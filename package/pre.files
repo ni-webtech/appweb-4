@@ -1,0 +1,10 @@
+#
+#	pre.files - Prepare for install
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+
+if [ "$BLD_FEATURE_RUN_AS_SERVICE" = "1" -a "$ORIGINAL_ROOT_DIR" = "" ] ; then
+    configureProduct stop
+    configureProduct uninstall
+fi

@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class XMLHttp</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>XMLHttp</h1>
+<div class='classBlock'>
+<table class='classHead' summary='XMLHttp'>
+   <tr><td><strong>Module</strong></td><td>ejs.io</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.io"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class XMLHttp</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ejs-11.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>XMLHttp <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>XMLHttp compatible method to retrieve HTTP data This code is prototype and is not yet supported.</p>
+
+<p class='classDescription'></p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Loaded</td><td>&nbsp;</td><td>ReadyState values. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Open</td><td>&nbsp;</td><td>ReadyState values. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Receiving</td><td>&nbsp;</td><td>ReadyState values. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Sent</td><td>&nbsp;</td><td>ReadyState values. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Uninitialized</td><td>&nbsp;</td><td>ReadyState values. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>onreadystatechange</td><td><a href='intrinsic-Function.html'>Function</a></td><td>Call back function for when the HTTP state changes. </td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>XMLHttp Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#abort'><b>abort</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Abort the connection.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#getAllResponseHeaders'><b>getAllResponseHeaders</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the response headers.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#getResponseHeader'><b>getResponseHeader</b></a>(key: <a href='intrinsic-String.html'>String</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Return a response header.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#http'><b>http</b></a>(): <a href='ejs.io-Http.html'>Http</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the underlying Http object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#open'><b>open</b></a>(method: <a href='intrinsic-String.html'>String</a>, url: <a href='intrinsic-String.html'>String</a>, async: <a href='intrinsic-Boolean.html'>Boolean</a>, user: <a href='intrinsic-String.html'>String</a>, password: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Open a connection to the web server using the supplied URL and method.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#readyState'><b>readyState</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the readystate value.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#responseBody'><b>responseBody</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Not implemented.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#responseText'><b>responseText</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the HTTP response payload as text.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#responseXML'><b>responseXML</b></a>(): <a href='ejs.xml-XML.html'>XML</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the HTTP response payload as an XML document.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#send'><b>send</b></a>(content: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send data with the request.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#setRequestHeader'><b>setRequestHeader</b></a>(key: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set an HTTP header with the request.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#status'><b>status</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the HTTP status code.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#statusText'><b>statusText</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the HTTP status code message.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#XMLHttp'><b>XMLHttp</b></a>()</tr></table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='abort'></a>
+<div class='api'>
+<div class='apiSig'> public abort(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Abort the connection.</p>
+</div>
+</div>
+<hr />
+<a name='getAllResponseHeaders'></a>
+<div class='api'>
+<div class='apiSig'> public getAllResponseHeaders(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Return the response headers.</p>
+<dl><dt>Returns</dt>
+<dd>A string with the headers catenated together.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='getResponseHeader'></a>
+<div class='api'>
+<div class='apiSig'> public getResponseHeader(key: <a href='intrinsic-String.html'>String</a>)
+</div>
+<div class='apiDetail'>
+<p>Return a response header.</p>
+<dl><dt>Description</dt><dd>Not yet implemented.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>key: <a href='intrinsic-String.html'>String</a> </td><td>The name of the response key to be returned. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The header value as a string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='http'></a>
+<div class='api'>
+<div class='apiSig'>get  public http(): <a href='ejs.io-Http.html'>Http</a>
+</div>
+<div class='apiDetail'>
+<p>Return the underlying Http object.</p>
+<dl><dt>Returns</dt>
+<dd>The Http object providing the implementation for XMLHttp.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='open'></a>
+<div class='api'>
+<div class='apiSig'> public open(method: <a href='intrinsic-String.html'>String</a>, url: <a href='intrinsic-String.html'>String</a>, async: <a href='intrinsic-Boolean.html'>Boolean</a>, user: <a href='intrinsic-String.html'>String</a>, password: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Open a connection to the web server using the supplied URL and method.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>method: <a href='intrinsic-String.html'>String</a> </td><td>HTTP method to use. Valid methods include "GET", "POST", "PUT", "DELETE", "OPTIONS" and "TRACE" </td></tr><tr><td class='param'>url: <a href='intrinsic-String.html'>String</a> </td><td>URL to invoke </td></tr><tr><td class='param'>async: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, don't block after issuing the requeset. By defining an $onreadystatuschange callback  function, the request progress can be monitored. NOTE: async mode is not supported. All calls will block.  [default: false ]</td></tr><tr><td class='param'>user: <a href='intrinsic-String.html'>String</a> </td><td>Optional user name if authentication is required.  [default: null ]</td></tr><tr><td class='param'>password: <a href='intrinsic-String.html'>String</a> </td><td>Optional password if authentication is required. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='readyState'></a>
+<div class='api'>
+<div class='apiSig'>get  public readyState(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Return the readystate value.</p>
+<dl><dt>Description</dt><dd>This value can be compared with the XMLHttp constants: Uninitialized, Open, Sent, Receiving or Loaded.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>Returns a number with the value: Uninitialized = 0, Open = 1, Sent = 2, Receiving = 3, Loaded = 4.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='responseBody'></a>
+<div class='api'>
+<div class='apiSig'>get  public responseBody(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Not implemented.</p>
+<dl><dt>Description</dt><dd>Only for ActiveX on IE.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='responseText'></a>
+<div class='api'>
+<div class='apiSig'>get  public responseText(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Return the HTTP response payload as text.</p>
+<dl><dt>Returns</dt>
+<dd>Returns a string containing the HTTP request response data.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='responseXML'></a>
+<div class='api'>
+<div class='apiSig'>get  public responseXML(): <a href='ejs.xml-XML.html'>XML</a>
+</div>
+<div class='apiDetail'>
+<p>Return the HTTP response payload as an XML document.</p>
+<dl><dt>Returns</dt>
+<dd>Returns an XML object that is the root of the HTTP request response data.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='send'></a>
+<div class='api'>
+<div class='apiSig'> public send(content: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Send data with the request.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>content: <a href='intrinsic-String.html'>String</a> </td><td>Data to send with the request. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='setRequestHeader'></a>
+<div class='api'>
+<div class='apiSig'> public setRequestHeader(key: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set an HTTP header with the request.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>key: <a href='intrinsic-String.html'>String</a> </td><td>Key value for the header </td></tr><tr><td class='param'>value: <a href='intrinsic-String.html'>String</a> </td><td>Value of the header </td></tr></table></dd>
+</dl><dl><dt>Example</dt>
+<dd><pre>setRequestHeader("Keep-Alive", "none")
+</pre></dd></dl>
+</div>
+</div>
+<hr />
+<a name='status'></a>
+<div class='api'>
+<div class='apiSig'>get  public status(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the HTTP status code.</p>
+<dl><dt>Returns</dt>
+<dd>A status code between 100 and 600. See $Http for the status code constants.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='statusText'></a>
+<div class='api'>
+<div class='apiSig'>get  public statusText(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Return the HTTP status code message.</p>
+<dl><dt>Returns</dt>
+<dd>A string containing the status message returned by the web server.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='XMLHttp'></a>
+<div class='api'>
+<div class='apiSig'> XMLHttp()
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

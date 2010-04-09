@@ -1,0 +1,957 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class Path</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Path</h1>
+<div class='classBlock'>
+<table class='classHead' summary='Path'>
+   <tr><td><strong>Module</strong></td><td>ejs.io</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.io"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class Path</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ejs-12.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Path <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>Path class.</p>
+
+<p class='classDescription'>Paths represent files in a file system. The corresponding file or directory for the Path  may or  may not exist. The representation of a path can be either natural, where the path delimiter is the normal  O/S path delimiter. For example, on Windows the path delimiter is "\" and on Unix it is "/". Paths can also be viewed with a unified representation where the delimiter is always "/". Ejscript typically operates in mapped representation to assist creating portable applications. The representaion can be changed via the representation() method.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>public static const </td><td>NATIVE</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>PORTABLE</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Path Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#absolute'><b>absolute</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return an absolute path name.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#accessed'><b>accessed</b></a>(): <a href='intrinsic-Date.html'>Date</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get when the file was last accessed.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#basename'><b>basename</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the base of portion of the path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#components'><b>components</b></a>(): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convert a path to an absolute path and break into components.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#contains'><b>contains</b></a>(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr>   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#copy'><b>copy</b></a>(target: <a href='intrinsic-Object.html'>Object</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Copy a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#created'><b>created</b></a>(): <a href='intrinsic-Date.html'>Date</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get when the file was created.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#dirname'><b>dirname</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the directory portion of a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#endsWith'><b>endsWith</b></a>(suffix: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return true if the path ends with the given suffix.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#exists'><b>exists</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Test to see if a file for this path exists.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#extension'><b>extension</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the file extension portion of the path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#files'><b>files</b></a>(enumDirs: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get a list of files in a directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#find'><b>find</b></a>(glob: <a href='intrinsic-String.html'>String</a>, recurse: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Find matching files.</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator override </td><td><a href='#get'><b>get</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get iterate over any files contained under this path (assuming it is a directory) "for (v in files)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator override </td><td><a href='#getValues'><b>getValues</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get an iterator for this file to be used by "for each (v in obj)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#hasDrive'><b>hasDrive</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the file path has a drive spec (C:) in it's name.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#isAbsolute'><b>isAbsolute</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the path is absolute.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#isDir'><b>isDir</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the path is a directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#isLink'><b>isLink</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the path is a link file (either symbolic or hard).</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#isRegular'><b>isRegular</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the path is a regular file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#isRelative'><b>isRelative</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the path is absolute.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#isSymbolic'><b>isSymbolic</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the path is a symbolic link file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#join'><b>join</b></a>(other: <a href='intrinsic-Array.html'>Array</a>): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Join paths.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#joinExt'><b>joinExt</b></a>(ext: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Join an extension to a path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public override get </td><td><a href='#length'><b>length</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the length of the path name.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#makeDir'><b>makeDir</b></a>(options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Make a new directory and all required intervening directories.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#makeLink'><b>makeLink</b></a>(existing: <a href='ejs.io-Path.html'>Path</a>, hard: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a link to a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#makeTemp'><b>makeTemp</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a temporary file in the path directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#modified'><b>modified</b></a>(): <a href='intrinsic-Date.html'>Date</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get when the file was created or last modified.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#name'><b>name</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the name of the Path as a string in the default representation.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#natural'><b>natural</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the path in the O/S natural (native) representation.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#normalize'><b>normalize</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Normalize a path by removing all redundant and invalid path components.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#open'><b>open</b></a>(options: <a href='intrinsic-Object.html'>Object</a>): <a href='ejs.io-File.html'>File</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Open a path and return a File object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#openBinaryStream'><b>openBinaryStream</b></a>(options: <a href='intrinsic-Object.html'>Object</a>): <a href='ejs.io-BinaryStream.html'>BinaryStream</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Open a file and return a BinaryStream object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#openTextStream'><b>openTextStream</b></a>(options: <a href='intrinsic-Object.html'>Object</a>): <a href='ejs.io-TextStream.html'>TextStream</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Open a file and return a TextStream object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#parent'><b>parent</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the parent directory of path.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#Path'><b>Path</b></a>(path: <a href='intrinsic-String.html'>String</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a new Path object and set the path's location.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-perms'><b>perms</b></a>(perms: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the file permissions of a path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#perms'><b>perms</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the file permissions of a path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#portable'><b>portable</b></a>(lower: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the path in the portable (like Unix) representation.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readBytes'><b>readBytes</b></a>(): <a href='intrinsic-ByteArray.html'>ByteArray</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read the file contents as an array of lines.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readLines'><b>readLines</b></a>(): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read the file contents as an array of lines.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readString'><b>readString</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read the file contents as a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readXML'><b>readXML</b></a>(): <a href='ejs.xml-XML.html'>XML</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read the file contents as an XML object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#relative'><b>relative</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return a relative path name for the file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#remove'><b>remove</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Delete the file associated with the File object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#removeAll'><b>removeAll</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Removes a directory and its contents.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#rename'><b>rename</b></a>(target: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Rename a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#representation'><b>representation</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the path name representation format.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static set </td><td><a href='#set-representation'><b>representation</b></a>(format: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the path name representation format.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#same'><b>same</b></a>(other: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Compare two paths test if they represent the same file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#separator'><b>separator</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the path separators for this path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#size'><b>size</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the size of the file associated with this Path object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#startsWith'><b>startsWith</b></a>(prefix: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return true if the path starts with the given prefix.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public override </td><td><a href='#toJSON'><b>toJSON</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convert the path to a JSON string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public override </td><td><a href='#toString'><b>toString</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convert the path to a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#trimEnd'><b>trimEnd</b></a>(pat: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Trim a pattern from the end of the path NOTE: this does a case-sensitive match.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#trimExt'><b>trimExt</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Trim a file extension from a path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#trimStart'><b>trimStart</b></a>(pat: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Trim a pattern from the start of the path NOTE: this does a case-sensitive match.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#truncate'><b>truncate</b></a>(size: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Reduce the size of the file by truncating it.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#write'><b>write</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write the file contents.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='absolute'></a>
+<div class='api'>
+<div class='apiSig'>get  public absolute(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Return an absolute path name.</p>
+<dl><dt>Returns</dt>
+<dd>An absolute path equivalent for the current path. The returned path is normalized.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='accessed'></a>
+<div class='api'>
+<div class='apiSig'>get  public accessed(): <a href='intrinsic-Date.html'>Date</a>
+</div>
+<div class='apiDetail'>
+<p>Get when the file was last accessed.</p>
+<dl><dt>Returns</dt>
+<dd>A date object with the date and time or null if the method fails.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='basename'></a>
+<div class='api'>
+<div class='apiSig'>get  public basename(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the base of portion of the path.</p>
+<dl><dt>Description</dt><dd>The base portion is the trailing portion without any directory elements.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A path containing the base name portion of the current path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='components'></a>
+<div class='api'>
+<div class='apiSig'>get  public components(): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Convert a path to an absolute path and break into components.</p>
+<dl><dt>Returns</dt>
+<dd>An array with an element for each segment of the path. The first element represents the the file system root and will be the empty string or drive spec on a windows like system.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='contains'></a>
+<div class='api'>
+<div class='apiSig'> public contains(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+</div>
+<hr />
+<a name='copy'></a>
+<div class='api'>
+<div class='apiSig'> public copy(target: <a href='intrinsic-Object.html'>Object</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Copy a file.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>target: <a href='intrinsic-Object.html'>Object</a> </td><td>New file location </td></tr><tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td>Object hash </td></tr></table></dd>
+</dl><h3 class='methodSection'>Options</h3>
+<p class='detail'>
+permissions: <a href='Set.html'>Set</a>  &mdash; to a numeric Posix permissions mask </p>
+</div>
+</div>
+<hr />
+<a name='created'></a>
+<div class='api'>
+<div class='apiSig'>get  public created(): <a href='intrinsic-Date.html'>Date</a>
+</div>
+<div class='apiDetail'>
+<p>Get when the file was created.</p>
+<dl><dt>Returns</dt>
+<dd>A date object with the date and time or null if the file does not exist.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='dirname'></a>
+<div class='api'>
+<div class='apiSig'>get  public dirname(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the directory portion of a file.</p>
+<dl><dt>Description</dt><dd>The directory portion is the leading portion including all  directory elements and excluding the base name. On some systems, it will include a drive specifier.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A string containing the directory name portion of the path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='endsWith'></a>
+<div class='api'>
+<div class='apiSig'> public endsWith(suffix: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Return true if the path ends with the given suffix.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>suffix: <a href='intrinsic-Object.html'>Object</a> </td><td>Path or String suffix to compare with the path. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>True if the path does begin with the suffix.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='exists'></a>
+<div class='api'>
+<div class='apiSig'>get  public exists(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Test to see if a file for this path exists.</p>
+<dl><dt>Returns</dt>
+<dd>True if the file exists.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='extension'></a>
+<div class='api'>
+<div class='apiSig'>get  public extension(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the file extension portion of the path.</p>
+<dl><dt>Description</dt><dd>The file extension is the portion starting with, and including the last ".".</dd></dl>
+<dl><dt>Returns</dt>
+<dd>String containing the file extension beginning with ".".</dd></dl>
+</div>
+</div>
+<hr />
+<a name='files'></a>
+<div class='api'>
+<div class='apiSig'> public files(enumDirs: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Get a list of files in a directory.</p>
+<dl><dt>Description</dt><dd>The returned array contains the base path portion only, relative to the path itself. This routine does not recurse into sub-directories. To get a list of files in sub-directories, use find().</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr><tr><td class='param'>enumDirs: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If set to true, then dirList will include sub-directories in the returned list of files.  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An Array of Path objects for each file in the directory.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='find'></a>
+<div class='api'>
+<div class='apiSig'> public find(glob: <a href='intrinsic-String.html'>String</a>, recurse: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Find matching files.</p>
+<dl><dt>Description</dt><dd>Files are listed in depth first order.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>glob: <a href='intrinsic-String.html'>String</a> </td><td>Glob style Pattern that files must match. This is similar to a ls() style pattern.  [default: null ]</td></tr><tr><td class='param'>recurse: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Set to true to examine sub-directories.   [default: true]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>Return a list of matching files.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='get'></a>
+<div class='api'>
+<div class='apiSig'>override  iterator get(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get iterate over any files contained under this path (assuming it is a directory) "for (v in files)".</p>
+<dl><dt>Description</dt><dd>This operates the same as getValues on a Path object.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Follow the prototype chain  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An iterator object.</dd></dl>
+<dl><dt>Example</dt>
+<dd><pre>for (f in Path("."))
+</pre></dd></dl>
+</div>
+</div>
+<hr />
+<a name='getValues'></a>
+<div class='api'>
+<div class='apiSig'>override  iterator getValues(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get an iterator for this file to be used by "for each (v in obj)".</p>
+<dl><dt>Description</dt><dd>Return  This operates the same as $get on a Path object.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Follow the prototype chain. Only implemented in ECMA compliance mode..  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An iterator object.</dd></dl>
+<dl><dt>Example</dt>
+<dd><pre>for each (f in Path("."))
+</pre></dd></dl>
+</div>
+</div>
+<hr />
+<a name='hasDrive'></a>
+<div class='api'>
+<div class='apiSig'>get  public hasDrive(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the file path has a drive spec (C:) in it's name.</p>
+<dl><dt>Description</dt><dd>Only relevant on Windows like systems.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>True if the file path has a drive spec.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='isAbsolute'></a>
+<div class='api'>
+<div class='apiSig'>get  public isAbsolute(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the path is absolute.</p>
+<dl><dt>Returns</dt>
+<dd>True if the path is an absolute path beginning at the file system's root.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='isDir'></a>
+<div class='api'>
+<div class='apiSig'>get  public isDir(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the path is a directory.</p>
+<dl><dt>Returns</dt>
+<dd>True if the file is a directory.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='isLink'></a>
+<div class='api'>
+<div class='apiSig'>get  public isLink(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the path is a link file (either symbolic or hard).</p>
+<dl><dt>Returns</dt>
+<dd>True if the file is a link.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='isRegular'></a>
+<div class='api'>
+<div class='apiSig'>get  public isRegular(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the path is a regular file.</p>
+<dl><dt>Returns</dt>
+<dd>True if the file is a regular file and not a directory.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='isRelative'></a>
+<div class='api'>
+<div class='apiSig'>get  public isRelative(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the path is absolute.</p>
+<dl><dt>Returns</dt>
+<dd>True if the path is an absolute path beginning at the file system's root.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='isSymbolic'></a>
+<div class='api'>
+<div class='apiSig'>get  public isSymbolic(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the path is a symbolic link file.</p>
+<dl><dt>Returns</dt>
+<dd>True if the file is a symbolic link.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='join'></a>
+<div class='api'>
+<div class='apiSig'>get  public join(other: <a href='intrinsic-Array.html'>Array</a>): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Join paths.</p>
+<dl><dt>Description</dt><dd>Joins one more more paths together. If another path is absolute, return it. Otherwise add a separator, and continue joining.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A joined, normalized path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='joinExt'></a>
+<div class='api'>
+<div class='apiSig'>get  public joinExt(ext: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Join an extension to a path.</p>
+<dl><dt>Description</dt><dd>If the base name of the path already has an extension, this call does nothing.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A path with extension.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='length'></a>
+<div class='api'>
+<div class='apiSig'>override get  public length(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the length of the path name.</p>
+<dl><dt>Returns</dt>
+<dd>The number of characters in the path name.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='makeDir'></a>
+<div class='api'>
+<div class='apiSig'> public makeDir(options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Make a new directory and all required intervening directories.</p>
+<dl><dt>Description</dt><dd>If the directory already exists,  the function returns without throwing an exception.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr><tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td></td></tr><tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td></td></tr></table></dd>
+</dl><h3 class='methodSection'>Options</h3>
+<p class='detail'>
+permissions: <a href='Set.html'>Set</a>  &mdash; to a numeric Posix permissions mask </p>
+<p class='detail'>
+owner: <a href='String.html'>String</a>  &mdash; representing the file owner (Not implemented) </p>
+<p class='detail'>
+group: <a href='String.html'>String</a>  &mdash; representing the file group (Not implemented) </p>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the directory cannot be created. 
+</p>
+</div>
+</div>
+<hr />
+<a name='makeLink'></a>
+<div class='api'>
+<div class='apiSig'> public makeLink(existing: <a href='ejs.io-Path.html'>Path</a>, hard: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Create a link to a file.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>existing: <a href='ejs.io-Path.html'>Path</a> </td><td>Path to an existing file to link to. </td></tr><tr><td class='param'>hard: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Set to true to create a hard link. Otherwise the default is to create a symbolic link.  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>This path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='makeTemp'></a>
+<div class='api'>
+<div class='apiSig'> public makeTemp(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Create a temporary file in the path directory.</p>
+<dl><dt>Description</dt><dd>Creates a new, uniquely named temporary file.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A new Path object for the temp file.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='modified'></a>
+<div class='api'>
+<div class='apiSig'>get  public modified(): <a href='intrinsic-Date.html'>Date</a>
+</div>
+<div class='apiDetail'>
+<p>Get when the file was created or last modified.</p>
+<dl><dt>Returns</dt>
+<dd>A date object with the date and time or null if the method fails.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='name'></a>
+<div class='api'>
+<div class='apiSig'>get  public name(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the name of the Path as a string in the default representation.</p>
+<dl><dt>Description</dt><dd>This is the same as $toString.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The name of the path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='natural'></a>
+<div class='api'>
+<div class='apiSig'>get  public natural(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the path in the O/S natural (native) representation.</p>
+<dl><dt>Description</dt><dd>This uses the native O/S separators, this is "\" on windows and "/" on unix.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The path in the O/S natural representation. The returned path is normalized.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='normalize'></a>
+<div class='api'>
+<div class='apiSig'>get  public normalize(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Normalize a path by removing all redundant and invalid path components.</p>
+<dl><dt>Description</dt><dd>This removes "segment/.."  and "./" components. It not convert to an absolute path nor will it map the case of the filename.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A normalized path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='open'></a>
+<div class='api'>
+<div class='apiSig'> public open(options: <a href='intrinsic-Object.html'>Object</a>): <a href='ejs.io-File.html'>File</a>
+</div>
+<div class='apiDetail'>
+<p>Open a path and return a File object.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td></td></tr><tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td></td></tr></table></dd>
+</dl><h3 class='methodSection'>Options</h3>
+<p class='detail'>
+mode: <a href='optional.html'>optional</a>  &mdash; file access mode string. Use "r" for read, "w" for write, "a" for append to existing content, "+" never truncate. </p>
+<p class='detail'>
+permissions: <a href='optional.html'>optional</a>  &mdash; Posix permissions number mask. Defaults to 0664. </p>
+<p class='detail'>
+owner: <a href='String.html'>String</a>  &mdash; representing the file owner (Not implemented) </p>
+<p class='detail'>
+group: <a href='String.html'>String</a>  &mdash; representing the file group (Not implemented) </p>
+<dl><dt>Returns</dt>
+<dd>A File object which implements the Stream interface.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the path or file cannot be created. 
+</p>
+</div>
+</div>
+<hr />
+<a name='openBinaryStream'></a>
+<div class='api'>
+<div class='apiSig'> public openBinaryStream(options: <a href='intrinsic-Object.html'>Object</a>): <a href='ejs.io-BinaryStream.html'>BinaryStream</a>
+</div>
+<div class='apiDetail'>
+<p>Open a file and return a BinaryStream object.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td>Optional options object </td></tr></td></tr></table></dd>
+</dl><h3 class='methodSection'>Options</h3>
+<p class='detail'>
+permissions: <a href='optional.html'>optional</a>  &mdash; Posix permissions number mask. Defaults to 0664. </p>
+<p class='detail'>
+owner: <a href='String.html'>String</a>  &mdash; representing the file owner (Not implemented) </p>
+<p class='detail'>
+group: <a href='String.html'>String</a>  &mdash; representing the file group (Not implemented) </p>
+<dl><dt>Returns</dt>
+<dd>A BinaryStream object which implements the Stream interface.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the path or file cannot be opened or created. 
+</p>
+</div>
+</div>
+<hr />
+<a name='openTextStream'></a>
+<div class='api'>
+<div class='apiSig'> public openTextStream(options: <a href='intrinsic-Object.html'>Object</a>): <a href='ejs.io-TextStream.html'>TextStream</a>
+</div>
+<div class='apiDetail'>
+<p>Open a file and return a TextStream object.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td>Optional options object </td></tr></table></dd>
+</dl><h3 class='methodSection'>Options</h3>
+<p class='detail'>
+mode: <a href='optional.html'>optional</a>  &mdash; file access mode string. Use "r" for read, "w" for write, "a" for append to existing content, "+" never truncate. </p>
+<p class='detail'>
+encoding: <a href='Text.html'>Text</a>  &mdash; encoding format </p>
+<p class='detail'>
+permissions: <a href='optional.html'>optional</a>  &mdash; Posix permissions number mask. Defaults to 0664. </p>
+<p class='detail'>
+owner: <a href='String.html'>String</a>  &mdash; representing the file owner (Not implemented) </p>
+<p class='detail'>
+group: <a href='String.html'>String</a>  &mdash; representing the file group (Not implemented) </p>
+<dl><dt>Returns</dt>
+<dd>A TextStream object which implements the Stream interface.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the path or file cannot be opened or created. 
+</p>
+</div>
+</div>
+<hr />
+<a name='parent'></a>
+<div class='api'>
+<div class='apiSig'>get  public parent(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the parent directory of path.</p>
+<dl><dt>Description</dt><dd>This may need to convert to an absolute path if there are no parent directories in a relative path.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The parent directory as a Path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='Path'></a>
+<div class='api'>
+<div class='apiSig'> Path(path: <a href='intrinsic-String.html'>String</a>)
+</div>
+<div class='apiDetail'>
+<p>Create a new Path object and set the path's location.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>the name of the file to associate with this path object.  </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='set-perms'></a>
+<div class='api'>
+<div class='apiSig'>set  public perms(perms: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the file permissions of a path.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>perms: <a href='intrinsic-Number.html'>Number</a> </td><td>the new Posix style permissions mask </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='perms'></a>
+<div class='api'>
+<div class='apiSig'>get  public perms(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the file permissions of a path.</p>
+<dl><dt>Returns</dt>
+<dd>The Posix style permissions mask.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='portable'></a>
+<div class='api'>
+<div class='apiSig'>get  public portable(lower: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the path in the portable (like Unix) representation.</p>
+<dl><dt>Description</dt><dd>This uses "/" separators.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>lower: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If set to true, all characters in the path will be mapped to lower case.  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The path in a portable representation. The returned path is normalized.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='readBytes'></a>
+<div class='api'>
+<div class='apiSig'> public readBytes(): <a href='intrinsic-ByteArray.html'>ByteArray</a>
+</div>
+<div class='apiDetail'>
+<p>Read the file contents as an array of lines.</p>
+<dl><dt>Description</dt><dd>Each line is a string. This method opens the file,  reads the contents and closes the file.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>An array of strings.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file cannot be read 
+</p>
+<dl><dt>Example</dt>
+<dd><pre>for each (byte in Path("/tmp/a.txt").readBytes())
+</pre></dd></dl>
+</div>
+</div>
+<hr />
+<a name='readLines'></a>
+<div class='api'>
+<div class='apiSig'> public readLines(): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Read the file contents as an array of lines.</p>
+<dl><dt>Description</dt><dd>Each line is a string. This method opens the file, reads the  contents and closes the file.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>An array of strings.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file cannot be read 
+</p>
+<dl><dt>Example</dt>
+<dd><pre>for each (line in Path("/tmp/a.txt").readLines())
+</pre></dd></dl>
+</div>
+</div>
+<hr />
+<a name='readString'></a>
+<div class='api'>
+<div class='apiSig'> public readString(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Read the file contents as a string.</p>
+<dl><dt>Description</dt><dd>This method opens the file, reads the contents and closes the file.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A string.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file cannot be read 
+</p>
+<dl><dt>Example</dt>
+<dd><pre>data = Path("/tmp/a.txt").readString()
+</pre></dd></dl>
+</div>
+</div>
+<hr />
+<a name='readXML'></a>
+<div class='api'>
+<div class='apiSig'> public readXML(): <a href='ejs.xml-XML.html'>XML</a>
+</div>
+<div class='apiDetail'>
+<p>Read the file contents as an XML object.</p>
+<dl><dt>Description</dt><dd>This method opens the file, reads the contents and closes the file.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>An XML object.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file cannot be read 
+</p>
+</div>
+</div>
+<hr />
+<a name='relative'></a>
+<div class='api'>
+<div class='apiSig'>get  public relative(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Return a relative path name for the file.</p>
+<dl><dt>Returns</dt>
+<dd>A string containing a file path name relative to the application's current working directory.. The returned path is normalized.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='remove'></a>
+<div class='api'>
+<div class='apiSig'> public remove(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Delete the file associated with the File object.</p>
+<dl><dt>Description</dt><dd>If this is a directory without contents it will be removed.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file exists and could not be deleted. 
+</p>
+</div>
+</div>
+<hr />
+<a name='removeAll'></a>
+<div class='api'>
+<div class='apiSig'> public removeAll(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Removes a directory and its contents.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the directory exists and cannot be removed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='rename'></a>
+<div class='api'>
+<div class='apiSig'> public rename(target: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Rename a file.</p>
+<dl><dt>Description</dt><dd>If the new path exists it is removed before the rename.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>target: <a href='intrinsic-Object.html'>Object</a> </td><td>New name of the path. Can be either a Path or String. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the original file does not exist or cannot be renamed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='representation'></a>
+<div class='api'>
+<div class='apiSig'>static get  public representation(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the path name representation format.</p>
+<dl><dt>Returns</dt>
+<dd>The Path format. Will return either: NATIVE or PORTABLE.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-representation'></a>
+<div class='api'>
+<div class='apiSig'>static set  public representation(format: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the path name representation format.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>format: <a href='intrinsic-Number.html'>Number</a> </td><td>Path format. Must be either: NATIVE or PORTABLE. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='same'></a>
+<div class='api'>
+<div class='apiSig'> public same(other: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Compare two paths test if they represent the same file.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>other: <a href='intrinsic-Object.html'>Object</a> </td><td>Other path to compare with </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>True if the paths represent the same underlying filename.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='separator'></a>
+<div class='api'>
+<div class='apiSig'>get  public separator(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Return the path separators for this path.</p>
+<dl><dt>Returns</dt>
+<dd>A string. Will typically be either "/" or "/\\" depending on the platform and representation.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='size'></a>
+<div class='api'>
+<div class='apiSig'>get  public size(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the size of the file associated with this Path object.</p>
+<dl><dt>Returns</dt>
+<dd>The number of bytes in the file or -1 if length determination failed.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='startsWith'></a>
+<div class='api'>
+<div class='apiSig'> public startsWith(prefix: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Return true if the path starts with the given prefix.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>prefix: <a href='intrinsic-Object.html'>Object</a> </td><td>Path or String prefix to compare with the path. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>True if the path does begin with the prefix.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='toJSON'></a>
+<div class='api'>
+<div class='apiSig'>override  public toJSON(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Convert the path to a JSON string.</p>
+<dl><dt>Returns</dt>
+<dd>A JSON string representing the path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='toString'></a>
+<div class='api'>
+<div class='apiSig'>override  public toString(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Convert the path to a string.</p>
+<dl><dt>Description</dt><dd>The format of the string will depend on the defined $representation format.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A string representing the path.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='trimEnd'></a>
+<div class='api'>
+<div class='apiSig'> public trimEnd(pat: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Trim a pattern from the end of the path NOTE: this does a case-sensitive match.</p>
+<dl><dt>Returns</dt>
+<dd>A Path containing the trimmed path name.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='trimExt'></a>
+<div class='api'>
+<div class='apiSig'> public trimExt(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Trim a file extension from a path.</p>
+<dl><dt>Returns</dt>
+<dd>A Path with no extension.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='trimStart'></a>
+<div class='api'>
+<div class='apiSig'> public trimStart(pat: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Trim a pattern from the start of the path NOTE: this does a case-sensitive match.</p>
+<dl><dt>Returns</dt>
+<dd>A Path containing the trimmed path name.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='truncate'></a>
+<div class='api'>
+<div class='apiSig'> public truncate(size: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Reduce the size of the file by truncating it.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>size: <a href='intrinsic-Number.html'>Number</a> </td><td>The new size of the file. If the truncate argument is greater than or equal to the  current file size nothing happens. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the truncate failed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='write'></a>
+<div class='api'>
+<div class='apiSig'> public write(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write the file contents.</p>
+<dl><dt>Description</dt><dd>This method opens the file, writes the contents and closes the file.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>The data to write to the file. Data is serialized in before writing. Note that numbers will not  be written in a cross platform manner. If that is required, use the BinaryStream class to write Numbers. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the data cannot be written 
+</p>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

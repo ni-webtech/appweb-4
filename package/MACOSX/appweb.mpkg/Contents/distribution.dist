@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-script minSpecVersion="1.000000" authoringTool="com.apple.PackageMaker" authoringToolVersion="3.0.3" authoringToolBuild="174">
+    <title>Appweb</title>
+    <options customize="allow" allow-external-scripts="no" rootVolumeOnly="false"/>
+    <domains enable_anywhere="true" enable_localSystem="true" enable_currentUserHome="true"/>
+    <readme file="ReadMe"/>
+    <license file="License"/>
+    <choices-outline>
+        <line choice="choice4"/>
+        <line choice="choice5"/>
+    </choices-outline>
+    <choice id="choice4" title="BIN">
+        <pkg-ref id="com.embedthis.appweb.bin.pkg"/>
+    </choice>
+    <choice id="choice5" title="DEV">
+        <pkg-ref id="com.embedthis.appweb.dev.pkg"/>
+    </choice>
+    <pkg-ref id="com.embedthis.appweb.bin.pkg" version="1" auth="Root">file:./Contents/Packages/bin.pkg</pkg-ref>
+    <pkg-ref id="com.embedthis.appweb.dev.pkg" version="1" auth="Root">file:./Contents/Packages/dev.pkg</pkg-ref>
+</installer-script>

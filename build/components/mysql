@@ -1,0 +1,25 @@
+#
+#   MySQL
+#
+defineComponent() {
+	local iflags path name search
+
+    name="mysql"
+    clientlib="libmysqlclient.dylib"
+
+    path=`probe --dir --path "$1" --base "$name/lib/$clientlib"` 
+    if [ "$path" != "" ] ; then 
+        path=${path}/${name}
+        dflags=`mysql_config --cflags`
+        cflags=`echo $dflags | sed 's/ -D.*//'`
+        dflags=`echo $dflags | sed -e "s^${cflags}^^"`
+        iflags="`mysql_config --include`"
+        libs="`mysql_config --libs_r`"
+        libpaths=`echo $libs | sed 's/ .*//'`
+        libs=`echo $libs | sed 's/[^ ]*//' | sed 's/-l//g'`
+        imports="$path/lib/$clientlib"
+    fi
+
+    configureComponent --name $name --dependencies "mpr" --libs "$libs" --path "$path" --cflags "$cflags" \
+        --dflags "$dflags" --iflags "$iflags" --imports "$imports"
+}

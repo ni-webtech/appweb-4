@@ -1,0 +1,878 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Global Functions and Variables</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Global Functions and Variables</h1>
+<div class='classBlock'>
+<p class='classBrief'>Global object containing all global functions and variables.</p>
+
+<p class='classDescription'></p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>ejs.web </td><td>action</td><td><a href='intrinsic-Namespace.html'>Namespace</a></td><td>Controller. Es -- Ejscript Controller class as part of the MVC framework. Also contains control helpers for views.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>ASC</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>Conditional compilation constant. Used to disable compilation of certain elements.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>boolean</td><td><a href='intrinsic-Type.html'>Type</a></td><td>Alias for the Boolean type. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>CONFIG</td><td><a href='intrinsic-Namespace.html'>Namespace</a></td><td>The CONFIG namespace used to defined conditional compilation directives. </td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>DEPRECATED</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>Conditional compilation constant. Used to deprecate elements.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>DOC_ONLY</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>Conditional compilation constant. Used to enable the compilation of elements only for creating the API documentation.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>double</td><td><a href='intrinsic-Type.html'>Type</a></td><td>Alias for the Number type. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>ECMA</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>&nbsp;</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>false</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>Boolean false value. </td></tr>
+   <tr><td nowrap align='center'>intrinsic </td><td>Frame</td><td>&nbsp;</td><td>Reserved slot marker for Frame activation records. Used by the GC to manage the activation record pool.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>FUTURE</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>Conditional compilation constant. Used to disable compilation of certain elements.</td></tr>
+   <tr><td nowrap align='center'>intrinsic </td><td>global</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Global variable space reference. The global variable references an object which is the global variable space.  This is useful when guaranteed access to a global variable is required. e.g. global.someName.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>Infinity</td><td><a href='intrinsic-Number.html'>Number</a></td><td>Infinity value. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>internal</td><td><a href='intrinsic-Namespace.html'>Namespace</a></td><td>The internal namespace used to make entities visible within a single module only. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>intrinsic</td><td><a href='intrinsic-Namespace.html'>Namespace</a></td><td>The intrinsic namespace used for entities that are part of and intrinsic to, the Ejscript platform. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>iterator</td><td><a href='intrinsic-Namespace.html'>Namespace</a></td><td>The iterator namespace used to defined iterators. </td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>NaN</td><td><a href='intrinsic-Number.html'>Number</a></td><td>Invalid numeric value. If the numeric type is set to an integral type, the value is zero.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>NegativeInfinity</td><td><a href='intrinsic-Number.html'>Number</a></td><td>Negative infinity value. </td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>null</td><td><a href='intrinsic-Null.html'>Null</a></td><td>Null value. The null value is returned when testing a nullable variable that has not yet had a  value assigned or one that has had null explicitly assigned.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>num</td><td><a href='intrinsic-Type.html'>Type</a></td><td>Alias for the Number type. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>public</td><td><a href='intrinsic-Namespace.html'>Namespace</a></td><td>The public namespace used to make entities visible accross modules. </td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>REGEXP</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>Conditional compilation constant. Used to deprecate elements.</td></tr>
+   <tr><td nowrap align='center'>ejs.sys.worker </td><td>self</td><td><a href='ejs.sys-Worker.html'>Worker</a></td><td>Reference to the Worker object for use inside a worker script. </td></tr>
+   <tr><td nowrap align='center'>ejs.web </td><td>sessions</td><td>&nbsp;</td><td>Array of all sessions. Held by the master interpreter.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>string</td><td><a href='intrinsic-Type.html'>Type</a></td><td>Alias for the String type. </td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>TODO</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>Conditional compilation constant. Used to disable compilation of certain elements.</td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>true</td><td><a href='intrinsic-Boolean.html'>Boolean</a></td><td>True value. </td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>undefined</td><td><a href='intrinsic-Void.html'>Void</a></td><td>Undefined variable value. The undefined value is returned when testing for a property that has not been defined.</td></tr>
+   <tr><td nowrap align='center'>ejs.web </td><td>view</td><td><a href='ejs.web-View.html'>View</a></td><td>Current view in the web framework. </td></tr>
+   <tr><td nowrap align='center'>intrinsic const </td><td>void</td><td><a href='intrinsic-Type.html'>Type</a></td><td>Void type value. This is an alias for Void.</td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Global Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#assert'><b>assert</b></a>(condition: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Assert a condition is true.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#basename'><b>basename</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the base name of a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#breakpoint'><b>breakpoint</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#chdir'><b>chdir</b></a>(dir: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Change the current working directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#chmod'><b>chmod</b></a>(path: <a href='intrinsic-String.html'>String</a>, perms: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the permissions of a file or directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#clearBoundThis'><b>clearBoundThis</b></a>(fn: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Function.html'>Function</a></tr>   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#cloneBase'><b>cloneBase</b></a>(klass: <a href='intrinsic-Type.html'>Type</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Replace the base type of a type with an exact clone.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#close'><b>close</b></a>(file: <a href='ejs.io-File.html'>File</a>, graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Close the file and free up all associated resources.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#cp'><b>cp</b></a>(fromPath: <a href='intrinsic-String.html'>String</a>, toPath: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Copy a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#decodeURI'><b>decodeURI</b></a>(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Reverse www-urlencoding on a string This function is prototype and may be renamed in a future release.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#deserialize'><b>deserialize</b></a>(obj: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Object.html'>Object</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convert a string into an object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#dirname'><b>dirname</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the directory name portion of a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#dump'><b>dump</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Dump the contents of objects.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#encodeURI'><b>encodeURI</b></a>(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Reverse www-urlencoding on a string This function is prototype and may be renamed in a future release.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#error'><b>error</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write to the standard error.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#escape'><b>escape</b></a>(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>HTML escape a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#eval'><b>eval</b></a>(script: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Object.html'>Object</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Evaluate a script.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#exists'><b>exists</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Does a file exist.</td></tr>
+   <tr class='apiDef'><td class='apiType'>ejs.sys.worker </td><td><a href='#exit'><b>exit</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Exit the worker.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#extension'><b>extension</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the file extension portion of the file name.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#find'><b>find</b></a>(path: <a href='intrinsic-Object.html'>Object</a>, glob: <a href='intrinsic-String.html'>String</a>, recurse: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Find matching files.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#formatStack'><b>formatStack</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Format the current call stack.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#freeSpace'><b>freeSpace</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the free space in the file system.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#gc'><b>gc</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#hashcode'><b>hashcode</b></a>(o: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the object's Unique hash id.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#input'><b>input</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read from the standard input.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#instanceOf'><b>instanceOf</b></a>(obj: <a href='intrinsic-Object.html'>Object</a>, target: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr>   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#isDir'><b>isDir</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Is a file a directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#kill'><b>kill</b></a>(pid: <a href='intrinsic-Number.html'>Number</a>, signal: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Kill a process.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#load'><b>load</b></a>(file: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Load a script or module.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#ls'><b>ls</b></a>(path: <a href='intrinsic-String.html'>String</a>, enumDirs: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get a list of files in a directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#makeGetter'><b>makeGetter</b></a>(fn: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Function.html'>Function</a></tr>   <tr class='apiDef'><td class='apiType'>ejs.db.mapper </td><td><a href='#mapType'><b>mapType</b></a>(value: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-String.html'>String</a></tr>   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#md5'><b>md5</b></a>(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Computed an MD5 sum of a string This function is prototype and may be renamed in a future release.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#mkdir'><b>mkdir</b></a>(path: <a href='intrinsic-String.html'>String</a>, permissions: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Make a new directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#mv'><b>mv</b></a>(fromFile: <a href='intrinsic-String.html'>String</a>, toFile: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Rename a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>ejs.sys.worker set </td><td><a href='#set-onerror'><b>onerror</b></a>(fun: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the error callback function.</td></tr>
+   <tr class='apiDef'><td class='apiType'>ejs.sys.worker get </td><td><a href='#onerror'><b>onerror</b></a>(): <a href='intrinsic-Function.html'>Function</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the error callback function.</td></tr>
+   <tr class='apiDef'><td class='apiType'>ejs.sys.worker set </td><td><a href='#set-onmessage'><b>onmessage</b></a>(fun: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the callback function to receive incoming messages.</td></tr>
+   <tr class='apiDef'><td class='apiType'>ejs.sys.worker get </td><td><a href='#onmessage'><b>onmessage</b></a>(): <a href='intrinsic-Function.html'>Function</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the callback function configured to receive incoming messages.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#open'><b>open</b></a>(path: <a href='intrinsic-String.html'>String</a>, mode: <a href='intrinsic-Number.html'>Number</a>, permissions: <a href='intrinsic-Number.html'>Number</a>): <a href='ejs.io-File.html'>File</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Open or create a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#output'><b>output</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Print the arguments to the standard output with a new line appended.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#parse'><b>parse</b></a>(input: <a href='intrinsic-String.html'>String</a>, preferredType: <a href='intrinsic-Type.html'>Type</a>): <a href='intrinsic-Object.html'>Object</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Parse a string and convert to a primitive type.</td></tr>
+   <tr class='apiDef'><td class='apiType'>ejs.db.mapper </td><td><a href='#plural'><b>plural</b></a>(name: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr>   <tr class='apiDef'><td class='apiType'>ejs.sys.worker </td><td><a href='#postMessage'><b>postMessage</b></a>(data: <a href='intrinsic-Object.html'>Object</a>, ports: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Post a message to the Worker's parent.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#print'><b>print</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Print the arguments to the standard output with a new line appended.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#printHash'><b>printHash</b></a>(name: <a href='intrinsic-String.html'>String</a>, o: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#printv'><b>printv</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Print variables for debugging.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#pwd'><b>pwd</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the current working directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#read'><b>read</b></a>(file: <a href='ejs.io-File.html'>File</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-ByteArray.html'>ByteArray</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read data bytes from a file and return a byte array containing the data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readFile'><b>readFile</b></a>(path: <a href='intrinsic-String.html'>String</a>, encoding: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr>   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#rm'><b>rm</b></a>(path: <a href='ejs.io-Path.html'>Path</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Remove a file from the file system.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#rmdir'><b>rmdir</b></a>(path: <a href='ejs.io-Path.html'>Path</a>, contents: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Removes a directory.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#serialize'><b>serialize</b></a>(obj: <a href='intrinsic-Object.html'>Object</a>, maxDepth: <a href='intrinsic-Number.html'>Number</a>, all: <a href='intrinsic-Boolean.html'>Boolean</a>, base: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Encode an object as a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>ejs.db.mapper </td><td><a href='#singular'><b>singular</b></a>(name: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr>   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#tempname'><b>tempname</b></a>(directory: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-File.html'>File</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a temporary file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>intrinsic </td><td><a href='#typeOf'><b>typeOf</b></a>(o): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the name of a type.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#write'><b>write</b></a>(file: <a href='ejs.io-File.html'>File</a>, items: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write data to the file.</td></tr>
+</table>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='assert'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic assert(condition: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Assert a condition is true.</p>
+<dl><dt>Description</dt><dd>This call tests if a condition is true by testing to see if the supplied  expression is true. If the expression is false, the interpreter will throw an exception.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>condition: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>JavaScript expression evaluating or castable to a Boolean result. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>True if the condition is.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='basename'></a>
+<div class='api'>
+<div class='apiSig'> public basename(path: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the base name of a file.</p>
+<dl><dt>Description</dt><dd>Returns the base name portion of a file name. The base name portion is the  trailing portion without any directory elements.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A string containing the base name portion of the file name.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='breakpoint'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic breakpoint(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='chdir'></a>
+<div class='api'>
+<div class='apiSig'> public chdir(dir: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Change the current working directory.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>dir: <a href='intrinsic-Object.html'>Object</a> </td><td>Directory String or path to change to </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='chmod'></a>
+<div class='api'>
+<div class='apiSig'> public chmod(path: <a href='intrinsic-String.html'>String</a>, perms: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the permissions of a file or directory.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>File or directory to modify </td></tr><tr><td class='param'>perms: <a href='intrinsic-Number.html'>Number</a> </td><td>New Posix style permission mask </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='clearBoundThis'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic clearBoundThis(fn: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Function.html'>Function</a>
+</div>
+</div>
+<hr />
+<a name='cloneBase'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic cloneBase(klass: <a href='intrinsic-Type.html'>Type</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Replace the base type of a type with an exact clone.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>klass: <a href='intrinsic-Type.html'>Type</a> </td><td>Class in which to replace the base class. </td></tr></table></dd>
+</dl><dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='close'></a>
+<div class='api'>
+<div class='apiSig'> public close(file: <a href='ejs.io-File.html'>File</a>, graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Close the file and free up all associated resources.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>file: <a href='ejs.io-File.html'>File</a> </td><td>Open file object previously opened via $open or $File </td></tr><tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>if true, then close the file gracefully after writing all pending data.  [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='cp'></a>
+<div class='api'>
+<div class='apiSig'> public cp(fromPath: <a href='intrinsic-String.html'>String</a>, toPath: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Copy a file.</p>
+<dl><dt>Description</dt><dd>If the destination file already exists, the old copy will be overwritten as part of the copy operation.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>fromPath: <a href='intrinsic-String.html'>String</a> </td><td>Original file to copy. </td></tr><tr><td class='param'>toPath: <a href='intrinsic-String.html'>String</a> </td><td>New destination file path name. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the copy is not successful. 
+</p>
+</div>
+</div>
+<hr />
+<a name='decodeURI'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic decodeURI(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Reverse www-urlencoding on a string This function is prototype and may be renamed in a future release.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A decoded string.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='deserialize'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic deserialize(obj: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Object.html'>Object</a>
+</div>
+<div class='apiDetail'>
+<p>Convert a string into an object.</p>
+<dl><dt>Description</dt><dd>This will parse a string that has been encoded via serialize. It may contain nested objects and arrays. This is a static method.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The fully constructed object or undefined if it could not be reconstructed.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: If the object could not be reconstructed from the string. 
+</p>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='dirname'></a>
+<div class='api'>
+<div class='apiSig'> public dirname(path: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the directory name portion of a file.</p>
+<dl><dt>Description</dt><dd>The dirname name portion is the leading portion including all  directory elements and excluding the base name. On some systems, it will include a drive specifier.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A string containing the directory name portion of the file name.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='dump'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic dump(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Dump the contents of objects.</p>
+<dl><dt>Description</dt><dd>Used for debugging, this routine serializes the objects and prints to the standard output.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Variable number of arguments of any type </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='encodeURI'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic encodeURI(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Reverse www-urlencoding on a string This function is prototype and may be renamed in a future release.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A decoded string.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='error'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic error(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write to the standard error.</p>
+<dl><dt>Description</dt><dd>This call writes the arguments to the standard error with a new line appended.  It evaluates the arguments, converts the result to strings and prints the result to the standard error.  Arguments are converted to strings by calling their toSource method.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Data to write </td></tr></table></dd>
+</dl><dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='escape'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic escape(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>HTML escape a string.</p>
+<dl><dt>Description</dt><dd>This quotes characters which would otherwise be interpreted as HTML directives. This function is prototype and may be renamed in a future release.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A HTML escaped string.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='eval'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic eval(script: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Object.html'>Object</a>
+</div>
+<div class='apiDetail'>
+<p>Evaluate a script.</p>
+<dl><dt>Description</dt><dd>Not present in ejsvm.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>script: <a href='intrinsic-String.html'>String</a> </td><td>Script to evaluate </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The the script expression value.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='exists'></a>
+<div class='api'>
+<div class='apiSig'> public exists(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Does a file exist.</p>
+<dl><dt>Description</dt><dd>Return true if the specified file exists and can be accessed.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>Filename path to examine. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>True if the file can be accessed.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='exit'></a>
+<div class='api'>
+<div class='apiSig'> ejs.sys.worker exit(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Exit the worker.</p>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='extension'></a>
+<div class='api'>
+<div class='apiSig'> public extension(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the file extension portion of the file name.</p>
+<dl><dt>Description</dt><dd>The file extension is the portion starting with the last "." in the path. It thus includes "." as the first charcter.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>Filename path to examine </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>String containing the file extension. It includes "." as the first character.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='find'></a>
+<div class='api'>
+<div class='apiSig'> public find(path: <a href='intrinsic-Object.html'>Object</a>, glob: <a href='intrinsic-String.html'>String</a>, recurse: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Find matching files.</p>
+<dl><dt>Description</dt><dd>Files are listed in a depth first order.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-Object.html'>Object</a> </td><td>Starting path from which to find matching files. </td></tr><tr><td class='param'>glob: <a href='intrinsic-String.html'>String</a> </td><td>Glob style Pattern that files must match. This is similar to a ls() style pattern. </td></tr><tr><td class='param'>recurse: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Set to true to examine sub-directories.   [default: true]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>Return a list of matching files.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='formatStack'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic formatStack(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Format the current call stack.</p>
+<dl><dt>Description</dt><dd>Used for debugging and when creating exception objects.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='freeSpace'></a>
+<div class='api'>
+<div class='apiSig'> public freeSpace(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Return the free space in the file system.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The number of 1M blocks (1024 *  1024 bytes) of free space in the file system.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='gc'></a>
+<div class='api'>
+<div class='apiSig'> public gc(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='hashcode'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic hashcode(o: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the object's Unique hash id.</p>
+<dl><dt>Description</dt><dd>All objects have a unique object hash.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>This property accessor returns a long containing the object's unique hash identifier.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='input'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic input(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Read from the standard input.</p>
+<dl><dt>Description</dt><dd>This call reads a line of input from the standard input.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A string containing the input. Returns null on EOF.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='instanceOf'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic instanceOf(obj: <a href='intrinsic-Object.html'>Object</a>, target: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+</div>
+<hr />
+<a name='isDir'></a>
+<div class='api'>
+<div class='apiSig'> public isDir(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Is a file a directory.</p>
+<dl><dt>Description</dt><dd>Return true if the specified path exists and is a directory.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>Directory path to examine. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>True if the file can be accessed.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='kill'></a>
+<div class='api'>
+<div class='apiSig'> public kill(pid: <a href='intrinsic-Number.html'>Number</a>, signal: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Kill a process.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>pid: <a href='intrinsic-Number.html'>Number</a> </td><td>Process ID to kill </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='load'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic load(file: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Load a script or module.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>file: <a href='intrinsic-String.html'>String</a> </td><td>path name to load. File will be interpreted relative to EJSPATH if it is not found as an absolute or relative file name. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='ls'></a>
+<div class='api'>
+<div class='apiSig'> public ls(path: <a href='intrinsic-String.html'>String</a>, enumDirs: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Get a list of files in a directory.</p>
+<dl><dt>Description</dt><dd>The returned array contains the base file name portion only.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>Directory path to enumerate. </td></tr><tr><td class='param'>enumDirs: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If set to true, then dirList will include sub-directories in the returned list of files.  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An Array of strings containing the filenames in the directory.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='makeGetter'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic makeGetter(fn: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Function.html'>Function</a>
+</div>
+</div>
+<hr />
+<a name='mapType'></a>
+<div class='api'>
+<div class='apiSig'> ejs.db.mapper mapType(value: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+</div>
+<hr />
+<a name='md5'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic md5(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Computed an MD5 sum of a string This function is prototype and may be renamed in a future release.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An MD5 checksum.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='mkdir'></a>
+<div class='api'>
+<div class='apiSig'> public mkdir(path: <a href='intrinsic-String.html'>String</a>, permissions: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Make a new directory.</p>
+<dl><dt>Description</dt><dd>Makes a new directory and all required intervening directories. If the directory  already exists, the function returns without throwing an exception.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>Filename path to use. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the directory cannot be created. 
+</p>
+</div>
+</div>
+<hr />
+<a name='mv'></a>
+<div class='api'>
+<div class='apiSig'> public mv(fromFile: <a href='intrinsic-String.html'>String</a>, toFile: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Rename a file.</p>
+<dl><dt>Description</dt><dd>If the new file name exists it is removed before the rename.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the original file does not exist or cannot be renamed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='set-onerror'></a>
+<div class='api'>
+<div class='apiSig'>set  ejs.sys.worker onerror(fun: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the error callback function.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>fun: <a href='intrinsic-Function.html'>Function</a> </td><td>Callback function to receive incoming data from postMessage() calls. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='onerror'></a>
+<div class='api'>
+<div class='apiSig'>get  ejs.sys.worker onerror(): <a href='intrinsic-Function.html'>Function</a>
+</div>
+<div class='apiDetail'>
+<p>Get the error callback function.</p>
+</div>
+</div>
+<hr />
+<a name='set-onmessage'></a>
+<div class='api'>
+<div class='apiSig'>set  ejs.sys.worker onmessage(fun: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the callback function to receive incoming messages.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>fun: <a href='intrinsic-Function.html'>Function</a> </td><td>Callback function to receive incoming data from postMessage() calls. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='onmessage'></a>
+<div class='api'>
+<div class='apiSig'>get  ejs.sys.worker onmessage(): <a href='intrinsic-Function.html'>Function</a>
+</div>
+<div class='apiDetail'>
+<p>Get the callback function configured to receive incoming messages.</p>
+</div>
+</div>
+<hr />
+<a name='open'></a>
+<div class='api'>
+<div class='apiSig'> public open(path: <a href='intrinsic-String.html'>String</a>, mode: <a href='intrinsic-Number.html'>Number</a>, permissions: <a href='intrinsic-Number.html'>Number</a>): <a href='ejs.io-File.html'>File</a>
+</div>
+<div class='apiDetail'>
+<p>Open or create a file.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>Filename path to open </td></tr><tr><td class='param'>mode: <a href='intrinsic-Number.html'>Number</a> </td><td>optional file access mode with values ored from: Read, Write, Append, Create, Open, Truncate.  Defaults to Read.  [default: Read]</td></tr><tr><td class='param'>permissions: <a href='intrinsic-Number.html'>Number</a> </td><td>optional permissions. Defaults to App.permissions </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A File object which implements the Stream interface.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the path or file cannot be opened or created. 
+</p>
+</div>
+</div>
+<hr />
+<a name='output'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic output(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Print the arguments to the standard output with a new line appended.</p>
+<dl><dt>Description</dt><dd>This call evaluates the arguments,  converts the result to strings and prints the result to the standard output. Arguments are converted to  strings by calling their toString method.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Variables to print </td></tr></table></dd>
+</dl><dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='parse'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic parse(input: <a href='intrinsic-String.html'>String</a>, preferredType: <a href='intrinsic-Type.html'>Type</a>): <a href='intrinsic-Object.html'>Object</a>
+</div>
+<div class='apiDetail'>
+<p>Parse a string and convert to a primitive type.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>preferredType: <a href='intrinsic-Type.html'>Type</a> </td><td></td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='plural'></a>
+<div class='api'>
+<div class='apiSig'> ejs.db.mapper plural(name: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+</div>
+<hr />
+<a name='postMessage'></a>
+<div class='api'>
+<div class='apiSig'> ejs.sys.worker postMessage(data: <a href='intrinsic-Object.html'>Object</a>, ports: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Post a message to the Worker's parent.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Object.html'>Object</a> </td><td>Data to pass to the worker's onmessage callback. </td></tr><tr><td class='param'>ports: <a href='intrinsic-Array.html'>Array</a> </td><td>Not implemented </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='print'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic print(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Print the arguments to the standard output with a new line appended.</p>
+<dl><dt>Description</dt><dd>This call evaluates the arguments,  converts the result to strings and prints the result to the standard output. Arguments are converted to  strings by calling their toString method. This method invokes $output as its implementation.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Variables to print </td></tr></table></dd>
+</dl><dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='printHash'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic printHash(name: <a href='intrinsic-String.html'>String</a>, o: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='printv'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic printv(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Print variables for debugging.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Variables to print </td></tr></table></dd>
+</dl><dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='pwd'></a>
+<div class='api'>
+<div class='apiSig'> public pwd(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the current working directory.</p>
+<dl><dt>Returns</dt>
+<dd>A Path containing the current working directory.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='read'></a>
+<div class='api'>
+<div class='apiSig'> public read(file: <a href='ejs.io-File.html'>File</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-ByteArray.html'>ByteArray</a>
+</div>
+<div class='apiDetail'>
+<p>Read data bytes from a file and return a byte array containing the data.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>file: <a href='ejs.io-File.html'>File</a> </td><td>Open file object previously opened via $open or $File </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A byte array containing the read data.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file could not be read. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readFile'></a>
+<div class='api'>
+<div class='apiSig'> public readFile(path: <a href='intrinsic-String.html'>String</a>, encoding: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+</div>
+<hr />
+<a name='rm'></a>
+<div class='api'>
+<div class='apiSig'> public rm(path: <a href='ejs.io-Path.html'>Path</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Remove a file from the file system.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='ejs.io-Path.html'>Path</a> </td><td>Filename path to delete. </td></tr></td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file exists and cannot be removed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='rmdir'></a>
+<div class='api'>
+<div class='apiSig'> public rmdir(path: <a href='ejs.io-Path.html'>Path</a>, contents: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Removes a directory.</p>
+<dl><dt>Description</dt><dd>This can remove a directory and its contents.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='ejs.io-Path.html'>Path</a> </td><td>Filename path to remove. </td></tr><tr><td class='param'>contents: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, remove the directory contents including files and sub-directories.  [default: false]</td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the directory exists and cannot be removed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='serialize'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic serialize(obj: <a href='intrinsic-Object.html'>Object</a>, maxDepth: <a href='intrinsic-Number.html'>Number</a>, all: <a href='intrinsic-Boolean.html'>Boolean</a>, base: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Encode an object as a string.</p>
+<dl><dt>Description</dt><dd>This function returns a literal string for the object and all its properties.  If.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>maxDepth: <a href='intrinsic-Number.html'>Number</a> </td><td>The depth to recurse when converting properties to literals. If set to zero, the depth is infinite. </td></tr><tr><td class='param'>all: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Encode non-enumerable and class fixture properties and functions.  [default: false ]</td></tr><tr><td class='param'>base: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Encode base class properties.  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>This function returns an object literal that can be used to reinstantiate an object.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='TypeError.html'>TypeError</a>: If the object could not be converted to a string. 
+</p>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='singular'></a>
+<div class='api'>
+<div class='apiSig'> ejs.db.mapper singular(name: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+</div>
+<hr />
+<a name='tempname'></a>
+<div class='api'>
+<div class='apiSig'> public tempname(directory: <a href='intrinsic-String.html'>String</a>): <a href='ejs.io-File.html'>File</a>
+</div>
+<div class='apiDetail'>
+<p>Create a temporary file.</p>
+<dl><dt>Description</dt><dd>Creates a new, uniquely named temporary file.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>directory: <a href='intrinsic-String.html'>String</a> </td><td>Directory in which to create the temp file. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A closed File object after creating an empty temporary file.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='typeOf'></a>
+<div class='api'>
+<div class='apiSig'> intrinsic typeOf(o): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Return the name of a type.</p>
+<dl><dt>Description</dt><dd>This is a fixed version of the standard "typeof" operator. It returns the real Ejscript underlying type.  This is implemented as a wrapper around Reflect(o).typeName.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>o </td><td>Object or value to examine.  </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string type name. If the object to examine is a type object, then return the name of the base type. If the object is Object, then return null.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='write'></a>
+<div class='api'>
+<div class='apiSig'> public write(file: <a href='ejs.io-File.html'>File</a>, items: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Write data to the file.</p>
+<dl><dt>Description</dt><dd>If the stream is in sync mode, the write call blocks until the underlying stream or  endpoint absorbes all the data. If in async-mode, the call accepts whatever data can be accepted immediately  and returns a count of the elements that have been written.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>file: <a href='ejs.io-File.html'>File</a> </td><td>Open file object previously opened via $open or $File </td></tr><tr><td class='param'>items: <a href='intrinsic-Array.html'>Array</a> </td><td>The data argument can be ByteArrays, strings or Numbers. All other types will call serialize first before writing. Note that numbers will not be written in a cross platform manner. If that is required, use the BinaryStream class to write Numbers. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The number of bytes written.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file could not be written. 
+</p>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,163 @@
+#
+#	Makefile.top -- Top level Makefile for the Embedthis Build System
+#					Included by $(BLD_TOP)/Makefile only.
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+#
+#	Standard Make targets supported are:
+#	
+#		make 						# Does a "make compile"
+#		make clean					# Removes generated objects
+#		make compile				# Compiles the source
+#		make depend					# Generates the make dependencies
+#		make test 					# Runs unit tests
+#		make leakTest 				# Runs memory leak tests
+#		make loadTest 				# Runs load tests
+#		make benchmark 				# Runs benchmarks
+#		make package				# Creates an installable package
+#
+#	Additional targets for this makefile:
+#
+#		make newbuild				# Increment the build number and rebuild
+#
+#	Installation targets. Use "make DESTDIR=myDir" to do a custom local
+#		install:
+#
+#		make install				# Call install-binary
+#		make install-binary			# Install binary files
+#		make install-dev			# Install development libraries and headers
+#
+#	To remove, use make uninstall-ITEM, where ITEM is a component above.
+#
+
+BLD_TOP		:= .
+BUILD_CHECK	:= buildCheck
+FIRST		:= first
+SHELL		:= /bin/bash
+IMG_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)
+SRC_NAME	= $(BLD_PRODUCT)-src-$(BLD_VERSION)-$(BLD_NUMBER)
+
+#
+#	Conditionally read in the Make rules and templates. The buildConfig.make
+#	file will not exist if configure has not been run. In that case, we must
+#	warn the user to run configure first. 
+#
+ifeq ($(shell [ -f buildConfig.make ] && echo found),found)
+
+include		buildConfig.make
+
+MAKE		:= $(BLD_MAKE)
+PRE_DIRS	= $(BLD_DIRS)
+
+include		build/make/make.rules
+
+#
+#	If cross compiling, include the host O/S settings.
+#
+ifeq ($(BUILDING_CROSS),1)
+	include $(BLD_TOP)/build/make/make.$(BLD_HOST_OS)
+else
+	include $(BLD_TOP)/build/make/make.$(BLD_BUILD_OS)
+endif
+
+else
+	#
+	#	Configure has not yet been run
+	#
+
+all clean clobber compile depend package test projects: always
+	@if [ "$(UCLINUX_BUILD_USER)" = 1 ] ; then \
+		echo ; \
+	else \
+		echo -e "\nMust run configure first\n" >&2 ; \
+		exit 2 ; \
+	fi
+
+.PHONY: always
+endif
+
+ifndef IN_BOOTSTRAP
+compileFirst: $(BLD_TOP)/build/src/.makedep
+endif
+
+#
+#	Check for the existing of the dynamic dependancy files (.makedep)
+#
+.PRECIOUS	: $(BLD_TOP)/build/src/.makedep
+
+$(BLD_TOP)/build/src/.makedep: buildConfig.make
+	@echo -e "\n  # Making dynamic makefile dependancies\n"
+	@$(MAKE) TRACE=$(TRACE) --no-print-directory depend
+	@if [ "$(BLD_CROSS)" = 1 -a "$(BUILDING_CROSS)" != "1" ] ; then \
+		echo "$(MAKE) BUILDING_CROSS=1 depend" ; \
+		$(MAKE) TRACE=$(TRACE) -S --no-print-directory _RECURSIVE_=1 BUILDING_CROSS=1 depend ; \
+	fi
+	$(MAKE) TRACE=$(TRACE) --no-print-directory clean
+
+#
+#	Build the build tools
+#
+$(BLD_TOOLS_DIR)/edep$(BLD_EXE): 
+	T=$(BLD_TOOLS_DIR)/src; $(DO_RECURSE)
+
+install uninstall install-% uninstall-%:
+	@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
+
+checkInstalled: 
+	@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
+
+cleanExtra:
+	@for f in $(CLEANIT) ; \
+	do \
+		rm -f bin/$$f obj/$$f lib/$$f ; \
+	done
+
+clobberExtra:
+	rm -f buildConfig.* 
+
+buildConfig.sh buildConfig.h buildConfig.make:
+
+#
+#	Do a new top level build after incrementing the build number
+#
+newbuild: incVersion clean compile
+
+version:
+	echo $(BLD_VERSION)-$(BLD_NUMBER)
+
+incVersion:
+	@num=`expr $(BLD_NUMBER) + 1` ; \
+	cp build/product.config /tmp/build$$$$.tmp ; \
+	sed s/BLD_NUMBER=\"$(BLD_NUMBER)\"/BLD_NUMBER=\"$${num}\"/ </tmp/build$$$$.tmp >build/product.config
+	./configure
+
+upload:
+	if [ "$(BUILD_UPLOAD)" = "" ] ; then \
+		echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \
+		exit 2 ; \
+	fi
+	cd releases >/dev/null 2>&1 ; \
+	if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
+		for name in $(IMG_NAME)* md5-$(IMG_NAME)* ; \
+		do \
+			chmod 664 $$name ; \
+			echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+			http --log stdout:5 -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+		done ; \
+	fi
+
+uploadSource:
+	if [ "$(BUILD_UPLOAD)" = "" ] ; then \
+		echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \
+		exit 2 ; \
+	fi
+	cd releases >/dev/null 2>&1 ; \
+	if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
+		for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; \
+		do \
+			chmod 664 $$name ; \
+			echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+			http --log stdout:5 -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+		done ; \
+	fi

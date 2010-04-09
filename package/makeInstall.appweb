@@ -1,0 +1,157 @@
+#
+#	makeInstall.appweb - Called by makeInstall
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+################################################################################
+#
+#	Configure a product
+#
+#	Usage:	configureProduct configure|initialize|install|uninstall|start|stop
+#
+
+configureProduct() {
+	local action sw
+
+	[ "$DRY_RUN" = 1 ] && return
+
+	action=$1
+	case $action in
+	cleanup)
+		rm -f "${BLD_CFG_PREFIX}/".${BLD_PRODUCT}_pid.log
+		rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
+		rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}/fileList.txt"
+		rm -fr "/var/${BLD_PRODUCT}"
+		rm -f "${BLD_LIB_PREFIX}/libcrypto"*
+		rm -f "${BLD_LIB_PREFIX}/libssl"*
+		rm -f "${BLD_LOG_PREFIX}"/access.log*
+		rm -f "${BLD_LOG_PREFIX}"/error.log*
+		;;
+
+    complete)
+        [ $TASK != Package -a $QUIET = 0 ] && echo -e "#\n#  ${TASK} Complete\n#" ; true
+        ;;
+
+	configure)
+		[ $QUIET = 0 ] && echo -e "#  Configuring ${BLD_PRODUCT}"
+		if [ $TASK = Install -a "${DO_BINARY}" = "1" ] ; then
+			BLD_CFG_PREFIX="$ORIG_BLD_CFG_PREFIX" BLD_WEB_PREFIX="$ORIG_BLD_WEB_PREFIX" \
+			BLD_DOC_PREFIX="$ORIG_BLD_DOC_PREFIX" BLD_MOD_PREFIX="$ORIG_BLD_MOD_PREFIX" \
+			BLD_MAN_PREFIX="$ORIG_BLD_MAN_PREFIX" BLD_SAM_PREFIX="$ORIG_BLD_SAM_PREFIX" \
+            BLD_LOG_PREFIX="$ORIGBLD_LOG_PREFIX" \
+            BLD_HTTP_PORT=$BLD_HTTP_PORT BLD_SSL_PORT=$BLD_SSL_PORT BLD_SERVER=`hostname` \
+                patchAppwebConf "${BLD_CFG_PREFIX}/appweb.conf" \
+                    "${BLD_CFG_PREFIX}/conf/hosts/ssl-default.conf" \
+                    "${BLD_CFG_PREFIX}/conf/log.conf" \
+                    "${BLD_CFG_PREFIX}/conf/doc.conf"
+		fi
+		;;
+
+	copy)
+		if [ -x "${BLD_WEB_PREFIX}" -a "$TASK" = Package ] ; then
+			find "${BLD_WEB_PREFIX}" -type d | while read f
+            do
+                chmod 755 "$f"
+            done
+			find "${BLD_WEB_PREFIX}" -type f | while read f
+			do
+				chmod 644 "$f"
+			done
+		fi
+		;;
+
+	initialize)
+		# echo -e "#  Initializing ..."
+		;;
+	
+	install)
+		[ $QUIET = 0 ] && 
+		echo -e "#  Installing ${BLD_PRODUCT} as a service/daemon"
+		if [ $BLD_HOST_OS = WIN ] ; then
+			if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
+				"$BLD_BIN_PREFIX/angel" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
+			fi
+
+		elif which launchctl >/dev/null 2>&1 ; then
+            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            launchctl unload /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
+            launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
+
+		elif type chkconfig >/dev/null 2>&1 ; then
+			/sbin/chkconfig --del $BLD_PRODUCT  >/dev/null
+			/sbin/chkconfig --add $BLD_PRODUCT >/dev/null
+			/sbin/chkconfig --level 5 $BLD_PRODUCT on >/dev/null
+
+		elif type update-rc.d >/dev/null 2>&1 ; then
+			update-rc.d $BLD_PRODUCT defaults 90 10 >/dev/null
+
+		else
+			echo "Can't find tools to install $BLD_NAME service"
+		fi
+		;;
+
+	uninstall)
+		[ $TASK = Remove -a $QUIET = 0 ] && echo -e "#  Uninstalling the ${BLD_PRODUCT} service"
+		if [ $BLD_HOST_OS = WIN ] ; then
+			if [ -x "$BLD_BIN_DIR/angel.exe" ] ; then
+				"$BLD_BIN_DIR/angel" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
+			fi
+		elif which launchctl >/dev/null 2>&1 ; then
+            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            launchctl unload -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
+		elif type chkconfig >/dev/null 2>&1 ; then
+			/sbin/chkconfig --del $BLD_PRODUCT >/dev/null 2>&1
+			rm -f "${BLD_ROOT_PREFIX}/etc/rc.d/init.d/${BLD_PRODUCT}"
+			rm -f "${BLD_ROOT_PREFIX}/etc/rc.d/rc*.d/"???${BLD_PRODUCT}
+		elif type update-rc.d >/dev/null 2>&1 ; then
+			update-rc.d -f $BLD_PRODUCT remove >/dev/null
+		else
+			echo "Can't find tools to uninstall $BLD_NAME service"
+		fi
+		;;
+
+	start|stop)
+		if [ $action = start ] ; then
+			verb=Starting
+            [ $QUIET = 0 ] && echo -e "#  $verb $BLD_PRODUCT"
+		else
+			verb=Stopping
+            [ $TASK = Remove -a $QUIET = 0 ] && echo -e "#  $verb $BLD_PRODUCT"
+		fi
+
+		if [ $BLD_HOST_OS = WIN ] ; then
+			if [ $action = start ] ; then
+				if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
+					"$BLD_BIN_PREFIX/angel" --start $BLD_BIN_PREFIX/$BLD_PRODUCT
+				fi
+				if [ -x "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor.exe" ] ; then
+					sleep 5
+					"$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" &
+				fi
+			else 
+				if [ -x "$BLD_BIN_DIR/angel.exe" ] ; then
+					"$BLD_BIN_DIR/angel" --stop $BLD_BIN_PREFIX/$BLD_PRODUCT
+				fi
+				if [ -x "$BLD_BIN_DIR/${BLD_PRODUCT}Monitor.exe" ] ; then
+					"$BLD_BIN_DIR/${BLD_PRODUCT}Monitor" --stop
+				fi
+			fi
+		elif which launchctl >/dev/null 2>&1 ; then
+            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            if [ $action = start ] ; then
+                launchctl start com.${company}.${BLD_PRODUCT}
+            else
+                launchctl stop com.${company}.${BLD_PRODUCT} 2>/dev/null
+            fi
+		elif type service >/dev/null 2>&1 ; then
+			/sbin/service $BLD_PRODUCT $action >/dev/null 2>&1
+
+		elif type invoke-rc.d >/dev/null 2>&1 ; then
+			invoke-rc.d --quiet $BLD_PRODUCT $action >/dev/null 2>&1
+
+		else
+			echo "Can't find tools to start/stop $BLD_NAME service"
+		fi
+		;;
+	esac
+}

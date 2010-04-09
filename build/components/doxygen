@@ -1,0 +1,14 @@
+#
+#	doxygen - Doxygen documentation generation tool
+#  
+defineComponent() {
+    local name path
+
+    name=doxygen
+    path=`probe --path "$1" --partial $name $name`
+    if [ "$path" = "" ] ; then
+        warnComponent $name
+        return
+	fi
+    configureComponent --path "$path" $name
+}

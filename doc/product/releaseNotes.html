@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <b>Release Notes</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2><a href="#releaseNotes">Release Notes</a>
+            <ul>
+                <li><a href="#requirements">System Requirements</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#releaseBuild">Release Build</a></li>
+                <li><a href="#hints">Helpful Hints</a></li>
+                <li><a href="#resolvedIssues">Resolved Issues</a></li>
+            </ul>
+<!-- BeginDsi "dsi/genSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../guide/appweb/overview.html">Appweb Overview</a></li>
+                <li><a href="../guide/appweb/features.html">Appweb Features</a></li>
+                <li><a href="../product/releaseNotes.html">Release Notes</a></li>
+                <li><a href="../product/changeLog.html">Change Log</a></li>
+                <li><a href="../product/roadmap.html">Roadmap</a></li>
+                <li><a href="../product/compatibility.html">Compatibility</a></li>
+                <li><a href="../licenses/index.html">Licensing</a></li>
+                <li><a href="../product/install/index.html">Installation Overview</a></li>
+                <li><a href="../guide/appweb/users/gettingStarted.html">Getting Started</a></li>
+                <li><a href="../guide/appweb/users/index.html">Users Guide</a></li>
+                <li><a href="../product/project.html">Project Resources</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div><a name="features" id="features"></a>
+        <div class="contentLeft">
+            <a name="releaseNotes" id="releaseNotes"></a>
+            <h1>Release Notes</h1>
+            <p>Welcome to the Embedthis Appweb&trade; installation release notes. This document provides
+            release-specific information for Appweb. This package contains a pre-built stand-alone (binary) web server
+            and the development libraries and headers needed to embed Appweb in a device or application.</p>
+            <h2 class="section">Licensing</h2>
+            <p>This software is copyrighted and distributed under license. It is available under a GPLv2 open source
+            license and an optional <a href="http://www.embedthis.com/licensing/index.html">commercial license</a>.
+            Please read LICENSE.TXT for details.</p>
+            <p>Appweb includes support for several external packages such as MatrixSSL, OpenSSL, and SQLite. These
+            packages have their own licenses. Make sure you check the packages license details to ensure you are
+            complying with their licenses.</p><a name="requirements" id="requirements"></a>
+            <h2 class="section">System Requirements</h2>
+            <p>Binary releases are supplied for the following operating systems.</p>
+            <ul>
+                <li>Linux (Fedora (x86 and x86_64), Ubuntu (x86 and x86_64)</li>
+                <li>Windows (XP, Vista, Windows-7)</li>
+                <li>MAC OS X (Tiger, Leopard)</li>
+            </ul>
+            <p>The following operating systems may be supported by recompiling Appweb from source.</p>
+            <ul>
+                <li>FreeBSD</li>
+                <li>Linux 2.4 and 2.6</li>
+                <li>VxWorks 5.4 and 6.X</li>
+                <li>Windows</li>
+            </ul>
+            <h2 class="section">Run-time System Requirements</h2>
+            <p>To install Appweb on a development system, your system will need at least the following:</p>
+            <ul>
+                <li>40 MB Disk</li>
+                <li>32 MB RAM</li>
+            </ul>
+            <p>To deploy Appweb in an embedded environment, you will need at least the following:</p>
+            <ul>
+                <li>800 KB Disk / ROM space</li>
+                <li>800 KB RAM</li>
+            </ul>
+            <p>To rebuild Appweb from source code, you will need at least</p>
+            <ul>
+                <li>50 MB disk space</li>
+            </ul>
+            <h2 class="section">Development Environment Hardware Platform Support</h2>
+            <p>If you wish to build Appweb from source code, you will need to use a C compiler and associated
+            development tools. Several development environments are supported. You may choose any of the following to
+            compile and build samples and source code.</p>
+            <ul>
+                <li>Linux GNU tools</li>
+                <li>Windows Visual Studio (Visual Studio 2008 and Visual Studio 2008 Express).</li>
+                <li>Windows XP with Cygwin UNIX emulation tools. See <a href=
+                "http://www.cygwin.com/">www.cygwin.com</a>.</li>
+                <li>WindRiver Tornado Development Tools.</li>
+            </ul><a name="releaseBuild" id="releaseBuild"></a> <a name="hints" id="hints"></a>
+            <h2 class="section">Helpful Hints</h2>
+            <h4>Debug Trace and Logging</h4>
+            <p>Appweb has a debug logging and trace facility that can help when debugging configuration issues or
+            developing your application code that uses Appweb. You can vary the level of logging via the <b>--log
+            logfile</b> command line switch for the <b>appweb</b> commands. The log command line switch has the
+            format:</p>
+            <blockquote>
+                <pre>
+appweb --log logFile:logLevel
+</pre>
+            </blockquote>
+            <p>The log level can be from 0 to 9, with 9 being the most verbose level.</p><a name="limitations" id=
+            "limitations"></a>
+            <h2 class="section">Limitations and Special Notes</h2><a name="resolvedIssues" id="resolvedIssues"></a>
+            <h3>Resolved Issues</h3>
+            <p>See the new features and fixes in the <a href="changeLog.html">Change Log</a> document.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

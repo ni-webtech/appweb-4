@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Installation</a> &gt; <b>Installing on Windows</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#exe">Installing the EXE Image</a></li>
+                <li><a href="#removing">Removing Appweb</a></li>
+                <li><a href="#silentInstallation">Silent Installation</a></li>
+                <li><a href="#running">Running Appweb</a></li>
+            </ul>
+<!-- BeginDsi "dsi/installSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../product/install/index.html">Installation Overview</a></li>
+                <li><a href="../../product/install/linux.html">Installing on Linux</a></li>
+                <li><a href="../../product/install/mac.html">Installing on Mac</a></li>
+                <li><a href="../../product/install/windows.html">Installing on Windows</a></li>
+                <li><a href="../../product/install/packages.html">Installing Packages</a></li>
+                <li><a href="../../guide/appweb/overview.html">Appweb Overview</a></li>
+                <li><a href="../../guide/appweb/features.html">Appweb Features</a></li>
+                <li><a href="../../product/releaseNotes.html">Release Notes</a></li>
+                <li><a href="../../product/changeLog.html">Change Log</a></li>
+                <li><a href="../../product/roadmap.html">Roadmap</a></li>
+                <li><a href="../../product/compatibility.html">Compatibility</a></li>
+                <li><a href="../../licenses/index.html">Licensing</a></li>
+
+                <li><a href="../../guide/appweb/users/gettingStarted.html">Getting Started</a></li>
+                <li><a href="../../guide/appweb/users/index.html">Users Guide</a></li>
+
+                <li><a href="../../guide/appweb/source/building.html">Building from Source</a></li>
+                <li><a href="../../guide/appweb/source/porting.html">Porting Guide</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Installing on Windows</h1>
+            <p>The Embedthis Appweb install package for Windows is an installation executable wrapped in a ZIP file
+            called:</p>
+            <pre>
+appweb-VERSION-BUILD-MS-WIN-i686.exe.zip
+</pre>
+            <p>The distribution image contains the binary distribution, documentation and development headers and
+            libraries in the one package. During installation you will have the option of installing the full package
+            or portions of the distribution.</p><a name="exe" id="exe"></a>
+            <h2 class="section">Installing the EXE Image</h2>
+            <ol>
+                <li>Login with administrator privileges.</li>
+                <li>Run winzip and extract the contents of the Zipped EXE install image to a folder of your
+                choosing.</li>
+                <li>Browse to the location holding the EXE install image and run it.</li>
+            </ol><a name="removing" id="removing"></a>
+            <h2 class="section">Removing Appweb</h2>
+            <ol>
+                <li>Login with administrator privileges.</li>
+                <li>Run the <b>Add / Remove Programs</b> applet from the <b>control panel</b>.</li>
+                <li>Select the <b>Embedthis Appweb</b> and choose remove.</li>
+            </ol><a name="silentInstallation" id="silentInstallation"></a>
+            <h2 class="section">Silent Installation</h2>
+            <p>If you need to do batch or unattended installations, you can install Appweb silently. Use the
+            <b>/silent</b> switch to suppress questions and <b>/verysilent</b> to suppress all visual
+            output.</p><a name="running" id="running"></a>
+            <h2 class="section">Running Appweb</h2>
+            <p>Appweb will start when the installation procedure completes and will launch your browser directed at the
+            Appweb local home page. Thereafter, Appweb will automatically start if the system is rebooted.</p>
+            <p>If you wish to manually stop Appweb, right click on the Appweb Monitor icon in the system tray (lower
+            left corner of the task bar) and select the <b>Stop Appweb</b> option.</p>
+            <p>To restart Appweb, select the <b>Start Appweb</b> option.</p>
+            <p>Alternatively, you can run appweb manually in a command window.:</p>
+            <pre>
+cd /etc/appweb
+appweb
+</pre>
+            <p>Appweb is configured by default to listen on port 7777. To test that it is serving pages, point your
+            browser at http://localhost:7777. To tailor the Embedthis Appweb configuration, including the default port,
+            you may wish to edit the <b>appweb.conf</b> configuration file.</p>
+            <p>To get all the options for Appweb, read the man page via:</p>
+            <pre>
+man appweb
+</pre>or get the command help via:
+            <pre>
+appweb --help
+</pre>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

@@ -1,0 +1,82 @@
+#!/bin/bash
+#
+#   config.VXWORKS -- Common build configuration for VxWorks
+#
+#   Read by product.config during configure.
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+###############################################################################
+
+. build/config/config.base
+
+#
+#   Determine the VxWorks CPU architecture
+#
+case $BLD_HOST_CPU in
+i386|i486)
+    BLD_BUILD_CPU_VX=386
+    ;;
+i586|i686|pentium)
+    BLD_BUILD_CPU_VX=pentium
+    ;;
+ppc*)
+    BLD_BUILD_CPU_VX=ppc
+    ;;
+sparc*)
+    BLD_BUILD_CPU_VX=sparc
+    ;;
+xscale*)
+    BLD_BUILD_CPU_VX=arm
+    ;;
+arm*)
+    BLD_BUILD_CPU_VX=arm
+    ;;
+mips)
+    BLD_BUILD_CPU_VX=mips
+    ;;
+86k)
+    BLD_BUILD_CPU_VX=68k
+    ;;
+sh)
+    BLD_BUILD_CPU_VX=sh
+    ;;
+simsparc)
+    BLD_BUILD_CPU_VX=simsparc
+    ;;
+sim*)
+    BLD_BUILD_CPU_VX=simpc
+    ;;
+*)
+    echo "Unknown CPU architecture for VxWorks " $BLD_HOST_CPU_ARCH
+    echo "It must be set to in conf/product.config"
+    exit 2
+    ;;
+esac
+
+#
+#   Tools
+#
+if [ "$BLD_CC_DIAB" != 1 ] ; then
+    eval BLD_${KIND}_AR=ar${BLD_BUILD_CPU_VX}
+    eval BLD_${KIND}_CC=cc${BLD_BUILD_CPU_VX}
+    eval BLD_${KIND}_LD=ld${BLD_BUILD_CPU_VX}
+else
+    eval BLD_${KIND}_AR=dar
+    eval BLD_${KIND}_CC=dcc
+    eval BLD_${KIND}_LD=dld
+fi
+eval BLD_${KIND}_TCLSH=tclsh
+eval BLD_${KIND}_MUNCH=munch.tcl
+eval BLD_${KIND}_NM=nm
+eval BLD_${KIND}_RANLIB=ranlib
+eval BLD_${KIND}_STRIP=strip
+
+#
+#   File extensions
+#
+eval BLD_${KIND}_ARCH=.a
+eval BLD_${KIND}_EXE=.out
+eval BLD_${KIND}_PIOBJ=.o
+eval BLD_${KIND}_SHLIB=.out
+eval BLD_${KIND}_SHOBJ=.out

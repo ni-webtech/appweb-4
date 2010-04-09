@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+#   Run a command with privilege
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+################################################################################
+
+if [ "HEADLESS" = 1 -o `id -u` = 0 -o "$OPENWRTVERSION" != "" ] ; then
+    sh -c "$*"
+
+else
+    if type sudo >/dev/null 2>&1 ; then
+        echo
+        PASS_PROMPT="Root privilege required, please enter the root password: "
+        sudo -S -p "$PASS_PROMPT" sh -c "$*"
+    else
+        sh -c "$*"
+    fi
+fi

@@ -1,0 +1,11 @@
+/*
+    Terminate unit tests
+ */
+
+pidfile = session["appwebPidFile"]
+if (pidfile && exists(pidfile)) {
+    path = Path(pidfile)
+    pid = path.readString()
+    kill(pid)
+    path.remove()
+}

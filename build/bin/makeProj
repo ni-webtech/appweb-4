@@ -1,0 +1,816 @@
+#!/bin/bash
+#
+#   makeProj -- Build Windows project files. Included by "bld"
+#
+#   Copyright (c) Embedthis LLC, 2003-2010. All Rights Reserved.
+#
+###############################################################################
+#
+#   Must exit if anything goes wrong
+#
+set -e 
+
+###############################################################################
+
+. ${BLD_TOP}/config.sh
+
+###############################################################################
+
+usage() {
+    cat <<!EOF
+makeProj: usage: makeProj [options] objects ....
+    Options:
+    --binDir path           Directory to find / store libraries and binaries
+    --debug                    
+    --dry-run               Trace commands but do not execute
+    --entry name            Shared library entry point
+    --executable name       Name of executable to build
+    --exeBaseDir name       Directory to hold the Debug and Release output dirs
+    --graphical             Create a windowed program instead of a console.
+    --headers               String containing header files for project
+    --headerList file       File with a list of the header files for project
+    --help                  Print usage information
+    --library name          Name of library to link
+    --libraryPath path      Path to search for the libraries
+    --libs libraries        Extra libraries to link with (add lib and .lib)
+    --objects "objects..."  String containing objects to link
+    --objectsDir path       Directory to find / store object
+    --objectList script     File containing list of objects to link
+    --postBuild file        Script containing post build commands
+    --preferShared          Link with shared libraries by preference
+    --preferStatic          Link with static libraries by preference
+    --quiet                 Run quietly without tracing actions to stdout
+    --resources name        Resource file (menus and icons for Windows)
+    --rpath path            Specify the executable run-time library search path
+    --shared                Make a shared library
+    --static                Make a static library
+    --sources               String containing source files for project
+    --sourceList file       File with a list of the source files for project
+    --smartLibs libraries   Use shared or static intelligently depending on
+                            --preferShared, --preferStatic and BLD_FEATURE_STATIC.
+    --syslibs libraries     Extra system libraries to link with 
+    --top dir               Nominate the top source directory
+    --version               Print the bld version
+
+    Environment variables used:
+        BLD_TOP             Top of the source tree
+        BLD_FEATURE_STATIC  Build static libraries where relevant.
+
+    Configuration files used:
+        config.sh
+!EOF
+    exit 255
+}
+
+###############################################################################
+#
+#   Append some text to the project file
+#
+
+output() {
+    echo -e "$*" >>$PROJECT_FILE
+}
+
+###############################################################################
+#
+#   Some shells don't have a standard getopts. Must supply our own.
+#
+#   Spec chars: ';' == no arg, ':' required arg, '.' optional arg
+#
+
+getoptex()
+{
+    let $# || return 1
+    local optlist="${1#;}"
+    let OPTIND || OPTIND=1
+    [ $OPTIND -lt $# ] || return 1
+    shift $OPTIND
+    if [ "$1" != "-" -a "$1" != "${1#-}" ]
+    then OPTIND=$[OPTIND+1]; if [ "$1" != "--" ]
+    then
+        local o
+        o="-${1#-$OPTOFS}"
+        for opt in ${optlist#;}
+        do
+            OPTOPT="${opt%[;.:]}"
+            unset OPTARG
+            local opttype="${opt##*[^;:.]}"
+            [ -z "$opttype" ] && opttype=";"
+            if [ ${#OPTOPT} -gt 1 ]
+            then # long-named option
+                case $o in
+                "--$OPTOPT")
+                    if [ "$opttype" != ":" ]; then return 0; fi
+                    OPTARG="$2"
+                    if [ "$OPTARG" != "${OPTARG#-}" ];
+                    then # error: must have an agrument
+                        let OPTERR && \
+                            echo "$0: error: $OPTOPT must have an argument" >&2
+                        OPTARG="$OPTOPT";
+                        OPTOPT="?"
+                        return 1;
+                    fi
+                    OPTIND=$[OPTIND+1] # skip option's argument
+                    return 0
+                ;;
+                "--$OPTOPT="*)
+                    if [ "$opttype" = ";" ];
+                    then    # error: must not have arguments
+                        let OPTERR && \
+                          echo "$0: error: $OPTOPT must not have arguments" >&2
+                        OPTARG="$OPTOPT"
+                        OPTOPT="?"
+                        return 1
+                    fi
+                    OPTARG=${o#"--$OPTOPT="}
+                    return 0
+                ;;
+                esac
+            else # short-named option
+                case "$o" in
+                    "-$OPTOPT")
+                        unset OPTOFS
+                        [ "$opttype" != ":" ] && return 0
+                        OPTARG="$2"
+                        if [ -z "$OPTARG" ]
+                        then
+                            echo "$0: error: -$OPTOPT must have an argument" >&2
+                            OPTARG="$OPTOPT"
+                            OPTOPT="?"
+                            return 1
+                        fi
+                        OPTIND=$[OPTIND+1] # skip option's argument
+                        return 0
+                    ;;
+                    "-$OPTOPT"*)
+                        if [ $opttype = ";" ]
+                        then 
+                            # option with no argument is in a chain of options
+                            # move to the next option in the chain
+                            # the chain still has other options
+                            OPTOFS="$OPTOFS?" 
+                            OPTIND=$[OPTIND-1] 
+                            return 0
+                        else
+                            unset OPTOFS
+                            OPTARG="${o#-$OPTOPT}"
+                            return 0
+                        fi
+                    ;;
+                esac
+            fi
+        done
+        echo "$0: error: invalid option: $o"
+    fi; fi
+    OPTOPT="?"
+    unset OPTARG
+    return 1
+}
+
+###############################################################################
+#
+#   Parse args and setup
+#
+
+parseArgs() {
+
+    if [ "$EXECUTABLE" ] 
+    then
+        PROJECT=${EXECUTABLE%.exe}
+    else
+        PROJECT=${LIBRARY}
+    fi
+    PROJECT=`basename ${PROJECT}`
+    PROJECT_FILE=${PROJECT}.dsp
+    echo -e "    # Creating $PROJECT_FILE ...\n"
+
+    if [ "${OBJ_FILE_LIST}" ]
+    then
+        for f in ${OBJ_FILE_LIST}
+        do
+            OBJECTS="$OBJECTS `cat ${f}`"
+        done
+    fi
+
+    if [ "${SOURCE_FILE_LIST}" ]
+    then
+        for fileList in ${SOURCE_FILE_LIST}
+        do
+            for f in `cat $fileList`
+            do
+                SOURCES="$SOURCES ${f}"
+            done
+        done
+    fi
+
+    if [ "${HEADER_FILE_LIST}" ]
+    then
+        for fileList in ${HEADER_FILE_LIST}
+        do
+            for f in `cat $fileList`
+            do
+                HEADERS="$HEADERS ${f}"
+            done
+        done
+    fi
+
+    if [ "${RESOURCES}" ]
+    then
+        RESOURCES_OBJ=`echo $RESOURCES | sed s/\.rc//`.res
+    fi
+
+    paths=
+    for p in ${LIBRARY_PATHS} 
+    do
+        paths="${paths} -libpath:\"${p}\""
+    done
+    LIBRARY_PATHS=${paths}
+
+    LIB_LIST=
+    for l in ${SMART_LIBS} 
+    do
+        if [ "$BLD_FEATURE_STATIC" = 1 -a $PREFER_STATIC = 1 ]
+        then
+            lib=`echo lib${l}Static${BLD_ARCH} | \
+                sed 's/StaticStatic/Static/'`
+            LIB_LIST="${LIB_LIST} ${lib}"
+        else
+            LIB_LIST="${LIB_LIST} lib${l}${BLD_SHLIB}"
+        fi
+    done
+
+    for l in ${LIBS}
+    do
+        LIB_LIST="${LIB_LIST} lib${l}${BLD_SHLIB}"
+    done
+
+    for l in ${SYSLIBS}
+    do
+        LIB_LIST="${LIB_LIST} ${l}"
+    done
+
+    if [ "$LIBRARY" != "" ]
+    then
+        if [ "$BLD_FEATURE_STATIC" = "0" -a "$ENTRY" = "" ]
+        then
+            ENTRY="_DllMainCRTStartup@12"
+        fi
+        ARCHIVE=${LIBRARY}Static${BLD_ARCH}
+        if [ $MAKE_SHARED = 1 ]
+        then
+            SHARED_LIBRARY=${LIBRARY}.dll
+        fi
+    fi
+    if [ "$EXECUTABLE" ]
+    then
+        if [ "$GRAPHICAL" ]
+        then 
+            ENTRY=WinMainCRTStartup
+            SUBSYSTEM="WINDOWS"
+        else 
+            ENTRY=mainCRTStartup
+            SUBSYSTEM="CONSOLE"
+        fi
+    fi
+
+    if [ "$EXECUTABLE" ]
+    then 
+        EXE_FILENAME=$EXECUTABLE
+        if [ "$GRAPHICAL" ]
+        then
+            MS_TARGET="# TARGTYPE \"Win32 (x86) Application\" 0x0101"
+            MS_TYPE="Application"
+        else 
+            MS_TARGET="# TARGTYPE \"Win32 (x86) Console Application\" 0x0103"
+            MS_TYPE="Console Application"
+        fi
+        DLL_SWITCH=
+    else
+        #
+        #   Library
+        #
+        if [ $MAKE_STATIC = 1 ]
+        then
+            MS_TARGET="# TARGTYPE \"Win32 (x86) Static Library\" 0x0102"
+            MS_TYPE="Static Library"
+        else
+            MS_TARGET="# TARGTYPE \"Win32 (x86) Dynamic-Link Library\" 0x0102"
+            MS_TYPE="Dynamic-Link Library"
+        fi
+        DLL_SWITCH=-dll
+    fi
+
+    if [ "$SUBSYSTEM" ]
+    then 
+        SUB=-subsystem:${SUBSYSTEM}
+    fi
+
+}
+
+###############################################################################
+
+outputHeader() {
+    #
+    #   Output standard header
+    #
+    cat >$PROJECT_FILE <<!EOF0
+# Microsoft Developer Studio Project File - Name="${PROJECT}" - Package Owner=<4>
+# Microsoft Developer Studio Generated Build File, Format Version 6.00
+# ** DO NOT EDIT **
+
+${MS_TARGET}
+
+CFG=${PROJECT} - Win32 Debug
+!MESSAGE This is not a valid makefile. To build this project using NMAKE,
+!MESSAGE use the Export Makefile command and run
+!MESSAGE 
+!MESSAGE NMAKE /f "${PROJECT}.mak".
+!MESSAGE 
+!MESSAGE You can specify a configuration when running NMAKE
+!MESSAGE by defining the macro CFG on the command line. For example:
+!MESSAGE 
+!MESSAGE NMAKE /f "${PROJECT}.mak" CFG="${PROJECT}.mak - Win32"
+!MESSAGE 
+!MESSAGE Possible choices for configuration are:
+!MESSAGE 
+!MESSAGE "${PROJECT} - Win32 Release" (based on "Win32 (x86) ${MS_TYPE}"
+!MESSAGE "${PROJECT} - Win32 Debug" (based on "Win32 (x86) ${MS_TYPE}"
+!MESSAGE 
+
+# Begin Project
+# PROP AllowPerConfigDependencies 0
+# PROP Scc_ProjName ""
+# PROP Scc_LocalPath ""
+CPP=cl.exe
+RSC=rc.exe
+
+!EOF0
+}
+
+###############################################################################
+
+outputPerConfig() {
+
+    #
+    #   Reset BLD_OBJ_DIR and BLD_BIN_DIR for the current BLD_TYPE
+    #   This trims the last directory portion then re-adds BLD_TYPE
+    #
+    BLD_TYPE=$1
+
+    if [ "$EXE_BASE_DIR" ]
+    then
+        BLD_BIN_DIR=${EXE_BASE_DIR}/${BLD_TYPE}
+        WIN_BIN_DIR=${BLD_BIN_DIR//\//\\}
+    else
+        BLD_BIN_DIR=${BLD_BIN_DIR%/*}/${BLD_TYPE}
+        WIN_BIN_DIR=${BLD_BIN_DIR//\//\\}
+    fi
+
+    
+    BLD_OBJ_DIR=${BLD_OBJ_DIR%/*}/${BLD_TYPE}
+    BLD_EXP_OBJ_DIR=${BLD_EXP_OBJ_DIR%/*}/${BLD_TYPE}
+    WIN_OBJ_DIR=${BLD_OBJ_DIR//\//\\}
+
+    if [ "$BLD_TYPE" = "Debug" ]
+    then
+        DEBUG_LIBRARIES=1
+        DEBUG_OPT=$_LD_OPT_DEBUG
+    else
+        DEBUG_LIBRARIES=0
+        DEBUG_OPT=$_LD_OPT_RELEASE
+    fi
+
+    #
+    #   Expand object variables. Need to temporarily bend BLD_OBJ_DIR
+    #
+    OBJS=`eval echo ${OBJECTS}`
+
+    #
+    #   Get the list of objects to link with. Include all SOURCES and 
+    #   objects (OBJS) that are not already in SOURCES.
+    #
+    for f in ${SOURCES}
+    do
+        f=${f##*/}                  # basename
+        f=${f%.*}                   # strip extension
+        eval _${f}=1
+    done
+    objs=
+    for f in ${OBJS}
+    do
+        b=${f##*/}                  # basename trick
+        eval v=$`echo _${b%.*}`     # strip extension and see if set
+        [ "$v" != 1 ] && objs="${objs} ${f}"
+    done
+    LINK_OBJS=${objs}
+
+    #
+    #   Add SOURCES to OBJS (if not already defined). Used for dumpext & making
+    #   DLLs.
+    #
+    for f in ${OBJS}
+    do
+        f=${f##*/}                      # basename
+        f=${f%.*}                       # strip extension
+        eval __${f}=1
+    done
+    objs=
+    for f in ${SOURCES}
+    do
+        f=${f##*/}                      # basename trick
+        eval v=$`echo __${f%.*}`        # strip extension and see if set
+        [ "$v" != 1 ] && objs="${objs} ${BLD_OBJ_DIR}/${f%.*}${BLD_OBJ}"
+    done
+    OBJS="$OBJS $objs"
+
+    cat >>$PROJECT_FILE <<!EOF1
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries ${DEBUG_LIBRARIES}
+# PROP Output_Dir "${WIN_BIN_DIR}"
+# PROP Intermediate_Dir "${WIN_OBJ_DIR}"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+
+# ADD BASE RSC /l 0x409
+# ADD RSC /l 0x409
+
+# ADD BASE CPP 
+!EOF1
+
+    if [ "$BLD_TYPE" = "Debug" ]
+    then
+        echo "# ADD CPP ${CPP_FLAGS} ${_CC_OPT_DEBUG} /c" >>$PROJECT_FILE
+    else
+        echo "# ADD CPP ${CPP_FLAGS} ${_CC_OPT_RELEASE} /c" >>$PROJECT_FILE
+    fi
+
+    DEF_FILE=-def:${BLD_OBJ_DIR}/${PROJECT}.def
+
+#   if [ "${RESOURCES}" ]
+#   then
+#       RES_SPEC=${BLD_OBJ_DIR}/${RESOURCES_OBJ}
+#   fi
+
+    if [ "$EXECUTABLE" ]
+    then
+        cat >>$PROJECT_FILE <<!EOF2
+LINK32=link.exe
+# ADD BASE LINK32 
+# ADD LINK32 -out:${WIN_BIN_DIR}\\${EXE_FILENAME} ${SUB} -entry:${ENTRY} ${MAKE_LDFLAGS} ${BLD_LDFLAGS} ${_LDFLAGS} ${DEBUG_OPT} ${LINK_OBJS} ${LIBRARY_PATHS} -libpath:"${BLD_TOP}/bin/${BLD_TYPE}" ${LIB_LIST} ${_SHARED_LIBS}
+
+!EOF2
+        if [ "$POST_BUILD_SCRIPT" -a -f $POST_BUILD_SCRIPT ]
+        then
+            echo "# Begin Special Build Tool" >>$PROJECT_FILE
+            echo "PostBuild_Desc=Running $POST_BUILD_SCRIPT" >>$PROJECT_FILE
+            echo "PostBuild_Cmds=$POST_BUILD_SCRIPT ${WIN_BIN_DIR}\\${EXE_FILENAME}" >>$PROJECT_FILE
+            echo "# End Special Build Tool" >>$PROJECT_FILE
+        fi
+
+    fi
+
+    if [ "$LIBRARY" ]
+    then
+        #
+        #   If building both a shared and static library, the default target is
+        #   to build the static library and we build the shared library via
+        #   post build commands (see below).
+        #
+        if [ $MAKE_STATIC = 1 ]
+        then
+            cat >>$PROJECT_FILE <<!EOF3
+LIB32=link.exe -lib
+# ADD BASE LIB32 
+# ADD LIB32 -nologo -out:${WIN_BIN_DIR}\\${ARCHIVE}
+
+!EOF3
+        else
+            cat >>$PROJECT_FILE <<!EOF3_A
+LINK32=link.exe
+# ADD BASE LINK32 
+# ADD LINK32 -out:${WIN_BIN_DIR}\\${SHARED_LIBRARY} ${DLL_SWITCH} ${SUB} -entry:${ENTRY} ${DEF_FILE} ${MAKE_LDFLAGS} ${BLD_LDFLAGS} ${_LDFLAGS} ${DEBUG_OPT} ${LINK_OBJS} ${LIBRARY_PATHS} -libpath:"${BLD_TOP}/bin/${BLD_TYPE}" ${LIB_LIST} ${_SHARED_LIBS}
+
+!EOF3_A
+        fi
+
+        if [ $MAKE_SHARED = 1 -o -f "$POST_BUILD_SCRIPT" ]
+        then
+            echo "# Begin Special Build Tool" >>$PROJECT_FILE
+            if [ "$SHARED_LIBRARY" ]
+            then
+                echo "PreLink_Desc=Export symbols for ${WIN_BIN_DIR}\\${SHARED_LIBRARY}" >>$PROJECT_FILE
+                echo -n "PreLink_Cmds=${WIN_TOOLS_DIR}\\dumpext -o ${BLD_OBJ_DIR}/${PROJECT}.def ${PROJECT}.dll ${OBJS}" >>$PROJECT_FILE
+
+                #
+                #   Build the shared library if also building a static library
+                #
+                if [ $MAKE_STATIC = 1 ]
+                then
+                    #
+                    #   WARNING: this must be a leading tab on this echo as a 
+                    #   command delimiter before the link command.
+                    #
+                    echo -n "   ${BLD_LD} \"-out:${BLD_BIN_DIR}/${SHARED_LIBRARY}\" ${_LD_OPT} -entry:${ENTRY} ${DEF_FILE} ${MAKE_LDFLAGS} ${BLD_LDFLAGS} ${_LDFLAGS} ${DEBUG_OPT} ${LIBRARY_PATHS} \"-libpath:${BLD_TOP}/bin/${BLD_TYPE}\" ${OBJS} ${LIB_LIST} ${_SHARED_LIBS}" >>$PROJECT_FILE
+                fi
+                echo >>$PROJECT_FILE
+            fi
+
+            if [ "$POST_BUILD_SCRIPT" -a -f $POST_BUILD_SCRIPT ]
+            then
+                echo "PostBuild_Desc=Running $POST_BUILD_SCRIPT" >>$PROJECT_FILE
+                echo "PostBuild_Cmds=$POST_BUILD_SCRIPT ${WIN_BIN_DIR}\\${LIBRARY}" >>$PROJECT_FILE
+            fi
+
+            echo "# End Special Build Tool" >>$PROJECT_FILE
+        fi
+    fi
+}
+
+###############################################################################
+
+outputSources() {
+    cat >>$PROJECT_FILE <<!EOF4
+
+# Begin Target
+
+# Name "${PROJECT} - Win32 Release"
+# Name "${PROJECT} - Win32 Debug"
+# Begin Group "Source Files"
+
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+
+!EOF4
+
+    #
+    #   Output the source files. Sources can contain objects or source files.
+    #
+    for F in ${SOURCES}
+    do
+        file=`eval echo ${F}`
+        file=${file//\//\\}
+        cat >>$PROJECT_FILE <<!EOF5
+# Begin Source File
+SOURCE=${file}
+# End Source File
+
+!EOF5
+    done
+
+    #
+    #   Output all the header files
+    #
+    cat >>$PROJECT_FILE <<!EOF6
+# End Group
+
+# Begin Group "Header Files"
+# PROP Default_Filter "h;"
+!EOF6
+
+    for F in ${HEADERS}
+    do
+        F=${F//\//\\}
+        cat >>$PROJECT_FILE <<!EOF7
+# Begin Source File
+SOURCE=.\\${F}
+# End Source File
+
+!EOF7
+    done
+
+
+    echo "# End Group" >>$PROJECT_FILE 
+
+    if [ "$RESOURCES" != "" ]
+    then
+        cat >>$PROJECT_FILE <<!EOF9
+# Begin Group "Resource Files"
+# PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+
+# Begin Source File
+SOURCE=.\\${RESOURCES}
+# End Source File
+
+# End Group
+!EOF9
+    fi
+
+    cat >>$PROJECT_FILE <<!EOF10
+# End Target
+# End Project
+!EOF10
+
+}
+
+###############################################################################
+#
+#   Main 
+#
+if [ "${EXPORT_OBJECTS}" = 1 ]
+then
+    BLD_OBJ_DIR=${BLD_EXP_OBJ_DIR}
+else
+    BLD_OBJ_DIR=.
+fi
+
+VERSION=1.0
+ARCHIVE=
+CPP_FLAGS="${DEBUG} ${_WARNING} ${MAKE_CFLAGS} ${_CFLAGS} ${MAKE_IFLAGS} ${_IFLAGS}"
+DEBUG=0
+DO=
+ENTRY=
+EXE_FILENAME=
+EXECUTABLE=
+GRAPHICAL=
+HEADERS=
+HEADER_FILE_LIST=
+LIBRARY=
+LIBRARY_PATHS=
+LIBS=
+MAKE_SHARED=0
+MAKE_STATIC=0
+OBJ_FILE_LIST=
+OBJECTS=
+PREFER_SHARED=0
+PREFER_STATIC=0
+RESOURCES=
+RPATH=
+SHARED_LIBRARY=
+SMART_LIBS=
+SOURCES=
+SOURCE_FILE_LIST=
+SUBSYSTEM=
+SYSLIBS=
+WIN_TOP_DIR=${BLD_TOP//\//\\}
+WIN_BIN_DIR=${BLD_BIN_DIR//\//\\}
+WIN_OBJ_DIR=${BLD_OBJ_DIR//\//\\}
+WIN_TOOLS_DIR=${BLD_TOOLS_DIR//\//\\}
+
+echo
+echo "    makeProj $*"
+
+while getoptex "\
+    binDir: \
+    debug \
+    dry-run \
+    entry: \
+    executable: \
+    exeBaseDir: \
+    graphical \
+    headers: \
+    headerList: \
+    help \
+    libs: \
+    library: \
+    libraryPath: \
+    objects: \
+    objectList: \
+    objectsDir: \
+    postBuild: \
+    preferShared \
+    preferStatic \
+    quiet \
+    resources: \
+    rpath: \
+    shared \
+    static \
+    sources: \
+    sourceList: \
+    smartLibs: \
+    syslibs: \
+    top: \
+    version"  \
+"$@"
+do
+    case "$OPTOPT" in 
+    binDir)
+        BLD_BIN_DIR="${OPTARG}"
+        ;;
+    debug)
+        # Not yet implemented
+        DEBUG=1
+        ;;
+    dry-run)
+        DO=:
+        ;;
+    entry)
+        ENTRY="$OPTARG"
+        ;;
+    executable)
+        EXECUTABLE="$OPTARG"
+        ;;
+    exeBaseDir)
+        EXE_BASE_DIR="$OPTARG"
+        ;;
+    graphical)
+        GRAPHICAL=1
+        ;;
+    headers)
+        HEADERS="$HEADERS ${OPTARG}"
+        ;;
+    headerList)
+        HEADER_FILE_LIST="$HEADER_FILE_LIST ${OPTARG}"
+        ;;
+    help)
+        usage
+        ;;
+    library)
+        LIBRARY="$OPTARG"
+        ;;
+    libraryPath)
+        LIBRARY_PATHS="$LIBRARY_PATHS ${OPTARG}"
+        ;;
+    libs)
+        LIBS="$LIBS $OPTARG"
+        ;;
+    objects)
+        OBJECTS="$OBJECTS ${OPTARG}"
+        ;;
+    objectsDir)
+        BLD_OBJ_DIR="${OPTARG}"
+        ;;
+    objectList)
+        OBJ_FILE_LIST="$OBJ_FILE_LIST ${OPTARG}"
+        ;;
+    postBuild)
+        POST_BUILD_SCRIPT=${OPTARG};
+        ;;
+    preferShared)
+        PREFER_SHARED=1
+        ;;
+    preferStatic)
+        PREFER_STATIC=1
+        ;;
+    quiet)
+        ;;
+    resources)
+        RESOURCES="$OPTARG"
+        ;;
+    rpath)
+        RPATH="$OPTARG"
+        ;;
+    shared)
+        MAKE_SHARED=1
+        ;;
+    smartLibs)
+        SMART_LIBS="$SMART_LIBS $OPTARG"
+        ;;
+    static)
+        MAKE_STATIC=1
+        ;;
+    sources)
+        SOURCES="$SOURCES ${OPTARG}"
+        ;;
+    sourceList)
+        SOURCE_FILE_LIST="$SOURCE_FILE_LIST $OPTARG"
+        ;;
+    syslibs)
+        SYSLIBS="$SYSLIBS $OPTARG"
+        ;;
+    top)
+        old=$BLD_TOP
+        BLD_TOP="$OPTARG"
+        . ${old}/config.sh
+        ;;
+    version)
+        echo $VERSION
+        exit 0
+        ;;
+    *)  echo "bld: bad option: $OPTOPT"
+        exit 2
+        ;;
+    esac
+done
+
+shift $[OPTIND-1]
+OBJECTS="$OBJECTS $*"
+
+if [ "$EXECUTABLE" -a "$LIBRARY" ]
+then
+    echo "Can't specify both a library and an executable to be built"
+    exit 255
+fi
+
+if [ "$LIBRARY" -a $MAKE_STATIC = 0 -a $MAKE_SHARED = 0 ]
+then
+    echo "Must specify either --static or --shared or both switches".
+    exit 255
+fi
+
+if [ $BLD_FEATURE_STATIC = 1 -a $PREFER_SHARED = 1 ]
+then
+    PREFER_STATIC=1
+fi
+
+parseArgs
+outputHeader
+
+for config in Release Debug
+do
+    output '!IF  "$(CFG)" ==' "\"${PROJECT} - Win32 ${config}\"" '\n'
+    outputPerConfig $config
+    output '\n!ENDIF\n'
+done
+
+outputSources
+
+unix2dos -D $PROJECT_FILE 2>/dev/null

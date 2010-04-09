@@ -1,0 +1,24 @@
+#
+#	post.files - Complete install/uninstall
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+
+if [ $TASK = Install ] ; then
+    configureProduct configure
+    if [ "$ORIGINAL_ROOT_DIR" = "" ] ; then
+        if [ "$BLD_FEATURE_RUN_AS_SERVICE" = "1" -a $user = 0 ] ; then
+            configureProduct --quiet stop
+            configureProduct install
+            configureProduct start
+        fi
+    else
+        [ "$QUIET" = "" ] && echo -e "#\n#  ${BLD_NAME} is ready for deployment at $ROOT_DIR"
+    fi
+    if [ "$LAUNCH_BROWSER" = 1 -a "$DRY_RUN" != 1 ] ; then
+        launchBrowser
+    fi
+
+elif [ $TASK = Remove ] ; then
+    ${RM} -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
+fi

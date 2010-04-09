@@ -1,0 +1,607 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class ByteArray</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>ByteArray</h1>
+<div class='classBlock'>
+<table class='classHead' summary='ByteArray'>
+   <tr><td><strong>Module</strong></td><td>ejs</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>intrinsic</td></tr>
+   <tr><td><strong>Definition</strong></td><td>final  class ByteArray</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>ByteArray <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>ByteArrays provide a growable, integer indexed, in-memory store for bytes.</p>
+
+<p class='classDescription'>ByteArrays are a powerful data  type that can be used as a simple array to store and encode data as bytes or it can be used as a Stream  implementing the Stream interface. <br/><br/> When used as a simple byte array, the ByteArray class offers a low level set of methods to insert and  extract bytes. The index operator [] can be used to access individual bytes and the copyIn and copyOut methods  can be used to get and put blocks of data. In this mode, the read and write position properties are ignored.  Accesses to the byte array are from index zero up to the size defined by the length property. When constructed,  the ByteArray can be designated as growable, in which case the initial size will grow as required to accomodate  data and the length property will be updated accordingly. <br/><br/> When used as a Stream, the byte array offers various read and write methods which store data at the location  specified by the write position property and they read data from the read position. The available method  indicates how much data is available between the read and write position pointers. The flush method will  reset the pointers to the start of the array. The length property is unchanged in behavior from when used as  a simple byte array and it specifies the overall storage capacity of the byte array. As numeric values are  read or written, they will be encoded according to the value of the endian property which can be set to  either LittleEndian or BigEndian. When used with for/in, ByteArrays will iterate or enumerate over the  available data between the read and write pointers. <br/><br/> In Stream mode ByteArrays can be configured with input and output callbacks to provide or consume data to other  streams or components. These callbacks will automatically be invoked as required when the various read/write  methods are called.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>public static const </td><td>BigEndian</td><td><a href='intrinsic-Number.html'>Number</a></td><td>&nbsp;</td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>LittleEndian</td><td><a href='intrinsic-Number.html'>Number</a></td><td>Numeric byte order constants used for the endian property. </td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>ByteArray Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#available'><b>available</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the number of bytes that are currently available for reading.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#ByteArray'><b>ByteArray</b></a>(size: <a href='intrinsic-Number.html'>Number</a>, growable: <a href='intrinsic-Boolean.html'>Boolean</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a new array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#close'><b>close</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Close the byte array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#compact'><b>compact</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Compact available data down and adjust the read/write positions accordingly.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#copyIn'><b>copyIn</b></a>(destOffset: <a href='intrinsic-Number.html'>Number</a>, src: <a href='intrinsic-ByteArray.html'>ByteArray</a>, srcOffset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Copy data into the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#copyOut'><b>copyOut</b></a>(srcOffset: <a href='intrinsic-Number.html'>Number</a>, dest: <a href='intrinsic-ByteArray.html'>ByteArray</a>, destOffset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Copy data from the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#endian'><b>endian</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the system is using little endian byte ordering.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-endian'><b>endian</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the system encoding to little or big endian.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#flush'><b>flush</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Flush the the byte array and reset the read and write position pointers.</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator override </td><td><a href='#get'><b>get</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get an iterator for this array to be used by "for (v in array)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator override </td><td><a href='#getValues'><b>getValues</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get an iterator for this array to be used by "for each (v in array)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-input'><b>input</b></a>(value: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Input callback function when read data is required.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#input'><b>input</b></a>(): <a href='intrinsic-Function.html'>Function</a></tr>   <tr class='apiDef'><td class='apiType'>public override get </td><td><a href='#length'><b>length</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the length of an array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#output'><b>output</b></a>(): <a href='intrinsic-Function.html'>Function</a></tr>   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-output'><b>output</b></a>(callback: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Define an output function to process (output) data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#read'><b>read</b></a>(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read data from the array into another byte array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readBoolean'><b>readBoolean</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a boolean from the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readByte'><b>readByte</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a byte from the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readDate'><b>readDate</b></a>(): <a href='intrinsic-Date.html'>Date</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a date from the array or a premature end of file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readDouble'><b>readDouble</b></a>(): <a href='intrinsic-Date.html'>Date</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a double from the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readInteger'><b>readInteger</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read an 32-bit integer from the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readLong'><b>readLong</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a 64-bit long from the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-readPosition'><b>readPosition</b></a>(position: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the current read position offset.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#readPosition'><b>readPosition</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the current read position offset.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readShort'><b>readShort</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a 16-bit short integer from the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readString'><b>readString</b></a>(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a data from the array as a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#reset'><b>reset</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Reset the read and write position pointers if there is no available data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#room'><b>room</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the number of data bytes that the array can store from the write position till the end of the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#skip'><b>skip</b></a>(n: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>public override </td><td><a href='#toString'><b>toString</b></a>(locale: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convert the data in the byte array between the read and write positions to a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#write'><b>write</b></a>(data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write data to the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#writeByte'><b>writeByte</b></a>(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write a byte to the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#writeDouble'><b>writeDouble</b></a>(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write a double to the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#writeInteger'><b>writeInteger</b></a>(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write a 32-bit integer to the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#writeLong'><b>writeLong</b></a>(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write a 64 bit long integer to the array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#writePosition'><b>writePosition</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the current write position offset.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-writePosition'><b>writePosition</b></a>(position: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the current write position offset.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#writeShort'><b>writeShort</b></a>(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write a short to the array.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='available'></a>
+<div class='api'>
+<div class='apiSig'>get  public available(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the number of bytes that are currently available for reading.</p>
+<dl><dt>Description</dt><dd>This consists of the bytes available from the current read position up to the current write position.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The number of available bytes of data.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='ByteArray'></a>
+<div class='api'>
+<div class='apiSig'> ByteArray(size: <a href='intrinsic-Number.html'>Number</a>, growable: <a href='intrinsic-Boolean.html'>Boolean</a>)
+</div>
+<div class='apiDetail'>
+<p>Create a new array.</p>
+<dl><dt>Description</dt><dd>This will set the default encoding.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>size: <a href='intrinsic-Number.html'>Number</a> </td><td>The initial size of the byte array. If not supplied a system default buffer size will be used. </td></tr><tr><td class='param'>growable: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Set to true to automatically grow the array as required to fit written data. If growable  is false, then some writes may return "short". ie. not be able to accomodate all written data.  [default: false]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='close'></a>
+<div class='api'>
+<div class='apiSig'> public close(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Close the byte array.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, then write all pending data  [default: false]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='compact'></a>
+<div class='api'>
+<div class='apiSig'> public compact(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Compact available data down and adjust the read/write positions accordingly.</p>
+<dl><dt>Description</dt><dd>This moves available room to the end of the byte array.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='copyIn'></a>
+<div class='api'>
+<div class='apiSig'> public copyIn(destOffset: <a href='intrinsic-Number.html'>Number</a>, src: <a href='intrinsic-ByteArray.html'>ByteArray</a>, srcOffset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Copy data into the array.</p>
+<dl><dt>Description</dt><dd>Data is written at the $destOffset index. This call does not update the  read and write positions.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>destOffset: <a href='intrinsic-Number.html'>Number</a> </td><td>Index in the destination byte array to copy the data to </td></tr><tr><td class='param'>src: <a href='intrinsic-ByteArray.html'>ByteArray</a> </td><td>Byte array containing the data elements to copy </td></tr><tr><td class='param'>srcOffset: <a href='intrinsic-Number.html'>Number</a> </td><td>Location in the source buffer from which to copy the data. Defaults to the start. </td></tr><tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to copy. Set to -1 to read all available data. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The number of bytes written into the array.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='copyOut'></a>
+<div class='api'>
+<div class='apiSig'> public copyOut(srcOffset: <a href='intrinsic-Number.html'>Number</a>, dest: <a href='intrinsic-ByteArray.html'>ByteArray</a>, destOffset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Copy data from the array.</p>
+<dl><dt>Description</dt><dd>Data is copied from the $srcOffset pointer. This call does not update the  read and write positions.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>dest: <a href='intrinsic-ByteArray.html'>ByteArray</a> </td><td>Destination byte array </td></tr><tr><td class='param'>destOffset: <a href='intrinsic-Number.html'>Number</a> </td><td>Location in the destination array to copy the data. Defaults to the start. </td></tr><tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to read. Set to -1 to read all available data. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The count of bytes read. Returns 0 on end of file.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='endian'></a>
+<div class='api'>
+<div class='apiSig'>get  public endian(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the system is using little endian byte ordering.</p>
+<dl><dt>Returns</dt>
+<dd>An endian encoding constant. Either LittleEndian or BigEndian.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-endian'></a>
+<div class='api'>
+<div class='apiSig'>set  public endian(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the system encoding to little or big endian.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>value: <a href='intrinsic-Number.html'>Number</a> </td><td>Set to true for little endian encoding or false for big endian. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='flush'></a>
+<div class='api'>
+<div class='apiSig'> public flush(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Flush the the byte array and reset the read and write position pointers.</p>
+<dl><dt>Description</dt><dd>This may invoke the output callback to send the data if the output callback is defined.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td> [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='get'></a>
+<div class='api'>
+<div class='apiSig'>override  iterator get(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get an iterator for this array to be used by "for (v in array)".</p>
+<dl><dt>Description</dt><dd>This will return array indicies for  read data in the array.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Follow the prototype chain. Only implemented in ECMA compliance mode..  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An iterator object.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='getValues'></a>
+<div class='api'>
+<div class='apiSig'>override  iterator getValues(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get an iterator for this array to be used by "for each (v in array)".</p>
+<dl><dt>Description</dt><dd>This will return read data in the array.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Follow the prototype chain. Only implemented in ECMA compliance mode..  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An iterator object.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-input'></a>
+<div class='api'>
+<div class='apiSig'>set  public input(value: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Input callback function when read data is required.</p>
+<dl><dt>Description</dt><dd>The input callback should write to the supplied buffer.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='input'></a>
+<div class='api'>
+<div class='apiSig'>get  public input(): <a href='intrinsic-Function.html'>Function</a>
+</div>
+</div>
+<hr />
+<a name='length'></a>
+<div class='api'>
+<div class='apiSig'>override get  public length(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the length of an array.</p>
+<dl><dt>Description</dt><dd>This is not the amount of read or write data, but is the size of the total  array storage.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The size of the byte array.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='output'></a>
+<div class='api'>
+<div class='apiSig'>get  public output(): <a href='intrinsic-Function.html'>Function</a>
+</div>
+</div>
+<hr />
+<a name='set-output'></a>
+<div class='api'>
+<div class='apiSig'>set  public output(callback: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Define an output function to process (output) data.</p>
+<dl><dt>Description</dt><dd>The output callback should read from the supplied buffer.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>callback: <a href='intrinsic-Function.html'>Function</a> </td><td>Function to invoke when the byte array is full or flush() is called. function outputCallback(buffer: ByteArray): Number </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='read'></a>
+<div class='api'>
+<div class='apiSig'> public read(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read data from the array into another byte array.</p>
+<dl><dt>Description</dt><dd>Data is read from the current read $position pointer toward the current write position. This byte array's read position is updated. If offset is < 0, then  data is copied to the destination buffer's write position and the destination buffer's write position  is also updated. If the offset is >= 0, the read and write positions of the destination buffer are updated.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a> </td><td>Destination byte array </td></tr><tr><td class='param'>offset: <a href='intrinsic-Number.html'>Number</a> </td><td>Location in the destination buffer to copy the data. If the offset is < 0, then the write  position is used and will be updated with the number of bytes read from the buffer. </td></tr><tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to read. Set to -1 to read all available data that will fit into the  destination buffer. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The count of bytes read. Returns 0 on end of file.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readBoolean'></a>
+<div class='api'>
+<div class='apiSig'> public readBoolean(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Read a boolean from the array.</p>
+<dl><dt>Description</dt><dd>Data is read from the current read $position pointer.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A boolean.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs or a premature end of file. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readByte'></a>
+<div class='api'>
+<div class='apiSig'> public readByte(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read a byte from the array.</p>
+<dl><dt>Description</dt><dd>Data is read from the current read $position pointer.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A byte.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs or a premature end of file. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readDate'></a>
+<div class='api'>
+<div class='apiSig'> public readDate(): <a href='intrinsic-Date.html'>Date</a>
+</div>
+<div class='apiDetail'>
+<p>Read a date from the array or a premature end of file.</p>
+<dl><dt>Description</dt><dd>Data is read from the current read $position pointer.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A date.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readDouble'></a>
+<div class='api'>
+<div class='apiSig'> public readDouble(): <a href='intrinsic-Date.html'>Date</a>
+</div>
+<div class='apiDetail'>
+<p>Read a double from the array.</p>
+<dl><dt>Description</dt><dd>The data will be decoded according to the encoding property. Data is read from the current read $position pointer.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A double.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs or a premature end of file. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readInteger'></a>
+<div class='api'>
+<div class='apiSig'> public readInteger(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read an 32-bit integer from the array.</p>
+<dl><dt>Description</dt><dd>The data will be decoded according to the encoding property. Data is read from the current read $position pointer.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>An integer.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs or a premature end of file. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readLong'></a>
+<div class='api'>
+<div class='apiSig'> public readLong(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read a 64-bit long from the array.</p>
+<dl><dt>Description</dt><dd>The data will be decoded according to the encoding property. Data is read from the current read $position pointer.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A long.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs or a premature end of file. 
+</p>
+</div>
+</div>
+<hr />
+<a name='set-readPosition'></a>
+<div class='api'>
+<div class='apiSig'>set  public readPosition(position: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the current read position offset.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>position: <a href='intrinsic-Number.html'>Number</a> </td><td>The new read position </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='readPosition'></a>
+<div class='api'>
+<div class='apiSig'>get  public readPosition(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Return the current read position offset.</p>
+<dl><dt>Returns</dt>
+<dd>The read offset.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='readShort'></a>
+<div class='api'>
+<div class='apiSig'> public readShort(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read a 16-bit short integer from the array.</p>
+<dl><dt>Description</dt><dd>The data will be decoded according to the encoding property. Data is read from the current read $position pointer.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A short int.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs or a premature end of file. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readString'></a>
+<div class='api'>
+<div class='apiSig'> public readString(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Read a data from the array as a string.</p>
+<dl><dt>Description</dt><dd>Read data from the read position to a string up to the write position, but not more than count characters.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>of bytes to read. If -1, convert the data up to the write position. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs or a premature end of file. 
+</p>
+</div>
+</div>
+<hr />
+<a name='reset'></a>
+<div class='api'>
+<div class='apiSig'> public reset(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Reset the read and write position pointers if there is no available data.</p>
+</div>
+</div>
+<hr />
+<a name='room'></a>
+<div class='api'>
+<div class='apiSig'>get  public room(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the number of data bytes that the array can store from the write position till the end of the array.</p>
+<dl><dt>Returns</dt>
+<dd>The number of data bytes that can be written.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='skip'></a>
+<div class='api'>
+<div class='apiSig'> public skip(n: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='toString'></a>
+<div class='api'>
+<div class='apiSig'>override  public toString(locale: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Convert the data in the byte array between the read and write positions to a string.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>locale: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='write'></a>
+<div class='api'>
+<div class='apiSig'> public write(data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Write data to the array.</p>
+<dl><dt>Description</dt><dd>Binary data is written in an optimal, platform dependent binary format. If  cross-platform portability is required, use the BinaryStream to encode the data. Data is written to  the current $writePosition If the data argument is itself a ByteArray, the available data from the  byte array will be copied. NOTE: the data byte array will not have its readPosition adjusted.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Data elements to write </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The number of bytes written into the array.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='writeByte'></a>
+<div class='api'>
+<div class='apiSig'> public writeByte(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write a byte to the array.</p>
+<dl><dt>Description</dt><dd>Data is written to the current write $position pointer which is then incremented.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Number.html'>Number</a> </td><td>Data to write </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeDouble'></a>
+<div class='api'>
+<div class='apiSig'> public writeDouble(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write a double to the array.</p>
+<dl><dt>Description</dt><dd>Data is written to the current write $position pointer which is then incremented.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Number.html'>Number</a> </td><td>Data to write </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeInteger'></a>
+<div class='api'>
+<div class='apiSig'> public writeInteger(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write a 32-bit integer to the array.</p>
+<dl><dt>Description</dt><dd>Data is written to the current write $position pointer which is  then incremented.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Number.html'>Number</a> </td><td>Data to write </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeLong'></a>
+<div class='api'>
+<div class='apiSig'> public writeLong(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write a 64 bit long integer to the array.</p>
+<dl><dt>Description</dt><dd>Data is written to the current write $position pointer which is  then incremented.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Number.html'>Number</a> </td><td>Data to write </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writePosition'></a>
+<div class='api'>
+<div class='apiSig'>get  public writePosition(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the current write position offset.</p>
+<dl><dt>Returns</dt>
+<dd>The write position.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-writePosition'></a>
+<div class='api'>
+<div class='apiSig'>set  public writePosition(position: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the current write position offset.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>position: <a href='intrinsic-Number.html'>Number</a> </td><td>the new write  position </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeShort'></a>
+<div class='api'>
+<div class='apiSig'> public writeShort(data: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write a short to the array.</p>
+<dl><dt>Description</dt><dd>Data is written to the current write $position pointer which is then incremented.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Number.html'>Number</a> </td><td>Data to write </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <b>Installation</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2><a href="#packages">Installation Packages</a>
+            <ul>
+                <li><a href="#options">Installation Options</a></li>
+                <li><a href="#external">External Packages</a></li>
+                <li><a href="#sourceCode">Source Code</a></li>
+                <li><a href="#upgrading">Upgrading</a></li>
+            </ul>
+<!-- BeginDsi "dsi/installSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../product/install/index.html">Installation Overview</a></li>
+                <li><a href="../../product/install/linux.html">Installing on Linux</a></li>
+                <li><a href="../../product/install/mac.html">Installing on Mac</a></li>
+                <li><a href="../../product/install/windows.html">Installing on Windows</a></li>
+                <li><a href="../../product/install/packages.html">Installing Packages</a></li>
+                <li><a href="../../guide/appweb/overview.html">Appweb Overview</a></li>
+                <li><a href="../../guide/appweb/features.html">Appweb Features</a></li>
+                <li><a href="../../product/releaseNotes.html">Release Notes</a></li>
+                <li><a href="../../product/changeLog.html">Change Log</a></li>
+                <li><a href="../../product/roadmap.html">Roadmap</a></li>
+                <li><a href="../../product/compatibility.html">Compatibility</a></li>
+                <li><a href="../../licenses/index.html">Licensing</a></li>
+
+                <li><a href="../../guide/appweb/users/gettingStarted.html">Getting Started</a></li>
+                <li><a href="../../guide/appweb/users/index.html">Users Guide</a></li>
+
+                <li><a href="../../guide/appweb/source/building.html">Building from Source</a></li>
+                <li><a href="../../guide/appweb/source/porting.html">Porting Guide</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Installation Overview</h1>
+            <p>Please read the overview information below, then refer to the specific instructions for your operating
+            system:</p>
+            <ul>
+                <li><a href="linux.html">Linux Installation Instructions</a></li>
+                <li><a href="mac.html">Mac OS X Installation Instructions</a></li>
+                <li><a href="windows.html">Windows Installation Instructions</a></li>
+                <li><a href="packages.html">Installing Supporting Packages</a></li>
+            </ul><a name="packages" id="packages"></a>
+            <h2 class="section">Installation Packages</h2>
+            <p>For each operating system, the Appweb installation package is available in two package formats:</p>
+            <ul>
+                <li>Native operating system package format (RPM on Linux, PKG on MAC OS X, and Zipped Windows Installer
+                Executable)</li>
+                <li>Archive for custom installations (Compressed Tar)</li>
+            </ul>
+            <p>It is recommended that you use the native package format unless you want exact control over the
+            placement of all the installation components. The native package will register the software installation
+            with the system's software manager so that you can subsequently query, verify, uninstall and easily manage
+            the software on your system.</p>
+            <p>The Appweb source distribution is available in two formats: GZIP and ZIP.</p><a name="options" id=
+            "options"></a>
+            <h2 class="section">Installation Options</h2>
+            <p>The Appweb binary installation packages contains two sub-packages:</p>
+            <ul>
+                <li>Binary distribution</li>
+                <li>Development libraries and headers</li>
+            </ul>
+            <p>The Appweb installation procedure allows you to select which sub-packages you wish to install. If you
+            are experienced with Appweb and wish to only run Appweb, install just the binary package. If you are new to
+            Appweb, accept the defaults. This will install all the sub-packages. With the default settings, the total
+            install size is quite small and uses minimal system resources.</p>
+            <h2 class="section"><a name="external" id="external"></a>External Packages</h2>
+            <p>Appweb integrates with other 3rd party packages such as OpenSSL or MatrixSSL and also may be built for
+            specific environments such as uClibc and uClinux. See installing with <a href="packages.html">External
+            Package</a> for details.</p><a name="sourceCode" id="sourceCode"></a>
+            <h2 class="section">Source Code</h2>
+            <p>The Appweb source code is provided as a separate download distribution. It is also available via the
+            source code <a href="http://hg.embedthis.com/appweb/">repository</a> for developers who wish to participate
+            in the development of Appweb.</p><a name="upgrading" id="upgrading"></a>
+            <h2 class="section">Upgrading</h2>
+            <p>If upgrading from a previous version, please save your appweb.conf and other configuration files, custom
+            modules and other data, and then remove the previous version of Appweb. Then install the new release and
+            apply your configuration to the new release.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

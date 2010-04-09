@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class Request</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Request</h1>
+<div class='classBlock'>
+<table class='classHead' summary='Request'>
+   <tr><td><strong>Module</strong></td><td>ejs.web</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.web"</td></tr>
+   <tr><td><strong>Definition</strong></td><td>final  class Request</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Request <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>HTTP request information.</p>
+
+<p class='classDescription'>The request objects stores parsed information for incoming HTTP requests.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>public </td><td>accept</td><td><a href='intrinsic-String.html'>String</a></td><td>Accept header. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>acceptCharset</td><td><a href='intrinsic-String.html'>String</a></td><td>AcceptCharset header. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>acceptEncoding</td><td><a href='intrinsic-String.html'>String</a></td><td>AcceptEncoding header. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>authAcl</td><td><a href='intrinsic-String.html'>String</a></td><td>Authentication access control list. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>authGroup</td><td><a href='intrinsic-String.html'>String</a></td><td>Authentication group. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>authType</td><td><a href='intrinsic-String.html'>String</a></td><td>Authentication method if authorization is being used (basic or digest). </td></tr>
+   <tr><td nowrap align='center'>public </td><td>authUser</td><td><a href='intrinsic-String.html'>String</a></td><td>Authentication user name. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>connection</td><td><a href='intrinsic-String.html'>String</a></td><td>Connection header. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>contentLength</td><td><a href='intrinsic-Number.html'>Number</a></td><td>Posted content length (header: Content-Length). </td></tr>
+   <tr><td nowrap align='center'>public </td><td>cookies</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Stores Client cookie state information. The cookies object will be created automatically if the Client supplied  cookies with the current request. Cookies are used to specify the session state. If sessions are being used,  a session cookie will be sent to and from the browser with each request. The elements are user defined. TODO - would be better if this were a hash of pre-parsed Cookie objects.</td></tr>
+   <tr><td nowrap align='center'>public </td><td>extension</td><td><a href='intrinsic-String.html'>String</a></td><td>Extension portion of the URL after aliasing to a filename. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>files</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Files uploaded as part of the request. For each uploaded file, an instance of UploadFile is created in files.  The property name of the instance is given by the file upload HTML input element ID in the request page form.  Set to null if no files have been uploaded.</td></tr>
+   <tr><td nowrap align='center'>public </td><td>headers</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Store the request headers. The request array stores all the HTTP request headers that were supplied by  the client in the current request.</td></tr>
+   <tr><td nowrap align='center'>public </td><td>hostName</td><td><a href='intrinsic-String.html'>String</a></td><td>The host name header. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>method</td><td><a href='intrinsic-String.html'>String</a></td><td>Request method: DELETE, GET, POST, PUT, OPTIONS, TRACE. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>mimeType</td><td><a href='intrinsic-String.html'>String</a></td><td>Content mime type (header: Content-Type). </td></tr>
+   <tr><td nowrap align='center'>public </td><td>originalUri</td><td><a href='intrinsic-String.html'>String</a></td><td>Raw request URI before decoding. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>pathInfo</td><td><a href='intrinsic-String.html'>String</a></td><td>The portion of the path after the script name if extra path processing is being used. See the ExtraPath  directive.</td></tr>
+   <tr><td nowrap align='center'>public </td><td>pathTranslated</td><td>&nbsp;</td><td>The physical path corresponding to PATH_INFO. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>pragma</td><td><a href='intrinsic-String.html'>String</a></td><td>Pragma header. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>query</td><td><a href='intrinsic-String.html'>String</a></td><td>Decoded Query string (URL query string). </td></tr>
+   <tr><td nowrap align='center'>public </td><td>referrer</td><td><a href='intrinsic-String.html'>String</a></td><td>Name of the referring URL. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>remoteAddress</td><td><a href='intrinsic-String.html'>String</a></td><td>The IP address of the Client issuing the request. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>remoteHost</td><td><a href='intrinsic-String.html'>String</a></td><td>The host address of the Client issuing the request. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>sessionID</td><td><a href='intrinsic-String.html'>String</a></td><td>Current session ID. Index into the $sessions object.</td></tr>
+   <tr><td nowrap align='center'>public </td><td>url</td><td><a href='intrinsic-String.html'>String</a></td><td>The decoded request URL portion after stripping the scheme, host, extra path, query and fragments. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>userAgent</td><td><a href='intrinsic-String.html'>String</a></td><td>Name of the Client browser software set in the HTTP_USER_AGENT header. </td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Request Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#Request'><b>Request</b></a>()</tr></table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='Request'></a>
+<div class='api'>
+<div class='apiSig'> Request()
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

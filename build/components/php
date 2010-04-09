@@ -1,0 +1,46 @@
+#
+#   PHP
+#
+defineComponent() {
+	local path name search ver imports libs iflags
+
+    if [ $KIND = "BUILD" -a $BLD_CROSS = 1 ] ; then
+        echo "only used as a host component"
+        return 0
+    fi
+
+    name="php"
+    path=$1
+    search="."
+    ver="latest"
+
+    path=`probe --path "$path" --partial "extensions/php/$ver" --search "$search" $name`
+    if [ "$path" = "" ] ; then
+        warnComponent $name
+        return
+	fi
+
+    if [ $BLD_HOST_OS = WIN ] ; then
+        if [ -x $path/Release_TS ] ; then
+            imports="$path/Release_TS/php5ts.dll"
+        else 
+            imports="$path/Release/php5.dll"
+        fi
+        libs="php5"
+    elif [ $BLD_HOST_OS = MACOSX ] ; then
+        imports="$path/libs/libphp5.dylib"
+        libs="php5"
+    else
+        imports="$path/libs/libphp5.so"
+        libs="php5"
+    fi
+
+    for i in $imports
+    do
+        [ ! -f "$i" ] && return
+    done
+
+    iflags="-I$path -I$path/main -I$path/Zend -I$path/TSRM"
+    configureComponent --path "$path" --dependencies "mpr" --imports "$imports" \
+        --withlibs "$libs" --libs "$libs" --iflags "$iflags" $name
+}

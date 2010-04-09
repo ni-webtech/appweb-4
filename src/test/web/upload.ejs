@@ -1,0 +1,19 @@
+<html>
+<body>
+<% 	
+	if (request.method == "POST") {
+        // request.dump("PARAMS", request.params)
+        // request.dump("request.files", request.files)
+
+        request.dump("PARAMS", request.params)
+        request.dump("request.files", request.files)
+        for each (f in request.files) {
+            // print("MV " + f.filename + " to " + "web/tmp/" + f.clientFilename)
+            mv(f.filename, "web/tmp/" + f.clientFilename)
+        }
+        write("Uploaded")
+    }
+%>
+</body>
+</html>
+

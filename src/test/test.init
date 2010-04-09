@@ -1,0 +1,64 @@
+/*
+    Initialize for Appweb unit tests
+ */
+require ejs.unix
+
+const APPWEB    = App.exeDir.join("appweb")
+const PIDFILE   = ".appweb.pid"
+
+let conf        = Path("appweb.conf").readString()
+const PORT      = conf.replace(/.*Listen ([0-9]+) *# MAIN.*/ms, "$1")
+const SSL_PORT  = conf.replace(/.*Listen ([0-9]+) *# SSL.*/ms, "$1")
+const LOCALHOST = "127.0.0.1"
+const VHOST     = conf.replace(/.*Listen ([0-9]+) *# VHOST.*/ms, "$1")
+const IPHOST    = conf.replace(/.*Listen ([0-9]+) *# IPHOST.*/ms, "$1")
+const HTTP      = "http://" + LOCALHOST + ":" + PORT
+const HTTPS     = "https://" + LOCALHOST + ":" + SSL_PORT
+
+if (!App.getenv("SECOND")) {
+    for each (file in find("cache", "*.mod")) {
+        rm(file)
+    }
+    cleanDir("web/tmp")
+    for each (f in find(".", "*.tdat", true)) {
+        rm(f)
+    }
+}
+
+if (!App.getenv("NOSERVER")) {
+    if (exists(PIDFILE)) {
+        path = Path(PIDFILE)
+        pid = path.readString()
+        path.remove()
+        try {
+            kill(pid)
+        } catch {}
+    }
+
+    /*
+         Start a web server for testing
+     */
+    let cmd = APPWEB + " --log trace.txt:6 --name forAppwebTest --config appweb.conf"
+    test.log(2, "[TestRun]", "Run: " + cmd)
+    pid = Cmd.daemon(cmd)
+    Path(PIDFILE).write(pid)
+    share("appwebPidFile", PIDFILE)
+
+    let http = new Http
+    for (i in 50) {
+        try { http.get(HTTP + "/alive.html"); } catch {}
+        if (http.status == 200) break
+        App.sleep(500)
+        http.close()
+    }
+    if (http.status != 200) {
+        throw "Can't start web server"
+    }
+}
+share("host", HTTP)
+share("port", PORT)
+share("http", "http://" + LOCALHOST + ":" + PORT)
+share("https", "https://" + LOCALHOST + ":" + SSL_PORT)
+share("vhost", "http://" + LOCALHOST + ":" + VHOST)
+share("vhostPort", VHOST)
+share("iphost", "http://" + LOCALHOST + ":" + IPHOST)

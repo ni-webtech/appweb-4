@@ -1,0 +1,21 @@
+#
+#   SQLite
+#
+defineComponent() {
+	local iflags builtin path name search
+
+    name="sqlite"
+    path="$1"
+    search="src/jems/ejs.db.sqlite/src:src/db/sqlite:src/deps/ejs:src/ejs"
+
+    path=`probe --emit-dir --path "$path" --partial "sqlite3.c" --search "$search" $name`
+    if [ "$path" = "" ] ; then
+        warnComponent $name
+        return
+	fi
+    if isExternal "$path" ; then
+        iflags="-I$path/include"
+        libpaths="$path/lib"
+    fi
+    configureComponent --dependencies "mpr" --libs "sqlite3" --path "$path" --iflags "$iflags" $builtin $name
+}

@@ -1,0 +1,14 @@
+LIBRARY libpcre.dll
+EXPORTS
+
+_pcre_is_newline
+_pcre_ord2utf8
+_pcre_try_flipped
+_pcre_ucp_findprop
+_pcre_ucp_othercase
+_pcre_valid_utf8
+_pcre_was_newline
+_pcre_xclass
+pcre_compile
+pcre_compile2
+pcre_exec

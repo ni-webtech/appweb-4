@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class TextStream</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>TextStream</h1>
+<div class='classBlock'>
+<table class='classHead' summary='TextStream'>
+   <tr><td><strong>Module</strong></td><td>ejs.io</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.io"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class TextStream</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ejs-11.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>TextStream <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>TextStreams interpret data as a stream of Unicode characters.</p>
+
+<p class='classDescription'>They provide methods to read and write data in various text encodings and to read/write lines of text appending appropriate system dependent new line  terminators. TextStreams can be stacked upon other Streams such as files, byte arrays, sockets, or Http objects.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>public static const </td><td>LATIN1</td><td><a href='intrinsic-String.html'>String</a></td><td>Text encoding formats for use with $encoding. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>UTF_16</td><td><a href='intrinsic-String.html'>String</a></td><td>Text encoding formats for use with $encoding. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>UTF_8</td><td><a href='intrinsic-String.html'>String</a></td><td>Text encoding formats for use with $encoding. </td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>TextStream Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#available'><b>available</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the number of bytes available to read.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#close'><b>close</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Close the input stream and free up all associated resources.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#encoding'><b>encoding</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the current text encoding.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-encoding'><b>encoding</b></a>(encoding: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the current text encoding.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#flush'><b>flush</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Flush the stream and the underlying file data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#read'><b>read</b></a>(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read characters from the stream into the supplied byte array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readLine'><b>readLine</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a line from the stream.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readLines'><b>readLines</b></a>(numLines: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a required number of lines of data from the stream.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readString'><b>readString</b></a>(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a string from the stream.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#skip'><b>skip</b></a>(n: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'> </td><td><a href='#TextStream'><b>TextStream</b></a>(stream: <a href='intrinsic-Stream.html'>Stream</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a text filter stream.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#write'><b>write</b></a>(data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write characters to the stream.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#writeLine'><b>writeLine</b></a>(lines: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write text lines to the stream.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='available'></a>
+<div class='api'>
+<div class='apiSig'> public available(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Return the number of bytes available to read.</p>
+<dl><dt>Returns</dt>
+<dd>A the number of available bytes.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='close'></a>
+<div class='api'>
+<div class='apiSig'> public close(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Close the input stream and free up all associated resources.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td> [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='encoding'></a>
+<div class='api'>
+<div class='apiSig'>get  public encoding(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the current text encoding.</p>
+<dl><dt>Returns</dt>
+<dd>The current text encoding as a string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-encoding'></a>
+<div class='api'>
+<div class='apiSig'>set  public encoding(encoding: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the current text encoding.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>encoding: <a href='intrinsic-String.html'>String</a> </td><td>string containing the current text encoding. Supported encodings are: utf-8.  [default: UTF_8]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='flush'></a>
+<div class='api'>
+<div class='apiSig'> public flush(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Flush the stream and the underlying file data.</p>
+<dl><dt>Description</dt><dd>Will block while flushing. Note: may complete before the data is actually written to disk.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, write all pending data.  [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='read'></a>
+<div class='api'>
+<div class='apiSig'> public read(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read characters from the stream into the supplied byte array.</p>
+<dl><dt>Description</dt><dd>This routine is used by upper streams to read data from the text stream as raw bytes.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a> </td><td>Destination byte array for the read data. </td></tr><tr><td class='param'>offset: <a href='intrinsic-Number.html'>Number</a> </td><td>Offset in the byte array to place the data. If the offset is -1, then data is appended to the buffer write $position which is then updated.  </td></tr><tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to read.  </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A count of characters actually written.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readLine'></a>
+<div class='api'>
+<div class='apiSig'> public readLine(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Read a line from the stream.</p>
+<dl><dt>Returns</dt>
+<dd>A string containing the next line without the newline character. Return null on eof.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readLines'></a>
+<div class='api'>
+<div class='apiSig'> public readLines(numLines: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Read a required number of lines of data from the stream.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>numLines: <a href='intrinsic-Number.html'>Number</a> </td><td>of lines to read. Defaults to read all lines. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>Array containing the read lines.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readString'></a>
+<div class='api'>
+<div class='apiSig'> public readString(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Read a string from the stream.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>of bytes to read. Returns the entire stream contents if count is -1. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='skip'></a>
+<div class='api'>
+<div class='apiSig'> public skip(n: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='TextStream'></a>
+<div class='api'>
+<div class='apiSig'> TextStream(stream: <a href='intrinsic-Stream.html'>Stream</a>)
+</div>
+<div class='apiDetail'>
+<p>Create a text filter stream.</p>
+<dl><dt>Description</dt><dd>A Text filter stream must be stacked upon a stream source such as a File.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>stream: <a href='intrinsic-Stream.html'>Stream</a> </td><td>stream data source/sink to stack upon. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='write'></a>
+<div class='api'>
+<div class='apiSig'> public write(data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Write characters to the stream.</p>
+<dl><dt>Description</dt><dd>The characters will be encoded using the current TextStream encoding. endpoint can accept more data.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>String to write.  </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The total number of elements that were written.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if there is an I/O error. 
+</p>
+</div>
+</div>
+<hr />
+<a name='writeLine'></a>
+<div class='api'>
+<div class='apiSig'> public writeLine(lines: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Write text lines to the stream.</p>
+<dl><dt>Description</dt><dd>The text line is written after appending the system text newline character or characters.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>lines: <a href='intrinsic-Array.html'>Array</a> </td><td>Text lines to write. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The number of characters written or -1 if unsuccessful.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file could not be written. 
+</p>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

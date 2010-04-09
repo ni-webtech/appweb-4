@@ -1,0 +1,53 @@
+#
+#	source.files - Files needed for the source installation
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+DIR="${BLD_SRC_PREFIX}"
+
+usePrefixes SRC 
+
+#
+#   Standard release files
+#
+makeDir "${DIR}/src" "${DIR}/build/bin" "${DIR}/obj" "${DIR}/bin" "${DIR}/lib" "${DIR}/modules" "${DIR}/all"
+
+cpy -e                    Makefile "${DIR}"
+cpy -w -e                 "*.TXT" "${DIR}"
+cpy -m 0755               configure "${DIR}"
+cpy -d .                  obj/Makefile  lib/Makefile modules/Makefile bin/Makefile "${DIR}"
+cpy -d build -c "Makefile|Makefile.top|configure.${BLD_PRODUCT}|*.defaults|config.*|*.make" "*"  "${DIR}/build"
+cpy -m 0755 -d build/bin  bld getlib makedep priv fakePriv mkdmg utest utest.worker "${DIR}/build/bin"
+cpy -m 0755 -d build/bin  "make*Package*" makeInstall "${DIR}/build/bin"
+cpy -m 0755 -d build/bin  patchAppwebConf all-in-one  "${DIR}/build/bin"
+cpy -d build/src          Makefile "*.c" "*.h" "${DIR}/build/src"
+cpy -d build/components   "*" "${DIR}/build/components"
+cpy -d package            Makefile "*.files" "${DIR}/package"
+cpy -m 0755 -d package    "*.sh" makeInstall.appweb linkup "${DIR}/package"
+cpy -d package            LINUX MACOSX WIN "${DIR}/package"
+
+#
+#   Source for mpr, ejs, server, http
+#
+srcFilter="/\.log$|\.tmp|old\/|web\/tmp"
+cpy -f "${srcFilter}" src/Makefile src/mpr src/ejs src/http src/utils src/include  "${DIR}/src"
+cpy -f "${srcFilter}" all/Makefile.all all/Makefile  "${DIR}/all"
+cpy -f "${srcFilter}" src/server test  "${DIR}/src"
+
+docFilter="api/ejs/xml/|api/ejs/html/|api/appweb/html|api/appweb/xml"
+cpy -f "${docFilter}" doc "${DIR}"
+
+samplesFilter="\.mod$|\.so$|\.dylib$|\.js$|\.o"
+cpy -f "${samplesFilter}" samples "${DIR}"
+
+projectsFilter="/Debug|/Release|\.user|\.suo|\.ncb|*.mode1v3|*.pbxuser|/appweb.build/|iphone"
+cpy -f "${projectsFilter}" projects "${DIR}"
+
+cat src/include/master/buildConfig.h | sed 's/-VERSION-/${BLD_VERSION}/;s/-NUMBER-/${BLD_NUMBER}/' \
+    >"${DIR}/src/include/buildConfig.h"
+
+if [ $TASK = Remove ] ; then
+    if [ "`pwd`" != "$DIR" ] ; then
+        ${RM} -f "${DIR}/buildConfig.*" "${DIR}/src/include/buildConfig.*" "${DIR}/build/bin/buildConfig.*"
+    fi
+fi

@@ -1,0 +1,48 @@
+#
+#   Appweb
+#
+defineComponent() {
+	local iflags builtin path name search optional libs
+
+    path=$1
+    name="appweb"
+    search="src/deps/appweb:src/$name:src/server"
+
+    if [ -f src/appweb/appweb.c ] ; then
+        path="src/appweb/appweb.c"
+        builtin=--builtin
+    elif [ -d src/deps/appweb ] ; then
+        path="src/deps/appweb"
+        builtin=--builtin
+    else
+        path=`probe --emit-dir --path "$path" --partial "appweb.c" --search "$search" $name`
+        if [ "$path" = "" ] ; then
+            warnComponent $name
+            return
+        fi
+        iflags="-I$path/include"
+    fi
+    libs="$name"
+
+    optional="ssl"
+	if [ "$BLD_FEATURE_STATIC" = 1 ] ; then
+		if [ "$BLD_PRODUCT_APPWEB" = 1 ] ; then
+        	if isdefined EJS ; then
+				optional="$optional ejs"
+                # NOTE: ejs second because required on Linux static builds for appweb
+				libs="$libs ejs"
+			fi
+			if isdefined PHP ; then
+				optional="$optional php"
+			fi
+		fi 
+	fi
+
+    deps="mpr"
+    if [ -d src/deps ] ; then
+        deps="$deps http"
+    fi
+
+    configureComponent --libs "$libs" --path "$path" --iflags "$iflags" $builtin \
+        --dependencies "$deps" --optional-dependencies "$optional" $name
+}

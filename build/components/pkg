@@ -1,0 +1,19 @@
+#
+#   PKG
+#
+defineComponent() {
+    local name path
+
+    #
+    #   Name comes from build/config/config.*
+    #
+    eval name=\$BLD_${KIND}_PKG
+
+    [ "$name" = "" ] && return 0
+    path=`probe --path "$1" --partial "$name" "$name"`
+    if [ "$path" = "" ] ; then
+        warnComponent pkg $name
+        return
+	fi
+    configureComponent --path "$path" pkg
+}

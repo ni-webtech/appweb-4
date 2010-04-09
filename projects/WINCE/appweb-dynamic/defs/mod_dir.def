@@ -1,0 +1,3 @@
+LIBRARY mod_dir.dll
+EXPORTS
+maDirHandlerInit

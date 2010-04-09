@@ -1,0 +1,120 @@
+#
+#   makeDmgPackage - Create MAC OS X Disk Image package
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+################################################################################
+
+PMAKER=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker
+
+export BLD_HOST_CPU_MAPPED=$BLD_HOST_CPU
+
+setupDmg() {
+    echo -e "\n#\n#  Create the MAC packages ...\n# "
+
+    if [ "$BLD_HOST_CPU_ARCH" = "MPR_CPU_IX86" ] ; then
+        BLD_HOST_CPU_MAPPED=i386
+    fi
+}
+
+
+updateReadme()  {
+    local DestD
+
+    DestD=${ROOT_DIR}/${BLD_PRODUCT}.mpkg/Contents/Resources/en.lproj
+    mkdir -p ${DestD}
+
+    cp "${ABS_BLD_TOP}/doc/product/README.TXT" ${DestD}/ReadMe
+    patchFile "${DestD}/ReadMe"
+
+    cp "${ABS_BLD_TOP}/doc/licenses/LICENSE.TXT" ${DestD}/License
+    patchFile "${DestD}/License"
+}
+
+
+updateScripts() {
+    local kind dir file
+
+    kind=$1
+    rm -rf ${ROOT_DIR}/scripts
+    mkdir -p ${ROOT_DIR}/scripts
+
+    dir=${ABS_BLD_TOP}/package/${BLD_HOST_OS}/scripts/${kind}
+    if [ -d $dir ] ; then
+        cp -r ${dir}/* ${ROOT_DIR}/scripts
+        for file in ${ROOT_DIR}/scripts/*
+        do
+            if [ -f $file ] ; then
+                patchFile "${file}"
+            fi
+        done
+    fi
+}
+
+updateSizes() {
+    local dir binSize devSize
+    binSize=`du -sk ${ROOT_DIR}/BIN | awk '{print $1}'`
+    devSize=`du -sk ${ROOT_DIR}/DEV | awk '{print $1}'`
+    dir=${ROOT_DIR}/${BLD_PRODUCT}.mpkg/Contents
+    cat $dir/distribution.dist >/tmp/dist$$.tmp
+    cat /tmp/dist$$.tmp | sed "s/bin.pkg\" /bin.pkg\" installKBytes=\"$binSize\" /" |
+    sed "s/dev.pkg\" /dev.pkg\" installKBytes=\"$devSize\" /" > $dir/distribution.dist
+    rm -f /tmp/dist$$.tmp
+}
+
+
+makeDmgPackage() {
+    local pkg mpkg kind dir upper
+
+    #
+    #   Copy the master to the root dir and remove the old packages
+    #
+    dir=${ROOT_DIR}/${BLD_PRODUCT}.mpkg
+    rm -rf ${dir}
+    cp -r ${ABS_BLD_TOP}/package/${BLD_HOST_OS}/${BLD_PRODUCT}.mpkg ${ROOT_DIR}
+    rm -rf ${dir}/Contents/Packages/*
+    mkdir -p ${dir}/Contents/Packages
+
+    updateReadme
+    updateSizes
+
+    for kind in bin dev
+    do
+        updateScripts $kind
+        upper=`echo $kind | tr '[a-z]' '[A-Z]'`
+
+        echo "PackageMaker --domain anywhere --root ${ROOT_DIR}/$upper --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1"
+        ${PMAKER} --domain anywhere --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
+            --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1
+        if [ $? != 0 ] 
+        then
+            echo "PackageMaker failed "
+            cat ${HOME}/build.log
+            exit 255
+        else 
+            echo 
+            rm -f ${HOME}/build.log
+        fi
+    done
+
+    #
+    #   Make a disk image
+    #
+    name="${ROOT_DIR}/`createPackageName ${BLD_PRODUCT}`.dmg"
+    echo "mkdmg ${BLD_PRODUCT}-${BLD_VERSION} ${dir} ${name}"
+    mkdmg ${BLD_PRODUCT}-${BLD_VERSION} ${dir} ${name} 2>&1 >>build.log
+    if [ $? != 0 ] 
+    then
+        echo "mkdmg failed "
+        cat ${HOME}/build.log
+        exit 255
+    else 
+        rm -f ${HOME}/build.log
+    fi
+}
+
+#
+#   Main
+#
+setupDmg
+makeDmgPackage

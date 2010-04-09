@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+#   Create or modify symlinks for the most recent installed versions of Ejscript
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+
+TASK=$1
+PRODUCT=appweb
+EXE=
+BIN=/usr/local/bin
+INC=/usr/include
+MAN=/usr/share/man
+PROGRAMS="ajs ajsc ajsmod ajssql ajsweb appweb http httpPassword"
+
+prefix=/usr/lib/${PRODUCT}
+
+# Appweb is not yet fully versioned
+version=
+# version=`ls $prefix | egrep -v '[a-zA-Z@!_\-]' | sort -n -r | head -1`
+
+if [ "$TASK" = "Remove" ] ; then
+    for name in $PROGRAMS
+    do
+        rm -f "${BIN}/$name"
+    done
+    rm -fr "${INC}/${PRODUCT}"
+else
+    if [ "$version" = "" ] ; then
+        latest=${prefix}
+    else
+        latest=${prefix}/$version
+    fi
+    bin=${latest}/bin
+    inc=${latest}/inc
+    man=${latest}/doc/man
+
+    home=`pwd`
+    for name in $PROGRAMS
+    do
+        name=${name}${EXE}
+        if [ -f "${bin}/${name}" ] ; then
+            rm -f "${BIN}/${name}"
+            ln -s "${bin}/${name}" "${BIN}/${name}"
+        fi
+    done
+
+    if [ -d "${inc}" ] ; then
+        rm -rf  "${INC}/${PRODUCT}"
+        ln -s "${inc}" "${INC}/${PRODUCT}"
+    fi
+    if [ -d "${man}" ] ; then
+        for f in ${man}/*.1.gz
+        do
+            name=`basename "$f"`
+            rm -f "${MAN}/man1/${name}"
+            ln -s "${f}" "${MAN}/man1/${name}"
+        done
+    fi
+fi

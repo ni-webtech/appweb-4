@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+#   config.LINUX -- Common build configuration for Linux
+#
+#   Read by product.config during configure.
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+###############################################################################
+
+. build/config/config.base

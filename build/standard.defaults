@@ -1,0 +1,133 @@
+#
+#	standard.defaults -- Release configuration settings when building 
+#		Embedthis Appweb from source.
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+#	These initial defaults are read by configure when first creating the
+#	configuration files: buildConfig.make, buildConfig.sh and buildConfig.h
+#	If a different defaults file is specifed, this file may be read and then
+#	be overridden by the original defaults file.
+#
+###############################################################################
+#
+#	Primary Configuration Section
+#
+BLD_TYPE="DEBUG" 						# The build type: (DEBUG), (RELEASE)
+BLD_TUNE="MPR_TUNE_SIZE" 			    # The tune type: (SIZE), (BALANCED), (SPEED)
+BLD_DEFAULTS="standard"					# Name of this defaults file
+BLD_DEBUG=1								# Set to 1 if DEBUG
+BLD_CLEAN_INSTALL=0						# Overwrite existing installations
+BLD_LICENSE=gpl
+BLD_COMMERCIAL=0
+
+#
+#
+#   Include settings common to all configurations
+#
+. "${BLD_TOP}/build/product.config"
+
+###############################################################################
+#
+#   Components (order matters: SDKs first, optional last)
+#
+with --os=win winsdk
+with --build --os=wince winsdk
+with --os=wince wince
+with --os=vxworks vxworks
+
+with ar cc make nm
+with --os=linux ranlib
+with --os=macosx ranlib
+with --os=win ld mt rc
+with --os=wince ld
+
+with --build --optional doxygen
+with --os=win --build --optional pkg
+with --optional regexp
+with mpr 
+with http
+with --host --optional matrixssl openssl ssl php
+with --optional sqlite 
+with --optional ejs
+with appweb
+
+###############################################################################
+#
+#	Turn assert checking on. Good for a debug build
+#
+BLD_FEATURE_ASSERT=1
+
+#
+#   Do a complete cross-build of everything including dev tools.
+#
+BLD_FEATURE_COMPLETE_CROSS=0
+
+#
+#   Do a complete build of everything for the native (build system).
+#   This includes programs that normally only run on the target.
+#
+BLD_FEATURE_COMPLETE_NATIVE=1
+
+#
+#	Name of the config directory to use. Can be an absolute path or be relative to src/server
+#
+BLD_FEATURE_CONFIG=template/standard
+
+#
+#	Device or emulator. (PocketPC2003, Smartphone2003)
+#
+if [ "$BLD_HOST_OS" = WINCE ] ; then
+    BLD_FEATURE_DEVICE=PocketPC2003
+else
+    BLD_FEATURE_DEVICE=
+fi
+
+#
+#	Disable the Legacy code for backward compatibility (back one major revision).
+#
+BLD_FEATURE_LEGACY_API=0
+
+#
+#	Disable the ability to run from a ROM file system. Only use this for deeply embedded projects without a file system.
+#
+BLD_FEATURE_ROMFS=0
+
+#
+#   Build shared by default. Only enable one of shared or static.
+#
+BLD_FEATURE_STATIC=0
+
+################################################################################
+#
+#	Handlers and Modules Section
+#
+
+#
+#	Enable authorization checking and the file and PAM (unix only) backends
+#
+BLD_FEATURE_AUTH_FILE=1
+BLD_FEATURE_AUTH_PAM=0
+
+#
+#	Ability to run commands (processes). Necessary if you want to use CGI or EJS
+#
+BLD_FEATURE_CGI=1
+
+#
+#	Ejscript Web Framework settings
+#
+BLD_FEATURE_EJS_ALL_IN_ONE=1
+
+################################################################################
+#
+#	Some fixups for O/Ss
+#
+
+if [ "$BLD_HOST_OS" = VXWORKS ] ; then
+	BLD_FEATURE_RUN_AS_SERVICE=0
+    BLD_FEATURE_AUTH_PAM=0
+fi
+if [ "$BLD_HOST_OS" = WIN ] ; then
+    BLD_FEATURE_AUTH_PAM=0
+fi

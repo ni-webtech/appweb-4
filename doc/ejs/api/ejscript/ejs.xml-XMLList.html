@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class XMLList</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>XMLList</h1>
+<div class='classBlock'>
+<table class='classHead' summary='XMLList'>
+   <tr><td><strong>Module</strong></td><td>ejs.xml</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.xml"</td></tr>
+   <tr><td><strong>Definition</strong></td><td>final  class XMLList</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ecma-357.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>XMLList <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>The XMLList class implements a subset of the E4X (ECMA-357) API.</p>
+
+<p class='classDescription'>An XMLList object stores a list of XML objects.  If the list has only one element, it functions similar to an XML object.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td colspan='4'>No properties defined</td></tr></table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>XMLList Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>iterator override </td><td><a href='#get'><b>get</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get an iterator for this node to be used by "for (v in node)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator override </td><td><a href='#getValues'><b>getValues</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get an iterator for this node to be used by "for each (v in node)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>public override </td><td><a href='#length'><b>length</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the length of an XML object; the length is defined as 1.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#name'><b>name</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the qualified name of this XML object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public override </td><td><a href='#toJSON'><b>toJSON</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convert to a JSON encoding.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public override </td><td><a href='#toString'><b>toString</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Provides a string representation of the XML object.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#XMLList'><b>XMLList</b></a>()</tr><tr class='apiBrief'><td>&nbsp;</td><td>XML Constructor.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='get'></a>
+<div class='api'>
+<div class='apiSig'>override  iterator get(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get an iterator for this node to be used by "for (v in node)".</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Follow the prototype chain. Only implemented in ECMA compliance mode..  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An iterator object.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='getValues'></a>
+<div class='api'>
+<div class='apiSig'>override  iterator getValues(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get an iterator for this node to be used by "for each (v in node)".</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Follow the prototype chain. Only implemented in ECMA compliance mode..  [default: false]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An iterator object.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='length'></a>
+<div class='api'>
+<div class='apiSig'>override  public length(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Return the length of an XML object; the length is defined as 1.</p>
+<dl><dt>Returns</dt>
+<dd>1.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='name'></a>
+<div class='api'>
+<div class='apiSig'> public name(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the qualified name of this XML object.</p>
+<dl><dt>Returns</dt>
+<dd>The qualified name.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='toJSON'></a>
+<div class='api'>
+<div class='apiSig'>override  public toJSON(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Convert to a JSON encoding.</p>
+<dl><dt>Returns</dt>
+<dd>A JSON string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='toString'></a>
+<div class='api'>
+<div class='apiSig'>override  public toString(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Provides a string representation of the XML object.</p>
+<dl><dt>Returns</dt>
+<dd>A string with the encoding.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='XMLList'></a>
+<div class='api'>
+<div class='apiSig'> XMLList()
+</div>
+<div class='apiDetail'>
+<p>XML Constructor.</p>
+<dl><dt>Description</dt><dd>Create an empty XML object.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>An XML node object.</dd></dl>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

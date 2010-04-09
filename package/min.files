@@ -1,0 +1,77 @@
+#
+#	min.files - Minimum binary install. Ideal for cross-compilation.
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+
+# TRACE=1
+
+if [ "$ROOT_DIR" = / ] ; then
+    echo "WARNING: can't do minimal install to root. Set ROOT_DIR and retry."
+    exit 255
+fi
+
+cpy -m 755 -d ${BLD_BIN_DIR} "appweb*${BLD_EXE}" "${ROOT_DIR}"
+
+if `ls ${BLD_MOD_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then
+	cpy -m 755 -d ${BLD_MOD_DIR} "*${BLD_SHOBJ}" "${ROOT_DIR}"
+fi
+if [ $BLD_LIB_DIR != $BLD_MOD_DIR ] ; then
+	if `ls ${BLD_LIB_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then
+		cpy -m 755 -d ${BLD_LIB_DIR} "*${BLD_SHOBJ}" "${ROOT_DIR}"
+	fi
+fi
+
+
+if [ "$WITH_CONF" = "" ] ; then
+	if [ -d "$BLD_FEATURE_CONFIG" ] ; then
+		configDir="$BLD_FEATURE_CONFIG"
+	else
+		configDir="src/server/$BLD_FEATURE_CONFIG"
+	fi
+    cpy "${configDir}"/appweb.conf "${ROOT_DIR}"
+else
+    cpy "$WITH_CONF" "${ROOT_DIR}/appweb.conf"
+fi
+
+#
+#   Patch appweb.conf
+#
+if [ "${TASK}" != Remove ] ; then
+    (
+        export BLD_CFG_PREFIX=.
+        export BLD_WEB_PREFIX=web
+        export BLD_DOC_PREFIX=.
+        export BLD_MOD_PREFIX=.
+        export BLD_LOG_PREFIX=.
+        export BLD_HTTP_PORT BLD_SSL_PORT 
+        patchAppwebConf "${ROOT_DIR}/appweb.conf" >/dev/null 2>&1
+    )
+fi
+
+makeDir "$ROOT_DIR/logs"
+makeDir ${ROOT_DIR}/web
+cpy src/server/web/min-index.html "${ROOT_DIR}/web/index.html"
+
+if [ "$BLD_FEATURE_PHP" = 1 ] ; then
+    cpy src/server/php.ini "${ROOT_DIR}"
+fi
+if [ "$BLD_FEATURE_SSL" = 1 ] ; then
+    cpy src/server/ssl/server.* "${ROOT_DIR}"
+fi
+if [ "$BLD_FEATURE_EJS" = 1 ] ; then
+	cpy -d ${BLD_MOD_DIR} "ajs.mod" "${ROOT_DIR}"
+    if [ "$BLD_CROSS" = 0 ] ; then
+        cpy -d ${BLD_MOD_DIR} "ejsweb.mod" "${ROOT_DIR}"
+        cpy -m 755 -d ${BLD_BIN_DIR} ejsc${BLD_EXE} ejsweb${BLD_EXE} ajs${BLD_EXE} ajsmod${BLD_EXE} \
+            ajssql${BLD_EXE} "${ROOT_DIR}"
+    fi
+fi
+
+if [ $BLD_HOST_OS = WIN ] ; then
+    clversion=$BLD_CC_CL_VERSION
+    if [ "$clversion" = 15 ] ; then
+        cpy -d "lib/msvcrt/$BLD_CC_CL_VERSION" msvcr90.dll Microsoft.VC90.CRT.manifest "${ROOT_DIR}"
+    fi
+	cpy ${BLD_BIN_DIR}/appwebMonitor.ico "${ROOT_DIR}"
+fi

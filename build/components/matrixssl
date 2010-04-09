@@ -1,0 +1,39 @@
+#
+#   MatrixSSL
+#
+defineComponent() {
+	local path name search ver imports libs
+
+    if [ $KIND = "BUILD" -a $BLD_CROSS = 1 ] ; then
+        echo "only used as a host component"
+        return 0
+    fi
+
+    path=$1
+    name="matrixssl"
+    ver="latest"
+    search="."
+
+    path=`probe --path "$path" --partial "extensions/matrixssl/$ver" --search "$search" $name`
+    if [ "$path" = "" ] ; then
+        warnComponent $name
+        return
+	fi
+    CFG_HOST_SSL_MANDATORY=1
+    if [ $BLD_HOST_OS = WIN ] ; then
+        imports="$path/src/Release/libmatrixssl.dll"
+        libs="libmatrixssl"
+    else
+        imports="$path/src/libmatrixsslstatic.a"
+        libs="matrixsslstatic.a"
+    fi
+
+    for i in $imports
+    do
+        if [ ! -f "$i" ] ; then
+            warnComponent $name "Can't locate $i"
+            return
+        fi
+    done
+    configureComponent --path "$path" --imports "$imports" --libs "$libs" --iflags "-I$path" $name
+}

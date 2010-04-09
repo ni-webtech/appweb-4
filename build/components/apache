@@ -1,0 +1,6 @@
+#
+#   Apache
+#
+defineComponent() {
+    echo "Apache component is Not yet supported" 1>&2
+}

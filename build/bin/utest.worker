@@ -1,0 +1,149 @@
+/*
+    utest.worker - Injected into the unit test global scope
+ */
+
+public class Test {
+    public var bin: Path
+    public var config: Object
+    public var depth: Number
+    public var dir: Path
+    public var lib: Path
+    public var multithread: Boolean
+    public var threads: Number
+    public var top: Path
+    public var os: Path
+    public var hostOs: Path
+    public var verbosity: Number = false
+
+    let out = App.outputStream
+
+    public function log(level: Number, name: String, ...items) {
+        if (verbosity >= level) {
+            out.write("%12s " % [name])
+            out.write(items)
+            if (verbosity > 1) {
+                out.write("\n")
+            } else {
+                out.write(": ")
+            }
+        }
+    }
+
+    public function mapVerbosity(adj: Number): String {
+        str = ""
+        for (i = test.verbosity + adj; i > 0; i--)
+            str += "-v "
+        return str
+    }
+
+    function searchUp(path: Path): String {
+        if (exists(path))
+            return path
+        path = Path(path).relative
+        dir = Path("..")
+        while (true) {
+            up = Path(dir.relative).join(path)
+            if (exists(up))
+                return up
+            if (dir.parent == dir) break
+            dir = dir.parent
+        }
+        return null
+    }
+
+    public function setLogPath(path: Path): Void {
+        if (path) {
+            out = File(path).open("aw")
+        } else {
+            out = App.outputStream
+        }
+    }
+
+    public function skip(message: String): Void
+        postMessage({ skip: message })
+}
+
+
+/*
+    Global functions
+ */
+public function assert(cond: Boolean, message: String = null): Void {
+    if (cond) {
+        postMessage({ passed: true })
+    } else {
+        if (message) {
+            throw new AssertError(message)
+        } else {
+            throw new AssertError("")
+        }
+    }
+}
+
+public function cleanDir(path) {
+    rmdir(path, true)
+    mkdir(path)
+}
+
+
+/*
+    Used to start support programs. This does capture output.
+ */
+public function sh(args): String {
+    test.log(2, "[Run]", "Run: " + args)
+    return Cmd.sh(env() + args)
+}
+
+
+/*
+    Test a command
+ */
+public function testCmdNoCapture(args): Boolean {
+    test.log(2, "[Test]", "Run test: " + args)
+    try {
+        args = args.toString().toJSON().trim('"')
+        Cmd.runx(("/bin/sh -c \"" + env() + args + "\"").trim('\n'), data)
+        assert(true)
+        return true
+    } catch (e) {
+        assert(false, e)
+        return false
+    }
+}
+
+
+public function testCmd(args): Boolean {
+    test.log(2, "[Test]", "Run test: " + args)
+    try {
+        args = args.toString().toJSON().trim('"')
+        Cmd.run(("/bin/sh -c \"" + env() + args + "\"").trim('\n'), data)
+        assert(true)
+        return true
+    } catch (e) {
+        assert(false, e)
+        return false
+    }
+}
+
+
+//  TODO - remove
+public function env(): String {
+/*
+    if (test.os  == "LINUX") {
+        return "LD_LIBRARY_PATH=" + test.lib + " " 
+    } else if (test.os  == "MACOSX") {
+        return "DYLD_LIBRARY_PATH=" + test.lib + " " 
+    } else if (test.os  == "WIN") {
+        // return "PATH=" + test.bin + " " 
+    }
+*/
+    return ""
+}
+
+
+public function locate(program): String {
+    return test.bin.join(program).portable.toString()
+}
+
+
+public function share(key: String, value: String)
+    postMessage({ key: key, value: value })

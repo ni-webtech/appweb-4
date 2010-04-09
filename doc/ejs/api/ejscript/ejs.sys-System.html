@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class System</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>System</h1>
+<div class='classBlock'>
+<table class='classHead' summary='System'>
+   <tr><td><strong>Module</strong></td><td>ejs.sys</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.sys"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class System</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ejs-11.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>System <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>System is a utility class providing methods to interact with the operating system.</p>
+
+<p class='classDescription'></p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Bufsize</td><td><a href='intrinsic-Number.html'>Number</a></td><td>&nbsp;</td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>System Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#cmd'><b>cmd</b></a>(args): <a href='intrinsic-String.html'>String</a></tr>   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#daemon'><b>daemon</b></a>(cmd: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Number.html'>Number</a></tr>   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#exec'><b>exec</b></a>(args): <a href='intrinsic-String.html'>String</a></tr>   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#hostname'><b>hostname</b></a>(fullyQualified: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the system hostname.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#run'><b>run</b></a>(cmd: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Execute a command/program.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#runx'><b>runx</b></a>(cmd: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#sh'><b>sh</b></a>(args): <a href='intrinsic-String.html'>String</a></tr></table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='cmd'></a>
+<div class='api'>
+<div class='apiSig'>static  public cmd(args): <a href='intrinsic-String.html'>String</a>
+</div>
+</div>
+<hr />
+<a name='daemon'></a>
+<div class='api'>
+<div class='apiSig'>static  public daemon(cmd: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+</div>
+<hr />
+<a name='exec'></a>
+<div class='api'>
+<div class='apiSig'>static  public exec(args): <a href='intrinsic-String.html'>String</a>
+</div>
+</div>
+<hr />
+<a name='hostname'></a>
+<div class='api'>
+<div class='apiSig'>static get  public hostname(fullyQualified: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the system hostname.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>fullyQualified: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, return a hostname including a domain portion  [default: true]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A host name string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='run'></a>
+<div class='api'>
+<div class='apiSig'>static  public run(cmd: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Execute a command/program.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A text stream connected to the programs standard output.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the command exits with non-zero status.  
+</p>
+</div>
+</div>
+<hr />
+<a name='runx'></a>
+<div class='api'>
+<div class='apiSig'>static  public runx(cmd: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='sh'></a>
+<div class='api'>
+<div class='apiSig'>static  public sh(args): <a href='intrinsic-String.html'>String</a>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

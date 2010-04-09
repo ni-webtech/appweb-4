@@ -1,0 +1,190 @@
+#!/bin/bash
+#
+#   configure.appweb -- Build configuration script for Embedthis Appweb Server
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+#   This script is included by configure and is never run stand-alone.
+#
+
+applyDependencies()
+{
+    local file status
+
+    if [ "$CFG_WITHOUT_SSL" = 1 ] ; then
+        without matrixssl
+        without openssl
+    fi
+}
+
+
+manageFeatures()
+{
+    local file status
+
+    BLD_FEATURE_MPR=1
+
+    if [ "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
+        if [ "$BLD_FEATURE_EJS" = 1 ] ; then
+            BLD_FEATURE_EJS_CROSS_COMPILER=1
+        fi
+    fi
+    if [ "$BLD_FEATURE_EJS" = 0 ] ; then
+        BLD_FEATURE_EJS_ALL_IN_ONE=0
+        BLD_FEATURE_EJS_AUTO_COMPILE=0
+        BLD_FEATURE_EJS_CROSS_COMPILER=0
+    fi
+
+    if [ "$BLD_FEATURE_SEND" = 1 ] ; then
+        if [ "$BLD_FEATURE_ROMFS" = 1 ] ; then
+            BLD_FEATURE_SEND=0
+        fi
+        if [ "$BLD_HOST_OS" != LINUX -a "$BLD_HOST_OS" != MACOSX -a "$BLD_HOST_OS" != FREEBSD ] ; then
+            BLD_FEATURE_SEND=0
+        fi
+    fi
+
+    if [ "$BLD_FEATURE_AUTH_PAM" = 1 ] ; then
+        if [ "$BLD_HOST_OS" = WIN  -o "$BLD_HOST_OS" = VXWORKS ] ; then
+            echo " "
+            echo "PAM authorization is only support on UNIX"
+            BLD_FEATURE_AUTH_PAM=0
+            BLD_FEATURE_AUTH_FILE=1
+        fi
+    fi
+    if [ "$BLD_FEATURE_AUTH_PAM" = 0 -a "$BLD_FEATURE_AUTH_FILE" = 0 ] ; then
+        echo " "
+        echo "Must have one auth backend enabled (PAM or FILE)."
+        echo "Enabling the auth-file authorization backend"
+        BLD_FEATURE_AUTH_FILE=1
+    fi
+}
+
+
+createFeatureConfig()
+{
+    NAME=$1
+
+    cat >>$NAME <<!EOF_FEATURE_CONFIG1
+#
+#   Extended Feature Selection
+#
+BLD_FEATURE_AUTH_FILE=$BLD_FEATURE_AUTH_FILE
+BLD_FEATURE_AUTH_PAM=$BLD_FEATURE_AUTH_PAM
+BLD_FEATURE_CGI=$BLD_FEATURE_CGI
+BLD_FEATURE_CONFIG=$BLD_FEATURE_CONFIG
+BLD_FEATURE_EJS_ALL_IN_ONE=$BLD_FEATURE_EJS_ALL_IN_ONE
+
+#
+#   Default port configuration
+#
+BLD_HTTP_PORT=$BLD_HTTP_PORT
+BLD_SSL_PORT=$BLD_SSL_PORT
+
+!EOF_FEATURE_CONFIG1
+}
+
+
+help()
+{
+    cat <<!EOF_HELP
+
+Additional Appweb Features:
+  --auth=[pam|file]        Build with file or PAM-based authorization support.
+  --conf=FILE              File to use for the appweb.conf configuration file.
+  --port=PORT              Set the default HTTP port to use for the product.
+  --sslPort=PORT           Set the default SSL port to use for the product.
+  --webDir=PATH            Set the directory for web documents (DocumentRoot).
+
+Optional Components: ejs, matrixssl, mysql, openssl, regexp, php, sqlite
+
+  --with-NAME=[DIR]        Support the NAME package. The build/components/NAME
+                           file will describe compile and linker switches. DIR 
+                           is the base directory to find the module.
+  --without-NAME           Do not include support for the NAME.
+
+Examples:
+  ./configure --with-openssl=/usr/src/openssl
+
+!EOF_HELP
+}
+
+
+parseArg()
+{
+    local ARG SW lower
+
+    ARG="${1#*=}"
+    [ "$ARG" = "$1" ] && ARG=
+
+    SW=`echo ${1#--} | tr '[A-Z]' '[a-z]'`
+    lower=`echo ${ARG#--} | tr '[A-Z]' '[a-z]'`
+    case ${SW} in
+    auth=*)
+        if [ "$lower" = "file" ] ; then
+            BLD_FEATURE_AUTH_FILE=1
+            BLD_FEATURE_AUTH_PAM=0
+        elif [ "$lower" = "pam" ] ; then
+            BLD_FEATURE_AUTH_FILE=0
+            BLD_FEATURE_AUTH_PAM=1
+        else
+            echo "Unknown authorization backend for --auth"
+            exit 255
+        fi
+        ;;
+    conf=*|config=*)
+        if [ "${ARG}" = "${ARG/\/}" ] ; then
+            BLD_FEATURE_CONFIG="template/${ARG}"
+        else
+            BLD_FEATURE_CONFIG="${ARG}"
+        fi
+        ;;
+    disable-all)
+        BLD_DISABLE_ALL=1
+        BLD_FEATURE_ASSERT=0
+        BLD_FEATURE_AUTH_FILE=1
+        BLD_FEATURE_AUTH_PAM=0
+        BLD_FEATURE_CGI=0
+        BLD_FEATURE_EJS_ALL_IN_ONE=0
+        BLD_FEATURE_EJS_AUTO_COMPILE=0
+        BLD_FEATURE_EJS_CROSS_COMPILER=0
+        BLD_FEATURE_LEGACY_API=0
+        BLD_FEATURE_ROMFS=0
+        ;;
+    disable-cgi)
+        BLD_FEATURE_CGI=0
+        ;;
+    enable-all)
+        BLD_FEATURE_ASSERT=1
+        BLD_FEATURE_AUTH_FILE=1
+        BLD_FEATURE_AUTH_PAM=1
+        BLD_FEATURE_CGI=1
+        BLD_FEATURE_EJS_ALL_IN_ONE=1
+        BLD_FEATURE_LEGACY_API=1
+        BLD_FEATURE_ROMFS=0
+        if [ "$BLD_HOST_OS" != WIN -a "$BLD_HOST_OS" != VXWORKS ] ; then
+            BLD_FEATURE_AUTH_PAM=1
+        else
+            BLD_FEATURE_AUTH_PAM=0
+        fi
+        ;;
+    enable-auto-compile)
+        BLD_FEATURE_EJS_AUTO_COMPILE=1
+        ;;
+    enable-cgi)
+        BLD_FEATURE_CGI=1
+        ;;
+    enable-cross-compiler)
+        BLD_FEATURE_EJS_CROSS_COMPILER=1
+        ;;
+    port=*)
+        BLD_HTTP_PORT=${ARG}
+        ;;
+    sslport=*)
+        BLD_SSL_PORT=${ARG}
+        ;;
+    *)  
+        return 1
+        ;;
+    esac
+    return 0
+}

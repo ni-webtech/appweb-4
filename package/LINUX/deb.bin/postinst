@@ -1,0 +1,114 @@
+#!/bin/sh -e
+#
+# 	postinst -- Post installation script for appweb
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+
+BLD_PRODUCT=!!BLD_PRODUCT!!
+BLD_NAME="!!BLD_NAME!!"
+BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
+BLD_MOD_PREFIX="!!ORIG_BLD_MOD_PREFIX!!"
+
+###############################################################################
+
+setup() {
+	local g u
+
+	#
+	#	Select default username
+	#
+	for u in nobody www-data 
+	do
+		grep "$u" /etc/passwd >/dev/null
+		if [ $? = 0 ] ; then
+			username=$u
+			break
+		fi
+	done
+
+	if [ "$username" = "" ] ; then
+		echo "Can't find a suitable username in /etc/passwd for $BLD_PRODUCT" 1>&2
+		exit 255
+	fi
+	
+	#
+	#	Select default group name
+	#
+	for g in nobody nogroup www-data 
+	do
+		grep "$g" /etc/group >/dev/null
+		if [ $? = 0 ] ; then
+			groupname=$g
+			break
+		fi
+	done
+	
+	if [ "$groupname" = "" ] ; then
+		echo "Can't find a suitable group in /etc/group for $BLD_PRODUCT" 1>&2
+		exit 255
+	fi
+}
+
+#
+#	Configure the product service. Usage: configureService start|stop|install
+#
+configureService() {
+	local action=$1
+
+	case $action in
+
+	start)
+		if which service >/dev/null 2>&1 ; then
+			service $BLD_PRODUCT $action
+		elif which invoke-rc.d >/dev/null 2>&1 ; then
+			invoke-rc.d appweb $action || true
+        elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
+            /etc/init.d/$BLD_PRODUCT start
+		fi
+		;;
+
+	install)
+        if which ldconfig >/dev/null 2>&1 ; then
+            ldconfig -n $BLD_LIB_PREFIX
+            ldconfig -n $BLD_MOD_PREFIX
+        fi
+		if which chkconfig >/dev/null 2>&1 ; then
+			/sbin/chkconfig --add $BLD_PRODUCT
+			/sbin/chkconfig --level 5 $BLD_PRODUCT on
+		elif which update-rc.d >/dev/null 2>&1 ; then
+			update-rc.d $BLD_PRODUCT defaults 90 10 >/dev/null || true
+        elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
+            (cd /etc/init.d ; /etc/init.d/$BLD_PRODUCT enable )
+		fi
+		;;
+	esac
+}
+
+install() {
+
+	configureService install
+	configureService start
+}
+
+###############################################################################
+#
+#	Main
+#
+
+cd /
+action=$1
+
+case $action in
+	configure)							# when new
+		oldVersion=$2
+		install
+		echo -e "\n$BLD_NAME installation successful."
+		;;
+	abort-upgrade)						# when old
+		;;
+	abort-remove)
+		# 	sometimes conflictor's-postinst abort-remove in-favor package new-version
+		;;
+esac
+exit 0
