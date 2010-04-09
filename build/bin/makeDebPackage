@@ -1,0 +1,87 @@
+#
+#   makeDebPackage - Create Debian package
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+################################################################################
+
+export BLD_HOST_CPU_MAPPED=$BLD_HOST_CPU
+
+setupDeb() {
+    echo -e "\n#\n# Create the Debian packages ...\n#"
+
+    if [ "$BLD_HOST_CPU_ARCH" = "MPR_CPU_IX86" ] ; then
+        BLD_HOST_CPU_MAPPED=i386
+    fi
+    if [ "$BLD_HOST_CPU_ARCH" = "MPR_CPU_IX64" ] ; then
+        BLD_HOST_CPU_MAPPED=amd64
+    fi
+}
+
+copyDebControlFiles() {
+    local pkg dir
+
+    for pkg in bin dev src ; do
+        suffix="-$pkg"
+        dir=`echo ${pkg} | tr '[a-z]' '[A-Z]'`
+        mkdir -p ${ROOT_DIR}/${dir}/DEBIAN
+
+        for f in package/LINUX/deb.${pkg}/* ; do
+            name=`basename $f`
+            cp ${f} ${ROOT_DIR}/${dir}/DEBIAN
+            patchFile ${ROOT_DIR}/${dir}/DEBIAN/$name
+            chmod 644 ${ROOT_DIR}/${dir}/DEBIAN/$name
+        done
+        if `ls ${ROOT_DIR}/${dir}/DEBIAN/p* >/dev/null 2>&1` ; then
+            chmod 755 ${ROOT_DIR}/${dir}/DEBIAN/p*
+        fi
+    done
+}
+
+#
+#   Make debian package
+#
+makeDebPackage() {
+
+    local pkg name
+
+    dir=$1
+    name=$2
+
+    cd ${ROOT_DIR}
+    echo "dpkg --build ${dir} ${name}"
+    dpkg --build ${dir} ${name} >${HOME}/build.log 2>&1
+    if [ $? != 0 ] ; then
+        echo "dpkg failed "
+        cat ${HOME}/build.log
+        exit 255
+    else 
+        rm -f ${HOME}/build.log
+    fi
+    cd ${HOME}
+}
+
+makeDebPackages() {
+
+    local pkg upper
+
+    name=`createPackageName ${BLD_PRODUCT}`.deb
+
+    for pkg in bin dev src ; do
+        upper=`echo ${pkg} | tr '[a-z]' '[A-Z]'`
+        if [ "$pkg" = src ] ; then
+            name="${BLD_PRODUCT}-${pkg}-${BLD_VERSION}-${BLD_NUMBER}.deb"
+        else
+            name=`createPackageName ${BLD_PRODUCT}-${pkg}`.deb
+        fi
+        makeDebPackage ${upper} $name
+    done
+}
+
+#
+#   Main
+#
+setupDeb
+copyDebControlFiles
+makeDebPackages
+

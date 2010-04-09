@@ -1,0 +1,71 @@
+#
+#   OpenSSL
+#
+defineComponent() {
+	local path name search ver imports libs
+
+    if [ $KIND = "BUILD" -a $BLD_CROSS = 1 ] ; then
+        echo "only used as a host component"
+        return 0
+    fi
+
+    path=$1
+    name="openssl"
+    ver="latest"
+    search="."
+
+    if [ $BLD_HOST_OS = WIN ] ; then
+        path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" $name`
+        imports="$path/out32dll/libeay32.dll $path/out32dll/ssleay32.dll"
+        libs="libeay32 ssleay32"
+        iflags="-I$path/inc32"
+
+    elif [ $BLD_HOST_OS = CYGWIN ] ; then
+        #
+        #   Use system libraries
+        #
+        path=/usr/lib
+        imports="$path/libssl.a $path/libcrypto.a"
+        libs="ssl crypto"
+        iflags="-I$path/include"
+
+    elif [ $BLD_HOST_OS = MACOSX ] ; then
+        #
+        #   Use system libraries
+        #       path=/usr/lib
+        #       libs="ssl crypto"
+        #       iflags="-I$path/include"
+        #
+        #   Use shared libraries
+        #
+        #       path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" $name`
+        #       imports="$path/libssl.dylib $path/libcrypto.dylib"
+        #       path=/usr/lib
+        #       libs="ssl crypto"
+        #       iflags="-I$path/include"
+        path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" $name`
+        imports="$path/libssl.a $path/libcrypto.a"
+        libs="ssl.a crypto.a"
+        iflags="-I$path/include"
+
+    else 
+        path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" $name`
+        imports="$path/libssl.so $path/libcrypto.so"
+        libs="ssl crypto"
+        iflags="-I$path/include"
+    fi
+    if [ "$path" = "" ] ; then
+        warnComponent $name
+        return
+	fi
+    CFG_HOST_SSL_MANDATORY=1
+
+    for i in $imports
+    do
+        if [ ! -f "$i" ] ; then
+            warnComponent $name "Can't locate $i"
+            return
+        fi
+    done
+    configureComponent --path "$path" --imports "$imports" --libs "$libs" --iflags "$iflags" $name
+}

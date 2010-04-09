@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class File</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>File</h1>
+<div class='classBlock'>
+<table class='classHead' summary='File'>
+   <tr><td><strong>Module</strong></td><td>ejs.io</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.io"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class File</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ejs-12.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>File <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>The File class provides a foundation of I/O services to interact with physical files.</p>
+
+<p class='classDescription'>Each File object represents a single file, a named path to data stored in non-volatile memory. A File object  provides methods for creating, opening, reading, writing and deleting a file, and for accessing and modifying  information about the file. All I/O is unbuffered and synchronous. defined via the callback property.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td colspan='4'>No properties defined</td></tr></table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>File Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#available'><b>available</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the number of bytes available to read.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#canRead'><b>canRead</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the file can be read.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#canWrite'><b>canWrite</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the file can be written.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#close'><b>close</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Close the input stream and free up all associated resources.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#File'><b>File</b></a>(path: <a href='intrinsic-Object.html'>Object</a>, options: <a href='intrinsic-Object.html'>Object</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a File object and open the requested path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#flush'><b>flush</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Flush any buffered data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator override </td><td><a href='#get'><b>get</b></a>(): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Iterate over the positions in a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator override </td><td><a href='#getValues'><b>getValues</b></a>(): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get an iterator for this file to be used by "for each (v in obj)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#isOpen'><b>isOpen</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Determine if the file is open.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#open'><b>open</b></a>(options: <a href='intrinsic-Object.html'>Object</a>): <a href='ejs.io-File.html'>File</a></tr>   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#options'><b>options</b></a>(): <a href='intrinsic-Object.html'>Object</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the file options.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#path'><b>path</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the name of the file associated with this File object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#position'><b>position</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the current I/O position in the file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-position'><b>position</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Seek to a new location in the file and set the File marker to a new read/write position.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#read'><b>read</b></a>(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a block of data from a file into a byte array.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readBytes'><b>readBytes</b></a>(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-ByteArray.html'>ByteArray</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read data bytes from a file and return a byte array containing the data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readString'><b>readString</b></a>(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read data from a file as a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#remove'><b>remove</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Remove a file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#size'><b>size</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the size of the file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#skip'><b>skip</b></a>(n: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#truncate'><b>truncate</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Truncate the file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#write'><b>write</b></a>(items: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write data to the file.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='available'></a>
+<div class='api'>
+<div class='apiSig'> public available(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Return the number of bytes available to read.</p>
+<dl><dt>Returns</dt>
+<dd>A the number of available bytes.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='canRead'></a>
+<div class='api'>
+<div class='apiSig'>get  public canRead(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the file can be read.</p>
+<dl><dt>Returns</dt>
+<dd>True if the file is open and can be read.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='canWrite'></a>
+<div class='api'>
+<div class='apiSig'>get  public canWrite(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the file can be written.</p>
+<dl><dt>Returns</dt>
+<dd>True if the file is open and can be written.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='close'></a>
+<div class='api'>
+<div class='apiSig'> public close(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Close the input stream and free up all associated resources.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>if true, then close the file gracefully after writing all pending data.  [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='File'></a>
+<div class='api'>
+<div class='apiSig'> File(path: <a href='intrinsic-Object.html'>Object</a>, options: <a href='intrinsic-Object.html'>Object</a>)
+</div>
+<div class='apiDetail'>
+<p>Create a File object and open the requested path.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-Object.html'>Object</a> </td><td>the name of the file to associate with this file object. Can be either a String or a Path. </td></tr><tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td>If the open options are provided, the file is opened. See $open for the available options. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='flush'></a>
+<div class='api'>
+<div class='apiSig'> public flush(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Flush any buffered data.</p>
+<dl><dt>Description</dt><dd>This is a noop and is supplied just to comply with the Stream interface.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, write all pending data.  [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='get'></a>
+<div class='api'>
+<div class='apiSig'>override  iterator get(): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Iterate over the positions in a file.</p>
+<dl><dt>Description</dt><dd>This will get an iterator for this file to be used by  "for (v in files)".</dd></dl>
+<dl><dt>Returns</dt>
+<dd>An iterator object that will return numeric offset positions in the file.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='getValues'></a>
+<div class='api'>
+<div class='apiSig'>override  iterator getValues(): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get an iterator for this file to be used by "for each (v in obj)".</p>
+<dl><dt>Description</dt><dd>Return each byte of the file in turn.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>An iterator object that will return the bytes of the file.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='isOpen'></a>
+<div class='api'>
+<div class='apiSig'>get  public isOpen(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Determine if the file is open.</p>
+<dl><dt>Returns</dt>
+<dd>True if the file is open.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='open'></a>
+<div class='api'>
+<div class='apiSig'> public open(options: <a href='intrinsic-Object.html'>Object</a>): <a href='ejs.io-File.html'>File</a>
+</div>
+</div>
+<hr />
+<a name='options'></a>
+<div class='api'>
+<div class='apiSig'>get  public options(): <a href='intrinsic-Object.html'>Object</a>
+</div>
+<div class='apiDetail'>
+<p>Get the file options.</p>
+<dl><dt>Returns</dt>
+<dd>The file options object hash.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='path'></a>
+<div class='api'>
+<div class='apiSig'>get  public path(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the name of the file associated with this File object.</p>
+<dl><dt>Returns</dt>
+<dd>The name of the file or null if there is no associated file.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='position'></a>
+<div class='api'>
+<div class='apiSig'>get  public position(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the current I/O position in the file.</p>
+<dl><dt>Returns</dt>
+<dd>The current read / write position in the file.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the seek failed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='set-position'></a>
+<div class='api'>
+<div class='apiSig'>set  public position(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Seek to a new location in the file and set the File marker to a new read/write position.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the seek failed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='read'></a>
+<div class='api'>
+<div class='apiSig'> public read(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read a block of data from a file into a byte array.</p>
+<dl><dt>Description</dt><dd>This will advance the read file's position.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a> </td><td>Destination byte array for the read data. </td></tr><tr><td class='param'>offset: <a href='intrinsic-Number.html'>Number</a> </td><td>Offset in the byte array to place the data. If the offset is -1, then data is appended to the buffer write $position which is then updated.  </td></tr><tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to read. If -1, raed much as the buffer will hold up to the entire file if the  buffer is of sufficient size or is growable. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A count of the bytes actually read. Returns 0 on end of file.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file could not be read. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readBytes'></a>
+<div class='api'>
+<div class='apiSig'> public readBytes(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-ByteArray.html'>ByteArray</a>
+</div>
+<div class='apiDetail'>
+<p>Read data bytes from a file and return a byte array containing the data.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to read. If null, read the entire file. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A byte array containing the read data. Returns an empty array on end of file.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file could not be read. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readString'></a>
+<div class='api'>
+<div class='apiSig'> public readString(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Read data from a file as a string.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to read. If -1, read the entire file. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string containing the read data. Returns an empty string on end of file.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file could not be read. 
+</p>
+</div>
+</div>
+<hr />
+<a name='remove'></a>
+<div class='api'>
+<div class='apiSig'> public remove(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Remove a file.</p>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file could not be removed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='size'></a>
+<div class='api'>
+<div class='apiSig'>get  public size(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the size of the file.</p>
+<dl><dt>Returns</dt>
+<dd>The number of bytes in the file or -1 if size determination failed.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='skip'></a>
+<div class='api'>
+<div class='apiSig'> public skip(n: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='truncate'></a>
+<div class='api'>
+<div class='apiSig'> public truncate(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Truncate the file.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>value: <a href='intrinsic-Number.html'>Number</a> </td><td>the new length of the file </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file's size cannot be changed 
+</p>
+</div>
+</div>
+<hr />
+<a name='write'></a>
+<div class='api'>
+<div class='apiSig'> public write(items: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Write data to the file.</p>
+<dl><dt>Description</dt><dd>If the stream is in sync mode, the write call blocks until the underlying stream or  endpoint absorbes all the data. If in async-mode, the call accepts whatever data can be accepted immediately  and returns a count of the elements that have been written.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>items: <a href='intrinsic-Array.html'>Array</a> </td><td>The data argument can be ByteArrays, strings or Numbers. All other types will call serialize first before writing. Note that numbers will not be written in a cross platform manner. If that is required, use the BinaryStream class to control the byte ordering when writing numbers. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The number of bytes written.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file could not be written. 
+</p>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

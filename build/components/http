@@ -1,0 +1,20 @@
+#
+#   Http
+#
+defineComponent() {
+    local name path libpaths
+
+    path="$1"
+    name="http"
+
+    path=`probe --path "$path" --partial http $name`
+    if [ "$path" = "" ] ; then
+        warnComponent $name
+        return
+	fi
+    libpaths="$path/lib"
+    configureComponent --builtin --optional-dependencies "regexp" --libs "http" --path "$path" \
+        --libpaths "$libpaths" $name
+
+    BLD_FEATURE_HTTP_ALL_IN_ONE=1
+}

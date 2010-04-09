@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+#   allinone -- Make an all-in-one source file
+#   Copyright (c) Embedthis LLC, 2003-2010. All Rights Reserved.
+#
+
+. ${BLD_TOP}/build/bin/buildConfig.sh
+
+files="$*"
+
+cat <<!EOF
+
+/******************************************************************************/
+/* 
+ *  This file is an amalgamation of all the individual source code files for
+ *  $BLD_NAME $BLD_VERSION.
+ *
+ *  Catenating all the source into a single file makes embedding simpler and
+ *  the resulting application faster, as many compilers can do whole file
+ *  optimization.
+ *
+ *  If you want to modify $BLD_PRODUCT, you can still get the whole source
+ *  as individual files if you need.
+ */
+!EOF
+for f in $files
+do
+    echo -en "\n\n/************************************************************************/\n" ; \
+    echo -en "/*\n *  Start of file \"${f}\"\n */\n" ; \
+    echo -en "/************************************************************************/\n\n" ; \
+    cat $f | grep -v '^/\*\*\*\*\*.*\/$' ; \
+    echo -en "/************************************************************************/\n" ; \
+    echo -en "/*\n *  End of file \"${f}\"\n */\n" ; \
+    echo -en "/************************************************************************/\n\n" ; \
+done
+

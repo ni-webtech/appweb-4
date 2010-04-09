@@ -1,0 +1,56 @@
+#
+#   Ejs
+#
+defineComponent() {
+    local builtin deps libs name optional path libpaths
+
+    name="ejs"
+    path="$1"
+    search="src/deps:src"
+
+    if [ -d src/vm ] ; then
+        path=`probe --path "$path" --partial "src/vm" --emit-dir $name`
+        builtin=--builtin
+    elif [ -d src/deps/ejs ] ; then
+        builtin=--builtin
+        path=`probe --path "$path" --partial "ejs" $name`
+    else
+        path=`probe --path "$path" --partial "ejs" $name`
+    fi
+    if [ "$path" = "" ] ; then
+        warnComponent $name
+        return
+    fi
+    if isExternal "$path" ; then
+        libpaths="$path/lib"
+    fi
+
+    optional="ssl"
+    if [ "$BLD_FEATURE_STATIC" = 1 ] ; then
+        optional="$optional sqlite"
+    else
+        if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
+            if isdefined SQLITE ; then
+                optional="$optional sqlite"
+            fi
+        fi
+    fi
+    deps="mpr"
+    if [ -d src/deps ] ; then
+        deps="$deps http"
+    fi
+    if [ -f src/mpr/mprPcre.c ] ; then
+        withlibs="$withlibs pcre"
+        libs="$libs pcre"
+    fi
+
+    if [ "$BLD_PRODUCT_APPWEB" = 1 -a ! -d src/deps ] ; then
+        # Version 3.1.X
+        libname="ajs"
+    else
+        libname="ejs"
+    fi
+
+    configureComponent --path "$path" --dependencies "$deps" --optional-dependencies "$optional" \
+        $builtin --libs "$libname $libs" --withlibs "$withlibs" $name
+}

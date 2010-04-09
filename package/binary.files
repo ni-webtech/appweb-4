@@ -1,0 +1,188 @@
+#
+#	binary.files - Files needed for the binary installation 
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+
+# TRACE=1
+
+usePrefixes CFG BIN JEM LIB LOG MOD PRD VER WEB 
+
+${CHMOD} 755 "${BLD_CFG_PREFIX}"
+
+if [ "${TASK}" = Remove -a -f "${BLD_BIN_PREFIX}/linkup" ] ; then
+    cp ${BLD_BIN_PREFIX}/linkup /tmp/linkup$$
+fi
+
+cpy -w -t -e doc/licenses/LICENSE.TXT doc/product/README.TXT doc/product/COPYRIGHT.TXT "${BLD_CFG_PREFIX}"
+if [ "$WITH_OPENWRT" != 1 ] ; then
+	cpy -e -m 0755 package/uninstall.sh "${BLD_CFG_PREFIX}/uninstall"
+	cpy -e -m 0755 package/uninstall.sh "${BLD_LIB_PREFIX}/uninstall"
+fi
+cpy -e -m 0755 package/linkup "${BLD_BIN_PREFIX}/linkup"
+
+cpy -m 755 "${BLD_BIN_DIR}/appweb${BLD_EXE}" "${BLD_BIN_PREFIX}"
+
+if [ "$BLD_FEATURE_ANGEL" = 1 ] ; then
+    cpy -m 755 "${BLD_BIN_DIR}/angel${BLD_EXE}" "${BLD_BIN_PREFIX}"
+fi
+
+if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
+    if [ "$BLD_FEATURE_HTTP_CLIENT" = 1 ] ; then
+        cpy -m 755 -d ${BLD_BIN_DIR} http${BLD_EXE} "${BLD_BIN_PREFIX}"
+    fi
+    cpy -m 755 -d ${BLD_BIN_DIR} httpPassword${BLD_EXE} makerom${BLD_EXE} "${BLD_BIN_PREFIX}"
+fi
+
+if `ls ${BLD_MOD_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then
+	cpy -m 755 -d ${BLD_MOD_DIR} "*${BLD_SHOBJ}" "${BLD_MOD_PREFIX}"
+fi
+if [ $BLD_LIB_DIR != $BLD_MOD_DIR ] ; then
+	if `ls ${BLD_LIB_DIR}/*${BLD_SHOBJ}* >/dev/null 2>&1` ; then
+        libcFilter="$BLD_LIB_DIR}/libec-${BLD_VERSION}"
+		cpy -f "${libcFilter}" -m 755 -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
+        if [ "$BLD_FEATURE_STATIC" = 0 ] ; then
+            if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
+                cpy -m 755 "${BLD_LIB_DIR}/libec-${BLD_VERSION}${BLD_SHOBJ}" "${BLD_LIB_PREFIX}"
+            fi
+        fi
+	fi
+fi
+
+cpy src/server/mime.types        "${BLD_CFG_PREFIX}"
+cpy -d src/server "*.db"         "${BLD_CFG_PREFIX}"
+
+if [ "$WITH_TESTWEB" != "" ] ; then
+	webFilter='mgmt/'
+    cpy -d src/server/web -f "${webFilter}" "*" "${BLD_WEB_PREFIX}"
+    if [ "${TASK}" != Remove ] ; then
+        chmod +x "${BLD_WEB_PREFIX}/test/"{*.cgi,*.pl,*.py}
+    fi
+else
+    cpy src/server/web/min-index.html "${BLD_WEB_PREFIX}/appweb.html"
+fi
+
+if [ "$WITH_CONF" = "" ] ; then
+	if [ -d "$BLD_FEATURE_CONFIG" ] ; then
+		configDir="$BLD_FEATURE_CONFIG"
+	else
+		configDir="src/server/$BLD_FEATURE_CONFIG"
+	fi
+    cpy -d "${configDir}" "*" "${BLD_CFG_PREFIX}"
+else
+    cpy "$WITH_CONF" "${BLD_CFG_PREFIX}/appweb.conf"
+fi
+
+makeDir "${BLD_LOG_PREFIX}"
+touch "${BLD_LOG_PREFIX}"/.dummy
+
+#
+#   Patch appweb.conf and other config files
+#
+rm -f "${BLD_CFG_PREFIX}/conf/appweb.conf"
+if [ "${TASK}" != Remove ] ; then
+    (
+        dir=$BLD_CFG_PREFIX
+        for v in BLD_CFG_PREFIX BLD_WEB_PREFIX BLD_DOC_PREFIX BLD_MOD_PREFIX BLD_LOG_PREFIX ; do
+            eval export $v=$`echo ORIG_${v}`
+        done
+        export BLD_HTTP_PORT BLD_SSL_PORT 
+		multipartConfig=1
+		for f in "${dir}/appweb.conf" "${dir}/conf/hosts/ssl-default.conf" "${dir}/conf/log.conf" "${dir}/conf/doc.conf"
+		do
+			[ ! -f "$f" ] && multipartConfig=0 
+		done
+        if [ "$multipartConfig" = "0" ] ; then
+            patchAppwebConf "${dir}/appweb.conf"
+        else
+            patchAppwebConf "${dir}/appweb.conf" "${dir}/conf/hosts/ssl-default.conf" \
+                "${dir}/conf/log.conf" "${dir}/conf/doc.conf"
+        fi
+    )
+fi
+
+if [ "$BLD_FEATURE_PHP" = 1 ] ; then
+    cpy src/server/php.ini "${BLD_CFG_PREFIX}"
+fi
+if [ "$BLD_FEATURE_SSL" = 1 ] ; then
+    makeDir "${BLD_CFG_PREFIX}/ssl"
+    cpy src/server/ssl/server.* "${BLD_CFG_PREFIX}/ssl"
+fi
+if [ "$BLD_FEATURE_EJS" = 1 ] ; then
+    cpy -d ${BLD_MOD_DIR} "ejs-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
+    if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
+        cpy -m 644 -d "${BLD_LIB_DIR}" appweb.conf mime.types "${BLD_LIB_PREFIX}"
+        if [ $BLD_HOST_OS = WIN ] ; then
+            cpy -d ${BLD_MOD_DIR} "ejsweb-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
+        fi
+        cpy -m 755 -d ${BLD_BIN_DIR} ejsc${BLD_EXE} ejsweb${BLD_EXE} "${BLD_BIN_PREFIX}"
+        makeDir "${BLD_LIB_DIR}/www"
+        cpy -m 644 -d "${BLD_LIB_DIR}/www" "*" "${BLD_LIB_PREFIX}/www"
+    fi
+    if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
+        cpy -m 755 -d ${BLD_BIN_DIR} ejs${BLD_EXE} ejsmod${BLD_EXE} ejssql${BLD_EXE} "${BLD_BIN_PREFIX}"
+    fi
+fi
+
+#
+#   Service startup scripts.
+#
+if [ $BLD_HOST_OS = MACOSX ] ; then
+    makeDir ${BLD_ROOT_PREFIX}/Library/LaunchDaemons
+    cpy -m 644 -e package/MACOSX/com.embedthis.appweb.plist "${BLD_ROOT_PREFIX}/Library/LaunchDaemons"
+
+elif [ $BLD_HOST_OS = LINUX ] ; then
+    makeDir ${BLD_ROOT_PREFIX}/etc/init.d
+    if [ "${TASK}" = Package ] ; then
+        cpy -m 0755 -e package/LINUX/${BLD_PRODUCT}.init ${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}
+    else
+        if [ `id -u` = 0 -o "$ROOT_DIR" != "" ] ; then
+            if [ "$WITH_OPENWRT" = 1 ] ; then
+				makeDir "${BLD_ROOT_PREFIX}/CONTROL"
+				cpy -e -m 0755 package/LINUX/deb.bin/p* "${BLD_ROOT_PREFIX}/CONTROL"
+                cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.openwrt "${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}"
+            else
+                #
+                #	Daemon start / stop scripts
+                #
+                cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.init "${BLD_ROOT_PREFIX}/etc/rc.d/${BLD_PRODUCT}"
+                cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.init "${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}"
+
+                d=`getpath "${BLD_ROOT_PREFIX}/etc"`
+                for i in 2 3 4 5 ; do
+                    ${RM} -f "${d}/rc${i}.d/S81${BLD_PRODUCT}"
+                    if [ $TASK != Remove ] ; then
+                        makeDir "${d}"/rc${i}.d
+                        ${LN} -s "${d}/init.d/${BLD_PRODUCT}" "${d}/rc${i}.d/S81${BLD_PRODUCT}"
+                    fi
+                done
+                for i in 0 1 6 ; do
+                    ${RM} -f "${d}/rc${i}.d/K15${BLD_PRODUCT}"
+                    if [ $TASK != Remove ] ; then
+                        makeDir "${d}"/rc${i}.d
+                        ${LN} -s "${d}/init.d/${BLD_PRODUCT}" "${d}/rc${i}.d/K15${BLD_PRODUCT}"
+                    fi
+                done
+            fi
+        fi
+    fi
+fi
+
+if [ $BLD_HOST_OS = WIN ] ; then
+    clversion=$BLD_CC_CL_VERSION
+    if [ "$clversion" = 15 -a -f lib/msvcrt/$BLD_CC_CL_VERSION/msvcr90.dll ] ; then
+        cpy -d "lib/msvcrt/$BLD_CC_CL_VERSION" msvcr90.dll Microsoft.VC90.CRT.manifest "${BLD_BIN_PREFIX}"
+    fi
+	cpy ${BLD_BIN_DIR}/appwebMonitor${BLD_EXE} "${BLD_BIN_PREFIX}"
+	cpy ${BLD_BIN_DIR}/appwebMonitor.ico "${BLD_BIN_PREFIX}"
+	cpy ${BLD_BIN_DIR}/ejs${BLD_EXE}* "${BLD_BIN_PREFIX}"
+    cpy ${BLD_BIN_DIR}/removeFiles${BLD_EXE}* "${BLD_BIN_PREFIX}"
+	cpy package/WIN/patchConfig.es "${BLD_BIN_PREFIX}"
+fi
+
+if [ "${TASK}" = Install ] ; then
+    bash ${BLD_BIN_PREFIX}/linkup $TASK
+elif [ -f /tmp/linkup$$ ] ; then
+    bash /tmp/linkup$$ $TASK
+    rm -f /tmp/linkup$$
+fi

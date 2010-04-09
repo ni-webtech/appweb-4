@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class Object</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Object</h1>
+<div class='classBlock'>
+<table class='classHead' summary='Object'>
+   <tr><td><strong>Module</strong></td><td>ejs</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>intrinsic</td></tr>
+   <tr><td><strong>Definition</strong></td><td>dynamic  class Object</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Object       </td></tr>
+</table>
+
+<p class='classBrief'>The Object Class is the root class from which all objects are based.</p>
+
+<p class='classDescription'>It provides a foundation set of functions  and properties which are available to all objects. It provides for: copying objects, evaluating equality of  objects, providing information about base classes, serialization and deserialization and iteration.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td colspan='4'>No properties defined</td></tr></table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Object Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#clone'><b>clone</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Clone the array and all its elements.</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator </td><td><a href='#get'><b>get</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>, namespaces: <a href='intrinsic-Array.html'>Array</a>): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get an iterator for this object to be used by "for (v in obj)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>iterator </td><td><a href='#getValues'><b>getValues</b></a>(deep: <a href='intrinsic-Boolean.html'>Boolean</a>, namespaces: <a href='intrinsic-Array.html'>Array</a>): <a href='iterator-Iterator.html'>Iterator</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get an iterator for this object to be used by "for each (v in obj)".</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#length'><b>length</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>The length of the object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#toJSON'><b>toJSON</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convert an object to an equivalent JSON encoding.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#toString'><b>toString</b></a>(locale: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>This function converts an object to a string representation.</td></tr>
+</table>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='clone'></a>
+<div class='api'>
+<div class='apiSig'> public clone(deep: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Clone the array and all its elements.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, do a deep copy where all object references are also copied, and so on, recursively.  [default: true]</td></tr></table></dd>
+</dl><dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='get'></a>
+<div class='api'>
+<div class='apiSig'> iterator get(deep: <a href='intrinsic-Boolean.html'>Boolean</a>, namespaces: <a href='intrinsic-Array.html'>Array</a>): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get an iterator for this object to be used by "for (v in obj)".</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Follow the prototype chain. Only implemented in ECMA compliance mode..  [default: false ]</td></tr><tr><td class='param'>namespaces: <a href='intrinsic-Array.html'>Array</a> </td><td></td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An iterator object.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='getValues'></a>
+<div class='api'>
+<div class='apiSig'> iterator getValues(deep: <a href='intrinsic-Boolean.html'>Boolean</a>, namespaces: <a href='intrinsic-Array.html'>Array</a>): <a href='iterator-Iterator.html'>Iterator</a>
+</div>
+<div class='apiDetail'>
+<p>Get an iterator for this object to be used by "for each (v in obj)".</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>deep: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Follow the prototype chain. Only implemented in ECMA compliance mode..  [default: false ]</td></tr><tr><td class='param'>namespaces: <a href='intrinsic-Array.html'>Array</a> </td><td></td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An iterator object.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='length'></a>
+<div class='api'>
+<div class='apiSig'>get  public length(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>The length of the object.</p>
+<dl><dt>Returns</dt>
+<dd>Returns the most natural size or length for the object. For types based on Object, the number of  properties will be returned. For Arrays, the number of elements will be returned. For some types,  the size property may be writable. For null objects the length is 0; for undefined objects the length is -1. BUG: ECMA specifies to return 1 always.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='toJSON'></a>
+<div class='api'>
+<div class='apiSig'> public toJSON(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Convert an object to an equivalent JSON encoding.</p>
+<dl><dt>Returns</dt>
+<dd>This function returns an object literal string.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='TypeError.html'>TypeError</a>: If the object could not be converted to a string. 
+</p>
+</div>
+</div>
+<hr />
+<a name='toString'></a>
+<div class='api'>
+<div class='apiSig'> public toString(locale: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>This function converts an object to a string representation.</p>
+<dl><dt>Description</dt><dd>Types typically override this to provide  the best string representation.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>locale: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string representation of the object. For Objects "[object className]" will be returned,  where className is set to the name of the class on which the object was based.</dd></dl>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

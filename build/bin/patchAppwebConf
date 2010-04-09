@@ -1,0 +1,128 @@
+#!/bin/sh
+#
+#   patchAppwebConf -- Patch the appweb.conf file
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+#   usage: $BLD_TOOLS_DIR/patchAppwebConf file 
+#
+#   Must set the env vars:
+#
+#       BLD_CFG_PREFIX, BLD_WEB_PREFIX, BLD_MOD_PREFIX BLD_HTTP_PORT, BLD_SSL_PORT
+#
+###############################################################################
+
+setup() {
+
+    local g u
+
+    #
+    #   Select default username
+    #
+    for u in nobody www-data Administrator
+    do
+        grep "$u" /etc/passwd >/dev/null
+        if [ $? = 0 ]
+        then
+            username=$u
+            break
+        fi
+    done
+
+    if [ "$username" = "" ]
+    then
+        echo "Can't find a suitable username in /etc/passwd for $PRODUCT" 1>&2
+        exit 255
+    fi
+    
+    #
+    #   Select default group name
+    #
+    for g in nogroup nobody www-data Administrators
+    do
+        grep "$g" /etc/group >/dev/null
+        if [ $? = 0 ]
+        then
+            groupname=$g
+            break
+        fi
+    done
+    
+    if [ "$groupname" = "" ]
+    then
+        echo "Can't find a suitable group in /etc/group for $PRODUCT" 1>&2
+        exit 255
+    fi
+}
+
+
+
+editAppwebConf()
+{
+    conf="$1"
+    ssl="$2"
+    log="$3"
+    doc="$4"
+    docPrefix="${BLD_DOC_PREFIX}"
+    
+    if [ -f "$conf" ] ; then
+        sed -e "
+            s!^ServerRoot.*\".*!ServerRoot \"${BLD_CFG_PREFIX}\"!
+            s!^DocumentRoot.*\".*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
+            s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_MOD_PREFIX}\"!
+            s!^Listen.*!Listen ${BLD_HTTP_PORT}!
+            s!^User .*!User ${username}!
+            s!^Group .*!Group ${groupname}!" <"$conf" >"$conf.new"
+        [ $? = 0 ] && mv "$conf.new" "$conf"
+    fi
+
+    if [ -f "$ssl" ] ; then
+        sed -e "
+            s![ 	][ 	]*Listen.*!    Listen ${BLD_SSL_PORT}!
+            s!DocumentRoot.*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
+            s!<VirtualHost .*!<VirtualHost *:${BLD_SSL_PORT}>!" <"$ssl" >"$ssl.new"
+        [ $? = 0 ] && mv "$ssl.new" "$ssl"
+    fi
+    
+    if [ -f "$log" ] ; then
+        sed -e "
+            s!ErrorLog.*error.log\"!ErrorLog \"${BLD_LOG_PREFIX}/error.log\"!
+            s!CustomLog.*access.log\"!CustomLog \"${BLD_LOG_PREFIX}/access.log\"!" "$log" >"$log.new"
+        [ $? = 0 ] && mv "$log.new" "$log"
+    fi
+
+    if [ -f "$doc" ] ; then
+        sed -e "
+            s![ 	][ 	]*Alias /doc/.*!    Alias /doc/ \"${docPrefix}\/\"!" <"$doc" >"$doc.new"
+        [ $? = 0 ] && mv "$doc.new" "$doc"
+    fi
+
+    if [ `uname | sed 's/CYGWIN.*/CYGWIN/'` = CYGWIN ] ; then
+        if which unix2dos >/dev/null 2>&1 ; then
+            unix2dos "$conf" >/dev/null 2>&1
+            unix2dos "$ssl" >/dev/null 2>&1
+            unix2dos "$log" >/dev/null 2>&1
+            unix2dos "$doc" >/dev/null 2>&1
+        fi
+    else
+        for f in "$conf" "$ssl" "$log" "$doc" ; do
+            if [ -f "$f" ] ; then
+                sed -e "s/$//" <"$f" >"$f".new
+                [ $? = 0 ] && mv "$f.new" "$f"
+            fi
+        done
+    fi
+}
+
+
+###############################################################################
+#
+#   Main
+#
+
+setup
+
+if [ $# = 1 ] ; then
+    editAppwebConf "$1" "$1" "$1" "$1"
+else
+    editAppwebConf "$1" "$2" "$3" "$4"
+fi

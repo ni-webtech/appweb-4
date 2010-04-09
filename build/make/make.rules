@@ -1,0 +1,413 @@
+#
+#	make.rules -- Embedthis Build System rules
+#
+#	This file expects that the per-directory Makefiles will have included
+#	their .makedep files which will in-turn include buildConfig.make and 
+#	this file.
+#
+################################################################################
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#	The latest version of this code is available at http://www.embedthis.com
+#
+#	This software is open source; you can redistribute it and/or modify it 
+#	under the terms of the GNU General Public License as published by the 
+#	Free Software Foundation; either version 2 of the License, or (at your 
+#	option) any later version.
+#
+#	This program is distributed WITHOUT ANY WARRANTY; without even the 
+#	implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+#	See the GNU General Public License for more details at:
+#	http://www.embedthis.com/downloads/gplLicense.html
+#	
+#	This General Public License does NOT permit incorporating this software 
+#	into proprietary programs. If you are unable to comply with the GPL, a 
+#	commercial license for this software and support services are available
+#	from Embedthis Software at http://www.embedthis.com
+#
+################################################################################
+#
+#	The following Make variables used (among others):
+#
+#		BLD_TOP			Relative path to the top of the source tree
+#		EXPORT_OBJECTS	Create objects in top level object directories. Used 
+#						in buildConfig.make and buildConfig.sh
+#		PRE_DIRS		Directories to recurse before the current directory
+#		POST_DIRS		Directories to recurse after the current directory
+#		MAKE_XXFLAGS    These are specified in user makes. Valid for IFLAGS,
+#                       CFLAGS and LDFLAGS
+#       _XXFLAGS        Flags from the make.* per O/S configuration files.
+#
+################################################################################
+
+ifneq (,)
+Error. This Makefile requires GNU make.
+endif
+
+include		$(BLD_TOP)/build/make.config
+
+.NOTPARALLEL:
+.PHONY:		test always
+
+#
+#	These exports may be defined by users make files and are passed to bld
+#
+export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS BUILDING_CROSS TRACE
+
+#
+#	Compute the directory path for display purposes
+#
+_DPATH_			?=	.
+BUILDING_CROSS 	:= 0
+MAKE			:= $(BLD_MAKE)
+ifeq ($(TRACE),)
+    MAKEFLAGS   += -s TRACE=0
+endif
+ifeq ($(findstring TRACE=0,$(MAKEFLAGS)),)
+    TRACE       = 1
+endif
+
+#
+#	Auto subdirectory recursion
+#
+RECURSE=\
+for i in $$D "" ; \
+do [ -d "$$i" ] || continue ;\
+	set -e ; \
+	if [ -f "$$i/Makefile" ] ; then \
+		unset CDPATH EXPORT_OBJECTS BUILDING_CROSS _LDFLAGS _LDPATH BLD_TOP ; \
+        if [ ! -f "$$i/.makedep" ] ; then \
+            cd $(BLD_TOP) >/dev/null 2>&1 ; makedep ; make depend ; cd - >/dev/null 2>&1 ; \
+        fi ; \
+		[ "$(findstring TRACE=1,$(MAKEFLAGS))" != "" ] && echo -e "\# $(MAKE) -C \"$(_DPATH_)/$$i\" $$T" ; \
+		$(MAKE) -S -C "$$i" --no-print-directory _RECURSIVE_=1 "_DPATH_=$(_DPATH_)/$$i" PRE=$(PRE) TRACE=$(TRACE) $$T ; \
+		if [ $$? != 0 ] ; then \
+			echo "\# WARNING: Makefile error in `pwd`" ; \
+			exit 255 ; \
+		fi ; \
+		[ "$(findstring s,$(MAKEFLAGS))" = "" ] && echo -e "cd $$PWD" ; \
+	fi ; \
+done
+
+DO_RECURSE=$(RECURSE)
+
+#
+#   This is used to run release executables on Linux before they are installed (typically unit testing)
+#   This is needed because the rpath is set to the installed location.
+#
+ifneq ($(BLD_OS),WIN)
+    ifeq ($(BLD_OS),MACOSX)
+        setlibpath = export DYLD_LIBRARY_PATH="$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
+    else
+        setlibpath = export LD_LIBRARY_PATH="$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
+    endif
+else
+	setlibpath  = true
+    CYGWIN      += nodosfilewarning
+    export      CYGWIN
+endif
+
+ifeq ($(findstring s,$(MAKEFLAGS)),)
+    log = true
+else
+    log = printf "%12s %s\n"
+endif
+
+lib  = $(patsubst %, $(BLD_LIB_DIR)/lib%$(BLD_LIB),$(1))
+mod  = $(patsubst %, $(BLD_MOD_DIR)/%.mod,$(1))
+vlib = $(patsubst %, $(BLD_LIB_DIR)/lib%$(BLD_LIB),$(1))
+
+#vlib = $(patsubst %, $(BLD_LIB_DIR)/lib%-$(BLD_VERSION)$(BLD_LIB),$(1))
+#mod  = $(patsubst %, $(BLD_MOD_DIR)/%-$(BLD_VERSION).mod,$(1))
+
+#
+#	Default target
+#
+all: compile
+
+#
+#	If doing cross-compilation recurse.
+#
+ifeq ($(_RECURSIVE_),)
+clean clobber compile depend test loadTest buildFarmTest longevityTest leakTest bench package projects \
+	preprocess process: dummy
+	@unset EXPORT_OBJECTS BUILDING_CROSS _LDFLAGS _LDPATH BLD_TOP ; \
+	touch $(BLD_TOP)/.buildStarted ; \
+	rm -f $(BLD_TOP)/.preprocessed ; \
+    $(call log) "[Notice]" "Building $(BLD_NAME) $(BLD_VERSION). For command details, use \"make TRACE=1\"."; \
+	if [ "$(SKIP_NATIVE)" != 1 ] ; then \
+		$(MAKE) -S --no-print-directory _RECURSIVE_=1 PRE=$(PRE) TRACE=$(TRACE) $@ ; \
+		[ $$? -ne 0 ] && exit 255 ; true ; \
+	fi ; \
+    [ $$? -ne 0 ] && exit 255 || true ; \
+	if [ "$(BLD_CROSS)" = 1 -a "$(BUILDING_CROSS)" != "1" -a "$(SKIP_CROSS)" != 1 ] ; then \
+		echo -e "\n    #\n    #  Cross building for $(BLD_HOST_SYSTEM) \n    #" ; \
+		$(MAKE) -S --no-print-directory _RECURSIVE_=1 BUILDING_CROSS=1 "_DPATH_=$(_DPATH_)" PRE=$(PRE) TRACE=$(TRACE) $@ ;\
+		[ $$? -ne 0 ] && exit 255 ; true ; \
+	fi ; \
+    $(call log) "[Notice]" "Operation complete." 
+else
+
+#
+#	Must abort this directory if building cross and cross is not desired
+#
+_ABORT_:=0
+ifeq ($(BUILDING_CROSS),1)
+#
+#	Bug in gmake. Need this _JUNK line.
+#
+_JUNK=1
+	ifeq ($(BUILD_CROSS),0)
+		_ABORT_	:= 1
+	endif
+else
+_JUNK=1
+	#
+	#	Abort native builds in this directory if doing cross compilation
+	#	and native not required. If not cross compiling, then build now.
+	#
+	ifeq ($(BUILD_CROSS),1)
+	ifeq ($(BUILD_NATIVE),0)
+		_ABORT_	:= 1
+	endif
+	endif
+endif
+
+
+ifeq ($(_ABORT_),1)
+compile clean clobber depend test loadTest buildFarmTest leakTest bench package projects preprocess process: dummy
+#
+#	Not aborting
+#
+else
+
+
+#
+#	Compile target phases
+#
+compile: $(BUILD_CHECK) preprocess compileFirst compileDirs files compileTargets compileExtra compileAdirs compileFinal
+
+$(BUILD_CHECK):
+
+files: $(OBJECTS)
+
+compileFirst:
+
+compileExtra:
+
+compileTargets: 
+
+compileFinal:
+
+compileDirs:
+	@+T=compile ; D="$(PRE_DIRS)" ; $(DO_RECURSE) 
+
+compileAdirs:
+	@+T=compile ; D="$(POST_DIRS)" ; $(DO_RECURSE) 
+
+
+COMPILE ?= *.c
+
+depend: $(BUILD_CHECK) dependExtra dependDirs dependCwd dependAfter
+
+dependCwd:
+ifndef SRC_PATH
+ifeq ($(PROCESSED_SRC),)
+	@$(MAKE) -S --no-print-directory _RECURSIVE_=1 "_DPATH_=$(_DPATH_)" TRACE=$(TRACE) dependAfter
+endif
+endif
+	@if [ ! -x $(BLD_TOOLS_DIR)/edep$(BLD_BUILD_EXE) -a "$(BUILDING_CROSS)" != 1 ] ; then \
+		$(MAKE) -S --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) -C $(BLD_TOP)/build/src compile ; \
+	fi
+	@[ "$(TRACE)" = 1 ] && echo edep$(BLD_BUILD_EXE) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE) ; true
+	@edep$(BLD_BUILD_EXE) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE)
+
+dependDirs:
+	@if [ ! -f .makedep ] ; then \
+		echo "  makedep" ; \
+	    cd $(BLD_TOP) >/dev/null 2>&1 ; makedep ; make depend ; cd - >/dev/null 2>&1 ; \
+	fi
+	@+T=depend ; D="$(PRE_DIRS) $(MID_DIRS) $(POST_DIRS)" ; $(DO_RECURSE)
+	@if [ -f $(BLD_TOP)/buildConfig.make -a -d java ] ; then \
+		[ "$(TRACE)" = 1 ] && echo "  $(MAKE) --no-print-directory _RECURSIVE_=1 "_DPATH_=$(_DPATH_)" -C java process" ; \
+		$(MAKE) -S --no-print-directory _RECURSIVE_=1 "_DPATH_=$(_DPATH_)/java" TRACE=$(TRACE) -C java process ; \
+	fi
+
+dependExtra:
+
+dependAfter: $(PROCESSED_SRC) dummy
+
+#
+#	Preprocess java source. This applies a conditional pre-processor to the source.
+#
+ifeq	($(HAS_JAVA),1)
+preprocess: $(BLD_TOP)/.preprocessed
+
+$(BLD_TOP)/.preprocessed: $(BLD_TOP)/.buildStarted
+	echo "$(MAKE) -C $(BLD_TOP)/java process"
+	@$(MAKE) --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) -C $(BLD_TOP)/java process || echo -e "\n--ERROR--\n"
+	@touch $(BLD_TOP)/.preprocessed
+	
+else
+preprocess:
+endif
+
+process: $(BUILD_CHECK) processExtra processDirs processCwd processAfter processAdirs
+
+ifneq ($(PROCESSED_SRC),)
+processCwd: $(PROCESSED_SRC)
+else
+processCwd: 
+endif
+
+processDirs:
+	@+T=process ; D="$(PRE_DIRS)" ; $(DO_RECURSE)
+
+processAdirs:
+	@+T=process ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+processExtra:
+
+processAfter:
+
+../../../obj/src/$(SRC_PATH)/%.java: %.java
+
+
+#
+#	Run unit tests
+#
+test: $(BUILD_CHECK) testDirs testExtra
+
+testDirs:
+	@+T=test ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+testExtra:
+
+
+#
+#	Run load tests
+#
+loadTest: $(BUILD_CHECK) loadTestDirs loadTestExtra
+
+loadTestDirs:
+	@+T=loadTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+loadTestExtra:
+
+
+#
+#	Run memory leak tests
+#
+leakTest: $(BUILD_CHECK) leakTestDirs leakTestExtra
+
+leakTestDirs:
+	@+T=leakTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+leakTestExtra:
+
+
+#
+#	Run memory longevity tests
+#
+longevityTest: $(BUILD_CHECK) longevityTestDirs longevityTestExtra
+
+longevityTestDirs:
+	@+T=longevityTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+longevityTestExtra:
+
+
+#
+#	Run benchmarks
+#
+bench: $(BUILD_CHECK) benchDirs benchExtra
+
+benchDirs:
+	@+T=bench ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+benchExtra:
+
+
+buildFarmTest: $(BUILD_CHECK) buildFarmTestDirs buildFarmTestExtra
+
+buildFarmTestDirs:
+	@+T=buildFarmTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+buildFarmTestExtra:
+
+
+#
+#	Clean the source tree
+#
+clean: $(BUILD_CHECK) cleanDirs cleanExtra 
+	@rm -f $(CLEANIT) $(TARGETS) $(OBJECTS)
+
+cleanDirs:
+	@+T=clean ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+cleanExtra:
+
+
+#
+#	Do an extra thorough clean and remove all generated files
+#
+clobber: $(BUILD_CHECK) clobberDirs cleanExtra clobberExtra
+	@rm -f $(CLEANIT) $(CLOBBERIT)
+
+clobberExtra:
+
+clobberDirs:
+	@+T=clobber ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+
+#
+#	Generate project files
+#
+projects: $(BUILD_CHECK) projectsDirs projectsExtra
+
+projectsDirs:
+	@+T=projects ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+
+projectsExtra:
+
+
+PACKAGE = 0
+ifeq    ($(BLD_OS),LINUX)
+PACKAGE = 1
+endif
+ifeq    ($(BLD_OS),WIN)
+PACKAGE = 1
+endif
+ifeq    ($(BLD_OS),MACOSX)
+PACKAGE = 1
+endif
+
+#
+#	Create a redistributable package
+#
+package: $(BUILD_CHECK) packagePriv packageDirs packageExtra
+
+packagePriv:
+
+packageDirs:
+ifeq    ($(PACKAGE),1)
+	@+T=package ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+endif
+
+packageExtra:
+
+#
+#	End _ABORT_
+#
+endif
+
+#
+#	End _RECURSIVE_
+#
+endif
+
+#
+#	Used to suppress make warning that there is "Nothing to be done for target"
+#
+dummy:
+	@true

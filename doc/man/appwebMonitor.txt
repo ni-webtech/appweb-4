@@ -1,0 +1,36 @@
+APPWEBMONITOR(1)                 User Commands                APPWEBMONITOR(1)
+
+
+
+NAME
+       appwebMonitor - Appweb Monitor Program for Windows
+
+SYNOPSIS
+       appwebMonitor [--manage] [--stop]
+
+DESCRIPTION
+       The  appwebMonitor program runs in the Windows tray and provides visual
+       feedback and control over the Appweb and Appweb Angel  process.  Right-
+       click  to  display  the  Monitor menu. From this menu, you can start or
+       stop Appweb and launch the management console. Double-click will launch
+       a browser homed to the web server home page.
+
+OPTIONS
+       --manage
+              Launch  a browser to display the Appweb management console. This
+              is currently not implemented.
+
+       --stop Stop the currently executing Monitor program.
+
+REPORTING BUGS
+       Report bugs to <dev@embedthis.com>.
+
+COPYRIGHT
+       Copyright (C) 2003-2010 Embedthis Software.
+
+SEE ALSO
+       appweb
+
+
+
+appwebMonitor                     March 2010                  APPWEBMONITOR(1)

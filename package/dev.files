@@ -1,0 +1,24 @@
+#
+#	dev.files - Files needed for the development installation
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+#   TRACE=1 
+
+usePrefixes DOC INC MAN LIB 
+
+cpy -d src/include "*" "${BLD_INC_PREFIX}"
+if [ $BLD_WIN_LIKE ] ; then
+    cpy src/include/buildConfig.h "${BLD_INC_PREFIX}"
+fi
+cpy -m 755 -d ${BLD_LIB_DIR} "*${BLD_LIB}" "${BLD_LIB_PREFIX}"
+
+docFilter="/xml/|/html/|/dsi/"
+cpy -f "${docFilter}" -d doc "*" "${BLD_DOC_PREFIX}"
+cpy -w -e -d doc/product index.html "${BLD_DOC_PREFIX}/product"
+cpy -t -w -e -d doc/product README.TXT "${BLD_DOC_PREFIX}/product"
+
+if [ $BLD_UNIX_LIKE ] ; then
+    makeDir "${BLD_MAN_PREFIX}/man1"
+    cpy -z -d doc/man appweb.1 angel.1 appwebMonitor.1 http.1 httpPassword.1 makerom.1 "${BLD_MAN_PREFIX}/man1"
+fi

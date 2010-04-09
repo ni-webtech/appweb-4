@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Ejscript 1.0.0 Documentation</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+	<link href="../doc.css" rel="stylesheet" type="text/css" />
+    <link href="api.css" rel="stylesheet" type="text/css" />
+	<link href="../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+    
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.ejscript.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.embedthis.com">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="embedthis.com" /> 
+                        <input type="hidden" name="sitesearch" value="embedthis.com" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Ejscript 1.0.0
+        </div>
+        <div class="crumbs">
+            <a href="../product/index.html">Home</a>
+            &gt; <a href="../ref/ejs/index.html">Programmers Reference</a> 
+            &gt; <a href="native.html">Native APIs</a> 
+            &gt; <b>Mpr</b> 
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="contentRight">
+            
+            <!-- BeginDsi "dsi/see.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../ref/ejs/index.html">Programmers Reference</a></li>
+                <li><a href="../api/ejscript/index.html" target="new">Script Library</a></li>
+                <li><a href="../api/native.html">Native APIs</a></li>
+            </ul>
+            <!-- EndDsi -->
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#Components">Components</a></li>
+                <li><a href="#Defines">Defines</a></li>
+                <li><a href="#Functions">Functions</a></li>
+                <li><a href="#Typedefs">Typedefs</a></li>
+            </ul>
+        </div>
+        <div class="contentLeft">

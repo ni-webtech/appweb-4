@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class Sqlite</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Sqlite</h1>
+<div class='classBlock'>
+<table class='classHead' summary='Sqlite'>
+   <tr><td><strong>Module</strong></td><td>ejs.db.sqlite</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.db"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class Sqlite</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Sqlite <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>SQLite database support.</p>
+
+<p class='classDescription'></p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>internal-51 static const </td><td>DataTypeToSqlType</td><td><a href='intrinsic-Object.html'>Object</a></td><td>&nbsp;</td></tr>
+   <tr><td nowrap align='center'>internal-51 static const </td><td>SqlTypeToDataType</td><td><a href='intrinsic-Object.html'>Object</a></td><td>&nbsp;</td></tr>
+   <tr><td nowrap align='center'>internal-51 static const </td><td>SqlTypeToEjsType</td><td><a href='intrinsic-Object.html'>Object</a></td><td>&nbsp;</td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Sqlite Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#addColumn'><b>addColumn</b></a>(table: <a href='intrinsic-String.html'>String</a>, column: <a href='intrinsic-String.html'>String</a>, datatype: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#addIndex'><b>addIndex</b></a>(table: <a href='intrinsic-String.html'>String</a>, column: <a href='intrinsic-String.html'>String</a>, indexName: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#changeColumn'><b>changeColumn</b></a>(table: <a href='intrinsic-String.html'>String</a>, column: <a href='intrinsic-String.html'>String</a>, datatype: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#close'><b>close</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#commit'><b>commit</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#connect'><b>connect</b></a>(connectionString: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#createDatabase'><b>createDatabase</b></a>(name: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#createTable'><b>createTable</b></a>(table: <a href='intrinsic-String.html'>String</a>, columns: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#dataTypeToSqlType'><b>dataTypeToSqlType</b></a>(dataType: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#destroyDatabase'><b>destroyDatabase</b></a>(name: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#destroyTable'><b>destroyTable</b></a>(table: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#endTransaction'><b>endTransaction</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#getColumns'><b>getColumns</b></a>(table: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#getNumRows'><b>getNumRows</b></a>(table: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#getTables'><b>getTables</b></a>(): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#query'><b>query</b></a>(cmd: <a href='intrinsic-String.html'>String</a>, tag: <a href='intrinsic-String.html'>String</a>, trace: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#removeColumns'><b>removeColumns</b></a>(table: <a href='intrinsic-String.html'>String</a>, columns: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#removeIndex'><b>removeIndex</b></a>(table: <a href='intrinsic-String.html'>String</a>, indexName: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#renameColumn'><b>renameColumn</b></a>(table: <a href='intrinsic-String.html'>String</a>, oldColumn: <a href='intrinsic-String.html'>String</a>, newColumn: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#renameTable'><b>renameTable</b></a>(oldTable: <a href='intrinsic-String.html'>String</a>, newTable: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#rollback'><b>rollback</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#sql'><b>sql</b></a>(cmd: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#Sqlite'><b>Sqlite</b></a>(connectionString: <a href='intrinsic-String.html'>String</a>)</tr>   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#sqlTypeToDataType'><b>sqlTypeToDataType</b></a>(sqlType: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#sqlTypeToEjsType'><b>sqlTypeToEjsType</b></a>(sqlType: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Type.html'>Type</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#startTransaction'><b>startTransaction</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Duplicate Database.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='addColumn'></a>
+<div class='api'>
+<div class='apiSig'> public addColumn(table: <a href='intrinsic-String.html'>String</a>, column: <a href='intrinsic-String.html'>String</a>, datatype: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td></td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='addIndex'></a>
+<div class='api'>
+<div class='apiSig'> public addIndex(table: <a href='intrinsic-String.html'>String</a>, column: <a href='intrinsic-String.html'>String</a>, indexName: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='changeColumn'></a>
+<div class='api'>
+<div class='apiSig'> public changeColumn(table: <a href='intrinsic-String.html'>String</a>, column: <a href='intrinsic-String.html'>String</a>, datatype: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td></td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='close'></a>
+<div class='api'>
+<div class='apiSig'> public close(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='commit'></a>
+<div class='api'>
+<div class='apiSig'> public commit(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='connect'></a>
+<div class='api'>
+<div class='apiSig'> public connect(connectionString: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='createDatabase'></a>
+<div class='api'>
+<div class='apiSig'> public createDatabase(name: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td></td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='createTable'></a>
+<div class='api'>
+<div class='apiSig'> public createTable(table: <a href='intrinsic-String.html'>String</a>, columns: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>columns: <a href='intrinsic-Array.html'>Array</a> </td><td></td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='dataTypeToSqlType'></a>
+<div class='api'>
+<div class='apiSig'>static  public dataTypeToSqlType(dataType: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='destroyDatabase'></a>
+<div class='api'>
+<div class='apiSig'> public destroyDatabase(name: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='destroyTable'></a>
+<div class='api'>
+<div class='apiSig'> public destroyTable(table: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='endTransaction'></a>
+<div class='api'>
+<div class='apiSig'> public endTransaction(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='getColumns'></a>
+<div class='api'>
+<div class='apiSig'> public getColumns(table: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='getNumRows'></a>
+<div class='api'>
+<div class='apiSig'> public getNumRows(table: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='getTables'></a>
+<div class='api'>
+<div class='apiSig'> public getTables(): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='query'></a>
+<div class='api'>
+<div class='apiSig'> public query(cmd: <a href='intrinsic-String.html'>String</a>, tag: <a href='intrinsic-String.html'>String</a>, trace: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>trace: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td> [default: false]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='removeColumns'></a>
+<div class='api'>
+<div class='apiSig'> public removeColumns(table: <a href='intrinsic-String.html'>String</a>, columns: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='removeIndex'></a>
+<div class='api'>
+<div class='apiSig'> public removeIndex(table: <a href='intrinsic-String.html'>String</a>, indexName: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='renameColumn'></a>
+<div class='api'>
+<div class='apiSig'> public renameColumn(table: <a href='intrinsic-String.html'>String</a>, oldColumn: <a href='intrinsic-String.html'>String</a>, newColumn: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='renameTable'></a>
+<div class='api'>
+<div class='apiSig'> public renameTable(oldTable: <a href='intrinsic-String.html'>String</a>, newTable: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='rollback'></a>
+<div class='api'>
+<div class='apiSig'> public rollback(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='sql'></a>
+<div class='api'>
+<div class='apiSig'> public sql(cmd: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='Sqlite'></a>
+<div class='api'>
+<div class='apiSig'> Sqlite(connectionString: <a href='intrinsic-String.html'>String</a>)
+</div>
+</div>
+<hr />
+<a name='sqlTypeToDataType'></a>
+<div class='api'>
+<div class='apiSig'>static  public sqlTypeToDataType(sqlType: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='sqlTypeToEjsType'></a>
+<div class='api'>
+<div class='apiSig'>static  public sqlTypeToEjsType(sqlType: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Type.html'>Type</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<a name='startTransaction'></a>
+<div class='api'>
+<div class='apiSig'> public startTransaction(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Duplicate Database.</p>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

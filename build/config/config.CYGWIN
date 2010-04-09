@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+#   config.CYGWIN -- Common build configuration for cygwin
+#
+#   Read by product.config during configure.
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+###############################################################################
+
+. build/config/config.base
+
+eval BLD_${KIND}_ARCH=.a
+eval BLD_${KIND}_EXE=.exe
+eval BLD_${KIND}_OBJ=.obj
+eval BLD_${KIND}_PIOBJ=.obj
+eval BLD_${KIND}_SHLIB=.lib
+eval BLD_${KIND}_SHOBJ=.dll
+
+#
+#   Override building directories
+#
+BLD_LIB_DIR='${BLD_TOP}/bin'
+BLD_MOD_DIR='${BLD_TOP}/bin'
+

@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class Stream</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Stream</h1>
+<div class='classBlock'>
+<table class='classHead' summary='Stream'>
+   <tr><td><strong>Module</strong></td><td>ejs</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>intrinsic</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class Stream</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ejs-11.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Stream       </td></tr>
+</table>
+
+<p class='classBrief'>Stream objects represent bi-directional streams of data that pass data elements between an endpoint known  as a source or sink and a consumer / producer.</p>
+
+<p class='classDescription'>In between, intermediate streams may be used as filters.  Example endpoints are the File, Socket, String and Http classes. The TextStream is an example of a filter  stream. The data elements passed by streams may be any series of objects including: bytes, lines of text,  integers or objects. Streams may buffer the incoming data or not. Streams may offer sync and/or async modes  of operation.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td colspan='4'>No properties defined</td></tr></table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Stream Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#available'><b>available</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the number of bytes available to read.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#close'><b>close</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Close the input stream and free up all associated resources.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#flush'><b>flush</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Flush the stream and all stacked streams and underlying data source/sinks.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#read'><b>read</b></a>(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a block of data from the stream.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#skip'><b>skip</b></a>(n: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#write'><b>write</b></a>(data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write data to the stream.</td></tr>
+</table>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='available'></a>
+<div class='api'>
+<div class='apiSig'> public available(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Return the number of bytes available to read.</p>
+<dl><dt>Returns</dt>
+<dd>A the number of available bytes.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='close'></a>
+<div class='api'>
+<div class='apiSig'> public close(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Close the input stream and free up all associated resources.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>if true, then close the socket gracefully after writing all pending data.  [default: false]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='flush'></a>
+<div class='api'>
+<div class='apiSig'> public flush(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Flush the stream and all stacked streams and underlying data source/sinks.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>if true, then write all pending data.  [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='read'></a>
+<div class='api'>
+<div class='apiSig'> public read(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read a block of data from the stream.</p>
+<dl><dt>Description</dt><dd>Read the required number of bytes from the stream into the  supplied byte array at the given offset.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>offset: <a href='intrinsic-Number.html'>Number</a> </td><td>Offset in the byte array to place the data. If the offset is -1, then data is appended to the buffer write $position which is then updated.  </td></tr><tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to read. If -1, read as much as the buffer will hold up to the entire  stream if the buffer is of sufficient size or is growable. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A count of the bytes actually read.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='skip'></a>
+<div class='api'>
+<div class='apiSig'> public skip(n: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='write'></a>
+<div class='api'>
+<div class='apiSig'> public write(data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Write data to the stream.</p>
+<dl><dt>Description</dt><dd>If in sync mode, the write call blocks until the underlying stream or  endpoint absorbes all the data. If in async-mode, the call accepts whatever data can be accepted  immediately and returns a count of the elements that have been written.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Data to write.  </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The total number of elements that were written.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if there is an I/O error. 
+</p>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

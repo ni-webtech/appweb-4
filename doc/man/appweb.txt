@@ -1,0 +1,100 @@
+APPWEB(1)                        User Commands                       APPWEB(1)
+
+
+
+NAME
+       appweb- Embedded HTTP Web Server
+
+SYNOPSIS
+       appweb [options]
+       appweb [options] [IP][:port] [documentRoot]
+
+       appweb [--config configFile] [--chroot directory] [--debug] [--ejs app-
+       Spec] [--log logSpec] [--home directory]  [--threads  threads]  [--ver-
+       sion] [--verbose]
+
+DESCRIPTION
+       Appweb  is  a  compact  embedded HTTP web server.  It is a fast, small-
+       footprint, multi-threaded, standards-based, portable  server  developed
+       for  use  by embedded devices and applications.  It can run as a stand-
+       alone web server or the Appweb library can be embedded in applications.
+
+       Appweb supports HTTP/1.1, SSL, digest and basic authentication, virtual
+       hosting, ranged requests, chunked transfers, file upload  and  security
+       limits.  Appweb has an Apache style configuration file and supports the
+       PHP and Ejscript web frameworks.
+
+       Appweb normally reads the appweb.conf  file  for  configuration  direc-
+       tives.  However, if appweb is invoked with an IP address or port number
+       on the command line, Appweb  will  not  read  the  configuration  file.
+       Rather it will listen for requests on the specified IP:PORT address. If
+       the PORT component is omitted, Appweb will listen on port 80. If the IP
+       address  is  omitted  and a port is supplied, Appweb will listen on all
+       network interfaces.
+
+OPTIONS
+       --config filename
+              Define the name of the Appweb configuration  file.  This  is  by
+              default appweb.
+
+       --chroot directory
+              Change  the  system  root  directory  for Appweb. This creates a
+              chroot jail so that the Appweb process cannot access  any  files
+              outside the given directory.
+
+       --debug
+              Run Appweb in debug mode and disable all timeouts. This disables
+              request and session timeouts.  The -d option  is  an  alias  for
+              --debug.
+
+       --ejs name:directory
+              Define  an  Ejscript application by name at the specified direc-
+              tory. The name is the application name and is used as a URL pre-
+              fix. When a request arrives which matches this URL prefix, it is
+              routed to the application to service. For example:
+
+              appweb --ejs /carmen/:/var/www/apps/carmen/
+
+       --log logSpec
+              Name the Appweb log file. This will override the ErrorLog direc-
+              tive  in  the  configuration  file.   When  the  maximum size is
+              exceeded, the log file will be rotated to logName.old and a  new
+              log  file  will be started. The -l option is an alias for --log.
+              The syntax is:
+
+              --log logName[:logLevel][.maxSize]
+
+       --home directory
+              Define the server home directory for Appweb.
+
+       --threads numThreads
+              Specify the maximum number of threads  to  use  for  the  appweb
+              thread  pool.  This overrides the ThreadLimit configuration file
+              directive.
+
+       --verbose
+              Shorthand for --log stdout:4. The -v  option  is  an  alias  for
+              --verbose.
+
+       --version
+              Output the product version number.
+
+
+FILES
+       /etc/appweb/appweb.conf
+       /var/www/appweb-default
+       /usr/lib/appweb
+       /var/log/appweb
+
+REPORTING BUGS
+       Report bugs to <dev@embedthis.com>.
+
+COPYRIGHT
+       Copyright (C) 2003-2010 Embedthis Software.
+
+SEE ALSO
+       http
+
+
+
+appweb                            March 2010                         APPWEB(1)

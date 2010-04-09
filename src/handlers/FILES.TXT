@@ -1,0 +1,25 @@
+FILES.TXT for the HTTP Modules in Embedthis Appweb
+--------------------------------------------------------------------------------
+
+This document describes the important files in this directory. The optional
+modules for the Appweb HTTP server are here. 
+
+The key files are:
+
+File                 Purpose
+----------------------------
+adminHandler.c     - Administration handler. Not for production use
+cgiHandler.c       - CGI handler
+fileHandler.c      - File handler for static content 
+egiHandler.c       - Embedded Gateway Interface (EGI) handler
+phpHandler.c       - PHP handler
+.makedep           - Makefile dependencies
+Makefile           - Makefile to build all modules
+
+--------------------------------------------------------------------------------
+Copyright (c) 2003-2010 Embedthis Software, LLC. All Rights Reserved.
+Embedthis and Appweb are trademarks of Embedthis Software, LLC. Other 
+brands and their products are trademarks of their respective holders.
+
+See LICENSE.TXT for software license details.
+--------------------------------------------------------------------------------

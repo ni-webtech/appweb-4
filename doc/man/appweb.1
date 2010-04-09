@@ -1,0 +1,94 @@
+.TH APPWEB "1" "March 2010" "appweb" "User Commands"
+.SH NAME
+appweb\- Embedded HTTP Web Server
+.SH SYNOPSIS
+.B appweb [options]
+.br
+.B appweb [options] [IP][:port] [documentRoot]
+.P
+.B appweb 
+[\fI--config configFile\fR]
+[\fI--chroot directory\fR]
+[\fI--debug\fR]
+[\fI--ejs appSpec\fR]
+[\fI--log logSpec\fR]
+[\fI--home directory\fR] 
+[\fI--threads threads\fR]
+[\fI--version\fR]
+[\fI--verbose\fR]
+.SH DESCRIPTION
+Appweb is a compact embedded HTTP web server.  It is a fast, small-footprint, multi-threaded, standards-based, 
+portable server developed for use by embedded devices and applications.  It can run as a stand-alone 
+web server or the Appweb library can be embedded in applications. 
+.P
+Appweb supports HTTP/1.1, SSL, digest and basic authentication, virtual hosting, ranged requests, chunked transfers, 
+file upload and security limits.  Appweb has an Apache style configuration file and supports the PHP and Ejscript 
+web frameworks. 
+.P
+Appweb normally reads the \fBappweb.conf\fR file for configuration directives. However, if appweb is invoked with 
+an IP address or port number on the command line, Appweb will not read the configuration file. Rather it will
+listen for requests on the specified IP:PORT address. If the PORT component is omitted, Appweb will listen
+on port 80. If the IP address is omitted and a port is supplied, Appweb will listen on all network interfaces.
+.SH OPTIONS
+.TP
+\fB\--config filename\fR
+Define the name of the Appweb configuration file. This is by default \fBappweb\fR.
+.TP
+\fB\--chroot directory\fR
+Change the system root directory for Appweb. This creates a chroot jail so that the Appweb process cannot access
+any files outside the given directory.
+.TP
+\fB\--debug\fR
+Run Appweb in debug mode and disable all timeouts. This disables request and session timeouts.
+The \fB-d\fR option is an alias for --debug.
+.TP
+\fB\--ejs name:directory\fR
+Define an Ejscript application by name at the specified directory. The \fBname\fR is the application name and is
+used as a URL prefix. When a request arrives which matches this URL prefix, it is routed to the application to
+service. For example:
+.PP
+.RS 6
+ appweb --ejs /carmen/:/var/www/apps/carmen/
+.RE
+.TP
+\fB\--log logSpec\fR
+Name the Appweb log file. This will override the ErrorLog directive 
+in the configuration file.  When the maximum size is exceeded, the log file will be rotated to logName.old 
+and a new log file will be started. The \fB-l\fR option is an alias for --log.
+The syntax is: 
+.PP
+.RS 6
+ --log logName[:logLevel][.maxSize]
+.RE
+.TP
+\fB\--home directory\fR
+Define the server home directory for Appweb.
+.TP
+\fB\--threads numThreads\fR
+Specify the maximum number of threads to use for the appweb thread pool. This 
+overrides the ThreadLimit configuration file directive.
+.TP
+\fB\--verbose\fR
+Shorthand for --log stdout:4. The \fB-v\fR option is an alias for --verbose.
+.TP
+\fB\--version\fR
+Output the product version number.
+.PP
+.SH FILES
+.PD 0
+.B /etc/appweb/appweb.conf
+.br
+.B /var/www/appweb-default
+.br
+.B /usr/lib/appweb
+.br
+.B /var/log/appweb
+.br
+.PD
+.SH "REPORTING BUGS"
+Report bugs to <dev@embedthis.com>.
+.SH COPYRIGHT
+Copyright \(co 2003-2010 Embedthis Software.
+.br
+.SH "SEE ALSO"
+http

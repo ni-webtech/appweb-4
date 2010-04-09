@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+#	postflight -- Post flight script for binary install
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+###############################################################################
+
+PKG_DIR="$1"
+INS_DIR="$2"
+BIN="!!BLD_BIN_DIR!!"
+NAME="!!ORIG_BLD_PREFIX!!"
+path="${INS_DIR}${NAME}"
+
+${BIN}/linkup
+
+chmod 644 /Library/LaunchDaemons/com.!!BLD_COMPANY!!.!!BLD_PRODUCT!!.plist
+launchctl load -w /Library/LaunchDaemons/com.!!BLD_COMPANY!!.!!BLD_PRODUCT!!.plist
+
+exit 0

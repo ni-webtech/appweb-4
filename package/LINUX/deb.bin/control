@@ -1,0 +1,14 @@
+Package: !!BLD_PRODUCT!!
+Version: !!BLD_VERSION!!
+Section: web
+Priority: optional
+Architecture: !!BLD_HOST_CPU_MAPPED!!
+Depends: libc6
+Installed-Size: 10
+Maintainer: Embedthis Development <dev@embedthis.com>
+Description: Embedthis Appweb Web Server
+ Appweb is a compact and powerful web server suitable for dynamic web applications.
+ .
+ more information about Appweb can be found at:
+ <URL:http://www.appwebserver.org>
+ <URL:http://www.embedthis.com>

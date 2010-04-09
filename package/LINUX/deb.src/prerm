@@ -1,0 +1,52 @@
+#!/bin/sh -e
+#
+# 	prerm -- Pre removal script for appweb-src
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+
+BLD_PRODUCT=!!BLD_PRODUCT!!
+BLD_NAME="!!BLD_NAME!!"
+BLD_CFG_PREFIX=!!ORIG_BLD_CFG_PREFIX!!
+BLD_SRC_PREFIX=!!ORIG_BLD_SRC_PREFIX!!
+
+remove() {
+	local cdir=`pwd`
+
+	if [ -d $BLD_SRC_PREFIX ] ; then
+		cd $BLD_SRC_PREFIX
+
+		make clean >/dev/null 2>&1
+		make clobber >/dev/null 2>&1
+
+		find . -name .makedep | xargs -i rm -f {}
+		rm -f buildConfig.* 
+		cd $cdir
+	fi
+}
+
+
+#
+#	Main
+#
+action=$1
+cd /
+
+case $action in
+	remove)					# when new
+		# or conflictor's prerm remove in-favor package new-version
+		oldVersion=$2
+		remove
+		;;
+	upgrade)				# when old
+		newVersion=$2
+		;;
+	failed-upgrade)			# when new
+		oldVersion=$2
+		;;
+	deconfigure)			# when old
+		# 	deconfigure in-favor package-being-installed version removing 
+		#	conflicting-package version
+esac
+exit 0
+

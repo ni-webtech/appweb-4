@@ -1,0 +1,279 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class RegExp</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>RegExp</h1>
+<div class='classBlock'>
+<table class='classHead' summary='RegExp'>
+   <tr><td><strong>Module</strong></td><td>ejs</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>intrinsic</td></tr>
+   <tr><td><strong>Definition</strong></td><td>final  class RegExp</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>RegExp <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>Regular expressions per ECMA-262.</p>
+
+<p class='classDescription'>The following special characters are supported: <ul> <li>\ - Reverse whether a character is treated literally or not.</li> <li>^ - Match to the start of input. If matching multiline, match starting after a line break.</li> <li>$ - Match to the end of input. If matching multiline, match before after a line break.</li> <li>*  - Match the preceding item zero or more times.</li> <li>+ - Match the preceding item one or more times.</li> <li>? - Match the preceding item zero or one times.</li> <li>(mem) - Match inside the parenthesis (i.e. "mem") and store the match.</li> <li>(?:nomem) - Match "nomem" and do not store the match.</li> <li>oper(?=need) - Match "oper" only if it is  followed by "need".</li> <li>oper(?!not) - Match "oper" only if it is not followed by "not".</li> <li>either|or - Match "either" or "or".</li> <li>{int} - Match exactly int occurences of the preceding item.</li> <li>{int,} - Match at least int occurences of the preceding item.</li> <li>{int1,int2} - Match at least int1 occurences of the preceding item but no more then int2.</li> <li>[pqr] - Match any one of the enclosed characters. Use a hyphen to specify a range of characters.</li> <li>[^pqr] - Match anything except the characters in brackets.</li> <li>[\b] - Match a backspace.</li> <li>\b - Match a word boundary.</li> <li>\B - Match a non-word boundary.</li> <li>\cQ - Match a control string, e.g. Control-Q</li> <li>\d - Match a digit.</li> <li>\D - Match any non-digit character.</li> <li>\f - Match a form feed.</li> <li>\n - Match a line feed.</li> <li>\r - Match a carriage return.</li> <li>\s - Match a single white space.</li> <li>\S - Match a non-white space.</li> <li>\t - Match a tab.</li> <li>\v - Match a vertical tab.</li> <li>\w - Match any alphanumeric character.</li> <li>\W - Match any non-word character.</li> <li>\int - A reference back int matches.</li> <li>\0 - Match a null character.</li> <li>\xYY - Match the character code YY.</li> <li>\xYYYY - Match the character code YYYY.</li> </ul></p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td colspan='4'>No properties defined</td></tr></table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>RegExp Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#exec'><b>exec</b></a>(str: <a href='intrinsic-String.html'>String</a>, start: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Match this regular expression against a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#global'><b>global</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the global flag this regular expression is using.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#ignoreCase'><b>ignoreCase</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the case flag this regular expression is using.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#lastIndex'><b>lastIndex</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the integer index of the end of the last match plus one.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-lastIndex'><b>lastIndex</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the integer index of the end of the last match plus one.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#matched'><b>matched</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the substring that was last matched.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#multiline'><b>multiline</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the multiline flag this regular expression is using.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#RegExp'><b>RegExp</b></a>(pattern: <a href='intrinsic-String.html'>String</a>, flags: <a href='intrinsic-String.html'>String</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a regular expression object that can be used to process strings.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#replace'><b>replace</b></a>(str: <a href='intrinsic-String.html'>String</a>, replacement: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Replace all the matches.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#source'><b>source</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the regular expression source pattern is using to match with.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#split'><b>split</b></a>(target: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Split the target string into substrings around the matching sections.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#start'><b>start</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the integer index of the start of the last match.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#sticky'><b>sticky</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the sticky flag this regular expression is using.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#test'><b>test</b></a>(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Test whether this regular expression will match against a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public override </td><td><a href='#toString'><b>toString</b></a>(locale: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convert the regular expression to a string.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='exec'></a>
+<div class='api'>
+<div class='apiSig'> public exec(str: <a href='intrinsic-String.html'>String</a>, start: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Match this regular expression against a string.</p>
+<dl><dt>Description</dt><dd>By default, the matching starts at the beginning  of the string.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>str: <a href='intrinsic-String.html'>String</a> </td><td>String to match. </td></tr><tr><td class='param'>start: <a href='intrinsic-Number.html'>Number</a> </td><td>Optional starting index for matching. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>Array of results, empty array if no matches.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11 adds start argument.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='global'></a>
+<div class='api'>
+<div class='apiSig'>get  public global(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Get the global flag this regular expression is using.</p>
+<dl><dt>Description</dt><dd>If the global flag is set, the regular expression  will search through the entire input string looking for matches.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The global flag, true if set, false otherwise.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='ignoreCase'></a>
+<div class='api'>
+<div class='apiSig'>get  public ignoreCase(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Get the case flag this regular expression is using.</p>
+<dl><dt>Description</dt><dd>If the ignore case flag is set, the regular expression  is case insensitive.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The case flag, true if set, false otherwise.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='lastIndex'></a>
+<div class='api'>
+<div class='apiSig'>get  public lastIndex(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the integer index of the end of the last match plus one.</p>
+<dl><dt>Description</dt><dd>This is the index to start the next match for global patterns.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>Match end plus one or -1 if there is no last match.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-lastIndex'></a>
+<div class='api'>
+<div class='apiSig'>set  public lastIndex(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the integer index of the end of the last match plus one.</p>
+<dl><dt>Description</dt><dd>This is the index to start the next match for global patterns.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>Match end plus one or -1 if there is no last match.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='matched'></a>
+<div class='api'>
+<div class='apiSig'>get  public matched(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the substring that was last matched.</p>
+<dl><dt>Returns</dt>
+<dd>The matched string or null if there were no matches.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='multiline'></a>
+<div class='api'>
+<div class='apiSig'>get  public multiline(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Get the multiline flag this regular expression is using.</p>
+<dl><dt>Description</dt><dd>If the multiline flag is set, the regular  expression will search through carriage return and new line characters in the input.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The multiline flag, true if set, false otherwise.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='RegExp'></a>
+<div class='api'>
+<div class='apiSig'> RegExp(pattern: <a href='intrinsic-String.html'>String</a>, flags: <a href='intrinsic-String.html'>String</a>)
+</div>
+<div class='apiDetail'>
+<p>Create a regular expression object that can be used to process strings.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>pattern: <a href='intrinsic-String.html'>String</a> </td><td>The pattern to associated with this regular expression. </td></tr><tr><td class='param'>flags: <a href='intrinsic-String.html'>String</a> </td><td>"g" for global match, "i" to ignore case, "m" match over multiple lines, "y" for sticky match. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='replace'></a>
+<div class='api'>
+<div class='apiSig'> public replace(str: <a href='intrinsic-String.html'>String</a>, replacement: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Replace all the matches.</p>
+<dl><dt>Description</dt><dd>This call replaces all matching substrings with the corresponding array element. If the array element is not a string, it is converted to a string before replacement.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>str: <a href='intrinsic-String.html'>String</a> </td><td>String to match and replace. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string with zero, one or more substitutions in it.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='source'></a>
+<div class='api'>
+<div class='apiSig'>get  public source(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the regular expression source pattern is using to match with.</p>
+<dl><dt>Returns</dt>
+<dd>The pattern string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='split'></a>
+<div class='api'>
+<div class='apiSig'> public split(target: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Split the target string into substrings around the matching sections.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>Array containing the matching substrings.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='start'></a>
+<div class='api'>
+<div class='apiSig'>get  public start(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the integer index of the start of the last match.</p>
+<dl><dt>Returns</dt>
+<dd>Match start.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='sticky'></a>
+<div class='api'>
+<div class='apiSig'>get  public sticky(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Get the sticky flag this regular expression is using.</p>
+<dl><dt>Description</dt><dd>If the sticky flag is set, the regular expression  contained the character flag "y".</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The sticky flag, true if set, false otherwise.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='test'></a>
+<div class='api'>
+<div class='apiSig'> public test(str: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Test whether this regular expression will match against a string.</p>
+<dl><dt>Description</dt><dd>TODO - not implemented.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>str: <a href='intrinsic-String.html'>String</a> </td><td>String to search. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>True if there is a match, false otherwise.</dd></dl>
+<dl><dt>Specified</dt>
+<dd>Ejs-11.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='toString'></a>
+<div class='api'>
+<div class='apiSig'>override  public toString(locale: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Convert the regular expression to a string.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>locale: <a href='intrinsic-String.html'>String</a> </td><td>Locale  </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string representation of the regular expression.</dd></dl>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

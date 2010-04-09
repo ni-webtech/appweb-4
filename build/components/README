@@ -1,0 +1,77 @@
+README for the build/components
+--------------------------------------------------------------------------------
+
+Component scripts are used to search and configure components for the build. 
+Components may be SDKs such as the Windows SDK, build tools such as the "cc" 
+compiler, or optional components such as OpenSSL. The configure program uses 
+the component scripts to test which components are present on the system and 
+to configure the component build settings.
+
+The script file "build/standard.defaults" specifies which components will be 
+automatically tested. This set of automatically tested components will be 
+augmented by any configure --with-COMPONENT switches that are used.
+
+Search Path
+-----------
+
+The configure program uses a search path to locate components. This is 
+initialized by the build/search.config file and may be augmented by the 
+SEARCH_PATH environment variable and the --search switch to the configure 
+program.
+
+
+Component Scripts
+-----------------
+
+A component script is loaded by configure and must define a function called
+"defineComponent". This function will be invoked by the configure program to 
+test for the presence of the component. If cross compiling, the script will
+be invoked twice, once with the KIND environment variable set to "BUILD" and
+once with KIND set to "HOST". The BUILD phase should search for the component
+to use when building on the dev system. The HOST phase should search for the
+component when cross-compiling for the target host.
+
+The defineComponent function may use the "probe" function to search for the 
+component along the configured search path.
+
+The probe function supports the following usage:
+
+  probe [--path path] [--partial file] [--emit-dir] [--search searchPath] name
+   --emit-dir      # Return the directory portion. Otherwise return the path.
+   --partial file  # Test if this partial file exists along the search path
+   --path path     # Test first if this path exists, if found, use it
+   --search path   # Override search path
+
+If the existence of the component can be verified, the component script 
+should then call "configureComponent" to add the component to the configuration. 
+The configureComponent function supports the following usage:
+
+  configureComponent
+        --builtin           # Component is builtin
+        --cflags CFLAGS     # Define CFLAGS to pass to the compiler
+        --dflags CFLAGS     # Define DFLAGS to pass to the preprocessor
+        --disable           # Disable the component
+        --emitter           # Define an emitter function
+        --iflags IFLAGS     # Define IFLAGS to pass to the compiler
+        --imports IMPORTS   # Define libraries to import when building
+        --jflags JFLAGS     # Define JFLAGS for java builds
+        --ldflags LDFLAGS   # Define LDFLAGS to pass to the linker
+        --libpaths PATHS    # Define library search paths for the linker
+        --libs LIBRARIES    # Define libraries to link with
+        --name NAME         # Set the name of the component
+        --path PATH         # Set the path to the component
+        --withlibs LIBS     # Define libraries to link with when using the
+                              component
+        --withpaths PATHS   # Define library paths to use when linking with 
+                              the component
+
+You can also define mandatory and optional dependencies via the switches:
+
+        --dependencies components
+        --optional-dependencies components
+
+--------------------------------------------------------------------------------
+
+Copyright (c) 2003-2010 Embedthis Software, LLC. All Rights Reserved.
+Embedthis and AppWeb are trademarks of Embedthis Software, LLC. Other 
+brands and their products are trademarks of their respective holders.

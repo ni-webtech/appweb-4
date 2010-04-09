@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class Memory</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Memory</h1>
+<div class='classBlock'>
+<table class='classHead' summary='Memory'>
+   <tr><td><strong>Module</strong></td><td>ejs.sys</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.sys"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class Memory</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ejs-11.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Memory <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>Singleton class to monitor and report on memory allocation.</p>
+
+<p class='classDescription'></p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td colspan='4'>No properties defined</td></tr></table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Memory Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#allocated'><b>allocated</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Total heap memory currently allocated by the application.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static set </td><td><a href='#set-callback'><b>callback</b></a>(fn: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the memory redline callback.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#callback'><b>callback</b></a>(fn: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#maximum'><b>maximum</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Maximum heap memory that may be used.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static set </td><td><a href='#set-maximum'><b>maximum</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the maximum amount of heap memory the application may use.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#peak'><b>peak</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Peak memory ever used by the application.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#redline'><b>redline</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the current memory redline value.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static set </td><td><a href='#set-redline'><b>redline</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the memory redline.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#resident'><b>resident</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Application's current resident set.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#stack'><b>stack</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Peak stack size ever used by the application.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#stats'><b>stats</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Prints memory statistics to stdout.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static get </td><td><a href='#system'><b>system</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>System RAM.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='allocated'></a>
+<div class='api'>
+<div class='apiSig'>static get  public allocated(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Total heap memory currently allocated by the application.</p>
+<dl><dt>Description</dt><dd>This includes memory currently in use and also  memory that has been freed but is still retained by the application for future use. It does not include code, static data or stack memory. If you require these, use the $resident call.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-callback'></a>
+<div class='api'>
+<div class='apiSig'>static set  public callback(fn: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the memory redline callback.</p>
+<dl><dt>Description</dt><dd>When the memory redline limit is exceeded, the callback will be invoked.  If no callback is defined and the redline limit is exceeded, a MemoryError exception is thrown. This callback enables the application detect low memory conditions before they become critical and to recover by freeing  memory or to gracefully exit. The callback is invoked with the following signature: function callback(size: Number, total: Number): Void.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>fn: <a href='intrinsic-Function.html'>Function</a> </td><td>Callback function to invoke when the redline limit is exceeded. While the callback is active subsequent invocations of the callback are suppressed. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='callback'></a>
+<div class='api'>
+<div class='apiSig'>static get  public callback(fn: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='maximum'></a>
+<div class='api'>
+<div class='apiSig'>static get  public maximum(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Maximum heap memory that may be used.</p>
+<dl><dt>Description</dt><dd>This defines the upper limit for heap memory usage by the application.  If this limit is reached, subsequent memory allocations will fail and a $MemoryError exception will be  thrown. Setting it to zero will allow unlimited memory allocations up to the system imposed maximum. If $redline is defined and non-zero, the redline callback will be invoked when the $redline is exceeded.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-maximum'></a>
+<div class='api'>
+<div class='apiSig'>static set  public maximum(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the maximum amount of heap memory the application may use.</p>
+<dl><dt>Description</dt><dd>This defines the upper limit for heap  memory usage by the application. If this limit is reached, subsequent memory allocations will fail and  a $MemoryError exception will be thrown. Setting it to zero will allow unlimited memory allocations up to  the system imposed maximum. If $redline is defined and non-zero, the redline callback will be invoked  when the $redline is exceeded.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>value: <a href='intrinsic-Number.html'>Number</a> </td><td>New maximum value in bytes </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='peak'></a>
+<div class='api'>
+<div class='apiSig'>static get  public peak(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Peak memory ever used by the application.</p>
+<dl><dt>Description</dt><dd>This statistic is the maximum value ever attained by $allocated.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The peak value of $allocated.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='redline'></a>
+<div class='api'>
+<div class='apiSig'>static get  public redline(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the current memory redline value.</p>
+<dl><dt>Returns</dt>
+<dd>The current memory redline limit in bytes.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-redline'></a>
+<div class='api'>
+<div class='apiSig'>static set  public redline(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the memory redline.</p>
+<dl><dt>Description</dt><dd>When the memory redline limit is exceeded, the redline $callback will be invoked.  If no callback is defined, a MemoryError exception is thrown. The redline limit enables the application detect  low memory conditions before they become critical and to recover by freeing memory or to gracefully exit.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>value: <a href='intrinsic-Number.html'>Number</a> </td><td>New memory redline limit in bytes </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='resident'></a>
+<div class='api'>
+<div class='apiSig'>static get  public resident(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Application's current resident set.</p>
+<dl><dt>Description</dt><dd>This is the total memory used to host the application and includes all  the the application code, data and heap. It is measured by the O/S.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The application's resident working set size in bytes.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='stack'></a>
+<div class='api'>
+<div class='apiSig'>static get  public stack(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Peak stack size ever used by the application.</p>
+<dl><dt>Returns</dt>
+<dd>The peak stack size in bytes.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='stats'></a>
+<div class='api'>
+<div class='apiSig'>static  public stats(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Prints memory statistics to stdout.</p>
+</div>
+</div>
+<hr />
+<a name='system'></a>
+<div class='api'>
+<div class='apiSig'>static get  public system(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>System RAM.</p>
+<dl><dt>Description</dt><dd>This is the total amount of RAM installed in the system.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The system RAM size in bytes.</dd></dl>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

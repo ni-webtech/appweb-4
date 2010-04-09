@@ -1,0 +1,17 @@
+#
+#   MT
+#
+defineComponent() {
+    local name path
+
+    #
+    #   Name comes from build/config/config.*
+    #
+    eval name=\$BLD_${KIND}_MT
+    path=`probe --path "$1" --partial $name $name`
+    if [ "$path" = "" ] ; then
+        warnComponent mt $name
+        return
+	fi
+    configureComponent --path "$path" mt
+}

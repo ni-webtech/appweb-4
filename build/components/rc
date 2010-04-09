@@ -1,0 +1,17 @@
+#
+#   RC
+#
+defineComponent() {
+    local name path
+
+    #
+    #   Name comes from build/config/config.*
+    #
+    eval name=\$BLD_${KIND}_RC
+    path=`probe --path "$1" --partial $name $name`
+    if [ "$path" = "" ] ; then
+        warnComponent rc $name
+        return
+	fi
+    configureComponent --path "$path" rc
+}

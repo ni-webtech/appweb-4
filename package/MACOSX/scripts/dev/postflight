@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+#	postflight -- Post flight script for documentation
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#
+###############################################################################
+
+PKG_DIR="$1"
+INS_DIR="$2"
+BIN="!!BLD_BIN_DIR!!"
+NAME="!!ORIG_BLD_DOC_PREFIX!!"
+path="${INS_DIR}${NAME}"
+
+${BIN}/linkup
+
+port=`cat !!ORIG_BLD_CFG_PREFIX!!/appweb.conf | grep Listen | awk '{print $2 }'`
+
+#
+#   Delay to allow appweb to start
+#
+(sleep 5 ; open "http://127.0.0.1:${port}/index.html" )
+
+exit 0

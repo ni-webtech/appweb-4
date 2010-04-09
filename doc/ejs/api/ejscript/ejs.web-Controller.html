@@ -1,0 +1,503 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class Controller</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Controller</h1>
+<div class='classBlock'>
+<table class='classHead' summary='Controller'>
+   <tr><td><strong>Module</strong></td><td>ejs.web</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.web"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class Controller</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Controller <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>Web framework controller.</p>
+
+<p class='classDescription'>Part of the Ejscript web MVC framework.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>public </td><td>absUrl</td><td><a href='intrinsic-String.html'>String</a></td><td>Stores application global data. The application array provides a means to store persistent information  to be shared across all clients using an application. Objects and variables stored in the application  array will live until either explicitly deleted or the web server exits. The application array does not  persist over system reboots. The elements are User defined. NOTE: Not yet implemented.</td></tr>
+   <tr><td nowrap align='center'>public </td><td>actionName</td><td><a href='intrinsic-String.html'>String</a></td><td>Name of the action being run. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>appUrl</td><td><a href='intrinsic-String.html'>String</a></td><td>Relative URL for the application. Does not include the URL scheme or host name portion.</td></tr>
+   <tr><td nowrap align='center'>public </td><td>config</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Web application configuration. This is initialized from the config *..ecf files.</td></tr>
+   <tr><td nowrap align='center'>public </td><td>controllerName</td><td><a href='intrinsic-String.html'>String</a></td><td>Lower case controller name. </td></tr>
+   <tr><td nowrap align='center'>ejs.web </td><td>dummy7</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+   <tr><td nowrap align='center'>public </td><td>flash</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Flash messages to display on the next screen "inform"        Informational / postitive feedback (note) "message"       Neutral feedback (reminders, suggestions. ) "warning"       Negative feedback (Warnings and errors) "error"         Negative errors (Warnings and errors).</td></tr>
+   <tr><td nowrap align='center'>public </td><td>home</td><td><a href='intrinsic-String.html'>String</a></td><td>Physical home directory of the application. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>host</td><td><a href='ejs.web-Host.html'>Host</a></td><td>Host object. </td></tr>
+   <tr><td nowrap align='center'>ejs.web </td><td>mob</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+   <tr><td nowrap align='center'>public </td><td>params</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Form parameters. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>request</td><td><a href='ejs.web-Request.html'>Request</a></td><td>The request object stores details of the incoming client's request. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>response</td><td><a href='ejs.web-Response.html'>Response</a></td><td>The response object stores details of the response going back to the client. </td></tr>
+   <tr><td nowrap align='center'>public </td><td>session</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Stores session state information. The session array will be created automatically if SessionAutoCreate  is defined or if a session is started via the useSession() or createSession() functions. Sessions are  shared among requests that come from a single client. This may mean that multiple requests access the  same session concurrently. Ejscript ensures that such accesses are serialized. The elements are user defined.</td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Controller Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#afterFilter'><b>afterFilter</b></a>(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#beforeFilter'><b>beforeFilter</b></a>(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#cache'><b>cache</b></a>(enable: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Add a cache-control header to direct the browser to not cache the response.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#Controller'><b>Controller</b></a>()</tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#createSession'><b>createSession</b></a>(timeout: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Enable session control.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#destroySession'><b>destroySession</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Destroy a session.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#discardOutput'><b>discardOutput</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Discard all prior output.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#doAction'><b>doAction</b></a>(act: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Invoke the named action.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#error'><b>error</b></a>(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#escapeHtml'><b>escapeHtml</b></a>(s: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Transform a string to be safe for output into an HTML web page.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#html'><b>html</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>HTML encode the arguments.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#inform'><b>inform</b></a>(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send a positive notification to the user.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#initialize'><b>initialize</b></a>(isApp: <a href='intrinsic-Boolean.html'>Boolean</a>, appDir: <a href='intrinsic-String.html'>String</a>, appUrl: <a href='intrinsic-String.html'>String</a>, session: <a href='ejs.web-Session.html'>Session</a>, host: <a href='ejs.web-Host.html'>Host</a>, request: <a href='ejs.web-Request.html'>Request</a>, response: <a href='ejs.web-Response.html'>Response</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Controller initialization.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#keepAlive'><b>keepAlive</b></a>(on: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Control whether the HTTP connection is kept alive after this request.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#loadView'><b>loadView</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Load a view.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#makeUrl'><b>makeUrl</b></a>(action: <a href='intrinsic-String.html'>String</a>, id: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>, query: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Make a URL suitable for invoking actions.</td></tr>
+   <tr class='apiDef'><td class='apiType'>action </td><td><a href='#missing'><b>missing</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Missing action method.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#redirect'><b>redirect</b></a>(action: <a href='intrinsic-String.html'>String</a>, id: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Redirect to the given action Options: id controller.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#redirectUrl'><b>redirectUrl</b></a>(url: <a href='intrinsic-String.html'>String</a>, code: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Redirect the client to a new URL.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#render'><b>render</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render the raw arguments back to the client.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#renderError'><b>renderError</b></a>(code: <a href='intrinsic-Number.html'>Number</a>, msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#renderFile'><b>renderFile</b></a>(filename: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render a file's contents.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#renderRaw'><b>renderRaw</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render raw data.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#renderView'><b>renderView</b></a>(viewName: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render a view template.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#resetFilters'><b>resetFilters</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#sendError'><b>sendError</b></a>(code: <a href='intrinsic-Number.html'>Number</a>, msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send an error response back to the client.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#setCookie'><b>setCookie</b></a>(name: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, path: <a href='intrinsic-String.html'>String</a>, domain: <a href='intrinsic-String.html'>String</a>, lifetime: <a href='intrinsic-Number.html'>Number</a>, secure: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Define a cookie header to include in the reponse.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#setHeader'><b>setHeader</b></a>(key: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, allowMultiple: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Of the format "keyword: value".</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#setHttpCode'><b>setHttpCode</b></a>(code: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the HTTP response status code.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#setMimeType'><b>setMimeType</b></a>(format: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the response body mime type.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#statusMessage'><b>statusMessage</b></a>(args: <a href='intrinsic-Array.html'>Array</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Send a status message to any registered status message view controls.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#unescapeHtml'><b>unescapeHtml</b></a>(s: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Transform an escaped string into its original contents.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#warn'><b>warn</b></a>(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send a warning message back to the client for display in the flash area.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#wrapFilter'><b>wrapFilter</b></a>(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#write'><b>write</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write text to the client.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#writeHtml'><b>writeHtml</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send text back to the client which must first be HTML escaped.</td></tr>
+   <tr class='apiDef'><td class='apiType'></td><td><a href='#writeRaw'><b>writeRaw</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr></table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='afterFilter'></a>
+<div class='api'>
+<div class='apiSig'> afterFilter(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='beforeFilter'></a>
+<div class='api'>
+<div class='apiSig'> beforeFilter(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='cache'></a>
+<div class='api'>
+<div class='apiSig'> cache(enable: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Add a cache-control header to direct the browser to not cache the response.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>enable: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td> [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='Controller'></a>
+<div class='api'>
+<div class='apiSig'> Controller()
+</div>
+</div>
+<hr />
+<a name='createSession'></a>
+<div class='api'>
+<div class='apiSig'> createSession(timeout: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Enable session control.</p>
+<dl><dt>Description</dt><dd>This enables session state management for this request and other requests  from the browser. If a session has not already been created, this call creates a session and sets  the.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>timeout: <a href='intrinsic-Number.html'>Number</a> </td><td>Optional timeout for the session in seconds. If ommitted the default timeout is used. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='destroySession'></a>
+<div class='api'>
+<div class='apiSig'> destroySession(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Destroy a session.</p>
+<dl><dt>Description</dt><dd>This call destroys the session state store that is being used for the current client.  If no session exists, this call has no effect.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='discardOutput'></a>
+<div class='api'>
+<div class='apiSig'> discardOutput(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Discard all prior output.</p>
+</div>
+</div>
+<hr />
+<a name='doAction'></a>
+<div class='api'>
+<div class='apiSig'> doAction(act: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Invoke the named action.</p>
+<dl><dt>Description</dt><dd>Internal use only. Called from ejsWeb.c.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>act: <a href='intrinsic-String.html'>String</a> </td><td>Action name to invoke </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='error'></a>
+<div class='api'>
+<div class='apiSig'> error(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='escapeHtml'></a>
+<div class='api'>
+<div class='apiSig'> escapeHtml(s: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Transform a string to be safe for output into an HTML web page.</p>
+<dl><dt>Description</dt><dd>It does this by changing the ">", "<" and '"' characters into their ampersand HTML equivalents.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>s: <a href='intrinsic-String.html'>String</a> </td><td>input string </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A transformed HTML escaped string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='html'></a>
+<div class='api'>
+<div class='apiSig'> html(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>HTML encode the arguments.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Variable arguments that will be converted to safe html </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string containing the encoded arguments catenated together.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='inform'></a>
+<div class='api'>
+<div class='apiSig'> inform(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Send a positive notification to the user.</p>
+<dl><dt>Description</dt><dd>This is just a convenience instead of setting flash["inform"].</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>msg: <a href='intrinsic-String.html'>String</a> </td><td>Message to display </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='initialize'></a>
+<div class='api'>
+<div class='apiSig'> initialize(isApp: <a href='intrinsic-Boolean.html'>Boolean</a>, appDir: <a href='intrinsic-String.html'>String</a>, appUrl: <a href='intrinsic-String.html'>String</a>, session: <a href='ejs.web-Session.html'>Session</a>, host: <a href='ejs.web-Host.html'>Host</a>, request: <a href='ejs.web-Request.html'>Request</a>, response: <a href='ejs.web-Response.html'>Response</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Controller initialization.</p>
+<dl><dt>Description</dt><dd>This is specially hand-crafted by the hosting web server so that it runs before the sub-classing constructors.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>appDir: <a href='intrinsic-String.html'>String</a> </td><td>Set to the top level directory containing the application </td></tr><tr><td class='param'>appUrl: <a href='intrinsic-String.html'>String</a> </td><td>URL that points to the application </td></tr><tr><td class='param'>session: <a href='ejs.web-Session.html'>Session</a> </td><td>Session state object </td></tr><tr><td class='param'>host: <a href='ejs.web-Host.html'>Host</a> </td><td>Host object </td></tr><tr><td class='param'>request: <a href='ejs.web-Request.html'>Request</a> </td><td>Request object </td></tr><tr><td class='param'>response: <a href='ejs.web-Response.html'>Response</a> </td><td>Response object </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='keepAlive'></a>
+<div class='api'>
+<div class='apiSig'> keepAlive(on: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Control whether the HTTP connection is kept alive after this request.</p>
+</div>
+</div>
+<hr />
+<a name='loadView'></a>
+<div class='api'>
+<div class='apiSig'> loadView(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Load a view.</p>
+<dl><dt>Description</dt><dd>If path is not supplied, use the default view for the current action.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr><tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='makeUrl'></a>
+<div class='api'>
+<div class='apiSig'> makeUrl(action: <a href='intrinsic-String.html'>String</a>, id: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>, query: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Make a URL suitable for invoking actions.</p>
+<dl><dt>Description</dt><dd>This routine will construct a URL Based on a supplied action name,  model id and options that may contain an optional controller name. This is a convenience routine remove from  applications the burden of building URLs that correctly use action and controller names.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>action: <a href='intrinsic-String.html'>String</a> </td><td>The action name to invoke in the URL. If the name starts with "." or "/", it is assumed to be  a controller name and it is used by itself. </td></tr><tr><td class='param'>id: <a href='intrinsic-String.html'>String</a> </td><td>The model record ID to select via the URL. Defaults to null.  [default: null ]</td></tr><tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td>The options string </td></tr><tr><td class='param'>query: <a href='intrinsic-Object.html'>Object</a> </td><td>Query </td></tr></table></dd>
+</dl><h3 class='methodSection'>Options</h3>
+<p class='detail'>
+url: <a href='An.html'>An</a>  &mdash; override url to use. All other args are ignored. </p>
+<p class='detail'>
+query: <a href='Query.html'>Query</a>  &mdash; string to append to the URL. Overridden by the query arg. </p>
+<p class='detail'>
+controller: <a href='The.html'>The</a>  &mdash; name of the controller to use in the URL. </p>
+<dl><dt>Returns</dt>
+<dd>A string URL.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='missing'></a>
+<div class='api'>
+<div class='apiSig'> action missing(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Missing action method.</p>
+<dl><dt>Description</dt><dd>This method will be called if the requested action routine does not exist.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='redirect'></a>
+<div class='api'>
+<div class='apiSig'> redirect(action: <a href='intrinsic-String.html'>String</a>, id: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Redirect to the given action Options: id controller.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>id: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='redirectUrl'></a>
+<div class='api'>
+<div class='apiSig'> redirectUrl(url: <a href='intrinsic-String.html'>String</a>, code: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Redirect the client to a new URL.</p>
+<dl><dt>Description</dt><dd>This call redirects the client's browser to a new location specified  by the.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>url: <a href='intrinsic-String.html'>String</a> </td><td>Url to redirect the client to </td></tr><tr><td class='param'>code: <a href='intrinsic-Number.html'>Number</a> </td><td>Optional HTTP redirection code </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='render'></a>
+<div class='api'>
+<div class='apiSig'> render(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render the raw arguments back to the client.</p>
+<dl><dt>Description</dt><dd>The args are converted to strings.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='renderError'></a>
+<div class='api'>
+<div class='apiSig'> renderError(code: <a href='intrinsic-Number.html'>Number</a>, msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='renderFile'></a>
+<div class='api'>
+<div class='apiSig'> renderFile(filename: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render a file's contents.</p>
+</div>
+</div>
+<hr />
+<a name='renderRaw'></a>
+<div class='api'>
+<div class='apiSig'> renderRaw(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render raw data.</p>
+</div>
+</div>
+<hr />
+<a name='renderView'></a>
+<div class='api'>
+<div class='apiSig'> renderView(viewName: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render a view template.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>viewName: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='resetFilters'></a>
+<div class='api'>
+<div class='apiSig'> resetFilters(): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='sendError'></a>
+<div class='api'>
+<div class='apiSig'> sendError(code: <a href='intrinsic-Number.html'>Number</a>, msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Send an error response back to the client.</p>
+<dl><dt>Description</dt><dd>This calls discard the output.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>msg: <a href='intrinsic-String.html'>String</a> </td><td>Message to display </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='setCookie'></a>
+<div class='api'>
+<div class='apiSig'> setCookie(name: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, path: <a href='intrinsic-String.html'>String</a>, domain: <a href='intrinsic-String.html'>String</a>, lifetime: <a href='intrinsic-Number.html'>Number</a>, secure: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Define a cookie header to include in the reponse.</p>
+<dl><dt>Description</dt><dd>Path, domain and lifetime can be set to null for default values.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>name: <a href='intrinsic-String.html'>String</a> </td><td>Cookie name </td></tr><tr><td class='param'>value: <a href='intrinsic-String.html'>String</a> </td><td>Cookie value </td></tr><tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>URI path to which the cookie applies  [default: null ]</td></tr><tr><td class='param'>domain: <a href='intrinsic-String.html'>String</a> </td><td>Domain in which the cookie applies. Must have 2-3 dots.  [default: null ]</td></tr><tr><td class='param'>lifetime: <a href='intrinsic-Number.html'>Number</a> </td><td>Duration for the cookie to persist in seconds </td></tr><tr><td class='param'>secure: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Set to true if the cookie only applies for SSL based connections  [default: false]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='setHeader'></a>
+<div class='api'>
+<div class='apiSig'> setHeader(key: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, allowMultiple: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Of the format "keyword: value".</p>
+<dl><dt>Description</dt><dd>If a header has already been defined and \a allowMultiple is false,  the header will be overwritten. If \a allowMultiple is true, the new header will be appended to the  response headers and the existing header will also be output. NOTE: case does not matter in the header keyword.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr><tr><td class='param'>allowMultiple: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If false, overwrite existing headers with the same keyword. If true, all headers are output.  [default: false]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='setHttpCode'></a>
+<div class='api'>
+<div class='apiSig'> setHttpCode(code: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the HTTP response status code.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>code: <a href='intrinsic-Number.html'>Number</a> </td><td>HTTP status code to define </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='setMimeType'></a>
+<div class='api'>
+<div class='apiSig'> setMimeType(format: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the response body mime type.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>format: <a href='intrinsic-String.html'>String</a> </td><td>Mime type for the response. For example "text/plain". </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='statusMessage'></a>
+<div class='api'>
+<div class='apiSig'> statusMessage(args: <a href='intrinsic-Array.html'>Array</a>)
+</div>
+<div class='apiDetail'>
+<p>Send a status message to any registered status message view controls.</p>
+</div>
+</div>
+<hr />
+<a name='unescapeHtml'></a>
+<div class='api'>
+<div class='apiSig'> unescapeHtml(s: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Transform an escaped string into its original contents.</p>
+<dl><dt>Description</dt><dd>This reverses the transformation done by $escapeHtml. It does this by changing &quot, &gt, &lt back into ", < and >.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>s: <a href='intrinsic-String.html'>String</a> </td><td>input string </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A transformed string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='warn'></a>
+<div class='api'>
+<div class='apiSig'> warn(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Send a warning message back to the client for display in the flash area.</p>
+<dl><dt>Description</dt><dd>This is just a convenience instead of setting flash["warn"].</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>msg: <a href='intrinsic-String.html'>String</a> </td><td>Message to display </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='wrapFilter'></a>
+<div class='api'>
+<div class='apiSig'> wrapFilter(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='write'></a>
+<div class='api'>
+<div class='apiSig'> write(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write text to the client.</p>
+<dl><dt>Description</dt><dd>This call writes the arguments back to the client's browser. The arguments  are converted to strings before writing back to the client. Text written using write, will be buffered  up to a configurable maximum. This allows text to be written prior to setting HTTP headers with setHeader.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Text or objects to write to the client </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeHtml'></a>
+<div class='api'>
+<div class='apiSig'> writeHtml(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Send text back to the client which must first be HTML escaped.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Objects to emit </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeRaw'></a>
+<div class='api'>
+<div class='apiSig'> writeRaw(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

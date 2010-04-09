@@ -1,0 +1,185 @@
+#
+#   C compiler
+#
+defineComponent() {
+    local name path
+
+    #
+    #   Name comes from build/config/config.*
+    #
+    eval name=\$BLD_${KIND}_CC
+
+    path=`probe --path "$1" --partial $name $name`
+    if [ "$path" = "" ] ; then
+        warnComponent cc $name
+        return
+	fi
+    configureComponent --path "$path" --emitter emitCompilerOptions cc
+    setCompilerOptions
+}
+
+
+setCompilerOptions()
+{
+    local out file cc cpu file hasGcc hasStackProtector hasMtune hasDynLoad tune
+
+    eval os=\$BLD_${KIND}_OS
+    eval cc=\$CFG_${KIND}_CC
+    eval cpu=\$BLD_${KIND}_CPU
+    eval hasStackProtector=\${KIND}_HAS_STACK_PROTECTOR
+    eval hasLibEdit=\${KIND}_HAS_EDITLINE
+    eval hasMtune=\${KIND}_HAS_MTUNE
+    eval hasDynLoad=\${KIND}_HAS_DYN_LOAD
+    eval hasMmu=\${KIND}_HAS_MMU
+    eval hasCygwin=\${KIND}_HAS_CYGWIN
+    eval hasDiab=\${KIND}_HAS_DIAB
+    eval hasWarnUnused=\${KIND}_HAS_WARN_UNUSED
+
+    eval $hasStackProtector=0
+    eval $hasMtune=0
+    eval ${hasDynLoad}=0
+    eval ${hasLibEdit}=0
+    eval ${hasMmu}=0
+    eval ${hasWarnUnused}=0
+
+    if [ $os = CYGWIN -o $os = FREEBSD -o $os = LINUX -o $os = VXWORKS -o $os = MACOSX ] ; then
+        hasGcc=1
+    else 
+        hasGcc=0
+    fi
+
+    if [ $hasGcc = 1 ] ; then
+        #
+        #   Check if the compiler can handle -mtune. The tricky part 
+        #
+        file=/tmp/t$$.c
+        out=/tmp/t$$
+        >${file}
+        if [ "$verbose" != 0 ] ; then
+            echo -e "    Checking for compiler -mtune support"
+            # echo -e "        ${cc}" -mtune=${cpu} -c $file "\n"
+        fi
+		eval tune=\$BLD_${KIND}_CFLAGS
+		tune=`echo $tune | sed 's/.*-mtune=//' | sed 's/ .*//'`
+		tune=${tune:=generic}
+        "${cc}" -mtune=$tune -c $file >/dev/null 2>&1
+        if [ $? = 0 ] ; then
+            eval $hasMtune=1
+		else
+			"${cc}" -mtune=${cpu} -c $file >/dev/null 2>&1
+			if [ $? = 0 ] ; then
+				eval $hasMtune=1
+			fi
+		fi
+
+        #
+        #   Test if -fno-stack-protector is supported
+        #
+        if [ "$verbose" != 0 ] ; then
+            echo -e "    Checking for compiler -fno-stack-protector support"
+            # echo -e "        ${cc}" -fno-stack-protector -c $file "\n"
+        fi
+        "${cc}" -fno-stack-protector -c $file >/dev/null 2>&1
+        if [ $? = 0 ] ; then
+            eval $hasStackProtector=1
+        fi
+
+        #
+        #   Test if -Wno-unused-result is supported
+        #
+        if [ "$verbose" != 0 ] ; then
+            echo -e "    Checking for compiler -Wno-unused-result support"
+            # echo -e "        ${cc}" -Wno-unused-result -c $file "\n"
+        fi
+        "${cc}" -Wno-unused-result -c $file >/dev/null 2>&1
+        if [ $? = 0 ] ; then
+            eval $hasWarnUnused=1
+        fi
+
+        if [ $os != VXWORKS ] ; then
+            #
+            #   Test if fork() supported
+            #
+            if [ "$verbose" != 0 ] ; then
+                echo -e "    Checking for fork()"
+                # echo -e "        ${cc}" -o $out -c $file "\n"
+            fi
+            echo -e "#include <stdio.h>\nint main() { fork(); return 0; }\n" >$file
+            "${cc}" -o $out $file >/dev/null 2>&1
+            if [ $? = 0 ] ; then
+                eval $hasMmu=1
+            fi
+
+            #
+            #   Search for dlopen() / libdl
+            #
+            if [ "$verbose" != 0 ] ; then
+                echo -e "    Checking for dlopen()"
+                # echo "         ${cc}" -o $out -c $file 
+            fi
+            echo -e "#include <stdio.h>\nint main() { dlopen(); return 0; }\n" >$file
+            "${cc}" -o $out $file >/dev/null 2>&1
+            if [ $? = 0 ] ; then
+                eval $hasDynLoad=1
+            else
+                "${cc}" -ldl -o $out $file >/dev/null 2>&1
+                if [ $? = 0 ] ; then
+                    eval $hasDynLoad=1
+                fi
+            fi
+
+            #
+            #   Search for libedit
+            #
+            if [ "$verbose" != 0 ] ; then
+                echo -e "    Checking for libedit()"
+                # echo "         ${cc}" -o $out -c $file 
+            fi
+            echo -e "#include <histedit.h>\nint main() { history_init(); return 0; }\n" >$file
+            "${cc}" -ledit -lcurses -o $out $file >/dev/null 2>&1
+            if [ $? = 0 ] ; then
+                eval $hasLibEdit=1
+            else
+                "${cc}" -ldl -o $out $file >/dev/null 2>&1
+                if [ $? = 0 ] ; then
+                    eval $hasLibEdit=1
+                fi
+            fi
+        fi
+        rm -f t$$.o ${file} ${out}
+
+    else
+        #
+        #   Enable for all non-GNU O/S
+        #
+        eval $hasMmu=1
+        eval $hasDynLoad=1
+    fi
+    if [ $os = VXWORKS ] ; then
+        eval ${hasDynLoad}=1
+    fi
+    if [ "$BLD_CC_CYGWIN" = 1 ] ; then
+        eval ${hasCygwin}=1
+    else
+        eval ${hasCygwin}=0
+    fi
+    if [ "$BLD_CC_DIAB" = 1 ] ; then
+        eval ${hasDiab}=1
+    else
+        eval ${hasDiab}=0
+    fi
+}
+
+emitCompilerOptions()
+{
+    local v
+    eval v=\$${KIND}_HAS_CYGWIN ;           echo -e "\tBLD_CC_CYGWIN=$v"
+    eval v=\$${KIND}_HAS_DIAB ;             echo -e "\tBLD_CC_DIAB=$v"
+    eval v=\$${KIND}_HAS_DYN_LOAD ;         echo -e "\tBLD_CC_DYN_LOAD=$v"
+    eval v=\$${KIND}_HAS_MTUNE ;            echo -e "\tBLD_CC_MTUNE=$v"
+    eval v=\$${KIND}_HAS_MMU ;              echo -e "\tBLD_CC_MMU=$v"
+    eval v=\$${KIND}_HAS_WARN_UNUSED ;      echo -e "\tBLD_CC_WARN_UNUSED=$v"
+    eval v=\$${KIND}_HAS_EDITLINE ;         echo -e "\tBLD_CC_EDITLINE=$v"
+    eval v=\$${KIND}_HAS_STACK_PROTECTOR ;  echo -e "\tBLD_CC_STACK_PROTECTOR=$v"
+}
+

@@ -1,0 +1,97 @@
+<BODY><PRE>
+APPWEB(1)                        User Commands                       APPWEB(1)
+
+<B>NAME</B>
+       appweb- Embedded HTTP Web Server
+
+<B>SYNOPSIS</B>
+       <B>appweb [options]</B>
+       <B>appweb [options] [IP][:port] [documentRoot]</B>
+
+       <B>appweb </B>[<I>--config configFile</I>] [<I>--chroot directory</I>] [<I>--debug</I>] [<I>--ejs app-</I>
+       <I>Spec</I>] [<I>--log logSpec</I>] [<I>--home directory</I>]  [<I>--threads  threads</I>]  [<I>--ver-</I>
+       <I>sion</I>] [<I>--verbose</I>]
+
+<B>DESCRIPTION</B>
+       Appweb  is  a  compact  embedded HTTP web server.  It is a fast, small-
+       footprint, multi-threaded, standards-based, portable  server  developed
+       for  use  by embedded devices and applications.  It can run as a stand-
+       alone web server or the Appweb library can be embedded in applications.
+
+       Appweb supports HTTP/1.1, SSL, digest and basic authentication, virtual
+       hosting, ranged requests, chunked transfers, file upload  and  security
+       limits.  Appweb has an Apache style configuration file and supports the
+       PHP and Ejscript web frameworks.
+
+       Appweb normally reads the <B>appweb.conf  </B>file  for  configuration  direc-
+       tives.  However, if appweb is invoked with an IP address or port number
+       on the command line, Appweb  will  not  read  the  configuration  file.
+       Rather it will listen for requests on the specified IP:PORT address. If
+       the PORT component is omitted, Appweb will listen on port 80. If the IP
+       address  is  omitted  and a port is supplied, Appweb will listen on all
+       network interfaces.
+
+<B>OPTIONS</B>
+       <B>--config filename</B>
+              Define the name of the Appweb configuration  file.  This  is  by
+              default <B>appweb</B>.
+
+       <B>--chroot directory</B>
+              Change  the  system  root  directory  for Appweb. This creates a
+              chroot jail so that the Appweb process cannot access  any  files
+              outside the given directory.
+
+       <B>--debug</B>
+              Run Appweb in debug mode and disable all timeouts. This disables
+              request and session timeouts.  The <B>-d </B>option  is  an  alias  for
+              --debug.
+
+       <B>--ejs name:directory</B>
+              Define  an  Ejscript application by name at the specified direc-
+              tory. The <B>name </B>is the application name and is used as a URL pre-
+              fix. When a request arrives which matches this URL prefix, it is
+              routed to the application to service. For example:
+
+              appweb --ejs /carmen/:/var/www/apps/carmen/
+
+       <B>--log logSpec</B>
+              Name the Appweb log file. This will override the ErrorLog direc-
+              tive  in  the  configuration  file.   When  the  maximum size is
+              exceeded, the log file will be rotated to logName.old and a  new
+              log  file  will be started. The <B>-l </B>option is an alias for --log.
+              The syntax is:
+
+              --log logName[:logLevel][.maxSize]
+
+       <B>--home directory</B>
+              Define the server home directory for Appweb.
+
+       <B>--threads numThreads</B>
+              Specify the maximum number of threads  to  use  for  the  appweb
+              thread  pool.  This overrides the ThreadLimit configuration file
+              directive.
+
+       <B>--verbose</B>
+              Shorthand for --log stdout:4. The <B>-v  </B>option  is  an  alias  for
+              --verbose.
+
+       <B>--version</B>
+              Output the product version number.
+
+<B>FILES</B>
+       <B>/etc/appweb/appweb.conf</B>
+       <B>/var/www/appweb-default</B>
+       <B>/usr/lib/appweb</B>
+       <B>/var/log/appweb</B>
+
+<B>REPORTING BUGS</B>
+       Report bugs to &ltdev@embedthis.com&gt.
+
+<B>COPYRIGHT</B>
+       Copyright (C) 2003-2010 Embedthis Software.
+
+<B>SEE ALSO</B>
+       http
+
+appweb                            March 2010                         APPWEB(1)
+</PRE></BODY>

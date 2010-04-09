@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+#   getlib -- Copy a library to the local lib directory.
+#
+#   Copyright (c) Embedthis LLC, 2003-2010. All Rights Reserved.
+#
+
+. ${BLD_TOP}/build/bin/buildConfig.sh
+
+files="$*"
+
+for path in $files
+do
+    if [ "${BLD_HOST_OS}" = "WIN" ] ; then
+        #
+        #   For windows, we must also copy the manifest and library .lib files.
+        #   First, strip the extension.
+        #
+        path="${path%.*}"
+        file=`basename $path`
+        cp "${path}"* "${BLD_LIB_DIR}"
+        chmod 755 ${BLD_LIB_DIR}/${file}*
+        file=${file/.dll/.lib}
+        path=`dirname "$path"`/$file
+        if [ -f "$path" ] ; then
+            printf "%12s %s\n" "[Import]" $path
+            cp "${path}" "${BLD_LIB_DIR}"
+            chmod 755 ${BLD_LIB_DIR}/$file
+        fi
+    else
+        file=`basename $path`
+        printf "%12s %s\n" "[Import]" $file
+        cp "$path" "${BLD_LIB_DIR}/$file"
+        chmod 755 ${BLD_LIB_DIR}/$file
+
+        #
+        #   Create symlink without library version
+        #
+        nover=${file/.[0-9].[0-9].[0-9]/}
+        if [ "$nover" != "$file" ] ; then
+            ( cd ${BLD_LIB_DIR} ; rm -f "$nover" ; ln -s "$file" "$nover" )
+        fi
+        if [ "${BLD_HOST_OS}" = "LINUX" ] ; then
+            if [ -f /etc/redhat-release -a -x /usr/bin/chcon ] ; then 
+                if [ "`sestatus | grep enabled`" != "" ] ; then 
+                    priv chcon /usr/bin/chcon -t texrel_shlib_t ${BLD_LIB_DIR}/$file
+                fi
+            fi
+            [ -x /sbin/ldconfig ] && ldconfig -n ${BLD_LIB_DIR}
+        fi
+    fi
+done
+

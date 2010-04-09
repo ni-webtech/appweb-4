@@ -1,0 +1,53 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: md5WithRSAEncryption
+        Issuer: C=US, ST=Washington, L=Bellevue, O=Acme Authority Inc., OU=Production, CN=www.acmeca.com/emailAddress=info@acmeca.com
+        Validity
+            Not Before: Dec  8 23:42:58 2003 GMT
+            Not After : Dec  7 23:42:58 2004 GMT
+        Subject: C=US, ST=Washington, O=Server Solutions Inc., OU=Development, CN=localhost/emailAddress=mob@serversolutions.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:e0:1f:3d:48:9b:96:bc:f6:5e:4c:ae:d6:a6:b9:
+                    82:2a:75:ce:e9:df:c7:44:a8:1d:6a:4e:26:0a:98:
+                    40:4e:f2:87:96:80:45:2e:9a:eb:f1:46:31:16:47:
+                    f8:a5:81:5c:b5:0e:35:8f:5e:95:66:20:3e:ba:4f:
+                    9c:cc:6f:f1:a7:2a:a9:c1:ab:b8:84:0e:76:54:ac:
+                    78:b5:c4:61:67:33:7b:ba:9f:c3:c9:19:bb:5d:09:
+                    66:72:f3:8b:a6:e9:e4:b0:e0:01:59:23:6e:f2:ca:
+                    8d:4c:b8:e1:34:74:26:ad:4a:8f:df:51:11:11:f1:
+                    78:e0:bf:b0:ae:f1:82:ee:eb
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+            CA:FALSE
+    Signature Algorithm: md5WithRSAEncryption
+        3e:de:46:4d:af:21:06:fe:10:fe:a9:43:e3:26:33:39:6f:0a:
+        71:f5:cc:8b:6f:29:29:3f:8c:2d:cb:a6:a9:77:34:c6:0d:9a:
+        32:6e:8d:3d:4f:39:d5:5d:19:01:4d:15:a0:2e:6d:d4:24:3b:
+        cd:91:c8:7d:f6:97:f3:6e:16:42:8e:d8:d4:a1:e3:fe:70:6b:
+        5c:9f:cd:22:bc:4b:ff:4d:58:83:65:4d:57:cf:4c:58:96:79:
+        de:63:bb:6a:4a:11:b2:af:95:fd:07:7d:9b:21:a8:80:c6:06:
+        61:c9:c7:6c:b9:82:6f:d8:4b:9a:56:8f:14:79:f7:45:c5:e8:
+        aa:da
+-----BEGIN CERTIFICATE-----
+MIICujCCAiOgAwIBAgIBATANBgkqhkiG9w0BAQQFADCBoTELMAkGA1UEBhMCVVMx
+EzARBgNVBAgTCldhc2hpbmd0b24xETAPBgNVBAcTCEJlbGxldnVlMRwwGgYDVQQK
+ExNBY21lIEF1dGhvcml0eSBJbmMuMRMwEQYDVQQLEwpQcm9kdWN0aW9uMRcwFQYD
+VQQDEw53d3cuYWNtZWNhLmNvbTEeMBwGCSqGSIb3DQEJARYPaW5mb0BhY21lY2Eu
+Y29tMB4XDTAzMTIwODIzNDI1OFoXDTA0MTIwNzIzNDI1OFowgZQxCzAJBgNVBAYT
+AlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMR4wHAYDVQQKExVTZXJ2ZXIgU29sdXRp
+b25zIEluYy4xFDASBgNVBAsTC0RldmVsb3BtZW50MRIwEAYDVQQDEwlsb2NhbGhv
+c3QxJjAkBgkqhkiG9w0BCQEWF21vYkBzZXJ2ZXJzb2x1dGlvbnMuY29tMIGfMA0G
+CSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgHz1Im5a89l5MrtamuYIqdc7p38dEqB1q
+TiYKmEBO8oeWgEUumuvxRjEWR/ilgVy1DjWPXpVmID66T5zMb/GnKqnBq7iEDnZU
+rHi1xGFnM3u6n8PJGbtdCWZy84um6eSw4AFZI27yyo1MuOE0dCatSo/fURER8Xjg
+v7Cu8YLu6wIDAQABow0wCzAJBgNVHRMEAjAAMA0GCSqGSIb3DQEBBAUAA4GBAD7e
+Rk2vIQb+EP6pQ+MmMzlvCnH1zItvKSk/jC3Lpql3NMYNmjJujT1POdVdGQFNFaAu
+bdQkO82RyH32l/NuFkKO2NSh4/5wa1yfzSK8S/9NWINlTVfPTFiWed5ju2pKEbKv
+lf0HfZshqIDGBmHJx2y5gm/YS5pWjxR590XF6Kra
+-----END CERTIFICATE-----

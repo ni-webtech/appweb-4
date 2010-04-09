@@ -1,0 +1,3 @@
+LIBRARY mod_php.dll
+EXPORTS
+  maPhpHandlerInit

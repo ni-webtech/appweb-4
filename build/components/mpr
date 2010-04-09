@@ -1,0 +1,27 @@
+#
+#   Mpr
+#
+defineComponent() {
+    local libpaths name path
+
+    name="mpr"
+    path="$1"
+    search="src/deps:src"
+
+    if [ -f src/mpr.c -o -f src/mpr/mprLib.c ] ; then
+        path="src/mpr"
+    elif [ -d src/deps/mpr ] ; then
+        path="src/deps/mpr"
+    else
+        path=`probe --path "$path" --partial "mpr" $name`
+    fi
+    if [ "$path" = "" ] ; then
+        warnComponent $name
+        return
+    fi
+    if isExternal "$path" ; then
+        libpaths="$path/lib"
+    fi
+    configureComponent --builtin --libs "mpr" --path "$path" --libpaths "$libpaths" $name
+    BLD_FEATURE_MPR_ALL_IN_ONE=1
+}

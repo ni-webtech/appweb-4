@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# $1 - Valgrind output
+# $2 - name of Valgrind suppression file
+# $3 - Number at wich to continue error count, optional 
+
+TMP_FILE="$2.tmp"
+EXPECT_STACK="no"
+STACK=""
+COUNTER=0
+
+rm $2 ${TMP_FILE} >/dev/null 2>&1
+
+>${TMP_FILE}
+
+while read i ; do
+    # get rid of leading crap
+    i=`echo $i|cut -d'=' -f5-`
+
+    if echo $i | grep -e 'Use of uninitialised value of size 4' >/dev/null
+    then
+        EXPECT_STACK="yes"
+        STACK="Value4"
+    elif echo $i | grep -e 'Conditional jump or move' >/dev/null
+    then
+        EXPECT_STACK="yes"
+        STACK="Cond"
+    elif echo $i | grep -e 'Syscall param' >/dev/null
+    then
+        EXPECT_STACK="yes"
+        STACK="Param"
+    elif echo $i | grep -e '^[:space:]*$' >/dev/null
+    then
+        if test "${EXPECT_STACK}" = "yes"
+        then
+            EXPECT_STACK="no"
+            echo ${STACK} >> ${TMP_FILE}
+            STACK=""
+            COUNTER=0
+        fi
+    elif test "$EXPECT_STACK" = "yes"
+    then
+        COUNTER=`expr ${COUNTER} + 1`
+        if test ${COUNTER} -le 4 
+        then
+            i=`echo $i | sed 's/.*: \(.*\) (.*/\1/'`
+            STACK="${STACK};fun:${i}"
+        fi
+    fi
+done < $1
+
+if test -z "$3"
+then
+    COUNTER=0
+else
+    COUNTER=$3
+fi
+
+sort ${TMP_FILE} | uniq | while read i ; do
+    SAVED_IFS=${IFS}
+    IFS=';'
+    echo "{" >> $2
+    echo "   ERROR_${COUNTER}" >> $2
+    for j in $i ; do
+        echo "   $j" >> $2
+    done
+    echo "}" >> $2
+    echo "" >> $2
+    COUNTER=`expr ${COUNTER} + 1`
+    IFS=${SAVED_IFS}
+done
+
+rm ${TMP_FILE}

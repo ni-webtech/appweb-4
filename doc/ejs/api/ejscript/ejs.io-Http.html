@@ -1,0 +1,905 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+   <title>Class Http</title>
+
+   <link rel="stylesheet" type="text/css" href="doc.css" />
+</head>
+
+<body>
+<div class='body'>
+
+<div class="content">
+
+<a name='top'></a>
+<h1 class='className'>Http</h1>
+<div class='classBlock'>
+<table class='classHead' summary='Http'>
+   <tr><td><strong>Module</strong></td><td>ejs.io</td></tr>
+   <tr><td><strong>Namespace</strong></td><td>"ejs.io"</td></tr>
+   <tr><td><strong>Definition</strong></td><td> class Http</td></tr>
+<tr><td><strong>Specified</strong></td><td>Ejs-11.</td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Http <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+</table>
+
+<p class='classBrief'>The Http object represents a Hypertext Transfer Protocol version 1.</p>
+
+<p class='classDescription'>1 client connection. It is used to issue  HTTP requests and capture responses. It supports the HTTP/1.1 standard including methods for GET, POST,  PUT, DELETE, OPTIONS, and TRACE. It also supports Keep-Alive and SSL connections.</p>
+
+</div>
+
+
+<hr />
+<a name='Properties'></a>
+<h2 class='classSection'>Properties</h2>
+<table class='itemTable' summary='properties'>
+   <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Accepted</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>BadGateway</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>BadMethod</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>BadRequest</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>ClientTimeout</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Conflict</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Continue</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Created</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>EntityTooLarge</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Forbidden</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>GatewayTimeout</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Gone</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>LengthRequired</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>MovedPermanently</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>MovedTemporarily</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>MultipleChoice</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>NoContent</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>NotAccepted</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>NotAuthoritative</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>NotFound</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>NotImplemented</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>NotModified</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Ok</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Partial</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>PaymentRequired</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>PrecondFailed</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>ProxyAuth</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Read</td><td><a href='intrinsic-Number.html'>Number</a></td><td>Callback event mask for readable events. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>ReqTooLong</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Reset</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>SeeOther</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>ServerError</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Unauthorized</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Unavailable</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>UnsupportedType</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>UseProxy</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Version</td><td><a href='intrinsic-Number.html'>Number</a></td><td>HTTP status code. </td></tr>
+   <tr><td nowrap align='center'>public static const </td><td>Write</td><td><a href='intrinsic-Number.html'>Number</a></td><td>Callback event mask for writeable events. </td></tr>
+</table>
+
+<hr />
+<a name='Methods'></a>
+<h2 class='classSection'>Http Methods</h2>
+<table class='apiIndex' summary='methods'>
+   <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#addHeader'><b>addHeader</b></a>(key: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, overwrite: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Add a request header.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#available'><b>available</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the number of response data bytes that are currently available for reading.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#bodyLength'><b>bodyLength</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-bodyLength'><b>bodyLength</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-certificate'><b>certificate</b></a>(certFile: <a href='ejs.io-Path.html'>Path</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set or reset the file name where this Https object holds its certificate.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#certificate'><b>certificate</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the name of the file holding the certificate for this HTTP object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#chunked'><b>chunked</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return whether chunked transfer encoding will be applied to the body data of the request.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-chunked'><b>chunked</b></a>(value: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Control whether chunked transfer encoding will be applied to the body data of the request.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#close'><b>close</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Close the connection to the server and free up all associated resources.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#code'><b>code</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the response code from a Http message, e.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#codeString'><b>codeString</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the response code message from a Http message, e.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#connect'><b>connect</b></a>(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Issue a HTTP request for the current method and uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#contentEncoding'><b>contentEncoding</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the value of the content encoding.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#contentLength'><b>contentLength</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the response content length.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-contentLength'><b>contentLength</b></a>(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the request content body length.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#contentType'><b>contentType</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the response content type.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#date'><b>date</b></a>(): <a href='intrinsic-Date.html'>Date</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the value of the content date header field.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#del'><b>del</b></a>(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Issue a DELETE request for the current uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#expires'><b>expires</b></a>(): <a href='intrinsic-Date.html'>Date</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the value of the expires header field.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#flush'><b>flush</b></a>(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Flush any buffered write data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#followRedirects'><b>followRedirects</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get whether redirects should be automatically followed by this Http object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-followRedirects'><b>followRedirects</b></a>(flag: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Eanble or disable following redirects from the connection remove server.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#form'><b>form</b></a>(uri: <a href='intrinsic-String.html'>String</a>, postData: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Issue a POST request with form data the current uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#get'><b>get</b></a>(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Issue a GET request for the current uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#head'><b>head</b></a>(uri: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Issue a HEAD request for the current uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#header'><b>header</b></a>(key: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the value of any response header field.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#headers'><b>headers</b></a>(): <a href='intrinsic-Object.html'>Object</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get all the response headers.</td></tr>
+   <tr class='apiDef'><td class='apiType'> </td><td><a href='#Http'><b>Http</b></a>(uri: <a href='intrinsic-String.html'>String</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Create an Http object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#isSecure'><b>isSecure</b></a>(): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get whether the connection is utilizing SSL.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#key'><b>key</b></a>(): <a href='ejs.io-Path.html'>Path</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the filename of the private key for this Https object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-key'><b>key</b></a>(keyFile: <a href='ejs.io-Path.html'>Path</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set or reset the filename where this Https object holds its private key.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#lastModified'><b>lastModified</b></a>(): <a href='intrinsic-Date.html'>Date</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the value of the response's last modified header field.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#method'><b>method</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the request method for this Http object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-method'><b>method</b></a>(name: <a href='intrinsic-String.html'>String</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Set or reset the Http object's request method.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public static </td><td><a href='#mimeType'><b>mimeType</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the mime type for a path or extension string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#options'><b>options</b></a>(uri: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Issue an OPTIONS request for the current uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#post'><b>post</b></a>(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Initiate a POST request for the current uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#put'><b>put</b></a>(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Issue a PUT request for the current uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#read'><b>read</b></a>(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a block of response content data from the connection.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readLines'><b>readLines</b></a>(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Array.html'>Array</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read the request response as an array of lines.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readString'><b>readString</b></a>(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read the request response as a string.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#readXml'><b>readXml</b></a>(): <a href='ejs.xml-XML.html'>XML</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read the request response as an XML document.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#response'><b>response</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Return the response data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#retries'><b>retries</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the permissible number of retries for a request.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-retries'><b>retries</b></a>(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Define the number of retries of a request.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#setCallback'><b>setCallback</b></a>(eventMask: <a href='intrinsic-Number.html'>Number</a>, cb: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Define a callback to be invoked for readable and/or writable events.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#setCredentials'><b>setCredentials</b></a>(username: <a href='intrinsic-String.html'>String</a>, password: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the user credentials to use if the request requires authentication.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#skip'><b>skip</b></a>(n: <a href='intrinsic-Number.html'>Number</a>)</tr>   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#timeout'><b>timeout</b></a>(): <a href='intrinsic-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the request timeout.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-timeout'><b>timeout</b></a>(timeout: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the request timeout.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#trace'><b>trace</b></a>(uri: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Issue a TRACE request for the current uri.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#upload'><b>upload</b></a>(url: <a href='intrinsic-String.html'>String</a>, files: <a href='intrinsic-Object.html'>Object</a>, fields: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Upload files using multipart/mime.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public get </td><td><a href='#uri'><b>uri</b></a>(): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get the URI for this Http object.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public set </td><td><a href='#set-uri'><b>uri</b></a>(uriString: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set or reset the Http object's URI.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#wait'><b>wait</b></a>(timeout: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Boolean.html'>Boolean</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Wait for a request to complete.</td></tr>
+   <tr class='apiDef'><td class='apiType'>public </td><td><a href='#write'><b>write</b></a>(data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write body data to the request stream.</td></tr>
+</table>
+
+<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+
+<hr />
+<h2>Method Detail</h2>
+<a name='addHeader'></a>
+<div class='api'>
+<div class='apiSig'> public addHeader(key: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, overwrite: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Add a request header.</p>
+<dl><dt>Description</dt><dd>Must be done before the Http request is issued.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>key: <a href='intrinsic-String.html'>String</a> </td><td>The header keyword for the request, e.g. "accept". </td></tr><tr><td class='param'>value: <a href='intrinsic-String.html'>String</a> </td><td>The value to associate with the header, e.g. "yes" </td></tr><tr><td class='param'>overwrite: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, overwrite existing headers of the same key name.  [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='available'></a>
+<div class='api'>
+<div class='apiSig'>get  public available(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the number of response data bytes that are currently available for reading.</p>
+<dl><dt>Description</dt><dd>This API is not supported and is provided only for compliance with the Stream interface.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The number of available bytes.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='bodyLength'></a>
+<div class='api'>
+<div class='apiSig'>get  public bodyLength(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='set-bodyLength'></a>
+<div class='api'>
+<div class='apiSig'>set  public bodyLength(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+</div>
+<hr />
+<a name='set-certificate'></a>
+<div class='api'>
+<div class='apiSig'>set  public certificate(certFile: <a href='ejs.io-Path.html'>Path</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set or reset the file name where this Https object holds its certificate.</p>
+<dl><dt>Description</dt><dd>If defined and secure  communications are used, then the connection will supply this certification during its connection request. NOT currently supported.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>certFile: <a href='ejs.io-Path.html'>Path</a> </td><td>The name of the certificate file. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file does not exist. 
+</p>
+</div>
+</div>
+<hr />
+<a name='certificate'></a>
+<div class='api'>
+<div class='apiSig'>get  public certificate(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the name of the file holding the certificate for this HTTP object.</p>
+<dl><dt>Description</dt><dd>This method applies only if secure communications are in use and if setCertificationFile has been called.  NOT currently supported.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The file name.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='chunked'></a>
+<div class='api'>
+<div class='apiSig'>get  public chunked(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Return whether chunked transfer encoding will be applied to the body data of the request.</p>
+<dl><dt>Description</dt><dd>Chunked encoding is used when an explicit request content length is unknown at the time the request headers must be emitted. Chunked encoding is automatically enabled if $post, $put or $upload is called and a contentLength has not been  previously set.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>True if chunked transfers will be employed.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-chunked'></a>
+<div class='api'>
+<div class='apiSig'>set  public chunked(value: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Control whether chunked transfer encoding will be applied to the body data of the request.</p>
+<dl><dt>Description</dt><dd>Chunked encoding is used when an explicit request content length is unknown at the time the request headers must be emitted. Chunked encoding is automatically enabled if $post, $put or $upload is called and a contentLength has not been  previously set.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>value: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Boolean value. Set to true to enable chunked transfers. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='close'></a>
+<div class='api'>
+<div class='apiSig'> public close(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Close the connection to the server and free up all associated resources.</p>
+<dl><dt>Description</dt><dd>It is not normally required to call  $close. But it can be useful to force a disconnect.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>if true, then close the socket gracefully after writing all pending data.  [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='code'></a>
+<div class='api'>
+<div class='apiSig'>get  public code(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the response code from a Http message, e.</p>
+<dl><dt>Description</dt><dd>G. 200.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The integer value of the response code or -1 if not known.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='codeString'></a>
+<div class='api'>
+<div class='apiSig'>get  public codeString(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the response code message from a Http message, e.</p>
+<dl><dt>Description</dt><dd>G. OK.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The string message returned with the HTTP response status line.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='connect'></a>
+<div class='api'>
+<div class='apiSig'> public connect(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Issue a HTTP request for the current method and uri.</p>
+<dl><dt>Description</dt><dd>The HTTP method should be defined via the $method  property and uri via the $uri property. This routine is typically not used. Rather $get, $head, $post or $put are used instead.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>New uri to use. This overrides any previously defined uri for the Http object. </td></tr><tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Data objects to send with the request. Data is written raw and is not encoded or converted.  However, the routine intelligently handles arrays such that, each element of the array will be written.  </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='contentEncoding'></a>
+<div class='api'>
+<div class='apiSig'>get  public contentEncoding(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the value of the content encoding.</p>
+<dl><dt>Returns</dt>
+<dd>A string with the content type or null if not known.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='contentLength'></a>
+<div class='api'>
+<div class='apiSig'>get  public contentLength(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the response content length.</p>
+<dl><dt>Returns</dt>
+<dd>The length of the response in characters or -1 if not known.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-contentLength'></a>
+<div class='api'>
+<div class='apiSig'>set  public contentLength(value: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the request content body length.</p>
+<dl><dt>Description</dt><dd>This sets the request Content-Length header value and is used when using  $write to manually send the requeset body data.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='contentType'></a>
+<div class='api'>
+<div class='apiSig'>get  public contentType(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the response content type.</p>
+<dl><dt>Description</dt><dd>Call read() or response() to get the response content.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>A string with the content type or null if not known.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='date'></a>
+<div class='api'>
+<div class='apiSig'>get  public date(): <a href='intrinsic-Date.html'>Date</a>
+</div>
+<div class='apiDetail'>
+<p>Get the value of the content date header field.</p>
+<dl><dt>Returns</dt>
+<dd>The date the request was served.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='del'></a>
+<div class='api'>
+<div class='apiSig'> public del(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Issue a DELETE request for the current uri.</p>
+<dl><dt>Description</dt><dd>This function will block until the the request completes or  fails, unless a callback function has been defined. If a callback has been specified, this function  will initiate the request and return immediately.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>The uri to delete. This overrides any previously defined uri for the Http object. </td></tr><tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Data objects to send with the request. Data is written raw and is not encoded or converted.  However, the routine intelligently handles arrays such that, each element of the array will be written.  </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='expires'></a>
+<div class='api'>
+<div class='apiSig'>get  public expires(): <a href='intrinsic-Date.html'>Date</a>
+</div>
+<div class='apiDetail'>
+<p>Get the value of the expires header field.</p>
+<dl><dt>Returns</dt>
+<dd>The date the content expires.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='flush'></a>
+<div class='api'>
+<div class='apiSig'> public flush(graceful: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Flush any buffered write data.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>graceful: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If true, then write all pending.  [default: true]</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='followRedirects'></a>
+<div class='api'>
+<div class='apiSig'>get  public followRedirects(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Get whether redirects should be automatically followed by this Http object.</p>
+<dl><dt>Returns</dt>
+<dd>True if redirects are automatically followed.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-followRedirects'></a>
+<div class='api'>
+<div class='apiSig'>set  public followRedirects(flag: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Eanble or disable following redirects from the connection remove server.</p>
+<dl><dt>Description</dt><dd>Default is true.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>flag: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Set to true to follow redirects. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='form'></a>
+<div class='api'>
+<div class='apiSig'> public form(uri: <a href='intrinsic-String.html'>String</a>, postData: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Issue a POST request with form data the current uri.</p>
+<dl><dt>Description</dt><dd>This function will block until the the request  completes or fails, unless a callback function has been defined. If a callback has been specified,  this function will initiate the request and return immediately.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>Optional request uri. If non-null, this overrides any previously defined uri for the Http object. </td></tr><tr><td class='param'>postData: <a href='intrinsic-Object.html'>Object</a> </td><td>Optional object hash of key value pairs to use as the post data. These are www-url-encoded and the content mime type is set to "application/x-www-form-urlencoded". </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='get'></a>
+<div class='api'>
+<div class='apiSig'> public get(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Issue a GET request for the current uri.</p>
+<dl><dt>Description</dt><dd>This call initiates a GET request. It does not wait for the request to complete. Once initiated, one of the $read or response routines  may be used to receive the  response data.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>The uri to get. This overrides any previously defined uri for the Http object. </td></tr><tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Data objects to send with the request. Data is written raw and is not encoded or converted.  However, the routine intelligently handles arrays such that, each element of the array will be written.  </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='head'></a>
+<div class='api'>
+<div class='apiSig'> public head(uri: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Issue a HEAD request for the current uri.</p>
+<dl><dt>Description</dt><dd>This call initiates a HEAD request. Once initiated, $read and $write may be issued to send and receive data.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>The request uri. This overrides any previously defined uri for the Http object. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='header'></a>
+<div class='api'>
+<div class='apiSig'> public header(key: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the value of any response header field.</p>
+<dl><dt>Returns</dt>
+<dd>The header field value as a string or null if not known.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='headers'></a>
+<div class='api'>
+<div class='apiSig'>get  public headers(): <a href='intrinsic-Object.html'>Object</a>
+</div>
+<div class='apiDetail'>
+<p>Get all the response headers.</p>
+<dl><dt>Returns</dt>
+<dd>An object hash filled with all the response headers.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='Http'></a>
+<div class='api'>
+<div class='apiSig'> Http(uri: <a href='intrinsic-String.html'>String</a>)
+</div>
+<div class='apiDetail'>
+<p>Create an Http object.</p>
+<dl><dt>Description</dt><dd>The object is initialized with the URI.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>The (optional) URI to initialize with. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the URI is malformed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='isSecure'></a>
+<div class='api'>
+<div class='apiSig'>get  public isSecure(): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Get whether the connection is utilizing SSL.</p>
+<dl><dt>Returns</dt>
+<dd>True if the connection is using SSL.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='key'></a>
+<div class='api'>
+<div class='apiSig'>get  public key(): <a href='ejs.io-Path.html'>Path</a>
+</div>
+<div class='apiDetail'>
+<p>Get the filename of the private key for this Https object.</p>
+<dl><dt>Description</dt><dd>NOT currently supported.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The file name.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-key'></a>
+<div class='api'>
+<div class='apiSig'>set  public key(keyFile: <a href='ejs.io-Path.html'>Path</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set or reset the filename where this Https object holds its private key.</p>
+<dl><dt>Description</dt><dd>NOT currently supported.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>keyFile: <a href='ejs.io-Path.html'>Path</a> </td><td>The name of the key file. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the file does not exist. 
+</p>
+</div>
+</div>
+<hr />
+<a name='lastModified'></a>
+<div class='api'>
+<div class='apiSig'>get  public lastModified(): <a href='intrinsic-Date.html'>Date</a>
+</div>
+<div class='apiDetail'>
+<p>Get the value of the response's last modified header field.</p>
+<dl><dt>Returns</dt>
+<dd>The number of milliseconds since January 1, 1970 GMT or -1 if not known.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='method'></a>
+<div class='api'>
+<div class='apiSig'>get  public method(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the request method for this Http object.</p>
+<dl><dt>Returns</dt>
+<dd>The request string or null if not set.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-method'></a>
+<div class='api'>
+<div class='apiSig'>set  public method(name: <a href='intrinsic-String.html'>String</a>)
+</div>
+<div class='apiDetail'>
+<p>Set or reset the Http object's request method.</p>
+<dl><dt>Description</dt><dd>Default method is GET.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>name: <a href='intrinsic-String.html'>String</a> </td><td>The method name as a string. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request is not GET, POST, HEAD, OPTIONS, PUT, DELETE or TRACE. 
+</p>
+</div>
+</div>
+<hr />
+<a name='mimeType'></a>
+<div class='api'>
+<div class='apiSig'>static  public mimeType(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the mime type for a path or extension string.</p>
+<dl><dt>Description</dt><dd>NOTE: this routine will migrate to the Url class in the future.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>Path or extension string to examine. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>The mime type string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='options'></a>
+<div class='api'>
+<div class='apiSig'> public options(uri: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Issue an OPTIONS request for the current uri.</p>
+<dl><dt>Description</dt><dd>Use $readString to retrieve the response.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>New uri to use. This overrides any previously defined uri for the Http object. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='post'></a>
+<div class='api'>
+<div class='apiSig'> public post(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Initiate a POST request for the current uri.</p>
+<dl><dt>Description</dt><dd>Posted data is NOT URL encoded. If you want to post data to a  form, consider using the $form method instead which automatically URL encodes the data. Post data may be  supplied may alternatively be supplied via $write. If a contentLength has not been previously defined for this request, chunked transfer encoding will be enabled (See $chunked).</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>Optional request uri. If non-null, this overrides any previously defined uri for the Http object. </td></tr><tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Data objects to send with the post request. Data is written raw and is not encoded or converted.  However, this routine intelligently handles arrays such that, each element of the array will be written.  </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='put'></a>
+<div class='api'>
+<div class='apiSig'> public put(uri: <a href='intrinsic-String.html'>String</a>, data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Issue a PUT request for the current uri.</p>
+<dl><dt>Description</dt><dd>This call initiates a PUT request. If a contentLength has not been  previously defined for this request, chunked transfer encoding will be enabled (See $chunked).</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>The uri to delete. This overrides any previously defined uri for the Http object. </td></tr><tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Optional data objects to write to the request stream. Data is written raw and is not encoded  or converted.  However, put intelligently handles arrays such that, each element of the array will be  written. If encoding of put data is required, use the BinaryStream filter. If no putData is supplied, and the $contentLength is non-zero you must call $write to supply the body data. </td></tr><tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Optional object hash of key value pairs to use as the post data. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='read'></a>
+<div class='api'>
+<div class='apiSig'> public read(buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a>, offset: <a href='intrinsic-Number.html'>Number</a>, count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read a block of response content data from the connection.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>buffer: <a href='intrinsic-ByteArray.html'>ByteArray</a> </td><td>Destination byte array for the read data. </td></tr><tr><td class='param'>offset: <a href='intrinsic-Number.html'>Number</a> </td><td>Offset in the byte array to place the data. If offset is -1, data is appended at the  current byte array write position. </td></tr><tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of bytes to read.  </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A count of the bytes actually read. This call may return with fewer bytes read than requested. If a callback has been defined, this call will not block and may return zero if no data is currently  available. If no callback has been defined, it will block.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readLines'></a>
+<div class='api'>
+<div class='apiSig'> public readLines(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Array.html'>Array</a>
+</div>
+<div class='apiDetail'>
+<p>Read the request response as an array of lines.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>of linese to read. Returns the entire response contents if count is -1. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>An array of strings.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readString'></a>
+<div class='api'>
+<div class='apiSig'> public readString(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Read the request response as a string.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>of bytes to read. Returns the entire response contents if count is -1. </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A string of $count characters beginning at the start of the response data.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='readXml'></a>
+<div class='api'>
+<div class='apiSig'> public readXml(): <a href='ejs.xml-XML.html'>XML</a>
+</div>
+<div class='apiDetail'>
+<p>Read the request response as an XML document.</p>
+<dl><dt>Returns</dt>
+<dd>The response content as an XML object.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='response'></a>
+<div class='api'>
+<div class='apiSig'>get  public response(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Return the response data.</p>
+<dl><dt>Description</dt><dd>This routine will read and cache the response data. Thus it may be called  multiple times.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The response as a string of characters.</dd></dl>
+<h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if an I/O error occurs. 
+</p>
+</div>
+</div>
+<hr />
+<a name='retries'></a>
+<div class='api'>
+<div class='apiSig'>get  public retries(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the permissible number of retries for a request.</p>
+<dl><dt>Description</dt><dd>Retries are essential as the HTTP protocol permits a  server or network to be unreliable. The default retries is 2.</dd></dl>
+<dl><dt>Returns</dt>
+<dd>The current retry setting.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-retries'></a>
+<div class='api'>
+<div class='apiSig'>set  public retries(count: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Define the number of retries of a request.</p>
+<dl><dt>Description</dt><dd>Retries are essential as the HTTP protocol permits a server or network to be unreliable. The default retries is 2.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>count: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of retries. A retry count of 1 will retry a failed request once. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='setCallback'></a>
+<div class='api'>
+<div class='apiSig'> public setCallback(eventMask: <a href='intrinsic-Number.html'>Number</a>, cb: <a href='intrinsic-Function.html'>Function</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Define a callback to be invoked for readable and/or writable events.</p>
+<dl><dt>Description</dt><dd>Callbacks are used when writing event based programs that must not block. When a callback is defined, the $read and $write routines will not block.  WARNING: this feature is experimental and is not supported.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>eventMask: <a href='intrinsic-Number.html'>Number</a> </td><td>Mask of events of interest. Select from Read, Write. </td></tr><tr><td class='param'>cb: <a href='intrinsic-Function.html'>Function</a> </td><td>Callback function to invoke in response to I/O events. <pre> function callback(e: Event): Void </pre> Where e.data == http. The event arg may be either a HttpDataEvent or a HtttpErrorEvent. The callback is invoked when there is an error, response data to read  or on end of request where $available == 0 and a read will return null). It may also invoked to signal that the underlying socket can accept write data.  The HttpError event will be passed  on any request processing errors. Does not include remote server errors. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='setCredentials'></a>
+<div class='api'>
+<div class='apiSig'> public setCredentials(username: <a href='intrinsic-String.html'>String</a>, password: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the user credentials to use if the request requires authentication.</p>
+</div>
+</div>
+<hr />
+<a name='skip'></a>
+<div class='api'>
+<div class='apiSig'> public skip(n: <a href='intrinsic-Number.html'>Number</a>)
+</div>
+</div>
+<hr />
+<a name='timeout'></a>
+<div class='api'>
+<div class='apiSig'>get  public timeout(): <a href='intrinsic-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Get the request timeout.</p>
+<dl><dt>Returns</dt>
+<dd>Number of milliseconds for requests to block while attempting the request.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-timeout'></a>
+<div class='api'>
+<div class='apiSig'>set  public timeout(timeout: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set the request timeout.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>timeout: <a href='intrinsic-Number.html'>Number</a> </td><td>Number of milliseconds to block while attempting requests. -1 means no timeout. </td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='trace'></a>
+<div class='api'>
+<div class='apiSig'> public trace(uri: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Issue a TRACE request for the current uri.</p>
+<dl><dt>Description</dt><dd>Use $readString to retrieve the response.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>uri: <a href='intrinsic-String.html'>String</a> </td><td>New uri to use. This overrides any previously defined uri for the Http object. </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the request was cannot be issued to the remote server. 
+</p>
+</div>
+</div>
+<hr />
+<a name='upload'></a>
+<div class='api'>
+<div class='apiSig'> public upload(url: <a href='intrinsic-String.html'>String</a>, files: <a href='intrinsic-Object.html'>Object</a>, fields: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Upload files using multipart/mime.</p>
+<dl><dt>Description</dt><dd>This routine initiates a POST request and sends the specified files and form fields using multipart mime encoding. This call also automatically enables chunked transfer  encoding (See $chunked). It can only be used on servers that accept HTTP/1.1 request which should be all  servers.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>files: <a href='intrinsic-Object.html'>Object</a> </td><td>Object hash of files to upload </td></tr><tr><td class='param'>fields: <a href='intrinsic-Object.html'>Object</a> </td><td>Object hash of of form fields to send </td></tr></table></dd>
+</dl><dl><dt>Example</dt>
+<dd><pre>fields = { name: "John Smith", address: "700 Park Avenue" }
+files = { file1: "a.txt, file2: "b.txt" }
+http.upload(URL, files, fields)
+</pre></dd></dl>
+</div>
+</div>
+<hr />
+<a name='uri'></a>
+<div class='api'>
+<div class='apiSig'>get  public uri(): <a href='intrinsic-String.html'>String</a>
+</div>
+<div class='apiDetail'>
+<p>Get the URI for this Http object.</p>
+<dl><dt>Returns</dt>
+<dd>The current uri string.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='set-uri'></a>
+<div class='api'>
+<div class='apiSig'>set  public uri(uriString: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set or reset the Http object's URI.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+</td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='IOError.html'>IOError</a>: if the URI is malformed. 
+</p>
+</div>
+</div>
+<hr />
+<a name='wait'></a>
+<div class='api'>
+<div class='apiSig'> public wait(timeout: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Boolean.html'>Boolean</a>
+</div>
+<div class='apiDetail'>
+<p>Wait for a request to complete.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>timeout: <a href='intrinsic-Number.html'>Number</a> </td><td>Time in seconds to wait for the request to complete </td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>True if the request successfully completes.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='write'></a>
+<div class='api'>
+<div class='apiSig'> public write(data: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Write body data to the request stream.</p>
+<dl><dt>Description</dt><dd>The write call blocks while writing data. The Http.contentLength should  normally be set prior to writing any data to ensure that the request "Content-length" header is properly  defined. If the body length has not been defined, the data will be transferred using chunked transfers. In this case, you should call write() with no data to signify the end of the write stream. the Content-Length header will not be defined and the remote server will have to close the underling  HTTP connection at the completion of the request. This will prevent HTTP keep-alive for subsequent  requests.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr><td class='param'>data: <a href='intrinsic-Array.html'>Array</a> </td><td>Data objects to write to the request stream. Data is written raw and is not encoded or converted.  However, write intelligently handles arrays such that, each element of the array will be written.  If encoding of write data is required, use the BinaryStream filter.  </td></tr></table></dd>
+</dl><h3 class='methodSection'>Throws</h3>
+<p class='detail'>
+<a href='StateError.html'>StateError</a>: if the Http method is not set to POST. , 
+<a href='IOError.html'>IOError</a>: if more post data is written than specified via the contentLength property. 
+</p>
+</div>
+</div>
+<hr />
+<div class="terms">
+   <p class="terms">
+       <a href="http://www.embedthis.com/">       Embedthis Software LLC, 2003-2010. All rights reserved. Embedthis is a trademark of Embedthis Software LLC.</a>
+   </p>
+</div></div>
+</div>
+</body>
+</html>

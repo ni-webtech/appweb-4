@@ -1,0 +1,19 @@
+#
+#   library archiver (ld, lib)
+#
+defineComponent() {
+    local name path
+
+    path="$1"
+
+    #
+    # Name comes from build/config/config.*
+    #
+    eval name=\$BLD_${KIND}_AR
+    path=`probe --path "$path" --partial $name $name`
+    if [ "$path" = "" ] ; then
+        warnComponent ar $name
+        return
+	fi
+    configureComponent --path "$path" ar
+}
