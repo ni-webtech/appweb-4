@@ -1,0 +1,299 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="../index.html">Users Guide</a> &gt; <a href="../configuration.html#directives">Configuration
+            Directives</a> &gt; <b>Location Directives</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#location">Location</a></li>
+                <li><a href="#resetPipeline">ResetPipeline</a></li>
+            </ul>
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../../guide/appweb/users/configuration.html">Configuration</a></li>
+                <li><a href="../configuration.html#directives">Configuration Directives</a></li>
+                <li><a href="dir.html">Directory Directives</a></li>
+            </ul>
+        </div>
+        <div class="contentLeft">
+            <h1>Location Directives</h1><a name="addHandler" id="addHandler"></a>
+            <h2>AddHandler</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add a handler for processing content with specific file extensions</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddHandler handlerName extension [extension] ...</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AddHandler ejs .ejs .asp</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddHandler directive ensures that the Appweb handler specified by handlerName, will
+                            be run whenever a document with the given extension is requested. Multiple extensions may
+                            be specified and multiple AddHandler directives may exist for any handler.</p>
+                            <p>If the AddHandler directive is specified within a <a href="vhost.html">VirtualHost</a>
+                            or <a href="location.html">Location</a> block, it is only valid within that context.
+                            VirtualHosts and Location blocks inherit the handler settings defined by outer blocks. I.e.
+                            a VirtualHost will inherit all the handlers of the default server. If you wish to remove a
+                            handler mapping, use ResetPipeline and then re-add the required handlers.</p>
+                            <p>NOTE: Unlike Apache, the extensions are case sensitive on systems that have case
+                            sensitive file systems. Also, the period must be part of the extension.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="addInputFilter" id="addInputFilter"></a>
+            <h2>AddInputFilter</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add the specified filter to the input processing pipeline</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddInputFilter filterName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Location /secret/&gt;<br />
+                        &nbsp; &nbsp; AddInputFilter decryptFilter<br />
+                        &lt;/Location&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddInputFilter directive adds a filter to the input processing pipeline. Incoming
+                            request data is passed through the input pipeline and may be processed by each filter in
+                            turn.</p>
+                            <p>Filters stack and thus have an order. The first filter added will receive the data last
+                            and the last filter defined for a given URL will be the first filter to receive the
+                            data.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="addOutputFilter" id="addOutputFilter"></a>
+            <h2>AddOutputFilter</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add the specified filter to the output processing pipeline</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddOutputFilter filterName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Location /capture/&gt;<br />
+                        &nbsp; &nbsp; AddOutputFilter compressFilter<br />
+                        &lt;/Location&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddOutputFilter directive adds a filter to the output processing pipeline. Output
+                            response data is passed through the output pipeline before being sent to the client.</p>
+                            <p>Filters stack and thus have an order. The first filter added will receive the output
+                            data first and the last filter defined for a given URL will be the last filter to receive
+                            the data before it is passed to the network connector for transmitting to the client.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="location" id="location"></a>
+            <h2>Location</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a block of directives to apply to a URL</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>&lt;Location URL&gt;<br />
+                        ...<br />
+                        &lt;/Location&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Location /admin/debug&gt;<br />
+                        &nbsp; &nbsp; AddHandler myDebugHandler<br />
+                        &lt;/Location&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Location directive defines a block of directives that apply to the given URL and all
+                            URLs that begin with that URL prefix. Location directives are mainly used to associate
+                            <a href="#addHandler">Handlers</a> with URLs.</p>
+                            <p>The main difference between the <a href="dir.html#directory">Directory</a> and Location
+                            directives is that while the Directory directive applies to files in the file system, the
+                            Location directive applies to the URLs before they are mapped to file names.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="resetPipeline" id="resetPipeline"></a>
+            <h2>ResetPipeline</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Reset the input and output processing pipeline.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>ResetPipeline</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>ResetPipeline</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The ResetPipeline directive cancels all previously defined handlers, filters and
+                            connectors for the specified context. ResetPipeline will clear both the incoming and
+                            outgoing pipeline. Use AddInputFilter, AddoutputFilter, AddHandler and AddConnector to
+                            reinitialize the pipeline.</p>
+                            <p>ResetPipeline is most often used inside VirtualHost blocks when you want to limit the
+                            pipeline to a small set of handlers and filters for that Virtual Host.</p>
+                            <p>NOTE: ResetPipeline is a proprietary Appweb directive.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="setConnector" id="setConnector"></a>
+            <h2>SetConnector</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the connector to transmit the response to the client</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>SetConnector connectorName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>SetConnector netConnector</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The SetConnector directive defines the network connector that will transmit a response
+                            to the client. The connector represents the last stage in the output request pipeline.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="setHandler" id="setHandler"></a>
+            <h2>SetHandler</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the handler to processing requests</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>SetHandler handlerName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>SetHandler handlerName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The SetHandler directive defines the request handler that will service a request
+                            matching the enclosing block.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

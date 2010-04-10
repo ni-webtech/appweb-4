@@ -1,0 +1,384 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="gettingStarted.html">Getting Started</a> &gt; <b>FAQ</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#questions">Questions</a></li>
+                <li><a href="#answers">Answers</a></li>
+            </ul>
+<!-- BeginDsi "dsi/gettingSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/overview.html">Appweb Overview</a></li>
+                <li><a href="../../../guide/appweb/features.html">Appweb Features</a></li>
+                <li><a href="../../../product/releaseNotes.html">Release Notes</a></li>
+                <li><a href="../../../product/install/index.html">Installation Overview</a></li>
+                <li><a href="../../../guide/appweb/users/gettingStarted.html">Getting Started</a></li>
+                <li><a href="../../../guide/appweb/users/index.html">Users Guide</a></li>
+                <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
+                <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
+                <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
+                <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
+                <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+            </ul>
+<!-- EndDsi -->
+            <!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Appweb&trade; FAQ</h1>
+            <p>If your question is not answered here FAQ, please submit your question to the online community support
+            <a href="http://www.appwebserver.org/forum/">Forum</a>.</p>
+            <h2 class="section">Questions</h2>
+            <h3>General Questions</h3>
+            <ul class="questions">
+                <li><a href="#XSP">What web framework should I use for my dynamic web application?</a></li>
+                <li><a href="#runTimeModules">Can I disable features to minimize memory footprint at run-time?</a></li>
+                <li><a href="#upload">How can I upload large files?</a></li>
+                <li><a href="#handlers">What is the difference between handlers, modules and services?</a></li>
+            </ul>
+            <h3>Building Questions</h3>
+            <ul class="questions">
+                <li><a href="#replacePHP">Can I replace the PHP library?</a></li>
+                <li><a href="#buildPHP">How can I rebuild PHP?</a></li>
+                <li><a href="#disableFeatures">If I rebuild the source, can I disable features at compile
+                time?</a></li>
+            </ul>
+            <h3>Diagnostic Questions</h3>
+            <ul class="questions">
+                <li><a href="#trace">How can I trouble-shoot with trace?</a></li>
+                <li><a href="#cgi">How can I use CGI?</a></li>
+            </ul>
+            <h3>Embeddded Questions</h3>
+            <ul class="questions">
+                <li><a href="#minimalFootprint">How small can I make Appweb?</a></li>
+                <li><a href="#cross">How can I cross compile?</a></li>
+            </ul>
+            <h2 class="section">Answers</h2>
+            <p class="question"><a name="XSP" id="XSP"></a>What web framework should I use for my dynamic web
+            appliation?</p>
+            <div class="answer">
+                <p>You have several choices: PHP, Ejscript, CGI, EGI and custom handlers.</p>
+                <p>PHP is a high functionality, web page creation environment. It is suitable for enterprise
+                application development, but is very large. Definitely not for embedded use.</p>
+                <p>Ejscript is a server-side JavaScript framework that is ideal for creating dynamic web applications.
+                It is compact and fast. Great for embedded, but also good for smaller enterprise apps.</p>
+                <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
+                external programs to generate dynamic data. It is standard but very slow and cumbersome.</p>
+                <p>EGI stands for the Embedded Gateway Interface and is unique to Appweb. It is an in-memory
+                replacement for CGI. However, Ejscript is a better choice in most cases.</p>
+                <p>Custom handlers are loadable Appweb modules, written in C, that add custom request handling logic to
+                Appweb. They are the fastest and most compact request handling mechanism. But they are harder to write
+                and secure.</p>
+                <p><b>We recommend using Ejscript</b> for embedded applications and smaller enterprise applications.
+                Use <b>PHP</b> for larger enterprise applications.</p>
+                <p>The following table may help summarize the differences:</p>
+                <table width="100%" border="1" summary="">
+                    <thead>
+                        <tr>
+                            <td></td>
+                            <td><b>CGI</b></td>
+                            <td><b>EGI</b></td>
+                            <td><b>Ejscript</b></td>
+                            <td><b>PHP</b></td>
+                            <td><b>Handler</b></td>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td><b>Target Use</b></td>
+                        <td>Legacy dynamic pages and forms</td>
+                        <td>In-memory form processing</td>
+                        <td>Dynamic embedded web pages and forms</td>
+                        <td>Enterprise web pages and forms</td>
+                        <td>Custom URL processing</td>
+                    </tr>
+                    <tr>
+                        <td><b>Typical memory footprint</b></td>
+                        <td>External program</td>
+                        <td>15K plus form code</td>
+                        <td>200K plus application code</td>
+                        <td>2-5MB</td>
+                        <td>Handler code</td>
+                    </tr>
+                    <tr>
+                        <td><b>Performance</b></td>
+                        <td>Slow</td>
+                        <td>Very fast form processing</td>
+                        <td>Fast page and form processing</td>
+                        <td>Medium speed but large memory consumption</td>
+                        <td>Fastest possible</td>
+                    </tr>
+                    <tr>
+                        <td><b>Advantages</b></td>
+                        <td>Standard in wide-use</td>
+                        <td>Simple fast forms processing</td>
+                        <td>Fast, compact and flexible</td>
+                        <td>Large base of PHP code and developers</td>
+                        <td>Allow any URL handling desired</td>
+                    </tr>
+                    <tr>
+                        <td><b>Disadvantages</b></td>
+                        <td>Slow. Limit to forms. Can't design page WYSIWYG</td>
+                        <td>Limit to forms. Can't design page WYSIWYG</td>
+                        <td>Open source, but still specific to Appweb</td>
+                        <td>Large memory footprint</td>
+                        <td>Must build functionality</td>
+                    </tr>
+                </table>
+            </div>
+            <p class="question"><a name="runTimeModules" id="runTimeModules"></a>Can I disable features to minimize
+            memory footprint at run-time?</p>
+            <div class="answer">
+                <p>Yes. Appweb loads request handlers, scripting engines and other functionality via a run-time module
+                loading mechanism. Via the Appweb configuration file, you can selectively enable the loading of
+                function modules. For example, if you don't require CGI, comment out the "<tt>LoadModule
+                cgiHandler</tt>" directive.</p>
+            </div>
+            <p class="question"><a name="upload" id="upload"></a>How can I upload large files?</p>
+            <div class="answer">
+                <p>You need to increase the LimitRequestBody limit in the appweb.conf file. This imposes a maximum
+                upload file size. Some samples have a MAX_FILE_SIZE input field in the HTML form. This however, is an
+                just a hint to the browser and is only processed by some browsers.</p>
+            </div>
+            <p class="question"><a name="replacePHP" id="replacePHP"></a>Can I replace the PHP library?</p>
+            <div class="answer">
+                <p>Yes, you can replace the Appweb supplied PHP library with either the library from the standard PHP
+                distribution or a custom PHP library of your own building. The Appweb PHP library is not special, it is
+                a simple PHP configuration that omits many features to create the smallest PHP library possible. To do
+                so, replace the PHP library which will be named either: libphp.so, libphp.dylib or php5ts.dll</p>
+            </div>
+            <p class="question"><a name="buildPHP" id="buildPHP"></a>How can I rebuild PHP?</p>
+            <div class="answer">
+                <p>Building PHP can sometimes be tricky, especially on Windows. We provide snapshots of various
+                packages at http://hg.embedthis.com/packages. This URL is a Mercurial repository for PHP, OpenSSL and
+                MatrixSSL with Makefiles to assist those wanting to rebuild these packages.</p>
+                <p><b>NOTE:</b>These packages are not supported. They are provides as a service only.</p>
+                <p>If you are building Ubuntu Linux, you will need to run the following command to get the necessary
+                tools and pre-requisites.</p>
+                <pre>
+apt-get install build-essential libxml2-dev libdb-dev
+</pre>
+                <p>To get the PHP package, use the <a href="http://www.selenic.com/mercurial/">Mercurial</a> tool to
+                download the packages:</p>
+                <pre>
+hg clone http://hg.embedthis.com/packages
+</pre>. This is a big download, please be patient.
+                <p>In the php sub-directory you will find a Makefile which has configure settings for PHP on various
+                platforms. This Makefile disables most features to build a minimal PHP configuration. Edit this to suit
+                your configuration.</p>
+                <p>On <b>Linux</b>, we use the following configuration:</p>
+                <pre>
+./configure --disable-debug --disable-rpath --disable-cli \
+  --enable-bcmath --enable-calendar --enable-maintainer-zts \
+  --enable-embed=shared --enable-force-cgi-redirect --enable-ftp \
+  --enable-inline-optimization --enable-magic-quotes \
+  --enable-memory-limit --enable-safe-mode --enable-sockets \
+  --enable-track-vars --enable-trans-sid --enable-wddx \
+  --sysconfdir=/etc/appWeb --with-pic --with-exec-dir=/etc/appWeb/exec \
+  --with-db --with-regex=system --with-pear --with-xml --with-xmlrpc \
+  --with-zlib
+</pre>
+                <p>For <b>Windows</b>, we use:</p>
+                <pre>
+cscript /nologo configure.js \
+  --without-gd --disable-bcmath --disable-calendar --disable-com-dotnet \
+  --disable-filter --disable-json --disable-ipv6 --disable-odbc \
+  --disable-reflection --disable-tokenizer --disable-zlib --disable-ftp \
+  --enable-embed --enable-zts --without-dom --without-libxml
+</pre>
+                <p>On <b>MAC OS X</b>, we use the following configuration:</p>
+                <pre>
+./configure --disable-debug --disable-rpath --enable-bcmath \
+  --enable-calendar --enable-maintainer-zts --enable-embed=shared \
+  --enable-force-cgi-redirect --enable-ftp --enable-inline-optimization \
+  --enable-magic-quotes --enable-memory-limit --enable-safe-mode \
+  --enable-sockets --enable-track-vars --enable-trans-sid --enable-wddx \
+  --sysconfdir=/etc/appWeb --with-pic --with-exec-dir=/etc/appWeb/exec \
+  --with-db --with-regex=system --with-pear --with-xml --with-xmlrpc \
+  --with-zlib
+</pre>
+                <p>Once we have a new PHP library, you can reconfigure and build Appweb to use this PHP library. Here
+                is a typical Appweb configure command to use PHP:</p>
+                <pre>
+./configure -with-php=/dir/to/php
+</pre>
+            </div>
+            <p class="question"><a name="disableFeatures" id="disableFeatures"></a>If I rebuild the source, can I
+            disable features at compile time?</p>
+            <div class="answer">
+                <p>Yes. When Appweb is built from source, a single bld.h header controls exactly what features and
+                modules are built into the server. For example, if you don't require HTTP Keep-Alive support and you
+                wish to minimize memory footprint, you can modify the MPR_FEATURE_HTTP_KEEP_ALIVE definition to be
+                0.</p>
+            </div><a name="trace" id="trace"></a>
+            <p class="question">How can I trouble-shoot with trace?</p>
+            <div class="answer">
+                <p>Run appweb or winAppweb with the logging switch "-l". The logging switch takes the following
+                parameters:</p>
+                <pre>
+appweb -l logName[:logLevel][.maxSize]
+</pre>
+                <p>Where logLevel is a number between 0 and 9. Zero is the least verbose. To debug HTTP requests, a
+                level of 6 provides the detail of all the request / response exchanges. MaxSize is the maximum size of
+                the log file in MB. When the maximum size is exceeded, the log file will be rotated to logName.old and
+                a new log file will be started.</p>
+            </div>
+            <p class="question"><a name="cgi" id="cgi"></a> How can I use CGI?</p>
+            <div class="answer">
+                <p>Appweb is configured by default to run CGI programs. If you do need to modify the CGI configuration,
+                the following may help:</p>
+                <p>The configuration file directives for CGI are:</p>
+                <pre>
+AddHandler cgiHandler .cgi .bat .cmd .pl
+</pre>
+                <p>This instructs Appweb to run the CGI handler for specified file extensions. You can also have CGI be
+                used for URLs that begin with a given prefix. By default there is already a Location block defined for
+                /cgi-bin in the default appweb.conf. Any files under this URL (http://host/cgi-bin/scriptName) will
+                also run as CGI scripts. To run a given interpreter (for example Perl), you can either just include</p>
+                <pre>
+#!/bin/perl 
+</pre>in the first line of your script (replace the /bin/perl path to point to your interpreter), and make sure your
+script has a .pl extension. Alternatively, you can change the path specified in the ActionProgram directive to point to
+your perl interpreter.
+                <p>Here is the list of CGI variables that are defined for Appweb under CGI and EGI:</p>
+                <pre>
+AUTH_TYPE 
+CONTENT_LENGTH 
+CONTENT_TYPE 
+DOCUMENT_ROOT 
+GATEWAY_INTERFACE 
+HTTP_ACCEPT 
+HTTP_CONNECTION 
+HTTP_HOST 
+HTTP_USER_AGENT 
+PATH_INFO 
+PATH_TRANSLATED 
+QUERY_STRING 
+REMOTE_ADDR 
+REMOTE_HOST 
+REMOTE_USER 
+REQUEST_METHOD 
+REQUEST_URI 
+SCRIPT_NAME 
+SERVER_ADDR 
+SERVER_HOST 
+SERVER_NAME 
+SERVER_PORT 
+SERVER_PROTOCOL 
+SERVER_SOFTWARE 
+SERVER_URL
+</pre>
+            </div>
+            <p class="question"><a name="handlers" id="handlers"></a>What is the difference between handlers and
+            modules?</p>
+            <div class="answer">
+                <p><b>Modules</b> are just for the basic loading mechanism of shared objects (DLLs). However they also
+                provide a consistent way to handle modules that are statically loaded without much effort on the part
+                of the developers.</p><b>Handlers</b> are the work-horses for the HTTP server. They actually process
+                the HTTP requests and have full access to the request and they own its processing.
+            </div>
+            <p class="question"><a name="minimalFootprint" id="minimalFootprint"></a>How small can I make Appweb?</p>
+            <div class="answer">
+                <p>Appweb 2 has about 400K of code and on a VxWorks or uClibc based Linux system, you should be able to
+                build Appweb for a 400-600K memory footprint. It will be larger if you use OpenSSL and much larger if
+                you use PHP (which is 2-4MB). Appweb 3 is a little larger with about 600K of code.</p>
+                <p>For a minimal footprint on Appweb 3, use</p>
+                <pre>
+./configure --disable-all ... more options ...
+</pre>
+                <p>This will disable all possible features but still provide a running web server. Then add selective
+                <tt>--enable-option</tt> and <tt>--with-component</tt> switches as required.</p>
+                <p>This to consider when building small:</p>
+                <ul>
+                    <li>Don't use PHP</li>
+                    <li>Disable all possible features. In particular, disable the PHP, CGI and EGI modules</li>
+                    <li>Don't build DEBUG. Use: <tt>./configure --type=release</tt></li>
+                    <li>Use <tt>./configure --tune=size</tt></li>
+                    <li>Use MatrixSSL instead of OpenSSL if possible</li>
+                    <li>Use a small C-Library such as uClibc on embedded Linux systems</li>
+                </ul>
+            </div>
+            <p class="question"><a name="cross" id="cross"></a>How can I cross compile?</p>
+            <div class="answer">
+                <p>The Appweb configure command has switches to specify the <b>build</b> system and the target system
+                that will <b>host</b> Appweb. For example:</p>
+                <pre>
+./configure --host powerpc-wrs-vxworks --build pentium-pc-windows
+</pre>
+                <p>When cross compiling, you also need to tell configure about your cross-compilation tool chain. This
+                means the names of your compiler, library archiver and other utilities and flags. The configure program
+                listens to the settings of the AR, CC, NM, RANLIB, STRIP, CFLAGS, IFLAGS and LDFLAGS environment
+                variables and will pass their values into the build system. These will be used to define the
+                cross-compilation tool chain. You can also specify an alternate build tool chain by using the same
+                variables but with a BUILD_ prefix. For example:</p>
+                <pre>
+DIR=/path/to/cross-tools ; \
+AR=$DIR/bin/ar.exe \
+CC=$DIR/bin/cc.exe \
+LD=$DIR/bin/cc.exe \
+NM=$DIR/nm.exe \
+RANLIB=$DIR/ranlib.exe \
+STRIP=$DIR/strip.exe \
+CFLAGS="-I$DIR/include \
+./configure --type=DEBUG --host=arm--linux 
+</pre>
+                <p>For more details, please read: <a href="../source/steps.html#cross">Cross Compilation</a> in the
+                <a href="../source/steps.html">Build Steps</a> guide.</p>
+            </div>
+            <h2 class="section">Need more help?</h2>
+            <p>If you have any further questions, please go to the Appweb community support <a href=
+            "http://www.appwebserver.org/forum/">Forum</a>.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

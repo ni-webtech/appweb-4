@@ -1,0 +1,278 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="../index.html">Users Guide</a> &gt; <a href="../configuration.html#directives">Configuration
+            Directives</a> &gt; <b>Logging Directives</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#customLog">CustomLog</a></li>
+                <li><a href="#errorLog">ErrorLog</a></li>
+                <li><a href="#logLevel">LogLevel</a></li>
+            </ul>
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../logFiles.html">Logging Overview</a></li>
+                <li><a href="../../../../guide/appweb/users/configuration.html">Configuration</a></li>
+                <li><a href="../configuration.html#directives">Configuration Directives</a></li>
+            </ul>
+        </div>
+        <div class="contentLeft">
+            <h1>Logging Directives</h1><a name="customLog" id="customLog"></a>
+            <h2>CustomLog</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define the location of the access log and its format.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>CustomLog path format</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>CustomLog access.log "%h %l %u %t \"%r\" %&gt;s %b"</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The CustomLog directive configures an access log that Appweb uses to log all successful
+                            HTTP requests. The path may be an absolute filename or it may be relative to the
+                            ServerRoot.</p>
+                            <p>The format string argument defines how Appweb will record HTTP accesses to the access
+                            log. The following log format specifiers are supported:</p>
+                            <table summary="">
+                                <thead>
+                                    <tr>
+                                        <td>Format Specifier</td>
+                                        <td>Description</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>%%</td>
+                                        <td>Percent sign</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%a</td>
+                                        <td>Remove IP address</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%b</td>
+                                        <td>Bytes written back to the browser including HTTP headers. If zero bytes, a
+                                        '-' is written.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%B</td>
+                                        <td>Bytes written excluding HTTP headers.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%h</td>
+                                        <td>Remote host</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%l</td>
+                                        <td>Remote log name if supplied</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%O</td>
+                                        <td>Bytes written including headers. If zero bytes, '0' is written.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%r</td>
+                                        <td>First line of the request</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%s</td>
+                                        <td>Request HTTP status code.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%t</td>
+                                        <td>Time</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%u</td>
+                                        <td>Remote user name</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%{header}i</td>
+                                        <td>Content of request header called "header"</td>
+                                    </tr>
+                                    <tr>
+                                        <td>%&gt;s</td>
+                                        <td>Response code. Same as %s.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="errorLog" id="errorLog"></a>
+            <h2>ErrorLog</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the path of the Appweb error and trace log</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>ErrorLog logSpec</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>ErrorLog error.log:2</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The ErrorLog directive defines the path to the Appweb error log and controls what is
+                            written to the log. A general overview of using log files is discussed in the Adminstration
+                            section on <a href="../logFiles.html">Log Files</a>.</p>
+                            <p>The logSpec argument has the following format:</p>
+                            <pre>
+pathName[:level][.maxSize]
+</pre>
+                            <p>The pathName is an absolute or ServerRoot relative path. The level argument defines a
+                            logging verbosity level between 0 and 9 with 9 being the most verbose.</p>
+                            <p>The following levels are generally observed:</p>
+                            <table summary="">
+                                <thead>
+                                    <tr>
+                                        <td>Level</td>
+                                        <td>Usage</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>0</td>
+                                        <td>Essential messages, fatal errors and critical warnings</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Hard errors</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>Configuration setup and soft warnings</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>Useful informational messages</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4</td>
+                                        <td>Debug information</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5-9</td>
+                                        <td>Increasing levels of internal Appweb trace useful for debugging</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p>The maxSize argument defines how large the log may grow in MB before it is rotated. When
+                            rotated, the old log will be renamed with ".old" appended to the pathName. The default size
+                            is 5 MB.</p>
+                            <p>If the LogLevel directive is used, it will override the level specified via the ErrorLog
+                            directive for general logging.</p>
+                            <h3>Examples</h3>
+                            <p>To log trace at the level specified by the LogLevel directive to the file named
+                            error.log:</p>
+                            <pre>
+ErrorLog error.log
+</pre>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="logLevel" id="logLevel"></a>
+            <h2>LogLevel</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the verbosity of messages to the error log</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LogLevel errorLevel</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LogLevel 2</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LogLevel directive defines the amount of information logged to the error log. The
+                            errorLevel argument must be a digit between 0 and 9 (inclusive) with 9 being the most
+                            verbose level.</p>
+                            <p>Normally a level of 2 is best as it will record the Appweb configuration, denied
+                            requests and general errors.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

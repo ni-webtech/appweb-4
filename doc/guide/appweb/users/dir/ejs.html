@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="../index.html">Users Guide</a> &gt; <a href="../configuration.html#directives">Configuration
+            Directives</a> &gt; <b>Ejscript Directives</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#ejsApp">EjsApp</a></li>
+                <li><a href="#ejsAppAlias">EjsAppAlias</a></li>
+                <li><a href="#ejsAppDir">EjsAppDir</a></li>
+                <li><a href="#ejsAppDirAlias">EjsAppDirAlias</a></li>
+                <li><a href="#ejsErrors">EjsErrors</a></li>
+                <li><a href="#ejsSession">EjsSession</a></li>
+                <li><a href="#ejsSessionTimeout">EjsSessionTimeout</a></li>
+            </ul>
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../configuration.html">Configuration</a></li>
+                <li><a href="../configuration.html#directives">Configuration Directives</a></li>
+            </ul>
+        </div>
+        <div class="contentLeft">
+            <h1>Ejscript Directives</h1>
+            <p>The Ejscript directives control the Ejscript Web Framework and configure Ejscript web
+            applications.</p><a name="ejsApp" id="ejsApp"></a>
+            <h2>EjsApp</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Enable the Ejscript Web Framework</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>EjsApp [on | off]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Location /myapp/&gt;<br />
+                        &nbsp; &nbsp; <b>EjsApp on</b><br />
+                        &nbsp; &nbsp; SetHandler ejs<br />
+                        &lt;/Location&gt;<br />
+                        Alias /myApp /var/www/myAppDir</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The EjsApp directive enables the Ejscript Web Framework to service requests in the
+                            enclosing block. This directive is used inside a Location or VirtualHost block which
+                            defines the <b>ejs</b> handler to process requests.</p>
+                            <p>However, It is insufficient to only use the <b>EjsApp</b> directive to create an
+                            EjsApplication. You typically need to also use SetHandler and Alias directives to fully
+                            define an Ejscript application. It is usually best to use the <a href=
+                            "#ejsAppAlias">EjsAppAlias</a> directive or the <a href=
+                            "#ejsAppDirAlias">EjsAppDirAlias</a> directives to define applications.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="ejsAppAlias" id="ejsAppAlias"></a>
+            <h2>EjsAppAlias</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define an Ejscript web application</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>EjsAppAlias UrlPrefix Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>EjsAppAlias /myapp/ &nbsp;/var/www/myapp/</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The EjsAppAlias directive defines an Ejscript application at the given directory which
+                            will receive all requests with specified URL prefix. This one-line directive is typically
+                            all you need to do to define an Ejscript application.</p>
+                            <p>It is convenient to define applications using this directive in a separate configuration
+                            file for each application. If the application config file is stored under the Appweb
+                            "conf/apps" directory, then Appweb will read it automatically when it starts. This makes it
+                            very easy to install or remove applications by simply adding or removing an application
+                            configuration file to or from this directory.</p>
+                            <p>The EjsAppAlias directive does the following actions:</p>
+                            <ul>
+                                <li>Creates a new Location block for the URL prefix</li>
+                                <li>Creates a new directory block if required for the directory</li>
+                                <li>Creates an alias for the URL prefix to the directory</li>
+                                <li>Defines the <b>ejs</b> handler as the handler for the URL prefix</li>
+                            </ul>
+                            <p>If you have many Ejscript applications you can also use the <a href=
+                            "#ejsAppDirAlias">EjsAppDirAlias</a> directives to define a directory of applications.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="ejsAppDir" id="ejsAppDir"></a>
+            <h2>EjsAppDir</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Enable a block for Ejscript applications</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>EjsAppDir [on | off]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Location /myapp/&gt;<br />
+                        &nbsp; &nbsp; <b>EjsAppDir on</b><br />
+                        &nbsp; &nbsp; SetHandler ejs<br />
+                        &lt;/Location&gt;<br />
+                        Alias /apps /var/www/applications</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The EjsAppDir directive enables the Ejscript Web Framework to service requests for
+                            Ejscript applications in the enclosing block. This directive is used inside a Location
+                            block which defines the <b>ejs</b> handler to process requests.</p>
+                            <p>When requests are serviced, the first URL segement after the Location block prefix is
+                            used as the application name. Applications reside in named directories under the aliased
+                            directory for the Location block.</p>
+                            <p>See the <a href="#ejsAppAlias">EjsAppAlias</a> directive to define a single
+                            application.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="ejsAppDirAlias" id="ejsAppDirAlias"></a>
+            <h2>EjsAppDirAlias</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a directory of Ejscript applications</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>EjsAppDirAlias UrlPrefix Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>EjsAppDirAlias /apps /var/www/applications</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The EjsAppDirAlias defines a directory of Ejscript applications at the given directory
+                            which will receive requests with the specified URL prefix.</p>
+                            <p>When requests are serviced, the first URL segement after the URL prefix is used as the
+                            application name.</p>
+                            <p>The directive does the following actions:</p>
+                            <ul>
+                                <li>Creates a new Location block for the URL prefix</li>
+                                <li>Creates a new directory block if required for the directory</li>
+                                <li>Creates an alias for the URL prefix to the directory</li>
+                                <li>Defines the <b>ejs</b> handler as the handler for the URL prefix</li>
+                            </ul>
+                            <p>Applications reside in named directories under the given directory name.</p>
+                            <p>See the <a href="#ejsAppAlias">EjsAppAlias</a> directive to define a single
+                            application.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="ejsErrors" id="ejsErrors"></a>
+            <h2>EjsErrors</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control Ejscript error handling</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>EjsErrors [browser | log]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>EjsErrors browser</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The EjsError directive controls how errors are processed by the Ejscript Web Framework.
+                            Errors can be logged into the web server log or they can be sent back to the client for
+                            display in a browser.</p>
+                            <p>Production installations typically send errors to the log, whereas development sites
+                            often send errors for display in a developer's browser.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="ejsSession" id="ejsSession"></a>
+            <h2>EjsSession</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control if Ejscript automatically creates session objects</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>EjsSession [on | off]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>EjsSession on</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive enables session state to be automatically created for requests. When
+                            enabled, Ejscript will create a session state object and a cookie to send to the client.
+                            The cookie contains the session ID. When requests quote this session ID, the appropraite
+                            session state storage object will be made available to the request.</p>
+                            <p>If this directive is disabled, the application can still use session state storage, but
+                            it will need to explicitly create the session state object via the Controller.createSession
+                            API.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="ejsSessionTimeout" id="ejsSessionTimeout"></a>
+            <h2>EjsSessionTimeout</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define the default session timeout value</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>EjsSessionTimeout seconds</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>EjsSessionTimeout 1800</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the inactivity timeout in seconds for session state objects. If
+                            no requests are received during this timeout period, the session state storage will be
+                            discarded.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

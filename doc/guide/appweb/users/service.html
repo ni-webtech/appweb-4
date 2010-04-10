@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Users Guide</a> &gt; <b>Running as a System Service</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#windows">Windows Instructions</a></li>
+                <li><a href="#linux">Linux Instructions</a></li>
+                <li><a href="#mac">Mac Instructions</a></li>
+            </ul>
+<!-- BeginDsi "dsi/gettingSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/overview.html">Appweb Overview</a></li>
+                <li><a href="../../../guide/appweb/features.html">Appweb Features</a></li>
+                <li><a href="../../../product/releaseNotes.html">Release Notes</a></li>
+                <li><a href="../../../product/install/index.html">Installation Overview</a></li>
+                <li><a href="../../../guide/appweb/users/gettingStarted.html">Getting Started</a></li>
+                <li><a href="../../../guide/appweb/users/index.html">Users Guide</a></li>
+                <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
+                <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
+                <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
+                <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
+                <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Running as a System Service or Daemon</h1>
+            <p>After installation, Appweb is started automatically as a system service or daemon. You can change this
+            behavior and only start Appweb manually if you wish.</p>
+            <p>This page gives platform-specific information about starting and stopping the Appweb service.</p>
+            <ul>
+                <li><a href="#windows">Windows Instructions</a></li>
+                <li><a href="#linux">Linux Instructions</a></li>
+                <li><a href="#mac">Mac Instructions</a></li>
+            </ul><a name="windows" id="windows"></a>
+            <h2 class="section">Windows Instructions</h2>
+            <p>On Windows, Appweb is managed by two programs:</p>
+            <ul>
+                <li><a href="#angel">The Appweb Angel</a></li>
+                <li><a href="#monitor">The Appweb Monitor</a></li>
+            </ul><a name="angel" id="angel"></a>
+            <p>The Appweb Angel is a guardian over Appweb. It is a windows service that starts, manages and restarts
+            Appweb. If Appweb fails, the Angel will automatically restart it.</p>
+            <p>Windows services run in the background with little interaction with the user. So to provide more
+            convenient access to manage Appweb, the <a href="#monitor">Appweb Monitor</a> program runs and is
+            accessible from the windows system tray (taskbar notification area). You can start and stop Appweb using
+            either the Angel or Monitor programs.</p>
+            <h3>Appweb Angel Service</h3>
+            <p>You can interface with the Angel via the Windows Services Applet. To invoke the applet, select:</p>
+            <pre>
+Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
+</pre>
+            <p>Then select and double click on the <b>Embedthis Appweb</b> service. A dialog panel will be displayed
+            from which you can start and stop the AppwebAngel process.</p><img src="../../../images/services.jpg" alt=
+            "" class="screen" />
+            <p>When started or stopped, the Angel will first do the same operation on the real Appweb instance. Pausing
+            the Angel will have no effect on Appweb, but will pause the Angel itself.</p>
+            <h3>Removing Appweb as a Service</h3>
+            <p>To permanently stop Appweb running as a Windows Service either remove the software or uninstall the
+            Angel via the following command:</p>
+            <pre>
+appwebAngel --uninstall
+</pre>
+            <p>To re-instate the Angel as a Windows Service, run the following command:</p>
+            <pre>
+appwebAngel --install
+</pre>
+            <p>Once installed, you will need to start the service via the Services control applet.</p><a name="monitor"
+            id="monitor"></a>
+            <h3>Appweb Monitor</h3>
+            <p>The Windows Appweb Monitor is launched when you log in. It a quick and easy way to start, stop and
+            restart Appweb. You can also launch a browser to display the documentation or the Appweb management console
+            (future feature).</p><img src="../../../images/tray.jpg" alt="" class="screen" />
+            <p>When you select stop Appweb, you actually stop the Angel process which in turn stops Appweb. Similarly,
+            when you select start Appweb, you are really starting the Angel which detects that Appweb is not running
+            and automatically launches it. <a name="linux" id="linux"></a></p>
+            <h2 class="section">Linux Instructions</h2>
+            <p>To stop Appweb running as a Daemon, on a Red Hat / Fedora system run the following command:</p>
+            <pre>
+/sbin/service appweb stop
+</pre>
+            <p>To re-start Appweb to run as a daemon, run the following command:</p>
+            <pre>
+/sbin/service appweb start
+</pre>
+            <p>On a Debian (Ubuntu) based system, run the following commands</p>
+            <pre>
+/sbin/invoke-rc.d appweb start
+/sbin/invoke-rc.d appweb stop
+</pre>
+            <h3>Removing Appweb as a Daemon</h3>
+            <p>To permanently remove Appweb from running as a Daemon on a Red Hat / Fedora system, run the following
+            command:</p>
+            <pre>
+/sbin/chkconfig --del appweb 
+</pre>
+            <p>To reinstall Appweb to run as a daemon, run the following command:</p>
+            <pre>
+/sbin/chkconfig --add appweb
+/sbin/chkconfig --level 5 appweb on
+/sbin/service appweb start
+</pre>
+            <p>To permanently remove Appweb from running as a Daemon on a Debian (Ubuntu) based system, run the
+            following command:</p>
+            <pre>
+update-rc.d appweb remove
+</pre>
+            <p>To reinstall Appweb to run as a daemon, run the following command:</p>
+            <pre>
+update-rc.d appweb defaults
+</pre><a name="mac" id="mac"></a>
+            <h2 class="section">Mac Instructions</h2>
+            <p>When Appweb runs on MAC OS X 10.5 (Leopard) it does not use the Appweb Angel or Appweb Monitor programs.
+            Rather it uses the MAC <b>launchd</b> service. Launchd offers similar capabilities to that of the Appweb
+            Angel. It starts, manages and restarts Appweb. If Appweb fails, launchd will automatically restart it.
+            Launchd is the preferred way to manage Daemons on a MAC.</p>
+            <p>To stop Appweb running as a Daemon on a Mac, run the following command:</p>
+            <pre>
+launchctl unload -w /Library/LaunchDaemons/com.embedthis.appweb
+</pre>
+            <p>To restart Appweb as a daemon, run the following command:</p>
+            <pre>
+launchctl load -w /Library/LaunchDaemons/com.embedthis.appweb
+</pre>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

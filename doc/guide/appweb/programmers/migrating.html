@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Programming Guide</a> &gt; <b>Migrating to Appweb 3</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#compatibility">Appweb 2 Compatibility</a></li>
+                <li><a href="#support">Appweb 2 Support</a></li>
+                <li><a href="#changes">Appweb 3 Changes</a></li>
+                <li><a href="#config">Migrating Config Files</a></li>
+                <li><a href="#modules">Migrating Modules</a></li>
+                <li><a href="#handlers">Migrating Handlers</a></li>
+                <li><a href="#cgi">Migrating CGI Programs</a></li>
+                <li><a href="#egi">Migrating EGI Programs</a></li>
+                <li><a href="#esp">Migrating ESP</a></li>
+            </ul>
+<!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
+                <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
+                <li><a href="../../../guide/appweb/programmers/modules.html">Custom Modules</a></li>
+                <li><a href="../../../guide/appweb/programmers/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 3</a></li>
+                <li><a href="../../../guide/appweb/programmers/rom.html">ROM Content</a></li>
+                <li><a href="../../../guide/appweb/programmers/man.html">Manual Pages</a></li>
+                <li><a href="../../../ref/appweb/index.html">Programmers Reference</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+                <li><a href="../../../ejs/ref/ejs/webArchitecture.html">Ejscript</a></li>
+                <li><a href="../../../api/native.html">Native APIs</a></li>
+                <li><a href="../../../guide/appweb/users/index.html">Users Guide</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Migrating to Appweb 3</h1>
+            <p>Appweb 3 is a major upgrade from Appweb 2. It incorporates an extensive set of new features and upgrades
+            to existing capabilities. It also changes many APIs and interfaces.</p><a name="compatibility" id=
+            "compatibility"></a>
+            <h2 class="section">Compatibility with Appweb 2</h2>
+            <p>We make every effort to preserve compatibility, but with Appweb 3, we needed to make some important
+            improvements that necessitated breaking compatibility with Appweb 2. Rather than make several ongoing
+            compatibility breaks &mdash; we decided to make all the changes in one release. In this way we can ensure
+            that Appweb 3 quickly becomes a stable platform going forward. Please see our <a href=
+            "../../../product/compatibility.html">Compatibility Policy</a>.</p><a name="support" id="support"></a>
+            <h3>Ongoing Support for Appweb 2</h3>
+            <p>To address the needs of users for whom upgrading to Appweb 3 will take some time, we intend to support
+            Appweb 2 till the end of 2010 and to continue to issue updates and upgrades for Appweb 2 during that
+            period.</p><a name="changes" id="changes"></a>
+            <h2 class="section">Changes in Appweb 3</h2>
+            <p>Appweb 3 provides equivalent functionality to that in Appweb 2 in nearly all cases. While Appweb 3 may
+            have a different interface or API, the capabilities of Appweb 2 have been continued in Appweb 3 &mdash; and
+            in many cases, the features have been enhanced.</p>
+            <h3>New Capabilities</h3>
+            <p>The following new capabilities have been added to Appweb 3 for which there is no equivalent in Appweb 2.
+            These additions should not require adjustment for applications developed under Appweb 2.</p>
+            <ul>
+                <li>Appweb Angel guardian program to start, monitor and restart Appweb</li>
+                <li>Appweb Monitor program for Windows system tray</li>
+                <li>Appweb configuration files support include files</li>
+                <li>New request processing pipeline</li>
+                <li>New request processing filters. New directives to AddInputFilter and AddOutputFilter</li>
+                <li>Added platform support for Mac OS X and FreeBSD</li>
+                <li>IPv6 protocol support</li>
+                <li>Added Visual Studio projects for building on Windows</li>
+                <li>Added PAM based authentication</li>
+            </ul>
+            <h3>Changed Capabilities</h3>
+            <p>The following capabilities have been changed and may impact your Appweb 2 applications.</p>
+            <ul>
+                <li>The core of Appweb is now written in C not C++. This was done for portability to some platforms and
+                to eliminate the C API module.</li>
+                <li>Added new Ejscript Web Framework.</li>
+                <li>Moved Chunk and Ranged request processing into modular filters in the Request Pipeline.</li>
+                <li>The stand-alone Appweb command line program is upgraded with all new switches and options.</li>
+                <li>Removed the windows winAppweb program. In its place, the Appweb angel starts the standard Appweb
+                program.</li>
+                <li>The Ejscript Web Framework replaces Embedded Server Pages.</li>
+                <li>The build system is upgraded and simplified. New configure options and cross compiling capabilities
+                are added.</li>
+                <li>The Http client is upgraded with new switches and options. Also now supports SSL, transfer chunk
+                encoding, transparent redirection and IPv6</li>
+                <li>The copyHandler is renamed as the fileHandler and is upgraded to utilize the <b>send</b>
+                connector.</li>
+                <li>The CGI handler now uses pipes instead of files to communicate with the server.</li>
+                <li>The matrixSSL and openSSL modules are removed. The functionality is now built into the SSL
+                module.</li>
+            </ul>
+            <h3>Removed Capabilities</h3>
+            <ul>
+                <li>The capi (C API) module has been removed.</li>
+                <li>The gaCompat module for compatibility with the GoAhead web server has been removed.</li>
+                <li>The adminHandler is no longer supported and has been removed.</li>
+            </ul>
+            <h3>Changed APIs</h3>
+            <p>Most of the internal APIs in Appweb 3 have been changed. This is due to moving the Appweb core to the
+            "C" language from "C++". The Appweb 2 APIs have been converted on a function by function basis to
+            equivalent C APIs. For each Appweb 2 API, there is an equivalent Appweb 3 API. These have very similar
+            names to the previous counterpart. When converting applications written for Appweb 2, you should be able to
+            modify your code on a line-by-line basis.</p>
+            <h3>Other Changes</h3>
+            <p>Appweb 3 includes a few other changes worth noting here.</p>
+            <ul>
+                <li>Module files are renamed mod_NAME and are stored under /usr/lib/appweb/modules. On Windows, they
+                are stored under a "modules" subdirectory.</li>
+                <li>New MPR Memory allocator</li>
+            </ul>
+            <p>Appweb 3 provides a high performance memory allocator that provides slab and arena based allocations.
+            When memory is allocated, it is connected to a parent memory block, thus forming a tree of blocks. When a
+            block is freed, all children blocks are automatically freed. Appweb uses this so that when a request
+            completes, one free operation releases all memory allocated by the request. This virtually eliminates
+            memory leaks.</p>
+            <p>The memory allocation APIs are changed to always take another memory block as the first parameter. This
+            block becomes the parent block for the new allocation. See the <a href="../../../api/mpr.html">Portable
+            Runtime API</a> for more details.</p><a name="config" id="config"></a>
+            <h2 class="section">Migrating Appweb Configuration Files</h2>
+            <p>The Appweb 3 configuration file is substantially the same. It does support conditional directive blocks
+            which were introduced in Appweb 2.4. It also supports included configuration files which should not be an
+            issue migrating forward.</p>
+            <h3>Inheriting from Outer Blocks</h3>
+            <p>Appweb 3 makes one change in how directives are inherited by inner blocks. If a Directory, Location or
+            Virtual Host block is defined, it will now inherit the settings from outer blocks. In Appweb 2 the
+            inheritance was not consistent. This is most noticable when configuring handlers. In Appweb 3, the pipeline
+            and handler configuration will be inherited and this greatly simplifies defining Virtual Hosts or Location
+            blocks. You need to use the <a href="../users/dir/location.html#resetPipeline">ResetPipeline</a> directive
+            to clear inherited pipeline configuration.</p>
+            <p>See <a href="../users/configuration.html">Configuring Appweb</a> and <a href=
+            "../users/configuration.html#directives">Configuration Directives</a> for more details.</p>
+            <h3>Directory Module</h3>
+            <p>In Appweb 2, the directory module provided directory listings and processed directory redirections when
+            a request was made for a directory URL. This has been problematic for users not wanting directory listings,
+            but still requiring directory redirections.</p>
+            <p>In Appweb 3, directory redirections are performed by the HTTP core and do not require the directory
+            handler.</p><a name="modules" id="modules"></a>
+            <h2 class="section">Migrating Modules</h2>
+            <p>Modules in Appweb 3 have a different API to register themselves with Appweb.</p>
+            <p>In Appweb 2 a module looked like this:</p>
+            <pre>
+SimpleModule::SimpleModule(void *handle) : 
+    MaModule("simpleModule", handle)
+{
+}
+int mprSimpleModuleInit(void *handle)
+{
+    new SimpleModule(handle);
+    return 0;
+}
+</pre>
+            <p>In Appweb 3, the same module looks like this:</p>
+            <pre>
+MprModule *mprSimpleModuleInit(MaHttp *http)
+{
+    MprModule   *module;
+    module = mprCreateModule(http, "simpleHandler", "1.0.0", 
+        NULL, NULL, NULL);
+    if (module == 0) {
+        return 0;
+    }
+    return module;
+}
+</pre>See the <a href="modules.html">Creating Modules</a> document for more details. <a name="handlers" id="handlers">
+            </a>
+            <h2 class="section">Migrating Handlers</h2>
+            <p>Handlers in Appweb 3 have a different API to the Appweb 2 equivalent. In Appweb 2, you had to create a
+            module, a handler service and a master handler from which to clone instances. In Appweb 3 this is greatly
+            simplified.</p>
+            <p>In Appweb 2 a handler looked like this:</p>
+            <pre>
+SimpleHandlerModule::SimpleHandlerModule(void *handle) : 
+    MaModule("simpleHandler", handle)
+{
+    simpleService = new SimpleHandlerService();
+}
+SimpleHandlerModule::~SimpleHandlerModule()
+{
+}
+SimpleHandlerService::SimpleHandlerService() : 
+    MaHandlerService("simpleHandler")
+{
+}
+int SimpleHandlerService::setup()
+{
+}
+MaHandler *SimpleHandlerService::newHandler(MaServer *server, MaHost *host, char *extensions)
+{
+    return new SimpleHandler(extensions);
+}
+SimpleHandler::SimpleHandler(char *extensions) : 
+    MaHandler("simpleHandler", extensions, 
+        MPR_HANDLER_GET | MPR_HANDLER_POST | MPR_HANDLER_TERMINAL)
+{
+}
+MaHandler *SimpleHandler::cloneHandler()
+{
+    return new SimpleHandler(extensions);
+}
+int SimpleHandler::run(MaRequest *rq)
+{
+}
+int mprSimpleHandlerInit(void *handle)
+{
+    new SimpleHandlerModule(handle);
+    return 0;
+}
+</pre>
+            <p>In Appweb 3 a handler now looks like this:</p>
+            <pre>
+static void runSimple(MaQueue *q)
+{
+}
+int maOpenSimpleHandler(MaHttp *http)
+{
+    MaStage     *stage;
+    stage = maCreateHandler(http, "simpleHandler", 
+        MA_STAGE_ALL | MA_STAGE_VIRTUAL);
+    if (stage == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    stage-&gt;run = runSimple;
+    return 0;
+}
+</pre>See the <a href="stages.html">Pipeline Stages</a> document for more details about creating Handlers.
+            <a name="cgi" id="cgi"></a>
+            <h2 class="section">Migrating CGI Programs</h2>
+            <p>CGI programs should migrate unchanged. The CGI handler in Appweb 3 offers much higher performance by
+            using pipes for I/O instead of files.</p><a name="egi" id="egi"></a>
+            <h2 class="section">Migrating EGI Programs</h2>
+            <p>The EGI API has changed very little. Mainly the arguments have changed.</p>
+            <p>In Appweb 2 an EGI form looked like this:</p>
+            <pre>
+static void myEgi(MaRequest *rq, char *script, char *uri, char *query, char *postData, int postLen)
+{
+    maWriteStr(rq, "
+</pre>\r\n"); } maDefineEgiForm("/myEgi.egi", myEgi);
+            <p>In Appweb 3 an EGI form looks like this:</p>
+            <pre>
+static void myEgi(MaQueue *q)
+{
+}
+maDefineEgiForm(http, "/myEgi.egi", myEgi);
+</pre><a name="esp" id="esp"></a>
+            <h2 class="section">Migrating ESP Applications to Ejscript</h2>
+            <p>The upgrade to Ejscript from ESP is the single biggest change in Appweb 3. ESP was a minimal subset of
+            the JavaScript language with a trivial embedding in HTML pages. Ejscript supports these capabilities, but
+            adds many upgrades and a complete web framework. The bigger changes in Ejscript vs ESP are:</p>
+            <ul>
+                <li>Full ECMAScript-262 language support instead of just a subset of JavaScript</li>
+                <li>High performance VM based design</li>
+                <li>Stand-alone or integrated JavaScript compiler</li>
+                <li>Caching of pre-compiled scripts and web pages</li>
+                <li>Model / View / Controller framework</li>
+                <li>Integrated SQLite database</li>
+                <li>Ajax library support</li>
+                <li>Extensive class library</li>
+                <li>Web page templating engine</li>
+                <li>Extended HTTP integration with Appweb</li>
+                <li>E4X XML parsing support</li>
+                <li>Much higher performance</li>
+                <li>Smaller memory footprint (no need to compile script at run-time)</li>
+                <li>Better scaling for larger JavaScript applications</li>
+            </ul>
+            <p>Appweb 3 and Ejscript supports two modes of operation for web pages:</p>
+            <ul>
+                <li>Stand-alone web pages</li>
+                <li>MVC Web applications</li>
+            </ul>
+            <p>Appweb 2 only supported stand-alone web pages. Appweb 3 continues this support, however the Ejscript
+            HTTP API has changed significantly.</p>
+            <p>The request object has different properties and the headers, server, cookies, files, and local objects
+            have been removed. Appweb 3 has a more ordered set of objects and properties. A <b>http</b> object stores
+            information about the server, the <b>request</b> object stores request information and the <b>response</b>
+            object contains response related information. The <b>form</b> object has been renamed <b>params</b>.</p>
+            <p>Here is a section from an Appweb 2 web page:</p>
+            <pre>
+if (request["REQUEST_METHOD"] == "POST") {
+    var ok = form["ok"];
+    if (ok == "Cancel") {
+        redirect(request["HTTP_REFERRER"]);
+    } else if (ok == "New Session") {
+        destroySession();
+        createSession(120);
+    } else if (ok == "Ok") {
+        session["name"] = form["name"];
+        session["address"] = form["address"];
+        application["appData1"] = form["appData1"];
+    }
+}
+write("Using session: " + request['SESSION_ID']);
+</pre>
+            <p>And here is the same section for an Appweb 3 web page:</p>
+            <pre>
+if (<b>request.method</b> == "POST") {
+    var ok = <b>params["ok"]</b>
+    if (ok == "Cancel") {
+        redirect(<b>request.referrer</b>)
+    } else if (ok == "New Session") {
+        destroySession()
+        createSession(120)
+    } else if (ok == "Ok") {
+        session["name"] = params.name
+        session["address"] = params.address
+    }
+}
+write("Using session: " + <b>request.sessionID</b>)
+</pre>
+            <h3>Post Back</h3>
+            <p>In Appweb 2, a common paradigm was to POST form data back to the same web page. This was called
+            "Post-Back" and was popularized with the Microsoft ASP.NET framework. However, it has become clear that
+            Post-Back mingles application logic with web views in a very unscalable way. Appweb 3 and Ejscript offer a
+            Model / View / Controller framework that is vastly superior to Post-Back. Post-Back is still supported, but
+            not encouraged.</p>
+            <h2>More Information</h2>
+            <p>For more details, please read</p>
+            <ul>
+                <li><a href="../../../product/changeLog.html">Appweb Change Log</a></li>
+                <li><a href="../users/ejs.html">Using Ejscript</a></li>
+                <li><a href="../../../ejs/index.html">Ejscript Documentation</a></li>
+                <li><a href="http://www.ejscript.org">Ejscript Web Site</a></li>
+                <li><a href="http://www.ejscript.org/forum/">Ejscript Forum</a></li>
+            </ul>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

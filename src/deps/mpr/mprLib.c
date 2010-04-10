@@ -10809,7 +10809,7 @@ MprList *mprGetPathFiles(MprCtx ctx, cchar *dir, bool enumDirs)
     list = 0;
     dp = 0;
 
-    if ((path = mprJoinPath(dir, "*.*")) == 0) {
+    if ((path = mprJoinPath(ctx, dir, "*.*")) == 0) {
         return 0;
     }
     sep = mprGetPathSeparator(ctx, dir);
@@ -14520,19 +14520,14 @@ static void disconnectSocket(MprSocket *sp)
     char    buf[16];
     int     fd;
 
-    if (sp->fd < 0) {
-        return;
-    }
-
     /*  
         Defensive lock buster. Use try lock incase an operation is blocked somewhere with a lock asserted. 
         Should never happen.
      */
     if (!mprTryLock(sp->mutex)) {
-        closesocket(sp->fd);
         return;
     }
-    if (sp->fd >= 0) {
+    if (sp->fd >= 0 || !(sp->flags & MPR_SOCKET_EOF)) {
         /*
             Read any outstanding read data to minimize resets. Then do a shutdown to send a FIN and read 
             outstanding data.  All non-blocking.
@@ -14543,8 +14538,6 @@ static void disconnectSocket(MprSocket *sp)
         }
         shutdown(sp->fd, SHUT_RDWR);
         fd = sp->fd;
-        sp->fd = -1;
-        closesocket(fd);
         sp->flags |= MPR_SOCKET_EOF;
         mprRecallWaitHandler(sp, fd);
     }
@@ -20730,7 +20723,6 @@ void mprRecallWaitHandler(MprCtx ctx, int fd)
     for (index = 0; (wp = (MprWaitHandler*) mprGetNextItem(ws->handlers, &index)) != 0; ) {
         if (wp->fd == fd) {
             wp->flags |= MPR_WAIT_RECALL_HANDLER;
-            wp->desiredMask &= ~(MPR_READABLE | MPR_WRITABLE);
             ws->needRecall = 1;
             mprWakeWaitService(wp->service);
             break;

@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Programming Guide</a> &gt; <b>Creating Appweb Modules</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            
+<!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
+                <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
+                <li><a href="../../../guide/appweb/programmers/modules.html">Custom Modules</a></li>
+                <li><a href="../../../guide/appweb/programmers/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 3</a></li>
+                <li><a href="../../../guide/appweb/programmers/rom.html">ROM Content</a></li>
+                <li><a href="../../../guide/appweb/programmers/man.html">Manual Pages</a></li>
+                <li><a href="../../../ref/appweb/index.html">Programmers Reference</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+                <li><a href="../../../ejs/ref/ejs/webArchitecture.html">Ejscript</a></li>
+                <li><a href="../../../api/native.html">Native APIs</a></li>
+                <li><a href="../../../guide/appweb/users/index.html">Users Guide</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Creating Appweb Modules</h1>
+            <p>Appweb supports extension modules that can augment the capability of Appweb by adding new features,
+            handlers, protocols or any arbitrary code.</p>
+            <p>Appweb is itself comprised of thirteen different modules. The core appweb HTTP server cannot serve any
+            pages or documents by itself. It relies on request handlers packaged as modules to actually serve HTTP
+            requests. Other Appweb modules provide SSL, authorization and file upload.</p>
+            <p>This document describes the Appweb Module Interface and how to create Appweb modules. The Appweb Module
+            interface supports both dynamicaly loaded and statically linked modules from a single C code
+            base.</p><a name="overview" id="overview"></a>
+            <h2>Overview</h2>
+            <p>To create an Appweb module, you must create an initialization function that is called when Appweb loads
+            your module. This must be named according to the form:</p>
+            <pre>
+mpr<b>Name</b>ModuleInit(MaHttp *http)
+</pre>
+            <p>where <b>Name</b> is the name of your module. The first letter must be upper case. This function will be
+            called immediately after loading the module code.</p>
+            <p>The initialization function must call the <b>mprCreateModule</b> API and supply a unique name, module
+            version string and optional module data and start/stop functions. This call returns a module instance that
+            is registered with Appweb.</p>
+            <pre>
+MprModule *mprSimpleModuleInit(MaHttp *http)
+{
+    MprModule   *module;
+    module = mprCreateModule(http, "testModule", "1.0.0", NULL, NULL, NULL);
+    if (module == 0) {
+        return 0;
+    }
+    /* Put custom initialization here */
+    return module;
+}
+</pre>
+            <p>Initialization functions are passed the Http service object as a parameter and must return the module
+            object for the module. You can put any custom code in the initialization function. If you supply start or
+            stop functions as parameters to the mprCreateModule API, these will be invoked when Appweb starts.</p>
+            <p>Modules can be dynamically loaded in response to the <a href=
+            "../users/dir/module.html#loadModule">LoadModule</a> Appweb configuration directive. You can also load
+            modules via the <b>maLoadModule</b> C API.</p>
+            <p>To package your module, you must create a DLL / shared library containing your module and on Windows,
+            you must export the initialization function. If you want to statically link your module, you need to ensure
+            the main program explicitly calls your initialization function during its initialization.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

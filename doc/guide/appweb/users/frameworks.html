@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Users Guide</a> &gt; <b>Web Frameworks</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#comparison">Comparison</a></li>
+                <li><a href="#ejs">Ejscript</a></li>
+                <li><a href="#php">PHP</a></li>
+                <li><a href="#cgi">CGI</a></li>
+                <li><a href="#egi">EGI</a></li>
+                <li><a href="#custom">Custom Handlers</a></li>
+            </ul>
+<!-- BeginDsi "dsi/usersGuideSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/users/index.html">User Guide Overview</a></li>
+                <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
+                <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
+                <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
+                <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
+                <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
+                <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
+                <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
+                <li><a href="../../../guide/appweb/users/ejs.html">Ejscript</a></li>
+                <li><a href="../../../guide/appweb/users/php.html">PHP</a></li>
+                <li><a href="../../../guide/appweb/users/cgi.html">CGI</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Web Frameworks</h1>
+            <p>To create dynamic web pages, you need a convenient and powerful server-side scripting environment. It is
+            slow and difficult to create a functional and appealing web application using the legacy <a href=
+            "cgi.html">CGI</a> protocol. It's interface is too low level and it provides little assistance to
+            manipulate server-side data, render UI elements and manage Ajax interactions.</p>
+            <p>In contrast, environments such as <a href="ejs.html">Ejscript</a>, Rails or even <a href="#php">PHP</a>
+            provide much more support for dynamic web content.</p>
+            <p>Appweb provides a rich set of options to use when creating web pages or web applications. This document
+            compares the alternatives and suggests where each option is best deployed.</p>
+            <ul>
+                <li><a href="#cgi">CGI</a></li>
+                <li><a href="#egi">Embedded Gateway Interface</a></li>
+                <li><a href="#ejs">Ejscript</a></li>
+                <li><a href="#php">PHP</a></li>
+                <li><a href="#custom">Custom Modules and Handlers</a></li>
+            </ul><a name="comparison" id="comparison"></a>
+            <h2 class="section">Comparison</h2>
+            <p>The following table summarizes the differences between the various web application environments.</p>
+            <table summary="">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td><a href="#cgi"><strong>CGI</strong></a></td>
+                        <td><a href="#egi"><strong>EGI</strong></a></td>
+                        <td><a href="#ejs">Ejscript</a></td>
+                        <td><a href="#php">PHP</a></td>
+                        <td><a href="#custom">Handler</a></td>
+                    </tr>
+                </thead>
+                <tr>
+                    <td><strong>Target Use</strong></td>
+                    <td>Legacy dynamic pages and forms</td>
+                    <td>In-memory form processing</td>
+                    <td>Dynamic embedded web pages and forms</td>
+                    <td>Enterprise web pages and forms</td>
+                    <td>Custom URL processing</td>
+                </tr>
+                <tr>
+                    <td><strong>Typical Memory Footprint</strong></td>
+                    <td>External program. 500K</td>
+                    <td>20K</td>
+                    <td>200K</td>
+                    <td>4-8MB</td>
+                    <td>20K</td>
+                </tr>
+                <tr>
+                    <td><strong>Performance</strong></td>
+                    <td>Slow</td>
+                    <td>Very fast form processing</td>
+                    <td>Very fast page and form processing</td>
+                    <td>Fast page and form processing</td>
+                    <td>Fastest possible</td>
+                </tr>
+                <tr>
+                    <td><strong>Advantages</strong></td>
+                    <td>Standard in wide-use</td>
+                    <td>Simple fast forms processing</td>
+                    <td>Easy creation of dynamic web pages</td>
+                    <td>Large base of PHP code and developers</td>
+                    <td>Allows any URL handling desired</td>
+                </tr>
+                <tr>
+                    <td><strong>Disadvantages</strong></td>
+                    <td>Slow. Hard to visualize output</td>
+                    <td>Limited to forms. Can't design page WYSIWYG</td>
+                    <td>Relatively new</td>
+                    <td>Very large memory footprint</td>
+                    <td>Must build functionality</td>
+                </tr>
+                <tr>
+                    <td><b>Remarks</b></td>
+                    <td>Use just for legacy CGI programs and scripts. Use Ejscript or PHP instead.</td>
+                    <td>Use just for simple forms..</td>
+                    <td>Preferred in embedded applications and devices.</td>
+                    <td>Use where memory footprint is not a concern. Useful for enterprise web applications.</td>
+                    <td>Use for custom HTTP processing.</td>
+                </tr>
+            </table>
+            <p>In summary, we recommend using <b>Ejscript</b> for embedded applications and devices and <b>PHP</b> for
+            enterprise and legacy applications. <a name="ejs" id="ejs"></a></p>
+            <h2 class="section">Ejscript</h2>
+            <p>The <a href="http://www.ejscript.org">Ejscript</a> Web Framework is a web application environment that
+            uses server-side JavaScript and a Model / View / Controller paradigm. It provides an application generator,
+            templating engine, a powerful Model/View/Controller framework and a library of Ajax view controls.</p>
+            <p>Ejscript was designed to make it dramatically easier to create dynamic web applications and it excells
+            when embedded in applications or devices. It is also ideal for back-end hosting of applications behind a
+            reverse-proxy.</p>
+            <p>Ejscript has a very small memory footprint (~300 including the JavaScript) and yet offers a powerful
+            suite of features:</p>
+            <ul>
+                <li>Server-side ECMA-262 compliant JavaScript language</li>
+                <li>Compact and fast JavaScript virtual machine</li>
+                <li>Extensive system class library with classes for Events, Timers, File I/O, Streams, Sockets, HTTP,
+                XML, Regular expressions and SQL Database</li>
+                <li>Integrated SQLite database</li>
+                <li>SQL Object Relational Mapping (ORM) layer</li>
+                <li>Templating engine</li>
+                <li>High level user interface control (e.g. Smart Table and charting)s</li>
+                <li>Support for leading Ajax libraries</li>
+                <li>One line binding to C data and functions</li>
+            </ul>
+            <p>For more information, please read <a href="ejs.html">Using Ejscript</a>.</p><a name="php" id="php"></a>
+            <h2 class="section">PHP</h2>
+            <p><acronym title="recursive acronym for PHP: Hypertext Preprocessor">PHP</acronym> is a widely-used
+            general-purpose scripting language that is especially suited for enterprise Web development. It provides an
+            object-oriented programming language, numerous extensions and a broad developer community. The power of PHP
+            comes at a price, it typically has a memory footprint of 1-2 MB for the PHP code alone. For embedded
+            systems, this is often too big and so we recommend using Ejscript for such systems.</p><a name="cgi" id=
+            "cgi"></a>
+            <h2 class="section">CGI</h2>
+            <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
+            external programs to generate dynamic data. It is standard but slow. Unless you have legacy CGI programs or
+            need to run a scripting language via CGI, you are better served by using either PHP or
+            Ejscript.</p><a name="egi" id="egi"></a>
+            <h2 class="section">EGI</h2>
+            <p>The Embedded Gateway Interface (EGI) was implemented by Embedthis as an in-memory, faster replacement
+            for CGI. It can be used to migrate and accelerate CGI programs by running them inside the Appweb address
+            space. However, in most cases Ejscript can do everything that EGI could be used for and so Ejscript is a
+            better choice.</p><a name="custom" id="custom"></a>
+            <h2 class="section">Custom Handlers</h2>
+            <p>Occasionally, you may require total control over how the HTTP server should respond to a request. Appweb
+            allows you to create your own custom HTTP handler that can respond and process HTTP requests. This is
+            useful if you have custom HTTP protocol extensions, proprietary authentication or authorization procedures
+            or specific request timeout requirements.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

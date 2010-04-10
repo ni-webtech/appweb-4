@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Users Guide</a> &gt; <b>Handlers</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#handlerProcessing">Handler Processing</a></li>
+            </ul>
+<!-- BeginDsi "dsi/usersGuideSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/users/index.html">User Guide Overview</a></li>
+                <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
+                <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
+                <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
+                <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
+                <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
+                <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
+                <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
+                <li><a href="../../../guide/appweb/users/ejs.html">Ejscript</a></li>
+                <li><a href="../../../guide/appweb/users/php.html">PHP</a></li>
+                <li><a href="../../../guide/appweb/users/cgi.html">CGI</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Configuring Pipeline Stages</h1>
+            <p>Appweb uses a bi-direction pipeline to process requests and generate responses. This consists of a
+            mechanism of queues, packets, buffering and event scheduling. The pipeline architecture is highly optimized
+            and supports the efficient transmission of data without copying.</p>
+            <p>The request pipeline is comprised of an incoming and outgoing stream. Each stream is in turn comprised
+            of stages.</p><img src="../../../images/pipeline.jpg" alt="" />&lt;
+            <p>Stages come in three varieties:</p>
+            <ul>
+                <li>Handlers</li>
+                <li>Filters</li>
+                <li>Network Connectors</li>
+            </ul>
+            <p>Handlers are responsible for generating the response content. Filters permute the request or incoming
+            and outgoing data in some way, and network connectors send the final response over the network to the
+            client.</p>
+            <p>Appweb has a set of handlers for common application and content types. Different handlers service
+            different content. Appweb provides the following handlers: PHP, CGI, EGI, Ejscript, directory listings,
+            file upload and a file handler for static file content. An API is also provided so you can create your own
+            request handlers and pipeline filters and connectors.</p>
+            <h2 class="section">Handlers</h2>
+            <p>Appweb handlers typically utilize the Appweb <a href="modules.html">loadable module</a> interface and
+            may be dynamically loaded and configured via the <a href="configuration.html">Appweb configuration
+            file</a>. The configuration file defines the handlers to use and the order in which they are matched to a
+            given request.</p><a name="handlerProcessing" id="handlerProcessing"></a>
+            <h3>Handler Processing</h3>
+            <p>The following is an example set of Appweb configuration file directives that loads modules and defines
+            the handlers to process client requests.</p>
+            <pre>
+<a href="dir/module.html#loadModule">LoadModule</a> auth mod_auth
+<a href="dir/module.html#loadModule">LoadModule</a> ejs mod_ejs
+LoadModule file mod_file
+<a href="dir/location.html#addHandler">AddHandler</a> authHandler
+<a href="dir/location.html#addHandler">AddHandler</a> ejsHandler .ejs .esp .asp
+<a href="dir/location.html#addHandler">AddHandler</a> fileHandler
+</pre>
+            <p>The order of the directives is important. When a request is received from a client, the handlers
+            specified in the configuration file will be matched against the request. If a handler does not specify an
+            extension (as the authHandler and the fileHandler do not), then they will always match. If the request URL
+            extension matches the extension for a handler, then that handler will be added to the list of handlers for
+            this request.</p>
+            <p>For example: "http://www.acme.com/myDoc.esp" would match the ".esp" extension for the ejsHandler. The
+            result is a list of handlers that will be applied to the request in the order they appear in the
+            configuration file. The first matching handler to accept the request will be responsible for the
+            request.</p>
+            <h2 class="section">Filters</h2>
+            <p>Filters can manipulate the request as it passes through the request pipeline. Typical uses are to
+            compress or encrypt data. Appweb implements Transfer Chunk Encoding, Ranged requests and user authorization
+            via filters. Filters are configured via the <a href="dir/location.html#addInputFilter">AddInputFilter</a>
+            and <a href="dir/location.html#addOutputFilter">AddOutputFilter</a> configuration file directives.</p>
+            <h2 class="section">Connectors</h2>
+            <p>Network connectors are the end of the outgoing stream of the pipeline. Their job is to transmit data
+            back to the client. Appweb supplies two connectors. One general purpose <b>net</b> connector and a
+            specialize <b>send</b> connector for static file content.</p>
+            <p>Please see the document <a href="../programmers/stages.html">Pipeline Stages</a> for programming
+            information about how to create Appweb handlers, filters and connectors.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

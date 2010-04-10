@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <b>Appweb Features</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            
+<!-- BeginDsi "dsi/genSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../guide/appweb/overview.html">Appweb Overview</a></li>
+                <li><a href="../../guide/appweb/features.html">Appweb Features</a></li>
+                <li><a href="../../product/releaseNotes.html">Release Notes</a></li>
+                <li><a href="../../product/changeLog.html">Change Log</a></li>
+                <li><a href="../../product/roadmap.html">Roadmap</a></li>
+                <li><a href="../../product/compatibility.html">Compatibility</a></li>
+                <li><a href="../../licenses/index.html">Licensing</a></li>
+                <li><a href="../../product/install/index.html">Installation Overview</a></li>
+                <li><a href="../../guide/appweb/users/gettingStarted.html">Getting Started</a></li>
+                <li><a href="../../guide/appweb/users/index.html">Users Guide</a></li>
+                <li><a href="../../product/project.html">Project Resources</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Embedthis Appweb&trade; Features</h1><a name="components" id="components"></a>
+            <p>The Appweb product includes the following components:</p>
+            <ul>
+                <li>Appweb HTTP Server main program</li>
+                <li>Appweb HTTP Client program</li>
+                <li>Appweb HTTP Server library</li>
+                <li>Appweb HTTP Client library</li>
+                <li>Appweb loadable modules for server-side JavaScript, Embedded Gateway Interface, Common Gateway
+                Interface, and PHP</li>
+                <li>Ejscript web framework for server-side JavaScript programming</li>
+                <li>Secure Sockets Layer (SSL/TLS)</li>
+                <li>Documentation</li>
+                <li>Samples</li>
+                <li>Source code</li>
+            </ul>
+            <h2 class="section">Feature Overview</h2>
+            <h3>HTTP Server Engine</h3>
+            <ul>
+                <li>Full HTTP/1.1 support</li>
+                <li>Mulit-threaded, event based server</li>
+                <li>Fast co-routine request pipeline</li>
+                <li>Per-request virtual arena-based memory allocator (prevents memory leaks)</li>
+                <li>Sendfile and vectored I/O</li>
+                <li>Supports ranged, chunked and pipelined requests</li>
+                <li>Supports transfer chunk encoding to preserve keep-alive</li>
+                <li>Virtual Hosting. IP-based and Name-based</li>
+                <li>Error and access Logging (Common Log Format)</li>
+                <li>Apache style configuration</li>
+                <li>Angel monitoring process</li>
+                <li>Sand-box resource limits</li>
+            </ul>
+            <h3>Performance</h3>
+            <ul>
+                <li>Request throughput (&gt; 4,500 requests per second)</li>
+                <li>Multi-threaded scaling on multi-cpu systems</li>
+                <li>Small memory footprint even under heavy load (from 800K)</li>
+            </ul>
+            <h3>Modularity</h3>
+            <ul>
+                <li>Dynamic loading of modules</li>
+                <li>Modules for CGI, PHP, Authorization, Chunked requests, Ranged reqeusts, directory listings, EGI,
+                static file requests, file upload and SSL</li>
+                <li>Extensible URL handlers</li>
+                <li>Extensible / replaceable authorization, SSL and script</li>
+            </ul>
+            <h3>Security</h3>
+            <ul>
+                <li>Secure Sockets Layer (SSL)</li>
+                <li>Basic and Digest Authentication</li>
+                <li>Directory and URL location based authorization</li>
+                <li>Sandbox limits</li>
+                <li>Access and access violation logging</li>
+                <li>Safe portable runtime to protect against memory leaks and buffer overflows</li>
+            </ul>
+            <h3>Dynamic Content</h3>
+            <ul>
+                <li>Ejscript Server-Side JavaScript</li>
+                <li>Embedded Gateway Interface (in-memory CGI)</li>
+                <li>CGI/1.1</li>
+                <li>PHP</li>
+            </ul>
+            <h3>Ejscript Web Framework</h3>
+            <ul>
+                <li>Server-side JavaScripting</li>
+                <li>Model / View / Controller paradigm or stand-alone web pages</li>
+                <li>SQLite database and ORM layer and database migrations</li>
+                <li>Web page templating engine</li>
+                <li>Ajax View Controls with jQuery support</li>
+                <li>Embedded scripting in HTML pages</li>
+                <li>Session and flash inter-request state management</li>
+            </ul>
+            <h3>Developer Support</h3>
+            <ul>
+                <li>HTTP server and client libraries</li>
+                <li>Shared and static libraries supplied</li>
+                <li>Extensive C API</li>
+                <li>Operate single-threaded or multithreaded (Compile or run-time selectable)</li>
+                <li>Easy, intuitive programming model</li>
+                <li>Coding minimized as most features can be specified via the configuration file</li>
+                <li>Extensive debug trace logging</li>
+            </ul>
+            <h3>Documentation</h3>
+            <ul>
+                <li>Full C API Documentation</li>
+                <li>Cookbook of samples (cut and paste to get going)</li>
+                <li>Tutorials</li>
+            </ul>
+            <h3>Platform Support</h3>
+            <ul>
+                <li>Linux (2.4, 2.6: Ubuntu, Fedora)</li>
+                <li>Windows (XP, Vista, 7)</li>
+                <li>MAC OSX (Leopard)</li>
+                <li>VxWorks (5.4, 6.3)</li>
+                <li>Free BSD</li>
+                <li>Windows CE</li>
+            </ul>
+            <h3>Embedding Support</h3>
+            <ul>
+                <li>Supports ARM, MIPS, X86, PPC, Sparc processors</li>
+                <li>Full cross-compilation support. Use Windows, Linux or Mac as build system</li>
+                <li>Fine-grained control for conditional build and compilation</li>
+                <li>Build statically or shared</li>
+                <li>Execute from ROM. Supports XIP</li>
+            </ul>
+            <h3>Other Features</h3>
+            <ul>
+                <li>Packaged installations for Linux, Windows and MAC OS X</li>
+                <li>Run as a service / daemon</li>
+                <li>HTTP server and client access program</li>
+            </ul>
+            <h3>Standards</h3>
+            <ul>
+                <li>HTTP/1.1</li>
+                <li>CGI/1.1</li>
+                <li>Apache configuration file and logging compatibility</li>
+            </ul>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

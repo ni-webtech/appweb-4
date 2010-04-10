@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Programming Guide</a> &gt; <b>Embedding Appweb</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#loadable">Loadable Modules</a></li>
+                <li><a href="#appwebProgram">Appweb Program</a></li>
+                <li><a href="#module">Creating a Module</a></li>
+                <li><a href="#library">Embed Appweb Library</a></li>
+            </ul>
+<!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
+                <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
+                <li><a href="../../../guide/appweb/programmers/modules.html">Custom Modules</a></li>
+                <li><a href="../../../guide/appweb/programmers/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 3</a></li>
+                <li><a href="../../../guide/appweb/programmers/rom.html">ROM Content</a></li>
+                <li><a href="../../../guide/appweb/programmers/man.html">Manual Pages</a></li>
+                <li><a href="../../../ref/appweb/index.html">Programmers Reference</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+                <li><a href="../../../ejs/ref/ejs/webArchitecture.html">Ejscript</a></li>
+                <li><a href="../../../api/native.html">Native APIs</a></li>
+                <li><a href="../../../guide/appweb/users/index.html">Users Guide</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Embedding Appweb</h1>
+            <p>When embedding Appweb in your application or system, you have a two options:</p>
+            <ol>
+                <li>Create an Appweb loadable module for your application.</li>
+                <li>Embed the Appweb HTTP library in your application.</li>
+            </ol><a name="loadable" id="loadable"></a>
+            <h3>Loadable Modules</h3>
+            <p>You can extend the Appweb server program by creating an Appweb loadable module. You do this by creating
+            a shared library that contains your application and some Appweb module interface code. This module is then
+            specified in the Appweb configuration file so that the Appweb program will load it. It requires about 10
+            lines of code to create an Appweb module.</p>
+            <h3>Embed the Appweb Library</h3>
+            <p>You can embed the Appweb library in your application to enable it to listen for HTTP requests and thus
+            become a HTTP server itself. Embedding the Appweb library is easy and can be done with as little as one
+            line of code.</p><a name="appwebProgram" id="appwebProgram"></a>
+            <h2 class="section">The Appweb Server Program</h2>
+            <p>The Appweb product includes a fully-featured HTTP server program that uses the Appweb HTTP library. This
+            server (called <b>appweb</b>) is run by default when you install the Appweb binary distribution or run
+            "make install" after building from source.</p>
+            <p>The Appweb server program is ideal for embedded systems as it offers the following features:</p>
+            <ul>
+                <li>High performance</li>
+                <li>Extendable via loadable modules</li>
+                <li>Deterministic memory footprint and CPU loads</li>
+                <li>Configurable sandbox limits that control memory usage</li>
+                <li>Monitored and managed by the Appweb Angel process</li>
+            </ul><a name="module" id="module"></a>
+            <h2 class="section">Creating a Module</h2>
+            <p>You can extend the Appweb program by creating a loadable module for your application code.</p>
+            <p>To initialize your module and register with Appweb, you must create an initialization function that is
+            called when Appweb loads your module. This must be named according to the form:</p>
+            <pre>
+mpr<b>Name</b>ModuleInit(MaHttp *http)
+</pre>
+            <p>Where <b>Name</b> is the name of your module.</p>
+            <p>This initialization function must call the <b>mprCreateModule</b> API to register with Appweb.</p>
+            <pre>
+MprModule *mprSimpleModuleInit(MaHttp *http)
+{
+    MprModule   *module;
+    <b>module = mprCreateModule(http, "testModule", "1.0.0", NULL, NULL, NULL);</b>
+    if (module == 0) {
+        return 0;
+    }
+    /* Put custom code here */
+    return module;
+}
+</pre>
+            <p>See <a href="modules.html">Creating Appweb Modules</a> for more details.</p><a name="library" id=
+            "library"></a>
+            <h2 class="section">Embed the Appweb Library</h2>
+            <p>You can also embed the Appweb HTTP library in your main program to enable it to function as a HTTP
+            server itself. This is ideal if your application is large and/or has a complex I/O, eventing or threading
+            paradigm.</p>
+            <h3>Linking with the Appweb Library</h3>
+            <p>To include the Appweb library in your program you need to do the following things:</p>
+            <ol>
+                <li>Add <b>#include "appweb/appweb.h"</b> to the relevant source files.</li>
+                <li>Add the Appweb library to your Makefiles or Windows project files. This will mean adding
+                libappweb.dll on Windows or libappweb.so on Unix.</li>
+                <li>Use one of the embedding APIs to create the HTTP server.</li>
+            </ol>
+            <h3>One Line Embedding</h3>
+            <p>The following code demonstrates the one-line Appweb embedding API. This will create and configure a web
+            server based on the "server.conf" configuration file.</p>
+            <pre>
+#include "appweb/appweb.h"
+int main(int argc, char** argv)
+{
+    return maRunWebServer("server.conf");
+}
+</pre>
+            <p>To build this sample and link with the Appweb library:</p>
+            <pre>
+cc -o server server.c -lappweb
+</pre>
+            <h3>Full Control API</h3>
+            <p>The Appweb library also provides a lower level embedding interface where you can precisely control how
+            the web server is created and configured. This API also exposes the inner event and threading
+            mechanisms.</p>
+            <p>This example creates a web server using the "server.conf" configuration file and will service events
+            until terminated.</p>
+            <pre>
+#include "appweb/appweb.h"
+int main(int argc, char **argv)
+{
+    Mpr         *mpr;
+    MaHttp      *http;
+    MaServer    *server;
+    /*
+     *  Initialize and start the portable runtime services.
+     */
+    if ((mpr = mprCreate(0, NULL, NULL)) == 0) {
+        mprError(mpr, "Can't create the web server runtime");
+        return 0;
+    }
+    if (mprStart(mpr, 0) &lt; 0) {
+        mprError(mpr, "Can't start the web server runtime");
+        return 0;
+    }
+    http = maCreateHttp(mpr);
+    if ((server = maCreateServer(http, "server.conf", NULL, NULL, -1)) == 0) {
+        mprError(mpr, "Can't create the web server");
+        return 0;
+    }
+    if (maParseConfig(server, "server.conf") &lt; 0) {
+        mprError(mpr, "Can't parse the config file %s", "server.conf");
+        return 0;
+    }
+    if (maStartHttp(http) &lt; 0) {
+        mprError(http, "Can't start the web server");
+        return MPR_ERR_CANT_CREATE;
+    }
+    mprServiceEvents(http, -1, 0);
+    maStopHttp(http);
+    mprFree(mpr);
+    return 0;
+}
+</pre>
+            <h3>More Details</h3>
+            <p>For more details about the embedding API, please consult the <a href="../../../api/appweb.html">Appweb
+            API</a> and the <a href="../../../api/native.html">Native APIs</a>.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

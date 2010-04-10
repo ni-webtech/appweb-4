@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="../index.html">Users Guide</a> &gt; <a href="../configuration.html#directives">Configuration
+            Directives</a> &gt; <b>Performance Directives</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#keepAlive">KeepAlive</a></li>
+                <li><a href="#keepAliveTimeout">KeepAliveTimeout</a></li>
+                <li><a href="#maxKeepAliveRequests">MaxKeepAliveRequests</a></li>
+                <li><a href="#sendBufferSize">SendBufferSize</a></li>
+                <li><a href="#timeout">Timeout</a></li>
+            </ul>
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="sandbox.html">Sandbox Directives</a></li>
+                <li><a href="../../../../guide/appweb/users/configuration.html">Configuration</a></li>
+                <li><a href="../configuration.html#directives">Configuration Directives</a></li>
+            </ul>
+        </div>
+        <div class="contentLeft">
+            <a href="../configuration.html#directives"></a>
+            <h1>Performance Directives</h1><a name="keepAlive" id="keepAlive"></a>
+            <h2>KeepAlive</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control the use of HTTP Keep-Alive</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>KeepAlive [on | off]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>KeepAlive on</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The KeepAlive directive enables HTTP Keep-Alive where a single TCP/IP connection may be
+                            reused for multiple requests. This can significantly speed up overall performance.</p>
+                            <p>Keep-Alive is supported by Appweb with both HTTP/1.0 and HTTP/1.1 protocols. With
+                            HTTP/1.1, Keep-Alive is the default. With HTTP/1.0, clients may optionally request
+                            Keep-Alive via the <b>Keep-Alive</b> HTTP request header.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="keepAliveTimeout" id="keepAliveTimeout"></a>
+            <h2>KeepAliveTimeout</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control the timeout period for TCP/IP connections</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>KeepAliveTimeout seconds</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>KeepAliveTimeout 120</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the time to keep connections open waiting for further requests
+                            from the client. If further requests arrive, the timeout period is restarted.</p>
+                            <p>Setting the timeout period too high may impact performance on high-traffic servers
+                            because the number of open TCP/IP connections can grow very large.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="maxKeepAliveRequests" id="maxKeepAliveRequests"></a>
+            <h2>MaxKeepAliveRequests</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define the maximum number of requests for a connection.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>MaxKeepAliveRequests number</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>MaxKeepAliveRequests 50</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the maximum number of requests that may be serviced using a
+                            single TCP/IP connection.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>
+                            <p>Limiting the number to a reasonable maximum can help reduce the impact of some denial of
+                            service attacks.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="sendBufferSize" id="sendBufferSize"></a>
+            <h2>SendBufferSize</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the TCP/IP buffer size.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>SendBufferSize limit</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>SendBufferSize 8192</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive sets the TCP/IP buffer size. Increasing its value can improve throughput
+                            and lower CPU usage. You should only need to do this for very high data rates.</p>
+                            <p>The limit may be set to 0 to use the O/S default value.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="timeout" id="timeout"></a>
+            <h2>Timeout</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Controls the request timeout period</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Timeout seconds</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Timeout 600</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the number of seconds of I/O inactivity to wait before cancelling
+                            a client request.</p>
+                            <p>Some web user interfaces with monitoring applets open HTTP connections and keep them
+                            open to stream response data back to the applet. To prevent Appweb from closing the
+                            connection, you may need to either increase the timeout value, or you may need to do some
+                            I/O to the applet to ensure it does not get closed.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

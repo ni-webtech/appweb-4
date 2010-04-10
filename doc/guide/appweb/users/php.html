@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Users Guide</a> &gt; <b>PHP</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <!--
+            <h2>Quick Nav</h2>
+            <ul>
+            </ul>
+            -->
+            
+<!-- BeginDsi "dsi/usersGuideSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/users/index.html">User Guide Overview</a></li>
+                <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
+                <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
+                <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
+                <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
+                <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
+                <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
+                <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
+                <li><a href="../../../guide/appweb/users/ejs.html">Ejscript</a></li>
+                <li><a href="../../../guide/appweb/users/php.html">PHP</a></li>
+                <li><a href="../../../guide/appweb/users/cgi.html">CGI</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h2>Using PHP</h2>
+            <p>Appweb supplies an in-memory PHP module that includes support for: sessions, sockets, MySQL, XML,
+            XML-RPC, regular expressions, large math, calendar functions, multi-byte strings, the pear library and the
+            Berkeley database.</p>
+            <p>The Appweb PHP module is called mod_php.so. The module loads the PHP library which is called libphp5.so
+            on Linux and libphp5.dll on Windows. You may replace the PHP library with a custom build from the PHP
+            source base if you wish.</p>
+            <p>The supplied PHP library was configured with the following configuration options (on Linux):</p>
+            <pre>
+./configure \
+    --disable-debug \
+    --disable-rpath \
+    --disable-cli \
+    --enable-bcmath \
+    --enable-calendar \
+    --enable-maintainer-zts \
+    --enable-embed=shared \
+    --enable-force-cgi-redirect \
+    --enable-ftp \
+    --enable-inline-optimization \
+    --enable-magic-quotes \
+    --enable-memory-limit \
+    --enable-safe-mode \
+    --enable-sockets \
+    --enable-track-vars \
+    --enable-trans-sid \
+    --enable-wddx \
+    --sysconfdir=/etc/appWeb \
+    --with-pic \
+    --with-exec-dir=/etc/appWeb/exec \
+    --with-db \
+    --with-regex=system \
+    --with-pear \
+    --with-xml \
+    --with-xmlrpc \
+    --with-zlib ; \
+</pre><a name="cgi" id="cgi"></a>
+            <h2>Using PHP via CGI</h2>
+            <p>If you need to use PHP via CGI, be aware that PHP will run much more slowly. This will be especially
+            apparent for small scripts where the load time for each script will be the dominant overhead.</p>
+            <p>To use PHP via CGI, you will need to disable the PHP module if you want your script to use the ".php"
+            extension. If your scripts do not use this extension, you can keep the PHP module enabled. To enable PHP
+            via CGI, add (or uncomment) the following lines in the appweb configuration file :</p>
+            <pre>
+AddHandler cgiHandler .cgi .cgi-nph .bat .cmd .pl .py
+Action application/x-appweb-php /usr/bin/php
+</pre>
+            <p>To disable the PHP module, ensure that you have commented out the following lines:</p>
+            <pre>
+# LoadModule php5 libphp5Module
+# AddHandler php5Handler .php
+</pre>
+            <p>When PHP is started as a CGI interpreter, it expects that the SCRIPT_FILENAME environment variable be
+            set to the name of the script to execute. In early PHP versions, it incorrectly looked at PATH_TRANSLATED
+            to have the name of the script. To ensure that PHP behaves correctly and looks in SCRIPT_FILENAME, ensure
+            that the "cgi.fix_pathinfo" is set to 1 in the "php.ini" file.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

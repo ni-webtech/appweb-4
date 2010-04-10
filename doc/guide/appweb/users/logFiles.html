@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Users Guide</a> &gt; <b>Log Files</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#errorLog">Error Log</a></li>
+                <li><a href="#accessLog">Access Log</a></li>
+            </ul>
+<!-- BeginDsi "dsi/usersGuideSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/users/index.html">User Guide Overview</a></li>
+                <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
+                <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
+                <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
+                <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
+                <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
+                <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
+                <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
+                <li><a href="../../../guide/appweb/users/ejs.html">Ejscript</a></li>
+                <li><a href="../../../guide/appweb/users/php.html">PHP</a></li>
+                <li><a href="../../../guide/appweb/users/cgi.html">CGI</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Log Files</h1>
+            <p>Appweb provides detailed logging regarding client accesses and operation of Appweb. This is done via two
+            log files:</p>
+            <ul>
+                <li>Error Log</li>
+                <li>Access Log</li>
+            </ul>
+            <p>This document describes the two logs and the information available in each log.</p><a name="errorLog"
+            id="errorLog"></a>
+            <h2 class="section">Error Log</h2>
+            <p>The Error Log records the essential Appweb configuration, details of denied requests and other trace
+            information. The location of the error log file is specified by the <a href=
+            "dir/log.html#errorLog">ErrorLog</a> configuration file directive and the level of logging is specified by
+            the <a href="dir/log.html#logLevel">LogLevel</a> directive.</p>
+            <p>The verbosity of the messages written to the error log can be specified by the &lt;
+            href="dir/log.html#logLevel"&gt;LogLevel directive. The log level is a digit ranging from 0, the least
+            verbose to 9 being the most verbose. For example, If you set the log level to 2, messages at levels 0 and 1
+            will be output to the log. Level 0 will only record errors. Level 2 is the default and will record denied
+            accesses. Levels 3-9 will record various internal Appweb activities. You should be very careful with levels
+            above 4 as the error log can grow very large with high log levels.</p>
+            <p>Here is a sample error log. Some lines have been manually wrapped to fit on the page.</p>
+            <pre>
+appweb: 2: Configuration for Embedthis Appweb
+appweb: 2: --------------------------------------------
+appweb: 2: Host:               saturn.local
+appweb: 2: CPU:                i386
+appweb: 2: OS:                 MACOSX
+appweb: 2: Distribution:       Apple 10.5.6
+appweb: 2: OS:                 MACOSX
+appweb: 2: Version:            3.0A.2.16081
+appweb: 2: BuildType:          RELEASE
+appweb: 2: Started at:         Mon Mar  9 15:56:03 2010
+appweb: 2: --------------------------------------------
+appweb: 2: Server Root "/Users/mob/hg/appweb/src/server/."
+appweb: 2: Document Root for Main Server is "/Users/mob/hg/appweb/src/server/web"
+appweb: 2: Set connector "netConnector"
+appweb: 2: Activating module (Loadable) authFilter
+appweb: 2: Add filter "authFilter" to location "" for all extensions
+appweb: 2: Activating module (Loadable) rangeFilter
+appweb: 2: Add filter "rangeFilter" to location "" for all extensions
+appweb: 2: Activating module (Loadable) chunkFilter
+appweb: 2: Add filter "chunkFilter" to location "" for all extensions
+appweb: 2: Activating module (Loadable) phpHandler
+appweb: 2: Add handler "phpHandler" to location "" for extensions ".php"
+appweb: 2: Activating module (Loadable) ejsHandler
+appweb: 2: Add handler "ejsHandler" to location "" for extensions ".ejs"
+appweb: 2: Set handler "ejsHandler" for location "/ejs/"
+appweb: 2: Activating module (Loadable) egiHandler
+appweb: 2: Add handler "egiHandler" to location "" for extensions ".egi"
+appweb: 2: Set handler "egiHandler" for location "/egi/"
+appweb: 2: Activating module (Loadable) dirHandler
+appweb: 2: Add handler "dirHandler" to location "" for all extensions
+appweb: 2: Activating module (Loadable) cgiHandler
+appweb: 2: Add handler "cgiHandler" to location "" for extensions ".exe .cgi .cgi-nph .bat .cmd .pl .py"
+appweb: 2: Set handler "cgiHandler" for location "/cgi-bin/"
+appweb: 2: Activating module (Loadable) fileHandler
+appweb: 2: Add handler "fileHandler" to location "" for extensions ".html .gif .jpeg .png .pdf """
+appweb: 2: Activating the SSL provider
+appweb: 2: Loading OpenSSL module
+appweb: 2: Activating module (Loadable) sslModule
+appweb: 2: Document Root for 127.0.0.1:4443 is "/Users/mob/hg/appweb/src/server/web"
+appweb: 1: Starting host named: "127.0.0.1:7777"
+appweb: 1: Starting host named: "127.0.0.1:4443"
+appweb: 2: Listening for HTTP on *:7777
+appweb: 2: Listening for HTTPS on *:4443
+appweb: 1: HTTP services are ready (single-threaded).
+appweb: 2  [Mon Mar  9 18:54:23 2010]
+appweb: 1  Error: 404 "Not Found" for "/myFile.html", 
+           file "/var/appweb/web/myFile.html": 
+</pre>
+            <p>Each line in the error log is prefixed with source information. This follows the format:</p>
+            <pre>
+program:logLevel
+</pre>
+            <p>The log level is the verbosity level assigned to the trace information by Appweb.</p>
+            <p>The error log always contains a header detailing the high level Appweb configuration. It specifies what
+            version of Appweb is being run, what handlers and modules are loaded and what IP addresses are being
+            listened to.</p>
+            <p>You may also specify the error log file and log level via the Appweb command line "-l" option. If you
+            invoke Appweb with a "-l logSpec" command line option, it will override the ErrorLog and LogLevel
+            directives.</p><a name="accessLog" id="accessLog"></a>
+            <h2>Access Log</h2>
+            <p>The Access Log records the details of each successful request served by Appweb. The access log file
+            format is configurable and can log requests in a variety of formats. By default, it will log in the
+            Combined Log File Format that is used by the Apache web server. The location of the access log file and its
+            format is specified via the <a href="dir/log.html#customLog">CustomLog</a> configuration file
+            directive.</p>
+            <p>The access log file is parseable by many open source and commercial log file analyzers. Here is a sample
+            access log. Some lines have been manually wrapped to fit on the page.</p>
+            <pre>
+localhost - - [Fri Dec 19 16:08:13 2003] "GET / 
+        HTTP/1.1" 302 464
+localhost - - [Fri Dec 19 16:08:22 2003] "GET /doc/index.html 
+        HTTP/1.1" 200 8006
+localhost - - [Fri Dec 19 16:08:22 2003] "GET /doc/css/doc.css 
+        HTTP/1.1" 200 10588
+localhost - - [Fri Dec 19 16:08:22 2003] "GET /doc/images/backLeft.png 
+        HTTP/1.1" 200 16492
+localhost - - [Fri Dec 19 16:08:22 2003] "GET /doc/images/backMiddle.png 
+        HTTP/1.1" 200 464
+localhost - - [Fri Dec 19 16:08:22 2003] "GET /doc/images/backRight.png 
+        HTTP/1.1" 200 987
+localhost - - [Fri Dec 19 16:08:22 2003] "GET /doc/images/graybar.gif 
+        HTTP/1.1" 200 290
+localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/index.html 
+        HTTP/1.1" 304 167
+localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/css/doc.css 
+        HTTP/1.1" 304 167
+localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/images/backLeft.png 
+        HTTP/1.1" 304 167
+localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/images/backMiddle.png 
+        HTTP/1.1" 304 165
+localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/images/backRight.png 
+        HTTP/1.1" 304 166
+</pre>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

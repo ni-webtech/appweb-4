@@ -1,0 +1,470 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Embedthis Appweb 3.1.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="ejscript.org" /> 
+                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 3.1.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="../index.html">Users Guide</a> &gt; <a href="../configuration.html#directives">Configuration
+            Directives</a> &gt; <b>Authorization Directives</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#allow">Allow</a></li>
+                <li><a href="#authDigestQop">AuthDigestQop</a></li>
+                <li><a href="#authGroupFile">AuthGroupFile</a></li>
+                <li><a href="#authMethod">AuthMethod</a></li>
+                <li><a href="#authName">AuthName</a></li>
+                <li><a href="#authType">AuthType</a></li>
+                <li><a href="#authUserFile">AuthUserFile</a></li>
+                <li><a href="#deny">Deny</a></li>
+                <li><a href="#order">Order</a></li>
+                <li><a href="#require">Require</a></li>
+            </ul>
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../../guide/appweb/users/authorization.html">Authoriation Guide</a></li>
+                <li><a href="../../../../guide/appweb/users/configuration.html">Configuration</a></li>
+                <li><a href="../configuration.html#directives">Configuration Directives</a></li>
+            </ul>
+        </div>
+        <div class="contentLeft">
+            <a name="allow" id="allow"></a>
+            <h1>Authorization Directives</h1>
+            <p>Authorization directives manage user authentication and server access control.</p>
+            <h2>Allow</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define which servers can access a section of the published content.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Allow from [all | host]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>
+                            <pre>
+&lt;Directory /var/www/acme&gt;
+    Allow from www.acme.com
+&lt;/Directory&gt;
+</pre>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>The Allow directive is currently not implemented.</td>
+                    </tr>
+                </tbody>
+            </table><a name="authDigestQop" id="authDigestQop"></a>
+            <h2>AuthDigestQop</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the quality of protection for Digest authentication</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AuthDigestQop [none | auth | auth-int]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AuthDigesteQop auth</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AuthDigestQop directive specifies the desire quality of protection to be employed by
+                            the AuthHandler when validating user credentials. The following levels are supported:</p>
+                            <ul>
+                                <li>none -- No authentication</li>
+                                <li>auth -- Standard digest authentication</li>
+                                <li>auth-int --Use integrity checking via an MD5 hash of the credentials. Not yet
+                                implemented.</li>
+                            </ul>
+                            <p>The default level is "auth".</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="authGroupFile" id="authGroupFile"></a>
+            <h2>AuthGroupFile</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the name of the user group file for authentication.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AuthGroupFile path</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AuthGroupFile /var/lib/appweb/groups.db</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AuthGroupFile directive defines the file for Appweb to use when validating user
+                            groups. The path may be an absolute file name or it may be a path relative to the
+                            ServerRoot.</p>
+                            <p>Unlike Apache, Appweb uses the same authorization file and format for Digest and Basic
+                            authentication. This simplifies administration. The file format is:</p>
+                            <pre>
+acmeUsers: coyote roadRunner
+</pre>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>It is essential that the AuthGroupFile and the AuthUserFile be stored outside the
+                        DocumentRoot or any directory serving content.</td>
+                    </tr>
+                </tbody>
+            </table><a name="authMethod" id="authMethod"></a>
+            <h2>AuthMethod</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the method to lookup user and password credentials.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AuthMethod [file | pam]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AuthMethod pam</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The File based authentication method utilizes files created via the <b>httpPassword</b>
+                            utility. The Pluggable Authentication Modules (PAM) method is available on Linux and Mac OS
+                            X only. The PAM method integrates with the operating systems authentication mechanisms.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="authName" id="authName"></a>
+            <h2>AuthName</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the "Realm" of users to be permitted access to this set of documents.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AuthName realm</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AuthName "Acme Inc"<br />
+                        AuthType Basic<br />
+                        Require group employees</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AuthName directive defines a name that is used to create a realm of access to
+                            Appweb. Realms define discrete regions of access to Appweb. Any number of realms may be
+                            created, but only one per context is allowed.</p>
+                            <p>The realm is usually presented by the user's browser when prompting for a user name and
+                            password.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="authType" id="authType"></a>
+            <h2>AuthType</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the type of authentication to use.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AuthType [Basic | Digest]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AuthType Digest<br />
+                        AuthName "Acme Inc"<br />
+                        Require valid-user</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AuthType directive specifies the style of authorization to perform when validating
+                            users.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>
+                            <p>Basic authentication is not very secure. It will transmit your user credentials in a
+                            format that is very easy for malicious individuals to expose. Unless you are also using
+                            SSL, basic authentication is not recommended. If at all possible, use Digest authentication
+                            rather than Basic.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="authUserFile" id="authUserFile"></a>
+            <h2>AuthUserFile</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the file of users to use when validating user names.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AuthUserFile path</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AuthUserFile /var/lib/appweb/user.db</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AuthUserFile directive defines the file for Appweb to use when validating user
+                            names. The path may be an absolute file name or it may be a path relative to the
+                            ServerRoot.</p>
+                            <p>Unlike Apache, Appweb uses the same authorization file and format for Digest and Basic
+                            authentication. This simplifies administration. The file format is:</p>
+                            <pre>
+coyote:Realm:EncryptedPassword
+</pre>
+                            <p>The Realm is the name specified via the AuthName directive. The EncryptedPassword is an
+                            MD5 secure hash of the user name, realm and password. Use the Appweb utility httpPassword
+                            to create entries in the password file. Use an editor to delete entries by deleting the
+                            relevant line.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>
+                            <p>It is essential that the AuthUserFile and the AuthGroupFile be stored outside the
+                            DocumentRoot or any directory serving content.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="deny" id="deny"></a>
+            <h2>Deny</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines which servers cannot access a section of the published content.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Deny [all | host]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Deny www.acme.com</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>The Deny directive is currently not implemented.</td>
+                    </tr>
+                </tbody>
+            </table><a name="order" id="order"></a>
+            <h2>Order</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Specifies the order in which the allow and deny directives apply.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Order allowSpec</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Order Deny,Allow<br />
+                        Deny from all<br />
+                        Allow from www.acme.com</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Order directive defines who the server access control is applied. The allowSpec may
+                            be either "Deny,Allow" or "Allow,Deny". Note that no spaces may appear between the words or
+                            after the comma.</p>
+                            <h3>Deny,Allow</h3>
+                            <p>The deny directive is applied first then the allow directive. Requests that do not match
+                            the deny directive and do match the allow directive will be permitted access. Access is
+                            allowed by default if either the deny or allow directive is ommitted.</p>
+                            <h3>Allow,Deny</h3>
+                            <p>The allow directive is applied first then the deny directive. Requests that do not match
+                            the allow directive or requests that match the deny directive will be denied. Access is
+                            denied by default if either the deny or allow directive is ommitted.</p>
+                            <h3>Examples</h3>
+                            <p>To only allow access for a specified domain, www.acme.com:</p>
+                            <pre>
+Order Deny,Allow
+Deny from All
+Allow from www.acme.com
+</pre>
+                            <p>To deny access to a specific domain: www.myCompetitor.com</p>
+                            <pre>
+Order Allow,Deny
+Allow from All
+Deny from www.myCompetitor.com
+</pre>
+                        </td>
+                    </tr>
+                </tbody>
+            </table><a name="require" id="require"></a>
+            <h2>Require</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines which authenticated users will be permitted access to a set of published
+                        content.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Require user userName [userName]...<br />
+                        Require group groupName [groupName]...<br />
+                        Require valid-user<br />
+                        Require acl aclMask</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Directory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AuthType Digest<br />
+                        AuthName "Cartoon Actors"<br />
+                        AuthUserFile "/var/appweb/users.db"<br />
+                        AuthGroupFile "/var/appweb/groups.db"<br />
+                        Require user coyote</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Require directive defines which users can access a set of resources. The directive
+                            may validate specific users, any valid user, or groups of users. The users and groups are
+                            specified via the <a href="#authUserFile">AuthUserFile</a> and <a href=
+                            "#authGroupFile">AuthGroupFile</a> directives.</p>
+                            <p>The Require acl directive specifies an Access Control Mask which defines a set of
+                            capabilities that must be satisfied to grant access. ACLs are used to associated
+                            capabilities with users and groups of users and to specifiy via the Require directive what
+                            capabilities the user must posess to gain access. Typically each bit in the ACL mask
+                            corresponds to a set of tasks or roles which must be performed. For example: backup tasks
+                            could be associated with the bit 0x10 in the ACLs.</p>
+                            <p>ACLs are defined in the group authorization file where each group has a specified ACL
+                            mask. A user may be in multiple groups and their total ACL capabilities are the union (or)
+                            of all the group masks for which they are a member. To be granted access, the logical OR of
+                            the users ACL and the Required ACL must be non-zero. For example, if the groups file
+                            contained:</p>
+                            <pre>
+1: 0x111: powerUsers: peter
+1: 0x1: users: julie
+</pre>
+                            <p>And the Require directive was:</p>
+                            <pre>
+Require acl 0x10
+</pre>
+                            <p>Then, for Peter, the computed ACL is 0x111 | 0x10 which results in 0x10 which is
+                            non-zero so Peter would be granted access. Julie's computed ACL is 0x1 | 0x10 which results
+                            in 0 so Julie would be denied access. The entries in the group authorization file contain
+                            ACL masks.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>
