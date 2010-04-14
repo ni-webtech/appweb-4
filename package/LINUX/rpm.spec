@@ -4,7 +4,7 @@
 Summary: !!BLD_NAME!! -- Embeddable HTTP Web Server
 Name: !!BLD_PRODUCT!!
 Version: !!BLD_VERSION!!
-Release: !!BLD_NUMBER!!
+Release: !!BLD_NUMBER_ONLY!!
 License: Dual GPL/commercial
 Group: Applications/Internet
 URL: http://www.appwebserver.org

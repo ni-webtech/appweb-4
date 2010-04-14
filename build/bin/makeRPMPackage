@@ -31,6 +31,7 @@ createSpecFile() {
     RPM_SPEC_FILE=$RPM_DIR/SPECS/${name}.spec
 
     cp package/${BLD_HOST_OS}/rpm.spec $RPM_SPEC_FILE
+    cp package/${BLD_HOST_OS}/rpm.spec $RPM_SPEC_FILE
     if [ "$BLD_CPU" = i686 ] ; then
         BLD_CPU=i386 patchFile $RPM_SPEC_FILE
     else 
@@ -120,9 +121,9 @@ makeRPMPackage() {
             name=`createPackageName ${BLD_PRODUCT}-$suffix`.rpm
         fi
         if [ "$suffix" = "bin" ] ; then
-            rpm="$RPM_DIR/RPMS/$BLD_HOST_CPU/${BLD_PRODUCT}-${BLD_VERSION}-${BLD_NUMBER}.${BLD_HOST_CPU}.rpm"
+            rpm="$RPM_DIR/RPMS/$BLD_HOST_CPU/${BLD_PRODUCT}-${BLD_VERSION}-${BLD_NUMBER_ONLY}.${BLD_HOST_CPU}.rpm"
         else
-            rpm="$RPM_DIR/RPMS/$BLD_HOST_CPU/${BLD_PRODUCT}-$suffix-${BLD_VERSION}-${BLD_NUMBER}.${BLD_HOST_CPU}.rpm"
+            rpm="$RPM_DIR/RPMS/$BLD_HOST_CPU/${BLD_PRODUCT}-$suffix-${BLD_VERSION}-${BLD_NUMBER_ONLY}.${BLD_HOST_CPU}.rpm"
         fi
         echo "# Creating `basename $name`"
         mv $rpm $ROOT_DIR/$name
