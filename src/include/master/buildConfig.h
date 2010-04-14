@@ -242,7 +242,7 @@
     #define BLD_FEATURE_PHP 0
 
     #define BLD_VERSION "3.3.0"
-    #define BLD_NUMBER "1"
+    #define BLD_NUMBER "1-repos"
     #define BLD_MAJOR_VERSION 3
     #define BLD_MINOR_VERSION 3
     #define BLD_PATCH_VERSION 0

@@ -263,6 +263,7 @@ EXPORTS
   mprMemcmp
   mprMemcpy
   mprMemoryError
+  mprNop
   mprOpen
   mprOpenClientSocket
   mprOpenServerSocket
@@ -331,6 +332,7 @@ EXPORTS
   mprSetAllocCallback
   mprSetAllocError
   mprSetAllocLimits
+  mprSetAllocPolicy
   mprSetAppName
   mprSetBufMax
   mprSetBufRefillProc

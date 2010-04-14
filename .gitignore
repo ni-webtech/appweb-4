@@ -35,3 +35,6 @@ src/test/cgi-bin/testScript
 build/bin/dsi
 bin/cgiProgram
 all/*.c
+all/*.h
+all/*.es
+build/bin/*.pdb

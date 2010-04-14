@@ -99,7 +99,7 @@ cleanExtra:
 	rm -f trace.txt access.log error.log leak.log
 	rm -f *.obj *.pdb
 	rm -f logs/*.log logs/*.old
-	rm -fr appweb.conf target conf/appweb.conf conf/hosts conf/modules
+	rm -fr target
 	rm -f web/*.mod web/*.es
 
 vxSetup:
