@@ -3,7 +3,7 @@
 /******************************************************************************/
 /* 
  *  This file is an amalgamation of all the individual source code files for
- *  Multithreaded Portable Runtime 3.3.0.
+ *  Multithreaded Portable Runtime 4.0.0.
  *
  *  Catenating all the source into a single file makes embedding simpler and
  *  the resulting application faster, as many compilers can do whole file
@@ -10798,7 +10798,7 @@ MprList *mprGetPathFiles(MprCtx ctx, cchar *dir, bool enumDirs)
     MprDirEntry     *dp;
     MprPath         fileInfo;
     MprList         *list;
-    char            *path;
+    char            *path, pbuf[MPR_MAX_PATH];
     int             sep;
 #if WINCE
     WIN32_FIND_DATAA findData;
@@ -10839,10 +10839,10 @@ MprList *mprGetPathFiles(MprCtx ctx, cchar *dir, bool enumDirs)
 
             /* dp->lastModified = (uint) findData.ftLastWriteTime.dwLowDateTime; */
 
-            if (mprSprintf(path, sizeof(path), "%s%c%s", dir, sep, dp->name) < 0) {
+            if (mprSprintf(pbuf, sizeof(pbuf), "%s%c%s", dir, sep, dp->name) < 0) {
                 dp->lastModified = 0;
             } else {
-                mprGetPathInfo(ctx, path, &fileInfo);
+                mprGetPathInfo(ctx, pbuf, &fileInfo);
                 dp->lastModified = fileInfo.mtime;
             }
             dp->isDir = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
@@ -13729,8 +13729,8 @@ int mprCreateNotifierService(MprWaitService *ws)
         /*
             Cygwin doesn't work with INADDR_ANY
          */
-        ws->breakAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
         // ws->breakAddress.sin_addr.s_addr = INADDR_ANY;
+        ws->breakAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
         ws->breakAddress.sin_port = htons((short) breakPort);
         rc = bind(breakSock, (struct sockaddr *) &ws->breakAddress, sizeof(ws->breakAddress));
         if (breakSock >= 0 && rc == 0) {
@@ -19142,7 +19142,9 @@ static int firstDay(int year, int mon, int wday)
     tm.tm_year = year;
     tm.tm_mon = mon;
     tm.tm_mday = 1;
-    mktime(&tm);
+    if (mktime(&tm) == -1) {
+        return -1;
+    }
     return (1 + (wday - tm.tm_wday + 7) % 7);
 }
 #endif
@@ -20710,7 +20712,7 @@ void mprEnableWaitEvents(MprWaitHandler *wp, int mask)
 
 
 /*
-    Set a handler to be recalled without further I/O. May be called with a null wp.
+    Set a handler to be recalled without further I/O
  */
 void mprRecallWaitHandler(MprCtx ctx, int fd)
 {
