@@ -7418,9 +7418,6 @@ module ejs {
             @return Return a list of matching files and directories
          */
         function find(glob: String = "*", recurse: Boolean = true): Array {
-            pattern = RegExp("^" + glob.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$")
-            return recursiveFind(this, pattern, recurse)
-
             function recursiveFind(path: Path, pattern: RegExp, recurse: Boolean): Array {
                 let result: Array = []
                 if (path.isDir) {
@@ -7442,6 +7439,8 @@ module ejs {
                 }
                 return result
             }
+            pattern = RegExp("^" + glob.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$")
+            return recursiveFind(this, pattern, recurse)
         }
 
         /**
