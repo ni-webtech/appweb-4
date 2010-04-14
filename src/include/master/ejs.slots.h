@@ -162,13 +162,6 @@
 /*
     Local slots for global methods 
  */
-#define ES_appInit_dir                                                 0
-#define ES_appInit_config                                              1
-#define ES_appInit_log                                                 2
-#define ES_appInit__hoisted_3_path                                     3
-#define ES_appInit__hoisted_4_e                                        4
-#define ES_appInit__hoisted_5_stream                                   5
-#define ES_appInit__hoisted_6_m                                        6
 #define ES_readFile_path                                               0
 #define ES_readFile_encoding                                           1
 #define ES_makeGetter_fn                                               0
@@ -177,12 +170,8 @@
 #define ES_cloneBase_klass                                             0
 #define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
-#define ES_dump_e                                                      1
 #define ES_dumpAll_args                                                0
-#define ES_dumpAll_e                                                   1
 #define ES_dumpDef_args                                                0
-#define ES_dumpDef_o                                                   1
-#define ES_dumpDef_key                                                 2
 #define ES_encodeURI_str                                               0
 #define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
@@ -317,18 +306,11 @@
 #define ES_Array_concat_args                                           0
 #define ES_Array_contains_element                                      0
 #define ES_Array_every_match                                           0
-#define ES_Array_every__hoisted_1_i                                    1
 #define ES_Array_filter_match                                          0
 #define ES_Array_find_match                                            0
-#define ES_Array_find_result                                           1
-#define ES_Array_find__hoisted_2_i                                     2
 #define ES_Array_findAll_match                                         0
-#define ES_Array_findAll_result                                        1
-#define ES_Array_findAll__hoisted_2_i                                  2
 #define ES_Array_forEach_callback                                      0
 #define ES_Array_forEach_thisObj                                       1
-#define ES_Array_forEach__hoisted_2_i                                  2
-#define ES_Array_forEach__hoisted_3_i                                  3
 #define ES_Array_indexOf_element                                       0
 #define ES_Array_indexOf_startIndex                                    1
 #define ES_Array_insert_pos                                            0
@@ -337,26 +319,20 @@
 #define ES_Array_lastIndexOf_element                                   0
 #define ES_Array_lastIndexOf_startIndex                                1
 #define ES_Array_map_mapper                                            0
-#define ES_Array_map_result                                            1
 #define ES_Array_push_items                                            0
 #define ES_Array_reject_match                                          0
-#define ES_Array_reject_result                                         1
-#define ES_Array_reject__hoisted_2_i                                   2
 #define ES_Array_remove_start                                          0
 #define ES_Array_remove_end                                            1
 #define ES_Array_slice_start                                           0
 #define ES_Array_slice_end                                             1
 #define ES_Array_slice_step                                            2
 #define ES_Array_some_match                                            0
-#define ES_Array_some_result                                           1
-#define ES_Array_some__hoisted_2_i                                     2
 #define ES_Array_sort_compare                                          0
 #define ES_Array_sort_order                                            1
 #define ES_Array_splice_start                                          0
 #define ES_Array_splice_deleteCount                                    1
 #define ES_Array_splice_values                                         2
 #define ES_Array_transform_mapper                                      0
-#define ES_Array_transform__hoisted_1_i                                1
 #define ES_Array_unshift_items                                         0
 
 
@@ -378,23 +354,22 @@
 #define ES_BinaryStream_read                                           37
 #define ES_BinaryStream_readBoolean                                    38
 #define ES_BinaryStream_readByte                                       39
-#define ES_BinaryStream_readByteArray                                  40
-#define ES_BinaryStream_readDate                                       41
-#define ES_BinaryStream_readDouble                                     42
-#define ES_BinaryStream_readInteger                                    43
-#define ES_BinaryStream_readLong                                       44
-#define ES_BinaryStream_readString                                     45
-#define ES_BinaryStream_readXML                                        46
-#define ES_BinaryStream_removeListener                                 47
-#define ES_BinaryStream_room                                           48
-#define ES_BinaryStream_write                                          49
-#define ES_BinaryStream_writeByte                                      50
-#define ES_BinaryStream_writeShort                                     51
-#define ES_BinaryStream_writeDouble                                    52
-#define ES_BinaryStream_writeInteger                                   53
-#define ES_BinaryStream_writeLong                                      54
+#define ES_BinaryStream_readDate                                       40
+#define ES_BinaryStream_readDouble                                     41
+#define ES_BinaryStream_readInteger                                    42
+#define ES_BinaryStream_readLong                                       43
+#define ES_BinaryStream_readString                                     44
+#define ES_BinaryStream_readXML                                        45
+#define ES_BinaryStream_removeListener                                 46
+#define ES_BinaryStream_room                                           47
+#define ES_BinaryStream_write                                          48
+#define ES_BinaryStream_writeByte                                      49
+#define ES_BinaryStream_writeShort                                     50
+#define ES_BinaryStream_writeDouble                                    51
+#define ES_BinaryStream_writeInteger                                   52
+#define ES_BinaryStream_writeLong                                      53
 
-#define ES_BinaryStream_NUM_CLASS_PROP                                 55
+#define ES_BinaryStream_NUM_CLASS_PROP                                 54
 
 /*
  * Instance slots for "BinaryStream" type 
@@ -413,15 +388,10 @@
 #define ES_BinaryStream_read_buffer                                    0
 #define ES_BinaryStream_read_offset                                    1
 #define ES_BinaryStream_read_count                                     2
-#define ES_BinaryStream_readByteArray_count                            0
 #define ES_BinaryStream_readString_count                               0
-#define ES_BinaryStream_readXML_data                                   0
-#define ES_BinaryStream_readXML_s                                      1
 #define ES_BinaryStream_removeListener_name                            0
 #define ES_BinaryStream_removeListener_listener                        1
 #define ES_BinaryStream_write_items                                    0
-#define ES_BinaryStream_write_count                                    1
-#define ES_BinaryStream_write__hoisted_2_i                             2
 #define ES_BinaryStream_writeByte_data                                 0
 #define ES_BinaryStream_writeShort_data                                0
 #define ES_BinaryStream_writeDouble_data                               0
@@ -508,7 +478,6 @@
 #define ES_ByteArray_copyOut_dest                                      1
 #define ES_ByteArray_copyOut_destOffset                                2
 #define ES_ByteArray_copyOut_count                                     3
-#define ES_ByteArray_MD5_buf                                           0
 #define ES_ByteArray_read_buffer                                       0
 #define ES_ByteArray_read_offset                                       1
 #define ES_ByteArray_read_count                                        2
@@ -570,20 +539,7 @@
  */
 #define ES_CmdArgs_CmdArgs_template                                    0
 #define ES_CmdArgs_CmdArgs_argv                                        1
-#define ES_CmdArgs_CmdArgs__hoisted_2_arg                              2
-#define ES_CmdArgs_CmdArgs__hoisted_3_key                              3
-#define ES_CmdArgs_CmdArgs__hoisted_4_parts                            4
 #define ES_CmdArgs_parseTemplate_template                              0
-#define ES_CmdArgs_parseTemplate__hoisted_1_item                       1
-#define ES_CmdArgs_parseTemplate__hoisted_1_key                        2
-#define ES_CmdArgs_parseTemplate__hoisted_1_range                      3
-#define ES_CmdArgs_parseTemplate__hoisted_1_defaultValue               4
-#define ES_CmdArgs_parseTemplate__hoisted_5_k                          5
-#define ES_CmdArgs_validate__hoisted_0_key                             0
-#define ES_CmdArgs_validate__hoisted_0_range                           1
-#define ES_CmdArgs_validate__hoisted_0_value                           2
-#define ES_CmdArgs_validate__hoisted_3_ok                              3
-#define ES_CmdArgs_validate__hoisted_4_v                               4
 
 
 /*
@@ -738,27 +694,16 @@
  */
 #define ES_Emitter_addOneListener_name                                 0
 #define ES_Emitter_addOneListener_callback                             1
-#define ES_Emitter_addOneListener_listeners                            2
-#define ES_Emitter_addOneListener_e                                    3
 #define ES_Emitter_addListener_name                                    0
 #define ES_Emitter_addListener_callback                                1
-#define ES_Emitter_addListener__hoisted_2_n                            2
 #define ES_Emitter_clearListeners_name                                 0
-#define ES_Emitter_clearListeners__hoisted_1_n                         1
 #define ES_Emitter_listeners_name                                      0
 #define ES_Emitter_emit_name                                           0
 #define ES_Emitter_emit_args                                           1
-#define ES_Emitter_emit_listeners                                      2
-#define ES_Emitter_emit_e                                              3
-#define ES_Emitter_emit__hoisted_4_e                                   4
 #define ES_Emitter_removeOneListener_name                              0
 #define ES_Emitter_removeOneListener_callback                          1
-#define ES_Emitter_removeOneListener_listeners                         2
-#define ES_Emitter_removeOneListener_e                                 3
-#define ES_Emitter_removeOneListener__hoisted_4_i                      4
 #define ES_Emitter_removeListener_name                                 0
 #define ES_Emitter_removeListener_callback                             1
-#define ES_Emitter_removeListener__hoisted_2_n                         2
 
 
 /*
@@ -1197,7 +1142,7 @@
  */
 #define ES_FileSystem_FileSystem_path                                  0
 
-#define ES_Frame_NUM_CLASS_PROP                                        26
+#define ES_Frame_NUM_CLASS_PROP                                        31
 #define ES_Frame_NUM_INSTANCE_PROP                                     0
 
 
@@ -1374,7 +1319,6 @@
 #define ES_Http_read_count                                             2
 #define ES_Http_readString_count                                       0
 #define ES_Http_readLines_count                                        0
-#define ES_Http_readLines_stream                                       1
 #define ES_Http_removeListener_name                                    0
 #define ES_Http_removeListener_listener                                1
 #define ES_Http_setCredentials_username                                0
@@ -1388,11 +1332,6 @@
 #define ES_Http_upload_uri                                             0
 #define ES_Http_upload_files                                           1
 #define ES_Http_upload_fields                                          2
-#define ES_Http_upload_boundary                                        3
-#define ES_Http_upload_buf                                             4
-#define ES_Http_upload_http                                            5
-#define ES_Http_upload__hoisted_7_key                                  7
-#define ES_Http_upload__hoisted_8_key                                  8
 #define ES_Http_wait_timeout                                           0
 #define ES_Http_write_data                                             0
 #define ES_Http_addHeader_key                                          0
@@ -1593,6 +1532,7 @@
 #define ES_Math_min_y                                                  1
 #define ES_Math_pow_num                                                0
 #define ES_Math_pow_pow                                                1
+#define ES_Math_round_num                                              0
 #define ES_Math_sin_angle                                              0
 #define ES_Math_sqrt_oper                                              0
 #define ES_Math_tan_angle                                              0
@@ -1662,11 +1602,7 @@
 #define ES_Number_toPrecision_numDigits                                0
 #define ES_Number_integral_size                                        0
 #define ES_Number_max_other                                            0
-#define ES_Number_max_result                                           1
-#define ES_Number_max__hoisted_2_n                                     2
 #define ES_Number_min_other                                            0
-#define ES_Number_min_result                                           1
-#define ES_Number_min__hoisted_2_n                                     2
 #define ES_Number_power_nth                                            0
 
 
@@ -1715,7 +1651,6 @@
 #define ES_Object_defineProperty_options                               2
 #define ES_Object_defineProperties_obj                                 0
 #define ES_Object_defineProperties_properties                          1
-#define ES_Object_defineProperties__hoisted_2_p                        2
 #define ES_Object_freeze_obj                                           0
 #define ES_Object_get_options                                          0
 #define ES_Object_getOwnPropertyDescriptor_obj                         0
@@ -1728,8 +1663,6 @@
 #define ES_Object_isPrototypeOf_obj                                    0
 #define ES_Object_isSealed_obj                                         0
 #define ES_Object_keys_obj                                             0
-#define ES_Object_keys_result                                          1
-#define ES_Object_keys__hoisted_2_key                                  2
 #define ES_Object_preventExtensions_obj                                0
 #define ES_Object_propertyIsEnumerable_property                        0
 #define ES_Object_seal_obj                                             0
@@ -1812,7 +1745,6 @@
 #define ES_Path_endsWith_suffix                                        0
 #define ES_Path_find_glob                                              0
 #define ES_Path_find_recurse                                           1
-#define ES_Path_find_recursiveFind                                     2
 #define ES_Path_files_enumDirs                                         0
 #define ES_Path_join_other                                             0
 #define ES_Path_joinExt_ext                                            0
@@ -1823,12 +1755,6 @@
 #define ES_Path_open_options                                           0
 #define ES_Path_openTextStream_options                                 0
 #define ES_Path_openBinaryStream_options                               0
-#define ES_Path_readBytes_file                                         0
-#define ES_Path_readLines_stream                                       0
-#define ES_Path_readString_file                                        0
-#define ES_Path_readXML_file                                           0
-#define ES_Path_readXML_data                                           1
-#define ES_Path_removeAll__hoisted_0_f                                 0
 #define ES_Path_rename_target                                          0
 #define ES_Path_replaceExt_ext                                         0
 #define ES_Path_resolve_otherPaths                                     0
@@ -1838,9 +1764,6 @@
 #define ES_Path_trimStart_pat                                          0
 #define ES_Path_truncate_size                                          0
 #define ES_Path_write_args                                             0
-#define ES_Path_write_file                                             1
-#define ES_Path_write__hoisted_2_item                                  2
-#define ES_Path_write__hoisted_3_es                                    3
 
 
 /*
@@ -1876,21 +1799,14 @@
 #define ES_Promise_addCancelback_listener                              0
 #define ES_Promise_addErrback_listener                                 0
 #define ES_Promise_emitSuccess_args                                    0
-#define ES_Promise_emitSuccess__hoisted_1_e                            1
 #define ES_Promise_emitError_args                                      0
-#define ES_Promise_emitError__hoisted_1_e                              1
 #define ES_Promise_emitCancel_args                                     0
 #define ES_Promise_cancel_args                                         0
 #define ES_Promise_then_success                                        0
 #define ES_Promise_then_error                                          1
 #define ES_Promise_then_progress                                       2
 #define ES_Promise_timeout_msec                                        0
-#define ES_Promise_timeout_done                                        1
-#define ES_Promise_timeout_awake                                       2
 #define ES_Promise_wait_timeout                                        0
-#define ES_Promise_wait_done                                           1
-#define ES_Promise_wait_result                                         2
-#define ES_Promise_wait_awake                                          3
 #define ES_Promise_issue_name                                          0
 #define ES_Promise_issue_args                                          1
 
@@ -2102,14 +2018,11 @@
 #define ES_String_substring_startIndex                                 0
 #define ES_String_substring_end                                        1
 #define ES_String_times_times                                          0
-#define ES_String_times_s                                              1
-#define ES_String_times__hoisted_2_i                                   2
 #define ES_String_tokenize_format                                      0
 #define ES_String_trim_str                                             0
 #define ES_String_trimStart_str                                        0
 #define ES_String_trimEnd_str                                          0
 #define ES_String_MINUS_str                                            0
-#define ES_String_MINUS_i                                              1
 #define ES_String_MOD_arg                                              0
 
 
@@ -2182,22 +2095,12 @@
 #define ES_TextStream_read_buffer                                      0
 #define ES_TextStream_read_offset                                      1
 #define ES_TextStream_read_count                                       2
-#define ES_TextStream_read_total                                       3
-#define ES_TextStream_read_where                                       4
-#define ES_TextStream_read__hoisted_5_len                              5
-#define ES_TextStream_readLine_nl                                      0
-#define ES_TextStream_readLine__hoisted_1_nlchar                       1
-#define ES_TextStream_readLine__hoisted_2_i                            2
 #define ES_TextStream_readLines_numLines                               0
-#define ES_TextStream_readLines_result                                 1
-#define ES_TextStream_readLines__hoisted_2_i                           2
 #define ES_TextStream_readString_count                                 0
 #define ES_TextStream_removeListener_name                              0
 #define ES_TextStream_removeListener_listener                          1
 #define ES_TextStream_write_data                                       0
 #define ES_TextStream_writeLine_lines                                  0
-#define ES_TextStream_writeLine_written                                1
-#define ES_TextStream_writeLine__hoisted_2_line                        2
 
 
 /*
@@ -2298,17 +2201,12 @@
 #define ES_Uri_join_other                                              0
 #define ES_Uri_joinExt_ext                                             0
 #define ES_Uri_relative_target                                         0
-#define ES_Uri_relative_parts                                          1
-#define ES_Uri_relative_targetParts                                    2
-#define ES_Uri_relative__hoisted_3_results                             3
 #define ES_Uri_replaceExt_ext                                          0
 #define ES_Uri_same_other                                              0
 #define ES_Uri_same_exact                                              1
 #define ES_Uri_startsWith_prefix                                       0
 #define ES_Uri_trimEnd_pat                                             0
-#define ES_Uri_trimEnd_u                                               1
 #define ES_Uri_trimStart_pat                                           0
-#define ES_Uri_trimStart_u                                             1
 
 #define ES_Void_NUM_CLASS_PROP                                         26
 #define ES_Void_NUM_INSTANCE_PROP                                      0
@@ -2422,22 +2320,16 @@
 /*
     Local slots for methods in type "XMLHttp" 
  */
-#define ES_XMLHttp_getAllResponseHeaders_result                        0
-#define ES_XMLHttp_getAllResponseHeaders__hoisted_1_key                1
 #define ES_XMLHttp_getResponseHeader_key                               0
 #define ES_XMLHttp_open_method                                         0
 #define ES_XMLHttp_open_url                                            1
 #define ES_XMLHttp_open_async                                          2
 #define ES_XMLHttp_open_user                                           3
 #define ES_XMLHttp_open_password                                       4
-#define ES_XMLHttp_open__hoisted_5_timeout                             5
-#define ES_XMLHttp_open__hoisted_5_when                                6
 #define ES_XMLHttp_send_content                                        0
 #define ES_XMLHttp_setRequestHeader_key                                0
 #define ES_XMLHttp_setRequestHeader_value                              1
 #define ES_XMLHttp_callback_e                                          0
-#define ES_XMLHttp_callback_hp                                         1
-#define ES_XMLHttp_callback_count                                      2
 
 
 /*
@@ -2451,7 +2343,7 @@
 #define ES_XMLList_NUM_CLASS_PROP                                      29
 #define ES_XMLList_NUM_INSTANCE_PROP                                   0
 
-#define _ES_CHECKSUM_ejs   1255174
+#define _ES_CHECKSUM_ejs   1251816
 
 #endif
 /*
@@ -2473,13 +2365,6 @@
 /*
     Local slots for global methods 
  */
-#define ES_appInit_dir                                                 0
-#define ES_appInit_config                                              1
-#define ES_appInit_log                                                 2
-#define ES_appInit__hoisted_3_path                                     3
-#define ES_appInit__hoisted_4_e                                        4
-#define ES_appInit__hoisted_5_stream                                   5
-#define ES_appInit__hoisted_6_m                                        6
 #define ES_readFile_path                                               0
 #define ES_readFile_encoding                                           1
 #define ES_makeGetter_fn                                               0
@@ -2488,12 +2373,8 @@
 #define ES_cloneBase_klass                                             0
 #define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
-#define ES_dump_e                                                      1
 #define ES_dumpAll_args                                                0
-#define ES_dumpAll_e                                                   1
 #define ES_dumpDef_args                                                0
-#define ES_dumpDef_o                                                   1
-#define ES_dumpDef_key                                                 2
 #define ES_encodeURI_str                                               0
 #define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
@@ -2560,23 +2441,13 @@
  */
 #define ES_Loader_init_mainId                                          0
 #define ES_Loader_require_id                                           0
-#define ES_Loader_require_path                                         1
-#define ES_Loader_require_exports                                      2
 #define ES_Loader_load_id                                              0
 #define ES_Loader_load_path                                            1
 #define ES_Loader_load_codeReader                                      2
-#define ES_Loader_load_initializer                                     3
-#define ES_Loader_load_code                                            4
-#define ES_Loader_load__hoisted_5_cache                                5
 #define ES_Loader_cached_path                                          0
 #define ES_Loader_cached_cachedir                                      1
-#define ES_Loader_cached__hoisted_2_dir                                2
 #define ES_Loader_wrap_code                                            0
 #define ES_Loader_locate_id                                            0
-#define ES_Loader_locate_extensions                                    1
-#define ES_Loader_locate__hoisted_2_dir                                2
-#define ES_Loader_locate__hoisted_3_ext                                3
-#define ES_Loader_locate__hoisted_3_path                               4
 #define ES_Loader_setConfig_newConfig                                  0
 
 #define _ES_CHECKSUM_ejs_cjs   26943
@@ -2601,13 +2472,6 @@
 /*
     Local slots for global methods 
  */
-#define ES_appInit_dir                                                 0
-#define ES_appInit_config                                              1
-#define ES_appInit_log                                                 2
-#define ES_appInit__hoisted_3_path                                     3
-#define ES_appInit__hoisted_4_e                                        4
-#define ES_appInit__hoisted_5_stream                                   5
-#define ES_appInit__hoisted_6_m                                        6
 #define ES_readFile_path                                               0
 #define ES_readFile_encoding                                           1
 #define ES_makeGetter_fn                                               0
@@ -2616,12 +2480,8 @@
 #define ES_cloneBase_klass                                             0
 #define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
-#define ES_dump_e                                                      1
 #define ES_dumpAll_args                                                0
-#define ES_dumpAll_e                                                   1
 #define ES_dumpDef_args                                                0
-#define ES_dumpDef_o                                                   1
-#define ES_dumpDef_key                                                 2
 #define ES_encodeURI_str                                               0
 #define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
@@ -2678,9 +2538,6 @@
 #define ES_find_path                                                   0
 #define ES_find_glob                                                   1
 #define ES_find_recurse                                                2
-#define ES_find_result                                                 3
-#define ES_find__hoisted_4_paths                                       4
-#define ES_find__hoisted_5_path                                        5
 #define ES_mkdir_path                                                  0
 #define ES_mkdir_permissions                                           1
 #define ES_mv_fromFile                                                 0
@@ -2712,13 +2569,6 @@
 /*
     Local slots for global methods 
  */
-#define ES_appInit_dir                                                 0
-#define ES_appInit_config                                              1
-#define ES_appInit_log                                                 2
-#define ES_appInit__hoisted_3_path                                     3
-#define ES_appInit__hoisted_4_e                                        4
-#define ES_appInit__hoisted_5_stream                                   5
-#define ES_appInit__hoisted_6_m                                        6
 #define ES_readFile_path                                               0
 #define ES_readFile_encoding                                           1
 #define ES_makeGetter_fn                                               0
@@ -2727,12 +2577,8 @@
 #define ES_cloneBase_klass                                             0
 #define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
-#define ES_dump_e                                                      1
 #define ES_dumpAll_args                                                0
-#define ES_dumpAll_e                                                   1
 #define ES_dumpDef_args                                                0
-#define ES_dumpDef_o                                                   1
-#define ES_dumpDef_key                                                 2
 #define ES_encodeURI_str                                               0
 #define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
@@ -2789,9 +2635,6 @@
 #define ES_find_path                                                   0
 #define ES_find_glob                                                   1
 #define ES_find_recurse                                                2
-#define ES_find_result                                                 3
-#define ES_find__hoisted_4_paths                                       4
-#define ES_find__hoisted_5_path                                        5
 #define ES_mkdir_path                                                  0
 #define ES_mkdir_permissions                                           1
 #define ES_mv_fromFile                                                 0
@@ -2856,8 +2699,6 @@
  */
 #define ES_ejs_db_Database_Database_adapter                            0
 #define ES_ejs_db_Database_Database_connectionString                   1
-#define ES_ejs_db_Database_Database__hoisted_2_adapterClass            2
-#define ES_ejs_db_Database_Database__hoisted_3_e                       3
 #define ES_ejs_db_Database_addColumn_table                             0
 #define ES_ejs_db_Database_addColumn_column                            1
 #define ES_ejs_db_Database_addColumn_datatype                          2
@@ -2896,7 +2737,6 @@
 #define ES_ejs_db_Database_sqlTypeToEjsType_sqlType                    0
 #define ES_ejs_db_Database_trace_on                                    0
 #define ES_ejs_db_Database_transaction_code                            0
-#define ES_ejs_db_Database_transaction__hoisted_1_e                    1
 #define ES_ejs_db_Database_quote_str                                   0
 
 
@@ -2988,13 +2828,6 @@
 /*
     Local slots for global methods 
  */
-#define ES_appInit_dir                                                 0
-#define ES_appInit_config                                              1
-#define ES_appInit_log                                                 2
-#define ES_appInit__hoisted_3_path                                     3
-#define ES_appInit__hoisted_4_e                                        4
-#define ES_appInit__hoisted_5_stream                                   5
-#define ES_appInit__hoisted_6_m                                        6
 #define ES_readFile_path                                               0
 #define ES_readFile_encoding                                           1
 #define ES_makeGetter_fn                                               0
@@ -3003,12 +2836,8 @@
 #define ES_cloneBase_klass                                             0
 #define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
-#define ES_dump_e                                                      1
 #define ES_dumpAll_args                                                0
-#define ES_dumpAll_e                                                   1
 #define ES_dumpDef_args                                                0
-#define ES_dumpDef_o                                                   1
-#define ES_dumpDef_key                                                 2
 #define ES_encodeURI_str                                               0
 #define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
@@ -3065,9 +2894,6 @@
 #define ES_find_path                                                   0
 #define ES_find_glob                                                   1
 #define ES_find_recurse                                                2
-#define ES_find_result                                                 3
-#define ES_find__hoisted_4_paths                                       4
-#define ES_find__hoisted_5_path                                        5
 #define ES_mkdir_path                                                  0
 #define ES_mkdir_permissions                                           1
 #define ES_mv_fromFile                                                 0
@@ -3078,7 +2904,6 @@
 #define ES_tempname_directory                                          0
 #define ES_ejs_db_mapper_plural_name                                   0
 #define ES_ejs_db_mapper_singular_name                                 0
-#define ES_ejs_db_mapper_singular_s                                    1
 #define ES_ejs_db_mapper_mapType_value                                 0
 
 
@@ -3178,7 +3003,6 @@
  */
 #define ES_Record_Record_fields                                        0
 #define ES_Record_initialize_fields                                    0
-#define ES_Record_initialize__hoisted_1_field                          1
 #define ES_Record_afterFilter_fn                                       0
 #define ES_Record_afterFilter_options                                  1
 #define ES_Record_beforeFilter_fn                                      0
@@ -3206,54 +3030,21 @@
 #define ES_Record_checkUnique_field                                    1
 #define ES_Record_checkUnique_value                                    2
 #define ES_Record_checkUnique_options                                  3
-#define ES_Record_checkUnique_grid                                     4
-#define ES_Record_coerceToEjsTypes__hoisted_0_field                    0
-#define ES_Record_coerceToEjsTypes__hoisted_0_col                      1
-#define ES_Record_coerceToEjsTypes__hoisted_0_value                    2
 #define ES_Record_createAssociations_rec                               0
 #define ES_Record_createAssociations_set                               1
 #define ES_Record_createAssociations_preload                           2
 #define ES_Record_createAssociations_options                           3
-#define ES_Record_createAssociations__hoisted_4_model                  4
-#define ES_Record_createAssociations__hoisted_5_association            5
-#define ES_Record_createAssociations__hoisted_6_field                  6
-#define ES_Record_createAssociations__hoisted_6_f                      7
-#define ES_Record_createAssociations__hoisted_8_field                  8
-#define ES_Record_createAssociations__hoisted_8_f                      9
 #define ES_Record_createRecord_data                                    0
 #define ES_Record_createRecord_options                                 1
-#define ES_Record_createRecord_rec                                     2
-#define ES_Record_createRecord_subOptions                              3
-#define ES_Record_createRecord__hoisted_4_model                        4
-#define ES_Record_createRecord__hoisted_5_model                        5
 #define ES_Record_error_field                                          0
 #define ES_Record_error_msg                                            1
 #define ES_Record_find_key                                             0
 #define ES_Record_find_options                                         1
-#define ES_Record_find_grid                                            2
-#define ES_Record_find__hoisted_3_results                              3
 #define ES_Record_findAll_options                                      0
-#define ES_Record_findAll_grid                                         1
-#define ES_Record_findAll__hoisted_2_i                                 2
 #define ES_Record_findOneWhere_where                                   0
-#define ES_Record_findOneWhere_grid                                    1
 #define ES_Record_findWhere_where                                      0
 #define ES_Record_findWhere_count                                      1
-#define ES_Record_findWhere_grid                                       2
-#define ES_Record_findWhere__hoisted_3_i                               3
-#define ES_Record_getColumnNames_result                                0
-#define ES_Record_getColumnNames__hoisted_1_col                        1
-#define ES_Record_getColumnTitles_result                               0
-#define ES_Record_getColumnTitles__hoisted_1_col                       1
 #define ES_Record_getColumnType_field                                  0
-#define ES_Record_getNumRows_cmd                                       0
-#define ES_Record_getNumRows_grid                                      1
-#define ES_Record_getSchema_sql                                        0
-#define ES_Record_getSchema_grid                                       1
-#define ES_Record_getSchema__hoisted_2_row                             2
-#define ES_Record_getSchema__hoisted_2_name                            3
-#define ES_Record_getSchema__hoisted_2_sqlType                         4
-#define ES_Record_getSchema__hoisted_2_ejsType                         5
 #define ES_Record_hasAndBelongsToMany_model                            0
 #define ES_Record_hasAndBelongsToMany_options                          1
 #define ES_Record_hasError_field                                       0
@@ -3264,54 +3055,19 @@
 #define ES_Record_innerFind_key                                        0
 #define ES_Record_innerFind_limit                                      1
 #define ES_Record_innerFind_options                                    2
-#define ES_Record_innerFind_cmd                                        3
-#define ES_Record_innerFind_columns                                    4
-#define ES_Record_innerFind_from                                       5
-#define ES_Record_innerFind_conditions                                 6
-#define ES_Record_innerFind_where                                      7
-#define ES_Record_innerFind_results                                    8
-#define ES_Record_innerFind__hoisted_9_index                           9
-#define ES_Record_innerFind__hoisted_10_model                          10
-#define ES_Record_innerFind__hoisted_11_entry                          11
-#define ES_Record_innerFind__hoisted_12_owner                          12
-#define ES_Record_innerFind__hoisted_13_owner                          13
-#define ES_Record_innerFind__hoisted_13_tname                          14
-#define ES_Record_innerFind__hoisted_15_parts                          15
-#define ES_Record_innerFind__hoisted_16_whereConditions                16
-#define ES_Record_innerFind__hoisted_17_cond                           17
-#define ES_Record_innerFind__hoisted_18_field                          18
-#define ES_Record_innerFind__hoisted_19_e                              19
 #define ES_Record_makeLazyReader_rec                                   0
 #define ES_Record_makeLazyReader_field                                 1
 #define ES_Record_makeLazyReader_model                                 2
 #define ES_Record_makeLazyReader_key                                   3
 #define ES_Record_makeLazyReader_options                               4
-#define ES_Record_makeLazyReader_lazyReader                            6
 #define ES_Record_mapSqlTypeToEjs_sqlType                              0
-#define ES_Record_mapSqlTypeToEjs_ejsType                              1
 #define ES_Record_prepareValue_field                                   0
 #define ES_Record_prepareValue_value                                   1
-#define ES_Record_prepareValue_col                                     2
 #define ES_Record_readRecords_key                                      0
 #define ES_Record_readRecords_options                                  1
-#define ES_Record_readRecords_data                                     2
-#define ES_Record_readRecords__hoisted_3_result                        3
-#define ES_Record_readRecords__hoisted_4_row                           4
 #define ES_Record_remove_ids                                           0
-#define ES_Record_remove__hoisted_1_key                                1
-#define ES_Record_remove__hoisted_1_cmd                                2
 #define ES_Record_runFilters_filters                                   0
-#define ES_Record_runFilters__hoisted_1_filter                         1
-#define ES_Record_runFilters__hoisted_1_fn                             2
-#define ES_Record_runFilters__hoisted_1_options                        3
-#define ES_Record_runFilters__hoisted_4_only                           4
-#define ES_Record_save_sql                                             0
-#define ES_Record_save_result                                          1
-#define ES_Record_save__hoisted_2_field                                2
-#define ES_Record_save__hoisted_3_field                                3
-#define ES_Record_save__hoisted_4_field                                4
 #define ES_Record_saveUpdate_fields                                    0
-#define ES_Record_saveUpdate__hoisted_1_field                          1
 #define ES_Record_setDb_database                                       0
 #define ES_Record_setKeyName_name                                      0
 #define ES_Record_setTableName_name                                    0
@@ -3324,12 +3080,6 @@
 #define ES_Record_validateNumber_options                               1
 #define ES_Record_validatePresence_fields                              0
 #define ES_Record_validatePresence_options                             1
-#define ES_Record_validateRecord_thisType                              0
-#define ES_Record_validateRecord__hoisted_1_validation                 1
-#define ES_Record_validateRecord__hoisted_1_check                      2
-#define ES_Record_validateRecord__hoisted_1_fields                     3
-#define ES_Record_validateRecord__hoisted_1_options                    4
-#define ES_Record_validateRecord__hoisted_5_field                      5
 #define ES_Record_validateUnique_fields                                0
 #define ES_Record_validateUnique_option                                1
 #define ES_Record_wrapFilter_fn                                        0
@@ -3382,13 +3132,6 @@
 /*
     Local slots for global methods 
  */
-#define ES_appInit_dir                                                 0
-#define ES_appInit_config                                              1
-#define ES_appInit_log                                                 2
-#define ES_appInit__hoisted_3_path                                     3
-#define ES_appInit__hoisted_4_e                                        4
-#define ES_appInit__hoisted_5_stream                                   5
-#define ES_appInit__hoisted_6_m                                        6
 #define ES_readFile_path                                               0
 #define ES_readFile_encoding                                           1
 #define ES_makeGetter_fn                                               0
@@ -3397,12 +3140,8 @@
 #define ES_cloneBase_klass                                             0
 #define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
-#define ES_dump_e                                                      1
 #define ES_dumpAll_args                                                0
-#define ES_dumpAll_e                                                   1
 #define ES_dumpDef_args                                                0
-#define ES_dumpDef_o                                                   1
-#define ES_dumpDef_key                                                 2
 #define ES_encodeURI_str                                               0
 #define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
@@ -3459,9 +3198,6 @@
 #define ES_find_path                                                   0
 #define ES_find_glob                                                   1
 #define ES_find_recurse                                                2
-#define ES_find_result                                                 3
-#define ES_find__hoisted_4_paths                                       4
-#define ES_find__hoisted_5_path                                        5
 #define ES_mkdir_path                                                  0
 #define ES_mkdir_permissions                                           1
 #define ES_mv_fromFile                                                 0
@@ -3472,7 +3208,6 @@
 #define ES_tempname_directory                                          0
 #define ES_ejs_db_mapper_plural_name                                   0
 #define ES_ejs_db_mapper_singular_name                                 0
-#define ES_ejs_db_mapper_singular_s                                    1
 #define ES_ejs_db_mapper_mapType_value                                 0
 
 
@@ -3534,32 +3269,13 @@
 #define ES_ejs_db_Sqlite_createDatabase_options                        1
 #define ES_ejs_db_Sqlite_createTable_table                             0
 #define ES_ejs_db_Sqlite_createTable_columns                           1
-#define ES_ejs_db_Sqlite_createTable_cmd                               2
-#define ES_ejs_db_Sqlite_createTable__hoisted_3_colspec                3
-#define ES_ejs_db_Sqlite_createTable__hoisted_3_spec                   4
-#define ES_ejs_db_Sqlite_createTable__hoisted_3_column                 5
-#define ES_ejs_db_Sqlite_createTable__hoisted_3_datatype               6
 #define ES_ejs_db_Sqlite_dataTypeToSqlType_dataType                    0
 #define ES_ejs_db_Sqlite_destroyDatabase_name                          0
 #define ES_ejs_db_Sqlite_destroyTable_table                            0
 #define ES_ejs_db_Sqlite_getColumns_table                              0
-#define ES_ejs_db_Sqlite_getColumns_names                              1
-#define ES_ejs_db_Sqlite_getColumns__hoisted_2_row                     2
-#define ES_ejs_db_Sqlite_getColumns__hoisted_2_name                    3
 #define ES_ejs_db_Sqlite_getNumRows_table                              0
-#define ES_ejs_db_Sqlite_getNumRows_cmd                                1
-#define ES_ejs_db_Sqlite_getNumRows_grid                               2
-#define ES_ejs_db_Sqlite_getTables_cmd                                 0
-#define ES_ejs_db_Sqlite_getTables_grid                                1
-#define ES_ejs_db_Sqlite_getTables_result                              2
-#define ES_ejs_db_Sqlite_getTables__hoisted_3_row                      3
-#define ES_ejs_db_Sqlite_getTables__hoisted_3_name                     4
 #define ES_ejs_db_Sqlite_removeColumns_table                           0
 #define ES_ejs_db_Sqlite_removeColumns_columns                         1
-#define ES_ejs_db_Sqlite_removeColumns__hoisted_2_column               2
-#define ES_ejs_db_Sqlite_removeColumns__hoisted_3_row                  3
-#define ES_ejs_db_Sqlite_removeColumns__hoisted_3_name                 4
-#define ES_ejs_db_Sqlite_removeColumns__hoisted_5_k                    5
 #define ES_ejs_db_Sqlite_removeIndex_table                             0
 #define ES_ejs_db_Sqlite_removeIndex_index                             1
 #define ES_ejs_db_Sqlite_renameColumn_table                            0
@@ -3596,13 +3312,6 @@
 /*
     Local slots for global methods 
  */
-#define ES_appInit_dir                                                 0
-#define ES_appInit_config                                              1
-#define ES_appInit_log                                                 2
-#define ES_appInit__hoisted_3_path                                     3
-#define ES_appInit__hoisted_4_e                                        4
-#define ES_appInit__hoisted_5_stream                                   5
-#define ES_appInit__hoisted_6_m                                        6
 #define ES_readFile_path                                               0
 #define ES_readFile_encoding                                           1
 #define ES_makeGetter_fn                                               0
@@ -3611,12 +3320,8 @@
 #define ES_cloneBase_klass                                             0
 #define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
-#define ES_dump_e                                                      1
 #define ES_dumpAll_args                                                0
-#define ES_dumpAll_e                                                   1
 #define ES_dumpDef_args                                                0
-#define ES_dumpDef_o                                                   1
-#define ES_dumpDef_key                                                 2
 #define ES_encodeURI_str                                               0
 #define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
@@ -3673,9 +3378,6 @@
 #define ES_find_path                                                   0
 #define ES_find_glob                                                   1
 #define ES_find_recurse                                                2
-#define ES_find_result                                                 3
-#define ES_find__hoisted_4_paths                                       4
-#define ES_find__hoisted_5_path                                        5
 #define ES_mkdir_path                                                  0
 #define ES_mkdir_permissions                                           1
 #define ES_mv_fromFile                                                 0
@@ -3686,14 +3388,10 @@
 #define ES_tempname_directory                                          0
 #define ES_ejs_db_mapper_plural_name                                   0
 #define ES_ejs_db_mapper_singular_name                                 0
-#define ES_ejs_db_mapper_singular_s                                    1
 #define ES_ejs_db_mapper_mapType_value                                 0
 #define ES_ejs_web_parseCookies_cookieHeader                           0
-#define ES_ejs_web_parseCookies_cookies                                1
-#define ES_ejs_web_parseCookies__hoisted_2_c                           2
 #define ES_ejs_web_escapeHtml_s                                        0
 #define ES_ejs_web_html_args                                           0
-#define ES_ejs_web_html__hoisted_1_s                                   1
 #define ES_ejs_web_unescapeHtml_s                                      0
 
 
@@ -3752,19 +3450,8 @@
  */
 #define ES_ejs_web_Controller_Controller_r                             0
 #define ES_ejs_web_Controller_ejs_web_create_request                   0
-#define ES_ejs_web_Controller_ejs_web_create_cname                     1
-#define ES_ejs_web_Controller_ejs_web_create_uname                     2
-#define ES_ejs_web_Controller_ejs_web_create_c                         3
 #define ES_ejs_web_Controller_openDatabase_request                     0
-#define ES_ejs_web_Controller_openDatabase_deploymentMode              1
-#define ES_ejs_web_Controller_openDatabase_dbconfig                    2
-#define ES_ejs_web_Controller_openDatabase_klass                       3
-#define ES_ejs_web_Controller_openDatabase_adapter                     4
-#define ES_ejs_web_Controller_openDatabase_profile                     5
-#define ES_ejs_web_Controller_openDatabase__hoisted_6_db               6
 #define ES_ejs_web_Controller_ejs_web_run_request                      0
-#define ES_ejs_web_Controller_flashAfter__hoisted_0_item               0
-#define ES_ejs_web_Controller_flashAfter__hoisted_1_old                1
 #define ES_ejs_web_Controller_ejs_web_beforeFilter_fn                  0
 #define ES_ejs_web_Controller_ejs_web_beforeFilter_options             1
 #define ES_ejs_web_Controller_ejs_web_afterFilter_fn                   0
@@ -3772,32 +3459,16 @@
 #define ES_ejs_web_Controller_ejs_web_wrapFilter_fn                    0
 #define ES_ejs_web_Controller_ejs_web_wrapFilter_options               1
 #define ES_ejs_web_Controller_runFilters_filters                       0
-#define ES_ejs_web_Controller_runFilters__hoisted_1_filter             1
-#define ES_ejs_web_Controller_runFilters__hoisted_1_fn                 2
-#define ES_ejs_web_Controller_runFilters__hoisted_1_options            3
 #define ES_ejs_web_Controller_ejs_web_loadView_path                    0
 #define ES_ejs_web_Controller_ejs_web_loadView_name                    1
-#define ES_ejs_web_Controller_ejs_web_loadView_cached                  2
-#define ES_ejs_web_Controller_ejs_web_loadView__hoisted_3_layout       3
-#define ES_ejs_web_Controller_ejs_web_loadView__hoisted_3_code         4
 #define ES_ejs_web_Controller_ejs_web_renderError_msg                  0
 #define ES_ejs_web_Controller_ejs_web_renderError_status               1
 #define ES_ejs_web_Controller_ejs_web_redirect_uri                     0
 #define ES_ejs_web_Controller_ejs_web_redirect_status                  1
 #define ES_ejs_web_Controller_ejs_web_render_args                      0
 #define ES_ejs_web_Controller_ejs_web_renderFile_filename              0
-#define ES_ejs_web_Controller_ejs_web_renderFile_file                  1
-#define ES_ejs_web_Controller_ejs_web_renderFile__hoisted_2_e          2
 #define ES_ejs_web_Controller_ejs_web_renderPartial_path               0
-#define ES_ejs_web_Controller_ejs_web_renderPartial_name               1
-#define ES_ejs_web_Controller_ejs_web_renderPartial_viewClass          2
-#define ES_ejs_web_Controller_ejs_web_renderPartial__hoisted_3_path    3
-#define ES_ejs_web_Controller_ejs_web_renderPartial__hoisted_3_name    4
-#define ES_ejs_web_Controller_ejs_web_renderPartial__hoisted_5_n       5
 #define ES_ejs_web_Controller_ejs_web_renderView_viewName              0
-#define ES_ejs_web_Controller_ejs_web_renderView_path                  1
-#define ES_ejs_web_Controller_ejs_web_renderView_viewClass             2
-#define ES_ejs_web_Controller_ejs_web_renderView__hoisted_3_n          3
 #define ES_ejs_web_Controller_ejs_web_error_msg                        0
 #define ES_ejs_web_Controller_ejs_web_inform_msg                       0
 #define ES_ejs_web_Controller_ejs_web_warn_msg                         0
@@ -3870,7 +3541,6 @@
 #define ES_HtmlConnector_ejs_web_checkbox_choice                       1
 #define ES_HtmlConnector_ejs_web_checkbox_submitValue                  2
 #define ES_HtmlConnector_ejs_web_checkbox_options                      3
-#define ES_HtmlConnector_ejs_web_checkbox_checked                      4
 #define ES_HtmlConnector_ejs_web_flash_kind                            0
 #define ES_HtmlConnector_ejs_web_flash_msg                             1
 #define ES_HtmlConnector_ejs_web_flash_options                         2
@@ -3890,10 +3560,6 @@
 #define ES_HtmlConnector_ejs_web_list_choices                          1
 #define ES_HtmlConnector_ejs_web_list_defaultValue                     2
 #define ES_HtmlConnector_ejs_web_list_options                          3
-#define ES_HtmlConnector_ejs_web_list_isSelected                       4
-#define ES_HtmlConnector_ejs_web_list_i                                5
-#define ES_HtmlConnector_ejs_web_list__hoisted_6_choice                6
-#define ES_HtmlConnector_ejs_web_list__hoisted_7_field                 7
 #define ES_HtmlConnector_ejs_web_mail_name                             0
 #define ES_HtmlConnector_ejs_web_mail_address                          1
 #define ES_HtmlConnector_ejs_web_mail_options                          2
@@ -3903,9 +3569,6 @@
 #define ES_HtmlConnector_ejs_web_radio_selected                        1
 #define ES_HtmlConnector_ejs_web_radio_choices                         2
 #define ES_HtmlConnector_ejs_web_radio_options                         3
-#define ES_HtmlConnector_ejs_web_radio_checked                         4
-#define ES_HtmlConnector_ejs_web_radio__hoisted_5_v                    5
-#define ES_HtmlConnector_ejs_web_radio__hoisted_6_item                 6
 #define ES_HtmlConnector_ejs_web_script_uri                            0
 #define ES_HtmlConnector_ejs_web_script_options                        1
 #define ES_HtmlConnector_ejs_web_status_initialData                    0
@@ -3914,35 +3577,8 @@
 #define ES_HtmlConnector_ejs_web_stylesheet_options                    1
 #define ES_HtmlConnector_ejs_web_tabs_initialData                      0
 #define ES_HtmlConnector_ejs_web_tabs_options                          1
-#define ES_HtmlConnector_ejs_web_tabs__hoisted_2_t                     2
-#define ES_HtmlConnector_ejs_web_tabs__hoisted_3_name                  3
-#define ES_HtmlConnector_ejs_web_tabs__hoisted_3_uri                   4
 #define ES_HtmlConnector_ejs_web_table_data                            0
 #define ES_HtmlConnector_ejs_web_table_options                         1
-#define ES_HtmlConnector_ejs_web_table_originalOptions                 2
-#define ES_HtmlConnector_ejs_web_table_tableId                         3
-#define ES_HtmlConnector_ejs_web_table_columns                         4
-#define ES_HtmlConnector_ejs_web_table_refresh                         5
-#define ES_HtmlConnector_ejs_web_table_sortOrder                       6
-#define ES_HtmlConnector_ejs_web_table_sort                            7
-#define ES_HtmlConnector_ejs_web_table_styleBody                       8
-#define ES_HtmlConnector_ejs_web_table_row                             9
-#define ES_HtmlConnector_ejs_web_table__hoisted_10_uri                 10
-#define ES_HtmlConnector_ejs_web_table__hoisted_11_gif                 11
-#define ES_HtmlConnector_ejs_web_table__hoisted_12_name                12
-#define ES_HtmlConnector_ejs_web_table__hoisted_12_header              13
-#define ES_HtmlConnector_ejs_web_table__hoisted_12_width               14
-#define ES_HtmlConnector_ejs_web_table__hoisted_15_r                   15
-#define ES_HtmlConnector_ejs_web_table__hoisted_15_uri                 16
-#define ES_HtmlConnector_ejs_web_table__hoisted_15_uriOptions          17
-#define ES_HtmlConnector_ejs_web_table__hoisted_15_odd                 18
-#define ES_HtmlConnector_ejs_web_table__hoisted_15_even                19
-#define ES_HtmlConnector_ejs_web_table__hoisted_15_col                 20
-#define ES_HtmlConnector_ejs_web_table__hoisted_21_name                21
-#define ES_HtmlConnector_ejs_web_table__hoisted_21_column              22
-#define ES_HtmlConnector_ejs_web_table__hoisted_21_styleCell           23
-#define ES_HtmlConnector_ejs_web_table__hoisted_21_align               24
-#define ES_HtmlConnector_ejs_web_table__hoisted_21_cellUrl             25
 #define ES_HtmlConnector_ejs_web_text_field                            0
 #define ES_HtmlConnector_ejs_web_text_value                            1
 #define ES_HtmlConnector_ejs_web_text_options                          2
@@ -3953,11 +3589,7 @@
 #define ES_HtmlConnector_ejs_web_tree_options                          1
 #define ES_HtmlConnector_getColumns_data                               0
 #define ES_HtmlConnector_getColumns_options                            1
-#define ES_HtmlConnector_getColumns_columns                            2
-#define ES_HtmlConnector_getColumns__hoisted_3_name                    3
-#define ES_HtmlConnector_getColumns__hoisted_4_name                    4
 #define ES_HtmlConnector_getTextKind_options                           0
-#define ES_HtmlConnector_getTextKind_kind                              1
 #define ES_HtmlConnector_getOptions_options                            0
 #define ES_HtmlConnector_write_str                                     0
 
@@ -4025,29 +3657,10 @@
     Local slots for methods in type "Mvc" 
  */
 #define ES_Mvc_defaultAppExports_request                               0
-#define ES_Mvc_defaultAppExports_controller                            1
 #define ES_Mvc_load_request                                            0
-#define ES_Mvc_load_dir                                                1
-#define ES_Mvc_load_path                                               2
-#define ES_Mvc_load_config                                             3
-#define ES_Mvc_load_start                                              4
-#define ES_Mvc_load_exports                                            5
-#define ES_Mvc_load__hoisted_6_appConfig                               6
 #define ES_Mvc_init_request                                            0
-#define ES_Mvc_init_config                                             1
-#define ES_Mvc_init_dir                                                2
-#define ES_Mvc_init_mod                                                3
-#define ES_Mvc_init_deps                                               4
-#define ES_Mvc_init_controller                                         5
-#define ES_Mvc_init_ucontroller                                        6
 #define ES_Mvc_loadComponent_mod                                       0
 #define ES_Mvc_loadComponent_deps                                      1
-#define ES_Mvc_loadComponent_rebuild                                   2
-#define ES_Mvc_loadComponent__hoisted_3_when                           3
-#define ES_Mvc_loadComponent__hoisted_4_dep                            4
-#define ES_Mvc_loadComponent__hoisted_5_code                           5
-#define ES_Mvc_loadComponent__hoisted_6_dep                            6
-#define ES_Mvc_loadComponent__hoisted_6_path                           7
 
 
 /*
@@ -4133,7 +3746,6 @@
 #define ES_ejs_web_Request_addListener_listener                        1
 #define ES_ejs_web_Request_cachable_enable                             0
 #define ES_ejs_web_Request_dump_args                                   0
-#define ES_ejs_web_Request_dump_e                                      1
 #define ES_ejs_web_Request_header_key                                  0
 #define ES_ejs_web_Request_read_buffer                                 0
 #define ES_ejs_web_Request_read_offset                                 1
@@ -4143,25 +3755,20 @@
 #define ES_ejs_web_Request_removeListener_name                         0
 #define ES_ejs_web_Request_removeListener_listener                     1
 #define ES_ejs_web_Request_makeUri_parts                               0
-#define ES_ejs_web_Request_makeUri_uri                                 1
-#define ES_ejs_web_Request_makeUri__hoisted_2_part                     2
 #define ES_ejs_web_Request_setLocation_prefix                          0
 #define ES_ejs_web_Request_setLocation_location                        1
 #define ES_ejs_web_Request_sendResponse_response                       0
 #define ES_ejs_web_Request_setCookie_name                              0
 #define ES_ejs_web_Request_setCookie_options                           1
-#define ES_ejs_web_Request_setCookie_value                             2
 #define ES_ejs_web_Request_setHeader_key                               0
 #define ES_ejs_web_Request_setHeader_value                             1
 #define ES_ejs_web_Request_setHeader_overwrite                         2
 #define ES_ejs_web_Request_setHeaders_headers                          0
 #define ES_ejs_web_Request_setHeaders_overwrite                        1
-#define ES_ejs_web_Request_setHeaders__hoisted_2_key                   2
 #define ES_ejs_web_Request_setStatus_status                            0
 #define ES_ejs_web_Request_write_data                                  0
 #define ES_ejs_web_Request_writeError_msg                              0
 #define ES_ejs_web_Request_writeError_code                             1
-#define ES_ejs_web_Request_writeError_text                             2
 #define ES_ejs_web_Request_writeHtml_args                              0
 
 
@@ -4193,24 +3800,7 @@
 #define ES_ejs_web_Router_Router_set                                   0
 #define ES_ejs_web_Router_addRoutes_routeSet                           0
 #define ES_ejs_web_Router_addRoutes_outer                              1
-#define ES_ejs_web_Router_addRoutes__hoisted_2_route                   2
-#define ES_ejs_web_Router_addRoutes__hoisted_3_p                       3
-#define ES_ejs_web_Router_addRoutes__hoisted_2_splitter                4
-#define ES_ejs_web_Router_addRoutes__hoisted_2_tokens                  5
-#define ES_ejs_web_Router_addRoutes__hoisted_6_i                       6
-#define ES_ejs_web_Router_addRoutes__hoisted_7_template                7
-#define ES_ejs_web_Router_addRoutes__hoisted_8_c                       8
 #define ES_ejs_web_Router_route_request                                0
-#define ES_ejs_web_Router_route_params                                 1
-#define ES_ejs_web_Router_route_pathInfo                               2
-#define ES_ejs_web_Router_route__hoisted_3_route                       3
-#define ES_ejs_web_Router_route__hoisted_4_i                           4
-#define ES_ejs_web_Router_route__hoisted_5_results                     5
-#define ES_ejs_web_Router_route__hoisted_6_name                        6
-#define ES_ejs_web_Router_route__hoisted_6_value                       7
-#define ES_ejs_web_Router_route__hoisted_8_i                           8
-#define ES_ejs_web_Router_route__hoisted_9_i                           9
-#define ES_ejs_web_Router_route__hoisted_3_location                    10
 
 
 /*
@@ -4246,15 +3836,8 @@
  */
 #define ES_ejs_web_Route_Route_route                                   0
 #define ES_ejs_web_Route_Route_router                                  1
-#define ES_ejs_web_Route_Route__hoisted_2_field                        2
 #define ES_ejs_web_Route_makeUri_request                               0
 #define ES_ejs_web_Route_makeUri_parts                                 1
-#define ES_ejs_web_Route_makeUri_result                                2
-#define ES_ejs_web_Route_makeUri_routeName                             3
-#define ES_ejs_web_Route_makeUri_route                                 4
-#define ES_ejs_web_Route_makeUri_path                                  5
-#define ES_ejs_web_Route_makeUri__hoisted_6_r                          6
-#define ES_ejs_web_Route_makeUri__hoisted_7_token                      7
 
 
 /*
@@ -4369,137 +3952,76 @@
 #define ES_ejs_web_View_write_data                                     0
 #define ES_ejs_web_View_ejs_web_aform_record                           0
 #define ES_ejs_web_View_ejs_web_aform_options                          1
-#define ES_ejs_web_View_ejs_web_aform_connector                        2
 #define ES_ejs_web_View_ejs_web_alink_text                             0
 #define ES_ejs_web_View_ejs_web_alink_options                          1
-#define ES_ejs_web_View_ejs_web_alink_connector                        2
 #define ES_ejs_web_View_ejs_web_button_value                           0
 #define ES_ejs_web_View_ejs_web_button_buttonName                      1
 #define ES_ejs_web_View_ejs_web_button_options                         2
-#define ES_ejs_web_View_ejs_web_button_connector                       3
 #define ES_ejs_web_View_ejs_web_buttonLink_text                        0
 #define ES_ejs_web_View_ejs_web_buttonLink_options                     1
-#define ES_ejs_web_View_ejs_web_buttonLink_connector                   2
 #define ES_ejs_web_View_ejs_web_chart_initialData                      0
 #define ES_ejs_web_View_ejs_web_chart_options                          1
-#define ES_ejs_web_View_ejs_web_chart_connector                        2
 #define ES_ejs_web_View_ejs_web_checkbox_field                         0
 #define ES_ejs_web_View_ejs_web_checkbox_choice                        1
 #define ES_ejs_web_View_ejs_web_checkbox_options                       2
-#define ES_ejs_web_View_ejs_web_checkbox_value                         3
-#define ES_ejs_web_View_ejs_web_checkbox_connector                     4
-#define ES_ejs_web_View_ejs_web_endform_connector                      0
 #define ES_ejs_web_View_ejs_web_form_record                            0
 #define ES_ejs_web_View_ejs_web_form_options                           1
-#define ES_ejs_web_View_ejs_web_form_connector                         2
 #define ES_ejs_web_View_ejs_web_image_src                              0
 #define ES_ejs_web_View_ejs_web_image_options                          1
 #define ES_ejs_web_View_ejs_web_imageLink_image                        0
 #define ES_ejs_web_View_ejs_web_imageLink_options                      1
-#define ES_ejs_web_View_ejs_web_imageLink_connector                    2
 #define ES_ejs_web_View_ejs_web_input_field                            0
 #define ES_ejs_web_View_ejs_web_input_options                          1
 #define ES_ejs_web_View_ejs_web_label_text                             0
 #define ES_ejs_web_View_ejs_web_label_options                          1
-#define ES_ejs_web_View_ejs_web_label_connector                        2
 #define ES_ejs_web_View_ejs_web_link_text                              0
 #define ES_ejs_web_View_ejs_web_link_options                           1
-#define ES_ejs_web_View_ejs_web_link_connector                         2
 #define ES_ejs_web_View_ejs_web_extlink_text                           0
 #define ES_ejs_web_View_ejs_web_extlink_options                        1
-#define ES_ejs_web_View_ejs_web_extlink_connector                      2
 #define ES_ejs_web_View_ejs_web_list_field                             0
 #define ES_ejs_web_View_ejs_web_list_choices                           1
 #define ES_ejs_web_View_ejs_web_list_options                           2
-#define ES_ejs_web_View_ejs_web_list_value                             3
-#define ES_ejs_web_View_ejs_web_list_connector                         4
 #define ES_ejs_web_View_ejs_web_mail_name                              0
 #define ES_ejs_web_View_ejs_web_mail_address                           1
 #define ES_ejs_web_View_ejs_web_mail_options                           2
-#define ES_ejs_web_View_ejs_web_mail_connector                         3
 #define ES_ejs_web_View_ejs_web_progress_initialData                   0
 #define ES_ejs_web_View_ejs_web_progress_options                       1
-#define ES_ejs_web_View_ejs_web_progress_connector                     2
 #define ES_ejs_web_View_ejs_web_radio_field                            0
 #define ES_ejs_web_View_ejs_web_radio_choices                          1
 #define ES_ejs_web_View_ejs_web_radio_options                          2
-#define ES_ejs_web_View_ejs_web_radio_value                            3
-#define ES_ejs_web_View_ejs_web_radio_connector                        4
 #define ES_ejs_web_View_ejs_web_script_uri                             0
 #define ES_ejs_web_View_ejs_web_script_options                         1
-#define ES_ejs_web_View_ejs_web_script_connector                       2
-#define ES_ejs_web_View_ejs_web_script__hoisted_3_u                    3
 #define ES_ejs_web_View_ejs_web_status_initialData                     0
 #define ES_ejs_web_View_ejs_web_status_options                         1
-#define ES_ejs_web_View_ejs_web_status_connector                       2
 #define ES_ejs_web_View_ejs_web_stylesheet_uri                         0
 #define ES_ejs_web_View_ejs_web_stylesheet_options                     1
-#define ES_ejs_web_View_ejs_web_stylesheet_connector                   2
-#define ES_ejs_web_View_ejs_web_stylesheet__hoisted_3_u                3
 #define ES_ejs_web_View_ejs_web_table_data                             0
 #define ES_ejs_web_View_ejs_web_table_options                          1
-#define ES_ejs_web_View_ejs_web_table_connector                        2
 #define ES_ejs_web_View_ejs_web_tabs_initialData                       0
 #define ES_ejs_web_View_ejs_web_tabs_options                           1
-#define ES_ejs_web_View_ejs_web_tabs_connector                         2
 #define ES_ejs_web_View_ejs_web_text_field                             0
 #define ES_ejs_web_View_ejs_web_text_options                           1
-#define ES_ejs_web_View_ejs_web_text_value                             2
-#define ES_ejs_web_View_ejs_web_text_connector                         3
 #define ES_ejs_web_View_ejs_web_textarea_field                         0
 #define ES_ejs_web_View_ejs_web_textarea_options                       1
-#define ES_ejs_web_View_ejs_web_textarea_value                         2
-#define ES_ejs_web_View_ejs_web_textarea_connector                     3
 #define ES_ejs_web_View_ejs_web_tree_initialData                       0
 #define ES_ejs_web_View_ejs_web_tree_options                           1
-#define ES_ejs_web_View_ejs_web_tree_connector                         2
 #define ES_ejs_web_View_ejs_web_flash_kinds                            0
 #define ES_ejs_web_View_ejs_web_flash_options                          1
-#define ES_ejs_web_View_ejs_web_flash_cflash                           2
-#define ES_ejs_web_View_ejs_web_flash_msgs                             3
-#define ES_ejs_web_View_ejs_web_flash__hoisted_4_kind                  4
-#define ES_ejs_web_View_ejs_web_flash__hoisted_5_kind                  5
-#define ES_ejs_web_View_ejs_web_flash__hoisted_5_msg                   6
-#define ES_ejs_web_View_ejs_web_flash__hoisted_7_connector             7
 #define ES_ejs_web_View_emitFormErrors_record                          0
-#define ES_ejs_web_View_emitFormErrors_errors                          1
-#define ES_ejs_web_View_emitFormErrors__hoisted_2_e                    2
 #define ES_ejs_web_View_getConnector_kind                              0
 #define ES_ejs_web_View_getConnector_options                           1
-#define ES_ejs_web_View_getConnector_views                             2
-#define ES_ejs_web_View_getConnector_connectorName                     3
-#define ES_ejs_web_View_getConnector_name                              4
-#define ES_ejs_web_View_getConnector__hoisted_5_e                      5
 #define ES_ejs_web_View_setOptions_field                               0
 #define ES_ejs_web_View_setOptions_options                             1
 #define ES_ejs_web_View_ejs_web_getValue_record                        0
 #define ES_ejs_web_View_ejs_web_getValue_field                         1
 #define ES_ejs_web_View_ejs_web_getValue_options                       2
-#define ES_ejs_web_View_ejs_web_getValue_value                         3
-#define ES_ejs_web_View_ejs_web_getValue_typeName                      4
-#define ES_ejs_web_View_ejs_web_getValue_fmt                           5
-#define ES_ejs_web_View_ejs_web_getValue_mvc                           6
-#define ES_ejs_web_View_ejs_web_getValue__hoisted_7_part               7
 #define ES_ejs_web_View_ejs_web_date_fmt                               0
 #define ES_ejs_web_View_ejs_web_currency_fmt                           0
 #define ES_ejs_web_View_ejs_web_number_fmt                             0
 #define ES_ejs_web_View_ejs_web_getOptions_options                     0
-#define ES_ejs_web_View_ejs_web_getOptions_result                      1
-#define ES_ejs_web_View_ejs_web_getOptions__hoisted_2_option           2
-#define ES_ejs_web_View_ejs_web_getOptions__hoisted_2_mapped           3
 #define ES_ejs_web_View_pivot_grid                                     0
 #define ES_ejs_web_View_pivot_options                                  1
-#define ES_ejs_web_View_pivot_headers                                  2
-#define ES_ejs_web_View_pivot_i                                        3
-#define ES_ejs_web_View_pivot_table                                    4
-#define ES_ejs_web_View_pivot_row                                      5
-#define ES_ejs_web_View_pivot__hoisted_6_name                          6
-#define ES_ejs_web_View_pivot__hoisted_7_name                          7
-#define ES_ejs_web_View_pivot__hoisted_7_r                             8
 #define ES_ejs_web_View_filter_data                                    0
-#define ES_ejs_web_View_filter__hoisted_1_i                            1
-#define ES_ejs_web_View_filter__hoisted_1_found                        2
-#define ES_ejs_web_View_filter__hoisted_3_f                            3
 
 
 /*
@@ -4522,32 +4044,13 @@
 /*
     Local slots for methods in type "Web" 
  */
-#define ES_ejs_web_Web_init_path                                       0
-#define ES_ejs_web_Web_init_config                                     1
-#define ES_ejs_web_Web_init__hoisted_2_webConfig                       2
 #define ES_ejs_web_Web_serve_request                                   0
 #define ES_ejs_web_Web_serve_router                                    1
-#define ES_ejs_web_Web_serve__hoisted_2_exports                        2
-#define ES_ejs_web_Web_serve__hoisted_3_e                              3
 #define ES_ejs_web_Web_worker_request                                  0
 #define ES_ejs_web_Web_workerHelper_request                            0
-#define ES_ejs_web_Web_workerHelper__hoisted_1_exports                 1
-#define ES_ejs_web_Web_workerHelper__hoisted_2_e                       2
 #define ES_ejs_web_Web_load_request                                    0
-#define ES_ejs_web_Web_load__hoisted_1_type                            1
-#define ES_ejs_web_Web_load__hoisted_1_exports                         2
-#define ES_ejs_web_Web_load__hoisted_3_path                            3
-#define ES_ejs_web_Web_load__hoisted_4_path                            4
-#define ES_ejs_web_Web_load__hoisted_5_e                               5
 #define ES_ejs_web_Web_start_request                                   0
 #define ES_ejs_web_Web_start_app                                       1
-#define ES_ejs_web_Web_start__hoisted_2_result                         2
-#define ES_ejs_web_Web_start__hoisted_3_headers                        3
-#define ES_ejs_web_Web_start__hoisted_3_body                           4
-#define ES_ejs_web_Web_start__hoisted_5_item                           5
-#define ES_ejs_web_Web_start__block__block_18067_693                   6
-#define ES_ejs_web_Web_start__block__block_18081_696                   7
-#define ES_ejs_web_Web_start__hoisted_8_e                              8
 
 #define _ES_CHECKSUM_ejs_web   512694
 
@@ -4571,13 +4074,6 @@
 /*
     Local slots for global methods 
  */
-#define ES_appInit_dir                                                 0
-#define ES_appInit_config                                              1
-#define ES_appInit_log                                                 2
-#define ES_appInit__hoisted_3_path                                     3
-#define ES_appInit__hoisted_4_e                                        4
-#define ES_appInit__hoisted_5_stream                                   5
-#define ES_appInit__hoisted_6_m                                        6
 #define ES_readFile_path                                               0
 #define ES_readFile_encoding                                           1
 #define ES_makeGetter_fn                                               0
@@ -4586,12 +4082,8 @@
 #define ES_cloneBase_klass                                             0
 #define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
-#define ES_dump_e                                                      1
 #define ES_dumpAll_args                                                0
-#define ES_dumpAll_e                                                   1
 #define ES_dumpDef_args                                                0
-#define ES_dumpDef_o                                                   1
-#define ES_dumpDef_key                                                 2
 #define ES_encodeURI_str                                               0
 #define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
@@ -4648,9 +4140,6 @@
 #define ES_find_path                                                   0
 #define ES_find_glob                                                   1
 #define ES_find_recurse                                                2
-#define ES_find_result                                                 3
-#define ES_find__hoisted_4_paths                                       4
-#define ES_find__hoisted_5_path                                        5
 #define ES_mkdir_path                                                  0
 #define ES_mkdir_permissions                                           1
 #define ES_mv_fromFile                                                 0
@@ -4661,14 +4150,10 @@
 #define ES_tempname_directory                                          0
 #define ES_ejs_db_mapper_plural_name                                   0
 #define ES_ejs_db_mapper_singular_name                                 0
-#define ES_ejs_db_mapper_singular_s                                    1
 #define ES_ejs_db_mapper_mapType_value                                 0
 #define ES_ejs_web_parseCookies_cookieHeader                           0
-#define ES_ejs_web_parseCookies_cookies                                1
-#define ES_ejs_web_parseCookies__hoisted_2_c                           2
 #define ES_ejs_web_escapeHtml_s                                        0
 #define ES_ejs_web_html_args                                           0
-#define ES_ejs_web_html__hoisted_1_s                                   1
 #define ES_ejs_web_unescapeHtml_s                                      0
 
 
@@ -4685,7 +4170,6 @@
     Local slots for methods in type "Template" 
  */
 #define ES_Template_load_request                                       0
-#define ES_Template_load_path                                          1
 
 
 /*
@@ -4724,21 +4208,7 @@
 #define ES_TemplateParser_buildView_options                            2
 #define ES_TemplateParser_parse_script                                 0
 #define ES_TemplateParser_parse_options                                1
-#define ES_TemplateParser_parse_token                                  2
-#define ES_TemplateParser_parse_out                                    3
-#define ES_TemplateParser_parse_dir                                    4
-#define ES_TemplateParser_parse_tid                                    5
-#define ES_TemplateParser_parse_layoutPage                             6
-#define ES_TemplateParser_parse__hoisted_7_args                        7
-#define ES_TemplateParser_parse__hoisted_7_cmd                         8
-#define ES_TemplateParser_parse__hoisted_7_path                        9
-#define ES_TemplateParser_parse__hoisted_7_incPath                     10
-#define ES_TemplateParser_parse__hoisted_7_inc                         11
-#define ES_TemplateParser_parse__hoisted_12_layoutOptions              12
-#define ES_TemplateParser_parse__hoisted_12_layoutText                 13
 #define ES_TemplateParser_getToken_token                               0
-#define ES_TemplateParser_getToken_tid                                 1
-#define ES_TemplateParser_getToken_c                                   2
 
 
 /*
