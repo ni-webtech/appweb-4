@@ -34,3 +34,4 @@ src/test/cgi-bin/cgiProgram
 src/test/cgi-bin/testScript
 build/bin/dsi
 bin/cgiProgram
+all/*.c
