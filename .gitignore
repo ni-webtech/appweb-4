@@ -38,3 +38,8 @@ all/*.c
 all/*.h
 all/*.es
 build/bin/*.pdb
+*.obj
+*.pdb
+bin/*.def
+bin/*.exp
+src/server/*.res
