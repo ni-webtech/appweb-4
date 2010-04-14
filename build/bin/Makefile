@@ -12,3 +12,6 @@ include .makedep
 dependExtra:
 	chmod +x *
 	chmod -x Makefile
+
+cleanExtra:
+    rm -f *.pdb
