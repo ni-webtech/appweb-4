@@ -1,5 +1,7 @@
 #!/usr/bin/env ejs
 
+// GC.enabled = false
+
 /*
     utest -- Embedthis Unit Test Framework
  */
@@ -207,6 +209,9 @@ class Test {
     }
 
     function runGroupTests(dir: Path): Void {
+        if (dir != "." && dir.name.startsWith(".")) {
+            return
+        }
         if (!runPrePost(dir, "init")) {
             return
         }
@@ -261,7 +266,7 @@ class Test {
                 }
                 Worker.join(workers, 0)
                 throw "Test Failed: \"" + test.fullName + "\". Timeout of " + TIMEOUT + " expired."
-            } else
+            }
             workers = null
         } catch (e) {
             failedCount++
@@ -272,7 +277,7 @@ class Test {
         } finally {
             App.chdir(home)
         }
-        GC.run()
+        //MOB GC.run()
     }
 
     function initWorker(w: Worker, export: Object) {
