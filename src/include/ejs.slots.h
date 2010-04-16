@@ -1201,7 +1201,7 @@
 #define ES_Http_NotAuthoritative                                       32
 #define ES_Http_NoContent                                              33
 #define ES_Http_Reset                                                  34
-#define ES_Http_Partial                                                35
+#define ES_Http_PartialContent                                         35
 #define ES_Http_MultipleChoice                                         36
 #define ES_Http_MovedPermanently                                       37
 #define ES_Http_MovedTemporarily                                       38
@@ -1214,78 +1214,79 @@
 #define ES_Http_Forbidden                                              45
 #define ES_Http_NotFound                                               46
 #define ES_Http_BadMethod                                              47
-#define ES_Http_NotAccepted                                            48
-#define ES_Http_ProxyAuth                                              49
-#define ES_Http_ClientTimeout                                          50
+#define ES_Http_NotAcceptable                                          48
+#define ES_Http_ProxyAuthRequired                                      49
+#define ES_Http_RequestTimeout                                         50
 #define ES_Http_Conflict                                               51
 #define ES_Http_Gone                                                   52
 #define ES_Http_LengthRequired                                         53
 #define ES_Http_PrecondFailed                                          54
 #define ES_Http_EntityTooLarge                                         55
-#define ES_Http_ReqTooLong                                             56
-#define ES_Http_UnsupportedType                                        57
-#define ES_Http_ServerError                                            58
-#define ES_Http_NotImplemented                                         59
-#define ES_Http_BadGateway                                             60
-#define ES_Http_Unavailable                                            61
-#define ES_Http_GatewayTimeout                                         62
-#define ES_Http_Version                                                63
-#define ES_Http_addListener                                            64
-#define ES_Http_async                                                  65
-#define ES_Http_chunkSize                                              66
-#define ES_Http_close                                                  67
-#define ES_Http_connect                                                68
-#define ES_Http_certificate                                            69
-#define ES_Http_contentLength                                          70
-#define ES_Http_contentType                                            71
-#define ES_Http_date                                                   72
-#define ES_Http_del                                                    73
-#define ES_Http_encoding                                               74
-#define ES_Http_expires                                                75
-#define ES_Http_finalize                                               76
-#define ES_Http_flush                                                  77
-#define ES_Http_followRedirects                                        78
-#define ES_Http_form                                                   79
-#define ES_Http_get                                                    80
-#define ES_Http_getRequestHeaders                                      81
-#define ES_Http_head                                                   82
-#define ES_Http_header                                                 83
-#define ES_Http_headers                                                84
-#define ES_Http_isSecure                                               85
-#define ES_Http_key                                                    86
-#define ES_Http_lastModified                                           87
-#define ES_Http_method                                                 88
-#define ES_Http_options                                                89
-#define ES_Http_post                                                   90
-#define ES_Http_put                                                    91
-#define ES_Http_read                                                   92
-#define ES_Http_readString                                             93
-#define ES_Http_readLines                                              94
-#define ES_Http_readXml                                                95
-#define ES_Http_removeListener                                         96
-#define ES_Http_response                                               97
-#define ES_Http_retries                                                98
-#define ES_Http_setCredentials                                         99
-#define ES_Http_setHeader                                              100
-#define ES_Http_setHeaders                                             101
-#define ES_Http_status                                                 102
-#define ES_Http_statusMessage                                          103
-#define ES_Http_success                                                104
-#define ES_Http_timeout                                                105
-#define ES_Http_trace                                                  106
-#define ES_Http_upload                                                 107
-#define ES_Http_uri                                                    108
-#define ES_Http_wait                                                   109
-#define ES_Http_write                                                  110
-#define ES_Http_addHeader                                              111
-#define ES_Http_bodyLength                                             112
-#define ES_Http_code                                                   113
-#define ES_Http_codeString                                             114
-#define ES_Http_available                                              115
-#define ES_Http_contentEncoding                                        116
-#define ES_Http_mimeType                                               117
+#define ES_Http_UriTooLong                                             56
+#define ES_Http_UnsupportedMedia                                       57
+#define ES_Http_BadRange                                               58
+#define ES_Http_ServerError                                            59
+#define ES_Http_NotImplemented                                         60
+#define ES_Http_BadGateway                                             61
+#define ES_Http_ServiceUnavailable                                     62
+#define ES_Http_GatewayTimeout                                         63
+#define ES_Http_VersionNotSupported                                    64
+#define ES_Http_addListener                                            65
+#define ES_Http_async                                                  66
+#define ES_Http_chunkSize                                              67
+#define ES_Http_close                                                  68
+#define ES_Http_connect                                                69
+#define ES_Http_certificate                                            70
+#define ES_Http_contentLength                                          71
+#define ES_Http_contentType                                            72
+#define ES_Http_date                                                   73
+#define ES_Http_del                                                    74
+#define ES_Http_encoding                                               75
+#define ES_Http_expires                                                76
+#define ES_Http_finalize                                               77
+#define ES_Http_flush                                                  78
+#define ES_Http_followRedirects                                        79
+#define ES_Http_form                                                   80
+#define ES_Http_get                                                    81
+#define ES_Http_getRequestHeaders                                      82
+#define ES_Http_head                                                   83
+#define ES_Http_header                                                 84
+#define ES_Http_headers                                                85
+#define ES_Http_isSecure                                               86
+#define ES_Http_key                                                    87
+#define ES_Http_lastModified                                           88
+#define ES_Http_method                                                 89
+#define ES_Http_options                                                90
+#define ES_Http_post                                                   91
+#define ES_Http_put                                                    92
+#define ES_Http_read                                                   93
+#define ES_Http_readString                                             94
+#define ES_Http_readLines                                              95
+#define ES_Http_readXml                                                96
+#define ES_Http_removeListener                                         97
+#define ES_Http_response                                               98
+#define ES_Http_retries                                                99
+#define ES_Http_setCredentials                                         100
+#define ES_Http_setHeader                                              101
+#define ES_Http_setHeaders                                             102
+#define ES_Http_status                                                 103
+#define ES_Http_statusMessage                                          104
+#define ES_Http_success                                                105
+#define ES_Http_timeout                                                106
+#define ES_Http_trace                                                  107
+#define ES_Http_upload                                                 108
+#define ES_Http_uri                                                    109
+#define ES_Http_wait                                                   110
+#define ES_Http_write                                                  111
+#define ES_Http_addHeader                                              112
+#define ES_Http_bodyLength                                             113
+#define ES_Http_code                                                   114
+#define ES_Http_codeString                                             115
+#define ES_Http_available                                              116
+#define ES_Http_contentEncoding                                        117
+#define ES_Http_mimeType                                               118
 
-#define ES_Http_NUM_CLASS_PROP                                         118
+#define ES_Http_NUM_CLASS_PROP                                         119
 
 /*
  * Instance slots for "Http" type 
@@ -1337,7 +1338,7 @@
 #define ES_Http_addHeader_key                                          0
 #define ES_Http_addHeader_value                                        1
 #define ES_Http_addHeader_overwrite                                    2
-#define ES_Http_mimeType_ext                                           0
+#define ES_Http_mimeType_path                                          0
 
 
 /*
@@ -2265,10 +2266,23 @@
 #define ES_XML_XML                                                     26
 #define ES_XML_load                                                    27
 #define ES_XML_save                                                    28
-#define ES_XML_length                                                  29
-#define ES_XML_name                                                    30
+#define ES_XML_appendChild                                             29
+#define ES_XML_attribute                                               30
+#define ES_XML_attributes                                              31
+#define ES_XML_child                                                   32
+#define ES_XML_childIndex                                              33
+#define ES_XML_children                                                34
+#define ES_XML_contains                                                35
+#define ES_XML_copy                                                    36
+#define ES_XML_descendants                                             37
+#define ES_XML_elements                                                38
+#define ES_XML_hasComplexContent                                       39
+#define ES_XML_hasSimpleContent                                        40
+#define ES_XML_length                                                  41
+#define ES_XML_name                                                    42
+#define ES_XML_parent                                                  43
 
-#define ES_XML_NUM_CLASS_PROP                                          31
+#define ES_XML_NUM_CLASS_PROP                                          44
 #define ES_XML_NUM_INSTANCE_PROP                                       0
 
 /*
@@ -2277,6 +2291,12 @@
 #define ES_XML_XML_value                                               0
 #define ES_XML_load_filename                                           0
 #define ES_XML_save_filename                                           0
+#define ES_XML_appendChild_child                                       0
+#define ES_XML_attribute_name                                          0
+#define ES_XML_child_name                                              0
+#define ES_XML_contains_obj                                            0
+#define ES_XML_descendants_name                                        0
+#define ES_XML_elements_name                                           0
 
 
 /*
@@ -2337,13 +2357,34 @@
  */
 #define ES_XMLList__origin                                             26
 #define ES_XMLList_XMLList                                             26
-#define ES_XMLList_length                                              27
-#define ES_XMLList_name                                                28
+#define ES_XMLList_appendChild                                         27
+#define ES_XMLList_attribute                                           28
+#define ES_XMLList_attributes                                          29
+#define ES_XMLList_child                                               30
+#define ES_XMLList_childIndex                                          31
+#define ES_XMLList_children                                            32
+#define ES_XMLList_copy                                                33
+#define ES_XMLList_descendants                                         34
+#define ES_XMLList_elements                                            35
+#define ES_XMLList_hasComplexContent                                   36
+#define ES_XMLList_inScopeNamespaces                                   37
+#define ES_XMLList_length                                              38
+#define ES_XMLList_name                                                39
+#define ES_XMLList_parent                                              40
 
-#define ES_XMLList_NUM_CLASS_PROP                                      29
+#define ES_XMLList_NUM_CLASS_PROP                                      41
 #define ES_XMLList_NUM_INSTANCE_PROP                                   0
 
-#define _ES_CHECKSUM_ejs   1251816
+/*
+    Local slots for methods in type "XMLList" 
+ */
+#define ES_XMLList_appendChild_child                                   0
+#define ES_XMLList_attribute_name                                      0
+#define ES_XMLList_child_name                                          0
+#define ES_XMLList_descendants_name                                    0
+#define ES_XMLList_elements_name                                       0
+
+#define _ES_CHECKSUM_ejs   1293788
 
 #endif
 /*

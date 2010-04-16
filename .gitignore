@@ -43,3 +43,4 @@ build/bin/*.pdb
 bin/*.def
 bin/*.exp
 src/server/*.res
+src/deps/ejs/.ejs.slots.h

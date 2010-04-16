@@ -50462,6 +50462,7 @@ static EcNode *parsePropertyOperator(EcCompiler *cp)
         case T_STRING:
         case T_REQUIRE:
         case T_RESERVED_NAMESPACE:
+        case T_MUL:
             if (cp->token->groupMask & G_RESERVED) {
                 np = appendNode(np, parseIdentifier(cp));
             } else {
