@@ -217,7 +217,6 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
     conn = q->conn;
     trans = conn->transmitter;
     rec = conn->receiver;
-    mprAssert(len >= 0);
 
     if (packet->content == 0) {
         len = packet->entityLength;
