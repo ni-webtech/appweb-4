@@ -1086,7 +1086,7 @@ module ejs {
             @returns a double
             @throws IOError if an I/O error occurs or premature eof
          */
-        function readDouble(): Date
+        function readDouble(): Double
             inbuf.readDouble()
 
         /** 
@@ -1653,6 +1653,14 @@ module ejs {
             @throws IOError if an I/O error occurs or a premature eof.
          */
         native function readString(count: Number = -1): String
+
+        /**
+         *  Read an XML document from the array. Data is read from the current read $position pointer.
+         *  @returns an XML document
+         *  @throws IOError if an I/O error occurs or a premature end of file.
+         */
+        # MOB
+        native function readXML(): XML
 
         /** 
             Remove a listener to the stream. If there are no listeners on the stream, the stream is put back into sync mode.
@@ -3891,7 +3899,8 @@ module ejs {
                 Options can be either a mode string or can be an options hash. 
             @options mode optional file access mode string. Use "r" for read, "w" for write, "a" for append to existing
                 content, "+" never truncate. Defaults to "r".
-            @options permissions optional Posix permissions number mask. Defaults to 0664.
+            @options permissions Number containing the Posix permissions number value. Note: this is a number
+                and not a string representation of an octal posix number.
             @options owner String representing the file owner (Not implemented)
             @options group String representing the file group (Not implemented)
             @return the File object. This permits method chaining.
@@ -4064,8 +4073,7 @@ module ejs {
         native function get space(): Number
 
         /** 
-            Do path names have a drive specifications (C:).
-            @return True if the file path has a drive spec
+            Do path names on this file system support a drive specifications.
          */
         native function get hasDrives(): Boolean 
 
@@ -4086,10 +4094,7 @@ module ejs {
          */
         native function get newline(): String 
 
-        /** 
-            @duplicate FileSystem.newline
-            @param terminator the new line termination characters Usually "\n" or "\r\n"
-         */
+        /** */
         native function set newline(terminator: String): Void
 
         /** 
@@ -4102,10 +4107,7 @@ module ejs {
          */
         native function get separators(): String 
 
-        /** 
-            @duplicate FileSystem.separators
-            @param sep the new path segment separators. Usually "/" or "/\\". The first characters is the default separator.
-         */
+        /** */
         native function set separators(sep: String): Void 
 
         /** 
@@ -4879,42 +4881,190 @@ module ejs {
 
         use default namespace public
 
-        /** HTTP status code */     static const Continue           : Number    = 100
-        /** HTTP status code */     static const Ok                 : Number    = 200
-        /** HTTP status code */     static const Created            : Number    = 201
-        /** HTTP status code */     static const Accepted           : Number    = 202
-        /** HTTP status code */     static const NotAuthoritative   : Number    = 203
-        /** HTTP status code */     static const NoContent          : Number    = 204
-        /** HTTP status code */     static const Reset              : Number    = 205
-        /** HTTP status code */     static const Partial            : Number    = 206
-        /** HTTP status code */     static const MultipleChoice     : Number    = 300
-        /** HTTP status code */     static const MovedPermanently   : Number    = 301
-        /** HTTP status code */     static const MovedTemporarily   : Number    = 302
-        /** HTTP status code */     static const SeeOther           : Number    = 303
-        /** HTTP status code */     static const NotModified        : Number    = 304
-        /** HTTP status code */     static const UseProxy           : Number    = 305
-        /** HTTP status code */     static const BadRequest         : Number    = 400
-        /** HTTP status code */     static const Unauthorized       : Number    = 401
-        /** HTTP status code */     static const PaymentRequired    : Number    = 402
-        /** HTTP status code */     static const Forbidden          : Number    = 403
-        /** HTTP status code */     static const NotFound           : Number    = 404
-        /** HTTP status code */     static const BadMethod          : Number    = 405
-        /** HTTP status code */     static const NotAccepted        : Number    = 406
-        /** HTTP status code */     static const ProxyAuth          : Number    = 407
-        /** HTTP status code */     static const ClientTimeout      : Number    = 408
-        /** HTTP status code */     static const Conflict           : Number    = 409
-        /** HTTP status code */     static const Gone               : Number    = 410
-        /** HTTP status code */     static const LengthRequired     : Number    = 411
-        /** HTTP status code */     static const PrecondFailed      : Number    = 412
-        /** HTTP status code */     static const EntityTooLarge     : Number    = 413
-        /** HTTP status code */     static const ReqTooLong         : Number    = 414
-        /** HTTP status code */     static const UnsupportedType    : Number    = 415
-        /** HTTP status code */     static const ServerError        : Number    = 500
-        /** HTTP status code */     static const NotImplemented     : Number    = 501
-        /** HTTP status code */     static const BadGateway         : Number    = 502
-        /** HTTP status code */     static const Unavailable        : Number    = 503
-        /** HTTP status code */     static const GatewayTimeout     : Number    = 504
-        /** HTTP status code */     static const Version            : Number    = 505
+        /** 
+          HTTP Continue Status (100)
+         */     
+        static const Continue : Number   = 100
+
+        /** 
+            HTTP Success Status (200) 
+         */     
+        static const Ok : Number   = 200
+
+        /** 
+            HTTP Created Status (201) 
+         */     
+        static const Created : Number   = 201
+
+        /** 
+            HTTP Accepted Status (202) 
+         */     
+        static const Accepted : Number   = 202
+
+        /** 
+            HTTP Non-Authoritative Information Status (203) 
+         */     
+        static const NotAuthoritative : Number   = 203
+
+        /** 
+            HTTP No Content Status (204)  
+         */     
+        static const NoContent : Number   = 204
+
+        /** 
+            HTTP Reset Content Status (205) 
+         */     
+        static const Reset : Number   = 205
+
+        /** 
+            HTTP Partial Content Status (206) 
+         */     
+        static const PartialContent : Number   = 206
+
+        /** 
+            HTTP Multiple Choices Status (300) 
+         */     
+        static const MultipleChoice : Number   = 300
+
+        /** 
+            HTTP Moved Permanently Status (301) 
+         */     
+        static const MovedPermanently : Number   = 301
+
+        /** 
+            HTTP Found but Moved Temporily Status (302) 
+         */     
+        static const MovedTemporarily : Number   = 302
+
+        /** 
+            HTTP See Other Status (303) 
+         */     
+        static const SeeOther : Number   = 303
+
+        /** 
+            HTTP Not Modified Status (304)     
+         */
+        static const NotModified : Number   = 304
+
+        /** 
+            HTTP Use Proxy Status (305) 
+         */     
+        static const UseProxy : Number   = 305
+
+        /** 
+            HTTP Bad Request Status(400) 
+         */     
+        static const BadRequest : Number   = 400
+
+        /** 
+            HTTP Unauthorized Status (401) 
+         */     
+        static const Unauthorized : Number   = 401
+
+        /** 
+            HTTP Payment Required Status (402) 
+         */     
+        static const PaymentRequired : Number   = 402
+
+        /** 
+            HTTP Forbidden Status (403)  
+         */     
+        static const Forbidden : Number   = 403
+
+        /** 
+            HTTP Not Found Status (404) 
+         */     
+        static const NotFound : Number   = 404
+
+        /** 
+            HTTP Method Not Allowed Status (405) 
+         */     
+        static const BadMethod : Number   = 405
+
+        /** 
+            HTTP Not Acceptable Status (406) 
+         */     
+        static const NotAcceptable : Number   = 406
+
+        /** 
+            HTTP ProxyAuthentication Required Status (407) 
+         */     
+        static const ProxyAuthRequired : Number   = 407
+
+        /** 
+            HTTP Request Timeout Status (408) 
+         */     
+        static const RequestTimeout : Number   = 408
+
+        /** 
+            HTTP Conflict Status (409) 
+         */     
+        static const Conflict : Number   = 409
+
+        /** 
+            HTTP Gone Status (410) 
+         */     
+        static const Gone : Number   = 410
+
+        /** 
+            HTTP Length Required Status (411) 
+         */     
+        static const LengthRequired : Number   = 411
+        
+        /** 
+            HTTP Precondition Failed Status (412) 
+         */     
+        static const PrecondFailed : Number   = 412
+
+        /** 
+            HTTP Request Entity Too Large Status (413) 
+         */     
+        static const EntityTooLarge : Number   = 413
+
+        /** 
+            HTTP Request URI Too Long Status (414)  
+         */     
+        static const UriTooLong : Number   = 414
+
+        /** 
+            HTTP Unsupported Media Type (415) 
+         */     
+        static const UnsupportedMedia : Number   = 415
+
+        /** 
+            HTTP Requested Range Not Satisfiable (416) 
+         */     
+        static const BadRange : Number   = 416
+
+        /** 
+            HTTP Server Error Status (500) 
+         */     
+        static const ServerError : Number   = 500
+
+        /** 
+            HTTP Not Implemented Status (501) 
+         */     
+        static const NotImplemented : Number   = 501
+
+        /** 
+            HTTP Bad Gateway Status (502) 
+         */     
+        static const BadGateway : Number   = 502
+
+        /** 
+            HTTP Service Unavailable Status (503) 
+         */     
+        static const ServiceUnavailable : Number   = 503
+
+        /** 
+            HTTP Gateway Timeout Status (504) 
+         */     
+        static const GatewayTimeout : Number   = 504
+
+        /** 
+            HTTP Http Version Not Supported Status (505) 
+         */     
+        static const VersionNotSupported: Number   = 505
 
         /* Cached response data */
         private var _response: String
@@ -5455,8 +5605,8 @@ module ejs {
 
         //  DEPRECATED
         /** @hide */
-        static function mimeType(ext: String): String
-            Uri(ext)..mimeType
+        static function mimeType(path: String): String
+            Uri(path)..mimeType
     }
 }
 
@@ -7649,16 +7799,15 @@ module ejs {
          */
         native function get parent(): Path
 
+        /*  MOB -- different to File.permissions. Should have something that returns an object with full path/file
+            attributes including group/user. The perms should be broken down into world:group:user */
         /**
-            The file permissions of a path. Set to the Posix style permissions mask or null if the file does not exist.
+            The file permissions of a path. This number contains the Posix style permissions value or null if the file 
+            does not exist. NOTE: this is not a string representation of an octal posix mask. 
          */
         native function get perms(): Number
 
-        /**
-            @duplicate Path.perms
-            @param perms the new Posix style permissions mask
-            @throws IOError if the path does not exist as a file.
-         */
+        /** */
         native function set perms(perms: Number): Void
 
         /**
@@ -9245,6 +9394,7 @@ module ejs {
          */ 
         override native function toString(): String
 
+//  MOB -- should be toUpperCase, toLowerCase
         /**
             Convert the string to upper case.
             @return Returns a new upper case version of the string.
@@ -10896,45 +11046,59 @@ module ejs {
             @param child The child to add.
             @return This object with the added child.
          */
-        # FUTURE
-        native function appendChild(child: XML): XML
+        function appendChild(child: XML): XML {
+            this[child.name()] = child
+            return this
+        }
 
         /**
             Get an XMLList containing all of the attributes of this object with the given name.
             @param name The name to search on.
             @return An XMLList with all the attributes (zero or more).
          */
-        # FUTURE
-        native function attribute(name: String): XMLList
+        function attribute(name: String): XMLList
+            this["@" + name]
 
         /**
             Get an XMLList containing all of the attributes of this object.
             @return An XMLList with all the attributes (zero or more).
          */
-        # FUTURE
-        native function attributes(): XMLList
+        function attributes(): XMLList
+            this.@*
         
         /**
             Get an XMLList containing the list of children (properties) in this XML object with the given name.
             @param name The name to search on.
             @return An XMLList with all the children names (zero or more).
          */
-        # FUTURE
-        native function child(name: String): XMLList
+        function child(name: String): XMLList {
+            if (name.isDigit) {
+                return this[name cast Number]
+            } else {
+                return this[name]
+            }
+        }
         
         /**
             Get the position of this object within the context of its parent.
             @return A number with the zero-based position.
          */
-        # FUTURE
-        native function childIndex(): Number
+        function childIndex(): Number {
+            let p = parent()
+            for (i in p) {
+                if (p[i] === this) {
+                    return i
+                }
+            }
+            return -1
+        }
         
         /**
             Get an XMLList containing the children (properties) of this object in order.
             @return An XMLList with all the properties.
          */
-        # FUTURE
-        native function children(): XMLList
+        function children(): XMLList 
+            this.*
 
         /**
             Get an XMLList containing the properties of this object that are
@@ -10950,15 +11114,21 @@ module ejs {
             object is said to contain the other.
             @return True if this object contains the argument.
          */
-        # FUTURE
-        native function contains(obj: Object): Boolean
+        function contains(obj: Object): Boolean {
+            for each (item in this) {
+                if (item == obj) {
+                    return true
+                }
+            }
+            return false
+        }
 
         /**
             Deep copy an XML object. The new object has its parent set to null.
             @return Then new XML object.
          */
-        # FUTURE
-        native function copy(): XML
+        function copy(): XML
+            this.clone(true)
 
         /**
             Get the defaults settings for an XML object. The settings include boolean values for: ignoring comments, 
@@ -10970,13 +11140,13 @@ module ejs {
         native function defaultSettings(): Object
 
         /**
-            Get all the descendants (that have the same name) of this XML object. The optional argument defaults 
+            Get all the descendants of this XML object with a given name. The optional argument defaults 
             to getting all descendants.
             @param name The (optional) name to search on.
             @return The list of descendants.
          */
-        # FUTURE
-        native function descendants(name: String = "*"): Object
+        function descendants(name: String = "*"): Object
+            this["." + name]
         
         /**
             Get all the children of this XML node that are elements having the
@@ -10984,8 +11154,8 @@ module ejs {
             @param name The (optional) name to search on.
             @return The list of elements.
          */
-        # FUTURE
-        native function elements(name: String = "*"): XMLList
+        function elements(name: String = "*"): XMLList
+            this[name]
 
         /**
             Get an iterator for this node to be used by "for (v in node)"
@@ -11004,25 +11174,24 @@ module ejs {
             considered complex.
             @return True if this object has complex content.
          */
-        # FUTURE
-        native function hasComplexContent(): Boolean
+        function hasComplexContent(): Boolean
+            this.*.length() > 0
 
         /**
             Determine whether this object has its own property of the given name.
             @param prop The property to look for.
             @return True if this object does have that property.
          */
-        # FUTURE
-        override native function hasOwnProperty(name: String): Boolean
+        override function hasOwnProperty(name: String): Boolean
+            this[name] != null
         
         /**
-            Determine whether this XML object has simple content. If the object
-            is a text node, an attribute node or an XML element that has no
-            children it is considered simple.
+            Determine whether this XML object has simple content. If the object is a text node, an attribute node or 
+            an XML element that has no children it is considered simple.
             @return True if this object has simple content.
          */
-        # FUTURE
-        native function hasSimpleContent(): Boolean
+        function hasSimpleContent(): Boolean
+            this.*.length() == 0
 
         # FUTURE
         native function inScopeNamespaces(): Array
@@ -11094,7 +11263,6 @@ module ejs {
             Get the parent of this XML object.
             @return The parent.
          */
-        # FUTURE
         native function parent(): XML
 
         /**
@@ -11202,10 +11370,8 @@ module ejs {
             Return this XML object.
             @return This object.
          */
-        # FUTURE 
-        override function valueOf(): XML {
-            return this
-        }
+        override function valueOf(): XML
+            this
     }
 }
 
@@ -11530,45 +11696,59 @@ module ejs {
             @param child The child to add.
             @return This object with the added child.
          */
-        # FUTURE
-        native function appendChild(child: XML): XML
+        function appendChild(child: XML): XML {
+            this[child.name()] = child
+            return this
+        }
 
         /**
             Get an XMLList containing all of the attributes of this object with the given name.
             @param name The name to search on.
             @return An XMLList with all the attributes (zero or more).
          */
-        # FUTURE
-        native function attribute(name: String): XMLList
+        function attribute(name: String): XMLList
+            this["@" + name]
 
         /**
             Get an XMLList containing all of the attributes of this object.
             @return An XMLList with all the attributes (zero or more).
          */
-        # FUTURE
-        native function attributes(): XMLList
+        function attributes(): XMLList
+            this.@*
 
         /**
             Get an XMLList containing the list of children (properties) in this XML object with the given name.
             @param name The name to search on.
             @return An XMLList with all the children names (zero or more).
          */
-        # FUTURE
-        native function child(name: String): XMLList
+        function child(name: String): XMLList {
+            if (name.isDigit) {
+                return this[name cast Number]
+            } else {
+                return this[name]
+            }
+        }
 
         /**
             Get the position of this object within the context of its parent.
             @return A number with the zero-based position.
          */
-        # FUTURE
-        native function childIndex(): Number
+        function childIndex(): Number {
+            let p = parent()
+            for (i in p) {
+                if (p[i] === this) {
+                    return i
+                }
+            }
+            return -1
+        }
 
         /**
             Get an XMLList containing the children (properties) of this object in order.
             @return An XMLList with all the properties.
          */
-        # FUTURE
-        native function children(): XMLList
+        function children(): XMLList
+            this.*
         
         /**
             Get an XMLList containing the properties of this object that are
@@ -11590,8 +11770,8 @@ module ejs {
             Deep copy an XML object. The new object has its parent set to null.
             @return Then new XML object.
          */
-        # FUTURE
-        native function copy(): XML
+        function copy(): XML
+            this.clone(true)
 
         /**
             Get the defaults settings for an XML object. The settings include boolean values for: ignoring comments, 
@@ -11608,8 +11788,8 @@ module ejs {
             @param name The (optional) name to search on.
             @return The list of descendants.
          */
-        # FUTURE
-        native function descendants(name: String = "*"): Object
+        function descendants(name: String = "*"): Object
+            this["." + name]
 
         /**
             Get all the children of this XML node that are elements having the
@@ -11617,8 +11797,8 @@ module ejs {
             @param name The (optional) name to search on.
             @return The list of elements.
          */
-        # FUTURE
-        native function elements(name: String = "*"): XMLList
+        function elements(name: String = "*"): XMLList
+            this[name]
 
         /**
             Get an iterator for this node to be used by "for (v in node)"
@@ -11637,16 +11817,16 @@ module ejs {
             considered complex.
             @return True if this object has complex content.
          */
-        # FUTURE
-        native function hasComplexContent(): Boolean
+        function hasComplexContent(): Boolean
+            this.*.length() > 0
 
         /**
             Determine whether this object has its own property of the given name.
             @param prop The property to look for.
             @return True if this object does have that property.
          */
-        # FUTURE
-        override native function hasOwnProperty(name: String): Boolean
+        override function hasOwnProperty(name: String): Boolean
+            this[name] != null
 
         /**
             Determine whether this XML object has simple content. If the object
@@ -11661,8 +11841,8 @@ module ejs {
             Return the namespace in scope
             @return Array of namespaces
          */
-        # FUTURE
-        native function inScopeNamespaces(): Array
+        function inScopeNamespaces(): Array
+            this.*.length() == 0
 
         /**
             Insert a child object into an XML object immediately after a specified marker object. If the marker 
@@ -11731,7 +11911,6 @@ module ejs {
             Get the parent of this XML object.
             @return The parent.
          */
-        # FUTURE
         native function parent(): XML
 
         /**
@@ -11839,10 +12018,8 @@ module ejs {
             Return this XML object.
             @return This object.
          */
-        # FUTURE
-        override function valueOf(): XML {
-            return this
-        }
+        override function valueOf(): XML
+            this
 
         /*
            XML
@@ -14187,7 +14364,7 @@ module ejs.db.sqlite {
         /**
             @duplicate ejs.db::Database.getNumRows
          */
-        function getNumRows(table: String): Array {
+        function getNumRows(table: String): Number {
             let cmd: String = "SELECT COUNT(*) FROM " + table + ";"
             let grid: Array = query(cmd, "numRows")
             return grid[0]["COUNT(*)"] cast Number
@@ -15785,6 +15962,7 @@ module ejs.web {
 
         /** 
             Get the encoding scheme for serializing strings. Not yet implemented.
+            MOB -- should this not be in the headers?
          */
         native var encoding: String
 
@@ -15801,6 +15979,7 @@ module ejs.web {
          */
         native var headers: Object
 
+//  MOB -- bad name
         /** 
             Relative Uri for the top-level of the application. This returns a relative Uri from the current request
             up to the top most application Uri.
