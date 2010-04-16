@@ -21428,7 +21428,8 @@ static EjsObj *integral(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 
     result = ((int64) np->value);
     if (size < 64) {
-        mask = (1 << size) - 1;
+        mask = 1;
+        mask = (mask << size) - 1;
         result &= mask;
     }
     return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) result);
