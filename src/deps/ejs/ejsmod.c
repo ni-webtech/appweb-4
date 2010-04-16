@@ -752,7 +752,7 @@ static void generateOverview(EjsMod *mp)
         "product details and downloads.</p>");
     out(mp, "<h2>Documentation Conventions</h2>");
     out(mp, "<p>APIs are grouped into Namespaces for logical ordering. Within each namespace, classes, methods "
-        "and properties are defined. For each method parameters, events and options are described./p>");
+        "and properties are defined. For each method parameters, events and options are described.</p>");
     out(mp, "<h4>Default Values</h4>");
     out(mp, "<p>Method parameters can take default values if an actual parameter is not provided when calling the API. "
         "The default value is listed in the method signature in the form \"name: Type = defaultValue\". The default "

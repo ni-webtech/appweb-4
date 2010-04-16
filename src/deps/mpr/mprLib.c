@@ -19500,8 +19500,10 @@ static int gettimeofday(struct timeval *tv, struct timezone *tz)
         } else {
             tz->tz_dsttime = 0;
         }
+#if UNUSED
         bias *= 60;
         /* UTC = local + bias */
+#endif
         tz->tz_minuteswest = bias;
     }
 

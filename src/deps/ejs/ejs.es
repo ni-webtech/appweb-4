@@ -2943,7 +2943,7 @@ module ejs {
             Return a localized string containing the date portion excluding the time portion of the date in local time.
             Note: You should not rely on the format of the output as the exact format will depend on the platform
             and locale.
-            Sample: "Fri, 15 Dec 2006 GMT-0800". (Note: Other platforms render as:
+            Sample: "Fri 15 Dec 2006 GMT-0800". (Note: Other platforms render as:
             V8  format: "Fri, 15 Dec 2006 GMT-0800"
             JS  format: "01/15/2010"
             JSC format: "January 15, 2010")
@@ -2955,7 +2955,7 @@ module ejs {
         /**
             Return a localized string containing the date. This formats the date using the operating system's locale
             conventions.
-            Sample:  "Fri, 15 Dec 2006 23:45:09 GMT-0800 (PST)". (Note: Other platforms render as:
+            Sample:  "Fri 15 Dec 2006 23:45:09 GMT-0800 (PST)". (Note: Other platforms render as:
             V8 format:  "Fri, 15 Dec 2006 23:45:09 GMT-0800 (PST)"
             JS format:  "Fri Jan 15 13:09:02 2010"
             JSC format: "January 15, 2010 1:09:06 PM PST"
@@ -2977,7 +2977,7 @@ module ejs {
 
         /**
             Return a string representing the date in local time. The format is American English.
-            Sample: "Fri, 15 Dec 2006 23:45:09 GMT-0800 (PST)"
+            Sample: "Fri 15 Dec 2006 23:45:09 GMT-0800 (PST)"
             @return A string representing the date.
          */
         override native function toString(): String 
@@ -2992,7 +2992,7 @@ module ejs {
 
         /**
             Return a string containing the date in UTC time.
-            Sample: "Sat, 16 Dec 2006 08:06:21 GMT"
+            Sample: "Sat 16 Dec 2006 08:06:21 GMT"
             @return A string representing the date.
          */
         function toUTCString(): String 
@@ -3405,7 +3405,6 @@ module ejs {
 
     /**
         Arithmetic error exception class. Thrown when the system cannot perform an arithmetic operation, 
-        e.g. on divide by zero.
         @spec ejs
         @stability evolving
      */
@@ -7568,19 +7567,13 @@ module ejs {
             @return Return a list of matching files and directories
          */
         function find(glob: String = "*", recurse: Boolean = true): Array {
-            function recursiveFind(path: Path, pattern: RegExp, recurse: Boolean): Array {
+            function recursiveFind(path: Path, pattern: RegExp, level: Number): Array {
                 let result: Array = []
-                if (path.isDir) {
+                if (path.isDir && (recurse || level == 0)) {
                     for each (f in path.files(true)) {
-                        if (recurse) {
-                            let got: Array = recursiveFind(f, pattern, recurse)
-                            for each (i in got) {
-                                result.append(i)
-                            }
-                        } else {
-                            if (f.basename.toString().match(pattern)) {
-                                result.append(f)
-                            }
+                        let got: Array = recursiveFind(f, pattern, level + 1)
+                        for each (i in got) {
+                            result.append(i)
                         }
                     }
                 }
@@ -7590,7 +7583,7 @@ module ejs {
                 return result
             }
             pattern = RegExp("^" + glob.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$")
-            return recursiveFind(this, pattern, recurse)
+            return recursiveFind(this, pattern, recurse, 0)
         }
 
         /**
@@ -9150,12 +9143,14 @@ module ejs {
 
         /**
             Is there is at least one character in the string and all characters are alphabetic.
+            Uses latin-1 for comparisons.
             @spec ejs
          */
         native function get isAlpha(): Boolean
 
         /**
             Is there is at least one character in the string and all characters are alphabetic or numeric.
+            Uses latin-1 for comparisons.
             @spec ejs
          */
         native function get isAlphaNum(): Boolean
@@ -9297,7 +9292,6 @@ module ejs {
             @param start The position of the first character to slice.
             @param end The position one after the last character. Negative indicies are measured from the end of the string.
             @param step Extract every "step" character.
-            @throws OutOfBoundsError If the range boundaries exceed the string limits.
          */ 
         native function slice(start: Number, end: Number = -1, step: Number = 1): String
 
@@ -9322,7 +9316,6 @@ module ejs {
             @param startIndex Integer location to start copying
             @param end Postitive index of one past the last character to extract.
             @return Returns a new string
-            @throws OutOfBoundsError If the starting index and/or the length exceed the string's limits.
          */
         native function substring(startIndex: Number, end: Number = -1): String
 
@@ -9456,6 +9449,9 @@ module ejs {
          */
         function - (str: String): String {
             var i: Number = indexOf(str)
+            if (i < 0) {
+                return this
+            }
             return remove(i, i + str.length)
         }
         
@@ -12778,7 +12774,7 @@ module ejs.db {
         /**
             Execute a SQL command on the database. This is a low level SQL command interface that bypasses logging.
                 Use @query instead.
-            @param cmd SQL command string
+            @param cmd SQL command to issue. Note: "SELECT" is automatically prepended and ";" is appended for you.
             @returns An array of row results where each row is represented by an Object hash containing the column 
                 names and values
          */
@@ -13967,7 +13963,7 @@ module ejs.db.mapper {
         //  MOB -- count not documented or implemented
         /**
             Run an SQL statement and return selected records.
-            @param cmd SQL command to issue
+            @param cmd SQL command to issue. Note: "SELECT" is automatically prepended and ";" is appended for you.
             @returns An array of objects. Each object represents a matching row with fields for each column.
          */
         static function sql(cmd: String, count: Number? = null): Array {
@@ -17097,7 +17093,7 @@ UNUSED && KEEP
         @stability prototype
      */
     function unescapeHtml(s: String): String
-        s.replace(/&amp/g,'&;').replace(/&gt/g,'>').replace(/&lt/g,'<').replace(/&quot/g,'"')
+        s.replace(/&amp;/g,'&').replace(/&gt;/g,'>').replace(/&lt;/g,'<').replace(/&quot;/g,'"')
 }
 /************************************************************************/
 /*
