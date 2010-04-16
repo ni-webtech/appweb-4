@@ -19495,7 +19495,9 @@ static int gettimeofday(struct timeval *tv, struct timezone *tz)
         rc = GetTimeZoneInformation(&zone);
         bias = (int) zone.Bias;
         if (rc == TIME_ZONE_ID_DAYLIGHT) {
+#if UNUSED
             bias += zone.DaylightBias;
+#endif
             tz->tz_dsttime = 1;
         } else {
             tz->tz_dsttime = 0;
