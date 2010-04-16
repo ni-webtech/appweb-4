@@ -453,7 +453,7 @@ extern "C" {
 #define BLD_HAS_UNNAMED_UNIONS 1
 #endif
 
-#if BLD_WIN_LIKE || LINUX || VXWORKS
+#if BLD_WIN_LIKE || VXWORKS
     #define  VA_NULL    {0}
 #else
     #define  VA_NULL    {{0}}
