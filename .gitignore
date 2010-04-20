@@ -45,3 +45,4 @@ bin/*.exp
 src/server/*.res
 src/deps/ejs/.ejs.slots.h
 lib/*.so
+src/test/trace.txt
