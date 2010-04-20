@@ -286,7 +286,9 @@ static void registerServerVars(zval *track_vars_array TSRMLS_DC)
 
 static void logMessage(char *message)
 {
-    mprLog(mprGetMpr(), 0, "phpModule: %s", message);
+#if FUTURE
+    mprLog(mprGetMpr(ctx), 0, "phpModule: %s", message);
+#endif
 }
 
 

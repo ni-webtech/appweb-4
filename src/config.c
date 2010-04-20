@@ -121,7 +121,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
     char            *cp, *tok, *key, *value, *path;
     int             i, rc, top, next, nextAlias, len;
 
-    mpr = mprGetMpr();
+    mpr = mprGetMpr(server);
     mprLog(mpr, 2, "Config File %s", configFile);
 
     appweb = server->appweb;
@@ -1021,7 +1021,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 port = HTTP_DEFAULT_PORT;
             }
 
-            ipList = mprGetMpr()->socketService->getInterfaceList();
+            ipList = mprGetMpr(server)->socketService->getInterfaceList();
             ip = (MprInterface*) ipList->getFirst();
             if (ip == 0) {
                 mprError(server, "Can't find interfaces, use Listen-directive with IP address.");
@@ -1722,7 +1722,7 @@ int HttpServer::saveConfig(char *configFile)
 
     mprFprintf(fd, "ServerRoot \"%s\"\n", serverRoot);
 
-    logService = mprGetMpr()->logService;
+    logService = mprGetMpr(server)->logService;
     logSpec = mprStrdup(logService->getLogSpec());
     if ((cp = strchr(logSpec, ':')) != 0) {
         *cp = '\0';

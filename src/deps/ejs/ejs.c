@@ -372,7 +372,7 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
         cp->errorCount = 0;
         cp->fatalError = 0;
         err = 0;
-        mprServiceEvents(ejs->dispatcher, 0, 0);
+        mprServiceEvents(ejs, ejs->dispatcher, 0, 0);
     }
     ecCloseStream(cp->lexer);
     return 0;

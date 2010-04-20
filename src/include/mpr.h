@@ -2727,7 +2727,7 @@ extern void mprDebug(MprCtx ctx, int level, cchar *fmt, ...);
     Optimized calling sequence.
  */
 #if BLD_DEBUG
-#define LOG if (mprGetMpr()->logLevel > 1) mprLog
+#define LOG mprLog
 #else
 #define LOG if (0) mprLog
 #endif
@@ -3926,6 +3926,7 @@ extern void mprEnableDispatcher(MprDispatcher *dispatcher);
     Schedule events. This can be called by any thread. Typically an app will dedicate one thread to be an event service 
     thread. This call will service events until the timeout expires or if MPR_SERVICE_ONE_THING is specified in flags, 
     after one event. This will service all enabled dispatcher queues and pending I/O events.
+    @param ctx Any memory context allocated by mprAlloc or mprCreate.
     @param dispatcher Primary dispatcher to service. This dispatcher is set to the running state and events on this
         dispatcher will be serviced without starting a worker thread. This can be set to NULL.
     @param timeout Time in milliseconds to wait. Set to zero for no wait. Set to -1 to wait forever.
@@ -3933,7 +3934,7 @@ extern void mprEnableDispatcher(MprDispatcher *dispatcher);
     @returns The number of events serviced. Returns MPR_ERR_BUSY is another thread is servicing events and timeout is zero.
     @ingroup MprEvent
  */
-extern int mprServiceEvents(MprDispatcher *dispatcher, int delay, int flags);
+extern int mprServiceEvents(MprCtx ctx, MprDispatcher *dispatcher, int delay, int flags);
 
 /**
     Create a new event
@@ -4760,10 +4761,11 @@ extern void mprSetAllocCallback(MprCtx ctx, MprAllocFailure cback);
     Initialize a block of memory
     @description This call initializes a static block of memory so it can be used as a memory context for subseqent
         allocations.
+    @param ctx Any memory context allocated by mprAlloc or mprCreate.
     @param ptr Pointer to the memory block
     @param size Size of the memory block
  */
-extern void mprInitBlock(void *ptr, uint size);
+extern void mprInitBlock(MprCtx ctx, void *ptr, uint size);
 
 #if DOXYGEN
 typedef void *Type;
@@ -4782,8 +4784,11 @@ typedef void *Type;
  */
 extern void *mprAlloc(MprCtx ctx, uint size);
 
+#if UNUSED
 /* Internal */
+//  MOB -- why public
 extern MprBlk *mprAllocBlock(MprHeap *heap, MprBlk *parent, uint size);
+#endif
 
 /**
     Allocate an object block of memory
@@ -4981,7 +4986,9 @@ extern cchar *mprGetName(void *ptr);
     Internal memory allocation routines
  */
 extern void *_mprAlloc(MprCtx ctx, uint size);
+#if UNUSED
 extern MprBlk *_mprAllocBlock(MprHeap *heap, MprBlk *parent, uint size);
+#endif
 extern void *_mprAllocWithDestructor(MprCtx ctx, uint size, MprDestructor destructor);
 extern void *_mprAllocWithDestructorZeroed(MprCtx ctx, uint size, MprDestructor destructor);
 extern void *_mprAllocZeroed(MprCtx ctx, uint size);
@@ -5004,8 +5011,10 @@ extern char *_mprStrdup(MprCtx ctx, cchar *str);
 
 #define mprAlloc(ctx, size) \
     mprSetName(_mprAlloc(ctx, size), MPR_LOC)
+#if UNUSED
 #define mprAllocBlock(heap, parent, size) \
     mprSetName(_mprAllocBlock(heap, parent, size), MPR_LOC)
+#endif
 #define mprAllocWithDestructor(ctx, size, destructor) \
     mprSetName(_mprAllocWithDestructor(ctx, size, destructor), MPR_LOC)
 #define mprAllocWithDestructorZeroed(ctx, size, destructor) \
@@ -5203,10 +5212,11 @@ extern int64 mprGetUsedMemory(MprCtx ctx);
 
 /**
     Memory virtual memory into the applications address space.
+    @param ctx Any memory context allocated by mprAlloc or mprCreate.
     @param size of virtual memory to map. This size will be rounded up to the nearest page boundary.
     @param mode Mask set to MPR_MAP_READ | MPR_MAP_WRITE
  */
-extern void *mprMapAlloc(uint size, int mode);
+extern void *mprMapAlloc(MprCtx ctx, uint size, int mode);
 
 /**
     Free (unpin) a mapped section of virtual memory
@@ -6466,6 +6476,7 @@ extern int mprWriteCmdPipe(MprCmd *cmd, int channel, char *buf, int bufsize);
 typedef struct Mpr {
     MprHeap         heap;                   /**< Top level memory pool */
     MprHeap         pageHeap;               /**< Heap for arenas and slabs. Always page oriented */
+    MprAlloc        alloc;                  /**< Memory allocation statistics */
 
     bool            debugMode;              /**< Run in debug mode (no timers) */
     int             logLevel;               /**< Log trace level */
@@ -6501,6 +6512,8 @@ typedef struct Mpr {
     struct MprWaitService   *waitService;   /**< IO Waiting service object */
     struct MprCmdService    *cmdService;    /**< Command service object */
     struct MprThreadService *threadService; /**< Thread service object */
+    
+    void            *ejsService;            /**< Ejscript service */
     MprOsThread     mainOsThread;           /**< Main OS thread ID */
     MprMutex        *mutex;                 /**< Thread synchronization */
     MprSpin         *spin;                  /**< Quick thread synchronization */
@@ -6510,12 +6523,13 @@ typedef struct Mpr {
 } Mpr;
 
 
-#if !BLD_WIN_LIKE || DOXYGEN
-extern Mpr  *_globalMpr;                /* Mpr singleton */
-#define mprGetMpr() _globalMpr
-#define MPR _globalMpr
+#if BLD_WIN_LIKE || BLD_UNIX_LIKE
+#define BLD_HAS_GLOBAL_MPR 0
 #else
+#define BLD_HAS_GLOBAL_MPR 0
+#endif
 
+#if DOXYGEN || !BLD_HAS_GLOBAL_MPR || BLD_WIN_LIKE
 /**
     Return the MPR control instance.
     @description Return the MPR singleton control object. 
@@ -6524,8 +6538,13 @@ extern Mpr  *_globalMpr;                /* Mpr singleton */
     @stability Evolving.
     @ingroup Mpr
  */
-extern struct Mpr *mprGetMpr();
-#define MPR mprGetMpr
+extern struct Mpr *mprGetMpr(MprCtx ctx);
+#define MPR(ctx) mprGetMpr(ctx)
+#else
+
+extern Mpr  *_globalMpr;                /* Mpr singleton */
+#define mprGetMpr(ctx) _globalMpr
+#define MPR(ctx) _globalMpr
 #endif
 
 /**

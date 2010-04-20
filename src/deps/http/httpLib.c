@@ -7015,15 +7015,17 @@ static bool processCompletion(HttpConn *conn)
     HttpReceiver        *rec;
     HttpTransmitter     *trans;
     HttpPacket          *packet;
+    Mpr                 *mpr;
     bool                more;
 
     mprAssert(conn->state == HTTP_STATE_COMPLETE);
 
     rec = conn->receiver;
     trans = conn->transmitter;
+    mpr = mprGetMpr(conn);
 
     LOG(rec, 4, "Request complete used %,d K, mpr usage %,d K, page usage %,d K",
-        rec->arena->allocBytes / 1024, mprGetMpr()->heap.allocBytes / 1024, mprGetMpr()->pageHeap.allocBytes / 1024);
+        rec->arena->allocBytes / 1024, mpr->heap.allocBytes / 1024, mpr->pageHeap.allocBytes / 1024);
 
     packet = conn->input;
     more = packet && (mprGetBufLength(packet->content) > 0);

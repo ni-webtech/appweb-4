@@ -4627,7 +4627,7 @@ int ejsInitStack(Ejs *ejs)
         This will allocate memory virtually for systems with virutal memory. Otherwise, it will just use malloc.
         TODO - create a guard page
      */
-    state->stackBase = mprMapAlloc(state->stackSize, MPR_MAP_READ | MPR_MAP_WRITE);
+    state->stackBase = mprMapAlloc(ejs, state->stackSize, MPR_MAP_READ | MPR_MAP_WRITE);
     if (state->stackBase == 0) {
         mprSetAllocError(ejs);
         return EJS_ERR;
@@ -7591,7 +7591,7 @@ int ejsEncodeWord(uchar *pos, int number)
     mprAssert(pos);
 
     if (abs(number) > EJS_ENCODE_MAX_WORD) {
-        mprError(mprGetMpr(), "Code generation error. Word %d exceeds maximum %d", number, EJS_ENCODE_MAX_WORD);
+        mprAssert("Code generation error. Word exceeds maximum");
         return 0;
     }
     len = ejsEncodeNum(pos, (int64) number);
@@ -8274,11 +8274,6 @@ static int  loadStandardModules(Ejs *ejs, MprList *require);
 static int  runSpecificMethod(Ejs *ejs, cchar *className, cchar *methodName);
 static int  searchForMethod(Ejs *ejs, cchar *methodName, EjsType **typeReturn);
 
-/*
-    Global singleton for the Ejs service
- */
-EjsService *_globalEjsService;
-
 /*  
     Initialize the EJS subsystem
  */
@@ -8290,7 +8285,7 @@ EjsService *ejsCreateService(MprCtx ctx)
     if (sp == 0) {
         return 0;
     }
-    _globalEjsService = sp;
+    mprGetMpr(ctx)->ejsService = sp;
     sp->nativeModules = mprCreateHash(sp, -1);
     return sp;
 }
@@ -8298,7 +8293,7 @@ EjsService *ejsCreateService(MprCtx ctx)
 
 EjsService *ejsGetService(MprCtx ctx)
 {
-    return _globalEjsService;
+    return mprGetMpr(ctx)->ejsService;
 }
 
 
@@ -8320,7 +8315,7 @@ Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *searchPath, MprList *require, i
         return 0;
     }
     mprSetAllocCallback(ejs, (MprAllocFailure) allocFailure);
-    ejs->service = _globalEjsService;
+    ejs->service = mprGetMpr(ctx)->ejsService;
     ejs->empty = require && mprGetListCount(require) == 0;
     ejs->heap = mprAllocHeap(ejs, "Ejs Object Heap", 1, 0, NULL);
     ejs->mutex = mprCreateLock(ejs);
@@ -8823,7 +8818,7 @@ int ejsRunProgram(Ejs *ejs, cchar *className, cchar *methodName)
             If the script calls App.noexit(), this will service events until App.exit() is called.
             TODO - should deprecate noexit()
          */
-        mprServiceEvents(ejs->dispatcher, -1, 0);
+        mprServiceEvents(ejs, ejs->dispatcher, -1, 0);
     }
     if (ejs->exception) {
         return -1;
@@ -9044,7 +9039,7 @@ static void logHandler(MprCtx ctx, int flags, int level, const char *msg)
     MprFile     *file;
     char        *prefix;
 
-    mpr = mprGetMpr();
+    mpr = mprGetMpr(ctx);
     file = (MprFile*) mpr->logHandlerData;
     prefix = mpr->name;
 
@@ -10205,7 +10200,7 @@ static EjsObj *exitApp(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     if (status != 0) {
         exit(status);
     } else {
-        mprTerminate(mprGetMpr(), 1);
+        mprTerminate(mprGetMpr(ejs), 1);
         ejsAttention(ejs);
     }
     return 0;
@@ -10271,7 +10266,7 @@ void ejsServiceEvents(Ejs *ejs, int timeout, int flags)
     expires = mprGetTime(ejs) + timeout;
     remaining = timeout;
     do {
-        rc = mprServiceEvents(ejs->dispatcher, remaining, MPR_SERVICE_ONE_THING);
+        rc = mprServiceEvents(ejs, ejs->dispatcher, remaining, MPR_SERVICE_ONE_THING);
         if (rc > 0 && flags & MPR_SERVICE_ONE_THING) {
             break;
         }
@@ -14651,7 +14646,7 @@ static EjsObj *date_set_fullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 */
 static EjsObj *date_getTimezoneOffset(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, -mprGetMpr()->timezone);
+    return (EjsObj*) ejsCreateNumber(ejs, -mprGetMpr(ejs)->timezone);
 }
 
 
@@ -17917,7 +17912,7 @@ static EjsObj *input(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     EjsObj          *result;
     int             c;
 
-    fs = mprGetMpr()->fileSystem;
+    fs = mprGetMpr(ejs)->fileSystem;
 
     buf = mprCreateBuf(ejs, -1, -1);
     while ((c = getchar()) != EOF) {
@@ -26595,8 +26590,7 @@ static EjsObj *charAt(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     mprAssert(argc == 1 && ejsIsNumber(argv[0]));
     index = ejsGetInt(ejs, argv[0]);
     if (index < 0 || index >= sp->length) {
-        ejsThrowOutOfBoundsError(ejs, "Bad string subscript");
-        return 0;
+        return (EjsObj*) ejs->emptyStringValue;
     }
     return (EjsObj*) ejsCreateStringWithLength(ejs, &sp->value[index], 1);
 }
@@ -26921,7 +26915,7 @@ static EjsObj *stringLength(Ejs *ejs, EjsString *ap, int argc, EjsObj **argv)
 
     function indexOf(pattern: String, startIndex: Number = 0): Number
  */
-static EjsObj *indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsObj*indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     cchar   *pattern;
     int     index, start, patternLength;
@@ -27065,19 +27059,14 @@ static EjsObj *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 
     if (argc == 2) {
         start = ejsGetInt(ejs, argv[1]);
-        if (start > sp->length) {
-            start = sp->length;
+        if (start >= sp->length) {
+            start = sp->length - 1;
         }
         if (start < 0) {
             start = 0;
         }
-
     } else {
         start = 0;
-    }
-    if (start < 0 || start >= sp->length) {
-        ejsThrowOutOfBoundsError(ejs, "Bad start subscript");
-        return 0;
     }
     index = indexof(sp->value, sp->length, pattern, patternLength, -1);
     if (index < 0) {
@@ -27444,27 +27433,26 @@ static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     } else {
         step = 1;
     }
-
     if (start < 0) {
         start += sp->length;
     }
-    if (end < 0) {
-        end += sp->length;
-    }
-    if (step == 0) {
-        step = 1;
+    if (start >= sp->length) {
+        start = sp->length - 1;
     }
     if (start < 0) {
         start = 0;
     }
-    if (start >= sp->length) {
-        start = sp->length;
+    if (end < 0) {
+        end += sp->length;
+    }
+    if (end >= sp->length) {
+        end = sp->length;
     }
     if (end < 0) {
         end = 0;
     }
-    if (end >= sp->length) {
-        end = sp->length;
+    if (step == 0) {
+        step = 1;
     }
     result = ejsCreateBareString(ejs, (end - start) / abs(step));
     if (result == 0) {
@@ -27600,7 +27588,6 @@ static EjsObj *substring(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     } else {
         end = sp->length;
     }
-
     if (start < 0) {
         start = 0;
     }
@@ -49346,6 +49333,10 @@ static EcNode *parseLiteralField(EcCompiler *cp, EcNode *on)
         if (fp->function.body == 0) {
             return LEAVE(cp, 0);
         }
+
+        np = createNode(cp, N_FIELD);
+        np->field.fieldKind = FIELD_KIND_FUNCTION;
+        np->attributes = fp->attributes;
         /*
             The function must get linked into the current var block. It must not get processed inline at
             this point in the AST tree because it must not use the block scope. Create a name based on the
@@ -49356,10 +49347,6 @@ static EcNode *parseLiteralField(EcCompiler *cp, EcNode *on)
         fp->qname.space = mprStrdup(fp, cp->fileState->namespace);
         mprAssert(cp->state->topVarBlockNode);
         appendNode(cp->state->topVarBlockNode, fp);
-
-        np = createNode(cp, N_FIELD);
-        np->field.fieldKind = FIELD_KIND_FUNCTION;
-        np->attributes = fp->attributes;
         /*
             Must clear the getter|setter attributes so it can be loaded without invoking the accessor.
             The NEW_OBJECT opcode will call ejsDefineProperty which will restore the attributes.

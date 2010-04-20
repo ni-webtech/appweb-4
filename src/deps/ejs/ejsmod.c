@@ -4414,7 +4414,7 @@ static void logger(MprCtx ctx, int flags, int level, const char *msg)
     MprFile     *file;
     char        *prefix;
 
-    mpr = mprGetMpr();
+    mpr = mprGetMpr(ctx);
     file = (MprFile*) mpr->logHandlerData;
     prefix = mpr->name;
 

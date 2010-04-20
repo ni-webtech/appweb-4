@@ -345,7 +345,7 @@ installRemoveLog() {
         return
     fi
     if [ "$pack" = binary ] ; then
-        eval $do \"${BLD_VER_PREFIX}fileList.txt\"
+        eval $do \"${BLD_VER_PREFIX}/fileList.txt\"
     elif [ "$pack" = dev ] ; then
         eval $do \"${BLD_INC_PREFIX}/fileList.txt\"
     elif [ "$pack" = source ] ; then

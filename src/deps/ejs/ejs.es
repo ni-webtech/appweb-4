@@ -9177,7 +9177,7 @@ module ejs {
         /**
             Search right to left for a substring starting at a given index.
             @param pattern The string to search for
-            @param location The integer starting to start the search or a range to search in.
+            @param location The character index at which to start the search.
             @return Return the starting index of the last match found.
          */
         native function lastIndexOf(pattern: String, location: Number = -1): Number
