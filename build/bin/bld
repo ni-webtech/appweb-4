@@ -324,8 +324,11 @@ findLib() {
                 eval $newLibName="$newName"
 			fi
 		else
-			# eval $newLibName="$newName"
-			eval $newLibName="-l${library}"
+            if [ "$OS" = "VXWORKS" ] ; then
+                eval $newLibName="$newName"
+            else 
+                eval $newLibName="-l${library}"
+            fi
         fi
 	else
 		#
