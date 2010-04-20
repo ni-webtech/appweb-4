@@ -1858,8 +1858,6 @@ int mprIsValid(cvoid *ptr)
  */
 Mpr *mprGetMpr(MprCtx ctx)
 {
-    mprAssert(ctx);
-    
 #if BLD_WIN_LIKE
     /*  Windows can use globalMpr but must have a function to solve linkage issues */
     return (Mpr*) _globalMpr;
