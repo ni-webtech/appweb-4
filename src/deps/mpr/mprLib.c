@@ -6930,7 +6930,7 @@ int mprWaitForSingleIO(MprCtx ctx, int fd, int mask, int timeout)
     struct epoll_event  ev, events[2];
     int                 epfd, rc, err;
 
-    ws = mprGetMpr()->waitService;
+    ws = mprGetMpr(ctx)->waitService;
     if (timeout < 0) {
         timeout = MAXINT;
     }
@@ -7046,7 +7046,7 @@ void mprWakeNotifier(MprCtx ctx)
     MprWaitService  *ws;
     int             c;
 
-    ws = mprGetMpr()->waitService;
+    ws = mprGetMpr(ctx)->waitService;
     if (!ws->wakeRequested) {
         ws->wakeRequested = 1;
         c = 0;
@@ -12324,7 +12324,7 @@ void mprWakeNotifier(MprCtx ctx)
     MprWaitService  *ws;
     int             c;
 
-    ws = mprGetMpr()->waitService;
+    ws = mprGetMpr(ctx)->waitService;
     if (!ws->wakeRequested) {
         ws->wakeRequested = 1;
         c = 0;
@@ -13343,8 +13343,7 @@ int print(cchar *fmt, ...)
     MprCtx          ctx;
     char            *buf;
 
-    ctx = mprGetMpr();
-
+    ctx = mprGetMpr(NULL);
     fs = mprLookupFileSystem(ctx, "/");
     va_start(ap, fmt);
     buf = mprVasprintf(ctx, -1, fmt, ap);
@@ -13641,7 +13640,7 @@ int mprSetRomFileSystem(MprCtx ctx, MprRomInode *inodeList)
     MprRomFileSystem     rfs;
     MprRomInode         *ri;
 
-    rfs = (MprRomFileSystem*) mprGetMpr()->fileSystem;
+    rfs = (MprRomFileSystem*) mprGetMpr(ctx)->fileSystem;
     rfs->romInodes = inodeList;
     rfs->fileIndex = mprCreateHash(rfs, MPR_FILES_HASH_SIZE);
 
@@ -13912,7 +13911,7 @@ int mprWaitForSingleIO(MprCtx ctx, int fd, int mask, int timeout)
     if (timeout < 0) {
         timeout = MAXINT;
     }
-    ws = mprGetMpr()->waitService;
+    ws = mprGetMpr(ctx)->waitService;
     tval.tv_sec = timeout / 1000;
     tval.tv_usec = (timeout % 1000) * 1000;
 
@@ -14019,7 +14018,7 @@ void mprWakeNotifier(MprCtx ctx)
     MprWaitService  *ws;
     int             c, rc;
 
-    ws = mprGetMpr()->waitService;
+    ws = mprGetMpr(ctx)->waitService;
     if (!ws->wakeRequested) {
         ws->wakeRequested = 1;
         c = 0;
@@ -20509,7 +20508,7 @@ MprModule *mprLoadModule(MprCtx ctx, cchar *name, cchar *initFunction, void *dat
                         mprError(ctx, "Can't find symbol %s when loading %s", initFunction, path);
 
                     } else {
-                        mp = mprCreateModule(mprGetMpr(), name, data);
+                        mp = mprCreateModule(mprGetMpr(ctx), name, data);
                         mp->handle = handle;
                         if ((fn)(ctx, mp) < 0) {
                             mprError(ctx, "Initialization for %s failed.", path);
@@ -20544,7 +20543,7 @@ void mprSleep(MprCtx ctx, int milliseconds)
 
 void mprUnloadModule(MprModule *mp)
 {
-    mprRemoveItem(mprGetMpr()->moduleService->modules, mp);
+    mprRemoveItem(mprGetMpr(mp)->moduleService->modules, mp);
     unldByModuleId((MODULE_ID) mp->handle, 0);
 }
 
@@ -20921,7 +20920,7 @@ HWND mprGetHwnd(MprCtx ctx)
 {
     Mpr     *mpr;
 
-    mpr = mprGetMpr();
+    mpr = mprGetMpr(ctx);
     return mpr->waitService->hwnd;
 }
 
@@ -21047,7 +21046,7 @@ void mprSetHwnd(MprCtx ctx, HWND h)
 {
     Mpr     *mpr;
 
-    mpr = mprGetMpr();
+    mpr = mprGetMpr(ctx);
     mpr->waitService->hwnd = h;
 }
 
@@ -21056,7 +21055,7 @@ void mprSetSocketMessage(MprCtx ctx, int socketMessage)
 {
     Mpr     *mpr;
 
-    mpr = mprGetMpr();
+    mpr = mprGetMpr(ctx);
     mpr->waitService->socketMessage = socketMessage;
 }
 
@@ -21101,7 +21100,7 @@ void mprUnloadModule(MprModule *mp)
     if (mp->stop) {
         mp->stop(mp);
     }
-    mprRemoveItem(mprGetMpr()->moduleService->modules, mp);
+    mprRemoveItem(mprGetMpr(mp)->moduleService->modules, mp);
     FreeLibrary((HINSTANCE) mp->handle);
 }
 
@@ -21528,7 +21527,7 @@ void mprSetHwnd(MprCtx ctx, HWND h)
 {
     Mpr     *mpr;
 
-    mpr = mprGetMpr();
+    mpr = mprGetMpr(ctx);
     mpr->service->hwnd = h;
 }
 
@@ -21537,7 +21536,7 @@ void mprSetSocketMessage(MprCtx ctx, int socketMessage)
 {
     Mpr     *mpr;
 
-    mpr = mprGetMpr();
+    mpr = mprGetMpr(ctx);
     mpr->service->socketMessage = socketMessage;
 }
 #endif /* WINCE */
@@ -21583,7 +21582,7 @@ void mprUnloadModule(MprModule *mp)
     if (mp->stop) {
         mp->stop(mp);
     }
-    mprRemoveItem(mprGetMpr()->moduleService->modules, mp);
+    mprRemoveItem(mprGetMpr(mp)->moduleService->modules, mp);
     FreeLibrary((HINSTANCE) mp->handle);
 }
 
