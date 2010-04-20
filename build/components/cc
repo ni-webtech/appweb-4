@@ -27,6 +27,7 @@ setCompilerOptions()
     eval cc=\$CFG_${KIND}_CC
     eval cpu=\$BLD_${KIND}_CPU
     eval hasStackProtector=\${KIND}_HAS_STACK_PROTECTOR
+    eval hasDoubleBraces=\${KIND}_HAS_DOUBLE_BRACES
     eval hasLibEdit=\${KIND}_HAS_EDITLINE
     eval hasMtune=\${KIND}_HAS_MTUNE
     eval hasDynLoad=\${KIND}_HAS_DYN_LOAD
@@ -37,6 +38,7 @@ setCompilerOptions()
 
     eval $hasStackProtector=0
     eval $hasMtune=0
+    eval ${hasDoubleBraces}=0
     eval ${hasDynLoad}=0
     eval ${hasLibEdit}=0
     eval ${hasMmu}=0
@@ -145,6 +147,19 @@ setCompilerOptions()
                     eval $hasLibEdit=1
                 fi
             fi
+
+            #
+            #   Check for braces around initializers
+            #
+            if [ "$verbose" != 0 ] ; then
+                echo -e "    Checking for initializers"
+                # echo "         ${cc}" -o $out -c $file 
+            fi
+            echo -e "#include <stdarg.h>\nva_list d = {0};\n" >$file
+            "${cc}" -Wall -c -o $out -c $file 2>&1 | grep 'missing braces' >/dev/null
+            if [ $? = 0 ] ; then
+                eval $hasDoubleBraces=1
+            fi
         fi
         rm -f t$$.o ${file} ${out}
 
@@ -154,6 +169,7 @@ setCompilerOptions()
         #
         eval $hasMmu=1
         eval $hasDynLoad=1
+        eval $hasDoubleBraces=0
     fi
     if [ $os = VXWORKS ] ; then
         eval ${hasDynLoad}=1
@@ -175,6 +191,7 @@ emitCompilerOptions()
     local v
     eval v=\$${KIND}_HAS_CYGWIN ;           echo -e "\tBLD_CC_CYGWIN=$v"
     eval v=\$${KIND}_HAS_DIAB ;             echo -e "\tBLD_CC_DIAB=$v"
+    eval v=\$${KIND}_HAS_DOUBLE_BRACES ;    echo -e "\tBLD_CC_DOUBLE_BRACES=$v"
     eval v=\$${KIND}_HAS_DYN_LOAD ;         echo -e "\tBLD_CC_DYN_LOAD=$v"
     eval v=\$${KIND}_HAS_MTUNE ;            echo -e "\tBLD_CC_MTUNE=$v"
     eval v=\$${KIND}_HAS_MMU ;              echo -e "\tBLD_CC_MMU=$v"
