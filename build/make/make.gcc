@@ -194,9 +194,10 @@ ifeq ($(BLD_FEATURE_STATIC_LIBC),1)
 endif
 
 _LDPATH			= $(BLD_ABS_LIB_DIR)
-ifeq ($(BLD_OS),LINUX)
-    _LDFLAGS	+= -Wl,-rpath-link=$(BLD_ABS_LIB_DIR)
-endif
+
+# ifeq ($(BLD_OS),LINUX)
+#     _LDFLAGS	+= -Wl,-rpath-link=$(BLD_ABS_LIB_DIR)
+# endif
 
 #
 #	Support for dynamically loadable modules is present in shared and static builds
