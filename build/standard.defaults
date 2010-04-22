@@ -36,7 +36,7 @@ with --build --os=wince winsdk
 with --os=wince wince
 with --os=vxworks vxworks
 
-with ar cc make nm
+with ar cc make nm strip
 with --os=linux ranlib
 with --os=macosx ranlib
 with --os=win ld mt rc

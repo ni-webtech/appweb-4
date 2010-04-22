@@ -693,15 +693,16 @@ else
         done
     fi
 
-#    if [ "$BLD_TYPE" = "RELEASE" ] ; then
-#        RPATH_LIST="${BLD_LIB_PREFIX} ${BLD_MOD_PREFIX} $RPATH_LIST"
-#    else
-#        RPATH_LIST="`canonPath \"${BLD_LIB_DIR}\"` `canonPath \"${BLD_MOD_DIR}\"` $RPATH_LIST"
-#    fi
+    libdir=${BLD_LIB_NAME%/*}
+    moddir=${BLD_MOD_NAME%/*}
     if [ "$OS" = MACOSX ] ; then
-        RPATH_LIST="@executable_path/../$BLD_LIB_NAME @executable_path/../$BLD_MOD_NAME @executable_path/ @loader_path/ $RPATH_LIST"
+        RPATH_LIST="@executable_path/../$libdir @executable_path/../$moddir @executable_path/ @loader_path/ $RPATH_LIST"
     elif [ "$OS" = LINUX ] ; then
-        RPATH_LIST="ORIGIN/ ORIGIN/../$BLD_LIB_NAME ORIGIN/../$BLD_MOD_NAME $RPATH_LIST"
+        if [ "$BLD_TYPE" = "RELEASE" ] ; then
+            # Uclinux needs the LIB_PREFIX explicitly in the rpath as $ORIGIN doesn't seem to work
+            RPATH_LIST="${BLD_LIB_PREFIX} ${BLD_MOD_PREFIX} $RPATH_LIST"
+        fi
+        RPATH_LIST="ORIGIN/ ORIGIN/../$libdir ORIGIN/../$moddir $RPATH_LIST"
     fi
     if [ "$RPATH_LIST" != "" ] ; then
         if [ "$OS" = "LINUX" ] ; then
