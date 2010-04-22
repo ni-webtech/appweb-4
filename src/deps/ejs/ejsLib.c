@@ -5781,7 +5781,6 @@ static char *makeModuleName(MprCtx ctx, cchar *name);
 static int  readNumber(Ejs *ejs, MprFile *file, int *number);
 static int  readWord(Ejs *ejs, MprFile *file, int *number);
 static char *search(Ejs *ejs, cchar *filename, int minVersion, int maxVersion);
-static int  swapShort(Ejs *ejs, int word);
 static int  swapWord(Ejs *ejs, int word);
 static char *tokenToString(EjsModule *mp, int   token);
 static int  trimModule(Ejs *ejs, char *name);
@@ -6764,7 +6763,7 @@ static int loadScriptModule(Ejs *ejs, MprFile *file, cchar *path, int flags)
         ejsThrowIOError(ejs, "Error reading module file %s, corrupt header", path);
         return EJS_ERR;
     }
-    if ((int) swapShort(ejs, hdr.magic) != EJS_MODULE_MAGIC) {
+    if ((int) swapWord(ejs, hdr.magic) != EJS_MODULE_MAGIC) {
         ejsThrowIOError(ejs, "Bad module file format in %s", path);
         return EJS_ERR;
     }
@@ -7696,6 +7695,7 @@ EjsDoc *ejsCreateDoc(Ejs *ejs, EjsBlock *block, int slotNum, cchar *docString)
 }
 
 
+#if UNUSED
 static int swapShort(Ejs *ejs, int word)
 {
     if (mprGetEndian(ejs) == MPR_LITTLE_ENDIAN) {
@@ -7704,6 +7704,7 @@ static int swapShort(Ejs *ejs, int word)
     word = ((word & 0xFFFF) << 16) | ((word & 0xFFFF0000) >> 16);
     return ((word & 0xFF) << 8) | ((word & 0xFF00) >> 8);
 }
+#endif
 
 
 static int swapWord(Ejs *ejs, int word)
@@ -46338,7 +46339,6 @@ static int  createPropertySection(EcCompiler *cp, EjsObj *block, int slotNum, Ej
 static int  createSection(EcCompiler *cp, EjsObj *block, int slotNum);
 static int  reserveRoom(EcCompiler *cp, int room);
 static int  sum(cchar *name, int value);
-static int  swapShortField(EcCompiler *cp, int word);
 static int  swapWordField(EcCompiler *cp, int word);
 
 static int  createDocSection(EcCompiler *cp, EjsObj *block, int slotNum, EjsTrait *trait);
@@ -46351,7 +46351,7 @@ int ecCreateModuleHeader(EcCompiler *cp)
     EjsModuleHdr    hdr;
 
     memset(&hdr, 0, sizeof(hdr));
-    hdr.magic = swapShortField(cp, EJS_MODULE_MAGIC);
+    hdr.magic = swapWordField(cp, EJS_MODULE_MAGIC);
     hdr.fileVersion = swapWordField(cp, EJS_MODULE_VERSION);
     if (ecEncodeBlock(cp, (uchar*) &hdr, sizeof(hdr)) < 0) {
         return MPR_ERR_CANT_WRITE;
@@ -47461,6 +47461,7 @@ void ecAdjustCodeLength(EcCompiler *cp, int adj)
 }
 
 
+#if UNUSED && KEEP
 static int swapShortField(EcCompiler *cp, int word)
 {
     if (mprGetEndian(cp) == MPR_LITTLE_ENDIAN) {
@@ -47469,6 +47470,7 @@ static int swapShortField(EcCompiler *cp, int word)
     word = ((word & 0xFFFF) << 16) | ((word & 0xFFFF0000) >> 16);
     return ((word & 0xFF) << 8) | ((word & 0xFF00) >> 8);
 }
+#endif
 
 
 static int swapWordField(EcCompiler *cp, int word)

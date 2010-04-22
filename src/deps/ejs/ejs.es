@@ -12551,18 +12551,16 @@ module ejs.db {
         function Database(adapter: String, connectionString: String) {
             Database.defaultDb ||= this
             if (adapter == "sqlite3") adapter = "sqlite"
-            try {
-                _name = Path(connectionString).basename
-                _connection = connectionString
-                let adapterClass = adapter.toPascal()
-                if (!global."ejs.db"::[adapterClass]) {
-                    load("ejs.db." + adapter + ".mod")
-                }
-                _adapter = new global."ejs.db"::[adapterClass](connectionString)
-            } catch (e) {
-                print(e)
+            _name = Path(connectionString).basename
+            _connection = connectionString
+            let adapterClass = adapter.toPascal()
+            if (!global."ejs.db"::[adapterClass]) {
+                load("ejs.db." + adapter + ".mod")
+            }
+            if (!global."ejs.db"::[adapterClass]) {
                 throw "Can't find database connector for " + adapter
             }
+            _adapter = new global."ejs.db"::[adapterClass](connectionString)
         }
 
         /**
@@ -13320,6 +13318,7 @@ module ejs.db.mapper {
          */
         function error(field: String, msg: String): Void {
             field ||= ""
+            _errors ||= {}
             _errors[field] = msg
         }
 
@@ -15089,7 +15088,12 @@ module ejs.web {
 
 		function buttonLink(text: String, options: Object): Void {
             options.uri ||= request.makeUri(options)
-			write('<button onclick="window.location=\'' + options.uri + '\';">' + text + '</button></a>')
+            if (options["data-remote"]) {
+                let attributes = getDataAttributes(options)
+                write('<button ' + attributes + '>' + text + '</button></a>')
+            } else {
+                write('<button onclick="window.location=\'' + options.uri + '\';">' + text + '</button></a>')
+            }
         }
 
 		function chart(initialData: Array, options: Object): Void {
@@ -15165,8 +15169,8 @@ module ejs.web {
                             }
                         }
                     } else {
-                        isSelected = (i == defaultValue) ? 'selected="yes"' : ''
-                        write('  <option value="' + i + '"' + isSelected + '>' + choice + '</option>')
+                        isSelected = (choice == defaultValue) ? 'selected="yes"' : ''
+                        write('  <option value="' + choice + '"' + isSelected + '>' + choice + '</option>')
                     }
                 }
                 i++
@@ -15245,13 +15249,7 @@ module ejs.web {
             let sortOrder = options.sortOrder || ""
             let sort = options.sort
             if (sort == undefined) sort = true
-
-            if (options["data-remote"]) {
-                attributes += ' data-remote="' + options["data-remote"] + '"'
-            }
-            if (options["data-apply"]) {
-                attributes += ' data-apply="' + options["data-apply"] + '"'
-            }
+            let attributes = getDataAttributes(options)
 
             //  TODO - would be nice to auto sense this
             if (!options.ajax) {
@@ -15459,6 +15457,20 @@ module ejs.web {
 
         private function write(str: String): Void
             request.write(str)
+
+        private function getDataAttributes(options): String {
+            let attributes = ""
+            if (options["data-remote"]) {
+                attributes += ' data-remote="' + options["data-remote"] + '"'
+            }
+            if (options["data-apply"]) {
+                attributes += ' data-apply="' + options["data-apply"] + '"'
+            }
+            if (options["data-id"]) {
+                attributes += ' data-id="' + options["data-id"] + '"'
+            }
+            return attributes
+        }
 	}
 }
 
@@ -18587,7 +18599,7 @@ module ejs.web.template  {
             if (layoutPage && layoutPage != options.currentLayout) {
                 let layoutOptions = blend(options.clone(), { currentLayout: layoutPage })
                 let layoutText: String = new TemplateParser().parse(layoutPage.readString(), layoutOptions)
-                return layoutText.replace(ContentPattern, out.toString())
+                return layoutText.replace(ContentPattern, out.toString().replace(/\$/g, "$$$$"))
             }
             return out.toString()
         }
