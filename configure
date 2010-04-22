@@ -1956,21 +1956,16 @@ Installation directories:
   directory options are not yet fully supported.
 
   --prefix=PATH            Set the default base installation directory for 
-                             the product. Default is /etc/${BLD_PRODUCT} on 
-                             Unix, /${BLD_PRODUCT} on Windows.
-  --bindir=PATH            Set the directory for binaries.
-                             "make install" will install tools to this location
+                             the product. Default is /usr/lib/${BLD_PRODUCT} on 
+                             Unix, /Program/Files/${BLD_NAME} on Windows.
   --datadir                Directory for generic data files. Typically
                              /usr/share on Unix systems.
   --docdir=PATH            Set the directory for the documentation.
   --incdir=PATH            Set the directory for include headers. --includedir and
                              --oldincludedir are aliases.
-  --libdir=PATH            Set the directory for $BLD_PRODUCT development libraries.
-  --libexecdir=PATH        Set the directory for development libraries.
   --localstatedir          Set the directory for modifiable files. Typically 
                               /var on Unix. 
   --logdir=PATH            Set the directory for logging.
-  --moddir=PATH            Set the directory for loadable modules.
   --mandir=PATH            Set the directory for the manual pages (UNIX only).
   --samdir=PATH            Set the directory for the samples.
   --sbindir=PATH           Set the directory for system binaries.
@@ -2216,7 +2211,7 @@ setSystemConfiguration
 [ $quiet = 0 ] && echo -e "  # Prepare search path ..."
 . build/search.config
 BUILD_SEARCH_PATH=`convertSearchPath "$BUILD_SEARCH_PATH"`:$PATH
-HOST_SEARCH_PATH=`convertSearchPath "$HOST_SEARCH_PATH"`
+HOST_SEARCH_PATH=`convertSearchPath "$HOST_SEARCH_PATH"`:$PATH
 if [ "$ENV_BUILD_SEARCH_PATH" != "" ] ; then
     BUILD_SEARCH_PATH=`convertSearchPath "$ENV_BUILD_SEARCH_PATH"`:"$BUILD_SEARCH_PATH"
 fi
@@ -2240,9 +2235,9 @@ while [ "${1#--}" != "$1" ] ; do
 
     SW=`echo ${1#--} | tr '[A-Z]' '[a-z]'`
     case ${SW} in
-    bindir=*)
-        BLD_BIN_PREFIX=`canonPath "${ARG}"`
-        ;;
+#   bindir=*)
+#       BLD_BIN_PREFIX=`canonPath "${ARG}"`
+#       ;;
     buildNumber=*)
         BLD_NUMBER="${ARG}"
         ;;
@@ -2309,14 +2304,14 @@ while [ "${1#--}" != "$1" ] ; do
     incdir=*|includedir=*|oldincludedir=*)
         BLD_INC_PREFIX=`canonPath "${ARG}"`
         ;;
-    libdir=*)
-        BLD_LIB_PREFIX=`canonPath "${ARG}"`
-        ;;
-    libexecdir=*)
-        BLD_LIB_PREFIX=`canonPath "${ARG}"/${BLD_PRODUCT}/${BLD_VERSION}`
-        BLD_MOD_PREFIX=`canonPath "${ARG}"/${BLD_PRODUCT}/modules`
-        BLD_JEM_PREFIX=`canonPath "${ARG}"/${BLD_PRODUCT}/jems`
-        ;;
+#   libdir=*)
+#       BLD_LIB_PREFIX=`canonPath "${ARG}"`
+#       ;;
+#   libexecdir=*)
+#       BLD_LIB_PREFIX=`canonPath "${ARG}"/${BLD_PRODUCT}/${BLD_VERSION}`
+#       BLD_MOD_PREFIX=`canonPath "${ARG}"/${BLD_PRODUCT}/${BLD_VERSION}/modules`
+#       BLD_JEM_PREFIX=`canonPath "${ARG}"/${BLD_PRODUCT}/jems`
+#       ;;
     localstatedir=*)
         BLD_WEB_PREFIX=`canonPath "${ARG}"/www/${BLD_PRODUCT}-default`
         ;;
@@ -2326,9 +2321,9 @@ while [ "${1#--}" != "$1" ] ; do
     mandir=*)
         BLD_MAN_PREFIX=`canonPath "${ARG}"`
         ;;
-    moddir=*)
-        BLD_MOD_PREFIX=`canonPath "${ARG}"`
-        ;;
+#   moddir=*)
+#       BLD_MOD_PREFIX=`canonPath "${ARG}"`
+#       ;;
     name=*)
         BLD_NAME="${ARG}"
         ;;
@@ -2419,6 +2414,8 @@ while [ "${1#--}" != "$1" ] ; do
     #
     #   Ignored but provided for compatibility with autoconf
     #
+    bindir=*|libdir=*|libexecdir=*|moddir=*)
+        ;;
     disable-nls|enable-nls)
         ;;
     exec-prefix=*|sbindir=*|sharedstatedir=*|localstatedir=*)
