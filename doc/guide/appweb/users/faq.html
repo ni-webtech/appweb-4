@@ -191,7 +191,7 @@
             <p class="question"><a name="buildPHP" id="buildPHP"></a>How can I rebuild PHP?</p>
             <div class="answer">
                 <p>Building PHP can sometimes be tricky, especially on Windows. We provide snapshots of various
-                packages at http://hg.embedthis.com/packages. This URL is a Mercurial repository for PHP, OpenSSL and
+                packages at http://hg.embedthis.com/packages. This URL is a Git repository for PHP, OpenSSL and
                 MatrixSSL with Makefiles to assist those wanting to rebuild these packages.</p>
                 <p><b>NOTE:</b>These packages are not supported. They are provides as a service only.</p>
                 <p>If you are building Ubuntu Linux, you will need to run the following command to get the necessary
@@ -199,10 +199,10 @@
                 <pre>
 apt-get install build-essential libxml2-dev libdb-dev
 </pre>
-                <p>To get the PHP package, use the <a href="http://www.selenic.com/mercurial/">Mercurial</a> tool to
+                <p>To get the PHP package, use the <strong>git</strong> tool to
                 download the packages:</p>
                 <pre>
-hg clone http://hg.embedthis.com/packages
+git clone http://github.com/embedthis/packages
 </pre>. This is a big download, please be patient.
                 <p>In the php sub-directory you will find a Makefile which has configure settings for PHP on various
                 platforms. This Makefile disables most features to build a minimal PHP configuration. Edit this to suit
