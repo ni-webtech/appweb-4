@@ -379,7 +379,9 @@ cpy() {
                 [ $v -gt 1 ] && echo -e "${UNIX2DOS} -D $dest" 2>/dev/null
                 ${UNIX2DOS} -D "$dest" 2>/dev/null
             fi
-
+            if [ $strip = 1 -a "${BLD_STRIP}" != "" -a $BLD_UNIX_LIKE ] ; then
+                ${BLD_STRIP} $dest
+            fi
             if [ "$mode" = 0 ] ; then
                 mode=`getDefaultMode $src`
             fi
@@ -440,7 +442,7 @@ preparePrefixes() {
     #
     #   Update prefixes
     #
-    for name in PREFIX ROOT_PREFIX BIN_PREFIX CFG_PREFIX DOC_PREFIX INC_PREFIX LIB_PREFIX LOG_PREFIX MAN_PREFIX \
+    for name in PREFIX ROOT_PREFIX BIN_PREFIX CFG_PREFIX DOC_PREFIX JEM_PREFIX INC_PREFIX LIB_PREFIX LOG_PREFIX MAN_PREFIX \
         MOD_PREFIX PRD_PREFIX SAM_PREFIX SRC_PREFIX VER_PREFIX WEB_PREFIX
     do
         eval path="\${BLD_${name}}"

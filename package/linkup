@@ -1,6 +1,5 @@
-#!/bin/bash
 #
-#   Create or modify symlinks for the most recent installed versions of Ejscript
+#   Create or modify symlinks for the most recent installed versions of Appweb
 #
 #   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
 #
@@ -8,10 +7,15 @@
 TASK=$1
 PRODUCT=appweb
 EXE=
-BIN=/usr/local/bin
 INC=/usr/include
 MAN=/usr/share/man
 PROGRAMS="ajs ajsc ajsmod ajssql ajsweb appweb http httpPassword"
+
+if [ -x /usr/local/bin ] ; then
+    BIN=/usr/local/bin
+else 
+    BIN=/usr/bin
+fi
 
 prefix=/usr/lib/${PRODUCT}
 
