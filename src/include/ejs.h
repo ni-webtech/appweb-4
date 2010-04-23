@@ -2811,6 +2811,13 @@ extern EjsBoolean *ejsToBoolean(Ejs *ejs, EjsObj *vp);
     #define ejsGetBoolean(ejs, vp) _ejsGetBoolean(ejs, (EjsObj*) (vp))
 #endif
 
+/*
+    Thse constants match Stream.READ, Stream.WRITE, Stream.BOTH
+ */
+#define EJS_STREAM_READ     0x1
+#define EJS_STREAM_WRITE    0x2
+#define EJS_STREAM_BOTH     0x3
+
 /** 
     ByteArray class
     @description ByteArrays provide a growable, integer indexed, in-memory store for bytes. ByteArrays can be used as a 

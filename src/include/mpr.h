@@ -5235,7 +5235,6 @@ extern int mprGetPageSize(MprCtx ctx);
 /*
     Wait service.
  */
-
 #define MPR_READABLE           0x2          /* Read event mask */
 #define MPR_WRITABLE           0x4          /* Write event mask */
 
