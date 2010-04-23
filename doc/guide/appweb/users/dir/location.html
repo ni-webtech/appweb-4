@@ -45,6 +45,7 @@
             <h2>Quick Nav</h2>
             <ul>
                 <li><a href="#location">Location</a></li>
+                <li><a href="#putMethod">PutMethod</a></li>
                 <li><a href="#resetPipeline">ResetPipeline</a></li>
             </ul>
             <h2>See Also</h2>
@@ -194,7 +195,41 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="resetPipeline" id="resetPipeline"></a>
+            </table>
+            
+            <a name="putMethod" id="putMethod"></a>
+            <h2>PutMethod</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control use of the HTTP PUT method inside a location block.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>PutMethod [on|off]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual host, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>ResetPipeline</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The HTTP PUT method is used for sending content to the server. It can be destructive
+                            and so the PUT method is disabled by default. It must be explicitly enabled for a location
+                            block efore use.
+                            <p>NOTE: PutMethod is a proprietary Appweb directive.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="resetPipeline" id="resetPipeline"></a>
             <h2>ResetPipeline</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
