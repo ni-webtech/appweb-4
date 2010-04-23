@@ -238,7 +238,7 @@ module ejs {
 
         /** 
             Set the current module search path
-            @parram paths An array of paths
+            @param paths An array of paths
          */
         native static function set search(paths: Array): Void
 
@@ -251,12 +251,13 @@ module ejs {
         native static function createSearch(searchPath: String? = null): Array
 
         /** 
-            Service events
+            Run the event loop. This is typically done automatically by the hosting program and is not normally required
+            in user programs.
             @param timeout Timeout to block waiting for an event in milliseconds before returning. If an event occurs, the
                 call returns immediately.
             @param oneEvent If true, return immediately after servicing one event.
          */
-        native static function serviceEvents(timeout: Number = -1, oneEvent: Boolean = false): Void
+        native static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): Void
 
         /** 
             Set an environment variable.
@@ -284,6 +285,50 @@ module ejs {
          */
         static static function get version(): String
             Config.Version
+
+
+        //  DEPRECATED
+        /** 
+            The current module search path . Set to a delimited searchPath string. Warning: This will be changed to an
+            array of paths in a future release.
+            @stability deprecated.
+            @hide
+         */
+        static function get searchPath(): String {
+            if (Config.OS == "WIN") {
+                return search.join(";")
+            } else {
+                return search.join(":")
+            }
+        }
+
+        //  DEPRECATED
+        /** 
+            @stability deprecated.
+            @hide
+         */
+        static function set searchPath(path: String): Void {
+            if (Config.OS == "WIN") {
+                search = path.split(";")
+            } else {
+                search = path.split(":")
+            }
+        }
+
+        //  DEPRECATED
+        /**
+            Service events
+            @param count Count of events to service. Defaults to unlimited.
+            @param timeout Timeout to block waiting for an event in milliseconds before returning. If an event occurs, the
+                call returns immediately.
+            @stability deprecated
+            @hide
+         */
+        static function serviceEvents(count: Number = -1, timeout: Number = -1): Void {
+            for (i in count) {
+                eventLoop(timeout, true)
+            }
+        }
     }
 
     /**  
@@ -1033,12 +1078,14 @@ module ejs {
         /**
             @duplicate Stream.flush
          */
-        function flush(): Void {
-            inbuf.flush()
-            outbuf.flush()
+        function flush(dir: Number): Void {
+            if (dir & Stream.READ) 
+                inbuf.flush(Stream.READ)
+            if (dir & Stream.WRITE) 
+                outbuf.flush(Stream.WRITE)
             if (!(nextStream is ByteArray)) {
                 /* Don't flush loopback bytearrays */
-                nextStream.flush()
+                nextStream.flush(dir)
             }
         }
 
@@ -1521,8 +1568,11 @@ module ejs {
 
         /** 
             Flush (discard) the data in the byte array and reset the read and write positions.
+            This call may block if the stream is in sync mode.
+            @param dir Direction in which to flush. Set to a mask containing: Stream.READ, Stream.WRITE or Stream.BOTH.
+                A read flush will discard read data. A write flush will attempt to write buffered write data.
          */
-        native function flush(): Void
+        native function flush(dir: Number): Void
 
         /**
             Is the ByteArray is growable.
@@ -1659,8 +1709,8 @@ module ejs {
          *  @returns an XML document
          *  @throws IOError if an I/O error occurs or a premature end of file.
          */
-        # MOB
-        native function readXML(): XML
+        function readXML(): XML
+            XML(readString())
 
         /** 
             Remove a listener to the stream. If there are no listeners on the stream, the stream is put back into sync mode.
@@ -3870,9 +3920,8 @@ module ejs {
 
         /** 
             @duplicate Stream.flush
-            @hide 
          */
-        function flush(): Void {}
+        function flush(dir: Number): Void {}
 
         /** 
             Iterate over the positions in a file. This will get an iterator for this file to be used by 
@@ -4883,187 +4932,187 @@ module ejs {
         /** 
           HTTP Continue Status (100)
          */     
-        static const Continue : Number   = 100
+        static const Continue : Number = 100
 
         /** 
             HTTP Success Status (200) 
          */     
-        static const Ok : Number   = 200
+        static const Ok : Number = 200
 
         /** 
             HTTP Created Status (201) 
          */     
-        static const Created : Number   = 201
+        static const Created : Number = 201
 
         /** 
             HTTP Accepted Status (202) 
          */     
-        static const Accepted : Number   = 202
+        static const Accepted : Number = 202
 
         /** 
             HTTP Non-Authoritative Information Status (203) 
          */     
-        static const NotAuthoritative : Number   = 203
+        static const NotAuthoritative : Number = 203
 
         /** 
             HTTP No Content Status (204)  
          */     
-        static const NoContent : Number   = 204
+        static const NoContent : Number = 204
 
         /** 
             HTTP Reset Content Status (205) 
          */     
-        static const Reset : Number   = 205
+        static const Reset : Number = 205
 
         /** 
             HTTP Partial Content Status (206) 
          */     
-        static const PartialContent : Number   = 206
+        static const PartialContent : Number = 206
 
         /** 
             HTTP Multiple Choices Status (300) 
          */     
-        static const MultipleChoice : Number   = 300
+        static const MultipleChoice : Number = 300
 
         /** 
             HTTP Moved Permanently Status (301) 
          */     
-        static const MovedPermanently : Number   = 301
+        static const MovedPermanently : Number = 301
 
         /** 
             HTTP Found but Moved Temporily Status (302) 
          */     
-        static const MovedTemporarily : Number   = 302
+        static const MovedTemporarily : Number = 302
 
         /** 
             HTTP See Other Status (303) 
          */     
-        static const SeeOther : Number   = 303
+        static const SeeOther : Number = 303
 
         /** 
             HTTP Not Modified Status (304)     
          */
-        static const NotModified : Number   = 304
+        static const NotModified : Number = 304
 
         /** 
             HTTP Use Proxy Status (305) 
          */     
-        static const UseProxy : Number   = 305
+        static const UseProxy : Number = 305
 
         /** 
             HTTP Bad Request Status(400) 
          */     
-        static const BadRequest : Number   = 400
+        static const BadRequest : Number = 400
 
         /** 
             HTTP Unauthorized Status (401) 
          */     
-        static const Unauthorized : Number   = 401
+        static const Unauthorized : Number = 401
 
         /** 
             HTTP Payment Required Status (402) 
          */     
-        static const PaymentRequired : Number   = 402
+        static const PaymentRequired : Number = 402
 
         /** 
             HTTP Forbidden Status (403)  
          */     
-        static const Forbidden : Number   = 403
+        static const Forbidden : Number = 403
 
         /** 
             HTTP Not Found Status (404) 
          */     
-        static const NotFound : Number   = 404
+        static const NotFound : Number = 404
 
         /** 
             HTTP Method Not Allowed Status (405) 
          */     
-        static const BadMethod : Number   = 405
+        static const BadMethod : Number = 405
 
         /** 
             HTTP Not Acceptable Status (406) 
          */     
-        static const NotAcceptable : Number   = 406
+        static const NotAcceptable : Number = 406
 
         /** 
             HTTP ProxyAuthentication Required Status (407) 
          */     
-        static const ProxyAuthRequired : Number   = 407
+        static const ProxyAuthRequired : Number = 407
 
         /** 
             HTTP Request Timeout Status (408) 
          */     
-        static const RequestTimeout : Number   = 408
+        static const RequestTimeout : Number = 408
 
         /** 
             HTTP Conflict Status (409) 
          */     
-        static const Conflict : Number   = 409
+        static const Conflict : Number = 409
 
         /** 
             HTTP Gone Status (410) 
          */     
-        static const Gone : Number   = 410
+        static const Gone : Number = 410
 
         /** 
             HTTP Length Required Status (411) 
          */     
-        static const LengthRequired : Number   = 411
+        static const LengthRequired : Number = 411
         
         /** 
             HTTP Precondition Failed Status (412) 
          */     
-        static const PrecondFailed : Number   = 412
+        static const PrecondFailed : Number = 412
 
         /** 
             HTTP Request Entity Too Large Status (413) 
          */     
-        static const EntityTooLarge : Number   = 413
+        static const EntityTooLarge : Number = 413
 
         /** 
             HTTP Request URI Too Long Status (414)  
          */     
-        static const UriTooLong : Number   = 414
+        static const UriTooLong : Number = 414
 
         /** 
             HTTP Unsupported Media Type (415) 
          */     
-        static const UnsupportedMedia : Number   = 415
+        static const UnsupportedMedia : Number = 415
 
         /** 
             HTTP Requested Range Not Satisfiable (416) 
          */     
-        static const BadRange : Number   = 416
+        static const BadRange : Number = 416
 
         /** 
             HTTP Server Error Status (500) 
          */     
-        static const ServerError : Number   = 500
+        static const ServerError : Number = 500
 
         /** 
             HTTP Not Implemented Status (501) 
          */     
-        static const NotImplemented : Number   = 501
+        static const NotImplemented : Number = 501
 
         /** 
             HTTP Bad Gateway Status (502) 
          */     
-        static const BadGateway : Number   = 502
+        static const BadGateway : Number = 502
 
         /** 
             HTTP Service Unavailable Status (503) 
          */     
-        static const ServiceUnavailable : Number   = 503
+        static const ServiceUnavailable : Number = 503
 
         /** 
             HTTP Gateway Timeout Status (504) 
          */     
-        static const GatewayTimeout : Number   = 504
+        static const GatewayTimeout : Number = 504
 
         /** 
             HTTP Http Version Not Supported Status (505) 
          */     
-        static const VersionNotSupported: Number   = 505
+        static const VersionNotSupported: Number = 505
 
         /* Cached response data */
         private var _response: String
@@ -5091,29 +5140,16 @@ module ejs {
             @duplicate Stream.async
          */
         native function get async(): Boolean
-
-        /** 
-            @duplicate Stream.async
-         */
         native function set async(enable: Boolean): Void
 
         /** 
-            The preferred chunk size used if transfer chunk encoding will be used. Chunked encoding is used when 
-            an explicit request content length is unknown at the time the request headers must be emitted. Chunked 
+            The preferred chunk size to use if transfer chunk encoding is employed. Chunked encoding will be used when 
+            an explicit request body content length is unknown at the time the request headers must be emitted. Chunked 
             encoding is automatically enabled if $post, $put or $upload is called and a contentLength has not been 
-            previously set. The chunk size is normally automatically determined by can be explicitly specified via
-            set $chunkSize. Set to zero if a size has not yet been defined.
+            previously set. The chunk size is normally automatically determined but can be explicitly specified by updating
+            the $chunkSize. It will be set to zero if a chunk size size has not yet been defined.
          */
         native function get chunkSize(): Boolean
-
-        /** 
-            Set the preferred chunk size to use for transfer chunk encoding. Chunked encoding is used when an explicit 
-            request content length is unknown at the time the request headers must be emitted.  Chunked encoding is 
-            automatically enabled if $post, $put or $upload is called and a contentLength has not been previously set.
-            @param value Number of bytes in chunks. This is advisory and the platform is free to determine a different
-            chunk size if required.
-            @hide
-         */
         native function set chunkSize(value: Boolean): Void
 
         /** 
@@ -5195,6 +5231,7 @@ module ejs {
             throw "Not yet implemented"
         }
 
+        //  MOB -- should this be script and not native
         /** 
             When the response content expires. This is derrived from the response Http Expires header.
          */
@@ -5210,9 +5247,8 @@ module ejs {
 
         /** 
             @duplicate Stream.flush
-            @hide 
          */
-        function flush(): Void {}
+        function flush(dir: Number): Void {}
 
         /** 
             Get whether redirects should be automatically followed by this Http object.
@@ -5494,7 +5530,7 @@ module ejs {
             let http = this
             buf.addListener("readable", function (event, buf) {
                 http.write(buf)
-                buf.flush()
+                buf.flush(Stream.WRITE)
             })
             setHeader("Content-Type", "multipart/form-data; boundary=" + boundary)
             post(uri)
@@ -5559,7 +5595,7 @@ module ejs {
         native function write(...data): Void
 
 //  TODO - Cleanup and remove
-        //  LEGACY 11/23/2010 1.0.0-B1
+        //  LEGACY 11/23/2010 1.0.0
         /** @hide */
         function addHeader(key: String, value: String, overwrite: Boolean = true): Void
             setHeader(key, value, overwrite)
@@ -5568,6 +5604,11 @@ module ejs {
         /** @hide */
         function get bodyLength(): Void
             contentLength
+
+        //  DEPRECATED
+        function set contentLength(value: Number): Void {
+            setHeader("content-length", value)
+        }
 
         //  DEPRECATED
         /** @hide */
@@ -5606,6 +5647,21 @@ module ejs {
         /** @hide */
         static function mimeType(path: String): String
             Uri(path)..mimeType
+
+        //  DEPRECATED
+        /** @hide */
+        function setCallback(eventMask: Number, cb: Function): Void {
+            addListener("" + eventMask, cb);
+        }
+
+        //  DEPRECATED
+        /** @hide */
+        function get chunked(): Boolean {
+            return chunksize != 0
+        }
+        function set chunked(enable: Boolean): Void {
+            chunkSize = (enable) ? 8192 : 0
+        }
     }
 }
 
@@ -6118,7 +6174,7 @@ module ejs {
         /**
             @hide
          */
-        function flush(): Void {}
+        function flush(dir: Number): Void {}
 
         /** 
             The numeric verbosity setting (0-9) of this logger.
@@ -8379,7 +8435,7 @@ module ejs {
 /*
     ES4 reflection proposal
  
-    intrinsic function typeOf(e: *): Type
+    function typeOf(e: *): Type
 
     interface Type {
         function canConvertTo(t: Type): Boolean
@@ -8775,9 +8831,8 @@ module ejs {
 
         /** 
             @duplicate Stream.flush
-            @hide 
          */
-        function flush(): Void {}
+        function flush(dir: Number): Void {}
 
         /** 
             Listen on a socket for client connections. This will put the socket into a server role for communcations.
@@ -8891,6 +8946,15 @@ module ejs {
 
         use default namespace public
 
+        /** Read direction constant for flush() */
+        const READ = 0x1
+
+        /** Write direction constant for flush() */
+        const WRITE = 0x2
+
+        /** Both directions constant for flush() */
+        const BOTH = 0x3
+
         /** 
             Add a listener to the stream. 
             @param name Name of the event to listen for. The name may be an array of events.
@@ -8922,12 +8986,14 @@ module ejs {
         function close(): Void
 
         /**
-            Flush the stream and underlying streams. The act of flushing requests a stream with buffered data to 
-            attempt to write all buffered data downstream. Flushing a stream with read data will cause the
-            stream to discard the read data. If the stream is in sync mode, this call will block until all data is
-            written. If the stream is in async mode, it will attempt to write all data but will not wait for completion.
+            Flush the stream and underlying streams. A supplied flush $direction argument modifies the effect of this call.
+            If direction is set to Stream.READ, then all read data is discarded. If direction is set to Stream.WRITE, 
+            any buffered data is written. Stream.BOTH will cause both directions to be flushed.  If the stream is in 
+            sync mode, this call will block until all data is written. If the stream is in async mode, it will attempt 
+            to write all data but will return immediately.
+            @param
          */
-        function flush(): Void 
+        function flush(dir: Number): Void 
 
         /** 
             Read a data from the stream. 
@@ -9756,7 +9822,7 @@ module ejs {
             @duplicate Stream.close
          */
         function close(): Void {
-            inbuf.flush()
+            inbuf.flush(Stream.WRITE)
             nextStream.close()
         }
 
@@ -9790,10 +9856,11 @@ module ejs {
         /** 
             @duplicate Stream.flush
          */
-        function flush(): Void {
-            inbuf.flush()
+        function flush(dir: Number): Void {
+            if (dir & Stream.WRITE)
+                inbuf.flush()
             if (!(nextStream is ByteArray)) {
-                nextStream.flush()
+                nextStream.flush(dir)
             }
         }
 
@@ -9814,7 +9881,7 @@ module ejs {
             if (offset < 0) {
                 buffer.reset()
             } else {
-                buffer.flush()
+                buffer.flush(Stream.READ)
             }
             let where = buffer.writePosition
             while (count > 0) {
@@ -16184,7 +16251,7 @@ module ejs.web {
             @duplicate Stream.flush
             @hide 
          */
-        function flush(): Void {}
+        function flush(dir: Number): Void {}
 
         /** 
             Get the (proposed) response headers
@@ -16427,6 +16494,108 @@ module ejs.web {
          */
         function get serverPort(): Number
             server.port
+
+        //  DEPRECATED
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get accept(): String
+            header("accept")
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get acceptCharset(): String
+            header("accept-charset")
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get acceptEncoding(): String
+            header("accept-encoding")
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get authAcl(): String {
+            throw new Error("Not supported")
+            return null
+        }
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get body(): String
+            input.readString()
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get connection(): String
+            header("connection")
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get extension(): String
+            Uri(pathInfo.extension)
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get hostName(): String
+            host
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get mimeType(): String
+            header("content-type")
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get pathTranslated(): String
+            dir.join(pathInfo)
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get pragma(): String
+            header("pragma")
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get remoteHost(): String
+            header("host")
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get url(): String
+            pathInfo
+
+        /** 
+            @stability deprecated
+            @hide
+          */
+        function get originalUri(): String
+            pathInfo
     }
 }
 

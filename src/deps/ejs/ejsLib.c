@@ -10277,9 +10277,9 @@ void ejsServiceEvents(Ejs *ejs, int timeout, int flags)
 
 
 /*  
-    static function serviceEvents(timeout: Number = -1, oneEvent: Boolean = false): void
+    static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): void
  */
-static EjsObj *serviceEvents(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *eventLoop(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     int     timeout, oneEvent;
 
@@ -10330,7 +10330,9 @@ void ejsConfigureAppType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_App_noexit, (EjsProc) noexit);
     ejsBindMethod(ejs, type, ES_App_createSearch, (EjsProc) createSearch);
     ejsBindAccess(ejs, type, ES_App_search, (EjsProc) getSearch, (EjsProc) setSearch);
-    ejsBindMethod(ejs, type, ES_App_serviceEvents, (EjsProc) serviceEvents);
+#if ES_App_eventLoop
+    ejsBindMethod(ejs, type, ES_App_eventLoop, (EjsProc) eventLoop);
+#endif
     ejsBindMethod(ejs, type, ES_App_sleep, (EjsProc) sleepProc);
 
 #if FUTURE
@@ -11380,7 +11382,7 @@ static EjsObj *lastArrayIndexOf(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     Get the length of an array.
     @return Returns the number of items in the array
 
-    intrinsic override function get length(): Number
+    override function get length(): Number
  */
 
 static EjsObj *getArrayLength(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
@@ -11392,7 +11394,7 @@ static EjsObj *getArrayLength(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 /*
     Set the length of an array.
 
-    intrinsic override function set length(value: Number): void
+    override function set length(value: Number): void
  */
 
 static EjsObj *setArrayLength(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
@@ -11659,7 +11661,9 @@ void quickSort(Ejs *ejs, EjsArray *ap, EjsFunction *compare, int direction, int 
 
 /**
     Sort the array using the supplied compare function
-    intrinsic native function sort(compare: Function = null, direction: Number = 1): Array
+
+    function sort(compare: Function = null, direction: Number = 1): Array
+
     Where compare is defined as:
         function compare(a,b): Number
  */
@@ -12280,8 +12284,8 @@ void ejsCreateBlockType(Ejs *ejs)
 
 /*
     Cast the operand to a primitive type
- *
-    intrinsic function cast(type: Type) : Object
+
+    function cast(type: Type) : Object
  */
 
 static EjsObj *castBooleanVar(Ejs *ejs, EjsBoolean *vp, EjsType *type)
@@ -12589,7 +12593,7 @@ void ejsConfigureBooleanType(Ejs *ejs)
 static EjsObj *ba_flush(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
 static EjsObj *ba_toString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
 
-static int  flushByteArray(Ejs *ejs, EjsByteArray *ap);
+static int  flushByteArray(Ejs *ejs, EjsByteArray *ap, int dir);
 static int  getInput(Ejs *ejs, EjsByteArray *ap, int required);
 static int  lookupByteArrayProperty(Ejs *ejs, EjsByteArray *ap, EjsName *qname);
  static bool makeRoom(Ejs *ejs, EjsByteArray *ap, int require);
@@ -12946,7 +12950,8 @@ static EjsObj *ba_close(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     if (ap->emitter) {
         ejsSendEvent(ejs, ap->emitter, "close", (EjsObj*) ap);
     }
-    return ba_flush(ejs, ap, argc, argv);
+    ap->writePosition = ap->readPosition = 0;
+    return 0;
 }
 
 
@@ -13139,12 +13144,15 @@ static EjsObj *ba_getValues(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
 
 /*  
     Flush the data in the byte array and reset the read and write position pointers
-    function flush(): Void
+    function flush(dir: Number): Void
  */
 static EjsObj *ba_flush(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
+    int     dir;
+
+    dir = ejsGetInt(ejs, argv[0]);
     if (argc == 0 || argv[0] == (EjsObj*) ejs->trueValue) {
-        flushByteArray(ejs, ap);
+        flushByteArray(ejs, ap, dir);
     }
     ap->writePosition = ap->readPosition = 0;
     return 0;
@@ -13154,7 +13162,7 @@ static EjsObj *ba_flush(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 /*
     Get the length of an array.
     @return Returns the number of items in the array
-    intrinsic override function get length(): Number
+    override function get length(): Number
  */
 static EjsObj *ba_getLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
@@ -13165,7 +13173,7 @@ static EjsObj *ba_getLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 #if KEEP
 /*
     Set the length of an array.
-    intrinsic override function set length(value: Number): void
+    override function set length(value: Number): void
  */
 static EjsObj *ba_setLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
@@ -13183,6 +13191,17 @@ static EjsObj *ba_setLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     return 0;
 }
 #endif
+
+
+/*
+    Get the length of an array.
+    @return Returns the number of items in the array
+    function growable(): Boolean
+ */
+static EjsObj *ba_growable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+{
+    return (EjsObj*) ejsCreateNumber(ejs, ap->length);
+}
 
 
 /*
@@ -13696,13 +13715,13 @@ static EjsObj *ba_setWritePosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj 
 /*
     Flush the array. Issue a "flush" event. Flushing attempts to write pending data before resetting the array.
  */
-static int flushByteArray(Ejs *ejs, EjsByteArray *ap)
+static int flushByteArray(Ejs *ejs, EjsByteArray *ap, int dir)
 {
-    if (ap->emitter && availableBytes(ap) && !ejs->exception) {
+    if ((dir & EJS_STREAM_WRITE) && ap->emitter && availableBytes(ap) && !ejs->exception) {
         ejsSendEvent(ejs, ap->emitter, "flush", (EjsObj*) ap);
     }
     ap->writePosition = ap->readPosition = 0;
-    if (ap->emitter) {
+    if ((dir & EJS_STREAM_WRITE) && ap->emitter) {
         ejsSendEvent(ejs, ap->emitter, "writable", (EjsObj*) ap);
     }
     return 0;
@@ -13982,6 +14001,9 @@ void ejsConfigureByteArrayType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_ByteArray_copyIn, (EjsProc) ba_copyIn);
     ejsBindMethod(ejs, type, ES_ByteArray_copyOut, (EjsProc) ba_copyOut);
     ejsBindMethod(ejs, type, ES_ByteArray_flush, (EjsProc) ba_flush);
+#if ES_ByteArray_growable
+    ejsBindMethod(ejs, type, ES_ByteArray_growable, (EjsProc) ba_growable);
+#endif
     ejsBindMethod(ejs, type, ES_ByteArray_length, (EjsProc) ba_getLength);
     ejsBindMethod(ejs, type, ES_Object_get, (EjsProc) ba_get);
     ejsBindMethod(ejs, type, ES_Object_getValues, (EjsProc) ba_getValues);
@@ -14165,7 +14187,7 @@ void ejsConfigureConfigType(Ejs *ejs)
 /*
     Cast the operand to the specified type
 
-    intrinsic function cast(type: Type) : Object
+    function cast(type: Type) : Object
  */
 
 static EjsObj *castDate(Ejs *ejs, EjsDate *dp, EjsType *type)
@@ -15434,7 +15456,7 @@ void __dummyEjsDebug() {}
 /*
     Cast the operand to the specified type
 
-    intrinsic function cast(type: Type) : Object
+    function cast(type: Type) : Object
  */
 
 static EjsObj *castError(Ejs *ejs, EjsError *vp, EjsType *type)
@@ -16319,7 +16341,7 @@ static EjsObj *readFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 
 /*  
     Get the size of the file associated with this File object.
-    override intrinsic function get size(): Number
+    override function get size(): Number
  */
 static EjsObj *getFileSize(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
@@ -17073,7 +17095,7 @@ static EjsFunction *createFunction(Ejs *ejs, EjsType *type, int numSlots)
 /*
     Cast the operand to the specified type
 
-    intrinsic function cast(type: Type) : Object
+    function cast(type: Type) : Object
  */
 static EjsObj *castFunction(Ejs *ejs, EjsFunction *vp, EjsType *type)
 {
@@ -17890,8 +17912,9 @@ static EjsObj *formatStackMethod(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 
 
 #if ES_hashcode
-/*  Get the hash code for the object.
-    intrinsic function hashcode(o: Object): Number
+/*  
+    Get the hash code for the object.
+    function hashcode(o: Object): Number
  */
 static EjsObj *hashcode(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
@@ -18160,7 +18183,7 @@ void ejsCreateGlobalBlock(Ejs *ejs)
     
     /*  
         Create the standard namespaces. Order matters here. This is the (reverse) order of lookup.
-        Empty is first intrinsic is last. TODO - OPT Optimize this ordering.
+        TODO - OPT Optimize this ordering.
      */
     block = (EjsBlock*) ejs->global;
     ejs->iteratorSpace =    addNamespace(ejs, block, EJS_ITERATOR_NAMESPACE);
@@ -20046,7 +20069,7 @@ static EjsObj *parseLiteralInner(Ejs *ejs, MprBuf *buf, JsonState *js)
 /*
     Global function to convert the object to a source code string in JSON format. This is the actual work-horse.
   
-    intrinsic function serialize(obj: Object, options: Object = null)
+    function serialize(obj: Object, options: Object = null)
  */
 static EjsObj *serialize(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
@@ -21513,7 +21536,7 @@ static EjsObj *getNumberIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **argv)
 
 /*
     Convert the number to a string.
-    intrinsic function toString(): String
+    function toString(): String
  */
 static EjsObj *numberToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
@@ -23277,7 +23300,7 @@ static EjsObj *obj_hasOwnProperty(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv
 /*
     Get the length for the object.
 
-    intrinsic function get length(): Number
+    function get length(): Number
  */
 static EjsObj *obj_length(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
@@ -23433,7 +23456,7 @@ static EjsObj *obj_seal(Ejs *ejs, EjsObj *type, int argc, EjsObj **argv)
 
 
 /*
-    intrinsic native function propertyIsEnumerable(property: String, flag: Object = undefined): Boolean
+    native function propertyIsEnumerable(property: String, flag: Object = undefined): Boolean
  */
 static EjsObj *obj_propertyIsEnumerable(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
@@ -23627,7 +23650,7 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 /*
     Convert the object to a localized string
 
-    intrinsic function toLocaleString(): String
+    function toLocaleString(): String
  */
 static EjsObj *toLocaleString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
@@ -24332,7 +24355,7 @@ static EjsObj *joinPathExt(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 /*
     Get the length of the path name.
   
-    override intrinsic function get length(): Number
+    override function get length(): Number
  */
 static EjsObj *pathLength(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
@@ -24866,7 +24889,7 @@ static EjsObj *pathSeparator(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 /*
     Get the size of the file associated with this Path
   
-    intrinsic function get size(): Number
+    function get size(): Number
  */
 static EjsObj *getPathFileSize(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
@@ -25367,7 +25390,7 @@ static int parseFlags(EjsRegExp *rp, cchar *flags);
 /*
     Cast the operand to the specified type
 
-    intrinsic function cast(type: Type) : Object
+    function cast(type: Type) : Object
  */
 static EjsObj *castRegExp(Ejs *ejs, EjsRegExp *rp, EjsType *type)
 {
@@ -28718,7 +28741,7 @@ static void setAttributes(EjsType *type, int attributes);
 /*
     Copy a type. 
 
-    intrinsic function copy(type: Object): Object
+    function copy(type: Object): Object
  */
 static EjsType *cloneTypeVar(Ejs *ejs, EjsType *src, bool deep)
 {
@@ -32590,7 +32613,7 @@ static EjsObj *xmlToJson(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 /*
     Convert the XML object to a string.
 
-    intrinsic function toString() : String
+    function toString() : String
  */
 static EjsObj *xmlToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
@@ -32602,7 +32625,7 @@ static EjsObj *xmlToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
     Get the length of an array.
     @return Returns the number of items in the array
 
-    intrinsic public override function get length(): int
+    public override function get length(): int
  */
 static EjsObj *xmlLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 {
@@ -32613,7 +32636,7 @@ static EjsObj *xmlLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 #if KEEP
 /*
     Set the length. TODO - what does this do?
-    intrinsic public override function set length(value: int): void
+    public override function set length(value: int): void
  */
 static EjsObj *setLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 {
@@ -33675,7 +33698,7 @@ static EjsObj *xmlListToJson(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 /*
     Convert the XML object to a string.
 
-    intrinsic function toString() : String
+    function toString() : String
  */
 static EjsObj *xmlListToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
@@ -33687,7 +33710,7 @@ static EjsObj *xmlListToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
     Get the length of an array.
     @return Returns the number of items in the array
 
-    intrinsic public override function get length(): int
+    public override function get length(): int
  */
 
 static EjsObj *xlLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
@@ -33699,7 +33722,7 @@ static EjsObj *xlLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 #if FUTURE
 /*
     Set the length. TODO - what does this do?
-    intrinsic public override function set length(value: int): void
+    public override function set length(value: int): void
  */
 static EjsObj *setLength(Ejs *ejs, EjsXMLList *xml, int argc, EjsObj **argv)
 {
@@ -54653,6 +54676,7 @@ static EcNode *parseNamespaceAttribute(EcCompiler *cp)
     switch (cp->peekToken->tokenId) {
     case T_RESERVED_NAMESPACE:
         if (!inClass && (subId == T_PRIVATE || subId ==  T_PROTECTED)) {
+            getToken(cp);
             return LEAVE(cp, unexpected(cp));
         }
         qualifier = parseReservedNamespace(cp);
@@ -54689,6 +54713,7 @@ static EcNode *parseNamespaceAttribute(EcCompiler *cp)
         break;
 
     default:
+        getToken(cp);
         np = unexpected(cp);
         break;
     }
@@ -55530,7 +55555,7 @@ static EcNode *parseResultType(EcCompiler *cp)
 
     } else {
         /*  Don't handle EMPTY here */
-        mprAssert(0);
+        getToken(cp);
         np = unexpected(cp);;
     }
     return LEAVE(cp, np);
@@ -56417,6 +56442,7 @@ static EcNode *parsePragma(EcCompiler *cp, EcNode *np)
         break;
 
     default:
+        getToken(cp);
         np = unexpected(cp);
         break;
     }
