@@ -5276,8 +5276,10 @@ typedef struct MprWaitService {
     struct pollfd   *fds;                   /* File descriptors to select on (linear index) */
     int             fdsCount;               /* Last used entry in the fds array */
     int             fdMax;                  /* Size of the fds array */
+#if UNUSED
     struct pollfd   *stableFds;             /* Stable copy of fds used when polling */
     int             stableFdsCount;         /* Last used entry in the stableFds array */
+#endif
     int             breakPipe[2];           /* Pipe to wakeup select */
 #elif MPR_EVENT_ASYNC
     struct MprWaitHandler **handlerMap;     /* Map of fds to handlers */

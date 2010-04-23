@@ -62,7 +62,8 @@ imports: $(IMPORTED)
 $(IMPORTED): $(IMPORTS)
 	getlib $^
 ifeq ($(BLD_FEATURE_MATRIXSSL),1)
-	find $(BLD_TOP)/projects/MACOSX -name Debug | while read d ; do cp $(BLD_MATRIXSSL_IMPORTS) $$d ; done
+	[ -x $(BLD_TOP)/projects/MACOSX ] && find $(BLD_TOP)/projects/MACOSX -name Debug | \
+		while read d ; do cp $(BLD_MATRIXSSL_IMPORTS) $$d ; done
 endif
 
 cleanExtra:

@@ -12243,7 +12243,8 @@ int mprWaitForSingleIO(MprCtx ctx, int fd, int mask, int timeout)
  */
 void mprWaitForIO(MprWaitService *ws, int timeout)
 {
-    int     rc;
+    struct pollfd   *fds;
+    int             count, rc;
 
 #if BLD_DEBUG
     if (mprGetDebugMode(ws) && timeout > 30000) {
@@ -12255,21 +12256,20 @@ void mprWaitForIO(MprWaitService *ws, int timeout)
         return;
     }
     lock(ws);
-    ws->stableFdsCount = ws->fdsCount;
-    if ((ws->stableFds = mprMemdup(ws, ws->fds, sizeof(struct pollfd)   ws->stableFdsCount)) == 0) {
+    count = ws->fdsCount;
+    if ((fds = mprMemdup(ws, ws->fds, sizeof(struct pollfd) * count)) == 0) {
         unlock(ws);
         return MPR_ERR_NO_MEMORY;
     }
     unlock(ws);
 
-    rc = poll(ws->stableFds, ws->stableFdsCount, timeout);
+    rc = poll(fds, count, timeout);
     if (rc < 0) {
         mprLog(ws, 2, "Poll returned %d, errno %d", rc, mprGetOsError());
     } else if (rc > 0) {
-        serviceIO(ws);
+        serviceIO(ws, fds, count);
     }
-    mprFree(ws->stableFds);
-    ws->stableFds = 0;
+    mprFree(fds);
     ws->wakeRequested = 0;
 }
 
@@ -12277,14 +12277,14 @@ void mprWaitForIO(MprWaitService *ws, int timeout)
 /*
     Service I/O events
  */
-static void serviceIO(MprWaitService *ws)
+static void serviceIO(MprWaitService *ws, struct poll *fds, int count)
 {
     MprWaitHandler      *wp;
     struct pollfd       *fp;
     int                 mask;
 
     lock(ws);
-    for (fp = ws->stableFds; fp < &ws->stableFds[ws->stableFdsCount]; fp++) {
+    for (fp = fds; fp < &fds[count]; fp++) {
         if (fp->revents == 0) {
            continue;
         }
