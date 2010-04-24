@@ -389,6 +389,7 @@
 #define ES_BinaryStream_BinaryStream_stream                            0
 #define ES_BinaryStream_addListener_name                               0
 #define ES_BinaryStream_addListener_listener                           1
+#define ES_BinaryStream_flush_dir                                      0
 #define ES_BinaryStream_read_buffer                                    0
 #define ES_BinaryStream_read_offset                                    1
 #define ES_BinaryStream_read_count                                     2
@@ -483,6 +484,7 @@
 #define ES_ByteArray_copyOut_dest                                      1
 #define ES_ByteArray_copyOut_destOffset                                2
 #define ES_ByteArray_copyOut_count                                     3
+#define ES_ByteArray_flush_dir                                         0
 #define ES_ByteArray_read_buffer                                       0
 #define ES_ByteArray_read_offset                                       1
 #define ES_ByteArray_read_count                                        2
@@ -1117,6 +1119,7 @@
 #define ES_File_File_options                                           1
 #define ES_File_addListener_name                                       0
 #define ES_File_addListener_listener                                   1
+#define ES_File_flush_dir                                              0
 #define ES_File_open_options                                           0
 #define ES_File_read_buffer                                            0
 #define ES_File_read_offset                                            1
@@ -1311,6 +1314,7 @@
 #define ES_Http_connect_data                                           1
 #define ES_Http_del_uri                                                0
 #define ES_Http_del_data                                               1
+#define ES_Http_flush_dir                                              0
 #define ES_Http_form_uri                                               0
 #define ES_Http_form_postData                                          1
 #define ES_Http_get_uri                                                0
@@ -1466,6 +1470,7 @@
 #define ES_Logger_Logger_level                                         2
 #define ES_Logger_addListener_name                                     0
 #define ES_Logger_addListener_listener                                 1
+#define ES_Logger_flush_dir                                            0
 #define ES_Logger_debug_level                                          0
 #define ES_Logger_debug_msgs                                           1
 #define ES_Logger_config_msgs                                          0
@@ -1908,6 +1913,7 @@
 #define ES_Socket_addListener_name                                     0
 #define ES_Socket_addListener_listener                                 1
 #define ES_Socket_connect_address                                      0
+#define ES_Socket_flush_dir                                            0
 #define ES_Socket_listen_address                                       0
 #define ES_Socket_read_buffer                                          0
 #define ES_Socket_read_offset                                          1
@@ -2110,6 +2116,7 @@
 #define ES_TextStream_TextStream_stream                                0
 #define ES_TextStream_addListener_name                                 0
 #define ES_TextStream_addListener_listener                             1
+#define ES_TextStream_flush_dir                                        0
 #define ES_TextStream_read_buffer                                      0
 #define ES_TextStream_read_offset                                      1
 #define ES_TextStream_read_count                                       2
@@ -2401,7 +2408,7 @@
 #define ES_XMLList_descendants_name                                    0
 #define ES_XMLList_elements_name                                       0
 
-#define _ES_CHECKSUM_ejs   1307211
+#define _ES_CHECKSUM_ejs   1309451
 
 #endif
 /*
@@ -3819,6 +3826,7 @@
 #define ES_ejs_web_Request_addListener_listener                        1
 #define ES_ejs_web_Request_cachable_enable                             0
 #define ES_ejs_web_Request_dump_args                                   0
+#define ES_ejs_web_Request_flush_dir                                   0
 #define ES_ejs_web_Request_header_key                                  0
 #define ES_ejs_web_Request_read_buffer                                 0
 #define ES_ejs_web_Request_read_offset                                 1
@@ -4125,7 +4133,7 @@
 #define ES_ejs_web_Web_start_request                                   0
 #define ES_ejs_web_Web_start_app                                       1
 
-#define _ES_CHECKSUM_ejs_web   531382
+#define _ES_CHECKSUM_ejs_web   531702
 
 #endif
 /*

@@ -7601,10 +7601,13 @@ int ejsEncodeWord(uchar *pos, int number)
 
 int ejsEncodeDouble(uchar *pos, double number)
 {
+#if UNUSED && OLD
     double   *ptr;
-
     ptr = (double*) pos;
     *ptr = number;
+#else
+    memcpy(pos, &number, sizeof(double));
+#endif
     return sizeof(double);
 }
 
@@ -21960,7 +21963,7 @@ EjsObj *ejsCloneObject(Ejs *ejs, EjsObj *src, bool deep)
     for (i = 0; i < numSlots; i++, sp++, dp++) {
         *dp = *sp;
         //  MOB -- all native types must provide clone or set immutable
-        if (deep /* MOB || !sp->value.ref->type->immutable */) {
+        if (deep && !sp->value.ref->type->immutable) {
             dp->value.ref = ejsClone(ejs, sp->value.ref, deep);
         }
     }
@@ -42863,7 +42866,6 @@ static void genLiteral(EcCompiler *cp, EcNode *np)
             These are signed values
          */
         ip = (EjsNumber*) np->literal.var;
-        n = (int64) floor(ip->value);
         if (ip->value != floor(ip->value) || ip->value <= -MAXINT || ip->value >= MAXINT) {
             ecEncodeOpcode(cp, EJS_OP_LOAD_DOUBLE);
             ecEncodeDouble(cp, ip->value);

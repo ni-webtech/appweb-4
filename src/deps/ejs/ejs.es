@@ -1078,7 +1078,7 @@ module ejs {
         /**
             @duplicate Stream.flush
          */
-        function flush(dir: Number): Void {
+        function flush(dir: Number = Stream.BOTH): Void {
             if (dir & Stream.READ) 
                 inbuf.flush(Stream.READ)
             if (dir & Stream.WRITE) 
@@ -1572,7 +1572,7 @@ module ejs {
             @param dir Direction in which to flush. Set to a mask containing: Stream.READ, Stream.WRITE or Stream.BOTH.
                 A read flush will discard read data. A write flush will attempt to write buffered write data.
          */
-        native function flush(dir: Number): Void
+        native function flush(dir: Number = Stream.BOTH): Void
 
         /**
             Is the ByteArray is growable.
@@ -3921,7 +3921,7 @@ module ejs {
         /** 
             @duplicate Stream.flush
          */
-        function flush(dir: Number): Void {}
+        function flush(dir: Number = Stream.BOTH): Void {}
 
         /** 
             Iterate over the positions in a file. This will get an iterator for this file to be used by 
@@ -5248,7 +5248,7 @@ module ejs {
         /** 
             @duplicate Stream.flush
          */
-        function flush(dir: Number): Void {}
+        function flush(dir: Number = Stream.BOTH): Void {}
 
         /** 
             Get whether redirects should be automatically followed by this Http object.
@@ -6174,7 +6174,7 @@ module ejs {
         /**
             @hide
          */
-        function flush(dir: Number): Void {}
+        function flush(dir: Number = Stream.BOTH): Void {}
 
         /** 
             The numeric verbosity setting (0-9) of this logger.
@@ -8832,7 +8832,7 @@ module ejs {
         /** 
             @duplicate Stream.flush
          */
-        function flush(dir: Number): Void {}
+        function flush(dir: Number = Stream.BOTH): Void {}
 
         /** 
             Listen on a socket for client connections. This will put the socket into a server role for communcations.
@@ -9856,7 +9856,7 @@ module ejs {
         /** 
             @duplicate Stream.flush
          */
-        function flush(dir: Number): Void {
+        function flush(dir: Number = Stream.BOTH): Void {
             if (dir & Stream.WRITE)
                 inbuf.flush()
             if (!(nextStream is ByteArray)) {
@@ -16251,7 +16251,7 @@ module ejs.web {
             @duplicate Stream.flush
             @hide 
          */
-        function flush(dir: Number): Void {}
+        function flush(dir: Number = Stream.BOTH): Void {}
 
         /** 
             Get the (proposed) response headers
@@ -18778,7 +18778,7 @@ module ejs.web.template  {
          */
         function getToken(token: ByteArray): Number {
             var tid = Token.Literal
-            token.flush()
+            token.flush(Stream.BOTH)
             var c
             while (pos < script.length) {
                 c = script[pos++]
