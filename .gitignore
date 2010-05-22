@@ -46,3 +46,6 @@ src/server/*.res
 src/deps/ejs/.ejs.slots.h
 lib/*.so
 src/test/trace.txt
+lib/appweb.conf
+src/test/.appweb.pid
+src/test/web/junk
