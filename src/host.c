@@ -124,9 +124,11 @@ MaHost *maCreateDefaultHost(MaServer *server, cchar *docRoot, cchar *ip, int por
 
         } else {
             ip = "localhost";
-            httpServer = httpCreateServer(server->appweb->http, ip, HTTP_DEFAULT_PORT, NULL);
+            if (port <= 0) {
+                port = HTTP_DEFAULT_PORT;
+            }
+            httpServer = httpCreateServer(server->appweb->http, ip, port, NULL);
             maAddHttpServer(server, httpServer);
-            port = HTTP_DEFAULT_PORT;
         }
         host = maCreateHost(server, ip, NULL);
 
@@ -138,17 +140,15 @@ MaHost *maCreateDefaultHost(MaServer *server, cchar *docRoot, cchar *ip, int por
         maAddHttpServer(server, httpServer);
         host = maCreateHost(server, ip, NULL);
     }
-
     if (maOpenMimeTypes(host, "mime.types") < 0) {
         maAddStandardMimeTypes(host);
     }
-
     /*  
         Insert the host and create a directory object for the docRoot
      */
     maAddHost(server, host);
     maInsertDir(host, maCreateBareDir(host, docRoot));
-    maSetDocumentRoot(host, docRoot);
+    maSetHostDocumentRoot(host, docRoot);
 
     /* 
         Ensure we are in the hash lookup of all the addresses to listen to acceptWrapper uses this hash to find
@@ -180,7 +180,7 @@ int maStopHost(MaHost *host)
 }
 
 
-void maSetDocumentRoot(MaHost *host, cchar *dir)
+void maSetHostDocumentRoot(MaHost *host, cchar *dir)
 {
     MaAlias     *alias;
     char        *doc;
@@ -191,7 +191,8 @@ void maSetDocumentRoot(MaHost *host, cchar *dir)
     if (doc[len - 1] == '/') {
         doc[len - 1] = '\0';
     }
-    /*  Create a catch-all alias
+    /*  
+        Create a catch-all alias
      */
     alias = maCreateAlias(host, "", doc, 0);
     maInsertAlias(host, alias);
@@ -215,6 +216,10 @@ void maSetHostIpAddrPort(MaHost *host, cchar *ipAddrPort)
     char    *cp;
 
     mprAssert(ipAddrPort);
+    
+#if UNUSED
+    maRemoveHostFromHostAddress(host->server, host->ip, host->port, host);
+#endif
     mprFree(host->ipAddrPort);
 
     if (*ipAddrPort == ':') {
@@ -231,9 +236,13 @@ void maSetHostIpAddrPort(MaHost *host, cchar *ipAddrPort)
         host->port = (int) mprAtoi(cp, 10);
         cp[-1] = ':';
     }
-    if (host->name == 0) {
+    if (host->name == 0 || strchr(host->name, ':')) {
+        mprFree(host->name);
         host->name = mprStrdup(host, host->ipAddrPort);
     }
+#if UNUSED
+    maAddHostAddress(host->server, host->ip, host->port);
+#endif
 }
 
 
@@ -474,6 +483,17 @@ MaDir *maLookupDir(MaHost *host, cchar *pathArg)
     }
     mprFree(tmpPath);
     return 0;
+}
+
+
+void maSetHostDirs(MaHost *host, cchar *path)
+{
+    MaDir       *dir;
+    int         next;
+
+    for (next = 0; (dir = mprGetNextItem(host->dirs, &next)) != 0; ) {
+        maSetDirPath(dir, path);
+    }
 }
 
 

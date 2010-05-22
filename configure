@@ -813,10 +813,11 @@ warnComponent() {
 #   Return true if not builtin
 #
 isExternal() {
-    local path
+    local path dir
 
-    path="$1"
-    if [ "$path" != "." -a "$path" = "${path#$PWD}" ] ; then
+    dir=`canonPath "$PWD"`
+    path=`canonPath "$1"`
+    if [ "$path" != "." -a "$path" = "${path#$dir}" ] ; then
         return 0
     fi
     return 1
@@ -827,10 +828,11 @@ isExternal() {
 #
 configureComponent() {
     local cflags dflags dependencies kind iflags imports jflags ldflags libpaths libs name upperDep new
-    local path withlibs withpaths upper builtin priorMandatory priorPath emitter disable optional
+    local path withlibs withpaths upper builtin priorMandatory priorPath emitter disable optional extra
 
     kind=$KIND
     builtin=0
+    libpaths=
 
     [ "$verbose" != 0 ] && echo -e "    configureComponent $@"
 
@@ -930,7 +932,6 @@ configureComponent() {
             fi
         fi
     done
-
     if [ "$BLD_FEATURE_STATIC" = 1 ] ; then
 
         for dep in $optional $dependencies

@@ -6,13 +6,16 @@ defineComponent() {
 
     path="$1"
     name="http"
+    search="src/deps"
 
-    path=`probe --path "$path" --partial http $name`
+    path=`probe --path "$path" --search "$search" --partial http $name`
     if [ "$path" = "" ] ; then
         warnComponent $name
         return
 	fi
-    libpaths="$path/lib"
+    if isExternal "$path" ; then
+        libpaths="$path/lib"
+    fi
     configureComponent --builtin --optional-dependencies "regexp" --libs "http" --path "$path" \
         --libpaths "$libpaths" $name
 

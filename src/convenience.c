@@ -107,7 +107,7 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
         mprError(mpr, "Can't create the web server");
         return MPR_ERR_CANT_CREATE;
     }
-    maSetDocumentRoot(server->defaultHost, docRoot);
+    maSetHostDocumentRoot(server->defaultHost, docRoot);
     
     if (maStartServer(server) < 0) {
         mprError(mpr, "Can't start the web server");

@@ -19,21 +19,19 @@ static void printAuth(int fd, MaHost *host, HttpAuth *auth, int indent);
 #endif
 
 /******************************************************************************/
-
-/*  Configure the server
+/*  
+    Configure the server
  */
-int maConfigureServer(MaServer *server, cchar *configFile, cchar *ip, int port, cchar *docRoot)
+int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port)
 {
     MaAppweb        *appweb;
-    MaHost          *host;
-    MaAlias         *ap;
-    HttpLocation    *location, *loc;
     Http            *http;
-    char            *path, *searchPath;
+    char            *path;
 
     appweb = server->appweb;
     http = appweb->http;
 
+#if UNUSED
     if (ip && docRoot) {
         mprLog(server, 2, "DocumentRoot %s", docRoot);
         if ((host = maCreateDefaultHost(server, docRoot, ip, port)) == 0) {
@@ -86,17 +84,24 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *ip, int port, 
         if (httpLookupStage(http, "fileHandler")) {
             httpAddHandler(location, "fileHandler", "");
         }
-
     } else {
-        /*
-            Configure the http service and hosts specified in the config file.
-         */
-        path = mprGetAbsPath(server, configFile);
-        if (maParseConfig(server, path) < 0) {
-            /* mprUserError(server, "Can't configure server using %s", path); */
-            return MPR_ERR_CANT_INITIALIZE;
-        }
-        mprFree(path);
+#endif
+
+    path = mprGetAbsPath(server, configFile);
+    if (maParseConfig(server, path) < 0) {
+        /* mprUserError(server, "Can't configure server using %s", path); */
+        return MPR_ERR_CANT_INITIALIZE;
+    }
+    mprFree(path);
+
+    if (serverRoot) {
+        maSetServerRoot(server, path);
+    }
+    if (ip || port > 0) {
+        maSetIpAddr(server, ip, port);
+    }
+    if (documentRoot) {
+        maSetDocumentRoot(server, documentRoot);
     }
     return 0;
 }
@@ -109,17 +114,13 @@ int maParseConfig(MaServer *server, cchar *configFile)
     MaAppweb        *appweb;
     MaHost          *defaultHost;
     MaConfigState   stack[MA_MAX_CONFIG_DEPTH], *state;
-    MaHostAddress   *address;
     Http            *http;
-    HttpServer      *httpServer;
-    MaDir           *dir, *bestDir;
-    MaHost          *host, *hp;
-    MaAlias         *alias;
+    MaDir           *dir;
+    MaHost          *host;
     MprDirEntry     *dp;
-    HttpLimits      *limits;
     char            buf[MPR_MAX_STRING];
     char            *cp, *tok, *key, *value, *path;
-    int             i, rc, top, next, nextAlias, len;
+    int             i, rc, top, next, len;
 
     mpr = mprGetMpr(server);
     mprLog(mpr, 2, "Config File %s", configFile);
@@ -346,8 +347,9 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 state->dir = maCreateDir(host, stack[top - 1].dir->path, stack[top - 1].dir);
                 state->auth = state->dir->auth;
                 maInsertDir(host, state->dir);
-
+#if UNUSED
                 mprLog(server, 2, "Virtual Host: %s ", value);
+#endif
                 if (maCreateHostAddresses(server, host, value) < 0) {
                     mprFree(host);
                     goto err;
@@ -423,6 +425,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
         }
     }
 
+#if UNUSED
     /*
         Validate configuration
      */
@@ -431,7 +434,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
         return MPR_ERR_BAD_SYNTAX;
     }
     if (defaultHost->documentRoot == 0) {
-        maSetDocumentRoot(defaultHost, ".");
+        maSetHostDocumentRoot(defaultHost, ".");
     }
 
     /*
@@ -515,9 +518,8 @@ int maParseConfig(MaServer *server, cchar *configFile)
         Validate all the hosts
      */
     for (next = 0; (hp = mprGetNextItem(server->hosts, &next)) != 0; ) {
-
         if (hp->documentRoot == 0) {
-            maSetDocumentRoot(hp, defaultHost->documentRoot);
+            maSetHostDocumentRoot(hp, defaultHost->documentRoot);
         }
 
         /*
@@ -534,7 +536,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
                  */
                 maAddStandardMimeTypes(hp);
                 if (once++ == 0) {
-                    mprLog(server, 2, "No mime.types file, using minimal mime configuration");
+                    mprLog(server, 2, "No supplied \"mime.types\" file, using builtin mime configuration");
                 }
             }
         }
@@ -544,14 +546,16 @@ int maParseConfig(MaServer *server, cchar *configFile)
             matching directory.
          */
         for (nextAlias = 0; (alias = mprGetNextItem(hp->aliases, &nextAlias)) != 0; ) {
-            // mprLog(hp, 0, "Alias \"%s\" %s", alias->prefix, alias->filename);
-            path = maMakePath(hp, alias->filename);
-            bestDir = maLookupBestDir(hp, path);
-            if (bestDir == 0) {
-                bestDir = maCreateDir(hp, alias->filename, stack[0].dir);
-                maInsertDir(hp, bestDir);
+            if (alias->filename) {
+                // mprLog(hp, 0, "Alias \"%s\" %s", alias->prefix, alias->filename);
+                path = maMakePath(hp, alias->filename);
+                bestDir = maLookupBestDir(hp, path);
+                if (bestDir == 0) {
+                    bestDir = maCreateDir(hp, alias->filename, stack[0].dir);
+                    maInsertDir(hp, bestDir);
+                }
+                mprFree(path);
             }
-            mprFree(path);
         }
 
         /*
@@ -570,6 +574,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
         mprError(server, "Memory allocation error when initializing");
         return MPR_ERR_NO_MEMORY;
     }
+#endif
     return 0;
 
 syntaxErr:
@@ -582,7 +587,168 @@ err:
 }
 
 
-/*  Process the configuration settings. Permissible to modify key and value.
+
+int maValidateConfiguration(MaServer *server)
+{
+    MaAlias         *alias;
+    MaAppweb        *appweb;
+    MaDir           *bestDir;
+    MaHost          *defaultHost, *hp;
+    MaHostAddress   *address;
+    Http            *http;
+    HttpServer      *httpServer;
+    char            *path;
+    int             next, nextAlias;
+
+    appweb = server->appweb;
+    http = appweb->http;
+
+    defaultHost = server->defaultHost;
+
+    if (mprGetListCount(server->httpServers) == 0) {
+        mprError(server, "Must have a Listen directive");
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    if (defaultHost->documentRoot == 0) {
+        maSetHostDocumentRoot(defaultHost, ".");
+    }
+
+    /*
+        Add default server listening addresses to the HostAddress hash. We pretend it is a vhost. Insert at the
+        end of the vhost list so we become the default if no other vhost matches. Ie. vhosts take precedence
+     */
+    for (next = 0; (httpServer = mprGetNextItem(server->httpServers, &next)) != 0; ) {
+        address = (MaHostAddress*) maLookupHostAddress(server, httpServer->ip, httpServer->port);
+        if (address == 0) {
+            address = maCreateHostAddress(server, httpServer->ip, httpServer->port);
+            mprAddItem(server->hostAddresses, address);
+        }
+        maInsertVirtualHost(address, defaultHost);
+    }
+
+    if (strcmp(defaultHost->name, "Main Server") == 0) {
+        defaultHost->name = 0;
+    }
+
+#if KEEP
+    natServerName = 0;
+    needServerName = (defaultHost->name == 0);
+
+    for (next = 0; (httpServer = mprGetNextItem(server->httpServer, &next)) != 0; ) {
+        ip = httpServer->ip;
+        if (needServerName && *ip != '\0') {
+            /*
+                Try to get the most accessible server name possible.
+             */
+            if (strncmp(ip, "127.", 4) == 0 || strncmp(ip, "localhost:", 10) == 0) {
+                if (! natServerName) {
+                    maSetHostName(defaultHost, ip);
+                    needServerName = 0;
+                }
+            } else {
+                if (strncmp(ip, "10.", 3) == 0 || strncmp(ip, "192.168.", 8) == 0 || 
+                        strncmp(ip, "172.16.", 7) == 0) {
+                    natServerName = 1;
+                } else {
+                    maSetHostName(defaultHost, ip);
+                    needServerName = 0;
+                }
+            }
+        }
+    }
+
+    /*
+        Last try to setup the server name if we don't have a non-local name.
+     */
+    if (needServerName && !natServerName) {
+        /*
+            This code is undesirable as it makes us dependent on DNS -- bad
+         */
+        if (natServerName) {
+            /*
+                TODO - but this code is not doing a DNS server lookup anymore
+             */
+            cchar *hostName = mprGetServerName(server);
+            mprLog(server, 0, "WARNING: Missing ServerName directive, doing DNS lookup.");
+            httpServer = mprGetFirstItem(server->httpServers);
+            mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
+            maSetHostName(defaultHost, hostName);
+
+        } else {
+            maSetHostName(defaultHost, defaultHost->ipAddrPort);
+        }
+        mprLog(server, 2, "Missing ServerName directive, ServerName set to: \"%s\"", defaultHost->name);
+    }
+#endif
+
+    /*
+        Validate all the hosts
+     */
+    for (next = 0; (hp = mprGetNextItem(server->hosts, &next)) != 0; ) {
+        if (hp->documentRoot == 0) {
+            maSetHostDocumentRoot(hp, defaultHost->documentRoot);
+        }
+        /*
+            Ensure all hosts have mime types.
+         */
+        if (hp->mimeTypes == 0 || mprGetHashCount(hp->mimeTypes) == 0) {
+            if (hp == defaultHost && defaultHost->mimeTypes) {
+                hp->mimeTypes = defaultHost->mimeTypes;
+
+            } else if (maOpenMimeTypes(hp, "mime.types") < 0) {
+                /*
+                    Do minimal mime types configuration
+                 */
+                maAddStandardMimeTypes(hp);
+#if UNUSED
+                static int once = 0;
+                if (once++ == 0) {
+                    mprLog(server, 2, "No supplied \"mime.types\" file, using builtin mime configuration");
+                }
+#endif
+            }
+        }
+
+        /*
+            Check aliases have directory blocks. We must be careful to inherit authorization from the best matching directory
+         */
+        for (nextAlias = 0; (alias = mprGetNextItem(hp->aliases, &nextAlias)) != 0; ) {
+            path = maMakePath(hp, alias->filename);
+            bestDir = maLookupBestDir(hp, path);
+            if (bestDir == 0) {
+                bestDir = maCreateBareDir(hp, alias->filename);
+                maInsertDir(hp, bestDir);
+            }
+            mprFree(path);
+        }
+
+        /*
+            Define a ServerName if one has not been defined. Just use the IP:Port if defined.
+         */
+        if (hp->name == 0) {
+            if (hp->ipAddrPort) {
+                maSetHostName(hp, hp->ipAddrPort);
+            } else {
+                maSetHostName(hp, mprGetHostName(hp));
+            }
+        }
+    }
+    if (mprHasAllocError(mprGetMpr(server))) {
+        mprError(server, "Memory allocation error when initializing");
+        return MPR_ERR_NO_MEMORY;
+    }
+#if BLD_FEATURE_ROMFS
+     mprLog(server, MPR_CONFIG, "Server Root \"%s\" in ROM", server->serverRoot);
+#else
+     mprLog(server, MPR_CONFIG, "Server Root \"%s\"", server->serverRoot);
+#endif
+     mprLog(server, MPR_CONFIG, "Default Document Root \"%s\"", defaultHost->documentRoot);
+    return 0;
+}
+
+
+/*  
+    Process the configuration settings. Permissible to modify key and value.
     Return < 0 for errors, zero if directive not found, otherwise 1 is success.
     TODO -- this function is quite big. Could be subject to a FEATURE.
  */
@@ -847,9 +1013,11 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 return MPR_ERR_BAD_SYNTAX;
             }
 #endif
-            maSetDocumentRoot(host, path);
+            maSetHostDocumentRoot(host, path);
             maSetDirPath(dir, path);
+#if UNUSED
             mprLog(server, MPR_CONFIG, "DocRoot (%s): \"%s\"", host->name, path);
+#endif
             mprFree(path);
             return 1;
         }
@@ -1043,13 +1211,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 #endif
 
         } else if (mprStrcmpAnyCase(key, "Listen") == 0) {
-
             /*
                 Options:
                     ipAddr:port
                     ipAddr          default port MA_SERVER_DEFAULT_PORT_NUM
                     port            All ip interfaces on this port
-             *
+            
                 Where ipAddr may be "::::::" for ipv6 addresses or may be enclosed in "[]" if appending a port.
              */
 
@@ -1108,9 +1275,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                     }
                 }
             }
-            //  TODO - need api insead of mprAddItem
             mprAddItem(server->httpServers, httpCreateServer(http, hostName, port, NULL));
-
             /*
                 Set the host ip spec if not already set
              */
@@ -1178,7 +1343,9 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
     case 'N':
         if (mprStrcmpAnyCase(key, "NameVirtualHost") == 0) {
+#if UNUSED
             mprLog(server, 2, "NameVirtual Host: %s ", value);
+#endif
             if (maCreateHostAddresses(server, 0, value) < 0) {
                 return -1;
             }
@@ -1309,10 +1476,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (mprStrcmpAnyCase(key, "ServerRoot") == 0) {
             path = maMakePath(host, mprStrTrim(value, "\""));
             maSetServerRoot(server, path);
+#if UNUSED
 #if BLD_FEATURE_ROMFS
             mprLog(server, MPR_CONFIG, "Server Root \"%s\" in ROM", path);
 #else
             mprLog(server, MPR_CONFIG, "Server Root \"%s\"", path);
+#endif
 #endif
             mprFree(path);
             return 1;
@@ -1529,24 +1698,25 @@ char *maReplaceReferences(MaHost *host, cchar *str)
     char    *result;
 
     buf = mprCreateBuf(host, 0, 0);
+    if (str) {
+        for (src = (char*) str; *src; ) {
+            if (*src == '$') {
+                ++src;
+                if (matchRef("DOCUMENT_ROOT", &src)) {
+                    mprPutStringToBuf(buf, host->documentRoot);
+                    continue;
 
-    for (src = (char*) str; *src; ) {
-        if (*src == '$') {
-            ++src;
-            if (matchRef("DOCUMENT_ROOT", &src)) {
-                mprPutStringToBuf(buf, host->documentRoot);
-                continue;
+                } else if (matchRef("SERVER_ROOT", &src)) {
+                    mprPutStringToBuf(buf, host->server->serverRoot);
+                    continue;
 
-            } else if (matchRef("SERVER_ROOT", &src)) {
-                mprPutStringToBuf(buf, host->server->serverRoot);
-                continue;
-
-            } else if (matchRef("PRODUCT", &src)) {
-                mprPutStringToBuf(buf, BLD_PRODUCT);
-                continue;
+                } else if (matchRef("PRODUCT", &src)) {
+                    mprPutStringToBuf(buf, BLD_PRODUCT);
+                    continue;
+                }
             }
+            mprPutCharToBuf(buf, *src++);
         }
-        mprPutCharToBuf(buf, *src++);
     }
     mprAddNullToBuf(buf);
     result = mprStealBuf(host, buf);
@@ -1681,11 +1851,11 @@ int HttpServer::saveConfig(char *configFile)
     MaAlias         *alias;
     MaDir           *dp, *defaultDp;
     MprFile         out;
-    HttpStage     *hanp;
+    HttpStage       *hanp;
     MaHost          *host, *defaultHost;
-    HttpLimits        *limits;
-    HttpServer        *listen;
-    HttpLocation      *loc;
+    HttpLimits      *limits;
+    HttpServer      *listen;
+    HttpLocation    *loc;
     MaMimeHashEntry *mt;
     MprHashTable    *mimeTypes;
     MprList         *aliases;

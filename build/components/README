@@ -56,14 +56,15 @@ The configureComponent function supports the following usage:
         --imports IMPORTS   # Define libraries to import when building
         --jflags JFLAGS     # Define JFLAGS for java builds
         --ldflags LDFLAGS   # Define LDFLAGS to pass to the linker
-        --libpaths PATHS    # Define library search paths for the linker
+        --libpaths PATHS    # Define linker library search paths to use when
+                            # linking with the components
         --libs LIBRARIES    # Define libraries to link with
         --name NAME         # Set the name of the component
         --path PATH         # Set the path to the component
-        --withlibs LIBS     # Define libraries to link with when using the
-                              component
-        --withpaths PATHS   # Define library paths to use when linking with 
-                              the component
+        --withlibs LIBS     # Define libraries to link with when creating the
+                            # component
+        --withpaths PATHS   # Define linker library search paths to use when 
+                            # creating the component
 
 You can also define mandatory and optional dependencies via the switches:
 

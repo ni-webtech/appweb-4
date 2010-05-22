@@ -433,15 +433,6 @@ cat >>$PROJECT <<!EOF_CONFIGURATION_A1
             fi
 cat >>$PROJECT <<!EOF_CONFIGURATION_A2
             <Tool
-                Name="VCXMLDataGeneratorTool"
-            />
-            <Tool
-                Name="VCWebServiceProxyGeneratorTool"
-            />
-            <Tool
-                Name="VCMIDLTool"
-            />
-            <Tool
                 Name="VCManagedResourceCompilerTool"
             />
             <Tool

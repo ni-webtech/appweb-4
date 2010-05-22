@@ -46,6 +46,7 @@ endif
 ifeq ($(BLD_FEATURE_SSL),1)
 	MODULES		+= $(BLD_MOD_DIR)/$(SSL)$(BLD_SHOBJ)
 endif
+TARGETS			+= $(BLD_LIB_DIR)/appweb.conf
 
 compileExtra: $(TARGETS)
 ifeq ($(BLD_FEATURE_STATIC),0)
@@ -77,6 +78,10 @@ $(BLD_MOD_DIR)/$(PHP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ) $(BLD_LIB
 
 $(BLD_MOD_DIR)/$(SSL)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_MOD_DIR)/$(SSL) --libs "$(LIBS) $(BLD_SSL_LIBS)" $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ)
+
+$(BLD_LIB_DIR)/appweb.conf: default.conf
+	$(call log) "[Install]" "$(BLD_LIB_DIR)/appweb.conf"
+	cp default.conf $(BLD_LIB_DIR)/appweb.conf
 
 cleanExtra:
 	rm -f $(MODULES)

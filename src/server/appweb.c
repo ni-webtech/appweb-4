@@ -1,8 +1,8 @@
 /**
-    appweb.c  -- AppWeb main programs.
+    appweb.c  -- AppWeb main program
 
-    usage: %s [options] [IpAddr[:port]] [documentRoot]
-            --config configFile     # Use config file instead of IP address (default: appweb.conf)
+    usage: %s [options] [IpAddr][:port] [documentRoot]
+            --config configFile     # Use given config file instead 
             --debug                 # Run in debug mode
             --ejs name:path         # Create an ejs application at the path
             --log logFile:level     # Log to file file at verbosity level
@@ -21,14 +21,16 @@
 /***************************** Forward Declarations ***************************/
 
 extern void appwebOsTerm();
+extern int  checkEnvironment(Mpr *mpr, cchar *program);
 static char *findConfigFile(Mpr *mpr, char *configFile);
 static void memoryFailure(MprCtx ctx, int64 askSize, int64 totalHeapMem, bool granted);
 extern int  osInit(Mpr *mpr);
+static MaAppweb *setup(Mpr *mpr, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
+        MprList *script, int workers);
 static void usageError(Mpr *mpr);
-extern int  checkEnvironment(Mpr *mpr, cchar *program, cchar *home);
 
 #if BLD_FEATURE_EJS
-static void createEjsAlias(MaAppweb *appweb, MaServer *server, cchar *ejsAlias, cchar *homeDir);
+static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts);
 #endif
 #if BLD_UNIX_LIKE
 static void catchSignal(int signo, siginfo_t *info, void *arg);
@@ -48,20 +50,21 @@ MAIN(appweb, int argc, char **argv)
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaServer    *server;
-    cchar       *ipAddrPort, *documentRoot, *argp, *logSpec, *ejsAlias;
-    char        *configFile, *ip, *homeDir, *timeText;
+    MprList     *scripts;
+    cchar       *ipAddrPort, *documentRoot, *argp, *logSpec;
+    char        *configFile, *ip, *homeDir;
     int         workers, outputVersion, argind, port;
-    
+
     configFile = 0;
     documentRoot = 0;
-    ejsAlias = 0;
     homeDir = 0;
     ipAddrPort = 0;
     ip = 0;
-    port = -1;
     logSpec = 0;
-    server = 0;
+    port = -1;
     outputVersion = 0;
+    server = 0;
+    scripts = 0;
     workers = -1;
 
     mpr = mprCreate(argc, argv, memoryFailure);
@@ -119,7 +122,10 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError(mpr);
             }
-            ejsAlias = argv[++argind];
+            if (scripts == 0) {
+                scripts = mprCreateList(mpr);
+            }
+            mprAddItem(scripts, argv[++argind]);
 
         } else if (strcmp(argp, "--home") == 0) {
             if (argind >= argc) {
@@ -162,7 +168,6 @@ MAIN(appweb, int argc, char **argv)
             exit(2);
         }
     }
-
     if (argc > argind) {
         if (argc > (argind + 2)) {
             usageError(mpr);
@@ -178,62 +183,22 @@ MAIN(appweb, int argc, char **argv)
         mprPrintf(mpr, "%s %s-%s\n", mprGetAppTitle(mpr), BLD_VERSION, BLD_NUMBER);
         exit(0);
     }
+    if (configFile == 0) {
+        configFile = findConfigFile(mpr, configFile);
+    }
     if (ipAddrPort) {
         mprParseIp(mpr, ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
-    } else {
-        if (configFile == 0) {
-            configFile = findConfigFile(mpr, configFile);
-        }
     }
-    homeDir = mprGetCurrentPath(mpr);
-    if (checkEnvironment(mpr, argv[0], homeDir) < 0) {
+    if (checkEnvironment(mpr, argv[0]) < 0) {
         exit(3);
     }
-
-    /*  
-        Create the top level HTTP service and default HTTP server. Set the initial server root to "."
-     */
-    appweb = maCreateAppweb(mpr);
-    if (appweb == 0) {
-        mprUserError(mpr, "Can't create HTTP service for %s", mprGetAppName(mpr));
+    if ((appweb = setup(mpr, configFile, homeDir, documentRoot, ip, port, scripts, workers)) == 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
-    server = maCreateServer(appweb, "default", ".", NULL, -1);
-    if (server == 0) {
-        mprUserError(mpr, "Can't create HTTP server for %s", mprGetAppName(mpr));
-        return MPR_ERR_CANT_INITIALIZE;
-    }
-    if (maConfigureServer(server, configFile, ip, port, documentRoot) < 0) {
-        /* mprUserError(mpr, "Can't configure the server, exiting."); */
-        exit(6);
-    }
-    if (mpr->ip) {
-        mprLog(mpr, 2, "Server IP address %s", mpr->ip);
-    }
-    timeText = mprFormatLocalTime(mpr, mprGetTime(mpr));
-    mprLog(mpr, 1, "Started at %s", timeText);
-    mprFree(timeText);
-
-#if BLD_FEATURE_EJS
-    if (ejsAlias) {
-        createEjsAlias(appweb, server, ejsAlias, homeDir);
-    }
-#endif
-
-    if (workers >= 0) {
-        mprSetMaxWorkers(appweb, workers);
-    }
-#if BLD_WIN_LIKE
-    if (!ejsAlias) {
-        writePort(server->defaultHost);
-    }
-#endif
-
     if (maStartAppweb(appweb) < 0) {
         mprUserError(mpr, "Can't start HTTP service, exiting.");
         exit(7);
     }
-    mprLog(mpr, 1, "HTTP services are ready with max %d worker threads", mprGetMaxWorkers(mpr));
 
     /*
         Service I/O events until instructed to exit
@@ -248,6 +213,49 @@ MAIN(appweb, int argc, char **argv)
 }
 
 
+static MaAppweb *setup(Mpr *mpr, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
+        MprList *scripts, int workers)
+{
+    MaAppweb    *appweb;
+    MaServer    *server;
+    
+    if ((appweb = maCreateAppweb(mpr)) == 0) {
+        mprUserError(mpr, "Can't create HTTP service for %s", mprGetAppName(mpr));
+        return 0;
+    }
+    if ((server = maCreateServer(appweb, "default", NULL, NULL, -1)) == 0) {
+        mprUserError(mpr, "Can't create HTTP server for %s", mprGetAppName(mpr));
+        return 0;
+    }
+    if (maConfigureServer(server, configFile, serverRoot, documentRoot, ip, port) < 0) {
+        /* mprUserError(mpr, "Can't configure the server, exiting."); */
+        exit(6);
+    }
+#if BLD_FEATURE_EJS
+#if BLD_EJS_PRODUCT && UNUSED
+    if (scripts == 0) {
+        scripts = mprCreateList(mpr);
+        mprAddItem(scripts, MA_EJS_STARTUP);
+    }
+#endif
+    if (scripts) {
+        if (setupEjsApps(appweb, server, scripts) < 0) {
+            exit(7);
+        }
+    }
+#endif
+    if (workers >= 0) {
+        mprSetMaxWorkers(appweb, workers);
+    }
+#if BLD_WIN_LIKE
+    if (!scripts) {
+        writePort(server->defaultHost);
+    }
+#endif
+    return appweb;
+}
+
+
 static char *findConfigFile(Mpr *mpr, char *configFile)
 {
     if (configFile == 0) {
@@ -255,7 +263,8 @@ static char *findConfigFile(Mpr *mpr, char *configFile)
     }
     if (!mprPathExists(mpr, configFile, R_OK)) {
         mprFree(configFile);
-        configFile = mprAsprintf(mpr, -1, "%s/../lib/%s.conf", mprGetAppDir(mpr), mprGetAppName(mpr));
+        //  MOB -- will BLD_LIB_NAME be bad for cross-compilation?
+        configFile = mprAsprintf(mpr, -1, "%s/../%s/%s.conf", mprGetAppDir(mpr), BLD_LIB_NAME, mprGetAppName(mpr));
         if (!mprPathExists(mpr, configFile, R_OK)) {
             mprPrintfError(mpr, "Can't open config file %s\n", configFile);
             exit(2);
@@ -267,61 +276,66 @@ static char *findConfigFile(Mpr *mpr, char *configFile)
 
 #if BLD_FEATURE_EJS
 /*
-    Create an ejs application location block and alias
+    Create the ejs application aliases
  */
-static void createEjsAlias(MaAppweb *appweb, MaServer *server, cchar *ejsAlias, cchar *homeDir)
+static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts)
 {
-    MaAlias         *alias;
     MaHost          *host;
-    MaDir           *dir, *parent;
+    MprCtx          ctx;
     HttpLocation    *location;
-    char            *path;
-    int             flags, sep;
+    char            *home, *path, *uri, *script;
+    int             next;
 
     host = server->defaultHost;
-    flags = host->location->flags & (HTTP_LOC_BROWSER | HTTP_LOC_AUTO_SESSION);
+    ctx = home = mprGetCurrentPath(appweb);
+    uri = "/";
 
-    if ((path = strchr(ejsAlias, ':')) != 0) {
-        *path++ = '\0';
-        path = mprJoinPath(appweb, homeDir, path);
-        path = mprStrcat(path, -1, path, "/", NULL);
-    } else {
-        path = mprStrcat(appweb, -1, homeDir, "/", NULL);
+    for (next = 0; (script = mprGetNextItem(scripts, &next)) != 0; ) {
+        path = mprGetPathDir(ctx, mprJoinPath(ctx, home, script));
+#if UNUSED
+        alias = maCreateAlias(host, "/", path, 0);
+        maInsertAlias(host, alias);
+#endif
+        mprLog(appweb, 3, "Ejs Alias \"%s\" for \"%s\"", uri, path);
+
+        if (maLookupLocation(host, uri)) {
+            mprError(appweb, "Location block already exists for \"%s\"", uri);
+            mprFree(ctx);
+            return MPR_ERR_ALREADY_EXISTS;
+        }
+        location = httpCreateInheritedLocation(appweb->http, host->location);
+#if UNUSED
+        httpSetLocationAuth(location, host->location->auth);
+#endif
+        httpSetLocationPrefix(location, uri);
+        httpSetLocationScript(location, script);
+        httpSetLocationAutoDelete(location, 1);
+        maAddLocation(host, location);
+        httpSetHandler(location, "ejsHandler");
+        
+#if UNUSED
+        /* Make sure there is a directory for the alias target */
+        dir = maLookupBestDir(host, path);
+        if (dir == 0) {
+            parent = mprGetFirstItem(host->dirs);
+#if UNUSED
+            dir = maCreateDir(host, alias->filename, parent);
+#else
+            dir = maCreateDir(host, path, parent);
+#endif
+            dir = maCreateDir(host, alias->filename, parent);
+            maInsertDir(host, dir);
+        }
+#endif
+        uri = "/web";
+        if (!maLookupLocation(host, uri)) {
+            location = httpCreateInheritedLocation(appweb->http, host->location);
+            httpSetLocationPrefix(location, uri);
+            maAddLocation(host, location);
+        }
     }
-    sep = mprGetPathSeparator(appweb, ejsAlias);
-
-    if (!mprIsAbsPath(appweb, ejsAlias) /* UNUSED || ejsAlias[strlen(ejsAlias) - 1] != sep */) {
-        mprError(appweb, "The ejs alias should be an absolute path");
-    }
-    alias = maCreateAlias(host, ejsAlias, path, 0);
-    maInsertAlias(host, alias);
-    mprLog(appweb, 4, "Alias \"%s\" for \"%s\"", ejsAlias, path);
-
-    if (maLookupLocation(host, ejsAlias)) {
-        mprError(appweb, "Location block already exists for \"%s\"", ejsAlias);
-        mprFree(path);
-        return;
-    }
-    location = httpCreateInheritedLocation(appweb->http, host->location);
-    httpSetLocationAuth(location, host->location->auth);
-    httpSetLocationPrefix(location, ejsAlias);
-    httpSetLocationFlags(location, HTTP_LOC_APP | flags);
-    maAddLocation(host, location);
-    httpSetHandler(location, "ejsHandler");
-
-    /* Upload configuration */
-    location->autoDelete = 1;
-
-    /*
-        Make sure there is a directory for the alias target
-     */
-    dir = maLookupBestDir(host, path);
-    if (dir == 0) {
-        parent = mprGetFirstItem(host->dirs);
-        dir = maCreateDir(host, alias->filename, parent);
-        maInsertDir(host, dir);
-    }
-    mprFree(path);
+    mprFree(ctx);
+    return 0;
 }
 #endif
 
@@ -336,13 +350,12 @@ static void usageError(Mpr *mpr)
     name = mprGetAppName(mpr);
 
     mprPrintfError(mpr, "\n\n%s Usage:\n\n"
-    "  %s [options]\n"
-    "  %s [options] [IPaddress][:port] [documentRoot] \n\n"
+    "  %s [options] [IPaddress][:port] [documentRoot]\n\n"
     "  Options:\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
     "    --chroot directory     # Change root directory to run more securely (Unix)\n"
     "    --debug                # Run in debug mode\n"
-    "    --ejs appSpec          # Create an ejs application at the path\n"
+    "    --ejs script           # Ejscript startup script\n"
     "    --home directory       # Change to directory to run\n"
     "    --name uniqueName      # Unique name for this instance\n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
@@ -381,12 +394,17 @@ int osInit(Mpr *mpr)
 /*
     Security checks. Make sure we are staring with a safe environment
  */
-int checkEnvironment(Mpr *mpr, cchar *program, cchar *home)
+int checkEnvironment(Mpr *mpr, cchar *program)
 {
+    char   *home;
+
 #if BLD_UNIX_LIKE
+    home = mprGetCurrentPath(mpr);
     if (unixSecurityChecks(mpr, program, home) < 0) {
+        mprFree(home);
         return -1;
     }
+    mprFree(home);
 #endif
 #if BLD_UNIX_LIKE
 {
@@ -528,7 +546,7 @@ static int writePort(MaHost *host)
 
     path = mprJoinPath(host, mprGetAppDir(host), "../.port.log");
     if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0) {
-        mprError(host, "Could not create port file %s\n", path);
+        mprError(host, "Could not create port file %s", path);
         return MPR_ERR_CANT_CREATE;
     }
 
@@ -543,7 +561,7 @@ static int writePort(MaHost *host)
     len = (int) strlen(numBuf);
     numBuf[len++] = '\n';
     if (write(fd, numBuf, len) != len) {
-        mprError(host, "Write to file %s failed\n", path);
+        mprError(host, "Write to file %s failed", path);
         return MPR_ERR_CANT_WRITE;
     }
     close(fd);

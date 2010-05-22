@@ -55,7 +55,6 @@ void maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
                 httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", rec->hostName);
             }
         }
-
         httpSetConnHost(conn, host);
         conn->documentRoot = host->documentRoot;
         conn->server->serverRoot = server->serverRoot;
@@ -512,7 +511,8 @@ static void prepRequest(HttpConn *conn, HttpStage *handler)
         }
         if (info->valid) {
             //  TODO - set a header here
-            trans->etag = mprAsprintf(trans, -1, "%x-%Lx-%Lx", info->inode, info->size, info->mtime);
+            //  MOB -- should be moved back to http/src
+            trans->etag = mprAsprintf(trans, -1, "\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
         }
     }
 }

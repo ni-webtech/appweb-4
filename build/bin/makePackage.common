@@ -379,7 +379,7 @@ cpy() {
                 [ $v -gt 1 ] && echo -e "${UNIX2DOS} -D $dest" 2>/dev/null
                 ${UNIX2DOS} -D "$dest" 2>/dev/null
             fi
-            if [ $strip = 1 -a "${BLD_STRIP}" != "" -a $BLD_UNIX_LIKE ] ; then
+            if [ $strip = 1 -a "${BLD_STRIP}" != "" -a $BLD_UNIX_LIKE = 1 -a $BLD_BUILD_OS != MACOSX ] ; then
                 ${BLD_STRIP} $dest
             fi
             if [ "$mode" = 0 ] ; then

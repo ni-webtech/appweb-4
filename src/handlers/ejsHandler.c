@@ -10,13 +10,9 @@
 #include    "ejs.h"
 
 #if BLD_FEATURE_EJS
-/************************************ Locals **********************************/
-
-static EjsService   *ejsService;
-
 /*********************************** Forwards *********************************/
 
-static int startEjsApp(Http *http, HttpLocation *location);
+static int loadStartupScript(Http *http, HttpLocation *location);
 
 /************************************* Code ***********************************/
 /*  
@@ -55,71 +51,85 @@ static void openEjs(HttpQueue *q)
     conn = q->conn;
     location = conn->receiver->location;
     if (location == 0 || location->context == 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Undefined location context. Missing HttpServer.attach call.");
-        return;
+        if (loadStartupScript(conn->http, location) < 0) {
+            //  MOB -- should this set an error somewhere?
+            return;
+        }
+        if (location == 0 || location->context == 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Undefined location context. Missing HttpServer.attach call.");
+            //  MOB -- should this set an error somewhere?
+            return;
+        }
     }
 }
 
 
 static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 {
-    HttpLocation    *location, *newloc;
-    MaServer        *server;
-    MaHost          *host;
-    char            *prefix, *path;
+    HttpLocation    *location;
+    char            *path;
     
-    host = state->host;
-    server = state->server;
-    location = state->location;
-    
-    if (mprStrcmpAnyCase(key, "EjsLocation") == 0) {
-        if (maSplitConfigValue(http, &prefix, &path, value, 1) < 0 || path == 0 || prefix == 0) {
-            return MPR_ERR_BAD_SYNTAX;
-        }
-        prefix = mprStrTrim(value, "\"");
+    if (mprStrcmpAnyCase(key, "EjsStartup") == 0) {
         path = mprStrTrim(value, "\"");
+        location = state->location;
         location->script = mprStrdup(location, path);
-        newloc = httpCreateInheritedLocation(http, location);
-        if (newloc == 0) {
-            return MPR_ERR_BAD_SYNTAX;
-        }
-        httpSetLocationPrefix(newloc, prefix);
-        newloc->autoDelete = 1;
-        location->script = mprStrdup(location, path);
-        startEjsApp(http, location);
-        return 1;
-
-    } else if (mprStrcmpAnyCase(key, "EjsStartup") == 0) {
-        path = mprStrTrim(value, "\"");
-        location->script = mprStrdup(location, path);
-        startEjsApp(http, location);
         return 1;
     }
     return 0;
 }
 
 
-static int startEjsApp(Http *http, HttpLocation *location)
+/*
+    Find a start script. Default to /usr/lib/PRODUCT/lib/PRODUCT.es.
+ */
+static char *findScript(MprCtx ctx, char *script)
+{
+    char        *base, *result;
+
+    if (script == 0 || *script == '\0') {
+        script = mprAsprintf(ctx, -1, "%s/../%s/%s", mprGetAppDir(ctx), BLD_LIB_NAME, MA_EJS_START);
+    } else {
+        if (!mprPathExists(ctx, script, R_OK)) {
+            base = mprGetPathBase(ctx, script);
+            script = mprAsprintf(ctx, -1, "%s/../%s/%s", mprGetAppDir(ctx), BLD_LIB_NAME, base);
+            mprFree(base);
+        }
+    }
+    if (mprPathExists(ctx, script, R_OK)) {
+        result = mprGetNativePath(ctx, script);
+        mprFree(script);
+        return result;
+    }
+    return 0;
+}
+
+
+static int loadStartupScript(Http *http, HttpLocation *location)
 {
     Ejs         *ejs;
+    char        *script;
     int         ver;
 
-    ejs = ejsCreateVm(ejsService, NULL, NULL, NULL, EJS_FLAG_MASTER);
+    ejs = ejsCreateVm(http, NULL, NULL, NULL, EJS_FLAG_MASTER);
     if (ejs == 0) {
         return 0;
     }
     ejs->location = location;
-
     ver = 0;
     if (ejsLoadModule(ejs, "ejs.web", ver, ver, 0) < 0) {
         mprError(ejs, "Can't load ejs.web.mod: %s", ejsGetErrorMsg(ejs, 1));
         return MPR_ERR_CANT_INITIALIZE;
     }
-    if ((ejs->service->loadScriptFile)(ejs, location->script, NULL) == 0) {
-        ejsReportError(ejs, "Can't load \"%s\"", location->script);
-    } else {
-        LOG(http, 2, "Loading Ejscript Server \"%s\"", location->script);
+    if ((script = findScript(http, location->script)) == 0) {
+        mprError(http, "Can't find script file %s", location->script);
+        return MPR_ERR_CANT_OPEN;
     }
+    if (ejsLoadScriptFile(ejs, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
+        mprError(ejs, "Can't load \"%s\"", script);
+    } else {
+        LOG(http, 2, "Loading Ejscript Server script: \"%s\"", script);
+    }
+    mprFree(script);
     return 0;
 }
 
@@ -143,11 +153,12 @@ double  __ejsAppweb_floating_point_resolution(double a, double b, int64 c, int64
  */
 int maEjsHandlerInit(Http *http, MprModule *mp)
 {
-    HttpStage     *handler;
+    HttpStage   *handler;
+    EjsService  *sp;
 
-    ejsService = ejsCreateService(http);
-    ejsService->http = http;
-    ejsInitCompiler(ejsService);
+    sp = ejsCreateService(http);
+    sp->http = http;
+    ejsInitCompiler(sp);
 
     /*
         Most of the Ejs handler is in ejsLib.c. Search for ejsAddWebHandler. Augment the handler with match, open

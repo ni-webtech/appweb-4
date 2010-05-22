@@ -65,6 +65,11 @@ module ejs {
          */
         static var config: Object
 
+        /**
+            Separator string to use when constructing PATH style search strings
+         */
+        static var SearchSeparator: String = (Config.OS == "WIN") ? ";" : ":"
+
         /*  
             Standard I/O streams. These can be any kind of stream.
          */
@@ -81,9 +86,7 @@ module ejs {
                 enable: true,
                 where: "stdout",
                 level: 2,
-                /*
-                    match: null,
-                 */
+                /* match: null, */
             },
             cache: {
                 enable: true,
@@ -189,7 +192,7 @@ module ejs {
         /** 
             Set the current logger
          */
-        public static var logger: Logger
+        public static var log: Logger
 
         /** 
             Application name. Set to a single word, lower-case name for the application.
@@ -325,8 +328,12 @@ module ejs {
             @hide
          */
         static function serviceEvents(count: Number = -1, timeout: Number = -1): Void {
-            for (i in count) {
-                eventLoop(timeout, true)
+            if (count < 0) {
+                eventLoop(timeout, false)
+            } else {
+                for (i in count) {
+                    eventLoop(timeout, true)
+                }
             }
         }
     }
@@ -361,34 +368,32 @@ module ejs {
 
         let log = config.log
         if (log.enable) {
-            let stream
-            if (log.where == "stdout") {
+            let stream = Logger.mprStream
+            if (stream) {
+                log.level = Logger.mprLevel
+            } else if (log.where == "stdout") {
                 stream = App.outputStream
             } else if (log.where == "stderr") {
                 stream = App.errorStream
             } else {
                 stream = File(log.where, "w")
             }
-            App.logger = new Logger(App.name, stream, log.level)
+            App.log = new Logger(App.name, stream, log.level)
             if (log.match) {
-                App.logger.match = log.match
+                App.log.match = log.match
             }
         }
 
-        /*  
-            Append search paths
-         */
+        /*  Append search paths */
         if (config.search) {
             if (config.search is Array) {
                 App.search = config.search + App.search
             } else if (config.search is String) {
-                App.search = config.search.split(Path.SearchSeparator) + App.search
+                App.search = config.search.split(App.SearchSeparator) + App.search
             }
         }
 
-        /*  
-            Run load scripts
-         */
+        /*  Run load scripts */
         if (config.scripts) {
             for each (m in config.scripts) {
                 load(m)
@@ -602,9 +607,10 @@ module ejs {
             The matching function is called with the following signature:
                 function match(element: Object, elementIndex: Number, arr: Array): Boolean
             @param callback Transforming function
-            @return Returns a new array of transformed elements.
+            @param thisObj Object to use for the "this" value when invoking the callback
+            @return Returns the original (transformed) array.
          */
-        function forEach(callback: Function, thisObj: Object? = null): Void {
+        function forEach(callback: Function, thisObj: Object? = null): Array {
             if (thisObj) {
                 for (let i: Number in this) {
                     callback.call(thisObj, this[i], i, this)
@@ -614,6 +620,7 @@ module ejs {
                     callback(this[i], i, this)
                 }
             }
+            return this
         }
 
         /**
@@ -670,7 +677,7 @@ module ejs {
                 whole array will be searched.
             @return The items index into the array if found, otherwise -1.
          */
-        native function lastIndexOf(element: Object, startIndex: Number = 0): Number
+        native function lastIndexOf(element: Object, startIndex: Number = -1): Number
 
         /**
             Length of an array.
@@ -793,12 +800,12 @@ module ejs {
         }
 
         /**
-            Sort the array using the supplied compare function
+            Sort the array. The array is sorted in lexical order. A compare function may be supplied.
             @param compare Function to use to compare. A null comparator will use a text compare. The compare signature is:
                 function comparator (array: Array, index1: Number, index2: Number): Number
                 The comparison function should return 0 if the items are equal, -1 if the item at index1 is less and should
                 return 1 otherwise.
-            @param order If order is >= 0, then an ascending order is used. Otherwise descending.
+            @param order If order is >= 0, then an ascending lexical order is used. Otherwise descending.
             @return the sorted array reference
             @spec ejs Added the order argument.
          */
@@ -861,8 +868,7 @@ module ejs {
             @param items to insert
             @return Returns the array reference
          */
-        function unshift(...items): Object
-            insert(0, items)
+        native function unshift(...items): Array
 
         /**
             Array intersection. Return the elements that appear in both arrays. 
@@ -1029,7 +1035,8 @@ module ejs {
         native function set async(enable: Boolean): Void
 
         /** 
-            The number of bytes available to read
+            The number of bytes available to read without blocking. This is the number of bytes internally buffered
+            in the binary stream and does not include any data buffered downstream.
             @return the number of available bytes
          */
         function get available(): Number
@@ -1506,8 +1513,8 @@ module ejs {
         native function close(): Void
 
         /** 
-            Compact available data down and adjust the read/write positions accordingly. This moves available room to
-            the end of the byte array.
+            Compact available data down and adjust the read/write positions accordingly. This sets the read pointer 
+            to the zero index and adjusts the write pointer by the corresponding amount.
          */
         native function compact(): Void
 
@@ -1577,7 +1584,6 @@ module ejs {
         /**
             Is the ByteArray is growable.
          */
-        # FUTURE
         native function get growable(): Boolean
 
         /** 
@@ -1827,17 +1833,16 @@ module ejs {
         }
 
         /**  
+            Output function to process (output) data. The output callback should read from the supplied buffer.
             LEGACY DEPRECATED 1.0.0B3
+            @param callback Function to invoke when the byte array is full or flush() is called.
+                function outputCallback(buffer: ByteArray): Number
             @hide
          */
         function get output(): Function { return null; } 
 
         //  LEGACY DEPRECATED 1.0.0B3
         /** 
-            Define an output function to process (output) data. The output callback should read from the supplied buffer.
-            @param callback Function to invoke when the byte array is full or flush() is called.
-                function outputCallback(buffer: ByteArray): Number
-            @hide
          */
         function set output(callback: Function): Void {
             addListener("readable", function(event: String, ba: ByteArray): Void {
@@ -2369,7 +2374,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    enumerable class Config extends Object {
+    enumerable class Config {
 
         use default namespace public
 
@@ -2450,18 +2455,6 @@ module ejs {
 
         use default namespace public
 
-        /**
-            Construct a new date object. Permissible constructor forms:
-            <ul>
-                <li>Date()</li>
-                <li>Date(milliseconds) where (seconds sincde 1 Jan 1970 00:00:00 UTC))</li>
-                <li>Date(dateString) where (In a format recognized by parse())</li>
-                <li>Date(year, month, date) where (Four digit year, month: 0-11, date: 1-31)</li>
-                <li>Date(year, month, date [, hour, minute, second, msec]) where (hour: 0-23, minute: 0-59, second: 0-59, msec: 0-999)</li>
-            </ul>
-         */
-        native function Date(...args)
-
 /* TODO 
             Better to convert Date to not have args, but rather default values
             @param milliseconds Integer representing milliseconds since 1 January 1970 00:00:00 UTC.
@@ -2476,16 +2469,22 @@ module ejs {
 */
 
         /**
+            Construct a new date object. Permissible constructor forms:
+            <ul>
+                <li>Date()</li>
+                <li>Date(milliseconds) where (seconds sincde 1 Jan 1970 00:00:00 UTC))</li>
+                <li>Date(dateString) where (In a format recognized by parse())</li>
+                <li>Date(year, month, date) where (Four digit year, month: 0-11, date: 1-31)</li>
+                <li>Date(year, month, date [, hour, minute, second, msec]) where (hour: 0-23, minute: 0-59, second: 0-59, msec: 0-999)</li>
+            </ul>
+         */
+        native function Date(...args)
+
+        /**
             The day of the week (0 - 6, where 0 is Sunday) in local time.
             @spec ejs
          */
         native function get day(): Number 
-
-        /**
-            The day of the week (0 - 6, where 0 is Sunday) in local time.
-            @param day The integer day of the week (0 - 6, where 0 is Sunday)
-            @spec ejs
-         */
         native function set day(day: Number): Void
 
         /**
@@ -2493,12 +2492,6 @@ module ejs {
             @spec ejs
          */
         native function get dayOfYear(): Number 
-
-        /**
-            The day of the year (0 - 365) in local time.
-            @param day The integer day of the year (0 - 365)
-            @spec ejs
-         */
         native function set dayOfYear(day: Number): Void
 
         /**
@@ -2506,12 +2499,6 @@ module ejs {
             @spec ejs
          */
         native function get date(): Number 
-
-        /**
-            The day of the month (1-31).
-            @param date integer day of the month (1-31)
-            @spec ejs
-         */
         native function set date(date: Number): Void
 
         /**
@@ -2523,6 +2510,7 @@ module ejs {
         /**
             Format a date using a format specifier in local time. This routine is implemented by calling 
             the O/S strftime routine and so not all the format specifiers are available on all platforms.
+            For full details, consult your platform API manual for strftime.
 
             The format specifiers are:
             <ul>
@@ -2530,44 +2518,35 @@ module ejs {
             <li>%a    national representation of the abbreviated weekday name.</li>
             <li>%B    national representation of the full month name.</li>
             <li>%b    national representation of the abbreviated month name.</li>
-            <li>%C    (year / 100) as decimal number; single digits are preceded by a zero.</li>
+            <li>%C    (year / 100) as decimal number; single digits are preceded by a zero. Not supported on Windows.</li>
             <li>%c    national representation of time and date.</li>
             <li>%D    is equivalent to ``%m/%d/%y''.</li>
             <li>%d    the day of the month as a decimal number (01-31).</li>
-            <li>%E*   POSIX locale extensions. The sequences %Ec %EC %Ex %EX %Ey %EY are supposed to provide alternate 
-                      representations. NOTE: these are not available on some platforms.</li>
-            <li>%e    the day of month as a decimal number (1-31); single digits are preceded by a blank.</li>
+            <li>%e    the day of month as a decimal number (1-31); single digits are preceded by a blank. Not supported 
+                      on Windows</li>
             <li>%F    is equivalent to ``%Y-%m-%d''.</li>
-            <li>%G    a year as a decimal number with century. This year is the one that contains the greater part of
-                      the week (Monday as the first day of the week).</li>
-            <li>%g    the same year as in ``%G'', but as a decimal number without century (00-99).</li>
             <li>%H    the hour (24-hour clock) as a decimal number (00-23).</li>
             <li>%h    the same as %b.</li>
             <li>%I    the hour (12-hour clock) as a decimal number (01-12).</li>
             <li>%j    the day of the year as a decimal number (001-366). Note: this range is different to that of
                       the dayOfYear property which is 0-365.</li>
-            <li>%k    the hour (24-hour clock) as a decimal number (0-23); single digits are preceded by a blank.</li>
+            <li>%k    the hour (24-hour clock) as a decimal number (0-23); single digits are preceded by a blank. 
+                      Not supported on windows</li>
             <li>%l    the hour (12-hour clock) as a decimal number (1-12); single digits are preceded by a blank.</li>
             <li>%M    the minute as a decimal number (00-59).</li>
             <li>%m    the month as a decimal number (01-12).</li>
             <li>%n    a newline.</li>
-            <li>%O*   POSIX locale extensions. The sequences %Od %Oe %OH %OI %Om %OM %OS %Ou %OU %OV %Ow %OW %Oy are 
-                      supposed to provide alternate representations. Additionly %OB implemented to represent alternative 
-                      months names (used standalone, without day mentioned). NOTE: these are not available on some 
-                      platforms.</li>
-            <li>%P    Lower case national representation of either "ante meridiem" or "post meridiem" as appropriate.</li>
+            <li>%P    Lower case national representation of either "ante meridiem" or "post meridiem" as appropriate.
+                      Not supported on Windows or Mac</li>
             <li>%p    national representation of either "ante meridiem" or "post meridiem" as appropriate.</li>
             <li>%R    is equivalent to ``%H:%M''.</li>
             <li>%r    is equivalent to ``%I:%M:%S %p''.</li>
             <li>%S    the second as a decimal number (00-60).</li>
-            <li>%s    the number of seconds since the Epoch, UTC (see mktime(3)).</li>
+            <li>%s    the number of seconds since the Epoch, UTC (see mktime(3)). Not supported on Windows</li>
             <li>%T    is equivalent to ``%H:%M:%S''.</li>
             <li>%t    a tab.</li>
             <li>%U    the week number of the year (Sunday as the first day of the week) as a decimal number (00-53).</li>
             <li>%u    the weekday (Monday as the first day of the week) as a decimal number (1-7).</li>
-            <li>%V    the week number of the year (Monday as the first day of the week) as a decimal
-                      number (01-53).  If the week containing January 1 has four or more days in the new year, then it
-                      is week 1; otherwise it is the last week of the previous year, and the next week is week 1.</li>
             <li>%v    is equivalent to ``%e-%b-%Y''.</li>
             <li>%W    the week number of the year (Monday as the first day of the week) as a decimal number (00-53).</li>
             <li>%w    the weekday (Sunday as the first day of the week) as a decimal number (0-6).</li>
@@ -2579,12 +2558,26 @@ module ejs {
             <li>%z    the time zone offset from UTC; a leading plus sign stands for east of UTC, a minus
                       sign for west of UTC, hours and minutes follow with two digits each and no delimiter between them
                       (common form for RFC 822 date headers).</li>
-            <li>%+    national representation of the date and time (the format is similar to that produced by date(1)). 
+            <li>%+    national representation of the date and time (the format is similar to that produced by date(1)).
                       This format is platform dependent.</li>
             <li>%%    Literal percent.</li>
             </ul>
         
-            @param layout Format layout string using the above format specifiers. Similar to a C language printf() string.
+         Some platforms may also support the following format extensions:
+            <ul>
+            <li>%E*   POSIX locale extensions. Where "*" is one of the characters: c, C, x, X, y, Y.
+            <li>%G    a year as a decimal number with century. This year is the one that contains the greater part of
+                      the week (Monday as the first day of the week).</li>
+            <li>%g    the same year as in ``%G'', but as a decimal number without century (00-99).</li>
+            <li>%O*   POSIX locale extensions. Where "*" is one of the characters: d e H I m M S u U V w W y.
+                      supposed to provide alternate representations. Additionly %OB implemented to represent alternative 
+                      months names (used standalone, without day mentioned).
+            <li>%V    the week number of the year (Monday as the first day of the week) as a decimal
+                      number (01-53).  If the week containing January 1 has four or more days in the new year, then it
+                      is week 1; otherwise it is the last week of the previous year, and the next week is week 1.</li>
+            </ul>
+
+            @param layout Format layout string using the above format specifiers. See strftime(3) for more information.
             @return string representation of the date.
             @spec ejs
          */
@@ -2605,12 +2598,6 @@ module ejs {
             @spec ejs
          */
         native function get fullYear(): Number 
-
-        /**
-            Set the year as four digits in local time.
-            @param year Year to set.
-            @spec ejs
-         */
         native function set fullYear(year: Number): void
 
         /**
@@ -2737,12 +2724,6 @@ module ejs {
             @spec ejs
          */
         native function get hours(): Number 
-
-        /**
-            Set the current hour (0 - 23) in local time
-            @param hour The hour as an integer
-            @spec ejs
-         */
         native function set hours(hour: Number): void
 
         /**
@@ -2750,12 +2731,6 @@ module ejs {
             @spec ejs
          */
         native function get milliseconds(): Number 
-
-        /**
-            Set the current millisecond (0 - 999) in local time.
-            @param ms The millisecond as an integer
-            @spec ejs
-         */
         native function set milliseconds(ms: Number): void
 
         /**
@@ -2763,12 +2738,6 @@ module ejs {
             @spec ejs
          */
         native function get minutes(): Number 
-
-        /**
-            Set the current minute (0 - 59) in local time.
-            @param min The minute as an integer
-            @spec ejs
-         */
         native function set minutes(min: Number): void
 
         /**
@@ -2776,12 +2745,6 @@ module ejs {
             @spec ejs
          */
         native function get month(): Number 
-
-        /**
-            Set the current month (0 - 11) in local time.
-            @param month The month as an integer
-            @spec ejs
-         */
         native function set month(month: Number): void
 
         /**
@@ -2810,6 +2773,22 @@ module ejs {
                 the date string will be interpreted as a local date/time.  This is similar to parse() but it returns a
                 date object.
             @param dateString The date string to parse.
+            The date parsing logic uses heuristics and attempts to intelligently parse a range of dates. Some of the
+            possible formats are:
+            <ul>
+                <li>07/28/2010</li>
+                <li>07/28/08</li>
+                <li>Jan/28/2010</li>
+                <li>Jaunuary-28-2010</li>
+                <li>28-jan-2010</li>
+                <li>[29] Jan [15] [2010]</li>
+                <li>dd/mm/yy, dd.mm.yy, dd-mm-yy</li>
+                <li>mm/dd/yy, mm.dd.yy, mm-dd-yy</li>
+                <li>yyyy/mm/dd, yyyy.mm.dd, yyyy-mm-dd</li>
+                <li>10:52[:23]</li>
+                <li>2009-05-21t16:06:05.000z (ISO date)</li>
+                <li>[GMT|UTC][+-]NN[:]NN (timezone)</li>
+            </ul>
             @param defaultDate Default date to use to fill out missing items in the date string.
             @return Return a new Date.
             @spec ejs
@@ -2819,7 +2798,7 @@ module ejs {
         /**
             Parse a date string and Return a new Date object. If $dateString does not contain a timezone,
                 the date string will be interpreted as a UTC date/time.
-            @param dateString UTC date string to parse.
+            @param dateString UTC date string to parse. See $parseDate for supported formats.
             @param defaultDate Default date to use to fill out missing items in the date string.
             @return Return a new Date.
             @spec ejs
@@ -2829,7 +2808,7 @@ module ejs {
         /**
             Parse a date string and return the number of milliseconds since midnight, January 1st, 1970 UTC. 
             If $dateString does not contain a timezone, the date string will be interpreted as a local date/time.
-            @param dateString The string to parse
+            @param dateString The string to parse. See $parseDate for supported formats.
             @return Return a new date number.
          */
         static native function parse(dateString: String): Number
@@ -2839,12 +2818,6 @@ module ejs {
             @spec ejs
          */
         native function get seconds(): Number 
-
-        /**
-            Set the current second (0 - 59) in local time.
-            @param sec The second as an integer
-            @spec ejs
-         */
         native function set seconds(sec: Number): void
 
         /**
@@ -2958,12 +2931,6 @@ module ejs {
             @spec ejs
          */
         native function get time(): Number 
-
-        /**
-            Set the number of milliseconds since midnight, January 1st, 1970 UTC.
-            @param value The number of milliseconds as a number
-            @spec ejs
-         */
         native function set time(value: Number): Void 
 
         /**
@@ -3059,8 +3026,8 @@ module ejs {
             @param seconds Secods of minute
             @param milliseconds Milliseconds of second
          */
-        native static function UTC(year: Number, month: Number, day: Number, hours: Number = 0, 
-                minutes: Number = 0, seconds: Number = 0, milliseconds: Number = 0): Date
+        static native function UTC(year: Number, month: Number, day: Number, hours: Number = 0, 
+            minutes: Number = 0, seconds: Number = 0, milliseconds: Number = 0): Date
 
         /**
             Return the primitive value of the object
@@ -3070,16 +3037,10 @@ module ejs {
             time
 
         /**
-            The current year as two digits.
+            The current year as two digits in local time.
             @spec ejs
          */
         native function get year(): Number 
-
-        /**
-            Set the current year as two digits in local time.
-            @param year Year to set.
-            @spec ejs
-         */
         native function set year(year: Number): void
 
         /**
@@ -3876,10 +3837,15 @@ module ejs {
         native function addListener(name, listener: Function): Void
 
         /** @duplicate Stream.async */
-        native function get async(): Boolean
+        function get async(): Boolean
+            false
 
         /** @duplicate Stream.async */
-        native function set async(enable: Boolean): Void
+        function set async(enable: Boolean): Void {
+            if (enable) {
+                throw new ArgError("File class does not support async I/O")
+            }
+        }
 
         /** 
             Create a File object and open the requested path.
@@ -4115,6 +4081,18 @@ module ejs {
         native function FileSystem(path: Object? = null)
 
         /** 
+            Are path names on this file system case sensitive. ie. are uppercase and lowercase path names equivalent
+         */
+        #FUTURE
+        native function get caseSensitive(): Boolean
+
+        /** 
+            Do path names on this file system preserve case
+         */
+        #FUTURE
+        native function get casePreserved(): Boolean
+
+        /** 
             Free space in the file system in 1M blocks (1024 * 1024 bytes).
          */
         #FUTURE
@@ -4276,7 +4254,7 @@ module ejs {
 module ejs {
 
     /** 
-        The Function type is used to represent closures, function expressions and class methods. It contains a 
+        The Function type is used to represent functions, function expressions, closures and class methods. It contains a 
         reference to the code to execute, the execution scope and possibly a bound "this" reference.
         @stability evolving
      */
@@ -4284,25 +4262,21 @@ module ejs {
 
         use default namespace public
 
-/* MOB
-ejs static function get name(): String { return Reflect(this).name; }
-native function get constructor(): Function
-ejs static native function get length(): Number
-        ejs native function get prototype(): Object
-        ejs var prototype: Object
+        /**
+            Create a function from the supplied formal parameter names and function body expression.
+            @param args The parameters and body are suplied as discrete parameters to Function(), i.e. 
+                not as an array of args.
+            Function ([args, ...], body)
+         */
+        native function Function(...args)
+/*
+            let body = args.pop()
+            let code = "function(" + args.join(",") + ") {\n" + body + "\n}"
+            print("CODE " + code)
+            eval(code)
+        }
 */
 
-
-/*
-    MOB
-    Must have:
-    const length = // typical number of args expected by the function
-    const prototype
-
-    MDC:
-        var constructor: Array = []
-        var length: Number
-   */
         /** 
             Invoke the function on another object.
             @param thisObject The object to set as the "this" object when the function is called.
@@ -4322,13 +4296,14 @@ ejs static native function get length(): Number
          */
         native function call(thisObject: Object, ...args): Object 
 
+        //    MOB -- this could go into Reflect
         /** 
             The bound object representing the "this" object. Functions carry both a lexical scoping and the owning 
             "this" object. Set to "null" if "this" is not defined for the function.
          */
         native function get boundThis(): Object
 
-//  MOB -- ES5 usage is function bind(obj, ...args)
+        //  MOB -- ES5 usage is function bind(obj, ...args)
         /** 
             Bind the value of "this" for the function. This can set the value of "this" for the function. If
             $overwrite is false, it will only define the value of "this" if it is not already defined.
@@ -4337,6 +4312,11 @@ ejs static native function get length(): Number
          */
         native function bind(thisObj: Object, overwrite: Boolean = true): Void
 
+//  MOB -- ECMA: this is a var on all functions and not a getter on the prototype
+        //  Number of arguments expected by the function
+        native function get length(): Number
+
+        //  MOB -- DOC
         /** @hide */
         native function setScope(scope: Object): Void
     }
@@ -4345,6 +4325,7 @@ ejs static native function get length(): Number
     /** @hide */
     native function makeGetter(fn: Function): Function
 
+    //  MOB -- move into Object   Object.
     /** @hide */
     native function clearBoundThis(fn: Function): Function
 }
@@ -4639,10 +4620,10 @@ public namespace ejs
         Assert a condition is true. This call tests if a condition is true by testing to see if the supplied 
         expression is true. If the expression is false, the interpreter will throw an exception.
         @param condition JavaScript expression evaluating or castable to a Boolean result.
-        @return True if the condition is.
+        @throws AssertError if the condition is false.
         @spec ejs
      */
-    native function assert(condition: Boolean): Boolean
+    native function assert(condition: Boolean): Void
 
     /** 
         Convenient way to trap to the debugger
@@ -4653,6 +4634,7 @@ public namespace ejs
         Replace the base type of a type with an exact clone. 
         @param klass Class in which to replace the base class.
         @spec ejs
+        @hide
      */
     native function cloneBase(klass: Type): Void
 
@@ -4836,7 +4818,7 @@ public namespace ejs
         obj is target
 
     /**  
-        DEPREACTED - Use App.stderr.write() and App.stderr.writeLine()
+        DEPRECATED - Use App.stderr.write() and App.stderr.writeLine()
         Write to the standard error. This call writes the arguments to the standard error with a new line appended. 
         It evaluates the arguments, converts the result to strings and prints the result to the standard error. 
         Arguments are converted to strings by calling their toSource method.
@@ -4847,7 +4829,7 @@ public namespace ejs
     native function error(...args): void
 
     /**
-        DEPREACTED
+        DEPRECATED
         Read from the standard input. This call reads a line of input from the standard input
         @return A string containing the input. Returns null on EOF.
         @hide
@@ -4855,7 +4837,7 @@ public namespace ejs
     native function input(): String
 
     /**  
-        DEPREACATED - Use print(), App.stdout.write() and App.stdout.writeLine()
+        DEPRECATED - Use print(), App.stdout.write() and App.stdout.writeLine()
         Print the arguments to the standard output with a new line appended. This call evaluates the arguments, 
         converts the result to strings and prints the result to the standard output. Arguments are converted to 
         strings by calling their toString method.
@@ -6041,7 +6023,7 @@ module ejs {
         A logger may have a "parent" logger in order to create hierarchies of loggers for granular control of logging.
         For example, a logger can be created for each class in a package with all such loggers having a single parent. 
         Loggers can send log messages to their parent and inherit their parent's log level. 
-        The top level logger for an application is defined by App.logger.
+        The top level logger for an application is defined by App.log.
  
         Loggers may define a filter function that returns true or false depending on whether a specific message 
         should be logged or not. A matching pattern can alternatively be used to filter messages based on the logger name.
@@ -6086,7 +6068,7 @@ module ejs {
         private var _level: Number = 0
         private var _pattern: RegExp
         private var _name: String
-        private var _outstream: Stream
+        private var _outStream: Stream
         private var _parent: Logger
 
         /** 
@@ -6101,21 +6083,24 @@ module ejs {
                 logger level will be emitted. Range is 0 (least verbose) to 9.
             @example:
                 var file = File("progress.log", "w")
-                var logger = new Logger("name", file, 5)
-                logger.log(2, "message")
+                var log = new Logger("name", file, 5)
+                log.debug(2, "message")
          */
         function Logger(name: String, output = null, level: Number? = 0) {
             _name = name
             if (output && output is Logger) {
                 _level = output.level
                 _parent = output
+            } else if (output && output is Stream) {
+                _outStream = output
+                _level = level
             } else {
                 if (output == "stdout") {
-                    _outstream = App.outputStream
+                    _outStream = App.outputStream
                 } else if (output == "stderr") {
-                    _outstream = App.errorStream
+                    _outStream = App.errorStream
                 } else {
-                    _outstream = output || App.errorStream
+                    _outStream = output || App.errorStream
                 }
                 _level = level
             }
@@ -6151,7 +6136,7 @@ module ejs {
             Close the logger 
          */
         function close(): Void {
-            _outstream = null
+            _outStream = null
         }
 
         /** 
@@ -6204,6 +6189,10 @@ module ejs {
             _pattern = pattern
         }
 
+        //  MOB
+        static native function get mprLevel(): Stream
+        static native function get mprStream(): Stream
+
         /** 
             The name of this logger.
          */
@@ -6221,15 +6210,15 @@ module ejs {
         /** 
             The output stream used by the logger.
          */
-        function get outstream(): Stream
-            _outstream
+        function get outStream(): Stream
+            _outStream
 
         /** 
             Set the output stream device for this logger.
             @param stream New output stream for the logger
          */
-        function set outstream(stream: Stream): void {
-            _outstream = outstream
+        function set outStream(stream: Stream): void {
+            _outStream = outStream
         }
 
         /** 
@@ -6317,7 +6306,7 @@ module ejs {
             @param msg The string message to emit
          */
         private function emit(log: Logger, level: Number, name: String, kind: String, msg: String): Void {
-            if (level > _level || !_outstream)
+            if (level > _level || !_outStream)
                 return
             if (name)
                 name = _name + "." + name
@@ -6330,8 +6319,8 @@ module ejs {
                 _parent.emit(log, level, name, kind, msg)
             } else {
                 if (kind)
-                    _outstream.write(name + ": " + kind + ": " + msg)
-                else _outstream.write(name + ": " + msg)
+                    _outStream.write(name + ": " + kind + ": " + msg)
+                else _outStream.write(name + ": " + level + ": " + msg)
             }
         }
     }
@@ -6365,7 +6354,7 @@ module ejs {
         or positive or negative infinity.
         @stability evolving
      */
-    class Math extends Object {
+    class Math {
 
         use default namespace public
 
@@ -7214,18 +7203,10 @@ module ejs {
 
         use default namespace public
 
-shared native function get constructor(): Function
-
-        //  ejs so other types don't need to use override when defining "length"
-
-shared ejs static native function get length(): Number
-
         /**
-            The prototype object for the type. The prototype object provides the template of instance properties 
-            shared by all Objects.
+            The constructor function from which this object was created.
          */
-shared static native function get prototype(): Object
-
+        native function get constructor(): Function
 
         /** 
             Clone the object
@@ -7240,7 +7221,7 @@ shared static native function get prototype(): Object
             @param props Properties for the new object
             @return The created object
          */
-        static native function create(prototype, props: Object = undefined): Object 
+        static native function create(prototype: Object, props: Object = undefined): Object 
 
         /** 
             Define or redefine a property on the given object
@@ -7313,6 +7294,11 @@ shared static native function get prototype(): Object
         static native function getOwnPropertyNames(obj: Object): Array
 
         /** 
+            The number of properties in the of the object including non-enumerable properties.
+         */
+        static native function getOwnPropertyCount(obj: Object): Number
+
+        /** 
             Get the prototype object
             @param obj Object to inspect
             @return The prototype object for the given object.
@@ -7376,16 +7362,6 @@ shared static native function get prototype(): Object
             return result
         }
 
-//  MOB -- removed
-        /** 
-            The length of the object.
-            This is the most natural size or length for the object. For types based on Object, it will be set to the 
-            number of properties in the object. For Arrays, it will be set to the number of elements in the array. 
-            For some types, the size property may be writable (e.g. Array). For null objects, length is 0, for 
-            undefined objects, length is -1.
-        native function get length(): Number 
-         */
-
         /** 
             Prevent extensions to object. Sets the extensible property to false 
             @return The object argument to permit chaining.
@@ -7400,6 +7376,13 @@ shared static native function get prototype(): Object
             TODO - prototype property
          */
         native function propertyIsEnumerable(property: String): Boolean
+
+        /**
+            The prototype object for objects of this type. The prototype object provides the template for instance 
+            properties shared by all objects of a given type.
+         */
+        static native function get prototype(): Object
+        static native function set prototype(v: Object): Void
 
         /** 
             Seal an object. This prevents changing the configuration of any property. This includes prventing property 
@@ -7633,10 +7616,19 @@ module ejs {
                         }
                     }
                 }
-                if (path.basename.toString().match(pattern)) {
-                    result.append(path)
+                if (Config.OS == "WIN") {
+                    if (path.basename.toString().toLower().match(pattern)) {
+                        result.append(path)
+                    }
+                } else {
+                    if (path.basename.toString().match(pattern)) {
+                        result.append(path)
+                    }
                 }
                 return result
+            }
+            if (Config.OS == "WIN") {
+                glob = glob.toLower()
             }
             pattern = RegExp("^" + glob.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$")
             return recursiveFind(this, pattern, recurse, 0)
@@ -7765,10 +7757,10 @@ module ejs {
 
         /**
             Get a path after mapping the path directory separator
-            @param separator Path directory separator to use
+            @param separator Path directory separator to use. Defaults to the separator of for this path.
             @return a new Path after mapping separators
          */
-        native function map(separator: String): Path
+        native function map(sep: String = separator): Path
 
         /** 
             Get the mime type for a path or extension string. The path's extension is used to lookup the corresponding
@@ -7878,6 +7870,21 @@ module ejs {
             result = file.readBytes()
             file.close()
             return result
+        }
+
+        /**
+            Read the file containing a JSON string and return a deserialized object. 
+            This method opens the file, reads the contents, deserializes the object and closes the file.
+            @return An object.
+            @throws IOError if the file cannot be read
+            @example:
+                data = Path("/tmp/a.json").readJson()
+         */
+        function readJSON(): Object {
+            let file: File = open(this)
+            result = file.readString()
+            file.close()
+            return deserialize(result)
         }
 
         /**
@@ -8401,7 +8408,7 @@ module ejs {
         native function Reflect(o: Object)
 
         /**
-            The base class of the object being examined
+            The base class of the object being examined. If the object is a type, this is the super class of the type.
          */
         native function get base(): Type
 
@@ -8410,14 +8417,17 @@ module ejs {
             @return True if the object is a type object
          */
         native function get isType(): Boolean
+        native function get isPrototype(): Boolean
 
         /**
-            The type (base class) of the object
+            The type of the object. If the object is an instance, this is the class type object. If the object is a
+            type, this value is "Type".
          */
         native function get type(): Type
+        native function get proto(): Object
 
         /**
-            The name of the object if it is a type object
+            The name of the object if it is a type object. Otherwise empty.
          */
         native function get name(): String
 
@@ -8425,7 +8435,7 @@ module ejs {
 
     /**
         Return the name of a type. This is a fixed version of the standard "typeof" operator. It returns the real
-        Ejscript underlying type. 
+        Ejscript underlying type name. 
         @param o Object or value to examine. 
         @return A string type name. 
         @spec ejs
@@ -8764,6 +8774,8 @@ module ejs {
 
         use default namespace public
 
+        //  MOB -- SSL
+
         /** 
             Create a socket object
          */
@@ -8789,19 +8801,11 @@ module ejs {
          */
         native function get address(): String 
 
-        /** 
-            @duplicate Stream.async
-         */
+        /** @duplicate Stream.async */
         native function get async(): Boolean
-
-        /** 
-            @duplicate Stream.async
-         */
         native function set async(enable: Boolean): Void
 
-        /** 
-            @duplicate Stream.close 
-         */
+        /** @duplicate Stream.close */
         native function close(): Void
 
         /** 
@@ -8821,17 +8825,11 @@ module ejs {
         function get encoding(): String
             "utf-8"
 
-        /** 
-            Set the encoding scheme for serializing strings. The default encoding is UTF-8.
-            @param enc String representing the encoding scheme
-         */
         function set encoding(enc: String): Void {
             throw "Not yet implemented"
         }
 
-        /** 
-            @duplicate Stream.flush
-         */
+        /** @duplicate Stream.flush */
         function flush(dir: Number = Stream.BOTH): Void {}
 
         /** 
@@ -8857,10 +8855,10 @@ module ejs {
          */
         native function get port(): Number 
 
-        /** 
-            @duplicate Stream.read 
-         */
-        native function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Object 
+        /** @duplicate Stream.read */
+        native function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
+
+        //  MOB - readString, readBytes, readXML
 
         /** 
             The remote address bound to this socket. Set to the remote address in dot notation or empty string if it 
@@ -8868,15 +8866,14 @@ module ejs {
          */
         native function get remoteAddress(): String 
 
-        /** 
-            @duplicate Stream.removeListener 
-         */
+        /** @duplicate Stream.removeListener */
         native function removeListener(name: Object, listener: Function): Void
 
         /** 
             @duplicate Stream.write 
          */
-        native function write(data: Object): Object
+        //  MOB -- or ...data
+        native function write(...items): Number
     }
 }
 
@@ -8947,13 +8944,13 @@ module ejs {
         use default namespace public
 
         /** Read direction constant for flush() */
-        const READ = 0x1
+        static const READ = 0x1
 
         /** Write direction constant for flush() */
-        const WRITE = 0x2
+        static const WRITE = 0x2
 
         /** Both directions constant for flush() */
-        const BOTH = 0x3
+        static const BOTH = 0x3
 
         /** 
             Add a listener to the stream. 
@@ -9379,6 +9376,7 @@ module ejs {
 
         /**
             Extract a substring. Similar to slice but only allows positive indicies.
+            If the end index is larger than start, then the effect of substring is as if the two arguments were swapped.
             @param startIndex Integer location to start copying
             @param end Postitive index of one past the last character to extract.
             @return Returns a new string
@@ -9812,7 +9810,8 @@ module ejs {
         }
 
         /** 
-            The number of bytes available to read
+            The number of bytes available to read without blocking. This is the number of bytes buffered internally
+            by this stream. It does not include any data buffered downstream.
             @return the number of available bytes
          */
         function get available(): Number
@@ -9849,6 +9848,7 @@ module ejs {
             @returns The number of new characters added to the input bufer
          */
         function fill(): Number {
+breakpoint()
             inbuf.compact()
             return nextStream.read(inbuf, -1)
         }
@@ -9886,6 +9886,7 @@ module ejs {
             let where = buffer.writePosition
             while (count > 0) {
                 if (inbuf.available == 0) {
+breakpoint()
                     if (fill() <= 0) {
                         if (total == 0) {
                             return null
@@ -10207,11 +10208,9 @@ module ejs {
 module ejs {
 
     /*
-        WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
-        WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
-        WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
-        WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
-        Must not define properties and methods of this type. They cannot be inherited by types.
+        MOB - REVISE
+        The Type class is unlike other class definitions. Rather than provide definitions that are accessed via
+        the base-class and prototype chain, these properties are cloned directly into all types.
      */
 
     /**
@@ -10221,67 +10220,16 @@ module ejs {
      */
     native final class Type {
 
-        use default namespace public
+        use default namespace ejs
 
         /**
+MOB - UNUSED - DELETE
             The prototype object for the type. The prototype object provides the template of instance properties 
             shared by all Objects.
+        static function get prototype(): Object
+            null
          */
-        # TODO
-        native function get prototype(): Type
-
-        /**
-            The base class for this type.
-            @spec ejs
-         */
-        # FUTURE
-        native function get baseClass(): Type
-
-        /**
-            Mix in a type into a dynamic type or object. This routine blends the functions and properties from 
-            a supplied mix-type into the specified target type. Mix-types that are blended in this manner are 
-            known as "mixins". Mixins are used to add horizontal functionality to types at run-time. The target 
-            type must be declared as dynamic.
-            @param type module The module to mix in.
-            @return Returns "this".
-            @throws StateError if the mixin fails due to the target type not being declared as dynamic.
-            @throws TypeError if the mixin fails due to a property clash between the mixin and target types.
-            @spec ejs
-         */ 
-        # FUTURE
-        native function mixin(mixType: Type): Object
-
-        /**
-            The type (class)  name
-            @spec ejs
-         */
-        # FUTURE
-        native function get name(): String
-
-        /**
-            Get the class name.
-            Same as name()
-            @returns the class name
-         */
-        # FUTURE
-        function getClass(): String
-            name()
-
-        /**
-            Seal a type. Once an type is sealed, further attempts to create or delete properties will fail, or calls 
-            to mixin will throw an exception. 
-            @spec ejs
-         */
-        # FUTURE
-        override native function seal() : void
     }
-
-
-    /*
-        TODO - should rename class Type into class Class
-     */
-    # FUTURE
-    var Class = Type
 }
 
 /*
@@ -10435,6 +10383,9 @@ module ejs {
             @param value String containing the new extension. 
          */
         native function set extension(value: String): Void
+
+        function get filename(): Path
+            Path(path.slice(1))
 
         /** 
             Does the Uri has an explicit extension
@@ -10982,19 +10933,19 @@ module ejs {
 
     /**
         Reference to the Worker object for use inside a worker script
-        @returns a Worker object
+        This is only present inside Worker scripts.
      */
     var self: Worker
 
     /**
-        Exit the worker
+        Exit the worker. This is only valid inside Worker scripts.
         @spec ejs
      */
     function exit(): Void
         Worker.exit()
 
     /**
-        Post a message to the Worker's parent
+        Post a message to the Worker's parent. This is only valid inside Worker scripts.
         @param data Data to pass to the worker's onmessage callback.
         @param ports Not implemented
      */
@@ -11002,14 +10953,13 @@ module ejs {
         self.postMessage(data, ports)
 
     /**
-        The error callback function
+        The error callback function.  This is the callback function to receive incoming data from postMessage() calls.
+        This is only present inside Worker scripts.
      */
     function get onerror(): Function
         self.onerror
 
     /**
-        Set the error callback function
-        @param fun Callback function to receive incoming data from postMessage() calls.
      */
     function set onerror(fun: Function): Void {
         self.onerror = fun
@@ -11017,19 +10967,19 @@ module ejs {
 
     /**
         The callback function configured to receive incoming messages. 
+        This is the callback function to receive incoming data from postMessage() calls.
+        This is only present inside Worker scripts.
      */
     function get onmessage(): Function
         self.onmessage
 
     /**
-        Set the callback function to receive incoming messages. 
-        @param fun Callback function to receive incoming data from postMessage() calls.
      */
     function set onmessage(fun: Function): Void {
         self.onmessage = fun
     }
 
-    # WebWorker // Only relevant in browsers 
+    # WebWorker         // Only relevant in browsers 
     var location: WorkerLocation
 }
 /************************************************************************/
@@ -11062,7 +11012,7 @@ module ejs {
     /**
      *  The XML class provides a simple ability to load, parse and save XML documents.
      */
-    final native class XML extends Object {
+    final native class XML {
 
         use default namespace public
 
@@ -11742,7 +11692,7 @@ module ejs {
         @spec ejs
         @hide
      */
-    final native class XMLList extends Object {
+    final native class XMLList {
 
         use default namespace public
 
@@ -12213,6 +12163,7 @@ module ejs.cjs {
             if (path) {
                 let cache: Path = cached(path)
                 if (cache && cache.exists && cache.modified >= path.modified) {
+                    App.log.debug(4, "Use cache for: " + path)
                     initializer = global.load(cache)
                 } else {
                     if (codeReader) {
@@ -12221,12 +12172,14 @@ module ejs.cjs {
                         code = path.readString()
                         code = wrap(code)
                     }
+                    App.log.debug(4, "Recompile module to: " + cache)
                     initializer = eval(code, cache)
                 }
                 timestamps[path] = path.modified
             } else {
+//  MOB BUG - code doesn't exist
                 code = wrap(code)
-                initializer = eval(code)
+                initializer = eval(code, "mob.mod")
             }
             signatures[path] = exports = {}
             initializer(require, exports, {id: id, path: path}, null)
@@ -12325,7 +12278,7 @@ module ejs.unix {
     /**
         Set the permissions of a file or directory
         @param path File or directory to modify
-        @param perms New Posix style permission mask
+        @param perms Posix style permission mask
      */
     function chmod(path: String, perms: Number): Void
         Path(path).perms = perms
@@ -12367,10 +12320,10 @@ module ejs.unix {
         Path(path).exists
 
     /**
-        Get the file extension portion of the file name. The file extension is the portion starting with the last "."
-        in the path. It thus includes "." as the first charcter.
+        Get the file extension portion of the file name. The file extension is the portion after the last "."
+        in the path.
         @param path Filename path to examine
-        @return String containing the file extension. It includes "." as the first character.
+        @return String containing the file extension. It excludes "." as the first character.
      */
     function extension(path: String): String
         Path(path).extension
@@ -12457,12 +12410,12 @@ module ejs.unix {
     /*  DEPRECATED
         Open or create a file
         @param path Filename path to open
-        @param mode optional file access mode with values ored from: Read, Write, Append, Create, Open, Truncate. 
+        @param mode optional file access mode with values values from: Read, Write, Append, Create, Open, Truncate. 
             Defaults to Read.
         @param permissions optional permissions. Defaults to App.permissions
         @return a File object which implements the Stream interface
         @throws IOError if the path or file cannot be opened or created.
-    function open(path: String, mode: Number = Read, permissions: Number = 0644): File
+    function open(path: String, mode: String = "r", permissions: Number = 0644): File
         new File(path, { mode: mode, permissions: permissions})
      */
 
@@ -12516,7 +12469,7 @@ module ejs.unix {
         @returns a closed File object after creating an empty temporary file.
      */
     function tempname(directory: String? = null): File
-        FileSystem.makeTemp(directory)
+        Path(directory).makeTemp()
 
     /*  DEPRECATED
         Write data to the file. If the stream is in sync mode, the write call blocks until the underlying stream or 
@@ -12772,7 +12725,7 @@ module ejs.db {
             @returns the count of rows in a table in the currently opened database.
          */
         function getNumRows(table: String): Number
-            _adapter.getNumRows()
+            _adapter.getNumRows(table)
 
         /**
             The name of the database.
@@ -13091,12 +13044,6 @@ module ejs.db {
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
-/*
-    Notes:
-    - Don't use getters/setters in this module. This avoids collisions with record fields. Even with namespaces, 
-      this can be a conceptual problem for users.
- */
-
 module ejs.db.mapper {
 
     require ejs.db
@@ -13167,6 +13114,14 @@ module ejs.db.mapper {
         // use namespace "ejs.db.mapper.int"
         use default namespace public
 
+        /*
+            Constructor for use when instantiating directly from Record. Typically, use models will implement this
+            class and will provdie their own constructor which calls initialize().
+         */
+        function Record(fields: Object? = null) {
+            initialize(fields)
+        }
+
         /**
             Construct a new record instance. This is really a constructor function, because the Record class is 
             implemented by user models, no constructor will be invoked when a new user model is instantiated. 
@@ -13175,11 +13130,6 @@ module ejs.db.mapper {
             one of the $find methods.
             @param fields An optional object set of field names and values may be supplied to initialize the record.
          */
-        function Record(fields: Object? = null) {
-            initialize(fields)
-        }
-
-        /** @hide */
         function initialize(fields: Object? = null): Void {
             if (fields) for (let field in fields) {
                 this."public"::[field] = fields[field]
@@ -13507,7 +13457,8 @@ module ejs.db.mapper {
             return result
         }
 
-        /** Get the type of a column
+        /** 
+            Get the type of a column
             @param field Name of the field to examine.
             @return A string with the data type of the column
          */
@@ -13602,7 +13553,7 @@ module ejs.db.mapper {
                 return (_errors && _errors[field])
             }
             if (_errors) {
-                return (_errors.length > 0)
+                return (Object.getOwnPropertyCount(_errors) > 0)
             } 
             return false
         }
@@ -14096,10 +14047,8 @@ module ejs.db.mapper {
             if (thisType["validate"]) {
                 thisType["validate"].call(this)
             }
-            if (_errors.length == 0) {
-                coerceToEjsTypes()
-            }
-            return _errors.length == 0
+            coerceToEjsTypes()
+            return Object.getOwnPropertyCount(_errors) == 0
         }
 
         /** @hide TODO */
@@ -14398,8 +14347,8 @@ module ejs.db.sqlite {
         }
 
         /** @duplicate ejs.db::Database.dataTypeToSqlType */
-        static function dataTypeToSqlType(dataType:String): String
-            DataTypeToSqlType[dataType]
+        function dataTypeToSqlType(dataType:String): String
+            Reflect(this).type.DataTypeToSqlType[dataType]
 
         /** @duplicate ejs.db::Database.destroyDatabase */
         function destroyDatabase(name: String): Void
@@ -14601,8 +14550,8 @@ module ejs.web {
      */
     class Controller {
         /*  
-            Define properties and functions (by default) in the ejs.web namespace so that user controller variables 
-            don't clash. Override with "public" the specific properties that must be copied to views.
+            Define properties and functions in the ejs.web namespace so that user controller variables don't clash. 
+            Override with "public" the specific properties that must be copied to views.
          */
         use default namespace module
 
@@ -14653,11 +14602,11 @@ module ejs.web {
          */
         function Controller(r: Request) {
             request = r || _initRequest
+            log = request.log
             if (request) {
-                log = request.logger
+                log = request.log
                 params = request.params
-//  MOB - should be able to use a bare Controller and then set Name to something?
-                controllerName = Reflect(this).name.trim("Controller")
+                controllerName = typeOf(this).trim("Controller") || "-Controller-"
                 if (request.config.database) {
                     openDatabase(request)
                 }
@@ -14677,7 +14626,7 @@ module ejs.web {
             }
             _initRequest = request
             let uname = cname.toPascal() + "Controller"
-            let c = new global[uname]()
+            let c = new global[uname](request)
             _initRequest = null
             return c
         }
@@ -14701,6 +14650,8 @@ module ejs.web {
             let adapter = dbconfig.adapter
             let profile = dbconfig[deploymentMode]
             if (klass && dbconfig.adapter && profile.name) {
+                //  MOB -- should NS be here
+                use namespace "ejs.db"
                 let db = new global[klass](dbconfig.adapter, request.dir.join(profile.name))
                 if (profile.trace) {
                     db.trace(true)
@@ -14729,6 +14680,8 @@ module ejs.web {
                 runFilters(_afterFilters)
             }
             flashAfter()
+            //  MOB -- but what if you don't want a controller to finalize?
+            request.finalize()
         }
 
         /* 
@@ -14829,16 +14782,18 @@ module ejs.web {
             Load the view
          */
         function loadView(path: Path, name: String) {
-            let cached = Loader.cached(path, request.dir.join(request.config.directories.cache))
+            let dirs = request.config.directories
+            let cached = Loader.cached(path, request.dir.join(dirs.cache))
             if (cached && cached.exists && cached.modified >= path.modified) {
+                log.debug(4, "Load view \"" + name + "\" from cache: " + cached);
                 load(cached)
             } else {
                 if (!global.TemplateParser) {
                     load("ejs.web.template.mod")
                 }
-                //  MOB - should be in ejsrc
-                let layout = request.dir.join("views/layouts/default.ejs")
-                let code = TemplateParser().buildView(name, path.readString(), { layout: layout })
+                let layouts = request.dir.join(dirs.layouts)
+                log.debug(4, "Rebuild and template \"" + name + "\" from cache: " + cached);
+                let code = TemplateParser().buildView(name, path.readString(), { layouts: layouts })
                 eval(code, cached)
             }
         }
@@ -14867,6 +14822,7 @@ module ejs.web {
         function render(...args): Void { 
             rendered = true
             request.write(args)
+            request.finalize()
         }
 
         /** 
@@ -14876,35 +14832,23 @@ module ejs.web {
             rendered = true
             let file: File = new File(filename)
             try {
+                //  MOB -- should use SENDFILE
                 file.open()
                 while (data = file.read(4096)) {
                     request.write(data)
                 }
                 file.close()
+                request.finalize()
             } catch (e: Error) {
                 reportError(Http.ServerError, "Can't read file: " + filename, e)
             }
         }
 
         /** 
-            Render a partial ejs template. Does not set "rendered"
+            Render a partial ejs template. Does not set "rendered" to true.
          */
         function renderPartial(path: Path): void { 
-            //  TODO - untested
-            let name = path.replace("/", "_") + "View"
-            let viewClass: String = name.toPascal()
-            if (!global[viewClass]) {
-                //  TOOD - where should partials come from?
-                let path = request.dir.join("views", controllerName, actionName + ".ejs")
-                let name = controllerName + "_" + actionName
-                loadView(path, name)
-            }
-            view = new global[viewClass](request)
-            for (let n: String in this) {
-                view.public::[n] = this[n]
-            }
-            // view.setController(this)
-            view.render(request)
+            //  MOB -- todo
         }
 
         /** 
@@ -14916,18 +14860,20 @@ module ejs.web {
                 return
             }
             rendered = true
-            viewName = controllerName + "_" + (viewName || actionName)
-            let path = request.dir.join("views", controllerName, actionName).joinExt(request.config.extensions.ejs)
-            loadView(path, viewName)
-            let viewClass: String = viewName + "View"
+            viewName ||= actionName
+            let viewClass = controllerName + "_" + viewName + "View"
             if (!global[viewClass]) {
-                loadView(path, viewName)
+                let path = request.dir.join("views", controllerName, viewName).joinExt(request.config.extensions.ejs)
+                loadView(path, controllerName + "_" + viewName)
             }
             view = new global[viewClass](request)
-            for (let n: String in this) {
-                view.public::[n] = this[n]
+            //  MOB -- slow. Native method for this?
+            for each (let n: String in Object.getOwnPropertyNames(this)) {
+                if (this.public::[n]) {
+                    view.public::[n] = this[n]
+                }
             }
-            // view.setController(this)
+            log.debug(4, "render view: \"" + controllerName + "/" + viewName + "\"")
             view.render(request)
         }
 
@@ -14956,7 +14902,7 @@ module ejs.web {
 //  MOB -- revise doc
         /** 
             Make a URI suitable for invoking actions. This routine will construct a URL Based on a supplied action name, 
-            model id and options that may contain an optional controller name. This is a convenience routine remove from 
+            model id and options that may contain an optional controller name. This is a convenience routine to remove from 
             applications the burden of building URLs that correctly use action and controller names.
             @params parts 
             @return A string URL.
@@ -15010,6 +14956,234 @@ module ejs.web {
 /************************************************************************/
 /*
  *  End of file "../src/jems/ejs.web/Controller.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../src/jems/ejs.web/Google.es"
+ */
+/************************************************************************/
+
+/**
+   GoogleConnector.es -- View connector for the Google Visualization library
+ */
+
+module ejs.web {
+
+    /**
+        @hide
+     */
+    # FUTURE
+	class GoogleConnector {
+
+        use default namespace module
+
+        function GoogleConnector(controller) {
+            // this.controller = controller
+        }
+
+        private var nextId: Number = 0
+
+        private function scriptHeader(kind: String, id: String): Void {
+            write('<script type="text/javascript" src="http://www.google.com/jsapi"></script>')
+            write('<script type="text/javascript">')
+            write('  google.load("visualization", "1", {packages:["' + kind + '"]});')
+            write('  google.setOnLoadCallback(' + 'draw_' + id + ');')
+        }
+
+        //  TODO - must support Ejs options: bands, columns, data, onClick, refresh, pageSize, pivot, 
+        //      sortColumn, sortOrder, style, styleHead, styleEvenRow, styleOddRow, styleCell, visible, widths
+        //      Support @options
+		function table(data, options: Object): Void {
+            var id: String = "GoogleTable_" + nextId++
+
+			if (data == null || data.length == 0) {
+				write("<p>No Data</p>")
+				return
+			}
+            let columns: Array = options["columns"]
+
+            scriptHeader("table", id)
+            
+            write('  function ' + 'draw_' + id + '() {')
+			write('    var data = new google.visualization.DataTable();')
+
+            let firstLine: Object = data[0]
+            if (columns) {
+                if (columns[0] != "id") {
+                    columns.insert(0, "id")
+                }
+                for (let i = 0; i < columns.length; ) {
+                    if (firstLine[columns[i]]) {
+                        i++
+                    } else {
+                        columns.remove(i, i)
+                    }
+                }
+            } else {
+                columns = []
+                for (let name in firstLine) {
+                    columns.append(name)
+                }
+            }
+
+            for each (name in columns) {
+                write('    data.addColumn("string", "' + name.toPascal() + '");')
+			}
+			write('    data.addRows(' + data.length + ');')
+
+			for (let row: Object in data) {
+                let col: Number = 0
+                for each (name in columns) {
+                    write('    data.setValue(' + row + ', ' + col + ', "' + data[row][name] + '");')
+                    col++
+                }
+            }
+
+            write('    var table = new google.visualization.Table(document.getElementById("' + id + '"));')
+
+            let goptions = getOptions(options, { 
+                height: null, 
+                page: null,
+                pageSize: null,
+                showRowNumber: null,
+                sort: null,
+                title: null,
+                width: null, 
+            })
+
+            write('    table.draw(data, ' + serialize(goptions) + ');')
+
+            if (options.click) {
+                write('    google.visualization.events.addListener(table, "select", function() {')
+                write('        var row = table.getSelection()[0].row;')
+                write('        window.location = "' + view.makeUrl(options.click, "", options) + '?id=" + ' + 
+                    'data.getValue(row, 0);')
+                write('    });')
+            }
+
+            write('  }')
+            write('</script>')
+
+            write('<div id="' + id + '"></div>')
+		}
+
+        //  TODO - must support Ejs options: columns, kind, onClick, refresh, style, visible
+        //  TODO - use @options
+
+		function chart(grid: Array, options: Object): Void {
+            var id: String = "GoogleChart_" + nextId++
+
+			if (grid == null || grid.length == 0) {
+				write("<p>No Data</p>")
+				return
+			}
+
+            let columns: Array = options["columns"]
+
+            scriptHeader("piechart", id)
+            
+            write('  function ' + 'draw_' + id + '() {')
+			write('    var data = new google.visualization.DataTable();')
+
+			let firstLine: Object = grid[0]
+            let col: Number = 0
+            //  TODO - need to get data types
+            let dataType: String = "string"
+			for (let name: String in firstLine) {
+                if  (columns && columns.contains(name)) {
+                    write('    data.addColumn("' + dataType + '", "' + name.toPascal() + '");')
+                    col++
+                    if (col >= 2) {
+                        break
+                    }
+                    dataType = "number"
+                }
+			}
+			write('    data.addRows(' + grid.length + ');')
+
+			for (let row: Object in grid) {
+                let col2: Number = 0
+                //  TODO - workaround
+				for (let name2: String in grid[row]) {
+                    if  (columns && columns.contains(name2)) {
+                        if (col2 == 0) {
+                            write('    data.setValue(' + row + ', ' + col2 + ', "' + grid[row][name2] + '");')
+                        } else if (col2 == 1) {
+                            write('    data.setValue(' + row + ', ' + col2 + ', ' + grid[row][name2] + ');')
+                        }
+                        //  else break. TODO should do this but it is bugged
+                        col2++
+                    }
+                }
+            }
+
+            //  PieChart, Table
+            write('    var chart = new google.visualization.PieChart(document.getElementById("' + id + '"));')
+
+            let goptions = getOptions(options, { width: 400, height: 400, is3D: true, title: null })
+            write('    chart.draw(data, ' + serialize(goptions) + ');')
+
+            write('  }')
+            write('</script>')
+
+            write('<div id="' + id + '"></div>')
+		}
+
+        private function getOptions(options: Object, defaults: Object): Object {
+            var result: Object = {}
+            for (let word: String in defaults) {
+                if (options[word]) {
+                    result[word] = options[word]
+                } else if (defaults[word]) {
+                    result[word] = defaults[word]
+                }
+            }
+            return result
+        }
+
+        private function write(str: String): Void {
+            view.write(str)
+        }
+	}
+}
+
+
+/*
+   @copy	default
+   
+   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+   Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+   
+   This software is distributed under commercial and open source licenses.
+   You may use the GPL open source license described below or you may acquire 
+   a commercial license from Embedthis Software. You agree to be fully bound 
+   by the terms of either license. Consult the LICENSE.TXT distributed with 
+   this software for full details.
+   
+   This software is open source; you can redistribute it and/or modify it 
+   under the terms of the GNU General Public License as published by the 
+   Free Software Foundation; either version 2 of the License, or (at your 
+   option) any later version. See the GNU General Public License for more 
+   details at: http://www.embedthis.com/downloads/gplLicense.html
+   
+   This program is distributed WITHOUT ANY WARRANTY; without even the 
+   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+   
+   This GPL license does NOT permit incorporating this software into 
+   proprietary programs. If you are unable to comply with the GPL, you must
+   acquire a commercial license to use this software. Commercial licenses 
+   for this software and support services are available from Embedthis 
+   Software at http://www.embedthis.com 
+   
+   @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../src/jems/ejs.web/Google.es"
  */
 /************************************************************************/
 
@@ -15596,15 +15770,18 @@ module ejs.web {
     dynamic class HttpServer {
         use default namespace public
 
+//  MOB -- remove serverRoot completely
         /** 
             Create a HttpServer object. The server is created in async mode by default.
-            @param serverRoot Base directory for the server configuration.
-            @param documentRoot Directory containing web documents to serve. 
+            @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
+                the serverRoot will be defined by the web server.
+            @param documentRoot Directory containing web documents to serve. If set to null and the HttpServer is hosted,
+                the documentRoot will be defined by the web server.
             @spec ejs
             @stability prototype
             @example: This is a fully async server:
 
-            let server: HttpServer = new HttpServer(".", "./web")
+            let server: HttpServer = new HttpServer(".", "web")
             let router = Router(Router.RestfulRoutes)
             server.addListener("readable", function (event: String, request: Request) {
                 request.status = 200
@@ -15702,6 +15879,7 @@ module ejs.web {
 
         /** 
             Default root directory for the server. The app does not change its current directory to this path.
+            MOB -- is this needed?
          */
         var serverRoot: Path
 
@@ -15795,8 +15973,8 @@ module ejs.web {
                 mod: "mod",
             },
             mvc: {
+                app: "",
                 appmod: "App.mod",
-                start: "start.es",
                 views: {
                     connectors: { },
                     formats: { },
@@ -15809,22 +15987,11 @@ module ejs.web {
         private static var dirs: Object
         private static var ext: Object
 
-        /*  
-            Default app exports function. Used if an MVC app does not provide a start.es script
-         */
-        private static function defaultAppExports(request: Request): Object {
-            //  TODO - change to RestfulRoutes
-            Route(request, Router.LegacyRoutes)
-            Mvc.init(request)
-            let controller = Controller.create(request)
-            return controller.start(request)
-        }
-
         /** 
             Load an MVC application. This is typically called by the Router to load an application after routing
             the request to determine the appropriate controller
             @param request Request object
-            @returns The exports object of the start slice
+            @returns The exports object
          */
         public static function load(request: Request): Object {
             let dir = request.dir
@@ -15833,28 +16000,45 @@ module ejs.web {
             if (path.exists) {
                 let appConfig = deserialize(path.readString())
                 /* Clone to get a request private copy of the configuration */
+                /* MOB - why do this? */
                 config = request.config = request.config.clone()
                 blend(config, appConfig, true)
+/* MOB - future create a new logger
+                if (app.config.log) {
+                    request.logger = new Logger("request", App.log, log.level)
+                    if (log.match) {
+                        App.log.match = log.match
+                    }
+                }
+ */
             }
             blend(config, defaultConfig, false)
             mvc = config.mvc
             dirs = config.directories
             ext = config.extensions
-            let start = dir.join(mvc.start)
+            //  MOB temp
+            App.log.level = config.log.level
             let exports
-            if (start && start.exists) {
-                exports = Loader.load(start, start)
-            } else {
-                exports = defaultAppExports
+            if (mvc.app) {
+                let app = dir.join(mvc.app)
+                if (app.exists) {
+                    exports = Loader.load(app, app)
+                }
             }
-            return exports
+            return exports || { 
+                app: function (request: Request): Object {
+                    //  BUG - can't use Mvc.init as "this" has been modified from Mvc to request
+                    global["Mvc"].init(request)
+                    let controller = Controller.create(request)
+                    return controller.run(request)
+                }
+            }
         }
 
         /** 
             Load an MVC application. This is typically called by the Router to load an application after routing
             the request to determine the appropriate controller
             @param request Request object
-            @returns The exports object of the start slice
          */
         public static function init(request: Request): Void {
             let config = request.config
@@ -15869,16 +16053,16 @@ module ejs.web {
                 deps.append(dir.join(dirs.src).find("*" + ext.es))
                 deps.append(dir.join(dirs.controllers, "Base").joinExt(ext.es))
             }
-            loadComponent(mod, deps)
+            loadComponent(request, mod, deps)
 
             /* Load controller */
             let controller = request.params.controller
             let ucontroller = controller.toPascal()
             mod = dir.join(dirs.cache, ucontroller).joinExt(ext.mod)
             if (!mod.exists || config.cache.reload) {
-                loadComponent(mod, [dir.join(dirs.controllers, ucontroller).joinExt(ext.es)])
+                loadComponent(request, mod, [dir.join(dirs.controllers, ucontroller).joinExt(ext.es)])
             } else {
-                loadComponent(mod)
+                loadComponent(request, mod)
             }
         }
 
@@ -15888,7 +16072,7 @@ module ejs.web {
             @param mod Path to the module to load
             @param deps Module dependencies
          */
-        public static function loadComponent(mod: Path, deps: Array? = null) {
+        public static function loadComponent(request: Request, mod: Path, deps: Array? = null) {
             let rebuild
             if (mod.exists) {
                 rebuild = false
@@ -15910,8 +16094,10 @@ module ejs.web {
                     }
                     code += path.readString()
                 }
+                request.log.debug(4, "Rebuild component " + mod)
                 eval(code, mod)
             } else {
+                request.log.debug(4, "Load component from cache " + mod)
                 global.load(mod)
             }
         }
@@ -15984,7 +16170,7 @@ module ejs.web {
         use default namespace public
 
         /** 
-            Absolute Uri for the top-level of the application. This returns a absolute Uri (includes scheme and host) 
+            Absolute Uri for the top-level of the application. This returns an absolute Uri (includes scheme and host) 
             for the top most application Uri. See $home to get a relative Uri.
          */ 
         native var absHome: Uri
@@ -16076,10 +16262,10 @@ module ejs.web {
         native var host: String
 
         /** 
-            Logger object. Set to App.logger. This is configured from the "log" section of the "ejsrc" config file.
+            Logger object. Set to App.log. This is configured from the "log" section of the "ejsrc" config file.
          */
         function get log(): Logger 
-            App.logger
+            App.log
 
         /** 
             Request HTTP method. String containing the Http method (DELETE | GET | POST | PUT | OPTIONS | TRACE)
@@ -16219,11 +16405,12 @@ module ejs.web {
          */
         native function close(): Void
 
+        //  MOB - unique name to not conflict with global.dump()
         /** 
             Dump objects for debugging
             @param args List of arguments to print.
          */
-        function dump(...args): Void {
+        function show(...args): Void {
             for each (var e: Object in args) {
                 write(serialize(e, {pretty: true}) + "\r\n")
             }
@@ -16306,15 +16493,21 @@ module ejs.web {
 
         //    MOB - doc
         /** @hide */
-        function makeUri(parts: Object): Uri {
+        function makeUri(where: Object): Uri {
             if (route) {
-                return route.makeUri(this, blend(params.clone(), parts))
+                if (where is String) {
+                    return route.makeUri(this, params).join(where)
+                } else {
+                    return route.makeUri(this, blend(params.clone(), where))
+                }
             }
-            let uri = request.absHome.components()
-            for each (part in parts) {
-                blend(uri, part)
+            let comoponents = request.absHome.components()
+            if (where is String) {
+                return Uri(components).join(where)
+            } else {
+                blend(components, where)
             }
-            return Uri(uri)
+            return Uri(components)
         }
 
         /**
@@ -16410,6 +16603,7 @@ module ejs.web {
          */
         native function write(...data): Number
 
+//  MOB -- was Controller.reportError
         /** 
             Write an error message back to the user. The status is set to Http.ServerError (500) and the content type
             is set to text/html. The output is html escaped for security. Output is finalized.
@@ -16448,7 +16642,7 @@ module ejs.web {
             @spec jsgi-0.3
          */
         static var jsgi: Object = {
-            errors: App.logger,
+            errors: App.log,
             version: [0,3],
             multithread: true,
             multiprocess: false,
@@ -16672,8 +16866,9 @@ module ejs.web {
             Simple top level route table for "es" and "ejs" scripts. Matches simply by script extension.
          */
         public static var TopRoutes = [
-          { name: "es",      type: "es",  match: /\.es$/   },
-          { name: "ejs",     type: "ejs", match: /\.ejs$/  },
+          { name: "es",      type: "es",     match: /\.es$/   },
+          { name: "ejs",     type: "ejs",    match: /\.ejs$/  },
+          { name: "default", type: "static", },
         ]
 
         /** 
@@ -16695,8 +16890,11 @@ module ejs.web {
           { name: "show",    type: "mvc", method: "GET",    match: "/:controller/:id",       params: { action: "show" } },
           { name: "update",  type: "mvc", method: "PUT",    match: "/:controller/:id",       params: { action: "update" } },
           { name: "delete",  type: "mvc", method: "DELETE", match: "/:controller/:id",       params: { action: "delete" } },
+          { name: "default", type: "mvc", method: "GET",  match: "/:controller/:action",     params: {} },
           { name: "create",  type: "mvc", method: "POST",   match: "/:controller",           params: { action: "create" } },
           { name: "index",   type: "mvc", method: "GET",    match: "/:controller",           params: { action: "index" } },
+          { name: "home",    type: "static", match: /^\/$/, redirect: "/web/index.ejs" },
+          { name: "static",  type: "static", },
         ]
 
         /**
@@ -16707,22 +16905,30 @@ module ejs.web {
           { name: "edit",    type: "mvc", method: "GET",  match: "/:controller/:id",         params: { action: "edit" } },
           { name: "update",  type: "mvc", method: "POST", match: "/:controller/:id",         params: { action: "update" } },
           { name: "destroy", type: "mvc", method: "POST", match: "/:controller/destroy/:id", params: { action: "destroy" }},
+          { name: "default", type: "mvc", method: "GET",  match: "/:controller/:action",     params: {} },
           { name: "index",   type: "mvc", method: "GET",  match: "/:controller",             params: { action: "index" } },
+          { name: "home",    type: "static", match: /^\/$/, redirect: "/web/index.ejs" },
+          { name: "static",  type: "static", },
         ]
          */
 
         /**
             Routes used in Ejscript 1.X
          */
+        //  MOB -- rename LegacyMvcRoutes
         public static var LegacyRoutes = [
+          { name: "es",      type: "es",  match: /web\/.*\.es$/   },
+          { name: "ejs",     type: "ejs", match: /web\/.*\.ejs$/  },
+          { name: "web",     type: "static", match: /web\//  },
           { name: "list",    type: "mvc", method: "GET",  match: "/:controller/list",        params: { action: "list" } },
           { name: "create",  type: "mvc", method: "POST", match: "/:controller/create",      params: { action: "create" } },
           { name: "edit",    type: "mvc", method: "GET",  match: "/:controller/edit",        params: { action: "edit" } },
           { name: "update",  type: "mvc", method: "POST", match: "/:controller/update",      params: { action: "update" } },
           { name: "destroy", type: "mvc", method: "POST", match: "/:controller/destroy",     params: { action: "destroy" } },
+          { name: "default", type: "mvc", method: "GET",  match: "/:controller/:action",     params: {} },
           { name: "index",   type: "mvc", method: "GET",  match: "/:controller",             params: { action: "index" } },
-
-          { name: "funny",   type: "mvc", method: "GET",  match: "/funny/:controller/:id/edit",  params: { action: "edit" } },
+          { name: "home",    type: "static", match: /^\/$/, redirect: "/Base/home" },
+          { name: "static",  type: "static", },
         ]
 
         function Router(set: Array = RestfulRoutes) {
@@ -16799,62 +17005,73 @@ module ejs.web {
         public function route(request): Void {
             let params = request.params
             let pathInfo = request.pathInfo
-            for each (route in routes) {
-                if (route.method && request.method != route.method) {
+            for each (r in routes) {
+                if (r.method && request.method != r.method) {
                     continue
                 }
-                if (route.matcher is Function) { 
-                    if (!route.matcher(request)) {
+                if (r.matcher is Function) { 
+                    if (!r.matcher(request)) {
                         continue
                     }
-                    for (i in route.params) {
-                        params[i] = route.params[i]
+                    for (i in r.params) {
+                        params[i] = r.params[i]
                     }
 
-                } else if (!route.splitter) { 
-                    let results = pathInfo.match(route.matcher)
-                    if (!results) {
-                        continue
-                    }
-                    for (let name in route.params) {
-                        let value = route.params[name]
-                        if (value.contains("$")) {
-                            value = pathInfo.replace(route.matcher, value)
+                } else if (!r.splitter) { 
+                    if (r.matcher) {
+                        let results = pathInfo.match(r.matcher)
+                        if (!results) {
+                            continue
                         }
-                        params[name] = value
+                        for (let name in r.params) {
+                            let value = r.params[name]
+                            if (value.contains("$")) {
+                                value = pathInfo.replace(r.matcher, value)
+                            }
+                            params[name] = value
+                        }
+                    } else {
+                        for (i in r.params) {
+                            params[i] = r.params[i]
+                        }
                     }
 
                 } else {
-                    /*  String based matcher */
-                    if (!pathInfo.match(route.matcher)) {
+                    /*  String or RegExp based matcher */
+                    if (!pathInfo.match(r.matcher)) {
                         continue
                     }
-                    parts = pathInfo.replace(route.matcher, route.splitter)
+                    parts = pathInfo.replace(r.matcher, r.splitter)
                     parts = parts.split(":")
-                    for (i in route.tokens) {
-                        params[route.tokens[i]] = parts[i]
+                    for (i in r.tokens) {
+                        params[r.tokens[i]] = parts[i]
                     }
                     /*  Apply override params */
-                    for (i in route.params) {
-                        params[i] = route.params[i]
+                    for (i in r.params) {
+                        params[i] = r.params[i]
                     }
                 }
-                request.route = route
-                if (route.rewrite && !route.rewrite(request)) {
-                    request.route = null
-                    continue
+                if (r.rewrite && !r.rewrite(request)) {
+                    route(request)
+                    return
                 }
-                let location = route.location
+                if (r.redirect) {
+                    request.pathInfo = r.redirect;
+                    this.route(request)
+                    return
+                }
+                request.route = r
+                let location = r.location
                 if (location && location.prefix && location.dir) {
                     request.setLocation(location.prefix, location.dir)
+                }
+                let log = request.log
+                if (log.level >= 5) {
+                    show(request.log)
                 }
                 return
             }
             throw "No route for " + pathInfo
-        }
-
-        function dumpRoutes(): Void {
-            dump(routes)
         }
     }
 
@@ -16954,17 +17171,33 @@ module ejs.web {
             this.router = router
         }
 
+        public function show(log: Logger, msg) {
+            log.debug(5, msg + " \"" + name + "\":")
+            for each (f in Object.getOwnPropertyNames(this)) {
+                if (f != "params" && f != "router") {
+                    log.debug(5, "    " + f + " = " + this[f])
+                }
+            }
+            log.debug(5, "    params = " + serialize(params))
+        }
+
         /**
             Make a URI provided parts of a URI. The URI is completed using the current request and route. 
+            @param where MOB
          */
-        public function makeUri(request: Request, parts: Object): Uri {
-            if (urimaker)
-                return urimaker(request, parts)
-            if (request)
-                parts = blend(request.absHome.components(), parts)
-            else parts = parts.clone()
-            let result = Uri(parts)
-            let routeName = parts.route
+        public function makeUri(request: Request, where: Object): Uri {
+            if (urimaker) {
+                return urimaker(request, where)
+            }
+            if (request) {
+                if (where is String) {
+                    where = blend(request.absHome.components(), { path: where })
+                } else {
+                    where = blend(request.absHome.components(), where)
+                }
+            }
+            let result = Uri(where)
+            let routeName = where.route || "default"
             let route = this
             if (routeName != this.name) {
                 for each (r in router.routes) {
@@ -16976,10 +17209,10 @@ module ejs.web {
             }
             let path = ""
             for each (token in route.tokens) {
-                if (!parts[token]) {
+                if (!where[token]) {
                     throw "Missing URI token " + token
                 }
-                path += "/" + parts[token]
+                path += "/" + where[token]
             }
             result.path = path
             return result
@@ -17309,8 +17542,8 @@ module ejs.web {
     /**
         Base class for web framework views. This class provides the core functionality for all Ejscript view web pages.
         Ejscript web pages are compiled to create a new View class which extends the View base class. In addition to
-        the properties defined by this class, user view classes will inherit at runtime all public properites of the
-        current controller object.
+        the properties defined by this class, user view classes will typically inherit at runtime all public properites 
+        of the current controller object.
         @spec ejs
         @stability prototype
      */
@@ -17320,24 +17553,19 @@ module ejs.web {
          */
         use default namespace module
 
-        /**
-            Current request object
-         */
+        /** Current request object */
         var request: Request
 
-        /*
-            Current record being used inside a form
-         */
+        /* Current record being used inside a form */
         private var currentRecord: Object
 
-        /*
-            Configuration from the applications ejsrc files
-         */
+        /* Configuration from the applications ejsrc files */
         private var config: Object
 
-        /*
-            Sequential DOM ID generator
-         */
+        /** Logger channel */
+        var log: Logger
+
+        /* Sequential DOM ID generator */
         private var nextId: Number = 0
 
         /** @hide */
@@ -17352,6 +17580,7 @@ module ejs.web {
         function View(request: Object) {
             this.request = request
             this.config = request.config
+            this.log = request.log
             view = this
         }
 
@@ -17372,9 +17601,10 @@ module ejs.web {
          */
         public function render(renderer: Function): Void {
             if (renderer) {
-                renderer.setScope(View)
+                // renderer.setScope(this)
                 renderer.call(this, request)
             }
+            request.finalize()
         }
 
         /** 
@@ -17537,6 +17767,7 @@ module ejs.web {
                 whether the field has been previously saved.
             @option uri String Use a URL rather than action and controller for the target uri.
          */
+//  MOB -- COMPAT was form(action, record, options)
         function form(record: Object, options: Object = {}): Void {
             currentRecord = record
             emitFormErrors(record)
@@ -17587,8 +17818,9 @@ module ejs.web {
                 <% input(null, { options }) %>
          */
         function input(field: String, options: Object = {}): Void {
-            if (currentRecord && currentRecord.getColumnType) {
-                datatype = currentRecord.getColumnType(field)
+            try {
+                datatype = Reflect(currentRecord).type.getColumnType(field)
+
                 //  TODO - needs fleshing out for each type
                 switch (datatype) {
                 case "binary":
@@ -17612,12 +17844,8 @@ module ejs.web {
                 default:
                     throw "input control: Unknown field type: " + datatype + " for field " + field
                 }
-            } else {
-                if (datatype is Boolean) {
-                    checkbox(field, "true", options)
-                } else {
-                    text(field, options)
-                }
+            } catch {
+                text(field, options)
             }
         }
 
@@ -18010,7 +18238,9 @@ module ejs.web {
          */
         private function getConnector(kind: String, options: Object) {
             let views = request.config.mvc.views
-            let connectorName = options["connector"] || views.connectors[kind] || views.connectors["rest"] || "html"
+            //  TODO OPT
+            let connectorName = (options && options["connector"]) || views.connectors[kind] ||
+                views.connectors["rest"] || "html"
             views.connectors[kind] = connectorName
             let name = (connectorName + "Connector").toPascal()
             try {
@@ -18070,7 +18300,7 @@ module ejs.web {
             //  TODO OPT
             let fmt
             let mvc = request.config.mvc
-            if (mvc.views && config.views.formats) {
+            if (mvc.views && mvc.views.formats) {
                 fmt = mvc.views.formats[typeName]
             }
             if (fmt == undefined || fmt == null || fmt == "") {
@@ -18157,7 +18387,7 @@ module ejs.web {
             }
             let result: String = ""
             for (let option: String in options) {
-                let mapped = htmlOptions[option]
+                let mapped = View.htmlOptions[option]
                 if (mapped || mapped == "") {
                     if (mapped == "") {
                         /* No mapping, keep the original option name */
@@ -18310,7 +18540,7 @@ module ejs.web {
 
         /** 
             Serve a web request. Convenience function to route, load and start a web application. 
-            Called by web application startup script (server.es)
+            Called by web application start script
             @param request Request object
             @param router Configured router instance. If omitted, a default Router will be created using the TopRoutes
                 routing table.
@@ -18385,6 +18615,38 @@ module ejs.web {
                 } else if (type == "mvc") {
                     exports = Mvc.load(request)
 
+                } else if (type == "static") {
+                    exports = {
+                        app: function (request) {
+                            //  MOB -- push into ejs.cjs
+                            //  MOB -- needs work
+                            let path = request.dir.join(request.uri.filename)
+                            if (path.isDir) {
+                                //  MOB -- should come from HttpServer.index[]
+                                for each (index in ["index.ejs", "index.html"]) {
+                                    let p = path.join(index)
+                                    if (p.exists) {
+                                        path = p
+                                        break
+                                    }
+                                }
+                            }
+                            let headers = {
+                                "Content-Type": Uri(request.uri).mimeType,
+                            }
+                            let body = ""
+                            if (request.method == "GET" || request.method == "POST") {
+                                headers["Content-Length"] = path.size
+                                body = path.readString()
+                            }
+                            return {
+                                status: Http.Ok,
+                                headers: headers,
+                                body: body
+                            }
+                        }
+                    }
+
                 } else {
                     throw "Request type: " + type + " is not supported by Web.load"
                 }
@@ -18406,7 +18668,7 @@ module ejs.web {
         static function start(request: Request, app: Function): Void {
 //  WARNING: this may block in write?? - is request in async mode?
             try {
-                let result = app(request)
+                let result = app.call(request, request)
                 if (!result) {
                     if (request.route.type == "ejs") {
                         request.finalize()
@@ -18414,7 +18676,7 @@ module ejs.web {
 
                 } else if (result is Function) {
                     /* The callback is responsible for calling finalize() */
-                    result(request)
+                    result.call(request, request)
 
                 } else {
                     request.status = result.status || 200
@@ -18423,14 +18685,15 @@ module ejs.web {
                     let body = result.body
                     if (body is String) {
                         request.write(body)
+                        request.finalize()
 
                     } else if (body is Array) {
                         for each (let item in body) {
                             request.write(item)
                         }
+                        request.finalize()
 
                     } else if (body is Stream) {
-//  MOB - finish
                         if (body.async) {
                             request.async = true
                             //  Should we wait on request being writable or on the body stream being readable?
@@ -18444,21 +18707,22 @@ module ejs.web {
                             while (body.read(ba)) {
                                 request.write(ba)
                             }
+                            request.finalize()
                         }
-                    } else if (body.forEach) {
+                    } else if (body && body.forEach) {
                         body.forEach(function(block) {
                             request.write(block)
                         })
+                        request.finalize()
                     }
                 }
-            } catch (e) {
-print("Web.start() CATCH " + e)
-                request.writeError(e)
 
-            } finally {
+            } catch (e) {
+                print("URI " + request.uri)
+                print("Web.start(): CATCH " + e)
+                request.writeError(e)
                 request.finalize()
             }
-//  MOB -- but finalize may not be complete. 
         }
     }
 }
@@ -18687,7 +18951,6 @@ module ejs.web.template  {
             if (options.layout) {
                 layoutPage = Path(options.layout)
             }
-
             this.script = script
             while ((tid = getToken(token)) != Token.Eof) {
                 // print("getToken => " + Token.tokens[tid + 1] + " TOKEN => \"" + token + "\"")
@@ -18733,15 +18996,13 @@ module ejs.web.template  {
                         break
 
                     case "layout":
+                        let layouts = options.layouts || "views/layouts"
                         let path = args[1]
                         if (path == "" || path == '""') {
                             layoutPage = undefined
                         } else {
                             path = args[1].trim("'").trim('"').trim('.ejs') + ".ejs"
-                            if (!options.layouts) {
-                                throw "Location of layout page not defined in options"
-                            }
-                            layoutPage = Path(options.layouts).join(path)
+                            layoutPage = Path(layouts).join(path)
                             if (!layoutPage.exists) {
                                 throw "Can't find layout page " + layoutPage
                             }
@@ -18764,7 +19025,6 @@ module ejs.web.template  {
 
                 }
             }
-
             if (layoutPage && layoutPage != options.currentLayout) {
                 let layoutOptions = blend(options.clone(), { currentLayout: layoutPage })
                 let layoutText: String = new TemplateParser().parse(layoutPage.readString(), layoutOptions)

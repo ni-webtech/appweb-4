@@ -517,6 +517,7 @@ test.initialize()
 try {
     test.runner()
 } catch (e) { 
+    //  MOB -- error is deprecated
     error("\nException: " + e)
 }
 test.summary()

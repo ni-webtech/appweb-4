@@ -444,6 +444,7 @@ installFiles() {
         ldconfig -n /usr/lib/$BLD_PRODUCT
         ldconfig -n /usr/lib/$BLD_PRODUCT/modules
     fi
+    "$BLD_BIN_PREFIX/linkup" Install
 
     if [ $BLD_HOST_OS = WIN ] ; then
         echo -e "\nSetting file permissions ..."

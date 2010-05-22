@@ -194,8 +194,6 @@ MAIN(ejscMain, int argc, char **argv)
                 requiredModules = mprCreateList(mpr);
             }
             require(requiredModules, "ejs");
-            require(requiredModules, "ejs.sys");
-            require(requiredModules, "ejs.io");
             require(requiredModules, "ejs.unix");
             require(requiredModules, "ejs.db");
             //  TODO MOB - decouple and remove this
@@ -288,7 +286,8 @@ MAIN(ejscMain, int argc, char **argv)
             Compile the source files supplied on the command line. This will compile in-memory and
             optionally also save to module files.
          */
-        if (ecCompile(cp, argc - nextArg, &argv[nextArg], 0) < 0) {
+        if (ecCompile(cp, argc - nextArg, &argv[nextArg]) < 0) {
+            mprError(cp, "%s", cp->errorMsg);
             err++;
         }
     }

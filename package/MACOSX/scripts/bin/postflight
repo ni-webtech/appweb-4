@@ -8,11 +8,11 @@
 
 PKG_DIR="$1"
 INS_DIR="$2"
-BIN="!!BLD_BIN_DIR!!"
+BIN="!!ORIG_BLD_BIN_PREFIX!!"
 NAME="!!ORIG_BLD_PREFIX!!"
 path="${INS_DIR}${NAME}"
 
-${BIN}/linkup
+${BIN}/linkup Install
 
 chmod 644 /Library/LaunchDaemons/com.!!BLD_COMPANY!!.!!BLD_PRODUCT!!.plist
 launchctl load -w /Library/LaunchDaemons/com.!!BLD_COMPANY!!.!!BLD_PRODUCT!!.plist

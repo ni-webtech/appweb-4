@@ -183,6 +183,9 @@ MAIN(ejsMain, int argc, char **argv)
                 }
             }
 
+        } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
+            ejsStartLogging(mpr, "stdout:2");
+
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintfError(mpr, "%s %s-%s\n", BLD_NAME, BLD_VERSION, BLD_NUMBER);
             exit(0);
@@ -226,6 +229,7 @@ MAIN(ejsMain, int argc, char **argv)
             "  --stats                  # Print stats on exit\n"
             "  --strict                 # Default compilation mode to strict\n"
             "  --require 'module,...'   # Required list of modules to pre-load\n"
+            "  --verbose | -v           # Same as --log stdout:2 \n"
             "  --version                # Emit the compiler version information\n"
             "  --warn level             # Set the warning message level (0-9 default is 0)\n\n",
             mpr->name);
@@ -305,7 +309,8 @@ static int interpretFiles(EcCompiler *cp, MprList *files, int argc, char **argv,
     ejs->argc = argc;
     ejs->argv = argv;
 
-    if (ecCompile(cp, files->length, (char**) files->items, 0) < 0) {
+    if (ecCompile(cp, files->length, (char**) files->items) < 0) {
+        mprError(cp, "%s", cp->errorMsg);
         return EJS_ERR;
     }
     if (cp->errorCount == 0) {
@@ -348,7 +353,8 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
     while (!cp->lexer->input->stream->eof) {
         err = 0;
         cp->uid = 0;
-        if (ecCompile(cp, 1, tmpArgv, 0) < 0) {
+        if (ecCompile(cp, 1, tmpArgv) < 0) {
+            mprError(cp, "%s", cp->errorMsg);
             ejs->result = ejs->undefinedValue;
             err++;
         }

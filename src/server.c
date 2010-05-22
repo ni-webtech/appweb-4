@@ -78,13 +78,26 @@ MaServer *maLookupServer(MaAppweb *appweb, cchar *name)
 int maStartAppweb(MaAppweb *appweb)
 {
     MaServer    *server;
+    HttpLimits  *limits;
+    Http        *http;
+    char        *timeText;
     int         next;
 
+    http = appweb->http;
+    limits = http->limits;
+    if (limits->maxThreads > 0) {
+        mprSetMaxWorkers(appweb, limits->maxThreads);
+        mprSetMinWorkers(appweb, limits->minThreads);
+    }
     for (next = 0; (server = mprGetNextItem(appweb->servers, &next)) != 0; ) {
+        maValidateConfiguration(server);
         if (maStartServer(server) < 0) {
             return MPR_ERR_CANT_INITIALIZE;
         }
     }
+    timeText = mprFormatLocalTime(appweb, mprGetTime(appweb));
+    mprLog(appweb, 1, "HTTP services Started at %s with max %d threads", timeText, mprGetMaxWorkers(appweb));
+    mprFree(timeText);
     return 0;
 }
 
@@ -129,7 +142,7 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, 
 
     if (ip && port > 0) {
         maAddHttpServer(server, httpCreateServer(appweb->http, ip, port, NULL));
-        mprAddItem(server->hostAddresses, maCreateHostAddress(server, ip, port));
+        maAddHostAddress(server, ip, port);
     }
     maSetDefaultServer(appweb, server);
 
@@ -145,13 +158,9 @@ int maStartServer(MaServer *server)
 {
     MaHost      *host;
     HttpServer  *httpServer;
-    int         next, count, warned;
+    int         next, nextHost, count, warned;
 
-    /*  
-        Start the hosts
-     */
     for (next = 0; (host = mprGetNextItem(server->hosts, &next)) != 0; ) {
-        mprLog(server, 1, "Starting host named: \"%s\"", host->name);
         if (maStartHost(host) < 0) {
             return MPR_ERR_CANT_INITIALIZE;
         }
@@ -183,6 +192,9 @@ int maStartServer(MaServer *server)
     }
     if (maApplyChangedGroup(server->appweb) < 0 || maApplyChangedUser(server->appweb) < 0) {
         return MPR_ERR_CANT_COMPLETE;
+    }
+    for (nextHost = 0; (host = mprGetNextItem(server->hosts, &nextHost)) != 0; ) {
+        mprLog(server, 3, "Serving %s at \"%s\"", host->name, host->documentRoot);
     }
     return 0;
 }
@@ -230,6 +242,16 @@ MaHost *maLookupHost(MaServer *server, cchar *name)
 }
 
 
+MaHostAddress *maAddHostAddress(MaServer *server, cchar *ip, int port)
+{
+    MaHostAddress   *address;
+
+    address = maCreateHostAddress(server, ip, port);
+    mprAddItem(server->hostAddresses, address);
+    return address;
+}
+
+
 /*  
     Lookup a host address. If ipAddr is null or port is -1, then those elements are wild.
  */
@@ -242,6 +264,28 @@ MaHostAddress *maLookupHostAddress(MaServer *server, cchar *ip, int port)
         if (address->port < 0 || port < 0 || address->port == port) {
             if (ip == 0 || address->ip == 0 || strcmp(address->ip, ip) == 0) {
                 return address;
+            }
+        }
+    }
+    return 0;
+}
+
+
+MaHostAddress *maRemoveHostFromHostAddress(MaServer *server, cchar *ip, int port, MaHost *host)
+{
+    MaHostAddress   *address;
+    MaHost          *hp;
+    int             next, nextHost;
+
+    for (next = 0; (address = mprGetNextItem(server->hostAddresses, &next)) != 0; ) {
+        if (address->port < 0 || port < 0 || address->port == port) {
+            if (ip == 0 || address->ip == 0 || strcmp(address->ip, ip) == 0) {
+                for (nextHost = 0; (hp = mprGetNextItem(address->vhosts, &nextHost)) != 0; ) {
+                    if (hp == host) {
+                        mprRemoveItem(address->vhosts, hp);
+                        nextHost--;
+                    }
+                }
             }
         }
     }
@@ -353,6 +397,43 @@ void maSetServerRoot(MaServer *server, cchar *path)
 #endif
     mprFree(server->serverRoot);
     server->serverRoot = mprGetAbsPath(server, path);
+}
+
+
+/*
+    Set the document root for the default server (only)
+ */
+void maSetDocumentRoot(MaServer *server, cchar *path)
+{
+    HttpServer  *httpServer;
+    MaHost      *host;
+    int         next;
+
+    maSetHostDirs(server->defaultHost, path);
+    for (next = 0; ((httpServer = mprGetNextItem(server->httpServers, &next)) != 0); ) {
+        httpSetDocumentRoot(httpServer, path);
+    }
+    for (next = 0; (host = mprGetNextItem(server->hosts, &next)) != 0; ) {
+        maSetHostDocumentRoot(host, path);
+    }
+}
+
+
+/*
+    Set the document root for the default server (only)
+ */
+void maSetIpAddr(MaServer *server, cchar *ip, int port)
+{
+    HttpServer  *httpServer;
+    char        ipAddrPort[MPR_MAX_IP_ADDR_PORT];
+    int         next;
+
+    mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip ? ip : "*", port > 0 ? port : HTTP_DEFAULT_PORT);
+
+    for (next = 0; ((httpServer = mprGetNextItem(server->httpServers, &next)) != 0); ) {
+        httpSetIpAddr(httpServer, ip, port);
+        maSetHostIpAddrPort(server->defaultHost, ipAddrPort);
+    }
 }
 
 

@@ -53,8 +53,9 @@ ifeq ($(BLD_FEATURE_STATIC),0)
 	# EXTRA_OBJECTS	+= $(patsubst %, $(BLD_LIB_DIR)/lib%-$(BLD_VERSION).out, mpr pcre)
 endif
 endif
+TARGETS				+= appweb.conf
 
-compileExtra: $(TARGETS) appweb.conf $(EXTRA_TARGETS)
+compileExtra: $(TARGETS) $(EXTRA_TARGETS)
 
 compileFirst: romFiles.c
 
@@ -85,6 +86,7 @@ appweb.conf: ../../buildConfig.make
 	[ "$(BLD_FEATURE_CONFIG)" != "" ] && cp -r $(BLD_FEATURE_CONFIG)/* .
 	BLD_CFG_PREFIX=. BLD_WEB_PREFIX=./web BLD_MOD_PREFIX=$(BLD_MOD_DIR) BLD_DOC_PREFIX=../../doc \
 	BLD_SERVER=`hostname` BLD_LOG_PREFIX=./logs BLD_HTTP_PORT=$(BLD_HTTP_PORT) BLD_SSL_PORT=$(BLD_SSL_PORT) \
+	$(call log) "[Patch]" "appweb.conf"
 	patchAppwebConf appweb.conf conf/hosts/ssl-default.conf conf/log.conf conf/doc.conf
 
 cgi-bin/cgiProgram$(BLD_EXE): $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)

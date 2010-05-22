@@ -669,7 +669,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
             This is an Apache compatible hack for PHP 5.3
          */
         mprItoa(status, sizeof(status), HTTP_CODE_MOVED_TEMPORARILY, 10);
-        mprAddHash(rec->headers, "REDIRECT_STATUS", status);
+        mprAddHash(rec->headers, "REDIRECT_STATUS", mprStrdup(rec, status));
     }
 
     /*

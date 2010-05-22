@@ -647,6 +647,11 @@ static int doRequest(HttpConn *conn, cchar *url)
             /* No point retrying */
             break;
         }
+        if (conn->receiver->status == HTTP_CODE_UNAUTHORIZED) {
+            if (conn->authUser == 0) {
+                break;
+            }
+        }
         /* Force a new connection */
         if (conn->receiver == 0 || conn->receiver->status != HTTP_CODE_UNAUTHORIZED) {
             httpSetKeepAliveCount(conn, -1);
@@ -659,17 +664,16 @@ static int doRequest(HttpConn *conn, cchar *url)
     if (!success) {
         msg = (conn->errorMsg) ? conn->errorMsg : "";
         mprError(conn, "http: failed \"%s\" request for %s after %d attempt(s).\n%s.", method, url, count, msg);
-        return MPR_ERR_TOO_MANY;
+    } else {
+        do {
+            httpWait(conn, HTTP_STATE_COMPLETE, 10);
+            while ((bytes = httpRead(conn, buf, sizeof(buf))) > 0) {
+                showOutput(conn, buf, bytes);
+            }
+            //  MOB -- Need proper flow control
+            conn->canProceed = 1;
+        } while (conn->state < HTTP_STATE_COMPLETE && mprGetElapsedTime(conn, mark) <= conn->timeout);
     }
-    
-    do {
-        httpWait(conn, HTTP_STATE_COMPLETE, 10);
-        while ((bytes = httpRead(conn, buf, sizeof(buf))) > 0) {
-            showOutput(conn, buf, bytes);
-        }
-        //  MOB -- Need proper flow control
-        conn->canProceed = 1;
-    } while (conn->state < HTTP_STATE_COMPLETE && mprGetElapsedTime(conn, mark) <= conn->timeout);
     
     status = httpGetStatus(conn);
     contentLen = httpGetContentLength(conn);
@@ -686,12 +690,18 @@ static int doRequest(HttpConn *conn, cchar *url)
             responseHeaders = httpGetHeaders(conn);
             rec = conn->receiver;
             mprPrintfError(conn, "%s %d %s\n", conn->protocol, rec->status, rec->statusMessage);
-            mprPrintfError(conn, "%s\n", responseHeaders);
-            mprFree(responseHeaders);
+            if (responseHeaders) {
+                mprPrintfError(conn, "%s\n", responseHeaders);
+                mprFree(responseHeaders);
+            }
         }
     }
 
-    if (status < 0) {
+    if (!success) {
+        /* Retries failed */
+        return MPR_ERR_TOO_MANY;
+
+    } else if (status < 0) {
         mprError(conn, "Can't process request for \"%s\" %s", url, httpGetError(conn));
         httpDestroyReceiver(conn);
         return MPR_ERR_CANT_READ;

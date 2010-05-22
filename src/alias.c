@@ -41,6 +41,7 @@ MaAlias *maCreateAlias(MprCtx ctx, cchar *prefix, cchar *target, int code)
     if (code) {
         ap->redirectCode = code;
         ap->uri = mprStrdup(ctx, target);
+        ap->filename = mprStrdup(ctx, "");
     } else {
         /*  
             Trim trailing "/" from filename always
