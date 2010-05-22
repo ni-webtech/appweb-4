@@ -18549,7 +18549,7 @@ static int leapYear(int year);
 static MprTime makeTime(MprCtx ctx, struct tm *tp);
 static void validateTime(MprCtx ctx, struct tm *tm, struct tm *defaults);
 
-#if BLD_WIN_LIKE || VXWORKS
+#if BLD_WIN_LIKE
 static int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif
 
@@ -18750,6 +18750,21 @@ static int getTimeZoneOffsetFromTm(MprCtx ctx, struct tm *tp)
         offset += tinfo.StandardBias;
     }
     return -offset * 60 * MS_PER_SEC;
+#elif VXWORKS
+    char  *tze, *p;
+    int   offset;
+
+    if ((tze = getenv("TIMEZONE")) != 0) {
+        if ((p = strchr(tze, ':')) != 0) {
+            if ((p = strchr(tze, ':')) != 0) {
+                offset = -mprAtoi(++p, 10) * MS_PER_MIN;
+            }
+        }
+        if (tp->tm_isdst) {
+            offset += MS_PER_HOUR;
+        }
+    }
+    return offset;
 #else
     return tp->tm_gmtoff * MS_PER_SEC;
 #endif
@@ -19913,7 +19928,7 @@ static void validateTime(MprCtx ctx, struct tm *tm, struct tm *defaults)
 /*
     Compatibility for windows and VxWorks
  */
-#if BLD_WIN_LIKE || VXWORKS
+#if BLD_WIN_LIKE
 static int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     #if BLD_WIN_LIKE
@@ -19970,7 +19985,7 @@ static int gettimeofday(struct timeval *tv, struct timezone *tz)
         return rc;
     #endif
 }
-#endif /* BLD_WIN_LIKE || VXWORKS */
+#endif /* BLD_WIN_LIKE */
 
 /*
     High resolution timer

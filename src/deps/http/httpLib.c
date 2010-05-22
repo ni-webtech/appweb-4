@@ -3824,7 +3824,7 @@ int httpAddHandler(HttpLocation *location, cchar *name, cchar *extensions)
     }
     if (extensions && *extensions) {
         /*
-            Add to the handler extension hash
+            Add to the handler extension hash. Skip over "*." and "."
          */ 
         extlist = mprStrdup(location, extensions);
         word = mprStrTok(extlist, " \t\r\n", &tok);
