@@ -18384,12 +18384,23 @@ static int changeState(MprWorker *worker, int state)
 #define MS_PER_DAY  (86400 * MPR_TICKS_PER_SEC)
 #define MS_PER_YEAR (INT64(31556952000))
 
+/*
+    On some platforms, time_t is only 32 bits (linux-32). This means there is a minimum and maximum
+    year that can be analysed using the O/S localtime routines. We want to use the O/S calculations
+    for daylight savings time, so when a date is outside the range time_t can represent, we must
+    use some trickery to remap the year to a valid year when using localtime.
+    FYI: 32 bit time_t expires at: 03:14:07 UTC on Tuesday, 19 January 2038
+ */
 #define MAX_TIME    (((time_t) -1) & ~(((time_t) 1) << ((sizeof(time_t) * 8) - 1)))
-#if BLD_UNIX_LIKE
 #define MIN_TIME    (((time_t) 1) << ((sizeof(time_t) * 8) - 1))
-#else
-#define MIN_TIME    0
-#endif
+
+/*
+    Approximate, conservative min and max year. The 31556952 constant is approx sec/year (365.2425 * 86400)
+    Reduce by one to ensure no overflow. Note: this does not reduce actual date range representations and is
+    only used in DST calculations.
+ */
+#define MIN_YEAR    ((MIN_TIME / 31556952) + 1)
+#define MAX_YEAR    ((MAX_TIME / 31556952) - 1)
 
 /*
     Token types or'd into the TimeToken value
@@ -18684,34 +18695,54 @@ MprTime mprGetElapsedTime(MprCtx ctx, MprTime mark)
  */
 int mprGetTimeZoneOffset(MprCtx ctx, MprTime when)
 {
-    MprTime     alternate;
+    MprTime     alternate, secs;
     struct tm   t;
-    time_t      secs;
+    int         offset;
 
     alternate = when;
     secs = when / MS_PER_SEC;
     if (secs < MIN_TIME || secs > MAX_TIME) {
-        /* Can't use localTime on this date. Map to an alternate date with a valid year.  */
+        /* secs overflows time_t on this platform. Need to map to an alternate valid year */
         decodeTime(ctx, &t, when, 0);
         t.tm_year = 110;
         alternate = makeTime(ctx, &t);
     }
     t.tm_isdst = -1;
-    localTime(ctx, &t, alternate);
-    return getTimeZoneOffsetFromTm(ctx, &t);
+    if (localTime(ctx, &t, alternate) < 0) {
+        localTime(ctx, &t, time(0) * MS_PER_SEC);
+    }
+    offset = getTimeZoneOffsetFromTm(ctx, &t);
+    return offset;
 }
 
 
 /*
     Make a time value interpreting "tm" as a local time
  */
-MprTime mprMakeTime(MprCtx ctx, struct tm *tm)
+MprTime mprMakeTime(MprCtx ctx, struct tm *tp)
 {
-    MprTime     when;
+    MprTime     when, alternate, year;
+    struct tm   t;
+    int         offset;
 
-    when = makeTime(ctx, tm);
-    when -= mprGetTimeZoneOffset(ctx, when);
-    return when;
+#if UNUSED || 1
+//  MOB UNUSED
+year = MIN_YEAR;
+year = MAX_YEAR;
+#endif
+    when = makeTime(ctx, tp);
+    year = tp->tm_year;
+    if (MIN_YEAR <= year && year <= MAX_YEAR) {
+        localTime(ctx, &t, when);
+        offset = getTimeZoneOffsetFromTm(ctx, &t);
+    } else {
+        t = *tp;
+        t.tm_year = 110;
+        alternate = makeTime(ctx, &t);
+        localTime(ctx, &t, alternate);
+        offset = getTimeZoneOffsetFromTm(ctx, &t);
+    }
+    return when - offset;
 }
 
 
@@ -18726,7 +18757,9 @@ static int localTime(MprCtx ctx, struct tm *timep, MprTime time)
 {
 #if BLD_UNIX_LIKE || WINCE
     time_t when = (time_t) (time / MS_PER_SEC);
-    return localtime_r(&when, timep) != 0;
+    if (localtime_r(&when, timep) < 0) {
+        return MPR_ERR;
+    }
 #else
     struct tm   *tp;
     time_t when = (time_t) (time / MS_PER_SEC);
@@ -18734,8 +18767,8 @@ static int localTime(MprCtx ctx, struct tm *timep, MprTime time)
         return MPR_ERR;
     }
     *timep = *tp;
-    return 0;
 #endif
+    return 0;
 }
 
 struct tm *universalTime(MprCtx ctx, struct tm *timep, MprTime time)
@@ -18879,7 +18912,7 @@ static int getYear(MprTime when)
  */
 static void decodeTime(MprCtx ctx, struct tm *tp, MprTime when, bool local)
 {
-    MprTime     alternate;
+    MprTime     timeForZoneCalc;
     struct tm   t;
     char        *zoneName;
     int         year, offset, dst;
@@ -18889,19 +18922,20 @@ static void decodeTime(MprCtx ctx, struct tm *tp, MprTime when, bool local)
 
     if (local) {
         //  MOB -- cache the results somehow
-        alternate = when;
+        timeForZoneCalc = when;
         if (when < MIN_TIME || when > MAX_TIME) {
             /*
                 Can't use localTime on this date. Map to an alternate date with a valid year.
              */
             decodeTime(ctx, &t, when, 0);
             t.tm_year = 110;
-            alternate = makeTime(ctx, &t);
+            timeForZoneCalc = makeTime(ctx, &t);
         }
         t.tm_isdst = -1;
-        localTime(ctx, &t, alternate);
-        offset = getTimeZoneOffsetFromTm(ctx, &t);
-        dst = t.tm_isdst;
+        if (localTime(ctx, &t, timeForZoneCalc) == 0) {
+            offset = getTimeZoneOffsetFromTm(ctx, &t);
+            dst = t.tm_isdst;
+        }
 #if BLD_UNIX_LIKE && !CYGWIN
         zoneName = (char*) t.tm_zone;
 #endif
