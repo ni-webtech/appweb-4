@@ -2471,7 +2471,7 @@ module ejs {
         /**
             Construct a new date object. Permissible constructor forms:
             <ul>
-                <li>Date()</li>
+                <li>Date() This is the default and it constructs a date instance for the current time.</li>
                 <li>Date(milliseconds) where (seconds sincde 1 Jan 1970 00:00:00 UTC))</li>
                 <li>Date(dateString) where (In a format recognized by parse())</li>
                 <li>Date(year, month, date) where (Four digit year, month: 0-11, date: 1-31)</li>
@@ -2520,11 +2520,11 @@ module ejs {
             <li>%b    national representation of the abbreviated month name.</li>
             <li>%C    (year / 100) as decimal number; single digits are preceded by a zero. Not supported on Windows.</li>
             <li>%c    national representation of time and date.</li>
-            <li>%D    is equivalent to ``%m/%d/%y''.</li>
+            <li>%D    is equivalent to %m/%d/%y.</li>
             <li>%d    the day of the month as a decimal number (01-31).</li>
             <li>%e    the day of month as a decimal number (1-31); single digits are preceded by a blank. Not supported 
                       on Windows</li>
-            <li>%F    is equivalent to ``%Y-%m-%d''.</li>
+            <li>%F    is equivalent to %Y-%m-%d.</li>
             <li>%H    the hour (24-hour clock) as a decimal number (00-23).</li>
             <li>%h    the same as %b.</li>
             <li>%I    the hour (12-hour clock) as a decimal number (01-12).</li>
@@ -2539,15 +2539,15 @@ module ejs {
             <li>%P    Lower case national representation of either "ante meridiem" or "post meridiem" as appropriate.
                       Not supported on Windows or Mac</li>
             <li>%p    national representation of either "ante meridiem" or "post meridiem" as appropriate.</li>
-            <li>%R    is equivalent to ``%H:%M''.</li>
-            <li>%r    is equivalent to ``%I:%M:%S %p''.</li>
+            <li>%R    is equivalent to %H:%M.</li>
+            <li>%r    is equivalent to %I:%M:%S %p.</li>
             <li>%S    the second as a decimal number (00-60).</li>
             <li>%s    the number of seconds since the Epoch, UTC (see mktime(3)). Not supported on Windows</li>
-            <li>%T    is equivalent to ``%H:%M:%S''.</li>
+            <li>%T    is equivalent to %H:%M:%S.</li>
             <li>%t    a tab.</li>
             <li>%U    the week number of the year (Sunday as the first day of the week) as a decimal number (00-53).</li>
             <li>%u    the weekday (Monday as the first day of the week) as a decimal number (1-7).</li>
-            <li>%v    is equivalent to ``%e-%b-%Y''.</li>
+            <li>%v    is equivalent to %e-%b-%Y.</li>
             <li>%W    the week number of the year (Monday as the first day of the week) as a decimal number (00-53).</li>
             <li>%w    the weekday (Sunday as the first day of the week) as a decimal number (0-6).</li>
             <li>%X    national representation of the time.</li>
@@ -2568,7 +2568,7 @@ module ejs {
             <li>%E*   POSIX locale extensions. Where "*" is one of the characters: c, C, x, X, y, Y.
             <li>%G    a year as a decimal number with century. This year is the one that contains the greater part of
                       the week (Monday as the first day of the week).</li>
-            <li>%g    the same year as in ``%G'', but as a decimal number without century (00-99).</li>
+            <li>%g    the same year as in %G, but as a decimal number without century (00-99).</li>
             <li>%O*   POSIX locale extensions. Where "*" is one of the characters: d e H I m M S u U V w W y.
                       supposed to provide alternate representations. Additionly %OB implemented to represent alternative 
                       months names (used standalone, without day mentioned).

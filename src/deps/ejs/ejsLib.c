@@ -32142,11 +32142,10 @@ void ejsConfigureWorkerType(Ejs *ejs)
 /*
     XML methods
  */
-static EjsObj   *loadXml(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv);
-static EjsObj   *saveXml(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv);
-static EjsObj   *xmlToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
-
-static EjsVar   *xml_parent(Ejs *ejs, EjsXML *xml, int argc, EjsVar **argv);
+static EjsObj *loadXml(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv);
+static EjsObj *saveXml(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv);
+static EjsObj *xmlToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
+static EjsVar *xml_parent(Ejs *ejs, EjsXML *xml, int argc, EjsVar **argv);
 
 static bool allDigitsForXml(cchar *name);
 static bool deepCompare(EjsXML *lhs, EjsXML *rhs);
@@ -33075,7 +33074,7 @@ static EjsObj *setLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
  */
 static EjsVar *xml_parent(Ejs *ejs, EjsXML *xml, int argc, EjsVar **argv)
 {
-    return xml->parent ? (EjsVar*) xml->parent : (EjsVar*) ejs->nullValue;
+    return (xml->parent && xml != xml->parent) ? (EjsVar*) xml->parent : (EjsVar*) ejs->nullValue;
 }
 
 /*
@@ -33578,7 +33577,13 @@ static EjsObj *getXmlListPropertyByName(Ejs *ejs, EjsXML *list, EjsName *qname)
 
 static EjsObj *getXmlListNodeName(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateString(ejs, xml->qname.name);
+    if (xml->targetProperty.name) {
+        return (EjsVar*) ejsCreateString(ejs, xml->targetProperty.name);
+    } else if (xml->targetObject) {
+        return (EjsVar*) ejsCreateString(ejs, xml->targetObject->qname.name);
+    } else {
+        return ejs->nullValue;
+    }
 }
 
 
@@ -33976,9 +33981,10 @@ static EjsXML *shallowCopy(Ejs *ejs, EjsXML *xml)
 
 
 /*
-    Resolve empty XML list objects to an actual XML object. This is used by SetPropertyByName to find the actual object to update.
-    This method resolves the value of empty XMLLists. If the XMLList is not empty, the list will be returned. If list is empty,
-    this method attempts to create an element based on the list targetObject and targetProperty.
+    Resolve empty XML list objects to an actual XML object. This is used by SetPropertyByName to find the actual 
+    object to update. This method resolves the value of empty XMLLists. If the XMLList is not empty, the list will 
+    be returned. If list is empty, this method attempts to create an element based on the list targetObject and 
+    targetProperty.
  */
 static EjsXML *resolve(Ejs *ejs, EjsXML *xml)
 {

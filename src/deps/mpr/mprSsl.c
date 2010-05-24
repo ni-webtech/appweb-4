@@ -6503,7 +6503,9 @@ typedef struct Mpr {
     int             hasDedicatedService;    /**< Running a dedicated events thread */
     int             allocPolicy;            /**< Memory allocation depletion policy */
     int             logFd;                  /**< Logging file descriptor */
-
+#if UNUSED
+    int             timezone;               /**< Minutes west of Greenwich without DST */
+#endif
     /*
         Service pointers
      */
