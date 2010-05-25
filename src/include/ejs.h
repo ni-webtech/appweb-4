@@ -1963,8 +1963,8 @@ typedef struct EjsFunction {
             uint    hasReturn: 1;           /**< Function has a return stmt */
             uint    inCatch: 1;             /**< Executing catch block */
             uint    inException: 1;         /**< Executing catch/finally exception processing */
-            uint    isInitializer: 1;       /**< Function is a type initializer */
             uint    isConstructor: 1;       /**< Function is a constructor */
+            uint    isInitializer: 1;       /**< Function is a type initializer */
             uint    isNativeProc: 1;        /**< Function is native procedure */
             uint    moduleInitializer: 1;   /**< Function is a module initializer */
             uint    rest: 1;                /**< Function has a "..." rest of args parameter */

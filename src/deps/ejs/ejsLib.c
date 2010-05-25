@@ -17131,15 +17131,15 @@ EjsFrame *ejsCreateFrame(Ejs *ejs, EjsFunction *fun, EjsObj *thisObj, int argc, 
 #if BLD_HAS_UNNAMED_UNIONS
     frame->function.bits = fun->bits;
 #else
+    //  MOB -- check these
     frame->function.numArgs = fun->numArgs;
     frame->function.numDefault = fun->numDefault;
     frame->function.castNulls = fun->castNulls;
-    frame->function.isConstructor = fun->isConstructor;
     frame->function.fullScope = fun->fullScope;
     frame->function.hasReturn = fun->hasReturn;
+    frame->function.isConstructor = fun->isConstructor;
     frame->function.isInitializer = fun->isInitializer;
-    frame->function.nativeProc = fun->nativeProc;
-    frame->function.override = fun->override;
+    frame->function.isNativeProc = fun->isNativeProc;
     frame->function.rest = fun->rest;
     frame->function.staticMethod = fun->staticMethod;
     frame->function.strict = fun->strict;
@@ -38346,7 +38346,7 @@ static void astForIn(EcCompiler *cp, EcNode *np)
         
 #else
         ejsName(&np->forInLoop.iterNext->qname, "public", "next");
-        resolveName(cp, np->forInLoop.iterNext, (EjsObj*) ejs->iteratorType->prototype, &np->forInLoop.iterNext->qname);
+        rc = resolveName(cp, np->forInLoop.iterNext, (EjsObj*) ejs->iteratorType->prototype, &np->forInLoop.iterNext->qname);
         if (rc < 0) {
             astError(cp, np, "Can't find Iterator.next method");
         }
@@ -43622,6 +43622,7 @@ static void genReturn(EcCompiler *cp, EcNode *np)
         /*
             return;
          */
+        fun = cp->state->currentFunction;
         if (fun->isConstructor) {
             ecEncodeOpcode(cp, EJS_OP_LOAD_THIS);
             ecEncodeOpcode(cp, EJS_OP_RETURN_VALUE);
@@ -56826,6 +56827,7 @@ static EcNode *parseModuleDefinition(EcCompiler *cp)
         }
     } else {
         isDefault = 1;
+        namespace = cp->fileState->namespace;
     }
     
     if (isDefault) {
@@ -56833,7 +56835,6 @@ static EcNode *parseModuleDefinition(EcCompiler *cp)
             No module name. Set the namespace to the unique internal namespace name.
          */
         np->module.name = mprStrdup(np, EJS_DEFAULT_MODULE);
-        namespace = cp->fileState->namespace;
     }
     np->qname.name = np->module.name;
     np->module.version = version;
