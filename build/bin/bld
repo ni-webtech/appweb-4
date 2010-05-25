@@ -897,7 +897,7 @@ else
             fi
 
             if [ $SONAME = 1 ] ; then
-                if [ $OS = "LINUX" -o "$OS" = "CYGWIN" -o $OS = "SOLARIS" ] ; then
+                if [ $OS = "LINUX" -o "$OS" = "CYGWIN" -o $OS = "SOLARIS" -o $OS = "FREEBSD" ] ; then
                     if [ $VERSION_SONAME = 1 ] ; then
                         SHARED_LIBRARY=${LIBRARY}${BLD_SHOBJ}.${BLD_VERSION}
                         SONAME_LIBRARY=${LIBRARY}${BLD_SHOBJ}.${BLD_VERSION%????}

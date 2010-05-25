@@ -111,7 +111,7 @@ configureService() {
                 fi
             fi
 		elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             if [ $action = start ] ; then
                 launchctl start com.${company}.${BLD_PRODUCT}
             else
@@ -132,7 +132,7 @@ configureService() {
 				"$BLD_BIN_PREFIX/angel" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
 			fi
 		elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             launchctl load /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
 		elif which chkconfig >/dev/null 2>&1 ; then
 			/sbin/chkconfig --add $BLD_PRODUCT >/dev/null
@@ -149,7 +149,7 @@ configureService() {
 				"$BLD_BIN_PREFIX/angel" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
 			fi
 		elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             launchctl unload -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
 		elif which chkconfig >/dev/null 2>&1 ; then
 			/sbin/chkconfig --del $BLD_PRODUCT >/dev/null 2>&1

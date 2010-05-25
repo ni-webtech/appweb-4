@@ -62,11 +62,11 @@ void maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
             conn->receiver->location = host->location;
         }
         conn->transmitter->handler = matchHandler(conn);
-		conn->traceLevel = host->traceLevel;
-		conn->traceMaxLength = host->traceMaxLength;
-		conn->traceMask = host->traceMask;
-		conn->traceInclude = host->traceInclude;
-		conn->traceExclude = host->traceExclude;
+        conn->traceLevel = host->traceLevel;
+        conn->traceMaxLength = host->traceMaxLength;
+        conn->traceMask = host->traceMask;
+        conn->traceInclude = host->traceInclude;
+        conn->traceExclude = host->traceExclude;
         break;
     }
 }

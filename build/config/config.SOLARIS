@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#   config.FREEBSD -- Common build configuration for BSD
+#   config.SOLARIS -- Common build configuration for BSD
 #
 #   Read by product.config during configure.
 #
@@ -11,6 +11,6 @@
 . build/config/config.base
 
 #
-#   Tools
+#   Tool names
 #
-eval BLD_${KIND}_MAKE=gmake
+eval BLD_${KIND}_MAKE=gnumake

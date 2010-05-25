@@ -1810,7 +1810,7 @@ MprAlloc *mprGetAllocStats(MprCtx ctx)
         close(fd);
     }
 #endif
-#if MACOSX
+#if MACOSX || FREEBSD
     struct rusage   rusage;
     int64           ram, usermem;
     size_t          len;
@@ -1820,7 +1820,11 @@ MprAlloc *mprGetAllocStats(MprCtx ctx)
     mpr->alloc.rss = rusage.ru_maxrss;
 
     mib[0] = CTL_HW;
+#if FREEBSD
     mib[1] = HW_MEMSIZE;
+#else
+    mib[1] = HW_PHYSMEM;
+#endif
     len = sizeof(ram);
     sysctl(mib, 2, &ram, &len, NULL, 0);
     mpr->alloc.ram = ram;
@@ -1999,6 +2003,15 @@ static void sysinit(Mpr *mpr)
         ap->numCpu = 1;
     #endif
     ap->pageSize = sysconf(_SC_PAGESIZE);
+#elif SOLARIS
+{
+    FILE *ptr;
+    if  ((ptr = popen("psrinfo -p", "r")) != NULL) {
+        fscanf(ptr, "%d", &alloc.numCpu);
+        (void) pclose(ptr);
+    }
+    alloc.pageSize = sysconf(_SC_PAGESIZE);
+}
 #elif BLD_WIN_LIKE
 {
     SYSTEM_INFO     info;
@@ -12020,11 +12033,26 @@ char *mprGetAppPath(MprCtx ctx)
     mpr->appPath = mprGetAbsPath(ctx, pbuf);
     return mprStrdup(ctx, mpr->appPath);
 
+#elif FREEBSD 
+    char    pbuf[MPR_MAX_STRING];
+    int     len;
+
+    len = readlink("/proc/curproc/file", pbuf, sizeof(pbuf) - 1);
+    if (len < 0) {
+        return mprGetAbsPath(ctx, ".");
+     }
+     pbuf[len] = '\0';
+     mpr->appPath = mprGetAbsPath(ctx, pbuf);
+     return mprStrdup(ctx, mpr->appPath);
+
 #elif BLD_UNIX_LIKE 
     char    pbuf[MPR_MAX_STRING], *path;
     int     len;
-
+#if SOLARIS
+    path = mprAsprintf(ctx, -1, "/proc/%i/path/a.out", getpid()); 
+#else
     path = mprAsprintf(ctx, -1, "/proc/%i/exe", getpid()); 
+#endif
     len = readlink(path, pbuf, sizeof(pbuf) - 1);
     if (len < 0) {
         mprFree(path);
@@ -18572,10 +18600,6 @@ static int localTime(MprCtx ctx, struct tm *timep, MprTime time);
 static MprTime makeTime(MprCtx ctx, struct tm *tp);
 static void validateTime(MprCtx ctx, struct tm *tm, struct tm *defaults);
 
-#if BLD_WIN_LIKE || VXWORKS
-static int gettimeofday(struct timeval *tv, struct timezone *tz);
-#endif
-
 /*
     Initialize the time service
  */
@@ -19988,7 +20012,7 @@ static void validateTime(MprCtx ctx, struct tm *tp, struct tm *defaults)
     Compatibility for windows and VxWorks
  */
 #if BLD_WIN_LIKE || VXWORKS
-static int gettimeofday(struct timeval *tv, struct timezone *tz)
+int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     #if BLD_WIN_LIKE
         FILETIME        fileTime;
@@ -20681,7 +20705,11 @@ int mprStartOsService(MprOsService *os)
     /* 
         Open a syslog connection
      */
+#if SOLARIS
+    openlog(mprGetAppName(os), LOG_CONS, LOG_LOCAL0);
+#else
     openlog(mprGetAppName(os), LOG_CONS || LOG_PERROR, LOG_LOCAL0);
+#endif
     return 0;
 }
 
@@ -23693,6 +23721,12 @@ typedef unsigned Long ULong;
 
  #include "stdlib.h"
  #include "string.h"
+
+#if FREEBSD
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
+#endif
 
 #ifdef USE_LOCALE
  #include "locale.h"
@@ -27126,6 +27160,7 @@ dtoa
         }
 #endif
 
+    mlo = 0;
     u.d = dd;
     if (word0(&u) & Sign_bit) {
         /* set sign for everything, including 0's and NaNs */

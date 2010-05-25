@@ -23,7 +23,7 @@ copyDebControlFiles() {
 
     for pkg in bin dev src ; do
         suffix="-$pkg"
-        dir=`echo ${pkg} | tr '[a-z]' '[A-Z]'`
+        dir=`echo ${pkg} | tr '[:lower:]' '[:upper:]'`
         mkdir -p ${ROOT_DIR}/${dir}/DEBIAN
 
         for f in package/LINUX/deb.${pkg}/* ; do
@@ -68,7 +68,7 @@ makeDebPackages() {
     name=`createPackageName ${BLD_PRODUCT}`.deb
 
     for pkg in bin dev src ; do
-        upper=`echo ${pkg} | tr '[a-z]' '[A-Z]'`
+        upper=`echo ${pkg} | tr '[:lower:]' '[:upper:]'`
         if [ "$pkg" = src ] ; then
             name="${BLD_PRODUCT}-${pkg}-${BLD_VERSION}-${BLD_NUMBER}.deb"
         else

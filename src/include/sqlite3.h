@@ -33,7 +33,7 @@
 #define SQLITE_ENABLE_COLUMN_METADATA   1
 #define SQLITE_THREADSAFE               1
 
-#if MACOSX || LINUX || SOLARIS
+#if MACOSX || LINUX || SOLARIS || FREEBSD
 #define STDC_HEADERS        1
 #define HAVE_SYS_TYPES_H    1
 #define HAVE_SYS_STAT_H     1

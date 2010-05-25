@@ -159,7 +159,7 @@ createArchives() {
         echo -en "\n#\n#  "
 
         name="${BLD_PRODUCT}-${suffix}"
-        dir=`echo "${suffix}" | tr '[a-z]' '[A-Z]'`
+        dir=`echo "${suffix}" | tr '[:lower:]' '[:upper:]'`
 
         echo -e "Create raw tar images for: ${ROOT_DIR}/${dir} ...\n#"
 
@@ -435,7 +435,7 @@ set -- ${OPTIONS} $*
 while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
     ARG="${1#*=}"
     [ "$ARG" = "$1" ] && ARG=
-    SW=`echo ${1#--} | tr '[A-Z]' '[a-z]'`
+    SW=`echo ${1#--} | tr '[:upper:]' '[:lower:]'`
     case ${SW} in
     dry|dry-run)
         DRY_RUN=1

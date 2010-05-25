@@ -185,7 +185,7 @@ cpy() {
     windows=0
     trim=0
     filter=" _ _ "
-    stndFilter="\.makedep$|*\.o$|*\.pdb$|\.tmp$|\.save$|\.sav$|OLD|/Archive/|/sav/|/save/|oldFiles|\.libs/|\.nc|\.orig|\.svn"
+    stndFilter="\.makedep$|\*\.o$|*\.pdb$|\.tmp$|\.save$|\.sav$|OLD|/Archive/|/sav/|/save/|oldFiles|\.libs/|\.nc|\.orig|\.svn"
     check=""
 
     if [ "$TRACE" = 1 ] ; then
@@ -269,26 +269,21 @@ cpy() {
                 files=$baseDir/$files
             fi
         fi
+        rm -f .cpy_copied
 
         if [ -d "${files}" ] ; then
             isDir=1
             dirPortion=${files}
             pattern="*"
-            depth=9999
+            find ${dirPortion} -name "$pattern" | egrep -v "$stndFilter" | egrep -v "$filter" | \
+               egrep "$check"
         else
             isDir=0
-            dirPortion=${files%/*}
+            dirPortion=`dirname "$files"`
             pattern=${files##*/}
-            depth=1
-        fi
-
-        [ $v -gt 1 ] && echo -e "find ${dirPortion}" -name \""$pattern"\" -maxdepth $depth \| \
-            egrep -v \""$filter"\" \| egrep \""$check"\"
-
-        rm -f .cpy_copied
-        find ${dirPortion} -maxdepth $depth -name "$pattern" | egrep -v "$stndFilter" | egrep -v "$filter" | \
-            egrep "$check" | while read src ; do
-
+            ls ${dirPortion}/$pattern | egrep -v "$stndFilter"  | egrep -v "$filter" | \
+               egrep "$check"
+        fi | while read src ; do
             [ -d "${src#}" ] && continue
 
             #
@@ -360,7 +355,7 @@ cpy() {
                 echo "# Can't copy: cp -pf $src $dest"
                 echo -e "\nIf installing to system directories, become administrator or attain"
                 echo -e "administrator privilege and retry.\n"
-                exit 2
+                [ -z "$DRY_RUN" ] && exit 2
             fi
 
             if [ $TASK = Install ] ; then
@@ -399,7 +394,7 @@ cpy() {
 
         if [ $TASK != Remove -a ! -f .cpy_copied ] ; then
             echo cpy: ERROR: no files copied for $files
-            exit 255
+            [ -z "$DRY_RUN" ] && exit 255
         fi
         rm -f .cpy_copied 
         [ $optind -ge $argc ] && break

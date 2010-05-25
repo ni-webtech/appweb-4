@@ -34,7 +34,7 @@
 BLD_TOP		:= .
 BUILD_CHECK	:= buildCheck
 FIRST		:= first
-SHELL		:= /bin/bash
+SHELL		:= bash
 IMG_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)
 SRC_NAME	= $(BLD_PRODUCT)-src-$(BLD_VERSION)-$(BLD_NUMBER)
 

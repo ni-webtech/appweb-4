@@ -395,7 +395,7 @@ launchBrowser() {
 
 with() {
     local name arg
-    name=`echo ${1%=*} | tr '[a-z]' '[A-Z]'`
+    name=`echo ${1%=*} | tr '[:lower:]' '[:upper:]'`
     if [ "$1" != "${1/=/}" ] ; then
         arg="${1##*=}"
     else
@@ -405,7 +405,7 @@ with() {
 }
 
 without() {
-    local name=`echo ${1} | tr '[a-z]' '[A-Z]'`
+    local name=`echo ${1} | tr '[:lower:]' '[:upper:]'`
     eval WITH_$name=0
 }
 
@@ -419,7 +419,7 @@ set -- ${OPTIONS} $*
 while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
     ARG="${1#*=}"
     [ "$ARG" = "$1" ] && ARG=
-    SW=`echo ${1#--} | tr '[A-Z]' '[a-z]'`
+    SW=`echo ${1#--} | tr '[:upper:]' '[:lower:]'`
     case ${SW} in
     browser)
         BROWSER=1

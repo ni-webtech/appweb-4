@@ -1477,7 +1477,7 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsObj *value, EjsObj *thisObj, Ejs
     #define traceCode(ejs, opcode) opcode
 #endif
 
-#if LINUX || MACOSX || LINUX || SOLARIS || VXWORKS
+#if BLD_UNIX_LIKE || VXWORKS
     #define CASE(opcode) opcode
     #define BREAK goto *opcodeJump[opcode = traceCode(ejs, GET_BYTE())]
 #else
@@ -1532,7 +1532,7 @@ static void VM(Ejs *ejs, EjsFunction *fun, EjsObj *otherThis, int argc, int stac
     uchar       *mark;
     int         i, offset, count, opcode, attributes;
 
-#if LINUX || MACOSX || LINUX || SOLARIS || VXWORKS 
+#if BLD_UNIX_LIKE || VXWORKS 
     /*
         Direct threading computed goto processing. Include computed goto jump table.
      */
@@ -1763,7 +1763,7 @@ static void *opcodeJump[] = {
 
     mprAssert(!FRAME->attentionPc);
 
-#if LINUX || MACOSX || LINUX || SOLARIS || VXWORKS 
+#if BLD_UNIX_LIKE || VXWORKS 
     /*
         Direct threading computed goto processing. Include computed goto jump table.
      */
@@ -3855,7 +3855,7 @@ static void *opcodeJump[] = {
             mprAssert(0);
             BREAK;
 
-#if !LINUX && !MACOSX && !LINUX && !SOLARIS && !VXWORKS
+#if !BLD_UNIX_LIKE && !VXWORKS
         }
     }
 #endif
@@ -8575,7 +8575,7 @@ static int destroyEjs(Ejs *ejs)
         mprMapFree(state->stackBase, state->stackSize);
     }
     mprFree(ejs->heap);
-	return 0;
+    return 0;
 }
 
 
@@ -28842,7 +28842,7 @@ static EjsObj *system_ipaddr(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 #if BLD_UNIX_LIKE || BLD_WIN_LIKE
     struct addrinfo *res, *reslist, hints;
     cchar           *ip;
-    char			ipaddr[MPR_MAX_STRING], service[MPR_MAX_STRING];
+    char            ipaddr[MPR_MAX_STRING], service[MPR_MAX_STRING];
 
     if ((ip = mprGetIpAddr(ejs)) != 0) {
         return (EjsObj*) ejsCreateString(ejs, mprGetIpAddr(ejs));

@@ -81,7 +81,7 @@ makeDmgPackage() {
     for kind in bin dev
     do
         updateScripts $kind
-        upper=`echo $kind | tr '[a-z]' '[A-Z]'`
+        upper=`echo $kind | tr '[:lower:]' '[:upper:]'`
 
         echo "PackageMaker --domain anywhere --root ${ROOT_DIR}/$upper --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1"
         ${PMAKER} --domain anywhere --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \

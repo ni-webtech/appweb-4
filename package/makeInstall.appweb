@@ -73,7 +73,7 @@ configureProduct() {
 			fi
 
 		elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             launchctl unload /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
             launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
 
@@ -97,7 +97,7 @@ configureProduct() {
 				"$BLD_BIN_DIR/angel" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
 			fi
 		elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             launchctl unload -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
 		elif type chkconfig >/dev/null 2>&1 ; then
 			/sbin/chkconfig --del $BLD_PRODUCT >/dev/null 2>&1
@@ -137,7 +137,7 @@ configureProduct() {
 				fi
 			fi
 		elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[A-Z]' '[a-z']`
+            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             if [ $action = start ] ; then
                 launchctl start com.${company}.${BLD_PRODUCT}
             else
