@@ -1459,7 +1459,7 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsObj *value, EjsObj *thisObj, Ejs
     } else 
 
 #define GET_BYTE()      *(FRAME)->pc++
-#define GET_DOUBLE()    ejsDecodeDouble(&(FRAME)->pc)
+#define GET_DOUBLE()    ejsDecodeDouble(ejs, &(FRAME)->pc)
 #define GET_INT()       (int) ejsDecodeNum(&(FRAME)->pc)
 #define GET_NUM()       ejsDecodeNum(&(FRAME)->pc)
 #define GET_NAME()      getNameArg(FRAME)
@@ -5941,6 +5941,7 @@ static void pushScope(EjsModule *mp, EjsBlock *block, EjsObj *obj);
 static int  readNumber(Ejs *ejs, MprFile *file, int *number);
 static int  readWord(Ejs *ejs, MprFile *file, int *number);
 static char *search(Ejs *ejs, cchar *filename, int minVersion, int maxVersion);
+static double swapDoubleWord(Ejs *ejs, double a);
 static int  swapWord(Ejs *ejs, int word);
 static char *tokenToString(EjsModule *mp, int   token);
 static int  trimModule(Ejs *ejs, char *name);
@@ -7656,11 +7657,12 @@ static int readNumber(Ejs *ejs, MprFile *file, int *number)
 }
 
 
-double ejsDecodeDouble(uchar **pp)
+double ejsDecodeDouble(Ejs *ejs, uchar **pp)
 {
     double   value;
 
     memcpy(&value, *pp, sizeof(double));
+    value = swapDoubleWord(ejs, value);
     *pp += sizeof(double);
     return value;
 }
@@ -7745,8 +7747,9 @@ int ejsEncodeWord(uchar *pos, int number)
 }
 
 
-int ejsEncodeDouble(uchar *pos, double number)
+int ejsEncodeDouble(Ejs *ejs, uchar *pos, double number)
 {
+    number = swapDoubleWord(ejs, number);
     memcpy(pos, &number, sizeof(double));
     return sizeof(double);
 }
@@ -7857,6 +7860,21 @@ static int swapWord(Ejs *ejs, int word)
     }
     return ((word & 0xFF000000) >> 24) | ((word & 0xFF0000) >> 8) | ((word & 0xFF00) << 8) | ((word & 0xFF) << 24);
 }
+
+
+static double swapDoubleWord(Ejs *ejs, double a)
+{
+    int64   low, high;
+
+    if (mprGetEndian(ejs) == MPR_LITTLE_ENDIAN) {
+        return a;
+    }
+    low = ((int64) a) & 0xFFFFFFFF;
+    high = (((int64) a) >> 32) & 0xFFFFFFFF;
+    return  (double) ((low & 0xFF) << 24 | (low & 0xFF00 << 8) | (low & 0xFF0000 >> 8) | (low & 0xFF000000 >> 16) |
+            ((high & 0xFF) << 24 | (high & 0xFF00 << 8) | (high & 0xFF0000 >> 8) | (high & 0xFF000000 >> 16)) << 32);
+}
+
 
 
 static EjsObj *getCurrentBlock(EjsModule *mp)
@@ -13432,11 +13450,13 @@ static EjsObj *ba_readDouble(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv
         }
         return (EjsObj*) ejs->nullValue;
     }
-
+#if OLD
     value = * (double*) &ap->value[ap->readPosition];
+#else
+    memcpy(&value, (char*) &ap->value[ap->readPosition], sizeof(double));
+#endif
     value = swapDouble(ap, value);
     adjustReadPosition(ap, sizeof(double));
-
     return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) value);
 }
 
@@ -13985,7 +14005,11 @@ static int putDouble(EjsByteArray *ap, double value)
 {
     value = swapDouble(ap, value);
 
+#if OLD
     *((double*) &ap->value[ap->writePosition]) = value;
+#else
+    memcpy((char*) &ap->value[ap->writePosition], &value, sizeof(double));
+#endif
     ap->writePosition += sizeof(double);
     return sizeof(double);
 }
@@ -38347,9 +38371,11 @@ static void astForIn(EcCompiler *cp, EcNode *np)
 #else
         ejsName(&np->forInLoop.iterNext->qname, "public", "next");
         rc = resolveName(cp, np->forInLoop.iterNext, (EjsObj*) ejs->iteratorType->prototype, &np->forInLoop.iterNext->qname);
+#if UNUSED
         if (rc < 0) {
             astError(cp, np, "Can't find Iterator.next method");
         }
+#endif
         //  MOB UNBIND
         np->forInLoop.iterNext->lookup.slotNum = -1;
 #endif
@@ -47894,7 +47920,7 @@ int ecEncodeDouble(EcCompiler *cp, double value)
         mprAssert(0);
         return EJS_ERR;
     }
-    len = ejsEncodeDouble((uchar*) mprGetBufEnd(buf), value);
+    len = ejsEncodeDouble(cp->ejs, (uchar*) mprGetBufEnd(buf), value);
     mprAdjustBufEnd(buf, len);
     return 0;
 }

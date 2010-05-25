@@ -47,6 +47,8 @@
                 <li><a href="#customLog">CustomLog</a></li>
                 <li><a href="#errorLog">ErrorLog</a></li>
                 <li><a href="#logLevel">LogLevel</a></li>
+                <li><a href="#logTrace">LogTrace</a></li>
+                <li><a href="#logTraceFilter">LogTraceFilter</a></li>
             </ul>
             <h2>See Also</h2>
             <ul>
@@ -263,6 +265,86 @@ ErrorLog error.log
                     </tr>
                 </tbody>
             </table>
+
+
+            <a name="logTrace" id="logTrace"></a>
+            <h2>LogTrace</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control the tracing of HTTP messages</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LogTrace level SET</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LogTrace 3 headers,request,response</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LogTrace directive controls how HTTP messages are traced to the log file.
+                            When tracing is enabled for a HTTP message, the headers and/or body of the message
+                            will be written to the log file. Binary messages will be encoded into printable hex characters.
+                            The level defines the log level at which tracing will be enabled.</p>
+                            <p>The "SET" option defines what parts of the HTTP message will be traced. SET is a comma 
+                            separated (without spaces) list of keywords. Valid keywords are: headers, body, request, 
+                            and response.</p>
+                            <p>For example: to trace the headers and body of requests but not responses, 
+                            use: "headers,body,request".</p>
+                            <p>The default configuration is to trace at level 3 request and response headers and request
+                            bodies.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a name="logTraceFilter" id="logTraceFilter"></a>
+            <h2>LogTraceFilter</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control the filtering of HTTP message tracing</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LogTraceFilter size INCLUDE EXCLUDE</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LogTraceFilter 4096 "*" "git,jpg,png,ico"</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LogTraceFilter directive applies a filter criteria to the tracing of HTTP messages.
+                            The size option specifies a maximum number of bytes to trace for any message. This is useful
+                            to prevent the entire tracing of very large files. </p>
+                            <p>The INCLUDE option specifies a comma
+                            separated (without spaces) list of file extensions to trace. Use "*" to specify tracing all
+                            request extensions. The EXCLUDE option specifies a comma separated list of file extensions
+                            to exclude from tracing. The include option is applied first, then the exclude option.</p>
+                            <p>For example: to trace only html and text files, use an include option of "html,txt". To trace 
+                            all files except graphics, use include "*" and exclude "gif,jpg,png,ico".
+                            <p>The default configuration is to trace all files, i.e. no filtering.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

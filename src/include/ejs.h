@@ -4300,12 +4300,12 @@ extern char         *ejsModuleReadString(struct Ejs *ejs, EjsModule *module);
 extern int          ejsModuleReadType(struct Ejs *ejs, EjsModule *module, EjsType **typeRef, EjsTypeFixup **fixup, 
                         EjsName *typeName, int *slotNum);
 extern int          ejsSetModuleConstants(struct Ejs *ejs, EjsModule *mp, cchar *pool, int poolSize);
-extern double       ejsDecodeDouble(uchar **pp);
+extern double       ejsDecodeDouble(Ejs *ejs, uchar **pp);
 extern int64        ejsDecodeNum(uchar **pp);
 extern int          ejsDecodeWord(uchar **pp);
 extern int          ejsEncodeNum(uchar *pos, int64 number);
 extern int          ejsEncodeWord(uchar *pos, int number);
-extern int          ejsEncodeDouble(uchar *pos, double number);
+extern int          ejsEncodeDouble(Ejs *ejs, uchar *pos, double number);
 extern int          ejsEncodeByteAtPos(uchar *pos, int value);
 extern int          ejsEncodeUint(uchar *pos, uint number);
 extern int          ejsEncodeWordAtPos(uchar *pos, int value);

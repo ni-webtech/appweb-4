@@ -5535,7 +5535,7 @@ static double getDouble(EjsMod *mp)
     double  value;
 
     start = mp->pc;
-    value = ejsDecodeDouble(&mp->pc);
+    value = ejsDecodeDouble(mp->ejs, &mp->pc);
 
     if (mp->showAsm) {
         for (; start < mp->pc; start++) {
