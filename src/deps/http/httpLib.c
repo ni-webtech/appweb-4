@@ -2923,7 +2923,10 @@ void httpConnError(HttpConn *conn, int status, cchar *fmt, ...)
 
 int httpSetupTrace(HttpConn *conn, cchar *ext)
 {
-    if (conn->traceMask && ext) {
+    if (conn->traceLevel > mprGetLogLevel(conn)) {
+        return 0;
+    }
+    if (ext) {
         if (conn->traceInclude && !mprLookupHash(conn->traceInclude, ext)) {
             return 0;
         }
