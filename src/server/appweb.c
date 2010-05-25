@@ -396,9 +396,8 @@ int osInit(Mpr *mpr)
  */
 int checkEnvironment(Mpr *mpr, cchar *program)
 {
-    char   *home;
-
 #if BLD_UNIX_LIKE
+    char   *home;
     home = mprGetCurrentPath(mpr);
     if (unixSecurityChecks(mpr, program, home) < 0) {
         mprFree(home);

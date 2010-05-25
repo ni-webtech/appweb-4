@@ -18814,7 +18814,7 @@ static int getTimeZoneOffsetFromTm(MprCtx ctx, struct tm *tp)
     return -offset * 60 * MS_PER_SEC;
 #elif VXWORKS
     char  *tze, *p;
-    int   offset;
+    int   offset = 0;
     if ((tze = getenv("TIMEZONE")) != 0) {
         if ((p = strchr(tze, ':')) != 0) {
             if ((p = strchr(tze, ':')) != 0) {

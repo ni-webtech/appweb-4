@@ -226,6 +226,7 @@ typedef struct Http {
     HttpGetPassword getPassword;            /**< Lookup password callback */
     HttpValidateCred validateCred;          /**< Validate user credentials callback */
 
+    int             connCount;              /**< Count of connections for Conn.seqno */
     void            *context;               /**< Embedding context */
     char            *currentDate;           /**< Date string for HTTP response headers */
     char            *expiresDate;           /**< Convenient expiry date (1 day in advance) */
@@ -1260,12 +1261,21 @@ extern int httpOpenUploadFilter(Http *http);
 #define HTTP_STATE_BEGIN            1       /**< Ready for a new request */
 #define HTTP_STATE_STARTED          2       /**< A new request has started */
 #define HTTP_STATE_WAIT             3       /**< Waiting for the response */
-#define HTTP_STATE_PARSED           4       /**< Headers have been parsed, handler can start */
-#define HTTP_STATE_CONTENT          5       /**< Reading posted content */
-#define HTTP_STATE_PROCESS          6       /**< Content received, handler can process */
-#define HTTP_STATE_RUNNING          7       /**< Handler running */
-#define HTTP_STATE_ERROR            8       /**< Request in error */
-#define HTTP_STATE_COMPLETE         9       /**< Request complete */
+#define HTTP_STATE_FIRST            4       /**< First request line has been parsed */
+#define HTTP_STATE_PARSED           5       /**< Headers have been parsed, handler can start */
+#define HTTP_STATE_CONTENT          6       /**< Reading posted content */
+#define HTTP_STATE_PROCESS          7       /**< Content received, handler can process */
+#define HTTP_STATE_RUNNING          8       /**< Handler running */
+#define HTTP_STATE_ERROR            9       /**< Request in error */
+#define HTTP_STATE_COMPLETE         10      /**< Request complete */
+
+/*
+    Request tracing
+ */
+#define HTTP_TRACE_TRANSMIT         0x1     /**< Trace transmission */
+#define HTTP_TRACE_RECEIVE          0x2     /**< Trace reception */
+#define HTTP_TRACE_HEADERS          0x4     /**< Trace headers */
+#define HTTP_TRACE_BODY             0x8     /**< Trace body */
 
 /** 
     Notifier and event callbacks.
@@ -1337,9 +1347,16 @@ typedef struct HttpConn {
     int             port;                   /**< Remote port */
     int             retries;                /**< Client request retries */
     int             secure;                 /**< Using https */
+    int             seqno;                  /**< Unique connection sequence number */
     int             status;                 /**< Request status */
     int             timeout;                /**< Timeout period in msec */
     int             writeBlocked;           /**< Transmission writing is blocked */
+
+    int             traceLevel;             /**< Trace activation level */
+    int             traceMaxLength;         /**< Maximum trace file length (if known) */
+    int             traceMask;              /**< Request/response trace mask */
+    MprHashTable    *traceInclude;          /**< Extensions to include in trace */
+    MprHashTable    *traceExclude;          /**< Extensions to exclude from trace */
 
     /*  
         Authentication for client requests
@@ -1639,6 +1656,10 @@ extern void httpEnableConnEvents(HttpConn *conn);
 extern HttpPacket *httpGetConnPacket(HttpConn *conn);
 extern void httpSetPipeHandler(HttpConn *conn, HttpStage *handler);
 
+#define httpShouldTrace(conn, mask) ((conn->traceMask & (mask)) == (mask))
+extern int httpSetupTrace(HttpConn *conn, cchar *ext);
+extern void httpTraceContent(HttpConn *conn, HttpPacket *packet, int size, int offset, int mask);
+
 /*  
     Deny/Allow order. TODO - this is not yet implemented.
  */
@@ -1781,8 +1802,8 @@ extern bool     httpValidateNativeCredentials(HttpAuth *auth, cchar *realm, ccha
 #endif /* AUTH_FILE */
 
 #if BLD_FEATURE_AUTH_PAM
-extern cchar    *maGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user);
-extern bool     maValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
+extern cchar    *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user);
+extern bool     httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
                     cchar *requiredPass, char **msg);
 #endif /* AUTH_PAM */
 

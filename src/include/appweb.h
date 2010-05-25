@@ -471,6 +471,12 @@ typedef struct MaHost {
     char            *documentRoot;          /**< Default directory for web documents */
     int             flags;                  /**< Host flags */
 
+    int             traceLevel;             /**< Trace activation level */
+    int             traceMaxLength;         /**< Maximum trace file length (if known) */
+    int             traceMask;              /**< Request/response trace mask */
+    MprHashTable    *traceInclude;          /**< Extensions to include in trace */
+    MprHashTable    *traceExclude;          /**< Extensions to exclude from trace */
+
     int             httpVersion;            /**< HTTP/1.X */
     HttpLocation    *location;              /**< Default location */
     MprList         *locations;             /**< List of Location defintions */
@@ -515,10 +521,13 @@ extern int          maStopHost(MaHost *host);
 extern void         maSetHostIpAddrPort(MaHost *host, cchar *ipAddrPort);
 extern void         maSetHostName(MaHost *host, cchar *name);
 extern void         maSetHostDirs(MaHost *host, cchar *path);
+extern void         maSetHostTrace(MaHost *host, int level, int mask);
+extern void         maSetHostTraceFilter(MaHost *host, int len, cchar *include, cchar *exclude);
 extern void         maSetHttpVersion(MaHost *host, int version);
-
 extern void         maSetNamedVirtualHost(MaHost *host);
 extern void         maSecureHost(MaHost *host, struct MprSsl *ssl);
+extern void         maSetHostFilter(MaHost *host, int length, cchar *include, cchar *exclude);
+extern int          maSetupTrace(MaHost *host, cchar *ext);
 extern void         maSetVirtualHost(MaHost *host);
 
 #if FUTURE

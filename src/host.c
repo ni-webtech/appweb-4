@@ -37,6 +37,10 @@ MaHost *maCreateHost(MaServer *server, cchar *ipAddrPort, HttpLocation *location
     host->flags = MA_HOST_NO_TRACE;
     host->httpVersion = 1;
 
+    host->traceMask = HTTP_TRACE_TRANSMIT | HTTP_TRACE_RECEIVE | HTTP_TRACE_HEADERS;
+    host->traceLevel = 3;
+    host->traceMaxLength = INT_MAX;
+
 #if UNUSED
     //  MOB -- is this used anymore 
     host->timeout = HTTP_SERVER_TIMEOUT;
@@ -98,6 +102,16 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
 #if UNUSED
     host->mutex = mprCreateLock(host);
 #endif
+
+    host->traceMask = parent->traceMask;
+    host->traceLevel = parent->traceLevel;
+    host->traceMaxLength = parent->traceMaxLength;
+    if (parent->traceInclude) {
+        host->traceInclude = mprCopyHash(host, parent->traceInclude);
+    }
+    if (parent->traceExclude) {
+        host->traceExclude = mprCopyHash(host, parent->traceExclude);
+    }
     maAddLocation(host, host->location);
     return host;
 }
@@ -606,6 +620,64 @@ MaHost *maLookupVirtualHost(MaHostAddress *hostAddress, cchar *hostStr)
         }
     }
     return 0;
+}
+
+
+//  MOB -- order this file
+
+void maSetHostTrace(MaHost *host, int level, int mask)
+{
+    host->traceMask = mask;
+    host->traceLevel = level;
+}
+
+
+void maSetHostTraceFilter(MaHost *host, int len, cchar *include, cchar *exclude)
+{
+    char    *word, *tok, *line;
+
+    host->traceMaxLength = len;
+
+    if (include && strcmp(include, "*") != 0) {
+        host->traceInclude = mprCreateHash(host, 0);
+        line = mprStrdup(host, include);
+        word = mprStrTok(line, ", \t\r\n", &tok);
+        while (word) {
+            if (word[0] == '*' && word[1] == '.') {
+                word += 2;
+            }
+            mprAddHash(host->traceInclude, word, host);
+            word = mprStrTok(NULL, ", \t\r\n", &tok);
+        }
+        mprFree(line);
+    }
+    if (exclude) {
+        host->traceExclude = mprCreateHash(host, 0);
+        line = mprStrdup(host, exclude);
+        word = mprStrTok(line, ", \t\r\n", &tok);
+        while (word) {
+            if (word[0] == '*' && word[1] == '.') {
+                word += 2;
+            }
+            mprAddHash(host->traceExclude, word, host);
+            word = mprStrTok(NULL, ", \t\r\n", &tok);
+        }
+        mprFree(line);
+    }
+}
+
+
+int maSetupTrace(MaHost *host, cchar *ext)
+{
+    if (ext) {
+        if (host->traceInclude && !mprLookupHash(host->traceInclude, ext)) {
+            return 0;
+        }
+        if (host->traceExclude && mprLookupHash(host->traceExclude, ext)) {
+            return 0;
+        }
+    }
+    return host->traceMask;
 }
 
 

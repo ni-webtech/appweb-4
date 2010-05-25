@@ -40,7 +40,7 @@ void maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
     mprAssert(conn);
 
     switch (state) {
-    case HTTP_STATE_PARSED:
+    case HTTP_STATE_FIRST:
         server = httpGetMetaServer(conn->server);
         listenSock = conn->sock->listenSock;
         address = (MaHostAddress*) maLookupHostAddress(server, listenSock->ip, listenSock->port);
@@ -62,6 +62,11 @@ void maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
             conn->receiver->location = host->location;
         }
         conn->transmitter->handler = matchHandler(conn);
+		conn->traceLevel = host->traceLevel;
+		conn->traceMaxLength = host->traceMaxLength;
+		conn->traceMask = host->traceMask;
+		conn->traceInclude = host->traceInclude;
+		conn->traceExclude = host->traceExclude;
         break;
     }
 }
@@ -131,7 +136,7 @@ static HttpStage *matchHandler(HttpConn *conn)
     location = rec->location;
     if (location && location->connector) {
         trans->connector = location->connector;
-    } else if (handler == http->fileHandler && !rec->ranges && !conn->secure && trans->chunkSize <= 0) {
+    } else if (handler == http->fileHandler && !rec->ranges && !conn->secure && trans->chunkSize <= 0 && !conn->traceMask) {
         trans->connector = http->sendConnector;
     } else {
         trans->connector = http->netConnector;

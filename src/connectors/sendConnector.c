@@ -186,6 +186,7 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
     HttpTransmitter *trans;
     HttpConn        *conn;
     MprIOVec        *iovec;
+    int             mask;
 
     conn = q->conn;
     trans = conn->transmitter;
@@ -210,6 +211,10 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
             q->ioFileEntry = 1;
             q->ioFileOffset += httpGetPacketLength(packet);
         }
+    }
+    mask = HTTP_TRACE_TRANSMIT | ((packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADERS : HTTP_TRACE_BODY);
+    if (httpShouldTrace(conn, mask)) {
+        httpTraceContent(conn, packet, 0, trans->bytesWritten, mask);
     }
 }
 
