@@ -25475,7 +25475,7 @@ void ejsConfigurePathType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Path_makeLink, (EjsProc) makePathLink);
     ejsBindMethod(ejs, prototype, ES_Path_makeTemp, (EjsProc) makePathTemp);
     ejsBindMethod(ejs, prototype, ES_Path_map, (EjsProc) pa_map);
-    ejsBindMethod(ejs, prototype, ES_Path_mimeType, (EjsProc) getMimeType);
+    ejsBindAccess(ejs, prototype, ES_Path_mimeType, (EjsProc) getMimeType, NULL);
     ejsBindMethod(ejs, prototype, ES_Path_modified, (EjsProc) getModifiedDate);
     ejsBindMethod(ejs, prototype, ES_Path_name, (EjsProc) pa_name);
     ejsBindMethod(ejs, prototype, ES_Path_natural, (EjsProc) getNaturalPath);
