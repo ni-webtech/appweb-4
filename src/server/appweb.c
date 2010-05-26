@@ -208,6 +208,8 @@ MAIN(appweb, int argc, char **argv)
     mprLog(appweb, 1, "Exiting ...");
     maStopAppweb(appweb);
     mprLog(appweb, 1, "Exit complete");
+
+    mprStop(mpr);
     mprFree(mpr);
     return 0;
 }

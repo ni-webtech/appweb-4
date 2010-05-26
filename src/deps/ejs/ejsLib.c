@@ -14649,13 +14649,15 @@ static EjsObj *date_day(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_day(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    int         dayDiff, day;
+    MprTime     dayDiff, day;
 
     day = ejsGetNumber(ejs, argv[0]);
+#if UNUSED
     if (day < 0 || day > 6) {
         ejsThrowArgError(ejs, "Bad day. Range 0-6");
         return 0;
     }
+#endif
     mprDecodeLocalTime(ejs, &tm, dp->value);
     dayDiff = day - tm.tm_wday;
     dp->value += dayDiff * 86400 * MPR_TICKS_PER_SEC;
@@ -14683,13 +14685,15 @@ static EjsObj *date_dayOfYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_dayOfYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    int         dayDiff, day;
+    MprTime     dayDiff, day;
 
     day = ejsGetNumber(ejs, argv[0]);
+#if UNUSED
     if (day < 0 || day > 365) {
         ejsThrowArgError(ejs, "Bad day. Range 0-365");
         return 0;
     }
+#endif
     mprDecodeLocalTime(ejs, &tm, dp->value);
     dayDiff = day - tm.tm_yday;
     dp->value += dayDiff * 86400 * MPR_TICKS_PER_SEC;
@@ -14717,13 +14721,15 @@ static EjsObj *date_date(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_date(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    int         dayDiff, day;
+    MprTime     dayDiff, day;
 
     day = ejsGetNumber(ejs, argv[0]);
+#if UNUSED
     if (day < 1 || day > 31) {
         ejsThrowArgError(ejs, "Bad day. Range 1-31");
         return 0;
     }
+#endif
     mprDecodeLocalTime(ejs, &tm, dp->value);
     dayDiff = day - tm.tm_mday;
     dp->value += dayDiff * 86400 * MPR_TICKS_PER_SEC;
@@ -14785,16 +14791,10 @@ static EjsObj *date_fullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_fullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    MprNumber   value;
 
     mprDecodeLocalTime(ejs, &tm, dp->value);
     tm.tm_year = ejsGetNumber(ejs, argv[0]) - 1900;
-    value = mprMakeTime(ejs, &tm);
-    if (value == -1) {
-        ejsThrowArgError(ejs, "Invalid year");
-    } else {
-        dp->value = value;
-    }
+    dp->value = mprMakeTime(ejs, &tm);
     return 0;
 }
 
@@ -14934,16 +14934,10 @@ static EjsObj *date_hours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_hours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    MprNumber   value;
 
     mprDecodeLocalTime(ejs, &tm, dp->value);
     tm.tm_hour = ejsGetNumber(ejs, argv[0]);
-    value = mprMakeTime(ejs, &tm);
-    if (value == -1) {
-        ejsThrowArgError(ejs, "Invalid hour");
-    } else {
-        dp->value = value;
-    }
+    dp->value = mprMakeTime(ejs, &tm);
     return 0;
 }
 
@@ -14985,16 +14979,10 @@ static EjsObj *date_minutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_minutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    MprNumber   value;
 
     mprDecodeLocalTime(ejs, &tm, dp->value);
     tm.tm_min = ejsGetNumber(ejs, argv[0]);
-    value = mprMakeTime(ejs, &tm);
-    if (value == -1) {
-        ejsThrowArgError(ejs, "Invalid minutes");
-    } else {
-        dp->value = value;
-    }
+    dp->value = mprMakeTime(ejs, &tm);
     return 0;
 }
 
@@ -15018,16 +15006,10 @@ static EjsObj *date_month(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_month(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    MprNumber   value;
 
     mprDecodeLocalTime(ejs, &tm, dp->value);
     tm.tm_mon = ejsGetNumber(ejs, argv[0]);
-    value = mprMakeTime(ejs, &tm);
-    if (value == -1) {
-        ejsThrowArgError(ejs, "Invalid month");
-    } else {
-        dp->value = value;
-    }
+    dp->value = mprMakeTime(ejs, &tm);
     return 0;
 }
 
@@ -15037,7 +15019,7 @@ static EjsObj *date_set_month(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
  */
 static EjsObj *date_nextDay(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    int64       inc;
+    MprTime     inc;
 
     if (argc == 1) {
         inc = ejsGetNumber(ejs, argv[0]);
@@ -15135,16 +15117,10 @@ static EjsObj *date_seconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_seconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    MprNumber   value;
 
     mprDecodeLocalTime(ejs, &tm, dp->value);
     tm.tm_sec = ejsGetNumber(ejs, argv[0]);
-    value = mprMakeTime(ejs, &tm);
-    if (value == -1) {
-        ejsThrowArgError(ejs, "Invalid seconds");
-    } else {
-        dp->value = value;
-    }
+    dp->value = mprMakeTime(ejs, &tm);
     return 0;
 }
 
@@ -15156,13 +15132,15 @@ static EjsObj *date_set_seconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_setUTCDate(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    int         dayDiff, day;
+    MprTime     dayDiff, day;
 
     day = ejsGetNumber(ejs, argv[0]);
+#if UNUSED
     if (day < 1 || day > 31) {
         ejsThrowArgError(ejs, "Bad day. Range 1-31");
         return 0;
     }
+#endif
     mprDecodeUniversalTime(ejs, &tm, dp->value);
     dayDiff = day - tm.tm_mday;
     dp->value += dayDiff * 86400 * MPR_TICKS_PER_SEC;
@@ -15378,16 +15356,10 @@ static EjsObj *date_year(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 static EjsObj *date_set_year(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
-    MprNumber   value;
 
     mprDecodeLocalTime(ejs, &tm, dp->value);
     tm.tm_year = ejsGetNumber(ejs, argv[0]) - 1900;
-    value = mprMakeTime(ejs, &tm);
-    if (value == -1) {
-        ejsThrowArgError(ejs, "Invalid year");
-    } else {
-        dp->value = value;
-    }
+    dp->value = mprMakeTime(ejs, &tm);
     return 0;
 }
 
@@ -27600,7 +27572,7 @@ static EjsObj *printable(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         } else {
             result->value[j++] = '\\';
             result->value[j++] = 'u';
-            mprItoa(buf, 4, sp->value[i], 16);
+            mprItoa(buf, 4, (uchar) sp->value[i], 16);
             len = (int) strlen(buf);
             for (k = len; k < 4; k++) {
                 result->value[j++] = '0';
@@ -33507,7 +33479,7 @@ static EjsObj *xlCast(Ejs *ejs, EjsXML *vp, EjsType *type)
                 return 0;
             }
             if (next < vp->elements->length) {
-                mprPutStringToBuf(buf, ", ");
+                mprPutStringToBuf(buf, " ");
             }
         }
         result = (EjsObj*) ejsCreateString(ejs, (char*) buf->start);
@@ -46613,7 +46585,7 @@ static void setTokenCurrentLine(EcToken *tp)
     /*
         The column is less one because we have already consumed one character.
      */
-    tp->column = tp->stream->column - 1;
+    tp->column = max(tp->stream->column - 1, 0);
     tp->filename = tp->stream->name;
 }
 
@@ -57794,12 +57766,13 @@ static char *makeHighlight(EcCompiler *cp, char *src, int col)
     /*
         Cover the case where the ^ must go after the end of the input
      */
-    dest[col] = '^';
-    if (p == &dest[col]) {
-        ++p;
+    if (col >= 0) {
+        dest[col] = '^';
+        if (p == &dest[col]) {
+            ++p;
+        }
+        *p = '\0';
     }
-    *p = '\0';
-
     return dest;
 }
 
