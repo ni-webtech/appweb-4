@@ -31358,7 +31358,6 @@ static EjsObj *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
             name = ejsGetString(ejs, value);
         }
     }
-
     if (name) {
         worker->name = mprStrdup(worker, name);
     } else {
@@ -32043,9 +32042,14 @@ static void destroyWorker(Ejs *ejs, EjsWorker *worker)
 {
     if (!worker->inside) {
         removeWorker(ejs, worker);
-        mprAssert(worker->pair);
-        mprFree(worker->pair->ejs);
-        worker->pair = 0;
+        if (worker->pair) {
+            mprFree(worker->pair->ejs);
+            worker->pair = 0;
+        }
+    } else {
+        if (worker->pair && worker->pair->pair) {
+            worker->pair->pair = 0;
+        }
     }
     ejsFreeVar(ejs, (EjsObj*) worker, -1);
 }

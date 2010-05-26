@@ -4495,8 +4495,10 @@ module ejs {
 
 //MOB
 public namespace ejs
+
     /** 
         The public namespace used to make entities visible accross modules.
+        @hide
      */
     public namespace public
 
@@ -4513,6 +4515,7 @@ public namespace ejs
 //  MOB -- is this needed
     /** 
         The CONFIG namespace used to defined conditional compilation directives.
+        @hide
      */
     public namespace CONFIG
 
@@ -4524,26 +4527,33 @@ public namespace ejs
 //  MOB -- rationalize all this
     /** 
         Conditional compilation constant. Used to disable compilation of certain elements.
+        @hide
      */  
     const TODO: Boolean = false
 
     /** 
         Conditional compilation constant. Used to disable compilation of certain elements.
+        @hide
      */  
     const FUTURE: Boolean = false
 
     /** 
         Conditional compilation constant. Used to disable compilation of certain elements.
+        @hide
+        MOB - remove
      */  
     const ASC: Boolean = false
 
     /** 
         Conditional compilation constant. Used to enable the compilation of elements only for creating the API documentation.
+        @hide
+        MOB - remove
      */  
     const DOC_ONLY: Boolean = false
 
     /** 
         Conditional compilation constant. Used to deprecate elements.
+        @hide
      */  
     const DEPRECATED: Boolean = false
 
@@ -4563,7 +4573,9 @@ public namespace ejs
 //  TODO - rationalize these aliases
     /** 
         Alias for the Number type
+        @hide
         @spec ejs
+        MOB - remove
      */
     native const num: Type
 
