@@ -246,14 +246,13 @@ static int updatePassFile(Mpr *mpr, char *passFile)
     char        *tempFile, buf[MPR_BUFSIZE];
     MprFile     *file;
 
-    tempFile = mprGetTempPath(mpr, NULL);
+    tempFile = mprAsprintf(mpr, -1, "%s.tmp", passFile);
     file = mprOpen(mpr, tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
     if (file == 0) {
         mprError(mpr, "%s: Can't open %s", programName, tempFile);
         mprFree(tempFile);
         return MPR_ERR_CANT_OPEN;
     }
-
     up = users;
     while (up) {
         sprintf(buf, "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
@@ -266,8 +265,6 @@ static int updatePassFile(Mpr *mpr, char *passFile)
         up = up->next;
     }
     mprFree(file);
-
-    mprDeletePath(mpr, passFile);
     if (rename(tempFile, passFile) < 0) {
         mprError(mpr, "%s: Can't rename %s to %s", programName, tempFile, passFile);
         mprFree(tempFile);
