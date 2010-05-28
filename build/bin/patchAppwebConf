@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 #   patchAppwebConf -- Patch the appweb.conf file
 #   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.

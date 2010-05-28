@@ -2,7 +2,7 @@
 /******************************************************************************/
 /* 
  *  This file is an amalgamation of all the individual source code files for
- *  Embedthis Ejscript 1.1.0.
+ *  Embedthis Ejscript 2.0.0.
  *
  *  Catenating all the source into a single file makes embedding simpler and
  *  the resulting application faster, as many compilers can do whole file
@@ -1426,6 +1426,9 @@ typedef EjsObj EO;
     #endif
 #endif
 
+extern void *ejsAlloc(Ejs *ejs, int size);
+extern void ejsFree(Ejs *ejs, void *ptr);
+
 /** 
     Allocate a new variable
     @description This will allocate space for a bare variable. This routine should only be called by type factories
@@ -1588,7 +1591,7 @@ extern int ejsGetPropertyCount(Ejs *ejs, EjsObj *vp);
     @return The qualified property name including namespace and name. Caller must not free.
     @ingroup EjsObj
  */
-extern EjsName ejsGetPropertyName(Ejs *ejs, EjsObj *vp, int slotNum);
+extern EjsName ejsGetPropertyName(Ejs *ejs, void *vp, int slotNum);
 
 /** 
     Get a property by name
@@ -1599,7 +1602,7 @@ extern EjsName ejsGetPropertyName(Ejs *ejs, EjsObj *vp, int slotNum);
     @return The variable property stored at the nominated slot.
     @ingroup EjsObj
  */
-extern void *ejsGetPropertyByName(Ejs *ejs, EjsObj *vp, EjsName *qname);
+extern void *ejsGetPropertyByName(Ejs *ejs, void *vp, EjsName *qname);
 
 /** 
     Get a property's traits
@@ -1643,11 +1646,10 @@ extern int ejsLookupProperty(Ejs *ejs, EjsObj *vp, EjsName *qname);
     @description Mark a variables as currently active so the garbage collector will preserve it. This routine should
         be called by native types in their markVar helper.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param parent Owning variable for the property
     @param vp Variable to mark as currently being used.
     @ingroup EjsObj
  */
-extern void ejsMark(Ejs *ejs, EjsObj *vp);
+extern void ejsMark(Ejs *ejs, void *vp);
 
 /** 
     Set a property's value
@@ -1738,7 +1740,8 @@ extern void ejsClearObjHash(EjsObj *obj);
 extern int ejsGetOwnTraits(Ejs *ejs, EjsObj *obj, int sizeTraits);
 extern void ejsSetTraitType(struct EjsTrait *trait, struct EjsType *type);
 extern void ejsSetTraitAttributes(struct EjsTrait *trait, int attributes);
-extern EjsTrait *ejsGetTrait(EjsObj *obj, int slotNum);
+extern EjsTrait *ejsGetTrait(Ejs *ejs, void *obj, int slotNum);
+extern int ejsSetTraitDetails(Ejs *ejs, void *vp, int slotNum, struct EjsType *type, int attributes);
 extern int ejsHasTrait(EjsObj *obj, int slotNum, int attributes);
 extern int ejsGetTraitAttributes(EjsObj *obj, int slotNum);
 extern struct EjsType *ejsGetTraitType(EjsObj *obj, int slotNum);
@@ -1777,7 +1780,6 @@ extern int ejsGrowObject(Ejs *ejs, EjsObj *obj, int numSlots);
     @description Mark an object as currently active so the garbage collector will preserve it. This routine should
         be called by native types that extend EjsObj in their markVar helper.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param parent Owning variable for the property
     @param obj Object to mark as currently being used.
     @ingroup EjsObj
  */
@@ -2217,6 +2219,7 @@ extern EjsBoolean *ejsToBoolean(Ejs *ejs, EjsObj *vp);
 
     /** 
         Get the C boolean value from a boolean object
+        @param ejs Ejs reference returned from #ejsCreate
         @param vp Boolean variable to access
         @return True or false
         @ingroup EjsBoolean
@@ -3277,6 +3280,7 @@ extern int ejsSendEvent(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *arg);
 
     /** 
         Get the numeric value stored in a EjsNumber object
+        @param ejs Ejs reference returned from #ejsCreate
         @param vp Variable to examine
         @return A numeric value
         @ingroup EjsNumber
@@ -3285,6 +3289,7 @@ extern int ejsSendEvent(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *arg);
 
     /** 
         Get the numeric value stored in a EjsNumber object
+        @param ejs Ejs reference returned from #ejsCreate
         @param vp Variable to examine
         @return An integer value
         @ingroup EjsNumber
@@ -3293,6 +3298,7 @@ extern int ejsSendEvent(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *arg);
 
     /** 
         Get the numeric value stored in a EjsNumber object
+        @param ejs Ejs reference returned from #ejsCreate
         @param vp Variable to examine
         @return A double value
         @ingroup EjsNumber
@@ -3327,14 +3333,18 @@ typedef struct EjsTypeHelpers {
     EjsObj  *(*getPropertyByName)(Ejs *ejs, EjsObj *vp, EjsName *qname);
     int     (*getPropertyCount)(Ejs *ejs, EjsObj *vp);
     EjsName (*getPropertyName)(Ejs *ejs, EjsObj *vp, int slotNum);
+#if UNUSED
     struct EjsTrait *(*getPropertyTrait)(Ejs *ejs, EjsObj *vp, int slotNum);
+#endif
     EjsObj  *(*invokeOperator)(Ejs *ejs, EjsObj *vp, int opCode, EjsObj *rhs);
     int     (*lookupProperty)(Ejs *ejs, EjsObj *vp, EjsName *qname);
     void    (*mark)(Ejs *ejs, EjsObj *vp);
     int     (*setProperty)(Ejs *ejs, EjsObj *vp, int slotNum, EjsObj *value);
     int     (*setPropertyByName)(Ejs *ejs, EjsObj *vp, EjsName *qname, EjsObj *value);
     int     (*setPropertyName)(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname);
+#if UNUSED
     int     (*setPropertyTrait)(Ejs *ejs, EjsObj *vp, int slotNum, struct EjsType *propType, int attributes);
+#endif
 } EjsTypeHelpers;
 
 
@@ -3356,9 +3366,8 @@ typedef void    (*EjsMarkHelper)(Ejs *ejs, EjsObj *vp);
 typedef int     (*EjsSetPropertyByNameHelper)(Ejs *ejs, EjsObj *vp, EjsName *qname, EjsObj *value);
 typedef int     (*EjsSetPropertyHelper)(Ejs *ejs, EjsObj *vp, int slotNum, EjsObj *value);
 typedef int     (*EjsSetPropertyNameHelper)(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname);
+#if UNUSED
 typedef int     (*EjsSetPropertyTraitHelper)(Ejs *ejs, EjsObj *vp, int slotNum, struct EjsType *propType, int attributes);
-
-#if !DOXYGEN
 typedef struct EjsTrait *(*EjsGetPropertyTraitHelper)(Ejs *ejs, EjsObj *vp, int slotNum);
 #endif
 
@@ -3438,6 +3447,7 @@ typedef struct EjsType {
         This name is not used to define the type as a global property.
     @param up Reference to a module that will own the type. Set to null if not owned by any module.
     @param baseType Base type for this type.
+    @param prototype Prototype object instance properties of this type.
     @param size Size of instances. This is the size in bytes of an instance object.
     @param slotNum Slot number that the type will be installed at. This is used by core types to define a unique type ID. 
         For non-core types, set to -1.
@@ -3496,7 +3506,7 @@ extern bool ejsIsTypeSubType(Ejs *ejs, EjsType *target, EjsType *baseType);
         by compiling a script file of native method definitions into a mod file. When loaded, this mod file will create
         the method properties. This routine will then bind the specified C function to the method property.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param type Type containing the function property to bind.
+    @param obj Type containing the function property to bind.
     @param slotNum Slot number of the method property
     @param fn Native C function to bind
     @return Zero if successful, otherwise a negative MPR error code.
@@ -3697,7 +3707,7 @@ typedef struct EjsLookup {
     struct EjsObj   *ref;                   /* Actual property reference */
     struct EjsTrait *trait;                 /* Property trait describing the property */
     struct EjsName  name;                   /* Name and namespace used to find the property */
-
+    int             bind;                   /* Whether to bind to this lookup */
 } EjsLookup;
 
 
@@ -4311,11 +4321,11 @@ extern int          ejsEncodeUint(uchar *pos, uint number);
 extern int          ejsEncodeWordAtPos(uchar *pos, int value);
 
 extern char         *ejsGetDocKey(struct Ejs *ejs, EjsBlock *block, int slotNum, char *buf, int bufsize);
-extern EjsDoc       *ejsCreateDoc(struct Ejs *ejs, EjsBlock *block, int slotNum, cchar *docString);
+extern EjsDoc       *ejsCreateDoc(struct Ejs *ejs, void *vp, int slotNum, cchar *docString);
 
-extern int ejsAddModule(Ejs *ejs, struct EjsModule *up);
+extern int          ejsAddModule(Ejs *ejs, struct EjsModule *up);
 extern struct EjsModule *ejsLookupModule(Ejs *ejs, cchar *name, int minVersion, int maxVersion);
-extern int ejsRemoveModule(Ejs *ejs, struct EjsModule *up);
+extern int          ejsRemoveModule(Ejs *ejs, struct EjsModule *up);
 
 #ifdef __cplusplus
 }
@@ -5698,7 +5708,7 @@ extern void     ecAddFunctionConstants(EcCompiler *cp, EjsObj *obj, int slotNum)
 extern void     ecAddConstants(EcCompiler *cp, EjsObj *obj);
 extern int      ecAddConstant(EcCompiler *cp, cchar *str);
 extern int      ecAddNameConstant(EcCompiler *cp, EjsName *qname);
-extern int      ecAddDocConstant(EcCompiler *cp, EjsTrait *trait, EjsObj *block, int slotNum);
+extern int      ecAddDocConstant(EcCompiler *cp, void *vp, int slotNum);
 extern int      ecAddModuleConstant(EcCompiler *cp, EjsModule *up, cchar *str);
 extern int      ecCreateModuleHeader(EcCompiler *cp);
 extern int      ecCreateModuleSection(EcCompiler *cp);

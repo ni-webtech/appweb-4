@@ -642,9 +642,7 @@ extern "C" {
     #define O_TEXT          0
     #define SOCKET_ERROR    -1
     #define MPR_DLL_EXT     ".dylib"
-#if UNUSED
-    #define __WALL          0x40000000
-#endif
+    #define __WALL          0
     #define PTHREAD_MUTEX_RECURSIVE_NP  PTHREAD_MUTEX_RECURSIVE
 
     #define MAX_FLOAT       MAXFLOAT
@@ -959,9 +957,6 @@ extern "C" {
 
 
 #if SOLARIS
-    /*
-        TODO -- This is old and needs updating to work
-     */
     typedef off_t MprOffset;
     typedef long long int int64;
     typedef unsigned long long int uint64;
@@ -981,7 +976,6 @@ extern "C" {
     #define PTHREAD_MUTEX_RECURSIVE_NP  PTHREAD_MUTEX_RECURSIVE
     #define LD_LIBRARY_PATH "LD_LIBRARY_PATH"
     #define MAX_FLOAT       MAXFLOAT
-
 #endif /* SOLARIS */
 
 #ifdef __cplusplus
@@ -8278,7 +8272,7 @@ int mprCreateOpenSslModule(MprCtx ctx, bool lazy)
     randBuf.pid = getpid();
     RAND_seed((void*) &randBuf, sizeof(randBuf));
 
-#if SOLARIS || LINUX || MACOSX || FREEBSD
+#if BLD_UNIX_LIKE
     mprLog(mpr, 6, "OpenSsl: Before calling RAND_load_file");
     RAND_load_file("/dev/urandom", 256);
     mprLog(mpr, 6, "OpenSsl: After calling RAND_load_file");
