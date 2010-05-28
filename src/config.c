@@ -1213,15 +1213,13 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (mprStrcmpAnyCase(key, "Listen") == 0) {
             /*
                 Options:
-                    ipAddr:port
-                    ipAddr          default port MA_SERVER_DEFAULT_PORT_NUM
-                    port            All ip interfaces on this port
+                    ip:port
+                    ip          default port MA_SERVER_DEFAULT_PORT_NUM
+                    port        All ip interfaces on this port
             
                 Where ipAddr may be "::::::" for ipv6 addresses or may be enclosed in "[]" if appending a port.
              */
-
             value = mprStrTrim(value, "\"");
-
             if (isdigit((int) *value) && strchr(value, '.') == 0 && strchr(value, ':') == 0) {
                 /*
                     Port only, listen on all interfaces (ipv4 + ipv6)

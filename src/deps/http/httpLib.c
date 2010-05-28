@@ -6266,7 +6266,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
             return 0;
         }
     } else {
-        if (!( 100 <= rec->status && rec->status < 200))
+        if (!(100 <= rec->status && rec->status < 200))
             httpSetState(conn, HTTP_STATE_PARSED);        
         }
     return 1;
@@ -7711,7 +7711,7 @@ void httpTraceContent(HttpConn *conn, HttpPacket *packet, int size, int offset, 
 static int acceptConnEvent(HttpServer *server, MprEvent *event);
 
 /*
-    Create a server listening on ipAddress:port. NOTE: ipAddr may be empty which means bind to all addresses.
+    Create a server listening on ip:port. NOTE: ip may be empty which means bind to all addresses.
  */
 HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dispatcher)
 {
@@ -7730,7 +7730,10 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
     server->ip = mprStrdup(server, ip);
     server->waitHandler.fd = -1;
     server->dispatcher = (dispatcher) ? dispatcher : mprGetDispatcher(http);
-    server->name = HTTP_NAME;
+    //  MOB -- no good if ip is null for wildcard addresses
+    //  MOB -- need API to set/get server name
+    //  MOB -- need virtual hosting in http module
+    server->name = server->ip;
     return server;
 }
 

@@ -135,7 +135,6 @@ MaHost *maCreateDefaultHost(MaServer *server, cchar *docRoot, cchar *ip, int por
         if (httpServer) {
             ip = httpServer->ip;
             port = httpServer->port;
-
         } else {
             ip = "localhost";
             if (port <= 0) {

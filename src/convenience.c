@@ -9,7 +9,6 @@
 #include    "appweb.h"
 
 /************************************ Code ************************************/
-
 /*  
     Create a web server described by a config file. 
  */

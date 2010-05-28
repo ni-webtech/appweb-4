@@ -39,13 +39,14 @@ if `ls ${BLD_MOD_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then
 fi
 if [ $BLD_LIB_DIR != $BLD_MOD_DIR ] ; then
 	if `ls ${BLD_LIB_DIR}/*${BLD_SHOBJ}* >/dev/null 2>&1` ; then
-        libcFilter="$BLD_LIB_DIR}/libec-${BLD_VERSION}"
-		cpy -s -f "${libcFilter}" -m 755 -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
-        if [ "$BLD_FEATURE_STATIC" = 0 ] ; then
-            if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
-                cpy -s -m 755 "${BLD_LIB_DIR}/libec-${BLD_VERSION}${BLD_SHOBJ}" "${BLD_LIB_PREFIX}"
-            fi
-        fi
+#        libcFilter="$BLD_LIB_DIR}/libec-${BLD_VERSION}"
+#		cpy -s -f "${libcFilter}" -m 755 -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
+		cpy -s -m 755 -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
+#       if [ "$BLD_FEATURE_STATIC" = 0 ] ; then
+#           if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
+#               cpy -s -m 755 "${BLD_LIB_DIR}/libec-${BLD_VERSION}${BLD_SHOBJ}" "${BLD_LIB_PREFIX}"
+#           fi
+#       fi
 	fi
 fi
 
@@ -109,13 +110,16 @@ if [ "$BLD_FEATURE_SSL" = 1 ] ; then
     cpy src/server/ssl/server.* "${BLD_CFG_PREFIX}/ssl"
 fi
 if [ "$BLD_FEATURE_EJS" = 1 ] ; then
-    cpy -d ${BLD_MOD_DIR} "ejs-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
+#   cpy -d ${BLD_MOD_DIR} "ejs-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
+    cpy -d ${BLD_MOD_DIR} "ejs.mod" "${BLD_MOD_PREFIX}"
     if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
-        cpy -m 644 -d "${BLD_LIB_DIR}" appweb.conf mime.types "${BLD_LIB_PREFIX}"
-        if [ $BLD_HOST_OS = WIN ] ; then
-            cpy -d ${BLD_MOD_DIR} "ejsweb-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
-        fi
-        cpy -m 755 -d ${BLD_BIN_DIR} ejsweb "${BLD_BIN_PREFIX}"
+        cpy -m 644 -d "${BLD_LIB_DIR}" appweb.conf "${BLD_LIB_PREFIX}"
+#       if [ $BLD_HOST_OS = WIN ] ; then
+#           cpy -d ${BLD_MOD_DIR} "ejsweb-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
+#       fi
+
+#   MOB - need ejsmvc, ejspage
+#       cpy -m 755 -d ${BLD_BIN_DIR} ejsmvc "${BLD_BIN_PREFIX}"
         cpy -s -m 755 -d ${BLD_BIN_DIR} ejsc${BLD_EXE} "${BLD_BIN_PREFIX}"
         makeDir "${BLD_LIB_DIR}/www"
         cpy -m 644 -d "${BLD_LIB_DIR}/www" "*" "${BLD_LIB_PREFIX}/www"

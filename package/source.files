@@ -30,12 +30,12 @@ cpy -d package            LINUX MACOSX WIN "${DIR}/package"
 #   Source for mpr, ejs, server, http
 #
 srcFilter="/\.log$|\.tmp|old\/|web\/tmp"
-cpy -f "${srcFilter}" src/Makefile src/mpr src/ejs src/http src/utils src/include  "${DIR}/src"
-cpy -f "${srcFilter}" all/Makefile.all all/Makefile  "${DIR}/all"
-cpy -f "${srcFilter}" src/server test  "${DIR}/src"
+cpy -d src -f "${srcFilter}" Makefile deps utils include  "${DIR}/src"
+cpy -d src -f "${srcFilter}" server test  "${DIR}/src"
+cpy -f "${srcFilter}" all/Makefile  "${DIR}/all"
 
 docFilter="api/ejs/xml/|api/ejs/html/|api/appweb/html|api/appweb/xml"
-cpy -f "${docFilter}" doc "${DIR}"
+cpy -v -f "${docFilter}" doc "${DIR}"
 
 samplesFilter="\.mod$|\.so$|\.dylib$|\.js$|\.o"
 cpy -f "${samplesFilter}" samples "${DIR}"

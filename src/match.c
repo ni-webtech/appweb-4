@@ -47,12 +47,14 @@ void maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
         if (address == 0 || (host = mprGetFirstItem(address->vhosts)) == 0) {
             mprError(server, "No host configured for request %s:%d", listenSock->ip, listenSock->port);
             //  MOB TODO - should cancel request
+            //  MOB or should this be httpError as per below
             return;
         }
         if (maIsNamedVirtualHostAddress(address)) {
             rec = conn->receiver;
             if ((host = maLookupVirtualHost(address, rec->hostName)) == 0) {
                 httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", rec->hostName);
+                return;
             }
         }
         httpSetConnHost(conn, host);
@@ -62,11 +64,14 @@ void maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
             conn->receiver->location = host->location;
         }
         conn->transmitter->handler = matchHandler(conn);
-        conn->traceLevel = host->traceLevel;
-        conn->traceMaxLength = host->traceMaxLength;
-        conn->traceMask = host->traceMask;
-        conn->traceInclude = host->traceInclude;
-        conn->traceExclude = host->traceExclude;
+            
+        if (mprGetLogLevel(conn) >= host->traceLevel) {
+            conn->traceLevel = host->traceLevel;
+            conn->traceMaxLength = host->traceMaxLength;
+            conn->traceMask = host->traceMask;
+            conn->traceInclude = host->traceInclude;
+            conn->traceExclude = host->traceExclude;
+        }
         break;
     }
 }
@@ -388,6 +393,8 @@ static void processDirectory(HttpConn *conn, bool *rescan)
     if (!mprPathExists(trans, path, R_OK)) {
         path = mprStrcat(trans, -1, rec->pathInfo, "/", NULL);
     }
+    //  MOB -- really need to have parsed the headers and should be using the Host header
+    rec->hostName = host->name;
     httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, path);
 }
 

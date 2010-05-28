@@ -450,8 +450,7 @@ typedef struct MaMimeType {
 
 /**
     Host Object
-    A Host object represents a logical host. It may be single listening HTTP connection endpoint or it may be a virtual
-    host. 
+    A Host object represents a logical host. It may be single listening HTTP connection endpoint or it may be a virtual host.
     @stability Evolving
     @defgroup MaHost MaHost
     @see MaHost
@@ -484,7 +483,9 @@ typedef struct MaHost {
     MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
     char            *mimeFile;              /**< Name of the mime types file */
     char            *moduleDirs;            /**< Directories for modules */
-    char            *name;                  /**< ServerName directive */
+
+    //  MOB -- should this not be down in http?
+    char            *name;                  /**< ServerName directive - used for redirects */
 
     char            *logFormat;             /**< Access log format */
     char            *logPath;               /**< Access log filename */

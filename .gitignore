@@ -50,3 +50,11 @@ lib/appweb.conf
 src/test/.appweb.pid
 src/test/web/junk
 projects/MACOSX/appweb-all/build
+releases/*.dmg
+releases/*.deb
+releases/*.gz
+releases/*.zip
+releases/*.txt
+bin/httpPassword
+*.swp
+staging

@@ -8,7 +8,6 @@ module embedthis.doc {
 
     var all: Boolean
     var bare: Boolean
-    var files: String
     var out: String
     var symbols = {}
     var seeAlso = {}
@@ -20,9 +19,7 @@ module embedthis.doc {
     }
 
     function parseArgs(): Array {
-
-        files = []
-
+        let files = []
         for (argind = 1 ; argind < App.args.length; argind++) {
             arg = App.args[argind]
             switch (arg) {
@@ -37,7 +34,7 @@ module embedthis.doc {
 
             case "--out":
                 /*
-                 *  FUTURE - not supported
+                    FUTURE - not supported
                  */
                 if (++argind >= App.args.length) {
                     throw usage()
@@ -102,7 +99,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit top level navigation
+        Emit top level navigation
      */
     function emitNavigation() {
         if (bare) {
@@ -119,7 +116,7 @@ module embedthis.doc {
 
 
     /*
-     *  Parse all symbol references and build an index of symbols
+        Parse all symbol references and build an index of symbols
      */
     function parseReferences(xml: XML) {
 
@@ -148,7 +145,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit a reference
+        Emit a reference
      */
     function ref(name: String): String {
 
@@ -187,7 +184,7 @@ module embedthis.doc {
 
 
     /*
-     *  Remove or map XML tags into HTML
+        Remove or map XML tags into HTML
      */
     function clean(str: String): String {
         if (str == "") {
@@ -207,7 +204,7 @@ module embedthis.doc {
 
 
     /*
-     *  Clean the string of XML tags and append a "."
+        Clean the string of XML tags and append a "."
      */
     function cleanDot(str: String): String {
         s = clean(str)
@@ -219,7 +216,7 @@ module embedthis.doc {
 
 
     /*
-     *  Intelligently transform a @return directive
+        Intelligently transform a @return directive
      */
     function cleanReturns(str: String): String {
         str = cleanDot(str)
@@ -229,7 +226,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit a file level overview
+        Emit a file level overview
      */
     function emitOverview(xml: XML) {
 
@@ -264,7 +261,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit an index of all services
+        Emit an index of all services
      */
     function emitServiceIndex(def: XML) {
 
@@ -278,7 +275,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit an index of all functions
+        Emit an index of all functions
      */
     function emitFunctionIndex(def: XML, section: XML) {
 
@@ -293,9 +290,9 @@ module embedthis.doc {
                     continue
                 }
 
-                def = m.definition.toString().split(" ")
-                typedef = def.slice(0, -1).join(" ")
-                name = def.slice(-1)
+                let definition = m.definition.toString().split(" ")
+                typedef = definition.slice(0, -1).join(" ")
+                name = definition.slice(-1)
 
                 emit('<tr class="apiDef">')
                 str = '<td class="apiType">' + ref(typedef) + '</td><td>'
@@ -321,7 +318,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit an index of all #define directives
+        Emit an index of all #define directives
      */
     function emitDefineIndex(section: XML) {
 
@@ -348,7 +345,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit an index of struct based typedefs
+        Emit an index of struct based typedefs
      */
     function emitTypeIndex(def: XML) {
 
@@ -365,7 +362,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit an index of all simple (non-struct) typedefs
+        Emit an index of all simple (non-struct) typedefs
      */
     function emitStructTypeIndex(section: XML) {
 
@@ -400,7 +397,7 @@ module embedthis.doc {
 
 
     /*
-     *  Get master group references for a given group name
+        Get master group references for a given group name
      */
     function getGroupReferences(group: String): Array {
         references = []
@@ -415,7 +412,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit a See Also section. Handle groups/struct @references
+        Emit a See Also section. Handle groups/struct @references
      */
     function emitSeeAlso(name: String, node: XML) {
         if (node.para.toString().startsWith('@-')) {
@@ -463,7 +460,7 @@ module embedthis.doc {
 
 
     /*
-     *  Emit function args
+        Emit function args
      */
     function emitArgs(args: XML) {
 
@@ -482,7 +479,7 @@ module embedthis.doc {
 
 
     /*
-     *  Used for function and simple typedef details
+        Used for function and simple typedef details
      */
     function emitDetail(def: XML, section: XML) {
 
@@ -536,7 +533,7 @@ module embedthis.doc {
 
                     } else if (n.name() == "parameterlist") {
                         /*
-                         *  Parameters
+                            Parameters
                          */
                         emit('    <dl><dt>Parameters:</dt><dd>')
                         emit('    <table class="parameters" summary="Parameters">')
@@ -635,7 +632,7 @@ module embedthis.doc {
         var sections: XML
 
         /*
-         *  Emit the group indicies
+            Emit the group indicies
          */
         emit('<a name="Components"></a><h1>Components</h1>')
         emit('  <table class="apiIndex" summary="Components">')
@@ -648,7 +645,7 @@ module embedthis.doc {
         emit('</table>')
 
         /*
-         *  Emit the navigation indicies
+            Emit the navigation indicies
          */
         emit('<a name="Functions"></a><h1>Functions</h1>')
         emit('  <table class="apiIndex" summary="Functions">')

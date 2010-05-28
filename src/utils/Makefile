@@ -9,10 +9,8 @@ include 		.makedep
 ifeq	($(BLD_FEATURE_CGI),1)
 	TARGETS		+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 endif
-ifeq ($(BLD_FEATURE_AUTH),1)
 ifeq ($(BUILD_NATIVE_OR_COMPLETE_CROSS),1)
 	TARGETS		+= $(BLD_BIN_DIR)/httpPassword$(BLD_EXE)
-endif
 endif
 
 compileExtra: $(TARGETS)
