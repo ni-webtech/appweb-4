@@ -49,3 +49,4 @@ src/test/trace.txt
 lib/appweb.conf
 src/test/.appweb.pid
 src/test/web/junk
+projects/MACOSX/appweb-all/build
