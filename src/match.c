@@ -41,37 +41,40 @@ void maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
 
     switch (state) {
     case HTTP_STATE_FIRST:
+        break;
+
+    case HTTP_STATE_PARSED:
         server = httpGetMetaServer(conn->server);
         listenSock = conn->sock->listenSock;
         address = (MaHostAddress*) maLookupHostAddress(server, listenSock->ip, listenSock->port);
         if (address == 0 || (host = mprGetFirstItem(address->vhosts)) == 0) {
             mprError(server, "No host configured for request %s:%d", listenSock->ip, listenSock->port);
-            //  MOB TODO - should cancel request
-            //  MOB or should this be httpError as per below
+            httpSetConnHost(conn, server->defaultHost);
             return;
         }
         if (maIsNamedVirtualHostAddress(address)) {
             rec = conn->receiver;
             if ((host = maLookupVirtualHost(address, rec->hostName)) == 0) {
                 httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", rec->hostName);
+                httpSetConnHost(conn, server->defaultHost);
                 return;
             }
         }
+        mprAssert(host);
         httpSetConnHost(conn, host);
         conn->documentRoot = host->documentRoot;
         conn->server->serverRoot = server->serverRoot;
         if (conn->receiver) {
             conn->receiver->location = host->location;
         }
-        conn->transmitter->handler = matchHandler(conn);
-            
         if (mprGetLogLevel(conn) >= host->traceLevel) {
             conn->traceLevel = host->traceLevel;
             conn->traceMaxLength = host->traceMaxLength;
             conn->traceMask = host->traceMask;
             conn->traceInclude = host->traceInclude;
             conn->traceExclude = host->traceExclude;
-        }
+        }            
+        conn->transmitter->handler = matchHandler(conn);  
         break;
     }
 }
@@ -98,7 +101,7 @@ static HttpStage *matchHandler(HttpConn *conn)
     http = conn->http;
     rec = conn->receiver;
     trans = conn->transmitter;
-    host = httpGetConnHost(conn);
+    host = conn->host;
 
     /*
         Find the alias that applies for this url. There is always a catch-all alias for the document root.
@@ -393,8 +396,6 @@ static void processDirectory(HttpConn *conn, bool *rescan)
     if (!mprPathExists(trans, path, R_OK)) {
         path = mprStrcat(trans, -1, rec->pathInfo, "/", NULL);
     }
-    //  MOB -- really need to have parsed the headers and should be using the Host header
-    rec->hostName = host->name;
     httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, path);
 }
 

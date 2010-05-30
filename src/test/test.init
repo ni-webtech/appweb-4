@@ -10,7 +10,7 @@ let conf        = Path("appweb.conf").readString()
 const PORT      = conf.replace(/.*Listen ([0-9]+) *# MAIN.*/ms, "$1")
 const SSL_PORT  = conf.replace(/.*Listen ([0-9]+) *# SSL.*/ms, "$1")
 const LOCALHOST = "127.0.0.1"
-const VHOST     = conf.replace(/.*Listen ([0-9]+) *# VHOST.*/ms, "$1")
+const VHOST_PORT= conf.replace(/.*Listen ([0-9]+) *# VHOST.*/ms, "$1")
 const IPHOST    = conf.replace(/.*Listen ([0-9]+) *# IPHOST.*/ms, "$1")
 const HTTP      = "http://" + LOCALHOST + ":" + PORT
 const HTTPS     = "https://" + LOCALHOST + ":" + SSL_PORT
@@ -59,6 +59,6 @@ share("host", HTTP)
 share("port", PORT)
 share("http", "http://" + LOCALHOST + ":" + PORT)
 share("https", "https://" + LOCALHOST + ":" + SSL_PORT)
-share("vhost", "http://" + LOCALHOST + ":" + VHOST)
-share("vhostPort", VHOST)
+share("vhost", "http://" + LOCALHOST + ":" + VHOST_PORT)
+share("vhostPort", VHOST_PORT)
 share("iphost", "http://" + LOCALHOST + ":" + IPHOST)

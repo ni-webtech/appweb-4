@@ -58,3 +58,5 @@ releases/*.txt
 bin/httpPassword
 *.swp
 staging
+src/test/web/tmp
+*.tmp

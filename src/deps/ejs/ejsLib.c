@@ -8917,22 +8917,22 @@ EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
         mprFree(next);
         return (EjsArray*) ap;
     }
-    /*
-        Create a default search path
-        "." : APP_DIR : APP_EXE_DIR/../modules : /usr/lib/ejs/1.0.0/modules
-     */
 #if VXWORKS
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePathAndFree(ejs, mprGetCurrentPath(ejs)));
 #elif WIN
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePathAndFree(ejs, mprGetAppDir(ejs)));
 #else
 {
+    /*
+        Create a default search path
+        "." : APP_EXE_DIR/../modules : /usr/lib/ejs/1.0.0/modules
+     */
     char *relModDir;
     relModDir = mprAsprintf(ejs, -1, "%s/../%s", mprGetAppDir(ejs), BLD_MOD_NAME);
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePath(ejs, "."));
-    ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePath(ejs, mprGetAppDir(ejs)));
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePathAndFree(ejs, mprGetAbsPath(ejs, relModDir)));
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePath(ejs, BLD_MOD_PREFIX));
+    mprFree(relModDir);
 }
 #endif
     return (EjsArray*) ap;
