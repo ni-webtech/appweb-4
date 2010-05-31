@@ -1,6 +1,7 @@
 LIBRARY libappweb.dll
 EXPORTS
   maAddHost
+  maAddHostAddress
   maAddHttpServer
   maAddLocation
   maAddMimeType
@@ -51,6 +52,7 @@ EXPORTS
   maOpenMimeTypes
   maOpenSendConnector
   maParseConfig
+  maRemoveHostFromHostAddress
   maReplaceReferences
   maRewriteUri
   maRotateAccessLog
@@ -64,11 +66,16 @@ EXPORTS
   maSetDirIndex
   maSetDirPath
   maSetDocumentRoot
+  maSetHostDirs
+  maSetHostDocumentRoot
   maSetHostIpAddrPort
   maSetHostName
+  maSetHostTrace
+  maSetHostTraceFilter
   maSetHttpGroup
   maSetHttpUser
   maSetHttpVersion
+  maSetIpAddr
   maSetKeepAliveTimeout
   maSetLogHost
   maSetMaxKeepAlive
@@ -78,6 +85,7 @@ EXPORTS
   maSetServerRoot
   maSetTimeout
   maSetVirtualHost
+  maSetupTrace
   maSplitConfigValue
   maStartAccessLogging
   maStartAppweb
@@ -90,4 +98,5 @@ EXPORTS
   maStopLogging
   maStopServer
   maUnloadStaticModules
+  maValidateConfiguration
   maWriteAccessLogEntry

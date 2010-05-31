@@ -1,6 +1,5 @@
 LIBRARY libmpr.dll
 EXPORTS
-  UNUSED_strtod
   __dummyMprSelectWait
   __dummyMprUnix
   __dummyMprVxWorks
@@ -11,7 +10,6 @@ EXPORTS
   __mprDummyPollWait
   __mprDummyUnicode
   _mprAlloc
-  _mprAllocBlock
   _mprAllocWithDestructor
   _mprAllocWithDestructorZeroed
   _mprAllocZeroed
@@ -19,10 +17,12 @@ EXPORTS
   _mprRealloc
   _mprStrdup
   _mprStrndup
+  _unused_strtod
   assertTrue
   dtoa
   freedtoa
   gethex
+  gettimeofday
   mprAcceptSocket
   mprActivateWorker
   mprAddDuplicateHash
@@ -144,6 +144,7 @@ EXPORTS
   mprGetElapsedTime
   mprGetEndian
   mprGetError
+  mprGetFileFd
   mprGetFilePosition
   mprGetFileSize
   mprGetFirstHash
@@ -160,6 +161,7 @@ EXPORTS
   mprGetLastPathSeparator
   mprGetListCapacity
   mprGetListCount
+  mprGetLogFd
   mprGetLogHandler
   mprGetLogLevel
   mprGetMD5Hash
@@ -202,6 +204,7 @@ EXPORTS
   mprGetTempPath
   mprGetThreadData
   mprGetTime
+  mprGetTimeZoneOffset
   mprGetTransformedPath
   mprGetUsedMemory
   mprGetWordTok
@@ -274,9 +277,11 @@ EXPORTS
   mprPathExists
   mprPeekc
   mprPollCmdPipes
+  mprPopItem
   mprPrintAllocReport
   mprPrintf
   mprPrintfError
+  mprPushItem
   mprPutBlockToBuf
   mprPutCharToBuf
   mprPutFmtToBuf
@@ -352,6 +357,7 @@ EXPORTS
   mprSetIpAddr
   mprSetItem
   mprSetListLimits
+  mprSetLogFd
   mprSetLogHandler
   mprSetLogLevel
   mprSetMaxSocketClients
@@ -457,3 +463,4 @@ EXPORTS
   mprXmlSetParseArg
   mprXmlSetParserHandler
   print
+  universalTime

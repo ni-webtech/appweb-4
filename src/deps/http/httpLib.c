@@ -2800,7 +2800,7 @@ void httpSetRetries(HttpConn *conn, int count)
 
 
 static char *notifyState[] = {
-    "IO_EVENT", "BEGIN", "STARTED", "WAIT", "PARSED", "CONTENT", "PROCESS", "RUNNING", "ERROR", "COMPLETE",
+    "IO_EVENT", "BEGIN", "STARTED", "WAIT", "FIRST", "PARSED", "CONTENT", "PROCESS", "RUNNING", "ERROR", "COMPLETE",
 };
 
 

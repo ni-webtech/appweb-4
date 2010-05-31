@@ -60,3 +60,9 @@ bin/httpPassword
 staging
 src/test/web/tmp
 *.tmp
+*.user
+Win32
+*.ncb
+*.suo
+.port.log
+bin/appweb.conf

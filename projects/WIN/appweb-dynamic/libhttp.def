@@ -191,16 +191,20 @@ EXPORTS
   httpSetCredentials
   httpSetDefaultHost
   httpSetDefaultPort
+  httpSetDocumentRoot
   httpSetEntityLength
   httpSetFormVar
   httpSetGroupAcl
   httpSetHandler
   httpSetHeader
   httpSetIntFormVar
+  httpSetIpAddr
   httpSetKeepAliveCount
   httpSetLocationAuth
+  httpSetLocationAutoDelete
   httpSetLocationFlags
   httpSetLocationPrefix
+  httpSetLocationScript
   httpSetMetaServer
   httpSetMimeType
   httpSetPipeHandler
@@ -213,16 +217,19 @@ EXPORTS
   httpSetServerAsync
   httpSetServerContext
   httpSetServerNotifier
+  httpSetServerRoot
   httpSetSimpleHeader
   httpSetState
   httpSetStatus
   httpSetTimeout
   httpSetUri
+  httpSetupTrace
   httpSplitPacket
   httpStartPipeline
   httpStartServer
   httpStopServer
   httpTestFormVar
+  httpTraceContent
   httpUpdateUserAcls
   httpUriToString
   httpValidateNativeCredentials

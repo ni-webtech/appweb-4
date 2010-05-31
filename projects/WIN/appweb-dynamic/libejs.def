@@ -9,8 +9,8 @@ EXPORTS
   _ejsGetString
   _ejsIs
   deserialize
-  ecAddBlockConstants
   ecAddConstant
+  ecAddConstants
   ecAddDocConstant
   ecAddFunctionConstants
   ecAddModule
@@ -90,13 +90,17 @@ EXPORTS
   ejsAlloc
   ejsAllocName
   ejsAllocPooled
+  ejsAllocVar
   ejsAppendAttributeToXML
   ejsAppendList
   ejsAppendToXML
   ejsAttention
   ejsBindAccess
+  ejsBindConstructor
   ejsBindFunction
   ejsBindMethod
+  ejsBlendTypeProperties
+  ejsBootstrapTypes
   ejsCast
   ejsClearAttention
   ejsClearException
@@ -111,7 +115,7 @@ EXPORTS
   ejsCloneRequest
   ejsCoerceOperands
   ejsCollectGarbage
-  ejsCompleteFunction
+  ejsCompleteType
   ejsComputeHashCode
   ejsConfigureAppType
   ejsConfigureArrayType
@@ -130,6 +134,7 @@ EXPORTS
   ejsConfigureHttpType
   ejsConfigureIteratorType
   ejsConfigureJSONType
+  ejsConfigureLoggerType
   ejsConfigureMathType
   ejsConfigureMemoryType
   ejsConfigureNamespaceType
@@ -159,6 +164,7 @@ EXPORTS
   ejsCopyToByteArray
   ejsCreate
   ejsCreateActivation
+  ejsCreateArchetype
   ejsCreateArray
   ejsCreateArrayType
   ejsCreateBareString
@@ -167,6 +173,7 @@ EXPORTS
   ejsCreateBoolean
   ejsCreateBooleanType
   ejsCreateByteArray
+  ejsCreateCompilerFrame
   ejsCreateCoreType
   ejsCreateDate
   ejsCreateDoc
@@ -193,10 +200,9 @@ EXPORTS
   ejsCreateNumber
   ejsCreateNumberType
   ejsCreateObject
-  ejsCreateObjectType
+  ejsCreateObjectHelpers
   ejsCreatePath
   ejsCreatePathAndFree
-  ejsCreatePrototype
   ejsCreateRegExp
   ejsCreateRegExpType
   ejsCreateRequest
@@ -204,6 +210,7 @@ EXPORTS
   ejsCreateSearchPath
   ejsCreateService
   ejsCreateSession
+  ejsCreateSimpleFunction
   ejsCreateSimpleObject
   ejsCreateSocket
   ejsCreateString
@@ -212,7 +219,6 @@ EXPORTS
   ejsCreateStringWithLength
   ejsCreateTimerEvent
   ejsCreateType
-  ejsCreateTypeFromFunction
   ejsCreateTypeType
   ejsCreateUndefined
   ejsCreateUri
@@ -239,6 +245,7 @@ EXPORTS
   ejsDestroy
   ejsDestroyGCService
   ejsDestroySession
+  ejsDisableFunction
   ejsDupName
   ejsDupString
   ejsEnableGC
@@ -256,8 +263,8 @@ EXPORTS
   ejsFormatReservedNamespace
   ejsFormatStack
   ejsFree
+  ejsFreeVar
   ejsFreezeGlobal
-  ejsGetAndMakeTrait
   ejsGetByteArrayAvailable
   ejsGetByteArrayRoom
   ejsGetErrorMsg
@@ -271,14 +278,12 @@ EXPORTS
   ejsGetNamespaceCount
   ejsGetNextItem
   ejsGetNumOption
-  ejsGetNumTraits
   ejsGetOptable
   ejsGetPrevItem
   ejsGetProperty
   ejsGetPropertyByName
   ejsGetPropertyCount
   ejsGetPropertyName
-  ejsGetPropertyTrait
   ejsGetService
   ejsGetSlot
   ejsGetStrOption
@@ -299,8 +304,8 @@ EXPORTS
   ejsHasListeners
   ejsHasTrait
   ejsInheritBaseClassNamespaces
-  ejsInheritProperties
   ejsInitCompiler
+  ejsInitFunction
   ejsInitList
   ejsInitSearchPath
   ejsInitStack
@@ -367,16 +372,16 @@ EXPORTS
   ejsServiceEvents
   ejsSetByteArrayPositions
   ejsSetFunctionCode
-  ejsSetFunctionLocation
+  ejsSetFunctionName
   ejsSetGeneration
   ejsSetListLimits
   ejsSetModuleConstants
   ejsSetProperty
   ejsSetPropertyByName
   ejsSetPropertyName
-  ejsSetPropertyTrait
   ejsSetSearchPath
   ejsSetTraitAttributes
+  ejsSetTraitDetails
   ejsSetTraitType
   ejsSetTypeName
   ejsSetXML
