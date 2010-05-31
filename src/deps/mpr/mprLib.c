@@ -8150,7 +8150,6 @@ MprHashTable *mprCreateHash(MprCtx ctx, int hashSize)
     if (table == 0) {
         return 0;
     }
-
     /*  TODO -- should support rehashing */
     if (hashSize < MPR_DEFAULT_HASH_SIZE) {
         hashSize = MPR_DEFAULT_HASH_SIZE;
@@ -8184,7 +8183,6 @@ MprHashTable *mprCopyHash(MprCtx ctx, MprHashTable *master)
     if (table == 0) {
         return 0;
     }
-
     hp = mprGetFirstHash(master);
     while (hp) {
         mprAddHash(table, hp->key, hp->data);
@@ -8211,7 +8209,6 @@ MprHash *mprAddHash(MprHashTable *table, cchar *key, cvoid *ptr)
         sp->data = ptr;
         return sp;
     }
-
     /*
         New entry
      */
@@ -8317,7 +8314,6 @@ static MprHash *lookupInner(int *bucketIndex, MprHash **prevSp, MprHashTable *ta
     if (bucketIndex) {
         *bucketIndex = index;
     }
-
     sp = table->buckets[index];
     prev = 0;
 

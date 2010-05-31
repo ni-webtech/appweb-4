@@ -3325,7 +3325,7 @@ typedef struct EjsTypeHelpers {
     EjsObj  *(*clone)(Ejs *ejs, EjsObj *vp, bool deep);
     EjsObj  *(*create)(Ejs *ejs, struct EjsType *type, int size);
     int     (*defineProperty)(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname, struct EjsType *propType, 
-                int attributes, EjsObj *value);
+                int64 attributes, EjsObj *value);
     void    (*destroy)(Ejs *ejs, EjsObj *vp);
     int     (*deleteProperty)(Ejs *ejs, EjsObj *vp, int slotNum);
     int     (*deletePropertyByName)(Ejs *ejs, EjsObj *vp, EjsName *qname);
@@ -3353,7 +3353,7 @@ typedef void    (*EjsDestroyHelper)(Ejs *ejs, EjsObj *vp);
 typedef EjsObj  *(*EjsCastHelper)(Ejs *ejs, EjsObj *vp, struct EjsType *type);
 typedef EjsObj  *(*EjsCloneHelper)(Ejs *ejs, EjsObj *vp, bool deep);
 typedef int     (*EjsDefinePropertyHelper)(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname, struct EjsType *propType, 
-                    int attributes, EjsObj *value);
+                    int64 attributes, EjsObj *value);
 typedef int     (*EjsDeletePropertyHelper)(Ejs *ejs, EjsObj *vp, int slotNum);
 typedef int     (*EjsDeletePropertyByNameHelper)(Ejs *ejs, EjsObj *vp, EjsName *qname);
 typedef EjsObj  *(*EjsGetPropertyHelper)(Ejs *ejs, EjsObj *vp, int slotNum);

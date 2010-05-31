@@ -22293,7 +22293,7 @@ EjsObj *ejsCloneObject(Ejs *ejs, EjsObj *src, bool deep)
 }
 
 
-static EjsObj *prepareAccessors(Ejs *ejs, EjsObj *obj, int slotNum, int *attributes, EjsObj *value)
+static EjsObj *prepareAccessors(Ejs *ejs, EjsObj *obj, int slotNum, int64 *attributes, EjsObj *value)
 {
     EjsFunction     *fun;
     EjsTrait        *trait;
@@ -22330,7 +22330,7 @@ static EjsObj *prepareAccessors(Ejs *ejs, EjsObj *obj, int slotNum, int *attribu
 /*
     Define (or redefine) a property and set its name, type, attributes and property value.
  */
-static int defineObjectProperty(Ejs *ejs, EjsObj *obj, int slotNum, EjsName *qname, EjsType *propType, int attributes, 
+static int defineObjectProperty(Ejs *ejs, EjsObj *obj, int slotNum, EjsName *qname, EjsType *propType, int64 attributes, 
     EjsObj *value)
 {
     EjsFunction     *fun;

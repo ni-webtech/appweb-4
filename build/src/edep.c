@@ -1,12 +1,12 @@
 /*
- *  edep.c - Embedthis Dependency Program. Generate C, C++ and Java Dependencies
+    edep.c - Embedthis Dependency Program. Generate C, C++ and Java Dependencies
  *
- *  Copyright (c) All Rights Reserved. See details at the end of the file.
+    Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
 /******************************* Documentation ********************************/
 /*
- *  usage:  edep [-q] [-I includes] files...
+    usage:  edep [-q] [-I includes] files...
  */
 /********************************* Includes ***********************************/
 #include    "posix.h"
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
     fprintf(fp, "\n");
 
     /*
-     *  Extract a src path for Java. Go up N levels less one for the "java" directory.
+        Extract a src path for Java. Go up N levels less one for the "java" directory.
      */
     strcpy(dirName, cwd);
     cp = &dirName[strlen(dirName) - 1];
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 
 
 /*
- *  Do the C and C++ dependencies
+    Do the C and C++ dependencies
  */
 static int findDependencies(FILE *fp, char *fname)
 {
@@ -287,7 +287,7 @@ static int findDependencies(FILE *fp, char *fname)
         }
         
         /*
-         *  Skip system headers
+            Skip system headers
          */
         if (*cp == '<') {
             continue;
@@ -311,7 +311,7 @@ static int findDependencies(FILE *fp, char *fname)
 
         } else {
             /*
-             *  First search relative to the including file
+                First search relative to the including file
              */
             mprGetDirName(dirName, sizeof(dirName), fname);
             if (*dirName) {
@@ -412,7 +412,7 @@ static char *mapExtension(char *path)
 
 
 /*
- *  Return the last portion of a pathname
+    Return the last portion of a pathname
  */
 static char *mprGetBaseName(char *name)
 {
@@ -441,7 +441,7 @@ static char *mprGetBaseName(char *name)
 
 
 /*
- *  Return the directory portion of a pathname into the users buffer.
+    Return the directory portion of a pathname into the users buffer.
  */
 int mprGetDirName(char *buf, int bufsize, char *path)
 {
@@ -480,7 +480,7 @@ int mprGetDirName(char *buf, int bufsize, char *path)
 
 
 /*
- *  Initialize signals
+    Initialize signals
  */
 static void openSignals() 
 {
@@ -503,31 +503,31 @@ static void catchInterrupt(int signo)
 }
 
 /*
- *  @copy   default
- *  
- *  Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
- *  Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
- *  
- *  This software is distributed under commercial and open source licenses.
- *  You may use the GPL open source license described below or you may acquire 
- *  a commercial license from Embedthis Software. You agree to be fully bound 
- *  by the terms of either license. Consult the LICENSE.TXT distributed with 
- *  this software for full details.
- *  
- *  This software is open source; you can redistribute it and/or modify it 
- *  under the terms of the GNU General Public License as published by the 
- *  Free Software Foundation; either version 2 of the License, or (at your 
- *  option) any later version. See the GNU General Public License for more 
- *  details at: http://www.embedthis.com/downloads/gplLicense.html
- *  
- *  This program is distributed WITHOUT ANY WARRANTY; without even the 
- *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
- *  
- *  This GPL license does NOT permit incorporating this software into 
- *  proprietary programs. If you are unable to comply with the GPL, you must
- *  acquire a commercial license to use this software. Commercial licenses 
- *  for this software and support services are available from Embedthis 
- *  Software at http://www.embedthis.com 
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
  *
- *  @end
+    @end
  */

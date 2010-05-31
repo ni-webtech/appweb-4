@@ -227,6 +227,7 @@ typedef struct List {
 static void     addUniqueItem(MprList *list, cchar *item);
 static void     addUniqueClass(MprList *list, ClassRec *item);
 static MprList  *buildClassList(EjsMod *mp, cchar *namespace);
+static void     buildMethodList(EjsMod *mp, MprList *methods, EjsObj *obj);
 static int      compareClasses(ClassRec **c1, ClassRec **c2);
 static int      compareFunctions(FunRec **f1, FunRec **f2);
 static int      compareProperties(PropRec **p1, PropRec **p2);
@@ -245,7 +246,7 @@ static char     *fmtType(EjsName qname);
 static char     *fmtTypeReference(EjsName qname);
 static char     *fmtModule(cchar *name);
 static char     *formatExample(Ejs *ejs, char *example);
-static int      generateMethodTable(EjsMod *mp, EjsObj *obj);
+static int      generateMethodTable(EjsMod *mp, MprList *methods, EjsObj *obj);
 static void     generateClassPage(EjsMod *mp, EjsObj *obj, EjsName *name, EjsTrait *trait, EjsDoc *doc);
 static void     generateClassPages(EjsMod *mp);
 static void     generateClassPageHeader(EjsMod *mp, EjsObj *obj, EjsName *name, EjsTrait *trait, EjsDoc *doc);
@@ -263,7 +264,7 @@ static void     generateHtmlHeader(EjsMod *mp, cchar *script, cchar *title, ... 
 static void     generateImages(EjsMod *mp);
 static void     generateOverview(EjsMod *mp);
 static void     generateMethod(EjsMod *mp, EjsObj *obj, int slotNum);
-static void     generateMethodDetail(EjsMod *mp, EjsObj *obj);
+static void     generateMethodDetail(EjsMod *mp, MprList *methods);
 static void     generateNamespace(EjsMod *mp, cchar *namespace);
 static void     generateNamespaceClassTable(EjsMod *mp, cchar *namespace);
 static int      generateNamespaceClassTableEntries(EjsMod *mp, cchar *namespace);
@@ -868,7 +869,7 @@ static void generateClassPages(EjsMod *mp)
     ejs = mp->ejs;
 
     count = ejsGetPropertyCount(ejs, ejs->global);
-    for (slotNum = 0; slotNum < count; slotNum++) {
+    for (slotNum = mp->firstGlobal; slotNum < count; slotNum++) {
         type = ejsGetProperty(ejs, ejs->global, slotNum);
         qname = ejsGetPropertyName(ejs, ejs->global, slotNum);
         if (type == 0 || !ejsIsType(type) || qname.name == 0 || strstr(qname.space, "internal-") != 0) {
@@ -932,7 +933,8 @@ static void generateClassPages(EjsMod *mp)
 
 static void generateClassPage(EjsMod *mp, EjsObj *obj, EjsName *name, EjsTrait *trait, EjsDoc *doc)
 {
-    int     count;
+    MprList     *methods;
+    int         count;
 
     prepDocStrings(mp, obj, name, trait, doc);
     if (doc->hide) {
@@ -940,11 +942,18 @@ static void generateClassPage(EjsMod *mp, EjsObj *obj, EjsName *name, EjsTrait *
     }
     generateClassPageHeader(mp, obj, name, trait, doc);
     generatePropertyTable(mp, obj);
-    count = generateMethodTable(mp, obj);
+
+    methods = mprCreateList(mp);
+    buildMethodList(mp, methods, obj);
+    if (ejsIsType(obj)) {
+        buildMethodList(mp, methods, ((EjsType*) obj)->prototype);
+    }
+    count = generateMethodTable(mp, methods, obj);
     if (count > 0) {
-        generateMethodDetail(mp, obj);
+        generateMethodDetail(mp, methods);
     }
     generateContentFooter(mp);
+    mprFree(methods);
 }
 
 
@@ -1299,7 +1308,7 @@ static int generateClassPropertyTableEntries(EjsMod *mp, EjsObj *obj, int numInh
     EjsDoc          *doc;
     MprList         *properties;
     PropRec         *prec;
-    int             slotNum, count, next;
+    int             slotNum, count, next, attributes;
 
     ejs = mp->ejs;
     count = 0;
@@ -1318,11 +1327,13 @@ static int generateClassPropertyTableEntries(EjsMod *mp, EjsObj *obj, int numInh
         if (isalpha((int) qname.name[0])) {
             out(mp, "<a name='%s'></a>\n", qname.name);
         }
+        attributes = trait->attributes;
         if (type && strcmp(qname.space, type->qname.space) == 0) {
-            out(mp, "   <tr><td nowrap align='center'>%s</td><td>%s</td>", fmtAttributes(trait->attributes, 1), qname.name);
+            out(mp, "   <tr><td nowrap align='center'>%s</td><td>%s</td>", 
+                fmtAttributes(attributes, 1), qname.name);
         } else {
             out(mp, "   <tr><td nowrap align='center'>%s %s</td><td>%s</td>", fmtNamespace(qname),
-                fmtAttributes(trait->attributes, 1), qname.name);
+                fmtAttributes(attributes, 1), qname.name);
         }
         if (trait->type) {
             out(mp, "<td>%s</td>", fmtTypeReference(trait->type->qname));
@@ -1413,7 +1424,7 @@ static int generateClassGetterTableEntries(EjsMod *mp, EjsObj *obj, int numInher
 }
 
 
-static MprList *buildMethodList(EjsMod *mp, EjsObj *obj)
+static void buildMethodList(EjsMod *mp, MprList *methods, EjsObj *obj)
 {
     Ejs             *ejs;
     EjsTrait        *trait;
@@ -1422,11 +1433,9 @@ static MprList *buildMethodList(EjsMod *mp, EjsObj *obj)
     EjsFunction     *fun;
     EjsDoc          *doc;
     FunRec          *fp;
-    MprList         *methods;
     int             slotNum, count;
 
     ejs = mp->ejs;
-    methods = mprCreateList(mp);
 
     if (obj == ejs->global) {
         slotNum = mp->firstGlobal;
@@ -1475,16 +1484,14 @@ static MprList *buildMethodList(EjsMod *mp, EjsObj *obj)
         fp->obj = obj;
         fp->slotNum = slotNum;
         fp->qname = qname;
-        mprAssert(strcmp(fp->qname.name, "appInit") != 0);
         fp->trait = trait;
         mprAddItem(methods, fp);
     }
     mprSortList(methods, (MprListCompareProc) compareFunctions);
-    return methods;
 }
 
 
-static int generateMethodTable(EjsMod *mp, EjsObj *obj)
+static int generateMethodTable(EjsMod *mp, MprList *methods, EjsObj *obj)
 {
     Ejs             *ejs;
     EjsType         *type;
@@ -1493,7 +1500,6 @@ static int generateMethodTable(EjsMod *mp, EjsObj *obj)
     EjsDoc          *doc;
     EjsFunction     *fun;
     FunRec          *fp;
-    MprList         *methods;
     cchar           *defaultValue;
     int             i, count, next;
 
@@ -1504,8 +1510,6 @@ static int generateMethodTable(EjsMod *mp, EjsObj *obj)
     out(mp, "<h2 class='classSection'>%s Methods</h2>\n", (type) ? type->qname.name : "Global");
     out(mp, "<table class='apiIndex' summary='methods'>\n");
     out(mp, "   <tr><th>Qualifiers</th><th width='95%%'>Method</th></tr>\n");
-
-    methods = buildMethodList(mp, obj);
 
     /*
         Output each method
@@ -1569,28 +1573,22 @@ static int generateMethodTable(EjsMod *mp, EjsObj *obj)
             fmtClassUrl(type->baseType->qname));
     }
     out(mp, "<hr />\n");
-    mprFree(methods);
     return count;
 }
 
 
-static void generateMethodDetail(EjsMod *mp, EjsObj *obj)
+static void generateMethodDetail(EjsMod *mp, MprList *methods)
 {
     Ejs         *ejs;
     FunRec      *fp;
-    MprList     *methods;
     int         next;
 
     ejs = mp->ejs;
-
     out(mp, "<h2>Method Detail</h2>\n");
-    methods = buildMethodList(mp, obj);
 
     for (next = 0; (fp = (FunRec*) mprGetNextItem(methods, &next)) != 0; ) {
-        mprAssert(strcmp(fp->qname.name, "appInit") != 0);
         generateMethod(mp, fp->obj, fp->slotNum);
     }
-    mprFree(methods);
 }
 
 

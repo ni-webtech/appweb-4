@@ -6478,7 +6478,6 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             httpConnError(conn, HTTP_CODE_BAD_REQUEST, "Bad header key value");
             break;
         }
-
         if ((oldValue = mprLookupHash(rec->headers, key)) != 0) {
             mprAddHash(rec->headers, key, mprAsprintf(rec->headers, -1, "%s, %s", oldValue, value));
         } else {
