@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #   Create a disk image from the command line on MAC OS X
 #
@@ -9,17 +9,17 @@ OUT="$3"
 
 rm -f "$OUT"
 
-hdiutil eject /Volumes$NAME >/dev/null 2>&1
+hdiutil eject /Volumes/$NAME >/dev/null 2>&1
 
 if [ -d "/Volumes/$NAME" ] ; then
     echo /Volumes/$NAME already exists
     exit 255
 fi
-TMP="tmp.dmg"
 
 SIZE=`du -sk ${DIR} | awk '{ print $1 }'`
 SIZE=$(((${SIZE} + 9999)/1000))
 
+TMP="tmp.dmg"
 hdiutil create "$TMP" -megabytes ${SIZE} -ov -type UDIF -layout NONE
 
 DISK=`hdid -nomount "$TMP"`
@@ -28,7 +28,6 @@ hdiutil eject $DISK
 
 hdid "$TMP"
 cp -R "${DIR}" "/Volumes/$NAME"
-
 hdiutil eject $DISK
 
 # convert to compressed image, delete temp image

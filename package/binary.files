@@ -11,7 +11,7 @@ usePrefixes CFG BIN JEM LIB LOG MOD PRD VER WEB
 ${CHMOD} 755 "${BLD_CFG_PREFIX}"
 
 if [ "${TASK}" = Remove -a -f "${BLD_BIN_PREFIX}/linkup" ] ; then
-    cp ${BLD_BIN_PREFIX}/linkup /tmp/linkup$$
+    cp "${BLD_BIN_PREFIX}/linkup" /tmp/linkup$$
 fi
 
 cpy -w -t -e doc/licenses/LICENSE.TXT doc/product/README.TXT doc/product/COPYRIGHT.TXT "${BLD_CFG_PREFIX}"
@@ -29,7 +29,7 @@ fi
 
 if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
     if [ "$BLD_FEATURE_HTTP_CLIENT" = 1 ] ; then
-        cpy -s -m 755 -d ${BLD_BIN_DIR} http${BLD_EXE} "${BLD_BIN_PREFIX}"
+        cpy -s -m 755 ${BLD_BIN_DIR}/http${BLD_EXE} "${BLD_BIN_PREFIX}"
     fi
     cpy -s -m 755 -d ${BLD_BIN_DIR} httpPassword${BLD_EXE} makerom${BLD_EXE} "${BLD_BIN_PREFIX}"
 fi
@@ -40,7 +40,7 @@ fi
 if [ $BLD_LIB_DIR != $BLD_MOD_DIR ] ; then
 	if `ls ${BLD_LIB_DIR}/*${BLD_SHOBJ}* >/dev/null 2>&1` ; then
 #        libcFilter="$BLD_LIB_DIR}/libec-${BLD_VERSION}"
-#		cpy -s -f "${libcFilter}" -m 755 -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
+#		cpy -s -m755 -f "${libcFilter}" -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
 		cpy -s -m 755 -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
 #       if [ "$BLD_FEATURE_STATIC" = 0 ] ; then
 #           if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
@@ -50,12 +50,12 @@ if [ $BLD_LIB_DIR != $BLD_MOD_DIR ] ; then
 	fi
 fi
 
-cpy src/server/mime.types        "${BLD_CFG_PREFIX}"
-cpy -d src/server "*.db"         "${BLD_CFG_PREFIX}"
+cpy src/server/mime.types "${BLD_CFG_PREFIX}"
+cpy -d src/server "*.db" "${BLD_CFG_PREFIX}"
 
 if [ "$WITH_TESTWEB" != "" ] ; then
 	webFilter='mgmt/'
-    cpy -d src/server/web -f "${webFilter}" "*" "${BLD_WEB_PREFIX}"
+    cpy -f "${webFilter}" "src/server/web/." "${BLD_WEB_PREFIX}"
     if [ "${TASK}" != Remove ] ; then
         chmod +x "${BLD_WEB_PREFIX}/test/"{*.cgi,*.pl,*.py}
     fi
@@ -69,13 +69,15 @@ if [ "$WITH_CONF" = "" ] ; then
 	else
 		configDir="src/server/$BLD_FEATURE_CONFIG"
 	fi
-    cpy -d "${configDir}" "*" "${BLD_CFG_PREFIX}"
+    cpy "${configDir}/appweb.conf" "${BLD_CFG_PREFIX}"
+    makeDir "${BLD_CFG_PREFIX}"
+    cpy "${configDir}/*" "${BLD_CFG_PREFIX}"
 else
     cpy "$WITH_CONF" "${BLD_CFG_PREFIX}/appweb.conf"
 fi
 
 makeDir "${BLD_LOG_PREFIX}"
-touch "${BLD_LOG_PREFIX}"/.dummy
+touch "${BLD_LOG_PREFIX}"/error.log
 
 #
 #   Patch appweb.conf and other config files
@@ -187,7 +189,7 @@ if [ $BLD_HOST_OS = WIN ] ; then
 fi
 
 if [ "${TASK}" = Install ] ; then
-    bash ${BLD_BIN_PREFIX}/linkup $TASK
+    bash "${BLD_BIN_PREFIX}/linkup" $TASK
 elif [ -f /tmp/linkup$$ ] ; then
     bash /tmp/linkup$$ $TASK
     rm -f /tmp/linkup$$

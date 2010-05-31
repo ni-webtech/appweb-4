@@ -156,26 +156,29 @@ getDefaultMode() {
 
 #
 #   cpy Recursive pattern matching copy program. Options:
-#       --check pattern             Check that all files match the pattern
-#       --dir dir                   Prefix all files with directory, but don't include dir in target
-#       --expand                    Expand %%Vars%%
-#       --filter pattern            Remove files that match the pattern
-#       --group grp                 Set the group permissions
-#       --mode mode                 Set the mode permissions
-#       --owner owner               Set the owner permissions
-#       --strip                     Strip executables
-#       --verbose                   Trace commands
-#       --windows                   Convert file to windows text format
-#       --zip                       Compress target using gzip
+#       --check pattern              Check that all files match the pattern
+#       --dir dir                    Prefix all files with directory
+#       --expand                     Expand %%Vars%%
+#       --filter pattern             Remove files that match the pattern
+#       --group grp                  Set the group permissions
+#       --mode mode                  Set the mode permissions
+#       --owner owner                Set the owner permissions
+#       --path                       Use full source path
+#       --strip                      Strip executables
+#       --verbose                    Trace commands
+#       --windows                    Convert file to windows text format
+#       --zip                        Compress target using gzip
 #
 #   NOTE:
-#       cpy dir target              This will create target/dir and recursively copy the dir contents
-#       cpy -d dir Makefile target  This will copy all Makefiles dir/* and create under target. Dir itself not copied.
+#       cpy dir target               This will create target/dir and recursively copy the dir contents
+#       cpy dir/*/Makefile target    This will copy all dir/*/Makefiles and create under target. Dir itself not copied
+#       cpy -p dir/*/Makefile target This will copy all dir/*/Makefiles and create target/dir/*/Makefile
 #
 cpy() {
     local argc optind arg target baseDir mode v expand files owner group f check src dirPortion pattern base 
     local rest isDir d parent windows
 
+    entirePath=0
     expand=0
     mode=0
     strip=0
@@ -229,6 +232,9 @@ cpy() {
             optind=$((optind + 1))
             owner=${!optind}
             ;;
+        --path|-p)
+            entirePath=1
+            ;;
         --strip|-s)
             strip=1
             ;;
@@ -261,75 +267,58 @@ cpy() {
     fi
 
     while : ;  do
-
-        if [ "$baseDir" != "" ] ; then
-            if [ "$files" = "*" ] ; then
-                files=$baseDir
-            else
-                files=$baseDir/$files
-            fi
-        fi
         rm -f .cpy_copied
-
-        if [ -d "${files}" ] ; then
-            isDir=1
-        else
-            isDir=0
+        if [ "$baseDir" != "" ] ; then
+            files=$baseDir/$files
         fi
-        if [ -d "${files}" ] ; then
-            dirPortion=${files}
-            pattern="*"
-            find ${dirPortion} -name "$pattern" | egrep -v "$stndFilter" | egrep -v "$filter" | egrep "$check"
-        else
-            dirPortion=`dirname "$files"`
-            pattern=${files##*/}
-            ls ${dirPortion}/$pattern | egrep -v "$stndFilter"  | egrep -v "$filter" | egrep "$check"
-        fi | while read src ; do
+        isDir=0
+        [ -d "${files}" ] && isDir=1
+        pattern="*"
+
+        files=${files##./}
+        [ $v -gt 0 ] && echo find ${files} -name "$pattern"
+        find ${files} -name "$pattern" | egrep -v "$stndFilter" | egrep -v "$filter" | egrep "$check" | while read src 
+        do
             [ -d "${src#}" ] && continue
 
-            #
-            #   Remove directory portions. Artifact of using find.
-            #
             base=${src##*/}
             if [ "${base#.*}" != "${base}" ] ; then
                 #
-                #   Skip files starting with "."
+                #   Skip tmp files starting with "."
                 #
                 continue
             fi
 
             src=${src##./}
-            if [ "$baseDir" != "" ] ; then
-                #
-                #   baseDir provided, must only copy contents, so must strip the directory off.
-                #
-                rest=${src/${baseDir}\//}
-                dest=$target/${rest}
 
+            if [ "$isDir" = 1 ] ; then
+                #
+                #   Source to cpy was a directory, so prepend the last path segment of "files"
+                #
+                d=${files%/*}
+                if [ "$d" != "$files" -a "$entirePath" = 0 ] ; then
+                    dest=$target/${src/${d}/}
+                else
+                    dest=$target/${src}
+                fi
             else
-                if [ "$isDir" = 1 ] ; then
-                    #
-                    #   Source is a directory so strip the dirname of the dirPortion off the source
-                    #
-                    d=${dirPortion%/*}
-                    if [ "$d" != "$dirPortion" ] ; then
-                        dest=$target/${src/${d}/}
-                    else
+                #
+                #   Source to cpy was a file, so strip of the source directory (if not entirePath requested).
+                #   If the target is a directory, copy into that dir. Otherwise copy to the target file itself.
+                #
+                if [ -d "$target" ] ; then
+                    if [ "$entirePath" = 1 ] ; then
                         dest=$target/${src}
+                    else
+                        dir=${files%/*}
+                        base=${src##${dir}/}
+                        dest=$target/${base}
+                        # dest=$target/${base}
                     fi
                 else
-                    #
-                    #   Source is a file, so just take the basename of the source
-                    #   If the target is a directory, copy into that dir. Otherwise copy to the target file itself.
-                    #
-                    if [ -d "$target" ] ; then
-                        dest=$target/${src##*/}
-                    else
-                        dest=$target
-                    fi
+                    dest=$target
                 fi
             fi
-
             dest=`getpath -a "$dest"`
             touch .cpy_copied
 

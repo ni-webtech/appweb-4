@@ -78,9 +78,9 @@ configureProduct() {
             launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
 
 		elif type chkconfig >/dev/null 2>&1 ; then
-			/sbin/chkconfig --del $BLD_PRODUCT  >/dev/null
-			/sbin/chkconfig --add $BLD_PRODUCT >/dev/null
-			/sbin/chkconfig --level 5 $BLD_PRODUCT on >/dev/null
+			chkconfig --del $BLD_PRODUCT  >/dev/null
+			chkconfig --add $BLD_PRODUCT >/dev/null
+			chkconfig --level 5 $BLD_PRODUCT on >/dev/null
 
 		elif type update-rc.d >/dev/null 2>&1 ; then
 			update-rc.d $BLD_PRODUCT defaults 90 10 >/dev/null
@@ -100,7 +100,7 @@ configureProduct() {
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             launchctl unload -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
 		elif type chkconfig >/dev/null 2>&1 ; then
-			/sbin/chkconfig --del $BLD_PRODUCT >/dev/null 2>&1
+			chkconfig --del $BLD_PRODUCT >/dev/null 2>&1
 			rm -f "${BLD_ROOT_PREFIX}/etc/rc.d/init.d/${BLD_PRODUCT}"
 			rm -f "${BLD_ROOT_PREFIX}/etc/rc.d/rc*.d/"???${BLD_PRODUCT}
 		elif type update-rc.d >/dev/null 2>&1 ; then
@@ -144,7 +144,7 @@ configureProduct() {
                 launchctl stop com.${company}.${BLD_PRODUCT} 2>/dev/null
             fi
 		elif type service >/dev/null 2>&1 ; then
-			/sbin/service $BLD_PRODUCT $action >/dev/null 2>&1
+			service $BLD_PRODUCT $action >/dev/null 2>&1
 
 		elif type invoke-rc.d >/dev/null 2>&1 ; then
 			invoke-rc.d --quiet $BLD_PRODUCT $action >/dev/null 2>&1

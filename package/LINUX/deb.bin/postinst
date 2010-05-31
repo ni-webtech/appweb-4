@@ -74,8 +74,8 @@ configureService() {
             ldconfig -n $BLD_MOD_PREFIX
         fi
 		if which chkconfig >/dev/null 2>&1 ; then
-			/sbin/chkconfig --add $BLD_PRODUCT
-			/sbin/chkconfig --level 5 $BLD_PRODUCT on
+			chkconfig --add $BLD_PRODUCT
+			chkconfig --level 5 $BLD_PRODUCT on
 		elif which update-rc.d >/dev/null 2>&1 ; then
 			update-rc.d $BLD_PRODUCT defaults 90 10 >/dev/null || true
         elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then

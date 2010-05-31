@@ -35,7 +35,7 @@ configureService() {
 
 	remove)
 		if which chkconfig >/dev/null 2>&1 ; then
-			/sbin/chkconfig --del $BLD_PRODUCT
+			chkconfig --del $BLD_PRODUCT
 			rm /etc/rc.d/init.d/$BLD_PRODUCT
 		elif which update-rc.d >/dev/null 2>&1 ; then
 			rm -f /etc/init.d/$BLD_PRODUCT
