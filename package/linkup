@@ -5,21 +5,20 @@
 #
 
 TASK=$1
+ROOT_DIR="${2%/}"
 PRODUCT=appweb
 EXE=
-INC=/usr/include
-MAN=/usr/share/man
+INC="${ROOT_DIR}/usr/include"
+MAN="${ROOT_DIR}/usr/share/man"
 PROGRAMS="ajs ajsc ajsmod ajssql ajsweb appweb http httpPassword"
 
-if [ -x /usr/local/bin ] ; then
-    BIN=/usr/local/bin
+if [ -x "${ROOT_DIR}/usr/local/bin" ] ; then
+    BIN="${ROOT_DIR}/usr/local/bin"
 else 
-    BIN=/usr/bin
+    BIN="${ROOT_DIR}/usr/bin"
 fi
 
-prefix=/usr/lib/${PRODUCT}
-
-prefix=/usr/lib/${PRODUCT}
+prefix="${ROOT_DIR}/usr/lib/${PRODUCT}"
 version=
 for v in `ls $prefix | egrep -v '[a-zA-Z@!_\-]' | sort -n -r`
 do
@@ -48,6 +47,8 @@ else
     inc=${latest}/inc
     man=${latest}/doc/man
 
+    [ ! -x "${BIN}" ] && mkdir -p "${BIN}"
+
     home=`pwd`
     for name in $PROGRAMS
     do
@@ -59,10 +60,12 @@ else
     done
 
     if [ -d "${inc}" ] ; then
+        [ ! -x "${INC}" ] && mkdir -p "${INC}"
         rm -rf  "${INC}/${PRODUCT}"
         ln -s "${inc}" "${INC}/${PRODUCT}"
     fi
     if [ -d "${man}" ] ; then
+        [ ! -x "${MAN}" ] && mkdir -p "${MAN}"
         for f in ${man}/*.1.gz
         do
             name=`basename "$f"`

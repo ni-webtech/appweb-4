@@ -17,6 +17,13 @@ class Test {
     const TIMEOUT: Number = 15 * 60 * 1000  // Test timeout (15 minutes)
 
     /*
+         Directories to omit from unit tests
+     */
+    // const skipDirs = [ "all", "bin", "build", "doc", "extensions", "lib", "jlocal", "jremote", "modules", "obj", 
+    //     "package", "projects", "releases", "samples", "staging" ]
+    const skipDirs = [ "staging" ]
+
+    /*
         Parsed args
      */
     var _bin: Path                          // Path to bin directory
@@ -210,6 +217,9 @@ class Test {
 
     function runGroupTests(dir: Path): Void {
         if (dir != "." && dir.name.startsWith(".")) {
+            return
+        }
+        if (skipDirs.contains(dir.toString())) {
             return
         }
         if (!runPrePost(dir, "init")) {

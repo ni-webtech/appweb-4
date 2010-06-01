@@ -39,7 +39,7 @@ if [ -x /usr/bin/chcon ] ; then
 		done
 	fi
 fi
-!!ORIG_BLD_BIN_PREFIX!!/linkup Install
+!!ORIG_BLD_BIN_PREFIX!!/linkup Install /
 ldconfig -n !!ORIG_BLD_LIB_PREFIX!!
 
 %preun

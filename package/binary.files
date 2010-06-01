@@ -188,8 +188,9 @@ if [ $BLD_HOST_OS = WIN ] ; then
 fi
 
 if [ "${TASK}" = Install ] ; then
-    bash "${BLD_BIN_PREFIX}/linkup" $TASK
+    export BLD_PRD_PREFIX BLD_INC_PREFIX
+    bash "${BLD_BIN_PREFIX}/linkup" $TASK "$ROOT_DIR"
 elif [ -f /tmp/linkup$$ ] ; then
-    bash /tmp/linkup$$ $TASK
+    bash /tmp/linkup$$ $TASK "$ROOT_DIR"
     rm -f /tmp/linkup$$
 fi

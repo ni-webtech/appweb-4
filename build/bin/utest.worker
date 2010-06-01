@@ -2,6 +2,8 @@
     utest.worker - Injected into the unit test global scope
  */
 
+require ejs.unix
+
 public class Test {
     public var bin: Path
     public var config: Object
@@ -152,7 +154,7 @@ public function share(key: String, value: String)
 const PIDFILE = ".pidfile"
 
 public function stopService() {
-    if (exists(PIDFILE)) {
+    if (Path(PIDFILE).exists) {
         pid = Path(PIDFILE).readString()
         Path(PIDFILE).remove()
         try { kill(pid); } catch (e) { print("CATCH " + e) }
@@ -160,15 +162,15 @@ public function stopService() {
 }
 
 
-public function startService(script: String, endpoint: String, url: String): Void {
+public function startService(script: String, address: String, url: String): Void {
     stopService()
     if (!App.getenv("NOSERVER")) {
-        let pid = System.daemon(App.exePath + " " + script + " "  + endpoint)
+        let pid = System.daemon(App.exePath + " " + script + " "  + address)
         Path(PIDFILE).write(pid)
     }
-    url = "http://" + endpoint + url
-    http = new Http
+    let url = "http://" + address + url
     for (i in 10) {
+        http = new Http
         try { http.get(url); } catch {}
         if (http.status == 200) {
             break
@@ -179,5 +181,5 @@ public function startService(script: String, endpoint: String, url: String): Voi
     if (http.status != 200) {
         throw "Can't start web server"
     }
-    share("endpoint", endpoint)
+    share("http", address)
 }
