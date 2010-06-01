@@ -4987,7 +4987,9 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsObj *thisObj, int argc, 
         return;
 #else
         if (thisObj == NULL) {
+            ejs->state->fp->ignoreAttention = 1;
             thisObj = ejsCreate(ejs, type, 0);
+            ejs->state->fp->ignoreAttention = 0;
         }
         ejs->result = thisObj;
         if (!type->hasConstructor) {
