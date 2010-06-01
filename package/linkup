@@ -65,7 +65,7 @@ else
         ln -s "${inc}" "${INC}/${PRODUCT}"
     fi
     if [ -d "${man}" ] ; then
-        [ ! -x "${MAN}" ] && mkdir -p "${MAN}"
+        [ ! -x "${MAN}" ] && mkdir -p "${MAN}/man1"
         for f in ${man}/*.1.gz
         do
             name=`basename "$f"`

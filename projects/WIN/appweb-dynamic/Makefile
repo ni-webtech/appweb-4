@@ -36,7 +36,9 @@ endif
 compileExtra: prep $(PROJECTS)
 
 prep:
-	cp ../../../bin/*.def .
+	if ls ../../../bin/*.def >/dev/null 2>&1 ; then \
+		cp ../../../bin/*.def . ; \
+	fi
 
 libmpr.vcproj: Makefile buildConfig.override
 	@makeVsProj --project libmpr.vcproj --library mpr --dflags "$(DFLAGS)" \
