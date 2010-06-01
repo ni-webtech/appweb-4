@@ -20,7 +20,8 @@ configureProduct() {
 	cleanup)
 		rm -f "${BLD_CFG_PREFIX}/".${BLD_PRODUCT}_pid.log
 		rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
-		rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}/fileList.txt"
+		rm -f "${BLD_PRD_PREFIX}/install.conf"
+		rm -f "${BLD_PRD_PREFIX}/fileList.txt"
 		rm -fr "/var/${BLD_PRODUCT}"
 		rm -f "${BLD_LIB_PREFIX}/libcrypto"*
 		rm -f "${BLD_LIB_PREFIX}/libssl"*

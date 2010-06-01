@@ -16,8 +16,7 @@ fi
 
 cpy -w -t -e doc/licenses/LICENSE.TXT doc/product/README.TXT doc/product/COPYRIGHT.TXT "${BLD_CFG_PREFIX}"
 if [ "$WITH_OPENWRT" != 1 ] ; then
-	cpy -e -m 0755 package/uninstall.sh "${BLD_CFG_PREFIX}/uninstall"
-	cpy -e -m 0755 package/uninstall.sh "${BLD_LIB_PREFIX}/uninstall"
+	cpy -e -m 0755 package/uninstall.sh "${BLD_BIN_PREFIX}/uninstall"
 fi
 cpy -e -m 0755 package/linkup "${BLD_BIN_PREFIX}/linkup"
 

@@ -264,8 +264,8 @@ saveSetup() {
     local firstChar
 
     mkdir -p "$BLD_CFG_PREFIX"
-    echo -e "FMT=$FMT\nbinDir=\"${BLD_CFG_PREFIX}\"\ninstallbin=$installbin\ninstalldev=$installdev\nrunDaemon=$runDaemon\nhttpPort=$HTTP_PORT\nsslPort=$SSL_PORT\nusername=$username\ngroupname=$groupname\nhostname=$HOSTNAME" \
-        >"$BLD_CFG_PREFIX/${BLD_PRODUCT}Install.conf"
+    echo -e "FMT=$FMT\nbinDir=\"${BLD_PRD_PREFIX}\"\ninstallbin=$installbin\ninstalldev=$installdev\nrunDaemon=$runDaemon\nhttpPort=$HTTP_PORT\nsslPort=$SSL_PORT\nusername=$username\ngroupname=$groupname\nhostname=$HOSTNAME" \
+        >"$BLD_PRD_PREFIX/install.conf"
 }
 
 #
@@ -425,8 +425,8 @@ installFiles() {
                 echo -e "dpkg -i $NAME"
                 dpkg -i $HOME/$NAME >/dev/null
             else
-                echo tar xfz "$HOME/${NAME}.gz" --strip-components 1 -C /
-                tar xfz "$HOME/${NAME}.gz" --strip-components 1 -C /
+                echo tar xfz "$HOME/${NAME}.gz" --strip-components 1 -P -C /
+                tar xfz "$HOME/${NAME}.gz" --strip-components 1 -P -C /
             fi
         fi
     done
