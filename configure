@@ -1401,6 +1401,7 @@ patchFile() {
         echo "            mv /tmp/in\$\$.tmp \"\${file}\"" >>$CONFIG_SH
     else
         echo "            \" < /tmp/in\$\$.tmp > /tmp/out\$\$.tmp" >>$CONFIG_SH
+        echo "            rm -f /tmp/in\$\$.tmp" >>$CONFIG_SH
         echo "            mv /tmp/out\$\$.tmp \"\${file}\"" >>$CONFIG_SH
     fi
 

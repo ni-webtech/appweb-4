@@ -1,10 +1,10 @@
 # 
 #   Makefile for the Appweb Web Server
 #
-#   Copyright (C) 2010 Embedthis Software
+#   Copyright (C) 2009 Embedthis Software
 #
 #   This software is licensed under the GPLv2. Commercial and other licenses are available
-#   from http://www.embedthis.com.
+#   from http://embedthis.com.
 #
 #   $Id$
 
@@ -14,11 +14,11 @@ PKG_NAME:=appweb
 PKG_RELEASE:=1
 
 #
-#   Build 3.0B.3
+#   Build 3.2.2-1
 #
-PKG_SOURCE_URL:=http://www.appwebserver.org/software/
-PKG_VERSION:=3.0B.2-3
-PKG_MD5SUM:=b54a99d388a5588a9af33aa1c6354e06
+PKG_SOURCE_URL:=http://appwebserver.org/software/
+PKG_VERSION:=3.2.2-1
+PKG_MD5SUM:=55b2265238733e08d6f6df50093d0d29
 PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
 
 #
@@ -33,8 +33,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
-EXTRA_CFG:=$(if $(CONFIG_PACKAGE_libopenssl), \
-	--with-openssl=$(wildcard $(BUILD_DIR)/openssl*))
+EXTRA_CFG:=$(if $(CONFIG_PACKAGE_libopenssl),--with-openssl=$(wildcard $(BUILD_DIR)/openssl*))
 
 CONFIGURE_ARGS += --defaults=release --shared --tune=size --disable-angel \
 	--disable-samples --disable-access-log --disable-complete-native \
