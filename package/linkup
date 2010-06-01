@@ -19,9 +19,18 @@ fi
 
 prefix=/usr/lib/${PRODUCT}
 
+prefix=/usr/lib/${PRODUCT}
+version=
+for v in `ls $prefix | egrep -v '[a-zA-Z@!_\-]' | sort -n -r`
+do
+    if [ -x "$prefix/$v/bin/ejs" ] ; then
+        version=$v
+        break
+    fi
+done
+
 # Appweb is not yet fully versioned
 version=
-# version=`ls $prefix | egrep -v '[a-zA-Z@!_\-]' | sort -n -r | head -1`
 
 if [ "$TASK" = "Remove" ] ; then
     for name in $PROGRAMS
@@ -43,8 +52,8 @@ else
     for name in $PROGRAMS
     do
         name=${name}${EXE}
+        rm -f "${BIN}/${name}"
         if [ -f "${bin}/${name}" ] ; then
-            rm -f "${BIN}/${name}"
             ln -s "${bin}/${name}" "${BIN}/${name}"
         fi
     done

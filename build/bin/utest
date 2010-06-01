@@ -466,12 +466,13 @@ class Test {
         _hostOs = getKey(data, "BLD_HOST_OS")
         config = {}
         config["debug"] = getKey(data, "BLD_DEBUG")
-        data = data.match(/BLD_FEATURE.*/g)
+        data = data.match(/BLD_FEATURE.*|BLD_HTTP_PORT.*|BLD_SSL_PORT.*/g)
         for each (item in data) {
             pair = item.split("=")
             key = pair[0]
             value = pair[1]
-            key = key.replace(/BLD_FEATURE_/, "").toLower()
+            key = key.replace(/BLD_FEATURE_/, "")
+            key = key.replace(/BLD_/, "").toLower()
             if (value == "1" || value == "0") {
                 value = value cast Number
             }

@@ -147,3 +147,37 @@ public function locate(program): String {
 
 public function share(key: String, value: String)
     postMessage({ key: key, value: value })
+
+
+const PIDFILE = ".pidfile"
+
+public function stopService() {
+    if (exists(PIDFILE)) {
+        pid = Path(PIDFILE).readString()
+        Path(PIDFILE).remove()
+        try { kill(pid); } catch (e) { print("CATCH " + e) }
+    }
+}
+
+
+public function startService(script: String, endpoint: String, url: String): Void {
+    stopService()
+    if (!App.getenv("NOSERVER")) {
+        let pid = System.daemon(App.exePath + " " + script + " "  + endpoint)
+        Path(PIDFILE).write(pid)
+    }
+    url = "http://" + endpoint + url
+    http = new Http
+    for (i in 10) {
+        try { http.get(url); } catch {}
+        if (http.status == 200) {
+            break
+        }
+        App.sleep(100)
+        http.close()
+    }
+    if (http.status != 200) {
+        throw "Can't start web server"
+    }
+    share("endpoint", endpoint)
+}

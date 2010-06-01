@@ -4652,7 +4652,7 @@ static void createExceptionBlock(Ejs *ejs, EjsEx *ex, int flags)
         for (i = 0; i < count && count > 0; i++) {
             ejsPopBlock(ejs);
         }
-        count = (state->stack - fp->stackReturn);
+        count = (state->stack - fp->stackReturn - fp->argc);
         state->stack -= (count - ex->numStack);
         mprAssert(state->stack >= fp->stackReturn);
     }
@@ -35325,7 +35325,7 @@ static EjsObj *hs_close(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 
 /*  
     function listen(address): Void
-    Address Can be either a "ip", "ip:port" or port
+    Address Can be either an "ip", "ip:port" or port
  */
 static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
@@ -43193,7 +43193,7 @@ static void genFunction(EcCompiler *cp, EcNode *np)
 
     /*
         Capture the scope chain by the defineFunction op code. Emit this into the existing code buffer. 
-        Don't do if a method as they get scope via other means.. Native methods also don't use this as an optimization.
+        Don't do if a method as they get scope via other means. Native methods also don't use this as an optimization.
         Native methods must handle scope explicitly.
       
         We only need to define the function if it needs full scope (unbound property access) or it is a nested function.
@@ -45108,7 +45108,6 @@ static void processNode(EcCompiler *cp, EcNode *np)
         mprAssert(0);
         badNode(cp, np);
     }
-
     mprAssert(state == cp->state);
     LEAVE(cp);
 }

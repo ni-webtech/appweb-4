@@ -15524,6 +15524,9 @@ int mprParseIp(MprCtx ctx, cchar *ipAddrPort, char **ipAddrRef, int *port, int d
     if (defaultPort < 0) {
         defaultPort = 80;
     }
+    if ((cp = strstr(ipAddrPort, "://")) != 0) {
+        ipAddrPort = &cp[3];
+    }
 
     /*  
         First check if ipv6 or ipv4 address by looking for > 1 colons.
@@ -20071,13 +20074,13 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     High resolution timer
  */
 #if BLD_UNIX_LIKE
-    #if MPR_CPU_IX86
+    #if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
         inline MprTime mprGetHiResTime() {
             MprTime  now;
             __asm__ __volatile__ ("rdtsc" : "=A" (now));
             return now;
         }
-    #endif /* MPR_CPU_IX86 */
+    #endif /* BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64 */
 
 #elif BLD_WIN_LIKE
     inline MprTime mprGetHiResTime() {
