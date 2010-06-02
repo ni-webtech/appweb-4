@@ -10,7 +10,7 @@ PRE_DIRS		= $(BLD_HOST_OS)
 BASE_NAME		:= "$(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-$(BLD_HOST_DIST)-$(BLD_HOST_OS)-$(BLD_HOST_CPU)"
 PACKS			:= binary dev source
 PKG_DIR			:= `pwd`/../staging
-WIN_INS_DIR		:= c:/tmp/testInsAppweb
+INS_DIR			:= c:/tmp/testInsAppweb
 
 install install-%: prep
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
@@ -32,47 +32,28 @@ packageOnly:
 	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
 
 install-package: prep
-	if [ $(BLD_HOST_OS) = WIN ] ; then \
-		name="$(BASE_NAME).exe.zip" ; \
-		rm -fr "$(WIN_INS_DIR)" ; \
-		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; unzip -o $$top/releases/$(BLD_PRODUCT)/$$name ; \
-		name="${BLD_PRODUCT}-${BLD_VERSION}-${BLD_NUMBER}-${BLD_HOST_OS}-${BLD_HOST_CPU}.exe" ; \
-		cp $$top/package/WIN/unattended.ans /tmp ; \
-		echo "Dir=$(WIN_INS_DIR)" >>/tmp/unattended.ans ; \
-		$$name /loadinf=/tmp/unattended.ans /silent ; \
-	else \
-		name="$(BASE_NAME).tar.tar.gz" ; \
-		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
-		priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
-	fi
+    name="$(BASE_NAME).tar.tar.gz" ; \
+    cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+    priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
 
 uninstall-package: prep
-	if [ $(BLD_HOST_OS) = WIN ] ; then \
-		if [ ! -x "$(WIN_INS_DIR)/unins000.exe" ] ; then \
-			echo "Can't find $(WIN_INS_DIR)/unins000.exe to uninstall" ; \
-			exit 255 ; \
-		fi ; \
-		"$(WIN_INS_DIR)/unins000.exe" /silent ; \
-	else \
-		name="$(BASE_NAME).tar.tar.gz" ; \
-		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
-		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
-	fi
+    name="$(BASE_NAME).tar.tar.gz" ; \
+    cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+    priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 
 install-native-package: prep
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
+		rm -fr "$(INS_DIR)" ; mkdir -p "$(INS_DIR)" ; \
 		name="$(BASE_NAME).exe.zip" ; \
-		rm -fr "$(WIN_INS_DIR)" ; \
-		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; unzip -o $$top/releases/$(BLD_PRODUCT)/$$name ; \
-		name="${BLD_PRODUCT}-${BLD_VERSION}-${BLD_NUMBER}-${BLD_HOST_OS}-${BLD_HOST_CPU}.exe" ; \
-		cp $$top/package/WIN/unattended.ans /tmp ; \
-		echo "Dir=$(WIN_INS_DIR)" >>/tmp/unattended.ans ; \
-		$$name /loadinf=/tmp/unattended.ans /silent ; \
+		cp WIN/unattended.ans ../releases/$$name "$(INS_DIR)" ; cd "$(INS_DIR)" ; \
+		unzip -q -o $$name ; \
+		echo "Dir=$(INS_DIR)" >>unattended.ans ; \
+		./$(BASE_NAME).exe /loadinf=/tmp/unattended.ans /silent ; \
 	elif [ $(BLD_HOST_OS) = MACOSX ] ; then \
-		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null ; \
+		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
 		hdid $(BLD_TOP)/releases/$(BASE_NAME).dmg >/dev/null ; \
 		priv installer -package /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION)/$(BLD_PRODUCT).mpkg -target /; \
-		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null ; \
+		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
 		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
@@ -81,16 +62,18 @@ install-native-package: prep
 
 uninstall-native-package: prep
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
-		if [ ! -x "$(WIN_INS_DIR)/unins000.exe" ] ; then \
-			echo "Can't find $(WIN_INS_DIR)/unins000.exe to uninstall" ; \
+		if [ ! -x "$(INS_DIR)/unins000.exe" ] ; then \
+			echo "Can't find $(INS_DIR)/unins000.exe to uninstall" ; \
 			exit 255 ; \
 		fi ; \
-		"$(WIN_INS_DIR)/unins000.exe" /silent ; \
+		"$(INS_DIR)/unins000.exe" /silent ; \
+		rm -fr "$(INS_DIR)" ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
 		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
 		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 	fi
+
 
 checkInstalled:
 	( \
