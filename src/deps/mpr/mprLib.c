@@ -197,10 +197,10 @@ bool mprStop(Mpr *mpr)
     mprTerminate(mpr, 1);
 
     mprStopSocketService(mpr->socketService);
-    if (!mprStopThreadService(mpr->threadService, MPR_TIMEOUT_STOP_TASK)) {
+    if (!mprStopWorkerService(mpr->workerService, MPR_TIMEOUT_STOP_TASK)) {
         stopped = 0;
     }
-    if (!mprStopWorkerService(mpr->workerService, MPR_TIMEOUT_STOP_TASK)) {
+    if (!mprStopThreadService(mpr->threadService, MPR_TIMEOUT_STOP_TASK)) {
         stopped = 0;
     }
     mprStopModuleService(mpr->moduleService);
