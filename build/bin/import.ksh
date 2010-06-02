@@ -78,7 +78,7 @@ importFiles()
 
     cat $FILE_LIST | while read pat ; do
         cd $SRC
-        find . -type f -path "$pat" | while read file ; do
+        find . -type f -path "$pat" | egrep -v '\.swp' | while read file ; do
             target=${file##$STRIP}
 
             mkdir -p `dirname ${DIR}/${target}`
@@ -104,7 +104,7 @@ diffFiles()
 
     cat $FILE_LIST | while read pat ; do
         cd $SRC
-        find . -type f -path "$pat" | while read file ; do
+        find . -type f -path "$pat" | egrep -v '\.swp' | while read file ; do
             target=${file##$STRIP}
 
             [ ! -f $DIR/$file ] && continue
@@ -128,7 +128,7 @@ syncFiles()
 
     cat $FILE_LIST | while read pat ; do
         cd $SRC
-        find . -type f -path "$pat" | while read file ; do
+        find . -type f -path "$pat" | egrep -v '\.swp' | while read file ; do
             target=${file##$STRIP}
             if [ "$ignore" != "" -a "${file/$ignore/}" != "${file}" ] ; then
                 echo "#    ignore $file"

@@ -209,6 +209,8 @@ bool mprStop(Mpr *mpr)
 }
 
 
+//  MOB -- is this being used?
+//  MOB - problem on windows. Causes the message pump to run in a thread that does not own the HWND.
 /*
     Thread to service the event queue. Used if the user does not have their own main event loop.
  */
@@ -11253,6 +11255,7 @@ bool mprIsRelPath(MprCtx ctx, cchar *path)
 }
 
 
+//  MOB -- should take a list of paths
 /*
     Join paths. Returns a joined (normalized) path.
     If other is absolute, then return other. If other is null, empty or "." then return path.
@@ -11739,6 +11742,7 @@ bool mprPathExists(MprCtx ctx, cchar *path, int omode)
 }
 
 
+//  MOB -- should take a list of paths
 /*
     Resolve one path against another path. Returns a joined (normalized) path.
     If other is absolute, then return other. If other is null, empty or "." then return path.

@@ -12,36 +12,36 @@ PACKS			:= binary dev source
 PKG_DIR			:= `pwd`/../staging
 INS_DIR			:= c:/tmp/testInsAppweb
 
-install install-%: prep
+install install-%:
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
 	[ "$$packs" = "binary dev" ] && BROWSER=--browser ; \
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
-	$$BROWSER --root=$(ROOT_DIR) --install --with-conf="$(CONF)" --with-testweb pre $$packs post
+		$$BROWSER --root=$(ROOT_DIR) --install --with-conf="$(CONF)" --with-testweb pre $$packs post
 
-uninstall uninstall-%: prep
+uninstall uninstall-%:
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev" ; \
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
-	--root=$(ROOT_DIR) --remove --with-testweb pre $$packs post
+		--root=$(ROOT_DIR) --remove --with-testweb pre $$packs post
 	
 packageExtra:
 	export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
 	fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) --with-testweb --package $(PACKS) && \
         $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)"
 
-packageOnly:
+package-only:
 	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
 
-install-package: prep
+test-install-package:
     name="$(BASE_NAME).tar.tar.gz" ; \
     cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
     priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
 
-uninstall-package: prep
+test-uninstall-package:
     name="$(BASE_NAME).tar.tar.gz" ; \
     cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
     priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 
-install-native-package: prep
+test-install-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
 		rm -fr "$(INS_DIR)" ; mkdir -p "$(INS_DIR)" ; \
 		name="$(BASE_NAME).exe.zip" ; \
@@ -60,7 +60,7 @@ install-native-package: prep
 		priv $(BLD_PRODUCT)_HEADLESS=1 ./install ; \
 	fi
 
-uninstall-native-package: prep
+test-uninstall-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
 		if [ ! -x "$(INS_DIR)/unins000.exe" ] ; then \
 			echo "Can't find $(INS_DIR)/unins000.exe to uninstall" ; \
@@ -74,8 +74,41 @@ uninstall-native-package: prep
 		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 	fi
 
+# SAM SRC
+test-installed:
+	complete=1 ; \
+	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) $(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_MOD_PREFIX) $(BLD_PRD_PREFIX) $(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; \
+	do \
+		if [ ! -x $$dir ] ; then \
+			echo Missing directory: $$dir ; \
+			complete=0 ; \
+		fi ; \
+	done ; \
+	[ $$complete = 0 ] && exit 255 ; \
+	port=$(BLD_HTTP_PORT) ; \
+	http -q $$port/index.html ; \
+	http -q $$port/test/test.php ; \
+	http -q $$port/test/test.cgi ; \
+	http -q $$port/test/test.pl ; \
+	http -q $$port/test/test.py ; \
+	echo Installed
+	# http -q $$port/test/test.ejs
 
-checkInstalled:
+test-removed:
+	partial=0 ; \
+	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) $(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_MOD_PREFIX) $(BLD_PRD_PREFIX) $(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; \
+	do \
+		if [ -x $$dir ] ; then \
+			partial=1 ; \
+			echo Directory present: $$dir ; \
+		fi ; \
+	done ; \
+	[ $$partial = 1 ] && exit 255 ; \
+	echo Removed
+
+checkInstalled: installed-files
+
+installed-files:
 	( \
 		for d in /etc /usr/src /usr/share /usr/share/doc /usr/lib /usr/lib/$(BLD_PRODUCT) /usr/include \
 			/usr/local/bin /usr/local/bin/$(BLD_PRODUCT) /usr/bin /usr/bin/$(BLD_PRODUCT) \
@@ -96,11 +129,6 @@ checkInstalled:
 			[ -x "$$d" ] && echo "$$d" || true; \
 		done ; \
 	) | sort | uniq
-
-prep:
-	if [ ! -x $(BLD_TOOLS_DIR)/edep$(BLD_BUILD_EXE) -a "$(BUILDING_CROSS)" != 1 ] ; then \
-		$(MAKE) -S --no-print-directory _RECURSIVE_=1 -C $(BLD_TOP)/build/src compile ; \
-	fi
 
 dependExtra:
 	[ "$(shell echo *.sh)" != "*.sh" ] && chmod +x *.sh ; true
