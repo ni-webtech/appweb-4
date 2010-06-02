@@ -4394,8 +4394,7 @@ typedef struct MprThreadService {
 typedef void (*MprThreadProc)(void *arg, struct MprThread *tp);
 
 extern MprThreadService *mprCreateThreadService(struct Mpr *mpr);
-extern int mprStartThreadService(MprThreadService *ts);
-extern int mprStopThreadService(MprThreadService *ts, int timeout);
+extern bool mprStopThreadService(MprThreadService *ts, int timeout);
 
 /**
     Thread Service. 
@@ -5946,7 +5945,7 @@ typedef struct MprWorkerService {
 
 extern MprWorkerService *mprCreateWorkerService(MprCtx ctx);
 extern int mprStartWorkerService(MprWorkerService *ws);
-extern void mprStopWorkerService(MprWorkerService *ws, int timeout);
+extern bool mprStopWorkerService(MprWorkerService *ws, int timeout);
 
 /**
     Get the count of available worker threads
@@ -6600,8 +6599,9 @@ extern int mprStart(Mpr *mpr);
 /**
     Stop the MPR and shutdown all services. After this call, the MPR cannot be used.
     @param mpr Mpr object created via mprCreateMpr
+    @return True if all services have been successfully stopped. Otherwise false.
  */
-extern void mprStop(Mpr *mpr);
+extern bool mprStop(Mpr *mpr);
 
 /**
     Signal the MPR to exit gracefully.
