@@ -11669,7 +11669,7 @@ static EjsObj *sliceArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 {
     EjsArray    *result;
     EjsObj      **src, **dest;
-    int         start, end, step, i, j, len;
+    int         start, end, step, i, j, len, size;
 
     mprAssert(1 <= argc && argc <= 3);
 
@@ -11687,7 +11687,6 @@ static EjsObj *sliceArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     if (step == 0) {
         step = 1;
     }
-
     if (start < 0) {
         start += ap->length;
     }
@@ -11696,7 +11695,6 @@ static EjsObj *sliceArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     } else if (start >= ap->length) {
         start = ap->length;
     }
-
     if (end < 0) {
         end += ap->length;
     }
@@ -11705,11 +11703,12 @@ static EjsObj *sliceArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     } else if (end >= ap->length) {
         end = ap->length;
     }
+    size = (start < end) ? end - start : start - end;
 
     /*
-        This may allocate too many elements if step is > 0, but length will still be correct.
+        This may allocate too many elements if abs(step) is > 1, but length will still be correct.
      */
-    result = ejsCreateArray(ejs, end - start);
+    result = ejsCreateArray(ejs, size);
     if (result == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
@@ -19445,7 +19444,7 @@ static void prepForm(Ejs *ejs, EjsHttp *hp, char *prefix, EjsObj *data)
         if (vp == 0) {
             continue;
         }
-        if (ejsGetPropertyCount(ejs, vp) > 0) {
+        if (ejsGetPropertyCount(ejs, vp) > 0 && !ejsIsArray(vp)) {
             if (prefix) {
                 newPrefix = mprAsprintf(hp, -1, "%s.%s", prefix, qname.name);
                 prepForm(ejs, hp, newPrefix, vp);
@@ -19454,7 +19453,11 @@ static void prepForm(Ejs *ejs, EjsHttp *hp, char *prefix, EjsObj *data)
                 prepForm(ejs, hp, (char*) qname.name, vp);
             }
         } else {
-            value = ejsToString(ejs, vp);
+            if (ejsIsArray(vp)) {
+                value = ejsToJSON(ejs, vp, NULL);
+            } else {
+                value = ejsToString(ejs, vp);
+            }
             sep = (mprGetBufLength(hp->requestContent) > 0) ? "&" : "";
             if (prefix) {
                 newKey = mprStrcat(hp, -1, prefix, ".", key, NULL);
@@ -27202,7 +27205,8 @@ static EjsObj *endsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function format(...args): String
 
-    Format:         %[modifier][width][precision][bits][type]
+    Format:         %[modifier][width][precision][type]
+    Modifiers:      +- #,
  */
 static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
@@ -27210,7 +27214,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     EjsString   *result;
     EjsObj      *value;
     char        *buf;
-    char        fmt[16];
+    char        fmt[32];
     int         c, i, len, nextArg, start, kind, last;
 
     mprAssert(argc == 1 && ejsIsArray(argv[0]));
@@ -27256,7 +27260,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
         if (strchr("cdefginopsSuxX", kind)) {
             len = i - start + 1;
-            mprMemcpy(fmt, sizeof(fmt), &sp->value[start], len);
+            mprMemcpy(fmt, sizeof(fmt) - 4, &sp->value[start], len);
             fmt[len] = '\0';
 
             if (nextArg < args->length) {
@@ -27268,7 +27272,8 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             switch (kind) {
             case 'd': case 'i': case 'o': case 'u':
                 value = (EjsObj*) ejsToNumber(ejs, value);
-                buf = mprAsprintf(ejs, -1, fmt, (int) ejsGetNumber(ejs, value));
+                strcpy(&fmt[len - 1], ".0f");
+                buf = mprAsprintf(ejs, -1, fmt, ejsGetNumber(ejs, value));
                 break;
 
             case 'e': case 'g': case 'f':
@@ -27927,7 +27932,7 @@ static EjsObj *searchString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString       *result;
-    int             start, end, step, i, j;
+    int             start, end, step, i, j, size;
 
     mprAssert(1 <= argc && argc <= 3);
 
@@ -27963,7 +27968,8 @@ static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     if (step == 0) {
         step = 1;
     }
-    result = ejsCreateBareString(ejs, (end - start) / abs(step));
+    size = (start < end) ? end - start : start - end;
+    result = ejsCreateBareString(ejs, size / abs(step) + 1);
     if (result == 0) {
         return 0;
     }
@@ -27973,7 +27979,7 @@ static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         }
 
     } else {
-        for (i = end - 1, j = 0; i >= start; i += step) {
+        for (i = start, j = 0; i > end; i += step) {
             result->value[j++] = sp->value[i];
         }
     }
@@ -35680,21 +35686,27 @@ void ejsConfigureHttpServerType(Ejs *ejs)
 static void defineParam(Ejs *ejs, EjsObj *params, cchar *key, cchar *value);
 
  
-static void defineParam(Ejs *ejs, EjsObj *params, cchar *key, cchar *value)
+static void defineParam(Ejs *ejs, EjsObj *params, cchar *key, cchar *svalue)
 {
     EjsName     qname;
-    EjsObj      *vp;
+    EjsObj      *vp, *value;
     char        *subkey, *end;
     int         slotNum;
 
     mprAssert(params);
+
+    if (*svalue == '[') {
+        value = ejsDeserialize(ejs, ejsCreateString(ejs, svalue));
+    } else {
+        value = (EjsVar*) ejsCreateString(ejs, svalue);
+    }
 
     /*  
         name.name.name
      */
     if (strchr(key, '.') == 0) {
         ejsName(&qname, "", key);
-        ejsSetPropertyByName(ejs, params, &qname, (EjsObj*) ejsCreateString(ejs, value));
+        ejsSetPropertyByName(ejs, params, &qname, value);
 
     } else {
         subkey = mprStrdup(ejs, key);
@@ -35710,7 +35722,7 @@ static void defineParam(Ejs *ejs, EjsObj *params, cchar *key, cchar *value)
         }
         mprAssert(params);
         ejsName(&qname, "", subkey);
-        ejsSetPropertyByName(ejs, params, &qname, (EjsObj*) ejsCreateString(ejs, value));
+        ejsSetPropertyByName(ejs, params, &qname, value);
     }
 }
 
@@ -37000,7 +37012,7 @@ int ejs_web_Init(MprCtx ctx)
 
 static void     addGlobalProperty(EcCompiler *cp, EcNode *np, EjsName *qname);
 static void     addScope(EcCompiler *cp, EjsBlock *block);
-static void     allocName(Ejs *ejs, EjsName *qname);
+static EjsName  *allocName(Ejs *ejs, EjsName *qname);
 static void     astBinaryOp(EcCompiler *cp, EcNode *np);
 static void     astBindName(EcCompiler *cp, EcNode *np);
 static void     astBlock(EcCompiler *cp, EcNode *np);
@@ -37634,7 +37646,7 @@ static void astClass(EcCompiler *cp, EcNode *np)
 
     ejs = cp->ejs;
     state = cp->state;
-    cp->classState = state;
+    state->classState = state;
     type = np->klass.ref;
     
     if (np->klass.implements) {
@@ -37665,7 +37677,13 @@ static void astClass(EcCompiler *cp, EcNode *np)
     state->currentClassNode = np;
     state->currentClassName = type->qname;
     state->inClass = 1;
+    
+    //  MOB -- need a way to zero things that should not be inherited
     state->inFunction = 0;
+    state->inMethod = 0;
+    state->blockIsMethod = 0;
+    state->currentFunction = 0;
+    state->currentFunctionNode = 0;
 
     /*
         Add the type to the scope chain and the static initializer if present. Use push frame to make it eaiser to
@@ -39741,7 +39759,7 @@ static void astVar(EcCompiler *cp, EcNode *np, int varKind, EjsObj *value)
     if (state->inClass && !(np->attributes & EJS_PROP_STATIC)) {
         if (state->inMethod) {
             state->instanceCode = 1;
-        } else if (cp->classState->blockNestCount == (cp->state->blockNestCount - 1)) {
+        } else if (state->classState->blockNestCount == (state->blockNestCount - 1)) {
             /*
                 Top level var declaration without a static attribute
              */
@@ -40838,9 +40856,7 @@ static EjsNamespace *createHoistNamespace(EcCompiler *cp, EjsObj *obj)
     char            *spaceName;
 
     ejs = cp->ejs;
-
-    //  MOB - is this the right context
-    spaceName = mprAsprintf(cp, -1, "-hoisted-%d", ejsGetPropertyCount(ejs, obj));
+    spaceName = mprAsprintf(ejs, -1, "-hoisted-%d", ejsGetPropertyCount(ejs, obj));
     namespace = ejsCreateNamespace(ejs, spaceName, spaceName);
 
     letBlockNode = cp->state->letBlockNode;
@@ -40865,7 +40881,7 @@ static EjsObj *getBlockForDefinition(EcCompiler *cp, EcNode *np, EjsObj *block, 
 
     if (ejsIsType(block) && state->inClass) {
         if (!(attributes & EJS_PROP_STATIC) && !state->inFunction &&
-                cp->state->blockNestCount <= (cp->classState->blockNestCount + 1)) {
+                state->blockNestCount <= (state->classState->blockNestCount + 1)) {
             /*
                 Use the prototype object if not static, outside a function and in the top level block.
              */
@@ -41056,10 +41072,11 @@ int ecLookupVar(EcCompiler *cp, EjsObj *obj, EjsName *name)
 }
 
 
-static void allocName(Ejs *ejs, EjsName *qname)
+static EjsName *allocName(Ejs *ejs, EjsName *qname)
 {
     qname->space = mprStrdup(ejs, qname->space);
     qname->name = mprStrdup(ejs, qname->name);
+    return qname;
 }
 
 /*
@@ -54333,7 +54350,7 @@ static EcNode *parseReturnStatement(EcCompiler *cp)
 
     } else {
         if (cp->state->currentFunctionNode == 0) {
-            np = parseError(cp, "Return statemeout outside function");
+            np = parseError(cp, "Return statement outside function");
 
         } else {
             np = createNode(cp, N_RETURN);
@@ -55673,8 +55690,7 @@ static EcNode *parseFunctionDefinition(EcCompiler *cp, EcNode *attributeNode)
                         return LEAVE(cp, 0);
                     }
                 }
-                if (state->inClass && !state->inFunction && 
-                        cp->classState->blockNestCount == (cp->state->blockNestCount - 1)) {
+                if (state->inClass && !state->inFunction && state->classState->blockNestCount == (state->blockNestCount - 1)) {
                     np->function.isMethod = 1;
                 }
             }
@@ -56405,14 +56421,13 @@ static EcNode *parseClassDefinition(EcCompiler *cp, EcNode *attributeNode)
     np = createNode(cp, N_CLASS);
     state->currentClassNode = np;
     state->topVarBlockNode = np;
-    cp->classState = state;
+    state->classState = state;
     state->defaultNamespace = NULL;
 
     classNameNode = parseClassName(cp);
     if (classNameNode == 0) {
         return LEAVE(cp, 0);
     }
-
     applyAttributes(cp, np, attributeNode, 0);
     setNodeDoc(cp, np);
 
@@ -56431,7 +56446,6 @@ static EcNode *parseClassDefinition(EcCompiler *cp, EcNode *attributeNode)
             mprStealBlock(np, np->klass.implements);
         }
     }
-
     if (peekToken(cp) != T_LBRACE) {
         getToken(cp);
         return LEAVE(cp, expected(cp, "{"));
@@ -56644,7 +56658,7 @@ static EcNode *parseInterfaceDefinition(EcCompiler *cp, EcNode *attributeNode)
     np = createNode(cp, N_CLASS);
     state->currentClassNode = np;
     state->topVarBlockNode = np;
-    cp->classState = state;
+    state->classState = state;
     state->defaultNamespace = NULL;
     
     classNameNode = parseClassName(cp);
@@ -58751,6 +58765,7 @@ int ecPushState(EcCompiler *cp, EcState *newState)
         newState->namespace = prev->namespace;
         newState->defaultNamespace = prev->defaultNamespace;
         newState->breakState = prev->breakState;
+        newState->classState = prev->classState;
         newState->inInterface = prev->inInterface;
 
     } else {

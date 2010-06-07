@@ -272,7 +272,7 @@ static int patch(char *path)
                 patched++;
 
                 if (level == 0 && 0) {
-                    fwrite(dsiBuf, 1, rc, ofp);
+                    rc = fwrite(dsiBuf, 1, rc, ofp);
 
                 } else {
                     for (cp = dsiBuf; *cp; ) {

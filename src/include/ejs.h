@@ -5560,6 +5560,7 @@ typedef struct EcState {
     struct EcState  *prev;                  /* State stack */
     struct EcState  *prevBlockState;        /* Block state stack */
     struct EcState  *breakState;            /* State for breakable blocks */
+    struct EcState  *classState;            /* State for current class */
     int             blockNestCount;         /* Count of blocks encountered. Used by ejs shell */
     int             stateLevel;             /* State level counter */
 } EcState;
@@ -5595,7 +5596,10 @@ typedef struct EcCompiler {
 #endif
 
     EcState     *fileState;                 /* Top level state for the file */
+#if UNUSED
     EcState     *classState;                /* State for the current class - used in parse */
+#endif
+//  MOB -- these are risky and should be moved into state. A nested block, directive class etc willl modify
     EcState     *directiveState;            /* State for the current directive - used in parse and CodeGen */
     EcState     *blockState;                /* State for the current block */
 
