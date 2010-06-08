@@ -32,14 +32,14 @@ package-only:
 	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
 
 test-install-package:
-    name="$(BASE_NAME).tar.tar.gz" ; \
-    cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
-    priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
+	name="$(BASE_NAME).tar.tar.gz" ; \
+	cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+	priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
 
 test-uninstall-package:
-    name="$(BASE_NAME).tar.tar.gz" ; \
-    cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
-    priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
+	name="$(BASE_NAME).tar.tar.gz" ; \
+	cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+	priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 
 test-install-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \

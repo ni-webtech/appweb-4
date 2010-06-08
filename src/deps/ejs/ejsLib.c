@@ -18046,7 +18046,7 @@ static EjsObj *error(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsString   *s;
     EjsObj      *args, *vp;
-    int         i, count;
+    int         rc, i, count;
 
     mprAssert(argc == 1 && ejsIsArray(argv[0]));
 
@@ -18063,11 +18063,11 @@ static EjsObj *error(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
             }
             if (vp) {
                 s = (EjsString*) vp;
-                write(2, s->value, s->length);
+                rc = write(2, s->value, s->length);
             }
         }
     }
-    write(2, "\n", 1);
+    rc = write(2, "\n", 1);
     return 0;
 }
 
@@ -18316,7 +18316,7 @@ static EjsObj *printLine(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     EjsString   *s;
     EjsObj      *args, *vp;
     char        *cp;
-    int         i, count;
+    int         i, count, rc;
 
     mprAssert(argc == 1 && ejsIsArray(argv[0]));
 
@@ -18337,15 +18337,15 @@ static EjsObj *printLine(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
                 if (s->length > 0 && s->value[0] == '"') {
                     cp = mprStrdup(ejs, s->value);
                     // cp = mprStrTrim(tmp, "\"");
-                    write(1, cp, strlen(cp));
+                    rc = write(1, cp, strlen(cp));
                     mprFree(cp);
                 } else {
-                    write(1, s->value, s->length);
+                    rc = write(1, s->value, s->length);
                 }
             }
         }
     }
-    write(1, "\n", 1);
+    rc = write(1, "\n", 1);
     return 0;
 }
 

@@ -104,6 +104,9 @@ $(BLD_TOOLS_DIR)/edep$(BLD_EXE):
 install uninstall install-% uninstall-%:
 	@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
 
+test-install% test-uninstall-%:
+	@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
+
 checkInstalled: 
 	@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
 

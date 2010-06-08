@@ -10969,7 +10969,7 @@ MprList *mprGetPathFiles(MprCtx ctx, cchar *dir, bool enumDirs)
 
             /* dp->lastModified = (uint) findData.ftLastWriteTime.dwLowDateTime; */
 
-            if (mprSprintf(pbuf, sizeof(pbuf), "%s%c%s", dir, sep, dp->name) < 0) {
+            if (mprSprintf(ctx, pbuf, sizeof(pbuf), "%s%c%s", dir, sep, dp->name) < 0) {
                 dp->lastModified = 0;
             } else {
                 mprGetPathInfo(ctx, pbuf, &fileInfo);

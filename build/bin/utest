@@ -146,7 +146,7 @@ class Test {
                 if (args[i].startsWith("-")) {
                     usage()
                 }
-                filters.append(new RegExp("^" + args[i].trimEnd(".tst") + "[\\.\/]"))
+                filters.append(new RegExp("^" + args[i].trimEnd(".tst") + "[\\.\/\\\\]"))
                 break
             }
         }

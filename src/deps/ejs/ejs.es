@@ -6241,7 +6241,7 @@ module ejs {
             @param stream New output stream for the logger
          */
         function set outStream(stream: Stream): void {
-            _outStream = outStream
+            _outStream = stream
         }
 
         /** 

@@ -14,11 +14,10 @@ path="${INS_DIR}${NAME}"
 
 ${BIN}/linkup Install
 
-port=`cat !!ORIG_BLD_CFG_PREFIX!!/appweb.conf | grep Listen | awk '{print $2 }'`
-
-#
-#   Delay to allow appweb to start
-#
-(sleep 5 ; open "http://127.0.0.1:${port}/index.html" )
+if [ -z "$COMMAND_LINE_INSTALL" ] ; then
+    port=`cat !!ORIG_BLD_CFG_PREFIX!!/appweb.conf | grep Listen | awk '{print $2 }'`
+    sleep 5 
+    open "http://127.0.0.1:${port}/index.html"
+fi
 
 exit 0
