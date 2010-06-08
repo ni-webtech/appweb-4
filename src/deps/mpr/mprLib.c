@@ -10013,9 +10013,8 @@ void mprStaticError(MprCtx ctx, cchar *fmt, ...)
     char        buf[MPR_MAX_STRING];
 
     va_start(args, fmt);
-    mprVsprintf(buf, sizeof(buf), fmt, args);
+    mprVsprintf(ctx, buf, sizeof(buf), fmt, args);
     va_end(args);
-
     logOutput(ctx, MPR_ERROR_MSG | MPR_ERROR_SRC, 0, buf);
 }
 
@@ -10028,7 +10027,11 @@ void mprStaticAssert(cchar *loc, cchar *msg)
 #if BLD_DEBUG
     char    buf[MPR_MAX_STRING];
 
-    mprSprintf(buf, sizeof(buf), "Assertion %s, failed at %s\n", msg, loc);
+#if BLD_UNIX_LIKE
+    snprintf(buf, sizeof(buf), "Assertion %s, failed at %s\n", msg, loc);
+#else
+    sprintf(buf, "Assertion %s, failed at %s\n", msg, loc);
+#endif
     
 #if BLD_UNIX_LIKE || VXWORKS
     write(2, buf, strlen(buf));
@@ -12644,7 +12647,7 @@ int mprStaticPrintf(MprCtx ctx, cchar *fmt, ...)
     fs = mprLookupFileSystem(ctx, "/");
 
     va_start(ap, fmt);
-    sprintfCore(NULL, buf, MPR_MAX_STRING, fmt, ap);
+    sprintfCore(ctx, buf, MPR_MAX_STRING, fmt, ap);
     va_end(ap);
     return mprWrite(fs->stdOutput, buf, strlen(buf));
 }
@@ -12662,13 +12665,13 @@ int mprStaticPrintfError(MprCtx ctx, cchar *fmt, ...)
     fs = mprLookupFileSystem(ctx, "/");
 
     va_start(ap, fmt);
-    sprintfCore(NULL, buf, MPR_MAX_STRING, fmt, ap);
+    sprintfCore(ctx, buf, MPR_MAX_STRING, fmt, ap);
     va_end(ap);
     return mprWrite(fs->stdError, buf, strlen(buf));
 }
 
 
-char *mprSprintf(char *buf, int bufsize, cchar *fmt, ...)
+char *mprSprintf(MprCtx ctx, char *buf, int bufsize, cchar *fmt, ...)
 {
     va_list     ap;
     char        *result;
@@ -12678,19 +12681,19 @@ char *mprSprintf(char *buf, int bufsize, cchar *fmt, ...)
     mprAssert(bufsize > 0);
 
     va_start(ap, fmt);
-    result = sprintfCore(NULL, buf, bufsize, fmt, ap);
+    result = sprintfCore(ctx, buf, bufsize, fmt, ap);
     va_end(ap);
     return result;
 }
 
 
-char *mprVsprintf(char *buf, int bufsize, cchar *fmt, va_list arg)
+char *mprVsprintf(MprCtx ctx, char *buf, int bufsize, cchar *fmt, va_list arg)
 {
     mprAssert(buf);
     mprAssert(fmt);
     mprAssert(bufsize > 0);
 
-    return sprintfCore(NULL, buf, bufsize, fmt, arg);
+    return sprintfCore(ctx, buf, bufsize, fmt, arg);
 }
 
 
@@ -16708,12 +16711,12 @@ static int loadModule(MprTestService *sp, cchar *fileName)
         return 0;
     }
                 
-    mprSprintf(entry, sizeof(entry), "%sInit", base);
+    mprSprintf(sp, entry, sizeof(entry), "%sInit", base);
 
     if (fileName[0] == '/' || (*fileName && fileName[1] == ':')) {
-        mprSprintf(path, sizeof(path), "%s%s", fileName, BLD_BUILD_SHOBJ);
+        mprSprintf(sp, path, sizeof(path), "%s%s", fileName, BLD_BUILD_SHOBJ);
     } else {
-        mprSprintf(path, sizeof(path), "./%s%s", fileName, BLD_BUILD_SHOBJ);
+        mprSprintf(sp, path, sizeof(path), "./%s%s", fileName, BLD_BUILD_SHOBJ);
     }
     if (mprLoadModule(sp, path, entry, (void*) sp) == 0) {
         mprError(sp, "Can't load module %s", path);
@@ -16754,7 +16757,7 @@ int mprRunTests(MprTestService *sp)
         MprList     *lp;
         char        tName[64];
 
-        mprSprintf(tName, sizeof(tName), "test.%d", i);
+        mprSprintf(sp, tName, sizeof(tName), "test.%d", i);
 
         lp = copyGroups(sp, sp->groups);
         if (lp == 0) {
@@ -17198,7 +17201,7 @@ static char *getErrorMessage(MprTestGroup *gp)
     errorMsg = mprStrdup(gp, "");
     fp = mprGetNextItem(gp->failures, &nextItem);
     while (fp) {
-        mprSprintf(msg, sizeof(msg), "Failure in %s\nAssertion: \"%s\"\n", fp->loc, fp->message);
+        mprSprintf(gp, msg, sizeof(msg), "Failure in %s\nAssertion: \"%s\"\n", fp->loc, fp->message);
         if ((errorMsg = mprStrcat(gp, -1, msg, NULL)) == NULL) {
             break;
         }
@@ -18280,7 +18283,7 @@ static MprWorker *createWorker(MprWorkerService *ws, int stackSize)
     worker->workerService = ws;
     worker->idleCond = mprCreateCond(worker);
 
-    mprSprintf(name, sizeof(name), "worker.%u", getNextThreadNum(ws));
+    mprSprintf(ws, name, sizeof(name), "worker.%u", getNextThreadNum(ws));
     worker->thread = mprCreateThread(ws, name, (MprThreadProc) workerMain, (void*) worker, 0);
     return worker;
 }
@@ -19160,7 +19163,7 @@ char *mprFormatTime(MprCtx ctx, cchar *fmt, struct tm *tp)
             case '+':
                 if (tp->tm_mday < 10) {
                     /* Some platforms don't support 'e' so avoid it here. Put a double space before %d */
-                    mprSprintf(dp, size, "%s  %d %s", "a %b", tp->tm_mday, "%H:%M:%S %Z %Y");
+                    mprSprintf(ctx, dp, size, "%s  %d %s", "a %b", tp->tm_mday, "%H:%M:%S %Z %Y");
                 } else {
                     strcpy(dp, "a %b %d %H:%M:%S %Z %Y");
                 }
@@ -19309,7 +19312,7 @@ char *mprFormatTime(MprCtx ctx, cchar *fmt, struct tm *tp)
                 if (value < 0) {
                     value = -value;
                 }
-                mprSprintf(dp, size, "%s%02d%02d", sign, value / 60, value % 60);
+                mprSprintf(ctx, dp, size, "%s%02d%02d", sign, value / 60, value % 60);
                 dp += strlen(dp);
                 cp++;
                 break;

@@ -238,12 +238,12 @@ static cchar    *demangle(cchar *name);
 static void     fixupDoc(Ejs *ejs, EjsDoc *doc);
 static char     *fmtAccessors(int attributes);
 static char     *fmtAttributes(int attributes, int showAccessors);
-static char     *fmtClassUrl(EjsName qname);
-static char     *fmtDeclaration(EjsName qname);
+static char     *fmtClassUrl(MprCtx ctx, EjsName qname);
+static char     *fmtDeclaration(MprCtx ctx, EjsName qname);
 static char     *fmtNamespace(EjsName qname);
-static char     *fmtSpace(EjsName qname);
-static char     *fmtType(EjsName qname);
-static char     *fmtTypeReference(EjsName qname);
+static char     *fmtSpace(MprCtx ctx, EjsName qname);
+static char     *fmtType(MprCtx ctx, EjsName qname);
+static char     *fmtTypeReference(MprCtx ctx, EjsName qname);
 static char     *fmtModule(cchar *name);
 static char     *formatExample(Ejs *ejs, char *example);
 static int      generateMethodTable(EjsMod *mp, MprList *methods, EjsObj *obj);
@@ -577,7 +577,7 @@ static int generateNamespaceClassTableEntries(EjsMod *mp, cchar *namespace)
     for (next = 0; (crec = (ClassRec*) mprGetNextItem(classes, &next)) != 0; ) {
         qname = crec->qname;
         trait = crec->trait;
-        fmtName = fmtType(crec->qname);
+        fmtName = fmtType(mp, crec->qname);
         out(mp, "   <tr><td><a href='%s' target='content'>%s</a></td>", getFilename(fmtName), qname.name);
         if (crec->block == ejs->globalBlock && mp->firstGlobal == ejsGetPropertyCount(ejs, ejs->global)) {
             continue;
@@ -694,7 +694,7 @@ static void generateClassList(EjsMod *mp, cchar *namespace)
         Create the header and auto-load a namespace overview. We do this here because the class list is loaded
         when the user selects a namespace.
      */
-    mprSprintf(script, sizeof(script), "parent.parent.content.location = \'%s.html\';", namespace);
+    mprSprintf(mp, script, sizeof(script), "parent.parent.content.location = \'%s.html\';", namespace);
     generateHtmlHeader(mp, script, "%s Class List", namespace);
 
     out(mp, "<body>\n");
@@ -713,7 +713,7 @@ static void generateClassList(EjsMod *mp, cchar *namespace)
         /*
             Strip namespace portion
          */
-        fmtName = fmtType(crec->qname);
+        fmtName = fmtType(mp, crec->qname);
         if ((cp = strrchr(fmtName, '.')) != 0) {
             className = ++cp;
         } else {
@@ -880,7 +880,7 @@ static void generateClassPages(EjsMod *mp)
          */
         mprFree(mp->file);
         mp->file = 0;
-        mp->path = mprJoinPath(mp, mp->docDir, getFilename(fmtType(type->qname)));
+        mp->path = mprJoinPath(mp, mp->docDir, getFilename(fmtType(mp, type->qname)));
         if (mp->path == 0) {
             return;
         }
@@ -903,13 +903,13 @@ static void generateClassPages(EjsMod *mp)
     doc->returns = doc->example = doc->description = "";
     doc->trait = trait;
 
-    mprSprintf(key, sizeof(key), "%Lx %d", PTOL(0), 0);
+    mprSprintf(mp, key, sizeof(key), "%Lx %d", PTOL(0), 0);
     mprAddHash(ejs->doc, key, doc);
 
     slotNum = ejsGetPropertyCount(ejs, ejs->global);
 
     ejsName(&qname, EJS_EJS_NAMESPACE, EJS_GLOBAL);
-    mp->file = createFile(mp, getFilename(fmtType(qname)));
+    mp->file = createFile(mp, getFilename(fmtType(mp, qname)));
     if (mp->file == 0) {
         return;
     }
@@ -1065,7 +1065,7 @@ static void generateClassPageHeader(EjsMod *mp, EjsObj *obj, EjsName *qname, Ejs
         if (type && type->baseType) {
             out(mp, "   <tr><td><strong>Inheritance</strong></td><td>%s", qname->name);
             for (t = type->baseType; t; t = t->baseType) {
-                out(mp, " <img src='images/inherit.gif' alt='inherit'/> %s", fmtTypeReference(t->qname));
+                out(mp, " <img src='images/inherit.gif' alt='inherit'/> %s", fmtTypeReference(mp, t->qname));
             }
         }
 
@@ -1176,7 +1176,7 @@ static void generatePropertyTable(EjsMod *mp, EjsObj *obj)
         count = getPropertyCount(ejs, (EjsObj*) type->baseType);
         if (count > 0) {
             out(mp, "<p class='inheritedLink'><a href='%s#Properties'><i>Inherited Properties</i></a></p>\n\n",
-                fmtClassUrl(type->baseType->qname));
+                fmtClassUrl(type, type->baseType->qname));
         }
     }
     out(mp, "<hr />\n");
@@ -1336,7 +1336,7 @@ static int generateClassPropertyTableEntries(EjsMod *mp, EjsObj *obj, int numInh
                 fmtAttributes(attributes, 1), qname.name);
         }
         if (trait->type) {
-            out(mp, "<td>%s</td>", fmtTypeReference(trait->type->qname));
+            out(mp, "<td>%s</td>", fmtTypeReference(mp, trait->type->qname));
         } else {
             out(mp, "<td>&nbsp;</td>");
         }
@@ -1403,11 +1403,11 @@ static int generateClassGetterTableEntries(EjsMod *mp, EjsObj *obj, int numInher
         }
 #endif
         if (fun->resultType) {
-            tname = fmtType(fun->resultType->qname);
+            tname = fmtType(mp, fun->resultType->qname);
             if (mprStrcmpAnyCase(tname, "intrinsic::Void") == 0) {
                 out(mp, "<td>&nbsp;</td>");
             } else {
-                out(mp, "<td>%s</td>", fmtTypeReference(fun->resultType->qname));
+                out(mp, "<td>%s</td>", fmtTypeReference(mp, fun->resultType->qname));
             }
         } else {
             out(mp, "<td>&nbsp;</td>");
@@ -1538,9 +1538,9 @@ static int generateMethodTable(EjsMod *mp, MprList *methods, EjsObj *obj)
             argName = ejsGetPropertyName(ejs, fun->activation, i);
             argTrait = ejsGetTrait(ejs, fun->activation, i);
             if (argTrait->type) {
-                out(mp, "%s: %s", fmtDeclaration(argName), fmtTypeReference(argTrait->type->qname));
+                out(mp, "%s: %s", fmtDeclaration(mp, argName), fmtTypeReference(mp, argTrait->type->qname));
             } else {
-                out(mp, "%s", fmtDeclaration(argName));
+                out(mp, "%s", fmtDeclaration(mp, argName));
             }
             if (doc) {
                 defaultValue = getDefault(doc, argName.name);
@@ -1555,7 +1555,7 @@ static int generateMethodTable(EjsMod *mp, MprList *methods, EjsObj *obj)
         out(mp, ")");
 
         if (fun->resultType) {
-            out(mp, ": %s", fmtTypeReference(fun->resultType->qname));
+            out(mp, ": %s", fmtTypeReference(mp, fun->resultType->qname));
         }
         out(mp, "</tr>");
 
@@ -1570,7 +1570,7 @@ static int generateMethodTable(EjsMod *mp, MprList *methods, EjsObj *obj)
     out(mp, "</table>\n\n");
     if (type && type->baseType) {
         out(mp, "<p class='inheritedLink'><a href='%s#Methods'><i>Inherited Methods</i></a></p>\n\n",
-            fmtClassUrl(type->baseType->qname));
+            fmtClassUrl(type, type->baseType->qname));
     }
     out(mp, "<hr />\n");
     return count;
@@ -1709,7 +1709,7 @@ static void generateMethod(EjsMod *mp, EjsObj *obj, int slotNum)
         accessorSep = (trait->attributes & (EJS_TRAIT_GETTER | EJS_TRAIT_SETTER)) ? " ": "";
         spaceSep = qname.space[0] ? " ": "";
         out(mp, "<div class='api'>\n");
-        out(mp, "<div class='apiSig'>%s %s%s %s%s %s(", fmtAttributes(trait->attributes, 0), spaceSep, fmtSpace(qname), 
+        out(mp, "<div class='apiSig'>%s %s%s %s%s %s(", fmtAttributes(trait->attributes, 0), spaceSep, fmtSpace(mp, qname), 
             accessorSep, fmtAccessors(trait->attributes), demangle(qname.name));
     }
 
@@ -1717,9 +1717,9 @@ static void generateMethod(EjsMod *mp, EjsObj *obj, int slotNum)
         argName = ejsGetPropertyName(ejs, fun->activation, i);
         argTrait = ejsGetTrait(ejs, fun->activation, i);
         if (argTrait->type) {
-            out(mp, "%s: %s", fmtDeclaration(argName), fmtTypeReference(argTrait->type->qname));
+            out(mp, "%s: %s", fmtDeclaration(mp, argName), fmtTypeReference(mp, argTrait->type->qname));
         } else {
-            out(mp, "%s", fmtDeclaration(argName));
+            out(mp, "%s", fmtDeclaration(mp, argName));
         }
         if (doc) {
             defaultValue = getDefault(doc, argName.name);
@@ -1733,7 +1733,7 @@ static void generateMethod(EjsMod *mp, EjsObj *obj, int slotNum)
     }
     out(mp, ")");
     if (fun->resultType) {
-        out(mp, ": %s", fmtTypeReference(fun->resultType->qname));
+        out(mp, ": %s", fmtTypeReference(mp, fun->resultType->qname));
     }
     out(mp, "\n</div>\n");
 
@@ -1761,9 +1761,9 @@ static void generateMethod(EjsMod *mp, EjsObj *obj, int slotNum)
                     argTrait = ejsGetTrait(ejs, fun->activation, i);
                     out(mp, "<tr class='param'><td class='param'>");
                     if (argTrait->type) {
-                        out(mp, "%s: %s ", fmtDeclaration(argName), fmtTypeReference(argTrait->type->qname));
+                        out(mp, "%s: %s ", fmtDeclaration(mp, argName), fmtTypeReference(mp, argTrait->type->qname));
                     } else {
-                        out(mp, "%s ", fmtDeclaration(argName));
+                        out(mp, "%s ", fmtDeclaration(mp, argName));
                     }
                     out(mp, "</td><td>%s", param->value);
                     if (defaultValue) {
@@ -1815,7 +1815,7 @@ static void generateMethod(EjsMod *mp, EjsObj *obj, int slotNum)
                     continue;
                 }
                 throwName = lookup.name;
-                out(mp, "<a href='%s'>%s</a>: %s%s\n", getFilename(fmtType(throwName)), thrown->key,
+                out(mp, "<a href='%s'>%s</a>: %s%s\n", getFilename(fmtType(mp, throwName)), thrown->key,
                     thrown->value, (count == next) ? "" : ", ");
             }
             out(mp, "</dd>\n");
@@ -2349,9 +2349,10 @@ static char *wikiFormat(Ejs *ejs, char *start)
                 }
                 qname = lookup.name;
                 if (property) {
-                    mprPutFmtToBuf(buf, "<a href='%s#%s'>%s.%s</a>", getFilename(fmtType(qname)), property, klass, property);
+                    mprPutFmtToBuf(buf, "<a href='%s#%s'>%s.%s</a>", getFilename(fmtType(ejs, qname)), 
+                        property, klass, property);
                 } else {
-                    mprPutFmtToBuf(buf, "<a href='%s'>%s</a>", getFilename(fmtType(qname)), klass);
+                    mprPutFmtToBuf(buf, "<a href='%s'>%s</a>", getFilename(fmtType(ejs, qname)), klass);
                 }
             } else {
                 mprPutFmtToBuf(buf, "<a href='#%s'>%s</a>", property, property);
@@ -2443,9 +2444,9 @@ static char *fmtModule(cchar *name)
 }
 
 
-static char *fmtClassUrl(EjsName qname)
+static char *fmtClassUrl(MprCtx ctx, EjsName qname)
 {
-    return getFilename(fmtType(qname));
+    return getFilename(fmtType(ctx, qname));
 }
 
 
@@ -2486,7 +2487,7 @@ static char *fmtNamespace(EjsName qname)
 }
 
 
-static char *fmtType(EjsName qname)
+static char *fmtType(MprCtx ctx, EjsName qname)
 {
     static char buf[MPR_MAX_STRING];
     char        *namespace;
@@ -2496,15 +2497,14 @@ static char *fmtType(EjsName qname)
     if (strcmp(namespace, EJS_PUBLIC_NAMESPACE) == 0) {
         *namespace = '\0';
     }
-
     if (*namespace) {
         if (*namespace) {
-            mprSprintf(buf, sizeof(buf), "%s::%s", namespace, qname.name);
+            mprSprintf(ctx, buf, sizeof(buf), "%s::%s", namespace, qname.name);
         } else {
-            mprSprintf(buf, sizeof(buf), "%s", qname.name);
+            mprSprintf(ctx, buf, sizeof(buf), "%s", qname.name);
         }
     } else {
-        mprSprintf(buf, sizeof(buf), "%s", qname.name);
+        mprSprintf(ctx, buf, sizeof(buf), "%s", qname.name);
     }
     return buf;
 }
@@ -2541,18 +2541,18 @@ static char *getFilename(cchar *name)
 }
 
 
-static char *fmtTypeReference(EjsName qname)
+static char *fmtTypeReference(MprCtx ctx, EjsName qname)
 {
     static char buf[MPR_MAX_STRING];
     char        *typeName;
 
-    typeName = fmtType(qname);
-    mprSprintf(buf, sizeof(buf), "<a href='%s'>%s</a>", getFilename(typeName), qname.name);
+    typeName = fmtType(ctx, qname);
+    mprSprintf(ctx, buf, sizeof(buf), "<a href='%s'>%s</a>", getFilename(typeName), qname.name);
     return buf;
 }
 
 
-static char *fmtSpace(EjsName qname)
+static char *fmtSpace(MprCtx ctx, EjsName qname)
 {
     static char buf[MPR_MAX_STRING];
     char        *namespace;
@@ -2560,13 +2560,13 @@ static char *fmtSpace(EjsName qname)
     namespace = fmtNamespace(qname);
 
     if (namespace[0]) {
-        mprSprintf(buf, sizeof(buf), "%s", qname.space);
+        mprSprintf(ctx, buf, sizeof(buf), "%s", qname.space);
     }
     return buf;
 }
 
 
-static char *fmtDeclaration(EjsName qname)
+static char *fmtDeclaration(MprCtx ctx, EjsName qname)
 {
     static char buf[MPR_MAX_STRING];
     char        *namespace;
@@ -2574,9 +2574,9 @@ static char *fmtDeclaration(EjsName qname)
     namespace = fmtNamespace(qname);
 
     if (namespace[0]) {
-        mprSprintf(buf, sizeof(buf), "%s %s", qname.space, demangle(qname.name));
+        mprSprintf(ctx, buf, sizeof(buf), "%s %s", qname.space, demangle(qname.name));
     } else {
-        mprSprintf(buf, sizeof(buf), "%s", demangle(qname.name));
+        mprSprintf(ctx, buf, sizeof(buf), "%s", demangle(qname.name));
     }
     return buf;
 }
@@ -2738,7 +2738,7 @@ static EjsDoc *getDoc(Ejs *ejs, void *vp, int slotNum)
 {
     char        key[32];
 
-    mprSprintf(key, sizeof(key), "%Lx %d", PTOL(vp), slotNum);
+    mprSprintf(ejs, key, sizeof(key), "%Lx %d", PTOL(vp), slotNum);
     return (EjsDoc*) mprLookupHash(ejs->doc, key);
 }
 
@@ -5017,69 +5017,69 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
 
         case EBC_BYTE:
             ival = getByte(mp);
-            mprSprintf(bufp, buflen,  "<%d> ", ival);
+            mprSprintf(mp, bufp, buflen,  "<%d> ", ival);
             break;
 
         case EBC_DOUBLE:
             dval = getDouble(mp);
-            mprSprintf(bufp, buflen,  "<%f> ", dval);
+            mprSprintf(mp, bufp, buflen,  "<%f> ", dval);
             break;
 
         case EBC_ARGC:
         case EBC_ARGC2:
             ival = (int) getNum(mp);
-            mprSprintf(bufp, buflen,  "<argc: %d> ", ival);
+            mprSprintf(mp, bufp, buflen,  "<argc: %d> ", ival);
             break;
 
         case EBC_ARGC3:
             ival = (int) getNum(mp);
-            mprSprintf(bufp, buflen,  "<argc: %d> ", ival);
+            mprSprintf(mp, bufp, buflen,  "<argc: %d> ", ival);
             break;
 
         case EBC_NEW_OBJECT:
             ival = (int) getNum(mp);
-            mprSprintf(bufp, buflen,  "<argc: %d> <att: ", ival);
+            mprSprintf(mp, bufp, buflen,  "<argc: %d> <att: ", ival);
             bufp += strlen(bufp);
             for (j = 0; j < ival; j++) {
                 att = (int) getNum(mp);
-                mprSprintf(bufp, buflen,  "%d ", ival);
+                mprSprintf(mp, bufp, buflen,  "%d ", ival);
                 len = strlen(bufp);
                 bufp += len;
                 buflen -= len;
             }
-            mprSprintf(bufp, buflen,  ">", ival);
+            mprSprintf(mp, bufp, buflen,  ">", ival);
             *stackEffect -= (ival * 3);
             break;
 
         case EBC_SLOT:
             ival = (int) getNum(mp);
-            mprSprintf(bufp, buflen,  "<slot: %d> ", ival);
+            mprSprintf(mp, bufp, buflen,  "<slot: %d> ", ival);
             break;
 
         case EBC_NUM:
             ival = (int) getNum(mp);
-            mprSprintf(bufp, buflen,  "<%d> ", ival);
+            mprSprintf(mp, bufp, buflen,  "<%d> ", ival);
             break;
 
         case EBC_JMP8:
             ival = getByte(mp);
-            mprSprintf(bufp, buflen,  "<addr: %d> ", ((char) ival) + address + 1);
+            mprSprintf(mp, bufp, buflen,  "<addr: %d> ", ((char) ival) + address + 1);
             break;
 
         case EBC_JMP:
             ival = getWord(mp);
-            mprSprintf(bufp, buflen,  "<addr: %d> ", ival + address + 4);
+            mprSprintf(mp, bufp, buflen,  "<addr: %d> ", ival + address + 4);
             break;
 
         case EBC_INIT_DEFAULT8:
             numEntries = getByte(mp);
-            mprSprintf(bufp, buflen,  "<%d> ", numEntries);
+            mprSprintf(mp, bufp, buflen,  "<%d> ", numEntries);
             len = strlen(bufp);
             bufp += len;
             buflen -= len;
             for (j = 0; j < numEntries; j++) {
                 ival = getByte(mp);
-                mprSprintf(bufp, buflen,  "<%d> ", ival + 2);
+                mprSprintf(mp, bufp, buflen,  "<%d> ", ival + 2);
                 len = strlen(bufp);
                 bufp += len;
                 buflen -= len;
@@ -5088,13 +5088,13 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
 
         case EBC_INIT_DEFAULT:
             numEntries = getByte(mp);
-            mprSprintf(bufp, buflen,  "<%d> ", numEntries);
+            mprSprintf(mp, bufp, buflen,  "<%d> ", numEntries);
             len = strlen(bufp);
             bufp += len;
             buflen -= len;
             for (j = 0; j < numEntries; j++) {
                 ival = getWord(mp);
-                mprSprintf(bufp, buflen,  "<%d> ", ival + 2);
+                mprSprintf(mp, bufp, buflen,  "<%d> ", ival + 2);
                 len = strlen(bufp);
                 bufp += len;
                 buflen -= len;
@@ -5103,7 +5103,7 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
 
         case EBC_STRING:
             sval = getString(mp);
-            mprSprintf(bufp, buflen,  "<%s> ", sval);
+            mprSprintf(mp, bufp, buflen,  "<%s> ", sval);
             break;
 
         case EBC_GLOBAL:
@@ -5251,7 +5251,7 @@ static void interp(EjsMod *mp, EjsModule *module, EjsFunction *fun)
             if (!lastDebug) {
                 mprFprintf(mp->file, "\n");
             }
-            mprSprintf(lineInfo, sizeof(lineInfo), "%s:%d", currentFile, lineNumber);
+            mprSprintf(mp, lineInfo, sizeof(lineInfo), "%s:%d", currentFile, lineNumber);
             mprFprintf(mp->file, "    # %-25s %s\n", lineInfo, currentLine);
             lastDebug = 1;
         }
@@ -5609,7 +5609,7 @@ static void getGlobal(EjsMod *mp, char *buf, int buflen)
     vp = 0;
 
     if ((t = (int) getNum(mp)) < 0) {
-        mprSprintf(buf, buflen,  "<can't read code>");
+        mprSprintf(mp, buf, buflen,  "<can't read code>");
         return;
     }
 
@@ -5630,7 +5630,8 @@ static void getGlobal(EjsMod *mp, char *buf, int buflen)
             vp = ejsGetProperty(ejs, ejs->global, slotNum);
         }
         if (vp && ejsIsType(vp)) {
-            mprSprintf(buf, buflen, "<type: 0x%x,  %s::%s> ", t, ((EjsType*) vp)->qname.space, ((EjsType*) vp)->qname.name);
+            mprSprintf(mp, buf, buflen, "<type: 0x%x,  %s::%s> ", t, ((EjsType*) vp)->qname.space, 
+                ((EjsType*) vp)->qname.name);
         }
         break;
 
@@ -5641,22 +5642,22 @@ static void getGlobal(EjsMod *mp, char *buf, int buflen)
         qname.name = &mp->module->constants->pool[t >> 2];
         if (qname.name == 0) {
             mprAssert(0);
-            mprSprintf(buf, buflen,  "<var: 0x%x,  missing name> ", t);
+            mprSprintf(mp, buf, buflen,  "<var: 0x%x,  missing name> ", t);
             return;
         }
         if ((qname.space = getString(mp)) == 0) {
-            mprSprintf(buf, buflen,  "<var: 0x%x,  missing namespace> ", t);
+            mprSprintf(mp, buf, buflen,  "<var: 0x%x,  missing namespace> ", t);
             return;
         }
         if (qname.name) {
             vp = ejsGetPropertyByName(ejs, ejs->global, &qname);
         }
-        mprSprintf(buf, buflen, "<var: 0x%x,  %s::%s> ", t, qname.space, qname.name);
+        mprSprintf(mp, buf, buflen, "<var: 0x%x,  %s::%s> ", t, qname.space, qname.name);
         break;
     }
 
     if (vp == 0) {
-        mprSprintf(buf, buflen, "<var: %d,  cannot resolve var/typ at slot e> ", t);
+        mprSprintf(mp, buf, buflen, "<var: %d,  cannot resolve var/typ at slot e> ", t);
     }
 }
 
@@ -5774,7 +5775,7 @@ static int createSlotFile(EjsMod *bp, EjsModule *mp, MprFile *file)
             *cp = '_';
         }
     }
-    mprSprintf(slotsName, sizeof(slotsName), "%sSlots", mp->name);
+    mprSprintf(bp, slotsName, sizeof(slotsName), "%sSlots", mp->name);
     slotsName[0] = toupper((int) slotsName[0]);
     for (dp = sp = slotsName; *sp; sp++) {
         if (*sp == '.') {
@@ -5864,14 +5865,14 @@ static void defineSlot(EjsMod *bp, MprFile *file, EjsModule *mp, EjsType *type, 
     if (nameStr[0] != '\0') {
         funSep = (char*) ((*funStr && *typeStr) ? "_" : "");
         if (*typeStr == '\0' && *funStr == '\0') {
-            mprSprintf(nameBuf, sizeof(nameBuf), "#define ES_%s", nameStr);
+            mprSprintf(bp, nameBuf, sizeof(nameBuf), "#define ES_%s", nameStr);
         } else {
             if (!(nameStr[0] == '_' && nameStr[1] == '_')) {
 #if UNUSED
-                mprSprintf(nameBuf, sizeof(nameBuf), "#define ES_%s%s%s%s%s_%s", typeStr, subSep, subStr, 
+                mprSprintf(bp, nameBuf, sizeof(nameBuf), "#define ES_%s%s%s%s%s_%s", typeStr, subSep, subStr, 
                     funSep, funStr, nameStr);
 #else
-                mprSprintf(nameBuf, sizeof(nameBuf), "#define ES_%s%s%s_%s", typeStr, funSep, funStr, nameStr);
+                mprSprintf(bp, nameBuf, sizeof(nameBuf), "#define ES_%s%s%s_%s", typeStr, funSep, funStr, nameStr);
 #endif
             } else {
                 nameBuf[0] = '\0';
@@ -5906,10 +5907,10 @@ static void defineSlotCount(EjsMod *bp, MprFile *file, EjsModule *mp, EjsType *t
             *sp = '_';
         }
     }
-    mprSprintf(name, sizeof(name), "#define ES_%s_NUM_%s_PROP", typeStr, suffix);
+    mprSprintf(bp, name, sizeof(name), "#define ES_%s_NUM_%s_PROP", typeStr, suffix);
     mprFprintf(file, "%-70s %d\n", name, numSlots);
     if (strcmp(suffix, "INSTANCE") == 0) {
-        mprSprintf(name, sizeof(name), "#define ES_%s_NUM_INHERITED_PROP", typeStr);
+        mprSprintf(bp, name, sizeof(name), "#define ES_%s_NUM_INHERITED_PROP", typeStr);
         mprFprintf(file, "%-70s %d\n", name, type->numInherited);
     }
     mprFree(typeStr);

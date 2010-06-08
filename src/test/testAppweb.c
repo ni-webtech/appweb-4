@@ -270,9 +270,9 @@ bool bulkPost(MprTestGroup *gp, char *url, int size, int expectStatus)
 
     for (i = 0; i < size; i++) {
         if (i > 0) {
-            mprSprintf(&post[i], 10, "&%07d=", i / 64);
+            mprSprintf(gp, &post[i], 10, "&%07d=", i / 64);
         } else {
-            mprSprintf(&post[i], 10, "%08d=", i / 64);
+            mprSprintf(gp, &post[i], 10, "%08d=", i / 64);
         }
         for (j = i + 9; j < (i + 63); j++) {
             post[j] = 'a';

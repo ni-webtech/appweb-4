@@ -84,7 +84,7 @@ module ejs {
              */
             log: {
                 enable: true,
-                where: "stdout",
+                where: "stderr",
                 level: 2,
                 /* match: null, */
             },
@@ -353,7 +353,7 @@ module ejs {
                 try {
                     App.config = deserialize(path.readString())
                 } catch (e) {
-                    error("Can't parse " + path + ": " + e)
+                    App.errorStream.write(App.exePath.basename +  " Can't parse " + path + ": " + e + "\n")
                 }
             }
         }
@@ -3014,11 +3014,12 @@ module ejs {
 
         /**
             Return a string containing the date in UTC time.
-            Sample: "Sat 16 Dec 2006 08:06:21 GMT"
+            Sample: "Sat, 16 Dec 2006 08:06:21 GMT"
             @return A string representing the date.
          */
         function toUTCString(): String 
             formatUTC("%a, %d %b %Y %T GMT")
+
 
         /**
             Calculate the number of milliseconds since the epoch for a UTC time.
@@ -6308,7 +6309,7 @@ module ejs {
             Write informational data to logger
          */
         function write(...data): Number
-            info(data)
+            _outStream.write(data.join(" "))
 
         /** 
             Emit a warning message.

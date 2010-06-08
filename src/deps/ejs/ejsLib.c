@@ -5146,9 +5146,8 @@ void ejsLog(Ejs *ejs, const char *fmt, ...)
     char        buf[MPR_MAX_LOG_STRING];
 
     va_start(args, fmt);
-    mprVsprintf(buf, sizeof(buf) - 1, fmt, args);
+    mprVsprintf(ejs, buf, sizeof(buf) - 1, fmt, args);
     va_end(args);
-
     mprLog(ejs, 0, "%s", buf);
 }
 
@@ -6920,7 +6919,7 @@ static int loadNativeLibrary(Ejs *ejs, EjsModule *mp, cchar *modPath)
      */
     mprStrcpy(moduleName, sizeof(moduleName), mp->name);
     moduleName[0] = tolower((int) moduleName[0]);
-    mprSprintf(initName, sizeof(initName), "%s_Init", moduleName);
+    mprSprintf(ejs, initName, sizeof(initName), "%s_Init", moduleName);
     for (cp = initName; *cp; cp++) {
         if (*cp == '.') {
             *cp = '_';
@@ -7854,7 +7853,7 @@ EjsDoc *ejsCreateDoc(Ejs *ejs, void *vp, int slotNum, cchar *docString)
     if (ejs->doc == 0) {
         ejs->doc = mprCreateHash(ejs, EJS_DOC_HASH_SIZE);
     }
-    mprSprintf(key, sizeof(key), "%Lx %d", PTOL(vp), slotNum);
+    mprSprintf(ejs, key, sizeof(key), "%Lx %d", PTOL(vp), slotNum);
     mprAddHash(ejs->doc, key, doc);
     return doc;
 }
@@ -8867,13 +8866,13 @@ static void allocFailure(Ejs *ejs, uint size, uint total, bool granted)
             ejsRunFunction(ejs, ejs->memoryCallback, thisObj, 2, argv);
         }
         if (!ejs->exception) {
-            mprSprintf(msg, sizeof(msg), "Low memory condition. Total mem: %d. Request for %d bytes granted.", 
+            mprSprintf(ejs, msg, sizeof(msg), "Low memory condition. Total mem: %d. Request for %d bytes granted.", 
                 total, size);
             ejsCreateException(ejs, ES_MemoryError, msg, dummy);
         }
     } else {
         if (!ejs->exception) {
-            mprSprintf(msg, sizeof(msg), "Memory depleted. Total mem: %d. Request for %d bytes denied.", total, size);
+            mprSprintf(ejs, msg, sizeof(msg), "Memory depleted. Total mem: %d. Request for %d bytes denied.", total, size);
             ejsCreateException(ejs, ES_MemoryError, msg, dummy);
         }
     }
@@ -14268,7 +14267,7 @@ void ejsConfigureConfigType(Ejs *ejs)
     ejsSetProperty(ejs, vp, ES_Config_Product, (EjsObj*) ejsCreateString(ejs, BLD_PRODUCT));
 
     ejsSetProperty(ejs, vp, ES_Config_Title, (EjsObj*) ejsCreateString(ejs, BLD_NAME));
-    mprSprintf(version, sizeof(version), "%s-%s", BLD_VERSION, BLD_NUMBER);
+    mprSprintf(ejs, version, sizeof(version), "%s-%s", BLD_VERSION, BLD_NUMBER);
     ejsSetProperty(ejs, vp, ES_Config_Version, (EjsObj*) ejsCreateString(ejs, version));
 
 #if BLD_WIN_LIKE
@@ -36707,7 +36706,7 @@ EjsSession *ejsCreateSession(Ejs *ejs, int timeout, bool secure)
         Use an MD5 prefix of "x" to avoid the hash being interpreted as a numeric index.
      */
     next = ejs->nextSession++;
-    mprSprintf(idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(ejs) + + PTOI(expire), (int) now, next);
+    mprSprintf(ejs, idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(ejs) + + PTOI(expire), (int) now, next);
     id = mprGetMD5Hash(session, idBuf, sizeof(idBuf), "x");
     if (id == 0) {
         mprFree(session);
@@ -38783,17 +38782,18 @@ static void astBindName(EcCompiler *cp, EcNode *np)
         Disable binding of names in certain cases.
      */
     lookup = &np->lookup;
-
-#if MOB || BINDING || DISABLE_ALL_BINDING || 1
-    if (lookup->obj != (EjsObj*) state->currentFunction || ejsIsType(lookup->obj)) {
-#if UNUSED
-        lookup->slotNum = -1;
-        lookup->obj = 0;
-        lookup->useThis = 0;
-#else
+    
+    if (ejsIsFrame(lookup->obj) && lookup->nthBlock == 0) {
+        ;
+    } else {
         lookup->bind = 0;
         lookup->useThis = 0;
-#endif
+    }
+
+#if UNUSED
+    if (lookup->obj != (EjsObj*) state->currentFunction || ejsIsType(lookup->obj)) {
+        lookup->bind = 0;
+        lookup->useThis = 0;
     }
 #endif
 
@@ -47640,7 +47640,7 @@ static int createDocSection(EcCompiler *cp, EjsObj *block, int slotNum)
     if (ejs->doc == 0) {
         ejs->doc = mprCreateHash(ejs, EJS_DOC_HASH_SIZE);
     }
-    mprSprintf(key, sizeof(key), "%Lx %d", PTOL(block), slotNum);
+    mprSprintf(cp, key, sizeof(key), "%Lx %d", PTOL(block), slotNum);
     doc = (EjsDoc*) mprLookupHash(ejs->doc, key);
     if (doc == 0) {
         return 0;
@@ -47754,7 +47754,7 @@ int ecAddDocConstant(EcCompiler *cp, void *vp, int slotNum)
     mprAssert(vp);
     mprAssert(slotNum >= 0);
 
-    mprSprintf(key, sizeof(key), "%Lx %d", PTOL(vp), slotNum);
+    mprSprintf(cp, key, sizeof(key), "%Lx %d", PTOL(vp), slotNum);
     doc = (EjsDoc*) mprLookupHash(ejs->doc, key);
     if (doc && doc->docString) {
         if (ecAddConstant(cp, doc->docString) < 0) {
@@ -58194,11 +58194,11 @@ static void appendDocString(EcCompiler *cp, EcNode *np, EcNode *parameter, EcNod
 
     if (np->doc) {
         found = 0;
-        mprSprintf(arg, sizeof(arg), "@param %s ", parameter->qname.name);
+        mprSprintf(cp, arg, sizeof(arg), "@param %s ", parameter->qname.name);
         if (strstr(np->doc, arg) != 0) {
             found++;
         } else {
-            mprSprintf(arg, sizeof(arg), "@params %s ", parameter->qname.name);
+            mprSprintf(cp, arg, sizeof(arg), "@params %s ", parameter->qname.name);
             if (strstr(np->doc, arg) != 0) {
                 found++;
             }

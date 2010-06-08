@@ -1608,18 +1608,20 @@ extern int mprFprintf(struct MprFile *file, cchar *fmt, ...);
     Format a string into a statically allocated buffer.
     @description This call format a string using printf style formatting arguments. A trailing null will 
         always be appended. The call returns the size of the allocated string excluding the null.
+    @param ctx Any memory context allocated by the MPR.
     @param buf Pointer to the buffer.
     @param maxSize Size of the buffer.
     @param fmt Printf style format string
     @return Returns the buffer.
     @ingroup MprString
  */
-extern char *mprSprintf(char *buf, int maxSize, cchar *fmt, ...);
+extern char *mprSprintf(MprCtx ctx, char *buf, int maxSize, cchar *fmt, ...);
 
 /**
     Format a string into a statically allocated buffer.
     @description This call format a string using printf style formatting arguments. A trailing null will 
         always be appended. The call returns the size of the allocated string excluding the null.
+    @param ctx Any memory context allocated by the MPR.
     @param buf Pointer to the buffer.
     @param maxSize Size of the buffer.
     @param fmt Printf style format string
@@ -1627,7 +1629,7 @@ extern char *mprSprintf(char *buf, int maxSize, cchar *fmt, ...);
     @return Returns the buffer;
     @ingroup MprString
  */
-extern char *mprVsprintf(char *buf, int maxSize, cchar *fmt, va_list args);
+extern char *mprVsprintf(MprCtx ctx, char *buf, int maxSize, cchar *fmt, va_list args);
 
 /**
     Convert an integer to a string.

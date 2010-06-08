@@ -34,7 +34,7 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
         mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
 
     } else if (flags & MPR_ERROR_SRC) {
-        mprSprintf(buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
+        mprSprintf(ctx, buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
         mprWriteToOsLog(ctx, buf, flags, level);
 
         /*
@@ -48,7 +48,7 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
         }
 
     } else if (flags & MPR_FATAL_SRC) {
-        mprSprintf(buf, sizeof(buf), "%s: Fatal: %s\n", prefix, msg);
+        mprSprintf(ctx, buf, sizeof(buf), "%s: Fatal: %s\n", prefix, msg);
         mprWriteString(file, buf);
         mprWriteToOsLog(ctx, buf, flags, level);
         
@@ -224,7 +224,7 @@ void maRotateAccessLog(MaHost *host)
         when = mprGetTime(host);
         mprDecodeUniversalTime(host, &tm, when);
 
-        mprSprintf(bak, sizeof(bak), "%s-%02d-%02d-%02d-%02d:%02d:%02d", host->logPath, 
+        mprSprintf(host, bak, sizeof(bak), "%s-%02d-%02d-%02d-%02d:%02d:%02d", host->logPath, 
             tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
         mprFree(host->accessLog);

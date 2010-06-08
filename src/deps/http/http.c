@@ -480,7 +480,7 @@ static void processing()
     activeLoadThreads = loadThreads;
     for (j = 0; j < loadThreads; j++) {
         char name[64];
-        mprSprintf(name, sizeof(name), "http.%d", j);
+        mprSprintf(mpr, name, sizeof(name), "http.%d", j);
         tp = mprCreateThread(mpr, name, threadMain, mpr, 0); 
         mprStartThread(tp);
     }

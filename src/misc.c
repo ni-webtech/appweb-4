@@ -155,7 +155,7 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
         mprFree(path);
         return 0;
     }
-    mprSprintf(entryPoint, sizeof(entryPoint), "ma%sInit", name);
+    mprSprintf(appweb, entryPoint, sizeof(entryPoint), "ma%sInit", name);
     entryPoint[2] = toupper((int) entryPoint[2]);
 
     if (mprLoadModule(appweb->http, path, entryPoint, NULL) == 0) {

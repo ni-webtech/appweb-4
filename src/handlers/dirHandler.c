@@ -334,7 +334,7 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
 }
 
 
-static void fmtNum(char *buf, int bufsize, int num, int divisor, char *suffix)
+static void fmtNum(MprCtx ctx, char *buf, int bufsize, int num, int divisor, char *suffix)
 {
     int     whole, point;
 
@@ -342,9 +342,9 @@ static void fmtNum(char *buf, int bufsize, int num, int divisor, char *suffix)
     point = (num % divisor) / (divisor / 10);
 
     if (point == 0) {
-        mprSprintf(buf, bufsize, "%6d%s", whole, suffix);
+        mprSprintf(ctx, buf, bufsize, "%6d%s", whole, suffix);
     } else {
-        mprSprintf(buf, bufsize, "%4d.%d%s", whole, point, suffix);
+        mprSprintf(ctx, buf, bufsize, "%4d.%d%s", whole, point, suffix);
     }
 }
 
@@ -368,16 +368,16 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
 
     dir = q->stage->stageData;
     if (ep->size >= (1024*1024*1024)) {
-        fmtNum(sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024 * 1024, "G");
+        fmtNum(q, sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024 * 1024, "G");
 
     } else if (ep->size >= (1024*1024)) {
-        fmtNum(sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024, "M");
+        fmtNum(q, sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024, "M");
 
     } else if (ep->size >= 1024) {
-        fmtNum(sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024, "K");
+        fmtNum(q, sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024, "K");
 
     } else {
-        mprSprintf(sizeBuf, sizeof(sizeBuf), "%6d", (int) ep->size);
+        mprSprintf(q, sizeBuf, sizeof(sizeBuf), "%6d", (int) ep->size);
     }
     newPath = mprJoinPath(q, path, ep->name);
 
@@ -412,7 +412,7 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
     }
     mprDecodeLocalTime(q, &tm, when);
 
-    mprSprintf(timeBuf, sizeof(timeBuf), "%02d-%3s-%4d %02d:%02d",
+    mprSprintf(q, timeBuf, sizeof(timeBuf), "%02d-%3s-%4d %02d:%02d",
         tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900, tm.tm_hour,  tm.tm_min);
     len = (int) strlen(ep->name) + (int) strlen(dirSuffix);
 

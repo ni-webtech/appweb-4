@@ -504,7 +504,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
             cchar *hostName = mprGetServerName(server);
             mprLog(server, 0, "WARNING: Missing ServerName directive, doing DNS lookup.");
             httpServer = mprGetFirstItem(server->httpServers);
-            mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
+            mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
             maSetHostName(defaultHost, hostName);
 
         } else {
@@ -671,7 +671,7 @@ int maValidateConfiguration(MaServer *server)
             cchar *hostName = mprGetServerName(server);
             mprLog(server, 0, "WARNING: Missing ServerName directive, doing DNS lookup.");
             httpServer = mprGetFirstItem(server->httpServers);
-            mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
+            mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
             maSetHostName(defaultHost, hostName);
 
         } else {
@@ -1202,7 +1202,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 }
                 server.insert(new HttpServer(ip->ip, port));
                 if (host->ipAddrPort == 0) {
-                    mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip->ip, port);
+                    mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip->ip, port);
                     maSetIpAddrPort(host, ipAddrPort);
                 }
                 break;
@@ -1278,7 +1278,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 Set the host ip spec if not already set
              */
             if (host->ipAddrPort == 0) {
-                mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, port);
+                mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, port);
                 maSetHostIpAddrPort(host, ipAddrPort);
             }
             return 1;

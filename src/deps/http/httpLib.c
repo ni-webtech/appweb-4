@@ -271,7 +271,7 @@ bool httpValidateNativeCredentials(HttpAuth *auth, cchar *realm, cchar *user, cc
     hashedPassword = 0;
     
     if (auth->type == HTTP_AUTH_BASIC) {
-        mprSprintf(passbuf, sizeof(passbuf), "%s:%s:%s", user, realm, password);
+        mprSprintf(auth, passbuf, sizeof(passbuf), "%s:%s:%s", user, realm, password);
         len = strlen(passbuf);
         hashedPassword = mprGetMD5Hash(auth, passbuf, len, NULL);
         password = hashedPassword;
@@ -826,7 +826,7 @@ int httpWriteUserFile(Http *http, HttpAuth *auth, char *path)
     hp = mprGetNextHash(auth->users, 0);
     while (hp) {
         up = (HttpUser*) hp->data;
-        mprSprintf(buf, sizeof(buf), "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
+        mprSprintf(http, buf, sizeof(buf), "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
         mprWrite(file, buf, (int) strlen(buf));
         hp = mprGetNextHash(auth->users, hp);
     }
@@ -859,7 +859,7 @@ int httpWriteGroupFile(Http *http, HttpAuth *auth, char *path)
     hp = mprGetNextHash(auth->groups, 0);
     while (hp) {
         gp = (HttpGroup*) hp->data;
-        mprSprintf(buf, sizeof(buf), "%d: %x: %s: ", gp->enabled, gp->acl, gp->name);
+        mprSprintf(http, buf, sizeof(buf), "%d: %x: %s: ", gp->enabled, gp->acl, gp->name);
         mprWrite(file, buf, (int) strlen(buf));
         for (next = 0; (name = mprGetNextItem(gp->users, &next)) != 0; ) {
             mprWrite(file, name, (int) strlen(name));
@@ -1301,7 +1301,7 @@ static char *createDigestNonce(MprCtx ctx, cchar *secret, cchar *etag, cchar *re
     mprAssert(realm && *realm);
 
     now = mprGetTime(ctx);
-    mprSprintf(nonce, sizeof(nonce), "%s:%s:%s:%Lx", secret, etag, realm, now);
+    mprSprintf(ctx, nonce, sizeof(nonce), "%s:%s:%s:%Lx", secret, etag, realm, now);
     return mprEncode64(ctx, nonce);
 }
 
@@ -1346,27 +1346,27 @@ static int calcDigest(MprCtx ctx, char **digest, cchar *userName, cchar *passwor
     if (userName == 0) {
         ha1 = mprStrdup(ctx, password);
     } else {
-        mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", userName, realm, password);
+        mprSprintf(ctx, a1Buf, sizeof(a1Buf), "%s:%s:%s", userName, realm, password);
         ha1 = md5(ctx, a1Buf);
     }
 
     /*
         HA2
      */ 
-    mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", method, uri);
+    mprSprintf(ctx, a2Buf, sizeof(a2Buf), "%s:%s", method, uri);
     ha2 = md5(ctx, a2Buf);
 
     /*
         H(HA1:nonce:HA2)
      */
     if (strcmp(qop, "auth") == 0) {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
+        mprSprintf(ctx, digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
 
     } else if (strcmp(qop, "auth-int") == 0) {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
+        mprSprintf(ctx, digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
 
     } else {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, nonce, ha2);
+        mprSprintf(ctx, digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, nonce, ha2);
     }
     *digest = md5(ctx, digestBuf);
     mprFree(ha1);
@@ -1955,7 +1955,7 @@ static HttpPacket *createHeaderPacket(HttpConn *conn)
 
     if (conn->authType && strcmp(conn->authType, "basic") == 0) {
         char    abuf[MPR_MAX_STRING];
-        mprSprintf(abuf, sizeof(abuf), "%s:%s", conn->authUser, conn->authPassword);
+        mprSprintf(conn, abuf, sizeof(abuf), "%s:%s", conn->authUser, conn->authPassword);
         encoded = mprEncode64(conn, abuf);
         httpAddHeader(conn, "Authorization", "basic %s", encoded);
         mprFree(encoded);
@@ -1973,24 +1973,24 @@ static HttpPacket *createHeaderPacket(HttpConn *conn)
         mprFree(conn->authCnonce);
         conn->authCnonce = mprAsprintf(conn, -1, "%s:%s:%x", http->secret, conn->authRealm, (uint) mprGetTime(conn)); 
 
-        mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
+        mprSprintf(conn, a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
         len = strlen(a1Buf);
         ha1 = mprGetMD5Hash(trans, a1Buf, len, NULL);
-        mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", trans->method, parsedUri->path);
+        mprSprintf(conn, a2Buf, sizeof(a2Buf), "%s:%s", trans->method, parsedUri->path);
         len = strlen(a2Buf);
         ha2 = mprGetMD5Hash(trans, a2Buf, len, NULL);
         qop = (conn->authQop) ? conn->authQop : (char*) "";
 
         conn->authNc++;
         if (mprStrcmpAnyCase(conn->authQop, "auth") == 0) {
-            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
+            mprSprintf(conn, digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
                 ha1, conn->authNonce, conn->authNc, conn->authCnonce, conn->authQop, ha2);
         } else if (mprStrcmpAnyCase(conn->authQop, "auth-int") == 0) {
-            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
+            mprSprintf(conn, digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
                 ha1, conn->authNonce, conn->authNc, conn->authCnonce, conn->authQop, ha2);
         } else {
             qop = "";
-            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, conn->authNonce, ha2);
+            mprSprintf(conn, digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, conn->authNonce, ha2);
         }
         mprFree(ha1);
         mprFree(ha2);

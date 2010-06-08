@@ -352,9 +352,9 @@ int maCreateHostAddresses(MaServer *server, MaHost *host, cchar *configValue)
             } else {
                 maInsertVirtualHost(address, host);
                 if (httpServer->ip[0] != '\0') {
-                    mprSprintf(addrBuf, sizeof(addrBuf), "%s:%d", httpServer->ip, httpServer->port);
+                    mprSprintf(server, addrBuf, sizeof(addrBuf), "%s:%d", httpServer->ip, httpServer->port);
                 } else {
-                    mprSprintf(addrBuf, sizeof(addrBuf), "%s:%d", ip, httpServer->port);
+                    mprSprintf(server, addrBuf, sizeof(addrBuf), "%s:%d", ip, httpServer->port);
                 }
                 maSetHostName(host, addrBuf);
             }
@@ -428,7 +428,7 @@ void maSetIpAddr(MaServer *server, cchar *ip, int port)
     char        ipAddrPort[MPR_MAX_IP_ADDR_PORT];
     int         next;
 
-    mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip ? ip : "*", port > 0 ? port : HTTP_DEFAULT_PORT);
+    mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip ? ip : "*", port > 0 ? port : HTTP_DEFAULT_PORT);
 
     for (next = 0; ((httpServer = mprGetNextItem(server->httpServers, &next)) != 0); ) {
         httpSetIpAddr(httpServer, ip, port);

@@ -466,7 +466,7 @@ static int consoleGets(EcStream *stream)
     if (stream->flags & EC_STREAM_EOL) {
         return 0;
     }
-    mprSprintf(prompt, sizeof(prompt), "%s-%d> ", EJS_NAME, stream->compiler->state->blockNestCount);
+    mprSprintf(stream, prompt, sizeof(prompt), "%s-%d> ", EJS_NAME, stream->compiler->state->blockNestCount);
 
     line = readline(prompt);
     if (line == NULL) {
