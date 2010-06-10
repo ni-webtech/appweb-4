@@ -130,15 +130,16 @@ uninstall uninstall-%:
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
 		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
 	
-packageExtra:
-	mkdir -p $(BLD_TOP)/releases
-	export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
-	pwd ; \
-	fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
-        $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)"
-
 package-only:
 	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
+
+packageExtra:
+	if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
+		mkdir -p $(BLD_TOP)/releases ; \
+		export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
+		fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
+			$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \
+	fi
 
 testExtraExtra:
 	if [ "$(BUILD_DEPTH)" -ge 3 ] ; then \
