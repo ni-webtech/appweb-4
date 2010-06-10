@@ -135,13 +135,18 @@ package-only:
 
 packageExtra:
 	echo BUILD_DEPTH $(BUILD_DEPTH)
-	if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
-		mkdir -p $(BLD_TOP)/releases ; \
-		export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
-		fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
-			$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \
+	if [ -d package ] ; then \
+		if [ "$(BUILD_DEPTH)" -ge 2 -a -d package ] ; then \
+			set -x ; \
+			mkdir -p $(BLD_TOP)/releases ; \
+			export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
+			fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
+				$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \
+		else \
+			echo "Packaging skipped at build depth $(BUILD_DEPTH)" ; \
+		fi ; \
 	else \
-		echo "Packaging skipped at build depth $(BUILD_DEPTH) ; \
+		echo "Packaging not supported with this product" ; \
 	fi
 
 upload:
