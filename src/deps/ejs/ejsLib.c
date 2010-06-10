@@ -19905,7 +19905,7 @@ static EjsObj *parseLiteralInner(Ejs *ejs, MprBuf *buf, JsonState *js);
  */
 EjsObj *deserialize(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    mprAssert(argc >=1 && ejsIsString(argv[0]));
+    mprAssert(argc >=1);
     return ejsDeserialize(ejs, (EjsString*) argv[0]);
 }
 
@@ -19917,6 +19917,7 @@ EjsObj *ejsDeserialize(Ejs *ejs, EjsString *str)
     cchar       *data;
 
     if (!ejsIsString(str)) {
+        ejsThrowSyntaxError(ejs, "Object is not a string");
         return 0;
     }
     data = ejsGetString(ejs, str);

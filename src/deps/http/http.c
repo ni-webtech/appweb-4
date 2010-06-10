@@ -850,11 +850,11 @@ static void finishThread(MprThread *tp)
 
 static void waitForUser(MprCtx ctx)
 {
-    int     rc;
+    int     c, rc;
 
     mprLock(mutex);
     mprPrintf(ctx, "Pause: ");
-    read(0, (char*) &rc, 1);
+    rc = read(0, (char*) &c, 1);
     mprUnlock(mutex);
 }
 
@@ -912,7 +912,7 @@ static char *resolveUrl(HttpConn *conn, cchar *url)
 static void showOutput(HttpConn *conn, cchar *buf, int count)
 {
     HttpReceiver    *rec;
-    int             i, c;
+    int             i, c, rc;
     
     rec = conn->receiver;
 
@@ -923,7 +923,7 @@ static void showOutput(HttpConn *conn, cchar *buf, int count)
         return;
     }
     if (!printable) {
-        write(1, (char*) buf, count);
+        rc = write(1, (char*) buf, count);
         return;
     }
 
@@ -934,7 +934,7 @@ static void showOutput(HttpConn *conn, cchar *buf, int count)
         }
     }
     if (!isBinary) {
-        write(1, (char*) buf, count);
+        rc = write(1, (char*) buf, count);
         return;
     }
     for (i = 0; i < count; i++) {

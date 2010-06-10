@@ -53,7 +53,7 @@ MAIN(appweb, int argc, char **argv)
     MprList     *scripts;
     cchar       *ipAddrPort, *documentRoot, *argp, *logSpec;
     char        *configFile, *ip, *homeDir;
-    int         workers, outputVersion, argind, port;
+    int         workers, outputVersion, argind, port, rc;
 
     configFile = 0;
     documentRoot = 0;
@@ -103,7 +103,7 @@ MAIN(appweb, int argc, char **argv)
 
             }
             homeDir = mprGetAbsPath(mpr, argv[++argind]);
-            chdir(homeDir);
+            rc = chdir(homeDir);
             if (chroot(homeDir) < 0) {
                 if (errno == EPERM) {
                     mprPrintfError(mpr, "%s: Must be super user to use the --chroot option", mprGetAppName(mpr));

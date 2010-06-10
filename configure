@@ -1957,7 +1957,7 @@ postGen() {
 
     if [ -d ../packages ] ; then
         rm -f extensions
-        ln - s ../packages extensions
+        ln -s ../packages extensions
     fi
 
     #
