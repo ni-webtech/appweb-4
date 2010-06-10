@@ -276,12 +276,12 @@ processAfter:
 #
 #	Run unit tests
 #
-test: $(BUILD_CHECK) testDirs testExtra
+test: $(BUILD_CHECK) testDirs testExtra testExtraExtra testFinal testCleanup
 
 testDirs:
 	@+T=test ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
-testExtra:
+testExtra testExtraExtra testFinal testCleanup:
 
 
 #

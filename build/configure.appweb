@@ -95,7 +95,7 @@ Additional Appweb Features:
   --sslPort=PORT           Set the default SSL port to use for the product.
   --webDir=PATH            Set the directory for web documents (DocumentRoot).
 
-Optional Components: ejs, matrixssl, mysql, openssl, regexp, php, sqlite
+Optional Components: cgi, ejs, matrixssl, mysql, openssl, php, sqlite
 
   --with-NAME=[DIR]        Support the NAME package. The build/components/NAME
                            file will describe compile and linker switches. DIR 

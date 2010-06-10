@@ -7973,6 +7973,9 @@ module ejs {
             @throws IOError if the directory exists and cannot be removed.
          */
         function removeAll(): Void {
+            if (name == "" || name == "/") {
+                throw new ArgError("Bad path for removeAll")
+            }
             for each (f in find('*')) {
                 f.remove()
             }

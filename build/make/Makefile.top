@@ -32,11 +32,15 @@
 #
 
 BLD_TOP		:= .
-BUILD_CHECK	:= buildCheck
+BUILD_DEPTH	?= 2
 FIRST		:= first
-SHELL		:= bash
 IMG_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)
 SRC_NAME	= $(BLD_PRODUCT)-src-$(BLD_VERSION)-$(BLD_NUMBER)
+BASE_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-$(BLD_HOST_DIST)-$(BLD_HOST_OS)-$(BLD_HOST_CPU)
+PACKS		:= binary dev source
+PKG_DIR		:= staging
+INS_WITH	= --with-conf="$(CONF)" --with-testweb 
+SHELL		:= bash
 
 #
 #	Conditionally read in the Make rules and templates. The buildConfig.make
@@ -101,14 +105,159 @@ $(BLD_TOP)/build/src/.makedep: buildConfig.make
 $(BLD_TOOLS_DIR)/edep$(BLD_EXE): 
 	T=$(BLD_TOOLS_DIR)/src; $(DO_RECURSE)
 
-install uninstall install-% uninstall-%:
-	@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
+dependExtra:
+	mkdir -p releases
+	[ ! -L extensions ] && ln -s ../packages extensions ; true
 
-test-install% test-uninstall-%:
-	@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
+##	MOB - remove
+##	install uninstall install-% uninstall-%:
+##		@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
+##	
+##	test-install% test-uninstall-%:
+##		@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
+##	
+##	checkInstalled: 
+##		@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
 
-checkInstalled: 
-	@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
+install install-%:
+	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
+	[ "$$packs" = "binary dev" ] && BROWSER=--browser ; \
+	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
+		$$BROWSER --root=$(ROOT_DIR) --install $(INS_WITH) pre $$packs post
+
+uninstall uninstall-%:
+	packs=$* ; [ "$$packs" = "" ] && packs="binary dev" ; \
+	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
+		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
+	
+packageExtra:
+	mkdir -p $(BLD_TOP)/releases
+	export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
+	pwd ; \
+	fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
+        $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)"
+
+package-only:
+	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
+
+testExtraExtra:
+	if [ "$(BUILD_DEPTH)" -ge 3 ] ; then \
+		$(MAKE) test-installed ; $(MAKE) uninstall ; $(MAKE) test-removed ; \
+		$(MAKE) test-install-package ; $(MAKE) test-installed ; $(MAKE) test-uninstall-package ; $(MAKE) test-removed ; \
+		$(MAKE) test-install-native-package ; $(MAKE) test-installed ; $(MAKE) test-uninstall-native-package ; $(MAKE) test-removed ; \
+	fi
+	if [ "$(BUILD_DEPTH)" -ge 4 ] ; then \
+	   	$(MAKE) leakTest ; \
+	fi
+	if [ "$(BUILD_DEPTH)" -ge 5 ] ; then \
+	   	$(MAKE) benchTest ; \
+	fi
+	if [ "$(BUILD_DEPTH)" -ge 6 ] ; then \
+	   	$(MAKE) loadTest ; \
+	fi
+
+test-install-package:
+	name="$(BASE_NAME).tar.tar.gz" ; \
+	cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+	priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
+
+test-uninstall-package:
+	name="$(BASE_NAME).tar.tar.gz" ; \
+	cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+	priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
+
+test-install-native-package:
+	if [ $(BLD_HOST_OS) = WIN ] ; then \
+		rm -fr "$(PKG_DIR)" ; mkdir -p "$(PKG_DIR)" ; \
+		name="$(BASE_NAME).exe.zip" ; \
+		cp WIN/unattended.ans ../releases/$$name "$(PKG_DIR)" ; cd "$(PKG_DIR)" ; \
+		unzip -q -o $$name ; \
+		echo "Dir=$(PKG_DIR)" >>unattended.ans ; \
+		./$(BASE_NAME).exe /loadinf=/tmp/unattended.ans /silent ; \
+	elif [ $(BLD_HOST_OS) = MACOSX ] ; then \
+		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
+		hdid $(BLD_TOP)/releases/$(BASE_NAME).dmg >/dev/null ; \
+		priv installer -package /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION)/$(BLD_PRODUCT).mpkg -target /; \
+		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
+	else \
+		name="$(BASE_NAME).tar.tar.gz" ; \
+		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+		priv $(BLD_PRODUCT)_HEADLESS=1 ./install ; \
+	fi
+
+test-uninstall-native-package:
+	if [ $(BLD_HOST_OS) = WIN ] ; then \
+		if [ ! -x "$(PKG_DIR)/unins000.exe" ] ; then \
+			echo "Can't find $(PKG_DIR)/unins000.exe to uninstall" ; \
+			exit 255 ; \
+		fi ; \
+		"$(PKG_DIR)/unins000.exe" /silent ; \
+		rm -fr "$(PKG_DIR)" ; \
+	else \
+		name="$(BASE_NAME).tar.tar.gz" ; \
+		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
+	fi
+
+# SAM SRC
+test-installed:
+	complete=1 ; \
+	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
+		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_MOD_PREFIX) $(BLD_PRD_PREFIX) \
+		$(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; \
+	do \
+		if [ ! -x $$dir ] ; then \
+			echo Missing directory: $$dir ; \
+			complete=0 ; \
+		fi ; \
+	done ; \
+	[ $$complete = 0 ] && exit 255 ; \
+	port=$(BLD_HTTP_PORT) ; \
+	http -q $$port/index.html ; \
+	http -q $$port/test/test.php ; \
+	http -q $$port/test/test.cgi ; \
+	http -q $$port/test/test.pl ; \
+	http -q $$port/test/test.py ; \
+	echo Installed
+	# http -q $$port/test/test.ejs
+
+test-removed:
+	partial=0 ; \
+	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
+		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_MOD_PREFIX) $(BLD_PRD_PREFIX) \
+		$(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; \
+	do \
+		if [ -x $$dir ] ; then \
+			partial=1 ; \
+			echo Directory present: $$dir ; \
+		fi ; \
+	done ; \
+	[ $$partial = 1 ] && exit 255 ; \
+	echo Removed
+
+checkInstalled: installed-files
+
+installed-files:
+	( \
+	for d in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
+		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_MOD_PREFIX) $(BLD_PRD_PREFIX) \
+		$(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) /var/log /var/www /usr/share /usr/share/doc /usr/include /var/lib /var/spool ; \
+		do \
+			if [ "`echo $$d/$(BLD_PRODUCT)*`" != $$d/$(BLD_PRODUCT)'*' ] ; then \
+				eval echo "$$d/$(BLD_PRODUCT)*" ; \
+				continue ; \
+			fi ; \
+			if [ -x "$$d/$(BLD_PRODUCT)" ] ; then \
+				echo "$$d/$(BLD_PRODUCT)" ; \
+				continue ; \
+			fi ; \
+		done ; \
+		for d in "$(BLD_CFG_PREFIX)" "$(BLD_DOC_PREFIX)" "$(BLD_INC_PREFIX)" "$(BLD_LIB_PREFIX)" "$(BLD_LOG_PREFIX)" \
+			"$(BLD_SAM_PREFIX)" "$(BLD_SRC_PREFIX)" ; \
+		do \
+			[ -x "$$d" ] && echo "$$d" || true; \
+		done ; \
+	) | sort | uniq
 
 cleanExtra:
 	@for f in $(CLEANIT) ; \
@@ -136,31 +285,30 @@ incVersion:
 	./configure
 
 upload:
-	if [ "$(BUILD_UPLOAD)" = "" ] ; then \
-		echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \
-		exit 2 ; \
-	fi
-	cd releases >/dev/null 2>&1 ; \
-	if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
-		for name in $(IMG_NAME)* md5-$(IMG_NAME)* ; \
-		do \
-			chmod 664 $$name ; \
-			echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-			http --log stdout:5 -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-		done ; \
-	fi
-
-uploadSource:
-	if [ "$(BUILD_UPLOAD)" = "" ] ; then \
-		echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \
-		exit 2 ; \
-	fi
-	cd releases >/dev/null 2>&1 ; \
-	if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
-		for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; \
-		do \
-			chmod 664 $$name ; \
-			echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-			http --log stdout:5 -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-		done ; \
+	if [ "$(BUILD_DEPTH)" -le 2 ] ; then \
+		echo "Skip upload for BUILD_DEPTH $(BUILD_DEPTH)" >&2; \
+	else \
+		if [ "$(BUILD_UPLOAD)" = "" ] ; then \
+			echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \
+			exit 2 ; \
+		fi
+		cd releases >/dev/null 2>&1 ; \
+		if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
+			for name in $(IMG_NAME)* md5-$(IMG_NAME)* ; \
+			do \
+				chmod 664 $$name ; \
+				echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+				http --log stdout:5 -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+			done ; \
+		fi ; \
+	if [ "$(BUILD_UPLOAD_SOURCE)" = "true" ] ; then \
+		cd releases >/dev/null 2>&1 ; \
+		if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
+			for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; \
+			do \
+				chmod 664 $$name ; \
+				echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+				http --log stdout:5 -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+			done ; \
+		fi ; \
 	fi

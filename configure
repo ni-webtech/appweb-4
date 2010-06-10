@@ -1955,6 +1955,11 @@ postGen() {
         chmod +x "${BLD_TOP}/build/bin/$f" >/dev/null 2>&1
     done
 
+    if [ -d ../packages ] ; then
+        rm -f extensions
+        ln - s ../packages extensions
+    fi
+
     #
     #   Touch all headers and remove objects to force a (somewhat) clean build
     #

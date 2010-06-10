@@ -578,6 +578,7 @@ int ejsCreateGCService(Ejs *ejs)
 
     gc = &ejs->gc;
     gc->enabled = 1;
+gc->enabled = 0;
     gc->firstGlobal = (ejs->empty) ? 0 : ES_global_NUM_CLASS_PROP;
     gc->numPools = EJS_MAX_TYPE;
     gc->allocGeneration = EJS_GEN_ETERNAL;
@@ -1174,6 +1175,7 @@ int ejsEnableGC(Ejs *ejs, bool on)
 
     old = ejs->gc.enabled;
     ejs->gc.enabled = on;
+ejs->gc.enabled = 0;
     return old;
 }
 
@@ -8920,8 +8922,6 @@ EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
     }
 #if VXWORKS
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePathAndFree(ejs, mprGetCurrentPath(ejs)));
-#elif WIN
-    ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePathAndFree(ejs, mprGetAppDir(ejs)));
 #else
 {
     /*
@@ -8931,6 +8931,7 @@ EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
     char *relModDir;
     relModDir = mprAsprintf(ejs, -1, "%s/../%s", mprGetAppDir(ejs), BLD_MOD_NAME);
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePath(ejs, "."));
+    ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePathAndFree(ejs, mprGetAppDir(ejs)));
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePathAndFree(ejs, mprGetAbsPath(ejs, relModDir)));
     ejsSetProperty(ejs, ap, -1, (EjsObj*) ejsCreatePath(ejs, BLD_MOD_PREFIX));
     mprFree(relModDir);
@@ -9825,13 +9826,6 @@ EjsString *ejsToJSON(Ejs *ejs, EjsObj *obj, EjsObj *options)
     if (obj == 0) {
         return ejsCreateString(ejs, "undefined");
     }
-#if UNUSED
-    if (obj->jsonVisited) {
-        return ejsCreateString(ejs, "this");
-    }    
-    obj->jsonVisited = 1;
-#endif
-    
     fn = (EjsFunction*) ejsGetPropertyByName(ejs, (EjsObj*) obj->type->prototype, ejsName(&qname, NULL, "toJSON"));
     if (fn == 0) {
         fn = (EjsFunction*) ejsGetPropertyByName(ejs, (EjsObj*) ejs->objectType->prototype, &qname);        
@@ -9848,9 +9842,6 @@ EjsString *ejsToJSON(Ejs *ejs, EjsObj *obj, EjsObj *options)
     } else {
         result = ejsToString(ejs, obj);
     }
-#if UNUSED
-    obj->jsonVisited = 0;
-#endif
     return result;
 }
 
@@ -24009,7 +24000,6 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
     if (pretty || indent) {
         mprPutCharToBuf(buf, '\n');
     }
-
     if (++ejs->serializeDepth <= depth) {
         for (slotNum = 0; slotNum < count && !ejs->exception; slotNum++) {
             trait = ejsGetTrait(ejs, obj, slotNum);
@@ -24067,6 +24057,7 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
                     mprPutCharToBuf(buf, ' ');
                 }
             }
+//  MOB GC - Can this be collected?
             sv = (EjsString*) ejsToJSON(ejs, pp, options);
             if (sv == 0 || !ejsIsString(sv)) {
                 if (!ejs->exception) {
@@ -24075,6 +24066,7 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
                 return 0;
             } else {
                 if (replacer) {
+//  MOB GC - Can this be collected?
                     replacerArgs[0] = (EjsObj*) ejsCreateString(ejs, qname.name); 
                     replacerArgs[1] = (EjsObj*) sv; 
                     pp = ejsRunFunction(ejs, replacer, obj, 2, replacerArgs);
@@ -24097,6 +24089,7 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
     }
     mprPutCharToBuf(buf, isArray ? ']' : '}');
     mprAddNullToBuf(buf);
+//  MOB GC
     result = (EjsObj*) ejsCreateString(ejs, mprGetBufStart(buf));
     mprFree(buf);
     return result;
@@ -31829,7 +31822,11 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
             mprLog(ejs, 1, "Discard message as no onmessage handler defined for worker");
             
         } else if (msg->callbackSlot == ES_Worker_onerror) {
-            ejsThrowError(ejs, "Exception in Worker: %s", ejsGetErrorMsg(worker->pair->ejs, 1));
+            if (msg->message) {
+                ejsThrowError(ejs, "Exception in Worker: %s", msg->message);
+            } else {
+                ejsThrowError(ejs, "Exception in Worker: %s", ejsGetErrorMsg(worker->pair->ejs, 1));
+            }
 
         } else {
             /* Ignore onclose message */

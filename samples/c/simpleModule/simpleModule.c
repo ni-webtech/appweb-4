@@ -1,32 +1,32 @@
 /*
-  	simpleModule.c - Create a simple AppWeb dynamically loadable module
+    simpleModule.c - Create a simple AppWeb dynamically loadable module
   
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
  
 /******************************* Includes *****************************/
 
-#include	"appweb.h"
+#include    "appweb.h"
 
 /********************************* Code *******************************/
 /* 
-  	Parse any module specific configuration directives from the appweb.conf config file.
+    Parse any module specific configuration directives from the appweb.conf config file.
  */
 
 static int parseSimple(MaHttp *http, cchar *key, char *value, MaConfigState *state)
 {
-	if (mprStrcmpAnyCase(key, "CustomConfigKey") == 0) {
-		/*
-		  	Do something with value. Return true to indicate we understood and accepted the directive.
-		 */
-		return 1;
-	}
-	return 0;
+    if (mprStrcmpAnyCase(key, "CustomConfigKey") == 0) {
+        /*
+            Do something with value. Return true to indicate we understood and accepted the directive.
+         */
+        return 1;
+    }
+    return 0;
 }
 
 
 /*
-  	Module load initialization. This is called when the module is first loaded. The module name is "Simple".
+    Module load initialization. This is called when the module is first loaded. The module name is "Simple".
  */
 MprModule *mprSimpleModuleInit(MaHttp *http)
 {

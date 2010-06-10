@@ -1,72 +1,72 @@
 /*
-  	simpleClient.c - Simple client using the GET method to retrieve a web page.
+    simpleClient.c - Simple client using the GET method to retrieve a web page.
   
-  	This sample demonstrates retrieving content using the HTTP GET 
-  	method via the Client class. This is a multi-threaded application.
+    This sample demonstrates retrieving content using the HTTP GET 
+    method via the Client class. This is a multi-threaded application.
   
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 /***************************** Includes *******************************/
 
-#include	"appweb.h"
+#include    "appweb.h"
 
 #if BLD_FEATURE_HTTP_CLIENT
 /********************************* Code *******************************/
 
 MAIN(simpleClient, int argc, char** argv)
 {
-	Mpr			*mpr;
-	Http		*http;
+    Mpr         *mpr;
+    Http        *http;
     HttpConn    *conn;
-	cchar		*content;
-	int			code, contentLen;
+    cchar       *content;
+    int         code, contentLen;
 
-	mpr = mprCreate(argc, argv, NULL);
+    mpr = mprCreate(argc, argv, NULL);
 
-	/* 
+    /* 
        Start the Multithreaded Portable Runtime
-	 */
-	mprStart(mpr);
+     */
+    mprStart(mpr);
     mprStartEventsThread(mpr);
 
-	/* 
+    /* 
        Create an Http service object
-	 */
-	http = httpCreate(mpr);
+     */
+    http = httpCreate(mpr);
 
-	/* 
+    /* 
        Get a client http object to work with. We can issue multiple requests with this one object.
-	 */
-	conn = httpCreateConn(http, NULL, NULL);
+     */
+    conn = httpCreateConn(http, NULL, NULL);
 
-	/* 
+    /* 
        Get a URL
-	 */
-	if (httpConnect(conn, "GET", "http://www.embedthis.com/index.html") < 0) {
-		mprError(mpr, "Can't get URL");
-		exit(2);
-	}
+     */
+    if (httpConnect(conn, "GET", "http://www.embedthis.com/index.html") < 0) {
+        mprError(mpr, "Can't get URL");
+        exit(2);
+    }
 
-	/* 
+    /* 
        Examine the HTTP response HTTP code. 200 is success.
-	 */
-	code = httpGetStatus(conn);
-	if (code != 200) {
-		mprError(mpr, "Server responded with code %d\n", code);
-		exit(1);
-	} 
+     */
+    code = httpGetStatus(conn);
+    if (code != 200) {
+        mprError(mpr, "Server responded with code %d\n", code);
+        exit(1);
+    } 
 
-	/* 
+    /* 
        Get the actual response content
-	 */
-	content = httpReadString(conn);
-	contentLen = httpGetContentLength(conn);
-	if (content) {
-		mprPrintf(mpr, "Server responded with:\n");
-		write(1, (char*) content, contentLen);
-	}
+     */
+    content = httpReadString(conn);
+    contentLen = httpGetContentLength(conn);
+    if (content) {
+        mprPrintf(mpr, "Server responded with:\n");
+        write(1, (char*) content, contentLen);
+    }
     mprFree(mpr);
-	return 0;
+    return 0;
 }
 #endif /* BLD_FEATURE_HTTP_CLIENT */
 

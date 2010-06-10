@@ -1,14 +1,14 @@
 /*
-  	simpleHandler.c - Create a simple AppWeb request handler
+    simpleHandler.c - Create a simple AppWeb request handler
   
-  	This sample demonstrates creating a request handler to process requests.
+    This sample demonstrates creating a request handler to process requests.
   
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
  
 /******************************* Includes *****************************/
 
-#include	"appweb.h"
+#include    "appweb.h"
 
 /********************************* Code *******************************/
 /*
@@ -25,20 +25,20 @@ static void runSimple(MaQueue *q)
     maSetHeader(conn, 0, "Last-Modified", req->host->currentDate);
     maDontCacheResponse(conn);
 
-	/*
-	  	Create the empty header packet. This will be filled in by the downstream network connector stage.
-	 */
+    /*
+        Create the empty header packet. This will be filled in by the downstream network connector stage.
+     */
     maPutForService(q, maCreateHeaderPacket(conn), 0);
 
-	/*
-	  	Generate some dynamic data. If you generate a lot, this will buffer up to a configured maximum. 
-	  	If that limit is exceeded, the packet will be sent downstream and the response headers will be created.
- 	 */
-	maWrite(q, "Hello World");
+    /*
+        Generate some dynamic data. If you generate a lot, this will buffer up to a configured maximum. 
+        If that limit is exceeded, the packet will be sent downstream and the response headers will be created.
+     */
+    maWrite(q, "Hello World");
 
-	/*
-	  	Send an end of data packet
- 	 */
+    /*
+        Send an end of data packet
+     */
     maPutForService(q, maCreateEndPacket(conn), 1);
 }
 
@@ -46,10 +46,10 @@ static void runSimple(MaQueue *q)
 
 static void incomingSimpleData(MaQueue *q, MaPacket *packet)
 {
-	/*
-	  	Do something with the incoming data in packet and then free the packet.
- 	 */
-	mprLog(q, 0, "Data in packet is %s", mprGetBufStart(packet->content));
+    /*
+        Do something with the incoming data in packet and then free the packet.
+     */
+    mprLog(q, 0, "Data in packet is %s", mprGetBufStart(packet->content));
     mprFree(packet);
 }
 

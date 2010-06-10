@@ -1,22 +1,22 @@
 /*
-  	simpleEjs.c - Simple use of Ejscript and a native function.
+    simpleEjs.c - Simple use of Ejscript and a native function.
   
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
   
-  	See the typicalEjs sample for a more extensive sample.
+    See the typicalEjs sample for a more extensive sample.
  */
  
 /******************************* Includes *****************************/
 
-#include	"appweb.h"
-#include	"ejs.h"
+#include    "appweb.h"
+#include    "ejs.h"
 
 /********************************* Code *******************************/
 /*
-  	Native C Function that is invoked when the corresponding ejs function is called.
-  	The ejs parameter is the Ejscript interpreter handle. argv contains the arguments 
-  	passed to the ejs function defined in the web page. This function is defined via 
-  	ejsDefineGlobalFunction in main() below.
+    Native C Function that is invoked when the corresponding ejs function is called.
+    The ejs parameter is the Ejscript interpreter handle. argv contains the arguments 
+    passed to the ejs function defined in the web page. This function is defined via 
+    ejsDefineGlobalFunction in main() below.
  */
 
 #if TODO
@@ -24,28 +24,28 @@ static EjsVar *myEjs(Ejs *ejs, EjsVar *thisObj, int argc, EjsVar **argv)
 {
     int     i;
 
-	/*
-	  	Write this data back to the client
- 	 */
-	ejsWrite(ejs, "<h1>Hello World</h1><p>Args: ");
+    /*
+        Write this data back to the client
+     */
+    ejsWrite(ejs, "<h1>Hello World</h1><p>Args: ");
 
-	mprAssert(argv);
-	for (i = 0; i < argc; ) {
+    mprAssert(argv);
+    for (i = 0; i < argc; ) {
         if (ejsIsNumber(argv[i])) {
             ejsWrite(ejs, "%d", ejsGetInt(argv[i]));
         } else {
             ejsWrite(ejs, ejsGetString(argv[i]));
         }
-		if (++i < argc) {
-			ejsWrite(ejs, " ");
-		}
-	}
-	ejsWrite(ejs, "</p>");
+        if (++i < argc) {
+            ejsWrite(ejs, " ");
+        }
+    }
+    ejsWrite(ejs, "</p>");
 
-	/*
-	 *	Functions can return a result
-	 */
-	return (EjsVar*) ejsCreateString(ejs, "sunny day");
+    /*
+     *  Functions can return a result
+     */
+    return (EjsVar*) ejsCreateString(ejs, "sunny day");
     return 0;
 }
 #endif
@@ -57,25 +57,25 @@ static EjsVar *myEjs(Ejs *ejs, EjsVar *thisObj, int argc, EjsVar **argv)
 MAIN(simpleEjs, int argc, char **argv)
 {
 #if TODO
-	MaServer	*server;
-	Ejs			*ejs;
+    MaServer    *server;
+    Ejs         *ejs;
 
-	if ((server = maCreateWebServer("simpleEjs.conf")) == 0) {
+    if ((server = maCreateWebServer("simpleEjs.conf")) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
 
-	/*  Define our ejs function in the master interpreter (shared definitions for all requests)
-	  	See the typicalEjs sample for how to create functions in classes.
-	 */
-	ejs = ejsGetMaster(server->http);
-	ejsDefineGlobalFunction(ejs, "helloWorld", myEjs);
-	
-	if (maServiceWebServer(server) < 0) {
+    /*  Define our ejs function in the master interpreter (shared definitions for all requests)
+        See the typicalEjs sample for how to create functions in classes.
+     */
+    ejs = ejsGetMaster(server->http);
+    ejsDefineGlobalFunction(ejs, "helloWorld", myEjs);
+    
+    if (maServiceWebServer(server) < 0) {
         return MPR_ERR_CANT_CREATE;
-	}
-	mprFree(server);
+    }
+    mprFree(server);
 #endif
-	return 0;
+    return 0;
 }
 
 

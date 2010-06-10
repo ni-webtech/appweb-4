@@ -1,65 +1,64 @@
 /*
-  	simpleEgi.c - Demonstrate the use of the Embedded Gateway Interface (EGI) 
-  			in a simple multi-threaded application.
+    simpleEgi.c - Demonstrate the use of the Embedded Gateway Interface (EGI) 
+        in a simple multi-threaded application.
   
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
  
 /******************************* Includes *****************************/
 
-#include	"appweb.h"
+#include    "appweb.h"
 
 /********************************* Code *******************************/
 /*
-  	This method is run when the EGI form is called from the web
-  	page. Rq is the request context. URI is the bare URL minus query.
-  	Query is the string after a "?" in the URL. Post data is posted
-  	HTTP form data.
+    This method is run when the EGI form is called from the web
+    page. Rq is the request context. URI is the bare URL minus query.
+    Query is the string after a "?" in the URL. Post data is posted
+    HTTP form data.
  */
 
 static void myEgi(HttpQueue *q)
 {
-	HttpConn	*conn;
+    HttpConn    *conn;
 
-	conn = q->conn;
-	httpWrite(q, "<HTML><TITLE>simpleEgi</TITLE><BODY>\r\n");
-	httpWrite(q, "<p>Name: %s</p>\n", httpGetFormVar(conn, "name", "-"));
-	httpWrite(q, "<p>Address: %s</p>\n", httpGetFormVar(conn, "address", "-"));
-	httpWrite(q, "</BODY></HTML>\r\n");
+    conn = q->conn;
+    httpWrite(q, "<HTML><TITLE>simpleEgi</TITLE><BODY>\r\n");
+    httpWrite(q, "<p>Name: %s</p>\n", httpGetFormVar(conn, "name", "-"));
+    httpWrite(q, "<p>Address: %s</p>\n", httpGetFormVar(conn, "address", "-"));
+    httpWrite(q, "</BODY></HTML>\r\n");
 
 #if POSSIBLE || 1
-	/*
-	 *	Useful things to do in egi forms
-	 */
-	httpSetStatus(conn, 200);
-	httpSetMimeType(conn, "text/plain");
-	httpDontCache(conn);
-	httpRedirect(conn, 302, "/myURl");
-	httpError(conn, 409, "My message : %d", 5);
+    /*
+     *  Useful things to do in egi forms
+     */
+    httpSetStatus(conn, 200);
+    httpSetMimeType(conn, "text/plain");
+    httpDontCache(conn);
+    httpRedirect(conn, 302, "/myURl");
+    httpError(conn, 409, "My message : %d", 5);
 #endif
 }
 
 
 /*
-  	Create a simple stand-alone web server
+    Create a simple stand-alone web server
  */
 MAIN(simpleEgi, int argc, char **argv)
 {
-	MaServer    *server;
+    MaServer    *server;
 
-	if ((server = maCreateWebServer("simpleEgi.conf")) == 0) {
+    if ((server = maCreateWebServer("simpleEgi.conf")) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-
-	/*  Define our EGI form
-	 */
-	maDefineEgiForm(server->http, "/myEgi.egi", myEgi);
-	
-	if (maServiceWebServer(server) < 0) {
+    /*  
+        Define our EGI form
+     */
+    maDefineEgiForm(server->http, "/myEgi.egi", myEgi);
+    if (maServiceWebServer(server) < 0) {
         return MPR_ERR_CANT_CREATE;
-	}
-	mprFree(server->http);
-	return 0;
+    }
+    mprFree(server->http);
+    return 0;
 }
 
 
