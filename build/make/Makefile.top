@@ -205,7 +205,7 @@ test-uninstall-package:
 
 test-install-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
-		rm -fr "$(PKG_DIR)" ; mkdir -p "$(PKG_DIR)" ; \
+		rm -fr "$(PKG_DIR)/*" ; \
 		name="$(BASE_NAME).exe.zip" ; \
 		cp WIN/unattended.ans ../releases/$$name "$(PKG_DIR)" ; cd "$(PKG_DIR)" ; \
 		unzip -q -o $$name ; \
@@ -229,7 +229,7 @@ test-uninstall-native-package:
 			exit 255 ; \
 		fi ; \
 		"$(PKG_DIR)/unins000.exe" /silent ; \
-		rm -fr "$(PKG_DIR)" ; \
+		rm -fr "$(PKG_DIR)/*" ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
 		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
