@@ -28,29 +28,13 @@ include			build/make/Makefile.appweb
 testCleanup:
 	killall testAppweb >/dev/null 2>&1 ; true
 
-#
-#	MOB -- this should be moved out into a script in build/bin
-#
-#diff import sync:
-x:
+diff import sync:
 	if [ ! -x $(BLD_TOOLS_DIR)/edep$(BLD_BUILD_EXE) -a "$(BUILDING_CROSS)" != 1 ] ; then \
 		$(MAKE) -S --no-print-directory _RECURSIVE_=1 -C $(BLD_TOP)/build/src compile ; \
 	fi
 	if [ "`git branch`" != "* master" ] ; then echo "Sync only in default branch" ; echo 255 ; fi
-	import.ksh --$@ --src ../tools --dir . ../tools/build/export/export.gen
-	import.ksh --$@ --src ../tools --dir . ../tools/build/export/export.configure
-	import.ksh --$@ --src ../mpr --dir . ../mpr/build/export/export.gen
-	import.ksh --$@ --src ../mpr --dir ./src/include --strip ./all/ ../mpr/build/export/export.h
-	import.ksh --$@ --src ../mpr --dir ./src/deps/mpr --strip ./all/ ../mpr/build/export/export.c
-	import.ksh --$@ --src ../pcre --dir . ../pcre/build/export/export.gen
-	import.ksh --$@ --src ../pcre --dir ./src/include --strip ./all/ ../pcre/build/export/export.h
-	import.ksh --$@ --src ../pcre --dir ./src/deps/pcre --strip ./all/ ../pcre/build/export/export.c
-	import.ksh --$@ --src ../http --dir . ../http/build/export/export.gen
-	import.ksh --$@ --src ../http --dir ./src/include --strip ./all/ ../http/build/export/export.h
-	import.ksh --$@ --src ../http --dir ./src/deps/http --strip ./all/ ../http/build/export/export.c
-	import.ksh --$@ --src ../ejs --dir . ../ejs/build/export/export.gen
-	import.ksh --$@ --src ../ejs --dir ./src/include --strip ./all/ ../ejs/build/export/export.h
-	import.ksh --$@ --src ../ejs --dir ./src/deps/ejs --strip ./all/ ../ejs/build/export/export.c
+	$(BLD_TOOLS_DIR)/import.sh --$@ ../tools/releases/tools-all.tgz
+	$(BLD_TOOLS_DIR)/import.sh --$@ ../ejs/releases/ejs-all.tgz
 	if [ ../ejs/doc/index.html -nt doc/ejs/index.html ] ; then \
 		set -x ; \
 		echo "#  import ejs doc"  \
@@ -66,9 +50,4 @@ x:
 	fi
 	echo
 
-diff import sync:
-	if [ ! -x $(BLD_TOOLS_DIR)/edep$(BLD_BUILD_EXE) -a "$(BUILDING_CROSS)" != 1 ] ; then \
-		$(MAKE) -S --no-print-directory _RECURSIVE_=1 -C $(BLD_TOP)/build/src compile ; \
-	fi
-	if [ "`git branch`" != "* master" ] ; then echo "Sync only in default branch" ; echo 255 ; fi
-	import.sh --$@ ../ejs
+x:

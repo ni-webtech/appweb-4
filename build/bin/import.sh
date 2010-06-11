@@ -1,13 +1,12 @@
 #!/bin/bash
 #
-#   import.ksh -- Import an all-in-one archive 
+#   import.sh -- Import an all-in-one archive 
 #
 #   Usage:
-#       import.ksh [--diff|sync|import] [--dir dir] [--ignore xx] [--patch preserveFeature] dir
+#       import.sh [--diff|sync|import] [--dir dir] [--ignore xx] [--patch preserveFeature] dir
 #
 #   Copyright (c) Embedthis Software Inc, 2003-2010. All Rights Reserved.
-#
-#   This file is for internal use only when importing shared source code.
+#   This file is for internal use only when importing all-in-one archives.
 #
 
 IDIR=staging/import
@@ -88,20 +87,20 @@ syncFiles() {
                 [ "${TRACE}" = 1 ] && echo diff ${SRC}/$file ${DIR}/${target}
                 if [ $diff = 1 ] ; then
                     diff ${SRC}/$file ${DIR}/${target} 2>&1 >/dev/null
-                    if [ $status != 0 ] ; then
+                    if [ $? != 0 ] ; then
                         echo ${DIR}/$target is MODIFIED >&2
-                        diff ${SRC}/$file ${DIR}/${target}
+                        diff ${SRC}/$file ${DIR}/${target} | more
                     fi
                 else
                     diff ${SRC}/$file ${DIR}/${target} 2>&1 >/dev/null
                 fi
             else
-                status=1
+                false
             fi
             status=$?
         fi
         if [ $status != 0 ] ; then
-            if [ ${DIR}/${target} -nt $SRC/$file ] ; then
+            if [ $import = 0 -a ${DIR}/${target} -nt $SRC/$file ] ; then
                 warn "WARNING" "${target} has been modified. Skipping"
                 continue
             fi
@@ -174,9 +173,7 @@ if [ "$#" -ne 1 ] ; then
 fi
 
 DIR=`getpath -a "."`
-SRC=`getpath -a "$1"`
-NAME=${SRC##*/}
-ARCHIVE=$SRC/all/${NAME}-all.tgz
+ARCHIVE=`getpath -a "$1"`
 
 if [ ! -f "$ARCHIVE" ] ; then
     echo "Can't find $ARCHIVE"

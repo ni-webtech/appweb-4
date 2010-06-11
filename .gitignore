@@ -66,3 +66,4 @@ Win32
 *.suo
 .port.log
 bin/appweb.conf
+releases/*.tgz

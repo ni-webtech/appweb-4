@@ -134,7 +134,7 @@ package-only:
 	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
 
 packageExtra:
-	if [ -d package ] ; then \
+	if [ -d package -a -f package/binary.files ] ; then \
 		if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
 			mkdir -p $(BLD_TOP)/releases ; \
 			export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
@@ -143,8 +143,6 @@ packageExtra:
 		else \
 			echo "Packaging skipped at build depth $(BUILD_DEPTH)" ; \
 		fi ; \
-	else \
-		echo "Packaging not supported with this product" ; \
 	fi
 
 upload:
