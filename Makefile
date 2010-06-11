@@ -50,4 +50,11 @@ diff import sync:
 	fi
 	echo
 
-x:
+testExtra: test-projects
+
+test-projects:
+ifeq    ($(BLD_HOST_OS),WIN)
+	if [ "$(BUILD_DEPTH)" -ge 3 ] ; then \
+		$(BLD_TOOLS_DIR)/nativeBuild ; \
+	fi
+endif
