@@ -15,7 +15,7 @@
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/ejsTune.h"
+ *  Start of file "../../src/include/ejsTune.h"
  */
 /************************************************************************/
 
@@ -199,7 +199,7 @@ extern "C" {
  */
 /************************************************************************/
 /*
- *  End of file "../src/include/ejsTune.h"
+ *  End of file "../../src/include/ejsTune.h"
  */
 /************************************************************************/
 
@@ -207,7 +207,7 @@ extern "C" {
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/ejsByteCode.h"
+ *  Start of file "../../src/include/ejsByteCode.h"
  */
 /************************************************************************/
 
@@ -456,7 +456,7 @@ typedef enum EjsOpCode {
  */
 /************************************************************************/
 /*
- *  End of file "../src/include/ejsByteCode.h"
+ *  End of file "../../src/include/ejsByteCode.h"
  */
 /************************************************************************/
 
@@ -464,7 +464,7 @@ typedef enum EjsOpCode {
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/ejsByteCodeTable.h"
+ *  Start of file "../../src/include/ejsByteCodeTable.h"
  */
 /************************************************************************/
 
@@ -763,7 +763,7 @@ extern EjsOptable *ejsGetOptable(MprCtx ctx);
 
 /************************************************************************/
 /*
- *  End of file "../src/include/ejsByteCodeTable.h"
+ *  End of file "../../src/include/ejsByteCodeTable.h"
  */
 /************************************************************************/
 
@@ -771,7 +771,7 @@ extern EjsOptable *ejsGetOptable(MprCtx ctx);
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/ejsCore.h"
+ *  Start of file "../../src/include/ejsCore.h"
  */
 /************************************************************************/
 
@@ -3972,7 +3972,7 @@ extern void ejsUnlockVm(Ejs *ejs);
 
 /************************************************************************/
 /*
- *  End of file "../src/include/ejsCore.h"
+ *  End of file "../../src/include/ejsCore.h"
  */
 /************************************************************************/
 
@@ -3980,7 +3980,7 @@ extern void ejsUnlockVm(Ejs *ejs);
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/ejsModule.h"
+ *  Start of file "../../src/include/ejsModule.h"
  */
 /************************************************************************/
 
@@ -4363,7 +4363,7 @@ extern int          ejsRemoveModule(Ejs *ejs, struct EjsModule *up);
  */
 /************************************************************************/
 /*
- *  End of file "../src/include/ejsModule.h"
+ *  End of file "../../src/include/ejsModule.h"
  */
 /************************************************************************/
 
@@ -4371,7 +4371,7 @@ extern int          ejsRemoveModule(Ejs *ejs, struct EjsModule *up);
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/ejs.h"
+ *  Start of file "../../src/include/ejs.h"
  */
 /************************************************************************/
 
@@ -4420,7 +4420,7 @@ extern int          ejsRemoveModule(Ejs *ejs, struct EjsModule *up);
  */
 /************************************************************************/
 /*
- *  End of file "../src/include/ejs.h"
+ *  End of file "../../src/include/ejs.h"
  */
 /************************************************************************/
 
@@ -4428,7 +4428,7 @@ extern int          ejsRemoveModule(Ejs *ejs, struct EjsModule *up);
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/ejsWeb.h"
+ *  Start of file "../../src/include/ejsWeb.h"
  */
 /************************************************************************/
 
@@ -4597,7 +4597,7 @@ extern void ejsConfigureWebTypes(Ejs *ejs);
  */
 /************************************************************************/
 /*
- *  End of file "../src/include/ejsWeb.h"
+ *  End of file "../../src/include/ejsWeb.h"
  */
 /************************************************************************/
 
@@ -4605,7 +4605,7 @@ extern void ejsConfigureWebTypes(Ejs *ejs);
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/ecCompiler.h"
+ *  Start of file "../../src/include/ecCompiler.h"
  */
 /************************************************************************/
 
@@ -5771,7 +5771,7 @@ extern void     ecAdjustCodeLength(EcCompiler *cp, int adj);
  */
 /************************************************************************/
 /*
- *  End of file "../src/include/ecCompiler.h"
+ *  End of file "../../src/include/ecCompiler.h"
  */
 /************************************************************************/
 

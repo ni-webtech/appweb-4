@@ -15,7 +15,7 @@
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/sqlite3.h"
+ *  Start of file "../../src/include/sqlite3.h"
  */
 /************************************************************************/
 
@@ -5830,7 +5830,7 @@ SQLITE_API int sqlite3_strnicmp(const char *, const char *, int);
 #endif /* _h_SQLITE3_ */
 /************************************************************************/
 /*
- *  End of file "../src/include/sqlite3.h"
+ *  End of file "../../src/include/sqlite3.h"
  */
 /************************************************************************/
 
@@ -5838,7 +5838,7 @@ SQLITE_API int sqlite3_strnicmp(const char *, const char *, int);
 
 /************************************************************************/
 /*
- *  Start of file "../src/jems/ejs.db.sqlite/src/sqlite3.c"
+ *  Start of file "../../src/jems/ejs.db.sqlite/src/sqlite3.c"
  */
 /************************************************************************/
 
@@ -112652,7 +112652,7 @@ SQLITE_PRIVATE void sqlite3Fts3IcuTokenizerModule(
 #endif /* BLD_FEATURE_SQLITE */
 /************************************************************************/
 /*
- *  End of file "../src/jems/ejs.db.sqlite/src/sqlite3.c"
+ *  End of file "../../src/jems/ejs.db.sqlite/src/sqlite3.c"
  */
 /************************************************************************/
 

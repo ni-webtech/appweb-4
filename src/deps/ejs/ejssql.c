@@ -15,7 +15,7 @@
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/sqlite3.h"
+ *  Start of file "../../src/include/sqlite3.h"
  */
 /************************************************************************/
 
@@ -5830,7 +5830,7 @@ SQLITE_API int sqlite3_strnicmp(const char *, const char *, int);
 #endif /* _h_SQLITE3_ */
 /************************************************************************/
 /*
- *  End of file "../src/include/sqlite3.h"
+ *  End of file "../../src/include/sqlite3.h"
  */
 /************************************************************************/
 
@@ -5838,7 +5838,7 @@ SQLITE_API int sqlite3_strnicmp(const char *, const char *, int);
 
 /************************************************************************/
 /*
- *  Start of file "../src/jems/ejs.db.sqlite/src/ejssql.c"
+ *  Start of file "../../src//jems/ejs.db.sqlite/src/ejssql.c"
  */
 /************************************************************************/
 
@@ -9049,7 +9049,7 @@ int main(int argc, char **argv){
 #endif /* BLD_FEATURE_SQLITE */
 /************************************************************************/
 /*
- *  End of file "../src/jems/ejs.db.sqlite/src/ejssql.c"
+ *  End of file "../../src//jems/ejs.db.sqlite/src/ejssql.c"
  */
 /************************************************************************/
 

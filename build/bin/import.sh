@@ -9,7 +9,7 @@
 #   This file is for internal use only when importing all-in-one archives.
 #
 
-IDIR=staging/import
+IDIR=staging
 PP_ARGS=
 PROGRAM=${0}
 
@@ -186,6 +186,7 @@ if [ "$patch" = "1" ] ; then
     echo -e "  # Using pp args: $PP_ARGS\n"
 fi
 
+mkdir -p $IDIR
 rm -fr $IDIR/*
 tar xfz $ARCHIVE -C $IDIR
 SRC=$IDIR

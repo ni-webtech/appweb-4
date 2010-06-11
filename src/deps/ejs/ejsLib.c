@@ -17,7 +17,7 @@
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsByteCode.c"
+ *  Start of file "../../src/vm/ejsByteCode.c"
  */
 /************************************************************************/
 
@@ -70,7 +70,7 @@ EjsOptable *ejsGetOptable(MprCtx ctx)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsByteCode.c"
+ *  End of file "../../src/vm/ejsByteCode.c"
  */
 /************************************************************************/
 
@@ -78,7 +78,7 @@ EjsOptable *ejsGetOptable(MprCtx ctx)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsException.c"
+ *  Start of file "../../src/vm/ejsException.c"
  */
 /************************************************************************/
 
@@ -505,7 +505,7 @@ EjsObj *ejsGetException(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsException.c"
+ *  End of file "../../src/vm/ejsException.c"
  */
 /************************************************************************/
 
@@ -513,7 +513,7 @@ EjsObj *ejsGetException(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsGarbage.c"
+ *  Start of file "../../src/vm/ejsGarbage.c"
  */
 /************************************************************************/
 
@@ -1335,7 +1335,7 @@ void ejsPrintAllocReport(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsGarbage.c"
+ *  End of file "../../src/vm/ejsGarbage.c"
  */
 /************************************************************************/
 
@@ -1343,7 +1343,7 @@ void ejsPrintAllocReport(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsInterp.c"
+ *  Start of file "../../src/vm/ejsInterp.c"
  */
 /************************************************************************/
 
@@ -5411,7 +5411,7 @@ static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsInterp.c"
+ *  End of file "../../src/vm/ejsInterp.c"
  */
 /************************************************************************/
 
@@ -5419,7 +5419,7 @@ static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsList.c"
+ *  Start of file "../../src/vm/ejsList.c"
  */
 /************************************************************************/
 
@@ -5914,7 +5914,7 @@ int ejsGetListCapacity(EjsList *lp)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsList.c"
+ *  End of file "../../src/vm/ejsList.c"
  */
 /************************************************************************/
 
@@ -5922,7 +5922,7 @@ int ejsGetListCapacity(EjsList *lp)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsLoader.c"
+ *  Start of file "../../src/vm/ejsLoader.c"
  */
 /************************************************************************/
 
@@ -7954,7 +7954,7 @@ static void popScope(EjsModule *mp, int keepScope)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsLoader.c"
+ *  End of file "../../src/vm/ejsLoader.c"
  */
 /************************************************************************/
 
@@ -7962,7 +7962,7 @@ static void popScope(EjsModule *mp, int keepScope)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsModule.c"
+ *  Start of file "../../src/vm/ejsModule.c"
  */
 /************************************************************************/
 
@@ -8125,7 +8125,7 @@ MprList *ejsGetModuleList(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsModule.c"
+ *  End of file "../../src/vm/ejsModule.c"
  */
 /************************************************************************/
 
@@ -8133,7 +8133,7 @@ MprList *ejsGetModuleList(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsScope.c"
+ *  Start of file "../../src/vm/ejsScope.c"
  */
 /************************************************************************/
 
@@ -8461,7 +8461,7 @@ void ejsShowCurrentScope(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsScope.c"
+ *  End of file "../../src/vm/ejsScope.c"
  */
 /************************************************************************/
 
@@ -8469,7 +8469,7 @@ void ejsShowCurrentScope(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsService.c"
+ *  Start of file "../../src/vm/ejsService.c"
  */
 /************************************************************************/
 
@@ -9386,7 +9386,7 @@ void ejsUnlockVm(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsService.c"
+ *  End of file "../../src/vm/ejsService.c"
  */
 /************************************************************************/
 
@@ -9394,7 +9394,7 @@ void ejsUnlockVm(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/vm/ejsVar.c"
+ *  Start of file "../../src/vm/ejsVar.c"
  */
 /************************************************************************/
 
@@ -10196,7 +10196,7 @@ cchar *_ejsGetString(Ejs *ejs, EjsObj *obj)
  */
 /************************************************************************/
 /*
- *  End of file "../src/vm/ejsVar.c"
+ *  End of file "../../src/vm/ejsVar.c"
  */
 /************************************************************************/
 
@@ -10204,7 +10204,7 @@ cchar *_ejsGetString(Ejs *ejs, EjsObj *obj)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsApp.c"
+ *  Start of file "../../src/core/src/ejsApp.c"
  */
 /************************************************************************/
 
@@ -10508,7 +10508,7 @@ void ejsConfigureAppType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsApp.c"
+ *  End of file "../../src/core/src/ejsApp.c"
  */
 /************************************************************************/
 
@@ -10516,7 +10516,7 @@ void ejsConfigureAppType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsArray.c"
+ *  Start of file "../../src/core/src/ejsArray.c"
  */
 /************************************************************************/
 
@@ -12212,7 +12212,7 @@ void ejsConfigureArrayType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsArray.c"
+ *  End of file "../../src/core/src/ejsArray.c"
  */
 /************************************************************************/
 
@@ -12220,7 +12220,7 @@ void ejsConfigureArrayType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsBlock.c"
+ *  Start of file "../../src/core/src/ejsBlock.c"
  */
 /************************************************************************/
 
@@ -12421,7 +12421,7 @@ void ejsCreateBlockType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsBlock.c"
+ *  End of file "../../src/core/src/ejsBlock.c"
  */
 /************************************************************************/
 
@@ -12429,7 +12429,7 @@ void ejsCreateBlockType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsBoolean.c"
+ *  Start of file "../../src/core/src/ejsBoolean.c"
  */
 /************************************************************************/
 
@@ -12731,7 +12731,7 @@ void ejsConfigureBooleanType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsBoolean.c"
+ *  End of file "../../src/core/src/ejsBoolean.c"
  */
 /************************************************************************/
 
@@ -12739,7 +12739,7 @@ void ejsConfigureBooleanType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsByteArray.c"
+ *  Start of file "../../src/core/src/ejsByteArray.c"
  */
 /************************************************************************/
 
@@ -14221,7 +14221,7 @@ void ejsConfigureByteArrayType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsByteArray.c"
+ *  End of file "../../src/core/src/ejsByteArray.c"
  */
 /************************************************************************/
 
@@ -14229,7 +14229,7 @@ void ejsConfigureByteArrayType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsConfig.c"
+ *  Start of file "../../src/core/src/ejsConfig.c"
  */
 /************************************************************************/
 
@@ -14307,7 +14307,7 @@ void ejsConfigureConfigType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsConfig.c"
+ *  End of file "../../src/core/src/ejsConfig.c"
  */
 /************************************************************************/
 
@@ -14315,7 +14315,7 @@ void ejsConfigureConfigType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsDate.c"
+ *  Start of file "../../src/core/src/ejsDate.c"
  */
 /************************************************************************/
 
@@ -15485,7 +15485,7 @@ void ejsConfigureDateType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsDate.c"
+ *  End of file "../../src/core/src/ejsDate.c"
  */
 /************************************************************************/
 
@@ -15493,7 +15493,7 @@ void ejsConfigureDateType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsDebug.c"
+ *  Start of file "../../src/core/src/ejsDebug.c"
  */
 /************************************************************************/
 
@@ -15567,7 +15567,7 @@ void __dummyEjsDebug() {}
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsDebug.c"
+ *  End of file "../../src/core/src/ejsDebug.c"
  */
 /************************************************************************/
 
@@ -15575,7 +15575,7 @@ void __dummyEjsDebug() {}
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsError.c"
+ *  Start of file "../../src/core/src/ejsError.c"
  */
 /************************************************************************/
 
@@ -15781,7 +15781,7 @@ void ejsConfigureErrorType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsError.c"
+ *  End of file "../../src/core/src/ejsError.c"
  */
 /************************************************************************/
 
@@ -15789,7 +15789,7 @@ void ejsConfigureErrorType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsEvent.c"
+ *  Start of file "../../src/core/src/ejsEvent.c"
  */
 /************************************************************************/
 
@@ -15839,7 +15839,7 @@ void ejsConfigureEventType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsEvent.c"
+ *  End of file "../../src/core/src/ejsEvent.c"
  */
 /************************************************************************/
 
@@ -15847,7 +15847,7 @@ void ejsConfigureEventType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsFile.c"
+ *  Start of file "../../src/core/src/ejsFile.c"
  */
 /************************************************************************/
 
@@ -16785,7 +16785,7 @@ void ejsConfigureFileType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsFile.c"
+ *  End of file "../../src/core/src/ejsFile.c"
  */
 /************************************************************************/
 
@@ -16793,7 +16793,7 @@ void ejsConfigureFileType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsFileSystem.c"
+ *  Start of file "../../src/core/src/ejsFileSystem.c"
  */
 /************************************************************************/
 
@@ -17030,7 +17030,7 @@ void ejsConfigureFileSystemType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsFileSystem.c"
+ *  End of file "../../src/core/src/ejsFileSystem.c"
  */
 /************************************************************************/
 
@@ -17038,7 +17038,7 @@ void ejsConfigureFileSystemType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsFrame.c"
+ *  Start of file "../../src/core/src/ejsFrame.c"
  */
 /************************************************************************/
 
@@ -17234,7 +17234,7 @@ void ejsCreateFrameType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsFrame.c"
+ *  End of file "../../src/core/src/ejsFrame.c"
  */
 /************************************************************************/
 
@@ -17242,7 +17242,7 @@ void ejsCreateFrameType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsFunction.c"
+ *  Start of file "../../src/core/src/ejsFunction.c"
  */
 /************************************************************************/
 
@@ -17790,7 +17790,7 @@ void ejsConfigureFunctionType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsFunction.c"
+ *  End of file "../../src/core/src/ejsFunction.c"
  */
 /************************************************************************/
 
@@ -17798,7 +17798,7 @@ void ejsConfigureFunctionType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsGC.c"
+ *  Start of file "../../src/core/src/ejsGC.c"
  */
 /************************************************************************/
 
@@ -17916,7 +17916,7 @@ void ejsConfigureGCType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsGC.c"
+ *  End of file "../../src/core/src/ejsGC.c"
  */
 /************************************************************************/
 
@@ -17924,7 +17924,7 @@ void ejsConfigureGCType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsGlobal.c"
+ *  Start of file "../../src/core/src/ejsGlobal.c"
  */
 /************************************************************************/
 
@@ -18451,7 +18451,7 @@ void ejsConfigureGlobalBlock(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsGlobal.c"
+ *  End of file "../../src/core/src/ejsGlobal.c"
  */
 /************************************************************************/
 
@@ -18459,7 +18459,7 @@ void ejsConfigureGlobalBlock(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsHttp.c"
+ *  Start of file "../../src/core/src/ejsHttp.c"
  */
 /************************************************************************/
 
@@ -19699,7 +19699,7 @@ void ejsConfigureHttpType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsHttp.c"
+ *  End of file "../../src/core/src/ejsHttp.c"
  */
 /************************************************************************/
 
@@ -19707,7 +19707,7 @@ void ejsConfigureHttpType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsIterator.c"
+ *  Start of file "../../src/core/src/ejsIterator.c"
  */
 /************************************************************************/
 
@@ -19867,7 +19867,7 @@ void ejsConfigureIteratorType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsIterator.c"
+ *  End of file "../../src/core/src/ejsIterator.c"
  */
 /************************************************************************/
 
@@ -19875,7 +19875,7 @@ void ejsConfigureIteratorType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsJSON.c"
+ *  Start of file "../../src/core/src/ejsJSON.c"
  */
 /************************************************************************/
 
@@ -20321,7 +20321,7 @@ void ejsConfigureJSONType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsJSON.c"
+ *  End of file "../../src/core/src/ejsJSON.c"
  */
 /************************************************************************/
 
@@ -20329,7 +20329,7 @@ void ejsConfigureJSONType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsLogger.c"
+ *  Start of file "../../src/core/src/ejsLogger.c"
  */
 /************************************************************************/
 
@@ -20407,7 +20407,7 @@ void ejsConfigureLoggerType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsLogger.c"
+ *  End of file "../../src/core/src/ejsLogger.c"
  */
 /************************************************************************/
 
@@ -20415,7 +20415,7 @@ void ejsConfigureLoggerType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsMath.c"
+ *  Start of file "../../src/core/src/ejsMath.c"
  */
 /************************************************************************/
 
@@ -20727,7 +20727,7 @@ void ejsConfigureMathType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsMath.c"
+ *  End of file "../../src/core/src/ejsMath.c"
  */
 /************************************************************************/
 
@@ -20735,7 +20735,7 @@ void ejsConfigureMathType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsMemory.c"
+ *  Start of file "../../src/core/src/ejsMemory.c"
  */
 /************************************************************************/
 
@@ -20946,7 +20946,7 @@ void ejsConfigureMemoryType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsMemory.c"
+ *  End of file "../../src/core/src/ejsMemory.c"
  */
 /************************************************************************/
 
@@ -20954,7 +20954,7 @@ void ejsConfigureMemoryType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsNamespace.c"
+ *  Start of file "../../src/core/src/ejsNamespace.c"
  */
 /************************************************************************/
 
@@ -21206,7 +21206,7 @@ void ejsConfigureNamespaceType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsNamespace.c"
+ *  End of file "../../src/core/src/ejsNamespace.c"
  */
 /************************************************************************/
 
@@ -21214,7 +21214,7 @@ void ejsConfigureNamespaceType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsNull.c"
+ *  Start of file "../../src/core/src/ejsNull.c"
  */
 /************************************************************************/
 
@@ -21458,7 +21458,7 @@ void ejsConfigureNullType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsNull.c"
+ *  End of file "../../src/core/src/ejsNull.c"
  */
 /************************************************************************/
 
@@ -21466,7 +21466,7 @@ void ejsConfigureNullType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsNumber.c"
+ *  Start of file "../../src/core/src/ejsNumber.c"
  */
 /************************************************************************/
 
@@ -21996,7 +21996,7 @@ void ejsConfigureNumberType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsNumber.c"
+ *  End of file "../../src/core/src/ejsNumber.c"
  */
 /************************************************************************/
 
@@ -22004,7 +22004,7 @@ void ejsConfigureNumberType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsObject.c"
+ *  Start of file "../../src/core/src/ejsObject.c"
  */
 /************************************************************************/
 
@@ -24222,7 +24222,7 @@ void ejsConfigureObjectType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsObject.c"
+ *  End of file "../../src/core/src/ejsObject.c"
  */
 /************************************************************************/
 
@@ -24230,7 +24230,7 @@ void ejsConfigureObjectType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsPath.c"
+ *  Start of file "../../src/core/src/ejsPath.c"
  */
 /************************************************************************/
 
@@ -25605,7 +25605,7 @@ void ejsConfigurePathType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsPath.c"
+ *  End of file "../../src/core/src/ejsPath.c"
  */
 /************************************************************************/
 
@@ -25613,7 +25613,7 @@ void ejsConfigurePathType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsReflect.c"
+ *  Start of file "../../src/core/src/ejsReflect.c"
  */
 /************************************************************************/
 
@@ -25830,7 +25830,7 @@ void ejsConfigureReflectType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsReflect.c"
+ *  End of file "../../src/core/src/ejsReflect.c"
  */
 /************************************************************************/
 
@@ -25838,7 +25838,7 @@ void ejsConfigureReflectType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsRegExp.c"
+ *  Start of file "../../src/core/src/ejsRegExp.c"
  */
 /************************************************************************/
 
@@ -26232,7 +26232,7 @@ void ejsConfigureRegExpType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsRegExp.c"
+ *  End of file "../../src/core/src/ejsRegExp.c"
  */
 /************************************************************************/
 
@@ -26240,7 +26240,7 @@ void ejsConfigureRegExpType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsSocket.c"
+ *  Start of file "../../src/core/src/ejsSocket.c"
  */
 /************************************************************************/
 
@@ -26716,7 +26716,7 @@ void ejsConfigureSocketType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsSocket.c"
+ *  End of file "../../src/core/src/ejsSocket.c"
  */
 /************************************************************************/
 
@@ -26724,7 +26724,7 @@ void ejsConfigureSocketType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsString.c"
+ *  Start of file "../../src/core/src/ejsString.c"
  */
 /************************************************************************/
 
@@ -28767,7 +28767,7 @@ void ejsConfigureStringType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsString.c"
+ *  End of file "../../src/core/src/ejsString.c"
  */
 /************************************************************************/
 
@@ -28775,7 +28775,7 @@ void ejsConfigureStringType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsSystem.c"
+ *  Start of file "../../src/core/src/ejsSystem.c"
  */
 /************************************************************************/
 
@@ -28977,7 +28977,7 @@ void ejsConfigureSystemType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsSystem.c"
+ *  End of file "../../src/core/src/ejsSystem.c"
  */
 /************************************************************************/
 
@@ -28985,7 +28985,7 @@ void ejsConfigureSystemType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsTimer.c"
+ *  Start of file "../../src/core/src/ejsTimer.c"
  */
 /************************************************************************/
 
@@ -29192,7 +29192,7 @@ void ejsConfigureTimerType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsTimer.c"
+ *  End of file "../../src/core/src/ejsTimer.c"
  */
 /************************************************************************/
 
@@ -29200,7 +29200,7 @@ void ejsConfigureTimerType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsType.c"
+ *  Start of file "../../src/core/src/ejsType.c"
  */
 /************************************************************************/
 
@@ -30167,7 +30167,7 @@ void ejsCompleteType(Ejs *ejs, EjsType *type)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsType.c"
+ *  End of file "../../src/core/src/ejsType.c"
  */
 /************************************************************************/
 
@@ -30175,7 +30175,7 @@ void ejsCompleteType(Ejs *ejs, EjsType *type)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsUri.c"
+ *  Start of file "../../src/core/src/ejsUri.c"
  */
 /************************************************************************/
 
@@ -31128,7 +31128,7 @@ void ejsConfigureUriType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsUri.c"
+ *  End of file "../../src/core/src/ejsUri.c"
  */
 /************************************************************************/
 
@@ -31136,7 +31136,7 @@ void ejsConfigureUriType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsVoid.c"
+ *  Start of file "../../src/core/src/ejsVoid.c"
  */
 /************************************************************************/
 
@@ -31376,7 +31376,7 @@ void ejsConfigureVoidType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsVoid.c"
+ *  End of file "../../src/core/src/ejsVoid.c"
  */
 /************************************************************************/
 
@@ -31384,7 +31384,7 @@ void ejsConfigureVoidType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsWorker.c"
+ *  Start of file "../../src/core/src/ejsWorker.c"
  */
 /************************************************************************/
 
@@ -32210,7 +32210,7 @@ void ejsConfigureWorkerType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsWorker.c"
+ *  End of file "../../src/core/src/ejsWorker.c"
  */
 /************************************************************************/
 
@@ -32218,7 +32218,7 @@ void ejsConfigureWorkerType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsXML.c"
+ *  Start of file "../../src/core/src/ejsXML.c"
  */
 /************************************************************************/
 
@@ -33450,7 +33450,7 @@ void ejsConfigureXMLType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsXML.c"
+ *  End of file "../../src/core/src/ejsXML.c"
  */
 /************************************************************************/
 
@@ -33458,7 +33458,7 @@ void ejsConfigureXMLType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsXMLList.c"
+ *  Start of file "../../src/core/src/ejsXMLList.c"
  */
 /************************************************************************/
 
@@ -34354,7 +34354,7 @@ void ejsConfigureXMLListType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsXMLList.c"
+ *  End of file "../../src/core/src/ejsXMLList.c"
  */
 /************************************************************************/
 
@@ -34362,7 +34362,7 @@ void ejsConfigureXMLListType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/core/src/ejsXMLLoader.c"
+ *  Start of file "../../src/core/src/ejsXMLLoader.c"
  */
 /************************************************************************/
 
@@ -34670,7 +34670,7 @@ static void indent(MprBuf *bp, int level)
  */
 /************************************************************************/
 /*
- *  End of file "../src/core/src/ejsXMLLoader.c"
+ *  End of file "../../src/core/src/ejsXMLLoader.c"
  */
 /************************************************************************/
 
@@ -34678,7 +34678,7 @@ static void indent(MprBuf *bp, int level)
 
 /************************************************************************/
 /*
- *  Start of file "../src/jems/ejs.db.sqlite/src/ejsSqlite.c"
+ *  Start of file "../../src/jems/ejs.db.sqlite/src/ejsSqlite.c"
  */
 /************************************************************************/
 
@@ -35209,7 +35209,7 @@ int ejs_db_sqlite_Init(MprCtx ctx)
  */
 /************************************************************************/
 /*
- *  End of file "../src/jems/ejs.db.sqlite/src/ejsSqlite.c"
+ *  End of file "../../src/jems/ejs.db.sqlite/src/ejsSqlite.c"
  */
 /************************************************************************/
 
@@ -35217,7 +35217,7 @@ int ejs_db_sqlite_Init(MprCtx ctx)
 
 /************************************************************************/
 /*
- *  Start of file "../src/jems/ejs.web/src/ejsHttpServer.c"
+ *  Start of file "../../src/jems/ejs.web/src/ejsHttpServer.c"
  */
 /************************************************************************/
 
@@ -35658,7 +35658,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/jems/ejs.web/src/ejsHttpServer.c"
+ *  End of file "../../src/jems/ejs.web/src/ejsHttpServer.c"
  */
 /************************************************************************/
 
@@ -35666,7 +35666,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/jems/ejs.web/src/ejsRequest.c"
+ *  Start of file "../../src/jems/ejs.web/src/ejsRequest.c"
  */
 /************************************************************************/
 
@@ -36473,7 +36473,7 @@ void ejsConfigureRequestType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/jems/ejs.web/src/ejsRequest.c"
+ *  End of file "../../src/jems/ejs.web/src/ejsRequest.c"
  */
 /************************************************************************/
 
@@ -36481,7 +36481,7 @@ void ejsConfigureRequestType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/jems/ejs.web/src/ejsSession.c"
+ *  Start of file "../../src/jems/ejs.web/src/ejsSession.c"
  */
 /************************************************************************/
 
@@ -36837,7 +36837,7 @@ void ejsConfigureSessionType(Ejs *ejs)
  */
 /************************************************************************/
 /*
- *  End of file "../src/jems/ejs.web/src/ejsSession.c"
+ *  End of file "../../src/jems/ejs.web/src/ejsSession.c"
  */
 /************************************************************************/
 
@@ -36845,7 +36845,7 @@ void ejsConfigureSessionType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../src/jems/ejs.web/src/ejsWeb.c"
+ *  Start of file "../../src/jems/ejs.web/src/ejsWeb.c"
  */
 /************************************************************************/
 
@@ -36972,7 +36972,7 @@ int ejs_web_Init(MprCtx ctx)
  */
 /************************************************************************/
 /*
- *  End of file "../src/jems/ejs.web/src/ejsWeb.c"
+ *  End of file "../../src/jems/ejs.web/src/ejsWeb.c"
  */
 /************************************************************************/
 
@@ -36980,7 +36980,7 @@ int ejs_web_Init(MprCtx ctx)
 
 /************************************************************************/
 /*
- *  Start of file "../src/compiler/ecAst.c"
+ *  Start of file "../../src/compiler/ecAst.c"
  */
 /************************************************************************/
 
@@ -41106,7 +41106,7 @@ static EjsName *allocName(Ejs *ejs, EjsName *qname)
  */
 /************************************************************************/
 /*
- *  End of file "../src/compiler/ecAst.c"
+ *  End of file "../../src/compiler/ecAst.c"
  */
 /************************************************************************/
 
@@ -41114,7 +41114,7 @@ static EjsName *allocName(Ejs *ejs, EjsName *qname)
 
 /************************************************************************/
 /*
- *  Start of file "../src/compiler/ecCodeGen.c"
+ *  Start of file "../../src/compiler/ecCodeGen.c"
  */
 /************************************************************************/
 
@@ -45478,7 +45478,7 @@ void ecStartBreakableStatement(EcCompiler *cp, int kinds)
 
 /************************************************************************/
 /*
- *  End of file "../src/compiler/ecCodeGen.c"
+ *  End of file "../../src/compiler/ecCodeGen.c"
  */
 /************************************************************************/
 
@@ -45486,7 +45486,7 @@ void ecStartBreakableStatement(EcCompiler *cp, int kinds)
 
 /************************************************************************/
 /*
- *  Start of file "../src/compiler/ecCompile.c"
+ *  Start of file "../../src/compiler/ecCompile.c"
  */
 /************************************************************************/
 
@@ -45698,7 +45698,7 @@ int ejsEvalScript(cchar *script)
  */
 /************************************************************************/
 /*
- *  End of file "../src/compiler/ecCompile.c"
+ *  End of file "../../src/compiler/ecCompile.c"
  */
 /************************************************************************/
 
@@ -45706,7 +45706,7 @@ int ejsEvalScript(cchar *script)
 
 /************************************************************************/
 /*
- *  Start of file "../src/compiler/ecLex.c"
+ *  Start of file "../../src/compiler/ecLex.c"
  */
 /************************************************************************/
 
@@ -46988,7 +46988,7 @@ void ecCloseStream(EcLexer *lp)
  */
 /************************************************************************/
 /*
- *  End of file "../src/compiler/ecLex.c"
+ *  End of file "../../src/compiler/ecLex.c"
  */
 /************************************************************************/
 
@@ -46996,7 +46996,7 @@ void ecCloseStream(EcLexer *lp)
 
 /************************************************************************/
 /*
- *  Start of file "../src/compiler/ecModuleWrite.c"
+ *  Start of file "../../src/compiler/ecModuleWrite.c"
  */
 /************************************************************************/
 
@@ -48173,7 +48173,7 @@ static int sum(cchar *name, int value)
  */
 /************************************************************************/
 /*
- *  End of file "../src/compiler/ecModuleWrite.c"
+ *  End of file "../../src/compiler/ecModuleWrite.c"
  */
 /************************************************************************/
 
@@ -48181,7 +48181,7 @@ static int sum(cchar *name, int value)
 
 /************************************************************************/
 /*
- *  Start of file "../src/compiler/ecParser.c"
+ *  Start of file "../../src/compiler/ecParser.c"
  */
 /************************************************************************/
 
@@ -58690,7 +58690,7 @@ static void dummy(int junk) { }
  */
 /************************************************************************/
 /*
- *  End of file "../src/compiler/ecParser.c"
+ *  End of file "../../src/compiler/ecParser.c"
  */
 /************************************************************************/
 
@@ -58698,7 +58698,7 @@ static void dummy(int junk) { }
 
 /************************************************************************/
 /*
- *  Start of file "../src/compiler/ecState.c"
+ *  Start of file "../../src/compiler/ecState.c"
  */
 /************************************************************************/
 
@@ -58882,7 +58882,7 @@ void ecLeaveState(EcCompiler *cp)
  */
 /************************************************************************/
 /*
- *  End of file "../src/compiler/ecState.c"
+ *  End of file "../../src/compiler/ecState.c"
  */
 /************************************************************************/
 
