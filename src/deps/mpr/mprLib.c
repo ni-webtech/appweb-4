@@ -4232,11 +4232,11 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
             destp += strlen(*ep) + 1;
         }
         if (!hasSystemRoot) {
-            mprSprintf(destp, endp - destp - 1, "SYSTEMROOT=%s", SYSTEMROOT);
+            mprSprintf(cmd, destp, endp - destp - 1, "SYSTEMROOT=%s", SYSTEMROOT);
             destp += 12 + strlen(SYSTEMROOT);
         }
         if (!hasPath) {
-            mprSprintf(destp, endp - destp - 1, "PATH=%s", PATH);
+            mprSprintf(cmd, destp, endp - destp - 1, "PATH=%s", PATH);
             destp += 6 + strlen(PATH);
         }
         *destp++ = '\0';
@@ -18650,7 +18650,6 @@ static int leapMonthStart[] = {
     0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 0
 };
 
-
 static MprTime daysSinceEpoch(int year);
 static void decodeTime(MprCtx ctx, struct tm *tp, MprTime when, bool local);
 static int getTimeZoneOffsetFromTm(MprCtx ctx, struct tm *tp);
@@ -18995,6 +18994,16 @@ static int getYear(MprTime when)
 }
 
 
+MprTime floorDiv(MprTime x, MprTime divisor)
+{
+    if (x < 0) {
+        return (x - divisor + 1) / divisor;
+    } else {
+        return x / divisor;
+    }
+}
+
+
 /*
     Decode an MprTime into components in a "struct tm" 
  */
@@ -19032,11 +19041,19 @@ static void decodeTime(MprCtx ctx, struct tm *tp, MprTime when, bool local)
     year = getYear(when);
 
     tp->tm_year     = year - 1900;
+#if UNUSED
     tp->tm_hour     = (int) ((when / MS_PER_HOUR) % 24);
     tp->tm_min      = (int) ((when / MS_PER_MIN) % 60);
     tp->tm_sec      = (int) ((when / MS_PER_SEC) % 60);
     tp->tm_wday     = (int) (((when / MS_PER_DAY) + 4) % 7);
     tp->tm_yday     = (int) ((when / MS_PER_DAY) - daysSinceEpoch(year));
+#else
+    tp->tm_hour     = (int) (floorDiv(when, MS_PER_HOUR) % 24);
+    tp->tm_min      = (int) (floorDiv(when, MS_PER_MIN) % 60);
+    tp->tm_sec      = (int) (floorDiv(when, MS_PER_SEC) % 60);
+    tp->tm_wday     = (int) ((floorDiv(when, MS_PER_DAY) + 4) % 7);
+    tp->tm_yday     = (int) (floorDiv(when, MS_PER_DAY) - daysSinceEpoch(year));
+#endif
     tp->tm_mon      = getMonth(year, tp->tm_yday);
     if (leapYear(year)) {
         tp->tm_mday = tp->tm_yday - leapMonthStart[tp->tm_mon] + 1;
@@ -19066,6 +19083,7 @@ static void decodeTime(MprCtx ctx, struct tm *tp, MprTime when, bool local)
     mprAssert(tp->tm_wday >= 0);
     mprAssert(tp->tm_mon >= 0);
     mprAssert(tp->tm_yday >= 0);
+    mprAssert(tp->tm_yday < 365 || (tp->tm_yday < 366 && leapYear(year)));
     mprAssert(tp->tm_mday >= 1);
 }
 
@@ -19567,7 +19585,7 @@ char *mprFormatTime(MprCtx ctx, cchar *fmt, struct tm *tp)
             break;
 
         case 's':                                       /* seconds since epoch */
-            mprPutFmtToBuf(buf, "%d", mprMakeTime(ctx, tp) / MS_PER_SEC);
+            mprPutFmtToBuf(buf, "%d", mprMakeUniversalTime(ctx, tp) / MS_PER_SEC);
             break;
 
         case 'T':
@@ -19787,7 +19805,8 @@ int mprParseTime(MprCtx ctx, MprTime *time, cchar *dateString, int zoneFlags, st
         Set these mandatory values to -1 so we can tell if they are set to valid values
         WARNING: all the calculations use tm_year with origin 0, not 1900. It is fixed up below.
      */
-    tm.tm_year = tm.tm_mon = tm.tm_mday = tm.tm_hour = tm.tm_sec = tm.tm_min = tm.tm_wday = -1;
+    tm.tm_year = -MAXINT;
+    tm.tm_mon = tm.tm_mday = tm.tm_hour = tm.tm_sec = tm.tm_min = tm.tm_wday = -1;
     tm.tm_min = tm.tm_sec = tm.tm_yday = -1;
 #if BLD_UNIX_LIKE && !CYGWIN
     tm.tm_gmtoff = 0;
@@ -20018,7 +20037,7 @@ static void validateTime(MprCtx ctx, struct tm *tp, struct tm *defaults)
     /*
         Get weekday, if before today then make next week
      */
-    if (tp->tm_wday >= 0 && tp->tm_year == -1 && tp->tm_mon < 0 && tp->tm_mday < 0) {
+    if (tp->tm_wday >= 0 && tp->tm_year == -MAXINT && tp->tm_mon < 0 && tp->tm_mday < 0) {
         tp->tm_mday = defaults->tm_mday + (tp->tm_wday - defaults->tm_wday + 7) % 7;
         tp->tm_mon = defaults->tm_mon;
         tp->tm_year = defaults->tm_year;
@@ -20028,7 +20047,7 @@ static void validateTime(MprCtx ctx, struct tm *tp, struct tm *defaults)
         Get month, if before this month then make next year
      */
     if (tp->tm_mon >= 0 && tp->tm_mon <= 11 && tp->tm_mday < 0) {
-        if (tp->tm_year == -1) {
+        if (tp->tm_year == -MAXINT) {
             tp->tm_year = defaults->tm_year + (((tp->tm_mon - defaults->tm_mon) < 0) ? 1 : 0);
         }
         tp->tm_mday = defaults->tm_mday;
@@ -20037,12 +20056,12 @@ static void validateTime(MprCtx ctx, struct tm *tp, struct tm *defaults)
     /*
         Get date, if before current time then make tomorrow
      */
-    if (tp->tm_hour >= 0 && tp->tm_year == -1 && tp->tm_mon < 0 && tp->tm_mday < 0) {
+    if (tp->tm_hour >= 0 && tp->tm_year == -MAXINT && tp->tm_mon < 0 && tp->tm_mday < 0) {
         tp->tm_mday = defaults->tm_mday + ((tp->tm_hour - defaults->tm_hour) < 0 ? 1 : 0);
         tp->tm_mon = defaults->tm_mon;
         tp->tm_year = defaults->tm_year;
     }
-    if (tp->tm_year == -1) {
+    if (tp->tm_year == -MAXINT) {
         tp->tm_year = defaults->tm_year;
     }
     if (tp->tm_mon < 0) {

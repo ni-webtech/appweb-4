@@ -15253,7 +15253,7 @@ static EjsObj *date_setUTCSeconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv
 
 
 /*
-    Get the number of millsecs since Jan 1, 1970 UTC.
+    Get the number of millseconds since Jan 1, 1970 UTC.
     function get time(): Number
  */
 static EjsObj *date_time(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)

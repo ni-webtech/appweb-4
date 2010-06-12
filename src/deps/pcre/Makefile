@@ -1,14 +1,25 @@
 #
-#	Makefile for the PCRE Regular Expression library
+#	Makefile for the PCRE - Regular Expression Library (based on pcre)
 #
-#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2009. All Rights Reserved.
+#
+#	This is an all-in-one build where all the re source files are catenated into as few files as possible. 
+#	See http://hg.embedthis.com/re if you require the full source for the RE.
 #
 
-include 	.makedep
+include 			.makedep
 
-compileFirst:	
-	$(MAKE) -S PRE=$(PRE) TRACE=$(TRACE) -f Makefile.all
+PCRE_LIB			+= $(BLD_LIB_DIR)/libpcre$(BLD_LIB)
 
-cleanExtra:
-	$(MAKE) -S PRE=$(PRE) TRACE=$(TRACE) -f Makefile.all clean
+MAKE_IFLAGS			+= $(BLD_REGEXP_IFLAGS) $(BLD_MPR_IFLAGS)
+ifeq ($(BLD_FEATURE_REGEXP),1)
+	TARGETS			+= $(PCRE_LIB)
+endif
 
+compileTargets: $(TARGETS)
+
+#
+#	Regular Expression (pcre) library
+#
+$(PCRE_LIB): $(OBJECTS)
+	bld --library $(PCRE_LIB) pcre

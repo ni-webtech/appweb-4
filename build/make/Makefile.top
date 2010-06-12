@@ -141,13 +141,13 @@ packageExtra:
 			fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
 				$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \
 		else \
-			echo "Packaging skipped at build depth $(BUILD_DEPTH)" ; \
+			$(call log) "[INFO]" "Packaging skipped at build depth $(BUILD_DEPTH)" ; \
 		fi ; \
 	fi
 
 upload:
 	if [ "$(BUILD_DEPTH)" -lt 2 ] ; then \
-		echo "Skip upload for BUILD_DEPTH $(BUILD_DEPTH)"; \
+		$(call log) "[INFO]" "Skip upload for BUILD_DEPTH $(BUILD_DEPTH)"; \
 	else \
 		if [ "$(BUILD_UPLOAD)" = "" ] ; then \
 			echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \

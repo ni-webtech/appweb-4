@@ -5,8 +5,8 @@ makerom - Compile files into C source code
 .B makerom [options] files ... >output.c
 .P
 [\fI--files fileList\fR] 
-[\fI--prefix prefix\fR]
 [\fI--name structName\fR]
+[\fI--prefix prefix\fR]
 .SH DESCRIPTION
 To enable files to be accessed on embedded systems without a file system, the
 \fBmakerom\fR command converts arbitrary files into C code that
@@ -26,6 +26,9 @@ Specifies a prefix to remove from each of the compiled file names.
 .TP
 \fB\--name structName\fR 
 Specifies the name of top level C structure that holds the converted files.
+.TP
+\fB\--prefix prefix\fR 
+Specifies a leading file name prefix to remove from the file names.
 .PP
 .SH "EXAMPLE"
 This example will create a list of web files and then convert these
