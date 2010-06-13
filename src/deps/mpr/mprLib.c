@@ -19585,7 +19585,7 @@ char *mprFormatTime(MprCtx ctx, cchar *fmt, struct tm *tp)
             break;
 
         case 's':                                       /* seconds since epoch */
-            mprPutFmtToBuf(buf, "%d", mprMakeUniversalTime(ctx, tp) / MS_PER_SEC);
+            mprPutFmtToBuf(buf, "%d", mprMakeTime(ctx, tp) / MS_PER_SEC);
             break;
 
         case 'T':
@@ -19845,7 +19845,7 @@ int mprParseTime(MprCtx ctx, MprTime *time, cchar *dateString, int zoneFlags, st
                 *time = value;
                 mprFree(str);
                 return 0;
-            } else if (value > 32 || (tm.tm_mday >= 0 && tm.tm_year < 0)) {
+            } else if (value > 32 || (tm.tm_mday >= 0 && tm.tm_year == -MAXINT)) {
                 if (value >= 1000) {
                     fullYear = 1;
                 }
@@ -20014,7 +20014,7 @@ static void validateTime(MprCtx ctx, struct tm *tp, struct tm *defaults)
         swapDayMonth(tp);
     }
 
-    if (tp->tm_year >= 0 && tp->tm_mon >= 0 && tp->tm_mday >= 0 && tp->tm_hour >= 0) {
+    if (tp->tm_year != -MAXINT && tp->tm_mon >= 0 && tp->tm_mday >= 0 && tp->tm_hour >= 0) {
         /*  Everything defined */
         return;
     }
