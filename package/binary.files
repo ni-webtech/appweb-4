@@ -22,7 +22,7 @@ cpy -e -m 0755 package/linkup "${BLD_BIN_PREFIX}/linkup"
 
 cpy -s -m 755 "${BLD_BIN_DIR}/appweb${BLD_EXE}" "${BLD_BIN_PREFIX}"
 
-if [ "$BLD_FEATURE_ANGEL" = 1 ] ; then
+if [ -x $BLD_BIN_DIR/angel${BLD_EXE} ] ; then
     cpy -s -m 755 "${BLD_BIN_DIR}/angel${BLD_EXE}" "${BLD_BIN_PREFIX}"
 fi
 
