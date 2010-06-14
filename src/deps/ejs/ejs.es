@@ -18100,6 +18100,7 @@ module ejs.web {
             @option styleColumns Array of styles to use for the table body columns. Can also use the style option in the
                 columns option.
             @option styleBody String CSS style to use for the table body cells
+            @option styleCells Grid of styles to use for the table body cells
             @option styleHeader String CSS style to use for the table header.
             @option styleRows Array of styles to use for the table body rows
             @option styleOddRow String CSS style to use for odd data rows in the table
