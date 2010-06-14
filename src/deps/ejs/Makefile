@@ -64,6 +64,12 @@ ifeq ($(BLD_EJS_DIR),)
 		endif
 	endif
 	endif
+	TARGETS		+= $(BLD_LIB_DIR)/www
+	ifeq ($(BLD_HOST_OS),WIN)
+		TARGETS	+= $(BLD_BIN_DIR)/ejsmvc.cmd
+		TARGETS	+= $(BLD_BIN_DIR)/ejspage.cmd
+		TARGETS	+= $(BLD_BIN_DIR)/jem.cmd
+	endif
 endif
 ifeq	($(BLD_CC_EDITLINE),1)
 	EJS_LIBS	+= edit curses
@@ -127,3 +133,22 @@ $(BLD_BIN_DIR)/ejssql$(BLD_EXE): $(OBJECTS) $(call lib, mpr) $(call vlib, ejs)
 # 	bld --shared --library $(BLD_MOD_DIR)/mod_ejs --search "$(BLD_APPWEB_LIBPATHS)" \
 # 		--libs "$(BLD_APPWEB_LIBS) $(BLD_EJS_LIBS)" ejsAppwebHandler$(BLD_OBJ) $(EXTRA_GATEWAY_OBJECTS)
 
+$(BLD_LIB_DIR)/www: Makefile www/*
+	mkdir -p $(BLD_LIB_DIR)/www/images
+	mkdir -p $(BLD_LIB_DIR)/www/themes
+	cp -r www/* $(BLD_LIB_DIR)/www
+
+$(BLD_BIN_DIR)/ejsmvc.cmd: ejsmvc.cmd
+	$(call log) "[Generate]" "ejsmvc.cmd"
+	cp ejsmvc.cmd $(BLD_BIN_DIR)/ejsmvc.cmd
+	chmod 755 $(BLD_BIN_DIR)/ejsmvc.cmd
+
+$(BLD_BIN_DIR)/ejspage.cmd: ejspage.cmd
+	$(call log) "[Generate]" "ejspage.cmd"
+	cp ejspage.cmd $(BLD_BIN_DIR)/ejspage.cmd
+	chmod 755 $(BLD_BIN_DIR)/ejspage.cmd
+
+$(BLD_BIN_DIR)/jem.cmd: jem.cmd
+	$(call log) "[Generate]" "jem.cmd"
+	cp jem.cmd $(BLD_BIN_DIR)/jem.cmd
+	chmod 755 $(BLD_BIN_DIR)/jem.cmd

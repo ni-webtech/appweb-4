@@ -16,10 +16,8 @@ ifeq	($(BLD_OS),WIN)
 	MONITOR_RES = --resources appwebMonitor.rc
 endif
 
-ifeq ($(BLD_FEATURE_ANGEL),1)
 ifeq ($(BUILD_CROSS_OR_COMPLETE_NATIVE),1)
 	TARGETS	:= angel$(BLD_EXE) $(BLD_PRODUCT)Monitor$(BLD_EXE)
-endif
 endif
 
 compileExtra: $(TARGETS) 

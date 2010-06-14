@@ -20,6 +20,7 @@ EXPORTS
   _unused_strtod
   assertTrue
   dtoa
+  floorDiv
   freedtoa
   gethex
   gettimeofday
@@ -409,6 +410,7 @@ EXPORTS
   mprStopModuleService
   mprStopOsService
   mprStopSocketService
+  mprStopThreadService
   mprStopWorkerService
   mprStrLower
   mprStrTok
