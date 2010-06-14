@@ -21054,7 +21054,7 @@ MprModule *mprLoadModule(MprCtx ctx, cchar *name, cchar *initFunction, void *dat
                 close(fd);
                 if (initFunction) {
 #if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
-                    mprSprintf(entryPoint, sizeof(entryPoint), "_%s", initFunction);
+                    mprSprintf(ctx, entryPoint, sizeof(entryPoint), "_%s", initFunction);
 #else
                     mprStrcpy(entryPoint, sizeof(entryPoint), initFunction);
 #endif
