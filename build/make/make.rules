@@ -386,17 +386,19 @@ endif
 #
 #	Create a redistributable package
 #
+ifeq    ($(DO_PACKAGE),1)
 package: $(BUILD_CHECK) packagePriv packageDirs packageExtra
 
 packagePriv:
 
 packageDirs:
-ifeq    ($(DO_PACKAGE),1)
 	if [ "$(BLD_CROSS)" = 0 -o "$(BUILDING_CROSS)" = 1 ] ; then \
 			if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
 			T=package ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE) ; \
 		fi ; \
 	fi
+else
+package:
 endif
 
 packageExtra:
