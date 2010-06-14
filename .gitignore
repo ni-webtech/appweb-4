@@ -68,3 +68,5 @@ Win32
 bin/appweb.conf
 releases/*.tgz
 src/test/t.es
+*/i386-wrs*
+src/test/cgi-bin/*.out
