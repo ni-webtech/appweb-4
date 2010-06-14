@@ -372,15 +372,15 @@ projectsDirs:
 projectsExtra:
 
 
-PACKAGE = 0
-ifeq    ($(BLD_OS),LINUX)
-PACKAGE = 1
+DO_PACKAGE = 0
+ifeq    ($(BLD_HOST_OS),LINUX)
+DO_PACKAGE = 1
 endif
-ifeq    ($(BLD_OS),WIN)
-PACKAGE = 1
+ifeq    ($(BLD_HOST_OS),WIN)
+DO_PACKAGE = 1
 endif
-ifeq    ($(BLD_OS),MACOSX)
-PACKAGE = 1
+ifeq    ($(BLD_HOST_OS),MACOSX)
+DO_PACKAGE = 1
 endif
 
 #
@@ -391,9 +391,11 @@ package: $(BUILD_CHECK) packagePriv packageDirs packageExtra
 packagePriv:
 
 packageDirs:
-ifeq    ($(PACKAGE),1)
-	if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
-	    T=package ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE) ; \
+ifeq    ($(DO_PACKAGE),1)
+	if [ "$(BLD_CROSS)" = 0 -o "$(BUILDING_CROSS)" = 1 ] ; then \
+			if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
+			T=package ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE) ; \
+		fi ; \
 	fi
 endif
 
