@@ -67,3 +67,4 @@ Win32
 .port.log
 bin/appweb.conf
 releases/*.tgz
+src/test/t.es

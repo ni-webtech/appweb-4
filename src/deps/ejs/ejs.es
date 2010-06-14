@@ -12385,7 +12385,7 @@ module ejs.unix {
         @deprecated
      */
     function kill(pid: Number, signal: Number = 2): Void {
-        if (Config.OS == "WIN") {
+        if (Config.OS == "WIN" || Config.OS == "CYGWIN") {
             Cmd.run("/bin/kill -f -" + signal + " " + pid)
         } else {
             Cmd.run("/bin/kill -" + signal + " " + pid)
