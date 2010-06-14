@@ -234,12 +234,12 @@ typedef struct Http {
     char            *defaultHost;           /**< Default ip address */
     int             defaultPort;            /**< Default port */
     char            *proxyHost;             /**< Proxy ip address */
+    int             enableTraceMethod;      /**< Trace method enabled */
     int             proxyPort;              /**< Proxy port */
     int             keepAliveTimeout;       /**< Default timeout for keep-alive */
     int             maxKeepAlive;           /**< Default maximum keep-alive count */
     int             sslLoaded;              /**< True when the SSL provider has been loaded */
     int             timeout;                /**< Default time a request can take */
-    int             traceEnabled;           /**< Trace method enabled */
 
     void            (*rangeService)(struct HttpQueue *q, HttpRangeProc fill);
 } Http;
