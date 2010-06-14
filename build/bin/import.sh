@@ -9,7 +9,7 @@
 #   This file is for internal use only when importing all-in-one archives.
 #
 
-IDIR=staging
+IDIR=.import
 PP_ARGS=
 PROGRAM=${0}
 

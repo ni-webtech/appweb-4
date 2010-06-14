@@ -18913,8 +18913,13 @@ static int getTimeZoneOffsetFromTm(MprCtx ctx, struct tm *tp)
 #else
     struct timezone     tz;
     struct timeval      tv;
+    int offset;
     gettimeofday(&tv, &tz);
-    return -tz.tz_minuteswest * MS_PER_MIN;
+    offset = -tz.tz_minuteswest * MS_PER_MIN;
+    if (tp->tm_isdst) {
+        offset += MS_PER_HOUR;
+    }
+    return offset;
 #endif
 }
 

@@ -58,6 +58,7 @@ export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS BUILDING
 #	Compute the directory path for display purposes
 #
 _DPATH_			?=	.
+BUILD_DEPTH     ?= 2
 BUILDING_CROSS 	:= 0
 MAKE			:= $(BLD_MAKE)
 ifeq ($(TRACE),)
@@ -391,7 +392,9 @@ packagePriv:
 
 packageDirs:
 ifeq    ($(PACKAGE),1)
-	@+T=package ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
+	    T=package ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE) ; \
+	fi
 endif
 
 packageExtra:

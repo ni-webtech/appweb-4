@@ -467,6 +467,35 @@
 /*
    Prototype (instance) slots for "global" type 
  */
+#define ES_ejs_db_DatabaseConnector_NUM_CLASS_PROP                     0
+
+/*
+   Prototype (instance) slots for "DatabaseConnector" type 
+ */
+#define ES_ejs_db_DatabaseConnector_addColumn                          0
+#define ES_ejs_db_DatabaseConnector_addIndex                           1
+#define ES_ejs_db_DatabaseConnector_changeColumn                       2
+#define ES_ejs_db_DatabaseConnector_close                              3
+#define ES_ejs_db_DatabaseConnector_commit                             4
+#define ES_ejs_db_DatabaseConnector_connect                            5
+#define ES_ejs_db_DatabaseConnector_createDatabase                     6
+#define ES_ejs_db_DatabaseConnector_createTable                        7
+#define ES_ejs_db_DatabaseConnector_dataTypeToSqlType                  8
+#define ES_ejs_db_DatabaseConnector_destroyDatabase                    9
+#define ES_ejs_db_DatabaseConnector_destroyTable                       10
+#define ES_ejs_db_DatabaseConnector_getColumns                         11
+#define ES_ejs_db_DatabaseConnector_getTables                          12
+#define ES_ejs_db_DatabaseConnector_removeColumns                      13
+#define ES_ejs_db_DatabaseConnector_removeIndex                        14
+#define ES_ejs_db_DatabaseConnector_renameColumn                       15
+#define ES_ejs_db_DatabaseConnector_renameTable                        16
+#define ES_ejs_db_DatabaseConnector_rollback                           17
+#define ES_ejs_db_DatabaseConnector_sql                                18
+#define ES_ejs_db_DatabaseConnector_sqlTypeToDataType                  19
+#define ES_ejs_db_DatabaseConnector_sqlTypeToEjsType                   20
+#define ES_ejs_db_DatabaseConnector_startTransaction                   21
+#define ES_ejs_db_DatabaseConnector_NUM_INSTANCE_PROP                  22
+#define ES_ejs_db_DatabaseConnector_NUM_INHERITED_PROP                 0
 
 
 /*
@@ -520,37 +549,8 @@
     Local slots for methods in type "Database" 
  */
 #define ES_ejs_db_Database_quote_str                                   0
-#define ES_ejs_db_DatabaseConnector_NUM_CLASS_PROP                     0
 
-/*
-   Prototype (instance) slots for "DatabaseConnector" type 
- */
-#define ES_ejs_db_DatabaseConnector_addColumn                          0
-#define ES_ejs_db_DatabaseConnector_addIndex                           1
-#define ES_ejs_db_DatabaseConnector_changeColumn                       2
-#define ES_ejs_db_DatabaseConnector_close                              3
-#define ES_ejs_db_DatabaseConnector_commit                             4
-#define ES_ejs_db_DatabaseConnector_connect                            5
-#define ES_ejs_db_DatabaseConnector_createDatabase                     6
-#define ES_ejs_db_DatabaseConnector_createTable                        7
-#define ES_ejs_db_DatabaseConnector_dataTypeToSqlType                  8
-#define ES_ejs_db_DatabaseConnector_destroyDatabase                    9
-#define ES_ejs_db_DatabaseConnector_destroyTable                       10
-#define ES_ejs_db_DatabaseConnector_getColumns                         11
-#define ES_ejs_db_DatabaseConnector_getTables                          12
-#define ES_ejs_db_DatabaseConnector_removeColumns                      13
-#define ES_ejs_db_DatabaseConnector_removeIndex                        14
-#define ES_ejs_db_DatabaseConnector_renameColumn                       15
-#define ES_ejs_db_DatabaseConnector_renameTable                        16
-#define ES_ejs_db_DatabaseConnector_rollback                           17
-#define ES_ejs_db_DatabaseConnector_sql                                18
-#define ES_ejs_db_DatabaseConnector_sqlTypeToDataType                  19
-#define ES_ejs_db_DatabaseConnector_sqlTypeToEjsType                   20
-#define ES_ejs_db_DatabaseConnector_startTransaction                   21
-#define ES_ejs_db_DatabaseConnector_NUM_INSTANCE_PROP                  22
-#define ES_ejs_db_DatabaseConnector_NUM_INHERITED_PROP                 0
-
-#define _ES_CHECKSUM_ejs_db   122178
+#define _ES_CHECKSUM_ejs_db   122179
 
 #endif
 /************************************************************************/
@@ -763,8 +763,8 @@
 #define ES_Block                                                       7
 #define ES_Boolean                                                     8
 #define ES_ByteArray                                                   9
-#define ES_Cmd                                                         10
-#define ES_CmdArgs                                                     11
+#define ES_CmdArgs                                                     10
+#define ES_Cmd                                                         11
 #define ES_gc                                                          12
 #define ES_readFile                                                    13
 #define ES_Config                                                      14
@@ -1155,6 +1155,19 @@
 #define ES_ByteArray_output                                            38
 #define ES_ByteArray_NUM_INSTANCE_PROP                                 39
 #define ES_ByteArray_NUM_INHERITED_PROP                                0
+#define ES_CmdArgs_NUM_CLASS_PROP                                      0
+
+/*
+   Prototype (instance) slots for "CmdArgs" type 
+ */
+#define ES_CmdArgs_args                                                0
+#define ES_CmdArgs_options                                             1
+#define ES_CmdArgs_ranges                                              2
+#define ES_CmdArgs_aliases                                             3
+#define ES_CmdArgs_parseTemplate                                       4
+#define ES_CmdArgs_validate                                            5
+#define ES_CmdArgs_NUM_INSTANCE_PROP                                   6
+#define ES_CmdArgs_NUM_INHERITED_PROP                                  0
 
 
 /*
@@ -1181,19 +1194,6 @@
 #define ES_Cmd_run_data                                                1
 #define ES_Cmd_daemon_cmdline                                          0
 #define ES_Cmd_runx_cmdline                                            0
-#define ES_CmdArgs_NUM_CLASS_PROP                                      0
-
-/*
-   Prototype (instance) slots for "CmdArgs" type 
- */
-#define ES_CmdArgs_args                                                0
-#define ES_CmdArgs_options                                             1
-#define ES_CmdArgs_ranges                                              2
-#define ES_CmdArgs_aliases                                             3
-#define ES_CmdArgs_parseTemplate                                       4
-#define ES_CmdArgs_validate                                            5
-#define ES_CmdArgs_NUM_INSTANCE_PROP                                   6
-#define ES_CmdArgs_NUM_INHERITED_PROP                                  0
 
 
 /*
@@ -2539,7 +2539,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1284208
+#define _ES_CHECKSUM_ejs   1284207
 
 #endif
 /************************************************************************/
