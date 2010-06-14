@@ -47,6 +47,7 @@ $(ARCHIVE): Makefile $(TARGETS)
 	cp -r $(BLD_LIB_DIR)/www $(DEST)
 	cp Makefile.all $(DEST)/Makefile
 	@$(call log) "[Generate]" "tar cfz $(ARCHIVE) -C $(STAGING) ."
+	rm -f $(ARCHIVE)
 	tar cfz $(ARCHIVE) -C $(STAGING) .
 	rm -fr $(STAGING)
 

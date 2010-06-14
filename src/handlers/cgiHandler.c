@@ -722,7 +722,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 
         len = (int) strlen(cmdScript) + 2 + 1;
         cmdBuf = (char*) mprAlloc(cmd, len);
-        mprSprintf(cmdBuf, len, "\"%s\"", cmdScript);
+        mprSprintf(conn, cmdBuf, len, "\"%s\"", cmdScript);
         argv[argind++] = cmdBuf;
 
         mprSetCmdDir(cmd, cmdScript);
