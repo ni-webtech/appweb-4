@@ -6,7 +6,7 @@
 
 include 	.makedep 
 
-PRE_DIRS	= $(BLD_HOST_OS)
+PRE_DIRS	= $(BLD_HOST_OS) all
 
 dependExtra:
 	[ "$(shell echo *.sh)" != "*.sh" ] && chmod +x *.sh ; true

@@ -123,6 +123,8 @@ if [ "$BLD_FEATURE_EJS" = 1 ] ; then
 #       cpy -m 755 -d ${BLD_BIN_DIR} ejsmvc "${BLD_BIN_PREFIX}"
         cpy -s -m 755 -d ${BLD_BIN_DIR} ejsc${BLD_EXE} "${BLD_BIN_PREFIX}"
         makeDir "${BLD_LIB_DIR}/www"
+echo LIB DIR is $BLD_LIB_DIR
+ls -l $BLD_LIB_DIR
         cpy -m 644 -d "${BLD_LIB_DIR}/www" "*" "${BLD_LIB_PREFIX}/www"
     fi
     if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
