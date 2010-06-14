@@ -24,7 +24,7 @@ cpy -p -d build/src Makefile "*.c" "*.h" "${DIR}"
 cpy -p -d build/components "*" "${DIR}"
 cpy -p -d package Makefile "*.files" "${DIR}"
 cpy -m 0755 -p -d package "*.sh" makeInstall.appweb linkup "${DIR}"
-cpy -p -d package LINUX MACOSX WIN "${DIR}"
+cpy -p -d package all LINUX MACOSX WIN "${DIR}"
 
 #
 #   Source for mpr, ejs, server, http
@@ -32,7 +32,6 @@ cpy -p -d package LINUX MACOSX WIN "${DIR}"
 srcFilter="/\.log$|\.tmp|old\/|web\/tmp"
 cpy -f "${srcFilter}" -p -d src Makefile deps utils include "${DIR}"
 cpy -f "${srcFilter}" -p -d src server test "${DIR}"
-cpy -f "${srcFilter}" -p -d all Makefile "${DIR}"
 
 docFilter="api/ejs/xml/|api/ejs/html/|api/appweb/html|api/appweb/xml"
 cpy -f "${docFilter}" -p doc "${DIR}"
