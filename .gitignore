@@ -70,3 +70,8 @@ releases/*.tgz
 src/test/t.es
 */i386-wrs*
 src/test/cgi-bin/*.out
+src/server/WIN/*.res
+bin/*.ico
+bin/*.cmd
+.cpy_copied
+bin/www
