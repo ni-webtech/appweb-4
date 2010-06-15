@@ -22,7 +22,6 @@ if [ $BLD_LIB_DIR != $BLD_MOD_DIR ] ; then
 	fi
 fi
 
-
 if [ "$WITH_CONF" = "" ] ; then
 	if [ -d "$BLD_FEATURE_CONFIG" ] ; then
 		configDir="$BLD_FEATURE_CONFIG"
@@ -34,16 +33,9 @@ else
     cpy "$WITH_CONF" "${ROOT_DIR}/appweb.conf"
 fi
 
-#
-#   Patch appweb.conf
-#
 if [ "${TASK}" != Remove ] ; then
     (
-        export BLD_CFG_PREFIX=.
-        export BLD_WEB_PREFIX=web
-        export BLD_DOC_PREFIX=.
-        export BLD_MOD_PREFIX=.
-        export BLD_LOG_PREFIX=.
+        export BLD_CFG_PREFIX=. BLD_WEB_PREFIX=web BLD_DOC_PREFIX=. BLD_MOD_PREFIX=. BLD_LOG_PREFIX=.
         export BLD_HTTP_PORT BLD_SSL_PORT 
         patchAppwebConf "${ROOT_DIR}/appweb.conf" >/dev/null 2>&1
     )
