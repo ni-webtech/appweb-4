@@ -76,3 +76,4 @@ bin/*.cmd
 .cpy_copied
 bin/www
 lib/www
+src/deps/ejs/*.lst

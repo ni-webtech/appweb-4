@@ -108,16 +108,6 @@ dependExtra:
 	mkdir -p releases
 	[ ! -L extensions ] && ln -s ../packages extensions ; true
 
-##	MOB - remove
-##	install uninstall install-% uninstall-%:
-##		@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
-##	
-##	test-install% test-uninstall-%:
-##		@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
-##	
-##	checkInstalled: 
-##		@$(MAKE) -C package --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) $@
-
 install install-%:
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
 	[ "$$packs" = "binary dev" ] && BROWSER=--browser ; \
@@ -175,10 +165,19 @@ upload:
 	fi
 
 testExtraExtra:
-	if [ "$(BUILD_DEPTH)" -ge 3 ] ; then \
-		$(MAKE) test-installed ; $(MAKE) uninstall ; $(MAKE) test-removed ; \
-		$(MAKE) test-install-package ; $(MAKE) test-installed ; $(MAKE) test-uninstall-package ; $(MAKE) test-removed ; \
-		$(MAKE) test-install-native-package ; $(MAKE) test-installed ; $(MAKE) test-uninstall-native-package ; $(MAKE) test-removed ; \
+	#	ejs is needed to run the build farm
+	if [ "$(BUILD_DEPTH)" -ge 3 -a "$(BLD_PRODUCT)" != ejs ] ; then \
+		$(MAKE) test-installed ; \
+		$(MAKE) uninstall ; \
+		$(MAKE) test-removed ; \
+		$(MAKE) test-install-package ; \
+		$(MAKE) test-installed ; \
+		$(MAKE) test-uninstall-package ; \
+		$(MAKE) test-removed ; \
+		$(MAKE) test-install-native-package ; \
+		$(MAKE) test-installed ; \
+		$(MAKE) test-uninstall-native-package ; \
+		$(MAKE) test-removed ; \
 	fi
 	if [ "$(BUILD_DEPTH)" -ge 4 ] ; then \
 	   	$(MAKE) leakTest ; \

@@ -6,7 +6,8 @@
 #   This is an internal-script used when testing only
 #
 
-PRODUCT=appweb
+. build/bin/buildConfig.sh
+
 VS="/Program Files/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"
 
 log() {
@@ -15,24 +16,78 @@ log() {
     printf "%12s %s\n" $tag "$*"
 }
 
-if [ -x "${VS}" ] ; then
-    if [ ! -f src/include/buildConfig.save ] ; then
-        mv src/include/buildConfig.h src/include/buildConfig.save
+winBuild() {
+    local status=0
+    if [ -x "${VS}" ] ; then
+        if [ ! -f src/include/buildConfig.save ] ; then
+            mv src/include/buildConfig.h src/include/buildConfig.save
+        fi
+        cp src/include/master/buildConfig.h src/include
+
+        log "[Test]" "Building ${BLD_PRODUCT}-static VS project"
+        rm -fr projects/WIN/*/Win32
+        "${VS}" projects/WIN/${BLD_PRODUCT}-static/*.sln /clean
+        "${VS}" projects/WIN/${BLD_PRODUCT}-static/*.sln /build
+
+        log "[Test]" "Building ${BLD_PRODUCT}-dynamic VS project"
+        rm -fr projects/WIN/*/Win32
+        "${VS}" projects/WIN/${BLD_PRODUCT}-dynamic/*.sln /clean
+
+        if [ $? != 0 ] ; then
+            echo Failed to clean: "${VS}" projects/WIN/${BLD_PRODUCT}-dynamic/*.sln /clean
+            exit 255
+        fi
+        "${VS}" projects/WIN/${BLD_PRODUCT}-dynamic/*.sln /build
+        if [ $? != 0 ] ; then
+            echo Failed to build: "${VS}" projects/WIN/${BLD_PRODUCT}-dynamic/*.sln /build
+            exit 255
+        fi
+
+        if [ -f src/include/buildConfig.save ] ; then
+            mv src/include/buildConfig.save src/include/buildConfig.h
+        fi
+        rm -fr projects/WIN/*/Win32
+
+        echo TESTING TARGETS
+
+        status=0
+        for f in appweb cgiProgram ejs ejsc ejsmod ejssql http httpPassword makerom testAppweb
+        do
+            if [ !-x $BLD_BIN_DIR/${f}${BLD_EXE} ] ; then
+                echo Missing target $BLD_BIN_DIR/${f}${BLD_EXE} >&2
+                status=255
+            fi
+        done
+        echo STATUS $status
     fi
-    cp src/include/master/buildConfig.h src/include
+    exit $status
+}
 
-    log "[Test]" "Building ${PRODUCT}-static VS project"
-    rm -fr projects/WIN/*/Win32
-    "${VS}" projects/WIN/${PRODUCT}-static/*.sln /clean
-    "${VS}" projects/WIN/${PRODUCT}-static/*.sln /build
-
-    log "[Test]" "Building ${PRODUCT}-dynamic VS project"
-    rm -fr projects/WIN/*/Win32
-    "${VS}" projects/WIN/${PRODUCT}-dynamic/*.sln /clean
-    "${VS}" projects/WIN/${PRODUCT}-dynamic/*.sln /build
-
-    if [ -f src/include/buildConfig.save ] ; then
-        mv src/include/buildConfig.save src/include/buildConfig.h
+macBuild() {
+    if which xcodebuild >/dev/null 2>&1 ; then
+        if [ "$BLD_TYPE" = "DEBUG" ] ; then
+            config=Debug
+        else
+            config=Release
+        fi
+        xcodebuild -project projects/MACOSX/appweb-all/appweb-all.xcodeproj -configuration $config clean
+        if [ $? != 0 ] ; then
+            echo Failed to clean: xcodebuild -project projects/MACOSX/appweb-all/appweb-all.xcodeproj -configuration $config clean
+        fi
+        xcodebuild -project projects/MACOSX/appweb-all/appweb-all.xcodeproj -configuration $config
+        if [ $? != 0 ] ; then
+            echo Failed to build: xcodebuild -project projects/MACOSX/appweb-all/appweb-all.xcodeproj -configuration $config
+        fi
     fi
-    rm -fr projects/WIN/*/Win32
-fi
+}
+
+case $BLD_OS in
+WIN)
+    winBuild
+    ;;
+MACOSX)
+    macBuild
+    ;;
+*)
+    ;;
+esac
