@@ -8,12 +8,7 @@ POST_DIRS			:= package
 
 include 			.makedep 
 
-ifeq 		($(BLD_UNIX_LIKE),1)
-	PRE_DIRS		+= UNIX
-else
-	PRE_DIRS		+= $(BLD_OS)
-endif
-PRE_DIRS			+= test
+PRE_DIRS			+= $(BLD_OS) test
 
 #
 #	Extra libraries

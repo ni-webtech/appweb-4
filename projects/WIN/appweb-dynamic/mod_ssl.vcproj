@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="mod_ssl"
-    ProjectGUID="074a8d60-32af-497c-80be-dd36012c8423"
+    ProjectGUID="03fbcc6a-cf25-481d-b14e-f07499a2a615"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -162,7 +162,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{120b2634-312c-44be-ad89-c9cf609ed16c}"
+            UniqueIdentifier="{692d90d9-5adc-42f0-ab12-5697118acf81}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -192,7 +192,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{be9e0a2f-311d-49ae-84d3-b33799dd3b94}"
+            UniqueIdentifier="{0648a2a0-fc14-4287-a439-0437c31ce563}"
             >
             <File
                 RelativePath="..\..\..\src\modules\sslModule.c"

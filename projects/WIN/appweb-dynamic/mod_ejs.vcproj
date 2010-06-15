@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="mod_ejs"
-    ProjectGUID="79ce8415-da88-4b5a-b572-6faca4e7592b"
+    ProjectGUID="4024c8f7-a563-4b58-b607-f0bc0b08dae5"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -162,7 +162,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{abbe8259-272d-4f1a-bce8-f1195ad45bd5}"
+            UniqueIdentifier="{116ce3a9-68f2-465b-82b3-984011ccf7a8}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -192,7 +192,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{12cce3ab-5b83-427e-99c6-27dece972e94}"
+            UniqueIdentifier="{1fda51c4-264f-4f36-9b87-b58c94558d36}"
             >
             <File
                 RelativePath="..\..\..\src\handlers\ejsHandler.c"

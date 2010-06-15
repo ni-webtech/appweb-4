@@ -341,10 +341,10 @@ buildFarmTestExtra:
 #	Clean the source tree
 #
 clean: $(BUILD_CHECK) cleanDirs cleanExtra 
-	@rm -f $(CLEANIT) $(TARGETS) $(OBJECTS)
+	rm -f $(CLEANIT) $(TARGETS) $(OBJECTS)
 
 cleanDirs:
-	@+T=clean ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=clean ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 cleanExtra:
 

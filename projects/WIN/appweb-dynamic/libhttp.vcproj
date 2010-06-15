@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="libhttp"
-    ProjectGUID="87df7a6f-3ff1-4955-b602-c4cd61598f4c"
+    ProjectGUID="9b576839-413c-4a10-8f40-fb2724d2f8fc"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -162,7 +162,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{8e4023a9-2551-43a9-8d28-05c212345003}"
+            UniqueIdentifier="{02396106-21f4-4164-9630-591bbce35c0a}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -184,7 +184,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{2f931dc1-ef8b-4dc5-a5c5-71be08ebe657}"
+            UniqueIdentifier="{5d0fb69b-dde8-4006-950f-b6f23e348e17}"
             >
             <File
                 RelativePath="..\..\..\src\deps\http\httpLib.c"

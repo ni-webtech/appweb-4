@@ -22,7 +22,7 @@ PROJECTS	= libmpr.vcproj libsqlite3.vcproj libmprssl.vcproj libpcre.vcproj libht
               ejssql.vcproj ejsweb.vcproj http.vcproj httpPassword.vcproj \
 			  mod_cgi.vcproj mod_ejs.vcproj mod_php.vcproj mod_ssl.vcproj
 
-MAKE_IFLAGS	+= $(BLD_TOP)/src/include/master $(BLD_REGEXP_IFLAGS) $(BLD_MPR_IFLAGS)
+MAKE_IFLAGS	= -I$(BLD_TOP)/src/include/master $(BLD_REGEXP_IFLAGS) $(BLD_MPR_IFLAGS)
 ifeq ($(BLD_FEATURE_OPENSSL),1)
 	SSL_IFLAGS	+= $(BLD_OPENSSL_IFLAGS)
 endif

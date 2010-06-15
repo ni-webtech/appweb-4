@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="libappweb"
-    ProjectGUID="b4621928-1588-4053-8634-0f041eb797f8"
+    ProjectGUID="d0075f01-c1b7-4498-ab28-7c7e126a5bc7"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -162,7 +162,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{69cdca2b-b635-4aba-b9c3-278cb9683d4f}"
+            UniqueIdentifier="{ab8e5500-4c5a-4d09-a28c-bbbf79b0b496}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -196,7 +196,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{1cc96cd8-573f-4569-946d-2921bcf41cc2}"
+            UniqueIdentifier="{f9786d4f-6239-430f-b48a-2bf8e8291d56}"
             >
             <File
                 RelativePath="..\..\..\src\alias.c"

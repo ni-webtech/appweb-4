@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="ejssql"
-    ProjectGUID="8f5c7c28-f2ea-4fc3-bc80-f9525880edff"
+    ProjectGUID="b749347c-698d-4210-87f5-b67bc61e2338"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -160,7 +160,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{385bd3d0-b3e4-478f-9bea-00e534656630}"
+            UniqueIdentifier="{aadc638f-b4dd-4275-90a0-a26a0dabc5de}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -178,7 +178,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{9e00105c-4056-4b50-8f35-07a660d5ceb6}"
+            UniqueIdentifier="{d848dd20-5486-4363-b95f-2c080301bc15}"
             >
             <File
                 RelativePath="..\..\..\src\deps\mpr\mprLib.c"
