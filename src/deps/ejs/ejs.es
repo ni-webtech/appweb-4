@@ -2827,6 +2827,7 @@ module ejs {
 
         /**
             Set the date of the month (1 - 31)
+            If a value outside the range is given, the date is adjusted without error.
             @param d Date of the month
          */
         function setDate(d: Number): void
@@ -2841,6 +2842,7 @@ module ejs {
 
         /**
             Set the current hour (0 - 23) in local time.
+            If a value outside the range is given, the date is adjusted without error.
             @param h The hour as an integer
          */
         function setHours(h: Number): void
@@ -2848,6 +2850,7 @@ module ejs {
 
         /**
             Set the current millisecond (0 - 999) in local time.
+            If a value outside the range is given, the date is adjusted without error.
             @param ms The millisecond as an integer
          */
         function setMilliseconds(ms: Number): void
@@ -2855,6 +2858,7 @@ module ejs {
 
         /**
             Set the current minute (0 - 59) in local time.
+            If a value outside the range is given, the date is adjusted without error.
             @param min The minute as an integer
          */
         function setMinutes(min: Number): void
@@ -2862,6 +2866,7 @@ module ejs {
 
         /**
             Set the current month (0 - 11) in local time.
+            If a value outside the range is given, the date is adjusted without error.
             @param mon The month as an integer
          */
         function setMonth(mon: Number): void
@@ -2869,6 +2874,7 @@ module ejs {
 
         /**
             Set the current second (0 - 59) in local time.
+            If a value outside the range is given, the date is adjusted without error.
             @param sec The second as an integer
             @param msec Optional milliseconds as an integer
          */
@@ -2888,6 +2894,7 @@ module ejs {
 
         /**
             Set the date of the month (1 - 31) in UTC time.
+            If a value outside the range is given, the date is adjusted without error.
             @param d The date to set
          */
         native function setUTCDate(d: Number): void
@@ -2900,30 +2907,35 @@ module ejs {
 
         /**
             Set the current hour (0 - 23) in UTC time.
+            If a value outside the range is given, the date is adjusted without error.
             @param h The hour as an integer
          */
         native function setUTCHours(h: Number): void
 
         /**
             Set the current millisecond (0 - 999) in UTC time.
+            If a value outside the range is given, the date is adjusted without error.
             @param ms The millisecond as an integer
          */
         native function setUTCMilliseconds(ms: Number): void
 
         /**
             Set the current minute (0 - 59) in UTC time.
+            If a value outside the range is given, the date is adjusted without error.
             @param min The minute as an integer
          */
         native function setUTCMinutes(min: Number): void
 
         /**
             Set the current month (0 - 11) in UTC time.
+            If a value outside the range is given, the date is adjusted without error.
             @param mon The month as an integer
          */
         native function setUTCMonth(mon: Number): void
 
         /**
             Set the current second (0 - 59) in UTC time.
+            If a value outside the range is given, the date is adjusted without error.
             @param sec The second as an integer
             @param msec Optional milliseconds as an integer
          */
@@ -7568,6 +7580,7 @@ module ejs {
          */
         native function get basename(): Path
         
+//  MOB -- perhaps should be split()
         /**
             Path components. This is the path converted to an absolute path and then broken into components for each
             directory level. It is set to an array object with an element for each segment of the path. The first 
@@ -17933,14 +17946,15 @@ module ejs.web {
             connector.extlink(text, options)
         }
 
+
         /**
             Emit a selection list. 
             @param field Name of the field to display. This is used to create a HTML "name" and "id" attribute for the 
                 input element. If used inside a model form, it is the field name in the model containing the list item to
                 select. If used without a model, the value to select should be passed via options.value. 
             @param choices Choices to select from. This can be an array list where each element is displayed and the value 
-                returned is an element index (origin zero). It can also be an array of array tuples where the first 
-                tuple entry is the value to display and the second is the value to send to the app. Or it can be an 
+                returned is an element index (origin zero). It can also be an array of array tuples where the 
+                first is the value to send to the app, and the second tuple entry is the value to display. Or it can be an 
                 array of objects such as those returned from a table lookup. If choices is null, the $field value is 
                 used to construct a model class name to use to return a data grid containing an array of row objects. 
                 The first non-id field is used as the value to display.
@@ -17948,7 +17962,7 @@ module ejs.web {
             @example
                 list("stockId", Stock.stockList) 
                 list("low", ["low", "med", "high"])
-                list("low", [["low", "3"], ["med", "5"], ["high", "9"]])
+                list("low", [["3", "low"], ["5", "med"], ["9", "high"]])
                 list("low", [{low: 3{, {med: 5}, {high: 9}])
                 list("Stock Type")  // Will invoke StockType.findAll() to do a table lookup
          */

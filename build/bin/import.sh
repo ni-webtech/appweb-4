@@ -16,7 +16,7 @@ PROGRAM=${0}
 log() {
     tag=$1
     shift
-    [ "${TRACE}" = "1" ] && printf "%12s %s\n" "[$tag]" "$*"
+    [ "${QUIET}" != "1" ] && printf "%12s %s\n" "[$tag]" "$*"
 }
 
 warn() {

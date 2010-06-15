@@ -22356,7 +22356,7 @@ static int defineObjectProperty(Ejs *ejs, EjsObj *obj, int slotNum, EjsName *qna
     if (ejsSetProperty(ejs, (EjsObj*) obj, slotNum, value ? value: ejs->nullValue) < 0) {
         return EJS_ERR;
     }
-    if (ejsSetTraitDetails(ejs, (EjsObj*) obj, slotNum, propType, attributes) < 0) {
+    if (ejsSetTraitDetails(ejs, (EjsObj*) obj, slotNum, propType, (int) attributes) < 0) {
         return EJS_ERR;
     }
 
