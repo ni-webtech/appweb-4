@@ -14,7 +14,7 @@ INC_DEST		:= $(STAGING)/src/include
 DOC_DEST		:= $(STAGING)/doc
 ARCHIVE			+= $(BLD_TOP)/releases/appweb-all.tgz
 TARGETS			+= $(patsubst %,$(INC_DEST)/%, appweb.h)
-TARGETS			+= $(patsubst %,$(DEST)/%, appwebLib.c appweb.c angel.c)
+TARGETS			+= $(patsubst %,$(DEST)/%, appwebLib.c appweb.c)
 
 APPWEB_HEADERS	+= $(patsubst %,$(SRC)/include/%.h, appweb appwebMonitor http)
 LIB_SOURCES		+= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|server/|test|utils|sav') 
@@ -38,14 +38,8 @@ $(DEST)/appweb.c: Makefile $(APPWEB_HEADERS) $(SRC)/server/appweb.c
 	echo '#include "appweb.h"' >$(DEST)/appweb.c
 	all-in-one $(SRC)/server/appweb.c | egrep -v '#include.*appweb|#include.*http' >>$(DEST)/appweb.c
 
-$(DEST)/angel.c: Makefile $(SRC)/server/UNIX/angel.c
-	echo '#include "mpr.h"' >$(DEST)/angel.c
-	all-in-one $(SRC)/server/UNIX/angel.c | egrep -v '#include.*appweb|#include.*http' >>$(DEST)/angel.c
-
 $(ARCHIVE): Makefile $(TARGETS)
 	cp $(BLD_TOP)/doc/man/*.1 $(STAGING)/doc/man
-	cp -r $(BLD_LIB_DIR)/www $(DEST)
-	cp Makefile.all $(DEST)/Makefile
 	@$(call log) "[Generate]" "tar cfz $(ARCHIVE) -C $(STAGING) ."
 	rm -f $(ARCHIVE)
 	tar cfz $(ARCHIVE) -C $(STAGING) .

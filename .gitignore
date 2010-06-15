@@ -77,3 +77,4 @@ bin/*.cmd
 bin/www
 lib/www
 src/deps/ejs/*.lst
+bin/angel*

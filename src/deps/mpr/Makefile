@@ -24,35 +24,35 @@ endif
 ifeq ($(BLD_FEATURE_MATRIXSSL),1)
 	MAKE_IFLAGS		+= $(BLD_MATRIXSSL_IFLAGS)
 endif
-
 ifeq ($(BLD_FEATURE_SSL),1)
 	TARGETS			+= $(MPRSSL_LIB)
 	SSL_OBJECTS		+= mprSsl
 endif
-
+TARGETS				+= $(BLD_BIN_DIR)/angel$(BLD_EXE)
 ifeq ($(BUILD_NATIVE_OR_COMPLETE_CROSS),1)
 	TARGETS			+= $(BLD_BIN_DIR)/makerom$(BLD_EXE)
 endif
 
 compileTargets: imports $(TARGETS)
 
-#
-#	MPR library
-#
 $(MPR_LIB): $(OBJECTS)
 	bld --library $(MPR_LIB) $(MPR_OBJECTS)
 
-#
-#	SSL library
-#
 $(MPRSSL_LIB): $(OBJECTS)
 	bld --library $(MPRSSL_LIB) --search "$(BLD_SSL_WITHLIBPATHS)" --libs "mpr $(BLD_SSL_WITHLIBS)" $(SSL_OBJECTS)
 
-#
-#	makerom utility
-#
 $(BLD_BIN_DIR)/makerom$(BLD_EXE): $(OBJECTS) $(MPR_LIB)
 	bld --exe $(BLD_BIN_DIR)/makerom$(BLD_EXE) --search "$(BLD_SSL_LIBPATHS)" --libs "mpr $(BLD_SSL_LIBS)" makerom
+
+ifeq ($(BLD_UNIX_LIKE),1)
+$(BLD_BIN_DIR)/angel$(BLD_EXE): $(OBJECTS) $(BLD_MPR_MAKEDEP)
+	bld --exe $(BLD_BIN_DIR)/angel$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" angel$(BLD_OBJ)
+endif
+ifeq ($(BLD_WIN_LIKE),1)
+$(BLD_BIN_DIR)/angel$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
+	bld --graphical --exe $(BLD_BIN_DIR)/angel$(BLD_EXE) --rpath "$(BLD_LIB_PREFIX)" --rpath "../bin" \
+		--search "$(LIBPATH)" $(MODE) --libs "mpr" --syslibs "$(SYSLIBS)" angel$(BLD_OBJ) 
+endif
 
 #
 #	Import required libraries

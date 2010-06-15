@@ -16,19 +16,7 @@ ifeq	($(BLD_OS),WIN)
 	MONITOR_RES = --resources appwebMonitor.rc
 endif
 
-ifeq ($(BUILD_CROSS_OR_COMPLETE_NATIVE),1)
-	TARGETS	:= angel$(BLD_EXE) $(BLD_PRODUCT)Monitor$(BLD_EXE)
-endif
-
 compileExtra: $(TARGETS) 
-
-#
-#	Link the service angel
-#
-angel$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
-	@bld --graphical --exe angel$(BLD_EXE) --rpath "$(BLD_LIB_PREFIX)" --rpath "../bin" \
-		--search "$(LIBPATH)" $(MODE) --libs "mpr" --syslibs "$(SYSLIBS)" $(BLD_OBJ_DIR)/angel$(BLD_OBJ) 
-	cp angel$(BLD_EXE) $(BLD_BIN_DIR)/angel$(BLD_EXE) 
 
 #
 #	Link the monitor
