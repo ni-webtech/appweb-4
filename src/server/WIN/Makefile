@@ -8,9 +8,7 @@ BUILD_CROSS	:= 0
 
 include 	.makedep 
 
-#
-#	Extra libraries
-#
+TARGETS		+= $(BLD_PRODUCT)Monitor$(BLD_EXE)
 ifeq	($(BLD_OS),WIN)
 	SYSLIBS	+= shell32.lib
 	MONITOR_RES = --resources appwebMonitor.rc
