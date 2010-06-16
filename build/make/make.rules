@@ -132,7 +132,7 @@ all: compile
 ifeq ($(_RECURSIVE_),)
 clean clobber compile depend test loadTest buildFarmTest longevityTest leakTest bench package projects \
 	preprocess process: dummy
-	@unset EXPORT_OBJECTS BUILDING_CROSS _LDFLAGS _LDPATH BLD_TOP ; \
+	unset EXPORT_OBJECTS BUILDING_CROSS _LDFLAGS _LDPATH BLD_TOP ; \
 	touch $(BLD_TOP)/.buildStarted ; \
 	rm -f $(BLD_TOP)/.preprocessed ; \
     $(call log) "[Notice]" "Building $(BLD_NAME) $(BLD_VERSION). For command details, use \"make TRACE=1\"."; \
@@ -201,10 +201,10 @@ compileTargets:
 compileFinal:
 
 compileDirs:
-	@+T=compile ; D="$(PRE_DIRS)" ; $(DO_RECURSE) 
+	T=compile ; D="$(PRE_DIRS)" ; $(DO_RECURSE) 
 
 compileAdirs:
-	@+T=compile ; D="$(POST_DIRS)" ; $(DO_RECURSE) 
+	T=compile ; D="$(POST_DIRS)" ; $(DO_RECURSE) 
 
 
 COMPILE ?= *.c
@@ -214,22 +214,22 @@ depend: $(BUILD_CHECK) dependExtra dependDirs dependCwd dependAfter
 dependCwd:
 ifndef SRC_PATH
 ifeq ($(PROCESSED_SRC),)
-	@$(MAKE) -S --no-print-directory _RECURSIVE_=1 "_DPATH_=$(_DPATH_)" TRACE=$(TRACE) dependAfter
+	$(MAKE) -S --no-print-directory _RECURSIVE_=1 "_DPATH_=$(_DPATH_)" TRACE=$(TRACE) dependAfter
 endif
 endif
-	@if [ ! -x $(BLD_TOOLS_DIR)/edep$(BLD_BUILD_EXE) -a "$(BUILDING_CROSS)" != 1 ] ; then \
+	if [ ! -x $(BLD_TOOLS_DIR)/edep$(BLD_BUILD_EXE) -a "$(BUILDING_CROSS)" != 1 ] ; then \
 		$(MAKE) -S --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) -C $(BLD_TOP)/build/src compile ; \
 	fi
-	@[ "$(TRACE)" = 1 ] && echo edep$(BLD_BUILD_EXE) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE) ; true
-	@edep$(BLD_BUILD_EXE) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE)
+	[ "$(TRACE)" = 1 ] && echo edep$(BLD_BUILD_EXE) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE) ; true
+	edep$(BLD_BUILD_EXE) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE)
 
 dependDirs:
-	@if [ ! -f .makedep ] ; then \
+	if [ ! -f .makedep ] ; then \
 		echo "  makedep" ; \
 	    cd $(BLD_TOP) >/dev/null 2>&1 ; makedep ; make depend ; cd - >/dev/null 2>&1 ; \
 	fi
-	@+T=depend ; D="$(PRE_DIRS) $(MID_DIRS) $(POST_DIRS)" ; $(DO_RECURSE)
-	@if [ -f $(BLD_TOP)/buildConfig.make -a -d java ] ; then \
+	T=depend ; D="$(PRE_DIRS) $(MID_DIRS) $(POST_DIRS)" ; $(DO_RECURSE)
+	if [ -f $(BLD_TOP)/buildConfig.make -a -d java ] ; then \
 		[ "$(TRACE)" = 1 ] && echo "  $(MAKE) --no-print-directory _RECURSIVE_=1 "_DPATH_=$(_DPATH_)" -C java process" ; \
 		$(MAKE) -S --no-print-directory _RECURSIVE_=1 "_DPATH_=$(_DPATH_)/java" TRACE=$(TRACE) -C java process ; \
 	fi
@@ -246,8 +246,8 @@ preprocess: $(BLD_TOP)/.preprocessed
 
 $(BLD_TOP)/.preprocessed: $(BLD_TOP)/.buildStarted
 	echo "$(MAKE) -C $(BLD_TOP)/java process"
-	@$(MAKE) --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) -C $(BLD_TOP)/java process || echo -e "\n--ERROR--\n"
-	@touch $(BLD_TOP)/.preprocessed
+	$(MAKE) --no-print-directory _RECURSIVE_=1 TRACE=$(TRACE) -C $(BLD_TOP)/java process || echo -e "\n--ERROR--\n"
+	touch $(BLD_TOP)/.preprocessed
 	
 else
 preprocess:
@@ -262,10 +262,10 @@ processCwd:
 endif
 
 processDirs:
-	@+T=process ; D="$(PRE_DIRS)" ; $(DO_RECURSE)
+	T=process ; D="$(PRE_DIRS)" ; $(DO_RECURSE)
 
 processAdirs:
-	@+T=process ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=process ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 processExtra:
 
@@ -280,7 +280,7 @@ processAfter:
 test: $(BUILD_CHECK) testDirs testExtra testExtraExtra testFinal testCleanup
 
 testDirs:
-	@+T=test ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=test ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 testExtra testExtraExtra testFinal testCleanup:
 
@@ -291,7 +291,7 @@ testExtra testExtraExtra testFinal testCleanup:
 loadTest: $(BUILD_CHECK) loadTestDirs loadTestExtra
 
 loadTestDirs:
-	@+T=loadTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=loadTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 loadTestExtra:
 
@@ -302,7 +302,7 @@ loadTestExtra:
 leakTest: $(BUILD_CHECK) leakTestDirs leakTestExtra
 
 leakTestDirs:
-	@+T=leakTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=leakTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 leakTestExtra:
 
@@ -313,7 +313,7 @@ leakTestExtra:
 longevityTest: $(BUILD_CHECK) longevityTestDirs longevityTestExtra
 
 longevityTestDirs:
-	@+T=longevityTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=longevityTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 longevityTestExtra:
 
@@ -324,7 +324,7 @@ longevityTestExtra:
 bench: $(BUILD_CHECK) benchDirs benchExtra
 
 benchDirs:
-	@+T=bench ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=bench ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 benchExtra:
 
@@ -332,7 +332,7 @@ benchExtra:
 buildFarmTest: $(BUILD_CHECK) buildFarmTestDirs buildFarmTestExtra
 
 buildFarmTestDirs:
-	@+T=buildFarmTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=buildFarmTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 buildFarmTestExtra:
 
@@ -353,12 +353,12 @@ cleanExtra:
 #	Do an extra thorough clean and remove all generated files
 #
 clobber: $(BUILD_CHECK) clobberDirs cleanExtra clobberExtra
-	@rm -f $(CLEANIT) $(CLOBBERIT)
+	rm -f $(CLEANIT) $(CLOBBERIT)
 
 clobberExtra:
 
 clobberDirs:
-	@+T=clobber ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=clobber ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 
 #
@@ -367,7 +367,7 @@ clobberDirs:
 projects: $(BUILD_CHECK) projectsDirs projectsExtra
 
 projectsDirs:
-	@+T=projects ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
+	T=projects ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
 projectsExtra:
 
@@ -417,4 +417,4 @@ endif
 #	Used to suppress make warning that there is "Nothing to be done for target"
 #
 dummy:
-	@true
+	true
