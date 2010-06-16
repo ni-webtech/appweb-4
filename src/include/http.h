@@ -616,7 +616,7 @@ extern int httpJoinPacket(HttpPacket *packet, HttpPacket *other);
         stages can digest their contents. If a packet is too large for the queue maximum size, it should be split.
         When the packet is split, a new packet is created containing the data after the offset. Any suffix headers
         are moved to the new packet.
-    @param ctx Any memory allocation context created by MprAlloc
+    @param ctx Any memory allocation context created by MprAlloc to own the packet.
     @param packet Packet to split
     @param offset Location in the original packet at which to split
     @return New HttpPacket object containing the data after the offset. No need to free, unless you have a very long
@@ -1324,7 +1324,6 @@ typedef struct HttpConn {
     struct HttpQueue serviceq;              /**< List of queues that require service for request pipeline */
 
     HttpPacket      *input;                 /**< Header packet */
-    HttpPacket      *freePackets;           /**< Free list of packets */
     HttpQueue       *readq;                 /**< End of the read pipeline */
     HttpQueue       *writeq;                /**< Start of the write pipeline */
     MprTime         started;                /**< When the connection started */
@@ -1927,7 +1926,7 @@ typedef struct HttpReceiver {
 
     MprHeap         *arena;                 /**< Memory arena */
     HttpConn        *conn;                  /**< Connection object */
-    HttpPacket      *packet;                /**< Current input packet */
+    HttpPacket      *freePackets;           /**< Free list of packets */
     HttpPacket      *headerPacket;          /**< HTTP headers */
     HttpUri         *parsedUri;             /**< Parsed request url */
     HttpLocation    *location;              /**< Location block */
@@ -2235,7 +2234,6 @@ typedef struct HttpTransmitter {
     MprList         *outputPipeline;        /**< Output processing */
     HttpStage       *handler;               /**< Server-side request handler stage */
     HttpStage       *connector;             /**< Network connector to send / receive socket data */
-    HttpPacket      *freePackets;           /**< List of free packets */
     MprHashTable    *headers;               /**< Custom transmission headers */
     HttpQueue       queue[2];               /**< Dummy head for the queues */
 

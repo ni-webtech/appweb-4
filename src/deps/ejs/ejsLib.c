@@ -26489,8 +26489,13 @@ static EjsObj *sock_read(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
     }
     nbytes = mprReadSocket(sp->sock, &ba->value[offset], count);
     if (nbytes < 0) {
+#if UNUSED
         ejsThrowIOError(ejs, "Can't read from socket");
         return 0;
+#endif
+        ejsSendEvent(ejs, sp->emitter, "eof", (EjsObj*) sp);
+        //  TODO - do we need to set the mask here?
+        return (EjsObj*) ejs->nullValue;
     }
     if (nbytes == 0) {
         //  TODO - but in async, this does not mean eof. See mpr for how to tell eof

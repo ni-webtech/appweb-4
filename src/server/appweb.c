@@ -53,7 +53,7 @@ MAIN(appweb, int argc, char **argv)
     MprList     *scripts;
     cchar       *ipAddrPort, *documentRoot, *argp, *logSpec;
     char        *configFile, *ip, *homeDir;
-    int         workers, outputVersion, argind, port, rc;
+    int         workers, outputVersion, argind, port;
 
     configFile = 0;
     documentRoot = 0;
@@ -98,9 +98,9 @@ MAIN(appweb, int argc, char **argv)
 
 #if BLD_UNIX_LIKE
         } else if (strcmp(argp, "--chroot") == 0) {
+            int rc;
             if (argind >= argc) {
                 usageError(mpr);
-
             }
             homeDir = mprGetAbsPath(mpr, argv[++argind]);
             rc = chdir(homeDir);

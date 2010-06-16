@@ -2394,7 +2394,10 @@ void httpPrepClientConn(HttpConn *conn, int retry)
         conn->flags = 0;
         conn->expire = conn->time + conn->http->keepAliveTimeout;
         conn->errorMsg = 0;
+#if UNUSED
+        //  MOB -- is this right?
         conn->input = NULL;
+#endif
         conn->state = 0;
         httpSetState(conn, HTTP_STATE_BEGIN);
         httpInitSchedulerQueue(&conn->serviceq);
@@ -4454,17 +4457,16 @@ HttpPacket *httpCreatePacket(MprCtx ctx, int size)
  */
 HttpPacket *httpCreateConnPacket(HttpConn *conn, int size)
 {
-    HttpPacket    *packet;
+    HttpPacket      *packet;
+    HttpReceiver    *rec;
 
     if (conn->state >= HTTP_STATE_COMPLETE) {
         return httpCreatePacket((MprCtx) conn, size);
     }
-    if (conn->receiver) {
-        /*
-            MOB - rethink this. The free list should be per request and not per connection
-         */
-        if ((packet = conn->freePackets) != NULL && size <= packet->content->buflen) {
-            conn->freePackets = packet->next; 
+    rec = conn->receiver;
+    if (rec) {
+        if ((packet = rec->freePackets) != NULL && size <= packet->content->buflen) {
+            rec->freePackets = packet->next; 
             packet->next = 0;
             return packet;
         }
@@ -4475,11 +4477,13 @@ HttpPacket *httpCreateConnPacket(HttpConn *conn, int size)
 
 void httpFreePacket(HttpQueue *q, HttpPacket *packet)
 {
-    HttpConn  *conn;
+    HttpConn        *conn;
+    HttpReceiver    *rec;
 
     conn = q->conn;
+    rec = conn->receiver;
 
-    if (packet->content == 0 || packet->content->buflen < HTTP_BUFSIZE || mprGetParent(packet) == conn) {
+    if (rec == 0 || packet->content == 0 || packet->content->buflen < HTTP_BUFSIZE || mprGetParent(packet) == conn) {
         /* 
             Don't bother recycling non-content, small packets or packets owned by the connection
             We only store packets owned by the request and not by the connection on the free list.
@@ -4499,8 +4503,8 @@ void httpFreePacket(HttpQueue *q, HttpPacket *packet)
     packet->suffix = 0;
     packet->entityLength = 0;
     packet->flags = 0;
-    packet->next = conn->freePackets;
-    conn->freePackets = packet;
+    packet->next = rec->freePackets;
+    rec->freePackets = packet;
 } 
 
 
@@ -6150,13 +6154,18 @@ HttpReceiver *httpCreateReceiver(HttpConn *conn)
 
 void httpDestroyReceiver(HttpConn *conn)
 {
-    conn->freePackets = NULL;
     if (conn->receiver) {
         mprFree(conn->receiver->arena);
         conn->receiver = 0;
     }
     if (conn->server) {
         httpPrepServerConn(conn);
+    }
+    if (conn->input) {
+        /* Left over packet */
+        if (mprGetParent(conn->input) != conn) {
+            conn->input = httpSplitPacket(conn, conn->input, 0);
+        }
     }
 }
 
@@ -7091,7 +7100,6 @@ static bool processCompletion(HttpConn *conn)
             conn->input = 0;
         }
     }
-    conn->freePackets = NULL;
     if (conn->server) {
         httpDestroyReceiver(conn);
         return more;
