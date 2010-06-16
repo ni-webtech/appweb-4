@@ -134,8 +134,8 @@ $(BLD_BIN_DIR)/ejssql$(BLD_EXE): $(OBJECTS) $(call lib, mpr) $(call vlib, ejs)
 # 		--libs "$(BLD_APPWEB_LIBS) $(BLD_EJS_LIBS)" ejsAppwebHandler$(BLD_OBJ) $(EXTRA_GATEWAY_OBJECTS)
 
 $(BLD_LIB_DIR)/www: Makefile www/*
-	mkdir -p $(BLD_LIB_DIR)/www/images
-	mkdir -p $(BLD_LIB_DIR)/www/themes
+	rm -fr $(BLD_LIB_DIR)/www
+	mkdir -p $(BLD_LIB_DIR)/www
 	cp -r www/* $(BLD_LIB_DIR)/www
 
 $(BLD_BIN_DIR)/ejsmvc.cmd: ejsmvc.cmd

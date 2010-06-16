@@ -61,7 +61,7 @@ module ejs {
         use default namespace public
 
         /** 
-            Configuration environment specified in the .ejsrc configuration files.
+            Configuration environment specified in the .ejsrc/ejsrc configuration files.
          */
         static var config: Object
 
@@ -336,6 +336,16 @@ module ejs {
                 }
             }
         }
+
+        static function loadrc(path: Path) {
+            if (path.exists) {
+                try {
+                    blend(App.config, path.readJSON(), false)
+                } catch {
+                    errorStream.write(App.exePath.basename +  " Can't parse " + path + ": " + e + "\n")
+                }
+            }
+        }
     }
 
     /**  
@@ -344,22 +354,14 @@ module ejs {
      */
     function appInit(): Void {
         /*  
-            Load ~/.ejsrc
+            Load ~/.ejsrc and ejsrc
          */
+        let config = App.config = {}
         let dir = App.getenv("HOME")
         if (dir) {
-            let path = Path(dir).join(".ejsrc")
-            if (path.exists) {
-                try {
-                    App.config = deserialize(path.readString())
-                } catch (e) {
-                    App.errorStream.write(App.exePath.basename +  " Can't parse " + path + ": " + e + "\n")
-                }
-            }
+            App.loadrc(Path(dir).join(".ejsrc"))
         }
-        let config = App.config || {}
-        App.config = config
-
+        App.loadrc("ejsrc")
         blend(config, App.defaultConfig, false)
 
         stdout = TextStream(App.outputStream)
@@ -2035,6 +2037,7 @@ module ejs {
         @stability prototype
         @example 
         cmd = CmdArgs({
+            [ "depth", Number ]
             [ "quiet", null, false ]
             [ [ "verbose", "v", ], true ]
             [ "log", /\w+(:\d)/, "stdout:4" ],
@@ -2094,14 +2097,20 @@ module ejs {
                     continue
                 }
                 if (range === Number) {
-                    if (! value.match(/^\d+$/)) {
-                       throw new ArgError("Option \"" + key + "\" must be a number")
+                    if (value) {
+                        if (! value.match(/^\d+$/)) {
+                           throw new ArgError("Option \"" + key + "\" must be a number")
+                        }
+                    } else {
+                        value = 0
                     }
                 } else if (range === Boolean) {
                     if (value is Boolean) {
                         value = value.toString()
-                    } else {
+                    } else if (value is String) {
                         value = value.toLower()
+                    } else {
+                        value = false
                     }
                     if (value != "true" && value != "false") {
                        throw new ArgError("Option \"" + key + "\" must be true or false")
@@ -5438,9 +5447,7 @@ module ejs {
             XML(response)
 
         /** 
-            Remove a listener to the stream. If there are no listeners on the stream, the stream is put back into sync mode.
-            @param name Event name previously used with addListener. The name may be an array of events.
-            @param listener Listener function previously used with addListener.
+            @duplicate Stream.removeListener
          */
         native function removeListener(name, listener: Function): Void
 
@@ -6111,9 +6118,8 @@ module ejs {
             The Logger constructor can create different types of loggers based on the three (optional) arguments. 
             @param name Unique name of the logger. Loggers are typically named after the module, class or subsystem they 
             are associated with.
-            @param output Optional output device or Logger to send messages to. If a parent Logger instance is provided for
-                the output parameter, messages are sent to the parent for rendering. The default output device is defined 
-                by the application, typically via a "--log" command line switch. 
+            @param where Optional output device or Logger to send messages to. If a parent Logger instance is provided for
+                the output parameter, messages are sent to the parent for rendering.
             @param level Optional integer verbosity level. Messages with a message level less than or equal to the defined
                 logger level will be emitted. Range is 0 (least verbose) to 9.
             @example:
@@ -6121,23 +6127,29 @@ module ejs {
                 var log = new Logger("name", file, 5)
                 log.debug(2, "message")
          */
-        function Logger(name: String, output = null, level: Number? = 0) {
+        function Logger(name: String, where = null, level: Number? = 0) {
             _name = name
-            if (output && output is Logger) {
-                _level = output.level
-                _parent = output
-            } else if (output && output is Stream) {
-                _outStream = output
+            if (where && where is Logger) {
+                _level = where.level
+                _parent = where
+            } else if (where && where is Stream) {
+                _outStream = where
                 _level = level
             } else {
-                if (output == "stdout") {
-                    _outStream = App.outputStream
-                } else if (output == "stderr") {
-                    _outStream = App.errorStream
-                } else {
-                    _outStream = output || App.errorStream
-                }
-                _level = level
+                redirect(where)
+            }
+        }
+
+        function redirect(where: String) {
+            let parts = where.split(":")
+            let path = parts[0], level = parts[1]
+            _level ||= level
+            if (path == "stdout") {
+                _outStream = App.outputStream
+            } else if (path == "stderr") {
+                _outStream = App.errorStream
+            } else {
+                _outStream = File(path).open("w")
             }
         }
 
@@ -6300,6 +6312,17 @@ module ejs {
          */
         function info(...msgs): void
             emit(this, Info, "", "INFO", msgs.join(" ") + "\n")
+
+        /** @hide
+            @stability prototype
+         */
+        function activity(tag: String, ...args): Void {
+            let msg = args.join(" ")
+            let msg = "%12s %s" % (["[" + tag.toUpper() + "]"] + [msg]) + "\n"
+            if (_level > 0) {
+                write(msg)
+            }
+        }
 
         /** 
             @hide

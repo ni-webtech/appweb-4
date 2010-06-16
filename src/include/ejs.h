@@ -5485,11 +5485,12 @@ typedef struct EcState {
         Inherited fields. These are inherited by new states.
      */
     //  OPT - compress into bit mask
-    int             inModule;                   /* Inside a module declaration */
+    int             inModule;               /* Inside a module declaration */
     int             inClass;                /* Inside a class declaration */
     int             inFunction;             /* Inside a function declaration */
     int             inMethod;               /* Inside a method declaration */
-    int             captureBreak;           /* Capture break and return inside a catch block */
+    int             captureBreak;           /* Capture break/continue inside a catch/finally block */
+    int             captureFinally;         /* Capture break/continue with a finally block */
     int             blockIsMethod;          /* Current function is a method */
     int             inHashExpression;       /* Inside a # expression */
     int             inSettings;             /* Inside constructor settings */

@@ -579,6 +579,9 @@ int ejsCreateGCService(Ejs *ejs)
     gc = &ejs->gc;
     gc->enabled = 1;
     gc->firstGlobal = (ejs->empty) ? 0 : ES_global_NUM_CLASS_PROP;
+
+//  MOB -- Some types are immutable App.config
+gc->firstGlobal = 0;
     gc->numPools = EJS_MAX_TYPE;
     gc->allocGeneration = EJS_GEN_ETERNAL;
     ejs->workQuota = EJS_WORK_QUOTA;
@@ -989,9 +992,6 @@ static void resetMarks(Ejs *ejs)
 }
 
     
-/*
-    Mark the global object
- */
 static void markGlobal(Ejs *ejs, int generation)
 {
     EjsGC       *gc;
@@ -1015,12 +1015,7 @@ static void markGlobal(Ejs *ejs, int generation)
         }
 
     } else {
-        /*
-            Current some global types are not immutable:
-            E.g. App.config
-         */
         i = gc->firstGlobal;
-        i = 0;
         for (; i < obj->numSlots; i++) {
             ejsMark(ejs, obj->slots[i].value.ref);
         }
@@ -22273,6 +22268,8 @@ EjsObj *ejsCloneObject(Ejs *ejs, EjsObj *src, bool deep)
     dest->permanent = src->permanent;
     dest->shortScope = src->shortScope;
 
+    //  MOB - OPT name copying
+#if UNUSED
     dp = dest->slots;
     sp = src->slots;
     for (i = 0; i < numSlots; i++, sp++, dp++) {
@@ -22282,6 +22279,24 @@ EjsObj *ejsCloneObject(Ejs *ejs, EjsObj *src, bool deep)
             dp->value.ref = ejsClone(ejs, sp->value.ref, deep);
         }
     }
+#else
+    dp = dest->slots;
+    sp = src->slots;
+    for (i = 0; i < numSlots; i++, sp++, dp++) {
+        *dp = *sp;
+        dp->trait = sp->trait;
+        //  MOB - OPT name copying
+        dp->qname.space = mprStrdup(dest, sp->qname.space);
+        dp->qname.name = mprStrdup(dest, sp->qname.name);
+        dp->hashChain = -1;
+        if (deep && !sp->value.ref->type->immutable) {
+            dp->value.ref = ejsClone(ejs, sp->value.ref, deep);
+        }
+    }
+    if (dest->numSlots > EJS_HASH_MIN_PROP) {
+        ejsMakeObjHash(dest);
+    }
+#endif
     ejsSetDebugName(dest, mprGetName(src));
     return dest;
 }
@@ -22569,11 +22584,12 @@ void ejsMarkObject(Ejs *ejs, EjsObj *obj)
     EjsSlot     *sp;
     int         i;
 
+    //  MOB -- put test if marked here
     ejsMark(ejs, (EjsObj*) obj->type);
 
     sp = obj->slots;
     for (i = 0; i < obj->numSlots; i++, sp++) {
-        if (sp->value.ref != ejs->nullValue) {
+        if (sp->value.ref != ejs->nullValue) {      //  MOB test permanent
             ejsMark(ejs, sp->value.ref);
         }
     }
@@ -29766,31 +29782,33 @@ static int fixupTypeImplements(Ejs *ejs, EjsType *type, int makeRoom)
     EjsType         *iface;
     EjsBlock        *bp;
     EjsNamespace    *nsp;
-    int             next, offset, count, nextNsp;
+    int             next, offset, itotal, icount, nextNsp;
 
     mprAssert(type);
     mprAssert(type->implements);
 
-    offset = type->constructor.block.obj.numSlots;
-    if (makeRoom) {
-        count = 0;
-        for (next = 0; ((iface = mprGetNextItem(type->implements, &next)) != 0); ) {
-            if (!iface->isInterface) {
-                count += iface->constructor.block.obj.numSlots;
-                type->hasInstanceVars |= iface->hasInstanceVars;
-            }
+    itotal = 0;
+    for (next = 0; ((iface = mprGetNextItem(type->implements, &next)) != 0); ) {
+        if (!iface->isInterface) {
+            itotal += iface->constructor.block.obj.numSlots;
+            type->hasInstanceVars |= iface->hasInstanceVars;
         }
-        if (count > 0 && ejsInsertGrowObject(ejs, (EjsObj*) type, count, 0) < 0) {
+    }
+    if (makeRoom) {
+        offset = type->constructor.block.obj.numSlots;
+        if (itotal > 0 && ejsGrowObject(ejs, (EjsObj*) type, offset + itotal) < 0) {
             return EJS_ERR;
         }
+    } else {
+        offset = type->constructor.block.obj.numSlots - itotal;
     }
     for (next = 0; ((iface = mprGetNextItem(type->implements, &next)) != 0); ) {
         if (!iface->isInterface) {
-            count = iface->constructor.block.obj.numSlots;
-            if (inheritProperties(ejs, type, (EjsObj*) type, offset, (EjsObj*) iface, 0, count, 1) < 0) {
+            icount = iface->constructor.block.obj.numSlots;
+            if (inheritProperties(ejs, type, (EjsObj*) type, offset, (EjsObj*) iface, 0, icount, 1) < 0) {
                 return EJS_ERR;
             }
-            offset += count;
+            offset += icount;
             for (nextNsp = 0; (nsp = (EjsNamespace*) ejsGetNextItem(&iface->constructor.block.namespaces, &nextNsp)) != 0;) {
                 ejsAddNamespaceToBlock(ejs, (EjsBlock*) type, nsp);
             }
@@ -35237,21 +35255,14 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags);
  */
 static EjsObj *hs_HttpServer(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
+    EjsObj      *serverRoot, *documentRoot;
+
     sp->ejs = ejs;
-    if (argc >= 1) {
-        ejsSetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_serverRoot, (EjsObj*) argv[0]);
-#if UNUSED
-    } else {
-        ejsSetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_serverRoot, (EjsObj*) ejsCreatePath(ejs, "."));
-#endif
-    }
-    if (argc >= 2) {
-        ejsSetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot, (EjsObj*) argv[1]);
-#if UNUSED
-    } else {
-        ejsSetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot, (EjsObj*) ejsCreatePath(ejs, "."));
-#endif
-    }
+    serverRoot = (argc >= 1) ? argv[0] : (EjsObj*) ejsCreatePath(ejs, ".");
+    ejsSetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_serverRoot, serverRoot);
+
+    documentRoot = (argc >= 1) ? argv[1] : (EjsObj*) ejsCreatePath(ejs, ".");
+    ejsSetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot, documentRoot);
     return (EjsObj*) sp;
 }
 
@@ -35361,12 +35372,16 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     sp->server = server;
 
     root = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
-    //  MOB -- why
-    server->documentRoot = mprStrdup(server, root->path);
+    if (ejsIsPath(ejs, root)) {
+        //  MOB -- why is this needed? remove?
+        server->documentRoot = mprStrdup(server, root->path);
+    }
 
     //  MOB -- is this needed? -- remove
     root = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_serverRoot);
-    server->serverRoot = mprStrdup(server, root->path);
+    if (ejsIsPath(ejs, root)) {
+        server->serverRoot = mprStrdup(server, root->path);
+    }
 
     //  MOB -- who make sure that the sp object is permanent?
 
@@ -41481,8 +41496,10 @@ static void genBreak(EcCompiler *cp, EcNode *np)
 
     state = cp->state;
     discardBlockItems(cp, state->code->blockMark);
-    if (state->captureBreak) {
+    if (state->captureFinally) {
         ecEncodeOpcode(cp, EJS_OP_FINALLY);
+    } else if (cp->state->captureBreak) {
+        ecEncodeOpcode(cp, EJS_OP_END_EXCEPTION);
     }
     if (state->code->jumps == 0 || !(state->code->jumpKinds & EC_JUMP_BREAK)) {
         genError(cp, np, "Illegal break statement");
@@ -41582,8 +41599,10 @@ static void genContinue(EcCompiler *cp, EcNode *np)
     ENTER(cp);
 
     discardBlockItems(cp, cp->state->code->blockMark);
-    if (cp->state->captureBreak) {
+    if (cp->state->captureFinally) {
         ecEncodeOpcode(cp, EJS_OP_FINALLY);
+    } else if (cp->state->captureBreak) {
+        ecEncodeOpcode(cp, EJS_OP_END_EXCEPTION);
     }
     if (cp->state->code->jumps == 0 || !(cp->state->code->jumpKinds & EC_JUMP_CONTINUE)) {
         genError(cp, np, "Illegal continue statement");
@@ -42697,12 +42716,11 @@ static void genDo(EcCompiler *cp, EcNode *np)
     int         condLen, bodyLen, len, condShortJump, continueLabel, breakLabel, mark;
 
     ENTER(cp);
-
-    state = cp->state;
-    state->captureBreak = 0;
-
     mprAssert(np->kind == N_DO);
 
+    state = cp->state;
+    state->captureFinally = 0;
+    state->captureBreak = 0;
     outerBlock = state->code;
     code = state->code = allocCodeBuffer(cp);
 
@@ -42818,6 +42836,7 @@ static void genFor(EcCompiler *cp, EcNode *np)
     outerBlock = state->code;
     code = state->code = allocCodeBuffer(cp);
     startMark = getStackCount(cp);
+    state->captureFinally = 0;
     state->captureBreak = 0;
 
     /*
@@ -42973,10 +42992,10 @@ static void genForIn(EcCompiler *cp, EcNode *np)
     outerBlock = state->code;
     code = state->code = allocCodeBuffer(cp);
     startMark = getStackCount(cp);
+    state->captureFinally = 0;
     state->captureBreak = 0;
 
     ecStartBreakableStatement(cp, EC_JUMP_BREAK | EC_JUMP_CONTINUE);
-
     processNode(cp, np->forInLoop.iterVar);
 
     /*
@@ -43724,7 +43743,7 @@ static void genReturn(EcCompiler *cp, EcNode *np)
 
     ENTER(cp);
 
-    if (cp->state->captureBreak) {
+    if (cp->state->captureFinally) {
         ecEncodeOpcode(cp, EJS_OP_FINALLY);
     }
     if (np->left) {
@@ -43800,6 +43819,7 @@ static void genSwitch(EcCompiler *cp, EcNode *np)
     ENTER(cp);
 
     state = cp->state;
+    state->captureFinally = 0;
     state->captureBreak = 0;
 
     outerBlock = state->code;
@@ -44044,11 +44064,12 @@ static void genTry(EcCompiler *cp, EcNode *np)
     processNode(cp, np->exception.tryBlock);
 
     if (np->exception.catchClauses) {
-        next = 0;
         /*
             If there is a finally block it must be invoked before acting on any break/continue and return statements 
          */
-        state->captureBreak = np->exception.finallyBlock ? 1 : 0;
+        next = 0;
+        state->captureFinally = np->exception.finallyBlock ? 1 : 0;
+        state->captureBreak = 1;
         while ((child = getNextNode(cp, np->exception.catchClauses, &next)) && !cp->error) {
             child->code = state->code = allocCodeBuffer(cp);
             mprAssert(child->left);
@@ -44058,16 +44079,19 @@ static void genTry(EcCompiler *cp, EcNode *np)
             }
             /* Add jumps below */
         }
+        state->captureFinally = 0;
         state->captureBreak = 0;
     }
 
     if (np->exception.finallyBlock) {
+        state->captureBreak = 1;
         np->exception.finallyBlock->code = state->code = allocCodeBuffer(cp);
         /* Finally pushes the original PC */
         pushStack(cp, 1);
         processNode(cp, np->exception.finallyBlock);
         ecEncodeOpcode(cp, EJS_OP_END_EXCEPTION);
         popStack(cp, 1);
+        state->captureBreak = 0;
     }
 
     /*
@@ -47717,6 +47741,11 @@ void ecAddConstants(EcCompiler *cp, EjsObj *block)
     int         i, numTraits;
 
     ejs = cp->ejs;
+    
+    if (block->visited) {
+        return;
+    }
+    block->visited = 1;
 
     numTraits = ejsGetPropertyCount(ejs, block);
     for (i = 0; i < numTraits; i++) {
@@ -47735,6 +47764,7 @@ void ecAddConstants(EcCompiler *cp, EjsObj *block)
             }
         }
     }
+    block->visited = 0;
 }
 
 
@@ -58726,6 +58756,7 @@ int ecPushState(EcCompiler *cp, EcState *newState)
         newState->inClass = prev->inClass;
         newState->inFunction = prev->inFunction;
         newState->captureBreak = prev->captureBreak;
+        newState->captureFinally = prev->captureFinally;
         newState->inMethod = prev->inMethod;
         newState->blockIsMethod = prev->blockIsMethod;
 
