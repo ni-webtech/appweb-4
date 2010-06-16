@@ -1177,6 +1177,7 @@ static int getBlockSize(MprBlk *bp)
 
 /*
     Steal a block from one context and insert in a new context. Ptr is inserted into the Ctx context.
+    MOB - this can't work to steal across virtual heaps. Should warn.
  */
 int mprStealBlock(MprCtx ctx, cvoid *ptr)
 {

@@ -44,12 +44,11 @@ $(MPRSSL_LIB): $(OBJECTS)
 $(BLD_BIN_DIR)/makerom$(BLD_EXE): $(OBJECTS) $(MPR_LIB)
 	bld --exe $(BLD_BIN_DIR)/makerom$(BLD_EXE) --search "$(BLD_SSL_LIBPATHS)" --libs "mpr $(BLD_SSL_LIBS)" makerom
 
+$(BLD_BIN_DIR)/angel$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
 ifeq ($(BLD_UNIX_LIKE),1)
-$(BLD_BIN_DIR)/angel$(BLD_EXE): $(OBJECTS) $(BLD_MPR_MAKEDEP)
 	bld --exe $(BLD_BIN_DIR)/angel$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" angel$(BLD_OBJ)
 endif
 ifeq ($(BLD_WIN_LIKE),1)
-$(BLD_BIN_DIR)/angel$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
 	bld --graphical --exe $(BLD_BIN_DIR)/angel$(BLD_EXE) --rpath "$(BLD_LIB_PREFIX)" --rpath "../bin" \
 		--search "$(LIBPATH)" $(MODE) --libs "mpr" --syslibs "$(SYSLIBS)" angel$(BLD_OBJ) 
 endif

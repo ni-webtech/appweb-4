@@ -176,7 +176,6 @@ int main(int argc, char *argv[])
         makeDaemon();
     }
     angel();
-
     return 0;
 }
 
@@ -814,7 +813,7 @@ static void angel()
      */
     homeDir = 0;
     serviceArgs = 0;
-    mprSprintf(key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s", serviceName);
+    mprSprintf(mpr, key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s", serviceName);
     mprReadRegistry(mpr, &homeDir, MPR_MAX_FNAME, key, "HomeDir");
     mprReadRegistry(mpr, &serviceArgs, MPR_MAX_FNAME, key, "Args");
 
@@ -824,16 +823,16 @@ static void angel()
     if (serviceProgram == 0) {
         GetModuleFileName(0, path, sizeof(path));
         dir = mprGetPathDir(mpr, path);
-        mprSprintf(path, sizeof(path), "\"%s\\%s.exe\"", dir, BLD_PRODUCT);
+        mprSprintf(mpr, path, sizeof(path), "\"%s\\%s.exe\"", dir, BLD_PRODUCT);
         mprFree(dir);
     } else {
-        mprSprintf(path, sizeof(path), "\"%s\"", serviceProgram);
+        mprSprintf(mpr, path, sizeof(path), "\"%s\"", serviceProgram);
     }
 
     if (serviceArgs && *serviceArgs) {
-        mprSprintf(cmd, sizeof(cmd), "%s %s", path, serviceArgs);
+        mprSprintf(mpr, cmd, sizeof(cmd), "%s %s", path, serviceArgs);
     } else {
-        mprSprintf(cmd, sizeof(cmd), "%s", path);
+        mprSprintf(mpr, cmd, sizeof(cmd), "%s", path);
     }
 
     if (createConsole) {
@@ -1043,7 +1042,7 @@ static int installService(char *homeDir, char *args)
     /*
         Write a service description
      */
-    mprSprintf(key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\" "Services\\%s", serviceName);
+    mprSprintf(mpr, key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\" "Services\\%s", serviceName);
 
     if (mprWriteRegistry(mpr, key, "Description", SERVICE_DESCRIPTION) < 0) {
         return MPR_ERR_CANT_WRITE;
