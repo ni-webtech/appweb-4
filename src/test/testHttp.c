@@ -107,7 +107,7 @@ static bool isValidUri(MprTestGroup *gp, char *uri, char *expectedUri)
 {
     char    *validated;
 
-    validated = httpValidateUri(gp, uri);
+    validated = httpNormalizeUriPath(gp, uri);
     if (strcmp(expectedUri, validated) == 0) {
         mprFree(validated);
         return 1;

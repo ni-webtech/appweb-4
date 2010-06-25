@@ -7326,7 +7326,7 @@ int httpSetUri(HttpConn *conn, cchar *uri)
     rec->uri = rec->parsedUri->uri;
     conn->transmitter->extension = rec->parsedUri->ext;
     mprFree(rec->pathInfo);
-    rec->pathInfo = httpValidateUri(rec, mprUriDecode(rec, rec->parsedUri->path));
+    rec->pathInfo = httpNormalizeUriPath(rec, mprUriDecode(rec, rec->parsedUri->path));
     rec->scriptName = mprStrdup(rec, "");
     return 0;
 }
@@ -9732,16 +9732,19 @@ char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *pat
 }
 
 
-/*  Validate a Uri
+#if UNUSED
+//  MOB -- DEPRECATE and remove this
+/*  
+    Validate a Uri
     WARNING: this code will not fully validate against certain Windows 95/98/Me bugs. Don't use this code in these
     operating systems without modifying this code to remove "con", "nul", "aux", "clock$" and "config$" in either
     case from the URI. The MprFileSystem::stat() will perform these checks to determine if a file is a device file.
  */
-char *httpValidateUri(MprCtx ctx, char *uri)
+char *httpValidateUri(MprCtx ctx, cchar *uriArg)
 {
-    char    *sp, *dp, *xp, *dot;
+    char    *uri, *sp, *dp, *xp, *dot;
 
-    if ((uri = mprStrdup(ctx, uri)) == 0) {
+    if ((uri = mprStrdup(ctx, uriArg)) == 0) {
         return 0;
     }
 
@@ -9767,7 +9770,8 @@ char *httpValidateUri(MprCtx ctx, char *uri)
         return uri;
     }
 
-    /*  Per RFC 1808, remove "./" segments
+    /*  
+        Per RFC 1808, remove "./" segments
      */
     dp = dot;
     for (sp = dot; *sp; ) {
@@ -9779,14 +9783,16 @@ char *httpValidateUri(MprCtx ctx, char *uri)
     }
     *dp = '\0';
 
-    /*  Remove trailing "."
+    /*  
+        Remove trailing "."
      */
     if ((dp == &uri[1] && uri[0] == '.') ||
         (dp > &uri[1] && dp[-1] == '.' && dp[-2] == '/')) {
         *--dp = '\0';
     }
 
-    /*  Remove "../"
+    /*  
+        Remove "../"
      */
     for (sp = dot; *sp; ) {
         if (*sp == '.' && sp[1] == '.' && sp[2] == '/' && (sp == uri || sp[-1] == '/')) {
@@ -9810,7 +9816,8 @@ char *httpValidateUri(MprCtx ctx, char *uri)
     }
     *dp = '\0';
 
-    /*  Remove trailing "/.."
+    /*  
+        Remove trailing "/.."
      */
     if (sp == &uri[2] && *uri == '.' && uri[1] == '.') {
         *uri = '\0';
@@ -9848,6 +9855,122 @@ char *httpValidateUri(MprCtx ctx, char *uri)
 #endif
     return uri;
 }
+#endif
+
+
+#if FUTURE
+char *httpJoinUriPath(Ejs *ejs, HttpUri *uri, int argc, EjsObj **argv)
+{
+    char    *other, *cp, *result, *prior;
+    int     i, abs;
+
+    args = (EjsArray*) argv[0];
+    result = mprStrdup(np, uri->path);
+
+    for (i = 0; i < argc; i++) {
+        other = argv[i];
+        prior = result;
+        if (*prior == '\0') {
+            result = mprStrdup(uri, other);
+        } else {
+            if (prior[strlen(prior) - 1] == '/') {
+                result = mprStrcat(uri, -1, prior, other, NULL);
+            } else {
+                if ((cp = strrchr(prior, '/')) != NULL) {
+                    cp[1] = '\0';
+                }
+                result = mprStrcat(uri, -1, prior, other, NULL);
+            }
+        }
+        if (prior != uri->path) {
+            mprFree(prior);
+        }
+    }
+    uri->path = httpNormalizeUriPath(np, result);
+    mprFree(result);
+    uri->ext = (char*) mprGetPathExtension(uri, uri->path);
+    return uri;
+}
+#endif
+
+
+/*
+    Normalize a URI path to remove redundant "./" and cleanup "../" and make separator uniform. Does not make an abs path.
+    It does not map separators nor change case. 
+ */
+char *httpNormalizeUriPath(MprCtx ctx, cchar *uriArg)
+{
+    char    *dupPath, *path, *sp, *dp, *mark, **segments;
+    int     j, i, nseg, len;
+
+    if (uriArg == 0 || *uriArg == '\0') {
+        return mprStrdup(ctx, "");
+    }
+    len = strlen(uriArg);
+    if ((dupPath = mprAlloc(ctx, len + 2)) == 0) {
+        return NULL;
+    }
+    strcpy(dupPath, uriArg);
+
+    if ((segments = mprAlloc(ctx, sizeof(char*) * (len + 1))) == 0) {
+        mprFree(dupPath);
+        return NULL;
+    }
+    nseg = len = 0;
+    for (mark = sp = dupPath; *sp; sp++) {
+        if (*sp == '/') {
+            *sp = '\0';
+            while (sp[1] == '/') {
+                sp++;
+            }
+            segments[nseg++] = mark;
+            len += sp - mark;
+            mark = sp + 1;
+        }
+    }
+    segments[nseg++] = mark;
+    len += sp - mark;
+    for (j = i = 0; i < nseg; i++, j++) {
+        sp = segments[i];
+        if (sp[0] == '.') {
+            if (sp[1] == '\0')  {
+                if ((i+1) == nseg) {
+                    segments[j] = "";
+                } else {
+                    j--;
+                }
+            } else if (sp[1] == '.' && sp[2] == '\0')  {
+                if ((i+1) == nseg) {
+                    if (--j >= 0) {
+                        segments[j] = "";
+                    }
+                } else {
+                    j = max(j - 2, -1);
+                }
+            }
+        } else {
+            segments[j] = segments[i];
+        }
+    }
+    nseg = j;
+    mprAssert(nseg >= 0);
+
+    if ((path = mprAlloc(ctx, len + nseg + 1)) != 0) {
+        for (i = 0, dp = path; i < nseg; ) {
+            strcpy(dp, segments[i]);
+            len = strlen(segments[i]);
+            dp += len;
+            if (++i < nseg) {
+                *dp++ = '/';
+            }
+        }
+        *dp = '\0';
+    }
+    mprFree(dupPath);
+    mprFree(segments);
+    return path;
+}
+
 
 /*
     @copy   default

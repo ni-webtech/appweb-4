@@ -18333,10 +18333,10 @@ static void workerMain(MprWorker *worker, MprThread *tp)
         /*
             Sleep till there is more work to do
          */
-        rc = mprWaitForCond(worker->idleCond, -1);
-
+        if (!mprIsExiting(worker)) {
+            rc = mprWaitForCond(worker->idleCond, -1);
+        }
         mprLock(ws->mutex);
-        mprAssert(worker->state == MPR_WORKER_BUSY || worker->state == MPR_WORKER_PRUNED);
     }
 
     changeState(worker, 0);

@@ -361,7 +361,7 @@ typedef struct HttpLimits {
         to escape dangerous characters for URIs as well as HTML content and shell commands.
     @stability Evolving
     @see HttpConn, httpCreateUri, httpCreateUriFromParts, httpFormatUri, httpEscapeCmd, httpEscapeHtml, httpUrlEncode, 
-        httpUrlDecode, httpValidateUri, httpLookupMimeType
+        httpUrlDecode, httpNormalizeUriPath, httpLookupMimeType
     @defgroup HttpUri HttpUri
  */
 typedef struct HttpUri {
@@ -482,14 +482,13 @@ extern char *httpUriToString(MprCtx ctx, HttpUri *uri, int complete);
 
 /** 
     Validate a URL
-    @description Validate and canonicalize a URL. This removes redundant "./" sequences and simplifies "../dir" 
-        references. This operates in-situ and modifies the existing string.
+    @description Validate and canonicalize a URL. This removes redundant "./" sequences and simplifies "../dir" references. 
     @param ctx Any memory allocation context created by MprAlloc
-    @param url Uri string to validate
-    @return A validated url.
+    @param uri Uri path string to normalize
+    @return A new validated uri string. Caller must free.
     @ingroup HttpUri
  */
-extern char *httpValidateUri(MprCtx ctx, char *url);
+extern char *httpNormalizeUriPath(MprCtx ctx, cchar *uri);
 
 /** 
     Content range structure

@@ -109,7 +109,7 @@ syncFiles() {
             if [ "$patch" = "1" ] ; then
                 eval pp $PP_ARGS $SRC/$file > "${DIR}/${target}"
             else
-                log "Update" "${SRC}/$file"
+                log "Update" "${target#./}"
                 cp $SRC/$file ${DIR}/${target}
             fi
             if [ `uname` != "CYGWIN_NT-5.1" ] ; then
