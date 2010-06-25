@@ -247,7 +247,8 @@
 #define ES_App_version                                                 26
 #define ES_App_searchPath                                              27
 #define ES_App_serviceEvents                                           28
-#define ES_App_NUM_CLASS_PROP                                          29
+#define ES_App_loadrc                                                  29
+#define ES_App_NUM_CLASS_PROP                                          30
 
 /*
    Prototype (instance) slots for "App" type 
@@ -270,6 +271,7 @@
 #define ES_App_sleep_delay                                             0
 #define ES_App_serviceEvents_count                                     0
 #define ES_App_serviceEvents_timeout                                   1
+#define ES_App_loadrc_path                                             0
 #define ES_Array_NUM_CLASS_PROP                                        0
 
 /*
@@ -1061,26 +1063,28 @@
 #define ES_Logger__name                                                3
 #define ES_Logger__outStream                                           4
 #define ES_Logger__parent                                              5
-#define ES_Logger_addListener                                          6
-#define ES_Logger_async                                                7
-#define ES_Logger_close                                                8
-#define ES_Logger_filter                                               9
-#define ES_Logger_flush                                                10
-#define ES_Logger_level                                                11
-#define ES_Logger_match                                                12
-#define ES_Logger_name                                                 13
-#define ES_Logger_outStream                                            14
-#define ES_Logger_parent                                               15
-#define ES_Logger_debug                                                16
-#define ES_Logger_config                                               17
-#define ES_Logger_error                                                18
-#define ES_Logger_info                                                 19
-#define ES_Logger_read                                                 20
-#define ES_Logger_removeListener                                       21
-#define ES_Logger_write                                                22
-#define ES_Logger_warn                                                 23
-#define ES_Logger_emit                                                 24
-#define ES_Logger_NUM_INSTANCE_PROP                                    25
+#define ES_Logger_redirect                                             6
+#define ES_Logger_addListener                                          7
+#define ES_Logger_async                                                8
+#define ES_Logger_close                                                9
+#define ES_Logger_filter                                               10
+#define ES_Logger_flush                                                11
+#define ES_Logger_level                                                12
+#define ES_Logger_match                                                13
+#define ES_Logger_name                                                 14
+#define ES_Logger_outStream                                            15
+#define ES_Logger_parent                                               16
+#define ES_Logger_debug                                                17
+#define ES_Logger_config                                               18
+#define ES_Logger_error                                                19
+#define ES_Logger_info                                                 20
+#define ES_Logger_activity                                             21
+#define ES_Logger_read                                                 22
+#define ES_Logger_removeListener                                       23
+#define ES_Logger_write                                                24
+#define ES_Logger_warn                                                 25
+#define ES_Logger_emit                                                 26
+#define ES_Logger_NUM_INSTANCE_PROP                                    27
 #define ES_Logger_NUM_INHERITED_PROP                                   0
 
 
@@ -1804,7 +1808,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1284208
+#define _ES_CHECKSUM_ejs   1289551
 
 #endif
 /*
