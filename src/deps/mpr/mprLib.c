@@ -11508,6 +11508,7 @@ static char *fromCygPath(MprCtx ctx, cchar *path)
 #endif
 
 
+//  MOB -- should this be mprNormalizePath?  apply to all APIs
 /*
     Normalize a path to remove redundant "./" and cleanup "../" and make separator uniform. Does not make an abs path.
     It does not map separators nor change case. 
@@ -11658,7 +11659,6 @@ char *mprGetNormalizedPath(MprCtx ctx, cchar *pathArg)
         mprFree(dupPath);
         return NULL;
     }
-
     mprAssert(segmentCount > 0);
 
     /*

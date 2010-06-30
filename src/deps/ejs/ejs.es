@@ -3303,6 +3303,7 @@ module ejs {
         function listeners(name: String): Array
             endpoints[name].clone(true)
        
+        //  MOB -- rename send() or fire()
         /** 
             Emit an event to the registered listeners.
             @param name Event name to send to the listeners.
@@ -5892,12 +5893,14 @@ module ejs {
      */
     native function deserialize(str: String): Object
 
+    //    MOB -- change pretty to format: "pretty" | "compact"
     /** 
         Encode an object as a string. This function returns a literal string for the object and all its properties. 
         If $maxDepth is sufficiently large (or zero for infinite depth), each property will be processed recursively 
         until all properties are rendered.  NOTE: the maxDepth, all and base properties are not yet supported.
         @param obj Object to serialize. If options is null, each option takes the defaults described.
         @param options Serialization options
+        MOB - change to includeBases (deprecated baseClasses)
         @option baseClasses Boolean determining if base class properties will be serialized. Defaults to false.
         @option depth Number indiciating the depth to recurse when converting properties to literals. If set to zero, 
             the depth is infinite. Defaults to zero.
@@ -7347,9 +7350,13 @@ module ejs {
             and does not include the namespace portions of the names. Use getOwnPropertyDescriptor to access property
             namespace values.
             @param obj Object to inspect
+            @param options Property selection options
+            MOB -- inconsistent with JSON.baseClasses
+            @option includeBases Boolean determining if base class properties will included. Defaults to false.
+            @option excludeFunctions Boolean determining if function properties will included. Defaults to false.
             @return Array of enumerable property names
          */ 
-        static native function getOwnPropertyNames(obj: Object): Array
+        static native function getOwnPropertyNames(obj: Object, options): Array
 
         /** 
             The number of properties in the of the object including non-enumerable properties.
@@ -10350,6 +10357,8 @@ MOB - UNUSED - DELETE
 
 module ejs {
 
+    //  MOB -- should this be URI or Uri
+
     /**
         Uri class to manage Uris
         @stability evolving
@@ -10396,7 +10405,7 @@ module ejs {
             @option query: String
             @option reference: String
          */
-        native function components(): Object 
+        native function get components(): Object 
 
         /** 
             Decode a Uri encoded string
@@ -10521,9 +10530,11 @@ module ejs {
             isAbsolute == false
 
         /** 
-            Join Uris. Joins Uris together. If a Uris is absolute, replace the join with it and continue. If a Uri is
-            relative add a separator and continue joining.
-            @return A joined Uri.
+            Join Uris. Joins Uris together. If a Uri is absolute, replace the join with it and continue. If a Uri is
+            relative, replace the basename portion of the existing Uri with the next joining uri and continue. For 
+            example:  Uri("/admin/login").join("logout") will replace "login" with "logout" whereas 
+            Uri("/admin/").join("login") will append login.
+            @return A new joined Uri.
          */
         native function join(...other): Uri
 
@@ -10625,12 +10636,10 @@ module ejs {
                     }
                 }
                 results = "../".times(parts.length - common - 1)
-
                 if (targetParts.length > 1) {
                     results += targetParts.slice(common).join("/")
-                } else {
-                    results = results.trimEnd("/")
                 }
+                results = results.trimEnd("/")
                 return Uri(results)
             }
         }
@@ -12247,6 +12256,7 @@ module ejs.cjs {
             } else {
 //  MOB BUG - code doesn't exist
                 code = wrap(code)
+//  MOB -- Fix this
                 initializer = eval(code, "mob.mod")
             }
             signatures[path] = exports = {}
@@ -13112,33 +13122,35 @@ module ejs.db {
 
 /************************************************************************/
 /*
- *  Start of file "../../src/jems/ejs.db.mapper/Record.es"
+ *  Start of file "../../src/jems/ejs.db.mapper/Model.es"
  */
 /************************************************************************/
 
 /**
-    Record.es -- Record class
+    Model.es -- Record class
 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
-module ejs.db.mapper {
+module ejs.db.xmapper {
 
     require ejs.db
 
     /**
-        Database record class. A record instance corresponds to a row in the database. This class provides a low level 
+        Database model class. A record instance corresponds to a row in the database. This class provides a low level 
         Object Relational Mapping (ORM) between the database and Ejscript objects. This class provides methods to create,
         read, update and delete rows in the database. When read or initialized object properties are dynamically created 
         in the Record instance for each column in the database table. Users should subclass the Record class for each 
         database table to manage. When users subclass Record to create models, they should use "implement" rather than
         extend.
-        @example public dynamic class MyModel implements Record {}
+        @example public dynamic class MyModel extends Model {}
         @spec ejs
         @stability prototype
      */
-    public class Record {
+    public class Model {
         
+        //  MOB -- these should be private. Also need a default namesapce
+
         static var  _assocName: String        //  Name for use in associations. Lower case class name
         static var  _belongsTo: Array         //  List of belonging associations
         static var  _className: String        //  Model class name
@@ -13178,13 +13190,1161 @@ module ejs.db.mapper {
             wrongFormat: "wrong format",
         }
 
+        static function sinit(model) {
+            model = new Model()
+            _keyName = "id"
+            _className = Reflect(this).name
+            //  BUG - should be able to use this _model = Reflect(this).type
+            _model = global[_className]
+            _assocName = _className.toCamel()
+            _foreignId = _className.toCamel() + _keyName.toPascal()
+            _tableName = plural(_className).toPascal()
+        }
+
+        /**
+            Run filters after saving data
+            @param fn Function to run
+            @param options - reserved
+         */
+        static function afterFilter(fn, options: Object? = null): Void {
+            _afterFilters ||= []
+            _afterFilters.append([fn, options])
+        }
+
+        /**
+            Run filters before saving data
+            @param fn Function to run
+            @param options - reserved
+         */
+        static function beforeFilter(fn, options: Object? = null): Void {
+            _beforeFilters ||= []
+            _beforeFilters.append([fn, options])
+        }
+
+        /**
+            Define a belonging reference to another model class. When a model belongs to another, it has a foreign key
+            reference to another class.
+            @param owner Referenced model class that logically owns this model.
+            @param options Optional options hash
+            @option className Name of the class
+            @option foreignKey Key name for the foreign key
+            @option conditions SQL conditions for the relationship to be satisfied
+         */
+        static function belongsTo(owner, options: Object? = null): Void {
+            _belongsTo ||= []
+            _belongsTo.append(owner)
+        }
+
+        /*
+            Read a single record of kind "model" by the given "key". Data is cached for subsequent reuse.
+            Read into rec[field] from table[key]
+         */
+        private static function cachedRead(rec: Record, field: String, model, key: String, options: Object): Object {
+            rec._cacheAssoc ||= {}
+            if (rec._cacheAssoc[field] == null) {
+                rec._cacheAssoc[field] =  model.readRecords(key, options); 
+            }
+            return rec._cacheAssoc[field]
+        }
+
+        private static function checkFormat(thisObj: Record, field: String, value, options: Object): Void {
+            if (! RegExp(options.format).test(value)) {
+                thisObj._errors[field] = options.message ? options.message : ErrorMessages.wrongFormat
+            }
+        }
+
+        private static function checkNumber(thisObj: Record, field: String, value, options): Void {
+            if (! RegExp(/^[0-9]+$/).test(value)) {
+                thisObj._errors[field] = options.message ? options.message : ErrorMessages.notNumber
+            }
+        }
+
+        private static function checkPresent(thisObj: Record, field: String, value, options): Void {
+            if (value == undefined) {
+                thisObj._errors[field] = options.message ? options.message : ErrorMessages.missing
+            } else if (value.length == 0 || value.trim() == "" && thisObj._errors[field] == undefined) {
+                thisObj._errors[field] = ErrorMessages.blank
+            }
+        }
+
+        private static function checkUnique(thisObj: Record, field: String, value, options): Void {
+            let grid: Array
+            if (thisObj._keyValue) {
+                grid = findWhere(field + ' = "' + value + '" AND id <> ' + thisObj._keyValue)
+            } else {
+                grid = findWhere(field + ' = "' + value + '"')
+            }
+            if (grid.length > 0) {
+                thisObj._errors[field] = options.message ? options.message : ErrorMessages.notUnique
+            }
+        }
+
+        /*
+            Create associations for a record
+         */
+        private static function createAssociations(rec: Record, set: Array, preload, options): Void {
+            for each (let model in set) {
+                if (model is Array) model = model[0]
+                // print("   Create Assoc for " + _tableName + "[" + model._assocName + "] for " + model._tableName + "[" + 
+                //    rec[model._foreignId] + "]")
+                if (preload == true || (preload && preload.contains(model))) {
+                    /*
+                        Query did table join, so rec already has the data. Extract the fields for the referred model and
+                        then remove from rec and replace with an association reference. 
+                     */
+                    let association = {}
+                    if (!model._columns) model.getSchema()
+                    for (let field: String in model._columns) {
+                        let f: String = "_" + model._className + field.toPascal()
+                        association[field] = rec[f]
+                        delete rec.public::[f]
+                    }
+                    rec[model._assocName] = model.createRecord(association, options)
+
+                } else {
+                    rec[model._assocName] = makeLazyReader(rec, model._assocName, model, rec[model._foreignId])
+                    if (!model._columns) model.getSchema()
+                    for (let field: String  in model._columns) {
+                        let f: String = "_" + model._className + field.toPascal()
+                        if (rec[f]) {
+                            delete rec.public::[f]
+                        }
+                    }
+                }
+            }
+        }
+
+        /*
+            Create a new record instance and apply the row data
+            Process a sql result and add properties for each field in the row
+         */
+        private static function createRecord(data: Object, options: Object = {}) {
+            let rec: Record = new global[_className]
+            rec.initialize(data)
+            rec._keyValue = data[_keyName]
+
+            let subOptions = {}
+            if (options.depth) {
+                subOptions.depth = options.depth
+                subOptions.depth--
+            }
+
+            if (options.include) {
+                createAssociations(rec, options.include, true, subOptions)
+            }
+            if (options.depth != 0) {
+                if (_belongsTo) {
+                    createAssociations(rec, _belongsTo, options.preload, subOptions)
+                }
+                if (_hasOne) {
+                    for each (model in _hasOne) {
+                        if (!rec[model._assocName]) {
+                            rec[model._assocName] = makeLazyReader(rec, model._assocName, model, null,
+                                {conditions: rec._foreignId + " = " + data[_keyName] + " LIMIT 1"})
+                        }
+                    }
+                }
+                if (_hasMany) {
+                    for each (model in _hasMany) {
+                        if (!rec[model._assocName]) {
+                            rec[model._assocName] = makeLazyReader(rec, model._assocName, model, null,
+                                {conditions: rec._foreignId + " = " + data[_keyName]})
+                        }
+                    }
+                }
+            }
+            rec.coerceToEjsTypes()
+            return rec
+        }
+
+        /**
+            Find a record. Find and return a record identified by its primary key if supplied or by the specified options. 
+            If more than one record matches, return the first matching record.
+            @param key Key Optional key value. Set to null if selecting via the options 
+            @param options Optional search option values
+            @returns a model record or null if the record cannot be found.
+            @throws IOError on internal SQL errors
+            @option columns List of columns to retrieve
+            @option conditions { field: value, ...}   or [ "SQL condition", "id == 23", ...]
+            @option from Low level from clause (not fully implemented)
+            @option keys [set of matching key values]
+            @option order ORDER BY clause
+            @option group GROUP BY clause
+            @option include [Model, ...] Models to join in the query and create associations for. Always preloads.
+            @option joins Low level join statement "LEFT JOIN vists on stockId = visits.id". Low level joins do not
+                create association objects (or lazy loaders). The names of the joined columns are prefixed with the
+                appropriate table name using camel case (tableColumn).
+            @option limit LIMIT count
+            @option depth Specify the depth for which to create associations for belongsTo, hasOne and hasMany relationships.
+                 Depth of 1 creates associations only in the immediate fields of the result. Depth == 2 creates in the 
+                 next level and so on. Defaults to one.
+            @option offset OFFSET count
+            @option preload [Model1, ...] Preload "belongsTo" model associations rather than creating lazy loaders. This can
+                reduce the number of database queries if iterating through associations.
+            @option readonly
+            @option lock
+         */
+        static function find(key: Object, options: Object = {}): Object {
+            let grid: Array = innerFind(key, 1, options)
+            if (grid.length >= 1) {
+                let results = createRecord(grid[0], options)
+                if (options && options.debug) {
+                    print("RESULTS: " + serialize(results))
+                }
+                return results
+            } 
+            return null
+        }
+
+        /**
+            Find all the matching records
+            @param options Optional set of options. See $find for list of possible options.
+            @returns An array of model records. The array may be empty if no matching records are found
+            @throws IOError on internal SQL errors
+         */
+        static function findAll(options: Object = {}): Array {
+            let grid: Array = innerFind(null, null, options)
+            // start = new Date
+            for (let i = 0; i < grid.length; i++) {
+                grid[i] = createRecord(grid[i], options)
+            }
+            // print("findAll - create records TIME: " + start.elapsed())
+            if (options && options.debug) {
+                print("RESULTS: " + serialize(grid))
+            }
+            return grid
+        }
+
+        /**
+            Find the first record matching a condition. Select a record using a given SQL where clause.
+            @param where SQL WHERE clause to use when selecting rows.
+            @returns a model record or null if the record cannot be found.
+            @throws IOError on internal SQL errors
+            @example
+                rec = findOneWhere("cost < 200")
+         */
+        static function findOneWhere(where: String): Object {
+            let grid: Array = innerFind(null, 1, { conditions: [where]})
+            if (grid.length >= 1) {
+                return createRecord(grid[0])
+            } 
+            return null
+        }
+
+//  MOB -- count not implemented
+        /**
+            Find records matching a condition. Select a set of records using a given SQL where clause
+            @param where SQL WHERE clause to use when selecting rows.
+            @returns An array of objects. Each object represents a matching row with fields for each column.
+            @example
+                list = findWhere("cost < 200")
+         */
+        static function findWhere(where: String, count: Number? = null): Array {
+            let grid: Array = innerFind(null, null, { conditions: [where]})
+            for (i in grid.length) {
+                grid[i] = createRecord(grid[i])
+            }
+            return grid
+        }
+
+        /**
+            Return the column names for the table
+            @returns an array containing the names of the database columns. This corresponds to the set of properties
+                that will be created when a row is read using $find.
+         */
+        static function getColumnNames(): Array { 
+            if (!_columns) _model.getSchema()
+            let result: Array = []
+            for (let col: String in _columns) {
+                result.append(col)
+            }
+            return result
+        }
+
+        /**
+            Return the column names for the record
+            @returns an array containing the Pascal case names of the database columns. The names have the first letter
+                capitalized. 
+         */
+        static function getColumnTitles(): Array { 
+            if (!_columns) _model.getSchema()
+            let result: Array = []
+            for (let col: String in _columns) {
+                result.append(col.toPascal())
+            }
+            return result
+        }
+
+        /** 
+            Get the type of a column
+            @param field Name of the field to examine.
+            @return A string with the data type of the column
+         */
+        static function getColumnType(field: String): String {
+            if (!_columns) _model.getSchema()
+            return _db.sqlTypeToDataType(_columns[field].sqlType)
+        }
+
+        /**
+            Get the database connection for this record class
+            @returns Database instance object created via new $Database
+         */
+        static function getDb(): Database {
+            if (!_db) {
+                _db = Database.defaultDatabase
+            }
+            return _db
+        }
+
+        /**
+            Get the key name for this record
+         */
+        static function getKeyName(): String
+            _keyName
+
+        /**
+            Return the number of rows in the table
+         */
+        static function getNumRows(): Number {
+            if (!_columns) _model.getSchema()
+            let cmd: String = "SELECT COUNT(*) FROM " + _tableName + " WHERE " + _keyName + " <> '';"
+            let grid: Array = _db.query(cmd, "numRows", _trace)
+            return grid[0]["COUNT(*)"]
+        }
+
+        /*
+            Read the table schema and return the column hash
+         */
+        private static function getSchema(): Void {
+            if (!_db) {
+                _db = Database.defaultDatabase
+                if (!_db) {
+                    throw new Error("Can't get schema, database connection has not yet been established")
+                }
+            }
+            let sql: String = 'PRAGMA table_info("' + _tableName + '");'
+            let grid: Array = _db.query(sql, "schema", _trace)
+            _columns = {}
+            for each (let row in grid) {
+                let name = row["name"]
+                let sqlType = row["type"].toLower()
+                let ejsType = mapSqlTypeToEjs(sqlType)
+                _columns[name] = new Column(name, false, ejsType, sqlType)
+            }
+        }
+
+        /**
+            Get the associated name for this record
+            @returns the database table name backing this record class. Normally this is simply a plural class name. 
+         */
+        static function getTableName(): String
+            _tableName
+
+        /**
+            Define a containment relationship to another model class. When using "hasAndBelongsToMany" on another model, it 
+            means that other models have a foreign key reference to this class and this class can "contain" many instances 
+            of the other models.
+            @param model Model. (TODO - not implemented).
+            @param options Object hash of options. (TODO - not implemented).
+            @option foreignKey Key name for the foreign key. (TODO - not implemented).
+            @option through String Class name which mediates the many to many relationship. (TODO - not implemented).
+            @option joinTable. (TODO - not implemented).
+         */
+        static function hasAndBelongsToMany(model: Object, options: Object = {}): Void {
+            belongsTo(model, options)
+            hasMany(model, options)
+        }
+
+        /**
+            Define a containment relationship to another model class. When using "hasMany" on another model, it means 
+            that other model has a foreign key reference to this class and this class can "contain" many instances of 
+            the other.
+            @param model Model class that is contained by this class. 
+            @param options Options parameter
+            @option things Model object that is posessed by this. (TODO - not implemented)
+            @option through String Class name which mediates the many to many relationship. (TODO - not implemented)
+            @option foreignKey Key name for the foreign key. (TODO - not implemented)
+         */
+        static function hasMany(model: Object, options: Object = {}): Void {
+            _hasMany ||= []
+            _hasMany.append(model)
+        }
+
+        /**
+            Define a containment relationship to another model class. When using "hasOne" on another model, 
+            it means that other model has a foreign key reference to this class and this class can "contain" 
+            only one instance of the other.
+            @param model Model class that is contained by this class. 
+            @option thing Model that is posessed by this. (TODO - not implemented).
+            @option foreignKey Key name for the foreign key (TODO - not implemented).
+            @option as String  (TODO - not implemented).
+         */
+        static function hasOne(model: Object, options: Object? = null): Void {
+            _hasOne ||= []
+            _hasOne.append(model)
+        }
+
+        /*
+            Common find implementation. See find/findAll for doc.
+         */
+        static private function innerFind(key: Object, limit: Number? = null, options: Object = {}): Array {
+            let cmd: String
+            let columns: Array
+            let from: String
+            let conditions: String
+            let where: Boolean
+
+            if (!_columns) _model.getSchema()
+            if (options == null) {
+                options = {}
+            }
+            //  LEGACY 1.0.0-B2
+            if (options.noassoc) {
+                options.depth = 0
+            }
+
+            if (options.columns) {
+                columns = options.columns
+                /*
+                    Qualify "id" so it won't clash when doing joins. If the "click" option is specified, must have an ID
+                    TODO - Should not modify the parameter. This is actually modifying the options passed in.
+                 */
+                let index: Number = columns.indexOf("id")
+                if (index >= 0) {
+                    columns[index] = _tableName + ".id"
+                } else if (!columns.contains(_tableName + ".id")) {
+                    columns.insert(0, _tableName + ".id")
+                }
+            } else {
+                columns = ["*"]
+            }
+
+            conditions = ""
+            from = ""
+            where = false
+
+            if (options.from) {
+                from = options.from
+            } else {
+                from = _tableName
+            }
+
+            if (options.include) {
+                let model
+                if (options.include is Array) {
+                    for each (entry in options.include) {
+                        if (entry is Array) {
+                            model = entry[0]
+                            from += " LEFT OUTER JOIN " + model._tableName
+                            from += " ON " + entry[1]
+                        } else {
+                            model = entry
+                            from += " LEFT OUTER JOIN " + model._tableName
+                        }
+                    }
+                } else {
+                    model = options.include
+                    from += " LEFT OUTER JOIN " + model._tableName
+                    // conditions = " ON " + model._tableName + ".id = " + _tableName + "." + model._assocName + "Id"
+                }
+            }
+
+            if (options.depth != 0) {
+                if (_belongsTo) {
+                    conditions = " ON "
+                    for each (let owner in _belongsTo) {
+                        from += " INNER JOIN " + owner._tableName
+                    }
+                    for each (let owner in _belongsTo) {
+                        let tname: String = Reflect(owner).name
+                        tname = tname[0].toLower() + tname.slice(1) + "Id"
+                        conditions += _tableName + "." + tname + " = " + owner._tableName + "." + owner._keyName + " AND "
+                    }
+                    if (conditions == " ON ") {
+                        conditions = ""
+                    }
+                }
+            }
+
+            if (options.joins) {
+                if (conditions == "") {
+                    conditions = " ON "
+                }
+                let parts: Array = options.joins.split(/ ON | on /)
+                from += " " + parts[0]
+                if (parts.length > 1) {
+                    conditions += parts[1] + " AND "
+                }
+            }
+            conditions = conditions.trim(" AND ")
+
+            if (options.conditions) {
+                let whereConditions: String = " WHERE "
+                if (options.conditions is Array) {
+                    for each (cond in options.conditions) {
+                        whereConditions += cond + " " + " AND "
+                    }
+                    whereConditions = whereConditions.trim(" AND ")
+
+                } else if (options.conditions is String) {
+                    whereConditions += options.conditions + " " 
+
+                } else if (options.conditions is Object) {
+                    for (field in options.conditions) {
+                        //  Remove quote from options.conditions[field]
+                        whereConditions += field + " = '" + options.conditions[field] + "' " + " AND "
+                    }
+                }
+                whereConditions = whereConditions.trim(" AND ")
+                if (whereConditions != " WHERE ") {
+                    where = true
+                    conditions += whereConditions
+                } else {
+                    whereConditions = ""
+                    from = from.trim(" AND ")
+                }
+
+            } else {
+                from = from.trim(" AND ")
+            }
+
+            if (key || options.key) {
+                if (!where) {
+                    conditions += " WHERE "
+                    where = true
+                } else {
+                    conditions += " AND "
+                }
+                conditions += (_tableName + "." + _keyName + " = ") + ((key) ? key : options.key)
+            }
+
+            //  Removed quote from "from"
+            cmd = "SELECT " + Database.quote(columns) + " FROM " + from + conditions
+            if (options.group) {
+                cmd += " GROUP BY " + options.group
+            }
+            if (options.order) {
+                cmd += " ORDER BY " + options.order
+            }
+            if (limit) {
+                cmd += " LIMIT " + limit
+            } else if (options.limit) {
+                cmd += " LIMIT " + options.limit
+            }
+            if (options.offset) {
+                cmd += " OFFSET " + options.offset
+            }
+            cmd += ";"
+
+            if (_db == null) {
+                throw new Error("Database connection has not yet been established")
+            }
+
+            let results: Array
+            try {
+                // print("TRACE " + _trace)
+                if (_trace || 1) {
+                    // let start = new Date
+                    results = _db.query(cmd, "find", _trace)
+                    // print("@@@@@@@@@ Query Time: " + start.elapsed())
+                } else {
+                    results = _db.query(cmd, "find", _trace)
+                }
+            }
+            catch (e) {
+                throw e
+            }
+            return results
+        }
+
+        /*
+            Make a getter function to lazily (on-demand) read associated records (belongsTo)
+         */
+        private static function makeLazyReader(rec: Record, field: String, model, key: String, 
+                options: Object = {}): Function {
+            // print("Make lazy reader for " + _tableName + "[" + field + "] for " + model._tableName + "[" + key + "]")
+            var lazyReader: Function = function(): Object {
+                // print("Run reader for " + _tableName + "[" + field + "] for " + model._tableName + "[" + key + "]")
+                return cachedRead(rec, field, model, key, options)
+            }
+            return makeGetter(lazyReader)
+        }
+
+        private static function mapSqlTypeToEjs(sqlType: String): Type {
+            sqlType = sqlType.replace(/\(.*/, "")
+            let ejsType: Type = _db.sqlTypeToEjsType(sqlType)
+            if (ejsType == undefined) {
+                throw new Error("Unsupported SQL type: \"" + sqlType + "\"")
+            }
+            return ejsType
+        }
+
+        /*
+            Prepare a value to be written to the database
+         */
+        private static function prepareValue(field: String, value: Object): String {
+            let col: Column = _columns[field]
+            if (col == undefined) {
+                return undefined
+            }
+			if (value == undefined) {
+				throw new Error("Field \"" + field + "\" is undefined")
+			}
+			if (value == null) {
+				throw new Error("Field \"" + field + "\" is null")
+			}
+            switch (col.ejsType) {
+            case Boolean:
+                if (value is String) {
+                    value = (value.toLower() == "true")
+                } else if (value is Number) {
+                    value = (value == 1)
+                } else {
+                    value = value cast Boolean
+                }
+                return value
+
+            case Date:
+                return "%d".format((new Date(value)).time)
+
+            case Number:
+                return value cast Number
+             
+            case String:
+                return Database.quote(value)
+            }
+            return Database.quote(value.toString())
+        }
+
+        /*
+            Read records for an assocation. Will return one or an array of records matching the supplied key and options.
+         */
+        private static function readRecords(key: String, options: Object): Object {
+            let data: Array = innerFind(key, null, options)
+            if (data.length > 1) {
+                let result: Array = new Array
+                for each (row in data) {
+                    result.append(createRecord(row))
+                }
+                return result
+
+            } else if (data.length == 1) {
+                return createRecord(data[0])
+            }
+            return null
+        }
+
+        /**
+            Remove records from the database
+            @param ids Set of keys identifying the records to remove
+         */
+        static function remove(...ids): Void {
+            for each (let key: Object in ids) {
+                let cmd: String = "DELETE FROM " + _tableName + " WHERE " + _keyName + " = " + key + ";"
+                db.query(cmd, "remove", _trace)
+            }
+        }
+
+        /**
+            Set the database connection for this record class
+            @param database Database instance object created via new $Database
+         */
+        static function setDb(database: Database) {
+            _db = database
+        }
+
+        /**
+            Set the key name for this record
+         */
+        static function setKeyName(name: String): Void {
+            _keyName = name
+        }
+
+        /**
+            Set the associated table name for this record
+            @param name Name of the database table to backup the record class.
+         */
+        static function setTableName(name: String): Void {
+            if (_tableName != name) {
+                _tableName = name
+                if (_db) {
+                    _model.getSchema()
+                }
+            }
+        }
+
+        //  MOB -- count not documented or implemented
+        /**
+            Run an SQL statement and return selected records.
+            @param cmd SQL command to issue. Note: "SELECT" is automatically prepended and ";" is appended for you.
+            @returns An array of objects. Each object represents a matching row with fields for each column.
+         */
+        static function sql(cmd: String, count: Number? = null): Array {
+            cmd = "SELECT " + cmd + ";"
+            return db.query(cmd, "select", _trace)
+        }
+
+        /**
+            Trace SQL statements. Control whether trace is enabled for the actual SQL statements issued against the database.
+            @param on If true, display each SQL statement to the log
+         */
+        static function trace(on: Boolean): void
+            _trace = on
+
+        /** @hide TODO */
+        static function validateFormat(fields: Object, options = null) {
+            if (_validations == null) {
+                _validations = []
+            }
+            _validations.append([checkFormat, fields, options])
+        }
+
+        /** @hide TODO */
+        static function validateNumber(fields: Object, options = null) {
+            if (_validations == null) {
+                _validations = []
+            }
+            _validations.append([checkNumber, fields, options])
+        }
+
+        /** @hide TODO */
+        static function validatePresence(fields: Object, options = null) {
+            if (_validations == null) {
+                _validations = []
+            }
+            _validations.append([checkPresent, fields, options])
+        }
+
+        /** @hide TODO */
+        static function validateUnique(fields: Object, option = null)
+            _validations.append([checkUnique, fields, options])
+
+        /**
+            Run filters before and after saving data
+            @param fn Function to run
+            @param options - reserved
+         */
+        static function wrapFilter(fn, options: Object? = null): Void {
+            _wrapFilters ||= []
+            _wrapFilters.append([fn, options])
+        }
+
+        //  LEGACY DEPRECATED in 1.0.0-B2
+        /** @hide */
+        static function get columnNames(): Array {
+            return getColumnNames()
+        }
+        /** @hide */
+        static function get columnTitles(): Array {
+            return getColumnTitles()
+        }
+        /** @hide */
+        static function get db(): Datbase {
+            return getDb()
+        }
+        /** @hide */
+        static function get keyName(): String {
+            return getKeyName()
+        }
+        /** @hide */
+        static function get numRows(): String {
+            return getNumRows()
+        }
+        /** @hide */
+        static function get tableName(): String {
+            return getTableName()
+        }
+    }
+
+    public class Record {
+
+        /*
+            Constructor for use when instantiating directly from Record. Typically, use models will implement this
+            class and will provdie their own constructor which calls initialize().
+         */
+        function Record(fields: Object? = null) {
+            initialize(fields)
+        }
+
+        /**
+            Construct a new record instance. This is really a constructor function, because the Record class is 
+            implemented by user models, no constructor will be invoked when a new user model is instantiated. 
+            The record may be initialized by optionally supplying field data. However, the record will not be 
+            written to the database until $save is called. To read data from the database into the record, use 
+            one of the $find methods.
+            @param fields An optional object set of field names and values may be supplied to initialize the record.
+         */
+        function initialize(fields: Object? = null): Void {
+            if (fields) for (let field in fields) {
+                this."public"::[field] = fields[field]
+            }
+        }
+
+        /*
+            Map types from SQL to ejs when reading from the database
+         */
+        private function coerceToEjsTypes(): Void {
+            for (let field: String in this) {
+                let col: Column = _columns[field]
+                if (col == undefined) {
+                    continue
+                }
+                if (col.ejsType == Reflect(this[field]).type) {
+                    continue
+                }
+                let value: String = this[field]
+                switch (col.ejsType) {
+                case Boolean:
+                    if (value is String) {
+                        this[field] = (value.trim().toLower() == "true")
+                    } else if (value is Number) {
+                        this[field] = (value == 1)
+                    } else {
+                        this[field] = value cast Boolean
+                    }
+                    this[field] = (this[field]) ? true : false
+                    break
+
+                case Date:
+                    this[field] = new Date(value)
+                    break
+
+                case Number:
+                    this[field] = this[field] cast Number
+                    break
+                }
+            }
+        }
+
+        /**
+            Set an error message. This defines an error message for the given field in a record.
+            @param field Name of the field to associate with the error message
+            @param msg Error message
+         */
+        function error(field: String, msg: String): Void {
+            field ||= ""
+            _errors ||= {}
+            _errors[field] = msg
+        }
+
+        /**
+            Get the errors for the record. 
+            @return The error message collection for the record.  
+         */
+        function getErrors(): Array
+            _errors
+
+        /**
+            Check if the record has any errors.
+            @return True if the record has errors.
+         */
+        function hasError(field: String? = null): Boolean {
+            if (field) {
+                return (_errors && _errors[field])
+            }
+            if (_errors) {
+                return (Object.getOwnPropertyCount(_errors) > 0)
+            } 
+            return false
+        }
+
+        private function runFilters(filters): Void {
+            for each (filter in filters) {
+                let fn = filter[0]
+                let options = filter[1]
+                if (options) {
+                    let only = options.only
+/* TODO
+                    if (only) {
+                        if (only is String && actionName != only) {
+                            continue
+                        }
+                        if (only is Array && !only.contains(actionName)) {
+                            continue
+                        }
+                    } 
+                    except = options.except
+                    if (except) {
+                        if (except is String && actionName == except) {
+                            continue
+                        }
+                        if (except is Array && except.contains(actionName)) {
+                            continue
+                        }
+                    }
+*/
+                }
+                fn.call(this)
+            }
+        }
+
+        /**
+            Save the record to the database.
+            @returns True if the record is validated and successfully written to the database
+            @throws IOError Throws exception on sql errors
+         */
+        function save(): Boolean {
+            var sql: String
+            if (!_columns) _model.getSchema()
+            if (!validateRecord()) {
+                return false
+            }
+            runFilters(_beforeFilters)
+            
+            if (_keyValue == null) {
+                sql = "INSERT INTO " + _tableName + " ("
+                for (let field: String in this) {
+                    if (_columns[field]) {
+                        sql += field + ", "
+                    }
+                }
+                sql = sql.trim(', ')
+                sql += ") VALUES("
+                for (let field: String in this) {
+                    if (_columns[field]) {
+                        sql += "'" + prepareValue(field, this[field]) + "', "
+                    }
+                }
+                sql = sql.trim(', ')
+                sql += ")"
+
+            } else {
+                sql = "UPDATE " + _tableName + " SET "
+                for (let field: String in this) {
+                    if (_columns[field]) {
+                        sql += field + " = '" + prepareValue(field, this[field]) + "', "
+                    }
+                }
+                sql = sql.trim(', ')
+                sql += " WHERE " + _keyName + " = " +  _keyValue
+            }
+            if (!_keyValue) {
+                sql += "; SELECT last_insert_rowid();"
+            } else {
+                sql += ";"
+            }
+
+            let result: Array = _db.query(sql, "save", _trace)
+            if (!_keyValue) {
+                _keyValue = this["id"] = result[0]["last_insert_rowid()"] cast Number
+            }
+            runFilters(_afterFilters)
+            return true
+        }
+
+        /**
+            Update a record based on the supplied fields and values.
+            @param fields Hash of field/value pairs to use for the record update.
+            @returns True if the database is successfully updated. Returns false if validation fails. In this case,
+                the record is not saved.
+            @throws IOError on database SQL errors
+         */
+        function saveUpdate(fields: Object): Boolean {
+            for (field in fields) {
+                if (this[field] != undefined) {
+                    this[field] = fields[field]
+                }
+            }
+            return save()
+        }
+
+        /**
+            Validate a record. This call validates all the fields in a record.
+            @returns True if the record has no errors.
+         */
+        function validateRecord(): Boolean {
+            if (!_columns) _model.getSchema()
+            _errors = {}
+            if (_validations) {
+                for each (let validation: String in _validations) {
+                    let check = validation[0]
+                    let fields = validation[1]
+                    let options = validation[2]
+                    if (fields is Array) {
+                        for each (let field in fields) {
+                            if (_errors[field]) {
+                                continue
+                            }
+                            check(this, field, this[field], options)
+                        }
+                    } else {
+                        check(this, fields, this[fields], options)
+                    }
+                }
+            }
+            let thisType = Reflect(this).type
+            if (thisType["validate"]) {
+                thisType["validate"].call(this)
+            }
+            coerceToEjsTypes()
+            return Object.getOwnPropertyCount(_errors) == 0
+        }
+    }
+
+
+    /**
+        Database column class. A database record is comprised of one or mor columns
+        @hide
+     */
+    class Column {
+        //  TODO - workaround. Make these public, see ticket 1227: ejsweb generate was not finding them when internal
+        //  missing the internal namespace.
+        public var ejsType: Object 
+        public var sqlType: Object 
+
+        function Column(name: String, accessor: Boolean = false, ejsType: Type? = null, sqlType: String? = null) {
+            this.ejsType = ejsType
+            this.sqlType = sqlType
+        }
+    }
+
+    /** @hide */
+    function plural(name: String): String
+        name + "s"
+
+    /** @hide */
+    function singular(name: String): String {
+        var s: String = name + "s"
+        if (name.endsWith("ies")) {
+            return name.slice(0,-3) + "y"
+        } else if (name.endsWith("es")) {
+            return name.slice(0,-2)
+        } else if (name.endsWith("s")) {
+            return name.slice(0,-1)
+        }
+        return name.toPascal()
+    }
+
+    /**
+        Map a type assuming it is already of the correct ejs type for the schema
+        @hide
+     */
+    function mapType(value: Object): String {
+        if (value is Date) {
+            return "%d".format((new Date(value)).time)
+        } else if (value is Number) {
+            return "%d".format(value)
+        }
+        return value
+    }
+}
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.db.mapper/Model.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/jems/ejs.db.mapper/Record.es"
+ */
+/************************************************************************/
+
+/**
+    Record.es -- Record class
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+module ejs.db.mapper {
+
+    require ejs.db
+
+    /**
+        Database record class. A record instance corresponds to a row in the database. This class provides a low level 
+        Object Relational Mapping (ORM) between the database and Ejscript objects. This class provides methods to create,
+        read, update and delete rows in the database. When read or initialized object properties are dynamically created 
+        in the Record instance for each column in the database table. Users should subclass the Record class for each 
+        database table to manage. When users subclass Record to create models, they should use "implement" rather than
+        extend.
+        @example public dynamic class MyModel implements Record {}
+        @spec ejs
+        @stability prototype
+     */
+    public class Record {
+        
+        //  MOB -- these should be private. Also need a default namesapce
+
+        static var  _assocName: String        //  Name for use in associations. Lower case class name
+        static var  _belongsTo: Array         //  List of belonging associations
+        static var  _className: String        //  Model class name
+        static var  _columns: Object          //  List of columns in this database table
+        static var  _hasOne: Array            //  List of 1-1 containment associations
+        static var  _hasMany: Array           //  List of 1-many containment  associations
+
+        static var  _db: Database             //  Hosting database
+        static var  _foreignId: String        //  Camel case class name with "Id". (userCartId))
+        static var  _keyName: String          //  Name of the key column (typically "id")
+        static var  _model: Type              //  Model class
+        static var  _tableName: String        //  Name of the database table. Plural, PascalCase
+        static var  _trace: Boolean           //  Trace database SQL statements
+        static var  _validations: Array
+
+        static var  _beforeFilters: Array     //  Filters that run before saving data
+        static var  _afterFilters: Array      //  Filters that run after saving data
+        static var  _wrapFilters: Array       //  Filters that run before and after saving data
+
+        var _keyValue: Object                 //  Record key column value
+        var _errors: Object                   //  Error message aggregation
+        var _cacheAssoc: Object               //  Cached association data
+        var _imodel: Type                     //  Model class
+
+        static var ErrorMessages = {
+            accepted: "must be accepted",
+            blank: "can't be blank",
+            confirmation: "doesn't match confirmation",
+            empty: "can't be empty",
+            invalid: "is invalid",
+            missing: "is missing",
+            notNumber: "is not a number",
+            notUnique: "is not unique",
+            taken: "already taken",
+            tooLong: "is too long",
+            tooShort: "is too short",
+            wrongLength: "wrong length",
+            wrongFormat: "wrong format",
+        }
+
         /*
             Initialize the model. This should be called by the model as its very first call.
          */
         _keyName = "id"
         _className = Reflect(this).name
-        //  BUG - should be able to use this _model = Reflect(this).type
-        _model = global[_className]
+
+        _model = this
         _assocName = _className.toCamel()
         _foreignId = _className.toCamel() + _keyName.toPascal()
         _tableName = plural(_className).toPascal()
@@ -13209,6 +14369,7 @@ module ejs.db.mapper {
             @param fields An optional object set of field names and values may be supplied to initialize the record.
          */
         function initialize(fields: Object? = null): Void {
+            _imodel = Reflect(this).type
             if (fields) for (let field in fields) {
                 this."public"::[field] = fields[field]
             }
@@ -13297,7 +14458,7 @@ module ejs.db.mapper {
          */
         private function coerceToEjsTypes(): Void {
             for (let field: String in this) {
-                let col: Column = _columns[field]
+                let col: Column = _imodel._columns[field]
                 if (col == undefined) {
                     continue
                 }
@@ -13351,7 +14512,8 @@ module ejs.db.mapper {
                     rec[model._assocName] = model.createRecord(association, options)
 
                 } else {
-                    rec[model._assocName] = makeLazyReader(rec, model._assocName, model, rec[model._foreignId])
+                    let reader = makeLazyReader(rec, model._assocName, model, rec[model._foreignId])
+                    Object.defineProperty(rec, model._assocName, { get: reader })
                     if (!model._columns) model.getSchema()
                     for (let field: String  in model._columns) {
                         let f: String = "_" + model._className + field.toPascal()
@@ -13388,16 +14550,18 @@ module ejs.db.mapper {
                 if (_hasOne) {
                     for each (model in _hasOne) {
                         if (!rec[model._assocName]) {
-                            rec[model._assocName] = makeLazyReader(rec, model._assocName, model, null,
+                            let reader = makeLazyReader(rec, model._assocName, model, null,
                                 {conditions: rec._foreignId + " = " + data[_keyName] + " LIMIT 1"})
+                            Object.defineProperty(rec, model._assocName, { get: reader })
                         }
                     }
                 }
                 if (_hasMany) {
                     for each (model in _hasMany) {
                         if (!rec[model._assocName]) {
-                            rec[model._assocName] = makeLazyReader(rec, model._assocName, model, null,
+                            let reader = makeLazyReader(rec, model._assocName, model, null,
                                 {conditions: rec._foreignId + " = " + data[_keyName]})
+                            Object.defineProperty(rec, model._assocName, { get: reader })
                         }
                     }
                 }
@@ -13840,6 +15004,7 @@ module ejs.db.mapper {
 
         /*
             Make a getter function to lazily (on-demand) read associated records (belongsTo)
+            MOB - OPT should reuse these and not create a new reader for each cell
          */
         private static function makeLazyReader(rec: Record, field: String, model, key: String, 
                 options: Object = {}): Function {
@@ -13848,7 +15013,7 @@ module ejs.db.mapper {
                 // print("Run reader for " + _tableName + "[" + field + "] for " + model._tableName + "[" + key + "]")
                 return cachedRead(rec, field, model, key, options)
             }
-            return makeGetter(lazyReader)
+            return lazyReader
         }
 
         private static function mapSqlTypeToEjs(sqlType: String): Type {
@@ -13963,23 +15128,24 @@ module ejs.db.mapper {
          */
         function save(): Boolean {
             var sql: String
-            if (!_columns) _model.getSchema()
+            _imodel ||= Reflect(this).type
+            if (!_imodel._columns) _imodel.getSchema()
             if (!validateRecord()) {
                 return false
             }
-            runFilters(_beforeFilters)
+            runFilters(_imodel._beforeFilters)
             
             if (_keyValue == null) {
-                sql = "INSERT INTO " + _tableName + " ("
+                sql = "INSERT INTO " + _imodel._tableName + " ("
                 for (let field: String in this) {
-                    if (_columns[field]) {
+                    if (_imodel._columns[field]) {
                         sql += field + ", "
                     }
                 }
                 sql = sql.trim(', ')
                 sql += ") VALUES("
                 for (let field: String in this) {
-                    if (_columns[field]) {
+                    if (_imodel._columns[field]) {
                         sql += "'" + prepareValue(field, this[field]) + "', "
                     }
                 }
@@ -13987,14 +15153,14 @@ module ejs.db.mapper {
                 sql += ")"
 
             } else {
-                sql = "UPDATE " + _tableName + " SET "
+                sql = "UPDATE " + _imodel._tableName + " SET "
                 for (let field: String in this) {
-                    if (_columns[field]) {
+                    if (_imodel._columns[field]) {
                         sql += field + " = '" + prepareValue(field, this[field]) + "', "
                     }
                 }
                 sql = sql.trim(', ')
-                sql += " WHERE " + _keyName + " = " +  _keyValue
+                sql += " WHERE " + _imodel._keyName + " = " +  _keyValue
             }
             if (!_keyValue) {
                 sql += "; SELECT last_insert_rowid();"
@@ -14002,11 +15168,11 @@ module ejs.db.mapper {
                 sql += ";"
             }
 
-            let result: Array = _db.query(sql, "save", _trace)
+            let result: Array = _imodel._db.query(sql, "save", _imodel._trace)
             if (!_keyValue) {
                 _keyValue = this["id"] = result[0]["last_insert_rowid()"] cast Number
             }
-            runFilters(_afterFilters)
+            runFilters(_imodel._afterFilters)
             return true
         }
 
@@ -14101,10 +15267,11 @@ module ejs.db.mapper {
             @returns True if the record has no errors.
          */
         function validateRecord(): Boolean {
-            if (!_columns) _model.getSchema()
+            _imodel ||= Reflect(this).type
+            if (!_imodel._columns) _imodel.getSchema()
             _errors = {}
-            if (_validations) {
-                for each (let validation: String in _validations) {
+            if (_imodel._validations) {
+                for each (let validation: String in _imodel._validations) {
                     let check = validation[0]
                     let fields = validation[1]
                     let options = validation[2]
@@ -14168,7 +15335,7 @@ module ejs.db.mapper {
             return getTableName()
         }
         /** @hide */
-        function constructorOLD(fields: Object? = null): Void {
+        function constructor(fields: Object = null): Void {
             initialize(fields)
         }
     }
@@ -14632,9 +15799,13 @@ module ejs.web {
          */
         use default namespace module
 
+//  MOB -- some should be private
 //  MOB -- can this be renamed "action" without clashing with "action" namespace?
         /** Name of the action being run */
         var actionName:  String 
+
+        //* Alias for request.config */
+        var config: Object 
 
 //  MOB -- rename to "name"
         /** Lower case controller name */
@@ -14664,7 +15835,8 @@ module ejs.web {
         */
         public var flash:       Object
 
-        private var rendered:   Boolean
+        private var noFinalize: Boolean
+        private var rendered: Boolean
         private var redirected: Boolean
         private var _afterFilters: Array
         private var _beforeFilters: Array
@@ -14684,7 +15856,8 @@ module ejs.web {
                 log = request.log
                 params = request.params
                 controllerName = typeOf(this).trim("Controller") || "-Controller-"
-                if (request.config.database) {
+                config = request.config
+                if (config.database) {
                     openDatabase(request)
                 }
             }
@@ -14693,7 +15866,7 @@ module ejs.web {
         /** 
             Factory method to create and initialize a controller. The controller class is specified by 
             params["controlller"] which should be set to the controller name without the "Controller" suffix. 
-            This call expects the controller class to be loaded. 
+            This call expects the controller class to be loaded. Called by Mvc.load().
             @param request Web request object
          */
         static function create(request: Request): Controller {
@@ -14703,7 +15876,8 @@ module ejs.web {
             }
             _initRequest = request
             let uname = cname.toPascal() + "Controller"
-            let c = new global[uname](request)
+            let c: Controller = new global[uname](request)
+            c.request = request
             _initRequest = null
             return c
         }
@@ -14721,8 +15895,8 @@ module ejs.web {
             }
          */
         private function openDatabase(request: Request) {
-            let deploymentMode = request.config.mode
-            let dbconfig = request.config.database
+            let deploymentMode = config.mode
+            let dbconfig = config.database
             let klass = dbconfig["class"]
             let adapter = dbconfig.adapter
             let profile = dbconfig[deploymentMode]
@@ -14744,37 +15918,47 @@ module ejs.web {
             actionName = params.action || "index"
             params.action = actionName
             use namespace action
-            if (!this[actionName]) {
-                actionName = "missing"
+            if (request.sessionID) {
+                flashBefore()
             }
-            flashBefore()
             runFilters(_beforeFilters)
             if (!redirected) {
-                /* Run the action */
-                this[actionName]()
-                if (!rendered)
+                if (!this[actionName]) {
+                    if (!viewExists(actionName)) {
+                        actionName = "missing"
+                        this[actionName]()
+                    }
+                } else {
+                    this[actionName]()
+                }
+                if (!rendered && !redirected && !noFinalize) {
                     renderView()
+                }
                 runFilters(_afterFilters)
             }
-            flashAfter()
-            //  MOB -- but what if you don't want a controller to finalize?
-            request.finalize()
+            if (flash) {
+                flashAfter()
+            }
+            if (!noFinalize) {
+                request.finalize()
+            }
         }
+
+        /*
+            Don't finalize the request. If called, the action routine must explicitly call Request.finalize. Note that
+            a default view will not be rendered if dontFinalize is called.
+         */
+        function dontFinalize(): Void
+            noFinalize = true
 
         /* 
             Prepare the flash message. This extracts any flash message from the session state store
          */
         private function flashBefore() {
             lastFlash = null
-            if (session) {
-                flash = session["__flash__"]
-            }
-            if (!flash) {
-                flash = {}
-            } else {
-                if (session) {
-                    session["__flash__"] = undefined
-                }
+            flash = request.session["__flash__"]
+            if (flash) {
+                request.session["__flash__"] = undefined
                 lastFlash = flash.clone()
             }
         }
@@ -14792,10 +15976,9 @@ module ejs.web {
                     }
                 }
             }
-            if (flash && flash.length > 0) {
-                if (session) {
-                    session["__flash__"] = flash
-                }
+//  MOB -- obj.length was so much easier!
+            if (Object.getOwnPropertyCount(flash) > 0) {
+                request.session["__flash__"] = flash
             }
         }
 
@@ -14856,21 +16039,37 @@ module ejs.web {
         }
 
         /**
-            Load the view
+            Load the view. 
+            @param viewName Bare view name
+            @hide
          */
-        function loadView(path: Path, name: String) {
-            let dirs = request.config.directories
+        private function loadView(viewName: String) {
+            let dirs = config.directories
+            let cvname = controllerName + "_" + viewName
+            let path = request.dir.join("views", controllerName, viewName).joinExt(config.extensions.ejs)
             let cached = Loader.cached(path, request.dir.join(dirs.cache))
+            let viewClass = cvname + "View"
+
+            //  TODO - OPT. Could keep a cache of cached.modified
+            if (global[viewClass] && cached.modified >= path.modified) {
+                log.debug(4, "Use loaded view: \"" + controllerName + "/" + viewName + "\"")
+                return
+            } else if (!path.exists) {
+                throw "Missing view: \"" + path+ "\""
+            }
             if (cached && cached.exists && cached.modified >= path.modified) {
-                log.debug(4, "Load view \"" + name + "\" from cache: " + cached);
+                log.debug(4, "Load view \"" + controllerName + "/" + viewName + "\" from: " + cached);
                 load(cached)
             } else {
                 if (!global.TemplateParser) {
                     load("ejs.web.template.mod")
                 }
                 let layouts = request.dir.join(dirs.layouts)
-                log.debug(4, "Rebuild and template \"" + name + "\" from cache: " + cached);
-                let code = TemplateParser().buildView(name, path.readString(), { layouts: layouts })
+                log.debug(4, "Rebuild view \"" + controllerName + "/" + viewName + "\" and save to: " + cached);
+                if (!path.exists) {
+                    throw "Can't find view: \"" + path + "\""
+                }
+                let code = TemplateParser().buildView(cvname, path.readString(), { layouts: layouts })
                 eval(code, cached)
             }
         }
@@ -14885,13 +16084,18 @@ module ejs.web {
 
         /** 
             Redirect to the given action
-            @param uri Uri to redirect to 
+            @param where Url to redirect the client toward. This can be a relative or absolute string URL or it can be
+                a hash of URL components. For example, the following are valid inputs: "../index.ejs", 
+                "http://www.example.com/home.html", {action: "list"}.
             @param status Http status code to use in the redirection response. Defaults to 302.
          */
-        function redirect(uri: Uri, status: Number = Http.MovedTemporarily): Void {
-            request.redirect(uri, status)
+        function redirect(where: Object, status: Number = Http.MovedTemporarily): Void {
+            request.redirect(where, status)
             redirected = true
         }
+
+        function redirectAction(action: String): Void
+            redirect({action: action})
 
         /** 
             Render the raw arguments back to the client. The args are converted to strings.
@@ -14928,6 +16132,18 @@ module ejs.web {
             //  MOB -- todo
         }
 
+        private function viewExists(name: String): Boolean {
+            let viewClass = controllerName + "_" + actionName + "View"
+            if (global[viewClass]) {
+                return true
+            }
+            let path = request.dir.join("views", controllerName, name).joinExt(config.extensions.ejs)
+            if (path.exists) {
+                return true
+            }
+            return null
+        }
+
         /** 
             Render a view template
          */
@@ -14936,21 +16152,17 @@ module ejs.web {
                 throw new Error("renderView invoked but render has already been called")
                 return
             }
-            rendered = true
             viewName ||= actionName
             let viewClass = controllerName + "_" + viewName + "View"
-            if (!global[viewClass]) {
-                let path = request.dir.join("views", controllerName, viewName).joinExt(request.config.extensions.ejs)
-                loadView(path, controllerName + "_" + viewName)
-            }
+            loadView(viewName)
             view = new global[viewClass](request)
+            view.controller = this
             //  MOB -- slow. Native method for this?
-            for each (let n: String in Object.getOwnPropertyNames(this)) {
-                if (this.public::[n]) {
-                    view.public::[n] = this[n]
-                }
+            for each (let n: String in Object.getOwnPropertyNames(this, {includeBases: true, excludeFunctions: true})) {
+                view.public::[n] = this[n]
             }
             log.debug(4, "render view: \"" + controllerName + "/" + viewName + "\"")
+            rendered = true
             view.render(request)
         }
 
@@ -14958,23 +16170,29 @@ module ejs.web {
             Send an error notification to the user. This is just a convenience instead of setting flash["error"]
             @param msg Message to display
          */
-        function error(msg: String): Void
+        function error(msg: String): Void {
+            flash ||= {}
             flash["error"] = msg
+        }
 
         /** 
             Send a positive notification to the user. This is just a convenience instead of setting flash["inform"]
             @param msg Message to display
          */
-        function inform(msg: String): Void
+        function inform(msg: String): Void {
+            flash ||= {}
             flash["inform"] = msg
+        }
 
         /** 
             Send a warning message back to the client for display in the flash area. This is just a convenience instead of
             setting flash["warn"]
             @param msg Message to display
          */
-        function warn(msg: String): Void
+        function warn(msg: String): Void {
+            flash ||= {}
             flash["warn"] = msg
+        }
 
 //  MOB -- revise doc
         /** 
@@ -14991,11 +16209,30 @@ module ejs.web {
             request.makeUri(parts)
 
         /** 
+            Session state object. The session state object can be used to share state between requests.
+            If a session has not already been created, this call creates a session and sets the $sessionID property. 
+            A cookie containing a session ID is automatically created and sent to the client on the first response 
+            after creating the session. Objects are stored the session state by JSON serialization.
+            This getter property is a wrapper and returns the Request.session object.
+         */
+        function get session(): Session
+            request.session
+
+        /** 
             Missing action method. This method will be called if the requested action routine does not exist.
          */
         action function missing(): Void {
             rendered = true
             throw "Missing Action: \"" + params.action + "\" could not be found for controller \"" + controllerName + "\""
+        }
+
+        //  LEGACY 1.0.2
+
+        function get appUrl()
+            request.home.toString().trimEnd("/")
+
+        function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String {
+            return makeUri({ path: action })
         }
     }
 }
@@ -15289,7 +16526,6 @@ module ejs.web {
 
         use default namespace module
 
-        private var nextId: Number = 0
         private var request: Request
         private var view: View
 
@@ -15319,7 +16555,7 @@ module ejs.web {
          */
 
         function aform(record: Object, options: Object = {}): Void {
-            options.id ||= "form"
+            options.domid ||= "form"
             onsubmit = ""
             if (options.condition) {
                 onsubmit += options.condition + ' && '
@@ -15334,9 +16570,8 @@ module ejs.web {
             if (options.query) {
                 onsubmit += 'data: ' + options.query + ', '
             } else {
-                onsubmit += 'data: $("#' + options.id + '").serialize(), '
+                onsubmit += 'data: $("#' + options.domid + '").serialize(), '
             }
-
             if (options.update) {
                 if (options.success) {
                     onsubmit += 'success: function(data) { $("#' + options.update + '").html(data).hide("slow"); ' + 
@@ -15365,7 +16600,7 @@ module ejs.web {
                 query
          */
 		function alink(text: String, options: Object): Void {
-            options.id ||= "alink"
+            options.domid ||= "alink"
             onclick = ""
             if (options.condition) {
                 onclick += options.condition + ' && '
@@ -15421,6 +16656,7 @@ module ejs.web {
 
 		function checkbox(field: String, choice: String, submitValue: String, options: Object): Void {
             let checked = (choice == submitValue) ? ' checked="yes" ' : ''
+            //  MOB -- should these have \r\n at the end of each line?
             write('<input name="' + field + '" type="checkbox" "' + getOptions(options) + checked + 
                 '" value="' + submitValue + '" />')
             write('<input name="' + field + '" type="hidden" "' + getOptions(options) + '" value="" />')
@@ -15504,7 +16740,7 @@ module ejs.web {
             write('<p>' + initialData + '%</p>')
 		}
 
-        function radio(name: String, selected: String, choices: Object, options: Object): Void {
+        function radio(name: String, choices: Object, selected: String, options: Object): Void {
             let checked: String
             if (choices is Array) {
                 for each (v in choices) {
@@ -15532,20 +16768,6 @@ module ejs.web {
 		function stylesheet(uri: String, options: Object): Void {
             write('<link rel="stylesheet" type="text/css" href="' + uri + '" />\r\n')
 		}
-
-		function tabs(initialData: Array, options: Object): Void {
-            write('<div class="-ejs-tabs">\r\n')
-            write('   <ul>\r\n')
-            for each (t in initialData) {
-                for (name in t) {
-                    let uri = t[name]
-                    write('      <li onclick="window.location=\'' + uri + '\'"><a href="' + uri + '" rel="nofollow">' + 
-                        name + '</a></li>\r\n')
-                }
-            }
-            write('    </ul>')
-            write('</div>')
-        }
 
 		function table(data, options: Object? = null): Void {
             let originalOptions = options
@@ -15632,7 +16854,8 @@ module ejs.web {
 
 			for each (let r: Object in data) {
                 let uri = null
-                let uriOptions = { controller: options.controller, query: options.query }
+                // let uriOptions = { controller: options.controller, query: options.query }
+                let uriOptions = options.clone()
                 if (options.click) {
                     uriOptions.query = (options.query is Array) ? options.query[row] : options.query
                     if (options.click is Array) {
@@ -15709,6 +16932,24 @@ module ejs.web {
 			write('    </tbody>\r\n  </table>\r\n')
 		}
 
+		function tabs(initialData: Array, options: Object): Void {
+            write('<div class="-ejs-tabs">\r\n')
+            write('   <ul>\r\n')
+            for each (t in initialData) {
+                for (name in t) {
+                    let uri = t[name]
+                    if (options["data-remote"]) {
+                        write('      <li data-remote="' + uri + '">' + name + '</a></li>\r\n')
+                    } else {
+                        write('      <li onclick="window.location=\'' + uri + '\'"><a href="' + uri + '" rel="nofollow">' + 
+                            name + '</a></li>\r\n')
+                    }
+                }
+            }
+            write('    </ul>')
+            write('</div>')
+        }
+
         function text(field: String, value: String, options: Object): Void {
             write('<input name="' + field + '" ' + getOptions(options) + ' type="' + getTextKind(options) + 
                 '" value="' + value + '" />')
@@ -15778,6 +17019,7 @@ module ejs.web {
 
         private function getDataAttributes(options): String {
             let attributes = ""
+            //  MOB -- would it be better to have data-remote == uri?
             if (options["data-remote"]) {
                 attributes += ' data-remote="' + options["data-remote"] + '"'
             }
@@ -15885,7 +17127,9 @@ module ejs.web {
                 function listener(event: String, ...args): Void
             @event readable Issued when there is a new request available
             @event close Issued when server is being closed.
-            @event closed Issued when server has been closed.
+            @event createSession Issued when a new session store object is created for a client. The request object is
+                passed.
+            @event destroySession Issued when a session is destroyed. The request object is passed.
          */
         native function addListener(name, listener: Function): Void
 
@@ -15965,6 +17209,12 @@ module ejs.web {
             @return A string containing the name and version of the web server software
          */
         native function get software(): String
+
+        /** 
+            Get the count of active sessions
+            @return The number of active sessionss
+         */
+        native static function get sessionCount(): Number
     }
 }
 
@@ -16050,6 +17300,7 @@ module ejs.web {
                 mod: "mod",
             },
             mvc: {
+                //  MOB -- what is this?
                 app: "",
                 appmod: "App.mod",
                 views: {
@@ -16063,6 +17314,10 @@ module ejs.web {
         private static var mvc: Object
         private static var dirs: Object
         private static var ext: Object
+        private static var loaded: Object = {}
+
+        //  MOB -- where should this come from?
+        private static const EJSRC = "ejsrc"
 
         /** 
             Load an MVC application. This is typically called by the Router to load an application after routing
@@ -16071,8 +17326,10 @@ module ejs.web {
             @returns The exports object
          */
         public static function load(request: Request): Object {
+            request.dir = request.server.serverRoot
             let dir = request.dir
-            let path = dir.join("ejsrc")
+            //  MOB -- should be in filenames in config
+            let path = dir.join(EJSRC)
             let config = request.config
             if (path.exists) {
                 let appConfig = deserialize(path.readString())
@@ -16095,8 +17352,10 @@ module ejs.web {
             ext = config.extensions
             //  MOB temp
             App.log.level = config.log.level
+
             let exports
             if (mvc.app) {
+    //  MOB -- what is this?
                 let app = dir.join(mvc.app)
                 if (app.exists) {
                     exports = Loader.load(app, app)
@@ -16121,23 +17380,26 @@ module ejs.web {
             let config = request.config
             let dir = request.dir
 
+            //  MOB -- good to have a single reload-app file 
             /* Load App */
-            let mod = dir.join(dirs.cache, mvc.appmod)
-            let deps
-            if (config.mode == "debug") {
-                deps = []
-                deps.append(dir.join(dirs.models).find("*" + ext.es))
-                deps.append(dir.join(dirs.src).find("*" + ext.es))
-                deps.append(dir.join(dirs.controllers, "Base").joinExt(ext.es))
+            let appmod = dir.join(dirs.cache, mvc.appmod)
+            let files, deps
+            if (config.cache.reload) {
+                deps = [dir.join(EJSRC)]
+                files = dir.join(dirs.models).find("*" + ext.es)
+                files += dir.join(dirs.src).find("*" + ext.es)
+                files += [dir.join(dirs.controllers, "Base").joinExt(ext.es)]
             }
-            loadComponent(request, mod, deps)
+            loadComponent(request, appmod, files, deps)
 
             /* Load controller */
             let controller = request.params.controller
             let ucontroller = controller.toPascal()
-            mod = dir.join(dirs.cache, ucontroller).joinExt(ext.mod)
+            let mod = dir.join(dirs.cache, ucontroller).joinExt(ext.mod)
             if (!mod.exists || config.cache.reload) {
-                loadComponent(request, mod, [dir.join(dirs.controllers, ucontroller).joinExt(ext.es)])
+                files = [dir.join(dirs.controllers, ucontroller).joinExt(ext.es)]
+                deps = [dir.join(dirs.controllers, "Base").joinExt(ext.es)]
+                loadComponent(request, mod, files, deps)
             } else {
                 loadComponent(request, mod)
             }
@@ -16148,35 +17410,43 @@ module ejs.web {
             more recent than the module itself. If recompilation occurs, the result will be cached in the supplied module.
             @param request Request object
             @param mod Path to the module to load
-            @param deps Module dependencies
+            @param files Files to compile into the module
+            @param deps Extra file dependencies
          */
-        public static function loadComponent(request: Request, mod: Path, deps: Array? = null) {
+        public static function loadComponent(request: Request, mod: Path, files: Array? = null, deps: Array? = null) {
             let rebuild
             if (mod.exists) {
                 rebuild = false
-                let when = mod.modified
-                for each (dep in deps) {
-                    if (dep.exists && dep.modified > when) {
-                        rebuild = true
+                if (request.config.cache.reload) {
+                    let when = mod.modified
+                    for each (file in (files + deps)) {
+                        if (file.exists && file.modified > when) {
+                            rebuild = true
+                        }
                     }
                 }
             } else {
                 rebuild = true
             }
             if (rebuild) {
-                let code = ""
-                for each (dep in deps) {
-                    let path = Path(dep)
+                let code = "require ejs.web\n"
+                for each (file in files) {
+                    let path = Path(file)
                     if (!path.exists) {
                         throw "Can't find required component: \"" + path + "\""
                     }
                     code += path.readString()
                 }
-                request.log.debug(4, "Rebuild component " + mod)
+                request.log.debug(4, "Rebuild component: " + mod + " files: " + files)
                 eval(code, mod)
-            } else {
-                request.log.debug(4, "Load component from cache " + mod)
+
+            } else if (!loaded[mod]) {
+                request.log.debug(4, "Reload component : " + mod)
                 global.load(mod)
+                loaded[mod] = new Date
+
+            } else {
+                request.log.debug(4, "Use existing component: " + mod)
             }
         }
     }
@@ -16409,11 +17679,12 @@ module ejs.web {
 
         /** 
             Session state object. The session state object can be used to share state between requests.
-            If a session has not already been created, this call creates a session and sets the $sessionID property. 
-            A cookie containing a session ID is automatically created and sent to the client on the first 
-            response after creating the session. Objects stored in the session state must be serializable using JSON.
+            If a session has not already been created, accessing this property automatically creates a new session 
+            and sets the $sessionID property and a cookie containing a session ID sent to the client.
+            To test if a session has been created, test the sessionID property which will not auto-create a session.
+            Objects are stored the session state by JSON serialization.
          */
-        native var session: Object 
+        native var session: Session 
 
         /** 
             Current session ID. Index into the $sessions object. Set to null if no session is defined.
@@ -16448,7 +17719,7 @@ module ejs.web {
             @duplicate Stream.addListener
             @event readable Issued when some body content is available.
             @event writable Issued when the connection is writable to accept body data (PUT, POST).
-            @event complete Issued when the request completes
+            @event close Issued when the request completes
             @event error Issued if the request does not complete
             All events are called with the signature:
             function (event: String, http: Http): Void
@@ -16494,6 +17765,7 @@ module ejs.web {
             }
         }
 
+//  MOB -- missing create session
         /** 
             Destroy a session. This call destroys the session state store that is being used for the current client. 
             If no session exists, this call has no effect.
@@ -16539,19 +17811,25 @@ module ejs.web {
 
         /** 
             Redirect the client to a new URL. This call redirects the client's browser to a new location specified 
-            by the @url.  Optionally, a redirection code may be provided. Normally this code is set to be the HTTP 
+            by the $url.  Optionally, a redirection code may be provided. Normally this code is set to be the HTTP 
             code 302 which means a temporary redirect. A 301, permanent redirect code may be explicitly set.
-            @param url Url to redirect the client to
+            @param where Url to redirect the client toward. This can be a relative or absolute string URL or it can be
+                a hash of URL components. For example, the following are valid inputs: "../index.ejs", 
+                "http://www.example.com/home.html", {action: "list"}.
             @param status Optional HTTP redirection status
          */
-        function redirect(url: String, status: Number = Http.MovedTemporarily): Void {
-            if (!url.contains("://")) {
-                if (url[0] == '/') {
-                    uri = Url({ scheme: scheme, host: serverName, port: port, path: url})
-                } else {
-                    url = Url({ scheme: scheme, host: serverName, port: port, path: scriptName + pathInfo + url})
-                }
-                url = uri.normalize.toString()
+        function redirect(where: Object, status: Number = Http.MovedTemporarily): Void {
+            /*
+                This permits urls like: ".." or "/" or "http://..."
+             */
+            let base = uri.clone()
+            base.query = ""
+            base.reference = ""
+            let url
+            if (where is String) {
+                url = makeUri(base.join(where).normalize.components)
+            } else {
+                url = makeUri(where)
             }
             this.status = status
             setHeader("Location", url)
@@ -16579,7 +17857,7 @@ module ejs.web {
                     return route.makeUri(this, blend(params.clone(), where))
                 }
             }
-            let comoponents = request.absHome.components()
+            let comoponents = request.absHome.components
             if (where is String) {
                 return Uri(components).join(where)
             } else {
@@ -16704,7 +17982,7 @@ module ejs.web {
                 write(text)
             } catch {}
             finalize()
-            log.error(status + ". " + msg)
+            log.error("Request error (" + status + ") for: \"" + uri + "\". " + msg)
         }
 
         /** 
@@ -16963,15 +18241,20 @@ module ejs.web {
             </pre>
         */
         public static var RestfulRoutes = [
+          { name: "es",      type: "es",                    match: /^\/web\/.*\.es$/   },
+          { name: "ejs",     type: "ejs",                   match: /^\/web\/.*\.ejs$/  },
+          { name: "web",     type: "static",                match: /^\/web\//  },
+          { name: "home",    type: "static",                match: /^\/$/, redirect: "/web/index.ejs" },
+          { name: "ico",     type: "static",                match: /^\/favicon.ico$/, redirect: "/web/favicon.ico" },
           { name: "new",     type: "mvc", method: "GET",    match: "/:controller/new",       params: { action: "new" } },
           { name: "edit",    type: "mvc", method: "GET",    match: "/:controller/:id/edit",  params: { action: "edit" } },
           { name: "show",    type: "mvc", method: "GET",    match: "/:controller/:id",       params: { action: "show" } },
           { name: "update",  type: "mvc", method: "PUT",    match: "/:controller/:id",       params: { action: "update" } },
           { name: "delete",  type: "mvc", method: "DELETE", match: "/:controller/:id",       params: { action: "delete" } },
-          { name: "default", type: "mvc", method: "GET",  match: "/:controller/:action",     params: {} },
+          { name: "default", type: "mvc",                   match: "/:controller/:action",     params: {} },
           { name: "create",  type: "mvc", method: "POST",   match: "/:controller",           params: { action: "create" } },
           { name: "index",   type: "mvc", method: "GET",    match: "/:controller",           params: { action: "index" } },
-          { name: "home",    type: "static", match: /^\/$/, redirect: "/web/index.ejs" },
+          { name: "home",    type: "static",                match: /^\/$/, redirect: "/web/index.ejs" },
           { name: "static",  type: "static", },
         ]
 
@@ -16983,9 +18266,9 @@ module ejs.web {
           { name: "edit",    type: "mvc", method: "GET",  match: "/:controller/:id",         params: { action: "edit" } },
           { name: "update",  type: "mvc", method: "POST", match: "/:controller/:id",         params: { action: "update" } },
           { name: "destroy", type: "mvc", method: "POST", match: "/:controller/destroy/:id", params: { action: "destroy" }},
-          { name: "default", type: "mvc", method: "GET",  match: "/:controller/:action",     params: {} },
+          { name: "default", type: "mvc",                 match: "/:controller/:action",     params: {} },
           { name: "index",   type: "mvc", method: "GET",  match: "/:controller",             params: { action: "index" } },
-          { name: "home",    type: "static", match: /^\/$/, redirect: "/web/index.ejs" },
+          { name: "home",    type: "static",              match: /^\/$/, redirect: "/web/index.ejs" },
           { name: "static",  type: "static", },
         ]
          */
@@ -16995,17 +18278,18 @@ module ejs.web {
          */
         //  MOB -- rename LegacyMvcRoutes
         public static var LegacyRoutes = [
-          { name: "es",      type: "es",  match: /web\/.*\.es$/   },
-          { name: "ejs",     type: "ejs", match: /web\/.*\.ejs$/  },
-          { name: "web",     type: "static", match: /web\//  },
+          { name: "es",      type: "es",                  match: /^\/web\/.*\.es$/   },
+          { name: "ejs",     type: "ejs",                 match: /^\/web\/.*\.ejs$/  },
+          { name: "web",     type: "static",              match: /^\/web\//  },
+          { name: "home",    type: "static",              match: /^\/$/, redirect: "/web/index.ejs" },
+          { name: "ico",     type: "static",              match: /^\/favicon.ico$/, redirect: "/web/favicon.ico" },
           { name: "list",    type: "mvc", method: "GET",  match: "/:controller/list",        params: { action: "list" } },
           { name: "create",  type: "mvc", method: "POST", match: "/:controller/create",      params: { action: "create" } },
           { name: "edit",    type: "mvc", method: "GET",  match: "/:controller/edit",        params: { action: "edit" } },
           { name: "update",  type: "mvc", method: "POST", match: "/:controller/update",      params: { action: "update" } },
           { name: "destroy", type: "mvc", method: "POST", match: "/:controller/destroy",     params: { action: "destroy" } },
-          { name: "default", type: "mvc", method: "GET",  match: "/:controller/:action",     params: {} },
+          { name: "default", type: "mvc",                 match: "/:controller/:action",     params: {} },
           { name: "index",   type: "mvc", method: "GET",  match: "/:controller",             params: { action: "index" } },
-          { name: "home",    type: "static", match: /^\/$/, redirect: "/Base/home" },
           { name: "static",  type: "static", },
         ]
 
@@ -17053,7 +18337,7 @@ module ejs.web {
                     for (i in tokens) {
                         tokens[i] = tokens[i].trim(":")
                     }
-                    let template = route.match.replace(/:([^:\W]+)/g, "([^\W]+)").replace(/\//g, "\\/")
+                    let template = route.match.replace(/:([^:\W]+)/g, "([^\W]*)").replace(/\//g, "\\/")
                     route.matcher = RegExp("^" + template)
                     /*  Splitter ends up looking like "$1$2$3$4..." */
                     count = 1
@@ -17083,7 +18367,13 @@ module ejs.web {
         public function route(request): Void {
             let params = request.params
             let pathInfo = request.pathInfo
+            let log = request.log
+            log.debug(5, "Routing " + request.pathInfo)
+
+            //  MOB - need better way to turn on debug trace without slowing down the router
             for each (r in routes) {
+                log.debug(6, "Test route \"" + r.name + "\"")
+
                 if (r.method && request.method != r.method) {
                     continue
                 }
@@ -17130,22 +18420,24 @@ module ejs.web {
                     }
                 }
                 if (r.rewrite && !r.rewrite(request)) {
+                    log.debug(5, "Request rewritten as " + request.pathInfo)
                     route(request)
                     return
                 }
                 if (r.redirect) {
                     request.pathInfo = r.redirect;
+                    log.debug(5, "Route redirected to " + request.pathInfo)
                     this.route(request)
                     return
+                }
+                if (log.level >= 5) {
+                    log.debug(5, "Matched route " + r.name)
+                    log.debug(5, "  Route params " + serialize(params))
                 }
                 request.route = r
                 let location = r.location
                 if (location && location.prefix && location.dir) {
                     request.setLocation(location.prefix, location.dir)
-                }
-                let log = request.log
-                if (log.level >= 5) {
-                    show(request.log)
                 }
                 return
             }
@@ -17249,32 +18541,37 @@ module ejs.web {
             this.router = router
         }
 
-        public function show(log: Logger, msg) {
-            log.debug(5, msg + " \"" + name + "\":")
-            for each (f in Object.getOwnPropertyNames(this)) {
-                if (f != "params" && f != "router") {
-                    log.debug(5, "    " + f + " = " + this[f])
-                }
-            }
-            log.debug(5, "    params = " + serialize(params))
-        }
-
+        //  MOB - OPT
         /**
             Make a URI provided parts of a URI. The URI is completed using the current request and route. 
-            @param where MOB
+            @param components MOB
          */
-        public function makeUri(request: Request, where: Object): Uri {
+        public function makeUri(request: Request, components: Object): Uri {
             if (urimaker) {
-                return urimaker(request, where)
+                return urimaker(request, components)
             }
+            let where
             if (request) {
-                if (where is String) {
-                    where = blend(request.absHome.components(), { path: where })
+                //  Base the URI on the current application home uri
+                let base = blend(request.absHome.components, request.params)
+                delete base.id
+                delete base.query
+                if (components is String) {
+                    where = blend(base, { path: components })
                 } else {
-                    where = blend(request.absHome.components(), where)
+                    where = blend(base, components)
+                }
+            } else {
+                where = components.clone()
+            }
+            if (where.id != undefined) {
+                if (where.query) {
+                    where.query += "&" + "id=" + where.id
+                } else {
+                    where.query = "id=" + where.id
                 }
             }
-            let result = Uri(where)
+            let uri = Uri(where)
             let routeName = where.route || "default"
             let route = this
             if (routeName != this.name) {
@@ -17285,15 +18582,16 @@ module ejs.web {
                     }
                 }
             }
-            let path = ""
-            for each (token in route.tokens) {
-                if (!where[token]) {
-                    throw "Missing URI token " + token
+            if (!components.path) {
+                for each (token in route.tokens) {
+                    if (!where[token]) {
+                        dump("WHERE", where)
+                        throw new ArgError("Missing URI token \"" + token + "\"")
+                    }
+                    uri = uri.join(where[token])
                 }
-                path += "/" + where[token]
             }
-            result.path = path
-            return result
+            return uri
         }
     }
 }
@@ -17347,30 +18645,10 @@ module ejs.web {
 
 module ejs.web {
     /** 
-        Stores session state information. The session array will be created automatically if SessionAutoCreate 
-        is defined or if a session is started via the useSession() or createSession() functions. Sessions are 
-        shared among requests that come from a single client. This may mean that multiple requests access the 
-        same session concurrently. Ejscript ensures that such accesses are serialized. The elements are user defined.
-        @spec ejs
-        @stability prototype
-     */
-    var session: Object
-
-    /** 
-        Session state storage class. The Session class provides management over sessions supporting listeners that
-        trigger when sessions are created or destroyed.
+        Session state storage class. 
         @spec ejs
      */
-    class Session { 
-        /** 
-            Add a listener to session state store.
-            @param name Name of the event to listen for. The name may be an array of events.
-            @param listener Callback listening function. The function is called with the following signature:
-                function listener(event: String, ...args): Void
-            @event createSession Issued when a new session is created
-            @event destroySession Issued when a session is destroyed
-         */
-        native static function addListener(name, listener: Function): Void
+    dynamic class Session { 
 
         /** 
             Get the count of active sessions
@@ -17378,20 +18656,11 @@ module ejs.web {
          */
         native static function get count(): Number
 
-        /** 
-            Remove a listener
-            @param name Event name previously used with addListener. The name may be an array of events.
-            @param listener Listener function previously used with addListener.
+        /*
+            Session inactivity timeout in milliseconds. Setting the timeout resets the inactivity counter.
          */
-        native static function removeListener(name, listener: Function): Void
-
-//  MOB -- how to identify the session
-        /** 
-            Set a session timeout
-            @param timeout Timeout for the session in seconds. 
-            A value of -1 means no timeout.
-         */
-        native function setSessionTimeout(timeout: Number): Object 
+        native function get timeout(): Number
+        native function set timeout(value: Number): Void
     }
 }
 
@@ -17631,6 +18900,9 @@ module ejs.web {
          */
         use default namespace module
 
+        /** Optional controller object */
+        var controller
+
         /** Current request object */
         var request: Request
 
@@ -17647,7 +18919,7 @@ module ejs.web {
         private var nextId: Number = 0
 
         /** @hide */
-        function getNextId(): Number {
+        function getNextId(): String {
             return "id_" + nextId++
         }
 
@@ -17731,7 +19003,7 @@ module ejs.web {
                 whether the field has been previously saved.
             @option uri String Use a URL rather than action and controller for the target uri.
          */
-        function aform(record: Object, options: Object = {}): Void {
+        function aform(record: Object, options: Object = {action: "update"}): Void {
             currentRecord = record
             emitFormErrors(record)
             options = setOptions("aform", options)
@@ -17824,7 +19096,7 @@ module ejs.web {
             options = setOptions(field, options)
             let value = getValue(currentRecord, field, options)
             let connector = getConnector("checkbox", options)
-            connector.checkbox(options.fieldName, value, choice, options)
+            connector.checkbox(options.fieldName, choice, value, options)
         }
 
         /**
@@ -17848,11 +19120,14 @@ module ejs.web {
 //  MOB -- COMPAT was form(action, record, options)
         function form(record: Object, options: Object = {}): Void {
             currentRecord = record
+            log.debug(5, serialize(record, {pretty: true}))
             emitFormErrors(record)
             options = setOptions("form", options)
             options.method ||= "POST"
             options.action ||= "update"
-            options.id ||= record.id
+            if (record) {
+                options.id ||= record.id
+            }
             let connector = getConnector("form", options)
             connector.form(record, options)
         }
@@ -17953,8 +19228,8 @@ module ejs.web {
             @option uri String Use a URL rather than action and controller for the target uri.
          */
         function link(text: String, options: Object = {}): Void {
-            options.action ||= text.split(" ")[0].toLower()
             options = setOptions("link", options)
+            options.action ||= text.split(" ")[0].toLower()
             let connector = getConnector("link", options)
             connector.link(text, options)
         }
@@ -17968,7 +19243,6 @@ module ejs.web {
             let connector = getConnector("extlink", options)
             connector.extlink(text, options)
         }
-
 
         /**
             Emit a selection list. 
@@ -17986,7 +19260,7 @@ module ejs.web {
                 list("stockId", Stock.stockList) 
                 list("low", ["low", "med", "high"])
                 list("low", [["3", "low"], ["5", "med"], ["9", "high"]])
-                list("low", [{low: 3{, {med: 5}, {high: 9}])
+                list("low", [{low: 3}, {med: 5}, {high: 9}])
                 list("Stock Type")  // Will invoke StockType.findAll() to do a table lookup
          */
         function list(field: String, choices: Object? = null, options: Object = {}): Void {
@@ -18050,7 +19324,7 @@ module ejs.web {
             options = setOptions(field, options)
             let value = getValue(currentRecord, field, options)
             let connector = getConnector("radio", options)
-            connector.radio(options.fieldName, value, choices, options)
+            connector.radio(options.fieldName, choices, value, options)
         }
 
         /** 
@@ -18266,7 +19540,8 @@ module ejs.web {
         function flash(kinds: Object? = null, options: Object = {}): Void {
             options = setOptions("flash", options)
 //  MOB - move flash to Request?
-            let cflash = request.flash
+//            let cflash = request.flash
+            let cflash = controller ? controller.flash : null
             if (cflash == null || cflash.length == 0) {
                 return
             }
@@ -18334,14 +19609,18 @@ module ejs.web {
             Update the options based on the model and field being considered
          */
         private function setOptions(field: String, options: Object): Object {
-            if (options is String)
+            if (options is String) {
                 options = {action: options}
-            if (currentRecord && currentRecord.id) {
-                options.id ||= field + '_' + currentRecord.id
+            }
+            if (currentRecord) {
+                if (currentRecord.id) {
+                    options.domid ||= field + '_' + currentRecord.id
+                }
                 if (currentRecord.hasError(field)) {
                     options.style += " -ejs-fieldError"
                 }
-                options.fieldName ||= Reflect(currentRecord).name.toCamel() + '.' + field
+                //  MOB -- not portable to other ORM
+                options.fieldName ||= typeOf(currentRecord).toCamel() + '.' + field
             } else {
                 options.fieldName ||= field
             }
@@ -18435,8 +19714,8 @@ module ejs.web {
             Mapping of helper options to HTML attributes ("" value means don't map the name)
          */
         private static const htmlOptions: Object = { 
-            background: "", color: "", id: "", height: "", method: "", size: "", style: "class", visible: "", width: "",
-            remote: "data-remote",
+            background: "", color: "", domid: "id", height: "", method: "", size: "", style: "class", visible: "", 
+            width: "", remote: "data-remote",
         }
 
         /**
@@ -18525,6 +19804,24 @@ module ejs.web {
             }
             return data
         }
+
+        //  LEGACY - move these into compat?
+
+        function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String {
+            //  MOB - should call the controller.makeUrl
+            return makeUri({ path: action })
+        }
+
+        function get appUrl()
+            request.home.toString().trimEnd("/")
+
+        function redirect(url: Object) {
+            if (controller) {
+                controller.redirect(url)
+            } else {
+                request.redirect(url)
+            }
+        }
     }
 }
 
@@ -18595,6 +19892,7 @@ module ejs.web {
                 showClient: true,
                 //  where: "file" - defaults to web server log
             },
+            // MOB -- not yet implemented
             session: {
                 //  MOB -- do we need enable
                 enable: true,
@@ -18609,7 +19907,7 @@ module ejs.web {
          */
         private static function init(): Void {
             let path = Path("ejsrc")
-            let config = App.config
+            config = App.config
             if (path.exists) {
                 let webConfig = deserialize(path.readString())
                 blend(config, webConfig, true)
@@ -18627,6 +19925,8 @@ module ejs.web {
          */
         static function serve(request: Request, router: Router = Router(Router.TopRoutes)): Void {
             try {
+//  MOB -- should the router be setting this?
+request.config = config
                 router.route(request)
                 if (request.route.threaded) {
                     worker(request)
@@ -18700,7 +20000,7 @@ module ejs.web {
                         app: function (request) {
                             //  MOB -- push into ejs.cjs
                             //  MOB -- needs work
-                            let path = request.dir.join(request.uri.filename)
+                            let path = request.dir.join(request.pathInfo.trimStart('/'))
                             if (path.isDir) {
                                 //  MOB -- should come from HttpServer.index[]
                                 for each (index in ["index.ejs", "index.html"]) {
@@ -18711,8 +20011,12 @@ module ejs.web {
                                     }
                                 }
                             }
+                            //  MOB -- work out a better way to do this. perhaps from ejsrc? (cache?)
+                            let expires = Date() 
+                            expires.date += 2
                             let headers = {
                                 "Content-Type": Uri(request.uri).mimeType,
+                                "Expires": expires.toUTCString()
                             }
                             let body = ""
                             if (request.method == "GET" || request.method == "POST") {
@@ -18798,8 +20102,8 @@ module ejs.web {
                 }
 
             } catch (e) {
-                print("URI " + request.uri)
-                print("Web.start(): CATCH " + e)
+                // print("Web.start(): CATCH " + e)
+                // print("URI " + request.uri)
                 request.writeError(e)
                 request.finalize()
             }
@@ -18881,7 +20185,8 @@ module ejs.web.template  {
     public class Template {
         use default namespace public
 
-        /** Load a templated web page.
+        /** 
+            Load a templated web page.
             @param request Web Request object
             @returns An exports object with a function "app" property representing the web page
          */
@@ -18980,7 +20285,7 @@ module ejs.web.template  {
 
         private const Header = "require ejs.web\n\nexports.app = function (request: Request) {\n" + 
             "    View(request).render(function(request: Request) {\n"
-        private const Footer = "\n})\n}\n"
+        private const Footer = "\n    })\n}\n"
 
         private const MvcHeader = "require ejs.web\n"
 
@@ -19081,10 +20386,12 @@ module ejs.web.template  {
                         if (path == "" || path == '""') {
                             layoutPage = undefined
                         } else {
-                            path = args[1].trim("'").trim('"').trim('.ejs') + ".ejs"
-                            layoutPage = Path(layouts).join(path)
+                            layoutPage = Path(args[1].trim("'").trim('"').trim('.ejs') + ".ejs")
                             if (!layoutPage.exists) {
-                                throw "Can't find layout page " + layoutPage
+                                layoutPage = Path(layouts).join(layoutPage)
+                                if (!layoutPage.exists) {
+                                    throw "Can't find layout page " + layoutPage
+                                }
                             }
                         }
                         break

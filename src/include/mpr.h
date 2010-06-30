@@ -2224,6 +2224,7 @@ extern void mprSetBufRefillProc(MprBuf *buf, MprBufProc fn, void *arg);
  */
 #define MPR_RFC_DATE        "%a, %d %b %Y %T %Z"
 #define MPR_DEFAULT_DATE    "%a %b %d %T %Y %Z"
+#define MPR_HTTP_DATE       "%a, %d %b %Y %T GMT"
 
 /**
     Date and Time Service

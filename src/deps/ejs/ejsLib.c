@@ -884,9 +884,11 @@ static void mark(Ejs *ejs, int generation)
     if (ejs->search) {
         ejsMark(ejs, ejs->search);
     }
+#if UNUSED
     if (ejs->emitter) {
         ejsMark(ejs, ejs->emitter);
     }
+#endif
     if (ejs->sessions) {
         ejsMark(ejs, ejs->sessions);
     }
@@ -1631,6 +1633,7 @@ static void *opcodeJump[] = {
     &&EJS_OP_LOAD_REGEXP,
     &&EJS_OP_LOAD_STRING,
     &&EJS_OP_LOAD_THIS,
+    &&EJS_OP_LOAD_THIS_BASE,
     &&EJS_OP_LOAD_TRUE,
     &&EJS_OP_LOAD_UNDEFINED,
     &&EJS_OP_LOAD_XML,
@@ -2018,14 +2021,19 @@ static void *opcodeJump[] = {
             push(ejs->undefinedValue);
             BREAK;
 
-        /*
-            Load the "this" value
-                LoadThis
-                Stack before (top)  []
-                Stack after         [this]
-         */
         CASE (EJS_OP_LOAD_THIS):
             push(THIS);
+            BREAK;
+
+        /*
+            Load the nth base class of "this"
+                LoadThis
+                Stack before (top)  []
+                Stack after         [baseClass]
+         */
+        CASE (EJS_OP_LOAD_THIS_BASE):
+            vp = getNthBase(ejs, (EjsObj*) THIS, GET_INT());
+            push(vp);
             BREAK;
 
         /*
@@ -5930,28 +5938,28 @@ int ejsGetListCapacity(EjsList *lp)
 
 
 
-static int  addFixup(Ejs *ejs, int kind, EjsObj *target, int slotNum, EjsTypeFixup *fixup);
+static int  addFixup(Ejs *ejs, EjsModule *mp, int kind, EjsObj *target, int slotNum, EjsTypeFixup *fixup);
 static int  alreadyLoaded(Ejs *ejs, cchar *name, int minVersion, int maxVersion);
-static void createLoadState(Ejs *ejs, int flags);
-static EjsTypeFixup *createFixup(Ejs *ejs, EjsName *qname, int slotNum);
+static EjsLoadState *createLoadState(Ejs *ejs, int flags);
+static EjsTypeFixup *createFixup(Ejs *ejs, EjsModule *mp, EjsName *qname, int slotNum);
 static int  fixupTypes(Ejs *ejs, MprList *list);
 static EjsObj *getCurrentBlock(EjsModule *mp);
 static int  getVersion(cchar *name);
-static int  initializeModule(Ejs *ejs, EjsModule *mp, cchar *path);
-static int  loadBlockSection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadClassSection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadDependencySection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadEndBlockSection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadEndFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadEndClassSection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadEndModuleSection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadExceptionSection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp);
-static int  loadModFile(Ejs *ejs, cchar *filename, int minVersion, int maxVersion, int flags);
+static int  initializeModule(Ejs *ejs, EjsModule *mp);
+static int  loadBlockSection(Ejs *ejs, EjsModule *mp);
+static int  loadClassSection(Ejs *ejs, EjsModule *mp);
+static int  loadDependencySection(Ejs *ejs, EjsModule *mp);
+static int  loadDocSection(Ejs *ejs, EjsModule *mp);
+static int  loadEndBlockSection(Ejs *ejs, EjsModule *mp);
+static int  loadEndFunctionSection(Ejs *ejs, EjsModule *mp);
+static int  loadEndClassSection(Ejs *ejs, EjsModule *mp);
+static int  loadEndModuleSection(Ejs *ejs, EjsModule *mp);
+static int  loadExceptionSection(Ejs *ejs, EjsModule *mp);
+static int  loadFunctionSection(Ejs *ejs, EjsModule *mp);
 static EjsModule *loadModuleSection(Ejs *ejs, MprFile *file, EjsModuleHdr *hdr, int *created, int flags);
 static int  loadSections(Ejs *ejs, MprFile *file, cchar *path, EjsModuleHdr *hdr, int flags);
-static int  loadPropertySection(Ejs *ejs, MprFile *file, EjsModule *mp, int sectionType);
-static int  loadScriptModule(Ejs *ejs, MprFile *file, cchar *path, int flags);
+static int  loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType);
+static int  loadScriptModule(Ejs *ejs, cchar *filename, int minVersion, int maxVersion, int flags);
 static char *makeModuleName(MprCtx ctx, cchar *name);
 static void popScope(EjsModule *mp, int keepScope);
 static void pushScope(EjsModule *mp, EjsBlock *block, EjsObj *obj);
@@ -5967,7 +5975,6 @@ static int  trimModule(Ejs *ejs, char *name);
 static int  loadNativeLibrary(Ejs *ejs, EjsModule *mp, cchar *path);
 #endif
 
-static int  loadDocSection(Ejs *ejs, MprFile *file, EjsModule *mp);
 static void setDoc(Ejs *ejs, EjsModule *mp, void *vp, int slotNum);
 
 /**
@@ -5988,9 +5995,8 @@ static void setDoc(Ejs *ejs, EjsModule *mp, void *vp, int slotNum);
  */
 int ejsLoadModule(Ejs *ejs, cchar *path, int minVersion, int maxVersion, int flags)
 {
-    EjsModule       *mp;
     char            *trimmedPath, *name;
-    int             nextModule, next, status, version;
+    int             status, version;
 
     mprAssert(path && *path);
 
@@ -5999,14 +6005,13 @@ int ejsLoadModule(Ejs *ejs, cchar *path, int minVersion, int maxVersion, int fla
         minVersion = maxVersion = version;
     }
     name = mprGetPathBase(ejs, trimmedPath);
-    nextModule = mprGetListCount(ejs->modules);
 
     if ((status = alreadyLoaded(ejs, name, minVersion, maxVersion)) == 0) {
-        createLoadState(ejs, flags);
-        if (strcmp(name, "ejs") == 0) {
-            flags |= EJS_LOADER_BUILTIN;
-        }
-        if ((status = loadModFile(ejs, trimmedPath, minVersion, maxVersion, flags)) == 0) {
+        status = loadScriptModule(ejs, trimmedPath, minVersion, maxVersion, flags);
+#if UNUSED
+        EjsModule  *mp;
+        nextModule = mprGetListCount(ejs->modules);
+        if ((status = loadScriptModule(ejs, trimmedPath, minVersion, maxVersion, flags)) == 0) {
             /*
                 Do fixups and run initializers when all dependent modules are loaded. Solves forward ref problem.
              */
@@ -6014,7 +6019,7 @@ int ejsLoadModule(Ejs *ejs, cchar *path, int minVersion, int maxVersion, int fla
                 //  MOB rationalize down to just ejs flag
                 if (!ejs->empty && !(flags & EJS_LOADER_NO_INIT) && !(ejs->flags & EJS_FLAG_NO_INIT)) {
                     for (next = nextModule; (mp = mprGetNextItem(ejs->modules, &next)) != 0; ) {
-                        if ((status = initializeModule(ejs, mp, mp->path)) < 0) {
+                        if ((status = initializeModule(ejs, mp)) < 0) {
                             break;
                         }
                     }
@@ -6023,6 +6028,7 @@ int ejsLoadModule(Ejs *ejs, cchar *path, int minVersion, int maxVersion, int fla
         }
         mprFree(ejs->loadState);
         ejs->loadState = 0;
+#endif
     }
     mprFree(trimmedPath);
     mprFree(name);
@@ -6030,32 +6036,7 @@ int ejsLoadModule(Ejs *ejs, cchar *path, int minVersion, int maxVersion, int fla
 }
 
 
-static int loadModFile(Ejs *ejs, cchar *filename, int minVersion, int maxVersion, int flags)
-{
-    MprFile         *file;
-    char            *path;
-    int             status;
-
-    mprAssert(filename && *filename);
-
-    if ((path = search(ejs, filename, minVersion, maxVersion)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    if ((file = mprOpen(ejs, path, O_RDONLY | O_BINARY, 0666)) != NULL) {
-        mprLog(ejs, 4, "Loading module %s", path);
-        mprEnableFileBuffering(file, 0, 0);
-        status = loadScriptModule(ejs, file, path, flags);
-        mprFree(file);
-    } else {
-        ejsThrowIOError(ejs, "Can't open module file %s", path);
-        status = MPR_ERR_CANT_OPEN;
-    }
-    mprFree(path);
-    return status;
-}
-
-
-static int initializeModule(Ejs *ejs, EjsModule *mp, cchar *path)
+static int initializeModule(Ejs *ejs, EjsModule *mp)
 {
     EjsNativeModule     *nativeModule;
     int                 priorGen;
@@ -6069,9 +6050,9 @@ static int initializeModule(Ejs *ejs, EjsModule *mp, cchar *path)
          */
         if ((nativeModule = ejsLookupNativeModule(ejs, mp->name)) == 0) {
 #if !BLD_FEATURE_STATIC
-            if (loadNativeLibrary(ejs, mp, path) < 0) {
+            if (loadNativeLibrary(ejs, mp, mp->path) < 0) {
                 if (ejs->exception == 0) {
-                    ejsThrowIOError(ejs, "Can't load the native module file \"%s\"", path);
+                    ejsThrowIOError(ejs, "Can't load the native module file \"%s\"", mp->path);
                 }
                 return MPR_ERR_CANT_INITIALIZE;
             }
@@ -6079,8 +6060,8 @@ static int initializeModule(Ejs *ejs, EjsModule *mp, cchar *path)
 #endif
             if (!(ejs->flags & EJS_FLAG_NO_INIT)) {
                 if (nativeModule->checksum != mp->checksum) {
-                    ejsThrowIOError(ejs, "Module \"%s\" does not match native code (%d, %d)", path, nativeModule->checksum, 
-                        mp->checksum);
+                    ejsThrowIOError(ejs, "Module \"%s\" does not match native code (%d, %d)", mp->path, 
+                            nativeModule->checksum, mp->checksum);
                     return MPR_ERR_BAD_STATE;
                 }
             }
@@ -6096,7 +6077,7 @@ static int initializeModule(Ejs *ejs, EjsModule *mp, cchar *path)
         }
         if (ejs->hasError || ejs->errorType == 0 || mprHasAllocError(ejs)) {
             if (!ejs->exception) {
-                ejsThrowIOError(ejs, "Initialization error for %s (%d, %d)", path, ejs->hasError, mprHasAllocError(ejs));
+                ejsThrowIOError(ejs, "Initialization error for %s (%d, %d)", mp->path, ejs->hasError, mprHasAllocError(ejs));
             }
             return MPR_ERR;
         }
@@ -6132,15 +6113,16 @@ static char *search(Ejs *ejs, cchar *filename, int minVersion, int maxVersion)
 
 
 /*
-    Load the sections: classes, properties and functions. Return the first module loaded in pup.
+    Load the sections: modules, classes, properties and functions from a module file. May load muliple logical modules.
  */
 static int loadSections(Ejs *ejs, MprFile *file, cchar *path, EjsModuleHdr *hdr, int flags)
 {
     EjsModule   *mp;
-    int         rc, sectionType, created;
+    int         rc, sectionType, created, firstModule, status, next;
 
     created = 0;
     mp = 0;
+    firstModule = mprGetListCount(ejs->modules);
 
     while ((sectionType = mprGetc(file)) >= 0) {
         if (sectionType < 0 || sectionType >= EJS_SECT_MAX) {
@@ -6154,58 +6136,59 @@ static int loadSections(Ejs *ejs, MprFile *file, cchar *path, EjsModuleHdr *hdr,
         switch (sectionType) {
 
         case EJS_SECT_BLOCK:
-            rc = loadBlockSection(ejs, file, mp);
+            rc = loadBlockSection(ejs, mp);
             break;
 
         case EJS_SECT_BLOCK_END:
-            rc = loadEndBlockSection(ejs, file, mp);
+            rc = loadEndBlockSection(ejs, mp);
             break;
 
         case EJS_SECT_CLASS:
-            rc = loadClassSection(ejs, file, mp);
+            rc = loadClassSection(ejs, mp);
             break;
 
         case EJS_SECT_CLASS_END:
-            rc = loadEndClassSection(ejs, file, mp);
+            rc = loadEndClassSection(ejs, mp);
             break;
 
         case EJS_SECT_DEPENDENCY:
-            rc = loadDependencySection(ejs, file, mp);
-            /*  Update the first free global (dependencies come before types, methods and properties of all kinds) */
+            rc = loadDependencySection(ejs, mp);
             mp->firstGlobal = ejsGetPropertyCount(ejs, ejs->global);
             break;
 
         case EJS_SECT_EXCEPTION:
-            rc = loadExceptionSection(ejs, file, mp);
+            rc = loadExceptionSection(ejs, mp);
             break;
 
         case EJS_SECT_FUNCTION:
-            rc = loadFunctionSection(ejs, file, mp);
+            rc = loadFunctionSection(ejs, mp);
             break;
 
         case EJS_SECT_FUNCTION_END:
-            rc = loadEndFunctionSection(ejs, file, mp);
+            rc = loadEndFunctionSection(ejs, mp);
             break;
 
         case EJS_SECT_MODULE:
-            if ((mp = loadModuleSection(ejs, file, hdr, &created, flags)) != 0) {
-                ejsAddModule(ejs, mp);
-                mp->path = mprStrdup(mp, path);
+            if ((mp = loadModuleSection(ejs, file, hdr, &created, flags)) == 0) {
+                return EJS_ERR;
             }
+            ejsAddModule(ejs, mp);
+            mp->path = mprStrdup(mp, path);
+            mp->file = file;
             mp->firstGlobal = (ejs->initialized) ? ejsGetPropertyCount(ejs, ejs->global) : 0;
             break;
 
         case EJS_SECT_MODULE_END:
-            rc = loadEndModuleSection(ejs, file, mp);
+            rc = loadEndModuleSection(ejs, mp);
             mp->lastGlobal = ejsGetPropertyCount(ejs, ejs->global);
             break;
 
         case EJS_SECT_PROPERTY:
-            rc = loadPropertySection(ejs, file, mp, sectionType);
+            rc = loadPropertySection(ejs, mp, sectionType);
             break;
 
         case EJS_SECT_DOC:
-            rc = loadDocSection(ejs, file, mp);
+            rc = loadDocSection(ejs, mp);
             break;
 
         default:
@@ -6220,7 +6203,27 @@ static int loadSections(Ejs *ejs, MprFile *file, cchar *path, EjsModuleHdr *hdr,
             return rc;
         }
     }
-    return 0;
+    status = 0;
+    for (next = firstModule; (mp = mprGetNextItem(ejs->modules, &next)) != 0; ) {
+        if (mp->loadState) {
+            if (fixupTypes(ejs, mp->loadState->typeFixups) < 0) {
+                return EJS_ERR;
+            }
+            mprFree(mp->loadState);
+            mp->loadState = 0;
+        }
+        //  MOB rationalize down to just ejs flag
+        if (!ejs->empty && !(flags & EJS_LOADER_NO_INIT) && !(ejs->flags & EJS_FLAG_NO_INIT)) {
+            if (!mp->initialized) {
+                status += initializeModule(ejs, mp);
+            }
+        }
+        mp->file = 0;
+    }
+    if (ejs->loaderCallback && !ejs->exception) {
+        (ejs->loaderCallback)(ejs, EJS_SECT_END, ejs->modules, firstModule);
+    }
+    return status;
 }
 
 
@@ -6287,15 +6290,14 @@ static EjsModule *loadModuleSection(Ejs *ejs, MprFile *file, EjsModuleHdr *hdr, 
     *created = 1;
     ejsSetModuleConstants(ejs, mp, pool, poolSize);
 
+    /* Signify that loading the module has begun. We allow multiple loads into the default module.  */
     if (strcmp(name, EJS_DEFAULT_MODULE) != 0) {
-        /*
-            Signify that loading the module has begun. We allow multiple loads into the default module.
-         */
         mp->loaded = 1;
         mp->constants->locked = 1;
     }
     mp->file = file;
     mp->flags = flags;
+    mp->loadState = createLoadState(ejs, flags);
 
     if (ejs->loaderCallback) {
         (ejs->loaderCallback)(ejs, EJS_SECT_MODULE, mp);
@@ -6305,7 +6307,7 @@ static EjsModule *loadModuleSection(Ejs *ejs, MprFile *file, EjsModuleHdr *hdr, 
 }
 
 
-static int loadEndModuleSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadEndModuleSection(Ejs *ejs, EjsModule *mp)
 {
     mprLog(ejs, 9, "End module section %s", mp->name);
 
@@ -6319,7 +6321,7 @@ static int loadEndModuleSection(Ejs *ejs, MprFile *file, EjsModule *mp)
 }
 
 
-static int loadDependencySection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadDependencySection(Ejs *ejs, EjsModule *mp)
 {
     EjsModule   *module;
     void        *saveCallback;
@@ -6327,7 +6329,6 @@ static int loadDependencySection(Ejs *ejs, MprFile *file, EjsModule *mp)
     int         rc, next, minVersion, maxVersion, checksum, nextModule;
 
     mprAssert(ejs);
-    mprAssert(file);
     mprAssert(mp);
 
     name = ejsModuleReadString(ejs, mp);
@@ -6346,16 +6347,15 @@ static int loadDependencySection(Ejs *ejs, MprFile *file, EjsModule *mp)
     ejs->loaderCallback = NULL;
 
     mprLog(ejs, 5, "    Load dependency section %s", name);
-    rc = loadModFile(ejs, name, minVersion, maxVersion, mp->flags | EJS_LOADER_DEP);
+    rc = loadScriptModule(ejs, name, minVersion, maxVersion, mp->flags | EJS_LOADER_DEP);
     ejs->loaderCallback = saveCallback;
     if (rc < 0) {
         return rc;
     }
     if ((module = ejsLookupModule(ejs, name, minVersion, maxVersion)) != 0) {
         if (checksum != module->checksum) {
-            ejsThrowIOError(ejs, "Can't load module %s.\n"
-                "It was compiled using a different version of module %s.", 
-                mp->name, name);
+            ejsThrowIOError(ejs, "Can't load module %s due to checksum mismatch.\n"
+                "The program was compiled expecting a different version of module %s.", mp->name, name);
             return MPR_ERR_BAD_STATE;
         }
     }
@@ -6372,7 +6372,7 @@ static int loadDependencySection(Ejs *ejs, MprFile *file, EjsModule *mp)
 }
 
 
-static int loadBlockSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadBlockSection(Ejs *ejs, EjsModule *mp)
 {
     EjsBlock    *bp;
     EjsObj      *current;
@@ -6395,7 +6395,7 @@ static int loadBlockSection(Ejs *ejs, MprFile *file, EjsModule *mp)
         TODO - replace this strict mode with dont-delete on a per property basis. Redefinition is then okay if the
         property to be replaced is !dont-delete
      */
-    if (ejs->loadState->flags & EJS_LOADER_STRICT) {
+    if (mp->loadState->flags & EJS_LOADER_STRICT) {
         if (ejsLookupProperty(ejs, current, &qname) >= 0) {
             ejsThrowReferenceError(ejs, "Block \"%s\" already loaded", qname.name);
             return MPR_ERR_CANT_CREATE;
@@ -6413,7 +6413,7 @@ static int loadBlockSection(Ejs *ejs, MprFile *file, EjsModule *mp)
 }
 
 
-static int loadEndBlockSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadEndBlockSection(Ejs *ejs, EjsModule *mp)
 {
     mprLog(ejs, 9, "    End block section %s", mp->name);
 
@@ -6425,7 +6425,7 @@ static int loadEndBlockSection(Ejs *ejs, MprFile *file, EjsModule *mp)
 }
 
 
-static int loadClassSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadClassSection(Ejs *ejs, EjsModule *mp)
 {
     EjsType         *type, *baseType, *iface, *nativeType;
     EjsTypeFixup    *fixup, *ifixup;
@@ -6448,7 +6448,7 @@ static int loadClassSection(Ejs *ejs, MprFile *file, EjsModule *mp)
     if (mp->hasError) {
         return MPR_ERR_CANT_READ;
     }
-    if (ejs->loadState->flags & EJS_LOADER_STRICT) {
+    if (mp->loadState->flags & EJS_LOADER_STRICT) {
         if (ejsLookupProperty(ejs, ejs->global, &qname) >= 0) {
             ejsThrowReferenceError(ejs, "Class \"%s\" already loaded", qname.name);
             return MPR_ERR_CANT_CREATE;
@@ -6475,7 +6475,7 @@ static int loadClassSection(Ejs *ejs, MprFile *file, EjsModule *mp)
     if (attributes & EJS_TYPE_FIXUP) {
         baseType = 0;
         if (fixup == 0) {
-            fixup = createFixup(ejs, (baseType) ? &baseType->qname : &ejs->objectType->qname, -1);
+            fixup = createFixup(ejs, mp, (baseType) ? &baseType->qname : &ejs->objectType->qname, -1);
         }
     }
     mprLog(ejs, 9, "    Load %s class %s for module %s at slot %d", qname.space, qname.name, mp->name, slotNum);
@@ -6523,7 +6523,7 @@ static int loadClassSection(Ejs *ejs, MprFile *file, EjsModule *mp)
             }
             if (iface) {
                 mprAddItem(type->implements, iface);
-            } else if (addFixup(ejs, EJS_FIXUP_INTERFACE_TYPE, (EjsObj*) type, -1, ifixup) < 0) {
+            } else if (addFixup(ejs, mp, EJS_FIXUP_INTERFACE_TYPE, (EjsObj*) type, -1, ifixup) < 0) {
                 ejsThrowMemoryError(ejs);
                 return MPR_ERR_NO_MEMORY;
             }
@@ -6540,7 +6540,7 @@ static int loadClassSection(Ejs *ejs, MprFile *file, EjsModule *mp)
     type->module = mp;
 
     if (fixup) {
-        if (addFixup(ejs, EJS_FIXUP_BASE_TYPE, (EjsObj*) type, -1, fixup) < 0) {
+        if (addFixup(ejs, mp, EJS_FIXUP_BASE_TYPE, (EjsObj*) type, -1, fixup) < 0) {
             ejsThrowMemoryError(ejs);
             return MPR_ERR_NO_MEMORY;
         }
@@ -6555,7 +6555,7 @@ static int loadClassSection(Ejs *ejs, MprFile *file, EjsModule *mp)
 }
 
 
-static int loadEndClassSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadEndClassSection(Ejs *ejs, EjsModule *mp)
 {
     EjsType     *type;
 
@@ -6577,7 +6577,7 @@ static int loadEndClassSection(Ejs *ejs, MprFile *file, EjsModule *mp)
 }
 
 
-static int loadFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
 {
     EjsType         *returnType, *currentType;
     EjsTypeFixup    *fixup;
@@ -6627,7 +6627,7 @@ static int loadFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
         if (code == 0) {
             return MPR_ERR_NO_MEMORY;
         }
-        if (mprRead(file, code, codeLen) != codeLen) {
+        if (mprRead(mp->file, code, codeLen) != codeLen) {
             mprFree(code);
             return MPR_ERR_CANT_READ;
         }
@@ -6650,7 +6650,7 @@ static int loadFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
         mprAssert(fun->isConstructor);
 
     } else {
-        if (ejs->loadState->flags & EJS_LOADER_STRICT) {
+        if (mp->loadState->flags & EJS_LOADER_STRICT) {
             if ((sn = ejsLookupProperty(ejs, block, &qname)) >= 0 && !(attributes & EJS_FUN_OVERRIDE)) {
                 if (!(attributes & EJS_TRAIT_SETTER && ejsHasTrait(block, sn, EJS_TRAIT_GETTER))) {
                     if (ejsIsType(block)) {
@@ -6710,7 +6710,7 @@ static int loadFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
     }
     if (fixup) {
         mprAssert(returnType == 0);
-        if (addFixup(ejs, EJS_FIXUP_RETURN_TYPE, (EjsObj*) fun, -1, fixup) < 0) {
+        if (addFixup(ejs, mp, EJS_FIXUP_RETURN_TYPE, (EjsObj*) fun, -1, fixup) < 0) {
             ejsThrowMemoryError(ejs);
             return MPR_ERR_NO_MEMORY;
         }
@@ -6726,7 +6726,7 @@ static int loadFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
 }
 
 
-static int loadEndFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadEndFunctionSection(Ejs *ejs, EjsModule *mp)
 {
     EjsFunction         *fun;
 
@@ -6741,7 +6741,7 @@ static int loadEndFunctionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
 }
 
 
-static int loadExceptionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadExceptionSection(Ejs *ejs, EjsModule *mp)
 {
     EjsFunction         *fun;
     EjsType             *catchType;
@@ -6771,7 +6771,7 @@ static int loadExceptionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
         ex = ejsAddException(fun, tryStart, tryEnd, catchType, handlerStart, handlerEnd, numBlocks, numStack, flags, i);
         if (fixup) {
             mprAssert(catchType == 0);
-            if (addFixup(ejs, EJS_FIXUP_EXCEPTION, (EjsObj*) ex, 0, fixup) < 0) {
+            if (addFixup(ejs, mp, EJS_FIXUP_EXCEPTION, (EjsObj*) ex, 0, fixup) < 0) {
                 mprAssert(0);
                 return MPR_ERR_NO_MEMORY;
             }
@@ -6783,10 +6783,8 @@ static int loadExceptionSection(Ejs *ejs, MprFile *file, EjsModule *mp)
     return 0;
 }
 
-/*
-    Define a global, class or block property. Not used for function locals or args.
- */
-static int loadPropertySection(Ejs *ejs, MprFile *file, EjsModule *mp, int sectionType)
+
+static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
 {
     EjsType         *type;
     EjsTypeFixup    *fixup;
@@ -6819,7 +6817,7 @@ static int loadPropertySection(Ejs *ejs, MprFile *file, EjsModule *mp, int secti
     if (attributes & EJS_PROP_NATIVE) {
         mp->hasNative = 1;
     }
-    if (ejs->loadState->flags & EJS_LOADER_STRICT) {
+    if (mp->loadState->flags & EJS_LOADER_STRICT) {
         if (ejsLookupProperty(ejs, current, &qname) >= 0) {
             ejsThrowReferenceError(ejs, "property \"%s\" already loaded", qname.name);
             return MPR_ERR_CANT_CREATE;
@@ -6849,7 +6847,7 @@ static int loadPropertySection(Ejs *ejs, MprFile *file, EjsModule *mp, int secti
             fixupKind = EJS_FIXUP_TYPE_PROPERTY;
         }
         mprAssert(type == 0);
-        if (addFixup(ejs, fixupKind, current, slotNum, fixup) < 0) {
+        if (addFixup(ejs, mp, fixupKind, current, slotNum, fixup) < 0) {
             ejsThrowMemoryError(ejs);
             return MPR_ERR_NO_MEMORY;
         }
@@ -6863,7 +6861,7 @@ static int loadPropertySection(Ejs *ejs, MprFile *file, EjsModule *mp, int secti
 }
 
 
-static int loadDocSection(Ejs *ejs, MprFile *file, EjsModule *mp)
+static int loadDocSection(Ejs *ejs, EjsModule *mp)
 {
     char        *doc;
 
@@ -6928,48 +6926,51 @@ static int loadNativeLibrary(Ejs *ejs, EjsModule *mp, cchar *modPath)
 #endif
 
 
-/*
-    Load a scripted module file
- */
-static int loadScriptModule(Ejs *ejs, MprFile *file, cchar *path, int flags)
+static int loadScriptModule(Ejs *ejs, cchar *filename, int minVersion, int maxVersion, int flags)
 {
     EjsModuleHdr    hdr;
+    MprFile         *file;
+    char            *path;
     int             status;
 
-    mprAssert(path);
+    mprAssert(filename && *filename);
+
+    if ((path = search(ejs, filename, minVersion, maxVersion)) == 0) {
+        return MPR_ERR_CANT_ACCESS;
+    }
+    if ((file = mprOpen(ejs, path, O_RDONLY | O_BINARY, 0666)) == NULL) {
+        ejsThrowIOError(ejs, "Can't open module file %s", path);
+        mprFree(path);
+        return MPR_ERR_CANT_OPEN;
+    }
+    mprLog(ejs, 4, "Loading module %s", path);
+    mprEnableFileBuffering(file, 0, 0);
 
     /*
         Read module file header
      */
     if ((mprRead(file, &hdr, sizeof(hdr))) != sizeof(hdr)) {
         ejsThrowIOError(ejs, "Error reading module file %s, corrupt header", path);
-        return EJS_ERR;
-    }
-    if ((int) swapWord(ejs, hdr.magic) != EJS_MODULE_MAGIC) {
-        ejsThrowIOError(ejs, "Bad module file format in %s", path);
-        return EJS_ERR;
-    }
-    if (swapWord(ejs, hdr.fileVersion) != EJS_MODULE_VERSION) {
-        ejsThrowIOError(ejs, "Incompatible module file format in %s", path);
-        return EJS_ERR;
-    }
-    if (ejs->loaderCallback) {
-        (ejs->loaderCallback)(ejs, EJS_SECT_START, path, &hdr);
-    }
 
-    /*
-        Load the sections: classes, properties and functions. This may load multiple modules.
-     */
-    if ((status = loadSections(ejs, file, path, &hdr, flags)) < 0) {
-        if (ejs->exception == 0) {
-            ejsThrowReferenceError(ejs, "Can't load module file %s", path);
+    } else if ((int) swapWord(ejs, hdr.magic) != EJS_MODULE_MAGIC) {
+        ejsThrowIOError(ejs, "Bad module file format in %s", path);
+
+    } if (swapWord(ejs, hdr.fileVersion) != EJS_MODULE_VERSION) {
+        ejsThrowIOError(ejs, "Incompatible module file format in %s", path);
+
+    } else {
+        if (ejs->loaderCallback) {
+            (ejs->loaderCallback)(ejs, EJS_SECT_START, path, &hdr);
         }
-        return status;
+        if ((status = loadSections(ejs, file, path, &hdr, flags)) < 0) {
+            if (ejs->exception == 0) {
+                ejsThrowReferenceError(ejs, "Can't load module file %s", path);
+            }
+        }
     }
-    if (ejs->loaderCallback) {
-        (ejs->loaderCallback)(ejs, EJS_SECT_END, ejs->modules, ejs->loadState->firstModule);
-    }
-    return 0;
+    mprFree(file);
+    mprFree(path);
+    return ejs->exception ? EJS_ERR : 0;
 }
 
 
@@ -7392,14 +7393,15 @@ static int alreadyLoaded(Ejs *ejs, cchar *name, int minVersion, int maxVersion)
 }
 
 
-static void createLoadState(Ejs *ejs, int flags)
+static EjsLoadState *createLoadState(Ejs *ejs, int flags)
 {
     EjsLoadState    *ls;
 
-    ls = ejs->loadState = mprAllocObjZeroed(ejs, EjsLoadState);
+    ls = mprAllocObjZeroed(ejs, EjsLoadState);
     ls->typeFixups = mprCreateList(ls);
     ls->firstModule = mprGetListCount(ejs->modules);
     ls->flags = flags;
+    return ls;
 }
 
 
@@ -7510,7 +7512,7 @@ int ejsModuleReadType(Ejs *ejs, EjsModule *mp, EjsType **typeRef, EjsTypeFixup *
         *typeRef = type;
 
     } else if (type == 0 && fixup) {
-        *fixup = createFixup(ejs, &qname, slot);
+        *fixup = createFixup(ejs, mp, &qname, slot);
     }
     if (typeName) {
         *typeName = qname;
@@ -7522,12 +7524,13 @@ int ejsModuleReadType(Ejs *ejs, EjsModule *mp, EjsType **typeRef, EjsTypeFixup *
 }
 
 
-static EjsTypeFixup *createFixup(Ejs *ejs, EjsName *qname, int slotNum)
+static EjsTypeFixup *createFixup(Ejs *ejs, EjsModule *mp, EjsName *qname, int slotNum)
 {
     EjsTypeFixup    *fixup;
 
-    mprAssert(ejs->loadState->typeFixups);
-    fixup = mprAllocZeroed(ejs->loadState->typeFixups, sizeof(EjsTypeFixup));
+    mprAssert(mp->loadState->typeFixups);
+
+    fixup = mprAllocZeroed(mp->loadState->typeFixups, sizeof(EjsTypeFixup));
     if (fixup == 0) {
         return 0;
     }
@@ -7537,19 +7540,19 @@ static EjsTypeFixup *createFixup(Ejs *ejs, EjsName *qname, int slotNum)
 }
 
 
-static int addFixup(Ejs *ejs, int kind, EjsObj *target, int slotNum, EjsTypeFixup *fixup)
+static int addFixup(Ejs *ejs, EjsModule *mp, int kind, EjsObj *target, int slotNum, EjsTypeFixup *fixup)
 {
     int     index;
 
     mprAssert(ejs);
     mprAssert(fixup);
-    mprAssert(ejs->loadState->typeFixups);
+    mprAssert(mp->loadState->typeFixups);
 
     fixup->kind = kind;
     fixup->target = target;
     fixup->slotNum = slotNum;
 
-    index = mprAddItem(ejs->loadState->typeFixups, fixup);
+    index = mprAddItem(mp->loadState->typeFixups, fixup);
     if (index < 0) {
         mprAssert(0);
         return EJS_ERR;
@@ -8716,17 +8719,20 @@ static int configureEjs(Ejs *ejs)
 static int loadStandardModules(Ejs *ejs, MprList *require)
 {
     char    *name;
-    int     rc, next, ver;
+    int     rc, next, ver, flags;
 
     rc = 0;
-
     ver = 0;
     if (require) {
         for (next = 0; rc == 0 && (name = mprGetNextItem(require, &next)) != 0; ) {
-            rc += ejsLoadModule(ejs, name, ver, ver, EJS_LOADER_STRICT);
+            flags = EJS_LOADER_STRICT;
+            if (strcmp(name, "ejs") == 0) {
+                flags |= EJS_LOADER_BUILTIN;
+            }
+            rc += ejsLoadModule(ejs, name, ver, ver, flags);
         }
     } else {
-        rc += ejsLoadModule(ejs, "ejs", ver, ver, EJS_LOADER_STRICT);
+        rc += ejsLoadModule(ejs, "ejs", ver, ver, EJS_LOADER_STRICT | EJS_LOADER_BUILTIN);
     }
     return rc;
 }
@@ -20566,11 +20572,18 @@ static EjsObj *math_min(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
  */
 static EjsObj *math_pow(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    MprNumber   x, y;
+    MprNumber   x, y, result;
     
     x = ejsGetNumber(ejs, argv[0]);
     y = ejsGetNumber(ejs, argv[1]);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) pow(x,y));
+    result = pow(x, y);
+#if CYGWIN
+    /* Cygwin computes (0.0 / -1) == -Infinity */
+    if (result < 0 && x == 0.0) {
+        result = -result;
+    }
+#endif
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) result);
 }
 
 
@@ -22068,6 +22081,9 @@ static EjsObj *castObject(Ejs *ejs, EjsObj *obj, EjsType *type)
         if (obj == ejs->global) {
             return (EjsObj*) ejsCreateString(ejs, "[object global]");
         } else {
+            if (obj->type->helpers.cast && obj->type->helpers.cast != castObject) {
+                return (obj->type->helpers.cast)(ejs, obj, type);
+            }
             return (EjsObj*) ejsCreateStringAndFree(ejs, mprStrcat(ejs, -1, "[object ", obj->type->qname.name, "]", NULL));
         }
 
@@ -23701,21 +23717,34 @@ static EjsObj *obj_getOwnPropertyDescriptor(Ejs *ejs, EjsObj *unused, int argc, 
 /*
     Get all properties names including non-enumerable properties
 
-    static function getOwnPropertyNames(obj: Object): Array
+    static function getOwnPropertyNames(obj: Object, options: Object): Array
  */
 static EjsObj *obj_getOwnPropertyNames(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    EjsObj      *obj;
+    EjsObj      *obj, *options, *arg;
     EjsArray    *result;
     EjsTrait    *trait;
     EjsName     qname;
-    int         slotNum, index;
+    int         slotNum, index, includeBases, excludeFunctions;
 
     obj = argv[0];
+    includeBases = 0;
+    excludeFunctions = 0;
+    if (argc > 0) {
+        options = argv[1];
+        if ((arg = ejsGetPropertyByName(ejs, options, EN(&qname, "includeBases"))) != 0) {
+            includeBases = (arg == (EjsObj*) ejs->trueValue);
+        }
+        if ((arg = ejsGetPropertyByName(ejs, options, EN(&qname, "excludeFunctions"))) != 0) {
+            excludeFunctions = (arg == (EjsObj*) ejs->trueValue);
+        }
+    }
     if ((result = ejsCreateArray(ejs, 0)) == 0) {
         return 0;
     }
-    for (index = slotNum = obj->type->numInherited; slotNum < obj->numSlots; slotNum++) {
+    index = 0;
+    slotNum = (includeBases) ? 0 : obj->type->numInherited;
+    for (; slotNum < obj->numSlots; slotNum++) {
         if ((trait = ejsGetTrait(ejs, obj, slotNum)) != 0) {
             if (trait->attributes & (EJS_TRAIT_DELETED | EJS_FUN_INITIALIZER | EJS_FUN_MODULE_INITIALIZER)) {
                 continue;
@@ -23723,6 +23752,9 @@ static EjsObj *obj_getOwnPropertyNames(Ejs *ejs, EjsObj *unused, int argc, EjsOb
         }
         qname = ejsGetPropertyName(ejs, obj, slotNum);
         if (qname.name[0] == '\0') {
+            continue;
+        }
+        if (excludeFunctions && ejsIsFunction(ejsGetProperty(ejs, obj, slotNum))) {
             continue;
         }
         ejsSetProperty(ejs, (EjsObj*) result, index++, (EjsObj*) ejsCreateString(ejs, qname.name));
@@ -28035,16 +28067,11 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
                     elt = ejsCreateStringWithLength(ejs, cp, (int) (mark - cp));
                     ejsSetProperty(ejs, (EjsObj*) results, -1, (EjsObj*) elt);
                     cp = mark + delimLen;
-                    mark = cp;
-                    if (mark >= end) {
-                        break;
-                    }
+                    mark = cp - 1;
                 }
             }
-            if (mark > cp) {
-                elt = ejsCreateStringWithLength(ejs, cp, (int) (mark - cp));
-                ejsSetProperty(ejs, (EjsObj*) results, -1, (EjsObj*) elt);
-            }
+            elt = ejsCreateStringWithLength(ejs, cp, (int) (mark - cp));
+            ejsSetProperty(ejs, (EjsObj*) results, -1, (EjsObj*) elt);
         }
         return (EjsObj*) results;
 
@@ -29156,9 +29183,9 @@ static int timerCallback(EjsTimer *tp, MprEvent *e)
     }
     arg = (EjsVar*) event;
     ejsRunFunction(tp->ejs, tp->callback, NULL, 1, &arg);
-    if (tp->ejs->exception) {
+    if (ejs->exception) {
         //  TODO must have way that users can catch these
-        mprError(tp, 0, "Exception in timer: %s", ejsGetErrorMsg(tp->ejs, 1));
+        mprError(tp, "Exception in timer: %s", ejsGetErrorMsg(ejs, 1));
     }
     return 0;
 }
@@ -30665,44 +30692,110 @@ static EjsObj *uri_isDir(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Join uri segments
     function join(...others): Uri
  */
+#if OLD && UNUSED
 static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *np;
     EjsArray    *args;
-    HttpUri     *uri, *nuri;
-    char        *other;
-    char        *result, *prior;
+    EjsObj      *vp;
+    char        *other, *cp, *result, *prior;
     int         i;
 
     args = (EjsArray*) argv[0];
-    uri = up->uri;
-    result = uri->path;
     np = cloneUri(ejs, up, 0);
-    nuri = np->uri;
+    result = mprStrdup(np->uri, np->uri->path);
 
     for (i = 0; i < args->length; i++) {
-        if ((other = getUriString(ejs, ejsGetProperty(ejs, (EjsObj*) args, i))) == NULL) {
+        vp = ejsGetProperty(ejs, (EjsObj*) args, i);
+        if ((other = getUriString(ejs, vp)) == NULL) {
             return 0;
         }
         prior = result;
-        if (other[0] == '/') {
-            result = mprStrdup(nuri, other);
+        if (strncmp(other, "http://", 7) == 0 || strncmp(other, "https://", 8) == 0) {
+            mprFree(np->uri);
+            np->uri = httpCreateUri(np, other, 0);
+            result = mprStrdup(np->uri, np->uri->path);
+            prior = 0;
+        } else if (other[0] == '/') {
+            result = mprStrdup(np->uri, other);
+            prior = 0;
+        } else if (*prior == '\0') {
+            result = mprStrdup(np->uri, other);
         } else {
             if (prior[strlen(prior) - 1] == '/') {
-                result = mprStrcat(nuri, -1, prior, other, NULL);
+                result = mprStrcat(np->uri, -1, prior, other, NULL);
             } else {
-                result = mprStrcat(nuri, -1, prior, "/", other, NULL);
+                if ((cp = strrchr(prior, '/')) != NULL) {
+                    cp[1] = '\0';
+                }
+                result = mprStrcat(np->uri, -1, prior, other, NULL);
             }
         }
-        mprFree(other);
-        if (prior != uri->path) {
+        if (prior != np->uri->path) {
             mprFree(prior);
         }
+        mprFree(other);
     }
     np->uri->path = result;
     np->uri->ext = (char*) mprGetPathExtension(np->uri, np->uri->path);
+    //  MOB -- what about reference?
     return (EjsObj*) np;
 }
+
+#else
+
+static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+{
+    EjsUri      *np;
+    EjsArray    *args;
+    EjsObj      *vp;
+    char        *other, *result, *prior, *cp;
+    int         i;
+
+    args = (EjsArray*) argv[0];
+    np = cloneUri(ejs, up, 0);
+    result = mprStrdup(np->uri, np->uri->path);
+
+    for (i = 0; i < args->length; i++) {
+        vp = ejsGetProperty(ejs, (EjsObj*) args, i);
+        if ((other = getUriString(ejs, vp)) == NULL) {
+            return 0;
+        }
+        prior = result;
+        if (strncmp(other, "http://", 7) == 0 || strncmp(other, "https://", 8) == 0) {
+            mprFree(np->uri);
+            np->uri = httpCreateUri(np, other, 0);
+            result = mprStrdup(np->uri, np->uri->path);
+            prior = 0;
+        } else if (other[0] == '/') {
+            result = mprStrdup(np->uri, other);
+            prior = 0;
+        } else if (*prior == '\0') {
+            result = mprStrdup(np->uri, other);
+        } else {
+            if (prior[strlen(prior) - 1] == '/') {
+                prior[strlen(prior) - 1] = '\0';
+            }
+            if (other[0] == '/') {
+                result = mprStrcat(np->uri, -1, prior, other, NULL);
+            } else {
+                result = mprStrcat(np->uri, -1, prior, "/", other, NULL);
+            }
+        }
+        if (prior != np->uri->path) {
+            mprFree(prior);
+        }
+        mprFree(other);
+    }
+    np->uri->path = result;
+    np->uri->ext = (char*) mprGetPathExtension(np->uri, np->uri->path);
+    if ((cp = strchr(result, '#')) != NULL) {
+        *cp++ = '\0';
+        np->uri->reference = cp;
+    }
+    return (EjsObj*) np;
+}
+#endif
 
 
 /*  
@@ -30745,7 +30838,7 @@ static EjsObj *uri_normalize(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     EjsUri      *np;
 
     np = cloneUri(ejs, up, 0);
-    np->uri->path = mprGetNormalizedPath(ejs, up->uri->path);
+    np->uri->path = httpNormalizeUriPath(np, up->uri->path);
     return (EjsObj*) np;
 }
 
@@ -30766,7 +30859,7 @@ static EjsObj *uri_path(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
  */
 static EjsObj *uri_set_path(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    up->uri->path = mprStrdup(up, ejsGetString(ejs, argv[0]));
+    up->uri->path = httpNormalizeUriPath(up, ejsGetString(ejs, argv[0]));
     up->uri->ext = (char*) mprGetPathExtension(up->uri, up->uri->path);
     return 0;
 }
@@ -30866,7 +30959,10 @@ static EjsObj *uri_query(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
  */
 static EjsObj *uri_set_query(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    up->uri->query = mprStrdup(up, ejsGetString(ejs, argv[0]));
+    cchar    *value;
+
+    value = (argv[0] == ejs->nullValue) ? "" : ejsGetString(ejs, argv[0]);
+    up->uri->query = mprStrdup(up, value);
     return 0;
 }
 
@@ -30887,7 +30983,10 @@ static EjsObj *uri_reference(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
  */
 static EjsObj *uri_set_reference(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    up->uri->reference = mprStrdup(up, ejsGetString(ejs, argv[0]));
+    cchar    *value;
+
+    value = (argv[0] == ejs->nullValue) ? "" : ejsGetString(ejs, argv[0]);
+    up->uri->reference = mprStrdup(up, value);
     return 0;
 }
 
@@ -35458,8 +35557,10 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
         break;
 
     case HTTP_STATE_COMPLETE:
-        if (req && req->emitter) {
-            ejsSendEvent(ejs, req->emitter, "complete", (EjsObj*) req);
+        if (req) {
+            if (req->emitter) {
+                ejsSendEvent(ejs, req->emitter, "close", (EjsObj*) req);
+            }
         }
         break;
 
@@ -35790,12 +35891,21 @@ static EjsObj *createEnv(Ejs *ejs, EjsRequest *req)
 }
 
 
-static EjsObj *createSession(Ejs *ejs, EjsRequest *req)
+/*
+    This will get the current session or create a new session if required
+ */
+static EjsObj *getSession(Ejs *ejs, EjsRequest *req, int create)
 {
     if (req->session) {
         return (EjsObj*) req->session;
     }
-    req->session = ejsCreateSession(ejs, 0, 0);
+    if ((req->session = ejsGetSession(ejs, req)) == NULL && create) {
+        req->session = ejsCreateSession(ejs, req, 0, 0);
+    }
+    if (req->session) {
+        //  TODO - SECURE (last arg) ?
+        httpSetCookie(req->conn, EJS_SESSION, req->session->id, "/", NULL, 0, 0);
+    }
     return (EjsObj*) req->session;
 }
 
@@ -35861,28 +35971,27 @@ static char *makeRelativeHome(Ejs *ejs, EjsRequest *req)
     HttpReceiver    *rec;
     cchar           *path, *end, *sp;
     char            *home, *cp;
-    int             slashes;
+    int             levels;
 
     rec = req->conn->receiver;
     mprAssert(rec->pathInfo);
 
     path = rec->pathInfo;
     end = &path[strlen(path)];
-    slashes = 0;
-    for (slashes = 0, sp = &path[1]; sp < end; sp++) {
+    for (levels = 1, sp = &path[1]; sp < end; sp++) {
         if (*sp == '/' && sp[-1] != '/') {
-            slashes++;
+            levels++;
         }
     }
-    home = mprAlloc(req, slashes * 3 + 2);
-    if (slashes) {
-        for (cp = home; slashes > 0; slashes--) {
+    home = mprAlloc(req, levels * 3 + 2);
+    if (levels) {
+        for (cp = home; levels > 0; levels--) {
             strcpy(cp, "../");
             cp += 3;
         }
         *cp = '\0';
     } else {
-        strcpy(home, ".");
+        strcpy(home, "./");
     }
     return home;
 }
@@ -35984,9 +36093,13 @@ static EjsObj *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return (EjsObj*) req->server;
 
     case ES_ejs_web_Request_session:
-        return createSession(ejs, req);
+        return getSession(ejs, req, 1);
 
     case ES_ejs_web_Request_sessionID:
+        if (!req->probedSession) {
+            getSession(ejs, req, 0);
+            req->probedSession = 1;
+        }
         if (req->session) {
             return createString(ejs, req->session->id);
         } else return ejs->nullValue;
@@ -36193,7 +36306,7 @@ static EjsObj *req_getResponseHeaders(Ejs *ejs, EjsRequest *req, int argc, EjsOb
  */
 static EjsObj *req_destroySession(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    ejsDestroySession(ejs, req->session);
+    ejsDestroySession(ejs, req->server, req->session);
     return 0;
 }
 
@@ -36378,7 +36491,15 @@ EjsRequest *ejsCreateRequest(Ejs *ejs, EjsHttpServer *server, HttpConn *conn, cc
     req->ejs = ejs;
     req->server = server;
     rec = conn->receiver;
+#if UNUSED
     req->dir = mprGetAbsPath(req, dir);
+#else
+    if (mprIsRelPath(req, dir)) {
+        req->dir = mprStrdup(req, dir);
+    } else {
+        req->dir = mprGetRelPath(req, dir);
+    }
+#endif
     req->home = makeRelativeHome(ejs, req);
     scheme = conn->secure ? "https" : "http";
     ip = conn->sock ? conn->sock->acceptIp : server->ip;
@@ -36509,7 +36630,8 @@ void ejsConfigureRequestType(Ejs *ejs)
     ejsSession.c - Native code for the Session class.
     This provides an in-memory, server-local session state store. It is fast, non-durable, non-scalable.
 
-    The Session class serializes objects that are stored to the session object.
+    The Session class serializes objects that are stored to the session object so that they can be accessed safely 
+    from multiple interpreters.
 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
@@ -36521,19 +36643,20 @@ static void noteSessionActivity(Ejs *ejs, EjsSession *sp);
 static void sessionTimer(Ejs *ejs, MprEvent *event);
 
 
-static EjsVar *getSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum)
+static EjsObj *getSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum)
 {
-    EjsVar      *vp;
+    EjsObj      *vp;
     Ejs         *master;
 
+    //  MOB -- convenience API for this
     master = ejs->master ? ejs->master : ejs;
     ejsLockVm(master);
-    vp = ejs->objectType->helpers.getProperty(ejs, (EjsVar*) sp, slotNum);
+    vp = ejs->objectType->helpers.getProperty(ejs, (EjsObj*) sp, slotNum);
     if (vp) {
         vp = ejsDeserialize(ejs, (EjsString*) vp);
     }
     if (vp == ejs->undefinedValue) {
-        vp = (EjsVar*) ejs->emptyStringValue;
+        vp = (EjsObj*) ejs->emptyStringValue;
     }
     noteSessionActivity(ejs, sp);
     ejsUnlockVm(master);
@@ -36541,9 +36664,9 @@ static EjsVar *getSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum)
 }
 
 
-static EjsVar *getSessionPropertyByName(Ejs *ejs, EjsSession *sp, EjsName *qname)
+static EjsObj *getSessionPropertyByName(Ejs *ejs, EjsSession *sp, EjsName *qname)
 {
-    EjsVar      *vp;
+    EjsObj      *vp;
     Ejs         *master;
     int         slotNum;
 
@@ -36551,14 +36674,14 @@ static EjsVar *getSessionPropertyByName(Ejs *ejs, EjsSession *sp, EjsName *qname
     master = ejs->master ? ejs->master : ejs;
     ejsLockVm(master);
 
-    slotNum = ejs->objectType->helpers.lookupProperty(ejs, (EjsVar*) sp, qname);
+    slotNum = ejs->objectType->helpers.lookupProperty(ejs, (EjsObj*) sp, qname);
     if (slotNum < 0) {
         /*  
             Return empty string so that web pages can access session values without having to test for null/undefined
          */
-        vp = (EjsVar*) ejs->emptyStringValue;
+        vp = (EjsObj*) ejs->emptyStringValue;
     } else {
-        vp = ejs->objectType->helpers.getProperty(ejs, (EjsVar*) sp, slotNum);
+        vp = ejs->objectType->helpers.getProperty(ejs, (EjsObj*) sp, slotNum);
         if (vp) {
             vp = ejsDeserialize(ejs, (EjsString*) vp);
         }
@@ -36569,7 +36692,7 @@ static EjsVar *getSessionPropertyByName(Ejs *ejs, EjsSession *sp, EjsName *qname
 }
 
 
-static int setSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum, EjsVar *value)
+static int setSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum, EjsObj *value)
 {
     Ejs     *master;
     
@@ -36579,8 +36702,8 @@ static int setSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum, EjsVar *val
     master = ejs->master ? ejs->master : ejs;
     ejsLockVm(master);
 
-    value = (EjsVar*) ejsToJSON(master, value, NULL);
-    slotNum = master->objectType->helpers.setProperty(master, (EjsVar*) sp, slotNum, value);
+    value = (EjsObj*) ejsToJSON(master, value, NULL);
+    slotNum = master->objectType->helpers.setProperty(master, (EjsObj*) sp, slotNum, value);
     noteSessionActivity(ejs, sp);
     ejsUnlockVm(master);
     return slotNum;
@@ -36610,28 +36733,25 @@ static void sessionTimer(Ejs *ejs, MprEvent *event)
     now = mprGetTime(ejs);
 
     sessions = ejs->sessions;
-    master = ejs->master;
-    if (master == 0) {
-        mprAssert(master);
-        return;
-    }
+    master = ejs->master ? ejs->master : ejs;
 
     /*  
         This could be on the primary event thread. Can't block long.
      */
     if (mprTryLock(master->mutex)) {
-        count = ejsGetPropertyCount(master, (EjsVar*) sessions);
+        count = ejsGetPropertyCount(master, (EjsObj*) sessions);
         deleted = 0;
         for (i = count - 1; i >= 0; i--) {
-            session = ejsGetProperty(master, (EjsVar*) sessions, i);
+            session = ejsGetProperty(master, (EjsObj*) sessions, i);
             if (session->obj.type == ejs->sessionType) {
                 if (session && session->expire <= now) {
-                    ejsDeleteProperty(master, (EjsVar*) sessions, i);
+                    ejsDeleteProperty(master, (EjsObj*) sessions, i);
                     deleted++;
                 }
             }
         }
         if (deleted) {
+            //  MOB -- probably better to do at idle time
             ejsCollectGarbage(master, EJS_GEN_NEW);
         }
         if (count == 0) {
@@ -36643,15 +36763,20 @@ static void sessionTimer(Ejs *ejs, MprEvent *event)
 }
 
 
-#if UNUSED
-void ejsParseWebSessionCookie(EjsRequest *req)
+EjsSession *ejsGetSession(Ejs *ejs, EjsRequest *req)
 {
+    Ejs            *master;
     EjsName         qname;
-    char            *cookie, *id, *cp, *value;
+    EjsSession      *session;
+    cchar           *cookies, *cookie;
+    char            *id, *cp, *value;
     int             quoted, len;
 
-    cookie = req->cookie;
-    while (cookie && (value = strstr(cookie, EJS_SESSION)) != 0) {
+    master = ejs->master ? ejs->master : ejs;
+    session = 0;
+
+    cookies = httpGetCookies(req->conn);
+    for (cookie = cookies; cookie && (value = strstr(cookie, EJS_SESSION)) != 0; cookie = value) {
         value += strlen(EJS_SESSION);
         while (isspace((int) *value) || *value == '=') {
             value++;
@@ -36675,23 +36800,19 @@ void ejsParseWebSessionCookie(EjsRequest *req)
         len = cp - value;
         id = mprMemdup(req, value, len + 1);
         id[len] = '\0';
-
-        if (ejs->master) {
-            ejsName(&qname, "", id);
-            req->session = ejsGetPropertyByName(ejs->master, (EjsVar*) ejs->sessions, &qname);
-        }
+        session = ejsGetPropertyByName(master, (EjsObj*) ejs->sessions, ejsName(&qname, "", id));
         mprFree(id);
-        cookie = value;
+        break;
     }
+    return session;
 }
-#endif
 
 
 /*  
     Create a new session object. This is created in the master interpreter and will persist past the life 
     of the current request. This will allocate a new session ID. Timeout is in seconds.
  */
-EjsSession *ejsCreateSession(Ejs *ejs, int timeout, bool secure)
+EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure)
 {
     Ejs             *master;
     EjsSession      *session;
@@ -36700,15 +36821,12 @@ EjsSession *ejsCreateSession(Ejs *ejs, int timeout, bool secure)
     char            idBuf[64], *id;
     int             slotNum, next;
 
-    master = ejs->master;
-    if (master == 0) {
-        return 0;
-    }
+    master = ejs->master ? ejs->master : ejs;
     if (timeout <= 0) {
         timeout = ejs->sessionTimeout;
     }
     now = mprGetTime(ejs);
-    expire = now + timeout * MPR_TICKS_PER_SEC;
+    expire = now + (timeout * MPR_TICKS_PER_SEC);
 
     ejsLockVm(master);
     session = (EjsSession*) ejsCreateObject(master, ejs->sessionType, 0);
@@ -36731,7 +36849,7 @@ EjsSession *ejsCreateSession(Ejs *ejs, int timeout, bool secure)
     }
     session->id = mprStrdup(session, id);
 
-    slotNum = ejsSetPropertyByName(ejs->master, (EjsVar*) ejs->sessions, EN(&qname, session->id), (EjsVar*) session);
+    slotNum = ejsSetPropertyByName(master, (EjsObj*) ejs->sessions, EN(&qname, session->id), (EjsObj*) session);
     if (slotNum < 0) {
         mprFree(session);
         ejsUnlockVm(master);
@@ -36746,15 +36864,9 @@ EjsSession *ejsCreateSession(Ejs *ejs, int timeout, bool secure)
     ejsUnlockVm(master);
 
     mprLog(ejs, 3, "Created new session %s", id);
-
-#if TODO
-    //  TODO - need to set out of band 
-    /*  
-        Create a cookie that will only live while the browser is not exited. (Set timeout to zero).
-     */
-    ejsSetCookie(ejs, EJS_SESSION, id, "/", NULL, 0, secure);
-#endif
-    ejsSendEvent(ejs, ejs->emitter, "createSession", (EjsObj*) session);
+    if (req->server->emitter) {
+        ejsSendEvent(ejs, req->server->emitter, "createSession", (EjsObj*) ejsCreateString(ejs, id));
+    }
     return session;
 }
 
@@ -36762,30 +36874,21 @@ EjsSession *ejsCreateSession(Ejs *ejs, int timeout, bool secure)
 /*  
     Destroy a session. Return true if destroyed. Return 0 if cancelled. 
  */
-int ejsDestroySession(Ejs *ejs, EjsSession *session)
+int ejsDestroySession(Ejs *ejs, EjsHttpServer *server, EjsSession *session)
 {
     EjsName     qname;
     MprTime     now;
 
     if (session) {
-        //  MOB -- but users can't do anything with a bare session. They really need the request object.
-        ejsSendEvent(ejs, ejs->emitter, "destroySession", (EjsObj*) session);
+        if (server) {
+            ejsSendEvent(ejs, server->emitter, "destroySession", (EjsObj*) ejsCreateString(ejs, session->id));
+        }
         now = mprGetTime(ejs);
         if (session->expire <= now) {
-            ejsDeletePropertyByName(ejs->master, (EjsVar*) ejs->sessions, EN(&qname, session->id));
+            ejsDeletePropertyByName(ejs->master, (EjsObj*) ejs->sessions, EN(&qname, session->id));
             return 1;
         }
     }
-    return 0;
-}
-
-
-/*  
-    function addListener(name: [String|Array], listener: Function): Void
- */
-static EjsObj *sess_addListener(Ejs *ejs, EjsSession *sp, int argc, EjsObj **argv)
-{
-    ejsAddListener(ejs, &ejs->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -36795,17 +36898,7 @@ static EjsObj *sess_addListener(Ejs *ejs, EjsSession *sp, int argc, EjsObj **arg
  */
 static EjsObj *sess_count(Ejs *ejs, EjsSession *sp, int argc, EjsObj **argv)
 {
-    return 0;
-}
-
-
-/*  
-    function removeListener(name: [String|Array], listener: Function): Void
- */
-static EjsObj *sess_removeListener(Ejs *ejs, EjsSession *sp, int argc, EjsObj **argv)
-{
-    ejsRemoveListener(ejs, ejs->emitter, argv[0], argv[1]);
-    return 0;
+    return (EjsObj*) ejsCreateNumber(ejs, ejsGetPropertyCount(ejs, ejs->sessions));
 }
 
 
@@ -36820,9 +36913,13 @@ void ejsConfigureSessionType(Ejs *ejs)
     helpers->getPropertyByName = (EjsGetPropertyByNameHelper) getSessionPropertyByName;
     helpers->setProperty = (EjsSetPropertyHelper) setSessionProperty;
 
-    ejsBindMethod(ejs, type, ES_ejs_web_Session_addListener, (EjsFun) sess_addListener);
     ejsBindMethod(ejs, type, ES_ejs_web_Session_count, (EjsFun) sess_count);
-    ejsBindMethod(ejs, type, ES_ejs_web_Session_removeListener, (EjsFun) sess_removeListener);
+
+    //  MOB -- could this be a simple static object in Session?
+    ejs->sessions = ejsCreateSimpleObject(ejs);
+
+    //  MOB -- should come from ejsrc
+    ejs->sessionTimeout = EJS_SESSION_TIMEOUT;
 }
 
 
@@ -41878,11 +41975,13 @@ static void genThisBaseClassPropertyName(EcCompiler *cp, EjsType *type, int slot
 static void genClassName(EcCompiler *cp, EjsType *type)
 {
     Ejs         *ejs;
+    EcState     *state;
     int         slotNum;
 
     mprAssert(type);
 
     ejs = cp->ejs;
+    state = cp->state;
 
     if (type == (EjsType*) ejs->global) {
         ecEncodeOpcode(cp, EJS_OP_LOAD_GLOBAL);
@@ -41893,6 +41992,19 @@ static void genClassName(EcCompiler *cp, EjsType *type)
         slotNum = ejsLookupProperty(ejs, ejs->global, &type->qname);
         mprAssert(slotNum >= 0);
         genGlobalName(cp, slotNum);
+
+    } else if (type == state->currentClass &&
+                (!state->inFunction || (state->currentFunction && state->currentFunction->staticMethod))) {
+        ecEncodeOpcode(cp, EJS_OP_LOAD_THIS);
+        pushStack(cp, 1);
+#if UNUSED
+            /*
+                This is broken. When calling a subclass method, this refers to the outer class and so the base
+                is not right
+             */
+            ecEncodeOpcode(cp, EJS_OP_LOAD_THIS_BASE);
+            ecEncodeNumber(cp, 0);
+#endif
 
     } else {
         ecEncodeOpcode(cp, EJS_OP_LOAD_GLOBAL);
@@ -47086,7 +47198,7 @@ int ecCreateModuleSection(EcCompiler *cp)
     buf = state->code->buf;
     mp = state->currentModule;
 
-    mprLog(cp, 5, "Create module section %s", mp->name);
+    mprLog(cp, 7, "Create module section %s", mp->name);
 
     ejs = cp->ejs;
     constants = mp->constants;
@@ -47173,7 +47285,7 @@ static int createDependencySection(EcCompiler *cp)
                 return MPR_ERR_CANT_WRITE;
             }
             mp->checksum += sum(module->name, 0);
-            mprLog(cp, 5, "    dependency section for %s from module %s", module->name, mp->name);
+            mprLog(cp, 7, "    dependency section for %s from module %s", module->name, mp->name);
         }
     }
     return 0;
@@ -47324,7 +47436,7 @@ static int createClassSection(EcCompiler *cp, EjsObj *block, int slotNum, EjsObj
     qname = ejsGetPropertyName(ejs, ejs->global, slotNum);
     mprAssert(qname.name);
 
-    mprLog(cp, 5, "    type section %s for module %s", qname.name, mp->name);
+    mprLog(cp, 7, "    type section %s for module %s", qname.name, mp->name);
     
     type = ejsGetProperty(ejs, ejs->global, slotNum);
     mprAssert(type);
@@ -47622,7 +47734,7 @@ static int createPropertySection(EcCompiler *cp, EjsObj *block, int slotNum, Ejs
     trait = ejsGetTrait(ejs, block, slotNum);
     attributes = trait->attributes;
 
-    mprLog(cp, 5, "    global property section %s", qname.name);
+    mprLog(cp, 7, "    global property section %s", qname.name);
 
     if (trait->type) {
         if (trait->type == ejs->namespaceType || (!ejs->initialized && (strcmp(trait->type->qname.name, "Namespace") == 0))){
@@ -47673,7 +47785,7 @@ static int createDocSection(EcCompiler *cp, EjsObj *block, int slotNum)
     qname = ejsGetPropertyName(ejs, block, slotNum);
     mprAssert(qname.name);
 
-    mprLog(cp, 5, "Create doc section for %s::%s", qname.space, qname.name);
+    mprLog(cp, 7, "Create doc section for %s::%s", qname.space, qname.name);
 
     if (ecEncodeByte(cp, EJS_SECT_DOC) < 0) {
         return MPR_ERR_CANT_WRITE;
@@ -57812,7 +57924,6 @@ EcNode *ecResetError(EcCompiler *cp, EcNode *np, bool eatInput)
         }
     }
 
-
     /*
         Try to resync by eating input up to the next statement / directive
      */
@@ -57827,7 +57938,6 @@ EcNode *ecResetError(EcCompiler *cp, EcNode *np, bool eatInput)
         }
         getToken(cp);
     }
-
     return np;
 }
 

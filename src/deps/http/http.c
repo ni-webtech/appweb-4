@@ -122,7 +122,7 @@ MAIN(httpMain, int argc, char *argv[])
         Wait for all the threads to complete (simple but effective). Keep servicing events as we wind down.
      */
     while (activeLoadThreads > 0) {
-        mprServiceEvents(mpr, NULL, 250, 0);
+        mprServiceEvents(mpr, NULL, 10, 0);
     }
     if (benchmark) {
         elapsed = (double) (mprGetTime(mpr) - start);

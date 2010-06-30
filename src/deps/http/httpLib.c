@@ -8554,7 +8554,7 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
     if (lifetime > 0) {
         mprDecodeUniversalTime(trans, &tm, conn->time + (lifetime * MPR_TICKS_PER_SEC));
         expiresAtt = "; expires=";
-        expires = mprFormatTime(trans, MPR_RFC_DATE, &tm);
+        expires = mprFormatTime(trans, MPR_HTTP_DATE, &tm);
 
     } else {
         expires = expiresAtt = "";
