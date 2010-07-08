@@ -1337,7 +1337,8 @@ struct  MprWorkerService;
 struct  MprXml;
 
 
-//  TODO - make these consistent: CANT vs NOT or NO
+//  MOB TODO - make these consistent: CANT vs NOT or NO
+//  MOB SORT 
 
 /**
     Standard MPR return and error codes
@@ -1378,7 +1379,8 @@ struct  MprXml;
 #define MPR_ERR_CANT_DELETE             -31
 #define MPR_ERR_CANT_CONNECT            -32
 #define MPR_ERR_CONNECTION              -33
-#define MPR_ERR_MAX                     -34
+#define MPR_ERR_CANT_LOAD               -34
+#define MPR_ERR_MAX                     -35
 
 /**
     Standard logging trace levels are 0 to 9 with 0 being the most verbose. These are ored with the error source
@@ -4018,6 +4020,15 @@ extern void mprStopContinuousEvent(MprEvent *event);
 extern void mprRestartContinuousEvent(MprEvent *event);
 
 /**
+    Enable or disable an event being continous
+    @description This call will modify the continuous property for an event. 
+    @param event Event object returned from #mprCreateEvent
+    @param enable Set to 1 to enable continous scheduling of the event
+    @ingroup MprEvent
+ */
+extern void mprEnableContinuousEvent(MprEvent *event, int enable);
+
+/**
     Create a timer event
     @description Create and queue a timer event for service. This is a convenience wrapper to create continuous
         events over the #mprCreateEvent call.
@@ -6096,10 +6107,12 @@ extern int mprCalcDigest(MprCtx ctx, char **digest, cchar *userName, cchar *pass
 /*  
     Character encoding masks
  */
-#define MPR_ENCODE_HTML            0x1
-#define MPR_ENCODE_SHELL           0x2
-#define MPR_ENCODE_URI             0x4
-#define MPR_ENCODE_URI_COMPONENT   0x8
+#define MPR_ENCODE_HTML             0x1
+#define MPR_ENCODE_SHELL            0x2
+#define MPR_ENCODE_URI              0x4             /* Encode for ejs Uri.encode */
+#define MPR_ENCODE_URI_COMPONENT    0x8             /* Encode for ejs Uri.encodeComponent */
+#define MPR_ENCODE_JS_URI           0x10            /* Encode according to ECMA encodeUri() */
+#define MPR_ENCODE_JS_URI_COMPONENT 0x20            /* Encode according to ECMA encodeUriComponent */
 
 /** 
     Encode a string escaping typical command (shell) characters

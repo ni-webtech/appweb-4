@@ -281,6 +281,7 @@ typedef enum EjsOpCode {
     EJS_OP_DIV,
     EJS_OP_DUP,
     EJS_OP_DUP2,
+    EJS_OP_DUP_STACK,
     EJS_OP_END_CODE,
     EJS_OP_END_EXCEPTION,
     EJS_OP_GOTO,
@@ -361,6 +362,7 @@ typedef enum EjsOpCode {
     EJS_OP_MUL,
     EJS_OP_NEG,
     EJS_OP_NEW,
+    EJS_OP_NEW_ARRAY,
     EJS_OP_NEW_OBJECT,
     EJS_OP_NOP,
     EJS_OP_NOT,
@@ -418,6 +420,7 @@ typedef enum EjsOpCode {
     EJS_OP_SAVE_RESULT,
     EJS_OP_SHL,
     EJS_OP_SHR,
+    EJS_OP_SPREAD,
     EJS_OP_SUB,
     EJS_OP_SUPER,
     EJS_OP_SWAP,
@@ -504,7 +507,8 @@ extern "C" {
 #define EBC_ARGC            0x20000         /* Argument count */
 #define EBC_ARGC2           0x40000         /* Argument count * 2 */
 #define EBC_ARGC3           0x80000         /* Argument count * 3 */
-#define EBC_NEW_OBJECT      0x100000        /* New Object: Argument count * 3, byte code: attributes * 3 */
+#define EBC_NEW_ARRAY       0x100000        /* New Array: Argument count * 2, byte code */
+#define EBC_NEW_OBJECT      0x200000        /* New Object: Argument count * 3, byte code: attributes * 3 */
 
 typedef struct EjsOptable {
     char    *name;
@@ -576,6 +580,7 @@ EjsOptable ejsOptable[] = {
     {   "DIV",                      -1,         { EBC_NONE,                               },},
     {   "DUP",                       1,         { EBC_NONE,                               },},
     {   "DUP2",                      2,         { EBC_NONE,                               },},
+    {   "DUP_STACK",                 1,         { EBC_BYTE,                               },},
     {   "END_CODE",                  0,         { EBC_NONE,                               },},
     {   "END_EXCEPTION",             0,         { EBC_NONE,                               },},
     {   "GOTO",                      0,         { EBC_JMP,                                },},
@@ -656,6 +661,7 @@ EjsOptable ejsOptable[] = {
     {   "MUL",                      -1,         { EBC_NONE,                               },},
     {   "NEG",                       0,         { EBC_NONE,                               },},
     {   "NEW",                       0,         { EBC_NONE,                               },},
+    {   "NEW_ARRAY",                 1,         { EBC_GLOBAL, EBC_NEW_ARRAY,              },},
     {   "NEW_OBJECT",                1,         { EBC_GLOBAL, EBC_NEW_OBJECT,             },},
     {   "NOP",                       0,         { EBC_NONE,                               },},
     {   "NOT",                       0,         { EBC_NONE,                               },},
@@ -713,6 +719,7 @@ EjsOptable ejsOptable[] = {
     {   "SAVE_RESULT",              -1,         { EBC_NONE,                               },},
     {   "SHL",                      -1,         { EBC_NONE,                               },},
     {   "SHR",                      -1,         { EBC_NONE,                               },},
+    {   "SPREAD",                    0,         { EBC_NONE,                               },},
     {   "SUB",                      -1,         { EBC_NONE,                               },},
     {   "SUPER",                     0,         { EBC_NONE,                               },},
     {   "SWAP",                      0,         { EBC_NONE,                               },},
@@ -1158,7 +1165,6 @@ typedef struct Ejs {
     struct EjsType      *requestType;       /**< Request type */
     struct EjsType      *stringType;        /**< String type */
     struct EjsType      *stopIterationType; /**< StopIteration type */
-    struct EjsType      *timerEventType;    /**< TimerEvent type */
     struct EjsType      *typeType;          /**< Type type */
     struct EjsType      *uriType;           /**< URI type */
     struct EjsType      *voidType;          /**< Void type */
@@ -1204,6 +1210,7 @@ typedef struct Ejs {
     int                 exitStatus;         /**< Status to exit() */
     int                 serializeDepth;     /**< Serialization depth */
     int                 joining;            /**< In Worker.join */
+    int                 spreadArgs;         /**< Count of spread args */
 
     int                 workQuota;          /* Quota of work before GC */
     int                 workDone;           /**< Count of allocations to determining if GC needed */
@@ -1458,7 +1465,7 @@ extern EjsObj *ejsAllocPooled(Ejs *ejs, int id);
     @param pool Optional pool id. Set to -1 for defaults.
     @ingroup EjsObj
  */
-extern void ejsFreeVar(Ejs *ejs, EjsObj *vp, int pool);
+extern void ejsFreeVar(Ejs *ejs, void *vp, int pool);
 
 /** 
     Cast a variable to a new type
@@ -1576,7 +1583,7 @@ extern int ejsDeletePropertyByName(Ejs *ejs, EjsObj *vp, EjsName *qname);
     @return The variable property stored at the nominated slot.
     @ingroup EjsObj
  */
-extern void *ejsGetProperty(Ejs *ejs, EjsObj *vp, int slotNum);
+extern void *ejsGetProperty(Ejs *ejs, void *vp, int slotNum);
 
 /** 
     Get a count of properties in a variable
@@ -1667,7 +1674,7 @@ extern void ejsMark(Ejs *ejs, void *vp);
     @return The slot number of the property updated.
     @ingroup EjsObj
  */
-extern int ejsSetProperty(Ejs *ejs, EjsObj *vp, int slotNum, EjsObj *value);
+extern int ejsSetProperty(Ejs *ejs, void *vp, int slotNum, void *value);
 
 /** 
     Set a property's value 
@@ -1735,7 +1742,7 @@ extern EjsObj *ejsCreateSimpleObject(Ejs *ejs);
     @return A new object instance
     @ingroup EjsObj
  */
-extern EjsObj *ejsCreateObject(Ejs *ejs, struct EjsType *type, int size);
+extern void *ejsCreateObject(Ejs *ejs, struct EjsType *type, int size);
 
 extern int ejsInsertGrowObject(Ejs *ejs, EjsObj *obj, int numSlots, int offset);
 extern int ejsRemoveProperty(Ejs *ejs, EjsObj *obj, int slotNum);
@@ -1766,7 +1773,7 @@ extern struct EjsType *ejsGetTraitType(EjsObj *obj, int slotNum);
     @return A newly allocated object. Caller must not free as the GC will manage the lifecycle of the variable.
     @ingroup EjsObj
  */
-extern EjsObj *ejsCloneObject(Ejs *ejs, EjsObj *src, bool deep);
+extern void *ejsCloneObject(Ejs *ejs, void *src, bool deep);
 
 /** 
     Grow an object
@@ -1789,7 +1796,7 @@ extern int ejsGrowObject(Ejs *ejs, EjsObj *obj, int numSlots);
     @param obj Object to mark as currently being used.
     @ingroup EjsObj
  */
-extern void     ejsMarkObject(Ejs *ejs, EjsObj *obj);
+extern void     ejsMarkObject(Ejs *ejs, void *obj);
 
 extern int      ejsGetSlot(Ejs *ejs, EjsObj *obj, int slotNum);
 extern EjsObj   *ejsCoerceOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs);
@@ -1957,7 +1964,8 @@ typedef struct EjsFunction {
         EjsProc     proc;                   /**< Native function pointer */
     } body;
 
-    EjsObj          *thisObj;               /**< Bound "this" for method extraction */
+    struct EjsArray *boundArgs;             /**< Bound "args" */
+    EjsObj          *boundThis;             /**< Bound "this" object value */
     struct EjsType  *resultType;            /**< Return type of method */
 
 #if BLD_HAS_UNNAMED_UNIONS
@@ -2392,34 +2400,41 @@ extern EjsDate *ejsCreateDate(Ejs *ejs, MprTime value);
  */
 typedef struct EjsError {
     EjsObj          obj;                /**< Extends Object */
+#if UNUSED
+    EjsObj          *data;              /**< Error data message */
     char            *message;           /**< Exception message */
     char            *stack;             /**< Execution stack back trace */
     char            *filename;          /**< Source code file name */
     int             lineNumber;         /**< Source code line number */
     int             code;               /**< Unique error lookup code */
+#endif
 } EjsError;
 
 #define ejsIsError(vp) ejsIs(vp, ES_Error)
 
-/** 
+extern EjsError *ejsCreateError(Ejs *ejs, struct EjsType *type, EjsObj *message);
+extern EjsArray *ejsCaptureStack(Ejs *ejs, int uplevels);
+
+/* 
+    DEPRECATED MOB
     Format the stack backtrace
     @description Return a string containing the current interpreter stack backtrace
     @param ejs Ejs reference returned from #ejsCreate
     @param error Error exception object to analyseo analyseo analyseo analyse
     @return A string containing the stack backtrace. The caller must free.
     @ingroup EjsError
- */
 extern char *ejsFormatStack(Ejs *ejs, EjsError *error);
+ */
 
 /** 
     Get the interpreter error message
     @description Return a string containing the current interpreter error message
     @param ejs Ejs reference returned from #ejsCreate
     @param withStack Set to 1 to include a stack backtrace in the error message
-    @return A string containing the error message. The caller must free.
+    @return A string containing the error message. The caller must not free.
     @ingroup EjsError
  */
-extern char *ejsGetErrorMsg(Ejs *ejs, int withStack);
+extern cchar *ejsGetErrorMsg(Ejs *ejs, int withStack);
 
 /** 
     Determine if an exception has been thrown
@@ -3139,9 +3154,11 @@ typedef struct EjsTimer {
     Ejs             *ejs;                           /**< Need interpreter reference in callback */
     MprEvent        *event;                         /**< MPR event for the timer */
     int             drift;                          /**< Timer event is allowed to drift if system conditions requrie */
-    int             oneShot;                        /**< Timer fires just once */
+    int             repeat;                         /**< Timer repeatedly fires */
     int             period;                         /**< Time in msec between invocations */          
     EjsFunction     *callback;                      /**< Callback function */
+    EjsFunction     *onerror;                       /**< onerror function */
+    EjsArray        *args;                          /**< Callback args */
 } EjsTimer;
 
 
@@ -3161,6 +3178,7 @@ typedef struct EjsWorker {
     EjsObj          obj;                            /**< Logically extentends Object */
     char            *name;                          /**< Optional worker name */
     Ejs             *ejs;                           /**< Interpreter */
+    EjsObj          *event;                         /**< Current event object */
     struct EjsWorker *pair;                         /**< Corresponding worker object in other thread */
     char            *scriptFile;                    /**< Script or module to run */
     char            *scriptLiteral;                 /**< Literal script string to run */
@@ -4689,7 +4707,6 @@ typedef struct EcNode {
     int                 attributes;         /* Attributes applying to this node */
     bool                specialNamespace;   /* Using a public|private|protected|internal namespace */
     Node                typeNode;           /* Type of name */
-    int                 index;              /* Used for array literal indicies */
     Node                parent;             /* Parent node */
     EjsNamespace        *namespaceRef;      /* Namespace reference */
     MprList             *namespaces;        /* Namespaces for hoisted variables */
@@ -4705,11 +4722,11 @@ typedef struct EcNode {
     int                 subId;              /* Sub token */
 
     /*
-        TODO - order in most useful order: name, type, function, binary
-        TODO - rename all with a Node suffix. ie. nameNode, importNode
+        MOB TODO - order in most useful order: name, type, function, binary
+        MOB TODO - rename all with a Node suffix. ie. nameNode, importNode
      */
 
-    //  TODO - disable for now
+    //  MOB TODO - disable for now
 #if !BLD_DEBUG && 0
     union {
 #endif
@@ -4721,17 +4738,18 @@ typedef struct EcNode {
             Name nodes hold a fully qualified name.
          */
         #define N_QNAME  3
+        #define N_VAR 63
         struct {
             Node        nameExpr;           /* Name expression */
             Node        qualifierExpr;      /* Qualifier expression */
-            //  OPT - bit field
             int         isAttribute;        /* Attribute identifier "@" */
             int         isType;             /* Name is a type */
             int         isNamespace;        /* Name is a namespace */
             int         letScope;           /* Variable is defined in let block scope */
             int         instanceVar;        /* Instance or static var (if defined in class) */
             int         isRest;             /* ... rest style args */
-            EjsObj   *value;             /* Initialization value */
+            int         varKind;            /* Variable definition kind */
+            EjsObj      *nsvalue;           /* Initialization value (MOB - remove) */
         } name;
 
         /*
@@ -4979,6 +4997,7 @@ typedef struct EcNode {
 
         #define N_BLOCK 25
 
+        //  MOB -- what does this actually do? - why not just use children?
         #define N_REF 42
         struct {
             Node        node;               /* Actual node reference */
@@ -5024,13 +5043,15 @@ typedef struct EcNode {
             MprBuf              *data;      /* XML data */
         } literal;
 
-        #define N_OBJECT_LITERAL    56
+        #define N_OBJECT_LITERAL    56      /* Array or object literal */
+        #define N_DASSIGN 62                /* Destructuring assignment */
         struct {
             Node                typeNode;   /* Type of object */
+            int                 isArray;    /* Array literal */
         } objectLiteral;
 
         /*
-            Object literal field
+            Object (and Array) literal field
          */
         #define FIELD_KIND_VALUE        0x1
         #define FIELD_KIND_FUNCTION     0x2
@@ -5039,8 +5060,9 @@ typedef struct EcNode {
         struct {
             int                 fieldKind;  /* value or function */
             int                 varKind;    /* Variable definition kind (const) */
-            Node                fieldName;  /* Field element name */
             Node                expr;       /* Field expression */
+            Node                fieldName;  /* Field element name for objects */
+            int                 index;      /* Array index, set to -1 for objects */
         } field;
 
         #define N_WITH 60
@@ -5111,9 +5133,12 @@ typedef struct EcNode {
 /* N_HASH 55 */
 /* N_OBJECT_LITERAL 56 */
 /* N_FIELD 57 */
-#define N_ARRAY_LITERAL 58
+#define N_ARRAY_LITERAL_UNUSED 58
 #define N_CATCH_ARG 59
 #define N_WITH 60
+#define N_SPREAD 61
+/* N_DASSIGN 62 */
+/* N_VAR 63 */
 
 #define EC_NUM_NODES                    8
 #define EC_TAB_WIDTH                    4
@@ -5407,6 +5432,7 @@ typedef struct EcToken {
     int         subId;
     int         groupMask;
 
+    //  MOB -- convert from uchar
     uchar       *text;                          /* Token text */
     int         textLen;                        /* Length of text */
     int         textBufSize;                    /* Size of text buffer */
@@ -5549,7 +5575,14 @@ typedef struct EcState {
     int             preserveStackCount;     /* If reset needed, preserve this count of elements */
     int             needsStackReset;        /* Stack must be reset before jumping */
     int             needsValue;             /* Express must yield a value */
+
+    //  MOB -- should rationalize and have only one of these. Parser needs onRight.
     int             onLeft;                 /* On the left of an assignment */
+
+    //  MOB -- unused
+    int             onRight;                /* On the right of an assignment */
+    int             dupLeft;                /* Dup left side */
+
     int             saveOnLeft;             /* Saved left of an assignment */
     int             conditional;            /* In branching conditional */
     int             strict;                 /* Compiler checking mode: Strict, standard*/
@@ -5696,7 +5729,7 @@ extern EcNode       *ecParseWarning(EcCompiler *cp, char *fmt, ...);
 extern int          ecPeekToken(EcCompiler *cp);
 extern int          ecPutSpecificToken(EcInput *input, EcToken *token);
 extern int          ecPutToken(EcInput *input);
-extern void         ecReportError(EcCompiler *cp, cchar *severity, cchar *filename, int lineNumber,
+extern void         ecSetError(EcCompiler *cp, cchar *severity, cchar *filename, int lineNumber,
                         char *currentLine, int column, char *msg);
 extern void         ecResetInput(EcCompiler *cp);
 extern EcNode       *ecResetError(EcCompiler *cp, EcNode *np, bool eatInput);

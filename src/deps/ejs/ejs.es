@@ -77,6 +77,10 @@ module ejs {
         private static var _inputStream: Stream
         private static var _outputStream: Stream
 
+        /**
+            Default ejsrc configuration for the application
+            @hide
+         */
         static internal var defaultConfig = {
             /*
                 search: null,
@@ -84,7 +88,7 @@ module ejs {
              */
             log: {
                 enable: true,
-                where: "stderr",
+                location: "stderr",
                 level: 2,
                 /* match: null, */
             },
@@ -113,6 +117,11 @@ module ejs {
             @param value The path to the new working directory
          */
         native static function chdir(value: Object): Void
+
+        /**
+            Default event Emitter for the application
+         */
+        static var emitter: Emitter = new Emitter
 
         /** 
             The directory containing the application executable
@@ -373,12 +382,12 @@ module ejs {
             let stream = Logger.mprStream
             if (stream) {
                 log.level = Logger.mprLevel
-            } else if (log.where == "stdout") {
+            } else if (log.location == "stdout") {
                 stream = App.outputStream
-            } else if (log.where == "stderr") {
+            } else if (log.location == "stderr") {
                 stream = App.errorStream
             } else {
-                stream = File(log.where, "w")
+                stream = File(log.location, "w")
             }
             App.log = new Logger(App.name, stream, log.level)
             if (log.match) {
@@ -551,7 +560,6 @@ module ejs {
             return true
         }
 
-         // TODO - how does this compare with JS1.8 reduce?
         /**
             Find all matching elements.
             Iterate over all elements in the object and find all elements for which the matching function is true.
@@ -564,24 +572,22 @@ module ejs {
         function filter(match: Function): Array
             findAll(match)
 
-         // TODO - should this return the index rather than the element?
         /**
             Find the first matching element.
-            Iterate over elements in the object and select the first element for which the matching function is true.
+            Iterate over elements in the object and select the first element for which the matching function returns true.
             The matching function is called with the following signature:
                 function match(element: Object, elementIndex: Number, arr: Array): Boolean
             @param match Matching function
-            @return True when the match function returns true.
+            @return The matched item
             @spec ejs
          */
         function find(match: Function): Object {
-            var result: Array = new Array
             for (let i: Number in this) {
                 if (match(this[i], i, this)) {
                     return this[i]
                 }
             }
-            return result
+            return null
         }
 
         /**
@@ -658,7 +664,6 @@ module ejs {
          */
         native function insert(pos: Number, ...args): Array
 
-//  MOB -- should this be = undefined or null
         /**
             Convert the array into a string.
             Joins the elements in the array into a single string by converting each element to a string and then 
@@ -666,7 +671,7 @@ module ejs {
             @param sep Element separator.
             @return A string.
          */
-        native function join(sep: String = undefined): String
+        native function join(sep: String = ""): String
 
         /**
             Find an item searching from the end of the arry.
@@ -721,11 +726,63 @@ module ejs {
         native function push(...items): Number 
 
         /**
+            Reduce array elements.
+            Apply a callback function against two values of the array and reduce to a single value. Traversal is from
+            left to right. The first time the callback is called, previous will be set to the first value and current
+            will be set to the second value. If an $initial parameter is provided, then previous will be set to initial
+            and current will be set to the first value.
+            The callback is called with the following signature:
+                function callback(previous, current, index: Number, array: Array): Object
+            @param callback Callback function
+            @param initial Initial value to use in the reduction
+            @return Returns a new array containing all matching elements.
+         */
+        function reduce(callback: Function, initial = null): Object {
+            let previous
+            if (length > 0) {
+                let i = 0
+                if (initial) {
+                    previous = callback(initial, this[i++], 0, this)
+                }
+                for (; i < length; i++) {
+                    previous = callback(previous, this[i], i, this)
+                }
+            }
+            return previous
+        }
+
+        /**
+            Reduce array elements.
+            Apply a callback function against two values of the array and reduce to a single value. Traversal is from
+            right to left. The first time the callback is called, previous will be set to the first value and current
+            will be set to the second value. If an $initial parameter is provided, then previous will be set to initial
+            and current will be set to the first value.
+            The callback is called with the following signature:
+                function callback(previous, current, index: Number, array: Array): Object
+            @param callback Callback function
+            @param initial Initial value to use in the reduction
+            @return Returns a new array containing all matching elements.
+         */
+        function reduceRight(callback: Function, initial = null): Object {
+            let previous
+            if (length > 0) {
+                let i = length - 1
+                if (initial) {
+                    previous = callback(initial, this[i--], 0, this)
+                }
+                for (; i >= 0; i--) {
+                    previous = callback(previous, this[i], i, this)
+                }
+            }
+            return previous
+        }
+
+        /**
             Find non-matching elements. Iterate over all elements in the array and select all elements for which 
             the filter function returns false. The matching function is called with the following signature:
-         *
+          
                 function match(element: Object, elementIndex: Number, arr: Array): Boolean
-         *
+          
             @param match Matching function
             @return A new array of non-matching elements.
             @spec ejs
@@ -1010,11 +1067,11 @@ module ejs {
             inbuf = new ByteArray
             outbuf = new ByteArray
 
-            inbuf.addListener("writable", function (event: String, buffer: ByteArray) {
+            inbuf.observe("writable", function (event: String, buffer: ByteArray) {
                 nextStream.read(buffer)
             })
 
-            outbuf.addListener("readable", function (event: String, buffer: ByteArray) {
+            outbuf.observe("readable", function (event: String, buffer: ByteArray) {
                 count = nextStream.write(buffer)
                 buffer.readPosition += count
                 buffer.reset()
@@ -1022,9 +1079,9 @@ module ejs {
         }
 
         /** 
-            @duplicate Stream.addListener 
+            @duplicate Stream.observe 
          */
-        native function addListener(name, listener: Function): Void
+        native function observe(name, observer: Function): Void
 
         /** 
             @duplicate Stream.async 
@@ -1191,9 +1248,9 @@ module ejs {
         }
 
         /** 
-            @duplicate Stream.addListener 
+            @duplicate Stream.observe 
          */
-        native function removeListener(name, listener: Function): Void
+        native function removeObserver(name, observer: Function): Void
 
         /** 
             Return the space available for write data. This call can be used to prevent write from blocking or 
@@ -1467,9 +1524,9 @@ module ejs {
         which can be set to either LittleEndian or BigEndian.  If strings values are read or written, they will 
         be encoded according to the value of the character set $encoding property.
         
-        When used as loop-back streams, ByteArrays can be run in sync or async mode. ByteArrays will issue events
-        for key state transitions such as close, eof, readable and writable events. All event listeners are called with the 
-        following signature:
+        When used as loop-back streams, data written to ByteArrays is immediately available for reading. 
+        ByteArrays can be run in sync or async mode. ByteArrays will issue events for key state transitions such as 
+        close, eof, readable and writable events. All event observers are called with the following signature:
             function callback(event: String, ba: ByteArray): Void
         @spec ejs
         @stability evolving
@@ -1496,8 +1553,8 @@ module ejs {
          */
         native function ByteArray(size: Number = -1, growable: Boolean = true)
 
-        /** @duplicate Stream.addListener */
-        native function addListener(name: Object, listener: Function): Void
+        /** @duplicate Stream.observe */
+        native function observe(name: Object, observer: Function): Void
 
         /** 
             Number of bytes that are currently available for reading. This consists of the bytes available
@@ -1576,10 +1633,10 @@ module ejs {
         native function set endian(value: Number): Void
 
         /** 
-            Flush (discard) the data in the byte array and reset the read and write positions.
+            Flush (discard) the data in the byte array and reset the read and write positions. 
             This call may block if the stream is in sync mode.
-            @param dir Direction in which to flush. Set to a mask containing: Stream.READ, Stream.WRITE or Stream.BOTH.
-                A read flush will discard read data. A write flush will attempt to write buffered write data.
+            @param dir The dir parameter is Ignored. Flushing a ByteArray in either direction the same effect of 
+                discarding all buffered data and resetting the read and write positions -- so this argument is ignored. 
          */
         native function flush(dir: Number = Stream.BOTH): Void
 
@@ -1624,7 +1681,7 @@ module ejs {
         /** 
             Read a boolean from the array. Data is read from the current read $position pointer.
             If insufficient data, a "writable" event will be issued indicating that the byte array is writable. This enables 
-            listeners to write data into the byte array.  If there is no data available, the call 
+            observers to write data into the byte array.  If there is no data available, the call 
             will return return null indicating eof.
             @returns a boolean or null on eof.
             @throws IOError if an I/O error occurs or premature eof.
@@ -1634,7 +1691,7 @@ module ejs {
         /** 
             Read a byte from the array. Data is read from the current read $position pointer.
             If insufficient data, a "write" event will be issued indicating that the byte array is 
-            writable.  This enables listeners to write data into the byte array.  If there is no data available, the call 
+            writable.  This enables observers to write data into the byte array.  If there is no data available, the call 
             will return return null indicating eof.
             @throws IOError if an I/O error occurs or premature eof.
          */
@@ -1643,7 +1700,7 @@ module ejs {
         /** 
             Read a date from the array. Data is read from the current read $position pointer.
             If insufficient data, a "write" event will be issued indicating that the byte array is 
-            writable.  This enables listeners to write data into the byte array.  If there is no data available, the call 
+            writable.  This enables observers to write data into the byte array.  If there is no data available, the call 
             will return return null indicating eof.
             @throws IOError if an I/O error occurs or premature eof.
          */
@@ -1652,7 +1709,7 @@ module ejs {
         /** 
             Read a double from the array. The data will be decoded according to the endian property. Data is read 
             from the current read $position pointer. If insufficient data, a "write" event will be issued indicating 
-            that the byte array is writable. This enables listeners to write data into the byte array. If there is 
+            that the byte array is writable. This enables observers to write data into the byte array. If there is 
             no data available, the call will return return null indicating eof.
             @returns a double or null on eof.
             @throws IOError if an I/O error occurs or premature eof.
@@ -1663,7 +1720,7 @@ module ejs {
             Read an 32-bit integer from the array. The data will be decoded according to the endian property.
             Data is read from the current read $position pointer.
             If insufficient data, a "write" event will be issued indicating that the byte array is 
-            writable.  This enables listeners to write data into the byte array.  If there is no data available, the call 
+            writable.  This enables observers to write data into the byte array.  If there is no data available, the call 
             will return return null indicating eof.
             @throws IOError if an I/O error occurs or premature eof.
          */
@@ -1673,7 +1730,7 @@ module ejs {
             Read a 64-bit long from the array.The data will be decoded according to the endian property.
             Data is read from the current read $position pointer.
             If insufficient data, a "write" event will be issued indicating that the byte array is 
-            writable.  This enables listeners to write data into the byte array.  If there is no data available, the call 
+            writable.  This enables observers to write data into the byte array.  If there is no data available, the call 
             will return return null indicating eof.
             @throws IOError if an I/O error occurs or premature eof.
          */
@@ -1694,7 +1751,7 @@ module ejs {
             Read a 16-bit short integer from the array.The data will be decoded according to the endian property.
             Data is read from the current read $position pointer.
             If insufficient data, a "write" event will be issued indicating that the byte array is 
-            writable.  This enables listeners to write data into the byte array.  If there is no data available, the call 
+            writable.  This enables observers to write data into the byte array.  If there is no data available, the call 
             will return return null indicating eof. If there is insufficient data 
             @returns a short int or null on eof.
             @throws IOError if an I/O error occurs or premature eof.
@@ -1704,7 +1761,7 @@ module ejs {
         /** 
             Read a data from the array as a string. Read data from the $readPosition to a string up to the $writePosition,
             but not more than count characters. If insufficient data, a "writable" event will be issued indicating that 
-            the byte array is writable. This enables listeners to write data into the byte array.  If there is no data 
+            the byte array is writable. This enables observers to write data into the byte array.  If there is no data 
             available, the call will return return null indicating eof. If there is insufficient data @param count of bytes 
             to read. If -1, convert the data up to the $writePosition.
             @returns a string or null on eof.
@@ -1721,11 +1778,11 @@ module ejs {
             XML(readString())
 
         /** 
-            Remove a listener to the stream. If there are no listeners on the stream, the stream is put back into sync mode.
-            @param name Event name previously used with addListener. The name may be an array of events.
-            @param listener Listener function previously used with addListener.
+            Remove an observer from the stream
+            @param name Event name previously used with observe. The name may be an array of events.
+            @param observer Observer function previously used with observe.
          */
-        native function removeListener(name: Object, listener: Function): Void
+        native function removeObserver(name: Object, observer: Function): Void
 
         /** 
             Reset the read and $writePosition pointers if there is no available data.
@@ -1829,7 +1886,7 @@ module ejs {
             @hide
          */
         function set input(callback: Function): Void {
-            addListener("writable", function(event: String, ba: ByteArray): Void {
+            observe("writable", function(event: String, ba: ByteArray): Void {
                 callback(ba)
             })
         }
@@ -1847,7 +1904,7 @@ module ejs {
         /** 
          */
         function set output(callback: Function): Void {
-            addListener("readable", function(event: String, ba: ByteArray): Void {
+            observe("readable", function(event: String, ba: ByteArray): Void {
                 callback(ba)
             })
         }
@@ -2068,19 +2125,23 @@ module ejs {
          */
         private function parseTemplate(template: Object): Void {
             for each (item in template) {
+/*
+            UNUSED
                 let key = item[0]
                 let range = item[1] || null
                 let defaultValue = item[2]
+*/
+                let [key, range, defaultValue] = item
                 if (key is Array) {
                     for each (k in key) {
-                        ranges[k] = range
+                        ranges[k] = range || null
                         options[k] = defaultValue
                         if (k != key[0]) {
                             aliases[k] = key[0]
                         }
                     } 
                 } else {
-                    ranges[key] = range
+                    ranges[key] = range || null
                     options[key] = defaultValue
                 }
             }
@@ -3216,12 +3277,13 @@ module ejs {
 module ejs {
 
     /** 
-        The emitter class supports the registration of listeners who want notification of events of interest.
+        The emitter class provides a publish/subscribe model of communication. It supports the registration of observers
+        who want to subscribe to events of interest. 
         @example
-            events.addListener(event, function (event, ...args) {
+            events.observe(event, function (event, ...args) {
                 //  Do something
             }
-            events.emit("topic", 1, 2, 3)
+            events.fire("topic", 1, 2, 3)
         @stability prototype
      */
     class Emitter {
@@ -3235,93 +3297,96 @@ module ejs {
         function Emitter()
             endpoints = new Object
 
-        private function addOneListener(name: String, callback: Function): Void {
-            let listeners : Array? = endpoints[name]
-            if (listeners) {
-                for each (var e: Endpoint in listeners) {
+        private function addOneObserver(name: String, callback: Function): Void {
+            let observers : Array? = endpoints[name]
+            if (observers) {
+                for each (var e: Endpoint in observers) {
                     if (e.callback == callback && e.name == name) {
                         return
                     }
                 }
             } else {
-                listeners = endpoints[name] = new Array
+                observers = endpoints[name] = new Array
             }
             if (callback) {
-//MOB           callback.bind(this)
-                listeners.append(new Endpoint(callback, name))
-                emit("addListener", name, callback)
+                observers.append(new Endpoint(callback, name))
+                fire("observe", name, callback)
             }
         }
 
         /** 
-            Add a listener function for events.
-            @param name Event name to listen for. The listener will receive events of this event class or any of its 
-            subclasses.  The name can be a string or an array of event strings.
+            Add an observer for a set of events.
+            The callback will be invoked when the requested event is fired by calling Emitter.fire. When the callback 
+            runs, it will be invoked with the value of "this" relevant to the context of the callback. If the callback
+            is a class method, the value of "this" will be the object instance. Global functions will have "this" set to
+            the global object. Use Function.bind to override the bound "this" value.
+            @param name Event name to observe. The observer will receive events of this event class or any of its subclasses.
+            The name can be a string or an array of event strings.
             @param callback Function to call when the event is received.
          */
-        function addListener(name: Object, callback: Function): Void {
+        function observe(name: Object, callback: Function): Void {
             if (name is String) {
-                addOneListener(name, callback)
+                addOneObserver(name, callback)
             } else if (name is Array) {
                 for each (n in name) {
-                    addOneListener(n, callback)
+                    addOneObserver(n, callback)
                 }
             } else {
-                throw new Error("Bad name type for addListener")
+                throw new Error("Bad name type for observe")
             }
         }
 
         /** 
-            Clear listeners for a given event name. 
-            @param name Event name to clear. The name can be a string or an array of event strings. If null, listeners 
+            Clear observers for a given event name. 
+            @param name Event name to clear. The name can be a string or an array of event strings. If null, observers 
             for all event names are cleared.
          */
-        function clearListeners(name: Object? = null): Void {
+        function clearObservers(name: Object? = null): Void {
             if (name == null) {
                 endpoints = new Object
             } else if (name is Array) {
                 for each (n in name) {
-                    listeners = endpoints[n] = new Array
+                    observers = endpoints[n] = new Array
                 }
             } else {
-                listeners = endpoints[name] = new Array
+                observers = endpoints[name] = new Array
             }
         }
 
         /** 
-            Determine if the emitter has any listeners.
-            @return True if there are currently registered listeners
+            Determine if the emitter has any observers.
+            @return True if there are currently registered observers
         */
-        function hasListeners(): Boolean 
+        function hasObservers(): Boolean 
             endpoints.length > 0
 
         /** 
-            Return the listeners for this emitter. 
-            @param name Event name to send to the listeners.
-            @return An array of listener endpoints. These are cloned and not the actual listener objects.
+            Return the observers for this emitter. 
+            @param name Event name to fire to the observers.
+            @return An array of observer endpoints. These are cloned and not the actual observer objects.
          */
-        function listeners(name: String): Array
+        function getObservers(name: String): Array
             endpoints[name].clone(true)
        
-        //  MOB -- rename send() or fire()
         /** 
-            Emit an event to the registered listeners.
-            @param name Event name to send to the listeners.
-            @param args Args to pass to the listener callback
+            Emit an event to the registered observers.
+            @param name Event name to fire to the observers.
+            @param args Args to pass to the observer callback
          */
-        function emit(name: String, ...args): Void {
-            let listeners: Array? = endpoints[name]
-            if (listeners) {
-                for each (var e: Endpoint in listeners) {
+        function fire(name: String, ...args): Void {
+            let observers: Array? = endpoints[name]
+            if (observers) {
+                for each (var e: Endpoint in observers) {
                     if (name == e.name) {
                         if (!e.active) {
                             e.active = true
                             do {
                                 e.again = false
                                 try {
+                                    /* This forces to use the bound this value */
                                     e.callback.apply(null, [name] + args)
                                 } catch (e) {
-                                    App.errorStream.write("Exception in event on listener: " + name  + "\n" + e)
+                                    App.errorStream.write("Exception in event on observer: " + name  + "\n" + e)
                                 }
                             } while (e.again)
                             e.active = false
@@ -3333,37 +3398,50 @@ module ejs {
             }
         }
 
-        private function removeOneListener(name: String, callback: Function): Void {
-            var listeners: Array? = endpoints[name]
-            for (let i in listeners) {
-                var e: Endpoint = listeners[i]
+        function delayedFire(name: String, delay: Number, ...args): Void {
+            Timer(delay, function() {
+                fire(name, ...args)
+            })
+        }
+
+        private function removeOneObserver(name: String, callback: Function): Void {
+            var observers: Array? = endpoints[name]
+            for (let i in observers) {
+                var e: Endpoint = observers[i]
                 if (e.callback == callback && e.name == name) {
-                    emit("removeListener", name, callback)
-                    listeners.splice(i, 1)
+                    fire("removeObserver", name, callback)
+                    observers.splice(i, 1)
                 }
             }
         }
 
         /** 
-            Remove a registered listener.
-            @param name Event name used when adding the listener.
-            @param callback Listener callback function used when adding the listener.
+            Remove a registered observer.
+            @param name Event name used when the observer was added.
+            @param callback Callback function used when the observer was added.
          */
-        function removeListener(name: Object, callback: Function): Void {
+        function removeObserver(name: Object, callback: Function): Void {
             if (name is String) {
-                removeOneListener(name, callback)
+                removeOneObserver(name, callback)
             } else if (name is Array) {
                 for each (n in name) {
-                    removeOneListener(n, callback)
+                    removeOneObserver(n, callback)
                 }
             } else {
-                throw new Error("Bad name type for removeListener")
+                throw new Error("Bad name type for removeObserver")
             }
         }
+
+        //  LEGACY
+        function addListener(name: Object, callback: Function): Void
+            observe(name, callback)
+
+        function emit(name: String, ...args): Void 
+            fire(name, ...args)
     }
 
 
-    /* Listening endpoints */
+    /* Observing endpoints */
     internal class Endpoint {
         public var callback: Function
         public var name: String
@@ -3496,32 +3574,73 @@ module ejs {
 
         use default namespace public
 
-        /**
-            Exception error message.
+        /** 
+            Source filename of the script that created the error
          */
-        native var message: String
+        function get filename(): String
+            stack[0].filename
+
+        /** 
+            Source line number in the script that created the error
+         */
+        function get lineno(): String
+            stack[0].lineno
+
+        /**
+            Supplemental error data
+         */
+        var data: Object
+
+        /**
+            Error message
+         */
+        var message: String
+
+        private var _stack: Array
+
+        /**
+            Execution call stack. Contains the execution stack backtrace at the point the Error object was created.
+            The stack is an array of stack frame records. Each record consists of the following properties: 
+                {file: String, line: Number, functionName: String, code: String}
+         */
+        function get stack(): Array {
+            if (!_stack) {
+                _stack = capture()
+            }
+            return _stack
+        }
+
+        /** 
+            Time the event was created. The Context constructor will automatically set the timestamp to the current time.  
+         */
+        var timestamp: Date
 
         /**
             Optional error code
          */
-        native function get code(): Number
-
-        /**
-            Set an optional error code
-            @param value Error code to set
-         */
-        native function set code(value: Number): Void
-
-        /**
-            Execution stack backtrace. Contains the execution stack backtrace at the time the exception was thrown.  
-         */
-        native var stack: String 
+        var code: Number
 
         /**
             Construct a new Error object.
-            @params message Message to use when defining the Error.message property
+            @params message Message to use when defining the Error.message property. Typically a string but can be an
+                object of any type.
          */
         native function Error(message: String? = null)
+
+        /**
+            Capture the stack. This call re-captures the stack and updates the stack property.
+            @param uplevels Skip a given count of stack frames from the stop of the call stack.
+         */
+        native function capture(uplevels: Number): Array
+
+        function formatStack(): String {
+            let result = ""
+            let i = 0
+            for each (frame in stack) {
+                result += " [%02d] %s, line %d, %s(), %s\n".format(i++, ...frame)
+            }
+            return result
+        }
     }
 
     /**
@@ -3721,123 +3840,6 @@ module ejs {
 
 /************************************************************************/
 /*
- *  Start of file "../../src/core/Event.es"
- */
-/************************************************************************/
-
-/*
-    Event.es -- Event class
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-module ejs {
-
-    /** 
-        The Event class encapsulates information pertaining to a system or application event. Applications typically
-        subclass Event to add custom event data if required. Events are initiated via the EventTarget class and are
-        routed to listening functions via a system event queue.
-        @stability prototype
-        @example 
-            class UpdateEvent extends Event { }
-            events.emit("topic", new UpdateEvent)
-     */
-    class Event {
-        use default namespace public
-
-        /** 
-            Event data associated with the Event. When Events are created, the constructor optionally takes an arbitrary 
-            object data reference.
-         */
-        var data: Object
-
-        /** 
-            Time the event was created. The Event constructor will automatically set the timestamp to the current time.  
-         */
-        var timestamp: Date
-
-        /** 
-            Constructor for Event. Create a new Event object.
-            @param data Arbitrary object to associate with the event.
-         */
-        function Event(data: Object? = null) {
-            this.timestamp = new Date
-            this.data = data
-        }
-
-        override function toString(): String
-            "[Event: " +  typeOf(this) + "]"
-    }
-
-    /** 
-        Event for exceptions
-        @spec WebWorker
-     */
-    class ErrorEvent extends Event {
-        use default namespace public
-
-        /** 
-            Event message
-         */
-        var message: String
-
-        /** 
-            Source filename of the script that issued the error
-         */
-        var filename: String
-
-        /** 
-            Source line number in the script that issued the error
-         */
-        var lineno: String
-
-        /** 
-            Callback stack at the point of the error
-         */
-        var stack: String
-    }
-}
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/core/Event.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "../../src/core/File.es"
  */
 /************************************************************************/
@@ -3862,8 +3864,8 @@ module ejs {
 
         use default namespace public
 
-        /** @duplicate Stream.addListener */
-        native function addListener(name, listener: Function): Void
+        /** @duplicate Stream.observe */
+        native function observe(name, observer: Function): Void
 
         /** @duplicate Stream.async */
         function get async(): Boolean
@@ -4014,8 +4016,8 @@ module ejs {
             Path(path).remove()
         }
 
-        /** @duplicate Stream.removeListener */
-        native function removeListener(name, listener: Function): Void
+        /** @duplicate Stream.removeObserver */
+        native function removeObserver(name, observer: Function): Void
 
         /** 
             The size of the file in bytes.
@@ -4299,10 +4301,11 @@ module ejs {
          */
         native function Function(...args)
 /*
+    MOB -- todo
             let body = args.pop()
             let code = "function(" + args.join(",") + ") {\n" + body + "\n}"
             print("CODE " + code)
-            eval(code)
+            return eval(code)
         }
 */
 
@@ -4325,21 +4328,25 @@ module ejs {
          */
         native function call(thisObject: Object, ...args): Object 
 
-        //    MOB -- this could go into Reflect
-        /** 
-            The bound object representing the "this" object. Functions carry both a lexical scoping and the owning 
-            "this" object. Set to "null" if "this" is not defined for the function.
-         */
-        native function get boundThis(): Object
-
-        //  MOB -- ES5 usage is function bind(obj, ...args)
         /** 
             Bind the value of "this" for the function. This can set the value of "this" for the function. If
             $overwrite is false, it will only define the value of "this" if it is not already defined.
             @param thisObj Value of "this" to define
-            @param overwrite If true, overwrite the existing stored value of "this"
+            @param args Function arguments to supply to the function. These arguments preceed any caller supplied
+                arguments when the function is actually invoked.
          */
-        native function bind(thisObj: Object, overwrite: Boolean = true): Void
+        native function bind(thisObj: Object, ...args): Void
+
+        /** 
+            The bound object representing the "this" object for the function. Will be set to null if no object is bound.
+            @see bind
+         */
+        native function get bound(): Object
+
+        /**
+            The name of the function. Function expressions do not have a name and set the name property to the empty string.
+         */
+        native function get name(): String
 
 //  MOB -- ECMA: this is a var on all functions and not a getter on the prototype
         //  Number of arguments expected by the function
@@ -4516,8 +4523,8 @@ module ejs {
     /** @hide */
     public var ECMA: Boolean = false
 
-//MOB
-public namespace ejs
+    //MOB - is this required? - remove
+    public namespace ejs
 
     /** 
         The public namespace used to make entities visible accross modules.
@@ -4531,7 +4538,8 @@ public namespace ejs
     public namespace internal
 
     /** 
-        The iterator namespace used to defined iterators.
+        The iterator namespace used to define iterators.
+        MOB - do we really need this?
      */
     public namespace iterator
 
@@ -4680,13 +4688,6 @@ public namespace ejs
      */
     native function cloneBase(klass: Type): Void
 
-    /**
-        Reverse www-url encoding on a string
-        @param str URL encoded string
-        @returns a decoded string
-     */
-    native function decodeURI(str: String): String
-
     //  TODO - consider renaming to debug()
     /** 
         Dump the contents of objects. Used for debugging, this routine serializes the objects and prints to the standard
@@ -4715,23 +4716,6 @@ public namespace ejs
             }
         }
     }
-
-
-    /**
-        Encode a string using  www-url encoding
-        @param str URL encoded string
-        @returns an encoded string
-     */
-    native function encodeURI(str: String): String
-
-    /** 
-        HTML escape a string. This quotes characters which would otherwise be interpreted as HTML directives.
-        This function is prototype and may be renamed in a future release.
-        @param str String to html escape
-        @returns a HTML escaped string
-        @spec ejs
-     */
-    native function escape(str: String): String
 
     //  TODO - move to Crypt
     /** 
@@ -4763,13 +4747,6 @@ public namespace ejs
         @returns the the script expression value.
      */
     native function eval(script: String, cache: String? = null): Object
-
-    //  TODO - move this to System/App/Debug and use "platform" (internal use only) namespace
-    /**
-        Format the current call stack. Used for debugging and when creating exception objects.
-        @spec ejs
-     */
-    native function formatStack(): String
 
     /** 
         Get the object's Unique hash id. All objects have a unique object hash. 
@@ -5152,7 +5129,7 @@ module ejs {
         native function Http(uri: Uri? = null)
 
         /** 
-            @duplicate Stream.addListener
+            @duplicate Stream.observe
             @event headers Issued when the response headers have been fully received.
             @event readable Issued when some body content is available.
             @event writable Issued when the connection is writable to accept body data (PUT, POST).
@@ -5161,7 +5138,7 @@ module ejs {
             All events are called with the signature:
             function (event: String, http: Http): Void
          */
-        native function addListener(name, listener: Function): Void
+        native function observe(name, observer: Function): Void
 
         /** 
             @duplicate Stream.async
@@ -5448,9 +5425,9 @@ module ejs {
             XML(response)
 
         /** 
-            @duplicate Stream.removeListener
+            @duplicate Stream.removeObserver
          */
-        native function removeListener(name, listener: Function): Void
+        native function removeObserver(name, observer: Function): Void
 
         /** 
             Response body content. The first time this property is read, the response content will be read and buffered.
@@ -5553,7 +5530,7 @@ module ejs {
             let boundary = "<<Upload Boundary>>"
             let buf = new ByteArray(4096)
             let http = this
-            buf.addListener("readable", function (event, buf) {
+            buf.observe("readable", function (event, buf) {
                 http.write(buf)
                 buf.flush(Stream.WRITE)
             })
@@ -5676,7 +5653,7 @@ module ejs {
         //  DEPRECATED
         /** @hide */
         function setCallback(eventMask: Number, cb: Function): Void {
-            addListener("" + eventMask, cb);
+            observe("" + eventMask, cb);
         }
 
         //  DEPRECATED
@@ -6072,6 +6049,8 @@ module ejs {
  
         Loggers may define a filter function that returns true or false depending on whether a specific message 
         should be logged or not. A matching pattern can alternatively be used to filter messages based on the logger name.
+
+        Loggers are themselves Streams and Stream filters can be stacked atop Loggers.
         @spec ejs
         @stability prototype
      */
@@ -6113,15 +6092,15 @@ module ejs {
         private var _level: Number = 0
         private var _pattern: RegExp
         private var _name: String
+
         private var _outStream: Stream
-        private var _parent: Logger
 
         /** 
             Logger constructor.
             The Logger constructor can create different types of loggers based on the three (optional) arguments. 
             @param name Unique name of the logger. Loggers are typically named after the module, class or subsystem they 
             are associated with.
-            @param where Optional output device or Logger to send messages to. If a parent Logger instance is provided for
+            @param location Optional output stream or Logger to send messages to. If a parent Logger instance is provided for
                 the output parameter, messages are sent to the parent for rendering.
             @param level Optional integer verbosity level. Messages with a message level less than or equal to the defined
                 logger level will be emitted. Range is 0 (least verbose) to 9.
@@ -6130,117 +6109,106 @@ module ejs {
                 var log = new Logger("name", file, 5)
                 log.debug(2, "message")
          */
-        function Logger(name: String, where = null, level: Number? = 0) {
-            _name = name
-            if (where && where is Logger) {
-                _level = where.level
-                _parent = where
-            } else if (where && where is Stream) {
-                _outStream = where
-                _level = level
-            } else {
-                redirect(where)
-            }
+        function Logger(name: String, location, level: Number? = 0) {
+            _level = level
+            redirect(location)
+            _name = (_outStream is Logger) ? (_outStream.name + "." + name) : name 
         }
 
-        function redirect(where: String) {
-            let parts = where.split(":")
-            let path = parts[0], level = parts[1]
-            _level ||= level
-            if (path == "stdout") {
-                _outStream = App.outputStream
-            } else if (path == "stderr") {
-                _outStream = App.errorStream
+        function redirect(location) {
+            if (location is Stream) {
+                _outStream = location
             } else {
-                _outStream = File(path).open("w")
+                location = location.toString()
+                let [path, level] = location.split(":")
+                if (level) {
+                    _level = level
+                }
+                if (path == "stdout") {
+                    _outStream = App.outputStream
+                } else if (path == "stderr") {
+                    _outStream = App.errorStream
+                } else {
+                    _outStream = File(path).open("w")
+                }
             }
         }
 
         /** 
             @hide
          */
-        function addListener(name, listener: Function): Void {
-            throw "addListener is not supported"
+        function observe(name, observer: Function): Void {
+            throw "observe is not supported"
         }
 
         /** 
-            The current sync/async mode.
+            Sync/async mode. Not supported for Loggers.
             @hide
          */
         function get async(): Boolean
             false
 
-        /** 
-            Set the current sync/async mode. The async mode affects the blocking APIs: close, read and write.
-            If in async mode, all Stream calls will not block. If listeners have been registered, they can be used to
-            respond to events to interface with the stream.
-            @param enable If true, set the stream into async mode
-         */
         function set async(enable: Boolean): Void {
-            if (enable) {
-                throw "Async mode not supported"
-            }
+            throw "Async mode not supported"
         }
 
         /** 
             Close the logger 
          */
-        function close(): Void {
+        function close(): Void
             _outStream = null
-        }
 
         /** 
-            The filter function in use by the logger.
+            Filter function for this logger. The filter function is called with the following signature:
+            with "this" set to the Logger instance. The $log parameter is set to the original logger that created the
+            message.
+            function filter(log: Logger, name: String, level: Number, kind: String, msg: String): Boolean
+            @param fn The filter function must return true or false.
          */
         function get filter(): Function
             _filter
 
-        /** 
-            Set the filter function for this logger. The filter function is called with the following signature:
-            with "this" set to the Logger instance. The $log parameter is set to the original logger that created the
-            message.
-            function filter(log: Logger, level: Number, msg: String): Boolean
-            @param fn The filter function must return true or false.
-         */
-        function set filter(fn: Function): void {
+        function set filter(fn: Function): void
             _filter = fn
-        }
 
         /**
             @hide
          */
-        function flush(dir: Number = Stream.BOTH): Void {}
+        function flush(dir: Number = Stream.BOTH): Void {
+            if (_outStream_) {
+                _outStream.flush(dir)
+            }
+        }
 
         /** 
-            The numeric verbosity setting (0-9) of this logger.
+            The numeric verbosity setting (0-9) of this logger. Zero is least verbose, nine is the most verbose.
          */
         function get level(): Number
             _level
 
-        /** 
-            Set the output level of this logger. (And all child loggers who have their logging level set to Inherit.)
-            @param level The next logging level (verbosity).
-         */
-        function set level(level: Number): void {
+        function set level(level: Number): void
             _level = level
-        }
 
         /** 
-            The match pattern for the logger.
+            Matching expression to filter log messages. The match regular expression is used to match 
+            against the Logger names.
          */
         function get match(): RegExp
             _pattern
 
-        /** 
-            Set a matching expression. The match expression is used to match against the Logger names.
-            @param pattern Regular expression.
-         */
-        function set match(pattern: RegExp): void {
+        function set match(pattern: RegExp): void 
             _pattern = pattern
-        }
 
-        //  MOB
-        static native function get mprLevel(): Stream
+        /**
+            Get the MPR log level via a command line "--log spec" switch
+            @hide
+         */
+        static native function get mprLevel(): Number
+
+        /**
+            Get the MPR log stream defined via a command line "--log spec" switch
+            @hide
+         */
         static native function get mprStream(): Stream
 
         /** 
@@ -6249,13 +6217,8 @@ module ejs {
         function get name(): String
             _name
 
-        /** 
-            Set the name for this logger.
-            @param name An optional string name.
-         */
-        function set name(name: String): void {
+        function set name(name: String): void
             _name = name
-        }
 
         /** 
             The output stream used by the logger.
@@ -6263,27 +6226,8 @@ module ejs {
         function get outStream(): Stream
             _outStream
 
-        /** 
-            Set the output stream device for this logger.
-            @param stream New output stream for the logger
-         */
-        function set outStream(stream: Stream): void {
+        function set outStream(stream: Stream): void
             _outStream = stream
-        }
-
-        /** 
-            The parent of this logger.
-         */
-        function get parent(): Logger
-            _parent
-
-        /** 
-            Set the parent logger for this logger.
-            @param parent A logger.
-         */
-        function set parent(parent: Logger): void {
-            _parent = parent
-        }
 
         /** 
             Emit a debug message. The message level will be compared to the logger setting to determine 
@@ -6293,30 +6237,34 @@ module ejs {
             @param msgs The string message to log.
          */
         function debug(level: Number, ...msgs): void 
-            emit(this, level, "", "", msgs.join(" ") + "\n")
+            emit("", level, "", msgs.join(" ") + "\n")
 
         /** 
             Emit a configuration message.
-            @param msgs Strings to log.
+            @param msgs Data to log.
          */
         function config(...msgs): void
-            emit(this, Config, "", "CONFIG", msgs.join(" ") + "\n")
+            emit("", Config, "CONFIG", msgs.join(" ") + "\n")
 
         /** 
             Emit an error message.
-            @param msgs Strings to log.
+            @param msgs Data to log.
          */
         function error(...msgs): void
-            emit(this, Error, "", "ERROR", msgs.join(" ") + "\n")
+            emit("", Error, "ERROR", msgs.join(" ") + "\n")
 
         /** 
             Emit an informational message.
-            @param msgs Strings to log.
+            @param msgs Data to log.
          */
         function info(...msgs): void
-            emit(this, Info, "", "INFO", msgs.join(" ") + "\n")
+            emit("", Info, "INFO", msgs.join(" ") + "\n")
 
-        /** @hide
+        /** 
+            Emit an activity message
+            @param tag Activity tag to prefix the message. The tag string is wraped in "[]".
+            @param args Output string to log
+            @hide
             @stability prototype
          */
         function activity(tag: String, ...args): Void {
@@ -6338,50 +6286,49 @@ module ejs {
         /** 
             @hide
          */
-        function removeListener(name, listener: Function): Void {
-            throw "addListener is not supported"
+        function removeObserver(name, observer: Function): Void {
+            throw "observe is not supported"
         }
 
         /** 
+            Write raw data to the logger stream
             @duplicate Stream.write
             Write informational data to logger
          */
         function write(...data): Number
-            _outStream.write(data.join(" "))
+            (_outStream) ? _outStream.write(data.join(" ")) : 0
 
         /** 
             Emit a warning message.
-            @param msgs The strings to log.
+            @param msgs The data to log.
          */
         function warn(...msgs): void
-            emit(this, Warn, "", "WARN", msgs.join(" ") + "\n")
+            emit("", Warn, "WARN", msgs.join(" ") + "\n")
 
         /* 
             Emit a message. The message level will be compared to the logger setting to determine whether it will be 
             output to the devices or not. Also, if the logger has a filter function set that may filter the message 
             out before logging.
-            @param log Logger to write to
+            @param origin Name of the logger that originated the message
             @param level The level of the message.
-            @param name Name tag to append to the message
             @param kind Message kind (debug, info, warn, error)
             @param msg The string message to emit
          */
-        private function emit(log: Logger, level: Number, name: String, kind: String, msg: String): Void {
+        private function emit(origin: String, level: Number, kind: String, msg: String): Void {
+            origin ||= _name
             if (level > _level || !_outStream)
                 return
-            if (name)
-                name = _name + "." + name
-            else name = _name
-            if (_pattern && !name.match(_pattern))
+            if (_pattern && !origin.match(_pattern)) {
                 return
-            if (_filter && !filter.call(this, log, level, msg))
+            }
+            if (_filter && !filter(this, origin, level, kind, msg))
                 return
-            if (_parent) {
-                _parent.emit(log, level, name, kind, msg)
+            if (_outStream is Logger) {
+                _outStream.emit(origin, level, kind, msg)
             } else {
                 if (kind)
-                    _outStream.write(name + ": " + kind + ": " + msg)
-                else _outStream.write(name + ": " + level + ": " + msg)
+                    _outStream.write(origin + ": " + kind + ": " + msg)
+                else _outStream.write(origin + ": " + level + ": " + msg)
             }
         }
     }
@@ -6663,7 +6610,7 @@ module ejs {
          */
         native static function get allocated(): Number
 
-        //  MOB -- should use listeners not callbacks
+        //  MOB -- should use observers not callbacks
         /**
             Memory redline callback. When the memory redline limit is exceeded, the callback will be invoked. 
             If no callback is defined and the redline limit is exceeded, a MemoryError exception is thrown. This callback
@@ -7814,12 +7761,11 @@ module ejs {
         native function makeLink(target: Path, hard: Boolean = false): Void
 
         //  TODO - make an auto cleanup temporary. ie. remove automatically somehow
-        //      temp = Path("dir").makeTemp
         /**
-            Create a temporary file in the path directory. Creates a new, uniquely named temporary file.
+            Create a new temporary file. The temp file is located in the directory specified by the Path object. 
             @returns a new Path object for the temp file.
          */
-        native function makeTemp(): Path
+        native function temp(): Path
 
         /**
             Get a path after mapping the path directory separator
@@ -8172,6 +8118,17 @@ module ejs {
                 file.close()
             }
         }
+
+        /** 
+            Create a new temporary file. The temp file is located in the directory specified by the Path object. 
+            @returns a new Path object for the temp file.
+            DEPRECATED
+            @hide
+         */
+        //  LEGACY
+        function makeTemp(): Path
+            temp()
+
     }
 }
 
@@ -8229,8 +8186,10 @@ module ejs {
         The Promise class permits deferred processing for async APIs. A Promise encapsulates callbacks and state for an API
         that will take some time to execute. The API can return the promise and the caller can register callbacks for events
         of interest.
+        WARNING: The CommonJS spec for promises is still changing 
         @spec commonjs
         @stability prototype
+        @hide
      */
     dynamic class Promise extends Emitter {
         private var timer: Timer
@@ -8242,7 +8201,7 @@ module ejs {
             @return Returns this promise
          */
         function addCallback(listener: Function): Promise {
-            addListener("success", listener)
+            observe("success", listener)
             return this
         }
 
@@ -8252,7 +8211,7 @@ module ejs {
             @return Returns this promise
          */
         function addCancelback(listener: Function): Promise {
-            addListener("cancel", listener)
+            observe("cancel", listener)
             return this
         }
 
@@ -8262,7 +8221,7 @@ module ejs {
             @return Returns this promise
          */
         function addErrback(listener: Function): Promise {
-            addListener("error", listener)
+            observe("error", listener)
             return this
         }
 
@@ -8277,9 +8236,9 @@ module ejs {
             }
             fired = true
             try {
-                issue("success", args)
+                issue("success", ...args)
             } catch (e) {
-                p("CATCH", e)
+print("CATCH", e)
                 emitError(e)
             }
         }
@@ -8295,9 +8254,10 @@ module ejs {
             }
             fired = true
             try {
-                issue("error", args)
+                issue("error", ...args)
             } catch (e) {
-                p("EmitError CATCH", e)
+                //  MOB -- use logging
+                print("EmitError CATCH", e)
             }
         }
 
@@ -8306,9 +8266,8 @@ module ejs {
             emitError or emitCancel, the Promise in completed and will not emit further events.
             @param args Args to pass to the listener
          */
-        function emitCancel(...args): Void {
-            issue("cancel", args)
-        }
+        function emitCancel(...args): Void
+            issue("cancel", ...args)
 
         /** 
             Cancels the promise and removes "success" and "error" and listeners then issues a cancel event.
@@ -8320,8 +8279,8 @@ module ejs {
             if (timer) {
                 timer.stop()
             }
-            clearListeners(["success", "error"])
-            issue("cancel", args)
+            clearObservers(["success", "error"])
+            issue("cancel", ...args)
         }
 
         /** 
@@ -8333,12 +8292,12 @@ module ejs {
             @return this promise
          */
         function then(success: Function, error: Function? = null, progress: Function? = null): Promise {
-            addListener("success", success)
+            observe("success", success)
             if (error) {
-                addListener("error", error)
+                observe("error", error)
             }
             if (progress) {
-                addListener("progress", progress)
+                observe("progress", progress)
             }
             return this
         }
@@ -8360,9 +8319,9 @@ module ejs {
                     timer.stop()
                 }
             }
-            addListener("success", awake)
-            addListener("error", awake)
-            addListener("cancel", awake)
+            observe("success", awake)
+            observe("error", awake)
+            observe("cancel", awake)
             timer = new Timer(msec, function() {
                 if (fired || done) {
                     return;
@@ -8370,7 +8329,7 @@ module ejs {
                 done = true
                 timer = null
                 issue("timeout")
-                issue("error", ["timeout"])
+                issue("error")
             })
             return this
         }
@@ -8379,33 +8338,32 @@ module ejs {
             Wait for the promise to complete for a given period. This blocks execution until the promise completes or 
             is cancelled.
             @param timeout Time to wait in milliseconds
-            @return The arguments provided to emitSuccess. If multiple arguments, they are returned as an array.
+            @return The arguments array provided to emitSuccess
          */
         function wait(timeout: Number = -1): Object {
             let done = false
             let result
-            function awake(...args) {
+            function awake(event, ...args) {
                 done = true
-                result = args.slice(1)
+                result = args
             }
-            addListener("success", awake)
-            addListener("error", awake)
-            addListener("cancel", awake)
-            new Timer(timeout, awake)
+            observe(["cancel", "error", "success"], awake)
+            timer = new Timer(timeout, awake)
+            timer.start()
             while (!done && !fired) {
                 App.serviceEvents(timeout, true)
             }
             return result
         }
 
-        private function issue(name: String, args: Array? = null): Void {
+        private function issue(name: String, ...args): Void {
             if (timer) {
                 timer.stop()
             }
             if (args) {
-                emit.apply(null, [name] + args)
+                fire(name, ...args)
             } else {
-                emit(name)
+                fire(name)
             }
         }
     }
@@ -8858,11 +8816,11 @@ module ejs {
         native function Socket()
 
         /** 
-            @duplicate Stream.addListener 
+            @duplicate Stream.observe 
             @event readable Issued when the response headers have been fully received and some body content is available.
             @event writable Issued when the connection is writable to accept body data (PUT, POST).
          */
-        native function addListener(name, listener: Function): Void
+        native function observe(name, observer: Function): Void
 
 //  MOB - or would it be better to have the accepted socket passed in as a callback parameter?
         /** 
@@ -8942,8 +8900,8 @@ module ejs {
          */
         native function get remoteAddress(): String 
 
-        /** @duplicate Stream.removeListener */
-        native function removeListener(name: Object, listener: Function): Void
+        /** @duplicate Stream.removeObserver */
+        native function removeObserver(name: Object, observer: Function): Void
 
         /** 
             @duplicate Stream.write 
@@ -9011,7 +8969,7 @@ module ejs {
         as filters or data mutators. Example endpoints are the File, Socket, and Http classes. The TextStream is an 
         example of a filter stream. The data elements passed by streams may be any series of objects including: bytes, 
         lines of text, numbers or objects. Streams may buffer the incoming data or not. Streams may issue events to 
-        registered listeners for topics of interest. Streams may offer synchronous and asynchronous APIs. 
+        registered observers for topics of interest. Streams may offer synchronous and asynchronous APIs. 
         @spec ejs
         @spec evolving
      */
@@ -9029,15 +8987,15 @@ module ejs {
         static const BOTH = 0x3
 
         /** 
-            Add a listener to the stream. 
+            Add an observer to the stream. 
             @param name Name of the event to listen for. The name may be an array of events.
-            @param listener Callback listening function. The function is called with the following signature:
-                function listener(event: String, ...args): Void
+            @param observer Callback observer function. The function is called with the following signature:
+                function observer(event: String, ...args): Void
             @event readable Issued when the stream becomes readable. 
             @event writable Issued when the stream becomes writable.
             @event close Issued when stream is being closed.
          */
-        function addListener(name, listener: Function): Void
+        function observe(name, observer: Function): Void
 
         /** 
             The current async mode. Set to true if the stream is in async mode.
@@ -9046,7 +9004,7 @@ module ejs {
 
         /** 
             Set the current sync/async mode. The async mode affects the blocking APIs: close, read and write.
-            If in async mode, all Stream calls will not block. If listeners have been registered, they can be used to
+            If in async mode, all Stream calls will not block. If observers have been registered, they can be used to
             respond to events to interface with the stream.
             @param enable If true, set the stream into async mode
          */
@@ -9087,11 +9045,11 @@ module ejs {
         function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
 
         /** 
-            Remove a listener from the stream. 
-            @param name Event name previously used with addListener. The name may be an array of events.
-            @param listener Listener function previously used with addListener.
+            Remove an observer from the stream. 
+            @param name Event name previously used with observe. The name may be an array of events.
+            @param observer Observer function previously used with observe.
          */
-        function removeListener(name, listener: Function): Void
+        function removeObserver(name, observer: Function): Void
 
         /** 
             Write data to the stream. 
@@ -9856,7 +9814,7 @@ module ejs {
             inbuf = new ByteArray
 /* UNUSED
             let self = this
-            inbuf.addListener("writable", function (event, ba) {
+            inbuf.observe("writable", function (event, ba) {
                 self.fill()
             });
 */
@@ -9865,10 +9823,10 @@ module ejs {
         }
 
         /** 
-            @duplicate Stream.addListener 
+            @duplicate Stream.observe 
          */
-        function addListener(name, listener: Function): Void {
-            throw new ArgError("Listeners are not supported")
+        function observe(name, observer: Function): Void {
+            throw new ArgError("Observers are not supported")
         }
 
         /** 
@@ -10054,10 +10012,10 @@ module ejs {
             inbuf.readString(count)
 
         /** 
-            @duplicate Stream.removeListener
+            @duplicate Stream.removeObserver
          */
-        function removeListener(name, listener: Function): Void {
-            throw new ArgError("Listeners are not supported")
+        function removeObserver(name, observer: Function): Void {
+            throw new ArgError("Observers are not supported")
         }
 
         /** 
@@ -10132,23 +10090,21 @@ module ejs {
 
 /*
     Timer.es -- Timer Services
- *
+
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
 module ejs {
 
     /**
-        Timers manage the execution of functions at some point in the future. Timers run repeatedly until stopped by 
-        calling the stop() method. Timers are scheduled with a granularity of 1 millisecond. However, many systems are not 
-        capable of supporting this granularity and make only best efforts to schedule events at the desired time.
-        To use timers, the application must call Dispatcher.serviceEvents.
+        Timers manage the execution of functions at some point in the future. Timers may run once, or they can be 
+        scheduled to run repeatedly, until stopped by calling the stop() method. Timers are scheduled with a granularity 
+        of 1 millisecond. However, many systems are not capable of supporting this granularity and make only best efforts 
+        to schedule events at the desired time.
         @Example
-            function callback(e: Event) {
-            }
-            new Timer(200, callback)
-        or
-            new Timer(200, function (e) { print(e); })
+            timer = Timer(200, function (args) { })
+            timer.repeat = true
+            timer.start()
         @stability prototype
      */
     class Timer {
@@ -10156,13 +10112,14 @@ module ejs {
         use default namespace public
 
         /**
-            Constructor for Timer. The timer is will not be called until @start is called.
+            Constructor for Timer. The timer is will not be called until $start is called.
+            When the callback is invoked, it will be invoked with the value of "this" set to the timer unless the
+                function has bound a "this" value via Function.bind.
+            @param period Delay in milliseconds before the timer will run
             @param callback Function to invoke when the timer is due.
-            @param oneShot If true, Timer fires just once. Otherwise, it fires every period till cancelled.
-            @param period Time period in milliseconds between invocations of the callback
-            @param drift Set the timers drift setting. See @drift.
+            @param args Callback arguments
          */
-        native function Timer(period: Number, callback: Function, oneShot: Boolean = true, drift: Boolean = true)
+        native function Timer(period: Number, callback: Function, ...args)
 
         /**
             The current drift setting. If drift is true, the timer is allowed to drift its execution time due to 
@@ -10174,60 +10131,79 @@ module ejs {
             end of the callback and the start of the next callback invocation is equal to the period. 
          */
         native function get drift(): Boolean
-
-        /**
-            @duplicate Timer.drift
-            @param enable If true, allow the timer to drift
-         */
         native function set drift(enable: Boolean): Void
 
         /**
-            Timer interval period in milliseconds.
+            Timer delay period in milliseconds
          */
         native function get period(): Number
-
-        /**
-            Set the timer period and reschedule the timer.
-            @param period New time in milliseconds between timer invocations.
-         */
         native function set period(period: Number): Void
 
         /**
-            Restart a stopped timer. Once running, the callback function will be invoked every @period milliseconds 
-            according to the @drift setting. If the timer is already stopped, this function has no effect.
+            Error callback function for exceptions inside the Timer callback
          */
-        native function restart(): Void
+        native function get onerror(): Function
+        native function set onerror(callback: Function): Void
 
         /**
-            Stop a timer running. Once stopped a timer can be restarted by calling @start.
+            Timer repeatability. If true, the timer will be repeated invoked every $period milliseconds
+         */
+        native function get repeat(): Boolean
+        native function set repeat(enable: Boolean): Void
+
+        /**
+            Start a timer running. The timer will be repeatedly invoked if the $repeat property is true, otherwise it 
+            will be invoked once.
+         */
+        native function start(): Void
+
+        /**
+            Stop a timer running. Once stopped a timer can be restarted by calling $start.
          */
         native function stop(): Void
     }
 
 
     /**
-        Constructor for Timer. The timer is will not be called until @start is called.
+        Create an interval timer. This will invoke the callback every $delay milliseconds.
         @param callback Function to invoke when the timer is due.
         @param delay Time period in milliseconds between invocations of the callback
+        @return Timer ID that can be used with $clearInterval
      */
-    function setInterval(callback: Function, delay: Number)
-        Timer(delay, callback, true)
+    function setInterval(callback: Function, delay: Number, ...args): Timer {
+        breakpoint()
+        let timer = new Timer(delay, callback, ...args)
+        timer.repeat = true
+        timer.start()
+        return timer
+    }
 
-    //  MOB -- should support args and pass them to the callback (MDC)
-    //  MOB -- what is the spec return value
+    /*
+        Clear and dispose of an interval timer
+        @param timer Interval timer returned from $setInterval
+     */
+    function clearInterval(timer: Timer): Void
+        timer.stop()
+
     /**
         Create a timeout
         @param callback Function to invoke when the timer expires
         @param delay Time in milliseconds until the timer expires and the callback is invoked
+        @param args Function arguments
+        @return Timer that can be used with $clearTimeout
       */
-    function setTimeout(callback: Function, delay: Number): Void {
-        Timer(delay, callback)
+    function setTimeout(callback: Function, delay: Number, ...args): Number {
+        let timer = new Timer(delay, callback, ...args)
+        timer.start()
+        return timer
     }
 
-    /**
-        Timer event
+    /*
+        Clear and dispose of a timeout
+        @param timer Timeout timer returned from $setTimeout
      */
-    class TimerEvent extends Event { }
+    function clearTimeout(timer: Timer): Void 
+        timer.stop()
 }
 
 
@@ -10357,8 +10333,6 @@ MOB - UNUSED - DELETE
 
 module ejs {
 
-    //  MOB -- should this be URI or Uri
-
     /**
         Uri class to manage Uris
         @stability evolving
@@ -10370,8 +10344,8 @@ module ejs {
 
         /** 
             Create and parse a Uri object. 
-            @param uri A string or object hash that describes the Uri. The $uri specify a complete absolute Uri string or
-            it may specify a partial Uri where missing elements take the normal defaults. The $uri argument may also be 
+            @param uri A string or object hash that describes the URI. The $uri specify a complete absolute URI string or
+            it may specify a partial URI where missing elements take the normal defaults. The $uri argument may also be 
             an object hash with the following properties.
             @option scheme: String
             @option host: String
@@ -10383,19 +10357,19 @@ module ejs {
         native function Uri(uri: Object)
 
         /** 
-            The base of portion of the Uri. The base portion is the trailing portion of the path without any 
+            The base of portion of the URI. The base portion is the trailing portion of the path without any 
                 directory elements.
          */
         native function get basename(): Uri
         
         /** 
-            A completed Uri including scheme, host. The Uri path will be normalized and completed with default values 
+            A completed URI including scheme, host. The URI path will be normalized and completed with default values 
             for missing components. 
          */
         native function get complete(): Uri
 
         /** 
-            Break a Uri into its components by converting the Uri to an absolute Uri and breaking into components.
+            Break a URI into its components by converting the URI to an absolute URI and breaking into components.
             The components are: scheme, host, port, path, reference and query.
             @return an object hash defining the following fields:
             @option scheme: String
@@ -10408,217 +10382,213 @@ module ejs {
         native function get components(): Object 
 
         /** 
-            Decode a Uri encoded string
+            Decode a URI encoded strin using www-url encoding
             @param str string to decode
             @returns a decoded string
          */
         native static function decode(str: String): String
 
         /** 
-            Decode a Uri encoded component 
+            Decode a URI encoded component using www-url encoding
             @param str string to decode
             @returns a decoded string
          */
         native static function decodeComponent(str: String): String
 
         /** 
-            The directory portion of a Uri path. The directory portion is the leading portion including all directory 
-            elements of the Uri path excluding the base name. On some systems, it will include a drive specifier.
+            The directory portion of a URI path. The directory portion is the leading portion including all directory 
+            elements of the URI path excluding the base name. On some systems, it will include a drive specifier.
          */
         native function get dirname(): Uri
 
+        /*
+            URI encoding notes: (RFC3986). See http://labs.apache.org/webarch/uri/rfc/rfc3986.html.
+            Reserved characters (and should be encoded):   : / ? # [ ] @    ! $ & ' ( ) * + , ; =
+            Unreserved characters (and must not be encoded): Alpha Digits - . _ ~
+
+            NOTE: ! , ( ) * do not yet have a formalized URI delimiting role.
+
+            encodeComponent preserves:  ! * ' ( )
+            encode preserves:           ! * ' ( ) # ; , / ? : @ 
+
+
+            NOTE: encodeComponent is encoding [] which is hard for IPv6
+
+
+            TODO:
+                Don't encode [] for IPv6
+                Encode ! ' ( ) *
+         */
+
         /** 
-            Encode a Uri
+            Encode a URI using www-url encoding. This replaces special characters with encoded alternative sequence.
+            The encode call replaces all characters except: alphabetic, decimal digits, "-", "_", ".", "!", "~", 
+            "*", "'", "(", ")", "#", ";", ",", "/", "?", ":", "@", "&", "=", "+", "$". Note that encocdeURI does not encode
+            "&", "+" and "=". If you require these to be encoded, use encodeComponents. 
+            NOTE: This routine encodes "!", "'", "(", ")" and "*", whereas the $encodeURI routine does not. It does not
+            encode "[" and "]" which may be used in IPv6 numeric hostnames.
             @param str string to encode
             @returns an encoded string
          */
         native static function encode(str: String): String
 
         /** 
-            Encode a Uri component
+            Encode a URI component suitable for the "application/x-www-form-urlencoded" mime type. This replaces 
+            special characters with encoded alternative sequence. The encode call replaces all characters 
+            except: alphabetic, decimal digits, "-", "_", ".", "!", "~", "*", "'", "(", ")". It also maps spaces to "+".
+            Compared with the $encode call, encodeComponent additionally encodes: "#", ";", ",", "/", "?", ":", "@", 
+            "&", "=", "+", "$".  Note that this call encodes "=" and "&" which are used to separate and delimit 
+            data form name/value pairs.
+            NOTE: This routine encodes "!", "'", "(", ")" and "*", whereas the $encodeURIComponent routine does not.
+            @note See http://labs.apache.org/webarch/uri/rfc/rfc3986.html for details.
             @param str string to encode
             @returns an encoded string
          */
         native static function encodeComponent(str: String): String
 
         /** 
-            Return true if the Uri path ends with the given suffix
-            @param suffix Uri or String suffix to compare with the path.
+            Return true if the URI path ends with the given suffix
+            @param suffix URI or String suffix to compare with the path.
             @return true if the path does begin with the suffix
          */
         function endsWith(suffix: Object): Boolean
             path.toString().endsWith(suffix.toString())
 
         /** 
-            The Uri extension portion of the path. Set to a String containing the Uri extension without the "." or set
+            The URI extension portion of the path. Set to a String containing the URI extension without the "." or set
             to null if there is no extension.
          */
         native function get extension(): String
-
-        /** 
-            Set the Uri extension portion
-            @param value String containing the new extension. 
-         */
         native function set extension(value: String): Void
 
         function get filename(): Path
             Path(path.slice(1))
 
         /** 
-            Does the Uri has an explicit extension
+            Does the URI has an explicit extension
          */
         native function get hasExtension(): Boolean 
 
         /** 
-            Does the Uri have an explicit host component. For example: "www.example.com"
+            Does the URI have an explicit host component. For example: "www.example.com"
          */
         native function get hasHost(): Boolean 
 
         /** 
-            Does the Uri have an explicit port number.
+            Does the URI have an explicit port number.
          */
         native function get hasPort(): Boolean 
 
         /** 
-            Does the Uri have an explicit query component
+            Does the URI have an explicit query component
          */
         native function get hasQuery(): Boolean 
 
         /** 
-            Does the Uri have an explicit reference component
+            Does the URI have an explicit reference component
          */
         native function get hasReference(): Boolean 
 
         /** 
-            Does the Uri have an explicit scheme (protocol) specifier. For example: "http://"
+            Does the URI have an explicit scheme (protocol) specifier. For example: "http://"
          */
         native function get hasScheme(): Boolean 
 
         /** 
-            The host portion of the Uri. Set to null if there is no host component.
+            The host portion of the URI. Set to null if there is no host component.
          */
         native function get host(): String
-
-        /** 
-            @duplicate Uri.host
-            @param value A string containing the new host portion
-         */
         native function set host(value: String): Void
 
         /** 
-            Is the Uri is absolute. Set to true if the Uri is an absolute path with the path component beginning with "/"
+            Is the URI is absolute. Set to true if the URI is an absolute path with the path component beginning with "/"
          */
         native function get isAbsolute(): Boolean
 
         /** 
-            Is the Uri is a directory Uri. Set to true if the Uri ends with "/". NOTE: this only tests the Uri and 
-            not any physical resource associated with the Uri.
+            Is the URI is a directory URI. Set to true if the URI ends with "/". NOTE: this only tests the URI and 
+            not any physical resource associated with the URI.
          */
         native function get isDir(): Boolean
 
         /** 
-            Is the Uri is a regular resource and not a directory. Set to true if the Uri does not end with "/". 
-            NOTE: this only tests the Uri and not any physical resource associated with the Uri.
+            Is the URI is a regular resource and not a directory. Set to true if the URI does not end with "/". 
+            NOTE: this only tests the URI and not any physical resource associated with the URI.
          */
         function get isRegular(): Boolean
             isDir == false
 
         /** 
-            Is if the Uri is relative. Set to true if the Uri's path component does not begin with "/"
+            Is if the URI is relative. Set to true if the URI's path component does not begin with "/"
          */
         function get isRelative(): Boolean
             isAbsolute == false
 
         /** 
-            Join Uris. Joins Uris together. If a Uri is absolute, replace the join with it and continue. If a Uri is
-            relative, replace the basename portion of the existing Uri with the next joining uri and continue. For 
+            Join URIs. If a URI is absolute, replace the join with it and continue. If a URI is
+            relative, replace the basename portion of the existing URI with the next joining uri and continue. For 
             example:  Uri("/admin/login").join("logout") will replace "login" with "logout" whereas 
             Uri("/admin/").join("login") will append login.
-            @return A new joined Uri.
+            @return A new joined URI.
          */
         native function join(...other): Uri
 
         /** 
-            Join an extension to a Uri. If the basename of the Uri already has an extension, this call does nothing.
-            @return A Uri with an extension.
+            Join an extension to a URI. If the basename of the URI already has an extension, this call does nothing.
+            @return A URI with an extension.
          */
         native function joinExt(ext: String): Uri
 
         /** 
-            The mime type of the Uri. This is set to a mime type string by examining the Uri extension. Set to null if
-            the Uri has no extension.
+            The mime type of the URI. This is set to a mime type string by examining the URI extension. Set to null if
+            the URI has no extension.
          */
         native function get mimeType(): String
 
         /** 
-            Normalized Uri by removing all redundant and invalid Uri components. Set to a Uri with "segment/.." 
-            and "./" components removed. The value will not be converted to an absolute Uri nor will it map character case.
+            Normalized URI by removing all redundant and invalid URI components. Set to a URI with "segment/.." 
+            and "./" components removed. The value will not be converted to an absolute URI nor will it map character case.
          */
         native function get normalize(): Uri
 
         /** 
-            The Uri path portion after the hostname
+            The URI path portion after the hostname
          */
         native function get path(): String
-
-        /** 
-            @duplicate Uri.path
-            @param value String containing the new path portion
-         */
         native function set path(value: String): Void
 
 //  MOB -- inconsistent - should this return null?
         /** 
-            The port number of the Uri. Set ot 80 if the Uri does not have an explicit port.
+            The port number of the URI. Set ot 80 if the URI does not have an explicit port.
          */
         native function get port(): Number
-
-        /** 
-            @duplicate Uri.port
-            @param value Number of the port
-         */
         native function set port(value: Number): Void
 
         /** 
-            The Uri protocol scheme. Set to "http" by default.
+            The URI protocol scheme. Set to "http" by default.
          */
         native function get scheme(): String
-
-        /** 
-            @duplicate Uri.scheme
-            @param value String containing the new protocol scheme. For example, to select FTP, use "ftp"
-         */
         native function set scheme(value: String): Void
 
 //  MOB -- are all these null or some other default values?
         /** 
-            The Uri query string. The query string is the fragment after a "?" character in the Uri.
+            The URI query string. The query string is the fragment after a "?" character in the URI.
          */
         native function get query(): String
-
-        /** 
-            @duplicate Uri.query
-            @param value A string containing the new query string portion. 
-         */
         native function set query(value: String): Void
 
         /** 
-            The Uri reference portion. The reference portion is sometimes called the "anchor" and is the the fragment 
-            after a "#" character in the Uri.
+            The URI reference portion. The reference portion is sometimes called the "anchor" and is the the fragment 
+            after a "#" character in the URI.
          */
         native function get reference(): String
-
-        /** 
-            @duplicate Uri.reference
-            @param value A string containing the new reference string portion. 
-         */
         native function set reference(value: String): Void
 
         /** 
-            Create a Uri with a releative path from the current Uri to a given Uri. This call computes the relative
-            path from this Uri to the $target Uri argument.
-            @param target Uri Target Uri to locate.
-            @return a new Uri object for the target Uri
+            Create a URI with a releative path from the current URI to a given URI. This call computes the relative
+            path from this URI to the $target URI argument.
+            @param target Uri Target URI to locate.
+            @return a new URI object for the target URI
          */
         function relative(target: Uri): Uri {
             let parts = this.normalize.path.toString().split("/")
@@ -10645,45 +10615,45 @@ module ejs {
         }
 
         /** 
-            Replace the extension and return a new Uri.
+            Replace the extension and return a new URI.
             @return A path with extension.
          */
         native function replaceExt(ext: String): Uri
 
         /** 
-            Compare two Uris test if they represent the same resource
-            @param other Other Uri to compare with
+            Compare two URIs test if they represent the same resource
+            @param other Other URI to compare with
             @param exact If exact is true, then the query and reference portions must match
-            @return True if the Uris represent the same underlying resource
+            @return True if the URIs represent the same underlying resource
          */
         native function same(other: Object, exact: Boolean = false): Boolean
 
         /** 
-            Return true if the Uri path starts with the given prefix. This skips the scheme, host and port portions
-            and examines the Uri path only.
-            @param prefix Uri or String prefix to compare with the Uri.
+            Return true if the URI path starts with the given prefix. This skips the scheme, host and port portions
+            and examines the URI path only.
+            @param prefix URI or String prefix to compare with the URI.
             @return true if the path does begin with the prefix
          */
         function startsWith(prefix: Object): Boolean
             path.toString().startsWith(prefix.toString()) 
 
         /** 
-            Convert the Uri to a JSON string. 
-            @return a JSON string representing the Uri.
+            Convert the URI to a JSON string. 
+            @return a JSON string representing the URI.
          */
         override function toJSON(): String
             JSON.stringify(this.toString())
 
         /** 
-            Convert the Uri to a string. The format of the string will depend on the defined $representation format.
-            @return a string representing the Uri.
+            Convert the URI to a string. The format of the string will depend on the defined $representation format.
+            @return a string representing the URI.
          */
         native override function toString(): String
 
         /** 
-            Trim a pattern from the end of the Uri path
+            Trim a pattern from the end of the URI path
             NOTE: this does a case-sensitive match. MOB - is this right?
-            @return a new Uri containing the trimmed Uri
+            @return a new URI containing the trimmed URI
             TODO - should support reg expressions
          */
         function trimEnd(pat: String): Uri {
@@ -10693,15 +10663,15 @@ module ejs {
         }
 
         /** 
-            Trim the extension portion off the Uri path
-            @return a Uri with no extension
+            Trim the extension portion off the URI path
+            @return a URI with no extension
          */
         native function trimExt(): Uri
 
         /** 
             Trim a pattern from the start of the path
             NOTE: this does a case-sensitive match. MOB - is this right?
-            @return a Uri containing the trimmed path name
+            @return a URI containing the trimmed path name
             TODO - should support reg expressions
          */
         function trimStart(pat: String): Uri {
@@ -10711,33 +10681,46 @@ module ejs {
         }
 
         /** 
-            The full Uri as a string.
+            The full URI as a string.
          */
         native function get uri(): String
-
-        /** 
-            Set the Uri 
-            @param value String containing the new Uri
-         */
         native function set uri(value: String): Void
     }
 
     /** 
-        Decode an encoded Uri.
+        Decode an encoded URI using www-url encoding
         @param str encoded string
         @returns a decoded string
      */
-    function decodeUri(str: String): String
-        Uri.decode(str)
+    native function decodeURI(str: String): String
 
     /** 
-        Decode an encoded Uri component.
+        Decode an encoded URI component.
         @param str encoded string
         @returns a decoded string
      */
-    function decodeUriComponent(str: String): String
-        Uri.decodeUriComponent(str)
+    native function decodeURIComponent(str: String): String
 
+    /** 
+        Encode a URI using www-url encoding. This replaces special characters with encoded alternative sequence.
+        The encode call replaces all characters except: alphabetic, decimal digits, "-", "_", ".", "!", "~", "*", 
+        "'", "(", ")", "#",";", ",", "/", "?", ":", "@", "&", "=", "+", "$". Note that encocdeURI does not encode
+        "&", "+" and "=". If you require these to be encoded, use encodeComponents. 
+        @see Uri.encode for RFC3986 compliant encoding.
+        @param str String to encode
+        @returns an encoded string
+     */
+    native function encodeURI(str: String): String
+
+    /** 
+        Encode a URI component using www-url encoding. This replaces special characters with encoded alternative sequence.
+        The encode call replaces all characters except: alphabetic, decimal digits, "-", "_", ".", "!", "~", "*", 
+        "'", "(", ")". Note that this call encodes "=" and "&" which are often used in URL query name/key pairs.
+        @see Uri.encodeComponent for RFC3986 compliant encoding.
+        @param str String to encode
+        @returns an encoded string
+     */
+    native function encodeURIComponent(str: String): String
 }
 
 
@@ -11002,6 +10985,18 @@ module ejs {
         native function waitForMessage(timeout: Number = -1): Boolean
     }
 
+    /** 
+        Event for Web Workers
+        @spec WebWorker
+     */
+    class Event extends Error {}
+
+    /** 
+        Error event for Web Workers
+        @spec WebWorker
+     */
+    class ErrorEvent extends Error { }
+
 
     /*
         Globals for inside workers.
@@ -11038,9 +11033,8 @@ module ejs {
 
     /**
      */
-    function set onerror(fun: Function): Void {
+    function set onerror(fun: Function): Void
         self.onerror = fun
-    }
 
     /**
         The callback function configured to receive incoming messages. 
@@ -11527,8 +11521,7 @@ module ejs {
 
         use default namespace public
 
-        //  TODO - rename http
-        private var hp: Http = new Http
+        private var http: Http = new Http
         private var state: Number = 0
         private var response: ByteArray
 
@@ -11561,14 +11554,14 @@ module ejs {
             Abort the connection
          */
         function abort(): void
-            hp.close
+            http.close
 
         /**
             The underlying Http object
             @spec ejs
          */
-        function get http() : Http
-            hp
+        function get httpObject() : Http
+            http
 
         /**
             The readystate value. This value can be compared with the XMLHttp constants: Uninitialized, Open, Sent,
@@ -11581,14 +11574,14 @@ module ejs {
             HTTP response body as a string.
          */
         function get responseText(): String
-            hp.response
+            http.response
 
         /**
             HTTP response payload as an XML document. Set to an XML object that is the root of the HTTP request 
             response data.
          */
         function get responseXML(): XML
-            XML(hp.response)
+            XML(http.response)
 
         /**
             Not implemented. Only for ActiveX on IE
@@ -11603,13 +11596,13 @@ module ejs {
             The HTTP status code. Set to an integer Http status code between 100 and 600.
          */
         function get status(): Number
-            hp.status
+            http.status
 
         /**
             Return the HTTP status code message
          */
         function get statusText() : String
-            hp.statusMessage
+            http.statusMessage
 
         /**
             Return the response headers
@@ -11617,8 +11610,8 @@ module ejs {
          */
         function getAllResponseHeaders(): String {
             let result: String = ""
-            for (key in hp.headers) {
-                result = result.concat(key + ": " + hp.headers[key] + '\n')
+            for (key in http.headers) {
+                result = result.concat(key + ": " + http.headers[key] + '\n')
             }
             return result
         }
@@ -11642,15 +11635,24 @@ module ejs {
          */
         function open(method: String, url: String, async: Boolean = false, user: String? = null, 
                 password: String = null): Void {
-            hp.method = method
-            hp.uri = url
-            if (user && password) {
-                hp.setCredentials(user, password)
-            }
-            hp.callback = callback
             response = new ByteArray(System.Bufsize, 1)
+            http.async = true
+            http.method = method
+            http.uri = url
+            if (user && password) {
+                http.setCredentials(user, password)
+            }
+            http.observe("readable", function (event, ...args) {
+                let http: Http = e.data
+                let count = http.read(response)
+                state = (count == 0) ? Loaded : Receiving
+                notify()
+            })
+            http.observe("error", function (event, ...args) {
+                notify()
+            })
 
-            hp.connect()
+            http.connect()
             state = Open
             notify()
 
@@ -11669,12 +11671,10 @@ module ejs {
             @param content Data to send with the request.
          */
         function send(content: String): Void {
-/*
-            if (hp.callback == null) {
+            if (!http.async) {
                 throw new IOError("Can't call send in sync mode")
             }
-*/
-            hp.write(content)
+            http.write(content)
         }
 
         /**
@@ -11685,18 +11685,18 @@ module ejs {
                 setRequestHeader("Keep-Alive", "none")
          */
         function setRequestHeader(key: String, value: String): Void
-            hp.addHeader(key, value, 1)
+            http.addHeader(key, value, 1)
 
         /*
             Http callback function
          */
-        private function callback (e: Event) {
+        private function callback (event, ...args) {
             if (e is HttpError) {
                 notify()
                 return
             }
-            let hp: Http = e.data
-            let count = hp.read(response)
+            let http: Http = e.data
+            let count = http.read(response)
             state = (count == 0) ? Loaded : Receiving
             notify()
         }
@@ -12249,7 +12249,9 @@ module ejs.cjs {
                         code = path.readString()
                         code = wrap(code)
                     }
-                    App.log.debug(4, "Recompile module to: " + cache)
+                    if (cache) {
+                        App.log.debug(4, "Recompile module to: " + cache)
+                    }
                     initializer = eval(code, cache)
                 }
                 timestamps[path] = path.modified
@@ -12271,6 +12273,8 @@ module ejs.cjs {
                 let dir = cachedir || Path(config.directories.cache) || Path("cache")
                 if (dir.exists) {
                     return Path(dir).join(md5(path)).joinExt('.mod')
+                } else {
+                    App.log.error("Can't find cache directory: " + dir)
                 }
             }
             return null
@@ -16372,7 +16376,7 @@ module ejs.web {
             write('    table.draw(data, ' + serialize(goptions) + ');')
 
             if (options.click) {
-                write('    google.visualization.events.addListener(table, "select", function() {')
+                write('    google.visualization.events.observe(table, "select", function() {')
                 write('        var row = table.getSelection()[0].row;')
                 write('        window.location = "' + view.makeUrl(options.click, "", options) + '?id=" + ' + 
                     'data.getValue(row, 0);')
@@ -17102,16 +17106,16 @@ module ejs.web {
 
             let server: HttpServer = new HttpServer(".", "web")
             let router = Router(Router.RestfulRoutes)
-            server.addListener("readable", function (event: String, request: Request) {
+            server.observe("readable", function (event: String, request: Request) {
                 request.status = 200
                 request.setHeaders({"Content-Type": "text/plain"})
-                request.addListener("readable", function (event, request) {
+                request.observe("readable", function (event, request) {
                     let data = new ByteArray
                     if (request.read(data) == null) {
                         print("EOF")
                     }
                 })
-                request.addListener("writable", function (event) {
+                request.observe("writable", function (event) {
                     request.write("Hello World")
                     request.finalize()
                 })
@@ -17121,17 +17125,17 @@ module ejs.web {
         native function HttpServer(serverRoot: Path = ".", documentRoot: Path = ".")
 
         /** 
-            Add a listener to the server. 
+            Add an observer for server events. 
             @param name Name of the event to listen for. The name may be an array of events.
-            @param listener Callback listening function. The function is called with the following signature:
-                function listener(event: String, ...args): Void
+            @param observer Callback listening function. The function is called with the following signature:
+                function observer(event: String, ...args): Void
             @event readable Issued when there is a new request available
             @event close Issued when server is being closed.
             @event createSession Issued when a new session store object is created for a client. The request object is
                 passed.
             @event destroySession Issued when a session is destroyed. The request object is passed.
          */
-        native function addListener(name, listener: Function): Void
+        native function observe(name, observer: Function): Void
 
         /** 
             Get the local IP address bound to this socket.
@@ -17192,11 +17196,11 @@ module ejs.web {
         native function get port(): Number 
 
         /** 
-            Remove a listener from the server. 
-            @param name Event name previously used with addListener. The name may be an array of events.
-            @param listener Listener function previously used with addListener.
+            Remove an observer from the server. 
+            @param name Event name previously used with observe. The name may be an array of events.
+            @param observer Observer function previously used with observe.
          */
-        native function removeListener(name: Object, listener: Function): Void
+        native function removeObserver(name: Object, observer: Function): Void
 
         /** 
             Default root directory for the server. The app does not change its current directory to this path.
@@ -17716,7 +17720,7 @@ module ejs.web {
         /* ************************************* Methods ******************************************/
 
         /** 
-            @duplicate Stream.addListener
+            @duplicate Stream.observe
             @event readable Issued when some body content is available.
             @event writable Issued when the connection is writable to accept body data (PUT, POST).
             @event close Issued when the request completes
@@ -17724,7 +17728,7 @@ module ejs.web {
             All events are called with the signature:
             function (event: String, http: Http): Void
          */
-        native function addListener(name, listener: Function): Void
+        native function observe(name, observer: Function): Void
 
         /** 
             @duplicate Stream.async
@@ -17843,9 +17847,9 @@ module ejs.web {
         }
 
         /** 
-            @duplicate Stream.removeListener 
+            @duplicate Stream.removeObserver 
          */
-        native function removeListener(name, listener: Function): Void
+        native function removeObserver(name, observer: Function): Void
 
         //    MOB - doc
         /** @hide */
@@ -18830,14 +18834,19 @@ UNUSED && KEEP
 
     /**
         Transform a string to be safe for output into an HTML web page. It does this by changing the
-            "&", ">", "<" and '"' characters into their ampersand HTML equivalents.
-        @param s input string
+            & > < " ' characters into their ampersand HTML equivalents.
+        @param str input string
         @returns a transformed HTML escaped string
         @spec ejs
         @stability prototype
      */
+    native function escapeHtml(str: String): String
+/*
+    UNUSED
     function escapeHtml(s: String): String
-        s.replace(/&/g,'&amp;').replace(/\>/g,'&gt;').replace(/</g,'&lt;').replace(/"/g,'&quot;')
+        s.replace(/&/g,'&amp;').replace(/\>/g,'&gt;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+*/
+
 
     /** 
         HTML encode the arguments. This escapes HTML directives to be safe for inclusion in a web page.
@@ -20082,7 +20091,7 @@ request.config = config
                             request.async = true
                             //  Should we wait on request being writable or on the body stream being readable?
                             //  Must detect eof and do a finalize()
-                            request.addListener("", function(event, body) {
+                            request.observe("", function(event, body) {
                                 request.write(body)
                             })
                             //  TODO - what about async reading of read data?

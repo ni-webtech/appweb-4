@@ -287,7 +287,7 @@ MAIN(ejscMain, int argc, char **argv)
             optionally also save to module files.
          */
         if (ecCompile(cp, argc - nextArg, &argv[nextArg]) < 0) {
-            mprError(cp, "%s", cp->errorMsg);
+            mprRawLog(cp, 0, "%s", cp->errorMsg);
             err++;
         }
     }

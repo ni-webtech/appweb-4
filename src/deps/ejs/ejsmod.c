@@ -5036,8 +5036,15 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
             mprSprintf(mp, bufp, buflen,  "<argc: %d> ", ival);
             break;
 
+        case EBC_NEW_ARRAY:
+            ival = (int) getNum(mp);     /* argc */
+            mprSprintf(mp, bufp, buflen,  "<argc: %d>", ival);
+            bufp += strlen(bufp);
+            *stackEffect -= (ival * 2);
+            break;
+
         case EBC_NEW_OBJECT:
-            ival = (int) getNum(mp);
+            ival = (int) getNum(mp);     /* argc */
             mprSprintf(mp, bufp, buflen,  "<argc: %d> <att: ", ival);
             bufp += strlen(bufp);
             for (j = 0; j < ival; j++) {
