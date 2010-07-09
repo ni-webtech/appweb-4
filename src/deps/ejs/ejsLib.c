@@ -38254,7 +38254,9 @@ static EjsFunction *defineFunction(EcCompiler *cp, EcNode *np)
 
     if (np->function.isMethod) {
         np->attributes |= EJS_TRAIT_FIXED | EJS_TRAIT_READONLY;
-        if (!(np->attributes & EJS_PROP_ENUMERABLE) && !(state->currentClassNode->attributes & EJS_PROP_ENUMERABLE)) {
+        if (!(np->attributes & EJS_PROP_ENUMERABLE) 
+                /* Don't inherit enumerable for functions */
+                /* MOB && !(state->currentClassNode->attributes & EJS_PROP_ENUMERABLE) */) {
             np->attributes |= EJS_TRAIT_HIDDEN;
         }
         block = getBlockForDefinition(cp, np, state->varBlock, np->attributes);

@@ -89,10 +89,10 @@
 <td class="apiType"><a href="#group___ejs_request" class="ref">EjsRequest*</a></td><td><a href="#ejs_8h_1e4d5165d879868c4cea4a78939c46cb8" class="nameRef">ejsCreateRequest</a>(<a href="#group___ejs" class="ref">Ejs</a> *ejs,  EjsHttpServer *server,  HttpConn *conn,  cchar *dir)</td></tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Create a new request.</td></tr>
 <tr class="apiDef">
-<td class="apiType"><a href="#group___ejs_session" class="ref">EjsSession*</a></td><td><a href="#ejs_8h_1b733bc29b28fc91c6d0eb03165845a91" class="nameRef">ejsCreateSession</a>(<a href="#group___ejs" class="ref">Ejs</a> *ejs,  int timeout,  bool secure)</td></tr>
+<td class="apiType"><a href="#group___ejs_session" class="ref">EjsSession*</a></td><td><a href="#ejs_8h_1db3f131c39450c515666f4d84c26b33b" class="nameRef">ejsCreateSession</a>(<a href="#group___ejs" class="ref">Ejs</a> *ejs,  struct EjsRequest *req,  int timeout,  bool secure)</td></tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Create a session object.</td></tr>
 <tr class="apiDef">
-<td class="apiType">int</td><td><a href="#ejs_8h_1ceee664902b7431cacd92456152c3478" class="nameRef">ejsDestroySession</a>(<a href="#group___ejs" class="ref">Ejs</a> *ejs,  EjsSession *session)</td></tr>
+<td class="apiType">int</td><td><a href="#ejs_8h_14814d6300c229a734d92fff69aa83a24" class="nameRef">ejsDestroySession</a>(<a href="#group___ejs" class="ref">Ejs</a> *ejs,  EjsHttpServer *server,  EjsSession *session)</td></tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Destroy as session.</td></tr>
 <tr class="apiDef">
 <td class="apiType">bool</td><td><a href="#ejs_8h_1cc42e0f86290f6c1919c81d899150379" class="nameRef">ejsIsFile</a>(<a href="#group___ejs" class="ref">Ejs</a> *ejs,  EjsObj *vp)</td></tr>
@@ -284,14 +284,8 @@
 <a name="Typedefs"></a><h1>Typedefs</h1>
 <table class="apiIndex" summary="typedefs">
 <tr class="apiDef">
-<td class="apiName"><a href="#struct_ejs_ex" class="nameRef">EjsEx</a></td>
-<td class="apiBrief">Exception Handler Record.</td></tr>
-<tr class="apiDef">
 <td class="apiName"><a href="#struct_ejs_list" class="nameRef">EjsList</a></td>
 <td class="apiBrief">List type.</td></tr>
-<tr class="apiDef">
-<td class="apiName"><a href="#struct_ejs_lookup" class="nameRef">EjsLookup</a></td>
-<td class="apiBrief">Lookup State.</td></tr>
 <tr class="apiDef">
 <td class="apiName"><a href="#struct_ejs_service" class="nameRef">EjsService</a></td>
 <td class="apiBrief">Ejscript Service structure.</td></tr>
@@ -1238,76 +1232,6 @@ Filename path.
     <a href="#group___ejs_function_1g1b04a89fc17493abd5f3d95dedf036d2" class="ref">ejsCreateFunction</a>, <a href="#group___ejs_function_1g57f528868eed5536dde9dacccd059083" class="ref">ejsIsFunction</a>, <a href="#group___ejs_function_1g8e764d2fd382cc8f0d4bf34c227db88c" class="ref">ejsIsInitializer</a>, <a href="#group___ejs_function_1g461f8132dd432d5b27d253419c9a85c8" class="ref">ejsIsNativeFunction</a>, <a href="#group___ejs_function_1gfc48c2ee73ed572e466a83f6903d29f9" class="ref">ejsRunFunction</a>, <a href="#group___ejs_function_1g07c05d4fe96ac9752069730ec21ef7ee" class="ref">ejsRunFunctionBySlot</a>, <a href="#group___ejs_function_1g5a7d2ad5dd3cf09e90d6288ac2ba73fc" class="ref">ejsRunInitializer</a></dd></dl>
     <dl><dt>Fields:</dt><dd>
     <table class="parameters" summary="Parameters">
-    <tr><td class="param">EjsObj *</td><td><td>activation</td><td>
-Activation block for local vars.
-</td>
-    <tr><td class="param">struct EjsType *</td><td><td>archetype</td><td>
-Type to use to create instances.
-</td>
-    <tr><td class="param">uint</td><td><td>castNulls</td><td>
-Cast return values of null.
-</td>
-    <tr><td class="param"><a class="ref" href="#struct_ejs_code">EjsCode</a></td><td><td>code</td><td>
-Byte code.
-</td>
-    <tr><td class="param">uint</td><td><td>fullScope</td><td>
-Closures must capture full scope.
-</td>
-    <tr><td class="param">uint</td><td><td>hasReturn</td><td>
-Function has a return stmt.
-</td>
-    <tr><td class="param">uint</td><td><td>inCatch</td><td>
-Executing catch block.
-</td>
-    <tr><td class="param">uint</td><td><td>inException</td><td>
-Executing catch/finally exception processing.
-</td>
-    <tr><td class="param">uint</td><td><td>isConstructor</td><td>
-Function is a constructor.
-</td>
-    <tr><td class="param">uint</td><td><td>isInitializer</td><td>
-Function is a type initializer.
-</td>
-    <tr><td class="param">uint</td><td><td>isNativeProc</td><td>
-Function is native procedure.
-</td>
-    <tr><td class="param">uint</td><td><td>moduleInitializer</td><td>
-Function is a module initializer.
-</td>
-    <tr><td class="param">cchar *</td><td><td>name</td><td>
-Activation properties (parameters + locals).
-</td>
-    <tr><td class="param">uint</td><td><td>numArgs</td><td>
-Count of formal parameters.
-</td>
-    <tr><td class="param">uint</td><td><td>numDefault</td><td>
-Count of formal parameters with default initializers.
-</td>
-    <tr><td class="param">EjsProc</td><td><td>proc</td><td>
-Native function pointer.
-</td>
-    <tr><td class="param">uint</td><td><td>rest</td><td>
-Function has a &quot;...&quot; rest of args parameter.
-</td>
-    <tr><td class="param">struct EjsType *</td><td><td>resultType</td><td>
-Return type of method.
-</td>
-    <tr><td class="param">struct EjsFunction *</td><td><td>setter</td><td>
-Function name for debuggability. 
-Setter function for this property.
-</td>
-    <tr><td class="param">uint</td><td><td>staticMethod</td><td>
-Function is a static method.
-</td>
-    <tr><td class="param">uint</td><td><td>strict</td><td>
-Language strict mode (vs standard).
-</td>
-    <tr><td class="param">EjsObj *</td><td><td>thisObj</td><td>
-Bound &quot;this&quot; for method extraction.
-</td>
-    <tr><td class="param">uint</td><td><td>throwNulls</td><td>
-Return type cannot be null.
-</td>
     </table></dd></dl>
   </div>
 </div>
@@ -1484,6 +1408,42 @@ Functions can be either native - meaning the implementation is via a C function,
     <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">char *</td><td><td>certFile</td><td>
+SSL certificate file.
+</td>
+    <tr><td class="param">char *</td><td><td>ciphers</td><td>
+SSL ciphers.
+</td>
+    <tr><td class="param">cchar *</td><td><td>dir</td><td>
+Directory containing web documents.
+</td>
+    <tr><td class="param">Ejs *</td><td><td>ejs</td><td>
+Ejscript interpreter handle.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>emitter</td><td>
+Event emitter.
+</td>
+    <tr><td class="param">char *</td><td><td>ip</td><td>
+Listening address.
+</td>
+    <tr><td class="param">char *</td><td><td>keyFile</td><td>
+SSL key file.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Extends Object.
+</td>
+    <tr><td class="param">int</td><td><td>port</td><td>
+Listening port.
+</td>
+    <tr><td class="param">char *</td><td><td>protocols</td><td>
+SSL protocols.
+</td>
+    <tr><td class="param">HttpServer *</td><td><td>server</td><td>
+Http server object.
+</td>
+    </table></dd></dl>
   </div>
 </div>
 <h1>EjsIterator</h1>
@@ -2407,30 +2367,31 @@ Create a new request object associated with the given Http connection
     <dl><dt>Returns:</dt><dd>A new request object.</dd></dl>
   </div>
 </div>
-<a name="ejs_8h_1b733bc29b28fc91c6d0eb03165845a91"></a>
+<a name="ejs_8h_1db3f131c39450c515666f4d84c26b33b"></a>
 <div class="api">
   <div class="prototype">
     <a href="#group___ejs_session" class="ref">EjsSession</a> *
     ejsCreateSession
-(Ejs *ejs, int timeout, bool secure)
+(Ejs *ejs, struct EjsRequest *req, int timeout, bool secure)
   </div>
   <div class="apiDetail">
 <p>Create a session object.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">ejs</td><td>Ejs interpreter handle returned from $ejsCreate.</td>
+    <tr><td class="param">req</td><td>Request object creating the session.</td>
     <tr><td class="param">timeout</td><td>Timeout in milliseconds.</td>
     <tr><td class="param">secure</td><td>If the session is to be given a cookie that is designated as only for secure sessions (SSL).</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>A new session object.</dd></dl>
   </div>
 </div>
-<a name="ejs_8h_1ceee664902b7431cacd92456152c3478"></a>
+<a name="ejs_8h_14814d6300c229a734d92fff69aa83a24"></a>
 <div class="api">
   <div class="prototype">
     int
     ejsDestroySession
-(Ejs *ejs, EjsSession *session)
+(Ejs *ejs, EjsHttpServer *server, EjsSession *session)
   </div>
   <div class="apiDetail">
 <p>Destroy as session.</p>
@@ -2438,6 +2399,7 @@ This destroys the session object so that subsequent requests will need to establ
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">ejs</td><td>Ejs interpreter handle returned from $ejsCreate.</td>
+    <tr><td class="param">server</td><td>Server object owning the session.</td>
     <tr><td class="param">session</td><td>Session object created via ejsCreateSession().</td>
     </table></dd></dl>
   </div>
@@ -2494,41 +2456,6 @@ Only used internally in the VM
   </div>
 </div>
 <h2>Typedefs</h2>
-<a name="struct_ejs_ex"></a>
-<div class="api">
-  <div class="prototype">EjsEx</div>
-  <div class="apiDetail">
-<p>Exception Handler Record.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Each exception handler has an exception handler record allocated that describes it.</dd></dl>
-    <dl><dt>Fields:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">struct EjsType *</td><td><td>catchType</td><td>
-Type of error to catch.
-</td>
-    <tr><td class="param">uint</td><td><td>flags</td><td>
-Exception flags.
-</td>
-    <tr><td class="param">uint</td><td><td>handlerEnd</td><td>
-Ptr to one past the end.
-</td>
-    <tr><td class="param">uint</td><td><td>handlerStart</td><td>
-Ptr to start of catch/finally block.
-</td>
-    <tr><td class="param">uint</td><td><td>numBlocks</td><td>
-Count of blocks opened before the try block.
-</td>
-    <tr><td class="param">uint</td><td><td>numStack</td><td>
-Count of stack slots pushed before the try block.
-</td>
-    <tr><td class="param">uint</td><td><td>tryEnd</td><td>
-Ptr to one past the end.
-</td>
-    <tr><td class="param">uint</td><td><td>tryStart</td><td>
-Ptr to start of try block.
-</td>
-    </table></dd></dl>
-  </div>
-</div>
 <a name="struct_ejs_list"></a>
 <div class="api">
   <div class="prototype">EjsList</div>
@@ -2541,17 +2468,6 @@ Ptr to start of try block.
     <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
-  </div>
-</div>
-<a name="struct_ejs_lookup"></a>
-<div class="api">
-  <div class="prototype">EjsLookup</div>
-  <div class="apiDetail">
-<p>Lookup State.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Location information returned when looking up properties.</dd></dl>
-    <dl><dt>Fields:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    </table></dd></dl>
   </div>
 </div>
 <a name="struct_ejs_service"></a>

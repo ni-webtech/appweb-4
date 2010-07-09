@@ -4,13 +4,15 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
 #
 
+STAGING		:= staging
 include		.makedep
 
-doc:
-	rm ../../../all/*.c
-	make -C ../../../all 
-	rm -fr xml html
-	mkdir -p xml html
+gen:
+	make -C ../../../package/all combo
+	rm -fr ./$(STAGING) xml html
+	mkdir -p ./$(STAGING) xml html
+	tar xf ../../../releases/$(BLD_PRODUCT)-all.tgz -C $(STAGING)
+	$(call log) "[Generate]" "doxygen appweb.spec"
 	doxygen appweb.spec
 	ejs $(BLD_TOOLS_DIR)/gendoc.es --bare --title "Appweb Native API" --tags ../appweb.tags \
 		xml/appweb_8h.xml xml/group* xml/struct_*.xml >../appwebBare.html

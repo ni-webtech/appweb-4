@@ -56,7 +56,7 @@ static void openEjs(HttpQueue *q)
             return;
         }
         if (location == 0 || location->context == 0) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Undefined location context. Missing HttpServer.attach call.");
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Undefined location context. Check EjsStartup script.");
             //  MOB -- should this set an error somewhere?
             return;
         }
@@ -124,10 +124,9 @@ static int loadStartupScript(Http *http, HttpLocation *location)
         mprError(http, "Can't find script file %s", location->script);
         return MPR_ERR_CANT_OPEN;
     }
+    LOG(http, 2, "Loading Ejscript Server script: \"%s\"", script);
     if (ejsLoadScriptFile(ejs, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
         mprError(ejs, "Can't load \"%s\"", script);
-    } else {
-        LOG(http, 2, "Loading Ejscript Server script: \"%s\"", script);
     }
     mprFree(script);
     return 0;

@@ -102,6 +102,9 @@ ifneq ($(BLD_OS),WIN)
     else
         setlibpath = export LD_LIBRARY_PATH="$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
     endif
+    ifeq ($(BLD_OS),CYGWIN)
+        export PATH:="$(BLD_TOP)/modules:$(PATH)"
+    endif
 else
 	setlibpath  = true
     CYGWIN      += nodosfilewarning

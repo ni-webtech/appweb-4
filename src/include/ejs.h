@@ -4567,7 +4567,7 @@ typedef struct EjsSession
 /** 
     Create a session object
     @param ejs Ejs interpreter handle returned from $ejsCreate
-    @param server Server object owning the session.
+    @param req Request object creating the session
     @param timeout Timeout in milliseconds
     @param secure If the session is to be given a cookie that is designated as only for secure sessions (SSL)
     @returns A new session object.

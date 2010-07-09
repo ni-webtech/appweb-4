@@ -1,9 +1,9 @@
 <% 	
-    request.setHeader("Content-Type", "text/plain", true)
+    setHeader("Content-Type", "text/plain", true)
     if (request.params.code) {
         request.status = request.params.code
     } else if (request.params.redirect) {
-        request.redirect(request.params.redirect)
+        redirect(request.params.redirect)
     }
     request.show(request)
 %>

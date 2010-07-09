@@ -1815,10 +1815,13 @@ createCrossConfig()
             SYS_DIR=":/sbin:/usr/sbin:"
         fi
         eval path=\$CFG_${kind}_PATH
+
+        #   Cygwin needs modules to be in the path
+
         if [ "${name}" = "$CONFIG_SH" ] ; then
-            echo -e "\texport PATH=\"\${top}/bin:${top}/lib:${top}/lib:${top}/build/bin${SYS_DIR}:${path}:\${PATH}\"" 
+            echo -e "\texport PATH=\"\${top}/bin:${top}/modules:${top}/lib:${top}/lib:${top}/build/bin${SYS_DIR}:${path}:\${PATH}\"" 
         else
-            echo -e "\texport PATH:=${top}/bin:${top}/lib:${top}/lib:${top}/build/bin${SYS_DIR}:${path}:\$(PATH)" 
+            echo -e "\texport PATH:=${top}/bin:${top}/modules:${top}/lib:${top}/lib:${top}/build/bin${SYS_DIR}:${path}:\$(PATH)" 
         fi
     fi
 

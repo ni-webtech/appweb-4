@@ -93,7 +93,7 @@ module ejs {
                 /* match: null, */
             },
             cache: {
-                enable: true,
+                enable: false,
             },
             directories: {
                 cache: "cache",
@@ -350,7 +350,7 @@ module ejs {
             if (path.exists) {
                 try {
                     blend(App.config, path.readJSON(), false)
-                } catch {
+                } catch (e) {
                     errorStream.write(App.exePath.basename +  " Can't parse " + path + ": " + e + "\n")
                 }
             }
@@ -8387,7 +8387,7 @@ module ejs {
             timer = new Timer(timeout, wakeup)
             timer.start()
             while (!waitComplete && !complete) {
-                App.serviceEvents(1, timeout)
+                App.eventLoop(timeout, true)
             }
             return result
         }
@@ -10450,10 +10450,7 @@ module ejs {
             encodeComponent preserves:  ! * ' ( )
             encode preserves:           ! * ' ( ) # ; , / ? : @ 
 
-
             NOTE: encodeComponent is encoding [] which is hard for IPv6
-
-
             TODO:
                 Don't encode [] for IPv6
                 Encode ! ' ( ) *
@@ -10474,7 +10471,7 @@ module ejs {
         /** 
             Encode a URI component suitable for the "application/x-www-form-urlencoded" mime type. This replaces 
             special characters with encoded alternative sequence. The encode call replaces all characters 
-            except: alphabetic, decimal digits, "-", "_", ".", "!", "~", "*", "'", "(", ")". It also maps spaces to "+".
+            except: alphabetic, decimal digits, "-", "_", ".", "!", "~", "*", "'", "(", ")". It also maps space to "+".
             Compared with the $encode call, encodeComponent additionally encodes: "#", ";", ",", "/", "?", ":", "@", 
             "&", "=", "+", "$".  Note that this call encodes "=" and "&" which are used to separate and delimit 
             data form name/value pairs.
@@ -11700,7 +11697,7 @@ module ejs {
                 let timeout = 5 * 1000
                 let when: Date = new Date
                 while (state != Loaded && when.elapsed < timeout) {
-                    App.serviceEvents(1, timeout)
+                    App.eventLoop(timeout, true)
                 }
             }
         }

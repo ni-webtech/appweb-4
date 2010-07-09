@@ -1,7 +1,7 @@
 /*
- *  testHttp.c - Test URL validation and encoding routines
- *
- *  Copyright (c) All Rights Reserved. See details at the end of the file.
+    testHttp.c - Test URL validation and encoding routines
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
 /********************************** Includes **********************************/
@@ -11,7 +11,7 @@
 /********************************** Forwards **********************************/
 
 static bool isValidUri(MprTestGroup *gp, char *uri, char *expectedUri);
-static bool okEscapeUri(MprTestGroup *gp, char *uri, char *expectedUri);
+static bool okEscapeUri(MprTestGroup *gp, char *uri, char *expectedUri, int map);
 static bool okEscapeCmd(MprTestGroup *gp, char *cmd, char *validCmd);
 static bool okEscapeHtml(MprTestGroup *gp, char *html, char *expectedHtml);
 
@@ -63,20 +63,23 @@ static void validateUri(MprTestGroup *gp)
 static void escape(MprTestGroup *gp)
 {
     /*  
-     *  URI unsafe chars are:
-     *      0x00-0x1F, 0x7F, 0x80-0xFF, <>'"#%{}|\^~[]
-     *      Space, \t, \r, \n
-     *      Reserved chars with special meaning are:
-     *          ;/?:@=& 
-     *      FUTURE -- should we not allow "'~"
-     *      FUTURE -- shold we not allow ";?" but allow "/?:@=&"
+        URI unsafe chars are:
+            0x00-0x1F, 0x7F, 0x80-0xFF, <>'"#%{}|\^~[]
+            Space, \t, \r, \n
+            Reserved chars with special meaning are:
+                ;/?:@=& 
+            FUTURE -- should we not allow "'~"
+            FUTURE -- shold we not allow ";?" but allow "/?:@=&"
      */
     assert(okEscapeUri(gp, " \t\r\n\x01\x7f\xff?<>\"#%{}|\\^[]?;", 
-        "+%09%0d%0a%01%7f%ff%3f%3c%3e%22%23%25%7b%7d%7c%5c%5e%5b%5d%3f%3b"));
+        "+%09%0D%0A%01%7F%FF%3F%3C%3E%22%23%25%7B%7D%7C%5C%5E%5B%5D%3F%3B", MPR_ENCODE_URI_COMPONENT));
+    assert(okEscapeUri(gp, " \t\r\n\x01\x7f\xff?<>\"#%{}|\\^[]?;", 
+        "%20%09%0D%0A%01%7F%FF?%3C%3E%22#%25%7B%7D%7C%5C%5E[]?;", MPR_ENCODE_URI));
+   
     assert(okEscapeCmd(gp, "&;`'\"|*?~<>^()[]{}$\\\n", 
         "\\&\\;\\`\\\'\\\"\\|\\*\\\?\\~\\<\\>\\^\\(\\)\\[\\]\\{\\}\\$\\\\\\\n"));
     assert(okEscapeHtml(gp, "<>&", "&lt;&gt;&amp;"));
-    assert(okEscapeHtml(gp, "#()", "&#35;&#40;&#41;"));
+    assert(okEscapeHtml(gp, "#()", "#()"));
 }
 
 
@@ -119,11 +122,11 @@ static bool isValidUri(MprTestGroup *gp, char *uri, char *expectedUri)
 }
 
 
-static bool okEscapeUri(MprTestGroup *gp, char *uri, char *expectedUri)
+static bool okEscapeUri(MprTestGroup *gp, char *uri, char *expectedUri, int map)
 {
     char    *escaped;
 
-    escaped = mprUriEncode(gp, uri, MPR_ENCODE_URI);
+    escaped = mprUriEncode(gp, uri, map);
     if (strcmp(expectedUri, escaped) == 0) {
         mprFree(escaped);
         return 1;
@@ -181,31 +184,31 @@ MprTestDef testHttp = {
 
 
 /*
- *  @copy   default
- *
- *  Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
- *  Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
- *
- *  This software is distributed under commercial and open source licenses.
- *  You may use the GPL open source license described below or you may acquire
- *  a commercial license from Embedthis Software. You agree to be fully bound
- *  by the terms of either license. Consult the LICENSE.TXT distributed with
- *  this software for full details.
- *
- *  This software is open source; you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License as published by the
- *  Free Software Foundation; either version 2 of the License, or (at your
- *  option) any later version. See the GNU General Public License for more
- *  details at: http://www.embedthis.com/downloads/gplLicense.html
- *
- *  This program is distributed WITHOUT ANY WARRANTY; without even the
- *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- *  This GPL license does NOT permit incorporating this software into
- *  proprietary programs. If you are unable to comply with the GPL, you must
- *  acquire a commercial license to use this software. Commercial licenses
- *  for this software and support services are available from Embedthis
- *  Software at http://www.embedthis.com
- *
- *  @end
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+
+    @end
  */

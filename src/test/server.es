@@ -1,10 +1,10 @@
 require ejs.web
 
+App.log.info("Starting server.es")
 let server: HttpServer = new HttpServer('.', "./web")
 var router = Router(Router.TopRoutes)
 
-server.addListener("readable", function (event, request) {
+server.observe("readable", function (event, request) {
     Web.serve(request, router)
 })
 server.attach()
-

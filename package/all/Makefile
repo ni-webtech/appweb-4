@@ -22,6 +22,7 @@ LIB_SOURCES		+= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|server/|test|ut
 combo packageExtra:	prep $(TARGETS) $(ARCHIVE)
 	
 prep:
+	@$(call log) "[Prepare]" "All-in-one combo package"
 	rm -fr $(STAGING)
 	mkdir -p $(STAGING)/src/include $(STAGING)/src/deps/appweb $(STAGING)/doc/api $(STAGING)/doc/man
 
