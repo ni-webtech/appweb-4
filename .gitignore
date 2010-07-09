@@ -78,3 +78,5 @@ bin/www
 lib/www
 src/deps/ejs/*.lst
 bin/angel*
+doc/api/appweb/html
+doc/api/appweb/xml

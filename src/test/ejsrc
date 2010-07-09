@@ -1,0 +1,20 @@
+//  Ejsript default configuration
+{
+    mode: "debug",
+    cache: {
+        enable: false,
+        reload: false,
+    },
+    directories: {
+        cache: "cache",
+    },
+    log: {
+        enable: true,
+        location: "stdout",
+        level: 0,
+    },
+    session: {
+        enable: true,
+        timeout: 1800,
+    },
+}
