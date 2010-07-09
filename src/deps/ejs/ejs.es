@@ -3507,6 +3507,88 @@ module ejs {
 module ejs {
 
     /**
+        Base class for error exception objects. Exception objects are created by the system as part of changing 
+        the normal flow of execution when some error condition occurs. 
+
+        When an exception is created and acted upon ("thrown"), the system transfers the flow of control to a 
+        pre-defined instruction stream (the handler or "catch" code). The handler may return processing to the 
+        point at which the exception was thrown or not. It may re-throw the exception or pass control up the call stack.
+        @stability evolving
+     */
+    native dynamic class Error {
+
+        use default namespace public
+
+        /** 
+            Source filename of the script that created the error
+         */
+        function get filename(): Path
+            Path(stack[0].filename)
+
+        /** 
+            Source line number in the script that created the error
+         */
+        function get lineno(): Number
+            stack[0].lineno
+
+        /**
+            Supplemental error data
+         */
+        enumerable var data: Object
+
+        /**
+            Error message
+         */
+        enumerable var message: String
+
+        private var _stack: Array
+
+        /**
+            Execution call stack. Contains the execution stack backtrace at the point the Error object was created.
+            The stack is an array of stack frame records. Each record consists of the following properties: 
+                {file: String, lineno: Number, func: String, code: String}
+         */
+        function get stack(): Array {
+            if (!_stack) {
+                _stack = capture()
+            }
+            return _stack
+        }
+
+        /** 
+            Time the event was created. The Context constructor will automatically set the timestamp to the current time.  
+         */
+        enumerable var timestamp: Date
+
+        /**
+            Optional error code
+         */
+        enumerable var code: Number
+
+        /**
+            Construct a new Error object.
+            @params message Message to use when defining the Error.message property. Typically a string but can be an
+                object of any type.
+         */
+        native function Error(message: String? = null)
+
+        /**
+            Capture the stack. This call re-captures the stack and updates the stack property.
+            @param uplevels Skip a given count of stack frames from the stop of the call stack.
+         */
+        native function capture(uplevels: Number): Array
+
+        function formatStack(): String {
+            let result = ""
+            let i = 0
+            for each (frame in stack) {
+                result += " [%02d] %s, line %d, %s, %s\n".format(i++, ...frame)
+            }
+            return result
+        }
+    }
+
+    /**
         Arguments error exception class. 
         Thrown the arguments cannot be cast to the required type or in strict mode if there are too few or too 
         many arguments.
@@ -3559,88 +3641,6 @@ module ejs {
             @params message Message to use when defining the Error.message property
          */
         native function InstructionError(message: String? = null) 
-    }
-
-    /**
-        Base class for error exception objects. Exception objects are created by the system as part of changing 
-        the normal flow of execution when some error condition occurs. 
-
-        When an exception is created and acted upon ("thrown"), the system transfers the flow of control to a 
-        pre-defined instruction stream (the handler or "catch" code). The handler may return processing to the 
-        point at which the exception was thrown or not. It may re-throw the exception or pass control up the call stack.
-        @stability evolving
-     */
-    native dynamic class Error {
-
-        use default namespace public
-
-        /** 
-            Source filename of the script that created the error
-         */
-        function get filename(): String
-            stack[0].filename
-
-        /** 
-            Source line number in the script that created the error
-         */
-        function get lineno(): String
-            stack[0].lineno
-
-        /**
-            Supplemental error data
-         */
-        var data: Object
-
-        /**
-            Error message
-         */
-        var message: String
-
-        private var _stack: Array
-
-        /**
-            Execution call stack. Contains the execution stack backtrace at the point the Error object was created.
-            The stack is an array of stack frame records. Each record consists of the following properties: 
-                {file: String, line: Number, functionName: String, code: String}
-         */
-        function get stack(): Array {
-            if (!_stack) {
-                _stack = capture()
-            }
-            return _stack
-        }
-
-        /** 
-            Time the event was created. The Context constructor will automatically set the timestamp to the current time.  
-         */
-        var timestamp: Date
-
-        /**
-            Optional error code
-         */
-        var code: Number
-
-        /**
-            Construct a new Error object.
-            @params message Message to use when defining the Error.message property. Typically a string but can be an
-                object of any type.
-         */
-        native function Error(message: String? = null)
-
-        /**
-            Capture the stack. This call re-captures the stack and updates the stack property.
-            @param uplevels Skip a given count of stack frames from the stop of the call stack.
-         */
-        native function capture(uplevels: Number): Array
-
-        function formatStack(): String {
-            let result = ""
-            let i = 0
-            for each (frame in stack) {
-                result += " [%02d] %s, line %d, %s(), %s\n".format(i++, ...frame)
-            }
-            return result
-        }
     }
 
     /**
@@ -4837,6 +4837,7 @@ module ejs {
         obj is target
 
     /**  
+MOB - removed because such a common global name is dangerous
         DEPRECATED - Use App.stderr.write() and App.stderr.writeLine()
         Write to the standard error. This call writes the arguments to the standard error with a new line appended. 
         It evaluates the arguments, converts the result to strings and prints the result to the standard error. 
@@ -4845,19 +4846,21 @@ module ejs {
         @spec ejs
         @hide
         @deprecated
-     */
     native function error(...args): void
+     */
 
     /**
+MOB - removed because such a common global name is dangerous
         DEPRECATED
         Read from the standard input. This call reads a line of input from the standard input
         @return A string containing the input. Returns null on EOF.
         @hide
         @deprecated
-     */
     native function input(): String
+     */
 
     /**  
+MOB - removed because such a common global name is dangerous
         DEPRECATED - Use print(), App.stdout.write() and App.stdout.writeLine()
         Print the arguments to the standard output with a new line appended. This call evaluates the arguments, 
         converts the result to strings and prints the result to the standard output. Arguments are converted to 
@@ -4866,8 +4869,8 @@ module ejs {
         @spec ejs
         @hide
         @deprecated
-     */
     native function output(...args): void
+     */
 }
 
 
@@ -6993,6 +6996,9 @@ module ejs {
          */
         native static const MaxValue: Number
 
+        /** @hide */
+        static const MaxInt32: Number = 2147483647
+
         /**
             Return the minimum value this number type can assume.
             @return A number with its value set to the minimum value allowed.
@@ -8193,14 +8199,16 @@ module ejs {
      */
     dynamic class Promise extends Emitter {
         private var timer: Timer
-        private var fired: Boolean
+        private var complete: Boolean
+
+        use default namespace public 
 
         /** 
             Add a callback listener for the "success" event. Returns this promise object.
             @param listener Callback function
             @return Returns this promise
          */
-        function addCallback(listener: Function): Promise {
+        function onSuccess(listener: Function): Promise {
             observe("success", listener)
             return this
         }
@@ -8210,7 +8218,7 @@ module ejs {
             @param listener Callback function
             @return Returns this promise
          */
-        function addCancelback(listener: Function): Promise {
+        function onCancel(listener: Function): Promise {
             observe("cancel", listener)
             return this
         }
@@ -8220,8 +8228,28 @@ module ejs {
             @param listener Callback function
             @return Returns this promise
          */
-        function addErrback(listener: Function): Promise {
+        function onError(listener: Function): Promise {
             observe("error", listener)
+            return this
+        }
+
+        /** 
+            Add a progress callback listener for the "progress" event. Returns this promise object.
+            @param listener Callback function
+            @return Returns this promise
+         */
+        function onProgress(listener: Function): Promise {
+            observe("progress", listener)
+            return this
+        }
+
+        /** 
+            Add a timeout callback listener for the "timeout" event. Returns this promise object.
+            @param listener Callback function
+            @return Returns this promise
+         */
+        function onTimeout(listener: Function): Promise {
+            observe("timeout", listener)
             return this
         }
 
@@ -8231,14 +8259,15 @@ module ejs {
             @param args Args to pass to the listener
          */
         function emitSuccess(...args): Void {
-            if (fired) {
+            if (complete) {
                 return
             }
-            fired = true
+            complete = true
             try {
                 issue("success", ...args)
             } catch (e) {
-print("CATCH", e)
+                //  MOB
+                print("CATCH", e)
                 emitError(e)
             }
         }
@@ -8249,10 +8278,10 @@ print("CATCH", e)
             @param args Args to pass to the listener
          */
         function emitError(...args): Void {
-            if (fired) {
+            if (complete) {
                 return
             }
-            fired = true
+            complete = true
             try {
                 issue("error", ...args)
             } catch (e) {
@@ -8269,13 +8298,13 @@ print("CATCH", e)
         function emitCancel(...args): Void
             issue("cancel", ...args)
 
+//  MOB -- why have cancel and emitCancel
         /** 
             Cancels the promise and removes "success" and "error" and listeners then issues a cancel event.
             @param args Args to pass to the "cancel" event listener
          */
         function cancel(...args): Void {
-            cancel = true
-            fired = true
+            complete = true
             if (timer) {
                 timer.stop()
             }
@@ -8283,18 +8312,23 @@ print("CATCH", e)
             issue("cancel", ...args)
         }
 
+//  MOB -- what about cancel?
         /** 
             Convenience function to register callbacks. 
-            @param success Success callback passed to addCallback
-            @param error error callback passed to addErrback
-            @param success Success callback passed to addCallback
-            @param progress Currently ignored
+            @param success Success callback passed to onSuccess
+            @param error error callback passed to onError
+            @param cancel Cancel callback passed to onCancel
+            @param progress Progress callback passed to onProgress
             @return this promise
          */
-        function then(success: Function, error: Function? = null, progress: Function? = null): Promise {
+        function then(success: Function, error: Function? = null, cancel: Function? = null, 
+                progress: Function? = null): Promise {
             observe("success", success)
             if (error) {
                 observe("error", error)
+            }
+            if (cancel) {
+                observe("cancel", cancel)
             }
             if (progress) {
                 observe("progress", progress)
@@ -8312,46 +8346,48 @@ print("CATCH", e)
             if (timer) {
                 timer.stop()
             }
-            let done
-            function awake(arg) {
-                done = true
+            let timeoutComplete
+            function wakeup(arg) {
+                timeoutComplete = true
                 if (timer) {
                     timer.stop()
                 }
             }
-            observe("success", awake)
-            observe("error", awake)
-            observe("cancel", awake)
+            observe("success", wakeup)
+            observe("error", wakeup)
+            observe("cancel", wakeup)
             timer = new Timer(msec, function() {
-                if (fired || done) {
+                if (complete || timeoutComplete) {
                     return;
                 }
-                done = true
+                timeoutComplete = true
                 timer = null
                 issue("timeout")
                 issue("error")
             })
+            timer.start()
             return this
         }
         
+        //  MOB - fix MaxInt
         /** 
             Wait for the promise to complete for a given period. This blocks execution until the promise completes or 
             is cancelled.
             @param timeout Time to wait in milliseconds
             @return The arguments array provided to emitSuccess
          */
-        function wait(timeout: Number = -1): Object {
-            let done = false
+        function wait(timeout: Number = Number.MaxInt32): Object {
+            let waitComplete = false
             let result
-            function awake(event, ...args) {
-                done = true
+            function wakeup(event, ...args) {
+                waitComplete = true
                 result = args
             }
-            observe(["cancel", "error", "success"], awake)
-            timer = new Timer(timeout, awake)
+            observe(["cancel", "error", "success"], wakeup)
+            timer = new Timer(timeout, wakeup)
             timer.start()
-            while (!done && !fired) {
-                App.serviceEvents(timeout, true)
+            while (!waitComplete && !complete) {
+                App.serviceEvents(1, timeout)
             }
             return result
         }
@@ -10116,7 +10152,8 @@ module ejs {
             When the callback is invoked, it will be invoked with the value of "this" set to the timer unless the
                 function has bound a "this" value via Function.bind.
             @param period Delay in milliseconds before the timer will run
-            @param callback Function to invoke when the timer is due.
+            @param callback Function to invoke when the timer is due. The callback is invoked with the following signature:
+                function callback(error: Error): Void
             @param args Callback arguments
          */
         native function Timer(period: Number, callback: Function, ...args)
@@ -10141,6 +10178,8 @@ module ejs {
 
         /**
             Error callback function for exceptions inside the Timer callback
+            The callback is invoked with the following signature:
+                function callback(error: Error): Void
          */
         native function get onerror(): Function
         native function set onerror(callback: Function): Void

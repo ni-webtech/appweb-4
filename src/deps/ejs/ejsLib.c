@@ -133,7 +133,7 @@ void ejsClearException(Ejs *ejs)
 {
     ejs->exception = 0;
     if (ejs->state->fp) {
-        ejs->state->fp->attentionPc = 0;
+        ejsClearAttention(ejs);
     }
 }
 
@@ -375,9 +375,9 @@ EjsArray *ejsCaptureStack(Ejs *ejs, int uplevels)
                 }
                 frame = ejsCreateSimpleObject(ejs);
                 ejsSetPropertyByName(ejs, frame, ejsName(&qname, "", "filename"), 
-                    ejsCreateString(ejs, fp->filename ? fp->filename : "undefined"));
+                    ejsCreatePath(ejs, fp->filename ? fp->filename : "undefined"));
                 ejsSetPropertyByName(ejs, frame, ejsName(&qname, "", "lineno"), ejsCreateNumber(ejs, fp->lineNumber));
-                ejsSetPropertyByName(ejs, frame, ejsName(&qname, "", "function"), ejsCreateString(ejs, fp->function.name));
+                ejsSetPropertyByName(ejs, frame, ejsName(&qname, "", "func"), ejsCreateString(ejs, fp->function.name));
                 ejsSetPropertyByName(ejs, frame, ejsName(&qname, "", "code"), ejsCreateString(ejs, line));
                 ejsSetProperty(ejs, stack, index++, frame);
             }
@@ -3148,9 +3148,12 @@ static void *opcodeJump[] = {
          */
         CASE (EJS_OP_ATTENTION):
             mprAssert(FRAME->attentionPc);
-            FRAME->pc = FRAME->attentionPc;
-            mprAssert(FRAME->pc);
-            FRAME->attentionPc = 0;
+            //  MOB SAFETY
+            if (FRAME->attentionPc) {
+                FRAME->pc = FRAME->attentionPc;
+                mprAssert(FRAME->pc);
+                FRAME->attentionPc = 0;
+            }
             if (mprHasAllocError(ejs) && !ejs->exception) {
                 mprResetAllocError(ejs);
                 ejsThrowMemoryError(ejs);
@@ -18122,10 +18125,9 @@ static EjsObj *cloneBase(Ejs *ejs, EjsObj *ignored, int argc, EjsObj **argv)
 
 
 /** DEPRECATED
-    
+    MOB - remove
     Print the arguments to the standard error with a new line.
     static function error(...args): void
- */
 static EjsObj *error(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsString   *s;
@@ -18154,6 +18156,7 @@ static EjsObj *error(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     rc = write(2, "\n", 1);
     return 0;
 }
+ */
 
 
 /*  
@@ -18202,10 +18205,10 @@ static EjsObj *hashcode(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 
 
 /** 
+    MOB REMOVE
     DEPREACATED
     Read a line of input
     static function input(): String
- */
 static EjsObj *input(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprFileSystem   *fs;
@@ -18238,6 +18241,7 @@ static EjsObj *input(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     mprFree(buf);
     return result;
 }
+ */
 
 
 /*  
@@ -18496,11 +18500,12 @@ void ejsConfigureGlobalBlock(Ejs *ejs)
     ejsBindFunction(ejs, block, ES_parseInt, parseInt);
     ejsBindFunction(ejs, block, ES_print, printLine);
 
+#if UNUSED
     /* DEPRECATED */
     ejsBindFunction(ejs, block, ES_error, error);
     ejsBindFunction(ejs, block, ES_input, input);
     ejsBindFunction(ejs, block, ES_output, printLine);
-
+#endif
     ejsSetProperty(ejs, ejs->global, ES_global, ejs->global);
 }
 
@@ -29254,8 +29259,7 @@ static EjsObj *timer_set_repeat(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 static int timerCallback(EjsTimer *tp, MprEvent *e)
 {
     Ejs         *ejs;
-    EjsString   *msg;
-    EjsObj      *thisObj;
+    EjsObj      *thisObj, *error;
 
     mprAssert(tp);
     mprAssert(tp->args);
@@ -29266,9 +29270,9 @@ static int timerCallback(EjsTimer *tp, MprEvent *e)
     ejsRunFunction(tp->ejs, tp->callback, thisObj, tp->args->length, tp->args->data);
     if (ejs->exception) {
         if (tp->onerror) {
-            msg = ejsCreateString(ejs, ejsGetErrorMsg(ejs, 1));
+            error = ejs->exception;
             ejsClearException(ejs);
-            ejsRunFunction(tp->ejs, tp->onerror, thisObj, 1, (EjsObj**) &msg);
+            ejsRunFunction(tp->ejs, tp->onerror, thisObj, 1, (EjsObj**) &error);
         }
     }
     return 0;
@@ -47589,7 +47593,6 @@ int ecCreateModuleSection(EcCompiler *cp)
     mp->constants->locked = 1;
     rc += ecEncodeNumber(cp, constants->len);
     rc += ecEncodeBlock(cp, (uchar*) constants->pool, constants->len);
-
     if (createDependencySection(cp) < 0) {
         return EJS_ERR;
     }
@@ -47898,8 +47901,7 @@ static int createClassSection(EcCompiler *cp, EjsObj *block, int slotNum, EjsObj
             }
         }
     }
-    mp->checksum += sum(type->qname.name, slotNum + ejsGetPropertyCount(ejs, (EjsObj*) type) + 
-        instanceTraits + interfaceCount);
+    mp->checksum += sum(type->qname.name, ejsGetPropertyCount(ejs, (EjsObj*) type) + instanceTraits + interfaceCount);
     if (ecEncodeByte(cp, EJS_SECT_CLASS_END) < 0) {
         return EJS_ERR;
     }
@@ -48006,9 +48008,9 @@ static int createFunctionSection(EcCompiler *cp, EjsObj *block, int slotNum, Ejs
     }
     if (strstr(qname.name, "--fun_")) {
         /* Don't sum the name for dynamic functions */
-        mp->checksum += sum(NULL, slotNum + fun->numArgs + numSlots - fun->numArgs + code->numHandlers);
+        mp->checksum += sum(NULL, fun->numArgs + numSlots - fun->numArgs + code->numHandlers);
     } else {
-        mp->checksum += sum(qname.name, slotNum + fun->numArgs + numSlots - fun->numArgs + code->numHandlers);
+        mp->checksum += sum(qname.name, fun->numArgs + numSlots - fun->numArgs + code->numHandlers);
     }
     return rc;
 }
@@ -48124,7 +48126,7 @@ static int createPropertySection(EcCompiler *cp, EjsObj *block, int slotNum, Ejs
             rc += ecEncodeString(cp, 0);
         }
     }
-    mp->checksum += sum(qname.name, slotNum);
+    mp->checksum += sum(qname.name, 0);
     return rc;
 }
 
@@ -50795,6 +50797,7 @@ static EcNode *parseComprehensionExpression(EcCompiler *cp, EcNode *literalEleme
 
     ENTER(cp);
     //  MOB
+	np = 0;
     return LEAVE(cp, np);
 }
 

@@ -360,8 +360,7 @@ typedef struct HttpLimits {
     @description The HTTP provides routines for formatting and parsing URIs. Routines are also provided
         to escape dangerous characters for URIs as well as HTML content and shell commands.
     @stability Evolving
-    @see HttpConn, httpCreateUri, httpCreateUriFromParts, httpFormatUri, httpEscapeCmd, httpEscapeHtml, httpUrlEncode, 
-        httpUrlDecode, httpNormalizeUriPath, httpLookupMimeType
+    @see HttpConn, httpCreateUri, httpCreateUriFromParts, httpFormatUri, httpNormalizeUriPath, httpLookupMimeType
     @defgroup HttpUri HttpUri
  */
 typedef struct HttpUri {
@@ -420,27 +419,6 @@ extern HttpUri *httpCreateUriFromParts(MprCtx ctx, cchar *scheme, cchar *host, i
         cchar *query);
 
 /** 
-    Encode a string escaping typical command (shell) characters
-    @description Encode a string escaping all dangerous characters that have meaning for the unix or MS-DOS command shells.
-    @param ctx Any memory allocation context created by MprAlloc
-    @param cmd Command string to encode
-    @param escChar Escape character to use when encoding the command.
-    @return An allocated string containing the escaped command. Caller must free using $mprFree.
-    @ingroup HttpUri
- */
-extern char *httpEscapeCmd(MprCtx ctx, cchar *cmd, int escChar);
-
-/**
-    Encode a string by escaping typical HTML characters
-    @description Encode a string escaping all dangerous characters that have meaning in HTML documents
-    @param ctx Any memory allocation context created by MprAlloc
-    @param html HTML content to encode
-    @return An allocated string containing the escaped HTML. Caller must free using $mprFree.
-    @ingroup HttpUri
- */
-extern char *httpEscapeHtml(MprCtx ctx, cchar *html);
-
-/** 
     Get the mime type for an extension.
     This call will return the mime type from a limited internal set of mime types for the given path or extension.
     @param ctx Any memory allocation context created by MprAlloc
@@ -448,26 +426,6 @@ extern char *httpEscapeHtml(MprCtx ctx, cchar *html);
     @returns Mime type. This is a static string. Caller must not free.
  */
 extern cchar *httpLookupMimeType(MprCtx ctx, cchar *ext);
-
-/** 
-    Encode a string by escaping URL characters
-    @description Encode a string escaping all characters that have meaning for URLs.
-    @param ctx Any memory allocation context created by MprAlloc
-    @param url URL to encode
-    @return An allocated string containing the encoded URL. Caller must free using $mprFree.
-    @ingroup HttpUri
- */
-extern char *httpUrlEncode(MprCtx ctx, cchar *url);
-
-/** 
-    Decode a URL string by de-scaping URL characters
-    @description Decode a string with www-encoded characters that have meaning for URLs.
-    @param ctx Any memory allocation context created by MprAlloc
-    @param url URL to decode
-    @return A reference to the buf argument.
-    @ingroup HttpUri
- */
-extern char *httpUrlDecode(MprCtx ctx, cchar *url);
 
 /** 
     Convert a Uri to a string.

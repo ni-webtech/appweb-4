@@ -119,6 +119,15 @@ uninstall uninstall-%:
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
 		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
 	
+combo:
+	if [ -d package/all ] ; then \
+		make -C package/all combo ; \
+	elif [ -f package/Makefile ] ; then \
+		make -C package combo ; \
+	elif [ -d all ] ; then \
+		make -C all combo ; \
+	fi
+
 package-only:
 	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
 

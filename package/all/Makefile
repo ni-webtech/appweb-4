@@ -1,5 +1,5 @@
 #
-#	Makefile to build the all-in-one Appweb distribution
+#	Makefile to build the all-in-one combined Appweb distribution
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
 #
@@ -19,7 +19,7 @@ TARGETS			+= $(patsubst %,$(DEST)/%, appwebLib.c appweb.c)
 APPWEB_HEADERS	+= $(patsubst %,$(SRC)/include/%.h, appweb appwebMonitor http)
 LIB_SOURCES		+= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|server/|test|utils|sav') 
 
-packageExtra:	prep $(TARGETS) $(ARCHIVE)
+combo packageExtra:	prep $(TARGETS) $(ARCHIVE)
 	
 prep:
 	rm -fr $(STAGING)
