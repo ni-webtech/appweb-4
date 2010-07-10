@@ -36,11 +36,11 @@
 #define ES_Date                                                        15
 #define ES_Emitter                                                     16
 #define ES_Endpoint                                                    17
-#define ES_ArgError                                                    18
-#define ES_ArithmeticError                                             19
-#define ES_AssertError                                                 20
-#define ES_InstructionError                                            21
-#define ES_Error                                                       22
+#define ES_Error                                                       18
+#define ES_ArgError                                                    19
+#define ES_ArithmeticError                                             20
+#define ES_AssertError                                                 21
+#define ES_InstructionError                                            22
 #define ES_IOError                                                     23
 #define ES_InternalError                                               24
 #define ES_MemoryError                                                 25
@@ -52,110 +52,106 @@
 #define ES_SyntaxError                                                 31
 #define ES_TypeError                                                   32
 #define ES_URIError                                                    33
-#define ES_Event                                                       34
-#define ES_ErrorEvent                                                  35
-#define ES_File                                                        36
-#define ES_FileSystem                                                  37
-#define ES_Frame                                                       38
-#define ES_Function                                                    39
-#define ES_makeGetter                                                  40
-#define ES_clearBoundThis                                              41
-#define ES_GC                                                          42
-#define ES_EJSCRIPT                                                    43
-#define ES_ECMA                                                        44
-#define ES_ejs                                                         45
-#define ES_public                                                      46
-#define ES_internal                                                    47
-#define ES_iterator                                                    48
-#define ES_CONFIG                                                      49
-#define ES_TODO                                                        50
-#define ES_FUTURE                                                      51
-#define ES_ASC                                                         52
-#define ES_DOC_ONLY                                                    53
-#define ES_DEPRECATED                                                  54
-#define ES_boolean                                                     55
-#define ES_double                                                      56
-#define ES_num                                                         57
-#define ES_string                                                      58
-#define ES_false                                                       59
-#define ES_global                                                      60
-#define ES_null                                                        61
-#define ES_Infinity                                                    62
-#define ES_NegativeInfinity                                            63
-#define ES_NaN                                                         64
-#define ES_true                                                        65
-#define ES_undefined                                                   66
-#define ES_void                                                        67
-#define ES_assert                                                      68
-#define ES_breakpoint                                                  69
-#define ES_cloneBase                                                   70
-#define ES_decodeURI                                                   71
-#define ES_dump                                                        72
-#define ES_dumpAll                                                     73
-#define ES_dumpDef                                                     74
-#define ES_encodeURI                                                   75
-#define ES_escape                                                      76
-#define ES_md5                                                         77
-#define ES_blend                                                       78
-#define ES_eval                                                        79
-#define ES_formatStack                                                 80
-#define ES_hashcode                                                    81
-#define ES_isNaN                                                       82
-#define ES_isFinite                                                    83
-#define ES_load                                                        84
-#define ES_print                                                       85
-#define ES_parse                                                       86
-#define ES_parseFloat                                                  87
-#define ES_parseInt                                                    88
-#define ES_printHash                                                   89
-#define ES_instanceOf                                                  90
-#define ES_error                                                       91
-#define ES_input                                                       92
-#define ES_output                                                      93
-#define ES_Http                                                        94
-#define ES_iterator_Iterable                                           95
-#define ES_iterator_Iterator                                           96
-#define ES_iterator_StopIteration                                      97
-#define ES_JSON                                                        98
-#define ES_deserialize                                                 99
-#define ES_serialize                                                   100
-#define ES_Locale                                                      101
-#define ES_Logger                                                      102
-#define ES_Math                                                        103
-#define ES_Memory                                                      104
-#define ES_Namespace                                                   105
-#define ES_Null                                                        106
-#define ES_Number                                                      107
-#define ES_Object                                                      108
-#define ES_Path                                                        109
-#define ES_Promise                                                     110
-#define ES_Reflect                                                     111
-#define ES_typeOf                                                      112
-#define ES_RegExp                                                      113
-#define ES_Socket                                                      114
-#define ES_Stream                                                      115
-#define ES_String                                                      116
-#define ES_System                                                      117
-#define ES_TextStream                                                  118
-#define ES_Timer                                                       119
-#define ES_setInterval                                                 120
-#define ES_setTimeout                                                  121
-#define ES_TimerEvent                                                  122
-#define ES_Type                                                        123
-#define ES_Uri                                                         124
-#define ES_decodeUri                                                   125
-#define ES_decodeUriComponent                                          126
-#define ES_Void                                                        127
-#define ES_Worker                                                      128
-#define ES_ejs_worker_self                                             129
-#define ES_ejs_worker_exit                                             130
-#define ES_ejs_worker_postMessage                                      131
-#define ES_ejs_worker_onerror                                          132
-#define ES_ejs_worker_onmessage                                        133
-#define ES_XML                                                         134
-#define ES_XMLHttp                                                     135
-#define ES_XMLList                                                     136
-#define ES_global_NUM_CLASS_PROP                                       137
+#define ES_File                                                        34
+#define ES_FileSystem                                                  35
+#define ES_Frame                                                       36
+#define ES_Function                                                    37
+#define ES_makeGetter                                                  38
+#define ES_clearBoundThis                                              39
+#define ES_GC                                                          40
+#define ES_EJSCRIPT                                                    41
+#define ES_ECMA                                                        42
+#define ES_ejs                                                         43
+#define ES_public                                                      44
+#define ES_internal                                                    45
+#define ES_iterator                                                    46
+#define ES_CONFIG                                                      47
+#define ES_TODO                                                        48
+#define ES_FUTURE                                                      49
+#define ES_ASC                                                         50
+#define ES_DOC_ONLY                                                    51
+#define ES_DEPRECATED                                                  52
+#define ES_boolean                                                     53
+#define ES_double                                                      54
+#define ES_num                                                         55
+#define ES_string                                                      56
+#define ES_false                                                       57
+#define ES_global                                                      58
+#define ES_null                                                        59
+#define ES_Infinity                                                    60
+#define ES_NegativeInfinity                                            61
+#define ES_NaN                                                         62
+#define ES_true                                                        63
+#define ES_undefined                                                   64
+#define ES_void                                                        65
+#define ES_assert                                                      66
+#define ES_breakpoint                                                  67
+#define ES_cloneBase                                                   68
+#define ES_dump                                                        69
+#define ES_dumpAll                                                     70
+#define ES_dumpDef                                                     71
+#define ES_md5                                                         72
+#define ES_blend                                                       73
+#define ES_eval                                                        74
+#define ES_hashcode                                                    75
+#define ES_isNaN                                                       76
+#define ES_isFinite                                                    77
+#define ES_load                                                        78
+#define ES_print                                                       79
+#define ES_parse                                                       80
+#define ES_parseFloat                                                  81
+#define ES_parseInt                                                    82
+#define ES_printHash                                                   83
+#define ES_instanceOf                                                  84
+#define ES_Http                                                        85
+#define ES_iterator_Iterable                                           86
+#define ES_iterator_Iterator                                           87
+#define ES_iterator_StopIteration                                      88
+#define ES_JSON                                                        89
+#define ES_deserialize                                                 90
+#define ES_serialize                                                   91
+#define ES_Locale                                                      92
+#define ES_Logger                                                      93
+#define ES_Math                                                        94
+#define ES_Memory                                                      95
+#define ES_Namespace                                                   96
+#define ES_Null                                                        97
+#define ES_Number                                                      98
+#define ES_Object                                                      99
+#define ES_Path                                                        100
+#define ES_Promise                                                     101
+#define ES_Reflect                                                     102
+#define ES_typeOf                                                      103
+#define ES_RegExp                                                      104
+#define ES_Socket                                                      105
+#define ES_Stream                                                      106
+#define ES_String                                                      107
+#define ES_System                                                      108
+#define ES_TextStream                                                  109
+#define ES_Timer                                                       110
+#define ES_setInterval                                                 111
+#define ES_clearInterval                                               112
+#define ES_setTimeout                                                  113
+#define ES_clearTimeout                                                114
+#define ES_Type                                                        115
+#define ES_Uri                                                         116
+#define ES_decodeURI                                                   117
+#define ES_decodeURIComponent                                          118
+#define ES_encodeURI                                                   119
+#define ES_encodeURIComponent                                          120
+#define ES_Void                                                        121
+#define ES_Worker                                                      122
+#define ES_Event                                                       123
+#define ES_ErrorEvent                                                  124
+#define ES_ejs_worker_self                                             125
+#define ES_ejs_worker_exit                                             126
+#define ES_ejs_worker_postMessage                                      127
+#define ES_ejs_worker_onerror                                          128
+#define ES_ejs_worker_onmessage                                        129
+#define ES_XML                                                         130
+#define ES_XMLHttp                                                     131
+#define ES_XMLList                                                     132
+#define ES_global_NUM_CLASS_PROP                                       133
 
 /*
    Prototype (instance) slots for "global" type 
@@ -172,12 +168,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -199,18 +192,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 
@@ -228,27 +225,28 @@
 #define ES_App_args                                                    7
 #define ES_App_dir                                                     8
 #define ES_App_chdir                                                   9
-#define ES_App_exeDir                                                  10
-#define ES_App_exePath                                                 11
-#define ES_App_errorStream                                             12
-#define ES_App_exit                                                    13
-#define ES_App_getenv                                                  14
-#define ES_App_inputStream                                             15
-#define ES_App_log                                                     16
-#define ES_App_name                                                    17
-#define ES_App_noexit                                                  18
-#define ES_App_outputStream                                            19
-#define ES_App_putenv                                                  20
-#define ES_App_search                                                  21
-#define ES_App_createSearch                                            22
-#define ES_App_eventLoop                                               23
-#define ES_App_sleep                                                   24
-#define ES_App_title                                                   25
-#define ES_App_version                                                 26
-#define ES_App_searchPath                                              27
-#define ES_App_serviceEvents                                           28
-#define ES_App_loadrc                                                  29
-#define ES_App_NUM_CLASS_PROP                                          30
+#define ES_App_emitter                                                 10
+#define ES_App_exeDir                                                  11
+#define ES_App_exePath                                                 12
+#define ES_App_errorStream                                             13
+#define ES_App_exit                                                    14
+#define ES_App_getenv                                                  15
+#define ES_App_inputStream                                             16
+#define ES_App_log                                                     17
+#define ES_App_name                                                    18
+#define ES_App_noexit                                                  19
+#define ES_App_outputStream                                            20
+#define ES_App_putenv                                                  21
+#define ES_App_search                                                  22
+#define ES_App_createSearch                                            23
+#define ES_App_eventLoop                                               24
+#define ES_App_sleep                                                   25
+#define ES_App_title                                                   26
+#define ES_App_version                                                 27
+#define ES_App_searchPath                                              28
+#define ES_App_serviceEvents                                           29
+#define ES_App_loadrc                                                  30
+#define ES_App_NUM_CLASS_PROP                                          31
 
 /*
    Prototype (instance) slots for "App" type 
@@ -272,6 +270,7 @@
 #define ES_App_serviceEvents_count                                     0
 #define ES_App_serviceEvents_timeout                                   1
 #define ES_App_loadrc_path                                             0
+#define ES_App_loadrc_overwrite                                        1
 #define ES_Array_NUM_CLASS_PROP                                        0
 
 /*
@@ -298,19 +297,21 @@
 #define ES_Array_map                                                   18
 #define ES_Array_pop                                                   19
 #define ES_Array_push                                                  20
-#define ES_Array_reject                                                21
-#define ES_Array_remove                                                22
-#define ES_Array_reverse                                               23
-#define ES_Array_shift                                                 24
-#define ES_Array_slice                                                 25
-#define ES_Array_some                                                  26
-#define ES_Array_sort                                                  27
-#define ES_Array_splice                                                28
-#define ES_Array_toString                                              29
-#define ES_Array_transform                                             30
-#define ES_Array_unique                                                31
-#define ES_Array_unshift                                               32
-#define ES_Array_NUM_INSTANCE_PROP                                     33
+#define ES_Array_reduce                                                21
+#define ES_Array_reduceRight                                           22
+#define ES_Array_reject                                                23
+#define ES_Array_remove                                                24
+#define ES_Array_reverse                                               25
+#define ES_Array_shift                                                 26
+#define ES_Array_slice                                                 27
+#define ES_Array_some                                                  28
+#define ES_Array_sort                                                  29
+#define ES_Array_splice                                                30
+#define ES_Array_toString                                              31
+#define ES_Array_transform                                             32
+#define ES_Array_unique                                                33
+#define ES_Array_unshift                                               34
+#define ES_Array_NUM_INSTANCE_PROP                                     35
 #define ES_Array_NUM_INHERITED_PROP                                    0
 
 
@@ -328,7 +329,7 @@
 #define ES_BinaryStream_inbuf                                          0
 #define ES_BinaryStream_outbuf                                         1
 #define ES_BinaryStream_nextStream                                     2
-#define ES_BinaryStream_addListener                                    3
+#define ES_BinaryStream_observe                                        3
 #define ES_BinaryStream_async                                          4
 #define ES_BinaryStream_available                                      5
 #define ES_BinaryStream_close                                          6
@@ -344,7 +345,7 @@
 #define ES_BinaryStream_readLong                                       16
 #define ES_BinaryStream_readString                                     17
 #define ES_BinaryStream_readXML                                        18
-#define ES_BinaryStream_removeListener                                 19
+#define ES_BinaryStream_removeObserver                                 19
 #define ES_BinaryStream_room                                           20
 #define ES_BinaryStream_write                                          21
 #define ES_BinaryStream_writeByte                                      22
@@ -381,7 +382,7 @@
 /*
    Prototype (instance) slots for "ByteArray" type 
  */
-#define ES_ByteArray_addListener                                       0
+#define ES_ByteArray_observe                                           0
 #define ES_ByteArray_available                                         1
 #define ES_ByteArray_async                                             2
 #define ES_ByteArray_close                                             3
@@ -407,7 +408,7 @@
 #define ES_ByteArray_readShort                                         23
 #define ES_ByteArray_readString                                        24
 #define ES_ByteArray_readXML                                           25
-#define ES_ByteArray_removeListener                                    26
+#define ES_ByteArray_removeObserver                                    26
 #define ES_ByteArray_reset                                             27
 #define ES_ByteArray_room                                              28
 #define ES_ByteArray_toString                                          29
@@ -580,15 +581,18 @@
    Prototype (instance) slots for "Emitter" type 
  */
 #define ES_Emitter_endpoints                                           0
-#define ES_Emitter_addOneListener                                      1
-#define ES_Emitter_addListener                                         2
-#define ES_Emitter_clearListeners                                      3
-#define ES_Emitter_hasListeners                                        4
-#define ES_Emitter_listeners                                           5
-#define ES_Emitter_emit                                                6
-#define ES_Emitter_removeOneListener                                   7
-#define ES_Emitter_removeListener                                      8
-#define ES_Emitter_NUM_INSTANCE_PROP                                   9
+#define ES_Emitter_addOneObserver                                      1
+#define ES_Emitter_observe                                             2
+#define ES_Emitter_clearObservers                                      3
+#define ES_Emitter_hasObservers                                        4
+#define ES_Emitter_getObservers                                        5
+#define ES_Emitter_fire                                                6
+#define ES_Emitter_delayedFire                                         7
+#define ES_Emitter_removeOneObserver                                   8
+#define ES_Emitter_removeObserver                                      9
+#define ES_Emitter_addListener                                         10
+#define ES_Emitter_emit                                                11
+#define ES_Emitter_NUM_INSTANCE_PROP                                   12
 #define ES_Emitter_NUM_INHERITED_PROP                                  0
 #define ES_Endpoint_NUM_CLASS_PROP                                     0
 
@@ -601,196 +605,284 @@
 #define ES_Endpoint_again                                              3
 #define ES_Endpoint_NUM_INSTANCE_PROP                                  4
 #define ES_Endpoint_NUM_INHERITED_PROP                                 0
-#define ES_ArgError_NUM_CLASS_PROP                                     0
-
-/*
-   Prototype (instance) slots for "ArgError" type 
- */
-#define ES_ArgError_message                                            0
-#define ES_ArgError_code                                               1
-#define ES_ArgError_stack                                              2
-#define ES_ArgError_NUM_INSTANCE_PROP                                  3
-#define ES_ArgError_NUM_INHERITED_PROP                                 3
-#define ES_ArithmeticError_NUM_CLASS_PROP                              0
-
-/*
-   Prototype (instance) slots for "ArithmeticError" type 
- */
-#define ES_ArithmeticError_message                                     0
-#define ES_ArithmeticError_code                                        1
-#define ES_ArithmeticError_stack                                       2
-#define ES_ArithmeticError_NUM_INSTANCE_PROP                           3
-#define ES_ArithmeticError_NUM_INHERITED_PROP                          3
-#define ES_AssertError_NUM_CLASS_PROP                                  0
-
-/*
-   Prototype (instance) slots for "AssertError" type 
- */
-#define ES_AssertError_message                                         0
-#define ES_AssertError_code                                            1
-#define ES_AssertError_stack                                           2
-#define ES_AssertError_NUM_INSTANCE_PROP                               3
-#define ES_AssertError_NUM_INHERITED_PROP                              3
-#define ES_InstructionError_NUM_CLASS_PROP                             0
-
-/*
-   Prototype (instance) slots for "InstructionError" type 
- */
-#define ES_InstructionError_message                                    0
-#define ES_InstructionError_code                                       1
-#define ES_InstructionError_stack                                      2
-#define ES_InstructionError_NUM_INSTANCE_PROP                          3
-#define ES_InstructionError_NUM_INHERITED_PROP                         3
 #define ES_Error_NUM_CLASS_PROP                                        0
 
 /*
    Prototype (instance) slots for "Error" type 
  */
-#define ES_Error_message                                               0
-#define ES_Error_code                                                  1
-#define ES_Error_stack                                                 2
-#define ES_Error_NUM_INSTANCE_PROP                                     3
+#define ES_Error_filename                                              0
+#define ES_Error_lineno                                                1
+#define ES_Error_data                                                  2
+#define ES_Error_message                                               3
+#define ES_Error__stack                                                4
+#define ES_Error_stack                                                 5
+#define ES_Error_timestamp                                             6
+#define ES_Error_code                                                  7
+#define ES_Error_capture                                               8
+#define ES_Error_formatStack                                           9
+#define ES_Error_NUM_INSTANCE_PROP                                     10
 #define ES_Error_NUM_INHERITED_PROP                                    0
+#define ES_ArgError_NUM_CLASS_PROP                                     0
+
+/*
+   Prototype (instance) slots for "ArgError" type 
+ */
+#define ES_ArgError_filename                                           0
+#define ES_ArgError_lineno                                             1
+#define ES_ArgError_data                                               2
+#define ES_ArgError_message                                            3
+#define ES_ArgError__stack                                             4
+#define ES_ArgError_stack                                              5
+#define ES_ArgError_timestamp                                          6
+#define ES_ArgError_code                                               7
+#define ES_ArgError_capture                                            8
+#define ES_ArgError_formatStack                                        9
+#define ES_ArgError_NUM_INSTANCE_PROP                                  10
+#define ES_ArgError_NUM_INHERITED_PROP                                 10
+#define ES_ArithmeticError_NUM_CLASS_PROP                              0
+
+/*
+   Prototype (instance) slots for "ArithmeticError" type 
+ */
+#define ES_ArithmeticError_filename                                    0
+#define ES_ArithmeticError_lineno                                      1
+#define ES_ArithmeticError_data                                        2
+#define ES_ArithmeticError_message                                     3
+#define ES_ArithmeticError__stack                                      4
+#define ES_ArithmeticError_stack                                       5
+#define ES_ArithmeticError_timestamp                                   6
+#define ES_ArithmeticError_code                                        7
+#define ES_ArithmeticError_capture                                     8
+#define ES_ArithmeticError_formatStack                                 9
+#define ES_ArithmeticError_NUM_INSTANCE_PROP                           10
+#define ES_ArithmeticError_NUM_INHERITED_PROP                          10
+#define ES_AssertError_NUM_CLASS_PROP                                  0
+
+/*
+   Prototype (instance) slots for "AssertError" type 
+ */
+#define ES_AssertError_filename                                        0
+#define ES_AssertError_lineno                                          1
+#define ES_AssertError_data                                            2
+#define ES_AssertError_message                                         3
+#define ES_AssertError__stack                                          4
+#define ES_AssertError_stack                                           5
+#define ES_AssertError_timestamp                                       6
+#define ES_AssertError_code                                            7
+#define ES_AssertError_capture                                         8
+#define ES_AssertError_formatStack                                     9
+#define ES_AssertError_NUM_INSTANCE_PROP                               10
+#define ES_AssertError_NUM_INHERITED_PROP                              10
+#define ES_InstructionError_NUM_CLASS_PROP                             0
+
+/*
+   Prototype (instance) slots for "InstructionError" type 
+ */
+#define ES_InstructionError_filename                                   0
+#define ES_InstructionError_lineno                                     1
+#define ES_InstructionError_data                                       2
+#define ES_InstructionError_message                                    3
+#define ES_InstructionError__stack                                     4
+#define ES_InstructionError_stack                                      5
+#define ES_InstructionError_timestamp                                  6
+#define ES_InstructionError_code                                       7
+#define ES_InstructionError_capture                                    8
+#define ES_InstructionError_formatStack                                9
+#define ES_InstructionError_NUM_INSTANCE_PROP                          10
+#define ES_InstructionError_NUM_INHERITED_PROP                         10
 #define ES_IOError_NUM_CLASS_PROP                                      0
 
 /*
    Prototype (instance) slots for "IOError" type 
  */
-#define ES_IOError_message                                             0
-#define ES_IOError_code                                                1
-#define ES_IOError_stack                                               2
-#define ES_IOError_NUM_INSTANCE_PROP                                   3
-#define ES_IOError_NUM_INHERITED_PROP                                  3
+#define ES_IOError_filename                                            0
+#define ES_IOError_lineno                                              1
+#define ES_IOError_data                                                2
+#define ES_IOError_message                                             3
+#define ES_IOError__stack                                              4
+#define ES_IOError_stack                                               5
+#define ES_IOError_timestamp                                           6
+#define ES_IOError_code                                                7
+#define ES_IOError_capture                                             8
+#define ES_IOError_formatStack                                         9
+#define ES_IOError_NUM_INSTANCE_PROP                                   10
+#define ES_IOError_NUM_INHERITED_PROP                                  10
 #define ES_InternalError_NUM_CLASS_PROP                                0
 
 /*
    Prototype (instance) slots for "InternalError" type 
  */
-#define ES_InternalError_message                                       0
-#define ES_InternalError_code                                          1
-#define ES_InternalError_stack                                         2
-#define ES_InternalError_NUM_INSTANCE_PROP                             3
-#define ES_InternalError_NUM_INHERITED_PROP                            3
+#define ES_InternalError_filename                                      0
+#define ES_InternalError_lineno                                        1
+#define ES_InternalError_data                                          2
+#define ES_InternalError_message                                       3
+#define ES_InternalError__stack                                        4
+#define ES_InternalError_stack                                         5
+#define ES_InternalError_timestamp                                     6
+#define ES_InternalError_code                                          7
+#define ES_InternalError_capture                                       8
+#define ES_InternalError_formatStack                                   9
+#define ES_InternalError_NUM_INSTANCE_PROP                             10
+#define ES_InternalError_NUM_INHERITED_PROP                            10
 #define ES_MemoryError_NUM_CLASS_PROP                                  0
 
 /*
    Prototype (instance) slots for "MemoryError" type 
  */
-#define ES_MemoryError_message                                         0
-#define ES_MemoryError_code                                            1
-#define ES_MemoryError_stack                                           2
-#define ES_MemoryError_NUM_INSTANCE_PROP                               3
-#define ES_MemoryError_NUM_INHERITED_PROP                              3
+#define ES_MemoryError_filename                                        0
+#define ES_MemoryError_lineno                                          1
+#define ES_MemoryError_data                                            2
+#define ES_MemoryError_message                                         3
+#define ES_MemoryError__stack                                          4
+#define ES_MemoryError_stack                                           5
+#define ES_MemoryError_timestamp                                       6
+#define ES_MemoryError_code                                            7
+#define ES_MemoryError_capture                                         8
+#define ES_MemoryError_formatStack                                     9
+#define ES_MemoryError_NUM_INSTANCE_PROP                               10
+#define ES_MemoryError_NUM_INHERITED_PROP                              10
 #define ES_OutOfBoundsError_NUM_CLASS_PROP                             0
 
 /*
    Prototype (instance) slots for "OutOfBoundsError" type 
  */
-#define ES_OutOfBoundsError_message                                    0
-#define ES_OutOfBoundsError_code                                       1
-#define ES_OutOfBoundsError_stack                                      2
-#define ES_OutOfBoundsError_NUM_INSTANCE_PROP                          3
-#define ES_OutOfBoundsError_NUM_INHERITED_PROP                         3
+#define ES_OutOfBoundsError_filename                                   0
+#define ES_OutOfBoundsError_lineno                                     1
+#define ES_OutOfBoundsError_data                                       2
+#define ES_OutOfBoundsError_message                                    3
+#define ES_OutOfBoundsError__stack                                     4
+#define ES_OutOfBoundsError_stack                                      5
+#define ES_OutOfBoundsError_timestamp                                  6
+#define ES_OutOfBoundsError_code                                       7
+#define ES_OutOfBoundsError_capture                                    8
+#define ES_OutOfBoundsError_formatStack                                9
+#define ES_OutOfBoundsError_NUM_INSTANCE_PROP                          10
+#define ES_OutOfBoundsError_NUM_INHERITED_PROP                         10
 #define ES_ReferenceError_NUM_CLASS_PROP                               0
 
 /*
    Prototype (instance) slots for "ReferenceError" type 
  */
-#define ES_ReferenceError_message                                      0
-#define ES_ReferenceError_code                                         1
-#define ES_ReferenceError_stack                                        2
-#define ES_ReferenceError_NUM_INSTANCE_PROP                            3
-#define ES_ReferenceError_NUM_INHERITED_PROP                           3
+#define ES_ReferenceError_filename                                     0
+#define ES_ReferenceError_lineno                                       1
+#define ES_ReferenceError_data                                         2
+#define ES_ReferenceError_message                                      3
+#define ES_ReferenceError__stack                                       4
+#define ES_ReferenceError_stack                                        5
+#define ES_ReferenceError_timestamp                                    6
+#define ES_ReferenceError_code                                         7
+#define ES_ReferenceError_capture                                      8
+#define ES_ReferenceError_formatStack                                  9
+#define ES_ReferenceError_NUM_INSTANCE_PROP                            10
+#define ES_ReferenceError_NUM_INHERITED_PROP                           10
 #define ES_ResourceError_NUM_CLASS_PROP                                0
 
 /*
    Prototype (instance) slots for "ResourceError" type 
  */
-#define ES_ResourceError_message                                       0
-#define ES_ResourceError_code                                          1
-#define ES_ResourceError_stack                                         2
-#define ES_ResourceError_NUM_INSTANCE_PROP                             3
-#define ES_ResourceError_NUM_INHERITED_PROP                            3
+#define ES_ResourceError_filename                                      0
+#define ES_ResourceError_lineno                                        1
+#define ES_ResourceError_data                                          2
+#define ES_ResourceError_message                                       3
+#define ES_ResourceError__stack                                        4
+#define ES_ResourceError_stack                                         5
+#define ES_ResourceError_timestamp                                     6
+#define ES_ResourceError_code                                          7
+#define ES_ResourceError_capture                                       8
+#define ES_ResourceError_formatStack                                   9
+#define ES_ResourceError_NUM_INSTANCE_PROP                             10
+#define ES_ResourceError_NUM_INHERITED_PROP                            10
 #define ES_SecurityError_NUM_CLASS_PROP                                0
 
 /*
    Prototype (instance) slots for "SecurityError" type 
  */
-#define ES_SecurityError_message                                       0
-#define ES_SecurityError_code                                          1
-#define ES_SecurityError_stack                                         2
-#define ES_SecurityError_NUM_INSTANCE_PROP                             3
-#define ES_SecurityError_NUM_INHERITED_PROP                            3
+#define ES_SecurityError_filename                                      0
+#define ES_SecurityError_lineno                                        1
+#define ES_SecurityError_data                                          2
+#define ES_SecurityError_message                                       3
+#define ES_SecurityError__stack                                        4
+#define ES_SecurityError_stack                                         5
+#define ES_SecurityError_timestamp                                     6
+#define ES_SecurityError_code                                          7
+#define ES_SecurityError_capture                                       8
+#define ES_SecurityError_formatStack                                   9
+#define ES_SecurityError_NUM_INSTANCE_PROP                             10
+#define ES_SecurityError_NUM_INHERITED_PROP                            10
 #define ES_StateError_NUM_CLASS_PROP                                   0
 
 /*
    Prototype (instance) slots for "StateError" type 
  */
-#define ES_StateError_message                                          0
-#define ES_StateError_code                                             1
-#define ES_StateError_stack                                            2
-#define ES_StateError_NUM_INSTANCE_PROP                                3
-#define ES_StateError_NUM_INHERITED_PROP                               3
+#define ES_StateError_filename                                         0
+#define ES_StateError_lineno                                           1
+#define ES_StateError_data                                             2
+#define ES_StateError_message                                          3
+#define ES_StateError__stack                                           4
+#define ES_StateError_stack                                            5
+#define ES_StateError_timestamp                                        6
+#define ES_StateError_code                                             7
+#define ES_StateError_capture                                          8
+#define ES_StateError_formatStack                                      9
+#define ES_StateError_NUM_INSTANCE_PROP                                10
+#define ES_StateError_NUM_INHERITED_PROP                               10
 #define ES_SyntaxError_NUM_CLASS_PROP                                  0
 
 /*
    Prototype (instance) slots for "SyntaxError" type 
  */
-#define ES_SyntaxError_message                                         0
-#define ES_SyntaxError_code                                            1
-#define ES_SyntaxError_stack                                           2
-#define ES_SyntaxError_NUM_INSTANCE_PROP                               3
-#define ES_SyntaxError_NUM_INHERITED_PROP                              3
+#define ES_SyntaxError_filename                                        0
+#define ES_SyntaxError_lineno                                          1
+#define ES_SyntaxError_data                                            2
+#define ES_SyntaxError_message                                         3
+#define ES_SyntaxError__stack                                          4
+#define ES_SyntaxError_stack                                           5
+#define ES_SyntaxError_timestamp                                       6
+#define ES_SyntaxError_code                                            7
+#define ES_SyntaxError_capture                                         8
+#define ES_SyntaxError_formatStack                                     9
+#define ES_SyntaxError_NUM_INSTANCE_PROP                               10
+#define ES_SyntaxError_NUM_INHERITED_PROP                              10
 #define ES_TypeError_NUM_CLASS_PROP                                    0
 
 /*
    Prototype (instance) slots for "TypeError" type 
  */
-#define ES_TypeError_message                                           0
-#define ES_TypeError_code                                              1
-#define ES_TypeError_stack                                             2
-#define ES_TypeError_NUM_INSTANCE_PROP                                 3
-#define ES_TypeError_NUM_INHERITED_PROP                                3
+#define ES_TypeError_filename                                          0
+#define ES_TypeError_lineno                                            1
+#define ES_TypeError_data                                              2
+#define ES_TypeError_message                                           3
+#define ES_TypeError__stack                                            4
+#define ES_TypeError_stack                                             5
+#define ES_TypeError_timestamp                                         6
+#define ES_TypeError_code                                              7
+#define ES_TypeError_capture                                           8
+#define ES_TypeError_formatStack                                       9
+#define ES_TypeError_NUM_INSTANCE_PROP                                 10
+#define ES_TypeError_NUM_INHERITED_PROP                                10
 #define ES_URIError_NUM_CLASS_PROP                                     0
 
 /*
    Prototype (instance) slots for "URIError" type 
  */
-#define ES_URIError_message                                            0
-#define ES_URIError_code                                               1
-#define ES_URIError_stack                                              2
-#define ES_URIError_NUM_INSTANCE_PROP                                  3
-#define ES_URIError_NUM_INHERITED_PROP                                 3
-#define ES_Event_NUM_CLASS_PROP                                        0
-
-/*
-   Prototype (instance) slots for "Event" type 
- */
-#define ES_Event_data                                                  0
-#define ES_Event_timestamp                                             1
-#define ES_Event_toString                                              2
-#define ES_Event_NUM_INSTANCE_PROP                                     3
-#define ES_Event_NUM_INHERITED_PROP                                    0
-#define ES_ErrorEvent_NUM_CLASS_PROP                                   0
-
-/*
-   Prototype (instance) slots for "ErrorEvent" type 
- */
-#define ES_ErrorEvent_data                                             0
-#define ES_ErrorEvent_timestamp                                        1
-#define ES_ErrorEvent_toString                                         2
-#define ES_ErrorEvent_message                                          3
-#define ES_ErrorEvent_filename                                         4
-#define ES_ErrorEvent_lineno                                           5
-#define ES_ErrorEvent_stack                                            6
-#define ES_ErrorEvent_NUM_INSTANCE_PROP                                7
-#define ES_ErrorEvent_NUM_INHERITED_PROP                               3
+#define ES_URIError_filename                                           0
+#define ES_URIError_lineno                                             1
+#define ES_URIError_data                                               2
+#define ES_URIError_message                                            3
+#define ES_URIError__stack                                             4
+#define ES_URIError_stack                                              5
+#define ES_URIError_timestamp                                          6
+#define ES_URIError_code                                               7
+#define ES_URIError_capture                                            8
+#define ES_URIError_formatStack                                        9
+#define ES_URIError_NUM_INSTANCE_PROP                                  10
+#define ES_URIError_NUM_INHERITED_PROP                                 10
 #define ES_File_NUM_CLASS_PROP                                         0
 
 /*
    Prototype (instance) slots for "File" type 
  */
-#define ES_File_addListener                                            0
+#define ES_File_observe                                                0
 #define ES_File_async                                                  1
 #define ES_File_canRead                                                2
 #define ES_File_canWrite                                               3
@@ -808,7 +900,7 @@
 #define ES_File_readBytes                                              15
 #define ES_File_readString                                             16
 #define ES_File_remove                                                 17
-#define ES_File_removeListener                                         18
+#define ES_File_removeObserver                                         18
 #define ES_File_size                                                   19
 #define ES_File_truncate                                               20
 #define ES_File_write                                                  21
@@ -839,11 +931,12 @@
  */
 #define ES_Function_apply                                              0
 #define ES_Function_call                                               1
-#define ES_Function_boundThis                                          2
-#define ES_Function_bind                                               3
-#define ES_Function_length                                             4
-#define ES_Function_setScope                                           5
-#define ES_Function_NUM_INSTANCE_PROP                                  6
+#define ES_Function_bind                                               2
+#define ES_Function_bound                                              3
+#define ES_Function_name                                               4
+#define ES_Function_length                                             5
+#define ES_Function_setScope                                           6
+#define ES_Function_NUM_INSTANCE_PROP                                  7
 #define ES_Function_NUM_INHERITED_PROP                                 0
 
 
@@ -915,7 +1008,7 @@
    Prototype (instance) slots for "Http" type 
  */
 #define ES_Http__response                                              0
-#define ES_Http_addListener                                            1
+#define ES_Http_observe                                                1
 #define ES_Http_async                                                  2
 #define ES_Http_chunkSize                                              3
 #define ES_Http_close                                                  4
@@ -947,7 +1040,7 @@
 #define ES_Http_readString                                             30
 #define ES_Http_readLines                                              31
 #define ES_Http_readXml                                                32
-#define ES_Http_removeListener                                         33
+#define ES_Http_removeObserver                                         33
 #define ES_Http_response                                               34
 #define ES_Http_retries                                                35
 #define ES_Http_setCredentials                                         36
@@ -1062,29 +1155,27 @@
 #define ES_Logger__pattern                                             2
 #define ES_Logger__name                                                3
 #define ES_Logger__outStream                                           4
-#define ES_Logger__parent                                              5
-#define ES_Logger_redirect                                             6
-#define ES_Logger_addListener                                          7
-#define ES_Logger_async                                                8
-#define ES_Logger_close                                                9
-#define ES_Logger_filter                                               10
-#define ES_Logger_flush                                                11
-#define ES_Logger_level                                                12
-#define ES_Logger_match                                                13
-#define ES_Logger_name                                                 14
-#define ES_Logger_outStream                                            15
-#define ES_Logger_parent                                               16
-#define ES_Logger_debug                                                17
-#define ES_Logger_config                                               18
-#define ES_Logger_error                                                19
-#define ES_Logger_info                                                 20
-#define ES_Logger_activity                                             21
-#define ES_Logger_read                                                 22
-#define ES_Logger_removeListener                                       23
-#define ES_Logger_write                                                24
-#define ES_Logger_warn                                                 25
-#define ES_Logger_emit                                                 26
-#define ES_Logger_NUM_INSTANCE_PROP                                    27
+#define ES_Logger_redirect                                             5
+#define ES_Logger_observe                                              6
+#define ES_Logger_async                                                7
+#define ES_Logger_close                                                8
+#define ES_Logger_filter                                               9
+#define ES_Logger_flush                                                10
+#define ES_Logger_level                                                11
+#define ES_Logger_match                                                12
+#define ES_Logger_name                                                 13
+#define ES_Logger_outStream                                            14
+#define ES_Logger_debug                                                15
+#define ES_Logger_config                                               16
+#define ES_Logger_error                                                17
+#define ES_Logger_info                                                 18
+#define ES_Logger_activity                                             19
+#define ES_Logger_read                                                 20
+#define ES_Logger_removeObserver                                       21
+#define ES_Logger_write                                                22
+#define ES_Logger_warn                                                 23
+#define ES_Logger_emit                                                 24
+#define ES_Logger_NUM_INSTANCE_PROP                                    25
 #define ES_Logger_NUM_INHERITED_PROP                                   0
 
 
@@ -1201,8 +1292,9 @@
 #define ES_Number_NEGATIVE_INFINITY                                    4
 #define ES_Number_POSITIVE_INFINITY                                    5
 #define ES_Number_MaxValue                                             6
-#define ES_Number_MinValue                                             7
-#define ES_Number_NUM_CLASS_PROP                                       8
+#define ES_Number_MaxInt32                                             7
+#define ES_Number_MinValue                                             8
+#define ES_Number_NUM_CLASS_PROP                                       9
 
 /*
    Prototype (instance) slots for "Number" type 
@@ -1279,6 +1371,7 @@
 #define ES_Object_getOwnPropertyDescriptor_obj                         0
 #define ES_Object_getOwnPropertyDescriptor_prop                        1
 #define ES_Object_getOwnPropertyNames_obj                              0
+#define ES_Object_getOwnPropertyNames_options                          1
 #define ES_Object_getOwnPropertyCount_obj                              0
 #define ES_Object_getOwnPrototypeOf_obj                                0
 #define ES_Object_isExtensible_obj                                     0
@@ -1319,7 +1412,7 @@
 #define ES_Path_linkTarget                                             24
 #define ES_Path_makeDir                                                25
 #define ES_Path_makeLink                                               26
-#define ES_Path_makeTemp                                               27
+#define ES_Path_temp                                                   27
 #define ES_Path_map                                                    28
 #define ES_Path_mimeType                                               29
 #define ES_Path_modified                                               30
@@ -1355,7 +1448,8 @@
 #define ES_Path_trimStart                                              60
 #define ES_Path_truncate                                               61
 #define ES_Path_write                                                  62
-#define ES_Path_NUM_INSTANCE_PROP                                      63
+#define ES_Path_makeTemp                                               63
+#define ES_Path_NUM_INSTANCE_PROP                                      64
 #define ES_Path_NUM_INHERITED_PROP                                     0
 #define ES_Promise_NUM_CLASS_PROP                                      0
 
@@ -1363,29 +1457,34 @@
    Prototype (instance) slots for "Promise" type 
  */
 #define ES_Promise_endpoints                                           0
-#define ES_Promise_addOneListener                                      1
-#define ES_Promise_addListener                                         2
-#define ES_Promise_clearListeners                                      3
-#define ES_Promise_hasListeners                                        4
-#define ES_Promise_listeners                                           5
-#define ES_Promise_emit                                                6
-#define ES_Promise_removeOneListener                                   7
-#define ES_Promise_removeListener                                      8
-#define ES_Promise_timer                                               9
-#define ES_Promise_fired                                               10
-#define ES_Promise_addCallback                                         11
-#define ES_Promise_addCancelback                                       12
-#define ES_Promise_addErrback                                          13
-#define ES_Promise_emitSuccess                                         14
-#define ES_Promise_emitError                                           15
-#define ES_Promise_emitCancel                                          16
-#define ES_Promise_cancel                                              17
-#define ES_Promise_then                                                18
-#define ES_Promise_timeout                                             19
-#define ES_Promise_wait                                                20
-#define ES_Promise_issue                                               21
-#define ES_Promise_NUM_INSTANCE_PROP                                   22
-#define ES_Promise_NUM_INHERITED_PROP                                  9
+#define ES_Promise_addOneObserver                                      1
+#define ES_Promise_observe                                             2
+#define ES_Promise_clearObservers                                      3
+#define ES_Promise_hasObservers                                        4
+#define ES_Promise_getObservers                                        5
+#define ES_Promise_fire                                                6
+#define ES_Promise_delayedFire                                         7
+#define ES_Promise_removeOneObserver                                   8
+#define ES_Promise_removeObserver                                      9
+#define ES_Promise_addListener                                         10
+#define ES_Promise_emit                                                11
+#define ES_Promise_timer                                               12
+#define ES_Promise_complete                                            13
+#define ES_Promise_onSuccess                                           14
+#define ES_Promise_onCancel                                            15
+#define ES_Promise_onError                                             16
+#define ES_Promise_onProgress                                          17
+#define ES_Promise_onTimeout                                           18
+#define ES_Promise_emitSuccess                                         19
+#define ES_Promise_emitError                                           20
+#define ES_Promise_emitCancel                                          21
+#define ES_Promise_cancel                                              22
+#define ES_Promise_then                                                23
+#define ES_Promise_timeout                                             24
+#define ES_Promise_wait                                                25
+#define ES_Promise_issue                                               26
+#define ES_Promise_NUM_INSTANCE_PROP                                   27
+#define ES_Promise_NUM_INHERITED_PROP                                  12
 #define ES_Reflect_NUM_CLASS_PROP                                      0
 
 /*
@@ -1425,7 +1524,7 @@
 /*
    Prototype (instance) slots for "Socket" type 
  */
-#define ES_Socket_addListener                                          0
+#define ES_Socket_observe                                              0
 #define ES_Socket_accept                                               1
 #define ES_Socket_address                                              2
 #define ES_Socket_async                                                3
@@ -1437,7 +1536,7 @@
 #define ES_Socket_port                                                 9
 #define ES_Socket_read                                                 10
 #define ES_Socket_remoteAddress                                        11
-#define ES_Socket_removeListener                                       12
+#define ES_Socket_removeObserver                                       12
 #define ES_Socket_write                                                13
 #define ES_Socket_NUM_INSTANCE_PROP                                    14
 #define ES_Socket_NUM_INHERITED_PROP                                   0
@@ -1454,12 +1553,12 @@
 /*
    Prototype (instance) slots for "Stream" type 
  */
-#define ES_Stream_addListener                                          0
+#define ES_Stream_observe                                              0
 #define ES_Stream_async                                                1
 #define ES_Stream_close                                                2
 #define ES_Stream_flush                                                3
 #define ES_Stream_read                                                 4
-#define ES_Stream_removeListener                                       5
+#define ES_Stream_removeObserver                                       5
 #define ES_Stream_write                                                6
 #define ES_Stream_NUM_INSTANCE_PROP                                    7
 #define ES_Stream_NUM_INHERITED_PROP                                   0
@@ -1566,7 +1665,7 @@
 #define ES_TextStream_inbuf                                            1
 #define ES_TextStream_format                                           2
 #define ES_TextStream_nextStream                                       3
-#define ES_TextStream_addListener                                      4
+#define ES_TextStream_observe                                          4
 #define ES_TextStream_async                                            5
 #define ES_TextStream_available                                        6
 #define ES_TextStream_close                                            7
@@ -1577,7 +1676,7 @@
 #define ES_TextStream_readLine                                         12
 #define ES_TextStream_readLines                                        13
 #define ES_TextStream_readString                                       14
-#define ES_TextStream_removeListener                                   15
+#define ES_TextStream_removeObserver                                   15
 #define ES_TextStream_write                                            16
 #define ES_TextStream_writeLine                                        17
 #define ES_TextStream_NUM_INSTANCE_PROP                                18
@@ -1589,20 +1688,12 @@
  */
 #define ES_Timer_drift                                                 0
 #define ES_Timer_period                                                1
-#define ES_Timer_restart                                               2
-#define ES_Timer_stop                                                  3
-#define ES_Timer_NUM_INSTANCE_PROP                                     4
+#define ES_Timer_onerror                                               2
+#define ES_Timer_repeat                                                3
+#define ES_Timer_start                                                 4
+#define ES_Timer_stop                                                  5
+#define ES_Timer_NUM_INSTANCE_PROP                                     6
 #define ES_Timer_NUM_INHERITED_PROP                                    0
-#define ES_TimerEvent_NUM_CLASS_PROP                                   0
-
-/*
-   Prototype (instance) slots for "TimerEvent" type 
- */
-#define ES_TimerEvent_data                                             0
-#define ES_TimerEvent_timestamp                                        1
-#define ES_TimerEvent_toString                                         2
-#define ES_TimerEvent_NUM_INSTANCE_PROP                                3
-#define ES_TimerEvent_NUM_INHERITED_PROP                               3
 #define ES_Type_NUM_CLASS_PROP                                         0
 
 /*
@@ -1713,6 +1804,40 @@
 #define ES_Worker_join_workers                                         0
 #define ES_Worker_join_timeout                                         1
 #define ES_Worker_lookup_name                                          0
+#define ES_Event_NUM_CLASS_PROP                                        0
+
+/*
+   Prototype (instance) slots for "Event" type 
+ */
+#define ES_Event_filename                                              0
+#define ES_Event_lineno                                                1
+#define ES_Event_data                                                  2
+#define ES_Event_message                                               3
+#define ES_Event__stack                                                4
+#define ES_Event_stack                                                 5
+#define ES_Event_timestamp                                             6
+#define ES_Event_code                                                  7
+#define ES_Event_capture                                               8
+#define ES_Event_formatStack                                           9
+#define ES_Event_NUM_INSTANCE_PROP                                     10
+#define ES_Event_NUM_INHERITED_PROP                                    10
+#define ES_ErrorEvent_NUM_CLASS_PROP                                   0
+
+/*
+   Prototype (instance) slots for "ErrorEvent" type 
+ */
+#define ES_ErrorEvent_filename                                         0
+#define ES_ErrorEvent_lineno                                           1
+#define ES_ErrorEvent_data                                             2
+#define ES_ErrorEvent_message                                          3
+#define ES_ErrorEvent__stack                                           4
+#define ES_ErrorEvent_stack                                            5
+#define ES_ErrorEvent_timestamp                                        6
+#define ES_ErrorEvent_code                                             7
+#define ES_ErrorEvent_capture                                          8
+#define ES_ErrorEvent_formatStack                                      9
+#define ES_ErrorEvent_NUM_INSTANCE_PROP                                10
+#define ES_ErrorEvent_NUM_INHERITED_PROP                               10
 #define ES_XML_NUM_CLASS_PROP                                          0
 
 /*
@@ -1759,12 +1884,12 @@
 /*
    Prototype (instance) slots for "XMLHttp" type 
  */
-#define ES_XMLHttp_hp                                                  0
+#define ES_XMLHttp_http                                                0
 #define ES_XMLHttp_state                                               1
 #define ES_XMLHttp_response                                            2
 #define ES_XMLHttp_onreadystatechange                                  3
 #define ES_XMLHttp_abort                                               4
-#define ES_XMLHttp_http                                                5
+#define ES_XMLHttp_httpObject                                          5
 #define ES_XMLHttp_readyState                                          6
 #define ES_XMLHttp_responseText                                        7
 #define ES_XMLHttp_responseXML                                         8
@@ -1808,7 +1933,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1289551
+#define _ES_CHECKSUM_ejs   1290534
 
 #endif
 /*
@@ -1840,12 +1965,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -1867,18 +1989,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 
@@ -1914,12 +2040,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -1941,18 +2064,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 
@@ -1988,12 +2115,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -2015,18 +2139,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 
@@ -2062,12 +2190,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -2089,18 +2214,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 #define ES_ejs_cjs_require_id                                          0
@@ -2144,7 +2273,7 @@
 #define ES_Loader_locate_id                                            0
 #define ES_Loader_setConfig_newConfig                                  0
 
-#define _ES_CHECKSUM_ejs_cjs   25281
+#define _ES_CHECKSUM_ejs_cjs   25051
 
 #endif
 /*
@@ -2176,12 +2305,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -2203,18 +2329,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 #define ES_ejs_cjs_require_id                                          0
@@ -2245,7 +2375,7 @@
 #define ES_rmdir_contents                                              1
 #define ES_tempname_directory                                          0
 
-#define _ES_CHECKSUM_ejs_unix   31360
+#define _ES_CHECKSUM_ejs_unix   28693
 
 #endif
 /*
@@ -2277,12 +2407,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -2304,18 +2431,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 #define ES_ejs_cjs_require_id                                          0
@@ -2428,7 +2559,283 @@
 #define ES_ejs_db_DatabaseConnector_NUM_INSTANCE_PROP                  22
 #define ES_ejs_db_DatabaseConnector_NUM_INHERITED_PROP                 0
 
-#define _ES_CHECKSUM_ejs_db   121873
+#define _ES_CHECKSUM_ejs_db   120847
+
+#endif
+/*
+   .ejs.slots.h -- Native property slot definitions for the "ejs.db.xmapper" module
+  
+   This file is generated by ejsmod
+  
+   Slot definitions. Version 3.3.0.
+ */
+
+#ifndef _h_SLOTS_EjsDbXmapperSlots
+#define _h_SLOTS_EjsDbXmapperSlots 1
+
+
+/*
+   Slots for the "ejs.db.xmapper" module 
+ */
+
+/*
+   Prototype (instance) slots for "global" type 
+ */
+
+/*
+    Local slots for global methods 
+ */
+#define ES_readFile_path                                               0
+#define ES_readFile_encoding                                           1
+#define ES_makeGetter_fn                                               0
+#define ES_clearBoundThis_fn                                           0
+#define ES_assert_condition                                            0
+#define ES_cloneBase_klass                                             0
+#define ES_dump_args                                                   0
+#define ES_dumpAll_args                                                0
+#define ES_dumpDef_args                                                0
+#define ES_md5_str                                                     0
+#define ES_blend_dest                                                  0
+#define ES_blend_src                                                   1
+#define ES_blend_overwrite                                             2
+#define ES_eval_script                                                 0
+#define ES_eval_cache                                                  1
+#define ES_hashcode_o                                                  0
+#define ES_isNaN_arg                                                   0
+#define ES_isFinite_arg                                                0
+#define ES_load_file                                                   0
+#define ES_load_cache                                                  1
+#define ES_print_args                                                  0
+#define ES_parse_str                                                   0
+#define ES_parse_preferredType                                         1
+#define ES_parseFloat_str                                              0
+#define ES_parseInt_str                                                0
+#define ES_parseInt_radix                                              1
+#define ES_printHash_name                                              0
+#define ES_printHash_o                                                 1
+#define ES_instanceOf_obj                                              0
+#define ES_instanceOf_target                                           1
+#define ES_deserialize_str                                             0
+#define ES_serialize_obj                                               0
+#define ES_serialize_options                                           1
+#define ES_typeOf_o                                                    0
+#define ES_setInterval_callback                                        0
+#define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
+#define ES_setTimeout_callback                                         0
+#define ES_setTimeout_delay                                            1
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
+#define ES_ejs_worker_postMessage_data                                 0
+#define ES_ejs_worker_postMessage_ports                                1
+#define ES_ejs_cjs_require_id                                          0
+#define ES_basename_path                                               0
+#define ES_chdir_dir                                                   0
+#define ES_chmod_path                                                  0
+#define ES_chmod_perms                                                 1
+#define ES_cp_fromPath                                                 0
+#define ES_cp_toPath                                                   1
+#define ES_dirname_path                                                0
+#define ES_exists_path                                                 0
+#define ES_extension_path                                              0
+#define ES_freeSpace_path                                              0
+#define ES_isDir_path                                                  0
+#define ES_kill_pid                                                    0
+#define ES_kill_signal                                                 1
+#define ES_ls_path                                                     0
+#define ES_ls_enumDirs                                                 1
+#define ES_find_path                                                   0
+#define ES_find_glob                                                   1
+#define ES_find_recurse                                                2
+#define ES_mkdir_path                                                  0
+#define ES_mkdir_permissions                                           1
+#define ES_mv_fromFile                                                 0
+#define ES_mv_toFile                                                   1
+#define ES_rm_path                                                     0
+#define ES_rmdir_path                                                  0
+#define ES_rmdir_contents                                              1
+#define ES_tempname_directory                                          0
+#define ES_ejs_db_xmapper_plural_name                                  0
+#define ES_ejs_db_xmapper_singular_name                                0
+#define ES_ejs_db_xmapper_mapType_value                                0
+
+
+/*
+    Class property slots for the "Model" type 
+ */
+#define ES_Model__initializer___Model_                                 0
+#define ES_Model__assocName                                            1
+#define ES_Model__belongsTo                                            2
+#define ES_Model__className                                            3
+#define ES_Model__columns                                              4
+#define ES_Model__hasOne                                               5
+#define ES_Model__hasMany                                              6
+#define ES_Model__db                                                   7
+#define ES_Model__foreignId                                            8
+#define ES_Model__keyName                                              9
+#define ES_Model__model                                                10
+#define ES_Model__tableName                                            11
+#define ES_Model__trace                                                12
+#define ES_Model__validations                                          13
+#define ES_Model__beforeFilters                                        14
+#define ES_Model__afterFilters                                         15
+#define ES_Model__wrapFilters                                          16
+#define ES_Model_ErrorMessages                                         17
+#define ES_Model_sinit                                                 18
+#define ES_Model_afterFilter                                           19
+#define ES_Model_beforeFilter                                          20
+#define ES_Model_belongsTo                                             21
+#define ES_Model_cachedRead                                            22
+#define ES_Model_checkFormat                                           23
+#define ES_Model_checkNumber                                           24
+#define ES_Model_checkPresent                                          25
+#define ES_Model_checkUnique                                           26
+#define ES_Model_createAssociations                                    27
+#define ES_Model_createRecord                                          28
+#define ES_Model_find                                                  29
+#define ES_Model_findAll                                               30
+#define ES_Model_findOneWhere                                          31
+#define ES_Model_findWhere                                             32
+#define ES_Model_getColumnNames                                        33
+#define ES_Model_getColumnTitles                                       34
+#define ES_Model_getColumnType                                         35
+#define ES_Model_getDb                                                 36
+#define ES_Model_getKeyName                                            37
+#define ES_Model_getNumRows                                            38
+#define ES_Model_getSchema                                             39
+#define ES_Model_getTableName                                          40
+#define ES_Model_hasAndBelongsToMany                                   41
+#define ES_Model_hasMany                                               42
+#define ES_Model_hasOne                                                43
+#define ES_Model_innerFind                                             44
+#define ES_Model_makeLazyReader                                        45
+#define ES_Model_mapSqlTypeToEjs                                       46
+#define ES_Model_prepareValue                                          47
+#define ES_Model_readRecords                                           48
+#define ES_Model_remove                                                49
+#define ES_Model_setDb                                                 50
+#define ES_Model_setKeyName                                            51
+#define ES_Model_setTableName                                          52
+#define ES_Model_sql                                                   53
+#define ES_Model_trace                                                 54
+#define ES_Model_validateFormat                                        55
+#define ES_Model_validateNumber                                        56
+#define ES_Model_validatePresence                                      57
+#define ES_Model_validateUnique                                        58
+#define ES_Model_wrapFilter                                            59
+#define ES_Model_columnNames                                           60
+#define ES_Model_columnTitles                                          61
+#define ES_Model_db                                                    62
+#define ES_Model_keyName                                               63
+#define ES_Model_numRows                                               64
+#define ES_Model_tableName                                             65
+#define ES_Model_NUM_CLASS_PROP                                        66
+
+/*
+   Prototype (instance) slots for "Model" type 
+ */
+#define ES_Model__keyValue                                             0
+#define ES_Model__errors                                               1
+#define ES_Model__cacheAssoc                                           2
+#define ES_Model_NUM_INSTANCE_PROP                                     3
+#define ES_Model_NUM_INHERITED_PROP                                    0
+
+/*
+    Local slots for methods in type "Model" 
+ */
+#define ES_Model_sinit_model                                           0
+#define ES_Model_afterFilter_fn                                        0
+#define ES_Model_afterFilter_options                                   1
+#define ES_Model_beforeFilter_fn                                       0
+#define ES_Model_beforeFilter_options                                  1
+#define ES_Model_belongsTo_owner                                       0
+#define ES_Model_belongsTo_options                                     1
+#define ES_Model_cachedRead_rec                                        0
+#define ES_Model_cachedRead_field                                      1
+#define ES_Model_cachedRead_model                                      2
+#define ES_Model_cachedRead_key                                        3
+#define ES_Model_cachedRead_options                                    4
+#define ES_Model_checkFormat_thisObj                                   0
+#define ES_Model_checkFormat_field                                     1
+#define ES_Model_checkFormat_value                                     2
+#define ES_Model_checkFormat_options                                   3
+#define ES_Model_checkNumber_thisObj                                   0
+#define ES_Model_checkNumber_field                                     1
+#define ES_Model_checkNumber_value                                     2
+#define ES_Model_checkNumber_options                                   3
+#define ES_Model_checkPresent_thisObj                                  0
+#define ES_Model_checkPresent_field                                    1
+#define ES_Model_checkPresent_value                                    2
+#define ES_Model_checkPresent_options                                  3
+#define ES_Model_checkUnique_thisObj                                   0
+#define ES_Model_checkUnique_field                                     1
+#define ES_Model_checkUnique_value                                     2
+#define ES_Model_checkUnique_options                                   3
+#define ES_Model_createAssociations_rec                                0
+#define ES_Model_createAssociations_set                                1
+#define ES_Model_createAssociations_preload                            2
+#define ES_Model_createAssociations_options                            3
+#define ES_Model_createRecord_data                                     0
+#define ES_Model_createRecord_options                                  1
+#define ES_Model_find_key                                              0
+#define ES_Model_find_options                                          1
+#define ES_Model_findAll_options                                       0
+#define ES_Model_findOneWhere_where                                    0
+#define ES_Model_findWhere_where                                       0
+#define ES_Model_findWhere_count                                       1
+#define ES_Model_getColumnType_field                                   0
+#define ES_Model_hasAndBelongsToMany_model                             0
+#define ES_Model_hasAndBelongsToMany_options                           1
+#define ES_Model_hasMany_model                                         0
+#define ES_Model_hasMany_options                                       1
+#define ES_Model_hasOne_model                                          0
+#define ES_Model_hasOne_options                                        1
+#define ES_Model_innerFind_key                                         0
+#define ES_Model_innerFind_limit                                       1
+#define ES_Model_innerFind_options                                     2
+#define ES_Model_makeLazyReader_rec                                    0
+#define ES_Model_makeLazyReader_field                                  1
+#define ES_Model_makeLazyReader_model                                  2
+#define ES_Model_makeLazyReader_key                                    3
+#define ES_Model_makeLazyReader_options                                4
+#define ES_Model_mapSqlTypeToEjs_sqlType                               0
+#define ES_Model_prepareValue_field                                    0
+#define ES_Model_prepareValue_value                                    1
+#define ES_Model_readRecords_key                                       0
+#define ES_Model_readRecords_options                                   1
+#define ES_Model_remove_ids                                            0
+#define ES_Model_setDb_database                                        0
+#define ES_Model_setKeyName_name                                       0
+#define ES_Model_setTableName_name                                     0
+#define ES_Model_sql_cmd                                               0
+#define ES_Model_sql_count                                             1
+#define ES_Model_trace_on                                              0
+#define ES_Model_validateFormat_fields                                 0
+#define ES_Model_validateFormat_options                                1
+#define ES_Model_validateNumber_fields                                 0
+#define ES_Model_validateNumber_options                                1
+#define ES_Model_validatePresence_fields                               0
+#define ES_Model_validatePresence_options                              1
+#define ES_Model_validateUnique_fields                                 0
+#define ES_Model_validateUnique_option                                 1
+#define ES_Model_wrapFilter_fn                                         0
+#define ES_Model_wrapFilter_options                                    1
+#define ES_ejs_db_xmapper_Column_NUM_CLASS_PROP                        0
+
+/*
+   Prototype (instance) slots for "Column" type 
+ */
+#define ES_ejs_db_xmapper_Column_ejsType                               0
+#define ES_ejs_db_xmapper_Column_sqlType                               1
+#define ES_ejs_db_xmapper_Column_NUM_INSTANCE_PROP                     2
+#define ES_ejs_db_xmapper_Column_NUM_INHERITED_PROP                    0
+
+#define _ES_CHECKSUM_ejs_db_xmapper   156806
 
 #endif
 /*
@@ -2460,12 +2867,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -2487,18 +2891,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 #define ES_ejs_cjs_require_id                                          0
@@ -2528,6 +2936,9 @@
 #define ES_rmdir_path                                                  0
 #define ES_rmdir_contents                                              1
 #define ES_tempname_directory                                          0
+#define ES_ejs_db_xmapper_plural_name                                  0
+#define ES_ejs_db_xmapper_singular_name                                0
+#define ES_ejs_db_xmapper_mapType_value                                0
 #define ES_ejs_db_mapper_plural_name                                   0
 #define ES_ejs_db_mapper_singular_name                                 0
 #define ES_ejs_db_mapper_mapType_value                                 0
@@ -2609,17 +3020,18 @@
 #define ES_Record__keyValue                                            0
 #define ES_Record__errors                                              1
 #define ES_Record__cacheAssoc                                          2
-#define ES_Record_initialize                                           3
-#define ES_Record_coerceToEjsTypes                                     4
-#define ES_Record_error                                                5
-#define ES_Record_getErrors                                            6
-#define ES_Record_hasError                                             7
-#define ES_Record_runFilters                                           8
-#define ES_Record_save                                                 9
-#define ES_Record_saveUpdate                                           10
-#define ES_Record_validateRecord                                       11
-#define ES_Record_constructorOLD                                       12
-#define ES_Record_NUM_INSTANCE_PROP                                    13
+#define ES_Record__imodel                                              3
+#define ES_Record_initialize                                           4
+#define ES_Record_coerceToEjsTypes                                     5
+#define ES_Record_error                                                6
+#define ES_Record_getErrors                                            7
+#define ES_Record_hasError                                             8
+#define ES_Record_runFilters                                           9
+#define ES_Record_save                                                 10
+#define ES_Record_saveUpdate                                           11
+#define ES_Record_validateRecord                                       12
+#define ES_Record_constructor                                          13
+#define ES_Record_NUM_INSTANCE_PROP                                    14
 #define ES_Record_NUM_INHERITED_PROP                                   0
 
 /*
@@ -2711,7 +3123,7 @@
 #define ES_ejs_db_mapper_Column_NUM_INSTANCE_PROP                      2
 #define ES_ejs_db_mapper_Column_NUM_INHERITED_PROP                     0
 
-#define _ES_CHECKSUM_ejs_db_mapper   186172
+#define _ES_CHECKSUM_ejs_db_mapper   185415
 
 #endif
 /*
@@ -2743,12 +3155,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -2770,18 +3179,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 #define ES_ejs_cjs_require_id                                          0
@@ -2811,6 +3224,9 @@
 #define ES_rmdir_path                                                  0
 #define ES_rmdir_contents                                              1
 #define ES_tempname_directory                                          0
+#define ES_ejs_db_xmapper_plural_name                                  0
+#define ES_ejs_db_xmapper_singular_name                                0
+#define ES_ejs_db_xmapper_mapType_value                                0
 #define ES_ejs_db_mapper_plural_name                                   0
 #define ES_ejs_db_mapper_singular_name                                 0
 #define ES_ejs_db_mapper_mapType_value                                 0
@@ -2856,7 +3272,7 @@
 #define ES_ejs_db_Sqlite_NUM_INSTANCE_PROP                             25
 #define ES_ejs_db_Sqlite_NUM_INHERITED_PROP                            0
 
-#define _ES_CHECKSUM_ejs_db_sqlite   72848
+#define _ES_CHECKSUM_ejs_db_sqlite   72310
 
 #endif
 /*
@@ -2888,12 +3304,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -2915,18 +3328,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 #define ES_ejs_cjs_require_id                                          0
@@ -2956,11 +3373,14 @@
 #define ES_rmdir_path                                                  0
 #define ES_rmdir_contents                                              1
 #define ES_tempname_directory                                          0
+#define ES_ejs_db_xmapper_plural_name                                  0
+#define ES_ejs_db_xmapper_singular_name                                0
+#define ES_ejs_db_xmapper_mapType_value                                0
 #define ES_ejs_db_mapper_plural_name                                   0
 #define ES_ejs_db_mapper_singular_name                                 0
 #define ES_ejs_db_mapper_mapType_value                                 0
 #define ES_ejs_web_parseCookies_cookieHeader                           0
-#define ES_ejs_web_escapeHtml_s                                        0
+#define ES_ejs_web_escapeHtml_str                                      0
 #define ES_ejs_web_html_args                                           0
 #define ES_ejs_web_unescapeHtml_s                                      0
 
@@ -2976,41 +3396,49 @@
    Prototype (instance) slots for "Controller" type 
  */
 #define ES_ejs_web_Controller_ejs_web_actionName                       0
-#define ES_ejs_web_Controller_ejs_web_controllerName                   1
-#define ES_ejs_web_Controller_ejs_web_deploymentMode                   2
-#define ES_ejs_web_Controller_ejs_web_log                              3
-#define ES_ejs_web_Controller_ejs_web_params                           4
-#define ES_ejs_web_Controller_ejs_web_request                          5
-#define ES_ejs_web_Controller_ejs_web_view                             6
-#define ES_ejs_web_Controller_flash                                    7
-#define ES_ejs_web_Controller_rendered                                 8
-#define ES_ejs_web_Controller_redirected                               9
-#define ES_ejs_web_Controller__afterFilters                            10
-#define ES_ejs_web_Controller__beforeFilters                           11
-#define ES_ejs_web_Controller__wrapFilters                             12
-#define ES_ejs_web_Controller_lastFlash                                13
-#define ES_ejs_web_Controller_openDatabase                             14
-#define ES_ejs_web_Controller_ejs_web_run                              15
-#define ES_ejs_web_Controller_flashBefore                              16
-#define ES_ejs_web_Controller_flashAfter                               17
-#define ES_ejs_web_Controller_ejs_web_resetFilters                     18
-#define ES_ejs_web_Controller_ejs_web_beforeFilter                     19
-#define ES_ejs_web_Controller_ejs_web_afterFilter                      20
-#define ES_ejs_web_Controller_ejs_web_wrapFilter                       21
-#define ES_ejs_web_Controller_runFilters                               22
-#define ES_ejs_web_Controller_ejs_web_loadView                         23
-#define ES_ejs_web_Controller_ejs_web_renderError                      24
-#define ES_ejs_web_Controller_ejs_web_redirect                         25
-#define ES_ejs_web_Controller_ejs_web_render                           26
-#define ES_ejs_web_Controller_ejs_web_renderFile                       27
-#define ES_ejs_web_Controller_ejs_web_renderPartial                    28
-#define ES_ejs_web_Controller_ejs_web_renderView                       29
-#define ES_ejs_web_Controller_ejs_web_error                            30
-#define ES_ejs_web_Controller_ejs_web_inform                           31
-#define ES_ejs_web_Controller_ejs_web_warn                             32
-#define ES_ejs_web_Controller_ejs_web_makeUri                          33
-#define ES_ejs_web_Controller_action_missing                           34
-#define ES_ejs_web_Controller_NUM_INSTANCE_PROP                        35
+#define ES_ejs_web_Controller_ejs_web_config                           1
+#define ES_ejs_web_Controller_ejs_web_controllerName                   2
+#define ES_ejs_web_Controller_ejs_web_deploymentMode                   3
+#define ES_ejs_web_Controller_ejs_web_log                              4
+#define ES_ejs_web_Controller_ejs_web_params                           5
+#define ES_ejs_web_Controller_ejs_web_request                          6
+#define ES_ejs_web_Controller_ejs_web_view                             7
+#define ES_ejs_web_Controller_flash                                    8
+#define ES_ejs_web_Controller_noFinalize                               9
+#define ES_ejs_web_Controller_rendered                                 10
+#define ES_ejs_web_Controller_redirected                               11
+#define ES_ejs_web_Controller__afterFilters                            12
+#define ES_ejs_web_Controller__beforeFilters                           13
+#define ES_ejs_web_Controller__wrapFilters                             14
+#define ES_ejs_web_Controller_lastFlash                                15
+#define ES_ejs_web_Controller_openDatabase                             16
+#define ES_ejs_web_Controller_ejs_web_run                              17
+#define ES_ejs_web_Controller_ejs_web_dontFinalize                     18
+#define ES_ejs_web_Controller_flashBefore                              19
+#define ES_ejs_web_Controller_flashAfter                               20
+#define ES_ejs_web_Controller_ejs_web_resetFilters                     21
+#define ES_ejs_web_Controller_ejs_web_beforeFilter                     22
+#define ES_ejs_web_Controller_ejs_web_afterFilter                      23
+#define ES_ejs_web_Controller_ejs_web_wrapFilter                       24
+#define ES_ejs_web_Controller_runFilters                               25
+#define ES_ejs_web_Controller_loadView                                 26
+#define ES_ejs_web_Controller_ejs_web_renderError                      27
+#define ES_ejs_web_Controller_ejs_web_redirect                         28
+#define ES_ejs_web_Controller_ejs_web_redirectAction                   29
+#define ES_ejs_web_Controller_ejs_web_render                           30
+#define ES_ejs_web_Controller_ejs_web_renderFile                       31
+#define ES_ejs_web_Controller_ejs_web_renderPartial                    32
+#define ES_ejs_web_Controller_viewExists                               33
+#define ES_ejs_web_Controller_ejs_web_renderView                       34
+#define ES_ejs_web_Controller_ejs_web_error                            35
+#define ES_ejs_web_Controller_ejs_web_inform                           36
+#define ES_ejs_web_Controller_ejs_web_warn                             37
+#define ES_ejs_web_Controller_ejs_web_makeUri                          38
+#define ES_ejs_web_Controller_ejs_web_session                          39
+#define ES_ejs_web_Controller_action_missing                           40
+#define ES_ejs_web_Controller_ejs_web_appUrl                           41
+#define ES_ejs_web_Controller_ejs_web_makeUrl                          42
+#define ES_ejs_web_Controller_NUM_INSTANCE_PROP                        43
 #define ES_ejs_web_Controller_NUM_INHERITED_PROP                       0
 
 /*
@@ -3022,60 +3450,64 @@
 /*
    Prototype (instance) slots for "HtmlConnector" type 
  */
-#define ES_HtmlConnector_nextId                                        0
-#define ES_HtmlConnector_request                                       1
-#define ES_HtmlConnector_view                                          2
-#define ES_HtmlConnector_ejs_web_aform                                 3
-#define ES_HtmlConnector_ejs_web_alink                                 4
-#define ES_HtmlConnector_ejs_web_button                                5
-#define ES_HtmlConnector_ejs_web_buttonLink                            6
-#define ES_HtmlConnector_ejs_web_chart                                 7
-#define ES_HtmlConnector_ejs_web_checkbox                              8
-#define ES_HtmlConnector_ejs_web_endform                               9
-#define ES_HtmlConnector_ejs_web_flash                                 10
-#define ES_HtmlConnector_ejs_web_form                                  11
-#define ES_HtmlConnector_ejs_web_image                                 12
-#define ES_HtmlConnector_ejs_web_imageLink                             13
-#define ES_HtmlConnector_ejs_web_label                                 14
-#define ES_HtmlConnector_ejs_web_link                                  15
-#define ES_HtmlConnector_ejs_web_extlink                               16
-#define ES_HtmlConnector_ejs_web_list                                  17
-#define ES_HtmlConnector_ejs_web_mail                                  18
-#define ES_HtmlConnector_ejs_web_progress                              19
-#define ES_HtmlConnector_ejs_web_radio                                 20
-#define ES_HtmlConnector_ejs_web_script                                21
-#define ES_HtmlConnector_ejs_web_status                                22
-#define ES_HtmlConnector_ejs_web_stylesheet                            23
+#define ES_HtmlConnector_request                                       0
+#define ES_HtmlConnector_view                                          1
+#define ES_HtmlConnector_ejs_web_aform                                 2
+#define ES_HtmlConnector_ejs_web_alink                                 3
+#define ES_HtmlConnector_ejs_web_button                                4
+#define ES_HtmlConnector_ejs_web_buttonLink                            5
+#define ES_HtmlConnector_ejs_web_chart                                 6
+#define ES_HtmlConnector_ejs_web_checkbox                              7
+#define ES_HtmlConnector_ejs_web_endform                               8
+#define ES_HtmlConnector_ejs_web_flash                                 9
+#define ES_HtmlConnector_ejs_web_form                                  10
+#define ES_HtmlConnector_ejs_web_image                                 11
+#define ES_HtmlConnector_ejs_web_imageLink                             12
+#define ES_HtmlConnector_ejs_web_label                                 13
+#define ES_HtmlConnector_ejs_web_link                                  14
+#define ES_HtmlConnector_ejs_web_extlink                               15
+#define ES_HtmlConnector_ejs_web_list                                  16
+#define ES_HtmlConnector_ejs_web_mail                                  17
+#define ES_HtmlConnector_ejs_web_progress                              18
+#define ES_HtmlConnector_ejs_web_radio                                 19
+#define ES_HtmlConnector_ejs_web_script                                20
+#define ES_HtmlConnector_ejs_web_status                                21
+#define ES_HtmlConnector_ejs_web_stylesheet                            22
+#define ES_HtmlConnector_ejs_web_table                                 23
 #define ES_HtmlConnector_ejs_web_tabs                                  24
-#define ES_HtmlConnector_ejs_web_table                                 25
-#define ES_HtmlConnector_ejs_web_text                                  26
-#define ES_HtmlConnector_ejs_web_textarea                              27
-#define ES_HtmlConnector_ejs_web_tree                                  28
-#define ES_HtmlConnector_getColumns                                    29
-#define ES_HtmlConnector_getTextKind                                   30
-#define ES_HtmlConnector_getOptions                                    31
-#define ES_HtmlConnector_write                                         32
-#define ES_HtmlConnector_getDataAttributes                             33
-#define ES_HtmlConnector_NUM_INSTANCE_PROP                             34
+#define ES_HtmlConnector_ejs_web_text                                  25
+#define ES_HtmlConnector_ejs_web_textarea                              26
+#define ES_HtmlConnector_ejs_web_tree                                  27
+#define ES_HtmlConnector_getColumns                                    28
+#define ES_HtmlConnector_getTextKind                                   29
+#define ES_HtmlConnector_getOptions                                    30
+#define ES_HtmlConnector_write                                         31
+#define ES_HtmlConnector_getDataAttributes                             32
+#define ES_HtmlConnector_NUM_INSTANCE_PROP                             33
 #define ES_HtmlConnector_NUM_INHERITED_PROP                            0
-#define ES_ejs_web_HttpServer_NUM_CLASS_PROP                           0
+
+
+/*
+    Class property slots for the "HttpServer" type 
+ */
+#define ES_ejs_web_HttpServer_sessionCount                             0
+#define ES_ejs_web_HttpServer_NUM_CLASS_PROP                           1
 
 /*
    Prototype (instance) slots for "HttpServer" type 
  */
-#define ES_ejs_web_HttpServer_addListener                              0
+#define ES_ejs_web_HttpServer_observe                                  0
 #define ES_ejs_web_HttpServer_address                                  1
 #define ES_ejs_web_HttpServer_async                                    2
 #define ES_ejs_web_HttpServer_close                                    3
 #define ES_ejs_web_HttpServer_documentRoot                             4
 #define ES_ejs_web_HttpServer_listen                                   5
-#define ES_ejs_web_HttpServer_attach                                   6
-#define ES_ejs_web_HttpServer_secureListen                             7
-#define ES_ejs_web_HttpServer_port                                     8
-#define ES_ejs_web_HttpServer_removeListener                           9
-#define ES_ejs_web_HttpServer_serverRoot                               10
-#define ES_ejs_web_HttpServer_software                                 11
-#define ES_ejs_web_HttpServer_NUM_INSTANCE_PROP                        12
+#define ES_ejs_web_HttpServer_secureListen                             6
+#define ES_ejs_web_HttpServer_port                                     7
+#define ES_ejs_web_HttpServer_removeObserver                           8
+#define ES_ejs_web_HttpServer_serverRoot                               9
+#define ES_ejs_web_HttpServer_software                                 10
+#define ES_ejs_web_HttpServer_NUM_INSTANCE_PROP                        11
 #define ES_ejs_web_HttpServer_NUM_INHERITED_PROP                       0
 
 
@@ -3087,10 +3519,12 @@
 #define ES_Mvc_mvc                                                     2
 #define ES_Mvc_dirs                                                    3
 #define ES_Mvc_ext                                                     4
-#define ES_Mvc_load                                                    5
-#define ES_Mvc_init                                                    6
-#define ES_Mvc_loadComponent                                           7
-#define ES_Mvc_NUM_CLASS_PROP                                          8
+#define ES_Mvc_loaded                                                  5
+#define ES_Mvc_EJSRC                                                   6
+#define ES_Mvc_load                                                    7
+#define ES_Mvc_init                                                    8
+#define ES_Mvc_loadComponent                                           9
+#define ES_Mvc_NUM_CLASS_PROP                                          10
 
 /*
    Prototype (instance) slots for "Mvc" type 
@@ -3105,7 +3539,8 @@
 #define ES_Mvc_init_request                                            0
 #define ES_Mvc_loadComponent_request                                   0
 #define ES_Mvc_loadComponent_mod                                       1
-#define ES_Mvc_loadComponent_deps                                      2
+#define ES_Mvc_loadComponent_files                                     2
+#define ES_Mvc_loadComponent_deps                                      3
 
 
 /*
@@ -3151,7 +3586,7 @@
 #define ES_ejs_web_Request_timeout                                     30
 #define ES_ejs_web_Request_uri                                         31
 #define ES_ejs_web_Request_userAgent                                   32
-#define ES_ejs_web_Request_addListener                                 33
+#define ES_ejs_web_Request_observe                                     33
 #define ES_ejs_web_Request_async                                       34
 #define ES_ejs_web_Request_cachable                                    35
 #define ES_ejs_web_Request_close                                       36
@@ -3164,7 +3599,7 @@
 #define ES_ejs_web_Request_header                                      43
 #define ES_ejs_web_Request_read                                        44
 #define ES_ejs_web_Request_redirect                                    45
-#define ES_ejs_web_Request_removeListener                              46
+#define ES_ejs_web_Request_removeObserver                              46
 #define ES_ejs_web_Request_makeUri                                     47
 #define ES_ejs_web_Request_setLocation                                 48
 #define ES_ejs_web_Request_sendResponse                                49
@@ -3234,34 +3669,23 @@
 #define ES_ejs_web_Route_splitter                                      11
 #define ES_ejs_web_Route_tokens                                        12
 #define ES_ejs_web_Route_router                                        13
-#define ES_ejs_web_Route_show                                          14
-#define ES_ejs_web_Route_makeUri                                       15
-#define ES_ejs_web_Route_NUM_INSTANCE_PROP                             16
+#define ES_ejs_web_Route_makeUri                                       14
+#define ES_ejs_web_Route_NUM_INSTANCE_PROP                             15
 #define ES_ejs_web_Route_NUM_INHERITED_PROP                            0
 
 
 /*
     Class property slots for the "Session" type 
  */
-#define ES_ejs_web_Session_addListener                                 0
-#define ES_ejs_web_Session_count                                       1
-#define ES_ejs_web_Session_removeListener                              2
-#define ES_ejs_web_Session_NUM_CLASS_PROP                              3
+#define ES_ejs_web_Session_count                                       0
+#define ES_ejs_web_Session_NUM_CLASS_PROP                              1
 
 /*
    Prototype (instance) slots for "Session" type 
  */
-#define ES_ejs_web_Session_setSessionTimeout                           0
+#define ES_ejs_web_Session_timeout                                     0
 #define ES_ejs_web_Session_NUM_INSTANCE_PROP                           1
 #define ES_ejs_web_Session_NUM_INHERITED_PROP                          0
-
-/*
-    Local slots for methods in type "Session" 
- */
-#define ES_ejs_web_Session_addListener_name                            0
-#define ES_ejs_web_Session_addListener_listener                        1
-#define ES_ejs_web_Session_removeListener_name                         0
-#define ES_ejs_web_Session_removeListener_listener                     1
 #define ES_ejs_web_UploadFile_NUM_CLASS_PROP                           0
 
 /*
@@ -3286,56 +3710,60 @@
 /*
    Prototype (instance) slots for "View" type 
  */
-#define ES_ejs_web_View_ejs_web_request                                0
-#define ES_ejs_web_View_currentRecord                                  1
-#define ES_ejs_web_View_config                                         2
-#define ES_ejs_web_View_ejs_web_log                                    3
-#define ES_ejs_web_View_nextId                                         4
-#define ES_ejs_web_View_ejs_web_getNextId                              5
-#define ES_ejs_web_View_makeUri                                        6
-#define ES_ejs_web_View_render                                         7
-#define ES_ejs_web_View_setHeader                                      8
-#define ES_ejs_web_View_setHeaders                                     9
-#define ES_ejs_web_View_setStatus                                      10
-#define ES_ejs_web_View_write                                          11
-#define ES_ejs_web_View_ejs_web_aform                                  12
-#define ES_ejs_web_View_ejs_web_alink                                  13
-#define ES_ejs_web_View_ejs_web_button                                 14
-#define ES_ejs_web_View_ejs_web_buttonLink                             15
-#define ES_ejs_web_View_ejs_web_chart                                  16
-#define ES_ejs_web_View_ejs_web_checkbox                               17
-#define ES_ejs_web_View_ejs_web_endform                                18
-#define ES_ejs_web_View_ejs_web_form                                   19
-#define ES_ejs_web_View_ejs_web_image                                  20
-#define ES_ejs_web_View_ejs_web_imageLink                              21
-#define ES_ejs_web_View_ejs_web_input                                  22
-#define ES_ejs_web_View_ejs_web_label                                  23
-#define ES_ejs_web_View_ejs_web_link                                   24
-#define ES_ejs_web_View_ejs_web_extlink                                25
-#define ES_ejs_web_View_ejs_web_list                                   26
-#define ES_ejs_web_View_ejs_web_mail                                   27
-#define ES_ejs_web_View_ejs_web_progress                               28
-#define ES_ejs_web_View_ejs_web_radio                                  29
-#define ES_ejs_web_View_ejs_web_script                                 30
-#define ES_ejs_web_View_ejs_web_status                                 31
-#define ES_ejs_web_View_ejs_web_stylesheet                             32
-#define ES_ejs_web_View_ejs_web_table                                  33
-#define ES_ejs_web_View_ejs_web_tabs                                   34
-#define ES_ejs_web_View_ejs_web_text                                   35
-#define ES_ejs_web_View_ejs_web_textarea                               36
-#define ES_ejs_web_View_ejs_web_tree                                   37
-#define ES_ejs_web_View_ejs_web_flash                                  38
-#define ES_ejs_web_View_emitFormErrors                                 39
-#define ES_ejs_web_View_getConnector                                   40
-#define ES_ejs_web_View_setOptions                                     41
-#define ES_ejs_web_View_ejs_web_getValue                               42
-#define ES_ejs_web_View_ejs_web_date                                   43
-#define ES_ejs_web_View_ejs_web_currency                               44
-#define ES_ejs_web_View_ejs_web_number                                 45
-#define ES_ejs_web_View_ejs_web_getOptions                             46
-#define ES_ejs_web_View_pivot                                          47
-#define ES_ejs_web_View_filter                                         48
-#define ES_ejs_web_View_NUM_INSTANCE_PROP                              49
+#define ES_ejs_web_View_ejs_web_controller                             0
+#define ES_ejs_web_View_ejs_web_request                                1
+#define ES_ejs_web_View_currentRecord                                  2
+#define ES_ejs_web_View_config                                         3
+#define ES_ejs_web_View_ejs_web_log                                    4
+#define ES_ejs_web_View_nextId                                         5
+#define ES_ejs_web_View_ejs_web_getNextId                              6
+#define ES_ejs_web_View_makeUri                                        7
+#define ES_ejs_web_View_render                                         8
+#define ES_ejs_web_View_setHeader                                      9
+#define ES_ejs_web_View_setHeaders                                     10
+#define ES_ejs_web_View_setStatus                                      11
+#define ES_ejs_web_View_write                                          12
+#define ES_ejs_web_View_ejs_web_aform                                  13
+#define ES_ejs_web_View_ejs_web_alink                                  14
+#define ES_ejs_web_View_ejs_web_button                                 15
+#define ES_ejs_web_View_ejs_web_buttonLink                             16
+#define ES_ejs_web_View_ejs_web_chart                                  17
+#define ES_ejs_web_View_ejs_web_checkbox                               18
+#define ES_ejs_web_View_ejs_web_endform                                19
+#define ES_ejs_web_View_ejs_web_form                                   20
+#define ES_ejs_web_View_ejs_web_image                                  21
+#define ES_ejs_web_View_ejs_web_imageLink                              22
+#define ES_ejs_web_View_ejs_web_input                                  23
+#define ES_ejs_web_View_ejs_web_label                                  24
+#define ES_ejs_web_View_ejs_web_link                                   25
+#define ES_ejs_web_View_ejs_web_extlink                                26
+#define ES_ejs_web_View_ejs_web_list                                   27
+#define ES_ejs_web_View_ejs_web_mail                                   28
+#define ES_ejs_web_View_ejs_web_progress                               29
+#define ES_ejs_web_View_ejs_web_radio                                  30
+#define ES_ejs_web_View_ejs_web_script                                 31
+#define ES_ejs_web_View_ejs_web_status                                 32
+#define ES_ejs_web_View_ejs_web_stylesheet                             33
+#define ES_ejs_web_View_ejs_web_table                                  34
+#define ES_ejs_web_View_ejs_web_tabs                                   35
+#define ES_ejs_web_View_ejs_web_text                                   36
+#define ES_ejs_web_View_ejs_web_textarea                               37
+#define ES_ejs_web_View_ejs_web_tree                                   38
+#define ES_ejs_web_View_ejs_web_flash                                  39
+#define ES_ejs_web_View_emitFormErrors                                 40
+#define ES_ejs_web_View_getConnector                                   41
+#define ES_ejs_web_View_setOptions                                     42
+#define ES_ejs_web_View_ejs_web_getValue                               43
+#define ES_ejs_web_View_ejs_web_date                                   44
+#define ES_ejs_web_View_ejs_web_currency                               45
+#define ES_ejs_web_View_ejs_web_number                                 46
+#define ES_ejs_web_View_ejs_web_getOptions                             47
+#define ES_ejs_web_View_pivot                                          48
+#define ES_ejs_web_View_filter                                         49
+#define ES_ejs_web_View_ejs_web_makeUrl                                50
+#define ES_ejs_web_View_ejs_web_appUrl                                 51
+#define ES_ejs_web_View_ejs_web_redirect                               52
+#define ES_ejs_web_View_NUM_INSTANCE_PROP                              53
 #define ES_ejs_web_View_NUM_INHERITED_PROP                             0
 
 
@@ -3370,7 +3798,7 @@
 #define ES_ejs_web_Web_start_request                                   0
 #define ES_ejs_web_Web_start_app                                       1
 
-#define _ES_CHECKSUM_ejs_web   523260
+#define _ES_CHECKSUM_ejs_web   531697
 
 #endif
 /*
@@ -3402,12 +3830,9 @@
 #define ES_clearBoundThis_fn                                           0
 #define ES_assert_condition                                            0
 #define ES_cloneBase_klass                                             0
-#define ES_decodeURI_str                                               0
 #define ES_dump_args                                                   0
 #define ES_dumpAll_args                                                0
 #define ES_dumpDef_args                                                0
-#define ES_encodeURI_str                                               0
-#define ES_escape_str                                                  0
 #define ES_md5_str                                                     0
 #define ES_blend_dest                                                  0
 #define ES_blend_src                                                   1
@@ -3429,18 +3854,22 @@
 #define ES_printHash_o                                                 1
 #define ES_instanceOf_obj                                              0
 #define ES_instanceOf_target                                           1
-#define ES_error_args                                                  0
-#define ES_output_args                                                 0
 #define ES_deserialize_str                                             0
 #define ES_serialize_obj                                               0
 #define ES_serialize_options                                           1
 #define ES_typeOf_o                                                    0
 #define ES_setInterval_callback                                        0
 #define ES_setInterval_delay                                           1
+#define ES_setInterval_args                                            2
+#define ES_clearInterval_timer                                         0
 #define ES_setTimeout_callback                                         0
 #define ES_setTimeout_delay                                            1
-#define ES_decodeUri_str                                               0
-#define ES_decodeUriComponent_str                                      0
+#define ES_setTimeout_args                                             2
+#define ES_clearTimeout_timer                                          0
+#define ES_decodeURI_str                                               0
+#define ES_decodeURIComponent_str                                      0
+#define ES_encodeURI_str                                               0
+#define ES_encodeURIComponent_str                                      0
 #define ES_ejs_worker_postMessage_data                                 0
 #define ES_ejs_worker_postMessage_ports                                1
 #define ES_ejs_cjs_require_id                                          0
@@ -3470,11 +3899,14 @@
 #define ES_rmdir_path                                                  0
 #define ES_rmdir_contents                                              1
 #define ES_tempname_directory                                          0
+#define ES_ejs_db_xmapper_plural_name                                  0
+#define ES_ejs_db_xmapper_singular_name                                0
+#define ES_ejs_db_xmapper_mapType_value                                0
 #define ES_ejs_db_mapper_plural_name                                   0
 #define ES_ejs_db_mapper_singular_name                                 0
 #define ES_ejs_db_mapper_mapType_value                                 0
 #define ES_ejs_web_parseCookies_cookieHeader                           0
-#define ES_ejs_web_escapeHtml_s                                        0
+#define ES_ejs_web_escapeHtml_str                                      0
 #define ES_ejs_web_html_args                                           0
 #define ES_ejs_web_unescapeHtml_s                                      0
 
@@ -3537,6 +3969,6 @@
 #define ES_ejs_web_template_Token_NUM_INSTANCE_PROP                    0
 #define ES_ejs_web_template_Token_NUM_INHERITED_PROP                   0
 
-#define _ES_CHECKSUM_ejs_web_template   39398
+#define _ES_CHECKSUM_ejs_web_template   39041
 
 #endif

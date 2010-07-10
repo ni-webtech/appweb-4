@@ -37,7 +37,10 @@ defineComponent() {
 
     for i in $imports
     do
-        [ ! -f "$i" ] && return
+        if [ ! -f "$i" ] ; then 
+            warnComponent $name "Can't locate $i"
+            return
+        fi
     done
 
     iflags="-I$path -I$path/main -I$path/Zend -I$path/TSRM"

@@ -200,6 +200,8 @@ typedef struct FunRec {
     EjsFunction     *fun;
     EjsObj          *obj;
     int             slotNum;
+    EjsObj          *owner;
+    EjsName         ownerName;
     EjsTrait        *trait;
 } FunRec;
 
@@ -227,7 +229,7 @@ typedef struct List {
 static void     addUniqueItem(MprList *list, cchar *item);
 static void     addUniqueClass(MprList *list, ClassRec *item);
 static MprList  *buildClassList(EjsMod *mp, cchar *namespace);
-static void     buildMethodList(EjsMod *mp, MprList *methods, EjsObj *obj);
+static void     buildMethodList(EjsMod *mp, MprList *methods, EjsObj *obj, EjsObj *owner, EjsName *ownerName);
 static int      compareClasses(ClassRec **c1, ClassRec **c2);
 static int      compareFunctions(FunRec **f1, FunRec **f2);
 static int      compareProperties(PropRec **p1, PropRec **p2);
@@ -263,7 +265,7 @@ static void     generateHtmlFooter(EjsMod *mp);
 static void     generateHtmlHeader(EjsMod *mp, cchar *script, cchar *title, ... );
 static void     generateImages(EjsMod *mp);
 static void     generateOverview(EjsMod *mp);
-static void     generateMethod(EjsMod *mp, EjsObj *obj, int slotNum);
+static void     generateMethod(EjsMod *mp, FunRec *fp);
 static void     generateMethodDetail(EjsMod *mp, MprList *methods);
 static void     generateNamespace(EjsMod *mp, cchar *namespace);
 static void     generateNamespaceClassTable(EjsMod *mp, cchar *namespace);
@@ -944,9 +946,9 @@ static void generateClassPage(EjsMod *mp, EjsObj *obj, EjsName *name, EjsTrait *
     generatePropertyTable(mp, obj);
 
     methods = mprCreateList(mp);
-    buildMethodList(mp, methods, obj);
+    buildMethodList(mp, methods, obj, obj, name);
     if (ejsIsType(obj)) {
-        buildMethodList(mp, methods, ((EjsType*) obj)->prototype);
+        buildMethodList(mp, methods, ((EjsType*) obj)->prototype, obj, name);
     }
     count = generateMethodTable(mp, methods, obj);
     if (count > 0) {
@@ -1424,7 +1426,7 @@ static int generateClassGetterTableEntries(EjsMod *mp, EjsObj *obj, int numInher
 }
 
 
-static void buildMethodList(EjsMod *mp, MprList *methods, EjsObj *obj)
+static void buildMethodList(EjsMod *mp, MprList *methods, EjsObj *obj, EjsObj *owner, EjsName *ownerName)
 {
     Ejs             *ejs;
     EjsTrait        *trait;
@@ -1483,6 +1485,8 @@ static void buildMethodList(EjsMod *mp, MprList *methods, EjsObj *obj)
         fp->fun = fun;
         fp->obj = obj;
         fp->slotNum = slotNum;
+        fp->owner = owner;
+        fp->ownerName = *ownerName;
         fp->qname = qname;
         fp->trait = trait;
         mprAddItem(methods, fp);
@@ -1587,12 +1591,12 @@ static void generateMethodDetail(EjsMod *mp, MprList *methods)
     out(mp, "<h2>Method Detail</h2>\n");
 
     for (next = 0; (fp = (FunRec*) mprGetNextItem(methods, &next)) != 0; ) {
-        generateMethod(mp, fp->obj, fp->slotNum);
+        generateMethod(mp, fp);
     }
 }
 
 
-static void checkArgs(EjsMod *mp, Ejs *ejs, EjsType *type, EjsFunction *fun, EjsName *qname, EjsDoc *doc)
+static void checkArgs(EjsMod *mp, Ejs *ejs, EjsName *ownerName, EjsFunction *fun, EjsName *qname, EjsDoc *doc)
 {
     EjsName         argName;
     MprKeyValue     *param;
@@ -1613,7 +1617,7 @@ static void checkArgs(EjsMod *mp, Ejs *ejs, EjsType *type, EjsFunction *fun, Ejs
         if (param == 0) { 
             if (mp->warnOnError) {
                 mprError(ejs, "Missing documentation for parameter \"%s\" in function \"%s\" in type \"%s\"", 
-                     argName.name, qname->name, (type) ? type->qname.name : "global");
+                     argName.name, qname->name, ownerName->name);
             }
         }
     }
@@ -1655,29 +1659,33 @@ static cchar *getDefault(EjsDoc *doc, cchar *key)
 }
 
 
-static void generateMethod(EjsMod *mp, EjsObj *obj, int slotNum)
+static void generateMethod(EjsMod *mp, FunRec *fp)
 {
     Ejs             *ejs;
     EjsType         *type;
     EjsTrait        *trait, *argTrait;
     EjsName         qname, argName, throwName;
     EjsFunction     *fun;
+    EjsObj          *obj;
     EjsDoc          *doc;
     EjsLookup       lookup;
     MprKeyValue     *param, *thrown, *option, *event;
     cchar           *defaultValue, *accessorSep, *spaceSep;
     char            *see;
-    int             i, count, next, numInherited;
+    int             i, count, next, numInherited, slotNum;
 
     ejs = mp->ejs;
+    obj = fp->obj;
+    slotNum = fp->slotNum;
 
     type = ejsIsType(obj) ? (EjsType*) obj : 0;
     fun = (EjsFunction*) ejsGetProperty(ejs, obj, slotNum);
-#if KEEP
-    numInherited = type ? type->numInherited : 0;
-#else
+
     numInherited = 0;
-#endif
+    if (ejsIsPrototype(obj)) {
+        mprAssert(ejsIsType(fp->owner));
+        numInherited = ((EjsType*) fp->owner)->numInherited;
+    }
     mprAssert(ejsIsFunction(fun));
 
     qname = ejsGetPropertyName(ejs, obj, slotNum);
@@ -1691,7 +1699,7 @@ static void generateMethod(EjsMod *mp, EjsObj *obj, int slotNum)
         /* One extra to not warn about default constructors */
         if (slotNum >= numInherited + 1) {
             if (mp->warnOnError) {
-                mprError(mp, "Missing documentation for \"%s.%s\"", (type) ? type->qname.name : "global", qname.name);
+                mprError(mp, "Missing documentation for \"%s.%s\"", fp->ownerName.name, qname.name);
             }
         }
         return;
@@ -1748,14 +1756,14 @@ static void generateMethod(EjsMod *mp, EjsObj *obj, int slotNum)
             out(mp, "<dl><dt>Parameters</dt>\n");
             out(mp, "<dd><table class='parameters' summary ='parameters'>\n");
 
-            checkArgs(mp, ejs, type, fun, &qname, doc);
+            checkArgs(mp, ejs, &fp->ownerName, fun, &qname, doc);
             for (next = 0; (param = mprGetNextItem(doc->params, &next)) != 0; ) {
 
                 defaultValue = getDefault(doc, param->key);
                 i = findArg(ejs, fun, param->key);
                 if (i < 0) {
                     mprError(mp, "Bad @param reference for \"%s\" in function \"%s\" in type \"%s\"", param->key, 
-                        qname.name, (type) ? type->qname.name : "global");
+                        qname.name, fp->ownerName.name);
                 } else {
                     argName = ejsGetPropertyName(ejs, fun->activation, i);
                     argTrait = ejsGetTrait(ejs, fun->activation, i);
@@ -1907,11 +1915,11 @@ static char *joinLines(char *str)
     for (cp = str; cp && *cp; cp++) {
         if (*cp == '\n') {
             for (np = &cp[1]; *np; np++) {
-                if (!isspace(*np)) {
+                if (!isspace((int) *np)) {
                     break;
                 }
             }
-            if (!isspace(*np)) {
+            if (!isspace((int) *np)) {
                 *cp = ' ';
             }
         }
@@ -2027,7 +2035,7 @@ static EjsDoc *crackDoc(EjsMod *mp, EjsDoc *doc, EjsName *qname)
     prepText(str);
     if (strstr(str, "@hide") || strstr(str, "@hidden")) {
         doc->hide = 1;
-    } else if (strstr(str, "@deprecated")) {
+    } else if (strstr(str, "@deprecate") || strstr(str, "@deprecated")) {
         doc->deprecated = 1;
     }
 
@@ -2334,7 +2342,7 @@ static char *wikiFormat(Ejs *ejs, char *start)
                 str = &property[strlen(property)];
             } else {
                 str = &str[strlen(str)];
-                if (islower(*klass)) {
+                if (islower((int) *klass)) {
                     property = klass;
                     klass = 0;
                 }
