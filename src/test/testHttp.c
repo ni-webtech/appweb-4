@@ -52,11 +52,7 @@ static void validateUri(MprTestGroup *gp)
     assert(isValidUri(gp, "/*a////b/", "/*a/b/"));
     assert(isValidUri(gp, "/*a/////b/", "/*a/b/"));
 
-#if BLD_WIN_LIKE || NW || OS2
-    assert(isValidUri(gp, "\\a\\b\\", "/a/b/"));
-#else
     assert(isValidUri(gp, "\\a\\b\\", "\\a\\b\\"));
-#endif
 }
 
 

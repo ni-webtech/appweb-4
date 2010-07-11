@@ -7,7 +7,7 @@ let http: Http = new Http
 
 /* Suport routines */
 
-if (!test || test.config["debug"] == 1) {
+if (test && test.config["debug"] == 1 && test.config["static"] == 0) {
     function contains(pat): Void {
         assert(http.response.contains(pat))
     }
@@ -136,5 +136,5 @@ if (!test || test.config["debug"] == 1) {
     quoting()
 
 } else {
-    test.skip("Run only when BLD_DEBUG is true")
+    test.skip("Run only for debug shared builds")
 }

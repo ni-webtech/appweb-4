@@ -10,7 +10,9 @@ TEST_SYSTEM		:= 127.0.0.1:4100
 include 		.makedep
 
 TARGETS			+= $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) 
-TARGETS			+= $(BLD_MOD_DIR)/egiTest$(BLD_SHOBJ)
+ifeq ($(BLD_FEATURE_STATIC),0)
+	TARGETS		+= $(BLD_MOD_DIR)/egiTest$(BLD_SHOBJ)
+endif
 
 ifeq			($(BLD_FEATURE_CGI),1)
 	CGIP		:= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)

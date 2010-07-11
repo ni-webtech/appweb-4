@@ -6582,7 +6582,7 @@ char *mprUriEncode(MprCtx ctx, cchar *inbuf, int map)
     mprAssert(inbuf);
 
     for (len = 1, ip = inbuf; *ip; ip++, len++) {
-        if (charMatch[(int) *ip] & map) {
+        if (charMatch[(int) (uchar) *ip] & map) {
             len += 2;
         }
     }
