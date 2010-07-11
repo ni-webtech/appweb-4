@@ -36,7 +36,7 @@ release32:
 vx:
 	unset WIND_HOME WIND_BASE ; \
 	SEARCH_PATH=/tornado ./configure --host=i386-wrs-vxworks --enable-all --without-ssl --without-php \
-		--enable-multithread --enable-complete-cross --static
+		--enable-complete-cross --static
 
 vx5:
 	unset WIND_HOME WIND_BASE ; \
@@ -92,11 +92,10 @@ vxenv:
 
 cygwin:
 	./configure --cygwin --defaults=dev --enable-test --disable-samples \
-	--without-php --without-matrixssl --without-openssl --without-gacompat
+	--without-php --without-matrixssl --without-openssl
 
 freebsd:
-	./configure --defaults=dev --enable-test --disable-samples --without-php --without-matrixssl \
-		--without-openssl --without-gacompat --disable-multithread
+	./configure --defaults=dev --enable-test --disable-samples --without-php --without-matrixssl --without-openssl
 
 php:
 	DIR=/Users/mob/svn/packages/php/php-5.2.0 ; \
