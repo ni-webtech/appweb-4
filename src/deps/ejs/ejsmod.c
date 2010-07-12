@@ -4440,7 +4440,7 @@ static void logger(MprCtx ctx, int flags, int level, const char *msg)
     char        *prefix;
 
     mpr = mprGetMpr(ctx);
-    file = (MprFile*) mpr->logHandlerData;
+    file = (MprFile*) mpr->logData;
     prefix = mpr->name;
 
     while (*msg == '\n') {

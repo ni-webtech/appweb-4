@@ -8641,6 +8641,7 @@ static int  destroyEjs(Ejs *ejs);
 static int  loadStandardModules(Ejs *ejs, MprList *require);
 static int  runSpecificMethod(Ejs *ejs, cchar *className, cchar *methodName);
 static int  searchForMethod(Ejs *ejs, cchar *methodName, EjsType **typeReturn);
+static int  startLogging(Ejs *ejs);
 
 /*  
     Initialize the EJS subsystem
@@ -8723,6 +8724,7 @@ Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *searchPath, MprList *require, i
     }
     ejsFreezeGlobal(ejs);
     ejsMakeEternalPermanent(ejs);
+    startLogging(ejs);
 
     if (mprHasAllocError(ejs)) {
         mprError(ejs, "Memory allocation error during initialization");
@@ -8847,7 +8849,9 @@ static int configureEjs(Ejs *ejs)
     ejsConfigureMathType(ejs);
     ejsConfigureMemoryType(ejs);
     ejsConfigureNamespaceType(ejs);
+#if UNUSED
     ejsConfigureReflectType(ejs);
+#endif
     ejsConfigureRegExpType(ejs);
     ejsConfigureSocketType(ejs);
     ejsConfigureStringType(ejs);
@@ -8916,9 +8920,7 @@ static int cloneMaster(Ejs *ejs, Ejs *master)
     ejs->byteArrayType = master->byteArrayType;
     ejs->dateType = master->dateType;
     ejs->errorType = master->errorType;
-#if UNUSED
     ejs->eventType = master->eventType;
-#endif
     ejs->functionType = master->functionType;
     ejs->iteratorType = master->iteratorType;
     ejs->namespaceType = master->namespaceType;
@@ -9043,9 +9045,7 @@ void ejsInitSearchPath(Ejs *ejs)
     }
 }
 
-/*
-    Set the module search path
- */
+
 void ejsSetSearchPath(Ejs *ejs, EjsArray *paths)
 {
     mprAssert(ejs);
@@ -9113,9 +9113,6 @@ void ejsSetServiceLocks(EjsService *sp, EjsLockFn lock, EjsUnlockFn unlock, void
 #endif
 
 
-/*  
-    Evaluate a module file
- */
 int ejsEvalModule(cchar *path)
 {
     EjsService      *service;   
@@ -9144,9 +9141,6 @@ int ejsEvalModule(cchar *path)
 }
 
 
-/*  
-    Run a program. This is called from the dispatcher event loop.
- */
 static int runProgram(Ejs *ejs, MprEvent *event)
 {
     /*
@@ -9248,9 +9242,6 @@ static int runSpecificMethod(Ejs *ejs, cchar *className, cchar *methodName)
 }
 
 
-/*  
-    Add the listener function. The event emitter is created on-demand.
- */
 int ejsAddListener(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener)
 {
     EjsObj      *emitter, *argv[2];
@@ -9391,42 +9382,90 @@ static int searchForMethod(Ejs *ejs, cchar *methodName, EjsType **typeReturn)
 }
 
 
-static void logHandler(MprCtx ctx, int flags, int level, const char *msg)
+typedef struct EjsLogData {
+    Ejs         *ejs;
+    EjsObj      *log;
+    EjsFunction *loggerWrite;
+    int         writeSlot;
+} EjsLogData;
+
+
+static int startLogging(Ejs *ejs)
 {
     Mpr         *mpr;
-    MprFile     *file;
-    char        *prefix;
+    EjsLogData  *ld;
+    EjsObj      *app;
+    EjsName     qname;
 
-    mpr = mprGetMpr(ctx);
-    file = (MprFile*) mpr->logHandlerData;
-    prefix = mpr->name;
-
-    while (*msg == '\n') {
-        mprFprintf(file, "\n");
-        msg++;
+    if ((ld = mprAllocObjZeroed(ejs, EjsLogData))  == 0) {
+        return MPR_ERR_NO_MEMORY;
     }
-    if (flags & MPR_LOG_SRC) {
-        mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
+    ld->ejs = ejs;
 
-    } else if (flags & MPR_ERROR_SRC) {
-        /*  
-            Use static printing to avoid malloc when the messages are small.
-            This is important for memory allocation errors.
-         */
-        if (strlen(msg) < (MPR_MAX_STRING - 32)) {
-            mprStaticPrintfError(file, "%s: Error: %s\n", prefix, msg);
-        } else {
-            mprFprintf(file, "%s: Error: %s\n", prefix, msg);
-        }
-    } else if (flags & MPR_FATAL_SRC) {
-        mprFprintf(file, "%s: Fatal: %s\n", prefix, msg);
-    } else if (flags & MPR_RAW) {
-        mprFprintf(file, "%s", msg);
+    if ((app = ejsGetPropertyByName(ejs, ejs->global, ejsName(&qname, EJS_EJS_NAMESPACE, "App"))) == 0) {
+        return MPR_ERR_CANT_READ;
     }
+    if ((ld->log = ejsGetPropertyByName(ejs, app, ejsName(&qname, EJS_PUBLIC_NAMESPACE, "log"))) == 0) {
+        return MPR_ERR_CANT_READ;
+    }
+    if ((ld->loggerWrite = ejsGetPropertyByName(ejs, ld->log->type->prototype, 
+            ejsName(&qname, EJS_PUBLIC_NAMESPACE, "write"))) < 0) {
+        return MPR_ERR_CANT_READ;
+    }
+    mpr = mprGetMpr(ejs);
+    mpr->altLogData = ld;
+    return 0;
 }
 
 
-int ejsStartLogging(Mpr *mpr, char *logSpec)
+static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
+{
+    Mpr         *mpr;
+    MprFile     *file;
+    Ejs         *ejs;
+    EjsLogData  *ld;
+    EjsObj      *str, *saveException;
+    char        *prefix, *tag, *amsg, lbuf[16], buf[MPR_MAX_STRING];
+
+    mpr = mprGetMpr(ctx);
+    prefix = mpr->name;
+    amsg = NULL;
+
+    if (flags & MPR_ERROR_SRC) {
+        tag = "Error";
+    } else if (flags & MPR_FATAL_SRC) {
+        tag = "Fatal";
+    } else if (flags & MPR_RAW) {
+        tag = NULL;
+    } else {
+        tag = mprItoa(lbuf, sizeof(lbuf), level, 10);
+    }
+    if (tag) {
+        if (strlen(msg) < (MPR_MAX_STRING - 32)) {
+            /* Avoid allocation if possible */
+            mprSprintf(ctx, buf, sizeof(buf), "%s: %s: %s\n", prefix, tag, msg);
+            msg = buf;
+        } else {
+            msg = amsg = mprAsprintf(ctx, -1, "%s: %s: %s\n", prefix, tag, msg);
+        }
+    }
+    if (mpr->altLogData) {
+        ld = (EjsLogData*) mpr->altLogData;
+        ejs = ld->ejs;
+        str = (EjsObj*) ejsCreateString(ejs, msg);
+        saveException = ejs->exception;
+        ejsClearException(ejs);
+        ejsRunFunction(ejs, ld->loggerWrite, ld->log, 1, &str);
+        ejs->exception = saveException;
+    } else {
+        file = (MprFile*) mpr->logData;
+        mprFprintf(file, "%s", msg);
+    }
+    mprFree(amsg);
+}
+
+
+int ejsStartMprLogging(Mpr *mpr, char *logSpec)
 {
     MprFile     *file;
     char        *levelSpec;
@@ -9479,7 +9518,7 @@ void ejsMemoryFailure(MprCtx ctx, int64 size, int64 total, bool granted)
 void ejsReportError(Ejs *ejs, char *fmt, ...)
 {
     va_list     arg;
-    const char  *emsg;
+    cchar       *emsg;
     char        *msg, *buf;
 
     va_start(arg, fmt);
@@ -9746,7 +9785,7 @@ void *ejsGetPropertyByName(Ejs *ejs, void *vp, EjsName *name)
     }
 
     /*
-     *  Fall back and use a two-step lookup and get
+        Fall back and use a two-step lookup and get
      */
     slotNum = ejsLookupProperty(ejs, obj, name);
     if (slotNum < 0) {
@@ -20435,17 +20474,30 @@ void ejsConfigureJSONType(Ejs *ejs)
 
 
 /*  
-
+    function get mprLogLevel(): Number
  */
-static EjsObj *logger_mprLevel(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *logger_mprLogLevel(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejsCreateNumber(ejs, mprGetLogLevel(ejs));
 }
 
-/*  
 
+#if UNUSED
+/*  
+    function set mprLogLevel(value: Number): Void
  */
-static EjsObj *logger_mprStream(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *logger_set_mprLogLevel(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    mprSetLogLevel(ejs, ejsGetInt(ejs, argv[0]));
+    return 0;
+}
+#endif
+
+
+/*  
+    function get mprLogFile(): Stream
+ */
+static EjsObj *logger_mprLogFile(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     int     fd;
 
@@ -20456,6 +20508,23 @@ static EjsObj *logger_mprStream(Ejs *ejs, EjsObj *unused, int argc, EjsObj **arg
 }
 
 
+#if UNUSED
+/*  
+    function set mprLogFile(log: Stream): Void
+ */
+static EjsObj *logger_set_mprLogFile(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    EjsFile     *fp;
+    int         fd;
+
+    if ((fd = mprGetLogFd(ejs)) >= 0) {
+        return (EjsObj*) ejsCreateFileFromFd(ejs, fd, "mpr-logger", O_WRONLY);
+    }
+    return (EjsObj*) ejs->nullValue;
+}
+#endif /* UNUSED */
+
+
 void ejsConfigureLoggerType(Ejs *ejs)
 {
     EjsType         *type;
@@ -20463,11 +20532,11 @@ void ejsConfigureLoggerType(Ejs *ejs)
     type = ejsGetTypeByName(ejs, EJS_EJS_NAMESPACE, "Logger");
     mprAssert(type);
 
-#if ES_Logger_mprLevel
-    ejsBindMethod(ejs, type, ES_Logger_mprLevel, (EjsProc) logger_mprLevel);
+#if ES_Logger_mprLogLevel
+    ejsBindMethod(ejs, type, ES_Logger_mprLogLevel, (EjsProc) logger_mprLogLevel);
 #endif
-#if ES_Logger_mprStream
-    ejsBindMethod(ejs, type, ES_Logger_mprStream, (EjsProc) logger_mprStream);
+#if ES_Logger_mprLogFile
+    ejsBindMethod(ejs, type, ES_Logger_mprLogFile, (EjsProc) logger_mprLogFile);
 #endif
 }
 
@@ -24264,6 +24333,140 @@ static EjsObj *obj_toString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 }
 
 
+/*
+    Get the base class of the object.
+
+    function getBaseType(obj: Type): Type
+ */
+static EjsObj *obj_getBaseType(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    EjsObj      *vp;
+
+    vp = argv[0];
+    if (ejsIsType(vp)) {
+        return (EjsObj*) (((EjsType*) vp)->baseType);
+    }
+    return (EjsObj*) ejs->nullValue;
+}
+
+
+/*
+    function isPrototype(obj: Object): Boolean
+ */
+static EjsObj *obj_isPrototype(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    return (EjsObj*) ejsCreateBoolean(ejs, ejsIsPrototype(argv[0]));
+}
+
+
+/*
+    function isType(obj: Object): Boolean
+ */
+static EjsObj *obj_isType(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    return (EjsObj*) ejsCreateBoolean(ejs, ejsIsType(argv[0]));
+}
+
+
+/*
+    Get the type of the object.
+
+    function getType(obj: Object): Type
+ */
+static EjsObj *obj_getType(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    EjsObj      *vp;
+
+    vp = argv[0];
+    if (vp->type == 0) {
+        return ejs->nullValue;
+    }
+    return (EjsObj*) vp->type;
+}
+
+
+/*
+    Return the type name of a var as a string. If the var is a type, get the base type.
+ */
+EjsObj *ejsGetTypeName(Ejs *ejs, EjsObj *vp)
+{
+    EjsType     *type;
+
+    if (vp == 0) {
+        return ejs->undefinedValue;
+    }
+    type = (EjsType*) vp->type;
+    if (type == 0) {
+        return ejs->nullValue;
+    }
+    return (EjsObj*) ejsCreateString(ejs, type->qname.name);
+}
+
+
+/*
+    Get the name of a function or type object
+
+    function getName(obj: Object): String
+ */
+static EjsObj *obj_getName(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    EjsObj      *obj;
+
+    obj = argv[0];
+
+    if (ejsIsType(obj)) {
+        return (EjsObj*) ejsCreateString(ejs, ((EjsType*) obj)->qname.name);
+    } else if (ejsIsFunction(obj)) {
+        return (EjsObj*) ejsCreateString(ejs, ((EjsFunction*) obj)->name);
+    }
+    return (EjsObj*) ejs->emptyStringValue;
+}
+
+
+/*
+    function typeOf(obj): String
+ */
+static EjsObj *obj_typeOf(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+{
+    mprAssert(argc >= 1);
+    return (EjsObj*) ejsGetTypeName(ejs, argv[0]);
+}
+
+
+/*
+    Get the ecma "typeof" value for an object. Unfortunately, typeof is pretty lame.
+ */
+EjsObj *ejsGetTypeOf(Ejs *ejs, EjsObj *vp)
+{
+    if (vp == ejs->undefinedValue) {
+        return (EjsObj*) ejsCreateString(ejs, "undefined");
+
+    } else if (vp == ejs->nullValue) {
+        /* Yea - I know, ECMAScript is broken */
+        return (EjsObj*) ejsCreateString(ejs, "object");
+
+    } if (ejsIsBoolean(vp)) {
+        return (EjsObj*) ejsCreateString(ejs, "boolean");
+
+    } else if (ejsIsNumber(vp)) {
+        return (EjsObj*) ejsCreateString(ejs, "number");
+
+    } else if (ejsIsString(vp)) {
+        return (EjsObj*) ejsCreateString(ejs, "string");
+
+    } else if (ejsIsFunction(vp)) {
+        return (EjsObj*) ejsCreateString(ejs, "function");
+               
+    } else if (ejsIsType(vp)) {
+        /* Pretend it is a constructor function */
+        return (EjsObj*) ejsCreateString(ejs, "function");
+               
+    } else {
+        return (EjsObj*) ejsCreateString(ejs, "object");
+    }
+}
+
+
 
 void ejsCreateObjectHelpers(Ejs *ejs)
 {
@@ -24317,6 +24520,13 @@ void ejsConfigureObjectType(Ejs *ejs)
     ejsBindAccess(ejs, type, ES_Object_prototype, (EjsProc) obj_prototype, obj_set_prototype);
     ejsBindMethod(ejs, type, ES_Object_seal, obj_seal);
 
+    /* Reflection */
+    ejsBindMethod(ejs, type, ES_Object_getBaseType, obj_getBaseType);
+    ejsBindMethod(ejs, type, ES_Object_getType, obj_getType);
+    ejsBindMethod(ejs, type, ES_Object_getName, obj_getName);
+    ejsBindMethod(ejs, type, ES_Object_isType, obj_isType);
+    ejsBindMethod(ejs, type, ES_Object_isPrototype, obj_isPrototype);
+
     ejsBindMethod(ejs, prototype, ES_Object_constructor, (EjsProc) obj_constructor);
     ejsBindMethod(ejs, prototype, ES_Object_clone, obj_clone);
     ejsBindMethod(ejs, prototype, ES_Object_iterator_get, obj_get);
@@ -24327,6 +24537,8 @@ void ejsConfigureObjectType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Object_toLocaleString, toLocaleString);
     ejsBindMethod(ejs, prototype, ES_Object_toString, obj_toString);
     ejsBindMethod(ejs, prototype, ES_Object_toJSON, obj_toJSON);
+
+    ejsBindFunction(ejs, ejs->globalBlock, ES_typeOf, (EjsProc) obj_typeOf);
 
     /*
         The prototype method is special. It is declared as static so it is generated in the type slots, but it is
@@ -25774,6 +25986,7 @@ void ejsConfigurePathType(Ejs *ejs)
 
 
 
+#if UNUSED
 /*
     Constructor
 
@@ -25939,13 +26152,17 @@ void ejsConfigureReflectType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Reflect_base, (EjsProc) ref_base);
     ejsBindMethod(ejs, prototype, ES_Reflect_isType, (EjsProc) ref_isType);
     ejsBindMethod(ejs, prototype, ES_Reflect_name, (EjsProc) ref_name);
-#if 0
+#if UNUSED
     ejsBindMethod(ejs, prototype, ES_Reflect_isPrototype, (EjsProc) ref_isPrototype);
     ejsBindMethod(ejs, prototype, ES_Reflect_prototype, (EjsProc) ref_prototype);
 #endif
     ejsBindMethod(ejs, prototype, ES_Reflect_type, (EjsProc) ref_type);
     ejsBindFunction(ejs, ejs->globalBlock, ES_typeOf, (EjsProc) ref_typeOf);
 }
+
+#else
+void dummy_Reflection() {}
+#endif
 
 
 /*
@@ -42624,7 +42841,7 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
             
         } else if (lookup->obj == ejs->global) {
             /*
-                Instance function or type being invoked as a constructor (e.g. Reflect(obj))
+                Instance function or type being invoked as a constructor (e.g. Date(obj))
              */
             argc = genCallArgs(cp, right);
             mprAssert(0);
@@ -49698,7 +49915,6 @@ static EcNode *parseXMLAttributeValue(EcCompiler *cp, EcNode *np)
             name
                 id
  */
-
 static EcNode *parseIdentifier(EcCompiler *cp)
 {
     EcNode      *np;
@@ -49712,8 +49928,8 @@ static EcNode *parseIdentifier(EcCompiler *cp)
     }
 
     switch (tid) {
-    case T_ID:
     case T_MUL:
+    case T_ID:
         np = createNode(cp, N_QNAME);
         setId(np, (char*) cp->token->text);
         break;
@@ -49938,7 +50154,6 @@ static EcNode *parseSimpleQualifiedName(EcCompiler *cp)
     ENTER(cp);
 
     if (peekToken(cp) == T_MUL || cp->peekToken->tokenId == T_STRING) {
-
         if (peekAheadToken(cp, 2) == T_COLON_COLON) {
             qualifier = parseQualifier(cp);
             getToken(cp);
@@ -50182,13 +50397,11 @@ static EcNode *parsePrimaryName(EcCompiler *cp)
             getToken(cp);
         }
     }
-
     if (np) {
         np = appendNode(np, parsePropertyName(cp));
     } else {
         np = parsePropertyName(cp);
     }
-
     return LEAVE(cp, np);
 }
 
@@ -53438,9 +53651,15 @@ static EcNode *parseTypeExpression(EcCompiler *cp)
         break;
 #endif
 
+    case T_MUL:
+        getToken(cp);
+        np = createNode(cp, N_QNAME);
+        setId(np, (char*) "Object");
+        np->name.isType = 1;
+        break;
+
     case T_STRING:
     case T_ID:
-    case T_MUL:
         np = parsePrimaryName(cp);
         if (np) {
             np->name.isType = 1;
@@ -57438,7 +57657,6 @@ static EcNode *parseNamespaceInitialisation(EcCompiler *cp, EcNode *nameNode)
     if (getToken(cp) != T_ASSIGN) {
         return LEAVE(cp, unexpected(cp));
     }
-
     if (peekToken(cp) == T_STRING) {
         getToken(cp);
         np = createNode(cp, N_LITERAL);
@@ -57448,7 +57666,6 @@ static EcNode *parseNamespaceInitialisation(EcCompiler *cp, EcNode *nameNode)
     } else {
         np = parsePrimaryName(cp);
     }
-
     return LEAVE(cp, np);
 }
 
@@ -57820,8 +58037,9 @@ static EcNode *parseRequireItem(EcCompiler *cp)
     np->useModule.minVersion = 0;
     np->useModule.maxVersion = EJS_MAX_VERSION;
 
-    moduleName = parseModuleName(cp);
-    np->qname.name = mprStrdup(np, moduleName->qname.name);
+    if ((moduleName = parseModuleName(cp)) != 0) {
+        np->qname.name = mprStrdup(np, moduleName->qname.name);
+    }
 
     /*
         Optional [version:version]

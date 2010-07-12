@@ -443,7 +443,7 @@ void mprSetLogHandler(MprCtx ctx, MprLogHandler handler, void *handlerData)
     mpr = mprGetMpr(ctx);
 
     mpr->logHandler = handler;
-    mpr->logHandlerData = handlerData;
+    mpr->logData = handlerData;
 }
 
 
@@ -6666,7 +6666,7 @@ char *mprEscapeCmd(MprCtx ctx, cchar *cmd, int escChar)
     mprAssert(cmd);
 
     for (len = 1, ip = cmd; *ip; ip++, len++) {
-        if (charMatch[(int) *ip] & MPR_ENCODE_SHELL) {
+        if (charMatch[(int) (uchar) *ip] & MPR_ENCODE_SHELL) {
             len++;
         }
     }
@@ -6707,7 +6707,7 @@ char *mprEscapeHtml(MprCtx ctx, cchar *html)
     int     len;
 
     for (len = 1, ip = html; *ip; ip++, len++) {
-        if (charMatch[(int) *ip] & MPR_ENCODE_HTML) {
+        if (charMatch[(int) (uchar) *ip] & MPR_ENCODE_HTML) {
             len += 5;
         }
     }
@@ -9924,9 +9924,6 @@ void mprLog(MprCtx ctx, int level, cchar *fmt, ...)
 }
 
 
-/*
-    Do raw output
- */
 void mprRawLog(MprCtx ctx, int level, cchar *fmt, ...)
 {
     va_list     args;
@@ -9944,9 +9941,6 @@ void mprRawLog(MprCtx ctx, int level, cchar *fmt, ...)
 }
 
 
-/*
-    Handle an error
- */
 void mprError(MprCtx ctx, cchar *fmt, ...)
 {
     va_list     args;
@@ -9963,9 +9957,6 @@ void mprError(MprCtx ctx, cchar *fmt, ...)
 }
 
 
-/*
-    Handle a memory allocation error
- */
 void mprMemoryError(MprCtx ctx, cchar *fmt, ...)
 {
     va_list     args;
@@ -9983,9 +9974,6 @@ void mprMemoryError(MprCtx ctx, cchar *fmt, ...)
 }
 
 
-/*
-    Handle an error that should be displayed to the user
- */
 void mprUserError(MprCtx ctx, cchar *fmt, ...)
 {
     va_list     args;
@@ -10000,9 +9988,6 @@ void mprUserError(MprCtx ctx, cchar *fmt, ...)
 }
 
 
-/*
-    Handle a fatal error. Forcibly shutdown the application.
- */
 void mprFatalError(MprCtx ctx, cchar *fmt, ...)
 {
     va_list     args;
@@ -17311,7 +17296,7 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
     char        *prefix;
 
     mpr = mprGetMpr(ctx);
-    file = (MprFile*) mpr->logHandlerData;
+    file = (MprFile*) mpr->logData;
     prefix = mpr->name;
 
     while (*msg == '\n') {

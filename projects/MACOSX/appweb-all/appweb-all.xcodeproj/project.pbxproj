@@ -7,12 +7,24 @@
 	objects = {
 
 /* Begin PBXAggregateTarget section */
+		C93E6EFE11E83A3B00248470 /* prep */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = C93E6F0311E83A6200248470 /* Build configuration list for PBXAggregateTarget "prep" */;
+			buildPhases = (
+				C93E6EFD11E83A3B00248470 /* ShellScript */,
+			);
+			dependencies = (
+			);
+			name = prep;
+			productName = prep;
+		};
 		C9761F7B0FD049F5009C78E1 /* All */ = {
 			isa = PBXAggregateTarget;
 			buildConfigurationList = C9761FA20FD04A26009C78E1 /* Build configuration list for PBXAggregateTarget "All" */;
 			buildPhases = (
 			);
 			dependencies = (
+				C93E6F0211E83A4400248470 /* PBXTargetDependency */,
 				C9817C59110D186F00F241EF /* PBXTargetDependency */,
 				C9761F7F0FD049FF009C78E1 /* PBXTargetDependency */,
 				C9761F810FD049FF009C78E1 /* PBXTargetDependency */,
@@ -163,6 +175,20 @@
 			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = C90A198D0FD6D9C5006A9E86;
+			remoteInfo = clean;
+		};
+		C93E6F0111E83A4400248470 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C93E6EFE11E83A3B00248470 /* prep */;
+			remoteInfo = prep;
+		};
+		C93E6F0411E83A7600248470 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C90A198D0FD6D9C5006A9E86 /* clean */;
 			remoteInfo = clean;
 		};
 		C940869A101A665B0019809C /* PBXContainerItemProxy */ = {
@@ -1224,6 +1250,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C93E6F0511E83A7600248470 /* PBXTargetDependency */,
 				C9408699101A665B0019809C /* PBXTargetDependency */,
 				C940869B101A665B0019809C /* PBXTargetDependency */,
 				C940869D101A665B0019809C /* PBXTargetDependency */,
@@ -1631,8 +1658,7 @@
 			projectRoot = "";
 			targets = (
 				C9761F7B0FD049F5009C78E1 /* All */,
-				C90A198D0FD6D9C5006A9E86 /* clean */,
-				C97623870FD06C9E009C78E1 /* ejs.mod */,
+				C93E6EFE11E83A3B00248470 /* prep */,
 				C9761D9F0FD03F94009C78E1 /* libmpr */,
 				C9761DAD0FD03FBA009C78E1 /* libmprssl */,
 				C9761DA60FD03FAA009C78E1 /* libpcre */,
@@ -1655,11 +1681,26 @@
 				C9761E090FD0415A009C78E1 /* httpPassword */,
 				C9761E100FD04163009C78E1 /* makerom */,
 				C9408698101A665B0019809C /* testAppweb */,
+				C97623870FD06C9E009C78E1 /* ejs.mod */,
+				C90A198D0FD6D9C5006A9E86 /* clean */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		C93E6EFD11E83A3B00248470 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\nBLD_TOP=$TOP\nif [ -f $TOP/build/bin/buildConfig.sh ] ; then\n\t. $TOP/build/bin/buildConfig.sh\nfi\n\nmkdir -p $BUILT_PRODUCTS_DIR\nif [ $BLD_FEATURE_MATRIXSSL ] ; then\n\tfor f in $BLD_MATRIXSSL_IMPORTS\n\tdo\n\t\tif [ -f $f ] ; then\n\t\t\techo cp $f $BUILT_PRODUCTS_DIR\n\t\t\tcp $f $BUILT_PRODUCTS_DIR\n\t\tfi\n\tdone\nfi\nif [ $BLD_FEATURE_OPENSSL ] ; then\n\tfor f in $BLD_OPENSSL_IMPORTS\n\tdo\n\t\tif [ -f $f ] ; then\n\t\t\techo cp $f $BUILT_PRODUCTS_DIR\n\t\t\tcp $f $BUILT_PRODUCTS_DIR\n\t\tfi\n\tdone\nfi\n\nexit 0";
+		};
 		C97623860FD06C9E009C78E1 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1674,7 +1715,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -x\nexport PATH=${BUILT_PRODUCTS_DIR}:$PATH\nexport DYLD_LIBRARY_PATH=${BUILT_PRODUCTS_DIR}:$DYLD_LIBRARY_PATH\n\ncd $PROJECT_DIR/../../../src/deps/ejs\n\nNAME=\"ejs\"\nFILES=\"ejs.es\"\nset -x\nTARGET=$BUILT_PRODUCTS_DIR/$NAME.mod\n\n$BUILT_PRODUCTS_DIR/ejsc  --debug --optimize 9 --bind --require \"\" --out $TARGET $FILES\n$BUILT_PRODUCTS_DIR/ejsmod --showDebug --require \"\" --cslots --listing --out $NAME.slots.h $TARGET\n\ndiff $NAME.slots.h ../include >/dev/null 2>&1 || cp $NAME.slots.h ../include\n\nset +x\nexit 0";
+			shellScript = "export PATH=${BUILT_PRODUCTS_DIR}:$PATH\nexport DYLD_LIBRARY_PATH=${BUILT_PRODUCTS_DIR}:$DYLD_LIBRARY_PATH\n\ncd $PROJECT_DIR/../../../src/deps/ejs\n\nNAME=\"ejs\"\nFILES=\"ejs.es\"\nTARGET=$BUILT_PRODUCTS_DIR/$NAME.mod\n\n$BUILT_PRODUCTS_DIR/ejsc  --debug --optimize 9 --bind --require \"\" --out $TARGET $FILES\n$BUILT_PRODUCTS_DIR/ejsmod --showDebug --require \"\" --cslots --listing --out $NAME.slots.h $TARGET\n\ndiff $NAME.slots.h ../include >/dev/null 2>&1 || cp $NAME.slots.h ../include\n\nset +x\nexit 0";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1879,6 +1920,16 @@
 			isa = PBXTargetDependency;
 			target = C90A198D0FD6D9C5006A9E86 /* clean */;
 			targetProxy = C90A19900FD6D9E9006A9E86 /* PBXContainerItemProxy */;
+		};
+		C93E6F0211E83A4400248470 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C93E6EFE11E83A3B00248470 /* prep */;
+			targetProxy = C93E6F0111E83A4400248470 /* PBXContainerItemProxy */;
+		};
+		C93E6F0511E83A7600248470 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C90A198D0FD6D9C5006A9E86 /* clean */;
+			targetProxy = C93E6F0411E83A7600248470 /* PBXContainerItemProxy */;
 		};
 		C9408699101A665B0019809C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2220,6 +2271,27 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = clean;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		C93E6EFF11E83A3B00248470 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = prep;
+			};
+			name = Debug;
+		};
+		C93E6F0011E83A3B00248470 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = prep;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3198,6 +3270,15 @@
 			buildConfigurations = (
 				C90A198E0FD6D9C5006A9E86 /* Debug */,
 				C90A198F0FD6D9C5006A9E86 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C93E6F0311E83A6200248470 /* Build configuration list for PBXAggregateTarget "prep" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C93E6EFF11E83A3B00248470 /* Debug */,
+				C93E6F0011E83A3B00248470 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

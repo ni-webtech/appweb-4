@@ -6502,11 +6502,11 @@ typedef struct Mpr {
     MprHeap         heap;                   /**< Top level memory pool */
     MprHeap         pageHeap;               /**< Heap for arenas and slabs. Always page oriented */
     MprAlloc        alloc;                  /**< Memory allocation statistics */
-
     bool            debugMode;              /**< Run in debug mode (no timers) */
     int             logLevel;               /**< Log trace level */
     MprLogHandler   logHandler;             /**< Current log handler callback */
-    void            *logHandlerData;        /**< Handle data for log handler */
+    void            *logData;               /**< Handle data for log handler */
+    void            *altLogData;            /**< Alternate handle data for log handler */
     MprHashTable    *timeTokens;            /**< Date/Time parsing tokens */
     char            *name;                  /**< Product name */
     char            *title;                 /**< Product title */

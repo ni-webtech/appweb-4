@@ -3950,7 +3950,7 @@ extern void ejsSetHandle(Ejs *ejs, void *handle);
 extern void ejsShowCurrentScope(Ejs *ejs);
 extern void ejsShowStack(Ejs *ejs, EjsFunction *fp);
 extern void ejsShowBlockScope(Ejs *ejs, EjsBlock *block);
-extern int ejsStartLogging(Mpr *mpr, char *logSpec);
+extern int ejsStartMprLogging(Mpr *mpr, char *logSpec);
 extern void ejsCloneObjectHelpers(Ejs *ejs, EjsType *type);
 extern void ejsCloneBlockHelpers(Ejs *ejs, EjsType *type);
 extern int  ejsParseModuleVersion(cchar *name);

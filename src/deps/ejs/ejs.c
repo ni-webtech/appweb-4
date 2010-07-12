@@ -126,7 +126,7 @@ MAIN(ejsMain, int argc, char **argv)
             if (nextArg >= argc) {
                 err++;
             } else {
-                ejsStartLogging(mpr, argv[++nextArg]);
+                ejsStartMprLogging(mpr, argv[++nextArg]);
             }
 
         } else if (strcmp(argp, "--method") == 0) {
@@ -184,7 +184,7 @@ MAIN(ejsMain, int argc, char **argv)
             }
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
-            ejsStartLogging(mpr, "stdout:2");
+            ejsStartMprLogging(mpr, "stdout:2");
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintfError(mpr, "%s %s-%s\n", BLD_NAME, BLD_VERSION, BLD_NUMBER);
@@ -246,7 +246,6 @@ MAIN(ejsMain, int argc, char **argv)
     if (ejs == 0) {
         return MPR_ERR_NO_MEMORY;
     }
-
     ecFlags = 0;
     ecFlags |= (merge) ? EC_FLAGS_MERGE: 0;
     ecFlags |= (bind) ? EC_FLAGS_BIND: 0;
@@ -283,7 +282,6 @@ MAIN(ejsMain, int argc, char **argv)
             err++;
         }
     }
-
 #if BLD_DEBUG
     if (stats) {
         mprSetLogLevel(ejs, 1);

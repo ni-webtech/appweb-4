@@ -20,7 +20,7 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
     char        *prefix, buf[MPR_MAX_STRING];
 
     mpr = mprGetMpr(ctx);
-    if ((file = (MprFile*) mpr->logHandlerData) == 0) {
+    if ((file = (MprFile*) mpr->logData) == 0) {
         return;
     }
     prefix = mpr->name;
@@ -128,10 +128,10 @@ int maStopLogging(MprCtx ctx)
 
     mpr = mprGetMpr(ctx);
 
-    file = mpr->logHandlerData;
+    file = mpr->logData;
     if (file) {
         mprFree(file);
-        mpr->logHandlerData = 0;
+        mpr->logData = 0;
         mprSetLogHandler(mpr, 0, 0);
     }
     return 0;

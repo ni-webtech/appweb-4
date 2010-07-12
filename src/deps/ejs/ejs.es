@@ -199,7 +199,8 @@ module ejs {
         native static function set locale(locale: String): Void
 
         /** 
-            Set the current logger
+            Default application logger. This is set to stderr unless the program specifies an output log via the --log 
+            command line switch.
          */
         public static var log: Logger
 
@@ -209,7 +210,7 @@ module ejs {
         static function get name(): String
             Config.Product
 
-        //  TODO need a better name than noexit, TODO could add a max delay option.
+        //  MOB TODO need a better name than noexit, TODO could add a max delay option.
         /** 
             Control whether an application will exit when global scripts have completed. Setting this to true will cause
             the application to continue servicing events until the $exit method is explicitly called. The default 
@@ -385,9 +386,9 @@ module ejs {
 
         let log = config.log
         if (log.enable) {
-            let stream = Logger.mprStream
+            let stream = Logger.mprLogFile
             if (stream) {
-                log.level = Logger.mprLevel
+                log.level = Logger.mprLogLevel
             } else if (log.location == "stdout") {
                 stream = App.outputStream
             } else if (log.location == "stderr") {
@@ -4844,6 +4845,10 @@ module ejs {
             @li $Function "function"
             @li Number "number"
             @li String "string"
+        Note that JavaScript has many other types that are not accurately represented by the typeof call. Such types
+        and values include: Array, String, Function, Math, Date, RegExp, Error and null and undefined values. 
+        Consequently, typeof() is unable to correctly identify object data types. Use the fixed $typeOf() function
+        instead.
         @remarks Note that lower case names are returned for class names.
         @spec ejs
     native function typeof(o: Object): String
@@ -6232,13 +6237,15 @@ module ejs {
             Get the MPR log level via a command line "--log spec" switch
             @hide
          */
-        static native function get mprLevel(): Number
+        static native function get mprLogLevel(): Number
+//      static native function set mprLogLevel(value: Number): Void
 
         /**
-            Get the MPR log stream defined via a command line "--log spec" switch
+            MPR log file defined via a command line "--log spec" switch
             @hide
          */
-        static native function get mprStream(): Stream
+        static native function get mprLogFile(): Stream
+//      static native function set mprLogFile(stream: Stream): Void
 
         /** 
             The name of this logger.
@@ -6345,8 +6352,9 @@ module ejs {
          */
         private function emit(origin: String, level: Number, kind: String, msg: String): Void {
             origin ||= _name
-            if (level > _level || !_outStream)
+            if (level > _level || !_outStream) {
                 return
+            }
             if (_pattern && !origin.match(_pattern)) {
                 return
             }
@@ -7463,7 +7471,48 @@ module ejs {
          */ 
         function valueOf(): String
             this
+
+
+        /**
+            Get the base type of a type object.
+            @return A type object
+         */
+        native static function getBaseType(obj: Type): Type
+  
+        /**
+            Get the type for an object. If the object is an instance, this is the class type object. If the object is a
+            type, this value is "Type".
+            @return A type object
+         */
+        native static function getType(obj: Object): Type
+  
+        /**
+            Test if the object is a type object
+            @return True if the object is a type object
+         */
+        native static function isType(obj: Object): Boolean
+  
+        /**
+            Test if the object is a prototype object
+            @return True if the object is being used as a prototype object
+         */
+        native static function isPrototype(obj: Object): Boolean
+  
+        /**
+            Get the name of the object if it is a function or type.
+            @return The string name of the function or type
+         */
+        native static function getName(obj: Object): String
     }
+  
+    /**
+        Return the name of a type. This is a fixed version of the standard "typeof" operator. It returns the real
+        Ejscript underlying type name. 
+        @param o Object or value to examine. 
+        @return A string type name. 
+        @spec ejs
+     */
+    native function typeOf(o): String
 }
 
 
@@ -8483,122 +8532,141 @@ module ejs {
 
 module ejs {
 
+    //  DEPRECATED
     /**
         Simple reflection class
+        @deprecated 
         @spec ejs
         @stability evolving 
-        @example
-        base      = Reflect(obj).base
-        type      = Reflect(Reflect(obj).base).type
-        name      = Reflect(obj).name
      */
     final class Reflect {
-        use default namespace public
 
-        native private var obj: Object
+        private var obj: Object
+
+        use default namespace public
 
         /**
             Create a new reflection object.
             @param o to reflect upon
+            @deprecated
          */
-        native function Reflect(o: Object)
+        function Reflect(o: *) {
+            obj = o
+        }
 
         /**
             The base class of the object being examined. If the object is a type, this is the super class of the type.
+            @deprecated
          */
-        native function get base(): Type
+        function get base(): Type
+            Object.getBaseType(obj)
 
         /**
             Test if the object is a type object
             @return True if the object is a type object
+            @deprecated
          */
-        native function get isType(): Boolean
-        native function get isPrototype(): Boolean
+        function get isType(): Boolean
+            Object.isType(obj)
+
+        /**
+            Test if the object is a prototype object
+            @return True if the object is a prototype object
+            @deprecated
+         */
+        function get isPrototype(): Boolean
+            Object.isPrototype(obj)
 
         /**
             The type of the object. If the object is an instance, this is the class type object. If the object is a
             type, this value is "Type".
          */
-        native function get type(): Type
-        native function get proto(): Object
+        function get type(): Type
+            Object.getType(obj)
+
+        /**
+            The prototype of the object
+            @deprecated
+         */
+        function get proto(): Object
+            Object.getOwnPrototypeOf(obj)
 
         /**
             The name of the object if it is a type object. Otherwise empty.
+            @deprecated
          */
-        native function get name(): String
+        function get name(): String {
+            if (obj is Type) {
+                return Object.getName(obj)
+            }
+            return null
+        }
 
     }
-
-    /**
-        Return the name of a type. This is a fixed version of the standard "typeof" operator. It returns the real
-        Ejscript underlying type name. 
-        @param o Object or value to examine. 
-        @return A string type name. 
-        @spec ejs
-     */
-    native function typeOf(o): String
 
 /*
-    ES4 reflection proposal
+    FUTURE reflection proposal
  
-    function typeOf(e: *): Type
+    final class Reflect {
+        native function Reflect(o: Object)
 
-    interface Type {
-        function canConvertTo(t: Type): Boolean
+        //  MOB -- rethink
+        function getInfo() {
+        }
+    }
+
+    enumerable class FieldInfo {
+        var name: Name
+        var type: Type
+        var enumerable: Boolean
+        var configurable: Boolean
+        var writable: Boolean
+        var getter: Boolean
+        var setter: Boolean
+
+        //  MOB -- bit ugly
+        var isFunction: Boolean
+        var isPrototype: Boolean
+        var isType: Boolean
+        var isFrame: Boolean
+        var isBuiltin: Boolean
+        var isDynamic: Boolean
+    }
+
+    enumerable class TypeInfo {
+        var name: Name
+        function get superTypes: Iterator
+        function get prototypes: Iterator
+        function get implements: Iterator
+        function get instanceMembers: Iterator
+        function get staticMembers: Iterator
+        function get constructor: Function
+
+        var isDynamic: Boolean
+        var isFinal: Boolean
+        var isFinal: Boolean
+
         function isSubtypeOf(t: Type): Boolean
+        function canConvertTo(t: Type): Boolean
     }
 
-    interface Field {
-        function namespace() : String
-        function name(): String
-        function type(): Type
+    enumerable class ParameterInfo {
+        var name: Name
+        var type: Type
+        var isRest: Boolean
+        var defaultValue: Object
     }
 
-    type FieldIterator = iterator::IteratorType.<Field>
-
-    interface NominalType extends Type {
-        function name(): String
-        function namespace(): String
-        function superTypes(): IteratorType.<ClassType>
-        function publicMembers(): FieldIterator
-        function publicStaticMembers(): FieldIterator
+    enumerable class FunctionInfo {
+        var parameters: Array   //  of Parameters
+        var returnType: Type
+        var boundThis: Object
+        var boundArgs: Array
+        var isMethod: Boolean
+        var isInitializer: Boolean
     }
-
-    interface InterfaceType extends NominalType {
-        function implementedBy():IteratorType.<ClassType>
-    }
-
-    type TypeIterator = iterator::IteratorType.<Type>
-    type ValueIterator = iterator::IteratorType.<*>
-
-    interface ClassType extends NominalType {
-        function construct(typeArgs: TypeIterator, valArgs: ValueIterator): Object
-    }
-
-    interface UnionType extends Type {
-        function members(): TypeIterator
-        function construct(typeArgs: TypeIterator, valArgs: ValueIterator): *
-    }
-
-    interface FieldValue {
-        function namespace() : String
-        function name(): String
-        function value(): *
-    }
-
-    type FieldValueIterator = iterator::IteratorType.<FieldValue>
-
-    interface RecordType extends Type {
-        function fields(): FieldIterator
-        function construct(typeArgs: TypeIterator, valArgs: FieldValueIterator): Object
-    }
-
-    interface FunctionType extends Type {
-        function hasBoundThis(): Boolean
-        function returnType(): Type
-        function argTypes(): TypeIterator
-        function construct(typeArgs: TypeIterator, valArgs: ValueIterator): *
-        function apply(typeArgs: TypeIterator, thisArg: Object?, valArgs: ValueIterator): *
+    
+    enumerable class ModuleInfo {
     }
 */
 }
@@ -13259,8 +13327,8 @@ module ejs.db.xmapper {
         static function sinit(model) {
             model = new Model()
             _keyName = "id"
-            _className = Reflect(this).name
-            //  BUG - should be able to use this _model = Reflect(this).type
+            _className = Object.getName(this)
+            //  BUG - should be able to use this _model = Object.getType(this)
             _model = global[_className]
             _assocName = _className.toCamel()
             _foreignId = _className.toCamel() + _keyName.toPascal()
@@ -13722,7 +13790,7 @@ module ejs.db.xmapper {
                         from += " INNER JOIN " + owner._tableName
                     }
                     for each (let owner in _belongsTo) {
-                        let tname: String = Reflect(owner).name
+                        let tname: String = Object.getName(owner)
                         tname = tname[0].toLower() + tname.slice(1) + "Id"
                         conditions += _tableName + "." + tname + " = " + owner._tableName + "." + owner._keyName + " AND "
                     }
@@ -14055,7 +14123,7 @@ module ejs.db.xmapper {
                 if (col == undefined) {
                     continue
                 }
-                if (col.ejsType == Reflect(this[field]).type) {
+                if (col.ejsType == Object.getType(this[field])) {
                     continue
                 }
                 let value: String = this[field]
@@ -14238,7 +14306,7 @@ module ejs.db.xmapper {
                     }
                 }
             }
-            let thisType = Reflect(this).type
+            let thisType = Objecg.getType(this)
             if (thisType["validate"]) {
                 thisType["validate"].call(this)
             }
@@ -14408,7 +14476,7 @@ module ejs.db.mapper {
             Initialize the model. This should be called by the model as its very first call.
          */
         _keyName = "id"
-        _className = Reflect(this).name
+        _className = Object.getName(this)
 
         _model = this
         _assocName = _className.toCamel()
@@ -14435,7 +14503,7 @@ module ejs.db.mapper {
             @param fields An optional object set of field names and values may be supplied to initialize the record.
          */
         function initialize(fields: Object? = null): Void {
-            _imodel = Reflect(this).type
+            _imodel = Object.getType(this)
             if (fields) for (let field in fields) {
                 this."public"::[field] = fields[field]
             }
@@ -14528,7 +14596,7 @@ module ejs.db.mapper {
                 if (col == undefined) {
                     continue
                 }
-                if (col.ejsType == Reflect(this[field]).type) {
+                if (col.ejsType == Object.getType(this[field])) {
                     continue
                 }
                 let value: String = this[field]
@@ -14967,7 +15035,7 @@ module ejs.db.mapper {
                         from += " INNER JOIN " + owner._tableName
                     }
                     for each (let owner in _belongsTo) {
-                        let tname: String = Reflect(owner).name
+                        let tname: String = Object.getName(owner)
                         tname = tname[0].toLower() + tname.slice(1) + "Id"
                         conditions += _tableName + "." + tname + " = " + owner._tableName + "." + owner._keyName + " AND "
                     }
@@ -15194,7 +15262,7 @@ module ejs.db.mapper {
          */
         function save(): Boolean {
             var sql: String
-            _imodel ||= Reflect(this).type
+            _imodel ||= Object.getType(this)
             if (!_imodel._columns) _imodel.getSchema()
             if (!validateRecord()) {
                 return false
@@ -15333,7 +15401,7 @@ module ejs.db.mapper {
             @returns True if the record has no errors.
          */
         function validateRecord(): Boolean {
-            _imodel ||= Reflect(this).type
+            _imodel ||= Object.getType(this)
             if (!_imodel._columns) _imodel.getSchema()
             _errors = {}
             if (_imodel._validations) {
@@ -15353,7 +15421,7 @@ module ejs.db.mapper {
                     }
                 }
             }
-            let thisType = Reflect(this).type
+            let thisType = Object.getType(this)
             if (thisType["validate"]) {
                 thisType["validate"].call(this)
             }
@@ -15658,7 +15726,7 @@ module ejs.db.sqlite {
 
         /** @duplicate ejs.db::Database.dataTypeToSqlType */
         function dataTypeToSqlType(dataType:String): String
-            Reflect(this).type.DataTypeToSqlType[dataType]
+            Object.getType(this).DataTypeToSqlType[dataType]
 
         /** @duplicate ejs.db::Database.destroyDatabase */
         function destroyDatabase(name: String): Void
@@ -17423,6 +17491,7 @@ module ejs.web {
             mvc: {
                 //  MOB -- what is this?
                 app: "",
+                //  MOB - should be moved to files
                 appmod: "App.mod",
                 views: {
                     connectors: { },
@@ -19299,7 +19368,7 @@ module ejs.web {
          */
         function input(field: String, options: Object = {}): Void {
             try {
-                datatype = Reflect(currentRecord).type.getColumnType(field)
+                datatype = Object.getType(currentRecord).getColumnType(field)
 
                 //  TODO - needs fleshing out for each type
                 switch (datatype) {
@@ -19701,7 +19770,7 @@ module ejs.web {
             }
             let errors = record.getErrors()
             if (errors) {
-                write('<div class="-ejs-formError"><h2>The ' + Reflect(record).name.toLower() + ' has ' + 
+                write('<div class="-ejs-formError"><h2>The ' + Object.getName(record).toLower() + ' has ' + 
                     errors.length + (errors.length > 1 ? ' errors' : ' error') + ' that ' +
                     ((errors.length > 1) ? 'prevent' : 'prevents') + '  it being saved.</h2>\r\n')
                 write('    <p>There were problems with the following fields:</p>\r\n')
@@ -19781,7 +19850,7 @@ module ejs.web {
             if (options.formatter != undefined && options.formatter is Function) {
                 return options.formatter(value).toString()
             }
-            let typeName = Reflect(value).typeName
+            let typeName = typeOf(value)
 
             //  TODO OPT
             let fmt
