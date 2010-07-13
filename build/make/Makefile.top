@@ -160,16 +160,16 @@ upload:
 				http -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
 			done ; \
 		fi ; \
-	fi ; \
-	if [ "$(BUILD_UPLOAD_SOURCE)" = "true" ] ; then \
-		cd releases >/dev/null 2>&1 ; \
-		if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
-			for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; \
-			do \
-				chmod 664 $$name ; \
-				echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-				http -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-			done ; \
+		if [ "$(BUILD_UPLOAD_SOURCE)" = "true" ] ; then \
+			cd releases >/dev/null 2>&1 ; \
+			if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
+				for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; \
+				do \
+					chmod 664 $$name ; \
+					echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+					http -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+				done ; \
+			fi ; \
 		fi ; \
 	fi
 

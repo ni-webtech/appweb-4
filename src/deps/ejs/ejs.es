@@ -5165,7 +5165,7 @@ module ejs {
             @event complete Issued when the request completes
             @event error Issued if the request does not complete successfully.
             All events are called with the signature:
-            function (event: String, http: Http): Void
+                function (event: String, http: Http): Void
          */
         native function observe(name, observer: Function): Void
 
@@ -5899,14 +5899,14 @@ module ejs {
      */
     native function deserialize(str: String): Object
 
-    //    MOB -- change pretty to format: "pretty" | "compact"
+    //  MOB -- change pretty to format: "pretty" | "compact"
+    //  MOB - change to includeBases (deprecated baseClasses)
     /** 
         Encode an object as a string. This function returns a literal string for the object and all its properties. 
         If $maxDepth is sufficiently large (or zero for infinite depth), each property will be processed recursively 
         until all properties are rendered.  NOTE: the maxDepth, all and base properties are not yet supported.
         @param obj Object to serialize. If options is null, each option takes the defaults described.
         @param options Serialization options
-        MOB - change to includeBases (deprecated baseClasses)
         @option baseClasses Boolean determining if base class properties will be serialized. Defaults to false.
         @option depth Number indiciating the depth to recurse when converting properties to literals. If set to zero, 
             the depth is infinite. Defaults to zero.
@@ -15926,7 +15926,7 @@ module ejs.web {
         @stability prototype
         @spec ejs
      */
-    class Controller {
+    enumerable class Controller {
         /*  
             Define properties and functions in the ejs.web namespace so that user controller variables don't clash. 
             Override with "public" the specific properties that must be copied to views.
@@ -15999,7 +15999,7 @@ module ejs.web {
 
         /** 
             Factory method to create and initialize a controller. The controller class is specified by 
-            params["controlller"] which should be set to the controller name without the "Controller" suffix. 
+            params["controller"] which should be set by the router to the controller name without the "Controller" suffix. 
             This call expects the controller class to be loaded. Called by Mvc.load().
             @param request Web request object
          */
@@ -17398,12 +17398,6 @@ module ejs.web {
             @return A string containing the name and version of the web server software
          */
         native function get software(): String
-
-        /** 
-            Get the count of active sessions
-            @return The number of active sessionss
-         */
-        native static function get sessionCount(): Number
     }
 }
 
@@ -19115,9 +19109,8 @@ module ejs.web {
         private var nextId: Number = 0
 
         /** @hide */
-        function getNextId(): String {
-            return "id_" + nextId++
-        }
+        function getNextId(): String
+            "id_" + nextId++
 
         /**
             Constructor method to initialize a new View
@@ -19788,11 +19781,11 @@ module ejs.web {
             Get the view connector to render a control
          */
         private function getConnector(kind: String, options: Object) {
-            let views = request.config.mvc.views
+            let vc = request.config.web.view
             //  TODO OPT
-            let connectorName = (options && options["connector"]) || views.connectors[kind] ||
-                views.connectors["rest"] || "html"
-            views.connectors[kind] = connectorName
+            let connectorName = (options && options["connector"]) || vc.connectors[kind] ||
+                vc.connectors["rest"] || "html"
+            vc.connectors[kind] = connectorName
             let name = (connectorName + "Connector").toPascal()
             try {
                 return new global[name](request, this)
@@ -19854,9 +19847,9 @@ module ejs.web {
 
             //  TODO OPT
             let fmt
-            let mvc = request.config.mvc
-            if (mvc.views && mvc.views.formats) {
-                fmt = mvc.views.formats[typeName]
+            let web = request.config.web
+            if (web.view && web.view.formats) {
+                fmt = web.view.formats[typeName]
             }
             if (fmt == undefined || fmt == null || fmt == "") {
                 return value.toString()
@@ -20102,6 +20095,20 @@ module ejs.web {
                 enable: true,
                 //  MOB -- is this being used?
                 timeout: 1800,
+            },
+            web: {
+                endpoint: "127.0.0.1:4000",
+                views: {
+                    connectors: {
+                        table: "html",
+                        chart: "google",
+                        rest: "html",
+                    },
+                    formats: {
+                        currency:   "$%10f",
+                        Date:       "%a %e %b %H:%M",
+                    },
+                },
             },
         }
 

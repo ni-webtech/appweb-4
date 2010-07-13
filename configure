@@ -367,11 +367,13 @@ parseSystemConfiguration() {
             version=`cat /etc/gentoo-release | head -1 | awk '{ print $5 }'`
         fi
         if [ -f /etc/debian_version ] ; then
-            cat /proc/version | grep -i ubuntu >/dev/null
-            if [ $? = 0 ] ; then
-                dist=ubuntu
-            else
-                dist=debian
+            if [ -f /etc/issue ] ; then
+                cat /etc/issue | grep -i ubuntu >/dev/null
+                if [ $? = 0 ] ; then
+                    dist=ubuntu
+                else
+                    dist=debian
+                fi
             fi
             if [ -f /etc/lsb-release ] ; then
                 version=`cat /etc/lsb-release | grep RELEASE | sed 's/.*=//'`

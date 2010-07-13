@@ -1905,13 +1905,13 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url)
         if (conn->keepAliveCount < 0 || port != conn->port || strcmp(ip, conn->ip) != 0) {
             httpCloseConn(conn);
         } else {
-            LOG(http, 4, "Http: reusing keep-alive socket on: %s:%d", ip, port);
+            mprLog(http, 4, "Http: reusing keep-alive socket on: %s:%d", ip, port);
         }
     }
     if (conn->sock) {
         return conn;
     }
-    LOG(conn, 3, "Http: Opening socket on: %s:%d", ip, port);
+    mprLog(conn, 3, "Http: Opening socket on: %s:%d", ip, port);
     if ((sp = mprCreateSocket(conn, (uri->secure) ? MPR_SECURE_CLIENT: NULL)) == 0) {
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't create socket for %s", url);
         mprFree(sp);
@@ -1965,7 +1965,7 @@ static HttpPacket *createHeaderPacket(HttpConn *conn)
         char    a1Buf[256], a2Buf[256], digestBuf[256];
         char    *ha1, *ha2, *digest, *qop;
         if (http->secret == 0 && httpCreateSecret(http) < 0) {
-            LOG(trans, MPR_ERROR, "Http: Can't create secret for digest authentication");
+            mprLog(trans, MPR_ERROR, "Http: Can't create secret for digest authentication");
             mprFree(trans);
             conn->transmitter = 0;
             return 0;
@@ -2059,7 +2059,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     if (conn->server) {
         return MPR_ERR_BAD_STATE;
     }
-    LOG(conn, 4, "Http: client request: %s %s", method, url);
+    mprLog(conn, 4, "Http: client request: %s %s", method, url);
 
     if (conn->sock) {
         /* 
@@ -2318,7 +2318,7 @@ void httpCloseConn(HttpConn *conn)
         }
     }
     if (conn->sock) {
-        LOG(conn, 4, "Closing connection");
+        mprLog(conn, 4, "Closing connection");
         if (conn->waitHandler.fd >= 0) {
             mprRemoveWaitHandler(&conn->waitHandler);
         }
@@ -2875,9 +2875,9 @@ static void httpErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
         conn->status = status;
         httpFormatErrorV(conn, status, fmt, args);
         if (rec == 0) {
-            LOG(conn, 2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
+            mprLog(conn, 2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
         } else {
-            LOG(conn, 2, "Error: \"%s\", status %d for URI \"%s\": %s.",
+            mprLog(conn, 2, "Error: \"%s\", status %d for URI \"%s\": %s.",
                 httpLookupStatus(conn->http, status), status, rec->uri ? rec->uri : "", conn->errorMsg);
         }
         httpOmitBody(conn);
@@ -3514,9 +3514,9 @@ static int httpTimer(Http *http, MprEvent *event)
         if (diff < 0 && !mprGetDebugMode(http)) {
             conn->keepAliveCount = 0;
             if (conn->receiver) {
-                LOG(http, 4, "Request timed out %s", conn->receiver->uri);
+                mprLog(http, 4, "Request timed out %s", conn->receiver->uri);
             } else {
-                LOG(http, 4, "Idle connection timed out");
+                mprLog(http, 4, "Idle connection timed out");
             }
             httpRemoveConn(http, conn);
             if (conn->sock) {
@@ -6254,7 +6254,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
 #if UNUSED
     if (isprint((int) (uchar) *start)) {
         *end = '\0'; 
-        LOG(conn, 3, "\n@@@ Incoming =>\n%s\n", start); 
+        mprLog(conn, 3, "\n@@@ Incoming =>\n%s\n", start); 
         *end = '\r';
     }
 #endif
@@ -6293,7 +6293,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     char                *method, *uri, *protocol;
     int                 methodFlags, mask, len;
 
-    LOG(conn, 4, "New request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
+    mprLog(conn, 4, "New request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
 
     rec = conn->receiver;
     trans = conn->transmitter;
@@ -6393,7 +6393,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
             httpTraceContent(conn, packet, len, 0, mask);
         }
     } else {
-        LOG(rec, 2, "%s %s %s", method, uri, protocol);
+        mprLog(rec, 2, "%s %s %s", method, uri, protocol);
     }
 }
 
@@ -6414,7 +6414,7 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     rec = conn->receiver;
     trans = conn->transmitter;
 
-    LOG(rec, 4, "Response from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
+    mprLog(rec, 4, "Response from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
     protocol = getToken(conn, " ");
     if (strcmp(protocol, "HTTP/1.0") == 0) {
         conn->keepAliveCount = 0;
@@ -7088,7 +7088,7 @@ static bool processCompletion(HttpConn *conn)
     trans = conn->transmitter;
     mpr = mprGetMpr(conn);
 
-    LOG(rec, 4, "Request complete used %,d K, mpr usage %,d K, page usage %,d K",
+    mprLog(rec, 4, "Request complete used %,d K, mpr usage %,d K, page usage %,d K",
         rec->arena->allocBytes / 1024, mpr->heap.allocBytes / 1024, mpr->pageHeap.allocBytes / 1024);
 
     packet = conn->input;
@@ -7768,7 +7768,7 @@ int httpStartServer(HttpServer *server)
     } else {
         mprSetSocketBlockingMode(server->sock, 1);
     }
-    LOG(server, MPR_CONFIG, "Started %s server on %s:%d", proto, ip, server->port);
+    mprLog(server, MPR_CONFIG, "Started %s server on %s:%d", proto, ip, server->port);
     return 0;
 }
 
@@ -7797,7 +7797,7 @@ static HttpConn *acceptConn(HttpServer *server)
     if (sock == 0) {
         return 0;
     }
-    LOG(server, 4, "New connection from %s:%d for %s:%d %s",
+    mprLog(server, 4, "New connection from %s:%d for %s:%d %s",
         sock->ip, sock->port, sock->acceptIp, sock->acceptPort, server->sock->sslSocket ? "(secure)" : "");
 
     if ((conn = httpCreateConn(server->http, server)) == 0) {
@@ -8448,7 +8448,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
     uri = 0;
     trans->status = status;
 
-    LOG(conn, 3, "redirect %d %s", status, targetUri);
+    mprLog(conn, 3, "redirect %d %s", status, targetUri);
 
     prev = rec->parsedUri;
     target = httpCreateUri(trans, targetUri, 0);
@@ -8786,7 +8786,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     trans->headerSize = mprGetBufLength(buf);
     trans->flags |= HTTP_TRANS_HEADERS_CREATED;
 
-    LOG(conn, 3, "\n@@@ Transmission => \n%s", mprGetBufStart(buf));
+    mprLog(conn, 3, "\n@@@ Transmission => \n%s", mprGetBufStart(buf));
 }
 
 

@@ -4474,6 +4474,11 @@ extern int          ejsRemoveModule(Ejs *ejs, struct EjsModule *up);
 extern "C" {
 #endif
 
+
+#ifndef EJS_HTTPSERVER_NAME
+#define EJS_HTTPSERVER_NAME "ejs-http/" BLD_VERSION
+#endif
+
 /** 
     HttpServer Class
     @description
@@ -4496,6 +4501,7 @@ typedef struct EjsHttpServer {
     char            *ciphers;                   /**< SSL ciphers */
     char            *ip;                        /**< Listening address */
     int             port;                       /**< Listening port */
+    int             async;                      /**< Async mode */
 } EjsHttpServer;
 
 
