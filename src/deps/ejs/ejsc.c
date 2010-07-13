@@ -257,7 +257,7 @@ MAIN(ejscMain, int argc, char **argv)
     if (doc) {
         ejsFlags |= EJS_FLAG_DOC;
     }
-    ejs = ejsCreateVm(ejsService, NULL, searchPath, requiredModules, ejsFlags);
+    ejs = ejsCreateVm(ejsService, NULL, searchPath, requiredModules, 0, NULL, ejsFlags);
     if (ejs == 0) {
         return MPR_ERR_NO_MEMORY;
     }

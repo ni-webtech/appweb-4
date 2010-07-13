@@ -4295,7 +4295,7 @@ MAIN(ejsmodMain, int argc, char **argv)
     if (mp->html || mp->xml) {
         flags |= EJS_FLAG_DOC;
     }
-    ejs = ejsCreateVm(ejsService, NULL, searchPath, requiredModules, flags);
+    ejs = ejsCreateVm(ejsService, NULL, searchPath, requiredModules, 0, NULL, flags);
     if (ejs == 0) {
         return MPR_ERR_NO_MEMORY;
     }

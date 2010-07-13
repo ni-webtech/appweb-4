@@ -801,6 +801,7 @@ static int writeBody(HttpConn *conn)
                     return MPR_ERR_CANT_OPEN;
                 }
                 if (verbose) {
+                    //  MOB - should this be to stdout or stderr?
                     mprPrintf(conn, "uploading: %s\n", path);
                 }
                 while ((bytes = mprRead(file, buf, sizeof(buf))) > 0) {

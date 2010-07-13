@@ -4863,8 +4863,6 @@ HttpPacket *httpSplitPacket(MprCtx ctx, HttpPacket *orig, int offset)
 static void openPass(HttpQueue *q)
 {
     /* Called only for the send queue */
-    q->max = q->conn->limits->maxTransmissionBody;
-    q->packetSize = q->conn->limits->maxTransmissionBody;
     if (q->pair) {
         q->pair->max = q->max;
         q->pair->packetSize = q->packetSize;
@@ -5288,9 +5286,6 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int direction, Http
     q->start = stage->start;
     q->direction = direction;
 
-    q->max = conn->limits->maxStageBuffer;
-    q->packetSize = conn->limits->maxStageBuffer;
-
     if (direction == HTTP_QUEUE_TRANS) {
         q->put = stage->outgoingData;
         q->service = stage->outgoingService;
@@ -5315,8 +5310,9 @@ void httpInitQueue(HttpConn *conn, HttpQueue *q, cchar *name)
     q->nextQ = q;
     q->prevQ = q;
     q->owner = name;
+    q->packetSize = conn->limits->maxStageBuffer;
     q->max = conn->limits->maxStageBuffer;
-    q->low = q->max / 100 *  5;
+    q->low = q->max / 100 *  5;    
 }
 
 
@@ -5384,6 +5380,8 @@ bool httpDrainQueue(HttpQueue *q, bool block)
     HttpConn      *conn;
     HttpQueue     *next;
     int         oldMode;
+
+    LOG(q, 6, "httpDrainQueue block %d", block);
 
     conn = q->conn;
     do {
@@ -5655,11 +5653,14 @@ bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
     }
 
     /*  
-        The downstream queue is full, so disable the queue and mark the downstream queue as full and service immediately. 
+        The downstream queue is full, so disable the queue and mark the downstream queue as full and service 
+        if immediately if not disabled.  
      */
     httpDisableQueue(q);
     next->flags |= HTTP_QUEUE_FULL;
-    httpScheduleQueue(next);
+    if (!(next->flags & HTTP_QUEUE_DISABLED)) {
+        httpScheduleQueue(next);
+    }
     return 0;
 }
 
@@ -5693,6 +5694,7 @@ int httpWriteBlock(HttpQueue *q, cchar *buf, int size, bool block)
         return 0;
     }
     for (written = 0; size > 0; ) {
+        LOG(q, 6, "httpWriteBlock q_count %d, q_max %d", q->count, q->max);
         if (q->count >= q->max && !httpDrainQueue(q, block)) {
             break;
         }
@@ -7334,8 +7336,9 @@ int httpSetUri(HttpConn *conn, cchar *uri)
 
 /*  
     Wait for the Http object to achieve a given state.
+    NOTE: timeout is an inactivity timeout
  */
-int httpWait(HttpConn *conn, int state, int timeout)
+int httpWait(HttpConn *conn, int state, int inactivityTimeout)
 {
     Http            *http;
     HttpTransmitter *trans;
@@ -7345,19 +7348,19 @@ int httpWait(HttpConn *conn, int state, int timeout)
     http = conn->http;
     trans = conn->transmitter;
 
-    if (timeout < 0) {
-        timeout = conn->timeout;
+    if (inactivityTimeout < 0) {
+        inactivityTimeout = conn->timeout;
     }
-    if (timeout < 0) {
-        timeout = MAXINT;
+    if (inactivityTimeout < 0) {
+        inactivityTimeout = MAXINT;
     }
     if (conn->state <= HTTP_STATE_BEGIN) {
         mprAssert(conn->state >= HTTP_STATE_BEGIN);
         return MPR_ERR_BAD_STATE;
     } 
     http->now = mprGetTime(conn);
-    expire = http->now + timeout;
-    remainingTime = timeout;
+    expire = http->now + inactivityTimeout;
+    remainingTime = inactivityTimeout;
     while (conn->state < state && conn->sock && !mprIsSocketEof(conn->sock) && remainingTime >= 0) {
         fd = conn->sock->fd;
         if (!trans->writeComplete) {
@@ -7369,10 +7372,12 @@ int httpWait(HttpConn *conn, int state, int timeout)
                 events = mprWaitForSingleIO(conn, fd, MPR_READABLE, remainingTime);
             }
         }
+        http->now = mprGetTime(conn);
+        remainingTime = (int) (expire - http->now);
         if (events) {
+            expire = http->now + inactivityTimeout;
             httpCallEvent(conn, events);
         }
-        http->now = mprGetTime(conn);
         if (conn->state >= HTTP_STATE_PARSED) {
             if (conn->state < state) {
                 return MPR_ERR_BAD_STATE;
@@ -7382,8 +7387,6 @@ int httpWait(HttpConn *conn, int state, int timeout)
             }
             break;
         }
-        http->now = mprGetTime(conn);
-        remainingTime = (int) (expire - http->now);
     }
     if (conn->sock == 0 || conn->error) {
         return MPR_ERR_CONNECTION;
@@ -8180,9 +8183,6 @@ HttpTransmitter *httpCreateTransmitter(HttpConn *conn, MprHashTable *headers)
     conn->transmitter = trans;
     trans->conn = conn;
     trans->status = HTTP_CODE_OK;
-#if UNUSED
-    trans->mimeType = "text/html";
-#endif
     trans->length = -1;
     trans->entityLength = -1;
     trans->traceMethods = HTTP_STAGE_ALL;

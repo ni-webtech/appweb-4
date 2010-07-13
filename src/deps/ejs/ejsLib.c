@@ -8117,9 +8117,9 @@ static void popScope(EjsModule *mp, int keepScope)
 /************************************************************************/
 
 /**
- *  ejsModule.c - Ejscript module management
- *
- *  Copyright (c) All Rights Reserved. See details at the end of the file.
+    ejsModule.c - Ejscript module management
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
 
@@ -8155,8 +8155,8 @@ EjsModule *ejsCreateModule(Ejs *ejs, cchar *name, int version)
 
 
 /*
- *  Register a native module callback to be invoked when it it time to configure the module. This is used by loadable modules
- *  when they are built statically.
+    Register a native module callback to be invoked when it it time to configure the module. This is used by loadable modules
+    when they are built statically.
  */
 int ejsAddNativeModule(MprCtx ctx, cchar *name, EjsNativeCallback callback, int checksum, int flags)
 {
@@ -8195,12 +8195,12 @@ int ejsSetModuleConstants(Ejs *ejs, EjsModule *mp, cchar *pool, int poolSize)
 
 
 /*
- *  Lookup a module name in the set of loaded modules
- *  If minVersion is <= 0, then any version up to, but not including maxVersion is acceptable.
- *  If maxVersion is < 0, then any version greater than minVersion is acceptable.
- *  If both are zero, then match the name itself and ignore minVersion and maxVersion
- *  If both are -1, then any version is acceptable.
- *  If both are equal, then only that version is acceptable.
+    Lookup a module name in the set of loaded modules
+    If minVersion is <= 0, then any version up to, but not including maxVersion is acceptable.
+    If maxVersion is < 0, then any version greater than minVersion is acceptable.
+    If both are zero, then match the name itself and ignore minVersion and maxVersion
+    If both are -1, then any version is acceptable.
+    If both are equal, then only that version is acceptable.
  */
 EjsModule *ejsLookupModule(Ejs *ejs, cchar *name, int minVersion, int maxVersion)
 {
@@ -8245,33 +8245,33 @@ MprList *ejsGetModuleList(Ejs *ejs)
 
 
 /*
- *  @copy   default
- *
- *  Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
- *  Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
- *
- *  This software is distributed under commercial and open source licenses.
- *  You may use the GPL open source license described below or you may acquire
- *  a commercial license from Embedthis Software. You agree to be fully bound
- *  by the terms of either license. Consult the LICENSE.TXT distributed with
- *  this software for full details.
- *
- *  This software is open source; you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License as published by the
- *  Free Software Foundation; either version 2 of the License, or (at your
- *  option) any later version. See the GNU General Public License for more
- *  details at: http://www.embedthis.com/downloads/gplLicense.html
- *
- *  This program is distributed WITHOUT ANY WARRANTY; without even the
- *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- *  This GPL license does NOT permit incorporating this software into
- *  proprietary programs. If you are unable to comply with the GPL, you must
- *  acquire a commercial license to use this software. Commercial licenses
- *  for this software and support services are available from Embedthis
- *  Software at http://www.embedthis.com
- *
- *  @end
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+
+    @end
  */
 /************************************************************************/
 /*
@@ -8672,13 +8672,10 @@ EjsService *ejsGetService(MprCtx ctx)
     @param searchPath Array of paths to search for modules. Must be persistent.
     @param require List of modules to pre-load
  */
-Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *searchPath, MprList *require, int flags)
+Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *searchPath, MprList *require, int argc, cchar **argv, int flags)
 {
     Ejs     *ejs;
 
-    /*  
-        Create interpreter structure
-     */
     ejs = mprAllocObjWithDestructorZeroed(ctx, Ejs, destroyEjs);
     if (ejs == 0) {
         return 0;
@@ -8692,6 +8689,8 @@ Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *searchPath, MprList *require, i
         ejs->service->http = httpCreate(ejs->service);
     }
     ejs->http = ejs->service->http;
+    ejs->argc = argc;
+    ejs->argv = argv;
 
     ejs->flags |= (flags & (EJS_FLAG_NO_INIT | EJS_FLAG_DOC));
     ejs->dispatcher = mprCreateDispatcher(ejs, "ejsDispatcher", 1);
@@ -8834,13 +8833,13 @@ static int configureEjs(Ejs *ejs)
     ejsConfigureVoidType(ejs);
     ejsConfigureNumberType(ejs);
 
+    ejsConfigureConfigType(ejs);
     ejsConfigurePathType(ejs);
     ejsConfigureFileSystemType(ejs);
     ejsConfigureFileType(ejs);
     ejsConfigureAppType(ejs);
     ejsConfigureArrayType(ejs);
     ejsConfigureByteArrayType(ejs);
-    ejsConfigureConfigType(ejs);
     ejsConfigureDateType(ejs);
     ejsConfigureFunctionType(ejs);
     ejsConfigureGCType(ejs);
@@ -8850,9 +8849,6 @@ static int configureEjs(Ejs *ejs)
     ejsConfigureMathType(ejs);
     ejsConfigureMemoryType(ejs);
     ejsConfigureNamespaceType(ejs);
-#if UNUSED
-    ejsConfigureReflectType(ejs);
-#endif
     ejsConfigureRegExpType(ejs);
     ejsConfigureSocketType(ejs);
     ejsConfigureStringType(ejs);
@@ -9125,7 +9121,7 @@ int ejsEvalModule(cchar *path)
         mprFree(mpr);
         return MPR_ERR_NO_MEMORY;
     }
-    if ((ejs = ejsCreateVm(service, NULL, NULL, NULL, 0)) == 0) {
+    if ((ejs = ejsCreateVm(service, NULL, NULL, NULL, 0, NULL, 0)) == 0) {
         mprFree(mpr);
         return MPR_ERR_NO_MEMORY;
     }
@@ -10398,7 +10394,7 @@ cchar *_ejsGetString(Ejs *ejs, EjsObj *obj)
     Get the application command line arguments
     static function get args(): String
  */
-static EjsObj *getArgs(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_args(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsArray    *args;
     int         i;
@@ -10415,7 +10411,7 @@ static EjsObj *getArgs(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Get the current working directory
     function get dir(): Path
  */
-static EjsObj *currentDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_dir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejsCreatePathAndFree(ejs, mprGetCurrentPath(ejs));
 }
@@ -10425,7 +10421,7 @@ static EjsObj *currentDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Set the current working directory
     function chdir(value: String|Path): void
  */
-static EjsObj *changeCurrentDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_chdir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     cchar   *path;
 
@@ -10450,7 +10446,7 @@ static EjsObj *changeCurrentDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **arg
     Get an environment var
     function getenv(key: String): String
  */
-static EjsObj *getEnvVar(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
+static EjsObj *app_getenv(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
     cchar   *value;
 
@@ -10466,7 +10462,7 @@ static EjsObj *getEnvVar(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
     Put an environment var
     function putenv(key: String, value: String): void
  */
-static EjsObj *putEnvVar(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
+static EjsObj *app_putenv(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
 #if !WINCE
 #if BLD_UNIX_LIKE
@@ -10490,7 +10486,7 @@ static EjsObj *putEnvVar(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
     Get the directory containing the application's executable file.
     static function get exeDir(): Path
  */
-static EjsObj *exeDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_exeDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejsCreatePath(ejs, mprGetAppDir(ejs));
 }
@@ -10500,7 +10496,7 @@ static EjsObj *exeDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Get the application's executable filename.
     static function get exePath(): Path
  */
-static EjsObj *exePath(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_exePath(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejsCreatePath(ejs, mprGetAppPath(ejs));
 }
@@ -10510,7 +10506,7 @@ static EjsObj *exePath(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Exit the application
     static function exit(status: Number): void
  */
-static EjsObj *exitApp(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     int     status;
 
@@ -10531,18 +10527,42 @@ static EjsObj *exitApp(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Control if the application will exit when the last script completes.
     static function noexit(exit: Boolean): void
  */
-static EjsObj *noexit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_noexit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     ejs->flags |= EJS_FLAG_NOEXIT;
     return 0;
 }
 
 
+#if UNUSED
+/*  
+    static function name(): String
+ */
+static EjsObj *app_name(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    return (EjsObj*) ejsCreateString(ejs, mprGetAppName(ejs));
+}
+
+
+/*  
+    static function set name(str: String): Void
+ */
+static EjsObj *app_set_name(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    cchar   *name;
+
+    name = ejsGetString(argv[0]);
+    mprSetAppName(ejs, name, name, NULL);
+    return 0;
+}
+#endif
+
+
 /*  
     Get the ejs module search path. Does not actually read the environment.
     function get search(): Array
  */
-static EjsObj *getSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
+static EjsObj *app_search(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejs->search;
 }
@@ -10552,7 +10572,7 @@ static EjsObj *getSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
     Set the ejs module search path. Does not actually update the environment.
     function set search(path: Array): Void
  */
-static EjsObj *setSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
+static EjsObj *app_set_search(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
     ejsSetSearchPath(ejs, (EjsArray*) argv[0]);
     return 0;
@@ -10563,7 +10583,7 @@ static EjsObj *setSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
     Get a default search path. NOTE: this does not modify ejs->search.
     function get createSearch(searchPaths: String): Void
  */
-static EjsObj *createSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
+static EjsObj *app_createSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
     cchar   *searchPath;
 
@@ -10598,7 +10618,7 @@ void ejsServiceEvents(Ejs *ejs, int timeout, int flags)
 /*  
     static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): void
  */
-static EjsObj *eventLoop(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_eventLoop(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     int     timeout, oneEvent;
 
@@ -10613,7 +10633,7 @@ static EjsObj *eventLoop(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Pause the application
     static function sleep(delay: Number = -1): void
  */
-static EjsObj *sleepProc(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_sleep(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     int         timeout;
 
@@ -10635,19 +10655,22 @@ void ejsConfigureAppType(Ejs *ejs)
     ejsSetProperty(ejs, type, ES_App__outputStream, ejsCreateFileFromFd(ejs, 1, "stdout", O_WRONLY));
     ejsSetProperty(ejs, type, ES_App__errorStream, ejsCreateFileFromFd(ejs, 2, "stderr", O_WRONLY));
 
-    ejsBindMethod(ejs, type, ES_App_args, (EjsProc) getArgs);
-    ejsBindMethod(ejs, type, ES_App_dir, (EjsProc) currentDir);
-    ejsBindMethod(ejs, type, ES_App_chdir, (EjsProc) changeCurrentDir);
-    ejsBindMethod(ejs, type, ES_App_exeDir, (EjsProc) exeDir);
-    ejsBindMethod(ejs, type, ES_App_exePath, (EjsProc) exePath);
-    ejsBindMethod(ejs, type, ES_App_exit, (EjsProc) exitApp);
-    ejsBindMethod(ejs, type, ES_App_getenv, (EjsProc) getEnvVar);
-    ejsBindMethod(ejs, type, ES_App_putenv, (EjsProc) putEnvVar);
-    ejsBindMethod(ejs, type, ES_App_noexit, (EjsProc) noexit);
-    ejsBindMethod(ejs, type, ES_App_createSearch, (EjsProc) createSearch);
-    ejsBindAccess(ejs, type, ES_App_search, (EjsProc) getSearch, (EjsProc) setSearch);
-    ejsBindMethod(ejs, type, ES_App_eventLoop, (EjsProc) eventLoop);
-    ejsBindMethod(ejs, type, ES_App_sleep, (EjsProc) sleepProc);
+    ejsBindMethod(ejs, type, ES_App_args, (EjsProc) app_args);
+    ejsBindMethod(ejs, type, ES_App_dir, (EjsProc) app_dir);
+    ejsBindMethod(ejs, type, ES_App_chdir, (EjsProc) app_chdir);
+    ejsBindMethod(ejs, type, ES_App_exeDir, (EjsProc) app_exeDir);
+    ejsBindMethod(ejs, type, ES_App_exePath, (EjsProc) app_exePath);
+    ejsBindMethod(ejs, type, ES_App_exit, (EjsProc) app_exit);
+    ejsBindMethod(ejs, type, ES_App_getenv, (EjsProc) app_getenv);
+    ejsBindMethod(ejs, type, ES_App_putenv, (EjsProc) app_putenv);
+#if ES_App_name && UNUSED
+    ejsBindAccess(ejs, type, ES_App_name, (EjsProc) app_name, (EjsProc) app_set_name);
+#endif
+    ejsBindMethod(ejs, type, ES_App_noexit, (EjsProc) app_noexit);
+    ejsBindMethod(ejs, type, ES_App_createSearch, (EjsProc) app_createSearch);
+    ejsBindAccess(ejs, type, ES_App_search, (EjsProc) app_search, (EjsProc) app_set_search);
+    ejsBindMethod(ejs, type, ES_App_eventLoop, (EjsProc) app_eventLoop);
+    ejsBindMethod(ejs, type, ES_App_sleep, (EjsProc) app_sleep);
 
 #if FUTURE
     (ejs, type, ES_App_permissions, (EjsProc) getPermissions,
@@ -31972,7 +31995,7 @@ static EjsObj *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
         Create a new interpreter and an "inside" worker object and pair it with the current "outside" worker.
      */
     //  TODO - must change NULL to ejs to get a master clone
-    wejs = ejsCreateVm(ejs->service, NULL, NULL, NULL, 0);
+    wejs = ejsCreateVm(ejs->service, NULL, NULL, NULL, 0, NULL, 0);
     if (wejs == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
@@ -36359,6 +36382,8 @@ static EjsObj *createHeaders(Ejs *ejs, EjsRequest *req)
     HttpConn    *conn;
     EjsName     n;
     
+    mprAssert(req->conn);
+
     conn = req->conn;
     if (req->headers == 0) {
         req->headers = (EjsObj*) ejsCreateSimpleObject(ejs);
@@ -36378,6 +36403,8 @@ static EjsObj *createFiles(Ejs *ejs, EjsRequest *req)
     EjsName         n;
     MprHash         *hp;
     int             index;
+
+    mprAssert(req->conn);
 
     if (req->files == 0) {
         conn = req->conn;
@@ -36441,6 +36468,9 @@ static EjsObj *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
     EjsName         n;
     EjsObj          *value;
 
+    if (req->conn == 0 || req->conn->receiver == 0) {
+        return (EjsObj*) ejs->nullValue;
+    }
     conn = req->conn;
     rec = conn->receiver;
 
@@ -36600,6 +36630,10 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
     HttpConn        *conn;
     HttpReceiver    *rec;
 
+    if (req->conn == 0 || req->conn->receiver == 0) {
+        ejsThrowStateError(ejs, "Request does not have a valid connection");
+        return 0;
+    }
     conn = req->conn;
     rec = conn->receiver;
 
@@ -36889,6 +36923,7 @@ EjsRequest *ejsCloneRequest(Ejs *ejs, EjsRequest *req, bool deep)
     EjsRequest  *newReq;
     HttpConn    *conn;
 
+    mprAssert(0);
     newReq = (EjsRequest*) ejsCloneObject(ejs, (EjsObj*) req, deep);
     if (newReq == 0) {
         ejsThrowMemoryError(ejs);
@@ -36927,21 +36962,15 @@ EjsRequest *ejsCreateRequest(Ejs *ejs, EjsHttpServer *server, HttpConn *conn, cc
     req->ejs = ejs;
     req->server = server;
     rec = conn->receiver;
-#if UNUSED
-    req->dir = mprGetAbsPath(req, dir);
-#else
     if (mprIsRelPath(req, dir)) {
         req->dir = mprStrdup(req, dir);
     } else {
         req->dir = mprGetRelPath(req, dir);
     }
-#endif
     req->home = makeRelativeHome(ejs, req);
     scheme = conn->secure ? "https" : "http";
     ip = conn->sock ? conn->sock->acceptIp : server->ip;
     port = conn->sock ? conn->sock->acceptPort : server->port;
-    
-    //  MOB -- should really use a symbolic server name from appweb.conf
     req->absHome = mprAsprintf(req, -1, "%s://%s:%d%s/", scheme, conn->sock->ip, server->port, rec->scriptName);
     return req;
 }
@@ -37434,14 +37463,14 @@ static EjsObj *req_worker(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     HttpConn    *conn;
 
 #if TRY
-    if ((nejs = ejsCreateVm(ejsService, ejs, NULL, NULL, 0)) == 0) {
+    if ((nejs = ejsCreateVm(ejsService, ejs, NULL, NULL, 0, NULL, 0)) == 0) {
         //  THROW
         return 0;
     }
 #else
     //  Cloning ejs would be faster
     //  MOB -- need to pick up service
-    if ((nejs = ejsCreateVm(ejsGetService(req), NULL, NULL, NULL, EJS_FLAG_MASTER)) == 0) {
+    if ((nejs = ejsCreateVm(ejsGetService(req), NULL, NULL, NULL, 0, NULL, EJS_FLAG_MASTER)) == 0) {
         //  THROW
         return 0;
     }
@@ -46376,7 +46405,7 @@ int ejsEvalFile(cchar *path)
         mprFree(mpr);
         return MPR_ERR_NO_MEMORY;
     }
-    if ((ejs = ejsCreateVm(service, NULL, NULL, NULL, 0)) == 0) {
+    if ((ejs = ejsCreateVm(service, NULL, NULL, NULL, 0, NULL, 0)) == 0) {
         mprFree(mpr);
         return MPR_ERR_NO_MEMORY;
     }
@@ -46404,7 +46433,7 @@ int ejsEvalScript(cchar *script)
         mprFree(mpr);
         return MPR_ERR_NO_MEMORY;
     }
-    if ((ejs = ejsCreateVm(service, NULL, NULL, NULL, 0)) == 0) {
+    if ((ejs = ejsCreateVm(service, NULL, NULL, NULL, 0, NULL, 0)) == 0) {
         mprFree(mpr);
         return MPR_ERR_NO_MEMORY;
     }

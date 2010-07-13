@@ -513,7 +513,7 @@ class Test {
     }
 
     function error(...msg): Void {
-        App.errorStream.write("\nutest: " + msg + "\n\n")
+        App.log.error("\nutest: " + msg + "\n\n")
         App.exit(1)
     }
 }
@@ -528,8 +528,7 @@ test.initialize()
 try {
     test.runner()
 } catch (e) { 
-    //  MOB -- error is deprecated
-    error("\nException: " + e)
+    App.log.error(e)
 }
 test.summary()
 test.exit()

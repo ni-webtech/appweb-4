@@ -242,7 +242,7 @@ MAIN(ejsMain, int argc, char **argv)
         return MPR_ERR_NO_MEMORY;
     }
     ejsInitCompiler(ejsService);
-    ejs = ejsCreateVm(ejsService, NULL, searchPath, requiredModules, 0);
+    ejs = ejsCreateVm(ejsService, NULL, searchPath, requiredModules, argc - nextArg, (cchar **) &argv[nextArg], 0);
     if (ejs == 0) {
         return MPR_ERR_NO_MEMORY;
     }
@@ -307,8 +307,11 @@ static int interpretFiles(EcCompiler *cp, MprList *files, int argc, char **argv,
     mprAssert(files);
 
     ejs = cp->ejs;
+#if UNUSED
     ejs->argc = argc;
     ejs->argv = argv;
+    mprSetAppName(cp, argv[0], argv[0], NULL);
+#endif
 
     if (ecCompile(cp, files->length, (char**) files->items) < 0) {
         mprRawLog(cp, 0, "%s", cp->errorMsg);

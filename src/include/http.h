@@ -72,15 +72,13 @@ struct MaDir;
     #define HTTP_MAX_NUM_HEADERS       20                    /**< Max number of header lines */
     #define HTTP_MAX_RECEIVE_BODY      (128 * 1024 * 1024)   /**< Maximum incoming body size */
     #define HTTP_MAX_REQUESTS          20                    /**< Max concurrent requests */
-    #define HTTP_MAX_TRANSMISSION_BODY (128 * 1024 * 1024)   /**< Max buffer for response data */
-    #define HTTP_MAX_STAGE_BUFFER      (4 * 1024)            /**< Max buffer for any stage */
-    #define HTTP_MAX_UPLOAD            (10 * 1024 * 1024)    /* Max size of uploaded document */
+    #define HTTP_MAX_STAGE_BUFFER      (16 * 1024)           /**< Max buffer for any stage */
 
 #elif BLD_TUNE == MPR_TUNE_BALANCED
     /*  
         Tune balancing speed and size
      */
-    #define HTTP_BUFSIZE               (4 * 1024)
+    #define HTTP_BUFSIZE               (8 * 1024)
     #define HTTP_CONN_MEM              ((32 * 1024) - MPR_HEAP_OVERHEAD)
     #define HTTP_REC_MEM               ((2 * 1024 * 1024) - MPR_HEAP_OVERHEAD)
     #define HTTP_MAX_CHUNK             (8 * 1024)
@@ -89,27 +87,26 @@ struct MaDir;
     #define HTTP_MAX_NUM_HEADERS       40
     #define HTTP_MAX_RECEIVE_BODY      (128 * 1024 * 1024)
     #define HTTP_MAX_REQUESTS          50
-    #define HTTP_MAX_TRANSMISSION_BODY (256 * 1024 * 1024)
     #define HTTP_MAX_STAGE_BUFFER      (32 * 1024)
-    #define HTTP_MAX_UPLOAD            0x7fffffff
 
 #else
     /*  
         Tune for speed
      */
-    #define HTTP_BUFSIZE               (8 * 1024)
+    #define HTTP_BUFSIZE               (16 * 1024)
     #define HTTP_CONN_MEM              ((64 * 1024) - MPR_HEAP_OVERHEAD)
     #define HTTP_REC_MEM               ((4 * 1024 * 1024) - MPR_HEAP_OVERHEAD)
-    #define HTTP_MAX_CHUNK             (8 * 1024) 
+    #define HTTP_MAX_CHUNK             (16 * 1024) 
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             32
     #define HTTP_MAX_NUM_HEADERS       256
     #define HTTP_MAX_RECEIVE_BODY      (256 * 1024 * 1024)
     #define HTTP_MAX_REQUESTS          1000
-    #define HTTP_MAX_TRANSMISSION_BODY 0x7fffffff
     #define HTTP_MAX_STAGE_BUFFER      (64 * 1024)
-    #define HTTP_MAX_UPLOAD            0x7fffffff
 #endif
+
+#define HTTP_MAX_TRANSMISSION_BODY (INT_MAX)             /**< Max buffer for response data */
+#define HTTP_MAX_UPLOAD            (INT_MAX)
 
 
 /*  

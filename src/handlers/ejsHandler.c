@@ -110,7 +110,7 @@ static int loadStartupScript(Http *http, HttpLocation *location)
     char        *script;
     int         ver;
 
-    ejs = ejsCreateVm(http, NULL, NULL, NULL, EJS_FLAG_MASTER);
+    ejs = ejsCreateVm(http, NULL, NULL, NULL, 0, NULL, EJS_FLAG_MASTER);
     if (ejs == 0) {
         return 0;
     }

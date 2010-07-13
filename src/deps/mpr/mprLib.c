@@ -8705,9 +8705,9 @@ void mprWaitForIO(MprWaitService *ws, int timeout)
     ws->interestCount = 1;
     unlock(ws);
 
-    LOG(ws, 7, "kevent sleep for %d", timeout);
+    LOG(ws, 8, "kevent sleep for %d", timeout);
     rc = kevent(ws->kq, ws->stableInterest, ws->stableInterestCount, ws->events, ws->eventsMax, &ts);
-    LOG(ws, 7, "kevent wakes rc %d", rc);
+    LOG(ws, 8, "kevent wakes rc %d", rc);
 
     if (rc < 0) {
         mprLog(ws, 2, "Kevent returned %d, errno %d", mprGetOsError());
