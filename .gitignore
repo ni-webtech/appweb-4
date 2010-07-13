@@ -83,3 +83,4 @@ doc/api/appweb/xml
 bin/*.manifest
 bin/*.res
 *.out
+src/test/regress/tcp
