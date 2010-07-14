@@ -6,7 +6,7 @@ defineComponent() {
 
     name="sqlite"
     path="$1"
-    search="src/jems/ejs.db.sqlite/src:src/db/sqlite:src/deps/ejs:src/ejs"
+    search="src/jems/ejs.db.sqlite/src:src/db/sqlite:src/deps/ejs"
 
     path=`probe --emit-dir --path "$path" --partial "sqlite3.c" --search "$search" $name`
     if [ "$path" = "" ] ; then

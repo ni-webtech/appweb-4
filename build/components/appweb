@@ -9,7 +9,7 @@ defineComponent() {
     search="src/deps/appweb:src/$name:src/server"
 
     if [ -f src/appweb/appweb.c ] ; then
-        path="src/appweb/appweb.c"
+        path=`canonPath "."`
         builtin=--builtin
     elif [ -d src/deps/appweb ] ; then
         path="src/deps/appweb"

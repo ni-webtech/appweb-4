@@ -24,6 +24,6 @@ defineComponent() {
         warnComponent $name
     else
         deps="$deps mpr"
-        configureComponent --path "src/ssl" --dependencies "$deps" --libs "$libs" --builtin $name
+        configureComponent --path "src/deps/mpr" --dependencies "$deps" --libs "$libs" --builtin $name
     fi
 }
