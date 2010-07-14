@@ -1227,9 +1227,6 @@ typedef struct Ejs {
     MprDispatcher       *dispatcher;        /**< Event dispatcher */
     MprList             *workers;           /**< Worker interpreters */
     MprList             *modules;           /**< Loaded modules */
-#if UNUSED
-    EjsLoadState        *loadState;         /**< State while loading modules */
-#endif
 
     void                (*loaderCallback)(struct Ejs *ejs, int kind, ...);
     void                *userData;          /**< User data */
@@ -1240,9 +1237,6 @@ typedef struct Ejs {
 
     Http                *http;              /**< Http service object (copy of EjsService.http) */
     HttpLocation        *location;          /**< Current HttpLocation object for web start scripts */
-#if UNUSED
-    struct EjsObj       *emitter;           /**< Event emitter */
-#endif
 
     struct EjsObj       *sessions;          /**< Session cache */
     struct EjsType      *sessionType;       /**< Session type object */
@@ -2274,7 +2268,7 @@ extern EjsBoolean *ejsToBoolean(Ejs *ejs, EjsObj *vp);
     If numeric values are read or written, they will be encoded according to the value of the endian property 
     which can be set to either LittleEndian or BigEndian. 
     \n\n
-    In Stream mode ByteArrays can be configured to run in sync or async mode. Adding listeners via the $addListener
+    In Stream mode ByteArrays can be configured to run in sync or async mode. Adding observers via the $addObserver
     method will put a stream into async mode. Events will then be issued for close, eof, read and write events.
     @stability Evolving
     @defgroup EjsByteArray EjsByteArray
@@ -3287,8 +3281,8 @@ extern int ejsAppendAttributeToXML(Ejs *ejs, EjsXML *parent, EjsXML *node);
 extern EjsXML *ejsCreateXMLList(Ejs *ejs, EjsXML *targetObject, EjsName *targetProperty);
 
 
-extern int ejsAddListener(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener);
-extern int ejsRemoveListener(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsObj *listener);
+extern int ejsAddObserver(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener);
+extern int ejsRemoveObserver(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsObj *listener);
 extern int ejsSendEventv(Ejs *ejs, EjsObj *emitter, cchar *name, int argc, EjsObj **argv);
 extern int ejsSendEvent(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *arg);
 

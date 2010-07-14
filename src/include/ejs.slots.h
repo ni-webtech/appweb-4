@@ -222,31 +222,32 @@
 #define ES_App__inputStream                                            4
 #define ES_App__outputStream                                           5
 #define ES_App_defaultConfig                                           6
-#define ES_App_args                                                    7
-#define ES_App_dir                                                     8
-#define ES_App_chdir                                                   9
-#define ES_App_emitter                                                 10
-#define ES_App_exeDir                                                  11
-#define ES_App_exePath                                                 12
-#define ES_App_errorStream                                             13
-#define ES_App_exit                                                    14
-#define ES_App_getenv                                                  15
-#define ES_App_inputStream                                             16
-#define ES_App_log                                                     17
-#define ES_App_name                                                    18
-#define ES_App_noexit                                                  19
-#define ES_App_outputStream                                            20
-#define ES_App_putenv                                                  21
-#define ES_App_search                                                  22
-#define ES_App_createSearch                                            23
-#define ES_App_eventLoop                                               24
-#define ES_App_sleep                                                   25
-#define ES_App_title                                                   26
-#define ES_App_version                                                 27
-#define ES_App_searchPath                                              28
-#define ES_App_serviceEvents                                           29
-#define ES_App_loadrc                                                  30
-#define ES_App_NUM_CLASS_PROP                                          31
+#define ES_App_emitter                                                 7
+#define ES_App_log                                                     8
+#define ES_App_name                                                    9
+#define ES_App_title                                                   10
+#define ES_App_version                                                 11
+#define ES_App_args                                                    12
+#define ES_App_createSearch                                            13
+#define ES_App_eventLoop                                               14
+#define ES_App_chdir                                                   15
+#define ES_App_dir                                                     16
+#define ES_App_exeDir                                                  17
+#define ES_App_exePath                                                 18
+#define ES_App_errorStream                                             19
+#define ES_App_exit                                                    20
+#define ES_App_getenv                                                  21
+#define ES_App_inputStream                                             22
+#define ES_App_loadrc                                                  23
+#define ES_App_noexit                                                  24
+#define ES_App_outputStream                                            25
+#define ES_App_putenv                                                  26
+#define ES_App_search                                                  27
+#define ES_App_sleep                                                   28
+#define ES_App_searchPath                                              29
+#define ES_App_serviceEvents                                           30
+#define ES_App_waitForEvent                                            31
+#define ES_App_NUM_CLASS_PROP                                          32
 
 /*
    Prototype (instance) slots for "App" type 
@@ -257,20 +258,23 @@
 /*
     Local slots for methods in type "App" 
  */
-#define ES_App_chdir_value                                             0
-#define ES_App_exit_status                                             0
-#define ES_App_getenv_name                                             0
-#define ES_App_noexit_exit                                             0
-#define ES_App_putenv_name                                             0
-#define ES_App_putenv_value                                            1
 #define ES_App_createSearch_searchPath                                 0
 #define ES_App_eventLoop_timeout                                       0
 #define ES_App_eventLoop_oneEvent                                      1
+#define ES_App_chdir_value                                             0
+#define ES_App_exit_status                                             0
+#define ES_App_getenv_name                                             0
+#define ES_App_loadrc_path                                             0
+#define ES_App_loadrc_overwrite                                        1
+#define ES_App_noexit_exit                                             0
+#define ES_App_putenv_name                                             0
+#define ES_App_putenv_value                                            1
 #define ES_App_sleep_delay                                             0
 #define ES_App_serviceEvents_count                                     0
 #define ES_App_serviceEvents_timeout                                   1
-#define ES_App_loadrc_path                                             0
-#define ES_App_loadrc_overwrite                                        1
+#define ES_App_waitForEvent_obj                                        0
+#define ES_App_waitForEvent_events                                     1
+#define ES_App_waitForEvent_timeout                                    2
 #define ES_Array_NUM_CLASS_PROP                                        0
 
 /*
@@ -1020,50 +1024,52 @@
 #define ES_Http_del                                                    10
 #define ES_Http_encoding                                               11
 #define ES_Http_expires                                                12
-#define ES_Http_finalize                                               13
-#define ES_Http_flush                                                  14
-#define ES_Http_followRedirects                                        15
-#define ES_Http_form                                                   16
-#define ES_Http_get                                                    17
-#define ES_Http_getRequestHeaders                                      18
-#define ES_Http_head                                                   19
-#define ES_Http_header                                                 20
-#define ES_Http_headers                                                21
-#define ES_Http_isSecure                                               22
-#define ES_Http_key                                                    23
-#define ES_Http_lastModified                                           24
-#define ES_Http_method                                                 25
-#define ES_Http_options                                                26
-#define ES_Http_post                                                   27
-#define ES_Http_put                                                    28
-#define ES_Http_read                                                   29
-#define ES_Http_readString                                             30
-#define ES_Http_readLines                                              31
-#define ES_Http_readXml                                                32
-#define ES_Http_removeObserver                                         33
-#define ES_Http_response                                               34
-#define ES_Http_retries                                                35
-#define ES_Http_setCredentials                                         36
-#define ES_Http_setHeader                                              37
-#define ES_Http_setHeaders                                             38
-#define ES_Http_status                                                 39
-#define ES_Http_statusMessage                                          40
-#define ES_Http_success                                                41
-#define ES_Http_timeout                                                42
-#define ES_Http_trace                                                  43
-#define ES_Http_upload                                                 44
-#define ES_Http_uri                                                    45
-#define ES_Http_wait                                                   46
-#define ES_Http_write                                                  47
-#define ES_Http_addHeader                                              48
-#define ES_Http_bodyLength                                             49
-#define ES_Http_code                                                   50
-#define ES_Http_codeString                                             51
-#define ES_Http_available                                              52
-#define ES_Http_contentEncoding                                        53
-#define ES_Http_setCallback                                            54
-#define ES_Http_chunked                                                55
-#define ES_Http_NUM_INSTANCE_PROP                                      56
+#define ES_Http_xh                                                     13
+#define ES_Http_fetch                                                  14
+#define ES_Http_finalize                                               15
+#define ES_Http_flush                                                  16
+#define ES_Http_followRedirects                                        17
+#define ES_Http_form                                                   18
+#define ES_Http_get                                                    19
+#define ES_Http_getRequestHeaders                                      20
+#define ES_Http_head                                                   21
+#define ES_Http_header                                                 22
+#define ES_Http_headers                                                23
+#define ES_Http_isSecure                                               24
+#define ES_Http_key                                                    25
+#define ES_Http_lastModified                                           26
+#define ES_Http_method                                                 27
+#define ES_Http_options                                                28
+#define ES_Http_post                                                   29
+#define ES_Http_put                                                    30
+#define ES_Http_read                                                   31
+#define ES_Http_readString                                             32
+#define ES_Http_readLines                                              33
+#define ES_Http_readXml                                                34
+#define ES_Http_removeObserver                                         35
+#define ES_Http_response                                               36
+#define ES_Http_retries                                                37
+#define ES_Http_setCredentials                                         38
+#define ES_Http_setHeader                                              39
+#define ES_Http_setHeaders                                             40
+#define ES_Http_status                                                 41
+#define ES_Http_statusMessage                                          42
+#define ES_Http_success                                                43
+#define ES_Http_timeout                                                44
+#define ES_Http_trace                                                  45
+#define ES_Http_upload                                                 46
+#define ES_Http_uri                                                    47
+#define ES_Http_wait                                                   48
+#define ES_Http_write                                                  49
+#define ES_Http_addHeader                                              50
+#define ES_Http_bodyLength                                             51
+#define ES_Http_code                                                   52
+#define ES_Http_codeString                                             53
+#define ES_Http_available                                              54
+#define ES_Http_contentEncoding                                        55
+#define ES_Http_setCallback                                            56
+#define ES_Http_chunked                                                57
+#define ES_Http_NUM_INSTANCE_PROP                                      58
 #define ES_Http_NUM_INHERITED_PROP                                     0
 
 /*
@@ -1894,12 +1900,12 @@
 /*
    Prototype (instance) slots for "XMLHttp" type 
  */
-#define ES_XMLHttp_http                                                0
+#define ES_XMLHttp_hp                                                  0
 #define ES_XMLHttp_state                                               1
 #define ES_XMLHttp_response                                            2
 #define ES_XMLHttp_onreadystatechange                                  3
 #define ES_XMLHttp_abort                                               4
-#define ES_XMLHttp_httpObject                                          5
+#define ES_XMLHttp_http                                                5
 #define ES_XMLHttp_readyState                                          6
 #define ES_XMLHttp_responseText                                        7
 #define ES_XMLHttp_responseXML                                         8
@@ -1911,9 +1917,8 @@
 #define ES_XMLHttp_open                                                14
 #define ES_XMLHttp_send                                                15
 #define ES_XMLHttp_setRequestHeader                                    16
-#define ES_XMLHttp_callback                                            17
-#define ES_XMLHttp_notify                                              18
-#define ES_XMLHttp_NUM_INSTANCE_PROP                                   19
+#define ES_XMLHttp_notify                                              17
+#define ES_XMLHttp_NUM_INSTANCE_PROP                                   18
 #define ES_XMLHttp_NUM_INHERITED_PROP                                  0
 #define ES_XMLList_NUM_CLASS_PROP                                      0
 
@@ -1943,7 +1948,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1296863
+#define _ES_CHECKSUM_ejs   1299779
 
 #endif
 /*

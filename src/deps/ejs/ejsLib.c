@@ -3278,7 +3278,7 @@ static void *opcodeJump[] = {
         CASE (EJS_OP_INIT_DEFAULT_ARGS_8): {
             int tableSize, numNonDefault;
             tableSize = (schar) GET_BYTE();
-            numNonDefault = FRAME->function.numArgs - FRAME->function.numDefault;
+            numNonDefault = FRAME->function.numArgs - FRAME->function.numDefault - FRAME->function.rest;
             offset = FRAME->argc - numNonDefault;
             if (offset < 0 || offset > tableSize) {
                 offset = tableSize;
@@ -4374,8 +4374,8 @@ static int validateArgs(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
     mprAssert(ejs->exception == 0);
     mprAssert(ejs->state->fp == 0 || ejs->state->fp->attentionPc == 0);
 
-    nonDefault = fun->numArgs - fun->numDefault;
     activation = fun->activation;
+    nonDefault = fun->numArgs - fun->numDefault - fun->rest;
 
     if (argc < nonDefault) {
         if (!fun->rest || argc != (fun->numArgs - 1)) {
@@ -4391,7 +4391,6 @@ static int validateArgs(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
             }
         }
     }
-
     if ((uint) argc > fun->numArgs && !fun->rest) {
         /*
             Discard excess arguments for scripted functions. No need to discard for native procs. This allows
@@ -4406,7 +4405,7 @@ static int validateArgs(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
     /*
         Handle rest "..." args
      */
-    if (fun->rest) {
+    if (fun->rest && (argc > nonDefault || fun->numDefault == 0)) {
         numRest = argc - fun->numArgs + 1;
         rest = ejsCreateArray(ejs, numRest);
         if (rest == 0) {
@@ -4803,7 +4802,11 @@ static void createExceptionBlock(Ejs *ejs, EjsEx *ex, int flags)
         for (i = 0; i < count && count > 0; i++) {
             ejsPopBlock(ejs);
         }
+#if OLD
         count = (state->stack - fp->stackReturn - fp->argc);
+#else
+        count = state->stack - fp->stackBase;
+#endif
         state->stack -= (count - ex->numStack);
         mprAssert(state->stack >= fp->stackReturn);
     }
@@ -9239,7 +9242,7 @@ static int runSpecificMethod(Ejs *ejs, cchar *className, cchar *methodName)
 }
 
 
-int ejsAddListener(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener)
+int ejsAddObserver(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener)
 {
     EjsObj      *emitter, *argv[2];
     EjsArray    *list;
@@ -9268,18 +9271,18 @@ int ejsAddListener(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener
 }
 
 
-#if ES_Emitter_hasListeners
-int ejsHasListeners(Ejs *ejs, EjsObj *emitter)
+#if ES_Emitter_hasObservers
+int ejsHasObservers(Ejs *ejs, EjsObj *emitter)
 {
     if (emitter) {
-        ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_hasListeners, 0, NULL);
+        ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_hasObservers, 0, NULL);
     }
     return 0;
 }
 #endif
 
 
-int ejsRemoveListener(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsObj *listener)
+int ejsRemoveObserver(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsObj *listener)
 {
     EjsObj      *argv[2];
     EjsArray    *list;
@@ -13256,7 +13259,7 @@ static EjsObj *ba_ByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_observe(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    ejsAddListener(ejs, &ap->emitter, argv[0], argv[1]);
+    ejsAddObserver(ejs, &ap->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -13821,7 +13824,7 @@ static EjsObj *ba_reset(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_removeObserver(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    ejsRemoveListener(ejs, ap->emitter, argv[0], argv[1]);
+    ejsRemoveObserver(ejs, ap->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -18658,11 +18661,17 @@ static EjsObj *httpConstructor(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 
 
 /*  
-    function observe(name, listener: function): Void
+    function observe(name, observer: function): Void
  */
 EjsObj *http_observe(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    ejsAddListener(ejs, &hp->emitter, argv[0], argv[1]);
+    EjsFunction     *observer;
+
+    observer = (EjsFunction*) argv[1];
+    if (observer->boundThis == 0 || observer->boundThis == ejs->global) {
+        observer->boundThis = (EjsObj*) hp;
+    }
+    ejsAddObserver(ejs, &hp->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -19129,11 +19138,11 @@ static EjsObj *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 
 
 /*  
-    function removeObserver(name, listener: function): Void
+    function removeObserver(name, observer: function): Void
  */
 EjsObj *http_removeObserver(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    ejsRemoveListener(ejs, hp->emitter, argv[0], argv[1]);
+    ejsRemoveObserver(ejs, hp->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -22683,9 +22692,7 @@ static EjsName getObjectPropertyName(Ejs *ejs, EjsObj *obj, int slotNum)
     EjsName     qname;
 
     mprAssert(obj);
-    mprAssert(obj->slots);
     mprAssert(slotNum >= 0);
-    mprAssert(slotNum < obj->numSlots);
 
     if (slotNum < 0 || slotNum >= obj->numSlots) {
         qname.name = 0;
@@ -26672,7 +26679,7 @@ static EjsObj *sock_Socket(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
  */
 EjsObj *sock_observe(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    ejsAddListener(ejs, &sp->emitter, argv[0], argv[1]);
+    ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -26899,7 +26906,7 @@ static EjsObj *sock_remoteAddress(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **ar
  */
 static EjsObj *sock_removeObserver(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    ejsRemoveListener(ejs, sp->emitter, argv[0], argv[1]);
+    ejsRemoveObserver(ejs, sp->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -35810,7 +35817,7 @@ static EjsObj *hs_HttpServer(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **arg
 static EjsObj *hs_observe(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     //  TODO -- should fire if currently readable / writable (also socket etc)
-    ejsAddListener(ejs, &sp->emitter, argv[0], argv[1]);
+    ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -35967,7 +35974,7 @@ static EjsObj *hs_port(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
  */
 static EjsObj *hs_removeObserver(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
-    ejsRemoveListener(ejs, sp->emitter, argv[0], argv[1]);
+    ejsRemoveObserver(ejs, sp->emitter, argv[0], argv[1]);
     return 0;
 }
 #endif
@@ -36715,7 +36722,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
 static EjsObj *req_observe(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
     //  MOB - must issue writable + readable if data available
-    ejsAddListener(ejs, &req->emitter, argv[0], argv[1]);
+    ejsAddObserver(ejs, &req->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -36832,7 +36839,7 @@ static EjsObj *req_read(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
  */
 static EjsObj *req_removeObserver(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    ejsRemoveListener(ejs, req->emitter, argv[0], argv[1]);
+    ejsRemoveObserver(ejs, req->emitter, argv[0], argv[1]);
     return 0;
 }
 #endif
@@ -42626,7 +42633,7 @@ static void genBoundName(EcCompiler *cp, EcNode *np)
     } else if (ejsIsFunction(lookup->obj) && lookup->nthBlock == 0) {
         genLocalName(cp, lookup->slotNum);
 #else
-    } else if (lookup->obj == (EjsObj*) state->currentFunction) {
+    } else if (lookup->obj == (EjsObj*) state->currentFunction->activation) {
         genLocalName(cp, lookup->slotNum);
 #endif
 
@@ -43832,11 +43839,13 @@ static void genForIn(EcCompiler *cp, EcNode *np)
  */
 static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun)
 {
+    Ejs             *ejs;
     EcNode          *parameters, *child;
     EcState         *state;
     EcCodeGen       **buffers, *saveCode;
     int             next, len, needLongJump, count, firstDefault;
 
+    ejs = cp->ejs;
     state = cp->state;
     saveCode = state->code;
 
@@ -43853,7 +43862,21 @@ static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun
             genAssignOp(cp, child->left);
         }
     }
-    firstDefault = fun->numArgs - fun->numDefault;
+    if (fun->rest) {
+        buffers[count - 1] = state->code = allocCodeBuffer(cp);
+        ecEncodeOpcode(cp, EJS_OP_NEW_ARRAY);
+        ecEncodeGlobal(cp, (EjsObj*) ejs->arrayType, &ejs->arrayType->qname);
+        ecEncodeNumber(cp, 0);
+        pushStack(cp, 1);
+        //  MOB -- convenience routine
+        if (fun->numArgs < 10) {
+            ecEncodeOpcode(cp, EJS_OP_PUT_LOCAL_SLOT_0 + fun->numArgs - 1);
+        } else {
+            ecEncodeOpcode(cp, EJS_OP_PUT_LOCAL_SLOT);
+            ecEncodeNumber(cp, fun->numArgs - 1);
+        }
+    }
+    firstDefault = fun->numArgs - fun->numDefault - fun->rest;
     mprAssert(firstDefault >= 0);
     needLongJump = cp->optimizeLevel > 0 ? 0 : 1;
 
@@ -43878,9 +43901,9 @@ static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun
         We have one more entry in the table to jump over the entire computed jump section.
      */
     ecEncodeOpcode(cp, (needLongJump) ? EJS_OP_INIT_DEFAULT_ARGS: EJS_OP_INIT_DEFAULT_ARGS_8);
-    ecEncodeByte(cp, fun->numDefault + 1);
+    ecEncodeByte(cp, fun->numDefault + fun->rest + 1);
 
-    len = (fun->numDefault + 1) * ((needLongJump) ? 4 : 1);
+    len = (fun->numDefault + fun->rest + 1) * ((needLongJump) ? 4 : 1);
 
     for (next = firstDefault; next < count; next++) {
         if (buffers[next] == 0) {

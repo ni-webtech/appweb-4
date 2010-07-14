@@ -2057,6 +2057,8 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     mprAssert(url && *url);
 
     if (conn->server) {
+        httpSetState(conn, HTTP_STATE_ERROR);
+        httpSetState(conn, HTTP_STATE_COMPLETE);
         return MPR_ERR_BAD_STATE;
     }
     mprLog(conn, 4, "Http: client request: %s %s", method, url);
@@ -2079,10 +2081,13 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     trans->parsedUri = httpCreateUri(trans, url, 0);
 
     if (openConnection(conn, url) == 0) {
+        httpSetState(conn, HTTP_STATE_ERROR);
         httpSetState(conn, HTTP_STATE_COMPLETE);
         return MPR_ERR_CANT_OPEN;
     }
     if ((headers = createHeaderPacket(conn)) == 0) {
+        httpSetState(conn, HTTP_STATE_ERROR);
+        httpSetState(conn, HTTP_STATE_COMPLETE);
         return MPR_ERR_CANT_INITIALIZE;
     }
     mprAssert(conn->writeq);

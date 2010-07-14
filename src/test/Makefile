@@ -73,7 +73,7 @@ valgrindTest:
 	fi
 
 server: 
-	$(BLD_BIN_DIR)/appweb --name APPWEB --log stdout:1
+	$(BLD_BIN_DIR)/appweb --log stdout:1
 
 first:
 	utest -n -v -i 9999999 --threads 8 ; \

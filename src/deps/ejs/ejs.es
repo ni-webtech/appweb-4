@@ -100,6 +100,32 @@ module ejs {
             }
         }
 
+        /**
+            Default event Emitter for the application
+         */
+        static var emitter: Emitter = new Emitter
+
+        /** 
+            Default application logger. This is set to stderr unless the program specifies an output log via the --log 
+            command line switch.
+         */
+        public static var log: Logger
+
+        /** 
+            Application name. Set to a single word, lower-case name for the application.
+         */
+        static var name: String
+
+        /** 
+            Application title name. Multi-word, Camel Case name for the application suitable for display.
+         */
+        static var title: String
+
+        /** 
+            Application version string. Set to a version string of the format Major.Minor.Patch-Build. For example: 1.1.2-3.
+         */
+        static var version: String
+
         /** 
             Application command line arguments. Set to an array containing each of the arguments. If the ejs command 
                 is invoked as "ejs script arg1 arg2", then args[0] will be "script", args[1] will be "arg1" etc.
@@ -107,10 +133,21 @@ module ejs {
         native static function get args(): Array
 
         /** 
-            The application's current directory
-            @return the path to the current directory
+            Create a search path array.
+            @param searchPath String containing a colon separated (or semi-colon on Windows) set of paths.
+                If search path is null, the default system search paths are returned
+            @return An array of search paths.
          */
-        native static function get dir(): Path
+        native static function createSearch(searchPath: String? = null): Array
+
+        /** 
+            Run the event loop. This is typically done automatically by the hosting program and is not normally required
+            in user programs.
+            @param timeout Timeout to block waiting for an event in milliseconds before returning. If an event occurs, the
+                call returns immediately.
+            @param oneEvent If true, return immediately after servicing one event.
+         */
+        native static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): Void
 
         /** 
             Change the application's Working directory
@@ -118,10 +155,12 @@ module ejs {
          */
         native static function chdir(value: Object): Void
 
-        /**
-            Default event Emitter for the application
+        /** 
+            The application's current directory
+            @return the path to the current directory
          */
-        static var emitter: Emitter = new Emitter
+        native static function get dir(): Path
+
 
         /** 
             The directory containing the application executable
@@ -135,14 +174,11 @@ module ejs {
 
         /** 
             The application's standard error file stream
+            Set the standard error stream. Changing the error stream will close and reopen stderr.
          */
         static function get errorStream(): Stream
             _errorStream
 
-        /** 
-            Set the standard error stream. Changing the error stream will close and reopen stderr.
-            @param stream The output stream.
-         */
         static function set errorStream(stream: Stream): Void {
             _errorStream = stream
             if (stderr) {
@@ -166,15 +202,11 @@ module ejs {
         native static function getenv(name: String): String
 
         /** 
-            The application's standard input file stream
+            Set the standard input stream. Changing the input stream will close and reopen stdin.
          */
         static function get inputStream(): Stream
             _inputStream
 
-        /** 
-            Set the standard input stream. Changing the input stream will close and reopen stdin.
-            @param stream The input stream.
-         */
        static function set inputStream(stream: Stream): Void {
             _inputStream = stream
             if (stdin) {
@@ -183,31 +215,31 @@ module ejs {
             stdin = TextStream(_inputStream)
         }
         
-        //  TODO - move to locale
+        /**
+            Load an "ejsrc" configuration file
+            This loads an Ejscript configuration file and blends the contents with App.config. 
+            @param path Path name of the file to load
+            @param overwrite If true, then new configuration values overwrite existing values in App.config.
+         */
+        static function loadrc(path: Path, overwrite: Boolean = true) {
+            if (path.exists) {
+                try {
+                    blend(App.config, path.readJSON(), overwrite)
+                } catch (e) {
+                    errorStream.write(App.exePath.basename +  " Can't parse " + path + ": " + e + "\n")
+                }
+            }
+        }
+
+        //  MOB TODO - move to locale
         /** 
             Get the current language locale for this application
             @hide
          */
         # FUTURE
         native static function get locale(): String
-
-        //  TODO - move to a Locale class
-        /** 
-            Set the current language locale
-         */
         # FUTURE
         native static function set locale(locale: String): Void
-
-        /** 
-            Default application logger. This is set to stderr unless the program specifies an output log via the --log 
-            command line switch.
-         */
-        public static var log: Logger
-
-        /** 
-            Application name. Set to a single word, lower-case name for the application.
-         */
-        static var name: String
 
         //  MOB TODO need a better name than noexit, TODO could add a max delay option.
         /** 
@@ -219,15 +251,11 @@ module ejs {
         native static function noexit(exit: Boolean = true): Void
 
         /** 
-            The application's standard output file stream
+            The standard output stream. Changing the output stream will close and reopen stdout.
          */
         static function get outputStream(): Stream
             _outputStream
 
-        /** 
-            Set the standard output stream. Changing the output stream will close and reopen stdout.
-            @param stream The output stream.
-         */
         static function set outputStream(stream: Stream): Void {
             _outputStream = stream
             if (stdout) {
@@ -247,29 +275,7 @@ module ejs {
             The current module search path. Set to an array of Paths.
          */
         native static function get search(): Array
-
-        /** 
-            Set the current module search path
-            @param paths An array of paths
-         */
         native static function set search(paths: Array): Void
-
-        /** 
-            Create a search path array.
-            @param searchPath String containing a colon separated (or semi-colon on Windows) set of paths.
-                If search path is null, the default system search paths are returned
-            @return An array of search paths.
-         */
-        native static function createSearch(searchPath: String? = null): Array
-
-        /** 
-            Run the event loop. This is typically done automatically by the hosting program and is not normally required
-            in user programs.
-            @param timeout Timeout to block waiting for an event in milliseconds before returning. If an event occurs, the
-                call returns immediately.
-            @param oneEvent If true, return immediately after servicing one event.
-         */
-        native static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): Void
 
         /** 
             Set an environment variable.
@@ -286,21 +292,12 @@ module ejs {
          */
         native static function sleep(delay: Number = -1): Void
 
-        /** 
-            Application title name. Multi-word, Camel Case name for the application suitable for display.
-         */
-        static var title: String
-
-        /** 
-            Application version string. Set to a version string of the format Major.Minor.Patch-Build. For example: 1.1.2-3.
-         */
-        static var version: String
-
         //  DEPRECATED
         /** 
             The current module search path . Set to a delimited searchPath string. Warning: This will be changed to an
             array of paths in a future release.
             @stability deprecated.
+            @deprecate
             @hide
          */
         static function get searchPath(): String {
@@ -310,12 +307,6 @@ module ejs {
                 return search.join(":")
             }
         }
-
-        //  DEPRECATED
-        /** 
-            @stability deprecated.
-            @hide
-         */
         static function set searchPath(path: String): Void {
             if (Config.OS == "WIN") {
                 search = path.split(";")
@@ -343,20 +334,20 @@ module ejs {
             }
         }
 
-        /**
-            Load an "ejsrc" configuration file
-            This loads an Ejscript configuration file and blends the contents with App.config. 
-            @param path Path name of the file to load
-            @param overwrite If true, then new configuration values overwrite existing values in App.config.
+        /** @hide
+            Wait for an event
+            @param Observable object
+            @param events Events to consider
+            @param timeout Timeout in milliseconds
          */
-        static function loadrc(path: Path, overwrite: Boolean = true) {
-            if (path.exists) {
-                try {
-                    blend(App.config, path.readJSON(), overwrite)
-                } catch (e) {
-                    errorStream.write(App.exePath.basename +  " Can't parse " + path + ": " + e + "\n")
-                }
-            }
+        static function waitForEvent(obj: *, events: Object, timeout: Number = Number.MaxInt32): Boolean {
+            let done
+            function callback(event) done = true
+            obj.observe(events, callback)
+            for (let mark = new Date; !done && mark.elapsed < timeout; )
+                App.eventLoop(timeout - mark.elapsed, 1)
+            obj.removeObserver(events, callback)
+            return done
         }
     }
 
@@ -1679,8 +1670,9 @@ module ejs {
             @duplicate Stream.read
             Data is read from the current read $position pointer toward the current $writePosition. 
             This byte array's $readPosition is updated. If offset is < 0, then data is copied to the destination buffer's 
-            $writePosition and the destination buffer's $writePosition is also updated. If the offset is >= 0, the read 
-            and write positions of the destination buffer are updated.
+            $writePosition and the destination buffer's $writePosition is also updated. If the offset is >= 0, the 
+            read position is set to the specified offset and data is stored at this offset. The write position is set to
+            one past the last byte read.
          */
         native function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number
 
@@ -3329,7 +3321,7 @@ module ejs {
             The name can be a string or an array of event strings.
             @param callback Function to call when the event is received.
          */
-        function observe(name: Object, callback: Function): Void {
+        function observe(name: Object!, callback: Function!): Void {
             if (name is String) {
                 addOneObserver(name, callback)
             } else if (name is Array) {
@@ -3337,7 +3329,7 @@ module ejs {
                     addOneObserver(n, callback)
                 }
             } else {
-                throw new Error("Bad name type for observe")
+                throw new Error("Bad name type for observe: " + typeOf(name))
             }
         }
 
@@ -3378,7 +3370,7 @@ module ejs {
             @param name Event name to fire to the observers.
             @param args Args to pass to the observer callback
          */
-        function fire(name: String, ...args): Void {
+        function fire(name: String!, ...args): Void {
             let observers: Array? = endpoints[name]
             if (observers) {
                 for each (var e: Endpoint in observers) {
@@ -5157,13 +5149,16 @@ module ejs {
 
         /** 
             @duplicate Stream.observe
+            All events are called with the following signature.  The "this" object will be set to the instance object
+            if the callback is a method. Otherwise, "this" will be set to the Http instance. If Function.bind may also
+            be used to define the "this" object and to inject additional callback arguments. 
+                function (event: String, http: Http): Void
             @event headers Issued when the response headers have been fully received.
             @event readable Issued when some body content is available.
             @event writable Issued when the connection is writable to accept body data (PUT, POST).
-            @event complete Issued when the request completes
-            @event error Issued if the request does not complete successfully.
-            All events are called with the signature:
-                function (event: String, http: Http): Void
+            @event complete Issued when the request completes. Complete is always issued whether the request errors or not.
+            @event error Issued if the request does not complete successfully. This is not issued if the request 
+                ompletes successfully but with a non 200 Http status code.
          */
         native function observe(name, observer: Function): Void
 
@@ -5202,8 +5197,8 @@ module ejs {
             @param uri New uri to use. This overrides any previously defined uri for the Http object.
             @param data Data objects to send with the request. Data is written raw and is not encoded or converted. 
                 However, the routine intelligently handles arrays such that, each element of the array will be written. 
-            @throws IOError if the request cannot be issued to the remote server.
-            @event connect Issued a "connect" event when the connection is complete.
+            @throws IOError if the request cannot be issued to the remote server. Once the connection has been made, 
+                exceptions will not be thrown and $status must be consulted for request status.
          */
         native function connect(uri: Uri? = null, ...data): Void
 
@@ -5213,12 +5208,6 @@ module ejs {
             @hide
          */
         native function get certificate(): Path
-
-        /** 
-            @duplicate Http.certificate
-            @param certFile The name of the certificate file.
-            @throws IOError if the file does not exist.
-         */
         native function set certificate(certFile: Path): Void
 
         /** 
@@ -5253,11 +5242,6 @@ module ejs {
         function get encoding(): String
             "utf-8"
 
-        /** 
-            @duplicate Http.encoding
-            @param enc String representing the encoding scheme
-            @hide
-         */
         function set encoding(enc: String): Void {
             throw "Not yet implemented"
         }
@@ -5267,6 +5251,23 @@ module ejs {
             When the response content expires. This is derrived from the response Http Expires header.
          */
         native function get expires(): Date
+
+        //  MOB -- Is this required to stop xh being GC'd
+        private var xh: XMLHttp
+
+//  MOB -- should there be an arg for body?
+        /** @hide
+            Fetch a URL asynchronously. This is a convenience method to invoke an Http method without waiting. 
+            @param method Http method. This is typically "GET" or "POST"
+            @param callback Function to invoke
+          */
+        function fetch(method: String, uri: Uri, callback: Function) {
+            xh = XMLHttp(this)
+            xh.open(method, uri)
+            xh.send(null)
+            xh.onreadystatechange = callback
+            _response = xh.response
+        }
 
         /** 
             Signals the end of write data. If using chunked writes (no content length specified), finalize() must
@@ -5282,15 +5283,9 @@ module ejs {
         function flush(dir: Number = Stream.BOTH): Void {}
 
         /** 
-            Get whether redirects should be automatically followed by this Http object.
-            @return True if redirects are automatically followed.
+            Control whether redirects should be automatically followed by this Http object. Default is true.
          */
         native function get followRedirects(): Boolean
-
-        /** 
-            Eanble or disable following redirects from the connection remove server. Default is true.
-            @param flag Set to true to follow redirects.
-         */
         native function set followRedirects(flag: Boolean): Void
 
         /** 
@@ -5312,7 +5307,8 @@ module ejs {
                 a previously defined uri.
             @param data Data objects to send with the request. Data is written raw and is not encoded or converted. 
                 However, the routine intelligently handles arrays such that, each element of the array will be written. 
-            @throws IOError if the request cannot be issued to the remote server.
+            @throws IOError if the request cannot be issued to the remote server. Once the connection has been made, 
+                exceptions will not be thrown and $status must be consulted for request status.
          */
         native function get(uri: Uri? = null, ...data): Void
 
@@ -5355,13 +5351,6 @@ module ejs {
             @hide
          */
         native function get key(): Path
-
-        /** 
-            @duplicate Http.key
-            @param keyFile The name of the key file.
-            @throws IOError if the file does not exist.
-            @hide
-         */
         native function set key(keyFile: Path): Void
 
         /** 
@@ -5371,15 +5360,10 @@ module ejs {
         native function get lastModified(): Date
 
         /** 
-            Http request method for this Http object.
+            Http request method for this Http object. Default is "GET". Typical methods are: GET, POST, HEAD, OPTIONS, 
+            PUT, DELETE and TRACE.
          */
         native function get method(): String
-
-        /** 
-            Set or reset the Http object's request method. Default method is GET.
-            @param name The method name as a string.
-            @throws IOError if the request is not GET, POST, HEAD, OPTIONS, PUT, DELETE or TRACE.
-         */
         native function set method(name: String)
 
         /** 
@@ -5471,13 +5455,6 @@ module ejs {
             @hide
          */
         native function get retries(): Number
-
-        /** 
-            Define the number of retries of a request. Retries are essential as the HTTP protocol permits a server or
-            network to be unreliable. The default retries is 2.
-            @param count Number of retries. A retry count of 1 will retry a failed request once.
-            @hide
-         */
         native function set retries(count: Number): Void
 
         /** 
@@ -5527,11 +5504,6 @@ module ejs {
             this time period, it will be retried or aborted.
          */
         native function get timeout(): Number
-
-        /** 
-            Set the request timeout.
-            @param timeout Number of milliseconds to complete while attempting requests. -1 means no timeout.
-         */
         native function set timeout(timeout: Number): Void
 
         /** 
@@ -5594,13 +5566,6 @@ module ejs {
             The current Uri for this Http object. The Uri is used for the request URL when making a $connect call.
          */
         native function get uri(): Uri
-
-        /** 
-            Set the Http object's Uri. The Uri is used for the request URL when making a $connect call.
-            @param newUri The new Uri as a Uri object. If a string is supplied it will automatically be cast to a Uri
-                object before making the call.
-            @throws IOError if the Uri is malformed.
-         */
         native function set uri(newUri: Uri): Void
 
         /** 
@@ -5634,7 +5599,6 @@ module ejs {
         function get bodyLength(): Void
             contentLength
 
-        //  DEPRECATED
         function set contentLength(value: Number): Void {
             setHeader("content-length", value)
         }
@@ -9789,7 +9753,7 @@ module ejs {
         @spec ejs
         @stability prototype
      */
-    class System {
+    enumerable class System {
 
         use default namespace public
 
@@ -11647,7 +11611,7 @@ module ejs {
 
         use default namespace public
 
-        private var http: Http = new Http
+        private var hp: Http = new Http
         private var state: Number = 0
         private var response: ByteArray
 
@@ -11676,18 +11640,23 @@ module ejs {
          */
         public var onreadystatechange: Function
 
+        function XMLHttp(http: Http? = null) {
+            hp = http || (new Http)
+            hp.async = true
+        }
+
         /**
             Abort the connection
          */
         function abort(): void
-            http.close
+            hp.close
 
         /**
             The underlying Http object
             @spec ejs
          */
-        function get httpObject() : Http
-            http
+        function get http() : Http
+            hp
 
         /**
             The readystate value. This value can be compared with the XMLHttp constants: Uninitialized, Open, Sent,
@@ -11700,14 +11669,14 @@ module ejs {
             HTTP response body as a string.
          */
         function get responseText(): String
-            http.response
+            response.toString()
 
         /**
             HTTP response payload as an XML document. Set to an XML object that is the root of the HTTP request 
             response data.
          */
         function get responseXML(): XML
-            XML(http.response)
+            XML(response)
 
         /**
             Not implemented. Only for ActiveX on IE
@@ -11722,13 +11691,13 @@ module ejs {
             The HTTP status code. Set to an integer Http status code between 100 and 600.
         */
         function get status(): Number
-            http.status
+            hp.status
 
         /**
             Return the HTTP status code message
          */
         function get statusText() : String
-            http.statusMessage
+            hp.statusMessage
 
         /**
             Return the response headers
@@ -11736,8 +11705,8 @@ module ejs {
          */
         function getAllResponseHeaders(): String {
             let result: String = ""
-            for (key in http.headers) {
-                result = result.concat(key + ": " + http.headers[key] + '\n')
+            for (key in hp.headers) {
+                result = result.concat(key + ": " + hp.headers[key] + '\n')
             }
             return result
         }
@@ -11753,42 +11722,36 @@ module ejs {
         /**
             Open a connection to the web server using the supplied URL and method.
             @param method HTTP method to use. Valid methods include "GET", "POST", "PUT", "DELETE", "OPTIONS" and "TRACE"
-            @param url URL to invoke
+            @param uri URL to retrieve
             @param async If true, don't block after issuing the requeset. By defining an $onreadystatuschange callback 
                 function, the request progress can be monitored. NOTE: async mode is not supported. All calls will block.
             @param user Optional user name if authentication is required.
             @param password Optional password if authentication is required.
          */
-        function open(method: String, url: String, async: Boolean = false, user: String? = null, 
+        function open(method: String, uri: String, async: Boolean = true, user: String? = null, 
                 password: String = null): Void {
-            response = new ByteArray(System.Bufsize, 1)
-            http.async = true
-            http.method = method
-            http.uri = url
+            response = new ByteArray(System.Bufsize)
+            hp.async = async
+            hp.method = method
+            hp.uri = uri
             if (user && password) {
-                http.setCredentials(user, password)
+                hp.setCredentials(user, password)
             }
-            http.observe("readable", function (event, ...args) {
-                let http: Http = e.data
-                let count = http.read(response)
-                state = (count == 0) ? Loaded : Receiving
+            hp.observe(["complete", "error"], function (event, ...args) {
+                state = Loaded
                 notify()
             })
-            http.observe("error", function (event, ...args) {
+            hp.observe("readable", function (event, ...args) {
+                let count = hp.read(response, -1)
+                state = Receiving
                 notify()
             })
-
-            http.connect()
+            hp.connect()
             state = Open
             notify()
-
-            //  TODO - ASYNC mode is not supported. This requires the ejs event mechanism
-            if (!async || 1) {
-                let timeout = 5 * 1000
-                let when: Date = new Date
-                while (state != Loaded && when.elapsed < timeout) {
-                    App.eventLoop(timeout, true)
-                }
+            if (!async) {
+                hp.finalize()
+                App.waitForEvent(hp, "complete", hp.timeout)
             }
         }
 
@@ -11796,11 +11759,15 @@ module ejs {
             Send data with the request.
             @param content Data to send with the request.
          */
-        function send(content: String): Void {
-            if (!http.async) {
+        function send(content: String? = null): Void {
+            if (!hp.async) {
                 throw new IOError("Can't call send in sync mode")
             }
-            http.write(content)
+            if (content == null) {
+                hp.finalize()
+            } else {
+                hp.write(content)
+            }
         }
 
         /**
@@ -11811,28 +11778,18 @@ module ejs {
                 setRequestHeader("Keep-Alive", "none")
          */
         function setRequestHeader(key: String, value: String): Void
-            http.addHeader(key, value, 1)
-
-        /*
-            Http callback function
-         */
-        private function callback (event, ...args) {
-            if (e is HttpError) {
-                notify()
-                return
-            }
-            let http: Http = e.data
-            let count = http.read(response)
-            state = (count == 0) ? Loaded : Receiving
-            notify()
-        }
+            hp.addHeader(key, value, 1)
 
         /*
             Invoke the user's state change handler
          */
         private function notify() {
             if (onreadystatechange) {
-                onreadystatechange()
+                if (onreadystatechange.bound == global) {
+                    onreadystatechange.call(this, this)
+                } else {
+                    onreadystatechange(this)
+                }
             }
         }
     }
