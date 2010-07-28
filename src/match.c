@@ -118,7 +118,6 @@ static HttpStage *matchHandler(HttpConn *conn)
         rec->auth = location->auth;        
         return http->passHandler;
     }
-
     /*
         Get the best (innermost) location block and see if a handler is explicitly set for that location block.
         Possibly rewrite the url and retry.

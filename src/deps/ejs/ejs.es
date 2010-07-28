@@ -89,15 +89,18 @@ module ejs {
             log: {
                 enable: true,
                 location: "stderr",
-                level: 2,
+                level: 0,
                 /* match: null, */
             },
             cache: {
                 enable: false,
+                reload: true,
             },
             directories: {
                 cache: "cache",
             }
+            test: {
+            },
         }
 
         /**
@@ -194,6 +197,7 @@ module ejs {
          */
         native static function exit(status: Number = 0): Void
 
+//  MOB -- need get env()
         /** 
             Get an environment variable.
             @param name The name of the environment variable to retrieve.
@@ -376,9 +380,9 @@ module ejs {
 
         let log = config.log
         if (log.enable) {
-            let stream = Logger.mprLogFile
+            let stream = Logger.nativeStream
             if (stream) {
-                log.level = Logger.mprLogLevel
+                log.level = Logger.nativeLevel
             } else if (log.location == "stdout") {
                 stream = App.outputStream
             } else if (log.location == "stderr") {
@@ -390,6 +394,7 @@ module ejs {
             if (log.match) {
                 App.log.match = log.match
             }
+            Logger.nativeLevel = log.level
         }
 
         /*  Append search paths */
@@ -1076,11 +1081,6 @@ module ejs {
         }
 
         /** 
-            @duplicate Stream.observe 
-         */
-        native function observe(name, observer: Function): Void
-
-        /** 
             @duplicate Stream.async 
          */
         native function get async(): Boolean
@@ -1151,6 +1151,11 @@ module ejs {
                 nextStream.flush(dir)
             }
         }
+
+        /** 
+            @duplicate Stream.observe 
+         */
+        native function observe(name, observer: Function): Void
 
         /** 
             @duplicate Stream.read
@@ -1260,11 +1265,10 @@ module ejs {
         /** 
             Write data to the stream. Write intelligently encodes various data types onto the stream and will encode 
             data in a portable cross-platform manner according to the setting of the $endian property. If data is an 
-            array, each element of the array will be written. The write call blocks until the underlying stream or 
-            endpoint absorbes all the data. 
+            array, each element of the array will be written. 
             @param items Data items to write. The ByteStream class intelligently encodes various data types according 
             to the current setting of the $endian property. 
-            @returns The total number of elements that were written.
+            @returns The total number of bytes that were written.
             @throws IOError if there is an I/O error.
             @event 
          */
@@ -1550,9 +1554,6 @@ module ejs {
          */
         native function ByteArray(size: Number = -1, growable: Boolean = true)
 
-        /** @duplicate Stream.observe */
-        native function observe(name: Object, observer: Function): Void
-
         /** 
             Number of bytes that are currently available for reading. This consists of the bytes available
             from the current $readPosition up to the current $writePosition.
@@ -1665,6 +1666,9 @@ module ejs {
             let buf: ByteArray = this.clone()
             return md5(buf.readString())
         }
+
+        /** @duplicate Stream.observe */
+        native function observe(name: Object, observer: Function): Void
 
         /** 
             @duplicate Stream.read
@@ -1806,13 +1810,16 @@ module ejs {
         native function uncompress(): Void
 
         /** 
-            @duplicate Stream.write
+            Write data to the ByteArray.
             Data is written to the current $writePosition. If the data argument is itself a ByteArray, the available data 
             from the byte array will be copied, ie. the $data byte array will not have its readPosition adjusted. If the 
-            byte array is growable, the underlying data storage will grow to accomodate written data.
+            byte array is growable, the underlying data storage will grow to accomodate written data. If the data will not
+            fit in the ByteArray, the call may return having only written a portion of the data.
+            @duplicate Stream.write
          */
         native function write(...data): Number
 
+//  MOB -- should these routines return the number of bytes written?
         /** 
             Write a byte to the array. Data is written to the current write $position pointer which is then incremented.
 //  MOB -- no such details exist
@@ -3312,28 +3319,6 @@ module ejs {
         }
 
         /** 
-            Add an observer for a set of events.
-            The callback will be invoked when the requested event is fired by calling Emitter.fire. When the callback 
-            runs, it will be invoked with the value of "this" relevant to the context of the callback. If the callback
-            is a class method, the value of "this" will be the object instance. Global functions will have "this" set to
-            the global object. Use Function.bind to override the bound "this" value.
-            @param name Event name to observe. The observer will receive events of this event class or any of its subclasses.
-            The name can be a string or an array of event strings.
-            @param callback Function to call when the event is received.
-         */
-        function observe(name: Object!, callback: Function!): Void {
-            if (name is String) {
-                addOneObserver(name, callback)
-            } else if (name is Array) {
-                for each (n in name) {
-                    addOneObserver(n, callback)
-                }
-            } else {
-                throw new Error("Bad name type for observe: " + typeOf(name))
-            }
-        }
-
-        /** 
             Clear observers for a given event name. 
             @param name Event name to clear. The name can be a string or an array of event strings. If null, observers 
             for all event names are cleared.
@@ -3348,6 +3333,15 @@ module ejs {
             } else {
                 observers = endpoints[name] = new Array
             }
+        }
+
+        /** @hide
+            MOB -- complete or remove
+         */
+        function delayedFire(name: String, delay: Number, ...args): Void {
+            Timer(delay, function() {
+                fire(name, ...args)
+            })
         }
 
         /** 
@@ -3370,38 +3364,57 @@ module ejs {
             @param name Event name to fire to the observers.
             @param args Args to pass to the observer callback
          */
-        function fire(name: String!, ...args): Void {
+        function fire(name: String, ...args): Void {
             let observers: Array? = endpoints[name]
             if (observers) {
                 for each (var e: Endpoint in observers) {
                     if (name == e.name) {
-                        if (!e.active) {
+                        if (e.active) {
+                            e.pending ||= []
+                            e.pending.append([name, args])
+                        } else {
                             e.active = true
-                            do {
-                                e.again = false
+                            for (;;) {
                                 try {
                                     /* This forces to use the bound this value */
                                     e.callback.apply(null, [name] + args)
                                 } catch (e) {
                                     App.errorStream.write("Exception in event on observer: " + name  + "\n" + e)
                                 }
-                            } while (e.again)
+                                if (e.pending && e.pending.length > 0) {
+                                    [name, args] = e.pending.shift()
+                                } else {
+                                    break
+                                }
+                            }
+                            e.pending = null
                             e.active = false
-                        } else {
-                            e.again = true
                         }
                     }
                 }
             }
         }
 
-        /** @hide
-            MOB -- complete
+        /** 
+            Add an observer for a set of events.
+            The callback will be invoked when the requested event is fired by calling Emitter.fire. When the callback 
+            runs, it will be invoked with the value of "this" relevant to the context of the callback. If the callback
+            is a class method, the value of "this" will be the object instance. Global functions will have "this" set to
+            the global object. Use Function.bind to override the bound "this" value.
+            @param name Event name to observe. The observer will receive events of this event class or any of its subclasses.
+            The name can be a string or an array of event strings.
+            @param callback Function to call when the event is received.
          */
-        function delayedFire(name: String, delay: Number, ...args): Void {
-            Timer(delay, function() {
-                fire(name, ...args)
-            })
+        function observe(name: Object!, callback: Function!): Void {
+            if (name is String) {
+                addOneObserver(name, callback)
+            } else if (name is Array) {
+                for each (n in name) {
+                    addOneObserver(n, callback)
+                }
+            } else {
+                throw new Error("Bad name type for observe: " + typeOf(name))
+            }
         }
 
         private function removeOneObserver(name: String, callback: Function): Void {
@@ -3452,7 +3465,7 @@ module ejs {
         public var callback: Function
         public var name: String
         public var active: Boolean
-        public var again: Boolean
+        public var pending: Array
         function Endpoint(callback: Function, name: String) {
             this.callback = callback
             this.name = name
@@ -3548,19 +3561,22 @@ module ejs {
          */
         enumerable var message: String
 
-        private var _stack: Array
+        enumerable var stack: Array
 
-        /**
+        /*
+UNUSED MOB
             Execution call stack. Contains the execution stack backtrace at the point the Error object was created.
             The stack is an array of stack frame records. Each record consists of the following properties: 
                 {file: String, lineno: Number, func: String, code: String}
-         */
         function get stack(): Array {
+print("_STACK " + _stack)
             if (!_stack) {
+print("CAPTURE")
                 _stack = capture()
             }
             return _stack
         }
+*/
 
         /** 
             Time the event was created. The Context constructor will automatically set the timestamp to the current time.  
@@ -3580,10 +3596,10 @@ module ejs {
         native function Error(message: String? = null)
 
         /**
-            Capture the stack. This call re-captures the stack and updates the stack property.
+            Capture the stack. This call captures the stack and returns an Array describing the current stack frame.
             @param uplevels Skip a given count of stack frames from the stop of the call stack.
          */
-        native function capture(uplevels: Number): Array
+        native static function capture(uplevels: Number = 0): Array
 
         /**
             Format the captured stack
@@ -3876,14 +3892,17 @@ module ejs {
 
         use default namespace public
 
-        /** @duplicate Stream.observe */
-        native function observe(name, observer: Function): Void
-
-        /** @duplicate Stream.async */
+        /**
+          Async mode is not yet supported
+          @hide 
+          */
         function get async(): Boolean
             false
 
-        /** @duplicate Stream.async */
+        /** 
+          Async mode is not yet supported
+          @hide 
+         */
         function set async(enable: Boolean): Void {
             if (enable) {
                 throw new ArgError("File class does not support async I/O")
@@ -3915,9 +3934,8 @@ module ejs {
         /** 
             Current encoding schem for serializing strings. Defaults to "utf-8".
          */
-        function get encoding(): String {
-            return "utf-8"
-        }
+        function get encoding(): String
+            "utf-8"
 
         /** 
             Set the encoding scheme for serializing strings. The default encoding is UTF-8.
@@ -3928,7 +3946,8 @@ module ejs {
         }
 
         /** 
-            @duplicate Stream.flush
+            File I/O is currently unbuffered
+            @hide
          */
         function flush(dir: Number = Stream.BOTH): Void {}
 
@@ -3949,6 +3968,9 @@ module ejs {
             Is the file open.
          */
         native function get isOpen(): Boolean
+
+        /** @duplicate Stream.observe */
+        native function observe(name, observer: Function): Void
 
         /**  
             Open a file. This opens the file designated when the File constructor was called.
@@ -4044,9 +4066,7 @@ module ejs {
         native function truncate(value: Number): Void 
 
         /** 
-            Write data to the file. If the stream is in sync mode, the write call blocks until the underlying stream or 
-            endpoint absorbes all the data. If in async-mode, the call accepts whatever data can be accepted immediately 
-            and returns a count of the elements that have been written.
+            Write data to the file. All I/O is unbuffered and synchronous. 
             @param items The data argument can be ByteArrays, strings or Numbers. All other types will call serialize
             first before writing. Note that numbers will not be written in a cross platform manner. If that is required, use
             the BinaryStream class to control the byte ordering when writing numbers.
@@ -4940,7 +4960,6 @@ MOB - removed because such a common global name is dangerous
 
 module ejs {
 
-    //  MOB -- do we really want this to be dynamic?
     /** 
         The Http object represents a Hypertext Transfer Protocol version 1/1 client connection. It is used to issue 
         HTTP requests and capture responses. It supports the HTTP/1.1 standard including methods for GET, POST, 
@@ -4948,10 +4967,11 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    dynamic class Http implements Stream {
+    class Http implements Stream {
 
         use default namespace public
 
+//  MOB -- should these all be upper CASE
         /** 
           HTTP Continue Status (100)
          */     
@@ -5137,9 +5157,6 @@ module ejs {
          */     
         static const VersionNotSupported: Number = 505
 
-        /* Cached response data */
-        private var _response: String
-
         /** 
             Create an Http object. The object is initialized with the Uri
             @param uri The (optional) Uri to initialize with.
@@ -5148,35 +5165,10 @@ module ejs {
         native function Http(uri: Uri? = null)
 
         /** 
-            @duplicate Stream.observe
-            All events are called with the following signature.  The "this" object will be set to the instance object
-            if the callback is a method. Otherwise, "this" will be set to the Http instance. If Function.bind may also
-            be used to define the "this" object and to inject additional callback arguments. 
-                function (event: String, http: Http): Void
-            @event headers Issued when the response headers have been fully received.
-            @event readable Issued when some body content is available.
-            @event writable Issued when the connection is writable to accept body data (PUT, POST).
-            @event complete Issued when the request completes. Complete is always issued whether the request errors or not.
-            @event error Issued if the request does not complete successfully. This is not issued if the request 
-                ompletes successfully but with a non 200 Http status code.
-         */
-        native function observe(name, observer: Function): Void
-
-        /** 
             @duplicate Stream.async
          */
         native function get async(): Boolean
         native function set async(enable: Boolean): Void
-
-        /** 
-            The preferred chunk size to use if transfer chunk encoding is employed. Chunked encoding will be used when 
-            an explicit request body content length is unknown at the time the request headers must be emitted. Chunked 
-            encoding is automatically enabled if $post, $put or $upload is called and a contentLength has not been 
-            previously set. The chunk size is normally automatically determined but can be explicitly specified by updating
-            the $chunkSize. It will be set to zero if a chunk size size has not yet been defined.
-         */
-        native function get chunkSize(): Boolean
-        native function set chunkSize(value: Boolean): Void
 
         /** 
             @duplicate Stream.close 
@@ -5194,13 +5186,14 @@ module ejs {
             implicitly reading $status or response content. This enables the request content length to be determined 
             automatically for smaller requests where the request body data can be buffered and measured before sending 
             the request headers.  
+            @param method Http method. This is typically "GET" or "POST"
             @param uri New uri to use. This overrides any previously defined uri for the Http object.
             @param data Data objects to send with the request. Data is written raw and is not encoded or converted. 
                 However, the routine intelligently handles arrays such that, each element of the array will be written. 
             @throws IOError if the request cannot be issued to the remote server. Once the connection has been made, 
                 exceptions will not be thrown and $status must be consulted for request status.
          */
-        native function connect(uri: Uri? = null, ...data): Void
+        native function connect(method: String, uri: Uri? = null, ...data): Void
 
         /** 
             Filename of the certificate file for this HTTP object. The certificate is only used if secure
@@ -5212,11 +5205,13 @@ module ejs {
 
         /** 
             Response content body length. Set to the length of the response body in bytes or -1 if no body or not known.
+            To set the request body Content-Length, use setHeader("Content-Length", Length)
          */
         native function get contentLength(): Number
 
         /** 
             Response content type derrived from the response Http Content-Type header.
+            To set the request body Content-Type, use setHeader("Content-Type", MimeType)
          */
         native function get contentType(): String
 
@@ -5225,15 +5220,12 @@ module ejs {
          */
         native function get date(): Date
 
-        /** 
-            Commence a DELETE request for the current uri. See connect() for connection details.
-            @param uri The uri to delete. This overrides any previously defined uri for the Http object.
-                If null, use a previously defined uri.
-            @param data Data objects to send with the request. Data is written raw and is not encoded or converted. 
-                However, the routine intelligently handles arrays such that, each element of the array will be written. 
-            @throws IOError if the request cannot be issued to the remote server.
+        /**
+            Don't auto-finalize the request. If dontFinalize is true, web frameworks should not auto-finalize requests. 
+            Rather, callers must explicitly invoke $finalize with force set to true.
          */
-        native function del(uri: Uri? = null, ...data): Void
+        native function get dontFinalize(): Boolean
+        native function set dontFinalize(value: Boolean): Void
 
         /** 
             Encoding scheme for serializing strings. The default encoding is UTF-8. Not yet implemented.
@@ -5246,41 +5238,45 @@ module ejs {
             throw "Not yet implemented"
         }
 
-        //  MOB -- should this be script and not native
-        /** 
-            When the response content expires. This is derrived from the response Http Expires header.
-         */
-        native function get expires(): Date
-
         //  MOB -- Is this required to stop xh being GC'd
         private var xh: XMLHttp
 
-//  MOB -- should there be an arg for body?
         /** @hide
-            Fetch a URL asynchronously. This is a convenience method to invoke an Http method without waiting. 
+            Fetch a URL. This is a convenience method to asynchronously invoke an Http method without waiting. 
             @param method Http method. This is typically "GET" or "POST"
-            @param callback Function to invoke
+            @param uri URL to fetch
+            @param data Body data to send with the request. Set to null for no data.
+            @param callback Function to invoke on completion of the request
           */
-        function fetch(method: String, uri: Uri, callback: Function) {
+        function fetch(method: String, uri: Uri, data: *, callback: Function) {
             xh = XMLHttp(this)
             xh.open(method, uri)
-            xh.send(null)
-            xh.onreadystatechange = callback
-            _response = xh.response
+            xh.send(data)
+            xh.onreadystatechange = function () {
+                if (xh.readyState == XMLHttp.Loaded) {
+                    response = xh.responseText
+                    if (callback.bound == global) {
+                        callback.call(this)
+                    } else {
+                        callback()
+                    }
+                }
+            }
         }
 
         /** 
-            Signals the end of write data. If using chunked writes (no content length specified), finalize() must
-            be called to properly signify the end of write data. This causes the chunk filter to write a chunk trailer.
-            It is good practice to call finalize() at the end of writing regardless of whether chunked transfer is used 
-            or not.
+            Signals the end of any write data and flushes any buffered write data to the client. 
+            If $dontFinalize is true, this call will have no effect unless $force is true.
+            @param force Do finalization even if $dontFinalize is true
          */
-        native function finalize(): Void 
+        native function finalize(force: Boolean = false): Void 
 
         /** 
+            Flush request data. Calling flush(Sream.WRITE) or finalize() is required to ensure write data is sent to 
+            the server.
             @duplicate Stream.flush
          */
-        function flush(dir: Number = Stream.BOTH): Void {}
+        native function flush(dir: Number = Stream.WRITE): Void
 
         /** 
             Control whether redirects should be automatically followed by this Http object. Default is true.
@@ -5313,7 +5309,8 @@ module ejs {
         native function get(uri: Uri? = null, ...data): Void
 
         /** 
-            Get the (proposed) request headers to send with the request
+            Get the (proposed) request headers that will be sent with the request. Use $headers to get the response
+            headers or header(key) to get a single response header.
             @return The set of request headers that will be used when the request is sent.
          */
         native function getRequestHeaders(): Object
@@ -5327,7 +5324,7 @@ module ejs {
         native function head(uri: Uri? = null): Void
 
         /** 
-            Get the value of a response header. This is a higher performance API than using response.headers["key"].
+            Get the value of a single response header. This is a higher performance API than using response.headers["key"].
             @return The header field value as a string or null if not known.
          */
         native function header(key: String): String
@@ -5359,6 +5356,25 @@ module ejs {
          */
         native function get lastModified(): Date
 
+        /**
+            Resource limits for requests.
+            @param limits. Limits is an object hash with the following properties:
+            @option chunk Maximum size of a chunk when using chunked transfer encoding.
+            Chunked encoding will be used if the total body content length is unknown at the time the request headers 
+            must be emitted. The Http class will typically buffer output until $flush is called and will often be able 
+            to determine the content length even if a Content-Length header has not been explicitly defined. 
+            @option headers Maximum number of headers in a response.
+            @option header Maximum size of response headers.
+            @option inactivityTimeout Maximum time in seconds to keep a connection open if idle. Set to zero for no timeout.
+            @option receive Maximum size of incoming body data.
+            @option requestTimeout Maximum time in seconds for a request to complete. Set to zero for no timeout.
+            @option reuse Maximum number of times to reuse a connection for requests (KeepAlive count).
+            @option stageBuffer Maximum stage buffer size for each direction.
+            @option transmission Maximum size of outgoing body data.
+            @see setLimits
+          */
+        native function get limits(): Object
+
         /** 
             Http request method for this Http object. Default is "GET". Typical methods are: GET, POST, HEAD, OPTIONS, 
             PUT, DELETE and TRACE.
@@ -5367,12 +5383,19 @@ module ejs {
         native function set method(name: String)
 
         /** 
-            Commence an OPTIONS request for the current uri. See connect() for connection details.
-            @param uri New uri to use. This overrides any previously defined uri for the Http object.
-                If null, use a previously defined uri.
-            @throws IOError if the request cannot be issued to the remote server.
+            @duplicate Stream.observe
+            All events are called with the following signature.  The "this" object will be set to the instance object
+            if the callback is a method. Otherwise, "this" will be set to the Http instance. If Function.bind may also
+            be used to define the "this" object and to inject additional callback arguments. 
+                function (event: String, http: Http): Void
+            @event headers Issued when the response headers have been fully received.
+            @event readable Issued when some body content is available.
+            @event writable Issued when the connection is writable to accept body data (PUT, POST).
+            @event complete Issued when the request completes. Complete is always issued whether the request errors or not.
+            @event error Issued if the request does not complete successfully. This is not issued if the request 
+                ompletes successfully but with a non 200 Http status code.
          */
-        native function options(uri: Uri? = null): Void
+        native function observe(name, observer: Function): Void
 
         /** 
             Initiate a POST request for the current uri. This call initiates a POST request. It does not wait for the 
@@ -5440,6 +5463,11 @@ module ejs {
          */
         native function removeObserver(name, observer: Function): Void
 
+        /**
+            Reset the Http object to prepare for a new request
+         */
+        native function reset(): Void
+
         /** 
             Response body content. The first time this property is read, the response content will be read and buffered.
             Don't use this property in async mode as it will block. Set to the response as a string of characters. If 
@@ -5447,8 +5475,8 @@ module ejs {
             @throws IOError if an I/O error occurs.
          */
         native function get response(): String
+        native function set response(data: String): Void
 
-        //  TODO - implement
         /** 
             The maximum number of retries for a request. Retries are essential as the HTTP protocol permits a 
             server or network to be unreliable. The default retries is 2.
@@ -5482,6 +5510,14 @@ module ejs {
          */
         native function setHeaders(headers: Object, overwrite: Boolean = true): Void
 
+        /**
+            Update the request resource limits. The supplied limit fields are updated.
+            See $limit for limit field details.
+            @param limits Object hash of limit fields and values
+            @see limits
+         */
+        native function setLimits(limits: Object): Void
+
         /** 
             Http response status code from the Http response status line, e.g. 200. Set to null if unknown.
          */
@@ -5499,20 +5535,18 @@ module ejs {
         function get success(): Boolean
             200 <= status && status < 300
 
-        /** 
-            Request timeout in milliseconds. This is the idle timeout value. If the request has no I/O activity for 
-            this time period, it will be retried or aborted.
-         */
-        native function get timeout(): Number
-        native function set timeout(timeout: Number): Void
+        /**
+            Configure tracing for the request. The default is to trace the first line of requests and responses 
+            at level 2 and headers at level 3.
+            @param level Level at which request tracing will occurr
+            @param options. Set of trace options. Select from: "request" to trace requests, "response" to trace responses,
+            "conn" to trace new connections", "first" to trace the first line of requsts or responses, "headers" to 
+            trace headers, and "body" to trace body content. Or use "all" to trace everything.
+            @param size Maximum request body size to trace
+          */
+        native function trace(level: Number, options: Object = ["conn", "first", "headers", "request", "response"], 
+            size: Number = null): Void
 
-        /** 
-            Commence a TRACE request for the current uri. See connect() for connection details.
-            @param uri New uri to use. This overrides any previously defined uri for the Http object.
-                If null, use a previously defined uri.
-            @throws IOError if the request cannot be issued to the remote server.
-         */
-        native function trace(uri: Uri? = null): Void
 
         /** 
             Upload files using multipart/mime. This routine initiates a POST request and sends the specified files
@@ -5526,40 +5560,32 @@ module ejs {
                 http.upload(URL, files, fields)
          */
         function upload(uri: String, files: Object, fields: Object? = null): Void {
-            let boundary = "<<Upload Boundary>>"
-            let buf = new ByteArray(4096)
-            let http = this
-            buf.observe("readable", function (event, buf) {
-                http.write(buf)
-                buf.flush(Stream.WRITE)
-            })
+            let boundary = "<<Upload Boundary - " + md5(Date.now()) + ">>"
             setHeader("Content-Type", "multipart/form-data; boundary=" + boundary)
             post(uri)
             if (fields) {
-                for (key in fields) {
-                    buf.write('--' + boundary + "\r\n")
-                    buf.write('Content-Disposition: form-data; name=' + Uri.encode(key) + "\r\n")
-                    buf.write('Content-Type: application/x-www-form-urlencoded\r\n\r\n')
-                    buf.write(Uri.encode(fields[key]) + "\r\n")
+                for (let [key,value] in fields) {
+                    write('--' + boundary + "\r\n")
+                    write('Content-Disposition: form-data; name=' + Uri.encode(key) + "\r\n")
+                    write('Content-Type: application/x-www-form-urlencoded\r\n\r\n')
+                    write(Uri.encode(value) + "\r\n")
                 }
             }
-            for (key in files) {
-                file = files[key]
-                buf.write('--' + boundary + "\r\n")
-                buf.write('Content-Disposition: form-data; name=' + key + '; filename=' + Path(file).basename + "\r\n")
-                buf.write('Content-Type: ' + Uri(file).mimeType + "\r\n\r\n")
+            for (let [key,file] in files) {
+                write('--' + boundary + "\r\n")
+                write('Content-Disposition: form-data; name=' + key + '; filename=' + Path(file).basename + "\r\n")
+                write('Content-Type: ' + Uri(file).mimeType + "\r\n\r\n")
 
-                f = File(file).open()
-                data = new ByteArray
-                while (f.read(data)) {
-                    buf.write(data)
+                let f = File(file, "r")
+                let data = new ByteArray
+                while (f.read(data) > 0) {
+                    write(data)
                 }
                 f.close()
-                buf.write("\r\n")
+                write("\r\n")
             }
-            buf.write('--' + boundary + "--\r\n\r\n")
-            http.finalize()
-            http.wait()
+            write('--' + boundary + "--\r\n\r\n")
+            finalize()
         }
 
         /** 
@@ -5576,38 +5602,43 @@ module ejs {
         native function wait(timeout: Number = -1): Boolean
 
         /** 
+            Write body data to the server. This will buffer the written data until either flush() or finalize() is called. 
+            The Http "Content-Length" header should normally be set prior to writing any data for optimial data transfter.
+            If the Content-Length header has not been defined, the data will be transferred using chunked transfers. 
             @duplicate Stream.write
-            The Http.contentLength should normally be set prior to writing any data to ensure that the request 
-            "Content-length" header is properly defined. If the body length has not been defined, the data will be 
-            transferred using chunked transfers. In this case, you should call close() with no data to signify the 
-            end of the write stream. Failure to define the Content-Length header will cause the remote server to have 
-            to close the underling HTTP connection at the completion of the request. This will erode performance by 
-            preventing  HTTP keep-alive for subsequent requests.
-            @throws StateError if the Http method is not set to POST or if more post data is written than specified via 
-                the contentLength property.
          */
         native function write(...data): Void
 
-//  TODO - Cleanup and remove
+        /* ***************************************** Legacy *******************************************/
+
+//  MOB TODO - Cleanup and remove
+
         //  LEGACY 11/23/2010 1.0.0
         /** @hide */
         function addHeader(key: String, value: String, overwrite: Boolean = true): Void
             setHeader(key, value, overwrite)
 
+        // DEPRECATED
+        /** 
+            The number of response data bytes that are currently available for reading.
+            @returns The number of available bytes.
+            @hide
+         */
+        native function get available(): Number 
+
         //  DEPRECATED
         /** @hide */
         function get bodyLength(): Void
             contentLength
-
-        function set contentLength(value: Number): Void {
+        function set bodyLength(value: Number): Void
             setHeader("content-length", value)
-        }
 
         //  DEPRECATED
         /** @hide */
-        function set bodyLength(value: Number): Void {
-            setHeader("content-length", value)
-        }
+        function get chunked(): Boolean
+            chunksize != 0
+        function set chunked(enable: Boolean): Void
+            chunkSize = (enable) ? 8192 : 0
 
         //  DEPRECATED
         /** @hide */
@@ -5619,14 +5650,6 @@ module ejs {
         function get codeString(): String
             statusMessage
 
-        // DEPRECATED
-        /** 
-            The number of response data bytes that are currently available for reading.
-            @returns The number of available bytes.
-            @hide
-         */
-        native function get available(): Number 
-
         //  DEPRECATED
         /**
             Get the value of the content encoding of the response.
@@ -5636,10 +5659,47 @@ module ejs {
         function get contentEncoding(): String
             header("content-encoding")
 
+        /**
+            @hide
+            @deprecated
+         */
+        function set contentLength(value: Number): Void
+            setHeader("content-length", value)
+
+        /** 
+            Commence a DELETE request for the current uri. See connect() for connection details.
+            @param uri The uri to delete. This overrides any previously defined uri for the Http object.
+                If null, use a previously defined uri.
+            @param data Data objects to send with the request. Data is written raw and is not encoded or converted. 
+                However, the routine intelligently handles arrays such that, each element of the array will be written. 
+            @throws IOError if the request cannot be issued to the remote server.
+            @deprecated
+            @hide
+         */
+        native function del(uri: Uri? = null, ...data): Void
+
+        //  DEPRECATED
+        /** 
+            When the response content expires. This is derrived from the response Http Expires header.
+            @hide
+         */
+        function get expires(): Date
+            Date.parseUTCDate(header("expires"))
+
         //  DEPRECATED
         /** @hide */
         static function mimeType(path: String): String
             Uri(path)..mimeType
+
+        /** 
+            Commence an OPTIONS request for the current uri. See connect() for connection details.
+            @param uri New uri to use. This overrides any previously defined uri for the Http object.
+                If null, use a previously defined uri.
+            @throws IOError if the request cannot be issued to the remote server.
+            @deprecated
+            @hide
+         */
+        native function options(uri: Uri? = null): Void
 
         //  DEPRECATED
         /** @hide */
@@ -5647,14 +5707,16 @@ module ejs {
             observe("" + eventMask, cb);
         }
 
-        //  DEPRECATED
-        /** @hide */
-        function get chunked(): Boolean {
-            return chunksize != 0
-        }
-        function set chunked(enable: Boolean): Void {
-            chunkSize = (enable) ? 8192 : 0
-        }
+        /** 
+            Commence a TRACE request for the current uri. See connect() for connection details.
+            @param uri New uri to use. This overrides any previously defined uri for the Http object.
+                If null, use a previously defined uri.
+            @throws IOError if the request cannot be issued to the remote server.
+            @deprecated
+            @hide
+         */
+        native function OLDtrace(uri: Uri? = null): Void
+
     }
 }
 
@@ -5930,6 +5992,170 @@ module ejs {
 
 /************************************************************************/
 /*
+ *  Start of file "../../src/core/Loader.es"
+ */
+/************************************************************************/
+
+/**
+    Loader.es - CommonJS module loader with require() support.
+ */
+
+module ejs {
+
+    /** 
+        Loader for CommonJS modules
+        @param id Module identifier. May be top level or may be an identifier relative to the loading script.
+        @returns An object hash of exports from the module
+        @spec ejs
+        @stability prototype
+     */
+    public function require(id: String): Object
+        Loader.require(id)
+
+    /** 
+        CommonJS loader class. This is public do assist dynamic loading of ejs.cjs so namespace qualification is not needed.
+        @spec ejs
+        @stability prototype
+     */ 
+    public class Loader {
+        //  TODO - doc
+        public  static var mainId
+        private static var signatures = {}
+        private static var timestamps = {}
+        private static const defaultExtensions = [".es", ".js"]
+
+        //  UNUSED - not yet used
+        static function init(mainId: String? = null) {
+            require.main = mainId
+        }
+
+        /**
+            Load a CommonJS module. The module is loaded only once unless it is modified.
+            @param id Name of the module to load. The id may be an absolute path, relative path or a path fragment that is
+                resolved relative to the App search path. Ids may or may not include a ".es" or ".js" extension.
+            @return a hash of exported properties
+         */
+        public static function require(id: String, config: Object = App.config): Object {
+            let exports = signatures[id]
+            if (!exports || config.cache.reload) {
+                let path: Path = locate(id, config)
+                if (path.modified > timestamps[path]) {
+                    return load(id, path, config)
+                }
+            }
+            return exports
+        }
+
+        /** 
+            Load a CommonJS module and return the exports object. After the first load, the CJS module will be compile
+            and cached as a byte-code module.
+            @param id Unique name of the module to load. The id may be a unique ID, an absolute path, relative path or a 
+                path fragment that is resolved relative to the App search path. Ids may or may not include a ".es" or 
+                ".js" extension.
+            @param path Optional path to the physical file corresponding to the module. If the module source code has
+                changed, it will be re-compiled and then cached.
+            @param codeReader Optional function to provide script code to use instead of reading from the path. 
+            @return a hash of exported properties
+         */
+        public static function load(id: String, path: Path, config = App.config, codeReader: Function = null): Object {
+            let initializer, code
+            let cache: Path = cached(id, config)
+            if (path) {
+                if (cache && cache.exists && cache.modified >= path.modified) {
+                    App.log.debug(4, "Use cache for: " + path)
+                    initializer = global.load(cache)
+                } else {
+                    if (codeReader) {
+                        code = codeReader(id, path)
+                    } else {
+                        if (!path.exists) {
+                            throw "Cannot find \"" + path + "\"."
+                        }
+                        code = wrap(path.readString())
+                    }
+                    if (cache) {
+                        App.log.debug(4, "Recompile module to: " + cache)
+                    }
+                    initializer = eval(code, cache)
+                }
+                timestamps[path] = path.modified
+            } else {
+                if (codeReader) {
+                    code = codeReader(id, path)
+                } else {
+                    throw "Must provide a codeReader if path is not specified"
+                }
+                initializer = eval(code, cache)
+            }
+            signatures[path] = exports = {}
+            //  MOB -- implement system?
+            //  function initializer(require, exports, module, system)
+            initializer(require, exports, {id: id, path: path}, null)
+            return exports
+        }
+
+        /** @hide */
+        public static function cached(id: Path, config = App.config, cachedir: Path = null): Path {
+            config ||= App.config
+            if (id && config.cache.enable) {
+                let dir = cachedir || Path(config.directories.cache) || Path("cache")
+                if (dir.exists) {
+                    return Path(dir).join(md5(id)).joinExt('.mod')
+                } else {
+                    App.log.error("Can't find cache directory: " + dir)
+                }
+            }
+            return null
+        }
+
+        /** @hide */
+        public static function wrap(code: String): String
+            "(function(require, exports, module, system) {\n" + code + "\n})"
+
+        /*  
+            Locate a CommonJS module. The id can be an absolute path, a path with/without a "es" or "js" extension. 
+            It will also search for the id relative to the App search path.
+            @param id Path fragment to the module
+            @return A full path to the module
+         */
+        private static function locate(id: Path, config = App.config) {
+            if (id.exists) {
+                return id
+            } 
+            //  TODO - need logging here
+            let extensions = config.extensions || defaultExtensions
+            for each (let dir: Path in App.search) {
+                for each (ext in extensions) {
+                    //  TODO - remove when typed expressions are enabled
+                    let path: Path = Path(dir).join(id)
+                    path = path.joinExt(ext)
+                    if (path.exists) {
+                        return path
+                    }
+                }
+            }
+            throw "Can't find \"" + id + "\""
+        }
+
+        /** 
+            Set the configuration options hash for require to use. Loader uses the config.extensions field to
+            determine the eligible file extensions to use when searching for modules.
+            @param newConfig Configuration options hash.
+         */
+        public static function setConfig(newConfig): Void
+            config = newConfig
+    }
+}
+/************************************************************************/
+/*
+ *  End of file "../../src/core/Loader.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "../../src/core/Locale.es"
  */
 /************************************************************************/
@@ -6131,13 +6357,6 @@ module ejs {
         }
 
         /** 
-            @hide
-         */
-        function observe(name, observer: Function): Void {
-            throw "observe is not supported"
-        }
-
-        /** 
             Sync/async mode. Not supported for Loggers.
             @hide
          */
@@ -6182,8 +6401,12 @@ module ejs {
         function get level(): Number
             _level
 
-        function set level(level: Number): void
+        function set level(level: Number): void {
             _level = level
+            if (this == App.log) {
+                nativeLogLevel = level
+            }
+        }
 
         /** 
             Matching expression to filter log messages. The match regular expression is used to match 
@@ -6196,16 +6419,17 @@ module ejs {
             _pattern = pattern
 
         /**
-            Get the MPR log level via a command line "--log spec" switch
+            The native code log level. This controls logging from C code.
             @hide
          */
-        static native function get mprLogLevel(): Number
+        static native function get nativeLevel(): Number
+        static native function set nativeLevel(level: Number): Void
 
         /**
-            MPR log file defined via a command line "--log spec" switch
+            Initial native log file defined via a command line "--log spec" switch
             @hide
          */
-        static native function get mprLogFile(): Stream
+        static native function get nativeStream(): Stream
 
         /** 
             The name of this logger.
@@ -6274,6 +6498,13 @@ module ejs {
         /** 
             @hide
          */
+        function observe(name, observer: Function): Void {
+            throw "observe is not supported"
+        }
+
+        /** 
+            @hide
+         */
         function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number  {
             throw "Read not supported"
             return null
@@ -6287,9 +6518,8 @@ module ejs {
         }
 
         /** 
-            Write raw data to the logger stream
+            Write raw data to the logger stream.
             @duplicate Stream.write
-            Write informational data to logger
          */
         function write(...data): Number
             (_outStream) ? _outStream.write(data.join(" ")) : 0
@@ -7990,11 +8220,13 @@ module ejs {
          */
         native function get relative(): Path
 
+//  MOB - better not to throw
         /**
             Delete the file associated with the Path object. If this is a directory without contents it will be removed.
+            @return True if the file is sucessfully deleted
             @throws IOError if the file exists and could not be deleted.
          */
-        native function remove(): Void 
+        native function remove(): Boolean 
 
         /**
             Removes a directory and its contents
@@ -8239,59 +8471,59 @@ module ejs {
         use default namespace public 
 
         /** 
-            Add a callback listener for the "success" event. Returns this promise object.
-            @param listener Callback function
+            Add a callback observer for the "success" event. Returns this promise object.
+            @param observer Callback function
             @return Returns this promise
          */
-        function onSuccess(listener: Function): Promise {
-            observe("success", listener)
+        function onSuccess(observer: Function): Promise {
+            observe("success", observer)
             return this
         }
 
         /** 
-            Add a cancel callback listener for the "cancel" event. Returns this promise object.
-            @param listener Callback function
+            Add a cancel callback observer for the "cancel" event. Returns this promise object.
+            @param observer Callback function
             @return Returns this promise
          */
-        function onCancel(listener: Function): Promise {
-            observe("cancel", listener)
+        function onCancel(observer: Function): Promise {
+            observe("cancel", observer)
             return this
         }
 
         /** 
-            Add an error callback listener for the "error" event. Returns this promise object.
-            @param listener Callback function
+            Add an error callback observer for the "error" event. Returns this promise object.
+            @param observer Callback function
             @return Returns this promise
          */
-        function onError(listener: Function): Promise {
-            observe("error", listener)
+        function onError(observer: Function): Promise {
+            observe("error", observer)
             return this
         }
 
         /** 
-            Add a progress callback listener for the "progress" event. Returns this promise object.
-            @param listener Callback function
+            Add a progress callback observer for the "progress" event. Returns this promise object.
+            @param observer Callback function
             @return Returns this promise
          */
-        function onProgress(listener: Function): Promise {
-            observe("progress", listener)
+        function onProgress(observer: Function): Promise {
+            observe("progress", observer)
             return this
         }
 
         /** 
-            Add a timeout callback listener for the "timeout" event. Returns this promise object.
-            @param listener Callback function
+            Add a timeout callback observer for the "timeout" event. Returns this promise object.
+            @param observer Callback function
             @return Returns this promise
          */
-        function onTimeout(listener: Function): Promise {
-            observe("timeout", listener)
+        function onTimeout(observer: Function): Promise {
+            observe("timeout", observer)
             return this
         }
 
         /** 
             Issue a "success" event with the given arguments. Once a result for the promise has been emitted via emitSucces,
             emitError or emitCancel, the Promise in completed and will not emit further events.
-            @param args Args to pass to the listener
+            @param args Args to pass to the observer
          */
         function emitSuccess(...args): Void {
             if (complete) {
@@ -8310,7 +8542,7 @@ module ejs {
         /** 
             Issue an "error" event with the given arguments. Once a result for the promise has been emitted via emitSucces,
             emitError or emitCancel, the Promise in completed and will not emit further events.
-            @param args Args to pass to the listener
+            @param args Args to pass to the observer
          */
         function emitError(...args): Void {
             if (complete) {
@@ -8328,15 +8560,15 @@ module ejs {
         /** 
             Issue an "cancel" event with the given arguments. Once a result for the promise has been emitted via emitSucces,
             emitError or emitCancel, the Promise in completed and will not emit further events.
-            @param args Args to pass to the listener
+            @param args Args to pass to the observer
          */
         function emitCancel(...args): Void
             issue("cancel", ...args)
 
 //  MOB -- why have cancel and emitCancel
         /** 
-            Cancels the promise and removes "success" and "error" and listeners then issues a cancel event.
-            @param args Args to pass to the "cancel" event listener
+            Cancels the promise and removes "success" and "error" observers then issues a cancel event.
+            @param args Args to pass to the "cancel" event observer
          */
         function cancel(...args): Void {
             complete = true
@@ -8905,13 +9137,6 @@ module ejs {
          */
         native function Socket()
 
-        /** 
-            @duplicate Stream.observe 
-            @event readable Issued when the response headers have been fully received and some body content is available.
-            @event writable Issued when the connection is writable to accept body data (PUT, POST).
-         */
-        native function observe(name, observer: Function): Void
-
 //  MOB - or would it be better to have the accepted socket passed in as a callback parameter?
         /** 
             Receive a client socket in response to a "connect" event. The accept call must be called after invoking
@@ -8973,6 +9198,13 @@ module ejs {
                 should be called.
          */
         native function listen(address): Socket
+
+        /** 
+            @duplicate Stream.observe 
+            @event readable Issued when the response headers have been fully received and some body content is available.
+            @event writable Issued when the connection is writable to accept body data (PUT, POST).
+         */
+        native function observe(name, observer: Function): Void
 
         /** 
             The port bound to this socket. Set to the integer port number or zero if not bound.
@@ -9076,17 +9308,6 @@ module ejs {
         static const BOTH = 0x3
 
         /** 
-            Add an observer to the stream. 
-            @param name Name of the event to listen for. The name may be an array of events.
-            @param observer Callback observer function. The function is called with the following signature:
-                function observer(event: String, ...args): Void
-            @event readable Issued when the stream becomes readable. 
-            @event writable Issued when the stream becomes writable.
-            @event close Issued when stream is being closed.
-         */
-        function observe(name, observer: Function): Void
-
-        /** 
             The current async mode. Set to true if the stream is in async mode.
          */
         function get async(): Boolean
@@ -9116,6 +9337,17 @@ module ejs {
         function flush(dir: Number): Void 
 
         /** 
+            Add an observer to the stream. 
+            @param name Name of the event to listen for. The name may be an array of events.
+            @param observer Callback observer function. The function is called with the following signature:
+                function observer(event: String, ...args): Void
+            @event readable Issued when the stream becomes readable. 
+            @event writable Issued when the stream becomes writable.
+            @event close Issued when stream is being closed.
+         */
+        function observe(name, observer: Function): Void
+
+        /** 
             Read a data from the stream. 
             If data is available, the call will return immediately. 
             If no data is available and the stream is in sync mode, the call will block until data is available.
@@ -9141,11 +9373,12 @@ module ejs {
         function removeObserver(name, observer: Function): Void
 
         /** 
-            Write data to the stream. 
-            If the stream can accept all the write data, the call returns immediately with the number of elements written. 
+            Write data to the stream.
+            If the stream can accept all the write data, the call returns immediately with the number of bytes written. 
             If writing more data than the stream can absorb in sync mode, the call will block until the data is written.
-            If writing more data than the stream can absorb in async mode, the call will not block and will return 
-            immediately. A "writable" event will be issued when all the data has been written.
+            If writing more data than the stream can absorb in async mode, the call will not block and will buffer the
+            data and return immediately. Some streams will require a flush() call to actually send the data.
+            A "writable" event will be issued when the stream can again absorb more data.
             @param data Data to write. 
             @returns a count of the bytes actually written.
             @throws IOError if there is an I/O error.
@@ -9912,13 +10145,6 @@ module ejs {
         }
 
         /** 
-            @duplicate Stream.observe 
-         */
-        function observe(name, observer: Function): Void {
-            throw new ArgError("Observers are not supported")
-        }
-
-        /** 
             @duplicate Stream.async 
          */
         function get async(): Boolean
@@ -9988,6 +10214,13 @@ module ejs {
         }
 
         /** 
+            @duplicate Stream.observe 
+         */
+        function observe(name, observer: Function): Void {
+            throw new ArgError("Observers are not supported")
+        }
+
+        /** 
             Read characters from the stream into the supplied byte array. 
             @param buffer Destination byte array for the read data.
             @param offset Offset in the byte array to place the data. If the offset is -1, then data is
@@ -10039,12 +10272,15 @@ module ejs {
                 return null
             }
 			//  All systems strip both \n and \r\n to normalize text lines
+            //  MOB -- this should be a configurable option on a TextStream
 			let nl = "\r\n"
             while (true) {
                 let nlchar = nl.charCodeAt(nl.length - 1)
+                let nlchar0 = nl.charCodeAt(0)
                 for (let i = inbuf.readPosition; i < inbuf.writePosition; i++) {
+                    //  MOB OPT. If ByteArray had indexOf(nl), then this could be MUCH faster
                     if (inbuf[i] == nlchar) {
-                        if (nl.length == 2 && i > inbuf.readPosition && nl.charCodeAt(0) == inbuf[i-1]) {
+                        if (nl.length == 2 && i > inbuf.readPosition && nlchar0 == inbuf[i-1]) {
 							result = inbuf.readString(i - inbuf.readPosition - 1)
 							inbuf.readPosition += 2
                         } else {
@@ -10110,8 +10346,7 @@ module ejs {
         /** 
             Write characters to the stream.
             @param data String to write. 
-            @returns The total number of elements that were written.
-            @throws IOError if there is an I/O error.
+            @returns The total number of bytes that were written.
          */
         function write(...data): Number
             nextStream.write(data)
@@ -10120,7 +10355,6 @@ module ejs {
             Write text lines to the stream. The text line is written after appending the system text newline character(s).
             @param lines Text lines to write.
             @return The number of characters written or -1 if unsuccessful.
-            @throws IOError if the file could not be written.
          */
         function writeLine(...lines): Number {
             let written = 0
@@ -11611,28 +11845,24 @@ module ejs {
 
         use default namespace public
 
-        private var hp: Http = new Http
+        private var hp: Http
         private var state: Number = 0
-        private var response: ByteArray
+        private var responseBuf: ByteArray
 
         //  TODO spec UNSENT
-        /** readyState values */
+        /** readyState value (UNSENT) */
         static const Uninitialized = 0              
 
-        //  TODO spec OPENED
-        /** readyState values */
+        /** readyState value (OPENED) */
         static const Open = 1
 
-        //  TODO spec HEADERS_RECEIVED
-        /** readyState values */
+        /** readyState value (SENT) */
         static const Sent = 2
 
-        //  TODO spec LOADING
-        /** readyState values */
+        /** readyState value (LOADING) */
         static const Receiving = 3
 
-        //  TODO spec DONE
-        /** readyState values */
+        /** readyState value (DONE) */
         static const Loaded = 4
 
         /**
@@ -11669,14 +11899,14 @@ module ejs {
             HTTP response body as a string.
          */
         function get responseText(): String
-            response.toString()
+            responseBuf.toString()
 
         /**
             HTTP response payload as an XML document. Set to an XML object that is the root of the HTTP request 
             response data.
          */
         function get responseXML(): XML
-            XML(response)
+            XML(responseBuf)
 
         /**
             Not implemented. Only for ActiveX on IE
@@ -11730,28 +11960,26 @@ module ejs {
          */
         function open(method: String, uri: String, async: Boolean = true, user: String? = null, 
                 password: String = null): Void {
-            response = new ByteArray(System.Bufsize)
+            responseBuf = new ByteArray(System.Bufsize)
             hp.async = async
-            hp.method = method
-            hp.uri = uri
             if (user && password) {
                 hp.setCredentials(user, password)
             }
-            hp.observe(["complete", "error"], function (event, ...args) {
+            hp.observe(["close", "error"], function (event, ...args) {
                 state = Loaded
                 notify()
             })
             hp.observe("readable", function (event, ...args) {
-                let count = hp.read(response, -1)
+                let count = hp.read(responseBuf, -1)
                 state = Receiving
                 notify()
             })
-            hp.connect()
+            hp.connect(method, uri)
             state = Open
             notify()
             if (!async) {
                 hp.finalize()
-                App.waitForEvent(hp, "complete", hp.timeout)
+                App.waitForEvent(hp, "close", hp.timeout)
             }
         }
 
@@ -12257,152 +12485,59 @@ module ejs {
 
 /************************************************************************/
 /*
- *  Start of file "../../src/jems/ejs.cjs/Loader.es"
+ *  Start of file "../../src/jems/ejs.cjs/CommonJS.es"
  */
 /************************************************************************/
 
-/**
-    Loader.es - CommonJS module loader with require() support.
+/*
+    CommonJS class
  */
 
 module ejs.cjs {
 
-    /** 
-        Loader for CommonJS modules
-        @param id Module identifier. May be top level or may be an identifier relative to the loading script.
-        @returns An object hash of exports from the module
-        @spec ejs
-        @stability prototype
+    /**
+        CommonJS properties 
      */
-    function require(id: String): Object
-        Loader.require(id)
+    enumerable dynamic class CommonJS {
+        use default namespace public
 
-    /** 
-        CommonJS loader class. This is public do assist dynamic loading of ejs.cjs so namespace qualification is not needed.
-        @spec ejs
-        @stability prototype
-     */ 
-    public class Loader {
-        //  TODO - doc
-        public  static var mainId
-        private static var signatures = {}
-        private static var timestamps = {}
-        private static const defaultExtensions = [".es", ".js"]
-        private static var config
-
-        //  UNUSED - not yet used
-        static function init(mainId: String? = null) {
-            require.main = mainId
-        }
-
-        /**
-            Load a CommonJS module. The module is loaded only once unless it is modified.
-            @param id Name of the module to load. The id may be an absolute path, relative path or a path fragment that is
-                resolved relative to the App search path. Ids may or may not include a ".es" or ".js" extension.
-         */
-        public static function require(id: String): Object {
-            let path: Path = locate(id)
-            let exports = signatures[path]
-            if (!exports || path.modified > timestamps[path]) {
-                return load(id, path)
-            }
-            return exports
-        }
-
-        /** 
-            Load a CommonJS module and return the exports object. After the first load, the CJS module will be compile
-            and cached as a byte-code module.
-            @param id Name of the module to load. The id may be an absolute path, relative path or a path fragment that is
-                resolved relative to the App search path. Ids may or may not include a ".es" or ".js" extension.
-            @param path Optional path to the physical file corresponding to the module. If the module source code has
-                changed, it will be re-compiled and then cached.
-            @param codeReader Optional function to provide script code to use instead of reading from the path. 
-         */
-        public static function load(id: String, path: Path, codeReader: Function? = null): Object {
-            let initializer, code
-            if (path) {
-                let cache: Path = cached(path)
-                if (cache && cache.exists && cache.modified >= path.modified) {
-                    App.log.debug(4, "Use cache for: " + path)
-                    initializer = global.load(cache)
-                } else {
-                    if (codeReader) {
-                        code = codeReader(path)
-                    } else {
-                        code = path.readString()
-                        code = wrap(code)
-                    }
-                    if (cache) {
-                        App.log.debug(4, "Recompile module to: " + cache)
-                    }
-                    initializer = eval(code, cache)
-                }
-                timestamps[path] = path.modified
-            } else {
-//  MOB BUG - code doesn't exist
-                code = wrap(code)
-//  MOB -- Fix this
-                initializer = eval(code, "mob.mod")
-            }
-            signatures[path] = exports = {}
-            initializer(require, exports, {id: id, path: path}, null)
-            return exports
-        }
+        static var stdin: File
+        static var stdout: File
+        static var stderr: File
+        static var args: Array
+        static var env: Array
+        static var fs: Object
+        static var platform: String
 
         /** @hide */
-        public static function cached(path: Path, cachedir: Path? = null): Path {
-            config ||= App.config
-            if (path && config.cache.enable) {
-                let dir = cachedir || Path(config.directories.cache) || Path("cache")
-                if (dir.exists) {
-                    return Path(dir).join(md5(path)).joinExt('.mod')
-                } else {
-                    App.log.error("Can't find cache directory: " + dir)
-                }
-            }
-            return null
+        function CommonJS() {
+            stdin = App.inputStream
+            stdout = App.outputStream
+            stderr = App.errorStream
+            args = App.args
+            //  TODO MOB
+            env = App.env
+            fs = new FileSystem("/")
+            log = App.log
+            platform = Config.title
+            this.global = global
         }
 
-        /** @hide */
-        public static function wrap(code: String): String
-            "(function(require, exports, module, system) {\n" + code + "\n})"
+    /*
+        function print(...args): Void
+            global.print(...args)
+     */
+        function log(...msgs): Void
+            App.logger.info(...msgs)
 
-        /*  
-            Locate a CommonJS module. The id can be an absolute path, a path with/without a "es" or "js" extension. 
-            It will also search for the id relative to the App search path.
-         */
-        private static function locate(id: Path) {
-            if (id.exists) {
-                return id
-            } 
-            config ||= App.config
-            //  TODO - need logging here
-            let extensions = config.extensions || defaultExtensions
-            for each (let dir: Path in App.search) {
-                for each (ext in extensions) {
-                    //  TODO - remove when typed expressions are enabled
-                    let path: Path = Path(dir).join(id)
-                    path = path.joinExt(ext)
-                    if (path.exists) {
-                        return path
-                    }
-                }
-            }
-            throw new IOError("Can't find module \"" + id + "\"")
-        }
-
-        /** 
-            Set the configuration options hash for require to use. Loader uses the config.extensions field to
-            determine the eligible file extensions to use when searching for modules.
-            @param newConfig Configuration options hash.
-         */
-        public static function setConfig(newConfig): Void
-            config = newConfig
+        platform
     }
+
+    var system = new CommonJS
 }
 /************************************************************************/
 /*
- *  End of file "../../src/jems/ejs.cjs/Loader.es"
+ *  End of file "../../src/jems/ejs.cjs/CommonJS.es"
  */
 /************************************************************************/
 
@@ -13202,1153 +13337,6 @@ module ejs.db {
 /************************************************************************/
 /*
  *  End of file "../../src/jems/ejs.db/DatabaseConnector.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/jems/ejs.db.mapper/Model.es"
- */
-/************************************************************************/
-
-/**
-    Model.es -- Record class
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-module ejs.db.xmapper {
-
-    require ejs.db
-
-    /**
-        Database model class. A record instance corresponds to a row in the database. This class provides a low level 
-        Object Relational Mapping (ORM) between the database and Ejscript objects. This class provides methods to create,
-        read, update and delete rows in the database. When read or initialized object properties are dynamically created 
-        in the Record instance for each column in the database table. Users should subclass the Record class for each 
-        database table to manage. When users subclass Record to create models, they should use "implement" rather than
-        extend.
-        @example public dynamic class MyModel extends Model {}
-        @spec ejs
-        @stability prototype
-     */
-    public class Model {
-        
-        //  MOB -- these should be private. Also need a default namesapce
-
-        static var  _assocName: String        //  Name for use in associations. Lower case class name
-        static var  _belongsTo: Array         //  List of belonging associations
-        static var  _className: String        //  Model class name
-        static var  _columns: Object          //  List of columns in this database table
-        static var  _hasOne: Array            //  List of 1-1 containment associations
-        static var  _hasMany: Array           //  List of 1-many containment  associations
-
-        static var  _db: Database             //  Hosting database
-        static var  _foreignId: String        //  Camel case class name with "Id". (userCartId))
-        static var  _keyName: String          //  Name of the key column (typically "id")
-        static var  _model: Type              //  Model class
-        static var  _tableName: String        //  Name of the database table. Plural, PascalCase
-        static var  _trace: Boolean           //  Trace database SQL statements
-        static var  _validations: Array
-
-        static var  _beforeFilters: Array     //  Filters that run before saving data
-        static var  _afterFilters: Array      //  Filters that run after saving data
-        static var  _wrapFilters: Array       //  Filters that run before and after saving data
-
-        var _keyValue: Object                 //  Record key column value
-        var _errors: Object                   //  Error message aggregation
-        var _cacheAssoc: Object               //  Cached association data
-
-        static var ErrorMessages = {
-            accepted: "must be accepted",
-            blank: "can't be blank",
-            confirmation: "doesn't match confirmation",
-            empty: "can't be empty",
-            invalid: "is invalid",
-            missing: "is missing",
-            notNumber: "is not a number",
-            notUnique: "is not unique",
-            taken: "already taken",
-            tooLong: "is too long",
-            tooShort: "is too short",
-            wrongLength: "wrong length",
-            wrongFormat: "wrong format",
-        }
-
-        static function sinit(model) {
-            model = new Model()
-            _keyName = "id"
-            _className = Object.getName(this)
-            //  BUG - should be able to use this _model = Object.getType(this)
-            _model = global[_className]
-            _assocName = _className.toCamel()
-            _foreignId = _className.toCamel() + _keyName.toPascal()
-            _tableName = plural(_className).toPascal()
-        }
-
-        /**
-            Run filters after saving data
-            @param fn Function to run
-            @param options - reserved
-         */
-        static function afterFilter(fn, options: Object? = null): Void {
-            _afterFilters ||= []
-            _afterFilters.append([fn, options])
-        }
-
-        /**
-            Run filters before saving data
-            @param fn Function to run
-            @param options - reserved
-         */
-        static function beforeFilter(fn, options: Object? = null): Void {
-            _beforeFilters ||= []
-            _beforeFilters.append([fn, options])
-        }
-
-        /**
-            Define a belonging reference to another model class. When a model belongs to another, it has a foreign key
-            reference to another class.
-            @param owner Referenced model class that logically owns this model.
-            @param options Optional options hash
-            @option className Name of the class
-            @option foreignKey Key name for the foreign key
-            @option conditions SQL conditions for the relationship to be satisfied
-         */
-        static function belongsTo(owner, options: Object? = null): Void {
-            _belongsTo ||= []
-            _belongsTo.append(owner)
-        }
-
-        /*
-            Read a single record of kind "model" by the given "key". Data is cached for subsequent reuse.
-            Read into rec[field] from table[key]
-         */
-        private static function cachedRead(rec: Record, field: String, model, key: String, options: Object): Object {
-            rec._cacheAssoc ||= {}
-            if (rec._cacheAssoc[field] == null) {
-                rec._cacheAssoc[field] =  model.readRecords(key, options); 
-            }
-            return rec._cacheAssoc[field]
-        }
-
-        private static function checkFormat(thisObj: Record, field: String, value, options: Object): Void {
-            if (! RegExp(options.format).test(value)) {
-                thisObj._errors[field] = options.message ? options.message : ErrorMessages.wrongFormat
-            }
-        }
-
-        private static function checkNumber(thisObj: Record, field: String, value, options): Void {
-            if (! RegExp(/^[0-9]+$/).test(value)) {
-                thisObj._errors[field] = options.message ? options.message : ErrorMessages.notNumber
-            }
-        }
-
-        private static function checkPresent(thisObj: Record, field: String, value, options): Void {
-            if (value == undefined) {
-                thisObj._errors[field] = options.message ? options.message : ErrorMessages.missing
-            } else if (value.length == 0 || value.trim() == "" && thisObj._errors[field] == undefined) {
-                thisObj._errors[field] = ErrorMessages.blank
-            }
-        }
-
-        private static function checkUnique(thisObj: Record, field: String, value, options): Void {
-            let grid: Array
-            if (thisObj._keyValue) {
-                grid = findWhere(field + ' = "' + value + '" AND id <> ' + thisObj._keyValue)
-            } else {
-                grid = findWhere(field + ' = "' + value + '"')
-            }
-            if (grid.length > 0) {
-                thisObj._errors[field] = options.message ? options.message : ErrorMessages.notUnique
-            }
-        }
-
-        /*
-            Create associations for a record
-         */
-        private static function createAssociations(rec: Record, set: Array, preload, options): Void {
-            for each (let model in set) {
-                if (model is Array) model = model[0]
-                // print("   Create Assoc for " + _tableName + "[" + model._assocName + "] for " + model._tableName + "[" + 
-                //    rec[model._foreignId] + "]")
-                if (preload == true || (preload && preload.contains(model))) {
-                    /*
-                        Query did table join, so rec already has the data. Extract the fields for the referred model and
-                        then remove from rec and replace with an association reference. 
-                     */
-                    let association = {}
-                    if (!model._columns) model.getSchema()
-                    for (let field: String in model._columns) {
-                        let f: String = "_" + model._className + field.toPascal()
-                        association[field] = rec[f]
-                        delete rec.public::[f]
-                    }
-                    rec[model._assocName] = model.createRecord(association, options)
-
-                } else {
-                    rec[model._assocName] = makeLazyReader(rec, model._assocName, model, rec[model._foreignId])
-                    if (!model._columns) model.getSchema()
-                    for (let field: String  in model._columns) {
-                        let f: String = "_" + model._className + field.toPascal()
-                        if (rec[f]) {
-                            delete rec.public::[f]
-                        }
-                    }
-                }
-            }
-        }
-
-        /*
-            Create a new record instance and apply the row data
-            Process a sql result and add properties for each field in the row
-         */
-        private static function createRecord(data: Object, options: Object = {}) {
-            let rec: Record = new global[_className]
-            rec.initialize(data)
-            rec._keyValue = data[_keyName]
-
-            let subOptions = {}
-            if (options.depth) {
-                subOptions.depth = options.depth
-                subOptions.depth--
-            }
-
-            if (options.include) {
-                createAssociations(rec, options.include, true, subOptions)
-            }
-            if (options.depth != 0) {
-                if (_belongsTo) {
-                    createAssociations(rec, _belongsTo, options.preload, subOptions)
-                }
-                if (_hasOne) {
-                    for each (model in _hasOne) {
-                        if (!rec[model._assocName]) {
-                            rec[model._assocName] = makeLazyReader(rec, model._assocName, model, null,
-                                {conditions: rec._foreignId + " = " + data[_keyName] + " LIMIT 1"})
-                        }
-                    }
-                }
-                if (_hasMany) {
-                    for each (model in _hasMany) {
-                        if (!rec[model._assocName]) {
-                            rec[model._assocName] = makeLazyReader(rec, model._assocName, model, null,
-                                {conditions: rec._foreignId + " = " + data[_keyName]})
-                        }
-                    }
-                }
-            }
-            rec.coerceToEjsTypes()
-            return rec
-        }
-
-        /**
-            Find a record. Find and return a record identified by its primary key if supplied or by the specified options. 
-            If more than one record matches, return the first matching record.
-            @param key Key Optional key value. Set to null if selecting via the options 
-            @param options Optional search option values
-            @returns a model record or null if the record cannot be found.
-            @throws IOError on internal SQL errors
-            @option columns List of columns to retrieve
-            @option conditions { field: value, ...}   or [ "SQL condition", "id == 23", ...]
-            @option from Low level from clause (not fully implemented)
-            @option keys [set of matching key values]
-            @option order ORDER BY clause
-            @option group GROUP BY clause
-            @option include [Model, ...] Models to join in the query and create associations for. Always preloads.
-            @option joins Low level join statement "LEFT JOIN vists on stockId = visits.id". Low level joins do not
-                create association objects (or lazy loaders). The names of the joined columns are prefixed with the
-                appropriate table name using camel case (tableColumn).
-            @option limit LIMIT count
-            @option depth Specify the depth for which to create associations for belongsTo, hasOne and hasMany relationships.
-                 Depth of 1 creates associations only in the immediate fields of the result. Depth == 2 creates in the 
-                 next level and so on. Defaults to one.
-            @option offset OFFSET count
-            @option preload [Model1, ...] Preload "belongsTo" model associations rather than creating lazy loaders. This can
-                reduce the number of database queries if iterating through associations.
-            @option readonly
-            @option lock
-         */
-        static function find(key: Object, options: Object = {}): Object {
-            let grid: Array = innerFind(key, 1, options)
-            if (grid.length >= 1) {
-                let results = createRecord(grid[0], options)
-                if (options && options.debug) {
-                    print("RESULTS: " + serialize(results))
-                }
-                return results
-            } 
-            return null
-        }
-
-        /**
-            Find all the matching records
-            @param options Optional set of options. See $find for list of possible options.
-            @returns An array of model records. The array may be empty if no matching records are found
-            @throws IOError on internal SQL errors
-         */
-        static function findAll(options: Object = {}): Array {
-            let grid: Array = innerFind(null, null, options)
-            // start = new Date
-            for (let i = 0; i < grid.length; i++) {
-                grid[i] = createRecord(grid[i], options)
-            }
-            // print("findAll - create records TIME: " + start.elapsed())
-            if (options && options.debug) {
-                print("RESULTS: " + serialize(grid))
-            }
-            return grid
-        }
-
-        /**
-            Find the first record matching a condition. Select a record using a given SQL where clause.
-            @param where SQL WHERE clause to use when selecting rows.
-            @returns a model record or null if the record cannot be found.
-            @throws IOError on internal SQL errors
-            @example
-                rec = findOneWhere("cost < 200")
-         */
-        static function findOneWhere(where: String): Object {
-            let grid: Array = innerFind(null, 1, { conditions: [where]})
-            if (grid.length >= 1) {
-                return createRecord(grid[0])
-            } 
-            return null
-        }
-
-//  MOB -- count not implemented
-        /**
-            Find records matching a condition. Select a set of records using a given SQL where clause
-            @param where SQL WHERE clause to use when selecting rows.
-            @returns An array of objects. Each object represents a matching row with fields for each column.
-            @example
-                list = findWhere("cost < 200")
-         */
-        static function findWhere(where: String, count: Number? = null): Array {
-            let grid: Array = innerFind(null, null, { conditions: [where]})
-            for (i in grid.length) {
-                grid[i] = createRecord(grid[i])
-            }
-            return grid
-        }
-
-        /**
-            Return the column names for the table
-            @returns an array containing the names of the database columns. This corresponds to the set of properties
-                that will be created when a row is read using $find.
-         */
-        static function getColumnNames(): Array { 
-            if (!_columns) _model.getSchema()
-            let result: Array = []
-            for (let col: String in _columns) {
-                result.append(col)
-            }
-            return result
-        }
-
-        /**
-            Return the column names for the record
-            @returns an array containing the Pascal case names of the database columns. The names have the first letter
-                capitalized. 
-         */
-        static function getColumnTitles(): Array { 
-            if (!_columns) _model.getSchema()
-            let result: Array = []
-            for (let col: String in _columns) {
-                result.append(col.toPascal())
-            }
-            return result
-        }
-
-        /** 
-            Get the type of a column
-            @param field Name of the field to examine.
-            @return A string with the data type of the column
-         */
-        static function getColumnType(field: String): String {
-            if (!_columns) _model.getSchema()
-            return _db.sqlTypeToDataType(_columns[field].sqlType)
-        }
-
-        /**
-            Get the database connection for this record class
-            @returns Database instance object created via new $Database
-         */
-        static function getDb(): Database {
-            if (!_db) {
-                _db = Database.defaultDatabase
-            }
-            return _db
-        }
-
-        /**
-            Get the key name for this record
-         */
-        static function getKeyName(): String
-            _keyName
-
-        /**
-            Return the number of rows in the table
-         */
-        static function getNumRows(): Number {
-            if (!_columns) _model.getSchema()
-            let cmd: String = "SELECT COUNT(*) FROM " + _tableName + " WHERE " + _keyName + " <> '';"
-            let grid: Array = _db.query(cmd, "numRows", _trace)
-            return grid[0]["COUNT(*)"]
-        }
-
-        /*
-            Read the table schema and return the column hash
-         */
-        private static function getSchema(): Void {
-            if (!_db) {
-                _db = Database.defaultDatabase
-                if (!_db) {
-                    throw new Error("Can't get schema, database connection has not yet been established")
-                }
-            }
-            let sql: String = 'PRAGMA table_info("' + _tableName + '");'
-            let grid: Array = _db.query(sql, "schema", _trace)
-            _columns = {}
-            for each (let row in grid) {
-                let name = row["name"]
-                let sqlType = row["type"].toLower()
-                let ejsType = mapSqlTypeToEjs(sqlType)
-                _columns[name] = new Column(name, false, ejsType, sqlType)
-            }
-        }
-
-        /**
-            Get the associated name for this record
-            @returns the database table name backing this record class. Normally this is simply a plural class name. 
-         */
-        static function getTableName(): String
-            _tableName
-
-        /**
-            Define a containment relationship to another model class. When using "hasAndBelongsToMany" on another model, it 
-            means that other models have a foreign key reference to this class and this class can "contain" many instances 
-            of the other models.
-            @param model Model. (TODO - not implemented).
-            @param options Object hash of options. (TODO - not implemented).
-            @option foreignKey Key name for the foreign key. (TODO - not implemented).
-            @option through String Class name which mediates the many to many relationship. (TODO - not implemented).
-            @option joinTable. (TODO - not implemented).
-         */
-        static function hasAndBelongsToMany(model: Object, options: Object = {}): Void {
-            belongsTo(model, options)
-            hasMany(model, options)
-        }
-
-        /**
-            Define a containment relationship to another model class. When using "hasMany" on another model, it means 
-            that other model has a foreign key reference to this class and this class can "contain" many instances of 
-            the other.
-            @param model Model class that is contained by this class. 
-            @param options Options parameter
-            @option things Model object that is posessed by this. (TODO - not implemented)
-            @option through String Class name which mediates the many to many relationship. (TODO - not implemented)
-            @option foreignKey Key name for the foreign key. (TODO - not implemented)
-         */
-        static function hasMany(model: Object, options: Object = {}): Void {
-            _hasMany ||= []
-            _hasMany.append(model)
-        }
-
-        /**
-            Define a containment relationship to another model class. When using "hasOne" on another model, 
-            it means that other model has a foreign key reference to this class and this class can "contain" 
-            only one instance of the other.
-            @param model Model class that is contained by this class. 
-            @option thing Model that is posessed by this. (TODO - not implemented).
-            @option foreignKey Key name for the foreign key (TODO - not implemented).
-            @option as String  (TODO - not implemented).
-         */
-        static function hasOne(model: Object, options: Object? = null): Void {
-            _hasOne ||= []
-            _hasOne.append(model)
-        }
-
-        /*
-            Common find implementation. See find/findAll for doc.
-         */
-        static private function innerFind(key: Object, limit: Number? = null, options: Object = {}): Array {
-            let cmd: String
-            let columns: Array
-            let from: String
-            let conditions: String
-            let where: Boolean
-
-            if (!_columns) _model.getSchema()
-            if (options == null) {
-                options = {}
-            }
-            //  LEGACY 1.0.0-B2
-            if (options.noassoc) {
-                options.depth = 0
-            }
-
-            if (options.columns) {
-                columns = options.columns
-                /*
-                    Qualify "id" so it won't clash when doing joins. If the "click" option is specified, must have an ID
-                    TODO - Should not modify the parameter. This is actually modifying the options passed in.
-                 */
-                let index: Number = columns.indexOf("id")
-                if (index >= 0) {
-                    columns[index] = _tableName + ".id"
-                } else if (!columns.contains(_tableName + ".id")) {
-                    columns.insert(0, _tableName + ".id")
-                }
-            } else {
-                columns = ["*"]
-            }
-
-            conditions = ""
-            from = ""
-            where = false
-
-            if (options.from) {
-                from = options.from
-            } else {
-                from = _tableName
-            }
-
-            if (options.include) {
-                let model
-                if (options.include is Array) {
-                    for each (entry in options.include) {
-                        if (entry is Array) {
-                            model = entry[0]
-                            from += " LEFT OUTER JOIN " + model._tableName
-                            from += " ON " + entry[1]
-                        } else {
-                            model = entry
-                            from += " LEFT OUTER JOIN " + model._tableName
-                        }
-                    }
-                } else {
-                    model = options.include
-                    from += " LEFT OUTER JOIN " + model._tableName
-                    // conditions = " ON " + model._tableName + ".id = " + _tableName + "." + model._assocName + "Id"
-                }
-            }
-
-            if (options.depth != 0) {
-                if (_belongsTo) {
-                    conditions = " ON "
-                    for each (let owner in _belongsTo) {
-                        from += " INNER JOIN " + owner._tableName
-                    }
-                    for each (let owner in _belongsTo) {
-                        let tname: String = Object.getName(owner)
-                        tname = tname[0].toLower() + tname.slice(1) + "Id"
-                        conditions += _tableName + "." + tname + " = " + owner._tableName + "." + owner._keyName + " AND "
-                    }
-                    if (conditions == " ON ") {
-                        conditions = ""
-                    }
-                }
-            }
-
-            if (options.joins) {
-                if (conditions == "") {
-                    conditions = " ON "
-                }
-                let parts: Array = options.joins.split(/ ON | on /)
-                from += " " + parts[0]
-                if (parts.length > 1) {
-                    conditions += parts[1] + " AND "
-                }
-            }
-            conditions = conditions.trim(" AND ")
-
-            if (options.conditions) {
-                let whereConditions: String = " WHERE "
-                if (options.conditions is Array) {
-                    for each (cond in options.conditions) {
-                        whereConditions += cond + " " + " AND "
-                    }
-                    whereConditions = whereConditions.trim(" AND ")
-
-                } else if (options.conditions is String) {
-                    whereConditions += options.conditions + " " 
-
-                } else if (options.conditions is Object) {
-                    for (field in options.conditions) {
-                        //  Remove quote from options.conditions[field]
-                        whereConditions += field + " = '" + options.conditions[field] + "' " + " AND "
-                    }
-                }
-                whereConditions = whereConditions.trim(" AND ")
-                if (whereConditions != " WHERE ") {
-                    where = true
-                    conditions += whereConditions
-                } else {
-                    whereConditions = ""
-                    from = from.trim(" AND ")
-                }
-
-            } else {
-                from = from.trim(" AND ")
-            }
-
-            if (key || options.key) {
-                if (!where) {
-                    conditions += " WHERE "
-                    where = true
-                } else {
-                    conditions += " AND "
-                }
-                conditions += (_tableName + "." + _keyName + " = ") + ((key) ? key : options.key)
-            }
-
-            //  Removed quote from "from"
-            cmd = "SELECT " + Database.quote(columns) + " FROM " + from + conditions
-            if (options.group) {
-                cmd += " GROUP BY " + options.group
-            }
-            if (options.order) {
-                cmd += " ORDER BY " + options.order
-            }
-            if (limit) {
-                cmd += " LIMIT " + limit
-            } else if (options.limit) {
-                cmd += " LIMIT " + options.limit
-            }
-            if (options.offset) {
-                cmd += " OFFSET " + options.offset
-            }
-            cmd += ";"
-
-            if (_db == null) {
-                throw new Error("Database connection has not yet been established")
-            }
-
-            let results: Array
-            try {
-                // print("TRACE " + _trace)
-                if (_trace || 1) {
-                    // let start = new Date
-                    results = _db.query(cmd, "find", _trace)
-                    // print("@@@@@@@@@ Query Time: " + start.elapsed())
-                } else {
-                    results = _db.query(cmd, "find", _trace)
-                }
-            }
-            catch (e) {
-                throw e
-            }
-            return results
-        }
-
-        /*
-            Make a getter function to lazily (on-demand) read associated records (belongsTo)
-         */
-        private static function makeLazyReader(rec: Record, field: String, model, key: String, 
-                options: Object = {}): Function {
-            // print("Make lazy reader for " + _tableName + "[" + field + "] for " + model._tableName + "[" + key + "]")
-            var lazyReader: Function = function(): Object {
-                // print("Run reader for " + _tableName + "[" + field + "] for " + model._tableName + "[" + key + "]")
-                return cachedRead(rec, field, model, key, options)
-            }
-            return makeGetter(lazyReader)
-        }
-
-        private static function mapSqlTypeToEjs(sqlType: String): Type {
-            sqlType = sqlType.replace(/\(.*/, "")
-            let ejsType: Type = _db.sqlTypeToEjsType(sqlType)
-            if (ejsType == undefined) {
-                throw new Error("Unsupported SQL type: \"" + sqlType + "\"")
-            }
-            return ejsType
-        }
-
-        /*
-            Prepare a value to be written to the database
-         */
-        private static function prepareValue(field: String, value: Object): String {
-            let col: Column = _columns[field]
-            if (col == undefined) {
-                return undefined
-            }
-			if (value == undefined) {
-				throw new Error("Field \"" + field + "\" is undefined")
-			}
-			if (value == null) {
-				throw new Error("Field \"" + field + "\" is null")
-			}
-            switch (col.ejsType) {
-            case Boolean:
-                if (value is String) {
-                    value = (value.toLower() == "true")
-                } else if (value is Number) {
-                    value = (value == 1)
-                } else {
-                    value = value cast Boolean
-                }
-                return value
-
-            case Date:
-                return "%d".format((new Date(value)).time)
-
-            case Number:
-                return value cast Number
-             
-            case String:
-                return Database.quote(value)
-            }
-            return Database.quote(value.toString())
-        }
-
-        /*
-            Read records for an assocation. Will return one or an array of records matching the supplied key and options.
-         */
-        private static function readRecords(key: String, options: Object): Object {
-            let data: Array = innerFind(key, null, options)
-            if (data.length > 1) {
-                let result: Array = new Array
-                for each (row in data) {
-                    result.append(createRecord(row))
-                }
-                return result
-
-            } else if (data.length == 1) {
-                return createRecord(data[0])
-            }
-            return null
-        }
-
-        /**
-            Remove records from the database
-            @param ids Set of keys identifying the records to remove
-         */
-        static function remove(...ids): Void {
-            for each (let key: Object in ids) {
-                let cmd: String = "DELETE FROM " + _tableName + " WHERE " + _keyName + " = " + key + ";"
-                db.query(cmd, "remove", _trace)
-            }
-        }
-
-        /**
-            Set the database connection for this record class
-            @param database Database instance object created via new $Database
-         */
-        static function setDb(database: Database) {
-            _db = database
-        }
-
-        /**
-            Set the key name for this record
-         */
-        static function setKeyName(name: String): Void {
-            _keyName = name
-        }
-
-        /**
-            Set the associated table name for this record
-            @param name Name of the database table to backup the record class.
-         */
-        static function setTableName(name: String): Void {
-            if (_tableName != name) {
-                _tableName = name
-                if (_db) {
-                    _model.getSchema()
-                }
-            }
-        }
-
-        //  MOB -- count not documented or implemented
-        /**
-            Run an SQL statement and return selected records.
-            @param cmd SQL command to issue. Note: "SELECT" is automatically prepended and ";" is appended for you.
-            @returns An array of objects. Each object represents a matching row with fields for each column.
-         */
-        static function sql(cmd: String, count: Number? = null): Array {
-            cmd = "SELECT " + cmd + ";"
-            return db.query(cmd, "select", _trace)
-        }
-
-        /**
-            Trace SQL statements. Control whether trace is enabled for the actual SQL statements issued against the database.
-            @param on If true, display each SQL statement to the log
-         */
-        static function trace(on: Boolean): void
-            _trace = on
-
-        /** @hide TODO */
-        static function validateFormat(fields: Object, options = null) {
-            if (_validations == null) {
-                _validations = []
-            }
-            _validations.append([checkFormat, fields, options])
-        }
-
-        /** @hide TODO */
-        static function validateNumber(fields: Object, options = null) {
-            if (_validations == null) {
-                _validations = []
-            }
-            _validations.append([checkNumber, fields, options])
-        }
-
-        /** @hide TODO */
-        static function validatePresence(fields: Object, options = null) {
-            if (_validations == null) {
-                _validations = []
-            }
-            _validations.append([checkPresent, fields, options])
-        }
-
-        /** @hide TODO */
-        static function validateUnique(fields: Object, option = null)
-            _validations.append([checkUnique, fields, options])
-
-        /**
-            Run filters before and after saving data
-            @param fn Function to run
-            @param options - reserved
-         */
-        static function wrapFilter(fn, options: Object? = null): Void {
-            _wrapFilters ||= []
-            _wrapFilters.append([fn, options])
-        }
-
-        //  LEGACY DEPRECATED in 1.0.0-B2
-        /** @hide */
-        static function get columnNames(): Array {
-            return getColumnNames()
-        }
-        /** @hide */
-        static function get columnTitles(): Array {
-            return getColumnTitles()
-        }
-        /** @hide */
-        static function get db(): Datbase {
-            return getDb()
-        }
-        /** @hide */
-        static function get keyName(): String {
-            return getKeyName()
-        }
-        /** @hide */
-        static function get numRows(): String {
-            return getNumRows()
-        }
-        /** @hide */
-        static function get tableName(): String {
-            return getTableName()
-        }
-    }
-
-    public class Record {
-
-        /*
-            Constructor for use when instantiating directly from Record. Typically, use models will implement this
-            class and will provdie their own constructor which calls initialize().
-         */
-        function Record(fields: Object? = null) {
-            initialize(fields)
-        }
-
-        /**
-            Construct a new record instance. This is really a constructor function, because the Record class is 
-            implemented by user models, no constructor will be invoked when a new user model is instantiated. 
-            The record may be initialized by optionally supplying field data. However, the record will not be 
-            written to the database until $save is called. To read data from the database into the record, use 
-            one of the $find methods.
-            @param fields An optional object set of field names and values may be supplied to initialize the record.
-         */
-        function initialize(fields: Object? = null): Void {
-            if (fields) for (let field in fields) {
-                this."public"::[field] = fields[field]
-            }
-        }
-
-        /*
-            Map types from SQL to ejs when reading from the database
-         */
-        private function coerceToEjsTypes(): Void {
-            for (let field: String in this) {
-                let col: Column = _columns[field]
-                if (col == undefined) {
-                    continue
-                }
-                if (col.ejsType == Object.getType(this[field])) {
-                    continue
-                }
-                let value: String = this[field]
-                switch (col.ejsType) {
-                case Boolean:
-                    if (value is String) {
-                        this[field] = (value.trim().toLower() == "true")
-                    } else if (value is Number) {
-                        this[field] = (value == 1)
-                    } else {
-                        this[field] = value cast Boolean
-                    }
-                    this[field] = (this[field]) ? true : false
-                    break
-
-                case Date:
-                    this[field] = new Date(value)
-                    break
-
-                case Number:
-                    this[field] = this[field] cast Number
-                    break
-                }
-            }
-        }
-
-        /**
-            Set an error message. This defines an error message for the given field in a record.
-            @param field Name of the field to associate with the error message
-            @param msg Error message
-         */
-        function error(field: String, msg: String): Void {
-            field ||= ""
-            _errors ||= {}
-            _errors[field] = msg
-        }
-
-        /**
-            Get the errors for the record. 
-            @return The error message collection for the record.  
-         */
-        function getErrors(): Array
-            _errors
-
-        /**
-            Check if the record has any errors.
-            @return True if the record has errors.
-         */
-        function hasError(field: String? = null): Boolean {
-            if (field) {
-                return (_errors && _errors[field])
-            }
-            if (_errors) {
-                return (Object.getOwnPropertyCount(_errors) > 0)
-            } 
-            return false
-        }
-
-        private function runFilters(filters): Void {
-            for each (filter in filters) {
-                let fn = filter[0]
-                let options = filter[1]
-                if (options) {
-                    let only = options.only
-/* TODO
-                    if (only) {
-                        if (only is String && actionName != only) {
-                            continue
-                        }
-                        if (only is Array && !only.contains(actionName)) {
-                            continue
-                        }
-                    } 
-                    except = options.except
-                    if (except) {
-                        if (except is String && actionName == except) {
-                            continue
-                        }
-                        if (except is Array && except.contains(actionName)) {
-                            continue
-                        }
-                    }
-*/
-                }
-                fn.call(this)
-            }
-        }
-
-        /**
-            Save the record to the database.
-            @returns True if the record is validated and successfully written to the database
-            @throws IOError Throws exception on sql errors
-         */
-        function save(): Boolean {
-            var sql: String
-            if (!_columns) _model.getSchema()
-            if (!validateRecord()) {
-                return false
-            }
-            runFilters(_beforeFilters)
-            
-            if (_keyValue == null) {
-                sql = "INSERT INTO " + _tableName + " ("
-                for (let field: String in this) {
-                    if (_columns[field]) {
-                        sql += field + ", "
-                    }
-                }
-                sql = sql.trim(', ')
-                sql += ") VALUES("
-                for (let field: String in this) {
-                    if (_columns[field]) {
-                        sql += "'" + prepareValue(field, this[field]) + "', "
-                    }
-                }
-                sql = sql.trim(', ')
-                sql += ")"
-
-            } else {
-                sql = "UPDATE " + _tableName + " SET "
-                for (let field: String in this) {
-                    if (_columns[field]) {
-                        sql += field + " = '" + prepareValue(field, this[field]) + "', "
-                    }
-                }
-                sql = sql.trim(', ')
-                sql += " WHERE " + _keyName + " = " +  _keyValue
-            }
-            if (!_keyValue) {
-                sql += "; SELECT last_insert_rowid();"
-            } else {
-                sql += ";"
-            }
-
-            let result: Array = _db.query(sql, "save", _trace)
-            if (!_keyValue) {
-                _keyValue = this["id"] = result[0]["last_insert_rowid()"] cast Number
-            }
-            runFilters(_afterFilters)
-            return true
-        }
-
-        /**
-            Update a record based on the supplied fields and values.
-            @param fields Hash of field/value pairs to use for the record update.
-            @returns True if the database is successfully updated. Returns false if validation fails. In this case,
-                the record is not saved.
-            @throws IOError on database SQL errors
-         */
-        function saveUpdate(fields: Object): Boolean {
-            for (field in fields) {
-                if (this[field] != undefined) {
-                    this[field] = fields[field]
-                }
-            }
-            return save()
-        }
-
-        /**
-            Validate a record. This call validates all the fields in a record.
-            @returns True if the record has no errors.
-         */
-        function validateRecord(): Boolean {
-            if (!_columns) _model.getSchema()
-            _errors = {}
-            if (_validations) {
-                for each (let validation: String in _validations) {
-                    let check = validation[0]
-                    let fields = validation[1]
-                    let options = validation[2]
-                    if (fields is Array) {
-                        for each (let field in fields) {
-                            if (_errors[field]) {
-                                continue
-                            }
-                            check(this, field, this[field], options)
-                        }
-                    } else {
-                        check(this, fields, this[fields], options)
-                    }
-                }
-            }
-            let thisType = Objecg.getType(this)
-            if (thisType["validate"]) {
-                thisType["validate"].call(this)
-            }
-            coerceToEjsTypes()
-            return Object.getOwnPropertyCount(_errors) == 0
-        }
-    }
-
-
-    /**
-        Database column class. A database record is comprised of one or mor columns
-        @hide
-     */
-    class Column {
-        //  TODO - workaround. Make these public, see ticket 1227: ejsweb generate was not finding them when internal
-        //  missing the internal namespace.
-        public var ejsType: Object 
-        public var sqlType: Object 
-
-        function Column(name: String, accessor: Boolean = false, ejsType: Type? = null, sqlType: String? = null) {
-            this.ejsType = ejsType
-            this.sqlType = sqlType
-        }
-    }
-
-    /** @hide */
-    function plural(name: String): String
-        name + "s"
-
-    /** @hide */
-    function singular(name: String): String {
-        var s: String = name + "s"
-        if (name.endsWith("ies")) {
-            return name.slice(0,-3) + "y"
-        } else if (name.endsWith("es")) {
-            return name.slice(0,-2)
-        } else if (name.endsWith("s")) {
-            return name.slice(0,-1)
-        }
-        return name.toPascal()
-    }
-
-    /**
-        Map a type assuming it is already of the correct ejs type for the schema
-        @hide
-     */
-    function mapType(value: Object): String {
-        if (value is Date) {
-            return "%d".format((new Date(value)).time)
-        } else if (value is Number) {
-            return "%d".format(value)
-        }
-        return value
-    }
-}
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.db.mapper/Model.es"
  */
 /************************************************************************/
 
@@ -15922,7 +14910,6 @@ module ejs.web {
         */
         public var flash:       Object
 
-        private var noFinalize: Boolean
         private var rendered: Boolean
         private var redirected: Boolean
         private var _afterFilters: Array
@@ -16000,8 +14987,9 @@ module ejs.web {
         /** 
             Run the controller action. 
             @param request Request object
+            @return A response object hash {status, headers, body} or null if writing directly using the request object.
          */
-        function run(request: Request): Void {
+        function run(request: Request): Object {
             actionName = params.action || "index"
             params.action = actionName
             use namespace action
@@ -16009,16 +14997,17 @@ module ejs.web {
                 flashBefore()
             }
             runFilters(_beforeFilters)
+            let result
             if (!redirected) {
                 if (!this[actionName]) {
                     if (!viewExists(actionName)) {
                         actionName = "missing"
-                        this[actionName]()
+                        result = this[actionName]()
                     }
                 } else {
-                    this[actionName]()
+                    result = this[actionName]()
                 }
-                if (!rendered && !redirected && !noFinalize) {
+                if (!result && !rendered && !redirected && !request.dontFinalize) {
                     renderView()
                 }
                 runFilters(_afterFilters)
@@ -16026,17 +15015,11 @@ module ejs.web {
             if (flash) {
                 flashAfter()
             }
-            if (!noFinalize) {
+            if (!result) {
                 request.finalize()
             }
+            return result
         }
-
-        /**
-            Don't finalize the request. If called, the action routine must explicitly call Request.finalize. Note that
-            a default view will not be rendered if dontFinalize is called.
-         */
-        function dontFinalize(): Void
-            noFinalize = true
 
         /* 
             Prepare the flash message. This extracts any flash message from the session state store
@@ -16134,7 +15117,7 @@ module ejs.web {
             let dirs = config.directories
             let cvname = controllerName + "_" + viewName
             let path = request.dir.join("views", controllerName, viewName).joinExt(config.extensions.ejs)
-            let cached = Loader.cached(path, request.dir.join(dirs.cache))
+            let cached = Loader.cached(path, request.config, request.dir.join(dirs.cache))
             let viewClass = cvname + "View"
 
             //  TODO - OPT. Could keep a cache of cached.modified
@@ -16164,8 +15147,8 @@ module ejs.web {
         /**
             Render an error message as the response
          */
-        function renderError(msg: String = "", status: Number = Http.ServerError): Void {
-            request.writeError(msg, status)
+        function renderError(status: Number, ...msgs): Void {
+            request.error(status, ...msgs)
             rendered = true
         }
 
@@ -16367,6 +15350,93 @@ module ejs.web {
 /************************************************************************/
 /*
  *  End of file "../../src/jems/ejs.web/Controller.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/jems/ejs.web/Dir.es"
+ */
+/************************************************************************/
+
+/*
+    Dir.es - Directory content handler
+ */
+
+module ejs.web {
+
+    /** 
+        Directory content handler. This redirects requests for directories and serves directory index files.
+        If the request pathInfo ends with "/", the request is transparently redirected to an index file if one is present.
+        The set of index files is defined by HttpServer.indicies. If the request is a directory but does not end in "/",
+        the client is redirected to a URL equal to the pathInfo with a "/" appended.
+        @param request Request object
+        @returns A response hash object
+        @spec ejs
+        @stability prototype
+     */
+    function DirApp(request: Request): Object {
+        if (request.pathInfo.endsWith("/")) {
+            for each (index in request.server.indicies) {
+                let path = request.filename.join(index)
+                if (path.exists) {
+                    /* Return a String containing the new pathInfo to serve */
+                    request.pathInfo += index 
+                    app = request.route.router.route(request)
+                    //  MOB -- some form of recursion protection? Add request.counter?
+                    return Web.process(app, request)
+                }
+            }
+            return { 
+                status: Http.NotFound, 
+                body: errorBody("Not Found", "Can't locate " + escapeHtml(request.pathInfo))
+            }
+        }
+        return { 
+            status: Http.MovedPermanently,
+            headers: { location: request.uri + "/" }
+            body: errorBody("Moved Permanently", 'The document has moved <a href="' + request.pathInfo + "/" + '">here</a>.')
+        }
+    }
+
+    /** @hide */
+    function DirBuilder(request: Request): Function DirApp
+}
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.web/Dir.es"
  */
 /************************************************************************/
 
@@ -17183,16 +16253,15 @@ module ejs.web {
 
 module ejs.web {
 
-    dynamic class HttpServer {
+    enumerable dynamic class HttpServer {
         use default namespace public
 
-//  MOB -- remove serverRoot completely
         /** 
             Create a HttpServer object. The server is created in async mode by default.
-            @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
-                the serverRoot will be defined by the web server.
             @param documentRoot Directory containing web documents to serve. If set to null and the HttpServer is hosted,
                 the documentRoot will be defined by the web server.
+            @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
+                the serverRoot will be defined by the web server.
             @spec ejs
             @stability prototype
             @example: This is a fully async server:
@@ -17215,7 +16284,119 @@ module ejs.web {
             }
             server.listen("127.0.0.1:7777")
          */
-        native function HttpServer(serverRoot: Path = ".", documentRoot: Path = ".")
+        native function HttpServer(documentRoot: Path = ".", serverRoot: Path = ".")
+
+        /** 
+            Accept a for client connection. This creates a request object in response to an incoming client connection
+            on the current HttpServer object. This call is only required in sync mode. 
+            In async mode, the HttpServer automatically creates the Request object and passes it on "readable" events.
+            @return A Request object if in sync mode. No return value if in async mode. 
+            @event Issues a "accept" event when there is a new connection available.
+            @example:
+                server = new Http(".", "./web")
+                server.listen("80")
+                while (request = server.accept()) {
+                    Web.serve(request)
+                }
+         */
+        native function accept(): Request
+
+        /** 
+            Get the local IP address bound to this socket.
+            @returns the address in dot notation or empty string if it is not bound.
+         */
+        native function get address(): String 
+
+        /** 
+            @duplicate Stream.async
+         */
+        native function get async(): Boolean
+        native function set async(enable: Boolean): Void
+
+        /** 
+            @duplicate Stream.close */
+        native function close(): Void
+
+        /** 
+            Default local directory for web documents to serve. This is used as the default Request.dir value.
+         */
+        var documentRoot: Path
+
+        /**
+            Resource limits for the server and for initial resource limits for requests.
+            @param limits. Limits is an object hash with the following properties:
+            @option chunk Maximum size of a chunk when using chunked transfer encoding.
+            @option clients Maximum number of simultaneous clients.
+            @option headers Maximum number of headers in a request.
+            @option header Maximum size of headers.
+            @option inactivityTimeout Maximum time in seconds to keep a connection open if idle. Set to zero for no timeout.
+            @option receive Maximum size of incoming body data.
+            @option requests Maximum number of simultaneous requests.
+            @option requestTimeout Maximum time in seconds for a request to complete. Set to zero for no timeout.
+            @option reuse Maximum number of times to reuse a connection for requests (KeepAlive count).
+            @option sessions Maximum number of simultaneous sessions.
+            @option sessionTimeout Maximum time to preserve session state. Set to zero for no timeout.
+            @option stageBuffer Maximum stage buffer size for each direction.
+            @option transmission Maximum size of outgoing body data.
+            @option upload Maximum size of uploaded files.
+            @option uri Maximum size of URIs.
+            @see setLimits
+          */
+        native function get limits(): Object
+
+        /**
+            Return an object hash with the current server resource limits
+          */
+
+        static var indicies = ["index.ejs", "index.html"]
+
+        /** 
+            Flag indicating if the server is using secure communications. This means that TLS/SSL is the underlying
+            protocol scheme.
+         */
+        native function get isSecure(): Boolean
+
+        /** 
+            Listen for client connections. This creates a HTTP server listening on a single socket endpoint. It can
+            also be used to attach to an existing listening connection if embedded in a web server. 
+            
+            When used inside a web server, the web server should define the listening endpoints and ensure the 
+            EjsScript startup script is executed. Then, when listen is called, the HttpServer object will be bound to
+            the web server's listening connection. In this case, the endpoint argument is ignored.
+
+            HttpServer supports both sync and async modes of operation.  In sync mode, after listen call is made, 
+            $accept must be called to wait for and receive client connections. The $accept call will create the 
+            Request object.  In async mode, Request objects will be created automatically and passed to registered 
+            observers via "readable" events.
+
+            @param endpoint The endpoint address on which to listen. An endoint may be a port number or a composite 
+            "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
+            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
+            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
+            hosting web server documentation for specifics.
+            @throws ArgError if the specified endpoint address is not valid or available for binding.
+            @event Issues a "accept" event when there is a new connection available.
+            @example:
+                server = new Http(".", "./web")
+                server.observe("readable", function (event, request) {
+                    Web.serve(request)
+                })
+                server.listen("80")
+         */
+        native function listen(endpoint: String?): Void
+
+        /**
+            The authorized public host name for the server. If defined, this name will be used in preference for 
+            request redirections. Defaults to the listening IP address if specified.
+         */
+        native function get name(): String 
+        native function set name(hostname: String): Void
+
+        /** 
+            Get the port bound to this Http endpoint.
+            @return The port number or 0 if it is not bound.
+         */
+        native function get port(): Number 
 
         /** 
             Add an observer for server events. 
@@ -17231,109 +16412,6 @@ module ejs.web {
         native function observe(name, observer: Function): Void
 
         /** 
-            Get the local IP address bound to this socket.
-            @returns the address in dot notation or empty string if it is not bound.
-         */
-        native function get address(): String 
-
-//  MOB - does sync mode make any sense? Maybe in threaded-appweb?
-        /** 
-            @duplicate Stream.async
-         */
-        native function get async(): Boolean
-
-        /** 
-            @duplicate Stream.async
-         */
-        native function set async(enable: Boolean): Void
-
-        /** 
-            @duplicate Stream.close */
-        native function close(): Void
-
-        /** 
-            Default local directory for web documents to serve. This is used as the default Request.dir value.
-         */
-        var documentRoot: Path
-
-//  MOB - how to do SSL?
-//  MOB -- not right for sync mode. Never returns a request
-        /** 
-            Listen for client connections. This creates a HTTP server listening on a single socket endpoint. It can
-            also be used to attach to an existing listening connection if embedded in a web server. 
-            
-            When used inside a web server, the web server should define the listening endpoints and ensure the 
-            EjsScript startup script is executed. Then, when listen is called, the HttpServer object will be bound to
-            the web server's listening connection. In this case, the endpoint argument is ignored.
-
-            HttpServer supports both sync and async modes of operation. If the server is in sync mode, the listen call 
-            will block until a client connection is received and the call will return a request object. If a the socket 
-            is in async mode, the listen call will return immediately and client connections will be notified via 
-            "accept" events. 
-
-            @return A Request object if in sync mode. No return value if in async mode. 
-            @param address The endpoint address on which to listen. An endoint is a port number or a composite 
-            "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
-            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
-            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
-            hosting web server documentation for specifics.
-            @throws ArgError if the specified endpoint address is not valid or available for binding.
-            @event Issues a "accept" event when there is a new connection available.
-            @example:
-                server = new Http(".", "./web")
-                server.observe("readable", function (event, request) {
-                    Web.serve(request)
-                })
-                server.listen("80")
-         */
-        native function listen(endpoint: String?): Request
-
-// MOB
-        /** @hide */
-        /** 
-            Listen for client connections using the Secure Sockets Layer (SSL)protocol. This creates a HTTP server 
-            listening on a single socket endpoint for SSL connections. It can also be used to attach to an existing 
-            listening connection if embedded in a web server. 
-            
-            When used inside a web server, the web server should define the listening endpoints and ensure the 
-            EjsScript startup script is executed. Then, when listen is called, the HttpServer object will be bound to
-            the web server's listening connection. In this case, the listen arguments are ignored.
-
-            HttpServer supports both sync and async modes of operation. If the server is in sync mode, the secureListen call 
-            will block until a client connection is received and the call will return a request object. If a the socket 
-            is in async mode, the secureListen call will return immediately and client connections will be notified via 
-            "accept" events. 
-
-            @return A Request object if in sync mode. No return value if in async mode. 
-            @param address The endpoint address on which to listen. An endoint is a port number or a composite 
-            "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
-            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
-            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
-            hosting web server documentation for specifics.
-            @param keyFile Path of the file containing the server's private key
-            @param certFile Path of the file containing the server's SSL certificate
-            @param protocols Arary of SSL protocols to support. Select from: SSLv2, SSLv3, TLSv1, ALL. For example:
-                ["SSLv3", "TLSv1"] or "[ALL]"
-            @param ciphers Array of ciphers to use when negotiating the SSL connection. Not yet supported.
-            @throws ArgError if the specified endpoint address is not valid or available for binding.
-            @event Issues a "accept" event when there is a new connection available.
-            @example:
-                server = new Http(".", "./web")
-                server.observe("readable", function (event, request) {
-                    Web.serve(request)
-                })
-                server.secureListen("443")
-         */
-        native function secureListen(endpoint: String?, keyFile: Path, certFile: Path, protocols: Array, 
-            ciphers: Array): Void
-
-        /** 
-            Get the port bound to this Http endpoint.
-            @return The port number or 0 if it is not bound.
-         */
-        native function get port(): Number 
-
-        /** 
             Remove an observer from the server. 
             @param name Event name previously used with observe. The name may be an array of events.
             @param observer Observer function previously used with observe.
@@ -17341,8 +16419,81 @@ module ejs.web {
         native function removeObserver(name: Object, observer: Function): Void
 
         /** 
+            Define the Secure Sockets Layer (SSL) protocol credentials. This must be done before calling $listen.
+            @param keyFile Path of the file containing the server's private key. This file
+            contains the PEM encoded private key file for the server. Set to null if the private key is combined with 
+            the certificate file. If the private key is encrypted, you will be prompted at the console to enter the 
+            pass-phrase to decript the private key on system reboot. There is a delima here. If you use a crypted 
+            private key, the server will pause until you enter the pass-phrase which makes headless operation impossible. 
+            If you do not encrypt the private key, your private key is more vulnerable should the server be compromised. 
+            Which option you choose depends on whether headless operation is essential or not.
+            @param certFile Path of the file containing the SSL certificate
+            The certificate file contains the PEM encoded X.509 certificate for the server. The file may also contain 
+            the private key in which case you should set the key parameter to null.
+            The path may be an absolute path or it may be relative to the ServerRoot.
+            @param protocols Optional arary of SSL protocols to support. Select from: SSLv2, SSLv3, TLSv1, ALL. 
+                Each protocol can be prefixed by "+" or "-" to add or subtract from the prior set.
+                For example: ["ALL", "-SSLv2"], or ["SSLv3", "TLSv1"] or "[ALL]"
+            @param ciphers Optional array of ciphers to use when negotiating the SSL connection. Not yet supported.
+            @throws ArgError for invalid arguments
+         */
+        native function secure(keyFile: Path, certFile: Path!, protocols: Array = null, ciphers: Array = null): Void
+
+        /**
+            Define the stages of the Http processing pipeline. Data flows through the processing pipeline and is
+            filtered or transmuted by filter stages. A communications connector is responsible for transmitting to 
+            the network.
+            @param incoming Array of stages for the incoming pipeline: default: ["chunk", "range", "upload"]
+            @param outgoing Array of stages for the outgoing pipeline: default: ["auth", "range", "chunk"]
+            @param connector Network connector to use for I/O. Defaults to the network connector "net". Other values: "send".
+                The "net" connector transparently upgrades to the "send" connector if transmitting static data and 
+                not using SSL, ranged or chunked transfers.
+         */
+        native function setPipeline(incoming: Array, outgoing: Array, connector: String): Void
+
+        /**
+            Update the server resource limits. The supplied limit fields are updated.
+            See $limit for limit field details.
+            @param limits Object hash of limit fields and values
+            @see limits
+         */
+        native function setLimits(limits: Object): Void
+
+        /**
+            Configure request tracing for the server. The default is to trace the first line of requests and responses 
+            and headers at level 3.
+            @param level Level at which request tracing will occurr
+            @param options. Set of trace options. Select from: "request" to trace requests, "response" to trace responses,
+            "conn" to trace new connections, "first" to trace the first line of requests or responses, "headers" to 
+            trace headers, and "body" to trace body content. Or use "all" to trace everything.
+            @param size Maximum request body size to trace
+          */
+        native function trace(level: Number, options: Object = ["conn", "first", "headers", "request", "response"], 
+            size: Number = null): Void
+
+
+        /**
+            Configure trace filters for request tracing
+            @param include Set of extensions to include when tracing
+            @param exclude Set of extensions to exclude when tracing
+          */
+        native function traceFilter(include: Array, exclude: Array = ["gif", "ico", "jpg", "png"]): Void
+
+        /**
+            Verify client certificates. This ensures that the clients must provide a client certificate for to verify 
+            the their identity. You can choose to use either the caCertPath or caCertFile argument. If both are provided
+            caCertPath takes precedence.
+            @param caCertPath Defines the directory containing the certificates to use for client authentication.
+            The path may be an absolute path or it may be relative to the ServerRoot.
+            Set to null if you are using $caCertFile.
+            @param caCertFile Defines the location of the certificate file or bundle to use for client authentication.
+                Use this if you have a single certificate or a bundle of certificates.
+                Set to null if you are using $caCertPath.
+         */
+        native function verifyClients(caCertPath: Path, caCertFile: Path): Void
+
+        /** 
             Default root directory for the server. The app does not change its current directory to this path.
-            MOB -- is this needed?
          */
         var serverRoot: Path
 
@@ -17393,6 +16544,174 @@ module ejs.web {
 
 /************************************************************************/
 /*
+ *  Start of file "../../src/jems/ejs.web/Middleware.es"
+ */
+/************************************************************************/
+
+/*
+    Middleware.es - Wrap a web app with defined middleware
+ */
+
+module ejs.web {
+
+    /** 
+        Define middleware for a web app. This wrapps the web application function with defined middleware filters.
+        @param app Base web app function object
+        @param middleware Array of middleware applications
+        @returns A top level web application function object
+        @spec ejs
+        @stability prototype
+     */
+    function Middleware(app, middleware: Array = null): Function {
+        for each (mid in middleware) {
+            app = mid[i](app)
+        }
+        return function (request: Request): Object {
+            return app(request)
+        }
+    }
+}
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.web/Middleware.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/jems/ejs.web/Monitor.es"
+ */
+/************************************************************************/
+
+/*
+    Monitor.es - Monitor client, request and session resource consumption. 
+ */
+
+module ejs.web {
+
+    /** 
+        Monitor resource consumption. This monitors the number of simultaneous requests and unique clients against
+        thresholds defined in the Request.server (HttpServer) limits.
+        @param app Base web app function object
+        @returns A new web application function object
+        @spec ejs
+        @stability prototype
+     */
+    function Monitor(app): Function {
+print("MONITOR TOP")
+        var clients = {}
+        var clientCount: Number = 0
+        var requestCount: Number = 0
+
+        return function (request: Request): Object {
+print("MONITOR RUN")
+            let server = request.server
+            let limits = server.limits
+print("CLIENTS  " + clientCount + "/" + limits.clients)
+print("REQUESTS " + requestCount + "/" + limits.requests)
+            if (clientCount >= limits.clients) {
+                return { status: Http.ServiceUnavailable, body: "Server busy, please try again later." }
+            }
+            if (requestCount >= limits.requests) {
+                return { status: Http.ServiceUnavailable, body: "Server busy, please try again later." }
+            }
+            requestCount++
+            try {
+                //  MOB -- does this work multithreaded?
+dump("BEFORE", clients)
+                if (clients[request.remoteAddress]) {
+                    clients[request.remoteAddress]++
+                } else {
+                    clients[request.remoteAddress] = 1
+                    clientCount++
+                }
+dump("MID", clients)
+                response = app(request)
+            } finally {
+print('FINALLY ' + clients[request.remoteAddress])
+                if (--clients[request.remoteAddress] == 0) {
+                    delete clients[request.remoteAddress]
+                    clientCount--
+                }
+            }
+dump("AFTER", clients)
+            requestCount--
+            return response
+        }
+    }
+}
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.web/Monitor.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "../../src/jems/ejs.web/Mvc.es"
  */
 /************************************************************************/
@@ -17403,14 +16722,15 @@ module ejs.web {
 
 module ejs.web {
 
-    require ejs.cjs
-
     /** 
-        The Mvc manages the loading of MVC applications
+        The Mvc class manages the loading and initialization of MVC web applications
         @stability prototype
         @spec ejs
      */
     public class Mvc {
+
+        static var apps = {}
+
         /*  
             Default configuration for MVC apps. This layers over App.defaultConfig and ejs.web::defaultConfig.
          */
@@ -17447,65 +16767,36 @@ module ejs.web {
             },
         }
 
-        /* References into the config state */
-        private static var mvc: Object
-        private static var dirs: Object
-        private static var ext: Object
         private static var loaded: Object = {}
-
-        //  MOB -- where should this come from?
         private static const EJSRC = "ejsrc"
 
-        /** 
-            Load an MVC application. This is typically called by the Router to load an application after routing
-            the request to determine the appropriate controller
-            @param request Request object
-            @returns The exports object
+        /*
+            Load the app/ejsrc and defaultConfig
+            @return The configuration object
          */
-        public static function load(request: Request): Object {
-            request.dir = request.server.serverRoot
-            let dir = request.dir
-            //  MOB -- should be in filenames in config
-            let path = dir.join(EJSRC)
+        private function loadConfig(request: Request): Object {
             let config = request.config
+            let path = request.dir.join(EJSRC)
             if (path.exists) {
-                let appConfig = deserialize(path.readString())
-                /* Clone to get a request private copy of the configuration */
-                /* MOB - why do this? */
+                let appConfig = path.readJSON()
+                /* Clone to get a request private copy of the configuration before blending "app/ejsrc" */
                 config = request.config = request.config.clone()
                 blend(config, appConfig, true)
-/* MOB - future create a new logger
-                if (app.config.log) {
-                    request.logger = new Logger("request", App.log, log.level)
-                    if (log.match) {
-                        App.log.match = log.match
-                    }
-                }
- */
             }
             blend(config, defaultConfig, false)
-            mvc = config.mvc
-            dirs = config.directories
-            ext = config.extensions
-            //  MOB temp
-            App.log.level = config.log.level
-
-            let exports
-            if (mvc.app) {
-    //  MOB -- what is this?
-                let app = dir.join(mvc.app)
-                if (app.exists) {
-                    exports = Loader.load(app, app)
+/* FUTURE
+            if (config.log) {
+                logger = new Logger("request", App.log, config.log.level)
+            }
+            if (config.mvc.app) {
+                // Load custom MVC app script and use it 
+                let script = request.dir.join(config.mvc.app)
+                if (script.exists) {
+                    startup = Loader.load(script, script, config).app
                 }
             }
-            return exports || { 
-                app: function (request: Request): Object {
-                    //  BUG - can't use Mvc.init as "this" has been modified from Mvc to request
-                    global["Mvc"].init(request)
-                    let controller = Controller.create(request)
-                    return controller.run(request)
-                }
-            }
+*/
+            return config
         }
 
         /** 
@@ -17513,13 +16804,16 @@ module ejs.web {
             the request to determine the appropriate controller
             @param request Request object
          */
-        public static function init(request: Request): Void {
-            let config = request.config
+        public function init(request: Request): Void {
+            let config = loadConfig(request)
+            let ext = config.extensions
+            let dirs = config.directories
             let dir = request.dir
 
-            //  MOB -- good to have a single reload-app file 
-            /* Load App */
-            let appmod = dir.join(dirs.cache, mvc.appmod)
+            request.log.debug(4, "MVC init at \"" + dir + "\"")
+
+            /* Load App. Touch ejsrc triggers a complete reload */
+            let appmod = dir.join(dirs.cache, config.mvc.appmod)
             let files, deps
             if (config.cache.reload) {
                 deps = [dir.join(EJSRC)]
@@ -17540,6 +16834,9 @@ module ejs.web {
             } else {
                 loadComponent(request, mod)
             }
+/* MOB -- implement
+            request.logger = logger
+*/
         }
 
         /** 
@@ -17550,7 +16847,7 @@ module ejs.web {
             @param files Files to compile into the module
             @param deps Extra file dependencies
          */
-        public static function loadComponent(request: Request, mod: Path, files: Array? = null, deps: Array? = null) {
+        public function loadComponent(request: Request, mod: Path, files: Array? = null, deps: Array? = null) {
             let rebuild
             if (mod.exists) {
                 rebuild = false
@@ -17586,6 +16883,24 @@ module ejs.web {
                 request.log.debug(4, "Use existing component: " + mod)
             }
         }
+    }
+
+    /**
+        MVC request handler.  
+        @param request Request object
+        @return A response hash (empty). MVC apps use Request methods directly to set status, headers and response body.
+     */
+    function MvcApp(request: Request): Object {
+        let app = MvcBuilder(request)
+        return app(request)
+    }
+
+    /** @hide */
+    function MvcBuilder(request: Request): Function {
+        //  MOB OPT - Currently Mvc has no state so really don't need an Mvc instance
+        let mvc: Mvc = Mvc.apps[request.dir] || (Mvc.apps[request.dir] = new Mvc(request))
+        mvc.init(request)
+        return Controller.create(request).run
     }
 }
 
@@ -17651,69 +16966,71 @@ module ejs.web {
         @spec ejs
         @stability prototype
      */
-    dynamic enumerable class Request implements Stream {
+    dynamic class Request implements Stream {
         use default namespace public
 
         /** 
             Absolute Uri for the top-level of the application. This returns an absolute Uri (includes scheme and host) 
             for the top most application Uri. See $home to get a relative Uri.
          */ 
-        native var absHome: Uri
+        native enumerable var absHome: Uri
 
         /** 
             Authentication group. This property is set to the value of the authentication group header. 
          */
-        native var authGroup: String
+        native enumerable var authGroup: String
 
         /** 
             Authentication method if authorization is being used (basic or digest). Set to null if not using authentication. 
          */
-        native var authType: String
+        native enumerable var authType: String
 
         /** 
             Authentication user name. This property is set to the value of the authentication user header. Set to null if
             not yet defined.
          */
-        native var authUser: String
+        native enumerable var authUser: String
 
-        /** 
+        /**
+UNUSED
             Preferred response chunk size for transfer chunk encoding. Chunked encoding is used when an explicit request 
             content length is unknown at the time the response headers must be emitted.  Chunked encoding is automatically 
             enabled if the chunkFilter is configured and a contentLength has not been defined.
+        native enumerable var chunkSize: Number
          */
-        native var chunkSize: Number
 
         /** 
             Request configuration. Initially refers to App.config which is filled with the aggregated "ejsrc" content.
             Middleware may modify to refer to a request local configuration object.
          */
-        var config: Object
+        enumerable var config: Object
 
         /** 
-            Get the request content length. This property is readonly and is set to the length of the request content 
-            body in bytes or -1 if not known.
+            Get the request content length. This is the length of body data sent by the client with the request. 
+            This property is readonly and is set to the length of the request content body in bytes or -1 if not known.
+            Body data is readable by using $read() or by using the request object as a stream.
          */
-        native var contentLength: Number
+        native enumerable var contentLength: Number
 
         /** 
             The request content type as specified by the "Content-Type" Http request header. This is set to null 
             if not defined.
          */
-        native var contentType: String
+        native enumerable var contentType: String
 
         /** 
             Cookie headers. Cookies are sent by the client browser via the Set-Cookie Http header. They are typically 
             used used to specify the session state. If sessions are being used, an Ejscript session cookie will be 
             sent to and from the browser with each request. 
          */
-        native var cookies: Object
+        native enumerable var cookies: Object
 
         /** 
             Application web document directory on the local file system. This is set to the directory containing the
             application. For MVC applications, this is set to the base directory of the application. For non-MVC apps, 
             it is set to the directory containing the application startup script.
          */
-        native var dir: Path
+        native enumerable var dir: Path
 
         /** 
             Get the encoding scheme for serializing strings. Not yet implemented.
@@ -17722,29 +17039,72 @@ module ejs.web {
         native var encoding: String
 
         /** 
+            Descriptive error message for the request. This message is defined internally by the Request if a request
+            times out or has a communications error.
+         */
+        native enumerable var errorMessage: String
+
+        /** 
             Files uploaded as part of the request. For each uploaded file, an instance of UploadFile is created in files. 
             Each element is named by the file upload HTML input element ID in the HTML page form. 
          */
-        native var files: Object
+        native enumerable var files: Object
+
+        /**
+            Physical filename for the resource supplying the response content for the request. Virtual requests where
+            the Request $uri does not correspond to any physical resource may not define this property.
+         */
+        enumerable var filename: Path
 
         /** 
-            Request Http headers. This is an object hash filled with the Http request headers. If multiple headers of 
-            the same key value are defined, their contents will be catenated with a ", " separator as per the HTTP/1.1 
-            specification. Use the header() method if you want to retrieve a single header.
+            Request Http headers. This is an object hash filled with the request headers from the client.  If multiple 
+            headers of the same key value are defined, their contents will be catenated with a ", " separator as per the 
+            HTTP/1.1 specification. Use the header() method if you want to retrieve a single header.
+            Header property names are lower case. ie. "content_length". Use $headers() if you want to match headers
+            using a mixed case key. E.g. headers("Content-Length")
          */
-        native var headers: Object
+        native enumerable var headers: Object
 
 //  MOB -- bad name
         /** 
             Relative Uri for the top-level of the application. This returns a relative Uri from the current request
             up to the top most application Uri.
          */ 
-        native var home: Uri
+        native enumerable var home: Uri
+
+//  MOB -- bad name
+        /** 
+            Server host name. This is set to the authorized server name (HttpServer.name) if one is configured. 
+            Otherwise it will be set to the $localAddress value which is either the "Host" header value if supplied 
+            by the client or is the server IP address of the accepting interface.
+         */
+        native enumerable var host: String
 
         /** 
-            Client requested Host. This is the Http request "Host" header value.
+            Flag indicating if the request is using secure communications. This means that TLS/SSL is the underlying
+            protocol scheme.
          */
-        native var host: String
+        native enumerable var isSecure: Boolean
+
+        /**
+            Resource limits for the request. The limits have initial default values defined by the owning HttpServer.
+            @param limits. Limits is an object hash with the following properties:
+            @option chunk Maximum size of a chunk when using chunked transfer encoding.
+            @option inactivityTimeout Maximum time in seconds to keep a connection open if idle. Set to zero for no timeout.
+            @option receive Maximum size of incoming body data.
+            @option requestTimeout Maximum time in seconds for a request to complete. Set to zero for no timeout.
+            @option reuse Maximum number of times to reuse a connection for requests (KeepAlive count).
+            @option sessionTimeout Maximum time to preserve session state. Set to zero for no timeout.
+            @option transmission Maximum size of outgoing body data.
+            @option upload Maximum size of uploaded files.
+            @see setLimits
+          */
+        native function get limits(): Object
+
+        /** 
+            Server IP address of the accepting interface
+         */
+        native enumerable var localAddress: String
 
         /** 
             Logger object. Set to App.log. This is configured from the "log" section of the "ejsrc" config file.
@@ -17755,45 +17115,50 @@ module ejs.web {
         /** 
             Request HTTP method. String containing the Http method (DELETE | GET | POST | PUT | OPTIONS | TRACE)
          */
-        native var method: String
+        native enumerable var method: String
 
         /** 
             The request form parameters. Object hash of user url-encoded post data parameters.
          */
-        native var params: Object
+        native enumerable var params: Object
 
         /** 
             Portion of the request URL after the scriptName. This is the location of the request within the application.
          */
-        native var pathInfo: String
+        native enumerable var pathInfo: String
+
+        /** 
+            Http request protocol (HTTP/1.0 | HTTP/1.1)
+         */
+        native enumerable var protocol: String
 
         /** 
             Request query string. This is the portion of the Uri after the "?". Set to null if there is no query.
          */
-        native var query: String
+        native enumerable var query: String
 
         /** 
             Name of the referring URL. This comes from the request "Referrer" Http header. Set to null if there is
             no defined referrer.
          */
-        native var referrer: String
+        native enumerable var referrer: String
 
         /** 
             IP address of the client issuing the request. 
          */
-        native var remoteAddress: String
+        native enumerable var remoteAddress: String
 
         /** 
             Route used for the request. The route is the matching entry in the route table for the request.
             The route has properties two properties of particular interest: "name" which is the name of the route and
             and "type" which classifies the type of request. 
          */
-        var route: Route
+        enumerable var route: Route
 
         /** 
-            Http request protocol scheme (http | https)
+            Http request scheme (http | https)
          */
-        native var scheme: String
+        native enumerable var scheme: String
 
         /** 
             Script name for the current application serving the request. This is typically the leading Uri portion 
@@ -17801,13 +17166,7 @@ module ejs.web {
             the application.  The script name is typically determined by the Router as it parses the request using 
             the routing tables.
          */
-        native var scriptName: String
-
-        /** 
-            Flag indicating if the request is using secure communications. This means that TLS/SSL is the underlying
-            protocol scheme.
-         */
-        native var secure: Boolean
+        native enumerable var scriptName: String
 
         /** 
             Owning server for the request. This is the HttpServer object that created this request.
@@ -17826,51 +17185,30 @@ module ejs.web {
         /** 
             Current session ID. Index into the $sessions object. Set to null if no session is defined.
          */
-        native var sessionID: String
+        native enumerable var sessionID: String
 
         /** 
             Set to the (proposed) Http response status code.
          */
-        native var status: Number
-
-        /** 
-            Request timeout. Number of milliseconds for requests to block while processing the request.
-            A value of -1 means no timeout.
-         */
-        native var timeout: Number
+        native enumerable var status: Number
 
         /**
-            The request URL as a parsed Uri. This is the original Uri and may not reflect changes to pathInfo or
-            scriptName.
+            The request URL path as a parsed Uri. This is the original Uri path combined with the HttpServer scheme, host
+            and port components. It will not reflect changes to pathInfo or scriptName.
          */
-        native var uri: Uri
+        native enumerable var uri: Uri
 
         /** 
             Get the name of the client browser software set in the "User-Agent" Http header 
          */
-        native var userAgent: String
+        native enumerable var userAgent: String
 
         /* ************************************* Methods ******************************************/
-
-        /** 
-            @duplicate Stream.observe
-            @event readable Issued when some body content is available.
-            @event writable Issued when the connection is writable to accept body data (PUT, POST).
-            @event close Issued when the request completes
-            @event error Issued if the request does not complete
-            All events are called with the signature:
-            function (event: String, http: Http): Void
-         */
-        native function observe(name, observer: Function): Void
 
         /** 
             @duplicate Stream.async
          */
         native function get async(): Boolean
-
-        /** 
-            @duplicate Stream.async
-         */
         native function set async(enable: Boolean): Void
 
         /**
@@ -17887,14 +17225,22 @@ module ejs.web {
 
         /** 
             @duplicate Stream.close
-            This closes the current request.
+            This closes the current request. It may not close the actually socket connection so that it can be reused
+                for future requests.
          */
         native function close(): Void
+
+        /**
+            Don't auto-finalize the request. If dontFinalize is true, web frameworks should not auto-finalize requests. 
+            Rather, callers must explicitly invoke $finalize with force set to true.
+         */
+        native enumerable var dontFinalize: Boolean
 
         //  MOB - unique name to not conflict with global.dump()
         /** 
             Dump objects for debugging
             @param args List of arguments to print.
+            @hide
          */
         function show(...args): Void {
             for each (var e: Object in args) {
@@ -17916,30 +17262,41 @@ module ejs.web {
             Path(pathInfo).extension
 
         /** 
-            Signals the end of any write data. If using chunked writes (no content length specified), finalize() must
-            be called to properly signify the end of write data. This causes the chunk filter to write a chunk trailer.
+            Signals the end of any write data and flushes any buffered write data to the client. 
+            If $dontFinalize is true, this call will have no effect unless $force is true.
+            @param force Do finalization even if $dontFinalize is true
          */
-        native function finalize(): Void 
+        native function finalize(force: Boolean = false): Void 
 
         /** 
+            Flush request data. Calling flush(Sream.WRITE) or finalize() is required to ensure write data is sent 
+            to the client. Flushing the read direction is ignored
             @duplicate Stream.flush
-            @hide 
          */
-        function flush(dir: Number = Stream.BOTH): Void {}
+        native function flush(dir: Number = Stream.WRITE): Void
 
         /** 
             Get the (proposed) response headers
             @return The set of response headers that will be used when the response is sent.
          */
-        native function getResponseHeaders(): Object
+        native function get responseHeaders(): Object
 
-//  MOB -- will this work case insensitive?
         /** 
-            Get a request header by keyword. Header properties are lower case. ie. "content_length". This is higher 
-            performance than using request.headers["key"].
+            Get a request header by keyword. The key match is case insensitive. 
             @return The header value
          */
         native function header(key: String): String
+
+        /** 
+            @duplicate Stream.observe
+            @event readable Issued when some body content is available.
+            @event writable Issued when the connection is writable to accept body data (PUT, POST).
+            @event close Issued when the request completes
+            @event error Issued if the request does not complete or the connection disconnects
+            All events are called with the signature:
+            function (event: String, http: Http): Void
+         */
+        native function observe(name, observer: Function): Void
 
         /** 
             @duplicate Stream.read
@@ -17962,17 +17319,12 @@ module ejs.web {
             let base = uri.clone()
             base.query = ""
             base.reference = ""
-            let url
-            if (where is String) {
-                url = makeUri(base.join(where).normalize.components)
-            } else {
-                url = makeUri(where)
-            }
+            let url = (where is String) ? makeUri(base.join(where).normalize.components) : makeUri(where)
             this.status = status
             setHeader("Location", url)
-            write("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n" +
+            write("<!DOCTYPE html>\r\n" +
                    "<html><head><title>Redirect (" + status + ")</title></head>\r\n" +
-                    "<body><h1>Redirect (" + status + ")</h1>\r\n</H1>\r\n" + 
+                    "<body><h1>Redirect (" + status + ")</h1>\r\n" + 
                     "<p>The document has moved <a href=\"" + url + 
                     "\">here</a>.</p>\r\n" +
                     "<address>" + server.software + " at " + serverName + " Port " + server.port + 
@@ -17983,6 +17335,15 @@ module ejs.web {
             @duplicate Stream.removeObserver 
          */
         native function removeObserver(name, observer: Function): Void
+
+        /**
+            Send a static file back to the client. This is a high performance way to send static content to the client.
+            This call must be invoked prior to sending any data or headers to the client, otherwise it will be ignored
+            and the slower netConnector will be used instead.
+            @param path Path to the file to send back to the client
+            @return True if the Send connector can successfully be used. 
+         */
+        native function sendfile(path: Path): Boolean
 
         //    MOB - doc
         /** @hide */
@@ -18003,20 +17364,6 @@ module ejs.web {
             return Uri(components)
         }
 
-        /**
-            Convenience routine to define an application at a given Uri prefix and directory location. This is typically
-                called from routing tables.
-            @param prefix The leading Uri prefix for the application. This prefix is removed from the pathInfo and the
-                $scriptName property is set to the prefix after removing the leading "/".
-            @param location Path to where the application home directory is. This sets the $dir property to the $location
-                argument.
-        */
-        function setLocation(prefix: String, location: Path): Void {
-            dir = location
-            pathInfo = pathInfo.trimStart(prefix)
-            scriptName = prefix.trimStart("/")
-        }
-
         /** 
             Send a response to the client. This can be used instead of setting status and calling setHeaders() and write(). 
             The $response argument is an object hash containing status, headers and
@@ -18032,6 +17379,29 @@ module ejs.web {
             if (response.body)
                 write(body)
             finalize()
+        }
+
+        /**
+            Update the request resource limits. The supplied limit fields are updated.
+            See $limit for limit field details.
+            @param limits Object hash of limit fields and values
+            @see limits
+         */
+        native function setLimits(limits: Object): Void
+
+        /**
+            Convenience routine to define an application at a given Uri prefix and directory location. This is typically
+                called from routing tables.
+            @param prefix The leading Uri prefix for the application. This prefix is removed from the pathInfo and the
+                $scriptName property is set to the prefix after removing the leading "/".
+            @param location Path to where the application home directory is. This sets the $dir property to the $location
+                argument.
+        */
+        function setLocation(prefix: String, location: Path): Void {
+            dir = location
+            prefix = prefix.trimEnd("/")
+            pathInfo = pathInfo.trimStart(prefix)
+            scriptName = prefix.trimStart("/")
         }
 
         /** 
@@ -18071,55 +17441,66 @@ module ejs.web {
         native function setHeader(key: String, value: String, overwrite: Boolean = true): Void
 
         /**
-            Set the HTTP response headers. Use getHeaders to inspect the response headers.
+            Set the HTTP response headers. Use getResponseHeaders to inspect the proposed response header set.
             @param headers Set of headers to use
             @param overwrite If the header is already defined and overwrite is true, then the new value will
                 overwrite the old. If overwrite is false, the new value will be catenated to the old value with a ", "
                 separator.
          */
         function setHeaders(headers: Object, overwrite: Boolean = true): Void {
-            for (key in headers) {
-                setHeader(key, headers[key], overwrite)
+            for (let [key,value] in headers) {
+                setHeader(key, value, overwrite)
             }
         }
 
         /** 
             Set to the (proposed) Http response status code. This is equivalent to assigning to the $status property.
          */
-        function setStatus(status: Number): Void {
+        function setStatus(status: Number): Void
             this.status = status
-        }
+
+        /**
+            Configure tracing for this request. The default tracing is defined by the owning HttpServer and is typically
+            to trace the first line of responses and headers at level 3. As the Request first line and headers are
+            already parsed and traced before the Request object is created, Modifying the request trace level via trace()
+            will only impact the tracing of body content.
+            @param level Level at which request tracing will occurr
+            @param options. Set of trace options. Select from: "body" to body content.,
+            @param size Maximum request body size to trace
+          */
+        native function trace(level: Number, options: Object = ["body"], size: Number = null): Void
 
         /** 
+            Write data to the client. This will buffer the written data until either flush() or finalize() is called. 
             @duplicate Stream.write
-            Write data to the client
          */
         native function write(...data): Number
 
-//  MOB -- was Controller.reportError
         /** 
-            Write an error message back to the user. The status is set to Http.ServerError (500) and the content type
-            is set to text/html. The output is html escaped for security. Output is finalized.
+            Write an error message back to the user and finalize the request. 
+            The output is html escaped for security.
+            @param status Http status code
             @param msg Message to send. The message may be modified for readability if it contains an exception backtrace.
+            @deprecated
          */
-        function writeError(msg: String, code: Number = Http.ServerError): Void {
+        function error(code: Number, ...msgs): Void {
             let text
             status = code
-            msg = msg.replace(/.*Error Exception: /, "")
+            let msg = msgs.join(" ").replace(/.*Error Exception: /, "")
             if (config.log.showClient) {
                 setHeader("Content-Type", "text/html")
                 text = "<h1>Request error for \"" + pathInfo + "\"</h1>\r\n"
                 text += "<pre>" + escapeHtml(msg) + "</pre>\r\n"
                 text += '<p>To prevent errors being displayed in the "browser, ' + 
-                    'set <b>errors.showClient</b> to false in the ejsrc file.</p>\r\n'
+                    'set <b>log.showClient</b> to false in the ejsrc file.</p>\r\n'
             } else {
                 text = "<h1>Request error for \"" + pathInfo + "\"</h1>\r\n"
             }
             try {
                 write(text)
             } catch {}
-            finalize()
-            log.error("Request error (" + status + ") for: \"" + uri + "\". " + msg)
+            finalize(true)
+            log.warn("Request error (" + status + ") for: \"" + uri + "\". " + msg)
         }
 
         /** 
@@ -18155,6 +17536,7 @@ module ejs.web {
             @returns Stream object equal to the value of "this" request instance.
         */
         function get input(): Stream {
+            //  MOB -- BUG - need {}
             return this
         }
 
@@ -18171,9 +17553,8 @@ module ejs.web {
             If a "Host" header is provided, it is used in preference.
             @returns A string containing the server name.
          */
-        function get serverName(): String {
-            return (host) ? host : uri.host
-        }
+        function get serverName(): String 
+            (host) ? host : uri.host
 
         /**
             Listening port number for the server
@@ -18283,6 +17664,12 @@ module ejs.web {
           */
         function get originalUri(): String
             pathInfo
+
+        /** @deprecated
+            @hide
+          */
+        function writeError(msg: String, code: Number = Http.ServerError): Void 
+            error(code, msg)
     }
 }
 
@@ -18346,22 +17733,23 @@ module ejs.web {
         /*
             Master Route Table. Routes are processed from first to last. Inner routes are tested before their outer parent.
          */
-		internal var routes: Array = []
+		var routes: Array = []
 		
-        //  MOB -- finish
-        //  MOB - need ajax support to do non-get / non-post methods in a client
-        //  MOB -- should have default MVC route in here
-        //  MOB -- should this be the default route and not RestfulRoutes?
-        //  MOB -- can a route do a Uri rewrite
-        //  MOB -- how normal static content be served?
+        /**
+            Function to test if the Request.filename is a directory.
+            @param request Request object to consider
+            @return True if request.filename is a directory
+         */
+        public static function isDir(request) request.filename.isDir
 
         /**
             Simple top level route table for "es" and "ejs" scripts. Matches simply by script extension.
          */
         public static var TopRoutes = [
-          { name: "es",      type: "es",     match: /\.es$/   },
-          { name: "ejs",     type: "ejs",    match: /\.ejs$/  },
-          { name: "default", type: "static", },
+          { name: "es",      builder: ScriptBuilder,    match: /\.es$/ },
+          { name: "ejs",     builder: TemplateBuilder,  match: /\.ejs$/, module: "ejs.template" },
+          { name: "dir",     builder: DirBuilder,       match: isDir },
+          { name: "default", builder: StaticBuilder },
         ]
 
         /** 
@@ -18378,56 +17766,36 @@ module ejs.web {
             </pre>
         */
         public static var RestfulRoutes = [
-          { name: "es",      type: "es",                    match: /^\/web\/.*\.es$/   },
-          { name: "ejs",     type: "ejs",                   match: /^\/web\/.*\.ejs$/  },
-          { name: "web",     type: "static",                match: /^\/web\//  },
-          { name: "home",    type: "static",                match: /^\/$/, redirect: "/web/index.ejs" },
-          { name: "ico",     type: "static",                match: /^\/favicon.ico$/, redirect: "/web/favicon.ico" },
-          { name: "new",     type: "mvc", method: "GET",    match: "/:controller/new",       params: { action: "new" } },
-          { name: "edit",    type: "mvc", method: "GET",    match: "/:controller/:id/edit",  params: { action: "edit" } },
-          { name: "show",    type: "mvc", method: "GET",    match: "/:controller/:id",       params: { action: "show" } },
-          { name: "update",  type: "mvc", method: "PUT",    match: "/:controller/:id",       params: { action: "update" } },
-          { name: "delete",  type: "mvc", method: "DELETE", match: "/:controller/:id",       params: { action: "delete" } },
-          { name: "default", type: "mvc",                   match: "/:controller/:action",     params: {} },
-          { name: "create",  type: "mvc", method: "POST",   match: "/:controller",           params: { action: "create" } },
-          { name: "index",   type: "mvc", method: "GET",    match: "/:controller",           params: { action: "index" } },
-          { name: "home",    type: "static",                match: /^\/$/, redirect: "/web/index.ejs" },
-          { name: "static",  type: "static", },
+  { name: "es",      builder: ScriptBuilder,                match: /^\/web\/.*\.es$/   },
+  { name: "ejs",     builder: TemplateBuilder,              match: /^\/web\/.*\.ejs$/,      module: "ejs.template" },
+  { name: "web",     builder: StaticBuilder,                match: /^\/web\//  },
+  { name: "home",    builder: StaticBuilder,                match: /^\/$/,                  redirect: "/web/index.ejs" },
+  { name: "ico",     builder: StaticBuilder,                match: /^\/favicon.ico$/,       redirect: "/web/favicon.ico" },
+  { name: "dir",     builder: DirBuilder,                   match: isDir },
+  { name: "new",     builder: MvcBuilder, method: "GET",    match: "/:controller/new",      params: { action: "new" } },
+  { name: "edit",    builder: MvcBuilder, method: "GET",    match: "/:controller/:id/edit", params: { action: "edit" } },
+  { name: "show",    builder: MvcBuilder, method: "GET",    match: "/:controller/:id",      params: { action: "show" } },
+  { name: "update",  builder: MvcBuilder, method: "PUT",    match: "/:controller/:id",      params: { action: "update" } },
+  { name: "delete",  builder: MvcBuilder, method: "DELETE", match: "/:controller/:id",      params: { action: "delete" } },
+  { name: "default", builder: MvcBuilder,                   match: "/:controller/:action",  params: {} },
+  { name: "create",  builder: MvcBuilder, method: "POST",   match: "/:controller",          params: { action: "create" } },
+  { name: "index",   builder: MvcBuilder, method: "GET",    match: "/:controller",          params: { action: "index" } },
         ]
 
-        /**
-            Simple routes  - Not used
-        public static var SimpleRoutes = [
-          { name: "list",    type: "mvc", method: "GET",  match: "/:controller/list",        params: { action: "list" } },
-          { name: "create",  type: "mvc", method: "POST", match: "/:controller/create",      params: { action: "create" } },
-          { name: "edit",    type: "mvc", method: "GET",  match: "/:controller/:id",         params: { action: "edit" } },
-          { name: "update",  type: "mvc", method: "POST", match: "/:controller/:id",         params: { action: "update" } },
-          { name: "destroy", type: "mvc", method: "POST", match: "/:controller/destroy/:id", params: { action: "destroy" }},
-          { name: "default", type: "mvc",                 match: "/:controller/:action",     params: {} },
-          { name: "index",   type: "mvc", method: "GET",  match: "/:controller",             params: { action: "index" } },
-          { name: "home",    type: "static",              match: /^\/$/, redirect: "/web/index.ejs" },
-          { name: "static",  type: "static", },
-        ]
-         */
-
-        /**
-            Routes used in Ejscript 1.X
-         */
-        //  MOB -- rename LegacyMvcRoutes
         public static var LegacyRoutes = [
-          { name: "es",      type: "es",                  match: /^\/web\/.*\.es$/   },
-          { name: "ejs",     type: "ejs",                 match: /^\/web\/.*\.ejs$/  },
-          { name: "web",     type: "static",              match: /^\/web\//  },
-          { name: "home",    type: "static",              match: /^\/$/, redirect: "/web/index.ejs" },
-          { name: "ico",     type: "static",              match: /^\/favicon.ico$/, redirect: "/web/favicon.ico" },
-          { name: "list",    type: "mvc", method: "GET",  match: "/:controller/list",        params: { action: "list" } },
-          { name: "create",  type: "mvc", method: "POST", match: "/:controller/create",      params: { action: "create" } },
-          { name: "edit",    type: "mvc", method: "GET",  match: "/:controller/edit",        params: { action: "edit" } },
-          { name: "update",  type: "mvc", method: "POST", match: "/:controller/update",      params: { action: "update" } },
-          { name: "destroy", type: "mvc", method: "POST", match: "/:controller/destroy",     params: { action: "destroy" } },
-          { name: "default", type: "mvc",                 match: "/:controller/:action",     params: {} },
-          { name: "index",   type: "mvc", method: "GET",  match: "/:controller",             params: { action: "index" } },
-          { name: "static",  type: "static", },
+  { name: "es",      builder: ScriptBuilder,                match: /^\/web\/.*\.es$/   },
+  { name: "ejs",     builder: TemplateBuilder,              match: /^\/web\/.*\.ejs$/,      module: "ejs.template"  },
+  { name: "web",     builder: StaticBuilder,                match: /^\/web\//  },
+  { name: "home",    builder: StaticBuilder,                match: /^\/$/,                  redirect: "/web/index.ejs" },
+  { name: "ico",     builder: StaticBuilder,                match: /^\/favicon.ico$/,       redirect: "/web/favicon.ico" },
+  { name: "list",    builder: MvcBuilder, method: "GET",    match: "/:controller/list",     params: { action: "list" } },
+  { name: "create",  builder: MvcBuilder, method: "POST",   match: "/:controller/create",   params: { action: "create" } },
+  { name: "edit",    builder: MvcBuilder, method: "GET",    match: "/:controller/edit",     params: { action: "edit" } },
+  { name: "update",  builder: MvcBuilder, method: "POST",   match: "/:controller/update",   params: { action: "update" } },
+  { name: "destroy", builder: MvcBuilder, method: "POST",   match: "/:controller/destroy",  params: { action: "destroy" } },
+  { name: "default", builder: MvcBuilder,                   match: "/:controller/:action",  params: {} },
+  { name: "index",   builder: MvcBuilder, method: "GET",    match: "/:controller",          params: { action: "index" } },
+  { name: "static",  builder: StaticBuilder, },
         ]
 
         function Router(set: Array = RestfulRoutes) {
@@ -18485,6 +17853,9 @@ module ejs.web {
                     route.splitter = splitter.trim(":")
                     route.tokens = tokens
                 }
+                if (route.middleware) {
+                    route.middleware = route.middleware.reverse()
+                }
                 route = new Route(route, this)
                 if (route.subroute) {
                     /* Must process nested routes first before appending the parent route to the routes table */
@@ -18498,10 +17869,12 @@ module ejs.web {
 
         /** 
             Route a request. The request is matched against the user-configured route table. If no route table is defined,
-            the restfulRoutes are used. 
+            the restfulRoutes are used. The call returns the web application to execute.
             @param request The current request object
+            @return The web application function of the signature: 
+                function app(request: Request): Object
          */
-        public function route(request): Void {
+        public function route(request): Function {
             let params = request.params
             let pathInfo = request.pathInfo
             let log = request.log
@@ -18557,29 +17930,78 @@ module ejs.web {
                     }
                 }
                 if (r.rewrite && !r.rewrite(request)) {
-                    log.debug(5, "Request rewritten as " + request.pathInfo)
-                    route(request)
-                    return
+                    log.debug(5, "Request rewritten as \"" + request.pathInfo + "\" (reroute)")
+                    return route(request)
                 }
                 if (r.redirect) {
                     request.pathInfo = r.redirect;
-                    log.debug(5, "Route redirected to " + request.pathInfo)
-                    this.route(request)
-                    return
-                }
-                if (log.level >= 5) {
-                    log.debug(5, "Matched route " + r.name)
-                    log.debug(5, "  Route params " + serialize(params))
+                    log.debug(5, "Route redirected to \"" + request.pathInfo + "\" (reroute)")
+                    return route(request)
                 }
                 request.route = r
                 let location = r.location
                 if (location && location.prefix && location.dir) {
                     request.setLocation(location.prefix, location.dir)
+                    log.debug(4, "Set location prefix \"" + location.prefix + "\" dir \"" + location.dir + "\" (reroute)")
+                    return route(request)
                 }
-                return
+                if (r.module && !r.initialized) {
+                    global.load(r.module + ".mod")
+                    r.initialized = true
+                }
+                if (log.level >= 4) {
+                    log.debug(4, "Matched route \"" + r.name + "\"")
+                    log.debug(5, "  Route params " + serialize(params, {pretty: true}))
+                    if (log.level >= 6) {
+                        log.debug(6, "  Route " + serialize(r, {pretty: true}))
+                        log.debug(6, "  REQUEST\n" + serialize(request, {pretty: true}))
+                    }
+                }
+                if (r.limits) {
+                    request.setLimits(r.limits)
+                }
+                if (r.trace) {
+                    if (r.trace.include && (!r.trace.include.contains(request.extension)) ||
+                        r.trace.exclude && r.trace.exclude.contains(request.extension)) {
+                        request.trace(99)
+                    } else {
+                        request.trace(r.trace.level || 0, r.trace.options, r.trace.size)
+                    }
+                }
+                let app = r.builder(request)
+                if (app == null) {
+                    return function(request) {}
+                }
+                return app
             }
             throw "No route for " + pathInfo
         }
+    }
+
+    /**
+        Builder function to load JSGI scripts.
+        @return JSGI application function 
+      */
+    function ScriptBuilder(request: Request): Function {
+        if (!request.filename.exists) {
+            request.error(Http.NotFound, "Cannot find " + request.pathInfo) 
+            return null
+        }
+        try {
+            return Loader.require(request.filename, request.config).app
+        } catch (e) {
+            request.error(Http.ServerError, e)
+        }
+    }
+
+    /** @hide */
+    function TemplateBuilder(request: Request): Function {
+        let route = request.route
+        if (route.module && !route.initialized) {
+            global.load(route.module + ".mod")
+            route.initialized = true
+        }
+        return "ejs.web"::TemplateApp
     }
 
     /** 
@@ -18598,13 +18020,24 @@ module ejs.web {
       
         Routes are tested in-order from first to last. Inner routes are tested before their outer parent.
      */
-    dynamic class Route {
+    enumerable dynamic class Route {
         use default namespace public
+
+        /**
+            Builder function to create the Provider function that represents the web application for requests matching 
+            this route.
+         */
+        var builder: Function
 
         /**
             Directory for the application serving the route. This directory path will be assigned to Request.dir.
          */
         var dir: Path
+
+        /**
+            Resource limits for the request. See HttpServer.limits for details.
+          */
+        var limits: Object
 
         /**
             Matching pattern for URIs. The pattern is used to match the request in general and pathInfo specifically. 
@@ -18628,6 +18061,17 @@ module ejs.web {
         var method: String
 
         /**
+            Middleware to run on requests for this route. Middleware wraps the application function filtering and 
+            modifying its inputs and outputs.
+         */
+        var middleware: Array
+
+        /**
+            Module containing code to serve the route.  
+         */
+        var module: String
+
+        /**
             Optional route name.
          */
         var name: String
@@ -18639,10 +18083,20 @@ module ejs.web {
         var params: Object
 
         /**
+            Provider function that represents the web application for requests matching this route
+         */
+        var provider: Function
+
+        /**
             Rewrite function. If present, this function is invoked with the Request as an argument. It may rewrite
             the request scriptName, pathInfo and other Request properties.
          */
         var rewrite: Function
+
+        /** 
+          Router instance reference
+         */
+        var router: Router
 
         /**
             Nested route. A nested route prepends the match patter of the outer route to its "match" pattern. 
@@ -18656,6 +18110,18 @@ module ejs.web {
          */
         var threaded: Boolean
 
+        /**
+            Trace options for the request. Note: the route is created after the Request object is created so 
+            the tracing of the connections and request headers will be controlled by the owning server. See
+            HttpServer.trace. Fields are:
+            @option level Level at which request tracing will occurr for the request.
+            @option options Set of trace options. Select from: "body" to trace body content.
+            @option size Maximum request body size to trace
+            @option include Set of extensions to include when tracing
+            @option exclude Set of extensions to exclude when tracing
+          */
+        var trace: Object
+
         /*
             Type of requests matched by this route. Typical types: "es", "ejs", "mvc"
          */
@@ -18666,10 +18132,9 @@ module ejs.web {
          */
         var urimaker: Function
 
-        internal var matcher: RegExp
+        internal var matcher: Object
         internal var splitter: String
         internal var tokens: Array
-        internal var router: Router
 
         function Route(route: Object, router: Router) {
             for (field in route) {
@@ -18723,7 +18188,6 @@ module ejs.web {
             if (!components.path) {
                 for each (token in route.tokens) {
                     if (!where[token]) {
-                        dump("WHERE", where)
                         throw new ArgError("Missing URI token \"" + token + "\"")
                     }
                     uri = uri.join(where[token])
@@ -18842,6 +18306,254 @@ module ejs.web {
 
 /************************************************************************/
 /*
+ *  Start of file "../../src/jems/ejs.web/Static.es"
+ */
+/************************************************************************/
+
+/*
+    Static.es - Static content handler
+ */
+
+module ejs.web {
+
+    /** 
+        Static content handler. This supports DELETE, GET, POST and PUT methods. It handles directory redirection
+        and will use X-SendFile for efficient transmission of static content.
+        @param request Request objects
+        @returns A response hash object
+        @spec ejs
+        @stability prototype
+     */
+// breakpoint()
+    function StaticApp(request: Request): Object {
+        let filename = request.filename
+        let status = Http.Ok, headers, body
+        if (!filename.exists && request.method != "PUT") {
+            status = Http.NotFound, 
+// breakpoint()
+            body = errorBody("Not Found", "Cannot find " + escapeHtml(request.pathInfo))
+        } else {
+            headers = {
+                "Content-Type": Uri(request.uri).mimeType,
+            }
+            let expires = request.config.web.expires
+            if (expires) {
+                let lifetime = expires[request.extension] || expires[""]
+                if (lifetime) {
+                    let when = new Date
+                    when.time += (lifetime * 1000)
+                    headers["Expires"] = when.toUTCString()
+                }
+            }
+            if (request.method == "GET" || request.method == "POST") {
+                headers["Content-Length"] = filename.size
+                body = filename
+                // headers["X-Sendfile"] = filename
+                // body = File(filename, "r")
+
+            } else if (request.method == "DELETE") {
+                status = Http.NoContent
+                //  MOB -- remove try when not needed
+                try {
+                    if (!filename.remove()) {
+                        status = Http.NotFound
+                    }
+                } catch {
+                    status = Http.NotFound
+                }
+
+            } else if (request.method == "PUT") {
+                return { body: put }
+
+            } else if (request.method == "HEAD") {
+                /* No need to calculate the content */
+                headers["Content-Length"] = filename.size
+
+            } else {
+                status = Http.BadMethod
+                body = errorBody("Unsupported method ", "Method " + escapeHtml(request.method) + " is not supported")
+            }
+        }
+        return {
+            status: status,
+            headers: headers,
+            body: body
+        }
+
+//  MOB -- complete
+        function put(request: Request) {
+            //  MOB -- how to handle ranges?
+            let path = request.dir.join(request.pathInfo.trimStart('/'))
+            request.status = path.exists ? Http.NoContent : Http.Created
+
+            let file = new File(path, "w")
+            file.position = 0;
+
+            request.input.observe("readable", function () {
+                buf = new ByteArray
+                if (request.read(buf)) {
+                    file.write(buf)
+                } else {
+                    request.finalize()
+                }
+            })
+            request.input.observe(["complete", "error"], function (event, request) {
+                print(event)
+                file.close()
+                if (event == "error") {
+                    file.remove()
+                    //  MOB -- what should be the status now?
+                }
+            })
+        }
+    }
+
+    /** @hide */
+    function StaticBuilder(request: Request): Function {
+        //  MOB -- BUG should not need "ejs.web"
+        return "ejs.web"::StaticApp
+    }
+}
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.web/Static.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/jems/ejs.web/Template.es"
+ */
+/************************************************************************/
+
+/*
+    Template.es -- Ejscript templated web content handler
+ */
+
+module ejs.web {
+    /** 
+        Template middleware filter. This interprets the output of an inner web app as a template page which is processed.
+        @param app Application function object
+        @returns A response object hash
+     */
+    function TemplateFilter(app: Function): Object {
+        return function(request) {
+            let response = app(request)
+            let id = md5(request.id)
+            return Loader.load(id, id, request.config, function (id, path) {
+                if (!global.TemplateParser) {
+                    load("ejs.web.template.mod")
+                }
+                let data = TemplateParser().build(response.body)
+                return Loader.wrap(data)
+            }).app(request)
+        }
+    }
+
+    /**
+        Build a web application from a template page. The template web page at Request.filename will be processed and
+            a web application script created.
+        @param request Request object
+        @return A web application function
+     */
+    function TemplateApp(request: Request): Function {
+        let app = TemplateBuilder(request)
+        return app(request)
+    }
+
+    /**
+        Builder function for templates to use with JSGI applications
+            a web application script created.
+        @param request Request object
+        @return A web application function
+     */
+    function TemplateBuilder(request: Request): Function {
+        let path = request.filename
+        if (!path.exists) {
+            request.error(Http.NotFound, "Cannot find " + path)
+            return null
+        }
+        return Loader.load(path, path, request.config, function (id, path) {
+            if (!global.TemplateParser) {
+                load("ejs.web.template.mod")
+            }
+            let data = TemplateParser().build(path.readString())
+            return Loader.wrap(data)
+        }).app
+    }
+}
+
+/*
+    @copy   default
+  
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+  
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+  
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+  
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+  
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.web/Template.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "../../src/jems/ejs.web/UploadFile.es"
  */
 /************************************************************************/
@@ -18910,6 +18622,14 @@ module ejs.web {
 
 module ejs.web {
 
+    /** @hide */
+    function errorBody(title: String, msg: String): String {
+        return '<!DOCTYPE html>\r\n<html>\r\n<head><title>' + title + '</title></head>\r\n' + 
+           '<body>\r\n<h1>' + msg + '</h1>\r\n' +
+           '    <p>' + msg + '</p>\r\n' +
+           '</body>\r\n</html>\r\n'
+    }
+
     /**
         Return the parsed cookie headers. Cookies are used to specify the session state. If sessions are being used, 
         a session cookie will be sent to and from the browser with each request. 
@@ -18975,6 +18695,7 @@ UNUSED && KEEP
         @stability prototype
      */
     native function escapeHtml(str: String): String
+
 /*
     UNUSED
     function escapeHtml(s: String): String
@@ -19127,6 +18848,14 @@ module ejs.web {
          */
         public function setStatus(status: Number): Void
             request.setStatus(status)
+
+        /** 
+            Dump objects for debugging
+            @param args List of arguments to print.
+            @hide
+         */
+        public function show(...args): Void
+            request.show(...args)
 
         /**
             Write data to the client
@@ -19736,8 +19465,7 @@ module ejs.web {
         private function getConnector(kind: String, options: Object) {
             let vc = request.config.web.view
             //  TODO OPT
-            let connectorName = (options && options["connector"]) || vc.connectors[kind] ||
-                vc.connectors["rest"] || "html"
+            let connectorName = (options && options["connector"]) || vc.connectors[kind] || vc.connectors["rest"] || "html"
             vc.connectors[kind] = connectorName
             let name = (connectorName + "Connector").toPascal()
             try {
@@ -20025,7 +19753,6 @@ module ejs.web {
  */
 
 module ejs.web {
-
     /** 
         Web class manages web applications. This class initializes the web framework and loads web applications. 
         Apps may be JSGI apps with a *.es extension, template apps with a ".ejs" extension or MVC applications.
@@ -20050,6 +19777,14 @@ module ejs.web {
                 timeout: 1800,
             },
             web: {
+                expires: {
+                    /*
+                        "html": 86400,
+                        "ejs": 86400,
+                        "es": 86400,
+                        "": 86400,
+                     */
+                },
                 endpoint: "127.0.0.1:4000",
                 views: {
                     connectors: {
@@ -20089,154 +19824,71 @@ module ejs.web {
          */
         static function serve(request: Request, router: Router = Router(Router.TopRoutes)): Void {
             try {
-//  MOB -- should the router be setting this?
-request.config = config
-                router.route(request)
+                let app = router.route(request)
                 if (request.route.threaded) {
-                    worker(request)
+                    worker(app, request)
                 } else {
-                    let exports = load(request)
-                    if (exports) {
-                        start(request, exports.app)
-                    }
+                    process(app, request)
                 }
             } catch (e) {
-                request.writeError(e)
+print("CATCH in WEB " + e)
+                request.error(Http.ServerError, e)
             }
         }
 
         /**
             Run the request via a separate worker thread
+            @param app Application function to run
             @param request Request object
          */
-        static native function worker(request: Request): Void
-
-        private static function workerHelper(request: Request): Void {
+        static native function worker(app: Function, request: Request): Void
+        private static function workerHelper(app: Function, request: Request): Void {
             try {
-                let exports = load(request)
-                if (exports) {
-                    start(request, exports.app)
-                }
+                process(app, request)
             } catch (e) {
-                request.writeError(e)
+                request.error(Http.ServerError, e)
             }
         }
 
+//  WARNING: this may block in write?? - is request in async mode?
         /** 
-            Load a web app. This routine will load JSGI apps with a ".es" extension, template apps with a ".ejs" extension
-            and MVC applications. This call expects that the request has been routed and that request.route.type is 
-            set to the type of the request (es|ejs|mvc).
+            Process a web request
             @param request Request object
-            @returns An exports object with an "app" property representing the application.
+            @param app JSGI application function 
          */
-        static function load(request: Request): Object {
+        static function process(app: Function, request: Request): Void {
+            request.config = config
             try {
-                let type = request.route.type
-                let exports
-                if (type == "es") {
-                    if (!global.Loader) {
-                        global.load("ejs.cjs.mod")
-                    }
-                    let path = request.dir.join(request.pathInfo.slice(1))
-                    if (!path.exists) {
-                        throw "Request resource \"" + path + "\" does not exist"
-                    }
-                    exports = Loader.require(path)
+                if (request.route.middleware) {
+                    app = Middleware(app, request.route.middleware)
+                }
+                let result
+                if (app.bound != global) {
+                    result = app(request)
+                } else {
+                    result = app.call(request, request)
+                }
+                if (result is Function) {
+                    /* Functions don't auto finalize. The user is responsible for calling finalize() */
+                    result.call(request, request)
 
-                } else if (type == "ejs") {
-                    if (!global.Template) {
-                        global.load("ejs.web.template.mod")
-                    }
-                    let path = request.dir.join(request.pathInfo.slice(1))
-                    if (!path.exists) {
-                        request.writeError("Can't find \"" + path + "\".", Http.NotFound)
-                        return null;
-                    } else {
-                        exports = Template.load(request)
-                        request.setHeader("Content-Type", "text/html")
-                    }
-
-                } else if (type == "mvc") {
-                    exports = Mvc.load(request)
-
-                } else if (type == "static") {
-                    exports = {
-                        app: function (request) {
-                            //  MOB -- push into ejs.cjs
-                            //  MOB -- needs work
-                            let path = request.dir.join(request.pathInfo.trimStart('/'))
-                            if (path.isDir) {
-                                //  MOB -- should come from HttpServer.index[]
-                                for each (index in ["index.ejs", "index.html"]) {
-                                    let p = path.join(index)
-                                    if (p.exists) {
-                                        path = p
-                                        break
-                                    }
-                                }
-                            }
-                            //  MOB -- work out a better way to do this. perhaps from ejsrc? (cache?)
-                            let expires = Date() 
-                            expires.date += 2
-                            let headers = {
-                                "Content-Type": Uri(request.uri).mimeType,
-                                "Expires": expires.toUTCString()
-                            }
-                            let body = ""
-                            if (request.method == "GET" || request.method == "POST") {
-                                headers["Content-Length"] = path.size
-                                body = path.readString()
-                            }
-                            return {
-                                status: Http.Ok,
-                                headers: headers,
-                                body: body
-                            }
+                } else if (result) {
+                    let body = result.body
+                    request.status = result.status || 200
+                    let headers = result.headers || { "Content-Type": "text/html" }
+                    request.setHeaders(headers)
+                    if (body is Path) {
+                        if (request.isSecure) {
+                            body = File(body, "r")
+                        } else {
+                            request.sendfile(body)
+                            return
                         }
                     }
 
-                } else {
-                    throw "Request type: " + type + " is not supported by Web.load"
-                }
-                if (!exports || !exports.app) {
-                    throw "Can't load application. No \"app\" object exported by application"
-                }
-                return exports
-            } catch (e) {
-                request.writeError(e)
-            }
-            return null
-        }
-
-        /** 
-            Start running a loaded application.
-            @param request Request object
-            @param app Application function exported by the JSGI slice
-         */
-        static function start(request: Request, app: Function): Void {
-//  WARNING: this may block in write?? - is request in async mode?
-            try {
-                let result = app.call(request, request)
-                if (!result) {
-                    if (request.route.type == "ejs") {
-                        request.finalize()
-                    }
-
-                } else if (result is Function) {
-                    /* The callback is responsible for calling finalize() */
-                    result.call(request, request)
-
-                } else {
-                    request.status = result.status || 200
-                    let headers = result.headers || { "content-type": "text/html" }
-                    request.setHeaders(headers)
-                    let body = result.body
-                    if (body is String) {
-                        request.write(body)
-                        request.finalize()
-
-                    } else if (body is Array) {
+                    if (body is Array) {
                         for each (let item in body) {
+//  MOB -- what about async? what if can't accept all the data?
                             request.write(item)
                         }
                         request.finalize()
@@ -20245,11 +19897,20 @@ request.config = config
                         if (body.async) {
                             request.async = true
                             //  Should we wait on request being writable or on the body stream being readable?
-                            //  Must detect eof and do a finalize()
-                            request.observe("", function(event, body) {
-                                request.write(body)
+//  MOB Must detect eof and do a finalize()
+                            request.observe("readable", function(event, request) {
+                                let data = new ByteArray
+                                if (request.read(data)) {
+//  MOB -- what about async? what if can't accept all the data?
+                                    request.write(body)
+                                } else {
+                                    request.finalize()
+                                }
                             })
-                            //  TODO - what about async reading of read data?
+                            //  MOB -- or this? but what about error events
+                            request.observe("complete", function(event, body) {
+                                request.finalize()
+                            })
                         } else {
                             ba = new ByteArray
                             while (body.read(ba)) {
@@ -20262,15 +19923,94 @@ request.config = config
                             request.write(block)
                         })
                         request.finalize()
+
+                    } else if (body is Function) {
+                        /* Functions don't auto finalize. The user is responsible for calling finalize() */
+                        body.call(request, request)
+
+                    } else if (body) {
+                        request.write(body)
+                        request.finalize()
+
+                    } else {
+                        let file = request.responseHeaders["X-Sendfile"]
+                        if (file && !request.isSecure) {
+                            request.sendfile(file)
+                        } else {
+                            request.finalize()
+                        }
+                    }
+                } else {
+                    let file = request.responseHeaders["X-Sendfile"]
+                    if (file && !request.isSecure) {
+                        request.sendfile(file)
                     }
                 }
-
             } catch (e) {
-                // print("Web.start(): CATCH " + e)
                 // print("URI " + request.uri)
-                request.writeError(e)
-                request.finalize()
+                request.error(Http.ServerError, e)
             }
+        }
+
+        /**
+            Convenience routine to start a routing web server that will serve a variety of content. This routines
+            sets up a web server using the specified route tables.
+            @param address The IP endpoint address on which to listen. The address may be a port number or a composite 
+            "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
+            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
+            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
+            hosting web server documentation for specifics.
+            @param documentRoot Directory containing web documents to serve. If set to null and the HttpServer is hosted,
+                the documentRoot will be defined by the web server.
+            @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
+                the serverRoot will be defined by the web server.
+            @param routes Route table to use. Defaults to Router.TopRoutes
+         */
+        static function start(address: String, documentRoot: Path = ".", serverRoot: Path = ".", 
+                routes = Router.TopRoutes): Void {
+            let server: HttpServer = new HttpServer(documentRoot, serverRoot)
+            var router = Router(routes)
+            server.observe("readable", function (event, request) {
+                serve(request, router)
+            })
+            server.listen(address)
+            App.eventLoop()
+        }
+
+        /**
+            Convenience routine to run a single web app script. 
+            @param address The IP endpoint address on which to listen. The address may be a port number or a composite 
+            "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
+            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
+            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
+            hosting web server documentation for specifics.
+            @param documentRoot Directory containing web documents to serve. If set to null and the HttpServer is hosted,
+                the documentRoot will be defined by the web server.
+            @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
+                the serverRoot will be defined by the web server.
+            @example The script must be of the form:
+            exports.app = function (request) {
+                return { 
+                    status: Http.Ok,
+                    body: "Hello World\r\n"
+                }
+            }
+         */
+        static function run(address: String, documentRoot: Path = ".", serverRoot: Path = "."): Void {
+            let server: HttpServer = new HttpServer(documentRoot, serverRoot)
+            server.observe("readable", function (event, request) {
+                try {
+                    if (!request.filename.exists) {
+                        request.error(Http.NotFound, "Cannot find " + request.uri)
+                    } else {
+                        process(Loader.require(request.filename).app)
+                    }
+                } catch {
+                    request.error(Http.ServerError, "Exception serving " + request.uri)
+                }
+            })
+            server.listen(address)
+            App.eventLoop()
         }
     }
 }
@@ -20314,97 +20054,7 @@ request.config = config
 
 /************************************************************************/
 /*
- *  Start of file "../../src/jems/ejs.web.template/Template.es"
- */
-/************************************************************************/
-
-/*
-    Template.es -- Ejscript web templating loader. 
- */
-
-module ejs.web.template  {
-    require ejs.cjs
-    require ejs.web
-
-    /** Web Page Template. This parses an web page with embedded Ejscript directives.
-      
-        The template engine provides  embedded Ejscript using <% %> directives. It supports:
-      
-          <%                    Begin an ejs directive section containing statements
-          <%=                   Begin an ejs directive section that contains an expression to evaluate and substitute
-          %>                    End an ejs directive
-          <%@ include "file" %> Include an ejs file
-          <%@ layout "file" %>  Specify a layout page to use. Use layout "" to disable layout management.
-      
-        Directives for use outside of <% %> 
-          @@var                 To expand the value of "var". Var can also be simple expressions (without spaces).
-      
-        TODO implement these directives
-          -%>                   Omit newline after tag
-          <%h                   Html escape the output
-
-        @stability prototype
-        @spec ejs
-     */
-    public class Template {
-        use default namespace public
-
-        /** 
-            Load a templated web page.
-            @param request Web Request object
-            @returns An exports object with a function "app" property representing the web page
-         */
-        static function load(request: Request): Object {
-            let path = request.dir.join(request.pathInfo.slice(1))
-            Loader.setConfig(request.config)
-            return Loader.load(path, path, function (path) {
-                let data = TemplateParser().build(path.readString())
-                return Loader.wrap(data)
-            })
-        }
-    }
-}
-
-/*
-    @copy   default
-  
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
-  
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
-    by the terms of either license. Consult the LICENSE.TXT distributed with
-    this software for full details.
-  
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-  
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
-  
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.web.template/Template.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/jems/ejs.web.template/TemplateParser.es"
+ *  Start of file "../../src/jems/ejs.template/TemplateParser.es"
  */
 /************************************************************************/
 
@@ -20412,7 +20062,7 @@ module ejs.web.template  {
     TemplateParser.es -- Ejscript web templating parser. 
  */
 
-module ejs.web.template  {
+module ejs.template  {
 
     /*
         TODO implement these directives
@@ -20449,7 +20099,7 @@ module ejs.web.template  {
 
         private const Header = "require ejs.web\n\nexports.app = function (request: Request) {\n" + 
             "    View(request).render(function(request: Request) {\n"
-        private const Footer = "\n    })\n}\n"
+        private const Footer = "\n        request.finalize()\n    })\n}\n"
 
         private const MvcHeader = "require ejs.web\n"
 
@@ -20738,7 +20388,7 @@ module ejs.web.template  {
  */
 /************************************************************************/
 /*
- *  End of file "../../src/jems/ejs.web.template/TemplateParser.es"
+ *  End of file "../../src/jems/ejs.template/TemplateParser.es"
  */
 /************************************************************************/
 

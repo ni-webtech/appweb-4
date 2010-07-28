@@ -9,7 +9,7 @@ appweb\- Embedded HTTP Web Server
 .B appweb 
 [\fI--config configFile\fR]
 [\fI--chroot directory\fR]
-[\fI--debug\fR]
+[\fI--debugger\fR]
 [\fI--ejs appSpec\fR]
 [\fI--log logSpec\fR]
 [\fI--home directory\fR] 
@@ -38,7 +38,7 @@ Define the name of the Appweb configuration file. This is by default \fBappweb\f
 Change the system root directory for Appweb. This creates a chroot jail so that the Appweb process cannot access
 any files outside the given directory.
 .TP
-\fB\--debug\fR
+\fB\--debugger\fR
 Run Appweb in debug mode and disable all timeouts. This disables request and session timeouts.
 The \fB-d\fR option is an alias for --debug.
 .TP

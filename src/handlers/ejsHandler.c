@@ -15,9 +15,7 @@
 static int loadStartupScript(Http *http, HttpLocation *location);
 
 /************************************* Code ***********************************/
-/*  
-    Confirm the request match to the ejs handler.
- */
+
 static bool matchEjs(HttpConn *conn, HttpStage *handler)
 {
     HttpReceiver    *rec;
@@ -51,6 +49,9 @@ static void openEjs(HttpQueue *q)
     conn = q->conn;
     location = conn->receiver->location;
     if (location == 0 || location->context == 0) {
+        /*
+            On-demand loading of the startup script
+         */
         if (loadStartupScript(conn->http, location) < 0) {
             //  MOB -- should this set an error somewhere?
             return;
@@ -84,7 +85,7 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
  */
 static char *findScript(MprCtx ctx, char *script)
 {
-    char        *base, *result;
+    char    *base, *result;
 
     if (script == 0 || *script == '\0') {
         script = mprAsprintf(ctx, -1, "%s/../%s/%s", mprGetAppDir(ctx), BLD_LIB_NAME, MA_EJS_START);
@@ -160,8 +161,7 @@ int maEjsHandlerInit(Http *http, MprModule *mp)
     ejsInitCompiler(sp);
 
     /*
-        Most of the Ejs handler is in ejsLib.c. Search for ejsAddWebHandler. Augment the handler with match, open
-        and parse callbacks.
+        Most of the Ejs handler is in ejsLib.c. Augment the handler with match, open and parse callbacks.
      */
     if ((handler = ejsAddWebHandler(http)) != 0) {
         handler->match = matchEjs;

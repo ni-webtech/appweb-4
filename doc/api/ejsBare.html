@@ -110,7 +110,7 @@
 <td class="apiType"><a href="#struct_ejs_service" class="ref">EjsService*</a></td><td><a href="#group___ejs_1g78fb0ad5d9f4998a0b64914370aacd24" class="nameRef">ejsCreateService</a>(MprCtx ctx)</td></tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Open the Ejscript service.</td></tr>
 <tr class="apiDef">
-<td class="apiType"><a href="#group___ejs" class="ref">Ejs*</a></td><td><a href="#group___ejs_1gad511190a29fb6ad99a5dc9af42e8504" class="nameRef">ejsCreateVm</a>(MprCtx ctx,  Ejs *master,  cchar *search,  MprList *require,  int flags)</td></tr>
+<td class="apiType"><a href="#group___ejs" class="ref">Ejs*</a></td><td><a href="#group___ejs_1ga00af6ecbf1d316061aa7524935ac22f" class="nameRef">ejsCreateVm</a>(MprCtx ctx,  Ejs *master,  cchar *search,  MprList *require,  int argc,  cchar **argv,  int flags)</td></tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Create an ejs virtual machine.</td></tr>
 <tr class="apiDef">
 <td class="apiType">int</td><td><a href="#group___ejs_1g2dd387ab6e232ecbe44b901cd5b01e58" class="nameRef">ejsEvalFile</a>(cchar *path)</td></tr>
@@ -286,6 +286,9 @@
 <tr class="apiDef">
 <td class="apiName"><a href="#struct_ejs_list" class="nameRef">EjsList</a></td>
 <td class="apiBrief">List type.</td></tr>
+<tr class="apiDef">
+<td class="apiName"><a href="#struct_ejs_lookup" class="nameRef">EjsLookup</a></td>
+<td class="apiBrief">Lookup State.</td></tr>
 <tr class="apiDef">
 <td class="apiName"><a href="#struct_ejs_service" class="nameRef">EjsService</a></td>
 <td class="apiBrief">Ejscript Service structure.</td></tr>
@@ -553,12 +556,12 @@ This can be used in ejsCreateVm
     <a href="#group___ejs_obj_1g50d9d774b3cddd1784d654326cddc237" class="ref">ejsCreate</a>, <a href="#group___ejs_1g2dd387ab6e232ecbe44b901cd5b01e58" class="ref">ejsEvalFile</a>, <a href="#group___ejs_1gc9d73946c6d81f299103daa26fcbc7f1" class="ref">ejsEvalScript</a>, <a href="#group___ejs_1g913f7898999e35964f1e93783808bda5" class="ref">ejsExit</a>, <a href="#group___ejs_1gce4f9f6ccb7c748e5a4a03f4378eca7d" class="ref">ejsSetSearchPath</a></dd></dl>
   </div>
 </div>
-<a name="group___ejs_1gad511190a29fb6ad99a5dc9af42e8504"></a>
+<a name="group___ejs_1ga00af6ecbf1d316061aa7524935ac22f"></a>
 <div class="api">
   <div class="prototype">
     <a href="#group___ejs" class="ref">Ejs</a> *
     ejsCreateVm
-(MprCtx ctx, Ejs *master, cchar *search, MprList *require, int flags)
+(MprCtx ctx, Ejs *master, cchar *search, MprList *require, int argc, cchar **argv, int flags)
   </div>
   <div class="apiDetail">
 <p>Create an ejs virtual machine.</p>
@@ -569,6 +572,8 @@ This can be used in ejsCreateVm
     <tr><td class="param">master</td><td>Optional master interpreter to clone.</td>
     <tr><td class="param">search</td><td>Module search path to use. Set to NULL for the default search path.</td>
     <tr><td class="param">require</td><td>Optional list of required modules to load. If NULL, the following modules will be loaded: ejs, ejs.io, ejs.events, ejs.xml, ejs.sys and ejs.unix.</td>
+    <tr><td class="param">argc</td><td>Count of command line argumements in argv.</td>
+    <tr><td class="param">argv</td><td>Command line arguments.</td>
     <tr><td class="param">flags</td><td>Optional flags to modify the interpreter behavior. Valid flags are: <ul><li>EJS_FLAG_COMPILER - Interpreter will compile code from source </li><li>EJS_FLAG_NO_EXE - Don&apos;t execute any code. Just compile. </li><li>EJS_FLAG_MASTER - Create a master interpreter </li><li>EJS_FLAG_DOC - Load documentation from modules </li><li>EJS_FLAG_NOEXIT - App should service events and not exit unless explicitly instructed </li></ul>.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>A new interpreter.</dd></dl>
@@ -960,7 +965,7 @@ Boolean value.
  When used as a simple byte array, the ByteArray class offers a low level set of methods to insert and extract bytes. The index operator [] can be used to access individual bytes and the copyIn and copyOut methods can be used to get and put blocks of data. In this mode, the read and write position properties are ignored. Access to the byte array is from index zero up to the size defined by the length property. When constructed, the ByteArray can be designated as growable, in which case the initial size will grow as required to accomodate data and the length property will be updated accordingly. <br/><br/>
  When used as a Stream, the byte array additional write methods to store data at the location specified by the $writePosition property and read methods to read from the $readPosition property. The $available method indicates how much data is available between the read and write position pointers. The $reset method can reset the pointers to the start of the array. When used with for/in, ByteArrays will iterate or enumerate over the available data between the read and write pointers. <br/><br/>
  If numeric values are read or written, they will be encoded according to the value of the endian property which can be set to either LittleEndian or BigEndian. <br/><br/>
- In Stream mode ByteArrays can be configured to run in sync or async mode. Adding listeners via the $addListener method will put a stream into async mode. Events will then be issued for close, eof, read and write events.</dd></dl>
+ In Stream mode ByteArrays can be configured to run in sync or async mode. Adding observers via the $addObserver method will put a stream into async mode. Events will then be issued for close, eof, read and write events.</dd></dl>
     <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___ejs_byte_array_1g7c58836430321096069355ee4f0f1114" class="ref">ejsCreateByteArray</a>, <a href="#group___ejs_byte_array_1gd776821fe6df5db995543ec0d60387f0" class="ref">ejsIsByteArray</a>, <a href="#group___ejs_byte_array_1gb8ca386fac3fe62e25d296a15da3e80e" class="ref">ejsSetByteArrayPositions</a></dd></dl>
@@ -1410,11 +1415,17 @@ Functions can be either native - meaning the implementation is via a C function,
     </dd></dl>
     <dl><dt>Fields:</dt><dd>
     <table class="parameters" summary="Parameters">
+    <tr><td class="param">int</td><td><td>async</td><td>
+Async mode.
+</td>
     <tr><td class="param">char *</td><td><td>certFile</td><td>
 SSL certificate file.
 </td>
     <tr><td class="param">char *</td><td><td>ciphers</td><td>
 SSL ciphers.
+</td>
+    <tr><td class="param">cchar *</td><td><td>connector</td><td>
+Pipeline connector.
 </td>
     <tr><td class="param">cchar *</td><td><td>dir</td><td>
 Directory containing web documents.
@@ -1425,14 +1436,26 @@ Ejscript interpreter handle.
     <tr><td class="param">EjsObj *</td><td><td>emitter</td><td>
 Event emitter.
 </td>
+    <tr><td class="param">EjsArray *</td><td><td>incomingStages</td><td>
+Incoming Http pipeline stages.
+</td>
     <tr><td class="param">char *</td><td><td>ip</td><td>
 Listening address.
 </td>
     <tr><td class="param">char *</td><td><td>keyFile</td><td>
 SSL key file.
 </td>
+    <tr><td class="param">EjsObj *</td><td><td>limits</td><td>
+Limits object.
+</td>
+    <tr><td class="param">char *</td><td><td>name</td><td>
+Server name.
+</td>
     <tr><td class="param">EjsObj</td><td><td>obj</td><td>
 Extends Object.
+</td>
+    <tr><td class="param">EjsArray *</td><td><td>outgoingStages</td><td>
+Outgoing Http pipeline stages.
 </td>
     <tr><td class="param">int</td><td><td>port</td><td>
 Listening port.
@@ -1442,6 +1465,24 @@ SSL protocols.
 </td>
     <tr><td class="param">HttpServer *</td><td><td>server</td><td>
 Http server object.
+</td>
+    <tr><td class="param">struct MprSsl *</td><td><td>ssl</td><td>
+SSL configuration.
+</td>
+    <tr><td class="param">MprHashTable *</td><td><td>traceExclude</td><td>
+Extensions to exclude from trace.
+</td>
+    <tr><td class="param">MprHashTable *</td><td><td>traceInclude</td><td>
+Extensions to include in trace.
+</td>
+    <tr><td class="param">int</td><td><td>traceLevel</td><td>
+Trace activation level.
+</td>
+    <tr><td class="param">int</td><td><td>traceMask</td><td>
+Request/response trace mask.
+</td>
+    <tr><td class="param">int</td><td><td>traceMaxLength</td><td>
+Maximum trace file length (if known).
 </td>
     </table></dd></dl>
   </div>
@@ -2468,6 +2509,17 @@ Only used internally in the VM
     <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
+  </div>
+</div>
+<a name="struct_ejs_lookup"></a>
+<div class="api">
+  <div class="prototype">EjsLookup</div>
+  <div class="apiDetail">
+<p>Lookup State.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Location information returned when looking up properties.</dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    </table></dd></dl>
   </div>
 </div>
 <a name="struct_ejs_service"></a>

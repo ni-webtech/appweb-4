@@ -29,7 +29,6 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
         mprFprintf(file, "\n");
         msg++;
     }
-
     if (flags & MPR_LOG_SRC) {
         mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
 

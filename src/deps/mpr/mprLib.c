@@ -1190,6 +1190,9 @@ int mprStealBlock(MprCtx ctx, cvoid *ptr)
     mprAssert(VALID_CTX(ctx));
     mprAssert(VALID_CTX(ptr));
     bp = GET_BLK(ptr);
+    if (bp->parent == ctx) {
+        return 0;
+    }
 
 #if BLD_FEATURE_MEMORY_VERIFY
     /*
@@ -2743,6 +2746,23 @@ MprBuf *mprCreateBuf(MprCtx ctx, int initialSize, int maxSize)
     }
     bp->growBy = MPR_BUFSIZE;
     mprSetBufSize(bp, initialSize, maxSize);
+    return bp;
+}
+
+
+MprBuf *mprDupBuf(MprCtx ctx, MprBuf *orig)
+{
+    MprBuf      *bp;
+    int         len;
+
+    if ((bp = mprCreateBuf(ctx, orig->growBy, orig->maxsize)) == 0) {
+        return 0;
+    }
+    bp->refillProc = orig->refillProc;
+    bp->refillArg = orig->refillArg;
+    if ((len = mprGetBufLength(orig)) > 0) {
+        memcpy(bp->data, orig->data, len);
+    }
     return bp;
 }
 
@@ -10063,6 +10083,12 @@ void mprSetLogLevel(MprCtx ctx, int level)
 }
 
 
+void mprSetAltLogData(MprCtx ctx, void *data)
+{
+    mprGetMpr(ctx)->altLogData = data;
+}
+
+
 /*
     Output a log message to the log handler
  */
@@ -10509,7 +10535,7 @@ int mprSearchForModule(MprCtx ctx, cchar *name, char **path)
         Search for path directly
      */
     if (probe(ctx, name, path)) {
-        mprLog(ctx, 5, "Found native module %s at %s", name, *path);
+        mprLog(ctx, 6, "Found native module %s at %s", name, *path);
         return 0;
     }
 
@@ -10524,7 +10550,7 @@ int mprSearchForModule(MprCtx ctx, cchar *name, char **path)
         fileName = mprJoinPath(ctx, dir, name);
         if (probe(ctx, fileName, path)) {
             mprFree(fileName);
-            mprLog(ctx, 5, "Found native module %s at %s", name, *path);
+            mprLog(ctx, 6, "Found native module %s at %s", name, *path);
             return 0;
         }
         mprFree(fileName);
@@ -12462,10 +12488,10 @@ void __mprDummyPollWait() {}
 
 /**
     mprPrintf.c - Printf routines safe for embedded programming
- *
+
     This module provides safe replacements for the standard printf formatting routines. Most routines in this file 
     are not thread-safe. It is the callers responsibility to perform all thread synchronization.
- *
+
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
@@ -12496,7 +12522,7 @@ void __mprDummyPollWait() {}
 
 /*
     Format:         %[modifier][width][precision][bits][type]
- *
+
     [-+ #,]         Modifiers
     [hlL]           Length bits
  */
@@ -12875,9 +12901,6 @@ static char *sprintfCore(MprCtx ctx, char *buf, int maxsize, cchar *spec, va_lis
 
         case STATE_DOT:
             fmt.precision = 0;
-#if UNUSED
-            fmt.flags &= ~SPRINTF_LEAD_ZERO;
-#endif
             break;
 
         case STATE_PRECISION:
@@ -13447,30 +13470,10 @@ int print(cchar *fmt, ...)
 {
     int             len;
     va_list         ap;
-#if UNUSED
-    MprFileSystem   *fs;
-    MprCtx          ctx;
-    char            *buf;
-
-    ctx = mprGetMpr(NULL);
-    fs = mprLookupFileSystem(ctx, "/");
-    va_start(ap, fmt);
-    buf = mprVasprintf(ctx, -1, fmt, ap);
-    va_end(ap);
-    if (buf != 0 && fs->stdOutput) {
-        len = mprWriteString(fs->stdOutput, buf);
-        len += mprWriteString(fs->stdOutput, "\n");
-    } else {
-        len = -1;
-    }
-    mprFree(buf);
-    return len;
-#else
     va_start(ap, fmt);
     len = vprintf(fmt, ap);
     va_end(ap);
     return len;
-#endif
 }
 
 /*
@@ -14356,6 +14359,7 @@ MprSocket *mprCreateSocket(MprCtx ctx, struct MprSsl *ssl)
         return 0;
 #endif
         if (ss->secureProvider == NULL || ss->secureProvider->createSocket == NULL) {
+            mprError(ctx, "Missing socket service provider");
             return 0;
         }
         sp = ss->secureProvider->createSocket(ctx, ssl);
@@ -14820,6 +14824,10 @@ static MprSocket *acceptSocket(MprSocket *listen)
     if (nsp->flags & MPR_SOCKET_NODELAY) {
         mprSetSocketNoDelay(nsp, 1);
     }
+
+    /*
+        Get the remote client address
+     */
     if (getSocketIpAddr(ss, addr, addrlen, ip, sizeof(ip), &port) != 0) {
         mprAssert(0);
         mprFree(nsp);
@@ -14828,6 +14836,9 @@ static MprSocket *acceptSocket(MprSocket *listen)
     nsp->ip = mprStrdup(nsp, ip);
     nsp->port = port;
 
+    /*
+        Get the server interface address accepting the connection
+     */
     saddr = (struct sockaddr*) &saddrStorage;
     saddrlen = sizeof(saddrStorage);
     getsockname(fd, saddr, &saddrlen);
@@ -14840,8 +14851,7 @@ static MprSocket *acceptSocket(MprSocket *listen)
 
 
 /*  
-    Read data. Return zero for EOF or no data if in non-blocking mode. Return -1 for errors. On success,
-    return the number of bytes read. Use getEof to tell if we are EOF or just no data (in non-blocking mode).
+    Read data. Return -1 for EOF and errors. On success, return the number of bytes read
  */
 int mprReadSocket(MprSocket *sp, void *buf, int bufsize)
 {
@@ -14883,7 +14893,6 @@ again:
     } else {
         bytes = recv(sp->fd, buf, bufsize, MSG_NOSIGNAL);
     }
-
     if (bytes < 0) {
         errCode = mprGetSocketError(sp);
         if (errCode == EINTR) {
@@ -17460,12 +17469,6 @@ MprThreadService *mprCreateThreadService(Mpr *mpr)
     }
     ts->mainThread->isMain = 1;
     ts->mainThread->osThread = mprGetCurrentOsThread();
-#if UNUSED
-    if (mprAddItem(ts->threads, ts->mainThread) < 0) {
-        mprFree(ts);
-        return 0;
-    }
-#endif
     return ts;
 }
 
@@ -18478,26 +18481,11 @@ static int changeState(MprWorker *worker, int state)
     some trickery to remap the year to a valid year when using localtime.
     FYI: 32 bit time_t expires at: 03:14:07 UTC on Tuesday, 19 January 2038
  */
-#if UNUSED
-#define MAX_TIME    (((time_t) -1) & ~(((time_t) 1) << ((sizeof(time_t) * 8) - 1)))
-#define MIN_TIME    (((time_t) 1) << ((sizeof(time_t) * 8) - 1))
-#else
 #define MAX_TIME    (((time_t) -1) & ~(((time_t) 1) << 31))
 #define MIN_TIME    (((time_t) 1) << 31)
-#endif
 
-#if UNUSED
-/*
-    Approximate, conservative min and max year. The 31556952 constant is approx sec/year (365.2425 * 86400)
-    Reduce by one to ensure no overflow. Note: this does not reduce actual date range representations and is
-    only used in DST calculations. Use 1900 for the minimum as 
- */
-#define MIN_YEAR    ((MIN_TIME / 31556952) + 1)
-#define MAX_YEAR    ((MAX_TIME / 31556952) - 1)
-#else
 #define MIN_YEAR    1901
 #define MAX_YEAR    2037
-#endif
 
 /*
     Token types or'd into the TimeToken value
@@ -18664,10 +18652,6 @@ int mprCreateTimeService(MprCtx ctx)
 {
     Mpr                 *mpr;
     TimeToken           *tt;
-#if UNUSED
-    struct timezone     tz;
-    struct timeval      tv;
-#endif
 
     mpr = mprGetMpr(ctx);
     mpr->timeTokens = mprCreateHash(mpr, -1);
@@ -18694,13 +18678,6 @@ int mprCreateTimeService(MprCtx ctx)
     for (tt = offsets; tt->name; tt++) {
         mprAddHash(mpr->timeTokens, tt->name, (void*) tt);
     }
-#if UNUSED
-    /*
-        Get timezone without DST
-     */
-    gettimeofday(&tv, &tz);
-    mpr->timezone = -tz.tz_minuteswest * MS_PER_MIN;
-#endif
     return 0;
 }
 
@@ -19045,19 +19022,11 @@ static void decodeTime(MprCtx ctx, struct tm *tp, MprTime when, bool local)
     year = getYear(when);
 
     tp->tm_year     = year - 1900;
-#if UNUSED
-    tp->tm_hour     = (int) ((when / MS_PER_HOUR) % 24);
-    tp->tm_min      = (int) ((when / MS_PER_MIN) % 60);
-    tp->tm_sec      = (int) ((when / MS_PER_SEC) % 60);
-    tp->tm_wday     = (int) (((when / MS_PER_DAY) + 4) % 7);
-    tp->tm_yday     = (int) ((when / MS_PER_DAY) - daysSinceEpoch(year));
-#else
     tp->tm_hour     = (int) (floorDiv(when, MS_PER_HOUR) % 24);
     tp->tm_min      = (int) (floorDiv(when, MS_PER_MIN) % 60);
     tp->tm_sec      = (int) (floorDiv(when, MS_PER_SEC) % 60);
     tp->tm_wday     = (int) ((floorDiv(when, MS_PER_DAY) + 4) % 7);
     tp->tm_yday     = (int) (floorDiv(when, MS_PER_DAY) - daysSinceEpoch(year));
-#endif
     tp->tm_mon      = getMonth(year, tp->tm_yday);
     if (leapYear(year)) {
         tp->tm_mday = tp->tm_yday - leapMonthStart[tp->tm_mon] + 1;
@@ -20847,7 +20816,7 @@ MprModule *mprLoadModule(MprCtx ctx, cchar *name, cchar *fun, void *data)
     if (mprSearchForModule(ctx, moduleName, &path) < 0) {
         mprError(ctx, "Can't find module \"%s\" in search path \"%s\"", name, mprGetModuleSearchPath(ctx));
     } else {
-        mprLog(ctx, 5, "Loading native module %s from %s", moduleName, path);
+        mprLog(ctx, 6, "Loading native module %s from %s", moduleName, path);
         if ((handle = dlopen(path, RTLD_LAZY | RTLD_GLOBAL)) == 0) {
             mprError(ctx, "Can't load module %s\nReason: \"%s\"",  path, dlerror());
         } else if (fun) {
@@ -23452,8 +23421,7 @@ static int scanFor(MprXml *xp, char *pattern)
 static int getNextChar(MprXml *xp)
 {
     MprBuf  *inBuf;
-    char    c;
-    int     l;
+    int     l, c;
 
     inBuf = xp->inBuf;
     if (mprGetBufLength(inBuf) <= 0) {
@@ -23468,7 +23436,6 @@ static int getNextChar(MprXml *xp)
         mprAdjustBufEnd(inBuf, l);
     }
     c = mprGetCharFromBuf(inBuf);
-
     if (c == '\n') {
         xp->lineNumber++;
     }

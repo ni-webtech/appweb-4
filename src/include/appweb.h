@@ -57,11 +57,11 @@ struct MaServer;
 /********************************** Defines ***********************************/
 /**
     Appweb Service
-    @description There is one instance of Http per application. It manages a list of HTTP servers running in
+    @description There is one instance of MaAppweb per application. It manages a list of HTTP servers running in
         the application.
     @stability Evolving
-    @defgroup Http Http
-    @see Http maCreateHttp maStartHttp maStopHttp
+    @defgroup Appweb Appweb
+    @see Http maCreateApweb maStartApweb maStopApweb
  */
 typedef struct MaAppweb {
     struct MaServer     *defaultServer;         /**< Default web server object */
@@ -81,7 +81,7 @@ typedef struct MaAppweb {
     @description Appweb uses a singleton Appweb object to manage multiple web servers instances.
     @param ctx Any memory context object returned by mprAlloc
     @return A Http object. Use mprFree to close and release.
-    @ingroup Http
+    @ingroup Appweb
  */
 extern MaAppweb *maCreateAppweb(MprCtx ctx);
 
@@ -90,7 +90,7 @@ extern MaAppweb *maCreateAppweb(MprCtx ctx);
     @description This starts listening for requests on all configured servers.
     @param http Http object created via #maCreateHttp
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup Http
+    @ingroup Appweb
  */
 extern int maStartAppweb(MaAppweb *appweb);
 
@@ -99,7 +99,7 @@ extern int maStartAppweb(MaAppweb *appweb);
     @description This stops listening for requests on all configured servers. Shutdown is somewhat graceful.
     @param http Http object created via #maCreateHttp
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup Http
+    @ingroup Appweb
  */
 extern int maStopAppweb(MaAppweb *appweb);
 
@@ -109,7 +109,7 @@ extern int maStopAppweb(MaAppweb *appweb);
     @param http Http object created via #maCreateHttp
     @param user User name. Must be defined in the system password file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup Http
+    @ingroup Appweb
  */
 extern int maSetHttpUser(MaAppweb *appweb, cchar *user);
 
@@ -122,7 +122,7 @@ extern void maGetUserGroup(MaAppweb *appweb);
     @param http Http object created via #maCreateHttp
     @param group Group name. Must be defined in the system group file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup Http
+    @ingroup Appweb
  */
 extern int maSetHttpGroup(MaAppweb *appweb, cchar *group);
 
@@ -155,7 +155,7 @@ extern int maRangeFilterInit(Http *http, MprModule *mp);
 extern int maSslModuleInit(Http *http, MprModule *mp);
 extern int maUploadFilterInit(Http *http, MprModule *mp);
 
-/********************************* HttpServer ***********************************/
+/********************************************************************************/
 
 #define MA_LISTEN_DEFAULT_PORT  0x1         /* Use default port 80 */
 #define MA_LISTEN_WILD_PORT     0x2         /* Port spec missing */
@@ -188,7 +188,7 @@ extern void maInsertVirtualHost(MaHostAddress *hostAddress, struct MaHost *vhost
 extern bool maIsNamedVirtualHostAddress(MaHostAddress *hostAddress);
 extern void maSetNamedVirtualHostAddress(MaHostAddress *hostAddress);
 
-/********************************** HttpServer **********************************/
+/********************************** MaServer **********************************/
 /**
     MaServer Control - 
     An application may have any number of HTTP servers, each managed by an instance of the Server class. Typically
@@ -196,14 +196,14 @@ extern void maSetNamedVirtualHostAddress(MaHostAddress *hostAddress);
     each server class. A server will typically be configured by calling the configure method for each server which
     parses a file to define the server and virtual host configuration.
     @stability Evolving
-    @defgroup HttpServer HttpServer
-    @see HttpServer maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateServer 
+    @defgroup MaServer MaServer
+    @see MaServer maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateServer 
         maConfigureServer maLoadStaticModules maUnloadStaticModules maSplitConfigValue
  */
 typedef struct MaServer {
     MaAppweb        *appweb;                /**< Appweb control object */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
-    MprList         *httpServers;           /**< List of HttpServers */
+    MprList         *httpServers;           /**< List of MaServers */
     struct MaHost   *defaultHost;           /**< Primary host */
     MprList         *hosts;                 /**< List of host objects */
     MprList         *hostAddresses;         /**< List of HostAddress objects */
@@ -218,7 +218,7 @@ typedef struct MaServer {
         object. If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @return Http object.
-    @ingroup HttpServer
+    @ingroup MaServer
  */
 extern MaServer *maCreateWebServer(cchar *configFile);
 
@@ -227,7 +227,7 @@ extern MaServer *maCreateWebServer(cchar *configFile);
         incoming Http requests until instructed to exit. This is often used in conjunction with #maCreateWebServer.
     @param http Http object created via #maCreateWebServer or #maCreateHttp.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup HttpServer
+    @ingroup MaServer
  */
 extern int maServiceWebServer(MaServer *server);
 
@@ -237,7 +237,7 @@ extern int maServiceWebServer(MaServer *server);
         instead. If you need more control, try #maCreateWebServer which exposes the Http object.
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup HttpServer
+    @ingroup MaServer
  */
 extern int maRunWebServer(cchar *configFile);
 
@@ -250,12 +250,12 @@ extern int maRunWebServer(cchar *configFile);
     @param port Port number to listen to
     @param docRoot Directory containing the documents to serve.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup HttpServer
+    @ingroup MaServer
  */
 extern int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot);
 
-/** Create a HttpServer object
-    @description Create new HttpServer object. This routine creates a bare HttpServer object, loads any required static
+/** Create an MaServer object
+    @description Create new MaServer object. This routine creates a bare MaServer object, loads any required static
         modules  and performs minimal configuration. To use the server object created, more configuration will be 
         required before starting Http services.
         If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
@@ -265,8 +265,8 @@ extern int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot);
     @param ip If not-null, create and open a listening endpoint on this IP address. If you are configuring via a
         config file, use #maConfigureServer and set ip to null.
     @param port Port number to listen on. Set to -1 if you do not want to open a listening endpoint on ip:port
-    @return HttpServer A newly created HttpServer object. Use mprFree to free and release.
-    @ingroup HttpServer
+    @return MaServer A newly created MaServer object. Use mprFree to free and release.
+    @ingroup MaServer
  */
 extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int port);
 
@@ -280,7 +280,7 @@ extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, ccha
     @param ip IP address to listen on. This overrides the value specified in the config file.
     @param port Port address to listen on. This overrides the value specified in the config file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup HttpServer
+    @ingroup MaServer
  */
 extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cchar *documentRoot, 
         cchar *ip, int port);
@@ -291,12 +291,14 @@ extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverR
         can specify a static or shared build of Appweb. The #maCreateServer routine will call maLoadStaticModules
         automatically. It should not be called by in user programs.
     @param http Http object created via #maCreateHttp
-    @ingroup HttpServer
+    @ingroup MaServer
  */
 extern void maLoadStaticModules(MaAppweb *appweb);
 
 extern void     maAddHost(MaServer *server, struct MaHost *host);
 extern MaHostAddress *maAddHostAddress(MaServer *server, cchar *ip, int port);
+
+//  MOB -- is this right?
 extern void     maAddHttpServer(MaServer *server, HttpServer *httpServer);
 extern int      maCreateHostAddresses(MaServer *server, struct MaHost *host, cchar *value);
 extern struct MaHost *maLookupHost(MaServer *server, cchar *name);
@@ -314,9 +316,10 @@ extern int      maStartServer(MaServer *server);
 extern int      maStopServer(MaServer *server);
 extern int      maValidateConfiguration(MaServer *server);
 
-/************************************* HttpAuth *********************************/
+/************************************* Auth *********************************/
 #if BLD_FEATURE_AUTH_FILE
-/** User Authorization
+/** 
+    User Authorization
     File based authorization backend
     @stability Evolving
     @defgroup MaUser
@@ -331,7 +334,8 @@ typedef struct MaUser {
 } MaUser;
 
 
-/** Group Authorization
+/** 
+    Group Authorization
     @stability Evolving
     @defgroup MaGroup
     @see MaGroup
@@ -457,6 +461,7 @@ typedef struct MaMimeType {
  */
 typedef struct MaHost {
     MaServer        *server;                /**< Meta-server owning this host */
+    HttpServer      *httpServer;            /**< HttpServer backing this host */
     struct MaHost   *parent;                /**< Parent host for virtual hosts */
     MprFile         *accessLog;             /**< File object for access logging */
     MprList         *dirs;                  /**< List of Directory definitions */
@@ -470,6 +475,7 @@ typedef struct MaHost {
     char            *documentRoot;          /**< Default directory for web documents */
     int             flags;                  /**< Host flags */
 
+    //  MOB -- has been moved to Http
     int             traceLevel;             /**< Trace activation level */
     int             traceMaxLength;         /**< Maximum trace file length (if known) */
     int             traceMask;              /**< Request/response trace mask */
@@ -504,7 +510,7 @@ extern MaAlias      *maLookupAlias(MaHost *host, cchar *prefix);
 extern MaDir        *maLookupBestDir(MaHost *host, cchar *path);
 extern MaDir        *maLookupDir(MaHost *host, cchar *path);
 extern HttpLocation *maLookupBestLocation(MaHost *host, cchar *uri);
-extern MaHost       *maCreateHost(MaServer *server, cchar *ip, HttpLocation *location);
+extern MaHost       *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ip, HttpLocation *location);
 extern MaHost       *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *host);
 extern HttpLocation *maLookupLocation(MaHost *host, cchar *prefix);
 extern MaMimeType   *maAddMimeType(MaHost *host, cchar *ext, cchar *mimetype);

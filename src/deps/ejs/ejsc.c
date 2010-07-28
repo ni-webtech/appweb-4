@@ -294,6 +294,7 @@ MAIN(ejscMain, int argc, char **argv)
     if (cp->errorCount > 0) {
         err++;
     }
+    mprFree(cp);
     mprFree(ejs);
     if (mprStop(mpr)) {
         mprFree(mpr);

@@ -47,7 +47,6 @@ static void openFile(HttpQueue *q)
         } else {
             httpSetEntityLength(conn, (int) trans->fileInfo.size);
         }
-        
         if (!trans->fileInfo.isReg && !trans->fileInfo.isLink) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't locate document: %s", rec->uri);
             
@@ -244,7 +243,6 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
         httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't read file %s", trans->filename);
         return MPR_ERR_CANT_READ;
     }
-
     mprAdjustBufEnd(packet->content, len);
     return len;
 }

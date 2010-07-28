@@ -133,7 +133,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
     /*
         Create the default host and directory
      */
-    defaultHost = host = maCreateHost(server, NULL, NULL);
+    defaultHost = host = maCreateHost(server, NULL, NULL, NULL);
     server->defaultHost = defaultHost;
     mprAddItem(server->hosts, host);
 
@@ -441,9 +441,9 @@ int maParseConfig(MaServer *server, cchar *configFile)
         TODO -- should test here that all location handlers are defined
      */
     limits = http->limits;
-    if (limits->maxThreads > 0) {
-        mprSetMaxWorkers(appweb, limits->maxThreads);
-        mprSetMinWorkers(appweb, limits->minThreads);
+    if (limits->threadCount > 0) {
+        mprSetMaxWorkers(appweb, limits->threadCount);
+        mprSetMinWorkers(appweb, limits->minThreadCount);
     }
 
     /*
@@ -756,12 +756,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 {
     MaAppweb        *appweb;
     MaAlias         *alias;
-    HttpLocation      *location;
+    HttpLocation    *location;
     MaHost          *host;
     MaDir           *dir;
     Http            *http;
     HttpAuth        *auth;
-    HttpLimits      *limits;
+    HttpLimits      limits;
     HttpStage       *stage;
     HttpServer      *httpServer;
     MprHash         *hp;
@@ -780,12 +780,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     dir = state->dir;
     location = state->location;
     mprAssert(state->location->prefix);
+    httpInitLimits(&limits, 1);
 
     mprAssert(host);
     mprAssert(dir);
     auth = state->auth;
     processed = 0;
-    limits = http->limits;
     flags = 0;
 
     //  TODO - crashes with missing value
@@ -1071,13 +1071,13 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     case 'K':
         if (mprStrcmpAnyCase(key, "KeepAlive") == 0) {
             if (mprStrcmpAnyCase(value, "on") != 0) {
-                maSetMaxKeepAlive(appweb, 0);
+                limits.keepAliveCount = 0;
             }
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "KeepAliveTimeout") == 0) {
             if (! mprGetDebugMode(server)) {
-                maSetKeepAliveTimeout(appweb, atoi(value) * 1000);
+                limits.inactivityTimeout = atoi(value);
             }
             return 1;
         }
@@ -1089,7 +1089,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_CHUNK_SIZE || num > MA_TOP_CHUNK_SIZE) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxChunkSize = num;
+            limits.chunkSize = num;
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "LimitClients") == 0) {
@@ -1109,23 +1109,26 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_BODY || num > MA_TOP_BODY) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxReceiveBody = num;
+            limits.receiveBodySize = num;
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitRequestFields") == 0) {
+        //  MOB -- Deprecate Field and update doc
+        } else if (mprStrcmpAnyCase(key, "LimitRequestFields") == 0 || 
+                mprStrcmpAnyCase(key, "LimitRequestHeaderCount") == 0) {
             num = atoi(value);
             if (num < MA_BOT_NUM_HEADERS || num > MA_TOP_NUM_HEADERS) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxNumHeaders = num;
+            limits.headerCount = num;
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitRequestFieldSize") == 0) {
+        //  MOB -- Deprecate Field and update doc
+        } else if (mprStrcmpAnyCase(key, "LimitRequestFieldSize") == 0 || mprStrcmpAnyCase(key, "LimitRequestHeaderSize") == 0) {
             num = atoi(value);
             if (num < MA_BOT_HEADER || num > MA_TOP_HEADER) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxHeader = num;
+            limits.headerSize = num;
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "LimitResponseBody") == 0) {
@@ -1133,7 +1136,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_RESPONSE_BODY || num > MA_TOP_RESPONSE_BODY) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxTransmissionBody = num;
+            limits.transmissionBodySize = num;
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "LimitStageBuffer") == 0) {
@@ -1141,7 +1144,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_STAGE_BUFFER || num > MA_TOP_STAGE_BUFFER) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxStageBuffer = num;
+            limits.stageBufferSize = num;
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "LimitUrl") == 0) {
@@ -1149,7 +1152,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_URL || num > MA_TOP_URL){
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxUri = num;
+            limits.uriSize = num;
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "LimitUploadSize") == 0) {
@@ -1158,7 +1161,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 //  TODO - should emit a message for all these cases
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxUploadSize = num;
+            limits.uploadSize = num;
             return 1;
 
 #if DEPRECATED
@@ -1273,7 +1276,10 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                     }
                 }
             }
-            mprAddItem(server->httpServers, httpCreateServer(http, hostName, port, NULL));
+            httpServer = httpCreateServer(http, hostName, port, NULL);
+            mprAddItem(server->httpServers, httpServer);
+            *httpServer->limits = limits;
+            host->httpServer = httpServer;
             /*
                 Set the host ip spec if not already set
              */
@@ -1359,7 +1365,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
     case 'M':
         if (mprStrcmpAnyCase(key, "MaxKeepAliveRequests") == 0) {
-            maSetMaxKeepAlive(appweb, atoi(value));
+            limits.keepAliveCount = atoi(value);
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "MemoryDepletionPolicy") == 0) {
@@ -1542,7 +1548,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < 0 || num > MA_TOP_THREADS) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->minThreads = num;
+            mprSetMinWorkers(appweb, num);
             return 1;
         }
         break;
@@ -1553,7 +1559,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < 0 || num > MA_TOP_THREADS) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits->maxThreads = num;
+            mprSetMaxWorkers(appweb, num);
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "ThreadStackSize") == 0) {
@@ -1564,12 +1570,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             mprSetThreadStackSize(server, num);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "TimeOut") == 0) {
-            maSetTimeout(appweb, atoi(value) * 1000);
+        } else if (mprStrcmpAnyCase(key, "Timeout") == 0) {
+            limits.requestTimeout = atoi(value);
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "TraceMethod") == 0) {
-            httpEnableTraceMethod(http, mprStrcmpAnyCase(value, "on") == 0);
+            limits.enableTraceMethod = (mprStrcmpAnyCase(value, "on") == 0);
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "TypesConfig") == 0) {
@@ -1976,12 +1982,12 @@ int HttpServer::saveConfig(char *configFile)
         For clarity, always print the ThreadLimit even if default.
      */
     limits = http->getLimits();
-    mprFprintf(fd, "ThreadLimit %d\n", limits->maxThreads);
+    mprFprintf(fd, "ThreadLimit %d\n", limits->threadCount);
     if (limits->threadStackSize != 0) {
         mprFprintf(fd, "ThreadStackSize %d\n", limits->threadStackSize);
     }
-    if (limits->minThreads != 0) {
-        mprFprintf(fd, "\nStartThreads %d\n", limits->minThreads);
+    if (limits->minThreadCount != 0) {
+        mprFprintf(fd, "\nStartThreads %d\n", limits->minThreadCount);
     }
     if (limits->maxReceiveBody != MA_MAX_BODY) {
         mprFprintf(fd, "LimitRequestBody %d\n", limits->maxReceiveBody);
@@ -2122,11 +2128,9 @@ int HttpServer::saveConfig(char *configFile)
                 mprFprintf(fd, "MaxKeepAliveRequests %d\n",
                     host->getMaxKeepAlive());
             }
-            if (host->getKeepAliveTimeout() !=
-                    defaultHost->getKeepAliveTimeout()) {
+            if (host->getKeepAliveTimeout() != defaultHost->getKeepAliveTimeout()) {
                 tabs(fd, indent);
-                mprFprintf(fd, "KeepAliveTimeout %d\n",
-                    host->getKeepAliveTimeout() / 1000);
+                mprFprintf(fd, "KeepAliveTimeout %d\n", host->getKeepAliveTimeout() / 1000);
             }
         }
         mimeFile = host->getMimeFile();

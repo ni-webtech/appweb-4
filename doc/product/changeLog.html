@@ -43,11 +43,14 @@
         <div class="contentRight">
             <h2>Quick Nav</h2>
             <ul>
+                <li><a href="#r4.0.0">Release 4.0.0</a></li>
+                <li><a href="#r3.2.3">Release 3.2.3</a></li>
+                <li><a href="#r3.2.2">Release 3.2.2</a></li>
+                <li><a href="#r3.2.1">Release 3.2.1</a></li>
+                <li><a href="#r3.2.0">Release 3.2.0</a></li>
+                <li><a href="#r3.1.2">Release 3.1.2</a></li>
                 <li><a href="#r3.1.1">Release 3.1.1</a></li>
                 <li><a href="#r3.1.0">Release 3.1.0</a></li>
-                <li><a href="#r3.0.2">Release 3.0.2</a></li>
-                <li><a href="#r3.0.1">Release 3.0.1</a></li>
-                <li><a href="#r3.0.0">Release 3.0.0</a></li>
                 <li><a href="#r2.4.2">Release 2.4.2</a></li>
             </ul>
 <!-- BeginDsi "dsi/genSeeAlso.html" -->
@@ -69,11 +72,121 @@
         </div>
         <div class="contentLeft">
             <h1>Appweb Change Log</h1>
-            <p>Appweb 3 is the next generation of the popular Appweb embeddable web server. It is a major upgrade
-            from Appweb 2 and has an extensive set of new features including a new core to the web server.
-            It is not source-code compatible with Appweb 2. If you require assistance migrating to Appweb 3 please
-            contact Embedthis who offer custom development services.</p>
+            <p>The Appweb change log details the major features and changes for each release.</p>
+            <p>See the Appweb <a href="http://github.com/embedthis/appweb-3/issues">issue database</a> for full 
+                details of fixes. See also the
+                Ejscript <a href="http://github.com/embedthis/ejs-1/issues">issue database</a>.</p>
 
+            <a name="r4.0.0" id="r4.0.0"></a>
+            <h2 class="section">Changes in 4.0.0</h2>
+            <h3>Major Features</h3>
+            <ul>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>Enhanced Ejscript 2.0 with new web framework</li>
+                <li>Smaller footprint Ejscript</li>
+                <li>Async I/O and enhanced streaming support</li>
+                <li>C Server Pages (CSP) web framework</li>
+                <li>Faster performance. Ejscript 2-5x faster, CSP for C-level web serving</li>
+                <li>Improved documentation and samples</li>
+            </ul>
+
+            <a name="r3.2.3" id="r3.2.3"></a>
+            <h2 class="section">Changes in 3.2.3</h2>
+            <h3>Key Fixes</h3>
+            <ul>
+                <li>Bad timezone on HTTP headers in certain locales</li>
+                <li>Potential bad free of connection input buffer</li>
+                <li>Formatted printing of floating point numbers</li>
+                <li>Update Ejscript documentation</li>
+                <li>Ejscript: Array.slice with negative indicies</li>
+                <li>Ejscript: Date/Time calculations for pre 1970 dates</li>
+                <li>Ejscript: Cygwin Math.pow Infinity results</li>
+                <li>Ejscript: Allow JSON encoded arrays in Http form data</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>None</li>
+            </ul>
+
+            <a name="r3.2.2" id="r3.2.2"></a>
+            <h2 class="section">Changes in 3.2.2</h2>
+            <h3>Minor Features</h3>
+            <ul>
+                <li>Solaris and FreeBSD ports</li>
+                <li>Http request and response body tracing. New configuration directives LogTrace and LogTraceFilter.</li>
+            </ul>
+            <h3>Key Fixes</h3>
+            <ul>
+                <li>Freeing memory on exiting. (Fix to mprFree(mpr))</li>
+                <li>Ejscript update to 1.0.2 </li>
+                <li>Documentation updates</li>
+                <li>Debian package improvements</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>None</li>
+            </ul>
+            <a name="r3.2.1" id="r3.2.1"></a>
+            <h2 class="section">Changes in 3.2.1</h2>
+            <h3>Key Fixes</h3>
+            <ul>
+                <li>Missing linkup script for packaging</li>
+                <li>Timedout requests</li>
+                <li>Update Ejscript to fix some ejscript issues</li>
+                <li>Building with va_list on some systems</li>
+                <li>Parsing IPv6 addresses in the config file</li>
+                <li>Ejscript loading modules fix for ARM</li>
+                <li>Large requests when using the fileHandler</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>None</li>
+            </ul>
+            <a name="r3.2.0" id="r3.2.0"></a>
+            <h2 class="section">Changes in 3.2.0</h2>
+            <h3>Minor Features</h3>
+            <ul>
+                <li>Updated Ejscript with enhanced Math, Date and Number classes</li>
+                <li>Improved Ejscript library API documentation</li>
+                <li>Improved configure diagnostics with the --verbose switch</li>
+                <li>Many small fixes</li>
+            </ul>
+            <h3>Fixes</h3>
+            <ul>
+                <li>Optimize make install/package when using svn</li>
+                <li>SimpleModule sample</li>
+                <li>Loading modules with a "." in the name</li>
+                <li>Single threaded page reload when using remote command execution</li>
+                <li>Improve configure diagnostics</li>
+                <li>Ejs: TextStream::read() with unterminated last line </li>
+                <li>Ejs: Http requests with credentials</li>
+                <li>Ejs: JSON parsing and encoding</li>
+                <li>Ejs: Math, Number and Date methods</li>
+                <li>Ejs: Documentation</li>
+                <li>Ejs: ByteArray.copyIn</li>
+                <li>Ejs: Parsing XML literals</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>New MPR mprDtoa C API</li>
+                <li>Enhanced Ejscript Number, Date and Math APIs</li>
+                <li>API documentation corrections</li>
+            </ul>
+            <a name="r3.1.2" id="r3.1.2"></a>
+            <h2 class="section">Changes in 3.1.2</h2>
+            <h3>Fixes</h3>
+            <ul>
+                <li>Windows project files</li>
+                <li>Setting /Program Files in windows installation</li>
+                <li>Ejscript TextStream and XML updates</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>None</li>
+            </ul>
+            
             <a name="r3.1.1" id="r3.1.1"></a>
             <h2 class="section">Changes in 3.1.1</h2>
             <h3>Major Features</h3>

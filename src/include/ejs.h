@@ -1752,6 +1752,7 @@ extern int ejsSetTraitDetails(Ejs *ejs, void *vp, int slotNum, struct EjsType *t
 extern int ejsHasTrait(EjsObj *obj, int slotNum, int attributes);
 extern int ejsGetTraitAttributes(EjsObj *obj, int slotNum);
 extern struct EjsType *ejsGetTraitType(EjsObj *obj, int slotNum);
+extern int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite);
 
 
 //  TODO - inconsistent naming vs ejsCloneVar (clone vs copy)
@@ -2392,6 +2393,7 @@ extern EjsDate *ejsCreateDate(Ejs *ejs, MprTime value);
         ejsThrowMemoryError ejsThrowOutOfBoundsError ejsThrowReferenceError ejsThrowResourceError ejsThrowStateError
         ejsThrowStopIteration ejsThrowSyntaxError ejsThrowTypeError
  */
+//  MOB -- perhaps remove and just use EjsObj. Ie. no longer native
 typedef struct EjsError {
     EjsObj          obj;                /**< Extends Object */
 #if UNUSED
@@ -2696,6 +2698,7 @@ typedef struct EjsUri {
  */
 extern EjsUri *ejsCreateUri(Ejs *ejs, cchar *uri);
 extern EjsUri *ejsCreateUriAndFree(Ejs *ejs, char *uri);
+extern EjsUri *ejsCreateFullUri(Ejs *ejs, cchar *scheme, cchar *host, int port, cchar *path, cchar *query, cchar *reference);
 
 #if DOXYGEN
     /** 
@@ -2776,6 +2779,7 @@ typedef struct EjsHttp {
     Ejs             *ejs;                       /**< Convenience access to ejs interpreter instance */
     EjsObj          *emitter;                   /**< Event emitter */
     EjsByteArray    *data;                      /**< Buffered write data */
+    EjsObj          *limits;                    /**< Limits object */
     EjsObj          *responseCache;             /**< Cached response (only used if response() is used) */
     HttpConn        *conn;                      /**< Http connection object */
     MprBuf          *requestContent;            /**< Request body data supplied */
@@ -2784,6 +2788,9 @@ typedef struct EjsHttp {
     char            *method;                    /**< HTTP method */
     char            *keyFile;                   /**< SSL key file */
     char            *certFile;                  /**< SSL certificate file */
+    int             dontFinalize;               /**< Suppress finalization */
+    int             closed;                     /**< Http is closed and "close" event has been issued */
+    int             error;                      /**< Http errored and "error" event has been issued */
     int             readCount;                  /**< Count of body bytes read */
     int             requestContentCount;        /**< Count of bytes written from requestContent */
     int             writeCount;                 /**< Count of bytes written via write() */
@@ -2803,6 +2810,8 @@ extern EjsHttp *ejsCreateHttp(Ejs *ejs);
 #else
     #define ejsIsHttp(vp) ejsIs(vp, ES_ejs_io_Http)
 #endif
+extern void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server);
+extern void ejsGetHttpLimits(Ejs *ejs, EjsObj *obj, HttpLimits *limits, int server);
 
 
 /** 
@@ -4264,6 +4273,7 @@ typedef struct EjsModule {
     uint            hasInitializer  : 1;    /* Has initializer function */
     uint            initialized     : 1;    /* Initializer has run */
     uint            hasError        : 1;    /* Module has a loader error */
+    uint            visited         : 1;    /* Module has been traversed */
     int             flags;                  /* Loading flags */
     char            *doc;                   /* Current doc string */
 } EjsModule;
@@ -4487,17 +4497,29 @@ extern "C" {
  */
 typedef struct EjsHttpServer {
     EjsObj          obj;                        /**< Extends Object */
-    EjsObj          *emitter;                   /**< Event emitter */
     Ejs             *ejs;                       /**< Ejscript interpreter handle */
+    EjsObj          *emitter;                   /**< Event emitter */
+    EjsObj          *limits;                    /**< Limits object */
     HttpServer      *server;                    /**< Http server object */
+    struct MprSsl   *ssl;                       /**< SSL configuration */
+    EjsArray        *incomingStages;            /**< Incoming Http pipeline stages */
+    EjsArray        *outgoingStages;            /**< Outgoing Http pipeline stages */
+    cchar           *connector;                 /**< Pipeline connector */
     cchar           *dir;                       /**< Directory containing web documents */
     char            *keyFile;                   /**< SSL key file */
     char            *certFile;                  /**< SSL certificate file */
     char            *protocols;                 /**< SSL protocols */
     char            *ciphers;                   /**< SSL ciphers */
     char            *ip;                        /**< Listening address */
+    char            *name;                      /**< Server name */
     int             port;                       /**< Listening port */
     int             async;                      /**< Async mode */
+
+    int             traceLevel;                 /**< Trace activation level */
+    int             traceMaxLength;             /**< Maximum trace file length (if known) */
+    int             traceMask;                  /**< Request/response trace mask */
+    MprHashTable    *traceInclude;              /**< Extensions to include in trace */
+    MprHashTable    *traceExclude;              /**< Extensions to exclude from trace */
 } EjsHttpServer;
 
 
@@ -4515,17 +4537,26 @@ typedef struct EjsRequest {
     HttpConn        *conn;          /**< Underlying Http connection object */
     EjsHttpServer   *server;        /**< Owning server */
     EjsObj          *emitter;       /**< Event emitter */
-    struct EjsSession *session;     /**< Current session */
-    EjsObj          *files;         /**< Cached files object */
-    EjsObj          *headers;       /**< Cached headers object */
-    EjsObj          *params;        /**< Form variables */
+    EjsPath         *dir;           /**< Home directory containing the application */
     EjsObj          *env;           /**< Request.env */
+    EjsPath         *filename;      /**< Physical resource filename */
+    EjsObj          *files;         /**< Files object */
+    EjsObj          *headers;       /**< Headers object */
+    EjsObj          *limits;        /**< Limits object */
+    EjsObj          *params;        /**< Form variables */
+    EjsUri          *uri;           /**< Complete uri */
     Ejs             *ejs;           /**< Ejscript interpreter handle */
-    cchar           *dir;           /**< Home directory containing the application */
+    struct EjsSession *session;     /**< Current session */
+
+    //  MOB -- should these two be stored as EjsObj?
     cchar           *home;          /**< Relative URI to the home of the application from this request */
     cchar           *absHome;       /**< Absolute URI to the home of the application from this request */
-    int             running;        /**< Request has started */
+
+    int             dontFinalize;   /**< Don't auto-finalize. Must call finalize(force) */
     int             probedSession;  /**< Determined if a session exists */
+    int             closed;         /**< Request closed and "close" event has been issued */
+    int             error;          /**< Request errored and "error" event has been issued */
+    int             running;        /**< Request has started */
 } EjsRequest;
 
 
@@ -4584,6 +4615,9 @@ extern EjsSession *ejsGetSession(Ejs *ejs, struct EjsRequest *req);
     @param session Session object created via ejsCreateSession()
 */
 extern int ejsDestroySession(Ejs *ejs, EjsHttpServer *server, EjsSession *session);
+
+extern void ejsSendRequestCloseEvent(Ejs *ejs, EjsRequest *req);
+extern void ejsSendRequestErrorEvent(Ejs *ejs, EjsRequest *req);
 
 
 extern void ejsConfigureHttpServerType(Ejs *ejs);

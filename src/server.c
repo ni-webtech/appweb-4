@@ -35,7 +35,6 @@ MaAppweb *maCreateAppweb(MprCtx ctx)
     maOpenDirHandler(http);
     maOpenEgiHandler(http);
     maOpenFileHandler(http);
-    maOpenSendConnector(http);
     return appweb;
 }
 
@@ -78,17 +77,11 @@ MaServer *maLookupServer(MaAppweb *appweb, cchar *name)
 int maStartAppweb(MaAppweb *appweb)
 {
     MaServer    *server;
-    HttpLimits  *limits;
     Http        *http;
     char        *timeText;
     int         next;
 
     http = appweb->http;
-    limits = http->limits;
-    if (limits->maxThreads > 0) {
-        mprSetMaxWorkers(appweb, limits->maxThreads);
-        mprSetMinWorkers(appweb, limits->minThreads);
-    }
     for (next = 0; (server = mprGetNextItem(appweb->servers, &next)) != 0; ) {
         maValidateConfiguration(server);
         if (maStartServer(server) < 0) {
@@ -443,15 +436,19 @@ void maSetDefaultHost(MaServer *server, MaHost *host)
 }
 
 
+#if UNUSED
 void maSetKeepAliveTimeout(MaAppweb *appweb, int timeout)
 {
-    appweb->http->keepAliveTimeout = timeout;
+    //  MOB -- API needed
+    appweb->http->limits->inactivityTimeout = timeout;
 }
 
 
+//  MOB -- is this used?
 void maSetMaxKeepAlive(MaAppweb *appweb, int timeout)
 {
-    appweb->http->maxKeepAlive = timeout;
+    //  MOB -- API needed
+    appweb->http->limits->keepAliveCount = timeout;
 }
 
 
@@ -461,8 +458,10 @@ void maSetMaxKeepAlive(MaAppweb *appweb, int timeout)
  */
 void maSetTimeout(MaAppweb *appweb, int timeout)
 {
-    appweb->http->timeout = timeout;
+    //  MOB -- API needed
+    appweb->http->limits->requestTimeout = timeout * MPR_TICKS_PER_SEC;
 }
+#endif
 
 
 /*

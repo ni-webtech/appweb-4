@@ -49,7 +49,6 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
         }
         return 1;
     }
-
     path = maMakePath(host, mprStrTrim(value, "\""));
 
     if (mprStrcmpAnyCase(key, "SSLCACertificatePath") == 0) {

@@ -16,7 +16,7 @@ ARCHIVE			+= $(BLD_TOP)/releases/appweb-all.tgz
 TARGETS			+= $(patsubst %,$(INC_DEST)/%, appweb.h)
 TARGETS			+= $(patsubst %,$(DEST)/%, appwebLib.c appweb.c)
 
-APPWEB_HEADERS	+= $(patsubst %,$(SRC)/include/%.h, appweb appwebMonitor http)
+APPWEB_HEADERS	+= $(patsubst %,$(SRC)/include/%.h, appweb appwebMonitor)
 LIB_SOURCES		+= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|server/|test|utils|sav') 
 
 combo packageExtra:	prep $(TARGETS) $(ARCHIVE)
@@ -40,7 +40,9 @@ $(DEST)/appweb.c: Makefile $(APPWEB_HEADERS) $(SRC)/server/appweb.c
 	all-in-one $(SRC)/server/appweb.c | egrep -v '#include.*appweb|#include.*http' >>$(DEST)/appweb.c
 
 $(ARCHIVE): Makefile $(TARGETS)
-	cp $(BLD_TOP)/doc/man/*.1 $(STAGING)/doc/man
+	cp $(BLD_TOP)/doc/man/appweb.1 $(STAGING)/doc/man
+	cp $(BLD_TOP)/doc/man/appwebMonitor.1 $(STAGING)/doc/man
+	cp $(BLD_TOP)/doc/man/httpPassword.1 $(STAGING)/doc/man
 	@$(call log) "[Generate]" "tar cfz $(ARCHIVE) -C $(STAGING) ."
 	rm -f $(ARCHIVE)
 	tar cfz $(ARCHIVE) -C $(STAGING) .

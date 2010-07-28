@@ -1,14 +1,15 @@
-.TH HTTP "1" "March 2010" "http" "User Commands"
+.TH HTTP "1" "July 2010" "http" "User Commands"
 .SH NAME
 http \- HTTP Client program
 .SH SYNOPSIS
-.B http [options] urls ...
+.B http [options] [files] url
 .PP
 [\fI--benchmark \fR]
 [\fI--chunk size \fR]
 [\fI--continue\fR] 
 [\fI--cookie cookieString\fR] 
-[\fI--debug\fR] 
+[\fI--data\fR] 
+[\fI--debugger\fR] 
 [\fI--delete\fR] 
 [\fI--form string\fR]
 [\fI--header 'key: value'\fR]
@@ -36,7 +37,8 @@ http \- HTTP Client program
 [\fI--verbose\fR]
 [\fI--workers count\fR]
 .SH DESCRIPTION
-The http command issues HTTP commands to retrieve files from a web server. 
+The http command issues HTTP commands to retrieve files from a web server. If "files" are provided on the command line
+these are included in the request body data. 
 .SH OPTIONS
 .TP
 \fB\--benchmark\fR 
@@ -52,9 +54,12 @@ Continue on errors. Default is to stop on the first error.
 \fB\--cookie cookieString\fR 
 Define a cookie string to send with the request. Multiple uses okay.
 .TP
-\fB\--debug\fR 
+\fB\--debugger\fR 
 Run in debug mode and disable all timeouts. Useful when running a server in the debugger to prevent the client
 from retrying or killing the request.
+.TP
+\fB\--data\fR 
+String of raw body data to send with the request.
 .TP
 \fB\--delete\fR 
 Issue a DELETE request. This is an alias for --method DELETE.

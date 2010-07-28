@@ -9,7 +9,7 @@ module ejs.test {
 
 require ejs.unix
 
-class Test {
+enumerable class Test {
 
     use default namespace public
 
@@ -29,6 +29,7 @@ class Test {
     var _bin: Path                          // Path to bin directory
     var config: Object                      // BuildConfig.make features
     var continueOnErrors: Boolean = false   // Continue on errors 
+    var data: Object                        // Opaque data
     var debug: Boolean = false              // Run in debug mode 
     var _depth: Number = 1                  // Test level. Higher levels mean deeper testing.
     var echo: Boolean = false               // Echo the command line 
@@ -222,6 +223,9 @@ class Test {
         if (skipDirs.contains(dir.toString())) {
             return
         }
+        if (!runSetup(dir, "init")) {
+            return
+        }
         if (!runPrePost(dir, "init")) {
             return
         }
@@ -250,10 +254,11 @@ class Test {
             }
         } finally {
             runPrePost(dir, "term")
+            runSetup(dir, "term")
         }
     }
 
-    function runTest(file: Path): Void {
+    function runTest(file: Path, phase: String = null): Void {
         skipTest = false
         let home = App.dir
         try {
@@ -263,11 +268,11 @@ class Test {
             let workers
             let ext = file.extension
             if (ext == "init" || ext == "term") {
-                workers = startWorker(file)
+                workers = startWorker(file, phase)
             } else {
                 workers = []
                 for (thread in threads) {
-                    workers.append(startWorker(file))
+                    workers.append(startWorker(file, phase))
                 }
             }
             if (!Worker.join(workers, TIMEOUT)) {
@@ -304,11 +309,13 @@ class Test {
             test.dir = Path(data.dir)
             test.lib = Path(data.lib)
             test.os = data.os
+            test.phase = data.phase
             test.hostOs = data.hostOs
             test.threads = data.threads
             test.top = Path(data.top)
             test.verbosity = Number(data.verbosity)
             test.config = data.config
+            blend(App.config.test, test.config, false)
             // test.multithread = test.config.multithread
             session = data.session
             if (data.logPath) {
@@ -317,20 +324,21 @@ class Test {
         ')
     }
 
-    function startWorker(file: Path): Worker {
+    function startWorker(file: Path, phase: String = null): Worker {
         let export = { 
             bin: _bin, 
-            dir: file.dirname,
+            config: config,
             depth: _depth, 
+            dir: file.dirname,
+            hostOs: _hostOs, 
             lib: _lib, 
             log: logPath,
             os: _os, 
-            hostOs: _hostOs, 
+            phase: phase,
+            session: session,
             threads: threads, 
             top: _top, 
             verbosity: verbosity, 
-            session: session,
-            config: config,
         }
         let w: Worker = new Worker
         w.name = fullName
@@ -360,17 +368,18 @@ class Test {
             test.failedCount++
             if (e.stack) {
                 test.testCount++
-                // let where = e.stack.replace(/.*\[00\] .*\n/m, "")
+                let stack = e.formatStack()
+                // let where = stack.replace(/.*\[00\] .*\n/m, "")
                 if (!test.continueOnErrors) {
                     test.finish = true
-                    test.out.write("Test Failed: \"" + test.fullName + "\". " + e.message + " At:\n" + e.stack + "\n")
+                    test.out.write("Test Failed: \"" + test.fullName + "\". " + e.message + " At:\n" + stack + "\n")
                 }
             } else {
                 test.out.write("Test Failed: " + e.message + "\n")
             }
         }
         w.onclose = function (e) {
-            if (test.testCount == test.priorCount) {
+            if (test.testCount == priorCount) {
                 /*
                     Test did not invoke assert. At least it did not crash, so count it as passed.
                  */
@@ -390,6 +399,7 @@ class Test {
         return w
     }
 
+    //  DEPRECATE
     /*
         Run a pre/post script. If it calls skip(), 
         then return skip so the whole directory can be skipped.
@@ -398,6 +408,20 @@ class Test {
         let file = path.join(path.absolute.basename.toString()).joinExt(suffix)
         if (file.exists) {
             runTest(file)
+            return !skipTest 
+        } else {
+            return true
+        }
+    }
+
+    /*
+        Run a test.setup script. If it calls skip(), 
+        then return skip so the whole directory can be skipped.
+     */
+    function runSetup(path: Path, phase: String): Boolean {
+        let file = path.join("test.setup")
+        if (file.exists) {
+            runTest(file, phase)
             return !skipTest 
         } else {
             return true

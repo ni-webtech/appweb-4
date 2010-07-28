@@ -3,7 +3,7 @@
 
     usage: %s [options] [IpAddr][:port] [documentRoot]
             --config configFile     # Use given config file instead 
-            --debug                 # Run in debug mode
+            --debugger              # Disable timeouts to make debugging easier
             --ejs name:path         # Create an ejs application at the path
             --log logFile:level     # Log to file file at verbosity level
             --name uniqueName       # Name for this instance
@@ -115,7 +115,7 @@ MAIN(appweb, int argc, char **argv)
             }
 #endif
 
-        } else if (strcmp(argp, "--debug") == 0 || strcmp(argp, "-d") == 0) {
+        } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-d") == 0) {
             mprSetDebugMode(mpr, 1);
 
         } else if (strcmp(argp, "--ejs") == 0) {
@@ -357,7 +357,7 @@ static void usageError(Mpr *mpr)
     "  Options:\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
     "    --chroot directory     # Change root directory to run more securely (Unix)\n"
-    "    --debug                # Run in debug mode\n"
+    "    --debugger             # Disable timeouts to make debugging easier\n"
     "    --ejs script           # Ejscript startup script\n"
     "    --home directory       # Change to directory to run\n"
     "    --name uniqueName      # Unique name for this instance\n"

@@ -15,7 +15,7 @@
 
 /*  Create a host from scratch
  */
-MaHost *maCreateHost(MaServer *server, cchar *ipAddrPort, HttpLocation *location)
+MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort, HttpLocation *location)
 {
     MaHost      *host;
 
@@ -28,6 +28,7 @@ MaHost *maCreateHost(MaServer *server, cchar *ipAddrPort, HttpLocation *location
 #if UNUSED
     host->connections = mprCreateList(host);
 #endif
+    host->httpServer = httpServer;
     host->locations = mprCreateList(host);
 
     if (ipAddrPort) {
@@ -143,7 +144,7 @@ MaHost *maCreateDefaultHost(MaServer *server, cchar *docRoot, cchar *ip, int por
             httpServer = httpCreateServer(server->appweb->http, ip, port, NULL);
             maAddHttpServer(server, httpServer);
         }
-        host = maCreateHost(server, ip, NULL);
+        host = maCreateHost(server, httpServer, ip, NULL);
 
     } else {
         /*  
@@ -151,7 +152,7 @@ MaHost *maCreateDefaultHost(MaServer *server, cchar *docRoot, cchar *ip, int por
          */
         httpServer = httpCreateServer(server->appweb->http, ip, port, NULL);
         maAddHttpServer(server, httpServer);
-        host = maCreateHost(server, ip, NULL);
+        host = maCreateHost(server, httpServer, ip, NULL);
     }
     if (maOpenMimeTypes(host, "mime.types") < 0) {
         maAddStandardMimeTypes(host);

@@ -119,8 +119,8 @@ if [ "$BLD_FEATURE_EJS" = 1 ] ; then
 #           cpy -d ${BLD_MOD_DIR} "ejsweb-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
 #       fi
 
-#   MOB - need ejsmvc, ejspage
-#       cpy -m 755 -d ${BLD_BIN_DIR} ejsmvc "${BLD_BIN_PREFIX}"
+#   MOB - need mvc, ejspage
+#       cpy -m 755 -d ${BLD_BIN_DIR} mvc "${BLD_BIN_PREFIX}"
         cpy -s -m 755 -d ${BLD_BIN_DIR} ejsc${BLD_EXE} "${BLD_BIN_PREFIX}"
         makeDir "${BLD_LIB_DIR}/www"
         cpy -m 644 -d "${BLD_LIB_DIR}/www" "*" "${BLD_LIB_PREFIX}/www"
@@ -184,7 +184,7 @@ if [ $BLD_HOST_OS = WIN ] ; then
 	cpy ${BLD_BIN_DIR}/ejs${BLD_EXE}* "${BLD_BIN_PREFIX}"
     cpy ${BLD_BIN_DIR}/removeFiles${BLD_EXE}* "${BLD_BIN_PREFIX}"
 	cpy package/WIN/patchConfig.es "${BLD_BIN_PREFIX}"
-    cpy -m 755 -d ${BLD_BIN_DIR} ejsmvc.cmd ejspage.cmd jem.cmd "${BLD_BIN_PREFIX}"
+    cpy -m 755 -d ${BLD_BIN_DIR} mvc.cmd ejspage.cmd jem.cmd "${BLD_BIN_PREFIX}"
 fi
 
 if [ ${BLD_HOST_OS} != "WIN" ] ; then
