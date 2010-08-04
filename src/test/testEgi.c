@@ -51,16 +51,16 @@ static void exitApp(HttpQueue *q)
 
 static void printVars(HttpQueue *q)
 {
-    HttpConn      *conn;
-    HttpTransmitter  *trans;
-    HttpReceiver   *rec;
+    HttpConn    *conn;
+    HttpTx      *tx;
+    HttpRx      *rx;
     char        *sw;
     char        *newLocation;
     int         responseStatus;
 
     conn = q->conn;
-    trans = conn->transmitter;
-    rec = conn->receiver;
+    tx = conn->tx;
+    rx = conn->rx;
     newLocation = 0;
     responseStatus = 0;
     sw = 0;
@@ -68,10 +68,10 @@ static void printVars(HttpQueue *q)
     /*
         Parse the switches
      */
-    if (rec->parsedUri->query) {
-        sw = (char*) strstr(rec->parsedUri->query, "SWITCHES=");
+    if (rx->parsedUri->query) {
+        sw = (char*) strstr(rx->parsedUri->query, "SWITCHES=");
         if (sw) {
-            sw = mprUriDecode(trans, &sw[9]);
+            sw = mprUriDecode(tx, &sw[9]);
             if (*sw == '-') {
                 if (sw[1] == 'l') {
                     newLocation = sw + 3;
@@ -122,7 +122,7 @@ static void printRequestHeaders(HttpQueue *q)
     MprHashTable    *env;
     MprHash         *hp;
 
-    env = q->conn->receiver->headers;
+    env = q->conn->rx->headers;
     httpWrite(q, "<H2>Request Headers</H2>\r\n");
     for (hp = 0; (hp = mprGetNextHash(env, hp)) != 0; ) {
         httpWrite(q, "<P>%s=%s</P>\r\n", hp->key, hp->data ? hp->data: "");
@@ -137,7 +137,7 @@ static void printFormVars(HttpQueue *q)
     MprHashTable    *env;
     MprHash         *hp;
 
-    env = q->conn->receiver->formVars;
+    env = q->conn->rx->formVars;
     httpWrite(q, "<H2>Request Form Variables</H2>\r\n");
     for (hp = 0; (hp = mprGetNextHash(env, hp)) != 0; ) {
         httpWrite(q, "<P>%s=%s</P>\r\n", hp->key, hp->data ? hp->data: "");
@@ -149,15 +149,15 @@ static void printFormVars(HttpQueue *q)
 
 static void printQueryData(HttpQueue *q)
 {
-    HttpReceiver   *rec;
-    char        buf[MPR_MAX_STRING], **keys, *value;
-    int         i, numKeys;
+    HttpRx  *rx;
+    char    buf[MPR_MAX_STRING], **keys, *value;
+    int     i, numKeys;
 
-    rec = q->conn->receiver;
-    if (rec->parsedUri->query == 0) {
+    rx = q->conn->rx;
+    if (rx->parsedUri->query == 0) {
         return;
     }
-    mprStrcpy(buf, sizeof(buf), rec->parsedUri->query);
+    mprStrcpy(buf, sizeof(buf), rx->parsedUri->query);
     numKeys = getVars(q, &keys, buf, (int) strlen(buf));
 
     if (numKeys == 0) {

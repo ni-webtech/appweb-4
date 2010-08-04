@@ -483,7 +483,7 @@ typedef struct MaHost {
     MprHashTable    *traceExclude;          /**< Extensions to exclude from trace */
 
     int             httpVersion;            /**< HTTP/1.X */
-    HttpLocation    *location;              /**< Default location */
+    HttpLoc         *loc;                   /**< Default location */
     MprList         *locations;             /**< List of Location defintions */
     struct MaHost   *logHost;               /**< If set, use this hosts logs */
     MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
@@ -509,15 +509,15 @@ extern MaAlias      *maGetAlias(MaHost *host, cchar *uri);
 extern MaAlias      *maLookupAlias(MaHost *host, cchar *prefix);
 extern MaDir        *maLookupBestDir(MaHost *host, cchar *path);
 extern MaDir        *maLookupDir(MaHost *host, cchar *path);
-extern HttpLocation *maLookupBestLocation(MaHost *host, cchar *uri);
-extern MaHost       *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ip, HttpLocation *location);
+extern HttpLoc      *maLookupBestLocation(MaHost *host, cchar *uri);
+extern MaHost       *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ip, HttpLoc *loc);
 extern MaHost       *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *host);
-extern HttpLocation *maLookupLocation(MaHost *host, cchar *prefix);
+extern HttpLoc      *maLookupLocation(MaHost *host, cchar *prefix);
 extern MaMimeType   *maAddMimeType(MaHost *host, cchar *ext, cchar *mimetype);
 extern cchar        *maGetMimeActionProgram(MaHost *host, cchar *mimetype);
 extern cchar        *maLookupMimeType(MaHost *host, cchar *ext);
 extern int          maInsertAlias(MaHost *host, MaAlias *newAlias);
-extern int          maAddLocation(MaHost *host, HttpLocation *newLocation);
+extern int          maAddLocation(MaHost *host, HttpLoc *newLocation);
 extern int          maInsertDir(MaHost *host, MaDir *newDir);
 extern int          maOpenMimeTypes(MaHost *host, cchar *path);
 extern void         maRemoveConn(MaHost *host, struct HttpConn *conn);
@@ -569,7 +569,7 @@ typedef struct MaConfigState {
     MaServer    *server;                    /**< Current meta-server */
     MaHost      *host;                      /**< Current host */
     MaDir       *dir;                       /**< Current directory block */
-    HttpLocation *location;                 /**< Current location */
+    HttpLoc     *loc;                       /**< Current location */
     HttpAuth    *auth;                      /**< Current auth object */
     MprFile     *file;                      /**< Config file handle */
     char        *filename;                  /** Config file name */
@@ -577,7 +577,7 @@ typedef struct MaConfigState {
     int         enabled;                    /**< True if the current block is enabled */
 } MaConfigState;
 
-extern HttpLocation *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefix, cchar *path, 
+extern HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefix, cchar *path, 
         cchar *handlerName, int flags);
 
 extern char         *maMakePath(MaHost *host, cchar *file);

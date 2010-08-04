@@ -13,7 +13,7 @@
 
 static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
 {
-    HttpLocation  *location;
+    HttpLoc     *loc;
     MaServer    *server;
     MaHost      *host;
     char        *path, prefix[MPR_MAX_FNAME];
@@ -23,7 +23,7 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
 
     host = state->host;
     server = state->server;
-    location = state->location;
+    loc = state->loc;
 
     mprStrcpy(prefix, sizeof(prefix), key);
     prefix[3] = '\0';
@@ -38,51 +38,51 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
         return 0;
         /* return MPR_ERR_BAD_SYNTAX; */
     }
-    if (location->ssl == 0) {
-        location->ssl = mprCreateSsl(location);
+    if (loc->ssl == 0) {
+        loc->ssl = mprCreateSsl(loc);
     }
     if (mprStrcmpAnyCase(key, "SSLEngine") == 0) {
         enable = mprStrTok(value, " \t", &tok);
         provider = mprStrTok(0, " \t", &tok);
         if (mprStrcmpAnyCase(value, "on") == 0) {
-            maSecureHost(host, location->ssl);
+            maSecureHost(host, loc->ssl);
         }
         return 1;
     }
     path = maMakePath(host, mprStrTrim(value, "\""));
 
     if (mprStrcmpAnyCase(key, "SSLCACertificatePath") == 0) {
-        mprSetSslCaPath(location->ssl, path);
+        mprSetSslCaPath(loc->ssl, path);
         mprFree(path);
         return 1;
 
     } else if (mprStrcmpAnyCase(key, "SSLCACertificateFile") == 0) {
-        mprSetSslCaFile(location->ssl, path);
+        mprSetSslCaFile(loc->ssl, path);
         mprFree(path);
         return 1;
 
     } else if (mprStrcmpAnyCase(key, "SSLCertificateFile") == 0) {
-        mprSetSslCertFile(location->ssl, path);
+        mprSetSslCertFile(loc->ssl, path);
         mprFree(path);
         return 1;
 
     } else if (mprStrcmpAnyCase(key, "SSLCertificateKeyFile") == 0) {
-        mprSetSslKeyFile(location->ssl, path);
+        mprSetSslKeyFile(loc->ssl, path);
         mprFree(path);
         return 1;
 
     } else if (mprStrcmpAnyCase(key, "SSLCipherSuite") == 0) {
-        mprSetSslCiphers(location->ssl, value);
+        mprSetSslCiphers(loc->ssl, value);
         mprFree(path);
         return 1;
 
     } else if (mprStrcmpAnyCase(key, "SSLVerifyClient") == 0) {
         mprFree(path);
         if (mprStrcmpAnyCase(value, "require") == 0) {
-            mprVerifySslClients(location->ssl, 1);
+            mprVerifySslClients(loc->ssl, 1);
 
         } else if (mprStrcmpAnyCase(value, "none") == 0) {
-            mprVerifySslClients(location->ssl, 0);
+            mprVerifySslClients(loc->ssl, 0);
 
         } else {
             return -1;
@@ -119,7 +119,7 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
             }
             word = mprStrTok(0, " \t", &tok);
         }
-        mprSetSslProtocols(location->ssl, protoMask);
+        mprSetSslProtocols(loc->ssl, protoMask);
         return 1;
     }
     mprFree(path);

@@ -50,7 +50,7 @@ MAIN(ejsMain, int argc, char **argv)
     EjsService      *ejsService;
     Ejs             *ejs;
     MprList         *requiredModules, *files;
-    cchar           *cmd, *className, *method;
+    cchar           *cmd, *className, *method, *homeDir;
     char            *argp, *searchPath, *modules, *name, *tok, *extraFiles;
     int             nextArg, err, ecFlags, stats, merge, bind, noout, debug, debugger, optimizeLevel, warnLevel, strict;
 
@@ -99,6 +99,35 @@ MAIN(ejsMain, int argc, char **argv)
             } else {
                 className = argv[++nextArg];
             }
+
+        } else if (strcmp(argp, "--chdir") == 0) {
+            if (nextArg >= argc) {
+                err++;
+            } else {
+                homeDir = argv[++nextArg];
+                if (chdir(homeDir) < 0) {
+                    mprError(mpr, "Can't change directory to %s", homeDir);
+                }
+            }
+
+#if BLD_UNIX_LIKE
+        } else if (strcmp(argp, "--chroot") == 0) {
+            /* Not documented or supported */
+            if (nextArg >= argc) {
+                err++;
+            } else {
+                homeDir = mprGetAbsPath(mpr, argv[++nextArg]);
+                if (chroot(homeDir) < 0) {
+                    if (errno == EPERM) {
+                        mprPrintfError(mpr, "%s: Must be super user to use the --chroot option", mprGetAppName(mpr));
+                    } else {
+                        mprPrintfError(mpr, "%s: Can't change change root directory to %s, errno %d",
+                            mprGetAppName(mpr), homeDir, errno);
+                    }
+                    exit(4);
+                }
+            }
+#endif
 
         } else if (strcmp(argp, "--cmd") == 0 || strcmp(argp, "-c") == 0) {
             if (nextArg >= argc) {

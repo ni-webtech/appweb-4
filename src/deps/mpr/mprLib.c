@@ -2471,6 +2471,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
 
     ws = wp->service;
     lock(ws);
+    mprAssert(wp->fd >= 0);
     WSAAsyncSelect(wp->fd, ws->hwnd, ws->socketMessage, 0);
     wp->desiredMask = 0;
     unlock(ws);
@@ -3409,6 +3410,7 @@ void mprDisconnectCmd(MprCmd *cmd)
     for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
         if (cmd->handlers[i]) {
             mprRemoveWaitHandler(cmd->handlers[i]);
+            cmd->handlers[i] = 0;
         }
     }
     unlock(cmd);
@@ -3427,6 +3429,7 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
      */
     if (cmd->handlers[channel]) {
         mprRemoveWaitHandler(cmd->handlers[channel]);
+        cmd->handlers[channel] = 0;
     }
     if (cmd->files[channel].fd != -1) {
         close(cmd->files[channel].fd);
@@ -6167,7 +6170,6 @@ static int dispatcherDestructor(MprDispatcher *dispatcher)
 
     es = dispatcher->service;
     lock(es);
-    mprAssert(!isReady(dispatcher));
     dequeueDispatcher(dispatcher);
     dispatcher->deleted = 1;
     if (dispatcher->inUse) {
@@ -6221,7 +6223,7 @@ void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, Mpr
     }
     lock(es);
     wasRunning = isRunning(dispatcher);
-    if (!isRunning(dispatcher)) {
+    if (!wasRunning) {
         queueDispatcher(&es->runQ, dispatcher);
     }
     unlock(es);
@@ -6233,6 +6235,7 @@ void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, Mpr
     if (--dispatcher->inUse == 0 && dispatcher->deleted) {
         mprFree(dispatcher);
     } else if (!wasRunning) {
+        //  MOB -- why reschedule?
         lock(es);
         dequeueDispatcher(dispatcher);
         mprScheduleDispatcher(dispatcher);
@@ -6969,6 +6972,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
 
     ws = wp->service;
     fd = wp->fd;
+    mprAssert(fd >= 0);
     lock(ws);
     epoll_ctl(ws->epoll, EPOLL_CTL_DEL, fd, NULL);
     mprAssert(ws->handlerMap[fd] == 0 || ws->handlerMap[fd] == wp);
@@ -8635,6 +8639,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
 
     ws = wp->service;
     fd = wp->fd;
+    mprAssert(fd >= 0);
     lock(ws);
     if ((ws->interestCount + 2) >= ws->interestMax) {
         growEvents(ws);
@@ -12289,6 +12294,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
 
     ws = wp->service;
     fd = wp->fd;
+    mprAssert(fd >= 0);
 
     lock(ws);
     index = wp->notifierIndex;
@@ -13955,6 +13961,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
 
     ws = wp->service;
     fd = wp->fd;
+    mprAssert(fd >= 0);
 
     lock(ws);
     FD_CLR(fd, &ws->readMask);
@@ -21260,8 +21267,10 @@ void mprRemoveWaitHandler(MprWaitHandler *wp)
         Lock the service to stabilize the list, then lock the handler to prevent callbacks. 
      */
     lock(ws);
+    mprAssert(wp->fd >= 0);
     mprRemoveNotifier(wp);
     mprRemoveItem(ws->handlers, wp);
+    wp->fd = -1;
     mprWakeWaitService(ws);
     unlock(ws);
 }

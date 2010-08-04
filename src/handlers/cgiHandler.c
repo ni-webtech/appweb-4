@@ -51,18 +51,18 @@ static void checkCompletion(HttpQueue *q, MprEvent *event);
  */
 static void openCgi(HttpQueue *q)
 {
-    HttpReceiver    *rec;
-    HttpConn        *conn;
+    HttpRx      *rx;
+    HttpConn    *conn;
 
     conn = q->conn;
-    rec = conn->receiver;
+    rx = conn->rx;
 
     /*  
         If there is body content, it may arrive on another thread. Uclibc can't wait accross thread groups,
         so we must ensure that further callback events come on the same thread that creates the CGI process.
      */
 #if __UCLIBC__
-    if (rec->remainingContent > 0) {
+    if (rx->remainingContent > 0) {
         mprDedicateWorkerToDispatcher(conn->dispatcher, mprGetCurrentWorker(conn));
         mprAssert(conn->dispatcher->requiredWorker == mprGetCurrentWorker(conn));
     }
@@ -82,23 +82,23 @@ static void closeCgi(HttpQueue *q)
  */
 static void startCgi(HttpQueue *q)
 {
-    HttpReceiver        *rec;
-    HttpTransmitter     *trans;
-    HttpConn            *conn;
-    MprCmd              *cmd;
-    MprHashTable        *vars;
-    cchar               *baseName;
-    char                **argv, **envv, *fileName;
-    int                 argc, varCount, count;
+    HttpRx          *rx;
+    HttpTx          *tx;
+    HttpConn        *conn;
+    MprCmd          *cmd;
+    MprHashTable    *vars;
+    cchar           *baseName;
+    char            **argv, **envv, *fileName;
+    int             argc, varCount, count;
 
     argv = 0;
     vars = 0;
     argc = 0;
 
     conn = q->conn;
-    rec = conn->receiver;
-    trans = conn->transmitter;
-    cmd = q->queueData = mprCreateCmd(rec, conn->dispatcher);
+    rx = conn->rx;
+    tx = conn->tx;
+    cmd = q->queueData = mprCreateCmd(rx, conn->dispatcher);
 
     argc = 1;                                   /* argv[0] == programName */
     buildArgs(conn, cmd, &argc, &argv);
@@ -113,11 +113,11 @@ static void startCgi(HttpQueue *q)
     /*  
         Build environment variables
      */
-    vars = rec->formVars;
-    varCount = mprGetHashCount(vars) + mprGetHashCount(rec->headers);
+    vars = rx->formVars;
+    varCount = mprGetHashCount(vars) + mprGetHashCount(rx->headers);
     if ((envv = (char**) mprAlloc(cmd, (varCount + 1) * sizeof(char*))) != 0) {
-        count = copyVars(cmd, envv, 0, rec->formVars, "");
-        count = copyVars(cmd, envv, count, rec->headers, "HTTP_");
+        count = copyVars(cmd, envv, 0, rx->formVars, "");
+        count = copyVars(cmd, envv, count, rx->headers, "HTTP_");
         mprAssert(count <= varCount);
     }
     cmd->stdoutBuf = mprCreateBuf(cmd, HTTP_BUFSIZE, -1);
@@ -127,7 +127,7 @@ static void startCgi(HttpQueue *q)
     mprSetCmdCallback(cmd, cgiCallback, conn);
 
     if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR) < 0) {
-        httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't run CGI process: %s, URI %s", fileName, rec->uri);
+        httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't run CGI process: %s, URI %s", fileName, rx->uri);
     }
 }
 
@@ -139,13 +139,13 @@ static void startCgi(HttpQueue *q)
  */
 static void waitForCgiCompletion(HttpQueue *q)
 {
-    HttpTransmitter *trans;
-    HttpConn        *conn;
-    MprCmd          *cmd;
-    int             rc;
+    HttpTx      *tx;
+    HttpConn    *conn;
+    MprCmd      *cmd;
+    int         rc;
 
     conn = q->conn;
-    trans = conn->transmitter;
+    tx = conn->tx;
     cmd = (MprCmd*) q->queueData;
 
     /*  
@@ -164,7 +164,7 @@ static void waitForCgiCompletion(HttpQueue *q)
     if (cmd->status != 0) {
         httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE,
             "CGI process %s: exited abnormally with exit status: %d.\nSee the server log for more information.\n", 
-            trans->filename, cmd->status);
+            tx->filename, cmd->status);
     }
     httpFinalize(conn);
     if (conn->state == HTTP_STATE_COMPLETE) {
@@ -231,17 +231,17 @@ static void outgoingCgiService(HttpQueue *q)
  */
 static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
 {
-    HttpConn        *conn;
-    HttpTransmitter *trans;
-    HttpReceiver    *rec;
-    MprCmd          *cmd;
+    HttpConn    *conn;
+    HttpTx      *tx;
+    HttpRx      *rx;
+    MprCmd      *cmd;
 
     mprAssert(q);
     mprAssert(packet);
     
     conn = q->conn;
-    trans = conn->transmitter;
-    rec = conn->receiver;
+    tx = conn->tx;
+    rx = conn->rx;
 
     cmd = (MprCmd*) q->pair->queueData;
     mprAssert(cmd);
@@ -249,7 +249,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
 
     if (httpGetPacketLength(packet) == 0) {
         /* End of input */
-        if (rec->remainingContent > 0) {
+        if (rx->remainingContent > 0) {
             /* Short incoming body data. Just kill the CGI process.  */
             mprFree(cmd);
             q->queueData = 0;
@@ -363,19 +363,19 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
  */
 static void cgiCallback(MprCmd *cmd, int channel, void *data)
 {
-    HttpQueue       *q;
-    HttpConn        *conn;
-    HttpTransmitter *trans;
+    HttpQueue   *q;
+    HttpConn    *conn;
+    HttpTx      *tx;
 
     conn = (HttpConn*) data;
     mprAssert(conn);
-    mprAssert(conn->transmitter);
+    mprAssert(conn->tx);
 
     mprLog(cmd, 6, "CGI callback channel %d", channel);
     
-    trans = conn->transmitter;
+    tx = conn->tx;
     cmd->lastActivity = mprGetTime(cmd);
-    q = conn->transmitter->queue[HTTP_QUEUE_TRANS].nextQ;
+    q = conn->tx->queue[HTTP_QUEUE_TRANS].nextQ;
 
     switch (channel) {
     case MPR_CMD_STDIN:
@@ -405,12 +405,12 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
  */
 static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
 {
-    HttpConn        *conn;
-    HttpTransmitter *trans;
-    int             space, nbytes, err;
+    HttpConn    *conn;
+    HttpTx      *tx;
+    int         space, nbytes, err;
 
     conn = q->conn;
-    trans = conn->transmitter;
+    tx = conn->tx;
     mprResetBufIfEmpty(buf);
 
     /*
@@ -545,13 +545,13 @@ static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd)
  */
 static bool parseHeader(HttpConn *conn, MprCmd *cmd)
 {
-    HttpTransmitter *trans;
-    HttpQueue       *q;
-    MprBuf          *buf;
-    char            *endHeaders, *headers, *key, *value, *location;
-    int             len;
+    HttpTx      *tx;
+    HttpQueue   *q;
+    MprBuf      *buf;
+    char        *endHeaders, *headers, *key, *value, *location;
+    int         len;
 
-    trans = conn->transmitter;
+    tx = conn->tx;
     location = 0;
     value = 0;
 
@@ -625,8 +625,8 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
     cmd->userFlags |= MA_CGI_SEEN_HEADER;
 
     if (location) {
-        httpRedirect(conn, trans->status, location);
-        q = trans->queue[HTTP_QUEUE_TRANS].nextQ;
+        httpRedirect(conn, tx->status, location);
+        q = tx->queue[HTTP_QUEUE_TRANS].nextQ;
         httpFinalize(conn);
         if (conn->state == HTTP_STATE_COMPLETE) {
             httpAdvanceReceiver(conn, NULL);
@@ -641,18 +641,18 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
  */
 static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 {
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    MaHost          *host;
-    char            *fileName, **argv, *program, *cmdScript, status[8], *indexQuery, *cp, *tok;
-    cchar           *actionProgram;
-    int             argc, argind, len;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    MaHost      *host;
+    char        *fileName, **argv, *program, *cmdScript, status[8], *indexQuery, *cp, *tok;
+    cchar       *actionProgram;
+    int         argc, argind, len;
 
-    rec = conn->receiver;
-    trans = conn->transmitter;
+    rx = conn->rx;
+    tx = conn->tx;
     host = httpGetConnHost(conn);
 
-    fileName = trans->filename;
+    fileName = tx->filename;
     mprAssert(fileName);
 
     program = cmdScript = 0;
@@ -660,8 +660,8 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     argind = 0;
     argc = *argcp;
 
-    if (rec->mimeType) {
-        actionProgram = maGetMimeActionProgram(host, rec->mimeType);
+    if (rx->mimeType) {
+        actionProgram = maGetMimeActionProgram(host, rx->mimeType);
         if (actionProgram != 0) {
             argc++;
         }
@@ -669,14 +669,14 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
             This is an Apache compatible hack for PHP 5.3
          */
         mprItoa(status, sizeof(status), HTTP_CODE_MOVED_TEMPORARILY, 10);
-        mprAddHash(rec->headers, "REDIRECT_STATUS", mprStrdup(rec, status));
+        mprAddHash(rx->headers, "REDIRECT_STATUS", mprStrdup(rx, status));
     }
 
     /*
         Count the args for ISINDEX queries. Only valid if there is not a "=" in the query. 
         If this is so, then we must not have these args in the query env also?
      */
-    indexQuery = rec->parsedUri->query;
+    indexQuery = rx->parsedUri->query;
     if (indexQuery && !strchr(indexQuery, '=')) {
         argc++;
         for (cp = indexQuery; *cp; cp++) {
@@ -780,7 +780,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 
         cp = mprStrTok(indexQuery, "+", &tok);
         while (cp) {
-            argv[argind++] = mprEscapeCmd(trans, mprUriDecode(trans, cp), 0);
+            argv[argind++] = mprEscapeCmd(tx, mprUriDecode(tx, cp), 0);
             cp = mprStrTok(NULL, "+", &tok);
         }
     }
@@ -802,33 +802,33 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
  */
 static void findExecutable(HttpConn *conn, char **program, char **script, char **bangScript, char *fileName)
 {
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    HttpLocation      *location;
-    MprHash         *hp;
-    MprFile         *file;
-    cchar           *actionProgram, *ext, *cmdShell;
-    char            *tok, buf[MPR_MAX_FNAME + 1], *path;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpLoc     *loc;
+    MprHash     *hp;
+    MprFile     *file;
+    cchar       *actionProgram, *ext, *cmdShell;
+    char        *tok, buf[MPR_MAX_FNAME + 1], *path;
 
-    rec = conn->receiver;
-    trans = conn->transmitter;
-    location = rec->location;
+    rx = conn->rx;
+    tx = conn->tx;
+    loc = rx->loc;
 
     *bangScript = 0;
     *script = 0;
     *program = 0;
     path = 0;
 
-    actionProgram = maGetMimeActionProgram(conn->host, rec->mimeType);
-    ext = trans->extension;
+    actionProgram = maGetMimeActionProgram(conn->host, rx->mimeType);
+    ext = tx->extension;
 
     /*
         If not found, go looking for the fileName with the extensions defined in appweb.conf. 
         NOTE: we don't use PATH deliberately!!!
      */
     if (access(fileName, X_OK) < 0 && *ext == '\0') {
-        for (hp = 0; (hp = mprGetNextHash(location->extensions, hp)) != 0; ) {
-            path = mprStrcat(trans, -1, fileName, ".", hp->key, NULL);
+        for (hp = 0; (hp = mprGetNextHash(loc->extensions, hp)) != 0; ) {
+            path = mprStrcat(tx, -1, fileName, ".", hp->key, NULL);
             if (access(path, X_OK) == 0) {
                 break;
             }
@@ -859,33 +859,33 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
         if (cmdShell == 0) {
             cmdShell = "cmd.exe";
         }
-        *script = mprStrdup(trans, path);
-        *program = mprStrdup(trans, cmdShell);
+        *script = mprStrdup(tx, path);
+        *program = mprStrdup(tx, cmdShell);
         return;
     }
 #endif
 
-    if ((file = mprOpen(trans, path, O_RDONLY, 0)) != 0) {
+    if ((file = mprOpen(tx, path, O_RDONLY, 0)) != 0) {
         if (mprRead(file, buf, MPR_MAX_FNAME) > 0) {
             mprFree(file);
             buf[MPR_MAX_FNAME] = '\0';
             if (buf[0] == '#' && buf[1] == '!') {
                 cmdShell = mprStrTok(&buf[2], " \t\r\n", &tok);
-                if (mprIsAbsPath(trans, cmdShell)) {
+                if (mprIsAbsPath(tx, cmdShell)) {
                     /*
                         If we can't access the command shell and the command is not an absolute path, 
                         look in the same directory as the script.
                      */
-                    if (mprPathExists(trans, cmdShell, X_OK)) {
-                        cmdShell = mprJoinPath(trans, mprGetPathDir(trans, path), cmdShell);
+                    if (mprPathExists(tx, cmdShell, X_OK)) {
+                        cmdShell = mprJoinPath(tx, mprGetPathDir(tx, path), cmdShell);
                     }
                 }
                 if (actionProgram) {
-                    *program = mprStrdup(trans, actionProgram);
+                    *program = mprStrdup(tx, actionProgram);
                 } else {
-                    *program = mprStrdup(trans, cmdShell);
+                    *program = mprStrdup(tx, cmdShell);
                 }
-                *bangScript = mprStrdup(trans, path);
+                *bangScript = mprStrdup(tx, path);
                 return;
             }
         } else {
@@ -894,10 +894,10 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     }
 
     if (actionProgram) {
-        *program = mprStrdup(trans, actionProgram);
-        *bangScript = mprStrdup(trans, path);
+        *program = mprStrdup(tx, actionProgram);
+        *bangScript = mprStrdup(tx, path);
     } else {
-        *program = mprStrdup(trans, path);
+        *program = mprStrdup(tx, path);
     }
     return;
 }
@@ -982,16 +982,16 @@ static int copyVars(MprCtx ctx, char **envv, int index, MprHashTable *vars, ccha
 
 static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
 {
-    HttpLocation    *location;
-    MaServer        *server;
-    MaHost          *host;
-    MaAlias         *alias;
-    MaDir           *dir, *parent;
-    char            *program, *mimeType, *prefix, *path;
+    HttpLoc     *loc;
+    MaServer    *server;
+    MaHost      *host;
+    MaAlias     *alias;
+    MaDir       *dir, *parent;
+    char        *program, *mimeType, *prefix, *path;
 
     host = state->host;
     server = state->server;
-    location = state->location;
+    loc = state->loc;
 
     if (mprStrcmpAnyCase(key, "Action") == 0) {
         if (maSplitConfigValue(http, &mimeType, &program, value, 1) < 0) {
@@ -1019,15 +1019,15 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
 
         maInsertAlias(host, alias);
 
-        if ((location = maLookupLocation(host, prefix)) == 0) {
-            location = httpCreateInheritedLocation(server->http, state->location);
-            httpSetLocationAuth(location, state->dir->auth);
-            httpSetLocationPrefix(location, prefix);
-            maAddLocation(host, location);
+        if ((loc = maLookupLocation(host, prefix)) == 0) {
+            loc = httpCreateInheritedLocation(server->http, state->loc);
+            httpSetLocationAuth(loc, state->dir->auth);
+            httpSetLocationPrefix(loc, prefix);
+            maAddLocation(host, loc);
         } else {
-            httpSetLocationPrefix(location, prefix);
+            httpSetLocationPrefix(loc, prefix);
         }
-        httpSetHandler(location, "cgiHandler");
+        httpSetHandler(loc, "cgiHandler");
         return 1;
     }
     return 0;

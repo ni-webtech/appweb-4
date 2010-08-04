@@ -114,14 +114,14 @@ static sapi_module_struct phpSapiBlock = {
  */
 static void openPhp(HttpQueue *q)
 {
-    HttpReceiver      *rec;
+    HttpRx      *rx;
 
-    rec = q->conn->receiver;
+    rx = q->conn->rx;
 
-    if (rec->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
-        q->queueData = mprAllocObjZeroed(rec, MaPhp);
+    if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
+        q->queueData = mprAllocObjZeroed(rx, MaPhp);
     } else {
-        httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method not supported by file handler: %s", rec->method);
+        httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method not supported by file handler: %s", rx->method);
     }
 }
 
@@ -132,8 +132,8 @@ static void openPhp(HttpQueue *q)
 static void processPhp(HttpQueue *q)
 {
     HttpConn            *conn;
-    HttpReceiver        *rec;
-    HttpTransmitter     *trans;
+    HttpRx              *rx;
+    HttpTx              *tx;
     MprHash             *hp;
     MaPhp               *php;
     zend_file_handle    file_handle;
@@ -141,8 +141,8 @@ static void processPhp(HttpQueue *q)
     TSRMLS_FETCH();
 
     conn = q->conn;
-    rec = conn->receiver;
-    trans = conn->transmitter;
+    rx = conn->rx;
+    tx = conn->tx;
     php = q->queueData;
 
     /*
@@ -153,13 +153,13 @@ static void processPhp(HttpQueue *q)
         SG(server_context) = conn;
         SG(request_info).auth_user = conn->authUser;
         SG(request_info).auth_password = conn->authPassword;
-        SG(request_info).content_type = rec->mimeType;
-        SG(request_info).content_length = rec->length;
+        SG(request_info).content_type = rx->mimeType;
+        SG(request_info).content_length = rx->length;
         SG(sapi_headers).http_response_code = HTTP_CODE_OK;
-        SG(request_info).path_translated = trans->filename;
-        SG(request_info).query_string = rec->parsedUri->query;
-        SG(request_info).request_method = rec->method;
-        SG(request_info).request_uri = rec->uri;
+        SG(request_info).path_translated = tx->filename;
+        SG(request_info).query_string = rx->parsedUri->query;
+        SG(request_info).request_method = rx->method;
+        SG(request_info).request_uri = rx->uri;
 
         /*
             Workaround on MAC OS X where the SIGPROF is given to the wrong thread
@@ -184,7 +184,7 @@ static void processPhp(HttpQueue *q)
         Define the header variable
      */
     zend_try {
-        hp = mprGetFirstHash(rec->headers);
+        hp = mprGetFirstHash(rx->headers);
         while (hp) {
             if (hp->data) {
                 char key[MPR_MAX_STRING];
@@ -192,9 +192,9 @@ static void processPhp(HttpQueue *q)
                 mprStrUpper(key);
                 php_register_variable(key, (char*) hp->data, php->var_array TSRMLS_CC);
             }
-            hp = mprGetNextHash(rec->headers, hp);
+            hp = mprGetNextHash(rx->headers, hp);
         }
-        hp = mprGetFirstHash(rec->formVars);
+        hp = mprGetFirstHash(rx->formVars);
         while (hp) {
             if (hp->data) {
                 char key[MPR_MAX_STRING];
@@ -202,14 +202,14 @@ static void processPhp(HttpQueue *q)
                 mprStrUpper(key);
                 php_register_variable(key, (char*) hp->data, php->var_array TSRMLS_CC);
             }
-            hp = mprGetNextHash(rec->formVars, hp);
+            hp = mprGetNextHash(rx->formVars, hp);
         }
     } zend_end_try();
 
     /*
         Execute the script file
      */
-    file_handle.filename = trans->filename;
+    file_handle.filename = tx->filename;
     file_handle.free_filename = 0;
     file_handle.type = ZEND_HANDLE_FILENAME;
     file_handle.opened_path = 0;
@@ -256,7 +256,7 @@ static int writeBlock(cchar *str, uint len TSRMLS_DC)
     if (conn == 0) {
         return -1;
     }
-    written = httpWriteBlock(conn->transmitter->queue[HTTP_QUEUE_TRANS].nextQ, str, len, 0);
+    written = httpWriteBlock(conn->tx->queue[HTTP_QUEUE_TRANS].nextQ, str, len, 0);
     if (written <= 0) {
         php_handle_aborted_connection();
     }
@@ -297,7 +297,7 @@ static char *readCookies(TSRMLS_D)
     HttpConn      *conn;
 
     conn = (HttpConn*) SG(server_context);
-    return conn->receiver->cookie;
+    return conn->rx->cookie;
 }
 
 
@@ -318,16 +318,16 @@ static int writeHeader(sapi_header_struct *sapiHeader, sapi_header_op_enum op, s
 static int writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sapi_headers TSRMLS_DC)
 #endif
 {
-    HttpConn        *conn;
-    HttpTransmitter *trans;
-    bool            allowMultiple;
-    char            *key, *value;
+    HttpConn    *conn;
+    HttpTx      *tx;
+    bool        allowMultiple;
+    char        *key, *value;
 
     conn = (HttpConn*) SG(server_context);
-    trans = conn->transmitter;
+    tx = conn->tx;
     allowMultiple = 1;
 
-    key = mprStrdup(trans, sapiHeader->header);
+    key = mprStrdup(tx, sapiHeader->header);
     if ((value = strchr(key, ':')) == 0) {
         return -1;
     }
@@ -376,7 +376,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     int         len;
 
     conn = (HttpConn*) SG(server_context);
-    q = conn->transmitter->queue[HTTP_QUEUE_RECEIVE].prevQ;
+    q = conn->tx->queue[HTTP_QUEUE_RECEIVE].prevQ;
     if (q->first == 0) {
         return 0;
     }

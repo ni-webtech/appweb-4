@@ -12,19 +12,19 @@
 #if BLD_FEATURE_EJS
 /*********************************** Forwards *********************************/
 
-static int loadStartupScript(Http *http, HttpLocation *location);
+static int loadStartupScript(Http *http, HttpLoc *loc);
 
 /************************************* Code ***********************************/
 
 static bool matchEjs(HttpConn *conn, HttpStage *handler)
 {
-    HttpReceiver    *rec;
-    MaAlias         *alias;
-    char            *uri;
+    HttpRx      *rx;
+    MaAlias     *alias;
+    char        *uri;
 
-    rec = conn->receiver;
-    alias = rec->alias;
-    uri = rec->pathInfo;
+    rx = conn->rx;
+    alias = rx->alias;
+    uri = rx->pathInfo;
 
     /*
         Set the scriptName to the alias prefix and remove from pathInfo
@@ -34,8 +34,8 @@ static bool matchEjs(HttpConn *conn, HttpStage *handler)
         if (*uri != '/' && uri[-1] == '/') {
             uri--;
         }
-        rec->scriptName = alias->prefix;
-        rec->pathInfo = (char*) uri;
+        rx->scriptName = alias->prefix;
+        rx->pathInfo = (char*) uri;
     }
     return 1;
 }
@@ -43,20 +43,20 @@ static bool matchEjs(HttpConn *conn, HttpStage *handler)
 
 static void openEjs(HttpQueue *q)
 {
-    HttpConn        *conn;
-    HttpLocation    *location;
+    HttpConn    *conn;
+    HttpLoc     *loc;
     
     conn = q->conn;
-    location = conn->receiver->location;
-    if (location == 0 || location->context == 0) {
+    loc = conn->rx->loc;
+    if (loc == 0 || loc->context == 0) {
         /*
             On-demand loading of the startup script
          */
-        if (loadStartupScript(conn->http, location) < 0) {
+        if (loadStartupScript(conn->http, loc) < 0) {
             //  MOB -- should this set an error somewhere?
             return;
         }
-        if (location == 0 || location->context == 0) {
+        if (loc == 0 || loc->context == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Undefined location context. Check EjsStartup script.");
             //  MOB -- should this set an error somewhere?
             return;
@@ -67,13 +67,13 @@ static void openEjs(HttpQueue *q)
 
 static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 {
-    HttpLocation    *location;
-    char            *path;
+    HttpLoc     *loc;
+    char        *path;
     
     if (mprStrcmpAnyCase(key, "EjsStartup") == 0) {
         path = mprStrTrim(value, "\"");
-        location = state->location;
-        location->script = mprStrdup(location, path);
+        loc = state->loc;
+        loc->script = mprStrdup(loc, path);
         return 1;
     }
     return 0;
@@ -105,24 +105,24 @@ static char *findScript(MprCtx ctx, char *script)
 }
 
 
-static int loadStartupScript(Http *http, HttpLocation *location)
+static int loadStartupScript(Http *http, HttpLoc *loc)
 {
-    Ejs         *ejs;
-    char        *script;
-    int         ver;
+    Ejs     *ejs;
+    char    *script;
+    int     ver;
 
     ejs = ejsCreateVm(http, NULL, NULL, NULL, 0, NULL, EJS_FLAG_MASTER);
     if (ejs == 0) {
         return 0;
     }
-    ejs->location = location;
+    ejs->loc = loc;
     ver = 0;
     if (ejsLoadModule(ejs, "ejs.web", ver, ver, 0) < 0) {
         mprError(ejs, "Can't load ejs.web.mod: %s", ejsGetErrorMsg(ejs, 1));
         return MPR_ERR_CANT_INITIALIZE;
     }
-    if ((script = findScript(http, location->script)) == 0) {
-        mprError(http, "Can't find script file %s", location->script);
+    if ((script = findScript(http, loc->script)) == 0) {
+        mprError(http, "Can't find script file %s", loc->script);
         return MPR_ERR_CANT_OPEN;
     }
     LOG(http, 2, "Loading Ejscript Server script: \"%s\"", script);

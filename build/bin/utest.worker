@@ -164,14 +164,14 @@ public function startService(cmd: String): Void {
         http = new Http
         try { http.get(url); 
             /* Expect to get a not-found response */
-            if (http.status == 404) {
+            if (http.status == 404 || http.status == 200) {
                 break
             }
         } catch (e) { }
         App.sleep(100)
         http.close()
     }
-    if (http.status != 404) {
+    if (http.status != 404 && http.status != 200) {
         throw "Can't start web server"
     }
     http.close()
@@ -184,3 +184,4 @@ public function httpService(cmd: String): Void {
         stopService()
     }
 }
+

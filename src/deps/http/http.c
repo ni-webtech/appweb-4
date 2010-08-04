@@ -629,7 +629,7 @@ static int sendRequest(HttpConn *conn, cchar *method, cchar *url)
 
 static int retryRequest(HttpConn *conn, cchar *url) 
 {
-    HttpReceiver    *rec;
+    HttpRx    *rec;
     char            *redirect;
     cchar           *msg, *sep;
     int             count, redirectCount;
@@ -661,8 +661,11 @@ static int retryRequest(HttpConn *conn, cchar *url)
             } else {
                 break;
             }
+        } else if (!conn->error) {
+            httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
+                "Inactive request timed out, exceeded request timeout %d", timeout);
         }
-        if ((rec = conn->receiver) != 0) {
+        if ((rec = conn->rx) != 0) {
             if (rec->status == HTTP_CODE_REQUEST_TOO_LARGE || rec->status == HTTP_CODE_REQUEST_URL_TOO_LARGE ||
                 (rec->status == HTTP_CODE_UNAUTHORIZED && conn->authUser == 0)) {
                 /* No point retrying */
@@ -682,7 +685,7 @@ static int retryRequest(HttpConn *conn, cchar *url)
 
 static int reportResponse(HttpConn *conn, cchar *url)
 {
-    HttpReceiver    *rec;
+    HttpRx    *rec;
     cchar           *msg;
     char            *responseHeaders;
     int             status, contentLen;
@@ -697,13 +700,13 @@ static int reportResponse(HttpConn *conn, cchar *url)
     if (conn->error) {
         success = 0;
     }
-    if (conn->receiver && success) {
+    if (conn->rx && success) {
         if (showStatus) {
             mprPrintf(http, "%d\n", status);
         }
         if (showHeaders) {
             responseHeaders = httpGetHeaders(conn);
-            rec = conn->receiver;
+            rec = conn->rx;
             mprPrintfError(conn, "\nHeaders\n-------\n%s %d %s\n", conn->protocol, rec->status, rec->statusMessage);
             if (responseHeaders) {
                 mprPrintfError(conn, "%s\n", responseHeaders);
@@ -713,7 +716,7 @@ static int reportResponse(HttpConn *conn, cchar *url)
     }
     if (status < 0) {
         mprError(conn, "Can't process request for \"%s\" %s", url, httpGetError(conn));
-        httpDestroyReceiver(conn);
+        httpDestroyRx(conn);
         return MPR_ERR_CANT_READ;
 
     } else if (status == 0 && conn->protocol == 0) {
@@ -722,11 +725,11 @@ static int reportResponse(HttpConn *conn, cchar *url)
     } else if (!(200 <= status && status <= 206) && !(301 <= status && status <= 304)) {
         if (!showStatus) {
             mprError(conn, "Can't process request for \"%s\" (%d) %s", url, status, httpGetError(conn));
-            httpDestroyReceiver(conn);
+            httpDestroyRx(conn);
             return MPR_ERR_CANT_READ;
         }
     }
-    httpDestroyReceiver(conn);
+    httpDestroyRx(conn);
 
     mprLock(mutex);
     if (verbose && noout) {
@@ -767,7 +770,12 @@ static int doRequest(HttpConn *conn, cchar *url)
         httpWait(conn, HTTP_STATE_COMPLETE, 10);
         readBody(conn);
     }
-    readBody(conn);
+    if (conn->state < HTTP_STATE_COMPLETE && !conn->error) {
+        httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
+            "Inactive request timed out, exceeded request timeout %d", timeout);
+    } else {
+        readBody(conn);
+    }
     mprLog(http, 6, "Response status %d, elapsed %d", httpGetStatus(conn), ((int) mprGetTime(mpr)) - mark);
     reportResponse(conn, url);
     return 0;
@@ -964,10 +972,10 @@ static char *resolveUrl(HttpConn *conn, cchar *url)
 
 static void showOutput(HttpConn *conn, cchar *buf, int count)
 {
-    HttpReceiver    *rec;
+    HttpRx    *rec;
     int             i, c, rc;
     
-    rec = conn->receiver;
+    rec = conn->rx;
 
     if (noout) {
         return;

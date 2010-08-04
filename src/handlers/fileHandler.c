@@ -23,21 +23,21 @@ static void handlePutRequest(HttpQueue *q);
  */
 static void openFile(HttpQueue *q)
 {
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    HttpLocation    *location;
-    HttpConn        *conn;
-    char            *date;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpLoc     *loc;
+    HttpConn    *conn;
+    char        *date;
 
     conn = q->conn;
-    trans = conn->transmitter;
-    rec = conn->receiver;
-    location = rec->location;
+    tx = conn->tx;
+    rx = conn->rx;
+    loc = rx->loc;
 
-    if (rec->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
-        if (trans->fileInfo.valid && trans->fileInfo.mtime) {
+    if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
+        if (tx->fileInfo.valid && tx->fileInfo.mtime) {
             //  TODO - OPT could cache this
-            date = httpGetDateString(rec, &trans->fileInfo);
+            date = httpGetDateString(rx, &tx->fileInfo);
             httpSetHeader(conn, "Last-Modified", date);
             mprFree(date);
         }
@@ -45,59 +45,59 @@ static void openFile(HttpQueue *q)
             httpSetStatus(conn, HTTP_CODE_NOT_MODIFIED);
             httpOmitBody(conn);
         } else {
-            httpSetEntityLength(conn, (int) trans->fileInfo.size);
+            httpSetEntityLength(conn, (int) tx->fileInfo.size);
         }
-        if (!trans->fileInfo.isReg && !trans->fileInfo.isLink) {
-            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't locate document: %s", rec->uri);
+        if (!tx->fileInfo.isReg && !tx->fileInfo.isLink) {
+            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't locate document: %s", rx->uri);
             
-        } else if (!(trans->connector == conn->http->sendConnector)) {
+        } else if (!(tx->connector == conn->http->sendConnector)) {
             /*
                 Open the file if a body must be sent with the response. The file will be automatically closed when 
                 the response is freed. Cool eh?
              */
-            trans->file = mprOpen(trans, trans->filename, O_RDONLY | O_BINARY, 0);
-            if (trans->file == 0) {
-                httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", trans->filename);
+            tx->file = mprOpen(tx, tx->filename, O_RDONLY | O_BINARY, 0);
+            if (tx->file == 0) {
+                httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
             }
         }
 
-    } else if (rec->flags & (HTTP_PUT | HTTP_DELETE)) {
-        if (location->flags & HTTP_LOC_PUT_DELETE) {
+    } else if (rx->flags & (HTTP_PUT | HTTP_DELETE)) {
+        if (loc->flags & HTTP_LOC_PUT_DELETE) {
             httpOmitBody(conn);
         } else {
             httpError(q->conn, HTTP_CODE_BAD_METHOD, 
-                "Method %s not supported by file handler at this location %s", rec->method, location->prefix);
+                "Method %s not supported by file handler at this location %s", rx->method, loc->prefix);
         }
     } else {
         httpError(q->conn, HTTP_CODE_BAD_METHOD, 
-            "Method %s not supported by file handler at this location %s", rec->method, location->prefix);
+            "Method %s not supported by file handler at this location %s", rx->method, loc->prefix);
     }
 }
 
 
 static void startFile(HttpQueue *q)
 {
-    HttpConn        *conn;
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    HttpPacket      *packet;
+    HttpConn    *conn;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpPacket  *packet;
 
     conn = q->conn;
-    rec = conn->receiver;
-    trans = conn->transmitter;
+    rx = conn->rx;
+    tx = conn->tx;
     
-    if (trans->flags & HTTP_TRANS_NO_BODY) {
-        if (rec->flags & HTTP_PUT) {
+    if (tx->flags & HTTP_TX_NO_BODY) {
+        if (rx->flags & HTTP_PUT) {
             handlePutRequest(q);
-        } else if (rec->flags & HTTP_DELETE) {
+        } else if (rx->flags & HTTP_DELETE) {
             handleDeleteRequest(q);
         }
     } else {
         /* Create a single data packet based on the entity length.  */
         packet = httpCreateDataPacket(q, 0);
-        packet->entityLength = trans->entityLength;
-        if (!rec->ranges) {
-            trans->length = trans->entityLength;
+        packet->entityLength = tx->entityLength;
+        if (!rx->ranges) {
+            tx->length = tx->entityLength;
         }
         httpPutForService(q, packet, 0);
     }
@@ -116,22 +116,22 @@ static void processFile(HttpQueue *q)
  */
 static void outgoingFileService(HttpQueue *q)
 {
-    HttpConn        *conn;
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    HttpPacket      *packet;
-    bool            usingSend;
-    int             len;
+    HttpConn    *conn;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpPacket  *packet;
+    bool        usingSend;
+    int         len;
 
     conn = q->conn;
-    rec = conn->receiver;
-    trans = conn->transmitter;
+    rx = conn->rx;
+    tx = conn->tx;
 
     mprLog(q, 7, "OutgoingFileService");
 
-    usingSend = trans->connector == conn->http->sendConnector;
+    usingSend = tx->connector == conn->http->sendConnector;
 
-    if (rec->ranges) {
+    if (rx->ranges) {
         mprAssert(conn->http->rangeService);
         (*conn->http->rangeService)(q, (usingSend) ? NULL : readFileData);
     
@@ -147,7 +147,7 @@ static void outgoingFileService(HttpQueue *q)
                     return;
                 }
                 mprLog(q, 7, "OutgoingFileService readData %d", len);
-                trans->pos += len;
+                tx->pos += len;
             }
             httpSendPacketToNext(q, packet);
         }
@@ -158,17 +158,17 @@ static void outgoingFileService(HttpQueue *q)
 
 static void incomingFileData(HttpQueue *q, HttpPacket *packet)
 {
-    HttpConn        *conn;
-    HttpTransmitter *trans;
-    HttpReceiver    *rec;
-    HttpRange       *range;
-    MprBuf          *buf;
-    MprFile         *file;
-    int             len;
+    HttpConn    *conn;
+    HttpTx      *tx;
+    HttpRx      *rx;
+    HttpRange   *range;
+    MprBuf      *buf;
+    MprFile     *file;
+    int         len;
 
     conn = q->conn;
-    trans = conn->transmitter;
-    rec = conn->receiver;
+    tx = conn->tx;
+    rx = conn->rx;
     file = (MprFile*) q->queueData;
     
     if (httpGetPacketLength(packet) == 0) {
@@ -191,12 +191,12 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
     len = mprGetBufLength(buf);
     mprAssert(len > 0);
 
-    range = rec->inputRange;
+    range = rx->inputRange;
     if (range && ((MprOffset) mprSeek(file, SEEK_SET, (long) range->start)) != range->start) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't seek to range start to %d", range->start);
     } else {
         if (mprWrite(file, mprGetBufStart(buf), len) != len) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't PUT to %s", trans->filename);
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't PUT to %s", tx->filename);
         }
     }
     httpFreePacket(q, packet);
@@ -208,14 +208,14 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
  */
 static int readFileData(HttpQueue *q, HttpPacket *packet)
 {
-    HttpConn        *conn;
-    HttpTransmitter *trans;
-    HttpReceiver    *rec;
-    int             len, rc;
+    HttpConn    *conn;
+    HttpTx      *tx;
+    HttpRx      *rx;
+    int         len, rc;
 
     conn = q->conn;
-    trans = conn->transmitter;
-    rec = conn->receiver;
+    tx = conn->tx;
+    rx = conn->rx;
 
     if (packet->content == 0) {
         len = packet->entityLength;
@@ -226,21 +226,21 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
         len = mprGetBufSpace(packet->content);
     }
     mprAssert(len <= mprGetBufSpace(packet->content));    
-    mprLog(q, 7, "readFileData len %d, pos %d", len, trans->pos);
+    mprLog(q, 7, "readFileData len %d, pos %d", len, tx->pos);
     
-    if (rec->ranges) {
+    if (rx->ranges) {
         /*  
-            rangeService will have set trans->pos to the next read position already
+            rangeService will have set tx->pos to the next read position already
          */
-        mprSeek(trans->file, SEEK_SET, trans->pos);
+        mprSeek(tx->file, SEEK_SET, tx->pos);
     }
 
-    if ((rc = mprRead(trans->file, mprGetBufStart(packet->content), len)) != len) {
+    if ((rc = mprRead(tx->file, mprGetBufStart(packet->content), len)) != len) {
         /*  
             As we may have sent some data already to the client, the only thing we can do is abort and hope the client 
             notices the short data.
          */
-        httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't read file %s", trans->filename);
+        httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't read file %s", tx->filename);
         return MPR_ERR_CANT_READ;
     }
     mprAdjustBufEnd(packet->content, len);
@@ -253,23 +253,23 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
  */
 static void handlePutRequest(HttpQueue *q)
 {
-    HttpConn        *conn;
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    MprFile         *file;
-    char            *path;
+    HttpConn    *conn;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    MprFile     *file;
+    char        *path;
 
     mprAssert(q->pair->queueData == 0);
 
     conn = q->conn;
-    rec = conn->receiver;
-    trans = conn->transmitter;
-    path = trans->filename;
+    rx = conn->rx;
+    tx = conn->tx;
+    path = tx->filename;
     if (path == 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't map URI to file storage");
         return;
     }
-    if (rec->ranges) {
+    if (rx->ranges) {
         /*  
             Open an existing file with fall-back to create
          */
@@ -290,7 +290,7 @@ static void handlePutRequest(HttpQueue *q)
             return;
         }
     }
-    httpSetStatus(conn, trans->fileInfo.isReg ? HTTP_CODE_NO_CONTENT : HTTP_CODE_CREATED);
+    httpSetStatus(conn, tx->fileInfo.isReg ? HTTP_CODE_NO_CONTENT : HTTP_CODE_CREATED);
     q->pair->queueData = (void*) file;
 }
 
@@ -300,20 +300,20 @@ static void handlePutRequest(HttpQueue *q)
  */
 static void handleDeleteRequest(HttpQueue *q)
 {
-    HttpConn        *conn;
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    char            *path;
+    HttpConn    *conn;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    char        *path;
 
     conn = q->conn;
-    rec = conn->receiver;
-    trans = conn->transmitter;
-    path = trans->filename;
+    rx = conn->rx;
+    tx = conn->tx;
+    path = tx->filename;
     if (path == 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't map URI to file storage");
         return;
     }
-    if (!conn->transmitter->fileInfo.isReg) {
+    if (!conn->tx->fileInfo.isReg) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "URI not found");
         return;
     }

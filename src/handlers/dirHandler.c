@@ -42,15 +42,15 @@ static void sortList(HttpConn *conn, MprList *list);
  */
 static bool matchDir(HttpConn *conn, HttpStage *handler)
 {
-    HttpTransmitter *trans;
-    MprPath         *info;
-    Dir             *dir;
+    HttpTx      *tx;
+    MprPath     *info;
+    Dir         *dir;
 
-    trans = conn->transmitter;
-    info = &trans->fileInfo;
+    tx = conn->tx;
+    info = &tx->fileInfo;
     dir = handler->stageData;
     
-    if (!info->valid && mprGetPathInfo(conn, trans->filename, info) < 0) {
+    if (!info->valid && mprGetPathInfo(conn, tx->filename, info) < 0) {
         return 0;
     }
     return dir->enabled && info->isDir;
@@ -60,8 +60,8 @@ static bool matchDir(HttpConn *conn, HttpStage *handler)
 static void processDir(HttpQueue *q)
 {
     HttpConn        *conn;
-    HttpTransmitter *trans;
-    HttpReceiver    *rec;
+    HttpTx          *tx;
+    HttpRx          *rx;
     MprList         *list;
     MprDirEntry     *dp;
     Dir             *dir;
@@ -70,11 +70,11 @@ static void processDir(HttpQueue *q)
     int             next;
 
     conn = q->conn;
-    rec = conn->receiver;
-    trans = conn->transmitter;
+    rx = conn->rx;
+    tx = conn->tx;
     dir = q->stage->stageData;
 
-    filename = trans->filename;
+    filename = tx->filename;
     mprAssert(filename);
 
     httpDontCache(conn);
@@ -101,7 +101,7 @@ static void processDir(HttpQueue *q)
     }
     nameSize = max(nameSize, 22);
 
-    outputHeader(q, rec->pathInfo, nameSize);
+    outputHeader(q, rx->pathInfo, nameSize);
     for (next = 0; (dp = mprGetNextItem(list, &next)) != 0; ) {
         outputLine(q, dp, filename, nameSize);
     }
@@ -113,16 +113,16 @@ static void processDir(HttpQueue *q)
 
 static void parseQuery(HttpConn *conn)
 {
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    Dir             *dir;
-    char            *value, *query, *next, *tok;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    Dir         *dir;
+    char        *value, *query, *next, *tok;
 
-    rec = conn->receiver;
-    trans = conn->transmitter;
-    dir = trans->handler->stageData;
+    rx = conn->rx;
+    tx = conn->tx;
+    dir = tx->handler->stageData;
     
-    query = mprStrdup(rec, rec->parsedUri->query);
+    query = mprStrdup(rx, rx->parsedUri->query);
     if (query == 0) {
         return;
     }
@@ -171,15 +171,15 @@ static void parseQuery(HttpConn *conn)
 
 static void sortList(HttpConn *conn, MprList *list)
 {
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    MprDirEntry     *tmp, **items;
-    Dir             *dir;
-    int             count, i, j, rc;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    MprDirEntry *tmp, **items;
+    Dir         *dir;
+    int         count, i, j, rc;
 
-    rec = conn->receiver;
-    trans = conn->transmitter;
-    dir = trans->handler->stageData;
+    rx = conn->rx;
+    tx = conn->tx;
+    dir = tx->handler->stageData;
     
     if (dir->sortField == 0) {
         return;
@@ -435,13 +435,13 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
 
 static void outputFooter(HttpQueue *q)
 {
-    HttpReceiver   *rec;
-    HttpConn      *conn;
+    HttpRx      *rx;
+    HttpConn    *conn;
     MprSocket   *sock;
     Dir         *dir;
     
     conn = q->conn;
-    rec = conn->receiver;
+    rx = conn->rx;
     dir = q->stage->stageData;
     
     if (dir->fancyIndexing == 2) {
@@ -464,7 +464,7 @@ static void filterDirList(HttpConn *conn, MprList *list)
     MprDirEntry     *dp;
     int             next;
 
-    dir = conn->transmitter->handler->stageData;
+    dir = conn->tx->handler->stageData;
     
     /*
         Do pattern matching. Entries that don't match, free the name to mark

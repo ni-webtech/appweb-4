@@ -1236,7 +1236,7 @@ typedef struct Ejs {
     void                *sqlite;            /**< Sqlite context information */
 
     Http                *http;              /**< Http service object (copy of EjsService.http) */
-    HttpLocation        *location;          /**< Current HttpLocation object for web start scripts */
+    HttpLoc             *loc;               /**< Current HttpLocation object for web start scripts */
 
     struct EjsObj       *sessions;          /**< Session cache */
     struct EjsType      *sessionType;       /**< Session type object */
@@ -2343,6 +2343,7 @@ extern int ejsGetByteArrayRoom(EjsByteArray *ba);
 extern int ejsGrowByteArray(Ejs *ejs, EjsByteArray *ap, int size);
 
 extern struct EjsNumber *ejsWriteToByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
+extern bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, int require);
 
 
 /** 
@@ -2812,6 +2813,7 @@ extern EjsHttp *ejsCreateHttp(Ejs *ejs);
 #endif
 extern void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server);
 extern void ejsGetHttpLimits(Ejs *ejs, EjsObj *obj, HttpLimits *limits, int server);
+extern int ejsSetupTrace(Ejs *ejs, MprCtx ctx, HttpTrace *trace, EjsObj *options);
 
 
 /** 
@@ -3292,8 +3294,8 @@ extern EjsXML *ejsCreateXMLList(Ejs *ejs, EjsXML *targetObject, EjsName *targetP
 
 extern int ejsAddObserver(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener);
 extern int ejsRemoveObserver(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsObj *listener);
-extern int ejsSendEventv(Ejs *ejs, EjsObj *emitter, cchar *name, int argc, EjsObj **argv);
-extern int ejsSendEvent(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *arg);
+extern int ejsSendEventv(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *thisObj, int argc, EjsObj **argv);
+extern int ejsSendEvent(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *thisObj, EjsObj *arg);
 
 
 #if DOXYGEN
@@ -4504,6 +4506,7 @@ typedef struct EjsHttpServer {
     struct MprSsl   *ssl;                       /**< SSL configuration */
     EjsArray        *incomingStages;            /**< Incoming Http pipeline stages */
     EjsArray        *outgoingStages;            /**< Outgoing Http pipeline stages */
+    HttpTrace       trace[2];                   /**< Default tracing for requests */
     cchar           *connector;                 /**< Pipeline connector */
     cchar           *dir;                       /**< Directory containing web documents */
     char            *keyFile;                   /**< SSL key file */
@@ -4514,12 +4517,6 @@ typedef struct EjsHttpServer {
     char            *name;                      /**< Server name */
     int             port;                       /**< Listening port */
     int             async;                      /**< Async mode */
-
-    int             traceLevel;                 /**< Trace activation level */
-    int             traceMaxLength;             /**< Maximum trace file length (if known) */
-    int             traceMask;                  /**< Request/response trace mask */
-    MprHashTable    *traceInclude;              /**< Extensions to include in trace */
-    MprHashTable    *traceExclude;              /**< Extensions to exclude from trace */
 } EjsHttpServer;
 
 
@@ -4532,31 +4529,43 @@ typedef struct EjsHttpServer {
     @see EjsRequest ejsCreateRequest
  */
 typedef struct EjsRequest {
-    EjsObj          obj;            /**< Base object storage */
-    EjsObj          *cookies;       /**< Cached cookies */
-    HttpConn        *conn;          /**< Underlying Http connection object */
-    EjsHttpServer   *server;        /**< Owning server */
-    EjsObj          *emitter;       /**< Event emitter */
-    EjsPath         *dir;           /**< Home directory containing the application */
-    EjsObj          *env;           /**< Request.env */
-    EjsPath         *filename;      /**< Physical resource filename */
-    EjsObj          *files;         /**< Files object */
-    EjsObj          *headers;       /**< Headers object */
-    EjsObj          *limits;        /**< Limits object */
-    EjsObj          *params;        /**< Form variables */
-    EjsUri          *uri;           /**< Complete uri */
-    Ejs             *ejs;           /**< Ejscript interpreter handle */
-    struct EjsSession *session;     /**< Current session */
+    EjsObj          obj;                /**< Base object storage */
+    EjsObj          *cookies;           /**< Cached cookies */
+    HttpConn        *conn;              /**< Underlying Http connection object */
+    EjsHttpServer   *server;            /**< Owning server */
 
-    //  MOB -- should these two be stored as EjsObj?
-    cchar           *home;          /**< Relative URI to the home of the application from this request */
-    cchar           *absHome;       /**< Absolute URI to the home of the application from this request */
+    EjsObj          *absHome;           /**< Absolute URI to the home of the application from this request */
+    EjsObj          *emitter;           /**< Event emitter */
+    EjsPath         *dir;               /**< Home directory containing the application */
+    EjsObj          *env;               /**< Request.env */
+    EjsPath         *filename;          /**< Physical resource filename */
+    EjsObj          *files;             /**< Files object */
+    EjsObj          *headers;           /**< Headers object */
+    EjsUri          *home;              /**< Relative URI to the home of the application from this request */
+    EjsObj          *host;              /**< Host property */
+    EjsObj          *limits;            /**< Limits object */
+    EjsObj          *log;               /**< Log object */
+    EjsObj          *originalMethod;    /**< Saved original method */
+    EjsObj          *originalUri;       /**< Saved original URI */
+    EjsObj          *params;            /**< Form variables */
+    EjsObj          *pathInfo;          /**< PathInfo property */
+    EjsObj          *port;              /**< Port property */
+    EjsObj          *query;             /**< Query property */
+    EjsObj          *reference;         /**< Reference property */
+    EjsObj          *responseHeaders;   /**< Headers object */
+    EjsObj          *scheme;            /**< Scheme property */
+    EjsObj          *scriptName;        /**< ScriptName property */
+    EjsObj          *uri;               /**< Complete uri */
 
-    int             dontFinalize;   /**< Don't auto-finalize. Must call finalize(force) */
-    int             probedSession;  /**< Determined if a session exists */
-    int             closed;         /**< Request closed and "close" event has been issued */
-    int             error;          /**< Request errored and "error" event has been issued */
-    int             running;        /**< Request has started */
+    Ejs             *ejs;               /**< Ejscript interpreter handle */
+    struct EjsSession *session;         /**< Current session */
+
+    int             accepted;           /**< Request has been accepted from the HttpServer */
+    int             dontFinalize;       /**< Don't auto-finalize. Must call finalize(force) */
+    int             probedSession;      /**< Determined if a session exists */
+    int             closed;             /**< Request closed and "close" event has been issued */
+    int             error;              /**< Request errored and "error" event has been issued */
+    int             running;            /**< Request has started */
 } EjsRequest;
 
 
@@ -5756,7 +5765,7 @@ extern void         ecFreeToken(EcInput *input, EcToken *token);
 extern char         *ecGetErrorMessage(EcCompiler *cp);
 extern char         *ecGetInputStreamName(EcLexer *lp);
 extern int          ecGetToken(EcInput *input);
-extern int          ecGetRegExpToken(EcInput *input);
+extern int          ecGetRegExpToken(EcInput *input, cchar *prefix);
 extern EcNode       *ecLinkNode(EcNode *np, EcNode *child);
 extern EjsModule    *ecLookupModule(EcCompiler *cp, cchar *name, int minVersion, int maxVersion);
 extern int          ecLookupScope(EcCompiler *cp, EjsName *name);

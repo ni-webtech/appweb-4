@@ -98,12 +98,10 @@ MAIN(appweb, int argc, char **argv)
 
 #if BLD_UNIX_LIKE
         } else if (strcmp(argp, "--chroot") == 0) {
-            int rc;
             if (argind >= argc) {
                 usageError(mpr);
             }
             homeDir = mprGetAbsPath(mpr, argv[++argind]);
-            rc = chdir(homeDir);
             if (chroot(homeDir) < 0) {
                 if (errno == EPERM) {
                     mprPrintfError(mpr, "%s: Must be super user to use the --chroot option", mprGetAppName(mpr));
@@ -283,11 +281,11 @@ static char *findConfigFile(Mpr *mpr, char *configFile)
  */
 static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts)
 {
-    MaHost          *host;
-    MprCtx          ctx;
-    HttpLocation    *location;
-    char            *home, *path, *uri, *script;
-    int             next;
+    MaHost      *host;
+    MprCtx      ctx;
+    HttpLoc     *loc;
+    char        *home, *path, *uri, *script;
+    int         next;
 
     host = server->defaultHost;
     ctx = home = mprGetCurrentPath(appweb);
@@ -306,15 +304,15 @@ static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts)
             mprFree(ctx);
             return MPR_ERR_ALREADY_EXISTS;
         }
-        location = httpCreateInheritedLocation(appweb->http, host->location);
+        loc = httpCreateInheritedLocation(appweb->http, host->loc);
 #if UNUSED
-        httpSetLocationAuth(location, host->location->auth);
+        httpSetLocationAuth(loc, host->loc->auth);
 #endif
-        httpSetLocationPrefix(location, uri);
-        httpSetLocationScript(location, script);
-        httpSetLocationAutoDelete(location, 1);
-        maAddLocation(host, location);
-        httpSetHandler(location, "ejsHandler");
+        httpSetLocationPrefix(loc, uri);
+        httpSetLocationScript(loc, script);
+        httpSetLocationAutoDelete(loc, 1);
+        maAddLocation(host, loc);
+        httpSetHandler(loc, "ejsHandler");
         
 #if UNUSED
         /* Make sure there is a directory for the alias target */
@@ -332,9 +330,9 @@ static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts)
 #endif
         uri = "/web";
         if (!maLookupLocation(host, uri)) {
-            location = httpCreateInheritedLocation(appweb->http, host->location);
-            httpSetLocationPrefix(location, uri);
-            maAddLocation(host, location);
+            loc = httpCreateInheritedLocation(appweb->http, host->loc);
+            httpSetLocationPrefix(loc, uri);
+            maAddLocation(host, loc);
         }
     }
     mprFree(ctx);

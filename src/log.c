@@ -237,15 +237,15 @@ static void rotateAccessLog(MaHost *host)
 
 void maLogRequest(HttpConn *conn)
 {
-    MaHost          *host, *logHost;
-    HttpReceiver    *rec;
-    HttpTransmitter *trans;
-    MprBuf          *buf;
-    char            keyBuf[80], *timeText, *fmt, *cp, *qualifier, *value, c;
-    int             len;
+    MaHost      *host, *logHost;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    MprBuf      *buf;
+    char        keyBuf[80], *timeText, *fmt, *cp, *qualifier, *value, c;
+    int         len;
 
-    rec = conn->receiver;
-    trans = conn->transmitter;
+    rx = conn->rx;
+    tx = conn->tx;
     host = httpGetConnContext(conn);
 
     logHost = host->logHost;
@@ -256,12 +256,11 @@ void maLogRequest(HttpConn *conn)
     if (fmt == 0) {
         return;
     }
-    if (rec->method == 0) {
+    if (rx->method == 0) {
         return;
     }
-
     len = MPR_MAX_URL + 256;
-    buf = mprCreateBuf(trans, len, len);
+    buf = mprCreateBuf(tx, len, len);
 
     while ((c = *fmt++) != '\0') {
         if (c != '%' || (c = *fmt++) == '%') {
@@ -279,15 +278,15 @@ void maLogRequest(HttpConn *conn)
             break;
 
         case 'b':
-            if (trans->bytesWritten == 0) {
+            if (tx->bytesWritten == 0) {
                 mprPutCharToBuf(buf, '-');
             } else {
-                mprPutIntToBuf(buf, trans->bytesWritten);
+                mprPutIntToBuf(buf, tx->bytesWritten);
             } 
             break;
 
         case 'B':                           /* Bytes written (minus headers) */
-            mprPutIntToBuf(buf, trans->bytesWritten - trans->headerSize);
+            mprPutIntToBuf(buf, tx->bytesWritten - tx->headerSize);
             break;
 
         case 'h':                           /* Remote host */
@@ -296,7 +295,7 @@ void maLogRequest(HttpConn *conn)
             break;
 
         case 'n':                           /* Local host */
-            mprPutStringToBuf(buf, rec->parsedUri->host);
+            mprPutStringToBuf(buf, rx->parsedUri->host);
             break;
 
         case 'l':                           /* Supplied in authorization */
@@ -304,15 +303,15 @@ void maLogRequest(HttpConn *conn)
             break;
 
         case 'O':                           /* Bytes written (including headers) */
-            mprPutIntToBuf(buf, trans->bytesWritten);
+            mprPutIntToBuf(buf, tx->bytesWritten);
             break;
 
         case 'r':                           /* First line of request */
-            mprPutFmtToBuf(buf, "%s %s %s", rec->method, rec->uri, conn->protocol);
+            mprPutFmtToBuf(buf, "%s %s %s", rx->method, rx->uri, conn->protocol);
             break;
 
         case 's':                           /* Response code */
-            mprPutIntToBuf(buf, trans->status);
+            mprPutIntToBuf(buf, tx->status);
             break;
 
         case 't':                           /* Time */
@@ -338,7 +337,7 @@ void maLogRequest(HttpConn *conn)
                 mprStrUpper(keyBuf);
                 switch (c) {
                 case 'i':
-                    value = (char*) mprLookupHash(rec->headers, keyBuf);
+                    value = (char*) mprLookupHash(rx->headers, keyBuf);
                     mprPutStringToBuf(buf, value ? value : "-");
                     break;
                 default:
@@ -354,7 +353,7 @@ void maLogRequest(HttpConn *conn)
         case '>':
             if (*fmt == 's') {
                 fmt++;
-                mprPutIntToBuf(buf, trans->status);
+                mprPutIntToBuf(buf, tx->status);
             }
             break;
 

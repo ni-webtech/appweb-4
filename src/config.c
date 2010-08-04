@@ -38,7 +38,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
             mprUserError(server, "Can't open server on %s", ip);
             return MPR_ERR_CANT_OPEN;
         }
-        location = host->location;
+        loc = host->loc;
 #if WIN
         searchPath = mprAsprintf(server, -1, "%s" MPR_SEARCH_SEP ".", mprGetAppDir(server));
 #else
@@ -48,26 +48,26 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
         mprSetModuleSearchPath(server, searchPath);
         mprFree(searchPath);
 #if UNUSED
-        httpSetConnector(location, "netConnector");
+        httpSetConnector(loc, "netConnector");
 #endif
         /*  
             Auth must be added first to authorize all requests. File is last as a catch all.
          */
         if (httpLookupStage(http, "authFilter")) {
-            httpAddHandler(location, "authFilter", "");
+            httpAddHandler(loc, "authFilter", "");
         }
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
-            httpAddHandler(location, "cgiHandler", ".cgi .cgi-nph .bat .cmd .pl .py");
+            httpAddHandler(loc, "cgiHandler", ".cgi .cgi-nph .bat .cmd .pl .py");
             /*
-                Add cgi-bin with a location block for the /cgi-bin URL prefix.
+                Add cgi-bin with a loc block for the /cgi-bin URL prefix.
              */
             path = "cgi-bin";
             if (mprPathExists(host, path, X_OK)) {
                 ap = maCreateAlias(host, "/cgi-bin/", path, 0);
                 mprLog(host, 4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
                 maInsertAlias(host, ap);
-                loc = httpCreateInheritedLocation(http, host->location);
+                loc = httpCreateInheritedLocation(http, host->loc);
                 httpSetLocationPrefix(loc, "/cgi-bin/");
                 httpSetHandler(loc, "cgiHandler");
                 maAddLocation(host, loc);
@@ -75,14 +75,14 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
         }
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
-            httpAddHandler(location, "ejsHandler", ".ejs");
+            httpAddHandler(loc, "ejsHandler", ".ejs");
         }
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
-            httpAddHandler(location, "phpHandler", ".php");
+            httpAddHandler(loc, "phpHandler", ".php");
         }
         if (httpLookupStage(http, "fileHandler")) {
-            httpAddHandler(location, "fileHandler", "");
+            httpAddHandler(loc, "fileHandler", "");
         }
     } else {
 #endif
@@ -142,8 +142,8 @@ int maParseConfig(MaServer *server, cchar *configFile)
     state->server = server;
     state->host = host;
     state->dir = maCreateBareDir(host, ".");
-    state->location = defaultHost->location;
-    state->location->connector = http->netConnector;
+    state->loc = defaultHost->loc;
+    state->loc->connector = http->netConnector;
     state->enabled = 1;
     state->lineNumber = 0;
 
@@ -158,7 +158,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
     /*
         Set the default location authorization definition to match the default directory auth
      */
-    state->location->auth = state->dir->auth;
+    state->loc->auth = state->dir->auth;
     state->auth = state->dir->auth;
 
     maInsertDir(host, state->dir);
@@ -338,8 +338,8 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 value = mprStrTrim(value, "\"");
                 state = pushState(server, state, &top);
                 state->host = host = maCreateVirtualHost(server, value, host);
-                state->location = host->location;
-                state->auth = host->location->auth;
+                state->loc = host->loc;
+                state->auth = host->loc->auth;
 
                 maAddHost(server, host);
                 maSetVirtualHost(host);
@@ -382,16 +382,16 @@ int maParseConfig(MaServer *server, cchar *configFile)
                     goto err;
                 }
                 state = pushState(server, state, &top);
-                state->location = httpCreateInheritedLocation(http, state->location);
-                state->auth = state->location->auth;
+                state->loc = httpCreateInheritedLocation(http, state->loc);
+                state->auth = state->loc->auth;
 
-                httpSetLocationPrefix(state->location, value);
+                httpSetLocationPrefix(state->loc, value);
 
-                if (maAddLocation(host, state->location) < 0) {
+                if (maAddLocation(host, state->loc) < 0) {
                     mprError(server, "Can't add location %s", value);
                     goto err;
                 }
-                mprAssert(host->location->prefix);
+                mprAssert(host->loc->prefix);
             }
 
         } else {
@@ -402,8 +402,8 @@ int maParseConfig(MaServer *server, cchar *configFile)
             /*
                 Closing tags
              */
-            if (state->enabled && state->location != stack[top-1].location) {
-                httpFinalizeLocation(state->location);
+            if (state->enabled && state->loc != stack[top-1].loc) {
+                httpFinalizeLocation(state->loc);
             }
             if (mprStrcmpAnyCase(key, "If") == 0) {
                 top--;
@@ -754,21 +754,21 @@ int maValidateConfiguration(MaServer *server)
  */
 static int processSetting(MaServer *server, char *key, char *value, MaConfigState *state)
 {
-    MaAppweb        *appweb;
-    MaAlias         *alias;
-    HttpLocation    *location;
-    MaHost          *host;
-    MaDir           *dir;
-    Http            *http;
-    HttpAuth        *auth;
-    HttpLimits      limits;
-    HttpStage       *stage;
-    HttpServer      *httpServer;
-    MprHash         *hp;
-    char            ipAddrPort[MPR_MAX_IP_ADDR_PORT];
-    char            *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *hostName;
-    char            *names, *type, *items, *include, *exclude;
-    int             len, port, rc, code, processed, num, flags, colonCount, mask, level;
+    MaAppweb    *appweb;
+    MaAlias     *alias;
+    HttpLoc     *loc;
+    MaHost      *host;
+    MaDir       *dir;
+    Http        *http;
+    HttpAuth    *auth;
+    HttpLimits  limits;
+    HttpStage   *stage;
+    HttpServer  *httpServer;
+    MprHash     *hp;
+    char        ipAddrPort[MPR_MAX_IP_ADDR_PORT];
+    char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *hostName;
+    char        *names, *type, *items, *include, *exclude;
+    int         len, port, rc, code, processed, num, flags, colonCount, mask, level;
 
     mprAssert(state);
     mprAssert(key);
@@ -778,8 +778,8 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     httpServer = 0;
     host = state->host;
     dir = state->dir;
-    location = state->location;
-    mprAssert(state->location->prefix);
+    loc = state->loc;
+    mprAssert(state->loc->prefix);
     httpInitLimits(&limits, 1);
 
     mprAssert(host);
@@ -816,7 +816,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (mprStrcmpAnyCase(key, "AddFilter") == 0) {
             /* Scope: server, host, location */
             name = mprStrTok(value, " \t", &extensions);
-            if (httpAddFilter(location, name, extensions, HTTP_STAGE_INCOMING | HTTP_STAGE_OUTGOING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_INCOMING | HTTP_STAGE_OUTGOING) < 0) {
                 mprError(server, "Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -825,7 +825,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (mprStrcmpAnyCase(key, "AddInputFilter") == 0) {
             /* Scope: server, host, location */
             name = mprStrTok(value, " \t", &extensions);
-            if (httpAddFilter(location, name, extensions, HTTP_STAGE_INCOMING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_INCOMING) < 0) {
                 mprError(server, "Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -834,7 +834,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (mprStrcmpAnyCase(key, "AddOutputFilter") == 0) {
             /* Scope: server, host, location */
             name = mprStrTok(value, " \t", &extensions);
-            if (httpAddFilter(location, name, extensions, HTTP_STAGE_OUTGOING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_OUTGOING) < 0) {
                 mprError(server, "Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -843,7 +843,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (mprStrcmpAnyCase(key, "AddHandler") == 0) {
             /* Scope: server, host, location */
             name = mprStrTok(value, " \t", &extensions);
-            if (httpAddHandler(state->location, name, extensions) < 0) {
+            if (httpAddHandler(state->loc, name, extensions) < 0) {
                 mprError(server, "Can't add handler %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -1030,7 +1030,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 mprError(server, "Bad ErrorDocument directive");
                 return MPR_ERR_BAD_SYNTAX;
             }
-            httpAddErrorDocument(location, codeStr, url);
+            httpAddErrorDocument(loc, codeStr, url);
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "ErrorLog") == 0) {
@@ -1314,17 +1314,23 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             items = mprStrTok(0, "\n", &tok);
             mprStrLower(items);
             mask = 0;
+            if (strstr(items, "conn")) {
+                mask |= HTTP_TRACE_CONN;
+            }
+            if (strstr(items, "first")) {
+                mask |= HTTP_TRACE_FIRST;
+            }
             if (strstr(items, "headers")) {
-                mask |= HTTP_TRACE_HEADERS;
+                mask |= HTTP_TRACE_HEADER;
             }
             if (strstr(items, "body")) {
                 mask |= HTTP_TRACE_BODY;
             }
             if (strstr(items, "request") || strstr(items, "transmit")) {
-                mask |= HTTP_TRACE_TRANSMIT;
+                mask |= HTTP_TRACE_TX;
             }
             if (strstr(items, "response") || strstr(items, "receive")) {
-                mask |= HTTP_TRACE_RECEIVE;
+                mask |= HTTP_TRACE_RX;
             }
             maSetHostTrace(host, level, mask);
             return 1;
@@ -1414,9 +1420,9 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
         } else if (mprStrcmpAnyCase(key, "PutMethod") == 0) {
             if (mprStrcmpAnyCase(value, "on") == 0) {
-                location->flags |= HTTP_LOC_PUT_DELETE;
+                loc->flags |= HTTP_LOC_PUT_DELETE;
             } else {
-                location->flags &= ~HTTP_LOC_PUT_DELETE;
+                loc->flags &= ~HTTP_LOC_PUT_DELETE;
             }
             return 1;
         }
@@ -1497,7 +1503,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "ResetPipeline") == 0) {
-            httpResetPipeline(location);
+            httpResetPipeline(loc);
             return 1;
         }
         break;
@@ -1526,9 +1532,9 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "SetConnector") == 0) {
-            /* Scope: server, host, location */
+            /* Scope: server, host, loc */
             value = mprStrTrim(value, "\"");
-            if (httpSetConnector(location, value) < 0) {
+            if (httpSetConnector(loc, value) < 0) {
                 mprError(server, "Can't add handler %s", value);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -1537,7 +1543,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (mprStrcmpAnyCase(key, "SetHandler") == 0) {
             /* Scope: server, host, location */
             name = mprStrTok(value, " \t", &extensions);
-            if (httpSetHandler(state->location, name) < 0) {
+            if (httpSetHandler(state->loc, name) < 0) {
                 mprError(server, "Can't add handler %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -1594,15 +1600,15 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     case 'U':
         if (mprStrcmpAnyCase(key, "UploadDir") == 0 || mprStrcmpAnyCase(key, "FileUploadDir") == 0) {
             path = maMakePath(host, mprStrTrim(value, "\""));
-            mprFree(location->uploadDir);
-            location->uploadDir = mprStrdup(location, path);
+            mprFree(loc->uploadDir);
+            loc->uploadDir = mprStrdup(loc, path);
             mprLog(http, MPR_CONFIG, "Upload directory: %s", path);
             mprFree(path);
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "UploadAutoDelete") == 0) {
             value = mprStrTrim(value, "\"");
-            location->autoDelete = (mprStrcmpAnyCase(value, "on") == 0);
+            loc->autoDelete = (mprStrcmpAnyCase(value, "on") == 0);
             return 1;
 
         } else if (mprStrcmpAnyCase(key, "User") == 0) {
@@ -1637,13 +1643,13 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 /*
     Create a location block for a handler and an alias. Convenience routine for ScriptAlias, EjsAppAlias, EjsAppDirAlias.
  */
-HttpLocation *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixArg, cchar *pathArg, cchar *handlerName, 
+HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixArg, cchar *pathArg, cchar *handlerName, 
         int flags)
 {
-    MaHost          *host;
-    MaAlias         *alias;
-    HttpLocation    *location;
-    char            *path, *prefix;
+    MaHost      *host;
+    MaAlias     *alias;
+    HttpLoc     *loc;
+    char        *path, *prefix;
 
     host = state->host;
 
@@ -1662,14 +1668,14 @@ HttpLocation *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *pre
         mprError(http, "Location block already exists for \"%s\"", prefix);
         return 0;
     }
-    location = httpCreateInheritedLocation(http, state->location);
-    httpSetLocationAuth(location, state->dir->auth);
-    httpSetLocationPrefix(location, prefix);
-    maAddLocation(host, location);
-    httpSetLocationFlags(location, flags);
-    httpSetHandler(location, handlerName);
+    loc = httpCreateInheritedLocation(http, state->loc);
+    httpSetLocationAuth(loc, state->dir->auth);
+    httpSetLocationPrefix(loc, prefix);
+    maAddLocation(host, loc);
+    httpSetLocationFlags(loc, flags);
+    httpSetHandler(loc, handlerName);
     mprFree(prefix);
-    return location;
+    return loc;
 }
 
 
@@ -1784,7 +1790,7 @@ static MaConfigState *pushState(MprCtx ctx, MaConfigState *state, int *top)
     next = state + 1;
     next->server = state->server;
     next->host = state->host;
-    next->location = state->location;
+    next->loc = state->loc;
     next->dir = state->dir;
     next->auth = state->auth;
     next->lineNumber = state->lineNumber;
@@ -1894,7 +1900,7 @@ int HttpServer::saveConfig(char *configFile)
     MaHost          *host, *defaultHost;
     HttpLimits      *limits;
     HttpServer      *listen;
-    HttpLocation    *loc;
+    HttpLoc         *loc;
     MaMimeHashEntry *mt;
     MprHashTable    *mimeTypes;
     MprList         *aliases;
@@ -2251,10 +2257,10 @@ int HttpServer::saveConfig(char *configFile)
         /*
             Locations
          */
-        loc = (HttpLocation*) host->getLocations()->getLast();
+        loc = (HttpLoc*) host->getLocations()->getLast();
         while (loc) {
             if (loc->isInherited()) {
-                loc = (HttpLocation*) host->getLocations()->getPrev(loc);
+                loc = (HttpLoc*) host->getLocations()->getPrev(loc);
                 continue;
             }
             mprFprintf(fd, "\n");
@@ -2272,7 +2278,7 @@ int HttpServer::saveConfig(char *configFile)
             tabs(fd, --indent);
             mprFprintf(fd, "</Location>\n");
 
-            loc = (HttpLocation*) host->getLocations()->getPrev(loc);
+            loc = (HttpLoc*) host->getLocations()->getPrev(loc);
         }
 
         /*

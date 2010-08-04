@@ -15,7 +15,7 @@
 
 /*  Create a host from scratch
  */
-MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort, HttpLocation *location)
+MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort, HttpLoc *loc)
 {
     MaHost      *host;
 
@@ -38,7 +38,8 @@ MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort
     host->flags = MA_HOST_NO_TRACE;
     host->httpVersion = 1;
 
-    host->traceMask = HTTP_TRACE_TRANSMIT | HTTP_TRACE_RECEIVE | HTTP_TRACE_HEADERS;
+    //  MOB -- not right
+    host->traceMask = HTTP_TRACE_TX | HTTP_TRACE_RX | HTTP_TRACE_FIRST | HTTP_TRACE_HEADER;
     host->traceLevel = 3;
     host->traceMaxLength = INT_MAX;
 
@@ -54,9 +55,9 @@ MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort
     host->keepAlive = 1;
 #endif
 
-    host->location = (location) ? location : httpCreateLocation(server->http);
-    maAddLocation(host, host->location);
-    host->location->auth = httpCreateAuth(host->location, host->location->auth);
+    host->loc = (loc) ? loc : httpCreateLocation(server->http);
+    maAddLocation(host, host->loc);
+    host->loc->auth = httpCreateAuth(host->loc, host->loc->auth);
 #if UNUSED
     host->mutex = mprCreateLock(host);
 #endif
@@ -99,7 +100,7 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
     host->keepAlive = parent->keepAlive;
 #endif
     host->accessLog = parent->accessLog;
-    host->location = httpCreateInheritedLocation(server->http, parent->location);
+    host->loc = httpCreateInheritedLocation(server->http, parent->loc);
 #if UNUSED
     host->mutex = mprCreateLock(host);
 #endif
@@ -113,7 +114,7 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
     if (parent->traceExclude) {
         host->traceExclude = mprCopyHash(host, parent->traceExclude);
     }
-    maAddLocation(host, host->location);
+    maAddLocation(host, host->loc);
     return host;
 }
 
@@ -401,9 +402,9 @@ int maInsertDir(MaHost *host, MaDir *newDir)
 }
 
 
-int maAddLocation(MaHost *host, HttpLocation *newLocation)
+int maAddLocation(MaHost *host, HttpLoc *newLocation)
 {
-    HttpLocation  *location;
+    HttpLoc     *loc;
     int         next, rc;
 
     mprAssert(newLocation);
@@ -416,14 +417,14 @@ int maAddLocation(MaHost *host, HttpLocation *newLocation)
     /*
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc
      */
-    for (next = 0; (location = mprGetNextItem(host->locations, &next)) != 0; ) {
-        rc = strcmp(newLocation->prefix, location->prefix);
+    for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
+        rc = strcmp(newLocation->prefix, loc->prefix);
         if (rc == 0) {
-            mprRemoveItem(host->locations, location);
+            mprRemoveItem(host->locations, loc);
             mprInsertItemAtPos(host->locations, next - 1, newLocation);
             return 0;
         }
-        if (strcmp(newLocation->prefix, location->prefix) > 0) {
+        if (strcmp(newLocation->prefix, loc->prefix) > 0) {
             mprInsertItemAtPos(host->locations, next - 1, newLocation);
             return 0;
         }
@@ -537,30 +538,30 @@ MaDir *maLookupBestDir(MaHost *host, cchar *path)
 }
 
 
-HttpLocation *maLookupLocation(MaHost *host, cchar *prefix)
+HttpLoc *maLookupLocation(MaHost *host, cchar *prefix)
 {
-    HttpLocation      *location;
-    int             next;
+    HttpLoc     *loc;
+    int         next;
 
-    for (next = 0; (location = mprGetNextItem(host->locations, &next)) != 0; ) {
-        if (strcmp(prefix, location->prefix) == 0) {
-            return location;
+    for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
+        if (strcmp(prefix, loc->prefix) == 0) {
+            return loc;
         }
     }
     return 0;
 }
 
 
-HttpLocation *maLookupBestLocation(MaHost *host, cchar *uri)
+HttpLoc *maLookupBestLocation(MaHost *host, cchar *uri)
 {
-    HttpLocation  *location;
+    HttpLoc     *loc;
     int         next, rc;
 
     if (uri) {
-        for (next = 0; (location = mprGetNextItem(host->locations, &next)) != 0; ) {
-            rc = strncmp(location->prefix, uri, location->prefixLen);
-            if (rc == 0 && uri[location->prefixLen] == '/') {
-                return location;
+        for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
+            rc = strncmp(loc->prefix, uri, loc->prefixLen);
+            if (rc == 0 && uri[loc->prefixLen] == '/') {
+                return loc;
             }
         }
     }

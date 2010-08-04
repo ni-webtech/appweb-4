@@ -86,7 +86,7 @@ _CFLAGS 	:= $(shell echo $(_CFLAGS) | sed 's/-W3/-W1/;s/-Wall/-w/')
 compileExtra: $(TARGETS)
 
 #
-#	Modules can only be built after the appweb library is built. May build twice if the slots change.
+#	Modules can only be built after the ejs library is built. May build twice if the slots change.
 #
 modules: $(MODULES) dummy
 

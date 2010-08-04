@@ -20,14 +20,14 @@ typedef struct MaEgi {
 
 static bool matchEgi(HttpConn *conn, HttpStage *handler)
 {
-    HttpReceiver    *rec;
+    HttpRx    *rx;
 
     /*  
         Rewrite the entire URL as the script name 
      */
-    rec = conn->receiver;
-    rec->scriptName = rec->pathInfo;
-    rec->pathInfo = "";
+    rx = conn->rx;
+    rx->scriptName = rx->pathInfo;
+    rx->pathInfo = "";
     return 1;
 }
 
@@ -37,18 +37,18 @@ static bool matchEgi(HttpConn *conn, HttpStage *handler)
  */
 static void runEgi(HttpQueue *q)
 {
-    HttpConn        *conn;
-    HttpReceiver    *rec;
-    MaEgiForm       *form;
-    MaEgi           *egi;
+    HttpConn    *conn;
+    HttpRx      *rx;
+    MaEgiForm   *form;
+    MaEgi       *egi;
 
     conn = q->conn;
-    rec = conn->receiver;
+    rx = conn->rx;
     egi = (MaEgi*) q->stage->stageData;
     
-    form = (MaEgiForm*) mprLookupHash(egi->forms, rec->scriptName);
+    form = (MaEgiForm*) mprLookupHash(egi->forms, rx->scriptName);
     if (form == 0) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Egi Form: \"%s\" is not defined", rec->scriptName);
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Egi Form: \"%s\" is not defined", rx->scriptName);
     } else {
         (*form)(q);
     }
@@ -57,7 +57,7 @@ static void runEgi(HttpQueue *q)
 
 static void startEgi(HttpQueue *q)
 {
-    if (!q->conn->receiver->form) {
+    if (!q->conn->rx->form) {
         runEgi(q);
     }
 }
@@ -65,7 +65,7 @@ static void startEgi(HttpQueue *q)
 
 static void processEgi(HttpQueue *q)
 {
-    if (q->conn->receiver->form) {
+    if (q->conn->rx->form) {
         runEgi(q);
     }
 }
