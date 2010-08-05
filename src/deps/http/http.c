@@ -216,7 +216,7 @@ static bool parseArgs(Mpr *mpr, int argc, char **argv)
         } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
             mprSetDebugMode(mpr, 1);
             retries = 0;
-            timeout = -1;
+            timeout = INT_MAX / MPR_TICKS_PER_SEC;
 
         } else if (strcmp(argp, "--delete") == 0) {
             method = "DELETE";
@@ -629,10 +629,10 @@ static int sendRequest(HttpConn *conn, cchar *method, cchar *url)
 
 static int retryRequest(HttpConn *conn, cchar *url) 
 {
-    HttpRx    *rec;
-    char            *redirect;
-    cchar           *msg, *sep;
-    int             count, redirectCount;
+    HttpRx  *rec;
+    char    *redirect;
+    cchar   *msg, *sep;
+    int     count, redirectCount;
 
     httpSetRetries(conn, retries);
     httpSetTimeout(conn, timeout, timeout);

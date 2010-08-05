@@ -1238,11 +1238,14 @@ typedef struct Ejs {
     Http                *http;              /**< Http service object (copy of EjsService.http) */
     HttpLoc             *loc;               /**< Current HttpLocation object for web start scripts */
 
+#if UNUSED
     struct EjsObj       *sessions;          /**< Session cache */
+    int                 sessionTimeout;     /**< Default session timeout */
+    MprEvent            *sessionTimer;      /**< Session expiry timer */
+#endif
+
     struct EjsType      *sessionType;       /**< Session type object */
     struct EjsObj       *applications;      /**< Application cache */
-    MprEvent            *sessionTimer;      /**< Session expiry timer */
-    int                 sessionTimeout;     /**< Default session timeout */
     int                 nextSession;        /**< Session ID counter */
     MprMutex            *mutex;             /**< Multithread locking */
 } Ejs;
@@ -1753,6 +1756,7 @@ extern int ejsHasTrait(EjsObj *obj, int slotNum, int attributes);
 extern int ejsGetTraitAttributes(EjsObj *obj, int slotNum);
 extern struct EjsType *ejsGetTraitType(EjsObj *obj, int slotNum);
 extern int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite);
+extern int ejsCompactObject(Ejs *ejs, EjsObj *obj);
 
 
 //  TODO - inconsistent naming vs ejsCloneVar (clone vs copy)
@@ -4500,12 +4504,9 @@ extern "C" {
 typedef struct EjsHttpServer {
     EjsObj          obj;                        /**< Extends Object */
     Ejs             *ejs;                       /**< Ejscript interpreter handle */
-    EjsObj          *emitter;                   /**< Event emitter */
-    EjsObj          *limits;                    /**< Limits object */
     HttpServer      *server;                    /**< Http server object */
+    MprEvent        *sessionTimer;              /**< Session expiry timer */
     struct MprSsl   *ssl;                       /**< SSL configuration */
-    EjsArray        *incomingStages;            /**< Incoming Http pipeline stages */
-    EjsArray        *outgoingStages;            /**< Outgoing Http pipeline stages */
     HttpTrace       trace[2];                   /**< Default tracing for requests */
     cchar           *connector;                 /**< Pipeline connector */
     cchar           *dir;                       /**< Directory containing web documents */
@@ -4517,6 +4518,11 @@ typedef struct EjsHttpServer {
     char            *name;                      /**< Server name */
     int             port;                       /**< Listening port */
     int             async;                      /**< Async mode */
+    EjsObj          *emitter;                   /**< Event emitter */
+    EjsObj          *limits;                    /**< Limits object */
+    EjsObj          *sessions;                  /**< Session cache */
+    EjsArray        *incomingStages;            /**< Incoming Http pipeline stages */
+    EjsArray        *outgoingStages;            /**< Outgoing Http pipeline stages */
 } EjsHttpServer;
 
 
@@ -4597,8 +4603,7 @@ extern EjsRequest *ejsCloneRequest(Ejs *ejs, EjsRequest *req, bool deep);
     @defgroup EjsSession EjsSession
     @see EjsSession ejsCreateSession ejsDestroySession
  */
-typedef struct EjsSession
-{
+typedef struct EjsSession {
     EjsObj      obj;
     MprTime     expire;             /* When the session should expire */
     cchar       *id;                /* Session ID */
@@ -4624,6 +4629,9 @@ extern EjsSession *ejsGetSession(Ejs *ejs, struct EjsRequest *req);
     @param session Session object created via ejsCreateSession()
 */
 extern int ejsDestroySession(Ejs *ejs, EjsHttpServer *server, EjsSession *session);
+
+extern void ejsSetSessionTimeout(Ejs *ejs, EjsSession *sp, int timeout);
+extern void ejsUpdateSessionLimits(Ejs *ejs, EjsHttpServer *server);
 
 extern void ejsSendRequestCloseEvent(Ejs *ejs, EjsRequest *req);
 extern void ejsSendRequestErrorEvent(Ejs *ejs, EjsRequest *req);

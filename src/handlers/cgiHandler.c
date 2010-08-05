@@ -280,7 +280,7 @@ static void pushDataToCgi(HttpQueue *q)
     mprAssert(cmd);
     conn = q->conn;
 
-    for (packet = httpGetPacket(q); packet && conn->state < HTTP_STATE_ERROR; packet = httpGetPacket(q)) {
+    for (packet = httpGetPacket(q); packet && conn->state < HTTP_STATE_COMPLETE; packet = httpGetPacket(q)) {
         buf = packet->content;
         len = mprGetBufLength(buf);
         mprAssert(len > 0);
@@ -325,8 +325,8 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
         Write to the browser. We write as much as we can. Service queues to get the filters and connectors pumping.
      */
     for (servicedQueues = 0; (len = mprGetBufLength(buf)) > 0 ; ) {
-        if (conn->state < HTTP_STATE_ERROR) {
-            rc = httpWriteBlock(q, mprGetBufStart(buf), len, 0);
+        if (conn->state < HTTP_STATE_COMPLETE) {
+            rc = httpWriteBlock(q, mprGetBufStart(buf), len);
             mprLog(cmd, 5, "Write to browser ask %d, actual %d", len, rc);
         } else {
             rc = len;
@@ -395,7 +395,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
         break;
     }
     if (conn->state == HTTP_STATE_COMPLETE) {
-        httpAdvanceReceiver(conn, NULL);
+        httpAdvanceRx(conn, NULL);
     }
 }
 
@@ -413,11 +413,17 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
     tx = conn->tx;
     mprResetBufIfEmpty(buf);
 
-    /*
-        Read as much data from the CGI as possible
-     */
     while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock) {
-        while ((space = mprGetBufSpace(buf)) > 0) {
+        do {
+            /*
+                Read as much data from the CGI as possible
+             */
+            if ((space = mprGetBufSpace(buf)) == 0) {
+                mprGrowBuf(buf, MPR_BUFSIZE);
+                if ((space = mprGetBufSpace(buf)) == 0) {
+                    break;
+                }
+            }
             nbytes = mprReadCmdPipe(cmd, channel, mprGetBufEnd(buf), space);
             if (nbytes < 0) {
                 err = mprGetError();
@@ -447,7 +453,8 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 traceData(cmd, mprGetBufStart(buf), nbytes);
                 mprAddNullToBuf(buf);
             }
-        }
+        } while ((space = mprGetBufSpace(buf)) > 0);
+
         if (mprGetBufLength(buf) == 0 || processCgiData(q, cmd, channel, buf) < 0) {
             break;
         }
@@ -549,7 +556,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
     HttpQueue   *q;
     MprBuf      *buf;
     char        *endHeaders, *headers, *key, *value, *location;
-    int         len;
+    int         fd, len;
 
     tx = conn->tx;
     location = 0;
@@ -562,9 +569,13 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
         Split the headers from the body.
      */
     len = 0;
-    if ((endHeaders = strstr(headers, "\r\n\r\n")) == NULL) {
+    fd = mprGetCmdFd(cmd, MPR_CMD_STDOUT);
+    if (fd >= 0 && (endHeaders = strstr(headers, "\r\n\r\n")) == NULL) {
         if ((endHeaders = strstr(headers, "\n\n")) == NULL) {
-            return 1;
+            if (strlen(headers) < HTTP_MAX_HEADERS) {
+                /* Not EOF and less than max headers and have not yet seen an end of headers delimiter */
+                return 0;
+            }
         } 
         len = 2;
     } else {
@@ -629,7 +640,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
         q = tx->queue[HTTP_QUEUE_TRANS].nextQ;
         httpFinalize(conn);
         if (conn->state == HTTP_STATE_COMPLETE) {
-            httpAdvanceReceiver(conn, NULL);
+            httpAdvanceRx(conn, NULL);
         }
     }
     return 1;

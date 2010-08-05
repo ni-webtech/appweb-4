@@ -937,9 +937,11 @@ static void mark(Ejs *ejs, int generation)
     if (ejs->search) {
         ejsMark(ejs, ejs->search);
     }
+#if UNUSED
     if (ejs->sessions) {
         ejsMark(ejs, ejs->sessions);
     }
+#endif
     if (ejs->applications) {
         ejsMark(ejs, ejs->applications);
     }
@@ -9462,9 +9464,10 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
     char        *prefix, *tag, *amsg, lbuf[16], buf[MPR_MAX_STRING];
 
     //  MOB - not thread safe
-    if (solo++ > 0) {
+    if (solo > 0) {
         return;
     }
+    solo++;
     mpr = mprGetMpr(ctx);
     prefix = mpr->name;
     amsg = NULL;
@@ -9909,7 +9912,7 @@ EjsObj *ejsInvokeOperator(Ejs *ejs, EjsObj *obj, int opCode, EjsObj *rhs)
 {
     mprAssert(obj);
 
-    mprAssert(obj->type->helpers.invokeOperator);
+     mprAssert(obj->type->helpers.invokeOperator);
     return (obj->type->helpers.invokeOperator)(ejs, obj, opCode, rhs);
 }
 
@@ -18425,7 +18428,6 @@ int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite)
             } else {
                 ejsBlendObject(ejs, dp, vp, overwrite);
             }
-
         } else {
             /* Primitive type (including arrays) */
             if (overwrite) {
@@ -19322,7 +19324,7 @@ static EjsObj *http_setLimits(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 }
 
 
-static int getNum(Ejs *ejs, EjsObj *options, cchar *field)
+static int getNumOption(Ejs *ejs, EjsObj *options, cchar *field)
 {
     EjsObj      *obj;
     EjsName     n;
@@ -19344,17 +19346,17 @@ static void setupTrace(Ejs *ejs, MprCtx ctx, HttpTrace *trace, int dir, EjsObj *
 
     tp = &trace[dir];
     levels = tp->levels;
-    if ((level = getNum(ejs, options, "all")) >= 0) {
+    if ((level = getNumOption(ejs, options, "all")) >= 0) {
         for (i = 0; i < HTTP_TRACE_MAX_ITEM; i++) {
             levels[i] = level;
         }
     } else {
-        levels[HTTP_TRACE_CONN] = getNum(ejs, options, "conn");
-        levels[HTTP_TRACE_FIRST] = getNum(ejs, options, "first");
-        levels[HTTP_TRACE_HEADER] = getNum(ejs, options, "headers");
-        levels[HTTP_TRACE_BODY] = getNum(ejs, options, "body");
+        levels[HTTP_TRACE_CONN] = getNumOption(ejs, options, "conn");
+        levels[HTTP_TRACE_FIRST] = getNumOption(ejs, options, "first");
+        levels[HTTP_TRACE_HEADER] = getNumOption(ejs, options, "headers");
+        levels[HTTP_TRACE_BODY] = getNumOption(ejs, options, "body");
     }
-    tp->size = getNum(ejs, options, "size");
+    tp->size = getNumOption(ejs, options, "size");
     if ((extensions = (EjsArray*) ejsGetPropertyByName(ejs, options, EN(&n, "include"))) != 0) {
         if (!ejsIsArray(extensions)) {
             ejsThrowArgError(ejs, "include is not an array");
@@ -23830,6 +23832,26 @@ static int cmpQname(EjsName *a, EjsName *b)
     }
     return 0;
 }
+
+
+int ejsCompactObject(Ejs *ejs, EjsObj *obj)
+{
+    EjsSlot     *slots, *src, *dest;
+    int         i, removed;
+
+    src = dest = slots = obj->slots;
+    for (removed = i = 0; i < obj->numSlots; i++, src++) {
+        if (src->value.ref == 0 || src->value.ref == ejs->undefinedValue || src->value.ref == ejs->nullValue) {
+            removed++;
+            continue;
+        }
+        *dest++ = *src;
+    }
+    obj->numSlots -= removed;
+    ejsMakeObjHash(obj);
+    return obj->numSlots;
+}
+
 
 /*
     function get constructor(): Object
@@ -36559,7 +36581,9 @@ static EjsObj *hs_setLimits(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
     }
     ejsBlendObject(ejs, sp->limits, argv[0], 1);
     if (sp->server) {
-        ejsSetHttpLimits(ejs, sp->server->limits, sp->limits, 1);
+        limits = sp->server->limits;
+        ejsSetHttpLimits(ejs, limits, sp->limits, 1);
+        ejsUpdateSessionLimits(ejs, sp);
     }
     return 0;
 }
@@ -37208,6 +37232,9 @@ static void markHttpServer(Ejs *ejs, EjsHttpServer *sp)
     if (sp->incomingStages) {
         ejsMark(ejs, (EjsObj*) sp->incomingStages);
     }
+    if (sp->sessions) {
+        ejsMark(ejs, (EjsObj*) sp->sessions);
+    }
 }
 
 
@@ -37514,6 +37541,9 @@ static EjsObj *createResponseHeaders(Ejs *ejs, EjsRequest *req)
  */
 static EjsSession *getSession(Ejs *ejs, EjsRequest *req, int create)
 {
+    HttpConn    *conn;
+
+    conn = req->conn;
     if (req->session) {
         return req->session;
     }
@@ -37521,8 +37551,7 @@ static EjsSession *getSession(Ejs *ejs, EjsRequest *req, int create)
         req->session = ejsCreateSession(ejs, req, 0, 0);
     }
     if (req->session) {
-        //  TODO - SECURE (last arg) ?
-        httpSetCookie(req->conn, EJS_SESSION, req->session->id, "/", NULL, 0, 0);
+        httpSetCookie(req->conn, EJS_SESSION, req->session->id, "/", NULL, 0, conn->secure);
     }
     return req->session;
 }
@@ -37817,7 +37846,9 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         }
         if (req->session) {
             return createString(ejs, req->session->id);
-        } else return ejs->nullValue;
+        } else {
+            return ejs->nullValue;
+        }
 
     case ES_ejs_web_Request_status:
         return ejsCreateNumber(ejs, conn->tx->status);
@@ -38287,6 +38318,7 @@ static EjsObj *req_setLimits(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     }
     ejsBlendObject(ejs, req->limits, argv[0], 1);
     ejsSetHttpLimits(ejs, req->conn->limits, req->limits, 0);
+    ejsSetSessionTimeout(ejs, req->session, req->conn->limits->sessionTimeout);
     return 0;
 }
 
@@ -38580,7 +38612,7 @@ void ejsConfigureRequestType(Ejs *ejs)
 
 
 static void noteSessionActivity(Ejs *ejs, EjsSession *sp);
-static void sessionTimer(Ejs *ejs, MprEvent *event);
+static void sessionTimer(EjsHttpServer *sp, MprEvent *event);
 
 
 static EjsObj *getSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum)
@@ -38588,7 +38620,6 @@ static EjsObj *getSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum)
     EjsObj      *vp;
     Ejs         *master;
 
-    //  MOB -- convenience API for this
     master = ejs->master ? ejs->master : ejs;
     ejsLockVm(master);
     vp = ejs->objectType->helpers.getProperty(ejs, (EjsObj*) sp, slotNum);
@@ -38659,90 +38690,74 @@ static void noteSessionActivity(Ejs *ejs, EjsSession *sp)
 }
 
 
-/*  
-    Check for expired sessions
- */
-static void sessionTimer(Ejs *ejs, MprEvent *event)
+void ejsSetSessionTimeout(Ejs *ejs, EjsSession *sp, int timeout)
 {
-    Ejs             *master;
-    EjsObj          *sessions;
-    EjsSession      *session;
-    MprTime         now;
-    int             i, count, deleted;
+    sp->expire = mprGetTime(ejs) + timeout;
+}
 
-    now = mprGetTime(ejs);
 
-    sessions = ejs->sessions;
-    master = ejs->master ? ejs->master : ejs;
+void ejsUpdateSessionLimits(Ejs *ejs, EjsHttpServer *server)
+{
+    EjsSession  *session;
+    MprTime     now;
+    int         i, count, timeout;
 
-    /*  
-        This could be on the primary event thread. Can't block long.
-     */
-    if (mprTryLock(master->mutex)) {
-        count = ejsGetPropertyCount(master, (EjsObj*) sessions);
-        deleted = 0;
+    if (server->sessions) {
+        timeout = server->server->limits->sessionTimeout;
+        now = mprGetTime(ejs);
+        count = ejsGetPropertyCount(ejs, (EjsObj*) server->sessions);
         for (i = count - 1; i >= 0; i--) {
-            session = ejsGetProperty(master, (EjsObj*) sessions, i);
-            if (session->obj.type == ejs->sessionType) {
-                if (session && session->expire <= now) {
-                    ejsDeleteProperty(master, (EjsObj*) sessions, i);
-                    deleted++;
-                }
-            }
+            session = ejsGetProperty(ejs, (EjsObj*) server->sessions, i);
+            session->expire = now + timeout;
         }
-        if (deleted) {
-            //  MOB -- probably better to do at idle time
-            ejsCollectGarbage(master, EJS_GEN_NEW);
-        }
-        if (count == 0) {
-            ejs->sessionTimer = 0;
-            mprFree(event);
-        }
-        mprUnlock(master->mutex);
     }
 }
 
 
 EjsSession *ejsGetSession(Ejs *ejs, EjsRequest *req)
 {
-    Ejs            *master;
+    Ejs             *master;
     EjsName         qname;
     EjsSession      *session;
+    EjsHttpServer   *server;
     cchar           *cookies, *cookie;
     char            *id, *cp, *value;
     int             quoted, len;
 
     master = ejs->master ? ejs->master : ejs;
+    server = req->server;
     session = 0;
 
-    cookies = httpGetCookies(req->conn);
-    for (cookie = cookies; cookie && (value = strstr(cookie, EJS_SESSION)) != 0; cookie = value) {
-        value += strlen(EJS_SESSION);
-        while (isspace((int) *value) || *value == '=') {
-            value++;
-        }
-        quoted = 0;
-        if (*value == '"') {
-            value++;
-            quoted++;
-        }
-        for (cp = value; *cp; cp++) {
-            if (quoted) {
-                if (*cp == '"' && cp[-1] != '\\') {
-                    break;
-                }
-            } else {
-                if ((*cp == ',' || *cp == ';') && cp[-1] != '\\') {
-                    break;
+    if (server->sessions) {
+        cookies = httpGetCookies(req->conn);
+        for (cookie = cookies; cookie && (value = strstr(cookie, EJS_SESSION)) != 0; cookie = value) {
+            value += strlen(EJS_SESSION);
+            while (isspace((int) *value) || *value == '=') {
+                value++;
+            }
+            quoted = 0;
+            if (*value == '"') {
+                value++;
+                quoted++;
+            }
+            for (cp = value; *cp; cp++) {
+                if (quoted) {
+                    if (*cp == '"' && cp[-1] != '\\') {
+                        break;
+                    }
+                } else {
+                    if ((*cp == ',' || *cp == ';') && cp[-1] != '\\') {
+                        break;
+                    }
                 }
             }
+            len = cp - value;
+            id = mprMemdup(req, value, len + 1);
+            id[len] = '\0';
+            session = ejsGetPropertyByName(master, server->sessions, ejsName(&qname, "", id));
+            mprFree(id);
+            break;
         }
-        len = cp - value;
-        id = mprMemdup(req, value, len + 1);
-        id[len] = '\0';
-        session = ejsGetPropertyByName(master, (EjsObj*) ejs->sessions, ejsName(&qname, "", id));
-        mprFree(id);
-        break;
     }
     return session;
 }
@@ -38757,16 +38772,20 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     Ejs             *master;
     EjsSession      *session;
     EjsName         qname;
-    MprTime         now, expire;
+    EjsHttpServer   *server;
+    HttpLimits      *limits;
+    MprTime         now;
     char            idBuf[64], *id;
-    int             slotNum, next;
+    int             count, slotNum, next;
 
     master = ejs->master ? ejs->master : ejs;
+    server = req->server;
+    limits = server->server->limits;
+
     if (timeout <= 0) {
-        timeout = ejs->sessionTimeout;
+        timeout = limits->sessionTimeout;
     }
     now = mprGetTime(ejs);
-    expire = now + (timeout * MPR_TICKS_PER_SEC);
 
     ejsLockVm(master);
     session = (EjsSession*) ejsCreateObject(master, ejs->sessionType, 0);
@@ -38775,12 +38794,12 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
         return 0;
     }
     session->timeout = timeout;
-    session->expire = mprGetTime(ejs) + timeout * MPR_TICKS_PER_SEC;
+    session->expire = now + timeout;
     /*  
         Use an MD5 prefix of "x" to avoid the hash being interpreted as a numeric index.
      */
     next = ejs->nextSession++;
-    mprSprintf(ejs, idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(ejs) + + PTOI(expire), (int) now, next);
+    mprSprintf(ejs, idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(ejs) + PTOI(session->expire), (int) now, next);
     id = mprGetMD5Hash(session, idBuf, sizeof(idBuf), "x");
     if (id == 0) {
         mprFree(session);
@@ -38789,7 +38808,17 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     }
     session->id = mprStrdup(session, id);
 
-    slotNum = ejsSetPropertyByName(master, ejs->sessions, EN(&qname, session->id), session);
+    if (server->sessions == 0) {
+        server->sessions = ejsCreateSimpleObject(ejs);
+    }
+    count = ejsGetPropertyCount(ejs, (EjsObj*) server->sessions);
+    if (count >= limits->sessionCount) {
+        ejsThrowResourceError(ejs, "Too many sessions: %d", count);
+        mprFree(session);
+        ejsUnlockVm(master);
+        return 0;
+    }
+    slotNum = ejsSetPropertyByName(master, server->sessions, EN(&qname, session->id), session);
     if (slotNum < 0) {
         mprFree(session);
         ejsUnlockVm(master);
@@ -38797,15 +38826,15 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     }
     session->index = slotNum;
 
-    if (ejs->sessionTimer == 0) {
-        ejs->sessionTimer = mprCreateTimerEvent(mprGetDispatcher(ejs), "sessionTimer", EJS_TIMER_PERIOD, 
-            (MprEventProc) sessionTimer, ejs, MPR_EVENT_CONTINUOUS);
+    if (server->sessionTimer == 0) {
+        server->sessionTimer = mprCreateTimerEvent(ejs->dispatcher, "sessionTimer", EJS_TIMER_PERIOD, 
+            (MprEventProc) sessionTimer, server, MPR_EVENT_CONTINUOUS);
     }
     ejsUnlockVm(master);
 
-    mprLog(ejs, 3, "Created new session %s", id);
-    if (req->server->emitter) {
-        ejsSendEvent(ejs, req->server->emitter, "createSession", NULL, (EjsObj*) ejsCreateString(ejs, id));
+    mprLog(ejs, 3, "Created new session %s. Count %d/%d", id, slotNum + 1, limits->sessionCount);
+    if (server->emitter) {
+        ejsSendEvent(ejs, server->emitter, "createSession", NULL, (EjsObj*) ejsCreateString(ejs, id));
     }
     return session;
 }
@@ -38820,34 +38849,104 @@ int ejsDestroySession(Ejs *ejs, EjsHttpServer *server, EjsSession *session)
     EjsName     qname;
     int         slotNum;
 
-    if (session) {
+    if (session && server->sessions) {
         master = ejs->master ? ejs->master : ejs;
         if (server) {
             ejsSendEvent(ejs, server->emitter, "destroySession", NULL, (EjsObj*) ejsCreateString(ejs, session->id));
         }
-        if ((slotNum = ejsLookupProperty(master, (EjsObj*) ejs->sessions, EN(&qname, session->id))) >= 0) {
-            ejsDeleteProperty(master, (EjsObj*) ejs->sessions, slotNum);
+        if ((slotNum = ejsLookupProperty(master, server->sessions, EN(&qname, session->id))) >= 0) {
+            ejsDeleteProperty(master, server->sessions, slotNum);
             return 1;
         }
-#if OLD
-        MprTime     now;
-        now = mprGetTime(ejs);
-        if (session->expire <= now) {
-            ejsDeletePropertyByName(master, (EjsObj*) ejs->sessions, EN(&qname, session->id));
-            return 1;
-        }
-#endif
     }
     return 0;
 }
 
 
+#if UNUSED
 /*  
     function get count(): Number
  */
 static EjsObj *sess_count(Ejs *ejs, EjsSession *sp, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejsCreateNumber(ejs, ejsGetPropertyCount(ejs, ejs->sessions));
+}
+#endif
+
+
+/*  
+    Check for expired sessions
+ */
+static void sessionTimer(EjsHttpServer *server, MprEvent *event)
+{
+    Ejs             *ejs;
+    EjsObj          *sessions;
+    EjsSession      *session;
+    MprTime         now;
+    HttpLimits      *limits;
+    int             i, count, soon, redline;
+
+    sessions = server->sessions;
+    ejs = server->ejs;
+
+    /*  
+        This could be on the primary event thread. Can't block long.  MOB -- is this lock really needed
+     */
+    if (sessions && mprTryLock(ejs->mutex)) {
+        limits = server->server->limits;
+        count = ejsGetPropertyCount(ejs, (EjsObj*) sessions);
+        mprLog(ejs, 6, "Check for sessions count %d/%d", count, limits->sessionCount);
+        now = mprGetTime(server);
+
+        /*
+            Start pruning at 80% of the max
+         */
+        redline = limits->sessionCount * 8 / 10;
+        if (count > redline) {
+            /* Expire oldest sessions */
+            /*
+                One quick swipe to find sessions that are 80% expired
+             */
+            soon = limits->sessionTimeout / 5;
+            for (i = count - 1; i >= 0; i--) {
+                if ((session = ejsGetProperty(ejs, (EjsObj*) sessions, i)) == 0) {
+                    continue;
+                }
+                printf("CMP %d with %d\n", (int) ((session->expire - now) / 1000), ((int) soon / 1000));
+                if ((session->expire - now) < soon) {
+                    mprLog(ejs, 3, "Too many sessions. Pruning session %s", session->id);
+                    ejsDeleteProperty(ejs, (EjsObj*) sessions, i);
+                    count--;
+                }
+            }
+        }
+        for (i = count - 1; i >= 0; i--) {
+            if ((session = ejsGetProperty(ejs, (EjsObj*) sessions, i)) == 0) {
+                continue;
+            }
+            if (session->obj.type == ejs->sessionType) {
+                mprLog(ejs, 7, "Check session %s timeout %d, expires %d secs", session->id, 
+                   session->timeout / MPR_TICKS_PER_SEC,
+                   (int) (session->expire - now) / MPR_TICKS_PER_SEC);
+                if (count > limits->sessionCount) {
+                    mprLog(ejs, 3, "Too many sessions. Pruning session %s", session->id);
+                    ejsDeleteProperty(ejs, (EjsObj*) sessions, i);
+                    count--;
+                }  
+                if (session->expire <= now) {
+                    mprLog(ejs, 3, "Session expired: %s (timeout %d secs)", 
+                        session->id, session->timeout / MPR_TICKS_PER_SEC);
+                    ejsDeleteProperty(ejs, (EjsObj*) sessions, i);
+                }
+            }
+        }
+        count = ejsCompactObject(ejs, sessions);
+        if (count == 0) {
+            server->sessionTimer = 0;
+            mprFree(event);
+        }
+        mprUnlock(ejs->mutex);
+    }
 }
 
 
@@ -38862,13 +38961,9 @@ void ejsConfigureSessionType(Ejs *ejs)
     helpers->getPropertyByName = (EjsGetPropertyByNameHelper) getSessionPropertyByName;
     helpers->setProperty = (EjsSetPropertyHelper) setSessionProperty;
 
+#if UNUSED
     ejsBindMethod(ejs, type, ES_ejs_web_Session_count, (EjsFun) sess_count);
-
-    //  MOB -- could this be a simple static object in Session?
-    ejs->sessions = ejsCreateSimpleObject(ejs);
-
-    //  MOB -- should come from ejsrc
-    ejs->sessionTimeout = EJS_SESSION_TIMEOUT;
+#endif
 }
 
 
@@ -38963,6 +39058,7 @@ static EjsObj *req_worker(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     }
 #endif
     conn = req->conn;
+    nreq = 0;
 #if FUTURE
     nreq = ejsCloneRequest(ejs, req, 1);
 #endif
