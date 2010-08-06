@@ -3,7 +3,7 @@
  */
 
 if (!test || test.config["php"] == 1) {
-    const HTTP = (global.session && session["http"]) || ":4100"
+    const HTTP = (global.tsession && tsession["http"]) || ":4100"
     let http: Http = new Http
 
     //  Simple Get 

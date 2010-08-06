@@ -2,7 +2,7 @@
     badUrl.tst - Stress test malformed URLs 
  */
 
-const HTTP = (global.session && session["http"]) || ":4100"
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
 //  TODO - this will be more meaningful when ejs supports unicode

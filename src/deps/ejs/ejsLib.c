@@ -171,7 +171,11 @@ static EjsObj *createException(Ejs *ejs, EjsType *type, cchar* fmt, va_list fmtA
         error = (EjsError*) ejsCreateInstance(ejs, type, 1, argv);
     }
 #else
-    error = (EjsError*) ejsCreateInstance(ejs, type, 1, argv);
+    if (ejs->errorType->constructor.body.proc) {
+        error = (EjsError*) ejsCreateInstance(ejs, type, 1, argv);
+    } else {
+        error = ejsCreateObject(ejs, type, 0);
+    }
 #endif
     mprFree(msg);
     return (EjsObj*) error;
@@ -2435,7 +2439,6 @@ static void *opcodeJump[] = {
                 uint *ui = (uint*) FRAME->pc;
                 *ui = ejsEncodeUint(mark, lookup.slotNum);
             }
-
             FILL(mark);
             BREAK;
 #endif
@@ -7136,7 +7139,7 @@ static int loadScriptModule(Ejs *ejs, cchar *filename, int minVersion, int maxVe
         ejsThrowIOError(ejs, "Bad module file format in %s", path);
         status = MPR_ERR_CANT_LOAD;
 
-    } if (swapWord(ejs, hdr.fileVersion) != EJS_MODULE_VERSION) {
+    } else if (swapWord(ejs, hdr.fileVersion) != EJS_MODULE_VERSION) {
         ejsThrowIOError(ejs, "Incompatible module file format in %s", path);
         status = MPR_ERR_CANT_LOAD;
 
@@ -8756,6 +8759,12 @@ Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *searchPath, MprList *require, i
             mprFree(ejs);
             return 0;
         }
+#if UNUSED
+        if (ejs->flags & EJS_FLAG_NO_INIT) {
+            /* Always need the Error type */
+            ejsConfigureErrorType(ejs);
+        }
+#endif
     } else {
         cloneMaster(ejs, master);
     }
@@ -15899,8 +15908,10 @@ static EjsObj *errorConstructor(Ejs *ejs, EjsError *error, int argc, EjsObj **ar
     if (argc > 0) {
         ejsSetProperty(ejs, error, ES_Error_message, ejsToString(ejs, argv[0]));
     }
-    ejsSetProperty(ejs, error, ES_Error_timestamp, ejsCreateDate(ejs, mprGetTime(ejs)));
-    ejsSetProperty(ejs, error, ES_Error_stack, ejsCaptureStack(ejs, 0));
+    if (ejs->dateType) {
+        ejsSetProperty(ejs, error, ES_Error_timestamp, ejsCreateDate(ejs, mprGetTime(ejs)));
+        ejsSetProperty(ejs, error, ES_Error_stack, ejsCaptureStack(ejs, 0));
+    }
     return (EjsObj*) error;
 }
 
@@ -15974,6 +15985,7 @@ static void configureType(Ejs *ejs, cchar *name)
     EjsType     *type;
 
     type = ejsGetTypeByName(ejs, "ejs", name);
+    mprAssert(type);
     ejsBindConstructor(ejs, type, (EjsProc) errorConstructor);
 }
 
@@ -22995,10 +23007,9 @@ static void destroyObject(Ejs *ejs, EjsObj *vp)
 static EjsObj *getObjectProperty(Ejs *ejs, EjsObj *obj, int slotNum)
 {
     mprAssert(obj);
-    mprAssert(obj->slots);
     mprAssert(slotNum >= 0);
 
-    if (slotNum < 0 || slotNum >= obj->numSlots) {
+    if (obj->slots == 0 || slotNum < 0 || slotNum >= obj->numSlots) {
         ejsThrowReferenceError(ejs, "Property at slot \"%d\" is not found", slotNum);
         return 0;
     }
@@ -32589,45 +32600,47 @@ static int reapJoins(Ejs *ejs, EjsObj *workers)
 {
     EjsWorker   *worker;
     EjsArray    *set;
-    int         i, completed;
+    int         i, completed, joined;
 
     lock(ejs);
+    completed = 0;
+    joined = 0;
+
     if (workers == 0 || workers == ejs->nullValue) {
         /* Join all */
-        completed = 0;
         for (i = 0; i < mprGetListCount(ejs->workers); i++) {
             worker = mprGetItem(ejs->workers, i);
             if (worker->state >= EJS_WORKER_COMPLETE) {
+                worker->obj.permanent = 0;
                 completed++;
             }
         }
         if (completed == mprGetListCount(ejs->workers)) {
-            unlock(ejs);
-            return 1;
+            joined = 1;
         }
     } else if (ejsIsArray(workers)) {
         /* Join a set */
         set = (EjsArray*) workers;
         for (i = 0; i < set->length; i++) {
             worker = (EjsWorker*) set->data[i];
-            if (worker->state < EJS_WORKER_COMPLETE) {
-                break;
+            if (worker->state >= EJS_WORKER_COMPLETE) {
+                worker->obj.permanent = 0;
+                completed++;
             }
         }
-        if (i >= set->length) {
-            unlock(ejs);
-            return 1;
+        if (completed == set->length) {
+            joined = 1;
         }
     } else if (workers->type == ejs->workerType) {
         /* Join one worker */
         worker = (EjsWorker*) workers;
         if (worker->state >= EJS_WORKER_COMPLETE) {
-            unlock(ejs);
-            return 1;
+            worker->obj.permanent = 0;
+            joined = 1;
         }
     }
     unlock(ejs);
-    return 0;
+    return joined;
 }
 
 
@@ -32817,10 +32830,12 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
         worker->state = EJS_WORKER_COMPLETE;
         LOG(ejs, 5, "Worker.doMessage: complete");
         removeWorker(ejs, worker);
+#if UNUSED
         /*
             Now that the inside worker is complete, the outside worker does not need to be protected from GC
          */
         worker->obj.permanent = 0;
+#endif
     }
     worker->event = 0;
     mprFree(msg);
@@ -37241,8 +37256,10 @@ static void markHttpServer(Ejs *ejs, EjsHttpServer *sp)
 static void destroyHttpServer(Ejs *ejs, EjsHttpServer *sp)
 {
     ejsSendEvent(ejs, sp->emitter, "close", NULL, (EjsObj*) sp);
-    mprFree(sp->server);
-    sp->server = 0;
+    if (sp->server) {
+        mprFree(sp->server);
+        sp->server = 0;
+    }
 }
 
 
@@ -38318,7 +38335,9 @@ static EjsObj *req_setLimits(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     }
     ejsBlendObject(ejs, req->limits, argv[0], 1);
     ejsSetHttpLimits(ejs, req->conn->limits, req->limits, 0);
-    ejsSetSessionTimeout(ejs, req->session, req->conn->limits->sessionTimeout);
+    if (req->session) {
+        ejsSetSessionTimeout(ejs, req->session, req->conn->limits->sessionTimeout);
+    }
     return 0;
 }
 
@@ -46697,7 +46716,9 @@ static void genUnboundName(EcCompiler *cp, EcNode *np)
         popStack(cp, 1);
         pushStack(cp, (state->onLeft) ? -1 : 1);
 
+#if UNUSED
     } else if (owner == ejs->global) {
+        /* Can't do early binding. Using Function.call/apply may change scope chain and invalidate the early-bound global */
         if (np->needThis) {
             mprAssert(0);
             ecEncodeOpcode(cp, EJS_OP_LOAD_GLOBAL);
@@ -46715,6 +46736,7 @@ static void genUnboundName(EcCompiler *cp, EcNode *np)
          */
         popStack(cp, 1);
         pushStack(cp, (state->onLeft) ? -1 : 1);
+#endif
 
     } else if (lookup->useThis) {
         ecEncodeOpcode(cp, EJS_OP_LOAD_THIS);

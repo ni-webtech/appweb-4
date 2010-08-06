@@ -2,7 +2,7 @@
     dir.tst - Directory GET tests
  */
 
-const HTTP = (global.session && session["http"]) || ":4100"
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
 /*  TODO DIRECTORY LISTINGS NEEDED 

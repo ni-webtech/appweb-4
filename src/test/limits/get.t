@@ -5,7 +5,7 @@
 //  TODO - should be able to have a module test.http.get
 module test.http.getmethod {
 
-    const HTTP = session["http"]
+    const HTTP = tsession["http"]
     const URL = HTTP + "/index.html"
     const BIG = HTTP + "/big.ejs"
 

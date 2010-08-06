@@ -2,7 +2,7 @@
     digest.tst - Digest authentication tests
  */
 
-const HTTP = (global.session && session["http"]) || ":4100"
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
 http.setCredentials("anybody", "PASSWORD WONT MATTER")

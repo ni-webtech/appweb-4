@@ -4,7 +4,7 @@
 
 if (test.depth > 1) {
 
-    const HTTP = (global.session && session["http"]) || ":4100"
+    const HTTP = (global.tsession && tsession["http"]) || ":4100"
 
     let command = "/usr/bin/env http --host " + HTTP + " "
     if (test.verbosity > 2) {

@@ -2,7 +2,7 @@
     upload.tst - Stress test uploads
  */
 
-const HTTP = (global.session && session["http"]) || ":4100"
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
 const TESTFILE = "stress/upload-" + hashcode(self) + ".tdat"
 
 let http: Http = new Http

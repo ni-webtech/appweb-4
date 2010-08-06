@@ -2,7 +2,7 @@
     stream.tst - Http tests using streams
  */
 
-const HTTP = (global.session && session["http"]) || ":4100"
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
 http.get(HTTP + "/big.ejs")

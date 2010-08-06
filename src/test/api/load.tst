@@ -3,7 +3,7 @@
  */
 
 if (false && test.depth >= 3) {
-    let command = locate("testAppweb") + " --host " + session["host"] + " --name mpr.api.c --iterations 400 " + 
+    let command = locate("testAppweb") + " --host " + tsession["host"] + " --name mpr.api.c --iterations 400 " + 
         test.mapVerbosity(-2)
 
     testCmd(command)

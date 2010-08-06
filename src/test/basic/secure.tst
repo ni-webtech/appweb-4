@@ -3,8 +3,8 @@
  */
 
 if (!test || test.config["ssl"] == 1) {
-    const HTTP = (global.session && session["http"]) || ":4100"
-    const HTTPS = (global.session && session["https"]) || ":4100"
+    const HTTP = (global.tsession && tsession["http"]) || ":4100"
+    const HTTPS = (global.tsession && tsession["https"]) || ":4100"
     let http: Http = new Http
 
     http.get(HTTP + "/index.html")

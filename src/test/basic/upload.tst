@@ -2,7 +2,7 @@
     upload.tst - File upload tests
  */
 
-const HTTP = (global.session && session["http"]) || ":4100"
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
 http.upload(HTTP + "/upload.ejs", { myfile: "test.dat"} )

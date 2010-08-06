@@ -7,8 +7,8 @@ let nc
 try { nc = sh("which nc"); } catch {}
 
 if (test.depth > 0 && nc && Config.OS != "WIN") {
-    const HTTP = (global.session && session["http"]) || ":4100"
-    const PORT = (global.session && session["port"]) || "4100"
+    const HTTP = (global.tsession && tsession["http"]) || ":4100"
+    const PORT = (global.tsession && tsession["port"]) || "4100"
     testCmd("cat 01000-chunk.dat | nc 127.0.0.1 " + PORT);
 
     sh("cc -o tcp tcp.c")

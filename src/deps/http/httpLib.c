@@ -3620,8 +3620,10 @@ static int httpTimer(Http *http, MprEvent *event)
             diff = (conn->lastActivity + requestTimeout) - http->now;
             inactivity = 0;
         }
-        if (diff < 0) {
+        if (diff < 0 && !conn->complete) {
+#if UNUSED
             httpRemoveConn(http, conn);
+#endif
             if (conn->rx) {
                 if (inactivity) {
                     httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
@@ -3632,6 +3634,8 @@ static int httpTimer(Http *http, MprEvent *event)
                 }
             } else {
                 mprLog(http, 4, "Idle connection timed out");
+                conn->complete = 1;
+                mprDisconnectSocket(conn->sock);
             }
         }
     }
@@ -8283,6 +8287,7 @@ static void adjustSendVec(HttpQueue *q, int written)
 
 
 static int destroyServer(HttpServer *server);
+static int destroyServerConnections(HttpServer *server);
 
 /*
     Create a server listening on ip:port. NOTE: ip may be empty which means bind to all addresses.
@@ -8317,10 +8322,33 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
 
 static int destroyServer(HttpServer *server)
 {
+    mprLog(server, 4, "Destroy server %s", server->name);
     if (server->waitHandler.fd >= 0) {
         mprRemoveWaitHandler(&server->waitHandler);
     }
+    destroyServerConnections(server);
     mprFree(server->sock);
+    return 0;
+}
+
+
+static int destroyServerConnections(HttpServer *server)
+{
+    HttpConn    *conn;
+    Http        *http;
+    int         next;
+
+    http = server->http;
+    lock(http);
+
+    for (next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; ) {
+        if (conn->server == server) {
+            httpRemoveConn(http, conn);
+            conn->server = 0;
+            mprFree(conn);
+        }
+    }
+    unlock(http);
     return 0;
 }
 

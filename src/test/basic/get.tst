@@ -2,7 +2,7 @@
     get.tst - Http GET tests
  */
 
-const HTTP = (global.session && session["http"]) || ":4100"
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
 //  Basic get. Validate response code and contents

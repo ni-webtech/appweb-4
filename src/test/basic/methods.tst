@@ -2,7 +2,7 @@
     methods.tst - Test misc Http methods
  */
 
-const HTTP = (global.session && session["http"]) || ":4100"
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
 //  Put a file

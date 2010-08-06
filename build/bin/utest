@@ -70,7 +70,7 @@ enumerable class Test {
     var skippedCount: Number = 0
     var testCount: Number = 0
 
-    public var session = { }
+    public var tsession = { }
         
     function Test() {
         program = Path(App.args[0]).basename
@@ -163,7 +163,7 @@ enumerable class Test {
             "  --log logFile         # Send output to a log file \n" + 
             "  --name testName       # Set test name\n" + 
             "  --noserver            # Don't run server side of tests\n" + 
-            "  --os O/S              # Set test name\n" + 
+            "  --os O/S              # Set operating system\n" + 
             "  --second              # Second instance. Bypass some initializations\n" + 
             "  --step                # Single step tests\n" + 
             "  --threads count       # Number of test threads\n" + 
@@ -302,7 +302,7 @@ enumerable class Test {
             data = deserialize(\'' + estr.replace(/\\/g, "\\\\") + '\')
 
             public var test: Test = new Test
-            public var session: Object
+            public var tsession: Object
 
             test.depth = data.depth
             test.bin = Path(data.bin)
@@ -317,7 +317,7 @@ enumerable class Test {
             test.config = data.config
             blend(App.config.test, test.config, false)
             // test.multithread = test.config.multithread
-            session = data.session
+            tsession = data.tsession
             if (data.logPath) {
                 test.setLogPath(Path(data.logPath))
             }
@@ -335,7 +335,7 @@ enumerable class Test {
             log: logPath,
             os: _os, 
             phase: phase,
-            session: session,
+            tsession: tsession,
             threads: threads, 
             top: _top, 
             verbosity: verbosity, 
@@ -357,7 +357,7 @@ enumerable class Test {
                 test.skippedMsg = obj.skip
                 test.skippedCount++
             } else if (obj.key) {
-                test.session[obj.key] = obj.value
+                test.tsession[obj.key] = obj.value
             }
         }
         w.onerror = function (e) {

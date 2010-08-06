@@ -2,7 +2,7 @@
     Terminate unit tests
  */
 
-pidfile = session["appwebPidFile"]
+pidfile = tsession["appwebPidFile"]
 if (pidfile && exists(pidfile)) {
     path = Path(pidfile)
     pid = path.readString()

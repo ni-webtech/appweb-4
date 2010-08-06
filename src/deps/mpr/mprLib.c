@@ -21271,6 +21271,9 @@ void mprRemoveWaitHandler(MprWaitHandler *wp)
     mprRemoveNotifier(wp);
     mprRemoveItem(ws->handlers, wp);
     wp->fd = -1;
+    if (wp->event.next) {
+        mprRemoveEvent(&wp->event);
+    }
     mprWakeWaitService(ws);
     unlock(ws);
 }
