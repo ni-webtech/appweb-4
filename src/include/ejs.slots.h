@@ -485,7 +485,9 @@
 #define ES_Config_LibDir                                               6
 #define ES_Config_BinDir                                               7
 #define ES_Config_ModDir                                               8
-#define ES_Config_NUM_CLASS_PROP                                       9
+#define ES_Config_SSL                                                  9
+#define ES_Config_SQLITE                                               10
+#define ES_Config_NUM_CLASS_PROP                                       11
 
 /*
    Prototype (instance) slots for "Config" type 
@@ -1978,7 +1980,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1340501
+#define _ES_CHECKSUM_ejs   1341211
 
 #endif
 /*
@@ -3294,26 +3296,27 @@
 /*
    Prototype (instance) slots for "HttpServer" type 
  */
-#define ES_ejs_web_HttpServer_accept                                   0
-#define ES_ejs_web_HttpServer_address                                  1
-#define ES_ejs_web_HttpServer_async                                    2
-#define ES_ejs_web_HttpServer_close                                    3
-#define ES_ejs_web_HttpServer_documentRoot                             4
-#define ES_ejs_web_HttpServer_limits                                   5
-#define ES_ejs_web_HttpServer_isSecure                                 6
-#define ES_ejs_web_HttpServer_listen                                   7
-#define ES_ejs_web_HttpServer_name                                     8
-#define ES_ejs_web_HttpServer_port                                     9
-#define ES_ejs_web_HttpServer_observe                                  10
-#define ES_ejs_web_HttpServer_removeObserver                           11
-#define ES_ejs_web_HttpServer_secure                                   12
-#define ES_ejs_web_HttpServer_setPipeline                              13
-#define ES_ejs_web_HttpServer_setLimits                                14
-#define ES_ejs_web_HttpServer_trace                                    15
-#define ES_ejs_web_HttpServer_verifyClients                            16
-#define ES_ejs_web_HttpServer_serverRoot                               17
-#define ES_ejs_web_HttpServer_software                                 18
-#define ES_ejs_web_HttpServer_NUM_INSTANCE_PROP                        19
+#define ES_ejs_web_HttpServer_address                                  0
+#define ES_ejs_web_HttpServer_async                                    1
+#define ES_ejs_web_HttpServer_documentRoot                             2
+#define ES_ejs_web_HttpServer_isSecure                                 3
+#define ES_ejs_web_HttpServer_limits                                   4
+#define ES_ejs_web_HttpServer_name                                     5
+#define ES_ejs_web_HttpServer_port                                     6
+#define ES_ejs_web_HttpServer_serverRoot                               7
+#define ES_ejs_web_HttpServer_sessions                                 8
+#define ES_ejs_web_HttpServer_software                                 9
+#define ES_ejs_web_HttpServer_accept                                   10
+#define ES_ejs_web_HttpServer_close                                    11
+#define ES_ejs_web_HttpServer_listen                                   12
+#define ES_ejs_web_HttpServer_observe                                  13
+#define ES_ejs_web_HttpServer_removeObserver                           14
+#define ES_ejs_web_HttpServer_secure                                   15
+#define ES_ejs_web_HttpServer_setPipeline                              16
+#define ES_ejs_web_HttpServer_setLimits                                17
+#define ES_ejs_web_HttpServer_trace                                    18
+#define ES_ejs_web_HttpServer_verifyClients                            19
+#define ES_ejs_web_HttpServer_NUM_INSTANCE_PROP                        20
 #define ES_ejs_web_HttpServer_NUM_INHERITED_PROP                       0
 
 
@@ -3621,7 +3624,7 @@
 #define ES_ejs_web_Web_run_documentRoot                                1
 #define ES_ejs_web_Web_run_serverRoot                                  2
 
-#define _ES_CHECKSUM_ejs_web   646774
+#define _ES_CHECKSUM_ejs_web   647662
 
 #endif
 /*

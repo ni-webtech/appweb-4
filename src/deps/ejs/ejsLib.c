@@ -14523,6 +14523,9 @@ void ejsConfigureConfigType(Ejs *ejs)
     mprSprintf(ejs, version, sizeof(version), "%s-%s", BLD_VERSION, BLD_NUMBER);
     ejsSetProperty(ejs, vp, ES_Config_Version, ejsCreateString(ejs, version));
 
+    ejsSetProperty(ejs, vp, ES_Config_SSL, ejsCreateBoolean(ejs, BLD_FEATURE_SSL));
+    ejsSetProperty(ejs, vp, ES_Config_SQLITE, ejsCreateBoolean(ejs, BLD_FEATURE_SQLITE));
+
 #if BLD_WIN_LIKE
 {
     char    *path;
@@ -32558,7 +32561,6 @@ static EjsObj *startWorker(Ejs *ejs, EjsWorker *outsideWorker, int timeout)
     if (join(ejs, (EjsObj*) outsideWorker, timeout) < 0) {
         return ejs->undefinedValue;
     }
-    //  MOB was "ejs"
     result = (EjsObj*) ejsToJSON(inside, inside->result, NULL);
     if (result == 0) {
         return ejs->nullValue;
@@ -32611,7 +32613,8 @@ static int reapJoins(Ejs *ejs, EjsObj *workers)
         for (i = 0; i < mprGetListCount(ejs->workers); i++) {
             worker = mprGetItem(ejs->workers, i);
             if (worker->state >= EJS_WORKER_COMPLETE) {
-                worker->obj.permanent = 0;
+                // worker->obj.permanent = 0;
+                // destroyWorkerEjs(ejs, worker);
                 completed++;
             }
         }
@@ -32624,7 +32627,8 @@ static int reapJoins(Ejs *ejs, EjsObj *workers)
         for (i = 0; i < set->length; i++) {
             worker = (EjsWorker*) set->data[i];
             if (worker->state >= EJS_WORKER_COMPLETE) {
-                worker->obj.permanent = 0;
+                // worker->obj.permanent = 0;
+                // destroyWorkerEjs(ejs, worker);
                 completed++;
             }
         }
@@ -32635,7 +32639,8 @@ static int reapJoins(Ejs *ejs, EjsObj *workers)
         /* Join one worker */
         worker = (EjsWorker*) workers;
         if (worker->state >= EJS_WORKER_COMPLETE) {
-            worker->obj.permanent = 0;
+            // worker->obj.permanent = 0;
+            // destroyWorkerEjs(ejs, worker);
             joined = 1;
         }
     }
@@ -32830,12 +32835,10 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
         worker->state = EJS_WORKER_COMPLETE;
         LOG(ejs, 5, "Worker.doMessage: complete");
         removeWorker(ejs, worker);
-#if UNUSED
         /*
             Now that the inside worker is complete, the outside worker does not need to be protected from GC
          */
         worker->obj.permanent = 0;
-#endif
     }
     worker->event = 0;
     mprFree(msg);
@@ -33122,6 +33125,16 @@ EjsWorker *ejsCreateWorker(Ejs *ejs)
     return (EjsWorker*) ejsCreate(ejs, ejs->workerType, 0);
 }
 
+
+#if UNUSED
+static void destroyWorkerEjs(Ejs *ejs, EjsWorker *worker)
+{
+    if (worker->pair) {
+        mprFree(worker->pair->ejs);
+        worker->pair = 0;
+    }
+}
+#endif
 
 static void destroyWorker(Ejs *ejs, EjsWorker *worker)
 {
@@ -36498,16 +36511,20 @@ static EjsObj *hs_observe(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     //  TODO -- should fire if currently readable / writable (also socket etc)
     ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
+    sp->emitter->permanent = 1;
     return 0;
 }
 
 
 /*  
-    function get address(): Void
+    function get address(): String
  */
 static EjsObj *hs_address(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateString(ejs, sp->ip);
+    if (sp->ip) {
+        return (EjsObj*) ejsCreateString(ejs, sp->ip);
+    } 
+    return ejs->nullValue;
 }
 
 
@@ -37234,10 +37251,10 @@ HttpStage *ejsAddWebHandler(Http *http)
  */
 static void markHttpServer(Ejs *ejs, EjsHttpServer *sp)
 {
+    /*
+        sp->emitter is permanent
+     */
     ejsMarkObject(ejs, (EjsObj*) sp);
-    if (sp->emitter) {
-        ejsMark(ejs, (EjsObj*) sp->emitter);
-    }
     if (sp->limits) {
         ejsMark(ejs, (EjsObj*) sp->limits);
     }
@@ -37247,9 +37264,11 @@ static void markHttpServer(Ejs *ejs, EjsHttpServer *sp)
     if (sp->incomingStages) {
         ejsMark(ejs, (EjsObj*) sp->incomingStages);
     }
+#if UNUSED
     if (sp->sessions) {
         ejsMark(ejs, (EjsObj*) sp->sessions);
     }
+#endif
 }
 
 
@@ -37259,6 +37278,9 @@ static void destroyHttpServer(Ejs *ejs, EjsHttpServer *sp)
     if (sp->server) {
         mprFree(sp->server);
         sp->server = 0;
+    }
+    if (sp->emitter) {
+        sp->emitter->permanent = 0;
     }
 }
 
@@ -38705,7 +38727,7 @@ static int setSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum, EjsObj *val
  */
 static void noteSessionActivity(Ejs *ejs, EjsSession *sp)
 {
-    sp->expire = mprGetTime(ejs) + sp->timeout * MPR_TICKS_PER_SEC;
+    sp->expire = mprGetTime(ejs) + sp->timeout;
 }
 
 
@@ -38721,7 +38743,7 @@ void ejsUpdateSessionLimits(Ejs *ejs, EjsHttpServer *server)
     MprTime     now;
     int         i, count, timeout;
 
-    if (server->sessions) {
+    if (server->sessions && server->server) {
         timeout = server->server->limits->sessionTimeout;
         now = mprGetTime(ejs);
         count = ejsGetPropertyCount(ejs, (EjsObj*) server->sessions);
@@ -38784,7 +38806,7 @@ EjsSession *ejsGetSession(Ejs *ejs, EjsRequest *req)
 
 /*  
     Create a new session object. This is created in the master interpreter and will persist past the life 
-    of the current request. This will allocate a new session ID. Timeout is in seconds.
+    of the current request. This will allocate a new session ID. Timeout is in msec.
  */
 EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure)
 {
@@ -38829,10 +38851,11 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
 
     if (server->sessions == 0) {
         server->sessions = ejsCreateSimpleObject(ejs);
+        ejsSetProperty(ejs, server, ES_ejs_web_HttpServer_sessions, server->sessions);
     }
     count = ejsGetPropertyCount(ejs, (EjsObj*) server->sessions);
     if (count >= limits->sessionCount) {
-        ejsThrowResourceError(ejs, "Too many sessions: %d", count);
+        ejsThrowResourceError(ejs, "Too many sessions: %d, limit %d", count, limits->sessionCount);
         mprFree(session);
         ejsUnlockVm(master);
         return 0;
@@ -38911,7 +38934,7 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
     /*  
         This could be on the primary event thread. Can't block long.  MOB -- is this lock really needed
      */
-    if (sessions && mprTryLock(ejs->mutex)) {
+    if (sessions && server->server && mprTryLock(ejs->mutex)) {
         limits = server->server->limits;
         count = ejsGetPropertyCount(ejs, (EjsObj*) sessions);
         mprLog(ejs, 6, "Check for sessions count %d/%d", count, limits->sessionCount);
@@ -38927,11 +38950,10 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
                 One quick swipe to find sessions that are 80% expired
              */
             soon = limits->sessionTimeout / 5;
-            for (i = count - 1; i >= 0; i--) {
+            for (i = count - 1; soon > 0 && i >= 0; i--) {
                 if ((session = ejsGetProperty(ejs, (EjsObj*) sessions, i)) == 0) {
                     continue;
                 }
-                printf("CMP %d with %d\n", (int) ((session->expire - now) / 1000), ((int) soon / 1000));
                 if ((session->expire - now) < soon) {
                     mprLog(ejs, 3, "Too many sessions. Pruning session %s", session->id);
                     ejsDeleteProperty(ejs, (EjsObj*) sessions, i);
@@ -54143,7 +54165,7 @@ static EcNode *parseUnaryExpression(EcCompiler *cp)
     case T_VOID:
         getToken(cp);
         np = createNode(cp, N_UNARY_OP);
-        np = appendNode(np, parsePostfixExpression(cp));
+        np = appendNode(np, parseUnaryExpression(cp));
         break;
 
     default:
@@ -55733,6 +55755,7 @@ static EcNode *parseStatement(EcCompiler *cp)
     case T_FALSE:
     case T_FUNCTION:
     case T_LBRACKET:
+    case T_LOGICAL_NOT:
     case T_LPAREN:
     case T_MINUS_MINUS:
     case T_NEW:
@@ -57116,6 +57139,7 @@ static EcNode *parseDirectives(EcCompiler *cp)
         case T_NAMESPACE:
         case T_NATIVE:
         case T_NEW:
+        case T_LOGICAL_NOT:
         case T_NUMBER:
         case T_RESERVED_NAMESPACE:
         case T_RETURN:

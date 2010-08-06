@@ -8553,6 +8553,14 @@ void httpSetMetaServer(HttpServer *server, void *meta)
 
 void httpSetServerAsync(HttpServer *server, int async)
 {
+    if (server->sock) {
+        if (server->async && !async) {
+            mprSetSocketBlockingMode(server->sock, 1);
+        }
+        if (!server->async && async) {
+            mprSetSocketBlockingMode(server->sock, 0);
+        }
+    }
     server->async = async;
 }
 
