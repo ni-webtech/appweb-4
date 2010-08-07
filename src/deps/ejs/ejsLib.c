@@ -18812,6 +18812,7 @@ static EjsObj *http_close(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
         httpSetConnNotifier(hp->conn, httpNotify);
         httpSetConnContext(hp->conn, hp);
     }
+    hp->obj.permanent = 0;
     return 0;
 }
 
@@ -18827,7 +18828,6 @@ static EjsObj *http_connect(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 }
 
 
-//  TODO
 /*  
     function get certificate(): String
  */
@@ -18966,7 +18966,11 @@ static EjsObj *http_set_followRedirects(Ejs *ejs, EjsHttp *hp, int argc, EjsObj 
  */
 static EjsObj *http_get(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    return startHttpRequest(ejs, hp, "GET", argc, argv);
+    startHttpRequest(ejs, hp, "GET", argc, argv);
+    if (hp->conn) {
+        httpFinalize(hp->conn);
+    }
+    return 0;
 }
 
 
@@ -19576,9 +19580,12 @@ static EjsObj *startHttpRequest(Ejs *ejs, EjsHttp *hp, char *method, int argc, E
         ejsThrowIOError(ejs, "Can't issue request for \"%s\"", hp->uri);
         return 0;
     }
+    hp->obj.permanent = 1;
+
     if (mprGetBufLength(hp->requestContent) > 0) {
         nbytes = httpWriteBlock(conn->writeq, mprGetBufStart(hp->requestContent), mprGetBufLength(hp->requestContent));
         if (nbytes < 0) {
+            hp->obj.permanent = 0;
             ejsThrowIOError(ejs, "Can't write request data for \"%s\"", hp->uri);
             return 0;
         } else if (nbytes > 0) {
@@ -19625,6 +19632,7 @@ static void httpNotify(HttpConn *conn, int state, int notifyFlags)
             }
             sendHttpCloseEvent(ejs, hp);
         }
+        hp->obj.permanent = 0;
         break;
 
     case 0:
@@ -52144,7 +52152,6 @@ static EcNode *parsePath(EcCompiler *cp, EcNode *lhs)
             }
         }
     }
-
     return LEAVE(cp, np);
 }
 
@@ -53528,6 +53535,8 @@ static EcNode *parsePropertyOperator(EcCompiler *cp)
         /* TODO - should handle all contextually reserved identifiers here */
         case T_TYPE:
         case T_ID:
+        case T_GET:
+        case T_SET:
         case T_STRING:
         case T_REQUIRE:
         case T_RESERVED_NAMESPACE:

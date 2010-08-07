@@ -5343,8 +5343,8 @@ FUTURE & KEEP
         /** 
             Commence a GET request for the current uri. See connect() for connection details.
             This call initiates a GET request. It does not wait for the request to complete. 
-            Once initiated, one of the $read or response routines  may be used to receive the 
-            response data.
+            The get() call will auto-finalize. If you need to send body content with a get request, use connect(). 
+            Once initiated, one of the $read or response routines  may be used to receive the response data.
             @param uri The uri to get. This overrides any previously defined uri for the Http object. If null, use
                 a previously defined uri.
             @param data Data objects to send with the request. Data is written raw and is not encoded or converted. 
