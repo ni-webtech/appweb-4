@@ -4186,6 +4186,9 @@ extern int mprWaitForCond(MprCond *cond, int timeout);
  */
 extern void mprSignalCond(MprCond *cond);
 
+extern void mprSignalMultiCond(MprCond *cp);
+extern int mprWaitForMultiCond(MprCond *cp, int timeout);
+
 /**
     Multithreaded Synchronization Services
     @see MprMutex, mprCreateStaticLock, mprFree, mprLock, mprTryLock, mprUnlock, mprGlobalLock, mprGlobalUnlock, 

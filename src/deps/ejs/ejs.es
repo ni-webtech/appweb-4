@@ -15265,7 +15265,7 @@ module ejs.web {
                 "warn"          Negative feedback (Warnings and errors)
                 "*"             Other feedback (reminders, suggestions...)
         */
-        public var flash:       Object
+        public var flash: Object
 
         private var rendered: Boolean
         private var redirected: Boolean
@@ -15654,8 +15654,8 @@ module ejs.web {
             after creating the session. Objects are stored the session state by JSON serialization.
             This getter property is a wrapper and returns the Request.session object.
          */
-        function get session(): Session
-            request.session
+        function get session(): Session 
+            request ? request.session : null
 
         /** 
             Missing action method. This method will be called if the requested action routine does not exist.

@@ -4877,7 +4877,7 @@ static int condDestructor(MprCond *cp)
 /*
     Wait for the event to be triggered. Should only be used when there are single waiters. If the event is already
     triggered, then it will return immediately. Timeout of -1 means wait forever. Timeout of 0 means no wait.
-    Returns 0 if the event was signalled. Returns < 0 if the timeout.
+    Returns 0 if the event was signalled. Returns < 0 for a timeout.
  */
 int mprWaitForCond(MprCond *cp, int timeout)
 {
@@ -4892,15 +4892,14 @@ int mprWaitForCond(MprCond *cp, int timeout)
     expire = now + timeout;
 
 #if BLD_UNIX_LIKE
-        struct timespec     waitTill;
-        struct timeval      current;
-        int                 usec;
-        gettimeofday(&current, NULL);
-        usec = current.tv_usec + (timeout % 1000) * 1000;
-        waitTill.tv_sec = current.tv_sec + (timeout / 1000) + (usec / 1000000);
-        waitTill.tv_nsec = (usec % 1000000) * 1000;
+    struct timespec     waitTill;
+    struct timeval      current;
+    int                 usec;
+    gettimeofday(&current, NULL);
+    usec = current.tv_usec + (timeout % 1000) * 1000;
+    waitTill.tv_sec = current.tv_sec + (timeout / 1000) + (usec / 1000000);
+    waitTill.tv_nsec = (usec % 1000000) * 1000;
 #endif
-
     mprLock(cp->mutex);
     if (!cp->triggered) {
         /*
@@ -4946,7 +4945,6 @@ int mprWaitForCond(MprCond *cp, int timeout)
 #endif
         } while (!cp->triggered && rc == 0 && (now = mprGetTime(cp)) < expire);
     }
-
     if (cp->triggered) {
         cp->triggered = 0;
         rc = 0;
@@ -4997,6 +4995,91 @@ void mprResetCond(MprCond *cp)
 #endif
     mprUnlock(cp->mutex);
 }
+
+
+/*
+    Wait for the event to be triggered when there may be multiple waiters. This routine may return early due to
+    other signals or events. The caller must verify if the signalled condition truly exists. If the event is already
+    triggered, then it will return immediately. This call will not reset cp->triggered and must be reset manually.
+    A timeout of -1 means wait forever. Timeout of 0 means no wait.  Returns 0 if the event was signalled. 
+    Returns < 0 for a timeout.
+ */
+int mprWaitForMultiCond(MprCond *cp, int timeout)
+{
+    MprTime     now, expire;
+    int         rc;
+
+    rc = 0;
+    if (timeout < 0) {
+        timeout = MAXINT;
+    }
+    now = mprGetTime(cp);
+    expire = now + timeout;
+
+#if BLD_UNIX_LIKE
+    struct timespec     waitTill;
+    struct timeval      current;
+    int                 usec;
+    gettimeofday(&current, NULL);
+    usec = current.tv_usec + (timeout % 1000) * 1000;
+    waitTill.tv_sec = current.tv_sec + (timeout / 1000) + (usec / 1000000);
+    waitTill.tv_nsec = (usec % 1000000) * 1000;
+#endif
+
+#if BLD_WIN_LIKE
+    rc = WaitForSingleObject(cp->cv, (int) (expire - now));
+    if (rc == WAIT_OBJECT_0) {
+        rc = 0;
+    } else if (rc == WAIT_TIMEOUT) {
+        rc = MPR_ERR_TIMEOUT;
+    } else {
+        rc = MPR_ERR_GENERAL;
+    }
+#elif VXWORKS
+    rc = semTake(cp->cv, (int) (expire - now));
+    if (rc != 0) {
+        if (errno == S_objLib_OBJ_UNAVAILABLE) {
+            rc = MPR_ERR_TIMEOUT;
+        } else {
+            rc = MPR_ERR_GENERAL;
+        }
+    }
+#elif BLD_UNIX_LIKE
+    mprLock(cp->mutex);
+    rc = pthread_cond_timedwait(&cp->cv, &cp->mutex->cs,  &waitTill);
+    if (rc == ETIMEDOUT) {
+        rc = MPR_ERR_TIMEOUT;
+    } else if (rc != 0) {
+        mprAssert(rc == 0);
+        rc = MPR_ERR_GENERAL;
+    }
+    mprUnlock(cp->mutex);
+#endif
+    return rc;
+}
+
+
+/*
+    Signal a condition and wakeup the all the waiters. Note: this may be called before or after to the waiter waiting.
+ */
+void mprSignalMultiCond(MprCond *cp)
+{
+    mprLock(cp->mutex);
+#if BLD_WIN_LIKE
+    /* Pulse event */
+    SetEvent(cp->cv);
+    ResetEvent(cp->cv);
+#elif VXWORKS
+    /* Reset sem count and then give once. Prevents accumulation */
+    while (semTake(cp->cv, 0) == OK) ;
+    semGive(cp->cv);
+    semFlush(cp->cv);
+#else
+    pthread_cond_broadcast(&cp->cv);
+#endif
+    mprUnlock(cp->mutex);
+}
+
 
 /*
     @copy   default
@@ -6068,7 +6151,7 @@ int mprServiceEvents(MprCtx ctx, MprDispatcher *dispatcher, int timeout, int fla
     MprDispatcher       *dp;
     MprTime             expires;
     Mpr                 *mpr;
-    int                 count, delay, wasRunning, beginEventCount, eventCount, justOne;
+    int                 count, delay, wasRunning, beginEventCount, eventCount, justOne, idle;
 
     mprAssert(ctx);
     mpr = mprGetMpr(ctx);
@@ -6098,6 +6181,11 @@ int mprServiceEvents(MprCtx ctx, MprDispatcher *dispatcher, int timeout, int fla
                 break;
             }
         }
+        delay = (int) (expires - es->now);
+        if (delay > 0 && dispatcher) {
+            idle = getIdleTime(es, dispatcher);
+            delay = min(delay, idle);
+        }
         while ((dp = getNextReadyDispatcher(es)) != NULL && !mprIsExiting(mpr)) {
             mprAssert(isRunning(dp));
             if (dp->requiredWorker) {
@@ -6112,21 +6200,18 @@ int mprServiceEvents(MprCtx ctx, MprDispatcher *dispatcher, int timeout, int fla
                 break;
             }
         } 
-        
         lock(es);
-        delay = dispatcher ? getIdleTime(es, dispatcher) : MPR_MAX_TIMEOUT;
-        delay = (int) min((expires - es->now), delay);
         if (delay > 0) {
             if (es->eventCount == eventCount && isIdle(es, dispatcher)) {
                 if (es->waiting) {
                     unlock(es);
-                    mprWaitForCond(es->waitCond, delay);
+                    mprWaitForMultiCond(es->waitCond, delay);
                 } else {
                     es->waiting = 1;
                     unlock(es);
                     mprWaitForIO(mpr->waitService, delay);
                     es->waiting = 0;
-                    mprSignalCond(es->waitCond);
+                    mprSignalMultiCond(es->waitCond);
                 }
             } else unlock(es);
         } else unlock(es);
@@ -9462,20 +9547,16 @@ MprMutex *mprCreateLock(MprCtx ctx)
     if (lock == 0) {
         return 0;
     }
-
 #if BLD_UNIX_LIKE
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
     pthread_mutex_init(&lock->cs, &attr);
     pthread_mutexattr_destroy(&attr);
-
 #elif WINCE
     InitializeCriticalSection(&lock->cs);
-
 #elif BLD_WIN_LIKE
     InitializeCriticalSectionAndSpinCount(&lock->cs, 5000);
-
 #elif VXWORKS
     /* Removed SEM_INVERSION_SAFE */
     lock->cs = semMCreate(SEM_Q_PRIORITY | SEM_DELETE_SAFE);
@@ -9499,13 +9580,10 @@ MprMutex *mprInitLock(MprCtx ctx, MprMutex *lock)
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
     pthread_mutex_init(&lock->cs, &attr);
     pthread_mutexattr_destroy(&attr);
-
 #elif WINCE
     InitializeCriticalSection(&lock->cs);
-
 #elif BLD_WIN_LIKE
     InitializeCriticalSectionAndSpinCount(&lock->cs, 5000);
-
 #elif VXWORKS
     /* Removed SEM_INVERSION_SAFE */
     lock->cs = semMCreate(SEM_Q_PRIORITY | SEM_DELETE_SAFE);
@@ -9528,10 +9606,8 @@ static int destroyLock(MprMutex *lock)
 #if BLD_UNIX_LIKE
     pthread_mutex_unlock(&lock->cs);
     pthread_mutex_destroy(&lock->cs);
-
 #elif BLD_WIN_LIKE
     DeleteCriticalSection(&lock->cs);
-
 #elif VXWORKS
     semDelete(lock->cs);
 #endif
@@ -9547,10 +9623,8 @@ bool mprTryLock(MprMutex *lock)
     int     rc;
 #if BLD_UNIX_LIKE
     rc = pthread_mutex_trylock(&lock->cs) != 0;
-
 #elif BLD_WIN_LIKE
     rc = TryEnterCriticalSection(&lock->cs) == 0;
-
 #elif VXWORKS
     rc = semTake(lock->cs, NO_WAIT) != OK;
 #endif
@@ -9568,29 +9642,22 @@ MprSpin *mprCreateSpinLock(MprCtx ctx)
     if (lock == 0) {
         return 0;
     }
-
 #if USE_MPR_LOCK
     mprInitLock(ctx, &lock->cs);
-
 #elif MACOSX
     lock->cs = OS_SPINLOCK_INIT;
-
 #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
     pthread_spin_init(&lock->cs, 0);
-
 #elif BLD_UNIX_LIKE
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
     pthread_mutex_init(&lock->cs, &attr);
     pthread_mutexattr_destroy(&attr);
-
 #elif WINCE
     InitializeCriticalSection(&lock->cs);
-
 #elif BLD_WIN_LIKE
     InitializeCriticalSectionAndSpinCount(&lock->cs, 5000);
-
 #elif VXWORKS
     /* Removed SEM_INVERSION_SAFE */
     lock->cs = semMCreate(SEM_Q_PRIORITY | SEM_DELETE_SAFE);
@@ -9600,7 +9667,6 @@ MprSpin *mprCreateSpinLock(MprCtx ctx)
         return 0;
     }
 #endif
-
 #if BLD_DEBUG
     lock->owner = 0;
 #endif
@@ -9617,26 +9683,20 @@ MprSpin *mprInitSpinLock(MprCtx ctx, MprSpin *lock)
 
 #if USE_MPR_LOCK
     mprInitLock(ctx, &lock->cs);
-
 #elif MACOSX
     lock->cs = OS_SPINLOCK_INIT;
-
 #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
     pthread_spin_init(&lock->cs, 0);
-
 #elif BLD_UNIX_LIKE
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
     pthread_mutex_init(&lock->cs, &attr);
     pthread_mutexattr_destroy(&attr);
-
 #elif WINCE
     InitializeCriticalSection(&lock->cs);
-
 #elif BLD_WIN_LIKE
     InitializeCriticalSectionAndSpinCount(&lock->cs, 5000);
-
 #elif VXWORKS
     /* Removed SEM_INVERSION_SAFE */
     lock->cs = semMCreate(SEM_Q_PRIORITY | SEM_DELETE_SAFE);
@@ -9662,16 +9722,12 @@ static int destroySpinLock(MprSpin *lock)
     mprAssert(lock);
 #if USE_MPR_LOCK || MACOSX
     ;
-
 #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
     pthread_spin_destroy(&lock->cs);
-
 #elif BLD_UNIX_LIKE
     pthread_mutex_destroy(&lock->cs);
-
 #elif BLD_WIN_LIKE
     DeleteCriticalSection(&lock->cs);
-
 #elif VXWORKS
     semDelete(lock->cs);
 #endif
@@ -9690,22 +9746,16 @@ bool mprTrySpinLock(MprSpin *lock)
 
 #if USE_MPR_LOCK
     mprTryLock(&lock->cs);
-
 #elif MACOSX
     rc = !OSSpinLockTry(&lock->cs);
-
 #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
     rc = pthread_spin_trylock(&lock->cs) != 0;
-
 #elif BLD_UNIX_LIKE
     rc = pthread_mutex_trylock(&lock->cs) != 0;
-
 #elif BLD_WIN_LIKE
     rc = TryEnterCriticalSection(&lock->cs) == 0;
-
 #elif VXWORKS
     rc = semTake(lock->cs, NO_WAIT) != OK;
-
 #endif
 #if BLD_DEBUG
     if (rc == 0) {
@@ -9763,10 +9813,8 @@ void mprLock(MprMutex *lock)
 {
 #if BLD_UNIX_LIKE
     pthread_mutex_lock(&lock->cs);
-
 #elif BLD_WIN_LIKE
     EnterCriticalSection(&lock->cs);
-
 #elif VXWORKS
     semTake(lock->cs, WAIT_FOREVER);
 #endif
@@ -9777,10 +9825,8 @@ void mprUnlock(MprMutex *lock)
 {
 #if BLD_UNIX_LIKE
     pthread_mutex_unlock(&lock->cs);
-
 #elif BLD_WIN_LIKE
     LeaveCriticalSection(&lock->cs);
-
 #elif VXWORKS
     semGive(lock->cs);
 #endif
@@ -9804,23 +9850,17 @@ void mprSpinLock(MprSpin *lock)
 
 #if USE_MPR_LOCK
     mprLock(&lock->cs);
-
 #elif MACOSX
     OSSpinLockLock(&lock->cs);
-
 #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
     pthread_spin_lock(&lock->cs);
-
 #elif BLD_UNIX_LIKE
     pthread_mutex_lock(&lock->cs);
-
 #elif BLD_WIN_LIKE
     EnterCriticalSection(&lock->cs);
-
 #elif VXWORKS
     semTake(lock->cs, WAIT_FOREVER);
 #endif
-
 #if BLD_DEBUG
     mprAssert(lock->owner != mprGetCurrentOsThread());
     lock->owner = mprGetCurrentOsThread();
@@ -9836,19 +9876,14 @@ void mprSpinUnlock(MprSpin *lock)
 
 #if USE_MPR_LOCK
     mprUnlock(&lock->cs);
-
 #elif MACOSX
     OSSpinLockUnlock(&lock->cs);
-
 #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
     pthread_spin_unlock(&lock->cs);
-
 #elif BLD_UNIX_LIKE
     pthread_mutex_unlock(&lock->cs);
-
 #elif BLD_WIN_LIKE
     LeaveCriticalSection(&lock->cs);
-
 #elif VXWORKS
     semGive(lock->cs);
 #endif

@@ -1332,7 +1332,7 @@ typedef struct EjsSlot {
     int             hashChain;              /**< Next property in hash chain */
     EjsTrait        trait;                  /**< Property descriptor traits */
     union {
-        struct EjsObj *ref;                 /**< Vector of slots containing property references */
+        struct EjsObj *ref;                 /**< Property reference */
         MprNumber   *number;                /**< Immediate number value */
     } value;
 } EjsSlot;
