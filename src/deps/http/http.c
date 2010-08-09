@@ -629,7 +629,7 @@ static int sendRequest(HttpConn *conn, cchar *method, cchar *url)
 
 static int retryRequest(HttpConn *conn, cchar *url) 
 {
-    HttpRx  *rec;
+    HttpRx  *rx;
     char    *redirect;
     cchar   *msg, *sep;
     int     count, redirectCount;
@@ -665,9 +665,9 @@ static int retryRequest(HttpConn *conn, cchar *url)
             httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
                 "Inactive request timed out, exceeded request timeout %d", timeout);
         }
-        if ((rec = conn->rx) != 0) {
-            if (rec->status == HTTP_CODE_REQUEST_TOO_LARGE || rec->status == HTTP_CODE_REQUEST_URL_TOO_LARGE ||
-                (rec->status == HTTP_CODE_UNAUTHORIZED && conn->authUser == 0)) {
+        if ((rx = conn->rx) != 0) {
+            if (rx->status == HTTP_CODE_REQUEST_TOO_LARGE || rx->status == HTTP_CODE_REQUEST_URL_TOO_LARGE ||
+                (rx->status == HTTP_CODE_UNAUTHORIZED && conn->authUser == 0)) {
                 /* No point retrying */
                 break;
             }
@@ -685,10 +685,10 @@ static int retryRequest(HttpConn *conn, cchar *url)
 
 static int reportResponse(HttpConn *conn, cchar *url)
 {
-    HttpRx    *rec;
-    cchar           *msg;
-    char            *responseHeaders;
-    int             status, contentLen;
+    HttpRx      *rx;
+    cchar       *msg;
+    char        *responseHeaders;
+    int         status, contentLen;
 
     if (mprIsExiting(conn)) {
         return 0;
@@ -706,8 +706,8 @@ static int reportResponse(HttpConn *conn, cchar *url)
         }
         if (showHeaders) {
             responseHeaders = httpGetHeaders(conn);
-            rec = conn->rx;
-            mprPrintfError(conn, "\nHeaders\n-------\n%s %d %s\n", conn->protocol, rec->status, rec->statusMessage);
+            rx = conn->rx;
+            mprPrintfError(conn, "\nHeaders\n-------\n%s %d %s\n", conn->protocol, rx->status, rx->statusMessage);
             if (responseHeaders) {
                 mprPrintfError(conn, "%s\n", responseHeaders);
                 mprFree(responseHeaders);
@@ -972,15 +972,15 @@ static char *resolveUrl(HttpConn *conn, cchar *url)
 
 static void showOutput(HttpConn *conn, cchar *buf, int count)
 {
-    HttpRx    *rec;
-    int             i, c, rc;
+    HttpRx      *rx;
+    int         i, c, rc;
     
-    rec = conn->rx;
+    rx = conn->rx;
 
     if (noout) {
         return;
     }
-    if (rec->status == 401 || (conn->followRedirects && (301 <= rec->status && rec->status <= 302))) {
+    if (rx->status == 401 || (conn->followRedirects && (301 <= rx->status && rx->status <= 302))) {
         return;
     }
     if (!printable) {
