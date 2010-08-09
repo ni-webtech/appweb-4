@@ -2060,7 +2060,7 @@ Optional Build Features:   (See more features below)
   --enable-assert          Build with assert checking.
   --enable-complete-cross  Build everything for the target host system.
   --enable-complete-native Build everything for the build system. [default]
-  --enable-legacy-api      Build with legacy API support for backwards 
+  --enable-legacy          Build with legacy API support for backwards 
                              compatibility.
   --enable-rom             Build with the ability to load files from ROM.
 !EOF_HELP
@@ -2292,7 +2292,7 @@ while [ "${1#--}" != "$1" ] ; do
     disable-complete-native)
         BLD_FEATURE_COMPLETE_NATIVE=0
         ;;
-    disable-legacy-api)
+    disable-legacy|disable-legacy-api)
         BLD_FEATURE_LEGACY_API=0
         ;;
     disable-rom-fs|disable-rom|disable-romfs)
@@ -2315,7 +2315,7 @@ while [ "${1#--}" != "$1" ] ; do
     enable-complete-native|complete-native)
         BLD_FEATURE_COMPLETE_NATIVE=1
         ;;
-    enable-legacy-api)
+    enable-legacy|enable-legacy-api|legacy)
         BLD_FEATURE_LEGACY_API=1
         ;;
     enable-rom-fs|enable-rom|enable-romfs|rom)

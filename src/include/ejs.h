@@ -1147,6 +1147,7 @@ typedef struct Ejs {
     struct EjsType      *blockType;         /**< Block type */
     struct EjsType      *booleanType;       /**< Boolean type */
     struct EjsType      *byteArrayType;     /**< ByteArray type */
+    struct EjsType      *configType;        /**< Config type */
     struct EjsType      *dateType;          /**< Date type */
     struct EjsType      *errorType;         /**< Error type */
     struct EjsType      *errorEventType;    /**< ErrorEvent type */
@@ -3610,6 +3611,7 @@ extern int      ejsBootstrapTypes(Ejs *ejs);
 extern void     ejsCreateArrayType(Ejs *ejs);
 extern void     ejsCreateBlockType(Ejs *ejs);
 extern void     ejsCreateBooleanType(Ejs *ejs);
+extern void     ejsCreateConfigType(Ejs *ejs);
 extern void     ejsCreateErrorType(Ejs *ejs);
 extern void     ejsCreateFrameType(Ejs *ejs);
 extern void     ejsCreateFunctionType(Ejs *ejs);
@@ -3633,7 +3635,6 @@ extern void     ejsConfigureAppType(Ejs *ejs);
 extern void     ejsConfigureArrayType(Ejs *ejs);
 extern void     ejsConfigureBooleanType(Ejs *ejs);
 extern void     ejsConfigureByteArrayType(Ejs *ejs);
-extern void     ejsConfigureConfigType(Ejs *ejs);
 extern void     ejsConfigureDateType(Ejs *ejs);
 extern void     ejsConfigureSqliteTypes(Ejs *ejs);
 extern void     ejsConfigureDebugType(Ejs *ejs);

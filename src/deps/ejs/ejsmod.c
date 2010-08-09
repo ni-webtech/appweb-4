@@ -184,7 +184,7 @@ extern int  emCreateDoc(EjsMod *mp);
     @see Keyword keyword ...            (Case matters)
     @example Description                (Up to next @)
     @stability kind                     (prototype | evolving | stable | mature | deprecated]
-    @deprecated                         Same as @stability deprecated
+    @deprecated version                 Same as @stability deprecated
     @requires ECMA                      (Emit: configuration requires --ejs-ecma)
     @spec                               (ecma-262, ecma-357, ejs-11)
     @hide                               (Hides this entry)
@@ -2038,10 +2038,8 @@ static EjsDoc *crackDoc(EjsMod *mp, EjsDoc *doc, EjsName *qname)
     } else if (strstr(str, "@deprecate") || strstr(str, "@deprecated")) {
         doc->deprecated = 1;
     }
-
     doc->description = "";
     doc->brief = "";
-
     str = mergeDuplicates(ejs, mp, qname, doc, str);
 
     thisDescription = "";
@@ -2083,7 +2081,7 @@ static EjsDoc *crackDoc(EjsMod *mp, EjsDoc *doc, EjsName *qname)
         @see Keyword keyword ...            (Case matters)
         @example Description                (Up to next @)
         @stability kind                     (prototype | evolving | stable | mature | deprecated]
-        @deprecated                         Same as @stability deprecated
+        @deprecated version                 Same as @stability deprecated
         @requires ECMA                      (Emit: configuration requires --ejs-ecma)
         @spec                               (ecma-262, ecma-357, ejs-11)
         @hide                               (Hides this entry)

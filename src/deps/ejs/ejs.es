@@ -302,14 +302,14 @@ module ejs {
          */
         native static function sleep(delay: Number = -1): Void
 
-        //  DEPRECATED
         /** 
             The current module search path . Set to a delimited searchPath string. Warning: This will be changed to an
             array of paths in a future release.
             @stability deprecated.
-            @deprecate
+            @deprecate 1.0.0
             @hide
          */
+        # Config.Legacy
         static function get searchPath(): String {
             if (Config.OS == "WIN") {
                 return search.join(";")
@@ -317,6 +317,8 @@ module ejs {
                 return search.join(":")
             }
         }
+
+        # Config.Legacy
         static function set searchPath(path: String): Void {
             if (Config.OS == "WIN") {
                 search = path.split(";")
@@ -325,7 +327,6 @@ module ejs {
             }
         }
 
-        //  DEPRECATED
         /**
             Service events
             @param count Count of events to service. Defaults to unlimited.
@@ -334,6 +335,7 @@ module ejs {
             @stability deprecated
             @hide
          */
+        # Config.Legacy
         static function serviceEvents(count: Number = -1, timeout: Number = -1): Void {
             if (count < 0) {
                 eventLoop(timeout, false)
@@ -1887,19 +1889,19 @@ module ejs {
          */
         native function set writePosition(position: Number): Void
 
-        //  LEGACY DEPRECATED 1.0.0B3
         /** 
             Input callback function when read data is required. The input callback should write to the supplied buffer.
             @hide
-            @deprecated
+            @deprecated 1.0.0B3
         */
+        # Config.Legacy
         function get input(): Function { return null; }
 
         /**  
-            LEGACY DEPRECATED 1.0.0B3
             @hide
-            @deprecated
+            @deprecated 1.0.0B3
          */
+        # Config.Legacy
         function set input(callback: Function): Void {
             observe("writable", function(event: String, ba: ByteArray): Void {
                 callback(ba)
@@ -1908,19 +1910,15 @@ module ejs {
 
         /**  
             Output function to process (output) data. The output callback should read from the supplied buffer.
-            LEGACY DEPRECATED 1.0.0B3
             @param callback Function to invoke when the byte array is full or flush() is called.
                 function outputCallback(buffer: ByteArray): Number
             @hide
-            @deprecated
+            @deprecated 1.0.0B3
          */
+        # Config.Legacy
         function get output(): Function { return null; } 
 
-        //  LEGACY DEPRECATED 1.0.0B3
-        /** 
-            @hide
-            @deprecated
-         */
+        # Config.Legacy
         function set output(callback: Function): Void {
             observe("readable", function(event: String, ba: ByteArray): Void {
                 callback(ba)
@@ -2462,59 +2460,63 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    enumerable class Config {
+    enumerable native class Config {
 
         use default namespace public
 
         /**
             True if a debug build
          */
-        static const Debug: Boolean
+        native static const Debug: Boolean
 
         /**
             CPU type (eg. i386, ppc, arm)
          */
-        shared static const CPU: String
+        shared native static const CPU: String
 
         /**
             Operating system version. One of: WIN, LINUX, MACOSX, FREEBSD, SOLARIS
          */
-        static const OS: String
+        native static const OS: String
 
         /**
             Ejscript product name. Single word name.
          */
-        static const Product: String
+        native static const Product: String
 
         /**
             Ejscript product title. Multiword title.
          */
-        static const Title: String
+        native static const Title: String
 
         /**
             Ejscript version. Multiword title. Format is Major.Minor.Patch-Build For example: 1.1.2-1
          */
-        static const Version: String
+        native static const Version: String
 
         /**
             Installation library directory
          */
-        static const LibDir: String
+        native static const LibDir: String
 
         /**
             Binaries directory
          */
-        static const BinDir: String
+        native static const BinDir: String
 
         /**
             Modules directory
          */
-        static const ModDir: String
+        native static const ModDir: String
 
         /** @hide */
-        static const SSL: Boolean
+        native static const Legacy: Boolean
+
         /** @hide */
-        static const SQLITE: Boolean
+        native static const SSL: Boolean
+
+        /** @hide */
+        native static const SQLITE: Boolean
     }
 }
 /************************************************************************/
@@ -3477,16 +3479,19 @@ module ejs {
             }
         }
 
-        //  LEGACY
-        /** @deprecated
+        /** 
             @hide 
+            @deprecated 1.0.0
          */
+        # Config.Legacy
         function addListener(name: Object, callback: Function): Void
             observe(name, callback)
 
-        /** @deprecated
+        /** 
             @hide 
+            @deprecated 1.0.0
          */
+        # Config.Legacy
         function emit(name: String, ...args): Void 
             fire(name, ...args)
     }
@@ -4580,14 +4585,14 @@ module ejs {
 
     /**
         Constant set to true in all Ejscript interpreters
+        @spec ejs
       */
     public var EJSCRIPT: Boolean = true
 
-    //  TODO - remove
-    /** @hide */
-    public var ECMA: Boolean = false
-
-    //MOB - is this required? - remove
+    /** 
+        The "ejs" namespace used for the core library
+        @spec ejs
+     */
     public namespace ejs
 
     /** 
@@ -4598,80 +4603,30 @@ module ejs {
 
     /** 
         The internal namespace used to make entities visible within a single module only.
+        @spec ejs
      */
     public namespace internal
 
     /** 
         The iterator namespace used to define iterators.
-        MOB - do we really need this?
+        @spec ejs
      */
     public namespace iterator
 
-//  MOB -- is this needed
-    /** 
-        The CONFIG namespace used to defined conditional compilation directives.
-        @hide
-     */
-    public namespace CONFIG
-
-    //  MOB -- is this needed?
-    use namespace iterator
-
-    //  TODO - refactor and reduce these
-   
-//  MOB -- rationalize all this
-    /** 
-        Conditional compilation constant. Used to disable compilation of certain elements.
-        @hide
-     */  
-    const TODO: Boolean = false
-
-    /** 
-        Conditional compilation constant. Used to disable compilation of certain elements.
-        @hide
-     */  
-    const FUTURE: Boolean = false
-
-    /** 
-        Conditional compilation constant. Used to disable compilation of certain elements.
-        @hide
-        MOB - remove
-     */  
-    const ASC: Boolean = false
-
-    /** 
-        Conditional compilation constant. Used to enable the compilation of elements only for creating the API documentation.
-        @hide
-        MOB - remove
-     */  
-    const DOC_ONLY: Boolean = false
-
-    /** 
-        Conditional compilation constant. Used to deprecate elements.
-        @hide
-        @deprecated
-     */  
-    const DEPRECATED: Boolean = false
-
-    //  TODO - remove. Should be using Config.RegularExpressions
-   
     /** 
         Alias for the Boolean type
+       @spec ejs
      */
     native const boolean: Type
 
-//  TODO - rationalize these aliases
     /** 
         Alias for the Number type
      */
     native const double: Type
 
-//  TODO - rationalize these aliases
     /** 
-        Alias for the Number type
-        @hide
-        @spec ejs
-        MOB - remove
+       Alias for the Number type
+       @spec ejs
      */
     native const num: Type
 
@@ -4688,6 +4643,7 @@ module ejs {
     /** 
         Global variable space reference. The global variable references an object which is the global variable space. 
         This is useful when guaranteed access to a global variable is required. e.g. global.someName.
+        @spec ejs
      */
     native var global: Object
 
@@ -4752,7 +4708,6 @@ module ejs {
      */
     native function cloneBase(klass: Type): Void
 
-    //  TODO - consider renaming to debug()
     /** 
         Dump the contents of objects. Used for debugging, this routine serializes the objects and prints to the standard
         output.
@@ -4834,7 +4789,7 @@ module ejs {
     function isFinite(arg: Number): Boolean
         arg.isFinite
 
-    //  TODO - should file and cache be paths?
+    //  TODO MOB - should file and cache be paths?
     /** 
         Load a script or module
         @param file path name to load. File will be interpreted relative to EJSPATH if it is not found as an absolute or
@@ -4903,42 +4858,6 @@ module ejs {
     /**  @hide TODO - doc */
     function instanceOf(obj: Object, target: Object): Boolean
         obj is target
-
-    /**  
-MOB - removed because such a common global name is dangerous
-        DEPRECATED - Use App.stderr.write() and App.stderr.writeLine()
-        Write to the standard error. This call writes the arguments to the standard error with a new line appended. 
-        It evaluates the arguments, converts the result to strings and prints the result to the standard error. 
-        Arguments are converted to strings by calling their toSource method.
-        @param args Data to write
-        @spec ejs
-        @hide
-        @deprecated
-    native function error(...args): void
-     */
-
-    /**
-MOB - removed because such a common global name is dangerous
-        DEPRECATED
-        Read from the standard input. This call reads a line of input from the standard input
-        @return A string containing the input. Returns null on EOF.
-        @hide
-        @deprecated
-    native function input(): String
-     */
-
-    /**  
-MOB - removed because such a common global name is dangerous
-        DEPRECATED - Use print(), App.stdout.write() and App.stdout.writeLine()
-        Print the arguments to the standard output with a new line appended. This call evaluates the arguments, 
-        converts the result to strings and prints the result to the standard output. Arguments are converted to 
-        strings by calling their toString method.
-        @param args Variables to print
-        @spec ejs
-        @hide
-        @deprecated
-    native function output(...args): void
-     */
 }
 
 
@@ -5651,7 +5570,7 @@ FUTURE & KEEP
         native function set uri(newUri: Uri): Void
 
         /** 
-            Wait for a request to complete.
+            Wait for a request to complete. This will auto-finalize if in sync mode if the request is not already finalized.
             @param timeout Time in seconds to wait for the request to complete. A timeout of zero means no timeout, ie.
             wait forever. A timeout of < 0, means don't wait.
             @return True if the request successfully completes.
@@ -5668,57 +5587,77 @@ FUTURE & KEEP
 
         /* ***************************************** Legacy *******************************************/
 
-//  MOB TODO - Cleanup and remove
-
-        //  LEGACY 11/23/2010 1.0.0
-        /** @hide */
+        /** 
+            @hide 
+            @deprecated 1.0.0
+         */
+        # Config.Legacy
         function addHeader(key: String, value: String, overwrite: Boolean = true): Void
             setHeader(key, value, overwrite)
 
-        // DEPRECATED
         /** 
             The number of response data bytes that are currently available for reading.
             @returns The number of available bytes.
             @hide
+            @deprecated 1.0.0
          */
+        # Config.Legacy
         native function get available(): Number 
 
-        //  DEPRECATED
-        /** @hide */
+        /** 
+            @hide 
+            @deprecated 1.0.0
+         */
+        # Config.Legacy
         function get bodyLength(): Void
             contentLength
+
+        # Config.Legacy
         function set bodyLength(value: Number): Void
             setHeader("content-length", value)
 
-        //  DEPRECATED
-        /** @hide */
+        /** 
+            @hide 
+            @deprecated 1.0.0
+         */
+        # Config.Legacy
         function get chunked(): Boolean
             chunksize != 0
+
+        # Config.Legacy
         function set chunked(enable: Boolean): Void
             chunkSize = (enable) ? 8192 : 0
 
-        //  DEPRECATED
-        /** @hide */
+        /** 
+            @hide 
+            @deprecated 1.0.0
+         */
+        # Config.Legacy
         function get code(): Number
             status
 
-        //  DEPRECATED
-        /** @hide */
+        /** 
+            @hide 
+            @deprecated 1.0.0
+         */
+        # Config.Legacy
         function get codeString(): String
             statusMessage
 
-        //  DEPRECATED
         /**
             Get the value of the content encoding of the response.
             @return A string with the content type or null if not known.
             @hide
+            @deprecated 1.0.0
          */
+        # Config.Legacy
         function get contentEncoding(): String
             header("content-encoding")
 
         /**
             @hide
-            @deprecated
+            @deprecated 1.0.0
+            //  TODO - can't use conditional compilation to remove as it will disable the getter which remains
          */
         function set contentLength(value: Number): Void
             setHeader("content-length", value)
@@ -5730,21 +5669,26 @@ FUTURE & KEEP
             @param data Data objects to send with the request. Data is written raw and is not encoded or converted. 
                 However, the routine intelligently handles arrays such that, each element of the array will be written. 
             @throws IOError if the request cannot be issued to the remote server.
-            @deprecated
+            @deprecated 1.0.0
             @hide
          */
+        # Config.Legacy
         native function del(uri: Uri? = null, ...data): Void
 
-        //  DEPRECATED
         /** 
             When the response content expires. This is derrived from the response Http Expires header.
             @hide
+            @deprecated 1.0.0
          */
+        # Config.Legacy
         function get expires(): Date
             Date.parseUTCDate(header("expires"))
 
-        //  DEPRECATED
-        /** @hide */
+        /**
+            @hide
+            @deprecated 1.0.0
+         */
+        # Config.Legacy
         static function mimeType(path: String): String
             Uri(path)..mimeType
 
@@ -5753,13 +5697,17 @@ FUTURE & KEEP
             @param uri New uri to use. This overrides any previously defined uri for the Http object.
                 If null, use a previously defined uri.
             @throws IOError if the request cannot be issued to the remote server.
-            @deprecated
             @hide
+            @deprecated 1.0.0
          */
+        # Config.Legacy
         native function options(uri: Uri? = null): Void
 
-        //  DEPRECATED
-        /** @hide */
+        /**
+            @hide
+            @deprecated 1.0.0
+         */
+        # Config.Legacy
         function setCallback(eventMask: Number, cb: Function): Void {
             observe("" + eventMask, cb);
         }
@@ -5769,10 +5717,11 @@ FUTURE & KEEP
             @param uri New uri to use. This overrides any previously defined uri for the Http object.
                 If null, use a previously defined uri.
             @throws IOError if the request cannot be issued to the remote server.
-            @deprecated
             @hide
+            @deprecated 1.0.0
          */
-        native function OLDtrace(uri: Uri? = null): Void
+        # Config.Legacy
+        native function trace_old(uri: Uri? = null): Void
 
     }
 }
@@ -8458,10 +8407,9 @@ module ejs {
         /** 
             Create a new temporary file. The temp file is located in the directory specified by the Path object. 
             @returns a new Path object for the temp file.
-            DEPRECATED
             @hide
+            @deprecated 1.0.0
          */
-        //  LEGACY
         function makeTemp(): Path
             temp()
 
@@ -8787,13 +8735,13 @@ module ejs {
 
 module ejs {
 
-    //  DEPRECATED
     /**
         Simple reflection class
-        @deprecated 
         @spec ejs
         @stability evolving 
+        @deprecated 2.0.0
      */
+    # Config.Legacy
     final class Reflect {
 
         private var obj: Object
@@ -8803,7 +8751,7 @@ module ejs {
         /**
             Create a new reflection object.
             @param o to reflect upon
-            @deprecated
+            @deprecated 2.0.0
          */
         function Reflect(o: *) {
             obj = o
@@ -8811,7 +8759,7 @@ module ejs {
 
         /**
             The base class of the object being examined. If the object is a type, this is the super class of the type.
-            @deprecated
+            @deprecated 2.0.0
          */
         function get base(): Type
             Object.getBaseType(obj)
@@ -8819,7 +8767,7 @@ module ejs {
         /**
             Test if the object is a type object
             @return True if the object is a type object
-            @deprecated
+            @deprecated 2.0.0
          */
         function get isType(): Boolean
             Object.isType(obj)
@@ -8827,7 +8775,7 @@ module ejs {
         /**
             Test if the object is a prototype object
             @return True if the object is a prototype object
-            @deprecated
+            @deprecated 2.0.0
          */
         function get isPrototype(): Boolean
             Object.isPrototype(obj)
@@ -8841,14 +8789,14 @@ module ejs {
 
         /**
             The prototype of the object
-            @deprecated
+            @deprecated 2.0.0
          */
         function get proto(): Object
             Object.getOwnPrototypeOf(obj)
 
         /**
             The name of the object if it is a type object. Otherwise empty.
-            @deprecated
+            @deprecated 2.0.0
          */
         function get name(): String {
             if (obj is Type) {
@@ -9990,15 +9938,19 @@ module ejs {
         function % (arg: Object): String
             format(arg)
 
-        /** @hide 
-            @deprecated 
+        /** 
+            @hide 
+            @deprecated 2.0.0
          */
+        # Config.Legacy
         function toLower(): String
             toLowerCase()
 
-        /** @hide 
-            @deprecated 
+        /** 
+            @hide 
+            @deprecated 2.0.0
          */
+        # Config.Legacy
         function toUpper(): String
             toUpperCase()
     }
@@ -12701,7 +12653,7 @@ module ejs.unix {
         Close the file and free up all associated resources.
         @param file Open file object previously opened via $open or $File
         @hide
-        @deprecated
+        @deprecated 2.0.0
     function close(file: File): Void
      */
 
@@ -12764,7 +12716,7 @@ module ejs.unix {
         @param pid Process ID to kill
         @param signal Signal number to use when killing the process.
         @hide
-        @deprecated
+        @deprecated 2.0.0
      */
     function kill(pid: Number, signal: Number = 2): Void {
         if (Config.OS == "WIN" || Config.OS == "CYGWIN") {
@@ -12825,7 +12777,7 @@ module ejs.unix {
     function mv(fromFile: String, toFile: String): void
         Path(fromFile).rename(toFile)
 
-    /*  DEPRECATED
+    /**  
         Open or create a file
         @param path Filename path to open
         @param mode optional file access mode with values values from: Read, Write, Append, Create, Open, Truncate. 
@@ -12834,10 +12786,11 @@ module ejs.unix {
         @return a File object which implements the Stream interface
         @throws IOError if the path or file cannot be opened or created.
         @hide
-        @deprecated
+        @deprecated 2.0.0
+     */
+    # Config.Legacy
     function open(path: String, mode: String = "r", permissions: Number = 0644): File
         new File(path, { mode: mode, permissions: permissions})
-     */
 
     /**
         Get the current working directory
@@ -12846,17 +12799,18 @@ module ejs.unix {
     function pwd(): Path
         App.dir
 
-    /*  DEPRECATED
+    /**  
         Read data bytes from a file and return a byte array containing the data.
         @param file Open file object previously opened via $open or $File
         @param count Number of bytes to read
         @return A byte array containing the read data
         @throws IOError if the file could not be read.
         @hide
-        @deprecated
+        @deprecated 2.0.0
+     */
+    # Config.Legacy
     function read(file: File, count: Number): ByteArray
         file.read(count)
-     */
 
     //  TODO - nice to allow wild cards for the path. Also allow ... for more files
     /**
@@ -12893,7 +12847,7 @@ module ejs.unix {
     function tempname(directory: String? = null): File
         Path(directory).makeTemp()
 
-    /*  DEPRECATED
+    /**
         Write data to the file. If the stream is in sync mode, the write call blocks until the underlying stream or 
         endpoint absorbes all the data. If in async-mode, the call accepts whatever data can be accepted immediately 
         and returns a count of the elements that have been written.
@@ -12904,11 +12858,11 @@ module ejs.unix {
         @returns the number of bytes written.  
         @throws IOError if the file could not be written.
         @hide
-        @deprecated
-
+        @deprecated 2.0.0
+     */
+    # Config.Legacy
     function write(file: File, ...items): Number
         file.write(items)
-     */
 }
 
 /*
@@ -14498,32 +14452,65 @@ module ejs.db.mapper {
             _wrapFilters.append([fn, options])
         }
 
-        //  LEGACY DEPRECATED in 1.0.0-B2
-        /** @hide */
+        /** 
+            @hide 
+            @deprecated 1.0.0B2
+         */
+        # Config.Legacy
         static function get columnNames(): Array {
             return getColumnNames()
         }
-        /** @hide */
+
+        /** 
+            @hide 
+            @deprecated 1.0.0B2
+         */
+        # Config.Legacy
         static function get columnTitles(): Array {
             return getColumnTitles()
         }
-        /** @hide */
+
+        /** 
+            @hide 
+            @deprecated 1.0.0B2
+         */
+        # Config.Legacy
         static function get db(): Datbase {
             return getDb()
         }
-        /** @hide */
+
+        /** 
+            @hide 
+            @deprecated 1.0.0B2
+         */
+        # Config.Legacy
         static function get keyName(): String {
             return getKeyName()
         }
-        /** @hide */
+
+        /** 
+            @hide 
+            @deprecated 1.0.0B2
+         */
+        # Config.Legacy
         static function get numRows(): String {
             return getNumRows()
         }
-        /** @hide */
+
+        /** 
+            @hide 
+            @deprecated 1.0.0B2
+         */
+        # Config.Legacy
         static function get tableName(): String {
             return getTableName()
         }
-        /** @hide */
+
+        /** 
+            @hide 
+            @deprecated 1.0.0B2
+         */
+        # Config.Legacy
         function constructor(fields: Object = null): Void {
             initialize(fields)
         }
@@ -15231,31 +15218,39 @@ module ejs.web {
          */
         use default namespace module
 
-//  MOB -- some should be private
-//  MOB -- can this be renamed "action" without clashing with "action" namespace?
+        private static var _initRequest: Request
+
+        private var redirected: Boolean
+        private var _afterFilters: Array
+        private var _beforeFilters: Array
+        private var _wrapFilters: Array
+        private var lastFlash: Object
+
         /** Name of the action being run */
         var actionName:  String 
 
-        //* Alias for request.config */
+        /** Configuration settings - reference to Request.config */
         var config: Object 
 
-//  MOB -- rename to "name"
         /** Lower case controller name */
         var controllerName: String
 
         /** Deployment mode: debug, test, production */
         var deploymentMode: String
 
-        /** Logger channel */
+        /** Logger stream - reference to Request.log */
         var log: Logger
 
-        /** Reference to the Request.params object. This stores the request query and form parameters */
+        /** Form and query parameters - reference to the Request.params object. */
         var params: Object
 
-        /** Reference to the current Request */
+        /** The response has been rendered. If an action does not render a response, then a default view will be rendered */
+        var rendered: Boolean
+
+        /** Reference to the current Request object */
         var request: Request
 
-        /** Reference to the current view */
+        /** Reference to the current View object */
         var view: View
 
         /** 
@@ -15267,32 +15262,58 @@ module ejs.web {
         */
         public var flash: Object
 
-        private var rendered: Boolean
-        private var redirected: Boolean
-        private var _afterFilters: Array
-        private var _beforeFilters: Array
-        private var _wrapFilters: Array
-        private var lastFlash
+        /***************************************** Convenience Getters  ***************************************/
 
-        private static var _initRequest: Request
+        /** @duplicate Request.absHome */
+        function get absHome(): Uri 
+            request ? request.absHome : null
 
+        /** @duplicate Request.home */
+        function get home(): Uri 
+            request ? request.home : null
+
+        /** @duplicate Request.pathInfo */
+        function get pathInfo(): String 
+            request ? request.pathInfo : null
+
+        /** @duplicate Request.session */
+        function get session(): Session 
+            request ? request.session : null
+
+        /** @duplicate Request.uri */
+        function get uri(): Uri 
+            request ? request.uri : null
+
+        /********************************************* Methods *******************************************/
         /** 
             Create and initialize a controller. This may be called directly by class constructors or via 
             the Controller.create factory method.
-            @param r Web request object
+            @param req Web request object
          */
-        function Controller(r: Request) {
+        function Controller(req: Request) {
             //  initRequest may be set by create() to allow subclasses to omit constructors
-            request = r || _initRequest
+            request = req || _initRequest
             if (request) {
                 log = request.log
                 params = request.params
-                controllerName = typeOf(this).trim("Controller") || "-Controller-"
+                controllerName = typeOf(this).trim("Controller") || "-DefaultController-"
                 config = request.config
                 if (config.database) {
                     openDatabase(request)
                 }
             }
+        }
+
+        /** MOB */
+        function afterFilter(fn, options: Object? = null): Void {
+            _afterFilters ||= []
+            _afterFilters.append([fn, options])
+        }
+
+        /** MOB */
+        function beforeFilter(fn, options: Object? = null): Void {
+            _beforeFilters ||= []
+            _beforeFilters.append([fn, options])
         }
 
         /** 
@@ -15314,32 +15335,134 @@ module ejs.web {
             return c
         }
 
-        /*
-            Generic open of a database. Expects and ejscr configuration like:
-
-            mode: "debug"
-            database: {
-                class: "Database",
-                adapter: "sqlite3",
-                debug: {
-                    name: "db/blog.sdb", trace: true, 
-                }
-            }
+        /** 
+            Send an error notification to the user. This is just a convenience instead of setting flash["error"]
+            @param msg Message to display
          */
-        private function openDatabase(request: Request) {
-            let deploymentMode = config.mode
-            let dbconfig = config.database
-            let klass = dbconfig["class"]
-            let adapter = dbconfig.adapter
-            let profile = dbconfig[deploymentMode]
-            if (klass && dbconfig.adapter && profile.name) {
-                //  MOB -- should NS be here
-                use namespace "ejs.db"
-                let db = new global[klass](dbconfig.adapter, request.dir.join(profile.name))
-                if (profile.trace) {
-                    db.trace(true)
-                }
+        function error(msg: String): Void {
+            flash ||= {}
+            flash["error"] = msg
+        }
+
+        /** 
+            @duplicate Rquest.header
+         */
+        function header(key: String): String
+            request.header(key)
+
+        /** 
+            Send a positive notification to the user. This is just a convenience instead of setting flash["inform"]
+            @param msg Message to display
+         */
+        function inform(msg: String): Void {
+            flash ||= {}
+            flash["inform"] = msg
+        }
+
+        /** 
+            @duplicate Request.makeUri
+            @option controller The name of the controller to use in the URI.
+            @option action The name of the action method to use in the URI.
+         */
+        function makeUri(location: Object): Uri
+            request.makeUri(location)
+
+//  MOB - could this use a general meta facility
+        /** 
+            Missing action method. This method will be called if the requested action routine does not exist.
+         */
+        action function missing(): Void {
+            rendered = true
+            throw "Missing Action: \"" + params.action + "\" could not be found for controller \"" + controllerName + "\""
+        }
+
+//  MOB -- are there any controller events?
+        /** 
+            @duplicate Request.observe
+         */
+        function observe(name, observer: Function): Void
+            request.observer(name, observer)
+
+        /** 
+            @duplicate Stream.read
+         */
+        function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
+            request.read(buffer, offset, count)
+
+        /** 
+            Redirect the client to the given URL
+            @param where Url to redirect the client toward. This can be a relative or absolute string URL or it can be
+                a hash of URL components. For example, the following are valid inputs: "../index.ejs", 
+                "http://www.example.com/home.html", {action: "list"}.
+            @param status Http status code to use in the redirection response. Defaults to 302.
+         */
+        function redirect(where: Object, status: Number = Http.MovedTemporarily): Void {
+            request.redirect(where, status)
+            redirected = true
+        }
+
+        /** 
+            Redirect the client to the given action
+            @param action Controller action name to which to redirect the client.
+         */
+        function redirectAction(action: String): Void
+            redirect({action: action})
+
+        /** 
+            Render the raw arguments back to the client. The args are converted to strings.
+            @param args Arguments to write to the client
+         */
+        function render(...args): Void { 
+            rendered = true
+            request.write(args)
+            request.finalize()
+        }
+
+        /**
+            Render an error message as the response
+         */
+        function renderError(status: Number, ...msgs): Void {
+            rendered = true
+            request.writeError(status, ...msgs)
+        }
+
+        /** 
+            Render a file's contents. 
+            @param filename Path to the filename to send to the client
+         */
+        function renderFile(filename: Path): Void { 
+            rendered = true
+            request.sendFile(filename)
+            request.finalize()
+        }
+
+        /** 
+            Render a partial ejs template. Does not set "rendered" to true.
+         */
+        function renderPartial(path: Path): void { 
+            //  MOB -- todo
+        }
+
+        /** 
+            Render a view template
+         */
+        function renderView(viewName: String? = null): Void {
+            if (rendered) {
+                throw new Error("renderView invoked but render has already been called")
+                return
             }
+            viewName ||= actionName
+            let viewClass = controllerName + "_" + viewName + "View"
+            loadView(viewName)
+            view = new global[viewClass](request)
+            view.controller = this
+            //  MOB -- slow. Native method for this?
+            for each (let n: String in Object.getOwnPropertyNames(this, {includeBases: true, excludeFunctions: true})) {
+                view.public::[n] = this[n]
+            }
+            log.debug(4, "render view: \"" + controllerName + "/" + viewName + "\"")
+            rendered = true
+            view.render(request)
         }
 
         /** 
@@ -15347,6 +15470,7 @@ module ejs.web {
             @param request Request object
             @return A response object hash {status, headers, body} or null if writing directly using the request object.
          */
+//  MOB -- is this a builder or what?
         function run(request: Request): Object {
             actionName = params.action || "index"
             params.action = actionName
@@ -15380,18 +15504,46 @@ module ejs.web {
             return response
         }
 
-        /* 
-            Prepare the flash message. This extracts any flash message from the session state store
-         */
-        private function flashBefore() {
-            lastFlash = null
-            flash = request.session["__flash__"]
-            if (flash) {
-                request.session["__flash__"] = undefined
-                lastFlash = flash.clone()
-            }
+        /** MOB */
+        function resetFilters(): Void {
+            _beforeFilters = null
+            _afterFilters = null
+            _wrapFilters = null
         }
 
+        /** @duplicate Request.setHeader */
+        function setHeader(key: String, value: String, overwrite: Boolean = true): Void
+            request.setHeader(key, value, overwrite)
+
+        /** @duplicate Request.setStatus */
+        function setStatus(status: Number): Void
+            request.status = status
+
+        /** 
+            Send a warning message back to the client for display in the flash area. This is just a convenience instead of
+            setting flash["warn"]
+            @param msg Message to display
+         */
+        function warn(msg: String): Void {
+            flash ||= {}
+            flash["warn"] = msg
+        }
+
+        /** MOB */
+        function wrapFilter(fn, options: Object? = null): Void {
+            _wrapFilters ||= []
+            _wrapFilters.append([fn, options])
+        }
+
+        /** 
+            Low-level write data to the client. This will buffer the written data until either flush() or 
+            finalize() is called.  This will not set the $rendered property.
+            @duplicate Request.write
+         */
+        function write(...data): Number
+            request.write(...data)
+
+        /**************************************** Private ******************************************/
         /* 
             Save the flash message for the next request. Delete old flash messages
          */
@@ -15411,29 +15563,81 @@ module ejs.web {
             }
         }
 
-        /** @hide TODO */
-        function resetFilters(): Void {
-            _beforeFilters = null
-            _afterFilters = null
-            _wrapFilters = null
+        /* 
+            Prepare the flash message. This extracts any flash message from the session state store
+         */
+        private function flashBefore() {
+            lastFlash = null
+            flash = request.session["__flash__"]
+            if (flash) {
+                request.session["__flash__"] = undefined
+                lastFlash = flash.clone()
+            }
         }
 
-        /** @hide TODO */
-        function beforeFilter(fn, options: Object? = null): Void {
-            _beforeFilters ||= []
-            _beforeFilters.append([fn, options])
+        /**
+            Load the view. 
+            @param viewName Bare view name
+            @hide
+         */
+        private function loadView(viewName: String) {
+            let dirs = config.directories
+            let cvname = controllerName + "_" + viewName
+            let path = request.dir.join("views", controllerName, viewName).joinExt(config.extensions.ejs)
+            let cached = Loader.cached(path, request.config, request.dir.join(dirs.cache))
+            let viewClass = cvname + "View"
+
+//  MOB -- can this be generalized and use the Web.serve code?
+            //  TODO - OPT. Could keep a cache of cached.modified
+            if (global[viewClass] && cached.modified >= path.modified) {
+                log.debug(4, "Use loaded view: \"" + controllerName + "/" + viewName + "\"")
+                return
+            } else if (!path.exists) {
+                throw "Missing view: \"" + path+ "\""
+            }
+            if (cached && cached.exists && cached.modified >= path.modified) {
+                log.debug(4, "Load view \"" + controllerName + "/" + viewName + "\" from: " + cached);
+                load(cached)
+            } else {
+                if (!global.TemplateParser) {
+                    load("ejs.web.template.mod")
+                }
+                let layouts = request.dir.join(dirs.layouts)
+                log.debug(4, "Rebuild view \"" + controllerName + "/" + viewName + "\" and save to: " + cached);
+                if (!path.exists) {
+                    throw "Can't find view: \"" + path + "\""
+                }
+                let code = TemplateParser().buildView(cvname, path.readString(), { layouts: layouts })
+                eval(code, cached)
+            }
         }
 
-        /** @hide TODO */
-        function afterFilter(fn, options: Object? = null): Void {
-            _afterFilters ||= []
-            _afterFilters.append([fn, options])
-        }
+        /*
+            Generic open of a database. Expects and ejscr configuration like:
 
-        /** @hide TODO */
-        function wrapFilter(fn, options: Object? = null): Void {
-            _wrapFilters ||= []
-            _wrapFilters.append([fn, options])
+            mode: "debug"
+            database: {
+                class: "Database",
+                adapter: "sqlite3",
+                debug: {
+                    name: "db/blog.sdb", trace: true, 
+                }
+            }
+         */
+        private function openDatabase(request: Request) {
+            let deploymentMode = config.mode
+            let dbconfig = config.database
+            let klass = dbconfig["class"]
+            let adapter = dbconfig.adapter
+            let profile = dbconfig[deploymentMode]
+            if (klass && dbconfig.adapter && profile.name) {
+                //  MOB -- should NS be here
+                use namespace "ejs.db"
+                let db = new global[klass](dbconfig.adapter, request.dir.join(profile.name))
+                if (profile.trace) {
+                    db.trace(true)
+                }
+            }
         }
 
         /* 
@@ -15467,104 +15671,6 @@ module ejs.web {
             }
         }
 
-        /**
-            Load the view. 
-            @param viewName Bare view name
-            @hide
-         */
-        private function loadView(viewName: String) {
-            let dirs = config.directories
-            let cvname = controllerName + "_" + viewName
-            let path = request.dir.join("views", controllerName, viewName).joinExt(config.extensions.ejs)
-            let cached = Loader.cached(path, request.config, request.dir.join(dirs.cache))
-            let viewClass = cvname + "View"
-
-            //  TODO - OPT. Could keep a cache of cached.modified
-            if (global[viewClass] && cached.modified >= path.modified) {
-                log.debug(4, "Use loaded view: \"" + controllerName + "/" + viewName + "\"")
-                return
-            } else if (!path.exists) {
-                throw "Missing view: \"" + path+ "\""
-            }
-            if (cached && cached.exists && cached.modified >= path.modified) {
-                log.debug(4, "Load view \"" + controllerName + "/" + viewName + "\" from: " + cached);
-                load(cached)
-            } else {
-                if (!global.TemplateParser) {
-                    load("ejs.web.template.mod")
-                }
-                let layouts = request.dir.join(dirs.layouts)
-                log.debug(4, "Rebuild view \"" + controllerName + "/" + viewName + "\" and save to: " + cached);
-                if (!path.exists) {
-                    throw "Can't find view: \"" + path + "\""
-                }
-                let code = TemplateParser().buildView(cvname, path.readString(), { layouts: layouts })
-                eval(code, cached)
-            }
-        }
-
-        /**
-            Render an error message as the response
-         */
-        function renderError(status: Number, ...msgs): Void {
-            request.writeError(status, ...msgs)
-            rendered = true
-        }
-
-        /** 
-            Redirect the client to the given URL
-            @param where Url to redirect the client toward. This can be a relative or absolute string URL or it can be
-                a hash of URL components. For example, the following are valid inputs: "../index.ejs", 
-                "http://www.example.com/home.html", {action: "list"}.
-            @param status Http status code to use in the redirection response. Defaults to 302.
-         */
-        function redirect(where: Object, status: Number = Http.MovedTemporarily): Void {
-            request.redirect(where, status)
-            redirected = true
-        }
-
-        /** 
-            Redirect the client to the given action
-            @param action Controller action name to which to redirect the client.
-         */
-        function redirectAction(action: String): Void
-            redirect({action: action})
-
-        /** 
-            Render the raw arguments back to the client. The args are converted to strings.
-         */
-        function render(...args): Void { 
-            rendered = true
-            request.write(args)
-            request.finalize()
-        }
-
-        /** 
-            Render a file's contents. 
-         */
-        function renderFile(filename: String): Void { 
-            rendered = true
-            let file: File = new File(filename)
-            try {
-                //  MOB -- should use SENDFILE
-                file.open()
-                while (data = file.read(4096)) {
-                    request.write(data)
-                }
-                file.close()
-                request.finalize()
-            } catch (e: Error) {
-                reportError(Http.ServerError, "Can't read file: " + filename, e)
-            }
-        }
-
-        /** 
-            Render a partial ejs template. Does not set "rendered" to true.
-         */
-        function renderPartial(path: Path): void { 
-            //  MOB -- todo
-        }
-
         private function viewExists(name: String): Boolean {
             let viewClass = controllerName + "_" + actionName + "View"
             if (global[viewClass]) {
@@ -15577,108 +15683,23 @@ module ejs.web {
             return null
         }
 
-        /** 
-            Render a view template
-         */
-        function renderView(viewName: String? = null): Void {
-            if (rendered) {
-                throw new Error("renderView invoked but render has already been called")
-                return
-            }
-            viewName ||= actionName
-            let viewClass = controllerName + "_" + viewName + "View"
-            loadView(viewName)
-            view = new global[viewClass](request)
-            view.controller = this
-            //  MOB -- slow. Native method for this?
-            for each (let n: String in Object.getOwnPropertyNames(this, {includeBases: true, excludeFunctions: true})) {
-                view.public::[n] = this[n]
-            }
-            log.debug(4, "render view: \"" + controllerName + "/" + viewName + "\"")
-            rendered = true
-            view.render(request)
-        }
+        /********************************************  LEGACY 1.0.2 ****************************************/
 
         /** 
-            Send an error notification to the user. This is just a convenience instead of setting flash["error"]
-            @param msg Message to display
+            @hide
+            @deprecated 2.0.0
          */
-        function error(msg: String): Void {
-            flash ||= {}
-            flash["error"] = msg
-        }
-
-        /** 
-            Send a positive notification to the user. This is just a convenience instead of setting flash["inform"]
-            @param msg Message to display
-         */
-        function inform(msg: String): Void {
-            flash ||= {}
-            flash["inform"] = msg
-        }
-
-        /** 
-            Send a warning message back to the client for display in the flash area. This is just a convenience instead of
-            setting flash["warn"]
-            @param msg Message to display
-         */
-        function warn(msg: String): Void {
-            flash ||= {}
-            flash["warn"] = msg
-        }
-
-//  MOB -- revise doc
-        /** 
-            Make a URI suitable for invoking actions. This routine will construct a URL Based on a supplied action name, 
-            model id and options that may contain an optional controller name. This is a convenience routine to remove from 
-            applications the burden of building URLs that correctly use action and controller names.
-            @params parts 
-            @return A string URL.
-            @options url An override url to use. All other options are ignored.
-            @options query Query string to append to the URL. Overridden by the query arg.
-            @options controller The name of the controller to use in the URL.
-            @option scheme String URI protocol scheme (http or https)
-            @option host String URI host name or IP address.
-            @option port Number TCP/IP port number for communications
-            @option path String URI path 
-            @option query String URI query parameters. Does not include "?"
-            @option reference String URI path reference. Does not include "#"
-         */
-        function makeUri(parts: Object): Uri
-            request.makeUri(parts)
-
-        /** 
-            Session state object. The session state object can be used to share state between requests.
-            If a session has not already been created, this call creates a session and sets the $sessionID property. 
-            A cookie containing a session ID is automatically created and sent to the client on the first response 
-            after creating the session. Objects are stored the session state by JSON serialization.
-            This getter property is a wrapper and returns the Request.session object.
-         */
-        function get session(): Session 
-            request ? request.session : null
-
-        /** 
-            Missing action method. This method will be called if the requested action routine does not exist.
-         */
-        action function missing(): Void {
-            rendered = true
-            throw "Missing Action: \"" + params.action + "\" could not be found for controller \"" + controllerName + "\""
-        }
-
-        //  LEGACY 1.0.2
-
-        /** @hide
-            @deprecated
-         */
+        # Config.Legacy
         function get appUrl()
             request.home.toString().trimEnd("/")
 
-        /** @hide
-            @deprecated
+        /** 
+            @hide
+            @deprecated 2.0.0
          */
-        function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String {
-            return makeUri({ path: action })
-        }
+        # Config.Legacy
+        function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String
+            makeUri({ path: action })
     }
 }
 
@@ -17695,10 +17716,7 @@ module ejs.web {
             @param timeout Session state timeout in seconds. After the timeout has expired, the session will be deleted.
          */
         function createSession(timeout: Number = -1): Session {
-            this.session
-            if (timeout < 0) {
-                setLimits({ sessionTimeout: timeout })
-            }
+            setLimits({ sessionTimeout: timeout })
             return session
         }
 
@@ -17759,6 +17777,7 @@ module ejs.web {
             @option reference String URI path reference. Does not include "#"
             @option controller String Controller name if using an MVC route
             @option action String Action name if using an MVC route
+            @return A Uri object
          */
         function makeUri(location: Object): Uri {
             if (route) {
@@ -17828,6 +17847,7 @@ module ejs.web {
          */
         native function removeObserver(name, observer: Function): Void
 
+//  MOB -- should this be sendFile - YES
         /**
             Send a static file back to the client. This is a high performance way to send static content to the client.
             This call must be invoked prior to sending any data or headers to the client, otherwise it will be ignored
@@ -17835,7 +17855,7 @@ module ejs.web {
             @param file Path to the file to send back to the client
             @return True if the Send connector can successfully be used. 
          */
-        native function sendfile(file: Path): Boolean
+        native function sendFile(file: Path): Boolean
 
         /** 
             Send a response to the client. This can be used instead of setting status and calling setHeaders() and write(). 
@@ -17989,7 +18009,6 @@ module ejs.web {
             The output is html escaped for security.
             @param status Http status code
             @param msg Message to send. The message may be modified for readability if it contains an exception backtrace.
-            @deprecated
          */
         function writeError(code: Number, ...msgs): Void {
             let text
@@ -18062,100 +18081,126 @@ module ejs.web {
 
         /*************************************** Deprecated ***************************************/
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get accept(): String
             header("accept")
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get acceptCharset(): String
             header("accept-charset")
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get acceptEncoding(): String
             header("accept-encoding")
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get authAcl(): String {
             throw new Error("Not supported")
             return null
         }
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get body(): String
             input.readString()
 
-        /** @deprecated
-            @hide
+        /** 
             Control the caching of the response content. Setting cacheable to false will add a Cache-Control: no-cache
             header to the output
             @param enable Set to false (default) to disable caching of the response content.
+            @hide
+            @deprecated 2.0.0
          */
+        # Config.Legacy
         function cachable(enable: Boolean = false): Void {
             if (!cache) {
                 setHeader("Cache-Control", "no-cache", false)
             }
         }
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get connection(): String
             header("connection")
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get hostName(): String
             host
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get mimeType(): String
             header("content-type")
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get pathTranslated(): String
             dir.join(pathInfo)
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get pragma(): String
             header("pragma")
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get remoteHost(): String
             header("host")
 
-        /** @deprecated
+        /** 
             @hide
+            @deprecated 2.0.0
           */
+        # Config.Legacy
         function get url(): String
             pathInfo
 
         /** 
             Get the name of the client browser software set in the "User-Agent" Http header 
-            @deprecated
             @hide
+            @deprecated 2.0.0
          */
+        # Config.Legacy
         function get userAgent(): String
             header("user-agent")
-
     }
 }
 
@@ -20361,24 +20406,27 @@ module ejs.web {
             return data
         }
 
-        //  LEGACY - move these into compat?
-        /** @hide
-            @deprecated
+        /** 
+            @hide
+            @deprecated 2.0.0
          */
-        function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String {
-            //  MOB - should call the controller.makeUrl
-            return makeUri({ path: action })
-        }
+        # Config.Legacy
+        function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String 
+            makeUri({ path: action })
 
-        /** @hide
-            @deprecated
+        /** 
+            @hide
+            @deprecated 2.0.0
          */
+        # Config.Legacy
         function get appUrl()
             request.home.toString().trimEnd("/")
 
-        /** @hide
-            @deprecated
+        /** 
+            @hide
+            @deprecated 2.0.0
          */
+        # Config.Legacy
         function redirect(url: Object) {
             if (controller) {
                 controller.redirect(url)
@@ -20541,7 +20589,7 @@ module ejs.web {
                 if (request.isSecure) {
                     body = File(body, "r")
                 } else {
-                    request.sendfile(body)
+                    request.sendFile(body)
                     return
                 }
             }
@@ -20594,7 +20642,7 @@ module ejs.web {
             } else {
                 let file = request.responseHeaders["X-Sendfile"]
                 if (file && !request.isSecure) {
-                    request.sendfile(file)
+                    request.sendFile(file)
                 } else {
                     request.finalize()
                 }
@@ -20631,7 +20679,7 @@ module ejs.web {
                 } else {
                     let file = request.responseHeaders["X-Sendfile"]
                     if (file && !request.isSecure) {
-                        request.sendfile(file)
+                        request.sendFile(file)
                     }
                 }
             } catch (e) {
