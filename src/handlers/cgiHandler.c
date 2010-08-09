@@ -570,9 +570,9 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
      */
     len = 0;
     fd = mprGetCmdFd(cmd, MPR_CMD_STDOUT);
-    if (fd >= 0 && (endHeaders = strstr(headers, "\r\n\r\n")) == NULL) {
+    if ((endHeaders = strstr(headers, "\r\n\r\n")) == NULL) {
         if ((endHeaders = strstr(headers, "\n\n")) == NULL) {
-            if (strlen(headers) < HTTP_MAX_HEADERS) {
+            if (fd >= 0 && strlen(headers) < HTTP_MAX_HEADERS) {
                 /* Not EOF and less than max headers and have not yet seen an end of headers delimiter */
                 return 0;
             }
