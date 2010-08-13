@@ -649,7 +649,7 @@ static int retryRequest(HttpConn *conn, cchar *url)
         if (sendRequest(conn, method, url) < 0) {
             return MPR_ERR_CANT_WRITE;
         }
-        if (httpWait(conn, HTTP_STATE_PARSED, conn->limits->requestTimeout) == 0) {
+        if (httpWait(conn, NULL, HTTP_STATE_PARSED, conn->limits->requestTimeout) == 0) {
             if (httpNeedRetry(conn, &redirect)) {
                 if (redirect) {
                     url = resolveUrl(conn, redirect);
@@ -767,7 +767,7 @@ static int doRequest(HttpConn *conn, cchar *url)
         return MPR_ERR_CANT_CONNECT;
     }
     while (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprGetElapsedTime(conn, mark) <= limits->requestTimeout) {
-        httpWait(conn, HTTP_STATE_COMPLETE, 10);
+        httpWait(conn, NULL, HTTP_STATE_COMPLETE, 10);
         readBody(conn);
     }
     if (conn->state < HTTP_STATE_COMPLETE && !conn->error) {

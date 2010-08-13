@@ -9211,7 +9211,6 @@ int mprRemoveItemAtPos(MprList *lp, int index)
     if (index < 0 || index >= lp->length) {
         return MPR_ERR_NOT_FOUND;
     }
-
     items = lp->items;
     for (i = index; i < (lp->length - 1); i++) {
         items[i] = items[i + 1];
@@ -11204,7 +11203,7 @@ char *mprGetPortablePath(MprCtx ctx, cchar *path)
 char *mprGetRelPath(MprCtx ctx, cchar *pathArg)
 {
     MprFileSystem   *fs;
-    char            home[MPR_MAX_FNAME], *hp, *cp, *result, *tmp, *path, *mark;
+    char            home[MPR_MAX_FNAME], *hp, *cp, *result, *tmp, *path;
     int             homeSegments, len, i, commonSegments, sep;
 
     fs = mprLookupFileSystem(ctx, pathArg);
@@ -11254,11 +11253,10 @@ char *mprGetRelPath(MprCtx ctx, cchar *pathArg)
         Find portion of path that matches the home directory, if any. Start at -1 because matching root doesn't count.
      */
     commonSegments = -1;
-    for (hp = home, mark = cp = path; *hp && *cp; hp++, cp++) {
+    for (hp = home, cp = path; *hp && *cp; hp++, cp++) {
         if (isSep(fs, *hp)) {
             if (isSep(fs, *cp)) {
                 commonSegments++;
-                mark = cp + 1;
             }
         } else if (fs->caseSensitive) {
             if (tolower((int) *hp) != tolower((int) *cp)) {
@@ -11277,7 +11275,6 @@ char *mprGetRelPath(MprCtx ctx, cchar *pathArg)
      */
     if ((isSep(fs, *hp) || *hp == '\0') && (isSep(fs, *cp) || *cp == '\0')) {
         commonSegments++;
-        mark = cp;
     }
     if (isSep(fs, *cp)) {
         cp++;
@@ -14515,6 +14512,9 @@ static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
     rc = bind(sp->fd, addr, addrlen);
     if (rc < 0) {
         rc = errno;
+        if (rc == EADDRINUSE) {
+            mprLog(sp, 3, "Can't bind, address %s:%d already in use", ip, port);
+        }
         mprFree(addr);
         closesocket(sp->fd);
         sp->fd = -1;

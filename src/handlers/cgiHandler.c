@@ -395,7 +395,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
         break;
     }
     if (conn->state == HTTP_STATE_COMPLETE) {
-        httpAdvanceRx(conn, NULL);
+        httpProcess(conn, NULL);
     }
 }
 
@@ -640,7 +640,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
         q = tx->queue[HTTP_QUEUE_TRANS].nextQ;
         httpFinalize(conn);
         if (conn->state == HTTP_STATE_COMPLETE) {
-            httpAdvanceRx(conn, NULL);
+            httpProcess(conn, NULL);
         }
     }
     return 1;

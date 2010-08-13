@@ -157,7 +157,7 @@ bool simpleGet(MprTestGroup *gp, cchar *uri, int expectStatus)
     }
     conn = getConn(gp);
     httpFinalize(conn);
-    if (httpWait(conn, HTTP_STATE_COMPLETE, -1) < 0) {
+    if (httpWait(conn, NULL, HTTP_STATE_COMPLETE, -1) < 0) {
         return MPR_ERR_CANT_READ;
     }
     status = httpGetStatus(gp->conn);
@@ -201,7 +201,7 @@ bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
         }
     }
     httpFinalize(conn);
-    if (httpWait(conn, HTTP_STATE_COMPLETE, -1) < 0) {
+    if (httpWait(conn, NULL, HTTP_STATE_COMPLETE, -1) < 0) {
         return MPR_ERR_CANT_READ;
     }
     status = httpGetStatus(conn);
@@ -240,7 +240,7 @@ bool simplePost(MprTestGroup *gp, char *uri, char *bodyData, int len, int expect
         }
     }
     httpFinalize(conn);
-    if (httpWait(conn, HTTP_STATE_COMPLETE, -1) < 0) {
+    if (httpWait(conn, NULL, HTTP_STATE_COMPLETE, -1) < 0) {
         return MPR_ERR_CANT_READ;
     }
 

@@ -1337,6 +1337,8 @@ struct  MprWorkerService;
 struct  MprXml;
 
 
+#undef UNUSED
+
 //  MOB TODO - make these consistent: CANT vs NOT or NO
 //  MOB SORT 
 
@@ -3934,7 +3936,6 @@ extern void mprEnableDispatcher(MprDispatcher *dispatcher);
     ServiceEvents parameters
  */
 #define MPR_SERVICE_ONE_THING   0x4         /**< Wait for one event or one I/O */
-#define MPR_SERVICE_NAP         0x8         /**< Nap to prevent busy waiting */
 
 /*
     Schedule events. This can be called by any thread. Typically an app will dedicate one thread to be an event service 

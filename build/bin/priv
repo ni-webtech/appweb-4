@@ -6,7 +6,7 @@
 #
 ################################################################################
 
-if [ "HEADLESS" = 1 -o `id -u` = 0 -o "$OPENWRTVERSION" != "" ] ; then
+if [ "$HEADLESS" = 1 -o `id -u` = 0 -o "$OPENWRTVERSION" != "" ] ; then
     sh -c "$*"
 
 else

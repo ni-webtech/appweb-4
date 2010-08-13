@@ -1830,6 +1830,8 @@ module ejs {
         native function write(...data): Number
 
 //  MOB -- should these routines return the number of bytes written?
+//  MOB -- function write(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number
+
         /** 
             Write a byte to the array. Data is written to the current write $position pointer which is then incremented.
 //  MOB -- no such details exist
@@ -2472,7 +2474,7 @@ module ejs {
         /**
             CPU type (eg. i386, ppc, arm)
          */
-        shared native static const CPU: String
+        native static const CPU: String
 
         /**
             Operating system version. One of: WIN, LINUX, MACOSX, FREEBSD, SOLARIS
@@ -2694,8 +2696,11 @@ module ejs {
         native function get fullYear(): Number 
         native function set fullYear(year: Number): void
 
+//  MOB -- rethink name
         /**
-            @hide
+            Calculate a time that is $msec in the future
+            @param msec Period into the future in milliseconds. Can be negative for the past.
+            @return A new date object
          */
         native function future(msec: Number): Date
 
@@ -5170,11 +5175,12 @@ module ejs {
          */
         native function get date(): Date
 
-        /**
+        /*
+UNUSED
             Stop auto-finalizing the request. Calling dontFinalize will keep the request open until a forced finalize is
             made via "finalize(true). 
-         */
         native function dontFinalize(): Void
+         */
 
         /** 
             Encoding scheme for serializing strings. The default encoding is UTF-8. Not yet implemented.
@@ -5192,22 +5198,25 @@ module ejs {
 
         /** @hide
             Fetch a URL. This is a convenience method to asynchronously invoke an Http method without waiting. 
+            It can be useful to wait for completion using App.waitForEvent(http, "close"))
             @param method Http method. This is typically "GET" or "POST"
             @param uri URL to fetch
             @param data Body data to send with the request. Set to null for no data.
-            @param callback Function to invoke on completion of the request
+            @param callback Optional function to invoke on completion of the request.
           */
-        function fetch(method: String, uri: Uri, data: *, callback: Function) {
+        function fetch(method: String, uri: Uri, data: *, callback: Function = null) {
             xh = XMLHttp(this)
             xh.open(method, uri)
             xh.send(data)
             xh.onreadystatechange = function () {
                 if (xh.readyState == XMLHttp.Loaded) {
                     response = xh.responseText
-                    if (callback.bound == global) {
-                        callback.call(this)
-                    } else {
-                        callback()
+                    if (callback) {
+                        if (callback.bound == global) {
+                            callback.call(this)
+                        } else {
+                            callback()
+                        }
                     }
                 }
             }
@@ -5215,10 +5224,14 @@ module ejs {
 
         /** 
             Signals the end of any write data and flushes any buffered write data to the client. 
-            If dontFinalize() has been called, this call will have no effect unless $force is true.
-            @param force Do finalization even if dontFinalize() has been called.
          */
-        native function finalize(force: Boolean = false): Void 
+        native function finalize(): Void 
+
+        /** 
+            Has the request output been finalized. 
+            @return True if the all the output has been written.
+         */
+        native function get finalized(): Boolean 
 
         /** 
             Flush request data. Calling flush(Sream.WRITE) or finalize() is required to ensure write data is sent to 
@@ -5228,7 +5241,8 @@ module ejs {
         native function flush(dir: Number = Stream.WRITE): Void
 
         /** 
-            Control whether redirects should be automatically followed by this Http object. Default is true.
+            Control whether redirects should be automatically followed by this Http object. When true, a redirected
+            response will be followed and the redirected URL will be transparently re-fetched.  Default is false.
          */
         native function get followRedirects(): Boolean
         native function set followRedirects(flag: Boolean): Void
@@ -5245,7 +5259,7 @@ module ejs {
          */
         native function form(uri: Uri, data: Object): Void
 
-        /*
+        /**
 FUTURE & KEEP
             Commence a POST request with form data the current uri. See connect() for connection details.
             @param uri Optional request uri. If non-null, this overrides any previously defined uri for the Http object.
@@ -5253,6 +5267,7 @@ FUTURE & KEEP
             @param data Data objects to pass with the POST request. The objects are json encoded and the Content-Type is
             set to "application/json". If you require "application/x-www-form-urlencoded" encoding, use publicForm().
             @throws IOError if the request cannot be issued to the remote server.
+            @hide
 
             function publicForm(uri: Uri, ...data): Void
                 connect("POST", uri, Uri.encodeObjects(data))
@@ -5262,7 +5277,7 @@ FUTURE & KEEP
         /** 
             Commence a GET request for the current uri. See connect() for connection details.
             This call initiates a GET request. It does not wait for the request to complete. 
-            The get() call will auto-finalize. If you need to send body content with a get request, use connect(). 
+            The get() method will call finalize. If you need to send body content with a get request, use connect(). 
             Once initiated, one of the $read or response routines  may be used to receive the response data.
             @param uri The uri to get. This overrides any previously defined uri for the Http object. If null, use
                 a previously defined uri.
@@ -5449,6 +5464,22 @@ FUTURE & KEEP
         native function set retries(count: Number): Void
 
         /** 
+            Get the ejs session cookie. This call extracts the ejs session cookie from the Http response headers.
+            Ejscript sessions are identified by a client cookie which when transmitted with subsequent requests will 
+            permit the server to locate the relevant session state store for the server-side application. 
+            Use: setCookie("Cookie", cookie) to transmit the cookie on subsquent requests.
+         */
+        function get sessionCookie()
+            header("Set-Cookie").match(/(-ejs-session-=.*);/)[1]
+
+        /**
+            Set a "Cookie" header in the request headers. This is used to send a cookie to the server.
+            @param cookie Cookie header value
+         */
+        function setCookie(cookie: String): Void
+            setHeader("Cookie", cookie)
+
+        /** 
             Set the user credentials to use if the request requires authentication.
          */
         native function setCredentials(username: String, password: String): Void
@@ -5570,9 +5601,10 @@ FUTURE & KEEP
         native function set uri(newUri: Uri): Void
 
         /** 
-            Wait for a request to complete. This will auto-finalize if in sync mode if the request is not already finalized.
-            @param timeout Time in seconds to wait for the request to complete. A timeout of zero means no timeout, ie.
-            wait forever. A timeout of < 0, means don't wait.
+            Wait for a request to complete. This will call finalize() if in sync mode and the request is not already 
+            finalized.
+            @param timeout Timeout in milliseconds to wait for the request to complete. A timeout of zero means no 
+            timeout, ie. wait forever. A timeout of < 0 (default), means use the default request timeout.
             @return True if the request successfully completes.
          */
         native function wait(timeout: Number = -1): Boolean
@@ -6030,7 +6062,10 @@ module ejs {
         private static var timestamps = {}
         private static const defaultExtensions = [".es", ".js"]
 
-        //  UNUSED - not yet used
+        /**
+            UNUSED - not yet used
+            @hide
+         */
         public static function init(mainId: String? = null) {
             require.main = mainId
         }
@@ -7540,12 +7575,12 @@ module ejs {
             namespace values.
             @param obj Object to inspect
             @param options Property selection options
-            MOB -- inconsistent with JSON.baseClasses
+MOB -- inconsistent with JSON.baseClasses
             @option includeBases Boolean determining if base class properties will included. Defaults to false.
             @option excludeFunctions Boolean determining if function properties will included. Defaults to false.
             @return Array of enumerable property names
          */ 
-        static native function getOwnPropertyNames(obj: Object, options): Array
+        static native function getOwnPropertyNames(obj: Object, options = null): Array
 
         /** 
             The number of properties in the object including non-enumerable properties.
@@ -8272,17 +8307,18 @@ module ejs {
 
         /**
             Resolve paths in the neighborhood of this path. Resolve operates like join, except that it joins the 
-            given paths to the directory portion of the current ("this") path. For example: if "path" is set to
-            "/usr/bin/ejs/bin", then path.resolve("lib") will return "/usr/lib/ejs/lib". i.e. it will return the
+            given paths to the directory portion of the current ("this") path. For example: 
+            Path("/usr/bin/ejs/bin").resolve("lib") will return "/usr/lib/ejs/lib". i.e. it will return the
             sibling directory "lib".
 
-            Resolve operations by accumulating a virtual current directory, starting with "this" path. It then
-            successively joins the given paths. If the next path is an absolute path, it is used unmodified. 
-            The effect is to find the given paths with a virtual current directory set to the directory containing 
-            the prior path.
+            Resolve operates by determining a virtual current directory for this Path object. It then successively 
+            joins the given paths to the directory portion of the current result. If the next path is an absolute path, 
+            it is used unmodified.  The effect is to find the given paths with a virtual current directory set to the 
+            directory containing the prior path.
 
             Resolve is useful for creating paths in the region of the current path and gracefully handles both 
             absolute and relative path segments.
+            @params otherPaths Paths to resolve in the region of this path.
             @return A new Path object that is resolved against the prior path. 
          */
         native function resolve(...otherPaths): Path
@@ -8982,7 +9018,7 @@ module ejs {
             global patterns. This is only set if the "g" flag was used.
             It is set to the match ending index plus one. Set to zero if no match.
          */
-        shared native function get lastIndex(): Number
+        native function get lastIndex(): Number
 
         /**
             Set the integer index of the end of the last match plus one. This is the index to start the next match for
@@ -9007,24 +9043,24 @@ module ejs {
             input string looking for matches.
             @spec ejs
          */
-        shared native function get global(): Boolean
+        native function get global(): Boolean
 
         /**
             Ignore case flag. If the ignore case modifier was specified, the regular expression is case insensitive.
             @spec ejs
          */
-        shared native function get ignoreCase(): Boolean
+        native function get ignoreCase(): Boolean
 
         /**
             Multiline flag. If the multiline modifier was specified, the regular expression will search through carriage 
             return and new line characters in the input.
          */
-        shared native function get multiline(): Boolean
+        native function get multiline(): Boolean
 
         /**
             Regular expression source pattern currently set.
          */
-        shared native function get source(): String
+        native function get source(): String
 
         /**
             Substring last matched. Set to the matched string or null if there were no matches.
@@ -9063,7 +9099,7 @@ module ejs {
             Sticky flag. If the sticky modifier was specified, the regular expression will only match from the $lastIndex.
             @spec ejs
          */
-        shared native function get sticky(): Boolean
+        native function get sticky(): Boolean
 
         /**
             Test whether this regular expression will match against a string.
@@ -10715,16 +10751,35 @@ module ejs {
         native function Uri(uri: Object)
 
         /** 
+            Create a complete absolute URI from "this" URI with all mandatory components present including 
+            scheme and host.  The resulting URI path will be normalized and any missing components will be 
+            completed with values from the given $base URI. If "this" URI path is relative, it will be joined to base 
+            URI's path.
+            Any query component of "this" URI is discarded in the result. This is because the query component of "this" URI
+            is regarded as POST data and not integral to the base URI.
+            @param base Optional URI to provide missing components and a base URI path if the current URI path is relative. 
+            The base argument can be a string, URI or an object hash of URI component. If the base argument is not supplied,
+            the current URI will be completed as much as possible. See $complete.
+            @return A complete, absolute URI.
+          */
+        native function absolute(base = null): Uri
+
+        /** 
             The base of portion of the URI. The base portion is the trailing portion of the path without any 
                 directory elements.
          */
         native function get basename(): Uri
         
         /** 
-            A completed URI including scheme, host. The URI path will be normalized and completed with default values 
-            for missing components. 
+            Create a complete absolute URI from "this" URI with all mandatory components present including scheme and host. 
+            The resulting URI path will be normalized and missing (mandatory) components will be completed with values 
+            from the given "missing" argument.
+            @param missing Optional URI to provide the missing components. The missing argument can be a string, URI or
+                an object hash of URI component. If this missing argument is not provided, the following defaults are used:
+                "http://localhost:80/".
+            @return A complete, absolute URI.
          */
-        native function get complete(): Uri
+        native function complete(missing = null): Uri
 
         /** 
             Break a URI into its components by converting the URI to an absolute URI and breaking into components.
@@ -10857,7 +10912,7 @@ module ejs {
         native function set host(value: String): Void
 
         /** 
-            Is the URI is absolute. Set to true if the URI is an absolute path with the path component beginning with "/"
+            Is the URI is an absolute path. Set to true if the URI path component beginning with a "/".
          */
         native function get isAbsolute(): Boolean
 
@@ -10875,19 +10930,22 @@ module ejs {
             isDir == false
 
         /** 
-            Is if the URI is relative. Set to true if the URI's path component does not begin with "/"
+            Is if the URI path is relative. Set to true if the URI's path component does not begin with a "/".
          */
         function get isRelative(): Boolean
             isAbsolute == false
 
         /** 
-            Join URIs. If a URI is absolute, replace the join with it and continue. If a URI is
-            relative, replace the basename portion of the existing URI with the next joining uri and continue. For 
-            example:  Uri("/admin/login").join("logout") will replace "login" with "logout" whereas 
-            Uri("/admin/").join("login") will append login.
-            @return A new joined URI.
+            Join URIs. URI argument are joined in turn starting with "this" URI" as the base. If a URI argument is absolute,
+            the progressive result is replaced with the absolute URI and joining continues. If a URI argument is relative, 
+            a "/" is appended followed by the argument, and joining continues. For example:  
+                Uri("/admin").join("/display") will result in "/display"
+                Uri("/admin").join("logout") will result in "/admin/logout"
+                Uri("/admin").join("private", "profile") will result in "/admin/private/profile"
+            @param others Other URIs to join. These can be URIs, strings or object hashes of URI components.
+            @return A new URI with the arguments joined to the current URI.
          */
-        native function join(...other): Uri
+        native function join(...others): Uri
 
         /** 
             Join an extension to a URI. If the basename of the URI already has an extension, this call does nothing.
@@ -10920,12 +10978,6 @@ module ejs {
         native function get port(): Number
         native function set port(value: Number): Void
 
-        /** 
-            The URI protocol scheme. Set to "http" by default.
-         */
-        native function get scheme(): String
-        native function set scheme(value: String): Void
-
 //  MOB -- are all these null or some other default values?
         /** 
             The URI query string. The query string is the fragment after a "?" character in the URI.
@@ -10941,12 +10993,27 @@ module ejs {
         native function set reference(value: String): Void
 
         /** 
-            Create a URI with a releative path from the current URI to a given URI. This call computes the relative
-            path from this URI to the $target URI argument.
-            @param target Uri Target URI to locate.
-            @return a new URI object for the target URI
+            Create a URI with a relative path from the $base URI to "this" URI. 
+            If the base URI has a different scheme, host or port to that of "this" URI, then a relative URI cannot be 
+            formed and the current URI is returned.
+            Any query component of the $base URI is ignored in the result. This is because the query component 
+            is regarded as POST data and not integral to the base URI.
+            @param base Base URI to use in calculating the relative path to "this" URI. The base argument can be a string, 
+            URI or an object hash of URI component.
+            @return a new URI object with a relative path from the $base URI to "this" URI.
          */
-        function relative(target: Uri): Uri {
+        native function relative(base): Uri
+
+//  MOB -- UNUSED
+        function OLDrelative(target): Uri {
+            if (!target.isAbsolute || !this.isAbsolute) {
+                /* If target is relative, just use it. If this is relative, can't use it because we don't know where it is */
+                return target
+            }
+            if (this.scheme != target.scheme || this.host != target.host || this.port != target.port) {
+                /* Different server */
+                return target
+            }
             let parts = this.normalize.path.toString().split("/")
             let targetParts = target.normalize.path.toString().split("/")
             if (parts.length < targetParts.length) {
@@ -10976,6 +11043,29 @@ module ejs {
          */
         native function replaceExt(ext: String): Uri
 
+        /**
+            Resolve a URI in the neighborhood of this URI. Resolve operates like join, except that it joins the 
+            given URI to the directory portion of the current ("this") URI. For example: 
+
+                Uri("/a/b.html").resolve("c.html") will return "/a/c.html".
+
+            Resolve operates by determining a virtual current directory for this URI. It then joins the given URI path 
+            to the directory portion of the current result. If the given URI is an absolute URI, it is 
+            used unmodified.  The effect is to find the given URI with a virtual current directory set to the 
+            directory containing the prior URI.
+
+            Resolve is useful for creating URIs in the region of the current URI and gracefully handles both 
+            absolute and relative URI segments.
+            Any query component of "this" URI is discarded in the result. This is because the query component of "this" URI
+            is regarded as POST data and not integral to the base URI.
+            @param others Other URIs to resolve in the region of this path. These can be URIs, strings or object hashes 
+                of URI components.
+            @param relative If true, return a relative URI by disregarding the scheme, host and port portions of "this" URI. 
+                Defaults to true.
+            @return A new URI object that resolves given URI args using the "this" URI as a base. 
+         */
+        native function resolve(target, relative: Boolean = true): Path
+
         /** 
             Compare two URIs test if they represent the same resource
             @param other Other URI to compare with
@@ -10983,6 +11073,12 @@ module ejs {
             @return True if the URIs represent the same underlying resource
          */
         native function same(other: Object, exact: Boolean = false): Boolean
+
+        /** 
+            The URI protocol scheme. Set to "http" by default.
+         */
+        native function get scheme(): String
+        native function set scheme(value: String): Void
 
         /** 
             Return true if the URI path starts with the given prefix. This skips the scheme, host and port portions
@@ -11001,10 +11097,17 @@ module ejs {
             JSON.stringify(this.toString())
 
         /** 
-            Convert the URI to a string. The format of the string will depend on the defined $representation format.
+            Convert the URI to a string.
             @return a string representing the URI.
          */
         native override function toString(): String
+
+        /** 
+            Convert the local portion of the URI to a string. This will include only the path, query and reference
+            components of the URI. The scheme, host and port portions of the URI will be ignored.
+            @return a string representing the URI's path, query and reference portions.
+         */
+        native override function toLocalString(): String
 
         /** 
             Trim a pattern from the end of the URI path
@@ -11081,7 +11184,7 @@ module ejs {
     /** 
         Encode objects using using www-url encoding. Each object is encoded as a "key=value" pair. Each pair is separated
         by a "&" character. 
-        @param str String to encode
+        @param items Strings to encode
         @returns an encoded string
      */
     function encodeObjects(...items) {
@@ -12923,20 +13026,21 @@ module ejs.db {
         @stability evolving
      */
     class Database {
+        private static var defaultDb: Database
 
         private var _adapter: Object
         private var _connection: String
         private var _name: String
         private var _traceAll: Boolean
 
-        private static var defaultDb: Database
-
         use default namespace public
 
         /**
-            Initialize a database connection using the supplied database connection string
+            Initialize a database connection using the supplied database connection string. The first opened database
+            will also be defined as the default database.
             @param adapter Database adapter to use. E.g. "sqlite"
             @param connectionString Connection string stipulating how to connect to the database. The format is one of the 
+            @param trace Trace database requests to the log
             following forms:
                 <ul>
                     <li>adapter://host/database/username/password</li>
@@ -12946,7 +13050,7 @@ module ejs.db {
                 For sqlite connection strings, the abbreviated form is permitted where a filename is supplied and the 
                 connection string is assumed to be: <pre>sqlite://localhost/filename</pre>
          */
-        function Database(adapter: String, connectionString: String) {
+        function Database(adapter: String, connectionString: String, trace: Boolean = false) {
             Database.defaultDb ||= this
             if (adapter == "sqlite3") adapter = "sqlite"
             _name = Path(connectionString).basename
@@ -12959,6 +13063,7 @@ module ejs.db {
                 throw "Can't find database connector for " + adapter
             }
             _adapter = new global."ejs.db"::[adapterClass](connectionString)
+            _traceAll = trace
         }
 
         /**
@@ -13055,12 +13160,8 @@ module ejs.db {
             Set the default database for the application.
             @param db the default database to define
          */
-        static function set defaultDatabase(db: Database): Void {
-            /*
-                Do this rather than using a Database static var so Database can go into the master interpreter
-             */
+        static function set defaultDatabase(db: Database): Void 
             defaultDb = db
-        }
 
         /**
             Destroy a database
@@ -15040,10 +15141,12 @@ module ejs.web {
         @example:
             export.app = CommonLog(app)
      */
-
     function CommonLog(app, logger: Stream = App.log): Object
         (new CommonLogBuilder(app, logger)).run
 
+    /**
+        TODO MOB
+     */
     class CommonLogBuilder {
         var app: Function
         var logger: Stream
@@ -15200,14 +15303,22 @@ module ejs.web {
  */
 
 module ejs.web {
-
-    /* 
+    /**
         Namespace for all action methods 
      */
     namespace action = "action"
 
     /** 
-        Web framework controller class.
+        Web framework controller class. The controller classes can accept web requests and direct them to action methods
+        which generate the response. Controllers are responsible for either generating output for the client or invoking
+        a View which will create the response. By convention, all Controllers should be defined with a "Controller" 
+        suffix. This permits similar Controller and Model to exist in the same namespace.
+
+        MOB - Need intro to controllers here
+
+        Action methods will autoFinalize by calling Request.autoFinalize unless Request.dontAutoFinalize has been called.
+        If the Controller action wants to keep the request connection to the client open, you must call dontAutoFinalize
+        before returning from the action.
         @stability prototype
         @spec ejs
      */
@@ -15220,11 +15331,8 @@ module ejs.web {
 
         private static var _initRequest: Request
 
-        private var redirected: Boolean
-        private var _afterFilters: Array
-        private var _beforeFilters: Array
-        private var _wrapFilters: Array
-        private var lastFlash: Object
+        private var _afterCheckers: Array
+        private var _beforeCheckers: Array
 
         /** Name of the action being run */
         var actionName:  String 
@@ -15235,32 +15343,19 @@ module ejs.web {
         /** Lower case controller name */
         var controllerName: String
 
-        /** Deployment mode: debug, test, production */
-        var deploymentMode: String
-
         /** Logger stream - reference to Request.log */
         var log: Logger
 
         /** Form and query parameters - reference to the Request.params object. */
         var params: Object
 
-        /** The response has been rendered. If an action does not render a response, then a default view will be rendered */
-        var rendered: Boolean
-
         /** Reference to the current Request object */
         var request: Request
 
-        /** Reference to the current View object */
+        /** Reference to the current View object 
+UNUSED - MOB -- better to set in Request
         var view: View
-
-        /** 
-            Flash messages to display on the next screen
-                "error"         Negative errors (Warnings and errors)
-                "inform"        Informational / postitive feedback (note)
-                "warn"          Negative feedback (Warnings and errors)
-                "*"             Other feedback (reminders, suggestions...)
-        */
-        public var flash: Object
+         */
 
         /***************************************** Convenience Getters  ***************************************/
 
@@ -15285,18 +15380,37 @@ module ejs.web {
             request ? request.uri : null
 
         /********************************************* Methods *******************************************/
+
+        /** 
+            Static factory method to create and initialize a controller. The controller class is specified by 
+            params["controller"] which should be set to the controller name without the "Controller" suffix. 
+            This call expects the controller class to be loaded. Called by Mvc.load().
+            @param request Web request object
+            @param cname Controller class name. This should be the name of the Controller class without the "Controller"
+                suffix.
+         */
+        static function create(request: Request, cname: String = null): Controller {
+            cname ||= (request.params.controller.toPascal() + "Controller")
+            _initRequest = request
+            let c: Controller = new global[cname](request)
+            c.request = request
+            _initRequest = null
+            return c
+        }
+
         /** 
             Create and initialize a controller. This may be called directly by class constructors or via 
             the Controller.create factory method.
             @param req Web request object
          */
         function Controller(req: Request) {
-            //  initRequest may be set by create() to allow subclasses to omit constructors
+            /*  _initRequest may be set by create() to allow subclasses to omit constructors */
+            controllerName = typeOf(this).trim("Controller") || "-DefaultController-"
             request = req || _initRequest
             if (request) {
+                request.controller = this
                 log = request.log
                 params = request.params
-                controllerName = typeOf(this).trim("Controller") || "-DefaultController-"
                 config = request.config
                 if (config.database) {
                     openDatabase(request)
@@ -15304,87 +15418,111 @@ module ejs.web {
             }
         }
 
-        /** MOB */
-        function afterFilter(fn, options: Object? = null): Void {
-            _afterFilters ||= []
-            _afterFilters.append([fn, options])
-        }
-
-        /** MOB */
-        function beforeFilter(fn, options: Object? = null): Void {
-            _beforeFilters ||= []
-            _beforeFilters.append([fn, options])
+        /** 
+            Run an action checker function after running the action
+            @param fn Function callback to invoke
+            @param options Checker options. 
+            @option only Only run the checker for this action name
+            @option except Run the checker for all actions except this name
+         */
+        function afterChecker(fn, options: Object = null): Void {
+            _afterCheckers ||= []
+            _afterCheckers.append([fn, options])
         }
 
         /** 
-            Factory method to create and initialize a controller. The controller class is specified by 
-            params["controller"] which should be set by the router to the controller name without the "Controller" suffix. 
-            This call expects the controller class to be loaded. Called by Mvc.load().
-            @param request Web request object
+            Controller web application. This function will run the controller action method and return a response object. 
+            The action method may be specified by the $aname parameter or it may be supplied via params.action.
+            @param request Request object
+            @param aname Optional action method name. If not supplied, params.action is consulted. If that is absent too, 
+                "index" is used as the action method name.
+            @return A response object hash {status, headers, body} or null if writing directly using the request object.
          */
-        static function create(request: Request): Controller {
-            let cname: String = request.params["controller"]
-            if (!cname) {
-                throw "Can't run app, controller " + cname + " is not loaded"
+        function app(request: Request, aname: String = null): Object {
+            use namespace action
+            actionName ||= aname || params.action || "index"
+            params.action = actionName
+            runCheckers(_beforeCheckers)
+            let response
+            if (!request.finalized && request.autoFinalizing) {
+                if (!this[actionName]) {
+                    if (!viewExists(actionName)) {
+                        response = this[actionName = "missing"]()
+                    }
+                } else {
+                    response = this[actionName]()
+                }
+                if (!response && !request.responded && request.autoFinalizing) {
+                    /* Run a default view */
+                    writeView()
+                }
             }
-            _initRequest = request
-            let uname = cname.toPascal() + "Controller"
-            let c: Controller = new global[uname](request)
-            c.request = request
-            _initRequest = null
-            return c
+            runCheckers(_afterCheckers)
+            if (!response) {
+                request.autoFinalize()
+            }
+            return response
         }
 
         /** 
-            Send an error notification to the user. This is just a convenience instead of setting flash["error"]
-            @param msg Message to display
+            Run an action checker before running the action. If the checker function writes a response, the normal
+            processing of the requested action will be prevented. Note that checkers do not autoFinalize so if the
+            checker does write a response, it must call finalize.
+            @param fn Function callback to invoke
+            @param options Checker options. 
+            @option only Only run the checker for this action name
+            @option except Run the checker for all actions except this name
          */
-        function error(msg: String): Void {
-            flash ||= {}
-            flash["error"] = msg
+        function beforeChecker(fn, options: Object = null): Void {
+            _beforeCheckers ||= []
+            _beforeCheckers.append([fn, options])
         }
 
         /** 
-            @duplicate Rquest.header
+            @duplicate Request.error
+         */
+        function error(msg: String): Void
+            request.error(msg)
+
+        /** 
+            @duplicate Request.flash
+         */
+        function flash(key: String, msg: String): Void
+            request.flash(key, msg)
+
+        /** 
+            @duplicate Request.header
          */
         function header(key: String): String
             request.header(key)
 
         /** 
-            Send a positive notification to the user. This is just a convenience instead of setting flash["inform"]
-            @param msg Message to display
+            @duplicate Request.inform
          */
-        function inform(msg: String): Void {
-            flash ||= {}
-            flash["inform"] = msg
-        }
+        function inform(msg: String): Void
+            request.inform(msg)
 
         /** 
             @duplicate Request.makeUri
-            @option controller The name of the controller to use in the URI.
-            @option action The name of the action method to use in the URI.
          */
-        function makeUri(location: Object): Uri
-            request.makeUri(location)
+        function makeUri(location: Object, relative: Boolean = true): Uri
+            request.makeUri(location, relative)
 
-//  MOB - could this use a general meta facility
         /** 
             Missing action method. This method will be called if the requested action routine does not exist.
          */
         action function missing(): Void {
-            rendered = true
             throw "Missing Action: \"" + params.action + "\" could not be found for controller \"" + controllerName + "\""
         }
 
-//  MOB -- are there any controller events?
         /** 
             @duplicate Request.observe
          */
         function observe(name, observer: Function): Void
-            request.observer(name, observer)
+            request.observe(name, observer)
 
         /** 
-            @duplicate Stream.read
+            @duplicate Request.read
          */
         function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
             request.read(buffer, offset, count)
@@ -15396,119 +15534,92 @@ module ejs.web {
                 "http://www.example.com/home.html", {action: "list"}.
             @param status Http status code to use in the redirection response. Defaults to 302.
          */
-        function redirect(where: Object, status: Number = Http.MovedTemporarily): Void {
+        function redirect(where: Object, status: Number = Http.MovedTemporarily): Void
             request.redirect(where, status)
-            redirected = true
-        }
 
         /** 
             Redirect the client to the given action
             @param action Controller action name to which to redirect the client.
          */
-        function redirectAction(action: String): Void
-            redirect({action: action})
+        function redirectAction(action: String): Void {
+            if (request.route) {
+                redirect({action: action})
+            } else {
+                redirect(request.uri.dirname.join(action))
+            }
+        }
 
         /** 
-            Render the raw arguments back to the client. The args are converted to strings.
-            @param args Arguments to write to the client
+            Render the raw data back to the client. 
+            If an action method does call a write data back to the client and has not called finalize() or 
+            dontAutoFinalize(), a default view template will be generated when the action method returns. 
+            @param args Arguments to write to the client.  The args are converted to strings.
          */
-        function render(...args): Void { 
-            rendered = true
-            request.write(args)
-            request.finalize()
-        }
+        function write(...args): Void
+            request.write(...args)
 
         /**
-            Render an error message as the response
+            Render an error message as the response.
+            This call sets the response status and writes a HTML error message with the given arguments back to the client.
+            @param status Http response status code
+            @param msgs Error messages to send with the response
          */
-        function renderError(status: Number, ...msgs): Void {
-            rendered = true
+        function writeError(status: Number, ...msgs): Void
             request.writeError(status, ...msgs)
-        }
 
         /** 
-            Render a file's contents. 
+            Render file content back to the client.
+            This call writes the given file contents back to the client.
             @param filename Path to the filename to send to the client
          */
-        function renderFile(filename: Path): Void { 
-            rendered = true
+        function writeFile(filename: Path): Void
             request.sendFile(filename)
-            request.finalize()
+
+        /** 
+            Render a partial response using template file.
+            @param path Path to the template to render to the client
+            @param layouts Optional directory for layout files. Defaults to config.directories.layouts.
+         */
+        function writePartialTemplate(path: Path, layouts: Path = null): Void { 
+            request.filename = path
+            layouts ||= config.directories.layouts
+            let app = TemplateBuilder(request, { layouts: layouts } )
+            log.debug(4, "writePartialTemplate: \"" + path + "\"")
+            Web.process(app, request, false)
         }
 
         /** 
-            Render a partial ejs template. Does not set "rendered" to true.
+            Render a view template.
+            This call writes the result of running the view template file back to the client.
+            @param viewName Name of the view to render to the client. The view template filename will be constructed by 
+                joining the views directory with the controller name and view name. E.g. views/Controller/list.ejs.
          */
-        function renderPartial(path: Path): void { 
-            //  MOB -- todo
-        }
-
-        /** 
-            Render a view template
-         */
-        function renderView(viewName: String? = null): Void {
-            if (rendered) {
-                throw new Error("renderView invoked but render has already been called")
-                return
-            }
+        function writeView(viewName: String = null): Void {
             viewName ||= actionName
-            let viewClass = controllerName + "_" + viewName + "View"
-            loadView(viewName)
-            view = new global[viewClass](request)
-            view.controller = this
-            //  MOB -- slow. Native method for this?
-            for each (let n: String in Object.getOwnPropertyNames(this, {includeBases: true, excludeFunctions: true})) {
-                view.public::[n] = this[n]
-            }
-            log.debug(4, "render view: \"" + controllerName + "/" + viewName + "\"")
-            rendered = true
-            view.render(request)
+            writeTemplate(request.dir.join(config.directories.views, controllerName, viewName).
+                joinExt(config.extensions.ejs))
         }
 
         /** 
-            Run the controller action. 
-            @param request Request object
-            @return A response object hash {status, headers, body} or null if writing directly using the request object.
+            Render a view template from a path.
+            This call writes the result of running the view template file back to the client.
+            @param path Path to the view template to render and write to the client.
+            @param layouts Optional directory for layout files. Defaults to config.directories.layouts.
          */
-//  MOB -- is this a builder or what?
-        function run(request: Request): Object {
-            actionName = params.action || "index"
-            params.action = actionName
-            use namespace action
-            if (request.sessionID) {
-                flashBefore()
-            }
-            runFilters(_beforeFilters)
-            let response
-            if (!redirected) {
-                if (!this[actionName]) {
-                    if (!viewExists(actionName)) {
-                        actionName = "missing"
-                        response = this[actionName]()
-                    }
-                } else {
-                    response = this[actionName]()
-                }
-                if (!response && !rendered && !redirected && request.autoFinalize) {
-                    /* Run a default view */
-                    renderView()
-                }
-                runFilters(_afterFilters)
-            }
-            if (flash) {
-                flashAfter()
-            }
-            if (!response) {
-                request.finalize()
-            }
-            return response
+        function writeTemplate(path: Path, layouts: Path = null): Void {
+            log.debug(4, "writeTemplate: \"" + path + "\"")
+            request.filename = path
+            layouts ||= config.directories.layouts
+            let app = TemplateBuilder(request, { layouts: layouts } )
+            Web.process(app, request, false)
         }
 
-        /** MOB */
-        function resetFilters(): Void {
-            _beforeFilters = null
-            _afterFilters = null
-            _wrapFilters = null
+        /** 
+            Remove all defined checkers on the Controller.
+         */
+        function removeCheckers(): Void {
+            _beforeCheckers = null
+            _afterCheckers = null
         }
 
         /** @duplicate Request.setHeader */
@@ -15520,149 +15631,85 @@ module ejs.web {
             request.status = status
 
         /** 
-            Send a warning message back to the client for display in the flash area. This is just a convenience instead of
-            setting flash["warn"]
-            @param msg Message to display
+            @duplicate Request.warn
          */
-        function warn(msg: String): Void {
-            flash ||= {}
-            flash["warn"] = msg
-        }
-
-        /** MOB */
-        function wrapFilter(fn, options: Object? = null): Void {
-            _wrapFilters ||= []
-            _wrapFilters.append([fn, options])
-        }
+        function warn(msg: String): Void
+            request.warn(msg)
 
         /** 
-            Low-level write data to the client. This will buffer the written data until either flush() or 
-            finalize() is called.  This will not set the $rendered property.
+            Low-level write data to the client. This will buffer the written data until either flush() or finalize() 
+            is called.
             @duplicate Request.write
          */
         function write(...data): Number
             request.write(...data)
 
+//  MOB -- move in place and doc
+
+        /** @duplicate Request.autoFinalize */
+        function autoFinalize(): Void
+            request.autoFinalize()
+
+        /** @duplicate Request.autoFinalizing */
+        function get autoFinalizing(): Boolean
+            request.autoFinalizing
+
+        /** @duplicate Request.flush */
+        function flush(): Void
+            request.flush()
+
+        /** @duplicate Request.finalize */
+        function finalize(): Void
+            request.finalize()
+
+        /** @duplicate Request.finalized */
+        function get finalized(): Boolean
+            request.finalized
+
+        /** @duplicate Request.dontAutoFinalize */
+        function dontAutoFinalize(): Void
+            request.dontAutoFinalize()
+
         /**************************************** Private ******************************************/
-        /* 
-            Save the flash message for the next request. Delete old flash messages
-         */
-        private function flashAfter() {
-            if (lastFlash) {
-                for (item in flash) {
-                    for each (old in lastFlash) {
-                        if (hashcode(flash[item]) == hashcode(old)) {
-                            delete flash[item]
-                        }
-                    }
-                }
-            }
-//  MOB -- obj.length was so much easier!
-            if (Object.getOwnPropertyCount(flash) > 0) {
-                request.session["__flash__"] = flash
-            }
-        }
-
-        /* 
-            Prepare the flash message. This extracts any flash message from the session state store
-         */
-        private function flashBefore() {
-            lastFlash = null
-            flash = request.session["__flash__"]
-            if (flash) {
-                request.session["__flash__"] = undefined
-                lastFlash = flash.clone()
-            }
-        }
-
-        /**
-            Load the view. 
-            @param viewName Bare view name
-            @hide
-         */
-        private function loadView(viewName: String) {
-            let dirs = config.directories
-            let cvname = controllerName + "_" + viewName
-            let path = request.dir.join("views", controllerName, viewName).joinExt(config.extensions.ejs)
-            let cached = Loader.cached(path, request.config, request.dir.join(dirs.cache))
-            let viewClass = cvname + "View"
-
-//  MOB -- can this be generalized and use the Web.serve code?
-            //  TODO - OPT. Could keep a cache of cached.modified
-            if (global[viewClass] && cached.modified >= path.modified) {
-                log.debug(4, "Use loaded view: \"" + controllerName + "/" + viewName + "\"")
-                return
-            } else if (!path.exists) {
-                throw "Missing view: \"" + path+ "\""
-            }
-            if (cached && cached.exists && cached.modified >= path.modified) {
-                log.debug(4, "Load view \"" + controllerName + "/" + viewName + "\" from: " + cached);
-                load(cached)
-            } else {
-                if (!global.TemplateParser) {
-                    load("ejs.web.template.mod")
-                }
-                let layouts = request.dir.join(dirs.layouts)
-                log.debug(4, "Rebuild view \"" + controllerName + "/" + viewName + "\" and save to: " + cached);
-                if (!path.exists) {
-                    throw "Can't find view: \"" + path + "\""
-                }
-                let code = TemplateParser().buildView(cvname, path.readString(), { layouts: layouts })
-                eval(code, cached)
-            }
-        }
-
         /*
-            Generic open of a database. Expects and ejscr configuration like:
+            Open database. Expects ejsrc configuration:
 
-            mode: "debug"
+            mode: "debug",
             database: {
+                module: "name.mod",
                 class: "Database",
                 adapter: "sqlite3",
-                debug: {
-                    name: "db/blog.sdb", trace: true, 
-                }
+                debug: { name: "db/blog.sdb", trace: true },
+                test: { name: "db/blog.sdb", trace: true },
+                production: { name: "db/blog.sdb", trace: true },
             }
          */
         private function openDatabase(request: Request) {
-            let deploymentMode = config.mode
             let dbconfig = config.database
-            let klass = dbconfig["class"]
-            let adapter = dbconfig.adapter
-            let profile = dbconfig[deploymentMode]
-            if (klass && dbconfig.adapter && profile.name) {
-                //  MOB -- should NS be here
-                use namespace "ejs.db"
-                let db = new global[klass](dbconfig.adapter, request.dir.join(profile.name))
-                if (profile.trace) {
-                    db.trace(true)
+            let dbclass = dbconfig["class"]
+            let profile = dbconfig[config.mode]
+            if (dbclass) {
+                if (dbconfig.module && !global[dbclass]) {
+                    global.load(dbconfig.module + ".mod")
                 }
+                new global[dbclass](dbconfig.adapter, request.dir.join(profile.name), profile.trace)
             }
         }
 
         /* 
-            Run the before/after filters. These are typically used to handle authorization and similar tasks
+            Run the before/after checkers. These are typically used to handle authorization and similar tasks
          */
-        private function runFilters(filters: Array): Void {
-            for each (filter in filters) {
-                let fn = filter[0]
-                let options = filter[1]
+        private function runCheckers(checkers: Array): Void {
+            for each (checker in checkers) {
+                let [fn, options] = checker
                 if (options) {
-                    only = options.only
-                    if (only) {
-                        if (only is String && actionName != only) {
-                            continue
-                        }
-                        if (only is Array && !only.contains(actionName)) {
+                    if (only = options.only) {
+                        if ((only is String && actionName != only) || (only is Array && !only.contains(actionName))) {
                             continue
                         }
                     } 
-                    except = options.except
-                    if (except) {
-                        if (except is String && actionName == except) {
-                            continue
-                        }
-                        if (except is Array && except.contains(actionName)) {
+                    if (except = options.except) {
+                        if ((except is String && actionName == except) || (except is Array && except.contains(actionName))) {
                             continue
                         }
                     }
@@ -15676,7 +15723,7 @@ module ejs.web {
             if (global[viewClass]) {
                 return true
             }
-            let path = request.dir.join("views", controllerName, name).joinExt(config.extensions.ejs)
+            let path = request.dir.join(config.directories.views, controllerName, name).joinExt(config.extensions.ejs)
             if (path.exists) {
                 return true
             }
@@ -15690,16 +15737,177 @@ module ejs.web {
             @deprecated 2.0.0
          */
         # Config.Legacy
-        function get appUrl()
-            request.home.toString().trimEnd("/")
+        function get absUrl()
+            absHome
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function afterFilter(fn, options: Object = null): Void
+            afterCheck(fn, options)
 
         /** 
             @hide
             @deprecated 2.0.0
          */
         # Config.Legacy
-        function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String
-            makeUri({ path: action })
+        function get appUrl()
+            home.trimEnd("/")
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function beforeFilter(fn, options: Object = null): Void
+            beforeCheck(fn, options)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function createSession(timeout: Number): Void
+            request.createSession(timeout)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function destroySession(): Void
+            request.destroySession()
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function discardOutput(): Void {
+            //  No supported
+            true
+        }
+            
+        /**
+            escapeHtml, html is now a global in Utils.es
+         */
+
+        /** 
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function get host()
+            request.server
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function keepAlive(on: Boolean): Void {
+            // Not supported 
+            true
+        }
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function loadView(path): Void
+            writeTemplate(path)
+
+        /** 
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String {
+            options = options.clone()
+            options.action = action;
+            options.id = id;
+            options.query = query;
+            makeUri(options)
+        }
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function redirectUrl(uri: String, status: Number = 302): Void
+            redirect(uri, status)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function render(...args): Void
+            write(...args)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function renderFile(filename: String): Void
+            writeFile(filename)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function renderRaw(...args): Void
+            write(...args)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function renderView(name: String = null): Void
+            writeView(name)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function reportError(status: Number, msg: String, e: Object = null): Void
+            writeError(status, msg + e)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function resetFilters(): Void
+            removeCheckers()
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function sendError(status, ...msgs): Void
+            writeError(status, ...msgs)
+
+        /**
+            @hide
+            @deprecated 2.0.0
+         */
+        # Config.Legacy
+        function setCookie(name: String, value: String, path: String = null, domain: String = null,
+                lifetime: Number = 0, secure: Boolean = false): Void  {
+            request.setCookie(name, 
+                { value: value, path: path, domain: domain, lifetime: Date().future(lifetime * 1000), secure: secure})
+        }
+
     }
 }
 
@@ -17188,25 +17396,13 @@ module ejs.web {
             Default configuration for MVC apps. This layers over App.defaultConfig and ejs.web::defaultConfig.
          */
         private static var defaultConfig = {
-            cache: {
-                enable: true,
-                reload: true,
-            },
             directories: {
                 bin: Path("bin"),
                 db: Path("db"),
-                cache: Path("cache"),
                 controllers: Path("controllers"),
-                layouts: Path("views/layouts"),
                 models: Path("models"),
-                views: Path("views"),
                 src: Path("src"),
                 web: Path("web"),
-            },
-            extensions: {
-                es: "es",
-                ejs: "ejs",
-                mod: "mod",
             },
             mvc: {
                 //  MOB -- what is this?
@@ -17252,6 +17448,8 @@ module ejs.web {
             return config
         }
 
+
+//  MOB -- rename to load?
         /** 
             Load an MVC application. This is typically called by the Router to load an application after routing
             the request to determine the appropriate controller
@@ -17338,6 +17536,7 @@ module ejs.web {
         }
     }
 
+//  MOB - is this right? who calls this?
     /**
         MVC request handler.  
         @param request Request object
@@ -17358,8 +17557,10 @@ module ejs.web {
     function MvcBuilder(request: Request): Function {
         //  MOB OPT - Currently Mvc has no state so really don't need an Mvc instance
         let mvc: Mvc = Mvc.apps[request.dir] || (Mvc.apps[request.dir] = new Mvc(request))
+        //  MOB -- rename to load?
         mvc.init(request)
-        return Controller.create(request).run
+        let cname: String = request.params["controller"].toPascal() + "Controller"
+        return Controller.create(request, cname).app
     }
 }
 
@@ -17429,6 +17630,8 @@ module ejs.web {
     dynamic class Request implements Stream {
         use default namespace public
 
+        private var lastFlash: Object
+
         /** 
             Absolute Uri for the top-level of the application. This returns an absolute Uri (includes scheme and host) 
             for the top-most application Uri. See $home to get a relative Uri.
@@ -17455,16 +17658,25 @@ module ejs.web {
         native enumerable var authUser: String
 
         /** 
-            Will the request auto-finalize. Set to false if dontFinalize() is called. Templated pages and controllers 
-            will auto-finalize, i.e. calling finalize() is not required unless dontFinalize() has been called.
+            Stop auto-finalizing the request. Some web frameworks will "auto-finalize" requests by calling finalize()
+            automatically at the conclusion of the request. Applications that wish to keep the connection open to the
+            client can defeat this auto-finalization by calling dontAutoFinalize().
+
+            Auto-finalization control. Set to true if the request will be finalized automatically at the conclusion of 
+            the request. Defaults to true and is set to false if dontAutoFinalize() is called. 
          */
-        native enumerable var autoFinalize: Boolean
+        native enumerable var autoFinalizing: Boolean
 
         /** 
             Request configuration. Initially refers to App.config which is filled with the aggregated "ejsrc" content.
             Middleware may modify to refer to a request local configuration object.
          */
         enumerable var config: Object
+
+        /** 
+            Associated Controller object. Set to null if no associated controller.
+         */
+        enumerable var controller: Controller
 
         /** 
             Get the request content length. This is the length of body data sent by the client with the request. 
@@ -17516,6 +17728,15 @@ module ejs.web {
             the Request $uri does not correspond to any physical resource may not define this property.
          */
         enumerable var filename: Path
+
+        /** 
+            Transient "flash" messages to pass to the next request. By convention, the following keys are used:
+            @option error    Negative errors (Warnings and errors)
+            @option inform   Informational / postitive feedback (note)
+            @option warn     Negative feedback (Warnings and errors)
+            @option *        Other feedback (reminders, suggestions...)
+        */
+        public var flashMessages: Object
 
         /** 
             Request Http headers. This is an object hash filled with lower-case request headers from the client. If multiple 
@@ -17633,6 +17854,12 @@ module ejs.web {
          */
         native enumerable var remoteAddress: String
 
+        /**
+            The application has responded in some way. The application has commenced a response by doing some 
+            output or setting status.
+         */
+        native var responded: Boolean
+
         /** 
             Http response headers. This is the proposed set of headers to send with the response.
             The case of header keys is preserved.
@@ -17691,6 +17918,16 @@ module ejs.web {
         native enumerable var uri: Uri
 
         /*************************************** Methods ******************************************/
+        /*
+            Construct the a Request object. Request objects are typically created by HttpServers and not constructed
+            manually.
+            @param uri Request URI
+            @param dir Default directory containing web documents
+         */
+        function Request(uri: Uri, dir: Path = ".") {
+            this.uri = uri
+            this.dir = dir
+        }
 
         /** 
             @duplicate Stream.async
@@ -17700,31 +17937,45 @@ module ejs.web {
         native function set async(enable: Boolean): Void
 
         /** 
+            Finalize the request if dontAutoFinalize has not been called. Finalization signals the end of any write data 
+            and flushes any buffered write data to the client. This routine is used by frameworks to allow users to 
+            defeat finalization by calling dontAutoFinalize. Users can then call finalize() to explictly control when
+            all the response data has been written. If dontAutoFinalize() has been called, this call will have no effect. 
+            In that case, call finalize() to finalize the request.
+         */
+        native function autoFinalize(): Void 
+
+        /** 
             @duplicate Stream.close
             This closes the current request by finalizing all transmission data and sending a "close" event. It may 
             not close the actually socket connection so that it can be reused for future requests.
+            It is normally not necessary to explicitly call close as the web framework will automatically close finalized
+            requests when all input data has been read.
          */
         native function close(): Void
 
-//  MOB -- have a default timeout value
         /**
             Create a session state object. The session state object can be used to share state between requests.
             If a session has not already been created, this call will create a new session and initialize the 
             $session property with the new session. It will also set the $sessionID property and a cookie containing 
             a session ID will be sent to the client with the response. Sessions can also be used/created by simply
             accessing the session property.  Objects are stored in the session state using JSON serialization.
-            @param timeout Session state timeout in seconds. After the timeout has expired, the session will be deleted.
+            @param timeout Optional session state timeout in seconds. Set to zero for no timeout. After the timeout has 
+                expired, the session will be deleted. 
          */
         function createSession(timeout: Number = -1): Session {
-            setLimits({ sessionTimeout: timeout })
+            if (timeout >= 0) {
+                setLimits({ sessionTimeout: timeout })
+            }
             return session
         }
 
         /**
-            Stop auto-finalizing the request. Calling dontFinalize will keep the request open until a forced finalize is
-            made via "finalize(true). 
+            Stop auto-finalizing the request. Some web frameworks will "auto-finalize" requests by calling finalize()
+            automatically at the conclusion of the request. Applications that wish to keep the connection open to the
+            client can defeat this auto-finalization by calling dontAutoFinalize().
          */
-        native function dontFinalize(): Void
+        native function dontAutoFinalize(): Void
 
         /** 
             Destroy a session. This call destroys the session state store that is being used for the current client. 
@@ -17734,21 +17985,73 @@ module ejs.web {
         native function destroySession(): Void
 
         /** 
+            Set an error flash notification message.
+            Flash messages persist for only one request and are a convenient way to pass state information or 
+            feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
+            be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+            automatically.
+            @param msg Message to store
+         */
+        function error(msg: String): Void
+            flash("error", msg)
+
+        /** 
             The request pathInfo file extension
          */
         function get extension(): String
             Uri(pathInfo).extension
 
         /** 
-            Signals the end of any write data and flushes any buffered write data to the client. 
-            If dontFinalize() has been called, this call will have no effect unless $force is true.
-            @param force Do finalization even if dontFinalize has been called.
+            Signals the end of any and all response data and flushes any buffered write data to the client. 
+            If the request has already been finalized, this call has no additional effect.
          */
-        native function finalize(force: Boolean = false): Void 
+        native function finalize(): Void 
 
         /** 
-            Flush request data. Calling flush(Sream.WRITE) or finalize() is required to ensure write data is sent 
-            to the client. Flushing the read direction is ignored
+            Has the request output been finalized. 
+            @return True if the all the output has been written.
+         */
+        native function get finalized(): Boolean 
+
+        /* 
+            Save flash messages for the next request and delete old flash messages.
+         */
+        function finalizeFlash() {
+            if (flashMessages) {
+                if (lastFlash) {
+                    for (item in flashMessages) {
+                        for each (old in lastFlash) {
+                            if (hashcode(flashMessages[item]) == hashcode(old)) {
+                                delete flashMessages[item]
+                            }
+                        }
+                    }
+                }
+                if (Object.getOwnPropertyCount(flashMessages) > 0) {
+                    session["__flash__"] = flashMessages
+                }
+            }
+        }
+
+        /** 
+            Set a transient flash notification message. Flash messages persist for only one request and are a convenient
+                way to pass state information or feedback messages to the next request. To use flash messages, 
+                setupFlash() and finalizeFlash() must be called before and after the request is processed. Web.process
+                will call setupFlash and finalizeFlash automatically.
+            @param key Flash message key
+            @param msg Message to store
+         */
+        function flash(key: String, msg: String): Void {
+            if (flashMessages == null) {
+                createSession()
+                flashMessages = {}
+            }
+            flashMessages[key] = msg
+        }
+
+        /** 
+            Flush request data. Calling flush(Sream.WRITE) or finalize() is required to ensure buffered write data is sent 
+            to the client. Flushing the read direction is ignored.
             @duplicate Stream.flush
          */
         native function flush(dir: Number = Stream.WRITE): Void
@@ -17762,39 +18065,39 @@ module ejs.web {
         native function header(key: String): String
 
         /** 
-            Make a URI, provided parts of the URI. The URI is completed using the current request and route state.
-            @params location The location parameter can be a URI string or object hash of components. If the URI is a
-               string, it is may be an absolute or relative URI. It is joined using Uri.join() to a base URI fromed from
-               the current request parameters. If the URI is an object hash, the following properties are examined
-               and used to augment parameters from the existing request: scheme, host, port, path, query, reference. 
-               Properties that are relevant to the current request route, such as "controller", or "action" are also
-               consulted.
+            Set a informational flash notification message.
+            Flash messages persist for only one request and are a convenient way to pass state information or 
+            feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
+            be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+            automatically.
+            @param msg Message to store
+         */
+        function inform(msg: String): Void
+            flash("inform", msg)
+
+        /** 
+            Make a URI. The URI is created from the given location parameter. The location may contain partial or complete 
+            URI information. The missing parts are supplied using the current request URI and optional route tables. 
+            @params location The location parameter can be a URI string or object hash of components. If the location is a
+               string, it is may be an absolute or relative URI. If location is an absolute URI, it will be used unmodified.
+               If location is a relative URI, is append to the current request URI. The location argument can also be
+               an object hash of URI components: scheme, host, port, path, query, reference, controller, action and other
+               route table tokens. 
+            @param relative If true, return a relative URI by disregarding the scheme, host and port portions of "this" URI. 
+                Defaults to true.
             @option scheme String URI protocol scheme (http or https)
             @option host String URI host name or IP address.
             @option port Number TCP/IP port number for communications
-            @option path String URI path 
+            @option path String URI path portion
             @option query String URI query parameters. Does not include "?"
             @option reference String URI path reference. Does not include "#"
-            @option controller String Controller name if using an MVC route
-            @option action String Action name if using an MVC route
-            @return A Uri object
+            @option controller String Controller name if using a Controller-based route
+            @option action String Action name if using a Controller-based route
+            @option other String Other route table tokens
+            @return A Uri object.
          */
-        function makeUri(location: Object): Uri {
-            if (route) {
-                if (location is String) {
-                    return route.makeUri(this, params).join(location)
-                } else {
-                    return route.makeUri(this, blend(params.clone(), location))
-                }
-            }
-            let components = absHome.components
-            if (location is String) {
-                return Uri(components).join(location)
-            } else {
-                blend(components, location)
-            }
-            return Uri(components)
-        }
+        function makeUri(location: Object, relative: Boolean = true): Uri
+            (route) ? route.makeUri(this, location, relative) : uri.resolve(location, relative)
 
         /** 
             @duplicate Stream.observe
@@ -17811,6 +18114,23 @@ module ejs.web {
 
         /** 
             @duplicate Stream.read
+            If the request is posting a form, i.e. the Http ContentType header is set to 
+            "application/x-www-form-urlencoded", then the request object will not be created by the HttpServer until
+            all the form data is read and the $params collection is populated with the form data. This permits form
+            data to be processed synchronously without having to use async/observer techniques to respond to readable
+            events. With all other content types, the Request object will be created and run, before incoming client 
+            data has been read. To read data in these situations, register an observer function to run when the
+            connection becomes "readable".
+            @example:
+                request.observe("readable", function(event, request) {
+                    var data = new byteArray
+                    if (read(data)) {
+                        print("Got " + data)
+                    } else {
+                        //  End of input
+                        request.finalize()
+                    }
+                })
          */
         native function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
 
@@ -17818,25 +18138,19 @@ module ejs.web {
             Redirect the client to a new URL. This call redirects the client's browser to a new location specified 
             by the $url.  Optionally, a redirection code may be provided. Normally this code is set to be the HTTP 
             code 302 which means a temporary redirect. A 301, permanent redirect code may be explicitly set.
-            @param location Url to redirect the client toward. This can be a relative or absolute string URL or it can be
-                a hash of URL components. For example, the following are valid inputs: "../index.ejs", 
+            @param location Uri to redirect the client toward. This can be a relative or absolute string URI or it can be
+                a hash of URI components. For example, the following are valid inputs: "../index.ejs", 
                 "http://www.example.com/home.html", {action: "list"}.
             @param status Optional HTTP redirection status
          */
-        function redirect(location: Object, status: Number = Http.MovedTemporarily): Void {
-            /*
-                This permits urls like: ".." or "/" or "http://..."
-             */
-            let base = uri.clone()
-            base.query = ""
-            base.reference = ""
-            let url = (location is String) ? makeUri(base.join(location).normalize.components) : makeUri(location)
+        function redirect(location: *, status: Number = Http.MovedTemporarily): Void {
             this.status = status
-            setHeader("Location", url)
+            let target: Uri = makeUri(location).absolute(uri)
+            setHeader("Location", target)
             write("<!DOCTYPE html>\r\n" +
                    "<html><head><title>Redirect (" + status + ")</title></head>\r\n" +
                     "<body><h1>Redirect (" + status + ")</h1>\r\n" + 
-                    "<p>The document has moved <a href=\"" + url + 
+                    "<p>The document has moved <a href=\"" + target + 
                     "\">here</a>.</p>\r\n" +
                     "<address>" + server.software + " at " + host + " Port " + server.port + 
                     "</address></body>\r\n</html>\r\n")
@@ -17847,7 +18161,6 @@ module ejs.web {
          */
         native function removeObserver(name, observer: Function): Void
 
-//  MOB -- should this be sendFile - YES
         /**
             Send a static file back to the client. This is a high performance way to send static content to the client.
             This call must be invoked prior to sending any data or headers to the client, otherwise it will be ignored
@@ -17871,7 +18184,7 @@ module ejs.web {
                 setHeaders(response.headers)
             if (response.body)
                 write(response.body)
-            finalize()
+            autoFinalize()
         }
 
         /** 
@@ -17956,6 +18269,21 @@ module ejs.web {
         function setStatus(status: Number): Void
             this.status = status
 
+        /* 
+            Prepare the flash message area. This copies flash messages from the session state store into the flashMessages
+            store.
+         */
+        function setupFlash() {
+            if (sessionID) {
+                lastFlash = null
+                flashMessages = session["__flash__"]
+                if (flashMessages) {
+                    session["__flash__"] = undefined
+                    lastFlash = flashMessages.clone()
+                }
+            }
+        }
+
         /** 
             Dump objects for debugging
             @param args List of arguments to print.
@@ -17997,6 +18325,16 @@ module ejs.web {
           */
         native function trace(options: Object): Void
 
+        /** 
+            Set a warning flash notification.
+            Flash messages persist for only one request and are a convenient way to pass state information or 
+            feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
+            be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+            automatically.
+            @param msg Message to store
+         */
+        function warn(msg: String): Void
+            flash("warn", msg)
 
         /** 
             Write data to the client. This will buffer the written data until either flush() or finalize() is called. 
@@ -18005,14 +18343,13 @@ module ejs.web {
         native function write(...data): Number
 
         /** 
-            Write an error message back to the user and finalize the request. 
-            The output is html escaped for security.
+            Write an error message back to the user and finalize the request.  The output is Html escaped for security.
             @param status Http status code
-            @param msg Message to send. The message may be modified for readability if it contains an exception backtrace.
+            @param msgs Messages to send with the response. The messages may be modified for readability if it 
+                contains an exception backtrace.
          */
-        function writeError(code: Number, ...msgs): Void {
-            let text
-            status = code
+        function writeError(status: Number, ...msgs): Void {
+            this.status = status
             let msg = msgs.join(" ").replace(/.*Error Exception: /, "")
             let title = "Request Error for \"" + pathInfo + "\""
             let text
@@ -18025,16 +18362,23 @@ module ejs.web {
                 setHeader("Content-Type", "text/html")
                 write(errorBody(title, text))
             } catch {}
-            finalize(true)
+            finalize()
             log.debug(4, "Request error (" + status + ") for: \"" + uri + "\". " + msg)
         }
 
         /** 
-            Send text back to the client which is first HTML escaped.
-            @param args Objects to emit
+            Send HTML escaped data back to the client.
+            @param args Objects to encode and write back to the client.
          */
         function writeHtml(...args): Void
             write(html(...args))
+
+        /**
+            The number of bytes written to the client. This is the count of bytes passed to $write and buffered, 
+            not the actual number of bytes sent to the network connection.
+            @return
+         */
+        native function get written(): Number
 
         /********************************************** JSGI  ********************************************************/
         /** 
@@ -18120,21 +18464,10 @@ module ejs.web {
             @deprecated 2.0.0
           */
         # Config.Legacy
-        function get body(): String
-            input.readString()
-
-        /** 
-            Control the caching of the response content. Setting cacheable to false will add a Cache-Control: no-cache
-            header to the output
-            @param enable Set to false (default) to disable caching of the response content.
-            @hide
-            @deprecated 2.0.0
-         */
-        # Config.Legacy
-        function cachable(enable: Boolean = false): Void {
-            if (!cache) {
-                setHeader("Cache-Control", "no-cache", false)
-            }
+        function get body(): String {
+            let data = new ByteArray
+            while (read(data));
+            return data
         }
 
         /** 
@@ -18265,6 +18598,7 @@ module ejs.web {
             Master Route Table. Routes are processed from first to last. Inner routes are tested before their outer parent.
          */
 		var routes: Array = []
+		var routeLookup: Object = {}
 		
         /**
             Function to test if the Request.filename is a directory.
@@ -18275,6 +18609,7 @@ module ejs.web {
 
         /**
             Simple top level route table for "es" and "ejs" scripts. Matches simply by script extension.
+            The default route is used for makeUri.
          */
         public static var TopRoutes = [
           { name: "es",      builder: ScriptBuilder,    match: /\.es$/ },
@@ -18284,6 +18619,7 @@ module ejs.web {
           { name: "default", builder: StaticBuilder },
         ]
 
+//  MOB -- rename these MvcRoutes
         /** 
             Restful routes. Supports CRUD actions: index, show, create, update, destroy. The restful routes defined are:
             <pre>
@@ -18296,6 +18632,7 @@ module ejs.web {
                 PUT		/controller/1           update      Update 
                 DELETE	/controller/1           destroy     
             </pre>
+            The default route is used for makeUri.
         */
         public static var RestfulRoutes = [
   { name: "es",      builder: ScriptBuilder,                match: /^\/web\/.*\.es$/   },
@@ -18314,6 +18651,7 @@ module ejs.web {
   { name: "index",   builder: MvcBuilder, method: "GET",    match: "/:controller",          params: { action: "index" } },
         ]
 
+        # Config.Legacy
         public static var LegacyRoutes = [
   { name: "es",      builder: ScriptBuilder,                match: /^\/web\/.*\.es$/   },
   { name: "ejs",     builder: TemplateBuilder,              match: /^\/web\/.*\.ejs$/,      module: "ejs.template"  },
@@ -18395,6 +18733,7 @@ module ejs.web {
                     addRoutes(route.subroute, route)
                 }
                 routes.append(route)
+                routeLookup[route.name] = route
             }
 		}
 
@@ -18536,17 +18875,6 @@ module ejs.web {
         }
     }
 
-/* UNUSED MOB
-    function TemplateBuilder(request: Request): Function {
-        let route = request.route
-        if (route.module && !route.initialized) {
-            global.load(route.module + ".mod")
-            route.initialized = true
-        }
-        return "ejs.web"::TemplateApp
-    }
-*/
-
     /** 
         Route class. A Route describes a mapping from a set of resources to a URI. The Router uses tables of 
         Routes to serve and route requests to web scripts.
@@ -18686,36 +19014,31 @@ module ejs.web {
             this.router = router
         }
 
-        //  MOB - OPT
         /**
-            Make a URI provided parts of a URI. The URI is completed using the current request and route. 
+            Make a URI. The URI is created from the given location parameter. The location may contain partial or complete 
+            URI information. The missing parts are supplied using the current request URI and the current route.
             @param request Request object
-            @param components Object hash of URI component properties.
+            @param location Object hash of URI component properties.
+            @param If true, return a relative URI by disregarding the scheme, host and port portions of "this" URI. 
+                Defaults to true.
             @option scheme String URI protocol scheme (http or https)
             @option host String URI host name or IP address.
             @option port Number TCP/IP port number for communications
             @option path String URI path 
             @option query String URI query parameters. Does not include "?"
             @option reference String URI path reference. Does not include "#"
+            @option controller String Controller name if using a Controller-based route
+            @option action String Action name if using a Controller-based route
+            @option other String Other route table tokens
+            @return A Uri object.
          */
-        public function makeUri(request: Request, components: Object): Uri {
+        public function makeUri(request: Request, location: Object, relative: Boolean = true): Uri {
             if (urimaker) {
-                return urimaker(request, components)
+                return urimaker(request, location, relative)
             }
-            let where
-            if (request) {
-                //  Base the URI on the current application home uri
-                let base = blend(request.absHome.components, request.params)
-                delete base.id
-                delete base.query
-                if (components is String) {
-                    where = blend(base, { path: components })
-                } else {
-                    where = blend(base, components)
-                }
-            } else {
-                where = components.clone()
-            }
+            let where = request.uri.resolve(location, relative)
+
+            //  MOB -- really don't want this in the query. Should be done via post or URI path: /id/
             if (where.id != undefined) {
                 if (where.query) {
                     where.query += "&" + "id=" + where.id
@@ -18723,18 +19046,19 @@ module ejs.web {
                     where.query = "id=" + where.id
                 }
             }
+            /*
+                If a path not supplied, build up the path via route tokens
+             */
             let uri = Uri(where)
-            let routeName = where.route || "default"
-            let route = this
-            if (routeName != this.name) {
-                for each (r in router.routes) {
-                    if (r.name == routeName) {
-                        route = r
-                        break
+            if (Object.getOwnPropertyCount(location) > 0 && !location.path) {
+                let routeName = where.route || "default"
+                let route = this
+                if (routeName != this.name) {
+                    route = routeLookup[routeName]
+                    if (!route) {
+                        throw new ReferenceError("makeUri: Unknown route \"" + routeName + "\"")
                     }
                 }
-            }
-            if (!components.path) {
                 for each (token in route.tokens) {
                     if (!where[token]) {
                         throw new ArgError("Missing URI token \"" + token + "\"")
@@ -18799,22 +19123,7 @@ module ejs.web {
         Session state storage class. 
         @spec ejs
      */
-    dynamic class Session { 
-
-        /*
-UNUSED
-            Get the count of active sessions
-            @return The number of active sessionss
-        native static function get count(): Number
-        */
-
-        /*
-UNUSED
-            Session inactivity timeout in milliseconds. Setting the timeout resets the inactivity counter.
-        native function get timeout(): Number
-        native function set timeout(value: Number): Void
-        */
-    }
+    dynamic class Session { }
 }
 
 
@@ -18981,6 +19290,7 @@ module ejs.web {
                 }
 
             } else if (request.method == "PUT") {
+                request.dontAutoFinalize()
                 return { body: put }
 
             } else if (request.method == "HEAD") {
@@ -19015,7 +19325,7 @@ module ejs.web {
                     request.finalize()
                 }
             })
-            request.input.observe(["complete", "error"], function (event, request) {
+            request.input.observe(["close", "complete", "error"], function (event, request) {
                 if (event == "error") {
                     file.close()
                     file.remove()
@@ -19096,7 +19406,7 @@ module ejs.web {
             let id = md5(request.id)
             return Loader.load(id, id, request.config, function (id, path) {
                 if (!global.TemplateParser) {
-                    load("ejs.web.template.mod")
+                    load("ejs.template.mod")
                 }
                 let data = TemplateParser().build(response.body)
                 return Loader.wrap(data)
@@ -19118,11 +19428,14 @@ module ejs.web {
     /** 
         Template builder for use in routing tables to serve requests for template files (*.ejs).
         @param request Request object. 
+        @param options Object hash of options
+        @options layout Path Layout file
+        @options dir Path Base directory to use for including files and for resolving layout directives
         @return A web script function that services a web request.
-        @example:
+        @example: Example use in a Route table entry
           { name: "index", builder: TemplateBuilder, match: "\.ejs$" }
      */
-    function TemplateBuilder(request: Request): Function {
+    function TemplateBuilder(request: Request, options: Object = {}): Function {
         let path = request.filename
         if (!path.exists) {
             request.writeError(Http.NotFound, "Cannot find " + path)
@@ -19130,9 +19443,9 @@ module ejs.web {
         }
         return Loader.load(path, path, request.config, function (id, path) {
             if (!global.TemplateParser) {
-                load("ejs.web.template.mod")
+                load("ejs.template.mod")
             }
-            let data = TemplateParser().build(path.readString())
+            let data = TemplateParser().build(path.readString(), options)
             return Loader.wrap(data)
         }).app
     }
@@ -19250,7 +19563,8 @@ module ejs.web {
         If the request pathInfo ends with "/", the request is transparently redirected to an index file if one is present.
         The set of index files is defined by HttpServer.indicies. If the request is a directory but does not end in "/",
         the client is redirected to a URL equal to the pathInfo with a "/" appended.
-        @param request Request object
+        @param map Map of URLs to use for routing. TODO
+        @param options TODO
         @returns A response hash object
         @spec ejs
         @stability prototype
@@ -19485,7 +19799,7 @@ module ejs.web {
         Base class for web framework views. This class provides the core functionality for all Ejscript view web pages.
         Ejscript web pages are compiled to create a new View class which extends the View base class. In addition to
         the properties defined by this class, user view classes will typically inherit at runtime all public properites 
-        of the current controller object.
+        of any associated controller object defined in Request.controller.
         @spec ejs
         @stability prototype
      */
@@ -19495,38 +19809,50 @@ module ejs.web {
          */
         use default namespace module
 
-        /** Optional controller object */
-        var controller
-
-        /** Current request object */
-        var request: Request
-
         /* Current record being used inside a form */
         private var currentRecord: Object
-
-        /* Configuration from the applications ejsrc files */
-        private var config: Object
-
-        /** Logger channel */
-        var log: Logger
 
         /* Sequential DOM ID generator */
         private var nextId: Number = 0
 
-        /** @hide */
-        function getNextId(): String
-            "id_" + nextId++
+        /* Configuration from the applications ejsrc files */
+        public var config: Object
+
+        /** Optional controller object */
+        public var controller
+
+        /** Current request object */
+        public var request: Request
+
+        /** Logger channel */
+        public var log: Logger
 
         /**
             Constructor method to initialize a new View
             @param request Request object
          */
         function View(request: Object) {
+/*
+            view = this
+*/
+            controller = request.controller
+
+            //  MOB -- replace all this with blend
             this.request = request
             this.config = request.config
             this.log = request.log
-            view = this
+            for each (let n: String in Object.getOwnPropertyNames(controller, {includeBases: true, excludeFunctions: true})){
+                if (n.startsWith("_")) continue
+                //  MOB - can we remove public::
+                this.public::[n] = controller[n]
+            }
         }
+
+        /** 
+            Get the next usable DOM ID for view controls
+         */
+        function getNextId(): String
+            "id_" + nextId++
 
         /**
             Make a uri from parts. The parts may include http properties for: scheme, host, port, path, reference and query.
@@ -19535,7 +19861,7 @@ module ejs.web {
             @param parts Uri components fields 
             @return a Uri
          */
-        public function makeUri(parts: Object): Uri
+        function makeUri(parts: Object): Uri
             request.makeUri(parts)
 
         /**
@@ -19543,12 +19869,11 @@ module ejs.web {
             @param renderer Rendering function. This may be any external function. The function will have its scope
                 modified so that it executes as if it were a member method of the View class.
          */
-        public function render(renderer: Function): Void {
+        function render(renderer: Function): Void {
             if (renderer) {
-                // renderer.setScope(this)
+                // MOB renderer.setScope(this)
                 renderer.call(this, request)
             }
-            request.finalize()
         }
 
         /** 
@@ -19560,7 +19885,7 @@ module ejs.web {
                 overwrite the old. If overwrite is false, the new value will be catenated to the old value with a ", "
                 separator.
          */
-        public function setHeader(key: String, value: String, overwrite: Boolean = true): Void
+        function setHeader(key: String, value: String, overwrite: Boolean = true): Void
             request.setHeader(key, value, overwrite)
 
         /**
@@ -19570,14 +19895,14 @@ module ejs.web {
                 overwrite the old. If overwrite is false, the new value will be catenated to the old value with a ", "
                 separator.
          */
-        public function setHeaders(headers: Object, overwrite: Boolean = true): Void
+        function setHeaders(headers: Object, overwrite: Boolean = true): Void
             request.setHeader(headers, overwrite)
 
         /**
             Set the Http response status
             @param status Http status code
          */
-        public function setStatus(status: Number): Void
+        function setStatus(status: Number): Void
             request.setStatus(status)
 
         /** 
@@ -19585,7 +19910,7 @@ module ejs.web {
             @param args List of arguments to print.
             @hide
          */
-        public function show(...args): Void
+        function show(...args): Void
             request.show(...args)
 
         /**
@@ -19593,8 +19918,8 @@ module ejs.web {
             @param data Data to write
             @return The number of bytes written
          */
-        public function write(...data): Number
-            request.write(data)
+        function write(...data): Number
+            request.write(...data)
 
         /************************************************ View Helpers ****************************************************/
         /**
@@ -20499,6 +20824,20 @@ module ejs.web {
         static var config
 
         private static var defaultConfig = {
+            cache: {
+                enable: true,
+                reload: true,
+            },
+            directories: {
+                cache: Path("cache"),
+                layouts: Path("layouts"),
+                views: Path("views"),
+            },
+            extensions: {
+                es:  "es",
+                ejs: "ejs",
+                mod: "mod",
+            },
             log: {
                 showClient: true,
                 //  where: "file" - defaults to web server log
@@ -20513,10 +20852,11 @@ module ejs.web {
             web: {
                 expires: {
                     /*
-                        "html": 86400,
-                        "ejs": 86400,
-                        "es": 86400,
-                        "": 86400,
+                        MOB -- can we have some of this be the default?
+                        html:   86400,
+                        ejs:    86400,
+                        es:     86400,
+                        "":     86400,
                      */
                 },
                 endpoint: "127.0.0.1:4000",
@@ -20583,7 +20923,6 @@ module ejs.web {
             }
         }
 
-
         private static function processBody(request: Request, body: Object): Void {
             if (body is Path) {
                 if (request.isSecure) {
@@ -20598,7 +20937,7 @@ module ejs.web {
 //  MOB -- what about async? what if can't accept all the data?
                     request.write(item)
                 }
-                request.finalize()
+                request.autoFinalize()
 
             } else if (body is Stream) {
                 if (body.async) {
@@ -20611,25 +20950,25 @@ module ejs.web {
 //  MOB -- what about async? what if can't accept all the data?
                             request.write(body)
                         } else {
-                            request.finalize()
+                            request.autoFinalize()
                         }
                     })
                     //  MOB -- or this? but what about error events
                     request.observe("complete", function(event, body) {
-                        request.finalize()
+                        request.autoFinalize()
                     })
                 } else {
                     ba = new ByteArray
                     while (body.read(ba)) {
                         request.write(ba)
                     }
-                    request.finalize()
+                    request.autoFinalize()
                 }
             } else if (body && body.forEach) {
                 body.forEach(function(block) {
                     request.write(block)
                 })
-                request.finalize()
+                request.autoFinalize()
 
             } else if (body is Function) {
                 /* Functions don't auto finalize. The user is responsible for calling finalize() */
@@ -20637,30 +20976,32 @@ module ejs.web {
 
             } else if (body) {
                 request.write(body)
-                request.finalize()
+                request.autoFinalize()
 
             } else {
                 let file = request.responseHeaders["X-Sendfile"]
                 if (file && !request.isSecure) {
                     request.sendFile(file)
                 } else {
-                    request.finalize()
+                    request.autoFinalize()
                 }
             }
         }
 
 //  MOB WARNING: this may block in write?? - is request in async mode?
+//  MOB -- is this the best name?
         /** 
             Process a web request
             @param request Request object
-            @param app JSGI application function 
+            @param app Web application function 
          */
-        static function process(app: Function, request: Request): Void {
+        static function process(app: Function, request: Request, finalize: Boolean = true): Void {
             request.config = config
             try {
                 if (request.route && request.route.middleware) {
                     app = Middleware(app, request.route.middleware)
                 }
+                request.setupFlash()
                 let response
                 if (app.bound != global) {
                     response = app(request)
@@ -20682,7 +21023,13 @@ module ejs.web {
                         request.sendFile(file)
                     }
                 }
+                if (finalize) {
+                    request.finalizeFlash()
+                    request.autoFinalize()
+                    //  if (request.finalized) request.close()
+                }
             } catch (e) {
+                App.log.debug(3, e)
                 request.writeError(Http.ServerError, e)
             }
         }
@@ -20832,12 +21179,6 @@ module ejs.template  {
         private var pos: Number = 0
         private var lineNumber: Number = 0
 
-        private const Header = "require ejs.web\n\nexports.app = function (request: Request) {\n" + 
-            "    View(request).render(function(request: Request) {\n"
-        private const Footer = "\n    })\n}\n"
-
-        private const MvcHeader = "require ejs.web\n"
-
         /**
             Build a templated page using JSGI
             @param script String containing the script to parse
@@ -20845,10 +21186,16 @@ module ejs.template  {
             @options layout Path Layout file
             @options dir Path Base directory to use for including files and for resolving layout directives
          */
-        public function build(script: String, options: Object = {}): String
-            Header + parse(script, options) + Footer
+        public function build(script: String, options: Object = {}): String {
+            return "require ejs.web\n\n" + 
+                "exports.app = function (request: Request) {\n" + 
+                "    View(request).render(function(request: Request) {\n" +
+                parse(script, options) + 
+                "\n    })\n}\n"
+        }
 
-        /** 
+        /*
+UNUSED
             Build an MVC view.
             @param name Name of the view to build
             @param script View web page script
@@ -20856,16 +21203,17 @@ module ejs.template  {
             @options layout Path Layout file
             @options dir Path Base directory to use for including files and for resolving layout directives
             @hide 
-         */
         public function buildView(name: String, script: String, options: Object = {}): String {
-            return MvcHeader + "public dynamic class " + name + "View extends View {\n\n" +
+            return "require ejs.web\n\n" + 
+                "public dynamic class " + name + "View extends View {\n\n" +
                 "    function " + name + "View(request: Request) {\n" +
                 "        super(request)\n" +
                 "    }\n\n" + 
                 "    public override function render(request: Request) {\n" + 
-                parse(script, options) + "\n    }\n}\n"
+                parse(script, options) + 
+                "\n    }\n}\n"
         }
-
+         */
 
         /**
             Template parser. Parse the given script and return the compiled (Ejscript) result

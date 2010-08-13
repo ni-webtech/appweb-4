@@ -696,7 +696,7 @@ void *ejsAlloc(Ejs *ejs, int size)
         return 0;
     }
     //  MOB -- how to do this test less often?
-    if (++ejs->workDone >= ejs->workQuota && !ejs->gcRequired) {
+    if (++ejs->workDone >= ejs->workQuota && !ejs->gcRequired && ejs->gc.enabled) {
         ejs->gcRequired = 1;
         ejsAttention(ejs);
     }
@@ -736,7 +736,7 @@ EjsObj *ejsAllocVar(Ejs *ejs, EjsType *type, int extra)
             return 0;
         }
         //  MOB -- how to do this test less often?
-        if (++ejs->workDone >= ejs->workQuota && !ejs->gcRequired) {
+        if (++ejs->workDone >= ejs->workQuota && !ejs->gcRequired && ejs->gc.enabled) {
             ejs->gcRequired = 1;
             ejsAttention(ejs);
         }
@@ -789,7 +789,7 @@ EjsObj *ejsAllocPooled(Ejs *ejs, int id)
             mprAssert(pool->count >= 0);
             ejsAddToGcStats(ejs, vp, id);
 #endif
-            if (++ejs->workDone >= ejs->workQuota) {
+            if (++ejs->workDone >= ejs->workQuota && !ejs->gcRequired && ejs->gc.enabled) {
                 ejs->gcRequired = 1;
                 ejsAttention(ejs);
             }
@@ -4404,11 +4404,11 @@ static int validateArgs(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
 
     if (argc < nonDefault) {
         if (!fun->rest || argc != (fun->numArgs - 1)) {
-            if (fun->strict) {
-                ejsThrowArgError(ejs, "Insufficient actual parameters. Call requires %d parameter(s).", nonDefault);
+            if (fun->strict || (ejsIsNativeFunction(fun) && !fun->allowMissingArgs)) {
+                ejsThrowArgError(ejs, "Insufficient actual parameters %d. Call requires %d parameter(s).", argc, nonDefault);
                 return EJS_ERR;
             } else {
-                /* Create undefined values for missing args */
+                /* Create undefined values for missing args for script functions */
                 for (i = argc; i < nonDefault; i++) {
                     pushOutside(ejs, ejs->undefinedValue);
                 }
@@ -8526,6 +8526,7 @@ int ejsLookupVarWithNamespaces(Ejs *ejs, EjsObj *obj, EjsName *name, EjsLookup *
     }
 done:
     if (slotNum >= 0) {
+        //  MOB MUST GET RID OF THIS. Means that every store does a get
         lookup->ref = ejsGetProperty(ejs, obj, slotNum);
         if (ejs->exception) {
             slotNum = -1;
@@ -9676,6 +9677,9 @@ static bool      parseBoolean(Ejs *ejs, cchar *s);
  */
 EjsObj *ejsCast(Ejs *ejs, EjsObj *obj, EjsType *type)
 {
+    EjsObj  *result;
+    int     save;
+
     mprAssert(ejs);
     mprAssert(type);
     mprAssert(obj);
@@ -9687,7 +9691,15 @@ EjsObj *ejsCast(Ejs *ejs, EjsObj *obj, EjsType *type)
         return obj;
     }
     if (obj->type->helpers.cast) {
-        return (obj->type->helpers.cast)(ejs, obj, type);
+        /*
+            Don't GC cast operations. This enables native code to not worry about the GC collecting tmp objects
+            MOB - what other operations should this apply to?
+         */
+        save = ejs->gc.enabled;
+        ejs->gc.enabled = 0;
+        result = (obj->type->helpers.cast)(ejs, obj, type);
+        ejs->gc.enabled = save;
+        return result;
     }
     ejsThrowInternalError(ejs, "Cast helper not defined for type \"%s\"", obj->type->qname.name);
     return 0;
@@ -10081,6 +10093,32 @@ EjsString *ejsToJSON(Ejs *ejs, EjsObj *obj, EjsObj *options)
         result = ejsToString(ejs, obj);
     }
     return result;
+}
+
+
+/**
+    Get a Path representation of a variable.
+    @return Returns a string variable or null if an exception is thrown.
+ */
+EjsPath *ejsToPath(Ejs *ejs, EjsObj *obj)
+{
+    if (obj == 0 || ejsIsPath(ejs, obj)) {
+        return (EjsPath*) obj;
+    }
+    return (EjsPath*) ejsCast(ejs, obj, ejs->pathType);
+}
+
+
+/**
+    Get a Uri representation of a variable.
+    @return Returns a string variable or null if an exception is thrown.
+ */
+EjsUri *ejsToUri(Ejs *ejs, EjsObj *obj)
+{
+    if (obj == 0 || ejsIsUri(ejs, obj)) {
+        return (EjsUri*) obj;
+    }
+    return (EjsUri*) ejsCast(ejs, obj, ejs->uriType);
 }
 
 
@@ -10705,10 +10743,10 @@ static EjsObj *app_eventLoop(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
  */
 static EjsObj *app_sleep(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    int         timeout;
+    int     timeout;
 
     timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]): MPR_MAX_TIMEOUT;
-    ejsServiceEvents(ejs, timeout, MPR_SERVICE_NAP);
+    ejsServiceEvents(ejs, timeout, 0);
     return 0;
 }
 
@@ -18887,6 +18925,7 @@ static EjsObj *http_date(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 }
 
 
+#if UNUSED
 /*  
     function dontFinalize(): Void
  */
@@ -18895,20 +18934,39 @@ static EjsObj *http_dontFinalize(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     hp->dontFinalize = 1;
     return 0;
 }
+#endif
 
 
 /*  
-    function finalize(force: Boolean = false): Void
+    function finalize(): Void
  */
 static EjsObj *http_finalize(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
+#if UNUSED
     int     force;
 
     force = (argc == 1 && argv[0] == ejs->trueValue);
     if (!hp->dontFinalize || force) {
         httpFinalize(hp->conn);
     }
+#else
+    if (hp->conn) {
+        httpFinalize(hp->conn);
+    }
+#endif
     return 0;
+}
+
+
+/*  
+    function get finalized(): Boolean
+ */
+static EjsObj *http_finalized(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+{
+    if (hp->conn && hp->conn->tx) {
+        return (EjsObj*) ejsCreateBoolean(ejs, hp->conn->tx->finalized);
+    }
+    return ejs->falseValue;
 }
 
 
@@ -18933,10 +18991,17 @@ static EjsObj *http_flush(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
  */
 static EjsObj *http_form(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
+    EjsObj  *data;
+
     if (argc == 2 && argv[1] != ejs->nullValue) {
         httpPrepClientConn(hp->conn, HTTP_NEW_REQUEST);
         mprFlushBuf(hp->requestContent);
-        prepForm(ejs, hp, NULL, argv[1]);
+        data = argv[1];
+        if (ejsGetPropertyCount(ejs, data) > 0) {
+            prepForm(ejs, hp, NULL, data);
+        } else {
+            mprPutStringToBuf(hp->requestContent, ejsGetString(ejs, data));
+        }
         mprAddNullToBuf(hp->requestContent);
         httpSetHeader(hp->conn, "Content-Type", "application/x-www-form-urlencoded");
     }
@@ -19211,12 +19276,20 @@ static EjsObj *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     EjsObj      *result;
     HttpConn    *conn;
-    int         count;
+    int         count, timeout;
     
     count = (argc == 1) ? ejsGetInt(ejs, argv[0]) : -1;
     conn = hp->conn;
 
-    if (!waitForState(hp, HTTP_STATE_CONTENT, conn->async ? 0 : conn->limits->inactivityTimeout, 0)) {
+    if (conn->async) {
+        timeout = 0;
+    } else {
+        timeout = conn->limits->inactivityTimeout;
+        if (timeout <= 0) {
+            timeout = INT_MAX;
+        }
+    }
+    if (!waitForState(hp, HTTP_STATE_CONTENT, timeout, 0)) {
         return 0;
     }
     if ((count = readTransfer(ejs, hp, count)) < 0) {
@@ -19489,17 +19562,23 @@ static EjsObj *http_statusMessage(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv
 
 
 /*  
+    Wait for a request to complete. Timeout is in msec.
+
     function wait(timeout: Number = -1): Boolean
-    Wait for a request to complete
  */
 static EjsObj *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     MprTime     mark;
     int         timeout;
 
-    timeout = (argc == 1) ? ejsGetInt(ejs, argv[0]) : hp->conn->limits->requestTimeout;
+    timeout = (argc >= 1) ? ejsGetInt(ejs, argv[0]) : -1;
+    if (timeout < 0) {
+        timeout = hp->conn->limits->requestTimeout;
+        if (timeout == 0) {
+            timeout = INT_MAX;
+        }
+    }
     mark = mprGetTime(ejs);
-
     if (!waitForState(hp, HTTP_STATE_COMPLETE, timeout, 0)) {
         return (EjsObj*) ejs->falseValue;
     }
@@ -19909,7 +19988,7 @@ static bool expired(EjsHttp *hp)
 
 /*  
     Wait for the connection to acheive a requested state
-    A timeout of zero means no timeout (ie. wait forever). A timeout of < 0 means don't wait.
+    Timeout is in msec. <= 0 means don't wait.
  */
 static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
 {
@@ -19943,10 +20022,9 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
     if (!conn->async) {
         httpFinalize(conn);
     }
-
     while (conn->state < state && count < conn->retries && redirectCount < 16 && !ejs->exiting && !mprIsExiting(conn)) {
         count++;
-        if ((rc = httpWait(conn, HTTP_STATE_PARSED, remaining)) == 0) {
+        if ((rc = httpWait(conn, ejs->dispatcher, HTTP_STATE_PARSED, remaining)) == 0) {
             if (httpNeedRetry(conn, &url)) {
                 if (url) {
                     mprFree(hp->uri);
@@ -19956,7 +20034,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
                 }
                 count--; 
                 redirectCount++;
-            } else if (httpWait(conn, state, remaining) == 0) {
+            } else if (httpWait(conn, ejs->dispatcher, state, remaining) == 0) {
                 success = 1;
                 break;
             }
@@ -19964,7 +20042,9 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
             if (rc == MPR_ERR_CONNECTION) {
                 httpFormatError(conn, HTTP_CODE_COMMS_ERROR, "Connection error");
             } else if (rc == MPR_ERR_TIMEOUT) {
-                httpFormatError(conn, HTTP_CODE_REQUEST_TIMEOUT, "Request timed out");
+                if (timeout > 0) {
+                    httpFormatError(conn, HTTP_CODE_REQUEST_TIMEOUT, "Request timed out");
+                }
             } else {
                 httpFormatError(conn, HTTP_CODE_CLIENT_ERROR, "Client request error");
             }
@@ -19982,7 +20062,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
             break;
         }
         remaining = (int) (mark + timeout - mprGetTime(conn));
-        if (remaining <= 0) {
+        if (count > 0 && remaining <= 0) {
             break;
         }
         if (hp->requestContentCount > 0) {
@@ -20012,6 +20092,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
 
 /*  
     Wait till the response headers have been received. Safe in sync and async mode. Async mode never blocks.
+    Timeout < 0 means use default inactivity timeout. Timeout of zero means wait forever.
  */
 static bool waitForResponseHeaders(EjsHttp *hp, int timeout)
 {
@@ -20023,6 +20104,9 @@ static bool waitForResponseHeaders(EjsHttp *hp, int timeout)
     }
     if (timeout < 0) {
         timeout = hp->conn->limits->inactivityTimeout;
+        if (timeout <= 0) {
+            timeout = INT_MAX;
+        }
     }
     if (hp->conn->state < HTTP_STATE_PARSED && !waitForState(hp, HTTP_STATE_PARSED, timeout, 1)) {
         return 0;
@@ -20162,8 +20246,11 @@ void ejsConfigureHttpType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Http_contentLength, (EjsProc) http_contentLength);
     ejsBindMethod(ejs, prototype, ES_Http_contentType, (EjsProc) http_contentType);
     ejsBindMethod(ejs, prototype, ES_Http_date, (EjsProc) http_date);
+#if UNUSED
     ejsBindMethod(ejs, prototype, ES_Http_dontFinalize, (EjsProc) http_dontFinalize);
+#endif
     ejsBindMethod(ejs, prototype, ES_Http_finalize, (EjsProc) http_finalize);
+    ejsBindMethod(ejs, prototype, ES_Http_finalized, (EjsProc) http_finalized);
     ejsBindMethod(ejs, prototype, ES_Http_flush, (EjsProc) http_flush);
     ejsBindAccess(ejs, prototype, ES_Http_followRedirects, (EjsProc) http_followRedirects, 
         (EjsProc) http_set_followRedirects);
@@ -24620,7 +24707,8 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
     if (pretty || indent) {
         mprPutCharToBuf(buf, '\n');
     }
-    if (++ejs->serializeDepth <= depth) {
+    if (++ejs->serializeDepth <= depth && !obj->visited) {
+        obj->visited = 1;
         for (slotNum = 0; slotNum < count && !ejs->exception; slotNum++) {
             trait = ejsGetTrait(ejs, obj, slotNum);
             if (trait && (trait->attributes & (EJS_TRAIT_HIDDEN | EJS_TRAIT_DELETED | EJS_FUN_INITIALIZER | 
@@ -24629,6 +24717,7 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
             }
             pp = ejsGetProperty(ejs, obj, slotNum);
             if (ejs->exception) {
+                obj->visited = 0;
                 return 0;
             }
             if (pp == 0) {
@@ -24683,6 +24772,7 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
                 if (!ejs->exception) {
                     ejsThrowTypeError(ejs, "Can't serialize property %s", qname.name);
                 }
+                obj->visited = 0;
                 return 0;
             } else {
                 if (replacer) {
@@ -24700,6 +24790,7 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
                 mprPutCharToBuf(buf, '\n');
             }
         }
+        obj->visited = 0;
     }
     --ejs->serializeDepth; 
     if (pretty || indent) {
@@ -27530,18 +27621,15 @@ static EjsObj *castString(Ejs *ejs, EjsString *sp, EjsType *type)
 
     if (type == ejs->pathType) {
         return (EjsObj*) ejsCreatePath(ejs, sp->value);
-        
     } else if (type == ejs->uriType) {
         return (EjsObj*) ejsCreateUri(ejs, sp->value);
     }
-    
     switch (type->id) {
     case ES_Boolean:
         if (sp->value[0]) {
             return (EjsObj*) ejs->trueValue;
-        } else {
-            return (EjsObj*) ejs->falseValue;
         }
+        return (EjsObj*) ejs->falseValue;
 
     case ES_Number:
         return (EjsObj*) ejsParse(ejs, sp->value, ES_Number);
@@ -27549,12 +27637,11 @@ static EjsObj *castString(Ejs *ejs, EjsString *sp, EjsType *type)
     case ES_RegExp:
         if (sp->value && sp->value[0] == '/') {
             return (EjsObj*) ejsCreateRegExp(ejs, sp->value);
-        } else {
-            buf = mprStrcat(ejs, -1, "/", sp->value, "/", NULL);
-            result = (EjsObj*) ejsCreateRegExp(ejs, buf);
-            mprFree(buf);
-            return result;
         }
+        buf = mprStrcat(ejs, -1, "/", sp->value, "/", NULL);
+        result = (EjsObj*) ejsCreateRegExp(ejs, buf);
+        mprFree(buf);
+        return result;
 
     case ES_String:
         return (EjsObj*) sp;
@@ -31052,23 +31139,53 @@ void ejsCompleteType(Ejs *ejs, EjsType *type)
 
 
 
-static char *getUriString(Ejs *ejs, EjsObj *vp);
+static EjsObj *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQuery);
 static int same(Ejs *ejs, HttpUri *u1, HttpUri *u2, int exact);
-static void setUriFromHash(Ejs *ejs, EjsUri *up, EjsObj *arg);
+static HttpUri *createHttpUriFromHash(Ejs *ejs, MprCtx ctx, EjsObj *arg, int complete);
+static HttpUri *toHttpUri(Ejs *ejs, MprCtx ctx, EjsObj *arg, int dup);
 static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv);
-static char *uriToString(Ejs *ejs, EjsUri *up);
+
+
+#if UNUSED && KEEP
+//  MOB -- keep this for when the cast helper is reversed
+/*
+    Convert an arg to a URI. Can handle strings, paths, URIs and object hashes. Will cast all else to strings and then
+    parse.
+ */
+static EjsUri *castToUri(Ejs *ejs, EjsObj *arg)
+{
+    EjsUri  *up;
+
+    up = (EjsUri*) ejsCreate(ejs, ejs->uriType, 0);
+    if (ejsIsString(arg)) {
+        up->uri = httpCreateUri(up, ejsGetString(ejs, arg), 0);
+
+    } else if (ejsIsUri(ejs, arg)) {
+        up->uri = httpCloneUri(up, ((EjsUri*) arg)->uri, 0);
+
+    } else if (ejsIsPath(ejs, arg)) {
+        ustr = ((EjsPath*) arg)->path;
+        up->uri = httpCreateUri(up, ustr, 0);
+
+    } else if (ejsGetPropertyCount(ejs, arg) > 0) {
+        up->uri = createHttpUriFromHash(ejs, up, arg, 0);
+
+    } else {
+        arg = (EjsObj) ejsToString(ejs, arg);
+        up->uri = httpCreateUri(up, ejsGetString(ejs, arg), 0);
+    }
+    return up;
+}
+#endif
 
 
 static EjsUri *cloneUri(Ejs *ejs, EjsUri *src, bool deep)
 {
     EjsUri     *dest;
-    char        *uri;
 
-    /*  Deep copy will complete the uri */
-    uri = httpUriToString(src, src->uri, deep);
     dest = (EjsUri*) ejsCloneObject(ejs, (EjsObj*) src, deep);
-    dest->uri = httpCreateUri(ejs, uri, 0);
-    mprFree(uri);
+    /*  Deep copy will complete the uri */
+    dest->uri = httpCloneUri(dest, src->uri, deep);
     return dest;
 }
 
@@ -31199,31 +31316,38 @@ static EjsObj *invokeUriOperator(Ejs *ejs, EjsUri *lhs, int opcode,  EjsUri *rhs
  */
 static EjsObj *uri_constructor(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    EjsObj      *arg;
-    char        *ustr;
-
-    mprAssert(argc == 1);
-    arg = argv[0];
-    if (ejsIsString(arg)) {
-        if ((ustr = getUriString(ejs, arg)) == 0) {
-            return 0;
-        }
-        up->uri = httpCreateUri(up, ustr, 0);
-        mprFree(ustr);
-
-    } else if (ejsIsUri(ejs, arg)) {
-        ustr = httpUriToString(up, ((EjsUri*) arg)->uri, 0);
-        up->uri = httpCreateUri(up, ustr, 0);
-        mprFree(ustr);
-
-    } else if (ejsIsPath(ejs, arg)) {
-        ustr = ((EjsPath*) arg)->path;
-        up->uri = httpCreateUri(up, ustr, 0);
-
-    } else {
-        setUriFromHash(ejs, up, arg);
+    if (argc >= 0) {
+        up->uri = toHttpUri(ejs, up, argv[0], 1);
     }
     return (EjsObj*) up;
+}
+
+
+/*  
+    Make an absolute reference for "this" URI.
+
+    function absolute(base): Uri
+ */
+static EjsObj *uri_absolute(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+{
+    EjsUri      *result;
+    HttpUri     *uri, *baseUri;
+
+    if (argc >= 1) {
+        baseUri = toHttpUri(ejs, ejs, argv[0], 1);
+        result = cloneUri(ejs, up, 0);
+        uri = result->uri;
+        if (uri->path && uri->path[0] != '/') {
+            httpJoinUriPath(uri, baseUri, uri);
+        }
+        httpCompleteUri(result->uri, baseUri);
+        mprFree(baseUri);
+    } else {
+        result = cloneUri(ejs, up, 0);
+        httpCompleteUri(result->uri, NULL);
+    }
+    httpNormalizeUri(result->uri);
+    return (EjsObj*) result;
 }
 
 
@@ -31254,12 +31378,14 @@ static EjsObj *uri_basename(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 
 
 /*  
-    Complete missing parts of a Uri
-    function get complete()
+    function complete(missing = null): Uri
  */
 static EjsObj *uri_complete(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) cloneUri(ejs, up, 1);
+    EjsUri  *result;
+
+    result = cloneUri(ejs, up, 0);
+    return completeUri(ejs, result, (argc >= 1) ? argv[0] : 0, 1);
 }
 
 
@@ -31506,110 +31632,32 @@ static EjsObj *uri_isDir(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Join uri segments
     function join(...others): Uri
  */
-#if OLD && UNUSED
 static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    EjsUri      *np;
+    EjsUri      *result;
+    EjsObj      *arg;
     EjsArray    *args;
-    EjsObj      *vp;
-    char        *other, *cp, *result, *prior;
+    HttpUri     *uri, *other, *oldUri;
     int         i;
 
     args = (EjsArray*) argv[0];
-    np = cloneUri(ejs, up, 0);
-    result = mprStrdup(np->uri, np->uri->path);
-
+    result = cloneUri(ejs, up, 0);
+    uri = result->uri;
     for (i = 0; i < args->length; i++) {
-        vp = ejsGetProperty(ejs, (EjsObj*) args, i);
-        if ((other = getUriString(ejs, vp)) == NULL) {
+        arg = ejsGetProperty(ejs, (EjsObj*) args, i);
+        if ((other = toHttpUri(ejs, result, arg, 0)) == NULL) {
             return 0;
         }
-        prior = result;
-        if (strncmp(other, "http://", 7) == 0 || strncmp(other, "https://", 8) == 0) {
-            mprFree(np->uri);
-            np->uri = httpCreateUri(np, other, 0);
-            result = mprStrdup(np->uri, np->uri->path);
-            prior = 0;
-        } else if (other[0] == '/') {
-            result = mprStrdup(np->uri, other);
-            prior = 0;
-        } else if (*prior == '\0') {
-            result = mprStrdup(np->uri, other);
-        } else {
-            if (prior[strlen(prior) - 1] == '/') {
-                result = mprStrcat(np->uri, -1, prior, other, NULL);
-            } else {
-                if ((cp = strrchr(prior, '/')) != NULL) {
-                    cp[1] = '\0';
-                }
-                result = mprStrcat(np->uri, -1, prior, other, NULL);
-            }
-        }
-        if (prior != np->uri->path) {
-            mprFree(prior);
-        }
+        oldUri = uri;
+        uri = httpJoinUri(result, oldUri, 1, &other);
         mprFree(other);
+        if (!ejsIsUri(ejs, arg)) {
+            mprFree(oldUri);
+        }
     }
-    np->uri->path = result;
-    np->uri->ext = (char*) mprGetPathExtension(np->uri, np->uri->path);
-    //  MOB -- what about reference?
-    return (EjsObj*) np;
+    result->uri = uri;
+    return (EjsObj*) result;
 }
-
-#else
-
-static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
-{
-    EjsUri      *np;
-    EjsArray    *args;
-    EjsObj      *vp;
-    char        *other, *result, *prior, *cp;
-    int         i;
-
-    args = (EjsArray*) argv[0];
-    np = cloneUri(ejs, up, 0);
-    result = mprStrdup(np->uri, np->uri->path);
-
-    for (i = 0; i < args->length; i++) {
-        vp = ejsGetProperty(ejs, (EjsObj*) args, i);
-        if ((other = getUriString(ejs, vp)) == NULL) {
-            return 0;
-        }
-        prior = result;
-        if (strncmp(other, "http://", 7) == 0 || strncmp(other, "https://", 8) == 0) {
-            mprFree(np->uri);
-            np->uri = httpCreateUri(np, other, 0);
-            result = mprStrdup(np->uri, np->uri->path);
-            prior = 0;
-        } else if (other[0] == '/') {
-            result = mprStrdup(np->uri, other);
-            prior = 0;
-        } else if (*prior == '\0') {
-            result = mprStrdup(np->uri, other);
-        } else {
-            if (prior[strlen(prior) - 1] == '/') {
-                prior[strlen(prior) - 1] = '\0';
-            }
-            if (other[0] == '/') {
-                result = mprStrcat(np->uri, -1, prior, other, NULL);
-            } else {
-                result = mprStrcat(np->uri, -1, prior, "/", other, NULL);
-            }
-        }
-        if (prior != np->uri->path) {
-            mprFree(prior);
-        }
-        mprFree(other);
-    }
-    np->uri->path = result;
-    np->uri->ext = (char*) mprGetPathExtension(np->uri, np->uri->path);
-    if ((cp = strchr(result, '#')) != NULL) {
-        *cp++ = '\0';
-        np->uri->reference = cp;
-    }
-    return (EjsObj*) np;
-}
-#endif
 
 
 /*  
@@ -31689,6 +31737,7 @@ static EjsObj *uri_port(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     
     uri = up->uri;
     if (uri->port == 0) {
+        //  MOB -- push this down into http
         if (uri->scheme == 0 || strcmp(uri->scheme, "http") == 0) {
             return (EjsObj*) ejsCreateNumber(ejs, 80);
         } else if (uri->scheme && strcmp(uri->scheme, "https") == 0) {
@@ -31730,6 +31779,46 @@ static EjsObj *uri_replaceExtension(Ejs *ejs, EjsUri *up, int argc, EjsObj **arg
     nuri->ext = ext;
     nuri->path = mprStrcat(nuri, -1, mprTrimPathExtension(nuri, nuri->path), ".", nuri->ext, NULL);
     return (EjsObj*) np;
+}
+
+
+/*  
+    function resolve(target, relative: Boolean = true): Uri
+ */
+static EjsObj *uri_resolve(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+{
+    EjsUri      *result;
+    HttpUri     *uri, *target;
+    int         relative;
+
+    relative = (argc >= 2 && argv[1] == ejs->falseValue) ? 0 : 1;
+    uri = up->uri;
+    target = toHttpUri(ejs, ejs, argv[0], 0);
+    result = (EjsUri*) ejsCreate(ejs, ejs->uriType, 0);
+    uri = httpResolveUri(result, uri, 1, &target, relative);
+    if (!ejsIsUri(ejs, target)) {
+        mprFree(target);
+    }
+    if (up->uri == uri) {
+        uri = httpCloneUri(result, uri, 0);
+    }
+    result->uri = uri;
+    return (EjsObj*) result;
+}
+
+
+/*  
+    function relative(base): Uri
+ */
+static EjsObj *uri_relative(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+{
+    EjsUri      *result;
+    HttpUri     *baseUri;
+
+    baseUri = toHttpUri(ejs, up, argv[0], 0);
+    result = (EjsUri*) ejsCreate(ejs, ejs->uriType, 0);
+    result->uri = httpGetRelativeUri(result, baseUri, up->uri, 1);
+    return (EjsObj*) result;
 }
 
 
@@ -31832,6 +31921,19 @@ static EjsObj *uri_toString(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 }
 
 
+/* 
+   function toLocalString(): String
+ */
+static EjsObj *uri_toLocalString(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+{
+    HttpUri     *uri;
+
+    uri = up->uri;
+    return (EjsObj*) ejsCreateStringAndFree(ejs, 
+        httpFormatUri(ejs, NULL, NULL, 0, uri->path, uri->reference, uri->query, 0));
+}
+
+
 /*  
     function trimExt(): Uri
  */
@@ -31859,6 +31961,7 @@ static EjsObj *uri_set_uri(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 }
 
 
+#if UNUSED && KEEP
 static char *uriToString(Ejs *ejs, EjsUri *up)
 {
     HttpUri     *uri;
@@ -31866,17 +31969,74 @@ static char *uriToString(Ejs *ejs, EjsUri *up)
     uri = up->uri;
     return httpFormatUri(ejs, uri->scheme, uri->host, uri->port, uri->path, uri->reference, uri->query, 0);
 }
+#endif
 
 
+static EjsObj *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQuery)
+{
+    EjsUri      *missingUri;
+
+    if (missing == 0 || ejsIsNull(missing) || ejsIsUndefined(missing)) {
+        missingUri = 0;
+    } else if (ejsGetPropertyCount(ejs, missing) > 0) {
+        missingUri = (EjsUri*) ejsCreate(ejs, ejs->uriType, 0);
+        missingUri->uri = createHttpUriFromHash(ejs, missingUri, missing, 1);
+    } else {
+        missingUri = ejsToUri(ejs, missing);
+    }
+    if (missingUri == 0) {
+        if (!includeQuery) {
+            up->uri->query = NULL;
+        }
+        httpCompleteUri(up->uri, NULL);
+    } else {
+        httpCompleteUri(up->uri, missingUri->uri);
+    }
+    return (EjsObj*) up;
+}
+
+
+#if UNUSED
 static char *getUriString(Ejs *ejs, EjsObj *vp)
 {
     if (ejsIsString(vp)) {
+        //  MOB query dup
         return mprStrdup(ejs, ejsGetString(ejs, vp));
+
     } else if (ejsIsUri(ejs, vp)) {
         return uriToString(ejs, ((EjsUri*) vp));
     }
-    ejsThrowIOError(ejs, "Bad path");
+    ejsThrowIOError(ejs, "Bad ");
     return NULL;
+}
+#endif
+
+
+static HttpUri *toHttpUri(Ejs *ejs, MprCtx ctx, EjsObj *arg, int dup)
+{
+    HttpUri     *uri;
+
+    if (ejsIsString(arg)) {
+        uri = httpCreateUri(ctx, ejsGetString(ejs, arg), 0);
+
+    } else if (ejsIsUri(ejs, arg)) {
+        if (dup) {
+            uri = httpCloneUri(ctx, ((EjsUri*) arg)->uri, 0);
+        } else {
+            uri = ((EjsUri*) arg)->uri;
+        }
+
+    } else if (ejsIsPath(ejs, arg)) {
+        uri = httpCreateUri(ctx, ((EjsPath*) arg)->path, 0);
+
+    } else if (ejsGetPropertyCount(ejs, arg) > 0) {
+        uri = createHttpUriFromHash(ejs, ctx, arg, 0);
+
+    } else {
+        arg = (EjsObj*) ejsToString(ejs, arg);
+        uri = httpCreateUri(ctx, ejsGetString(ejs, arg), 0);
+    }
+    return uri;
 }
 
 
@@ -31924,7 +32084,7 @@ static int same(Ejs *ejs, HttpUri *u1, HttpUri *u2, int exact)
 }
 
 
-static void setUriFromHash(Ejs *ejs, EjsUri *up, EjsObj *arg)
+static HttpUri *createHttpUriFromHash(Ejs *ejs, MprCtx ctx, EjsObj *arg, int complete)
 {
     EjsObj      *schemeObj, *hostObj, *portObj, *pathObj, *referenceObj, *queryObj;
     EjsName     qname;
@@ -31945,7 +32105,6 @@ static void setUriFromHash(Ejs *ejs, EjsUri *up, EjsObj *arg)
             port = (int) mprAtoi(ejsGetString(ejs, portObj), 10);
         }
     }
-
     pathObj = ejsGetPropertyByName(ejs, arg, EN(&qname, "path"));
     path = (pathObj && ejsIsString(pathObj)) ? ejsGetString(ejs, pathObj) : 0;
 
@@ -31955,8 +32114,7 @@ static void setUriFromHash(Ejs *ejs, EjsUri *up, EjsObj *arg)
     queryObj = ejsGetPropertyByName(ejs, arg, EN(&qname, "query"));
     query = (queryObj && ejsIsString(queryObj)) ? ejsGetString(ejs, queryObj) : 0;
 
-    mprFree(up->uri);
-    up->uri = httpCreateUriFromParts(up, scheme, host, port, path, reference, query);
+    return httpCreateUriFromParts(ctx, scheme, host, port, path, reference, query, complete);
 }
 
 
@@ -32017,7 +32175,8 @@ EjsUri *ejsCreateUri(Ejs *ejs, cchar *path)
 }
 
 
-EjsUri *ejsCreateFullUri(Ejs *ejs, cchar *scheme, cchar *host, int port, cchar *path, cchar *query, cchar *reference)
+EjsUri *ejsCreateFullUri(Ejs *ejs, cchar *scheme, cchar *host, int port, cchar *path, cchar *query, cchar *reference, 
+    int complete)
 {
     EjsUri      *up;
 
@@ -32025,7 +32184,7 @@ EjsUri *ejsCreateFullUri(Ejs *ejs, cchar *scheme, cchar *host, int port, cchar *
     if (up == 0) {
         return 0;
     }
-    up->uri = httpCreateUriFromParts(up, scheme, host, port, path, reference, query);
+    up->uri = httpCreateUriFromParts(up, scheme, host, port, path, reference, query, complete);
     return up;
 }
 
@@ -32057,6 +32216,7 @@ void ejsConfigureUriType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_Uri_encodeComponent, (EjsProc) uri_encodeComponent);
 
     ejsBindConstructor(ejs, type, (EjsProc) uri_constructor);
+    ejsBindMethod(ejs, prototype, ES_Uri_absolute, (EjsProc) uri_absolute);
     ejsBindMethod(ejs, prototype, ES_Uri_basename, (EjsProc) uri_basename);
     ejsBindMethod(ejs, prototype, ES_Uri_complete, (EjsProc) uri_complete);
     ejsBindMethod(ejs, prototype, ES_Uri_components, (EjsProc) uri_components);
@@ -32081,8 +32241,11 @@ void ejsConfigureUriType(Ejs *ejs)
     ejsBindAccess(ejs, prototype, ES_Uri_query, (EjsProc) uri_query, (EjsProc) uri_set_query);
     ejsBindAccess(ejs, prototype, ES_Uri_reference, (EjsProc) uri_reference, (EjsProc) uri_set_reference);
     ejsBindMethod(ejs, prototype, ES_Uri_replaceExt, (EjsProc) uri_replaceExtension);
+    ejsBindMethod(ejs, prototype, ES_Uri_relative, (EjsProc) uri_relative);
+    ejsBindMethod(ejs, prototype, ES_Uri_resolve, (EjsProc) uri_resolve);
     ejsBindMethod(ejs, prototype, ES_Uri_same, (EjsProc) uri_same);
     ejsBindMethod(ejs, prototype, ES_Uri_toString, (EjsProc) uri_toString);
+    ejsBindMethod(ejs, prototype, ES_Uri_toLocalString, (EjsProc) uri_toLocalString);
     ejsBindMethod(ejs, prototype, ES_Uri_trimExt, (EjsProc) uri_trimExt);
     ejsBindAccess(ejs, prototype, ES_Uri_uri, (EjsProc) uri_toString, (EjsProc) uri_set_uri);
 
@@ -32162,6 +32325,9 @@ static EjsObj *castVoid(Ejs *ejs, EjsVoid *vp, EjsType *type)
     case ES_String:
         return (EjsObj*) ejsCreateString(ejs, "undefined");
 
+    case ES_Uri:
+        return (EjsObj*) ejsCreateUri(ejs, "undefined");
+            
     default:
         ejsThrowTypeError(ejs, "Can't cast to this type");
         return 0;
@@ -36582,10 +36748,10 @@ static EjsObj *hs_set_async(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
 static EjsObj *hs_close(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     if (sp->server) {
-        //  MOB -- who make sure that the server object is permanent?
         ejsSendEvent(ejs, sp->emitter, "close", NULL, (EjsObj*) sp);
         mprFree(sp->server);
         sp->server = 0;
+        sp->obj.permanent = 0;
     }
     return 0;
 }
@@ -37064,9 +37230,7 @@ static void closeEjs(HttpQueue *q)
     EjsRequest  *req;
 
     if ((req = httpGetConnContext(q->conn)) != 0) {
-        if (!req->closed) {
-            ejsSendRequestCloseEvent(req->ejs, req);
-        }
+        ejsSendRequestCloseEvent(req->ejs, req);
         req->conn = 0;
     }
     httpSetConnContext(q->conn, 0);
@@ -37733,7 +37897,7 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
     EjsObj      *value;
     EjsName     n;
     HttpConn    *conn;
-    cchar       *pathInfo;
+    cchar       *pathInfo, *scriptName;
     char        *path, *filename, *uri, *ip, *scheme;
     int         port;
 
@@ -37762,8 +37926,8 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
     case ES_ejs_web_Request_authUser:
         return createString(ejs, conn ? conn->authUser : NULL);
 
-    case ES_ejs_web_Request_autoFinalize:
-        return ejsCreateBoolean(ejs, !req->dontFinalize);
+    case ES_ejs_web_Request_autoFinalizing:
+        return ejsCreateBoolean(ejs, !req->dontAutoFinalize);
 
     case ES_ejs_web_Request_config:
         value = ejs->objectType->helpers.getProperty(ejs, (EjsObj*) req, slotNum);
@@ -37811,10 +37975,12 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return createHeaders(ejs, req);
 
     case ES_ejs_web_Request_home:
-        if (req->home == 0) {
-            req->home = ejsCreateUriAndFree(ejs, makeRelativeHome(ejs, req));
-        }
-        return req->home;
+        if (conn) {
+            if (req->home == 0) {
+                req->home = ejsCreateUriAndFree(ejs, makeRelativeHome(ejs, req));
+            }
+            return req->home;
+        } else return ejs->nullValue;
 
     case ES_ejs_web_Request_host:
         if (req->host == 0) {
@@ -37850,7 +38016,7 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
                 scheme = (conn->secure) ? "https" : "http";
                 /* NOTE: conn->rx->uri is not normalized or decoded */
                 req->originalUri = (EjsObj*) ejsCreateFullUri(ejs, scheme, getHost(conn, req), req->server->port, 
-                    conn->rx->uri, conn->rx->parsedUri->query, conn->rx->parsedUri->reference);
+                    conn->rx->uri, conn->rx->parsedUri->query, conn->rx->parsedUri->reference, 0);
             }
             return req->originalUri;
         }
@@ -37891,6 +38057,9 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
     case ES_ejs_web_Request_remoteAddress:
         return createString(ejs, conn ? conn->ip : NULL);
 
+    case ES_ejs_web_Request_responded:
+        return ejsCreateBoolean(ejs, req->responded);
+
     case ES_ejs_web_Request_responseHeaders:
         return createResponseHeaders(ejs, req);
 
@@ -37929,22 +38098,32 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         } else return ejs->nullValue;
 
     case ES_ejs_web_Request_uri:
-        if (conn) {
-            if (req->uri == 0) {
-                scheme = (conn->secure) ? "https" : "http";
-                path = mprStrcat(req, -1, getDefaultString(ejs, req->scriptName, ""),
+        if (req->uri == 0) {
+            scriptName = getDefaultString(ejs, req->scriptName, "");
+            if (conn) {
+                path = mprStrcat(req, -1, scriptName,
                     getDefaultString(ejs, req->pathInfo, conn->rx->uri), NULL);
+                scheme = (conn->secure) ? "https" : "http";
                 req->uri = (EjsObj*) ejsCreateFullUri(ejs, 
                     getDefaultString(ejs, req->scheme, scheme),
                     getDefaultString(ejs, req->host, getHost(conn, req)),
                     getDefaultInt(ejs, req->port, req->server->port),
                     path,
                     getDefaultString(ejs, req->query, conn->rx->parsedUri->query),
-                    getDefaultString(ejs, req->reference, conn->rx->parsedUri->reference));
+                    getDefaultString(ejs, req->reference, conn->rx->parsedUri->reference), 0);
+            } else {
+                path = mprStrcat(req, -1, scriptName, getDefaultString(ejs, req->pathInfo, NULL), NULL);
+                req->uri = (EjsObj*) ejsCreateFullUri(ejs, 
+                    getDefaultString(ejs, req->scheme, NULL),
+                    getDefaultString(ejs, req->host, NULL),
+                    getDefaultInt(ejs, req->port, 0),
+                    path,
+                    getDefaultString(ejs, req->query, NULL),
+                    getDefaultString(ejs, req->reference, NULL), 0);
             }
-            return req->uri;
+            mprFree(path);
         }
-        return ejs->nullValue;
+        return req->uri;
 
     default:
         if (slotNum < req->obj.numSlots) {
@@ -37984,26 +38163,29 @@ static int getNum(Ejs *ejs, EjsObj *vp)
 
 static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *value)
 {
+    EjsType     *type;
+    EjsUri      *up;
+
     switch (slotNum) {
     default:
     case ES_ejs_web_Request_config:
         return ejs->objectType->helpers.setProperty(ejs, (EjsObj*) req, slotNum, value);
 
     case ES_ejs_web_Request_absHome:
-        req->absHome = value;
+        req->absHome = (EjsObj*) ejsToUri(ejs, value);
         break;
 
-    case ES_ejs_web_Request_autoFinalize:
-        req->dontFinalize = !ejsGetBoolean(ejs, value);
+    case ES_ejs_web_Request_autoFinalizing:
+        req->dontAutoFinalize = !ejsGetBoolean(ejs, value);
         break;
 
     case ES_ejs_web_Request_dir:
-        req->dir = (EjsPath*) value;
+        req->dir = ejsToPath(ejs, value);
         req->filename = 0;
         break;
 
     case ES_ejs_web_Request_filename:
-        req->filename = (EjsPath*) value;
+        req->filename = ejsToPath(ejs, value);
         break;
 
     case ES_ejs_web_Request_headers:
@@ -38014,37 +38196,46 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
         break;
 
     case ES_ejs_web_Request_home:
-        req->home = (EjsUri*) value;
+        req->home = ejsToUri(ejs, value);
         break;
 
     case ES_ejs_web_Request_host:
-        req->host = value;
+        req->host = (EjsObj*) ejsToString(ejs, value);
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_log:
+        type = ejsGetType(ejs, ES_Logger);
+        if (!ejsIsA(ejs, value, type)) {
+            ejsThrowArgError(ejs, "Property is not a logger");
+            break;
+        }
         req->log = value;
         break;
 
     case ES_ejs_web_Request_pathInfo:
-        req->pathInfo = value;
+        req->pathInfo = (EjsObj*) ejsToString(ejs, value);
         req->filename = 0;
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_port:
-        req->port = value;
+        req->port = (EjsObj*) ejsToNumber(ejs, value);
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_query:
-        req->query = value;
+        req->query = (EjsObj*) ejsToString(ejs, value);
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_reference:
-        req->reference = value;
+        req->reference = (EjsObj*) ejsToString(ejs, value);
         req->uri = 0;
+        break;
+
+    case ES_ejs_web_Request_responded:
+        req->responded = (value == ejs->trueValue);
         break;
 
     case ES_ejs_web_Request_responseHeaders:
@@ -38052,24 +38243,53 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
         break;
 
     case ES_ejs_web_Request_scriptName:
-        req->scriptName = value;
+        req->scriptName = (EjsObj*) ejsToString(ejs, value);
         req->filename = 0;
         req->uri = 0;
         req->absHome = 0;
         break;
 
     case ES_ejs_web_Request_server:
+        type = ejsGetTypeByName(ejs, "ejs.web", "HttpServer");
+        if (!ejsIsA(ejs, value, type)) {
+            ejsThrowArgError(ejs, "Property is not an instance of HttpServer");
+            break;
+        }
         req->server = (EjsHttpServer*) value;
         break;
 
     case ES_ejs_web_Request_scheme:
-        req->scheme = value;
+        req->scheme = (EjsObj*) ejsToString(ejs, value);
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_uri:
-        req->uri = value;
+        up = ejsToUri(ejs, value);
+        req->uri = (EjsObj*) up;
         req->filename = 0;
+        if (!connOk(ejs, req, 0)) {
+            /*
+                This is really just for unit testing without a connection
+             */
+            if (up->uri->scheme) {
+                req->scheme = (EjsObj*) ejsCreateString(ejs, up->uri->scheme);
+            }
+            if (up->uri->host) {
+                req->host = (EjsObj*) ejsCreateString(ejs, up->uri->host);
+            }
+            if (up->uri->port) {
+                req->port = (EjsObj*) ejsCreateNumber(ejs, up->uri->port);
+            }
+            if (up->uri->path) {
+                req->pathInfo = (EjsObj*) ejsCreateString(ejs, up->uri->path);
+            }
+            if (up->uri->query) {
+                req->query = (EjsObj*) ejsCreateString(ejs, up->uri->query);
+            }
+            if (up->uri->reference) {
+                req->reference = (EjsObj*) ejsCreateString(ejs, up->uri->reference);
+            }
+        }
         break;
 
     /*
@@ -38087,6 +38307,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
     case ES_ejs_web_Request_limits:
     case ES_ejs_web_Request_localAddress:
     case ES_ejs_web_Request_originalMethod:
+    case ES_ejs_web_Request_originalUri:
     case ES_ejs_web_Request_params:
     case ES_ejs_web_Request_protocol:
     case ES_ejs_web_Request_referrer:
@@ -38110,29 +38331,8 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
     case ES_ejs_web_Request_status:
         if (!connOk(ejs, req, 1)) return 0;
         httpSetStatus(req->conn, getNum(ejs, value));
+        req->responded = 1;
         break;
-
-    }
-    return 0;
-}
-
-
-/*  
-    function observe(name: [String|Array], listener: Function): Void
- */
-static EjsObj *req_observe(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
-{
-    HttpConn    *conn;
-    
-    conn = req->conn;
-    ejsAddObserver(ejs, &req->emitter, argv[0], argv[1]);
-
-    if (conn->readq->count > 0) {
-        ejsSendEvent(ejs, req->emitter, "readable", NULL, (EjsObj*) req);
-    }
-    if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
-            conn->writeq->ioCount == 0) {
-        ejsSendEvent(ejs, req->emitter, "writable", NULL, (EjsObj*) req);
     }
     return 0;
 }
@@ -38160,15 +38360,27 @@ static EjsObj *req_set_async(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 
 
 /*  
+    function autoFinalize(): Void
+ */
+static EjsObj *req_autoFinalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+{
+    if (req->conn && !req->dontAutoFinalize) {
+        httpFinalize(req->conn);
+    }
+    return 0;
+}
+
+
+/*  
     function close(): Void
  */
 static EjsObj *req_close(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
     if (req->conn) {
         httpFinalize(req->conn);
+        httpCloseRx(req->conn);
     }
     ejsSendRequestCloseEvent(ejs, req);
-    //  MOB -- should we do more to actually complete the request?
     return 0;
 }
 
@@ -38186,28 +38398,36 @@ static EjsObj *req_destroySession(Ejs *ejs, EjsRequest *req, int argc, EjsObj **
 
 
 /*  
-    function dontFinalize(): Void
+    function dontAutoFinalize(): Void
  */
-static EjsObj *req_dontFinalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+static EjsObj *req_dontAutoFinalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    req->dontFinalize = 1;
+    req->dontAutoFinalize = 1;
     return 0;
 }
 
+
 /*  
-    function finalize(force: Boolean = false): Void
+    function finalize(): Void
  */
 static EjsObj *req_finalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    int     force;
-
     if (req->conn) {
-        force = (argc == 1 && argv[0] == ejs->trueValue);
-        if (!req->dontFinalize || force) {
-            httpFinalize(req->conn);
-        }
+        httpFinalize(req->conn);
     }
     return 0;
+}
+
+
+/*  
+    function get finalized(): Boolean
+ */
+static EjsObj *req_finalized(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+{
+    if (req->conn && req->conn->tx) {
+        return (EjsObj*) ejsCreateBoolean(ejs, req->conn->tx->finalized);
+    }
+    return ejs->falseValue;
 }
 
 
@@ -38252,6 +38472,27 @@ static EjsObj *req_header(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         }
     }
     return (value) ? value : (EjsObj*) ejs->nullValue;
+}
+
+
+/*  
+    function observe(name: [String|Array], listener: Function): Void
+ */
+static EjsObj *req_observe(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+{
+    HttpConn    *conn;
+    
+    conn = req->conn;
+    ejsAddObserver(ejs, &req->emitter, argv[0], argv[1]);
+
+    if (conn->readq->count > 0) {
+        ejsSendEvent(ejs, req->emitter, "readable", NULL, (EjsObj*) req);
+    }
+    if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
+            conn->writeq->ioCount == 0) {
+        ejsSendEvent(ejs, req->emitter, "writable", NULL, (EjsObj*) req);
+    }
+    return 0;
 }
 
 
@@ -38414,11 +38655,12 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     EjsByteArray    *ba;
     HttpQueue       *q;
     HttpConn        *conn;
-    int             err, len;
+    int             err, len, written;
 
     if (!connOk(ejs, req, 1)) return 0;
 
     err = 0;
+    written = 0;
     data = argv[0];
     conn = req->conn;
     q = conn->writeq;
@@ -38427,36 +38669,56 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         ejsThrowIOError(ejs, "Response already finalized");
         return 0;
     }
-
     switch (data->type->id) {
     case ES_String:
         s = (EjsString*) data;
-        if (httpWriteBlock(q, s->value, s->length) != s->length) {
+        if ((written = httpWriteBlock(q, s->value, s->length)) != s->length) {
             err++;
         }
         break;
 
     case ES_ByteArray:
         ba = (EjsByteArray*) data;
+        //  MOB -- not updating the read position
+        //  MOB ba->readPosition += len;
+        //  MOB -- should reset ptrs also
         len = ba->writePosition - ba->readPosition;
-        if (httpWriteBlock(q, (char*) &ba->value[ba->readPosition], len) != len) {
+        if ((written = httpWriteBlock(q, (char*) &ba->value[ba->readPosition], len)) != len) {
             err++;
         }
         break;
 
     default:
         s = (EjsString*) ejsToString(ejs, data);
-        if (s && httpWriteBlock(q, s->value, s->length) != s->length) {
+        if (s == NULL || (written = httpWriteBlock(q, s->value, s->length)) != s->length) {
             err++;
         }
-    }
-    if (ejs->exception) {
-        return 0;
     }
     if (err) {
         ejsThrowIOError(ejs, "%s", conn->errorMsg);
     }
+    if (ejs->exception) {
+        return 0;
+    }
+    req->written += written;
+    req->responded = 1;
+
+    //  MOB - now
+    if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
+            conn->writeq->ioCount == 0) {
+        //  MOB - what if over the queue max
+        ejsSendEvent(ejs, req->emitter, "writable", NULL, (EjsObj*) req);
+    }
     return 0;
+}
+
+
+/*
+    function get written(): Number
+ */
+static EjsObj *req_written(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+{
+    return (EjsObj*) ejsCreateNumber(ejs, req->written);
 }
 
 
@@ -38595,9 +38857,6 @@ void ejsConfigureRequestType(Ejs *ejs)
 
     helpers = &type->helpers;
     helpers->mark = (EjsMarkHelper) markRequest;
-#if UNUSED
-    helpers->clone = (EjsCloneHelper) ejsCloneRequest;
-#endif
     helpers->destroy = (EjsDestroyHelper) destroyRequest;
     helpers->getProperty = (EjsGetPropertyHelper) getRequestProperty;
     helpers->getPropertyCount = (EjsGetPropertyCountHelper) getRequestPropertyCount;
@@ -38607,10 +38866,12 @@ void ejsConfigureRequestType(Ejs *ejs)
 
     prototype = type->prototype;
     ejsBindAccess(ejs, prototype, ES_ejs_web_Request_async, (EjsProc) req_async, (EjsProc) req_set_async);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_autoFinalize, (EjsProc) req_autoFinalize);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_close, (EjsProc) req_close);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_destroySession, (EjsProc) req_destroySession);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_dontFinalize, (EjsProc) req_dontFinalize);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_dontAutoFinalize, (EjsProc) req_dontAutoFinalize);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_finalize, (EjsProc) req_finalize);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_finalized, (EjsProc) req_finalized);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_flush, (EjsProc) req_flush);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_header, (EjsProc) req_header);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_observe, (EjsProc) req_observe);
@@ -38621,7 +38882,7 @@ void ejsConfigureRequestType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setHeader, (EjsProc) req_setHeader);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_trace, (EjsProc) req_trace);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_write, (EjsProc) req_write);
-
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_written, (EjsProc) req_written);
 }
 
 
@@ -43561,13 +43822,16 @@ int ecCodeGen(EcCompiler *cp, int argc, EcNode **nodes)
     if (ecEnterState(cp) < 0) {
         return EJS_ERR;
     }
-    for (i = 0; i < argc; i++) {
+    for (i = 0; i < argc && !cp->error; i++) {
         np = nodes[i];
         cp->fileState = cp->state;
         cp->fileState->strict = cp->strict;
         if (np) {
             processNode(cp, np);
         }
+    }
+    if (cp->error) {
+        return EJS_ERR;
     }
 
     /*
@@ -48249,7 +48513,9 @@ static ReservedWord keywords[] =
   { "require",          G_CONREV,           T_REQUIRE,                  0, },
   { "return",           G_RESERVED,         T_RETURN,                   0, },
   { "set",              G_CONREV,           T_SET,                      0, },
+#if UNUSED
   { "shared",           G_CONREV,           T_ATTRIBUTE,                T_SHARED, },
+#endif
   { "standard",         G_CONREV,           T_STANDARD,                 0, },
   { "static",           G_CONREV,           T_ATTRIBUTE,                T_STATIC, },
   { "strict",           G_CONREV,           T_STRICT,                   0, },
@@ -57761,9 +58027,11 @@ static EcNode *parseAttribute(EcCompiler *cp)
             }
             break;
 
+#if UNUSED
         case T_SHARED:
             np->attributes |= EJS_PROP_SHARED;
             break;
+#endif
 
         case T_STATIC:
             if (inClass || inInterface) {
@@ -58025,7 +58293,6 @@ static EcNode *parseVariableBinding(EcCompiler *cp, EcNode *np, EcNode *attribut
         initialize = parsePattern(cp);
         for (next = 0; (elt = mprGetNextItem(initialize->children, &next)) != 0 && !cp->error; ) {
             var = createNode(cp, N_VAR);
-            mprAssert(elt->field.expr->kind == N_QNAME);
             var->qname = ejsCopyName(var, &elt->field.expr->qname);
             var->name.varKind = np->def.varKind;
             var->attributes |= np->attributes;

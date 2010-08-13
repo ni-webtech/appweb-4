@@ -410,6 +410,8 @@ typedef struct HttpUri {
  */
 extern HttpUri *httpCreateUri(MprCtx ctx, cchar *uri, int complete);
 
+extern HttpUri *httpCloneUri(MprCtx ctx, HttpUri *base, int complete);
+
 /** 
     Format a URI
     @description Format a URI string using the input components.
@@ -428,7 +430,7 @@ extern char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cch
         int complete);
 
 extern HttpUri *httpCreateUriFromParts(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, 
-        cchar *query);
+        cchar *query, int complete);
 
 /** 
     Get the mime type for an extension.
@@ -459,6 +461,13 @@ extern char *httpUriToString(MprCtx ctx, HttpUri *uri, int complete);
     @ingroup HttpUri
  */
 extern char *httpNormalizeUriPath(MprCtx ctx, cchar *uri);
+extern void httpNormalizeUri(HttpUri *uri);
+
+extern HttpUri *httpJoinUri(MprCtx ctx, HttpUri *uri, int argc, HttpUri **others);
+extern HttpUri *httpJoinUriPath(HttpUri *uri, HttpUri *base, HttpUri *other);
+extern HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *missing);
+extern HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup);
+extern HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, int relative);
 
 /** 
     Content range structure
@@ -1295,7 +1304,7 @@ typedef struct HttpConn {
     int             state;                  /**< Connection state */
     int             flags;                  /**< Connection flags */
     int             abortPipeline;          /**< Connection errors (not proto errors) abort the pipeline */
-    int             advancing;              /**< In httpAdvanceRx (mutex) */
+    int             advancing;              /**< In httpProcess (reentrancy prevention) */
     int             complete;               /**< Request is complete and should step through all remaining states */
     int             writeComplete;          /**< All write data has been sent for the current request */
     int             error;                  /**< A request error has occurred */
@@ -1928,6 +1937,7 @@ typedef struct HttpRx {
     MprList         *etags;                 /**< Document etag to uniquely identify the document version */
     MprTime         since;                  /**< If-Modified date */
 
+    int             eof;                    /**< All read data has been received (eof) */
     int             length;                 /**< Declared content length (ENV: CONTENT_LENGTH) */
     int             chunkState;             /**< Chunk encoding state */
     int             chunkSize;              /**< Size of the next chunk */
@@ -1937,7 +1947,6 @@ typedef struct HttpRx {
     int             remainingContent;       /**< Remaining content data to read (in next chunk if chunked) */
     int             receivedContent;        /**< Length of content actually received */
     int             readContent;            /**< Length of content read by user */
-    int             readComplete;           /**< All read data has been received (eof) */
 
     bool            ifModified;             /**< If-Modified processing requested */
     bool            ifMatch;                /**< If-Match processing requested */
@@ -2094,11 +2103,12 @@ extern char *httpReadString(HttpConn *conn);
 /* Internal */
 extern HttpRx *httpCreateRx(HttpConn *conn);
 extern void httpDestroyRx(HttpConn *conn);
+extern void httpCloseRx(struct HttpConn *conn);
 extern bool httpContentNotModified(HttpConn *conn);
 extern HttpRange *httpCreateRange(HttpConn *conn, int start, int end);
 extern void  httpConnError(struct HttpConn *conn, int status, cchar *fmt, ...);
 extern void  httpProtocolError(struct HttpConn *conn, int status, cchar *fmt, ...);
-extern void  httpAdvanceRx(HttpConn *conn, HttpPacket *packet);
+extern void  httpProcess(HttpConn *conn, HttpPacket *packet);
 extern void  httpProcessWriteEvent(HttpConn *conn);
 extern bool  httpProcessCompletion(HttpConn *conn);
 extern int   httpSetUri(HttpConn *conn, cchar *newUri);
@@ -2532,11 +2542,12 @@ extern void httpSetSimpleHeader(HttpConn *conn, cchar *key, cchar *value);
 /** 
     Wait for the connection to achieve the requested state Used for blocking client requests.
     @param conn HttpConn connection object created via $httpCreateConn
+    @param dispatcher Mpr dispatcher to use for waiting
     @param state HTTP_STATE_XXX to wait for.
     @param timeout Timeout in milliseconds to wait 
     @ingroup HttpTx
  */
-extern int httpWait(HttpConn *conn, int state, int timeout);
+extern int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout);
 
 /** 
     Write the transmission headers
