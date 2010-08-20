@@ -3603,22 +3603,10 @@ module ejs {
          */
         enumerable var message: String
 
+        /**
+            Callback stack
+         */
         enumerable var stack: Array
-
-        /*
-UNUSED MOB
-            Execution call stack. Contains the execution stack backtrace at the point the Error object was created.
-            The stack is an array of stack frame records. Each record consists of the following properties: 
-                {file: String, lineno: Number, func: String, code: String}
-        function get stack(): Array {
-print("_STACK " + _stack)
-            if (!_stack) {
-print("CAPTURE")
-                _stack = capture()
-            }
-            return _stack
-        }
-*/
 
         /** 
             Time the event was created. The Context constructor will automatically set the timestamp to the current time.  
@@ -3660,8 +3648,7 @@ print("CAPTURE")
 
     /**
         Arguments error exception class. 
-        Thrown the arguments cannot be cast to the required type or in strict mode if there are too few or too 
-        many arguments.
+        Thrown the arguments are not compatible with the required function  parameters.
         @spec ejs
         @stability evolving
      */
@@ -3673,6 +3660,7 @@ print("CAPTURE")
         native function ArgError(message: String? = null) 
     }
 
+//MOB Who is using this? Delete
     /**
         Arithmetic error exception class. Thrown when the system cannot perform an arithmetic operation, 
         @spec ejs
@@ -3699,6 +3687,7 @@ print("CAPTURE")
         native function AssertError(message: String? = null) 
     }
 
+//MOB Who is using this? Delete
     /**
         Code (instruction) error exception class. Thrown when an illegal or insecure operation code is detected 
         in the instruction stream.
@@ -3755,6 +3744,7 @@ print("CAPTURE")
         native function MemoryError(message: String? = null) 
     }
 
+//MOB Who is using this? Delete
     /**
         OutOfBounds error exception class. Thrown to indicate that an attempt has been made to set or access an 
         object's property outside of the permitted set of values for that property. For example, an array has been 
@@ -3855,8 +3845,9 @@ print("CAPTURE")
         native function TypeError(message: String? = null) 
     }
 
+//MOB Delete
     /**
-        Uri error exception class. Thrown a Uri fails to parse.
+        Uri error exception class. Throw a Uri fails to parse.
         @stability prototype
         @hide
      */
@@ -4422,7 +4413,6 @@ module ejs {
          */
         native function get name(): String
 
-//  MOB -- ECMA: this is a var on all functions and not a getter on the prototype
         //  Number of arguments expected by the function
         native function get length(): Number
 
@@ -4431,13 +4421,15 @@ module ejs {
         native function setScope(scope: Object): Void
     }
 
-    //  MOB -- remove
-    /** @hide */
+//  MOB -- remove
+/** 
+        UNUSED @hide 
     native function makeGetter(fn: Function): Function
+*/
 
-    //  MOB -- move into Object   Object.
-    /** @hide */
+/** UNUSED
     native function clearBoundThis(fn: Function): Function
+*/
 }
 
 /*
@@ -5129,7 +5121,8 @@ module ejs {
             @duplicate Stream.close 
             This closes any open network connection and resets the http object to be ready for another connection. 
             Connections should be explicitly closed rather than relying on the garbage collector to dispose of the 
-            Http object and automatically close the connection.
+            Http object and automatically close the connection. If you have more requests that can be issued on 
+            the same network connection, use reset() rather than close to prepare for a new request on the same connection.
          */
         native function close(): Void 
 
@@ -5442,7 +5435,7 @@ FUTURE & KEEP
         native function removeObserver(name, observer: Function): Void
 
         /**
-            Reset the Http object to prepare for a new request
+            Reset the Http object to prepare for a new request. This will not close the connection.
          */
         native function reset(): Void
 
@@ -6531,7 +6524,6 @@ module ejs {
             @param tag Activity tag to prefix the message. The tag string is wraped in "[]".
             @param args Output string to log
             @hide
-            @stability prototype
          */
         function activity(tag: String, ...args): Void {
             let msg = args.join(" ")
@@ -7830,7 +7822,7 @@ module ejs {
         corresponding file or directory for the Path  may or may not exist. Once created, Paths are immutable and their
         path value cannot be changed.
         @spec ejs
-        @stability prototype
+        @stability evolving
      */
     final class Path {
 
@@ -9369,7 +9361,7 @@ module ejs {
 
         /** 
             Close the stream. 
-            @event close Issued before closing the stream.
+            @event close A close event is issued before closing the stream.
          */
         function close(): Void
 
@@ -10663,18 +10655,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native final class Type {
-
-        use default namespace ejs
-
-        /**
-MOB - UNUSED - DELETE
-            The prototype object for the type. The prototype object provides the template of instance properties 
-            shared by all Objects.
-        static function get prototype(): Object
-            null
-         */
-    }
+    native final class Type { }
 }
 
 /*
@@ -10726,7 +10707,6 @@ MOB - UNUSED - DELETE
  */
 
 module ejs {
-
     /**
         Uri class to manage Uris
         @stability evolving
@@ -11990,7 +11970,7 @@ module ejs {
         This code is prototype and is not yet supported
         @spec ejs
         @hide
-        @stability prototype
+        @stability evolving
      */
     class XMLHttp {
 
@@ -13025,7 +13005,7 @@ module ejs.db {
         @spec ejs
         @stability evolving
      */
-    class Database {
+    public class Database {
         private static var defaultDb: Database
 
         private var _adapter: Object
@@ -15403,7 +15383,7 @@ UNUSED - MOB -- better to set in Request
             the Controller.create factory method.
             @param req Web request object
          */
-        function Controller(req: Request) {
+        function Controller(req: Request = null) {
             /*  _initRequest may be set by create() to allow subclasses to omit constructors */
             controllerName = typeOf(this).trim("Controller") || "-DefaultController-"
             request = req || _initRequest
@@ -15425,7 +15405,7 @@ UNUSED - MOB -- better to set in Request
             @option only Only run the checker for this action name
             @option except Run the checker for all actions except this name
          */
-        function afterChecker(fn, options: Object = null): Void {
+        function checkAfter(fn, options: Object = null): Void {
             _afterCheckers ||= []
             _afterCheckers.append([fn, options])
         }
@@ -15473,7 +15453,7 @@ UNUSED - MOB -- better to set in Request
             @option only Only run the checker for this action name
             @option except Run the checker for all actions except this name
          */
-        function beforeChecker(fn, options: Object = null): Void {
+        function checkBefore(fn, options: Object = null): Void {
             _beforeCheckers ||= []
             _beforeCheckers.append([fn, options])
         }
@@ -15615,6 +15595,20 @@ UNUSED - MOB -- better to set in Request
         }
 
         /** 
+            Render a view template from a string literal.
+            This call writes the result of running the view template file back to the client.
+            @param page String literal containing the view template to render and write to the client.
+            @param layouts Optional directory for layout files. Defaults to config.directories.layouts.
+         */
+        function writeTemplateLiteral(page: String, layouts: Path = null): Void {
+            log.debug(4, "writeTemplateLiteral")
+            request.filename = null
+            layouts ||= config.directories.layouts
+            let app = TemplateBuilder(request, { layouts: layouts, literal: page } )
+            Web.process(app, request, false)
+        }
+
+        /** 
             Remove all defined checkers on the Controller.
          */
         function removeCheckers(): Void {
@@ -15625,6 +15619,10 @@ UNUSED - MOB -- better to set in Request
         /** @duplicate Request.setHeader */
         function setHeader(key: String, value: String, overwrite: Boolean = true): Void
             request.setHeader(key, value, overwrite)
+
+        /** @duplicate Request.setHeaders */
+        function setHeaders(headers: Object, overwrite: Boolean = true): Void
+            request.setHeaders(headers, overwrite)
 
         /** @duplicate Request.setStatus */
         function setStatus(status: Number): Void
@@ -15692,6 +15690,8 @@ UNUSED - MOB -- better to set in Request
                 if (dbconfig.module && !global[dbclass]) {
                     global.load(dbconfig.module + ".mod")
                 }
+                // namespace db = dbconfig.module
+                // use namespace db
                 new global[dbclass](dbconfig.adapter, request.dir.join(profile.name), profile.trace)
             }
         }
@@ -15746,7 +15746,7 @@ UNUSED - MOB -- better to set in Request
          */
         # Config.Legacy
         function afterFilter(fn, options: Object = null): Void
-            afterCheck(fn, options)
+            checkAfter(fn, options)
 
         /** 
             @hide
@@ -15762,7 +15762,7 @@ UNUSED - MOB -- better to set in Request
          */
         # Config.Legacy
         function beforeFilter(fn, options: Object = null): Void
-            beforeCheck(fn, options)
+            checkBefore(fn, options)
 
         /**
             @hide
@@ -16066,6 +16066,8 @@ module ejs.web {
             // this.controller = controller
         }
 
+        //  MOB -- state should be stored in View.viewState. This should be stateless
+//  MOB -- all methods must become static
         private var nextId: Number = 0
 
         private function scriptHeader(kind: String, id: String): Void {
@@ -16373,111 +16375,10 @@ module ejs.web {
         private var request: Request
         private var view: View
 
-        function HtmlConnector(request, view) {
-            this.request = request
+        function HtmlConnector(view) {
             this.view = view
+            this.request = view.request
         }
-
-        /*
-            Options to implement:
-                method
-                update
-                confirm     JS confirm code
-                condition   JS expression. True to continue
-                success
-                failure
-                query
-   
-            Not implemented
-                submit      FakeFormDiv
-                complete
-                before
-                after
-                loading
-                loaded
-                interactive
-         */
-
-        function aform(record: Object, options: Object = {}): Void {
-            options.domid ||= "form"
-            onsubmit = ""
-            if (options.condition) {
-                onsubmit += options.condition + ' && '
-            }
-            if (options.confirm) {
-                onsubmit += 'confirm("' + options.confirm + '"); && '
-            }
-            onsubmit = '$.ajax({ ' +
-                'uri: "' + options.uri + '", ' + 
-                'type: "' + options.method + '", '
-
-            if (options.query) {
-                onsubmit += 'data: ' + options.query + ', '
-            } else {
-                onsubmit += 'data: $("#' + options.domid + '").serialize(), '
-            }
-            if (options.update) {
-                if (options.success) {
-                    onsubmit += 'success: function(data) { $("#' + options.update + '").html(data).hide("slow"); ' + 
-                        options.success + '; }, '
-                } else {
-                    onsubmit += 'success: function(data) { $("#' + options.update + '").html(data).hide("slow"); }, '
-                }
-            } else if (options.success) {
-                onsubmit += 'success: function(data) { ' + options.success + '; } '
-            }
-            if (options.error) {
-                onsubmit += 'error: function(data) { ' + options.error + '; }, '
-            }
-            onsubmit += '}); return false;'
-            write('<form action="' + "/User/list" + '"' + getOptions(options) + "onsubmit='" + onsubmit + "' >")
-        }
-
-        /*
-            TODO Extra options:
-                method
-                update
-                confirm     JS confirm code
-                condition   JS expression. True to continue
-                success
-                failure
-                query
-         */
-		function alink(text: String, options: Object): Void {
-            options.domid ||= "alink"
-            onclick = ""
-            if (options.condition) {
-                onclick += options.condition + ' && '
-            }
-            if (options.confirm) {
-                onclick += 'confirm("' + options.confirm + '"); && '
-            }
-            onclick = '$.ajax({ ' +
-                'uri: "' + options.action + '", ' + 
-                'type: "' + options.method + '", '
-
-            if (options.query) {
-                'data: ' + options.query + ', '
-            }
-
-            if (options.update) {
-                if (options.success) {
-                    onclick += 'success: function(data) { $("#' + options.update + '").html(data); ' + 
-                        options.success + '; }, '
-                } else {
-                    onclick += 'success: function(data) { $("#' + options.update + '").html(data); }, '
-                }
-            } else if (options.success) {
-                onclick += 'success: function(data) { ' + options.success + '; } '
-            }
-            if (options.error) {
-                onclick += 'error: function(data) { ' + options.error + '; }, '
-            }
-            onclick += '}); return false;'
-            options.uri ||= request.makeUri(options)
-            write('<a href="' + options.uri + '"' + getOptions(options) + "onclick='" + onclick + "' rel='nofollow'>" + 
-                text + '</a>')
-		}
 
 		function button(value: String, buttonName: String, options: Object): Void {
             write('<input name="' + buttonName + '" type="submit" value="' + value + '"' + getOptions(options) + ' />')
@@ -16521,7 +16422,8 @@ module ejs.web {
 
 		function form(record: Object, options: Object): Void {
             options.uri ||= request.makeUri(options)
-            write('<form method="post" action="' + options.uri + '"' + getOptions(options) + 
+            //  MOB -- must support options.method
+            write('<form method="' + options.method + '" action="' + options.uri + '"' + getOptions(options) + 
                 ' xonsubmit="ejs.fixCheckboxes();">')
         }
 
@@ -16615,7 +16517,7 @@ module ejs.web {
 
 		function table(data, options: Object? = null): Void {
             let originalOptions = options
-            let tableId = view.getNextId()
+            let tableId = view.nextDomID
 
             if (data is Array) {
                 if (data.length == 0) {
@@ -16741,7 +16643,7 @@ module ejs.web {
                         styleCell += " " + (options.styleCells[row][col] || "")
                     }
                     styleCell = styleCell.trim()
-                    data = view.getValue(r, name, { render: column.render, formatter: column.formatter } )
+                    data = view.formatValue(r, name, { render: column.render} )
 
                     let align = ""
                     if (column.align) {
@@ -16844,7 +16746,6 @@ module ejs.web {
     
         private function getTextKind(options): String {
             var kind: String
-
             if (options.password) {
                 kind = "password"
             } else if (options.hidden) {
@@ -17948,9 +17849,10 @@ module ejs.web {
         /** 
             @duplicate Stream.close
             This closes the current request by finalizing all transmission data and sending a "close" event. It may 
-            not close the actually socket connection so that it can be reused for future requests.
-            It is normally not necessary to explicitly call close as the web framework will automatically close finalized
-            requests when all input data has been read.
+            not actually close the socket connection if the reuse limit has not been exceeded (see limits).
+            It is normally not necessary to explicitly call close a requeset as the web framework will automatically 
+            close finalized requests when all input data has fully been read. Calling close on an already closed
+            request is silently ignored.
          */
         native function close(): Void
 
@@ -18028,7 +17930,9 @@ module ejs.web {
                     }
                 }
                 if (Object.getOwnPropertyCount(flashMessages) > 0) {
+breakpoint()
                     session["__flash__"] = flashMessages
+print("@@@@@ FINALIZE FLASH \"" + session["__flash__"] + "\"")
                 }
             }
         }
@@ -18042,10 +17946,15 @@ module ejs.web {
             @param msg Message to store
          */
         function flash(key: String, msg: String): Void {
-            if (flashMessages == null) {
+print("FM WAS " + flashMessages)
+            if (!flashMessages) {
                 createSession()
                 flashMessages = {}
             }
+            breakpoint()
+            print("FM " + flashMessages)
+            print("TYPE " + typeOf(flashMessages))
+            dump(flashMessages)
             flashMessages[key] = msg
         }
 
@@ -18276,11 +18185,16 @@ module ejs.web {
         function setupFlash() {
             if (sessionID) {
                 lastFlash = null
+print("@@@@@@@@@@@@@@ SESSION FLASH \"" + session["__flash__"] + "\"")
+breakpoint()
                 flashMessages = session["__flash__"]
                 if (flashMessages) {
                     session["__flash__"] = undefined
                     lastFlash = flashMessages.clone()
+                } else {
+                    flashMessages = null
                 }
+print("TYPE " + typeOf(flashMessages))
             }
         }
 
@@ -18343,6 +18257,19 @@ module ejs.web {
         native function write(...data): Number
 
         /** 
+            Write a block of data to the client. This will buffer the written data which will be flushed when either 
+            close(), flush() or finalize() is called or the underlying pipeline is full. 
+            @param buffer Destination byte array for read data.
+            @param offset Offset in the byte array from which to write. If the offset is -1, then data is
+                written from the buffer read $position which is then updated. 
+            @param count Read up to this number of bytes. If -1, write all available data in the buffer. 
+            @returns a count of the bytes actually written. Returns null on eof.
+            @event writable Issued when the connection can absorb more data.
+         */
+        # FUTURE
+        native function writeBlock(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
+
+        /** 
             Write an error message back to the user and finalize the request.  The output is Html escaped for security.
             @param status Http status code
             @param msgs Messages to send with the response. The messages may be modified for readability if it 
@@ -18357,13 +18284,14 @@ module ejs.web {
                 text = "<pre>" + escapeHtml(msg) + "</pre>\r\n" +
                     '<p>To prevent errors being displayed in the "browser, ' + 
                     'set <b>log.showClient</b> to false in the ejsrc file.</p>\r\n'
+                try {
+                    setHeader("Content-Type", "text/html")
+                    write(errorBody(title, text))
+                } catch {}
             }
-            try {
-                setHeader("Content-Type", "text/html")
-                write(errorBody(title, text))
-            } catch {}
             finalize()
-            log.debug(4, "Request error (" + status + ") for: \"" + uri + "\". " + msg)
+            //  MOB -- what level should this be?
+            log.debug(0, "Request error (" + status + ") for: \"" + uri + "\". " + msg)
         }
 
         /** 
@@ -18651,7 +18579,8 @@ module ejs.web {
   { name: "index",   builder: MvcBuilder, method: "GET",    match: "/:controller",          params: { action: "index" } },
         ]
 
-        # Config.Legacy
+        //  MOB - remove
+        # Config.Legacy || 1
         public static var LegacyRoutes = [
   { name: "es",      builder: ScriptBuilder,                match: /^\/web\/.*\.es$/   },
   { name: "ejs",     builder: TemplateBuilder,              match: /^\/web\/.*\.ejs$/,      module: "ejs.template"  },
@@ -19054,16 +18983,17 @@ module ejs.web {
                 let routeName = where.route || "default"
                 let route = this
                 if (routeName != this.name) {
-                    route = routeLookup[routeName]
+                    route = router.routeLookup[routeName]
                     if (!route) {
                         throw new ReferenceError("makeUri: Unknown route \"" + routeName + "\"")
                     }
                 }
                 for each (token in route.tokens) {
-                    if (!where[token]) {
+                    let value = where[token] || request.params[token]
+                    if (!value) {
                         throw new ArgError("Missing URI token \"" + token + "\"")
                     }
-                    uri = uri.join(where[token])
+                    uri = uri.join(value)
                 }
             }
             return uri
@@ -19426,10 +19356,12 @@ module ejs.web {
     }
 
     /** 
-        Template builder for use in routing tables to serve requests for template files (*.ejs).
+        Template builder for use in routing tables to serve requests for templates. The template path can be supplied
+        via the request.filename or a literal template can be provided via options.literal.
         @param request Request object. 
         @param options Object hash of options
         @options layout Path Layout file
+        @options literal String containing the template to render.
         @options dir Path Base directory to use for including files and for resolving layout directives
         @return A web script function that services a web request.
         @example: Example use in a Route table entry
@@ -19437,7 +19369,7 @@ module ejs.web {
      */
     function TemplateBuilder(request: Request, options: Object = {}): Function {
         let path = request.filename
-        if (!path.exists) {
+        if (path && !path.exists) {
             request.writeError(Http.NotFound, "Cannot find " + path)
             return null
         }
@@ -19445,7 +19377,7 @@ module ejs.web {
             if (!global.TemplateParser) {
                 load("ejs.template.mod")
             }
-            let data = TemplateParser().build(path.readString(), options)
+            let data = options.literal || TemplateParser().build(path.readString(), options)
             return Loader.wrap(data)
         }).app
     }
@@ -19696,7 +19628,7 @@ module ejs.web {
             if (key == "name") {
                 cookies[name] = cookie = {}
             }
-            cookie[key] = parts[1]
+            cookies[key] = parts[1]
         }
         return cookies
     }
@@ -19809,11 +19741,13 @@ module ejs.web {
          */
         use default namespace module
 
+        private var connectors: Object = {}
         /* Current record being used inside a form */
         private var currentRecord: Object
+        private var formats: Object
 
         /* Sequential DOM ID generator */
-        private var nextId: Number = 0
+        private var nextDomID: Number = 0
 
         /* Configuration from the applications ejsrc files */
         public var config: Object
@@ -19821,48 +19755,40 @@ module ejs.web {
         /** Optional controller object */
         public var controller
 
+        /** Form and query parameters - reference to the Request.params object. */
+        public var params: Object
+
         /** Current request object */
         public var request: Request
 
-        /** Logger channel */
-        public var log: Logger
+        /** View connector state storage */
+        public var viewState: Object
 
         /**
             Constructor method to initialize a new View
             @param request Request object
          */
         function View(request: Object) {
-/*
-            view = this
-*/
-            controller = request.controller
-
-            //  MOB -- replace all this with blend
-            this.request = request
-            this.config = request.config
-            this.log = request.log
-            for each (let n: String in Object.getOwnPropertyNames(controller, {includeBases: true, excludeFunctions: true})){
-                if (n.startsWith("_")) continue
-                //  MOB - can we remove public::
-                this.public::[n] = controller[n]
+            if (request) {
+                controller = request.controller
+//  MOB -- replace all this with blend. Perhaps request and config come over automatically.
+                this.request = request
+                this.config = request.config
+                formats = config.web.views.formats
+                for each (let n: String in 
+                        Object.getOwnPropertyNames(controller, {includeBases: true, excludeFunctions: true})){
+                    if (n.startsWith("_")) continue
+                    //  MOB - can we remove public::
+                    this.public::[n] = controller[n]
+                }
             }
         }
 
         /** 
             Get the next usable DOM ID for view controls
          */
-        function getNextId(): String
-            "id_" + nextId++
-
-        /**
-            Make a uri from parts. The parts may include http properties for: scheme, host, port, path, reference and query.
-            Depending on the route table entry used for the request, properties may also be included for route tokens 
-            such as "controller" or "action". These will take precedence over the http properties.
-            @param parts Uri components fields 
-            @return a Uri
-         */
-        function makeUri(parts: Object): Uri
-            request.makeUri(parts)
+        function get nextDomID(): String
+            "id_" + nextDomID++
 
         /**
             Process and emit a view to the client. Overridden or replaced by the views.
@@ -19870,96 +19796,15 @@ module ejs.web {
                 modified so that it executes as if it were a member method of the View class.
          */
         function render(renderer: Function): Void {
+//  MOB -- is this ever called without a renderer. 
+            assert(renderer)
             if (renderer) {
                 // MOB renderer.setScope(this)
                 renderer.call(this, request)
             }
         }
 
-        /** 
-            Set a header. If a header has already been defined and $overwrite is true, the header will be overwritten.
-            NOTE: case does not matter in the header keyword.
-            @param key The header keyword for the request, e.g. "accept".
-            @param value The value to associate with the header, e.g. "yes"
-            @param overwrite If the header is already defined and overwrite is true, then the new value will
-                overwrite the old. If overwrite is false, the new value will be catenated to the old value with a ", "
-                separator.
-         */
-        function setHeader(key: String, value: String, overwrite: Boolean = true): Void
-            request.setHeader(key, value, overwrite)
-
-        /**
-            Set the HTTP response headers. Use getHeaders to inspect the response headers.
-            @param headers Set of headers to use
-            @param overwrite If the header is already defined and overwrite is true, then the new value will
-                overwrite the old. If overwrite is false, the new value will be catenated to the old value with a ", "
-                separator.
-         */
-        function setHeaders(headers: Object, overwrite: Boolean = true): Void
-            request.setHeader(headers, overwrite)
-
-        /**
-            Set the Http response status
-            @param status Http status code
-         */
-        function setStatus(status: Number): Void
-            request.setStatus(status)
-
-        /** 
-            Dump objects for debugging
-            @param args List of arguments to print.
-            @hide
-         */
-        function show(...args): Void
-            request.show(...args)
-
-        /**
-            Write data to the client
-            @param data Data to write
-            @return The number of bytes written
-         */
-        function write(...data): Number
-            request.write(...data)
-
-        /************************************************ View Helpers ****************************************************/
-        /**
-            Render an asynchronous (ajax) form.
-            @param record Data record to edit
-            @param options Optional extra options. See $getOptions for a list of the standard options.
-            @option action Action to invoke when the form is submitted. Defaults to "create" or "update" depending on 
-                whether the field has been previously saved.
-            @option uri String Use a URL rather than action and controller for the target uri.
-         */
-        function aform(record: Object, options: Object = {action: "update"}): Void {
-            currentRecord = record
-            emitFormErrors(record)
-            options = setOptions("aform", options)
-            if (options.method == null) {
-                options.method = "POST"
-            }
-            options.action ||= "update"
-            options.id ||= record.id
-            let connector = getConnector("aform", options)
-            connector.aform(record, options)
-        }
-
-        /** 
-            Emit an asynchronous (ajax) link to an action. The URL is constructed from the given action and the 
-                current controller. The controller may be overridden by setting the controller option.
-            @param text Link text to display
-            @param options Optional extra options. See $getOptions for a list of the standard options.
-            @option action Action to invoke when the link is clicked
-            @option controller String Name of the target controller for the given action
-            @option uri String Use a URL rather than action and controller for the target uri.
-         */
-        function alink(text: String, options: Object = {}): Void {
-            options = setOptions("alink", options)
-            options.action ||= text.split(" ")[0].toLowerCase()
-            options.method ||= "POST"
-            let connector = getConnector("alink", options)
-            connector.alink(text, options)
-        }
-
+        /************************************************ View Controls ***************************************************/
         /**
             Render a form button. This creates a button suitable for use inside an input form. When the button is clicked,
             the input form will be submitted.
@@ -19969,11 +19814,10 @@ module ejs.web {
             Examples:
                 button("Click Me", "OK")
          */
-        function button(value: String, buttonName: String? = null, options: Object = {}): Void {
+        function button(value: String, buttonName: String = null, options: Object = {}): Void {
             options = setOptions("button", options)
             buttonName ||= value.toLowerCase()
-            let connector = getConnector("button", options)
-            connector.button(value, buttonName, options)
+            getConnector("button").button(value, buttonName, options)
         }
 
 //  MOB -- action is really a uri
@@ -19986,14 +19830,13 @@ module ejs.web {
          */
         function buttonLink(text: String, options: Object = {}): Void {
             options = setOptions("buttonLink", options)
-            let connector = getConnector("buttonLink", options)
-            connector.buttonLink(text, options)
+            getConnector("buttonLink").buttonLink(text, options)
         }
 
         /**
             Render a chart. The chart control can display static or dynamic tabular data. The client chart control manages
             sorting by column, dynamic data refreshes, pagination and clicking on rows.
-            @param initialData Optional initial data for the control. The data option may be used with the refresh option to 
+            @param data Optional initial data for the control. The data option may be used with the refresh option to 
                 dynamically refresh the data.
             @param options Object Optional extra options. See also $getOptions for a list of the standard options.
             @option columns Object hash of column entries. Each column entry is in-turn an object hash of options. If unset, 
@@ -20006,9 +19849,9 @@ module ejs.web {
                 <% chart(null, { data: "getData", refresh: 2" }) %>
                 <% chart(data, { onClick: "action" }) %>
          */
-        function chart(initialData: Array, options: Object = {}): Void {
-            let connector = getConnector("chart", options)
-            connector.chart(initialData, options)
+        function chart(data: Array, options: Object = {}): Void {
+            options = setOptions("chart", options)
+            getConnector("chart").chart(data, options)
         }
 
         /**
@@ -20020,19 +19863,63 @@ module ejs.web {
             @param options Optional extra options. See $getOptions for a list of the standard options.
          */
         function checkbox(field: String, choice: String = "true", options: Object = {}): Void {
-            options = setOptions(field, options)
-            let value = getValue(currentRecord, field, options)
-            let connector = getConnector("checkbox", options)
-            connector.checkbox(options.fieldName, choice, value, options)
+            options = setOptions("field", options)
+            let value = formatValue(currentRecord, field, options)
+            getConnector("checkbox").checkbox(options.fieldName, choice, value, options)
         }
 
         /**
             End an input form. This closes an input form initiated by calling the $form method.
          */
         function endform(): Void {
-            let connector = getConnector("endform", null)
-            connector.endform()
+            getConnector("endform").endform()
             currentRecord = undefined
+        }
+
+        /** 
+            Emit a flash message area. 
+            @param kinds Kinds of flash messages to display. May be a single string 
+                ("error", "inform", "message", "warning"), an array of strings or null. If set to null (or omitted), 
+                then all flash messages will be displayed.
+            @param options Optional extra options. See $getOptions for a list of the standard options.
+            @option retain Number. Number of seconds to retain the message. If <= 0, the message is retained until another
+                message is displayed. Default is 0.
+            @example
+                <% flash("status") %>
+                <% flash() %>
+                <% flash(["error", "warning"]) %>
+         */
+
+//  MOB - rename to notify
+        function flash(kinds: Object = null, options: Object = {}): Void {
+            options = setOptions("flash", options)
+//  MOB - move flash to Request?
+//            let cflash = request.flash
+            let cflash = controller ? controller.flash : null
+            if (cflash == null || cflash.length == 0) {
+                return
+            }
+            let msgs: Object
+            if (kinds is String) {
+                msgs = {}
+                msgs[kinds] = cflash[kinds]
+            } else if (kinds is Array) {
+                msgs = {}
+                for each (kind in kinds) {
+                    msgs[kind] = cflash[kind]
+                }
+
+            } else {
+                msgs = cflash
+            }
+            for (kind in msgs) {
+                let msg: String = msgs[kind]
+                if (msg && msg != "") {
+                    let connector = getConnector("flash", options)
+                    options.style = "-ejs-flash -ejs-flash" + kind.toPascal()
+                    connector.flash(kind, msg, options)
+                }
+            }
         }
 
         //  TODO - should have an option to not show validation errors
@@ -20070,8 +19957,7 @@ module ejs.web {
          */
         function image(src: String, options: Object = {}): Void {
             options = setOptions("image", options)
-            getConnector("image", options)
-            connector.image(src, options)
+            getConnector("image", options).image(src, options)
         }
 
         /**
@@ -20084,8 +19970,7 @@ module ejs.web {
          */
         function imageLink(image: String, options: Object = {}): Void {
             options = setOptions("imageLink", options)
-            let connector = getConnector("imageLink", options)
-            connector.imageLink(text, options)
+            getConnector("imageLink", options).imageLink(text, options)
         }
 
         /**
@@ -20140,8 +20025,7 @@ module ejs.web {
          */
         function label(text: String, options: Object = {}): Void {
             options = setOptions("label", options)
-            let connector = getConnector("label", options)
-            connector.label(text, options)
+            getConnector("label", options).label(text, options)
         }
 
         //  TODO - how to do image links?
@@ -20157,8 +20041,7 @@ module ejs.web {
         function link(text: String, options: Object = {}): Void {
             options = setOptions("link", options)
             options.action ||= text.split(" ")[0].toLowerCase()
-            let connector = getConnector("link", options)
-            connector.link(text, options)
+            getConnector("link", options).link(text, options)
         }
 
         /** 
@@ -20167,8 +20050,8 @@ module ejs.web {
             @param options Optional extra options. See $getOptions for a list of the standard options.
          */
         function extlink(text: String, options: Object = {}): Void {
-            let connector = getConnector("extlink", options)
-            connector.extlink(text, options)
+            //  MOB -- missing:  options = setOptions("extlink", options)
+            getConnector("extlink", options).extlink(text, options)
         }
 
         /**
@@ -20190,8 +20073,8 @@ module ejs.web {
                 list("low", [{low: 3}, {med: 5}, {high: 9}])
                 list("Stock Type")  // Will invoke StockType.findAll() to do a table lookup
          */
-        function list(field: String, choices: Object? = null, options: Object = {}): Void {
-            options = setOptions(field, options)
+        function list(field: String, choices: Object = null, options: Object = {}): Void {
+            options = setOptions("list", options)
             if (choices == null) {
                 //TODO - is this de-pluralizing?
                 modelTypeName = field.replace(/\s/, "").toPascal()
@@ -20201,9 +20084,8 @@ module ejs.web {
                 }
                 choices = global[modelTypeName].findAll()
             }
-            let value = getValue(currentRecord, field, options)
-            let connector = getConnector("list", options)
-            connector.list(options.fieldName, choices, value, options)
+            let value = formatValue(currentRecord, field, options)
+            getConnector("list", options).list(options.fieldName, choices, value, options)
         }
 
         /**
@@ -20212,23 +20094,25 @@ module ejs.web {
             @param address Mail recipient address
             @param options Optional extra options. See $getOptions for a list of the standard options.
          */
-        function mail(name: String, address: String, options: Object = {}): Void  {
-            let connector = getConnector("mail", options)
-            connector.mail(name, address, options)
+        function mail(name: String, address: String, options: Object = {}): Void {
+            options = setOptions("mail", options)
+            getConnector("mail", options).mail(name, address, options)
         }
 
         /** 
-            Emit a progress bar. Not implemented.
-            @param initialData Optional initial data for the control. The data option may be used with the refresh option 
+            Emit a progress bar. MOB - Not implemented.
+            @param data Optional initial data for the control. The data option may be used with the refresh option 
                 to dynamically refresh the data. Progress data is a simple Number in the range 0 to 100 and represents 
                 a percentage completion value.
             @param options Optional extra options. See $getOptions for a list of the standard options.
             @example
                 <% progress(null, { data: "getData", refresh: 2" }) %>
          */
-        function progress(initialData: Object, options: Object = {}): Void {
+        function progress(data: Object, options: Object = {}): Void {
+            options = setOptions("progress", options)
             let connector = getConnector("progress", options)
-            connector.progress(initialData, options)
+            connector.progress(data, options)
+            getConnector("progress", options).progress(data, options)
         }
 
         /** 
@@ -20248,10 +20132,10 @@ module ejs.web {
                 radio(priority, Message.priorities)
          */
         function radio(field: String, choices: Object, options: Object = {}): Void {
-            options = setOptions(field, options)
-            let value = getValue(currentRecord, field, options)
-            let connector = getConnector("radio", options)
-            connector.radio(options.fieldName, choices, value, options)
+            //  MOB -- inconsistent field. Not using "radio"
+            options = setOptions("radio", options)
+            let value = formatValue(currentRecord, field, options)
+            getConnector("radio", options).radio(options.fieldName, choices, value, options)
         }
 
         /** 
@@ -20271,17 +20155,17 @@ module ejs.web {
         }
 
         /** 
-            Emit a status control area. Not implemented.
-            @param initialData Optional initial data for the control. The data option may be used with the refresh option to 
+            Emit a status control area. MOB - Not implemented.
+            @param data Optional initial data for the control. The data option may be used with the refresh option to 
                 dynamically refresh the data. Status data is a simple String. Status messages may be updated by calling the
                 \a statusMessage function.
             @param options Optional extra options. See $getOptions for a list of the standard options.
             @example
                 <% status("Initial Status Message", { data: "getData", refresh: 2" }) %>
          */
-        function status(initialData: Object, options: Object = {}): Void {
-            let connector = getConnector("status", options)
-            connector.status(initialData, options)
+        function status(data: Object, options: Object = {}): Void {
+            options = setOptions("status", options)
+            getConnector("status", options).status(data, options)
         }
 
         /** 
@@ -20381,14 +20265,14 @@ module ejs.web {
 
         /**
             Render a tab control. The tab control can display static or dynamic tree data.
-            @param initialData Optional initial data for the control. The data option may be used with the refresh option to 
+            @param data Optional initial data for the control. The data option may be used with the refresh option to 
                 dynamically refresh the data. Tab data is an array of objects -- one per tab. For example:
                 [{"Tab One Label", "action1"}, {"Tab Two Label", "action2"}]
             @param options Optional extra options. See $getOptions for a list of the standard options.
          */
-        function tabs(initialData: Array, options: Object = {}): Void {
-            let connector = getConnector("tabs", options)
-            connector.tabs(initialData, options)
+        function tabs(data: Array, options: Object = {}): Void {
+            options = setOptions("tabs", options)
+            getConnector("tabs", options).tabs(data, options)
         }
 
         /**
@@ -20405,10 +20289,12 @@ module ejs.web {
                 <% text("name") %>
          */
         function text(field: String, options: Object = {}): Void {
-            options = setOptions(field, options)
-            let value = getValue(currentRecord, field, options)
-            let connector = getConnector("text", options)
-            connector.text(options.fieldName, value, options)
+            options = setOptions("text", options)
+print("TEXT field " + field)
+dump("CR", currentRecord)
+dump("OPTIONS", options)
+            let value = formatValue(currentRecord, field, options)
+            getConnector("text", options).text(options.fieldName, value, options)
         }
 
 //  TODO - need a rich text editor. Wiki style
@@ -20429,15 +20315,14 @@ module ejs.web {
                 <% textarea("name") %>
          */
         function textarea(field: String, options: Object = {}): Void {
-            options = setOptions(field, options)
-            let value = getValue(currentRecord, field, options)
-            let connector = getConnector("textarea", options)
-            connector.textarea(options.fieldName, value, options)
+            options = setOptions("textarea", options)
+            let value = formatValue(currentRecord, field, options)
+            getConnector("textarea", options).textarea(options.fieldName, value, options)
         }
 
         /**
             Render a tree control. The tree control can display static or dynamic tree data.
-            @param initialData Optional initial data for the control. The data option may be used with the refresh option to 
+            @param data Optional initial data for the control. The data option may be used with the refresh option to 
                 dynamically refresh the data. The tree data is typically an XML document.
             @param options Optional extra options. See $getOptions for a list of the standard options.
             @option data URL or action to get data 
@@ -20445,60 +20330,68 @@ module ejs.web {
             @option style String CSS Style to use for the control
             @option visible Boolean Make the control visible. Defaults to true.
          */
-        function tree(initialData: Object, options: Object = {}): Void {
-            let connector = getConnector("tree", options)
-            connector.tree(initialData, options)
+        function tree(data: Object, options: Object = {}): Void {
+            options = setOptions("tree", options)
+            getConnector("tree").tree(data, options)
         }
 
-        /*********************************** Wrappers for Control Methods ***********************************/
-        /** 
-            Emit a flash message area. 
-            @param kinds Kinds of flash messages to display. May be a single string 
-                ("error", "inform", "message", "warning"), an array of strings or null. If set to null (or omitted), 
-                then all flash messages will be displayed.
-            @param options Optional extra options. See $getOptions for a list of the standard options.
-            @option retain Number. Number of seconds to retain the message. If <= 0, the message is retained until another
-                message is displayed. Default is 0.
-            @example
-                <% flash("status") %>
-                <% flash() %>
-                <% flash(["error", "warning"]) %>
+        /***************************************** Wrapped Request Functions **********************************************/
+        /**
+            @duplicate Request.makeUri
          */
-        function flash(kinds: Object? = null, options: Object = {}): Void {
-            options = setOptions("flash", options)
-//  MOB - move flash to Request?
-//            let cflash = request.flash
-            let cflash = controller ? controller.flash : null
-            if (cflash == null || cflash.length == 0) {
-                return
-            }
-            let msgs: Object
-            if (kinds is String) {
-                msgs = {}
-                msgs[kinds] = cflash[kinds]
-            } else if (kinds is Array) {
-                msgs = {}
-                for each (kind in kinds) {
-                    msgs[kind] = cflash[kind]
-                }
+        function makeUri(parts: Object): Uri
+            request.makeUri(parts)
 
-            } else {
-                msgs = cflash
-            }
-            for (kind in msgs) {
-                let msg: String = msgs[kind]
-                if (msg && msg != "") {
-                    let connector = getConnector("flash", options)
-                    options.style = "-ejs-flash -ejs-flash" + kind.toPascal()
-                    connector.flash(kind, msg, options)
-                }
-            }
-        }
+        /** 
+            @duplicate Request.redirect
+         */
+        function redirect(location: *, status: Number = Http.MovedTemporarily): Void
+            request.redirect(location)
+
+        /** 
+            @duplicate Request.session 
+         */
+        function get session(): Session 
+            request.session
+
+        /** 
+            @duplicate Request.setHeader
+         */
+        function setHeader(key: String, value: String, overwrite: Boolean = true): Void
+            request.setHeader(key, value, overwrite)
+
+        /**
+            @duplicate Request.setHeaders
+         */
+        function setHeaders(headers: Object, overwrite: Boolean = true): Void
+            request.setHeaders(headers, overwrite)
+
+        /**
+            @duplicate Request.setStatus
+         */
+        function setStatus(status: Number): Void
+            request.setStatus(status)
+
+        /** 
+            @duplicate Request.show
+            @hide
+         */
+        function show(...args): Void
+            request.show(...args)
+
+        /**
+            @duplicate Request.write
+         */
+        function write(...data): Number
+            request.write(...data)
+
+        /*********************************************** Support ****************************************************/
 
         private function emitFormErrors(record): Void {
             if (!record || !record.getErrors) {
                 return
             }
+//  MOB -- how does this map to a grid
             let errors = record.getErrors()
             if (errors) {
                 write('<div class="-ejs-formError"><h2>The ' + Object.getName(record).toLowerCase() + ' has ' + 
@@ -20514,132 +20407,48 @@ module ejs.web {
             }
         }
 
-        /* ****************************************** Support ***********************************************/
-        /*
-            Get the view connector to render a control
-         */
-        private function getConnector(kind: String, options: Object) {
-            let vc = request.config.web.view
-            //  TODO OPT
-            let connectorName = (options && options["connector"]) || vc.connectors[kind] || vc.connectors["rest"] || "html"
-            vc.connectors[kind] = connectorName
+//  MOB -- never called
+        //  TODO - this actually modifies the grid. Need to doc this.
+        private function filter(data: Array): Array {
+            data = data.clone()
+            pattern = request.params.filter.toLowerCase()
+            for (let i = 0; i < data.length; i++) {
+                let found: Boolean = false
+                for each (f in data[i]) {
+                    if (f.toString().toLowerCase().indexOf(pattern) >= 0) {
+                        found = true
+                    }
+                }
+                if (!found) {
+                    data.remove(i, i)
+                    i--
+                }
+            }
+            return data
+        }
+
+        private function getConnector(kind: String, options: Object = {}) {
+            let vc = config.web.views
+            let connectorName = options.connector || vc.connectors[kind] || vc.connectors["rest"]
             let name = (connectorName + "Connector").toPascal()
+            if (connectors[name]) {
+                return connectors[name]
+            }
+            return connectors[name] = new global[name](this)
+/* UNUSED
             try {
-                return new global[name](request, this)
+                //  MOB - make connectors static without state
+                return new global[name](this)
             } catch (e: Error) {
                 throw new Error("Undefined view connector: " + name)
             }
-        }
-
-        /*
-            Update the options based on the model and field being considered
-         */
-        private function setOptions(field: String, options: Object): Object {
-            if (options is String) {
-                options = {action: options}
-            }
-            if (currentRecord) {
-                if (currentRecord.id) {
-                    options.domid ||= field + '_' + currentRecord.id
-                }
-                if (currentRecord.hasError(field)) {
-                    options.style += " -ejs-fieldError"
-                }
-                //  MOB -- not portable to other ORM
-                options.fieldName ||= typeOf(currentRecord).toCamel() + '.' + field
-            } else {
-                options.fieldName ||= field
-            }
-            options.style ||= field
-            return options
-        }
-
-        /**
-            Get the data value for presentation.
-            @hide
-         */
-        function getValue(record: Object, field: String, options: Object): String {
-            let value
-            if (record && field) {
-                value = record[field]
-            }
-            value ||= options.value
-            if (!value == null || value == undefined) {
-                value = record
-                if (value) {
-                    for each (let part in field.split(".")) {
-                        value = value[part]
-                    }
-                }
-                value ||= ""
-            }
-            if (options.render != undefined && options.render is Function) {
-                result = options.render(value, record, field).toString()
-                return result
-            }
-            if (options.formatter != undefined && options.formatter is Function) {
-                return options.formatter(value).toString()
-            }
-            let typeName = typeOf(value)
-
-            //  TODO OPT
-            let fmt
-            let web = request.config.web
-            if (web.view && web.view.formats) {
-                fmt = web.view.formats[typeName]
-            }
-            if (fmt == undefined || fmt == null || fmt == "") {
-                return value.toString()
-            }
-            switch (typeName) {
-            case "Date":
-                return new Date(value).format(fmt)
-            case "Number":
-                return fmt.format(value)
-            }
-            return value.toString()
-        }
-
-        /**
-            Temporary helper function to format the date. TODO - should move to helpers somewhere
-            @param fmt Format string
-            @returns a formatted string
-            @hide
-         */
-        function date(fmt: String): String {
-            return function (data: String): String {
-                return new Date(data).format(fmt)
-            }
-        }
-
-        /**
-            Temporary helper function to format a number as currency. TODO
-            @param fmt Format string
-            @returns a formatted string
-            @hide
-         */
-        function currency(fmt: String): String {
-            return function (data: String): String {
-                return fmt.format(data)
-            }
-        }
-
-        /**
-            Temporary helper function to format a number. TODO
-            @param fmt Format string
-            @returns a formatted string
-            @hide
-         */
-        function number(fmt: String): String {
-            return function (data: String): String {
-                return fmt.format(data)
-            }
+*/
         }
 
         /*
             Mapping of helper options to HTML attributes ("" value means don't map the name)
          */
-        private static const htmlOptions: Object = { 
+        private const htmlOptions: Object = { 
             background: "", color: "", domid: "id", height: "", method: "", size: "", style: "class", visible: "", 
             width: "", remote: "data-remote",
         }
@@ -20662,17 +20471,17 @@ module ejs.web {
                 is defined.
             @option size (Number|String) Size of the element.
             @option style String CSS Style to use for the table.
-            @option value Default data value to use for the control if not supplied by other means.
             @option visible Boolean Make the control visible. Defaults to true.
             @option width (Number|String) Width of the table or column. Can be a number of pixels or a percentage string. 
          */
+//  MOB -- MOVE to Html.getOptions (static). Change all $getOptions references to Html.getOptions
         function getOptions(options: Object): String {
             if (!options) {
                 return " "
             }
             let result: String = ""
             for (let option: String in options) {
-                let mapped = View.htmlOptions[option]
+                let mapped = htmlOptions[option]
                 if (mapped || mapped == "") {
                     if (mapped == "") {
                         /* No mapping, keep the original option name */
@@ -20684,6 +20493,34 @@ module ejs.web {
                 }
             }
             return result + " "
+        }
+
+        /**
+            Get the data value for presentation.
+            @param record Object containing the data to present. This could be a plain-old-object or it could be a model.
+         */
+        function formatValue(record: Object, field: String, options: Object): String {
+/* UNUSED - KEEP for now
+            if (value == null || value == undefined) {
+                value = record
+                //  MOB - who uses this?
+                if (value) {
+                    for each (let part in field.split(".")) {
+                        value = value[part]
+                    }
+                }
+                value ||= ""
+            }
+*/
+print("FV " + record)
+print("OPTIONS " + options)
+print("options.value " + options.value)
+dump(options)
+print("URI " + request.uri)
+            let value = options.value || (record && record[field])
+print("VALUE " + value)
+            let render = options.render || renderers[typeOf(value)] || plainRenderer
+            return render(request, value, record, field)
         }
 
         /*
@@ -20712,32 +20549,92 @@ module ejs.web {
             return table
         }
 
-        //  TODO - this actually modifies the grid. Need to doc this.
-        private function filter(data: Array): Array {
-            data = data.clone()
-            pattern = request.params.filter.toLowerCase()
-            for (let i = 0; i < data.length; i++) {
-                let found: Boolean = false
-                for each (f in data[i]) {
-                    if (f.toString().toLowerCase().indexOf(pattern) >= 0) {
-                        found = true
-                    }
-                }
-                if (!found) {
-                    data.remove(i, i)
-                    i--
-                }
+        /*
+            Update the options based on the model and field being considered
+            MOB - but field is often just the name of the control
+         */
+        private function setOptions(field: String, options: Object): Object {
+            if (options is String) {
+                //  MOB - reconsider
+                options = {action: options}
             }
-            return data
+            if (currentRecord) {
+                if (currentRecord.id) {
+                    //MOB - push into connector
+                    options.domid ||= field + '_' + currentRecord.id
+                }
+                if (currentRecord.hasError(field)) {
+                    options.style += " -ejs-fieldError"
+                }
+                //  MOB -- not portable to other ORM
+//  MOB -- how is field name used?
+                options.fieldName ||= typeOf(currentRecord).toCamel() + '.' + field
+            } else {
+                options.fieldName ||= field
+            }
+//  MOB - probably needs some kind of prefix
+            options.style ||= field
+            return options
         }
 
+        /************************************************ View Renderers **************************************************/
+
+        var renderers = {
+            Date: dateRenderer,
+            String: plainRenderer,
+            Number: plainRenderer,
+            Boolean: plainRenderer,
+            //  MOB -- put all standard types here -- faster
+        }
+
+        private static function dateRenderer(request, value, record, field)
+            new Date(value).format(request.formats.Date)
+
+        private static function plainRenderer(request, value, record, field)
+            value.toString()
+       
+        /************************************************ View Helpers ****************************************************/
+        /**
+            Temporary helper function to format the date. MOB - should move to helpers somewhere
+            @param fmt Format string
+            @returns a formatted string
+         */
+        function date(fmt: String): String {
+            return function (data: String): String {
+                return new Date(data).format(fmt)
+            }
+        }
+
+        /**
+            Temporary helper function to format a number as currency. MOB
+            @param fmt Format string
+            @returns a formatted string
+         */
+        function currency(fmt: String): String {
+            return function (data: String): String {
+                return fmt.format(data)
+            }
+        }
+
+        /**
+            Temporary helper function to format a number. MOB
+            @param fmt Format string
+            @returns a formatted string
+         */
+        function number(fmt: String): String {
+            return function (data: String): String {
+                return fmt.format(data)
+            }
+        }
+
+        /*************************************************** Deprecated ***************************************************/
         /** 
             @hide
             @deprecated 2.0.0
          */
         # Config.Legacy
         function makeUrl(action: String, id: String = null, options: Object = {}, query: Object = null): String 
-            makeUri({ path: action })
+            request.makeUrl(action, id, options, query)
 
         /** 
             @hide
@@ -20745,20 +20642,7 @@ module ejs.web {
          */
         # Config.Legacy
         function get appUrl()
-            request.home.toString().trimEnd("/")
-
-        /** 
-            @hide
-            @deprecated 2.0.0
-         */
-        # Config.Legacy
-        function redirect(url: Object) {
-            if (controller) {
-                controller.redirect(url)
-            } else {
-                request.redirect(url)
-            }
-        }
+            request.appUrl
     }
 }
 
@@ -20859,7 +20743,7 @@ module ejs.web {
                         "":     86400,
                      */
                 },
-                endpoint: "127.0.0.1:4000",
+                // endpoint: "127.0.0.1:4000",
                 views: {
                     connectors: {
                         table: "html",
@@ -20867,8 +20751,7 @@ module ejs.web {
                         rest: "html",
                     },
                     formats: {
-                        currency:   "$%10f",
-                        Date:       "%a %e %b %H:%M",
+                        Date: "%a %e %b %H:%M",
                     },
                 },
             },

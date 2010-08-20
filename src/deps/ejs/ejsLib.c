@@ -31650,9 +31650,9 @@ static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
         }
         oldUri = uri;
         uri = httpJoinUri(result, oldUri, 1, &other);
-        mprFree(other);
+        mprFree(oldUri);
         if (!ejsIsUri(ejs, arg)) {
-            mprFree(oldUri);
+            mprFree(other);
         }
     }
     result->uri = uri;
@@ -38578,8 +38578,8 @@ static EjsObj *req_sendFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     httpSetSendConnector(req->conn, path->path);
 
     packet = httpCreateDataPacket(conn->writeq, 0);
-    packet->entityLength = info.size;
-    trans->length = trans->entityLength = info.size;
+    packet->entityLength = (int) info.size;
+    trans->length = trans->entityLength = (int) info.size;
     httpPutForService(conn->writeq, packet, 0);
     httpFinalize(req->conn);
     return ejs->trueValue;
@@ -46303,7 +46303,8 @@ static void genObjectLiteral(EcCompiler *cp, EcNode *np)
     int         next, argc;
 
     if (np->objectLiteral.isArray) {
-        return genArrayLiteral(cp, np);
+        genArrayLiteral(cp, np);
+        return;
     }
     ENTER(cp);
     /*

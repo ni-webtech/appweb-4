@@ -3622,10 +3622,8 @@ static int httpTimer(Http *http, MprEvent *event)
             diff = (conn->lastActivity + requestTimeout) - http->now;
             inactivity = 0;
         }
+
         if (diff < 0 && !conn->complete) {
-#if UNUSED
-            httpRemoveConn(http, conn);
-#endif
             if (conn->rx) {
                 if (inactivity) {
                     httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
@@ -4318,7 +4316,8 @@ static void netOutgoingService(HttpQueue *q)
             }
         }
         if (tx->file) {
-            return httpSendOutgoingService(q);
+            httpSendOutgoingService(q);
+            return;
         }
     }
     while (q->first || q->ioIndex) {
@@ -6496,6 +6495,9 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     char        *start, *end;
     int         len;
 
+    if (packet == NULL) {
+        return 0;
+    }
     if (conn->server && !httpValidateLimits(conn->server, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
         return 0;
     }
@@ -7284,8 +7286,9 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     rx = conn->rx;
     q = &conn->tx->queue[HTTP_QUEUE_RECEIVE];
 
-    //  MOB -- clarify what remainingContent is when chunked. Need simple way to tell end of input
-
+    if (packet == NULL) {
+        return 0;
+    }
     if (conn->complete || conn->connError || rx->remainingContent <= 0) {
         httpSetState(conn, HTTP_STATE_RUNNING);
         return 1;
@@ -7379,7 +7382,6 @@ void httpCloseRx(HttpConn *conn)
         conn->connError = 1;
     }
     httpFinalize(conn);
-    conn->abortPipeline = 1;
     if (conn->state < HTTP_STATE_COMPLETE && !conn->advancing) {
         httpProcess(conn, NULL);
     }
@@ -7637,8 +7639,8 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
         mprAssert(conn->state >= HTTP_STATE_BEGIN);
         return MPR_ERR_BAD_STATE;
     } 
+    saveAsync = conn->async;
     if (conn->waitHandler.fd < 0) {
-        saveAsync = conn->async;
         conn->async = 1;
         eventMask = MPR_READABLE;
         if (!conn->writeComplete) {
@@ -7652,25 +7654,6 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
     http->now = mprGetTime(conn);
     expire = http->now + timeout;
     while (!conn->error && conn->state < state && conn->sock && !mprIsSocketEof(conn->sock)) {
-#if UNUSED
-        fd = conn->sock->fd;
-        if (!conn->writeComplete) {
-            events = mprWaitForSingleIO(conn, fd, MPR_WRITABLE, 0);
-        } else {
-            if (mprSocketHasPendingData(conn->sock)) {
-                events = MPR_READABLE;
-            } else {
-                events = mprWaitForSingleIO(conn, fd, MPR_READABLE, 0);
-            }
-        }
-        http->now = mprGetTime(conn);
-        if (events) {
-            httpCallEvent(conn, events);
-        }
-        if (conn->error) {
-            return MPR_ERR_BAD_STATE;
-        }
-#endif
         remainingTime = (int) (expire - http->now);
         if (remainingTime <= 0) {
             break;
@@ -7678,7 +7661,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
         mprAssert(!mprSocketHasPendingData(conn->sock));
         mprServiceEvents(conn, dispatcher, remainingTime, MPR_SERVICE_ONE_THING);
     }
-    if (addedHandler) {
+    if (addedHandler && conn->waitHandler.fd >= 0) {
         mprRemoveWaitHandler(&conn->waitHandler);
         conn->async = saveAsync;
     }
@@ -7699,7 +7682,7 @@ void httpWriteBlocked(HttpConn *conn)
 {
     mprLog(conn, 7, "Write Blocked");
     conn->canProceed = 0;
-    conn->writeBlocked = 0;
+    conn->writeBlocked = 1;
 }
 
 
@@ -8908,7 +8891,7 @@ void httpInitTrace(HttpTrace *trace)
     mprAssert(trace);
 
     for (dir = 0; dir < HTTP_TRACE_MAX_DIR; dir++) {
-        trace[dir].levels[HTTP_TRACE_CONN] = 2;
+        trace[dir].levels[HTTP_TRACE_CONN] = 3;
         trace[dir].levels[HTTP_TRACE_FIRST] = 2;
         trace[dir].levels[HTTP_TRACE_HEADER] = 3;
         trace[dir].levels[HTTP_TRACE_BODY] = 4;
@@ -10564,8 +10547,9 @@ HttpUri *httpCreateUriFromParts(MprCtx ctx, cchar *scheme, cchar *host, int port
         up->port = port;
     }
     if (path) {
-        while (path[0] == '/' && path[1] == '/')
+        while (path[0] == '/' && path[1] == '/') {
             path++;
+        }
         up->path = mprStrdup(up, path);
     }
     if (up->path == 0) {
@@ -10765,7 +10749,7 @@ char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *pat
 HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
 {
     HttpUri     *uri;
-    char        *targetPath, *basePath, *bp, *cp, *tp;
+    char        *targetPath, *basePath, *bp, *cp, *tp, *startDiff;
     int         i, baseSegments, commonSegments;
 
     if (target == 0) {
@@ -10793,20 +10777,22 @@ HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
     targetPath = httpNormalizeUriPath(ctx, target->path);
     basePath = httpNormalizeUriPath(ctx, base->path);
 
+    /* Count trailing "/" */
     for (baseSegments = 0, bp = basePath; *bp; bp++) {
-        if (*bp == '/' && bp[1]) {
+        if (*bp == '/') {
             baseSegments++;
         }
     }
 
     /*
-        Find portion of path that matches the home directory, if any.
+        Find portion of path that matches the base, if any.
      */
     commonSegments = 0;
-    for (bp = base->path, tp = target->path; *bp && *tp; bp++, tp++) {
+    for (bp = base->path, tp = startDiff = target->path; *bp && *tp; bp++, tp++) {
         if (*bp == '/') {
             if (*tp == '/') {
                 commonSegments++;
+                startDiff = tp;
             }
         } else {
             if (*bp != *tp) {
@@ -10816,13 +10802,15 @@ HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
     }
 
     /*
-        Add one more segment if the last segment matches. Handle trailing separators
+        Add one more segment if the last segment matches. Handle trailing separators.
      */
+#if OLD
     if ((*bp == '/' || *bp == '\0') && (*tp == '/' || *tp == '\0')) {
         commonSegments++;
     }
-    if (*tp == '/') {
-        tp++;
+#endif
+    if (*startDiff == '/') {
+        startDiff++;
     }
     
     //  MOB -- should this remove scheme, host, port to be truly relative
@@ -10833,8 +10821,8 @@ HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
         *cp++ = '.';
         *cp++ = '/';
     }
-    if (*tp) {
-        strcpy(cp, tp);
+    if (*startDiff) {
+        strcpy(cp, startDiff);
     } else if (cp > uri->path) {
         /*
             Cleanup trailing separators ("../" is the end of the new path)
