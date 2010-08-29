@@ -1195,7 +1195,7 @@ extern "C" {
 #define MPR_TIMEOUT_LINGER      2000        /**< Close socket linger timeout */
 #define MPR_TIMEOUT_HANDLER     10000       /**< Wait period when removing a wait handler */
 
-#define MPR_MAX_TIMEOUT         (3600 * MPR_TICKS_PER_SEC) /**< One hour */
+#define MPR_MAX_TIMEOUT         (INT_MAX / MPR_TICKS_PER_SEC)
 
 
 /*

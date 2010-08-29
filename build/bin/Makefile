@@ -14,4 +14,4 @@ dependExtra:
 	chmod -x Makefile
 
 cleanExtra:
-    rm -f *.pdb
+    rm -f *.pdb *.exe

@@ -630,6 +630,7 @@ static int sendRequest(HttpConn *conn, cchar *method, cchar *url)
 static int retryRequest(HttpConn *conn, cchar *url) 
 {
     HttpRx  *rx;
+    HttpUri *target, *location;
     char    *redirect;
     cchar   *msg, *sep;
     int     count, redirectCount;
@@ -652,7 +653,11 @@ static int retryRequest(HttpConn *conn, cchar *url)
         if (httpWait(conn, conn->dispatcher, HTTP_STATE_PARSED, conn->limits->requestTimeout) == 0) {
             if (httpNeedRetry(conn, &redirect)) {
                 if (redirect) {
-                    url = resolveUrl(conn, redirect);
+                    location = httpCreateUri(conn, redirect, 0);
+                    target = httpJoinUri(conn, conn->tx->parsedUri, 1, &location);
+                    url = httpUriToString(conn, target, 1);
+                    mprFree(location);
+                    mprFree(target);
                     httpPrepClientConn(conn, HTTP_NEW_REQUEST);
                 }
                 /* Count redirects and auth retries */

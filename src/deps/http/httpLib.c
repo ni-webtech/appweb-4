@@ -2364,6 +2364,9 @@ void httpPrepClientConn(HttpConn *conn, int retry)
         if (conn->keepAliveCount >= 0) {
             /* Eat remaining input incase last request did not consume all data */
             httpConsumeLastRequest(conn);
+        } else {
+            mprFree(conn->input);
+            conn->input = 0;
         }
         if (retry && (tx = conn->tx) != 0) {
             headers = tx->headers;
@@ -2502,6 +2505,7 @@ static void writeEvent(HttpConn *conn)
     if (conn->tx) {
         httpEnableQueue(conn->tx->queue[HTTP_QUEUE_TRANS].prevQ);
         httpServiceQueues(conn);
+        httpProcess(conn, NULL);
     }
 }
 
@@ -3419,6 +3423,7 @@ HttpStatusCode HttpStatusCodes[] = {
     { 409, "409", "Conflict" },
     { 410, "410", "Length Required" },
     { 411, "411", "Length Required" },
+    { 412, "412", "Precondition Failed" },
     { 413, "413", "Request Entity Too Large" },
     { 414, "414", "Request-URI Too Large" },
     { 415, "415", "Unsupported Media Type" },
@@ -6573,7 +6578,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
     char        *method, *uri, *protocol;
-    int         methodFlags, traced, level;
+    int         methodFlags, traced;
 
     mprLog(conn, 4, "New request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
 
@@ -6651,16 +6656,17 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
         httpProtocolError(conn, HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
     }
     rx->flags |= methodFlags;
-    rx->method = method;
+    rx->method = mprStrUpper(method);
 
     if (httpSetUri(conn, uri) < 0) {
         httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad URL format");
     }
     httpSetState(conn, HTTP_STATE_FIRST);
-
+#if UNUSED
     if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) >= 0) {
         mprLog(conn, level, "%s %s %s", method, uri, protocol);
     }
+#endif
 }
 
 
@@ -6863,7 +6869,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             if ((strcmp(key, "if-modified-since") == 0) || (strcmp(key, "if-unmodified-since") == 0)) {
                 MprTime     newDate = 0;
                 char        *cp;
-                bool        ifModified = (key[3] == 'M');
+                bool        ifModified = (key[3] == 'm');
 
                 if ((cp = strchr(value, ';')) != 0) {
                     *cp = '\0';
@@ -6880,7 +6886,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
             } else if ((strcmp(key, "if-match") == 0) || (strcmp(key, "if-none-match") == 0)) {
                 char    *word, *tok;
-                bool    ifMatch = key[3] == 'M';
+                bool    ifMatch = key[3] == 'm';
 
                 if ((tok = strchr(value, ';')) != 0) {
                     *tok = '\0';
@@ -6967,7 +6973,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
 #if BLD_DEBUG
         case 'x':
-            if (strcmp(key, "x-appweb-chunk-size") == 0) {
+            if (strcmp(key, "x-chunk-size") == 0) {
                 tx->chunkSize = atoi(value);
                 if (tx->chunkSize <= 0) {
                     tx->chunkSize = 0;
@@ -8452,8 +8458,8 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
             mprRemoveHash(server->clients, conn->ip);
         }
         server->clientCount = mprGetHashCount(server->clients);
-        mprLog(server, 4, "Close connection. Active requests %d, active clients %d", 
-            server->requestCount, server->clientCount);
+        mprLog(server, 4, "Close connection %d. Active requests %d, active clients %d", 
+            conn->seqno, server->requestCount, server->clientCount);
         break;
     
     case HTTP_VALIDATE_OPEN_REQUEST:
@@ -9629,15 +9635,18 @@ void httpSetMimeType(HttpConn *conn, cchar *mimeType)
 void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
 {
     Http        *http;
+    HttpRx      *rx;
     HttpTx      *tx;
     HttpUri     *parsedUri;
     MprHash     *hp;
     MprBuf      *buf;
+    int         level;
 
     mprAssert(packet->flags == HTTP_PACKET_HEADER);
 
     http = conn->http;
     tx = conn->tx;
+    rx = conn->rx;
     buf = packet->content;
 
     if (tx->flags & HTTP_TX_HEADERS_CREATED) {
@@ -9705,6 +9714,10 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     }
     tx->headerSize = mprGetBufLength(buf);
     tx->flags |= HTTP_TX_HEADERS_CREATED;
+
+    if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) == mprGetLogLevel(tx)) {
+        mprLog(conn, level, "%s %s %d", rx->method, rx->uri, tx->status);
+    }
 }
 
 
@@ -10838,18 +10851,21 @@ HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
 }
 
 
-HttpUri *httpJoinUriPath(HttpUri *uri, HttpUri *base, HttpUri *other)
+/*
+    result = base.join(other)
+ */
+HttpUri *httpJoinUriPath(HttpUri *result, HttpUri *base, HttpUri *other)
 {
     char    *sep;
 
     if (other->path[0] == '/') {
-        uri->path = mprStrdup(uri, other->path);
+        result->path = mprStrdup(result, other->path);
     } else {
         sep = ((base->path[0] == '\0' || base->path[strlen(base->path) - 1] == '/') || 
                (other->path[0] == '\0' || other->path[0] == '/'))  ? "" : "/";
-        uri->path = mprStrcat(uri, -1, base->path, sep, other->path, NULL);
+        result->path = mprStrcat(result, -1, base->path, sep, other->path, NULL);
     }
-    return uri;
+    return result;
 }
 
 
