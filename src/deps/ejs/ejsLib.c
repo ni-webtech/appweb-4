@@ -485,7 +485,7 @@ cchar *ejsGetErrorMsg(Ejs *ejs, int withStack)
             message = (EjsObj*) ejsCreateString(ejs, "Uncaught StopIteration exception");
         }
     }
-    if (message == ejs->nullValue) {
+    if (message == ejs->nullValue || message == 0) {
         msg = "Exception";
     } else{
         msg = ejsToString(ejs, message)->value;
@@ -6519,33 +6519,32 @@ static int loadDependencySection(Ejs *ejs, EjsModule *mp)
     if (mp->hasError) {
         return MPR_ERR_CANT_READ;
     }
-    if (ejsLookupModule(ejs, name, minVersion, maxVersion) != 0) {
-        return 0;
-    }
-    saveCallback = ejs->loaderCallback;
-    nextModule = mprGetListCount(ejs->modules);
-    ejs->loaderCallback = NULL;
+    if (ejsLookupModule(ejs, name, minVersion, maxVersion) == 0) {
+        saveCallback = ejs->loaderCallback;
+        nextModule = mprGetListCount(ejs->modules);
+        ejs->loaderCallback = NULL;
 
-    mprLog(ejs, 6, "    Load dependency section %s", name);
-    rc = loadScriptModule(ejs, name, minVersion, maxVersion, mp->flags | EJS_LOADER_DEP);
-    ejs->loaderCallback = saveCallback;
-    if (rc < 0) {
-        return rc;
+        mprLog(ejs, 6, "    Load dependency section %s", name);
+        rc = loadScriptModule(ejs, name, minVersion, maxVersion, mp->flags | EJS_LOADER_DEP);
+        ejs->loaderCallback = saveCallback;
+        if (rc < 0) {
+            return rc;
+        }
+        if (mp->dependencies == 0) {
+            mp->dependencies = mprCreateList(mp);
+        }
+        for (next = nextModule; (module = mprGetNextItem(ejs->modules, &next)) != 0; ) {
+            mprAddItem(mp->dependencies, module);
+            if (ejs->loaderCallback) {
+                (ejs->loaderCallback)(ejs, EJS_SECT_DEPENDENCY, mp, module);
+            }
+        }
     }
     if ((module = ejsLookupModule(ejs, name, minVersion, maxVersion)) != 0) {
         if (checksum != module->checksum) {
-            ejsThrowIOError(ejs, "Can't load module %s due to checksum mismatch.\n"
-                "The program was compiled expecting a different version of module %s.", mp->name, name);
+            ejsThrowIOError(ejs, "Can't load module \"%s\" due to checksum mismatch.\n"
+                "The program was compiled depending on a different version of module \"%s\".", mp->name, name);
             return MPR_ERR_BAD_STATE;
-        }
-    }
-    if (mp->dependencies == 0) {
-        mp->dependencies = mprCreateList(mp);
-    }
-    for (next = nextModule; (module = mprGetNextItem(ejs->modules, &next)) != 0; ) {
-        mprAddItem(mp->dependencies, module);
-        if (ejs->loaderCallback) {
-            (ejs->loaderCallback)(ejs, EJS_SECT_DEPENDENCY, mp, module);
         }
     }
     return 0;
@@ -6970,7 +6969,6 @@ static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
     EjsTypeFixup    *fixup;
     EjsName         qname, propTypeName;
     EjsObj          *current, *value;
-    cchar           *str;
     int             slotNum, attributes, fixupKind;
 
     value = 0;
@@ -6982,16 +6980,22 @@ static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
     ejsModuleReadNumber(ejs, mp, &slotNum);
     ejsModuleReadType(ejs, mp, &type, &fixup, &propTypeName, 0);
 
+#if 1 || UNUSED
+    /*
+        This is used for namespace values. It is required when compiling (only) and thus module init code is not 
+        being run -- but we still need the value of the namespace if a script wants to declare a variable qualified
+        by the namespace that is defined in the module.
+     */
     //  MOB -- remove the need for this flag
-
     if (attributes & EJS_PROP_HAS_VALUE) {
+        cchar  *str;
         if ((str = ejsModuleReadString(ejs, mp)) == 0) {
             return MPR_ERR_CANT_READ;
         }
         /*  Only doing for namespaces currently */
         value = (EjsObj*) ejsCreateNamespace(ejs, str, str);
     }
-
+#endif
     mprLog(ejs, 9, "Loading property %s:%s at slot %d", qname.space, qname.name, slotNum);
 
     if (attributes & EJS_PROP_NATIVE) {
@@ -9828,7 +9832,6 @@ void *ejsGetProperty(Ejs *ejs, void *vp, int slotNum)
 
     mprAssert(ejs);
     mprAssert(vp);
-    mprAssert(slotNum >= 0);
 
     obj = (EjsObj*) vp;
     type = obj->type;
@@ -10706,7 +10709,7 @@ void ejsServiceEvents(Ejs *ejs, int timeout, int flags)
     int         rc, remaining;
 
     if (timeout < 0) {
-        timeout = MPR_MAX_TIMEOUT;
+        timeout = INT_MAX;
     }
     expires = mprGetTime(ejs) + timeout;
     remaining = timeout;
@@ -10730,7 +10733,7 @@ static EjsObj *app_eventLoop(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     int     timeout, oneEvent;
 
-    timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]) : MPR_MAX_TIMEOUT;
+    timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]) : INT_MAX;
     oneEvent = (argc > 1) ? (argv[1] == ejs->trueValue) : 0;
     ejsServiceEvents(ejs, timeout, oneEvent ? MPR_SERVICE_ONE_THING: 0);
     return 0;
@@ -12115,7 +12118,7 @@ static EjsObj *sortArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     if (ap->length <= 1) {
         return (EjsObj*) ap;
     }
-    compare = (EjsFunction*) ((argc == 1) ? argv[0]: NULL);
+    compare = (EjsFunction*) ((argc >= 1) ? argv[0]: NULL);
     if ((EjsObj*) compare == ejs->nullValue) {
         compare = 0;
     }
@@ -12123,7 +12126,7 @@ static EjsObj *sortArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
         ejsThrowArgError(ejs, "Compare argument is not a function");
         return 0;
     }
-    direction = (argc == 2) ? ejsGetInt(ejs, argv[1]) : 1;
+    direction = (argc >= 2) ? ejsGetInt(ejs, argv[1]) : 1;
     quickSort(ejs, ap, compare, direction, 0, ap->length - 1);
     return (EjsObj*) ap;
 }
@@ -13360,9 +13363,9 @@ static EjsObj *ba_ByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 
 
 /**
-    function get observe(name, listener: Function): Void
+    function get on(name, listener: Function): Void
  */
-static EjsObj *ba_observe(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsObj *ba_on(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     ejsAddObserver(ejs, &ap->emitter, argv[0], argv[1]);
     return 0;
@@ -14458,7 +14461,7 @@ void ejsConfigureByteArrayType(Ejs *ejs)
     helpers->setProperty = (EjsSetPropertyHelper) setByteArrayProperty;
     
     ejsBindConstructor(ejs, type, (EjsProc) ba_ByteArray);
-    ejsBindMethod(ejs, prototype, ES_ByteArray_observe, (EjsProc) ba_observe);
+    ejsBindMethod(ejs, prototype, ES_ByteArray_on, (EjsProc) ba_on);
     ejsBindMethod(ejs, prototype, ES_ByteArray_available, (EjsProc) ba_available);
     ejsBindAccess(ejs, prototype, ES_ByteArray_async, (EjsProc) ba_async, (EjsProc) ba_setAsync);
     ejsBindMethod(ejs, prototype, ES_ByteArray_close, (EjsProc) ba_close);
@@ -18771,9 +18774,9 @@ static EjsObj *httpConstructor(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 
 
 /*  
-    function observe(name, observer: function): Void
+    function on(name, observer: function): Void
  */
-EjsObj *http_observe(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+EjsObj *http_on(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     EjsFunction     *observer;
     HttpConn        *conn;
@@ -20022,7 +20025,8 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
     if (!conn->async) {
         httpFinalize(conn);
     }
-    while (conn->state < state && count < conn->retries && redirectCount < 16 && !ejs->exiting && !mprIsExiting(conn)) {
+    while (conn->state < state && count < conn->retries && redirectCount < 16 && 
+           !conn->error && !ejs->exiting && !mprIsExiting(conn)) {
         count++;
         if ((rc = httpWait(conn, ejs->dispatcher, HTTP_STATE_PARSED, remaining)) == 0) {
             if (httpNeedRetry(conn, &url)) {
@@ -20265,7 +20269,7 @@ void ejsConfigureHttpType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Http_lastModified, (EjsProc) http_lastModified);
     ejsBindMethod(ejs, prototype, ES_Http_limits, (EjsProc) http_limits);
     ejsBindAccess(ejs, prototype, ES_Http_method, (EjsProc) http_method, (EjsProc) http_set_method);
-    ejsBindMethod(ejs, prototype, ES_Http_observe, (EjsProc) http_observe);
+    ejsBindMethod(ejs, prototype, ES_Http_on, (EjsProc) http_on);
     ejsBindMethod(ejs, prototype, ES_Http_post, (EjsProc) http_post);
     ejsBindMethod(ejs, prototype, ES_Http_put, (EjsProc) http_put);
     ejsBindMethod(ejs, prototype, ES_Http_read, (EjsProc) http_read);
@@ -24880,7 +24884,6 @@ static EjsObj *obj_getType(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     return (EjsObj*) vp->type;
 }
 
-
 /*
     Return the type name of a var as a string. If the var is a type, get the base type.
  */
@@ -24896,6 +24899,16 @@ EjsObj *ejsGetTypeName(Ejs *ejs, EjsObj *vp)
         return ejs->nullValue;
     }
     return (EjsObj*) ejsCreateString(ejs, type->qname.name);
+}
+
+
+/*
+    function getTypeName(obj): String
+ */
+static EjsObj *obj_getTypeName(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+{
+    mprAssert(argc >= 1);
+    return (EjsObj*) ejsGetTypeName(ejs, argv[0]);
 }
 
 
@@ -25019,6 +25032,7 @@ void ejsConfigureObjectType(Ejs *ejs)
     /* Reflection */
     ejsBindMethod(ejs, type, ES_Object_getBaseType, obj_getBaseType);
     ejsBindMethod(ejs, type, ES_Object_getType, obj_getType);
+    ejsBindMethod(ejs, type, ES_Object_getTypeName, obj_getTypeName);
     ejsBindMethod(ejs, type, ES_Object_getName, obj_getName);
     ejsBindMethod(ejs, type, ES_Object_isType, obj_isType);
     ejsBindMethod(ejs, type, ES_Object_isPrototype, obj_isPrototype);
@@ -27137,9 +27151,9 @@ static EjsObj *sock_Socket(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 
 
 /*
-    function observe(name: [String|Array], listener: Function): Void
+    function on(name: [String|Array], listener: Function): Void
  */
-EjsObj *sock_observe(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
+EjsObj *sock_on(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
     ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
     return 0;
@@ -27539,12 +27553,12 @@ void ejsConfigureSocketType(Ejs *ejs)
 
     ejsBindConstructor(ejs, type, (EjsProc) sock_Socket);
     ejsBindMethod(ejs, prototype, ES_Socket_accept, (EjsProc) sock_accept);
-    ejsBindMethod(ejs, prototype, ES_Socket_observe, (EjsProc) sock_observe);
     ejsBindMethod(ejs, prototype, ES_Socket_address, (EjsProc) sock_address);
     ejsBindAccess(ejs, prototype, ES_Socket_async, (EjsProc) sock_async, (EjsProc) sock_set_async);
     ejsBindMethod(ejs, prototype, ES_Socket_close, (EjsProc) sock_close);
     ejsBindMethod(ejs, prototype, ES_Socket_connect, (EjsProc) sock_connect);
     ejsBindMethod(ejs, prototype, ES_Socket_listen, (EjsProc) sock_listen);
+    ejsBindMethod(ejs, prototype, ES_Socket_on, (EjsProc) sock_on);
     ejsBindMethod(ejs, prototype, ES_Socket_port, (EjsProc) sock_port);
     ejsBindMethod(ejs, prototype, ES_Socket_read, (EjsProc) sock_read);
     ejsBindMethod(ejs, prototype, ES_Socket_remoteAddress, (EjsProc) sock_remoteAddress);
@@ -27683,7 +27697,7 @@ static void destroyString(Ejs *ejs, EjsString *sp)
 static EjsObj *getStringProperty(Ejs *ejs, EjsString *sp, int index)
 {
     if (index < 0 || index >= sp->length) {
-        ejsThrowOutOfBoundsError(ejs, "Bad string subscript");
+        return (EjsObj*) ejs->emptyStringValue;
         return 0;
     }
     return (EjsObj*) ejsCreateStringWithLength(ejs, &sp->value[index], 1);
@@ -28850,20 +28864,18 @@ static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     if (start < 0) {
         start += sp->length;
     }
-    if (start >= sp->length) {
-        start = sp->length - 1;
-    }
     if (start < 0) {
         start = 0;
+    } else if (start >= sp->length) {
+        start = sp->length;
     }
     if (end < 0) {
         end += sp->length;
     }
-    if (end >= sp->length) {
-        end = sp->length;
-    }
     if (end < 0) {
         end = 0;
+    } if (end >= sp->length) {
+        end = sp->length;
     }
     if (step == 0) {
         step = 1;
@@ -31589,7 +31601,11 @@ static EjsObj *uri_hasScheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 static EjsObj *uri_host(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     if (up->uri->host == 0) {
+#if UNUSED
         return (EjsObj*) ejsCreateString(ejs, "localhost");
+#else
+        return ejs->nullValue;
+#endif
     }    
     return (EjsObj*) ejsCreateString(ejs, up->uri->host);
 }
@@ -31683,6 +31699,20 @@ static EjsObj *uri_joinExt(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 
 
 /*  
+    function local(): Uri
+ */
+static EjsObj *uri_local(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+{
+    EjsUri      *result;
+
+    if ((result = cloneUri(ejs, up, 0)) != 0) {
+        httpMakeUriLocal(result->uri);
+    }
+    return (EjsObj*) result;
+}
+
+
+/*  
     Get the mimeType
     function mimeType(): String
  */
@@ -31737,7 +31767,9 @@ static EjsObj *uri_port(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     
     uri = up->uri;
     if (uri->port == 0) {
-        //  MOB -- push this down into http
+        if (uri->host == 0) {
+            return ejs->nullValue;
+        }
         if (uri->scheme == 0 || strcmp(uri->scheme, "http") == 0) {
             return (EjsObj*) ejsCreateNumber(ejs, 80);
         } else if (uri->scheme && strcmp(uri->scheme, "https") == 0) {
@@ -31783,20 +31815,24 @@ static EjsObj *uri_replaceExtension(Ejs *ejs, EjsUri *up, int argc, EjsObj **arg
 
 
 /*  
-    function resolve(target, relative: Boolean = true): Uri
+    function resolve(target): Uri
  */
 static EjsObj *uri_resolve(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *result;
     HttpUri     *uri, *target;
+
+#if UNUSED
     int         relative;
 
     relative = (argc >= 2 && argv[1] == ejs->falseValue) ? 0 : 1;
+#endif
+
     uri = up->uri;
     target = toHttpUri(ejs, ejs, argv[0], 0);
     result = (EjsUri*) ejsCreate(ejs, ejs->uriType, 0);
-    uri = httpResolveUri(result, uri, 1, &target, relative);
-    if (!ejsIsUri(ejs, target)) {
+    uri = httpResolveUri(result, uri, 1, &target, 0);
+    if (!ejsIsUri(ejs, argv[0])) {
         mprFree(target);
     }
     if (up->uri == uri) {
@@ -31829,7 +31865,11 @@ static EjsObj *uri_relative(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 static EjsObj *uri_scheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     if (up->uri->scheme == 0) {
+#if UNUSED
         return (EjsObj*) ejsCreateString(ejs, "http");
+#else
+        return ejs->nullValue;
+#endif
     }
     return (EjsObj*) ejsCreateString(ejs, up->uri->scheme);
 }
@@ -31906,6 +31946,62 @@ static EjsObj *uri_same(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     other = (EjsUri*) argv[0];
     exact = (argc == 2 && argv[1] == (EjsObj*) ejs->trueValue);
     return (EjsObj*) (same(ejs, up->uri, other->uri, exact) ? ejs->trueValue: ejs->falseValue);
+}
+
+
+/*  
+    Expand a template with {word} tokens from the given options objects
+
+    function template(pattern: String, ...options): Uri
+ */
+static EjsObj *uri_template(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+{
+    EjsArray    *options;
+    EjsObj      *obj, *value;
+    EjsUri      *uri;
+    EjsName     n;
+    MprBuf      *buf;
+    cchar       *pattern, *cp, *ep, *str;
+    char        *token;
+    int         i, len;
+
+    pattern = ejsGetString(ejs, argv[0]);
+    options = (EjsArray*) argv[1];
+
+    buf = mprCreateBuf(ejs, -1, -1);
+    for (cp = pattern; *cp; cp++) {
+        if (*cp == '{' && (cp == pattern || cp[-1] != '\\')) {
+            if ((ep = strchr(++cp, '}')) != 0) {
+                len = ep - cp;
+                token = mprMemdup(buf, cp, len + 1);
+                token[len] = '\0';
+                value = 0;
+                for (i = 0; i < options->length; i++) {
+                    obj = options->data[i];
+                    if ((value = ejsGetPropertyByName(ejs, obj, EN(&n, token))) != 0 && value != ejs->nullValue && 
+                            value != ejs->undefinedValue) {
+                        str = ejsGetString(ejs, value);
+                        if (str && *str) {
+                            mprPutStringToBuf(buf, str);
+                            break;
+                        } else {
+                            value = 0;
+                        }
+                    }
+                }
+                if (value == 0 && cp >= &pattern[2] && cp[-2] == '/') {
+                    mprAdjustBufEnd(buf, -1);
+                }
+                cp = ep;
+            }
+        } else {
+            mprPutCharToBuf(buf, *cp);
+        }
+    }
+    mprAddNullToBuf(buf);
+    uri = ejsCreateUri(ejs, mprGetBufStart(buf));
+    mprFree(buf);
+    return (EjsObj*) uri;
 }
 
 
@@ -31996,22 +32092,6 @@ static EjsObj *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQue
 }
 
 
-#if UNUSED
-static char *getUriString(Ejs *ejs, EjsObj *vp)
-{
-    if (ejsIsString(vp)) {
-        //  MOB query dup
-        return mprStrdup(ejs, ejsGetString(ejs, vp));
-
-    } else if (ejsIsUri(ejs, vp)) {
-        return uriToString(ejs, ((EjsUri*) vp));
-    }
-    ejsThrowIOError(ejs, "Bad ");
-    return NULL;
-}
-#endif
-
-
 static HttpUri *toHttpUri(Ejs *ejs, MprCtx ctx, EjsObj *arg, int dup)
 {
     HttpUri     *uri;
@@ -32086,10 +32166,18 @@ static int same(Ejs *ejs, HttpUri *u1, HttpUri *u2, int exact)
 
 static HttpUri *createHttpUriFromHash(Ejs *ejs, MprCtx ctx, EjsObj *arg, int complete)
 {
-    EjsObj      *schemeObj, *hostObj, *portObj, *pathObj, *referenceObj, *queryObj;
+    EjsObj      *schemeObj, *hostObj, *portObj, *pathObj, *referenceObj, *queryObj, *uriObj;
     EjsName     qname;
     cchar       *scheme, *host, *path, *reference, *query;
     int         port;
+
+    /*
+        This permits a uri property override. Used in ejs.web::View.getOptions()
+     */
+    uriObj = ejsGetPropertyByName(ejs, arg, EN(&qname, "uri"));
+    if (uriObj) {
+        return toHttpUri(ejs, ctx, uriObj, 1);
+    }
 
     schemeObj = ejsGetPropertyByName(ejs, arg, EN(&qname, "scheme"));
     scheme = (schemeObj && ejsIsString(schemeObj)) ? ejsGetString(ejs, schemeObj) : 0;
@@ -32175,7 +32263,7 @@ EjsUri *ejsCreateUri(Ejs *ejs, cchar *path)
 }
 
 
-EjsUri *ejsCreateFullUri(Ejs *ejs, cchar *scheme, cchar *host, int port, cchar *path, cchar *query, cchar *reference, 
+EjsUri *ejsCreateUriFromParts(Ejs *ejs, cchar *scheme, cchar *host, int port, cchar *path, cchar *query, cchar *reference, 
     int complete)
 {
     EjsUri      *up;
@@ -32214,6 +32302,7 @@ void ejsConfigureUriType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_Uri_decodeComponent, (EjsProc) uri_decodeComponent);
     ejsBindMethod(ejs, type, ES_Uri_encode, (EjsProc) uri_encode);
     ejsBindMethod(ejs, type, ES_Uri_encodeComponent, (EjsProc) uri_encodeComponent);
+    ejsBindMethod(ejs, type, ES_Uri_template, (EjsProc) uri_template);
 
     ejsBindConstructor(ejs, type, (EjsProc) uri_constructor);
     ejsBindMethod(ejs, prototype, ES_Uri_absolute, (EjsProc) uri_absolute);
@@ -32233,6 +32322,7 @@ void ejsConfigureUriType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Uri_isDir, (EjsProc) uri_isDir);
     ejsBindMethod(ejs, prototype, ES_Uri_join, (EjsProc) uri_join);
     ejsBindMethod(ejs, prototype, ES_Uri_joinExt, (EjsProc) uri_joinExt);
+    ejsBindMethod(ejs, prototype, ES_Uri_local, (EjsProc) uri_local);
     ejsBindMethod(ejs, prototype, ES_Uri_mimeType, (EjsProc) uri_mimeType);
     ejsBindMethod(ejs, prototype, ES_Uri_normalize, (EjsProc) uri_normalize);
     ejsBindAccess(ejs, prototype, ES_Uri_path, (EjsProc) uri_path, (EjsProc) uri_set_path);
@@ -36681,18 +36771,6 @@ static EjsObj *hs_HttpServer(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **arg
 
 
 /*  
-    function observe(name: [String|Array], observer: Function): Void
- */
-static EjsObj *hs_observe(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
-{
-    //  TODO -- should fire if currently readable / writable (also socket etc)
-    ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
-    sp->emitter->permanent = 1;
-    return 0;
-}
-
-
-/*  
     function get address(): String
  */
 static EjsObj *hs_address(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
@@ -36771,6 +36849,18 @@ static EjsObj *hs_limits(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         ejsGetHttpLimits(ejs, sp->limits, limits, 1);
     }
     return sp->limits;
+}
+
+
+/*  
+    function on(name: [String|Array], observer: Function): Void
+ */
+static EjsObj *hs_on(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+{
+    //  TODO -- should fire if currently readable / writable (also socket etc)
+    ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
+    sp->emitter->permanent = 1;
+    return 0;
 }
 
 
@@ -37479,7 +37569,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_listen, (EjsProc) hs_listen);
     ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_name, (EjsProc) hs_name, (EjsProc) hs_set_name);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_port, (EjsProc) hs_port);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_observe, (EjsProc) hs_observe);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_on, (EjsProc) hs_on);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_removeObserver, (EjsProc) hs_removeObserver);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_secure, (EjsProc) hs_secure);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setLimits, (EjsProc) hs_setLimits);
@@ -37683,15 +37773,23 @@ static EjsObj *createFiles(Ejs *ejs, EjsRequest *req)
 
 static EjsObj *createHeaders(Ejs *ejs, EjsRequest *req)
 {
-    MprHash     *hp;
-    HttpConn    *conn;
     EjsName     n;
+    EjsString   *value;
+    EjsObj      *old;
+    HttpConn    *conn;
+    MprHash     *hp;
     
     if (req->headers == 0) {
         req->headers = (EjsObj*) ejsCreateSimpleObject(ejs);
         conn = req->conn;
         for (hp = 0; conn && (hp = mprGetNextHash(conn->rx->headers, hp)) != 0; ) {
-            ejsSetPropertyByName(ejs, req->headers, EN(&n, hp->key), ejsCreateString(ejs, hp->data));
+            EN(&n, hp->key);
+            if ((old = ejsGetPropertyByName(ejs, req->headers, &n)) != 0) {
+                value = ejsCreateStringAndFree(ejs, mprStrcat(req, -1, ejsGetString(ejs, old), "; ", hp->data, NULL));
+            } else {
+                value = ejsCreateString(ejs, hp->data);
+            }
+            ejsSetPropertyByName(ejs, req->headers, &n, value);
         }
     }
     return (EjsObj*) req->headers;
@@ -37770,9 +37868,9 @@ static EjsSession *getSession(Ejs *ejs, EjsRequest *req, int create)
     }
     if ((req->session = ejsGetSession(ejs, req)) == NULL && create) {
         req->session = ejsCreateSession(ejs, req, 0, 0);
-    }
-    if (req->session && conn) {
-        httpSetCookie(conn, EJS_SESSION, req->session->id, "/", NULL, 0, conn->secure);
+        if (req->session && conn) {
+            httpSetCookie(conn, EJS_SESSION, req->session->id, "/", NULL, 0, conn->secure);
+        }
     }
     return req->session;
 }
@@ -37905,17 +38003,18 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
 
     switch (slotNum) {
     case ES_ejs_web_Request_absHome:
-        if (req->conn) {
-            if (req->absHome == 0) {
+        if (req->absHome == 0) {
+            if (req->conn) {
                 scheme = conn->secure ? "https" : "http";
                 ip = conn->sock ? conn->sock->acceptIp : req->server->ip;
                 port = conn->sock ? conn->sock->acceptPort : req->server->port;
                 uri = mprAsprintf(req, -1, "%s://%s:%d%s/", scheme, conn->sock->ip, req->server->port, conn->rx->scriptName);
                 req->absHome = (EjsObj*) ejsCreateUriAndFree(ejs, uri);
+            } else {
+                req->absHome = ejs->nullValue;
             }
-            return req->absHome;
         }
-        return ejs->nullValue;
+        return req->absHome;
 
     case ES_ejs_web_Request_authGroup:
         return createString(ejs, conn ? conn->authGroup : NULL);
@@ -37975,12 +38074,12 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return createHeaders(ejs, req);
 
     case ES_ejs_web_Request_home:
-        if (conn) {
-            if (req->home == 0) {
+        if (req->home == 0) {
+            if (conn) {
                 req->home = ejsCreateUriAndFree(ejs, makeRelativeHome(ejs, req));
-            }
-            return req->home;
-        } else return ejs->nullValue;
+            } else return ejs->nullValue;
+        }
+        return req->home;
 
     case ES_ejs_web_Request_host:
         if (req->host == 0) {
@@ -38011,16 +38110,17 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return mapNull(ejs, req->originalMethod);
 
     case ES_ejs_web_Request_originalUri:
-        if (conn) {
-            if (req->originalUri == 0) {
+        if (req->originalUri == 0) {
+            if (conn) {
                 scheme = (conn->secure) ? "https" : "http";
                 /* NOTE: conn->rx->uri is not normalized or decoded */
-                req->originalUri = (EjsObj*) ejsCreateFullUri(ejs, scheme, getHost(conn, req), req->server->port, 
+                req->originalUri = (EjsObj*) ejsCreateUriFromParts(ejs, scheme, getHost(conn, req), req->server->port, 
                     conn->rx->uri, conn->rx->parsedUri->query, conn->rx->parsedUri->reference, 0);
+            } else {
+                return ejs->nullValue;
             }
-            return req->originalUri;
         }
-        return ejs->nullValue;
+        return req->originalUri;
 
     case ES_ejs_web_Request_params:
         return createParams(ejs, req);
@@ -38070,7 +38170,7 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return req->scheme;
 
     case ES_ejs_web_Request_scriptName:
-        return req->scriptName;
+        return req->scriptName ? req->scriptName : (EjsObj*) ejs->emptyStringValue;
 
     case ES_ejs_web_Request_server:
         return req->server;
@@ -38101,10 +38201,9 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         if (req->uri == 0) {
             scriptName = getDefaultString(ejs, req->scriptName, "");
             if (conn) {
-                path = mprStrcat(req, -1, scriptName,
-                    getDefaultString(ejs, req->pathInfo, conn->rx->uri), NULL);
+                path = mprStrcat(req, -1, scriptName, getDefaultString(ejs, req->pathInfo, conn->rx->uri), NULL);
                 scheme = (conn->secure) ? "https" : "http";
-                req->uri = (EjsObj*) ejsCreateFullUri(ejs, 
+                req->uri = (EjsObj*) ejsCreateUriFromParts(ejs, 
                     getDefaultString(ejs, req->scheme, scheme),
                     getDefaultString(ejs, req->host, getHost(conn, req)),
                     getDefaultInt(ejs, req->port, req->server->port),
@@ -38113,7 +38212,7 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
                     getDefaultString(ejs, req->reference, conn->rx->parsedUri->reference), 0);
             } else {
                 path = mprStrcat(req, -1, scriptName, getDefaultString(ejs, req->pathInfo, NULL), NULL);
-                req->uri = (EjsObj*) ejsCreateFullUri(ejs, 
+                req->uri = (EjsObj*) ejsCreateUriFromParts(ejs, 
                     getDefaultString(ejs, req->scheme, NULL),
                     getDefaultString(ejs, req->host, NULL),
                     getDefaultInt(ejs, req->port, 0),
@@ -38415,6 +38514,7 @@ static EjsObj *req_finalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     if (req->conn) {
         httpFinalize(req->conn);
     }
+    req->responded = 1;
     return 0;
 }
 
@@ -38476,9 +38576,9 @@ static EjsObj *req_header(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 
 
 /*  
-    function observe(name: [String|Array], listener: Function): Void
+    function on(name: [String|Array], listener: Function): Void
  */
-static EjsObj *req_observe(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+static EjsObj *req_on(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
     HttpConn    *conn;
     
@@ -38551,42 +38651,6 @@ static EjsObj *req_removeObserver(Ejs *ejs, EjsRequest *req, int argc, EjsObj **
 
 
 /*  
-    function sendFile(path: Path): Boolean
- */
-static EjsObj *req_sendFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
-{
-    EjsPath         *path;
-    HttpConn        *conn;
-    HttpRx          *rx;
-    HttpTx          *trans;
-    HttpPacket      *packet;
-    MprPath         info;
-
-    if (!connOk(ejs, req, 1)) return 0;
-    conn = req->conn;
-    rx = conn->rx;
-    trans = conn->tx;
-
-    if (rx->ranges || conn->secure || trans->chunkSize > 0) {
-        return ejs->falseValue;
-    }
-    path = (EjsPath*) argv[0];
-    if (mprGetPathInfo(ejs, path->path, &info) < 0) {
-        ejsThrowIOError(ejs, "Cannot open %s", path->path);
-        return ejs->falseValue;
-    }
-    httpSetSendConnector(req->conn, path->path);
-
-    packet = httpCreateDataPacket(conn->writeq, 0);
-    packet->entityLength = (int) info.size;
-    trans->length = trans->entityLength = (int) info.size;
-    httpPutForService(conn->writeq, packet, 0);
-    httpFinalize(req->conn);
-    return ejs->trueValue;
-}
-
-
-/*  
     function setHeader(key: String, value: String, overwrite: Boolean = true): Void
  */
 static EjsObj *req_setHeader(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
@@ -38608,6 +38672,11 @@ static EjsObj *req_setHeader(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         }
     }
     ejsSetPropertyByName(ejs, req->responseHeaders, ejsName(&n, "", mprStrdup(req->responseHeaders, key)), value);
+
+    /* MOB Just until we have filters - to disable chunk filtering */
+    if (strcmp(key, "x-chunk-size") == 0) {
+        httpSetChunkSize(req->conn, ejsGetInt(ejs, value));
+    }
     return 0;
 }
 
@@ -38650,18 +38719,19 @@ static EjsObj *req_trace(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
  */
 static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
+    EjsArray        *args;
     EjsString       *s;
     EjsObj          *data;
     EjsByteArray    *ba;
     HttpQueue       *q;
     HttpConn        *conn;
-    int             err, len, written;
+    int             err, len, written, i;
 
     if (!connOk(ejs, req, 1)) return 0;
 
     err = 0;
     written = 0;
-    data = argv[0];
+    args = (EjsArray*) argv[0];
     conn = req->conn;
     q = conn->writeq;
 
@@ -38669,38 +38739,41 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         ejsThrowIOError(ejs, "Response already finalized");
         return 0;
     }
-    switch (data->type->id) {
-    case ES_String:
-        s = (EjsString*) data;
-        if ((written = httpWriteBlock(q, s->value, s->length)) != s->length) {
-            err++;
-        }
-        break;
+    for (i = 0; i < args->length; i++) {
+        data = args->data[i];
+        switch (data->type->id) {
+        case ES_String:
+            s = (EjsString*) data;
+            if ((written = httpWriteBlock(q, s->value, s->length)) != s->length) {
+                err++;
+            }
+            break;
 
-    case ES_ByteArray:
-        ba = (EjsByteArray*) data;
-        //  MOB -- not updating the read position
-        //  MOB ba->readPosition += len;
-        //  MOB -- should reset ptrs also
-        len = ba->writePosition - ba->readPosition;
-        if ((written = httpWriteBlock(q, (char*) &ba->value[ba->readPosition], len)) != len) {
-            err++;
-        }
-        break;
+        case ES_ByteArray:
+            ba = (EjsByteArray*) data;
+            //  MOB -- not updating the read position
+            //  MOB ba->readPosition += len;
+            //  MOB -- should reset ptrs also
+            len = ba->writePosition - ba->readPosition;
+            if ((written = httpWriteBlock(q, (char*) &ba->value[ba->readPosition], len)) != len) {
+                err++;
+            }
+            break;
 
-    default:
-        s = (EjsString*) ejsToString(ejs, data);
-        if (s == NULL || (written = httpWriteBlock(q, s->value, s->length)) != s->length) {
-            err++;
+        default:
+            s = (EjsString*) ejsToString(ejs, data);
+            if (s == NULL || (written = httpWriteBlock(q, s->value, s->length)) != s->length) {
+                err++;
+            }
         }
+        if (err) {
+            ejsThrowIOError(ejs, "%s", conn->errorMsg);
+        }
+        if (ejs->exception) {
+            return 0;
+        }
+        req->written += written;
     }
-    if (err) {
-        ejsThrowIOError(ejs, "%s", conn->errorMsg);
-    }
-    if (ejs->exception) {
-        return 0;
-    }
-    req->written += written;
     req->responded = 1;
 
     //  MOB - now
@@ -38710,6 +38783,42 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         ejsSendEvent(ejs, req->emitter, "writable", NULL, (EjsObj*) req);
     }
     return 0;
+}
+
+
+/*  
+    function writeFile(path: Path): Boolean
+ */
+static EjsObj *req_writeFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+{
+    EjsPath         *path;
+    HttpConn        *conn;
+    HttpRx          *rx;
+    HttpTx          *trans;
+    HttpPacket      *packet;
+    MprPath         info;
+
+    if (!connOk(ejs, req, 1)) return 0;
+    conn = req->conn;
+    rx = conn->rx;
+    trans = conn->tx;
+
+    if (rx->ranges || conn->secure || trans->chunkSize > 0) {
+        return ejs->falseValue;
+    }
+    path = (EjsPath*) argv[0];
+    if (mprGetPathInfo(ejs, path->path, &info) < 0) {
+        ejsThrowIOError(ejs, "Cannot open %s", path->path);
+        return ejs->falseValue;
+    }
+    httpSetSendConnector(req->conn, path->path);
+
+    packet = httpCreateDataPacket(conn->writeq, 0);
+    packet->entityLength = (int) info.size;
+    trans->length = trans->entityLength = (int) info.size;
+    httpPutForService(conn->writeq, packet, 0);
+    httpFinalize(req->conn);
+    return ejs->trueValue;
 }
 
 
@@ -38874,14 +38983,14 @@ void ejsConfigureRequestType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_finalized, (EjsProc) req_finalized);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_flush, (EjsProc) req_flush);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_header, (EjsProc) req_header);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_observe, (EjsProc) req_observe);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_on, (EjsProc) req_on);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_read, (EjsProc) req_read);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_removeObserver, (EjsProc) req_removeObserver);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_sendFile, (EjsProc) req_sendFile);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setLimits, (EjsProc) req_setLimits);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setHeader, (EjsProc) req_setHeader);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_trace, (EjsProc) req_trace);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_write, (EjsProc) req_write);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_writeFile, (EjsProc) req_writeFile);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_written, (EjsProc) req_written);
 }
 
@@ -40637,6 +40746,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
     EjsFunction     *fun;
     EjsObj          *block;
     EjsName         qname;
+    bool            modified;
     int             slotNum, next;
 
     mprAssert(cp->phase >= EC_PHASE_BIND);
@@ -40662,8 +40772,11 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
             Exclude constructors which are hidden in the virtual constructor namespace.
          */
         if (!np->literalNamespace && !np->function.isConstructor) {
-            if (resolveNamespace(cp, np, block, 0) == 0) {
+            if (resolveNamespace(cp, np, block, &modified) == 0) {
                 return 0;
+            }
+            if (modified && np->left) {
+                np->left->qname = np->qname;
             }
         }
         if (block == ejs->global) {
@@ -41579,7 +41692,7 @@ static void astReturn(EcCompiler *cp, EcNode *np)
                     /*
                         Allow block-less function expressions where a return node was generated by the parser.
                      */
-                    if (!np->ret.blockLess) {
+                    if (!np->ret.blockless) {
                         astError(cp, np, "Void function \"%s\" can't return a value", functionNode->qname.name);
                     }
                 }
@@ -41906,17 +42019,19 @@ static void astUseNamespace(EcCompiler *cp, EcNode *np)
                 //  MOB -- UN BIND
                 np->lookup.bind = 0;
                 namespace = (EjsNamespace*) np->lookup.ref;
-                np->namespaceRef->uri = namespace->uri;
-
-                if (!ejsIsNamespace(namespace)) {
-                    astError(cp, np, "The variable \"%s\" is not a namespace", np->qname.name);
-                } else {
-                    np->namespaceRef = namespace;
+                if (namespace) {
+                    np->namespaceRef->uri = namespace->uri;
+                    if (!ejsIsNamespace(namespace)) {
+                        astError(cp, np, "The variable \"%s\" is not a namespace", np->qname.name);
+                    } else {
+                        np->namespaceRef = namespace;
+                    }
                 }
             }
             if (namespace && np->useNamespace.isDefault) {
                 /*
                     Apply the namespace URI to all upper blocks
+                    MOB -- not right
                  */
                 for (s = cp->state; s; s = s->prev) {
                     s->namespace = (char*) namespace->uri;
@@ -42222,6 +42337,7 @@ static void bindVariableDefinition(EcCompiler *cp, EcNode *np)
     EjsTrait        *trait;
     EcState         *state;
     EcNode          *typeNode;
+    bool            modified;
 
     ENTER(cp);
 
@@ -42236,10 +42352,14 @@ static void bindVariableDefinition(EcCompiler *cp, EcNode *np)
     } else {
         block = getBlockForDefinition(cp, np, state->varBlock, np->attributes);
     }
-    if (!state->inFunction) {
-        if (!np->literalNamespace && resolveNamespace(cp, np, block, 0) == 0) {
+    if (/*MOB*/1 || !state->inFunction) {
+        if (!np->literalNamespace && resolveNamespace(cp, np, block, &modified) == 0) {
             LEAVE(cp);
             return;
+        }
+        if (modified && np->left && np->left->left && np->left->left->kind == N_QNAME) {
+            /* Fix the namespace of the lhs */
+            np->left->left->qname = np->qname;
         }
     }
     if (cp->phase == EC_PHASE_BIND && block == ejs->global) {
@@ -43065,7 +43185,7 @@ static void fixupClass(EcCompiler *cp, EjsType *type)
 
 
 /*
-    Lookup a namespace in the current scope. We look for the namespace variable declaration if it is a user
+    Lookup the namespace for a definition (np->qname.space).  We look for the namespace variable declaration if it is a user
     defined namespace. Otherwise, we trust that if the set of open namespaces has the namespace -- it must exist.
  */
 static EjsNamespace *resolveNamespace(EcCompiler *cp, EcNode *np, EjsObj *block, bool *modified)
@@ -43080,20 +43200,14 @@ static EjsNamespace *resolveNamespace(EcCompiler *cp, EcNode *np, EjsObj *block,
     if (modified) {
         *modified = 0;
     }
-
-    /*
-        Resolve the namespace. Must be visible in the current scope. Then update the URI.
-     */
     qname.name = np->qname.space;
     qname.space = 0;
     namespace = (EjsNamespace*) getTypeProperty(cp, 0, &qname);
     if (namespace == 0 || !ejsIsNamespace(namespace)) {
         namespace = ejsLookupNamespace(cp->ejs, np->qname.space);
     }
-    if (namespace == 0) {
-        if (strcmp(cp->state->namespace, np->qname.space) == 0) {
-            namespace = ejsCreateNamespace(ejs, np->qname.space, np->qname.space);
-        }
+    if (namespace == 0 && strcmp(cp->state->namespace, np->qname.space) == 0) {
+        namespace = ejsCreateNamespace(ejs, np->qname.space, np->qname.space);
     }
     if (namespace == 0) {
         if (!np->literalNamespace) {
@@ -43107,9 +43221,9 @@ static EjsNamespace *resolveNamespace(EcCompiler *cp, EcNode *np, EjsObj *block,
                 mprFree((char*) np->qname.space);
                 /*
                     Change the name to use the namespace URI. This will change the property name and set
-                    "modified" so that the caller can modify the type name if block is a type.
+                    "modified" so that the caller can modify the derrived names (type->qname)
                  */
-                //  MOB BUG - context not right for names
+                //  MOB BUG - context not right for names - will leak.
                 np->qname.space = mprStrdup(ejs, namespace->uri);
                 ejsSetPropertyName(ejs, block, slotNum, &np->qname);
                 if (modified) {
@@ -43118,6 +43232,7 @@ static EjsNamespace *resolveNamespace(EcCompiler *cp, EcNode *np, EjsObj *block,
             }
         }
     }
+    //  MOB - nobody uses this except as a return code
     return namespace;
 }
 
@@ -44662,12 +44777,12 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
         /*
             Unbound or Function expression or instance variable containing a function. Can't use fast path op codes below.
          */
-        if (left->kind == N_QNAME) {
+        if (left->kind == N_QNAME && !left->name.nameExpr) {
             argc = genCallArgs(cp, right);
             ecEncodeOpcode(cp, EJS_OP_CALL_SCOPED_NAME);
             ecEncodeName(cp, &np->qname);
             
-        } else if (left->kind == N_DOT && left->right->kind == N_QNAME) {
+        } else if (left->kind == N_DOT && left->right->kind == N_QNAME && !left->right->name.nameExpr) {
             processNodeGetValue(cp, left->left);
             if (state->dupLeft) {
                 ecEncodeOpcode(cp, EJS_OP_DUP);
@@ -44683,13 +44798,9 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
             /*
                 MOB BUG. Could be an arbitrary expression on the left. Need a consistent way to save the right most
                 object before the property. */
-#if OLD
-            ecEncodeOpcode(cp, EJS_OP_LOAD_GLOBAL);
-            pushStack(cp, 1);
-#else
             count = getStackCount(cp);
             left->needThis = 1;
-#endif
+
             processNodeGetValue(cp, left);
             if (getStackCount(cp) < (count + 2)) {
                 ecEncodeOpcode(cp, EJS_OP_DUP);
@@ -46455,7 +46566,7 @@ static void genReturn(EcCompiler *cp, EcNode *np)
             ecEncodeOpcode(cp, EJS_OP_RETURN_VALUE);
             popStack(cp, 1);
 
-        } else if (np->ret.blockLess) {
+        } else if (np->ret.blockless) {
             /*
                 The return was inserted by the parser. So we must still process the statement
              */
@@ -47015,7 +47126,6 @@ static void genUnboundName(EcCompiler *cp, EcNode *np)
         pushStack(cp, 1);
         np->needThis = 0;
     }
-
     if (np->name.qualifierExpr || np->name.nameExpr) {
         genNameExpr(cp, np);
         if (state->currentObjectNode) {
@@ -47029,7 +47139,6 @@ static void genUnboundName(EcCompiler *cp, EcNode *np)
         LEAVE(cp);
         return;
     }
-
     if (state->currentObjectNode) {
         /*
             Property name (requires obj on stack)
@@ -47171,7 +47280,6 @@ static void genUseNamespace(EcCompiler *cp, EcNode *np)
     if (np->useNamespace.isLiteral) {
         ecEncodeOpcode(cp, EJS_OP_ADD_NAMESPACE);
         ecEncodeString(cp, np->qname.name);
-
     } else {
         genName(cp, np);
         ecEncodeOpcode(cp, EJS_OP_ADD_NAMESPACE_REF);
@@ -50336,11 +50444,13 @@ static int createPropertySection(EcCompiler *cp, EjsObj *block, int slotNum, Ejs
 
     mprLog(cp, 7, "    global property section %s", qname.name);
 
+#if 1 || (UNUSED && MOB)
     if (trait->type) {
         if (trait->type == ejs->namespaceType || (!ejs->initialized && (strcmp(trait->type->qname.name, "Namespace") == 0))){
             attributes |= EJS_PROP_HAS_VALUE;
         }
     }
+#endif
     rc = 0;
     rc += ecEncodeByte(cp, EJS_SECT_PROPERTY);
     rc += ecEncodeName(cp, &qname);
@@ -50349,6 +50459,7 @@ static int createPropertySection(EcCompiler *cp, EjsObj *block, int slotNum, Ejs
     rc += ecEncodeNumber(cp, (cp->bind || (block != ejs->global)) ? slotNum : -1);
     rc += ecEncodeGlobal(cp, (EjsObj*) trait->type, trait->type ? &trait->type->qname : 0);
 
+#if 1 || UNUSED
     if (attributes & EJS_PROP_HAS_VALUE) {
         if (vp && ejsIsNamespace(vp)) {
             rc += ecEncodeString(cp, ((EjsNamespace*) vp)->name);
@@ -50356,6 +50467,7 @@ static int createPropertySection(EcCompiler *cp, EjsObj *block, int slotNum, Ejs
             rc += ecEncodeString(cp, 0);
         }
     }
+#endif
     mp->checksum += sum(qname.name, 0);
     return rc;
 }
@@ -51920,7 +52032,6 @@ static EcNode *parseIdentifier(EcCompiler *cp)
     if (cp->token->groupMask & G_CONREV) {
         tid = T_ID;
     }
-
     switch (tid) {
     case T_MUL:
     case T_ID:
@@ -52213,11 +52324,12 @@ static EcNode *parseExpressionQualifiedName(EcCompiler *cp)
         return LEAVE(cp, unexpected(cp));
     }
     qualifier = parseListExpression(cp);
-
+    if (getToken(cp) != T_RPAREN) {
+        return LEAVE(cp, expected(cp, ")"));
+    }
     if (getToken(cp) == T_COLON_COLON) {
         np = parseQualifiedNameIdentifier(cp);
         np->name.qualifierExpr = linkNode(np, qualifier);
-
     } else {
         np = expected(cp, "\"::\"");
     }
@@ -52603,7 +52715,7 @@ static EcNode *parseFunctionExpressionBody(EcCompiler *cp)
     } else {
         np = createNode(cp, N_DIRECTIVES);
         ret = createNode(cp, N_RETURN);
-        ret->ret.blockLess = 1;
+        ret->ret.blockless = 1;
         ret = appendNode(ret, parseAssignmentExpression(cp));
         np = appendNode(np, ret);
     }
@@ -52670,7 +52782,7 @@ static EcNode *parseObjectLiteral(EcCompiler *cp)
 static EcNode *parseFieldList(EcCompiler *cp, EcNode *np)
 {
     ENTER(cp);
-    while (peekToken(cp) != T_RBRACE) {
+    while (peekToken(cp) != T_RBRACE && !cp->error) {
         if (peekToken(cp) != T_COMMA) {
             np = appendNode(np, parseLiteralField(cp));
         } else {
@@ -53482,7 +53594,7 @@ static EcNode *parseThisExpression(EcCompiler *cp)
  */
 static EcNode *parsePrimaryExpression(EcCompiler *cp)
 {
-    EcNode      *np;
+    EcNode      *np, *qualifier, *name;
     EjsObj      *vp;
     Ejs         *ejs;
     int         tid;
@@ -53575,6 +53687,18 @@ static EcNode *parsePrimaryExpression(EcCompiler *cp)
 
     case T_LPAREN:
         np = parseParenListExpression(cp);
+        if (peekToken(cp) == T_COLON_COLON) {
+            getToken(cp);
+            qualifier = np;
+            if ((np = parseQualifiedNameIdentifier(cp)) != 0) {
+                if (np->kind == N_EXPRESSIONS) {
+                    name = np;
+                    np = createNode(cp, N_QNAME);
+                    np->name.nameExpr = linkNode(np, name);
+                }
+                np->name.qualifierExpr = linkNode(np, qualifier);
+            }
+        }
         break;
 
     case T_LBRACKET:
@@ -53813,7 +53937,7 @@ static EcNode *parseRestArgument(EcCompiler *cp)
  */
 static EcNode *parsePropertyOperator(EcCompiler *cp)
 {
-    EcNode      *np, *name;
+    EcNode      *np, *qualifier, *name;
     char        *id;
 
     ENTER(cp);
@@ -53824,10 +53948,17 @@ static EcNode *parsePropertyOperator(EcCompiler *cp)
         getToken(cp);
         switch (peekToken(cp)) {
         case T_LPAREN:
-            np = appendNode(np, parseParenListExpression(cp));
+            name = parseParenListExpression(cp);
+            if (peekToken(cp) == T_COLON_COLON) {
+                qualifier = name;
+                getToken(cp);
+                name = parseQualifiedNameIdentifier(cp);
+                name->name.qualifierExpr = linkNode(name, qualifier);
+            }
+            np = appendNode(np, name);
             break;
 
-        /* TODO - should handle all contextually reserved identifiers here */
+        /* MOB TODO - should handle all contextually reserved identifiers here */
         case T_TYPE:
         case T_ID:
         case T_GET:
@@ -53853,8 +53984,15 @@ static EcNode *parsePropertyOperator(EcCompiler *cp)
             break;
 
         default:
+            if (cp->token->groupMask & G_RESERVED) {
+                np = appendNode(np, parseIdentifier(cp));
+            } else {
+                np = appendNode(np, parsePropertyName(cp));
+            }
+#if UNUSED
             getToken(cp);
             np = unexpected(cp);
+#endif
             break;
         }
         break;
@@ -56467,7 +56605,6 @@ static EcNode *parseIfStatement(EcCompiler *cp)
         getToken(cp);
         return LEAVE(cp, parseError(cp, "Expecting \"(\""));
     }
-
     np = createNode(cp, N_IF);
     if ((np->tenary.cond = linkNode(np, parseParenListExpression(cp))) == 0) {
         return LEAVE(cp, 0);
@@ -56508,7 +56645,6 @@ static EcNode *parseSwitchStatement(EcCompiler *cp)
 
     if (getToken(cp) != T_SWITCH) {
         np = unexpected(cp);
-
     } else {
         if (peekToken(cp) != T_TYPE) {
             np = appendNode(np, parseParenListExpression(cp));
@@ -56714,7 +56850,6 @@ static EcNode *parseTypeCaseElement(EcCompiler *cp)
 static EcNode *parseDoStatement(EcCompiler *cp)
 {
     EcNode      *np;
-
 
     ENTER(cp);
 
@@ -59192,7 +59327,7 @@ static EcNode *parseFunctionBody(EcCompiler *cp, EcNode *fun)
          */
         np = createNode(cp, N_DIRECTIVES);
         ret = createNode(cp, N_RETURN);
-        ret->ret.blockLess = 1;
+        ret->ret.blockless = 1;
         ret = appendNode(ret, parseAssignmentExpression(cp));
         np = appendNode(np, ret);
     }
@@ -59577,11 +59712,16 @@ static EcNode *parseInterfaceBody(EcCompiler *cp)
  */
 static EcNode *parseNamespaceDefinition(EcCompiler *cp, EcNode *attributeNode)
 {
+    EcState     *state;
     EcNode      *varDefNode, *assignNode, *varNode, *typeNode, *namespaceNode, *nameNode;
     EjsObj      *vp;
 
     ENTER(cp);
-
+    state = cp->state;
+    if (state->inClass || state->inFunction) {
+        getToken(cp);
+        return LEAVE(cp, parseError(cp, "Namespace definitions are not permitted inside classes or functions"));
+    }
     if (getToken(cp) != T_NAMESPACE) {
         return LEAVE(cp, unexpected(cp));
     }
@@ -59610,7 +59750,6 @@ static EcNode *parseNamespaceDefinition(EcCompiler *cp, EcNode *attributeNode)
 
     if (peekToken(cp) == T_ASSIGN) {
         namespaceNode = parseNamespaceInitialisation(cp, varNode);
-
     } else {
         /*
             Create a namespace literal node from which to assign.
@@ -59641,10 +59780,7 @@ static EcNode *parseNamespaceDefinition(EcCompiler *cp, EcNode *attributeNode)
     NamespaceInitialisation (501)
         EMPTY
         = StringLiteral
-        = SimpleQualifiedName
-
-    Input
-        =
+        = MOB -- not supported SimpleQualifiedName
 
     AST
         N_LITERAL
@@ -59661,15 +59797,22 @@ static EcNode *parseNamespaceInitialisation(EcCompiler *cp, EcNode *nameNode)
     if (getToken(cp) != T_ASSIGN) {
         return LEAVE(cp, unexpected(cp));
     }
-    if (peekToken(cp) == T_STRING) {
-        getToken(cp);
-        np = createNode(cp, N_LITERAL);
-        vp = (EjsObj*) ejsCreateNamespace(cp->ejs, nameNode->qname.name, mprStrdup(np, (char*) cp->token->text));
-        np->literal.var = vp;
+    if (peekToken(cp) != T_STRING) {
+        return LEAVE(cp, expected(cp, "Namespace initializers must be literal strings"));
+    }
+    getToken(cp);
+    np = createNode(cp, N_LITERAL);
+    vp = (EjsObj*) ejsCreateNamespace(cp->ejs, nameNode->qname.name, mprStrdup(np, (char*) cp->token->text));
+    np->literal.var = vp;
 
+    if (peekToken(cp) != T_SEMICOLON && cp->peekToken->tokenId != T_EOF && cp->peekToken->lineNumber == cp->token->lineNumber) {
+        return LEAVE(cp, expected(cp, "Namespace initializers must be simple literal strings"));
+    }
+#if UNUSED
     } else {
         np = parsePrimaryName(cp);
     }
+#endif
     return LEAVE(cp, np);
 }
 

@@ -84,3 +84,4 @@ bin/*.manifest
 bin/*.res
 *.out
 src/test/regress/tcp
+src/include/ejs.slots.h

@@ -321,7 +321,7 @@ MAIN(ejsMain, int argc, char **argv)
         }
     }
 #if BLD_DEBUG
-    if (stats) {
+     if (stats) {
         mprSetLogLevel(ejs, 1);
         ejsPrintAllocReport(ejs);
     }

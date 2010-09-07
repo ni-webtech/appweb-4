@@ -1974,9 +1974,8 @@ postGen() {
     rm -f obj/*.o obj/*.obj bin/*.exe
     rm -f lib/*.so lib/*.dylib lib/*.lib lib/*.dll lib/*.a
     rm -f modules/*.so modules/*.dylib modules/*.mod modules/*.dll
-    [ -f .makedep ] && $MAKE -C bin clean depend 2>&1 >/dev/null
-    $MAKE depend 2>&1 >/dev/null
-    $MAKE clean 2>&1 >/dev/null
+    [ -f .makedep ] && $MAKE -C bin clean depend >/dev/null 2>&1
+    $MAKE depend clean >/dev/null 2>&1
 }
 
 

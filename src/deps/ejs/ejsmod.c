@@ -2316,10 +2316,16 @@ static char *wikiFormat(Ejs *ejs, char *start)
 
     end = &start[strlen(start)];
     for (str = start; str < end && *str; str++) {
+        /*
+            MOB -- expand this to support basic markdown
+         */
         if (str[0] == '\n' && str[1] == '\n') {
+            /* Two blank lines forces a blank line in the output */
             mprPutStringToBuf(buf, "<br/><br/>");
             str++;
+
         } else if (*str == '$') {
+            /* Dollar reference expansion*/
             klass = 0;
             property = 0;
             klass = &str[1];
@@ -2367,11 +2373,7 @@ static char *wikiFormat(Ejs *ejs, char *start)
                 mprPutCharToBuf(buf, '.');
             }
             mprPutCharToBuf(buf, ' ');
-#if UNUSED
-        } else if (*str == '\\' && str[-1] != '\\' && str[1]) {
-            str++;
-            mprPutCharToBuf(buf, *str);
-#endif
+
         } else {
             mprPutCharToBuf(buf, *str);
         }

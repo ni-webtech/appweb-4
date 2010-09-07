@@ -5400,7 +5400,9 @@ bool httpServiceQueues(HttpConn *conn)
 
     workDone = 0;
     while (conn->state < HTTP_STATE_COMPLETE && (q = httpGetNextQueueForService(&conn->serviceq)) != NULL) {
-        if (!q->servicing) {
+        if (q->servicing) {
+            q->flags |= HTTP_QUEUE_RESERVICE;
+        } else {
             httpServiceQueue(q);
             workDone = 1;
         }
@@ -5868,7 +5870,9 @@ void httpScheduleQueue(HttpQueue *q)
 
 void httpServiceQueue(HttpQueue *q)
 {
-    if (!q->servicing) {
+    if (q->servicing) {
+        q->flags |= HTTP_QUEUE_RESERVICE;
+    } else {
         q->servicing = 1;
         /*  
             Since we are servicing this "q" now, we can remove from the schedule queue if it is already queued.
@@ -5877,6 +5881,10 @@ void httpServiceQueue(HttpQueue *q)
             httpGetNextQueueForService(&q->conn->serviceq);
         }
         q->service(q);
+        if (q->flags & HTTP_QUEUE_RESERVICE) {
+            q->flags &= ~HTTP_QUEUE_RESERVICE;
+            httpScheduleQueue(q);
+        }
         q->flags |= HTTP_QUEUE_SERVICED;
         q->servicing = 0;
     }
@@ -10667,22 +10675,14 @@ HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *missing)
     if (uri->scheme == 0) {
         uri->scheme = scheme;
     }
+    if (uri->port == 0 && port) {
+        /* Don't complete port if there is a host */
+        if (uri->host == 0) {
+            uri->port = port;
+        }
+    }
     if (uri->host == 0) {
         uri->host = host;
-    }
-    if (uri->port == 0) {
-        if (port) {
-            uri->port = port;
-#if UNUSED
-        //  MOB - don't complete as it implies an absolute URL
-        } else {
-            if (strcmp(uri->scheme, "https") == 0) {
-                uri->port = 443;
-            } else { 
-                uri->port = 80;
-            }
-#endif
-        }
     }
     return uri;
 }
@@ -10758,6 +10758,8 @@ char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *pat
 
 /*
     This returns a URI relative to the base for the given target
+
+    uri = target.relative(base)
  */
 HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
 {
@@ -10772,15 +10774,11 @@ HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
         /* If target is relative, just use it. If base is relative, can't use it because we don't know where it is */
         return (dup) ? httpCloneUri(ctx, target, 0) : target;
     }
-    if (base->scheme && target->scheme) {
-        if (base->scheme != target->scheme || (base->scheme && strcmp(base->scheme, target->scheme) != 0)) {
-            return (dup) ? httpCloneUri(ctx, target, 0) : target;
-        }
+    if (base->scheme && target->scheme && strcmp(base->scheme, target->scheme) != 0) {
+        return (dup) ? httpCloneUri(ctx, target, 0) : target;
     }
-    if (base->host && target->host) {
-        if (base->host != target->host || (base->host && strcmp(base->host, target->host) != 0)) {
-            return (dup) ? httpCloneUri(ctx, target, 0) : target;
-        }
+    if (base->host && target->host && (base->host && strcmp(base->host, target->host) != 0)) {
+        return (dup) ? httpCloneUri(ctx, target, 0) : target;
     }
     if (getPort(base) != getPort(target)) {
         return (dup) ? httpCloneUri(ctx, target, 0) : target;
@@ -10826,8 +10824,13 @@ HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
         startDiff++;
     }
     
-    //  MOB -- should this remove scheme, host, port to be truly relative
-    uri = httpCloneUri(ctx, target, 0);
+    if ((uri = httpCloneUri(ctx, target, 0)) == 0) {
+        return 0;
+    }
+    uri->host = 0;
+    uri->scheme = 0;
+    uri->port = 0;
+
     uri->path = cp = mprAlloc(ctx, baseSegments * 3 + (int) strlen(target->path) + 2);
     for (i = commonSegments; i < baseSegments; i++) {
         *cp++ = '.';
@@ -10898,14 +10901,17 @@ HttpUri *httpJoinUri(MprCtx ctx, HttpUri *uri, int argc, HttpUri **others)
         }
     }
     uri->ext = (char*) mprGetPathExtension(uri, uri->path);
-#if UNUSED
-    //  MOB -- should this normalize?
-    if (normalize) {
-        oldPath = uri->path;
-        uri->path = httpNormalizeUriPath(uri, uri->path);
-        mprFree(oldPath);
+    return uri;
+}
+
+
+HttpUri *httpMakeUriLocal(HttpUri *uri)
+{
+    if (uri) {
+        uri->host = 0;
+        uri->scheme = 0;
+        uri->port = 0;
     }
-#endif
     return uri;
 }
 
@@ -10929,7 +10935,7 @@ void httpNormalizeUri(HttpUri *uri)
 char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
 {
     char    *dupPath, *path, *sp, *dp, *mark, **segments;
-    int     j, i, nseg, len;
+    int     firstc, j, i, nseg, len;
 
     if (pathArg == 0 || *pathArg == '\0') {
         return mprStrdup(ctx, "");
@@ -10945,6 +10951,7 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
         return NULL;
     }
     nseg = len = 0;
+    firstc = *dupPath;
     for (mark = sp = dupPath; *sp; sp++) {
         if (*sp == '/') {
             *sp = '\0';
@@ -10968,7 +10975,9 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
                     j--;
                 }
             } else if (sp[1] == '.' && sp[2] == '\0')  {
-                if ((i+1) == nseg) {
+                if (i == 1 && *segments[0] == '\0') {
+                    j = 0;
+                } else if ((i+1) == nseg) {
                     if (--j >= 0) {
                         segments[j] = "";
                     }
@@ -10982,13 +10991,12 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
     }
     nseg = j;
     mprAssert(nseg >= 0);
-
     if ((path = mprAlloc(ctx, len + nseg + 1)) != 0) {
         for (i = 0, dp = path; i < nseg; ) {
             strcpy(dp, segments[i]);
             len = strlen(segments[i]);
             dp += len;
-            if (++i < nseg) {
+            if (++i < nseg || (nseg == 1 && *segments[0] == '\0' && firstc == '/')) {
                 *dp++ = '/';
             }
         }
@@ -11000,7 +11008,7 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
 }
 
 
-HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, int relative)
+HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, int local)
 {
     HttpUri     *current, *other;
     int         i;
@@ -11008,7 +11016,7 @@ HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, i
     if ((current = httpCloneUri(ctx, base, 0)) == 0) {
         return 0;
     }
-    if (relative) {
+    if (local) {
         current->host = 0;
         current->scheme = 0;
         current->port = 0;
@@ -11042,13 +11050,6 @@ HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, i
         }
     }
     current->ext = (char*) mprGetPathExtension(current, current->path);
-#if UNUSED
-    if (normalize) {
-        oldPath = current->path;
-        current->path = httpNormalizeUriPath(current, current->path);
-        mprFree(oldPath);
-    }
-#endif
     return current;
 }
 

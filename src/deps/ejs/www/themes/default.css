@@ -1,6 +1,5 @@
-
 /*
- * 	Default theme style sheet
+   	Default theme style sheet
  */
 
 html {
@@ -235,9 +234,9 @@ form td {
 
 
 /*
- * 	Ejscript web framework controls style sheet
+   	Ejscript web framework controls style sheet
  */
-.-ejs-fieldError {
+.-ejs-field-error {
 	border: 1px solid #FF0000;
 	-webkit-box-shadow: 3px 3px 3px #AAA;
 }
@@ -254,12 +253,16 @@ div.-ejs-formError h2 {
     font-size: 12pt;
 }
 
-.-ejs-clickable {
+[data-click] {
     cursor: pointer;
 }
+[data-click]:hover { 
+    color: #CC4477;
+}
+
 
 /*
- *  Flash web control
+    Flash web control
  */
 div.-ejs-flash {
 	-webkit-box-shadow: 4px 4px 4px #BBB;
@@ -270,25 +273,25 @@ div.-ejs-flash {
     color: #FFFFFF;
 }
 
-div.-ejs-flashInform {
+div.-ejs-flash-inform {
     background-color: #228000;
 }
 
-div.-ejs-flashMessage {
+div.-ejs-flash-message {
     background-color: #A0A0A0;
 }
 
-div.-ejs-flashError {
+div.-ejs-flash-error {
     background-color: #FF0000;
     font-weight: bold;
 }
 
-div.-ejs-flashWarning {
+div.-ejs-flash-warning {
     background-color: #FF8020;
 }
 
 /*
- *  Tabs control
+    Tabs control
  */
 div.-ejs-tabs ul {
 	list-style: none;
@@ -371,13 +374,13 @@ table.-ejs-table td {
     text-align: center;
 }
 
-.-ejs-oddRow {
+.-ejs-table-odd {
     background-color: #F0F0FF;
     background: -webkit-gradient(linear, left bottom, left top, from(rgba(220,220,250,.95)), color-stop(1, #eff));
     color: #000000;
 }
 
-.-ejs-evenRow {
+.-ejs-table-even {
     background-color: #FFFFFF;
 }
 
