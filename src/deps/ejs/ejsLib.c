@@ -33073,7 +33073,7 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
     }
     if (msg->stack) {
         ejsSetProperty(ejs, event, ES_ErrorEvent_stack, msg->stack);
-        if ((frame = ejsGetProperty(ejs, msg->stack, 0)) != 0) {
+        if ((frame = ejsGetProperty(ejs, msg->stack, 0)) != 0 && frame != ejs->undefinedValue) {
             ejsSetProperty(ejs, event, ES_ErrorEvent_filename, 
                 ejsGetPropertyByName(ejs, frame, ejsName(&qname, "", "filename")));
             ejsSetProperty(ejs, event, ES_ErrorEvent_lineno, 
@@ -33428,7 +33428,7 @@ static void markWorker(Ejs *ejs, EjsWorker *worker)
 {
     ejsMarkObject(ejs, (EjsObj*) worker);
     if (worker->event) {
-        ejsMarkObject(ejs, (EjsObj*) worker->event);
+        ejsMark(ejs, (EjsObj*) worker->event);
     }
 }
 
@@ -38065,10 +38065,14 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return createString(ejs, conn ? conn->errorMsg : NULL);
 
     case ES_ejs_web_Request_filename:
-        if (req->filename == 0 && conn) {
+        if (req->filename == 0) {
             pathInfo = ejsGetString(ejs, req->pathInfo);
-            filename = mprJoinPath(ejs, req->dir->path, &pathInfo[1]);
-            req->filename = ejsCreatePathAndFree(ejs, filename);
+            if (req->dir) {
+                filename = mprJoinPath(ejs, req->dir->path, &pathInfo[1]);
+                req->filename = ejsCreatePathAndFree(ejs, filename);
+            } else {
+                req->filename = ejsCreatePath(ejs, pathInfo);
+            }
         }
         return req->filename ? (EjsObj*) req->filename : (EjsObj*) ejs->nullValue;
 

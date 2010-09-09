@@ -9986,7 +9986,7 @@ module ejs {
             @hide 
             @deprecated 2.0.0
          */
-        # Config.Legacy
+        # Config.Legacy || 1
         function toLower(): String
             toLowerCase()
 
@@ -9994,7 +9994,7 @@ module ejs {
             @hide 
             @deprecated 2.0.0
          */
-        # Config.Legacy
+        # Config.Legacy || 1
         function toUpper(): String
             toUpperCase()
     }
@@ -15116,25 +15116,28 @@ module ejs.web {
             yield a response object.
         @example:
             export.app = CommonLog(app)
+        @spec ejs
+        @stability prototype
      */
-    function CommonLog(app, logger: Stream = App.log): Object
-        (new CommonLogBuilder(app, logger)).run
+    function CommonLog(app, logger: Stream = App.log): Object {
+        return (new CommonLogClass(app, logger)).app
+    }
 
     /**
-        TODO MOB
+        TODO - doc
      */
-    class CommonLogBuilder {
-        var app: Function
+    class CommonLogClass {
+        var innerApp: Function
         var logger: Stream
 
-        function CommonLogBuilder(app, logger: Stream = App.log) {
-            this.app = app
+        function CommonLogClass(app, logger: Stream = App.log) {
+            this.innerApp = app
             this.logger = logger
         }
 
-        function run(request: Request): Object {
+        function app(request: Request): Object {
             let start = new Date
-            let response = app.call(request, request)
+            let response = innerApp.call(request, request)
             let size = (response.body is String) ? response.body.length : 0
             /*
                 Sample:  10.0.0.5 - - [16/Mar/2010:15:40:36 -0700] "GET /index.html HTTP/1.1" 200 44
@@ -16007,9 +16010,12 @@ module ejs.web {
         yield a response object.
         @example:
           { name: "index", builder: DirBuilder, match: Router.isDir }
+        @spec ejs
+        @stability prototype
      */
-    function DirBuilder(request: Request): Function 
-        DirApp
+    function DirBuilder(request: Request): Function {
+        return DirApp
+    }
 }
 
 /*
@@ -17703,23 +17709,27 @@ module ejs.web {
         }
     }
 
-//  MOB - is this right? who calls this?
     /**
         MVC request handler.  
         @param request Request object
         @return A response hash (empty). MVC apps use Request methods directly to set status, headers and response body.
+        @spec ejs
+        @stability prototype
+     */
     function MvcApp(request: Request): Object {
         let app = MvcBuilder(request)
         return app(request)
     }
-     */
 
+//  MOB -- update doc
     /** 
         MVC builder for use in routing tables. The MVC builder function can be included directly in Route table entries.
         @param request Request object. 
         @return A web script function that services a web request.
         @example:
           { name: "index", builder: MvcBuilder, match: "/" }
+        @spec ejs
+        @stability prototype
      */
     function MvcBuilder(request: Request): Function {
         //  MOB OPT - Currently Mvc has no state so really don't need an Mvc instance
@@ -19207,7 +19217,7 @@ module ejs.web {
         })
 
         //  Replace the home page route
-        r.addHome("/Status/")
+        r.addHome("/Status")
 
         //  Display the route table to the console
         r.show()
@@ -19235,16 +19245,6 @@ module ejs.web {
          */
         public var routes: Object = {}
         
-        /*
-            Map of run functions based on request extension 
-UNUSED
-        var builders = {
-            "es":   ScriptBuilder,
-            "ejs":  TemplateBuilder,
-            "html": StaticBuilder,
-        }
-         */
-
         /**
             Function to test if the Request.filename is a directory.
             @param request Request object to consider
@@ -19258,13 +19258,33 @@ UNUSED
         public function addCatchall(): Void
             add(/^\/.*$/, {name: "catchall", run: StaticBuilder, method: "*"})
 
+        /**
+            Add a default MVC controller/action route. This consists of a "/{controller}/{action}" route.
+            All HTTP method verbs are supported.
+         */
+        public function addDefault(): Void
+            add("/{controller}(/{action})", {name: "default", method: "*"})
+
         /** 
             Direct routes for MVC apps. These map HTTP methods directly to method names.
-        */
+            @hide
+         */
         public function addDirect(name: String, options: Object = {}): Void {
-            add("/" + name + "/(/{id}(/{action}))")
-            let names = options.plural || toPlural(name)
-            add("/" + names + "/(/{action})", {contrtoller: name, namespace: "GROUP"})
+            add("/" + name + "/(/{id}(/{action}))", {method: "*"})
+            add("/" + name + "/(/{action})", {contrtoller: name, namespace: "GROUP", method: "*"})
+        }
+
+        /**
+            Add routes to handle static content, directories, "es" scripts and stand-alone ejs templated pages.
+         */
+        public function addHandlers(): Void {
+            let staticPattern = "\/" + (App.config.directories.static || "static") + "\/.*"
+            if (staticPattern) {
+                add(staticPattern, {name: "static", run: StaticBuilder})
+            }
+            add(/\.es$/,  {name: "es",  run: ScriptBuilder, method: "*"})
+            add(/\.ejs$/, {name: "ejs", module: "ejs.template", run: TemplateBuilder, method: "*"})
+            add(isDir,    {name: "dir", run: DirBuilder})
         }
 
         /**
@@ -19368,27 +19388,8 @@ UNUSED
             add("/{controller}/{id}",               {action: "update", constraints: id, method: "PUT"})
             add("/{controller}/{id}",               {action: "destroy", constraints: id, method: "DELETE"})
 
+            //  Same as addDefault()
             add("/{controller}(/{action})",         {name: "default", method: "*"})
-        }
-
-        /**
-            Add a default MVC controller/action route. This consists of a "/{controller}/{action}" route.
-            All HTTP method verbs are supported.
-         */
-        public function addDefault(): Void
-            add("/{controller}(/{action})", {name: "default", method: "*"})
-
-        /**
-            Add routes to handle static content, directories, "es" scripts and stand-alone ejs templated pages.
-         */
-        public function addHandlers(): Void {
-            let staticPattern = "\/" + (App.config.directories.static || "static") + "\/.*"
-            if (staticPattern) {
-                add(staticPattern, {name: "static", run: StaticBuilder})
-            }
-            add(/\.es$/,  {name: "es",  run: ScriptBuilder, method: "*"})
-            add(/\.ejs$/, {name: "ejs", module: "ejs.template", run: TemplateBuilder, method: "*"})
-            add(isDir,    {name: "dir", run: DirBuilder})
         }
 
         /**
@@ -19414,19 +19415,6 @@ UNUSED
             }
         }
 
-        /** 
-UNUSED
-            Add a builder function for an extension
-            @param builder Builder function. Builders must be of the form
-                function builder(request: Request): Function
-            @param ext 
-        function addBuilder(builder: Function, ext: String): Void
-            builders[ext] = builder
-
-        private function lookupBuilders(ext): Function
-            builders[ext] || MvcBuilder
-         */
-
         private function insertRoute(r: Route, options: Object): Void {
             let routeSetName
             if (r.template is String) {
@@ -19437,7 +19425,7 @@ UNUSED
             routeSet[r.name] = r
         }
 
-        /*
+        /**
             Add a route
             @param template String or Regular Expression defining the form of a matching URI (Request.pathInfo).
             @param options Route options representing the URI and options to use when servicing the request. If it
@@ -19475,7 +19463,7 @@ UNUSED
             return r
         }
 
-        /*
+        /**
             Lookup a route
             @param options Route description. This can be either string or object hash. If it is a string, it should be
                 of the form "controller/action". If the options is an object hash, it should have properties
@@ -19504,32 +19492,20 @@ UNUSED
         }
 
         /**
-            Replace a route route
-            @param template String or Regular Expression defining the form of a matching URI (Request.pathInfo).
-            @param options Route options representing the URI and options to use when servicing the request. If it
-                is a string, it may begin with an "@" and be of the form "@[controller/]action". In this case, if there
-                is a "/" delimiter, the first portion is a controller and the second is the controller action to invoke.
-                The controller or action may be absent. For example: "@Controller/", "@action", "@controller/action".
-                If the string does not begin with an "@", it is interpreted as a literal URI. For example: "/web/index.html".
-                If the options is an object hash, it may contain the options below:
-                See $add() for option details.
-         */
-        public function replace(template, options: Object = {}): Void
-            add(template, options)
-
-        /*
             Remove a route
             @param name Name of the route to remove. Name should be of the form "controller/action" where controller
             is the index for the route set and action is the index for the route name.
          */
         public function remove(name: String): Void {
-            let routeSet = routes[name.split("/")[0]]
+            let [controller, action] = name.split("/")
+            let routeSet = routes[controller]
             for (let routeName in routeSet) {
-                if (routeName == name) {
-                    delete routeSet[route]
-                    break
+                if (routeName == action) {
+                    delete routeSet[action]
+                    return
                 }
             }
+            throw "Can't find route \"" + name + "\" to remove"
         }
 
         /*
@@ -19556,6 +19532,7 @@ UNUSED
                 return route(request)
             }
             if (r.redirect) {
+                //  TODO OPT - could this this via a custom builder
                 request.pathInfo = r.redirect
                 log.debug(5, "Route redirected to \"" + request.pathInfo + "\" (reroute)")
                 return route(request)
@@ -19748,14 +19725,15 @@ UNUSED
          */
         var moduleName: String
 
-        /*
+        /**
             Original template as supplied by caller
          */
-        var originalTemplate: Object
+        private var originalTemplate: Object
 
         /**
             Outer route for a nested route. A nested route prepends the outer route template to its template. 
             The param set of the outer route is appended to the inner route.
+            @hide
          */
         var outer: Route
 
@@ -19877,6 +19855,7 @@ UNUSED
             @param controller Controller name
             @param routeName Route name to look for
             @return A template URI string
+            @hide
          */
         public function getTemplate(controller: String, routeName: String): String {
             let routes = router.routes
@@ -20015,9 +19994,12 @@ UNUSED
             }
             let action = options.action
             if (action) {
+/* UNUSED
                 if (action is Function) {
                     options.run ||= options.action
-                } else if (action[0] == '@') {
+                } else 
+*/
+                if (action[0] == '@') {
                     [options.controller, options.action] = action.slice(1).split("/")
                 }
             }
@@ -20050,19 +20032,20 @@ UNUSED
             threaded = options.threaded
             trace = options.trace
             if (options.method == "" || options.method == "*") {
-                options.method = ""
+                method = options.method = ""
             } else {
                 method = options.method || "GET"
             }
-            if (options.run is Function) {
-                builder = options.run || MvcBuilder
-            } else if (options.run) {
+            options.run ||= MvcBuilder
+            if (!(options.run is Function)) {
                 response = options.run
                 builder = function (request) {
                     return function (request) {
                         return response
                     }
                 }
+            } else {
+                builder = options.run
             }
         }
 
@@ -20117,12 +20100,28 @@ UNUSED
  */
 
 module ejs.web {
+
+    /**
+        Run a script app. The script at request.filename will be run
+        @param request Request object
+        @return A response object
+        @spec ejs
+        @stability prototype
+     */
+    function ScriptApp(request: Request) {
+        let app = ScriptBuilder(request)
+        return app(request)
+    }
+
+
     /** 
         Script builder for use in routing tables to load pure script files (*.es).
         @param request Request object. 
         @return A web script function that services a web request.
         @example:
           { name: "index", builder: ScriptBuilder, match: "\.es$" }
+        @spec ejs
+        @stability prototype
      */
     function ScriptBuilder(request: Request): Function {
         if (!request.filename.exists) {
@@ -20470,6 +20469,8 @@ module ejs.web {
         @return A web script function that services a web request for static content
         @example:
           { name: "index", builder: StaticBuilder, }
+        @spec ejs
+        @stability prototype
      */
     function StaticBuilder(request: Request): Function {
         //  MOB -- BUG should not need "ejs.web"
@@ -20529,6 +20530,8 @@ module ejs.web {
         Template middleware filter. This interprets the output of an inner web app as a template page which is processed.
         @param app Application function object
         @returns A response object hash
+        @spec ejs
+        @stability prototype
      */
     function TemplateFilter(app: Function): Object {
         return function(request) {
@@ -20544,13 +20547,14 @@ module ejs.web {
         }
     }
 
-    /**
-        Build a web application from a template page. The template web page at Request.filename will be processed and
-            a web application script created.
-        @param request Request object
-        @return A web application function
+    /** 
+        Template web page handler. The template web page at request.filename will be processed and run.
+        @param request Request objects
+        @returns A response hash object
+        @spec ejs
+        @stability prototype
      */
-    function TemplateApp(request: Request): Function {
+    function TemplateApp(request: Request) {
         let app = TemplateBuilder(request)
         return app(request)
     }
@@ -20566,6 +20570,8 @@ module ejs.web {
         @return A web script function that services a web request.
         @example: Example use in a Route table entry
           { name: "index", builder: TemplateBuilder, match: "\.ejs$" }
+        @spec ejs
+        @stability prototype
      */
     function TemplateBuilder(request: Request, options: Object = {}): Function {
         let path
