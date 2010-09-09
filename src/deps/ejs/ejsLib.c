@@ -18270,6 +18270,7 @@ static EjsObj *breakpoint(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 #endif
 
 
+//  MOB -- would this be better as blend(obj, obj, obj, ...)
 /*  
     function blend(dest: Object, src: Object, overwrite: Boolean = true): void
  */
@@ -24414,9 +24415,11 @@ static EjsObj *obj_getOwnPropertyNames(Ejs *ejs, EjsObj *unused, int argc, EjsOb
             }
         }
         qname = ejsGetPropertyName(ejs, obj, slotNum);
+#if UNUSED
         if (qname.name[0] == '\0') {
             continue;
         }
+#endif
         if (excludeFunctions && ejsIsFunction(ejsGetProperty(ejs, obj, slotNum))) {
             continue;
         }
@@ -28922,7 +28925,6 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     if (ejsIsString(argv[0])) {
         delim = ejsGetString(ejs, argv[0]);
         delimLen = (int) strlen(delim);
-
         if (delimLen == 0) {
             for (cp = sp->value; (--limit != -1) && *cp; cp++) {
                 ejsSetProperty(ejs, results, -1, ejsCreateStringWithLength(ejs, cp, 1));
@@ -31978,7 +31980,8 @@ static EjsObj *uri_template(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
                 value = 0;
                 for (i = 0; i < options->length; i++) {
                     obj = options->data[i];
-                    if ((value = ejsGetPropertyByName(ejs, obj, EN(&n, token))) != 0 && value != ejs->nullValue && 
+                    ejsName(&n, NULL, token);
+                    if ((value = ejsGetPropertyByName(ejs, obj, &n)) != 0 && value != ejs->nullValue && 
                             value != ejs->undefinedValue) {
                         str = ejsGetString(ejs, value);
                         if (str && *str) {
@@ -31989,8 +31992,10 @@ static EjsObj *uri_template(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
                         }
                     }
                 }
-                if (value == 0 && cp >= &pattern[2] && cp[-2] == '/') {
-                    mprAdjustBufEnd(buf, -1);
+                if (value == 0 || value == ejs->undefinedValue || value == ejs->nullValue) {
+                    if (cp >= &pattern[2] && cp[-2] == '/') {
+                        mprAdjustBufEnd(buf, -1);
+                    }
                 }
                 cp = ep;
             }
