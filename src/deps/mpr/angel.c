@@ -565,7 +565,7 @@ static void     angel();
 
 static int      initWindow();
 static void     mapPathDelim(char *s);
-static long     msgProc(HWND hwnd, uint msg, uint wp, long lp);
+static LRESULT  msgProc(HWND hwnd, uint msg, uint wp, long lp);
 
 static void     serviceThread(void *data);
 static void WINAPI serviceMain(ulong argc, char **argv);
@@ -1269,7 +1269,7 @@ static int initWindow()
 /*
     Windows message processing loop
  */
-static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
+static LRESULT msgProc(HWND hwnd, uint msg, uint wp, long lp)
 {
     switch (msg) {
     case WM_DESTROY:
@@ -1340,7 +1340,7 @@ static void mapPathDelim(char *s)
 }
 
 #else
-void __dummyAngel() {
+void stubAngel() {
     fprintf(stderr, "Angel not supported on this architecture");
 }
 #endif /* BLD_WIN_LIKE */

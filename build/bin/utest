@@ -292,7 +292,6 @@ enumerable class Test {
         } finally {
             App.chdir(home)
         }
-        //MOB GC.run()
     }
 
     function initWorker(w: Worker, export: Object) {
@@ -300,6 +299,7 @@ enumerable class Test {
         let estr = serialize(export)
         w.preeval('
             data = deserialize(\'' + estr.replace(/\\/g, "\\\\") + '\')
+dump("INIT WORKER", data)
 
             public var test: Test = new Test
             public var tsession: Object
@@ -325,6 +325,7 @@ enumerable class Test {
     }
 
     function startWorker(file: Path, phase: String = null): Worker {
+dump('START WORKER', tsession)
         let export = { 
             bin: _bin, 
             config: config,
@@ -357,6 +358,7 @@ enumerable class Test {
                 test.skippedMsg = obj.skip
                 test.skippedCount++
             } else if (obj.key) {
+print("GOT KEY " + key + " " + value)
                 test.tsession[obj.key] = obj.value
             }
         }

@@ -359,7 +359,7 @@ module ejs {
             for (let mark = new Date; !done && mark.elapsed < timeout; ) {
                 App.eventLoop(timeout - mark.elapsed, 1)
             }
-            obj.removeObserver(events, callback)
+            obj.off(events, callback)
             return done
         }
     }
@@ -1259,9 +1259,9 @@ module ejs {
         }
 
         /** 
-            @duplicate Stream.on 
+            @duplicate Stream.off 
          */
-        native function removeObserver(name, observer: Function): Void
+        native function off(name, observer: Function): Void
 
         /** 
             Return the space available for write data. This call can be used to prevent write from blocking or 
@@ -1677,6 +1677,9 @@ module ejs {
             return md5(buf.readString())
         }
 
+        /** @duplicate Stream.off */
+        native function off(name: Object, observer: Function): Void
+
         /** @duplicate Stream.on */
         native function on(name: Object, observer: Function): Void
 
@@ -1789,13 +1792,6 @@ module ejs {
          */
         function readXML(): XML
             XML(readString())
-
-        /** 
-            Remove an observer from the stream
-            @param name Event name previously used with observe. The name may be an array of events.
-            @param observer Observer function previously used with observe.
-         */
-        native function removeObserver(name: Object, observer: Function): Void
 
         /** 
             Reset the read and $writePosition pointers if there is no available data.
@@ -3345,7 +3341,7 @@ module ejs {
             }
             if (callback) {
                 observers.append(new Endpoint(callback, name))
-                fire("observe", name, callback)
+                fire("on", name, callback)
             }
         }
 
@@ -3457,16 +3453,12 @@ module ejs {
             }
         }
 
-        //  MOB - remove
-        function observe(name: Object!, callback: Function!): Void
-            on(name, callback)
-
         private function removeOneObserver(name: String!, callback: Function): Void {
             var observers: Array? = endpoints[name]
             for (let i in observers) {
                 var e: Endpoint = observers[i]
                 if (e.callback == callback && e.name == name) {
-                    fire("removeObserver", name, callback)
+                    fire("off", name, callback)
                     observers.splice(i, 1)
                 }
             }
@@ -3485,32 +3477,15 @@ module ejs {
                     removeOneObserver(n, callback)
                 }
             } else {
-                throw new Error("Bad name type for removeObserver")
+                throw new Error("Bad name type for off()")
             }
         }
-        function removeObserver(name: Object!, callback: Function): Void
-            off(name, callback)
-
-
-        /** 
-            @hide 
-            @deprecated 1.0.0
-         */
-        # Config.Legacy
-        function addListener(name: Object, callback: Function): Void
-            on(name, callback)
-
-        /** 
-            @hide 
-            @deprecated 1.0.0
-         */
-        # Config.Legacy
-        function emit(name: String, ...args): Void 
-            fire(name, ...args)
     }
 
 
-    /* Observing endpoints */
+    /* 
+        Observing endpoints 
+     */
     internal class Endpoint {
         public var callback: Function
         public var name: String
@@ -4010,6 +3985,9 @@ module ejs {
          */
         native function get isOpen(): Boolean
 
+        /** @duplicate Stream.off */
+        native function off(name, observer: Function): Void
+
         /** @duplicate Stream.on */
         native function on(name, observer: Function): Void
 
@@ -4090,9 +4068,6 @@ module ejs {
             }
             Path(path).remove()
         }
-
-        /** @duplicate Stream.removeObserver */
-        native function removeObserver(name, observer: Function): Void
 
         /** 
             The size of the file in bytes.
@@ -5366,7 +5341,12 @@ FUTURE & KEEP
         native function set method(name: String)
 
         /** 
-            @duplicate Stream.observe
+            @duplicate Stream.off
+         */
+        native function off(name, observer: Function): Void
+
+        /** 
+            @duplicate Stream.on
             All events are called with the following signature.  The "this" object will be set to the instance object
             if the callback is a method. Otherwise, "this" will be set to the Http instance. If Function.bind may also
             be used to define the "this" object and to inject additional callback arguments. 
@@ -5438,11 +5418,6 @@ FUTURE & KEEP
          */
         function readXml(): XML
             XML(response)
-
-        /** 
-            @duplicate Stream.removeObserver
-         */
-        native function removeObserver(name, observer: Function): Void
 
         /**
             Reset the Http object to prepare for a new request. This will not close the connection.
@@ -5793,6 +5768,227 @@ FUTURE & KEEP
 /************************************************************************/
 /*
  *  End of file "../../src/core/Http.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/core/Inflector.es"
+ */
+/************************************************************************/
+
+/**
+    Inflector.es -- Mangage word transformations
+ */
+
+module ejs {
+
+    /** 
+        The Inflector class emulates the Rails Inflector. 
+        See: http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html
+     */
+    # UNUSED && KEEP
+    class Inflector {
+        static var irregularMap = [
+            ['move',   'moves'   ],
+            ['sex',    'sexes'   ],
+            ['child',  'children'],
+            ['man',    'men'     ],
+            ['person', 'people'  ]
+        ]
+
+        static var pluralRules = [
+            [/(quiz)$/i,               "$1zes"  ],
+            [/^(ox)$/i,                "$1en"   ],
+            [/([m|l])ouse$/i,          "$1ice"  ],
+            [/(matr|vert|ind)ix|ex$/i, "$1ices" ],
+            [/(x|ch|ss|sh)$/i,         "$1es"   ],
+            [/([^aeiouy]|qu)y$/i,      "$1ies"  ],
+            [/(hive)$/i,               "$1s"    ],
+            [/(?:([^f])fe|([lr])f)$/i, "$1$2ves"],
+            [/sis$/i,                  "ses"    ],
+            [/([ti])um$/i,             "$1a"    ],
+            [/(buffal|tomat)o$/i,      "$1oes"  ],
+            [/(bu)s$/i,                "$1ses"  ],
+            [/(alias|status)$/i,       "$1es"   ],
+            [/(octop|vir)us$/i,        "$1i"    ],
+            [/(ax|test)is$/i,          "$1es"   ],
+            [/s$/i,                    "s"      ],
+            [/$/,                      "s"      ]
+        ]
+
+        static var singularRules = [
+            [/(quiz)zes$/i,                                                    "$1"     ],
+            [/(matr)ices$/i,                                                   "$1ix"   ],
+            [/(vert|ind)ices$/i,                                               "$1ex"   ],
+            [/^(ox)en/i,                                                       "$1"     ],
+            [/(alias|status)es$/i,                                             "$1"     ],
+            [/(octop|vir)i$/i,                                                 "$1us"   ],
+            [/(cris|ax|test)es$/i,                                             "$1is"   ],
+            [/(shoe)s$/i,                                                      "$1"     ],
+            [/(o)es$/i,                                                        "$1"     ],
+            [/(bus)es$/i,                                                      "$1"     ],
+            [/([m|l])ice$/i,                                                   "$1ouse" ],
+            [/(x|ch|ss|sh)es$/i,                                               "$1"     ],
+            [/(m)ovies$/i,                                                     "$1ovie" ],
+            [/(s)eries$/i,                                                     "$1eries"],
+            [/([^aeiouy]|qu)ies$/i,                                            "$1y"    ],
+            [/([lr])ves$/i,                                                    "$1f"    ],
+            [/(tive)s$/i,                                                      "$1"     ],
+            [/(hive)s$/i,                                                      "$1"     ],
+            [/([^f])ves$/i,                                                    "$1fe"   ],
+            [/(^analy)ses$/i,                                                  "$1sis"  ],
+            [/((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$/i, "$1$2sis"],
+            [/([ti])a$/i,                                                      "$1um"   ],
+            [/(n)ews$/i,                                                       "$1ews"  ],
+            [/s$/i,                                                            ""       ]
+        ]
+
+        static var uncountable = [
+            "sheep",
+            "fish",
+            "series",
+            "species",
+            "money",
+            "rice",
+            "information",
+            "equipment"
+        ]
+
+        /**
+            Add a new irregular mapping
+            @param singular Singular word form
+            @param plural Plural word form
+         */
+        static function addIrregular(singular: String, plural: String): Void {
+            irregularMap.append([singular, plural])
+        }
+
+        /**
+            Add a new plural rule
+            @param expr Regular expression to match
+            @param replacement Regular expression replacement string
+         */
+        static function addPlural(expr: RegExp, replacement: String): Void {
+            pluralRules.append([expr, replacement])
+        }
+
+        /**
+            Add a new singular rule
+            @param expr Regular expression to match
+            @param replacement Regular expression replacement string
+         */
+        static function addSingular(expr: RegExp, replacement: String): Void {
+            singular.append([expr, replacement])
+        }
+
+        /**
+            Add a new uncountable rule
+            @param expr Regular expression to match
+            @param replacement Regular expression replacement string
+         */
+        static function addUncountable(expr: RegExp, replacement: String): Void {
+            uncountable.append([expr, replacement])
+        }
+
+        /**
+            Convert a number to an ordinal string
+            @param number to convert
+            @return an ordinal string matching the number
+         */
+        static function toOrdinal(number: Number) {
+            if (11 <= number % 100 && number % 100 <= 13) {
+                return number + "th"
+            } else switch (number % 10) {
+                case  1: return number + "st"
+                case  2: return number + "nd"
+                case  3: return number + "rd"
+                default: return number + "th"
+            }
+        }
+
+        /**
+            Convert a singular word to its plural form
+            @param word Word to transform
+            @return the plural form of a word
+        */
+        static function toPlural(word: String): String {
+            for each (item in uncountable) {
+                if (word.toLowerCase() == item) {
+                    return item
+                }
+            }
+            for each (let [singular, plural] in irregularMap) {
+                if ((word.toLowerCase() == singular) || (word == plural)) {
+                    return plural
+                }
+            }
+            for each (let [regex, replacement] in pluralRules) {
+                if (regex.test(word)) {
+                    return word.replace(regex, replacement)
+                }
+            }
+        }
+
+        /**
+            Convert a singular word to its plural form
+            @param word Word to transform
+            @return the plural form of a word
+        */
+        static function toSingular(word) {
+            for each (item in uncountable) {
+                if (word.toLowerCase() == item) {
+                    return item
+                }
+            }
+            for each (let [singular, plural] in irregularMap) {
+                if ((word.toLowerCase() == singular) || (word == plural)) {
+                    return singular
+                }
+            }
+            for each (let [regex, replacement] in singularRules) {
+                if (regex.test(word)) {
+                    return word.replace(regex, replacement)
+                }
+            }
+        }
+    }
+
+    /**
+        Convert a number to an ordinal string
+        @param number to convert
+        @return an ordinal string matching the number
+     */
+    function toOrdinal(number: Number): String {
+        return Inflector.toOrdinal(number)
+    }
+
+    /**
+        Convert a singular word to its plural form
+        @param word Word to transform
+        @return the plural form of a word
+     */
+    function toPlural(word: String, count: Number = null): String {
+        if (count == null || count > 1) {
+            return Inflector.toPlural(word)
+        }
+        return word
+    }
+
+    /**
+        Convert a singular word to its plural form
+        @param word Plural word to transform
+        @return the plural form of a word
+     */
+    function toSingular(word: String): String {
+        return Inflector.toSingular(word)
+    }
+}
+/************************************************************************/
+/*
+ *  End of file "../../src/core/Inflector.es"
  */
 /************************************************************************/
 
@@ -6546,6 +6742,13 @@ module ejs {
         /** 
             @hide
          */
+        function off(name, observer: Function): Void {
+            throw "observe is not supported"
+        }
+
+        /** 
+            @hide
+         */
         function on(name, observer: Function): Void {
             throw "observe is not supported"
         }
@@ -6556,13 +6759,6 @@ module ejs {
         function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number  {
             throw "Read not supported"
             return null
-        }
-
-        /** 
-            @hide
-         */
-        function removeObserver(name, observer: Function): Void {
-            throw "observe is not supported"
         }
 
         /** 
@@ -7719,6 +7915,12 @@ MOB -- inconsistent with JSON.baseClasses
         native static function getBaseType(obj: Type): Type
   
         /**
+            Get the name of the object if it is a function or type.
+            @return The string name of the function or type
+         */
+        native static function getName(obj: Object): String
+
+        /**
             Get the type for an object. If the object is an instance, this is the class type object. If the object is a
             type, this value is Type.
             @return A type object
@@ -7732,12 +7934,14 @@ MOB -- inconsistent with JSON.baseClasses
          */
         native static function getTypeName(obj: Object): String
   
-        /**
-            Test if the object is a type object
-            @return True if the object is a type object
+        /** 
+            Test if the object is a simple object whose base class is Object.
+            @param obj Target object to use in test.
+            @returns true if the direct type of this object is Object.
          */
-        native static function isType(obj: Object): Boolean
-  
+        # UNUSED 
+        native static function isObject(obj: Object): Boolean
+
         /**
             Test if the object is a prototype object
             @return True if the object is being used as a prototype object
@@ -7745,10 +7949,10 @@ MOB -- inconsistent with JSON.baseClasses
         native static function isPrototype(obj: Object): Boolean
   
         /**
-            Get the name of the object if it is a function or type.
-            @return The string name of the function or type
+            Test if the object is a type object
+            @return True if the object is a type object
          */
-        native static function getName(obj: Object): String
+        native static function isType(obj: Object): Boolean
     }
   
     /**
@@ -9253,6 +9457,9 @@ module ejs {
          */
         native function listen(address): Socket
 
+        /** @duplicate Stream.off */
+        native function off(name: Object, observer: Function): Void
+
         /** 
             @duplicate Stream.on 
             @event readable Issued when the response headers have been fully received and some body content is available.
@@ -9275,9 +9482,6 @@ module ejs {
             is not bound.
          */
         native function get remoteAddress(): String 
-
-        /** @duplicate Stream.removeObserver */
-        native function removeObserver(name: Object, observer: Function): Void
 
         /** 
             @duplicate Stream.write 
@@ -9391,6 +9595,13 @@ module ejs {
         function flush(dir: Number): Void 
 
         /** 
+            Remove an observer from the stream. 
+            @param name Event name previously used with observe. The name may be an array of events.
+            @param observer Observer function previously used with observe.
+         */
+        function off(name, observer: Function): Void
+
+        /** 
             Add an observer to the stream for the named events. 
             @param name Name of the event to listen for. The name may be an array of events.
             @param observer Callback observer function. The function is called with the following signature:
@@ -9418,13 +9629,6 @@ module ejs {
             @event writable Issued when the stream becomes empty.
          */
         function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
-
-        /** 
-            Remove an observer from the stream. 
-            @param name Event name previously used with observe. The name may be an array of events.
-            @param observer Observer function previously used with observe.
-         */
-        function removeObserver(name, observer: Function): Void
 
         /** 
             Write data to the stream.
@@ -10289,7 +10493,14 @@ module ejs {
         }
 
         /** 
-            @duplicate Stream.observe 
+            @duplicate Stream.off
+         */
+        function off(name, observer: Function): Void {
+            throw new ArgError("Observers are not supported")
+        }
+
+        /** 
+            @duplicate Stream.on 
          */
         function on(name, observer: Function): Void {
             throw new ArgError("Observers are not supported")
@@ -10410,13 +10621,6 @@ module ejs {
          */
         function readString(count: Number = -1): String
             inbuf.readString(count)
-
-        /** 
-            @duplicate Stream.removeObserver
-         */
-        function removeObserver(name, observer: Function): Void {
-            throw new ArgError("Observers are not supported")
-        }
 
         /** 
             Write characters to the stream.
@@ -11026,7 +11230,7 @@ module ejs {
             and relative URI segments.
             Any query component of "this" URI is discarded in the result. This is because the query component of "this" URI
             is regarded as POST data and not integral to the base URI.
-            @param others Other URIs to resolve in the region of this path. These can be URIs, strings or object hashes 
+            @param target Other URI to resolve in the region of this path. Target can be a URI, string or object hash
                 of URI components.
             @return A new URI object that resolves given URI args using the "this" URI as a base. 
          */
@@ -13001,7 +13205,7 @@ module ejs.db {
         @spec ejs
         @stability evolving
      */
-    public class Database {
+    class Database {
         private static var defaultDb: Database
 
         private var _adapter: Object
@@ -15334,23 +15538,23 @@ module ejs.web {
 
         /***************************************** Convenience Getters  ***************************************/
 
-        /** @duplicate Request.absHome */
+        /** @duplicate ejs.web::Request.absHome */
         function get absHome(): Uri 
             request ? request.absHome : null
 
-        /** @duplicate Request.home */
+        /** @duplicate ejs.web::Request.home */
         function get home(): Uri 
             request ? request.home : null
 
-        /** @duplicate Request.pathInfo */
+        /** @duplicate ejs.web::Request.pathInfo */
         function get pathInfo(): String 
             request ? request.pathInfo : null
 
-        /** @duplicate Request.session */
+        /** @duplicate ejs.web::Request.session */
         function get session(): Session 
             request ? request.session : null
 
-        /** @duplicate Request.uri */
+        /** @duplicate ejs.web::Request.uri */
         function get uri(): Uri 
             request ? request.uri : null
 
@@ -15451,11 +15655,11 @@ use namespace action
             return response
         }
 
-        /** @duplicate Request.autoFinalize */
+        /** @duplicate ejs.web::Request.autoFinalize */
         function autoFinalize(): Void
             request.autoFinalize()
 
-        /** @duplicate Request.autoFinalizing */
+        /** @duplicate ejs.web::Request.autoFinalizing */
         function get autoFinalizing(): Boolean
             request.autoFinalizing
 
@@ -15473,47 +15677,47 @@ use namespace action
             _beforeCheckers.append([fn, options])
         }
 
-        /** @duplicate Request.dontAutoFinalize */
+        /** @duplicate ejs.web::Request.dontAutoFinalize */
         function dontAutoFinalize(): Void
             request.dontAutoFinalize()
 
         /** 
-            @duplicate Request.error
+            @duplicate ejs.web::Request.error
          */
         function error(msg: String): Void
             request.error(msg)
 
-        /** @duplicate Request.finalize */
+        /** @duplicate ejs.web::Request.finalize */
         function finalize(): Void
             request.finalize()
 
-        /** @duplicate Request.finalized */
+        /** @duplicate ejs.web::Request.finalized */
         function get finalized(): Boolean
             request.finalized
 
         /** 
-            @duplicate Request.flash
+            @duplicate ejs.web::Request.flash
          */
         function get flash(): Object
             request.flash
 
-        /** @duplicate Request.flush */
-        function flush(): Void
-            request.flush()
+        /** @duplicate ejs.web::Request.flush */
+        function flush(dir: Number = Stream.WRITE): Void
+            request.flush(dir)
 
         /** 
-            @duplicate Request.header
+            @duplicate ejs.web::Request.header
          */
         function header(key: String): String
             request.header(key)
 
-        /** @duplicate Request.inform */
+        /** @duplicate ejs.web::Request.inform */
         function inform(msg: String): Void
             request.inform(msg)
 
-        /** @duplicate Request.link */
-        function link(location: Object): Uri
-            request.link(location)
+        /** @duplicate ejs.web::Request.link */
+        function link(target: Object): Uri
+            request.link(target)
 
         /** 
             Missing action method. This method will be called if the requested action routine does not exist.
@@ -15522,15 +15726,15 @@ use namespace action
             throw "Missing Action: \"" + params.action + "\" could not be found for controller \"" + controllerName + "\""
         }
 
-        /** @duplicate Request.notify */
+        /** @duplicate ejs.web::Request.notify */
         function notify(key: String, msg: String): Void
             request.notify(key, msg)
 
-        /** @duplicate Request.on */
+        /** @duplicate ejs.web::Request.on */
         function on(name, observer: Function): Void
             request.on(name, observer)
 
-        /** @duplicate Request.read */
+        /** @duplicate ejs.web::Request.read */
         function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
             request.read(buffer, offset, count)
 
@@ -15552,15 +15756,15 @@ use namespace action
             _afterCheckers = null
         }
 
-        /** @duplicate Request.setHeader */
+        /** @duplicate ejs.web::Request.setHeader */
         function setHeader(key: String, value: String, overwrite: Boolean = true): Void
             request.setHeader(key, value, overwrite)
 
-        /** @duplicate Request.setHeaders */
+        /** @duplicate ejs.web::Request.setHeaders */
         function setHeaders(headers: Object, overwrite: Boolean = true): Void
             request.setHeaders(headers, overwrite)
 
-        /** @duplicate Request.setStatus */
+        /** @duplicate ejs.web::Request.setStatus */
         function setStatus(status: Number): Void
             request.status = status
 
@@ -15573,8 +15777,11 @@ use namespace action
         function write(...args): Void
             request.write(...args)
 
-        function writeContent(...args): Void
-            request.writeContent(...args)
+        /**
+            @duplicate ejs.web::Request.writeContent
+         */
+        function writeContent(data): Void
+            request.writeContent(data)
 
         /**
             Render an error message as the response.
@@ -15651,7 +15858,8 @@ use namespace action
             Render a view template from a string literal.
             This call writes the result of running the view template file back to the client.
             @param page String literal containing the view template to render and write to the client.
-            @param layout Optional layout template. Defaults to config.directories.layouts/default.ejs.
+            @param options Additional options.
+            @option layout Path layout template. Defaults to config.directories.layouts/default.ejs.
          */
         function writeTemplateLiteral(page: String, options: Object = {}): Void {
             log.debug(4, "writeTemplateLiteral")
@@ -15664,7 +15872,7 @@ use namespace action
         }
 
         /** 
-            @duplicate Request.warn
+            @duplicate ejs.web::Request.warn
          */
         function warn(msg: String): Void
             request.warn(msg)
@@ -15672,7 +15880,7 @@ use namespace action
         /** 
             Low-level write data to the client. This will buffer the written data until either flush() or finalize() 
             is called.
-            @duplicate Request.write
+            @duplicate ejs.web::Request.write
          */
         function write(...data): Number
             request.write(...data)
@@ -15705,8 +15913,7 @@ use namespace action
                     global.load(dbconfig.module + ".mod")
                 }
                 let module = dbconfig.module || "public"
-                // new global[dbclass](dbconfig.adapter, request.dir.join(profile.name), profile.trace)
-                new global.(module)::[dbclass](dbconfig.adapter, request.dir.join(profile.name), profile.trace)
+                new (module)::[dbclass](dbconfig.adapter, request.dir.join(profile.name), profile.trace)
             }
         }
 
@@ -17258,6 +17465,13 @@ module ejs.web {
         native function listen(endpoint: String?): Void
 
         /** 
+            Remove an observer from the server. 
+            @param name Event name previously used with observe. The name may be an array of events.
+            @param observer Observer function previously used with observe.
+         */
+        native function off(name: Object, observer: Function): Void
+
+        /** 
             Add an observer for server events. 
             @param name Name of the event to listen for. The name may be an array of events.
             @param observer Callback listening function. The function is called with the following signature:
@@ -17270,13 +17484,6 @@ module ejs.web {
             @event destroySession Issued when a session is destroyed. The request object is passed.
          */
         native function on(name, observer: Function): Void
-
-        /** 
-            Remove an observer from the server. 
-            @param name Event name previously used with observe. The name may be an array of events.
-            @param observer Observer function previously used with observe.
-         */
-        native function removeObserver(name: Object, observer: Function): Void
 
         /** 
             Define the Secure Sockets Layer (SSL) protocol credentials. This must be done before calling $listen.
@@ -17781,165 +17988,6 @@ module ejs.web {
 
 /************************************************************************/
 /*
- *  Start of file "../../src/jems/ejs.web/Plural.es"
- */
-/************************************************************************/
-
-/**
-    Plural.es -- 
- */
-
-module ejs.web {
-
-    class Inflector {
-        static var plural = [
-            [/(quiz)$/i,               "$1zes"  ],
-            [/^(ox)$/i,                "$1en"   ],
-            [/([m|l])ouse$/i,          "$1ice"  ],
-            [/(matr|vert|ind)ix|ex$/i, "$1ices" ],
-            [/(x|ch|ss|sh)$/i,         "$1es"   ],
-            [/([^aeiouy]|qu)y$/i,      "$1ies"  ],
-            [/(hive)$/i,               "$1s"    ],
-            [/(?:([^f])fe|([lr])f)$/i, "$1$2ves"],
-            [/sis$/i,                  "ses"    ],
-            [/([ti])um$/i,             "$1a"    ],
-            [/(buffal|tomat)o$/i,      "$1oes"  ],
-            [/(bu)s$/i,                "$1ses"  ],
-            [/(alias|status)$/i,       "$1es"   ],
-            [/(octop|vir)us$/i,        "$1i"    ],
-            [/(ax|test)is$/i,          "$1es"   ],
-            [/s$/i,                    "s"      ],
-            [/$/,                      "s"      ]
-        ]
-
-        static var singular = [
-            [/(quiz)zes$/i,                                                    "$1"     ],
-            [/(matr)ices$/i,                                                   "$1ix"   ],
-            [/(vert|ind)ices$/i,                                               "$1ex"   ],
-            [/^(ox)en/i,                                                       "$1"     ],
-            [/(alias|status)es$/i,                                             "$1"     ],
-            [/(octop|vir)i$/i,                                                 "$1us"   ],
-            [/(cris|ax|test)es$/i,                                             "$1is"   ],
-            [/(shoe)s$/i,                                                      "$1"     ],
-            [/(o)es$/i,                                                        "$1"     ],
-            [/(bus)es$/i,                                                      "$1"     ],
-            [/([m|l])ice$/i,                                                   "$1ouse" ],
-            [/(x|ch|ss|sh)es$/i,                                               "$1"     ],
-            [/(m)ovies$/i,                                                     "$1ovie" ],
-            [/(s)eries$/i,                                                     "$1eries"],
-            [/([^aeiouy]|qu)ies$/i,                                            "$1y"    ],
-            [/([lr])ves$/i,                                                    "$1f"    ],
-            [/(tive)s$/i,                                                      "$1"     ],
-            [/(hive)s$/i,                                                      "$1"     ],
-            [/([^f])ves$/i,                                                    "$1fe"   ],
-            [/(^analy)ses$/i,                                                  "$1sis"  ],
-            [/((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$/i, "$1$2sis"],
-            [/([ti])a$/i,                                                      "$1um"   ],
-            [/(n)ews$/i,                                                       "$1ews"  ],
-            [/s$/i,                                                            ""       ]
-        ]
-
-        static var irregular = [
-            ['move',   'moves'   ],
-            ['sex',    'sexes'   ],
-            ['child',  'children'],
-            ['man',    'men'     ],
-            ['person', 'people'  ]
-        ]
-        static var uncountable = [
-            "sheep",
-            "fish",
-            "series",
-            "species",
-            "money",
-            "rice",
-            "information",
-            "equipment"
-        ]
-
-        static function toOrdinal(number) {
-            if (11 <= parseInt(number) % 100 && parseInt(number) % 100 <= 13) {
-                return number + "th"
-            } else {
-                switch (parseInt(number) % 10) {
-                    case  1: return number + "st"
-                    case  2: return number + "nd"
-                    case  3: return number + "rd"
-                    default: return number + "th"
-                }
-            }
-        }
-
-        static function toPlural(word) {
-            for (var i = 0; i < this.uncountable.length; i++) {
-                var uncountable = this.uncountable[i];
-                if (word.toLowerCase() == uncountable) {
-                    return uncountable
-                }
-            }
-            for (var i = 0; i < this.irregular.length; i++) {
-                var singular = this.irregular[i][0]
-                var plural   = this.irregular[i][1]
-                if ((word.toLowerCase() == singular) || (word == plural)) {
-                    return plural
-                }
-            }
-            for (var i = 0; i < this.plural.length; i++) {
-                var regex          = this.plural[i][0]
-                var replace_string = this.plural[i][1]
-                if (regex.test(word)) {
-                    return word.replace(regex, replace_string)
-                }
-            }
-        }
-
-        static function toSingular(word) {
-            for (var i = 0; i < this.uncountable.length; i++) {
-                var uncountable = this.uncountable[i]
-                if (word.toLowerCase() == uncountable) {
-                    return uncountable
-                }
-            }
-            for (var i = 0; i < this.irregular.length; i++) {
-                var singular = this.irregular[i][0]
-                var plural   = this.irregular[i][1]
-                if ((word.toLowerCase() == singular) || (word == plural)) {
-                    return singular
-                }
-            }
-            for (var i = 0; i < this.singular.length; i++) {
-                var regex          = this.singular[i][0]
-                var replace_string = this.singular[i][1]
-                if (regex.test(word)) {
-                    return word.replace(regex, replace_string)
-                }
-            }
-        }
-    }
-
-    function toOrdinal(number)
-        Inflector.toOrdinal(number)
-
-    function toPlural(singular: String, count: Number = null) {
-        if (count == null || count > 1) {
-            return Inflector.toPlural(singular)
-        }
-        return singular
-    }
-
-    function toSingular(plural)
-        Inflector.toSingular(plural)
-}
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.web/Plural.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "../../src/jems/ejs.web/Request.es"
  */
 /************************************************************************/
@@ -18213,6 +18261,12 @@ module ejs.web {
          */
         enumerable var route: Route
 
+        /**
+            Count of times the request has been routed. Used to prevent recursive loops.
+            @hide
+         */
+        native var routed: Number
+
         /** 
             Http request scheme (http | https)
          */
@@ -18296,9 +18350,14 @@ module ejs.web {
          */
         native function close(): Void
 
+        /**
+            Check the request security token. If a required security token is defined in the session state, the
+            request must supply the same token with all POST requests. This helps mitigate potential CSRF threats.
+            @throw Throws a SecurityError if the token does not match.
+         */
         function checkSecurityToken() {
             if (session[SecurityTokenName] && session[SecurityTokenName] != params[SecurityTokenName]) {
-                throw "Security token does not match. Potential CSRF attack. Denying request"
+                throw new SecurityError("Security token does not match. Potential CSRF attack. Denying request")
             }
         }
 
@@ -18361,7 +18420,7 @@ module ejs.web {
          */
         native function get finalized(): Boolean 
 
-        /* 
+        /**
             Save flash messages for the next request and delete old flash messages.
          */
         function finalizeFlash() {
@@ -18458,7 +18517,7 @@ module ejs.web {
             return uri.local.resolve(target).normalize
         }
 
-        /*
+        /**
             Make a URI hash from a string.  This converts the target URI specification into a hash of properties 
             describing the target URI.
             @param target String URI target to convert. If this is not a string, the target is returned.
@@ -18508,10 +18567,10 @@ module ejs.web {
             return target
         }
 
-        /*
+        /**
             Select the response content type based on the request "Accept" header . See RFC-2616.
-            @param formats Array of supported mime types
-            @return The selected mime type string
+            @param formats Array of server supported mime types
+            @return formats The selected mime types mime type string
 
             Accept: "application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png"
          */
@@ -18564,6 +18623,11 @@ module ejs.web {
             }
             flash[key] = msg
         }
+
+        /** 
+            @duplicate Stream.off 
+         */
+        native function off(name, observer: Function): Void
 
         /** 
             @duplicate Stream.on
@@ -18621,11 +18685,6 @@ module ejs.web {
                     "<address>" + server.software + " at " + host + " Port " + server.port + 
                     "</address></body>\r\n</html>\r\n")
         }
-
-        /** 
-            @duplicate Stream.removeObserver 
-         */
-        native function removeObserver(name, observer: Function): Void
 
         /**
             Get a security token to help mitigate CSRF threats. The security token is submitted by forms and requests and
@@ -18718,7 +18777,7 @@ module ejs.web {
         function setStatus(status: Number): Void
             this.status = status
 
-        /* 
+        /**
             Prepare the flash message area. This copies flash messages from the session state store into the flash store.
          */
         function setupFlash() {
@@ -18809,7 +18868,7 @@ module ejs.web {
 
         /**
             Write content based on the requested accept mime type
-            @param data
+            @param data Data to send to the client
          */
         function writeContent(data): Void {
             let mime = matchContent("application/json", "text/html", "application/xml", "text/plain")
@@ -18868,10 +18927,6 @@ module ejs.web {
          */
         native function writeFile(file: Path): Boolean
 
-        //  MOB - remove
-        function sendFile(file: Path): Boolean
-            writeFile(file)
-
         /** 
             Send a response to the client. This can be used instead of setting status and calling setHeaders() and write(). 
             The $response argument is an object hash containing status, headers and
@@ -18889,16 +18944,12 @@ module ejs.web {
             autoFinalize()
         }
 
-        //  MOB - remove
-        function sendResponse(response: Object): Void
-            writeResponse(response)
-
         /** 
             Write safely. Write HTML escaped data back to the client.
-            @param args Objects to HTML encode and write back to the client.
+            @param data Objects to HTML encode and write back to the client.
          */
-        function writeSafe(...args): Void
-            write(html(...args))
+        function writeSafe(...data): Void
+            write(html(...data))
 
         /**
             The number of bytes written to the client. This is the count of bytes passed to $write and buffered, 
@@ -18960,7 +19011,8 @@ module ejs.web {
             @option no-store response may not be stored in a cache.
             @option must-revalidate forces caches to observe expiry and other freshness information
             @option proxy-revalidate similar to must-revalidate except only for proxy caches
-//MOB
+            @hide
+            MOB - complete
           */
         function cache(options) {
         }
@@ -19138,18 +19190,32 @@ module ejs.web {
 
     /** 
         Web router class. Routes incoming client HTTP requests to the appropriate location. The Route class supports 
-        configurable user-defined routes. 
+        configurable user-defined routes.  Each application should create a Router instance and then attach matching routes.
 
-        Each application should create a Router instance and then attach matching routes.
+        The Router works by defining routes in a route table. For rapid routing, routes are grouped into sets of 
+        routes with the same leading URI path segment. For example: the route template "/User/login" would be put into
+        the "User" route set. If a route template is a function or regular expression, the route is added to the "Global"
+        route set.
+        
+        The pathInfo and other request properties are examined when selecting a matching route. The request's leading 
+        URI pathInfo segment is used to select a route set and then the request is matched against each route in that set.
+        Routes are matched in the order in which they are defined.
+
         @example:
 
         var r = new Router
 
+        //  Match /some/path and run the custom builder. Target is data for the customBuilder.
+        r.add("/some/path", {run: customBuilder, target: "/other/path"})
+
+        //  Match /some/path and run MvcBuilder with controller == User and action == "register"
+        r.add("@/User/register")
+
         //  Add route for files with a ".es" extension and use the ScriptBuilder to run
-        r.add(/\.es$/,  {run: ScriptBuilder})
+        r.add(/\.es$/, {run: ScriptBuilder})
 
         //  Add route for directories and use the DirBuilder to run
-        r.add(Router.isDir,    {name: "dir", run: DirBuilder})
+        r.add(Router.isDir, {name: "dir", run: DirBuilder})
 
         //  Add route for RESTful routes and run with the MvcBuilder
         r.addResources("User")
@@ -19164,12 +19230,12 @@ module ejs.web {
         r.add("/{controller}/{id}",      {action: "destroy", method: "DELETE"})
         r.add("/{controller}(/do/{action})")
         
-        //  Add route for upper or lower case "D" or "d". Run the default app: MvcBuilder
+        //  Add route for upper or lower case "D" or "d". Run the default app: MvcBuilder, Dash contoller, refresh action.
         r.add("/[Dd]ash/refresh", "@Dash/refresh")
 
-        //  Add route for an "admin" application. This sets the scriptName to "admin" expects an MVC application to be
-        //  located at the directory "myApp"
-        r.add("/admin/", {location: { prefix: "/control", dir: "my"})
+        //  Add route for an "admin" application. This sets the scriptName to "admin" and expects an application to be
+        //      located at the directory "myApp"
+        r.add("/admin/", {location: { scriptName: "/control", dir: "my"})
 
         //  Rewrite a request for "old.html" to new.html
         r.add("/web/old.html",  {rewrite: function(request) { request.pathInfo = "/web/new.html"}})
@@ -19202,11 +19268,11 @@ module ejs.web {
         r.add("/custom", {action: "display", params: { from: "{uri}", transport: "{scheme}" })
 
         //  Nest matching routes
-        let outer = r.add("/blog", {action: "/post/index"})
-        r.add("/comment", {action: "/comment/{action}/{id}", outer: outer})
+        let outer = r.add("/blog", {target: "/post/index"})
+        r.add("/comment", {target: "/comment/{action}/{id}", outer: outer})
 
         //  Match with regular expression. The sub-match is available via $N parameters
-        r.add(/^\/Dash-((Mini)|(Full))$/, {controller: "post", action: "list", kind: "$1"})
+        r.add(/^\/Dash-((Mini)|(Full))$/, {controller: "post", action: "list", params: {kind: "$1"}})
         
         //  Conditional matching. Surround optional tokens in "()"
         r.add("/Dash(/{product}(/{branch}(/{configuration})))", {   
@@ -19235,10 +19301,20 @@ module ejs.web {
         public static const Default = "default"
 
         /**
+            Max calls to route() per request
+         */
+        static const MaxRoute = 20
+
+        /**
             Symbolic constant for Router() to add top-level routes for directory, *.es, *.ejs, generic routes for
             RESTful resources and a catchall route for static pages
          */ 
         public static const Restful = "restful"
+
+        /**
+            Default builder to use when unspecified by a route
+         */
+        public var defaultBuilder = MvcBuilder
 
         /*
             Routes indexed by first component of the URI path/template
@@ -19265,22 +19341,13 @@ module ejs.web {
         public function addDefault(): Void
             add("/{controller}(/{action})", {name: "default", method: "*"})
 
-        /** 
-            Direct routes for MVC apps. These map HTTP methods directly to method names.
-            @hide
-         */
-        public function addDirect(name: String, options: Object = {}): Void {
-            add("/" + name + "/(/{id}(/{action}))", {method: "*"})
-            add("/" + name + "/(/{action})", {contrtoller: name, namespace: "GROUP", method: "*"})
-        }
-
         /**
             Add routes to handle static content, directories, "es" scripts and stand-alone ejs templated pages.
          */
         public function addHandlers(): Void {
             let staticPattern = "\/" + (App.config.directories.static || "static") + "\/.*"
             if (staticPattern) {
-                add(staticPattern, {name: "static", run: StaticBuilder})
+                add(staticPattern, {name: "default", run: StaticBuilder})
             }
             add(/\.es$/,  {name: "es",  run: ScriptBuilder, method: "*"})
             add(/\.ejs$/, {name: "ejs", module: "ejs.template", run: TemplateBuilder, method: "*"})
@@ -19289,9 +19356,10 @@ module ejs.web {
 
         /**
             Add a home page route. This will add or update the "home" page route.
+            @param target Target to invoke when the home page is accessed.
          */
-        public function addHome(target: String): Void
-            add("/", { name: "home", action: target})
+        public function addHome(target: Object): Void
+            add("/", { name: "home", target: target})
 
         /**
             Add restful routes for a singleton resource. 
@@ -19416,11 +19484,6 @@ module ejs.web {
         }
 
         private function insertRoute(r: Route, options: Object): Void {
-            let routeSetName
-            if (r.template is String) {
-                routeSetName = r.template.split("{")[0].split("/")[1]
-            }
-            r.routeSetName = routeSetName || ""
             let routeSet = routes[r.routeSetName] ||= {}
             routeSet[r.name] = r
         }
@@ -19434,9 +19497,15 @@ module ejs.web {
                 The controller or action may be absent. For example: "@Controller/", "@action", "@controller/action".
                 If the string does not begin with an "@", it is interpreted as a literal URI. For example: "/web/index.html".
                 If the options is an object hash, it may contain the options below:
-            @option action Action method to service the request. This may be of the form "controller/action" or "controller/"
+            @option action Action method to service the request if using controllers. This may also be of the form 
+                "controller/action" to set both the action and controller in one property.
             @option controller Controller to service the request.
             @option name Name to give to the route. If absent, the name is created from the controller and action names.
+                The route naming rules are:
+                1. Use options.name if provided, else
+                2. Use any action name, else
+                3. Use "index"
+                The action name is sleuthed from the template if no options are given.
             @option outer Parent route. The parent's template and parameters are appended to this route.
             @option params Override parameter to provide to the request in the Request.params.
             @examples:
@@ -19445,7 +19514,9 @@ module ejs.web {
             @option name Name for the route
             @option method String|RegExp HTTP methods to support.
             @option limits Limits object for the requests on this route. See HttpServer.limits.
-            @option location Object hash with properties prefix and dir
+            @option location Application location to serve the request. Location contains two properties: scriptName 
+                which is the string URI prefix for the application and dir which is a Path to the physical file system 
+                directory containing the applciation.
             @option params Override request parameters.
             @option parent Outer parent route
             @option redirect Redirect requests on this route to this URI.
@@ -19454,6 +19525,9 @@ module ejs.web {
                 response hash with status, headers and body properties. The builder function should return a function 
                 of the form:
                     function (request: Request): Object
+            @option set Route set name in which to add this route. Defaults to the first component of the template if
+                the template is a string, otherwise "".
+            @option target Target for the route. This can be a Uri path or a controller/action pair: "@[controller/]action".
             @example:
                 r.add("/User/{action}", {controller: "User"})
          */
@@ -19464,7 +19538,9 @@ module ejs.web {
         }
 
         /**
-            Lookup a route
+            Lookup a route by name. The route name is determined by the options provided when the route was created.
+            Action names will be sleuthed from the template if no options provided.
+            Outer routes are pre-pended if defined.
             @param options Route description. This can be either string or object hash. If it is a string, it should be
                 of the form "controller/action". If the options is an object hash, it should have properties
                 controller and action. The controller is used as the index for the route set. The action property is
@@ -19529,20 +19605,21 @@ module ejs.web {
             }
             if (r.rewrite && !r.rewrite(request)) {
                 log.debug(5, "Request rewritten as \"" + request.pathInfo + "\" (reroute)")
-                return route(request)
+                return reroute(request)
             }
             if (r.redirect) {
                 //  TODO OPT - could this this via a custom builder
                 request.pathInfo = r.redirect
                 log.debug(5, "Route redirected to \"" + request.pathInfo + "\" (reroute)")
-                return route(request)
+                return reroute(request)
             }
             request.route = r
             let location = r.location
-            if (location && location.prefix && location.dir) {
-                request.setLocation(location.prefix, location.dir)
-                log.debug(4, "Set location prefix \"" + location.prefix + "\" dir \"" + location.dir + "\" (reroute)")
-                return route(request)
+            if (location && location.scriptName && location.scriptName != request.scriptName && location.dir) {
+                request.setLocation(location.scriptName, location.dir)
+                log.debug(4, "Set location scriptName \"" + location.scriptName + "\" dir \"" + 
+                        location.dir + "\" (reroute)")
+                return reroute(request)
             }
             if (r.module && !r.initialized) {
                 global.load(r.module + ".mod")
@@ -19572,6 +19649,21 @@ module ejs.web {
             return r.builder(request)
         }
 
+        /**
+            Reset the routing tables by removing all routes
+         */
+        public function reset(request): Void {
+            routes = {}
+        }
+
+        private function reroute(request): Function {
+            request.routed ||= 1
+            if (request.routed++ > MaxRoute) {
+                throw "Too many route calls. Route table may have a loop."
+            }
+            return route(request)
+        }
+
         /** 
             Route a request. The request is matched against the configured route table. 
             The call returns the web application to execute.
@@ -19582,7 +19674,6 @@ module ejs.web {
         public function route(request): Function {
             let log = request.log
             log.debug(5, "Routing " + request.pathInfo)
-
             if (request.method == "POST") {
                 let method = request.params["-ejs-method-"] || request.header("X-HTTP-METHOD-OVERRIDE")
                 if (method && method.toUpperCase() != request.method) {
@@ -19610,13 +19701,21 @@ module ejs.web {
         }
 
         /**
+            Set the default builder function for the route
+            @hide
+         */
+        public function setDefaultBuilder(builder: Function): Void {
+            defaultBuilder = builder
+        }
+
+        /**
             Show the route table
             @param extra Set to true to display extra route information
          */
         public function show(extra: Boolean = false): Void {
             let lastController
             for each (name in Object.getOwnPropertyNames(routes).sort()) {
-                print("\n" + (name || "Global")+ ":")
+                print("\n" + (name || "Global")+ "/")
                 for each (r in routes[name]) {
                     showRoute(r, extra)
                 }
@@ -19698,9 +19797,9 @@ module ejs.web {
         var limits: Object
 
         /**
-            Application location to serve the request. Location contains two properties: prefix which is the string 
+            Application location to serve the request. Location contains two properties: scriptName which is the string 
             URI prefix for the application and dir which is a Path to the physical file system directory containing 
-            the MVC applciation.
+            the applciation.
          */
         var location: Object
 
@@ -19769,6 +19868,11 @@ module ejs.web {
             Route set owning the route. This is the first component of the template.
          */
         var routeSetName: String
+
+        /**
+            Target mapping for the route. The route maps from the template to the target.
+         */
+        var target: String
 
         /**
             Template pattern for URIs. The template is used to match the request pathInfo. The template can be a 
@@ -19845,6 +19949,7 @@ module ejs.web {
             inheritRoutes(options)
             compileTemplate(options)
             setName(options)
+            setRouteSetName(options)
             setRouteProperties(options)
         }
 
@@ -19875,7 +19980,7 @@ module ejs.web {
                     template = ptem + tem
                 }
                 for (p in parent.params) {
-                    params[p] = parent.params[p]
+                    params[p] ||= parent.params[p]
                 }
             }
             this.originalTemplate = template
@@ -19967,40 +20072,55 @@ module ejs.web {
             if (options.action) {
                 params.action = options.action
             }
-            let action = params.action
-            if (action) {
-                if (action.contains("/")) {
-                    let [controller, act] = action.trimStart("/").split("/")
-                    params.action = action = act || "index"
-                    params.controller = controller
-                } 
-                if (action.contains("::")) {
-                    let [ns, act] = action.split("::")
-                    params.action = action
-                    params.namespace = ns
-                }
-            }
             if (options.controller) {
                 params.controller = options.controller
             }
+            if (options.namespace) {
+                params.namespace = options.namespace
+            }
         }
+/*
 
+    add("/abc/def")             => add("/abc/def", {target: "@/abc/def"})
+    add("/abc/def", "/path")    => add("/abc/def", {target: "/path"})
+    add("/abc/def", "@action")  => add("/abc/def", {target: "@action"})
+                                => add("/abc/def", {action: "action"})
+
+ */
+
+        /*
+            If no options provided, sleuth the action from the template. This will probably also end up setting 
+            the name to the action component
+         */
         private function parseOptions(options: Object): Object {
             if (!options) {
-                let t = template.replace(/[\(\)]/g, "")
-                options = {action: "@" + t.split("{")[0].trimStart("/")}
+                if (template is String) {
+                    if (template[0] == '@') {
+                        let t = template.replace(/[\(\)]/g, "")
+                        options = {target: t.split("{")[0]}
+                        template = template.trimStart("@")
+                    }
+                }
+                options ||= {}
             } else if (options is String) {
-                options = {action: options}
+                options = {target: options}
             }
-            let action = options.action
-            if (action) {
-/* UNUSED
-                if (action is Function) {
-                    options.run ||= options.action
-                } else 
-*/
-                if (action[0] == '@') {
-                    [options.controller, options.action] = action.slice(1).split("/")
+            target = options.target
+            if (target) {
+                if (target[0] == '@') {
+                    if (target.contains("/")) {
+                        [options.controller, options.action] = target.slice(1).trimStart("/").split("/")
+                    } else {
+                        options.action = target.slice(1)
+                    }
+                }
+            }
+            if (options.action) {
+                if (options.action.contains("/")) {
+                    [options.controller, options.action] = options.action.trimStart("/").split("/")
+                } 
+                if (options.action.contains("::")) {
+                    [options.namespace, options.action] = options.action.split("::")
                 }
             }
             if (options.middleware) {
@@ -20010,16 +20130,44 @@ module ejs.web {
         }
 
         /*
-            Create a useful (deterministic) name for the route
+            Create a useful (deterministic) name for the route. Rules are:
+            1. Use options.name if provided, else
+            2. Use any action name, else
+            3. Use "index"
+
+            Action names will be sleuthed from the template if no options provided.
+            Outer routes are pre-pended if defined.
          */
-        private function setName(options: Object) {
-            name = options.name || options.action || "index"
+        private function setName(options: Object): Void {
+            name = options.name
+            if (!name && options.action) {
+                name = options.action
+            }
+            if (!name) {
+                if (template is String) {
+                    /* Take second component */
+                    name = template.split("{")[0].split("/")[2]
+                } else if (template is Function) {
+                    name = template.name
+                }
+            }
+            name ||= "index"
             if (outer && !options.name) {
                 name = options.name + "/" + name
             }
             if (!name) {
                 throw "Route has no name defined"
             }
+        }
+
+        private function setRouteSetName(options: Object): Void {
+            if (options) {
+                routeSetName = options.set
+            }
+            if (!routeSetName && template is String) {
+                routeSetName = template.split("{")[0].split("/")[1]
+            }
+            routeSetName ||= ""
         }
 
         private function setRouteProperties(options: Object): Void {
@@ -20036,7 +20184,7 @@ module ejs.web {
             } else {
                 method = options.method || "GET"
             }
-            options.run ||= MvcBuilder
+            options.run ||= router.defaultBuilder
             if (!(options.run is Function)) {
                 response = options.run
                 builder = function (request) {
@@ -20911,12 +21059,6 @@ UNUSED && KEEP
      */
     function unescapeHtml(s: String): String
         s.replace(/&amp;/g,'&').replace(/&gt;/g,'>').replace(/&lt;/g,'<').replace(/&quot;/g,'"')
-
-    //  TODO - need real pluralization and toSingular
-    function toPlural(word: String): String {
-        return word + "s"
-    }
-
 }
 /************************************************************************/
 /*
@@ -21175,6 +21317,7 @@ module ejs.web {
         /**
             Render a HTML division. This creates an HTML element with the required options. It is useful to generate
                 a dynamically refreshing division.
+            @param body Division body content
             @param options Optional extra options. See $View for a list of the standard options.
             @examples
                 <% div({ refresh: "/getData", period: 2000}) %>
@@ -21351,8 +21494,8 @@ print("CATCH " + e)
 
         /**
             Emit a selection list. 
-            @param field Field to provide the default value for the list. The field should be a property of the form control 
-                record. The field can be a simple property of the record or it can have multiple parts, 
+            @param name Field name to provide the default value for the list. The field should be a property of the 
+                form control record. The field can be a simple property of the record or it can have multiple parts, 
                 i.e. field.field.field. The field name is used to create the HTML input control name.
                 If this call is used without a form control record, the actual data value should be supplied via the 
                 options.value property.
@@ -21387,9 +21530,7 @@ print("CATCH " + e)
 //  MOB -- redo progress using a commet style
         /** 
             Emit a progress bar.
-            @param data Optional initial data for the control. The data option may be used with the refresh option 
-                to dynamically refresh the data. Progress data is a simple Number in the range 0 to 100 and represents 
-                a percentage completion value.
+            @param percent Progress percentage (0-100) 
             @param options Optional extra options. See $View for a list of the standard options.
             @example
                 <% progress(percent, { refresh: "/getData", period: 2000" }) %>
@@ -21583,8 +21724,8 @@ print("CATCH " + e)
             @param data Initial data for the control. Tab data can be an array of objects -- one per tab. It can also
                 be a single object where the tab text is the property key and the property value is the target.
             @param options Optional extra options. See $View for a list of the standard options.
-            @param click Invoke the target URI in the foreground when clicked.
-            @param remote Invoke the target URI in the background when clicked.
+            @option click Invoke the target URI in the foreground when clicked.
+            @option remote Invoke the target URI in the background when clicked.
             @example
                 tabs({Status: "pane-1", "Edit: "pane-2"})
                 tabs([{Status: "/url-1"}, {"Edit: "/url-2"}], { click: true})
@@ -21687,62 +21828,56 @@ MOB -- review and rethink this
 
         /***************************************** Wrapped Request Functions **********************************************/
         /**
-            @duplicate Request.link
+            @duplicate ejs.web::Request.link
          */
-        function link(parts: Object): Uri
-            request.link(parts)
+        function link(target: Object): Uri
+            request.link(target)
 
         /** 
-            @duplicate Request.redirect
+            @duplicate ejs.web::Request.redirect
          */
-        function redirect(location: *, status: Number = Http.MovedTemporarily): Void
-            request.redirect(location)
+        function redirect(target: *, status: Number = Http.MovedTemporarily): Void
+            request.redirect(target)
 
         /** 
-            @duplicate Request.session 
+            @duplicate ejs.web::Request.session 
          */
         function get session(): Session 
             request.session
 
         /** 
-            @duplicate Request.setHeader
+            @duplicate ejs.web::Request.setHeader
          */
         function setHeader(key: String, value: String, overwrite: Boolean = true): Void
             request.setHeader(key, value, overwrite)
 
         /**
-            @duplicate Request.setHeaders
+            @duplicate ejs.web::Request.setHeaders
          */
         function setHeaders(headers: Object, overwrite: Boolean = true): Void
             request.setHeaders(headers, overwrite)
 
         /**
-            @duplicate Request.setStatus
+            @duplicate ejs.web::Request.setStatus
          */
         function setStatus(status: Number): Void
             request.setStatus(status)
 
         /** 
-            @duplicate Request.show
+            @duplicate ejs.web::Request.show
             @hide
          */
         function show(...args): Void
             request.show(...args)
 
         /**
-            @duplicate Request.toplink
-         */
-        function toplink(parts: Object): Uri
-            request.toplink(parts)
-
-        /**
-            @duplicate Request.write
+            @duplicate ejs.web::Request.write
          */
         function write(...data): Number
             request.write(...data)
 
         /**
-            @duplicate Request.writeSafe
+            @duplicate ejs.web::Request.writeSafe
          */
         function writeSafe(...data): Number
             request.writeSafe(...data)
@@ -21750,7 +21885,12 @@ MOB -- review and rethink this
         /*********************************************** Support ****************************************************/
         /**
             Get the data value for presentation.
-            @param record Object containing the data to present. This could be a plain-old-object or it could be a model.
+            @param value Data to present
+            @param options Formatting options
+            @option formatter Optional data formatter. If undefined, defaults to a basic formatter based on the value's
+                data type.
+            @option escape If true, the data will be HTML escaped
+            @return The formatted data.
          */
         function formatValue(value: Object, options: Object): String {
             if (value == undefined) {
@@ -21797,12 +21937,14 @@ MOB -- review and rethink this
         private function getOptions(options: Object): Object
             (options is String) ? request.makeUriHash(options) : options
 
-        /*
-            Get the data value. Data may be:
-                options.value       Overrides all
-                data                if a record is not defined
-                fieldname           data is a record[data] if a simple string
-                { field: name }
+//  MOB -- refactor - poor API
+        /**
+            @param record Optional record holding the data to display
+            @param data String field name in record or object hash {field: field}. If record is not defined, "data" is
+                the actual data.
+            @param options Optional extra options. See $View for a list of the standard options.
+            @param value Override value.
+            @hide
          */
         function getValue(record: Object, data: Object, options: Object): Object {
             let value

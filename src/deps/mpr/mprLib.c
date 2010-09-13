@@ -634,7 +634,7 @@ static void monitorStack();
 static int mapProt(int flags);
 #endif
 
-static MprBlk *_mprAllocBlock(MprCtx ctx, MprHeap *heap, MprBlk *parent, uint usize);
+static MprBlk *mprAllocBlockInternal(MprCtx ctx, MprHeap *heap, MprBlk *parent, uint usize);
 
 /*
     Initialize the memory subsystem
@@ -744,7 +744,7 @@ static MprCtx allocHeap(MprCtx ctx, cchar *name, uint heapSize, bool threadSafe,
     pageHeap = &mpr->pageHeap;
     mprAssert(pageHeap);
 
-    if (unlikely((bp = _mprAllocBlock(ctx, pageHeap, NULL, usize)) == 0)) {
+    if (unlikely((bp = mprAllocBlockInternal(ctx, pageHeap, NULL, usize)) == 0)) {
         allocError(parent, usize);
         unlockHeap(pageHeap);
         return 0;
@@ -848,7 +848,7 @@ MprHeap *mprAllocSlab(MprCtx ctx, cchar *name, uint objSize, uint count, bool th
 /*
     Allocate a block. Not used to allocate heaps.
  */
-void *_mprAlloc(MprCtx ctx, uint usize)
+void *mprAllocInternal(MprCtx ctx, uint usize)
 {
     MprBlk      *bp, *parent;
     MprHeap     *heap;
@@ -862,7 +862,7 @@ void *_mprAlloc(MprCtx ctx, uint usize)
     heap = mprGetHeap(parent);
     mprAssert(heap);
 
-    if (unlikely((bp = _mprAllocBlock(ctx, heap, parent, usize)) == 0)) {
+    if (unlikely((bp = mprAllocBlockInternal(ctx, heap, parent, usize)) == 0)) {
         allocError(parent, usize);
         return 0;
     }
@@ -873,11 +873,11 @@ void *_mprAlloc(MprCtx ctx, uint usize)
 /*
     Allocate and zero a block
  */
-void *_mprAllocZeroed(MprCtx ctx, uint size)
+void *mprAllocZeroedInternal(MprCtx ctx, uint size)
 {
     void    *newBlock;
 
-    newBlock = _mprAlloc(ctx, size);
+    newBlock = mprAllocInternal(ctx, size);
     mprAssert(newBlock);
 
     if (newBlock) {
@@ -890,7 +890,7 @@ void *_mprAllocZeroed(MprCtx ctx, uint size)
 /*
     Allocate an object. Typically used via the macro: mprAllocObj
  */
-void *_mprAllocWithDestructor(MprCtx ctx, uint size, MprDestructor destructor)
+void *mprAllocWithDestructorInternal(MprCtx ctx, uint size, MprDestructor destructor)
 {
     MprBlk      *bp;
     void        *ptr;
@@ -898,7 +898,7 @@ void *_mprAllocWithDestructor(MprCtx ctx, uint size, MprDestructor destructor)
     mprAssert(VALID_CTX(ctx));
     mprAssert(size > 0);
 
-    ptr = _mprAlloc(ctx, size + sizeof(MprDestructor));
+    ptr = mprAllocInternal(ctx, size + sizeof(MprDestructor));
     mprAssert(ptr);
     if (ptr == 0) {
         return 0;
@@ -989,11 +989,11 @@ void mprInitBlock(MprCtx ctx, void *ptr, uint size)
 /*
     Allocate and zero a block
  */
-void *_mprAllocWithDestructorZeroed(MprCtx ctx, uint size, MprDestructor destructor)
+void *mprAllocWithDestructorZeroedInternal(MprCtx ctx, uint size, MprDestructor destructor)
 {
     void    *newBlock;
 
-    newBlock = _mprAllocWithDestructor(ctx, size, destructor);
+    newBlock = mprAllocWithDestructorInternal(ctx, size, destructor);
     if (newBlock) {
         memset(newBlock, 0, size);
     }
@@ -1104,7 +1104,7 @@ void mprFreeChildren(MprCtx ptr)
 /*
     Rallocate a block
  */
-void *_mprRealloc(MprCtx ctx, void *ptr, uint usize)
+void *mprReallocInternal(MprCtx ctx, void *ptr, uint usize)
 {
     MprHeap     *heap;
     MprBlk      *parent, *bp, *newbp, *child;
@@ -1116,7 +1116,7 @@ void *_mprRealloc(MprCtx ctx, void *ptr, uint usize)
     mpr = mprGetMpr(ctx);
 
     if (ptr == 0) {
-        return _mprAlloc(ctx, usize);
+        return mprAllocInternal(ctx, usize);
     }
 
     mprAssert(VALID_CTX(ptr));
@@ -1130,7 +1130,7 @@ void *_mprRealloc(MprCtx ctx, void *ptr, uint usize)
     parent = GET_BLK(ctx);
     mprAssert(parent);
 
-    newPtr = _mprAlloc(ctx, usize);
+    newPtr = mprAllocInternal(ctx, usize);
     if (newPtr == 0) {
         return 0;
     }
@@ -1255,7 +1255,7 @@ void mprReparentBlock(MprCtx ctx, cvoid *ptr)
 }
 
 
-char *_mprStrdup(MprCtx ctx, cchar *str)
+char *mprStrdupInternal(MprCtx ctx, cchar *str)
 {
     char    *newp;
     int     len;
@@ -1266,7 +1266,7 @@ char *_mprStrdup(MprCtx ctx, cchar *str)
         str = "";
     }
     len = (int) strlen(str) + 1;
-    newp = (char*) _mprAlloc(ctx, len);
+    newp = (char*) mprAllocInternal(ctx, len);
     if (newp) {
         memcpy(newp, str, len);
     }
@@ -1274,7 +1274,7 @@ char *_mprStrdup(MprCtx ctx, cchar *str)
 }
 
 
-char *_mprStrndup(MprCtx ctx, cchar *str, uint usize)
+char *mprStrndupInternal(MprCtx ctx, cchar *str, uint usize)
 {
     char    *newp;
     uint    len;
@@ -1286,7 +1286,7 @@ char *_mprStrndup(MprCtx ctx, cchar *str, uint usize)
     }
     len = (int) strlen(str) + 1;
     len = min(len, usize);
-    newp = (char*) _mprAlloc(ctx, len);
+    newp = (char*) mprAllocInternal(ctx, len);
     if (newp) {
         memcpy(newp, str, len);
     }
@@ -1294,13 +1294,13 @@ char *_mprStrndup(MprCtx ctx, cchar *str, uint usize)
 }
 
 
-void *_mprMemdup(MprCtx ctx, cvoid *ptr, uint usize)
+void *mprMemdupInternal(MprCtx ctx, cvoid *ptr, uint usize)
 {
     char    *newp;
 
     mprAssert(VALID_CTX(ctx));
 
-    newp = (char*) _mprAlloc(ctx, usize);
+    newp = (char*) mprAllocInternal(ctx, usize);
     if (newp) {
         memcpy(newp, ptr, usize);
     }
@@ -1311,7 +1311,7 @@ void *_mprMemdup(MprCtx ctx, cvoid *ptr, uint usize)
 /*
     Allocate a block from a heap. Must be heap locked when called.
  */
-static MprBlk *_mprAllocBlock(MprCtx ctx, MprHeap *heap, MprBlk *parent, uint usize)
+static MprBlk *mprAllocBlockInternal(MprCtx ctx, MprHeap *heap, MprBlk *parent, uint usize)
 {
     MprBlk      *bp;
     Mpr         *mpr;
@@ -2288,7 +2288,7 @@ static void printMprHeaps(MprCtx ctx)
     MprHeap     *heap;
     MprRegion   *region;
     cchar       *kind;
-    int         available, total, remaining;
+    int64       available, total, remaining;
 
     bp = MPR_GET_BLK(ctx);
 
@@ -2325,10 +2325,10 @@ static void printMprHeaps(MprCtx ctx)
         mprLog(ctx, 0, "    Alloc calls              %,10d",            heap->totalAllocCalls);
 
         if (heap->flags & (MPR_ALLOC_PAGE_HEAP | MPR_ALLOC_ARENA_HEAP | MPR_ALLOC_SLAB_HEAP)) {
-            mprLog(ctx, 0, "    Heap Regions             %,10d K",      total / 1024);
-            mprLog(ctx, 0, "    Depleted regions         %,10d K",      available / 1024);
+            mprLog(ctx, 0, "    Heap Regions             %,10d K",      (int) (total / 1024));
+            mprLog(ctx, 0, "    Depleted regions         %,10d K",      (int) (available / 1024));
             if (heap->region) {
-                mprLog(ctx, 0, "    Unallocated memory       %,10d K",  remaining / 1024);
+                mprLog(ctx, 0, "    Unallocated memory       %,10d K",  (int) (remaining / 1024));
             }            
         }
             
@@ -2514,7 +2514,6 @@ int mprWaitForSingleIO(MprCtx ctx, int fd, int desiredMask, int timeout)
 void mprWaitForIO(MprWaitService *ws, int timeout)
 {
     MSG     msg;
-    int     rc;
 
     mprAssert(ws->hwnd);
 
@@ -2529,8 +2528,7 @@ void mprWaitForIO(MprWaitService *ws, int timeout)
             return;
         }
         ws->willAwake = mprGetMpr(ws)->eventService->now + timeout;
-        rc = SetTimer(ws->hwnd, 0, timeout, NULL);
-        mprAssert(rc != 0);
+        SetTimer(ws->hwnd, 0, timeout, NULL);
 
         if (GetMessage(&msg, NULL, 0, 0) == 0) {
             mprTerminate(ws, 1);
@@ -2674,7 +2672,7 @@ void mprSetWinMsgCallback(MprWaitService *ws, MprMsgCallback callback)
 
 
 #else
-void __mprAsyncDummy() {}
+void stubMprAsync() {}
 #endif /* MPR_EVENT_ASYNC */
 
 /*
@@ -2840,7 +2838,7 @@ char *mprStealBuf(MprCtx ctx, MprBuf *bp)
  */
 void mprAddNullToBuf(MprBuf *bp)
 {
-    int     space;
+    size_t      space;
 
     space = bp->endbuf - bp->end;
     if (space < (int) sizeof(char)) {
@@ -3073,7 +3071,7 @@ int mprPutSubStringToBuf(MprBuf *bp, cchar *str, int count)
     int     len;
 
     if (str) {
-        len = strlen(str);
+        len = (int) strlen(str);
         len = min(len, count);
         if (len > 0) {
             return mprPutBlockToBuf(bp, str, len);
@@ -4256,11 +4254,11 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
             destp += strlen(*ep) + 1;
         }
         if (!hasSystemRoot) {
-            mprSprintf(cmd, destp, endp - destp - 1, "SYSTEMROOT=%s", SYSTEMROOT);
+            mprSprintf(cmd, destp, (int) (endp - destp - 1), "SYSTEMROOT=%s", SYSTEMROOT);
             destp += 12 + strlen(SYSTEMROOT);
         }
         if (!hasPath) {
-            mprSprintf(cmd, destp, endp - destp - 1, "PATH=%s", PATH);
+            mprSprintf(cmd, destp, (int) (endp - destp - 1), "PATH=%s", PATH);
             destp += 6 + strlen(PATH);
         }
         *destp++ = '\0';
@@ -5265,7 +5263,7 @@ char *mprDecode64(MprCtx ctx, cchar *s)
     char        *buffer, *bp;
     int         len, c, i, j, shift;
 
-    len = strlen(s);
+    len = (int) strlen(s);
     if ((buffer = mprAlloc(ctx, len + 1)) == 0) {
         return NULL;
     }
@@ -5300,7 +5298,7 @@ char *mprEncode64(MprCtx ctx, cchar *s)
     char    *buffer, *bp;
     int     len, x, i, j, shift;
 
-    len = strlen(s) * 2;
+    len = (int) strlen(s) * 2;
     if ((buffer = mprAlloc(ctx, len + 1)) == 0) {
         return NULL;
     }
@@ -7202,7 +7200,7 @@ void mprWakeNotifier(MprCtx ctx)
 }
 
 #else
-void __mprDummyEpoll() {}
+void stubMmprEpoll() {}
 #endif /* MPR_EVENT_EPOLL */
 
 /*
@@ -7680,7 +7678,7 @@ int mprWrite(MprFile *file, cvoid *buf, uint count)
 
 int mprWriteString(MprFile *file, cchar *str)
 {
-    return mprWrite(file, str, strlen(str));
+    return mprWrite(file, str, (int) strlen(str));
 }
 
 
@@ -7869,7 +7867,7 @@ int mprPuts(MprFile *file, cchar *str)
     int     total, bytes, count;
 
     mprAssert(file);
-    count = strlen(str);
+    count = (int) strlen(str);
 
     /*
         Buffer output and flush when full.
@@ -8895,7 +8893,7 @@ void mprWakeNotifier(MprCtx ctx)
 }
 
 #else
-void __mprDummyKqueue() {}
+void stubMprKqueue() {}
 #endif /* MPR_EVENT_KQUEUE */
 
 /*
@@ -11588,7 +11586,7 @@ char *mprGetNormalizedPath(MprCtx ctx, cchar *pathArg)
         Allocate one spare byte incase we need to break into segments. If so, will add a trailing "/" to make 
         parsing easier later.
      */
-    len = strlen(pathArg);
+    len = (int) strlen(pathArg);
     if ((path = mprAlloc(ctx, len + 2)) == 0) {
         return NULL;
     }
@@ -11673,7 +11671,7 @@ char *mprGetNormalizedPath(MprCtx ctx, cchar *pathArg)
                 continue;
             }
             segments[i++] = mark;
-            len += sp - mark;
+            len += (int) (sp - mark);
 #if KEEP
             if (i == 1 && segmentCount == 1 && fs->hasDriveSpecs && strchr(mark, ':') != 0) {
                 /*
@@ -11689,7 +11687,7 @@ char *mprGetNormalizedPath(MprCtx ctx, cchar *pathArg)
 
     if (--sp > mark) {
         segments[i++] = mark;
-        len += sp - mark;
+        len += (int) (sp - mark);
     }
     mprAssert(i <= segmentCount);
     segmentCount = i;
@@ -12478,7 +12476,7 @@ void mprWakeNotifier(MprCtx ctx)
 }
 
 #else
-void __mprDummyPollWait() {}
+void stubMprPollWait() {}
 #endif /* MPR_EVENT_POLL */
 
 /*
@@ -12712,7 +12710,7 @@ int mprStaticPrintf(MprCtx ctx, cchar *fmt, ...)
     va_start(ap, fmt);
     sprintfCore(ctx, buf, MPR_MAX_STRING, fmt, ap);
     va_end(ap);
-    return mprWrite(fs->stdOutput, buf, strlen(buf));
+    return mprWrite(fs->stdOutput, buf, (int) strlen(buf));
 }
 
 
@@ -12730,7 +12728,7 @@ int mprStaticPrintfError(MprCtx ctx, cchar *fmt, ...)
     va_start(ap, fmt);
     sprintfCore(ctx, buf, MPR_MAX_STRING, fmt, ap);
     va_end(ap);
-    return mprWrite(fs->stdError, buf, strlen(buf));
+    return mprWrite(fs->stdError, buf, (int) strlen(buf));
 }
 
 
@@ -13255,7 +13253,7 @@ static void outFloat(MprCtx ctx, Format *fmt, char specChar, double value)
         // sprintf(result, "%*.*e", fmt->width, fmt->precision, value);
     }
 
-    len = strlen(result);
+    len = (int) strlen(result);
     fill = fmt->width - len;
     if (fmt->flags & SPRINTF_COMMA) {
         if (((len - 1) / 3) > 0) {
@@ -13377,7 +13375,7 @@ char *mprDtoa(MprCtx ctx, double value, int ndigits, int mode, int flags)
             Note: ndigits < 0 seems to trim N digits from the end with rounding.
          */
         ip = intermediate = dtoa(value, mode, ndigits, &period, &sign, NULL);
-        len = strlen(intermediate);
+        len = (int) strlen(intermediate);
         exponent = period - 1;
 
         if (mode == MPR_DTOA_ALL_DIGITS && ndigits == 0) {
@@ -13422,7 +13420,7 @@ char *mprDtoa(MprCtx ctx, double value, int ndigits, int mode, int flags)
                         count = totalDigits + sign - mprGetBufLength(buf);
                         mprPutCharToBuf(buf, '.');
                         mprPutSubStringToBuf(buf, &ip[period], count);
-                        mprPutPadToBuf(buf, '0', count - strlen(&ip[period]));
+                        mprPutPadToBuf(buf, '0', count - (int) strlen(&ip[period]));
                     }
                 }
 
@@ -13821,7 +13819,7 @@ MprRomFileSystem *mprCreateRomFileSystem(MprCtx ctx, cchar *path)
 
 
 #else /* BLD_FEATURE_ROMFS */
-void __dummy_romfs() {}
+void stubRomfs() {}
 #endif /* BLD_FEATURE_ROMFS */
 
 /*
@@ -14164,7 +14162,7 @@ static void readPipe(MprWaitService *ws)
 }
 
 #else
-void __dummyMprSelectWait() {}
+void stubMprSelectWait() {}
 #endif /* MPR_EVENT_SELECT */
 
 /*
@@ -15951,7 +15949,7 @@ char *mprReallocStrcat(MprCtx ctx, int destMax, char *buf, cchar *src, ...)
         destMax = INT_MAX;
     }
 
-    existingLen = (buf) ? strlen(buf) : 0;
+    existingLen = (buf) ? (int) strlen(buf) : 0;
     required = existingLen + 1;
 
     str = (char*) src;
@@ -19192,7 +19190,8 @@ char *mprFormatTime(MprCtx ctx, cchar *fmt, struct tm *tp)
         tp = &tm;
     }
     endp = &localFmt[sizeof(localFmt) - 1];
-    for (cp = fmt, size = sizeof(localFmt) - 1; *cp && dp < &localFmt[sizeof(localFmt) - 32]; size = endp - dp - 1) {
+    size = (int) sizeof(localFmt) - 1;
+    for (cp = fmt; *cp && dp < &localFmt[sizeof(localFmt) - 32]; size = (int) (endp - dp - 1)) {
         if (*cp == '%') {
             *dp++ = *cp++;
         again:
@@ -20722,7 +20721,7 @@ int mprScanUs(uni *us, cchar *fmt, ...)
 }
 
 #else
-void __mprDummyUnicode() {}
+void stubMprUnicode() {}
 #endif
 
 /*
@@ -20938,7 +20937,7 @@ void mprWriteToOsLog(MprCtx ctx, cchar *message, int flags, int level)
 }
 
 #else
-void __dummyMprUnix() {}
+void stubMprUnix() {}
 #endif /* BLD_UNIX_LIKE */
 
 /*
@@ -21150,7 +21149,7 @@ int usleep(uint msec)
 
 
 #else
-void __dummyMprVxWorks() {}
+void stubMprVxWorks() {}
 #endif /* VXWORKS */
 
 /*
@@ -21823,7 +21822,7 @@ static cchar *getHive(cchar *keyPath, HKEY *hive)
 }
 
 #else
-void __dummyMprWin() {}
+void stubMprWin() {}
 #endif /* BLD_WIN_LIKE */
 
 /*
@@ -22854,7 +22853,7 @@ void mprWriteToOsLog(MprCtx ctx, cchar *message, int flags, int level)
 }
 
 #else
-void __dummyMprWince() {}
+void stubMprWince() {}
 #endif /* WINCE */
 
 /*
@@ -25294,7 +25293,7 @@ rshift(Bigint *b, int k)
             while(x < xe)
                 *x1++ = *x++;
         }
-    if ((b->wds = x1 - b->x) == 0)
+    if ((b->wds = (int) (x1 - b->x)) == 0)
         b->x[0] = 0;
     }
 
@@ -25543,7 +25542,7 @@ gethex( CONST char **sp, U *rvp, int rounding, int sign)
         word1(rvp) = Big1;
         return;
         }
-    n = s1 - s0 - 1;
+    n = (int) (s1 - s0) - 1;
     for(k = 0; n > (1 << (kshift-2)) - 1; n >>= 1)
         k++;
     b = Balloc(k);
@@ -25572,7 +25571,7 @@ gethex( CONST char **sp, U *rvp, int rounding, int sign)
         n += 4;
         }
     *x++ = L;
-    b->wds = n = x - b->x;
+    b->wds = n = (int) (x - b->x);
     n = ULbits*n - hi0bits(L);
     nbits = Nbits;
     lostbits = 0;
@@ -26169,7 +26168,7 @@ strtod
         else if (nd < 16)
             z = 10*z + c - '0';
     nd0 = nd;
-    bc.dp0 = bc.dp1 = s - s0;
+    bc.dp0 = bc.dp1 = (int) (s - s0);
 #ifdef USE_LOCALE
     s1 = localeconv()->decimal_point;
     if (c == *s1) {
@@ -26191,7 +26190,7 @@ strtod
 #endif
     if (c == '.') {
         c = *++s;
-        bc.dp1 = s - s0;
+        bc.dp1 = (int) (s - s0);
         bc.dplen = bc.dp1 - bc.dp0;
         if (!nd) {
             for(; c == '0'; c = *++s)

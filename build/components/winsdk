@@ -7,31 +7,30 @@ defineComponent() {
     if [ $BLD_CROSS = 1 -a $KIND = HOST -a $BLD_HOST_OS != "WIN" ] ; then 
         return 0
     fi
-
     name=winsdk
-    partial="Include/WinBase.h"
-    path=`probe --emit-dir --path "$1" --partial "$partial" $name`
+    path=`probe --emit-dir --path "$1" --partial "Include/WinBase.h" $name`
     if [ "$path" = "" ] ; then
         warnComponent "Windows SDK" \
             "Download from http://msdn.microsoft.com/en-us/windowsserver/bb980924.aspx\n"
         return
 	fi
     configureComponent --path "$path" --emitter emitWinOptions $name
-    [ $KIND = BUILD ] && setWinEnv
+    # [ $KIND = BUILD ] && setWinEnv
+    setWinEnv
 }
 
 
 setWinEnv()
 {
-    local file path cc version file os cc cpu bldPath bldInclude bldLib winsdk VS VS_DOS WIN_SDK cldir
+    local file path cc version file os cc cpu bldPath bldInclude bldLib vs VS WINSDK cl
 
     name=cc
     eval file=\$BLD_${KIND}_CC
 	eval path=\$CFG_${KIND}_CC
     cc=`probe --path "$1" --partial $file $name`
 
-    eval winsdk=\$CFG_${KIND}_WINSDK
-    if [ "$winsdk" = "" ] ; then
+    eval WINSDK=\$CFG_${KIND}_WINSDK
+    if [ "$WINSDK" = "" ] ; then
 		echo "Can't find required component: Windows SDK"
 		exit 255
 	fi
@@ -43,101 +42,32 @@ setWinEnv()
 		exit 255
 	fi
 
-	cc=`cygpath -u "$cc"`
-    VS=`dirname "${cc%/cl*}"`
-    cldir=`basename "${cc%/cl*}"`
-    VS=`dirname "$VS"`
+    VS=`echo $cc | sed 's/\/VC\/.*//'`
+    VSBIN=`dirname "${cc}"`
+    VSLIB=`echo $VSBIN | sed 's/Bin/Lib/' | sed 's/x86_amd64/amd64/'`
 
-	# TODO REFACTOR - but they are already in DOS format. These names are really reversed
-    VS_DOS=`cygpath -m "$VS"`
-    WIN_SDK=`cygpath -m "$winsdk"`
-	winsdk=`cygpath -u "$winsdk"`
+    # Lower case for unix style paths
+    vs=`cygpath -u "$VS"`
+    vsbin=`cygpath -u "$VSBIN"`
+	winsdk=`cygpath -u "$WINSDK"`
 
     #
-    #   WARNING: Only VS 2008 or later is supported
+    #   Visual Studio 2010
     #
-    if [ "${cc%VC98*}" != "${cc}" ] ; then
-        #
-        #   Visual Studio 6 defines. 
-        #
-        bldPath="$VS/Common/MSDev98/bin:$VS/VC98/BIN:$VS/Common/IDE:$VS/Common/Tools/WinNT:$VS/Common/Tools"
-        bldInclude="$VS_DOS/VC98/ATLMFC/INCLUDE;$VS_DOS/VC98/INCLUDE;$VS_DOS/VC98/MFC/INCLUDE"
-        bldLib="$VS_DOS/VC98/LIB;$VS_DOS/VC98/MFC/LIB"
-        version=12
+    bldPath="${vs}/Common7/IDE:${vsbin}:${vs}/Common7/Tools:${vs}/SDK/v3.5/bin:${vs}/VC/VCPackages"
+    bldInclude="$VS/VC/INCLUDE"
+    bldLib="$VSLIB"
+    version=16
 
-    elif [ "${cc%Visual Studio .NET 2003*}" != "${cc}" ] ; then
-        #
-        #   Visual Studio .NET 2003
-        #
-        bldPath="$VS/Common7/IDE:$VS/Vc7/BIN:$VS/Common7/Tools:$VS/Common7/Tools/bin:$VS/Vc7/PlatformSDK/bin"
-        bldInclude="$VS_DOS/Vc7/ATLMFC/INCLUDE;$VS_DOS/Vc7/INCLUDE;$VS_DOS/Vc7/PlatformSDK/include"
-        bldLib="$VS_DOS/Vc7/ATLMFC/LIB;$VS_DOS/Vc7/LIB;$VS_DOS/Vc7/PlatformSDK/lib"
-        version=13
-
-    elif [ "${cc%Visual Studio 8*}" != "${cc}" -a "$cldir" != AMD64 ] ; then
-        #
-        #   Visual Studio 2005
-        #
-        bldPath="$VS/Common7/IDE:$VS/VC/BIN:$VS/Common7/Tools:$VS/Common7/Tools/bin:$VS/VC/PlatformSDK/bin:$VS/SDK/v2.0/bin:$VS/VC/VCPackages"
-        bldInclude="$VS_DOS/VC/ATLMFC/INCLUDE;$VS_DOS/VC/INCLUDE;$VS_DOS/VC/PlatformSDK/include;$VS_DOS/SDK/v2.0/include"
-        bldLib="$VS_DOS/VC/ATLMFC/LIB;$VS_DOS/VC/LIB;$VS_DOS/VC/PlatformSDK/lib;$VS_DOS/SDK/v2.0/lib;$VS_DOS/PlatformSDK/include/mfc"
-        version=14
-
-    elif [ "${cc%Visual Studio 10*}" != "${cc}" -a "$cldir" != AMD64 ] ; then
-        #
-        #   Visual Studio 2010
-        #
-        bldPath="$VS/Common7/IDE:$VS/VC/BIN:$VS/Common7/Tools:$VS/SDK/v3.5/bin:$VS/VC/VCPackages"
-        bldInclude="$VS_DOS/VC/INCLUDE"
-        bldLib="$VS_DOS/VC/LIB"
-        version=16
-
-        #
-        #	Add the Windows SDK
-        #
-        bldPath="$bldPath:$winsdk/bin"
-        bldInclude="$bldInclude;$WIN_SDK/include"
-        bldLib="$bldLib;$WIN_SDK/LIB"
-
-    elif [ "${cc%Visual Studio 9*}" != "${cc}" -a "$cldir" != AMD64 ] ; then
-        #
-        #   Visual Studio 2008
-        #
-        bldPath="$VS/Common7/IDE:$VS/VC/BIN:$VS/Common7/Tools:$VS/SDK/v2.0/bin:$VS/VC/VCPackages"
-        bldInclude="$VS_DOS/VC/INCLUDE"
-        bldLib="$VS_DOS/VC/LIB"
-        version=15
-
-        #
-        #	Add the Windows SDK
-        #
-        bldPath="$bldPath:$winsdk/bin"
-        bldInclude="$bldInclude;$WIN_SDK/include"
-        bldLib="$bldLib;$WIN_SDK/LIB"
-
-    elif [ "${cc%PlatformSDK*}" != "${cc}" ] ; then
-        #
-        #   Platform Compiler (need to go up 3 more dirs)
-        #
-        VS=`dirname "$VS"`
-        VS=`dirname "$VS"`
-        VS=`dirname "$VS"`
-        VS_DOS=`cygpath -m "$VS"`
-        bldPath="$VS/PlatformSDK/bin/x86/AMD64"
-        bldInclude="$VS_DOS/PlatformSDK/include/crt"
-        bldLib="$VS_DOS/PlatformSDK/LIB/AMD64"
-        version=15
-
-        #
-        #	Add the Windows SDK
-        #
-        bldPath="$bldPath:$winsdk/bin"
-        bldInclude="$bldInclude;$WIN_SDK/include"
-        bldLib="$bldLib;$WIN_SDK/LIB"
-
+    #
+    #	Add the Windows SDK
+    #
+    bldPath="$bldPath:$winsdk/bin"
+    bldInclude="$bldInclude;$WINSDK/include"
+    if [ "$BLD_CPU" = x86_64 ] ; then
+        bldLib="$WINSDK/LIB/x64;$bldLib"
     else
-        echo "Microsoft CL Compiler not found"
-        exit 255
+        bldLib="$WINSDK/LIB;$bldLib"
     fi
 
     eval ${KIND}_MSCL_VERSION="$version"

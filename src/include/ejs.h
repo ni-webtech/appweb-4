@@ -1762,6 +1762,8 @@ extern int ejsGetTraitAttributes(EjsObj *obj, int slotNum);
 extern struct EjsType *ejsGetTraitType(EjsObj *obj, int slotNum);
 extern int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite);
 extern int ejsCompactObject(Ejs *ejs, EjsObj *obj);
+extern int ejsLookupObjectProperty(struct Ejs *ejs, EjsObj *obj, EjsName *qname);
+extern EjsName ejsGetObjectPropertyName(Ejs *ejs, EjsObj *obj, int slotNum);
 
 
 //  TODO - inconsistent naming vs ejsCloneVar (clone vs copy)
@@ -3159,6 +3161,7 @@ extern EjsString *ejsDupString(Ejs *ejs, EjsString *sp);
 
 extern int ejsStrdup(MprCtx ctx, uchar **dest, const void *src, int nbytes);
 extern int ejsStrcat(Ejs *ejs, EjsString *dest, EjsObj *src);
+extern EjsObj *ejsStringToJSON(Ejs *ejs, EjsObj *vp);
 
 /** 
     Timer Class

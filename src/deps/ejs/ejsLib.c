@@ -8495,7 +8495,7 @@ int ejsLookupVarWithNamespaces(Ejs *ejs, EjsObj *obj, EjsName *name, EjsLookup *
                 if (name->space[0] && (name->space[0] != target.space[0] || strcmp(name->space, target.space) != 0)) {
                     /* Unique name match. Name matches, but namespace does not */
                     slotNum = -1;
-                } else if (target.space[0]) {
+                } else if (target.space && target.space[0]) {
                     for (next = -1; (nsp = (EjsNamespace*) ejsGetPrevItem(&ejs->globalBlock->namespaces, &next)) != 0; ) {
                         if (strcmp(nsp->uri, target.space) == 0) {
                             goto done;
@@ -9314,12 +9314,12 @@ int ejsAddObserver(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener
             name = ejsGetProperty(ejs, (EjsObj*) list, i);
             if (!ejsIsNull(name)) {
                 argv[0] = name;
-                ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_observe, 2, argv);
+                ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_on, 2, argv);
             }
         }
     } else {
         argv[0] = name;
-        ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_observe, 2, argv);
+        ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_on, 2, argv);
     }
     return 0;
 }
@@ -9350,12 +9350,12 @@ int ejsRemoveObserver(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsObj *listener)
                 name = ejsGetProperty(ejs, (EjsObj*) list, i);
                 if (!ejsIsNull(name)) {
                     argv[0] = name;
-                    ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_removeObserver, 2, argv);
+                    ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_off, 2, argv);
                 }
             }
         } else {
             argv[0] = name;
-            ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_removeObserver, 2, argv);
+            ejsRunFunctionBySlot(ejs, emitter, ES_Emitter_off, 2, argv);
         }
     }
     return 0;
@@ -10094,6 +10094,7 @@ EjsString *ejsToJSON(Ejs *ejs, EjsObj *obj, EjsObj *options)
         result = (EjsString*) ejsRunFunction(ejs, fn, obj, argc, argv);
     } else {
         result = ejsToString(ejs, obj);
+        result = ejsToJSON(ejs, (EjsObj*) result, options);
     }
     return result;
 }
@@ -13928,9 +13929,9 @@ static EjsObj *ba_reset(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 
 
 /**
-    function get removeObserver(name, listener: Function): Number
+    function off(name, listener: Function): Number
  */
-static EjsObj *ba_removeObserver(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsObj *ba_off(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     ejsRemoveObserver(ejs, ap->emitter, argv[0], argv[1]);
     return 0;
@@ -14468,12 +14469,15 @@ void ejsConfigureByteArrayType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ByteArray_compact, (EjsProc) ba_compact);
     ejsBindMethod(ejs, prototype, ES_ByteArray_copyIn, (EjsProc) ba_copyIn);
     ejsBindMethod(ejs, prototype, ES_ByteArray_copyOut, (EjsProc) ba_copyOut);
+    ejsBindAccess(ejs, prototype, ES_ByteArray_endian, (EjsProc) endian, (EjsProc) setEndian);
     ejsBindMethod(ejs, prototype, ES_ByteArray_flush, (EjsProc) ba_flush);
     ejsBindMethod(ejs, prototype, ES_ByteArray_growable, (EjsProc) ba_growable);
     ejsBindMethod(ejs, prototype, ES_ByteArray_length, (EjsProc) ba_getLength);
     ejsBindMethod(ejs, prototype, ES_ByteArray_iterator_get, (EjsProc) ba_get);
     ejsBindMethod(ejs, prototype, ES_ByteArray_iterator_getValues, (EjsProc) ba_getValues);
-    ejsBindAccess(ejs, prototype, ES_ByteArray_endian, (EjsProc) endian, (EjsProc) setEndian);
+#if ES_ByteArray_off
+    ejsBindMethod(ejs, prototype, ES_ByteArray_off, (EjsProc) ba_off);
+#endif
     ejsBindMethod(ejs, prototype, ES_ByteArray_read, (EjsProc) ba_read);
     ejsBindMethod(ejs, prototype, ES_ByteArray_readBoolean, (EjsProc) ba_readBoolean);
     ejsBindMethod(ejs, prototype, ES_ByteArray_readByte, (EjsProc) ba_readByte);
@@ -14484,7 +14488,6 @@ void ejsConfigureByteArrayType(Ejs *ejs)
     ejsBindAccess(ejs, prototype, ES_ByteArray_readPosition, (EjsProc) ba_readPosition,(EjsProc) ba_setReadPosition);
     ejsBindMethod(ejs, prototype, ES_ByteArray_readShort, (EjsProc) ba_readShort);
     ejsBindMethod(ejs, prototype, ES_ByteArray_readString, (EjsProc) ba_readString);
-    ejsBindMethod(ejs, prototype, ES_ByteArray_removeObserver, (EjsProc) ba_removeObserver);
     ejsBindMethod(ejs, prototype, ES_ByteArray_reset, (EjsProc) ba_reset);
     ejsBindMethod(ejs, prototype, ES_ByteArray_room, (EjsProc) ba_room);
     ejsBindMethod(ejs, prototype, ES_ByteArray_toString, (EjsProc) ba_toString);
@@ -19306,9 +19309,9 @@ static EjsObj *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 
 
 /*  
-    function removeObserver(name, observer: function): Void
+    function off(name, observer: function): Void
  */
-EjsObj *http_removeObserver(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+EjsObj *http_off(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     ejsRemoveObserver(ejs, hp->emitter, argv[0], argv[1]);
     return 0;
@@ -20270,12 +20273,14 @@ void ejsConfigureHttpType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Http_lastModified, (EjsProc) http_lastModified);
     ejsBindMethod(ejs, prototype, ES_Http_limits, (EjsProc) http_limits);
     ejsBindAccess(ejs, prototype, ES_Http_method, (EjsProc) http_method, (EjsProc) http_set_method);
+#if ES_Http_off
+    ejsBindMethod(ejs, prototype, ES_Http_off, (EjsProc) http_off);
+#endif
     ejsBindMethod(ejs, prototype, ES_Http_on, (EjsProc) http_on);
     ejsBindMethod(ejs, prototype, ES_Http_post, (EjsProc) http_post);
     ejsBindMethod(ejs, prototype, ES_Http_put, (EjsProc) http_put);
     ejsBindMethod(ejs, prototype, ES_Http_read, (EjsProc) http_read);
     ejsBindMethod(ejs, prototype, ES_Http_readString, (EjsProc) http_readString);
-    ejsBindMethod(ejs, prototype, ES_Http_removeObserver, (EjsProc) http_removeObserver);
     ejsBindMethod(ejs, prototype, ES_Http_reset, (EjsProc) http_reset);
     ejsBindAccess(ejs, prototype, ES_Http_response, (EjsProc) http_response, (EjsProc) http_set_response);
     ejsBindAccess(ejs, prototype, ES_Http_retries, (EjsProc) http_retries, (EjsProc) http_set_retries);
@@ -22664,10 +22669,8 @@ void ejsConfigureNumberType(Ejs *ejs)
 
 static int      cmpName(EjsName *a, EjsName *b);
 static int      cmpQname(EjsName *a, EjsName *b);
-static EjsName  getObjectPropertyName(Ejs *ejs, EjsObj *obj, int slotNum);
 static int      growSlots(Ejs *ejs, EjsObj *obj, int size);
 static int      hashProperty(EjsObj *obj, int slotNum, EjsName *qname);
-static int      lookupObjectProperty(struct Ejs *ejs, EjsObj *obj, EjsName *qname);
 static EjsObj   *obj_defineProperty(Ejs *ejs, EjsObj *type, int argc, EjsObj **argv);
 static EjsObj   *obj_toString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
 static void     removeHashEntry(Ejs *ejs, EjsObj  *obj, EjsName *qname);
@@ -23080,7 +23083,7 @@ static int deleteObjectProperty(Ejs *ejs, EjsObj *obj, int slotNum)
         return EJS_ERR;
     }
 #endif
-    qname = getObjectPropertyName(ejs, obj, slotNum);
+    qname = ejsGetObjectPropertyName(ejs, obj, slotNum);
     if (qname.name) {
         removeHashEntry(ejs, obj, &qname);
     }
@@ -23096,7 +23099,7 @@ static int deleteObjectPropertyByName(Ejs *ejs, EjsObj *obj, EjsName *qname)
 {
     int     slotNum;
 
-    slotNum = lookupObjectProperty(ejs, obj, qname);
+    slotNum = ejsLookupObjectProperty(ejs, obj, qname);
     if (slotNum < 0) {
         ejsThrowReferenceError(ejs, "Property does not exist");
         return EJS_ERR;
@@ -23131,7 +23134,7 @@ static int getObjectPropertyCount(Ejs *ejs, EjsObj *obj)
 }
 
 
-static EjsName getObjectPropertyName(Ejs *ejs, EjsObj *obj, int slotNum)
+EjsName ejsGetObjectPropertyName(Ejs *ejs, EjsObj *obj, int slotNum)
 {
     EjsName     qname;
 
@@ -23161,7 +23164,7 @@ static EjsTrait *getObjectPropertyTrait(Ejs *ejs, EjsObj *obj, int slotNum)
     Only the name portion is hashed. The namespace is not included in the hash. This is used to do a one-step lookup 
     for properties regardless of the namespace.
  */
-static int lookupObjectProperty(struct Ejs *ejs, EjsObj *obj, EjsName *qname)
+int ejsLookupObjectProperty(struct Ejs *ejs, EjsObj *obj, EjsName *qname)
 {
     EjsSlot     *slots, *sp, *np;
     int         slotNum, index, prior;
@@ -24511,6 +24514,16 @@ static EjsObj *obj_isFrozen(Ejs *ejs, EjsObj *type, int argc, EjsObj **argv)
 }
 
 
+#if UNUSED && KEEP
+/*
+    function isObject(obj): Boolean
+ */
+static EjsObj *obj_isObject(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+{
+    return argv[0]->type == ejs->objectType ? ejs->trueValue : ejs->falseValue;
+}
+#endif
+
 /*
     static function isPrototypeOf(obj: Object): Boolean
  */
@@ -24662,7 +24675,11 @@ static EjsObj *obj_toJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
      */
     count = ejsGetPropertyCount(ejs, vp);
     if (count == 0 && vp->type != ejs->objectType && vp->type != ejs->arrayType) {
-        return (EjsObj*) ejsToString(ejs, vp);
+        if (ejsIsNull(vp) || ejsIsUndefined(vp) || ejsIsBoolean(vp) || ejsIsNumber(vp) || ejsIsString(vp)) {
+            return (EjsObj*) ejsToString(ejs, vp);
+        } else {
+            return (EjsObj*) ejsStringToJSON(ejs, vp);
+        }
     }
     depth = 99;
     baseClasses = hidden = namespaces = pretty = 0;
@@ -24934,7 +24951,6 @@ static EjsObj *obj_getName(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     return (EjsObj*) ejs->emptyStringValue;
 }
 
-
 /*
     function typeOf(obj): String
  */
@@ -24996,8 +25012,8 @@ void ejsCreateObjectHelpers(Ejs *ejs)
     helpers->destroy                = (EjsDestroyHelper) destroyObject;
     helpers->getProperty            = (EjsGetPropertyHelper) getObjectProperty;
     helpers->getPropertyCount       = (EjsGetPropertyCountHelper) getObjectPropertyCount;
-    helpers->getPropertyName        = (EjsGetPropertyNameHelper) getObjectPropertyName;
-    helpers->lookupProperty         = (EjsLookupPropertyHelper) lookupObjectProperty;
+    helpers->getPropertyName        = (EjsGetPropertyNameHelper) ejsGetObjectPropertyName;
+    helpers->lookupProperty         = (EjsLookupPropertyHelper) ejsLookupObjectProperty;
     helpers->invokeOperator         = (EjsInvokeOperatorHelper) ejsObjectOperator;
     helpers->mark                   = (EjsMarkHelper) ejsMarkObject;
     helpers->setProperty            = (EjsSetPropertyHelper) setObjectProperty;
@@ -25037,8 +25053,8 @@ void ejsConfigureObjectType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_Object_getType, obj_getType);
     ejsBindMethod(ejs, type, ES_Object_getTypeName, obj_getTypeName);
     ejsBindMethod(ejs, type, ES_Object_getName, obj_getName);
-    ejsBindMethod(ejs, type, ES_Object_isType, obj_isType);
     ejsBindMethod(ejs, type, ES_Object_isPrototype, obj_isPrototype);
+    ejsBindMethod(ejs, type, ES_Object_isType, obj_isType);
 
     ejsBindMethod(ejs, prototype, ES_Object_constructor, (EjsProc) obj_constructor);
     ejsBindMethod(ejs, prototype, ES_Object_clone, obj_clone);
@@ -27383,9 +27399,9 @@ static EjsObj *sock_remoteAddress(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **ar
 
 
 /*
-    function removeObserver(name, listener: Function): Void
+    function off(name, listener: Function): Void
  */
-static EjsObj *sock_removeObserver(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
+static EjsObj *sock_off(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
     ejsRemoveObserver(ejs, sp->emitter, argv[0], argv[1]);
     return 0;
@@ -27561,11 +27577,13 @@ void ejsConfigureSocketType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Socket_close, (EjsProc) sock_close);
     ejsBindMethod(ejs, prototype, ES_Socket_connect, (EjsProc) sock_connect);
     ejsBindMethod(ejs, prototype, ES_Socket_listen, (EjsProc) sock_listen);
+#if ES_Socket_off
+    ejsBindMethod(ejs, prototype, ES_Socket_off, (EjsProc) sock_off);
+#endif
     ejsBindMethod(ejs, prototype, ES_Socket_on, (EjsProc) sock_on);
     ejsBindMethod(ejs, prototype, ES_Socket_port, (EjsProc) sock_port);
     ejsBindMethod(ejs, prototype, ES_Socket_read, (EjsProc) sock_read);
     ejsBindMethod(ejs, prototype, ES_Socket_remoteAddress, (EjsProc) sock_remoteAddress);
-    ejsBindMethod(ejs, prototype, ES_Socket_removeObserver, (EjsProc) sock_removeObserver);
     ejsBindMethod(ejs, prototype, ES_Socket_write, (EjsProc) sock_write);
 }
 
@@ -28959,7 +28977,7 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             if (count <= 0) {
                 break;
             }
-            if (rp->endLastMatch < matches[0]) {
+            if (rp->endLastMatch <= matches[0]) {
                 match = ejsCreateStringWithLength(ejs, &sp->value[rp->endLastMatch], matches[0] - rp->endLastMatch);
                 ejsSetProperty(ejs, results, resultCount++, match);
             }
@@ -29060,12 +29078,18 @@ static EjsObj *toCamel(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     override function toJSON(): String
  */
-static EjsObj *stringToJSON(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+EjsObj *ejsStringToJSON(Ejs *ejs, EjsObj *vp)
 {
-    EjsObj  *result;
-    MprBuf  *buf;
-    int     i, c;
+    EjsObj      *result;
+    EjsString   *sp;
+    MprBuf      *buf;
+    int         i, c;
 
+    if (ejsIsString(vp)) {
+        sp = (EjsString*) vp;
+    } else {
+        sp = ejsToString(ejs, vp);
+    }
     buf = mprCreateBuf(sp, 0, 0);
     mprPutCharToBuf(buf, '"');
     for (i = 0; i < sp->length; i++) {
@@ -29630,7 +29654,7 @@ void ejsConfigureStringType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_String_startsWith, (EjsProc) startsWith);
     ejsBindMethod(ejs, prototype, ES_String_substring, (EjsProc) substring);
     ejsBindMethod(ejs, prototype, ES_String_toCamel, (EjsProc) toCamel);
-    ejsBindMethod(ejs, prototype, ES_String_toJSON, (EjsProc) stringToJSON);
+    ejsBindMethod(ejs, prototype, ES_String_toJSON, (EjsProc) ejsStringToJSON);
     ejsBindMethod(ejs, prototype, ES_String_toLowerCase, (EjsProc) toLowerCase);
     ejsBindMethod(ejs, prototype, ES_String_toPascal, (EjsProc) toPascal);
     ejsBindMethod(ejs, prototype, ES_String_toString, (EjsProc) stringToString);
@@ -36680,8 +36704,8 @@ void ejsConfigureFilterType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_flush, (EjsProc) filter_flush);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_header, (EjsProc) filter_header);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_limits, (EjsProc) filter_limits);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_off, (EjsProc) filter_off);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_read, (EjsProc) filter_read);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_removeObserver, (EjsProc) filter_removeObserver);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_sendFile, (EjsProc) filter_sendFile);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_setLimits, (EjsProc) filter_setLimits);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_setHeader, (EjsProc) filter_setHeader);
@@ -37012,6 +37036,18 @@ static EjsObj *hs_set_name(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 }
 
 
+#if ES_ejs_web_HttpServer_off
+/*  
+    function off(name: [String|Array], observer: Function): Void
+ */
+static EjsObj *hs_off(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+{
+    ejsRemoveObserver(ejs, sp->emitter, argv[0], argv[1]);
+    return 0;
+}
+#endif
+
+
 /*  
     function get port(): Number
  */
@@ -37019,18 +37055,6 @@ static EjsObj *hs_port(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejsCreateNumber(ejs, sp->port);
 }
-
-
-#if ES_ejs_web_HttpServer_removeObserver
-/*  
-    function removeObserver(name: [String|Array], observer: Function): Void
- */
-static EjsObj *hs_removeObserver(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
-{
-    ejsRemoveObserver(ejs, sp->emitter, argv[0], argv[1]);
-    return 0;
-}
-#endif
 
 
 /*  
@@ -37574,8 +37598,8 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_listen, (EjsProc) hs_listen);
     ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_name, (EjsProc) hs_name, (EjsProc) hs_set_name);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_port, (EjsProc) hs_port);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_off, (EjsProc) hs_off);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_on, (EjsProc) hs_on);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_removeObserver, (EjsProc) hs_removeObserver);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_secure, (EjsProc) hs_secure);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setLimits, (EjsProc) hs_setLimits);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setPipeline, (EjsProc) hs_setPipeline);
@@ -38250,13 +38274,25 @@ static int getRequestPropertyCount(Ejs *ejs, EjsRequest *req)
 
 static EjsName getRequestPropertyName(Ejs *ejs, EjsRequest *req, int slotNum)
 {
-    return ejsGetPropertyName(ejs, (EjsObj*) req->obj.type->prototype, slotNum);
+    EjsName     qname;
+
+    qname = ejsGetPropertyName(ejs, req->obj.type->prototype, slotNum);
+    if (qname.name == 0) {
+        qname = ejsGetObjectPropertyName(ejs, &req->obj, slotNum);
+    }
+    return qname;
 }
 
 
 static int lookupRequestProperty(Ejs *ejs, EjsRequest *req, EjsName *qname)
 {
-    return ejsLookupProperty(ejs, (EjsObj*) req->obj.type->prototype, qname);
+    int slotNum;
+    
+    slotNum = ejsLookupProperty(ejs, req->obj.type->prototype, qname);
+    if (slotNum < 0) {
+        slotNum = ejsLookupObjectProperty(ejs, &req->obj, qname);
+    }
+    return slotNum;
 }
 
 
@@ -38585,6 +38621,16 @@ static EjsObj *req_header(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 
 
 /*  
+    function off(name: [String|Array], listener: Function): Void
+ */
+static EjsObj *req_off(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+{
+    ejsRemoveObserver(ejs, req->emitter, argv[0], argv[1]);
+    return 0;
+}
+
+
+/*  
     function on(name: [String|Array], listener: Function): Void
  */
 static EjsObj *req_on(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
@@ -38646,16 +38692,6 @@ static EjsObj *req_read(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     }
     ba->writePosition += nbytes;
     return (EjsObj*) ejsCreateNumber(ejs, nbytes);
-}
-
-
-/*  
-    function removeObserver(name: [String|Array], listener: Function): Void
- */
-static EjsObj *req_removeObserver(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
-{
-    ejsRemoveObserver(ejs, req->emitter, argv[0], argv[1]);
-    return 0;
 }
 
 
@@ -38992,9 +39028,9 @@ void ejsConfigureRequestType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_finalized, (EjsProc) req_finalized);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_flush, (EjsProc) req_flush);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_header, (EjsProc) req_header);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_off, (EjsProc) req_off);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_on, (EjsProc) req_on);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_read, (EjsProc) req_read);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_removeObserver, (EjsProc) req_removeObserver);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setLimits, (EjsProc) req_setLimits);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setHeader, (EjsProc) req_setHeader);
     ejsBindMethod(ejs, prototype, ES_ejs_web_Request_trace, (EjsProc) req_trace);
@@ -44786,7 +44822,7 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
         /*
             Unbound or Function expression or instance variable containing a function. Can't use fast path op codes below.
          */
-        if (left->kind == N_QNAME && !left->name.nameExpr) {
+        if (left->kind == N_QNAME && !(left->name.nameExpr || left->name.qualifierExpr)) {
             argc = genCallArgs(cp, right);
             ecEncodeOpcode(cp, EJS_OP_CALL_SCOPED_NAME);
             ecEncodeName(cp, &np->qname);

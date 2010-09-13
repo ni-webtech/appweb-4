@@ -10,7 +10,7 @@
 
 /********************************** Forwards **********************************/
 
-static bool isValidUri(MprTestGroup *gp, char *uri, char *expectedUri);
+static bool normalize(MprTestGroup *gp, char *uri, char *expectedUri);
 static bool okEscapeUri(MprTestGroup *gp, char *uri, char *expectedUri, int map);
 static bool okEscapeCmd(MprTestGroup *gp, char *cmd, char *validCmd);
 static bool okEscapeHtml(MprTestGroup *gp, char *html, char *expectedHtml);
@@ -28,31 +28,31 @@ static void setup(MprTestGroup *gp)
 
 static void validateUri(MprTestGroup *gp)
 {
-    assert(isValidUri(gp, "", ""));
-    assert(isValidUri(gp, "/", "/"));
-    assert(isValidUri(gp, "/index.html", "/index.html"));
-    assert(isValidUri(gp, "/a/index.html", "/a/index.html"));
+    assert(normalize(gp, "", ""));
+    assert(normalize(gp, "/", "/"));
+    assert(normalize(gp, "/index.html", "/index.html"));
+    assert(normalize(gp, "/a/index.html", "/a/index.html"));
 
-    assert(isValidUri(gp, "..", ""));
-    assert(isValidUri(gp, "../", ""));
-    assert(isValidUri(gp, "/..", ""));
-    assert(isValidUri(gp, "/a/..", "/"));
-    assert(isValidUri(gp, "/a/../", "/"));
-    assert(isValidUri(gp, "/a/../b/..", "/"));
-    assert(isValidUri(gp, "../a/b/..", "a/"));
+    assert(normalize(gp, "..", ""));
+    assert(normalize(gp, "../", ""));
+    assert(normalize(gp, "/..", "/"));
+    assert(normalize(gp, "/a/..", "/"));
+    assert(normalize(gp, "/a/../", "/"));
+    assert(normalize(gp, "/a/../b/..", "/"));
+    assert(normalize(gp, "../a/b/..", "a/"));
 
-    assert(isValidUri(gp, "./", ""));
-    assert(isValidUri(gp, "./.", ""));
-    assert(isValidUri(gp, "././", ""));
-    assert(isValidUri(gp, "/a/./", "/a/"));
-    assert(isValidUri(gp, "/a/./.", "/a/"));
-    assert(isValidUri(gp, "/a/././", "/a/"));
-    assert(isValidUri(gp, "/a/.", "/a/"));
+    assert(normalize(gp, "./", ""));
+    assert(normalize(gp, "./.", ""));
+    assert(normalize(gp, "././", ""));
+    assert(normalize(gp, "/a/./", "/a/"));
+    assert(normalize(gp, "/a/./.", "/a/"));
+    assert(normalize(gp, "/a/././", "/a/"));
+    assert(normalize(gp, "/a/.", "/a/"));
 
-    assert(isValidUri(gp, "/*a////b/", "/*a/b/"));
-    assert(isValidUri(gp, "/*a/////b/", "/*a/b/"));
+    assert(normalize(gp, "/*a////b/", "/*a/b/"));
+    assert(normalize(gp, "/*a/////b/", "/*a/b/"));
 
-    assert(isValidUri(gp, "\\a\\b\\", "\\a\\b\\"));
+    assert(normalize(gp, "\\a\\b\\", "\\a\\b\\"));
 }
 
 
@@ -102,7 +102,7 @@ static void descape(MprTestGroup *gp)
 }
 
 
-static bool isValidUri(MprTestGroup *gp, char *uri, char *expectedUri)
+static bool normalize(MprTestGroup *gp, char *uri, char *expectedUri)
 {
     char    *validated;
 

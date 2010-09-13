@@ -643,6 +643,8 @@ if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
         if [ $MAKE_STATIC = 0 -a "$ENTRY" = "" ] ; then
             if [ $OS = WINCE ] ; then
                 ENTRY="DllMain"
+            elif [ "${BLD_CPU}" = "x86_64" ] ; then
+                ENTRY="_DllMainCRTStartup"
             else
                 ENTRY="_DllMainCRTStartup@12"
             fi
@@ -790,8 +792,13 @@ if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
                     echo dumpbin /symbols ${OBJECTS} \| grep ' External ' \| egrep -v 'UNDEF|__real@|\?' \
                         \| awk '{ print $8 }' \| sed 's/^_/ /' \| sort \| uniq \>\> ${DEF}
                 fi
-                dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | awk '{ print $8 }' | \
-                    sed 's/^_/  /' | sort | uniq >> ${DEF}
+                if [ "${BLD_CPU}" = "x86_64" ] ; then
+                    dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | awk '{ print $8 }' | \
+                        sort | uniq >> ${DEF}
+                else
+                    dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | awk '{ print $8 }' | \
+                        sed 's/^_/  /' | sort | uniq >> ${DEF}
+                fi
             fi
 
             if [ "$BLD_WIN_LIKE" = 1 -a "$ENTRY" != "" ] ; then

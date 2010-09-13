@@ -74,13 +74,10 @@ function assert(cond: Boolean, message: String = null): Void {
     if (cond) {
         postMessage({ passed: true })
     } else {
-        if (message) {
-            throw new AssertError(message)
-        } else {
-            throw new AssertError("")
-        }
+        throw new AssertError(message.toString())
     }
 }
+
 /* 
     Redefine the Global.assert function 
 */
@@ -138,8 +135,10 @@ public function locate(program): String {
 }
 
 
-public function share(key: String, value: String)
+public function share(key: String, value: String) {
+print('SHARE ' + key + " " + value)
     postMessage({ key: key, value: value })
+}
 
 
 const PIDFILE = ".pidfile"

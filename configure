@@ -156,8 +156,10 @@ setSystemConfiguration() {
 
     if [ "${BLD_HOST_SYSTEM}" != "${BLD_BUILD_SYSTEM}" ] ; then
         BLD_CROSS=1
-        BLD_HOST_DIST=Unknown
-        BLD_HOST_DIST_VER=Unknown
+        if [ "${BLD_HOST_OS}" != "${BLD_BUILD_OS}" ] ; then
+            BLD_HOST_DIST=Unknown
+            BLD_HOST_DIST_VER=Unknown
+        fi
     else 
         BLD_CROSS=0
     fi
@@ -711,14 +713,13 @@ convertSearchPath()
             [ "$x" = "" ] && continue
             # [ "$verbose" != 0 ] && echo -e "\nConvert: \"$x\" => \n    \"`eval ls -d1 "$x" 2>/dev/null | sort -r`\"" 1>&2
             if [ "$BLD_BUILD_OS" = WIN ] ; then
-                eval ls -d1 "$x" 2>/dev/null | sort | while read f
+                eval ls -d1 "$x" 2>/dev/null | sort -r | while read f
                 do
                     cygpath "$f"
                 done
             else
-                eval ls -d1 "$x" 2>/dev/null | sort
+                eval ls -d1 "$x" 2>/dev/null | sort -r
             fi
-            eval ls -d1 "$x" 2>/dev/null | sort
         done | grep -v '^$' | tr '\n' : | sed 's/:$//'
     fi
 }
@@ -751,6 +752,8 @@ findComponents() {
 
             eval BLD_UNIX_LIKE=\$BLD_${kind}_UNIX              
             eval BLD_WIN_LIKE=\$BLD_${kind}_WIN              
+            eval BLD_CPU=\$BLD_${kind}_CPU
+            eval BLD_OS=\$BLD_${kind}_OS              
 
             [ "$verbose" -gt 0 ] && echo -e "\nSearch for component \"${name}\" using script \"build/components/${name}\""
 
@@ -807,7 +810,7 @@ warnComponent() {
         actual="$name"
     fi
     upper=`upper ${name}`
-    eval mandatory="\$CFG_${kind}_${upper}_MANDATORY"
+    eval mandatory="\$CFG_${kind}_${upper}_MANDATORY" 2>/dev/null
 
     if [ "$mandatory" = 1 ] ; then
         echo -e "\n\nCan't find required component: $name\n" >&2
@@ -1135,6 +1138,16 @@ probe()
 }
 
 
+locate() {
+    local file="$1"
+    local search="$2"
+    search=`convertSearchPath "$search"`
+    local dir=`probe --partial "$file" --search "$search" "$file"`
+    dir=`cygpath -u "$dir"`
+    echo "'"`dirname "$dir"`"'"
+}
+
+
 #
 #   Add a component to build with
 #
@@ -1206,7 +1219,7 @@ without() {
     lowerName=`lower ${name}`
 
     if [ ! -f build/components/${lowerName} ] ; then
-        echo "Unknown component \"${name}\". Ignoring and continuing ..."
+        echo -e "\nUnknown component \"${name}\". Ignoring and continuing ...\n"
     fi
     components=" ${BLD_COMPONENTS} "
     if [ "${components/ $lowerName /}" = "$components" ] ; then
@@ -1821,7 +1834,7 @@ createCrossConfig()
         #   Cygwin needs modules to be in the path
 
         if [ "${name}" = "$CONFIG_SH" ] ; then
-            echo -e "\texport PATH=\"\${top}/bin:${top}/modules:${top}/lib:${top}/lib:${top}/build/bin${SYS_DIR}:${path}:\${PATH}\"" 
+            echo -e "\texport PATH=\"${top}/bin:${top}/modules:${top}/lib:${top}/lib:${top}/build/bin${SYS_DIR}:${path}:\${PATH}\"" 
         else
             echo -e "\texport PATH:=${top}/bin:${top}/modules:${top}/lib:${top}/lib:${top}/build/bin${SYS_DIR}:${path}:\$(PATH)" 
         fi

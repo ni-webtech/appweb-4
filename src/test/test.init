@@ -38,7 +38,7 @@ if (!App.getenv("NOSERVER")) {
     /*
          Start a web server for testing
      */
-    let cmd = APPWEB + " --log trace.txt:6 --name forAppwebTest --config appweb.conf"
+    let cmd = APPWEB + " --log trace.txt:0 --name forAppwebTest --config appweb.conf"
     test.log(2, "[TestRun]", "Run: " + cmd)
     pid = Cmd.daemon(cmd)
     Path(PIDFILE).write(pid)
@@ -46,8 +46,12 @@ if (!App.getenv("NOSERVER")) {
 
     let http = new Http
     for (i in 50) {
-        try { http.get(HTTP + "/alive.html"); } catch {}
-        if (http.status == 200) break
+        try { 
+            http.get(HTTP + "/alive.html"); 
+            if (http.status == 200) break
+        } catch (e) {
+            //print(e)
+        }
         App.sleep(500)
         http.close()
     }
@@ -62,3 +66,6 @@ share("https", "https://" + LOCALHOST + ":" + SSL_PORT)
 share("vhost", "http://" + LOCALHOST + ":" + VHOST_PORT)
 share("vhostPort", VHOST_PORT)
 share("iphost", "http://" + LOCALHOST + ":" + IPHOST)
+
+print("AFTER SHARE")
+dump(tsession)

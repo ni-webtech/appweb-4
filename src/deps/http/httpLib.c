@@ -272,7 +272,7 @@ bool httpValidateNativeCredentials(HttpAuth *auth, cchar *realm, cchar *user, cc
     
     if (auth->type == HTTP_AUTH_BASIC) {
         mprSprintf(auth, passbuf, sizeof(passbuf), "%s:%s:%s", user, realm, password);
-        len = strlen(passbuf);
+        len = (int) strlen(passbuf);
         hashedPassword = mprGetMD5Hash(auth, passbuf, len, NULL);
         password = hashedPassword;
     }
@@ -1680,7 +1680,7 @@ static void incomingChunkData(HttpQueue *q, HttpPacket *packet)
             httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
             return;
         }
-        mprAdjustBufStart(buf, cp - start + 1);
+        mprAdjustBufStart(buf, (int) (cp - start + 1));
         rx->remainingContent = rx->chunkSize;
         if (rx->chunkSize == 0) {
             rx->chunkState = HTTP_CHUNK_EOF;
@@ -1974,10 +1974,10 @@ static int setClientHeaders(HttpConn *conn)
         conn->authCnonce = mprAsprintf(conn, -1, "%s:%s:%x", http->secret, conn->authRealm, (uint) mprGetTime(conn)); 
 
         mprSprintf(conn, a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
-        len = strlen(a1Buf);
+        len = (int) strlen(a1Buf);
         ha1 = mprGetMD5Hash(tx, a1Buf, len, NULL);
         mprSprintf(conn, a2Buf, sizeof(a2Buf), "%s:%s", tx->method, parsedUri->path);
-        len = strlen(a2Buf);
+        len = (int) strlen(a2Buf);
         ha2 = mprGetMD5Hash(tx, a2Buf, len, NULL);
         qop = (conn->authQop) ? conn->authQop : (char*) "";
 
@@ -1994,7 +1994,7 @@ static int setClientHeaders(HttpConn *conn)
         }
         mprFree(ha1);
         mprFree(ha2);
-        digest = mprGetMD5Hash(tx, digestBuf, strlen(digestBuf), NULL);
+        digest = mprGetMD5Hash(tx, digestBuf, (int) strlen(digestBuf), NULL);
 
         if (*qop == '\0') {
             httpAddHeader(conn, "Authorization", "Digest user=\"%s\", realm=\"%s\", nonce=\"%s\", "
@@ -6528,7 +6528,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     if ((end = mprStrnstr(start, "\r\n\r\n", len)) == 0) {
         return 0;
     }
-    len = end - start;
+    len = (int) (end - start);
     mprAddNullToBuf(packet->content);
 
     if (len >= conn->limits->headerSize) {
@@ -6571,7 +6571,7 @@ static int traceRequest(HttpConn *conn, HttpPacket *packet)
     if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
         content = packet->content;
         endp = strstr((char*) content->start, "\r\n\r\n");
-        len = (endp) ? (endp - mprGetBufStart(content) + 4) : 0;
+        len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
         httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, packet, len, 0);
         return 1;
     }
@@ -6714,7 +6714,7 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
         content = packet->content;
         endp = strstr((char*) content->start, "\r\n\r\n");
-        len = (endp) ? (endp - mprGetBufStart(content) + 4) : 0;
+        len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
         httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, packet, len, 0);
 
     } else if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, conn->tx->extension)) >= 0) {
@@ -7440,7 +7440,7 @@ static int getChunkPacketSize(HttpConn *conn, MprBuf *buf)
             }
             return 0;
         }
-        need = cp - start + 1;
+        need = (int) (cp - start + 1);
         size = (int) mprAtoi(&start[2], 16);
         if (size == 0 && &cp[2] < buf->end && cp[1] == '\r' && cp[2] == '\n') {
             /*
@@ -7567,7 +7567,7 @@ char *httpGetHeaders(HttpConn *conn)
             }
         }
         headers = mprReallocStrcat(rx, -1, headers, ": ", hp->data, "\n", NULL);
-        len = strlen(headers);
+        len = (int) strlen(headers);
         hp = mprGetNextHash(rx->headers, hp);
     }
     return headers;
@@ -9328,7 +9328,7 @@ int httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
     mprFree(body);
     httpOmitBody(conn);
     va_end(args);
-    return strlen(tx->altBody);
+    return (int) strlen(tx->altBody);
 }
 
 
@@ -10940,7 +10940,7 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
     if (pathArg == 0 || *pathArg == '\0') {
         return mprStrdup(ctx, "");
     }
-    len = strlen(pathArg);
+    len = (int) strlen(pathArg);
     if ((dupPath = mprAlloc(ctx, len + 2)) == 0) {
         return NULL;
     }
@@ -10959,12 +10959,12 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
                 sp++;
             }
             segments[nseg++] = mark;
-            len += sp - mark;
+            len += (int) (sp - mark);
             mark = sp + 1;
         }
     }
     segments[nseg++] = mark;
-    len += sp - mark;
+    len += (int) (sp - mark);
     for (j = i = 0; i < nseg; i++, j++) {
         sp = segments[i];
         if (sp[0] == '.') {
@@ -10994,7 +10994,7 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
     if ((path = mprAlloc(ctx, len + nseg + 1)) != 0) {
         for (i = 0, dp = path; i < nseg; ) {
             strcpy(dp, segments[i]);
-            len = strlen(segments[i]);
+            len = (int) strlen(segments[i]);
             dp += len;
             if (++i < nseg || (nseg == 1 && *segments[0] == '\0' && firstc == '/')) {
                 *dp++ = '/';
@@ -11081,7 +11081,7 @@ static void trimPathToDirname(HttpUri *uri)
     int         len;
 
     path = uri->path;
-    len = strlen(path);
+    len = (int) strlen(path);
     if (path[len - 1] == '/') {
         if (len > 1) {
             path[len - 1] = '\0';
