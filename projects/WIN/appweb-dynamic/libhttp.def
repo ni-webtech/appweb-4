@@ -2,6 +2,7 @@ LIBRARY libhttp.dll
 EXPORTS
 
   __pamAuth
+  httpAcceptConn
   httpAddConn
   httpAddErrorDocument
   httpAddFilter
@@ -15,14 +16,19 @@ EXPORTS
   httpAddUsersToGroup
   httpAddVars
   httpAddVarsFromQueue
-  httpAdvanceReceiver
   httpAppendHeader
   httpAppendQueue
   httpCallEvent
+  httpClearHeaders
+  httpClearStages
   httpCloneStage
+  httpCloneUri
+  httpCloseClientConn
   httpCloseConn
+  httpCloseRx
   httpCompareFormVar
   httpCompleteRequest
+  httpCompleteUri
   httpCompleteWriting
   httpConnError
   httpConnect
@@ -42,29 +48,30 @@ EXPORTS
   httpCreateHandler
   httpCreateHeaderPacket
   httpCreateInheritedLocation
+  httpCreateLimits
   httpCreateLocation
   httpCreatePacket
   httpCreatePipeline
   httpCreateQueue
   httpCreateRange
-  httpCreateReceiver
+  httpCreateRx
   httpCreateSecret
   httpCreateServer
   httpCreateStage
-  httpCreateTransmitter
+  httpCreateTx
   httpCreateUri
   httpCreateUriFromParts
   httpCreateUser
   httpDefaultOutgoingServiceStage
   httpDestroyPipeline
-  httpDestroyReceiver
+  httpDestroyRx
   httpDisableGroup
   httpDisableQueue
   httpDisableUser
   httpDiscardData
-  httpDiscardPipeData
+  httpDiscardTransmitData
   httpDontCache
-  httpDrainQueue
+  httpDupPacket
   httpEnableConnEvents
   httpEnableGroup
   httpEnableQueue
@@ -77,6 +84,7 @@ EXPORTS
   httpFinalizeLocation
   httpFindPreviousQueue
   httpFlush
+  httpFlushQueue
   httpFollowRedirects
   httpFormatBody
   httpFormatError
@@ -108,13 +116,17 @@ EXPORTS
   httpGetQueryString
   httpGetQueueData
   httpGetQueueRoom
+  httpGetRelativeUri
   httpGetServerAsync
   httpGetServerContext
   httpGetStatus
   httpGetStatusMessage
   httpInitAuth
+  httpInitLimits
+  httpInitLocation
   httpInitQueue
   httpInitSchedulerQueue
+  httpInitTrace
   httpInsertQueue
   httpIsEof
   httpIsFinalized
@@ -124,12 +136,20 @@ EXPORTS
   httpIsUserEnabled
   httpJoinPacket
   httpJoinPacketForService
+  httpJoinPackets
+  httpJoinUri
+  httpJoinUriPath
+  httpLimitError
+  httpLoadSsl
   httpLookupErrorDocument
   httpLookupStage
   httpLookupStatus
+  httpMakeUriLocal
   httpMatchEtag
   httpMatchModified
   httpNeedRetry
+  httpNormalizeUri
+  httpNormalizeUriPath
   httpOmitBody
   httpOpenAuthFilter
   httpOpenChunkFilter
@@ -137,11 +157,14 @@ EXPORTS
   httpOpenPassHandler
   httpOpenQueue
   httpOpenRangeFilter
+  httpOpenSendConnector
   httpOpenUploadFilter
   httpParseAcl
   httpPrepClientConn
   httpPrepServerConn
+  httpProcess
   httpProcessPipeline
+  httpProtocolError
   httpPutBackPacket
   httpPutForService
   httpRead
@@ -162,7 +185,10 @@ EXPORTS
   httpResetCredentials
   httpResetPipeline
   httpResizePacket
+  httpResolveUri
   httpScheduleQueue
+  httpSendOpen
+  httpSendOutgoingService
   httpSendPacket
   httpSendPacketToNext
   httpSendPackets
@@ -193,6 +219,7 @@ EXPORTS
   httpSetDefaultPort
   httpSetDocumentRoot
   httpSetEntityLength
+  httpSetFillHeaders
   httpSetFormVar
   httpSetGroupAcl
   httpSetHandler
@@ -214,16 +241,22 @@ EXPORTS
   httpSetRequiredAcl
   httpSetResponseBody
   httpSetRetries
+  httpSetSendConnector
   httpSetServerAsync
   httpSetServerContext
+  httpSetServerLocation
+  httpSetServerName
   httpSetServerNotifier
   httpSetServerRoot
+  httpSetServerSoftware
+  httpSetServerSsl
   httpSetSimpleHeader
   httpSetState
   httpSetStatus
   httpSetTimeout
+  httpSetUniqueConnLimits
   httpSetUri
-  httpSetupTrace
+  httpShouldTrace
   httpSplitPacket
   httpStartPipeline
   httpStartServer
@@ -232,8 +265,8 @@ EXPORTS
   httpTraceContent
   httpUpdateUserAcls
   httpUriToString
+  httpValidateLimits
   httpValidateNativeCredentials
-  httpValidateUri
   httpWait
   httpWillNextQueueAcceptPacket
   httpWritable

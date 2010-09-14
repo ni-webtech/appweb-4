@@ -50,12 +50,10 @@ EXPORTS
   maOpenEgiHandler
   maOpenFileHandler
   maOpenMimeTypes
-  maOpenSendConnector
   maParseConfig
   maRemoveHostFromHostAddress
   maReplaceReferences
   maRewriteUri
-  maRotateAccessLog
   maRunSimpleWebServer
   maRunWebServer
   maSecureHost
@@ -76,14 +74,11 @@ EXPORTS
   maSetHttpUser
   maSetHttpVersion
   maSetIpAddr
-  maSetKeepAliveTimeout
   maSetLogHost
-  maSetMaxKeepAlive
   maSetMimeActionProgram
   maSetNamedVirtualHost
   maSetNamedVirtualHostAddress
   maSetServerRoot
-  maSetTimeout
   maSetVirtualHost
   maSetupTrace
   maSplitConfigValue

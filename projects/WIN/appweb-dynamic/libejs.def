@@ -9,6 +9,7 @@ EXPORTS
   _ejsGetString
   _ejsIs
   deserialize
+  dummy_Reflection
   ecAddConstant
   ecAddConstants
   ecAddDocConstant
@@ -65,12 +66,12 @@ EXPORTS
   ecPutSpecificToken
   ecPutToken
   ecRemoveModule
-  ecReportError
   ecResetError
   ecResetInput
   ecResetModuleList
   ecResetParser
   ecSetCertFile
+  ecSetError
   ecSetOptimizeLevel
   ecSetOutputFile
   ecSetStrictMode
@@ -81,10 +82,10 @@ EXPORTS
   ejsAddException
   ejsAddItem
   ejsAddItemToSharedList
-  ejsAddListener
   ejsAddModule
   ejsAddNamespaceToBlock
   ejsAddNativeModule
+  ejsAddObserver
   ejsAddToGcStats
   ejsAddWebHandler
   ejsAlloc
@@ -99,8 +100,10 @@ EXPORTS
   ejsBindConstructor
   ejsBindFunction
   ejsBindMethod
+  ejsBlendObject
   ejsBlendTypeProperties
   ejsBootstrapTypes
+  ejsCaptureStack
   ejsCast
   ejsClearAttention
   ejsClearException
@@ -112,19 +115,17 @@ EXPORTS
   ejsCloneFunction
   ejsCloneObject
   ejsCloneObjectHelpers
-  ejsCloneRequest
   ejsCoerceOperands
   ejsCollectGarbage
+  ejsCompactObject
   ejsCompleteType
   ejsComputeHashCode
   ejsConfigureAppType
   ejsConfigureArrayType
   ejsConfigureBooleanType
   ejsConfigureByteArrayType
-  ejsConfigureConfigType
   ejsConfigureDateType
   ejsConfigureErrorType
-  ejsConfigureEventType
   ejsConfigureFileSystemType
   ejsConfigureFileType
   ejsConfigureFunctionType
@@ -143,7 +144,6 @@ EXPORTS
   ejsConfigureNumberType
   ejsConfigureObjectType
   ejsConfigurePathType
-  ejsConfigureReflectType
   ejsConfigureRegExpType
   ejsConfigureRequestType
   ejsConfigureSessionType
@@ -174,9 +174,11 @@ EXPORTS
   ejsCreateBooleanType
   ejsCreateByteArray
   ejsCreateCompilerFrame
+  ejsCreateConfigType
   ejsCreateCoreType
   ejsCreateDate
   ejsCreateDoc
+  ejsCreateError
   ejsCreateErrorType
   ejsCreateException
   ejsCreateFile
@@ -217,12 +219,12 @@ EXPORTS
   ejsCreateStringAndFree
   ejsCreateStringType
   ejsCreateStringWithLength
-  ejsCreateTimerEvent
   ejsCreateType
   ejsCreateTypeType
   ejsCreateUndefined
   ejsCreateUri
   ejsCreateUriAndFree
+  ejsCreateUriFromParts
   ejsCreateVm
   ejsCreateVoidType
   ejsCreateWorker
@@ -261,7 +263,6 @@ EXPORTS
   ejsExit
   ejsFixupType
   ejsFormatReservedNamespace
-  ejsFormatStack
   ejsFree
   ejsFreeVar
   ejsFreezeGlobal
@@ -271,6 +272,7 @@ EXPORTS
   ejsGetException
   ejsGetGlobalObject
   ejsGetHashSize
+  ejsGetHttpLimits
   ejsGetItem
   ejsGetLastItem
   ejsGetListCount
@@ -285,6 +287,7 @@ EXPORTS
   ejsGetPropertyCount
   ejsGetPropertyName
   ejsGetService
+  ejsGetSession
   ejsGetSlot
   ejsGetStrOption
   ejsGetTrait
@@ -301,7 +304,7 @@ EXPORTS
   ejsGrowByteArray
   ejsGrowObject
   ejsHasException
-  ejsHasListeners
+  ejsHasObservers
   ejsHasTrait
   ejsInheritBaseClassNamespaces
   ejsInitCompiler
@@ -331,6 +334,7 @@ EXPORTS
   ejsMakeEternalPermanent
   ejsMakeObjHash
   ejsMakePermanent
+  ejsMakeRoomInByteArray
   ejsMakeTransient
   ejsMark
   ejsMarkBlock
@@ -354,8 +358,8 @@ EXPORTS
   ejsRegExpToString
   ejsRemoveItemAtPos
   ejsRemoveLastItem
-  ejsRemoveListener
   ejsRemoveModule
+  ejsRemoveObserver
   ejsRemoveProperty
   ejsReportError
   ejsResetBlockNamespaces
@@ -369,26 +373,31 @@ EXPORTS
   ejsSearchForModule
   ejsSendEvent
   ejsSendEventv
+  ejsSendRequestCloseEvent
+  ejsSendRequestErrorEvent
+  ejsSendRequestEvent
   ejsServiceEvents
   ejsSetByteArrayPositions
   ejsSetFunctionCode
   ejsSetFunctionName
   ejsSetGeneration
+  ejsSetHttpLimits
   ejsSetListLimits
   ejsSetModuleConstants
   ejsSetProperty
   ejsSetPropertyByName
   ejsSetPropertyName
   ejsSetSearchPath
+  ejsSetSessionTimeout
   ejsSetTraitAttributes
   ejsSetTraitDetails
   ejsSetTraitType
   ejsSetTypeName
   ejsSetXML
+  ejsSetupTrace
   ejsShowBlockScope
   ejsShowCurrentScope
-  ejsShowStack
-  ejsStartLogging
+  ejsStartMprLogging
   ejsStrcat
   ejsStrdup
   ejsThrowArgError
@@ -410,8 +419,11 @@ EXPORTS
   ejsToBoolean
   ejsToJSON
   ejsToNumber
+  ejsToPath
   ejsToString
+  ejsToUri
   ejsUnlockVm
+  ejsUpdateSessionLimits
   ejsUseActivation
   ejsWriteToByteArray
   ejsXMLDescendants
@@ -421,10 +433,10 @@ EXPORTS
   ejs_web_Init
   getMimeType
   getNextJsonToken
-  http_addListener
   http_async
   http_available
-  http_removeListener
+  http_on
+  http_removeObserver
   http_setHeader
   http_set_async
   markHttp
@@ -439,9 +451,9 @@ EXPORTS
   peekNextJsonToken
   quickSort
   sock_accept
-  sock_addListener
   sock_address
   sock_async
+  sock_on
   sock_set_async
   truncateFile
   writeFile
