@@ -405,7 +405,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>C97FC003123EF7EE00ABFD22</string>
+										<string>C97FC004123F1EBF00ABFD22</string>
 										<key>history</key>
 										<array>
 											<string>C9817C74110D195B00F241EF</string>
@@ -618,7 +618,7 @@
 						<key>Frame</key>
 						<string>{{0, 0}, {1728, 345}}</string>
 						<key>RubberWindowFrame</key>
-						<string>102 161 1728 1017 0 0 1920 1178 </string>
+						<string>101 161 1728 1017 0 0 1920 1178 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXDebugCLIModule</string>
@@ -694,10 +694,10 @@
 							<key>Frame</key>
 							<string>{{0, 220}, {764, 406}}</string>
 							<key>RubberWindowFrame</key>
-							<string>102 161 1728 1017 0 0 1920 1178 </string>
+							<string>101 161 1728 1017 0 0 1920 1178 </string>
 						</dict>
 						<key>RubberWindowFrame</key>
-						<string>102 161 1728 1017 0 0 1920 1178 </string>
+						<string>101 161 1728 1017 0 0 1920 1178 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXDebugSessionModule</string>
@@ -744,7 +744,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>306116590.23168898</real>
+	<real>306126527.29585898</real>
 	<key>ToolbarConfigUserDefaultsMinorVersion</key>
 	<string>2</string>
 	<key>ToolbarDisplayMode</key>
@@ -766,7 +766,7 @@
 		<string>/Users/mob/git/appweb/projects/MACOSX/appweb-all/appweb-all.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>102 161 1728 1017 0 0 1920 1178 </string>
+	<string>101 161 1728 1017 0 0 1920 1178 </string>
 	<key>WindowToolsV3</key>
 	<array>
 		<dict>

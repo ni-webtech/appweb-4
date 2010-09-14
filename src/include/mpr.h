@@ -377,14 +377,6 @@ extern "C" {
     #endif
 #endif
 
-#if BLD_UNIX_LIKE
-    typedef pthread_t   MprOsThread;
-#elif BLD_CPU_ARCH == MPR_CPU_IX64
-    typedef int64       MprOsThread;
-#else
-    typedef int         MprOsThread;
-#endif
-
 #ifndef BITSPERBYTE
 #define BITSPERBYTE     (8 * sizeof(char))
 #endif
@@ -982,12 +974,6 @@ extern "C" {
 }
 #endif
 
-#if MPR_64_BIT
-typedef int64 psize;
-#else
-typedef int psize;
-#endif
-
 #endif /* _h_MPR_OS_HDRS */
 
 /*
@@ -1454,6 +1440,14 @@ struct  MprXml;
         int main(argc, argv)
 #else
     #define MAIN(name, argc, argv) int main(argc, argv)
+#endif
+
+#if BLD_UNIX_LIKE
+    typedef pthread_t   MprOsThread;
+#elif BLD_CPU_ARCH == MPR_CPU_IX64
+    typedef int64       MprOsThread;
+#else
+    typedef int         MprOsThread;
 #endif
 
 /**

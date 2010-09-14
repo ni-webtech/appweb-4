@@ -778,7 +778,7 @@ EOF
         esac
         exit ;;
     i*:CYGWIN*:*)
-        if [ "${PROCESSOR_ARCHITECTURE} = AMD64 -o "${PROCESSOR_ARCHITEW6432} = AMD64 ] ; then
+        if [ "${PROCESSOR_ARCHITECTURE}" = AMD64 -o "${PROCESSOR_ARCHITEW6432}" = AMD64 ] ; then
                 echo x86_64-pc-cygwin
         else
                 echo ${UNAME_MACHINE}-pc-cygwin

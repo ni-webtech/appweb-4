@@ -499,14 +499,15 @@ parseSystem() {
         os=CYGWIN
         if [ "$CL_FOUND" = 1 ] ; then
             os=WIN
-        elif [ ! -x /bin/cc.exe -o "$BLD_CC_CYGWIN" != 1 ] ; then
-            BLD_BUILD_OS=WIN
-            [ $quiet = 0 ] && echo -e "  # Search for MS compiler ..."
-            . build/search.config
-            search=`convertSearchPath "$BUILD_SEARCH_PATH"`:$PATH
-            if [ "`probe --partial cl --search "$search" cl`" != "" ] ; then
-                os=WIN
-                CL_FOUND=1
+        elif [ "$CL_SEARCHED" != 1 ] ; then
+            if [ ! -x /bin/cc.exe -o "$BLD_CC_CYGWIN" != 1 ] ; then
+               [ $quiet = 0 ] && echo -e "  # Search for MS compiler ..."
+               vsdirs=`ls -d /cygdrive/*/Program?Files*/Microsoft?Visual?Studio?{10*,9*}/VC/Bin 2>/dev/null`
+               if [ "$vsdirs" != "" ] ; then
+                   os=WIN
+                   CL_FOUND=1
+                   CL_SEARCHED=1
+               fi
             fi
         fi
         ;;
@@ -701,14 +702,13 @@ remapDir() {
 #   Convert the search path into a normal PATH style with ":" separators
 #   On windows, this requires cygwin paths in searchPath.
 #
-convertSearchPath() 
-{
+convertSearchPath() {
     local x
 
     if [ "$1" != "" ] ; then
         [ "$verbose" -gt 2 ] && echo "ConvertPath expanding $1" 1>&2
         echo $1 | sed "s/[  ]'/=/g" | tr "=" "\n" | sed "s/'//g" |
-        sed "s/ /?/g" | grep -v '^$' | while read x
+        sed "s/[ \)\(]/?/g" | grep -v '^$' | while read x
         do
             [ "$x" = "" ] && continue
             # [ "$verbose" != 0 ] && echo -e "\nConvert: \"$x\" => \n    \"`eval ls -d1 "$x" 2>/dev/null | sort -r`\"" 1>&2
@@ -726,12 +726,16 @@ convertSearchPath()
 
 
 findComponents() {
-    local with build host mandatory name path upperName os
+    local with build host mandatory name path upperName os system
 
     [ $quiet = 0 ] && echo -e "  # Finding components ..."
 
     for kind in BUILD HOST ; do
-        [ $quiet = 0 ] && echo -e "  #\n  # Search for `lower $kind` components"
+        if [ $quiet = 0 ] ; then
+            eval system=\$BLD_${KIND}_SYSTEM
+            echo -e "  #\n  # Search for `lower $kind` components for $system"
+            echo -e "  #   (Modify build/search.config and build/components for component searching)\n  #"
+        fi
 
         eval SEARCH_PATH=\$${kind}_SEARCH_PATH
         if [ "$verbose" -gt 0 ] ; then
