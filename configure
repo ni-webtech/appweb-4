@@ -732,7 +732,7 @@ findComponents() {
 
     for kind in BUILD HOST ; do
         if [ $quiet = 0 ] ; then
-            eval system=\$BLD_${KIND}_SYSTEM
+            eval system=\$BLD_${kind}_SYSTEM
             echo -e "  #\n  # Search for `lower $kind` components for $system"
             echo -e "  #   (Modify build/search.config and build/components for component searching)\n  #"
         fi

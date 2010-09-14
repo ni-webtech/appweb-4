@@ -3906,7 +3906,6 @@ int mprReapCmd(MprCmd *cmd, int timeout)
         int     status, waitrc;
         status = 0;
         if ((waitrc = waitpid(cmd->pid, &status, WNOHANG | __WALL)) < 0) {
-            mprAssert(0);
             mprLog(cmd, 0, "waitpid failed for pid %d, errno %d", cmd->pid, errno);
             return MPR_ERR_CANT_READ;
 
