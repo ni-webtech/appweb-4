@@ -136,7 +136,6 @@ public function locate(program): String {
 
 
 public function share(key: String, value: String) {
-print('SHARE ' + key + " " + value)
     postMessage({ key: key, value: value })
 }
 

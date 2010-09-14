@@ -17440,7 +17440,7 @@ module ejs.web {
             
             When used inside a web server, the web server should define the listening endpoints and ensure the 
             EjsScript startup script is executed. Then, when listen is called, the HttpServer object will be bound to
-            the web server's listening connection. In this case, the endpoint argument is ignored.
+            the web server's listening connection. In this case, the endpoint argument is not required and is ignored.
 
             HttpServer supports both sync and async modes of operation.  In sync mode, after listen call is made, 
             $accept must be called to wait for and receive client connections. The $accept call will create the 
@@ -17462,7 +17462,7 @@ module ejs.web {
                 })
                 server.listen("80")
          */
-        native function listen(endpoint: String?): Void
+        native function listen(endpoint: String? = null): Void
 
         /** 
             Remove an observer from the server. 

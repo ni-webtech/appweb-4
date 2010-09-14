@@ -515,7 +515,7 @@ static int consoleGets(EcStream *stream)
         return -1;
     }
     cp = mprStrTrim(line, "\r\n");
-    len = strlen(cp);
+    len = (int) strlen(cp);
     stream->buf = mprStrdup(stream, cp);
     stream->nextChar = stream->buf;
     stream->end = &stream->buf[len];

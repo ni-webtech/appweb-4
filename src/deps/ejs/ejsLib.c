@@ -4827,11 +4827,7 @@ static void createExceptionBlock(Ejs *ejs, EjsEx *ex, int flags)
         for (i = 0; i < count && count > 0; i++) {
             ejsPopBlock(ejs);
         }
-#if OLD
-        count = (state->stack - fp->stackReturn - fp->argc);
-#else
-        count = state->stack - fp->stackBase;
-#endif
+        count = (int) (state->stack - fp->stackBase);
         state->stack -= (count - ex->numStack);
         mprAssert(state->stack >= fp->stackReturn);
     }
@@ -5450,10 +5446,12 @@ static void manageBreakpoint(Ejs *ejs)
 
     //  TODO - should have a switch to turn this on / off
     //  OPT - compiler should strip '\n' from currentLine and we should explicitly add it here
+
     optable = ejsGetOptable(ejs);
-    mprLog(ejs, 7, "%0s %04d: [%d] %02x: %-35s # %s:%d %s",
-        mprGetCurrentThreadName(fp), offset, (int) (state->stack - fp->stackReturn),
-        (uchar) opcode, optable[opcode].name, fp->filename, fp->lineNumber, fp->currentLine);
+    if (mprGetLogLevel(ejs) > 7) {
+        mprPrintf(ejs, "%0s %04d: [%d] %02x: %-35s # %s:%d %s",
+            mprGetCurrentThreadName(fp), offset, (int) (state->stack - fp->stackReturn),
+            (uchar) opcode, optable[opcode].name, fp->filename, fp->lineNumber, fp->currentLine);
     if (stop && once++ == 0) {
         mprSleep(ejs, 0);
     }
@@ -7354,7 +7352,7 @@ static char *probe(MprCtx ctx, cchar *path, int minVersion, int maxVersion)
         *ext = '\0';
     }
     files = mprGetPathFiles(ctx, dir, 0);
-    nameLen = strlen(base);
+    nameLen = (int) strlen(base);
     bestVersion = -1;
     best = 0;
 
@@ -8695,7 +8693,9 @@ EjsService *ejsCreateService(MprCtx ctx)
     }
     mprGetMpr(ctx)->ejsService = sp;
     sp->nativeModules = mprCreateHash(sp, -1);
+#if UNUSED
     mprSetLogHandler(ctx, logHandler, NULL);
+#endif
     return sp;
 }
 
@@ -8767,12 +8767,6 @@ Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *searchPath, MprList *require, i
             mprFree(ejs);
             return 0;
         }
-#if UNUSED
-        if (ejs->flags & EJS_FLAG_NO_INIT) {
-            /* Always need the Error type */
-            ejsConfigureErrorType(ejs);
-        }
-#endif
     } else {
         cloneMaster(ejs, master);
     }
@@ -20701,7 +20695,7 @@ Token getNextJsonToken(MprBuf *buf, char **token, JsonState *js)
                 return TOK_ERR;
             }
             if (buf) {
-                mprPutBlockToBuf(buf, (char*) start, cp - start);
+                mprPutBlockToBuf(buf, (char*) start, (int) (cp - start));
             }
             cp++;
 
@@ -20723,7 +20717,7 @@ Token getNextJsonToken(MprBuf *buf, char **token, JsonState *js)
                 return TOK_ERR;
             }
             if (buf) {
-                mprPutBlockToBuf(buf, (char*) start, cp - start);
+                mprPutBlockToBuf(buf, (char*) start, (int) (cp - start));
             }
             
             cp++;
@@ -20740,7 +20734,7 @@ Token getNextJsonToken(MprBuf *buf, char **token, JsonState *js)
                 }
             }
             if (buf) {
-                mprPutBlockToBuf(buf, (char*) start, cp - start);
+                mprPutBlockToBuf(buf, (char*) start, (int) (cp - start));
             }
         }
         if (buf) {
@@ -25714,7 +25708,7 @@ static EjsObj *joinPathExt(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
  */
 static EjsObj *pathLength(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, strlen(fp->path));
+    return (EjsObj*) ejsCreateNumber(ejs, (int) strlen(fp->path));
 }
 
 
@@ -26265,7 +26259,7 @@ static EjsObj *pathToJSON(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     int     i, c, len;
 
     buf = mprCreateBuf(fp, 0, 0);
-    len = strlen(fp->path);
+    len = (int) strlen(fp->path);
     mprPutCharToBuf(buf, '"');
     for (i = 0; i < len; i++) {
         c = fp->path[i];
@@ -28187,7 +28181,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
                 ejsThrowArgError(ejs, "Bad format specifier");
                 return 0;
             }
-            catString(ejs, result, buf, strlen(buf));
+            catString(ejs, result, buf, (int) strlen(buf));
             mprFree(buf);
             last = i + 1;
             nextArg++;
@@ -29263,7 +29257,7 @@ static EjsObj *trim(Ejs *ejs, EjsString *sp, cchar *pattern, int where)
         }
         end++;
     } else {
-        patternLength = strlen(pattern);
+        patternLength = (int) strlen(pattern);
         if (patternLength <= 0 || patternLength > sp->length) {
             return (EjsObj*) sp;
         }
@@ -29846,8 +29840,8 @@ static EjsObj *system_ipaddr(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
         ip = 0;
         //  TODO - support IPv6
         for (res = reslist; res; res = res->ai_next) {
-            if (getnameinfo(res->ai_addr, res->ai_addrlen, ipaddr, sizeof(ipaddr) - 1, service, sizeof(service) - 1, 
-                    NI_NUMERICHOST | NI_NUMERICSERV | NI_NOFQDN) == 0) {
+            if (getnameinfo(res->ai_addr, (socklen_t) res->ai_addrlen, ipaddr, (int) sizeof(ipaddr) - 1, service, 
+                    (int) sizeof(service) - 1, NI_NUMERICHOST | NI_NUMERICSERV | NI_NOFQDN) == 0) {
                 if (strncmp(ipaddr, "10.", 3) == 0 || strncmp(ipaddr, "127.", 4) == 0 ||
                      strncmp(ipaddr, "169.", 4) == 0 || strncmp(ipaddr, "172.", 4) == 0 ||
                      strncmp(ipaddr, "192.", 4) == 0) {
@@ -31403,7 +31397,7 @@ static EjsObj *uri_basename(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     if (path == 0) {
         return (EjsObj*) ejs->emptyStringValue;
     }
-    len = strlen(path);
+    len = (int) strlen(path);
     if (path[len - 1] == '/') {
         *path = '\0';
     } else {
@@ -31497,7 +31491,7 @@ static EjsObj *uri_dirname(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     if (path == 0) {
         return (EjsObj*) ejs->emptyStringValue;
     }
-    len = strlen(path);
+    len = (int) strlen(path);
     if (path[len - 1] == '/') {
         if (len > 1) {
             path[len - 1] = '\0';
@@ -31998,7 +31992,7 @@ static EjsObj *uri_template(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     for (cp = pattern; *cp; cp++) {
         if (*cp == '{' && (cp == pattern || cp[-1] != '\\')) {
             if ((ep = strchr(++cp, '}')) != 0) {
-                len = ep - cp;
+                len = (int) (ep - cp);
                 token = mprMemdup(buf, cp, len + 1);
                 token[len] = '\0';
                 value = 0;
@@ -36768,6 +36762,7 @@ void ejsConfigureFilterType(Ejs *ejs)
 
 
 static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn);
+static EjsHttpServer *getServerContext(HttpConn *conn);
 static void setHttpPipeline(Ejs *ejs, EjsHttpServer *sp);
 static void setupConnTrace(HttpConn *conn);
 static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags);
@@ -36936,7 +36931,7 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     EjsObj      *endpoint;
     EjsPath     *root;
 
-    endpoint = argv[0];
+    endpoint = (argc >= 1) ? argv[0] : ejs->nullValue;
 
     if (sp->server) {
         mprFree(sp->server);
@@ -37401,21 +37396,24 @@ static void setupConnTrace(HttpConn *conn)
 }
 
 
-static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn)
+static EjsHttpServer *getServerContext(HttpConn *conn)
 {
     Ejs             *ejs;
-    EjsRequest      *req;
     EjsPath         *dirPath;
+    EjsHttpServer   *sp;
     HttpLoc         *loc;
     cchar           *dir;
 
+    if ((sp = httpGetServerContext(conn->server)) != 0) {
+        return sp;
+    }
     if (conn->tx->handler->match) {
         /*
             Hosted handler. Must supply a location block which defines the HttpServer instance.
          */
         loc = conn->rx->loc;
         if (loc == 0 || loc->context == 0) {
-            mprError(sp, "Location block is not defined for request");
+            mprError(conn, "Location block is not defined for request");
             return 0;
         }
         sp = (EjsHttpServer*) loc->context;
@@ -37432,11 +37430,24 @@ static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn)
         }
         httpSetServerContext(conn->server, sp);
         httpSetRequestNotifier(conn, (HttpNotifier) stateChangeNotifier);
-    } else {
-        ejs = sp->ejs;
-        dirPath = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
-        dir = (dirPath && ejsIsPath(ejs, dirPath)) ? dirPath->path : ".";
+        return sp;
     }
+    mprError(conn, "Server context not defined for request");
+    return NULL;
+}
+
+
+static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn)
+{
+    Ejs             *ejs;
+    EjsRequest      *req;
+    EjsPath         *dirPath;
+    cchar           *dir;
+
+    ejs = sp->ejs;
+    dirPath = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
+    dir = (dirPath && ejsIsPath(ejs, dirPath)) ? dirPath->path : ".";
+
     req = ejsCreateRequest(ejs, sp, conn, dir);
     httpSetConnContext(conn, req);
     conn->dispatcher = ejs->dispatcher;
@@ -37477,11 +37488,15 @@ static void runEjs(HttpQueue *q)
 
     conn = q->conn;
     if (!conn->abortPipeline) {
-        sp = httpGetServerContext(conn->server);
-        mprAssert(sp);
-        if ((req = httpGetConnContext(conn)) == 0 && (req = createRequest(sp, conn)) == 0) {
-            return;
+        if ((req = httpGetConnContext(conn)) == 0) {
+            if ((sp = getServerContext(conn)) == 0) {
+                return;
+            }
+            if ((req = createRequest(sp, conn)) == 0) {
+                return;
+            }
         }
+        sp = httpGetServerContext(conn->server);
         if (!req->accepted) {
             /* Server accept event */
             req->accepted = 1;
@@ -39236,7 +39251,7 @@ EjsSession *ejsGetSession(Ejs *ejs, EjsRequest *req)
                     }
                 }
             }
-            len = cp - value;
+            len = (int) (cp - value);
             id = mprMemdup(req, value, len + 1);
             id[len] = '\0';
             session = ejsGetPropertyByName(master, server->sessions, ejsName(&qname, "", id));
@@ -49967,7 +49982,7 @@ int ecCreateModuleSection(EcCompiler *cp)
     /*
         Remember this location for the module checksum. Reserve 4 bytes.
      */
-    state->checksumOffset = mprGetBufEnd(buf) - buf->data;
+    state->checksumOffset = (int) (mprGetBufEnd(buf) - buf->data);
     mprAdjustBufEnd(buf, 4);
 
     /*
@@ -51974,7 +51989,7 @@ static EcNode *parseXMLText(EcCompiler *cp, EcNode *np)
         for (p = cp->peekToken->text; p && *p; p++) {
             if (*p == '{' || *p == '<') {
                 if (cp->peekToken->text < p) {
-                    mprPutBlockToBuf(np->literal.data, (cchar*) cp->token->text, p - cp->token->text);
+                    mprPutBlockToBuf(np->literal.data, (cchar*) cp->token->text, (int) (p - cp->token->text));
                     mprAddNullToBuf(np->literal.data);
                     if (getToken(cp) == T_EOF || cp->token->tokenId == T_ERR || cp->token->tokenId == T_NOP) {
                         return 0;
@@ -60493,7 +60508,7 @@ static EcNode *parseProgram(EcCompiler *cp, cchar *path)
         np->qname.name = ejs->state->internal->uri;
     } else if (path) {
         apath = mprGetAbsPath(cp, path);
-        md5 = mprGetMD5Hash(cp, apath, strlen(apath), NULL);
+        md5 = mprGetMD5Hash(cp, apath, (int) strlen(apath), NULL);
         np->qname.name = mprAsprintf(np, -1, "%s-%s-%d", EJS_INTERNAL_NAMESPACE, md5, cp->uid++);
         mprFree(md5);
         mprFree(apath);

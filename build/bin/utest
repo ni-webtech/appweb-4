@@ -299,7 +299,6 @@ enumerable class Test {
         let estr = serialize(export)
         w.preeval('
             data = deserialize(\'' + estr.replace(/\\/g, "\\\\") + '\')
-dump("INIT WORKER", data)
 
             public var test: Test = new Test
             public var tsession: Object
@@ -325,7 +324,6 @@ dump("INIT WORKER", data)
     }
 
     function startWorker(file: Path, phase: String = null): Worker {
-dump('START WORKER', tsession)
         let export = { 
             bin: _bin, 
             config: config,
@@ -358,7 +356,6 @@ dump('START WORKER', tsession)
                 test.skippedMsg = obj.skip
                 test.skippedCount++
             } else if (obj.key) {
-print("GOT KEY " + key + " " + value)
                 test.tsession[obj.key] = obj.value
             }
         }

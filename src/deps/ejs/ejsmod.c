@@ -2226,7 +2226,7 @@ static char *fixSentance(MprCtx ctx, char *str)
     /*
         Copy the string and grow by 1 byte (plus null) to allow for a trailing period.
      */
-    len = strlen(str) + 2;
+    len = (int) strlen(str) + 2;
     buf = mprAlloc(ctx, len);
     if (str == 0) {
         return "";
@@ -2245,7 +2245,7 @@ static char *fixSentance(MprCtx ctx, char *str)
         Add a "." if the string does not appear to contain HTML tags
      */
     if (strstr(str, "</") == 0) {
-        len = strlen(str);
+        len = (int) strlen(str);
         if (str[len - 1] != '.') {
             str[len] = '.';
             str[len+1] = '\0';
@@ -2272,7 +2272,7 @@ static char *formatExample(Ejs *ejs, char *docString)
         }
         for (indent = 0; *cp == '\t' || *cp == ' '; indent++, cp++) {}
 
-        buf = mprAlloc(ejs, strlen(example) * 4 + 2);
+        buf = mprAlloc(ejs, (int) strlen(example) * 4 + 2);
         for (cp = example, dp = buf; *cp; ) {
             for (i = 0; i < indent && *cp; i++, cp++) {}
             for (; *cp && *cp != '\n'; ) {
@@ -2543,8 +2543,7 @@ static char *getFilename(cchar *name)
         }
         *cp = '\0';
     }
-    mprStrcpy(&buf[strlen(buf)], sizeof(buf) - strlen(buf) - 1, ".html");
-
+    mprStrcpy(&buf[strlen(buf)], sizeof(buf) - (int) strlen(buf) - 1, ".html");
     return buf;
 }
 
@@ -2597,7 +2596,7 @@ static bool match(cchar *last, cchar *key)
     mprAssert(last);
     mprAssert(key && *key);
 
-    len = strlen(key);
+    len = (int) strlen(key);
     return strncmp(last, key, len) == 0;
 }
 
@@ -5058,7 +5057,7 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
             for (j = 0; j < ival; j++) {
                 att = (int) getNum(mp);
                 mprSprintf(mp, bufp, buflen,  "%d ", ival);
-                len = strlen(bufp);
+                len = (int) strlen(bufp);
                 bufp += len;
                 buflen -= len;
             }
@@ -5089,13 +5088,13 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
         case EBC_INIT_DEFAULT8:
             numEntries = getByte(mp);
             mprSprintf(mp, bufp, buflen,  "<%d> ", numEntries);
-            len = strlen(bufp);
+            len = (int) strlen(bufp);
             bufp += len;
             buflen -= len;
             for (j = 0; j < numEntries; j++) {
                 ival = getByte(mp);
                 mprSprintf(mp, bufp, buflen,  "<%d> ", ival + 2);
-                len = strlen(bufp);
+                len = (int) strlen(bufp);
                 bufp += len;
                 buflen -= len;
             }
@@ -5104,13 +5103,13 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
         case EBC_INIT_DEFAULT:
             numEntries = getByte(mp);
             mprSprintf(mp, bufp, buflen,  "<%d> ", numEntries);
-            len = strlen(bufp);
+            len = (int) strlen(bufp);
             bufp += len;
             buflen -= len;
             for (j = 0; j < numEntries; j++) {
                 ival = getWord(mp);
                 mprSprintf(mp, bufp, buflen,  "<%d> ", ival + 2);
-                len = strlen(bufp);
+                len = (int) strlen(bufp);
                 bufp += len;
                 buflen -= len;
             }
@@ -5129,7 +5128,7 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
             mprError(mp, "Bad arg type in opcode table");
             break;
         }
-        len = strlen(bufp);
+        len = (int) strlen(bufp);
         bufp += len;
         buflen -= len;
 
@@ -5144,7 +5143,7 @@ static int decodeOperands(EjsMod *mp, EjsOptable *opt, char *argbuf, int argbufL
             *stackEffect = -ival;
         }
     }
-    return mp->pc - start;
+    return (int) (mp->pc - start);
 }
 
 
@@ -5186,7 +5185,7 @@ static void interp(EjsMod *mp, EjsModule *module, EjsFunction *fun)
     }
     
     while ((mp->pc - start) < codeLen) {
-        address = mp->pc - start;
+        address = (int) (mp->pc - start);
         opcode = *mp->pc++;
         argbuf[0] = '\0';
         stackEffect = 0;
@@ -5221,10 +5220,10 @@ static void interp(EjsMod *mp, EjsModule *module, EjsFunction *fun)
             if ((currentLine = getString(mp)) == 0) {
                 goto badToken;
             }
-            nbytes = (mp->pc - start) - address - 1;
+            nbytes = (int) (mp->pc - start) - address - 1;
 
         } else {
-            nbytes = decodeOperands(mp, opt, argbuf, sizeof(argbuf), mp->pc - start, &stackEffect);
+            nbytes = decodeOperands(mp, opt, argbuf, (int) sizeof(argbuf), (int) (mp->pc - start), &stackEffect);
         }
 
         if (mp->showAsm) {
