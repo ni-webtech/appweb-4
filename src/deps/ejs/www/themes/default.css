@@ -16,7 +16,7 @@ div.top {
 	background-repeat: no-repeat;
 }
 
-div.top h1 a {
+div.top h1 {
     color: #000;
 	text-decoration: none; 
 }
@@ -256,8 +256,9 @@ div.-ejs-formError h2 {
 [data-click] {
     cursor: pointer;
 }
+
 [data-click]:hover { 
-    color: #CC4477;
+    color: #444477;
 }
 
 

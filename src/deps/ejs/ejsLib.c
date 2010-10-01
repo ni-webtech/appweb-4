@@ -289,7 +289,7 @@ EjsObj *ejsThrowMemoryError(Ejs *ejs)
      */
     if (ejs->exception == 0) {
         va_list dummy = NULL_INIT;
-        return ejsCreateException(ejs, ES_MemoryError, NULL, dummy);
+        return ejsCreateException(ejs, ES_MemoryError, "Memory Error", dummy);
     }
     return ejs->exception;
 }
@@ -640,10 +640,10 @@ gc->firstGlobal = 0;
     ejs->workQuota = EJS_WORK_QUOTA;
 
     for (i = 0; i < EJS_MAX_GEN; i++) {
-        gc->generations[i] = mprAllocObjZeroed(ejs->heap, EjsGen);
+        gc->generations[i] = mprAllocCtx(ejs->heap, sizeof(EjsGen));
     }
     for (i = 0; i < EJS_MAX_TYPE; i++) {
-        gc->pools[i] = mprAllocObjZeroed(ejs->heap, EjsPool);
+        gc->pools[i] = mprAllocCtx(ejs->heap, sizeof(EjsPool));
     }
     ejs->currentGeneration = ejs->gc.generations[EJS_GEN_ETERNAL];
     return 0;
@@ -655,13 +655,14 @@ void ejsDestroyGCService(Ejs *ejs)
     EjsGC       *gc;
     EjsGen      *gen;
     EjsObj      *vp;
-    MprBlk      *bp, *next;
+    MprBlk      *bp, *next, *end;
     int         generation;
     
     gc = &ejs->gc;
     for (generation = EJS_GEN_ETERNAL; generation >= 0; generation--) {
         gen = gc->generations[generation];
-        for (bp = mprGetFirstChild(gen); bp; bp = next) {
+        end = mprGetEndChildren(gen);
+        for (bp = mprGetFirstChild(gen); bp != end; bp = next) {
             next = bp->next;
             vp = MPR_GET_PTR(bp);
             checkAddr(vp);
@@ -731,7 +732,7 @@ EjsObj *ejsAllocVar(Ejs *ejs, EjsType *type, int extra)
     }
     if (vp == 0) {
         size = type->instanceSize + extra;
-        if ((vp = (EjsObj*) mprAllocZeroed(ejsGetAllocCtx(ejs), size)) == 0) {
+        if ((vp = (EjsObj*) mprAllocCtx(ejsGetAllocCtx(ejs), size)) == 0) {
             ejsThrowMemoryError(ejs);
             return 0;
         }
@@ -752,15 +753,14 @@ EjsObj *ejsAllocPooled(Ejs *ejs, int id)
 {
     EjsPool     *pool;
     EjsObj      *vp;
-    MprBlk      *bp, *gp;
+    MprBlk      *bp;
 
     if (0 < id && id < ejs->gc.numPools) {
         pool = ejs->gc.pools[id];
         if ((bp = mprGetFirstChild(pool)) != NULL) {
             vp = MPR_GET_PTR(bp);
-            /*
-                Transfer from the pool to the current generation. Inline for speed.
-             */
+            mprStealBlock(ejs->currentGeneration, vp);
+#if OLD
             gp = MPR_GET_BLK(ejs->currentGeneration);
             if (bp->prev) {
                 bp->prev->next = bp->next;
@@ -777,6 +777,7 @@ EjsObj *ejsAllocPooled(Ejs *ejs, int id)
             bp->next = gp->children;
             gp->children = bp;
             bp->prev = 0;
+#endif
 
             memset(vp, 0, pool->type->instanceSize);
             vp->type = pool->type;
@@ -810,7 +811,6 @@ void ejsFreeVar(Ejs *ejs, void *vp, int id)
     EjsPool     *pool;
     EjsGC       *gc;
     EjsObj      *obj;
-    MprBlk      *bp, *pp;
 
     mprAssert(vp);
     checkAddr(vp);
@@ -827,10 +827,12 @@ void ejsFreeVar(Ejs *ejs, void *vp, int id)
     type->dontPool = 1;
 
     if (!type->dontPool && 0 <= id && id < gc->numPools && pool->count < EJS_MAX_OBJ_POOL) {
+        pool->type = obj->type; 
+        mprStealBlock(pool, obj);
+#if OLD
         /*
             Transfer from the current generation back to the pool. Inline for speed.
          */
-        pool->type = obj->type; 
         pp = MPR_GET_BLK(pool);
         bp = MPR_GET_BLK(obj);
         if (bp->prev) {
@@ -855,6 +857,7 @@ void ejsFreeVar(Ejs *ejs, void *vp, int id)
         bp->next = pp->children;
         pp->children = bp;
         bp->prev = 0;
+#endif
 
 #if BLD_DEBUG
         obj->type = (void*) -1;
@@ -917,7 +920,7 @@ static void mark(Ejs *ejs, int generation)
     EjsGen          *gen;
     EjsBlock        *block;
     EjsObj          *vp, **sp, **top;
-    MprBlk          *bp, *nextBp;
+    MprBlk          *bp, *nextBp, *end;
     int             next;
 
     gc = &ejs->gc;
@@ -982,7 +985,8 @@ static void mark(Ejs *ejs, int generation)
     for (generation = EJS_MAX_GEN - 1; generation >= 0; generation--) {
         ejs->gc.collectGeneration = generation;
         gen = ejs->gc.generations[generation];
-        for (bp = mprGetFirstChild(gen); bp; bp = nextBp) {
+        end = mprGetEndChildren(gen);
+        for (bp = mprGetFirstChild(gen); bp != end; bp = nextBp) {
             nextBp = bp->next;
             vp = MPR_GET_PTR(bp);
             if (!vp->marked && vp->permanent) {
@@ -1001,7 +1005,7 @@ static void sweep(Ejs *ejs, int maxGeneration)
     EjsObj      *vp;
     EjsGC       *gc;
     EjsGen      *gen;
-    MprBlk      *bp, *next;
+    MprBlk      *bp, *next, *end;
     int         destroyed, generation;
     
     /*
@@ -1012,7 +1016,8 @@ static void sweep(Ejs *ejs, int maxGeneration)
         gc->collectGeneration = generation;
         gen = gc->generations[generation];
 
-        for (destroyed = 0, bp = mprGetFirstChild(gen); bp; bp = next) {
+        end = mprGetEndChildren(gen);
+        for (destroyed = 0, bp = mprGetFirstChild(gen); bp != end; bp = next) {
             next = bp->next;
             vp = MPR_GET_PTR(bp);
             checkAddr(vp);
@@ -1040,13 +1045,14 @@ static void resetMarks(Ejs *ejs)
     EjsGC       *gc;
     EjsObj      *obj;
     EjsBlock    *block, *b;
-    MprBlk      *bp;
+    MprBlk      *bp, *end;
     int         i;
 
     gc = &ejs->gc;
     for (i = 0; i < EJS_MAX_GEN; i++) {
         gen = gc->generations[i];
-        for (bp = mprGetFirstChild(gen); bp; bp = bp->next) {
+        end = mprGetEndChildren(gen);
+        for (bp = mprGetFirstChild(gen); bp != end; bp = bp->next) {
             obj = MPR_GET_PTR(bp);
             obj->marked = 0;
         }
@@ -1122,8 +1128,8 @@ void ejsMark(Ejs *ejs, void *ptr)
 
 static inline bool memoryUsageOk(Ejs *ejs)
 {
-    MprAlloc    *alloc;
-    int64        memory;
+    MprAllocStats   *alloc;
+    size_t          memory;
 
     memory = mprGetUsedMemory(ejs);
     alloc = mprGetAllocStats(ejs);
@@ -1133,13 +1139,13 @@ static inline bool memoryUsageOk(Ejs *ejs)
 
 static inline void pruneTypePools(Ejs *ejs)
 {
-    EjsPool     *pool;
-    EjsGC       *gc;
-    EjsObj      *vp;
-    MprAlloc    *alloc;
-    MprBlk      *bp, *next;
-    int64       memory;
-    int         i;
+    EjsPool         *pool;
+    EjsGC           *gc;
+    EjsObj          *vp;
+    MprAllocStats   *alloc;
+    MprBlk          *bp, *next, *end;
+    size_t          memory;
+    int             i;
 
     gc = &ejs->gc;
 
@@ -1149,7 +1155,8 @@ static inline void pruneTypePools(Ejs *ejs)
     for (i = 0; i < gc->numPools; i++) {
         pool = gc->pools[i];
         if (pool->count) {
-            for (bp = mprGetFirstChild(pool); bp; bp = next) {
+            end = mprGetEndChildren(pool);
+            for (bp = mprGetFirstChild(pool); bp != end; bp = next) {
                 next = bp->next;
                 vp = MPR_GET_PTR(bp);
                 mprFree(vp);
@@ -1180,10 +1187,11 @@ void ejsMakeEternalPermanent(Ejs *ejs)
 {
     EjsGen      *gen;
     EjsObj      *vp;
-    MprBlk      *bp;
+    MprBlk      *bp, *end;
 
     gen = ejs->gc.generations[EJS_GEN_ETERNAL];
-    for (bp = mprGetFirstChild(gen); bp; bp = bp->next) {
+    end = mprGetEndChildren(gen);
+    for (bp = mprGetFirstChild(gen); bp != end; bp = bp->next) {
         vp = MPR_GET_PTR(bp);
         vp->permanent = 1;
     }
@@ -1311,7 +1319,7 @@ void ejsPrintAllocReport(Ejs *ejs)
     EjsType         *type;
     EjsGC           *gc;
     EjsPool         *pool;
-    MprAlloc        *ap;
+    MprAllocStats   *ap;
     int             i, maxSlot, typeMemory, count, peakCount, freeCount, peakFreeCount, reuseCount;
 
     gc = &ejs->gc;
@@ -1454,7 +1462,6 @@ void ejsPrintAllocReport(Ejs *ejs)
         FRAME->lineNumber = GET_INT(); \
         FRAME->currentLine = GET_STRING(); \
     }
-
 
 static void callFunction(Ejs *ejs, EjsFunction *fun, EjsObj *thisObj, int argc, int stackAdjust);
 
@@ -1704,6 +1711,7 @@ static void *opcodeJump[] = {
     &&EJS_OP_LOAD_REGEXP,
     &&EJS_OP_LOAD_STRING,
     &&EJS_OP_LOAD_THIS,
+    &&EJS_OP_LOAD_THIS_LOOKUP,
     &&EJS_OP_LOAD_THIS_BASE,
     &&EJS_OP_LOAD_TRUE,
     &&EJS_OP_LOAD_UNDEFINED,
@@ -2098,6 +2106,15 @@ static void *opcodeJump[] = {
 
         CASE (EJS_OP_LOAD_THIS):
             push(THIS);
+            BREAK;
+
+        CASE (EJS_OP_LOAD_THIS_LOOKUP):
+            if (lookup.originalObj) {
+                push(lookup.originalObj);
+            } else {
+                obj = FRAME->function.moduleInitializer ? ejs->global : (EjsObj*) FRAME;
+                push(obj);
+            }
             BREAK;
 
         /*
@@ -3038,7 +3055,7 @@ static void *opcodeJump[] = {
             blk->prev = blk->scope = state.bp;
             state.bp = blk;
             blk->stackBase = state.stack;
-            ejsSetDebugName(state.bp, mprGetName(v1));
+            ejsSetDebugName(state.bp, ejsGetDebugName(v1));
             BREAK;
 
         /*
@@ -4932,7 +4949,7 @@ int ejsInitStack(Ejs *ejs)
 {
     EjsState    *state;
 
-    state = ejs->state = ejs->masterState = mprAllocObjZeroed(ejs, EjsState);
+    state = ejs->state = ejs->masterState = mprAllocBlock(ejs, sizeof(EjsState), MPR_ALLOC_ZERO);
 
     /*
         Allocate the stack
@@ -4943,7 +4960,7 @@ int ejsInitStack(Ejs *ejs)
         This will allocate memory virtually for systems with virutal memory. Otherwise, it will just use malloc.
         TODO - create a guard page
      */
-    state->stackBase = mprMapAlloc(ejs, state->stackSize, MPR_MAP_READ | MPR_MAP_WRITE);
+    state->stackBase = mprVirtAlloc(state->stackSize, MPR_MAP_READ | MPR_MAP_WRITE);
     if (state->stackBase == 0) {
         mprSetAllocError(ejs);
         return EJS_ERR;
@@ -5684,7 +5701,7 @@ int ejsAddItemToSharedList(MprCtx ctx, EjsList *lp, cvoid *item)
 {
     EjsList     tmp;
 
-    if (lp->items == NULL || mprGetParent(lp->items) != ctx) {
+    if (lp->items == NULL || !mprIsParent(ctx, lp->items)) {
         tmp = *lp;
         lp->items = 0;
         lp->length = 0;
@@ -7400,7 +7417,7 @@ static char *probe(MprCtx ctx, cchar *path, int minVersion, int maxVersion)
  */
 static char *searchForModule(Ejs *ejs, MprCtx ctx, cchar *moduleName, int minVersion, int maxVersion)
 {
-    MprCtx      *tx;
+    MprCtx      tx;
     EjsPath     *dir;
     char        *withDotMod, *path, *filename, *basename, *cp, *slash, *name, *bootSearch, *tok, *searchDir, *dp;
     int         i;
@@ -7411,7 +7428,8 @@ static char *searchForModule(Ejs *ejs, MprCtx ctx, cchar *moduleName, int minVer
     if (maxVersion <= 0) {
         maxVersion = MAXINT;
     }
-    ctx = withDotMod = makeModuleName(ejs, moduleName);
+    ctx = mprAllocCtx(ejs, 0);
+    withDotMod = makeModuleName(ejs, moduleName);
     name = mprGetNormalizedPath(ctx, withDotMod);
 
     mprLog(ejs, 6, "Search for module \"%s\"", name);
@@ -7502,7 +7520,7 @@ static char *searchForModule(Ejs *ejs, MprCtx ctx, cchar *moduleName, int minVer
 
             /* Search bin/../modules */
             dp = mprGetAppDir(ctx);
-            tx = (MprCtx*) dp;
+            tx = mprAllocCtx(ejs, 0);
             dp = mprGetPathParent(tx, dp);
             dp = mprJoinPath(tx, dp, BLD_MOD_NAME);
             filename = mprJoinPath(ctx, dp, basename);
@@ -7531,7 +7549,6 @@ static char *searchForModule(Ejs *ejs, MprCtx ctx, cchar *moduleName, int minVer
 
 char *ejsSearchForModule(Ejs *ejs, cchar *moduleName, int minVersion, int maxVersion)
 {
-    MprCtx      ctx;
     char        *path, *withDotMod, *name;
 
     mprAssert(moduleName && *moduleName);
@@ -7539,15 +7556,16 @@ char *ejsSearchForModule(Ejs *ejs, cchar *moduleName, int minVersion, int maxVer
     if (maxVersion <= 0) {
         maxVersion = MAXINT;
     }
-    ctx = withDotMod = makeModuleName(ejs, moduleName);
-    name = mprGetNormalizedPath(ctx, withDotMod);
+    withDotMod = makeModuleName(ejs, moduleName);
+    name = mprGetNormalizedPath(ejs, withDotMod);
 
     mprLog(ejs, 6, "Search for module \"%s\"", name);
-    path = searchForModule(ejs, ctx, name, minVersion, maxVersion);
+    path = searchForModule(ejs, ejs, name, minVersion, maxVersion);
     if (path) {
-        mprLog(ctx, 6, "Found %s at %s", name, path);
+        mprLog(ejs, 6, "Found %s at %s", name, path);
     }
-    mprFree(ctx);
+    mprFree(name);
+    mprFree(withDotMod);
     return path;
 }
 
@@ -7585,7 +7603,7 @@ static EjsLoadState *createLoadState(Ejs *ejs, int flags)
 {
     EjsLoadState    *ls;
 
-    ls = mprAllocObjZeroed(ejs, EjsLoadState);
+    ls = mprAllocCtx(ejs, sizeof(EjsLoadState));
     ls->typeFixups = mprCreateList(ls);
     ls->firstModule = mprGetListCount(ejs->modules);
     ls->flags = flags;
@@ -8161,8 +8179,7 @@ EjsModule *ejsCreateModule(Ejs *ejs, cchar *name, int version)
 
     mprAssert(version >= 0);
 
-    mp = (EjsModule*) mprAllocZeroed(ejs, sizeof(EjsModule));
-    if (mp == 0) {
+    if ((mp = (EjsModule*) mprAllocObj(ejs, EjsModule, NULL)) == NULL) {
         mprAssert(mp);
         return 0;
     }
@@ -8173,7 +8190,7 @@ EjsModule *ejsCreateModule(Ejs *ejs, cchar *name, int version)
     } else {
         mp->vname = mp->name;
     }
-    mp->constants = mprAllocZeroed(mp, sizeof(EjsConst));
+    mp->constants = mprAllocCtx(mp, sizeof(EjsConst));
     if (mp->constants == 0) {
         return 0;
     }
@@ -8195,7 +8212,7 @@ int ejsAddNativeModule(MprCtx ctx, cchar *name, EjsNativeCallback callback, int 
 
     es = ejsGetService(ctx);
 
-    nm = mprAllocObjZeroed(es, EjsNativeModule);
+    nm = mprAllocObj(es, EjsNativeModule, NULL);
     nm->name = name;
     nm->callback = callback;
     nm->checksum = checksum;
@@ -8356,6 +8373,7 @@ int ejsLookupScope(Ejs *ejs, EjsName *name, EjsLookup *lookup)
     //  MOB -- remove nthBlock. Not needed if not binding
     for (lookup->nthBlock = 0, bp = state->bp; bp; bp = bp->scope, lookup->nthBlock++) {
         /* Seach simple object */
+        lookup->originalObj = (EjsObj*) bp;
         if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) bp, name, lookup)) >= 0) {
             return slotNum;
         }
@@ -8364,6 +8382,7 @@ int ejsLookupScope(Ejs *ejs, EjsName *name, EjsLookup *lookup)
             if (thisObj && frame->function.boundThis == thisObj && 
                     thisObj != ejs->global && !frame->function.staticMethod && 
                     !frame->function.isInitializer) {
+                lookup->originalObj = thisObj;
                 /* Instance method only */
                 if ((slotNum = ejsLookupVarWithNamespaces(ejs, thisObj, name, lookup)) >= 0) {
                     return slotNum;
@@ -8429,7 +8448,6 @@ int ejsLookupVar(Ejs *ejs, EjsObj *obj, EjsName *name, EjsLookup *lookup)
     if ((slotNum = ejsLookupVarWithNamespaces(ejs, obj, name, lookup)) >= 0) {
         return slotNum;
     }
-    
     /* Lookup prototype chain */
     for (nthBase = 1, type = obj->type; type; type = type->baseType, nthBase++) {
         if ((prototype = type->prototype) == 0 || prototype->shortScope) {
@@ -8440,7 +8458,6 @@ int ejsLookupVar(Ejs *ejs, EjsObj *obj, EjsName *name, EjsLookup *lookup)
             return slotNum;
         }
     }
-
     /* Lookup base-class chain */
     type = ejsIsType(obj) ? ((EjsType*) obj)->baseType : obj->type;
     for (nthBase = 1; type; type = type->baseType, nthBase++) {
@@ -8582,7 +8599,7 @@ void ejsShowBlockScope(Ejs *ejs, EjsBlock *block)
 
     mprLog(ejs, 6, "\n  Block scope");
     for (; block; block = block->scope) {
-        mprLog(ejs, 6, "    Block \"%s\" 0x%08x", mprGetName(block), block);
+        mprLog(ejs, 6, "    Block \"%s\" 0x%08x", ejsGetDebugName(block), block);
         namespaces = &block->namespaces;
         if (namespaces) {
             for (nextNsp = 0; (nsp = (EjsNamespace*) ejsGetNextItem(namespaces, &nextNsp)) != 0; ) {
@@ -8604,7 +8621,7 @@ void ejsShowCurrentScope(Ejs *ejs)
 
     mprLog(ejs, 6, "\n  Current scope");
     for (block = ejs->state->bp; block; block = block->scope) {
-        mprLog(ejs, 6, "    Block \"%s\" 0x%08x", mprGetName(block), block);
+        mprLog(ejs, 6, "    Block \"%s\" 0x%08x", ejsGetDebugName(block), block);
         namespaces = &block->namespaces;
         if (namespaces) {
             for (nextNsp = 0; (nsp = (EjsNamespace*) ejsGetNextItem(namespaces, &nextNsp)) != 0; ) {
@@ -8687,15 +8704,11 @@ EjsService *ejsCreateService(MprCtx ctx)
 {
     EjsService  *sp;
 
-    sp = mprAllocObjWithDestructorZeroed(ctx, EjsService, destroyEjsService);
-    if (sp == 0) {
+    if ((sp = mprAllocObj(ctx, EjsService, destroyEjsService)) == NULL) {
         return 0;
     }
     mprGetMpr(ctx)->ejsService = sp;
     sp->nativeModules = mprCreateHash(sp, -1);
-#if UNUSED
-    mprSetLogHandler(ctx, logHandler, NULL);
-#endif
     return sp;
 }
 
@@ -8724,14 +8737,13 @@ Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *searchPath, MprList *require, i
     cchar   *name;
     static int seqno = 0;
 
-    ejs = mprAllocObjWithDestructorZeroed(ctx, Ejs, destroyEjs);
-    if (ejs == 0) {
+    if ((ejs = mprAllocObj(ctx, Ejs, destroyEjs)) == NULL) {
         return 0;
     }
     mprSetAllocCallback(ejs, (MprAllocFailure) allocFailure);
     ejs->service = mprGetMpr(ctx)->ejsService;
     ejs->empty = require && mprGetListCount(require) == 0;
-    ejs->heap = mprAllocHeap(ejs, "Ejs Object Heap", 1, 0, NULL);
+    ejs->heap = mprAllocCtx(ejs, 0);
     ejs->mutex = mprCreateLock(ejs);
     if (ejs->service->http == 0) {
         ejs->service->http = httpCreate(ejs->service);
@@ -8793,7 +8805,7 @@ static int destroyEjs(Ejs *ejs)
     ejsDestroyGCService(ejs);
     state = ejs->masterState;
     if (state->stackBase) {
-        mprMapFree(state->stackBase, state->stackSize);
+        mprVirtFree(state->stackBase, state->stackSize);
     }
     mprFree(ejs->heap);
     mprSetAltLogData(ejs, NULL);
@@ -9057,10 +9069,10 @@ static int cloneMaster(Ejs *ejs, Ejs *master)
  */
 static void allocFailure(Ejs *ejs, uint size, uint total, bool granted)
 {
-    MprAlloc    *alloc;
-    EjsObj      *argv[2], *thisObj;
-    char        msg[MPR_MAX_STRING];
-    va_list     dummy = NULL_INIT;
+    MprAllocStats   *alloc;
+    EjsObj          *argv[2], *thisObj;
+    char            msg[MPR_MAX_STRING];
+    va_list         dummy = NULL_INIT;
 
     alloc = mprGetAllocStats(ejs);
     if (granted) {
@@ -9444,7 +9456,7 @@ static int startLogging(Ejs *ejs)
     EjsObj      *app;
     EjsName     qname;
 
-    if ((ld = mprAllocObjZeroed(ejs, EjsLogData))  == 0) {
+    if ((ld = mprAllocObj(ejs, EjsLogData, NULL))  == 0) {
         return MPR_ERR_NO_MEMORY;
     }
     ld->ejs = ejs;
@@ -9561,7 +9573,7 @@ int ejsStartMprLogging(Mpr *mpr, char *logSpec)
     Global memory allocation handler. This is invoked when there is no notifier to handle an allocation failure.
     The interpreter has an allocFailure (see ejsService: allocFailure) and it will handle allocation errors.
  */
-void ejsMemoryFailure(MprCtx ctx, int64 size, int64 total, bool granted)
+void ejsMemoryFailure(MprCtx ctx, size_t size, size_t total, bool granted)
 {
     if (!granted) {
         mprPrintfError(ctx, "Can't allocate memory block of size %d\n", size);
@@ -10167,7 +10179,7 @@ EjsName *ejsAllocName(MprCtx ctx, cchar *name, cchar *space)
 {
     EjsName     *np;
 
-    np = mprAllocObj(ctx, EjsName);
+    np = mprAllocObj(ctx, EjsName, NULL);
     if (np) {
         np->name = mprStrdup(np, name);
         np->space = mprStrdup(np, space);
@@ -11383,7 +11395,6 @@ static EjsObj *arrayConstructor(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
         }
 
     } else {
-
         /*
             x = new Array(element0, element1, ..., elementN):
          */
@@ -11392,7 +11403,6 @@ static EjsObj *arrayConstructor(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
             ejsThrowMemoryError(ejs);
             return 0;
         }
-
         src = args->data;
         dest = ap->data;
         for (i = 0; i < size; i++) {
@@ -11486,11 +11496,7 @@ static EjsObj *concatArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 
     args = ((EjsArray*) argv[0]);
 
-    /*
-        Guess the new array size. May exceed this if args has elements that are themselves arrays.
-     */
-    newArray = ejsCreateArray(ejs, ap->length + ((EjsArray*) argv[0])->length);
-
+    newArray = ejsCreateArray(ejs, ap->length);
     src = ap->data;
     dest = newArray->data;
 
@@ -11508,7 +11514,7 @@ static EjsObj *concatArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
         vp = args->data[i];
         if (ejsIsArray(vp)) {
             vpa = (EjsArray*) vp;
-            if (growArray(ejs, newArray, newArray->length + vpa->length - 1) < 0) {
+            if (growArray(ejs, newArray, next + vpa->length) < 0) {
                 ejsThrowMemoryError(ejs);
                 return 0;
             }
@@ -11516,8 +11522,11 @@ static EjsObj *concatArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
             for (k = 0; k < vpa->length; k++) {
                 dest[next++] = vpa->data[k];
             }
-
         } else {
+            if (growArray(ejs, newArray, next + 1) < 0) {
+                ejsThrowMemoryError(ejs);
+                return 0;
+            }
             dest[next++] = vp;
         }
     }
@@ -11732,7 +11741,6 @@ static EjsObj *insertArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     if (growArray(ejs, ap, ap->length + args->length) < 0) {
         return 0;
     }
-
     delta = args->length;
     dest = ap->data;
     src = args->data;
@@ -12349,7 +12357,7 @@ static int growArray(Ejs *ejs, EjsArray *ap, int len)
         return 0;
     }
     if (len <= ap->length) {
-        return EJS_ERR;
+        return 0;
     }
     size = mprGetBlockSize(ap->data) / sizeof(EjsObj*);
 
@@ -17328,7 +17336,7 @@ static EjsFrame *allocFrame(Ejs *ejs, int numSlots)
     mprAssert(ejs);
 
     size = numSlots * sizeof(EjsSlot) + sizeof(EjsFrame);
-    if ((obj = (EjsObj*) mprAllocZeroed(ejsGetAllocCtx(ejs), size)) == 0) {
+    if ((obj = (EjsObj*) mprAllocCtx(ejsGetAllocCtx(ejs), size)) == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
     }
@@ -17889,8 +17897,7 @@ EjsEx *ejsAddException(EjsFunction *fun, uint tryStart, uint tryEnd, EjsType *ca
 
     code = &fun->body.code;
 
-    exception = mprAllocObjZeroed(fun, EjsEx);
-    if (exception == 0) {
+    if ((exception = mprAllocObj(fun, EjsEx, NULL)) == 0) {
         mprAssert(0);
         return 0;
     }
@@ -21389,7 +21396,7 @@ void ejsConfigureMathType(Ejs *ejs)
  */
 static EjsObj *getAllocatedMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    MprAlloc    *alloc;
+    MprAllocStats    *alloc;
 
     alloc = mprGetAllocStats(ejs);
     return (EjsObj*) ejsCreateNumber(ejs, (int) alloc->bytesAllocated);
@@ -21417,7 +21424,7 @@ static EjsObj *setRedlineCallback(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **
  */
 static EjsObj *getMaxMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    MprAlloc    *alloc;
+    MprAllocStats    *alloc;
 
     alloc = mprGetAllocStats(ejs);
     return (EjsObj*) ejsCreateNumber(ejs, (int) alloc->maxMemory);
@@ -21439,16 +21446,18 @@ static EjsObj *setMaxMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 }
 
 
+#if UNUSED
 /*
     native static function get peak(): Number
  */
 static EjsObj *getPeakMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    MprAlloc    *alloc;
+    MprAllocStats    *alloc;
 
     alloc = mprGetAllocStats(ejs);
     return (EjsObj*) ejsCreateNumber(ejs, (int) alloc->peakAllocated);
 }
+#endif
 
 
 /*
@@ -21456,7 +21465,7 @@ static EjsObj *getPeakMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
  */
 static EjsObj *getRedline(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    MprAlloc    *alloc;
+    MprAllocStats    *alloc;
 
     alloc = mprGetAllocStats(ejs);
     return (EjsObj*) ejsCreateNumber(ejs, (int) alloc->redLine);
@@ -21487,23 +21496,25 @@ static EjsObj *setRedline(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
  */
 static EjsObj *getResident(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    MprAlloc    *alloc;
+    MprAllocStats    *alloc;
 
     alloc = mprGetAllocStats(ejs);
     return (EjsObj*) ejsCreateNumber(ejs, (int) alloc->rss);
 }
 
 
+#if UNUSED
 /*
     native static function get stack(): Number
  */
 static EjsObj *getStack(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    MprAlloc    *alloc;
+    MprAllocStats    *alloc;
 
     alloc = mprGetAllocStats(ejs);
     return (EjsObj*) ejsCreateNumber(ejs, (int) alloc->peakStack);
 }
+#endif
 
 
 /*
@@ -21511,7 +21522,7 @@ static EjsObj *getStack(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
  */
 static EjsObj *getSystemRam(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    MprAlloc    *alloc;
+    MprAllocStats    *alloc;
 
     alloc = mprGetAllocStats(ejs);
     return (EjsObj*) ejsCreateNumber(ejs, (double) alloc->ram);
@@ -21525,7 +21536,7 @@ static EjsObj *printStats(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     //  TODO - should go to log file and not to stdout
     ejsPrintAllocReport(ejs);
-    mprPrintAllocReport(ejs, "Memory Report");
+    mprPrintAllocReport("Memory Report", 0);
     return 0;
 }
 
@@ -21542,10 +21553,8 @@ void ejsConfigureMemoryType(Ejs *ejs)
     }
     ejsBindMethod(ejs, type, ES_Memory_allocated, (EjsProc) getAllocatedMemory);
     ejsBindAccess(ejs, type, ES_Memory_maximum, (EjsProc) getMaxMemory, (EjsProc) setMaxMemory);
-    ejsBindMethod(ejs, type, ES_Memory_peak, (EjsProc) getPeakMemory);
     ejsBindAccess(ejs, type, ES_Memory_redline, (EjsProc) getRedline, (EjsProc) setRedline);
     ejsBindMethod(ejs, type, ES_Memory_resident, (EjsProc) getResident);
-    ejsBindMethod(ejs, type, ES_Memory_stack, (EjsProc) getStack);
     ejsBindMethod(ejs, type, ES_Memory_system, (EjsProc) getSystemRam);
     ejsBindMethod(ejs, type, ES_Memory_stats, (EjsProc) printStats);
 
@@ -21711,8 +21720,8 @@ char *ejsFormatReservedNamespace(MprCtx ctx, EjsName *typeName, cchar *spaceName
     spaceLen = (int) strlen(spaceName);
 
     /*
-     *  Add 4 for [,,]
-     *  Add 2 for the trailing "::" and one for the null
+        Add 4 for [,,]
+        Add 2 for the trailing "::" and one for the null
      */
     len += 4 + spaceLen + 2 + 1;
 
@@ -21720,7 +21729,6 @@ char *ejsFormatReservedNamespace(MprCtx ctx, EjsName *typeName, cchar *spaceName
     if (namespace == 0) {
         return 0;
     }
-
     sp = namespace;
     *sp++ = '[';
 
@@ -21745,7 +21753,6 @@ char *ejsFormatReservedNamespace(MprCtx ctx, EjsName *typeName, cchar *spaceName
     *sp = '\0';
 
     mprAssert(sp <= &namespace[len]);
-
     return namespace;
 }
 
@@ -22951,7 +22958,7 @@ void *ejsCloneObject(Ejs *ejs, void *vp, bool deep)
         ejsMakeObjHash(dest);
     }
 #endif
-    ejsSetDebugName(dest, mprGetName(src));
+    ejsSetDebugName(dest, ejsGetDebugName(src));
     return dest;
 }
 
@@ -23367,7 +23374,7 @@ static int setObjectPropertyName(Ejs *ejs, EjsObj *obj, int slotNum, EjsName *qn
         EjsObj  *value;
 
         value = obj->slots[slotNum].value.ref;
-        if (value != ejs->nullValue && *mprGetName(value) == '\0') {
+        if (value != ejs->nullValue && *ejsGetDebugName(value) == '\0') {
             ejsSetDebugName(value, qname->name);
         }
     }
@@ -25371,16 +25378,13 @@ static EjsObj *copyPath(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
         ejsThrowIOError(ejs, "Cant open %s", fp->path);
         return 0;
     }
-
     to = mprOpen(ejs, toPath, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, EJS_FILE_PERMS);
     if (to == 0) {
         ejsThrowIOError(ejs, "Cant create %s", toPath);
         mprFree(from);
         return 0;
     }
-
-    buf = mprAlloc(ejs, MPR_BUFSIZE);
-    if (buf == 0) {
+    if ((buf = mprAlloc(ejs, MPR_BUFSIZE)) == NULL) {
         ejsThrowMemoryError(ejs);
         mprFree(to);
         mprFree(from);
@@ -30279,7 +30283,7 @@ static EjsType *createTypeVar(Ejs *ejs, EjsType *typeType, int numSlots)
             typeSize += sizeof(EjsHash) + (sizeHash * (int) sizeof(EjsSlot*));
         }
     }
-    if ((vp = (EjsObj*) mprAllocZeroed(ejsGetAllocCtx(ejs), typeSize)) == 0) {
+    if ((vp = (EjsObj*) mprAllocCtx(ejsGetAllocCtx(ejs), typeSize)) == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
     }
@@ -33228,7 +33232,7 @@ static EjsObj *workerPostMessage(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
         ejsThrowArgError(ejs, "Can't serialize message data");
         return 0;
     }
-    if ((msg = mprAllocObjZeroed(ejs, Message)) == 0) {
+    if ((msg = mprAllocObj(ejs, Message, NULL)) == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
     }
@@ -33283,7 +33287,7 @@ static int workerMain(EjsWorker *insideWorker, MprEvent *event)
         handleError(outside, outsideWorker, inside->exception, 0);
         inside->exception = 0;
     }
-    if ((msg = mprAllocObjZeroed(outside, Message)) == 0) {
+    if ((msg = mprAllocObj(outside, Message, NULL)) == 0) {
         ejsThrowMemoryError(outside);
         return 0;
     }
@@ -33372,7 +33376,7 @@ static void handleError(Ejs *ejs, EjsWorker *worker, EjsObj *exception, int thro
     mprAssert(exception);
     mprAssert(ejs == worker->ejs);
 
-    if ((msg = mprAllocObjZeroed(ejs, Message)) == 0) {
+    if ((msg = mprAllocObj(ejs, Message, NULL)) == 0) {
         ejsThrowMemoryError(ejs);
         return;
     }
@@ -35692,8 +35696,7 @@ MprXml *ejsCreateXmlParser(Ejs *ejs, EjsXML *xml, cchar *filename)
     /*
         Create the parser stack
      */
-    parser = mprAllocObjZeroed(xp, EjsXmlState);
-    if (parser == 0) {
+    if ((parser = mprAllocObj(xp, EjsXmlState, NULL)) == 0) {
         mprFree(xp);
         return 0;
     }
@@ -36027,7 +36030,7 @@ MprThreadLocal  *sqliteTls;
 #define SET_CTX(ctx)  mprSetThreadData(sqliteTls, (void*) ctx)
 #else
 /*
-    Single-threaded (or VxWorks). Use one single context for all threads. In this case, we must create a thread-safe arena.
+    Single-threaded (or VxWorks). Use one single context for all threads.
  */
 static MprCtx sqliteCtx;
 #define SET_CTX(ctx)
@@ -36041,15 +36044,14 @@ static MprCtx sqliteCtx;
 #define SET_CTX(ctx)
 #endif /* MAP_ALLOC */
     
-
 /*
     Ejscript Sqlite class object
  */
 typedef struct EjsSqlite {
-    EjsObj       obj;                /* Extends Object */
-    sqlite3         *sdb;               /* Sqlite handle */
-    MprHeap         *arena;             /* Memory context arena */
-    Ejs             *ejs;               /* Interp reference */
+    EjsObj          obj;            /* Extends Object */
+    sqlite3         *sdb;           /* Sqlite handle */
+    MprCtx          ctx;            /* Memory context arena */
+    Ejs             *ejs;           /* Interp reference */
 } EjsSqlite;
 
 
@@ -36070,31 +36072,18 @@ static EjsVar *sqliteConstructor(Ejs *ejs, EjsSqlite *db, int argc, EjsVar **arg
     path = ejsGetString(ejs, argv[0]);    
     db->ejs = ejs;
     
-    /*
-     *  Create a memory context for use by sqlite. This is a virtual paged memory region.
-     *  TODO OPT - Could do better for running applications.
-     */
-#if MAP_ALLOC
-    db->arena = mprAllocArena(ejs, "sqlite", EJS_MAX_SQLITE_MEM, !USE_TLS, 0);
-    if (db->arena == 0) {
+    if ((db->ctx = mprAllocCtx(ejs, 0)) == NULL) {
         return 0;
     }
-    SET_CTX(db->arena);
-#else
-    db->arena = mprAllocHeap(ejs, "sqlite", EJS_MAX_SQLITE_MEM, 1, 0);
-    if (db->arena == 0) {
-        return 0;
-    }
-    SET_CTX(db->arena);
-#endif
+    SET_CTX(db->ctx);
     
 #if UNUSED
     EjsSqlite       **dbp;
     /*
-     *  Create a destructor object so we can cleanup and close the database. Must create after the arena so it will be
-     *  invoked before the arena is freed. 
+        Create a destructor object so we can cleanup and close the database. Must create after the ctx so it will be
+        invoked before the ctx is freed. 
      */
-    if ((dbp = mprAllocWithDestructor(ejs, sizeof(void*), (MprDestructor) sqldbDestructor)) == 0) {
+    if ((dbp = mprAllocObj(ejs, void*, sqldbDestructor)) == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
     }
@@ -36123,7 +36112,7 @@ static int sqldbDestructor(EjsSqlite **dbp)
     db = *dbp;
 
     if (db->sdb) {
-        SET_CTX(db->arena);
+        SET_CTX(db->ctx);
         sqlite3_close(db->sdb);
         db->sdb = 0;
     }
@@ -36141,7 +36130,7 @@ static int sqliteClose(Ejs *ejs, EjsSqlite *db, int argc, EjsVar **argv)
     mprAssert(db);
 
     if (db->sdb) {
-        SET_CTX(db->arena);
+        SET_CTX(db->ctx);
         sqlite3_close(db->sdb);
         db->sdb = 0;
     }
@@ -36169,7 +36158,7 @@ static EjsVar *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsVar **argv)
     mprAssert(ejs);
     mprAssert(db);
 
-    SET_CTX(db->arena);
+    SET_CTX(db->ctx);
     cmd = ejsGetString(ejs, argv[0]);
     retries = 0;
     sdb = db->sdb;
@@ -36225,7 +36214,7 @@ static EjsVar *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsVar **argv)
                         ejsName(&qname, EJS_EMPTY_NAMESPACE, mprStrdup(row, colName));
                     } else {
                         /*
-                         *  Append the table name for columns from foreign tables. Convert to camel case (tableColumn)
+                            Append the table name for columns from foreign tables. Convert to camel case (tableColumn)
                          */
                         len = strlen(tableName) + 1;
                         tableName = mprStrcat(row, -1, "_", tableName, colName, NULL);
@@ -41622,7 +41611,7 @@ static void astNew(EcCompiler *cp, EcNode *np)
              */
             np->qname = left->qname;
             np->lookup = left->lookup;
-            np->lookup.trait = mprAllocObj(cp->ejs, EjsTrait);
+            np->lookup.trait = mprAllocObj(cp->ejs, EjsTrait, NULL);
             np->lookup.trait->type = (EjsType*) np->lookup.ref;
             np->lookup.ref = 0;
             np->lookup.instanceProperty = 1;
@@ -43439,7 +43428,7 @@ static void addGlobalProperty(EcCompiler *cp, EcNode *np, EjsName *qname)
     up = cp->state->currentModule;
     mprAssert(up);
 
-    prop = mprAllocObjZeroed(cp, EjsName);
+    prop = mprAllocObj(cp, EjsName, NULL);
     *prop = *qname;
 
     if (up->globalProperties == 0) {
@@ -44819,7 +44808,6 @@ static int genCallArgs(EcCompiler *cp, EcNode *np)
 static void genCallSequence(EcCompiler *cp, EcNode *np)
 {
     Ejs             *ejs;
-    EjsType         *type;
     EcNode          *left, *right;
     EcState         *state;
     EjsFunction     *fun;
@@ -44842,7 +44830,8 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
             ecEncodeOpcode(cp, EJS_OP_CALL_SCOPED_NAME);
             ecEncodeName(cp, &np->qname);
             
-        } else if (left->kind == N_DOT && left->right->kind == N_QNAME && !left->right->name.nameExpr) {
+        } else if (left->kind == N_DOT && left->right->kind == N_QNAME && 
+                   !(left->right->name.nameExpr || left->right->name.qualifierExpr)) {
             processNodeGetValue(cp, left->left);
             if (state->dupLeft) {
                 ecEncodeOpcode(cp, EJS_OP_DUP);
@@ -44859,13 +44848,19 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
                 MOB BUG. Could be an arbitrary expression on the left. Need a consistent way to save the right most
                 object before the property. */
             count = getStackCount(cp);
+#if UNUSED
             left->needThis = 1;
-
+#endif
             processNodeGetValue(cp, left);
+#if UNUSED
             if (getStackCount(cp) < (count + 2)) {
                 ecEncodeOpcode(cp, EJS_OP_DUP);
                 pushStack(cp, 1);
             }
+#endif
+            ecEncodeOpcode(cp, EJS_OP_LOAD_THIS_LOOKUP);
+            pushStack(cp, 1);
+            ecEncodeOpcode(cp, EJS_OP_SWAP);
             argc = genCallArgs(cp, right);
             ecEncodeOpcode(cp, EJS_OP_CALL);
             popStack(cp, 2);
@@ -44910,7 +44905,9 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
     if (staticMethod) {
         mprAssert(ejsIsType(lookup->obj));
         if (state->currentClass && state->inFunction && 
+#if UNUSED
                 ejsIsTypeSubType(ejs, state->currentClass, (EjsType*) lookup->originalObj) && 
+#endif
                 lookup->obj != (EjsObj*) ejs->objectType) {
             /*
                 Calling a static method from within a class or subclass. So we can use "this".
@@ -44919,6 +44916,7 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
             mprAssert(0);
             ecEncodeOpcode(cp, EJS_OP_CALL_THIS_STATIC_SLOT);
             ecEncodeNumber(cp, lookup->slotNum);
+#if UNUSED
             /*
                 If searching the scope chain (i.e. without a qualifying obj.property), and if the current class is not the 
                 original object, then see how far back on the inheritance chain we must go.
@@ -44928,6 +44926,7 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
                     lookup->nthBase++;
                 }
             }
+#endif
             if (!state->currentFunction->staticMethod) {
                 /*
                     If calling from within an instance function, need to step over the instance also
@@ -47465,8 +47464,7 @@ static EcCodeGen *allocCodeBuffer(EcCompiler *cp)
     state = cp->state;
     mprAssert(state);
 
-    code = mprAllocObjZeroed(state, EcCodeGen);
-    if (code == 0) {
+    if ((code = mprAllocObj(state, EcCodeGen, NULL)) == 0) {
         cp->fatalError = 1;
         return 0;
     }
@@ -48258,8 +48256,7 @@ static void addException(EcCompiler *cp, uint tryStart, uint tryEnd, EjsType *ca
     code = state->code;
     mprAssert(code);
 
-    exception = mprAllocObjZeroed(cp, EjsEx);
-    if (exception == 0) {
+    if ((exception = mprAllocObj(cp, EjsEx, NULL)) == 0) {
         mprAssert(0);
         return;
     }
@@ -48281,7 +48278,7 @@ static void addJump(EcCompiler *cp, EcNode *np, int kind)
 
     ENTER(cp);
 
-    jump = mprAllocObjZeroed(cp, EcJump);
+    jump = mprAllocObj(cp, EcJump, NULL);
     mprAssert(jump);
 
     jump->kind = kind;
@@ -48748,12 +48745,10 @@ EcLexer *ecCreateLexer(EcCompiler *cp)
     ReservedWord    *rp;
     int             size;
 
-    lp = mprAllocObjWithDestructorZeroed(cp, EcLexer, destroyLexer);
-    if (lp == 0) {
+    if ((lp = mprAllocObj(cp, EcLexer, destroyLexer)) == 0) {
         return 0;
     }
-    lp->input = mprAllocObjZeroed(lp, EcInput);
-    if (lp->input == 0) {
+    if ((lp->input = mprAllocObj(lp, EcInput, NULL)) == 0) {
         mprFree(lp);
         return 0;
     }
@@ -48811,7 +48806,7 @@ int ecGetToken(EcInput *input)
 
     if (token == 0) {
         //  TBD -- need an API for this
-        input->token = mprAllocObjZeroed(input, EcToken);
+        input->token = mprAllocObj(input, EcToken, NULL);
         if (input->token == 0) {
             //  TBD -- err code
             return -1;
@@ -49738,21 +49733,17 @@ int ecOpenFileStream(EcLexer *lp, const char *path)
     MprPath         info;
     int             c;
 
-    fs = mprAllocObjZeroed(lp->input, EcFileStream);
-    if (fs == 0) {
+    if ((fs = mprAllocObj(lp->input, EcFileStream, NULL)) == 0) {
         return MPR_ERR_NO_MEMORY;
     }
-
     if ((fs->file = mprOpen(lp, path, O_RDONLY | O_BINARY, 0666)) == 0) {
         mprFree(fs);
         return MPR_ERR_CANT_OPEN;
     }
-
     if (mprGetPathInfo(fs, path, &info) < 0 || info.size < 0) {
         mprFree(fs);
         return MPR_ERR_CANT_ACCESS;
     }
-
     /* Sanity check */
     mprAssert(info.size < (100 * 1024 * 1024));
     mprAssert(info.size >= 0);
@@ -49766,7 +49757,6 @@ int ecOpenFileStream(EcLexer *lp, const char *path)
         mprFree(fs);
         return MPR_ERR_CANT_READ;
     }
-
     fs->stream.buf[info.size] = '\0';
     fs->stream.nextChar = fs->stream.buf;
     fs->stream.end = &fs->stream.buf[info.size];
@@ -49798,13 +49788,10 @@ int ecOpenMemoryStream(EcLexer *lp, const uchar *buf, int len)
     EcMemStream     *ms;
     int             c;
 
-    ms = mprAllocObjZeroed(lp->input, EcMemStream);
-    if (ms == 0) {
+    if ((ms = mprAllocObj(lp->input, EcMemStream, NULL)) == 0) {
         return MPR_ERR_NO_MEMORY;
     }
-
     ms->stream.lineNumber = 0;
-
     ms->stream.buf = mprMemdup(ms, buf, len + 1);
     ms->stream.buf[len] = '\0';
     ms->stream.nextChar = ms->stream.buf;
@@ -49826,7 +49813,6 @@ int ecOpenMemoryStream(EcLexer *lp, const uchar *buf, int len)
      */
     c = getNextChar(&ms->stream);
     putBackChar(&ms->stream, c);
-
     return 0;
 }
 
@@ -49835,11 +49821,9 @@ int ecOpenConsoleStream(EcLexer *lp, EcStreamGet gets)
 {
     EcConsoleStream     *cs;
 
-    cs = mprAllocObjZeroed(lp->input, EcConsoleStream);
-    if (cs == 0) {
+    if ((cs = mprAllocObj(lp->input, EcConsoleStream, NULL)) == 0) {
         return MPR_ERR_NO_MEMORY;
     }
-
     cs->stream.lineNumber = 0;
     cs->stream.nextChar = 0;
     cs->stream.end = 0;
@@ -51552,11 +51536,9 @@ EcCompiler *ecCreateCompiler(Ejs *ejs, int flags)
 {
     EcCompiler      *cp;
 
-    cp = mprAllocObjWithDestructorZeroed(ejs, EcCompiler, NULL);
-    if (cp == 0) {
+    if ((cp = mprAllocObj(ejs, EcCompiler, NULL)) == 0) {
         return 0;
     }
-
     cp->ejs = ejs;
     cp->strict = 0;
     cp->tabWidth = EC_TAB_WIDTH;
@@ -53121,7 +53103,6 @@ static EcNode *parseElementList(EcCompiler *cp, EcNode *np)
 
     ENTER(cp);
 
-    index = 0;
     for (index = 0; np; ) {
         if (peekToken(cp) == T_COMMA) {
             getToken(cp);
@@ -53132,6 +53113,10 @@ static EcNode *parseElementList(EcCompiler *cp, EcNode *np)
             if ((elt = parseLiteralElement(cp)) != 0) {
                 mprAssert(elt->kind == N_FIELD);
                 elt->field.index = index;
+                if (peekToken(cp) != T_COMMA && cp->peekToken->tokenId != T_RBRACKET) {
+                    getToken(cp);
+                    return LEAVE(cp, unexpected(cp));
+                }
             }
             np = appendNode(np, elt);
         }
@@ -61099,12 +61084,10 @@ static EcNode *createNode(EcCompiler *cp, int kind)
 
     mprAssert(cp->state);
 
-    np = mprAllocObjZeroed(cp->state, EcNode);
-    if (np == 0) {
+    if ((np = mprAllocObj(cp->state, EcNode, NULL)) == 0) {
         cp->memError = 1;
         return 0;
     }
-
     np->seqno = cp->nextSeqno++;
     np->kind = kind;
     np->cp = cp;
@@ -61802,9 +61785,7 @@ int ecEnterState(EcCompiler *cp)
 {
     EcState *state;
 
-    //  OPT - keep state free list for speed
-    state = mprAllocObjZeroed(cp, EcState);
-    if (state == 0) {
+    if ((state = mprAllocObj(cp, EcState, NULL)) == 0) {
         mprAssert(state);
         //  TBD -- convenience function for this.
         cp->memError = 1;

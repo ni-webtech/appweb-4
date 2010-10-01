@@ -54,8 +54,7 @@ MaMimeType *maAddMimeType(MaHost *host, cchar *ext, cchar *mimeType)
 {
     MaMimeType  *mime;
 
-    mime = mprAllocObjZeroed(host->mimeTypes, MaMimeType);
-    if (mime == 0) {
+    if ((mime = mprAllocObj(host->mimeTypes, MaMimeType, NULL)) == NULL) {
         return 0;
     }
     mime->type = mprStrdup(host, mimeType);

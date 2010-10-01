@@ -105,7 +105,7 @@ MAIN(ejsMain, int argc, char **argv)
                 err++;
             } else {
                 homeDir = argv[++nextArg];
-                if (chdir(homeDir) < 0) {
+                if (chdir((char*) homeDir) < 0) {
                     mprError(mpr, "Can't change directory to %s", homeDir);
                 }
             }

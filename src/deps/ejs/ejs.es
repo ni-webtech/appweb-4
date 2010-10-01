@@ -5447,8 +5447,13 @@ FUTURE & KEEP
             permit the server to locate the relevant session state store for the server-side application. 
             Use: setCookie("Cookie", cookie) to transmit the cookie on subsquent requests.
          */
-        function get sessionCookie()
-            header("Set-Cookie").match(/(-ejs-session-=.*);/)[1]
+        function get sessionCookie() {
+            let cookie = header("Set-Cookie")
+            if (cookie) {
+                return cookie.match(/(-ejs-session-=.*);/)[1]
+            }
+            return null
+        }
 
         /**
             Set a "Cookie" header in the request headers. This is used to send a cookie to the server.
@@ -5789,14 +5794,13 @@ module ejs {
         The Inflector class emulates the Rails Inflector. 
         See: http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html
      */
-    # UNUSED && KEEP
     class Inflector {
         static var irregularMap = [
-            ['move',   'moves'   ],
-            ['sex',    'sexes'   ],
             ['child',  'children'],
             ['man',    'men'     ],
-            ['person', 'people'  ]
+            ['move',   'moves'   ],
+            ['person', 'people'  ],
+            ['sex',    'sexes'   ],
         ]
 
         static var pluralRules = [
@@ -5847,14 +5851,14 @@ module ejs {
         ]
 
         static var uncountable = [
-            "sheep",
+            "equipment",
             "fish",
-            "series",
-            "species",
+            "information",
             "money",
             "rice",
-            "information",
-            "equipment"
+            "series",
+            "sheep",
+            "species",
         ]
 
         /**
@@ -5862,36 +5866,32 @@ module ejs {
             @param singular Singular word form
             @param plural Plural word form
          */
-        static function addIrregular(singular: String, plural: String): Void {
+        static function addIrregular(singular: String, plural: String): Void
             irregularMap.append([singular, plural])
-        }
 
         /**
             Add a new plural rule
             @param expr Regular expression to match
             @param replacement Regular expression replacement string
          */
-        static function addPlural(expr: RegExp, replacement: String): Void {
+        static function addPlural(expr: RegExp, replacement: String): Void
             pluralRules.append([expr, replacement])
-        }
 
         /**
             Add a new singular rule
             @param expr Regular expression to match
             @param replacement Regular expression replacement string
          */
-        static function addSingular(expr: RegExp, replacement: String): Void {
+        static function addSingular(expr: RegExp, replacement: String): Void
             singular.append([expr, replacement])
-        }
 
         /**
             Add a new uncountable rule
             @param expr Regular expression to match
             @param replacement Regular expression replacement string
          */
-        static function addUncountable(expr: RegExp, replacement: String): Void {
+        static function addUncountable(expr: RegExp, replacement: String): Void
             uncountable.append([expr, replacement])
-        }
 
         /**
             Convert a number to an ordinal string
@@ -5912,7 +5912,7 @@ module ejs {
         /**
             Convert a singular word to its plural form
             @param word Word to transform
-            @return the plural form of a word
+            @return the plural form of a word. Return the word if it can't be converted.
         */
         static function toPlural(word: String): String {
             for each (item in uncountable) {
@@ -5920,22 +5920,25 @@ module ejs {
                     return item
                 }
             }
-            for each (let [singular, plural] in irregularMap) {
+            for each (rule in irregularMap) {
+                let [singular, plural] = rule
                 if ((word.toLowerCase() == singular) || (word == plural)) {
                     return plural
                 }
             }
-            for each (let [regex, replacement] in pluralRules) {
+            for each (rule in pluralRules) {
+                let [regex, replacement] = rule
                 if (regex.test(word)) {
                     return word.replace(regex, replacement)
                 }
             }
+            return word
         }
 
         /**
             Convert a singular word to its plural form
             @param word Word to transform
-            @return the plural form of a word
+            @return the plural form of a word. Return the word if it can't be converted.
         */
         static function toSingular(word) {
             for each (item in uncountable) {
@@ -5943,16 +5946,19 @@ module ejs {
                     return item
                 }
             }
-            for each (let [singular, plural] in irregularMap) {
+            for each (rule in irregularMap) {
+                let [singular, plural] = rule
                 if ((word.toLowerCase() == singular) || (word == plural)) {
                     return singular
                 }
             }
-            for each (let [regex, replacement] in singularRules) {
+            for each (rule in singularRules) {
+                let [regex, replacement] = rule
                 if (regex.test(word)) {
                     return word.replace(regex, replacement)
                 }
             }
+            return word
         }
     }
 
@@ -5961,9 +5967,8 @@ module ejs {
         @param number to convert
         @return an ordinal string matching the number
      */
-    function toOrdinal(number: Number): String {
-        return Inflector.toOrdinal(number)
-    }
+    function toOrdinal(number: Number): String
+        Inflector.toOrdinal(number)
 
     /**
         Convert a singular word to its plural form
@@ -5982,9 +5987,8 @@ module ejs {
         @param word Plural word to transform
         @return the plural form of a word
      */
-    function toSingular(word: String): String {
-        return Inflector.toSingular(word)
-    }
+    function toSingular(word: String): String
+        Inflector.toSingular(word)
 }
 /************************************************************************/
 /*
@@ -7116,7 +7120,9 @@ module ejs {
         /**
             Peak memory ever used by the application in bytes. This statistic is the maximum value ever attained by 
             $allocated. 
+            @deprecated
          */
+        # DEPRECATED
         native static function get peak(): Number
         
         /**
@@ -7141,7 +7147,9 @@ module ejs {
 
         /**
             Peak stack size ever used by the application in bytes 
+            @deprecated
          */
+        # DEPRECATED
         native static function get stack(): Number
         
         /**
@@ -7872,7 +7880,7 @@ MOB -- inconsistent with JSON.baseClasses
         static native function set prototype(v: Object): Void
 
         /** 
-            Seal an object. This prevents changing the configuration of any property. This includes prventing property 
+            Seal an object. This prevents changing the configuration of any property. This includes preventing property 
             deletion, changes to property descriptors or adding new properties to the object.
             @param obj Object to seal
          */ 
@@ -15627,17 +15635,22 @@ module ejs.web {
             runCheckers(_beforeCheckers)
             let response
 //  MOB - temp
-use namespace action
+// use namespace action
             if (!request.finalized && request.autoFinalizing) {
 // print("NS \"" + ns + "\" name " + actionName)
 // breakpoint()
 // print("PRESENT " + this.(ns)::[actionName])
-                if (!this.(ns)::[actionName]) {
+
+//  MOB -- this.(ns)::[actionName]    appears to be binding from the left
+//  this.(ns
+                var x = (ns)::[actionName]
+                if (!(ns)::[actionName]) {
                     if (!viewExists(actionName)) {
                         response = this.(ns)::[actionName = "missing"]()
                     }
                 } else {
-                    response = this.(ns)::[actionName]()
+breakpoint()
+                    response = (ns)::[actionName]()
 // print("RESP " + response)
                 }
                 if (response && !response.body) {
@@ -16599,7 +16612,6 @@ module ejs.web {
             -ejs-table
             -ejs-table-download
             -ejs-even-row
-            -ejs-click
             -ejs-field-error
             -ejs-form-error
         @stability prototype
@@ -16629,20 +16641,22 @@ module ejs.web {
             "domid":                "id",
             "effects":              "data-effects",
             "height":               "height",
-            "key":                  "data-key",
-            "keyFormat":            "data-key-format",
-            "method":               "data-method",
+
+//          "key":                  "data-key",
+//          "keyFormat":            "data-key-format",
+//          "method":               "data-method",
+//          "refresh":              "data-refresh",
+//          "params":               "data-params",
+
             "modal":                "data-modal",
+//  MOB
             "period":               "data-refresh-period",
-            "params":               "data-params",
             "pivot":                "data-pivot",
-            "refresh":              "data-refresh",
             "rel":                  "rel",
             "size":                 "size",
             "sort":                 "data-sort",
             "sortOrder":            "data-sort-order",
             "style":                "class",
-            "visible":              "visible",
             "width":                "width",
         }
 
@@ -16671,19 +16685,21 @@ module ejs.web {
             write('<div' + getAttributes(options) + '>' +  text + '</div>\r\n')
         }
 
+/*
         function anchor(text: String, options: Object): Void {
-            let uri ||= request.link(options)
-            write('<a href="' + uri + '"' + getAttributes(options) + '>' + text + '</a>\r\n')
+            setLink(options.click, options, "data-click")
+            let att = getAttributes(options, {"data-click": true})
+            write('<a href="' + options.data-click + '"' + att + '>' + text + '</a>\r\n')
         }
+*/
 
         function button(name: String, value: String, options: Object): Void {
             write('    <input name="' + name + '" type="submit" value="' + value + '"' + getAttributes(options) + ' />\r\n')
         }
 
         function buttonLink(text: String, options: Object): Void {
-            options.click ||= true
             let attributes = getAttributes(options)
-            write('<button ' + attributes + '>' + text + '</button></a>\r\n')
+            write('<button' + attributes + '>' + text + '</button>\r\n')
         }
 
         function chart(data: Array, options: Object): Void {
@@ -16699,8 +16715,7 @@ module ejs.web {
         }
 
         function div(body: String, options: Object): Void {
-            // write('<div ' + getAttributes(options) + ' type="' + getTextKind(options) + '">' +  body + '</div>\r\n')
-            write('<span ' + getAttributes(options) + '>' +  body + '</span>\r\n')
+            write('<div' + getAttributes(options) + '>' +  body + '</div>\r\n')
         }
 
         function endform(): Void {
@@ -16710,24 +16725,19 @@ module ejs.web {
         function flash(kind: String, msg: String, options: Object): Void {
             options.style = append(options.style, "-ejs-flash -ejs-flash-" + kind)
             write('<div' + getAttributes(options) + '>' + msg + '</div>\r\n')
-            if (kind == "inform") {
-                write('<script>$(document).ready(function() {
-                        $("div.-ejs-flash-inform").animate({opacity: 1.0}, 2000).hide("slow");
-                    });}</script>\r\n')
-            }
         }
 
         function form(record: Object, options: Object): Void {
-            options.method ||= ((record && options.id) ? "PUT" : "POST")
+            let method ||= options.method || ((record && options.id) ? "PUT" : "POST")
+            options.action ||= options.click
             options.action ||= ((record && options.id) ? "update" : "create")
-            let method = options.method
             if (method != "GET" && method != "POST") {
+                options.method = method
                 method = "POST"
             }
             let uri = request.link(options)
             emitFormErrors(record, options)
-            /* Exclude method from the mapped-attribute list. Don't want data-method */
-            let attributes = getAttributes(options, { method: true })
+            let attributes = getAttributes(options, {action: true, "data-click": true})
             write('<form method="' + method + '" action="' + uri + '"' + attributes + '>\r\n')
             if (options.id != undefined) {
                 write('    <input name="id" type="hidden" value="' + options.id + '" />\r\n')
@@ -16735,9 +16745,6 @@ module ejs.web {
             if (!options.insecure) {
                 let token = options.securityToken || request.securityToken
                 write('    <input name="' + Request.SecurityTokenName + '" type="hidden" value="' + token + '" />\r\n')
-            }
-            if (options.method && options.method != "POST") {
-                write('    <input name="-ejs-method-" type="hidden" value="' + options.method.toUpperCase() + '" />\r\n')
             }
         }
 
@@ -16750,7 +16757,7 @@ module ejs.web {
         }
 
         function label(text: String, options: Object): Void {
-            write('<span ' + getAttributes(options) + '>' +  text + '</span>\r\n')
+            write('<span' + getAttributes(options) + '>' +  text + '</span>\r\n')
         }
 
         function list(name: String, choices: Object, defaultValue: String, options: Object): Void {
@@ -16760,10 +16767,10 @@ module ejs.web {
                 let i = 0
                 for each (choice in choices) {
                     if (choice is Array) {
-                        /* list("priority", [["3", "low"], ["5", "med"], ["9", "high"]]) */
+                        /* list("priority", [["low", "3"], ["med", "5"], ["high", "9"]]) */
                         let [key, value] = choice
-                        selected = (choice[0] == defaultValue) ? ' selected="yes"' : ''
-                        write('      <option value="' + choice[0] + '"' + selected + '>' + choice[1] + '</option>\r\n')
+                        selected = (value == defaultValue) ? ' selected="yes"' : ''
+                        write('      <option value="' + value + '"' + selected + '>' + key + '</option>\r\n')
 
                     } else if (Object.getOwnPropertyCount(choice) > 0) {
                         /* list("priority", [{low: 3}, {med: 5}, {high: 9}]) */
@@ -16806,31 +16813,32 @@ module ejs.web {
                     if (choice is Array) {
                         /* radio("priority", [["3", "low"], ["5", "med"], ["9", "high"]]) */
                         let [key, value] = choice
-                        checked = (value == actual) ? "checked " : ""
-                        write('    ' + key.toPascal() + ' <input type="radio" name=' + name + attributes + ' value="' + 
-                            value + '"' + checked + '/>\r\n')
+                        checked = (value == actual) ? " checked" : ""
+                        write('    ' + key.toPascal() + ' <input type="radio" name="' + name + '"' + attributes + 
+                            ' value="' + value + '"' + checked + ' />\r\n')
 
                     } else if (Object.getOwnPropertyCount(choice) > 0) {
                         /* radio("priority", [{low: 3}, {med: 5}, {high: 9}]) */
                         for (let [key, value] in choice) {
-                            checked = (value == actual) ? "checked " : ""
-                            write('  ' + key.toPascal() + ' <input type="radio" name=' + name + attributes + ' value="' + 
-                                value + '"' + checked + '/>\r\n')
+                            checked = (value == actual) ? " checked" : ""
+                            write('  ' + key.toPascal() + ' <input type="radio" name="' + name + '"' + attributes + 
+                                ' value="' + value + '"' + checked + ' />\r\n')
                         }
 
                     } else {
                         /* radio("priority", ["low", "med", "high"]) */
-                        checked = (choice == actual) ? "checked " : ""
-                        write("    " + choice + ' <input type="radio" name="' + name + '"' + attributes + ' value="' + 
-                            choice + '" ' + checked + '/>\r\n')
+                        checked = (choice == actual) ? " checked" : ""
+                        write("    " + choice.toPascal() + 
+                            ' <input type="radio" name="' + name + '"' + attributes + ' value="' + 
+                            choice + '"' + checked + ' />\r\n')
                     }
                 }
             } else {
                 /* radio("priority", {low: 0, med: 1, high: 2}) */
                 for (let [key, value] in choices) {
-                    checked = (value == actual) ? "checked " : ""
+                    checked = (value == actual) ? " checked" : ""
                     write("    " + key.toPascal() + ' <input type="radio" name="' + name + '"' + attributes + ' value="' + 
-                        value + '" ' + checked + '/>\r\n')
+                        value + '"' + checked + ' />\r\n')
                 }
             }
         }
@@ -16874,13 +16882,17 @@ module ejs.web {
                 return
             }
             options.style = append(options.style, "-ejs-table")
+    /*
             let attributes = getAttributes({
+                apply: options.apply,
                 period: options.period,
                 refresh: options.refresh,
                 sort: options.sort,
                 sortOrder: options.sortOrder || "ascending",
                 style: options.style,
             })
+    */
+            let attributes = getAttributes(options, {"data-click": true})
             let columns = getColumns(data, options)
 
             write('  <table' + attributes + '>\r\n')
@@ -16915,12 +16927,27 @@ module ejs.web {
                     values[name] = view.getValue(r, name, options)
                 }
                 let styleRow = options.styleRows ? (' class="' + options.styleRows[row] + '"') : ""
+                let rowOptions = {
+                    click: options.click,
+                    edit: options.edit,
+                    id: r.id,
+                    key: options.key,
+                    params: options.params,
+                    remote: options.remote,
+                }
+    /*MOB
                 if (options.cell) {
                     write('        <tr' + styleRow + '>\r\n')
                 } else {
-                    let att = getCellRowAtt(r, row, null, values, options)
+    */
+                    rowOptions.record = r
+                    rowOptions.field = null
+                    rowOptions.values = values
+                    let att = getAttributes(rowOptions)
                     write('        <tr' + att + styleRow + '>\r\n')
+    /*MOB
                 }
+    */
 
                 let col = 0
                 for (let [name, column] in columns) {
@@ -16930,7 +16957,11 @@ module ejs.web {
                         styleCell = append(styleCell, options.styleColumns[col])
                     }
                     if (column.style) {
-                        styleCell = append(styleCell, column.style)
+                        if (column.style is Array) {
+                            styleCell = append(styleCell, column.style[r])
+                        } else {
+                            styleCell = append(styleCell, column.style)
+                        }
                     }
                     if (options.styleCells && options.styleCells[row]) {
                         styleCell = append(styleCell, options.styleCells[row][col])
@@ -16944,10 +16975,18 @@ module ejs.web {
                     } else if (value is Number) {
                         attr = append(attr, ' align="right"')
                     }
-                    if (options.cell) {
-                        attr = append(attr, getCellRowAtt(r, row, name, values, options))
+                    if (column.click || column.edit /* MOB options.cell */) {
+                        /* really cell options */
+                        rowOptions.record = r
+                        rowOptions.row = row
+                        rowOptions.field = name
+                        rowOptions.values = values
+                        rowOptions.key = column.key
+                        rowOptions.click = column.click
+                        rowOptions.edit = column.edit
+                        attr = append(attr, getAttributes(rowOptions))
                     }
-                    value = view.formatValue(value, r, name, { formatter: column.formatter} )
+                    value = view.formatValue(value, { formatter: column.formatter} )
                     write('            <td' + attr + '>' + value + '</td>\r\n')
                     col++
                 }
@@ -16958,26 +16997,26 @@ module ejs.web {
         }
 
         function tabs(data: Object, options: Object): Void {
-            let attributes = getAttributes(options)
+            let attributes = getAttributes(options, {"data-remote": true})
             let att
-            if (options.remote) {
+            if (options.toggle) {
+                att = "data-toggle"
+            } else if (options.remote) {
                 att = "data-remote"
-            } else if (options.click) {
-                att = "data-click"
             } else {
-                att = "data-show"
+                att = "data-click"
             }
-            write('<div class="-ejs-tabs">\r\n    <ul>\r\n')
+            write('<div class="-ejs-tabs"' + attributes + '>\r\n    <ul>\r\n')
             if (data is Array) {
                 for each (tuple in data) {
                     for (let [name, target] in tuple) {
-                        let uri = request.link(target)
+                        let uri = (att == "data-toggle") ? target : request.link(target)
                         write('      <li ' + att + '="' + uri + '">' + name + '</li>\r\n')
                     }
                 }
             } else {
                 for (let [name, target] in data) {
-                    let uri = request.link(target)
+                    let uri = (att == "data-toggle") ? target : request.link(target)
                     write('      <li ' + att + '="' + uri + '">' + name + '</li>\r\n')
                 }
             }
@@ -16985,21 +17024,22 @@ module ejs.web {
         }
 
         function text(field: String, value: String, options: Object): Void {
-            write('    <input name="' + field + '"' + getAttributes(options) + ' type="' + getTextKind(options) + 
-                '" value="' + value + '" />\r\n')
-        }
-
-        function textarea(field: String, value: String, options: Object): Void {
-            numCols = options.numCols
-            if (numCols == undefined) {
-                numCols = 60
+            if (options.rows) {
+                let cols = options.size
+                if (cols == undefined) {
+                    cols = 60
+                }
+                let rows = options.rows
+                if (rows == undefined) {
+                    rows = 10
+                }
+                att = getAttributes(options, {size: true})
+                write('    <textarea name="' + field + '" type="' + getTextKind(options) + '"' + att + 
+                    ' cols="' + cols + '" rows="' + rows + '">' + value + '</textarea>\r\n')
+            } else {
+                write('    <input name="' + field + '"' + getAttributes(options) + ' type="' + getTextKind(options) + 
+                    '" value="' + value + '" />\r\n')
             }
-            numRows = options.numRows
-            if (numRows == undefined) {
-                numRows = 10
-            }
-            write('<textarea name="' + field + '" type="' + getTextKind(options) + '"' + getAttributes(options) + 
-                ' cols="' + numCols + '" rows="' + numRows + '">' + value + '</textarea>\r\n')
         }
 
         function tree(data: Object, options: Object): Void {
@@ -17056,10 +17096,43 @@ module ejs.web {
 */
 
         /*
-            Like link but supports location == true to use the rest of options.
+            Set the template key fields
+                        options.record = r
+                        options.row = row
+                        options.field = name
+                        options.values = values
+        */
+        private function setKeyFields(target: Object, keyFields: Array, options: Object): Void {
+            let record = options.record
+            let row = options.row
+            let values = options.values
+            for (name in record) {
+                // Add missing values incase columns are not being displayed 
+                values[name] ||= record[name]
+            }
+            let keys = []
+            for each (key in keyFields) {
+                if (key is String) {
+                    // Array of key names corresponding to the columns 
+                    //  MOB
+                    // keys.push(Uri.encodeComponent(key) + "=" + Uri.encodeComponent((values[key] || row)))
+                    target[key] = Uri.encodeComponent((values[key] || row))
+                } else {
+                    // Hash of key:mapped names corresponding to the columns
+                    for (field in key) {
+                        //  MOB
+                        // keys.push(Uri.encodeComponent(key[field]) + "=" + Uri.encodeComponent((values[field] || row)))
+                        target[key[field]] = Uri.encodeComponent((values[key] || row))
+                    }
+                }
+            }
+        /*  MOB
+            if (keys && keys.length > 0) {
+                return keys.join("&")
+            }
+            return null
          */
-        private function buildLink(location: Object, options: Object): Uri
-            request.link(location === true ? options : location)
+        }
 
         /**
             Map options to a HTML attribute string. See htmlOptions and $View for a discussion on standard options.
@@ -17071,123 +17144,27 @@ module ejs.web {
             if (options.hasError) {
                 options.style = append(options.style, "-ejs-field-error")
             }
-            if (options.remote) {
-                options["data-remote"] = buildLink(options.remote, options)
-            } else if (options.click) {
-                options["data-click"] = buildLink(options.click, options)
+            if (options.click) {
+                setLink(options.click, options, "data-click")
+
+            } else if (options.remote) {
+                if (options.remote == true && options.action) {
+                    options.remote = options.action
+                }
+                setLink(options.remote, options, "data-remote")
+
+            } else if (options.edit) {
+                setLink(options.edit, options, "data-edit")
+
+            } else if (options.action) {
+                /* This is just a safety net incase someone uses "action" instead of click */
+                setLink(options.action, options, "data-click")
             }
-            if (options.refresh && !options.domid) {
-                options.domid = getNextID()
+            if (options.refresh) {
+                options.domid ||= getNextID()
+                setLink(options.refresh, options, "data-refresh")
             }
             return mapAttributes(options, exclude)
-        }
-
-        /*
-            Get attributes for table cells and rows
-         */
-        private function getCellRowAtt(record, row, field, values, options): String {
-            let click, edit, key, method, params, uri
-            if (options.click) {
-                ({method, uri, params, key}) = getTableLink(options.click, record, row, field, values, options)
-                click = buildLink(uri, options)
-            } else if (options.edit) {
-                ({method, uri, params, key}) = getTableLink(options.edit, record, row, field, values, options)
-                edit = buildLink(uri, options)
-            }
-            if (params) {
-                /* Process params and convert to an encoded query string */
-                let list = []
-                for (let [key,value] in params) {
-                    list.push(Uri.encodeComponent(key) + "=" + Uri.encodeComponent(value))
-                }
-                params = list.join("&")
-            }
-            return mapAttributes({ 
-                "data-click": click,
-                "data-edit": edit,
-                key: key, 
-                keyFormat: options.keyFormat,
-                method: method,
-                params: params,
-            })
-        }
-
-        /*
-            Get data-key attributes for tables
-         */
-        private function getKeyAtt(keyFields: Array, record, row, values, options): String {
-            let keys
-/*
-            if (!keyFields && options.click && record.id) {
-                keyFields = ["id"]
-            }
-*/
-            if (keyFields) {
-                for (name in record) {
-                    /* Add missing values if columns are not being displayed */
-                    values[name] ||= record[name]
-                }
-                keys = []
-                for each (key in keyFields) {
-                    if (key is String) {
-                        /* Array of key names corresponding to the columns */
-                        keys.push(Uri.encodeComponent(key) + "=" + Uri.encodeComponent((values[key] || row)))
-                    } else {
-                        /* Hash of key:mapped names corresponding to the columns */
-                        for (field in key) {
-                            keys.push(Uri.encodeComponent(key[field]) + "=" + Uri.encodeComponent((values[field] || row)))
-                        }
-                    }
-                }
-                if (keys && keys.length > 0) {
-                    return keys.join("&")
-                }
-            }
-            return ""
-        }
-
-        /*
-            Get table click/edit links. Return a hash {method, uri, params, key}
-         */
-        private function getTableLink(location, record, row, field, values, options): Object {
-            if (location === true) {
-                location = options
-            }
-            if (location is Function) {
-                result = location(record, field, values[field], options)
-            } else {
-                location = request.makeUriHash(location)
-                if (record) {
-                    location.id = record.id
-                }
-                result = { 
-                    method: options.method, 
-                    uri: request.link(location), 
-                    params: options.params, 
-                    key: getKeyAtt(options.key, record, row, values, options)
-                }
-            }
-            return result
-        }
-
-        /*
-            Map options to HTML attributes
-         */
-        private function mapAttributes(options: Object, exclude: Object = null): String {
-            let result: String = ""
-            if (options.method) {
-                options.method = options.method.toUpperCase();
-            }
-            for (let [key, value] in options) {
-                if (exclude && exclude[key]) continue
-                if (value != undefined) {
-                    if (htmlOptions[key] || key.startsWith("data-")) {
-                        let mapped = htmlOptions[key] ? htmlOptions[key] : key
-                        result += mapped + '="' + value + '" '
-                    }
-                }
-            }
-            return (result == "") ? result : (" " + result.trimEnd())
         }
 
         private function getColumns(data: Object, options: Object): Object {
@@ -17228,11 +17205,70 @@ module ejs.web {
             return kind
         }
 
-        /** 
+        /*
             Get the next usable DOM ID for view controls
          */
         private function getNextID(): String
             "id_" + lastDomID++
+
+        /*
+            Map options to HTML attributes
+         */
+        private function mapAttributes(options: Object, exclude: Object = null): String {
+            let result: String = ""
+            if (options.method) {
+                options.method = options.method.toUpperCase();
+            }
+            for (let [key, value] in options) {
+                if (exclude && exclude[key]) continue
+                if (value != undefined) {
+                    if (htmlOptions[key] || key.startsWith("data-")) {
+                        let mapped = htmlOptions[key] ? htmlOptions[key] : key
+                        result += mapped + '="' + value + '" '
+                    }
+                }
+            }
+            return (result == "") ? result : (" " + result.trimEnd())
+        }
+
+        private function setLink(target: Object, options: Object, prefix: String) {
+            if (typeOf(target) != "Object") {
+                target = target.toString()
+                if (target[0] == '@') {
+                    target = {action: target}
+                } else {
+                    /* Non-mvc URI string */
+                    target = {uri: (target[0] == '/') ? (request.scriptName + target) : target}
+                }
+            } else {
+                target = target.clone()
+            }
+            blend(target, options, false)
+            if (options.key && options.record) {
+                setKeyFields(target, options.key, options)
+            }
+            target.uri ||= request.link(target)
+            if (target.params) {
+                /* Process params and convert to an encoded query string */
+                let list = []
+                for (let [k,v] in target.params) {
+                    list.push(Uri.encodeComponent(k) + "=" + Uri.encodeComponent(v))
+                }
+                target.params = list.join("&")
+            }
+            options[prefix] = target.uri
+            if (target.method) {
+                options[prefix + "-" + "method"] = target.method
+            }
+            if (target.params) {
+                options[prefix + "-" + "params"] = target.params
+            }
+/*MOB
+            if (target.key) {
+                options[prefix + "-" + "key"] = target.key
+            }
+*/
+        }
 
         private function write(str: String): Void
             request.write(str)
@@ -17846,7 +17882,7 @@ module ejs.web {
             /* Load controller */
             let params = request.params
             if (!params.controller) {
-                throw "No controller specified by route: " + request.route.name
+                throw new StateError("No controller specified by route: " + request.route.name)
             }
             let controller = params.controller = params.controller.toPascal()
             let mod = dir.join(dirs.cache, controller).joinExt(ext.mod)
@@ -17868,7 +17904,7 @@ module ejs.web {
                 let path = Path(file)
                 if (!path.exists) {
                     request.status = Http.NotFound
-                    throw "Can't find required component: \"" + path + "\""
+                    throw new StateError("Can't find required component: \"" + path + "\"")
                 }
                 code += path.readString()
             }
@@ -18123,6 +18159,7 @@ module ejs.web {
             @option warn     Negative feedback (Warnings and errors)
             @option *        Other feedback (reminders, suggestions...)
         */
+//  MOB -- why public here
         public var flash: Object
 
         /** 
@@ -18467,104 +18504,102 @@ module ejs.web {
             notify("inform", msg)
 
         /** 
-            Create a link to a URI. The target parameter may contain partial or complete URI information. The missing 
-            parts are supplied using the current request URI and optional route tables. The resulting URI is a normalized, 
-            server-local URI (begins with "/"). The URI will include any defined scriptName, but will not include scheme, 
-            host or port components.
+            Create a URI link. The target parameter may contain partial or complete URI information. The missing parts 
+            are supplied using the current request and route tables. The resulting URI is a normalized, server-local 
+            URI (begins with "/"). The URI will include any defined scriptName, but will not include scheme, host or 
+            port components.
 
-            @params target The target parameter can be a URI string or object hash of components. If the target is a
-               string, it is may contain an absolute or relative URI. If the target has an absolute URI path, that path
-               is used unmodified. If the target is a relative URI, it is appended to the current request URI path. 
-               The target argument can also be an object hash of URI components: scheme, host, port, path, reference and
-               query. 
+            @params target The URI target. The target parameter can be a URI string or object hash of components. If the 
+                target is a string, it is may contain an absolute or relative URI. If the target has an absolute URI path, 
+                that path is used unmodified. If the target is a relative URI, it is appended to the current request URI 
+                path.  The target can also be an object hash of URI components: scheme, host, port, path, reference and
+                query. If these component properties are supplied, these will be combined to create a URI.
+
+                The URI will be created according to the route URI template. The template may be explicitly specified
+                via a "route" target property. Otherwise, if an "action" property is specified, the route of the same
+                name will be used. If these don't result in a usable route, the "default" route will be used. See the
+                Router for more details.
                
-               If the hash contains a route property that specifies the name of a route table entry, then the
-               hash may contain properties that will be used when creating the URI by expanding the route template. 
-               If the target is a string that begins with "@" it will be interpreted as a controller/action pair of the 
-               form "@[Controller/]action". This is a shorthand way to specify an action and optional controller. The 
-               short-hand link("@") refers to the "index" action of the current controller.
+                If the target is a string that begins with "@" it will be interpreted as a controller/action pair of the 
+                form "@Controller/action". If the "controller/" portion is absent, the current controller is used. If 
+                the action component is missing, the "index" action is used. A bare "@" refers to the "index" action 
+                of the current controller.
 
+                Lastly, the target object hash may contain an override "uri" property. If specified, the value of the 
+                "uri" property will be returned and all other properties will be ignored.
+
+            @option scheme String URI scheme portion
+            @option host String URI host portion
+            @option port Number URI port number
             @option path String URI path portion
-            @option query String URI query parameters. Does not include "?"
             @option reference String URI path reference. Does not include "#"
-            @option controller String Controller name if using a Controller-based route
-            @option action String Action name if using a Controller-based route
-            @option other String Other route table tokens
+            @option query String URI query parameters. Does not include "?"
+            @option controller String Controller name if using a Controller-based route. This can also be specified via
+                the action option.
+            @option action String Action to invoke. This can be a URI string or a Controller action of the form
+                @Controller/action.
+            @option route String Route name to use for the URI template
             @example
                 Given a current request of http://example.com/samples/demo" and "r" == the current request:
+
 
                 r.link("images/splash.png")                  returns "/samples/images/splash.png"
                 r.link("images/splash.png").complete(r.uri)  returns "http://example.com/samples/images/splash.png"
                 r.link("images/splash.png").relative(r.uri)  returns "images/splash.png"
 
-                r.link({action: "checkout")
-                r.link({controller: "User", action: "logout")
-                r.link("@User.logout")
-                r.link({uri: "http://example.com/checkout"})
-
-                r.link({route: "default", action: "checkout")
+                r.link("http://example.com/index.html")
+                r.link("/path/to/index.html")
+                r.link("@Controller/checkout")
+                r.link("@Controller/")
                 r.link("@checkout")
                 r.link("@")
+                r.link({action: "checkout")
+                r.link({action: "logout", controller: "Admin")
+                r.link({action: "Admin/logout")
+                r.link({action: "@Admin/logout")
+                r.link({uri: "http://example.com/checkout"})
+                r.link({route: "default", action: "@checkout")
                 r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}")
 
             @return A normalized, server-local Uri object.
+            MOB - OPT make native
          */
         function link(target: Object): Uri {
-            target = makeUriHash(target)
-            if (target.route) {
-                target = Uri.template(target.template, target).path
-            }
-            return uri.local.resolve(target).normalize
-        }
-
-        /**
-            Make a URI hash from a string.  This converts the target URI specification into a hash of properties 
-            describing the target URI.
-            @param target String URI target to convert. If this is not a string, the target is returned.
-            @return An object hash representing the target.
-            @example: Sample targets
-                "/path/to/something"
-                "http://example.com/path/to/something"
-                "@controller/action"
-                "@controller/"
-                "@action"
-                URI object
-                {scheme, host, port, path, reference, query, uri: uriString}
-                {controller: name, action: name}
-                {action: "Controller/action"}
-                {custom: name, custom: name}
-                {uri: AnyTargetAbove }
-         */
-        function makeUriHash(target): Object {
             if (target is Uri) {
                 target = target.toString()
             }
             if (target is String) {
                 if (target[0] == '@') {
-                    target = {action: target.slice(1)}
+                    target = {action: target}
                 } else {
                     /* Non-mvc URI string */
-                    return {uri: (target[0] == '/') ? (scriptName + target) : target}
+                    target = {uri: (target[0] == '/') ? (scriptName + target) : target}
                 }
             }
-            if (Object.getOwnPropertyCount(target) > 0) {
-                let action = target.action
-                if (action && action.contains("/")) {
-                    [target.controller, target.action] = action.split("/")
+            if (!target.uri) {
+                if (target.action) {
+                    if (target.action[0] == '@') {
+                        target.action = target.action.slice(1)
+                    }
+                    if (target.action.contains("/")) {
+                        [target.controller, target.action] = target.action.split("/")
+                    }
+                    if (!target.controller && controller) {
+                        target.controller = controller.controllerName
+                    }
+                    target.route = target.action || "default"
                 }
-                if (target.controller) {
-                    //  MOB - messes up Cancel (/Product) button link. 
-                    // target.action ||= "index"
-                } else if (target.action != undefined && controller) {
-                    target.controller = controller.controllerName
-                }
-                if (route) {
-                    target.route ||= target.action || "default"
+                if (target.route) {
                     target.scriptName ||= scriptName
-                    target.template ||= route.getTemplate(target.controller, target.route)
+                    if (!target.template && route) {
+                        target.template = route.getTemplate(target.controller, target.route)
+                    }
                 }
             }
-            return target
+            if (target.route && target.template) {
+                target = Uri.template(target.template, target).path
+            }
+            return uri.local.resolve(target).normalize
         }
 
         /**
@@ -18670,7 +18705,7 @@ module ejs.web {
             code 302 which means a temporary redirect. A 301, permanent redirect code may be explicitly set.
             @param target Uri to redirect the client toward. This can be a relative or absolute string URI or it can be
                 a hash of URI components. For example, the following are valid inputs: "../index.ejs", 
-                "http://www.example.com/home.html", {action: "list"}.
+                "http://www.example.com/home.html", "@list".
             @param status Optional HTTP redirection status
          */
         function redirect(target: *, status: Number = Http.MovedTemporarily): Void {
@@ -19298,7 +19333,7 @@ module ejs.web {
             route for static pages. 
             Use of this constant will not add routes for MVC content or RESTful resources. 
          */ 
-        public static const Default = "default"
+        public static const Top = "top"
 
         /**
             Max calls to route() per request
@@ -19338,8 +19373,8 @@ module ejs.web {
             Add a default MVC controller/action route. This consists of a "/{controller}/{action}" route.
             All HTTP method verbs are supported.
          */
-        public function addDefault(): Void
-            add("/{controller}(/{action})", {name: "default", method: "*"})
+        public function addDefault(run: Object): Void
+            add("/{controller}(/{action}(/.*))", {name: "default", method: "*", run: run})
 
         /**
             Add routes to handle static content, directories, "es" scripts and stand-alone ejs templated pages.
@@ -19461,17 +19496,24 @@ module ejs.web {
         }
 
         /**
-            Create a Router instance
-            @param routeSet Name of the route set to add. Supports sets include:
-                Router.Default, Router.Direct, Router.Handlers, Router.Restful
+            Create a Router instance and initialize routes.
+            @param routeSet Optional name of the route set to add. Supports sets include:
+                Router.Top and Router.Restful. The Top routes provide top level routes for pages with extensions ".ejs", 
+                and ".es" as well as for static content (see $addHandlers, $addCatchall). The Restful routes provide 
+                default Controller/Action routes according to a RESTful paradigm (see $addRestful). The routeSet can
+               also be set to null to add not routes. This is useful for creating a bare Router instance. Defaults 
+               to Top.
+           @throws Error for an unknown route set.
          */
-        function Router(routeSet: String = null) {
+        function Router(routeSet: String = Top) {
             switch (routeSet) {
-            case Default:
+            case Top:
                 addHandlers()
-                addCatchall()
+                addDefault(StaticBuilder)
+                // addCatchall()
                 break
             case Restful:
+                addHome("@Base/")
                 addHandlers()
                 addRestful()
                 addCatchall()
@@ -19479,7 +19521,7 @@ module ejs.web {
             case null:
                 break
             default:
-                throw "Unknown route set: " + name
+                throw new ArgError("Unknown route set: " + routeSet)
             }
         }
 
@@ -19499,6 +19541,9 @@ module ejs.web {
                 If the options is an object hash, it may contain the options below:
             @option action Action method to service the request if using controllers. This may also be of the form 
                 "controller/action" to set both the action and controller in one property.
+            @option constraints Object Object hash of properties whose values are constrained. The property names are
+                the field names to be constrained and their values are regular expressions for which the actual URI
+                values must match for the route to match.
             @option controller Controller to service the request.
             @option name Name to give to the route. If absent, the name is created from the controller and action names.
                 The route naming rules are:
@@ -20022,7 +20067,7 @@ module ejs.web {
                     splitter = splitter.trim(":")
                 }
                 match = matchAndSplit
-                template = template.replace(/[\(\)]/g, "")
+                template = template.replace(/[\(\)]/g, "").replace(/\/\.\*/g, "")
             } else {
                 if (template is Function) {
                     match = template
@@ -20133,7 +20178,7 @@ module ejs.web {
             Create a useful (deterministic) name for the route. Rules are:
             1. Use options.name if provided, else
             2. Use any action name, else
-            3. Use "index"
+            3. Use "default"
 
             Action names will be sleuthed from the template if no options provided.
             Outer routes are pre-pended if defined.
@@ -20151,7 +20196,8 @@ module ejs.web {
                     name = template.name
                 }
             }
-            name ||= "index"
+            //  MOB -- was index
+            name ||= "default"
             if (outer && !options.name) {
                 name = options.name + "/" + name
             }
@@ -21099,40 +21145,56 @@ module ejs.web {
         object hash with a single "action" property set to the value of the options string. i.e. {action: options}. Note
         that controls will modify the options object and so sharing one option set over many controls is not advisable.
 
-        Various controls have custom options, but they share the following common set of option properties:
-
-        @option apply String Client DOM-ID to apply the data fetched from the $remote URI.
+        Various controls have custom options, but most share the following common set of option properties. 
+        @option action String Action to invoke. This can be a URI string or a Controller action of the form
+            @Controller/action.
+        @option apply String Client JQuery selector identifying the element to apply the remote update.
+            Typically "div.ID" where ID is the DOM ID for the element.
         @option background String Background color. This is a CSS RGB color specification. For example "FF0000" for red.
-        @option click (Boolean|Uri|String) The control is click by the user. If set to true, the rest of the 
-            options specifies the URI to invoke. Otherwise click can be set to a URI to invoke.
+        @option click (Boolean|Uri|String) URI to invoke if the control is clicked.
         @option color String Foreground color. This is a CSS RGB color specification. For example "FF0000" for red.
         @option confirm String Message to prompt the user to requeset confirmation before submitting a form or request.
-        @option data-* All other data-* names are passed through to the HTML unmodified.
+        @option controller Controller owning the action to invoke when clicked. Defaults to the current controller.
+        @option data-* All data-* names are passed through to the HTML unmodified.
         @option domid String Client-side DOM-ID to use for the control
         @option effects String Transition effects to apply when updating a control. Select from: "fadein", "fadeout",
             "highlight".
         @option escape Boolean Escape the text before rendering. This converts HTML reserved tags and delimiters into
             an encoded form.
-        @option field String Client DOM name to use for the generated HTML element.
-        @option height (Number|String) Height of the table. Can be a number of pixels or a percentage string. 
+        @option height (Number|String) Height of the control. Can be a number of pixels or a percentage string. 
             Defaults to unlimited.
+        @option key Array List of fields to set as the key values to uniquely identify the clicked or edited element. 
+            The key will be rendered as a "data-key" HTML attribute and will be passed to the receiving controller 
+            when the entry is clicked or edited. Each entry of the key option can be a simple
+            string field name or it can be an Object with a single property, where the property name is a simple
+            string field name and the property value is the mapped field name to use as the actual key name. This 
+            supports using custom key names. NOTE: this option cannot be used if using cell clicks or edits. In that
+            case, set click/edit to a callback function and explicitly construct the required URI and parameters.
+        @option keyFormat String Define how the keys will be handled for click and edit URIs. 
+            Set to one of the set: ["body", "path", "query"]. Default is "path".
+            Set to "query" to add the key/value pairs to the request URI. Each pair is separated using "&" and the
+                key and value are formatted as "key=value".
+            Set to "params" to add the key/value pair to the request body parameters. 
+            Set to "path" to add the key values in order to the request URI. Each value is separated using "/". This
+                provides "pretty" URIs that can be easily tokenized by router templates.
+            If you require more complex key management, set click or edit to a callback function and format the 
+            URI and params manually.
         @option id Number Numeric database ID for the record that originated the data for the view element.
         @option method String HTTP method to invoke.
-        @option modal String Make a form a modal dialog.
+        @option params Request parameters to include with a click or remote request
         @option period Number Period in milliseconds to invoke the $refresh URI to update the control data. If period
             is zero (or undefined), then refresh will be done using a perisistent connection.
+        @option query URI query string to add to click URIs.
         @option rel String HTML rel attribute. Can be used to generate "rel=nofollow" on links.
-        @option remote (String|Boolean) Perform the request in the background without changing the browser location.
-            The option may be set to the URI to invoke or it may be set to true and the URI will be determined by
-            other options.
-        @option refresh (String|URI|Object) URI to invoke in the background to refresh the control data every $period.
-            milliseconds. If period is undefined or zero, a persistent connection will be used to refresh data.
-        @option refresh-method String HTTP method to invoke for refresh requests.
+        @option remote (String|URI|Object) Perform the request in the background without changing the browser location.
+        @option refresh (String|URI|Object) URI to invoke in the background to refresh the control's data every $period.
+            milliseconds. If period is undefined or zero, a persistent connection may be used to refresh data.
+            The refresh option may use the "@Controller/action" form.
         @option size (Number|String) Size of the element.
         @option style String CSS Style to use for the table.
         @option value Object Override value to display if used without a form control record.
-        @option visible Boolean Make the control visible. Defaults to true.
-        @option width (Number|String) Width of the table or column. Can be a number of pixels or a percentage string. 
+        @option width (Number|String) Width of the control. Can be a number of pixels or a percentage string. Defaults to
+            unlimited.
 
         <h4>Dynamic Data</h4>
         Most controls can perform background updates of their data after the initial presentation. This is done via
@@ -21166,7 +21228,7 @@ module ejs.web {
         public var params: Object
 
         /** Current request object */
-        public var request: Request
+        public var request: Object
 
         /**
             Constructor method to initialize a new View
@@ -21219,29 +21281,28 @@ module ejs.web {
             @param text Initial message text to display. Status messages may be updated by calling the 
                 $Controller.status function.
             @param options Optional extra options. See $View for a list of the standard options.
-            @option refresh URI to call to to get status message updates.
             @option period Polling period in milliseconds for the client to check the server for status message 
                 updates. If this is not specifed, the connection to the server will be kept open. This permits the 
                 server to "push" alerts to the console, but will consume a connection at the server for each client.
             @example
-                <% status("Status Message", { refresh: "/getData", period: 2000" }) %>
+                <% alert("Status Message", { refresh: "/getData", period: 2000" }) %>
          */
         function alert(text: String, options: Object = {}): Void {
+            options = getOptions(options)
             text = formatValue(text, options)
             getConnector("alert", options).alert(text, options)
         }
 
+//  MOB -- consider deprecating
         /**
             Emit an anchor. This is lable inside an anchor reference. 
             @param text Link text to display
             @param options Optional extra options. See $View for a list of the standard options.
-         */
         function anchor(text: String, options: Object = {}): Void {
             options = getOptions(options)
-            options.click ||= true
-            // options.action ||= text.split(" ")[0].toLowerCase()
-            getConnector("anchor", options).anchor(text, options)
+            getConnector("label", options).label(text, options)
         }
+*/
 
         /**
             Render a form button. This creates a button suitable for use inside an input form. When the button is clicked,
@@ -21257,6 +21318,7 @@ module ejs.web {
                 button("commit", "Cancel")
          */
         function button(name: String, label: String, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("button", options).button(name, label, options)
         }
 
@@ -21279,11 +21341,9 @@ module ejs.web {
         /**
             Render a chart. The chart control can display static or dynamic tabular data. The client chart control manages
                 sorting by column, dynamic data refreshes, pagination and clicking on rows.
-            MOB -- update
+    MOB -- update
             @param data Optional initial data for the control. The data option may be used with the refresh option to 
                 dynamically refresh the data.
-
-            @param data Initial data to display. This should be a data grid (array of objects).
             @param options Object Optional extra options. See also $View for a list of the standard options.
             @option columns Object hash of column entries. Each column entry is in-turn an object hash of options. If unset, 
                 all columns are displayed using defaults.
@@ -21292,10 +21352,12 @@ module ejs.web {
                 linechart, imagelinechart, imagepiechart, scatterchart (and more)
             @example
                 <% chart(grid, { refresh: "/getData", period: 2000" }) %>
-                <% chart(data, { onclick: "action" }) %>
+                <% chart(data, { click: "@update" }) %>
          */
-        function chart(data: Array, options: Object = {}): Void
+        function chart(data: Array, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("chart", options).chart(data, options)
+        }
 
         /**
             Render an input checkbox. This creates a checkbox suitable for use within an input form. 
@@ -21306,9 +21368,9 @@ module ejs.web {
                 property.
             @param checkedValue Value for which the checkbox will be checked. Defaults to true.
             @param options Optional extra options. See $View for a list of the standard options.
-            @option value Object Override value to display if used without a form control record.
          */
         function checkbox(name: String, checkedValue: Object = true, options: Object = {}): Void {
+            options = getOptions(options)
             let value = getValue(currentRecord, name, options)
             name = getFieldName(name, options) 
             getConnector("checkbox", options).checkbox(name, value, checkedValue, options)
@@ -21322,8 +21384,10 @@ module ejs.web {
             @examples
                 <% div({ refresh: "/getData", period: 2000}) %>
          */
-        function div(body: String, options: Object = {}): Void
+        function div(body: String, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("div", options).div(body, options)
+        }
 
         /**
             End an input form. This closes an input form initiated by calling the $form method.
@@ -21341,12 +21405,14 @@ module ejs.web {
             @param options Optional extra options. See $View for a list of the standard options.
             @option retain Number. Number of seconds to retain the message. If <= 0, the message is retained until another
                 message is displayed. Default is 0.
+                MOB - this default implies it is displayed for zero seconds
             @example
                 <% flash("status") %>
                 <% flash() %>
                 <% flash(["error", "warning"]) %>
          */
         function flash(kinds: Object = null, options: Object = {}): Void {
+            options = getOptions(options)
             let cflash ||= request.flash
             if (cflash == null || cflash.length == 0) {
                 return
@@ -21360,7 +21426,6 @@ module ejs.web {
                 for each (kind in kinds) {
                     msgs[kind] = cflash[kind]
                 }
-
             } else {
                 msgs = cflash
             }
@@ -21381,24 +21446,19 @@ module ejs.web {
             will be generated once for the view and the same token will be used by all forms on the view page. To use
             security tokens outside a form, you need to manually call $securityToken in the &lt;head> section of the page.
 
-
 MOB -- much more doc here
     - Talk about controllers updating the record
-    - Talk about HTML ids generated from field names
             @param record Record to display and optionally update
             @param options Optional extra options. See $View for a list of the standard options.
             @option hideErrors Don't display model errors. Models retain error diagnostics from a failed write. Setting
                 thish option will prevent their display.
-            @option method HTTP method to use when submitting the form.
-            @option action Action to invoke when the form is submitted. Defaults to "create" or "update" depending on 
-                whether the field has been previously saved.
-            @option controller Controller to invoke when the form is submitted. Defaults to the current controller.
+            @option modal String Make a form a modal dialog.
             @option nosecurity Don't generate a security token for the form.
             @option securityToken String Override CSRF security token to include when the form is submitted. A default 
                 security token will always be generated unless options.nosecurity is defined to be true.
-            @option uri String Use a complete URI rather than an action and controller option to create the target uri.
          */
         function form(record: Object, options: Object = {}): Void {
+            options = getOptions(options, "action")
             currentRecord = record
             if (record) {
                 options.id ||= record.id
@@ -21412,8 +21472,10 @@ MOB -- much more doc here
             @param src Source name for the icon.
             @param options Optional extra options. See $View for a list of the standard options.
          */
-        function icon(src: Object, options: Object = {}): Void
+        function icon(src: Object, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("icon", options).icon(src, options)
+        }
 
         /**
             Render an image
@@ -21421,13 +21483,16 @@ MOB -- much more doc here
             @param options Optional extra options. See $View for a list of the standard options.
             @examples
                 <% image("pic.gif") %>
-                <% image("pic.gif", { refresh: "/getData", period: 2000, style: "myStyle" }) %>
-                <% image("pic.gif", { click: true, uri: "/foreground/click" }) %>
-                <% image("checkout.gif", { click: true, uri: "@checkout" }) %>
-                <% image("pic.gif", { remote: "/background/click" }) %>
+                <% image("pic.gif", { refresh: "@store/getData", period: 2000, style: "myStyle" }) %>
+MOB - uri not supported
+                <% image("pic.gif", { click: "@foreground/click" }) %>
+                <% image("checkout.gif", { click: "@checkout" }) %>
+                <% image("pic.gif", { remote: "@store/update" }) %>
          */
-        function image(src: String, options: Object = {}): Void
+        function image(src: String, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("image", options).image(src, options)
+        }
 
         /**
             Render an input field as part of a form. This is a smart input control that will call the appropriate
@@ -21487,10 +21552,13 @@ print("CATCH " + e)
                 <% label("Hello World") %>
                 <% label("Hello", { refresh: "/getData", period: 2000, style: "myStyle" }) %>
                 <% label("Hello", { click: "/foreground/link" }) %>
-                <% label("Checkout", { click: true, uri: "@checkout" }) %>
+                <% label("Checkout", { click: "@checkout" }) %>
          */
-        function label(text: String, options: Object = {}): Void
+        function label(text: String, options: Object = {}): Void {
+            options = getOptions(options)
+            text = formatValue(text, options)
             getConnector("label", options).label(text, options)
+        }
 
         /**
             Emit a selection list. 
@@ -21504,7 +21572,7 @@ print("CATCH " + e)
                 first entry is the value to display and the second is the value to send to the app. Or it can be an 
                 array of objects such as those returned from a table lookup. Lastly, it can be an object where the
                 property key is the value to display and the property value is the value to send to the app.
-            @param options control options
+            @param options Optional extra options. See $View for a list of the standard options.
             @example
                 list("stockId", Stock.stockList) 
                 list("priority", ["low", "med", "high"])
@@ -21513,6 +21581,7 @@ print("CATCH " + e)
                 list("priority", {low: 0, med: 1, high: 2})
          */
         function list(name: String, choices: Object, options: Object = {}): Void {
+            options = getOptions(options)
             let value = getValue(currentRecord, name, options)
             name = getFieldName(name, options) 
             getConnector("list", options).list(name, choices, value, options)
@@ -21524,8 +21593,10 @@ print("CATCH " + e)
             @param address Mail recipient address link
             @param options Optional extra options. See $View for a list of the standard options.
          */
-        function mail(name: String, address: String, options: Object = {}): Void
+        function mail(name: String, address: String, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("mail", options).mail(name, address, options)
+        }
 
 //  MOB -- redo progress using a commet style
         /** 
@@ -21535,8 +21606,10 @@ print("CATCH " + e)
             @example
                 <% progress(percent, { refresh: "/getData", period: 2000" }) %>
          */
-        function progress(percent: Number, options: Object = {}): Void
+        function progress(percent: Number, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("progress", options).progress(percent, options)
+        }
 
         /** 
             Render a radio button. This creates a radio button suitable for use within an input form. 
@@ -21551,7 +21624,6 @@ print("CATCH " + e)
                 array of objects such as those returned from a table lookup. Lastly, it can be an object where the
                 property key is the value to display and the property value is the value to send to the app.
             @param options Optional extra options. See $View for a list of the standard options.
-            @option value Object Override value to display if used without a form control record.
             @example
                 radio("priority", ["low", "med", "high"])
                 radio("priority", [["low", 0], ["med", 0.5], ["high", 1]])
@@ -21560,6 +21632,7 @@ print("CATCH " + e)
                 radio("priority", Message.priorities)
          */
         function radio(name: String, choices: Object, options: Object = {}): Void {
+            options = getOptions(options)
             let value = getValue(currentRecord, name, options)
             name = getFieldName(name, options) 
             getConnector("radio", options).radio(name, value, choices, options)
@@ -21623,50 +21696,17 @@ print("CATCH " + e)
         /**
             Render a table. The table control can display static or dynamic tabular data. The client table control 
                 manages sorting by column, dynamic data refreshes, pagination and clicking on rows or cells.
-            @param data Initial data to display. The data must be a grid of data, ie. an Array of 
-                objects where each object represents the data for a row. The column names are the object property names 
-                and the cell text is the object property values.
+            @param data Data to display. The data must be a grid of data, ie. an Array of objects where each object 
+                represents the data for a row. The column names are the object property names and the cell text is 
+                the object property values.
             @param options Optional extra options. See $View for a list of the standard options.
-            @option keyFormat String Define how the keys will be handled for click and edit URIs. 
-                Set to one of the set: ["body", "path", "query"]. Default is "path".
-                Set to "query" to add the key/value pairs to the request URI. Each pair is separated using "&" and the
-                    key and value are formatted as "key=value".
-                Set to "params" to add the key/value pair to the request body parameters. 
-                Set to "path" to add the key values in order to the request URI. Each value is separated using "/". This
-                    provides "pretty" URIs that can be easily tokenized by router templates.
-                If you require more complex key management, set click or edit to a callback function and format the 
-                URI and params manually.
             @option cell Boolean Set to true to make click or edit links apply per cell instead of per row. 
                 The default is false.
-            @option click (Boolean|Uri|String) URI to invoke when editing cells. If set to true, the rest of the 
-                options specifies the URI to invoke. Otherwise click can be set to a URI to invoke. The relevant column 
-                or columns must be marked as editable in the columns properties. If set to a function, the function will 
-                be invoked to provide the click method, uri and parameters. The function should be of the form:
-
-                function click(record, field: String, value, options): {method: String, uri: Uri, params: Object}
-
-                If using cell based click/edit, then field will be set to the relevant field. If using row click/edit,
-                then field will be null. 
-
             @option columns (Array|Object) The columns list can be either an array of column names or an object hash 
                 of column objects where each column entry is hash of column options. 
                 Column options: align, formatter, header, sort, sortOrder, style, width.
-            @option edit (Boolean|Uri|String) URI to invoke when editing cells. If set to true, the rest of the 
-                options specifies the URI to invoke. Otherwise click can be set to a URI to invoke. The relevant 
-                column or columns must be marked as editable in the columns properties.
-            @option key Array List of fields to set as the key values to uniquely identify the clicked or edited 
-                row. The key will be rendered as a "data-key" HTML attribute and will be passed to the 
-                receiving controller when the entry is clicked or edited. Each entry of the key option can be a simple
-                string field name or it can be an Object with a single property, where the property name is a simple
-                string field name and the property value is the mapped field name to use as the actual key name. This 
-                supports using custom key names. NOTE: this option cannot be used if using cell clicks or edits. In that
-                case, set click/edit to a callback function and explicitly construct the required URI and parameters.
-            @option pageSize Number Number of rows to display per page. Omit or set to <= 0 for unlimited. 
-                Defaults to unlimited.
             @option params Object Hash of post parameters to include in the request. This is a hash of key/value items.
             @option pivot Boolean Pivot the table by swaping rows for columns and vice-versa
-            @option query URI query string to add to click URIs. Can be a single-dimension array for per-row query 
-                strings or a two-dimensional array for per cell (order is row/column).
             @option showHeader Boolean Control if column headings are displayed.
             @option showId Boolean If a columns option is not provided, the id column is normally hidden. 
                 To display, set showId to be true.
@@ -21674,32 +21714,29 @@ print("CATCH " + e)
             @option sortOrder String Default sort order. Set to "ascending" or "descending".Defaults to ascending.
             @option style String CSS class to use for the table. The ultimate style to use for a table cell is the 
                 combination of style, styleCells, styleColumns and style Rows.
-            @option styleCells 2D Array of styles to use for the table body cells.
+            @option styleCells 2D Array of styles to use for the table body cells. Can also provide an array to the 
+                column.style property.
             @option styleColumns Array of styles to use for the table body columns. Can also use the style option in the
                 columns option.
             @option styleRows Array of styles to use for the table body rows
             @option title String Table title.
-
-//  MOB -- should auto-align currency to the right
-//  MOB -- test editable
             Column options:
             <ul>
-                <li>align</li>
-                <li>editable</li>
-                <li>formatter</li>
-                <li>header</li>
-                <li>sort String Define the column to sort by and the sort order</li>
-                <li>sortOrder String Set to "ascending" or "descending".  Defaults to ascending.</li>
-                <li>style</li>
-                <li>width</li>
+                <li>align - Will right-align numbers by default</li>
+                <li>click - URI to invoke if the cell is clicked</li>
+                <li>edit - MOB </li>
+                <li>formatter - Function to invoke to format the value to display</li>
+                <li>header - Header text for the column</li>
+                <li>style - Cell styles</li>
+                <li>width - Column width. Can be a string percentage or numeric pixel width</li>
             </ul>
         
             @example
-                <% table(gridData, { refresh: "/getData", period: 1000, pivot: true" }) %>
-                <% table(gridData, { click: "edit" }) %>
+                <% table(gridData, { refresh: "@update", period: 1000, pivot: true" }) %>
+                <% table(gridData, { click: "@edit" }) %>
                 <% table(Table.findAll()) %>
                 <% table(gridData, {
-                    click: "edit",
+                    click: "@edit",
                     sort: "Product",
                     columns: {
                         product:    { header: "Product", width: "20%" }
@@ -21708,6 +21745,7 @@ print("CATCH " + e)
                  }) %>
          */
         function table(data, options: Object = {}): Void {
+            options = getOptions(options)
             //  MOB - move to client side (data-pivot). No good here as it can't be refreshed!
             if (options.pivot) {
                 data = pivot(data)
@@ -21718,20 +21756,26 @@ print("CATCH " + e)
         /**
             Render a tab control. 
             The tab control can manage a set of panes and selectively show and hide or invoke the selected panes. 
-            If the click option is defined, the selected pane will be invoked via a foreground click. If the
-            remote option is defined, the selected pane will be invoked via a background click. Otherwise the 
-            selected pane will be made visible and other panes will be hidden.
-            @param data Initial data for the control. Tab data can be an array of objects -- one per tab. It can also
-                be a single object where the tab text is the property key and the property value is the target.
+            If the click option is defined (default), the selected pane will be invoked via a foreground click. If the
+            remote option is defined, the selected pane will be invoked via a background click. If the toggle option is
+            defined the selected pane will be made visible and other panes will be hidden.
+            If using show/hide tabs, define the initial visible pane to be of the class "-ejs-pane-visible" and define
+            other panes to be "-ejs-pane-hidden". The Control's client side code will toggle these classes to make panes
+            visible or hidden.
+            @param data Tab data for the control. Tab data can be be a single object where the tab text is the property 
+                key and the target to invoke is the property value. It can also be an an array of objects, one per tab. 
             @param options Optional extra options. See $View for a list of the standard options.
-            @option click Invoke the target URI in the foreground when clicked.
-            @option remote Invoke the target URI in the background when clicked.
+            @option click Set to true to invoke the selected pane via a foreground click.
+            @option remote Set to true to invoke the selected pane via a background click.
+            @option toggle Set to true to show the selected pane and hide other panes.
             @example
                 tabs({Status: "pane-1", "Edit: "pane-2"})
-                tabs([{Status: "/url-1"}, {"Edit: "/url-2"}], { click: true})
+                tabs([{Status: "/url-1"}, {"Edit: "/url-2"}], { click: "@someAction"})
          */
-        function tabs(data: Object, options: Object = {}): Void
+        function tabs(data: Object, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("tabs", options).tabs(data, options)
+        }
 
         /**
             Render a text input field as part of a form.
@@ -21739,17 +21783,18 @@ print("CATCH " + e)
                 of the initial value to display. The field should be a property of the form control record. It can 
                 be a simple property of the record or it can have multiple parts, such as: field.field.field. If 
                 this call is used without a form control record, the actual data value should be supplied via the 
-                options.value property.
+                options.value property. If the cols or rows option is defined, then a textarea HTML element will be used for
+                multiline input.
             @param options Optional extra options. See $View for a list of the standard options.
-            @option escape Boolean Escape the text before rendering. This converts HTML reserved tags and delimiters into
-                an encoded form.
+            @option cols Number number of text columns
+            @option rows Number number of text rows
             @option password Boolean The data to display is a password and should be obfuscated.
-            @option value Object Override value to display if used without a form control record.
             @examples
                 <% text("name") %>
                 <% text("product.name") %>
                 <% text("address", { escape: true }) %>
                 <% text("password", {value: params.password, password: true}) %>
+                <% text("password", {size: 20}) %>
          */
         function text(name: String, options: Object = {}): Void {
             let value = getValue(currentRecord, name, options)
@@ -21758,42 +21803,16 @@ print("CATCH " + e)
             getConnector("text", options).text(name, value, options)
         }
 
-
-        /**
-            Render a text area
-            @param name Name for the input textarea field. This defines the HTML element name and provides the source 
-                of the initial value to display. The field should be a property of the form control record. It can 
-                be a simple property of the record or it can have multiple parts, such as: field.field.field. If 
-                this call is used without a form control record, the actual data value should be supplied via the 
-                options.value property.
-            @option Boolean escape Escape the text before rendering. This converts HTML reserved tags and delimiters into
-                an encoded form.
-            @param options Optional extra options. See $View for a list of the standard options.
-            @option numCols Number number of text columns
-            @option numRows Number number of text rows
-            @option value Object Override value to display if used without a form control record.
-            @examples
-                <% textarea("name") %>
-         */
-        function textarea(name: String, options: Object = {}): Void {
-            let value = getValue(currentRecord, name, options)
-            value = formatValue(value, options)
-            name = getFieldName(name, options) 
-            getConnector("textarea", options).textarea(name, value, options)
-        }
-
         /**
             Render a tree control. The tree control can display static or dynamic tree data.
             @param data Optional initial data for the control. The data option may be used with the refresh option to 
                 dynamically refresh the data. The tree data is typically an XML document.
             @param options Optional extra options. See $View for a list of the standard options.
-            @option data URI or action to get data 
-            @option refresh If set, this defines the data refresh period in seconds. Only valid if the data option is defined
-            @option style String CSS Style to use for the control
-            @option visible Boolean Make the control visible. Defaults to true.
          */
-        function tree(data: Object, options: Object = {}): Void
+        function tree(data: Object, options: Object = {}): Void {
+            options = getOptions(options)
             getConnector("tree", options).tree(data, options)
+        }
 
         /**
             Render a partial view. This creates an HTML element with the required options. It is useful to generate
@@ -21813,6 +21832,7 @@ MOB -- review and rethink this
                 if (viewPath.controller) {
                     cname = viewPath.controller
                 }
+//MOB - reivew
                 if (viewPath.action) {
                     action = viewPath.action
                 }
@@ -21889,7 +21909,6 @@ MOB -- review and rethink this
             @param options Formatting options
             @option formatter Optional data formatter. If undefined, defaults to a basic formatter based on the value's
                 data type.
-            @option escape If true, the data will be HTML escaped
             @return The formatted data.
          */
         function formatValue(value: Object, options: Object): String {
@@ -21934,8 +21953,17 @@ MOB -- review and rethink this
             return field
         }
 
-        private function getOptions(options: Object): Object
-            (options is String) ? request.makeUriHash(options) : options
+        private function getOptions(options: Object, name: String = "click"): Object {
+            if (options is Uri) {
+                options = options.toString()
+            }
+            if (options is String) {
+                let str = options
+                options = {}
+                options[name] = str
+            }
+            return options
+        }
 
 //  MOB -- refactor - poor API
         /**
@@ -21943,7 +21971,6 @@ MOB -- review and rethink this
             @param data String field name in record or object hash {field: field}. If record is not defined, "data" is
                 the actual data.
             @param options Optional extra options. See $View for a list of the standard options.
-            @param value Override value.
             @hide
          */
         function getValue(record: Object, data: Object, options: Object): Object {
@@ -22197,10 +22224,10 @@ module ejs.web {
             Serve a web request. Convenience function to route, load and start a web application. 
             Called by web application start script
             @param request Request object
-            @param router Configured router instance. If omitted, a default Router will be created using the Router.Default
+            @param router Configured router instance. If omitted, a default Router will be created using the Router.Top
                 routing table.
          */
-        static function serve(request: Request, router: Router = Router(Router.Default)): Void {
+        static function serve(request: Request, router: Router = Router()): Void {
             try {
                 let app = router.route(request)
                 if (request.route.threaded) {
@@ -22311,7 +22338,9 @@ module ejs.web {
                 if (request.route && request.route.middleware) {
                     app = Middleware(app, request.route.middleware)
                 }
-                request.setupFlash()
+                if (finalize) {
+                    request.setupFlash()
+                }
                 let response
                 if (app.bound != global) {
                     response = app(request)
@@ -22355,10 +22384,10 @@ module ejs.web {
                 the documentRoot will be defined by the web server.
             @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
                 the serverRoot will be defined by the web server.
-            @param routes Route table to use. Defaults to Router.Default
+            @param routes Route table to use. Defaults to Router.Top
          */
         static function start(address: String, documentRoot: Path = ".", serverRoot: Path = ".", 
-                routes = Router.Default): Void {
+                routes = Router.Top): Void {
             let server: HttpServer = new HttpServer(documentRoot, serverRoot)
             var router = Router(routes)
             server.on("readable", function (event, request) {

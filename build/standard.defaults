@@ -77,10 +77,8 @@ BLD_FEATURE_CONFIG=template/standard
 #
 #	Device or emulator. (PocketPC2003, Smartphone2003)
 #
-if [ "$BLD_HOST_OS" = WINCE ] ; then
+if [ "$BLD_FEATURE_DEVICE" = "" ] ; then
     BLD_FEATURE_DEVICE=PocketPC2003
-else
-    BLD_FEATURE_DEVICE=
 fi
 
 #

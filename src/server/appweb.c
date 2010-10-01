@@ -23,7 +23,7 @@
 extern void appwebOsTerm();
 extern int  checkEnvironment(Mpr *mpr, cchar *program);
 static char *findConfigFile(Mpr *mpr, char *configFile);
-static void memoryFailure(MprCtx ctx, int64 askSize, int64 totalHeapMem, bool granted);
+static void memoryFailure(MprCtx ctx, size_t askSize, size_t totalHeapMem, bool granted);
 extern int  osInit(Mpr *mpr);
 static MaAppweb *setup(Mpr *mpr, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
         MprList *script, int workers);
@@ -371,7 +371,7 @@ static void usageError(Mpr *mpr)
 /*
     Global memory failure hook
  */
-static void memoryFailure(MprCtx ctx, int64 size, int64 total, bool granted)
+static void memoryFailure(MprCtx ctx, size_t size, size_t total, bool granted)
 {
     if (!granted) {
         mprPrintf(ctx, "Can't allocate memory block of size %d\n", size);

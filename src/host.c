@@ -19,8 +19,7 @@ MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort
 {
     MaHost      *host;
 
-    host = mprAllocObjZeroed(server, MaHost);
-    if (host == 0) {
+    if ((host = mprAllocObj(server, MaHost, NULL)) == NULL) {
         return 0;
     }
     host->aliases = mprCreateList(host);
@@ -72,8 +71,7 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
 {
     MaHost      *host;
 
-    host = mprAllocObjZeroed(server, MaHost);
-    if (host == 0) {
+    if ((host = mprAllocObj(server, MaHost, NULL)) == NULL) {
         return 0;
     }
     host->parent = parent;
@@ -340,11 +338,11 @@ int maInsertAlias(MaHost *host, MaAlias *newAlias)
     MaAlias     *alias, *old;
     int         rc, next, index;
 
-    if (mprGetParent(host->aliases) == host->parent) {
+    if (mprIsParent(host->parent, host->aliases)) {
         host->aliases = mprDupList(host, host->parent->aliases);
     }
-
-    /*  Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc. But we sort redirects with
+    /*  
+        Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc. But we sort redirects with
         status codes first.
      */
     for (next = 0; (alias = mprGetNextItem(host->aliases, &next)) != 0; ) {
@@ -376,7 +374,7 @@ int maInsertDir(MaHost *host, MaDir *newDir)
     mprAssert(newDir);
     mprAssert(newDir->path);
     
-    if (mprGetParent(host->dirs) == host->parent) {
+    if (mprIsParent(host->parent, host->dirs)) {
         host->dirs = mprDupList(host, host->parent->dirs);
     }
 
@@ -410,7 +408,7 @@ int maAddLocation(MaHost *host, HttpLoc *newLocation)
     mprAssert(newLocation);
     mprAssert(newLocation->prefix);
     
-    if (mprGetParent(host->locations) == host->parent) {
+    if (mprIsParent(host->parent, host->locations)) {
         host->locations = mprDupList(host, host->parent->locations);
     }
 
@@ -576,8 +574,7 @@ MaHostAddress *maCreateHostAddress(MprCtx ctx, cchar *ip, int port)
     mprAssert(ip && ip);
     mprAssert(port >= 0);
 
-    hostAddress = mprAllocObjZeroed(ctx, MaHostAddress);
-    if (hostAddress == 0) {
+    if ((hostAddress = mprAllocObj(ctx, MaHostAddress, NULL)) == NULL) {
         return 0;
     }
     hostAddress->flags = 0;

@@ -1,9 +1,9 @@
 /*
- *  httpPassword.c -- Manage passwords for HTTP authorization.
- *
- *  This file provides facilities for creating passwords for Appweb. It uses basic encoding and decoding using the 
- *  base64 encoding scheme and the MD5 Message-Digest algorithms developed by RSA. This module is used by both basic 
- *  and digest authentication services.
+    httpPassword.c -- Manage passwords for HTTP authorization.
+
+    This file provides facilities for creating passwords for Appweb. It uses basic encoding and decoding using the 
+    base64 encoding scheme and the MD5 Message-Digest algorithms developed by RSA. This module is used by both basic 
+    and digest authentication services.
  */
 
 /********************************* Includes ***********************************/
@@ -209,12 +209,11 @@ static User *createUser(Mpr *mpr, cchar *realm, cchar *name, cchar *password, bo
 {
     User    *up;
 
-    up = mprAllocObjZeroed(mpr, User);
+    up = mprAllocObj(mpr, User, NULL);
     up->realm = mprStrdup(up, realm);
     up->name = mprStrdup(up, name);
     up->password = mprStrdup(up, password);
     up->enabled = enabled;
-
     return up;
 }
 
@@ -343,7 +342,7 @@ static char *getpass(char *prompt)
 #endif /* BLD_WIN_LIKE */
  
 /*
- *  Display the usage
+    Display the usage
  */
 
 static void printUsage(Mpr *mpr, cchar *programName)
@@ -379,7 +378,7 @@ static char* trimWhiteSpace(char *str)
 
 /************************************ MD5 Code ********************************/
 /*
- *  Constants for MD5Transform routine.
+    Constants for MD5Transform routine.
  */
 #define CRYPT_HASH_SIZE 16
 
@@ -407,7 +406,7 @@ static uchar PADDING[64] = {
 };
 
 /*
- * F, G, H and I are basic MD5 functions.
+   F, G, H and I are basic MD5 functions.
  */
 #define F(x, y, z) (((x) & (y)) | ((~x) & (z)))
 #define G(x, y, z) (((x) & (z)) | ((y) & (~z)))
@@ -415,13 +414,13 @@ static uchar PADDING[64] = {
 #define I(x, y, z) ((y) ^ ((x) | (~z)))
 
 /*
- * ROTATE_LEFT rotates x left n bits.
+   ROTATE_LEFT rotates x left n bits.
  */
 #define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32-(n))))
 
 /*
- * FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
- * Rotation is separate from addition to prevent recomputation.
+   FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
+   Rotation is separate from addition to prevent recomputation.
  */
 #define FF(a, b, c, d, x, s, ac) { \
  (a) += F ((b), (c), (d)) + (x) + (uint)(ac); \
@@ -454,7 +453,7 @@ static void MD5_memset(uchar *, int, unsigned);
 
 /*********************************** Code *************************************/
 /*
- *  maMD5binary returns the MD5 hash. FUTURE -- better name
+    maMD5binary returns the MD5 hash. FUTURE -- better name
  */
 
 char *maMD5binary(uchar *buf, int length)
@@ -487,7 +486,7 @@ char *maMD5binary(uchar *buf, int length)
 
 
 /*
- *  Convenience call to webMD5binary 
+    Convenience call to webMD5binary 
  */
 char *maMD5(char *string)
 {
@@ -496,7 +495,7 @@ char *maMD5(char *string)
 
 
 /*
- *  MD5 initialization. Begins an MD5 operation, writing a new context.
+    MD5 initialization. Begins an MD5 operation, writing a new context.
  */ 
 void maMD5Init(MD5_CONTEXT *context)
 {
@@ -513,8 +512,8 @@ void maMD5Init(MD5_CONTEXT *context)
 
 
 /*
- *  MD5 block update operation. Continues an MD5 message-digest operation, 
- *  processing another message block, and updating the context.
+    MD5 block update operation. Continues an MD5 message-digest operation, 
+    processing another message block, and updating the context.
  */
 void maMD5Update(MD5_CONTEXT *context, uchar *input, unsigned inputLen)
 {
@@ -549,7 +548,7 @@ void maMD5Update(MD5_CONTEXT *context, uchar *input, unsigned inputLen)
 
 
 /*
- *  MD5 finalization. Ends an MD5 message-digest operation, writing the message digest and zeroizing the context.
+    MD5 finalization. Ends an MD5 message-digest operation, writing the message digest and zeroizing the context.
  */ 
 void maMD5Final(uchar digest[16], MD5_CONTEXT *context)
 {
@@ -586,7 +585,7 @@ void maMD5Final(uchar digest[16], MD5_CONTEXT *context)
 
 
 /*
- *  MD5 basic transformation. Transforms state based on block.
+    MD5 basic transformation. Transforms state based on block.
  */
 static void MD5Transform(uint state[4], uchar block[64])
 {
@@ -683,7 +682,7 @@ static void MD5Transform(uint state[4], uchar block[64])
 
 
 /*
- *  Encodes input (uint) into output (uchar). Assumes len is a multiple of 4.
+    Encodes input (uint) into output (uchar). Assumes len is a multiple of 4.
  */
 static void Encode(uchar *output, uint *input, unsigned len)
 {
@@ -699,7 +698,7 @@ static void Encode(uchar *output, uint *input, unsigned len)
 
 
 /*
- *  Decodes input (uchar) into output (uint). Assumes len is a multiple of 4.
+    Decodes input (uchar) into output (uint). Assumes len is a multiple of 4.
  */
 static void Decode(uint *output, uchar *input, unsigned len)
 {
@@ -714,7 +713,7 @@ static void Decode(uint *output, uchar *input, unsigned len)
 
 
 /*
- *  FUTURE: Replace "for loop" with standard memcpy if possible.
+    FUTURE: Replace "for loop" with standard memcpy if possible.
  */
 static void MD5_memcpy(uchar *output, uchar *input, unsigned len)
 {
@@ -726,7 +725,7 @@ static void MD5_memcpy(uchar *output, uchar *input, unsigned len)
 
 
 /*
- * FUTURE: Replace "for loop" with standard memset if possible.
+   FUTURE: Replace "for loop" with standard memset if possible.
  */
 static void MD5_memset(uchar *output, int value, unsigned len)
 {
@@ -739,7 +738,7 @@ static void MD5_memset(uchar *output, int value, unsigned len)
 
 #if VXWORKS
 /*
- *  VxWorks link resolution
+    VxWorks link resolution
  */
 int _cleanup() {
     return 0;
@@ -750,77 +749,77 @@ int _exit() {
 #endif
 
 /*
- *  @copy   default
- *  
- *  Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
- *  Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
- *  
- *  This software is distributed under commercial and open source licenses.
- *  You may use the GPL open source license described below or you may acquire 
- *  a commercial license from Embedthis Software. You agree to be fully bound 
- *  by the terms of either license. Consult the LICENSE.TXT distributed with 
- *  this software for full details.
- *  
- *  This software is open source; you can redistribute it and/or modify it 
- *  under the terms of the GNU General Public License as published by the 
- *  Free Software Foundation; either version 2 of the License, or (at your 
- *  option) any later version. See the GNU General Public License for more 
- *  details at: http://www.embedthis.com/downloads/gplLicense.html
- *  
- *  This program is distributed WITHOUT ANY WARRANTY; without even the 
- *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
- *  
- *  This GPL license does NOT permit incorporating this software into 
- *  proprietary programs. If you are unable to comply with the GPL, you must
- *  acquire a commercial license to use this software. Commercial licenses 
- *  for this software and support services are available from Embedthis 
- *  Software at http://www.embedthis.com 
- *  
- *
- *  MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm
- *  
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *  
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- *  ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- *  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- *  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- *  SUCH DAMAGE.
- *  
- *  RSA License Details
- *  -------------------
- *  
- *  License to copy and use this software is granted provided that it is 
- *  identified as the "RSA Data Security, Inc. MD5 Message-Digest Algorithm" 
- *  in all material mentioning or referencing this software or this function.
- *  
- *  License is also granted to make and use derivative works provided that such
- *  works are identified as "derived from the RSA Data Security, Inc. MD5 
- *  Message-Digest Algorithm" in all material mentioning or referencing the 
- *  derived work.
- *  
- *  RSA Data Security, Inc. makes no representations concerning either the 
- *  merchantability of this software or the suitability of this software for 
- *  any particular purpose. It is provided "as is" without express or implied 
- *  warranty of any kind.
- *  
- *  These notices must be retained in any copies of any part of this documentation 
- *  and/or software.
- *  
- *  @end
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+
+    MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm
+    
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+    
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+    
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+    
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+    OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+    HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+    SUCH DAMAGE.
+    
+    RSA License Details
+    -------------------
+    
+    License to copy and use this software is granted provided that it is 
+    identified as the "RSA Data Security, Inc. MD5 Message-Digest Algorithm" 
+    in all material mentioning or referencing this software or this function.
+    
+    License is also granted to make and use derivative works provided that such
+    works are identified as "derived from the RSA Data Security, Inc. MD5 
+    Message-Digest Algorithm" in all material mentioning or referencing the 
+    derived work.
+    
+    RSA Data Security, Inc. makes no representations concerning either the 
+    merchantability of this software or the suitability of this software for 
+    any particular purpose. It is provided "as is" without express or implied 
+    warranty of any kind.
+    
+    These notices must be retained in any copies of any part of this documentation 
+    and/or software.
+    
+    @end
  */

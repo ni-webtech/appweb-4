@@ -36,7 +36,7 @@ static void     angel();
 static void     catchSignal(int signo, siginfo_t *info, void *arg);
 static void     cleanup();
 static int      makeDaemon();
-static void     memoryFailure(MprCtx ctx, int64 size, int64 total, bool granted);
+static void     memoryFailure(MprCtx ctx, size_t size, size_t total, bool granted);
 static int      readAngelPid();
 static void     setAppDefaults(Mpr *mpr);
 static int      setupUnixSignals();
@@ -499,7 +499,7 @@ static int makeDaemon()
 /*
     Global memory allocation handler
  */
-static void memoryFailure(MprCtx ctx, int64 size, int64 total, bool granted)
+static void memoryFailure(MprCtx ctx, size_t size, size_t total, bool granted)
 {
     if (!granted) {
         mprPrintfError(ctx, "Can't allocate memory block of size %d\n", size);

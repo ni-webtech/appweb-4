@@ -15,7 +15,8 @@
      */
     var defaults = {
         "updating": true,
-        "toggle": 27,
+        //  ESC to toggle updating
+        "toggle-updating": 27,
     }
     $.fn.extend({
         /*
@@ -25,6 +26,8 @@
             $.extend(defaults, options || {});
             $('[data-sort-order]').each(sort);
             $('[data-refresh]').each(refresh);
+            $('div[class~=-ejs-flash-inform]').animate({opacity: 1.0}, 2000).hide("slow");
+
             $('[data-modal]').each(function() {
                 $(this).modal({
                     escClose: false, 
@@ -41,16 +44,16 @@
     /*
         Background request using data-remote attributes. Apply the result to the data-apply (or current element).
      */
-    function backgroundRequest() {
-        var elt     = $(this),
-            data    = elt.is('form') ? elt.serializeArray() : [],
-            method  = elt.attr('method') || elt.attr('data-method') || 'GET',
-            /* Data-url is a modified remote URL */
-            //  MOB -- remove data-url
-            url     = elt.attr('action') || elt.attr('href') || elt.attr('data-url') || elt.attr('data-remote');
+    function remote(url) {
+        var elt         = $(this),
+            data        = elt.is('form') ? elt.serializeArray() : [],
+            method      = elt.attr('data-remote-method') || 'GET';
 
         if (url === undefined) {
-            throw "No URL specified for remote call";
+            url = elt.attr('action') || elt.attr('href') || elt.attr('data-remote');
+            if (!url) {
+                throw "No URL specified for remote call";
+            }
         }
         elt.trigger('http:before');
         // MOB changeUrl(url);
@@ -99,6 +102,7 @@
         var result = {};
         $.each(elt[0].attributes, function(index, att) {
             if (att.name.indexOf("data-") == 0) {
+                //  MOB -- why bother removing data-
                 result[att.name.substring(5)] = att.value;
             }
         });
@@ -109,7 +113,6 @@
         Debug logging
      */
     function log(msg) {
-        // $('#console').append('<div>' + new Date() + ' ' + text + '</div>');
         if (window.console) {
             console.debug(msg);
         } else {
@@ -123,38 +126,16 @@
      */
     function request() {
         var el          = $(this);
-        var method      = el.attr('method') || el.attr('data-method') || 'GET';
-        var url         = el.attr('action') || el.attr('href') || el.attr('data-click');
-        var key         = el.attr('data-key');
-        var keyFormat   = el.attr('data-key-format');
-        var params;
+        var method      = el.attr('data-click-method') || el.attr('data-method') || 'GET';
+        var url         = el.attr('data-click') || el.attr('action') || el.attr('href');
+        var params      = el.attr('data-click-params');;
 
         if (url === undefined) {
             alert("No URL specified");
             return;
         }
         method = method.toUpperCase();
-        if (key) {
-            if (!keyFormat) {
-                keyFormat = (method == "GET") ? "path" : null;
-            }
-        } else keyFormat = null;
 
-        if (keyFormat == "path") {
-            var keys = [];
-            var split = key.split("&");
-            for (i in split) {
-                pair = split[i];
-                keys.push(pair.split("=")[1]);
-            } 
-            if (keys.length > 0) {
-                url = url + "/" + keys.join("/");
-            }
-        } else if (keyFormat == "query") {
-            url = url + "?" + key;
-        } else if (keyFormat == "body") {
-            params = key.split("&");
-        }
         if (method == "GET") {
             window.location = url;
         } else {
@@ -318,8 +299,8 @@
             }
             if (!o.bound) {
                 $(document).bind('keyup.refresh', function(event) {
-                    if (event.keyCode == o.toggle) {
-                        $('[data-refresh]').each(toggle);
+                    if (event.keyCode == o["toggle-updating"]) {
+                        $('[data-refresh]').each(toggleUpdating);
                     }
                 });
                 o.bound = true;
@@ -331,10 +312,7 @@
         return this;
     }
 
-    /*
-        Toggle dynmic refresh on or off
-     */
-    function toggle() {
+    function toggleUpdating() {
         elt = $(this);
         var o = elt.data("ejs-options");
         if (o) {
@@ -361,76 +339,66 @@
         elt.trigger('confirm');
     });
 
-    /* Click with tabs */
-//  MOB -- should this be this or div#-ejs-tabs
-    $('div.tabbed-dialog li').live('click', function(e) {
-        var next = $(this).attr('data-remote');
-        $('div[id|=pane]').hide();
-        var pane = $('div#' + next);
-        pane.fadeIn(500);
-        pane.addClass('pane-visible');
-        pane.removeClass('pane-hidden');
-        e.preventDefault();
-        return false
-    });
-
     /* Click in form. Ensure submit buttons are added for remote calls */
     $('input[type=submit]').live('click', function (e) {
         $(this).attr("checked", true);
     });
 
-    /* Click on table data-remote="" */
-    $('table[data-remote] tr').live('click', function(e) {
-        var table = $(this).parents("table");
-        //  MOB -- remove this and use data-key
-        var id = $(this).attr('data-id');
-        if (!id) {
-            id = $(this).parent().children().index($(this)) + 1;
-        }
-        //  MOB 
-        table.attr('data-url', table.attr('data-remote') + "?id=" + id);
-        backgroundRequest.apply(this);
+//  MOB -- is this used? or is data-click always present?
+    /* Click on link foreground with data-method */
+    $('a[data-method]:not([data-remote])').live('click', function (e) {
+        request.apply(this)
         e.preventDefault();
     });
 
-    /* Click with button data-remote */
-    $('button[data-remote]').live('click', function(e) {
-        backgroundRequest.apply(this);
+    /* Click on table row data-remote */
+    $('tr[data-remote]').live('click', function(e) {
+        var table = $(this).parents("table");
+        var url = $(this).attr('data-remote');
+        remote.call(table, url);
         e.preventDefault();
+    });
+
+    /* Click data-remote */
+    $('button[data-remote]').live('click', function(e) {
+        remote.apply(this);
+        e.preventDefault();
+    });
+
+    $('form').live('submit', function (e) {
+        var method = $(this).attr('data-method');
+        if (method) {
+            $(this).append('<input name="-ejs-method-" value="' + method + '" type="hidden" />');
+        }
     });
 
     /* Click on form with data-remote (background) */
     $('form[data-remote]').live('submit', function (e) {
-        backgroundRequest.apply(this);
+        var method = $(this).attr('data-method');
+        if (method) {
+            $(this).append('<input name="-ejs-method-" value="' + method + '" type="hidden" />');
+        }
+        remote.apply(this);
         e.preventDefault();
     });
+
 
     /* Click on link with data-remote (background) */
     $('a[data-remote],input[data-remote]').live('click', function (e) {
-        backgroundRequest.apply(this);
+        remote.apply(this);
         e.preventDefault();
     });
 
-    /* Click on link foreground with data-method */
-    $('a[data-method]:not([data-remote])').live('click', function (e) {
-        request.apply(this)
-/* UNUSED
-        var link = $(this);
-        var href = link.attr('href');
-        var method = link.attr('data-method');
-        var tokenName = $('meta[name=SecurityTokenName]').attr('content');
-        var token = $('meta[name=' + tokenName + ']').attr('content');
-        if (token) {
-            $('<form method="post" action="' + url + '"/>').hide().
-                append('<input name="__method__" value="' + method + '" type="hidden" />').
-                append('<input name="' + tokenName + '" value="' + token + '" type="hidden" />').
-                appendTo('body').
-                submit();
-        } else {
-            alert("Missing Security Token");
-        }
-*/
+    /* Click data-toggle */
+    $('li[data-toggle]').live('click', function(e) {
+        var next = $(this).attr('data-toggle');
+        $('div[id|=pane]').hide();
+        var pane = $('div#' + next);
+        pane.fadeIn(500);
+        pane.addClass('-ejs-pane-visible');
+        pane.removeClass('-ejs-pane-hidden');
         e.preventDefault();
+        return false
     });
 
     /* Click on anything with data-click */
@@ -448,8 +416,23 @@
             window.status = location.protocol + "//" + location.host + click;
         }
     });
+
     $('[data-click]').live('mouseout', function (e) {
-            window.status = "";
+        window.status = "";
+    });
+
+    $('[data-remote]').live('mouseover', function (e) {
+        var remote = $(this).attr("data-remote");
+        if (remote.indexOf("http://") == 0) {
+            window.status = remote;
+        } else {
+            var location = window.location;
+            window.status = location.protocol + "//" + location.host + remote;
+        }
+    });
+
+    $('[data-remote]').live('mouseout', function (e) {
+        window.status = "";
     });
 
 /////////////////////////////////////////

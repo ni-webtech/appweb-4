@@ -14,7 +14,7 @@ compileExtra: $(HEADERS)
 #   Update buildConfig.h version information. This is used in windows packages for building with VS.
 #
 dependExtra:
-	for f in master/*slots* ; do \
+	for f in master/ejs*.h sqlite*.h ; do \
 		cp $$f . ; \
 	done
 ifeq ($(BLD_OS),WIN)

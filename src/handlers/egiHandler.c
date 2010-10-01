@@ -102,7 +102,7 @@ int maOpenEgiHandler(Http *http)
     handler->match = matchEgi; 
     handler->start = startEgi; 
     handler->process = processEgi; 
-    handler->stageData = egi = mprAllocObjZeroed(handler, MaEgi);
+    handler->stageData = egi = mprAllocObj(handler, MaEgi, NULL);
     egi->forms = mprCreateHash(egi, HTTP_LARGE_HASH_SIZE);
     return 0;
 }

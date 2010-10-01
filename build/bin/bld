@@ -783,21 +783,21 @@ if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
             if [ "$OS" = WINCE ] ; then
                 if [ "$VERBOSE" -gt 0 -o "$TRACE" = 1 ] ; then
                     echo dumpbin /symbols ${OBJECTS} \| grep ' External ' \| egrep -v 'UNDEF|__real@|\?' \
-                        \| awk '{ print $8 }' \| sort \| uniq \>\> ${DEF}
+                        \| cut --characters=49- \| sort \| uniq \>\> ${DEF}
                 fi
-                dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | awk '{ print $8 }' \
-                    | sort | uniq >> ${DEF}
+                dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | \
+                    cut --characters=49- | sort | uniq >> ${DEF}
             else
                 if [ "$VERBOSE" -gt 0 -o "$TRACE" = 1 ] ; then
                     echo dumpbin /symbols ${OBJECTS} \| grep ' External ' \| egrep -v 'UNDEF|__real@|\?' \
-                        \| awk '{ print $8 }' \| sed 's/^_/ /' \| sort \| uniq \>\> ${DEF}
+                        \| cut --characters=49- \| sed 's/^_/ /' \| sort \| uniq \>\> ${DEF}
                 fi
                 if [ "${BLD_CPU}" = "x86_64" ] ; then
-                    dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | awk '{ print $8 }' | \
-                        sort | uniq >> ${DEF}
+                    dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | \
+                        cut --characters=49- | sort | uniq >> ${DEF}
                 else
-                    dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | awk '{ print $8 }' | \
-                        sed 's/^_/  /' | sort | uniq >> ${DEF}
+                    dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | \
+                        cut --characters=49- | sed 's/^_/  /' | sort | uniq >> ${DEF}
                 fi
             fi
 
@@ -823,7 +823,7 @@ if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
             fi
 
             if [ "${BLD_MT}" != "" -a -f ${SHARED_LIBRARY}.manifest ] ; then
-                run "${BLD_MT}" /nologo /manifest ${SHARED_LIBRARY}.manifest "/outputresource:${SHARED_LIBRARY};#2"
+                run "${BLD_MT}" /map /nologo /manifest ${SHARED_LIBRARY}.manifest "/outputresource:${SHARED_LIBRARY};#2"
                 if [ $? != 0 ] ; then
                     echo "bld: $BLD_MT failed"
                     exit 255

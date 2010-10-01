@@ -64,7 +64,6 @@ struct MaDir;
         Tune for size
      */
     #define HTTP_BUFSIZE               (4 * 1024)            /**< Default I/O buffer size */
-    #define HTTP_REC_MEM               ((1 * 1024 * 1024) - MPR_HEAP_OVERHEAD) /**< Initial virt memory arena size */
     #define HTTP_MAX_CHUNK             (8 * 1024)            /**< Max chunk size for transfer chunk encoding */
     #define HTTP_MAX_HEADERS           2048                  /**< Max size of the headers */
     #define HTTP_MAX_IOVEC             16                    /**< Number of fragments in a single socket write */
@@ -81,7 +80,6 @@ struct MaDir;
         Tune balancing speed and size
      */
     #define HTTP_BUFSIZE               (8 * 1024)
-    #define HTTP_REC_MEM               ((2 * 1024 * 1024) - MPR_HEAP_OVERHEAD)
     #define HTTP_MAX_CHUNK             (8 * 1024)
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             24
@@ -98,7 +96,6 @@ struct MaDir;
         Tune for speed
      */
     #define HTTP_BUFSIZE               (16 * 1024)
-    #define HTTP_REC_MEM               ((4 * 1024 * 1024) - MPR_HEAP_OVERHEAD)
     #define HTTP_MAX_CHUNK             (16 * 1024) 
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             32
@@ -1926,9 +1923,6 @@ typedef struct HttpRx {
     char            *scriptName;            /**< ScriptName portion of the url (Decoded). May be empty or start with "/" */
     char            *pathInfo;              /**< Path information after the scriptName (Decoded and normalized) */
 
-#if FUTURE
-    MprHeap         *arena;                 /**< Memory arena */
-#endif
     HttpConn        *conn;                  /**< Connection object */
     HttpPacket      *freePackets;           /**< Free list of packets */
     HttpPacket      *headerPacket;          /**< HTTP headers */

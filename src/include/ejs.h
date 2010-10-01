@@ -311,6 +311,7 @@ typedef enum EjsOpCode {
     EJS_OP_LOAD_REGEXP,
     EJS_OP_LOAD_STRING,
     EJS_OP_LOAD_THIS,
+    EJS_OP_LOAD_THIS_LOOKUP,
     EJS_OP_LOAD_THIS_BASE,
     EJS_OP_LOAD_TRUE,
     EJS_OP_LOAD_UNDEFINED,
@@ -610,6 +611,7 @@ EjsOptable ejsOptable[] = {
     {   "LOAD_REGEXP",               1,         { EBC_STRING,                             },},
     {   "LOAD_STRING",               1,         { EBC_STRING,                             },},
     {   "LOAD_THIS",                 1,         { EBC_NONE,                               },},
+    {   "LOAD_THIS_LOOKUP",          1,         { EBC_NONE,                               },},
     {   "LOAD_THIS_BASE",            1,         { EBC_NUM,                                },},
     {   "LOAD_TRUE",                 1,         { EBC_NONE,                               },},
     {   "LOAD_UNDEFINED",            1,         { EBC_NONE,                               },},
@@ -1057,8 +1059,7 @@ extern int      ejsSetListDetails(MprCtx ctx, EjsList *list, int initialSize, in
 /*
     GC Per generation structure
  */
-typedef struct EjsGen
-{
+typedef struct EjsGen {
     uint            totalReclaimed;     /* Total blocks reclaimed on sweeps */
     uint            totalSweeps;        /* Total sweeps */
 } EjsGen;
@@ -1067,8 +1068,7 @@ typedef struct EjsGen
     GC Pool of free objects of a given type. Each type maintains a free pool for faster allocations.
     Types in the pool have a weak reference and may be reclaimed.
  */
-typedef struct EjsPool
-{
+typedef struct EjsPool {
     struct EjsType  *type;              /* Owning type */
     int             allocated;          /* Count of instances created */
     int             peakAllocated;      /* High water mark for allocated */
@@ -1428,10 +1428,9 @@ typedef EjsObj EO;
 #else
     #define ejsGetVarType(vp)       (vp->type)
     #if BLD_DEBUG
-    #define ejsGetDebugName(vp) (ejsIsType(vp) ? ((EjsType*)(vp))->qname.name : mprGetName(vp))
+    #define ejsGetDebugName(vp) (ejsIsType(vp) ? ((EjsType*)(vp))->qname.name : "--noname--")
     #define ejsSetDebugName(vp, debugName) \
         if (1) { \
-            mprSetName(vp, debugName); \
             ((EjsObj*) vp)->name = debugName; \
         } else
     #else
@@ -3741,15 +3740,12 @@ typedef struct EjsLookup {
     uint            nthBase;                /* Property on Nth super type -- count from the object */
     uint            nthBlock;               /* Property on Nth block in the scope chain -- count from the end */
     EjsType         *type;                  /* Type containing property (if on a prototype obj) */
-#if UNUSED || 1
-    uint            useThis;                /* Property accessible via "this." */
     //  MOB -- check all these being used
     uint            instanceProperty;       /* Property is an instance property */
     //  MOB -- check all these being used
     uint            ownerIsType;            /* Original object owning the property is a type */
-    //  MOB -- check all these being used
+    uint            useThis;                /* Property accessible via "this." */
     struct EjsObj   *originalObj;           /* Original object used for the search */
-#endif
     struct EjsObj   *ref;                   /* Actual property reference */
     struct EjsTrait *trait;                 /* Property trait describing the property */
     struct EjsName  name;                   /* Name and namespace used to find the property */
@@ -3968,7 +3964,7 @@ extern int ejsLookupVar(Ejs *ejs, EjsObj *vp, EjsName *name, EjsLookup *lookup);
 extern int ejsLookupVarWithNamespaces(Ejs *ejs, EjsObj *vp, EjsName *name, EjsLookup *lookup);
 
 extern int ejsLookupScope(Ejs *ejs, EjsName *name, EjsLookup *lookup);
-extern void ejsMemoryFailure(MprCtx ctx, int64 size, int64 total, bool granted);
+extern void ejsMemoryFailure(MprCtx ctx, size_t size, size_t total, bool granted);
 extern int ejsRunProgram(Ejs *ejs, cchar *className, cchar *methodName);
 extern void ejsSetHandle(Ejs *ejs, void *handle);
 extern void ejsShowCurrentScope(Ejs *ejs);

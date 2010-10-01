@@ -1,6 +1,5 @@
-
 /*
- * 	Default layout style sheet
+   	Default layout style sheet
  */
 
 html {
@@ -16,7 +15,7 @@ div.top {
 	height: 90px;
 }
 
-div.top h1 a {
+div.top h1 {
     margin: 10px 0 0 20px;
 }
 
@@ -183,6 +182,16 @@ div.-ejs-tabs li {
 	padding: 8px 6px 8px 4px;
 }
 
+div.-ejs-pane-visible {
+    visibility: visible;
+    display: block;
+}
+
+div.-ejs-pane-hidden {
+    visibility: hidden;
+    display: none;
+}
+
 div.-ejs-formError {
     width: 550px;
     margin-bottom: 20px;
@@ -201,8 +210,6 @@ div.-ejs-flash {
 }
 
 #-ejs-modal-foreground {
-    height: 240px; 
-    width: 450px; 
     color: #bbb; 
     background-color: #333; 
     border: 4px solid #444; 

@@ -17,8 +17,7 @@ MaDir *maCreateBareDir(MaHost *host, cchar *path)
     mprAssert(host);
     mprAssert(path);
 
-    dir = mprAllocObjZeroed(host, MaDir);
-    if (dir == 0) {
+    if ((dir = mprAllocObj(host, MaDir, NULL)) == NULL) {
         return 0;
     }
     dir->indexName = mprStrdup(dir, "index.html");
@@ -40,8 +39,7 @@ MaDir *maCreateDir(MaHost *host, cchar *path, MaDir *parent)
     mprAssert(path);
     mprAssert(parent);
 
-    dir = mprAllocObjZeroed(host, MaDir);
-    if (dir == 0) {
+    if ((dir = mprAllocObj(host, MaDir, NULL)) == NULL) {
         return 0;
     }
     dir->host = host;

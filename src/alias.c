@@ -25,8 +25,7 @@ MaAlias *maCreateAlias(MprCtx ctx, cchar *prefix, cchar *target, int code)
     mprAssert(prefix);
     mprAssert(target && *target);
 
-    ap = mprAllocObjZeroed(ctx, MaAlias);
-    if (ap == 0) {
+    if ((ap = mprAllocObj(ctx, MaAlias, NULL)) == NULL) {
         return 0;
     }
     ap->prefix = mprStrdup(ctx, prefix);

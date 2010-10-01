@@ -631,7 +631,7 @@ int maOpenDirHandler(Http *http)
     handler->match = matchDir; 
     handler->process = processDir; 
     handler->parse = (HttpParse) parseDir; 
-    handler->stageData = dir = mprAllocObjZeroed(handler, Dir);
+    handler->stageData = dir = mprAllocObj(handler, Dir, NULL);
     http->dirHandler = handler;
     dir->sortOrder = 1;
     return 0;

@@ -24,8 +24,7 @@ MaAppweb *maCreateAppweb(MprCtx ctx)
     MaAppweb    *appweb;
     Http        *http;
 
-    appweb = mprAllocObjWithDestructorZeroed(ctx, MaAppweb, appwebDestructor);
-    if (appweb == 0) {
+    if ((appweb = mprAllocObj(ctx, MaAppweb, appwebDestructor)) == NULL) {
         return 0;
     }
     appweb->servers = mprCreateList(appweb);
@@ -119,8 +118,7 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, 
     mprAssert(appweb);
     mprAssert(name && *name);
 
-    server = mprAllocObjZeroed(appweb, MaServer);
-    if (server == 0) {
+    if ((server = mprAllocObj(appweb, MaServer, NULL)) == NULL) {
         return 0;
     }
     server->hosts = mprCreateList(server);

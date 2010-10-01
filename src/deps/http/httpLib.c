@@ -32,8 +32,7 @@ HttpAuth *httpCreateAuth(MprCtx ctx, HttpAuth *parent)
 {
     HttpAuth      *auth;
 
-    auth = mprAllocObjZeroed(ctx, HttpAuth);
-
+    auth = mprAllocObj(ctx, HttpAuth, NULL);
     if (parent) {
         auth->allow = parent->allow;
         auth->anyValidUser = parent->anyValidUser;
@@ -368,11 +367,9 @@ HttpGroup *httpCreateGroup(HttpAuth *auth, cchar *name, HttpAcl acl, bool enable
 {
     HttpGroup     *gp;
 
-    gp = mprAllocObjZeroed(auth, HttpGroup);
-    if (gp == 0) {
+    if ((gp = mprAllocObj(auth, HttpGroup, NULL)) == 0) {
         return 0;
     }
-
     gp->acl = acl;
     gp->name = mprStrdup(gp, name);
     gp->enabled = enabled;
@@ -412,8 +409,7 @@ HttpUser *httpCreateUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *passw
 {
     HttpUser      *up;
 
-    up = mprAllocObjZeroed(auth, HttpUser);
-    if (up == 0) {
+    if ((up = mprAllocObj(auth, HttpUser, NULL)) == 0) {
         return 0;
     }
     up->name = mprStrdup(up, user);
@@ -993,7 +989,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     if (!conn->server || auth == 0 || auth->type == 0) {
         return 0;
     }
-    if ((ad = mprAllocObjZeroed(rx, AuthData)) == 0) {
+    if ((ad = mprAllocObj(rx, AuthData, NULL)) == 0) {
         return 1;
     }
 #if UNUSED
@@ -2244,8 +2240,7 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server)
 {
     HttpConn    *conn;
 
-    conn = mprAllocObjWithDestructorZeroed(http, HttpConn, connectionDestructor);
-    if (conn == 0) {
+    if ((conn = mprAllocObj(http, HttpConn, connectionDestructor)) == 0) {
         return 0;
     }
     conn->http = http;
@@ -2845,7 +2840,7 @@ HttpLimits *httpSetUniqueConnLimits(HttpConn *conn)
 {
     HttpLimits      *limits;
 
-    limits = mprAllocObj(conn, HttpLimits);
+    limits = mprAllocObj(conn, HttpLimits, NULL);
     *limits = *conn->limits;
     conn->limits = limits;
     return limits;
@@ -3455,8 +3450,7 @@ Http *httpCreate(MprCtx ctx)
     Http            *http;
     HttpStatusCode  *code;
 
-    http = mprAllocObjZeroed(ctx, Http);
-    if (http == 0) {
+    if ((http = mprAllocObj(ctx, Http, NULL)) == 0) {
         return 0;
     }
     http->protocol = "HTTP/1.1";
@@ -3549,7 +3543,7 @@ HttpLimits *httpCreateLimits(MprCtx ctx, int serverSide)
 {
     HttpLimits  *limits;
 
-    if ((limits = mprAllocObjZeroed(ctx, HttpLimits)) != 0) {
+    if ((limits = mprAllocObj(ctx, HttpLimits, NULL)) != 0) {
         httpInitLimits(limits, serverSide);
     }
     return limits;
@@ -3884,8 +3878,7 @@ HttpLoc *httpCreateLocation(Http *http)
 {
     HttpLoc  *loc;
 
-    loc = mprAllocObjZeroed(http, HttpLoc);
-    if (loc == 0) {
+    if ((loc = mprAllocObj(http, HttpLoc, NULL)) == 0) {
         return 0;
     }
     loc->http = http;
@@ -3911,8 +3904,7 @@ HttpLoc *httpCreateInheritedLocation(Http *http, HttpLoc *parent)
     if (parent == 0) {
         return httpCreateLocation(http);
     }
-    loc = mprAllocObjZeroed(http, HttpLoc);
-    if (loc == 0) {
+    if ((loc = mprAllocObj(http, HttpLoc, NULL)) == 0) {
         return 0;
     }
     loc->http = http;
@@ -3965,7 +3957,7 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
     mprAssert(loc);
 
     http = loc->http;
-    if (mprGetParent(loc->handlers) == loc->parent) {
+    if (mprIsParent(loc->parent, loc->handlers)) {
         loc->extensions = mprCopyHash(loc, loc->parent->extensions);
         loc->handlers = mprDupList(loc, loc->parent->handlers);
     }
@@ -4020,7 +4012,7 @@ int httpSetHandler(HttpLoc *loc, cchar *name)
 
     mprAssert(loc);
     
-    if (mprGetParent(loc->handlers) == loc->parent) {
+    if (mprIsParent(loc->parent, loc->handlers)) {
         loc->extensions = mprCopyHash(loc, loc->parent->extensions);
         loc->handlers = mprDupList(loc, loc->parent->handlers);
     }
@@ -4074,13 +4066,13 @@ int httpAddFilter(HttpLoc *loc, cchar *name, cchar *extensions, int direction)
     }
 
     if (direction & HTTP_STAGE_INCOMING) {
-        if (mprGetParent(loc->inputStages) == loc->parent) {
+        if (mprIsParent(loc->parent, loc->inputStages)) {
             loc->inputStages = mprDupList(loc, loc->parent->inputStages);
         }
         mprAddItem(loc->inputStages, filter);
     }
     if (direction & HTTP_STAGE_OUTGOING) {
-        if (mprGetParent(loc->outputStages) == loc->parent) {
+        if (mprIsParent(loc->parent, loc->outputStages)) {
             loc->outputStages = mprDupList(loc, loc->parent->outputStages);
         }
         mprAddItem(loc->outputStages, filter);
@@ -4122,22 +4114,22 @@ int httpSetConnector(HttpLoc *loc, cchar *name)
 
 void httpResetPipeline(HttpLoc *loc)
 {
-    if (mprGetParent(loc->extensions) == loc) {
+    if (mprIsParent(loc, loc->extensions)) {
         mprFree(loc->extensions);
     }
     loc->extensions = mprCreateHash(loc, 0);
     
-    if (mprGetParent(loc->handlers) == loc) {
+    if (mprIsParent(loc, loc->handlers)) {
         mprFree(loc->handlers);
     }
     loc->handlers = mprCreateList(loc);
     
-    if (mprGetParent(loc->inputStages) == loc) {
+    if (mprIsParent(loc, loc->inputStages)) {
         mprFree(loc->inputStages);
     }
     loc->inputStages = mprCreateList(loc);
     
-    if (mprGetParent(loc->outputStages) == loc) {
+    if (mprIsParent(loc, loc->outputStages)) {
         mprFree(loc->outputStages);
     }
     loc->outputStages = mprCreateList(loc);
@@ -4188,7 +4180,7 @@ void httpSetLocationScript(HttpLoc *loc, cchar *script)
 
 void httpAddErrorDocument(HttpLoc *loc, cchar *code, cchar *url)
 {
-    if (mprGetParent(loc->errorDocuments) == loc->parent) {
+    if (mprIsParent(loc->parent, loc->errorDocuments)) {
         loc->errorDocuments = mprCopyHash(loc, loc->parent->errorDocuments);
     }
     mprAddHash(loc->errorDocuments, code, mprStrdup(loc, url));
@@ -4591,20 +4583,22 @@ static void adjustNetVec(HttpQueue *q, int written)
 
 /*
     packet.c -- Queue support routines. Queues are the bi-directional data flow channels for the pipeline.
+
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
 
 
-/*  Create a new packet. If size is -1, then also create a default growable buffer -- used for incoming body content. If 
-    size > 0, then create a non-growable buffer of the requested size.
+/*  
+    Create a new packet. If size is -1, then also create a default growable buffer -- 
+    used for incoming body content. If size > 0, then create a non-growable buffer 
+    of the requested size.
  */
 HttpPacket *httpCreatePacket(MprCtx ctx, int size)
 {
     HttpPacket  *packet;
 
-    packet = mprAllocObjZeroed(ctx, HttpPacket);
-    if (packet == 0) {
+    if ((packet = mprAllocObj(ctx, HttpPacket, NULL)) == 0) {
         return 0;
     }
     if (size != 0) {
@@ -4651,7 +4645,7 @@ void httpFreePacket(HttpQueue *q, HttpPacket *packet)
     conn = q->conn;
     rx = conn->rx;
 
-    if (rx == 0 || packet->content == 0 || packet->content->buflen < HTTP_BUFSIZE || mprGetParent(packet) == conn) {
+    if (rx == 0 || packet->content == 0 || packet->content->buflen < HTTP_BUFSIZE || mprIsParent(conn, packet)) {
         /* 
             Don't bother recycling non-content, small packets or packets owned by the connection
             We only store packets owned by the request and not by the connection on the free list.
@@ -5527,8 +5521,7 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int direction, Http
 {
     HttpQueue   *q;
 
-    q = mprAllocObjZeroed(conn->tx, HttpQueue);
-    if (q == 0) {
+    if ((q = mprAllocObj(conn->tx, HttpQueue, NULL)) == 0) {
         return 0;
     }
     httpInitQueue(conn, q, stage->name);
@@ -6389,27 +6382,9 @@ HttpRx *httpCreateRx(HttpConn *conn)
 {
     HttpRx      *rx;
 
-#if FUTURE
-    MprHeap     *arena;
-    /*  
-        Create a request memory arena. From this arena, are all allocations made for this entire request.
-        Arenas are scalable, non-thread-safe virtual memory blocks.
-     */
-    arena  = mprAllocArena(conn, "request", HTTP_REC_MEM, 0, NULL);
-    if (arena == 0) {
+    if ((rx = mprAllocObj(conn, HttpRx, NULL)) == 0) {
         return 0;
     }
-    rx = mprAllocObjZeroed(arena, HttpRx);
-    rx->arena = arena;
-    if (rx == 0) {
-        return 0;
-    }
-#else
-    rx = mprAllocObjZeroed(conn, HttpRx);
-    if (rx == 0) {
-        return 0;
-    }
-#endif
     rx->conn = conn;
     rx->length = -1;
     rx->ifMatch = 1;
@@ -6431,7 +6406,7 @@ HttpRx *httpCreateRx(HttpConn *conn)
 void httpDestroyRx(HttpConn *conn)
 {
     if (conn->input) {
-        if (mprGetParent(conn->input) != conn && httpGetPacketLength(conn->input) > 0) {
+        if (!mprIsParent(conn, conn->input) && httpGetPacketLength(conn->input) > 0) {
             conn->input = httpSplitPacket(conn, conn->input, 0);
         } else {
             conn->input = 0;
@@ -6441,11 +6416,7 @@ void httpDestroyRx(HttpConn *conn)
         if (conn->server) {
             httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_REQUEST, conn);
         }
-#if FUTURE
-        mprFree(conn->rx->arena);
-#else
         mprFree(conn->rx);
-#endif
         conn->rx = 0;
     }
     if (conn->server) {
@@ -6596,6 +6567,8 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     traced = traceRequest(conn, packet);
 
     method = getToken(conn, " ");
+    mprStrUpper(method);
+
     switch (method[0]) {
     case 'D':
         if (strcmp(method, "DELETE") == 0) {
@@ -7368,14 +7341,9 @@ static bool processCompletion(HttpConn *conn)
 
     mpr = mprGetMpr(conn);
 
-#if FUTURE
-    mprLog(conn, 4, "Request complete used %,d K, mpr usage %,d K, page usage %,d K",
-        conn->arena->allocBytes / 1024, mpr->heap.allocBytes / 1024, mpr->pageHeap.allocBytes / 1024);
-#endif
-
     packet = conn->input;
     more = packet && !conn->connError && (mprGetBufLength(packet->content) > 0);
-    if (mprGetParent(packet) != conn) {
+    if (!mprIsParent(conn, packet)) {
         if (more) {
             conn->input = httpSplitPacket(conn, packet, 0);
         } else {
@@ -7493,8 +7461,7 @@ HttpRange *httpCreateRange(HttpConn *conn, int start, int end)
 {
     HttpRange     *range;
 
-    range = mprAllocObjZeroed(conn->rx, HttpRange);
-    if (range == 0) {
+    if ((range = mprAllocObj(conn->rx, HttpRange, NULL)) == 0) {
         return 0;
     }
     range->start = start;
@@ -7820,12 +7787,11 @@ static bool parseRange(HttpConn *conn, char *value)
     tok = mprStrTok(value, "=", &value);
 
     for (last = 0; value && *value; ) {
-        range = mprAllocObjZeroed(rx, HttpRange);
-        if (range == 0) {
+        if ((range = mprAllocObj(rx, HttpRange, NULL)) == 0) {
             return 0;
         }
-
-        /*  A range "-7" will set the start to -1 and end to 8
+        /*  
+            A range "-7" will set the start to -1 and end to 8
          */
         tok = mprStrTok(value, ",", &value);
         if (*tok != '-') {
@@ -8341,8 +8307,7 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
     mprAssert(ip);
     mprAssert(port > 0);
 
-    server = mprAllocObjWithDestructorZeroed(http, HttpServer, destroyServer);
-    if (server == 0) {
+    if ((server = mprAllocObj(http, HttpServer, destroyServer)) == 0) {
         return 0;
     }
     server->clients = mprCreateHash(server, HTTP_CLIENTS_HASH);
@@ -8786,8 +8751,7 @@ HttpStage *httpCreateStage(Http *http, cchar *name, int flags)
     mprAssert(http);
     mprAssert(name && *name);
 
-    stage = mprAllocObjZeroed(http, HttpStage);
-    if (stage == 0) {
+    if ((stage = mprAllocObj(http, HttpStage, NULL)) == 0) {
         return 0;
     }
     stage->flags = flags;
@@ -8808,8 +8772,7 @@ HttpStage *httpCloneStage(Http *http, HttpStage *stage)
 {
     HttpStage   *clone;
 
-    clone = mprAllocObjZeroed(http, HttpStage);
-    if (clone == 0) {
+    if ((clone = mprAllocObj(http, HttpStage, NULL)) == 0) {
         return 0;
     }
     *clone = *stage;
@@ -9086,15 +9049,7 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
 
     http = conn->http;
 
-    /*  
-        Use the rxs arena so that freeing the rx will also free the tx 
-     */
-#if FUTURE
-    tx = mprAllocObjWithDestructorZeroed(conn->rx->arena, HttpTx, destroyTx);
-#else
-    tx = mprAllocObjWithDestructorZeroed(conn->rx, HttpTx, destroyTx);
-#endif
-    if (tx == 0) {
+    if ((tx = mprAllocObj(conn->rx, HttpTx, destroyTx)) == 0) {
         return 0;
     }
     conn->tx = tx;
@@ -9874,8 +9829,7 @@ static void openUpload(HttpQueue *q)
     tx = conn->tx;
     rx = conn->rx;
 
-    up = mprAllocObjZeroed(tx, Upload);
-    if (up == 0) {
+    if ((up = mprAllocObj(tx, Upload, NULL)) == 0) {
         return;
     }
     q->queueData = up;
@@ -10143,7 +10097,7 @@ static int processContentHeader(HttpQueue *q, char *line)
                 /*  
                     Create the files[id]
                  */
-                file = up->currentFile = mprAllocObjZeroed(up, HttpUploadFile);
+                file = up->currentFile = mprAllocObj(up, HttpUploadFile, NULL);
                 file->clientFilename = mprStrdup(file, up->clientFilename);
                 file->filename = mprStrdup(file, up->tmpPath);
             }
@@ -10433,8 +10387,7 @@ HttpUri *httpCreateUri(MprCtx ctx, cchar *uri, int complete)
 
     mprAssert(uri);
 
-    up = mprAllocObjZeroed(ctx, HttpUri);
-    if (up == 0) {
+    if ((up = mprAllocObj(ctx, HttpUri, NULL)) == 0) {
         return 0;
     }
     /*  
@@ -10547,8 +10500,7 @@ HttpUri *httpCreateUriFromParts(MprCtx ctx, cchar *scheme, cchar *host, int port
     HttpUri     *up;
     char        *cp, *last_delim;
 
-    up = mprAllocObjZeroed(ctx, HttpUri);
-    if (up == 0) {
+    if ((up = mprAllocObj(ctx, HttpUri, NULL)) == 0) {
         return 0;
     }
     if (scheme) {
@@ -10607,8 +10559,7 @@ HttpUri *httpCloneUri(MprCtx ctx, HttpUri *base, int complete)
     char        *path, *cp, *last_delim;
     int         port;
 
-    up = mprAllocObjZeroed(ctx, HttpUri);
-    if (up == 0) {
+    if ((up = mprAllocObj(ctx, HttpUri, NULL)) == 0) {
         return 0;
     }
     port = base->port;
@@ -10922,7 +10873,7 @@ void httpNormalizeUri(HttpUri *uri)
 
     old = uri->path;
     uri->path = httpNormalizeUriPath(uri, uri->path);
-    if (mprGetParent(old) == uri) {
+    if (mprIsValid(old)) {
         mprFree(old);
     }
 }

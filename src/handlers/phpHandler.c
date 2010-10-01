@@ -119,7 +119,7 @@ static void openPhp(HttpQueue *q)
     rx = q->conn->rx;
 
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
-        q->queueData = mprAllocObjZeroed(rx, MaPhp);
+        q->queueData = mprAllocObj(rx, MaPhp, NULL);
     } else {
         httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method not supported by file handler: %s", rx->method);
     }
