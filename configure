@@ -1313,7 +1313,6 @@ unique() {
 createBuildConfig() {
     if [ "$BLD_BUILD_OS" = WIN ] ; then
         BLD_OUT_DIR=`relativePath "${BLD_OUT_DIR}"`
-        eval BLD_OUT_DIR=\"${BLD_OUT_DIR}\"
     fi
 
     #
@@ -1322,10 +1321,10 @@ createBuildConfig() {
     [ $quiet = 0 ] && echo "  #"
     mkdir -p ${BLD_OUT_DIR}/bin ${BLD_OUT_DIR}/include
     
-    CONFIG_ARGS=${BLD_OUT_DIR}/${CONFIG_ARGS}
-    CONFIG_MAKE=${BLD_OUT_DIR}/${CONFIG_MAKE}
-    CONFIG_SH=${BLD_OUT_DIR}/bin/${CONFIG_SH}
-    CONFIG_H=${BLD_OUT_DIR}/include/${CONFIG_H}
+    eval CONFIG_ARGS=\"${BLD_OUT_DIR}/${CONFIG_ARGS}\"
+    eval CONFIG_MAKE=\"${BLD_OUT_DIR}/${CONFIG_MAKE}\"
+    eval CONFIG_SH=\"${BLD_OUT_DIR}/bin/${CONFIG_SH}\"
+    eval CONFIG_H=\"${BLD_OUT_DIR}/include/${CONFIG_H}\"
 
     rm -f $CONFIG_SH $CONFIG_MAKE $CONFIG_H
     for f in $CONFIG_SH $CONFIG_MAKE $CONFIG_H
