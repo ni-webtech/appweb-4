@@ -1313,6 +1313,7 @@ unique() {
 createBuildConfig() {
     if [ "$BLD_BUILD_OS" = WIN ] ; then
         BLD_OUT_DIR=`relativePath "${BLD_OUT_DIR}"`
+        eval BLD_OUT_DIR=\"${BLD_OUT_DIR}\"
     fi
 
     #
