@@ -17,14 +17,14 @@ MaDir *maCreateBareDir(MaHost *host, cchar *path)
     mprAssert(host);
     mprAssert(path);
 
-    if ((dir = mprAllocObj(host, MaDir, NULL)) == NULL) {
+    if ((dir = mprAllocObj(MaDir, NULL)) == NULL) {
         return 0;
     }
-    dir->indexName = mprStrdup(dir, "index.html");
+    dir->indexName = sclone("index.html");
     dir->host = host;
-    dir->auth = httpCreateAuth(dir, 0);
+    dir->auth = httpCreateAuth(0);
     if (path) {
-        dir->path = mprStrdup(dir, path);
+        dir->path = sclone(path);
         dir->pathLen = strlen(path);
     }
     return dir;
@@ -39,17 +39,17 @@ MaDir *maCreateDir(MaHost *host, cchar *path, MaDir *parent)
     mprAssert(path);
     mprAssert(parent);
 
-    if ((dir = mprAllocObj(host, MaDir, NULL)) == NULL) {
+    if ((dir = mprAllocObj(MaDir, NULL)) == NULL) {
         return 0;
     }
     dir->host = host;
-    dir->indexName = mprStrdup(dir, parent->indexName);
+    dir->indexName = sclone(parent->indexName);
 
     if (path == 0) {
         path = parent->path;
     }
     maSetDirPath(dir, path);
-    dir->auth = httpCreateAuth(dir, parent->auth);
+    dir->auth = httpCreateAuth(parent->auth);
     return dir;
 }
 
@@ -59,9 +59,8 @@ void maSetDirPath(MaDir *dir, cchar *fileName)
     mprAssert(dir);
     mprAssert(fileName);
 
-    mprFree(dir->path);
-    dir->path = mprGetAbsPath(dir, fileName);
-    dir->pathLen = (int) strlen(dir->path);
+    dir->path = mprGetAbsPath(fileName);
+    dir->pathLen = strlen(dir->path);
 
     /*  
         Always strip trailing "/"
@@ -77,8 +76,7 @@ void maSetDirIndex(MaDir *dir, cchar *name)
     mprAssert(dir);
     mprAssert(name && *name);
 
-    mprFree(dir->indexName);
-    dir->indexName = mprStrdup(dir, name); 
+    dir->indexName = sclone(name); 
 }
 
 

@@ -25,7 +25,7 @@ else
 endif
 
 _DFLAGS  			+= -D_REENTRANT -D_MT
-_IFLAGS			    += -I$(BLD_TOP) -I$(BLD_TOP)/src/include
+_IFLAGS			    += -I$(BLD_INC_DIR) -I$(BLD_TOP)/src/include
 
 # TODO - missing BUILDING_CROSS
 #

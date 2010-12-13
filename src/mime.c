@@ -13,36 +13,36 @@
 int maOpenMimeTypes(MaHost *host, cchar *path)
 {
     MprFile     *file;
-    char        buf[80], *tok, *ext, *type;
+    char        *buf, *tok, *ext, *type;
     int         line;
 
-    host->mimeFile = mprStrdup(host, path);
+    host->mimeFile = sclone(path);
 
     if (host->mimeTypes == 0) {
-        host->mimeTypes = mprCreateHash(host, HTTP_LARGE_HASH_SIZE);
+        host->mimeTypes = mprCreateHash(HTTP_LARGE_HASH_SIZE, 0);
     }
-    file = mprOpen(host, path, O_RDONLY | O_TEXT, 0);
+    file = mprOpen(path, O_RDONLY | O_TEXT, 0);
     if (file == 0) {
         return MPR_ERR_CANT_OPEN;
     }
     line = 0;
-    while (mprGets(file, buf, sizeof(buf)) != 0) {
+    while ((buf = mprGets(file, 0, NULL)) != 0) {
         line++;
         if (buf[0] == '#' || isspace((int) buf[0])) {
             continue;
         }
-        type = mprStrTok(buf, " \t\n\r", &tok);
-        ext = mprStrTok(0, " \t\n\r", &tok);
+        type = stok(buf, " \t\n\r", &tok);
+        ext = stok(0, " \t\n\r", &tok);
         if (type == 0 || ext == 0) {
-            mprError(host, "Bad mime spec in %s at line %d", path, line);
+            mprError("Bad mime spec in %s at line %d", path, line);
             continue;
         }
         while (ext) {
             maAddMimeType(host, ext, type);
-            ext = mprStrTok(0, " \t\n\r", &tok);
+            ext = stok(0, " \t\n\r", &tok);
         }
     }
-    mprFree(file);
+    mprCloseFile(file);
     return 0;
 }
 
@@ -54,12 +54,12 @@ MaMimeType *maAddMimeType(MaHost *host, cchar *ext, cchar *mimeType)
 {
     MaMimeType  *mime;
 
-    if ((mime = mprAllocObj(host->mimeTypes, MaMimeType, NULL)) == NULL) {
+    if ((mime = mprAllocObj(MaMimeType, NULL)) == NULL) {
         return 0;
     }
-    mime->type = mprStrdup(host, mimeType);
+    mime->type = sclone(mimeType);
     if (host->mimeTypes == 0) {
-        host->mimeTypes = mprCreateHash(host, HTTP_LARGE_HASH_SIZE);
+        host->mimeTypes = mprCreateHash(HTTP_LARGE_HASH_SIZE, 0);
     }
     if (*ext == '.') {
         ext++;
@@ -75,7 +75,7 @@ int maSetMimeActionProgram(MaHost *host, cchar *mimeType, cchar *actionProgram)
     MprHash         *hp;
     
     if (host->mimeTypes == 0) {
-        host->mimeTypes = mprCreateHash(host, HTTP_LARGE_HASH_SIZE);
+        host->mimeTypes = mprCreateHash(HTTP_LARGE_HASH_SIZE, 0);
         maAddStandardMimeTypes(host);
     }
     hp = 0;
@@ -87,11 +87,10 @@ int maSetMimeActionProgram(MaHost *host, cchar *mimeType, cchar *actionProgram)
         }
     }
     if (mime == 0) {
-        mprError(host, "Can't find mime type %s for action program %s", mimeType, actionProgram);
-        return MPR_ERR_NOT_FOUND;
+        mprError("Can't find mime type %s for action program %s", mimeType, actionProgram);
+        return MPR_ERR_CANT_FIND;
     }
-    mprFree(mime->actionProgram);
-    mime->actionProgram = mprStrdup(host, actionProgram);
+    mime->actionProgram = sclone(actionProgram);
     return 0;
 }
 

@@ -67,11 +67,12 @@ buildPatch() {
 
 
 syncFiles() {
-    local status
+    local status file
 
     log "Sync" ${ARCHIVE}
 
-    tar tfz $ARCHIVE | while read file ; do
+    (cd $SRC >/dev/null 2>&1 ; find *) | while read file ; do
+        # Strip off "./"
         target=${file##$STRIP}
         if [ "$ignore" != "" -a "${file/$ignore/}" != "${file}" ] ; then
             echo "#    ignore $file"
@@ -172,6 +173,10 @@ if [ "$#" -ne 1 ] ; then
     exit 2
 fi
 
+if [ "`git branch | grep master`" != "* master" ] ; then 
+    echo "Sync only in default branch" 
+    echo 255 
+fi
 DIR=`getpath -a "."`
 ARCHIVE=`getpath -a "$1"`
 
@@ -189,7 +194,7 @@ fi
 mkdir -p $IDIR
 rm -fr $IDIR/*
 tar xfz $ARCHIVE -C $IDIR
-SRC=$IDIR
+SRC=$IDIR/*
 syncFiles
 rm -fr $IDIR/*
 

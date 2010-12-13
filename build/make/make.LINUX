@@ -30,4 +30,4 @@
 #
 #	Defer to the default gcc settings
 #
-include			$(BLD_TOP)/build/make/make.gcc
+include     $(BLD_TOP)/build/make/make.gcc

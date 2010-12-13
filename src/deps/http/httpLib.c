@@ -2,15 +2,15 @@
 
 /******************************************************************************/
 /* 
- *  This file is an amalgamation of all the individual source code files for
- *  Http Library 0.5.0.
- *
- *  Catenating all the source into a single file makes embedding simpler and
- *  the resulting application faster, as many compilers can do whole file
- *  optimization.
- *
- *  If you want to modify http, you can still get the whole source
- *  as individual files if you need.
+    This file is an amalgamation of all the individual source code files for
+     .
+  
+    Catenating all the source into a single file makes embedding simpler and
+    the resulting application faster, as many compilers can do whole file
+    optimization.
+  
+    If you want to modify , you can still get the whole source
+    as individual files if you need.
  */
 
 
@@ -28,11 +28,14 @@
 
 
 
-HttpAuth *httpCreateAuth(MprCtx ctx, HttpAuth *parent)
+static void manageAuth(HttpAuth *auth, int flags);
+
+
+HttpAuth *httpCreateAuth(HttpAuth *parent)
 {
     HttpAuth      *auth;
 
-    auth = mprAllocObj(ctx, HttpAuth, NULL);
+    auth = mprAllocObj(HttpAuth, manageAuth);
     if (parent) {
         auth->allow = parent->allow;
         auth->anyValidUser = parent->anyValidUser;
@@ -59,10 +62,28 @@ HttpAuth *httpCreateAuth(MprCtx ctx, HttpAuth *parent)
 }
 
 
+static void manageAuth(HttpAuth *auth, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(auth->allow);
+        mprMark(auth->deny);
+        mprMark(auth->requiredRealm);
+        mprMark(auth->requiredGroups);
+        mprMark(auth->requiredUsers);
+        mprMark(auth->qop);
+        mprMark(auth->userFile);
+        mprMark(auth->groupFile);
+        mprMarkHash(auth->users);
+        mprMarkHash(auth->groups);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 void httpSetAuthAllow(HttpAuth *auth, cchar *allow)
 {
-    mprFree(auth->allow);
-    auth->allow = mprStrdup(auth, allow);
+    auth->allow = sclone(allow);
 }
 
 
@@ -75,15 +96,13 @@ void httpSetAuthAnyValidUser(HttpAuth *auth)
 
 void httpSetAuthDeny(HttpAuth *auth, cchar *deny)
 {
-    mprFree(auth->deny);
-    auth->deny = mprStrdup(auth, deny);
+    auth->deny = sclone(deny);
 }
 
 
 void httpSetAuthGroup(HttpConn *conn, cchar *group)
 {
-    mprFree(conn->authGroup);
-    conn->authGroup = mprStrdup(conn, group);
+    conn->authGroup = sclone(group);
 }
 
 
@@ -95,42 +114,37 @@ void httpSetAuthOrder(HttpAuth *auth, int order)
 
 void httpSetAuthQop(HttpAuth *auth, cchar *qop)
 {
-    mprFree(auth->qop);
     if (strcmp(qop, "auth") == 0 || strcmp(qop, "auth-int") == 0) {
-        auth->qop = mprStrdup(auth, qop);
+        auth->qop = sclone(qop);
     } else {
-        auth->qop = mprStrdup(auth, "");
+        auth->qop = sclone("");
     }
 }
 
 
 void httpSetAuthRealm(HttpAuth *auth, cchar *realm)
 {
-    mprFree(auth->requiredRealm);
-    auth->requiredRealm = mprStrdup(auth, realm);
+    auth->requiredRealm = sclone(realm);
 }
 
 
 void httpSetAuthRequiredGroups(HttpAuth *auth, cchar *groups)
 {
-    mprFree(auth->requiredGroups);
-    auth->requiredGroups = mprStrdup(auth, groups);
+    auth->requiredGroups = sclone(groups);
     auth->flags |= HTTP_AUTH_REQUIRED;
 }
 
 
 void httpSetAuthRequiredUsers(HttpAuth *auth, cchar *users)
 {
-    mprFree(auth->requiredUsers);
-    auth->requiredUsers = mprStrdup(auth, users);
+    auth->requiredUsers = sclone(users);
     auth->flags |= HTTP_AUTH_REQUIRED;
 }
 
 
 void httpSetAuthUser(HttpConn *conn, cchar *user)
 {
-    mprFree(conn->authUser);
-    conn->authUser = mprStrdup(conn, user);
+    conn->authUser = sclone(user);
 }
 
 
@@ -241,19 +255,20 @@ void httpInitAuth(Http *http)
 #if BLD_FEATURE_AUTH_FILE
 
 static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user);
+static void manageGroup(HttpGroup *group, int flags);
+static void manageUser(HttpUser *user, int flags);
 
 
 cchar *httpGetNativePassword(HttpAuth *auth, cchar *realm, cchar *user)
 {
-    HttpUser      *up;
+    HttpUser    *up;
     char        *key;
 
     up = 0;
-    key = mprStrcat(auth, -1, realm, ":", user, NULL);
+    key = sjoin(realm, ":", user, NULL);
     if (auth->users) {
         up = (HttpUser*) mprLookupHash(auth->users, key);
     }
-    mprFree(key);
     if (up == 0) {
         return 0;
     }
@@ -265,27 +280,24 @@ bool httpValidateNativeCredentials(HttpAuth *auth, cchar *realm, cchar *user, cc
     char **msg)
 {
     char    passbuf[HTTP_MAX_PASS * 2], *hashedPassword;
-    int     len;
+    size_t  len;
 
     hashedPassword = 0;
     
     if (auth->type == HTTP_AUTH_BASIC) {
-        mprSprintf(auth, passbuf, sizeof(passbuf), "%s:%s:%s", user, realm, password);
-        len = (int) strlen(passbuf);
-        hashedPassword = mprGetMD5Hash(auth, passbuf, len, NULL);
+        mprSprintf(passbuf, sizeof(passbuf), "%s:%s:%s", user, realm, password);
+        len = strlen(passbuf);
+        hashedPassword = mprGetMD5Hash(passbuf, len, NULL);
         password = hashedPassword;
     }
     if (!isUserValid(auth, realm, user)) {
         *msg = "Access Denied, Unknown User.";
-        mprFree(hashedPassword);
         return 0;
     }
     if (strcmp(password, requiredPassword)) {
         *msg = "Access Denied, Wrong Password.";
-        mprFree(hashedPassword);
         return 0;
     }
-    mprFree(hashedPassword);
     return 1;
 }
 
@@ -295,39 +307,38 @@ bool httpValidateNativeCredentials(HttpAuth *auth, cchar *realm, cchar *user, cc
  */
 static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user)
 {
-    HttpGroup         *gp;
-    HttpUser          *up;
-    cchar           *tok, *gtok;
-    char            ubuf[80], gbuf[80], *key, *requiredUser, *group, *name;
-    int             rc, next;
+    HttpGroup       *gp;
+    HttpUser        *up;
+    char            *key, *requiredUser, *requiredUsers, *requiredGroups, *group, *name, *tok, *gtok;
+    int             next;
 
     if (auth->anyValidUser) {
-        key = mprStrcat(auth, -1, realm, ":", user, NULL);
+        key = sjoin(realm, ":", user, NULL);
         if (auth->users == 0) {
             return 0;
         }
-        rc = mprLookupHash(auth->users, key) != 0;
-        mprFree(key);
-        return rc;
+        return mprLookupHash(auth->users, key) != 0;
     }
 
     if (auth->requiredUsers) {
+        requiredUsers = sclone(auth->requiredUsers);
         tok = NULL;
-        requiredUser = mprGetWordTok(ubuf, sizeof(ubuf), auth->requiredUsers, " \t", &tok);
+        requiredUser = stok(requiredUsers, " \t", &tok);
         while (requiredUser) {
             if (strcmp(user, requiredUser) == 0) {
                 return 1;
             }
-            requiredUser = mprGetWordTok(ubuf, sizeof(ubuf), 0, " \t", &tok);
+            requiredUser = stok(NULL, " \t", &tok);
         }
     }
 
     if (auth->requiredGroups) {
         gtok = NULL;
-        group = mprGetWordTok(gbuf, sizeof(gbuf), auth->requiredGroups, " \t", &gtok);
+        requiredGroups = sclone(auth->requiredGroups);
         /*
             For each group, check all the users in the group.
          */
+        group = stok(requiredGroups, " \t", &gtok);
         while (group) {
             if (auth->groups == 0) {
                 gp = 0;
@@ -335,8 +346,8 @@ static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user)
                 gp = (HttpGroup*) mprLookupHash(auth->groups, group);
             }
             if (gp == 0) {
-                mprError(auth, "Can't find group %s", group);
-                group = mprGetWordTok(gbuf, sizeof(gbuf), 0, " \t", &gtok);
+                mprError("Can't find group %s", group);
+                group = stok(NULL, " \t", &gtok);
                 continue;
             }
             for (next = 0; (name = mprGetNextItem(gp->users, &next)) != 0; ) {
@@ -344,20 +355,18 @@ static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user)
                     return 1;
                 }
             }
-            group = mprGetWordTok(gbuf, sizeof(gbuf), 0, " \t", &gtok);
+            group = stok(NULL, " \t", &gtok);
         }
     }
     if (auth->requiredAcl != 0) {
-        key = mprStrcat(auth, -1, realm, ":", user, NULL);
+        key = sjoin(realm, ":", user, NULL);
         up = (HttpUser*) mprLookupHash(auth->users, key);
         if (up) {
-            mprLog(auth, 6, "UserRealm \"%s\" has ACL %lx, Required ACL %lx", key, up->acl, auth->requiredAcl);
+            mprLog(6, "UserRealm \"%s\" has ACL %lx, Required ACL %lx", key, up->acl, auth->requiredAcl);
             if (up->acl & auth->requiredAcl) {
-                mprFree(key);
                 return 1;
             }
         }
-        mprFree(key);
     }
     return 0;
 }
@@ -367,14 +376,25 @@ HttpGroup *httpCreateGroup(HttpAuth *auth, cchar *name, HttpAcl acl, bool enable
 {
     HttpGroup     *gp;
 
-    if ((gp = mprAllocObj(auth, HttpGroup, NULL)) == 0) {
+    if ((gp = mprAllocObj(HttpGroup, manageGroup)) == 0) {
         return 0;
     }
     gp->acl = acl;
-    gp->name = mprStrdup(gp, name);
+    gp->name = sclone(name);
     gp->enabled = enabled;
     gp->users = mprCreateList(gp);
     return gp;
+}
+
+
+static void manageGroup(HttpGroup *group, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(group->name);
+        mprMarkList(group->users);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 
@@ -387,19 +407,19 @@ int httpAddGroup(HttpAuth *auth, cchar *group, HttpAcl acl, bool enabled)
 
     gp = httpCreateGroup(auth, group, acl, enabled);
     if (gp == 0) {
-        return MPR_ERR_NO_MEMORY;
+        return MPR_ERR_MEMORY;
     }
     /*
         Create the index on demand
      */
     if (auth->groups == 0) {
-        auth->groups = mprCreateHash(auth, -1);
+        auth->groups = mprCreateHash(-1, 0);
     }
     if (mprLookupHash(auth->groups, group)) {
         return MPR_ERR_ALREADY_EXISTS;
     }
     if (mprAddHash(auth->groups, group, gp) == 0) {
-        return MPR_ERR_NO_MEMORY;
+        return MPR_ERR_MEMORY;
     }
     return 0;
 }
@@ -409,14 +429,26 @@ HttpUser *httpCreateUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *passw
 {
     HttpUser      *up;
 
-    if ((up = mprAllocObj(auth, HttpUser, NULL)) == 0) {
+    if ((up = mprAllocObj(HttpUser, manageUser)) == 0) {
         return 0;
     }
-    up->name = mprStrdup(up, user);
-    up->realm = mprStrdup(up, realm);
-    up->password = mprStrdup(up, password);
+    up->name = sclone(user);
+    up->realm = sclone(realm);
+    up->password = sclone(password);
     up->enabled = enabled;
     return up;
+}
+
+
+static void manageUser(HttpUser *user, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(user->password);
+        mprMark(user->realm);
+        mprMark(user->name);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 
@@ -428,22 +460,18 @@ int httpAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool
 
     up = httpCreateUser(auth, realm, user, password, enabled);
     if (up == 0) {
-        return MPR_ERR_NO_MEMORY;
+        return MPR_ERR_MEMORY;
     }
     if (auth->users == 0) {
-        auth->users = mprCreateHash(auth, -1);
+        auth->users = mprCreateHash(-1, 0);
     }
-    key = mprStrcat(auth, -1, realm, ":", user, NULL);
+    key = sjoin(realm, ":", user, NULL);
     if (mprLookupHash(auth->users, key)) {
-        mprFree(key);
         return MPR_ERR_ALREADY_EXISTS;
     }
-
     if (mprAddHash(auth->users, key, up) == 0) {
-        mprFree(key);
-        return MPR_ERR_NO_MEMORY;
+        return MPR_ERR_MEMORY;
     }
-    mprFree(key);
     return 0;
 }
 
@@ -458,16 +486,15 @@ int httpAddUserToGroup(HttpAuth *auth, HttpGroup *gp, cchar *user)
             return MPR_ERR_ALREADY_EXISTS;
         }
     }
-    mprAddItem(gp->users, mprStrdup(gp, user));
+    mprAddItem(gp->users, sclone(user));
     return 0;
 }
 
 
-int httpAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *users)
+int httpAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *userList)
 {
-    HttpGroup     *gp;
-    cchar       *tok;
-    char        ubuf[80], *user;
+    HttpGroup   *gp;
+    char        *user, *users, *tok;
 
     gp = 0;
 
@@ -475,11 +502,12 @@ int httpAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *users)
         return MPR_ERR_CANT_ACCESS;
     }
     tok = NULL;
-    user = mprGetWordTok(ubuf, sizeof(ubuf), users, " \t", &tok);
+    users = sclone(userList);
+    user = stok(users, " \t", &tok);
     while (user) {
         /* Ignore already exists errors */
         httpAddUserToGroup(auth, gp, user);
-        user = mprGetWordTok(ubuf, sizeof(ubuf), 0, " \t", &tok);
+        user = stok(NULL, " \t", &tok);
     }
     return 0;
 }
@@ -505,12 +533,10 @@ int httpDisableUser(HttpAuth *auth, cchar *realm, cchar *user)
     char        *key;
 
     up = 0;
-    key = mprStrcat(auth, -1, realm, ":", user, NULL);
+    key = sjoin(realm, ":", user, NULL);
     if (auth->users == 0 || (up = (HttpUser*) mprLookupHash(auth->users, key)) == 0) {
-        mprFree(key);
         return MPR_ERR_CANT_ACCESS;
     }
-    mprFree(key);
     up->enabled = 0;
     return 0;
 }
@@ -535,7 +561,7 @@ int httpEnableUser(HttpAuth *auth, cchar *realm, cchar *user)
     char        *key;
 
     up = 0;
-    key = mprStrcat(auth, -1, realm, ":", user, NULL);    
+    key = sjoin(realm, ":", user, NULL);    
     if (auth->users == 0 || (up = (HttpUser*) mprLookupHash(auth->users, key)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
@@ -574,12 +600,10 @@ bool httpIsUserEnabled(HttpAuth *auth, cchar *realm, cchar *user)
     char    *key;
 
     up = 0;
-    key = mprStrcat(auth, -1, realm, ":", user, NULL);
+    key = sjoin(realm, ":", user, NULL);
     if (auth->users == 0 || (up = (HttpUser*) mprLookupHash(auth->users, key)) == 0) {
-        mprFree(key);
         return 0;
     }
-    mprFree(key);
     return up->enabled;
 }
 
@@ -661,33 +685,30 @@ int httpRemoveUser(HttpAuth *auth, cchar *realm, cchar *user)
 {
     char    *key;
 
-    key = mprStrcat(auth, -1, realm, ":", user, NULL);
+    key = sjoin(realm, ":", user, NULL);
     if (auth->users == 0 || !mprLookupHash(auth->users, key)) {
-        mprFree(key);
         return MPR_ERR_CANT_ACCESS;
     }
     mprRemoveHash(auth->users, key);
-    mprFree(key);
     return 0;
 }
 
 
-int httpRemoveUsersFromGroup(HttpAuth *auth, cchar *group, cchar *users)
+int httpRemoveUsersFromGroup(HttpAuth *auth, cchar *group, cchar *userList)
 {
-    HttpGroup     *gp;
-    cchar       *tok;
-    char        ubuf[80], *user;
+    HttpGroup   *gp;
+    char        *user, *users, *tok;
 
     gp = 0;
     if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupHash(auth->groups, group)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
-
     tok = NULL;
-    user = mprGetWordTok(ubuf, sizeof(ubuf), users, " \t", &tok);
+    users = sclone(userList);
+    user = stok(users, " \t", &tok);
     while (user) {
         httpRemoveUserFromGroup(gp, user);
-        user = mprGetWordTok(ubuf, sizeof(ubuf), 0, " \t", &tok);
+        user = stok(NULL, " \t", &tok);
     }
     return 0;
 }
@@ -731,35 +752,30 @@ int httpReadGroupFile(Http *http, HttpAuth *auth, char *path)
 {
     MprFile     *file;
     HttpAcl     acl;
-    char        buf[MPR_MAX_STRING];
+    char        *buf;
     char        *users, *group, *enabled, *aclSpec, *tok, *cp;
 
-    mprFree(auth->groupFile);
-    auth->groupFile = mprStrdup(http, path);
+    auth->groupFile = sclone(path);
 
-    if ((file = mprOpen(auth, path, O_RDONLY | O_TEXT, 0444)) == 0) {
+    if ((file = mprOpen(path, O_RDONLY | O_TEXT, 0444)) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
-
-    while (mprGets(file, buf, sizeof(buf))) {
-        enabled = mprStrTok(buf, " :\t", &tok);
-
+    while ((buf = mprGets(file, MPR_BUFSIZE, NULL)) != NULL) {
+        enabled = stok(buf, " :\t", &tok);
         for (cp = enabled; isspace((int) *cp); cp++) {
             ;
         }
         if (*cp == '\0' || *cp == '#') {
             continue;
         }
-
-        aclSpec = mprStrTok(0, " :\t", &tok);
-        group = mprStrTok(0, " :\t", &tok);
-        users = mprStrTok(0, "\r\n", &tok);
+        aclSpec = stok(NULL, " :\t", &tok);
+        group = stok(NULL, " :\t", &tok);
+        users = stok(NULL, "\r\n", &tok);
 
         acl = httpParseAcl(auth, aclSpec);
         httpAddGroup(auth, group, acl, (*enabled == '0') ? 0 : 1);
         httpAddUsersToGroup(auth, group, users);
     }
-    mprFree(file);
     httpUpdateUserAcls(auth);
     return 0;
 }
@@ -768,36 +784,32 @@ int httpReadGroupFile(Http *http, HttpAuth *auth, char *path)
 int httpReadUserFile(Http *http, HttpAuth *auth, char *path)
 {
     MprFile     *file;
-    char        buf[MPR_MAX_STRING];
+    char        *buf;
     char        *enabled, *user, *password, *realm, *tok, *cp;
 
-    mprFree(auth->userFile);
-    auth->userFile = mprStrdup(auth, path);
+    auth->userFile = sclone(path);
 
-    if ((file = mprOpen(auth, path, O_RDONLY | O_TEXT, 0444)) == 0) {
+    if ((file = mprOpen(path, O_RDONLY | O_TEXT, 0444)) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
-
-    while (mprGets(file, buf, sizeof(buf))) {
-        enabled = mprStrTok(buf, " :\t", &tok);
-
+    while ((buf = mprGets(file, MPR_BUFSIZE, NULL)) != NULL) {
+        enabled = stok(buf, " :\t", &tok);
         for (cp = enabled; isspace((int) *cp); cp++) {
             ;
         }
         if (*cp == '\0' || *cp == '#') {
             continue;
         }
-        user = mprStrTok(0, ":", &tok);
-        realm = mprStrTok(0, ":", &tok);
-        password = mprStrTok(0, " \t\r\n", &tok);
+        user = stok(NULL, ":", &tok);
+        realm = stok(NULL, ":", &tok);
+        password = stok(NULL, " \t\r\n", &tok);
 
-        user = mprStrTrim(user, " \t");
-        realm = mprStrTrim(realm, " \t");
-        password = mprStrTrim(password, " \t");
+        user = strim(user, " \t", MPR_TRIM_BOTH);
+        realm = strim(realm, " \t", MPR_TRIM_BOTH);
+        password = strim(password, " \t", MPR_TRIM_BOTH);
 
         httpAddUser(auth, realm, user, password, (*enabled == '0' ? 0 : 1));
     }
-    mprFree(file);
     httpUpdateUserAcls(auth);
     return 0;
 }
@@ -811,25 +823,22 @@ int httpWriteUserFile(Http *http, HttpAuth *auth, char *path)
     char            buf[HTTP_MAX_PASS * 2];
     char            *tempFile;
 
-    tempFile = mprGetTempPath(auth, NULL);
-    if ((file = mprOpen(auth, tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
-        mprError(http, "Can't open %s", tempFile);
-        mprFree(tempFile);
+    tempFile = mprGetTempPath(NULL);
+    if ((file = mprOpen(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
+        mprError("Can't open %s", tempFile);
         return MPR_ERR_CANT_OPEN;
     }
-    mprFree(tempFile);
 
     hp = mprGetNextHash(auth->users, 0);
     while (hp) {
         up = (HttpUser*) hp->data;
-        mprSprintf(http, buf, sizeof(buf), "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
+        mprSprintf(buf, sizeof(buf), "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
         mprWrite(file, buf, (int) strlen(buf));
         hp = mprGetNextHash(auth->users, hp);
     }
-    mprFree(file);
     unlink(path);
     if (rename(tempFile, path) < 0) {
-        mprError(http, "Can't create new %s", path);
+        mprError("Can't create new %s", path);
         return MPR_ERR_CANT_WRITE;
     }
     return 0;
@@ -844,30 +853,27 @@ int httpWriteGroupFile(Http *http, HttpAuth *auth, char *path)
     char            buf[MPR_MAX_STRING], *tempFile, *name;
     int             next;
 
-    tempFile = mprGetTempPath(http, NULL);
-    if ((file = mprOpen(auth, tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
-        mprError(http, "Can't open %s", tempFile);
-        mprFree(tempFile);
+    tempFile = mprGetTempPath(NULL);
+    if ((file = mprOpen(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
+        mprError("Can't open %s", tempFile);
         return MPR_ERR_CANT_OPEN;
     }
-    mprFree(tempFile);
 
     hp = mprGetNextHash(auth->groups, 0);
     while (hp) {
         gp = (HttpGroup*) hp->data;
-        mprSprintf(http, buf, sizeof(buf), "%d: %x: %s: ", gp->enabled, gp->acl, gp->name);
-        mprWrite(file, buf, (int) strlen(buf));
+        mprSprintf(buf, sizeof(buf), "%d: %x: %s: ", gp->enabled, gp->acl, gp->name);
+        mprWrite(file, buf, strlen(buf));
         for (next = 0; (name = mprGetNextItem(gp->users, &next)) != 0; ) {
-            mprWrite(file, name, (int) strlen(name));
+            mprWrite(file, name, strlen(name));
         }
         mprWrite(file, "\n", 1);
         hp = mprGetNextHash(auth->groups, hp);
     }
-    mprFree(file);
 
     unlink(path);
     if (rename(tempFile, path) < 0) {
-        mprError(http, "Can't create new %s", path);
+        mprError("Can't create new %s", path);
         return MPR_ERR_CANT_WRITE;
     }
     return 0;
@@ -944,14 +950,14 @@ typedef struct AuthData
 } AuthData;
 
 
-static int calcDigest(MprCtx ctx, char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
+static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
     cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);
-static char *createDigestNonce(MprCtx ctx, cchar *secret, cchar *etag, cchar *realm);
+static char *createDigestNonce(cchar *secret, cchar *etag, cchar *realm);
 static void decodeBasicAuth(HttpConn *conn, AuthData *ad);
 static int  decodeDigestDetails(HttpConn *conn, AuthData *ad);
 static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg);
 static bool matchAuth(HttpConn *conn, HttpStage *handler);
-static int parseDigestNonce(MprCtx ctx, char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when);
+static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when);
 
 
 int httpOpenAuthFilter(Http *http)
@@ -989,7 +995,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     if (!conn->server || auth == 0 || auth->type == 0) {
         return 0;
     }
-    if ((ad = mprAllocObj(rx, AuthData, NULL)) == 0) {
+    if ((ad = mprAllocObj(AuthData, NULL)) == 0) {
         return 1;
     }
 #if UNUSED
@@ -1006,11 +1012,11 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
         formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing authorization details.", 0);
         return 1;
     }
-    if (mprStrcmpAnyCase(rx->authType, "basic") == 0) {
+    if (scasecmp(rx->authType, "basic") == 0) {
         decodeBasicAuth(conn, ad);
         actualAuthType = HTTP_AUTH_BASIC;
 
-    } else if (mprStrcmpAnyCase(rx->authType, "digest") == 0) {
+    } else if (scasecmp(rx->authType, "digest") == 0) {
         if (decodeDigestDetails(conn, ad) < 0) {
             httpError(conn, 400, "Bad authorization header");
             return 1;
@@ -1019,7 +1025,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     } else {
         actualAuthType = HTTP_AUTH_UNKNOWN;
     }
-    mprLog(conn, 4, "run: type %d, url %s\nDetails %s\n", auth->type, rx->pathInfo, rx->authDetails);
+    mprLog(4, "run: type %d, url %s\nDetails %s\n", auth->type, rx->pathInfo, rx->authDetails);
 
     if (ad->userName == 0) {
         formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing user name", 0);
@@ -1044,7 +1050,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied. Protection quality does not match", 0);
             return 1;
         }
-        calcDigest(rx, &requiredDigest, 0, requiredPassword, ad->realm, rx->pathInfo, ad->nonce, ad->qop, ad->nc, 
+        calcDigest(&requiredDigest, 0, requiredPassword, ad->realm, rx->pathInfo, ad->nonce, ad->qop, ad->nc, 
             ad->cnonce, rx->method);
         requiredPassword = requiredDigest;
 
@@ -1052,7 +1058,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
             Validate the nonce value - prevents replay attacks
          */
         when = 0; secret = 0; etag = 0; realm = 0;
-        parseDigestNonce(conn, ad->nonce, &secret, &etag, &realm, &when);
+        parseDigestNonce(ad->nonce, &secret, &etag, &realm, &when);
         if (strcmp(secret, http->secret) != 0 || strcmp(etag, tx->etag) != 0 || strcmp(realm, auth->requiredRealm) != 0) {
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce mismatch");
         } else if ((when + (5 * 60 * MPR_TICKS_PER_SEC)) < http->now) {
@@ -1075,22 +1081,21 @@ static void decodeBasicAuth(HttpConn *conn, AuthData *ad)
     char    *decoded, *cp;
 
     rx = conn->rx;
-    if ((decoded = mprDecode64(conn, rx->authDetails)) == 0) {
+    if ((decoded = mprDecode64(rx->authDetails)) == 0) {
         return;
     }
     if ((cp = strchr(decoded, ':')) != 0) {
         *cp++ = '\0';
     }
     if (cp) {
-        ad->userName = mprStrdup(rx, decoded);
-        ad->password = mprStrdup(rx, cp);
+        ad->userName = sclone(decoded);
+        ad->password = sclone(cp);
 
     } else {
-        ad->userName = mprStrdup(rx, "");
-        ad->password = mprStrdup(rx, "");
+        ad->userName = sclone("");
+        ad->password = sclone("");
     }
     httpSetAuthUser(conn, ad->userName);
-    mprFree(decoded);
 }
 
 
@@ -1104,7 +1109,7 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
     int         seenComma;
 
     rx = conn->rx;
-    key = authDetails = mprStrdup(rx, rx->authDetails);
+    key = authDetails = sclone(rx->authDetails);
 
     while (*key) {
         while (*key && isspace((int) *key)) {
@@ -1152,64 +1157,64 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
          */
         switch (tolower((int) *key)) {
         case 'a':
-            if (mprStrcmpAnyCase(key, "algorithm") == 0) {
+            if (scasecmp(key, "algorithm") == 0) {
                 break;
-            } else if (mprStrcmpAnyCase(key, "auth-param") == 0) {
+            } else if (scasecmp(key, "auth-param") == 0) {
                 break;
             }
             break;
 
         case 'c':
-            if (mprStrcmpAnyCase(key, "cnonce") == 0) {
-                ad->cnonce = mprStrdup(rx, value);
+            if (scasecmp(key, "cnonce") == 0) {
+                ad->cnonce = sclone(value);
             }
             break;
 
         case 'd':
-            if (mprStrcmpAnyCase(key, "domain") == 0) {
+            if (scasecmp(key, "domain") == 0) {
                 break;
             }
             break;
 
         case 'n':
-            if (mprStrcmpAnyCase(key, "nc") == 0) {
-                ad->nc = mprStrdup(rx, value);
-            } else if (mprStrcmpAnyCase(key, "nonce") == 0) {
-                ad->nonce = mprStrdup(rx, value);
+            if (scasecmp(key, "nc") == 0) {
+                ad->nc = sclone(value);
+            } else if (scasecmp(key, "nonce") == 0) {
+                ad->nonce = sclone(value);
             }
             break;
 
         case 'o':
-            if (mprStrcmpAnyCase(key, "opaque") == 0) {
-                ad->opaque = mprStrdup(rx, value);
+            if (scasecmp(key, "opaque") == 0) {
+                ad->opaque = sclone(value);
             }
             break;
 
         case 'q':
-            if (mprStrcmpAnyCase(key, "qop") == 0) {
-                ad->qop = mprStrdup(rx, value);
+            if (scasecmp(key, "qop") == 0) {
+                ad->qop = sclone(value);
             }
             break;
 
         case 'r':
-            if (mprStrcmpAnyCase(key, "realm") == 0) {
-                ad->realm = mprStrdup(rx, value);
-            } else if (mprStrcmpAnyCase(key, "response") == 0) {
+            if (scasecmp(key, "realm") == 0) {
+                ad->realm = sclone(value);
+            } else if (scasecmp(key, "response") == 0) {
                 /* Store the response digest in the password field */
-                ad->password = mprStrdup(rx, value);
+                ad->password = sclone(value);
             }
             break;
 
         case 's':
-            if (mprStrcmpAnyCase(key, "stale") == 0) {
+            if (scasecmp(key, "stale") == 0) {
                 break;
             }
         
         case 'u':
-            if (mprStrcmpAnyCase(key, "uri") == 0) {
-                ad->uri = mprStrdup(rx, value);
-            } else if (mprStrcmpAnyCase(key, "user") == 0) {
-                ad->userName = mprStrdup(rx, value);
+            if (scasecmp(key, "uri") == 0) {
+                ad->uri = sclone(value);
+            } else if (scasecmp(key, "user") == 0) {
+                ad->userName = sclone(value);
             }
             break;
 
@@ -1227,7 +1232,6 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
             }
         }
     }
-    mprFree(authDetails);
     if (ad->userName == 0 || ad->realm == 0 || ad->nonce == 0 || ad->uri == 0 || ad->password == 0) {
         return MPR_ERR_BAD_ARGS;
     }
@@ -1235,7 +1239,7 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
         return MPR_ERR_BAD_ARGS;
     }
     if (ad->qop == 0) {
-        ad->qop = mprStrdup(rx, "");
+        ad->qop = sclone("");
     }
     httpSetAuthUser(conn, ad->userName);
     return 0;
@@ -1256,7 +1260,7 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
     if (logMsg == 0) {
         logMsg = msg;
     }
-    mprLog(conn, 3, "Auth response: code %d, %s", code, logMsg);
+    mprLog(3, "Auth response: code %d, %s", code, logMsg);
 
     if (auth->type == HTTP_AUTH_BASIC) {
         httpSetHeader(conn, "WWW-Authenticate", "Basic realm=\"%s\"", auth->requiredRealm);
@@ -1264,7 +1268,7 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
     } else if (auth->type == HTTP_AUTH_DIGEST) {
         qopClass = auth->qop;
         etag = tx->etag ? tx->etag : "";
-        nonce = createDigestNonce(conn, conn->http->secret, etag, auth->requiredRealm);
+        nonce = createDigestNonce(conn->http->secret, etag, auth->requiredRealm);
 
         if (strcmp(qopClass, "auth") == 0) {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
@@ -1279,7 +1283,6 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
         } else {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", nonce=\"%s\"", auth->requiredRealm, nonce);
         }
-        mprFree(nonce);
     }
     httpError(conn, code, "Authentication Error: %s", msg);
     httpSetPipeHandler(conn, conn->http->passHandler);
@@ -1289,45 +1292,45 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
 /*
     Create a nonce value for digest authentication (RFC 2617)
  */ 
-static char *createDigestNonce(MprCtx ctx, cchar *secret, cchar *etag, cchar *realm)
+static char *createDigestNonce(cchar *secret, cchar *etag, cchar *realm)
 {
     MprTime     now;
     char        nonce[256];
 
     mprAssert(realm && *realm);
 
-    now = mprGetTime(ctx);
-    mprSprintf(ctx, nonce, sizeof(nonce), "%s:%s:%s:%Lx", secret, etag, realm, now);
-    return mprEncode64(ctx, nonce);
+    now = mprGetTime();
+    mprSprintf(nonce, sizeof(nonce), "%s:%s:%s:%Lx", secret, etag, realm, now);
+    return mprEncode64(nonce);
 }
 
 
-static int parseDigestNonce(MprCtx ctx, char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when)
+static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when)
 {
     char    *tok, *decoded, *whenStr;
 
-    if ((decoded = mprDecode64(ctx, nonce)) == 0) {
+    if ((decoded = mprDecode64(nonce)) == 0) {
         return MPR_ERR_CANT_READ;
     }
-    *secret = mprStrTok(decoded, ":", &tok);
-    *etag = mprStrTok(NULL, ":", &tok);
-    *realm = mprStrTok(NULL, ":", &tok);
-    whenStr = mprStrTok(NULL, ":", &tok);
-    *when = (MprTime) mprAtoi(whenStr, 16);
+    *secret = stok(decoded, ":", &tok);
+    *etag = stok(NULL, ":", &tok);
+    *realm = stok(NULL, ":", &tok);
+    whenStr = stok(NULL, ":", &tok);
+    *when = (MprTime) stoi(whenStr, 16, NULL); 
     return 0;
 }
 
 
-static char *md5(MprCtx ctx, cchar *string)
+static char *md5(cchar *string)
 {
-    return mprGetMD5Hash(ctx, string, (int) strlen(string), NULL);
+    return mprGetMD5Hash(string, strlen(string), NULL);
 }
 
 
 /*
     Get a Digest value using the MD5 algorithm -- See RFC 2617 to understand this code.
  */ 
-static int calcDigest(MprCtx ctx, char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
+static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
     cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method)
 {
     char    a1Buf[256], a2Buf[256], digestBuf[256];
@@ -1340,33 +1343,31 @@ static int calcDigest(MprCtx ctx, char **digest, cchar *userName, cchar *passwor
         (MD5(userName:realm:password).
      */
     if (userName == 0) {
-        ha1 = mprStrdup(ctx, password);
+        ha1 = sclone(password);
     } else {
-        mprSprintf(ctx, a1Buf, sizeof(a1Buf), "%s:%s:%s", userName, realm, password);
-        ha1 = md5(ctx, a1Buf);
+        mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", userName, realm, password);
+        ha1 = md5(a1Buf);
     }
 
     /*
         HA2
      */ 
-    mprSprintf(ctx, a2Buf, sizeof(a2Buf), "%s:%s", method, uri);
-    ha2 = md5(ctx, a2Buf);
+    mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", method, uri);
+    ha2 = md5(a2Buf);
 
     /*
         H(HA1:nonce:HA2)
      */
     if (strcmp(qop, "auth") == 0) {
-        mprSprintf(ctx, digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
 
     } else if (strcmp(qop, "auth-int") == 0) {
-        mprSprintf(ctx, digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
 
     } else {
-        mprSprintf(ctx, digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, nonce, ha2);
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, nonce, ha2);
     }
-    *digest = md5(ctx, digestBuf);
-    mprFree(ha1);
-    mprFree(ha2);
+    *digest = md5(digestBuf);
     return 0;
 }
 
@@ -1671,12 +1672,12 @@ static void incomingChunkData(HttpQueue *q, HttpPacket *packet)
             httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
             return;
         }
-        rx->chunkSize = (int) mprAtoi(&start[2], 16);
+        rx->chunkSize = stoi(&start[2], 16, NULL);
         if (!isxdigit((int) start[2]) || rx->chunkSize < 0) {
             httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
             return;
         }
-        mprAdjustBufStart(buf, (int) (cp - start + 1));
+        mprAdjustBufStart(buf, (cp - start + 1));
         rx->remainingContent = rx->chunkSize;
         if (rx->chunkSize == 0) {
             rx->chunkState = HTTP_CHUNK_EOF;
@@ -1692,12 +1693,12 @@ static void incomingChunkData(HttpQueue *q, HttpPacket *packet)
         }
         mprAssert(mprGetBufLength(buf) == 0);
         httpFreePacket(q, packet);
-        mprLog(q, 5, "chunkFilter: start incoming chunk of %d bytes", rx->chunkSize);
+        mprLog(5, "chunkFilter: start incoming chunk of %d bytes", rx->chunkSize);
         break;
 
     case HTTP_CHUNK_DATA:
         mprAssert(httpGetPacketLength(packet) <= rx->chunkSize);
-        mprLog(q, 5, "chunkFilter: data %d bytes, rx->remainingContent %d", httpGetPacketLength(packet), 
+        mprLog(5, "chunkFilter: data %d bytes, rx->remainingContent %d", httpGetPacketLength(packet), 
             rx->remainingContent);
         httpSendPacketToNext(q, packet);
         if (rx->remainingContent == 0) {
@@ -1709,7 +1710,7 @@ static void incomingChunkData(HttpQueue *q, HttpPacket *packet)
     case HTTP_CHUNK_EOF:
         mprAssert(httpGetPacketLength(packet) == 0);
         httpSendPacketToNext(q, packet);
-        mprLog(q, 5, "chunkFilter: last chunk");
+        mprLog(5, "chunkFilter: last chunk");
         break;    
 
     default:
@@ -1781,7 +1782,7 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
     if (packet->prefix) {
         return;
     }
-    packet->prefix = mprCreateBuf(packet, 32, 32);
+    packet->prefix = mprCreateBuf(32, 32);
     /*  
         NOTE: prefixes don't count in the queue length. No need to adjust q->count
      */
@@ -1871,13 +1872,13 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url)
     mprAssert(conn);
 
     http = conn->http;
-    uri = httpCreateUri(conn, url, 0);
+    uri = httpCreateUri(url, 0);
 
     if (uri->secure) {
 #if BLD_FEATURE_SSL
         if (!http->sslLoaded) {
-            if (!mprLoadSsl(http, 0)) {
-                mprError(http, "Can't load SSL provider");
+            if (!mprLoadSsl(0)) {
+                mprError("Can't load SSL provider");
                 return 0;
             }
             http->sslLoaded = 1;
@@ -1901,31 +1902,29 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url)
         if (conn->keepAliveCount < 0 || port != conn->port || strcmp(ip, conn->ip) != 0) {
             httpCloseClientConn(conn);
         } else {
-            mprLog(http, 4, "Http: reusing keep-alive socket on: %s:%d", ip, port);
+            mprLog(4, "Http: reusing keep-alive socket on: %s:%d", ip, port);
         }
     }
     if (conn->sock) {
         return conn;
     }
-    if ((sp = mprCreateSocket(conn, (uri->secure) ? MPR_SECURE_CLIENT: NULL)) == 0) {
+    if ((sp = mprCreateSocket((uri->secure) ? MPR_SECURE_CLIENT: NULL)) == 0) {
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't create socket for %s", url);
-        mprFree(sp);
         return 0;
     }
     rc = mprOpenClientSocket(sp, ip, port, 0);
     if (rc < 0) {
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't open socket on %s:%d", ip, port);
-        mprFree(sp);
         return 0;
     }
     conn->sock = sp;
-    conn->ip = mprStrdup(conn, ip);
+    conn->ip = sclone(ip);
     conn->port = port;
     conn->secure = uri->secure;
     conn->keepAliveCount = (conn->limits->keepAliveCount) ? conn->limits->keepAliveCount : -1;
 
     if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_CONN, NULL)) >= 0) {
-        mprLog(conn, level, "### Outgoing connection from %s:%d to %s:%d", 
+        mprLog(level, "### Outgoing connection from %s:%d to %s:%d", 
             conn->ip, conn->port, conn->sock->ip, conn->sock->port);
     }
     return conn;
@@ -1941,7 +1940,8 @@ static int setClientHeaders(HttpConn *conn)
     HttpTx      *tx;
     HttpUri     *parsedUri;
     char        *encoded;
-    int         len, rc;
+    size_t      len;
+    int         rc;
 
     mprAssert(conn);
 
@@ -1951,46 +1951,41 @@ static int setClientHeaders(HttpConn *conn)
     parsedUri = tx->parsedUri;
     if (conn->authType && strcmp(conn->authType, "basic") == 0) {
         char    abuf[MPR_MAX_STRING];
-        mprSprintf(conn, abuf, sizeof(abuf), "%s:%s", conn->authUser, conn->authPassword);
-        encoded = mprEncode64(conn, abuf);
+        mprSprintf(abuf, sizeof(abuf), "%s:%s", conn->authUser, conn->authPassword);
+        encoded = mprEncode64(abuf);
         httpAddHeader(conn, "Authorization", "basic %s", encoded);
-        mprFree(encoded);
         conn->sentCredentials = 1;
 
     } else if (conn->authType && strcmp(conn->authType, "digest") == 0) {
         char    a1Buf[256], a2Buf[256], digestBuf[256];
         char    *ha1, *ha2, *digest, *qop;
         if (http->secret == 0 && httpCreateSecret(http) < 0) {
-            mprLog(tx, MPR_ERROR, "Http: Can't create secret for digest authentication");
-            mprFree(tx);
+            mprLog(MPR_ERROR, "Http: Can't create secret for digest authentication");
             conn->tx = 0;
             return MPR_ERR_CANT_CREATE;
         }
-        mprFree(conn->authCnonce);
-        conn->authCnonce = mprAsprintf(conn, -1, "%s:%s:%x", http->secret, conn->authRealm, (uint) mprGetTime(conn)); 
+        conn->authCnonce = mprAsprintf("%s:%s:%x", http->secret, conn->authRealm, (uint) mprGetTime(conn)); 
 
-        mprSprintf(conn, a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
-        len = (int) strlen(a1Buf);
-        ha1 = mprGetMD5Hash(tx, a1Buf, len, NULL);
-        mprSprintf(conn, a2Buf, sizeof(a2Buf), "%s:%s", tx->method, parsedUri->path);
-        len = (int) strlen(a2Buf);
-        ha2 = mprGetMD5Hash(tx, a2Buf, len, NULL);
+        mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
+        len = strlen(a1Buf);
+        ha1 = mprGetMD5Hash(a1Buf, len, NULL);
+        mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", tx->method, parsedUri->path);
+        len = strlen(a2Buf);
+        ha2 = mprGetMD5Hash(a2Buf, len, NULL);
         qop = (conn->authQop) ? conn->authQop : (char*) "";
 
         conn->authNc++;
-        if (mprStrcmpAnyCase(conn->authQop, "auth") == 0) {
-            mprSprintf(conn, digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
+        if (scasecmp(conn->authQop, "auth") == 0) {
+            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
                 ha1, conn->authNonce, conn->authNc, conn->authCnonce, conn->authQop, ha2);
-        } else if (mprStrcmpAnyCase(conn->authQop, "auth-int") == 0) {
-            mprSprintf(conn, digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
+        } else if (scasecmp(conn->authQop, "auth-int") == 0) {
+            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
                 ha1, conn->authNonce, conn->authNc, conn->authCnonce, conn->authQop, ha2);
         } else {
             qop = "";
-            mprSprintf(conn, digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, conn->authNonce, ha2);
+            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, conn->authNonce, ha2);
         }
-        mprFree(ha1);
-        mprFree(ha2);
-        digest = mprGetMD5Hash(tx, digestBuf, (int) strlen(digestBuf), NULL);
+        digest = mprGetMD5Hash(digestBuf, strlen(digestBuf), NULL);
 
         if (*qop == '\0') {
             httpAddHeader(conn, "Authorization", "Digest user=\"%s\", realm=\"%s\", nonce=\"%s\", "
@@ -2007,7 +2002,6 @@ static int setClientHeaders(HttpConn *conn)
         } else if (strcmp(qop, "auth-int") == 0) {
             ;
         }
-        mprFree(digest);
         conn->sentCredentials = 1;
     }
     httpAddSimpleHeader(conn, "Host", conn->ip);
@@ -2042,7 +2036,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
         httpError(conn, HTTP_CODE_BAD_GATEWAY, "Can't call connect in a server");
         return MPR_ERR_BAD_STATE;
     }
-    mprLog(conn, 4, "Http: client request: %s %s", method, url);
+    mprLog(4, "Http: client request: %s %s", method, url);
 
     if (conn->sock) {
         /* 
@@ -2056,11 +2050,9 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     httpSetState(conn, HTTP_STATE_CONNECTED);
     conn->sentCredentials = 0;
 
-    mprFree(tx->method);
-    method = tx->method = mprStrdup(tx, method);
-    mprStrUpper(tx->method);
-    mprFree(tx->parsedUri);
-    tx->parsedUri = httpCreateUri(tx, url, 0);
+    method = tx->method = sclone(method);
+    supper(tx->method);
+    tx->parsedUri = httpCreateUri(url, 0);
 
     if (openConnection(conn, url) == 0) {
         return MPR_ERR_CANT_OPEN;
@@ -2115,8 +2107,7 @@ bool httpNeedRetry(HttpConn *conn, char **url)
  */
 void httpEnableUpload(HttpConn *conn)
 {
-    mprFree(conn->boundary);
-    conn->boundary = mprAsprintf(conn, -1, "--BOUNDARY--%Ld", conn->http->now);
+    conn->boundary = mprAsprintf("--BOUNDARY--%Ld", conn->http->now);
     httpSetHeader(conn, "Content-Type", "multipart/form-data; boundary=%s", &conn->boundary[2]);
 }
 
@@ -2127,9 +2118,9 @@ static int blockingFileCopy(HttpConn *conn, cchar *path)
     char        buf[MPR_BUFSIZE];
     int         bytes;
 
-    file = mprOpen(conn, path, O_RDONLY | O_BINARY, 0);
+    file = mprOpen(path, O_RDONLY | O_BINARY, 0);
     if (file == 0) {
-        mprError(conn, "Can't open %s", path);
+        mprError("Can't open %s", path);
         return MPR_ERR_CANT_OPEN;
     }
     while ((bytes = mprRead(file, buf, sizeof(buf))) > 0) {
@@ -2155,18 +2146,17 @@ int httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
 
     if (formData) {
         for (rc = next = 0; rc >= 0 && (pair = mprGetNextItem(formData, &next)) != 0; ) {
-            key = mprStrTok(mprStrdup(conn, pair), "=", &value);
+            key = stok(sclone(pair), "=", &value);
             rc += httpWrite(conn->writeq, "%s\r\nContent-Disposition: form-data; name=\"%s\";\r\n", conn->boundary, key);
             rc += httpWrite(conn->writeq, "Content-Type: application/x-www-form-urlencoded\r\n\r\n%s\r\n", value);
         }
     }
     if (fileData) {
         for (rc = next = 0; rc >= 0 && (path = mprGetNextItem(fileData, &next)) != 0; ) {
-            name = mprGetPathBase(conn, path);
+            name = mprGetPathBase(path);
             rc += httpWrite(conn->writeq, "%s\r\nContent-Disposition: form-data; name=\"file%d\"; filename=\"%s\"\r\n", 
                 conn->boundary, next - 1, name);
-            mprFree(name);
-            rc += httpWrite(conn->writeq, "Content-Type: %s\r\n\r\n", mprLookupMimeType(conn->http, path));
+            rc += httpWrite(conn->writeq, "Content-Type: %s\r\n\r\n", mprLookupMimeType(path));
             rc += blockingFileCopy(conn, path);
             rc += httpWrite(conn->writeq, "\r\n", value);
         }
@@ -2228,7 +2218,7 @@ int httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
 
 
 
-static int connectionDestructor(HttpConn *conn);
+static void manageConn(HttpConn *conn, int flags);
 static inline HttpPacket *getPacket(HttpConn *conn, int *bytesToRead);
 static void readEvent(HttpConn *conn);
 static void writeEvent(HttpConn *conn);
@@ -2240,7 +2230,7 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server)
 {
     HttpConn    *conn;
 
-    if ((conn = mprAllocObj(http, HttpConn, connectionDestructor)) == 0) {
+    if ((conn = mprAllocObj(HttpConn, manageConn)) == 0) {
         return 0;
     }
     conn->http = http;
@@ -2270,27 +2260,65 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server)
 }
 
 
-/*  
-    Cleanup a connection. Invoked automatically whenever the connection is freed.
- */
-static int connectionDestructor(HttpConn *conn)
+static void manageConn(HttpConn *conn, int flags)
 {
     mprAssert(conn);
 
-    if (conn->server) {
-        httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_CONN, conn);
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(conn->callbackArg);
+        mprMark(conn->fillHeadersArg);
+        mprMark(conn->limits);
+        mprMark(conn->stages);
+        mprMark(conn->dispatcher);
+        mprMark(conn->sock);
+        mprMark(conn->documentRoot);
+        mprMark(conn->rx);
+        mprMark(conn->tx);
+
+        httpManageQueue(&conn->serviceq, flags);
+        if (conn->readq) {
+            httpManageQueue(conn->readq, flags);
+        }
+        if (conn->writeq) {
+            httpManageQueue(conn->writeq, flags);
+        }
+
+        mprMark(conn->input);
+        mprMark(conn->context);
+        mprMark(conn->boundary);
+        mprMark(conn->errorMsg);
+        mprMark(conn->host);
+        mprMark(conn->ip);
+
+        httpManageTrace(&conn->trace[0], flags);
+        httpManageTrace(&conn->trace[1], flags);
+
+        mprMark(conn->authCnonce);
+        mprMark(conn->authDomain);
+        mprMark(conn->authNonce);
+        mprMark(conn->authOpaque);
+        mprMark(conn->authRealm);
+        mprMark(conn->authQop);
+        mprMark(conn->authType);
+        mprMark(conn->authGroup);
+        mprMark(conn->authUser);
+        mprMark(conn->authPassword);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (conn->server) {
+            httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_CONN, conn);
+        }
+        if (HTTP_STATE_PARSED <= conn->state && conn->state < HTTP_STATE_COMPLETE) {
+            HTTP_NOTIFY(conn, HTTP_STATE_COMPLETE, 0);
+        }
+        HTTP_NOTIFY(conn, -1, 0);
+        httpRemoveConn(conn->http, conn);
+        if (conn->sock) {
+            httpCloseConn(conn);
+        }
+        conn->input = 0;
+        httpDestroyRx(conn);
     }
-    if (HTTP_STATE_PARSED <= conn->state && conn->state < HTTP_STATE_COMPLETE) {
-        HTTP_NOTIFY(conn, HTTP_STATE_COMPLETE, 0);
-    }
-    HTTP_NOTIFY(conn, -1, 0);
-    httpRemoveConn(conn->http, conn);
-    if (conn->sock) {
-        httpCloseConn(conn);
-    }
-    conn->input = 0;
-    httpDestroyRx(conn);
-    return 0;
 }
 
 
@@ -2311,12 +2339,11 @@ void httpCloseConn(HttpConn *conn)
     mprAssert(conn);
 
     if (conn->sock) {
-        mprLog(conn, 6, "Closing connection");
+        mprLog(6, "Closing connection");
         if (conn->waitHandler.fd >= 0) {
             mprRemoveWaitHandler(&conn->waitHandler);
         }
         mprCloseSocket(conn->sock, 0);
-        mprFree(conn->sock);
         conn->sock = 0;
     }
 }
@@ -2360,12 +2387,10 @@ void httpPrepClientConn(HttpConn *conn, int retry)
             /* Eat remaining input incase last request did not consume all data */
             httpConsumeLastRequest(conn);
         } else {
-            mprFree(conn->input);
             conn->input = 0;
         }
         if (retry && (tx = conn->tx) != 0) {
             headers = tx->headers;
-            mprStealBlock(conn, headers);
         }
         conn->abortPipeline = 0;
         conn->canProceed = 1;
@@ -2401,7 +2426,7 @@ void httpConsumeLastRequest(HttpConn *conn)
     }
     mark = mprGetTime(conn);
     requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
-    while (!httpIsEof(conn) && mprGetRemainingTime(conn, mark, requestTimeout) > 0) {
+    while (!httpIsEof(conn) && mprGetRemainingTime(mark, requestTimeout) > 0) {
         if ((rc = httpRead(conn, junk, sizeof(junk))) <= 0) {
             break;
         }
@@ -2430,7 +2455,7 @@ void httpCallEvent(HttpConn *conn, int mask)
  */
 void httpEvent(HttpConn *conn, MprEvent *event)
 {
-    LOG(conn, 7, "httpEvent for fd %d, mask %d\n", conn->sock->fd, event->mask);
+    LOG(7, "httpEvent for fd %d, mask %d\n", conn->sock->fd, event->mask);
 
     conn->lastActivity = conn->time = event->timestamp;
     mprAssert(conn->time);
@@ -2466,7 +2491,8 @@ static void readEvent(HttpConn *conn)
 
     while ((packet = getPacket(conn, &len)) != 0) {
         nbytes = mprReadSocket(conn->sock, mprGetBufEnd(packet->content), len);
-        LOG(conn, 8, "http: read event. Got %d", nbytes);
+        //  MOB - was 8
+        LOG(0, "http: read event. Got %d", nbytes);
        
         if (nbytes > 0) {
             mprAdjustBufEnd(packet->content, nbytes);
@@ -2474,9 +2500,12 @@ static void readEvent(HttpConn *conn)
 
         } else if (nbytes < 0) {
             if (conn->state <= HTTP_STATE_CONNECTED) {
-                conn->connError = conn->error = 1;
+                if (mprIsSocketEof(conn->sock)) {
+                    conn->connError = conn->error = 1;
+                }
                 break;
             } else if (conn->state < HTTP_STATE_COMPLETE) {
+                mprLog(0, "DEBUG: call process %d\n", packet->entityLength);
                 httpProcess(conn, packet);
                 if (!conn->error && conn->state < HTTP_STATE_COMPLETE) {
                     httpConnError(conn, HTTP_CODE_COMMS_ERROR, "Connection lost");
@@ -2494,7 +2523,7 @@ static void readEvent(HttpConn *conn)
 
 static void writeEvent(HttpConn *conn)
 {
-    LOG(conn, 6, "httpProcessWriteEvent, state %d", conn->state);
+    LOG(6, "httpProcessWriteEvent, state %d", conn->state);
 
     conn->writeBlocked = 0;
     if (conn->tx) {
@@ -2543,10 +2572,10 @@ void httpEnableConnEvents(HttpConn *conn)
                 conn->waitHandler.fd = -1;
             }
         }
-        mprLog(conn, 7, "EnableConnEvents mask %x", eventMask);
+        mprLog(7, "EnableConnEvents mask %x", eventMask);
         if (eventMask) {
             if (conn->waitHandler.fd < 0) {
-                mprInitWaitHandler(conn, &conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, 
+                mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, 
                     (MprEventProc) conn->callback, conn->callbackArg);
             } else if (eventMask != conn->waitHandler.desiredMask) {
                 mprEnableWaitEvents(&conn->waitHandler, eventMask);
@@ -2587,8 +2616,11 @@ static inline HttpPacket *getPacket(HttpConn *conn, int *bytesToRead)
         chunk boundary data.
      */
     if ((packet = conn->input) == NULL) {
+        mprLog(0, "DEBUG: create new packet %d", mprGetCurrentThread()->yielded);
         conn->input = packet = httpCreateConnPacket(conn, len);
+        mprLog(0, "DEBUG: elen %d\n", packet->entityLength);
     } else {
+        mprLog(0, "DEBUG: reuse packet %d", mprGetCurrentThread()->yielded);
         content = packet->content;
         mprResetBufIfEmpty(content);
         if (req) {
@@ -2690,16 +2722,6 @@ cchar *httpGetError(HttpConn *conn)
 
 void httpResetCredentials(HttpConn *conn)
 {
-    mprFree(conn->authDomain);
-    mprFree(conn->authCnonce);
-    mprFree(conn->authNonce);
-    mprFree(conn->authOpaque);
-    mprFree(conn->authPassword);
-    mprFree(conn->authRealm);
-    mprFree(conn->authQop);
-    mprFree(conn->authType);
-    mprFree(conn->authUser);
-
     conn->authType = 0;
     conn->authDomain = 0;
     conn->authCnonce = 0;
@@ -2736,11 +2758,11 @@ void httpSetRequestNotifier(HttpConn *conn, HttpNotifier notifier)
 void httpSetCredentials(HttpConn *conn, cchar *user, cchar *password)
 {
     httpResetCredentials(conn);
-    conn->authUser = mprStrdup(conn, user);
+    conn->authUser = sclone(user);
     if (password == NULL && strchr(user, ':') != 0) {
-        conn->authUser = mprStrTok(conn->authUser, ":", &conn->authPassword);
+        conn->authUser = stok(conn->authUser, ":", &conn->authPassword);
     } else {
-        conn->authPassword = mprStrdup(conn, password);
+        conn->authPassword = sclone(password);
     }
 }
 
@@ -2820,7 +2842,7 @@ void httpSetState(HttpConn *conn, int state)
         return;
     }
     conn->state = state;
-    LOG(conn, 6, "Connection state change to %s", notifyState[state]);
+    LOG(6, "Connection state change to %s", notifyState[state]);
     HTTP_NOTIFY(conn, state, 0);
 }
 
@@ -2840,7 +2862,7 @@ HttpLimits *httpSetUniqueConnLimits(HttpConn *conn)
 {
     HttpLimits      *limits;
 
-    limits = mprAllocObj(conn, HttpLimits, NULL);
+    limits = mprAllocObj(HttpLimits, NULL);
     *limits = *conn->limits;
     conn->limits = limits;
     return limits;
@@ -2859,8 +2881,7 @@ void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
         Lock as this may be called by httpTimer
      */
     mprLock(conn->http->mutex);
-    mprFree(conn->errorMsg);
-    conn->errorMsg = mprVasprintf(conn, HTTP_BUFSIZE, fmt, args);
+    conn->errorMsg = mprAsprintfv(fmt, args);
     if (status) {
         if (conn->server && conn->tx) {
             conn->tx->status = status;
@@ -2903,9 +2924,9 @@ static void httpErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
         conn->error = 1;
         httpFormatErrorV(conn, status, fmt, args);
         if (rx == 0) {
-            mprLog(conn, 2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
+            mprLog(2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
         } else {
-            mprLog(conn, 2, "Error: \"%s\", status %d for URI \"%s\": %s.",
+            mprLog(2, "Error: \"%s\", status %d for URI \"%s\": %s.",
                 httpLookupStatus(conn->http, status), status, rx->uri ? rx->uri : "", conn->errorMsg);
         }
         tx = conn->tx;
@@ -3089,8 +3110,8 @@ void httpCreateEnvVars(HttpConn *conn)
     if (conn->sock) {
         mprAddHash(vars, "REMOTE_ADDR", conn->ip);
     }
-    mprItoa(port, sizeof(port) - 1, conn->port, 10);
-    mprAddHash(vars, "REMOTE_PORT", mprStrdup(vars, port));
+    itos(port, sizeof(port) - 1, conn->port, 10);
+    mprAddHash(vars, "REMOTE_PORT", sclone(port));
 
     /*  Same as AUTH_USER (yes this is right) */
     mprAddHash(vars, "REMOTE_USER", (conn->authUser && *conn->authUser) ? conn->authUser : 0);
@@ -3100,8 +3121,8 @@ void httpCreateEnvVars(HttpConn *conn)
     sock = conn->sock;
     mprAddHash(vars, "SERVER_ADDR", sock->acceptIp);
     mprAddHash(vars, "SERVER_NAME", server->name);
-    mprItoa(port, sizeof(port) - 1, sock->acceptPort, 10);
-    mprAddHash(vars, "SERVER_PORT", mprStrdup(rx, port));
+    itos(port, sizeof(port) - 1, sock->acceptPort, 10);
+    mprAddHash(vars, "SERVER_PORT", sclone(port));
 
     /*  HTTP/1.0 or HTTP/1.1 */
     mprAddHash(vars, "SERVER_PROTOCOL", conn->protocol);
@@ -3126,12 +3147,12 @@ void httpCreateEnvVars(HttpConn *conn)
     if (rx->files) {
         for (index = 0, hp = 0; (hp = mprGetNextHash(conn->rx->files, hp)) != 0; index++) {
             up = (HttpUploadFile*) hp->data;
-            mprAddHash(vars, mprAsprintf(vars, -1, "FILE_%d_FILENAME", index), up->filename);
-            mprAddHash(vars, mprAsprintf(vars, -1, "FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
-            mprAddHash(vars, mprAsprintf(vars, -1, "FILE_%d_CONTENT_TYPE", index), up->contentType);
-            mprAddHash(vars, mprAsprintf(vars, -1, "FILE_%d_NAME", index), hp->key);
-            mprItoa(size, sizeof(size) - 1, up->size, 10);
-            mprAddHash(vars, mprAsprintf(vars, -1, "FILE_%d_SIZE", index), size);
+            mprAddHash(vars, mprAsprintf("FILE_%d_FILENAME", index), up->filename);
+            mprAddHash(vars, mprAsprintf("FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
+            mprAddHash(vars, mprAsprintf("FILE_%d_CONTENT_TYPE", index), up->contentType);
+            mprAddHash(vars, mprAsprintf("FILE_%d_NAME", index), hp->key);
+            itos(size, sizeof(size) - 1, up->size, 10);
+            mprAddHash(vars, mprAsprintf("FILE_%d_SIZE", index), size);
         }
     }
 }
@@ -3156,19 +3177,19 @@ void httpAddVars(HttpConn *conn, cchar *buf, int len)
     if (vars == 0) {
         return;
     }
-    decoded = (char*) mprAlloc(tx, len + 1);
+    decoded = mprAlloc(len + 1);
     decoded[len] = '\0';
     memcpy(decoded, buf, len);
 
-    keyword = mprStrTok(decoded, "&", &tok);
+    keyword = stok(decoded, "&", &tok);
     while (keyword != 0) {
         if ((value = strchr(keyword, '=')) != 0) {
             *value++ = '\0';
-            value = mprUriDecode(rx, value);
+            value = mprUriDecode(value);
         } else {
             value = "";
         }
-        keyword = mprUriDecode(rx, keyword);
+        keyword = mprUriDecode(keyword);
 
         if (*keyword) {
             /*  
@@ -3177,15 +3198,14 @@ void httpAddVars(HttpConn *conn, cchar *buf, int len)
             oldValue = mprLookupHash(vars, keyword);
             if (oldValue != 0 && *oldValue) {
                 if (*value) {
-                    newValue = mprStrcat(vars, conn->limits->headerSize, oldValue, " ", value, NULL);
+                    newValue = sjoin(oldValue, " ", value, NULL);
                     mprAddHash(vars, keyword, newValue);
-                    mprFree(newValue);
                 }
             } else {
                 mprAddHash(vars, keyword, value);
             }
         }
-        keyword = mprStrTok(0, "&", &tok);
+        keyword = stok(0, "&", &tok);
     }
     /*  Must not free "decoded". This will be freed when the response completes */
 }
@@ -3202,7 +3222,7 @@ void httpAddVarsFromQueue(HttpQueue *q)
     if (conn->rx->form && q->first && q->first->content) {
         content = q->first->content;
         mprAddNullToBuf(content);
-        mprLog(q, 3, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
+        mprLog(3, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
         httpAddVars(conn, mprGetBufStart(content), mprGetBufLength(content));
     }
 }
@@ -3242,12 +3262,13 @@ int httpGetIntFormVar(HttpConn *conn, cchar *var, int defaultValue)
     vars = conn->rx->formVars;
     if (vars) {
         value = mprLookupHash(vars, var);
-        return (value) ? (int) mprAtoi(value, 10) : defaultValue;
+        return (value) ? (int) stoi(value, 10, NULL) : defaultValue;
     }
     return defaultValue;
 }
 
 
+//  MOB - need formatted version
 void httpSetFormVar(HttpConn *conn, cchar *var, cchar *value) 
 {
     MprHashTable    *vars;
@@ -3257,6 +3278,7 @@ void httpSetFormVar(HttpConn *conn, cchar *var, cchar *value)
         /* This is allowed. Upload filter uses this when uploading to the file handler */
         return;
     }
+    //  MOB -- DUP?
     mprAddHash(vars, var, (void*) value);
 }
 
@@ -3270,7 +3292,7 @@ void httpSetIntFormVar(HttpConn *conn, cchar *var, int value)
         /* This is allowed. Upload filter uses this when uploading to the file handler */
         return;
     }
-    mprAddHash(vars, var, mprAsprintf(vars, -1, "%d", value));
+    mprAddHash(vars, var, mprAsprintf("%d", value));
 }
 
 
@@ -3296,7 +3318,7 @@ void httpAddUploadFile(HttpConn *conn, cchar *id, HttpUploadFile *upfile)
 
     rx = conn->rx;
     if (rx->files == 0) {
-        rx->files = mprCreateHash(rx, -1);
+        rx->files = mprCreateHash(-1, 0);
     }
     mprAddHash(rx->files, id, upfile);
 }
@@ -3311,7 +3333,7 @@ void httpRemoveUploadFile(HttpConn *conn, cchar *id)
 
     upfile = (HttpUploadFile*) mprLookupHash(rx->files, id);
     if (upfile) {
-        mprDeletePath(conn, upfile->filename);
+        mprDeletePath(upfile->filename);
         upfile->filename = 0;
     }
 }
@@ -3328,7 +3350,7 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
     for (hp = 0; rx->files && (hp = mprGetNextHash(rx->files, hp)) != 0; ) {
         upfile = (HttpUploadFile*) hp->data;
         if (upfile->filename) {
-            mprDeletePath(conn, upfile->filename);
+            mprDeletePath(upfile->filename);
             upfile->filename = 0;
         }
     }
@@ -3442,24 +3464,26 @@ HttpStatusCode HttpStatusCodes[] = {
 
 
 static int httpTimer(Http *http, MprEvent *event);
+static void manageHttp(Http *http, int flags);
 static void updateCurrentDate(Http *http);
 
 
-Http *httpCreate(MprCtx ctx)
+Http *httpCreate()
 {
     Http            *http;
     HttpStatusCode  *code;
 
-    if ((http = mprAllocObj(ctx, Http, NULL)) == 0) {
+    if ((http = mprAllocObj(Http, manageHttp)) == 0) {
         return 0;
     }
+    mprGetMpr()->httpService = http;
     http->protocol = "HTTP/1.1";
     http->mutex = mprCreateLock(http);
     http->connections = mprCreateList(http);
-    http->stages = mprCreateHash(http, 31);
+    http->stages = mprCreateHash(31, 0);
 
     updateCurrentDate(http);
-    http->statusCodes = mprCreateHash(http, 41);
+    http->statusCodes = mprCreateHash(41, 0);
     for (code = HttpStatusCodes; code->code; code++) {
         mprAddHash(http->statusCodes, code->codeString, code);
     }
@@ -3473,14 +3497,38 @@ Http *httpCreate(MprCtx ctx)
     httpOpenUploadFilter(http);
     httpOpenPassHandler(http);
 
-    http->clientLimits = httpCreateLimits(http, 0);
-    http->serverLimits = httpCreateLimits(http, 1);
-    http->clientLocation = httpInitLocation(http, http, 0);
+    http->clientLimits = httpCreateLimits(0);
+    http->serverLimits = httpCreateLimits(1);
+    http->clientLocation = httpInitLocation(http, 0);
     return http;
 }
 
 
-HttpLoc *httpInitLocation(Http *http, MprCtx ctx, int serverSide)
+static void manageHttp(Http *http, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMarkList(http->connections);
+
+        //  MOB -- make these eternal?
+        mprMarkHash(http->stages);
+        mprMarkHash(http->mimeTypes);
+        mprMark(http->statusCodes);
+        mprMark(http->clientLimits);
+        mprMark(http->serverLimits);
+        mprMark(http->clientLocation);
+        mprMark(http->timer);
+        mprMark(http->mutex);
+        mprMark(http->context);
+        mprMark(http->secret);
+        mprMark(http->defaultHost);
+        mprMark(http->proxyHost);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
+HttpLoc *httpInitLocation(Http *http, int serverSide)
 {
     HttpLoc     *loc;
 
@@ -3523,15 +3571,15 @@ void httpInitLimits(HttpLimits *limits, int serverSide)
 #if FUTURE
     mprSetMaxSocketClients(server, atoi(value));
 
-    if (mprStrcmpAnyCase(key, "LimitClients") == 0) {
+    if (scasecmp(key, "LimitClients") == 0) {
         mprSetMaxSocketClients(server, atoi(value));
         return 1;
     }
-    if (mprStrcmpAnyCase(key, "LimitMemoryMax") == 0) {
+    if (scasecmp(key, "LimitMemoryMax") == 0) {
         mprSetAllocLimits(server, -1, atoi(value));
         return 1;
     }
-    if (mprStrcmpAnyCase(key, "LimitMemoryRedline") == 0) {
+    if (scasecmp(key, "LimitMemoryRedline") == 0) {
         mprSetAllocLimits(server, atoi(value), -1);
         return 1;
     }
@@ -3539,11 +3587,11 @@ void httpInitLimits(HttpLimits *limits, int serverSide)
 }
 
 
-HttpLimits *httpCreateLimits(MprCtx ctx, int serverSide)
+HttpLimits *httpCreateLimits(int serverSide)
 {
     HttpLimits  *limits;
 
-    if ((limits = mprAllocObj(ctx, HttpLimits, NULL)) != 0) {
+    if ((limits = mprAllocObj(HttpLimits, NULL)) != 0) {
         httpInitLimits(limits, serverSide);
     }
     return limits;
@@ -3567,12 +3615,19 @@ cchar *httpLookupStatus(Http *http, int status)
     HttpStatusCode  *ep;
     char            key[8];
     
-    mprItoa(key, sizeof(key), status, 10);
+    itos(key, sizeof(key), status, 10);
     ep = (HttpStatusCode*) mprLookupHash(http->statusCodes, key);
     if (ep == 0) {
         return "Custom error";
     }
     return ep->msg;
+}
+
+
+void httpSetForkCallback(Http *http, MprForkCallback callback, void *data)
+{
+    http->forkCallback = callback;
+    http->forkData = data;
 }
 
 
@@ -3582,7 +3637,7 @@ cchar *httpLookupStatus(Http *http, int status)
 static void startTimer(Http *http)
 {
     updateCurrentDate(http);
-    http->timer = mprCreateTimerEvent(mprGetDispatcher(http), "httpTimer", HTTP_TIMER_PERIOD, (MprEventProc) httpTimer, 
+    http->timer = mprCreateTimerEvent(mprGetDispatcher(), "httpTimer", HTTP_TIMER_PERIOD, (MprEventProc) httpTimer, 
         http, MPR_EVENT_CONTINUOUS);
 }
 
@@ -3632,7 +3687,7 @@ static int httpTimer(Http *http, MprEvent *event)
                         "Request timed out, exceeded timeout %d sec", requestTimeout / 1000);
                 }
             } else {
-                mprLog(http, 4, "Idle connection timed out");
+                mprLog(4, "Idle connection timed out");
                 conn->complete = 1;
                 mprDisconnectSocket(conn->sock);
             }
@@ -3674,8 +3729,8 @@ int httpCreateSecret(Http *http)
     char        bytes[HTTP_MAX_SECRET], ascii[HTTP_MAX_SECRET * 2 + 1], *ap, *cp, *bp;
     int         i, pid;
 
-    if (mprGetRandomBytes(http, bytes, sizeof(bytes), 0) < 0) {
-        mprError(http, "Can't get sufficient random data for secure SSL operation. If SSL is used, it may not be secure.");
+    if (mprGetRandomBytes(bytes, sizeof(bytes), 0) < 0) {
+        mprError("Can't get sufficient random data for secure SSL operation. If SSL is used, it may not be secure.");
         now = mprGetTime(http); 
         pid = (int) getpid();
         cp = (char*) &now;
@@ -3697,8 +3752,7 @@ int httpCreateSecret(Http *http)
         *ap++ = hex[((uchar) bytes[i]) & 0xf];
     }
     *ap = '\0';
-    mprFree(http->secret);
-    http->secret = mprStrdup(http, ascii);
+    http->secret = sclone(ascii);
     return 0;
 }
 
@@ -3709,18 +3763,18 @@ void httpEnableTraceMethod(HttpLimits *limits, bool on)
 }
 
 
-char *httpGetDateString(MprCtx ctx, MprPath *sbuf)
+char *httpGetDateString(MprPath *sbuf)
 {
     MprTime     when;
     struct tm   tm;
 
     if (sbuf == 0) {
-        when = mprGetTime(ctx);
+        when = mprGetTime();
     } else {
         when = (MprTime) sbuf->mtime * MPR_TICKS_PER_SEC;
     }
-    mprDecodeUniversalTime(ctx, &tm, when);
-    return mprFormatTime(ctx, HTTP_DATE_FORMAT, &tm);
+    mprDecodeUniversalTime(&tm, when);
+    return mprFormatTime(HTTP_DATE_FORMAT, &tm);
 }
 
 
@@ -3752,14 +3806,14 @@ int httpLoadSsl(Http *http)
 {
 #if BLD_FEATURE_SSL
     if (!http->sslLoaded) {
-        if (!mprLoadSsl(http, 0)) {
-            mprError(http, "Can't load SSL provider");
+        if (!mprLoadSsl(0)) {
+            mprError("Can't load SSL provider");
             return MPR_ERR_CANT_LOAD;
         }
         http->sslLoaded = 1;
     }
 #else
-    mprError(http, "SSL communications support not included in build");
+    mprError("SSL communications support not included in build");
 #endif
     return 0;
 }
@@ -3781,15 +3835,13 @@ void httpSetDefaultPort(Http *http, int port)
 
 void httpSetDefaultHost(Http *http, cchar *host)
 {
-    mprFree(http->defaultHost);
-    http->defaultHost = mprStrdup(http, host);
+    http->defaultHost = sclone(host);
 }
 
 
 void httpSetProxy(Http *http, cchar *host, int port)
 {
-    mprFree(http->proxyHost);
-    http->proxyHost = mprStrdup(http, host);
+    http->proxyHost = sclone(host);
     http->proxyPort = port;
 }
 
@@ -3803,17 +3855,16 @@ static void updateCurrentDate(Http *http)
     char        *ds;
 
     lock(http);
-    http->now = mprGetTime(http);
-    ds = httpGetDateString(http, NULL);
-    mprStrcpy(date[dateSelect], sizeof(date[0]) - 1, ds);
+    http->now = mprGetTime();
+    ds = httpGetDateString(NULL);
+    scopy(date[dateSelect], sizeof(date[0]) - 1, ds);
     http->currentDate = date[dateSelect];
     dateSelect = !dateSelect;
-    mprFree(ds);
 
     //  MOB - check. Could do this once per minute
-    mprDecodeUniversalTime(http, &tm, http->now + (86400 * 1000));
-    ds = mprFormatTime(http, HTTP_DATE_FORMAT, &tm);
-    mprStrcpy(expires[expiresSelect], sizeof(expires[0]) - 1, ds);
+    mprDecodeUniversalTime(&tm, http->now + (86400 * 1000));
+    ds = mprFormatTime(HTTP_DATE_FORMAT, &tm);
+    scopy(expires[expiresSelect], sizeof(expires[0]) - 1, ds);
     http->expiresDate = expires[expiresSelect];
     expiresSelect = !expiresSelect;
     unlock(http);
@@ -3874,25 +3925,50 @@ static void updateCurrentDate(Http *http)
 
 
 
+static void manageLoc(HttpLoc *loc, int flags);
+
+
 HttpLoc *httpCreateLocation(Http *http)
 {
     HttpLoc  *loc;
 
-    if ((loc = mprAllocObj(http, HttpLoc, NULL)) == 0) {
+    if ((loc = mprAllocObj(HttpLoc, manageLoc)) == 0) {
         return 0;
     }
     loc->http = http;
-    loc->errorDocuments = mprCreateHash(loc, HTTP_SMALL_HASH_SIZE);
+    loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
     loc->handlers = mprCreateList(loc);
-    loc->extensions = mprCreateHash(loc, HTTP_SMALL_HASH_SIZE);
-    loc->inputStages = mprCreateList(loc);
-    loc->outputStages = mprCreateList(loc);
-    loc->prefix = mprStrdup(loc, "");
+    loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
+    loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
+    loc->inputStages = mprCreateList();
+    loc->outputStages = mprCreateList();
+    loc->prefix = sclone("");
     loc->prefixLen = (int) strlen(loc->prefix);
-    loc->auth = httpCreateAuth(loc, 0);
+    loc->auth = httpCreateAuth(0);
     return loc;
 }
 
+
+static void manageLoc(HttpLoc *loc, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(loc->auth);
+        mprMark(loc->prefix);
+        mprMarkHash(loc->extensions);
+        mprMarkHash(loc->expires);
+        mprMarkList(loc->handlers);
+        mprMarkList(loc->inputStages);
+        mprMarkList(loc->outputStages);
+        mprMarkHash(loc->errorDocuments);
+        mprMark(loc->context);
+        mprMark(loc->uploadDir);
+        mprMark(loc->searchPath);
+        mprMark(loc->script);
+        mprMark(loc->ssl);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
 
 /*  
     Create a new location block. Inherit from the parent. We use a copy-on-write scheme if these are modified later.
@@ -3904,11 +3980,11 @@ HttpLoc *httpCreateInheritedLocation(Http *http, HttpLoc *parent)
     if (parent == 0) {
         return httpCreateLocation(http);
     }
-    if ((loc = mprAllocObj(http, HttpLoc, NULL)) == 0) {
+    if ((loc = mprAllocObj(HttpLoc, manageLoc)) == 0) {
         return 0;
     }
     loc->http = http;
-    loc->prefix = mprStrdup(loc, parent->prefix);
+    loc->prefix = sclone(parent->prefix);
     loc->parent = parent;
     loc->prefixLen = parent->prefixLen;
     loc->flags = parent->flags;
@@ -3916,10 +3992,11 @@ HttpLoc *httpCreateInheritedLocation(Http *http, HttpLoc *parent)
     loc->outputStages = parent->outputStages;
     loc->handlers = parent->handlers;
     loc->extensions = parent->extensions;
+    loc->expires = parent->expires;
     loc->connector = parent->connector;
     loc->errorDocuments = parent->errorDocuments;
     loc->sessionTimeout = parent->sessionTimeout;
-    loc->auth = httpCreateAuth(loc, parent->auth);
+    loc->auth = httpCreateAuth(parent->auth);
     loc->uploadDir = parent->uploadDir;
     loc->autoDelete = parent->autoDelete;
     loc->script = parent->script;
@@ -3928,6 +4005,22 @@ HttpLoc *httpCreateInheritedLocation(Http *http, HttpLoc *parent)
     return loc;
 }
 
+
+/*
+    Separate from parent. Clone own configuration
+ */
+static void graduate(HttpLoc *loc) 
+{
+    if (loc->parent) {
+        loc->errorDocuments = mprCloneHash(loc->parent->errorDocuments);
+        loc->expires = mprCloneHash(loc->parent->expires);
+        loc->extensions = mprCloneHash(loc->parent->extensions);
+        loc->handlers = mprCloneList(loc->parent->handlers);
+        loc->inputStages = mprCloneList(loc->parent->inputStages);
+        loc->outputStages = mprCloneList(loc->parent->outputStages);
+        loc->parent = 0;
+    }
+}
 
 void httpFinalizeLocation(HttpLoc *loc)
 {
@@ -3957,26 +4050,23 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
     mprAssert(loc);
 
     http = loc->http;
-    if (mprIsParent(loc->parent, loc->handlers)) {
-        loc->extensions = mprCopyHash(loc, loc->parent->extensions);
-        loc->handlers = mprDupList(loc, loc->parent->handlers);
-    }
+    graduate(loc);
     handler = httpLookupStage(http, name);
     if (handler == 0) {
-        mprError(loc, "Can't find stage %s", name); 
-        return MPR_ERR_NOT_FOUND;
+        mprError("Can't find stage %s", name); 
+        return MPR_ERR_CANT_FIND;
     }
     if (extensions && *extensions) {
-        mprLog(loc, MPR_CONFIG, "Add handler \"%s\" for \"%s\"", name, extensions);
+        mprLog(MPR_CONFIG, "Add handler \"%s\" for \"%s\"", name, extensions);
     } else {
-        mprLog(loc, MPR_CONFIG, "Add handler \"%s\" for \"%s\"", name, loc->prefix);
+        mprLog(MPR_CONFIG, "Add handler \"%s\" for \"%s\"", name, loc->prefix);
     }
     if (extensions && *extensions) {
         /*
             Add to the handler extension hash. Skip over "*." and "."
          */ 
-        extlist = mprStrdup(loc, extensions);
-        word = mprStrTok(extlist, " \t\r\n", &tok);
+        extlist = sclone(extensions);
+        word = stok(extlist, " \t\r\n", &tok);
         while (word) {
             if (*word == '*' && word[1] == '.') {
                 word += 2;
@@ -3986,9 +4076,8 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
                 word = "";
             }
             mprAddHash(loc->extensions, word, handler);
-            word = mprStrTok(0, " \t\r\n", &tok);
+            word = stok(0, " \t\r\n", &tok);
         }
-        mprFree(extlist);
 
     } else {
         if (handler->match == 0) {
@@ -4012,14 +4101,11 @@ int httpSetHandler(HttpLoc *loc, cchar *name)
 
     mprAssert(loc);
     
-    if (mprIsParent(loc->parent, loc->handlers)) {
-        loc->extensions = mprCopyHash(loc, loc->parent->extensions);
-        loc->handlers = mprDupList(loc, loc->parent->handlers);
-    }
+    graduate(loc);
     handler = httpLookupStage(loc->http, name);
     if (handler == 0) {
-        mprError(loc, "Can't find handler %s", name); 
-        return MPR_ERR_NOT_FOUND;
+        mprError("Can't find handler %s", name); 
+        return MPR_ERR_CANT_FIND;
     }
     loc->handler = handler;
     return 0;
@@ -4039,8 +4125,8 @@ int httpAddFilter(HttpLoc *loc, cchar *name, cchar *extensions, int direction)
     
     stage = httpLookupStage(loc->http, name);
     if (stage == 0) {
-        mprError(loc, "Can't find filter %s", name); 
-        return MPR_ERR_NOT_FOUND;
+        mprError("Can't find filter %s", name); 
+        return MPR_ERR_CANT_FIND;
     }
     /*
         Clone an existing stage because each filter stores its own set of extensions to match against
@@ -4048,9 +4134,9 @@ int httpAddFilter(HttpLoc *loc, cchar *name, cchar *extensions, int direction)
     filter = httpCloneStage(loc->http, stage);
 
     if (extensions && *extensions) {
-        filter->extensions = mprCreateHash(filter, 0);
-        extlist = mprStrdup(loc, extensions);
-        word = mprStrTok(extlist, " \t\r\n", &tok);
+        filter->extensions = mprCreateHash(0, 0);
+        extlist = sclone(extensions);
+        word = stok(extlist, " \t\r\n", &tok);
         while (word) {
             if (*word == '*' && word[1] == '.') {
                 word += 2;
@@ -4060,24 +4146,33 @@ int httpAddFilter(HttpLoc *loc, cchar *name, cchar *extensions, int direction)
                 word = "";
             }
             mprAddHash(filter->extensions, word, filter);
-            word = mprStrTok(0, " \t\r\n", &tok);
+            word = stok(0, " \t\r\n", &tok);
         }
-        mprFree(extlist);
     }
-
+    graduate(loc);
     if (direction & HTTP_STAGE_INCOMING) {
-        if (mprIsParent(loc->parent, loc->inputStages)) {
-            loc->inputStages = mprDupList(loc, loc->parent->inputStages);
-        }
         mprAddItem(loc->inputStages, filter);
     }
     if (direction & HTTP_STAGE_OUTGOING) {
-        if (mprIsParent(loc->parent, loc->outputStages)) {
-            loc->outputStages = mprDupList(loc, loc->parent->outputStages);
-        }
         mprAddItem(loc->outputStages, filter);
     }
     return 0;
+}
+
+
+void httpAddLocationExpiry(HttpLoc *loc, MprTime when, cchar *mimeTypes)
+{
+    char    *types, *mime, *tok;
+
+    if (mimeTypes && *mimeTypes) {
+        graduate(loc);
+        types = sclone(mimeTypes);
+        mime = stok(types, " ,\t\r\n", &tok);
+        while (mime) {
+            mprAddHash(loc->expires, mime, ITOP(when));
+            mime = stok(0, " \t\r\n", &tok);
+        }
+    }
 }
 
 
@@ -4103,36 +4198,33 @@ int httpSetConnector(HttpLoc *loc, cchar *name)
     
     stage = httpLookupStage(loc->http, name);
     if (stage == 0) {
-        mprError(loc, "Can't find connector %s", name); 
-        return MPR_ERR_NOT_FOUND;
+        mprError("Can't find connector %s", name); 
+        return MPR_ERR_CANT_FIND;
     }
     loc->connector = stage;
-    mprLog(loc, MPR_CONFIG, "Set connector \"%s\"", name);
+    mprLog(MPR_CONFIG, "Set connector \"%s\"", name);
     return 0;
 }
 
 
 void httpResetPipeline(HttpLoc *loc)
 {
-    if (mprIsParent(loc, loc->extensions)) {
-        mprFree(loc->extensions);
-    }
-    loc->extensions = mprCreateHash(loc, 0);
-    
-    if (mprIsParent(loc, loc->handlers)) {
-        mprFree(loc->handlers);
-    }
-    loc->handlers = mprCreateList(loc);
-    
-    if (mprIsParent(loc, loc->inputStages)) {
-        mprFree(loc->inputStages);
-    }
-    loc->inputStages = mprCreateList(loc);
-    
-    if (mprIsParent(loc, loc->outputStages)) {
-        mprFree(loc->outputStages);
+    if (loc->parent == 0) {
+        loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
+        loc->expires = mprCreateHash(0, 0);
+        loc->extensions = mprCreateHash(0, 0);
+        loc->handlers = mprCreateList(loc);
+        loc->inputStages = mprCreateList(loc);
+        loc->inputStages = mprCreateList(loc);
     }
     loc->outputStages = mprCreateList(loc);
+}
+
+
+void httpResetHandlers(HttpLoc *loc)
+{
+    graduate(loc);
+    loc->handlers = mprCreateList(loc);
 }
 
 
@@ -4146,8 +4238,7 @@ void httpSetLocationPrefix(HttpLoc *loc, cchar *uri)
 {
     mprAssert(loc);
 
-    mprFree(loc->prefix);
-    loc->prefix = mprStrdup(loc, uri);
+    loc->prefix = sclone(uri);
     loc->prefixLen = (int) strlen(loc->prefix);
 
     /*
@@ -4173,17 +4264,14 @@ void httpSetLocationAutoDelete(HttpLoc *loc, int enable)
 
 void httpSetLocationScript(HttpLoc *loc, cchar *script)
 {
-    mprFree(loc->script);
-    loc->script = mprStrdup(loc, script);
+    loc->script = sclone(script);
 }
 
 
 void httpAddErrorDocument(HttpLoc *loc, cchar *code, cchar *url)
 {
-    if (mprIsParent(loc->parent, loc->errorDocuments)) {
-        loc->errorDocuments = mprCopyHash(loc, loc->parent->errorDocuments);
-    }
-    mprAddHash(loc->errorDocuments, code, mprStrdup(loc, url));
+    graduate(loc);
+    mprAddHash(loc->errorDocuments, code, sclone(url));
 }
 
 
@@ -4194,7 +4282,7 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
     if (loc->errorDocuments == 0) {
         return 0;
     }
-    mprItoa(numBuf, sizeof(numBuf), code, 10);
+    itos(numBuf, sizeof(numBuf), code, 10);
     return (cchar*) mprLookupHash(loc->errorDocuments, numBuf);
 }
 
@@ -4328,14 +4416,14 @@ static void netOutgoingService(HttpQueue *q)
          */
         mprAssert(q->ioIndex > 0);
         written = mprWriteSocketVector(conn->sock, q->iovec, q->ioIndex);
-        LOG(q, 5, "Net connector written %d", written);
+        LOG(5, "Net connector written %d", written);
         if (written < 0) {
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
                 break;
             }
             if (errCode != EPIPE && errCode != ECONNRESET) {
-                LOG(conn, 5, "netOutgoingService write failed, error %d", errCode);
+                LOG(5, "netOutgoingService write failed, error %d", errCode);
             }
             httpConnError(conn, HTTP_CODE_COMMS_ERROR, "Write error %d", errCode);
             httpCompleteWriting(conn);
@@ -4498,7 +4586,8 @@ static void freeNetPackets(HttpQueue *q, int bytes)
 static void adjustNetVec(HttpQueue *q, int written)
 {
     MprIOVec    *iovec;
-    int         i, j, len;
+    size_t      len;
+    int         i, j;
 
     /*
         Cleanup the IO vector
@@ -4518,7 +4607,7 @@ static void adjustNetVec(HttpQueue *q, int written)
         mprAssert(q->ioCount >= 0);
         iovec = q->iovec;
         for (i = 0; i < q->ioIndex; i++) {
-            len = (int) iovec[i].len;
+            len = iovec[i].len;
             if (written < len) {
                 iovec[i].start += written;
                 iovec[i].len -= written;
@@ -4589,26 +4678,42 @@ static void adjustNetVec(HttpQueue *q, int written)
 
 
 
+
+static void managePacket(HttpPacket *packet, int flags);
+
 /*  
     Create a new packet. If size is -1, then also create a default growable buffer -- 
     used for incoming body content. If size > 0, then create a non-growable buffer 
     of the requested size.
  */
-HttpPacket *httpCreatePacket(MprCtx ctx, int size)
+HttpPacket *httpCreatePacket(int size)
 {
     HttpPacket  *packet;
 
-    if ((packet = mprAllocObj(ctx, HttpPacket, NULL)) == 0) {
+    if ((packet = mprAllocObj(HttpPacket, managePacket)) == 0) {
         return 0;
     }
     if (size != 0) {
-        packet->content = mprCreateBuf(packet, size < 0 ? HTTP_BUFSIZE: size, -1);
+        packet->content = mprCreateBuf(size < 0 ? HTTP_BUFSIZE: size, -1);
         if (packet->content == 0) {
-            mprFree(packet);
             return 0;
         }
     }
+    mprLog(0, "DEBUG: httpCreate new packet %d\n", packet->entityLength);
     return packet;
+}
+
+
+static void managePacket(HttpPacket *packet, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(packet->prefix);
+        mprMark(packet->content);
+        mprMark(packet->suffix);
+        mprMark(packet->next);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 
@@ -4621,18 +4726,18 @@ HttpPacket *httpCreateConnPacket(HttpConn *conn, int size)
     HttpRx      *rx;
 
     if (conn->state >= HTTP_STATE_COMPLETE) {
-        return httpCreatePacket((MprCtx) conn, size);
+        return httpCreatePacket(size);
     }
     rx = conn->rx;
     if (rx) {
         if ((packet = rx->freePackets) != NULL && size <= packet->content->buflen) {
+            mprLog(0, "DEBUG: httpCreateConnPacket got free packet from rx->freePackets");
             rx->freePackets = packet->next; 
             packet->next = 0;
-            mprStealBlock(conn, packet);
             return packet;
         }
     }
-    return httpCreatePacket(conn->rx ? (MprCtx) conn->rx: (MprCtx) conn, size);
+    return httpCreatePacket(size);
 }
 
 
@@ -4650,7 +4755,6 @@ void httpFreePacket(HttpQueue *q, HttpPacket *packet)
             Don't bother recycling non-content, small packets or packets owned by the connection
             We only store packets owned by the request and not by the connection on the free list.
          */
-        mprFree(packet);
         return;
     }
     /*  
@@ -4659,25 +4763,21 @@ void httpFreePacket(HttpQueue *q, HttpPacket *packet)
      */
     mprAssert(packet->content);
     mprFlushBuf(packet->content);
-    mprFree(packet->prefix);
     packet->prefix = 0;
-    mprFree(packet->suffix);
     packet->suffix = 0;
     packet->entityLength = 0;
     packet->flags = 0;
     packet->next = rx->freePackets;
     rx->freePackets = packet;
-#else
-    mprFree(packet);
 #endif
 } 
 
 
-HttpPacket *httpCreateDataPacket(MprCtx ctx, int size)
+HttpPacket *httpCreateDataPacket(int size)
 {
     HttpPacket    *packet;
 
-    packet = httpCreatePacket(ctx, size);
+    packet = httpCreatePacket(size);
     if (packet == 0) {
         return 0;
     }
@@ -4686,11 +4786,11 @@ HttpPacket *httpCreateDataPacket(MprCtx ctx, int size)
 }
 
 
-HttpPacket *httpCreateEndPacket(MprCtx ctx)
+HttpPacket *httpCreateEndPacket()
 {
     HttpPacket    *packet;
 
-    packet = httpCreatePacket(ctx, 0);
+    packet = httpCreatePacket(0);
     if (packet == 0) {
         return 0;
     }
@@ -4699,11 +4799,11 @@ HttpPacket *httpCreateEndPacket(MprCtx ctx)
 }
 
 
-HttpPacket *httpCreateHeaderPacket(MprCtx ctx)
+HttpPacket *httpCreateHeaderPacket()
 {
     HttpPacket    *packet;
 
-    packet = httpCreatePacket(ctx, HTTP_BUFSIZE);
+    packet = httpCreatePacket(HTTP_BUFSIZE);
     if (packet == 0) {
         return 0;
     }
@@ -4801,7 +4901,7 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
 int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 {
     if (mprPutBlockToBuf(packet->content, mprGetBufStart(p->content), httpGetPacketLength(p)) < 0) {
-        return MPR_ERR_NO_MEMORY;
+        return MPR_ERR_MEMORY;
     }
     return 0;
 }
@@ -4901,16 +5001,16 @@ int httpResizePacket(HttpQueue *q, HttpPacket *packet, int size)
     if (size == len) {
         return 0;
     }
-    tail = httpSplitPacket(q->conn, packet, size);
+    tail = httpSplitPacket(packet, size);
     if (tail == 0) {
-        return MPR_ERR_NO_MEMORY;
+        return MPR_ERR_MEMORY;
     }
     httpPutBackPacket(q, tail);
     return 0;
 }
 
 
-HttpPacket *httpDupPacket(MprCtx ctx, HttpPacket *orig)
+HttpPacket *httpClonePacket(HttpPacket *orig)
 {
     HttpPacket  *packet;
     int         count, size;
@@ -4919,17 +5019,17 @@ HttpPacket *httpDupPacket(MprCtx ctx, HttpPacket *orig)
     size = max(count, HTTP_BUFSIZE);
     size = HTTP_PACKET_ALIGN(size);
 
-    if ((packet = httpCreatePacket(ctx, 0)) == 0) {
+    if ((packet = httpCreatePacket(0)) == 0) {
         return 0;
     }
     if (orig->content) {
-        packet->content = mprDupBuf(packet, orig->content);
+        packet->content = mprCloneBuf(orig->content);
     }
     if (orig->prefix) {
-        packet->prefix = mprDupBuf(packet, orig->prefix);
+        packet->prefix = mprCloneBuf(orig->prefix);
     }
     if (orig->suffix) {
-        packet->suffix = mprDupBuf(packet, orig->suffix);
+        packet->suffix = mprCloneBuf(orig->suffix);
     }
     packet->flags = orig->flags;
     packet->entityLength = orig->entityLength;
@@ -4975,7 +5075,7 @@ void httpSendPackets(HttpQueue *q)
     Split a packet at a given offset and return a new packet containing the data after the offset.
     The suffix data migrates to the new packet. 
  */
-HttpPacket *httpSplitPacket(MprCtx ctx, HttpPacket *orig, int offset)
+HttpPacket *httpSplitPacket(HttpPacket *orig, int offset)
 {
     HttpPacket  *packet;
     int         count, size;
@@ -4988,7 +5088,7 @@ HttpPacket *httpSplitPacket(MprCtx ctx, HttpPacket *orig, int offset)
     size = max(count, HTTP_BUFSIZE);
     size = HTTP_PACKET_ALIGN(size);
 
-    if ((packet = httpCreatePacket(ctx, orig->entityLength ? 0 : size)) == 0) {
+    if ((packet = httpCreatePacket(orig->entityLength ? 0 : size)) == 0) {
         return 0;
     }
     packet->flags = orig->flags;
@@ -5004,7 +5104,6 @@ HttpPacket *httpSplitPacket(MprCtx ctx, HttpPacket *orig, int offset)
      */
     if (packet->suffix) {
         packet->suffix = orig->suffix;
-        mprStealBlock(packet, packet->suffix);
         orig->suffix = 0;
     }
 #endif
@@ -5229,7 +5328,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     mprSetItem(tx->outputPipeline, 0, tx->handler);
     if (tx->handler->flags & HTTP_STAGE_THREAD && !conn->threaded) {
         /* Start with dispatcher disabled. Conn.c will enable */
-        conn->dispatcher = mprCreateDispatcher(conn, tx->handler->name, 0);
+        conn->dispatcher = mprCreateDispatcher(tx->handler->name, 0);
     }
 
     /*  Create the outgoing queue heads and open the queues */
@@ -5249,7 +5348,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     conn->writeq = conn->tx->queue[HTTP_QUEUE_TRANS].nextQ;
     conn->readq = conn->tx->queue[HTTP_QUEUE_RECEIVE].prevQ;
 
-    httpPutForService(conn->writeq, httpCreateHeaderPacket(conn->writeq), 0);
+    httpPutForService(conn->writeq, httpCreateHeaderPacket(), 0);
 
     /*  
         Pair up the send and receive queues
@@ -5305,7 +5404,7 @@ void httpSetSendConnector(HttpConn *conn, cchar *path)
 
     tx = conn->tx;
     tx->flags |= HTTP_TX_SENDFILE;
-    tx->filename = mprStrdup(tx, path);
+    tx->filename = sclone(path);
     max = conn->limits->transmissionBodySize;
 
     qhead = &tx->queue[HTTP_QUEUE_TRANS];
@@ -5433,9 +5532,9 @@ static void setEnvironment(HttpConn *conn)
     tx = conn->tx;
 
     if (tx->handler->flags & (HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS)) {
-        rx->formVars = mprCreateHash(rx, HTTP_MED_HASH_SIZE);
+        rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
         if (rx->parsedUri->query) {
-            httpAddVars(conn, rx->parsedUri->query, (int) strlen(rx->parsedUri->query));
+            httpAddVars(conn, rx->parsedUri->query, strlen(rx->parsedUri->query));
         }
     }
     if (tx->handler && (tx->handler->flags & HTTP_STAGE_ENV_VARS)) {
@@ -5521,7 +5620,7 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int direction, Http
 {
     HttpQueue   *q;
 
-    if ((q = mprAllocObj(conn->tx, HttpQueue, NULL)) == 0) {
+    if ((q = mprAllocObj(HttpQueue, httpManageQueue)) == 0) {
         return 0;
     }
     httpInitQueue(conn, q, stage->name);
@@ -5546,6 +5645,17 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int direction, Http
         httpInsertQueue(prev, q);
     }
     return q;
+}
+
+
+void httpManageQueue(HttpQueue *q, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(q->first);
+        mprMark(q->queueData);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 
@@ -5578,7 +5688,7 @@ void httpAppendQueue(HttpQueue *head, HttpQueue *q)
 
 void httpDisableQueue(HttpQueue *q)
 {
-    mprLog(q, 7, "Disable q %s", q->owner);
+    mprLog(7, "Disable q %s", q->owner);
     q->flags |= HTTP_QUEUE_DISABLED;
 }
 
@@ -5633,7 +5743,7 @@ bool httpFlushQueue(HttpQueue *q, bool blocking)
     HttpQueue   *next;
     int         oldMode;
 
-    LOG(q, 6, "httpFlushQueue blocking %d", blocking);
+    LOG(6, "httpFlushQueue blocking %d", blocking);
 
     if (q->flags & HTTP_QUEUE_DISABLED) {
         return 0;
@@ -5655,7 +5765,7 @@ bool httpFlushQueue(HttpQueue *q, bool blocking)
 
 void httpEnableQueue(HttpQueue *q)
 {
-    mprLog(q, 7, "Enable q %s", q->owner);
+    mprLog(7, "Enable q %s", q->owner);
     q->flags &= ~HTTP_QUEUE_DISABLED;
     httpScheduleQueue(q);
 }
@@ -5763,7 +5873,7 @@ int httpRead(HttpConn *conn, char *buf, int size)
                 break;
             }
             inactivityTimeout = conn->limits->inactivityTimeout ? conn->limits->inactivityTimeout : INT_MAX;
-            events = mprWaitForSingleIO(conn, conn->sock->fd, MPR_READABLE, inactivityTimeout);
+            events = mprWaitForSingleIO(conn->sock->fd, MPR_READABLE, inactivityTimeout);
         }
         if (events) {
             httpCallEvent(conn, MPR_READABLE);
@@ -5807,7 +5917,7 @@ char *httpReadString(HttpConn *conn)
     rx = conn->rx;
 
     if (rx->length > 0) {
-        content = mprAlloc(rx, rx->length + 1);
+        content = mprAlloc(rx->length + 1);
         remaining = rx->length;
         sofar = 0;
         while (remaining > 0) {
@@ -5819,7 +5929,7 @@ char *httpReadString(HttpConn *conn)
             remaining -= nbytes;
         }
     } else {
-        content = mprAlloc(rx, HTTP_BUFSIZE);
+        content = mprAlloc(HTTP_BUFSIZE);
         sofar = 0;
         while (1) {
             nbytes = httpRead(conn, &content[sofar], HTTP_BUFSIZE);
@@ -5829,7 +5939,7 @@ char *httpReadString(HttpConn *conn)
                 break;
             }
             sofar += nbytes;
-            content = mprRealloc(conn, content, sofar + HTTP_BUFSIZE);
+            content = mprRealloc(content, sofar + HTTP_BUFSIZE);
         }
     }
     content[sofar] = '\0';
@@ -5926,12 +6036,12 @@ bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
     Write a block of data. This is the lowest level write routine for data. This will buffer the data and flush if
     the queue buffer is full.
  */
-int httpWriteBlock(HttpQueue *q, cchar *buf, int size)
+size_t httpWriteBlock(HttpQueue *q, cchar *buf, size_t size)
 {
     HttpPacket  *packet;
     HttpConn    *conn;
     HttpTx      *tx;
-    int         bytes, written, packetSize;
+    size_t      bytes, written, packetSize;
 
     mprAssert(q == q->conn->writeq);
                
@@ -5941,7 +6051,7 @@ int httpWriteBlock(HttpQueue *q, cchar *buf, int size)
         return MPR_ERR_CANT_WRITE;
     }
     for (written = 0; size > 0; ) {
-        LOG(q, 6, "httpWriteBlock q_count %d, q_max %d", q->count, q->max);
+        LOG(6, "httpWriteBlock q_count %d, q_max %d", q->count, q->max);
         if (conn->state >= HTTP_STATE_COMPLETE) {
             return MPR_ERR_CANT_WRITE;
         }
@@ -5953,7 +6063,7 @@ int httpWriteBlock(HttpQueue *q, cchar *buf, int size)
         }
         if (packet == 0 || mprGetBufSpace(packet->content) == 0) {
             packetSize = (tx->chunkSize > 0) ? tx->chunkSize : q->packetSize;
-            if ((packet = httpCreateDataPacket(q, packetSize)) != 0) {
+            if ((packet = httpCreateDataPacket(packetSize)) != 0) {
                 httpPutForService(q, packet, 0);
             }
         }
@@ -5973,25 +6083,21 @@ int httpWriteBlock(HttpQueue *q, cchar *buf, int size)
 }
 
 
-int httpWriteString(HttpQueue *q, cchar *s)
+size_t httpWriteString(HttpQueue *q, cchar *s)
 {
-    return httpWriteBlock(q, s, (int) strlen(s));
+    return httpWriteBlock(q, s, strlen(s));
 }
 
 
-int httpWrite(HttpQueue *q, cchar *fmt, ...)
+size_t httpWrite(HttpQueue *q, cchar *fmt, ...)
 {
     va_list     vargs;
     char        *buf;
-    int         rc;
     
     va_start(vargs, fmt);
-    buf = mprVasprintf(q, -1, fmt, vargs);
+    buf = mprAsprintfv(fmt, vargs);
     va_end(vargs);
-
-    rc = httpWriteString(q, buf);
-    mprFree(buf);
-    return rc;
+    return httpWriteString(q, buf);
 }
 
 
@@ -6154,7 +6260,7 @@ static void rangeService(HttpQueue *q, HttpRangeProc fill)
 
             } else if (tx->pos < range->start) {
                 /*  Packets starts before range with some data in range so skip some data */
-                count = (int) (range->start - tx->pos);
+                count = (range->start - tx->pos);
                 bytes -= count;
                 tx->pos += count;
                 if (packet->content == 0) {
@@ -6218,12 +6324,12 @@ static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range)
     tx = conn->tx;
 
     if (tx->entityLength >= 0) {
-        mprItoa(lenBuf, sizeof(lenBuf), tx->entityLength, 10);
+        itos(lenBuf, sizeof(lenBuf), tx->entityLength, 10);
     } else {
         lenBuf[0] = '*';
         lenBuf[1] = '\0';
     }
-    packet = httpCreatePacket(tx, HTTP_RANGE_BUFSIZE);
+    packet = httpCreatePacket(HTTP_RANGE_BUFSIZE);
     packet->flags |= HTTP_PACKET_RANGE;
     mprPutFmtToBuf(packet->content, 
         "\r\n--%s\r\n"
@@ -6242,7 +6348,7 @@ static HttpPacket *createFinalRangePacket(HttpConn *conn)
 
     tx = conn->tx;
 
-    packet = httpCreatePacket(tx, HTTP_RANGE_BUFSIZE);
+    packet = httpCreatePacket(HTTP_RANGE_BUFSIZE);
     packet->flags |= HTTP_PACKET_RANGE;
     mprPutFmtToBuf(packet->content, "\r\n--%s--\r\n", tx->rangeBoundary);
     return packet;
@@ -6257,7 +6363,7 @@ static void createRangeBoundary(HttpConn *conn)
 
     tx = conn->tx;
     mprAssert(tx->rangeBoundary == 0);
-    tx->rangeBoundary = mprAsprintf(tx, -1, "%08X%08X", PTOI(tx) + PTOI(conn) * (int) conn->time, (int) conn->time);
+    tx->rangeBoundary = mprAsprintf("%08X%08X", PTOI(tx) + PTOI(conn) * (int) conn->time, (int) conn->time);
 }
 
 
@@ -6366,6 +6472,8 @@ static bool fixRangeLength(HttpConn *conn)
 static void addMatchEtag(HttpConn *conn, char *etag);
 static int getChunkPacketSize(HttpConn *conn, MprBuf *buf);
 static char *getToken(HttpConn *conn, cchar *delim);
+static void manageRange(HttpRange *range, int flags);
+static void manageRx(HttpRx *rx, int flags);
 static bool parseAuthenticate(HttpConn *conn, char *authDetails);
 static void parseHeaders(HttpConn *conn, HttpPacket *packet);
 static bool parseIncoming(HttpConn *conn, HttpPacket *packet);
@@ -6382,7 +6490,7 @@ HttpRx *httpCreateRx(HttpConn *conn)
 {
     HttpRx      *rx;
 
-    if ((rx = mprAllocObj(conn, HttpRx, NULL)) == 0) {
+    if ((rx = mprAllocObj(HttpRx, manageRx)) == 0) {
         return 0;
     }
     rx->conn = conn;
@@ -6391,31 +6499,66 @@ HttpRx *httpCreateRx(HttpConn *conn)
     rx->ifModified = 1;
     rx->remainingContent = 0;
     rx->method = 0;
-    rx->pathInfo = mprStrdup(rx, "/");
-    rx->scriptName = mprStrdup(rx, "");
+    rx->pathInfo = sclone("/");
+    rx->scriptName = sclone("");
     rx->status = 0;
     rx->statusMessage = "";
     rx->mimeType = "";
     rx->needInputPipeline = !conn->server;
-    rx->headers = mprCreateHash(rx, HTTP_SMALL_HASH_SIZE);
-    mprSetHashCase(rx->headers, 0);
+    rx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     return rx;
+}
+
+
+static void manageRx(HttpRx *rx, int flags)
+{
+    HttpPacket  *packet;
+
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(rx->method);
+        mprMark(rx->uri);
+        mprMark(rx->scriptName);
+        mprMark(rx->pathInfo);
+        mprMarkList(rx->etags);
+        mprMark(rx->headerPacket);
+        mprMarkHash(rx->headers);
+        mprMarkList(rx->inputPipeline);
+        mprMark(rx->loc);
+        mprMark(rx->parsedUri);
+        mprMarkHash(rx->requestData);
+        mprMark(rx->pathTranslated);
+        mprMark(rx->pragma);
+        mprMark(rx->redirect);
+        mprMark(rx->referrer);
+        mprMarkHash(rx->formVars);
+        mprMark(rx->ranges);
+        mprMark(rx->inputRange);
+        mprMark(rx->auth);
+        mprMark(rx->authAlgorithm);
+        mprMark(rx->authDetails);
+        mprMark(rx->authStale);
+        mprMark(rx->authType);
+        mprMarkHash(rx->files);
+        mprMark(rx->uploadDir);
+        mprMark(rx->alias);
+        mprMark(rx->dir);
+
+        for (packet = rx->freePackets; packet; packet = packet->next) {
+            mprMark(packet);
+        }
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 
 void httpDestroyRx(HttpConn *conn)
 {
-    if (conn->input) {
-        if (!mprIsParent(conn, conn->input) && httpGetPacketLength(conn->input) > 0) {
-            conn->input = httpSplitPacket(conn, conn->input, 0);
-        } else {
-            conn->input = 0;
-        }
-    }
     if (conn->rx) {
         if (conn->server) {
             httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_REQUEST, conn);
         }
+        /* Force destructor to run now */
         mprFree(conn->rx);
         conn->rx = 0;
     }
@@ -6437,7 +6580,7 @@ void httpProcess(HttpConn *conn, HttpPacket *packet)
     conn->advancing = 1;
 
     while (conn->canProceed) {
-        LOG(conn, 7, "httpProcess, state %d, error %d", conn->state, conn->error);
+        LOG(7, "httpProcess, state %d, error %d", conn->state, conn->error);
 
         switch (conn->state) {
         case HTTP_STATE_BEGIN:
@@ -6496,7 +6639,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         return 0;
     }
     start = mprGetBufStart(packet->content);
-    if ((end = mprStrnstr(start, "\r\n\r\n", len)) == 0) {
+    if ((end = scontains(start, "\r\n\r\n", len)) == 0) {
         return 0;
     }
     len = (int) (end - start);
@@ -6538,7 +6681,7 @@ static int traceRequest(HttpConn *conn, HttpPacket *packet)
     cchar   *endp;
     int     len;
 
-    mprLog(conn, 6, "Request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
+    mprLog(6, "Request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
     if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
         content = packet->content;
         endp = strstr((char*) content->start, "\r\n\r\n");
@@ -6559,7 +6702,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     char        *method, *uri, *protocol;
     int         methodFlags, traced;
 
-    mprLog(conn, 4, "New request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
+    mprLog(4, "New request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
 
     rx = conn->rx;
     protocol = uri = 0;
@@ -6567,7 +6710,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     traced = traceRequest(conn, packet);
 
     method = getToken(conn, " ");
-    mprStrUpper(method);
+    supper(method);
 
     switch (method[0]) {
     case 'D':
@@ -6637,7 +6780,8 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
         httpProtocolError(conn, HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
     }
     rx->flags |= methodFlags;
-    rx->method = mprStrUpper(method);
+    rx->method = method;
+    supper(rx->method);
 
     if (httpSetUri(conn, uri) < 0) {
         httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad URL format");
@@ -6645,7 +6789,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     httpSetState(conn, HTTP_STATE_FIRST);
 #if UNUSED
     if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) >= 0) {
-        mprLog(conn, level, "%s %s %s", method, uri, protocol);
+        mprLog(level, "%s %s %s", rx->method, uri, protocol);
     }
 #endif
 }
@@ -6681,7 +6825,7 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     rx->status = atoi(status);
     rx->statusMessage = getToken(conn, "\r\n");
 
-    if ((int) strlen(rx->statusMessage) >= conn->limits->uriSize) {
+    if (slen(rx->statusMessage) >= conn->limits->uriSize) {
         httpError(conn, HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad response. Status message too long");
     }
     if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
@@ -6691,7 +6835,7 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
         httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, packet, len, 0);
 
     } else if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, conn->tx->extension)) >= 0) {
-        mprLog(rx, level, "%s %d %s", protocol, rx->status, rx->statusMessage);
+        mprLog(level, "%s %d %s", protocol, rx->status, rx->statusMessage);
     }
 }
 
@@ -6731,24 +6875,23 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         while (isspace((int) *value)) {
             value++;
         }
-        mprStrLower(key);
+        slower(key);
 
-        LOG(rx, 8, "Key %s, value %s", key, value);
+        LOG(8, "Key %s, value %s", key, value);
         if (strspn(key, "%<>/\\") > 0) {
             httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad header key value");
             break;
         }
         if ((oldValue = mprLookupHash(rx->headers, key)) != 0) {
-            mprAddHash(rx->headers, key, mprAsprintf(rx->headers, -1, "%s, %s", oldValue, value));
+            mprAddHash(rx->headers, key, mprAsprintf("%s, %s", oldValue, value));
         } else {
-            mprAddHash(rx->headers, key, value);
+            mprAddHash(rx->headers, key, sclone(value));
         }
-
         switch (key[0]) {
         case 'a':
             if (strcmp(key, "authorization") == 0) {
-                value = mprStrdup(rx, value);
-                rx->authType = mprStrTok(value, " \t", &tok);
+                value = sclone(value);
+                rx->authType = stok(value, " \t", &tok);
                 rx->authDetails = tok;
 
             } else if (strcmp(key, "accept-charset") == 0) {
@@ -6800,17 +6943,16 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     sp++;
                 }
                 if (*sp) {
-                    start = (int) mprAtoi(sp, 10);
-
+                    start = (int) stoi(sp, 10, NULL);
                     if ((sp = strchr(sp, '-')) != 0) {
-                        end = (int) mprAtoi(++sp, 10);
+                        end = (int) stoi(++sp, 10, NULL);
                     }
                     if ((sp = strchr(sp, '/')) != 0) {
                         /*
                             Note this is not the content length transmitted, but the original size of the input of which
                             the client is transmitting only a portion.
                          */
-                        size = (int) mprAtoi(++sp, 10);
+                        size = (int) stoi(++sp, 10, NULL);
                     }
                 }
                 if (start < 0 || end < 0 || size < 0 || end <= start) {
@@ -6825,16 +6967,16 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
             } else if (strcmp(key, "cookie") == 0) {
                 if (rx->cookie && *rx->cookie) {
-                    rx->cookie = mprStrcat(rx, -1, rx->cookie, "; ", value, NULL);
+                    rx->cookie = sjoin(rx->cookie, "; ", value, NULL);
                 } else {
                     rx->cookie = value;
                 }
 
             } else if (strcmp(key, "connection") == 0) {
                 rx->connection = value;
-                if (mprStrcmpAnyCase(value, "KEEP-ALIVE") == 0) {
+                if (scasecmp(value, "KEEP-ALIVE") == 0) {
                     keepAlive++;
-                } else if (mprStrcmpAnyCase(value, "CLOSE") == 0) {
+                } else if (scasecmp(value, "CLOSE") == 0) {
                     conn->keepAliveCount = -1;
                 }
             }
@@ -6855,7 +6997,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 if ((cp = strchr(value, ';')) != 0) {
                     *cp = '\0';
                 }
-                if (mprParseTime(conn, &newDate, value, MPR_UTC_TIMEZONE, NULL) < 0) {
+                if (mprParseTime(&newDate, value, MPR_UTC_TIMEZONE, NULL) < 0) {
                     mprAssert(0);
                     break;
                 }
@@ -6874,11 +7016,11 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 rx->ifMatch = ifMatch;
                 rx->flags |= HTTP_REC_IF_MODIFIED;
-                value = mprStrdup(conn, value);
-                word = mprStrTok(value, " ,", &tok);
+                value = sclone(value);
+                word = stok(value, " ,", &tok);
                 while (word) {
                     addMatchEtag(conn, word);
-                    word = mprStrTok(0, " ,", &tok);
+                    word = stok(0, " ,", &tok);
                 }
 
             } else if (strcmp(key, "if-range") == 0) {
@@ -6889,11 +7031,11 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 rx->ifMatch = 1;
                 rx->flags |= HTTP_REC_IF_MODIFIED;
-                value = mprStrdup(conn, value);
-                word = mprStrTok(value, " ,", &tok);
+                value = sclone(value);
+                word = stok(value, " ,", &tok);
                 while (word) {
                     addMatchEtag(conn, word);
-                    word = mprStrTok(0, " ,", &tok);
+                    word = stok(0, " ,", &tok);
                 }
             }
             break;
@@ -6933,13 +7075,14 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     httpError(conn, HTTP_CODE_RANGE_NOT_SATISFIABLE, "Bad range");
                 }
             } else if (strcmp(key, "referer") == 0) {
-                rx->referer = value;
+                /* NOTE: yes the header is misspelt in the spec */
+                rx->referrer = value;
             }
             break;
 
         case 't':
             if (strcmp(key, "transfer-encoding") == 0) {
-                mprStrLower(value);
+                slower(value);
                 if (strcmp(value, "chunked") == 0) {
                     rx->flags |= HTTP_REC_CHUNKED;
                     /*  
@@ -6978,9 +7121,8 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     value++;
                 }
                 *value++ = '\0';
-                mprStrLower(tp);
-                mprFree(conn->authType);
-                conn->authType = mprStrdup(conn, tp);
+                slower(tp);
+                conn->authType = sclone(slower(tp));
                 if (!parseAuthenticate(conn, value)) {
                     httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad Authentication header");
                     break;
@@ -7066,53 +7208,47 @@ static bool parseAuthenticate(HttpConn *conn, char *authDetails)
          */
         switch (tolower((int) *key)) {
         case 'a':
-            if (mprStrcmpAnyCase(key, "algorithm") == 0) {
-                mprFree(rx->authAlgorithm);
+            if (scasecmp(key, "algorithm") == 0) {
                 rx->authAlgorithm = value;
                 break;
             }
             break;
 
         case 'd':
-            if (mprStrcmpAnyCase(key, "domain") == 0) {
-                mprFree(conn->authDomain);
-                conn->authDomain = mprStrdup(conn, value);
+            if (scasecmp(key, "domain") == 0) {
+                conn->authDomain = sclone(value);
                 break;
             }
             break;
 
         case 'n':
-            if (mprStrcmpAnyCase(key, "nonce") == 0) {
-                mprFree(conn->authNonce);
-                conn->authNonce = mprStrdup(conn, value);
+            if (scasecmp(key, "nonce") == 0) {
+                conn->authNonce = sclone(value);
                 conn->authNc = 0;
             }
             break;
 
         case 'o':
-            if (mprStrcmpAnyCase(key, "opaque") == 0) {
-                mprFree(conn->authOpaque);
-                conn->authOpaque = mprStrdup(conn, value);
+            if (scasecmp(key, "opaque") == 0) {
+                conn->authOpaque = sclone(value);
             }
             break;
 
         case 'q':
-            if (mprStrcmpAnyCase(key, "qop") == 0) {
-                mprFree(conn->authQop);
-                conn->authQop = mprStrdup(conn, value);
+            if (scasecmp(key, "qop") == 0) {
+                conn->authQop = sclone(value);
             }
             break;
 
         case 'r':
-            if (mprStrcmpAnyCase(key, "realm") == 0) {
-                mprFree(conn->authRealm);
-                conn->authRealm = mprStrdup(conn, value);
+            if (scasecmp(key, "realm") == 0) {
+                conn->authRealm = sclone(value);
             }
             break;
 
         case 's':
-            if (mprStrcmpAnyCase(key, "stale") == 0) {
-                rx->authStale = mprStrdup(rx, value);
+            if (scasecmp(key, "stale") == 0) {
+                rx->authStale = sclone(value);
                 break;
             }
 
@@ -7214,7 +7350,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, NULL) >= 0) {
         httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, 0);
     }
-    LOG(conn, 7, "processContent: packet of %d bytes, remaining %d", mprGetBufLength(content), remaining);
+    LOG(7, "processContent: packet of %d bytes, remaining %d", mprGetBufLength(content), remaining);
 
     if (nbytes > 0) {
         mprAssert(httpGetPacketLength(packet) > 0);
@@ -7229,15 +7365,13 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
         }
         if (packet == rx->headerPacket) {
             /* Preserve headers if more data to come. Otherwise handlers may free the packet and destory the headers */
-            packet = httpSplitPacket(conn, packet, 0);
-        } else {
-            mprStealBlock(tx, packet);
+            packet = httpSplitPacket(packet, 0);
         }
         conn->input = 0;
         if (remaining == 0 && mprGetBufLength(packet->content) > nbytes) {
             /*  Split excess data belonging to the next pipelined request.  */
-            LOG(conn, 7, "processContent: Split packet of %d at %d", httpGetPacketLength(packet), nbytes);
-            conn->input = httpSplitPacket(conn, packet, nbytes);
+            LOG(7, "processContent: Split packet of %d at %d", httpGetPacketLength(packet), nbytes);
+            conn->input = httpSplitPacket(packet, nbytes);
         }
         if ((q->count + httpGetPacketLength(packet)) > q->max) {
             /*  
@@ -7246,17 +7380,11 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
             */
             return 0;
         }
-        if (conn->error) {
-            /* Discard input data if the request has an error */
-            mprFree(packet);
-        } else {
+        if (!conn->error) {
             httpSendPacketToNext(q, packet);
         }
 
     } else {
-        if (conn->input != rx->headerPacket) {
-            mprFree(packet);
-        }
         conn->input = 0;
     }
     return 1;
@@ -7291,7 +7419,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     if (rx->remainingContent == 0) {
         if (!(rx->flags & HTTP_REC_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)) {
             rx->eof = 1;
-            httpSendPacketToNext(q, httpCreateEndPacket(rx));
+            httpSendPacketToNext(q, httpCreateEndPacket());
         }
         httpSetState(conn, HTTP_STATE_RUNNING);
         return 1;
@@ -7339,17 +7467,19 @@ static bool processCompletion(HttpConn *conn)
 
     mprAssert(conn->state == HTTP_STATE_COMPLETE);
 
-    mpr = mprGetMpr(conn);
+    mpr = mprGetMpr();
 
     packet = conn->input;
     more = packet && !conn->connError && (mprGetBufLength(packet->content) > 0);
+#if UNUSED
     if (!mprIsParent(conn, packet)) {
         if (more) {
-            conn->input = httpSplitPacket(conn, packet, 0);
+            conn->input = httpSplitPacket(packet, 0);
         } else {
             conn->input = 0;
         }
     }
+#endif
     if (conn->server) {
         httpDestroyRx(conn);
         return more;
@@ -7377,7 +7507,7 @@ static int getChunkPacketSize(HttpConn *conn, MprBuf *buf)
 {
     HttpRx      *rx;
     char        *start, *cp;
-    int         need, size;
+    size_t      need, size;
 
     rx = conn->rx;
     need = 0;
@@ -7408,8 +7538,8 @@ static int getChunkPacketSize(HttpConn *conn, MprBuf *buf)
             }
             return 0;
         }
-        need = (int) (cp - start + 1);
-        size = (int) mprAtoi(&start[2], 16);
+        need = (cp - start + 1);
+        size = stoi(&start[2], 16, NULL);
         if (size == 0 && &cp[2] < buf->end && cp[1] == '\r' && cp[2] == '\n') {
             /*
                 This is the last chunk (size == 0). Now need to consume the trailing "\r\n".
@@ -7445,10 +7575,6 @@ bool httpContentNotModified(HttpConn *conn)
         modified = (MprTime) tx->fileInfo.mtime * MPR_TICKS_PER_SEC;
         same = httpMatchModified(conn, modified) && httpMatchEtag(conn, tx->etag);
         if (rx->ranges && !same) {
-            /*
-                Need to transfer the entire resource
-             */
-            mprFree(rx->ranges);
             rx->ranges = 0;
         }
         return same;
@@ -7461,14 +7587,22 @@ HttpRange *httpCreateRange(HttpConn *conn, int start, int end)
 {
     HttpRange     *range;
 
-    if ((range = mprAllocObj(conn->rx, HttpRange, NULL)) == 0) {
+    if ((range = mprAllocObj(HttpRange, manageRange)) == 0) {
         return 0;
     }
     range->start = start;
     range->end = end;
     range->len = end - start;
-
     return range;
+}
+
+
+static void manageRange(HttpRange *range, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(range->next);
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 
@@ -7495,18 +7629,11 @@ cchar *httpGetCookies(HttpConn *conn)
 
 cchar *httpGetHeader(HttpConn *conn, cchar *key)
 {
-    cchar   *value;
-    char    *lower;
-
     if (conn->rx == 0) {
         mprAssert(conn->rx);
         return 0;
     }
-    lower = mprStrdup(conn, key);
-    mprStrLower(lower);
-    value = mprLookupHash(conn->rx->headers, lower);
-    mprFree(lower);
-    return value;
+    return mprLookupHash(conn->rx->headers, slower(sclone(key)));
 }
 
 
@@ -7525,7 +7652,7 @@ char *httpGetHeaders(HttpConn *conn)
     rx = conn->rx;
     headers = 0;
     for (len = 0, hp = mprGetFirstHash(rx->headers); hp; ) {
-        headers = mprReallocStrcat(rx, -1, headers, hp->key, NULL);
+        headers = srejoin(headers, hp->key, NULL);
         key = &headers[len];
         for (cp = &key[1]; *cp; cp++) {
             *cp = tolower((int) *cp);
@@ -7533,7 +7660,7 @@ char *httpGetHeaders(HttpConn *conn)
                 cp++;
             }
         }
-        headers = mprReallocStrcat(rx, -1, headers, ": ", hp->data, "\n", NULL);
+        headers = srejoin(headers, ": ", hp->data, "\n", NULL);
         len = (int) strlen(headers);
         hp = mprGetNextHash(rx->headers, hp);
     }
@@ -7578,7 +7705,7 @@ int httpSetUri(HttpConn *conn, cchar *uri)
     /*  
         Parse and tokenize the uri. Then decode and validate the URI path portion.
      */
-    rx->parsedUri = httpCreateUri(rx, uri, 0);
+    rx->parsedUri = httpCreateUri(uri, 0);
     if (rx->parsedUri == 0) {
         return MPR_ERR_BAD_ARGS;
     }
@@ -7587,10 +7714,9 @@ int httpSetUri(HttpConn *conn, cchar *uri)
         Start out with no scriptName and the entire URI in the pathInfo. Stages may rewrite.
      */
     rx->uri = rx->parsedUri->uri;
-    conn->tx->extension = rx->parsedUri->ext;
-    mprFree(rx->pathInfo);
-    rx->pathInfo = httpNormalizeUriPath(rx, mprUriDecode(rx, rx->parsedUri->path));
-    rx->scriptName = mprStrdup(rx, "");
+    conn->tx->extension = sclone(rx->parsedUri->ext);
+    rx->pathInfo = httpNormalizeUriPath(mprUriDecode(rx->parsedUri->path));
+    rx->scriptName = sclone("");
     return 0;
 }
 
@@ -7627,7 +7753,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
         if (!conn->writeComplete) {
             eventMask |= MPR_WRITABLE;
         }
-        mprInitWaitHandler(conn, &conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher,
+        mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher,
             (MprEventProc) waitHandler, conn);
         addedHandler = 1;
     } else addedHandler = 0;
@@ -7640,14 +7766,14 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
             break;
         }
         mprAssert(!mprSocketHasPendingData(conn->sock));
-        mprServiceEvents(conn, dispatcher, remainingTime, MPR_SERVICE_ONE_THING);
+        mprServiceEvents(dispatcher, remainingTime, MPR_SERVICE_ONE_THING);
     }
     if (addedHandler && conn->waitHandler.fd >= 0) {
         mprRemoveWaitHandler(&conn->waitHandler);
         conn->async = saveAsync;
     }
     if (conn->sock == 0 || conn->error) {
-        return MPR_ERR_CONNECTION;
+        return MPR_ERR_CANT_CONNECT;
     }
     if (conn->state < state) {
         return MPR_ERR_TIMEOUT;
@@ -7661,7 +7787,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
  */
 void httpWriteBlocked(HttpConn *conn)
 {
-    mprLog(conn, 7, "Write Blocked");
+    mprLog(7, "Write Blocked");
     conn->canProceed = 0;
     conn->writeBlocked = 1;
 }
@@ -7693,7 +7819,7 @@ static char *getToken(HttpConn *conn, cchar *delim)
 
     buf = conn->input->content;
     token = mprGetBufStart(buf);
-    nextToken = mprStrnstr(mprGetBufStart(buf), delim, mprGetBufLength(buf));
+    nextToken = scontains(mprGetBufStart(buf), delim, mprGetBufLength(buf));
     if (nextToken) {
         *nextToken = '\0';
         len = (int) strlen(delim);
@@ -7776,7 +7902,7 @@ static bool parseRange(HttpConn *conn, char *value)
 
     rx = conn->rx;
 
-    value = mprStrdup(conn, value);
+    value = sclone(value);
     if (value == 0) {
         return 0;
     }
@@ -7784,18 +7910,18 @@ static bool parseRange(HttpConn *conn, char *value)
     /*  
         Step over the "bytes="
      */
-    tok = mprStrTok(value, "=", &value);
+    tok = stok(value, "=", &value);
 
     for (last = 0; value && *value; ) {
-        if ((range = mprAllocObj(rx, HttpRange, NULL)) == 0) {
+        if ((range = mprAllocObj(HttpRange, NULL)) == 0) {
             return 0;
         }
         /*  
             A range "-7" will set the start to -1 and end to 8
          */
-        tok = mprStrTok(value, ",", &value);
+        tok = stok(value, ",", &value);
         if (*tok != '-') {
-            range->start = (int) mprAtoi(tok, 10);
+            range->start = stoi(tok, 10, NULL);
         } else {
             range->start = -1;
         }
@@ -7806,7 +7932,7 @@ static bool parseRange(HttpConn *conn, char *value)
                 /*
                     End is one beyond the range. Makes the math easier.
                  */
-                range->end = (int) mprAtoi(ep, 10) + 1;
+                range->end = stoi(ep, 10, NULL) + 1;
             }
         }
         if (range->start >= 0 && range->end >= 0) {
@@ -7844,6 +7970,31 @@ static bool parseRange(HttpConn *conn, char *value)
     conn->tx->currentRange = rx->ranges;
     return (last) ? 1: 0;
 }
+
+
+void httpSetStageData(HttpConn *conn, cchar *key, cvoid *data)
+{
+    HttpRx      *rx;
+
+    rx = conn->rx;
+    if (rx->requestData == 0) {
+        rx->requestData = mprCreateHash(-1, 0);
+    }
+    mprAddHash(rx->requestData, key, data);
+}
+
+
+cvoid *httpGetStageData(HttpConn *conn, cchar *key)
+{
+    HttpRx      *rx;
+
+    rx = conn->rx;
+    if (rx->requestData == 0) {
+        return NULL;
+    }
+    return mprLookupHash(rx->requestData, key);
+}
+
 
 /*
     @copy   default
@@ -7944,7 +8095,7 @@ void httpSendOpen(HttpQueue *q)
     q->packetSize = conn->limits->transmissionBodySize;
 
     if (!(tx->flags & HTTP_TX_NO_BODY)) {
-        tx->file = mprOpen(q, tx->filename, O_RDONLY | O_BINARY, 0);
+        tx->file = mprOpen(tx->filename, O_RDONLY | O_BINARY, 0);
         if (tx->file == 0) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
         }
@@ -8001,14 +8152,14 @@ void httpSendOutgoingService(HttpQueue *q)
         ioCount = q->ioIndex - q->ioFileEntry;
         mprAssert(ioCount >= 0);
         written = (int) mprSendFileToSocket(conn->sock, tx->file, tx->pos, q->ioCount, q->iovec, ioCount, NULL, 0);
-        mprLog(q, 5, "Send connector written %d", written);
+        mprLog(5, "Send connector written %d", written);
         if (written < 0) {
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
                 break;
             }
             if (errCode != EPIPE && errCode != ECONNRESET) {
-                mprLog(conn, 7, "SendFileToSocket failed, errCode %d", errCode);
+                mprLog(7, "SendFileToSocket failed, errCode %d", errCode);
             }
             httpConnError(conn, HTTP_CODE_COMMS_ERROR, "SendFileToSocket failed, errCode %d", errCode);
             httpCompleteWriting(conn);
@@ -8294,7 +8445,7 @@ static void adjustSendVec(HttpQueue *q, int written)
 
 
 
-static int destroyServer(HttpServer *server);
+static int manageServer(HttpServer *server, int flags);
 static int destroyServerConnections(HttpServer *server);
 
 /*
@@ -8307,34 +8458,52 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
     mprAssert(ip);
     mprAssert(port > 0);
 
-    if ((server = mprAllocObj(http, HttpServer, destroyServer)) == 0) {
+    if ((server = mprAllocObj(HttpServer, manageServer)) == 0) {
         return 0;
     }
-    server->clients = mprCreateHash(server, HTTP_CLIENTS_HASH);
+    server->clients = mprCreateHash(HTTP_CLIENTS_HASH, 0);
     server->async = 1;
     server->http = http;
     server->port = port;
-    server->ip = mprStrdup(server, ip);
+    server->ip = sclone(ip);
     server->waitHandler.fd = -1;
     server->dispatcher = (dispatcher) ? dispatcher : mprGetDispatcher(http);
     if (server->ip && server->ip) {
         server->name = server->ip;
     }
     server->software = HTTP_NAME;
-    server->limits = httpCreateLimits(server, 1);
-    server->loc = httpInitLocation(http, server, 1);
+    server->limits = httpCreateLimits(1);
+    server->loc = httpInitLocation(http, 1);
     return server;
 }
 
 
-static int destroyServer(HttpServer *server)
+static int manageServer(HttpServer *server, int flags)
 {
-    mprLog(server, 4, "Destroy server %s", server->name);
-    if (server->waitHandler.fd >= 0) {
-        mprRemoveWaitHandler(&server->waitHandler);
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(server->http);
+        mprMark(server->loc);
+        mprMark(server->limits);
+        mprMark(server->clients);
+        mprMark(server->serverRoot);
+        mprMark(server->documentRoot);
+        mprMark(server->name);
+        mprMark(server->ip);
+        mprMark(server->context);
+        mprMark(server->meta);
+        mprMark(server->software);
+        mprMark(server->sock);
+        mprMark(server->dispatcher);
+        mprMark(server->ssl);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        mprLog(4, "Destroy server %s", server->name);
+        if (server->waitHandler.fd >= 0) {
+            mprRemoveWaitHandler(&server->waitHandler);
+        }
+        destroyServerConnections(server);
+        mprFree(server->sock);
     }
-    destroyServerConnections(server);
-    mprFree(server->sock);
     return 0;
 }
 
@@ -8366,32 +8535,34 @@ int httpStartServer(HttpServer *server)
     cchar       *proto;
     char        *ip;
 
-    if ((server->sock = mprCreateSocket(server, server->ssl)) == 0) {
-        return MPR_ERR_NO_MEMORY;
+    if ((server->sock = mprCreateSocket(server->ssl)) == 0) {
+        return MPR_ERR_MEMORY;
     }
     if (mprOpenServerSocket(server->sock, server->ip, server->port, MPR_SOCKET_NODELAY | MPR_SOCKET_THREAD) < 0) {
-        mprError(server, "Can't open a socket on %s, port %d", server->ip, server->port);
+        mprError("Can't open a socket on %s, port %d", server->ip, server->port);
         return MPR_ERR_CANT_OPEN;
     }
     if (mprListenOnSocket(server->sock) < 0) {
-        mprError(server, "Can't listen on %s, port %d", server->ip, server->port);
+        mprError("Can't listen on %s, port %d", server->ip, server->port);
         return MPR_ERR_CANT_OPEN;
     }
-    proto = "HTTP";
-    if (mprIsSocketSecure(server->sock)) {
-        proto = "HTTPS";
-    }
+    proto = mprIsSocketSecure(server->sock) ? "HTTPS" : "HTTP";
     ip = server->ip;
     if (ip == 0 || *ip == '\0') {
         ip = "*";
     }
+    if (server->listenCallback) {
+        if ((server->listenCallback)(server) < 0) {
+            return MPR_ERR_CANT_OPEN;
+        }
+    }
     if (server->async) {
-        mprInitWaitHandler(server, &server->waitHandler, server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
+        mprInitWaitHandler(&server->waitHandler, server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
             (MprEventProc) httpAcceptConn, server);
     } else {
         mprSetSocketBlockingMode(server->sock, 1);
     }
-    mprLog(server, MPR_CONFIG, "Started %s server on %s:%d", proto, ip, server->port);
+    mprLog(MPR_CONFIG, "Started %s server on %s:%d", proto, ip, server->port);
     return 0;
 }
 
@@ -8431,7 +8602,7 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
             mprRemoveHash(server->clients, conn->ip);
         }
         server->clientCount = mprGetHashCount(server->clients);
-        mprLog(server, 4, "Close connection %d. Active requests %d, active clients %d", 
+        mprLog(4, "Close connection %d. Active requests %d, active clients %d", 
             conn->seqno, server->requestCount, server->clientCount);
         break;
     
@@ -8447,10 +8618,10 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
     case HTTP_VALIDATE_CLOSE_REQUEST:
         server->requestCount--;
         mprAssert(server->requestCount >= 0);
-        mprLog(server, 4, "Close request. Active requests %d, active clients %d", server->requestCount, server->clientCount);
+        mprLog(4, "Close request. Active requests %d, active clients %d", server->requestCount, server->clientCount);
         break;
     }
-    mprLog(server, 6, "Validate request. Counts: requests: %d/%d, clients %d/%d", 
+    mprLog(6, "Validate request. Counts: requests: %d/%d, clients %d/%d", 
         server->requestCount, limits->requestCount, server->clientCount, limits->clientCount);
     return 1;
 }
@@ -8479,20 +8650,19 @@ HttpConn *httpAcceptConn(HttpServer *server)
     if (sock == 0) {
         return 0;
     }
-    mprLog(server, 4, "New connection from %s:%d to %s:%d %s",
+    mprLog(4, "New connection from %s:%d to %s:%d %s",
         sock->ip, sock->port, sock->acceptIp, sock->acceptPort, server->sock->sslSocket ? "(secure)" : "");
 
     if ((conn = httpCreateConn(server->http, server)) == 0) {
-        mprError(server, "Can't create connect object. Insufficient memory.");
+        mprError("Can't create connect object. Insufficient memory.");
         mprFree(sock);
         return 0;
     }
-    mprStealBlock(conn, sock);
     conn->async = server->async;
     conn->server = server;
     conn->sock = sock;
     conn->port = sock->port;
-    conn->ip = mprStrdup(conn, sock->ip);
+    conn->ip = sclone(sock->ip);
     conn->secure = mprIsSocketSecure(sock);
 
     if (!httpValidateLimits(server, HTTP_VALIDATE_OPEN_CONN, conn)) {
@@ -8503,7 +8673,7 @@ HttpConn *httpAcceptConn(HttpServer *server)
     httpSetState(conn, HTTP_STATE_CONNECTED);
 
     if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_CONN, NULL)) >= 0) {
-        mprLog(conn, level, "### Incoming connection from %s:%d to %s:%d", 
+        mprLog(level, "### Incoming connection from %s:%d to %s:%d", 
             conn->ip, conn->port, conn->sock->ip, conn->sock->port);
     }
     e.mask = MPR_READABLE;
@@ -8534,7 +8704,7 @@ int httpGetServerAsync(HttpServer *server)
 void httpSetDocumentRoot(HttpServer *server, cchar *documentRoot)
 {
     mprFree(server->documentRoot);
-    server->documentRoot = mprStrdup(server, documentRoot);
+    server->documentRoot = sclone(documentRoot);
 }
 
 
@@ -8542,7 +8712,7 @@ void httpSetIpAddr(HttpServer *server, cchar *ip, int port)
 {
     if (ip) {
         mprFree(server->ip);
-        server->ip = mprStrdup(server, ip);
+        server->ip = sclone(ip);
     }
     if (port >= 0) {
         server->port = port;
@@ -8588,7 +8758,7 @@ void httpSetServerLocation(HttpServer *server, HttpLoc *loc)
 
 void httpSetServerName(HttpServer *server, cchar *name)
 {
-    server->name = mprStrdup(server, name);
+    server->name = sclone(name);
 }
 
 
@@ -8601,19 +8771,25 @@ void httpSetServerNotifier(HttpServer *server, HttpNotifier notifier)
 void httpSetServerRoot(HttpServer *server, cchar *serverRoot)
 {
     mprFree(server->serverRoot);
-    server->serverRoot = mprStrdup(server, serverRoot);
+    server->serverRoot = sclone(serverRoot);
 }
 
 
 void httpSetServerSoftware(HttpServer *server, cchar *software)
 {
-    server->software = mprStrdup(server, software);
+    server->software = sclone(software);
 }
 
 
 void httpSetServerSsl(HttpServer *server, struct MprSsl *ssl)
 {
     server->ssl = ssl;
+}
+
+
+void httpSetListenCallback(HttpServer *server, HttpListenCallback fn)
+{
+    server->listenCallback = fn;
 }
 
 
@@ -8670,6 +8846,9 @@ void httpSetServerSsl(HttpServer *server, struct MprSsl *ssl)
  */
 
 
+
+
+static void manageStage(HttpStage *stage, int flags);
 
 
 static void defaultOpen(HttpQueue *q)
@@ -8751,12 +8930,11 @@ HttpStage *httpCreateStage(Http *http, cchar *name, int flags)
     mprAssert(http);
     mprAssert(name && *name);
 
-    if ((stage = mprAllocObj(http, HttpStage, NULL)) == 0) {
+    if ((stage = mprAllocObj(HttpStage, manageStage)) == 0) {
         return 0;
     }
     stage->flags = flags;
-    stage->name = mprStrdup(stage, name);
-
+    stage->name = sclone(name);
     stage->open = defaultOpen;
     stage->close = defaultClose;
     stage->incomingData = incomingData;
@@ -8768,11 +8946,23 @@ HttpStage *httpCreateStage(Http *http, cchar *name, int flags)
 }
 
 
+static void manageStage(HttpStage *stage, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(stage->name);
+        mprMark(stage->stageData);
+        mprMarkHash(stage->extensions);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 HttpStage *httpCloneStage(Http *http, HttpStage *stage)
 {
     HttpStage   *clone;
 
-    if ((clone = mprAllocObj(http, HttpStage, NULL)) == 0) {
+    if ((clone = mprAllocObj(HttpStage, manageStage)) == 0) {
         return 0;
     }
     *clone = *stage;
@@ -8861,6 +9051,17 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags)
 
 
 
+void httpManageTrace(HttpTrace *trace, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMarkHash(trace->include);
+        mprMarkHash(trace->exclude);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 void httpInitTrace(HttpTrace *trace)
 {
     int     dir;
@@ -8931,16 +9132,15 @@ static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf,
         seqno = rxSeq++;
     }
     if (printable) {
-        data = mprAlloc(conn, len + 1);
+        data = mprAlloc(len + 1);
         memcpy(data, buf, len);
         data[len] = '\0';
-        mprRawLog(conn, level, "\n>>>>>>>>>> %s %s packet %d, len %d (conn %d) >>>>>>>>>>\n%s", tag, msg, seqno, 
+        mprRawLog(level, "\n>>>>>>>>>> %s %s packet %d, len %d (conn %d) >>>>>>>>>>\n%s", tag, msg, seqno, 
             len, conn->seqno, data);
-        mprFree(data);
     } else {
-        mprRawLog(conn, level, "\n>>>>>>>>>> %s %s packet %d, len %d (conn %d) >>>>>>>>>> (binary)\n", tag, msg, seqno, 
+        mprRawLog(level, "\n>>>>>>>>>> %s %s packet %d, len %d (conn %d) >>>>>>>>>> (binary)\n", tag, msg, seqno, 
             len, conn->seqno);
-        data = mprAlloc(conn, len * 3 + ((len / 16) + 1) + 1);
+        data = mprAlloc(len * 3 + ((len / 16) + 1) + 1);
         digits = "0123456789ABCDEF";
         for (i = 0, cp = buf, dp = data; cp < &buf[len]; cp++) {
             *dp++ = digits[(*cp >> 4) & 0x0f];
@@ -8952,9 +9152,9 @@ static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf,
         }
         *dp++ = '\n';
         *dp = '\0';
-        mprRawLog(conn, level, "%s", data);
+        mprRawLog(level, "%s", data);
     }
-    mprRawLog(conn, level, "<<<<<<<<<< %s packet, conn %d\n\n", tag, conn->seqno);
+    mprRawLog(level, "<<<<<<<<<< %s packet, conn %d\n\n", tag, conn->seqno);
 }
 
 
@@ -8967,7 +9167,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, int
     level = trace->levels[item];
 
     if (trace->size >= 0 && total >= trace->size) {
-        mprLog(conn, level, "Abbreviating response trace for conn %d", conn->seqno);
+        mprLog(level, "Abbreviating response trace for conn %d", conn->seqno);
         trace->disable = 1;
         return;
     }
@@ -9038,7 +9238,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, int
 
 
 
-static int destroyTx(HttpTx *tx);
+static void manageTx(HttpTx *tx, int flags);
 static void setDefaultHeaders(HttpConn *conn);
 
 
@@ -9049,7 +9249,7 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
 
     http = conn->http;
 
-    if ((tx = mprAllocObj(conn->rx, HttpTx, destroyTx)) == 0) {
+    if ((tx = mprAllocObj(HttpTx, manageTx)) == 0) {
         return 0;
     }
     conn->tx = tx;
@@ -9062,10 +9262,8 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
 
     if (headers) {
         tx->headers = headers;
-        mprStealBlock(tx, headers);
     } else {
-        tx->headers = mprCreateHash(tx, HTTP_SMALL_HASH_SIZE);
-        mprSetHashCase(tx->headers, 0);
+        tx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
         setDefaultHeaders(conn);
     }
     httpInitQueue(conn, &tx->queue[HTTP_QUEUE_TRANS], "TxHead");
@@ -9074,11 +9272,26 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
 }
 
 
-static int destroyTx(HttpTx *tx)
+static void manageTx(HttpTx *tx, int flags)
 {
-    httpDestroyPipeline(tx->conn);
-    tx->conn->tx = 0;
-    return 0;
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(tx->outputPipeline);
+        httpManageQueue(&tx->queue[0], flags);
+        httpManageQueue(&tx->queue[1], flags);
+        mprMark(tx->parsedUri);
+        mprMark(tx->currentRange);
+        mprMark(tx->rangeBoundary);
+        mprMark(tx->etag);
+        mprMark(tx->method);
+        mprMark(tx->altBody);
+        mprMark(tx->file);
+        mprMark(tx->filename);
+        mprMark(tx->extension);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        httpDestroyPipeline(tx->conn);
+        tx->conn->tx = 0;
+    }
 }
 
 
@@ -9090,8 +9303,8 @@ static void addHeader(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(key && *key);
     mprAssert(value);
 
-    if (mprStrcmpAnyCase(key, "content-length") == 0) {
-        conn->tx->length = (int) mprAtoi(value, 10);
+    if (scasecmp(key, "content-length") == 0) {
+        conn->tx->length = stoi(value, 10, NULL);
     }
     mprAddHash(conn->tx->headers, key, value);
 }
@@ -9107,7 +9320,7 @@ int httpRemoveHeader(HttpConn *conn, cchar *key)
     if (tx) {
         return mprRemoveHash(tx->headers, key);
     }
-    return MPR_ERR_NOT_FOUND;
+    return MPR_ERR_CANT_FIND;
 }
 
 
@@ -9125,7 +9338,7 @@ void httpAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 
     tx = conn->tx;
     va_start(vargs, fmt);
-    value = mprVasprintf(tx, HTTP_MAX_HEADERS, fmt, vargs);
+    value = mprAsprintfv(fmt, vargs);
     va_end(vargs);
 
     if (!mprLookupHash(tx->headers, key)) {
@@ -9167,12 +9380,12 @@ void httpAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 
     tx = conn->tx;
     va_start(vargs, fmt);
-    value = mprVasprintf(tx, HTTP_MAX_HEADERS, fmt, vargs);
+    value = mprAsprintfv(fmt, vargs);
     va_end(vargs);
 
     oldValue = mprLookupHash(tx->headers, key);
     if (oldValue) {
-        addHeader(conn, key, mprAsprintf(tx->headers, -1, "%s, %s", oldValue, value));
+        addHeader(conn, key, mprAsprintf("%s, %s", oldValue, value));
     } else {
         addHeader(conn, key, value);
     }
@@ -9193,7 +9406,7 @@ void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 
     tx = conn->tx;
     va_start(vargs, fmt);
-    value = mprVasprintf(tx, HTTP_MAX_HEADERS, fmt, vargs);
+    value = mprAsprintfv(fmt, vargs);
     va_end(vargs);
     addHeader(conn, key, value);
 }
@@ -9207,7 +9420,7 @@ void httpSetSimpleHeader(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(value);
 
     tx = conn->tx;
-    addHeader(conn, key, mprStrdup(tx, value));
+    addHeader(conn, key, sclone(value));
 }
 
 
@@ -9216,9 +9429,7 @@ void httpClearHeaders(HttpConn *conn)
     HttpTx      *tx;
 
     tx = conn->tx;
-    mprFree(tx->headers);
-    tx->headers = mprCreateHash(tx, HTTP_SMALL_HASH_SIZE);
-    mprSetHashCase(tx->headers, 0);
+    tx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     setDefaultHeaders(conn);
 }
 
@@ -9238,7 +9449,7 @@ void httpFinalize(HttpConn *conn)
         return;
     }
     tx->finalized = 1;
-    httpPutForService(conn->writeq, httpCreateEndPacket(tx), 1);
+    httpPutForService(conn->writeq, httpCreateEndPacket(), 1);
     httpServiceQueues(conn);
     if (conn->state == HTTP_STATE_RUNNING && conn->writeComplete && !conn->advancing) {
         httpProcess(conn, NULL);
@@ -9274,13 +9485,12 @@ int httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
     mprAssert(tx->altBody == 0);
 
     va_start(args, fmt);
-    body = mprVasprintf(tx, HTTP_MAX_HEADERS, fmt, args);
-    tx->altBody = mprAsprintf(tx, -1,
+    body = mprAsprintfv(fmt, args);
+    tx->altBody = mprAsprintf(
         "<!DOCTYPE html>\r\n"
         "<html><head><title>%s</title></head>\r\n"
         "<body>\r\n%s\r\n</body>\r\n</html>\r\n",
         title, body);
-    mprFree(body);
     httpOmitBody(conn);
     va_end(args);
     return (int) strlen(tx->altBody);
@@ -9300,7 +9510,7 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *msg)
     tx = conn->tx;
 
     if (tx->flags & HTTP_TX_HEADERS_CREATED) {
-        mprError(conn, "Can't set response body if headers have already been created");
+        mprError("Can't set response body if headers have already been created");
         /* Connectors will detect this also and disconnect */
     } else {
         httpDiscardTransmitData(conn);
@@ -9308,7 +9518,7 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *msg)
     tx->status = status;
     if (tx->altBody == 0) {
         statusMsg = httpLookupStatus(conn->http, status);
-        emsg = mprEscapeHtml(tx, msg);
+        emsg = mprEscapeHtml(msg);
         httpFormatBody(conn, statusMsg, "<h2>Access Error: %d -- %s</h2>\r\n<p>%s</p>\r\n", status, statusMsg, emsg);
     }
 }
@@ -9345,47 +9555,49 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
 
     mprAssert(targetUri);
 
-    mprLog(conn, 3, "redirect %d %s", status, targetUri);
+    mprLog(3, "redirect %d %s", status, targetUri);
 
     rx = conn->rx;
     tx = conn->tx;
     uri = 0;
     tx->status = status;
     prev = rx->parsedUri;
-    target = httpCreateUri(tx, targetUri, 0);
+    target = httpCreateUri(targetUri, 0);
 
+    if (tx->redirectCallback) {
+        targetUri = (tx->redirectCallback)(conn, &status, target);
+    }
     if (strstr(targetUri, "://") == 0) {
         port = strchr(targetUri, ':') ? prev->port : conn->server->port;
         if (target->path[0] == '/') {
             /*
                 Absolute URL. If hostName has a port specifier, it overrides prev->port.
              */
-            uri = httpFormatUri(tx, prev->scheme, rx->hostName, port, target->path, target->reference, target->query, 1);
+            uri = httpFormatUri(prev->scheme, rx->hostName, port, target->path, target->reference, target->query, 1);
         } else {
             /*
                 Relative file redirection to a file in the same directory as the previous request.
              */
-            dir = mprStrdup(tx, rx->pathInfo);
+            dir = sclone(rx->pathInfo);
             if ((cp = strrchr(dir, '/')) != 0) {
                 /* Remove basename */
                 *cp = '\0';
             }
-            path = mprStrcat(tx, -1, dir, "/", target->path, NULL);
-            uri = httpFormatUri(tx, prev->scheme, rx->hostName, port, path, target->reference, target->query, 1);
+            path = sjoin(dir, "/", target->path, NULL);
+            uri = httpFormatUri(prev->scheme, rx->hostName, port, path, target->reference, target->query, 1);
         }
         targetUri = uri;
     }
     httpSetHeader(conn, "Location", "%s", targetUri);
     mprAssert(tx->altBody == 0);
     msg = httpLookupStatus(conn->http, status);
-    tx->altBody = mprAsprintf(tx, -1,
+    tx->altBody = mprAsprintf(
         "<!DOCTYPE html>\r\n"
         "<html><head><title>%s</title></head>\r\n"
         "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p>\r\n"
         "<address>%s at %s Port %d</address></body>\r\n</html>\r\n",
         msg, msg, targetUri, HTTP_NAME, conn->server->name, prev->port);
     httpOmitBody(conn);
-    mprFree(uri);
 }
 
 
@@ -9433,7 +9645,7 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
         }
     }
     if (webkitVersion >= 312) {
-        domain = mprStrdup(tx, rx->hostName);
+        domain = sclone(rx->hostName);
         if ((cp = strchr(domain, ':')) != 0) {
             *cp = '\0';
         }
@@ -9451,9 +9663,9 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
         domainAtt = "";
     }
     if (lifetime > 0) {
-        mprDecodeUniversalTime(tx, &tm, conn->time + (lifetime * MPR_TICKS_PER_SEC));
+        mprDecodeUniversalTime(&tm, conn->time + (lifetime * MPR_TICKS_PER_SEC));
         expiresAtt = "; expires=";
-        expires = mprFormatTime(tx, MPR_HTTP_DATE, &tm);
+        expires = mprFormatTime(MPR_HTTP_DATE, &tm);
 
     } else {
         expires = expiresAtt = "";
@@ -9467,7 +9679,7 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
        Allow multiple cookie headers. Even if the same name. Later definitions take precedence
      */
     httpAppendHeader(conn, "Set-Cookie", 
-        mprStrcat(tx, -1, name, "=", value, "; path=", path, domainAtt, domain, expiresAtt, expires, secure, NULL));
+        sjoin(name, "=", value, "; path=", path, domainAtt, domain, expiresAtt, expires, secure, NULL));
     httpAppendHeader(conn, "Cache-control", "no-cache=\"set-cookie\"");
 }
 
@@ -9492,7 +9704,10 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     HttpTx      *tx;
     HttpRange   *range;
     MprBuf      *buf;
+    MprTime     expires;
     cchar       *mimeType;
+    char        *hdr;
+    struct tm   tm;
     int         handlerFlags;
 
     mprAssert(packet->flags == HTTP_PACKET_HEADER);
@@ -9507,7 +9722,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
             tx->status = HTTP_CODE_NOT_ACCEPTABLE;
             httpFormatBody(conn, "Trace Request Denied", "<p>The TRACE method is disabled on this server.</p>");
         } else {
-            tx->altBody = mprAsprintf(tx, -1, "%s %s %s\r\n", rx->method, rx->uri, conn->protocol);
+            tx->altBody = mprAsprintf("%s %s %s\r\n", rx->method, rx->uri, conn->protocol);
         }
     } else if (rx->flags & HTTP_OPTIONS) {
         handlerFlags = tx->traceMethods;
@@ -9524,6 +9739,19 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
 
     if (tx->flags & HTTP_TX_DONT_CACHE) {
         httpAddSimpleHeader(conn, "Cache-Control", "no-cache");
+
+    } else if (rx->loc && rx->loc->expires) {
+        mimeType = mprLookupHash(tx->headers, "Content-Type");
+        expires = PTOL(mprLookupHash(rx->loc->expires, mimeType ? mimeType : ""));
+        if (expires == 0) {
+            expires = PTOL(mprLookupHash(rx->loc->expires, ""));
+        }
+        if (expires) {
+            mprDecodeUniversalTime(&tm, mprGetTime(conn) + (expires * MPR_TICKS_PER_SEC));
+            hdr = mprFormatTime(MPR_HTTP_DATE, &tm);
+            httpAddHeader(conn, "Cache-Control", "max-age=%d", expires);
+            httpAddHeader(conn, "Expires", "%s", hdr);
+        }
     }
     if (tx->etag) {
         httpAddHeader(conn, "ETag", "%s", tx->etag);
@@ -9552,7 +9780,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         httpAddHeader(conn, "Accept-Ranges", "bytes");
     }
     if (tx->extension) {
-        if ((mimeType = (char*) mprLookupMimeType(http, tx->extension)) != 0) {
+        if ((mimeType = (char*) mprLookupMimeType(tx->extension)) != 0) {
             httpAddSimpleHeader(conn, "Content-Type", mimeType);
         }
     }
@@ -9591,7 +9819,7 @@ void httpSetStatus(HttpConn *conn, int status)
 
 void httpSetMimeType(HttpConn *conn, cchar *mimeType)
 {
-    httpSetSimpleHeader(conn, "Content-Type", mprStrdup(conn->tx, mimeType));
+    httpSetSimpleHeader(conn, "Content-Type", sclone(mimeType));
 }
 
 
@@ -9679,7 +9907,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     tx->flags |= HTTP_TX_HEADERS_CREATED;
 
     if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) == mprGetLogLevel(tx)) {
-        mprLog(conn, level, "%s %s %d", rx->method, rx->uri, tx->status);
+        mprLog(level, "%s %s %d", rx->method, rx->uri, tx->status);
     }
 }
 
@@ -9760,9 +9988,12 @@ typedef struct Upload {
 } Upload;
 
 
+
 static void closeUpload(HttpQueue *q);
 static char *getBoundary(void *buf, int bufLen, void *boundary, int boundaryLen);
 static void incomingUploadData(HttpQueue *q, HttpPacket *packet);
+static void manageHttpUploadFile(HttpUploadFile *file, int flags);
+static void manageUpload(Upload *up, int flags);
 static bool matchUpload(HttpConn *conn, HttpStage *filter);
 static void openUpload(HttpQueue *q);
 static int  processContentBoundary(HttpQueue *q, char *line);
@@ -9805,7 +10036,7 @@ static bool matchUpload(HttpConn *conn, HttpStage *filter)
     }
     pat = "multipart/form-data";
     len = (int) strlen(pat);
-    if (mprStrcmpAnyCaseCount(rx->mimeType, pat, len) == 0) {
+    if (sncasecmp(rx->mimeType, pat, len) == 0) {
         rx->upload = 1;
         return 1;
     } else {
@@ -9829,7 +10060,7 @@ static void openUpload(HttpQueue *q)
     tx = conn->tx;
     rx = conn->rx;
 
-    if ((up = mprAllocObj(tx, Upload, NULL)) == 0) {
+    if ((up = mprAllocObj(Upload, manageUpload)) == 0) {
         return;
     }
     q->queueData = up;
@@ -9839,12 +10070,12 @@ static void openUpload(HttpQueue *q)
 #if BLD_WIN_LIKE
         rx->uploadDir = mprGetNormalizedPath(rx, getenv("TEMP"));
 #else
-        rx->uploadDir = mprStrdup(rx, "/tmp");
+        rx->uploadDir = sclone("/tmp");
 #endif
     }
     if ((boundary = strstr(rx->mimeType, "boundary=")) != 0) {
         boundary += 9;
-        up->boundary = mprStrcat(up, -1, "--", boundary, NULL);
+        up->boundary = sjoin("--", boundary, NULL);
         up->boundaryLen = strlen(up->boundary);
     }
     if (up->boundaryLen == 0 || *up->boundary == '\0') {
@@ -9852,6 +10083,21 @@ static void openUpload(HttpQueue *q)
         return;
     }
     httpSetFormVar(conn, "UPLOAD_DIR", rx->uploadDir);
+}
+
+
+static void manageUpload(Upload *up, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(up->currentFile);
+        mprMark(up->file);
+        mprMark(up->boundary);
+        mprMark(up->clientFilename);
+        mprMark(up->tmpPath);
+        mprMark(up->id);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 
@@ -9869,9 +10115,8 @@ static void closeUpload(HttpQueue *q)
     
     if (up->currentFile) {
         file = up->currentFile;
-        mprDeletePath(q->conn, file->filename);
+        mprDeletePath(file->filename);
         file->filename = 0;
-        mprFree(up->file);
     }
     if (rx->autoDelete) {
         httpRemoveAllUploadedFiles(q->conn);
@@ -9906,7 +10151,7 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
         httpSendPacketToNext(q, packet);
         return;
     }
-    mprLog(conn, 5, "uploadIncomingData: %d bytes", httpGetPacketLength(packet));
+    mprLog(5, "uploadIncomingData: %d bytes", httpGetPacketLength(packet));
     
     /*  
         Put the packet data onto the service queue for buffering. This aggregates input data incase we don't have
@@ -9925,14 +10170,14 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
                 Parse the next input line
              */
             line = mprGetBufStart(content);
-            mprStrTok(line, "\n", &nextTok);
+            stok(line, "\n", &nextTok);
             if (nextTok == 0) {
                 /* Incomplete line */
                 done++;
                 break; 
             }
             mprAdjustBufStart(content, (int) (nextTok - line));
-            line = mprStrTrim(line, "\r");
+            line = strim(line, "\r", MPR_TRIM_END);
         }
 
         switch (up->contentState) {
@@ -10034,12 +10279,12 @@ static int processContentHeader(HttpQueue *q, char *line)
         up->contentState = HTTP_UPLOAD_CONTENT_DATA;
         return 0;
     }
-    mprLog(conn, 5, "Header line: %s", line);
+    mprLog(5, "Header line: %s", line);
 
     headerTok = line;
-    mprStrTok(line, ": ", &rest);
+    stok(line, ": ", &rest);
 
-    if (mprStrcmpAnyCase(headerTok, "Content-Disposition") == 0) {
+    if (scasecmp(headerTok, "Content-Disposition") == 0) {
 
         /*  
             The content disposition header describes either a form
@@ -10058,38 +10303,36 @@ static int processContentHeader(HttpQueue *q, char *line)
          */
         key = rest;
         up->id = up->clientFilename = 0;
-        while (key && mprStrTok(key, ";\r\n", &nextPair)) {
+        while (key && stok(key, ";\r\n", &nextPair)) {
 
-            key = mprStrTrim(key, " ");
-            mprStrTok(key, "= ", &value);
-            value = mprStrTrim(value, "\"");
+            key = strim(key, " ", MPR_TRIM_BOTH);
+            stok(key, "= ", &value);
+            value = strim(value, "\"", MPR_TRIM_BOTH);
 
-            if (mprStrcmpAnyCase(key, "form-data") == 0) {
+            if (scasecmp(key, "form-data") == 0) {
                 /* Nothing to do */
 
-            } else if (mprStrcmpAnyCase(key, "name") == 0) {
-                mprFree(up->id);
-                up->id = mprStrdup(up, value);
+            } else if (scasecmp(key, "name") == 0) {
+                up->id = sclone(value);
 
-            } else if (mprStrcmpAnyCase(key, "filename") == 0) {
+            } else if (scasecmp(key, "filename") == 0) {
                 if (up->id == 0) {
                     httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad upload state. Missing name field");
                     return MPR_ERR_BAD_STATE;
                 }
-                mprFree(up->clientFilename);
-                up->clientFilename = mprStrdup(up, value);
+                up->clientFilename = sclone(value);
                 /*  
                     Create the file to hold the uploaded data
                  */
-                up->tmpPath = mprGetTempPath(up, rx->uploadDir);
+                up->tmpPath = mprGetTempPath(rx->uploadDir);
                 if (up->tmpPath == 0) {
                     httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, 
                         "Can't create upload temp file %s. Check upload temp dir %s", up->tmpPath, rx->uploadDir);
                     return MPR_ERR_CANT_OPEN;
                 }
-                mprLog(conn, 5, "File upload of: %s stored as %s", up->clientFilename, up->tmpPath);
+                mprLog(5, "File upload of: %s stored as %s", up->clientFilename, up->tmpPath);
 
-                up->file = mprOpen(up, up->tmpPath, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
+                up->file = mprOpen(up->tmpPath, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
                 if (up->file == 0) {
                     httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't open upload temp file %s", up->tmpPath);
                     return MPR_ERR_BAD_STATE;
@@ -10097,20 +10340,32 @@ static int processContentHeader(HttpQueue *q, char *line)
                 /*  
                     Create the files[id]
                  */
-                file = up->currentFile = mprAllocObj(up, HttpUploadFile, NULL);
-                file->clientFilename = mprStrdup(file, up->clientFilename);
-                file->filename = mprStrdup(file, up->tmpPath);
+                file = up->currentFile = mprAllocObj(HttpUploadFile, manageHttpUploadFile);
+                file->clientFilename = sclone(up->clientFilename);
+                file->filename = sclone(up->tmpPath);
             }
             key = nextPair;
         }
 
-    } else if (mprStrcmpAnyCase(headerTok, "Content-Type") == 0) {
+    } else if (scasecmp(headerTok, "Content-Type") == 0) {
         if (up->clientFilename) {
-            mprLog(conn, 5, "Set files[%s][CONTENT_TYPE] = %s", up->id, rest);
-            up->currentFile->contentType = mprStrdup(up->currentFile, rest);
+            mprLog(5, "Set files[%s][CONTENT_TYPE] = %s", up->id, rest);
+            up->currentFile->contentType = sclone(rest);
         }
     }
     return 1;
+}
+
+
+static void manageHttpUploadFile(HttpUploadFile *file, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(file->filename);
+        mprMark(file->clientFilename);
+        mprMark(file->contentType);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 
@@ -10129,21 +10384,17 @@ static void defineFileFields(HttpQueue *q, Upload *up)
     }
     up = q->queueData;
     file = up->currentFile;
-    key = mprStrcat(q, -1, "FILE_CLIENT_FILENAME_", up->id, NULL);
+    key = sjoin("FILE_CLIENT_FILENAME_", up->id, NULL);
     httpSetFormVar(conn, key, file->clientFilename);
-    mprFree(key);
 
-    key = mprStrcat(q, -1, "FILE_CONTENT_TYPE_", up->id, NULL);
+    key = sjoin("FILE_CONTENT_TYPE_", up->id, NULL);
     httpSetFormVar(conn, key, file->contentType);
-    mprFree(key);
 
-    key = mprStrcat(q, -1, "FILE_FILENAME_", up->id, NULL);
+    key = sjoin("FILE_FILENAME_", up->id, NULL);
     httpSetFormVar(conn, key, file->filename);
-    mprFree(key);
 
-    key = mprStrcat(q, -1, "FILE_SIZE_", up->id, NULL);
+    key = sjoin("FILE_SIZE_", up->id, NULL);
     httpSetIntFormVar(conn, key, file->size);
-    mprFree(key);
 }
 
 
@@ -10176,7 +10427,7 @@ static int writeToFile(HttpQueue *q, char *data, int len)
             return MPR_ERR_CANT_WRITE;
         }
         file->size += len;
-        mprLog(q, 6, "uploadFilter: Wrote %d bytes to %s", len, up->tmpPath);
+        mprLog(6, "uploadFilter: Wrote %d bytes to %s", len, up->tmpPath);
     }
     return 0;
 }
@@ -10213,7 +10464,7 @@ static int processContentData(HttpQueue *q)
     }
     bp = getBoundary(mprGetBufStart(content), size, up->boundary, up->boundaryLen);
     if (bp == 0) {
-        mprLog(q, 6, "uploadFilter: Got boundary filename %x", up->clientFilename);
+        mprLog(6, "uploadFilter: Got boundary filename %x", up->clientFilename);
         if (up->clientFilename) {
             /*  
                 No signature found yet. probably more data to come. Must handle split boundaries.
@@ -10256,12 +10507,12 @@ static int processContentData(HttpQueue *q)
                 Normal string form data variables
              */
             data[dataLen] = '\0'; 
-            mprLog(conn, 5, "uploadFilter: form[%s] = %s", up->id, data);
-            key = mprUriDecode(q, up->id);
-            data = mprUriDecode(q, data);
+            mprLog(5, "uploadFilter: form[%s] = %s", up->id, data);
+            key = mprUriDecode(up->id);
+            data = mprUriDecode(data);
             httpSetFormVar(conn, key, data);
             if (packet == 0) {
-                packet = httpCreatePacket(q, HTTP_BUFSIZE);
+                packet = httpCreatePacket(HTTP_BUFSIZE);
             }
             if (mprGetBufLength(packet->content) > 0) {
                 /*
@@ -10278,7 +10529,6 @@ static int processContentData(HttpQueue *q)
          */
         mprFree(up->file);
         up->file = 0;
-        mprFree(up->clientFilename);
         up->clientFilename = 0;
     }
     if (packet) {
@@ -10374,12 +10624,13 @@ static char *getBoundary(void *buf, int bufLen, void *boundary, int boundaryLen)
 
 static int getPort(HttpUri *uri);
 static int getDefaultPort(cchar *scheme);
+static void manageUri(HttpUri *uri, int flags);
 static void trimPathToDirname(HttpUri *uri);
 
 
 /*  Create and initialize a URI. This accepts full URIs with schemes (http:) and partial URLs
  */
-HttpUri *httpCreateUri(MprCtx ctx, cchar *uri, int complete)
+HttpUri *httpCreateUri(cchar *uri, int complete)
 {
     HttpUri     *up;
     char        *tok, *cp, *last_delim, *hostbuf;
@@ -10387,16 +10638,15 @@ HttpUri *httpCreateUri(MprCtx ctx, cchar *uri, int complete)
 
     mprAssert(uri);
 
-    if ((up = mprAllocObj(ctx, HttpUri, NULL)) == 0) {
+    if ((up = mprAllocObj(HttpUri, manageUri)) == 0) {
         return 0;
     }
-    /*  
-        Allocate a single buffer to hold all the cracked fields.
-     */
+
+    /*  Allocate a single buffer to hold all the cracked fields.  */
     ulen = (int) strlen(uri);
     len = ulen *  2 + 3;
-    up->uri = mprStrdup(up, uri);
-    up->parsedUriBuf = (char*) mprAlloc(up, len *  sizeof(char));
+    up->uri = sclone(uri);
+    up->parsedUriBuf = mprAlloc(len *  sizeof(char));
 
     hostbuf = &up->parsedUriBuf[ulen+1];
     strcpy(up->parsedUriBuf, uri);
@@ -10433,7 +10683,7 @@ HttpUri *httpCreateUri(MprCtx ctx, cchar *uri, int complete)
         if ((cp = strchr(tok, '/')) != NULL) {
             c = *cp;
             *cp = '\0';
-            mprStrcpy(hostbuf, ulen + 1, up->host);
+            scopy(hostbuf, ulen + 1, up->host);
             *cp = c;
             up->host = hostbuf;
             up->path = cp;
@@ -10474,13 +10724,13 @@ HttpUri *httpCreateUri(MprCtx ctx, cchar *uri, int complete)
             if (last_delim <= cp) {
                 up->ext = cp + 1;
 #if BLD_WIN_LIKE
-                mprStrLower(up->ext);
+                slower(up->ext);
 #endif
             }
         } else {
             up->ext = cp + 1;
 #if BLD_WIN_LIKE
-            mprStrLower(up->ext);
+            slower(up->ext);
 #endif
         }
     }
@@ -10491,27 +10741,46 @@ HttpUri *httpCreateUri(MprCtx ctx, cchar *uri, int complete)
 }
 
 
+static void manageUri(HttpUri *uri, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+#if UNUSED
+        mprMark(uri->scheme);
+        mprMark(uri->host);
+        mprMark(uri->path);
+        mprMark(uri->ext);
+        mprMark(uri->reference);
+        mprMark(uri->query);
+#endif
+        mprMark(uri->uri);
+        mprMark(uri->parsedUriBuf);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 /*  
     Create and initialize a URI. This accepts full URIs with schemes (http:) and partial URLs
  */
-HttpUri *httpCreateUriFromParts(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, 
-        cchar *query, int complete)
+HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, cchar *query, 
+        int complete)
 {
     HttpUri     *up;
     char        *cp, *last_delim;
 
-    if ((up = mprAllocObj(ctx, HttpUri, NULL)) == 0) {
+    if ((up = mprAllocObj(HttpUri, NULL)) == 0) {
         return 0;
     }
     if (scheme) {
-        up->scheme = mprStrdup(up, scheme);
+        up->scheme = sclone(scheme);
     } else if (complete) {
         up->scheme = "http";
     }
     if (host) {
-        up->host = mprStrdup(up, host);
+        up->host = sclone(host);
         if ((cp = strchr(host, ':')) && port == 0) {
-            port = (int) mprAtoi(++cp, 10);
+            port = stoi(++cp, 10, NULL);
         }
     } else if (complete) {
         host = "localhost";
@@ -10523,29 +10792,29 @@ HttpUri *httpCreateUriFromParts(MprCtx ctx, cchar *scheme, cchar *host, int port
         while (path[0] == '/' && path[1] == '/') {
             path++;
         }
-        up->path = mprStrdup(up, path);
+        up->path = sclone(path);
     }
     if (up->path == 0) {
         up->path = "/";
     }
     if (reference) {
-        up->reference = mprStrdup(up, reference);
+        up->reference = sclone(reference);
     }
     if (query) {
-        up->query = mprStrdup(up, query);
+        up->query = sclone(query);
     }
     if ((cp = strrchr(up->path, '.')) != NULL) {
         if ((last_delim = strrchr(up->path, '/')) != NULL) {
             if (last_delim <= cp) {
                 up->ext = cp + 1;
 #if BLD_WIN_LIKE
-                mprStrLower(up->ext);
+                slower(up->ext);
 #endif
             }
         } else {
             up->ext = cp + 1;
 #if BLD_WIN_LIKE
-            mprStrLower(up->ext);
+            slower(up->ext);
 #endif
         }
     }
@@ -10553,27 +10822,27 @@ HttpUri *httpCreateUriFromParts(MprCtx ctx, cchar *scheme, cchar *host, int port
 }
 
 
-HttpUri *httpCloneUri(MprCtx ctx, HttpUri *base, int complete)
+HttpUri *httpCloneUri(HttpUri *base, int complete)
 {
     HttpUri     *up;
     char        *path, *cp, *last_delim;
     int         port;
 
-    if ((up = mprAllocObj(ctx, HttpUri, NULL)) == 0) {
+    if ((up = mprAllocObj(HttpUri, NULL)) == 0) {
         return 0;
     }
     port = base->port;
     path = base->path;
 
     if (base->scheme) {
-        up->scheme = mprStrdup(up, base->scheme);
+        up->scheme = sclone(base->scheme);
     } else if (complete) {
         up->scheme = "http";
     }
     if (base->host) {
-        up->host = mprStrdup(up, base->host);
+        up->host = sclone(base->host);
         if ((cp = strchr(base->host, ':')) && port == 0) {
-            port = (int) mprAtoi(++cp, 10);
+            port = (int) stoi(++cp, 10, NULL);
         }
     } else if (complete) {
         base->host = "localhost";
@@ -10584,29 +10853,29 @@ HttpUri *httpCloneUri(MprCtx ctx, HttpUri *base, int complete)
     if (path) {
         while (path[0] == '/' && path[1] == '/')
             path++;
-        up->path = mprStrdup(up, path);
+        up->path = sclone(path);
     }
     if (up->path == 0) {
         up->path = "/";
     }
     if (base->reference) {
-        up->reference = mprStrdup(up, base->reference);
+        up->reference = sclone(base->reference);
     }
     if (base->query) {
-        up->query = mprStrdup(up, base->query);
+        up->query = sclone(base->query);
     }
     if ((cp = strrchr(up->path, '.')) != NULL) {
         if ((last_delim = strrchr(up->path, '/')) != NULL) {
             if (last_delim <= cp) {
                 up->ext = cp + 1;
 #if BLD_WIN_LIKE
-                mprStrLower(up->ext);
+                slower(up->ext);
 #endif
             }
         } else {
             up->ext = cp + 1;
 #if BLD_WIN_LIKE
-            mprStrLower(up->ext);
+            slower(up->ext);
 #endif
         }
     }
@@ -10619,8 +10888,8 @@ HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *missing)
     char        *scheme, *host;
     int         port;
 
-    scheme = (missing) ? mprStrdup(uri, missing->scheme) : "http";
-    host = (missing) ? mprStrdup(uri, missing->host) : "localhost";
+    scheme = (missing) ? sclone(missing->scheme) : "http";
+    host = (missing) ? sclone(missing->host) : "localhost";
     port = (missing) ? missing->port : 0;
 
     if (uri->scheme == 0) {
@@ -10643,8 +10912,7 @@ HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *missing)
     Format a fully qualified URI
     If complete is true, missing elements are completed
  */
-char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, cchar *query, 
-        int complete)
+char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, cchar *query, int complete)
 {
     char    portBuf[16], *uri;
     cchar   *hostDelim, *portDelim, *pathDelim, *queryDelim, *referenceDelim;
@@ -10667,7 +10935,7 @@ char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *pat
         portDelim = 0;
     } else {
         if (port != 0 && port != getDefaultPort(scheme)) {
-            mprItoa(portBuf, sizeof(portBuf), port, 10);
+            itos(portBuf, sizeof(portBuf), port, 10);
             portDelim = ":";
         } else {
             portBuf[0] = '\0';
@@ -10697,11 +10965,10 @@ char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *pat
         queryDelim = query = "";
     }
     if (portDelim) {
-        uri = mprStrcat(ctx, -1, scheme, hostDelim, host, portDelim, portBuf, pathDelim, path, referenceDelim, 
-            reference, queryDelim, query, NULL);
+        uri = sjoin(scheme, hostDelim, host, portDelim, portBuf, pathDelim, path, referenceDelim, reference, 
+            queryDelim, query, NULL);
     } else {
-        uri = mprStrcat(ctx, -1, scheme, hostDelim, host, pathDelim, path, referenceDelim, reference, queryDelim, 
-            query, NULL);
+        uri = sjoin(scheme, hostDelim, host, pathDelim, path, referenceDelim, reference, queryDelim, query, NULL);
     }
     return uri;
 }
@@ -10712,32 +10979,32 @@ char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *pat
 
     uri = target.relative(base)
  */
-HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
+HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int dup)
 {
     HttpUri     *uri;
     char        *targetPath, *basePath, *bp, *cp, *tp, *startDiff;
     int         i, baseSegments, commonSegments;
 
     if (target == 0) {
-        return (dup) ? httpCloneUri(ctx, base, 0) : base;
+        return (dup) ? httpCloneUri(base, 0) : base;
     }
     if (!(target->path && target->path[0] == '/') || !((base->path && base->path[0] == '/'))) {
         /* If target is relative, just use it. If base is relative, can't use it because we don't know where it is */
-        return (dup) ? httpCloneUri(ctx, target, 0) : target;
+        return (dup) ? httpCloneUri(target, 0) : target;
     }
     if (base->scheme && target->scheme && strcmp(base->scheme, target->scheme) != 0) {
-        return (dup) ? httpCloneUri(ctx, target, 0) : target;
+        return (dup) ? httpCloneUri(target, 0) : target;
     }
     if (base->host && target->host && (base->host && strcmp(base->host, target->host) != 0)) {
-        return (dup) ? httpCloneUri(ctx, target, 0) : target;
+        return (dup) ? httpCloneUri(target, 0) : target;
     }
     if (getPort(base) != getPort(target)) {
-        return (dup) ? httpCloneUri(ctx, target, 0) : target;
+        return (dup) ? httpCloneUri(target, 0) : target;
     }
 
     //  OPT -- Could avoid free if already normalized
-    targetPath = httpNormalizeUriPath(ctx, target->path);
-    basePath = httpNormalizeUriPath(ctx, base->path);
+    targetPath = httpNormalizeUriPath(target->path);
+    basePath = httpNormalizeUriPath(base->path);
 
     /* Count trailing "/" */
     for (baseSegments = 0, bp = basePath; *bp; bp++) {
@@ -10775,14 +11042,14 @@ HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
         startDiff++;
     }
     
-    if ((uri = httpCloneUri(ctx, target, 0)) == 0) {
+    if ((uri = httpCloneUri(target, 0)) == 0) {
         return 0;
     }
     uri->host = 0;
     uri->scheme = 0;
     uri->port = 0;
 
-    uri->path = cp = mprAlloc(ctx, baseSegments * 3 + (int) strlen(target->path) + 2);
+    uri->path = cp = mprAlloc(baseSegments * 3 + (int) strlen(target->path) + 2);
     for (i = commonSegments; i < baseSegments; i++) {
         *cp++ = '.';
         *cp++ = '.';
@@ -10799,8 +11066,6 @@ HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup)
     } else {
         strcpy(uri->path, ".");
     }
-    mprFree(targetPath);
-    mprFree(basePath);
     return uri;
 }
 
@@ -10813,30 +11078,30 @@ HttpUri *httpJoinUriPath(HttpUri *result, HttpUri *base, HttpUri *other)
     char    *sep;
 
     if (other->path[0] == '/') {
-        result->path = mprStrdup(result, other->path);
+        result->path = sclone(other->path);
     } else {
         sep = ((base->path[0] == '\0' || base->path[strlen(base->path) - 1] == '/') || 
                (other->path[0] == '\0' || other->path[0] == '/'))  ? "" : "/";
-        result->path = mprStrcat(result, -1, base->path, sep, other->path, NULL);
+        result->path = sjoin(base->path, sep, other->path, NULL);
     }
     return result;
 }
 
 
-HttpUri *httpJoinUri(MprCtx ctx, HttpUri *uri, int argc, HttpUri **others)
+HttpUri *httpJoinUri(HttpUri *uri, int argc, HttpUri **others)
 {
     HttpUri     *other;
     int         i;
 
-    uri = httpCloneUri(ctx, uri, 0);
+    uri = httpCloneUri(uri, 0);
 
     for (i = 0; i < argc; i++) {
         other = others[i];
         if (other->scheme) {
-            uri->scheme = mprStrdup(uri, other->scheme);
+            uri->scheme = sclone(other->scheme);
         }
         if (other->host) {
-            uri->host = mprStrdup(uri, other->host);
+            uri->host = sclone(other->host);
         }
         if (other->port) {
             uri->port = other->port;
@@ -10845,13 +11110,13 @@ HttpUri *httpJoinUri(MprCtx ctx, HttpUri *uri, int argc, HttpUri **others)
             httpJoinUriPath(uri, uri, other);
         }
         if (other->reference) {
-            uri->reference = mprStrdup(uri, other->reference);
+            uri->reference = sclone(other->reference);
         }
         if (other->query) {
-            uri->query = mprStrdup(uri, other->query);
+            uri->query = sclone(other->query);
         }
     }
-    uri->ext = (char*) mprGetPathExtension(uri, uri->path);
+    uri->ext = (char*) mprGetPathExtension(uri->path);
     return uri;
 }
 
@@ -10869,13 +11134,7 @@ HttpUri *httpMakeUriLocal(HttpUri *uri)
 
 void httpNormalizeUri(HttpUri *uri)
 {
-    char    *old;
-
-    old = uri->path;
-    uri->path = httpNormalizeUriPath(uri, uri->path);
-    if (mprIsValid(old)) {
-        mprFree(old);
-    }
+    uri->path = httpNormalizeUriPath(uri->path);
 }
 
 
@@ -10883,22 +11142,21 @@ void httpNormalizeUri(HttpUri *uri)
     Normalize a URI path to remove redundant "./" and cleanup "../" and make separator uniform. Does not make an abs path.
     It does not map separators nor change case. 
  */
-char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
+char *httpNormalizeUriPath(cchar *pathArg)
 {
     char    *dupPath, *path, *sp, *dp, *mark, **segments;
     int     firstc, j, i, nseg, len;
 
     if (pathArg == 0 || *pathArg == '\0') {
-        return mprStrdup(ctx, "");
+        return sclone("");
     }
     len = (int) strlen(pathArg);
-    if ((dupPath = mprAlloc(ctx, len + 2)) == 0) {
+    if ((dupPath = mprAlloc(len + 2)) == 0) {
         return NULL;
     }
     strcpy(dupPath, pathArg);
 
-    if ((segments = mprAlloc(ctx, sizeof(char*) * (len + 1))) == 0) {
-        mprFree(dupPath);
+    if ((segments = mprAlloc(sizeof(char*) * (len + 1))) == 0) {
         return NULL;
     }
     nseg = len = 0;
@@ -10942,7 +11200,7 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
     }
     nseg = j;
     mprAssert(nseg >= 0);
-    if ((path = mprAlloc(ctx, len + nseg + 1)) != 0) {
+    if ((path = mprAlloc(len + nseg + 1)) != 0) {
         for (i = 0, dp = path; i < nseg; ) {
             strcpy(dp, segments[i]);
             len = (int) strlen(segments[i]);
@@ -10953,18 +11211,16 @@ char *httpNormalizeUriPath(MprCtx ctx, cchar *pathArg)
         }
         *dp = '\0';
     }
-    mprFree(dupPath);
-    mprFree(segments);
     return path;
 }
 
 
-HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, int local)
+HttpUri *httpResolveUri(HttpUri *base, int argc, HttpUri **others, int local)
 {
     HttpUri     *current, *other;
     int         i;
 
-    if ((current = httpCloneUri(ctx, base, 0)) == 0) {
+    if ((current = httpCloneUri(base, 0)) == 0) {
         return 0;
     }
     if (local) {
@@ -10981,10 +11237,10 @@ HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, i
     for (i = 0; i < argc; i++) {
         other = others[i];
         if (other->scheme) {
-            current->scheme = mprStrdup(current, other->scheme);
+            current->scheme = sclone(other->scheme);
         }
         if (other->host) {
-            current->host = mprStrdup(current, other->host);
+            current->host = sclone(other->host);
         }
         if (other->port) {
             current->port = other->port;
@@ -10994,20 +11250,20 @@ HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, i
             httpJoinUriPath(current, current, other);
         }
         if (other->reference) {
-            current->reference = mprStrdup(current, other->reference);
+            current->reference = sclone(other->reference);
         }
         if (other->query) {
-            current->query = mprStrdup(current, other->query);
+            current->query = sclone(other->query);
         }
     }
-    current->ext = (char*) mprGetPathExtension(current, current->path);
+    current->ext = (char*) mprGetPathExtension(current->path);
     return current;
 }
 
 
-char *httpUriToString(MprCtx ctx, HttpUri *uri, int complete)
+char *httpUriToString(HttpUri *uri, int complete)
 {
-    return httpFormatUri(ctx, uri->scheme, uri->host, uri->port, uri->path, uri->reference, uri->query, complete);
+    return httpFormatUri(uri->scheme, uri->host, uri->port, uri->path, uri->reference, uri->query, complete);
 }
 
 

@@ -6,6 +6,8 @@ Commercial license are also available for those who require them.  The Embedthis
 
     http://www.embedthis.com/downloads/licensing.html
 
+Some components of the sofware are licensed from third parties. See the end of this document for a list of licensed third party software.
+
 ---------------------------------------------------------------------------------------------
 
 GNU GENERAL PUBLIC LICENSE
@@ -99,3 +101,17 @@ NO WARRANTY
 12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
 -- END OF TERMS AND CONDITIONS --
+
+
+Third Party Components
+---------------------------------------------------------------------------------------------
+
+1) Build Tools. Some of the tools used to build the Licensed Software are licensed under a GPL license. They are not part of the binary product nor are they normally deployed with the software after it is built into binary form.
+2) Perl Regular Expressions. Portions of the Perl Regular Expression Library (pcre) are used. These are covered by the PCRE license. The Perl regular expression library is an optional component of the Licensed Software.
+3) SQLite. The SQLite library is included as an optional component of the Licensed Software. It is covered by the SQLite license.
+4) MatrixSSL. The MatrixSSL interface contains some licensed code from PeerSec. MatrixSSL is an optional component.
+5) DTOA (Decimal to Ascii conversion code). This is used in the runtime core. It is licensed by Lucent with a BSD style license.
+6) JQuery and plugins. These optional components may be deployed in client-side browser user interfaces. They are not part of the binary product. JQuery is licensed under an MIT or GPL license. Some plugins have other licenses. 
+7) Hashing algorithm inspired by Paul Hsieh at http://www.azillionmonkeys.com/qed/hash.html
+
+Contributors have provided other portions of the software that are covered by the Embedthis Contributor license that grants Embedthis sufficient rights to execute this license Agreement.

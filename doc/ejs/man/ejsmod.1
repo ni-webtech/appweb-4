@@ -4,11 +4,11 @@ ejsmod \- Ejscript Module Generator
 .SH SYNOPSIS
 .B ejsmod
 [\fI--cslots\fR] 
-[\fI--empty\fR]
+[\fI--depends\fR]
 [\fI--html path\fR] 
 [\fI--listing\fR]
+[\fI--require 'module ...'\fR]
 [\fI--search ejsPath\fR]
-[\fI--showBuiltin\fR]
 [\fI--showDebug\fR]
 [\fI--version\fR]
 modules ...
@@ -39,9 +39,8 @@ samples for further information.
 \fB\--cslots\fR
 Generate slot binding definition headers for the input modules. 
 .TP
-\fB\--empty\fR
-Start with an empty interpreter without the core language types such as Object, Array and Number. This option is 
-used to build the foundation ejs.mod module which contains the core system types.
+\fB\--depends\fR
+Generate the dependant modules required by the input modules.
 .TP
 \fB\--html dir\fR
 Generate HTML documentation to the specified directory. The source files must have been compiled by \fBejsc\fR 
@@ -49,6 +48,9 @@ with the --doc switch to include the documentation strings in the module files.
 .TP
 \fB\--listing\fR
 Generate symbolic assembler files for each input module.
+.TP
+\fB\--require 'module ...'\fR
+List of modules to preload before loading the input modules.
 .TP
 \fB\--search ejsPath\fR
 Set the module search path. The module search path is a set of directories that the \fBejsmod\fR command will use
@@ -72,9 +74,6 @@ Given a module named "a.b.c" in a script, \fBejsmod\fR will use the following se
 .TP
 \fB\--showDebug\fR
 Show debug instructions in the symbolic assembler listings.
-.TP
-\fB\--showBuiltin\fR
-Show built-in properties in HTML documentation, assembler listings and slot binding files.
 .TP
 \fB\--version\fR
 Print the \fBejsmod\fR command version and exit.

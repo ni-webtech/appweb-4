@@ -31,7 +31,7 @@ static char            *defaultHost;
 
 /******************************* Forward Declarations *************************/
 
-static void parseHostSwitch(MprCtx ctx, char **host, int *port);
+static void parseHostSwitch(char **host, int *port);
 
 /************************************* Code ***********************************/
 
@@ -42,19 +42,19 @@ MAIN(testAppWeb, int argc, char *argv[])
     int             rc;
 
     mpr = mprCreate(argc, argv, 0);
-    mprSetAppName(mpr, argv[0], argv[0], BLD_VERSION);
+    mprSetAppName(argv[0], argv[0], BLD_VERSION);
 
     defaultHost = "127.0.0.1";
     defaultPort = 4100;
 
     ts = mprCreateTestService(mpr);
     if (ts == 0) {
-        mprError(mpr, "Can't create test service");
+        mprError("Can't create test service");
         exit(2);
     }
     
     if (mprParseTestArgs(ts, argc, argv) < 0) {
-        mprPrintfError(mpr, "\n"
+        mprPrintfError("\n"
             "  Commands specifically for %s\n"
             "    --host ip:port      # Set the default host address for testing\n\n",
             mprGetAppName(mpr));
@@ -62,14 +62,14 @@ MAIN(testAppWeb, int argc, char *argv[])
         exit(3);
     }
     
-    parseHostSwitch(ts, &defaultHost, &defaultPort);
+    parseHostSwitch(&defaultHost, &defaultPort);
     gp = mprAddTestGroup(ts, &master);
     if (gp == 0) {
         exit(4);
     }
 
 #if BLD_FEATURE_SSL
-    if (!mprLoadSsl(mpr, 0)) {
+    if (!mprLoadSsl(0)) {
         return 0;
     }
 #endif
@@ -78,7 +78,7 @@ MAIN(testAppWeb, int argc, char *argv[])
         Need a background event thread as we use the main thread to run the tests.
      */
     if (mprStart(mpr)) {
-        mprError(mpr, "Can't start mpr services");
+        mprError("Can't start mpr services");
         exit(5);
     }
 
@@ -92,7 +92,7 @@ MAIN(testAppWeb, int argc, char *argv[])
 }
 
 
-static void parseHostSwitch(MprCtx ctx, char **host, int *port) 
+static void parseHostSwitch(char **host, int *port) 
 {
     char    *ip, *cp;
     int     i;
@@ -109,7 +109,7 @@ static void parseHostSwitch(MprCtx ctx, char **host, int *port)
             if (strncmp(ip, "http://", 7) == 0) {
                 ip += 7;
             }
-            ip = mprStrdup(ctx, ip);
+            ip = sclone(ip);
             if ((cp = strchr(ip, ':')) != 0) {
                 *cp++ = '\0';
                 *port = atoi(cp);
@@ -127,9 +127,7 @@ int startRequest(MprTestGroup *gp, cchar *method, cchar *uri)
     Http        *http;
     HttpConn    *conn;
 
-    mprFree(gp->content);
     gp->content = 0;
-
     http = getHttp(gp);
 
     if (*uri == '/') {
@@ -164,13 +162,13 @@ bool simpleGet(MprTestGroup *gp, cchar *uri, int expectStatus)
 
     assert(status == expectStatus);
     if (status != expectStatus) {
-        mprLog(gp, 0, "simpleGet: HTTP response code %d, expected %d", status, expectStatus);
+        mprLog(0, "simpleGet: HTTP response code %d, expected %d", status, expectStatus);
         return 0;
     }
     assert(httpGetError(gp->conn) != 0);
     gp->content = httpReadString(gp->conn);
     assert(gp->content != NULL);
-    mprLog(gp, 4, "Response content %s", gp->content);
+    mprLog(4, "Response content %s", gp->content);
     return 1;
 }
 
@@ -206,7 +204,7 @@ bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
     }
     status = httpGetStatus(conn);
     if (status != expectStatus) {
-        mprLog(gp, 0, "Client failed for %s, response code: %d, msg %s\n", uri, status, httpGetStatusMessage(conn));
+        mprLog(0, "Client failed for %s, response code: %d, msg %s\n", uri, status, httpGetStatusMessage(conn));
         return 0;
     }
     gp->content = httpReadString(conn);
@@ -214,7 +212,7 @@ bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
     if (! assert(gp->content != 0 && contentLen > 0)) {
         return 0;
     }
-    mprLog(gp, 4, "Response content %s", gp->content);
+    mprLog(4, "Response content %s", gp->content);
     return 1;
 }
 
@@ -246,7 +244,7 @@ bool simplePost(MprTestGroup *gp, char *uri, char *bodyData, int len, int expect
 
     status = httpGetStatus(conn);
     if (status != expectStatus) {
-        mprLog(gp, 0, "Client failed for %s, response code: %d, msg %s\n", uri, status, httpGetStatusMessage(conn));
+        mprLog(0, "Client failed for %s, response code: %d, msg %s\n", uri, status, httpGetStatusMessage(conn));
         return 0;
     }
     gp->content = httpReadString(conn);
@@ -254,7 +252,7 @@ bool simplePost(MprTestGroup *gp, char *uri, char *bodyData, int len, int expect
     if (! assert(gp->content != 0 && contentLen > 0)) {
         return 0;
     }
-    mprLog(gp, 4, "Response content %s", gp->content);
+    mprLog(4, "Response content %s", gp->content);
     return 1;
 }
 
@@ -265,14 +263,14 @@ bool bulkPost(MprTestGroup *gp, char *url, int size, int expectStatus)
     int     i, j;
     bool    success;
 
-    post = (char*) mprAlloc(gp, size + 1);
+    post = (char*) mprAlloc(size + 1);
     assert(post != 0);
 
     for (i = 0; i < size; i++) {
         if (i > 0) {
-            mprSprintf(gp, &post[i], 10, "&%07d=", i / 64);
+            mprSprintf(&post[i], 10, "&%07d=", i / 64);
         } else {
-            mprSprintf(gp, &post[i], 10, "%08d=", i / 64);
+            mprSprintf(&post[i], 10, "%08d=", i / 64);
         }
         for (j = i + 9; j < (i + 63); j++) {
             post[j] = 'a';
@@ -284,7 +282,6 @@ bool bulkPost(MprTestGroup *gp, char *url, int size, int expectStatus)
 
     success = simplePost(gp, url, post, strlen(post), expectStatus);
     assert(success);
-    mprFree(post);
     return success;
 }
 
@@ -320,14 +317,12 @@ bool match(MprTestGroup *gp, char *key, char *value)
     if (vp == 0 && value == 0) {
         return 1;
     }
-    trim = mprStrTrim(vp, "\"");
+    trim = strim(vp, "\"", MPR_TRIM_BOTH);
     if (vp == 0 || value == 0 || strcmp(trim, value) != 0) {
-        mprLog(gp, 1, "Match %s failed. Got \"%s\" expected \"%s\"", key, vp, value);
-        mprLog(gp, 1, "Content %s", gp->content);
-        mprFree(vp);
+        mprLog(1, "Match %s failed. Got \"%s\" expected \"%s\"", key, vp, value);
+        mprLog(1, "Content %s", gp->content);
         return 0;
     }
-    mprFree(vp);
     return 1;
 }
 
@@ -343,18 +338,16 @@ bool matchAnyCase(MprTestGroup *gp, char *key, char *value)
     if (vp == 0 && value == 0) {
         return 1;
     }
-    trim = mprStrTrim(vp, "\"");
+    trim = strim(vp, "\"", MPR_TRIM_BOTH);
 #if BLD_WIN_LIKE
-    if (vp == 0 || mprStrcmpAnyCase(trim, value) != 0)
+    if (vp == 0 || sncasecmp(trim, value) != 0)
 #else
     if (vp == 0 || value == 0 || strcmp(trim, value) != 0)
 #endif
     {
-        mprLog(gp, 1, "Match %s failed. Got %s expected %s", key, vp, value);
-        mprFree(vp);
+        mprLog(1, "Match %s failed. Got %s expected %s", key, vp, value);
         return 0;
     }
-    mprFree(vp);
     return 1;
 }
 
@@ -368,7 +361,7 @@ char *getValue(MprTestGroup *gp, char *key)
 
     value = lookupValue(gp, key);
     if (value == 0) {
-        return mprStrdup(gp, "");
+        return sclone("");
     } else {
         return value;
     }
@@ -406,13 +399,12 @@ char *lookupValue(MprTestGroup *gp, char *key)
     } else {
         nextToken += 1;
     }
-    result = mprStrdup(gp, nextToken);
+    result = sclone(nextToken);
     for (bp = result; *bp && *bp != '<' && *bp != ','; bp++) {
         ;
     }
     *bp++ = '\0';
     if (strcmp(result, "null") == 0) {
-        mprFree(result);
         return 0;
     }
     return result;

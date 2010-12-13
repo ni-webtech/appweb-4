@@ -5,7 +5,8 @@
 #   Copyright (c) Embedthis LLC, 2003-2010. All Rights Reserved.
 #
 
-. ${BLD_TOP}/build/bin/buildConfig.sh
+: ${BLD_OUT_DIR:=$BLD_TOP/out}
+. ${BLD_OUT_DIR}/bin/buildConfig.sh
 
 files="$*"
 

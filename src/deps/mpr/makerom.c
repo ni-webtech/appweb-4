@@ -13,7 +13,7 @@
 /**************************** Forward Declarations ****************************/
 
 static void printUsage(Mpr *mpr);
-static int  binToC(Mpr *mpr, MprList *files, char *romName, char *prefix);
+static int  binToC(MprList *files, char *romName, char *prefix);
 
 /*********************************** Code *************************************/
 /*
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     while (nextArg < argc) {
         mprAddItem(files, argv[nextArg++]);
     }
-    if (binToC(mpr, files, romName, prefix) < 0) {
+    if (binToC(files, romName, prefix) < 0) {
         return MPR_ERR;
     }
     return 0;
@@ -74,17 +74,17 @@ int main(int argc, char **argv)
 
 static void printUsage(Mpr *mpr)
 {
-    mprPrintfError(mpr, "usage: makerom [options] files... >output.c\n");
-    mprPrintfError(mpr, "  Makerom options:\n");
-    mprPrintfError(mpr, "  --prefix prefix       # File prefix to remove\n");
-    mprPrintfError(mpr, "  --name structName     # Name of top level C struct\n");
+    mprPrintfError("usage: makerom [options] files... >output.c\n");
+    mprPrintfError("  Makerom options:\n");
+    mprPrintfError("  --prefix prefix       # File prefix to remove\n");
+    mprPrintfError("  --name structName     # Name of top level C struct\n");
 }
 
 
 /* 
     Encode the files as C code
  */
-static int binToC(Mpr *mpr, MprList *files, char *romName, char *prefix)
+static int binToC(MprList *files, char *romName, char *prefix)
 {
     MprPath         info;
     MprFile         *file;
@@ -92,43 +92,43 @@ static int binToC(Mpr *mpr, MprList *files, char *romName, char *prefix)
     char            *filename, *cp, *sl, *p;
     int             next, j, i, len;
 
-    mprPrintf(mpr, "/*\n    %s -- Compiled Files\n */\n", romName);
+    mprPrintf("/*\n    %s -- Compiled Files\n */\n", romName);
 
-    mprPrintf(mpr, "#include \"mpr.h\"\n\n");
-    mprPrintf(mpr, "#if BLD_FEATURE_ROMFS\n");
+    mprPrintf("#include \"mpr.h\"\n\n");
+    mprPrintf("#if BLD_FEATURE_ROMFS\n");
 
     /*
         Open each input file and compile
      */
     for (next = 0; (filename = mprGetNextItem(files, &next)) != 0; ) {
-        if (mprGetPathInfo(mpr, filename, &info) == 0 && info.isDir) {
+        if (mprGetPathInfo(filename, &info) == 0 && info.isDir) {
             continue;
         } 
-        if ((file = mprOpen(mpr, filename, O_RDONLY | O_BINARY, 0666)) < 0) {
-            mprError(mpr, "Can't open file %s\n", filename);
+        if ((file = mprOpen(filename, O_RDONLY | O_BINARY, 0666)) < 0) {
+            mprError("Can't open file %s\n", filename);
             return -1;
         }
-        mprPrintf(mpr, "static uchar _file_%d[] = {\n", next);
+        mprPrintf("static uchar _file_%d[] = {\n", next);
 
         while ((len = mprRead(file, buf, sizeof(buf))) > 0) {
             p = buf;
             for (i = 0; i < len; ) {
-                mprPrintf(mpr, "    ");
+                mprPrintf("    ");
                 for (j = 0; p < &buf[len] && j < 16; j++, p++) {
-                    mprPrintf(mpr, "%3d,", (unsigned char) *p);
+                    mprPrintf("%3d,", (unsigned char) *p);
                 }
                 i += j;
-                mprPrintf(mpr, "\n");
+                mprPrintf("\n");
             }
         }
-        mprPrintf(mpr, "    0 };\n\n");
+        mprPrintf("    0 };\n\n");
         mprFree(file);
     }
 
     /*
         Now output the page index
      */ 
-    mprPrintf(mpr, "MprRomInode %s[] = {\n", romName);
+    mprPrintf("MprRomInode %s[] = {\n", romName);
 
     for (next = 0; (filename = mprGetNextItem(files, &next)) != 0; ) {
         /*
@@ -149,16 +149,16 @@ static int binToC(Mpr *mpr, MprList *files, char *romName, char *prefix)
         if (*cp == '.' && cp[1] == '\0') {
             cp++;
         }
-        if (mprGetPathInfo(mpr, filename, &info) == 0 && info.isDir) {
-            mprPrintf(mpr, "    { \"%s\", 0, 0, 0 },\n", cp);
+        if (mprGetPathInfo(filename, &info) == 0 && info.isDir) {
+            mprPrintf("    { \"%s\", 0, 0, 0 },\n", cp);
             continue;
         }
-        mprPrintf(mpr, "    { \"%s\", _file_%d, %d, %d },\n", cp, next, (int) info.size, next);
+        mprPrintf("    { \"%s\", _file_%d, %d, %d },\n", cp, next, (int) info.size, next);
     }
     
-    mprPrintf(mpr, "    { 0, 0, 0, 0 },\n");
-    mprPrintf(mpr, "};\n");
-    mprPrintf(mpr, "#endif /* BLD_FEATURE_ROMFS */\n");
+    mprPrintf("    { 0, 0, 0, 0 },\n");
+    mprPrintf("};\n");
+    mprPrintf("#endif /* BLD_FEATURE_ROMFS */\n");
     return 0;
 }
 

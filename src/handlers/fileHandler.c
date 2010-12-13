@@ -27,7 +27,8 @@ static void openFile(HttpQueue *q)
     HttpTx      *tx;
     HttpLoc     *loc;
     HttpConn    *conn;
-    char        *date;
+    MprPath     ginfo;
+    char        *date, *gfile;
 
     conn = q->conn;
     tx = conn->tx;
@@ -35,11 +36,20 @@ static void openFile(HttpQueue *q)
     loc = rx->loc;
 
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
+        if (rx->acceptEncoding) {
+            if (strstr(rx->acceptEncoding, "gzip") != 0) {
+                gfile = mprAsprintf("%s.gz", tx->filename);
+                if (mprGetPathInfo(gfile, &ginfo) == 0) {
+                    tx->filename = gfile;
+                    tx->fileInfo = ginfo;
+                    httpSetHeader(conn, "Content-Encoding", "gzip");
+                }
+            }
+        }
         if (tx->fileInfo.valid && tx->fileInfo.mtime) {
             //  TODO - OPT could cache this
-            date = httpGetDateString(rx, &tx->fileInfo);
+            date = httpGetDateString(&tx->fileInfo);
             httpSetHeader(conn, "Last-Modified", date);
-            mprFree(date);
         }
         if (httpContentNotModified(conn)) {
             httpSetStatus(conn, HTTP_CODE_NOT_MODIFIED);
@@ -55,7 +65,7 @@ static void openFile(HttpQueue *q)
                 Open the file if a body must be sent with the response. The file will be automatically closed when 
                 the response is freed. Cool eh?
              */
-            tx->file = mprOpen(tx, tx->filename, O_RDONLY | O_BINARY, 0);
+            tx->file = mprOpen(tx->filename, O_RDONLY | O_BINARY, 0);
             if (tx->file == 0) {
                 httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
             }
@@ -94,7 +104,7 @@ static void startFile(HttpQueue *q)
         }
     } else {
         /* Create a single data packet based on the entity length.  */
-        packet = httpCreateDataPacket(q, 0);
+        packet = httpCreateDataPacket(0);
         packet->entityLength = tx->entityLength;
         if (!rx->ranges) {
             tx->length = tx->entityLength;
@@ -127,7 +137,7 @@ static void outgoingFileService(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
 
-    mprLog(q, 7, "OutgoingFileService");
+    mprLog(7, "OutgoingFileService");
 
     usingSend = tx->connector == conn->http->sendConnector;
 
@@ -139,20 +149,20 @@ static void outgoingFileService(HttpQueue *q)
         for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
             if (!usingSend && packet->flags & HTTP_PACKET_DATA) {
                 if (!httpWillNextQueueAcceptPacket(q, packet)) {
-                    mprLog(q, 7, "OutgoingFileService downstream full, putback");
+                    mprLog(7, "OutgoingFileService downstream full, putback");
                     httpPutBackPacket(q, packet);
                     return;
                 }
                 if ((len = readFileData(q, packet)) < 0) {
                     return;
                 }
-                mprLog(q, 7, "OutgoingFileService readData %d", len);
+                mprLog(7, "OutgoingFileService readData %d", len);
                 tx->pos += len;
             }
             httpSendPacketToNext(q, packet);
         }
     }
-    mprLog(q, 7, "OutgoingFileService complete");
+    mprLog(7, "OutgoingFileService complete");
 }
 
 
@@ -175,7 +185,6 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
         /*
             End of input
          */
-        mprFree(file);
         q->queueData = 0;
         httpFreePacket(q, packet);
         return;
@@ -219,14 +228,14 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
 
     if (packet->content == 0) {
         len = packet->entityLength;
-        if ((packet->content = mprCreateBuf(packet, len, len)) == 0) {
-            return MPR_ERR_NO_MEMORY;
+        if ((packet->content = mprCreateBuf(len, len)) == 0) {
+            return MPR_ERR_MEMORY;
         }
     } else {
         len = mprGetBufSpace(packet->content);
     }
     mprAssert(len <= mprGetBufSpace(packet->content));    
-    mprLog(q, 7, "readFileData len %d, pos %d", len, tx->pos);
+    mprLog(7, "readFileData len %d, pos %d", len, tx->pos);
     
     if (rx->ranges) {
         /*  
@@ -273,9 +282,9 @@ static void handlePutRequest(HttpQueue *q)
         /*  
             Open an existing file with fall-back to create
          */
-        file = mprOpen(q, path, O_BINARY | O_WRONLY, 0644);
+        file = mprOpen(path, O_BINARY | O_WRONLY, 0644);
         if (file == 0) {
-            file = mprOpen(q, path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
+            file = mprOpen(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
             if (file == 0) {
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create the put URI");
                 return;
@@ -284,7 +293,7 @@ static void handlePutRequest(HttpQueue *q)
             mprSeek(file, SEEK_SET, 0);
         }
     } else {
-        file = mprOpen(q, path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
+        file = mprOpen(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
         if (file == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create the put URI");
             return;
@@ -317,7 +326,7 @@ static void handleDeleteRequest(HttpQueue *q)
         httpError(conn, HTTP_CODE_NOT_FOUND, "URI not found");
         return;
     }
-    if (mprDeletePath(q, path) < 0) {
+    if (mprDeletePath(path) < 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't remove URI");
         return;
     }

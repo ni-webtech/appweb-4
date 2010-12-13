@@ -32,7 +32,4 @@
 #
 include		$(BLD_TOP)/build/make/make.gcc
 
-SHELL		:= bash
 MAKE		:= gmake
-_LIBS		:= -lpthread -lm
-_LDFLAGS	+= -Wl,-rpath-link=$(BLD_LIB_PREFIX)

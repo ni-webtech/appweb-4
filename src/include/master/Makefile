@@ -7,5 +7,7 @@
 include 		.makedep
 
 import:
-	echo cp ../ejs.slots.h .
-	cp ../ejs.slots.h .
+	for f in $(BLD_INC_DIR)/*slots* ; do \
+		echo cp $$f . ; \
+		cp $$f . ; \
+	done

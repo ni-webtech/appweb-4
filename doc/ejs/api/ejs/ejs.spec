@@ -574,8 +574,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = ../../../all/ejs.h \
-                         ../../../all/ec.h
+INPUT                  = ./staging/src/include/ejs.h 
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
@@ -1264,19 +1263,13 @@ PREDEFINED             = DOXYGEN=1 \
                          BLD_WIN_LIKE=1 \
                          BLD_FEATURE_ASSERT=1 \
                          BLD_FEATURE_ALLOC_STATS=1 \
-                         BLD_FEATURE_CMD=1 \
-                         BLD_FEATURE_FLOATING_POINT=1 \
                          BLD_FEATURE_INT64=1 \
                          BLD_FEATURE_LEGACY_API=1 \
-                         BLD_FEATURE_MULTITHREAD=1 \
-                         BLD_FEATURE_TEST=1 \
                          BLD_FEATURE_ROMFS=1 \
                          BLD_FEATURE_CMD=1 \
                          BLD_FEATURE_HTTP=1 \
-                         BLD_FEATURE_HTTP_CLIENT=1 \
                          BLD_FEATURE_REGEXP=1 \
                          BLD_FEATURE_SSL=1 \
-                         BLD_FEATURE_XML=1 \
                          BLD_FEATURE_OPENSSL=1 \
                          BLD_FEATURE_MATRIXSSL=1
 

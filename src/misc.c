@@ -24,15 +24,15 @@ void maGetUserGroup(MaAppweb *appweb)
 
     appweb->uid = getuid();
     if ((pp = getpwuid(appweb->uid)) == 0) {
-        mprError(appweb, "Can't read user credentials: %d. Check your /etc/passwd file.", appweb->uid);
+        mprError("Can't read user credentials: %d. Check your /etc/passwd file.", appweb->uid);
     } else {
-        appweb->user = mprStrdup(appweb, pp->pw_name);
+        appweb->user = sclone(pp->pw_name);
     }
     appweb->gid = getgid();
     if ((gp = getgrgid(appweb->gid)) == 0) {
-        mprError(appweb, "Can't read group credentials: %d. Check your /etc/group file", appweb->gid);
+        mprError("Can't read group credentials: %d. Check your /etc/group file", appweb->gid);
     } else {
-        appweb->group = mprStrdup(appweb, gp->gr_name);
+        appweb->group = sclone(gp->gr_name);
     }
 #else
     appweb->uid = appweb->gid = -1;
@@ -48,21 +48,20 @@ int maSetHttpUser(MaAppweb *appweb, cchar *newUser)
     if (allDigits(newUser)) {
         appweb->uid = atoi(newUser);
         if ((pp = getpwuid(appweb->uid)) == 0) {
-            mprError(appweb, "Bad user id: %d", appweb->uid);
+            mprError("Bad user id: %d", appweb->uid);
             return MPR_ERR_CANT_ACCESS;
         }
         newUser = pp->pw_name;
 
     } else {
         if ((pp = getpwnam(newUser)) == 0) {
-            mprError(appweb, "Bad user name: %s", newUser);
+            mprError("Bad user name: %s", newUser);
             return MPR_ERR_CANT_ACCESS;
         }
         appweb->uid = pp->pw_uid;
     }
 #endif
-    mprFree(appweb->user);
-    appweb->user = mprStrdup(appweb, newUser);
+    appweb->user = sclone(newUser);
     return 0;
 }
 
@@ -75,21 +74,20 @@ int maSetHttpGroup(MaAppweb *appweb, cchar *newGroup)
     if (allDigits(newGroup)) {
         appweb->gid = atoi(newGroup);
         if ((gp = getgrgid(appweb->gid)) == 0) {
-            mprError(appweb, "Bad group id: %d", appweb->gid);
+            mprError("Bad group id: %d", appweb->gid);
             return MPR_ERR_CANT_ACCESS;
         }
         newGroup = gp->gr_name;
 
     } else {
         if ((gp = getgrnam(newGroup)) == 0) {
-            mprError(appweb, "Bad group name: %s", newGroup);
+            mprError("Bad group name: %s", newGroup);
             return MPR_ERR_CANT_ACCESS;
         }
         appweb->gid = gp->gr_gid;
     }
 #endif
-    mprFree(appweb->group);
-    appweb->group = mprStrdup(appweb, newGroup);
+    appweb->group = sclone(newGroup);
     return 0;
 }
 
@@ -99,7 +97,7 @@ int maApplyChangedUser(MaAppweb *appweb)
 #if BLD_UNIX_LIKE
     if (appweb->uid >= 0) {
         if ((setuid(appweb->uid)) != 0) {
-            mprError(appweb, "Can't change user to: %s: %d\n"
+            mprError("Can't change user to: %s: %d\n"
                 "WARNING: This is a major security exposure", appweb->user, appweb->uid);
 #if LINUX && PR_SET_DUMPABLE
         } else {
@@ -117,7 +115,7 @@ int maApplyChangedGroup(MaAppweb *appweb)
 #if BLD_UNIX_LIKE
     if (appweb->gid >= 0) {
         if (setgid(appweb->gid) != 0) {
-            mprError(appweb, "Can't change group to %s: %d\n"
+            mprError("Can't change group to %s: %d\n"
                 "WARNING: This is a major security exposure", appweb->group, appweb->gid);
 #if LINUX && PR_SET_DUMPABLE
         } else {
@@ -141,29 +139,26 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
 
     if (strcmp(name, "authFilter") == 0 || strcmp(name, "rangeFilter") == 0 || strcmp(name, "uploadFilter") == 0 ||
             strcmp(name, "fileHandler") == 0 || strcmp(name, "egiHandler") == 0 || strcmp(name, "dirHandler") == 0) {
-        mprError(appweb, "The %s module is now builtin. No need to use LoadModule", name);
+        mprError("The %s module is now builtin. No need to use LoadModule", name);
         return 0;
     }
     if (libname == 0) {
-        path = mprStrcat(appweb, -1, "mod_", name, BLD_SHOBJ, NULL);
+        path = sjoin("mod_", name, BLD_SHOBJ, NULL);
     } else {
-        path = mprStrdup(appweb, libname);
+        path = sclone(libname);
     }
-    module = mprLookupModule(appweb, path);
+    module = mprLookupModule(path);
     if (module) {
-        mprLog(appweb, MPR_CONFIG, "Activating module (Builtin) %s", name);
-        mprFree(path);
+        mprLog(MPR_CONFIG, "Activating module (Builtin) %s", name);
         return 0;
     }
-    mprSprintf(appweb, entryPoint, sizeof(entryPoint), "ma%sInit", name);
+    mprSprintf(entryPoint, sizeof(entryPoint), "ma%sInit", name);
     entryPoint[2] = toupper((int) entryPoint[2]);
 
-    if (mprLoadModule(appweb->http, path, entryPoint, NULL) == 0) {
-        mprFree(path);
+    if (mprLoadModule(path, entryPoint, NULL) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    mprFree(path);
-    mprLog(appweb, MPR_CONFIG, "Activating module (Loadable) %s", name);
+    mprLog(MPR_CONFIG, "Activating module (Loadable) %s", name);
     return 0;
 }
 

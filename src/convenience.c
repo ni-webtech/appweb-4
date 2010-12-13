@@ -21,24 +21,24 @@ MaServer *maCreateWebServer(cchar *configFile)
     /*  
         Initialize and start the portable runtime services.
      */
-    if ((mpr = mprCreate(0, NULL, NULL)) == 0) {
-        mprError(mpr, "Can't create the web server runtime");
+    if ((mpr = mprCreate(0, NULL, 0)) == 0) {
+        mprError("Can't create the web server runtime");
         return 0;
     }
-    if (mprStart(mpr) < 0) {
-        mprError(mpr, "Can't start the web server runtime");
+    if (mprStart() < 0) {
+        mprError("Can't start the web server runtime");
         return 0;
     }
     if ((appweb = maCreateAppweb(mpr)) == 0) {
-        mprError(mpr, "Can't create appweb object");
+        mprError("Can't create appweb object");
         return 0;
     }
     if ((server = maCreateServer(appweb, "default", ".", NULL, 0)) == 0) {
-        mprError(mpr, "Can't create the web server");
+        mprError("Can't create the web server");
         return 0;
     }
     if (maParseConfig(server, configFile) < 0) {
-        mprError(mpr, "Can't parse the config file %s", configFile);
+        mprError("Can't parse the config file %s", configFile);
         return 0;
     }
     return server;
@@ -51,10 +51,10 @@ MaServer *maCreateWebServer(cchar *configFile)
 int maServiceWebServer(MaServer *server)
 {
     if (maStartServer(server) < 0) {
-        mprError(server, "Can't start the web server");
+        mprError("Can't start the web server");
         return MPR_ERR_CANT_CREATE;
     }
-    mprServiceEvents(server, mprGetDispatcher(server), -1, 0);
+    mprServiceEvents(mprGetDispatcher(server), -1, 0);
     maStopServer(server);
     return 0;
 }
@@ -83,17 +83,17 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
     /*  
         Initialize and start the portable runtime services.
      */
-    if ((mpr = mprCreate(0, NULL, NULL)) == 0) {
-        mprError(mpr, "Can't create the web server runtime");
+    if ((mpr = mprCreate(0, NULL, 0)) == 0) {
+        mprError("Can't create the web server runtime");
         return MPR_ERR_CANT_CREATE;
     }
     if (mprStart(mpr) < 0) {
-        mprError(mpr, "Can't start the web server runtime");
+        mprError("Can't start the web server runtime");
         return MPR_ERR_CANT_INITIALIZE;
     }
     //  TODO MOB - do we need a meta server when running via an API
     if ((appweb = maCreateAppweb(mpr)) == 0) {
-        mprError(mpr, "Can't create the web server http services");
+        mprError("Can't create the web server http services");
         return MPR_ERR_CANT_INITIALIZE;
     }
 
@@ -103,17 +103,18 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
      */
     server = maCreateServer(appweb, ip, ".", ip, port);
     if (server == 0) {
-        mprError(mpr, "Can't create the web server");
+        mprError("Can't create the web server");
         return MPR_ERR_CANT_CREATE;
     }
     maSetHostDocumentRoot(server->defaultHost, docRoot);
     
     if (maStartServer(server) < 0) {
-        mprError(mpr, "Can't start the web server");
+        mprError("Can't start the web server");
         return MPR_ERR_CANT_CREATE;
     }
-    mprServiceEvents(mpr, mprGetDispatcher(mpr), -1, 0);
+    mprServiceEvents(mprGetDispatcher(mpr), -1, 0);
     maStopServer(server);
+    mprStop(mpr);
     mprFree(mpr);
     return 0;
 }

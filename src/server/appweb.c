@@ -21,21 +21,20 @@
 /***************************** Forward Declarations ***************************/
 
 extern void appwebOsTerm();
-extern int  checkEnvironment(Mpr *mpr, cchar *program);
-static char *findConfigFile(Mpr *mpr, char *configFile);
-static void memoryFailure(MprCtx ctx, size_t askSize, size_t totalHeapMem, bool granted);
-extern int  osInit(Mpr *mpr);
-static MaAppweb *setup(Mpr *mpr, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
+extern int  checkEnvironment(cchar *program);
+static char *findConfigFile(char *configFile);
+extern int  osInit();
+static MaAppweb *setup(cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
         MprList *script, int workers);
-static void usageError(Mpr *mpr);
+static void usageError();
 
 #if BLD_FEATURE_EJS
 static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts);
 #endif
 #if BLD_UNIX_LIKE
 static void catchSignal(int signo, siginfo_t *info, void *arg);
-static int  unixSecurityChecks(Mpr *mpr, cchar *program, cchar *home);
-static int  setupUnixSignals(Mpr *mpr);
+static int  unixSecurityChecks(cchar *program, cchar *home);
+static int  setupUnixSignals();
 #endif
 
 #if BLD_WIN_LIKE
@@ -67,20 +66,20 @@ MAIN(appweb, int argc, char **argv)
     scripts = 0;
     workers = -1;
 
-    mpr = mprCreate(argc, argv, memoryFailure);
+    mpr = mprCreate(argc, argv, 0);
     argc = mpr->argc;
     argv = mpr->argv;
 
 #if BLD_FEATURE_ROMFS
     extern MprRomInode romFiles[];
-    mprSetRomFileSystem(mpr, romFiles);
+    mprSetRomFileSystem(romFiles);
 #endif
 
-    if (osInit(mpr) < 0) {
+    if (osInit() < 0) {
         exit(2);
     }
-    if (mprStart(mpr) < 0) {
-        mprUserError(mpr, "Can't start MPR for %s", mprGetAppName(mpr));
+    if (mprStart() < 0) {
+        mprUserError("Can't start MPR for %s", mprGetAppName());
         mprFree(mpr);
         return MPR_ERR_CANT_INITIALIZE;
     }
@@ -92,83 +91,83 @@ MAIN(appweb, int argc, char **argv)
         }
         if (strcmp(argp, "--config") == 0) {
             if (argind >= argc) {
-                usageError(mpr);
+                usageError();
             }
             configFile = argv[++argind];
 
 #if BLD_UNIX_LIKE
         } else if (strcmp(argp, "--chroot") == 0) {
             if (argind >= argc) {
-                usageError(mpr);
+                usageError();
             }
-            homeDir = mprGetAbsPath(mpr, argv[++argind]);
+            homeDir = mprGetAbsPath(argv[++argind]);
             if (chroot(homeDir) < 0) {
                 if (errno == EPERM) {
-                    mprPrintfError(mpr, "%s: Must be super user to use the --chroot option", mprGetAppName(mpr));
+                    mprPrintfError("%s: Must be super user to use the --chroot option", mprGetAppName());
                 } else {
-                    mprPrintfError(mpr, "%s: Can't change change root directory to %s, errno %d",
-                        mprGetAppName(mpr), homeDir, errno);
+                    mprPrintfError("%s: Can't change change root directory to %s, errno %d",
+                        mprGetAppName(), homeDir, errno);
                 }
                 exit(4);
             }
 #endif
 
         } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-d") == 0) {
-            mprSetDebugMode(mpr, 1);
+            mprSetDebugMode(1);
 
         } else if (strcmp(argp, "--ejs") == 0) {
             if (argind >= argc) {
-                usageError(mpr);
+                usageError();
             }
             if (scripts == 0) {
-                scripts = mprCreateList(mpr);
+                scripts = mprCreateList();
             }
             mprAddItem(scripts, argv[++argind]);
 
         } else if (strcmp(argp, "--home") == 0) {
             if (argind >= argc) {
-                usageError(mpr);
+                usageError();
             }
-            homeDir = mprGetAbsPath(mpr, argv[++argind]);
+            homeDir = mprGetAbsPath(argv[++argind]);
             if (chdir((char*) homeDir) < 0) {
-                mprPrintfError(mpr, "%s: Can't change directory to %s\n", mprGetAppName(mpr), homeDir);
+                mprPrintfError("%s: Can't change directory to %s\n", mprGetAppName(), homeDir);
                 exit(2);
             }
 
         } else if (strcmp(argp, "--log") == 0 || strcmp(argp, "-l") == 0) {
             if (argind >= argc) {
-                usageError(mpr);
+                usageError();
             }
             logSpec = argv[++argind];
-            maStartLogging(mpr, logSpec);
+            maStartLogging(logSpec);
 
         } else if (strcmp(argp, "--name") == 0 || strcmp(argp, "-n") == 0) {
             if (argind >= argc) {
-                usageError(mpr);
+                usageError();
             }
-            mprSetAppName(mpr, argv[++argind], 0, 0);
+            mprSetAppName(argv[++argind], 0, 0);
 
         } else if (strcmp(argp, "--threads") == 0) {
             if (argind >= argc) {
-                usageError(mpr);
+                usageError();
             }
             workers = atoi(argv[++argind]);
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
-            maStartLogging(mpr, "stdout:2");
+            maStartLogging("stdout:2");
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             outputVersion++;
 
         } else {
-            mprPrintfError(mpr, "Unknown switch \"%s\"\n", argp);
-            usageError(mpr);
+            mprPrintfError("Unknown switch \"%s\"\n", argp);
+            usageError();
             exit(2);
         }
     }
     if (argc > argind) {
         if (argc > (argind + 2)) {
-            usageError(mpr);
+            usageError();
         }
         ipAddrPort = argv[argind++];
         if (argc > argind) {
@@ -178,64 +177,63 @@ MAIN(appweb, int argc, char **argv)
         }
     }
     if (outputVersion) {
-        mprPrintf(mpr, "%s %s-%s\n", mprGetAppTitle(mpr), BLD_VERSION, BLD_NUMBER);
+        mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
         exit(0);
     }
     if (configFile == 0) {
-        configFile = findConfigFile(mpr, configFile);
+        configFile = findConfigFile(configFile);
     }
     if (ipAddrPort) {
-        mprParseIp(mpr, ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
+        mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
     }
-    if (checkEnvironment(mpr, argv[0]) < 0) {
+    if (checkEnvironment(argv[0]) < 0) {
         exit(3);
     }
-    if ((appweb = setup(mpr, configFile, homeDir, documentRoot, ip, port, scripts, workers)) == 0) {
+    if ((appweb = setup(configFile, homeDir, documentRoot, ip, port, scripts, workers)) == 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (maStartAppweb(appweb) < 0) {
-        mprUserError(mpr, "Can't start HTTP service, exiting.");
+        mprUserError("Can't start HTTP service, exiting.");
         exit(7);
     }
 
     /*
         Service I/O events until instructed to exit
      */
-    mprServiceEvents(mpr, mpr->dispatcher, -1, 0);
+    mprServiceEvents(mpr->dispatcher, -1, 0);
 
-    mprLog(appweb, 1, "Exiting ...");
+    mprLog(1, "Exiting ...");
     maStopAppweb(appweb);
-    mprLog(appweb, 1, "Exit complete");
+    mprLog(1, "Exit complete");
 
-    if (mprStop(mpr)) {
-        mprFree(mpr);
-    }
+    mprStop(mpr);
+    mprFree(mpr);
     return 0;
 }
 
 
-static MaAppweb *setup(Mpr *mpr, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
+static MaAppweb *setup(cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
         MprList *scripts, int workers)
 {
     MaAppweb    *appweb;
     MaServer    *server;
     
-    if ((appweb = maCreateAppweb(mpr)) == 0) {
-        mprUserError(mpr, "Can't create HTTP service for %s", mprGetAppName(mpr));
+    if ((appweb = maCreateAppweb()) == 0) {
+        mprUserError("Can't create HTTP service for %s", mprGetAppName());
         return 0;
     }
     if ((server = maCreateServer(appweb, "default", NULL, NULL, -1)) == 0) {
-        mprUserError(mpr, "Can't create HTTP server for %s", mprGetAppName(mpr));
+        mprUserError("Can't create HTTP server for %s", mprGetAppName());
         return 0;
     }
     if (maConfigureServer(server, configFile, serverRoot, documentRoot, ip, port) < 0) {
-        /* mprUserError(mpr, "Can't configure the server, exiting."); */
+        /* mprUserError("Can't configure the server, exiting."); */
         exit(6);
     }
 #if BLD_FEATURE_EJS
 #if BLD_EJS_PRODUCT && UNUSED
     if (scripts == 0) {
-        scripts = mprCreateList(mpr);
+        scripts = mprCreateList();
         mprAddItem(scripts, MA_EJS_STARTUP);
     }
 #endif
@@ -246,7 +244,7 @@ static MaAppweb *setup(Mpr *mpr, cchar *configFile, cchar *serverRoot, cchar *do
     }
 #endif
     if (workers >= 0) {
-        mprSetMaxWorkers(appweb, workers);
+        mprSetMaxWorkers(workers);
     }
 #if BLD_WIN_LIKE
     if (!scripts) {
@@ -257,21 +255,20 @@ static MaAppweb *setup(Mpr *mpr, cchar *configFile, cchar *serverRoot, cchar *do
 }
 
 
-static char *findConfigFile(Mpr *mpr, char *configFile)
+static char *findConfigFile(char *configFile)
 {
     if (configFile == 0) {
-        configFile = mprJoinPathExt(mpr, mprGetAppName(mpr), ".conf");
+        configFile = mprJoinPathExt(mprGetAppName(), ".conf");
     }
-    if (!mprPathExists(mpr, configFile, R_OK)) {
-        mprFree(configFile);
+    if (!mprPathExists(configFile, R_OK)) {
         //  MOB -- will BLD_LIB_NAME be bad for cross-compilation?
-        configFile = mprAsprintf(mpr, -1, "%s/../%s/%s.conf", mprGetAppDir(mpr), BLD_LIB_NAME, mprGetAppName(mpr));
-        if (!mprPathExists(mpr, configFile, R_OK)) {
-            mprPrintfError(mpr, "Can't open config file %s\n", configFile);
+        configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
+        if (!mprPathExists(configFile, R_OK)) {
+            mprPrintfError("Can't open config file %s\n", configFile);
             exit(2);
         }
     }
-    return mprGetAbsPath(mpr, configFile);
+    return mprGetAbsPath(configFile);
 }
 
 
@@ -282,26 +279,24 @@ static char *findConfigFile(Mpr *mpr, char *configFile)
 static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts)
 {
     MaHost      *host;
-    MprCtx      ctx;
     HttpLoc     *loc;
     char        *home, *path, *uri, *script;
     int         next;
 
     host = server->defaultHost;
-    ctx = home = mprGetCurrentPath(appweb);
+    home = mprGetCurrentPath(appweb);
     uri = "/";
 
     for (next = 0; (script = mprGetNextItem(scripts, &next)) != 0; ) {
-        path = mprGetPathDir(ctx, mprJoinPath(ctx, home, script));
+        path = mprGetPathDir(mprJoinPath(home, script));
 #if UNUSED
-        alias = maCreateAlias(host, "/", path, 0);
+        alias = maCreateAlias("/", path, 0);
         maInsertAlias(host, alias);
 #endif
-        mprLog(appweb, 3, "Ejs Alias \"%s\" for \"%s\"", uri, path);
+        mprLog(3, "Ejs Alias \"%s\" for \"%s\"", uri, path);
 
         if (maLookupLocation(host, uri)) {
-            mprError(appweb, "Location block already exists for \"%s\"", uri);
-            mprFree(ctx);
+            mprError("Location block already exists for \"%s\"", uri);
             return MPR_ERR_ALREADY_EXISTS;
         }
         loc = httpCreateInheritedLocation(appweb->http, host->loc);
@@ -335,7 +330,6 @@ static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts)
             maAddLocation(host, loc);
         }
     }
-    mprFree(ctx);
     return 0;
 }
 #endif
@@ -348,9 +342,9 @@ static void usageError(Mpr *mpr)
 {
     cchar   *name;
 
-    name = mprGetAppName(mpr);
+    name = mprGetAppName();
 
-    mprPrintfError(mpr, "\n\n%s Usage:\n\n"
+    mprPrintfError("\n\n%s Usage:\n\n"
     "  %s [options] [IPaddress][:port] [documentRoot]\n\n"
     "  Options:\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
@@ -368,25 +362,10 @@ static void usageError(Mpr *mpr)
 }
 
 
-/*
-    Global memory failure hook
- */
-static void memoryFailure(MprCtx ctx, size_t size, size_t total, bool granted)
-{
-    if (!granted) {
-        mprPrintf(ctx, "Can't allocate memory block of size %d\n", size);
-        mprPrintf(ctx, "Total memory used %d\n", total);
-        exit(255);
-    }
-    mprPrintf(ctx, "Memory request for %d bytes exceeds memory red-line\n", size);
-    mprPrintf(ctx, "Total memory used %d\n", total);
-}
-
-
-int osInit(Mpr *mpr)
+int osInit()
 {
 #if BLD_UNIX_LIKE
-    setupUnixSignals(mpr);
+    setupUnixSignals();
 #endif
     return 0;
 }
@@ -395,27 +374,19 @@ int osInit(Mpr *mpr)
 /*
     Security checks. Make sure we are staring with a safe environment
  */
-int checkEnvironment(Mpr *mpr, cchar *program)
+int checkEnvironment(cchar *program)
 {
 #if BLD_UNIX_LIKE
-    char   *home;
-    home = mprGetCurrentPath(mpr);
-    if (unixSecurityChecks(mpr, program, home) < 0) {
-        mprFree(home);
+    char   *home, *path;
+    home = mprGetCurrentPath();
+    if (unixSecurityChecks(program, home) < 0) {
         return -1;
     }
-    mprFree(home);
-#endif
-#if BLD_UNIX_LIKE
-{
-    char    *path;
-
     /*
         Ensure the binaries directory is in the path. Used by ejs to run ejsweb from /usr/local/bin
      */
-    path = mprStrcat(mpr, -1, "PATH=", getenv("PATH"), ":", mprGetAppDir(mpr), NULL);
+    path = sjoin("PATH=", getenv("PATH"), ":", mprGetAppDir(), NULL);
     putenv(path);
-}
 #endif
     return 0;
 }
@@ -425,16 +396,16 @@ int checkEnvironment(Mpr *mpr, cchar *program)
 /*
     Security checks. Make sure we are staring with a safe environment
  */
-static int unixSecurityChecks(Mpr *mpr, cchar *program, cchar *home)
+static int unixSecurityChecks(cchar *program, cchar *home)
 {
     struct stat     sbuf;
 
     if (((stat(home, &sbuf)) != 0) || !(S_ISDIR(sbuf.st_mode))) {
-        mprUserError(mpr, "Can't access directory: %s", home);
+        mprUserError("Can't access directory: %s", home);
         return MPR_ERR_BAD_STATE;
     }
     if ((sbuf.st_mode & S_IWOTH) || (sbuf.st_mode & S_IWGRP)) {
-        mprUserError(mpr, "Security risk, directory %s is writeable by others", home);
+        mprUserError("Security risk, directory %s is writeable by others", home);
     }
 
     /*
@@ -442,33 +413,26 @@ static int unixSecurityChecks(Mpr *mpr, cchar *program, cchar *home)
      */
     if (*program == '/') {
         if ((stat(program, &sbuf)) != 0) {
-            mprUserError(mpr, "Can't access program: %s", program);
+            mprUserError("Can't access program: %s", program);
             return MPR_ERR_BAD_STATE;
         }
         if ((sbuf.st_mode & S_IWOTH) || (sbuf.st_mode & S_IWGRP)) {
-            mprUserError(mpr, "Security risk, Program %s is writeable by others", program);
+            mprUserError("Security risk, Program %s is writeable by others", program);
         }
         if (sbuf.st_mode & S_ISUID) {
-            mprUserError(mpr, "Security risk, %s is setuid", program);
+            mprUserError("Security risk, %s is setuid", program);
         }
         if (sbuf.st_mode & S_ISGID) {
-            mprUserError(mpr, "Security risk, %s is setgid", program);
+            mprUserError("Security risk, %s is setgid", program);
         }
     }
     return 0;
 }
 
 
-/*
-    Signals need a global reference to the mpr
- */
-static Mpr *_signalMpr;
-
-static int setupUnixSignals(Mpr *mpr)
+static int setupUnixSignals()
 {
     struct sigaction    act;
-
-    _signalMpr = mpr;
 
     memset(&act, 0, sizeof(act));
     act.sa_sigaction = catchSignal;
@@ -485,7 +449,7 @@ static int setupUnixSignals(Mpr *mpr)
     sigaddset(&act.sa_mask, SIGUSR1);
     sigaddset(&act.sa_mask, SIGUSR2);
 
-    if (!mprGetDebugMode(mpr)) {
+    if (!mprGetDebugMode()) {
         sigaddset(&act.sa_mask, SIGINT);
     }
 
@@ -495,6 +459,7 @@ static int setupUnixSignals(Mpr *mpr)
     sigaction(SIGINT, &act, 0);
     sigaction(SIGQUIT, &act, 0);
     sigaction(SIGTERM, &act, 0);
+    sigaction(SIGUSR1, &act, 0);
     
     /*
         Ignore pipe signals
@@ -516,20 +481,18 @@ static int setupUnixSignals(Mpr *mpr)
  */
 static void catchSignal(int signo, siginfo_t *info, void *arg)
 {
-    Mpr     *mpr;
-
-    mpr = _signalMpr;
-    mprLog(mpr, 1, "\n%s: Received signal %d\nExiting ...\n", mprGetAppName(mpr), signo);
-    if (mpr) {
 #if DEBUG_IDE
-        if (signo != 2) {
-            mprTerminate(mpr, 1);
-        }
-#elif BLD_DEBUG
-        exit(1);
-#else
-        mprTerminate(mpr, 1);
+    if (signo == SIGINT) {
+        return;
+    }
 #endif
+    mprLog(2, "Received signal %d", signo);
+    if (signo == SIGINT || signo == SIGTERM) {
+        mprLog(1, "Exiting immediately ...");
+        mprTerminate(0);
+    } else {
+        mprLog(1, "Executing a graceful exit. Waiting for all requests to complete");
+        mprTerminate(MPR_GRACEFUL);
     }
 }
 #endif /* BLD_HOST_UNIX */

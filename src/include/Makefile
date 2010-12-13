@@ -4,28 +4,14 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
 #
 
-HEADERS			:= ejs.slots.h
+include		.makedep
 
-include 		.makedep
-
-compileExtra: $(HEADERS)
-
-#
-#   Update buildConfig.h version information. This is used in windows packages for building with VS.
-#
 dependExtra:
-	for f in master/ejs*.h sqlite*.h ; do \
-		cp $$f . ; \
-	done
-ifeq ($(BLD_OS),WIN)
-	cat master/buildConfig.h | \
-        egrep -v 'BLD_VERSION|BLD_NUMBER|BLD_.*_VERSION|BLD_VNUM' | grep -v BLD_CC_CL_VERSION >versions.h
-	cat buildConfig.h | egrep 'BLD_VERSION|BLD_NUMBER|BLD_.*_VERSION|BLD_VNUM' | grep -v BLD_CC_CL_VERSION >>versions.h
-	mv versions.h master/buildConfig.h
-endif
+	chmod +w $(BLD_INC_DIR)/*.h
+	cp master/*slots.h $(BLD_INC_DIR)
 
-cleanExtra: 
-	rm -f $(HEADERS)
+cleanExtra:
+	mkdir -p $(BLD_INC_DIR)
+	cp master/*slots.h $(BLD_INC_DIR)
 
-%.h: master/%.h
-	cp $< .
+

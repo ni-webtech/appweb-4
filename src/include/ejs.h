@@ -1,15 +1,15 @@
 
 /******************************************************************************/
 /* 
- *  This file is an amalgamation of all the individual source code files for
- *  Embedthis Ejscript 2.0.0.
- *
- *  Catenating all the source into a single file makes embedding simpler and
- *  the resulting application faster, as many compilers can do whole file
- *  optimization.
- *
- *  If you want to modify ejs, you can still get the whole source
- *  as individual files if you need.
+    This file is an amalgamation of all the individual source code files for
+     .
+  
+    Catenating all the source into a single file makes embedding simpler and
+    the resulting application faster, as many compilers can do whole file
+    optimization.
+  
+    If you want to modify , you can still get the whole source
+    as individual files if you need.
  */
 
 
@@ -147,21 +147,13 @@ extern "C" {
  */
 #define EC_MAX_INCLUDE          32              /* Max number of nested includes */
 #define EC_LINE_INCR            1024            /* Growth increment for input lines */
-#define EC_TOKEN_INCR           256             /* Growth increment for tokens */
+#define EC_TOKEN_INCR           64              /* Growth increment for tokens */
 #define EC_MAX_LOOK_AHEAD       8
 #define EC_BUFSIZE              4096            /* General buffer size */
 #define EC_MAX_ERRORS           25              /* Max compilation errors before giving up */
 
 #define EC_CODE_BUFSIZE         4096            /* Initial size of code gen buffer */
 #define EC_NUM_PAK_PROP         32              /* Initial number of properties */
-
-/*
-    File extensions
-    MOB -- move these out of here 
- */
-#define EJS_MODULE_EXT          ".mod"
-#define EJS_SOURCE_EXT          ".es"
-#define EJS_LISTING_EXT         ".lst"
 
 #ifdef __cplusplus
 }
@@ -273,7 +265,6 @@ typedef enum EjsOpCode {
     EJS_OP_COMPARE_TRUE,
     EJS_OP_COMPARE_UNDEFINED,
     EJS_OP_COMPARE_ZERO,
-    EJS_OP_DEBUG,
     EJS_OP_DEFINE_CLASS,
     EJS_OP_DEFINE_FUNCTION,
     EJS_OP_DELETE_NAME_EXPR,
@@ -573,7 +564,6 @@ EjsOptable ejsOptable[] = {
     {   "COMPARE_TRUE",             -1,         { EBC_NONE,                               },},
     {   "COMPARE_UNDEFINED",        -1,         { EBC_NONE,                               },},
     {   "COMPARE_ZERO",             -1,         { EBC_NONE,                               },},
-    {   "DEBUG",                     0,         { EBC_NUM, EBC_STRING,                    },},
     {   "DEFINE_CLASS",              0,         { EBC_GLOBAL,                             },},
     {   "DEFINE_FUNCTION",           0,         { EBC_STRING, EBC_STRING,                 },},
     {   "DELETE_NAME_EXPR",         -2,         { EBC_NONE,                               },},
@@ -734,7 +724,7 @@ EjsOptable ejsOptable[] = {
 };
 #endif /* EJS_DEFINE_OPTABLE */
 
-extern EjsOptable *ejsGetOptable(MprCtx ctx);
+extern EjsOptable *ejsGetOptable();
 
 #ifdef __cplusplus
 }
@@ -815,41 +805,23 @@ struct EjsBlock;
 struct EjsFrame;
 struct EjsFunction;
 struct EjsGC;
-struct EjsList;
+struct EjsHelpers;
+struct EjsLoc;
+struct EjsMem;
 struct EjsNames;
 struct EjsModule;
 struct EjsNamespace;
 struct EjsObj;
+struct EjsPot;
 struct EjsService;
-struct EjsString;
 struct EjsState;
 struct EjsTrait;
 struct EjsTraits;
 struct EjsType;
-struct EjsTypeHelpers;
 struct EjsUri;
 struct EjsWorker;
 struct EjsXML;
 #endif
-
-//  MOB -- move
-/*
-    Default GC thresholds (not tunable)
- */
-#define EJS_MIN_TIME_FOR_GC     300     /* Need 1/3 sec for GC */
-#define EJS_SHORT_WORK_QUOTA    50      /* Predict GC short of a full work quota */
-    
-/*
-    GC Object generations
- */
-#define EJS_GEN_NEW         0           /* New objects */
-#define EJS_GEN_ETERNAL     1           /* Builtin objects that live forever */
-#define EJS_MAX_GEN         2           /* Number of generations for object allocation */
-
-/*
-    GC Collection modes
- */
-#define EJS_GC_ETERNAL      1           /* Collect eternal generation */
 
 /*
     Trait, type, function and property attributes. These are sometimes combined into a single attributes word.
@@ -865,44 +837,38 @@ struct EjsXML;
 #define EJS_TRAIT_SETTER                0x100       /**< Property is a settter */
 #define EJS_TRAIT_THROW_NULLS           0x200       /**< Property rejects null */
 
-#if UNUSED || 1
 #define EJS_PROP_HAS_VALUE              0x400       /**< Property has a value record */
-#endif
 #define EJS_PROP_NATIVE                 0x800       /**< Property is backed by native code */
 #define EJS_PROP_STATIC                 0x1000      /**< Class static property */
-#if UNUSED
-#define EJS_PROP_SHARED                 0x2000      /**< Share static method with all subclasses */
-#endif
-#define EJS_PROP_ENUMERABLE             0x4000      /**< Property will be enumerable (compiler use only) */
+#define EJS_PROP_ENUMERABLE             0x2000      /**< Property will be enumerable (compiler use only) */
 
-#define EJS_FUN_CONSTRUCTOR             0x8000      /**< Method is a constructor */
-#define EJS_FUN_FULL_SCOPE              0x10000     /**< Function needs closure when defined */
-#define EJS_FUN_HAS_RETURN              0x20000     /**< Function has a return statement */
-#define EJS_FUN_INITIALIZER             0x40000     /**< Type initializer code */
-#define EJS_FUN_OVERRIDE                0x80000     /**< Override base type */
-#define EJS_FUN_MODULE_INITIALIZER      0x100000    /**< Module initializer */
-#define EJS_FUN_REST_ARGS               0x200000    /**< Parameter is a "..." rest */
-#define EJS_TRAIT_MASK                  0x3FFFFF    /**< Mask of trait attributes */
+#define EJS_FUN_CONSTRUCTOR             0x4000      /**< Method is a constructor */
+#define EJS_FUN_FULL_SCOPE              0x8000      /**< Function needs closure when defined */
+#define EJS_FUN_HAS_RETURN              0x10000     /**< Function has a return statement */
+#define EJS_FUN_INITIALIZER             0x20000     /**< Type initializer code */
+#define EJS_FUN_OVERRIDE                0x40000     /**< Override base type */
+#define EJS_FUN_MODULE_INITIALIZER      0x80000     /**< Module initializer */
+#define EJS_FUN_REST_ARGS               0x100000    /**< Parameter is a "..." rest */
+#define EJS_TRAIT_MASK                  0x1FFFFF    /**< Mask of trait attributes */
 
 /*
     These attributes are never stored in EjsTrait but are often passed in "attributes"
  */
-#define EJS_TYPE_CALLS_SUPER            0x400000    /**< Constructor calls super() */
-#define EJS_TYPE_HAS_INSTANCE_VARS      0x800000    /**< Type has non-method instance vars (state) */
-#define EJS_TYPE_DYNAMIC_INSTANCE       0x1000000   /**< Instances are not sealed */
-#define EJS_TYPE_FINAL                  0x2000000   /**< Type can't be subclassed */
-#define EJS_TYPE_FIXUP                  0x4000000   /**< Type needs to inherit base types properties */
-#define EJS_TYPE_HAS_CONSTRUCTOR        0x8000000   /**< Type has a constructor */
-#define EJS_TYPE_HAS_TYPE_INITIALIZER   0x10000000  /**< Type has an initializer */
-#define EJS_TYPE_IMMUTABLE              0x20000000  /**< Instances are immutable */
-#define EJS_TYPE_INTERFACE              0x40000000  /**< Class is an interface */
+#define EJS_TYPE_CALLS_SUPER            0x200000    /**< Constructor calls super() */
+#define EJS_TYPE_HAS_INSTANCE_VARS      0x400000    /**< Type has non-method instance vars (state) */
+#define EJS_TYPE_DYNAMIC_INSTANCE       0x800000    /**< Instances are not sealed */
+#define EJS_TYPE_FINAL                  0x1000000   /**< Type can't be subclassed */
+#define EJS_TYPE_FIXUP                  0x2000000   /**< Type needs to inherit base types properties */
+#define EJS_TYPE_HAS_CONSTRUCTOR        0x4000000   /**< Type has a constructor */
+#define EJS_TYPE_HAS_TYPE_INITIALIZER   0x80000000  /**< Type has an initializer */
+#define EJS_TYPE_IMMUTABLE              0x10000000  /**< Instances are immutable */
+#define EJS_TYPE_INTERFACE              0x20000000  /**< Class is an interface */
 
 /*
     Interpreter flags
  */
 #define EJS_FLAG_EVENT          0x1         /**< Event pending */
 #define EJS_FLAG_NO_INIT        0x8         /**< Don't initialize any modules*/
-#define EJS_FLAG_MASTER         0x20        /**< Create a master interpreter */
 #define EJS_FLAG_DOC            0x40        /**< Load documentation from modules */
 #define EJS_FLAG_NOEXIT         0x200       /**< App should service events and not exit */
 #define EJS_FLAG_DYNAMIC        0x400       /**< Make a type that is dynamic itself */
@@ -949,7 +915,6 @@ typedef BLD_FEATURE_NUM_TYPE MprNumber;
 #define EJS_NSP_PRIVATE         0x1
 #define EJS_NSP_PROTECTED       0x2
 
-
 /*  
     When allocating slots, name hashes and traits, we optimize by rounding up allocations
  */
@@ -972,7 +937,7 @@ typedef BLD_FEATURE_NUM_TYPE MprNumber;
     Ejscript return codes.
  */
 #define EJS_SUCCESS             MPR_ERR_OK
-#define EJS_ERR                 MPR_ERR_GENERAL
+#define EJS_ERR                 MPR_ERR
 #define EJS_EXCEPTION           (MPR_ERR_MAX - 1)
 
 /*  
@@ -1020,104 +985,150 @@ typedef BLD_FEATURE_NUM_TYPE MprNumber;
 #define EJS_NAME                    "ejs"
 #define EJS_MOD                     "ejs.mod"
 
-/*  
-    Compare if a variable is an instance or sub-type of a given type described by the type's global slot.
+/*
+    File extensions
  */
-#define ejsIs(vp, slot)             _ejsIs((EjsObj*) vp, slot)
-extern int _ejsIs(struct EjsObj *vp, int slot);
+#define EJS_MODULE_EXT              ".mod"
+#define EJS_SOURCE_EXT              ".es"
+#define EJS_LISTING_EXT             ".lst"
 
-/* TODO - merge with MprList */
+typedef struct EjsLoc {
+    MprChar         *source;
+    char            *filename;
+    int             lineNumber;
+} EjsLoc;
+
+//  MOB -- reorder this file
+
+
+typedef void EjsAny;
+
+typedef struct EjsObj {
+    struct EjsType  *type;
+} EjsObj;
+
+typedef struct EjsString {
+    struct EjsType   *type;
+    struct EjsString *next;              /* Hash chain link when interning */
+    struct EjsString *prev;
+    size_t           length;
+    MprChar          value[0];
+} EjsString;
+
+extern void ejsManageString(EjsString *sp, int flags);
+
 /**
-    List type
-    @description    The MprList is a dynamic growable array suitable for storing pointers to arbitrary objects.
-    @stability      Prototype.
-    @see            EjsList mprCreateList mprFree MprBuf
+    Qualified name structure
+    @description All names in Ejscript consist of a property name and a name space. Namespaces provide discrete
+        spaces to manage and minimize name conflicts. These names will soon be converted to unicode.
+    @stability Prototype
+    @defgroup EjsName EjsName
+    @see EjsName ejsName ejsAllocName ejsDupName ejsCopyName
+ */       
+typedef struct EjsName {
+    EjsString   *name;                          /**< Property name */
+    EjsString   *space;                         /**< Property namespace */
+} EjsName;
+
+extern void ejsMarkName(EjsName *qname);
+
+
+/** 
+    Allocation and Type Helpers
+    @description The type helpers interface defines the set of primitive operations a type must support to
+        interact with the virtual machine.
+    @ingroup EjsType
  */
-typedef struct EjsList {
-    void    **items;                    /* List item data */
-    int     length;                     /* Count of used items */
-    int     maxSize;                    /* Maximum capacity */
-} EjsList;
-
-//  TODO - DOC
-extern void     ejsInitList(EjsList *list);
-extern int      ejsAddItem(MprCtx ctx, EjsList *list, cvoid *item);
-extern int      ejsAddItemToSharedList(MprCtx ctx, EjsList *list, cvoid *item);
-extern EjsList  *ejsAppendList(MprCtx ctx, EjsList *list, EjsList *add);
-extern int      ejsCopyList(MprCtx ctx, EjsList *dest, EjsList *src);
-extern void     ejsClearList(EjsList *lp);
-extern void     *ejsGetItem(EjsList *lp, int index);
-extern void     *ejsGetLastItem(EjsList *lp);
-extern int      ejsGetListCount(EjsList *lp);
-extern void     *ejsGetNextItem(EjsList *lp, int *lastIndex);
-extern void     *ejsGetPrevItem(EjsList *lp, int *lastIndex);
-extern int      ejsLookupItem(EjsList *lp, cvoid *item);
-extern int      ejsRemoveItemAtPos(EjsList *lp, int index);
-extern int      ejsRemoveLastItem(EjsList *lp);
-extern int      ejsSetListDetails(MprCtx ctx, EjsList *list, int initialSize, int maxSize);
-
-/*
-    GC Per generation structure
- */
-typedef struct EjsGen {
-    uint            totalReclaimed;     /* Total blocks reclaimed on sweeps */
-    uint            totalSweeps;        /* Total sweeps */
-} EjsGen;
-
-/*
-    GC Pool of free objects of a given type. Each type maintains a free pool for faster allocations.
-    Types in the pool have a weak reference and may be reclaimed.
- */
-typedef struct EjsPool {
-    struct EjsType  *type;              /* Owning type */
-    int             allocated;          /* Count of instances created */
-    int             peakAllocated;      /* High water mark for allocated */
-    int             count;              /* Count in pool */
-    int             peakCount;          /* High water mark for count */
-    int             reuse;              /* Count of reuses */
-} EjsPool;
+typedef struct EjsHelpers {
+    /* Used by objects and values */
+    EjsAny  *(*cast)(struct Ejs *ejs, EjsAny *obj, struct EjsType *type);
+    void    *(*clone)(struct Ejs *ejs, EjsAny *obj, bool deep);
+//  MOB -- rename alloc/free
+    EjsAny  *(*create)(struct Ejs *ejs, struct EjsType *type, int size);
+    int     (*defineProperty)(struct Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname, struct EjsType *propType, 
+                int64 attributes, EjsAny *value);
+    int     (*deleteProperty)(struct Ejs *ejs, EjsAny *obj, int slotNum);
+    int     (*deletePropertyByName)(struct Ejs *ejs, EjsAny *obj, EjsName qname);
+    EjsAny  *(*getProperty)(struct Ejs *ejs, EjsAny *obj, int slotNum);
+    EjsAny  *(*getPropertyByName)(struct Ejs *ejs, EjsAny *obj, EjsName qname);
+    int     (*getPropertyCount)(struct Ejs *ejs, EjsAny *obj);
+    EjsName (*getPropertyName)(struct Ejs *ejs, EjsAny *obj, int slotNum);
+    struct EjsTrait *(*getPropertyTraits)(struct Ejs *ejs, EjsAny *obj, int slotNum);
+    EjsAny  *(*invokeOperator)(struct Ejs *ejs, EjsAny *obj, int opCode, EjsAny *rhs);
+    int     (*lookupProperty)(struct Ejs *ejs, EjsAny *obj, EjsName qname);
+    int     (*setProperty)(struct Ejs *ejs, EjsAny *obj, int slotNum, EjsAny *value);
+    int     (*setPropertyByName)(struct Ejs *ejs, EjsAny *obj, EjsName qname, EjsAny *value);
+    int     (*setPropertyName)(struct Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname);
+    int     (*setPropertyTraits)(struct Ejs *ejs, EjsAny *obj, int slotNum, struct EjsType *type, int attributes);
+} EjsHelpers;
 
 
-/*
-    Garbage collector control
- */
-typedef struct EjsGC {
+//  MOB title
 
-    EjsGen      *generations[EJS_MAX_GEN];
+#define POT(ejs, ptr)    (TYPE(ptr)->isPot)
 
-    //  MOB -- make this dynamic and remove the constant
-    EjsPool     *pools[EJS_MAX_TYPE];   /* Object pools */
-    int         numPools;               /* Count of object pools */
-    uint        allocGeneration;        /* Current generation accepting objects */
-    uint        collectGeneration;      /* Current generation doing GC */
-    uint        markGenRef;             /* Generation to mark objects */
-    uint        firstGlobal;            /* First global slots to examine */
-    bool        collecting;             /* Running garbage collection */
-    bool        enabled;                /* GC is enabled */
-    int         degraded;               /* Have exceeded redlineMemory */
-    uint        allocatedTypes;         /* Count of types allocated */
-    uint        peakAllocatedTypes;     /* Peak allocated types */ 
-    uint        allocatedObjects;       /* Count of objects allocated */
-    uint        peakAllocatedObjects;   /* Peak allocated */ 
-    uint        peakMemory;             /* Peak memory usage */
-    uint        totalAllocated;         /* Total count of allocation calls */
-    uint        totalReclaimed;         /* Total blocks reclaimed on sweeps */
-    uint        totalOverflows;         /* Total overflows  */
-    uint        totalRedlines;          /* Total times redline limit exceeded */
-    uint        totalSweeps;            /* Total sweeps */
-#if BLD_DEBUG
-    int         indent;                 /* Indent formatting in GC reports */
-#endif
-} EjsGC;
+#define DYNAMIC(ptr)        (MPR_GET_MEM(ptr)->dynamic)
+#define VISITED(ptr)        (MPR_GET_MEM(ptr)->visited)
+#define BUILTIN(ptr)        (MPR_GET_MEM(ptr)->builtin)
+#define TYPE(ptr)           (((EjsObj*) (ptr))->type)
 
+//  MOB dividor
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct EjsLoadState {
-    MprList     *typeFixups;        /**< Loaded types to fixup */
-    int         firstModule;        /**< First module in ejs->modules for this load */
-    int         flags;              /**< Module load flags */
+    MprList         *typeFixups;            /**< Loaded types to fixup */
+    int             firstModule;            /**< First module in ejs->modules for this load */
+    int             flags;                  /**< Module load flags */
 } EjsLoadState;
 
 typedef void (*EjsLoaderCallback)(struct Ejs *ejs, int kind, ...);
+
+/*
+    Interned unicode string hash
+ */
+typedef struct EjsIntern {
+    EjsString       *buckets;               /**< Hash buckets and references to link chains of strings (unicode) */
+    int             size;                   /**< Size of hash */
+    int             count;                  /**< Number of strings */
+    int             accesses;
+    int             reuse;
+} EjsIntern;
+
+
+
+#if UNUSED
+#define NS_EJS                  1
+#define NS_EMPTY                2
+#define NS_INTERNAL             3
+#define NS_ITERATOR             4
+#define NS_PUBLIC               5
+
+#define S_COMMA_PROTECTED       6
+#define S_EMPTY                 7
+#define S_LENGTH                8
+#define S_PUBLIC                9
+
+#define V_FALSE                 10
+#define V_INFINITY              11
+#define V_ITERATOR              12
+#define V_MAX                   13
+#define V_MIN                   14
+#define V_MINUS_ONE             15
+#define V_NAN                   16
+#define V_NEGATIVE_INFINITY     17
+#define V_NOP                   18
+#define V_NULL                  19
+#define V_ONE                   20
+#define V_TRUE                  21
+#define V_UNDEFINED             22
+#define V_ZERO                  23
+#endif
+#define EJS_MAX_SPECIAL         1
+
+extern void ejsSetSpecial(struct Ejs *ejs, int index, EjsAny *value);
+extern EjsAny *ejsGetSpecial(struct Ejs *ejs, int index);
+
+#define V(i) ejsGetSpecial(ejs, i)
 
 /**
     Ejsript Interperter Structure
@@ -1128,16 +1139,13 @@ typedef void (*EjsLoaderCallback)(struct Ejs *ejs, int kind, ...);
     @see ejsCreate, ejsCreateService, ejsAppendSearchPath, ejsSetSearchPath, ejsEvalFile, ejsEvalScript, ejsExit
  */
 typedef struct Ejs {
-    struct EjsObj       *exception;         /**< Pointer to exception object */
-    struct EjsObj       *result;            /**< Last expression result */
+    EjsAny              *exception;         /**< Pointer to exception object */
+    EjsAny              *result;            /**< Last expression result */
     struct EjsState     *state;             /**< Current evaluation state and stack */
     struct EjsState     *masterState;       /**< Owns the eval stack */
 
     struct EjsService   *service;           /**< Back pointer to the service */
-    struct Ejs          *master;            /**< Inherit builtin types from the master */
-    struct EjsGC        gc;                 /**< Garbage collector state */
-    EjsGen              *currentGeneration; /**< Current allocation generation */
-    MprHeap             *heap;              /**< Allocation heap */
+    EjsIntern           intern;             /**< Interned Unicode string hash */
     cchar               *bootSearch;        /**< Module search when bootstrapping the VM */
     struct EjsArray     *search;            /**< Module load search path */
     cchar               *className;         /**< Name of a specific class to run for a program */
@@ -1146,6 +1154,7 @@ typedef struct Ejs {
     /*
         Essential types
      */
+    //  MOB - should these be in special values except for the really common ones?
     struct EjsType      *appType;           /**< App type */
     struct EjsType      *arrayType;         /**< Array type */
     struct EjsType      *blockType;         /**< Block type */
@@ -1158,7 +1167,9 @@ typedef struct Ejs {
     struct EjsType      *eventType;         /**< Event type */
     struct EjsType      *frameType;         /**< Frame type */
     struct EjsType      *fileType;          /**< File type */
+    struct EjsType      *fileSystemType;    /**< FileSystem type */
     struct EjsType      *functionType;      /**< Function type */
+    struct EjsType      *httpType;          /**< Http type */
     struct EjsType      *iteratorType;      /**< Iterator type */
     struct EjsType      *mathType;          /**< Math type */
     struct EjsType      *namespaceType;     /**< Namespace type */
@@ -1168,7 +1179,9 @@ typedef struct Ejs {
     struct EjsType      *pathType;          /**< Path type */
     struct EjsType      *regExpType;        /**< RegExp type */
     struct EjsType      *requestType;       /**< Request type */
+    struct EjsType      *sessionType;       /**< Session type object */
     struct EjsType      *stringType;        /**< String type */
+    struct EjsType      *socketType;        /**< Socket type */
     struct EjsType      *stopIterationType; /**< StopIteration type */
     struct EjsType      *typeType;          /**< Type type */
     struct EjsType      *uriType;           /**< URI type */
@@ -1181,11 +1194,15 @@ typedef struct Ejs {
     /*
         Key values
      */
-    struct EjsObj       *global;            /**< The "global" object as an EjsObj */
-    struct EjsBlock     *globalBlock;       /**< The "global" object as an EjsBlock */
+    EjsAny              *global;            /**< The "global" object */
+#if BLD_DEBUG
+    struct EjsBlock     *globalBlock;
+#endif
 
-    struct EjsString    *emptyStringValue;  /**< "" value */
-    struct EjsObj       *falseValue;        /**< The "false" value */
+    EjsAny              *values[EJS_MAX_SPECIAL];
+
+    //  MOB -- remove most of these
+    EjsAny              *falseValue;        /**< The "false" value */
     struct EjsNumber    *infinityValue;     /**< The infinity number value */
     struct EjsIterator  *iterator;          /**< Default iterator */
     struct EjsNumber    *maxValue;          /**< Maximum number value */
@@ -1194,12 +1211,17 @@ typedef struct Ejs {
     struct EjsNumber    *nanValue;          /**< The "NaN" value if floating point numbers, else zero */
     struct EjsNumber    *negativeInfinityValue; /**< The negative infinity number value */
     struct EjsFunction  *nopFunction;       /**< The NOP function */
-    struct EjsObj       *nullValue;         /**< The "null" value */
+    EjsAny              *nullValue;         /**< The "null" value */
     struct EjsNumber    *oneValue;          /**< The 1 number value */
-    struct EjsObj       *trueValue;         /**< The "true" value */
-    struct EjsObj       *undefinedValue;    /**< The "void" value */
+    EjsAny              *trueValue;         /**< The "true" value */
+    EjsAny              *undefinedValue;    /**< The "void" value */
     struct EjsNumber    *zeroValue;         /**< The 0 number value */
-    struct EjsFunction  *memoryCallback;    /**< Memory.readline callback */
+
+    //  MOB - need a more scalable solution (index based on first 4 chars only)
+    EjsString           *emptyString;       /**< "" */
+    EjsString           *lengthString;      /**< "length" */
+    EjsString           *publicString;      /**< "public" */
+    EjsString           *commaProtString;   /**< ",protected" */
 
     struct EjsNamespace *emptySpace;        /**< Empty namespace */
     struct EjsNamespace *ejsSpace;          /**< Ejs namespace */
@@ -1207,27 +1229,30 @@ typedef struct Ejs {
     struct EjsNamespace *internalSpace;     /**< Internal namespace */
     struct EjsNamespace *publicSpace;       /**< Public namespace */
 
-    char                *castTemp;          /**< Temporary string for casting */
+    EjsHelpers          objHelpers;         /**< Default EjsObj helpers */
+    EjsHelpers          potHelpers;         /**< Helper methods for Pots */
     char                *errorMsg;          /**< Error message */
     cchar               **argv;             /**< Command line args */
     int                 argc;               /**< Count of command line args */
     int                 flags;              /**< Execution flags */
+    int                 gc;                 /**< GC required (don't make bit field */
     int                 exitStatus;         /**< Status to exit() */
-    int                 serializeDepth;     /**< Serialization depth */
+    int                 firstGlobal;        /**< First global to examine for GC */
     int                 joining;            /**< In Worker.join */
+    int                 serializeDepth;     /**< Serialization depth */
     int                 spreadArgs;         /**< Count of spread args */
-
-    int                 workQuota;          /* Quota of work before GC */
-    int                 workDone;           /**< Count of allocations to determining if GC needed */
-    int                 gcRequired;         /**< Garbage collection is now required */
-
+#if UNUSED
+    int                 yield;              /**< GC yield required (don't make bit field */
+#endif
     uint                compiling: 1;       /**< Currently executing the compiler */
     uint                empty: 1;           /**< Interpreter will be created empty */
-    uint                initialized: 1;     /**< Interpreter fully initialized and not empty */
-    uint                hasError: 1;        /**< Interpreter has an initialization error */
     uint                exiting: 1;         /**< VM should exit */
+    uint                finished: 1;        /**< Interpreter has finished processing and can be destroyed */
+    uint                freeze: 1;          /**< Freeze GC sync -- don't do a GC sync */
+    uint                hasError: 1;        /**< Interpreter has an initialization error */
+    uint                initialized: 1;     /**< Interpreter fully initialized and not empty */
 
-    struct EjsObj       *exceptionArg;      /**< Exception object for catch block */
+    EjsAny              *exceptionArg;      /**< Exception object for catch block */
 
     MprDispatcher       *dispatcher;        /**< Event dispatcher */
     MprList             *workers;           /**< Worker interpreters */
@@ -1235,8 +1260,8 @@ typedef struct Ejs {
 
     void                (*loaderCallback)(struct Ejs *ejs, int kind, ...);
     void                *userData;          /**< User data */
-    MprHashTable        *coreTypes;         /**< Core type instances */
-    MprHashTable        *standardSpaces;    /**< Hash of standard namespaces (global namespaces) */
+
+    EjsObj              *coreTypes;         /**< Core type instances */
     MprHashTable        *doc;               /**< Documentation */
     void                *sqlite;            /**< Sqlite context information */
 
@@ -1244,13 +1269,11 @@ typedef struct Ejs {
     HttpLoc             *loc;               /**< Current HttpLocation object for web start scripts */
 
 #if UNUSED
-    struct EjsObj       *sessions;          /**< Session cache */
+    EjsAny              *sessions;          /**< Session cache */
     int                 sessionTimeout;     /**< Default session timeout */
     MprEvent            *sessionTimer;      /**< Session expiry timer */
 #endif
-
-    struct EjsType      *sessionType;       /**< Session type object */
-    struct EjsObj       *applications;      /**< Application cache */
+    EjsAny              *applications;      /**< Application cache */
     int                 nextSession;        /**< Session ID counter */
     MprMutex            *mutex;             /**< Multithread locking */
 } Ejs;
@@ -1261,34 +1284,21 @@ typedef struct Ejs {
     Native Function signature
     @description This is the calling signature for C Functions.
     @param ejs Ejs reference returned from #ejsCreate
-    @param obj Reference to the "this" object. (The object containing the method).
+    @param thisObj Reference to the "this" object. (The object containing the method).
     @param argc Number of arguments.
     @param argv Array of arguments.
     @returns Returns a result variable or NULL on errors and exceptions.
     @stability Prototype.
  */
-typedef struct EjsObj *(*EjsFun)(Ejs *ejs, struct EjsObj *vp, int argc, struct EjsObj **argv);
+typedef struct EjsObj *(*EjsFun)(Ejs *ejs, EjsAny *thisObj, int argc, EjsObj **argv);
+
 //LEGACY
 typedef EjsFun EjsProc;
 typedef EjsFun EjsNativeFunction;
 #endif
 
 //  TODO is this used?
-typedef int (*EjsSortFn)(Ejs *ejs, struct EjsObj *p1, struct EjsObj *p2, cchar *name, int order);
-
-/**
-    Qualified name structure
-    @description All names in Ejscript consist of a property name and a name space. Namespaces provide discrete
-        spaces to manage and minimize name conflicts. These names will soon be converted to unicode.
-    @stability Prototype
-    @defgroup EjsName EjsName
-    @see EjsName ejsName ejsAllocName ejsDupName ejsCopyName
- */       
-typedef struct EjsName {
-    cchar       *name;                          /**< Property name */
-    cchar       *space;                         /**< Property namespace */
-} EjsName;
-
+typedef int (*EjsSortFn)(Ejs *ejs, EjsAny *p1, EjsAny *p2, cchar *name, int order);
 
 /**
     Initialize a Qualified Name structure
@@ -1299,23 +1309,22 @@ typedef struct EjsName {
     @return A reference to the qname structure
     @ingroup EjsName
  */
-extern EjsName *ejsName(struct EjsName *qname, cchar *space, cchar *name);
 
-#define EN(qname, name) ejsName(qname, "", name)
+//  MOB -- NAMING
+extern EjsName ejsEmptyWideName(Ejs *ejs, MprChar *name);
+extern EjsName ejsEmptyName(Ejs *ejs, cchar *name);
+extern EjsName ejsWideName(Ejs *ejs, MprChar *space, MprChar *name);
+extern EjsName ejsName(Ejs *ejs, cchar *space, cchar *name);
 
-/**
-    Allocate and Initialize  a Qualified Name structure
-    @description Create and initialize a qualified name structure using a name and namespace.
-    @param ctx Any memory context returned by mprAlloc
-    @param space Namespace string
-    @param name Name string
-    @return A reference to an allocated EjsName structure. Caller must free.
-    @ingroup EjsName
- */
-extern EjsName *ejsAllocName(MprCtx ctx, cchar *space, cchar *name);
+//  MOB -- NAMING
+#define WEN(name) ejsEmptyWideName(ejs, name)
+#define EN(name) ejsEmptyName(ejs, name)
+#define N(space, name) ejsName(ejs, space, name)
+#define WN(space, name) ejsWideName(ejs, space, name)
 
-extern EjsName *ejsDupName(MprCtx ctx, EjsName *qname);
-extern EjsName ejsCopyName(MprCtx ctx, EjsName *qname);
+#if UNUSED
+#define NS(space, name) ejsName(ejs, space, name)
+#endif
 
 /** 
     Property traits. 
@@ -1332,21 +1341,17 @@ typedef struct EjsTrait {
 } EjsTrait;
 
 
+//  MOB OPT packing
 typedef struct EjsSlot {
     EjsName         qname;                  /**< Property name */
     int             hashChain;              /**< Next property in hash chain */
     EjsTrait        trait;                  /**< Property descriptor traits */
     union {
-        struct EjsObj *ref;                 /**< Property reference */
-        MprNumber   *number;                /**< Immediate number value */
+        EjsAny      *ref;                   /**< Property reference */
+        MprNumber   *value;                 /**< Immediate number value */
     } value;
 } EjsSlot;
 
-typedef struct EjsSlots {
-    struct EjsSlot  *slots;                 /**< Vector of slots containing property references */
-    int             sizeSlots;              /**< Current size of traits[] and slots[] */
-    int             numSlots;               /**< Number of properties in traits/slots */
-} EjsSlots;
 
 typedef struct EjsHash {
     int             size;                   /**< Size of hash */
@@ -1354,94 +1359,66 @@ typedef struct EjsHash {
 } EjsHash;
 
 
+typedef struct EjsProperties {
+    EjsHash         *hash;                  /**< Hash buckets and head of link chains */
+    int             size;                   /**< Current size of slots[] in elements */
+    struct EjsSlot  slots[0];               /**< Vector of slots containing property references */
+} EjsProperties;
+
+
+//  MOB revise doc
 /** 
     Object Type. Base type for all objects.
-    @description The EjsObj type is the foundation for all types, blocks, functions and scripted classes. 
+    @description The EjsPot type is the foundation for all types, blocks, functions and scripted classes. 
         It provides storage and hashed lookup for properties.
         \n\n
-        EjsObj stores properties in an array of slots. These slots store a reference to the property value. 
+        EjsPot stores properties in an array of slots. These slots store a reference to the property value. 
         Property names are stored in a names hash. Dynamic objects own their own name hash. Sealed object instances 
         of a type, will simply refer to the hash of names owned by the type.
         \n\n
-        EjsObjs may be either dynamic or sealed. Dynamic objects can grow the number of properties. Sealed 
-        objects cannot. Sealed objects will store the slot array as part of the EjsObj memory chunk. Dynamic 
+        EjsPots may be either dynamic or sealed. Dynamic objects can grow the number of properties. Sealed 
+        objects cannot. Sealed objects will store the slot array as part of the EjsPot memory chunk. Dynamic 
         objects will perform a separate allocation for the slot array so that it can grow.
     @stability Evolving.
-    @defgroup EjsObj EjsObj
-    @see EjsObj ejsIsObject ejsCreateSimpleObject ejsCreateObject ejsCloneObject ejsGrowObject ejsMarkObject
-        TODO - change these From Var
+    @defgroup EjsPot EjsPot
+    @see EjsPot ejsIsPot ejsCreateSimpleObject ejsCreateObject ejsCloneObject ejsGrowObject ejsManageObject
+        MOB - change these From Var
         ejsGetVarType ejsAllocObj ejsFreeObj ejsCast ejsClone ejsCreateInstance ejsCreateVar
         ejsDestroyVar ejsDefineProperty ejsDeleteProperty ejsDeletePropertyByName
         ejsGetProperty ejsLookupProperty ejsSetProperty ejsSetPropertyByName ejsSetPropertyName
-        ejsSetPropertyTrait ejsDeserialize ejsParseVar
+        ejsSetPropertyTraits ejsDeserialize ejsParseVar
  */
-typedef struct EjsObj {
+typedef struct EjsPot {
+    struct EjsType  *type;                      /**< Type of the object */
+
+    uint    isBlock         : 1;                /**< Instance is a block */
+    uint    isFrame         : 1;                /**< Instance is a frame */
+    uint    isFunction      : 1;                /**< Instance is a function */
+    uint    isPrototype     : 1;                /**< Object is a type prototype object */
+    uint    isType          : 1;                /**< Instance is a type object */
+    uint    separateHash    : 1;                /**< Object has separate hash memory */
+    uint    separateSlots   : 1;                /**< Object has separate slots[] memory */
+    uint    shortScope      : 1;                /**< Don't follow type or base classes */
+
+    EjsProperties   *properties;                /** Object properties */
+    //  TODO - OPT - merge numProp with bits above (24 bits)
+    int             numProp;                    /** Number of properties */
 #if BLD_DEBUG
-    cchar   *name;                              /**< Name useful when debugging memory allocations */
-    int     seq;                                /**< Unique allocations squence */
+    MprMem          *mem;                       /**< Pointer to underlying memory block */
 #endif
+} EjsPot;
 
-#if BLD_HAS_UNNAMED_UNIONS
-    union {
-        struct {
-#endif
-            uint    builtin           :  1;     /**< Object is part of ejs-core */
-            uint    dynamic           :  1;     /**< Object may add properties */
-            uint    isFrame           :  1;     /**< Instance is a frame */
-            uint    isFunction        :  1;     /**< Instance is a function */
-            uint    isPrototype       :  1;     /**< Object is a type prototype object */
-            uint    isType            :  1;     /**< Instance is a type object */
-            uint    marked            :  1;     /**< GC marked in use */
-            uint    master            :  1;     /**< Allocated in the master interpreter */
-            uint    permanent         :  1;     /**< Object is immune from GC */
-            uint    separateSlots     :  1;     /**< Object has separate slots[] memory */
-            uint    shortScope        :  1;     /**< Don't follow type or base classes */
-            uint    visited           :  1;     /**< Has been traversed */
-#if BLD_HAS_UNNAMED_UNIONS
-        };
-        int         bits;
-    };
-#endif
-    struct EjsType  *type;                      /**< Type of this object (not base type). ie. type for Object is EjsType  */
+extern int ejsIs(EjsAny *obj, int slot);
+#define ejsIsPot(ejs, obj) (obj && POT(ejs, obj))
 
-    //  MOB -- convert to EjsSlots *properties;
-    struct EjsSlot  *slots;                     /**< Vector of slots containing property references */
-    int             sizeSlots;                  /**< Current size of traits[] and slots[] */
-    int             numSlots;                   /**< Number of properties in traits/slots */
-
-    EjsHash         *hash;                      /**< Hash buckets and head of link chains */
-} EjsObj;
-
-//  LEGACY TODO
-typedef EjsObj EjsVar;
-typedef EjsObj EO;
-
-#if DOXYGEN
-    /** 
-        Get a variables type
-        @description Get the base type for a variable
-        @param vp Variable reference
-        @returns A reference to the variables type object
-        @ingroup EjsObj
-     */
-    extern EjsType *ejsGetVarType(EjsObj *vp);
+#define ejsGetName(ptr) mprGetName(ptr)
+#define ejsSetName(ptr, name) mprSetName(ptr, name)
+#define ejsCopyName(dest, src) mprSetName(dest, mprGetName(src))
+#if BLD_DEBUG
+    #define ejsSetMemRef(obj) if (1) { obj->mem = MPR_GET_MEM(obj); } else 
 #else
-    #define ejsGetVarType(vp)       (vp->type)
-    #if BLD_DEBUG
-    #define ejsGetDebugName(vp) (ejsIsType(vp) ? ((EjsType*)(vp))->qname.name : "--noname--")
-    #define ejsSetDebugName(vp, debugName) \
-        if (1) { \
-            ((EjsObj*) vp)->name = debugName; \
-        } else
-    #else
-    #define ejsGetDebugName(vp) (ejsIsType(vp) ? ((EjsType*)(vp))->qname.name : "")
-    #define ejsSetDebugName(vp, name)
-    #define ejsSetFmtDebugName(vp, fmt, arg)
-    #endif
+    #define ejsSetMemRef(obj) 
 #endif
-
-extern void *ejsAlloc(Ejs *ejs, int size);
-extern void ejsFree(Ejs *ejs, void *ptr);
 
 /** 
     Allocate a new variable
@@ -1449,36 +1426,24 @@ extern void ejsFree(Ejs *ejs, void *ptr);
         when implementing the createVar helper.
     @param ejs Interpreter instance returned from #ejsCreate
     @param type Type object from which to create an object instance
-    @param size Size of extra property slots to reserve. This is used for dynamic objects.
+    @param extra Size of extra property slots to reserve. This is used for dynamic objects.
     @return A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle
         of the variable.
     @ingroup EjsObj
  */
-extern EjsObj *ejsAllocVar(Ejs *ejs, struct EjsType *type, int size);
-extern EjsObj *ejsAllocPooled(Ejs *ejs, int id);
-
-/**
-    Free a new variable
-    @description This should typically only be called by the destroyVar type helper which is invoked by the GC when
-        a variable is no longer needed. It should not be called by normal code.
-    @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to free
-    @param pool Optional pool id. Set to -1 for defaults.
-    @ingroup EjsObj
- */
-extern void ejsFreeVar(Ejs *ejs, void *vp, int pool);
+extern EjsAny *ejsAlloc(Ejs *ejs, struct EjsType *type, int extra);
 
 /** 
     Cast a variable to a new type
     @description Cast a variable and return a new variable of the required type.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to cast
+    @param obj Object to cast
     @param type Type to cast to
     @return A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle
         of the variable.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern EjsObj *ejsCast(Ejs *ejs, EjsObj *vp, struct EjsType *type);
+extern EjsAny *ejsCast(Ejs *ejs, EjsAny *obj, struct EjsType *type);
 
 /** 
     Clone a variable
@@ -1486,13 +1451,13 @@ extern EjsObj *ejsCast(Ejs *ejs, EjsObj *vp, struct EjsType *type);
         will not copy the property instances, rather it will only duplicate the property reference. A deep copy
         will recursively clone all the properties of the variable.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to clone
+    @param obj Object to clone
     @param deep Set to true to do a deep copy.
     @return A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle
         of the variable.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern EjsObj *ejsClone(Ejs *ejs, EjsObj *vp, bool deep);
+extern EjsAny *ejsClone(Ejs *ejs, EjsAny *obj, bool deep);
 
 /** 
     Create a new variable instance 
@@ -1500,12 +1465,12 @@ extern EjsObj *ejsClone(Ejs *ejs, EjsObj *vp, bool deep);
     @param ejs Interpreter instance returned from #ejsCreate
     @param type Type from which to create a new instance
     @param argc Count of args in argv
-    @param argv Vector of arguments. Each arg is an EjsObj.
+    @param argv Vector of arguments. Each arg is an EjsAny.
     @return A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle
         of the variable.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern EjsObj *ejsCreateInstance(Ejs *ejs, struct EjsType *type, int argc, EjsObj **argv);
+extern EjsAny *ejsCreateInstance(Ejs *ejs, struct EjsType *type, int argc, void *argv);
 
 /** 
     Create a variable
@@ -1515,26 +1480,15 @@ extern EjsObj *ejsCreateInstance(Ejs *ejs, struct EjsType *type, int argc, EjsOb
     @param numSlots Size of extra property slots to reserve. This is used for dynamic objects.
     @return A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle
         of the variable.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern EjsObj *ejsCreate(Ejs *ejs, struct EjsType *type, int numSlots);
-
-/** 
-    Destroy a variable
-    @description Destroy a variable of the required type. This invokes the destroyVar helper method for the specified type.
-        The default action for the destroyVar helper is to simply invoke ejsFreeObj which will return the variable
-        storage to a type pool or return the memory to the heap.
-    @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Varaible to destroy
-    @ingroup EjsObj
- */
-extern void ejsDestroy(Ejs *ejs, EjsObj *vp);
+extern EjsAny *ejsCreate(Ejs *ejs, struct EjsType *type, int numSlots);
 
 /** 
     Define a property
     @description Define a property in a variable and give it a name, base type, attributes and default value.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable in which to define a property
+    @param obj Object in which to define a property
     @param slotNum Slot number in the variable for the property. Slots are numbered sequentially from zero. Set to
         -1 to request the next available slot number.
     @param qname Qualified name containing a name and a namespace.
@@ -1545,22 +1499,22 @@ extern void ejsDestroy(Ejs *ejs, EjsObj *vp);
         @li EJS_ATTR_ENUMERABLE
     @param value Initial value of the property
     @return A postitive slot number or a negative MPR error code.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsDefineProperty(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname, struct EjsType *type, 
-    int64 attributes, EjsObj *value);
+extern int ejsDefineProperty(Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname, struct EjsType *type, int64 attributes, 
+    EjsAny *value);
 
 /** 
     Delete a property
     @description Delete a variable's property and set its slot to null. The slot is not reclaimed and subsequent properties
         are not compacted.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable in which to delete the property
+    @param obj Variable in which to delete the property
     @param slotNum Slot number in the variable for the property to delete.
     @return Zero if successful, otherwise a negative MPR error code.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsDeleteProperty(Ejs *ejs, EjsObj *vp, int slotNum);
+extern int ejsDeleteProperty(Ejs *ejs, EjsAny *obj, int slotNum);
 
 /** 
     Delete a property by name
@@ -1568,126 +1522,120 @@ extern int ejsDeleteProperty(Ejs *ejs, EjsObj *vp, int slotNum);
         ejsLookupProperty with the specified name. Once deleted, the slot is not reclaimed and subsequent properties
         are not compacted.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable in which to delete the property
+    @param obj Variable in which to delete the property
     @param qname Qualified name for the property including name and namespace.
     @return Zero if successful, otherwise a negative MPR error code.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsDeletePropertyByName(Ejs *ejs, EjsObj *vp, EjsName *qname);
+extern int ejsDeletePropertyByName(Ejs *ejs, EjsAny *obj, EjsName qname);
 
 /** 
     Get a property
     @description Get a property from a variable at a given slot.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Object to examine
     @param slotNum Slot number for the requested property.
     @return The variable property stored at the nominated slot.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern void *ejsGetProperty(Ejs *ejs, void *vp, int slotNum);
+extern EjsAny *ejsGetProperty(Ejs *ejs, EjsAny *obj, int slotNum);
 
 /** 
     Get a count of properties in a variable
     @description Get a property from a variable at a given slot.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Variable to examine
     @return A positive integer count of the properties stored by the variable. 
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsGetPropertyCount(Ejs *ejs, EjsObj *vp);
+extern int ejsGetLength(Ejs *ejs, EjsAny *obj);
+
+//  MOB -- globally change
+#define ejsGetPropertyCount(ejs, obj) ejsGetLength(ejs, obj)
 
 /** 
     Get a variable property's name
     @description Get a property name for the property at a given slot in the  variable.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Object to examine
     @param slotNum Slot number for the requested property.
     @return The qualified property name including namespace and name. Caller must not free.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern EjsName ejsGetPropertyName(Ejs *ejs, void *vp, int slotNum);
+extern EjsName ejsGetPropertyName(Ejs *ejs, EjsAny *obj, int slotNum);
 
 /** 
     Get a property by name
     @description Get a property from a variable by name.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Object to examine
     @param qname Qualified name specifying both a namespace and name.
     @return The variable property stored at the nominated slot.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern void *ejsGetPropertyByName(Ejs *ejs, void *vp, EjsName *qname);
+extern EjsAny *ejsGetPropertyByName(Ejs *ejs, EjsAny *obj, EjsName qname);
 
 /** 
     Get a property's traits
     @description Get a property's trait description. The property traits define the properties base type,
         and access attributes.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Variable to examine
     @param slotNum Slot number for the requested property.
     @return A trait structure reference for the property.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern struct EjsTrait *ejsGetPropertyTrait(Ejs *ejs, EjsObj *vp, int slotNum);
+extern struct EjsTrait *ejsGetPropertyTraits(Ejs *ejs, EjsAny *obj, int slotNum);
 
 /** 
     Invoke an opcode on a native type.
     @description Invoke an Ejscript byte code operator on the specified variable given the expression right hand side.
         Native types would normally implement the invokeOperator helper function to respond to this function call.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Variable to examine
     @param opCode Byte ope code to execute
     @param rhs Expression right hand side for binary expression op codes. May be null for other op codes.
     @return The result of the op code or NULL if the opcode does not require a result.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern EjsObj *ejsInvokeOperator(Ejs *ejs, EjsObj *vp, int opCode, EjsObj *rhs);
+extern EjsAny *ejsInvokeOperator(Ejs *ejs, EjsAny *obj, int opCode, EjsAny *rhs);
+extern EjsAny *ejsInvokeOperatorDefault(Ejs *ejs, EjsAny *obj, int opCode, EjsAny *rhs);
 
 /** 
     Lookup a property by name
     @description Search for a property by name in the given variable.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Variable to examine
     @param qname Qualified name of the property to search for.
     @return The slot number containing the property. Then use #ejsGetProperty to retrieve the property or alternatively
         use ejsGetPropertyByName to lookup and retrieve in one step.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsLookupProperty(Ejs *ejs, EjsObj *vp, EjsName *qname);
-
-/** 
-    Mark a variable as currently in use.
-    @description Mark a variables as currently active so the garbage collector will preserve it. This routine should
-        be called by native types in their markVar helper.
-    @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to mark as currently being used.
-    @ingroup EjsObj
- */
-extern void ejsMark(Ejs *ejs, void *vp);
+extern int ejsLookupProperty(Ejs *ejs, EjsAny *obj, EjsName qname);
 
 /** 
     Set a property's value
     @description Set a value for a property at a given slot in the specified variable.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Object to examine
     @param slotNum Slot number for the requested property.
     @param value Reference to a value to store.
     @return The slot number of the property updated.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsSetProperty(Ejs *ejs, void *vp, int slotNum, void *value);
+extern int ejsSetProperty(Ejs *ejs, void *obj, int slotNum, void *value);
 
 /** 
     Set a property's value 
     @description Set a value for a property. The property is located by name in the specified variable.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Object to examine
     @param qname Qualified property name.
     @param value Reference to a value to store.
     @return The slot number of the property updated.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsSetPropertyByName(Ejs *ejs, void *vp, EjsName *qname, void *value);
+extern int ejsSetPropertyByName(Ejs *ejs, void *obj, EjsName qname, void *value);
 
 /** 
     Set a property's name 
@@ -1695,43 +1643,45 @@ extern int ejsSetPropertyByName(Ejs *ejs, void *vp, EjsName *qname, void *value)
         consists of a namespace and name - both of which must be persistent. A typical paradigm is for these name
         strings to be owned by the memory context of the variable.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Variable to examine
     @param slotNum Slot number of the property in the variable.
     @param qname Qualified property name.
     @return The slot number of the property updated.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsSetPropertyName(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname);
+extern int ejsSetPropertyName(Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname);
 
 /** 
     Set a property's traits
     @description Set the traits describing a property. These include the property's base type and access attributes.
     @param ejs Interpreter instance returned from #ejsCreate
-    @param vp Variable to examine
+    @param obj Variable to examine
     @param slotNum Slot number of the property in the variable.
     @param type Base type for the property. Set to NULL for an untyped property.
     @param attributes Integer mask of access attributes.
     @return The slot number of the property updated.
-    @ingroup EjsObj
+    @ingroup EjsAny
  */
-extern int ejsSetPropertyTrait(Ejs *ejs, EjsObj *vp, int slotNum, struct EjsType *type, int attributes);
+extern int ejsSetPropertyTraits(Ejs *ejs, EjsAny *obj, int slotNum, struct EjsType *type, int attributes);
 
 //  TODO - DOC - 
-extern EjsObj  *ejsDeserialize(Ejs *ejs, struct EjsString *value);
+extern EjsAny *ejsDeserialize(Ejs *ejs, EjsString *value);
 
-//  TODO - DOC
-extern EjsObj *ejsParse(Ejs *ejs, cchar *str,  int prefType);
+//  MOB -- should this be EjsString?
+extern EjsAny *ejsParse(Ejs *ejs, MprChar *str,  int prefType);
 extern void ejsZeroSlots(Ejs *ejs, EjsSlot *slots, int count);
-extern void ejsCopySlots(Ejs *ejs, EjsObj *obj, EjsSlot *dest, EjsSlot *src, int count, int dup);
+
+//  MOB -- bad signature
+extern void ejsCopySlots(Ejs *ejs, EjsPot *pot, EjsSlot *dest, EjsSlot *src, int count);
 
 /** 
-    Create a simple object
+    Create an empty property object
     @description Create a simple object using Object as its base type.
     @param ejs Interpreter instance returned from #ejsCreate
     @return A new object instance
     @ingroup EjsObj
  */
-extern EjsObj *ejsCreateSimpleObject(Ejs *ejs);
+extern EjsAny *ejsCreateEmptyPot(Ejs *ejs);
 
 /** 
     Create an object instance of the specified type
@@ -1743,30 +1693,17 @@ extern EjsObj *ejsCreateSimpleObject(Ejs *ejs);
     @return A new object instance
     @ingroup EjsObj
  */
-extern void *ejsCreateObject(Ejs *ejs, struct EjsType *type, int size);
+extern void *ejsCreatePot(Ejs *ejs, struct EjsType *type, int size);
 
-extern int ejsInsertGrowObject(Ejs *ejs, EjsObj *obj, int numSlots, int offset);
-extern int ejsRemoveProperty(Ejs *ejs, EjsObj *obj, int slotNum);
-extern int ejsGetOwnNames(Ejs *ejs, EjsObj *obj, int sizeNames);
-extern int ejsMakeObjHash(EjsObj *obj);
-extern void ejsClearObjHash(EjsObj *obj);
-
-extern int ejsGetOwnTraits(Ejs *ejs, EjsObj *obj, int sizeTraits);
-extern void ejsSetTraitType(struct EjsTrait *trait, struct EjsType *type);
-extern void ejsSetTraitAttributes(struct EjsTrait *trait, int attributes);
-extern EjsTrait *ejsGetTrait(Ejs *ejs, void *obj, int slotNum);
-extern int ejsSetTraitDetails(Ejs *ejs, void *vp, int slotNum, struct EjsType *type, int attributes);
-extern int ejsHasTrait(EjsObj *obj, int slotNum, int attributes);
-extern int ejsGetTraitAttributes(EjsObj *obj, int slotNum);
-extern struct EjsType *ejsGetTraitType(EjsObj *obj, int slotNum);
-extern int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite);
-extern int ejsCompactObject(Ejs *ejs, EjsObj *obj);
-extern int ejsLookupObjectProperty(struct Ejs *ejs, EjsObj *obj, EjsName *qname);
-extern EjsName ejsGetObjectPropertyName(Ejs *ejs, EjsObj *obj, int slotNum);
+extern int ejsCompactPot(Ejs *ejs, EjsPot *obj);
+extern int ejsInsertPotProperties(Ejs *ejs, EjsPot *pot, int numSlots, int offset);
+extern int ejsMakeHash(Ejs *ejs, EjsPot *obj);
+extern int ejsPropertyHasTrait(Ejs *ejs, EjsAny *obj, int slotNum, int attributes);
+extern int ejsRemovePotProperty(Ejs *ejs, EjsAny *obj, int slotNum);
+extern int ejsLookupPotProperty(Ejs *ejs, EjsPot *obj, EjsName qname);
+extern EjsName ejsGetPotPropertyName(Ejs *ejs, EjsPot *obj, int slotNum);
 
 
-//  TODO - inconsistent naming vs ejsCloneVar (clone vs copy)
-//
 /** 
     Copy an object
     @description Copy an object create a new instance. This may do a shallow or deep copy depending on the value of 
@@ -1778,10 +1715,10 @@ extern EjsName ejsGetObjectPropertyName(Ejs *ejs, EjsObj *obj, int slotNum);
     @return A newly allocated object. Caller must not free as the GC will manage the lifecycle of the variable.
     @ingroup EjsObj
  */
-extern void *ejsCloneObject(Ejs *ejs, void *src, bool deep);
+extern EjsAny *ejsClonePot(Ejs *ejs, EjsAny *src, bool deep);
 
 /** 
-    Grow an object
+    Grow a pot object
     @description Grow the property storage for an object. Object properties are stored in slots. To store more 
         properties, you need to grow the slots.
     @param ejs Interpreter instance returned from #ejsCreate
@@ -1791,7 +1728,7 @@ extern void *ejsCloneObject(Ejs *ejs, void *src, bool deep);
     @return Zero if successful
     @ingroup EjsObj
  */
-extern int ejsGrowObject(Ejs *ejs, EjsObj *obj, int numSlots);
+extern int ejsGrowPot(Ejs *ejs, EjsPot *obj, int numSlots);
 
 /** 
     Mark an object as currently in use.
@@ -1801,28 +1738,192 @@ extern int ejsGrowObject(Ejs *ejs, EjsObj *obj, int numSlots);
     @param obj Object to mark as currently being used.
     @ingroup EjsObj
  */
-extern void     ejsMarkObject(Ejs *ejs, void *obj);
+extern void ejsManagePot(void *obj, int flags);
 
-extern int      ejsGetSlot(Ejs *ejs, EjsObj *obj, int slotNum);
+extern int      ejsGetSlot(Ejs *ejs, EjsPot *obj, int slotNum);
 extern EjsObj   *ejsCoerceOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs);
-extern int      ejsComputeHashCode(EjsObj *obj, EjsName *qname);
+extern int      ejsComputeStringHashCode(EjsString *name, int size);
+extern int      ejsComputeMultiHashCode(cchar *name, int size);
 extern int      ejsGetHashSize(int numProp);
-extern void     ejsCreateObjectHelpers(Ejs *ejs);
-extern int      ejsInsertGrowObject(Ejs *ejs, EjsObj *obj, int size, int offset);
-#if UNUSED
-extern int      ejsLookupSingleProperty(Ejs *ejs, EjsObj *obj, EjsName *qname);
-#endif
-extern void     ejsMakePropertyDontDelete(EjsObj *vp, int dontDelete);
-extern int      ejsMakePropertyEnumerable(EjsObj *vp, bool enumerable);
-extern void     ejsMakePropertyReadOnly(EjsObj *vp, int readonly);
-extern EjsObj   *ejsObjectOperator(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs);
-extern int      ejsRebuildHash(Ejs *ejs, EjsObj *obj);
-extern void     ejsResetHash(Ejs *ejs, EjsObj *obj);
-extern void     ejsRemoveSlot(Ejs *ejs, EjsObj *slots, int slotNum, int compact);
+extern void     ejsCreatePotHelpers(Ejs *ejs);
+
+//  MOB -- rename
+extern void     ejsMakePropertyDontDelete(EjsObj *obj, int dontDelete);
+extern int      ejsMakePropertyEnumerable(EjsObj *obj, bool enumerable);
+extern void     ejsMakePropertyReadOnly(EjsObj *obj, int readonly);
+extern int      ejsRebuildHash(Ejs *ejs, EjsPot *obj);
+extern void     ejsResetHash(Ejs *ejs, EjsPot *obj);
+extern void     ejsRemoveSlot(Ejs *ejs, EjsPot *slots, int slotNum, int compact);
 extern void     ejsSetAllocIncrement(Ejs *ejs, struct EjsType *type, int increment);
-extern EjsObj   *ejsToSource(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
+extern EjsObj   *ejsToSource(Ejs *ejs, EjsObj *obj, int argc, void *argv);
+
+extern EjsString *ejsObjToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
+extern EjsString *ejsObjToJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
+extern int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite);
+
+/** 
+    String Class
+    @description The String class provides the base class for all strings. Each String object represents a single 
+    immutable linear sequence of characters. Strings have operators for: comparison, concatenation, copying, 
+    searching, conversion, matching, replacement, and, subsetting.
+    \n\n
+    Strings are currently sequences of Unicode characters. Depending on the configuration, they may be 8, 16 or 32 bit
+    code point values.
+    @stability Evolving
+    @defgroup EjsString EjsString
+    @see EjsString ejsToString ejsCreateString ejsCreateBareString ejsCreateStringWithLength ejsDupString
+        ejsVarToString ejsStrdup ejsStrcat ejsIsString
+ */
+//  MOB -- need definition here
+
+/** 
+    Create a string object
+    @param ejs Ejs reference returned from #ejsCreate
+    @param value C string value to define for the string object. Note: this will soon be changed to unicode.
+    @stability Prototype
+    @return A string object
+    @ingroup EjsString
+ */
+extern EjsString *ejsCreateString(Ejs *ejs, MprChar *value, size_t len);
+extern EjsString *ejsCreateStringFromConst(Ejs *ejs, struct EjsModule *mp, int index);
+extern EjsString *ejsCreateStringFromAsc(Ejs *ejs, cchar *value);
+extern EjsString *ejsCreateStringFromBytes(Ejs *ejs, cchar *value, size_t len);
+extern EjsString *ejsCreateStringFromMulti(Ejs *ejs, cchar *value, size_t len);
+
+/** 
+    Create an empty string object. This creates an uninitialized string object of the requrired size. Once initialized,
+        the string must be "interned" via $ejsInternString.
+    @param ejs Ejs reference returned from #ejsCreate
+    @param len Length of space to reserve for future string data
+    @return A string object
+    @ingroup EjsString
+ */
+extern EjsString *ejsCreateBareString(Ejs *ejs, size_t len);
+
+//  MOB DOC
+extern EjsString *ejsCreateNonInternedString(Ejs *ejs, MprChar *value, size_t len);
+
+/** 
+    Intern a string object. This stores the string in the internal string pool. This is required if the string was
+    created via ejsCreateBareString. The ejsCreateString routine will intern the string automatcially.
+    @param ejs Ejs reference returned from #ejsCreate
+    @param len Length of space to reserve for future string data
+    @return The internalized string object. NOTE: this may be different to the object passed in, if the string value
+        was already present in the intern pool.
+    @ingroup EjsString
+ */
+extern EjsString *ejsInternString(Ejs *ejs, EjsString *sp);
+extern EjsString *ejsInternMulti(struct Ejs *ejs, cchar *value, size_t len);
+extern EjsString *ejsInternAsc(struct Ejs *ejs, cchar *value, size_t len);
+extern EjsString *ejsInternWide(struct Ejs *ejs, MprChar *value, size_t len);
+extern void ejsManageIntern(Ejs *ejs, int flags);
+
+extern int       ejsAtoi(Ejs *ejs, EjsString *sp, int radix);
+extern EjsString *ejsCatString(Ejs *ejs, EjsString *dest, EjsString *src);
+extern EjsString *ejsCatStrings(Ejs *ejs, EjsString *src, ...);
+extern EjsString *ejsSubstring(Ejs *ejs, EjsString *src, size_t start, size_t len);
+extern int       ejsCompareString(Ejs *ejs, EjsString *s1, EjsString *s2);
+extern int       ejsCompareSubstring(Ejs *ejs, EjsString *s1, EjsString *s2, size_t offset, size_t len);
+extern EjsString *ejsToLower(Ejs *ejs, EjsString *sp);
+extern EjsString *ejsToUpper(Ejs *ejs, EjsString *sp);
+extern EjsString *ejsTruncateString(Ejs *ejs, EjsString *sp, size_t len);
+
+//  MIXED modes
+extern int       ejsCompareMulti(Ejs *ejs, EjsString *s1, cchar *s2);
+extern int       ejsCompareWide(Ejs *ejs, EjsString *s1, MprChar *s2, size_t len);
+extern int       ejsContainsChar(Ejs *ejs, EjsString *sp, int charPat);
+extern int       ejsContainsMulti(Ejs *ejs, EjsString *sp, cchar *pat);
+extern int       ejsContainsString(Ejs *ejs, EjsString *sp, EjsString *pat);
+extern int       ejsStartsWithMulti(Ejs *ejs, EjsString *sp, cchar *pat);
+extern char      *ejsToMulti(Ejs *ejs, void *obj);
+extern EjsString *ejsSprintf(Ejs *ejs, cchar *fmt, ...);
+
+/**
+    Convert a variable to a string in JSON format
+    @param ejs Ejs reference returned from #ejsCreate
+    @param obj Value to cast
+    @param options Encoding options. See serialize for details.
+    @return A string object
+    @ingroup MOB
+ */
+extern EjsString *ejsToJSON(Ejs *ejs, EjsAny *obj, EjsObj *options);
+
+//  MOB - low level serialize
+extern EjsString *ejsSerialize(Ejs *ejs, EjsAny *obj, EjsObj *options);
+
+/** 
+    Cast a variable to a string
+    @param ejs Ejs reference returned from #ejsCreate
+    @param obj Object to convert
+    @return A string object
+    @ingroup MOB
+ */
+extern EjsString *ejsToString(Ejs *ejs, EjsAny *obj);
+
+#if DOXYGEN
+    bool ejsIsString(Ejs *ejs, EjsAny *obj);
+#else
+    #define ejsIsString(ejs, obj) (obj && TYPE(obj)->id == ES_String)
+#endif
+
+extern EjsString *ejsStringToJSON(Ejs *ejs, EjsObj *obj);
+
+/** 
+    Array class
+    @description Arrays provide a growable, integer indexed, in-memory store for objects. An array can be treated as a 
+        stack (FIFO or LIFO) or a list (ordered). Insertions can be done at the beginning or end of the stack or at an 
+        indexed location within a list. The Array class can store objects with numerical indicies and can also store 
+        any named properties. The named properties are stored in the obj field, whereas the numeric indexed values are
+        stored in the data field. Array extends EjsObj and has all the capabilities of EjsObj.
+    @stability Evolving
+    @defgroup EjsArray EjsArray
+    @see EjsArray ejsCreateArray ejsIsArray
+ */
+typedef struct EjsArray {
+    EjsPot          pot;                /**< Property storage */
+    EjsObj          **data;             /**< Array elements */
+    int             length;             /**< Array length property */
+} EjsArray;
 
 
+/** 
+    Create an array
+    @param ejs Ejs reference returned from #ejsCreate
+    @param size Initial size of the array
+    @return A new array object
+    @ingroup EjsArray
+ */
+extern EjsArray *ejsCreateArray(Ejs *ejs, int size);
+extern EjsArray *ejsCloneArray(Ejs *ejs, EjsArray *ap, bool deep);
+
+extern int ejsAddItem(Ejs *ejs, EjsArray *ap, EjsAny *item);
+extern int ejsAppendArray(Ejs *ejs, EjsArray *dest, EjsArray *src);
+extern void ejsClearArray(Ejs *ejs, EjsArray *ap);
+extern int ejsInsertItem(Ejs *ejs, EjsArray *ap, int index, EjsAny *item);
+extern void *ejsGetItem(Ejs *ejs, EjsArray *ap, int index);
+extern void *ejsGetFirstItem(Ejs *ejs, EjsArray *ap);
+extern void *ejsGetLastItem(Ejs *ejs, EjsArray *ap);
+extern void *ejsGetNextItem(Ejs *ejs, EjsArray *ap, int *next);
+extern void *ejsGetPrevItem(Ejs *ejs, EjsArray *ap, int *next);
+extern int ejsLookupItem(Ejs *ejs, EjsArray *lp, EjsAny *item);
+extern int ejsRemoveItem(Ejs *ejs, EjsArray *ap, EjsAny *item);
+extern int ejsRemoveLastItem(Ejs *ejs, EjsArray *ap);
+extern int ejsRemoveItemAtPos(Ejs *ejs, EjsArray *ap, int index);
+
+#if DOXYGEN
+    /** 
+        Determine if a variable is an array
+        @param obj Object to test
+        @return True if the variable is an array
+        @ingroup EjsArray
+     */
+    extern bool ejsIsArray(Ejs *ejs, EjsAny *obj);
+#else
+    #define ejsIsArray(ejs, obj) (obj && TYPE(obj)->id == ES_Array)
+#endif
+
+
+//MOB - add dividors for all classes
 /** 
     Block class
     @description The block class is the base class for all program code block scope objects. This is an internal class
@@ -1834,17 +1935,20 @@ extern EjsObj   *ejsToSource(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
     @see EjsBlock ejsIsBlock ejsBindFunction
  */
 typedef struct EjsBlock {
-    EjsObj          obj;                            /**< Extends Object - Property storage */
-    EjsList         namespaces;                     /**< Current list of namespaces open in this block of properties */
+    EjsPot          pot;                            /**< Property storage */
+    MprList         namespaces;                     /**< Current list of namespaces open in this block of properties */
     struct EjsBlock *scope;                         /**< Lexical scope chain for this block */
     struct EjsBlock *prev;                          /**< Previous block in activation chain */
 
     //  MOB -- OPT and compress / eliminate some of these fields. Every function has these.
     EjsObj          *prevException;                 /**< Previous exception if nested exceptions */
-    EjsVar          **stackBase;                    /**< Start of stack in this block */
+    EjsObj          **stackBase;                    /**< Start of stack in this block */
     uint            breakCatch: 1;                  /**< Return, break or continue in a catch block */
     uint            isGlobal: 1;                    /**< Block is the global block */
     uint            nobind: 1;                      /**< Don't bind to properties in this block */
+#if BLD_DEBUG
+    EjsLoc          loc;
+#endif
 } EjsBlock;
 
 
@@ -1852,14 +1956,13 @@ typedef struct EjsBlock {
     /** 
         Determine if a variable is a block.
         @description This call tests if the variable is a block.
-        @param vp Variable to test
+        @param obj Object to test
         @returns True if the variable is based on EjsBlock
         @ingroup EjsBlock
      */
-    extern bool ejsIsBlock(EjsObj *vp);
+    extern bool ejsIsBlock(Ejs *ejs, EjsObj *obj);
 #else
-    //  MOB -- very slot. Should have EjsObj.isBlock
-    #define ejsIsBlock(vp) (ejsIs(vp, ES_Block) || ejsIs(vp, ES_Function) || ejsIs(vp, ES_Type) || ejsIsFrame(vp))
+    #define ejsIsBlock(ejs, obj) (ejsIsPot(ejs, obj) && ((EjsPot*) (obj))->isBlock)
 #endif
 
 /** 
@@ -1871,33 +1974,39 @@ typedef struct EjsBlock {
     @param ejs Interpreter instance returned from #ejsCreate
     @param obj Object containing the function property to bind.
     @param slotNum Slot number of the method property
-    @param fn Native C function to bind
+    @param fun Native C function to bind
     @return Zero if successful, otherwise a negative MPR error code.
     @ingroup EjsType
  */
-extern int ejsBindFunction(Ejs *ejs, void *obj, int slotNum, EjsProc fn);
+extern int ejsBindFunction(Ejs *ejs, EjsAny *obj, int slotNum, void *fun);
 
 /*  
     This is all an internal API. Native types should probably not be using these routines. Speak up if you find
     you need these routines in your code.
  */
 
-extern int      ejsAddNamespaceToBlock(Ejs *ejs, EjsBlock *blockRef, struct EjsNamespace *namespace);
-extern int      ejsAddScope(MprCtx ctx, EjsBlock *block, EjsBlock *scopeBlock);
+extern int      ejsAddNamespaceToBlock(Ejs *ejs, EjsBlock *blockRef, struct EjsNamespace *nsp);
+extern int      ejsAddScope(EjsBlock *block, EjsBlock *scopeBlock);
 extern EjsBlock *ejsCreateBlock(Ejs *ejs, int numSlots);
 
 //  TODO - why do we have ejsCloneObject, ejsCloneBlock ... Surely ejsCloneVar is sufficient?
 extern EjsBlock *ejsCloneBlock(Ejs *ejs, EjsBlock *src, bool deep);
 
-extern int      ejsCaptureScope(Ejs *ejs, EjsBlock *block, EjsList *scopeChain);
-extern int      ejsCopyScope(EjsBlock *block, EjsList *chain);
+extern int      ejsCaptureScope(Ejs *ejs, EjsBlock *block, struct EjsArray *scopeChain);
+extern int      ejsCopyScope(EjsBlock *block, struct EjsArray *chain);
 extern int      ejsGetNamespaceCount(EjsBlock *block);
 
 extern EjsBlock *ejsGetTopScope(EjsBlock *block);
-extern void     ejsMarkBlock(Ejs *ejs, EjsBlock *block);
+extern void     ejsManageBlock(EjsBlock *block, int flags);
 extern void     ejsPopBlockNamespaces(EjsBlock *block, int count);
 extern EjsBlock *ejsRemoveScope(EjsBlock *block);
 extern void     ejsResetBlockNamespaces(Ejs *ejs, EjsBlock *block);
+
+#if BLD_DEBUG
+extern void     ejsSetBlockLocation(EjsBlock *block, EjsLoc *loc);
+#else
+#define ejsSetBlockLocation(block, loc)
+#endif
 
 /** 
     Exception Handler Record
@@ -1917,6 +2026,41 @@ typedef struct EjsEx {
 } EjsEx;
 
 
+#define EJS_INDEX_INCR  256
+
+typedef struct EjsConstants {
+    char          *pool;                    /**< Constant pool string data */
+    int           poolSize;                 /**< Size of constant pool storage in bytes */
+    int           poolLength;               /**< Length of used bytes in constant pool */
+    int           indexSize;                /**< Size of index in elements */
+    int           indexCount;               /**< Number of constants used in index */
+    int           locked;                   /**< No more additions allowed */
+    MprHashTable  *table;                   /**< Hash table for fast lookup when compiling */
+    EjsString     **index;                  /**< Interned string index */
+} EjsConstants;
+
+extern EjsConstants *ejsCreateConstants(Ejs *ejs, int count, size_t size);
+extern int ejsGrowConstants(Ejs *ejs, EjsConstants *constants, size_t size);
+extern int ejsAddConstant(Ejs *ejs, EjsConstants *constants, cchar *str);
+
+#define EJS_DEBUG_INCR 16
+
+typedef struct EjsLine {
+    int         offset;                     /**< Optional PC offsets of each line in function */
+    MprChar     *source;                    /**< Program source code. Format: path@line: code */         
+} EjsLine;
+
+
+typedef struct EjsDebug {
+    int        size;                        /**< Size of lines[] in elements */
+    int        numLines;                    /**< Number of entries in lines[] */
+    EjsLine    lines[0];
+} EjsDebug;
+
+extern EjsDebug *ejsCreateDebug(Ejs *ejs);
+extern int ejsAddDebugLine(Ejs *ejs, EjsDebug **debug, int offset, MprChar *source);
+extern int ejsGetDebugInfo(Ejs *ejs, struct EjsFunction *fun, uchar *pc, char **path, int *lineNumber, MprChar **source);
+
 // TODO OPT. Could compress this.
 /** 
     Byte code
@@ -1925,12 +2069,14 @@ typedef struct EjsEx {
     @ingroup EjsFunction
  */
 typedef struct EjsCode {
-    uchar           *byteCode;              /**< Byte code */
-    int             codeLen;                /**< Byte code length */
-    struct EjsConst *constants;             /**< Constant pool. Reference to module constant pool */
-    int             numHandlers;            /**< Number of exception handlers */
-    int             sizeHandlers;           /**< Size of handlers array */
-    struct EjsEx    **handlers;             /**< Exception handlers */
+    struct EjsModule *module;                /**< Module owning this function */
+    EjsDebug         *debug;                 /**< Source code debug information */
+    EjsEx            **handlers;             /**< Exception handlers */
+    int              codeLen;                /**< Byte code length */
+    int              debugOffset;            /**< Offset in mod file for debug info */
+    int              numHandlers;            /**< Number of exception handlers */
+    int              sizeHandlers;           /**< Size of handlers array */
+    uchar            byteCode[0];            /**< Byte code */
 } EjsCode;
 
 
@@ -1949,13 +2095,10 @@ typedef struct EjsFunction {
         activation object. When compiling, the compiler stores parameters in the normal property "block", it then
         transfers them into the activation block when complete.
      */
-    EjsBlock        block;                  /** Activation block for local vars */
-    EjsObj          *activation;            /** Activation properties (parameters + locals) */
-
-    //  MOB -- should this be BLD_DEBUG?
-    cchar           *name;                  /** Function name for debuggability */
-
-#if FUTURE && MOB
+    EjsBlock        block;                  /** Run-time properties for local vars */
+    EjsPot          *activation;            /** Parameter and local properties */
+    EjsString       *name;                  /** Function name */
+#if FUTURE
     union {
 #endif
         struct EjsFunction *setter;         /**< Setter function for this property */
@@ -1963,75 +2106,69 @@ typedef struct EjsFunction {
 #if FUTURE && MOB
     } extra;
 #endif
-
     union {
-        EjsCode     code;                   /**< Byte code */
-        EjsProc     proc;                   /**< Native function pointer */
+        EjsCode     *code;                  /**< Byte code */
+        EjsFun      proc;                   /**< Native function pointer */
     } body;
 
     struct EjsArray *boundArgs;             /**< Bound "args" */
-    EjsObj          *boundThis;             /**< Bound "this" object value */
+    EjsAny          *boundThis;             /**< Bound "this" object value */
     struct EjsType  *resultType;            /**< Return type of method */
 
-#if BLD_HAS_UNNAMED_UNIONS
-    union {
-        struct {
-#endif
-            uint    numArgs: 8;             /**< Count of formal parameters */
-            uint    numDefault: 8;          /**< Count of formal parameters with default initializers */
-            uint    allowMissingArgs: 1;    /**< Allow unsufficient args for native functions */
-            uint    castNulls: 1;           /**< Cast return values of null */
-            uint    fullScope: 1;           /**< Closures must capture full scope */
-            uint    hasReturn: 1;           /**< Function has a return stmt */
-            uint    inCatch: 1;             /**< Executing catch block */
-            uint    inException: 1;         /**< Executing catch/finally exception processing */
-            uint    isConstructor: 1;       /**< Function is a constructor */
-            uint    isInitializer: 1;       /**< Function is a type initializer */
-            uint    isNativeProc: 1;        /**< Function is native procedure */
-            uint    moduleInitializer: 1;   /**< Function is a module initializer */
-            uint    rest: 1;                /**< Function has a "..." rest of args parameter */
-            uint    staticMethod: 1;        /**< Function is a static method */
-            uint    strict: 1;              /**< Language strict mode (vs standard) */
-            uint    throwNulls: 1;          /**< Return type cannot be null */
+    uint    numArgs: 8;                     /**< Count of formal parameters */
+    uint    numDefault: 8;                  /**< Count of formal parameters with default initializers */
+    uint    allowMissingArgs: 1;            /**< Allow unsufficient args for native functions */
+    uint    castNulls: 1;                   /**< Cast return values of null */
+    uint    fullScope: 1;                   /**< Closures must capture full scope */
+    uint    hasReturn: 1;                   /**< Function has a return stmt */
+    uint    inCatch: 1;                     /**< Executing catch block */
+    uint    inException: 1;                 /**< Executing catch/finally exception processing */
+    uint    isConstructor: 1;               /**< Function is a constructor */
+    uint    isInitializer: 1;               /**< Function is a type initializer */
+    uint    isNativeProc: 1;                /**< Function is native procedure */
+    uint    moduleInitializer: 1;           /**< Function is a module initializer */
+    uint    rest: 1;                        /**< Function has a "..." rest of args parameter */
+    uint    staticMethod: 1;                /**< Function is a static method */
+    uint    strict: 1;                      /**< Language strict mode (vs standard) */
+    uint    throwNulls: 1;                  /**< Return type cannot be null */
 
-#if BLD_HAS_UNNAMED_UNIONS
-        };
-        int64       bits;
-    };
-#endif
 } EjsFunction;
 
 #if DOXYGEN
     /** 
         Determine if a variable is a function. This will return true if the variable is a function of any kind, including
             methods, native and script functions or initializers.
-        @param vp Variable to test
+        @param obj Variable to test
         @return True if the variable is a function
         @ingroup EjsFunction
      */
-    extern bool ejsIsFunction(EjsObj *vp);
+    //  MOB -- convert all ejsIs to take ejs as arg
+    extern bool ejsIsFunction(Ejs *ejs, EjsAny *obj);
 
     /** 
         Determine if the function is a native function. Functions can be either native - meaning the implementation is
             via a C function, or can be scripted.
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a native function.
         @ingroup EjsFunction
      */
-    extern bool ejsIsNativeFunction(EjsObj *vp);
+    //  MOB -- convert all ejsIs to take ejs as arg
+    extern bool ejsIsNativeFunction(Ejs *ejs, EjsAny *obj);
 
     /** 
         Determine if the function is an initializer. Initializers are special functions created by the compiler to do
             static and instance initialization of classes during construction.
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is an initializer
         @ingroup EjsFunction
      */
-    extern bool ejsIsInitializer(EjsObj *vp);
+    //  MOB -- convert all ejsIs to take ejs as arg
+    extern bool ejsIsInitializer(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsFunction(vp)       (vp && ((EjsObj*) vp)->isFunction)
-    #define ejsIsNativeFunction(vp) (ejsIsFunction(vp) && (((EjsFunction*) (vp))->isNativeProc))
-    #define ejsIsInitializer(vp)    (ejsIsFunction(vp) && (((EjsFunction*) (vp))->isInitializer)
+    //  MOB OPT
+    #define ejsIsFunction(ejs, obj)       (obj && POT(ejs, obj) && ((EjsPot*) obj)->isFunction)
+    #define ejsIsNativeFunction(ejs, obj) (ejsIsFunction(ejs, obj) && (((EjsFunction*) (obj))->isNativeProc))
+    #define ejsIsInitializer(ejs, obj)    (ejsIsFunction(ejs, obj) && (((EjsFunction*) (obj))->isInitializer)
 #endif
 
 /** 
@@ -2046,23 +2183,23 @@ typedef struct EjsFunction {
     @param numExceptions Number of exception handlers
     @param returnType Return type of the function. Set to NULL for no defined type.
     @param attributes Integer mask of access attributes.
-    @param constants Reference to the module constant pool. Some byte code opcodes contain references into the
-        constant pool
+    @param module Reference to the module owning the function.
     @param scope Reference to the chain of blocks that that comprises the lexical scope chain for this function.
     @param strict Run code in strict mode (vs standard).
     @return An initialized function object
     @ingroup EjsFunction
  */
-extern EjsFunction *ejsCreateFunction(Ejs *ejs, cchar *name, cuchar *code, int codeLen, int numArgs, int numDefault,
-    int numExceptions, struct EjsType *returnType, int attributes, struct EjsConst *constants, EjsBlock *scope, 
+//  MOB - refactor into several functions
+extern EjsFunction *ejsCreateFunction(Ejs *ejs, EjsString *name, cuchar *code, int codeLen, int numArgs, int numDefault,
+    int numExceptions, struct EjsType *returnType, int attributes, struct EjsModule *module, EjsBlock *scope, 
     int strict);
-extern void ejsInitFunction(Ejs *ejs, EjsFunction *fun, cchar *name, cuchar *code, int codeLen, int numArgs, int numDefault,
-    int numExceptions, struct EjsType *returnType, int attributes, struct EjsConst *constants, EjsBlock *scope, 
-    int strict);
-extern EjsFunction *ejsCreateSimpleFunction(Ejs *ejs, cchar *name, int attributes);
+extern int ejsInitFunction(Ejs *ejs, EjsFunction *fun, EjsString *name, cuchar *code, int codeLen, int numArgs, 
+    int numDefault, int numExceptions, struct EjsType *returnType, int attributes, struct EjsModule *module, 
+    EjsBlock *scope, int strict);
+extern EjsFunction *ejsCreateSimpleFunction(Ejs *ejs, EjsString *name, int attributes);
 extern void ejsDisableFunction(Ejs *ejs, EjsFunction *fun);
 
-extern EjsObj *ejsCreateActivation(Ejs *ejs, EjsFunction *fun, int numSlots);
+extern EjsPot *ejsCreateActivation(Ejs *ejs, EjsFunction *fun, int numSlots);
 extern void ejsCompleteFunction(Ejs *ejs, EjsFunction *fun);
 extern void ejsUseActivation(Ejs *ejs, EjsFunction *fun);
 
@@ -2081,14 +2218,14 @@ extern EjsObj *ejsRunInitializer(Ejs *ejs, struct EjsModule *module);
     @description Run a function with the given actual parameters
     @param ejs Ejs reference returned from #ejsCreate
     @param fn Function object to run
-    @param obj Object to use as the "this" object when running the function
+    @param thisObj Object to use as the "this" object when running the function.
     @param argc Count of actual parameters
     @param argv Vector of actual parameters
     @return The return value from the function. If an exception is thrown, NULL will be returned and ejs->exception
         will be set to the exception object.
     @ingroup EjsFunction
  */
-extern EjsObj *ejsRunFunction(Ejs *ejs, EjsFunction *fn, EjsObj *obj, int argc, EjsObj **argv);
+extern EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fn, EjsAny *thisObj, int argc, void *argv);
 
 /** 
     Run a function by slot number
@@ -2104,93 +2241,56 @@ extern EjsObj *ejsRunFunction(Ejs *ejs, EjsFunction *fn, EjsObj *obj, int argc, 
         will be set to the exception object.
     @ingroup EjsFunction
  */
-extern EjsObj *ejsRunFunctionBySlot(Ejs *ejs, EjsObj *obj, int slotNum, int argc, EjsObj **argv);
-extern EjsObj *ejsRunFunctionByName(Ejs *ejs, EjsObj *container, EjsName *qname, EjsObj *obj, int argc, EjsObj **argv);
+extern EjsAny *ejsRunFunctionBySlot(Ejs *ejs, EjsAny *obj, int slotNum, int argc, void *argv);
+extern EjsAny *ejsRunFunctionByName(Ejs *ejs, EjsAny *container, EjsName qname, EjsAny *obj, int argc, void *argv);
 
-extern EjsEx *ejsAddException(EjsFunction *mp, uint tryStart, uint tryEnd, struct EjsType *catchType,
+extern EjsEx *ejsAddException(Ejs *ejs, EjsFunction *mp, uint tryStart, uint tryEnd, struct EjsType *catchType,
     uint handlerStart, uint handlerEnd, int numBlocks, int numStack, int flags, int preferredIndex);
 extern EjsFunction *ejsCloneFunction(Ejs *ejs, EjsFunction *src, int deep);
-extern int ejsDefineException(Ejs *ejs, struct EjsType *vp, int slot, uint tryOffset,
+extern int ejsDefineException(Ejs *ejs, struct EjsType *obj, int slot, uint tryOffset,
     uint tryLength, uint handlerOffset, uint handlerLength, int flags);
 extern void ejsOffsetExceptions(EjsFunction *mp, int offset);
-extern int  ejsSetFunctionCode(EjsFunction *mp, uchar *byteCode, int len);
-extern void ejsMarkFunction(Ejs *ejs, EjsFunction *fun);
+extern int ejsSetFunctionCode(Ejs *ejs, EjsFunction *fun, struct EjsModule *module, cuchar *byteCode, size_t len, 
+    EjsDebug *debug);
+extern EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, struct EjsModule *module, cuchar *byteCode, size_t len, 
+    EjsDebug *debug);
+extern void ejsManageFunction(EjsFunction *fun, int flags);
 extern void ejsShowOpFrequency(Ejs *ejs);
-#if UNUSED
-extern int ejsLookupFunctionProperty(Ejs *ejs, EjsFunction *fun, EjsName *qname);
-#endif
 
 typedef struct EjsFrame {
     EjsFunction     function;               /**< Activation frame for function calls. Stores local variables */
+    EjsFunction     *orig;                  /**< Original function frame is based on */
     struct EjsFrame *caller;                /**< Previous invoking frame */
-    EjsVar          **stackBase;            /**< Start of stack in this function */
+    EjsObj          **stackBase;            /**< Start of stack in this function */
     EjsObj          **stackReturn;          /**< Top of stack to return to */
-    int             slotNum;                /**< Slot in owner */
     uchar           *pc;                    /**< Program counter */
     uchar           *attentionPc;           /**< Restoration PC value after attention */
-    int             ignoreAttention;        /**< Ignore attention commands */
-    int             lineNumber;             /**< Source code line number */
-    cchar           *currentLine;           /**< Current source code line */
-    cchar           *filename;              /**< Source code file name */
-    int             getter;                 /**< Frame is a getter */
     uint            argc;                   /**< Actual parameter count */
+    int             slotNum;                /**< Slot in owner */
+    uint            freeze: 1;              /**< Garbage collection frozen */
+    uint            getter: 1;              /**< Frame is a getter */
+#if BLD_DEBUG
+    EjsLoc          loc;
+#endif
 } EjsFrame;
 
 #if DOXYGEN
     /** 
         Determine if a variable is a frame. Only used internally in the VM.
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a frame. 
         @ingroup EjsFrame
      */
-    extern bool ejsIsFrame(EjsObj *vp);
+    extern bool ejsIsFrame(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsFrame(vp)       ejsIs(vp, ES_Frame)
+    #define ejsIsFrame(ejs, obj) (ejsIsPot(ejs, obj) && ((EjsPot*) (obj))->isFrame)
 #endif
 
 extern EjsFrame *ejsCreateFrame(Ejs *ejs, EjsFunction *src, EjsObj *thisObj, int argc, EjsObj **argv);
 extern EjsFrame *ejsCreateCompilerFrame(Ejs *ejs, EjsFunction *src);
 extern EjsBlock *ejsPopBlock(Ejs *ejs);
 extern EjsBlock *ejsPushBlock(Ejs *ejs, EjsBlock *block);
-
-/** 
-    Array class
-    @description Arrays provide a growable, integer indexed, in-memory store for objects. An array can be treated as a 
-        stack (FIFO or LIFO) or a list (ordered). Insertions can be done at the beginning or end of the stack or at an 
-        indexed location within a list. The Array class can store objects with numerical indicies and can also store 
-        any named properties. The named properties are stored in the obj field, whereas the numeric indexed values are
-        stored in the data field. Array extends EjsObj and has all the capabilities of EjsObj.
-    @stability Evolving
-    @defgroup EjsArray EjsArray
-    @see EjsArray ejsCreateArray ejsIsArray
- */
-typedef struct EjsArray {
-    EjsObj          obj;                /**< Extends Object */
-    EjsObj          **data;             /**< Array elements */
-    int             length;             /**< Array length property */
-} EjsArray;
-
-
-/** 
-    Create an array
-    @param ejs Ejs reference returned from #ejsCreate
-    @param size Initial size of the array
-    @return A new array object
-    @ingroup EjsArray
- */
-extern EjsArray *ejsCreateArray(Ejs *ejs, int size);
-
-#if DOXYGEN
-    /** 
-        Determine if a variable is an array
-        @param vp Variable to test
-        @return True if the variable is an array
-        @ingroup EjsArray
-     */
-    extern bool ejsIsArray(EjsObj *vp);
-#else
-    #define ejsIsArray(vp) ejsIs(vp, ES_Array)
-#endif
+extern int ejsFreeze(Ejs *ejs, int freeze);
 
 /** 
     Boolean class
@@ -2203,7 +2303,7 @@ extern EjsArray *ejsCreateArray(Ejs *ejs, int size);
     @see EjsBoolean ejsCreateBoolean ejsIsBoolean ejsGetBoolean
  */
 typedef struct EjsBoolean {
-    EjsObj          obj;                /**< Extends Object - Property storage */
+    struct EjsType  *type;              /**< Type of the object */
     bool            value;              /**< Boolean value */
 } EjsBoolean;
 
@@ -2222,34 +2322,32 @@ extern EjsBoolean *ejsCreateBoolean(Ejs *ejs, int value);
     Cast a variable to a boolean 
     @description
     @param ejs Ejs reference returned from #ejsCreate
-    @param vp Variable to cast
+    @param obj Object to cast
     @return A new boolean object
     @ingroup EjsBoolean
  */
-extern EjsBoolean *ejsToBoolean(Ejs *ejs, EjsObj *vp);
+extern EjsBoolean *ejsToBoolean(Ejs *ejs, EjsAny *obj);
 
 #if DOXYGEN
     /** 
         Determine if a variable is a boolean
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a boolean
         @ingroup EjsBoolean
      */
-    extern bool ejsIsBoolean(EjsObj *vp);
-
-    /** 
-        Get the C boolean value from a boolean object
-        @param ejs Ejs reference returned from #ejsCreate
-        @param vp Boolean variable to access
-        @return True or false
-        @ingroup EjsBoolean
-     */
-    extern bool ejsGetBoolean(Ejs *ejs, EjsObj *vp);
+    extern bool ejsIsBoolean(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsBoolean(vp) ejsIs(vp, ES_Boolean)
-    extern int _ejsGetBoolean(Ejs *ejs, EjsObj *vp);
-    #define ejsGetBoolean(ejs, vp) _ejsGetBoolean(ejs, (EjsObj*) (vp))
+    #define ejsIsBoolean(ejs, obj) (obj && TYPE(obj)->id == ES_Boolean)
 #endif
+
+/** 
+    Get the C boolean value from a boolean object
+    @param ejs Ejs reference returned from #ejsCreate
+    @param obj Boolean variable to access
+    @return True or false
+    @ingroup EjsBoolean
+ */
+extern bool ejsGetBoolean(Ejs *ejs, EjsAny *obj);
 
 /*
     Thse constants match Stream.READ, Stream.WRITE, Stream.BOTH
@@ -2287,7 +2385,7 @@ extern EjsBoolean *ejsToBoolean(Ejs *ejs, EjsObj *vp);
     @see EjsByteArray ejsIsByteArray ejsCreateByteArray ejsSetByteArrayPositions ejsCopyToByteArray
  */
 typedef struct EjsByteArray {
-    EjsObj          obj;                /**< Extends Object - Property storage (not used) */
+    struct EjsType  *type;              /**< Type of the object */
     EjsObj          *emitter;           /**< Event emitter for listeners */
     uchar           *value;             /**< Data bytes in the array */
     int             async;              /**< Async mode */
@@ -2304,13 +2402,14 @@ typedef struct EjsByteArray {
 #if DOXYGEN
     /** 
         Determine if a variable is a byte array
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a byte array
         @ingroup EjsByteArray
      */
-    extern bool ejsIsByteArray(EjsObj *vp);
+    //  MOB -- convert all ejsIs to take ejs as arg
+    extern bool ejsIsByteArray(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsByteArray(vp) ejsIs(vp, ES_ByteArray)
+    #define ejsIsByteArray(ejs, obj) (obj && TYPE(obj)->id == ES_ByteArray)
 #endif
 
 /** 
@@ -2346,7 +2445,7 @@ extern void ejsSetByteArrayPositions(Ejs *ejs, EjsByteArray *ba, int readPositio
     @param length Length of the data to copy
     @return Zero if successful, otherwise a negative MPR error code.
  */
-extern int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, int offset, char *data, int length);
+extern int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, int offset, char *data, size_t length);
 
 extern void ejsResetByteArray(EjsByteArray *ba);
 extern int ejsGetByteArrayAvailable(EjsByteArray *ba);
@@ -2355,7 +2454,6 @@ extern int ejsGrowByteArray(Ejs *ejs, EjsByteArray *ap, int size);
 
 extern struct EjsNumber *ejsWriteToByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
 extern bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, int require);
-
 
 /** 
     Date class
@@ -2367,20 +2465,20 @@ extern bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, int require);
     @see EjsDate EjsIsDate ejsCreateDate
  */
 typedef struct EjsDate {
-    EjsObj          obj;                /**< Extends Object - Property storage */
+    struct EjsType  *type;              /**< Type of the object */
     MprTime         value;              /**< Time in milliseconds since "1970/01/01 GMT" */
 } EjsDate;
 
 #if DOXYGEN
     /** 
         Determine if a variable is a Date
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a date
         @ingroup EjsDate
      */
-    bool ejsIsDate(EjsObj *vp);
+    bool ejsIsDate(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsDate(vp) ejsIs(vp, ES_Date)
+    #define ejsIsDate(ejs, obj) (obj && TYPE(obj)->id == ES_Date)
 #endif
 
 /** 
@@ -2405,20 +2503,9 @@ extern EjsDate *ejsCreateDate(Ejs *ejs, MprTime value);
         ejsThrowMemoryError ejsThrowOutOfBoundsError ejsThrowReferenceError ejsThrowResourceError ejsThrowStateError
         ejsThrowStopIteration ejsThrowSyntaxError ejsThrowTypeError
  */
-//  MOB -- perhaps remove and just use EjsObj. Ie. no longer native
-typedef struct EjsError {
-    EjsObj          obj;                /**< Extends Object */
-#if UNUSED
-    EjsObj          *data;              /**< Error data message */
-    char            *message;           /**< Exception message */
-    char            *stack;             /**< Execution stack back trace */
-    char            *filename;          /**< Source code file name */
-    int             lineNumber;         /**< Source code line number */
-    int             code;               /**< Unique error lookup code */
-#endif
-} EjsError;
+typedef EjsPot EjsError;
 
-#define ejsIsError(vp) ejsIs(vp, ES_Error)
+#define ejsIsError(ejs, obj) (obj && ejsIsA(ejs, obj, ejs->errorType))
 
 extern EjsError *ejsCreateError(Ejs *ejs, struct EjsType *type, EjsObj *message);
 extern EjsArray *ejsCaptureStack(Ejs *ejs, int uplevels);
@@ -2462,7 +2549,7 @@ extern EjsObj *ejsGetException(Ejs *ejs);
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowArgError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowArgError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an assertion exception
@@ -2471,7 +2558,7 @@ extern EjsObj *ejsThrowArgError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3)
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowAssertError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowAssertError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an math exception
@@ -2480,7 +2567,7 @@ extern EjsObj *ejsThrowAssertError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowArithmeticError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowArithmeticError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an instruction code exception
@@ -2489,7 +2576,7 @@ extern EjsObj *ejsThrowArithmeticError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBU
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowInstructionError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowInstructionError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an general error exception
@@ -2498,7 +2585,7 @@ extern EjsObj *ejsThrowInstructionError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIB
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an internal error exception
@@ -2507,7 +2594,7 @@ extern EjsObj *ejsThrowError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowInternalError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowInternalError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an IO exception
@@ -2516,14 +2603,14 @@ extern EjsObj *ejsThrowInternalError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowIOError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowIOError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an Memory depletion exception
     @param ejs Ejs reference returned from #ejsCreate
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowMemoryError(Ejs *ejs);
+extern EjsError *ejsThrowMemoryError(Ejs *ejs);
 
 /** 
     Throw an out of bounds exception
@@ -2532,7 +2619,7 @@ extern EjsObj *ejsThrowMemoryError(Ejs *ejs);
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowOutOfBoundsError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowOutOfBoundsError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an reference exception
@@ -2541,7 +2628,7 @@ extern EjsObj *ejsThrowOutOfBoundsError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIB
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowReferenceError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowReferenceError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an resource exception
@@ -2550,7 +2637,7 @@ extern EjsObj *ejsThrowReferenceError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUT
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowResourceError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowResourceError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an state exception
@@ -2559,7 +2646,7 @@ extern EjsObj *ejsThrowResourceError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowStateError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowStateError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an stop iteration exception
@@ -2575,7 +2662,7 @@ extern EjsObj *ejsThrowStopIteration(Ejs *ejs);
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowSyntaxError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowSyntaxError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 /** 
     Throw an type error exception
@@ -2584,7 +2671,7 @@ extern EjsObj *ejsThrowSyntaxError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2
     @param ... Message arguments
     @ingroup EjsError
  */
-extern EjsObj *ejsThrowTypeError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+extern EjsError *ejsThrowTypeError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
 
 /** 
@@ -2597,13 +2684,14 @@ extern EjsObj *ejsThrowTypeError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3
     @see EjsFile ejsCreateFile ejsIsFile
  */
 typedef struct EjsFile {
-    EjsObj          obj;                /**< Extends Object */
+    struct EjsType  *type;              /**< Type of the object */
     MprFile         *file;              /**< Open file handle */
     MprPath         info;               /**< Cached file info */
     char            *path;              /**< Filename path */
     char            *modeString;        /**< User supplied mode string */
     int             mode;               /**< Current open mode */
     int             perms;              /**< Posix permissions mask */
+    int             attached;           /**< Attached to existing descriptor */
 #if FUTURE
     cchar           *cygdrive;          /**< Cygwin drive directory (c:/cygdrive) */
     cchar           *newline;           /**< Newline delimiters */
@@ -2628,13 +2716,13 @@ extern EjsFile *ejsCreateFileFromFd(Ejs *ejs, int fd, cchar *name, int mode);
     /** 
         Determine if a variable is a File
         @param ejs Ejs reference returned from #ejsCreate
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a File
         @ingroup File
      */
-    extern bool ejsIsFile(Ejs *ejs, EjsObj *vp);
+    extern bool ejsIsFile(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsFile(ejs, vp) (vp && ((EjsObj*) vp)->type == ejs->fileType)
+    #define ejsIsFile(ejs, obj) (obj && TYPE(obj)->id == ES_File)
 #endif
 
 
@@ -2646,11 +2734,9 @@ extern EjsFile *ejsCreateFileFromFd(Ejs *ejs, int fd, cchar *name, int mode);
     @see EjsFile ejsCreatePath ejsIsPath
  */
 typedef struct EjsPath {
-    EjsObj          obj;                /**< Extends Object */
+    struct EjsType  *type;              /**< Type of the object */
+    cchar           *value;             /**< Filename path */
     MprPath         info;               /**< Cached file info */
-    //  TODO - should have pathLength
-    //  TODO - rename value
-    char            *path;              /**< Filename path */
     MprList         *files;             /**< File list for enumeration */
 #if FUTURE
     cchar           *cygdrive;          /**< Cygwin drive directory (c:/cygdrive) */
@@ -2669,23 +2755,24 @@ typedef struct EjsPath {
     @return A new Path object
     @ingroup EjsPath
  */
-extern EjsPath *ejsCreatePath(Ejs *ejs, cchar *path);
-
-extern EjsPath *ejsCreatePathAndFree(Ejs *ejs, char *path);
+extern EjsPath *ejsCreatePath(Ejs *ejs, EjsString *path);
+extern EjsPath *ejsCreatePathFromAsc(Ejs *ejs, cchar *path);
 
 #if DOXYGEN
     /** 
         Determine if a variable is a Path
         @param ejs Ejs reference returned from #ejsCreate
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a Path
         @ingroup EjsPath
      */
-    extern bool ejsIsPath(Ejs *ejs, EjsObj *vp);
+    extern bool ejsIsPath(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsPath(ejs, vp) (vp && ((EjsObj*) vp)->type == ejs->pathType)
+    #define ejsIsPath(ejs, obj) (obj && TYPE(obj)->id == ES_Path)
 #endif
-extern EjsPath *ejsToPath(Ejs *ejs, EjsObj *obj);
+
+//  MOB DOC
+extern EjsPath *ejsToPath(Ejs *ejs, EjsAny *obj);
 
 
 /** 
@@ -2696,7 +2783,7 @@ extern EjsPath *ejsToPath(Ejs *ejs, EjsObj *obj);
     @see EjsFile ejsCreateUri ejsIsUri
  */
 typedef struct EjsUri {
-    EjsObj          obj;                /**< Extends Object */
+    struct EjsType  *type;              /**< Type of the object */
     HttpUri         *uri;               /**< Decoded URI */
 } EjsUri;
 
@@ -2709,8 +2796,8 @@ typedef struct EjsUri {
     @return A new Uri object
     @ingroup EjsUri
  */
-extern EjsUri *ejsCreateUri(Ejs *ejs, cchar *uri);
-extern EjsUri *ejsCreateUriAndFree(Ejs *ejs, char *uri);
+extern EjsUri *ejsCreateUri(Ejs *ejs, EjsString *uri);
+extern EjsUri *ejsCreateUriFromMulti(Ejs *ejs, cchar *uri);
 extern EjsUri *ejsCreateUriFromParts(Ejs *ejs, cchar *scheme, cchar *host, int port, cchar *path, cchar *query, 
         cchar *reference, int complete);
 
@@ -2718,18 +2805,19 @@ extern EjsUri *ejsCreateUriFromParts(Ejs *ejs, cchar *scheme, cchar *host, int p
     /** 
         Determine if a variable is a Uri
         @param ejs Ejs reference returned from #ejsCreate
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a Uri
         @ingroup EjsUri
      */
-    extern bool ejsIsUri(Ejs *ejs, EjsObj *vp);
-    extern cchar *ejsGetUri(Ejs *ejs, EjsObj *vp);
+    extern bool ejsIsUri(Ejs *ejs, EjsAny *obj);
+    extern cchar *ejsGetUri(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsUri(ejs, vp) (vp && ((EjsObj*) vp)->type == ejs->uriType)
-    #define ejsGetUri(ejs, vp) _ejsGetUri(ejs, (EjsObj*) (vp))
-    extern cchar *_ejsGetUri(Ejs *ejs, EjsObj *vp);
+    #define ejsIsUri(ejs, obj) (obj && TYPE(obj)->id == ES_Uri)
+    extern cchar *ejsGetUri(Ejs *ejs, EjsAny *obj);
 #endif
-extern EjsUri *ejsToUri(Ejs *ejs, EjsObj *obj);
+
+//  MOB DOC
+extern EjsUri *ejsToUri(Ejs *ejs, EjsAny *obj);
 
 /** 
     FileSystem class
@@ -2739,7 +2827,7 @@ extern EjsUri *ejsToUri(Ejs *ejs, EjsObj *obj);
     @see EjsFile ejsCreateFile ejsIsFile
  */
 typedef struct EjsFileSystem {
-    EjsObj          obj;                /**< Extends Object */
+    struct EjsType  *type;              /**< Type of the object */
     char            *path;              /**< Filename path */
     MprFileSystem   *fs;                /**< MPR file system object */
 } EjsFileSystem;
@@ -2758,24 +2846,15 @@ extern EjsFileSystem *ejsCreateFileSystem(Ejs *ejs, cchar *path);
 #if DOXYGEN
     /**
         Determine if a variable is a Path
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a FileSystem
         @ingroup EjsFileSystem
      */
-    extern bool ejsIsFileSystem(EjsObj *vp);
+    extern bool ejsIsFileSystem(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsFileSystem(vp) ejsIs(vp, ES_ejs_io_FileSystem)
+    #define ejsIsFileSystem(ejs, obj) (obj && TYPE(obj)->id == ES_FileSystem)
 #endif
 
-
-/** 
-    EjsGlobal cass
-    @description The Global class is the base class for the global object. The global object is the top level
-        scoping object.
-    @stability Stable
-    @defgroup EjsGlobal EjsGlobal
- */
-typedef EjsObj EjsGlobal;
 
 extern EjsObj *ejsCreateGlobal(Ejs *ejs);
 extern void ejsFreezeGlobal(Ejs *ejs);
@@ -2792,8 +2871,7 @@ extern void ejsFreezeGlobal(Ejs *ejs);
     @see EjsHttp ejsCreateHttp ejsIsHttp
  */
 typedef struct EjsHttp {
-    EjsObj          obj;                        /**< Extends Object (not used) */
-    Ejs             *ejs;                       /**< Convenience access to ejs interpreter instance */
+    struct EjsType  *type;                      /**< Type of the object */
     EjsObj          *emitter;                   /**< Event emitter */
     EjsByteArray    *data;                      /**< Buffered write data */
     EjsObj          *limits;                    /**< Limits object */
@@ -2821,14 +2899,18 @@ typedef struct EjsHttp {
  */
 extern EjsHttp *ejsCreateHttp(Ejs *ejs);
 
+//  MOB - fix up this pattern do don't need both define and function
 #if DOXYGEN
-    extern bool ejsIsHttp(EjsObj *vp);
+    extern bool ejsIsHttp(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsHttp(vp) ejsIs(vp, ES_ejs_io_Http)
+    #define ejsIsHttpType(ejs, obj) (obj && TYPE(obj)->id == ES_Http)
 #endif
 extern void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server);
 extern void ejsGetHttpLimits(Ejs *ejs, EjsObj *obj, HttpLimits *limits, int server);
-extern int ejsSetupTrace(Ejs *ejs, MprCtx ctx, HttpTrace *trace, EjsObj *options);
+
+//  MOB - rename SetupHttpTrace
+extern int ejsSetupTrace(Ejs *ejs, HttpTrace *trace, EjsObj *options);
+void ejsLoadHttpService(Ejs *ejs);
 
 
 /** 
@@ -2839,13 +2921,13 @@ extern int ejsSetupTrace(Ejs *ejs, MprCtx ctx, HttpTrace *trace, EjsObj *options
     @see EjsIterator ejsCreateIterator
  */
 typedef struct EjsIterator {
-    EjsObj              var;                /**< Extends Object - Property storage (not used) */
-    EjsObj              *target;            /**< Object to be enumerated */
-    EjsProc             nativeNext;         /**< Native next function */
-    bool                deep;               /**< Iterator deep (recursively over all properties) */
-    EjsArray            *namespaces;        /**< Namespaces to consider in iteration */
-    int                 index;              /**< Current index */
-    EjsObj              *indexVar;          /**< Reference to current item */
+    struct EjsType  *type;              /**< Type of the object */
+    EjsObj          *target;            /**< Object to be enumerated */
+    EjsFun          nativeNext;         /**< Native next function */
+    bool            deep;               /**< Iterator deep (recursively over all properties) */
+    EjsArray        *namespaces;        /**< Namespaces to consider in iteration */
+    int             index;              /**< Current index */
+    EjsObj          *indexVar;          /**< Reference to current item */
 } EjsIterator;
 
 /** 
@@ -2859,7 +2941,7 @@ typedef struct EjsIterator {
     @return A new EjsIterator object
     @ingroup EjsIterator
  */
-extern EjsIterator *ejsCreateIterator(Ejs *ejs, EjsObj *target, EjsProc next, bool deep, EjsArray *namespaces);
+extern EjsIterator *ejsCreateIterator(Ejs *ejs, EjsAny *target, EjsFun next, bool deep, EjsArray *namespaces);
 
 /** 
     Namespace Class
@@ -2870,12 +2952,8 @@ extern EjsIterator *ejsCreateIterator(Ejs *ejs, EjsObj *target, EjsProc next, bo
         ejsCreateReservedNamespace ejsFormatReservedNamespace 
  */
 typedef struct EjsNamespace {
-    EjsObj      obj;                /**< Extends Object - Property storage */
-    char        *name;              /**< Textual name of the namespace */
-#if TODO || 1 /* REMOVE */
-    char        *uri;               /**< Optional uri definition */
-    int         flags;              /**< Fast comparison flags */
-#endif
+    struct EjsType  *type;              /**< Type of the object */
+    EjsString       *value;             /**< Textual name of the namespace */
 } EjsNamespace;
 
 
@@ -2883,26 +2961,26 @@ typedef struct EjsNamespace {
     Create a namespace object
     @param ejs Ejs reference returned from #ejsCreate
     @param name Space name to use for the namespace
-    @param uri URI to associate with the namespace
     @return A new namespace object
     @ingroup EjsNamespace
  */
-extern EjsNamespace *ejsCreateNamespace(Ejs *ejs, cchar *name, cchar *uri);
+extern EjsNamespace *ejsCreateNamespace(Ejs *ejs, EjsString *name);
 
 #if DOXYGEN
     /**
         Determine if a variable is a namespace
+        @param obj Object to test
         @return True if the variable is a namespace
         @ingroup EjsNamespace
      */
-    extern bool ejsIsNamespace(EjsObj *vp)
+    extern bool ejsIsNamespace(Ejs *ejs, EjsAny *obj)
 #else
-    #define ejsIsNamespace(vp) ejsIs(vp, ES_Namespace)
+    #define ejsIsNamespace(ejs, obj) (obj && TYPE(obj)->id == ES_Namespace)
 #endif
 
 extern EjsNamespace *ejsDefineReservedNamespace(Ejs *ejs, EjsBlock *block, EjsName *typeName, cchar *name);
-extern EjsNamespace *ejsCreateReservedNamespace(Ejs *ejs, EjsName *typeName, cchar *name);
-extern char *ejsFormatReservedNamespace(MprCtx ctx, EjsName *typeName, cchar *spaceName);
+extern EjsNamespace *ejsCreateReservedNamespace(Ejs *ejs, EjsName *typeName, EjsString *name);
+extern EjsString *ejsFormatReservedNamespace(Ejs *ejs, EjsName *typeName, EjsString *spaceName);
 
 /** 
     Null Class
@@ -2912,15 +2990,14 @@ extern char *ejsFormatReservedNamespace(MprCtx ctx, EjsName *typeName, cchar *sp
     @defgroup EjsNull EjsNull
     @see EjsNull ejsCreateIsNull
  */
-typedef EjsObj EjsNull;
+typedef EjsAny EjsNull;
 
 /** 
     Determine if a variable is a null
     @return True if a variable is a null
     @ingroup EjsNull
  */
-#define ejsIsNull(vp) ejsIs(vp, ES_Null)
-
+#define ejsIsNull(ejs, obj) (obj && TYPE(obj)->id == ES_Null)
 extern EjsNull *ejsCreateNull(Ejs *ejs);
 
 /** 
@@ -2933,8 +3010,8 @@ extern EjsNull *ejsCreateNull(Ejs *ejs);
     @see EjsNumber ejsToNumber ejsCreateNumber ejsIsNumber ejsGetNumber ejsGetInt ejsGetDouble ejsIsInfinite ejsIsNan
  */
 typedef struct EjsNumber {
-    EjsObj      obj;                /**< Extends Object - Property storage */
-    MprNumber   value;              /**< Numeric value */
+    struct EjsType  *type;              /**< Type of the object */
+    MprNumber       value;              /**< Numeric value */
 } EjsNumber;
 
 
@@ -2950,11 +3027,11 @@ extern EjsNumber *ejsCreateNumber(Ejs *ejs, MprNumber value);
 /** 
     Cast a variable to a number
     @param ejs Ejs reference returned from #ejsCreate
-    @param vp Variable to cast
+    @param obj Object to cast
     @return A number object
     @ingroup EjsNumber
  */
-extern struct EjsNumber *ejsToNumber(Ejs *ejs, EjsObj *vp);
+extern struct EjsNumber *ejsToNumber(Ejs *ejs, EjsAny *obj);
 
 extern bool ejsIsInfinite(MprNumber f);
 #if WIN
@@ -2975,13 +3052,13 @@ extern bool ejsIsInfinite(MprNumber f);
     @see EjsReflect
  */
 typedef struct EjsReflect {
-    EjsObj      obj;                /**< Extends Object - Property storage (unused) */
-    EjsObj      *subject;           /**< Object under examination */
+    struct EjsType  *type;              /**< Type of the object */
+    EjsObj          *subject;           /**< Object under examination */
 } EjsReflect;
 
 
-extern EjsObj *ejsGetTypeName(Ejs *ejs, EjsObj *vp);
-extern EjsObj *ejsGetTypeOf(Ejs *ejs, EjsObj *vp);
+extern EjsString *ejsGetTypeName(struct Ejs *ejs, EjsAny *obj);
+extern EjsString *ejsGetTypeOf(struct Ejs *ejs, EjsAny *obj);
 
 /** 
     RegExp Class
@@ -2991,8 +3068,8 @@ extern EjsObj *ejsGetTypeOf(Ejs *ejs, EjsObj *vp);
     @see EjsRegExp ejsCreateRegExp ejsIsRegExp
  */
 typedef struct EjsRegExp {
-    EjsObj          var;                /**< Extends Object - Property storage */
-    char            *pattern;           /**< Pattern to match with */
+    struct EjsType  *type;              /**< Type of the object */
+    MprChar         *pattern;           /**< Pattern to match */
     void            *compiled;          /**< Compiled pattern */
     bool            global;             /**< Search for pattern globally (multiple times) */
     bool            ignoreCase;         /**< Do case insensitive matching */
@@ -3001,7 +3078,7 @@ typedef struct EjsRegExp {
     int             options;            /**< Pattern matching options */
     int             endLastMatch;       /**< End of the last match (one past end) */
     int             startLastMatch;     /**< Start of the last match */
-    struct EjsString *matched;          /**< Last matched component */
+    EjsString       *matched;           /**< Last matched component */
 } EjsRegExp;
 
 
@@ -3012,9 +3089,9 @@ typedef struct EjsRegExp {
     @return a EjsRegExp object
     @ingroup EjsRegExp
  */
-extern EjsRegExp *ejsCreateRegExp(Ejs *ejs, cchar *pattern);
+extern EjsRegExp *ejsCreateRegExp(Ejs *ejs, EjsString *pattern);
 
-struct EjsString *ejsRegExpToString(Ejs *ejs, EjsRegExp *rp);
+EjsString *ejsRegExpToString(Ejs *ejs, EjsRegExp *rp);
 
 #if DOXYGEN
     /** 
@@ -3022,9 +3099,9 @@ struct EjsString *ejsRegExpToString(Ejs *ejs, EjsRegExp *rp);
         @return True if the variable is a regular expression
         @ingroup EjsRegExp
      */
-    extern bool ejsIsRegExp(EjsObj *vp);
+    extern bool ejsIsRegExp(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsRegExp(vp) ejsIs(vp, ES_RegExp)
+    #define ejsIsRegExp(ejs, obj) (obj && TYPE(obj)->id == ES_RegExp)
 #endif
 
 /**
@@ -3035,17 +3112,16 @@ struct EjsString *ejsRegExpToString(Ejs *ejs, EjsRegExp *rp);
     @see EjsSocket ejsCreateSocket ejsIsSocket
  */
 typedef struct EjsSocket {
-    EjsObj          obj;                        /**< Extends Object */
-    EjsObj          *emitter;                   /**< Event emitter */
-    EjsByteArray    *data;                      /**< Buffered write data */
-    MprSocket       *sock;                      /**< Underlying MPR socket object */
-    MprWaitHandler  waitHandler;                /**< I/O event wait handler */
-    Ejs             *ejs;                       /**< Convenience access to ejs interpreter instance */
-    char            *address;                   /**< Remote address */
-    int             port;                       /**< Remote port */
-    int             async;                      /**< In async mode */
-    int             mask;                       /**< IO event mask */
-    MprMutex        *mutex;                     /**< Multithread sync */
+    struct EjsType  *type;              /**< Type of the object */
+    EjsObj          *emitter;           /**< Event emitter */
+    EjsByteArray    *data;              /**< Buffered write data */
+    MprSocket       *sock;              /**< Underlying MPR socket object */
+    MprWaitHandler  waitHandler;        /**< I/O event wait handler */
+    cchar           *address;           /**< Remote address */
+    int             port;               /**< Remote port */
+    int             async;              /**< In async mode */
+    int             mask;               /**< IO event mask */
+    MprMutex        *mutex;             /**< Multithread sync */
 } EjsSocket;
 
 /** 
@@ -3057,110 +3133,11 @@ typedef struct EjsSocket {
 extern EjsSocket *ejsCreateSocket(Ejs *ejs);
 
 #if DOXYGEN
-    extern bool ejsIsSocket(EjsObj *vp);
+    extern bool ejsIsSocket(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsSocket(vp) ejsIs(vp, ES_ejs_io_Socket)
+    #define ejsIsSocket(ejs, obj) (obj && TYPE(obj)->id == ES_Socket)
 #endif
 
-/** 
-    String Class
-    @description The String class provides the base class for all strings. Each String object represents a single 
-    immutable linear sequence of characters. Strings have operators for: comparison, concatenation, copying, 
-    searching, conversion, matching, replacement, and, subsetting.
-    \n\n
-    Strings are currently sequences of UTF-8 characters. They will soon be upgraded to UTF-16.
-    @stability Evolving
-    @defgroup EjsString EjsString
-    @see EjsString ejsToString ejsCreateString ejsCreateBareString ejsCreateStringWithLength ejsDupString
-        ejsVarToString ejsStrdup ejsStrcat ejsIsString ejsGetString ejsToJson
- */
-typedef struct EjsString {
-    EjsObj      obj;                /**< Extends Object - Property storage */
-    int         length;             /**< String length (sans null) */
-    char        *value;             /**< String value. Currently UTF-8. Will upgrade to UTF-16 soon */
-} EjsString;
-
-
-/** 
-    Cast a variable to a string
-    @param ejs Ejs reference returned from #ejsCreate
-    @param obj Object to convert
-    @return A string object
-    @ingroup EjsObj
- */
-extern EjsString *ejsToString(Ejs *ejs, EjsObj *obj);
-
-/**
-    Convert a variable to a string in JSON format
-    @param ejs Ejs reference returned from #ejsCreate
-    @param obj Object to cast
-    @param options Options object. See serialize for details.
-    @return A string object
-    @ingroup EjsObj
- */
-extern EjsString *ejsToJSON(Ejs *ejs, EjsObj *obj, EjsObj *options);
-
-/** 
-    Create a string object
-    @param ejs Ejs reference returned from #ejsCreate
-    @param value C string value to define for the string object. Note: this will soon be changed to unicode.
-    @stability Prototype
-    @return A string object
-    @ingroup EjsString
- */
-extern EjsString *ejsCreateString(Ejs *ejs, cchar *value);
-
-/** 
-    Create a string object and free the argument
-    @param ejs Ejs reference returned from #ejsCreate
-    @param value C string value to define for the string object. Note: this will soon be changed to unicode.
-    @stability Prototype
-    @return A string object
-    @ingroup EjsString
- */
-extern EjsString *ejsCreateStringAndFree(Ejs *ejs, char *value);
-
-/** 
-    Create an empty string object
-    @param ejs Ejs reference returned from #ejsCreate
-    @param len Length of space to reserve for future string data
-    @return A string object
-    @ingroup EjsString
- */
-extern EjsString *ejsCreateBareString(Ejs *ejs, int len);
-
-/** 
-    Create a string and reserve extra room.
-    @param ejs Ejs reference returned from #ejsCreate
-    @param value C string value to define for the string object. Note: this will soon be changed to unicode.
-    @param len Length of the string storage to allocate.
-    @return A string object
-    @ingroup EjsString
- */
-extern EjsString *ejsCreateStringWithLength(Ejs *ejs, cchar *value, int len);
-
-//  TODO - why do we need this. Why not just use ejsCloneVar?
-/**
-    Duplicate a string object
-    @param ejs Ejs reference returned from #ejsCreate
-    @param sp String value to copy
-    @return A string object
-    @ingroup EjsString
- */
-extern EjsString *ejsDupString(Ejs *ejs, EjsString *sp);
-
-#if DOXYGEN
-    bool ejsIsString(EjsObj *vp);
-    extern cchar *ejsGetString(Ejs *ejs, EjsObj *vp);
-#else
-    #define ejsIsString(vp) ejsIs(vp, ES_String)
-    #define ejsGetString(ejs, vp) _ejsGetString(ejs, (EjsObj*) (vp))
-    extern cchar *_ejsGetString(Ejs *ejs, EjsObj *vp);
-#endif
-
-extern int ejsStrdup(MprCtx ctx, uchar **dest, const void *src, int nbytes);
-extern int ejsStrcat(Ejs *ejs, EjsString *dest, EjsObj *src);
-extern EjsObj *ejsStringToJSON(Ejs *ejs, EjsObj *vp);
 
 /** 
     Timer Class
@@ -3171,15 +3148,14 @@ extern EjsObj *ejsStringToJSON(Ejs *ejs, EjsObj *vp);
     @see EjsTimer
  */
 typedef struct EjsTimer {
-    EjsObj          obj;                            /**< Extends Object */
-    Ejs             *ejs;                           /**< Need interpreter reference in callback */
-    MprEvent        *event;                         /**< MPR event for the timer */
-    int             drift;                          /**< Timer event is allowed to drift if system conditions requrie */
-    int             repeat;                         /**< Timer repeatedly fires */
-    int             period;                         /**< Time in msec between invocations */          
-    EjsFunction     *callback;                      /**< Callback function */
-    EjsFunction     *onerror;                       /**< onerror function */
-    EjsArray        *args;                          /**< Callback args */
+    struct EjsType  *type;              /**< Type of the object */
+    MprEvent        *event;             /**< MPR event for the timer */
+    int             drift;              /**< Timer event is allowed to drift if system conditions requrie */
+    int             repeat;             /**< Timer repeatedly fires */
+    int             period;             /**< Time in msec between invocations */          
+    EjsFunction     *callback;          /**< Callback function */
+    EjsFunction     *onerror;           /**< onerror function */
+    EjsArray        *args;              /**< Callback args */
 } EjsTimer;
 
 
@@ -3196,18 +3172,18 @@ typedef struct EjsTimer {
     @see EjsObj
  */
 typedef struct EjsWorker {
-    EjsObj          obj;                            /**< Logically extentends Object */
-    char            *name;                          /**< Optional worker name */
-    Ejs             *ejs;                           /**< Interpreter */
-    EjsObj          *event;                         /**< Current event object */
-    struct EjsWorker *pair;                         /**< Corresponding worker object in other thread */
-    char            *scriptFile;                    /**< Script or module to run */
-    char            *scriptLiteral;                 /**< Literal script string to run */
-    int             state;                          /**< Worker state */
-    int             inside;                         /**< Running inside the worker */
-    int             complete;                       /**< Worker has completed its work */
-    int             gotMessage;                     /**< Worker has received a message */
-    int             terminated;                     /**< Worker has had terminate() called */
+    EjsPot          pot;                /**< Property storage */
+    char            *name;              /**< Optional worker name */
+    Ejs             *ejs;               /**< Interpreter */
+    EjsAny          *event;             /**< Current event object */
+    struct EjsWorker *pair;             /**< Corresponding worker object in other thread */
+    char            *scriptFile;        /**< Script or module to run */
+    EjsString       *scriptLiteral;     /**< Literal script string to run */
+    int             state;              /**< Worker state */
+    int             inside;             /**< Running inside the worker */
+    int             complete;           /**< Worker has completed its work */
+    int             gotMessage;         /**< Worker has received a message */
+    int             terminated;         /**< Worker has had terminate() called */
 } EjsWorker;
 
 extern EjsWorker *ejsCreateWorker(Ejs *ejs);
@@ -3220,11 +3196,12 @@ extern EjsWorker *ejsCreateWorker(Ejs *ejs);
     @defgroup EjsVoid EjsVoid
     @see EjsVoid
  */
-typedef EjsObj EjsVoid;
+
+typedef EjsAny EjsVoid;
 
 extern EjsVoid  *ejsCreateUndefined(Ejs *ejs);
-#define ejsIsUndefined(vp) ejsIs(vp, ES_Void)
 
+#define ejsIsUndefined(ejs, obj) (obj && TYPE(obj)->id == ES_Void)
 
 /*  
     Xml tag state
@@ -3249,6 +3226,7 @@ typedef struct EjsXmlState {
     int             topOfStack;
     long            inputSize;
     long            inputPos;
+//  XX
     cchar           *inputBuf;
     cchar           *filename;
 } EjsXmlState;
@@ -3263,7 +3241,7 @@ typedef struct EjsXmlState {
     @see EjsXML ejsIsXML ejsConfigureXML ejsCreateXML ejsLoadXMLString ejsDeepCopyXML ejsXMLDescendants
  */
 typedef struct EjsXML {
-    EjsObj          obj;                /**< Extends Object - Property storage (unused) */
+    struct EjsType  *type;
     EjsName         qname;              /**< XML node name (e.g. tagName) */
     int             kind;               /**< Kind of XML node */
     MprList         *elements;          /**< List elements or child nodes */
@@ -3272,149 +3250,106 @@ typedef struct EjsXML {
     struct EjsXML   *parent;            /**< Parent node reference (XML or XMLList) */
     struct EjsXML   *targetObject;      /**< XML/XMLList object modified when items inserted into an empty list */
     EjsName         targetProperty;     /**< XML property modified when items inserted into an empty list */
-    char            *value;             /**< String vale of text|attribute|comment|pi */
+    EjsString       *value;             /**< Value of text|attribute|comment|pi */
     int             flags;
 } EjsXML;
 
 
 #if DOXYGEN
-    //  MOB -- missing param doc
     /** 
         Determine if a variable is an XML object
+        @param Object to test
         @return true if the variable is an XML or XMLList object
         @ingroup EjsXML
      */
-    extern boolean ejsIsXML(Ejs *ejs, EjsObj *vp);
+    extern boolean ejsIsXML(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsXML(ejs, vp) (vp && \
-        ((((EjsObj*) vp)->type == ejs->xmlType) || (((EjsObj*) vp)->type == ejs->xmlListType)))
+    #define ejsIsXML(ejs, obj) (obj && ((TYPE(obj)->id == ES_XML) || TYPE(obj)->id == ES_XMLList))
 #endif
 
-extern EjsXML *ejsCreateXML(Ejs *ejs, int kind, EjsName *name, EjsXML *parent, cchar *value);
-extern void  ejsLoadXMLString(Ejs *ejs, EjsXML *xml, cchar *xmlString);
-extern EjsXML *ejsConfigureXML(Ejs *ejs, EjsXML *xml, int kind, cchar *name, EjsXML *parent, cchar *value);
+extern EjsXML *ejsCreateXML(Ejs *ejs, int kind, EjsName name, EjsXML *parent, EjsString *value);
+extern void  ejsLoadXMLString(Ejs *ejs, EjsXML *xml, EjsString *xmlString);
+extern void  ejsLoadXMLFromMulti(Ejs *ejs, EjsXML *xml, cchar *xmlString);
+extern EjsXML *ejsConfigureXML(Ejs *ejs, EjsXML *xml, int kind, EjsString *name, EjsXML *parent, EjsString *value);
 extern EjsXML *ejsDeepCopyXML(Ejs *ejs, EjsXML *xml);
-extern EjsXML *ejsXMLDescendants(Ejs *ejs, EjsXML *xml, EjsName *qname);
+extern EjsXML *ejsXMLDescendants(Ejs *ejs, EjsXML *xml, EjsName qname);
 
 /*  
     Xml private prototypes
  */
-extern void ejsMarkXML(Ejs *ejs, EjsXML *xml);
+extern void ejsManageXML(EjsXML *xml, int flags);
 extern MprXml *ejsCreateXmlParser(Ejs *ejs, EjsXML *xml, cchar *filename);
 extern int ejsXMLToString(Ejs *ejs, MprBuf *buf, EjsXML *xml, int indentLevel);
 extern EjsXML *ejsAppendToXML(Ejs *ejs, EjsXML *xml, EjsXML *node);
 extern EjsXML *ejsSetXML(Ejs *ejs, EjsXML *xml, int index, EjsXML *node);
 extern int ejsAppendAttributeToXML(Ejs *ejs, EjsXML *parent, EjsXML *node);
-extern EjsXML *ejsCreateXMLList(Ejs *ejs, EjsXML *targetObject, EjsName *targetProperty);
+extern EjsXML *ejsCreateXMLList(Ejs *ejs, EjsXML *targetObject, EjsName targetProperty);
 
 
 extern int ejsAddObserver(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener);
 extern int ejsRemoveObserver(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsObj *listener);
-extern int ejsSendEventv(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *thisObj, int argc, EjsObj **argv);
-extern int ejsSendEvent(Ejs *ejs, EjsObj *emitter, cchar *name, EjsObj *thisObj, EjsObj *arg);
+extern int ejsSendEventv(Ejs *ejs, EjsObj *emitter, cchar *name, EjsAny *thisObj, int argc, void *argv);
+extern int ejsSendEvent(Ejs *ejs, EjsObj *emitter, cchar *name, EjsAny *thisObj, EjsAny *arg);
 
 
+/** 
+    Determine if a variable is a number
+    @param obj Object to examine
+    @return True if the variable is a number
+    @ingroup EjsNumber
+ */
 #if DOXYGEN
-    /** 
-        Determine if a variable is a number
-        @param vp Variable to examine
-        @return True if the variable is a number
-        @ingroup EjsNumber
-     */
-    extern bool ejsIsNumber(EjsObj *vp);
-
-    /** 
-        Get the numeric value stored in a EjsNumber object
-        @param ejs Ejs reference returned from #ejsCreate
-        @param vp Variable to examine
-        @return A numeric value
-        @ingroup EjsNumber
-     */
-    extern MprNumber ejsGetNumber(Ejs *ejs, EjsObj *vp);
-
-    /** 
-        Get the numeric value stored in a EjsNumber object
-        @param ejs Ejs reference returned from #ejsCreate
-        @param vp Variable to examine
-        @return An integer value
-        @ingroup EjsNumber
-     */
-    extern int ejsGetInt(Ejs *ejs, EjsObj *vp);
-
-    /** 
-        Get the numeric value stored in a EjsNumber object
-        @param ejs Ejs reference returned from #ejsCreate
-        @param vp Variable to examine
-        @return A double value
-        @ingroup EjsNumber
-     */
-    extern double ejsGetDouble(Ejs *ejs, EjsObj *vp);
+    bool ejsIsNumber(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsNumber(vp) ejsIs(vp, ES_Number)
-    extern MprNumber _ejsGetNumber(Ejs *ejs, EjsObj *vp);
-    extern double _ejsGetDouble(Ejs *ejs, EjsObj *vp);
-    extern int _ejsGetInt(Ejs *ejs, EjsObj *vp);
-    #define ejsGetNumber(ejs, vp) _ejsGetNumber(ejs, (EjsObj*) (vp))
-    #define ejsGetInt(ejs, vp) _ejsGetInt(ejs, (EjsObj*) (vp))
-    #define ejsGetDouble(ejs, vp) _ejsGetDouble(ejs, (EjsObj*) (vp))
+    #define ejsIsNumber(ejs, obj) (obj && TYPE(obj)->id == ES_Number)
 #endif
 
 /** 
-    Type Helpers
-    @description The type helpers interface defines the set of primitive operations a type must support to
-        interact with the virtual machine.
-    @ingroup EjsType
+    Get the numeric value stored in a EjsNumber object
+    @param ejs Ejs reference returned from #ejsCreate
+    @param obj Object to examine
+    @return A numeric value
+    @ingroup EjsNumber
  */
-typedef struct EjsTypeHelpers {
-    EjsObj  *(*cast)(Ejs *ejs, EjsObj *vp, struct EjsType *type);
-    EjsObj  *(*clone)(Ejs *ejs, EjsObj *vp, bool deep);
-    EjsObj  *(*create)(Ejs *ejs, struct EjsType *type, int size);
-    int     (*defineProperty)(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname, struct EjsType *propType, 
-                int64 attributes, EjsObj *value);
-    void    (*destroy)(Ejs *ejs, EjsObj *vp);
-    int     (*deleteProperty)(Ejs *ejs, EjsObj *vp, int slotNum);
-    int     (*deletePropertyByName)(Ejs *ejs, EjsObj *vp, EjsName *qname);
-    EjsObj  *(*getProperty)(Ejs *ejs, EjsObj *vp, int slotNum);
-    EjsObj  *(*getPropertyByName)(Ejs *ejs, EjsObj *vp, EjsName *qname);
-    int     (*getPropertyCount)(Ejs *ejs, EjsObj *vp);
-    EjsName (*getPropertyName)(Ejs *ejs, EjsObj *vp, int slotNum);
-#if UNUSED
-    struct EjsTrait *(*getPropertyTrait)(Ejs *ejs, EjsObj *vp, int slotNum);
-#endif
-    EjsObj  *(*invokeOperator)(Ejs *ejs, EjsObj *vp, int opCode, EjsObj *rhs);
-    int     (*lookupProperty)(Ejs *ejs, EjsObj *vp, EjsName *qname);
-    void    (*mark)(Ejs *ejs, EjsObj *vp);
-    int     (*setProperty)(Ejs *ejs, EjsObj *vp, int slotNum, EjsObj *value);
-    int     (*setPropertyByName)(Ejs *ejs, EjsObj *vp, EjsName *qname, EjsObj *value);
-    int     (*setPropertyName)(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname);
-#if UNUSED
-    int     (*setPropertyTrait)(Ejs *ejs, EjsObj *vp, int slotNum, struct EjsType *propType, int attributes);
-#endif
-} EjsTypeHelpers;
+extern MprNumber ejsGetNumber(Ejs *ejs, EjsAny *obj);
 
+/** 
+    Get the numeric value stored in a EjsNumber object
+    @param ejs Ejs reference returned from #ejsCreate
+    @param obj Object to examine
+    @return An integer value
+    @ingroup EjsNumber
+ */
+extern int ejsGetInt(Ejs *ejs, EjsAny *obj);
 
-typedef EjsObj  *(*EjsCreateHelper)(Ejs *ejs, struct EjsType *type, int size);
-typedef void    (*EjsDestroyHelper)(Ejs *ejs, EjsObj *vp);
-typedef EjsObj  *(*EjsCastHelper)(Ejs *ejs, EjsObj *vp, struct EjsType *type);
-typedef EjsObj  *(*EjsCloneHelper)(Ejs *ejs, EjsObj *vp, bool deep);
-typedef int     (*EjsDefinePropertyHelper)(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname, struct EjsType *propType, 
-                    int64 attributes, EjsObj *value);
-typedef int     (*EjsDeletePropertyHelper)(Ejs *ejs, EjsObj *vp, int slotNum);
-typedef int     (*EjsDeletePropertyByNameHelper)(Ejs *ejs, EjsObj *vp, EjsName *qname);
-typedef EjsObj  *(*EjsGetPropertyHelper)(Ejs *ejs, EjsObj *vp, int slotNum);
-typedef EjsObj  *(*EjsGetPropertyByNameHelper)(Ejs *ejs, EjsObj *vp, EjsName *qname);
-typedef int     (*EjsGetPropertyCountHelper)(Ejs *ejs, EjsObj *vp);
-typedef EjsName (*EjsGetPropertyNameHelper)(Ejs *ejs, EjsObj *vp, int slotNum);
-typedef int     (*EjsLookupPropertyHelper)(Ejs *ejs, EjsObj *vp, EjsName *qname);
-typedef EjsObj  *(*EjsInvokeOperatorHelper)(Ejs *ejs, EjsObj *vp, int opCode, EjsObj *rhs);
-typedef void    (*EjsMarkHelper)(Ejs *ejs, EjsObj *vp);
-typedef int     (*EjsSetPropertyByNameHelper)(Ejs *ejs, EjsObj *vp, EjsName *qname, EjsObj *value);
-typedef int     (*EjsSetPropertyHelper)(Ejs *ejs, EjsObj *vp, int slotNum, EjsObj *value);
-typedef int     (*EjsSetPropertyNameHelper)(Ejs *ejs, EjsObj *vp, int slotNum, EjsName *qname);
-#if UNUSED
-typedef int     (*EjsSetPropertyTraitHelper)(Ejs *ejs, EjsObj *vp, int slotNum, struct EjsType *propType, int attributes);
-typedef struct EjsTrait *(*EjsGetPropertyTraitHelper)(Ejs *ejs, EjsObj *vp, int slotNum);
-#endif
+/** 
+    Get the numeric value stored in a EjsNumber object
+    @param ejs Ejs reference returned from #ejsCreate
+    @param obj Object to examine
+    @return A double value
+    @ingroup EjsNumber
+ */
+extern double ejsGetDouble(Ejs *ejs, EjsAny *obj);
+
+//  MOB -- rename alloc/free
+typedef EjsAny  *(*EjsCreateHelper)(Ejs *ejs, struct EjsType *type, int size);
+typedef EjsAny  *(*EjsCastHelper)(Ejs *ejs, EjsAny *obj, struct EjsType *type);
+typedef EjsAny  *(*EjsCloneHelper)(Ejs *ejs, EjsAny *obj, bool deep);
+typedef int     (*EjsDefinePropertyHelper)(Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname, struct EjsType *propType, 
+                    int64 attributes, EjsAny *value);
+typedef int     (*EjsDeletePropertyHelper)(Ejs *ejs, EjsAny *obj, int slotNum);
+typedef int     (*EjsDeletePropertyByNameHelper)(Ejs *ejs, EjsAny *obj, EjsName qname);
+typedef EjsAny  *(*EjsGetPropertyHelper)(Ejs *ejs, EjsAny *obj, int slotNum);
+typedef EjsAny  *(*EjsGetPropertyByNameHelper)(Ejs *ejs, EjsAny *obj, EjsName qname);
+typedef struct EjsTrait *(*EjsGetPropertyTraitsHelper)(Ejs *ejs, EjsAny *obj, int slotNum);
+typedef int     (*EjsGetPropertyCountHelper)(Ejs *ejs, EjsAny *obj);
+typedef EjsName (*EjsGetPropertyNameHelper)(Ejs *ejs, EjsAny *obj, int slotNum);
+typedef EjsAny  *(*EjsInvokeOperatorHelper)(Ejs *ejs, EjsAny *obj, int opCode, EjsAny *rhs);
+typedef int     (*EjsLookupPropertyHelper)(Ejs *ejs, EjsAny *obj, EjsName qname);
+typedef int     (*EjsSetPropertyByNameHelper)(Ejs *ejs, EjsAny *obj, EjsName qname, EjsAny *value);
+typedef int     (*EjsSetPropertyHelper)(Ejs *ejs, EjsAny *obj, int slotNum, EjsAny *value);
+typedef int     (*EjsSetPropertyNameHelper)(Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname);
+typedef int     (*EjsSetPropertyTraitsHelper)(Ejs *ejs, EjsAny *obj, int slotNum, struct EjsType *type, int attributes);
 
 /** 
     Type class
@@ -3431,33 +3366,36 @@ typedef struct EjsTrait *(*EjsGetPropertyTraitHelper)(Ejs *ejs, EjsObj *vp, int 
 typedef struct EjsType {
     EjsFunction     constructor;                    /**< Constructor function and type properties */
     EjsName         qname;                          /**< Qualified name of the type. Type name and namespace */
-    EjsObj          *prototype;                     /**< Prototype for instances when using prototype inheritance (only) */
+    EjsPot          *prototype;                     /**< Prototype for instances when using prototype inheritance (only) */
+    EjsHelpers      helpers;                        /**< Type helper methods */
     struct EjsType  *baseType;                      /**< Base class */
+    MprManager      manager;                        /**< Manager callback */
+    struct Ejs      *ejs;                           /**< Interpreter reference */
+
     MprList         *implements;                    /**< List of implemented interfaces */
         
-    uint            callsSuper              :  1;   /**< Constructor calls super() */
-    uint            dontPool                :  1;   /**< Don't pool instances */
-    uint            dynamicInstance         :  1;   /**< Object instances may add properties */
-    uint            final                   :  1;   /**< Type is final */
-    uint            hasBaseConstructors     :  1;   /**< Base types has constructors */
-    uint            hasBaseInitializers     :  1;   /**< Base types have initializers */
-    uint            hasConstructor          :  1;   /**< Type has a constructor */
-    uint            hasInitializer          :  1;   /**< Type has static level initialization code */
-    uint            hasInstanceVars         :  1;   /**< Type has non-function instance vars (state) */
-    uint            hasMeta                 :  1;   /**< Type has meta methods */
-    uint            hasScriptFunctions      :  1;   /**< Block has non-native functions requiring namespaces */
-    uint            immutable               :  1;   /**< Instances are immutable */
-    uint            initialized             :  1;   /**< Static initializer has run */
-    uint            isInterface             :  1;   /**< Interface vs class */
-    uint            needFinalize            :  1;   /**< Instances need finalization */
-    uint            needFixup               :  1;   /**< Slots need fixup */
-    uint            numericIndicies         :  1;   /**< Instances support direct numeric indicies */
-    uint            virtualSlots            :  1;   /**< Properties are not stored in slots[] */
+    uint            callsSuper           : 1;       /**< Constructor calls super() */
+    uint            dynamicInstance      : 1;       /**< Object instances may add properties */
+    uint            final                : 1;       /**< Type is final */
+    uint            hasBaseConstructors  : 1;       /**< Base types has constructors */
+    uint            hasBaseInitializers  : 1;       /**< Base types have initializers */
+    uint            hasConstructor       : 1;       /**< Type has a constructor */
+    uint            hasInitializer       : 1;       /**< Type has static level initialization code */
+    uint            hasInstanceVars      : 1;       /**< Type has non-function instance vars (state) */
+    uint            hasMeta              : 1;       /**< Type has meta methods */
+    uint            hasScriptFunctions   : 1;       /**< Block has non-native functions requiring namespaces */
+    uint            immutable            : 1;       /**< Instances are immutable */
+    uint            initialized          : 1;       /**< Static initializer has run */
+    uint            isInterface          : 1;       /**< Interface vs class */
+    uint            isPot                : 1;       /**< Instances are based on EjsPot */
+    uint            needFixup            : 1;       /**< Slots need fixup */
+    uint            numericIndicies      : 1;       /**< Instances support direct numeric indicies */
+    uint            virtualSlots         : 1;       /**< Properties are not stored in slots[] */
     
-    int             numInherited;                   /**< Number of inherited prototype properties */
-    short           id;                             /**< Unique type id */
+    //  MOB -- pack with above?
+    ushort          numInherited;                   /**< Number of inherited prototype properties */
     ushort          instanceSize;                   /**< Size of instances in bytes */
-    EjsTypeHelpers  helpers;                        /**< Type helper methods */
+    ushort          id;                             /**< Unique type id */
     struct EjsModule *module;                       /**< Module owning the type - stores the constant pool */
     void            *typeData;                      /**< Type specific data */
 } EjsType;
@@ -3466,22 +3404,22 @@ typedef struct EjsType {
 #if DOXYGEN
     /** 
         Determine if a variable is an type
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a type
         @ingroup EjsType
      */
-    extern bool ejsIsType(EjsObj *vp);
+    extern bool ejsIsType(Ejs *ejs, EjsAny *obj);
 
     /** 
         Determine if a variable is a prototype object. Types store the template for instance properties in a prototype object
-        @param vp Variable to test
+        @param obj Object to test
         @return True if the variable is a prototype object.
         @ingroup EjsType
      */
-    extern bool ejsIsPrototype(EjsObj *vp);
+    extern bool ejsIsPrototype(Ejs *ejs, EjsAny *obj);
 #else
-    #define ejsIsType(vp)       (vp && (((EjsObj*) (vp))->isType))
-    #define ejsIsPrototype(vp)  (vp && (((EjsObj*) (vp))->isPrototype))
+    #define ejsIsType(ejs, obj)       (obj && ejsIsPot(ejs, obj) && (((EjsPot*) (obj))->isType))
+    #define ejsIsPrototype(ejs, obj)  (obj && ejsIsPot(ejs, obj) && (((EjsPot*) (obj))->isPrototype))
 #endif
 
 /** 
@@ -3502,15 +3440,19 @@ typedef struct EjsType {
     @param data
     @ingroup EjsType EjsType
  */
-extern EjsType *ejsCreateType(Ejs *ejs, EjsName *name, struct EjsModule *up, EjsType *baseType, EjsObj *prototype,
-    int size, int slotNum, int numTypeProp, int numInstanceProp, int64 attributes, void *data);
-
+extern EjsType *ejsCreateType(Ejs *ejs, EjsName name, struct EjsModule *up, EjsType *baseType, EjsPot *prototype,
+    int size, int typeId, int numTypeProp, int numInstanceProp, int64 attributes);
 extern EjsType *ejsConfigureType(Ejs *ejs, EjsType *type, struct EjsModule *up, EjsType *baseType, 
     int numTypeProp, int numInstanceProp, int64 attributes);
-extern void ejsCompleteType(Ejs *ejs, EjsType *type);
+
+#define EJS_OBJ_HELPERS 1
+#define EJS_POT_HELPERS  2
+
+extern EjsType  *ejsCreateNativeType(Ejs *ejs, EjsName qname, int id, int size, void *manager, int helpers);
+extern EjsType  *ejsConfigureNativeType(Ejs *ejs, EjsName qname, int size, void *manager, int helpers);
 
 extern EjsObj *ejsCreatePrototype(Ejs *ejs, EjsType *type, int numProp);
-extern EjsType *ejsCreateArchetype(Ejs *ejs, struct EjsFunction *fun, EjsObj *prototype);
+extern EjsType *ejsCreateArchetype(Ejs *ejs, struct EjsFunction *fun, EjsPot *prototype);
 
 /** 
     Define a global function
@@ -3520,7 +3462,8 @@ extern EjsType *ejsCreateArchetype(Ejs *ejs, struct EjsFunction *fun, EjsObj *pr
         create the function/method definitions. Then use #ejsBindMethod to associate a C function with a property.
     @ingroup EjsType
  */
-extern int ejsDefineGlobalFunction(Ejs *ejs, cchar *name, EjsProc fn);
+//  XX
+extern int ejsDefineGlobalFunction(Ejs *ejs, EjsString *name, EjsFun fn);
 
 
 /** 
@@ -3532,7 +3475,7 @@ extern int ejsDefineGlobalFunction(Ejs *ejs, cchar *name, EjsProc fn);
     @return True if target is an instance of "type" or an instance of a subclass of "type".
     @ingroup EjsType
  */
-extern bool ejsIsA(Ejs *ejs, EjsObj *target, EjsType *type);
+extern bool ejsIsA(Ejs *ejs, EjsAny *target, EjsType *type);
 
 /** 
     Test if a type is a derived type of a given base type.
@@ -3557,9 +3500,9 @@ extern bool ejsIsTypeSubType(Ejs *ejs, EjsType *target, EjsType *baseType);
     @return Zero if successful, otherwise a negative MPR error code.
     @ingroup EjsType
  */
-extern int ejsBindMethod(Ejs *ejs, void *obj, int slotNum, EjsProc fn);
-extern int ejsBindAccess(Ejs *ejs, void *obj, int slotNum, EjsProc getter, EjsProc setter);
-extern void ejsBindConstructor(Ejs *ejs, EjsType *type, EjsProc nativeProc);
+extern int ejsBindMethod(Ejs *ejs, EjsAny *obj, int slotNum, void *fn);
+extern int ejsBindAccess(Ejs *ejs, EjsAny *obj, int slotNum, void *getter, void *setter);
+extern void ejsBindConstructor(Ejs *ejs, EjsType *type, void *nativeProc);
 
 /** 
     Define an instance property
@@ -3577,8 +3520,8 @@ extern void ejsBindConstructor(Ejs *ejs, EjsType *type, EjsProc nativeProc);
     @return The slot number used for the property.
     @ingroup EjsType
  */
-extern int ejsDefineInstanceProperty(Ejs *ejs, EjsType *type, int slotNum, EjsName *name, EjsType *propType, 
-    int attributes, EjsObj *value);
+extern int ejsDefineInstanceProperty(Ejs *ejs, EjsType *type, int slotNum, EjsName name, EjsType *propType, 
+    int attributes, EjsAny *value);
 
 /** 
     Get a type
@@ -3594,7 +3537,7 @@ extern int ejsDefineInstanceProperty(Ejs *ejs, EjsType *type, int slotNum, EjsNa
  */
 extern EjsType  *ejsGetType(Ejs *ejs, int slotNum);
 
-extern EjsType  *ejsGetTypeByName(Ejs *ejs, cchar *space, cchar *name);
+extern EjsType  *ejsGetTypeByName(Ejs *ejs, EjsName qname);
 
 #define VSPACE(space) space "-" BLD_VNUM
 #define ejsGetVType(ejs, space, name) ejsGetTypeByName(ejs, space "-" BLD_VNUM, name)
@@ -3603,19 +3546,12 @@ extern int      ejsCompactClass(Ejs *ejs, EjsType *type);
 extern int      ejsCopyBaseProperties(Ejs *ejs, EjsType *type, EjsType *baseType);
 extern void     ejsDefineTypeNamespaces(Ejs *ejs, EjsType *type);
 extern int      ejsFixupType(Ejs *ejs, EjsType *type, EjsType *baseType, int makeRoom);
-extern int      ejsBlendTypeProperties(Ejs *ejs, EjsType *type, EjsType *typeType);
-extern int      ejsGetTypePropertyAttributes(Ejs *ejs, EjsObj *vp, int slot);
-extern void     ejsInitializeBlockHelpers(EjsTypeHelpers *helpers);
+extern void     ejsInitializeBlockHelpers(EjsHelpers *helpers);
 
-extern void     ejsSetTypeName(Ejs *ejs, EjsType *type, EjsName *qname);
+extern void     ejsSetTypeName(Ejs *ejs, EjsType *type, EjsName qname);
 extern void     ejsTypeNeedsFixup(Ejs *ejs, EjsType *type);
 extern int      ejsGetTypeSize(Ejs *ejs, EjsType *type);
-
-extern EjsType  *ejsCreateCoreType(Ejs *ejs, EjsName *name, EjsType *extendsType, int size, int slotNum, 
-    int numTypeProp, int numInstanceProp, int64 attributes);
-
-extern EjsType  *ejsCreateNativeType(Ejs *ejs, cchar *space, cchar *name, int id, int size);
-extern EjsType  *ejsConfigureNativeType(Ejs *ejs, cchar *space, cchar *name, int size);
+extern EjsPot   *ejsGetPrototype(Ejs *ejs, EjsAny *obj);
 
 
 extern int      ejsBootstrapTypes(Ejs *ejs);
@@ -3633,11 +3569,12 @@ extern void     ejsCreateNullType(Ejs *ejs);
 extern void     ejsCreateNumberType(Ejs *ejs);
 extern void     ejsCreateObjectType(Ejs *ejs);
 extern void     ejsCreateRegExpType(Ejs *ejs);
-extern void     ejsCreateStringType(Ejs *ejs);
 extern void     ejsCreateTypeType(Ejs *ejs);
 extern void     ejsCreateVoidType(Ejs *ejs);
 extern void     ejsCreateXMLType(Ejs *ejs);
 extern void     ejsCreateXMLListType(Ejs *ejs);
+
+extern void     ejsInitStringType(Ejs *ejs, EjsType *type);
 
 /*  
     Native type configuration
@@ -3685,21 +3622,19 @@ extern int      ejsCopyCoreTypes(Ejs *ejs);
 extern int      ejsDefineCoreTypes(Ejs *ejs);
 extern int      ejsDefineErrorTypes(Ejs *ejs);
 extern void     ejsInheritBaseClassNamespaces(Ejs *ejs, EjsType *type, EjsType *baseType);
-extern void     ejsInitializeDefaultHelpers(EjsTypeHelpers *helpers);
-extern void     ejsInitializeFunctionHelpers(EjsTypeHelpers *helpers, int all);
 extern void     ejsServiceEvents(Ejs *ejs, int timeout, int flags);
-extern void     ejsSetSqliteMemCtx(MprThreadLocal *tls, MprCtx ctx);
+extern void     ejsSetSqliteMemCtx(MprThreadLocal *tls);
 extern void     ejsSetSqliteTls(MprThreadLocal *tls);
 
 #if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_FEATURE_STATIC
-extern int      ejs_events_Init(MprCtx ctx);
-extern int      ejs_xml_Init(MprCtx ctx);
-extern int      ejs_io_Init(MprCtx ctx);
-extern int      ejs_sys_Init(MprCtx ctx);
+extern int      ejs_events_Init(Ejs *ejs);
+extern int      ejs_xml_Init(Ejs *ejs);
+extern int      ejs_io_Init(Ejs *ejs);
+extern int      ejs_sys_Init(Ejs *ejs);
 #if BLD_FEATURE_SQLITE
-extern int      ejs_db_sqlite_Init(MprCtx ctx);
+extern int      ejs_db_sqlite_Init(Ejs *ejs);
 #endif
-extern int      ejs_web_Init(MprCtx ctx);
+extern int      ejs_web_Init(Ejs *ejs);
 #endif
 
 /* 
@@ -3709,8 +3644,8 @@ extern int      ejs_web_Init(MprCtx ctx);
 extern HttpStage *ejsAddWebHandler(Http *http);
 extern int ejsHostHttpServer(HttpConn *conn);
 
-extern int ejs_db_sqlite_Init(MprCtx ctx);
-extern int ejs_web_init(MprCtx ctx);
+extern int ejs_db_sqlite_Init(Ejs *ejs);
+extern int ejs_web_init(Ejs *ejs);
 
 /**
     VM Evaluation state. 
@@ -3721,8 +3656,8 @@ extern int ejs_web_init(MprCtx ctx);
 typedef struct EjsState {
     struct EjsFrame     *fp;                /* Current Frame function pointer */
     struct EjsBlock     *bp;                /* Current block pointer */
-    struct EjsObj       **stack;            /* Top of stack (points to the last element pushed) */
-    struct EjsObj       **stackBase;        /* Pointer to start of stack mem */
+    EjsObj              **stack;            /* Top of stack (points to the last element pushed) */
+    EjsObj              **stackBase;        /* Pointer to start of stack mem */
     struct EjsState     *prev;              /* Previous state */
     struct EjsNamespace *internal;          /* Current internal namespace */
     int                 stackSize;          /* Stack size */
@@ -3735,7 +3670,6 @@ typedef struct EjsState {
     @ingroup EjsVm
  */
 typedef struct EjsLookup {
-    EjsObj          *obj;                   /* Final object / Type containing the variable */
     int             slotNum;                /* Final slot in obj containing the variable reference */
     uint            nthBase;                /* Property on Nth super type -- count from the object */
     uint            nthBlock;               /* Property on Nth block in the scope chain -- count from the end */
@@ -3745,35 +3679,14 @@ typedef struct EjsLookup {
     //  MOB -- check all these being used
     uint            ownerIsType;            /* Original object owning the property is a type */
     uint            useThis;                /* Property accessible via "this." */
-    struct EjsObj   *originalObj;           /* Original object used for the search */
-    struct EjsObj   *ref;                   /* Actual property reference */
+    EjsAny          *obj;                   /* Final object / Type containing the variable */
+    EjsAny          *originalObj;           /* Original object used for the search */
+    EjsAny          *ref;                   /* Actual property reference */
     struct EjsTrait *trait;                 /* Property trait describing the property */
     struct EjsName  name;                   /* Name and namespace used to find the property */
     int             bind;                   /* Whether to bind to this lookup */
 } EjsLookup;
 
-
-
-extern int      ejsSetGeneration(Ejs *ejs, int generation);
-extern void     ejsAnalyzeGlobal(Ejs *ejs);
-extern int      ejsCreateGCService(Ejs *ejs);
-extern void     ejsDestroyGCService(Ejs *ejs);
-extern int      ejsIsTimeForGC(Ejs *ejs, int timeTillNextEvent);
-extern void     ejsCollectEverything(Ejs *ejs);
-extern void     ejsCollectGarbage(Ejs *ejs, int gen);
-extern int      ejsEnableGC(Ejs *ejs, bool on);
-extern void     ejsTraceMark(Ejs *ejs, struct EjsObj *vp);
-extern void     ejsGracefulDegrade(Ejs *ejs);
-extern void     ejsPrintAllocReport(Ejs *ejs);
-extern void     ejsMakeEternalPermanent(Ejs *ejs);
-extern void     ejsMakePermanent(Ejs *ejs, struct EjsObj *vp);
-extern void     ejsMakeTransient(Ejs *ejs, struct EjsObj *vp);
-
-#if BLD_DEBUG
-extern void     ejsAddToGcStats(Ejs *ejs, struct EjsObj *vp, int id);
-#else
-#define         ejsAddToGcStats(ejs, vp, id)
-#endif
 
 /**
     Ejscript Service structure
@@ -3782,15 +3695,15 @@ extern void     ejsAddToGcStats(Ejs *ejs, struct EjsObj *vp, int id);
     @ingroup EjsService
  */
 typedef struct EjsService {
-    struct EjsObj           *(*loadScriptLiteral)(Ejs *ejs, cchar *script, cchar *cache);
-    struct EjsObj           *(*loadScriptFile)(Ejs *ejs, cchar *path, cchar *cache);
-    MprHashTable            *nativeModules;
-    Http                    *http;
+    EjsObj          *(*loadScriptLiteral)(Ejs *ejs, EjsString *script, cchar *cache);
+    EjsObj          *(*loadScriptFile)(Ejs *ejs, cchar *path, cchar *cache);
+    MprList         *vmlist;
+    MprHashTable    *nativeModules;
+    Http            *http;
+    MprMutex        *mutex;             /**< Multithread locking */
 } EjsService;
 
-#define ejsGetAllocCtx(ejs) ejs->currentGeneration
-
-extern EjsService *ejsGetService(MprCtx ctx);
+extern EjsService *ejsGetService();
 extern int ejsInitCompiler(EjsService *service);
 extern void ejsAttention(Ejs *ejs);
 extern void ejsClearAttention(Ejs *ejs);
@@ -3799,11 +3712,10 @@ extern void ejsClearAttention(Ejs *ejs);
     Open the Ejscript service
     @description One Ejscript service object is required per application. From this service, interpreters
         can be created.
-    @param ctx Any memory context returned by mprAlloc
     @return An ejs service object
     @ingroup Ejs
  */
-extern EjsService *ejsCreateService(MprCtx ctx);
+extern EjsService *ejsCreateService();
 
 /**
     Create an ejs virtual machine 
@@ -3811,8 +3723,6 @@ extern EjsService *ejsCreateService(MprCtx ctx);
         interpreters. One interpreter can be designated as a master interpreter and then it can be cloned by supplying 
         the master interpreter to this call. A master interpreter provides the standard system types and clone interpreters 
         can quickly be created an utilize the master interpreter's types. This saves memory and speeds initialization.
-    @param ctx Any memory context returned by mprAlloc
-    @param master Optional master interpreter to clone.
     @param search Module search path to use. Set to NULL for the default search path.
     @param require Optional list of required modules to load. If NULL, the following modules will be loaded:
         ejs, ejs.io, ejs.events, ejs.xml, ejs.sys and ejs.unix.
@@ -3821,13 +3731,12 @@ extern EjsService *ejsCreateService(MprCtx ctx);
     @param flags Optional flags to modify the interpreter behavior. Valid flags are:
         @li    EJS_FLAG_COMPILER       - Interpreter will compile code from source
         @li    EJS_FLAG_NO_EXE         - Don't execute any code. Just compile.
-        @li    EJS_FLAG_MASTER         - Create a master interpreter
         @li    EJS_FLAG_DOC            - Load documentation from modules
         @li    EJS_FLAG_NOEXIT         - App should service events and not exit unless explicitly instructed
     @return A new interpreter
     @ingroup Ejs
  */
-extern Ejs *ejsCreateVm(MprCtx ctx, Ejs *master, cchar *search, MprList *require, int argc, cchar **argv, int flags);
+extern Ejs *ejsCreateVm(cchar *search, MprList *require, int argc, cchar **argv, int flags);
 
 /**
     Create a search path array. This can be used in ejsCreateVm.
@@ -3879,10 +3788,11 @@ extern int ejsEvalFile(cchar *path);
 #define EC_FLAGS_PARSE_ONLY      0x20                   /* Just parse source. Don't generate code */
 #define EC_FLAGS_THROW           0x40                   /* Throw errors when compiling. Used for eval() */
 #define EC_FLAGS_VISIBLE         0x80                   /* Make global vars visible to all */
+#define EC_FLAGS_DOC             0x100                  /* Parse inline doc */
 
 //  TODO - DOC
 extern int ejsLoadScriptFile(Ejs *ejs, cchar *path, cchar *cache, int flags);
-extern int ejsLoadScriptLiteral(Ejs *ejs, cchar *script, cchar *cache, int flags);
+extern int ejsLoadScriptLiteral(Ejs *ejs, EjsString *script, cchar *cache, int flags);
 
 /**
     Evaluate a module
@@ -3937,7 +3847,7 @@ extern int ejsRun(Ejs *ejs);
     @return The exception argument for chaining.
     @ingroup Ejs
  */
-extern EjsObj *ejsThrowException(Ejs *ejs, EjsObj *error);
+extern EjsAny *ejsThrowException(Ejs *ejs, EjsAny *error);
 extern void ejsClearException(Ejs *ejs);
 
 /**
@@ -3951,33 +3861,34 @@ extern void ejsClearException(Ejs *ejs);
  */
 extern void ejsReportError(Ejs *ejs, char *fmt, ...);
 
-extern EjsObj *ejsCastOperands(Ejs *ejs, EjsObj *lhs, int opcode,  EjsObj *rhs);
+extern EjsAny *ejsCastOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs);
 extern int ejsCheckModuleLoaded(Ejs *ejs, cchar *name);
 extern void ejsClearExiting(Ejs *ejs);
-extern EjsObj *ejsCreateException(Ejs *ejs, int slot, cchar *fmt, va_list fmtArgs);
-extern MprList *ejsGetModuleList(Ejs *ejs);
-extern EjsObj *ejsGetVarByName(Ejs *ejs, EjsObj *vp, EjsName *name, EjsLookup *lookup);
+extern EjsAny *ejsCreateException(Ejs *ejs, int slot, cchar *fmt, va_list fmtArgs);
+extern EjsAny *ejsGetVarByName(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup);
 extern int ejsInitStack(Ejs *ejs);
 extern void ejsLog(Ejs *ejs, cchar *fmt, ...);
 
-extern int ejsLookupVar(Ejs *ejs, EjsObj *vp, EjsName *name, EjsLookup *lookup);
-extern int ejsLookupVarWithNamespaces(Ejs *ejs, EjsObj *vp, EjsName *name, EjsLookup *lookup);
+extern int ejsLookupVar(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup);
+extern int ejsLookupVarWithNamespaces(Ejs *ejs, EjsObj *obj, EjsName name, EjsLookup *lookup);
 
-extern int ejsLookupScope(Ejs *ejs, EjsName *name, EjsLookup *lookup);
-extern void ejsMemoryFailure(MprCtx ctx, size_t size, size_t total, bool granted);
+extern int ejsLookupScope(Ejs *ejs, EjsName name, EjsLookup *lookup);
 extern int ejsRunProgram(Ejs *ejs, cchar *className, cchar *methodName);
 extern void ejsSetHandle(Ejs *ejs, void *handle);
 extern void ejsShowCurrentScope(Ejs *ejs);
 extern void ejsShowStack(Ejs *ejs, EjsFunction *fp);
 extern void ejsShowBlockScope(Ejs *ejs, EjsBlock *block);
-extern int ejsStartMprLogging(Mpr *mpr, char *logSpec);
-extern void ejsCloneObjectHelpers(Ejs *ejs, EjsType *type);
+extern int ejsStartMprLogging(char *logSpec);
+extern void ejsCreateObjHelpers(Ejs *ejs);
+extern void ejsCloneObjHelpers(Ejs *ejs, EjsType *type);
+extern void ejsClonePotHelpers(Ejs *ejs, EjsType *type);
 extern void ejsCloneBlockHelpers(Ejs *ejs, EjsType *type);
 extern int  ejsParseModuleVersion(cchar *name);
 
 extern void ejsLockVm(Ejs *ejs);
 extern void ejsUnlockVm(Ejs *ejs);
-
+extern void ejsLockService(Ejs *ejs);
+extern void ejsUnlockService(Ejs *ejs);
 
 #ifdef __cplusplus
 }
@@ -4130,6 +4041,15 @@ extern "C" {
         type        catchType
     }
 
+    Debug {
+        byte        section
+        number      countOfLines
+        string      fileName
+        number      startLine
+        number      addressOffset      
+        ...
+    }
+
     Block {
         byte        section
         string      name
@@ -4202,17 +4122,18 @@ typedef struct EjsTypeFixup
  */
 #define EJS_SECT_MODULE         1           /* Module section */
 #define EJS_SECT_MODULE_END     2           /* End of a module */
-#define EJS_SECT_DEPENDENCY     3           /* Module dependency */
-#define EJS_SECT_CLASS          4           /* Class definition */
-#define EJS_SECT_CLASS_END      5           /* End of class definition */
-#define EJS_SECT_FUNCTION       6           /* Function */
-#define EJS_SECT_FUNCTION_END   7           /* End of function definition */
-#define EJS_SECT_BLOCK          8           /* Nested block */
-#define EJS_SECT_BLOCK_END      9           /* End of Nested block */
-#define EJS_SECT_PROPERTY       10          /* Property (variable) definition */
-#define EJS_SECT_EXCEPTION      11          /* Exception definition */
-#define EJS_SECT_DOC            12          /* Documentation for an element */
-#define EJS_SECT_MAX            13
+#define EJS_SECT_DEBUG          3           /* Module dependency */
+#define EJS_SECT_DEPENDENCY     4           /* Module dependency */
+#define EJS_SECT_CLASS          5           /* Class definition */
+#define EJS_SECT_CLASS_END      6           /* End of class definition */
+#define EJS_SECT_FUNCTION       7           /* Function */
+#define EJS_SECT_FUNCTION_END   8           /* End of function definition */
+#define EJS_SECT_BLOCK          9           /* Nested block */
+#define EJS_SECT_BLOCK_END      10          /* End of Nested block */
+#define EJS_SECT_PROPERTY       11          /* Property (variable) definition */
+#define EJS_SECT_EXCEPTION      12          /* Exception definition */
+#define EJS_SECT_DOC            13          /* Documentation for an element */
+#define EJS_SECT_MAX            14
 
 /*
     Psudo section types for loader callback
@@ -4229,29 +4150,15 @@ typedef struct EjsTypeFixup
     File format is little-endian. All headers are aligned on word boundaries.
  */
 typedef struct EjsModuleHdr {
-    int         magic;                      /* Magic number for Ejscript modules */
-    int         fileVersion;                /* Module file format version */
-    int         flags;                      /* Module flags */
+    int32       magic;                      /* Magic number for Ejscript modules */
+    int32       fileVersion;                /* Module file format version */
+    int32       flags;                      /* Module flags */
 } EjsModuleHdr;
 
-/*
-    Structure for the string constant pool
- */
-typedef struct EjsConst {
-    char        *pool;                      /* Constant pool storage */
-    int         size;                       /* Size of constant pool storage */
-    int         len;                        /* Length of active constant pool */
-    int         base;                       /* Base used during relocations */
-    int         locked;                     /* No more additions allowed */
-    MprHashTable *table;                    /* Hash table for fast lookup */
-} EjsConst;
 
-/*
-    Module. NOTE: not an EjsObj
- */
 typedef struct EjsModule {
-    char            *name;                  /* Name of this module */
-    char            *vname;                 /* Versioned name */
+    EjsString       *name;                  /* Name of this module */
+    EjsString       *vname;                 /* Versioned name */
     char            *path;                  /* Module file path name */
     int             version;                /* Made with EJS_MAKE_VERSION */
     int             minVersion;             /* Minimum version when used as a dependency */
@@ -4264,6 +4171,7 @@ typedef struct EjsModule {
 
     /*
         Used during code generation
+        MOB - move to separate struct
      */
     struct EcCodeGen *code;                 /* Code generation buffer */
     MprList         *globalProperties;      /* List of global properties */
@@ -4271,17 +4179,20 @@ typedef struct EjsModule {
 
     /*
         Used only while loading modules
+        MOB move into separate struct
      */
     MprList         *current;               /* Current stack of open objects */
     EjsBlock        *scope;                 /* Lexical scope chain */
-    EjsConst        *constants;             /* Constant pool */
+    EjsConstants    *constants;             /* Constant pool */
     int             nameToken;              /* */
     int             firstGlobal;            /* First global property */
     int             lastGlobal;             /* Last global property + 1*/
-    struct EjsFunction  *currentMethod;     /* Current method being loaded */
+    struct EjsFunction *currentMethod;      /* Current method being loaded */
 
     uint            compiling       : 1;    /* Module currently being compiled from source */
     uint            configured      : 1;    /* Module types have been configured with native code */
+
+    //  MOB -- used to test if a module should be compiled
     uint            loaded          : 1;    /* Module has been loaded from an external file */
     uint            nativeLoaded    : 1;    /* Backing shared library loaded */
     uint            hasNative       : 1;    /* Has native property definitions */
@@ -4290,7 +4201,7 @@ typedef struct EjsModule {
     uint            hasError        : 1;    /* Module has a loader error */
     uint            visited         : 1;    /* Module has been traversed */
     int             flags;                  /* Loading flags */
-    char            *doc;                   /* Current doc string */
+    EjsString       *doc;                   /* Current doc string */
 } EjsModule;
 
 
@@ -4298,7 +4209,7 @@ typedef int (*EjsNativeCallback)(Ejs *ejs);
 
 typedef struct EjsNativeModule {
     EjsNativeCallback callback;             /* Callback to configure module native types and properties */
-    cchar           *name;                  /* Module name */
+    EjsString       *name;                  /* Module name */
     int             checksum;               /* Checksum expected by native code */
     int             flags;                  /* Configuration flags */
 } EjsNativeModule;
@@ -4308,28 +4219,25 @@ typedef struct EjsNativeModule {
     Element documentation string. The loader will create if required.
  */
 typedef struct EjsDoc {
-    char        *docString;                         /* Original doc string */
-    char        *brief;
-    char        *description;
-    char        *example;
-    char        *requires;
-    char        *returns;
-    char        *stability;                         /* prototype, evolving, stable, mature, deprecated */
-    char        *spec;                              /* Where specified */
-    int         deprecated;                         /* Hide doc if true */
-    int         hide;                               /* Hide doc if true */
-    int         cracked;                            /* Doc has been cracked and tokenized */
-
+    EjsString   *docString;                         /* Original doc string */
+    MprChar     *brief;
+    MprChar     *description;
+    MprChar     *example;
+    MprChar     *requires;
+    MprChar     *returns;
+    MprChar     *stability;                         /* prototype, evolving, stable, mature, deprecated */
+    MprChar     *spec;                              /* Where specified */
     struct EjsDoc *duplicate;                       /* From @duplicate directive */
-
     MprList     *defaults;                          /* Parameter default values */
     MprList     *params;                            /* Function parameters */
     MprList     *options;                           /* Option parameter values */
     MprList     *events;                            /* Option parameter values */
     MprList     *see;
     MprList     *throws;
-
     EjsTrait    *trait;                             /* Back pointer to trait */
+    int         deprecated;                         /* Hide doc if true */
+    int         hide;                               /* Hide doc if true */
+    int         cracked;                            /* Doc has been cracked and tokenized */
 } EjsDoc;
 
 
@@ -4343,35 +4251,46 @@ typedef struct EjsDoc {
 #define EJS_LOADER_DEP        0x10                  /* Loading a dependency */
 
 
+extern int          ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, int checksum, int flags);
+extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, EjsString *name);
+extern EjsModule    *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsConstants *constants);
 
-extern int          ejsAddNativeModule(MprCtx ctx, cchar *name, EjsNativeCallback callback, int checksum, int flags);
-extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, cchar *name);
-extern EjsModule    *ejsCreateModule(struct Ejs *ejs, cchar *name, int version);
-extern int          ejsLoadModule(struct Ejs *ejs, cchar *name, int minVer, int maxVer, int flags);
+//  MOB -- would this be better with an ascii name?
+extern int          ejsLoadModule(Ejs *ejs, EjsString *name, int minVer, int maxVer, int flags);
 extern char         *ejsSearchForModule(Ejs *ejs, cchar *name, int minVer, int maxVer);
-extern int          ejsModuleReadName(struct Ejs *ejs, MprFile *file, char **name, int len);
-extern int          ejsModuleReadNumber(struct Ejs *ejs, EjsModule *module, int *number);
-extern int          ejsModuleReadByte(struct Ejs *ejs, EjsModule *module, int *number);
-extern char         *ejsModuleReadString(struct Ejs *ejs, EjsModule *module);
-extern int          ejsModuleReadType(struct Ejs *ejs, EjsModule *module, EjsType **typeRef, EjsTypeFixup **fixup, 
+extern int          ejsSetModuleConstants(Ejs *ejs, EjsModule *mp, EjsConstants *constants);
+
+extern void         ejsModuleReadBlock(Ejs *ejs, EjsModule *module, char *buf, int len);
+extern int          ejsModuleReadByte(Ejs *ejs, EjsModule *module);
+extern EjsString    *ejsModuleReadConst(Ejs *ejs, EjsModule *module);
+extern int          ejsModuleReadInt32(Ejs *ejs, EjsModule *module);
+extern EjsName      ejsModuleReadName(Ejs *ejs, EjsModule *module);
+extern int64        ejsModuleReadNum(Ejs *ejs, EjsModule *module);
+extern char         *ejsModuleReadMulti(Ejs *ejs, EjsModule *mp);
+extern MprChar      *ejsModuleReadMultiAsWide(Ejs *ejs, EjsModule *mp);
+extern int          ejsModuleReadType(Ejs *ejs, EjsModule *module, EjsType **typeRef, EjsTypeFixup **fixup, 
                         EjsName *typeName, int *slotNum);
-extern int          ejsSetModuleConstants(struct Ejs *ejs, EjsModule *mp, cchar *pool, int poolSize);
+
 extern double       ejsDecodeDouble(Ejs *ejs, uchar **pp);
-extern int64        ejsDecodeNum(uchar **pp);
-extern int          ejsDecodeWord(uchar **pp);
-extern int          ejsEncodeNum(uchar *pos, int64 number);
-extern int          ejsEncodeWord(uchar *pos, int number);
+extern int          ejsDecodeInt32(Ejs *ejs, uchar **pp);
+extern int64        ejsDecodeNum(Ejs *ejs, uchar **pp);
+
+extern int          ejsEncodeByteAtPos(Ejs *ejs, uchar *pos, int value);
 extern int          ejsEncodeDouble(Ejs *ejs, uchar *pos, double number);
-extern int          ejsEncodeByteAtPos(uchar *pos, int value);
-extern int          ejsEncodeUint(uchar *pos, uint number);
-extern int          ejsEncodeWordAtPos(uchar *pos, int value);
+extern int          ejsEncodeInt32(Ejs *ejs, uchar *pos, int number);
+extern int          ejsEncodeNum(Ejs *ejs, uchar *pos, int64 number);
+extern int          ejsEncodeInt32AtPos(Ejs *ejs, uchar *pos, int value);
 
-extern char         *ejsGetDocKey(struct Ejs *ejs, EjsBlock *block, int slotNum, char *buf, int bufsize);
-extern EjsDoc       *ejsCreateDoc(struct Ejs *ejs, void *vp, int slotNum, cchar *docString);
+extern double       ejsSwapDouble(Ejs *ejs, double a);
+extern int          ejsSwapInt32(Ejs *ejs, int word);
+extern int64        ejsSwapInt64(Ejs *ejs, int64 word);
 
-extern int          ejsAddModule(Ejs *ejs, struct EjsModule *up);
-extern struct EjsModule *ejsLookupModule(Ejs *ejs, cchar *name, int minVersion, int maxVersion);
-extern int          ejsRemoveModule(Ejs *ejs, struct EjsModule *up);
+extern char         *ejsGetDocKey(Ejs *ejs, EjsBlock *block, int slotNum, char *buf, int bufsize);
+extern EjsDoc       *ejsCreateDoc(Ejs *ejs, void *vp, int slotNum, EjsString *docString);
+
+extern int          ejsAddModule(Ejs *ejs, EjsModule *up);
+extern EjsModule    *ejsLookupModule(Ejs *ejs, EjsString *name, int minVersion, int maxVersion);
+extern int          ejsRemoveModule(Ejs *ejs, EjsModule *up);
 
 #ifdef __cplusplus
 }
@@ -4511,7 +4430,7 @@ extern "C" {
     @see EjsHttpServer
  */
 typedef struct EjsHttpServer {
-    EjsObj          obj;                        /**< Extends Object */
+    EjsPot          pot;                        /**< Extends Object */
     Ejs             *ejs;                       /**< Ejscript interpreter handle */
     HttpServer      *server;                    /**< Http server object */
     MprEvent        *sessionTimer;              /**< Session expiry timer */
@@ -4529,7 +4448,7 @@ typedef struct EjsHttpServer {
     int             async;                      /**< Async mode */
     EjsObj          *emitter;                   /**< Event emitter */
     EjsObj          *limits;                    /**< Limits object */
-    EjsObj          *sessions;                  /**< Session cache */
+    EjsPot          *sessions;                  /**< Session cache */
     EjsArray        *incomingStages;            /**< Incoming Http pipeline stages */
     EjsArray        *outgoingStages;            /**< Outgoing Http pipeline stages */
 } EjsHttpServer;
@@ -4544,7 +4463,7 @@ typedef struct EjsHttpServer {
     @see EjsRequest ejsCreateRequest
  */
 typedef struct EjsRequest {
-    EjsObj          obj;                /**< Base object storage */
+    EjsPot          pot;                /**< Base object storage */
     EjsObj          *cookies;           /**< Cached cookies */
     HttpConn        *conn;              /**< Underlying Http connection object */
     EjsHttpServer   *server;            /**< Owning server */
@@ -4615,7 +4534,7 @@ extern EjsRequest *ejsCloneRequest(Ejs *ejs, EjsRequest *req, bool deep);
     @see EjsSession ejsCreateSession ejsDestroySession
  */
 typedef struct EjsSession {
-    EjsObj      obj;
+    EjsPot      pot;
     MprTime     expire;             /* When the session should expire */
     cchar       *id;                /* Session ID */
     int         timeout;            /* Session inactivity lifespan */
@@ -4712,6 +4631,10 @@ extern void ejsConfigureWebTypes(Ejs *ejs);
 #define _h_EC_COMPILER 1
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
     Compiler validation modes. From "use standard|strict"
  */
@@ -4736,6 +4659,70 @@ extern void ejsConfigureWebTypes(Ejs *ejs);
 #define EC_PHASE_BIND           3           /* Bind var references to slots and property types */
 #define EC_AST_PHASES           4
 
+typedef struct EcLocation {
+    MprChar     *source;
+    char        *filename;
+    int         lineNumber;
+    int         column;
+} EcLocation;
+
+#define N_ARGS                  1
+#define N_ASSIGN_OP             2
+#define N_ATTRIBUTES            3
+#define N_BINARY_OP             4
+#define N_BINARY_TYPE_OP        5
+#define N_BLOCK                 6
+#define N_BREAK                 7
+#define N_CALL                  8
+#define N_CASE_ELEMENTS         9
+#define N_CASE_LABEL            10
+#define N_CATCH                 11
+#define N_CATCH_ARG             12
+#define N_CATCH_CLAUSES         13
+#define N_CLASS                 14
+#define N_CONTINUE              15
+#define N_DASSIGN               16
+#define N_DIRECTIVES            17
+#define N_DO                    18
+#define N_DOT                   19
+#define N_END_FUNCTION          20
+#define N_EXPRESSIONS           21
+#define N_FIELD                 22
+#define N_FOR                   23
+#define N_FOR_IN                24
+#define N_FUNCTION              25
+#define N_GOTO                  26
+#define N_HASH                  27
+#define N_IF                    28
+#define N_LITERAL               29
+#define N_MODULE                30
+#define N_NEW                   31
+#define N_NOP                   32
+#define N_OBJECT_LITERAL        33
+#define N_PARAMETER             34
+#define N_POSTFIX_OP            35
+#define N_PRAGMA                36
+#define N_PRAGMAS               37
+#define N_PROGRAM               38
+#define N_QNAME                 39
+#define N_REF                   40
+#define N_RETURN                41
+#define N_SPREAD                42
+#define N_SUPER                 43
+#define N_SWITCH                44
+#define N_THIS                  45
+#define N_THROW                 46
+#define N_TRY                   47
+#define N_TYPE_IDENTIFIERS      48
+#define N_UNARY_OP              49
+#define N_USE_MODULE            50
+#define N_USE_NAMESPACE         51
+#define N_VALUE                 52
+#define N_VAR                   53
+#define N_VAR_DEFINITION        54
+#define N_VOID                  55
+#define N_WITH                  56
+
 /*
     Ast node define
  */
@@ -4743,665 +4730,458 @@ extern void ejsConfigureWebTypes(Ejs *ejs);
 typedef struct EcNode   *Node;
 #endif
 
+/*
+    Structure for code generation buffers
+ */
+typedef struct EcCodeGen {
+    MprBuf      *buf;                           /* Code generation buffer */
+    MprList     *jumps;                         /* Break/continues to patch for this code block */
+    MprList     *exceptions;                    /* Exception handlers for this code block */
+    EjsDebug    *debug;                         /* Source debug info */ 
+    int         jumpKinds;                      /* Kinds of jumps allowed */
+    int         breakMark;                      /* Stack item counter for the target for break/continue stmts */
+    int         blockMark;                      /* Lexical block counter for the target for break/continue stmts */
+    int         stackCount;                     /* Current stack item counter */
+    int         blockCount;                     /* Current block counter */
+    int         lastLineNumber;                 /* Last line for debug */
+} EcCodeGen;
+
+
 typedef struct EcNode {
-    //  TODO - need consistency in naming. Nodes should have a node suffix. 
-    //  References EjsObj should have a Ref suffix.
-    /*
-        Ordered for debugging
-     */
-    char                *kindName;          /* Node kind string */
-
-    /*
-        TODO - optimize name+qualifier fields
-     */
-    EjsName             qname;
-    int                 literalNamespace;   /* Namespace is a literal */
-
-    cchar               *filename;          /* File containing source code line */
-    char                *currentLine;       /* Current source code line */
-    int                 lineNumber;
-
-    Node                left;               /* children[0] */
-    Node                right;              /* children[1] */
-
-    EjsBlock            *blockRef;          /* Block scope */
-    bool                createBlockObject;  /* Create the block object to contain let scope variables */
-    bool                blockCreated;       /* Block object has been created */
-    EjsLookup           lookup;
-    int                 attributes;         /* Attributes applying to this node */
-    bool                specialNamespace;   /* Using a public|private|protected|internal namespace */
-    Node                typeNode;           /* Type of name */
-    Node                parent;             /* Parent node */
-    EjsNamespace        *namespaceRef;      /* Namespace reference */
-    MprList             *namespaces;        /* Namespaces for hoisted variables */
-
-    #define N_VALUE     1
-
+    char                *kindName;              /* Node kind string */
 #if BLD_DEBUG
     char                *tokenName;
 #endif
+    EjsName             qname;
+    EcLocation          loc;                    /* Source code info */
+    EjsBlock            *blockRef;              /* Block scope */
+    EjsLookup           lookup;                 /* Lookup residuals */
+    EjsNamespace        *namespaceRef;          /* Namespace reference */
+    Node                left;                   /* children[0] */
+    Node                right;                  /* children[1] */
+    Node                typeNode;               /* Type of name */
+    Node                parent;                 /* Parent node */
+    MprList             *namespaces;            /* Namespaces for hoisted variables */
+    MprList             *children;
 
-    int                 tokenId;            /* Lex token */
-    int                 groupMask;          /* Token group */
-    int                 subId;              /* Sub token */
+    int                 kind;                   /* Kind of node */
+    int                 attributes;             /* Attributes applying to this node */
+    int                 tokenId;                /* Lex token */
+    int                 groupMask;              /* Token group */
+    int                 subId;                  /* Sub token */
+    int                 slotNum;                /* Allocated slot for variable */
+    int                 jumpLength;             /* Goto length for exceptions */
+    int                 seqno;                  /* Unique sequence number */
 
-    /*
-        MOB TODO - order in most useful order: name, type, function, binary
-        MOB TODO - rename all with a Node suffix. ie. nameNode, importNode
-     */
+    uint                blockCreated      : 1;  /* Block object has been created */
+    uint                createBlockObject : 1;  /* Create the block object to contain let scope variables */
+    uint                enabled           : 1;  /* Node is enabled via conditional definitions */
+    int                 literalNamespace  : 1;  /* Namespace is a literal */
+    uint                needThis          : 1;  /* Need to push this object */
+    uint                needDupObj        : 1;  /* Need to dup the object on stack (before) */
+    uint                needDup           : 1;  /* Need to dup the result (after) */
+    uint                slotFixed         : 1;  /* Slot fixup has been done */
+    uint                specialNamespace  : 1;  /* Using a public|private|protected|internal namespace */
 
-    //  MOB TODO - disable for now
-#if !BLD_DEBUG && 0
+    uchar               *patchAddress;          /* For code patching */
+    EcCodeGen           *code;                  /* Code buffer */
+
+    EjsName             *globalProp;            /* Set if this is a global property */
+    EjsString           *doc;                   /* Documentation string */
+
+    struct EcCompiler   *cp;                    /* Compiler instance reference */
+
     union {
+#if UNUSED
+        struct {
+            EcCodeGen   *rightCode;
+        } binary;
 #endif
 
-        //  GROUPING ONLY
-        #define N_ATTRIBUTES 50
-
-        /*
-            Name nodes hold a fully qualified name.
-         */
-        #define N_QNAME  3
-        #define N_VAR 63
         struct {
-            Node        nameExpr;           /* Name expression */
-            Node        qualifierExpr;      /* Qualifier expression */
-            int         isAttribute;        /* Attribute identifier "@" */
-            int         isType;             /* Name is a type */
-            int         isNamespace;        /* Name is a namespace */
-            int         letScope;           /* Variable is defined in let block scope */
-            int         instanceVar;        /* Instance or static var (if defined in class) */
-            int         isRest;             /* ... rest style args */
-            int         varKind;            /* Variable definition kind */
-            EjsObj      *nsvalue;           /* Initialization value (MOB - remove) */
-        } name;
-
-        /*
-            cast, is, to
-         */
-        #define N_BINARY_TYPE_OP  5
-
-        /*
-           + - * / % << >> >>> & | ^ && || instanceof in == != ===
-                !== < <= > >= , ]
-         */
-        #define N_BINARY_OP  6
-        #define N_ASSIGN_OP  7
+            Node        expression;
+            EcCodeGen   *expressionCode;        /* Code buffer for the case expression */
+            int         kind;
+            int         nextCaseCode;           /* Goto length to the next case statements */
+        } caseLabel;
 
         struct {
-            struct EcCodeGen    *rightCode;
-        } binary;
+            Node        arg;                    /* Catch block argument */
+        } catchBlock;
 
-
-        #define N_FOR_IN 33
+        /*
+            Var definitions have one child per variable. Child nodes can be either N_NAME or N_ASSIGN_OP
+         */
         struct {
-            int         each;                       /* For each used */
+            int         varKind;                /* Variable definition kind */
+        } def;
+
+#if UNUSED
+        struct {
+            Node        cond;
+            Node        body;
+            EcCodeGen   *condCode;
+            EcCodeGen   *bodyCode;
+        } doWhile;
+#endif
+
+        struct {
+            /* Children are the catch clauses */
+            Node        tryBlock;               /* Try code */
+            Node        catchClauses;           /* Catch clauses */
+            Node        finallyBlock;           /* Finally code */
+            int         numBlocks;              /* Count of open blocks in the try block */
+        } exception;
+
+#if UNUSED
+        struct {
+            char        *space;                 /* Namespace qualifier */
+        } expr;
+#endif
+
+        struct {
+            Node        expr;                   /* Field expression */
+            Node        fieldName;              /* Field element name for objects */
+            int         fieldKind;              /* value or function */
+            int         index;                  /* Array index, set to -1 for objects */
+            int         varKind;                /* Variable definition kind (const) */
+        } field;
+
+        struct {
+            Node        resultType;             /* Function return type */
+            Node        body;                   /* Function body */
+            Node        parameters;             /* Function formal parameters */
+            Node        constructorSettings;    /* Constructor settings */
+            Node        expressionRef;          /* Reference to the function expression name */
+            EjsFunction *functionVar;           /* Function variable */
+            uint        operatorFn    : 1;      /* operator function */
+            uint        getter        : 1;      /* getter function */
+            uint        setter        : 1;      /* setter function */
+            uint        call          : 1;      /* */
+            uint        has           : 1;      /* */
+            uint        hasRest       : 1;      /* Has rest parameter */
+            uint        hasReturn     : 1;      /* Has a return statement */
+            uint        isMethod      : 1;      /* Is a class method */
+            uint        isConstructor : 1;      /* Is constructor method */
+            uint        isDefaultConstructor : 1; /* Is default constructor */
+        } function;
+
+        struct {
             Node        iterVar;
             Node        iterGet;
             Node        iterNext;
             Node        body;
-            struct EcCodeGen    *initCode;
-            struct EcCodeGen    *bodyCode;
+            EcCodeGen   *initCode;
+            EcCodeGen   *bodyCode;
+            int         each;                   /* For each used */
         } forInLoop;
 
-
-        /*
-            Used by for and while
-         */
-        #define N_FOR   32
         struct {
-            Node        initializer;
-            Node        cond;
-            Node        perLoop;
             Node        body;
-            struct EcCodeGen    *condCode;
-            struct EcCodeGen    *bodyCode;
-            struct EcCodeGen    *perLoopCode;
+            Node        cond;
+            Node        initializer;
+            Node        perLoop;
+            EcCodeGen   *condCode;
+            EcCodeGen   *bodyCode;
+            EcCodeGen   *perLoopCode;
         } forLoop;
 
-
-        #define N_DO    51
         struct {
-            Node        cond;
             Node        body;
-            struct EcCodeGen    *condCode;
-            struct EcCodeGen    *bodyCode;
-        } doWhile;
-
-
-        /*  OPT - convert to grouping  */
-        #define N_UNARY_OP  9
-        struct {
-            int         dummy;
-        } unary;
-
-
-        #define N_IF  10
-        struct {
-            Node                cond;
-            Node                thenBlock;
-            Node                elseBlock;
-            struct EcCodeGen    *thenCode;
-            struct EcCodeGen    *elseCode;
-        } tenary;
-
-
-        #define N_HASH  55
-        struct {
             Node        expr;
-            Node        body;
             bool        disabled;
         } hash;
 
-
-        #define N_VAR_DEFINITION  11
-        /*
-            Var definitions have one child per variable. Child nodes can
-            be either N_NAME or N_ASSIGN_OP
-         */
         struct {
-            int         varKind;            /* Variable definition kind */
-        } def;
+            Node         implements;          /* Implemented interfaces */
+            Node         constructor;         /* Class constructor */
+            MprList      *staticProperties;   /* List of static properties */
+            MprList      *instanceProperties; /* Implemented interfaces */
+            MprList      *classMethods;       /* Static methods */
+            MprList      *methods;            /* Instance methods */
+            EjsType      *ref;                /* Type instance ref */
+            EjsFunction  *initializer;        /* Initializer function */
+            EjsNamespace *publicSpace;
+            EjsNamespace *internalSpace;
+            EjsString    *extends;            /* Class base class */
+            int          isInterface;         /* This is an interface */
+        } klass;
 
-
-        //  TODO - split apart into separate AST nodes.
-        /*
-           Pragmas: use strict, use standard
-         */
-        #define N_PRAGMA  12
         struct {
-            Node        decimalContext;     /* use decimal expr */
-            uint        strict;             /* Strict mode */
-            char        *moduleName;        /* Module name value */
-        } pragma;
+            EjsObj      *var;               /* Special value */
+            MprBuf      *data;              /* XML data */
+        } literal;
 
-
-        /*
-            Module defintions
-         */
-        #define N_MODULE 52
         struct {
             EjsModule   *ref;               /* Module object */
+            EjsString   *name;              /* Module name */
             char        *filename;          /* Module file name */
-            char        *name;              /* Module name */
             int         version;
         } module;
 
-
         /*
-            Use module
+            Name nodes hold a fully qualified name.
          */
-        #define N_USE_MODULE 53
+        struct {
+            Node        nameExpr;           /* Name expression */
+            Node        qualifierExpr;      /* Qualifier expression */
+            EjsObj      *nsvalue;           /* Initialization value (MOB - remove) */
+            uint        instanceVar  : 1;   /* Instance or static var (if defined in class) */
+            uint        isAttribute  : 1;   /* Attribute identifier "@" */
+            uint        isDefault    : 1;   /* use default namespace */
+            uint        isInternal   : 1;   /* internal namespace */
+            uint        isLiteral    : 1;   /* use namespace "literal" */
+            uint        isNamespace  : 1;   /* Name is a namespace */
+            uint        isRest       : 1;   /* ... rest style args */
+            uint        isType       : 1;   /* Name is a type */
+            uint        letScope     : 1;   /* Variable is defined in let block scope */
+            int         varKind;            /* Variable definition kind */
+        } name;
+
+        struct {
+            int         callConstructors;   /* Bound type has a constructor */
+        } newExpr;
+
+        struct {
+            Node        typeNode;           /* Type of object */
+            int         isArray;            /* Array literal */
+        } objectLiteral;
+
+#if UNUSED
+        struct {
+            char        *type;              /* Parameter type */
+            char        *value;             /* Default value */
+            int         isRest1;            /* Is rest parameter */
+        } parameter;
+#endif
+
+        struct {
+            uint        strict;             /* Strict mode */
+#if UNUSED
+            char        *moduleName;        /* Module name value */
+#endif
+        } pragma;
+
+        struct {
+            MprList     *dependencies;      /* Accumulated list of dependent modules */
+        } program;
+
+        struct {
+            Node        node;               /* Actual node reference */
+        } ref;
+
+        struct {
+            int         blockless;          /* Function expression */
+        } ret;
+
+        struct {
+            Node        cond;
+            Node        thenBlock;
+            Node        elseBlock;
+            EcCodeGen   *thenCode;
+            EcCodeGen   *elseCode;
+        } tenary;
+
+        struct {
+            int         thisKind;           /* Kind of this. See EC_THIS_ flags */
+        } thisNode;
+
         struct {
             int         minVersion;
             int         maxVersion;
         } useModule;
 
-
-        /*
-            use namespace, use default namespace
-         */
-        #define N_USE_NAMESPACE  49
         struct {
-            int         isDefault;          /* "use default" */
-            int         isLiteral;          /* use namespace "literal" */
-            int         isInternal;         /* internal namespace */
-        } useNamespace;
-
-
-        #define N_FUNCTION 14
-        struct {
-            uint        operatorFn : 1;     /* operator function */
-            uint        getter : 1;         /* getter function */
-            uint        setter : 1;         /* setter function */
-            uint        call : 1;           /* */
-            uint        has : 1;            /* */
-            uint        hasRest : 1;        /* Has rest parameter */
-            uint        hasReturn : 1;      /* Has a return statement */
-            uint        isMethod : 1;       /* Is a class method */
-            uint        isConstructor : 1;  /* Is constructor method */
-            uint        isDefaultConstructor : 1;/* Is default constructor */
-            Node        resultType;         /* Function return type */
-            Node        body;               /* Function body */
-            Node        parameters;         /* Function formal parameters */
-            Node        constructorSettings;/* Constructor settings */
-
-            /*
-                Bound definition
-             */
-            EjsFunction *functionVar;       /* Function variable */
-            Node        expressionRef;      /* Reference to the function expression name */
-
-        } function;
-
-        #define N_END_FUNCTION 40
-
-        #define N_PARAMETER 15
-        struct {
-            char        *type;              /* Parameter type */
-            char        *value;             /* Default value */
-            int         isRest : 1;         /* Is rest parameter */
-        } parameter;
-
-
-        /*
-            Body stored in the child node
-         */
-        #define N_CLASS  16
-        struct {
-            char        *extends;           /* Class base class */
-            Node        implements;         /* Implemented interfaces */
-            MprList     *staticProperties;  /* List of static properties */
-            MprList     *instanceProperties;/* Implemented interfaces */
-            MprList     *classMethods;      /* Static methods */
-            MprList     *methods;           /* Instance methods */
-            Node        constructor;        /* Class constructor */
-            int         isInterface;        /* This is an interface */
-
-            EjsType     *ref;               /* Type instance ref */
-            EjsFunction *initializer;       /* Initializer function */
-
-            EjsNamespace *publicSpace;
-            EjsNamespace *internalSpace;
-
-        } klass;
-
-
-        #define N_DIRECTIVES 18
-
-        #define N_SUPER 35
-        struct {
-            int         dummy;
-        } super;
-
-
-        #define N_NEW 31
-        struct {
-            int         callConstructors;   /* Bound type has a constructor */
-        } newExpr;
-
-
-        #define N_TRY 36
-        struct {
-            /* Children are the catch clauses */
-            Node        tryBlock;           /* Try code */
-            Node        catchClauses;       /* Catch clauses */
-            Node        finallyBlock;       /* Finally code */
-            int         numBlocks;          /* Count of open blocks in the try block */
-        } exception;
-
-
-        #define N_CATCH 37
-        struct {
-            Node        arg;                /* Catch block argument */
-        } catchBlock;
-
-
-        #define N_CALL 28
-        struct {
-            int         dummmy;
-        } call;
-
-
-        #define N_PROGRAM 20
-        struct {
-            MprList     *dependencies;      /* Accumulated list of dependent modules */
-        } program;
-
-
-        /*
-            Block kinds
-         */
-        #define EC_CLASS_BLOCK      1
-        #define EC_FUNCTION_BLOCK   2
-        #define EC_INTERFACE_BLOCK  3
-        #define EC_NESTED_BLOCK     4
-        #define EC_GLOBAL_BLOCK     5
-        #define EC_MODULE_BLOCK     6
-
-        #define N_BLOCK 25
-
-        //  MOB -- what does this actually do? - why not just use children?
-        #define N_REF 42
-        struct {
-            Node        node;               /* Actual node reference */
-        } ref;
-
-
-        #define N_SWITCH 43
-        struct {
-            int         dummy;
-        } switchNode;
-
-
-        #define EC_SWITCH_KIND_CASE     1   /* Case block */
-        #define EC_SWITCH_KIND_DEFAULT  2   /* Default block */
-
-        #define N_CASE_LABEL 44
-        struct {
-            Node                expression;
-            int                 kind;
-            struct EcCodeGen    *expressionCode;    /* Code buffer for the case expression */
-            int                 nextCaseCode;       /* Goto length to the next case statements */
-        } caseLabel;
-
-        #define N_THIS 30
-
-        #define N_THIS_GENERATOR    1
-        #define N_THIS_CALLEE       2
-        #define N_THIS_TYPE         3
-        #define N_THIS_FUNCTION     4
-
-        struct {
-            int                 thisKind;   /* Kind of this. See N_THIS_ flags */
-        } thisNode;
-
-        #define N_CASE_ELEMENTS 45
-        #define N_BREAK         46
-        #define N_CONTINUE      47
-        #define N_GOTO          48
-
-        #define N_LITERAL       2
-        struct {
-            EjsObj              *var;       /* Special value */
-            MprBuf              *data;      /* XML data */
-        } literal;
-
-        #define N_OBJECT_LITERAL    56      /* Array or object literal */
-        #define N_DASSIGN 62                /* Destructuring assignment */
-        struct {
-            Node                typeNode;   /* Type of object */
-            int                 isArray;    /* Array literal */
-        } objectLiteral;
-
-        /*
-            Object (and Array) literal field
-         */
-        #define FIELD_KIND_VALUE        0x1
-        #define FIELD_KIND_FUNCTION     0x2
-
-        #define N_FIELD 57
-        struct {
-            int                 fieldKind;  /* value or function */
-            int                 varKind;    /* Variable definition kind (const) */
-            Node                expr;       /* Field expression */
-            Node                fieldName;  /* Field element name for objects */
-            int                 index;      /* Array index, set to -1 for objects */
-        } field;
-
-        #define N_WITH 60
-        struct {
-            Node                object;
-            Node                statement;
+            Node        object;
+            Node        statement;
         } with;
-
-        #define N_RETURN 27
-        struct {
-            int                 blockless;  /* Function expression */
-        } ret;
-
-        #define N_EXPRESSIONS 22
-        struct {
-            char                *space;      /* Namespace qualifier */
-        } expr;
-#if !BLD_DEBUG && 0
     };
-#endif
-
-    int                 kind;               /* Kind of node */
-    MprList             *children;
-
-    struct EcCompiler   *cp;                /* Compiler instance reference */
-
-    int                 column;             /* Column of token in currentLine */
-
-    /*
-        Bound definition. Applies to names and expression values.
-     */
-
-    int                 slotFixed;          /* Slot fixup has been done */
-    int                 needThis;           /* Need to push this object */
-    int                 needDupObj;         /* Need to dup the object on stack (before) */
-    int                 needDup;            /* Need to dup the result (after) */
-    int                 slotNum;            /* Allocated slot for variable */
-    int                 enabled;            /* Node is enabled via conditional definitions */
-
-    uchar               *patchAddress;      /* For code patching */
-    struct EcCodeGen    *code;              /* Code buffer */
-    int                 jumpLength;         /* Goto length for exceptions */
-
-    int                 seqno;              /* Unique sequence number */
-    EjsName             *globalProp;        /* Set if this is a global property */
-    char                *doc;               /* Documentation string */
 } EcNode;
 
 
 /*
-    Grouping node types
+    Various per-node flags
  */
-/* 21 - unused */
-#define N_PRAGMAS 23
-#define N_TYPE_IDENTIFIERS 24
-#define N_DOT 26
-#define N_ARGS 29
-/* N_new 31 */
-/* N_for 32 */
-/* N_forIn 33 */
-#define N_POSTFIX_OP 34
-/* N_try 36 */
-/* N_catch 37 */
-#define N_CATCH_CLAUSES 38
-#define N_THROW 39
-#define N_NOP 41
-#define N_VOID 54
-/* N_HASH 55 */
-/* N_OBJECT_LITERAL 56 */
-/* N_FIELD 57 */
-#define N_ARRAY_LITERAL_UNUSED 58
-#define N_CATCH_ARG 59
-#define N_WITH 60
-#define N_SPREAD 61
-/* N_DASSIGN 62 */
-/* N_VAR 63 */
+#define EC_THIS_GENERATOR       1
+#define EC_THIS_CALLEE          2
+#define EC_THIS_TYPE            3
+#define EC_THIS_FUNCTION        4
 
-#define EC_NUM_NODES                    8
-#define EC_TAB_WIDTH                    4
+#define EC_SWITCH_KIND_CASE     1   /* Case block */
+#define EC_SWITCH_KIND_DEFAULT  2   /* Default block */
+
+/*
+    Object (and Array) literal field
+ */
+#define FIELD_KIND_VALUE        0x1
+#define FIELD_KIND_FUNCTION     0x2
+
+#define EC_NUM_NODES            8
+#define EC_TAB_WIDTH            4
 
 /*
     Fix clash with arpa/nameser.h
  */
 #undef T_NULL
 
-#if UNUSED && MOVED
-/*
-    Flags for ecCompile()
- */
-#define EC_FLAGS_BIND            0x1                    /* Bind global references and type/object properties */
-#define EC_FLAGS_DEBUG           0x2                    /* Generate symbolic debugging information */
-#define EC_FLAGS_MERGE           0x8                    /* Merge all output onto one output file */
-#define EC_FLAGS_NO_OUT          0x10                   /* Don't generate any output file */
-#define EC_FLAGS_PARSE_ONLY      0x20                   /* Just parse source. Don't generate code */
-#define EC_FLAGS_THROW           0x40                   /* Throw errors when compiling. Used for eval() */
-#endif
-
 /*
     Lexical tokens (must start at 1)
     ASSIGN tokens must be +1 compared to their non-assignment counterparts.
+    (Use genTokens to recreate)
+    WARNING: ensure T_MOD and T_MOD_ASSIGN are adjacent. rewriteCompoundAssignment relies on this
  */
-#define T_AS 1
-#define T_ASSIGN 2
-#define T_AT 3
-#define T_ATTRIBUTE 4
-#define T_BIT_AND 5
-#define T_BIT_AND_ASSIGN 6
-#define T_BIT_OR 7
-#define T_BIT_OR_ASSIGN 8
-#define T_BIT_XOR 9
-#define T_BIT_XOR_ASSIGN 10
-#define T_BREAK 11
-#define T_CALL 12
-#define T_CASE 13
-#define T_CAST 14
-#define T_CATCH 15
-#define T_CLASS 16
-/* TODO - remove and resequence #define T_CLOSE_TAG 17 */
-#define T_COLON 18
-#define T_COLON_COLON 19
-#define T_COMMA 20
-#define T_CONST 21
-#define T_CONTEXT_RESERVED_ID 22
-#define T_CONTINUE 23
-#define T_DEBUGGER 24
-#define T_DECIMAL 25                    //  UNUSED
-#define T_DECREMENT 26
-#define T_DEFAULT 27
-#define T_DELETE 28
-#define T_DIV 29
-#define T_DIV_ASSIGN 30
-#define T_DO 31
-#define T_DOT 32
-#define T_DOT_DOT 33
-#define T_DOT_LESS 34
-#define T_DOUBLE 35
-#define T_DYNAMIC 36
-#define T_EACH 37
-#define T_ELIPSIS 38
-#define T_ELSE 39
-#define T_ENUMERABLE 40
-#define T_EOF 41
-#define T_EQ 42
-#define T_EXTENDS 43
-#define T_FALSE 44
-#define T_FINAL 45
-#define T_FINALLY 46
-#define T_FLOAT 47
-#define T_FOR 48
-#define T_FUNCTION 49
-#define T_GE 50
-#define T_GET 51
-#define T_GOTO 52
-#define T_GT 53
-#define T_ID 54
-#define T_IF 55
-#define T_IMPLEMENTS 56
-#define T_IMPORT 57
-#define T_IN 58
-#define T_INCLUDE 59
-#define T_INCREMENT 60
-#define T_INSTANCEOF 61
-#define T_INT 62
-#define T_INTERFACE 64
-#define T_INTERNAL 65
-#define T_INTRINSIC 66
-#define T_IS 67
-#define T_LBRACE 68
-#define T_LBRACKET 69
-#define T_LE 70
-#define T_LET 71
-#define T_LOGICAL_AND 72
-#define T_LOGICAL_AND_ASSIGN 73
-#define T_LOGICAL_NOT 74
-#define T_LOGICAL_OR 75
-#define T_LOGICAL_OR_ASSIGN 76
-#define T_LOGICAL_XOR 77
-#define T_LOGICAL_XOR_ASSIGN 78
-#define T_LPAREN 79
-#define T_LSH 80
-#define T_LSH_ASSIGN 81
-#define T_LT 82
-#define T_MINUS 83
-#define T_MINUS_ASSIGN 84
-#define T_MINUS_MINUS 85
-#define T_MOD 86
-#define T_MOD_ASSIGN 87
-#define T_MODULE 88
-#define T_MUL 89
-#define T_MUL_ASSIGN 90
-#define T_NAMESPACE 91
-#define T_NATIVE 92
-#define T_NE 93
-#define T_NEW 94
-#define T_NULL 95
-#define T_NUMBER 96
-/* TODO - remove and resequence #define T_OPEN_TAG 97 */
-#define T_OVERRIDE 98
-//  TODO #define    T_PACKAGE 99
-#define T_PLUS 100
-#define T_PLUS_ASSIGN 101
-#define T_PLUS_PLUS 102
-#define T_PRIVATE 103
-#define T_PROTECTED 104
-#define T_PROTOTYPE 105
-#define T_PUBLIC 106
-#define T_QUERY 107
-#define T_RBRACE 108
-#define T_RBRACKET 109
-#define T_READONLY 110
-#define T_RETURN 111
-#define T_ROUNDING 112
-#define T_RPAREN 113
-#define T_RSH 114
-#define T_RSH_ASSIGN 115
-#define T_RSH_ZERO 116
-#define T_RSH_ZERO_ASSIGN 117
-#define T_SEMICOLON 118
-#define T_SET 119
-#define T_RESERVED_NAMESPACE 120
-#define T_STANDARD 121
-#define T_STATIC 122
-#define T_STRICT 123
-#define T_STRICT_EQ 124
-#define T_STRICT_NE 125
-#define T_STRING 126
-#define T_SUPER 127
-#define T_SWITCH 128
-#define T_SYNCHRONIZED 129
-#define T_THIS 130
-#define T_THROW 131
-#define T_TILDE 132
-#define T_TO 133
-#define T_TRUE 134
-#define T_TRY 135
-#define T_TYPE 136
-#define T_TYPEOF 137
-#define T_UINT 138
-#define T_USE 139
-#define T_VAR 140
-#define T_VOID 141
-#define T_WHILE 142
-#define T_WITH 143
-#define T_XML 144
-#define T_YIELD 145
-#define T_EARLY_TODO_REMOVED 146
-#define T_ENUM 147
-#define T_HAS 148
-#define T_PRECISION 149
-#define T_UNDEFINED 150
-#define T_BOOLEAN 151
-#define T_LONG 152
-#define T_VOLATILE 153
-#define T_ULONG 154
-#define T_HASH 155
-#define T_ABSTRACT 156
-#define T_CALLEE 157
-#define T_GENERATOR 158
-#define T_NUMBER_WORD 159
-#define T_XML_COMMENT_START 161
-#define T_XML_COMMENT_END 162
-#define T_CDATA_START 163
-#define T_CDATA_END 164
-#define T_XML_PI_START 165
-#define T_XML_PI_END 166
-#define T_LT_SLASH 167
-#define T_SLASH_GT 168
-#define T_LIKE 169
-#define T_REGEXP 170
-#define T_REQUIRE 171
-#if UNUSED
-#define T_SHARED 172
-#endif
-#define T_NOP 174
-#define T_ERR 175
+#define T_ASSIGN                    1
+#define T_AT                        2
+#define T_ATTRIBUTE                 3
+#define T_BIT_AND                   4
+#define T_BIT_AND_ASSIGN            5
+#define T_BIT_OR                    6
+#define T_BIT_OR_ASSIGN             7
+#define T_BIT_XOR                   8
+#define T_BIT_XOR_ASSIGN            9
+#define T_BREAK                    10
+#define T_CALL                     11
+#define T_CALLEE                   12
+#define T_CASE                     13
+#define T_CAST                     14
+#define T_CATCH                    15
+#define T_CDATA_END                16
+#define T_CDATA_START              17
+#define T_CLASS                    18
+#define T_COLON                    19
+#define T_COLON_COLON              20
+#define T_COMMA                    21
+#define T_CONST                    22
+#define T_CONTEXT_RESERVED_ID      23
+#define T_CONTINUE                 24
+#define T_DEBUGGER                 25
+#define T_DECREMENT                26
+#define T_DEFAULT                  27
+#define T_DELETE                   28
+#define T_DIV                      29
+#define T_DIV_ASSIGN               30
+#define T_DO                       31
+#define T_DOT                      32
+#define T_DOT_DOT                  33
+#define T_DOT_LESS                 34
+#define T_DOUBLE                   35
+#define T_DYNAMIC                  36
+#define T_EACH                     37
+#define T_ELIPSIS                  38
+#define T_ELSE                     39
+#define T_ENUMERABLE               40
+#define T_EOF                      41
+#define T_EQ                       42
+#define T_ERR                      43
+#define T_EXTENDS                  44
+#define T_FALSE                    45
+#define T_FINAL                    46
+#define T_FINALLY                  47
+#define T_FLOAT                    48
+#define T_FOR                      49
+#define T_FUNCTION                 50
+#define T_GE                       51
+#define T_GENERATOR                52
+#define T_GET                      53
+#define T_GOTO                     54
+#define T_GT                       55
+#define T_HAS                      56
+#define T_HASH                     57
+#define T_ID                       58
+#define T_IF                       59
+#define T_IMPLEMENTS               60
+#define T_IN                       61
+#define T_INCLUDE                  62
+#define T_INCREMENT                63
+#define T_INSTANCEOF               64
+#define T_INT                      65
+#define T_INTERFACE                66
+#define T_INTERNAL                 67
+#define T_INTRINSIC                68
+#define T_IS                       69
+#define T_LBRACE                   70
+#define T_LBRACKET                 71
+#define T_LE                       72
+#define T_LET                      73
+#define T_LOGICAL_AND              74
+#define T_LOGICAL_AND_ASSIGN       75
+#define T_LOGICAL_NOT              76
+#define T_LOGICAL_OR               77
+#define T_LOGICAL_OR_ASSIGN        78
+#define T_LOGICAL_XOR              79
+#define T_LOGICAL_XOR_ASSIGN       80
+#define T_LPAREN                   81
+#define T_LSH                      82
+#define T_LSH_ASSIGN               83
+#define T_LT                       84
+#define T_LT_SLASH                 85
+#define T_MINUS                    86
+#define T_MINUS_ASSIGN             87
+#define T_MINUS_MINUS              88
+#define T_MODULE                   89
+#define T_MOD                      90       // WARNING sorted order manually fixed!!
+#define T_MOD_ASSIGN               91
+#define T_MUL                      92
+#define T_MUL_ASSIGN               93
+#define T_NAMESPACE                94
+#define T_NATIVE                   95
+#define T_NE                       96
+#define T_NEW                      97
+#define T_NOP                      98
+#define T_NULL                     99
+#define T_NUMBER                  100
+#define T_NUMBER_WORD             101
+#define T_OVERRIDE                102
+#define T_PLUS                    103
+#define T_PLUS_ASSIGN             104
+#define T_PLUS_PLUS               105
+#define T_PRIVATE                 106
+#define T_PROTECTED               107
+#define T_PROTOTYPE               108
+#define T_PUBLIC                  109
+#define T_QUERY                   110
+#define T_RBRACE                  111
+#define T_RBRACKET                112
+#define T_REGEXP                  113
+#define T_REQUIRE                 114
+#define T_RESERVED_NAMESPACE      115
+#define T_RETURN                  116
+#define T_RPAREN                  117
+#define T_RSH                     118
+#define T_RSH_ASSIGN              119
+#define T_RSH_ZERO                120
+#define T_RSH_ZERO_ASSIGN         121
+#define T_SEMICOLON               122
+#define T_SET                     123
+#define T_SLASH_GT                124
+#define T_STANDARD                125
+#define T_STATIC                  126
+#define T_STRICT                  127
+#define T_STRICT_EQ               128
+#define T_STRICT_NE               129
+#define T_STRING                  130
+#define T_SUPER                   131
+#define T_SWITCH                  132
+#define T_THIS                    133
+#define T_THROW                   134
+#define T_TILDE                   135
+#define T_TO                      136
+#define T_TRUE                    137
+#define T_TRY                     138
+#define T_TYPE                    139
+#define T_TYPEOF                  140
+#define T_UINT                    141
+#define T_UNDEFINED               142
+#define T_USE                     143
+#define T_VAR                     144
+#define T_VOID                    145
+#define T_WHILE                   146
+#define T_WITH                    147
+#define T_XML_COMMENT_END         148
+#define T_XML_COMMENT_START       149
+#define T_XML_PI_END              150
+#define T_XML_PI_START            151
+#define T_YIELD                   152
 
 /*
     Group masks
@@ -5435,29 +5215,15 @@ typedef int (*EcStreamGet)(struct EcStream *stream);
 
 
 typedef struct EcStream {
-    char        *name;                          /* Stream name / filename */
-
-    char        *currentLine;                   /* Current input source line */
-    int         lineNumber;                     /* Line number in source of current token */
-    int         column;                         /* Current reading position */
-
-    char        *lastLine;                      /* Save last currentLine */
-    int         lastColumn;                     /* Save last column length for putBack */
-
-    /*
-        In-memory copy if input source
-     */
-    char        *buf;                           /* Buffer holding source file */
-    char        *nextChar;                      /* Ptr to next input char */
-    char        *end;                           /* Ptr to one past end of buf */
-
-    bool        eof;                            /* At end of file */
-
-    int         flags;                          /* Input flags */
-    EcStreamGet gets;                           /* Stream get another characters */
-
     struct EcCompiler *compiler;                /* Compiler back reference */
-
+    EcLocation  loc;                            /* Source code debug info */
+    EcLocation  lastLoc;                        /* Location info for a prior line */
+    EcStreamGet getInput;                       /* Get more input callback */
+    MprChar     *buf;                           /* Buffer holding source file */
+    MprChar     *nextChar;                      /* Ptr to next input char */
+    MprChar     *end;                           /* Ptr to one past end of buf */
+    bool        eof;                            /* At end of file */
+    int         flags;                          /* Input flags */
 } EcStream;
 
 
@@ -5470,7 +5236,6 @@ typedef struct EcFileStream {
 } EcFileStream;
 
 
-
 /*
     Parse source code from a memory block
  */
@@ -5479,71 +5244,32 @@ typedef struct EcMemStream {
 } EcMemStream;
 
 
-
 /*
     Parse input from the console (or file if using ejsh)
  */
 typedef struct EcConsoleStream {
     EcStream    stream;
-    MprBuf      *inputBuffer;                   /* Stream input buffer */
 } EcConsoleStream;
 
 
-
 /*
-    Program input tokens
+    Program source input tokens
  */
 typedef struct EcToken {
+    MprChar     *text;                  /* Token text */
+    int         length;                 /* Length of text in characters */
+    int         size;                   /* Size of text in characters */
     int         tokenId;
     int         subId;
     int         groupMask;
-
-    //  MOB -- convert from uchar
-    uchar       *text;                          /* Token text */
-    int         textLen;                        /* Length of text */
-    int         textBufSize;                    /* Size of text buffer */
-
-    EjsObj   *number;                        /* Any numeric literals */
-
-    char        *filename;
-    char        *currentLine;
-    int         lineNumber;
-    int         column;
-    int         eol;                            /* At the end of the line */
-
-    EcStream    *stream;                        /* Current input stream */
-    struct EcToken *next;                       /* Putback linkage */
-} EcToken;
-
-
-
-/*
-    Input token parsing state. Includes putback stack for N lookahead.
- */
-typedef struct EcInput {
+    int         eol;                    /* At the end of the line */
+    EcLocation  loc;                    /* Source code debug info */
+    struct EcToken *next;               /* Putback and freelist linkage */
     EcStream    *stream;
-
-    int         state;                  /* Lexer state */
-
-    EcToken     *putBack;               /* List of putback tokens */
-    EcToken     *token;                 /* Current token */
-    EcToken     *freeTokens;            /* Free list of tokens */
-
-    char        *doc;                   /* Last doc token */
-
-    struct EcLexer *lexer;              /* Owning lexer */
-    struct EcInput *next;               /* List of input streams */
-    struct EcCompiler *compiler;        /* Reference to compiler */
-} EcInput;
-
-
-
-typedef struct EcLexer {
-    MprHashTable        *keywords;
-    EcInput             *input;         /* List of input streams */
-    struct EcCompiler   *compiler;      /* Owning compiler */
-} EcLexer;
-
+#if BLD_DEBUG
+    char        *name;                  /* Debug token name */
+#endif
+} EcToken;
 
 
 /*
@@ -5561,118 +5287,58 @@ typedef struct EcJump {
 
 
 /*
-    Structure for code generation buffers
- */
-typedef struct EcCodeGen {
-    MprBuf      *buf;                   /* Code generation buffer */
-    MprList     *jumps;                 /* Break/continues to patch for this code block */
-    MprList     *exceptions;            /* Exception handlers for this code block */
-    int         jumpKinds;              /* Kinds of jumps allowed */
-    int         breakMark;              /* Stack item counter for the target for break/continue stmts */
-    int         blockMark;              /* Lexical block counter for the target for break/continue stmts */
-    int         stackCount;             /* Current stack item counter */
-    int         blockCount;             /* Current block counter */
-} EcCodeGen;
-
-
-/*
     Current parse state. Each non-terminal production has its own state.
     Some state fields are inherited. We keep a linked list from EcCompiler.
  */
 typedef struct EcState {
-    /*
-        TODO - group into EcInheritableState and EcPrivateState. Then can use structure assignment.
-     */
-    /*
-        Inherited fields. These are inherited by new states.
-     */
-    //  OPT - compress into bit mask
-    int             inModule;               /* Inside a module declaration */
-    int             inClass;                /* Inside a class declaration */
-    int             inFunction;             /* Inside a function declaration */
-    int             inMethod;               /* Inside a method declaration */
-    int             captureBreak;           /* Capture break/continue inside a catch/finally block */
-    int             captureFinally;         /* Capture break/continue with a finally block */
-    int             blockIsMethod;          /* Current function is a method */
-    int             inHashExpression;       /* Inside a # expression */
-    int             inSettings;             /* Inside constructor settings */
+    uint            blockIsMethod    : 1;   /* Current function is a method */
+    uint            captureBreak     : 1;   /* Capture break/continue inside a catch/finally block */
+    uint            captureFinally   : 1;   /* Capture break/continue with a finally block */
+    uint            conditional      : 1;   /* In branching conditional */
+    uint            disabled         : 1;   /* Disable nodes below this scope */
+    uint            dupLeft          : 1;   /* Dup left side */
+    uint            inClass          : 1;   /* Inside a class declaration */
+    uint            inFunction       : 1;   /* Inside a function declaration */
+    uint            inHashExpression : 1;   /* Inside a # expression */
+    uint            inInterface      : 1;   /* Inside an interface */
+    uint            inMethod         : 1;   /* Inside a method declaration */
+    uint            inSettings       : 1;   /* Inside constructor settings */
+    uint            instanceCode     : 1;   /* Generating instance class code */
+    uint            needsValue       : 1;   /* Expression must yield a value */
+    uint            noin             : 1;   /* Don't allow "in" */
+    uint            onLeft           : 1;   /* On the left of an assignment */
+    uint            saveOnLeft       : 1;   /* Saved left of an assignment */
+    uint            strict           : 1;   /* Compiler checking mode: Strict, standard*/
 
-    /*
-        These are used when parsing
-     */
-    EjsModule       *currentModule;         /* Current open module definition */
-    EjsName         currentClassName;       /* Current open class name - Used only in ecParse */
-    EcNode          *currentClassNode;      /* Current open class */
-    EcNode          *currentFunctionNode;   /* Current open method */
-    int             noin;                   /* Don't allow "in" */
-    int             checksumOffset;         /* Location to write checksum when writing out modules */
-
-    //  TODO - rename
-    EcNode          *topVarBlockNode;       /* Top var block node */
-
-    /*
-        These are used when doing AST processing and code generation
-     */
-    EjsType         *currentClass;          /* Current open class */
-
-    //  TODO - should be using frame->currentMethod
-    EjsFunction     *currentFunction;       /* Current open method */
-
-    //  TODO - can this be derrived from currentMethod?
-    cchar           *currentFunctionName;   /* Current method name */
-
-    EjsObj          *letBlock;              /* Block for local block scope declarations */
-    EjsObj          *varBlock;              /* Block for var declarations */
-    EjsObj          *optimizedLetBlock;     /* Optimized let block declarations - may equal ejs->global */
-    EcNode          *letBlockNode;
-
-    /*
-        The defaultNamespace comes from "use default namespace NAME" and is used for new declarations in the top level block
-        where the pragma was defined. ie. it is not passed into classes or functions (1 level deep).
-        If the defaultNamespace is not defined, then the namespace field is used.
-     */
-    cchar           *namespace;             /* Namespace for declarations */
-    cchar           *defaultNamespace;      /* Default namespace for new top level declarations. Does not propagate */
+    int             blockNestCount;         /* Count of blocks encountered. Used by ejs shell */
     int             namespaceCount;         /* Count of namespaces originally in block. Used to pop namespaces */
 
-    //  TODO - should change this to include functions also
+    EjsModule       *currentModule;         /* Current open module definition */
+    EjsType         *currentClass;          /* Current open class */
+    EjsName         currentClassName;       /* Current open class name */
+    EcNode          *currentClassNode;      /* Current open class */
+    EjsFunction     *currentFunction;       /* Current open method */
+    EcNode          *currentFunctionNode;   /* Current open method */
     EcNode          *currentObjectNode;     /* Left object in "." or "[" */
+    EcNode          *topVarBlockNode;       /* Top var block node */
 
-    int             preserveStackCount;     /* If reset needed, preserve this count of elements */
-    int             needsStackReset;        /* Stack must be reset before jumping */
-    int             needsValue;             /* Express must yield a value */
+    EjsBlock        *letBlock;              /* Block for local block scope declarations */
+    EjsBlock        *varBlock;              /* Block for var declarations */
+    EjsBlock        *optimizedLetBlock;     /* Optimized let block declarations - may equal ejs->global */
+    EcNode          *letBlockNode;          /* Node for the current let block */
 
-    //  MOB -- should rationalize and have only one of these. Parser needs onRight.
-    int             onLeft;                 /* On the left of an assignment */
+    EjsString       *nspace;                /* Namespace for declarations */
+    EjsString       *defaultNamespace;      /* Default namespace for new top level declarations. Does not propagate */
 
-    //  MOB -- unused
-    int             onRight;                /* On the right of an assignment */
-    int             dupLeft;                /* Dup left side */
-
-    int             saveOnLeft;             /* Saved left of an assignment */
-    int             conditional;            /* In branching conditional */
-    int             strict;                 /* Compiler checking mode: Strict, standard*/
-    int             inheritedTraits;        /* Inherited traits from current block */
-    bool            disabled;               /* Disable nodes below this scope */
-
-    struct EcCodeGen    *code;              /* Global and function code buffer */
-    struct EcCodeGen    *staticCodeBuf;     /* Class static level code generation buffer */
-    struct EcCodeGen    *instanceCodeBuf;   /* Class instance level code generation buffer */
-
-    MprList         *namespaces;            /* List of open namespaces */
-
-    /*
-        TODO refactor or source via some other way
-     */
-    int             inInterface;            /* Inside an interface */
-    int             instanceCode;           /* Generating instance class code */
+    EcCodeGen       *code;                  /* Global and function code buffer */
+    EcCodeGen       *staticCodeBuf;         /* Class static level code generation buffer */
+    EcCodeGen       *instanceCodeBuf;       /* Class instance level code generation buffer */
 
     struct EcState  *prev;                  /* State stack */
     struct EcState  *prevBlockState;        /* Block state stack */
     struct EcState  *breakState;            /* State for breakable blocks */
     struct EcState  *classState;            /* State for current class */
-    int             blockNestCount;         /* Count of blocks encountered. Used by ejs shell */
-    int             stateLevel;             /* State level counter */
+    struct EcState  *next;                  /* Next state when on free list */
 } EcState;
 
 
@@ -5692,36 +5358,26 @@ typedef struct EcCompiler {
      */
     int         phase;                      /* Ast processing phase */
     EcState     *state;                     /* Current state */
+    EcToken     *peekToken;                 /* Peek ahead token */
+    EcToken     *token;                     /* Current input token */
 
-#if BLD_DEBUG
-    char        *currentLine;               /* Current input source code line */
-#endif
-
-    EcToken     *peekToken;                 /* Alias for peek ahead */
-    EcToken     *token;                     /* Alias for lexer->input->token */
-
-#if BLD_DEBUG
-    char        *tokenName;                 /* Name of last consumed token */
-    char        *peekTokenName;             /* Name of lookahead token */
-#endif
+    /*  Lexer */
+    MprHashTable *keywords;
+    EcStream    *stream;
+    EcToken     *putback;                   /* List of active putback tokens */
+    EcState     *freeStates;                /* Free list of states */
+    EcToken     *freeTokens;                /* Free list of tokens */
+    EjsString   *docToken;                  /* Last doc token */
 
     EcState     *fileState;                 /* Top level state for the file */
-#if UNUSED
-    EcState     *classState;                /* State for the current class - used in parse */
-#endif
 //  MOB -- these are risky and should be moved into state. A nested block, directive class etc willl modify
     EcState     *directiveState;            /* State for the current directive - used in parse and CodeGen */
     EcState     *blockState;                /* State for the current block */
 
     EjsLookup   lookup;                     /* Lookup residuals */
-
-    int         currentLineNumber;          /* Current input source line number */
-    cchar       *currentFilename;           /* Current input file name */
-
-    EcLexer     *lexer;                     /* Lexical analyser */
-    EcInput     *input;                     /* Alias for lexer->input */
     EjsService  *vmService;                 /* VM runtime */
     Ejs         *ejs;                       /* Interpreter instance */
+    MprList     *nodes;                     /* Compiled AST nodes */
 
     /*
         Compiler command line options
@@ -5730,6 +5386,7 @@ typedef struct EcCompiler {
     bool        debug;                      /* Run in debug mode */
     bool        doc;                        /* Include documentation strings in output */
     char        *extraFiles;                /* Extra source files to compile */
+
     MprList     *require;                   /* Required list of modules to pre-load */
     bool        interactive;                /* Interactive use (ejsh) */
     bool        merge;                      /* Merge all dependent modules */
@@ -5756,7 +5413,6 @@ typedef struct EcCompiler {
     char        *errorMsg;                  /* Aggregated error messages */
     int         error;                      /* Unresolved parse error */
     int         fatalError;                 /* Any a fatal error - Can't continue */
-    int         memError;                   /* Memory error */
     int         errorCount;                 /* Count of all errors */
     int         warningCount;               /* Count of all warnings */
     int         nextSeqno;                  /* Node sequence numbers */
@@ -5765,63 +5421,71 @@ typedef struct EcCompiler {
     /*
         TODO - aggregate these into flags
      */
-    int         peeking;                    /* Parser is doing peek() */
     int         lastOpcode;                 /* Last opcode encoded */
     int         uid;                        /* Unique identifier generator */
 } EcCompiler;
 
 
+//  MOB -- reorder
 extern int          ecAddModule(EcCompiler *cp, EjsModule *mp);
 extern EcNode       *ecAppendNode(EcNode *np, EcNode *child);
 extern int          ecAstFixup(EcCompiler *cp, struct EcNode *np);
-extern EcNode       *ecChangeNode(EcNode *np, EcNode *oldNode, EcNode *newNode);
+extern EcNode       *ecChangeNode(EcCompiler *cp, EcNode *np, EcNode *oldNode, EcNode *newNode);
 extern void         ecGenConditionalCode(EcCompiler *cp, EcNode *np, EjsModule *up);
-extern int          ecCodeGen(EcCompiler *cp, int argc, struct EcNode **nodes);
+extern int          ecCodeGen(EcCompiler *cp);
 extern int          ecCompile(EcCompiler *cp, int argc, char **path);
-extern EcLexer      *ecCreateLexer(EcCompiler *cp);
-extern void         ecDestroyLexer(EcCompiler *cp);
-EcCompiler          *ecCreateCompiler(struct Ejs *ejs, int flags);
+extern EcCompiler   *ecCreateCompiler(struct Ejs *ejs, int flags);
+extern void         ecInitLexer(EcCompiler *cp);
 extern EcNode       *ecCreateNode(EcCompiler *cp, int kind);
-extern void         ecFreeToken(EcInput *input, EcToken *token);
+extern void         ecFreeToken(EcCompiler *cp, EcToken *token);
 extern char         *ecGetErrorMessage(EcCompiler *cp);
-extern char         *ecGetInputStreamName(EcLexer *lp);
-extern int          ecGetToken(EcInput *input);
-extern int          ecGetRegExpToken(EcInput *input, cchar *prefix);
+extern EjsString    *ecGetInputStreamName(EcCompiler *lp);
+extern int          ecGetToken(EcCompiler *cp);
+extern int          ecGetRegExpToken(EcCompiler *cp, MprChar *prefix);
 extern EcNode       *ecLinkNode(EcNode *np, EcNode *child);
-extern EjsModule    *ecLookupModule(EcCompiler *cp, cchar *name, int minVersion, int maxVersion);
-extern int          ecLookupScope(EcCompiler *cp, EjsName *name);
-extern int          ecLookupVar(EcCompiler *cp, EjsObj *vp, EjsName *name);
+
+extern EjsModule    *ecLookupModule(EcCompiler *cp, EjsString *name, int minVersion, int maxVersion);
+extern int          ecLookupScope(EcCompiler *cp, EjsName name);
+extern int          ecLookupVar(EcCompiler *cp, EjsObj *vp, EjsName name);
 extern EcNode       *ecParseWarning(EcCompiler *cp, char *fmt, ...);
 extern int          ecPeekToken(EcCompiler *cp);
-extern int          ecPutSpecificToken(EcInput *input, EcToken *token);
-extern int          ecPutToken(EcInput *input);
-extern void         ecSetError(EcCompiler *cp, cchar *severity, cchar *filename, int lineNumber,
-                        char *currentLine, int column, char *msg);
+extern int          ecPutSpecificToken(EcCompiler *cp, EcToken *token);
+extern int          ecPutToken(EcCompiler *cp);
+extern void         ecError(EcCompiler *cp, cchar *severity, EcLocation *loc, cchar *fmt, ...);
+extern void         ecErrorv(EcCompiler *cp, cchar *severity, EcLocation *loc, cchar *fmt, va_list args);
 extern void         ecResetInput(EcCompiler *cp);
 extern EcNode       *ecResetError(EcCompiler *cp, EcNode *np, bool eatInput);
 extern int          ecRemoveModule(EcCompiler *cp, EjsModule *mp);
 extern void         ecResetParser(EcCompiler *cp);
 extern int          ecResetModuleList(EcCompiler *cp);
-extern int          ecOpenConsoleStream(EcLexer *lp, EcStreamGet gets);
-extern int          ecOpenFileStream(EcLexer *input, cchar *path);
-extern int          ecOpenMemoryStream(EcLexer *input, const uchar *buf, int len);
-extern void         ecCloseStream(EcLexer *input);
+extern int          ecOpenConsoleStream(EcCompiler *cp, EcStreamGet gets, cchar *contents);
+extern int          ecOpenFileStream(EcCompiler *cp, cchar *path);
+extern int          ecOpenMemoryStream(EcCompiler *cp, cchar *contents, size_t len);
+extern void         ecCloseStream(EcCompiler *cp);
 extern void         ecSetOptimizeLevel(EcCompiler *cp, int level);
 extern void         ecSetWarnLevel(EcCompiler *cp, int level);
 extern void         ecSetStrictMode(EcCompiler *cp, int on);
 extern void         ecSetTabWidth(EcCompiler *cp, int width);
 extern void         ecSetOutputFile(EcCompiler *cp, cchar *outputFile);
 extern void         ecSetCertFile(EcCompiler *cp, cchar *certFile);
-extern EcToken      *ecTakeToken(EcInput *input);
-extern int          ecAstProcess(struct EcCompiler *cp, int argc,  struct EcNode **nodes);
+extern EcToken      *ecTakeToken(EcCompiler *cp);
+extern int          ecAstProcess(struct EcCompiler *cp);
+extern void         *ecCreateStream(EcCompiler *cp, size_t size, cchar *filename, void *manager);
+extern void         ecSetStreamBuf(EcStream *sp, cchar *contents, size_t len);
+extern EcNode       *ecParseFile(EcCompiler *cp, char *path);
+extern void         ecManageStream(EcStream *sp, int flags);
+extern void         ecMarkLocation(EcLocation *loc);
+extern void         ecSetRequire(EcCompiler *cp, MprList *modules);
+
 
 /*
     Module file creation routines.
  */
-extern void     ecAddFunctionConstants(EcCompiler *cp, EjsObj *obj, int slotNum);
-extern void     ecAddConstants(EcCompiler *cp, EjsObj *obj);
-extern int      ecAddConstant(EcCompiler *cp, cchar *str);
-extern int      ecAddNameConstant(EcCompiler *cp, EjsName *qname);
+extern void     ecAddFunctionConstants(EcCompiler *cp, EjsPot *obj, int slotNum);
+extern void     ecAddConstants(EcCompiler *cp, EjsAny *obj);
+extern int      ecAddStringConstant(EcCompiler *cp, EjsString *sp);
+extern int      ecAddCStringConstant(EcCompiler *cp, cchar *str);
+extern int      ecAddNameConstant(EcCompiler *cp, EjsName qname);
 extern int      ecAddDocConstant(EcCompiler *cp, void *vp, int slotNum);
 extern int      ecAddModuleConstant(EcCompiler *cp, EjsModule *up, cchar *str);
 extern int      ecCreateModuleHeader(EcCompiler *cp);
@@ -5831,23 +5495,28 @@ extern int      ecCreateModuleSection(EcCompiler *cp);
 /*
     Encoding emitter routines
  */
-extern int      ecEncodeBlock(EcCompiler *cp, uchar *buf, int len);
-extern int      ecEncodeByte(EcCompiler *cp, int value);
-extern int      ecEncodeUint(EcCompiler *cp, int number);
-extern int      ecEncodeNumber(EcCompiler *cp, int64 number);
-extern int      ecEncodeName(EcCompiler *cp, EjsName *qname);
-extern int      ecEncodeOpcode(EcCompiler *cp, int value);
-extern int      ecEncodeString(EcCompiler *cp, cchar *str);
-extern int      ecEncodeGlobal(EcCompiler *cp, EjsObj *obj, EjsName *qname);
-extern int      ecEncodeWord(EcCompiler *cp, int value);
-extern int      ecEncodeDouble(EcCompiler *cp, double value);
-extern int      ecEncodeByteAtPos(EcCompiler *cp, uchar *pos, int value);
-extern int      ecEncodeWordAtPos(EcCompiler *cp, uchar *pos, int value);
+extern void      ecEncodeBlock(EcCompiler *cp, cuchar *buf, int len);
+extern void      ecEncodeByte(EcCompiler *cp, int value);
+extern void      ecEncodeByteAtPos(EcCompiler *cp, int offset, int value);
+extern void      ecEncodeConst(EcCompiler *cp, EjsString *sp);
+extern void      ecEncodeDouble(EcCompiler *cp, double value);
+extern void      ecEncodeGlobal(EcCompiler *cp, EjsAny *obj, EjsName qname);
+extern void      ecEncodeInt32(EcCompiler *cp, int value);
+extern void      ecEncodeInt32AtPos(EcCompiler *cp, int offset, int value);
+extern void      ecEncodeNum(EcCompiler *cp, int64 number);
+extern void      ecEncodeName(EcCompiler *cp, EjsName qname);
+extern void      ecEncodeMulti(EcCompiler *cp, cchar *str);
+extern void      ecEncodeWideAsMulti(EcCompiler *cp, MprChar *str);
+extern void      ecEncodeOpcode(EcCompiler *cp, int value);
+
 extern void     ecCopyCode(EcCompiler *cp, uchar *pos, int size, int dist);
 extern uint     ecGetCodeOffset(EcCompiler *cp);
 extern int      ecGetCodeLen(EcCompiler *cp, uchar *mark);
 extern void     ecAdjustCodeLength(EcCompiler *cp, int adj);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _h_EC_COMPILER */
 
 /*

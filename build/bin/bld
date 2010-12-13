@@ -166,8 +166,8 @@ parseArgs() {
     done
 
     if [ "$VERBOSE" = 0 -a "$TRACE" = "0" ] ; then
-        [ "$EXECUTABLE" ] && log "Link" ${EXECUTABLE/${BLD_TOP}\/}
-        [ "$LIBRARY" ] && log "Link" ${LIBRARY/${BLD_TOP}\/}
+        [ "$EXECUTABLE" ] && log "Link" ${EXECUTABLE/${BLD_OUT_DIR}\/}
+        [ "$LIBRARY" ] && log "Link" ${LIBRARY/${BLD_OUT_DIR}\/}
     fi
     ARGS=$args
 }
@@ -203,7 +203,7 @@ bld: usage: bld [options] objects ....
       BLD_FEATURE_STATIC    Build static libraries where relevant.
 
     Configuration files used:
-        build/bin/buildConfig.sh
+        buildConfig.sh
 !EOF
     exit 255
 }
@@ -284,7 +284,7 @@ findLib() {
 
     eval $newLibName=
 
-#    if [ "$BLD_OS" = VXWORKS -a $MAKE_STATIC = 0 -a "${base/lib/}" = "${base}" ] ; then
+#    if [ "$BLD_OS" = VXWORKS -a "$MAKE_STATIC" = 0 -a "${base/lib/}" = "${base}" ] ; then
 #        #
 #        #   Skip libraries that dont start with "lib" on a shared vxWorks build. Vxworks resolves at load time.
 #        #
@@ -515,7 +515,8 @@ useArg() {
 #
 
 BLD_TOP=`findTop`
-. ${BLD_TOP}/build/bin/buildConfig.sh
+: ${BLD_OUT_DIR:=$BLD_TOP/out}
+. ${BLD_OUT_DIR}/bin/buildConfig.sh
 
 parseArgs "$@"
 argc=$#
@@ -531,7 +532,7 @@ fi
 #   Prioritize library suffix search order
 #
 SUFFIXES=
-if [ $MAKE_STATIC = 0 ] ; then
+if [ "$MAKE_STATIC" = 0 ] ; then
     SUFFIXES="$SUFFIXES ${BLD_SHLIB} ${BLD_ARCH}"
 else
     SUFFIXES="$SUFFIXES ${BLD_ARCH} ${BLD_SHLIB}"
@@ -640,8 +641,8 @@ if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
     done
 
     if [ "$LIBRARY" != "" ] ; then
-        if [ $MAKE_STATIC = 0 -a "$ENTRY" = "" ] ; then
-            if [ $OS = WINCE ] ; then
+        if [ "$MAKE_STATIC" = 0 -a "$ENTRY" = "" ] ; then
+            if [ "$OS" = WINCE ] ; then
                 ENTRY="DllMain"
             elif [ "${BLD_CPU}" = "x86_64" ] ; then
                 ENTRY="_DllMainCRTStartup"
@@ -695,16 +696,16 @@ else
         done
     fi
 
-    libdir=${BLD_LIB_NAME%/*}
-    moddir=${BLD_MOD_NAME%/*}
     if [ "$OS" = MACOSX ] ; then
-        RPATH_LIST="@executable_path/../$libdir @executable_path/../$moddir @executable_path/ @loader_path/ $RPATH_LIST"
+        RPATH_LIST="@executable_path/../$BLD_LIB_NAME @executable_path/../$BLD_MOD_NAME @executable_path/ @loader_path/ $RPATH_LIST"
     elif [ "$OS" = LINUX ] ; then
         if [ "$BLD_TYPE" = "RELEASE" ] ; then
             # Uclinux needs the LIB_PREFIX explicitly in the rpath as $ORIGIN doesn't seem to work
             RPATH_LIST="${BLD_LIB_PREFIX} ${BLD_MOD_PREFIX} $RPATH_LIST"
         fi
-        RPATH_LIST="ORIGIN/ ORIGIN/../$libdir ORIGIN/../$moddir $RPATH_LIST"
+        RPATH_LIST="ORIGIN/ ORIGIN/../$BLD_LIB_NAME ORIGIN/../$BLD_MOD_NAME $RPATH_LIST"
+    elif [ "$OS" = FREEBSD ] ; then
+        RPATH_LIST="lib modules $RPATH_LIST"
     fi
     if [ "$RPATH_LIST" != "" ] ; then
         if [ "$OS" = "LINUX" ] ; then
@@ -762,7 +763,7 @@ else
     DSO=-shared
 fi
 
-if [ $OS = "WINCE" ] ; then
+if [ "$OS" = "WINCE" ] ; then
     EXTRA_FLAGS="-ignore:4099 -ignore:4254"
 fi
 
@@ -809,7 +810,7 @@ if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
                 DEF_SW=""
             fi
 
-            run "${LINKER}" ${DSO} "-out:${SHARED_LIBRARY}" ${ENTRY_SW} ${DEF_SW} ${MAKE_LDFLAGS} ${BLD_LDFLAGS} \
+            run "${LINKER}" ${DSO} "-out:${SHARED_LIBRARY}" ${ENTRY_SW} ${DEF_SW} ${MAKE_LDFLAGS} ${BLD_LDFLAGS} ${_LDFLAGS}\
                 ${LINK_SWITCHES} ${_LDFLAGS} ${LINK_LIBRARY_PATHS} "-libpath:${_LDPATH}" \
                 ${EXTRA_FLAGS} ${OBJECTS} ${LIB_LIST} ${STND_LIBS} >/tmp/link$$.tmp
             status=$?
@@ -841,7 +842,7 @@ if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
                 echo "bld: $BLD_RC failed"
                 exit 255
             fi
-        elif [ $OS != WINCE ] ; then
+        elif [ "$OS" != WINCE ] ; then
             RES_OBJ=.dummy.res
             echo >.dummy.rc
             run "$BLD_RC" /r .dummy.rc >/dev/null
@@ -882,7 +883,7 @@ else
     #
     if [ "$LIBRARY" ] ; then
 
-        if [ $MAKE_STATIC = 1 ] ; then
+        if [ "$MAKE_STATIC" = 1 ] ; then
             ARCHIVE=${LIBRARY}${BLD_ARCH}
             rm -f ${ARCHIVE}
             run "${BLD_AR}" cr ${ARCHIVE} ${OBJECTS} 2>.err.out
@@ -896,7 +897,7 @@ else
             fi
         fi
 
-        if [ $MAKE_STATIC = 0 ] ; then
+        if [ "$MAKE_STATIC" = 0 ] ; then
             if [ $OS != "VXWORKS" -a $OS != "CYGWIN" ] ; then
                 LOBJS=`echo ${OBJECTS} | sed "s/\.o/${BLD_PIOBJ}/g"`
             else
@@ -944,10 +945,14 @@ else
             #
             if [ "$OS" = MACOSX ] ; then
                 INSTALL_NAME="-install_name @rpath/`basename $SHARED_LIBRARY`"
+            elif [ "$OS" = LINUX ] ; then
+                # ERRORS="-Wl,--no-allow-shlib-undefined"
+                :
             fi
-            run "${LINKER}" -o ${SHARED_LIBRARY} ${SONAME_SWITCH} ${INSTALL_NAME} ${DSO} ${LOBJS} ${MAKE_LDFLAGS} \
-                ${MAKE_CFLAGS} ${_CFLAGS} ${BLD_CFLAGS} ${_LDFLAGS} ${LINK_LIBRARY_PATHS} -L${_LDPATH} ${RPATH} ${LIB_LIST} \
-                ${STND_LIBS}
+            run "${LINKER}" -o ${SHARED_LIBRARY} ${SONAME_SWITCH} ${INSTALL_NAME} ${DSO} ${LOBJS} \
+                ${MAKE_LDFLAGS} ${BLD_LDFLAGS} ${_LDFLAGS} ${MAKE_CFLAGS} ${BLD_CFLAGS} ${_CFLAGS} \
+                ${LINK_LIBRARY_PATHS} -L${_LDPATH} ${RPATH} ${LIB_LIST} \
+                ${STND_LIBS} ${ERRORS}
             if [ $? != 0 ] ; then
                 echo "bld: $LINKER failed"
                 log "DETAILS" `traceArgs $ARGS`
@@ -972,7 +977,7 @@ else
 
     if [ "$EXECUTABLE" ] ; then
         run "${LINKER}" -o ${EXECUTABLE} ${OBJECTS} ${LINK_LIBRARY_PATHS} -L${_LDPATH} ${RPATH} ${LIB_LIST} ${MOD_LIST} \
-			${MAKE_LDFLAGS} ${_LDFLAGS} ${BLD_LDFLAGS} ${STND_LIBS}
+			${MAKE_LDFLAGS} ${BLD_LDFLAGS} ${_LDFLAGS} ${STND_LIBS}
         if [ $? != 0 ] ; then
             echo "bld: $LINKER failed"
             log "DETAILS" `traceArgs $ARGS`
@@ -1009,7 +1014,7 @@ else
             echo ${BLD_NM} ${ORIG} \| ${BLD_TCLSH} ${BLD_MUNCH} -asm ${BLD_BUILD_CPU_VX} \> ctdt.c
             ${BLD_NM} ${ORIG} | ${BLD_TCLSH} ${BLD_MUNCH} -asm ${BLD_BUILD_CPU_VX} > ctdt.c
 
-            run "${LINKER}" -c ${MAKE_CFLAGS} ${_CFLAGS} ${BLD_CFLAGS} ${MAKE_IFLAGS} ${BLD_IFLAGS} ${_IFLAGS} \
+            run "${LINKER}" -c ${MAKE_CFLAGS} ${BLD_CFLAGS} ${_CFLAGS} ${MAKE_IFLAGS} ${BLD_IFLAGS} ${_IFLAGS} \
                 ctdt.c -o ctdt.o
             if [ $? != 0 ] ; then
                 echo "bld: $LINKER failed"

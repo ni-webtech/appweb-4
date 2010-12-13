@@ -74,11 +74,11 @@ setWinEnv()
     eval ${KIND}_HAS_MSCL=1
 
     if [ "$KIND" = HOST ] ; then
-        CFG_HOST_PATH="$bldPath"
+        CFG_HOST_PATH="/bin:/usr/bin:$bldPath"
         CFG_HOST_INCLUDE="$bldInclude"
         CFG_HOST_LIB="$bldLib"
     else
-        CFG_BUILD_PATH="$bldPath"
+        CFG_BUILD_PATH="/bin:/usr/bin:$bldPath"
         CFG_BUILD_INCLUDE="$bldInclude"
         CFG_BUILD_LIB="$bldLib"
     fi

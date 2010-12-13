@@ -19,12 +19,12 @@ static int appwebDestructor(MaAppweb *appweb);
 /*
     Create the top level appweb control object. This is typically a singleton.
  */
-MaAppweb *maCreateAppweb(MprCtx ctx)
+MaAppweb *maCreateAppweb()
 {
     MaAppweb    *appweb;
     Http        *http;
 
-    if ((appweb = mprAllocObj(ctx, MaAppweb, appwebDestructor)) == NULL) {
+    if ((appweb = mprAllocObj(MaAppweb, appwebDestructor)) == NULL) {
         return 0;
     }
     appweb->servers = mprCreateList(appweb);
@@ -87,9 +87,8 @@ int maStartAppweb(MaAppweb *appweb)
             return MPR_ERR_CANT_INITIALIZE;
         }
     }
-    timeText = mprFormatLocalTime(appweb, mprGetTime(appweb));
-    mprLog(appweb, 1, "HTTP services Started at %s with max %d threads", timeText, mprGetMaxWorkers(appweb));
-    mprFree(timeText);
+    timeText = mprFormatLocalTime(mprGetTime(appweb));
+    mprLog(1, "HTTP services Started at %s with max %d threads", timeText, mprGetMaxWorkers(appweb));
     return 0;
 }
 
@@ -118,13 +117,13 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, 
     mprAssert(appweb);
     mprAssert(name && *name);
 
-    if ((server = mprAllocObj(appweb, MaServer, NULL)) == NULL) {
+    if ((server = mprAllocObj(MaServer, NULL)) == NULL) {
         return 0;
     }
     server->hosts = mprCreateList(server);
     server->httpServers = mprCreateList(server);
     server->hostAddresses = mprCreateList(server);
-    server->name = mprStrdup(server, name);
+    server->name = sclone(name);
     server->appweb = appweb;
     server->http = appweb->http;
 
@@ -177,7 +176,7 @@ int maStartServer(MaServer *server)
     }
     if (count == 0) {
         if (!warned) {
-            mprError(server, "Server is not listening on any addresses");
+            mprError("Server is not listening on any addresses");
         }
         return MPR_ERR_CANT_OPEN;
     }
@@ -185,7 +184,7 @@ int maStartServer(MaServer *server)
         return MPR_ERR_CANT_COMPLETE;
     }
     for (nextHost = 0; (host = mprGetNextItem(server->hosts, &nextHost)) != 0; ) {
-        mprLog(server, 3, "Serving %s at \"%s\"", host->name, host->documentRoot);
+        mprLog(3, "Serving %s at \"%s\"", host->name, host->documentRoot);
     }
     return 0;
 }
@@ -237,7 +236,7 @@ MaHostAddress *maAddHostAddress(MaServer *server, cchar *ip, int port)
 {
     MaHostAddress   *address;
 
-    address = maCreateHostAddress(server, ip, port);
+    address = maCreateHostAddress(ip, port);
     mprAddItem(server->hostAddresses, address);
     return address;
 }
@@ -296,23 +295,22 @@ int maCreateHostAddresses(MaServer *server, MaHost *host, cchar *configValue)
     int             next, port;
 
     address = 0;
-    value = mprStrdup(server, configValue);
-    ipAddrPort = mprStrTok(value, " \t", &tok);
+    value = sclone(configValue);
+    ipAddrPort = stok(value, " \t", &tok);
 
     while (ipAddrPort) {
-        if (mprStrcmpAnyCase(ipAddrPort, "_default_") == 0) {
+        if (scasecmp(ipAddrPort, "_default_") == 0) {
             //  TODO is this used?
             mprAssert(0);
             ipAddrPort = "*:*";
         }
-
-        if (mprParseIp(server, ipAddrPort, &ip, &port, -1) < 0) {
-            mprError(server, "Can't parse ipAddr %s", ipAddrPort);
+        if (mprParseIp(ipAddrPort, &ip, &port, -1) < 0) {
+            mprError("Can't parse ipAddr %s", ipAddrPort);
             continue;
         }
         mprAssert(ip && *ip);
         if (ip[0] == '*') {
-            ip = mprStrdup(server, "");
+            ip = sclone("");
         }
 
         /*  
@@ -330,7 +328,7 @@ int maCreateHostAddresses(MaServer *server, MaHost *host, cchar *configValue)
                 Find the matching host address or create a new one
              */
             if ((address = maLookupHostAddress(server, httpServer->ip, httpServer->port)) == 0) {
-                address = maCreateHostAddress(server, httpServer->ip, httpServer->port);
+                address = maCreateHostAddress(httpServer->ip, httpServer->port);
                 mprAddItem(server->hostAddresses, address);
             }
 
@@ -343,28 +341,25 @@ int maCreateHostAddresses(MaServer *server, MaHost *host, cchar *configValue)
             } else {
                 maInsertVirtualHost(address, host);
                 if (httpServer->ip[0] != '\0') {
-                    mprSprintf(server, addrBuf, sizeof(addrBuf), "%s:%d", httpServer->ip, httpServer->port);
+                    mprSprintf(addrBuf, sizeof(addrBuf), "%s:%d", httpServer->ip, httpServer->port);
                 } else {
-                    mprSprintf(server, addrBuf, sizeof(addrBuf), "%s:%d", ip, httpServer->port);
+                    mprSprintf(addrBuf, sizeof(addrBuf), "%s:%d", ip, httpServer->port);
                 }
                 maSetHostName(host, addrBuf);
             }
         }
-        mprFree(ip);
-        ipAddrPort = mprStrTok(0, " \t", &tok);
+        ipAddrPort = stok(0, " \t", &tok);
     }
 
     if (host) {
         if (address == 0) {
-            mprError(server, "No valid IP address for host %s", host->name);
-            mprFree(value);
+            mprError("No valid IP address for host %s", host->name);
             return MPR_ERR_CANT_INITIALIZE;
         }
         if (maIsNamedVirtualHostAddress(address)) {
             maSetNamedVirtualHost(host);
         }
     }
-    mprFree(value);
     return 0;
 }
 
@@ -381,13 +376,12 @@ void maSetServerRoot(MaServer *server, cchar *path)
     /*
         VxWorks stat() is broken if using a network FTP server.
      */
-    if (! mprPathExists(server, path, R_OK)) {
-        mprError(server, "Can't access ServerRoot directory %s", path);
+    if (! mprPathExists(path, R_OK)) {
+        mprError("Can't access ServerRoot directory %s", path);
         return;
     }
 #endif
-    mprFree(server->serverRoot);
-    server->serverRoot = mprGetAbsPath(server, path);
+    server->serverRoot = mprGetAbsPath(path);
 }
 
 
@@ -419,7 +413,7 @@ void maSetIpAddr(MaServer *server, cchar *ip, int port)
     char        ipAddrPort[MPR_MAX_IP_ADDR_PORT];
     int         next;
 
-    mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip ? ip : "*", port > 0 ? port : HTTP_DEFAULT_PORT);
+    mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip ? ip : "*", port > 0 ? port : HTTP_DEFAULT_PORT);
 
     for (next = 0; ((httpServer = mprGetNextItem(server->httpServers, &next)) != 0); ) {
         httpSetIpAddr(httpServer, ip, port);
@@ -460,6 +454,16 @@ void maSetTimeout(MaAppweb *appweb, int timeout)
     appweb->http->limits->requestTimeout = timeout * MPR_TICKS_PER_SEC;
 }
 #endif
+
+
+void maSetForkCallback(MaAppweb *appweb, MprForkCallback callback, void *data)
+{
+#if MOB && TODO
+    appweb->forkCallback = callback;
+    appweb->forkData = data;
+#endif
+}
+
 
 
 /*

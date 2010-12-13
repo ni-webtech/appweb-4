@@ -50,7 +50,7 @@ static bool matchDir(HttpConn *conn, HttpStage *handler)
     info = &tx->fileInfo;
     dir = handler->stageData;
     
-    if (!info->valid && mprGetPathInfo(conn, tx->filename, info) < 0) {
+    if (!info->valid && mprGetPathInfo(tx->filename, info) < 0) {
         return 0;
     }
     return dir->enabled && info->isDir;
@@ -81,7 +81,7 @@ static void processDir(HttpQueue *q)
     httpSetHeader(conn, "Last-Modified", conn->http->currentDate);
     parseQuery(conn);
 
-    list = mprGetPathFiles(conn, filename, 1);
+    list = mprGetPathFiles(filename, 1);
     if (list == 0) {
         httpWrite(q, "<h2>Can't get file list</h2>\r\n");
         outputFooter(q);
@@ -107,7 +107,6 @@ static void processDir(HttpQueue *q)
     }
     outputFooter(q);
     httpFinalize(conn);
-    mprFree(list);
 }
  
 
@@ -122,17 +121,16 @@ static void parseQuery(HttpConn *conn)
     tx = conn->tx;
     dir = tx->handler->stageData;
     
-    query = mprStrdup(rx, rx->parsedUri->query);
+    query = sclone(rx->parsedUri->query);
     if (query == 0) {
         return;
     }
 
-    tok = mprStrTok(query, ";&", &next);
+    tok = stok(query, ";&", &next);
     while (tok) {
         if ((value = strchr(tok, '=')) != 0) {
             *value++ = '\0';
             if (*tok == 'C') {                  /* Sort column */
-                mprFree(dir->sortField);
                 if (*value == 'N') {
                     dir->sortField = "Name";
                 } else if (*value == 'M') {
@@ -140,7 +138,7 @@ static void parseQuery(HttpConn *conn)
                 } else if (*value == 'S') {
                     dir->sortField = "Size";
                 }
-                dir->sortField = mprStrdup(dir, dir->sortField);
+                dir->sortField = sclone(dir->sortField);
 
             } else if (*tok == 'O') {           /* Sort order */
                 if (*value == 'A') {
@@ -159,13 +157,11 @@ static void parseQuery(HttpConn *conn)
                 }
 
             } else if (*tok == 'P') {           /* Pattern */ 
-                dir->pattern = mprStrdup(dir, value);
+                dir->pattern = sclone(value);
             }
         }
-        tok = mprStrTok(next, ";&", &next);
+        tok = stok(next, ";&", &next);
     }
-    
-    mprFree(query);
 }
 
 
@@ -187,7 +183,7 @@ static void sortList(HttpConn *conn, MprList *list)
 
     count = mprGetListCount(list);
     items = (MprDirEntry**) list->items;
-    if (mprStrcmpAnyCase(dir->sortField, "Name") == 0) {
+    if (scasecmp(dir->sortField, "Name") == 0) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = strcmp(items[i]->name, items[j]->name);
@@ -207,7 +203,7 @@ static void sortList(HttpConn *conn, MprList *list)
             }
         }
 
-    } else if (mprStrcmpAnyCase(dir->sortField, "Size") == 0) {
+    } else if (scasecmp(dir->sortField, "Size") == 0) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = (items[i]->size < items[j]->size) ? -1 : 1;
@@ -227,7 +223,7 @@ static void sortList(HttpConn *conn, MprList *list)
             }
         }
 
-    } else if (mprStrcmpAnyCase(dir->sortField, "Date") == 0) {
+    } else if (scasecmp(dir->sortField, "Date") == 0) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = (items[i]->lastModified < items[j]->lastModified) ? -1: 1;
@@ -283,7 +279,7 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
         fancy = '2';
     }
 
-    parent = mprGetPathDir(q, path);
+    parent = mprGetPathDir(path);
     if (parent[strlen(parent) - 1] != '/') {
         parentSuffix = "/";
     } else {
@@ -330,11 +326,10 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
             httpWrite(q, "<li><a href=\"%s%s\"> Parent Directory</a></li>\r\n", parent, parentSuffix);
         }
     }
-    mprFree(parent);
 }
 
 
-static void fmtNum(MprCtx ctx, char *buf, int bufsize, int num, int divisor, char *suffix)
+static void fmtNum(char *buf, int bufsize, int num, int divisor, char *suffix)
 {
     int     whole, point;
 
@@ -342,9 +337,9 @@ static void fmtNum(MprCtx ctx, char *buf, int bufsize, int num, int divisor, cha
     point = (num % divisor) / (divisor / 10);
 
     if (point == 0) {
-        mprSprintf(ctx, buf, bufsize, "%6d%s", whole, suffix);
+        mprSprintf(buf, bufsize, "%6d%s", whole, suffix);
     } else {
-        mprSprintf(ctx, buf, bufsize, "%4d.%d%s", whole, point, suffix);
+        mprSprintf(buf, bufsize, "%4d.%d%s", whole, point, suffix);
     }
 }
 
@@ -368,20 +363,20 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
 
     dir = q->stage->stageData;
     if (ep->size >= (1024*1024*1024)) {
-        fmtNum(q, sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024 * 1024, "G");
+        fmtNum(sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024 * 1024, "G");
 
     } else if (ep->size >= (1024*1024)) {
-        fmtNum(q, sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024, "M");
+        fmtNum(sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024, "M");
 
     } else if (ep->size >= 1024) {
-        fmtNum(q, sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024, "K");
+        fmtNum(sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024, "K");
 
     } else {
-        mprSprintf(q, sizeBuf, sizeof(sizeBuf), "%6d", (int) ep->size);
+        mprSprintf(sizeBuf, sizeof(sizeBuf), "%6d", (int) ep->size);
     }
-    newPath = mprJoinPath(q, path, ep->name);
+    newPath = mprJoinPath(path, ep->name);
 
-    if (mprGetPathInfo(q, newPath, &info) < 0) {
+    if (mprGetPathInfo(newPath, &info) < 0) {
         when = mprGetTime(q);
         isDir = 0;
 
@@ -389,14 +384,12 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
         isDir = info.isDir ? 1 : 0;
         when = (MprTime) info.mtime * MPR_TICKS_PER_SEC;
     }
-    mprFree(newPath);
-
     if (isDir) {
         icon = "folder";
         dirSuffix = "/";
     } else {
         host = httpGetConnHost(q->conn);
-        ext = mprGetPathExtension(q, ep->name);
+        ext = mprGetPathExtension(ep->name);
         if ((mimeType = maLookupMimeType(host, ext)) != 0) {
             if (strcmp(ext, "es") == 0 || strcmp(ext, "ejs") == 0 || strcmp(ext, "php") == 0) {
                 icon = "text";
@@ -410,9 +403,9 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
         }
         dirSuffix = "";
     }
-    mprDecodeLocalTime(q, &tm, when);
+    mprDecodeLocalTime(&tm, when);
 
-    mprSprintf(q, timeBuf, sizeof(timeBuf), "%02d-%3s-%4d %02d:%02d",
+    mprSprintf(timeBuf, sizeof(timeBuf), "%02d-%3s-%4d %02d:%02d",
         tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900, tm.tm_hour,  tm.tm_min);
     len = (int) strlen(ep->name) + (int) strlen(dirSuffix);
 
@@ -472,7 +465,6 @@ static void filterDirList(HttpConn *conn, MprList *list)
     for (next = 0; (dp = mprGetNextItem(list, &next)) != 0; ) {
         if (! match(dir->pattern, dp->name)) {
             mprRemoveItem(list, dp);
-            mprFree(dp);
             next--;
         }
     }
@@ -534,63 +526,62 @@ static int parseDir(Http *http, cchar *key, char *value, MaConfigState *state)
     dir = handler->stageData;
     mprAssert(dir);
     
-    if (mprStrcmpAnyCase(key, "AddIcon") == 0) {
+    if (scasecmp(key, "AddIcon") == 0) {
         /*  AddIcon file ext ext ext */
         /*  Not yet supported */
-        name = mprStrTok(value, " \t", &extensions);
+        name = stok(value, " \t", &extensions);
         parseWords(dir->extList, extensions);
         return 1;
 
-    } else if (mprStrcmpAnyCase(key, "DefaultIcon") == 0) {
+    } else if (scasecmp(key, "DefaultIcon") == 0) {
         /*  DefaultIcon file */
         /*  Not yet supported */
-        dir->defaultIcon = mprStrTok(value, " \t", &junk);
+        dir->defaultIcon = stok(value, " \t", &junk);
         return 1;
 
-    } else if (mprStrcmpAnyCase(key, "IndexOrder") == 0) {
+    } else if (scasecmp(key, "IndexOrder") == 0) {
         /*  IndexOrder ascending|descending name|date|size */
-        mprFree(dir->sortField);
         dir->sortField = 0;
-        option = mprStrTok(value, " \t", &dir->sortField);
-        if (mprStrcmpAnyCase(option, "ascending") == 0) {
+        option = stok(value, " \t", &dir->sortField);
+        if (scasecmp(option, "ascending") == 0) {
             dir->sortOrder = 1;
         } else {
             dir->sortOrder = -1;
         }
         if (dir->sortField) {
-            dir->sortField = mprStrdup(dir, dir->sortField);
+            dir->sortField = sclone(dir->sortField);
         }
         return 1;
 
-    } else if (mprStrcmpAnyCase(key, "IndexIgnore") == 0) {
+    } else if (scasecmp(key, "IndexIgnore") == 0) {
         /*  IndexIgnore pat ... */
         /*  Not yet supported */
         parseWords(dir->ignoreList, value);
         return 1;
 
-    } else if (mprStrcmpAnyCase(key, "IndexOptions") == 0) {
+    } else if (scasecmp(key, "IndexOptions") == 0) {
         /*  IndexOptions FancyIndexing|FoldersFirst ... (set of options) */
-        option = mprStrTok(value, " \t", &nextTok);
+        option = stok(value, " \t", &nextTok);
         while (option) {
-            if (mprStrcmpAnyCase(option, "FancyIndexing") == 0) {
+            if (scasecmp(option, "FancyIndexing") == 0) {
                 dir->fancyIndexing = 1;
-            } else if (mprStrcmpAnyCase(option, "HTMLTable") == 0) {
+            } else if (scasecmp(option, "HTMLTable") == 0) {
                 dir->fancyIndexing = 2;
-            } else if (mprStrcmpAnyCase(option, "FoldersFirst") == 0) {
+            } else if (scasecmp(option, "FoldersFirst") == 0) {
                 dir->foldersFirst = 1;
             }
-            option = mprStrTok(nextTok, " \t", &nextTok);
+            option = stok(nextTok, " \t", &nextTok);
         }
         return 1;
 
-    } else if (mprStrcmpAnyCase(key, "Options") == 0) {
+    } else if (scasecmp(key, "Options") == 0) {
         /*  Options Indexes */
-        option = mprStrTok(value, " \t", &nextTok);
+        option = stok(value, " \t", &nextTok);
         while (option) {
-            if (mprStrcmpAnyCase(option, "Indexes") == 0) {
+            if (scasecmp(option, "Indexes") == 0) {
                 dir->enabled = 1;
             }
-            option = mprStrTok(nextTok, " \t", &nextTok);
+            option = stok(nextTok, " \t", &nextTok);
         }
         return 1;
     }
@@ -606,12 +597,11 @@ static void parseWords(MprList *list, cchar *str)
     if (str == 0 || *str == '\0') {
         return;
     }
-
-    strTok = mprStrdup(list, str);
-    word = mprStrTok(strTok, " \t\r\n", &tok);
+    strTok = sclone(str);
+    word = stok(strTok, " \t\r\n", &tok);
     while (word) {
         mprAddItem(list, word);
-        word = mprStrTok(0, " \t\r\n", &tok);
+        word = stok(0, " \t\r\n", &tok);
     }
 }
 
@@ -631,7 +621,7 @@ int maOpenDirHandler(Http *http)
     handler->match = matchDir; 
     handler->process = processDir; 
     handler->parse = (HttpParse) parseDir; 
-    handler->stageData = dir = mprAllocObj(handler, Dir, NULL);
+    handler->stageData = dir = mprAllocObj(Dir, NULL);
     http->dirHandler = handler;
     dir->sortOrder = 1;
     return 0;

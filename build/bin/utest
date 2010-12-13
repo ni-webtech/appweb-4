@@ -74,10 +74,10 @@ enumerable class Test {
         
     function Test() {
         program = Path(App.args[0]).basename
-        if ((path = searchUp("buildConfig.make")) == null) {
-            throw "Can't find buildConfig.make"
+        if ((path = searchUp("out/buildConfig.make")) == null) {
+            throw "Can't find out/buildConfig.make"
         }
-        _top = path.dirname.absolute
+        _top = path.dirname.dirname.absolute
         _bin = path.dirname.join("bin").absolute
         _lib = path.dirname.join("lib").absolute
         parseBuildConfig(path);

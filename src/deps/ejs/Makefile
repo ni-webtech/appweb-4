@@ -1,5 +1,5 @@
 #
-#	Makefile for Ejscript
+#	Makefile for Ejscript combo distribution
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
 #
@@ -24,31 +24,14 @@ ifeq ($(BLD_EJS_DIR),)
 		TARGETS		+= $(BLD_LIB_DIR)/libsqlite3$(BLD_LIB)
 	endif
 	TARGETS			+= $(BLD_LIB_DIR)/libejs$(BLD_LIB)
-
-	ifneq ($(BUILDING_CROSS),1)
-		BUILD_COMPILER=1
-	endif
-	ifeq ($(BUILD_NATIVE_OR_COMPLETE_CROSS),1)
-		BUILD_COMPILER=1
-	endif
-	ifeq ($(BLD_FEATURE_EJS_CROSS_COMPILER),1)
-		BUILD_COMPILER=1
-	endif
-
 	TARGETS			+= $(BLD_BIN_DIR)/ejs$(BLD_EXE)
-
-	ifeq ($(BUILD_COMPILER),1)
-		TARGETS		+= $(BLD_BIN_DIR)/ejsc$(BLD_EXE)
-		TOOLS		+= $(BLD_BIN_DIR)/ejsc$(BLD_EXE)
+	TARGETS			+= $(BLD_BIN_DIR)/ejsc$(BLD_EXE)
+	TARGETS			+= $(BLD_BIN_DIR)/ejsmod$(BLD_EXE)
+	ifeq ($(BLD_FEATURE_SQLITE),1)
+		TARGETS		+= $(BLD_BIN_DIR)/ejssql$(BLD_EXE)
 	endif
-
-	ifeq ($(BUILD_NATIVE_OR_COMPLETE_CROSS),1)
-		TARGETS		+= $(BLD_BIN_DIR)/ejsmod$(BLD_EXE)
-		TOOLS		+= $(BLD_BIN_DIR)/ejsmod$(BLD_EXE)
-		ifeq ($(BLD_FEATURE_SQLITE),1)
-			TARGETS	+= $(BLD_BIN_DIR)/ejssql$(BLD_EXE)
-		endif
-	endif
+	TOOLS			+= $(BLD_BIN_DIR)/ejsc$(BLD_EXE)
+	TOOLS			+= $(BLD_BIN_DIR)/ejsmod$(BLD_EXE)
 
 	TARGETS		+= $(BLD_MOD_DIR)/ejs.mod
 	ifeq ($(BLD_FEATURE_STATIC),1) 

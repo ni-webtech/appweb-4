@@ -2,7 +2,7 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Embedthis Ejscript 1.0.0 Documentation</title>
+    <title>Embedthis Ejscript 2.0.0 Documentation</title>
     <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
 	<link href="../doc.css" rel="stylesheet" type="text/css" />
     <link href="api.css" rel="stylesheet" type="text/css" />
@@ -15,6 +15,7 @@
     <div class="top">
         <a class="logo" href="http://www.ejscript.org/">&nbsp;</a>
         <div class="topRight">
+             <!--
              <div class="search">
                  <form method="get" action="http://www.google.com/search" title="Search www.embedthis.com">
                      <p>
@@ -26,7 +27,8 @@
                     </p>
                  </form>
               </div>
-            <!--TITLE-->Embedthis Ejscript 1.0.0
+              -->
+            <!--TITLE-->Embedthis Ejscript 2.0.0
         </div>
         <div class="crumbs">
             <a href="../product/index.html">Home</a>

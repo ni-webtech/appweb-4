@@ -83,7 +83,7 @@ typedef struct MaAppweb {
     @return A Http object. Use mprFree to close and release.
     @ingroup Appweb
  */
-extern MaAppweb *maCreateAppweb(MprCtx ctx);
+extern MaAppweb *maCreateAppweb();
 
 /**
     Start Appweb services
@@ -139,6 +139,7 @@ extern void maUnloadStaticModules(MaAppweb *appweb);
 extern void maSetKeepAliveTimeout(MaAppweb *appweb, int timeout);
 extern void maSetTimeout(MaAppweb *appweb, int timeout);
 extern void maSetMaxKeepAlive(MaAppweb *appweb, int timeout);
+extern void maSetForkCallback(MaAppweb *appweb, MprForkCallback callback, void *data);
 
 /*
     Loadable module entry points
@@ -181,7 +182,7 @@ typedef struct MaHostAddress {
 } MaHostAddress;
 
 
-extern MaHostAddress *maCreateHostAddress(MprCtx ctx, cchar *ip, int port);
+extern MaHostAddress *maCreateHostAddress(cchar *ip, int port);
 extern MaHostAddress *maLookupHostAddress(struct MaServer *server, cchar *ip, int port);
 extern struct MaHost *maLookupVirtualHost(MaHostAddress *hostAddress, cchar *hostStr);
 extern void maInsertVirtualHost(MaHostAddress *hostAddress, struct MaHost *vhost);
@@ -302,7 +303,7 @@ extern MaHostAddress *maAddHostAddress(MaServer *server, cchar *ip, int port);
 extern void     maAddHttpServer(MaServer *server, HttpServer *httpServer);
 extern int      maCreateHostAddresses(MaServer *server, struct MaHost *host, cchar *value);
 extern struct MaHost *maLookupHost(MaServer *server, cchar *name);
-extern int      maGetConfigValue(MprCtx ctx, char **arg, char *buf, char **nextToken, int quotes);
+extern int      maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes);
 extern void     maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags);
 extern int      maParseConfig(MaServer *server, cchar *configFile);
 extern MaHostAddress *maRemoveHostFromHostAddress(MaServer *server, cchar *ip, int port, struct MaHost *host);
@@ -311,7 +312,7 @@ extern void     maSetDefaultIndex(MaServer *server, cchar *path, cchar *filename
 extern void     maSetDocumentRoot(MaServer *server, cchar *path);
 extern void     maSetIpAddr(MaServer *server, cchar *ip, int port);
 extern void     maSetServerRoot(MaServer *server, cchar *path);
-extern int      maSplitConfigValue(MprCtx ctx, char **s1, char **s2, char *buf, int quotes);
+extern int      maSplitConfigValue(char **s1, char **s2, char *buf, int quotes);
 extern int      maStartServer(MaServer *server);
 extern int      maStopServer(MaServer *server);
 extern int      maValidateConfiguration(MaServer *server);
@@ -354,7 +355,7 @@ extern int      maAddGroup(HttpAuth *auth, cchar *group, HttpAcl acl, bool enabl
 extern int      maAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool enabled);
 extern int      maAddUserToGroup(HttpAuth *auth, MaGroup *gp, cchar *user);
 extern int      maAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *users);
-extern HttpAuth   *maCreateAuth(MprCtx ctx, HttpAuth *parent);
+extern HttpAuth   *maCreateAuth(HttpAuth *parent);
 extern MaGroup  *maCreateGroup(HttpAuth *auth, cchar *name, HttpAcl acl, bool enabled);
 extern MaUser   *maCreateUser(HttpAuth *auth, cchar *realm, cchar *name, cchar *password, bool enabled);
 extern int      maDisableGroup(HttpAuth *auth, cchar *group);
@@ -395,12 +396,15 @@ extern bool     maValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *us
     @see MaDir
  */
 typedef struct  MaDir {
+#if UNUSED
+    struct MaHost   *parent;                /**< Owner of the directory */
+#endif
     HttpAuth        *auth;                  /**< Authorization control */
     //TODO MOB - Hosts don't own directories. They are outside hosts
     struct MaHost   *host;                  /**< Host owning this directory */
     char            *indexName;             /**< Default index document name */
     char            *path;                  /**< Directory filename */
-    int             pathLen;                /**< Length of the directory path */
+    size_t          pathLen;                /**< Length of the directory path */
 } MaDir;
 
 extern MaDir    *maCreateBareDir(struct MaHost *host, cchar *path);
@@ -423,6 +427,9 @@ extern int maOpenSendConnector(Http *http);
     @see MaAlias maCreateAlias
  */
 typedef struct MaAlias {
+#if UNUSED
+    struct MaHost   *parent;                /**< Owner of the alias */
+#endif
     char            *prefix;                /**< Original URI prefix */
     int             prefixLen;              /**< Prefix length */
     char            *filename;              /**< Alias to a physical path name */
@@ -430,7 +437,7 @@ typedef struct MaAlias {
     int             redirectCode;
 } MaAlias;
 
-extern MaAlias *maCreateAlias(MprCtx ctx, cchar *prefix, cchar *name, int code);
+extern MaAlias *maCreateAlias(cchar *prefix, cchar *name, int code);
 
 /******************************* MaMimeType ******************************/
 /**
@@ -583,8 +590,8 @@ extern HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *p
 extern char         *maMakePath(MaHost *host, cchar *file);
 extern char         *maReplaceReferences(MaHost *host, cchar *str);
 extern void         maSetAccessLog(MaHost *host, cchar *path, cchar *format);
-extern int          maStopLogging(MprCtx ctx);
-extern int          maStartLogging(MprCtx ctx, cchar *logSpec);
+extern int          maStopLogging();
+extern int          maStartLogging(cchar *logSpec);
 extern void         maSetLogHost(MaHost *host, MaHost *logHost);
 extern int          maStartAccessLogging(MaHost *host);
 extern int          maStopAccessLogging(MaHost *host);

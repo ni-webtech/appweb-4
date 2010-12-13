@@ -16,14 +16,17 @@
 <div class='classBlock'>
 <table class='classHead' summary='UploadFile'>
    <tr><td><strong>Module</strong></td><td>ejs.web</td></tr>
-   <tr><td><strong>Namespace</strong></td><td>"ejs.web"</td></tr>
    <tr><td><strong>Definition</strong></td><td> class UploadFile</td></tr>
-   <tr><td><strong>Inheritance</strong></td><td>UploadFile <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>UploadFile <img src='images/inherit.gif' alt='inherit'/> <a href='ejs-Object.html'>Object</a><tr><td><strong>Specified</strong></td><td>ejscript-2.0</td></tr>
+<tr><td><strong>Stability</strong></td><td>Evolving.</td></tr>
+       </td></tr>
 </table>
 
 <p class='classBrief'>Upload file class.</p>
 
-<p class='classDescription'></p>
+<p class='classDescription'>Instances of UploadFile are created for each uploaded file when POST requests using
+multi-part mime body content are received. The UploadFile instances are stored in the request.files property.
+Users should not create instances of UploadFile manually.</p>
 
 </div>
 
@@ -33,29 +36,30 @@
 <h2 class='classSection'>Properties</h2>
 <table class='itemTable' summary='properties'>
    <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
-   <tr><td nowrap align='center'>public </td><td>clientFilename</td><td><a href='intrinsic-String.html'>String</a></td><td>Name of the uploaded file given by the client. </td></tr>
-   <tr><td nowrap align='center'>public </td><td>contentType</td><td><a href='intrinsic-String.html'>String</a></td><td>Mime type of the encoded data. </td></tr>
-   <tr><td nowrap align='center'>public </td><td>filename</td><td><a href='intrinsic-String.html'>String</a></td><td>Name of the uploaded file. This is a temporary file in the upload directory.</td></tr>
-   <tr><td nowrap align='center'>public </td><td>name</td><td><a href='intrinsic-String.html'>String</a></td><td>HTML input ID for the upload file element. </td></tr>
-   <tr><td nowrap align='center'>public </td><td>size</td><td><a href='intrinsic-Number.html'>Number</a></td><td>Size of the uploaded file in bytes. </td></tr>
+<a name='clientFilename'></a>
+   <tr><td nowrap align='center'>public </td><td>clientFilename</td><td><a href='ejs-String.html'>String</a></td><td>Name of the uploaded file given by the client. </td></tr>
+<a name='contentType'></a>
+   <tr><td nowrap align='center'>public </td><td>contentType</td><td><a href='ejs-String.html'>String</a></td><td>Mime type of the encoded data. </td></tr>
+<a name='filename'></a>
+   <tr><td nowrap align='center'>public </td><td>filename</td><td><a href='ejs-String.html'>String</a></td><td>Name of the uploaded file. This is a temporary file in the upload directory.</td></tr>
+<a name='name'></a>
+   <tr><td nowrap align='center'>public </td><td>name</td><td><a href='ejs-String.html'>String</a></td><td>HTML input ID for the upload file element. </td></tr>
+<a name='size'></a>
+   <tr><td nowrap align='center'>public </td><td>size</td><td><a href='ejs-Number.html'>Number</a></td><td>Size of the uploaded file in bytes. </td></tr>
 </table>
+
+<p class='inheritedLink'><a href='ejs-Object.html#Properties'><i>Inherited Properties</i></a></p>
 
 <hr />
 <a name='Methods'></a>
 <h2 class='classSection'>UploadFile Methods</h2>
 <table class='apiIndex' summary='methods'>
    <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
-   <tr class='apiDef'><td class='apiType'> </td><td><a href='#UploadFile'><b>UploadFile</b></a>()</tr></table>
+   <tr><td colspan='2'>No methods defined</td></tr>
+</table>
 
-<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+<p class='inheritedLink'><a href='ejs-Object.html#Methods'><i>Inherited Methods</i></a></p>
 
-<hr />
-<h2>Method Detail</h2>
-<a name='UploadFile'></a>
-<div class='api'>
-<div class='apiSig'> UploadFile()
-</div>
-</div>
 <hr />
 <div class="terms">
    <p class="terms">

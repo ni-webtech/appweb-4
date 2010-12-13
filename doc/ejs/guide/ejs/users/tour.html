@@ -3,7 +3,7 @@
 <!-- BeginDsi "dsi/head.html" -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Embedthis Ejscript 1.0.0 Documentation</title>
+    <title>Embedthis Ejscript 2.0.0 Documentation</title>
     <meta name="keywords" content="Ejscript, JavaScript, ECMAScript, Server-Side JavaScript, Dynamic languages, 
         Embedded, AJAX, language"/>
 	<meta name="description" content="Ejscript -- Embedded Server-Side JavaScript Language."/>
@@ -30,7 +30,7 @@
                     </p>
                  </form>
               </div>
-            <!--TITLE-->Embedthis Ejscript 1.0.0
+            <!--TITLE-->Embedthis Ejscript 2.0.0
         </div>
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
@@ -388,12 +388,12 @@ o</font></strong>
             <p>The most common need for Namespaces is to package related code so that it will not have name clashes
             with other code declarations. Java uses packages and import directives for this purpose, Ejscript uses
             modules &mdash; based on Namespaces. A module directive groups variables, functions and classes into a
-            single namespace. A module can be imported via the "use module" directive.</p>
+            single namespace. A module can be imported via the "require" directive.</p>
             <pre>
 <font color="#FFFF00">ejs-0&gt;</font> module Test {
 <font color="#FFFF00">ejs-0&gt;</font>     var x = "hello"
 <font color="#FFFF00">ejs-0&gt;</font> }
-<font color="#FFFF00">ejs-0&gt;</font> use module Test
+<font color="#FFFF00">ejs-0&gt;</font> require Test
 <font color="#FFFF00">ejs-0&gt;</font> print(x)
 <strong><font color="#FFFF00">hello</font></strong>
 </pre>

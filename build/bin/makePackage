@@ -34,6 +34,8 @@
 DRY_RUN=
 QUIET=0
 TASK=Package
+: ${BLD_OUT_DIR:=$BLD_TOP/out}
+. ${BLD_OUT_DIR}/bin/buildConfig.sh
 
 #
 #   Find the top of the source tree and change directory to it. Set BLD_TOP
@@ -77,13 +79,6 @@ setup() {
     cd ${BLD_TOP}
     BLD_TOP=.
     HOME=`pwd`
-
-    . ${BLD_TOP}/build/bin/buildConfig.sh
-
-    if [ "${BLD_CROSS}" = 1 ] ; then
-        BUILDING_CROSS=1
-        . ./build/bin/buildConfig.sh
-    fi
 
     . ${BLD_TOP}/build/bin/makePackage.common
 

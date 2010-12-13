@@ -3,7 +3,7 @@
 <!-- BeginDsi "dsi/head.html" -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Embedthis Ejscript 1.0.0 Documentation</title>
+    <title>Embedthis Ejscript 2.0.0 Documentation</title>
     <meta name="keywords" content="Ejscript, JavaScript, ECMAScript, Server-Side JavaScript, Dynamic languages, 
         Embedded, AJAX, language"/>
 	<meta name="description" content="Ejscript -- Embedded Server-Side JavaScript Language."/>
@@ -30,7 +30,7 @@
                     </p>
                  </form>
               </div>
-            <!--TITLE-->Embedthis Ejscript 1.0.0
+            <!--TITLE-->Embedthis Ejscript 2.0.0
         </div>
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
@@ -392,7 +392,7 @@ class Chape implements Shape {
             when "programming in-the-large", the lack of a comprehensive name resolution facility is a great
             drawback.</p>
             <p>Ejscript rectifies this problem by providing a powerful module facility. This consists of <b>module</b>
-            and <b>use module</b> directives, and a module packaging mechanism and loader.</p>
+            and <b>require</b> directives, and a module packaging mechanism and loader.</p>
             <p>Grouping related declarations inside a module block instructs the compiler to create a module and to
             qualify the contained declarations with the module name as a namespace.</p>
             <pre>
@@ -404,15 +404,15 @@ module YourStuff {
 }
 </pre>
             <p>This code creates two modules and two variables both called <b>x</b>. However, it qualifies each
-            <b>x</b> with the name of the module. If your code utilizes the <b>use module</b> directive, you can
+            <b>x</b> with the name of the module. If your code utilizes the <b>require</b> directive, you can
             specify which module you want to use and which variable <b>x</b> you need.</p>
             <pre>
 <b>home&gt;</b> ejs
-use module MyStuff
+require MyStuff
 print(x)
 <b>mine</b>
 </pre>
-            <p>Multiple use module directives can be employed and they stack and nest as expected. A use module
+            <p>Multiple require directives can be employed and they stack and nest as expected. A require
             directive only applies to the block in which it is defined and from the point of declaration
             onward.</p><a name="return" id="return"></a>
             <h2 class="section">return</h2>
@@ -481,9 +481,9 @@ catch (error){
             <p>The <b>use</b> statement applies various modifiers to the code environment. These are typically called
             <b>pragma</b> directives.</p>
             <h3>Use Module</h3>
-            <p>To load and access a module, you need to add a <b>use module</b> pragma to you code.</p>
+            <p>To load and access a module, you need to add a <b>require</b> pragma to you code.</p>
             <pre>
-use module moduleName
+require moduleName
 </pre>
             <p>This will add the module named "moduleName" to your program. This adds the module to the set of open
             namespaces in the current file scope.</p>

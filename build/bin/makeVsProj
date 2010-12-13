@@ -224,7 +224,7 @@ makeVsProj: usage: makeVsProj [options] objects ....
       BLD_FEATURE_STATIC    Build static libraries where relevant.
 
     Configuration files used:
-        build/bin/buildConfig.sh
+        buildConfig.sh
 !EOF
     exit 255
 }
@@ -752,7 +752,8 @@ useArg() {
 
 BLD_TOP=`findTop`
 
-. ${BLD_TOP}/build/bin/buildConfig.sh
+: ${BLD_OUT_DIR:=$BLD_TOP/out}
+. ${BLD_OUT_DIR}/bin/buildConfig.sh
 
 parseArgs "$@"
 log "Generate" ${PROJECT}

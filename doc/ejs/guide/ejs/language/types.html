@@ -3,7 +3,7 @@
 <!-- BeginDsi "dsi/head.html" -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Embedthis Ejscript 1.0.0 Documentation</title>
+    <title>Embedthis Ejscript 2.0.0 Documentation</title>
     <meta name="keywords" content="Ejscript, JavaScript, ECMAScript, Server-Side JavaScript, Dynamic languages, 
         Embedded, AJAX, language"/>
 	<meta name="description" content="Ejscript -- Embedded Server-Side JavaScript Language."/>
@@ -30,7 +30,7 @@
                     </p>
                  </form>
               </div>
-            <!--TITLE-->Embedthis Ejscript 1.0.0
+            <!--TITLE-->Embedthis Ejscript 2.0.0
         </div>
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
@@ -210,12 +210,12 @@ module acme.rockets {
             <p>This creates a module named "acme.rockets" and prefixes declarations with the module name.</p>
             <p>It is important that you choose a unique module name that won't clash with other modules. A reverse
             domain name is one safe option. For example: "com.embedthis.appweb".</p>
-            <p>To use a access a module, users need to add a <b>use module</b> directive to their code.</p>
+            <p>To use a access a module, users need to add a <b>require</b> directive to their code.</p>
             <pre>
-use module acme.rockets
+require acme.rockets
 BlastOff()
 </pre>
-            <p>The <b>use module</b> directive adds the "acme.rockets" module to the set of open modules and makes
+            <p>The <b>require</b> directive adds the "acme.rockets" module to the set of open modules and makes
             visible the declarations defined in the module.</p>
             <p>When creating modules, multiple source files can contribute code into the same module. The Ejscript
             compiler will aggregate the code and combine it into a single module.</p><a name="undeclared" id=

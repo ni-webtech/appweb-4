@@ -13,13 +13,16 @@ config:
 	make depend clean >/dev/null
 
 rom:
-	./configure --host=i686-apple-darwin --build=x86_64-apple-darwin --rom --static --without-ssl --without-php --without-ejs
+	./configure --host=i386-apple-darwin --build=x86_64-apple-darwin --rom --static --without-ssl --without-php --without-ejs
+
+config32:
+	./configure --host=i386-apple-darwin --build=i386-apple-darwin --without-matrixssl --without-php
 
 cross32:
-	./configure --host=i686-apple-darwin --build=i686-apple-darwin --without-matrixssl --without-php
+	./configure --host=i386-apple-darwin --without-matrixssl --without-php
 
 cross64:
-	./configure --shared --build=i686-apple-darwin --host=x86_64-apple-darwin --without-ssl --without-php
+	./configure --shared --build=i386-apple-darwin --host=x86_64-apple-darwin --without-ssl --without-php
 
 universal:
 	./configure --shared --host=universal-apple-darwin --build=universal-apple-darwin --without-ssl --without-php
@@ -31,7 +34,7 @@ release:
 	./configure --defaults=release
 
 release32:
-	./configure --defaults=release --host=i686-apple-darwin --build=i686-apple-darwin --without-matrixssl --without-php
+	./configure --defaults=release --host=i386-apple-darwin --build=i386-apple-darwin --without-matrixssl --without-php
 
 vx:
 	unset WIND_HOME WIND_BASE ; \

@@ -16,14 +16,14 @@
 <div class='classBlock'>
 <table class='classHead' summary='Controller'>
    <tr><td><strong>Module</strong></td><td>ejs.web</td></tr>
-   <tr><td><strong>Namespace</strong></td><td>"ejs.web"</td></tr>
    <tr><td><strong>Definition</strong></td><td> class Controller</td></tr>
-   <tr><td><strong>Inheritance</strong></td><td>Controller <img src='images/inherit.gif' alt='inherit'/> <a href='intrinsic-Object.html'>Object</a>       </td></tr>
+   <tr><td><strong>Inheritance</strong></td><td>Controller <img src='images/inherit.gif' alt='inherit'/> <a href='ejs-Object.html'>Object</a>       </td></tr>
 </table>
 
-<p class='classBrief'>Web framework controller.</p>
+<p class='classBrief'>Create and initialize a controller.</p>
 
-<p class='classDescription'>Part of the Ejscript web MVC framework.</p>
+<p class='classDescription'>This may be called directly by class constructors or via 
+the Controller.create factory method.</p>
 
 </div>
 
@@ -33,245 +33,303 @@
 <h2 class='classSection'>Properties</h2>
 <table class='itemTable' summary='properties'>
    <tr><th>Qualifiers</th><th>Property</th><th>Type</th><th width='95%'>Description</th></tr>
-   <tr><td nowrap align='center'>public </td><td>absUrl</td><td><a href='intrinsic-String.html'>String</a></td><td>Stores application global data. The application array provides a means to store persistent information  to be shared across all clients using an application. Objects and variables stored in the application  array will live until either explicitly deleted or the web server exits. The application array does not  persist over system reboots. The elements are User defined. NOTE: Not yet implemented.</td></tr>
-   <tr><td nowrap align='center'>public </td><td>actionName</td><td><a href='intrinsic-String.html'>String</a></td><td>Name of the action being run. </td></tr>
-   <tr><td nowrap align='center'>public </td><td>appUrl</td><td><a href='intrinsic-String.html'>String</a></td><td>Relative URL for the application. Does not include the URL scheme or host name portion.</td></tr>
-   <tr><td nowrap align='center'>public </td><td>config</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Web application configuration. This is initialized from the config *..ecf files.</td></tr>
-   <tr><td nowrap align='center'>public </td><td>controllerName</td><td><a href='intrinsic-String.html'>String</a></td><td>Lower case controller name. </td></tr>
-   <tr><td nowrap align='center'>ejs.web </td><td>dummy7</td><td>&nbsp;</td><td>&nbsp;</td></tr>
-   <tr><td nowrap align='center'>public </td><td>flash</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Flash messages to display on the next screen "inform"        Informational / postitive feedback (note) "message"       Neutral feedback (reminders, suggestions. ) "warning"       Negative feedback (Warnings and errors) "error"         Negative errors (Warnings and errors).</td></tr>
-   <tr><td nowrap align='center'>public </td><td>home</td><td><a href='intrinsic-String.html'>String</a></td><td>Physical home directory of the application. </td></tr>
-   <tr><td nowrap align='center'>public </td><td>host</td><td><a href='ejs.web-Host.html'>Host</a></td><td>Host object. </td></tr>
-   <tr><td nowrap align='center'>ejs.web </td><td>mob</td><td>&nbsp;</td><td>&nbsp;</td></tr>
-   <tr><td nowrap align='center'>public </td><td>params</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Form parameters. </td></tr>
-   <tr><td nowrap align='center'>public </td><td>request</td><td><a href='ejs.web-Request.html'>Request</a></td><td>The request object stores details of the incoming client's request. </td></tr>
-   <tr><td nowrap align='center'>public </td><td>response</td><td><a href='ejs.web-Response.html'>Response</a></td><td>The response object stores details of the response going back to the client. </td></tr>
-   <tr><td nowrap align='center'>public </td><td>session</td><td><a href='intrinsic-Object.html'>Object</a></td><td>Stores session state information. The session array will be created automatically if SessionAutoCreate  is defined or if a session is started via the useSession() or createSession() functions. Sessions are  shared among requests that come from a single client. This may mean that multiple requests access the  same session concurrently. Ejscript ensures that such accesses are serialized. The elements are user defined.</td></tr>
+<a name='actionName'></a>
+   <tr><td nowrap align='center'>ejs.web </td><td>actionName</td><td><a href='ejs-String.html'>String</a></td><td>Name of the action being run. </td></tr>
+<a name='config'></a>
+   <tr><td nowrap align='center'>ejs.web </td><td>config</td><td><a href='ejs-Object.html'>Object</a></td><td>Configuration settings - reference to Request.config. </td></tr>
+<a name='controllerName'></a>
+   <tr><td nowrap align='center'>ejs.web </td><td>controllerName</td><td><a href='ejs-String.html'>String</a></td><td>Pascal case controller name. </td></tr>
+<a name='log'></a>
+   <tr><td nowrap align='center'>ejs.web </td><td>log</td><td><a href='ejs-Logger.html'>Logger</a></td><td>Logger stream - reference to Request.log. </td></tr>
+<a name='params'></a>
+   <tr><td nowrap align='center'>ejs.web </td><td>params</td><td><a href='ejs-Object.html'>Object</a></td><td>Form and query parameters - reference to the Request.params object. </td></tr>
+<a name='request'></a>
+   <tr><td nowrap align='center'>ejs.web </td><td>request</td><td><a href='ejs.web-Request.html'>Request</a></td><td>Reference to the current Request object. </td></tr>
+<a name='absHome'></a>
+   <tr><td nowrap align='left'>ejs.web const get </td><td>absHome</td><td><a href='ejs-Uri.html'>Uri</a></td><td>Absolute Uri for the top-level of the application. This returns an absolute Uri (includes scheme and host) 
+for the top-most application Uri. See <a href='#home'>home</a> to get a relative Uri</td></tr>
+<a name='autoFinalizing'></a>
+   <tr><td nowrap align='left'>ejs.web const get </td><td>autoFinalizing</td><td><a href='ejs-Boolean.html'>Boolean</a></td><td>Stop auto-finalizing the request. Some web frameworks will "auto-finalize" requests by calling finalize()
+automatically at the conclusion of the request. Applications that wish to keep the connection open to the
+client can defeat this auto-finalization by calling dontAutoFinalize().<br/><br/>Auto-finalization control. Set to true if the request will be finalized automatically at the conclusion of 
+the request. Defaults to true and is set to false if dontAutoFinalize() is called.</td></tr>
+<a name='finalized'></a>
+   <tr><td nowrap align='left'>ejs.web const get </td><td>finalized</td><td><a href='ejs-Boolean.html'>Boolean</a></td><td>Has the request output been finalized. </td></tr>
+<a name='flash'></a>
+   <tr><td nowrap align='left'>ejs.web const get </td><td>flash</td><td><a href='ejs-Object.html'>Object</a></td><td>Notification "flash" messages to pass to the next request (only). By convention, the following keys are used:.</td></tr>
+<a name='home'></a>
+   <tr><td nowrap align='left'>ejs.web const get </td><td>home</td><td><a href='ejs-Uri.html'>Uri</a></td><td>Home URI for the application. This is a relative Uri from the current URI to the 
+the top-most directory level of the application.</td></tr>
+<a name='pathInfo'></a>
+   <tr><td nowrap align='left'>ejs.web const get </td><td>pathInfo</td><td><a href='ejs-String.html'>String</a></td><td>Portion of the request URL after the scriptName. This is the location of the request within the application.
+The pathInfo is originally derrived from uri.path after splitting off the scriptName. Changes to the uri or 
+scriptName properties will not affect the pathInfo property.</td></tr>
+<a name='session'></a>
+   <tr><td nowrap align='left'>ejs.web const get </td><td>session</td><td><a href='ejs.web-Session.html'>Session</a></td><td>Session state object. The session state object can be used to share state between requests.
+If a session has not already been created, accessing this property automatically creates a new session 
+and sets the <a href='#sessionID'>sessionID</a> property and a cookie containing a session ID sent to the client with the response.
+To test if a session has been created, test the sessionID property which will not auto-create a session.
+Objects are stored in the session state using JSON serialization</td></tr>
+<a name='uri'></a>
+   <tr><td nowrap align='left'>ejs.web const get </td><td>uri</td><td><a href='ejs-Uri.html'>Uri</a></td><td>The current request URI. This property is read-only and is dynamically computed from the originalUri combined
+with the current scheme, host, port, scriptName, pathInfo, query and reference property values. 
+The "uri" property has fields for: scheme, host, port, path, query and reference.</td></tr>
 </table>
+
+<p class='inheritedLink'><a href='ejs-Object.html#Properties'><i>Inherited Properties</i></a></p>
 
 <hr />
 <a name='Methods'></a>
 <h2 class='classSection'>Controller Methods</h2>
 <table class='apiIndex' summary='methods'>
    <tr><th>Qualifiers</th><th width='95%'>Method</th></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#afterFilter'><b>afterFilter</b></a>(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#beforeFilter'><b>beforeFilter</b></a>(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#cache'><b>cache</b></a>(enable: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Add a cache-control header to direct the browser to not cache the response.</td></tr>
-   <tr class='apiDef'><td class='apiType'> </td><td><a href='#Controller'><b>Controller</b></a>()</tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#createSession'><b>createSession</b></a>(timeout: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Enable session control.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#destroySession'><b>destroySession</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Destroy a session.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#discardOutput'><b>discardOutput</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Discard all prior output.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#doAction'><b>doAction</b></a>(act: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Invoke the named action.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#error'><b>error</b></a>(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#escapeHtml'><b>escapeHtml</b></a>(s: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Transform a string to be safe for output into an HTML web page.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#html'><b>html</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>HTML encode the arguments.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#inform'><b>inform</b></a>(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send a positive notification to the user.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#initialize'><b>initialize</b></a>(isApp: <a href='intrinsic-Boolean.html'>Boolean</a>, appDir: <a href='intrinsic-String.html'>String</a>, appUrl: <a href='intrinsic-String.html'>String</a>, session: <a href='ejs.web-Session.html'>Session</a>, host: <a href='ejs.web-Host.html'>Host</a>, request: <a href='ejs.web-Request.html'>Request</a>, response: <a href='ejs.web-Response.html'>Response</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Controller initialization.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#keepAlive'><b>keepAlive</b></a>(on: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Control whether the HTTP connection is kept alive after this request.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#loadView'><b>loadView</b></a>(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Load a view.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#makeUrl'><b>makeUrl</b></a>(action: <a href='intrinsic-String.html'>String</a>, id: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>, query: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Make a URL suitable for invoking actions.</td></tr>
-   <tr class='apiDef'><td class='apiType'>action </td><td><a href='#missing'><b>missing</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Missing action method.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#redirect'><b>redirect</b></a>(action: <a href='intrinsic-String.html'>String</a>, id: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Redirect to the given action Options: id controller.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#redirectUrl'><b>redirectUrl</b></a>(url: <a href='intrinsic-String.html'>String</a>, code: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Redirect the client to a new URL.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#render'><b>render</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render the raw arguments back to the client.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#renderError'><b>renderError</b></a>(code: <a href='intrinsic-Number.html'>Number</a>, msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#renderFile'><b>renderFile</b></a>(filename: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render a file's contents.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#renderRaw'><b>renderRaw</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render raw data.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#renderView'><b>renderView</b></a>(viewName: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render a view template.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#resetFilters'><b>resetFilters</b></a>(): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#sendError'><b>sendError</b></a>(code: <a href='intrinsic-Number.html'>Number</a>, msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send an error response back to the client.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#setCookie'><b>setCookie</b></a>(name: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, path: <a href='intrinsic-String.html'>String</a>, domain: <a href='intrinsic-String.html'>String</a>, lifetime: <a href='intrinsic-Number.html'>Number</a>, secure: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Define a cookie header to include in the reponse.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#setHeader'><b>setHeader</b></a>(key: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, allowMultiple: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Of the format "keyword: value".</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#setHttpCode'><b>setHttpCode</b></a>(code: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the HTTP response status code.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#setMimeType'><b>setMimeType</b></a>(format: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set the response body mime type.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#statusMessage'><b>statusMessage</b></a>(args: <a href='intrinsic-Array.html'>Array</a>)</tr><tr class='apiBrief'><td>&nbsp;</td><td>Send a status message to any registered status message view controls.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#unescapeHtml'><b>unescapeHtml</b></a>(s: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Transform an escaped string into its original contents.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#warn'><b>warn</b></a>(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send a warning message back to the client for display in the flash area.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#wrapFilter'><b>wrapFilter</b></a>(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a></tr>   <tr class='apiDef'><td class='apiType'></td><td><a href='#write'><b>write</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write text to the client.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#writeHtml'><b>writeHtml</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Send text back to the client which must first be HTML escaped.</td></tr>
-   <tr class='apiDef'><td class='apiType'></td><td><a href='#writeRaw'><b>writeRaw</b></a>(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a></tr></table>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#after'><b>after</b></a>(fn, options: <a href='ejs-Object.html'>Object</a> = null): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Run an action checker function after running the action.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#app'><b>app</b></a>(request: <a href='ejs.web-Request.html'>Request</a>, aname: <a href='ejs-String.html'>String</a> = null): <a href='ejs-Object.html'>Object</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Controller web application.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#autoFinalize'><b>autoFinalize</b></a>(): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Finalize the request if dontAutoFinalize has not been called.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#before'><b>before</b></a>(fn, options: <a href='ejs-Object.html'>Object</a> = null): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Run an action checker before running the action.</td></tr>
+   <tr class='apiDef'><td class='apiType'>static const </td><td><a href='#create'><b>create</b></a>(request: <a href='ejs.web-Request.html'>Request</a>, cname: <a href='ejs-String.html'>String</a> = null): <a href='ejs.web-Controller.html'>Controller</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Static factory method to create and initialize a controller.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#dontAutoFinalize'><b>dontAutoFinalize</b></a>(): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Stop auto-finalizing the request.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#error'><b>error</b></a>(msg: <a href='ejs-String.html'>String</a>): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set an error flash notification message.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#finalize'><b>finalize</b></a>(): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Signals the end of any and all response data and flushes any buffered write data to the client.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#flush'><b>flush</b></a>(dir: <a href='ejs-Number.html'>Number</a> = expression): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Flush the stream and underlying streams.Flush request data.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#header'><b>header</b></a>(key: <a href='ejs-String.html'>String</a>): <a href='ejs-String.html'>String</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Get a request header by keyword.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#inform'><b>inform</b></a>(msg: <a href='ejs-String.html'>String</a>): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set a informational flash notification message.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#link'><b>link</b></a>(target: <a href='ejs-Object.html'>Object</a>): <a href='ejs-Uri.html'>Uri</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Create a URI link.</td></tr>
+   <tr class='apiDef'><td class='apiType'>action const </td><td><a href='#missing'><b>missing</b></a>(): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Missing action method.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#notify'><b>notify</b></a>(key: <a href='ejs-String.html'>String</a>, msg: <a href='ejs-String.html'>String</a>): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set a transient flash notification message.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#on'><b>on</b></a>(name, observer: <a href='ejs-Function.html'>Function</a>): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Add an observer to the stream for the named events.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#read'><b>read</b></a>(buffer: <a href='ejs-ByteArray.html'>ByteArray</a>, offset: <a href='ejs-Number.html'>Number</a> = 0 , count: <a href='ejs-Number.html'>Number</a> = -1): <a href='ejs-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Read a data from the stream.If the request is posting a form, i.e.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#redirect'><b>redirect</b></a>(where: <a href='ejs-Object.html'>Object</a>, status: <a href='ejs-Number.html'>Number</a> = expression): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Redirect the client to the given URL.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#removeCheckers'><b>removeCheckers</b></a>(): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Remove all defined checkers on the Controller.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#setHeader'><b>setHeader</b></a>(key: <a href='ejs-String.html'>String</a>, value: <a href='ejs-String.html'>String</a>, overwrite: <a href='ejs-Boolean.html'>Boolean</a> = true): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convenience routine to set a Http response header in <a href='#responseHeaders'>responseHeaders</a></td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#setHeaders'><b>setHeaders</b></a>(headers: <a href='ejs-Object.html'>Object</a>, overwrite: <a href='ejs-Boolean.html'>Boolean</a> = true): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convenience routine to set multiple Http response headers in <a href='#responseHeaders'>responseHeaders</a></td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#setStatus'><b>setStatus</b></a>(status: <a href='ejs-Number.html'>Number</a>): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Convenience routine to set the (proposed) Http response status code.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#warn'><b>warn</b></a>(msg: <a href='ejs-String.html'>String</a>): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Set a warning flash notification.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#write'><b>write</b></a>(data: <a href='ejs-Array.html'>Array</a>): <a href='ejs-Number.html'>Number</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write data to the stream.Write data to the client.Low-level write data to the client.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#writeContent'><b>writeContent</b></a>(data): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Write content based on the requested accept mime type.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#writeError'><b>writeError</b></a>(status: <a href='ejs-Number.html'>Number</a>, msgs: <a href='ejs-Array.html'>Array</a>): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render an error message as the response.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#writeFile'><b>writeFile</b></a>(filename: <a href='ejs-Path.html'>Path</a>): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render file content back to the client.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#writePartialTemplate'><b>writePartialTemplate</b></a>(path: <a href='ejs-Path.html'>Path</a>, options: <a href='ejs-Object.html'>Object</a> = expression): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render a partial response using template file.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#writeTemplate'><b>writeTemplate</b></a>(path: <a href='ejs-Path.html'>Path</a>, options: <a href='ejs-Object.html'>Object</a> = expression): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render a view template from a path.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#writeTemplateLiteral'><b>writeTemplateLiteral</b></a>(page: <a href='ejs-String.html'>String</a>, options: <a href='ejs-Object.html'>Object</a> = expression): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render a view template from a string literal.</td></tr>
+   <tr class='apiDef'><td class='apiType'>const </td><td><a href='#writeView'><b>writeView</b></a>(viewName = null , options: <a href='ejs-Object.html'>Object</a> = expression): <a href='ejs-Void.html'>Void</a></tr><tr class='apiBrief'><td>&nbsp;</td><td>Render a view template.</td></tr>
+</table>
 
-<p class='inheritedLink'><a href='intrinsic-Object.html#Methods'><i>Inherited Methods</i></a></p>
+<p class='inheritedLink'><a href='ejs-Object.html#Methods'><i>Inherited Methods</i></a></p>
 
 <hr />
 <h2>Method Detail</h2>
-<a name='afterFilter'></a>
+<a name='after'></a>
 <div class='api'>
-<div class='apiSig'> afterFilter(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-</div>
-<hr />
-<a name='beforeFilter'></a>
-<div class='api'>
-<div class='apiSig'> beforeFilter(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-</div>
-<hr />
-<a name='cache'></a>
-<div class='api'>
-<div class='apiSig'> cache(enable: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  after(fn, options: <a href='ejs-Object.html'>Object</a> = null): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Add a cache-control header to direct the browser to not cache the response.</p>
+<p>Run an action checker function after running the action.</p>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>enable: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td> [default: true]</td></tr></table></dd>
+<tr class='param'><td class='param'>fn </td><td>Function callback to invoke.</td></tr><tr class='param'><td class='param'>options: <a href='ejs-Object.html'>Object</a> </td><td>Checker options. [default: null]</td></tr></table></dd>
+</dl><dl><dt>Options</dt>
+<dd><table class='parameters' summary ='options'>
+<td class='param'>only</td><td>Only run the checker for this action name.</td></tr>
+<td class='param'>except</td><td>Run the checker for all actions except this name.</td></tr>
+</table></dd>
 </dl></div>
 </div>
 <hr />
-<a name='Controller'></a>
+<a name='app'></a>
 <div class='api'>
-<div class='apiSig'> Controller()
+<div class='apiSig'>const   ejs.web  app(request: <a href='ejs.web-Request.html'>Request</a>, aname: <a href='ejs-String.html'>String</a> = null): <a href='ejs-Object.html'>Object</a>
+</div>
+<div class='apiDetail'>
+<p>Controller web application.</p>
+<dl><dt>Description</dt><dd>This function will run the controller action method and return a response object. 
+The action method may be specified by the <a href='#aname'>aname</a> parameter or it may be supplied via params.action.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>request: <a href='ejs.web-Request.html'>Request</a> </td><td>Request object.</td></tr><tr class='param'><td class='param'>aname: <a href='ejs-String.html'>String</a> </td><td>Optional action method name. If not supplied, params.action is consulted. If that is absent too,  "index" is used as the action method name. [default: null]</td></tr></table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A response object hash {status, headers, body} or null if writing directly using the request object.</dd></dl>
 </div>
 </div>
 <hr />
-<a name='createSession'></a>
+<a name='autoFinalize'></a>
 <div class='api'>
-<div class='apiSig'> createSession(timeout: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  autoFinalize(): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Enable session control.</p>
-<dl><dt>Description</dt><dd>This enables session state management for this request and other requests  from the browser. If a session has not already been created, this call creates a session and sets  the.</dd></dl>
+<p>Finalize the request if dontAutoFinalize has not been called.</p>
+<dl><dt>Description</dt><dd>Finalization signals the end of any write data 
+and flushes any buffered write data to the client. This routine is used by frameworks to allow users to 
+defeat finalization by calling dontAutoFinalize. Users can then call finalize() to explictly control when
+all the response data has been written. If dontAutoFinalize() has been called, this call will have no effect. 
+In that case, call finalize() to finalize the request.</dd></dl>
+</div>
+</div>
+<hr />
+<a name='before'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  before(fn, options: <a href='ejs-Object.html'>Object</a> = null): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Run an action checker before running the action.</p>
+<dl><dt>Description</dt><dd>If the checker function writes a response, the normal
+processing of the requested action will be prevented. Note that checkers do not autoFinalize so if the
+checker does write a response, it must call finalize.</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>timeout: <a href='intrinsic-Number.html'>Number</a> </td><td>Optional timeout for the session in seconds. If ommitted the default timeout is used. </td></tr></table></dd>
+<tr class='param'><td class='param'>fn </td><td>Function callback to invoke.</td></tr><tr class='param'><td class='param'>options: <a href='ejs-Object.html'>Object</a> </td><td>Checker options. [default: null]</td></tr></table></dd>
+</dl><dl><dt>Options</dt>
+<dd><table class='parameters' summary ='options'>
+<td class='param'>only</td><td>Only run the checker for this action name.</td></tr>
+<td class='param'>except</td><td>Run the checker for all actions except this name.</td></tr>
+</table></dd>
 </dl></div>
 </div>
 <hr />
-<a name='destroySession'></a>
+<a name='create'></a>
 <div class='api'>
-<div class='apiSig'> destroySession(): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>static const  create(request: <a href='ejs.web-Request.html'>Request</a>, cname: <a href='ejs-String.html'>String</a> = null): <a href='ejs.web-Controller.html'>Controller</a>
 </div>
 <div class='apiDetail'>
-<p>Destroy a session.</p>
-<dl><dt>Description</dt><dd>This call destroys the session state store that is being used for the current client.  If no session exists, this call has no effect.</dd></dl>
-</div>
-</div>
-<hr />
-<a name='discardOutput'></a>
-<div class='api'>
-<div class='apiSig'> discardOutput(): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Discard all prior output.</p>
-</div>
-</div>
-<hr />
-<a name='doAction'></a>
-<div class='api'>
-<div class='apiSig'> doAction(act: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Invoke the named action.</p>
-<dl><dt>Description</dt><dd>Internal use only. Called from ejsWeb.c.</dd></dl>
+<p>Static factory method to create and initialize a controller.</p>
+<dl><dt>Description</dt><dd>The controller class is specified by 
+params["controller"] which should be set to the controller name without the "Controller" suffix. 
+This call expects the controller class to be loaded. Called by Mvc.load().</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>act: <a href='intrinsic-String.html'>String</a> </td><td>Action name to invoke </td></tr></table></dd>
+<tr class='param'><td class='param'>request: <a href='ejs.web-Request.html'>Request</a> </td><td>Web request object.</td></tr><tr class='param'><td class='param'>cname: <a href='ejs-String.html'>String</a> </td><td>Controller class name. This should be the name of the Controller class without the "Controller" suffix. [default: null]</td></tr></table></dd>
 </dl></div>
+</div>
+<hr />
+<a name='dontAutoFinalize'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  dontAutoFinalize(): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Stop auto-finalizing the request.</p>
+<dl><dt>Description</dt><dd>Some web frameworks will "auto-finalize" requests by calling finalize()
+automatically at the conclusion of the request. Applications that wish to keep the connection open to the
+client can defeat this auto-finalization by calling dontAutoFinalize().</dd></dl>
+</div>
 </div>
 <hr />
 <a name='error'></a>
 <div class='api'>
-<div class='apiSig'> error(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  error(msg: <a href='ejs-String.html'>String</a>): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set an error flash notification message.</p>
+<dl><dt>Description</dt><dd>Flash messages persist for only one request and are a convenient way to pass state information or 
+feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
+be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+automatically.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>msg: <a href='ejs-String.html'>String</a> </td><td>Message to store.</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='finalize'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  finalize(): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Signals the end of any and all response data and flushes any buffered write data to the client.</p>
+<dl><dt>Description</dt><dd>If the request has already been finalized, this call has no additional effect.</dd></dl>
 </div>
 </div>
 <hr />
-<a name='escapeHtml'></a>
+<a name='flush'></a>
 <div class='api'>
-<div class='apiSig'> escapeHtml(s: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
+<div class='apiSig'>const   ejs.web  flush(dir: <a href='ejs-Number.html'>Number</a> = expression): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Transform a string to be safe for output into an HTML web page.</p>
-<dl><dt>Description</dt><dd>It does this by changing the ">", "<" and '"' characters into their ampersand HTML equivalents.</dd></dl>
+<p>Flush the stream and underlying streams.Flush request data.</p>
+<dl><dt>Description</dt><dd>A supplied flush <a href='#direction'>direction</a> argument modifies the effect of this call.
+If direction is set to Stream.READ, then all read data is discarded. If direction is set to Stream.WRITE, 
+any buffered data is written. Stream.BOTH will cause both directions to be flushed.  If the stream is in 
+sync mode, this call will block until all data is written. If the stream is in async mode, it will attempt 
+to write all data but will return immediately.Calling flush(Sream.WRITE) or finalize() is required to ensure buffered write data is sent 
+to the client. Flushing the read direction is ignored</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>s: <a href='intrinsic-String.html'>String</a> </td><td>input string </td></tr></table></dd>
-</dl><dl><dt>Returns</dt>
-<dd>A transformed HTML escaped string.</dd></dl>
-</div>
+<tr class='param'><td class='param'>dir: <a href='ejs-Number.html'>Number</a> </td><td> [default: expression]</td></tr><tr class='param'><td class='param'>dir: <a href='ejs-Number.html'>Number</a> </td><td> [default: expression]</td></tr></table></dd>
+</dl></div>
 </div>
 <hr />
-<a name='html'></a>
+<a name='header'></a>
 <div class='api'>
-<div class='apiSig'> html(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-String.html'>String</a>
+<div class='apiSig'>const   ejs.web  header(key: <a href='ejs-String.html'>String</a>): <a href='ejs-String.html'>String</a>
 </div>
 <div class='apiDetail'>
-<p>HTML encode the arguments.</p>
+<p>Get a request header by keyword.</p>
+<dl><dt>Description</dt><dd>Headers supplied by the remote client are stored in lower-case. 
+Headers defined on the server-side preserve case. This routine supports both by doing a case-insensitive lookup.</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Variable arguments that will be converted to safe html </td></tr></table></dd>
+<tr class='param'><td class='param'>key: <a href='ejs-String.html'>String</a> </td><td>Header key value to retrieve. The key match is case insensitive.</td></tr></table></dd>
 </dl><dl><dt>Returns</dt>
-<dd>A string containing the encoded arguments catenated together.</dd></dl>
+<dd>The header value.</dd></dl>
 </div>
 </div>
 <hr />
 <a name='inform'></a>
 <div class='api'>
-<div class='apiSig'> inform(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  inform(msg: <a href='ejs-String.html'>String</a>): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Send a positive notification to the user.</p>
-<dl><dt>Description</dt><dd>This is just a convenience instead of setting flash["inform"].</dd></dl>
+<p>Set a informational flash notification message.</p>
+<dl><dt>Description</dt><dd>Flash messages persist for only one request and are a convenient way to pass state information or 
+feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
+be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+automatically.</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>msg: <a href='intrinsic-String.html'>String</a> </td><td>Message to display </td></tr></table></dd>
+<tr class='param'><td class='param'>msg: <a href='ejs-String.html'>String</a> </td><td>Message to store.</td></tr></table></dd>
 </dl></div>
 </div>
 <hr />
-<a name='initialize'></a>
+<a name='link'></a>
 <div class='api'>
-<div class='apiSig'> initialize(isApp: <a href='intrinsic-Boolean.html'>Boolean</a>, appDir: <a href='intrinsic-String.html'>String</a>, appUrl: <a href='intrinsic-String.html'>String</a>, session: <a href='ejs.web-Session.html'>Session</a>, host: <a href='ejs.web-Host.html'>Host</a>, request: <a href='ejs.web-Request.html'>Request</a>, response: <a href='ejs.web-Response.html'>Response</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  link(target: <a href='ejs-Object.html'>Object</a>): <a href='ejs-Uri.html'>Uri</a>
 </div>
 <div class='apiDetail'>
-<p>Controller initialization.</p>
-<dl><dt>Description</dt><dd>This is specially hand-crafted by the hosting web server so that it runs before the sub-classing constructors.</dd></dl>
+<p>Create a URI link.</p>
+<dl><dt>Description</dt><dd>The target parameter may contain partial or complete URI information. The missing parts 
+are supplied using the current request and route tables. The resulting URI is a normalized, server-local 
+URI (begins with "/"). The URI will include any defined scriptName, but will not include scheme, host or 
+port components.</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>appDir: <a href='intrinsic-String.html'>String</a> </td><td>Set to the top level directory containing the application </td></tr><tr><td class='param'>appUrl: <a href='intrinsic-String.html'>String</a> </td><td>URL that points to the application </td></tr><tr><td class='param'>session: <a href='ejs.web-Session.html'>Session</a> </td><td>Session state object </td></tr><tr><td class='param'>host: <a href='ejs.web-Host.html'>Host</a> </td><td>Host object </td></tr><tr><td class='param'>request: <a href='ejs.web-Request.html'>Request</a> </td><td>Request object </td></tr><tr><td class='param'>response: <a href='ejs.web-Response.html'>Response</a> </td><td>Response object </td></tr></table></dd>
-</dl></div>
-</div>
-<hr />
-<a name='keepAlive'></a>
-<div class='api'>
-<div class='apiSig'> keepAlive(on: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Control whether the HTTP connection is kept alive after this request.</p>
-</div>
-</div>
-<hr />
-<a name='loadView'></a>
-<div class='api'>
-<div class='apiSig'> loadView(path: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Load a view.</p>
-<dl><dt>Description</dt><dd>If path is not supplied, use the default view for the current action.</dd></dl>
-<dl><dt>Parameters</dt>
-<dd><table class='parameters' summary ='parameters'>
-</td></tr><tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
-</dl></div>
-</div>
-<hr />
-<a name='makeUrl'></a>
-<div class='api'>
-<div class='apiSig'> makeUrl(action: <a href='intrinsic-String.html'>String</a>, id: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>, query: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-String.html'>String</a>
-</div>
-<div class='apiDetail'>
-<p>Make a URL suitable for invoking actions.</p>
-<dl><dt>Description</dt><dd>This routine will construct a URL Based on a supplied action name,  model id and options that may contain an optional controller name. This is a convenience routine remove from  applications the burden of building URLs that correctly use action and controller names.</dd></dl>
-<dl><dt>Parameters</dt>
-<dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>action: <a href='intrinsic-String.html'>String</a> </td><td>The action name to invoke in the URL. If the name starts with "." or "/", it is assumed to be  a controller name and it is used by itself. </td></tr><tr><td class='param'>id: <a href='intrinsic-String.html'>String</a> </td><td>The model record ID to select via the URL. Defaults to null.  [default: null ]</td></tr><tr><td class='param'>options: <a href='intrinsic-Object.html'>Object</a> </td><td>The options string </td></tr><tr><td class='param'>query: <a href='intrinsic-Object.html'>Object</a> </td><td>Query </td></tr></table></dd>
-</dl><h3 class='methodSection'>Options</h3>
-<p class='detail'>
-url: <a href='An.html'>An</a>  &mdash; override url to use. All other args are ignored. </p>
-<p class='detail'>
-query: <a href='Query.html'>Query</a>  &mdash; string to append to the URL. Overridden by the query arg. </p>
-<p class='detail'>
-controller: <a href='The.html'>The</a>  &mdash; name of the controller to use in the URL. </p>
-<dl><dt>Returns</dt>
-<dd>A string URL.</dd></dl>
+<tr class='param'><td class='param'>target: <a href='ejs-Object.html'>Object</a> </td><td>The URI target. The target parameter can be a URI string or object hash of components. If the  target is a string, it is may contain an absolute or relative URI. If the target has an absolute URI path,  that path is used unmodified. If the target is a relative URI, it is appended to the current request URI  path.  The target can also be an object hash of URI components: scheme, host, port, path, reference and query. If these component properties are supplied, these will be combined to create a URI.  The URI will be created according to the route URI template. The template may be explicitly specified via a "route" target property. Otherwise, if an "action" property is specified, the route of the same name will be used. If these don't result in a usable route, the "default" route will be used. See the Router for more details.  If the target is a string that begins with ".</td></tr></table></dd>
+</dl><dl><dt>Options</dt>
+<dd><table class='parameters' summary ='options'>
+<td class='param'>scheme</td><td>String URI scheme portion.</td></tr>
+<td class='param'>host</td><td>String URI host portion.</td></tr>
+<td class='param'>port</td><td>Number URI port number.</td></tr>
+<td class='param'>path</td><td>String URI path portion.</td></tr>
+<td class='param'>reference</td><td>String URI path reference. Does not include "#".</td></tr>
+<td class='param'>query</td><td>String URI query parameters. Does not include "?".</td></tr>
+<td class='param'>controller</td><td>String Controller name if using a Controller-based route. This can also be specified via the action option.</td></tr>
+<td class='param'>action</td><td>String Action to invoke. This can be a URI string or a Controller action of the form.</td></tr>
+<td class='param'>route</td><td>String Route name to use for the URI template.</td></tr>
+</table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A normalized, server-local Uri object. MOB - OPT make native.</dd></dl>
+<dl><dt>Example</dt>
+<dd><pre>Given a current request of http://example.com/samples/demo" and "r" == the current request:
+  r.link("images/splash.png")                  returns "/samples/images/splash.png"
+r.link("images/splash.png").complete(r.uri)  returns "http://example.com/samples/images/splash.png"
+r.link("images/splash.png").relative(r.uri)  returns "images/splash.png"
+ r.link("http://example.com/index.html")
+r.link("/path/to/index.html")
+r.link("</pre></dd></dl>
 </div>
 </div>
 <hr />
 <a name='missing'></a>
 <div class='api'>
-<div class='apiSig'> action missing(): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   action  missing(): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
 <p>Missing action method.</p>
@@ -279,218 +337,293 @@ controller: <a href='The.html'>The</a>  &mdash; name of the controller to use in
 </div>
 </div>
 <hr />
+<a name='notify'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  notify(key: <a href='ejs-String.html'>String</a>, msg: <a href='ejs-String.html'>String</a>): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Set a transient flash notification message.</p>
+<dl><dt>Description</dt><dd>Flash messages persist for only one request and are a convenient
+way to pass state information or feedback messages to the next request. To use flash messages, 
+setupFlash() and finalizeFlash() must be called before and after the request is processed. Web.process
+will call setupFlash and finalizeFlash automatically.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>key: <a href='ejs-String.html'>String</a> </td><td>Flash message key.</td></tr><tr class='param'><td class='param'>msg: <a href='ejs-String.html'>String</a> </td><td>Message to store.</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='on'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  on(name, observer: <a href='ejs-Function.html'>Function</a>): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Add an observer to the stream for the named events.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>name </td><td>Name of the event to listen for. The name may be an array of events.</td></tr><tr class='param'><td class='param'>observer: <a href='ejs-Function.html'>Function</a> </td><td>Callback observer function. The function is called with the following signature: function observer(event: String, ...args): Void.</td></tr></table></dd>
+</dl><dl><dt>Events</dt>
+<dd><table class='parameters' summary ='events'>
+<td class='param'>readable</td><td>Issued when the stream becomes readable.</td></tr>
+<td class='param'>writable</td><td>Issued when the stream becomes writable.</td></tr>
+<td class='param'>close</td><td>Issued when stream is being closed.</td></tr>
+<td class='param'>readable</td><td>Issued when some body content is available.</td></tr>
+<td class='param'>writable</td><td>Issued when the connection is writable to accept body data (PUT, POST).</td></tr>
+<td class='param'>close</td><td>Issued when the request completes.</td></tr>
+<td class='param'>error</td><td>Issued if the request does not complete or the connection disconnects. An error event is not  caused by non-200 status codes, these are regarded as valid return results. Rather, an error event will be issued when the request cannot return a complete, valid Http response to the client. All events are called with the signature: function (event: String, http: Http): Void.</td></tr>
+</table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='read'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  read(buffer: <a href='ejs-ByteArray.html'>ByteArray</a>, offset: <a href='ejs-Number.html'>Number</a> = 0 , count: <a href='ejs-Number.html'>Number</a> = -1): <a href='ejs-Number.html'>Number</a>
+</div>
+<div class='apiDetail'>
+<p>Read a data from the stream.If the request is posting a form, i.e.</p>
+<dl><dt>Description</dt><dd>If data is available, the call will return immediately. 
+If no data is available and the stream is in sync mode, the call will block until data is available.
+If no data is available and the stream is in async mode, the call will not block and will return immediately.
+In this case a "readable" event will be issued when data is available for reading.the Http ContentType header is set to 
+"application/x-www-form-urlencoded", then the request object will not be created by the HttpServer until
+all the form data is read and the <a href='#params'>params</a> collection is populated with the form data. This permits form
+data to be processed synchronously without having to use async/observer techniques to respond to readable
+events. With all other content types, the Request object will be created and run, before incoming client 
+data has been read. To read data in these situations, register an observer function to run when the
+connection becomes "readable"</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>buffer: <a href='ejs-ByteArray.html'>ByteArray</a> </td><td>Destination byte array for read data.</td></tr><tr class='param'><td class='param'>offset: <a href='ejs-Number.html'>Number</a> </td><td>Offset in the byte array to place the data. If the offset is -1, then data is appended to the buffer write <a href='#position'>position</a> which is then updated [default: 0 ]</td></tr><tr class='param'><td class='param'>count: <a href='ejs-Number.html'>Number</a> </td><td>Read up to this number of bytes. If -1, read as much as the buffer will hold up. If the  stream is of fixed and known length (such as a file) and the buffer is of sufficient size or is growable,  read the entire stream. [default: -1]</td></tr><tr class='param'><td class='param'>offset: <a href='ejs-Number.html'>Number</a> </td><td> [default: 0 ]</td></tr><tr class='param'><td class='param'>count: <a href='ejs-Number.html'>Number</a> </td><td> [default: -1]</td></tr><tr class='param'><td class='param'>offset: <a href='ejs-Number.html'>Number</a> </td><td> [default: 0 ]</td></tr><tr class='param'><td class='param'>count: <a href='ejs-Number.html'>Number</a> </td><td> [default: -1]</td></tr></table></dd>
+</dl><dl><dt>Events</dt>
+<dd><table class='parameters' summary ='events'>
+<td class='param'>readable</td><td>Issued when there is new read data available.</td></tr>
+<td class='param'>writable</td><td>Issued when the stream becomes empty.</td></tr>
+</table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A count of the bytes actually read. Returns null on eof.</dd></dl>
+<dl><dt>Example</dt>
+<dd><pre>request.on("readable", function(event, request) {
+    var data = new byteArray
+    if (read(data)) {
+        print("Got " + data)
+    } else {
+        //  End of input
+        request.finalize()
+    }
+})
+</pre></dd></dl>
+</div>
+</div>
+<hr />
 <a name='redirect'></a>
 <div class='api'>
-<div class='apiSig'> redirect(action: <a href='intrinsic-String.html'>String</a>, id: <a href='intrinsic-String.html'>String</a>, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  redirect(where: <a href='ejs-Object.html'>Object</a>, status: <a href='ejs-Number.html'>Number</a> = expression): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Redirect to the given action Options: id controller.</p>
+<p>Redirect the client to the given URL.</p>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>id: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
+<tr class='param'><td class='param'>where: <a href='ejs-Object.html'>Object</a> </td><td>Url to redirect the client toward. This can be a relative or absolute string URL or it can be a hash of URL components. For example, the following are valid inputs: "../index.ejs",  "http://www.example.com/home.html", {action: "list"}.</td></tr><tr class='param'><td class='param'>status: <a href='ejs-Number.html'>Number</a> </td><td>Http status code to use in the redirection response. Defaults to 302. [default: expression]</td></tr></table></dd>
 </dl></div>
 </div>
 <hr />
-<a name='redirectUrl'></a>
+<a name='removeCheckers'></a>
 <div class='api'>
-<div class='apiSig'> redirectUrl(url: <a href='intrinsic-String.html'>String</a>, code: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  removeCheckers(): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Redirect the client to a new URL.</p>
-<dl><dt>Description</dt><dd>This call redirects the client's browser to a new location specified  by the.</dd></dl>
-<dl><dt>Parameters</dt>
-<dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>url: <a href='intrinsic-String.html'>String</a> </td><td>Url to redirect the client to </td></tr><tr><td class='param'>code: <a href='intrinsic-Number.html'>Number</a> </td><td>Optional HTTP redirection code </td></tr></table></dd>
-</dl></div>
+<p>Remove all defined checkers on the Controller.</p>
 </div>
-<hr />
-<a name='render'></a>
-<div class='api'>
-<div class='apiSig'> render(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Render the raw arguments back to the client.</p>
-<dl><dt>Description</dt><dd>The args are converted to strings.</dd></dl>
-</div>
-</div>
-<hr />
-<a name='renderError'></a>
-<div class='api'>
-<div class='apiSig'> renderError(code: <a href='intrinsic-Number.html'>Number</a>, msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-</div>
-<hr />
-<a name='renderFile'></a>
-<div class='api'>
-<div class='apiSig'> renderFile(filename: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Render a file's contents.</p>
-</div>
-</div>
-<hr />
-<a name='renderRaw'></a>
-<div class='api'>
-<div class='apiSig'> renderRaw(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Render raw data.</p>
-</div>
-</div>
-<hr />
-<a name='renderView'></a>
-<div class='api'>
-<div class='apiSig'> renderView(viewName: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Render a view template.</p>
-<dl><dt>Parameters</dt>
-<dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>viewName: <a href='intrinsic-String.html'>String</a> </td><td></td></tr></table></dd>
-</dl></div>
-</div>
-<hr />
-<a name='resetFilters'></a>
-<div class='api'>
-<div class='apiSig'> resetFilters(): <a href='intrinsic-Void.html'>Void</a>
-</div>
-</div>
-<hr />
-<a name='sendError'></a>
-<div class='api'>
-<div class='apiSig'> sendError(code: <a href='intrinsic-Number.html'>Number</a>, msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Send an error response back to the client.</p>
-<dl><dt>Description</dt><dd>This calls discard the output.</dd></dl>
-<dl><dt>Parameters</dt>
-<dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>msg: <a href='intrinsic-String.html'>String</a> </td><td>Message to display </td></tr></table></dd>
-</dl></div>
-</div>
-<hr />
-<a name='setCookie'></a>
-<div class='api'>
-<div class='apiSig'> setCookie(name: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, path: <a href='intrinsic-String.html'>String</a>, domain: <a href='intrinsic-String.html'>String</a>, lifetime: <a href='intrinsic-Number.html'>Number</a>, secure: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
-<div class='apiDetail'>
-<p>Define a cookie header to include in the reponse.</p>
-<dl><dt>Description</dt><dd>Path, domain and lifetime can be set to null for default values.</dd></dl>
-<dl><dt>Parameters</dt>
-<dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>name: <a href='intrinsic-String.html'>String</a> </td><td>Cookie name </td></tr><tr><td class='param'>value: <a href='intrinsic-String.html'>String</a> </td><td>Cookie value </td></tr><tr><td class='param'>path: <a href='intrinsic-String.html'>String</a> </td><td>URI path to which the cookie applies  [default: null ]</td></tr><tr><td class='param'>domain: <a href='intrinsic-String.html'>String</a> </td><td>Domain in which the cookie applies. Must have 2-3 dots.  [default: null ]</td></tr><tr><td class='param'>lifetime: <a href='intrinsic-Number.html'>Number</a> </td><td>Duration for the cookie to persist in seconds </td></tr><tr><td class='param'>secure: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>Set to true if the cookie only applies for SSL based connections  [default: false]</td></tr></table></dd>
-</dl></div>
 </div>
 <hr />
 <a name='setHeader'></a>
 <div class='api'>
-<div class='apiSig'> setHeader(key: <a href='intrinsic-String.html'>String</a>, value: <a href='intrinsic-String.html'>String</a>, allowMultiple: <a href='intrinsic-Boolean.html'>Boolean</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  setHeader(key: <a href='ejs-String.html'>String</a>, value: <a href='ejs-String.html'>String</a>, overwrite: <a href='ejs-Boolean.html'>Boolean</a> = true): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Of the format "keyword: value".</p>
-<dl><dt>Description</dt><dd>If a header has already been defined and \a allowMultiple is false,  the header will be overwritten. If \a allowMultiple is true, the new header will be appended to the  response headers and the existing header will also be output. NOTE: case does not matter in the header keyword.</dd></dl>
+<p>Convenience routine to set a Http response header in <a href='#responseHeaders'>responseHeaders</a></p>
+<dl><dt>Description</dt><dd>If a header has already been 
+defined and <a href='#overwrite'>overwrite</a> is true, the header will be overwritten. NOTE: case is ignored in the header keyword.
+Access <a href='#responseHeaders'>responseHeaders</a> to inspect the proposed response header set</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-</td></tr><tr><td class='param'>allowMultiple: <a href='intrinsic-Boolean.html'>Boolean</a> </td><td>If false, overwrite existing headers with the same keyword. If true, all headers are output.  [default: false]</td></tr></table></dd>
+<tr class='param'><td class='param'>key: <a href='ejs-String.html'>String</a> </td><td>The header keyword for the request, e.g. "accept".</td></tr><tr class='param'><td class='param'>value: <a href='ejs-String.html'>String</a> </td><td>The value to associate with the header, e.g. "yes".</td></tr><tr class='param'><td class='param'>overwrite: <a href='ejs-Boolean.html'>Boolean</a> </td><td>If the header is already defined and overwrite is true, then the new value will overwrite the old. If overwrite is false, the new value will be catenated to the old value with a ", " separator. [default: true]</td></tr><tr class='param'><td class='param'>overwrite: <a href='ejs-Boolean.html'>Boolean</a> </td><td> [default: true]</td></tr></table></dd>
 </dl></div>
 </div>
 <hr />
-<a name='setHttpCode'></a>
+<a name='setHeaders'></a>
 <div class='api'>
-<div class='apiSig'> setHttpCode(code: <a href='intrinsic-Number.html'>Number</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  setHeaders(headers: <a href='ejs-Object.html'>Object</a>, overwrite: <a href='ejs-Boolean.html'>Boolean</a> = true): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Set the HTTP response status code.</p>
+<p>Convenience routine to set multiple Http response headers in <a href='#responseHeaders'>responseHeaders</a></p>
+<dl><dt>Description</dt><dd>Access <a href='#responseHeaders'>responseHeaders</a> to 
+inspect the proposed response header set</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>code: <a href='intrinsic-Number.html'>Number</a> </td><td>HTTP status code to define </td></tr></table></dd>
+<tr class='param'><td class='param'>headers: <a href='ejs-Object.html'>Object</a> </td><td>Set of headers to use.</td></tr><tr class='param'><td class='param'>overwrite: <a href='ejs-Boolean.html'>Boolean</a> </td><td>If the header is already defined and overwrite is true, then the new value will overwrite the old. If overwrite is false, the new value will be catenated to the old value with a ", " separator. [default: true]</td></tr><tr class='param'><td class='param'>overwrite: <a href='ejs-Boolean.html'>Boolean</a> </td><td> [default: true]</td></tr></table></dd>
 </dl></div>
 </div>
 <hr />
-<a name='setMimeType'></a>
+<a name='setStatus'></a>
 <div class='api'>
-<div class='apiSig'> setMimeType(format: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  setStatus(status: <a href='ejs-Number.html'>Number</a>): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Set the response body mime type.</p>
-<dl><dt>Parameters</dt>
-<dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>format: <a href='intrinsic-String.html'>String</a> </td><td>Mime type for the response. For example "text/plain". </td></tr></table></dd>
-</dl></div>
-</div>
-<hr />
-<a name='statusMessage'></a>
-<div class='api'>
-<div class='apiSig'> statusMessage(args: <a href='intrinsic-Array.html'>Array</a>)
-</div>
-<div class='apiDetail'>
-<p>Send a status message to any registered status message view controls.</p>
-</div>
-</div>
-<hr />
-<a name='unescapeHtml'></a>
-<div class='api'>
-<div class='apiSig'> unescapeHtml(s: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-String.html'>String</a>
-</div>
-<div class='apiDetail'>
-<p>Transform an escaped string into its original contents.</p>
-<dl><dt>Description</dt><dd>This reverses the transformation done by $escapeHtml. It does this by changing &quot, &gt, &lt back into ", < and >.</dd></dl>
-<dl><dt>Parameters</dt>
-<dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>s: <a href='intrinsic-String.html'>String</a> </td><td>input string </td></tr></table></dd>
-</dl><dl><dt>Returns</dt>
-<dd>A transformed string.</dd></dl>
+<p>Convenience routine to set the (proposed) Http response status code.</p>
+<dl><dt>Description</dt><dd>This is equivalent to assigning 
+to the <a href='#status'>status</a> property</dd></dl>
 </div>
 </div>
 <hr />
 <a name='warn'></a>
 <div class='api'>
-<div class='apiSig'> warn(msg: <a href='intrinsic-String.html'>String</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  warn(msg: <a href='ejs-String.html'>String</a>): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Send a warning message back to the client for display in the flash area.</p>
-<dl><dt>Description</dt><dd>This is just a convenience instead of setting flash["warn"].</dd></dl>
+<p>Set a warning flash notification.</p>
+<dl><dt>Description</dt><dd>Flash messages persist for only one request and are a convenient way to pass state information or 
+feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
+be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+automatically.</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>msg: <a href='intrinsic-String.html'>String</a> </td><td>Message to display </td></tr></table></dd>
+<tr class='param'><td class='param'>msg: <a href='ejs-String.html'>String</a> </td><td>Message to store.</td></tr></table></dd>
 </dl></div>
-</div>
-<hr />
-<a name='wrapFilter'></a>
-<div class='api'>
-<div class='apiSig'> wrapFilter(fn, options: <a href='intrinsic-Object.html'>Object</a>): <a href='intrinsic-Void.html'>Void</a>
-</div>
 </div>
 <hr />
 <a name='write'></a>
 <div class='api'>
-<div class='apiSig'> write(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  write(data: <a href='ejs-Array.html'>Array</a>): <a href='ejs-Number.html'>Number</a>
 </div>
 <div class='apiDetail'>
-<p>Write text to the client.</p>
-<dl><dt>Description</dt><dd>This call writes the arguments back to the client's browser. The arguments  are converted to strings before writing back to the client. Text written using write, will be buffered  up to a configurable maximum. This allows text to be written prior to setting HTTP headers with setHeader.</dd></dl>
+<p>Write data to the stream.Write data to the client.Low-level write data to the client.</p>
+<dl><dt>Description</dt><dd>If the stream can accept all the write data, the call returns immediately with the number of bytes written. 
+If writing more data than the stream can absorb in sync mode, the call will block until the data is written.
+If writing more data than the stream can absorb in async mode, the call will not block and will buffer the
+data and return immediately. Some streams will require a flush() call to actually send the data.
+A "writable" event will be issued when the stream can again absorb more data.This will buffer the written data until either flush() or finalize() is called.This will buffer the written data until either flush() or finalize() 
+is called.</dd></dl>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Text or objects to write to the client </td></tr></table></dd>
+<tr class='param'><td class='param'>data: <a href='ejs-Array.html'>Array</a> </td><td>Data to write.</td></tr></table></dd>
+</dl><dl><dt>Events</dt>
+<dd><table class='parameters' summary ='events'>
+<td class='param'>readable</td><td>Issued when data is written and a consumer can read without blocking.</td></tr>
+<td class='param'>writable</td><td>Issued when the stream becomes empty and it is ready to be written to.</td></tr>
+</table></dd>
+</dl><dl><dt>Returns</dt>
+<dd>A count of the bytes actually written.</dd></dl>
+<dl><dt>Throws</dt><dd>
+<a href='ejs-IOError.html'>IOError</a>: if there is an I/O error. 
+</dd>
 </dl></div>
 </div>
 <hr />
-<a name='writeHtml'></a>
+<a name='writeContent'></a>
 <div class='api'>
-<div class='apiSig'> writeHtml(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  writeContent(data): <a href='ejs-Void.html'>Void</a>
 </div>
 <div class='apiDetail'>
-<p>Send text back to the client which must first be HTML escaped.</p>
+<p>Write content based on the requested accept mime type.</p>
 <dl><dt>Parameters</dt>
 <dd><table class='parameters' summary ='parameters'>
-<tr><td class='param'>args: <a href='intrinsic-Array.html'>Array</a> </td><td>Objects to emit </td></tr></table></dd>
+<tr class='param'><td class='param'>data </td><td>Data to send to the client.</td></tr></table></dd>
 </dl></div>
 </div>
 <hr />
-<a name='writeRaw'></a>
+<a name='writeError'></a>
 <div class='api'>
-<div class='apiSig'> writeRaw(args: <a href='intrinsic-Array.html'>Array</a>): <a href='intrinsic-Void.html'>Void</a>
+<div class='apiSig'>const   ejs.web  writeError(status: <a href='ejs-Number.html'>Number</a>, msgs: <a href='ejs-Array.html'>Array</a>): <a href='ejs-Void.html'>Void</a>
 </div>
+<div class='apiDetail'>
+<p>Render an error message as the response.</p>
+<dl><dt>Description</dt><dd>This call sets the response status and writes a HTML error message with the given arguments back to the client.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>status: <a href='ejs-Number.html'>Number</a> </td><td>Http response status code.</td></tr><tr class='param'><td class='param'>msgs: <a href='ejs-Array.html'>Array</a> </td><td>Error messages to send with the response.</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeFile'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  writeFile(filename: <a href='ejs-Path.html'>Path</a>): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render file content back to the client.</p>
+<dl><dt>Description</dt><dd>This call writes the given file contents back to the client.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>filename: <a href='ejs-Path.html'>Path</a> </td><td>Path to the filename to send to the client.</td></tr></table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writePartialTemplate'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  writePartialTemplate(path: <a href='ejs-Path.html'>Path</a>, options: <a href='ejs-Object.html'>Object</a> = expression): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render a partial response using template file.</p>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>path: <a href='ejs-Path.html'>Path</a> </td><td>Path to the template to render to the client.</td></tr><tr class='param'><td class='param'>options: <a href='ejs-Object.html'>Object</a> </td><td>Additional options. [default: expression]</td></tr></table></dd>
+</dl><dl><dt>Options</dt>
+<dd><table class='parameters' summary ='options'>
+<td class='param'>layout</td><td>Optional layout template. Defaults to config.directories.layouts/default.ejs.</td></tr>
+</table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeTemplate'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  writeTemplate(path: <a href='ejs-Path.html'>Path</a>, options: <a href='ejs-Object.html'>Object</a> = expression): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render a view template from a path.</p>
+<dl><dt>Description</dt><dd>This call writes the result of running the view template file back to the client.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>path: <a href='ejs-Path.html'>Path</a> </td><td>Path to the view template to render and write to the client.</td></tr><tr class='param'><td class='param'>options: <a href='ejs-Object.html'>Object</a> </td><td>Additional options. [default: expression]</td></tr></table></dd>
+</dl><dl><dt>Options</dt>
+<dd><table class='parameters' summary ='options'>
+<td class='param'>layout</td><td>Optional layout template. Defaults to config.directories.layouts/default.ejs.</td></tr>
+</table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeTemplateLiteral'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  writeTemplateLiteral(page: <a href='ejs-String.html'>String</a>, options: <a href='ejs-Object.html'>Object</a> = expression): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render a view template from a string literal.</p>
+<dl><dt>Description</dt><dd>This call writes the result of running the view template file back to the client.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>page: <a href='ejs-String.html'>String</a> </td><td>String literal containing the view template to render and write to the client.</td></tr><tr class='param'><td class='param'>options: <a href='ejs-Object.html'>Object</a> </td><td>Additional options. [default: expression]</td></tr></table></dd>
+</dl><dl><dt>Options</dt>
+<dd><table class='parameters' summary ='options'>
+<td class='param'>layout</td><td>Path layout template. Defaults to config.directories.layouts/default.ejs.</td></tr>
+</table></dd>
+</dl></div>
+</div>
+<hr />
+<a name='writeView'></a>
+<div class='api'>
+<div class='apiSig'>const   ejs.web  writeView(viewName = null , options: <a href='ejs-Object.html'>Object</a> = expression): <a href='ejs-Void.html'>Void</a>
+</div>
+<div class='apiDetail'>
+<p>Render a view template.</p>
+<dl><dt>Description</dt><dd>This call writes the result of running the view template file back to the client.</dd></dl>
+<dl><dt>Parameters</dt>
+<dd><table class='parameters' summary ='parameters'>
+<tr class='param'><td class='param'>viewName </td><td>Name of the view to render to the client. The view template filename will be constructed by  joining the views directory with the controller name and view name. E.g. views/Controller/list.ejs. [default: null ]</td></tr><tr class='param'><td class='param'>options: <a href='ejs-Object.html'>Object</a> </td><td>Additional options. [default: expression]</td></tr></table></dd>
+</dl><dl><dt>Options</dt>
+<dd><table class='parameters' summary ='options'>
+<td class='param'>controller</td><td>Optional controller for the view.</td></tr>
+<td class='param'>layout</td><td>Optional layout template. Defaults to config.directories.layouts/default.ejs.</td></tr>
+</table></dd>
+</dl></div>
 </div>
 <hr />
 <div class="terms">

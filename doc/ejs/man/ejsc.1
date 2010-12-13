@@ -7,15 +7,14 @@ ejsc \- Ejscript compiler.
 [\fI--debug\fR]
 [\fI--doc\fR]
 [\fI--lang [ecma|plus|fixed]\fR]
-[\fI--empty\fR]
 [\fI--noout\fR]
 [\fI--optimize level\fR]
 [\fI--out filename\fR]
 [\fI--parse\fR]
+[\fI--require 'module ...'\fR]
 [\fI--search ejsPath\fR]
 [\fI--standard\fR]
 [\fI--strict\fR]
-[\fI--use 'module, ...'\fR]
 [\fI--version\fR]
 [\fI--warn level\fR]
 files...
@@ -84,10 +83,6 @@ stack backtraces to include line number information.
 Include documentation strings from input scripts in the output modules. The \fBejsmod\fR command can then generate
 HTML documentation using these doc strings. The format of the doc strings resembles that of Javadoc.
 .TP
-\fB\--empty\fR
-Start with an empty interpreter without the core language types such as Object, Array and Number. This option is 
-used to build the foundation ejs.mod module which contains the core system types.
-.TP
 \fB\--lang [ecma|plus|fixed]\fR
 Set the language compliance mode. Use \fBecma\fR for strict ECMAScript Edition 3 compliance. Use \fBplus\fR for 
 close ECMAScript compliance plus Ejscript enhancements. Select \fBfixed\fR mode for ECMAScript features plus
@@ -102,6 +97,9 @@ Set the code optimization level. Level values must be between 0 (least) and 9 (m
 .TP
 \fB\--parse\fR
 Just parse the source scripts. Don't verify, execute or generate output. Useful to check the script syntax only.
+.TP
+\fB\--require 'module ...'\fR
+List of modules to preload before compiling input files.
 .TP
 \fB\--search ejsPath\fR
 Set the module search path. The module search path is a set of directories that the \fBejsc\fR command will use
@@ -130,9 +128,6 @@ variables be declared and typed before use.
 \fB\--strict\fR
 Run scripts in standard mode. Ejscript supports two parsing modes: strict and standard. Strict mode requires that 
 all variables be declared and typed.
-.TP
-\fB\--use 'module, ...'\fR
-List of modules to preload before compiling input files.
 .TP
 \fB\--version\fR
 Print the \fBejsc\fR command version and exit.

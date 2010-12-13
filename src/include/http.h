@@ -1,15 +1,15 @@
 
 /******************************************************************************/
 /* 
- *  This file is an amalgamation of all the individual source code files for
- *  Http Library 0.5.0.
- *
- *  Catenating all the source into a single file makes embedding simpler and
- *  the resulting application faster, as many compilers can do whole file
- *  optimization.
- *
- *  If you want to modify http, you can still get the whole source
- *  as individual files if you need.
+    This file is an amalgamation of all the individual source code files for
+     .
+  
+    Catenating all the source into a single file makes embedding simpler and
+    the resulting application faster, as many compilers can do whole file
+    optimization.
+  
+    If you want to modify , you can still get the whole source
+    as individual files if you need.
  */
 
 
@@ -211,22 +211,26 @@ typedef struct Http {
     struct HttpStage *authFilter;           /**< Authorization filter (digest and basic) */
     struct HttpStage *rangeFilter;          /**< Ranged requests filter */
     struct HttpStage *chunkFilter;          /**< Chunked transfer encoding filter */
+    struct HttpStage *cgiHandler;           /**< CGI listing handler */
     struct HttpStage *dirHandler;           /**< Directory listing handler */
     struct HttpStage *egiHandler;           /**< Embedded Gateway Interface (EGI) handler */
     struct HttpStage *ejsHandler;           /**< Ejscript Web Framework handler */
     struct HttpStage *fileHandler;          /**< Static file handler */
     struct HttpStage *passHandler;          /**< Pass through handler */
+    struct HttpStage *phpHandler;           /**< PHP through handler */
     struct HttpStage *uploadFilter;         /**< Upload filter */
 
     struct HttpLimits *clientLimits;        /**< Client resource limits */
     struct HttpLimits *serverLimits;        /**< Server resource limits */
-    struct HttpLoc *clientLocation;    /**< Default location block for clients */
+    struct HttpLoc *clientLocation;         /**< Default location block for clients */
 
     MprEvent        *timer;                 /**< Admin service timer */
     MprTime         now;                    /**< When was the currentDate last computed */
     MprMutex        *mutex;
     HttpGetPassword getPassword;            /**< Lookup password callback */
     HttpValidateCred validateCred;          /**< Validate user credentials callback */
+    MprForkCallback forkCallback;
+    void            *forkData;
 
     int             connCount;              /**< Count of connections for Conn.seqno */
     void            *context;               /**< Embedding context */
@@ -247,11 +251,10 @@ typedef struct Http {
     Create a Http connection object
     @description Create a new http connection object. This creates an object that can be initialized and then
         used with mprHttpRequest. Destroy with mprFree.
-    @param ctx Any memory allocation context created by MprAlloc
     @return A newly allocated HttpConn structure. Caller must free using mprFree.
     @ingroup Http
  */
-extern Http *httpCreate(MprCtx ctx);
+extern Http *httpCreate();
 
 /**
     Create a Http client
@@ -286,12 +289,11 @@ extern void *httpGetContext(Http *http);
 
 /**
     Get the time as an ISO date string
-    @param ctx Any memory allocation context created by MprAlloc
     @param sbuf Optional path buffer. If supplied, the modified time of the path is used. If NULL, then the current
         time is used.
     @return RFC822 formatted date string. Caller must free.
  */
-extern char *httpGetDateString(MprCtx ctx, MprPath *sbuf);
+extern char *httpGetDateString(MprPath *sbuf);
 
 /**
     Set the http context object
@@ -332,6 +334,7 @@ extern void httpSetProxy(Http *http, cchar *host, int port);
 extern void httpAddConn(Http *http, struct HttpConn *conn);
 extern void httpRemoveConn(Http *http, struct HttpConn *conn);
 extern cchar *httpLookupStatus(Http *http, int status);
+extern void httpSetForkCallback(Http *http, MprForkCallback callback, void *data);
 
 /** 
     Http limits
@@ -362,7 +365,7 @@ typedef struct HttpLimits {
 } HttpLimits;
 
 extern void httpInitLimits(HttpLimits *limits, int serverSide);
-extern HttpLimits *httpCreateLimits(MprCtx ctx, int serverSide);
+extern HttpLimits *httpCreateLimits(int serverSide);
 
 /** 
     URI management
@@ -399,20 +402,18 @@ typedef struct HttpUri {
 /** 
     Create and initialize a URI.
     @description Parse a uri and return a tokenized HttpUri structure.
-    @param ctx Any memory allocation context created by MprAlloc
     @param uri Uri string to parse
     @param complete Add missing components. ie. Add scheme, host and port if not supplied. 
     @return A newly allocated HttpUri structure. Caller must free using $mprFree.
     @ingroup HttpUri
  */
-extern HttpUri *httpCreateUri(MprCtx ctx, cchar *uri, int complete);
+extern HttpUri *httpCreateUri(cchar *uri, int complete);
 
-extern HttpUri *httpCloneUri(MprCtx ctx, HttpUri *base, int complete);
+extern HttpUri *httpCloneUri(HttpUri *base, int complete);
 
 /** 
     Format a URI
     @description Format a URI string using the input components.
-    @param ctx Any memory allocation context created by MprAlloc
     @param scheme Protocol string for the uri. Example: "http"
     @param host Host or IP address
     @param port TCP/IP port number
@@ -423,48 +424,45 @@ extern HttpUri *httpCloneUri(MprCtx ctx, HttpUri *base, int complete);
     @return A newly allocated uri string. Caller must free using $mprFree.
     @ingroup HttpUri
  */
-extern char *httpFormatUri(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *path, cchar *ref, cchar *query, 
+extern char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *ref, cchar *query, 
         int complete);
 
-extern HttpUri *httpCreateUriFromParts(MprCtx ctx, cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, 
+extern HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, 
         cchar *query, int complete);
 
 /** 
     Get the mime type for an extension.
     This call will return the mime type from a limited internal set of mime types for the given path or extension.
-    @param ctx Any memory allocation context created by MprAlloc
     @param ext Path or extension to examine
     @returns Mime type. This is a static string. Caller must not free.
  */
-extern cchar *httpLookupMimeType(MprCtx ctx, cchar *ext);
+extern cchar *httpLookupMimeType(cchar *ext);
 
 /** 
     Convert a Uri to a string.
     @description Convert the given Uri to a string, optionally completing missing parts such as the host, port and path.
-    @param ctx Any memory allocation context created by MprAlloc
     @param uri A Uri object created via httpCreateUri 
     @param complete Fill in missing parts of the uri
     @return A newly allocated uri string. Caller must free using $mprFree.
     @ingroup HttpUri
  */
-extern char *httpUriToString(MprCtx ctx, HttpUri *uri, int complete);
+extern char *httpUriToString(HttpUri *uri, int complete);
 
 /** 
     Validate a URL
     @description Validate and canonicalize a URL. This removes redundant "./" sequences and simplifies "../dir" references. 
-    @param ctx Any memory allocation context created by MprAlloc
     @param uri Uri path string to normalize
     @return A new validated uri string. Caller must free.
     @ingroup HttpUri
  */
-extern char *httpNormalizeUriPath(MprCtx ctx, cchar *uri);
+extern char *httpNormalizeUriPath(cchar *uri);
 extern void httpNormalizeUri(HttpUri *uri);
 
-extern HttpUri *httpJoinUri(MprCtx ctx, HttpUri *uri, int argc, HttpUri **others);
+extern HttpUri *httpJoinUri(HttpUri *uri, int argc, HttpUri **others);
 extern HttpUri *httpJoinUriPath(HttpUri *uri, HttpUri *base, HttpUri *other);
 extern HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *missing);
-extern HttpUri *httpGetRelativeUri(MprCtx ctx, HttpUri *base, HttpUri *target, int dup);
-extern HttpUri *httpResolveUri(MprCtx ctx, HttpUri *base, int argc, HttpUri **others, int local);
+extern HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int dup);
+extern HttpUri *httpResolveUri(HttpUri *base, int argc, HttpUri **others, int local);
 extern HttpUri *httpMakeUriLocal(HttpUri *uri);
 
 /** 
@@ -521,13 +519,12 @@ typedef struct HttpPacket {
 /** 
     Create a data packet
     @description Create a packet of the required size.
-    @param ctx A conn or request memory context object.
     @param size Size of the package data storage.
     @return HttpPacket object.
     @ingroup HttpPacket
  */
-extern HttpPacket *httpCreatePacket(MprCtx ctx, int size);
-extern HttpPacket *httpDup(MprCtx ctx, HttpPacket *orig);
+extern HttpPacket *httpCreatePacket(int size);
+extern HttpPacket *httpDup(HttpPacket *orig);
 
 /**
     Create a connection packet packet
@@ -549,32 +546,29 @@ extern void httpFreePacket(struct HttpQueue *q, HttpPacket *packet);
     Create a data packet
     @description Create a packet and set the HTTP_PACKET_DATA flag
         Data packets convey data through the response pipeline.
-    @param ctx A conn or request memory context object.
     @param size Size of the package data storage.
     @return HttpPacket object.
     @ingroup HttpPacket
  */
-extern HttpPacket *httpCreateDataPacket(MprCtx ctx, int size);
+extern HttpPacket *httpCreateDataPacket(int size);
 
 /** 
     Create an eof packet
     @description Create an end-of-stream packet and set the HTTP_PACKET_END flag. The end pack signifies the 
         end of data. It is used on both incoming and outgoing streams through the request/response pipeline.
-    @param ctx A conn or request memory context object.
     @return HttpPacket object.
     @ingroup HttpPacket
  */
-extern HttpPacket *httpCreateEndPacket(MprCtx ctx);
+extern HttpPacket *httpCreateEndPacket();
 
 /** 
     Create a response header packet
     @description Create a response header packet and set the HTTP_PACKET_HEADER flag. 
         A header packet is used by the pipeline to hold the response headers.
-    @param ctx A conn or request memory context object.
     @return HttpPacket object.
     @ingroup HttpPacket
  */
-extern HttpPacket *httpCreateHeaderPacket(MprCtx ctx);
+extern HttpPacket *httpCreateHeaderPacket();
 
 /** 
     Join two packets
@@ -593,14 +587,13 @@ extern int httpJoinPacket(HttpPacket *packet, HttpPacket *other);
         stages can digest their contents. If a packet is too large for the queue maximum size, it should be split.
         When the packet is split, a new packet is created containing the data after the offset. Any suffix headers
         are moved to the new packet.
-    @param ctx Any memory allocation context created by MprAlloc to own the packet.
     @param packet Packet to split
     @param offset Location in the original packet at which to split
     @return New HttpPacket object containing the data after the offset. No need to free, unless you have a very long
         running request. Otherwise the packet memory will be released automatically when the request completes.
     @ingroup HttpPacket
  */
-extern HttpPacket *httpSplitPacket(MprCtx ctx, HttpPacket *packet, int offset);
+extern HttpPacket *httpSplitPacket(HttpPacket *packet, int offset);
 
 #if DOXYGEN
 /** 
@@ -903,7 +896,7 @@ extern bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet);
     @return A count of the bytes actually written
     @ingroup HttpQueue
  */
-extern int httpWrite(HttpQueue *q, cchar *fmt, ...);
+extern size_t httpWrite(HttpQueue *q, cchar *fmt, ...);
 
 /** 
     Write a block of data to the queue
@@ -915,7 +908,7 @@ extern int httpWrite(HttpQueue *q, cchar *fmt, ...);
     @return A count of the bytes actually written
     @ingroup HttpQueue
  */
-extern int httpWriteBlock(HttpQueue *q, cchar *buf, int size);
+extern size_t httpWriteBlock(HttpQueue *q, cchar *buf, size_t size);
 
 /** 
     Write a string of data to the queue
@@ -927,7 +920,7 @@ extern int httpWriteBlock(HttpQueue *q, cchar *buf, int size);
     @return A count of the bytes actually written
     @ingroup HttpQueue
  */
-extern int httpWriteString(HttpQueue *q, cchar *s);
+extern size_t httpWriteString(HttpQueue *q, cchar *s);
 
 /* Internal */
 extern HttpQueue *httpFindPreviousQueue(HttpQueue *q);
@@ -939,6 +932,7 @@ extern void httpInitSchedulerQueue(HttpQueue *q);
 extern void httpInsertQueue(HttpQueue *prev, HttpQueue *q);
 extern int httpIsEof(struct HttpConn *conn);
 extern void httpJoinPackets(HttpQueue *q, int size);
+extern void httpManageQueue(HttpQueue *q, int flags);
 
 /*
     The Http processing pipeline is comprised of a sequence of "stages". 
@@ -964,9 +958,10 @@ extern void httpJoinPackets(HttpQueue *q, int size);
 #define HTTP_STAGE_AUTO_DIR       0x100000          /**< Want auto directory redirection */
 #define HTTP_STAGE_VERIFY_ENTITY  0x200000          /**< Verify the request entity exists */
 #define HTTP_STAGE_THREAD         0x400000          /**< Run handler dispatcher in a worker thread */
+#define HTTP_STAGE_MISSING_EXT    0x800000          /**< Support URIs with missing extensions */
 
-#define HTTP_STAGE_INCOMING       0x400000
-#define HTTP_STAGE_OUTGOING       0x800000
+#define HTTP_STAGE_INCOMING       0x1000000
+#define HTTP_STAGE_OUTGOING       0x2000000
 
 typedef int (*HttpParse)(Http *http, cchar *key, char *value, void *state);
 
@@ -989,6 +984,16 @@ typedef struct HttpStage {
     int             flags;                  /**< Stage flags */
     void            *stageData;             /**< Private stage data */
     MprHashTable    *extensions;            /**< Matching extensions for this filter */
+
+    /**
+        Modify a request
+        @description This method is invoked to potentially modify a request. 
+        @param conn MaConn connection object
+        @param stage Stage object
+        @return True if the stage wishes to process this request.
+        @ingroup MaStage
+     */
+    bool (*modify)(struct HttpConn *conn, struct HttpStage *stage);
 
     /** 
         Match a request
@@ -1275,6 +1280,8 @@ typedef struct HttpTrace {
     MprHashTable    *include;                    /**< Extensions to include in trace */
     MprHashTable    *exclude;                    /**< Extensions to exclude from trace */
 } HttpTrace;
+
+extern void httpManageTrace(HttpTrace *trace, int flags);
 
 /** 
     Notifier and event callbacks.
@@ -1731,7 +1738,7 @@ typedef struct HttpAuth {
 
 //  TODO - Document
 extern void httpInitAuth(Http *http);
-extern HttpAuth *httpCreateAuth(MprCtx ctx, HttpAuth *parent);
+extern HttpAuth *httpCreateAuth(HttpAuth *parent);
 extern void httpSetAuthAllow(HttpAuth *auth, cchar *allow);
 extern void httpSetAuthAnyValidUser(HttpAuth *auth);
 extern void httpSetAuthDeny(HttpAuth *auth, cchar *deny);
@@ -1780,7 +1787,7 @@ extern int      httpAddGroup(HttpAuth *auth, cchar *group, HttpAcl acl, bool ena
 extern int      httpAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool enabled);
 extern int      httpAddUserToGroup(HttpAuth *auth, HttpGroup *gp, cchar *user);
 extern int      httpAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *users);
-extern HttpAuth *httpCreateAuth(MprCtx ctx, HttpAuth *parent);
+extern HttpAuth *httpCreateAuth(HttpAuth *parent);
 extern HttpGroup *httpCreateGroup(HttpAuth *auth, cchar *name, HttpAcl acl, bool enabled);
 extern HttpUser *httpCreateUser(HttpAuth *auth, cchar *realm, cchar *name, cchar *password, bool enabled);
 extern int      httpDisableGroup(HttpAuth *auth, cchar *group);
@@ -1833,11 +1840,12 @@ typedef struct HttpLoc {
     HttpStage       *handler;               /**< Fixed handler */
     void            *handlerData;           /**< Data reserved for the handler */
     MprHashTable    *extensions;            /**< Hash of handlers by extensions */
+    MprHashTable    *expires;               /**< Expiry of content by mime type */
     MprList         *handlers;              /**< List of handlers for this location */
     MprList         *inputStages;           /**< Input stages */
     MprList         *outputStages;          /**< Output stages */
     MprHashTable    *errorDocuments;        /**< Set of error documents to use on errors */
-    struct HttpLoc *parent;            /**< Parent location */
+    struct HttpLoc  *parent;                /**< Parent location */
     void            *context;               /**< Hosting context */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
@@ -1846,7 +1854,7 @@ typedef struct HttpLoc {
     struct MprSsl   *ssl;                   /**< SSL configuration */
 } HttpLoc;
 
-extern HttpLoc *httpInitLocation(Http *http, MprCtx ctx, int serverSide);
+extern HttpLoc *httpInitLocation(Http *http, int serverSide);
 extern void httpAddErrorDocument(HttpLoc *location, cchar *code, cchar *url);
 
 extern void httpFinalizeLocation(HttpLoc *location);
@@ -1867,6 +1875,7 @@ extern HttpLoc *httpCreateInheritedLocation(Http *http, HttpLoc *location);
 extern int httpSetHandler(HttpLoc *location, cchar *name);
 extern int httpAddFilter(HttpLoc *location, cchar *name, cchar *extensions, int direction);
 extern void httpClearStages(HttpLoc *location, int direction);
+extern void httpAddLocationExpiry(HttpLoc *location, MprTime when, cchar *mimeTypes);
 
 /**
     Upload File
@@ -1917,20 +1926,23 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
     @see HttpRx HttpConn HttpTx httpWriteBlocked httpGetCookies httpGetQueryString
  */
 typedef struct HttpRx {
-
     char            *method;                /**< Request method */
     char            *uri;                   /**< Original URI (alias for parsedUri->uri) (not decoded) */
     char            *scriptName;            /**< ScriptName portion of the url (Decoded). May be empty or start with "/" */
     char            *pathInfo;              /**< Path information after the scriptName (Decoded and normalized) */
 
     HttpConn        *conn;                  /**< Connection object */
+
+    //  MOB -- do we need to keep free packet list now?
     HttpPacket      *freePackets;           /**< Free list of packets */
-    HttpPacket      *headerPacket;          /**< HTTP headers */
-    HttpUri         *parsedUri;             /**< Parsed request uri */
-    HttpLoc         *loc;                   /**< Location block */
-    MprList         *inputPipeline;         /**< Input processing */
-    MprHashTable    *headers;               /**< Header variables */
+
     MprList         *etags;                 /**< Document etag to uniquely identify the document version */
+    HttpPacket      *headerPacket;          /**< HTTP headers */
+    MprHashTable    *headers;               /**< Header variables */
+    MprList         *inputPipeline;         /**< Input processing */
+    HttpLoc         *loc;                   /**< Location block */
+    HttpUri         *parsedUri;             /**< Parsed request uri */
+    MprHashTable    *requestData;           /**< General request data storage. Users must create hash table if required */
     MprTime         since;                  /**< If-Modified date */
 
     int             eof;                    /**< All read data has been received (eof) */
@@ -1969,7 +1981,7 @@ typedef struct HttpRx {
     char            *pragma;                /**< Pragma header */
     char            *mimeType;              /**< Mime type of the request payload (ENV: CONTENT_TYPE) */
     char            *redirect;              /**< Redirect location header */
-    char            *referer;               /**< Refering URL */
+    char            *referrer;              /**< Refering URL */
     char            *userAgent;             /**< User-Agent header */
     int             form;                   /**< Using mime-type application/x-www-form-urlencoded */
     int             upload;                 /**< Using uploadFilter ("multipart/form-data) */
@@ -2096,19 +2108,24 @@ extern int httpRead(HttpConn *conn, char *buffer, int size);
  */
 extern char *httpReadString(HttpConn *conn);
 
+//  MOB DOC
+extern void httpSetStageData(HttpConn *conn, cchar *key, cvoid *data);
+extern cvoid *httpGetStageData(HttpConn *conn, cchar *key);
+
+
 /* Internal */
 extern HttpRx *httpCreateRx(HttpConn *conn);
 extern void httpDestroyRx(HttpConn *conn);
 extern void httpCloseRx(struct HttpConn *conn);
 extern bool httpContentNotModified(HttpConn *conn);
 extern HttpRange *httpCreateRange(HttpConn *conn, int start, int end);
-extern void  httpConnError(struct HttpConn *conn, int status, cchar *fmt, ...);
-extern void  httpProtocolError(struct HttpConn *conn, int status, cchar *fmt, ...);
-extern void  httpProcess(HttpConn *conn, HttpPacket *packet);
-extern void  httpProcessWriteEvent(HttpConn *conn);
-extern bool  httpProcessCompletion(HttpConn *conn);
-extern int   httpSetUri(HttpConn *conn, cchar *newUri);
-extern void  httpSetEtag(HttpConn *conn, MprPath *info);
+extern void httpConnError(struct HttpConn *conn, int status, cchar *fmt, ...);
+extern void httpProtocolError(struct HttpConn *conn, int status, cchar *fmt, ...);
+extern void httpProcess(HttpConn *conn, HttpPacket *packet);
+extern void httpProcessWriteEvent(HttpConn *conn);
+extern bool httpProcessCompletion(HttpConn *conn);
+extern int  httpSetUri(HttpConn *conn, cchar *newUri);
+extern void httpSetEtag(HttpConn *conn, MprPath *info);
 extern bool httpMatchEtag(HttpConn *conn, char *requestedEtag);
 extern bool httpMatchModified(HttpConn *conn, MprTime time);
 
@@ -2223,6 +2240,9 @@ extern void httpCreateEnvVars(HttpConn *conn);
 #define HTTP_TX_HEADERS_CREATED     0x4     /**< Response headers have been created */
 #define HTTP_TX_SENDFILE            0x8     /**< Relay output via Send connector */
 
+typedef cchar *(*HttpRedirectCallback)(HttpConn *conn, int *code, HttpUri *uri);
+typedef void (*HttpEnvCallback)(HttpConn *conn);
+
 /** 
     Http Tx
     @description The tx object controls the transmission of data. This may be client requests or responses to
@@ -2264,6 +2284,9 @@ typedef struct HttpTx {
     int             entityLength;           /**< Original content length before range subsetting */
     int             bytesWritten;           /**< Bytes written including headers */
     int             headerSize;             /**< Size of the header written */
+
+    HttpRedirectCallback redirectCallback;  /**< Redirect callback */
+    HttpEnvCallback envCallback;            /**< SetEnv callback */
 } HttpTx;
 
 /** 
@@ -2575,6 +2598,9 @@ extern int httpWriteUploadData(HttpConn *conn, MprList *formData, MprList *fileD
  */
 extern void httpWriteBlocked(HttpConn *conn);
 
+
+typedef int (*HttpListenCallback)(struct HttpServer *server);
+
 /** 
     Server endpoint
     @stability Evolving
@@ -2601,6 +2627,7 @@ typedef struct  HttpServer {
     MprSocket       *sock;                  /**< Listening socket */
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
     HttpNotifier    notifier;               /**< Http state change notification callback */
+    HttpListenCallback listenCallback;      /**< Invoked when creating listeners */
     struct MprSsl   *ssl;                   /**< Server SSL configuration */
 } HttpServer;
 

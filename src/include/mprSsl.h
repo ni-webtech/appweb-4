@@ -107,8 +107,8 @@ typedef struct MprSslSocket
 
 
 #if MOVED
-extern MprModule *mprSslInit(MprCtx ctx, cchar *path);
-extern MprSsl *mprCreateSsl(MprCtx ctx);
+extern MprModule *mprSslInit(cchar *path);
+extern MprSsl *mprCreateSsl();
 extern void mprSetSslCiphers(MprSsl *ssl, cchar *ciphers);
 extern void mprSetSslKeyFile(MprSsl *ssl, cchar *keyFile);
 extern void mprSetSslCertFile(MprSsl *ssl, cchar *certFile);
@@ -119,11 +119,11 @@ extern void mprVerifySslClients(MprSsl *ssl, bool on);
 #endif
 
 #if BLD_FEATURE_OPENSSL
-extern int mprCreateOpenSslModule(MprCtx ctx, bool lazy);
+extern int mprCreateOpenSslModule(bool lazy);
 #endif
 
 #if BLD_FEATURE_MATRIXSSL
-extern int mprCreateMatrixSslModule(MprCtx ctx, bool lazy);
+extern int mprCreateMatrixSslModule(bool lazy);
 #endif
 
 #ifdef __cplusplus

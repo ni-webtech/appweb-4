@@ -21,7 +21,7 @@
 
 static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp);
 static void cgiCallback(MprCmd *cmd, int channel, void *data);
-static int copyVars(MprCtx ctx, char **envv, int index, MprHashTable *vars, cchar *prefix);
+static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix);
 static void enableCgiEvents(HttpQueue *q, MprCmd *cmd, int channel);
 static char *getCgiToken(MprBuf *buf, cchar *delim);
 static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd);
@@ -98,13 +98,18 @@ static void startCgi(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
-    cmd = q->queueData = mprCreateCmd(rx, conn->dispatcher);
+    cmd = q->queueData = mprCreateCmd(conn->dispatcher);
+
+    if (conn->http->forkCallback) {
+        cmd->forkCallback = conn->http->forkCallback;
+        cmd->forkData = conn->http->forkData;
+    }
 
     argc = 1;                                   /* argv[0] == programName */
     buildArgs(conn, cmd, &argc, &argv);
     fileName = argv[0];
 
-    baseName = mprGetPathBase(q, fileName);
+    baseName = mprGetPathBase(fileName);
     if (strncmp(baseName, "nph-", 4) == 0 || 
             (strlen(baseName) > 4 && strcmp(&baseName[strlen(baseName) - 4], "-nph") == 0)) {
         /* Pretend we've seen the header for Non-parsed Header CGI programs */
@@ -115,15 +120,15 @@ static void startCgi(HttpQueue *q)
      */
     vars = rx->formVars;
     varCount = mprGetHashCount(vars) + mprGetHashCount(rx->headers);
-    if ((envv = (char**) mprAlloc(cmd, (varCount + 1) * sizeof(char*))) != 0) {
-        count = copyVars(cmd, envv, 0, rx->formVars, "");
-        count = copyVars(cmd, envv, count, rx->headers, "HTTP_");
+    if ((envv = mprAlloc((varCount + 1) * sizeof(char*))) != 0) {
+        count = copyVars(envv, 0, rx->formVars, "");
+        count = copyVars(envv, count, rx->headers, "HTTP_");
         mprAssert(count <= varCount);
     }
-    cmd->stdoutBuf = mprCreateBuf(cmd, HTTP_BUFSIZE, -1);
-    cmd->stderrBuf = mprCreateBuf(cmd, HTTP_BUFSIZE, -1);
+    cmd->stdoutBuf = mprCreateBuf(HTTP_BUFSIZE, -1);
+    cmd->stderrBuf = mprCreateBuf(HTTP_BUFSIZE, -1);
 
-    mprSetCmdDir(cmd, mprGetPathDir(q, fileName));
+    mprSetCmdDir(cmd, mprGetPathDir(fileName));
     mprSetCmdCallback(cmd, cgiCallback, conn);
 
     if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR) < 0) {
@@ -286,13 +291,13 @@ static void pushDataToCgi(HttpQueue *q)
         mprAssert(len > 0);
         rc = mprWriteCmdPipe(cmd, MPR_CMD_STDIN, mprGetBufStart(buf), len);
         if (rc < 0) {
-            mprLog(q, 2, "CGI: write to gateway failed for %d bytes, rc %d, errno %d\n", len, rc, mprGetOsError());
+            mprLog(2, "CGI: write to gateway failed for %d bytes, rc %d, errno %d\n", len, rc, mprGetOsError());
             mprCloseCmdFd(cmd, MPR_CMD_STDIN);
             httpError(conn, HTTP_CODE_BAD_GATEWAY, "Can't write body data to CGI gateway");
             break;
 
         } else {
-            mprLog(q, 5, "CGI: write to gateway %d bytes asked to write %d\n", rc, len);
+            mprLog(5, "CGI: write to gateway %d bytes asked to write %d\n", rc, len);
             mprAdjustBufStart(buf, rc);
             if (mprGetBufLength(buf) > 0) {
                 httpPutBackPacket(q, packet);
@@ -327,7 +332,7 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
     for (servicedQueues = 0; (len = mprGetBufLength(buf)) > 0 ; ) {
         if (conn->state < HTTP_STATE_COMPLETE) {
             rc = httpWriteBlock(q, mprGetBufStart(buf), len);
-            mprLog(cmd, 5, "Write to browser ask %d, actual %d", len, rc);
+            mprLog(5, "Write to browser ask %d, actual %d", len, rc);
         } else {
             rc = len;
         }
@@ -371,7 +376,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     mprAssert(conn);
     mprAssert(conn->tx);
 
-    mprLog(cmd, 6, "CGI callback channel %d", channel);
+    mprLog(6, "CGI callback channel %d", channel);
     
     tx = conn->tx;
     cmd->lastActivity = mprGetTime(cmd);
@@ -432,7 +437,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 } else if (err == EAGAIN || err == EWOULDBLOCK) {
                     break;
                 }
-                mprLog(cmd, 5, "CGI read error %d for %", mprGetError(), (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
+                mprLog(5, "CGI read error %d for %", mprGetError(), (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
                 mprCloseCmdFd(cmd, channel);
                 break;
                 
@@ -440,7 +445,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 /*
                     This may reap the terminated child and thus clear cmd->process if both stderr and stdout are closed.
                  */
-                mprLog(cmd, 5, "CGI EOF for %s", (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
+                mprLog(5, "CGI EOF for %s", (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
                 mprCloseCmdFd(cmd, channel);
                 if (cmd->pid == 0) {
                     httpFinalize(conn);
@@ -448,7 +453,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 break;
 
             } else {
-                mprLog(cmd, 5, "CGI read %d bytes from %s", nbytes, (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
+                mprLog(5, "CGI read %d bytes from %s", nbytes, (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
                 mprAdjustBufEnd(buf, nbytes);
                 traceData(cmd, mprGetBufStart(buf), nbytes);
                 mprAddNullToBuf(buf);
@@ -470,7 +475,7 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
     conn = q->conn;
 
     if (channel == MPR_CMD_STDERR) {
-        mprLog(conn, 4, mprGetBufStart(buf));
+        mprLog(4, mprGetBufStart(buf));
         if (writeToClient(q, cmd, buf, channel) < 0) {
             mprDisconnectSocket(conn->sock);
             return -1;
@@ -503,7 +508,7 @@ static void enableCgiEvents(HttpQueue *q, MprCmd *cmd, int channel)
             Now that stdout is complete, enable stderr to receive an EOF or any error output. This is 
             serialized to eliminate both stdin and stdout events on different threads at the same time.
          */
-        mprLog(cmd, 8, "CGI enable stderr");
+        mprLog(8, "CGI enable stderr");
         mprEnableCmdEvents(cmd, MPR_CMD_STDERR);
         
     } else if (cmd->pid) {
@@ -537,7 +542,7 @@ static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd)
         return 0;
     }
     message = getCgiToken(buf, "\n");
-    mprLog(conn, 4, "CGI status line: %s %s %s", protocol, status, message);
+    mprLog(4, "CGI status line: %s %s %s", protocol, status, message);
     return 1;
 }
 
@@ -596,7 +601,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
     }
     
     if (strchr(mprGetBufStart(buf), ':')) {
-        mprLog(conn, 4, "CGI: parseHeader: header\n%s\n", headers);
+        mprLog(4, "CGI: parseHeader: header\n%s\n", headers);
 
         while (mprGetBufLength(buf) > 0 && buf->start[0] && (buf->start[0] != '\r' && buf->start[0] != '\n')) {
 
@@ -613,7 +618,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
                 value[len - 1] = '\0';
                 len--;
             }
-            mprStrLower(key);
+            slower(key);
 
             if (strcmp(key, "location") == 0) {
                 location = value;
@@ -657,7 +662,8 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     MaHost      *host;
     char        *fileName, **argv, *program, *cmdScript, status[8], *indexQuery, *cp, *tok;
     cchar       *actionProgram;
-    int         argc, argind, len;
+    size_t      len;
+    int         argc, argind;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -679,8 +685,8 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
         /*
             This is an Apache compatible hack for PHP 5.3
          */
-        mprItoa(status, sizeof(status), HTTP_CODE_MOVED_TEMPORARILY, 10);
-        mprAddHash(rx->headers, "REDIRECT_STATUS", mprStrdup(rx, status));
+        itos(status, sizeof(status), HTTP_CODE_MOVED_TEMPORARILY, 10);
+        mprAddHash(rx->headers, "REDIRECT_STATUS", sclone(status));
     }
 
     /*
@@ -724,20 +730,19 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
         argc = 4;
 
         len = (argc + 1) * sizeof(char*);
-        argv = (char**) mprAlloc(cmd, len);
+        argv = (char**) mprAlloc(len);
         memset(argv, 0, len);
 
         argv[argind++] = program;               /* Duped in findExecutable */
-        argv[argind++] = mprStrdup(cmd, "/Q");
-        argv[argind++] = mprStrdup(cmd, "/C");
+        argv[argind++] = "/Q";
+        argv[argind++] = "/C";
 
-        len = (int) strlen(cmdScript) + 2 + 1;
-        cmdBuf = (char*) mprAlloc(cmd, len);
+        len = strlen(cmdScript) + 2 + 1;
+        cmdBuf = mprAlloc(len);
         mprSprintf(conn, cmdBuf, len, "\"%s\"", cmdScript);
         argv[argind++] = cmdBuf;
 
         mprSetCmdDir(cmd, cmdScript);
-        mprFree(cmdScript);
         /*  program will get freed when argv[] gets freed */
         
     } else if (bangScript) {
@@ -748,7 +753,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
         argc++;     /* Adding bangScript arg */
 
         len = (argc + 1) * sizeof(char*);
-        argv = (char**) mprAlloc(cmd, len);
+        argv = (char**) mprAlloc(len);
         memset(argv, 0, len);
 
         argv[argind++] = program;       /* Will get freed when argv[] is freed */
@@ -760,24 +765,25 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
             Either unknown extension or .exe (.out) program.
          */
         len = (argc + 1) * sizeof(char*);
-        argv = (char**) mprAlloc(cmd, len);
+        argv = (char**) mprAlloc(len);
         memset(argv, 0, len);
 
         if (actionProgram) {
-            argv[argind++] = mprStrdup(cmd, actionProgram);
+            argv[argind++] = sclone(actionProgram);
         }
         argv[argind++] = program;
     }
 }
 #else
     len = (argc + 1) * sizeof(char*);
-    argv = (char**) mprAlloc(cmd, len);
+    argv = mprAlloc(len);
     memset(argv, 0, len);
 
     if (actionProgram) {
-        argv[argind++] = mprStrdup(cmd, actionProgram);
+        argv[argind++] = sclone(actionProgram);
     }
-    argv[argind++] = mprStrdup(cmd, fileName);
+    //  MOB - why clone all these string?
+    argv[argind++] = sclone(fileName);
 
 #endif
 
@@ -787,12 +793,12 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
         TODO - should query vars be set in the env?
      */
     if (indexQuery) {
-        indexQuery = mprStrdup(cmd, indexQuery);
+        indexQuery = sclone(indexQuery);
 
-        cp = mprStrTok(indexQuery, "+", &tok);
+        cp = stok(indexQuery, "+", &tok);
         while (cp) {
-            argv[argind++] = mprEscapeCmd(tx, mprUriDecode(tx, cp), 0);
-            cp = mprStrTok(NULL, "+", &tok);
+            argv[argind++] = mprEscapeCmd(mprUriDecode(cp), 0);
+            cp = stok(NULL, "+", &tok);
         }
     }
     
@@ -839,11 +845,10 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
      */
     if (access(fileName, X_OK) < 0 && *ext == '\0') {
         for (hp = 0; (hp = mprGetNextHash(loc->extensions, hp)) != 0; ) {
-            path = mprStrcat(tx, -1, fileName, ".", hp->key, NULL);
+            path = sjoin(fileName, ".", hp->key, NULL);
             if (access(path, X_OK) == 0) {
                 break;
             }
-            mprFree(path);
             path = 0;
         }
         if (hp) {
@@ -870,45 +875,45 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
         if (cmdShell == 0) {
             cmdShell = "cmd.exe";
         }
-        *script = mprStrdup(tx, path);
-        *program = mprStrdup(tx, cmdShell);
+        *script = sclone(path);
+        *program = sclone(cmdShell);
         return;
     }
 #endif
 
     if ((file = mprOpen(tx, path, O_RDONLY, 0)) != 0) {
         if (mprRead(file, buf, MPR_MAX_FNAME) > 0) {
-            mprFree(file);
+            mprCloseFile(file);
             buf[MPR_MAX_FNAME] = '\0';
             if (buf[0] == '#' && buf[1] == '!') {
-                cmdShell = mprStrTok(&buf[2], " \t\r\n", &tok);
+                cmdShell = stok(&buf[2], " \t\r\n", &tok);
                 if (mprIsAbsPath(tx, cmdShell)) {
                     /*
                         If we can't access the command shell and the command is not an absolute path, 
                         look in the same directory as the script.
                      */
                     if (mprPathExists(tx, cmdShell, X_OK)) {
-                        cmdShell = mprJoinPath(tx, mprGetPathDir(tx, path), cmdShell);
+                        cmdShell = mprJoinPath(tx, mprGetPathDir(path), cmdShell);
                     }
                 }
                 if (actionProgram) {
-                    *program = mprStrdup(tx, actionProgram);
+                    *program = sclone(actionProgram);
                 } else {
-                    *program = mprStrdup(tx, cmdShell);
+                    *program = sclone(cmdShell);
                 }
-                *bangScript = mprStrdup(tx, path);
+                *bangScript = sclone(path);
                 return;
             }
         } else {
-            mprFree(file);
+            mprCloseFile(file);
         }
     }
 
     if (actionProgram) {
-        *program = mprStrdup(tx, actionProgram);
-        *bangScript = mprStrdup(tx, path);
+        *program = sclone(actionProgram);
+        *bangScript = sclone(path);
     } else {
-        *program = mprStrdup(tx, path);
+        *program = sclone(path);
     }
     return;
 }
@@ -928,9 +933,8 @@ static char *getCgiToken(MprBuf *buf, cchar *delim)
     if (len == 0) {
         return "";
     }
-
     token = mprGetBufStart(buf);
-    nextToken = mprStrnstr(mprGetBufStart(buf), delim, len);
+    nextToken = scontains(mprGetBufStart(buf), delim, len);
     if (nextToken) {
         *nextToken = '\0';
         len = (int) strlen(delim);
@@ -953,7 +957,7 @@ static void traceCGIData(MprCmd *cmd, char *src, int size)
     char    dest[512];
     int     index, i;
 
-    mprRawLog(cmd, 5, "@@@ CGI process wrote => \n");
+    mprRawLog(5, "@@@ CGI process wrote => \n");
 
     for (index = 0; index < size; ) { 
         for (i = 0; i < (sizeof(dest) - 1) && index < size; i++) {
@@ -961,21 +965,21 @@ static void traceCGIData(MprCmd *cmd, char *src, int size)
             index++;
         }
         dest[i] = '\0';
-        mprRawLog(cmd, 5, "%s", dest);
+        mprRawLog(5, "%s", dest);
     }
-    mprRawLog(cmd, 5, "\n");
+    mprRawLog(5, "\n");
 }
 #endif
 
 
-static int copyVars(MprCtx ctx, char **envv, int index, MprHashTable *vars, cchar *prefix)
+static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix)
 {
     MprHash     *hp;
     char        *cp;
 
     for (hp = 0; (hp = mprGetNextHash(vars, hp)) != 0; ) {
         if (hp->data) {
-            cp = envv[index] = mprStrcat(ctx, -1, prefix, hp->key, "=", (char*) hp->data, NULL);
+            cp = envv[index] = sjoin(hp->key, "=", (char*) hp->data, NULL);
             for (; *cp != '='; cp++) {
                 if (*cp == '-') {
                     *cp = '_';
@@ -1004,15 +1008,15 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
     server = state->server;
     loc = state->loc;
 
-    if (mprStrcmpAnyCase(key, "Action") == 0) {
-        if (maSplitConfigValue(http, &mimeType, &program, value, 1) < 0) {
+    if (scasecmp(key, "Action") == 0) {
+        if (maSplitConfigValue(&mimeType, &program, value, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
         maSetMimeActionProgram(host, mimeType, program);
         return 1;
 
-    } else if (mprStrcmpAnyCase(key, "ScriptAlias") == 0) {
-        if (maSplitConfigValue(server, &prefix, &path, value, 1) < 0 || path == 0 || prefix == 0) {
+    } else if (scasecmp(key, "ScriptAlias") == 0) {
+        if (maSplitConfigValue(&prefix, &path, value, 1) < 0 || path == 0 || prefix == 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
         /*
@@ -1024,10 +1028,8 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
             parent = mprGetFirstItem(host->dirs);
             dir = maCreateDir(host, path, parent);
         }
-        alias = maCreateAlias(host, prefix, path, 0);
-        mprLog(server, 4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
-        mprFree(path);
-
+        alias = maCreateAlias(prefix, path, 0);
+        mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
         maInsertAlias(host, alias);
 
         if ((loc = maLookupLocation(host, prefix)) == 0) {
@@ -1045,17 +1047,19 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
 }
 
 
-/*  Dynamic module initialization
+/*  
+    Dynamic module initialization
  */
 int maCgiHandlerInit(Http *http, MprModule *mp)
 {
     HttpStage     *handler;
 
-    handler = httpCreateHandler(http, "cgiHandler", 
-        HTTP_STAGE_ALL | HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_THREAD);
+    handler = httpCreateHandler(http, "cgiHandler", HTTP_STAGE_ALL | HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | 
+        HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT | HTTP_STAGE_THREAD);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
+    http->cgiHandler = handler;
     handler->open = openCgi; 
     handler->close = closeCgi; 
     handler->outgoingService = outgoingCgiService;

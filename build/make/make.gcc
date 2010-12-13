@@ -51,7 +51,7 @@ else
 	TUNE		= mcpu
 endif
 
-_IFLAGS		    = -I$(BLD_TOP) -I$(BLD_TOP)/src/include
+_IFLAGS		    = -I$(BLD_INC_DIR) -I$(BLD_TOP)/src/include 
 
 #
 #	Optimization and debug settings
@@ -204,12 +204,14 @@ _LDPATH			= $(BLD_ABS_LIB_DIR)
 #
 ifneq			($(BLD_OS),VXWORKS)
 ifeq			($(BLD_CC_DYN_LOAD),1)
+ifeq			($(BLD_OS),LINUX)
     _LIBS	    += -ldl
 endif
-_LIBS       	+= -lm
+endif
 ifeq 			($(BLD_FEATURE_AUTH_PAM),1)
     _LIBS       += -lpam
 endif
+_LIBS      	    += -lm
 endif
 
 #
@@ -244,7 +246,7 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
         $(BLD_CC) -E $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
     fi
 	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
-	else d=$(_DPATH_)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
+	else d=$(_DPATH_)/$< ; d=$${d#./} ; $(call log) "[Compile]" $(subst $(BLD_OUT_DIR)/,,$@) ; fi
 	@$(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
 	if [ $$? != 0 -a "$(TRACE)" != 1 ] ; then \
 	    $(call log) "[DETAILS]" "$(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@\n" ; \

@@ -50,7 +50,7 @@ eval BLD_${KIND}_SHOBJ=.dll
 #
 #   Override building directories
 #
-BLD_LIB_DIR='${BLD_TOP}/bin'
-BLD_MOD_DIR='${BLD_TOP}/bin'
+BLD_LIB_DIR='${BLD_OUT_DIR}/bin'
+BLD_MOD_DIR='${BLD_OUT_DIR}/bin'
 
 

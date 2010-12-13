@@ -11,7 +11,7 @@ PRE_DIRS	+= api product
 gen: 
 	touch api/Makefile product/Makefile
 	make -C api gen
-	make -C product
+	make -C product gen
 
 patch: 
 	@echo -e "\n  # Perform DSI patching\n"

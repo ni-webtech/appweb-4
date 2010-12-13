@@ -9,15 +9,10 @@
 
 include 			.makedep
 
-HTTP_LIB			+= $(BLD_LIB_DIR)/libhttp$(BLD_LIB)
-TARGETS				+= $(HTTP_LIB)
-HTTP_OBJECTS		+= httpLib
-
 MAKE_IFLAGS			+= $(BLD_HTTP_IFLAGS)
-
-ifeq ($(BUILD_NATIVE_OR_COMPLETE_CROSS),1)
-	TARGETS			+= $(BLD_BIN_DIR)/http$(BLD_EXE)
-endif
+HTTP_LIB			+= $(BLD_LIB_DIR)/libhttp$(BLD_LIB)
+HTTP_OBJECTS		+= httpLib
+TARGETS				+= $(HTTP_LIB) $(BLD_BIN_DIR)/http$(BLD_EXE)
 
 compileTargets: $(TARGETS)
 

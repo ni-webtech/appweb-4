@@ -29,23 +29,18 @@ testCleanup:
 	killall testAppweb >/dev/null 2>&1 ; true
 
 diff import sync:
-	if [ ! -x $(BLD_TOOLS_DIR)/edep$(BLD_BUILD_EXE) -a "$(BUILDING_CROSS)" != 1 ] ; then \
-		$(MAKE) -S --no-print-directory _RECURSIVE_=1 -C $(BLD_TOP)/build/src compile ; \
-	fi
-	if [ "`git branch`" != "* master" ] ; then echo "Sync only in default branch" ; echo 255 ; fi
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../tools/releases/tools-all.tgz
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../mpr/releases/mpr-all.tgz
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../http/releases/http-all.tgz
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../pcre/releases/pcre-all.tgz
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../ejs/releases/ejs-all.tgz
+	$(BLD_TOOLS_DIR)/import.sh --$@ ../tools/out/releases/tools-dist.tgz
+	$(BLD_TOOLS_DIR)/import.sh --$@ ../mpr/out/releases/mpr-dist.tgz
+	$(BLD_TOOLS_DIR)/import.sh --$@ ../http/out/releases/http-dist.tgz
+	$(BLD_TOOLS_DIR)/import.sh --$@ ../pcre/out/releases/pcre-dist.tgz
+	$(BLD_TOOLS_DIR)/import.sh --$@ ../ejs/out/releases/ejs-dist.tgz
 	if [ ../ejs/doc/index.html -nt doc/ejs/index.html ] ; then \
-		set -x ; \
 		echo "#  import ejs doc"  \
 		chmod -R +w doc/ejs doc/man ; \
 		rm -fr doc/ejs ; \
 		mkdir -p doc/ejs ; \
 		( cd ../ejs/doc ; find . -type f | \
-			egrep -v '/xml/|/html/|/dsi/|.makedep|.DS_Store|.pptx|\/Archive' | cpio -pdum ../../appweb/doc/ejs ) ; \
+			egrep -v '/xml/|/html/|/dsi/|.makedep|.DS_Store|.pptx|\/Archive' | cpio --quiet -pdum ../../appweb/doc/ejs ) ; \
 		chmod +w doc/man/* ; \
 		cp doc/ejs/man/*.1 doc/man ; \
 		chmod -R +w doc/ejs ; \

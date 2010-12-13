@@ -16,19 +16,19 @@
     may be either a physical path or a URI if a non-zero redirect code is supplied.
  */
 
-MaAlias *maCreateAlias(MprCtx ctx, cchar *prefix, cchar *target, int code)
+MaAlias *maCreateAlias(cchar *prefix, cchar *target, int code)
 {
     MaAlias     *ap;
-    int         len, sep;
+    cchar       *seps;
+    int         len;
 
-    mprAssert(ctx);
     mprAssert(prefix);
     mprAssert(target && *target);
 
-    if ((ap = mprAllocObj(ctx, MaAlias, NULL)) == NULL) {
+    if ((ap = mprAllocObj(MaAlias, NULL)) == NULL) {
         return 0;
     }
-    ap->prefix = mprStrdup(ctx, prefix);
+    ap->prefix = sclone(prefix);
     ap->prefixLen = (int) strlen(prefix);
 
     /*  
@@ -39,16 +39,16 @@ MaAlias *maCreateAlias(MprCtx ctx, cchar *prefix, cchar *target, int code)
     }
     if (code) {
         ap->redirectCode = code;
-        ap->uri = mprStrdup(ctx, target);
-        ap->filename = mprStrdup(ctx, "");
+        ap->uri = sclone(target);
+        ap->filename = sclone("");
     } else {
         /*  
             Trim trailing "/" from filename always
          */
-        sep = mprGetPathSeparator(ctx, target);
-        ap->filename = mprStrdup(ctx, target);
+        seps = mprGetPathSeparators(target);
+        ap->filename = sclone(target);
         len = strlen(ap->filename) - 1;
-        if (len >= 0 && ap->filename[len] == sep) {
+        if (len >= 0 && ap->filename[len] == seps[0]) {
             ap->filename[len] = '\0';
         }
     }

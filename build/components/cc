@@ -21,7 +21,7 @@ defineComponent() {
 
 setCompilerOptions()
 {
-    local out file cc cpu file hasGcc hasStackProtector hasMtune hasDynLoad tune
+    local out file cc cpu file hasGcc hasStackProtector hasMtune hasDynLoad tune flags
 
     eval os=\$BLD_${KIND}_OS
     eval cc=\$CFG_${KIND}_CC
@@ -35,7 +35,10 @@ setCompilerOptions()
     eval hasCygwin=\${KIND}_HAS_CYGWIN
     eval hasDiab=\${KIND}_HAS_DIAB
     eval hasWarnUnused=\${KIND}_HAS_WARN_UNUSED
-
+    eval flags=\"\$BLD_${KIND}_CFLAGS \$BLD_${KIND}_DFLAGS \$BLD_${KIND}_IFLAGS \$BLD_${KIND}_LDFLAGS\"
+    if [ $os = MACOSX -a "${flags}" = "${flags/-arch/}" ] ; then
+        flags="$flags -arch $cpu"
+    fi
     eval $hasStackProtector=0
     eval $hasMtune=0
     eval ${hasDoubleBraces}=0
@@ -59,16 +62,16 @@ setCompilerOptions()
         >${file}
         if [ "$verbose" != 0 ] ; then
             echo -e "    Checking for compiler -mtune support"
-            # echo -e "        ${cc}" -mtune=${cpu} -c $file "\n"
+            # echo -e "        ${cc}" -arch ${cpu} -mtune=${cpu} -c $file "\n"
         fi
 		eval tune=\$BLD_${KIND}_CFLAGS
 		tune=`echo $tune | sed 's/.*-mtune=//' | sed 's/ .*//'`
 		tune=${tune:=generic}
-        "${cc}" -mtune=$tune -c $file >/dev/null 2>&1
+        eval \"${cc}\" -mtune=$tune -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
             eval $hasMtune=1
 		else
-			"${cc}" -mtune=${cpu} -c $file >/dev/null 2>&1
+			eval \"${cc}\" -mtune=${cpu} -c $file >/dev/null 2>&1
 			if [ $? = 0 ] ; then
 				eval $hasMtune=1
 			fi
@@ -81,7 +84,7 @@ setCompilerOptions()
             echo -e "    Checking for compiler -fno-stack-protector support"
             # echo -e "        ${cc}" -fno-stack-protector -c $file "\n"
         fi
-        "${cc}" -fno-stack-protector -c $file >/dev/null 2>&1
+        eval \"${cc}\" -fno-stack-protector -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
             eval $hasStackProtector=1
         fi
@@ -93,7 +96,7 @@ setCompilerOptions()
             echo -e "    Checking for compiler -Wno-unused-result support"
             # echo -e "        ${cc}" -Wno-unused-result -c $file "\n"
         fi
-        "${cc}" -Wno-unused-result -c $file >/dev/null 2>&1
+        eval \"${cc}\" -Wno-unused-result -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
             eval $hasWarnUnused=1
         fi
@@ -107,7 +110,7 @@ setCompilerOptions()
                 # echo -e "        ${cc}" -o $out -c $file "\n"
             fi
             echo -e "#include <stdio.h>\nint main() { fork(); return 0; }\n" >$file
-            "${cc}" -o $out $file >/dev/null 2>&1
+            eval \"${cc}\" ${flags} -o $out $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasMmu=1
             fi
@@ -120,11 +123,11 @@ setCompilerOptions()
                 # echo "         ${cc}" -o $out -c $file 
             fi
             echo -e "#include <stdio.h>\nint main() { dlopen(); return 0; }\n" >$file
-            "${cc}" -o $out $file >/dev/null 2>&1
+            eval \"${cc}\" ${flags} -o $out $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasDynLoad=1
             else
-                "${cc}" -ldl -o $out $file >/dev/null 2>&1
+                eval \"${cc}\" ${flags} -ldl -o $out $file >/dev/null 2>&1
                 if [ $? = 0 ] ; then
                     eval $hasDynLoad=1
                 fi
@@ -138,14 +141,9 @@ setCompilerOptions()
                 # echo "         ${cc}" -o $out -c $file 
             fi
             echo -e "#include <histedit.h>\nint main() { history_init(); return 0; }\n" >$file
-            "${cc}" -ledit -lcurses -o $out $file >/dev/null 2>&1
+            eval \"${cc}\" ${flags} -ledit -lcurses -o $out $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasLibEdit=1
-            else
-                "${cc}" -ldl -o $out $file >/dev/null 2>&1
-                if [ $? = 0 ] ; then
-                    eval $hasLibEdit=1
-                fi
             fi
 
             #
@@ -155,8 +153,8 @@ setCompilerOptions()
                 echo -e "    Checking for initializers"
                 # echo "         ${cc}" -o $out -c $file 
             fi
-            echo -e "#include <stdarg.h>\nva_list d = {0};\n" >$file
-            "${cc}" -Wall -c -o $out -c $file 2>&1 | grep 'missing braces' >/dev/null
+            echo -e "#include <stdarg.h>\nva_list d = {{0}};\n" >$file
+            eval \"${cc}\" ${flags} -Werror -c -o $out -c $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasDoubleBraces=1
             fi
@@ -188,15 +186,17 @@ setCompilerOptions()
 
 emitCompilerOptions()
 {
-    local v
-    eval v=\$${KIND}_HAS_CYGWIN ;           echo -e "\tBLD_CC_CYGWIN=$v"
-    eval v=\$${KIND}_HAS_DIAB ;             echo -e "\tBLD_CC_DIAB=$v"
-    eval v=\$${KIND}_HAS_DOUBLE_BRACES ;    echo -e "\tBLD_CC_DOUBLE_BRACES=$v"
-    eval v=\$${KIND}_HAS_DYN_LOAD ;         echo -e "\tBLD_CC_DYN_LOAD=$v"
-    eval v=\$${KIND}_HAS_MTUNE ;            echo -e "\tBLD_CC_MTUNE=$v"
-    eval v=\$${KIND}_HAS_MMU ;              echo -e "\tBLD_CC_MMU=$v"
-    eval v=\$${KIND}_HAS_WARN_UNUSED ;      echo -e "\tBLD_CC_WARN_UNUSED=$v"
-    eval v=\$${KIND}_HAS_EDITLINE ;         echo -e "\tBLD_CC_EDITLINE=$v"
-    eval v=\$${KIND}_HAS_STACK_PROTECTOR ;  echo -e "\tBLD_CC_STACK_PROTECTOR=$v"
+    local v t
+
+    [ $BLD_CROSS = 1 ] && t="\t"
+    eval v=\$${KIND}_HAS_CYGWIN ;           echo -e "${t}BLD_CC_CYGWIN=$v"
+    eval v=\$${KIND}_HAS_DIAB ;             echo -e "${t}BLD_CC_DIAB=$v"
+    eval v=\$${KIND}_HAS_DOUBLE_BRACES ;    echo -e "${t}BLD_CC_DOUBLE_BRACES=$v"
+    eval v=\$${KIND}_HAS_DYN_LOAD ;         echo -e "${t}BLD_CC_DYN_LOAD=$v"
+    eval v=\$${KIND}_HAS_MTUNE ;            echo -e "${t}BLD_CC_MTUNE=$v"
+    eval v=\$${KIND}_HAS_MMU ;              echo -e "${t}BLD_CC_MMU=$v"
+    eval v=\$${KIND}_HAS_WARN_UNUSED ;      echo -e "${t}BLD_CC_WARN_UNUSED=$v"
+    eval v=\$${KIND}_HAS_EDITLINE ;         echo -e "${t}BLD_CC_EDITLINE=$v"
+    eval v=\$${KIND}_HAS_STACK_PROTECTOR ;  echo -e "${t}BLD_CC_STACK_PROTECTOR=$v"
 }
 

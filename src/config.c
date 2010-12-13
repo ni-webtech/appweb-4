@@ -9,8 +9,8 @@
 
 /***************************** Forward Declarations ****************************/
 
-static bool featureSupported(MprCtx ctx, char *key);
-static MaConfigState *pushState(MprCtx ctx, MaConfigState *state, int *top);
+static bool featureSupported(char *key);
+static MaConfigState *pushState(MaConfigState *state, int *top);
 static int processSetting(MaServer *server, char *key, char *value, MaConfigState *state);
 
 #if BLD_FEATURE_CONFIG_SAVE
@@ -33,7 +33,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
 
 #if UNUSED
     if (ip && docRoot) {
-        mprLog(server, 2, "DocumentRoot %s", docRoot);
+        mprLog(2, "DocumentRoot %s", docRoot);
         if ((host = maCreateDefaultHost(server, docRoot, ip, port)) == 0) {
             mprUserError(server, "Can't open server on %s", ip);
             return MPR_ERR_CANT_OPEN;
@@ -45,8 +45,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
         searchPath = mprAsprintf(server, -1, "%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", mprGetAppDir(server),
             mprSamePath(server, BLD_BIN_PREFIX, mprGetAppDir(server)) ? BLD_MOD_PREFIX: BLD_ABS_MOD_DIR);
 #endif
-        mprSetModuleSearchPath(server, searchPath);
-        mprFree(searchPath);
+        mprSetModuleSearchPath(searchPath);
 #if UNUSED
         httpSetConnector(loc, "netConnector");
 #endif
@@ -64,8 +63,8 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
              */
             path = "cgi-bin";
             if (mprPathExists(host, path, X_OK)) {
-                ap = maCreateAlias(host, "/cgi-bin/", path, 0);
-                mprLog(host, 4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
+                ap = maCreateAlias("/cgi-bin/", path, 0);
+                mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
                 maInsertAlias(host, ap);
                 loc = httpCreateInheritedLocation(http, host->loc);
                 httpSetLocationPrefix(loc, "/cgi-bin/");
@@ -87,12 +86,11 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
     } else {
 #endif
 
-    path = mprGetAbsPath(server, configFile);
+    path = mprGetAbsPath(configFile);
     if (maParseConfig(server, path) < 0) {
         /* mprUserError(server, "Can't configure server using %s", path); */
         return MPR_ERR_CANT_INITIALIZE;
     }
-    mprFree(path);
 
     if (serverRoot) {
         maSetServerRoot(server, path);
@@ -118,12 +116,11 @@ int maParseConfig(MaServer *server, cchar *configFile)
     MaDir           *dir;
     MaHost          *host;
     MprDirEntry     *dp;
-    char            buf[MPR_MAX_STRING];
-    char            *cp, *tok, *key, *value, *path;
+    char            *buf, *cp, *tok, *key, *value, *path;
     int             i, rc, top, next, len;
 
-    mpr = mprGetMpr(server);
-    mprLog(mpr, 2, "Config File %s", configFile);
+    mpr = mprGetMpr();
+    mprLog(2, "Config File %s", configFile);
 
     appweb = server->appweb;
     http = appweb->http;
@@ -149,9 +146,9 @@ int maParseConfig(MaServer *server, cchar *configFile)
 
     state->filename = (char*) configFile;
 
-    state->file = mprOpen(server, configFile, O_RDONLY | O_TEXT, 0444);
+    state->file = mprOpen(configFile, O_RDONLY | O_TEXT, 0444);
     if (state->file == 0) {
-        mprError(server, "Can't open %s for config directives", configFile);
+        mprError("Can't open %s for config directives", configFile);
         return MPR_ERR_CANT_OPEN;
     }
 
@@ -171,9 +168,9 @@ int maParseConfig(MaServer *server, cchar *configFile)
 
         state = &stack[top];
         mprAssert(state->file);
-        if (mprGets(state->file, buf, sizeof(buf) - 1) == 0) {
+        if ((buf = mprGets(state->file, 0, NULL)) == 0) {
             if (--top > 0 && strcmp(state->filename, stack[top].filename) == 0) {
-                mprError(server, "Unclosed directives in %s", state->filename);
+                mprError("Unclosed directives in %s", state->filename);
                 while (top >= 0 && strcmp(state->filename, state[top].filename) == 0) {
                     top--;
                 }
@@ -181,6 +178,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
             if (top >= 0 && state->file == stack[top].file) {
                 stack[top].lineNumber = state->lineNumber + 1;
             } else {
+                //  MOB - mprCloseFile?
                 mprFree(state->file);
                 state->file = 0;
                 if (top >= 0) {
@@ -189,8 +187,6 @@ int maParseConfig(MaServer *server, cchar *configFile)
             }
             continue;
         }
-
-        buf[sizeof(buf) - 1] = '\0';
         cp = buf;
         while (isspace((int) *cp)) {
             cp++;
@@ -199,9 +195,9 @@ int maParseConfig(MaServer *server, cchar *configFile)
             continue;
         }
 
-        cp = mprStrTrim(cp, "\r\n\t ");
-        key = mprStrTok(cp, " \t\n", &tok);
-        value = mprStrTok(0, "\n", &tok);
+        cp = strim(cp, "\r\n\t ", MPR_TRIM_BOTH);
+        key = stok(cp, " \t\n", &tok);
+        value = stok(0, "\n", &tok);
         if (key == 0 || *key == '\0') {
             goto syntaxErr;
         }
@@ -221,19 +217,19 @@ int maParseConfig(MaServer *server, cchar *configFile)
             value = "";
         }
 
-        if (mprStrcmpAnyCase(key, "Include") == 0) {
+        if (scasecmp(key, "Include") == 0) {
             state->lineNumber++;
-            value = mprStrTrim(value, "\"");
+            value = strim(value, "\"", MPR_TRIM_BOTH);
             if ((cp = strchr(value, '*')) == 0) {
-                state = pushState(server, state, &top);
+                state = pushState(state, &top);
                 state->lineNumber = 0;
-                state->filename = mprJoinPath(server, server->serverRoot, value);
-                state->file = mprOpen(server, state->filename, O_RDONLY | O_TEXT, 0444);
+                state->filename = mprJoinPath(server->serverRoot, value);
+                state->file = mprOpen(state->filename, O_RDONLY | O_TEXT, 0444);
                 if (state->file == 0) {
-                    mprError(server, "Can't open include file %s for config directives", state->filename);
+                    mprError("Can't open include file %s for config directives", state->filename);
                     return MPR_ERR_CANT_OPEN;
                 }
-                mprLog(server, 5, "Parsing config file: %s", state->filename);
+                mprLog(5, "Parsing config file: %s", state->filename);
 
             } else {
                 /*
@@ -244,30 +240,29 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 if (value[len - 1] == '/') {
                     value[len - 1] = '\0';
                 }
-                cp = mprJoinPath(server, server->serverRoot, value);
-                includes = mprGetPathFiles(server, cp, 0);
+                cp = mprJoinPath(server->serverRoot, value);
+                includes = mprGetPathFiles(cp, 0);
                 if (includes == 0) {
                     continue;
                 }
-                value = mprJoinPath(server, server->serverRoot, value);
+                value = mprJoinPath(server->serverRoot, value);
                 for (next = 0; (dp = mprGetNextItem(includes, &next)) != 0; ) {
-                    state = pushState(server, state, &top);
-                    state->filename = mprJoinPath(server, value, dp->name);
-                    state->file = mprOpen(server, state->filename, O_RDONLY | O_TEXT, 0444);
+                    state = pushState(state, &top);
+                    state->filename = mprJoinPath(value, dp->name);
+                    state->file = mprOpen(state->filename, O_RDONLY | O_TEXT, 0444);
                     if (state->file == 0) {
-                        mprError(server, "Can't open include file %s for config directives", state->filename);
+                        mprError("Can't open include file %s for config directives", state->filename);
                         return MPR_ERR_CANT_OPEN;
                     }
-                    mprLog(server, 5, "Parsing config file: %s", state->filename);
+                    mprLog(5, "Parsing config file: %s", state->filename);
                 }
-                mprFree(includes);
             }
             continue;
 
         } else if (*key != '<') {
 
             if (!state->enabled) {
-                mprLog(server, 8, "Skipping key %s at %s:%d", key, state->filename, state->lineNumber);
+                mprLog(8, "Skipping key %s at %s:%d", key, state->filename, state->lineNumber);
                 continue;
             }
 
@@ -284,20 +279,19 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 } else {
                     extraMsg = "";
                 }
-                mprError(server,
-                    "Ignoring unknown directive \"%s\"\nAt line %d in %s\n\n"
+                mprError("Ignoring unknown directive \"%s\"\nAt line %d in %s\n\n"
                     "Make sure the required modules are loaded. %s\n",
                     key, state->lineNumber, state->filename, extraMsg);
                 continue;
 
             } else if (rc < 0) {
-                mprError(server, "Ignoring bad directive \"%s\" at %s:%d in %s", key, state->filename, state->lineNumber, 
+                mprError("Ignoring bad directive \"%s\" at %s:%d in %s", key, state->filename, state->lineNumber, 
                     configFile);
             }
             continue;
         }
 
-        mprLog(server, 9, "AT %d, key %s", state->lineNumber, key);
+        mprLog(9, "AT %d, key %s", state->lineNumber, key);
 
         /*
             Directory, Location and virtual host sections
@@ -309,8 +303,8 @@ int maParseConfig(MaServer *server, cchar *configFile)
         }
         if (*key != '/') {
             if (!state->enabled) {
-                state = pushState(server, state, &top);
-                mprLog(server, 8, "Skipping key %s at %s:%d", key, state->filename, state->lineNumber);
+                state = pushState(state, &top);
+                mprLog(8, "Skipping key %s at %s:%d", key, state->filename, state->lineNumber);
                 continue;
             }
 
@@ -322,21 +316,21 @@ int maParseConfig(MaServer *server, cchar *configFile)
             /*
                 Opening tags
              */
-            if (mprStrcmpAnyCase(key, "If") == 0) {
-                value = mprStrTrim(value, "\"");
+            if (scasecmp(key, "If") == 0) {
+                value = strim(value, "\"", MPR_TRIM_BOTH);
 
                 /*
                     Want to be able to nest <if> directives.
                  */
-                state = pushState(server, state, &top);
-                state->enabled = featureSupported(server, value);
+                state = pushState(state, &top);
+                state->enabled = featureSupported(value);
                 if (!state->enabled) {
-                    mprLog(server, 7, "If \"%s\" conditional is false at %s:%d", value, state->filename, state->lineNumber);
+                    mprLog(7, "If \"%s\" conditional is false at %s:%d", value, state->filename, state->lineNumber);
                 }
 
-            } else if (mprStrcmpAnyCase(key, "VirtualHost") == 0) {
-                value = mprStrTrim(value, "\"");
-                state = pushState(server, state, &top);
+            } else if (scasecmp(key, "VirtualHost") == 0) {
+                value = strim(value, "\"", MPR_TRIM_BOTH);
+                state = pushState(state, &top);
                 state->host = host = maCreateVirtualHost(server, value, host);
                 state->loc = host->loc;
                 state->auth = host->loc->auth;
@@ -348,16 +342,16 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 state->auth = state->dir->auth;
                 maInsertDir(host, state->dir);
 #if UNUSED
-                mprLog(server, 2, "Virtual Host: %s ", value);
+                mprLog(2, "Virtual Host: %s ", value);
 #endif
                 if (maCreateHostAddresses(server, host, value) < 0) {
                     mprFree(host);
                     goto err;
                 }
 
-            } else if (mprStrcmpAnyCase(key, "Directory") == 0) {
-                path = maMakePath(host, mprStrTrim(value, "\""));
-                state = pushState(server, state, &top);
+            } else if (scasecmp(key, "Directory") == 0) {
+                path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+                state = pushState(state, &top);
 
                 if ((dir = maLookupDir(host, path)) != 0) {
                     /*
@@ -375,20 +369,20 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 }
                 state->auth = state->dir->auth;
 
-            } else if (mprStrcmpAnyCase(key, "Location") == 0) {
-                value = mprStrTrim(value, "\"");
+            } else if (scasecmp(key, "Location") == 0) {
+                value = strim(value, "\"", MPR_TRIM_BOTH);
                 if (maLookupLocation(host, value)) {
-                    mprError(server, "Location block already exists for \"%s\"", value);
+                    mprError("Location block already exists for \"%s\"", value);
                     goto err;
                 }
-                state = pushState(server, state, &top);
+                state = pushState(state, &top);
                 state->loc = httpCreateInheritedLocation(http, state->loc);
                 state->auth = state->loc->auth;
 
                 httpSetLocationPrefix(state->loc, value);
 
                 if (maAddLocation(host, state->loc) < 0) {
-                    mprError(server, "Can't add location %s", value);
+                    mprError("Can't add location %s", value);
                     goto err;
                 }
                 mprAssert(host->loc->prefix);
@@ -405,18 +399,18 @@ int maParseConfig(MaServer *server, cchar *configFile)
             if (state->enabled && state->loc != stack[top-1].loc) {
                 httpFinalizeLocation(state->loc);
             }
-            if (mprStrcmpAnyCase(key, "If") == 0) {
+            if (scasecmp(key, "If") == 0) {
                 top--;
                 host = stack[top].host;
 
-            } else if (mprStrcmpAnyCase(key, "VirtualHost") == 0) {
+            } else if (scasecmp(key, "VirtualHost") == 0) {
                 top--;
                 host = stack[top].host;
 
-            } else if (mprStrcmpAnyCase(key, "Directory") == 0) {
+            } else if (scasecmp(key, "Directory") == 0) {
                 top--;
 
-            } else if (mprStrcmpAnyCase(key, "Location") == 0) {
+            } else if (scasecmp(key, "Location") == 0) {
                 top--;
             }
             if (top < 0) {
@@ -430,7 +424,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
         Validate configuration
      */
     if (mprGetListCount(server->httpServers) == 0) {
-        mprError(server, "Must have a Listen directive");
+        mprError("Must have a Listen directive");
         return MPR_ERR_BAD_SYNTAX;
     }
     if (defaultHost->documentRoot == 0) {
@@ -442,8 +436,8 @@ int maParseConfig(MaServer *server, cchar *configFile)
      */
     limits = http->limits;
     if (limits->threadCount > 0) {
-        mprSetMaxWorkers(appweb, limits->threadCount);
-        mprSetMinWorkers(appweb, limits->minThreadCount);
+        mprSetMaxWorkers(limits->threadCount);
+        mprSetMinWorkers(limits->minThreadCount);
     }
 
     /*
@@ -453,7 +447,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
     for (next = 0; (httpServer = mprGetNextItem(server->httpServers, &next)) != 0; ) {
         address = (MaHostAddress*) maLookupHostAddress(server, httpServer->ip, httpServer->port);
         if (address == 0) {
-            address = maCreateHostAddress(server, httpServer->ip, httpServer->port);
+            address = maCreateHostAddress(httpServer->ip, httpServer->port);
             mprAddItem(server->hostAddresses, address);
         }
         maInsertVirtualHost(address, defaultHost);
@@ -502,15 +496,15 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 TODO - but this code is not doing a DNS server lookup anymore
              */
             cchar *hostName = mprGetServerName(server);
-            mprLog(server, 0, "WARNING: Missing ServerName directive, doing DNS lookup.");
+            mprLog(0, "WARNING: Missing ServerName directive, doing DNS lookup.");
             httpServer = mprGetFirstItem(server->httpServers);
-            mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
+            mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
             maSetHostName(defaultHost, hostName);
 
         } else {
             maSetHostName(defaultHost, defaultHost->ipAddrPort);
         }
-        mprLog(server, 2, "Missing ServerName directive, ServerName set to: \"%s\"", defaultHost->name);
+        mprLog(2, "Missing ServerName directive, ServerName set to: \"%s\"", defaultHost->name);
     }
 #endif
 
@@ -536,7 +530,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
                  */
                 maAddStandardMimeTypes(hp);
                 if (once++ == 0) {
-                    mprLog(server, 2, "No supplied \"mime.types\" file, using builtin mime configuration");
+                    mprLog(2, "No supplied \"mime.types\" file, using builtin mime configuration");
                 }
             }
         }
@@ -547,14 +541,13 @@ int maParseConfig(MaServer *server, cchar *configFile)
          */
         for (nextAlias = 0; (alias = mprGetNextItem(hp->aliases, &nextAlias)) != 0; ) {
             if (alias->filename) {
-                // mprLog(hp, 0, "Alias \"%s\" %s", alias->prefix, alias->filename);
+                // mprLog(0, "Alias \"%s\" %s", alias->prefix, alias->filename);
                 path = maMakePath(hp, alias->filename);
                 bestDir = maLookupBestDir(hp, path);
                 if (bestDir == 0) {
                     bestDir = maCreateDir(hp, alias->filename, stack[0].dir);
                     maInsertDir(hp, bestDir);
                 }
-                mprFree(path);
             }
         }
 
@@ -570,19 +563,19 @@ int maParseConfig(MaServer *server, cchar *configFile)
         }
     }
 
-    if (mprHasAllocError(mpr)) {
-        mprError(server, "Memory allocation error when initializing");
-        return MPR_ERR_NO_MEMORY;
+    if (mprHasAllocError()) {
+        mprError("Memory allocation error when initializing");
+        return MPR_ERR_MEMORY;
     }
 #endif
     return 0;
 
 syntaxErr:
-    mprError(server, "Syntax error in %s at %s:%d", configFile, state->filename, state->lineNumber);
+    mprError("Syntax error in %s at %s:%d", configFile, state->filename, state->lineNumber);
     return MPR_ERR_BAD_SYNTAX;
 
 err:
-    mprError(server, "Error in %s at %s:%d", configFile, state->filename, state->lineNumber);
+    mprError("Error in %s at %s:%d", configFile, state->filename, state->lineNumber);
     return MPR_ERR_BAD_SYNTAX;
 }
 
@@ -606,7 +599,7 @@ int maValidateConfiguration(MaServer *server)
     defaultHost = server->defaultHost;
 
     if (mprGetListCount(server->httpServers) == 0) {
-        mprError(server, "Must have a Listen directive");
+        mprError("Must have a Listen directive");
         return MPR_ERR_BAD_SYNTAX;
     }
     if (defaultHost->documentRoot == 0) {
@@ -620,7 +613,7 @@ int maValidateConfiguration(MaServer *server)
     for (next = 0; (httpServer = mprGetNextItem(server->httpServers, &next)) != 0; ) {
         address = (MaHostAddress*) maLookupHostAddress(server, httpServer->ip, httpServer->port);
         if (address == 0) {
-            address = maCreateHostAddress(server, httpServer->ip, httpServer->port);
+            address = maCreateHostAddress(httpServer->ip, httpServer->port);
             mprAddItem(server->hostAddresses, address);
         }
         maInsertVirtualHost(address, defaultHost);
@@ -669,15 +662,15 @@ int maValidateConfiguration(MaServer *server)
                 TODO - but this code is not doing a DNS server lookup anymore
              */
             cchar *hostName = mprGetServerName(server);
-            mprLog(server, 0, "WARNING: Missing ServerName directive, doing DNS lookup.");
+            mprLog(0, "WARNING: Missing ServerName directive, doing DNS lookup.");
             httpServer = mprGetFirstItem(server->httpServers);
-            mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
+            mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
             maSetHostName(defaultHost, hostName);
 
         } else {
             maSetHostName(defaultHost, defaultHost->ipAddrPort);
         }
-        mprLog(server, 2, "Missing ServerName directive, ServerName set to: \"%s\"", defaultHost->name);
+        mprLog(2, "Missing ServerName directive, ServerName set to: \"%s\"", defaultHost->name);
     }
 #endif
 
@@ -703,7 +696,7 @@ int maValidateConfiguration(MaServer *server)
 #if UNUSED
                 static int once = 0;
                 if (once++ == 0) {
-                    mprLog(server, 2, "No supplied \"mime.types\" file, using builtin mime configuration");
+                    mprLog(2, "No supplied \"mime.types\" file, using builtin mime configuration");
                 }
 #endif
             }
@@ -719,7 +712,6 @@ int maValidateConfiguration(MaServer *server)
                 bestDir = maCreateBareDir(hp, alias->filename);
                 maInsertDir(hp, bestDir);
             }
-            mprFree(path);
         }
 
         /*
@@ -733,16 +725,16 @@ int maValidateConfiguration(MaServer *server)
             }
         }
     }
-    if (mprHasAllocError(mprGetMpr(server))) {
-        mprError(server, "Memory allocation error when initializing");
-        return MPR_ERR_NO_MEMORY;
+    if (mprHasMemError()) {
+        mprError("Memory allocation error when initializing");
+        return MPR_ERR_MEMORY;
     }
 #if BLD_FEATURE_ROMFS
-     mprLog(server, MPR_CONFIG, "Server Root \"%s\" in ROM", server->serverRoot);
+     mprLog(MPR_CONFIG, "Server Root \"%s\" in ROM", server->serverRoot);
 #else
-     mprLog(server, MPR_CONFIG, "Server Root \"%s\"", server->serverRoot);
+     mprLog(MPR_CONFIG, "Server Root \"%s\"", server->serverRoot);
 #endif
-     mprLog(server, MPR_CONFIG, "Default Document Root \"%s\"", defaultHost->documentRoot);
+     mprLog(MPR_CONFIG, "Default Document Root \"%s\"", defaultHost->documentRoot);
     return 0;
 }
 
@@ -792,100 +784,97 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     //  TODO - need a real parser
     switch (toupper((int) key[0])) {
     case 'A':
-        if (mprStrcmpAnyCase(key, "Alias") == 0) {
+        if (scasecmp(key, "Alias") == 0) {
             /* Scope: server, host */
-            if (maSplitConfigValue(server, &prefix, &path, value, 1) < 0) {
+            if (maSplitConfigValue(&prefix, &path, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
             prefix = maReplaceReferences(host, prefix);
             path = maMakePath(host, path);
             if (maLookupAlias(host, prefix)) {
-                mprError(server, "Alias \"%s\" already exists", prefix);
+                mprError("Alias \"%s\" already exists", prefix);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            alias = maCreateAlias(host, prefix, path, 0);
-            mprLog(server, 4, "Alias: \"%s for \"%s\"", prefix, path);
+            alias = maCreateAlias(prefix, path, 0);
+            mprLog(4, "Alias: \"%s for \"%s\"", prefix, path);
             if (maInsertAlias(host, alias) < 0) {
-                mprError(server, "Can't insert alias: %s", prefix);
+                mprError("Can't insert alias: %s", prefix);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            mprFree(path);
-            mprFree(prefix);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AddFilter") == 0) {
+        } else if (scasecmp(key, "AddFilter") == 0) {
             /* Scope: server, host, location */
-            name = mprStrTok(value, " \t", &extensions);
+            name = stok(value, " \t", &extensions);
             if (httpAddFilter(loc, name, extensions, HTTP_STAGE_INCOMING | HTTP_STAGE_OUTGOING) < 0) {
-                mprError(server, "Can't add filter %s", name);
+                mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AddInputFilter") == 0) {
+        } else if (scasecmp(key, "AddInputFilter") == 0) {
             /* Scope: server, host, location */
-            name = mprStrTok(value, " \t", &extensions);
+            name = stok(value, " \t", &extensions);
             if (httpAddFilter(loc, name, extensions, HTTP_STAGE_INCOMING) < 0) {
-                mprError(server, "Can't add filter %s", name);
+                mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AddOutputFilter") == 0) {
+        } else if (scasecmp(key, "AddOutputFilter") == 0) {
             /* Scope: server, host, location */
-            name = mprStrTok(value, " \t", &extensions);
+            name = stok(value, " \t", &extensions);
             if (httpAddFilter(loc, name, extensions, HTTP_STAGE_OUTGOING) < 0) {
-                mprError(server, "Can't add filter %s", name);
+                mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AddHandler") == 0) {
+        } else if (scasecmp(key, "AddHandler") == 0) {
             /* Scope: server, host, location */
-            name = mprStrTok(value, " \t", &extensions);
+            name = stok(value, " \t", &extensions);
             if (httpAddHandler(state->loc, name, extensions) < 0) {
-                mprError(server, "Can't add handler %s", name);
+                mprError("Can't add handler %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AddType") == 0) {
-            if (maSplitConfigValue(server, &mimeType, &ext, value, 1) < 0) {
+        } else if (scasecmp(key, "AddType") == 0) {
+            if (maSplitConfigValue(&mimeType, &ext, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
             maAddMimeType(host, ext, mimeType);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "Allow") == 0) {
+        } else if (scasecmp(key, "Allow") == 0) {
             char *from, *spec;
-            if (maSplitConfigValue(server, &from, &spec, value, 1) < 0) {
+            if (maSplitConfigValue(&from, &spec, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
             /* spec can be: all, host, ipAddr */
             httpSetAuthAllow(auth, spec);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AuthGroupFile") == 0) {
+        } else if (scasecmp(key, "AuthGroupFile") == 0) {
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belongs elsewhere
-            path = maMakePath(host, mprStrTrim(value, "\""));
+            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             if (httpReadGroupFile(http, auth, path) < 0) {
-                mprError(http, "Can't open AuthGroupFile %s", path);
+                mprError("Can't open AuthGroupFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            mprFree(path);
 #else
-            mprError(server, "AuthGroupFile directive not supported when --auth=pam");
+            mprError("AuthGroupFile directive not supported when --auth=pam");
 #endif
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AuthMethod") == 0) {
-            value = mprStrTrim(value, "\"");
-            if (mprStrcmpAnyCase(value, "pam") == 0) {
+        } else if (scasecmp(key, "AuthMethod") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            if (scasecmp(value, "pam") == 0) {
                 auth->backend = HTTP_AUTH_METHOD_PAM;
                 return 1;
 
-            } else if (mprStrcmpAnyCase(value, "file") == 0) {
+            } else if (scasecmp(value, "file") == 0) {
                 auth->backend = HTTP_AUTH_METHOD_FILE;
                 return 1;
 
@@ -893,74 +882,73 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 return MPR_ERR_BAD_SYNTAX;
             }
 
-        } else if (mprStrcmpAnyCase(key, "AuthName") == 0) {
+        } else if (scasecmp(key, "AuthName") == 0) {
             //  TODO - should be httpSetAuthRealm
-            httpSetAuthRealm(auth, mprStrTrim(value, "\""));
+            httpSetAuthRealm(auth, strim(value, "\"", MPR_TRIM_BOTH));
             return 1;
             
-        } else if (mprStrcmpAnyCase(key, "AuthType") == 0) {
+        } else if (scasecmp(key, "AuthType") == 0) {
             //  TODO - config parser should trim there for us
-            value = mprStrTrim(value, "\"");
-            if (mprStrcmpAnyCase(value, "Basic") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            if (scasecmp(value, "Basic") == 0) {
                 auth->type = HTTP_AUTH_BASIC;
 
-            } else if (mprStrcmpAnyCase(value, "Digest") == 0) {
+            } else if (scasecmp(value, "Digest") == 0) {
                 auth->type = HTTP_AUTH_DIGEST;
 
             } else {
-                mprError(http, "Unsupported authorization protocol");
+                mprError("Unsupported authorization protocol");
                 return MPR_ERR_BAD_SYNTAX;
             }
             return 1;
             
-        } else if (mprStrcmpAnyCase(key, "AuthUserFile") == 0) {
+        } else if (scasecmp(key, "AuthUserFile") == 0) {
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belons elsewhere
-            path = maMakePath(host, mprStrTrim(value, "\""));
+            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             if (httpReadUserFile(http, auth, path) < 0) {
-                mprError(http, "Can't open AuthUserFile %s", path);
+                mprError("Can't open AuthUserFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            mprFree(path);
 #else
-            mprError(server, "AuthUserFile directive not supported when --auth=pam");
+            mprError("AuthUserFile directive not supported when --auth=pam");
 #endif
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AuthDigestQop") == 0) {
-            value = mprStrTrim(value, "\"");
-            mprStrLower(value);
+        } else if (scasecmp(key, "AuthDigestQop") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            slower(value);
             if (strcmp(value, "none") != 0 && strcmp(value, "auth") != 0 && strcmp(value, "auth-int") != 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
             httpSetAuthQop(auth, value);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AuthDigestAlgorithm") == 0) {
+        } else if (scasecmp(key, "AuthDigestAlgorithm") == 0) {
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AuthDigestDomain") == 0) {
+        } else if (scasecmp(key, "AuthDigestDomain") == 0) {
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "AuthDigestNonceLifetime") == 0) {
+        } else if (scasecmp(key, "AuthDigestNonceLifetime") == 0) {
             return 1;
         }
         break;
 
     case 'B':
-        if (mprStrcmpAnyCase(key, "BrowserMatch") == 0) {
+        if (scasecmp(key, "BrowserMatch") == 0) {
             return 1;
         }
         break;
 
     case 'C':
-        if (mprStrcmpAnyCase(key, "CustomLog") == 0) {
+        if (scasecmp(key, "CustomLog") == 0) {
 #if !BLD_FEATURE_ROMFS
             char *format, *end;
             if (*value == '\"') {
                 end = strchr(++value, '\"');
                 if (end == 0) {
-                    mprError(server, "Missing closing quote");
+                    mprError("Missing closing quote");
                     return MPR_ERR_BAD_SYNTAX;
                 }
                 *end++ = '\0';
@@ -971,14 +959,13 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 }
 
             } else {
-                path = mprStrTok(value, " \t", &format);
+                path = stok(value, " \t", &format);
             }
             if (path == 0 || format == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
             path = maMakePath(host, path);
-            maSetAccessLog(host, path, mprStrTrim(format, "\""));
-            mprFree(path);
+            maSetAccessLog(host, path, strim(format, "\"", MPR_TRIM_BOTH));
             maSetLogHost(host, host);
 #endif
             return 1;
@@ -986,69 +973,58 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'D':
-        if (mprStrcmpAnyCase(key, "Deny") == 0) {
+        if (scasecmp(key, "Deny") == 0) {
             char *from, *spec;
-            if (maSplitConfigValue(server, &from, &spec, value, 1) < 0) {
+            if (maSplitConfigValue(&from, &spec, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
             httpSetAuthDeny(auth, spec);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "DirectoryIndex") == 0) {
-            value = mprStrTrim(value, "\"");
+        } else if (scasecmp(key, "DirectoryIndex") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
             if (dir == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
             maSetDirIndex(dir, value);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "DocumentRoot") == 0) {
-            path = maMakePath(host, mprStrTrim(value, "\""));
-#if !VXWORKS
-            /*
-                VxWorks stat() is broken if using a network FTP server.
-             */
-            if (!mprPathExists(server, path, X_OK)) {
-                mprError(server, "Can't access DocumentRoot directory %s", path);
-                return MPR_ERR_BAD_SYNTAX;
-            }
-#endif
+        } else if (scasecmp(key, "DocumentRoot") == 0) {
+            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             maSetHostDocumentRoot(host, path);
             maSetDirPath(dir, path);
 #if UNUSED
-            mprLog(server, MPR_CONFIG, "DocRoot (%s): \"%s\"", host->name, path);
+            mprLog(MPR_CONFIG, "DocRoot (%s): \"%s\"", host->name, path);
 #endif
-            mprFree(path);
             return 1;
         }
         break;
 
     case 'E':
-        if (mprStrcmpAnyCase(key, "ErrorDocument") == 0) {
-            codeStr = mprStrTok(value, " \t", &url);
+        if (scasecmp(key, "ErrorDocument") == 0) {
+            codeStr = stok(value, " \t", &url);
             if (codeStr == 0 || url == 0) {
-                mprError(server, "Bad ErrorDocument directive");
+                mprError("Bad ErrorDocument directive");
                 return MPR_ERR_BAD_SYNTAX;
             }
             httpAddErrorDocument(loc, codeStr, url);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "ErrorLog") == 0) {
-            path = mprStrTrim(value, "\"");
+        } else if (scasecmp(key, "ErrorLog") == 0) {
+            path = strim(value, "\"", MPR_TRIM_BOTH);
             if (path && *path) {
                 if (server->alreadyLogging) {
-                    mprLog(server, 4, "Already logging. Ignoring ErrorLog directive");
+                    mprLog(4, "Already logging. Ignoring ErrorLog directive");
                 } else {
                     maStopLogging(server);
                     if (strncmp(path, "stdout", 6) != 0) {
                         path = maMakePath(host, path);
-                        rc = maStartLogging(server, path);
-                        mprFree(path);
+                        rc = maStartLogging(path);
                     } else {
-                        rc = maStartLogging(server, path);
+                        rc = maStartLogging(path);
                     }
                     if (rc < 0) {
-                        mprError(server, "Can't write to ErrorLog");
+                        mprError("Can't write to ErrorLog");
                         return MPR_ERR_BAD_SYNTAX;
                     }
                 }
@@ -1058,8 +1034,8 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'G':
-        if (mprStrcmpAnyCase(key, "Group") == 0) {
-            value = mprStrTrim(value, "\"");
+        if (scasecmp(key, "Group") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
             maSetHttpGroup(appweb, value);
             return 1;
         }
@@ -1069,13 +1045,13 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'K':
-        if (mprStrcmpAnyCase(key, "KeepAlive") == 0) {
-            if (mprStrcmpAnyCase(value, "on") != 0) {
+        if (scasecmp(key, "KeepAlive") == 0) {
+            if (scasecmp(value, "on") != 0) {
                 limits.keepAliveCount = 0;
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "KeepAliveTimeout") == 0) {
+        } else if (scasecmp(key, "KeepAliveTimeout") == 0) {
             if (! mprGetDebugMode(server)) {
                 limits.inactivityTimeout = atoi(value);
             }
@@ -1084,7 +1060,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'L':
-        if (mprStrcmpAnyCase(key, "LimitChunkSize") == 0) {
+        if (scasecmp(key, "LimitChunkSize") == 0) {
             num = atoi(value);
             if (num < MA_BOT_CHUNK_SIZE || num > MA_TOP_CHUNK_SIZE) {
                 return MPR_ERR_BAD_SYNTAX;
@@ -1092,19 +1068,19 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             limits.chunkSize = num;
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitClients") == 0) {
-            mprSetMaxSocketClients(server, atoi(value));
+        } else if (scasecmp(key, "LimitClients") == 0) {
+            mprSetMaxSocketClients(atoi(value));
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitMemoryMax") == 0) {
-            mprSetAllocLimits(server, -1, atoi(value));
+        } else if (scasecmp(key, "LimitMemoryMax") == 0) {
+            mprSetMemLimits(-1, atoi(value));
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitMemoryRedline") == 0) {
-            mprSetAllocLimits(server, atoi(value), -1);
+        } else if (scasecmp(key, "LimitMemoryRedline") == 0) {
+            mprSetMemLimits(atoi(value), -1);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitRequestBody") == 0) {
+        } else if (scasecmp(key, "LimitRequestBody") == 0) {
             num = atoi(value);
             if (num < MA_BOT_BODY || num > MA_TOP_BODY) {
                 return MPR_ERR_BAD_SYNTAX;
@@ -1113,8 +1089,8 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         //  MOB -- Deprecate Field and update doc
-        } else if (mprStrcmpAnyCase(key, "LimitRequestFields") == 0 || 
-                mprStrcmpAnyCase(key, "LimitRequestHeaderCount") == 0) {
+        } else if (scasecmp(key, "LimitRequestFields") == 0 || 
+                scasecmp(key, "LimitRequestHeaderCount") == 0) {
             num = atoi(value);
             if (num < MA_BOT_NUM_HEADERS || num > MA_TOP_NUM_HEADERS) {
                 return MPR_ERR_BAD_SYNTAX;
@@ -1123,7 +1099,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         //  MOB -- Deprecate Field and update doc
-        } else if (mprStrcmpAnyCase(key, "LimitRequestFieldSize") == 0 || mprStrcmpAnyCase(key, "LimitRequestHeaderSize") == 0) {
+        } else if (scasecmp(key, "LimitRequestFieldSize") == 0 || scasecmp(key, "LimitRequestHeaderSize") == 0) {
             num = atoi(value);
             if (num < MA_BOT_HEADER || num > MA_TOP_HEADER) {
                 return MPR_ERR_BAD_SYNTAX;
@@ -1131,7 +1107,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             limits.headerSize = num;
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitResponseBody") == 0) {
+        } else if (scasecmp(key, "LimitResponseBody") == 0) {
             num = atoi(value);
             if (num < MA_BOT_RESPONSE_BODY || num > MA_TOP_RESPONSE_BODY) {
                 return MPR_ERR_BAD_SYNTAX;
@@ -1139,7 +1115,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             limits.transmissionBodySize = num;
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitStageBuffer") == 0) {
+        } else if (scasecmp(key, "LimitStageBuffer") == 0) {
             num = atoi(value);
             if (num < MA_BOT_STAGE_BUFFER || num > MA_TOP_STAGE_BUFFER) {
                 return MPR_ERR_BAD_SYNTAX;
@@ -1147,7 +1123,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             limits.stageBufferSize = num;
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitUrl") == 0) {
+        } else if (scasecmp(key, "LimitUrl") == 0) {
             num = atoi(value);
             if (num < MA_BOT_URL || num > MA_TOP_URL){
                 return MPR_ERR_BAD_SYNTAX;
@@ -1155,7 +1131,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             limits.uriSize = num;
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LimitUploadSize") == 0) {
+        } else if (scasecmp(key, "LimitUploadSize") == 0) {
             num = atoi(value);
             if (num != -1 && (num < MA_BOT_UPLOAD_SIZE || num > MA_TOP_UPLOAD_SIZE)){
                 //  TODO - should emit a message for all these cases
@@ -1165,7 +1141,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
 #if DEPRECATED
-        } else if (mprStrcmpAnyCase(key, "ListenIF") == 0) {
+        } else if (scasecmp(key, "ListenIF") == 0) {
             MprList         *ipList;
             MprInterface    *ip;
 
@@ -1184,7 +1160,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
                 port = atoi(cp);
                 if (port <= 0 || port > 65535) {
-                    mprError(server, "Bad listen port number %d", port);
+                    mprError("Bad listen port number %d", port);
                     return MPR_ERR_BAD_SYNTAX;
                 }
 
@@ -1192,20 +1168,20 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 port = HTTP_DEFAULT_PORT;
             }
 
-            ipList = mprGetMpr(server)->socketService->getInterfaceList();
+            ipList = mprGetMpr()->socketService->getInterfaceList();
             ip = (MprInterface*) ipList->getFirst();
             if (ip == 0) {
-                mprError(server, "Can't find interfaces, use Listen-directive with IP address.");
+                mprError("Can't find interfaces, use Listen-directive with IP address.");
                 return MPR_ERR_BAD_SYNTAX;
             }
             while (ip) {
-                if (mprStrcmpAnyCase(ip->name, value) != 0) {
+                if (scasecmp(ip->name, value) != 0) {
                     ip = (MprInterface*) ipList->getNext(ip);
                     continue;
                 }
                 server.insert(new HttpServer(ip->ip, port));
                 if (host->ipAddrPort == 0) {
-                    mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip->ip, port);
+                    mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip->ip, port);
                     maSetIpAddrPort(host, ipAddrPort);
                 }
                 break;
@@ -1213,7 +1189,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 #endif
 
-        } else if (mprStrcmpAnyCase(key, "Listen") == 0) {
+        } else if (scasecmp(key, "Listen") == 0) {
             /*
                 Options:
                     ip:port
@@ -1222,14 +1198,14 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             
                 Where ipAddr may be "::::::" for ipv6 addresses or may be enclosed in "[]" if appending a port.
              */
-            value = mprStrTrim(value, "\"");
+            value = strim(value, "\"", MPR_TRIM_BOTH);
             if (isdigit((int) *value) && strchr(value, '.') == 0 && strchr(value, ':') == 0) {
                 /*
                     Port only, listen on all interfaces (ipv4 + ipv6)
                  */
                 port = atoi(value);
                 if (port <= 0 || port > 65535) {
-                    mprError(server, "Bad listen port number %d", port);
+                    mprError("Bad listen port number %d", port);
                     return MPR_ERR_BAD_SYNTAX;
                 }
                 hostName = "";
@@ -1284,35 +1260,35 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 Set the host ip spec if not already set
              */
             if (host->ipAddrPort == 0) {
-                mprSprintf(server, ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, port);
+                mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, port);
                 maSetHostIpAddrPort(host, ipAddrPort);
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LogFormat") == 0) {
+        } else if (scasecmp(key, "LogFormat") == 0) {
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LogLevel") == 0) {
+        } else if (scasecmp(key, "LogLevel") == 0) {
             if (server->alreadyLogging) {
-                mprLog(server, 4, "Already logging. Ignoring LogLevel directive");
+                mprLog(4, "Already logging. Ignoring LogLevel directive");
 
             } else {
                 int level;
-                value = mprStrTrim(value, "\"");
+                value = strim(value, "\"", MPR_TRIM_BOTH);
                 level = atoi(value);
-                mprSetLogLevel(server, level);
+                mprSetLogLevel(level);
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LogTrace") == 0) {
-            cp = mprStrTok(value, " \t", &tok);
+        } else if (scasecmp(key, "LogTrace") == 0) {
+            cp = stok(value, " \t", &tok);
             level = atoi(cp);
             if (level < 0 || level > 9) {
-                mprError(server, "Bad LogTrace level %d, must be 0-9", level);
+                mprError("Bad LogTrace level %d, must be 0-9", level);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            items = mprStrTok(0, "\n", &tok);
-            mprStrLower(items);
+            items = stok(0, "\n", &tok);
+            slower(items);
             mask = 0;
             if (strstr(items, "conn")) {
                 mask |= HTTP_TRACE_CONN;
@@ -1335,29 +1311,28 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             maSetHostTrace(host, level, mask);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LogTraceFilter") == 0) {
-            cp = mprStrTok(value, " \t", &tok);
+        } else if (scasecmp(key, "LogTraceFilter") == 0) {
+            cp = stok(value, " \t", &tok);
             len = atoi(cp);
-            include = mprStrTok(0, " \t", &tok);
-            exclude = mprStrTok(0, " \t", &tok);
-            include = mprStrTrim(include, "\"");
-            exclude = mprStrTrim(exclude, "\"");
+            include = stok(0, " \t", &tok);
+            exclude = stok(0, " \t", &tok);
+            include = strim(include, "\"", MPR_TRIM_BOTH);
+            exclude = strim(exclude, "\"", MPR_TRIM_BOTH);
             maSetHostTraceFilter(host, len, include, exclude);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LoadModulePath") == 0) {
-            value = mprStrTrim(value, "\"");
-            path = mprStrcat(server, -1, value, MPR_SEARCH_SEP, mprGetAppDir(server), NULL);
-            mprSetModuleSearchPath(server, path);
-            mprFree(path);
+        } else if (scasecmp(key, "LoadModulePath") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            path = sjoin(value, MPR_SEARCH_SEP, mprGetAppDir(server), NULL);
+            mprSetModuleSearchPath(path);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "LoadModule") == 0) {
-            name = mprStrTok(value, " \t", &tok);
+        } else if (scasecmp(key, "LoadModule") == 0) {
+            name = stok(value, " \t", &tok);
             if (name == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            path = mprStrTok(0, "\n", &tok);
+            path = stok(0, "\n", &tok);
             if (path == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
@@ -1370,26 +1345,26 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'M':
-        if (mprStrcmpAnyCase(key, "MaxKeepAliveRequests") == 0) {
+        if (scasecmp(key, "MaxKeepAliveRequests") == 0) {
             limits.keepAliveCount = atoi(value);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "MemoryDepletionPolicy") == 0) {
-            mprStrLower(value);
+        } else if (scasecmp(key, "MemoryDepletionPolicy") == 0) {
+            slower(value);
             if (strcmp(value, "exit") == 0) {
-                mprSetAllocPolicy(server, MPR_ALLOC_POLICY_EXIT);
+                mprSetMemPolicy(MPR_ALLOC_POLICY_EXIT);
             } else if (strcmp(value, "restart") == 0) {
-                mprSetAllocPolicy(server, MPR_ALLOC_POLICY_RESTART);
+                mprSetMemPolicy(MPR_ALLOC_POLICY_RESTART);
             }
-            mprSetAllocLimits(server, atoi(value), -1);
+            mprSetMemLimits(atoi(value), -1);
             return 1;
         }
         break;
 
     case 'N':
-        if (mprStrcmpAnyCase(key, "NameVirtualHost") == 0) {
+        if (scasecmp(key, "NameVirtualHost") == 0) {
 #if UNUSED
-            mprLog(server, 2, "NameVirtual Host: %s ", value);
+            mprLog(2, "NameVirtual Host: %s ", value);
 #endif
             if (maCreateHostAddresses(server, 0, value) < 0) {
                 return -1;
@@ -1399,8 +1374,8 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'O':
-        if (mprStrcmpAnyCase(key, "Order") == 0) {
-            if (mprStrcmpAnyCase(mprStrTrim(value, "\""), "Allow,Deny") == 0) {
+        if (scasecmp(key, "Order") == 0) {
+            if (scasecmp(strim(value, "\"", MPR_TRIM_BOTH), "Allow,Deny") == 0) {
                 httpSetAuthOrder(auth, HTTP_ALLOW_DENY);
             } else {
                 httpSetAuthOrder(auth, HTTP_DENY_ALLOW);
@@ -1410,7 +1385,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'P':
-        if (mprStrcmpAnyCase(key, "Protocol") == 0) {
+        if (scasecmp(key, "Protocol") == 0) {
             if (strcmp(value, "HTTP/1.0") == 0) {
                 maSetHttpVersion(host, 0);
             } else if (strcmp(value, "HTTP/1.1") == 0) {
@@ -1418,8 +1393,8 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "PutMethod") == 0) {
-            if (mprStrcmpAnyCase(value, "on") == 0) {
+        } else if (scasecmp(key, "PutMethod") == 0) {
+            if (scasecmp(value, "on") == 0) {
                 loc->flags |= HTTP_LOC_PUT_DELETE;
             } else {
                 loc->flags &= ~HTTP_LOC_PUT_DELETE;
@@ -1429,18 +1404,18 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'R':
-        if (mprStrcmpAnyCase(key, "Redirect") == 0) {
+        if (scasecmp(key, "Redirect") == 0) {
             if (value[0] == '/' || value[0] == 'h') {
                 code = 302;
-                url = mprStrTok(value, " \t", &tok);
+                url = stok(value, " \t", &tok);
 
             } else if (isdigit((int) value[0])) {
-                cp = mprStrTok(value, " \t", &tok);
+                cp = stok(value, " \t", &tok);
                 code = atoi(cp);
-                url = mprStrTok(0, " \t\n", &tok);
+                url = stok(0, " \t\n", &tok);
 
             } else {
-                cp = mprStrTok(value, " \t", &tok);
+                cp = stok(value, " \t", &tok);
                 if (strcmp(value, "permanent") == 0) {
                     code = 301;
                 } else if (strcmp(value, "temp") == 0) {
@@ -1452,65 +1427,65 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 } else {
                     return MPR_ERR_BAD_SYNTAX;
                 }
-                url = mprStrTok(0, " \t\n", &tok);
+                url = stok(0, " \t\n", &tok);
             }
             if (code >= 300 && code <= 399) {
-                newUrl = mprStrTok(0, "\n", &tok);
+                newUrl = stok(0, "\n", &tok);
             } else {
                 newUrl = "";
             }
             if (code <= 0 || url == 0 || newUrl == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            url = mprStrTrim(url, "\"");
-            newUrl = mprStrTrim(newUrl, "\"");
-            mprLog(server, 4, "insertAlias: Redirect %d from \"%s\" to \"%s\"", code, url, newUrl);
-            alias = maCreateAlias(host, url, newUrl, code);
+            url = strim(url, "\"", MPR_TRIM_BOTH);
+            newUrl = strim(newUrl, "\"", MPR_TRIM_BOTH);
+            mprLog(4, "insertAlias: Redirect %d from \"%s\" to \"%s\"", code, url, newUrl);
+            alias = maCreateAlias(url, newUrl, code);
             maInsertAlias(host, alias);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "Require") == 0) {
-            if (maGetConfigValue(http, &type, value, &tok, 1) < 0) {
+        } else if (scasecmp(key, "Require") == 0) {
+            if (maGetConfigValue(&type, value, &tok, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            if (mprStrcmpAnyCase(type, "acl") == 0) {
+            if (scasecmp(type, "acl") == 0) {
 #if BLD_FEATURE_AUTH_FILE
                 HttpAcl   acl;
                 char    *aclSpec;
-                aclSpec = mprStrTrim(tok, "\"");
+                aclSpec = strim(tok, "\"", MPR_TRIM_BOTH);
                 acl = httpParseAcl(auth, aclSpec);
                 httpSetRequiredAcl(auth, acl);
 #else
-            mprError(server, "Acl directive not supported when --auth=pam");
+            mprError("Acl directive not supported when --auth=pam");
 #endif
 
-            } else if (mprStrcmpAnyCase(type, "valid-user") == 0) {
+            } else if (scasecmp(type, "valid-user") == 0) {
                 httpSetAuthAnyValidUser(auth);
 
             } else {
-                names = mprStrTrim(tok, "\"");
-                if (mprStrcmpAnyCase(type, "user") == 0) {
+                names = strim(tok, "\"", MPR_TRIM_BOTH);
+                if (scasecmp(type, "user") == 0) {
                     httpSetAuthRequiredUsers(auth, names);
 
-                } else if (mprStrcmpAnyCase(type, "group") == 0) {
+                } else if (scasecmp(type, "group") == 0) {
                     httpSetAuthRequiredGroups(auth, names);
 
                 } else {
-                    mprError(http, "Bad Require syntax: %s", type);
+                    mprError("Bad Require syntax: %s", type);
                     return MPR_ERR_BAD_SYNTAX;
                 }
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "ResetPipeline") == 0) {
+        } else if (scasecmp(key, "ResetPipeline") == 0) {
             httpResetPipeline(loc);
             return 1;
         }
         break;
 
     case 'S':
-        if (mprStrcmpAnyCase(key, "ServerName") == 0) {
-            value = mprStrTrim(value, "\"");
+        if (scasecmp(key, "ServerName") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
             if (strncmp(value, "http://", 7) == 0) {
                 maSetHostName(host, &value[7]);
             } else {
@@ -1518,101 +1493,96 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "ServerRoot") == 0) {
-            path = maMakePath(host, mprStrTrim(value, "\""));
+        } else if (scasecmp(key, "ServerRoot") == 0) {
+            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             maSetServerRoot(server, path);
 #if UNUSED
 #if BLD_FEATURE_ROMFS
-            mprLog(server, MPR_CONFIG, "Server Root \"%s\" in ROM", path);
+            mprLog(MPR_CONFIG, "Server Root \"%s\" in ROM", path);
 #else
-            mprLog(server, MPR_CONFIG, "Server Root \"%s\"", path);
+            mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
 #endif
 #endif
-            mprFree(path);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "SetConnector") == 0) {
+        } else if (scasecmp(key, "SetConnector") == 0) {
             /* Scope: server, host, loc */
-            value = mprStrTrim(value, "\"");
+            value = strim(value, "\"", MPR_TRIM_BOTH);
             if (httpSetConnector(loc, value) < 0) {
-                mprError(server, "Can't add handler %s", value);
+                mprError("Can't add handler %s", value);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "SetHandler") == 0) {
+        } else if (scasecmp(key, "SetHandler") == 0) {
             /* Scope: server, host, location */
-            name = mprStrTok(value, " \t", &extensions);
+            name = stok(value, " \t", &extensions);
             if (httpSetHandler(state->loc, name) < 0) {
-                mprError(server, "Can't add handler %s", name);
+                mprError("Can't add handler %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "StartThreads") == 0) {
+        } else if (scasecmp(key, "StartThreads") == 0) {
             num = atoi(value);
             if (num < 0 || num > MA_TOP_THREADS) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            mprSetMinWorkers(appweb, num);
+            mprSetMinWorkers(num);
             return 1;
         }
         break;
 
     case 'T':
-        if (mprStrcmpAnyCase(key, "ThreadLimit") == 0) {
+        if (scasecmp(key, "ThreadLimit") == 0) {
             num = atoi(value);
             if (num < 0 || num > MA_TOP_THREADS) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            mprSetMaxWorkers(appweb, num);
+            mprSetMaxWorkers(num);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "ThreadStackSize") == 0) {
+        } else if (scasecmp(key, "ThreadStackSize") == 0) {
             num = atoi(value);
             if (num < MA_BOT_STACK || num > MA_TOP_STACK) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            mprSetThreadStackSize(server, num);
+            mprSetThreadStackSize(num);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "Timeout") == 0) {
+        } else if (scasecmp(key, "Timeout") == 0) {
             limits.requestTimeout = atoi(value);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "TraceMethod") == 0) {
-            limits.enableTraceMethod = (mprStrcmpAnyCase(value, "on") == 0);
+        } else if (scasecmp(key, "TraceMethod") == 0) {
+            limits.enableTraceMethod = (scasecmp(value, "on") == 0);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "TypesConfig") == 0) {
-            path = maMakePath(host, mprStrTrim(value, "\""));
+        } else if (scasecmp(key, "TypesConfig") == 0) {
+            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             if (maOpenMimeTypes(host, path) < 0) {
-                mprError(server, "Can't open TypesConfig mime file %s", path);
+                mprError("Can't open TypesConfig mime file %s", path);
                 maAddStandardMimeTypes(host);
-                mprFree(path);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            mprFree(path);
             return 1;
         }
         break;
 
     case 'U':
-        if (mprStrcmpAnyCase(key, "UploadDir") == 0 || mprStrcmpAnyCase(key, "FileUploadDir") == 0) {
-            path = maMakePath(host, mprStrTrim(value, "\""));
-            mprFree(loc->uploadDir);
-            loc->uploadDir = mprStrdup(loc, path);
-            mprLog(http, MPR_CONFIG, "Upload directory: %s", path);
-            mprFree(path);
+        if (scasecmp(key, "UploadDir") == 0 || scasecmp(key, "FileUploadDir") == 0) {
+            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            loc->uploadDir = sclone(path);
+            mprLog(MPR_CONFIG, "Upload directory: %s", path);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "UploadAutoDelete") == 0) {
-            value = mprStrTrim(value, "\"");
-            loc->autoDelete = (mprStrcmpAnyCase(value, "on") == 0);
+        } else if (scasecmp(key, "UploadAutoDelete") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            loc->autoDelete = (scasecmp(value, "on") == 0);
             return 1;
 
-        } else if (mprStrcmpAnyCase(key, "User") == 0) {
-            maSetHttpUser(appweb, mprStrTrim(value, "\""));
+        } else if (scasecmp(key, "User") == 0) {
+            maSetHttpUser(appweb, strim(value, "\"", MPR_TRIM_BOTH));
             return 1;
         }
         break;
@@ -1659,13 +1629,12 @@ HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixAr
     /*
         Create an ejs application location block and alias
      */
-    alias = maCreateAlias(host, prefix, path, 0);
+    alias = maCreateAlias(prefix, path, 0);
     maInsertAlias(host, alias);
-    mprLog(http, 4, "Alias \"%s\" for \"%s\"", prefix, path);
-    mprFree(path);
+    mprLog(4, "Alias \"%s\" for \"%s\"", prefix, path);
 
     if (maLookupLocation(host, prefix)) {
-        mprError(http, "Location block already exists for \"%s\"", prefix);
+        mprError("Location block already exists for \"%s\"", prefix);
         return 0;
     }
     loc = httpCreateInheritedLocation(http, state->loc);
@@ -1674,7 +1643,6 @@ HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixAr
     maAddLocation(host, loc);
     httpSetLocationFlags(loc, flags);
     httpSetHandler(loc, handlerName);
-    mprFree(prefix);
     return loc;
 }
 
@@ -1696,22 +1664,21 @@ char *maMakePath(MaHost *host, cchar *file)
         return 0;
     }
     if (*path == '\0' || strcmp(path, ".") == 0) {
-        result = mprStrdup(host, server->serverRoot);
+        result = sclone(server->serverRoot);
 
 #if BLD_WIN_LIKE
     } else if (*path != '/' && path[1] != ':' && path[2] != '/') {
-        result = mprJoinPath(host, server->serverRoot, path);
+        result = mprJoinPath(server->serverRoot, path);
 #elif VXWORKS
     } else if (strchr((path), ':') == 0 && *path != '/') {
-        result = mprJoinPath(host, server->serverRoot, path);
+        result = mprJoinPath(server->serverRoot, path);
 #else
     } else if (*path != '/') {
-        result = mprJoinPath(host, server->serverRoot, path);
+        result = mprJoinPath(server->serverRoot, path);
 #endif
     } else {
-        result = mprGetAbsPath(server, path);
+        result = mprGetAbsPath(path);
     }
-    mprFree(path);
     return result;
 }
 
@@ -1742,7 +1709,7 @@ char *maReplaceReferences(MaHost *host, cchar *str)
     char    *src;
     char    *result;
 
-    buf = mprCreateBuf(host, 0, 0);
+    buf = mprCreateBuf(0, 0);
     if (str) {
         for (src = (char*) str; *src; ) {
             if (*src == '$') {
@@ -1764,8 +1731,7 @@ char *maReplaceReferences(MaHost *host, cchar *str)
         }
     }
     mprAddNullToBuf(buf);
-    result = mprStealBuf(host, buf);
-    mprFree(buf);
+    result = sclone(mprGetBufStart(buf));
     return result;
 }
 
@@ -1778,13 +1744,13 @@ char *maReplaceReferences(MaHost *host, cchar *str)
                     <Location>  Level 4
  *
  */
-static MaConfigState *pushState(MprCtx ctx, MaConfigState *state, int *top)
+static MaConfigState *pushState(MaConfigState *state, int *top)
 {
     MaConfigState   *next;
 
     (*top)++;
     if (*top >= MA_MAX_CONFIG_DEPTH) {
-        mprError(ctx, "Too many nested directives in config file at %s:%d", state->filename, state->lineNumber);
+        mprError("Too many nested directives in config file at %s:%d", state->filename, state->lineNumber);
         return 0;
     }
     next = state + 1;
@@ -1802,53 +1768,53 @@ static MaConfigState *pushState(MprCtx ctx, MaConfigState *state, int *top)
 }
 
 
-static bool featureSupported(MprCtx ctx, char *key)
+static bool featureSupported(char *key)
 {
     //  TODO - should always create a conditional directive when a module is loaded. Even for user modules.
-    if (mprStrcmpAnyCase(key, "BLD_COMMERCIAL") == 0) {
+    if (scasecmp(key, "BLD_COMMERCIAL") == 0) {
         return strcmp(BLD_COMMERCIAL, "0") == 0;
 
 #ifdef BLD_DEBUG
-    } else if (mprStrcmpAnyCase(key, "BLD_DEBUG") == 0) {
+    } else if (scasecmp(key, "BLD_DEBUG") == 0) {
         return BLD_DEBUG;
 #endif
 
 #ifdef BLD_FEATURE_CGI
-    } else if (mprStrcmpAnyCase(key, "CGI_MODULE") == 0) {
+    } else if (scasecmp(key, "CGI_MODULE") == 0) {
         return BLD_FEATURE_CGI;
 #endif
 
-    } else if (mprStrcmpAnyCase(key, "DIR_MODULE") == 0) {
+    } else if (scasecmp(key, "DIR_MODULE") == 0) {
         return 1;
 
-    } else if (mprStrcmpAnyCase(key, "EGI_MODULE") == 0) {
+    } else if (scasecmp(key, "EGI_MODULE") == 0) {
         return 1;
 
 #ifdef BLD_FEATURE_EJS
-    } else if (mprStrcmpAnyCase(key, "EJS_MODULE") == 0) {
+    } else if (scasecmp(key, "EJS_MODULE") == 0) {
         return BLD_FEATURE_EJS;
 #endif
 
 #ifdef BLD_FEATURE_PHP
-    } else if (mprStrcmpAnyCase(key, "PHP_MODULE") == 0) {
+    } else if (scasecmp(key, "PHP_MODULE") == 0) {
         return BLD_FEATURE_PHP;
 #endif
 
 #ifdef BLD_FEATURE_SSL
-    } else if (mprStrcmpAnyCase(key, "SSL_MODULE") == 0) {
+    } else if (scasecmp(key, "SSL_MODULE") == 0) {
         return BLD_FEATURE_SSL;
 #endif
     }
-    mprError(ctx, "Unknown conditional \"%s\"", key);
+    mprError("Unknown conditional \"%s\"", key);
     return 0;
 }
 
 
-int maSplitConfigValue(MprCtx ctx, char **s1, char **s2, char *buf, int quotes)
+int maSplitConfigValue(char **s1, char **s2, char *buf, int quotes)
 {
     char    *next;
 
-    if (maGetConfigValue(ctx, s1, buf, &next, quotes) < 0 || maGetConfigValue(ctx, s2, next, &next, quotes) < 0) {
+    if (maGetConfigValue(s1, buf, &next, quotes) < 0 || maGetConfigValue(s2, next, &next, quotes) < 0) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (*s1 == 0 || *s2 == 0) {
@@ -1858,7 +1824,7 @@ int maSplitConfigValue(MprCtx ctx, char **s1, char **s2, char *buf, int quotes)
 }
 
 
-int maGetConfigValue(MprCtx ctx, char **arg, char *buf, char **nextToken, int quotes)
+int maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes)
 {
     char    *endp;
 
@@ -1881,7 +1847,7 @@ int maGetConfigValue(MprCtx ctx, char **arg, char *buf, char **nextToken, int qu
         }
         *nextToken = endp;
     } else {
-        *arg = mprStrTok(buf, " \t\n", nextToken);
+        *arg = stok(buf, " \t\n", nextToken);
     }
     return 0;
 }
@@ -1918,7 +1884,7 @@ int HttpServer::saveConfig(char *configFile)
 
     fd = open(configFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0666);
     if (fd < 0) {
-        mprLog(server, 0, "saveConfig: Can't open %s", configFile);
+        mprLog(0, "saveConfig: Can't open %s", configFile);
         return MPR_ERR_CANT_OPEN;
     }
 
@@ -1937,8 +1903,8 @@ int HttpServer::saveConfig(char *configFile)
 
     mprFprintf(fd, "ServerRoot \"%s\"\n", serverRoot);
 
-    logService = mprGetMpr(server)->logService;
-    logSpec = mprStrdup(logService->getLogSpec());
+    logService = mprGetMpr()->logService;
+    logSpec = sclone(logService->getLogSpec());
     if ((cp = strchr(logSpec, ':')) != 0) {
         *cp = '\0';
     }

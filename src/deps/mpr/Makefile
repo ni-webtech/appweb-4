@@ -1,5 +1,5 @@
 #
-#	Makefile for the MPR - Multithreaded Portable Runtime
+#	Makefile for the MPR (Multithreaded Portable Runtime)
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
 #
@@ -29,9 +29,7 @@ ifeq ($(BLD_FEATURE_SSL),1)
 	SSL_OBJECTS		+= mprSsl
 endif
 TARGETS				+= $(BLD_BIN_DIR)/angel$(BLD_EXE)
-ifeq ($(BUILD_NATIVE_OR_COMPLETE_CROSS),1)
-	TARGETS			+= $(BLD_BIN_DIR)/makerom$(BLD_EXE)
-endif
+TARGETS				+= $(BLD_BIN_DIR)/makerom$(BLD_EXE)
 
 compileTargets: imports $(TARGETS)
 

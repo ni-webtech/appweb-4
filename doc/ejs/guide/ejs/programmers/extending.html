@@ -3,7 +3,7 @@
 <!-- BeginDsi "dsi/head.html" -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Embedthis Ejscript 1.0.0 Documentation</title>
+    <title>Embedthis Ejscript 2.0.0 Documentation</title>
     <meta name="keywords" content="Ejscript, JavaScript, ECMAScript, Server-Side JavaScript, Dynamic languages, 
         Embedded, AJAX, language"/>
 	<meta name="description" content="Ejscript -- Embedded Server-Side JavaScript Language."/>
@@ -30,7 +30,7 @@
                     </p>
                  </form>
               </div>
-            <!--TITLE-->Embedthis Ejscript 1.0.0
+            <!--TITLE-->Embedthis Ejscript 2.0.0
         </div>
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
@@ -72,7 +72,7 @@
             code is compiled, the Ejscript <b>ec</b> compiler saves the output in a module file with a <b>.mod</b>
             extension. This is often referred to as a <b>mod</b> file.</p>
             <pre>
-ec --out Library.mod file1.es file2.es
+ejsc --out Library.mod file1.es file2.es
 </pre>
             <p>This example creates a pre-compiled mod file with the byte code for file1 and file2. It can be reused by
             other script programs without having to reparse or recompile the script files. The <b>ejs</b> shell,
@@ -101,7 +101,7 @@ module mytools {
             <p>If we put the above script code into a source file called anyname.es, and then compile with <b>ec</b>,
             we will get a module file called <b>mytools.mod</b>.</p>
             <pre>
-ec anyname.es
+ejsc anyname.es
 ls -l mytools*
 <b>-rw-r--r--  1 bethr  wheel  78 Feb 19 19:38 mytools.mod</b>
 </pre>
@@ -112,7 +112,7 @@ ls -l mytools*
             module</b> directive.</p>
             <pre>
 /* In the source file program.es */
-use module testlib
+require testlib
 myFunction()
 </pre>
             <p>To run the program wth the <b>ejs</b> shell you now do not need to specify the module name. The compiler
@@ -132,7 +132,7 @@ ejs program.es
             "../../../guide/ejs/language/classes.html">Classes</a> documents.</p>
             <h3>Declarations</h3>
             <p>You can define global functions and variables by placing such declarations outside any module blocks.
-            Then by using the ec compiler <b>--out</b> switch, you can explicitly name the output module file. However,
+            Then by using the ejsc compiler <b>--out</b> switch, you can explicitly name the output module file. However,
             module files that contain only global code with no module directives will need to be explicitly loaded and
             cannot be installed in the module repository. Without a module directive, the loader cannot locate the
             module. Users of such a module will need to explicitly load the module. A solution is to create a dummy

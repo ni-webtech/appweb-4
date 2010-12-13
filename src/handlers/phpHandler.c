@@ -109,9 +109,7 @@ static sapi_module_struct phpSapiBlock = {
 };
 
 /********************************** Code ***************************/
-/*
-    Open the queue for a new request
- */
+
 static void openPhp(HttpQueue *q)
 {
     HttpRx      *rx;
@@ -119,7 +117,7 @@ static void openPhp(HttpQueue *q)
     rx = q->conn->rx;
 
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
-        q->queueData = mprAllocObj(rx, MaPhp, NULL);
+        q->queueData = mprAllocObj(MaPhp, NULL);
     } else {
         httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method not supported by file handler: %s", rx->method);
     }
@@ -172,7 +170,7 @@ static void processPhp(HttpQueue *q)
         CG(zend_lineno) = 0;
 
     } zend_catch {
-        mprError(q, "Can't start PHP request");
+        mprError("Can't start PHP request");
         zend_try {
             php_request_shutdown(0);
         } zend_end_try();
@@ -181,15 +179,15 @@ static void processPhp(HttpQueue *q)
     } zend_end_try();
 
     /*
-        Define the header variable
+        Define header variables
      */
     zend_try {
         hp = mprGetFirstHash(rx->headers);
         while (hp) {
             if (hp->data) {
                 char key[MPR_MAX_STRING];
-                mprStrcpy(key, sizeof(key), hp->key);
-                mprStrUpper(key);
+                scopy(key, sizeof(key), hp->key);
+                supper(key);
                 php_register_variable(key, (char*) hp->data, php->var_array TSRMLS_CC);
             }
             hp = mprGetNextHash(rx->headers, hp);
@@ -198,8 +196,8 @@ static void processPhp(HttpQueue *q)
         while (hp) {
             if (hp->data) {
                 char key[MPR_MAX_STRING];
-                mprStrcpy(key, sizeof(key), hp->key);
-                mprStrUpper(key);
+                scopy(key, sizeof(key), hp->key);
+                supper(key);
                 php_register_variable(key, (char*) hp->data, php->var_array TSRMLS_CC);
             }
             hp = mprGetNextHash(rx->formVars, hp);
@@ -287,7 +285,7 @@ static void registerServerVars(zval *track_vars_array TSRMLS_DC)
 static void logMessage(char *message)
 {
 #if FUTURE
-    mprLog(mprGetMpr(ctx), 0, "phpModule: %s", message);
+    mprLog(0, "phpModule: %s", message);
 #endif
 }
 
@@ -327,7 +325,7 @@ static int writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sapi
     tx = conn->tx;
     allowMultiple = 1;
 
-    key = mprStrdup(tx, sapiHeader->header);
+    key = sclone(sapiHeader->header);
     if ((value = strchr(key, ':')) == 0) {
         return -1;
     }
@@ -422,7 +420,7 @@ static int initializePhp(Http *http)
     phpSapiBlock.php_ini_path_override = appweb->defaultServer->serverRoot;
     sapi_startup(&phpSapiBlock);
     if (php_module_startup(&phpSapiBlock, 0, 0) == FAILURE) {
-        mprError(http, "PHP did not initialize");
+        mprError("PHP did not initialize");
         return MPR_ERR_CANT_INITIALIZE;
     }
 
@@ -457,14 +455,14 @@ int maPhpHandlerInit(Http *http, MprModule *mp)
 {
     HttpStage     *handler;
 
-    handler = httpCreateHandler(http, "phpHandler", 
-        HTTP_STAGE_GET | HTTP_STAGE_HEAD | HTTP_STAGE_PUT | HTTP_STAGE_DELETE | HTTP_STAGE_POST | HTTP_STAGE_ENV_VARS | 
-        HTTP_STAGE_PATH_INFO | HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_THREAD);
+    handler = httpCreateHandler(http, "phpHandler", HTTP_STAGE_ALL | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | 
+        HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_THREAD | HTTP_STAGE_MISSING_EXT);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openPhp;
     handler->process = processPhp;
+    http->phpHandler = handler;
     mp->stop = finalizePhp;
     initializePhp(http);
     return 0;

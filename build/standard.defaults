@@ -17,6 +17,8 @@ BLD_TYPE="DEBUG" 						# The build type: (DEBUG), (RELEASE)
 BLD_TUNE="MPR_TUNE_SIZE" 			    # The tune type: (SIZE), (BALANCED), (SPEED)
 BLD_DEFAULTS="standard"					# Name of this defaults file
 BLD_DEBUG=1								# Set to 1 if DEBUG
+BLD_CHAR_LEN=1
+BLD_CHAR=char
 BLD_CLEAN_INSTALL=0						# Overwrite existing installations
 BLD_LICENSE=gpl
 BLD_COMMERCIAL=0
@@ -80,6 +82,11 @@ BLD_FEATURE_CONFIG=template/standard
 if [ "$BLD_FEATURE_DEVICE" = "" ] ; then
     BLD_FEATURE_DEVICE=PocketPC2003
 fi
+
+#
+#   Floating point support
+#
+BLD_FEATURE_FLOAT=1
 
 #
 #	Disable the Legacy code for backward compatibility (back one major revision).

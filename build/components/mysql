@@ -7,8 +7,11 @@ defineComponent() {
     name="mysql"
     clientlib="libmysqlclient.dylib"
 
-    path=`probe --dir --path "$1" --base "$name/lib/$clientlib"` 
-    if [ "$path" != "" ] ; then 
+    path=`probe --dir --path "$1" --partial "$name/lib/$clientlib" mysql` 
+    if [ "$path" = "" ] ; then 
+        warnComponent $name 
+        return
+    else
         path=${path}/${name}
         dflags=`mysql_config --cflags`
         cflags=`echo $dflags | sed 's/ -D.*//'`

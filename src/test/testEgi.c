@@ -44,8 +44,8 @@ static void bigTest(HttpQueue *q)
 static void exitApp(HttpQueue *q)
 {
     httpCompleteRequest(q->conn);
-    mprLog(q, 0, "Instructed to exit ...");
-    mprTerminate(q, 1);
+    mprLog(0, "Instructed to exit ...");
+    mprTerminate(1);
 }
 
 
@@ -71,7 +71,7 @@ static void printVars(HttpQueue *q)
     if (rx->parsedUri->query) {
         sw = (char*) strstr(rx->parsedUri->query, "SWITCHES=");
         if (sw) {
-            sw = mprUriDecode(tx, &sw[9]);
+            sw = mprUriDecode(&sw[9]);
             if (*sw == '-') {
                 if (sw[1] == 'l') {
                     newLocation = sw + 3;
@@ -109,9 +109,6 @@ static void printVars(HttpQueue *q)
         printQueryData(q);
         printBodyData(q);
         httpWrite(q, "</BODY></HTML>\r\n");
-    }
-    if (sw) {
-        mprFree(sw);
     }
     httpCompleteRequest(q->conn);
 }
@@ -157,7 +154,7 @@ static void printQueryData(HttpQueue *q)
     if (rx->parsedUri->query == 0) {
         return;
     }
-    mprStrcpy(buf, sizeof(buf), rx->parsedUri->query);
+    scopy(buf, sizeof(buf), rx->parsedUri->query);
     numKeys = getVars(q, &keys, buf, (int) strlen(buf));
 
     if (numKeys == 0) {
@@ -170,7 +167,6 @@ static void printQueryData(HttpQueue *q)
         }
     }
     httpWrite(q, "\r\n");
-    mprFree(keys);
     /* Don't finalize */
 }
 
@@ -198,7 +194,6 @@ static void printBodyData(HttpQueue *q)
         }
     }
     httpWrite(q, "\r\n");
-    mprFree(keys);
     /* Don't finalize */
 }
 
@@ -230,17 +225,17 @@ static int getVars(HttpQueue *q, char ***keys, char *buf, int len)
     /*
         Crack the input into name/value pairs 
      */
-    keyList = (char**) mprAlloc(q, (keyCount * 2) * sizeof(char**));
+    keyList = mprAlloc((keyCount * 2) * sizeof(char**));
 
     i = 0;
     tok = 0;
-    for (pp = mprStrTok(buf, "&", &tok); pp; pp = mprStrTok(0, "&", &tok)) {
+    for (pp = stok(buf, "&", &tok); pp; pp = stok(0, "&", &tok)) {
         if ((eq = strchr(pp, '=')) != 0) {
             *eq++ = '\0';
-            pp = mprUriDecode(q, pp);
-            eq = mprUriDecode(q, eq);
+            pp = mprUriDecode(pp);
+            eq = mprUriDecode(eq);
         } else {
-            pp = mprUriDecode(q, pp);
+            pp = mprUriDecode(pp);
             eq = 0;
         }
         if (i < (keyCount * 2)) {
@@ -266,7 +261,7 @@ static void upload(HttpQueue *q)
 
     sw = (char*) strstr(httpGetFormVar(conn, "QUERY_STRING", ""), "SWITCHES=");
     if (sw) {
-        sw = mprUriDecode(sw, &sw[9]);
+        sw = mprUriDecode(&sw[9]);
         if (*sw == '-') {
             if (sw[1] == 'l') {
                 newLocation = sw + 3;
@@ -292,9 +287,6 @@ static void upload(HttpQueue *q)
         printQueryData(q);
         printBodyData(q);
         httpWrite(q, "</BODY></HTML>\r\n");
-    }
-    if (sw) {
-        mprFree(sw);
     }
     httpCompleteRequest(q->conn);
 }

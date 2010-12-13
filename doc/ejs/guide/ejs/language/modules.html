@@ -3,7 +3,7 @@
 <!-- BeginDsi "dsi/head.html" -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Embedthis Ejscript 1.0.0 Documentation</title>
+    <title>Embedthis Ejscript 2.0.0 Documentation</title>
     <meta name="keywords" content="Ejscript, JavaScript, ECMAScript, Server-Side JavaScript, Dynamic languages, 
         Embedded, AJAX, language"/>
 	<meta name="description" content="Ejscript -- Embedded Server-Side JavaScript Language."/>
@@ -30,7 +30,7 @@
                     </p>
                  </form>
               </div>
-            <!--TITLE-->Embedthis Ejscript 1.0.0
+            <!--TITLE-->Embedthis Ejscript 2.0.0
         </div>
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
@@ -131,20 +131,20 @@ module acme.rockets {
             observe the <a href="#search">module search strategy</a> conventions when you install your module into a
             <a href="#repository">repository</a>.</p><a name="usingModules" id="usingModules"></a>
             <h2 class="section">Using Modules</h2>
-            <p>To use a access a module and use it in your code, you need to add a <b>use module</b> directive to your
+            <p>To use a access a module and use it in your code, you need to add a <b>require</b> directive to your
             code.</p>
             <pre>
-use module acme.rockets
+require acme.rockets
 rocket = new Apollo
 </pre>
-            <p>The <b>use module</b> directive adds the "acme.rockets" module namespace to the set of open namespaces
+            <p>The <b>require</b> directive adds the "acme.rockets" module namespace to the set of open namespaces
             and thus makes visible the declarations defined in the acme.rockets module.</p>
             <p>If you import two modules and these both provide a declaration of the same name, you may need to use an
             explict namespace qualifier. For example, if Module1 and Module2 both provide a variable named version,
             then the following code would select the appropriate variable:</p>
             <pre>
-use module Module1
-use module Module2
+require Module1
+require Module2
 print("Module1"::version)     /* Prints the version from Module1 */
 print("Module2"::version)     /* Prints the version from Module2 */
 print(version)                /* Prints Module2::version */
@@ -154,7 +154,7 @@ print(version)                /* Prints Module2::version */
             module name is used within quotes as a string literal namespace.</p><a name="dependencies" id=
             "dependencies"></a>
             <h3>Module Dependencies</h3>
-            <p>By utilizing the <b>use module</b> directive, you create a dependency from your code to the requested
+            <p>By utilizing the <b>require</b> directive, you create a dependency from your code to the requested
             module. Ejscript manages the dependencies of modules so that the Ejscript compiler and loader can load not
             just the module you specify, but also all the modules that it depends upon. This occurs transparently to
             you. In this manner, a tree graph of module dependencies is created. Note that you cannot have two mutually
@@ -171,7 +171,7 @@ print(version)                /* Prints Module2::version */
             <b>.mod</b> extension added. This means if we compiled the "acme.rockets" module, we would get a file
             "acme.rockets.mod".</p>
             <pre>
-<b>home&gt;</b> ec rockets.es
+<b>home&gt;</b> ejsc rockets.es
 <b>home&gt;</b> ls -l acme.rockets*
 <b>-rw-r--r--  1 bethr  wheel  58 Feb 16 13:08 acme.rockets.mod</b>
 </pre>
@@ -180,7 +180,7 @@ print(version)                /* Prints Module2::version */
             application as a single module file. You can instruct the compiler to merge all the modules into a single
             output file by using the --out switch.</p>
             <pre>
-<b>home&gt;</b> ec --out acme.mod rockets.es dynamite.es
+<b>home&gt;</b> ejsc --out acme.mod rockets.es dynamite.es
 <b>home&gt;</b> ls -l acme.rockets*
 <b>-rw-r--r--  1 bethr  wheel  58 Feb 16 13:17 acme.mod</b>
 </pre>

@@ -38,6 +38,8 @@ QUIET=${QUIET:-0}
 SKIP_PERMS=${SKIP_PERMS:-0}
 TASK=${TASK:-Install}
 
+: ${BLD_OUT_DIR:=$BLD_TOP/out}
+
 ################################################################################
 #
 #   Copy packages
@@ -258,12 +260,7 @@ setup() {
     cd ${BLD_TOP}
     BLD_TOP=.
 
-    . ./build/bin/buildConfig.sh
-
-    if [ "${BLD_CROSS}" = 1 ] ; then
-        BUILDING_CROSS=1
-        . ./build/bin/buildConfig.sh
-    fi
+    . ${BLD_OUT_DIR}/bin/buildConfig.sh
 
     . ${BLD_TOP}/build/bin/makePackage.common
     . package/makeInstall.${BLD_PRODUCT}

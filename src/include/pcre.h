@@ -1,15 +1,15 @@
 
 /******************************************************************************/
 /* 
- *  This file is an amalgamation of all the individual source code files for
- *  Regular Expressions 0.5.0.
- *
- *  Catenating all the source into a single file makes embedding simpler and
- *  the resulting application faster, as many compilers can do whole file
- *  optimization.
- *
- *  If you want to modify pcre, you can still get the whole source
- *  as individual files if you need.
+    This file is an amalgamation of all the individual source code files for
+     .
+  
+    Catenating all the source into a single file makes embedding simpler and
+    the resulting application faster, as many compilers can do whole file
+    optimization.
+  
+    If you want to modify , you can still get the whole source
+    as individual files if you need.
  */
 
 
@@ -275,8 +275,12 @@ typedef struct real_pcre pcre;
 replaced with a custom type. For conventional use, the public interface is a
 const char *. */
 
+#ifdef BLD_CHAR
+#define PCRE_SPTR const BLD_CHAR *
+#else
 #ifndef PCRE_SPTR
 #define PCRE_SPTR const char *
+#endif
 #endif
 
 /* The structure for passing additional data to pcre_exec(). This is defined in

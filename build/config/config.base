@@ -93,14 +93,15 @@ eval BLD_${KIND}_SHOBJ=.so
 #
 #   Building directories
 #
-if [ $BLD_CROSS = 1 -a $KIND = HOST ] ; then
-    eval system=/\${BLD_${KIND}_SYSTEM}
+if [ ${BLD_HOST_SYSTEM} != ${BLD_BUILD_SYSTEM} -a $KIND = HOST ] ; then
+    eval system=\${BLD_${KIND}_SYSTEM}/
 else
     system=
 fi
-eval BLD_${KIND}_BIN_DIR='\${BLD_TOP}/bin'${system}
-eval BLD_${KIND}_LIB_DIR='\${BLD_TOP}/lib'${system}
-eval BLD_${KIND}_MOD_DIR='\${BLD_TOP}/modules'${system}
-eval BLD_${KIND}_JEM_DIR='\${BLD_TOP}/jlocal'${system}
-eval BLD_${KIND}_OBJ_DIR='\${BLD_TOP}/obj'${system}
-eval BLD_${KIND}_INC_DIR='\${BLD_TOP}/src/include'
+
+eval BLD_${KIND}_BIN_DIR='\${BLD_OUT_DIR}'/${system}bin
+eval BLD_${KIND}_LIB_DIR='\${BLD_OUT_DIR}'/${system}lib
+eval BLD_${KIND}_MOD_DIR='\${BLD_OUT_DIR}'/${system}modules
+eval BLD_${KIND}_JEM_DIR='\${BLD_OUT_DIR}'/${system}jlocal
+eval BLD_${KIND}_OBJ_DIR='\${BLD_OUT_DIR}'/${system}obj
+eval BLD_${KIND}_INC_DIR='\${BLD_OUT_DIR}'/include

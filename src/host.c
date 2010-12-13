@@ -11,6 +11,10 @@
 
 #include    "appweb.h"
 
+/********************************** Forwards **********************************/
+
+static bool appwebIsIdle();
+
 /*********************************** Code *************************************/
 
 /*  Create a host from scratch
@@ -19,7 +23,7 @@ MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort
 {
     MaHost      *host;
 
-    if ((host = mprAllocObj(server, MaHost, NULL)) == NULL) {
+    if ((host = mprAllocObj(MaHost, NULL)) == NULL) {
         return 0;
     }
     host->aliases = mprCreateList(host);
@@ -56,10 +60,11 @@ MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort
 
     host->loc = (loc) ? loc : httpCreateLocation(server->http);
     maAddLocation(host, host->loc);
-    host->loc->auth = httpCreateAuth(host->loc, host->loc->auth);
+    host->loc->auth = httpCreateAuth(host->loc->auth);
 #if UNUSED
     host->mutex = mprCreateLock(host);
 #endif
+    mprSetIdleCallback(appwebIsIdle);
     return host;
 }
 
@@ -71,7 +76,7 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
 {
     MaHost      *host;
 
-    if ((host = mprAllocObj(server, MaHost, NULL)) == NULL) {
+    if ((host = mprAllocObj(MaHost, NULL)) == NULL) {
         return 0;
     }
     host->parent = parent;
@@ -107,10 +112,10 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
     host->traceLevel = parent->traceLevel;
     host->traceMaxLength = parent->traceMaxLength;
     if (parent->traceInclude) {
-        host->traceInclude = mprCopyHash(host, parent->traceInclude);
+        host->traceInclude = mprCloneHash(parent->traceInclude);
     }
     if (parent->traceExclude) {
-        host->traceExclude = mprCopyHash(host, parent->traceExclude);
+        host->traceExclude = mprCloneHash(parent->traceExclude);
     }
     maAddLocation(host, host->loc);
     return host;
@@ -169,7 +174,7 @@ MaHost *maCreateDefaultHost(MaServer *server, cchar *docRoot, cchar *ip, int por
      */
     address = maLookupHostAddress(server, ip, port);
     if (address == 0) {
-        address = maCreateHostAddress(server, ip, port);
+        address = maCreateHostAddress(ip, port);
         mprAddItem(server->hostAddresses, address);
     }
     maInsertVirtualHost(address, host);
@@ -193,6 +198,45 @@ int maStopHost(MaHost *host)
 }
 
 
+static bool appwebIsIdle()
+{
+#if MOB && TODO
+    MaHost      *host;
+    HttpConn    *conn;
+    Http        *http;
+    MprTime     now;
+    int         nextHost, next;
+    static MprTime lastTrace = 0;
+
+    now = mprGetTime();
+    http = (Http*) mprGetMpr()->httpService;
+    for (nextHost = 0; (host = mprGetNextItem(http->defaultServer->hosts, &nextHost)) != 0; ) {
+        lock(host);
+        for (next = 0; (conn = mprGetNextItem(host->connections, &next)) != 0; ) {
+            if (conn->state != MPR_HTTP_STATE_BEGIN) {
+                if (lastTrace < now) {
+                    mprLog(0, "Waiting for request %s to complete", 
+                           *conn->request->url ? conn->request->url : conn->request->pathInfo);
+                    lastTrace = now;
+                }
+                unlock(host);
+                return 0;
+            }
+        }
+        unlock(host);
+    }
+    if (!mprServicesAreIdle()) {
+        if (lastTrace < now) {
+            mprLog(0, "Waiting for MPR services complete");
+            lastTrace = now;
+        }
+        return 0;
+    }
+#endif
+    return 1;
+}
+
+
 void maSetHostDocumentRoot(MaHost *host, cchar *dir)
 {
     MaAlias     *alias;
@@ -207,7 +251,7 @@ void maSetHostDocumentRoot(MaHost *host, cchar *dir)
     /*  
         Create a catch-all alias
      */
-    alias = maCreateAlias(host, "", doc, 0);
+    alias = maCreateAlias("", doc, 0);
     maInsertAlias(host, alias);
 }
 
@@ -217,10 +261,7 @@ void maSetHostDocumentRoot(MaHost *host, cchar *dir)
  */
 void maSetHostName(MaHost *host, cchar *name)
 {
-    if (host->name) {
-        mprFree(host->name);
-    }
-    host->name = mprStrdup(host, name);
+    host->name = sclone(name);
 }
 
 
@@ -233,25 +274,22 @@ void maSetHostIpAddrPort(MaHost *host, cchar *ipAddrPort)
 #if UNUSED
     maRemoveHostFromHostAddress(host->server, host->ip, host->port, host);
 #endif
-    mprFree(host->ipAddrPort);
-
     if (*ipAddrPort == ':') {
         ++ipAddrPort;
     }
     if (isdigit((int) *ipAddrPort) && strchr(ipAddrPort, '.') == 0) {
-        host->ipAddrPort = mprStrcat(host, -1, "127.0.0.1", ":", ipAddrPort, NULL);
+        host->ipAddrPort = sjoin("127.0.0.1", ":", ipAddrPort, NULL);
     } else {
-        host->ipAddrPort = mprStrdup(host, ipAddrPort);
+        host->ipAddrPort = sclone(ipAddrPort);
     }
     if ((cp = strchr(host->ipAddrPort, ':')) != 0) {
         *cp++ = '\0';
-        host->ip = mprStrdup(host, host->ipAddrPort);
-        host->port = (int) mprAtoi(cp, 10);
+        host->ip = sclone(host->ipAddrPort);
+        host->port = (int) stoi(cp, 10, NULL);
         cp[-1] = ':';
     }
     if (host->name == 0 || strchr(host->name, ':')) {
-        mprFree(host->name);
-        host->name = mprStrdup(host, host->ipAddrPort);
+        host->name = sclone(host->ipAddrPort);
     }
 #if UNUSED
     maAddHostAddress(host->server, host->ip, host->port);
@@ -304,10 +342,10 @@ void maSecureHost(MaHost *host, struct MprSsl *ssl)
     host->secure = 1;
 #endif
     hostIp = host->ipAddrPort;
-    if (mprStrcmpAnyCase(hostIp, "_default_") == 0) {
+    if (scasecmp(hostIp, "_default_") == 0) {
         hostIp = (char*) "*:*";
     }
-    mprParseIp(host, hostIp, &ip, &port, -1);
+    mprParseIp(hostIp, &ip, &port, -1);
    
     for (next = 0; (httpServer = mprGetNextItem(host->server->httpServers, &next)) != 0; ) {
         if (port > 0 && port != httpServer->port) {
@@ -318,7 +356,7 @@ void maSecureHost(MaHost *host, struct MprSsl *ssl)
         }
 #if BLD_FEATURE_SSL
         if (host->flags & MA_HOST_NAMED_VHOST) {
-            mprError(host, "SSL does not support named virtual hosts");
+            mprError("SSL does not support named virtual hosts");
             return;
         }
         httpServer->ssl = ssl;
@@ -338,9 +376,13 @@ int maInsertAlias(MaHost *host, MaAlias *newAlias)
     MaAlias     *alias, *old;
     int         rc, next, index;
 
-    if (mprIsParent(host->parent, host->aliases)) {
-        host->aliases = mprDupList(host, host->parent->aliases);
+#if MOB && TODO
+    if (host->parent == host->aliases->parent)) {
+        host->aliases = mprCloneList(host->parent->aliases);
     }
+#else
+        host->aliases = mprCloneList(host->parent->aliases);
+#endif
     /*  
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc. But we sort redirects with
         status codes first.
@@ -374,9 +416,13 @@ int maInsertDir(MaHost *host, MaDir *newDir)
     mprAssert(newDir);
     mprAssert(newDir->path);
     
-    if (mprIsParent(host->parent, host->dirs)) {
-        host->dirs = mprDupList(host, host->parent->dirs);
+#if MOB && TODO
+    if (host->parent == host->dirs->parent)) {
+        host->dirs = mprCloneList(host->parent->dirs);
     }
+#else
+        host->dirs = mprCloneList(host->parent->dirs);
+#endif
 
     /*
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc
@@ -408,9 +454,13 @@ int maAddLocation(MaHost *host, HttpLoc *newLocation)
     mprAssert(newLocation);
     mprAssert(newLocation->prefix);
     
+#if MOB && UNUSED
     if (mprIsParent(host->parent, host->locations)) {
-        host->locations = mprDupList(host, host->parent->locations);
+        host->locations = mprCloneList(host->parent->locations);
     }
+#else
+        host->locations = mprCloneList(host->parent->locations);
+#endif
 
     /*
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc
@@ -477,8 +527,8 @@ MaDir *maLookupDir(MaHost *host, cchar *pathArg)
     char        *path, *tmpPath;
     int         next, len;
 
-    if (!mprIsAbsPath(host, pathArg)) {
-        path = tmpPath = mprGetAbsPath(host, pathArg);
+    if (!mprIsAbsPath(pathArg)) {
+        path = tmpPath = mprGetAbsPath(pathArg);
     } else {
         path = (char*) pathArg;
         tmpPath = 0;
@@ -488,13 +538,11 @@ MaDir *maLookupDir(MaHost *host, cchar *pathArg)
     for (next = 0; (dir = mprGetNextItem(host->dirs, &next)) != 0; ) {
         mprAssert(strlen(dir->path) == 0 || dir->path[strlen(dir->path) - 1] != '/');
         if (dir->path != 0) {
-            if (mprSamePath(host, dir->path, path)) {
-                mprFree(tmpPath);
+            if (mprSamePath(dir->path, path)) {
                 return dir;
             }
         }
     }
-    mprFree(tmpPath);
     return 0;
 }
 
@@ -526,7 +574,7 @@ MaDir *maLookupBestDir(MaHost *host, cchar *path)
     for (next = 0; (dir = mprGetNextItem(host->dirs, &next)) != 0; ) {
         dlen = dir->pathLen;
         mprAssert(dlen == 0 || dir->path[dlen - 1] != '/');
-        if (mprSamePathCount(host, dir->path, path, dlen)) {
+        if (mprSamePathCount(dir->path, path, dlen)) {
             if (dlen >= 0) {
                 return dir;
             }
@@ -567,18 +615,18 @@ HttpLoc *maLookupBestLocation(MaHost *host, cchar *uri)
 }
 
 
-MaHostAddress *maCreateHostAddress(MprCtx ctx, cchar *ip, int port)
+MaHostAddress *maCreateHostAddress(cchar *ip, int port)
 {
     MaHostAddress   *hostAddress;
 
     mprAssert(ip && ip);
     mprAssert(port >= 0);
 
-    if ((hostAddress = mprAllocObj(ctx, MaHostAddress, NULL)) == NULL) {
+    if ((hostAddress = mprAllocObj(MaHostAddress, NULL)) == NULL) {
         return 0;
     }
     hostAddress->flags = 0;
-    hostAddress->ip = mprStrdup(hostAddress, ip);
+    hostAddress->ip = sclone(ip);
     hostAddress->port = port;
     hostAddress->vhosts = mprCreateList(hostAddress);
     return hostAddress;
@@ -637,30 +685,28 @@ void maSetHostTraceFilter(MaHost *host, int len, cchar *include, cchar *exclude)
     host->traceMaxLength = len;
 
     if (include && strcmp(include, "*") != 0) {
-        host->traceInclude = mprCreateHash(host, 0);
-        line = mprStrdup(host, include);
-        word = mprStrTok(line, ", \t\r\n", &tok);
+        host->traceInclude = mprCreateHash(0, 0);
+        line = sclone(include);
+        word = stok(line, ", \t\r\n", &tok);
         while (word) {
             if (word[0] == '*' && word[1] == '.') {
                 word += 2;
             }
             mprAddHash(host->traceInclude, word, host);
-            word = mprStrTok(NULL, ", \t\r\n", &tok);
+            word = stok(NULL, ", \t\r\n", &tok);
         }
-        mprFree(line);
     }
     if (exclude) {
-        host->traceExclude = mprCreateHash(host, 0);
-        line = mprStrdup(host, exclude);
-        word = mprStrTok(line, ", \t\r\n", &tok);
+        host->traceExclude = mprCreateHash(0, 0);
+        line = sclone(exclude);
+        word = stok(line, ", \t\r\n", &tok);
         while (word) {
             if (word[0] == '*' && word[1] == '.') {
                 word += 2;
             }
             mprAddHash(host->traceExclude, word, host);
-            word = mprStrTok(NULL, ", \t\r\n", &tok);
+            word = stok(NULL, ", \t\r\n", &tok);
         }
-        mprFree(line);
     }
 }
 

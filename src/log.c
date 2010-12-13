@@ -13,13 +13,13 @@
     Turn on logging. If no logSpec is specified, default to stdout:2. If the user specifies --log "none" then 
     the log is disabled. This is useful when specifying the log via the appweb.conf.
  */
-static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
+static void logHandler(int flags, int level, cchar *msg)
 {
     Mpr         *mpr;
     MprFile     *file;
     char        *prefix, buf[MPR_MAX_STRING];
 
-    mpr = mprGetMpr(ctx);
+    mpr = mprGetMpr();
     if ((file = (MprFile*) mpr->logData) == 0) {
         return;
     }
@@ -33,8 +33,8 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
         mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
 
     } else if (flags & MPR_ERROR_SRC) {
-        mprSprintf(ctx, buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
-        mprWriteToOsLog(ctx, buf, flags, level);
+        mprSprintf(buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
+        mprWriteToOsLog(buf, flags, level);
 
         /*
             Use static printing to avoid malloc when the messages are small.
@@ -47,9 +47,9 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
         }
 
     } else if (flags & MPR_FATAL_SRC) {
-        mprSprintf(ctx, buf, sizeof(buf), "%s: Fatal: %s\n", prefix, msg);
+        mprSprintf(buf, sizeof(buf), "%s: Fatal: %s\n", prefix, msg);
         mprWriteString(file, buf);
-        mprWriteToOsLog(ctx, buf, flags, level);
+        mprWriteToOsLog(buf, flags, level);
         
     } else if (flags & MPR_RAW) {
         mprFprintf(file, "%s", msg);
@@ -60,7 +60,7 @@ static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
 /*
     Start error and information logging. Note: this is not per-request access logging
  */
-int maStartLogging(MprCtx ctx, cchar *logSpec)
+int maStartLogging(cchar *logSpec)
 {
     Mpr         *mpr;
     MprFile     *file;
@@ -69,13 +69,13 @@ int maStartLogging(MprCtx ctx, cchar *logSpec)
     static int  once = 0;
 
     level = 0;
-    mpr = mprGetMpr(ctx);
+    mpr = mprGetMpr();
 
     if (logSpec == 0) {
         logSpec = "stdout:0";
     }
     if (*logSpec && strcmp(logSpec, "none") != 0) {
-        spec = mprStrdup(mpr, logSpec);
+        spec = sclone(logSpec);
         if ((levelSpec = strrchr(spec, ':')) != 0 && isdigit((int) levelSpec[1])) {
             *levelSpec++ = '\0';
             level = atoi(levelSpec);
@@ -84,14 +84,14 @@ int maStartLogging(MprCtx ctx, cchar *logSpec)
         if (strcmp(spec, "stdout") == 0) {
             file = mpr->fileSystem->stdOutput;
         } else {
-            if ((file = mprOpen(mpr, spec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
-                mprPrintfError(mpr, "Can't open log file %s\n", spec);
+            if ((file = mprOpen(spec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
+                mprPrintfError("Can't open log file %s\n", spec);
                 return -1;
             }
             once = 0;
         }
-        mprSetLogLevel(mpr, level);
-        mprSetLogHandler(mpr, logHandler, (void*) file);
+        mprSetLogLevel(level);
+        mprSetLogHandler(logHandler, (void*) file);
 #if FUTURE && !BLD_WIN_LIKE
         /*
             TODO - The currently breaks MprCmd as it will close stderr.
@@ -100,17 +100,17 @@ int maStartLogging(MprCtx ctx, cchar *logSpec)
         dup2(file->fd, 2);
 #endif
         if (once++ == 0) {
-            mprLog(mpr, MPR_CONFIG, "Configuration for %s", mprGetAppTitle(mpr));
-            mprLog(mpr, MPR_CONFIG, "---------------------------------------------");
-            mprLog(mpr, MPR_CONFIG, "Host:               %s", mprGetHostName(mpr));
-            mprLog(mpr, MPR_CONFIG, "CPU:                %s", BLD_CPU);
-            mprLog(mpr, MPR_CONFIG, "OS:                 %s", BLD_OS);
+            mprLog(MPR_CONFIG, "Configuration for %s", mprGetAppTitle(mpr));
+            mprLog(MPR_CONFIG, "---------------------------------------------");
+            mprLog(MPR_CONFIG, "Host:               %s", mprGetHostName(mpr));
+            mprLog(MPR_CONFIG, "CPU:                %s", BLD_CPU);
+            mprLog(MPR_CONFIG, "OS:                 %s", BLD_OS);
             if (strcmp(BLD_DIST, "Unknown") != 0) {
-                mprLog(mpr, MPR_CONFIG, "Distribution:       %s %s", BLD_DIST, BLD_DIST_VER);
+                mprLog(MPR_CONFIG, "Distribution:       %s %s", BLD_DIST, BLD_DIST_VER);
             }
-            mprLog(mpr, MPR_CONFIG, "Version:            %s-%s", BLD_VERSION, BLD_NUMBER);
-            mprLog(mpr, MPR_CONFIG, "BuildType:          %s", BLD_TYPE);
-            mprLog(mpr, MPR_CONFIG, "---------------------------------------------");
+            mprLog(MPR_CONFIG, "Version:            %s-%s", BLD_VERSION, BLD_NUMBER);
+            mprLog(MPR_CONFIG, "BuildType:          %s", BLD_TYPE);
+            mprLog(MPR_CONFIG, "---------------------------------------------");
         }
     }
     return 0;
@@ -120,18 +120,18 @@ int maStartLogging(MprCtx ctx, cchar *logSpec)
 /*
     Stop the error and information logging. Note: this is not per-request access logging
  */
-int maStopLogging(MprCtx ctx)
+int maStopLogging()
 {
     MprFile     *file;
     Mpr         *mpr;
 
-    mpr = mprGetMpr(ctx);
+    mpr = mprGetMpr();
 
     file = mpr->logData;
     if (file) {
-        mprFree(file);
+        mprCloseFile(file);
         mpr->logData = 0;
-        mprSetLogHandler(mpr, 0, 0);
+        mprSetLogHandler(0, 0);
     }
     return 0;
 }
@@ -141,9 +141,9 @@ int maStartAccessLogging(MaHost *host)
 {
 #if !BLD_FEATURE_ROMFS
     if (host->logPath) {
-        host->accessLog = mprOpen(host, host->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
+        host->accessLog = mprOpen(host->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
         if (host->accessLog == 0) {
-            mprError(host, "Can't open log file %s", host->logPath);
+            mprError("Can't open log file %s", host->logPath);
         }
     }
 #endif
@@ -153,10 +153,7 @@ int maStartAccessLogging(MaHost *host)
 
 int maStopAccessLogging(MaHost *host)
 {
-    if (host->accessLog) {
-        mprFree(host->accessLog);
-        host->accessLog = 0;
-    }
+    host->accessLog = 0;
     return 0;
 }
 
@@ -173,11 +170,8 @@ void maSetAccessLog(MaHost *host, cchar *path, cchar *format)
         format = "%h %l %u %t \"%r\" %>s %b";
     }
 
-    mprFree(host->logPath);
-    host->logPath = mprStrdup(host, path);
-
-    mprFree(host->logFormat);
-    host->logFormat = mprStrdup(host, format);
+    host->logPath = sclone(path);
+    host->logFormat = sclone(format);
 
     for (src = dest = host->logFormat; *src; src++) {
         if (*src == '\\' && src[1] != '\\') {
@@ -200,7 +194,7 @@ void maWriteAccessLogEntry(MaHost *host, cchar *buf, int len)
     static int once = 0;
 
     if (mprWrite(host->accessLog, (char*) buf, len) != len && once++ == 0) {
-        mprError(host, "Can't write to access log %s", host->logPath);
+        mprError("Can't write to access log %s", host->logPath);
     }
 }
 
@@ -218,19 +212,17 @@ static void rotateAccessLog(MaHost *host)
     /*
         Rotate logs when full
      */
-    if (mprGetPathInfo(host, host->logPath, &info) == 0 && info.size > MA_MAX_ACCESS_LOG) {
+    if (mprGetPathInfo(host->logPath, &info) == 0 && info.size > MA_MAX_ACCESS_LOG) {
 
         when = mprGetTime(host);
-        mprDecodeUniversalTime(host, &tm, when);
+        mprDecodeUniversalTime(&tm, when);
 
-        mprSprintf(host, bak, sizeof(bak), "%s-%02d-%02d-%02d-%02d:%02d:%02d", host->logPath, 
+        mprSprintf(bak, sizeof(bak), "%s-%02d-%02d-%02d-%02d:%02d:%02d", host->logPath, 
             tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
-        mprFree(host->accessLog);
         rename(host->logPath, bak);
         unlink(host->logPath);
-
-        host->accessLog = mprOpen(host, host->logPath, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
+        host->accessLog = mprOpen(host->logPath, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
     }
 }
 
@@ -260,7 +252,7 @@ void maLogRequest(HttpConn *conn)
         return;
     }
     len = MPR_MAX_URL + 256;
-    buf = mprCreateBuf(tx, len, len);
+    buf = mprCreateBuf(len, len);
 
     while ((c = *fmt++) != '\0') {
         if (c != '%' || (c = *fmt++) == '%') {
@@ -316,9 +308,8 @@ void maLogRequest(HttpConn *conn)
 
         case 't':                           /* Time */
             mprPutCharToBuf(buf, '[');
-            timeText = mprFormatLocalTime(conn, mprGetTime(conn));
+            timeText = mprFormatLocalTime(mprGetTime(conn));
             mprPutStringToBuf(buf, timeText);
-            mprFree(timeText);
             mprPutCharToBuf(buf, ']');
             break;
 
@@ -332,9 +323,9 @@ void maLogRequest(HttpConn *conn)
                 fmt = &cp[1];
                 *cp = '\0';
                 c = *fmt++;
-                mprStrcpy(keyBuf, sizeof(keyBuf), "HTTP_");
-                mprStrcpy(&keyBuf[5], sizeof(keyBuf) - 5, qualifier);
-                mprStrUpper(keyBuf);
+                scopy(keyBuf, sizeof(keyBuf), "HTTP_");
+                scopy(&keyBuf[5], sizeof(keyBuf) - 5, qualifier);
+                supper(keyBuf);
                 switch (c) {
                 case 'i':
                     value = (char*) mprLookupHash(rx->headers, keyBuf);

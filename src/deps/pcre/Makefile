@@ -4,14 +4,20 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2009. All Rights Reserved.
 #
 #	This is an all-in-one build where all the re source files are catenated into as few files as possible. 
-#	See http://hg.embedthis.com/re if you require the full source for the RE.
 #
 
 include 			.makedep
 
-PCRE_LIB			+= $(BLD_LIB_DIR)/libpcre$(BLD_LIB)
-
+CHAR				= char
+ifeq ($(BLD_CHAR_LEN),2)
+	CHAR			= short
+endif
+ifeq ($(BLD_CHAR_LEN),4)
+	CHAR			= int32
+endif
+MAKE_DFLAGS			+= -DPCRE_CHAR=$(CHAR)
 MAKE_IFLAGS			+= $(BLD_REGEXP_IFLAGS) $(BLD_MPR_IFLAGS)
+PCRE_LIB			+= $(BLD_LIB_DIR)/libpcre$(BLD_LIB)
 ifeq ($(BLD_FEATURE_REGEXP),1)
 	TARGETS			+= $(PCRE_LIB)
 endif

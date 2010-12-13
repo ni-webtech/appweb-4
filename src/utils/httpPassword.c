@@ -22,13 +22,13 @@ typedef struct User {
   
 /********************************* Forwards ***********************************/
 
-static User *createUser(Mpr *mpr, cchar *realm, cchar *name, cchar *password, bool enabled);
-static void addUser(Mpr *mpr, char *realm, char *user, char *password, bool enabled);
-static char *getPassword(Mpr *mpr, char *passBuf, int passLen);
-static void printUsage(Mpr *mpr, cchar *programName);
-static int  readPassFile(Mpr *mpr, char *passFile);
+static User *createUser(cchar *realm, cchar *name, cchar *password, bool enabled);
+static void addUser(char *realm, char *user, char *password, bool enabled);
+static char *getPassword(char *passBuf, int passLen);
+static void printUsage(cchar *programName);
+static int  readPassFile(char *passFile);
 static char* trimWhiteSpace(char *str);
-static int  updatePassFile(Mpr *mpr, char *passFile);
+static int  updatePassFile(char *passFile);
 
 typedef struct {
     uint  state[4];
@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
     int     i, errflg, create, nextArg;
     bool    enable;
 
-    mpr = mprCreate(argc, argv, NULL);
-    mprSetAppName(mpr, argv[0], NULL, NULL);
+    mpr = mprCreate(argc, argv, 0);
+    mprSetAppName(argv[0], NULL, NULL);
     programName = mprGetAppName(mpr);
 
     userName = 0;
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     }
 
     if (errflg) {
-        printUsage(mpr, programName);
+        printUsage(programName);
         exit(2);
     }   
 
@@ -118,26 +118,26 @@ int main(int argc, char *argv[])
     userName = argv[nextArg++];
 
     if (!create) {
-        if (readPassFile(mpr, passFile) < 0) {
+        if (readPassFile(passFile) < 0) {
             exit(2);
         }
-        if (!mprPathExists(mpr, passFile, R_OK)) {
-            mprError(mpr, "%s: Can't find %s", programName, passFile);
+        if (!mprPathExists(passFile, R_OK)) {
+            mprError("%s: Can't find %s", programName, passFile);
             exit(3);
         }
-        if (!mprPathExists(mpr, passFile, W_OK)) {
-            mprError(mpr, "%s: Can't write to %s", programName, passFile);
+        if (!mprPathExists(passFile, W_OK)) {
+            mprError("%s: Can't write to %s", programName, passFile);
             exit(4);
         }
     } else {
-        if (mprPathExists(mpr, passFile, R_OK)) {
-            mprError(mpr, "%s: Can't create %s, already exists", programName, passFile);
+        if (mprPathExists(passFile, R_OK)) {
+            mprError("%s: Can't create %s, already exists", programName, passFile);
             exit(5);
         }
     }
 
     if (password == 0) {
-        password = getPassword(mpr, passBuf, sizeof(passBuf));
+        password = getPassword(passBuf, sizeof(passBuf));
         if (password == 0) {
             exit(1);
         }
@@ -146,9 +146,9 @@ int main(int argc, char *argv[])
     sprintf(buf, "%s:%s:%s", userName, realm, password);
     encodedPassword = maMD5(buf);
 
-    addUser(mpr, realm, userName, encodedPassword, enable);
+    addUser(realm, userName, encodedPassword, enable);
 
-    if (updatePassFile(mpr, passFile) < 0) {
+    if (updatePassFile(passFile) < 0) {
         exit(6);
     }
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 
  
 
-static int readPassFile(Mpr *mpr, char *passFile)
+static int readPassFile(char *passFile)
 {
     FILE    *fp;
     User    *up;
@@ -172,19 +172,19 @@ static int readPassFile(Mpr *mpr, char *passFile)
 
     fp = fopen(passFile, "r" MPR_TEXT);
     if (fp == 0) {
-        mprError(mpr, "%s: Can't open %s", programName, passFile);
+        mprError("%s: Can't open %s", programName, passFile);
         return MPR_ERR_CANT_OPEN;
     }
 
     line = 0;
     while (fgets(buf, sizeof(buf), fp) != 0) {
         line++;
-        enabledSpec = mprStrTok(buf, ":", &tok);
-        name = mprStrTok(0, ":", &tok);
-        realm = mprStrTok(0, ":", &tok);
-        password = mprStrTok(0, "\n\r", &tok);
+        enabledSpec = stok(buf, ":", &tok);
+        name = stok(0, ":", &tok);
+        realm = stok(0, ":", &tok);
+        password = stok(0, "\n\r", &tok);
         if (enabledSpec == 0 || name == 0 || realm == 0 || password == 0) {
-            mprError(mpr, "%s: Badly formed password on line %d", programName, line);
+            mprError("%s: Badly formed password on line %d", programName, line);
             return MPR_ERR_BAD_SYNTAX;
         }
         name = trimWhiteSpace(name);
@@ -196,7 +196,7 @@ static int readPassFile(Mpr *mpr, char *passFile)
         realm = trimWhiteSpace(realm);
         password = trimWhiteSpace(password);
 
-        up = createUser(mpr, realm, name, password, enabled);
+        up = createUser(realm, name, password, enabled);
         up->next = users;
         users = up;
     }
@@ -205,77 +205,72 @@ static int readPassFile(Mpr *mpr, char *passFile)
 }
  
 
-static User *createUser(Mpr *mpr, cchar *realm, cchar *name, cchar *password, bool enabled)
+static User *createUser(cchar *realm, cchar *name, cchar *password, bool enabled)
 {
     User    *up;
 
-    up = mprAllocObj(mpr, User, NULL);
-    up->realm = mprStrdup(up, realm);
-    up->name = mprStrdup(up, name);
-    up->password = mprStrdup(up, password);
+    up = mprAllocObj(User, NULL);
+    up->realm = sclone(realm);
+    up->name = sclone(name);
+    up->password = sclone(password);
     up->enabled = enabled;
     return up;
 }
 
 
-static void addUser(Mpr *mpr, char *realm, char *name, char *password, bool enabled)
+static void addUser(char *realm, char *name, char *password, bool enabled)
 {
     User    *up;
 
     up = users;
     while (up) {
         if (strcmp(name, up->name) == 0 && strcmp(realm, up->realm) == 0) {
-            up->password = mprStrdup(up, password);
+            up->password = sclone(password);
             up->enabled = enabled;
             return;
         }
         up = up->next;
     }
-
-    up = createUser(mpr, realm, name, password, enabled);
+    up = createUser(realm, name, password, enabled);
     up->next = users;
     users = up;
 }
 
 
 
-static int updatePassFile(Mpr *mpr, char *passFile)
+static int updatePassFile(char *passFile)
 {
     User        *up;
     char        *tempFile, buf[MPR_BUFSIZE];
     MprFile     *file;
 
-    tempFile = mprAsprintf(mpr, -1, "%s.tmp", passFile);
-    file = mprOpen(mpr, tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
+    tempFile = mprAsprintf(-1, "%s.tmp", passFile);
+    file = mprOpen(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
     if (file == 0) {
-        mprError(mpr, "%s: Can't open %s", programName, tempFile);
-        mprFree(tempFile);
+        mprError("%s: Can't open %s", programName, tempFile);
         return MPR_ERR_CANT_OPEN;
     }
     up = users;
     while (up) {
         sprintf(buf, "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
         if (mprWrite(file, buf, strlen(buf)) < 0) {
-            mprError(mpr, "%s: Can't write to %s", programName, tempFile);
-            mprFree(file);
-            mprFree(tempFile);
+            mprError("%s: Can't write to %s", programName, tempFile);
+            mprCloseFile(file);
             return MPR_ERR_CANT_WRITE;
         }
         up = up->next;
     }
-    mprFree(file);
+    mprCloseFile(file);
     if (rename(tempFile, passFile) < 0) {
-        mprError(mpr, "%s: Can't rename %s to %s", programName, tempFile, passFile);
-        mprFree(tempFile);
+        mprError("%s: Can't rename %s to %s", programName, tempFile, passFile);
         return MPR_ERR_CANT_COMPLETE;
     }
-    mprFree(tempFile);
     return 0;
 }
  
  
 
-static char *getPassword(Mpr *mpr, char *passBuf, int passLen)
+static char *getPassword(char *passBuf, int passLen)
 {
     char    *password, *confirm;
 
@@ -285,7 +280,7 @@ static char *getPassword(Mpr *mpr, char *passBuf, int passLen)
     if (strcmp(passBuf, confirm) == 0) {
         return passBuf;
     }
-    mprError(mpr, "%s: Error: Password not verified", programName);
+    mprError("%s: Error: Password not verified", programName);
     return 0;
 }
 
@@ -345,10 +340,9 @@ static char *getpass(char *prompt)
     Display the usage
  */
 
-static void printUsage(Mpr *mpr, cchar *programName)
+static void printUsage(cchar *programName)
 {
-    mprPrintfError(mpr, 
-        "usage: %s [-c] [-p password] passwordFile realm user\n"
+    mprPrintfError("usage: %s [-c] [-p password] passwordFile realm user\n"
         "Options:\n"
         "    -c              Create the password file\n"
         "    -p passWord     Use the specified password\n"

@@ -245,7 +245,8 @@ div.apiSig {
 	border: 1px solid #84b0c7;	
 	color: #000040;
 	margin-right: 20px;
-	padding: 8px 10px 8px 10px;
+	padding: 8px 10px 8px 30px;
+    text-indent: -21px;
 	background-color: #d5e1e8;
 	font-weight: bold;
 	-webkit-border-top-left-radius: 10px;
@@ -277,18 +278,24 @@ table.parameters {
     margin: 4px 0 0 0;
     padding: 6px;
     border: 1px solid #888;
+    border-collapse: collapse;
 	-webkit-box-shadow: 5px 5px 9px #888;
 }
 
 table.parameters td {
-    xborder-collapse: collapse;
     border: none;
-	padding: 2px 6px 2px 8px;
+	padding: 4px 6px 4px 8px;
+    border: 1px solid #888;
+}
+
+tr.param {
+    border: 1px solid #888;
 }
 
 td.param {
 	font-style: italic;
 	text-align: right;
+    white-space: nowrap;
 }
 
 p.classBrief { 

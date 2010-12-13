@@ -3,7 +3,7 @@
 <!-- BeginDsi "dsi/head.html" -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Embedthis Ejscript 1.0.0 Documentation</title>
+    <title>Embedthis Ejscript 2.0.0 Documentation</title>
     <meta name="keywords" content="Ejscript, JavaScript, ECMAScript, Server-Side JavaScript, Dynamic languages, 
         Embedded, AJAX, language"/>
 	<meta name="description" content="Ejscript -- Embedded Server-Side JavaScript Language."/>
@@ -30,7 +30,7 @@
                     </p>
                  </form>
               </div>
-            <!--TITLE-->Embedthis Ejscript 1.0.0
+            <!--TITLE-->Embedthis Ejscript 2.0.0
         </div>
         <div class="crumbs">
             <a href="../product/index.html">Home</a>
@@ -42,17 +42,15 @@
         <div class="contentRight">
             <h2>Quick Nav</h2>
             <ul>
-                <li><a href="#r100B1">Release 1.0.0.B2</a></li>
+                <li><a href="#r102">Release 2.0.0</a></li>
+                <li><a href="#r102">Release 1.0.3</a></li>
+                <li><a href="#r103">Release 1.0.3</a></li>
+                <li><a href="#r102">Release 1.0.2</a></li>
+                <li><a href="#r101">Release 1.0.1</a></li>
+                <li><a href="#r100">Release 1.0.0</a></li>
+                <li><a href="#r100B3">Release 1.0.0.B3</a></li>
+                <li><a href="#r100B2">Release 1.0.0.B2</a></li>
                 <li><a href="#r100B1">Release 1.0.0.B1</a></li>
-                <li><a href="#r099">Release 0.9.9</a></li>
-                <li><a href="#r098">Release 0.9.8</a></li>
-                <li><a href="#r097">Release 0.9.7</a></li>
-                <li><a href="#r096">Release 0.9.6</a></li>
-                <li><a href="#r095">Release 0.9.5</a></li>
-                <li><a href="#r093">Release 0.9.3</a></li>
-                <li><a href="#r092">Release 0.9.2</a></li>
-                <li><a href="#r091">Release 0.9.1</a></li>
-                <li><a href="#r090">Release 0.9.0</a></li>
             </ul>
             <h2>See Also</h2>
             <ul>
@@ -65,11 +63,123 @@
         <div class="contentLeft">
             <h1>Ejscript Change Log</h1>
             <p>This change log chronicles the features and fixes in each Ejscript release. </p>
-            <h3>Ejscript 1.0.0 Beta Release</h3>
-            This is a beta release for Ejscript 1.0. This includes a full JavaScript language, virtual
-            machine, optional stand-alone compiler, disassembler, documentation generator and embeddable web server.
-            Ejscript extends the basic JavaScript language and includes a comprehensive MVC web framework with suport for
-            Ajax controls, jQuery, SQL databases and database migrations.</p>
+            <p>See the Ejscript <a href="http://github.com/embedthis/ejs-1/issues">issue database</a> for full 
+                details of fixes.</p>
+            <a name="r200" id="r200"></a>
+            <h2 class="section">Changes in 2.0.0</h2>
+            <h3>Major Features</h3>
+            <ul>
+                <li>Decouple MVC, ORM and web server hosting into separate Jems (packages)</li>
+                <li>Enhanced web framework with HttpServer class and URL routing</li>
+                <li>CommonJS JSGI Support - For stackable Jack/Rack style web apps</li>
+                <li>Full async API for Socket, Http, HttpServer</li>
+                <li>CommonJS Package Spec support</li>
+                <li>Jem package manager</li>
+                <li>CouchDB database support</li>
+                <li>Support for RESTful and unobtrusive JavaScript client-side techniques</li>
+                <li>Full ECMA 262 ES5 Object methods</li>
+                <li>Type validation and checking. Currently type annotations are not validated in expressions and type
+                    casting is done at runtime. Convert this to do type validation at compile time with cast injection into
+                    the byte code stream.</li>
+                <li>Numerous class library improvements</li>
+                <li>Faster performance in general and 2-5x faster web applications</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>TODO</li>
+            </ul>
+            <a name="r103" id="r103"></a>
+            <h2 class="section">Changes in 1.0.3</h2>
+            <h3>Key Fixes</h3>
+            <ul>
+                <li>Update date documentation</li>
+                <li>Array.slice with negative indicies</li>
+                <li>Formatted printing of floating point numbers</li>
+                <li>Date/Time calculations for pre 1970 dates</li>
+                <li>Cygwin Math.pow Infinity results</li>
+                <li>Allow JSON encoded arrays in Http form data</li>
+                <li>Bad timezone on HTTP headers in certain locales</li>
+                <li>Exception stack management</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>None</li>
+            </ul>
+            <a name="r102" id="r102"></a>
+            <h2 class="section">Changes in 1.0.2</h2>
+            <h3>Minor Features</h3>
+            <ul>
+                <li>Solaris and FreeBSD ports</li>
+                <li>Http request and response body tracing</li>
+            </ul>
+            <h3>Key Fixes</h3>
+            <ul>
+                <li>Freeing memory on exiting ejs and ejsc. (Fix to mprFree(mpr))</li>
+                <li>Path.mimeTypes</li>
+                <li>for unicode constants in strings</li>
+                <li>Date fixes for dates outside 2038 and prior to 1970</li>
+                <li>PPC encoding of floating point numbers in module files</li>
+                <li>linking in uClinux</li>
+                <li>Documentation updates</li>
+                <li>Debian package improvements</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>None</li>
+            </ul>
+            <a name="r101" id="r101"></a>
+            <h2 class="section">Changes in 1.0.1</h2>
+            <h3>Key Fixes</h3>
+            <ul>
+                <li>Math.random()</li>
+                <li>String.caseCompare</li>
+                <li>WebServer IPv6 addresses</li>
+                <li>WebServer timedout requests</li>
+                <li>Windows delimiters in Path class</li>
+                <li>Build fixes for va_list</li>
+                <li>Documentation corrections</li>
+                <li>Fix for loading modules on ARM systems</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>None</li>
+            </ul>
+            <a name="r100" id="r100"></a>
+            <h2 class="section">Changes in 1.0.0</h2>
+            <h3><strong>Fixes</strong></h3>
+            <ul>
+                <li>TextStream.read when last line has no line terminator</li>
+                <li>Module loading when module filenames have a "."</li>
+                <li>Http with credentials</li>
+                <li>Web page reload when using System.cmd for command execution</li>
+                <li>Optimize make install and make package when used with svn</li>
+                <li>Path.find was not handling nested directories correctly</li>
+                <li>XML node update issues</li>
+                <li>Number.toString() for typed variable declarations</li>
+                <li>Enhanced Math, Number and Date classes</li>
+                <li>Improved documentation</li>
+                <li>Improved configuration and searching for build components</li>
+                <li>XML.toJSON()</li>
+                <li>trailing comma in JSON (IE fix)</li>
+                <li>diagnostics for configure with verbose mode</li>
+                <li>JSON parsing and encoding</li>
+                <li>html() escaping</li>
+                <li>parsing XML literals</li>
+                <li>ByteArray.copyin with negative count</li>
+                <li>Config properties to be boolean</li>
+            </ul>
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>Path.extension changed to trim "."</li>
+            </ul>
+            <a name="r100B3" id="r100B3"></a>
+            <h2 class="section">Changes in 1.0.0 Beta 3</h2>
+            <h3><strong>Fixes</strong></h3>
+            <ul>
+                <li>Dependency checking when building</li>
+                <li>Iteration in for statements inside Constructors</li>
+                <li>Strict equality testing with null and undefined</li>
+            </ul>
             <a name="r100B2" id="r100B2"></a>
             <h2 class="section">Changes in 1.0.0 Beta 2</h2>
             <h3>Major New Features</h3>
@@ -91,7 +201,7 @@
             </ul>
             <h3><strong>Fixes</strong></h3>
             <ul>
-                <li>Fix library and module search paths and module resolution</li>
+                <li>library and module search paths and module resolution</li>
                 <li>Improved ECMA standard compliance</li>
                 <li>Error.stack property</li>
                 <li>Hybrid type slot binding</li>
@@ -105,7 +215,7 @@
                 <li>Compiling with ejsweb compile all. Was missing views. Thanks Damien.</li>
                 <li>Optimize memory footprint.</li>
                 <li>Partial support execution from ROM (not all features operational).</li>
-                <li>Fix some parser asserts</li>
+                <li>some parser asserts</li>
             </ul>
             <h3><strong>API Changes</strong></h3>
             <ul>
@@ -165,10 +275,10 @@
                 <li>JSON encoding</li>
                 <li>SQL quoting</li>
                 <li>Compiler warning fixes</li>
-                <li>Fixed regular expression doc</li>
-                <li>Fixed readLines on windows and other platforms</li>
-                <li>Fixed TextStream reader</li>
-                <li>Fixed File.size for open files</li>
+                <li>Regular expression doc</li>
+                <li>TextStream.ReadLines on windows and other platforms</li>
+                <li>TextStream reader</li>
+                <li>File.size for open files</li>
             </ul>
             <h3><strong>API Changes</strong></h3>
             <ul>
@@ -177,7 +287,7 @@
                 <li>Http and Socket classes have new methods and signatures</li>
                 <li>Record class supports hasOne, hasMany. The find and findAll methods have new and better defined 
                     options</li>
-                <li>Fixed Stream.read() API definition. Offsets are now by default 0.</li>
+                <li>Stream.read() API definition. Offsets are now by default 0.</li>
             </ul>
             <a name="r099" id="r099"></a>
             <h2 class="section">Changes in 0.9.9</h2>

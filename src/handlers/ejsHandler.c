@@ -70,10 +70,10 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpLoc     *loc;
     char        *path;
     
-    if (mprStrcmpAnyCase(key, "EjsStartup") == 0) {
-        path = mprStrTrim(value, "\"");
+    if (scasecmp(key, "EjsStartup") == 0) {
+        path = strim(value, "\"", MPR_TRIM_BOTH);
         loc = state->loc;
-        loc->script = mprStrdup(loc, path);
+        loc->script = sclone(path);
         return 1;
     }
     return 0;
@@ -83,22 +83,20 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 /*
     Find a start script. Default to /usr/lib/PRODUCT/lib/PRODUCT.es.
  */
-static char *findScript(MprCtx ctx, char *script)
+static char *findScript(char *script)
 {
     char    *base, *result;
 
     if (script == 0 || *script == '\0') {
-        script = mprAsprintf(ctx, -1, "%s/../%s/%s", mprGetAppDir(ctx), BLD_LIB_NAME, MA_EJS_START);
+        script = mprAsprintf("%s/../%s/%s", mprGetAppDir(), BLD_LIB_NAME, MA_EJS_START);
     } else {
-        if (!mprPathExists(ctx, script, R_OK)) {
-            base = mprGetPathBase(ctx, script);
-            script = mprAsprintf(ctx, -1, "%s/../%s/%s", mprGetAppDir(ctx), BLD_LIB_NAME, base);
-            mprFree(base);
+        if (!mprPathExists(script, R_OK)) {
+            base = mprGetPathBase(script);
+            script = mprAsprintf("%s/../%s/%s", mprGetAppDir(), BLD_LIB_NAME, base);
         }
     }
-    if (mprPathExists(ctx, script, R_OK)) {
-        result = mprGetNativePath(ctx, script);
-        mprFree(script);
+    if (mprPathExists(script, R_OK)) {
+        result = mprGetNativePath(script);
         return result;
     }
     return 0;
@@ -111,25 +109,24 @@ static int loadStartupScript(Http *http, HttpLoc *loc)
     char    *script;
     int     ver;
 
-    ejs = ejsCreateVm(http, NULL, NULL, NULL, 0, NULL, EJS_FLAG_MASTER);
+    ejs = ejsCreateVm(NULL, NULL, 0, NULL, 0);
     if (ejs == 0) {
         return 0;
     }
     ejs->loc = loc;
     ver = 0;
-    if (ejsLoadModule(ejs, "ejs.web", ver, ver, 0) < 0) {
-        mprError(ejs, "Can't load ejs.web.mod: %s", ejsGetErrorMsg(ejs, 1));
+    if (ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.web"), ver, ver, 0) < 0) {
+        mprError("Can't load ejs.web.mod: %s", ejsGetErrorMsg(ejs, 1));
         return MPR_ERR_CANT_INITIALIZE;
     }
-    if ((script = findScript(http, loc->script)) == 0) {
-        mprError(http, "Can't find script file %s", loc->script);
+    if ((script = findScript(loc->script)) == 0) {
+        mprError("Can't find script file %s", loc->script);
         return MPR_ERR_CANT_OPEN;
     }
-    LOG(http, 2, "Loading Ejscript Server script: \"%s\"", script);
+    LOG(2, "Loading Ejscript Server script: \"%s\"", script);
     if (ejsLoadScriptFile(ejs, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
-        mprError(ejs, "Can't load \"%s\"", script);
+        mprError("Can't load \"%s\"", script);
     }
-    mprFree(script);
     return 0;
 }
 
