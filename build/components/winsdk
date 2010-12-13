@@ -44,7 +44,7 @@ setWinEnv()
 
     VS=`echo $cc | sed 's/\/VC\/.*//'`
     VSBIN=`dirname "${cc}"`
-    VSLIB=`echo $VSBIN | sed 's/Bin/Lib/' | sed 's/x86_amd64/amd64/'`
+    VSLIB=`echo $VSBIN | sed 's/[bB]in/lib/' | sed 's/x86_amd64/amd64/'`
 
     # Lower case for unix style paths
     vs=`cygpath -u "$VS"`
@@ -85,7 +85,10 @@ setWinEnv()
 }
 
 emitWinOptions() {
-    eval v=\$${KIND}_HAS_MSCL ;     echo -e "\tBLD_CC_MSCL=$v"
-    eval v=\$${KIND}_MSCL_VERSION ; echo -e "\tBLD_CC_CL_VERSION=$v"
+    local t
+
+    [ $BLD_CROSS = 1 ] && t="\t"
+    eval v=\$${KIND}_HAS_MSCL ;     echo -e "${t}BLD_CC_MSCL=$v"
+    eval v=\$${KIND}_MSCL_VERSION ; echo -e "${t}BLD_CC_CL_VERSION=$v"
 }
 

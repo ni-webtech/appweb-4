@@ -102,18 +102,19 @@ static int stopSeqno = -1;
     #elif BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
         #define USE_FFSL_ASM_X86 1
     #endif
-    static inline int ffsl(ulong word);
-    static inline int flsl(ulong word);
+    static MPR_INLINE int ffsl(ulong word);
+    static MPR_INLINE int flsl(ulong word);
 #elif BSD_EMULATION
     #define ffsl FFSL
     #define flsl FLSL
     #define NEED_FFSL 1
     #define USE_FFSL_ASM_X86 1
-    static inline int ffsl(ulong word);
-    static inline int flsl(ulong word);
+    static MPR_INLINE int ffsl(ulong word);
+    static MPR_INLINE int flsl(ulong word);
 #endif
 
 
+#undef          MPR
 Mpr             *MPR;
 static MprHeap  *heap;
 static int      padding[] = { 0, MANAGER_SIZE };
@@ -642,7 +643,7 @@ static int getQueueIndex(size_t size, int roundup)
     mprAssert(index < (heap->freeEnd - heap->freeq));
     
 #if BLD_MEMORY_STATS
-    mprAssert(heap->freeq[index].stats.minSize <= usize && usize < heap->freeq[index + 1].stats.minSize);
+    mprAssert(heap->freeq[index].stats.minSize <= (int) usize && (int) usize < heap->freeq[index + 1].stats.minSize);
 #endif
     
     if (roundup) {
@@ -1267,7 +1268,7 @@ size_t mprGetMem()
 #if NEED_FFSL
 #if USE_FFSL_ASM_X86
 
-static inline int ffsl(ulong x)
+static MPR_INLINE int ffsl(ulong x)
 {
     long    r;
 
@@ -1279,7 +1280,7 @@ static inline int ffsl(ulong x)
 }
 
 
-static inline int flsl(ulong x)
+static MPR_INLINE int flsl(ulong x)
 {
     long r;
 
@@ -1295,7 +1296,7 @@ static inline int flsl(ulong x)
 /* 
     Find first bit set in word 
  */
-static inline int ffsl(ulong word)
+static MPR_INLINE int ffsl(ulong word)
 {
     int     b;
 
@@ -1312,7 +1313,7 @@ static inline int ffsl(ulong word)
 /* 
     Find last bit set in word 
  */
-static inline int flsl(ulong word)
+static MPR_INLINE int flsl(ulong word)
 {
     int     b;
 
@@ -1599,6 +1600,7 @@ static void sweep()
 {
     MprRegion   *region, *nextRegion;
     MprMem      *mp, *next;
+MprMem *xnext, *onext;
     int         total;
     
     if (!heap->enabled) {
@@ -1623,7 +1625,6 @@ static void sweep()
 
     //  MOB - opt. Could lock regions?
     lockHeap();
-    MprMem *xnext, *onext;
     for (region = heap->regions; region; region = nextRegion) {
         nextRegion = region->next;
         for (mp = region->start; mp; mp = next) {
@@ -8661,7 +8662,7 @@ void mprSetPathNewline(cchar *path, cchar *newline)
 
 
 
-static inline void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key);
+static void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key);
 static MprHash  *lookupHash(int *bucketIndex, MprHash **prevSp, MprHashTable *table, cvoid *key);
 static void manageHash(MprHashTable *table, int flags);
 
@@ -8965,7 +8966,7 @@ MprHash *mprGetNextHash(MprHashTable *table, MprHash *last)
 }
 
 
-static inline void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key)
+static void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key)
 {
 #if BLD_CHAR_LEN > 1
     if (table->flags & MPR_HASH_UNICODE) {
@@ -11917,8 +11918,7 @@ MprList *mprGetPathFiles(cchar *dir, bool enumDirs)
     MprDirEntry     *dp;
     MprPath         fileInfo;
     MprList         *list;
-    char            *path, pbuf[MPR_MAX_PATH];
-    int             sep;
+    char            *seps, *path, pbuf[MPR_MAX_PATH];
 #if WINCE
     WIN32_FIND_DATAA findData;
 #else
@@ -11931,7 +11931,7 @@ MprList *mprGetPathFiles(cchar *dir, bool enumDirs)
     if ((path = mprJoinPath(dir, "*.*")) == 0) {
         return 0;
     }
-    sep = mprGetPathSeparator(dir);
+    seps = mprGetPathSeparators(dir);
 
     h = FindFirstFile(path, &findData);
     if (h == INVALID_HANDLE_VALUE) {
@@ -11958,7 +11958,7 @@ MprList *mprGetPathFiles(cchar *dir, bool enumDirs)
 
             /* dp->lastModified = (uint) findData.ftLastWriteTime.dwLowDateTime; */
 
-            if (mprSprintf(pbuf, sizeof(pbuf), "%s%c%s", dir, sep, dp->name) < 0) {
+            if (mprSprintf(pbuf, sizeof(pbuf), "%s%c%s", dir, seps[0], dp->name) < 0) {
                 dp->lastModified = 0;
             } else {
                 mprGetPathInfo(pbuf, &fileInfo);
@@ -12425,7 +12425,7 @@ static char *toCygPath(cchar *path)
         
     if (fs->cygdrive) {
         len = strlen(fs->cygdrive);
-        if (mprStrcmpAnyCaseCount(fs->cygdrive, &path[2], len) == 0 && isSep(mpr, path[len+2])) {
+        if (sncasecmp(fs->cygdrive, &path[2], len) == 0 && isSep(mpr, path[len+2])) {
             /*
                 If path is like: "c:/cygdrive/c/..."
                 Just strip the "c:" portion. Still validly qualified.
@@ -12671,6 +12671,7 @@ char *mprGetNormalizedPath(cchar *pathArg)
 }
 
 
+#if UNUSED
 cchar *mprGetPathSeparator(cchar *path)
 {
     MprFileSystem   *fs;
@@ -12678,6 +12679,7 @@ cchar *mprGetPathSeparator(cchar *path)
     fs = mprLookupFileSystem(path);
     return fs->separators;
 }
+#endif
 
 
 bool mprIsPathSeparator(cchar *path, cchar c)
@@ -21435,7 +21437,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
  */
 #if BLD_UNIX_LIKE
     #if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
-        inline MprTime mprGetHiResTime() {
+        MPR_INLINE MprTime mprGetHiResTime() {
             MprTime  now;
             __asm__ __volatile__ ("rdtsc" : "=A" (now));
             return now;
@@ -21443,7 +21445,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     #endif /* BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64 */
 
 #elif BLD_WIN_LIKE
-    inline MprTime mprGetHiResTime() {
+    MPR_INLINE MprTime mprGetHiResTime() {
         MprTime  now;
         QueryPerformanceCounter((LARGE_INTEGER*) &now);
         return now;
@@ -23700,13 +23702,13 @@ static cchar *getHive(cchar *keyPath, HKEY *hive)
     if (cp == 0 || *cp == '\0') {
         return 0;
     }
-    if (!mprStrcmpAnyCase(key, "HKEY_LOCAL_MACHINE")) {
+    if (!scasecmp(key, "HKEY_LOCAL_MACHINE")) {
         *hive = HKEY_LOCAL_MACHINE;
-    } else if (!mprStrcmpAnyCase(key, "HKEY_CURRENT_USER")) {
+    } else if (!scasecmp(key, "HKEY_CURRENT_USER")) {
         *hive = HKEY_CURRENT_USER;
-    } else if (!mprStrcmpAnyCase(key, "HKEY_USERS")) {
+    } else if (!scasecmp(key, "HKEY_USERS")) {
         *hive = HKEY_USERS;
-    } else if (!mprStrcmpAnyCase(key, "HKEY_CLASSES_ROOT")) {
+    } else if (!scasecmp(key, "HKEY_CLASSES_ROOT")) {
         *hive = HKEY_CLASSES_ROOT;
     } else {
         return 0;

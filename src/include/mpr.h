@@ -88,8 +88,12 @@
     #include    <arpa/inet.h>
 #endif
     #include    <ctype.h>
+#if BLD_WIN_LIKE
+    #include    <direct.h>
+#else
     #include    <dirent.h>
     #include    <dlfcn.h>
+#endif
     #include    <fcntl.h>
     #include    <errno.h>
 #if BLD_FEATURE_FLOAT || 1
@@ -97,7 +101,9 @@
     #define __USE_ISOC99 1
     #include    <math.h>
 #endif
+#if !BLD_WIN_LIKE
     #include    <grp.h> 
+#endif
 #if UNUSED && BLD_WIN_LIKE
     #include    <io.h>
 #endif
@@ -108,6 +114,7 @@
 #if UNUSED && BLD_WIN_LIKE
     #include    <malloc.h>
 #endif
+#if !BLD_WIN_LIKE
     #include    <netdb.h>
     #include    <net/if.h>
     #include    <netinet/in.h>
@@ -117,6 +124,7 @@
     #include    <pwd.h> 
 #if !CYGWIN
     #include    <resolv.h>
+#endif
 #endif
     #include    <setjmp.h>
     #include    <signal.h>
@@ -136,17 +144,20 @@
 #if LINUX
     #include    <sys/epoll.h>
 #endif
+#if !BLD_WIN_LIKE
     #include    <sys/ioctl.h>
     #include    <sys/mman.h>
 #if UNUSED && MACOSX
     #include    <sys/param.h>
 #endif
     #include    <sys/poll.h>
+#endif
     #include    <sys/stat.h>
 #if LINUX
     #include    <sys/prctl.h>
 #endif
     #include    <sys/types.h>
+#if !BLD_WIN_LIKE
     #include    <sys/resource.h>
     #include    <sys/sem.h>
 #if UNUSED
@@ -162,8 +173,11 @@
     #include    <sys/un.h>
 #endif
     #include    <sys/wait.h>
+#endif
     #include    <time.h>
+#if !BLD_WIN_LIKE
     #include    <unistd.h>
+#endif
 #if UNUSED && LINUX
     #include    <values.h>
 #endif
@@ -498,8 +512,9 @@ typedef intptr_t pint;
     #ifndef FILE_FLAG_FIRST_PIPE_INSTANCE
         #define FILE_FLAG_FIRST_PIPE_INSTANCE   0x00080000
     #endif
-    #define TIME_GENESIS UINT64(11644473600000000)
 #endif
+    #define TIME_GENESIS UINT64(11644473600000000)
+    #define va_copy(d, s) ((d) = (s))
 
     #if !WINCE
     #define access      _access
@@ -2012,7 +2027,7 @@ extern void mprVirtFree(void *ptr, size_t size);
     In debug mode, all memory blocks can have a debug name
  */
 #if BLD_MEMORY_DEBUG
-    static inline void *mprSetName(void *ptr, cchar *name) {
+    static MPR_INLINE void *mprSetName(void *ptr, cchar *name) {
         MPR_GET_MEM(ptr)->name = name;
         return ptr;
     }
@@ -6704,6 +6719,7 @@ extern void mprNop(void *ptr);
     @ingroup Mpr
  */
 extern Mpr *mprGetMpr();
+#define MPR mprGetMpr()
 #else
     #define mprGetMpr() MPR
     extern Mpr *MPR;

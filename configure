@@ -108,7 +108,7 @@ checkSetup() {
     #
     BLD_TOP=`canonPath .`
     BLD_TOOLS_DIR=${BLD_TOP}/build/bin
-    BLD_OUT_DIR=${BLD_TOP}/out
+    BLD_OUT_DIR=out
 
     #
     #   Sleuth the product. By convention products put a configure.PRODUCT file under the build directory.
@@ -537,7 +537,7 @@ parseSystem() {
 #   Convert a path to a canonical form: absolute (Windows: with drive spec and forward slashes)
 #
 canonPath() {
-    local path
+    local path v
 
     path="$1"
     if [ "$path" = "" ] ; then
@@ -556,16 +556,17 @@ canonPath() {
     fi
 
     if [ "${path##..}" != "${path}" ] ; then
-        cd .. ; echo `pwd`${path##..} ; cd - >/dev/null 2>&1
+        cd .. ; v=`pwd`${path##..} ; cd - >/dev/null 2>&1
     elif [ "${path##.}" != "${path}" ] ; then
-        echo `pwd`${path##.}
+        v=`pwd`${path##.}
     elif [ "${path##/}" != "${path}" ] ; then
         # Absolute
-        echo "$path"
+        v="$path"
     else
         # Relative
-        echo `pwd`/${path#/}
+        v=`pwd`/${path#/}
     fi
+    eval echo $v
 }
 
 
@@ -1311,20 +1312,18 @@ unique() {
 
 
 createBuildConfig() {
-    if [ "$BLD_BUILD_OS" = WIN ] ; then
-        BLD_OUT_DIR=`relativePath "${BLD_OUT_DIR}"`
-    fi
-
+    local out
+    
     #
     #   Create the buildConfig.sh and buildConfig.make files
     #
     [ $quiet = 0 ] && echo "  #"
-    mkdir -p ${BLD_OUT_DIR}/bin ${BLD_OUT_DIR}/include
+    mkdir -p "${BLD_OUT_DIR}/bin" "${BLD_OUT_DIR}/include"
     
-    eval CONFIG_ARGS=\"${BLD_OUT_DIR}/${CONFIG_ARGS}\"
-    eval CONFIG_MAKE=\"${BLD_OUT_DIR}/${CONFIG_MAKE}\"
-    eval CONFIG_SH=\"${BLD_OUT_DIR}/bin/${CONFIG_SH}\"
-    eval CONFIG_H=\"${BLD_OUT_DIR}/include/${CONFIG_H}\"
+    CONFIG_ARGS="${BLD_OUT_DIR}/${CONFIG_ARGS}"
+    CONFIG_MAKE="${BLD_OUT_DIR}/${CONFIG_MAKE}"
+    CONFIG_SH="${BLD_OUT_DIR}/bin/${CONFIG_SH}"
+    CONFIG_H="${BLD_OUT_DIR}/include/${CONFIG_H}"
 
     rm -f $CONFIG_SH $CONFIG_MAKE $CONFIG_H
     for f in $CONFIG_SH $CONFIG_MAKE $CONFIG_H
@@ -1602,16 +1601,30 @@ BLD_VER_PREFIX="$BLD_VER_PREFIX"
 BLD_WEB_PREFIX="$BLD_WEB_PREFIX"
 
 #
-#   Absolute native build directories
+#   Relative native build directories
 #
 !EOF_CONFIG2
 
-    v=`eval canonPath "${BLD_BUILD_BIN_DIR}"` 
+    v=`eval relativePath "${BLD_BUILD_BIN_DIR}"` 
     echo -e "BLD_BUILD_BIN_DIR=\"${v}\""      >>$NAME
-    v=`eval canonPath "${BLD_BUILD_LIB_DIR}"` 
+    v=`eval relativePath "${BLD_BUILD_LIB_DIR}"` 
     echo -e "BLD_BUILD_LIB_DIR=\"${v}\""      >>$NAME
-    v=`eval canonPath "${BLD_BUILD_MOD_DIR}"` 
+    v=`eval relativePath "${BLD_BUILD_MOD_DIR}"` 
     echo -e "BLD_BUILD_MOD_DIR=\"${v}\""      >>$NAME
+
+    cat >>$NAME <<!EOF_CONFIG2a
+
+#
+#   Absolute native build directories
+#
+!EOF_CONFIG2a
+
+    v=`eval canonPath "${BLD_BUILD_BIN_DIR}"` 
+    echo -e "BLD_ABS_BUILD_BIN_DIR=\"${v}\""      >>$NAME
+    v=`eval canonPath "${BLD_BUILD_LIB_DIR}"` 
+    echo -e "BLD_ABS_BUILD_LIB_DIR=\"${v}\""      >>$NAME
+    v=`eval canonPath "${BLD_BUILD_MOD_DIR}"` 
+    echo -e "BLD_ABS_BUILD_MOD_DIR=\"${v}\""      >>$NAME
 
     cat >>$NAME <<!EOF_STANDARD_FEATURES
 
@@ -1718,7 +1731,7 @@ BLD_FEATURE_LEGACY_API=$BLD_FEATURE_LEGACY_API
 
 createCrossConfig()
 {
-    local name kind v os path top f t d
+    local name kind v os path top out f t d
 
     name=$1
     kind=$2
@@ -1773,8 +1786,8 @@ createCrossConfig()
 
     echo -e "\n${t}#\n${t}#\tOutput Directories \n${t}#"
 
-    echo -e "${t}BLD_OUT_DIR=\"${BLD_OUT_DIR}\""
-    echo -e "${t}BLD_TOOLS_DIR=\"${BLD_TOP}/build/bin\""
+    echo -e "${t}BLD_OUT_DIR=\"\${BLD_TOP}/${BLD_OUT_DIR}\""
+    echo -e "${t}BLD_TOOLS_DIR=\"\${BLD_TOP}/build/bin\""
     echo
     for d in BIN LIB OBJ MOD INC
     do
@@ -1818,8 +1831,10 @@ createCrossConfig()
         fi
 
         top="$BLD_TOP"
+        out="$BLD_OUT_DIR"
         if [ $HAS_CYGPATH = 1 ] ; then
             top=`cygpath "${top}"`
+            out=`cygpath "${top}/${out}"`
         fi
 
         if [ "${BLD_HOST_OS}" = "LINUX" ] ; then
@@ -1830,9 +1845,9 @@ createCrossConfig()
         #   Cygwin needs modules to be in the path
 
         if [ "${name}" = "$CONFIG_SH" ] ; then
-            echo -e "${t}export PATH=\"${BLD_OUT_DIR}/bin:${BLD_OUT_DIR}/modules:${BLD_OUT_DIR}/lib:${BLD_OUT_DIR}/lib:${top}/build/bin${SYS_DIR}:${path}:\${PATH}\"" 
+            echo -e "${t}export PATH=\"${out}/bin:${out}/modules:${out}/lib:${out}/lib:${top}/build/bin${SYS_DIR}:${path}:\${PATH}\"" 
         else
-            echo -e "${t}export PATH:=${BLD_OUT_DIR}/bin:${BLD_OUT_DIR}/modules:${BLD_OUT_DIR}/lib:${BLD_OUT_DIR}/lib:${top}/build/bin${SYS_DIR}:${path}:\$(PATH)" 
+            echo -e "${t}export PATH:=${out}/bin:${out}/modules:${out}/lib:${out}/lib:${top}/build/bin${SYS_DIR}:${path}:\$(PATH)" 
         fi
     fi
 
