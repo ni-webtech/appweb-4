@@ -22,6 +22,7 @@ BLD_CHAR=char
 BLD_CLEAN_INSTALL=0						# Overwrite existing installations
 BLD_LICENSE=gpl
 BLD_COMMERCIAL=0
+BLD_STATIC=0
 
 #
 #
@@ -97,11 +98,6 @@ BLD_FEATURE_LEGACY_API=0
 #	Disable the ability to run from a ROM file system. Only use this for deeply embedded projects without a file system.
 #
 BLD_FEATURE_ROMFS=0
-
-#
-#   Build shared by default. Only enable one of shared or static.
-#
-BLD_FEATURE_STATIC=0
 
 ################################################################################
 #
