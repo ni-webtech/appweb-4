@@ -8,7 +8,7 @@ include		.makedep
 
 gen compileExtra: index.html
 
-index.html: $(BLD_OUT_DIR)/buildConfig.make Makefile
+index.html: $(BLD_INC_DIR)/buildConfig.h Makefile
 	cp version.html version.new
 	sed 's/<p>.*<\/p>/<p>$(BLD_VERSION)<\/p>/' < version.new >version.html
 	cp index.html index.new

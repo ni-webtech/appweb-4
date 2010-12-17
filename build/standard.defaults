@@ -5,7 +5,8 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
 #
 #	These initial defaults are read by configure when first creating the
-#	configuration files: buildConfig.make, buildConfig.sh and buildConfig.h
+#	buildConfig.h configuration file.
+
 #	If a different defaults file is specifed, this file may be read and then
 #	be overridden by the original defaults file.
 #

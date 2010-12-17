@@ -52,7 +52,7 @@ endif
 #
 #	Update the shbang path in testScript. Must be an absolute path on some systems and for valgrind.
 #
-cgi-bin/testScript: $(CGIP) Makefile $(BLD_TOP)/buildConfig.make
+cgi-bin/testScript: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
 	echo "#!$(BLD_ABS_BIN_DIR)/cgiProgram$(BLD_EXE)" >cgi-bin/testScript
 	chmod +x cgi-bin/testScript
 

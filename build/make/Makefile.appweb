@@ -181,7 +181,7 @@ remoteDeploy:
 	cp -r src/server/*.db $(REMOTE)
 	cp -r src/server/web/* $(REMOTE)/web
 
-ifeq ($(shell [ -f buildConfig.make ] && echo found),found)
+ifeq ($(shell [ -f out/include/buildConfig.h ] && echo found),found)
 uclinuxCheck: 
 	@if [ "$(UCLINUX_BUILD_USER)" = 1 ] ; \
 	then \
@@ -189,7 +189,7 @@ uclinuxCheck:
 		BLD_PRODUCT=appweb ; \
 		echo "    ln -s $$BLD_PRODUCT/uclinux.defaults build/buildConfig.defaults" ;\
 		ln -s $$BLD_PRODUCT/uclinux.defaults build/buildConfig.defaults ; \
-		if [ ! -f build/buildConfig.cache -o ../../.config -nt buildConfig.make ] ; \
+		if [ ! -f build/buildConfig.cache -o ../../.config -nt out/include/buildConfig.h ] ; \
 		then \
 			if [ "$$CONFIG_USER_APPWEB_DYNAMIC" = "y" ] ; \
 			then \
