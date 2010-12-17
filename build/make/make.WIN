@@ -4,7 +4,7 @@
 #   Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 #
 #	This file expects that the per-directory Makefiles will have included their .makedep 
-#	files which will in-turn include buildConfig.make and this file.
+#	files which will in-turn include buildConfig.h and this file.
 #
 ################################################################################
 
@@ -35,7 +35,7 @@ _CFLAGS             += -nologo -GR-
 
 ifeq ($(BLD_TYPE),DEBUG)
     _CFLAGS	        += -W3 -Zi -Od
-    ifeq ($(BLD_FEATURE_STATIC),0)
+    ifeq ($(BLD_STATIC),0)
         _CFLAGS 	+= -MDd
     else
         _CFLAGS 	+= -MTd
@@ -43,7 +43,7 @@ ifeq ($(BLD_TYPE),DEBUG)
     _LDFLAGS		+= -debug
 else
     _CFLAGS         += -O2
-    ifeq ($(BLD_FEATURE_STATIC),0)
+    ifeq ($(BLD_STATIC),0)
         _CFLAGS		+= -MD
     else
 	    _CFLAGS		+= -MT
@@ -61,7 +61,7 @@ _LDPATH			    = $(BLD_LIB_DIR)
 _LIBS          	    += ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib
 
 ifeq ($(BLD_DEBUG),1)
-    ifeq ($(BLD_FEATURE_STATIC),1)
+    ifeq ($(BLD_STATIC),1)
         _LIBS       += libcmtd.lib
     else
         ifeq ($(BLD_EMBEDTHIS),1)
@@ -71,7 +71,7 @@ ifeq ($(BLD_DEBUG),1)
         endif
     endif
 else
-    ifeq ($(BLD_FEATURE_STATIC),1)
+    ifeq ($(BLD_STATIC),1)
 	    _LIBS       += libcmt.lib
     else
 	    _LIBS       += msvcrt.lib
@@ -102,9 +102,9 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
         $(call log) "[Preprocess]" "cl -E $< >$*.pre" ; \
 		"$(BLD_CC)" -E $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< > `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
     fi
-	@if [ "$(TRACE)" = 1 ] ; then echo "$(BLD_CC)" -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ ; \
+	@if [ "$(TRACE)" = 1 ] ; then echo "$(BLD_CC)" -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ -Fd$(BLD_OBJ_DIR)/ ; \
 	else d=$(_DPATH_)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
-	@"$(BLD_CC)" -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ >.$$$$.cltmp ; \
+	@"$(BLD_CC)" -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ -Fd$(BLD_OBJ_DIR)/ >.$$$$.cltmp ; \
 	status=$$? ; \
 	if [ $$status -ne 0 -o "$(TRACE)" = "1" ] ; then cat .$$$$.cltmp ; rm -f .$$$$.cltmp ; \
     else true ; fi ; rm -f .$$$$.cltmp ; \

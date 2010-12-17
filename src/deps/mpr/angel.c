@@ -567,7 +567,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     char    **argv, *argp, *serviceArgs, *homeDir;
     int     argc, err, nextArg, installFlag;
 
-    mpr = mprCreate(0, NULL, NULL);
+    mpr = mprCreate(0, NULL, 0);
 
     appInst = inst;
     serviceArgs = 0;

@@ -4,7 +4,7 @@
 #   Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 #
 #	This file expects that the per-directory Makefiles will have included their .makedep files which will 
-#	in-turn include buildConfig.make and this file.
+#	in-turn include buildConfig.h and this file.
 #
 
 include			$(BLD_TOP)/build/make/make.gcc

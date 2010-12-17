@@ -2,15 +2,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    Http Library Library Source.
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -280,7 +280,7 @@ bool httpValidateNativeCredentials(HttpAuth *auth, cchar *realm, cchar *user, cc
     char **msg)
 {
     char    passbuf[HTTP_MAX_PASS * 2], *hashedPassword;
-    size_t  len;
+    ssize   len;
 
     hashedPassword = 0;
     
@@ -1672,7 +1672,7 @@ static void incomingChunkData(HttpQueue *q, HttpPacket *packet)
             httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
             return;
         }
-        rx->chunkSize = stoi(&start[2], 16, NULL);
+        rx->chunkSize = (int) stoi(&start[2], 16, NULL);
         if (!isxdigit((int) start[2]) || rx->chunkSize < 0) {
             httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
             return;
@@ -1742,7 +1742,7 @@ static void outgoingChunkService(HttpQueue *q)
                 /*  
                     Set the response content length and thus disable chunking -- not needed as we know the entity length.
                  */
-                tx->length = q->count;
+                tx->length = (int) q->count;
             }
         } else {
             if (tx->chunkSize < 0) {
@@ -1940,7 +1940,7 @@ static int setClientHeaders(HttpConn *conn)
     HttpTx      *tx;
     HttpUri     *parsedUri;
     char        *encoded;
-    size_t      len;
+    ssize       len;
     int         rc;
 
     mprAssert(conn);
@@ -2050,8 +2050,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     httpSetState(conn, HTTP_STATE_CONNECTED);
     conn->sentCredentials = 0;
 
-    method = tx->method = sclone(method);
-    supper(tx->method);
+    method = tx->method = supper(method);
     tx->parsedUri = httpCreateUri(url, 0);
 
     if (openConnection(conn, url) == 0) {
@@ -2116,7 +2115,7 @@ static int blockingFileCopy(HttpConn *conn, cchar *path)
 {
     MprFile     *file;
     char        buf[MPR_BUFSIZE];
-    int         bytes;
+    ssize       bytes;
 
     file = mprOpen(path, O_RDONLY | O_BINARY, 0);
     if (file == 0) {
@@ -2137,13 +2136,13 @@ static int blockingFileCopy(HttpConn *conn, cchar *path)
 /*  
     Write upload data. This routine blocks. If you need non-blocking ... cut and paste.
  */
-int httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
+ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
 {
     char    *path, *pair, *key, *value, *name;
-    int     next, rc;
+    ssize   rc;
+    int     next;
 
     rc = 0;
-
     if (formData) {
         for (rc = next = 0; rc >= 0 && (pair = mprGetNextItem(formData, &next)) != 0; ) {
             key = stok(sclone(pair), "=", &value);
@@ -2219,7 +2218,7 @@ int httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
 
 
 static void manageConn(HttpConn *conn, int flags);
-static inline HttpPacket *getPacket(HttpConn *conn, int *bytesToRead);
+static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead);
 static void readEvent(HttpConn *conn);
 static void writeEvent(HttpConn *conn);
 
@@ -2419,7 +2418,7 @@ void httpConsumeLastRequest(HttpConn *conn)
 {
     MprTime     mark;
     char        junk[4096];
-    int         requestTimeout, rc;
+    int         requestTimeout;
 
     if (!conn->sock || conn->state < HTTP_STATE_FIRST) {
         return;
@@ -2427,7 +2426,7 @@ void httpConsumeLastRequest(HttpConn *conn)
     mark = mprGetTime(conn);
     requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
     while (!httpIsEof(conn) && mprGetRemainingTime(mark, requestTimeout) > 0) {
-        if ((rc = httpRead(conn, junk, sizeof(junk))) <= 0) {
+        if (httpRead(conn, junk, sizeof(junk)) <= 0) {
             break;
         }
     }
@@ -2467,6 +2466,7 @@ void httpEvent(HttpConn *conn, MprEvent *event)
         readEvent(conn);
     }
     if (conn->server) {
+        //  MOB BUG - if still processing a request, EOF should not free the request
         if (conn->connError || mprIsSocketEof(conn->sock) || (!conn->rx && conn->keepAliveCount < 0)) {
             /*  
                 NOTE: compare keepAliveCount with "< 0" so that the client can have one more keep alive request. 
@@ -2487,12 +2487,12 @@ void httpEvent(HttpConn *conn, MprEvent *event)
 static void readEvent(HttpConn *conn)
 {
     HttpPacket  *packet;
-    int         nbytes, len;
+    ssize       nbytes, len;
 
     while ((packet = getPacket(conn, &len)) != 0) {
         nbytes = mprReadSocket(conn->sock, mprGetBufEnd(packet->content), len);
         //  MOB - was 8
-        LOG(0, "http: read event. Got %d", nbytes);
+        LOG(1, "http: read event. Got %d", nbytes);
        
         if (nbytes > 0) {
             mprAdjustBufEnd(packet->content, nbytes);
@@ -2505,9 +2505,8 @@ static void readEvent(HttpConn *conn)
                 }
                 break;
             } else if (conn->state < HTTP_STATE_COMPLETE) {
-                mprLog(0, "DEBUG: call process %d\n", packet->entityLength);
                 httpProcess(conn, packet);
-                if (!conn->error && conn->state < HTTP_STATE_COMPLETE) {
+                if (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprIsSocketEof(conn->sock)) {
                     httpConnError(conn, HTTP_CODE_COMMS_ERROR, "Connection lost");
                     break;
                 }
@@ -2600,12 +2599,12 @@ void httpFollowRedirects(HttpConn *conn, bool follow)
     Get the packet into which to read data. This may be owned by the connection or if mid-request, may be owned by the
     request. Also return in *bytesToRead the length of data to attempt to read.
  */
-static inline HttpPacket *getPacket(HttpConn *conn, int *bytesToRead)
+static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead)
 {
     HttpPacket  *packet;
     MprBuf      *content;
     HttpRx      *req;
-    int         len;
+    ssize       len;
 
     req = conn->rx;
     len = HTTP_BUFSIZE;
@@ -2616,11 +2615,8 @@ static inline HttpPacket *getPacket(HttpConn *conn, int *bytesToRead)
         chunk boundary data.
      */
     if ((packet = conn->input) == NULL) {
-        mprLog(0, "DEBUG: create new packet %d", mprGetCurrentThread()->yielded);
         conn->input = packet = httpCreateConnPacket(conn, len);
-        mprLog(0, "DEBUG: elen %d\n", packet->entityLength);
     } else {
-        mprLog(0, "DEBUG: reuse packet %d", mprGetCurrentThread()->yielded);
         content = packet->content;
         mprResetBufIfEmpty(content);
         if (req) {
@@ -2687,7 +2683,7 @@ int httpGetAsync(HttpConn *conn)
 }
 
 
-int httpGetChunkSize(HttpConn *conn)
+ssize httpGetChunkSize(HttpConn *conn)
 {
     if (conn->tx) {
         return conn->tx->chunkSize;
@@ -2787,7 +2783,7 @@ void httpSetFillHeaders(HttpConn *conn, HttpFillHeadersProc fn, void *arg)
 }
 
 
-void httpSetChunkSize(HttpConn *conn, int size)
+void httpSetChunkSize(HttpConn *conn, ssize size)
 {
     if (conn->tx) {
         conn->tx->chunkSize = size;
@@ -3163,7 +3159,7 @@ void httpCreateEnvVars(HttpConn *conn)
     Make variables for each keyword in a query string. The buffer must be url encoded (ie. key=value&key2=value2..., 
     spaces converted to '+' and all else should be %HEX encoded).
  */
-void httpAddVars(HttpConn *conn, cchar *buf, int len)
+void httpAddVars(HttpConn *conn, cchar *buf, ssize len)
 {
     HttpTx          *tx;
     HttpRx          *rx;
@@ -4343,9 +4339,9 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
 
 
 static void addPacketForNet(HttpQueue *q, HttpPacket *packet);
-static void adjustNetVec(HttpQueue *q, int written);
-static int  buildNetVec(HttpQueue *q);
-static void freeNetPackets(HttpQueue *q, int written);
+static void adjustNetVec(HttpQueue *q, ssize written);
+static ssize buildNetVec(HttpQueue *q);
+static void freeNetPackets(HttpQueue *q, ssize written);
 static void netOutgoingService(HttpQueue *q);
 
 /*  
@@ -4369,7 +4365,8 @@ static void netOutgoingService(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpTx      *tx;
-    int         written, errCode;
+    ssize       written;
+    int         errCode;
 
     conn = q->conn;
     tx = conn->tx;
@@ -4455,7 +4452,7 @@ static void netOutgoingService(HttpQueue *q)
 /*
     Build the IO vector. Return the count of bytes to be written. Return -1 for EOF.
  */
-static int buildNetVec(HttpQueue *q)
+static ssize buildNetVec(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpTx      *tx;
@@ -4495,7 +4492,7 @@ static int buildNetVec(HttpQueue *q)
 /*
     Add one entry to the io vector
  */
-static void addToNetVector(HttpQueue *q, char *ptr, int bytes)
+static void addToNetVector(HttpQueue *q, char *ptr, ssize bytes)
 {
     mprAssert(bytes > 0);
 
@@ -4537,10 +4534,10 @@ static void addPacketForNet(HttpQueue *q, HttpPacket *packet)
 }
 
 
-static void freeNetPackets(HttpQueue *q, int bytes)
+static void freeNetPackets(HttpQueue *q, ssize bytes)
 {
     HttpPacket    *packet;
-    int         len;
+    ssize         len;
 
     mprAssert(q->count >= 0);
     mprAssert(bytes >= 0);
@@ -4583,10 +4580,10 @@ static void freeNetPackets(HttpQueue *q, int bytes)
 /*
     Clear entries from the IO vector that have actually been transmitted. Support partial writes.
  */
-static void adjustNetVec(HttpQueue *q, int written)
+static void adjustNetVec(HttpQueue *q, ssize written)
 {
     MprIOVec    *iovec;
-    size_t      len;
+    ssize       len;
     int         i, j;
 
     /*
@@ -4686,7 +4683,7 @@ static void managePacket(HttpPacket *packet, int flags);
     used for incoming body content. If size > 0, then create a non-growable buffer 
     of the requested size.
  */
-HttpPacket *httpCreatePacket(int size)
+HttpPacket *httpCreatePacket(ssize size)
 {
     HttpPacket  *packet;
 
@@ -4699,7 +4696,7 @@ HttpPacket *httpCreatePacket(int size)
             return 0;
         }
     }
-    mprLog(0, "DEBUG: httpCreate new packet %d\n", packet->entityLength);
+    mprLog(5, "DEBUG: httpCreate new packet %d\n", packet->entityLength);
     return packet;
 }
 
@@ -4720,7 +4717,7 @@ static void managePacket(HttpPacket *packet, int flags)
 /*
     Create a packet for the connection to read into. This may come from the connection packet free list.
  */
-HttpPacket *httpCreateConnPacket(HttpConn *conn, int size)
+HttpPacket *httpCreateConnPacket(HttpConn *conn, ssize size)
 {
     HttpPacket  *packet;
     HttpRx      *rx;
@@ -4731,7 +4728,7 @@ HttpPacket *httpCreateConnPacket(HttpConn *conn, int size)
     rx = conn->rx;
     if (rx) {
         if ((packet = rx->freePackets) != NULL && size <= packet->content->buflen) {
-            mprLog(0, "DEBUG: httpCreateConnPacket got free packet from rx->freePackets");
+            mprLog(5, "DEBUG: httpCreateConnPacket got free packet from rx->freePackets");
             rx->freePackets = packet->next; 
             packet->next = 0;
             return packet;
@@ -4773,7 +4770,7 @@ void httpFreePacket(HttpQueue *q, HttpPacket *packet)
 } 
 
 
-HttpPacket *httpCreateDataPacket(int size)
+HttpPacket *httpCreateDataPacket(ssize size)
 {
     HttpPacket    *packet;
 
@@ -4854,7 +4851,7 @@ HttpPacket *httpGetPacket(HttpQueue *q)
  */
 bool httpIsPacketTooBig(HttpQueue *q, HttpPacket *packet)
 {
-    int     size;
+    ssize   size;
     
     size = mprGetBufLength(packet->content);
     return size > q->max || size > q->packetSize;
@@ -4910,10 +4907,10 @@ int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 /*
     Join queue packets up to the maximum of the given size and the downstream queue packet size.
  */
-void httpJoinPackets(HttpQueue *q, int size)
+void httpJoinPackets(HttpQueue *q, ssize size)
 {
     HttpPacket  *first, *next;
-    int         maxPacketSize;
+    ssize       maxPacketSize;
 
     if ((first = q->first) != 0 && first->next) {
         maxPacketSize = min(q->nextQ->packetSize, size);
@@ -4977,10 +4974,10 @@ void httpPutForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
     Split a packet if required so it fits in the downstream queue. Put back the 2nd portion of the split packet on the queue.
     Ensure that the packet is not larger than "size" if it is greater than zero.
  */
-int httpResizePacket(HttpQueue *q, HttpPacket *packet, int size)
+int httpResizePacket(HttpQueue *q, HttpPacket *packet, ssize size)
 {
     HttpPacket  *tail;
-    int         len;
+    ssize       len;
     
     if (size <= 0) {
         size = MAXINT;
@@ -5013,7 +5010,7 @@ int httpResizePacket(HttpQueue *q, HttpPacket *packet, int size)
 HttpPacket *httpClonePacket(HttpPacket *orig)
 {
     HttpPacket  *packet;
-    int         count, size;
+    ssize       count, size;
 
     count = httpGetPacketLength(orig);
     size = max(count, HTTP_BUFSIZE);
@@ -5075,10 +5072,10 @@ void httpSendPackets(HttpQueue *q)
     Split a packet at a given offset and return a new packet containing the data after the offset.
     The suffix data migrates to the new packet. 
  */
-HttpPacket *httpSplitPacket(HttpPacket *orig, int offset)
+HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
 {
     HttpPacket  *packet;
-    int         count, size;
+    ssize       count, size;
 
     if (offset >= httpGetPacketLength(orig)) {
         mprAssert(0);
@@ -5400,17 +5397,17 @@ void httpSetSendConnector(HttpConn *conn, cchar *path)
 {
     HttpTx      *tx;
     HttpQueue   *q, *qhead;
-    int         max;
+    ssize       maxBody;
 
     tx = conn->tx;
     tx->flags |= HTTP_TX_SENDFILE;
     tx->filename = sclone(path);
-    max = conn->limits->transmissionBodySize;
+    maxBody = conn->limits->transmissionBodySize;
 
     qhead = &tx->queue[HTTP_QUEUE_TRANS];
     for (q = conn->writeq; q != qhead; q = q->nextQ) {
-        q->max = max;
-        q->packetSize = max;
+        q->max = maxBody;
+        q->packetSize = maxBody;
     }
 }
 
@@ -5699,7 +5696,7 @@ void httpDisableQueue(HttpQueue *q)
 void httpDiscardData(HttpQueue *q, bool removePackets)
 {
     HttpPacket  *packet, *prev, *next;
-    int         len;
+    ssize       len;
 
     for (prev = 0, packet = q->first; packet; packet = next) {
         next = packet->next;
@@ -5801,7 +5798,7 @@ HttpQueue *httpGetNextQueueForService(HttpQueue *q)
 /*  
     Return the number of bytes the queue will accept. Always positive.
  */
-int httpGetQueueRoom(HttpQueue *q)
+ssize httpGetQueueRoom(HttpQueue *q)
 {
     mprAssert(q->max > 0);
     mprAssert(q->count >= 0);
@@ -5838,7 +5835,7 @@ bool httpIsQueueEmpty(HttpQueue *q)
 }
 
 
-void httpOpenQueue(HttpQueue *q, int chunkSize)
+void httpOpenQueue(HttpQueue *q, ssize chunkSize)
 {
     if (chunkSize > 0) {
         q->packetSize = min(q->packetSize, chunkSize);
@@ -5854,13 +5851,14 @@ void httpOpenQueue(HttpQueue *q, int chunkSize)
     Read data. If sync mode, this will block. If async, will never block.
     Will return what data is available up to the requested size. Returns a byte count.
  */
-int httpRead(HttpConn *conn, char *buf, int size)
+ssize httpRead(HttpConn *conn, char *buf, ssize size)
 {
     HttpPacket  *packet;
     HttpQueue   *q;
     HttpRx      *rx;
     MprBuf      *content;
-    int         nbytes, len, events, inactivityTimeout;
+    ssize       nbytes, len;
+    int         events, inactivityTimeout;
 
     q = conn->readq;
     rx = conn->rx;
@@ -5912,7 +5910,7 @@ char *httpReadString(HttpConn *conn)
 {
     HttpRx      *rx;
     char        *content;
-    int         remaining, sofar, nbytes;
+    ssize       remaining, sofar, nbytes;
 
     rx = conn->rx;
 
@@ -6002,7 +6000,7 @@ bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
 {
     HttpConn    *conn;
     HttpQueue   *next;
-    int         size;
+    ssize       size;
 
     conn = q->conn;
     next = q->nextQ;
@@ -6018,7 +6016,6 @@ bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
     if (size <= next->packetSize && (size + next->count) <= next->max) {
         return 1;
     }
-
     /*  
         The downstream queue is full, so disable the queue and mark the downstream queue as full and service 
         if immediately if not disabled.  
@@ -6036,12 +6033,12 @@ bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
     Write a block of data. This is the lowest level write routine for data. This will buffer the data and flush if
     the queue buffer is full.
  */
-size_t httpWriteBlock(HttpQueue *q, cchar *buf, size_t size)
+ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size)
 {
     HttpPacket  *packet;
     HttpConn    *conn;
     HttpTx      *tx;
-    size_t      bytes, written, packetSize;
+    ssize       bytes, written, packetSize;
 
     mprAssert(q == q->conn->writeq);
                
@@ -6083,13 +6080,13 @@ size_t httpWriteBlock(HttpQueue *q, cchar *buf, size_t size)
 }
 
 
-size_t httpWriteString(HttpQueue *q, cchar *s)
+ssize httpWriteString(HttpQueue *q, cchar *s)
 {
     return httpWriteBlock(q, s, strlen(s));
 }
 
 
-size_t httpWrite(HttpQueue *q, cchar *fmt, ...)
+ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
 {
     va_list     vargs;
     char        *buf;
@@ -6204,7 +6201,7 @@ static void rangeService(HttpQueue *q, HttpRangeProc fill)
     HttpConn    *conn;
     HttpRx      *rx;
     HttpTx      *tx;
-    int         bytes, count, endpos;
+    ssize       bytes, count, endpos;
 
     conn = q->conn;
     rx = conn->rx;
@@ -6374,7 +6371,7 @@ static bool fixRangeLength(HttpConn *conn)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpRange   *range;
-    int         length;
+    ssize       length;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -6470,7 +6467,7 @@ static bool fixRangeLength(HttpConn *conn)
 
 
 static void addMatchEtag(HttpConn *conn, char *etag);
-static int getChunkPacketSize(HttpConn *conn, MprBuf *buf);
+static ssize getChunkPacketSize(HttpConn *conn, MprBuf *buf);
 static char *getToken(HttpConn *conn, cchar *delim);
 static void manageRange(HttpRange *range, int flags);
 static void manageRx(HttpRx *rx, int flags);
@@ -6619,8 +6616,8 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpLoc     *loc;
+    ssize       len;
     char        *start, *end;
-    int         len;
 
     if (packet == NULL) {
         return 0;
@@ -6710,7 +6707,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     traced = traceRequest(conn, packet);
 
     method = getToken(conn, " ");
-    supper(method);
+    method = supper(method);
 
     switch (method[0]) {
     case 'D':
@@ -6780,8 +6777,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
         httpProtocolError(conn, HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
     }
     rx->flags |= methodFlags;
-    rx->method = method;
-    supper(rx->method);
+    rx->method = supper(method);
 
     if (httpSetUri(conn, uri) < 0) {
         httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad URL format");
@@ -6850,7 +6846,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
     HttpTx      *tx;
     HttpLimits  *limits;
     MprBuf      *content;
-    char        *key, *value, *tok, *tp;
+    char        *key, *value, *tok;
     cchar       *oldValue;
     int         len, count, keepAlive;
 
@@ -6875,7 +6871,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         while (isspace((int) *value)) {
             value++;
         }
-        slower(key);
+        key = slower(key);
 
         LOG(8, "Key %s, value %s", key, value);
         if (strspn(key, "%<>/\\") > 0) {
@@ -7082,8 +7078,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
         case 't':
             if (strcmp(key, "transfer-encoding") == 0) {
-                slower(value);
-                if (strcmp(value, "chunked") == 0) {
+                if (scasecmp(value, "chunked") == 0) {
                     rx->flags |= HTTP_REC_CHUNKED;
                     /*  
                         This will be revised by the chunk filter as chunks are processed and will be set to zero when the
@@ -7116,13 +7111,11 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
         case 'w':
             if (strcmp(key, "www-authenticate") == 0) {
-                tp = value;
+                conn->authType = value = slower(value);
                 while (*value && !isspace((int) *value)) {
                     value++;
                 }
                 *value++ = '\0';
-                slower(tp);
-                conn->authType = sclone(slower(tp));
                 if (!parseAuthenticate(conn, value)) {
                     httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad Authentication header");
                     break;
@@ -7326,7 +7319,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     HttpTx      *tx;
     HttpQueue   *q;
     MprBuf      *content;
-    int         nbytes, remaining;
+    ssize       nbytes, remaining;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -7503,11 +7496,11 @@ void httpCloseRx(HttpConn *conn)
 /*  
     Optimization to correctly size the packets to the chunk filter.
  */
-static int getChunkPacketSize(HttpConn *conn, MprBuf *buf)
+static ssize getChunkPacketSize(HttpConn *conn, MprBuf *buf)
 {
     HttpRx      *rx;
     char        *start, *cp;
-    size_t      need, size;
+    ssize       need, size;
 
     rx = conn->rx;
     need = 0;
@@ -7539,7 +7532,7 @@ static int getChunkPacketSize(HttpConn *conn, MprBuf *buf)
             return 0;
         }
         need = (cp - start + 1);
-        size = stoi(&start[2], 16, NULL);
+        size = (ssize) stoi(&start[2], 16, NULL);
         if (size == 0 && &cp[2] < buf->end && cp[1] == '\r' && cp[2] == '\n') {
             /*
                 This is the last chunk (size == 0). Now need to consume the trailing "\r\n".
@@ -7606,14 +7599,13 @@ static void manageRange(HttpRange *range, int flags)
 }
 
 
-int httpGetContentLength(HttpConn *conn)
+ssize httpGetContentLength(HttpConn *conn)
 {
     if (conn->rx == 0) {
         mprAssert(conn->rx);
         return 0;
     }
     return conn->rx->length;
-    return 0;
 }
 
 
@@ -7633,7 +7625,7 @@ cchar *httpGetHeader(HttpConn *conn, cchar *key)
         mprAssert(conn->rx);
         return 0;
     }
-    return mprLookupHash(conn->rx->headers, slower(sclone(key)));
+    return mprLookupHash(conn->rx->headers, slower(key));
 }
 
 
@@ -7725,6 +7717,11 @@ static void waitHandler(HttpConn *conn, struct MprEvent *event)
 {
     httpCallEvent(conn, event->mask);
     httpEnableConnEvents(conn);
+#if UNUSED
+    if (conn->cond) {
+        mprSignalCond(conn->cond);
+    }
+#endif
 }
 
 
@@ -7735,7 +7732,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
 {
     Http        *http;
     MprTime     expire;
-    int         eventMask, remainingTime, addedHandler, saveAsync;
+    int         eventMask, remainingTime, addedHandler, saveAsync, flags;
 
     http = conn->http;
 
@@ -7753,11 +7750,16 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
         if (!conn->writeComplete) {
             eventMask |= MPR_WRITABLE;
         }
-        mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher,
-            (MprEventProc) waitHandler, conn);
+        mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, (MprEventProc)waitHandler, conn);
         addedHandler = 1;
-    } else addedHandler = 0;
-
+    } else {
+        addedHandler = 0;
+    }
+#if UNUSED
+    if (conn->cond == 0) {
+        conn->cond = mprCreateCond();
+    }
+#endif
     http->now = mprGetTime(conn);
     expire = http->now + timeout;
     while (!conn->error && conn->state < state && conn->sock && !mprIsSocketEof(conn->sock)) {
@@ -7766,7 +7768,16 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
             break;
         }
         mprAssert(!mprSocketHasPendingData(conn->sock));
-        mprServiceEvents(dispatcher, remainingTime, MPR_SERVICE_ONE_THING);
+#if UNUSED
+        if (0 && mprHasEventsThread()) {
+            mprWaitForCond(conn->cond, remainingTime);
+        } else {
+            mprServiceEvents(dispatcher, remainingTime, MPR_SERVICE_ONE_THING);
+        }
+#else
+        flags = mprHasEventsThread() ? MPR_SERVICE_ONLY : 0;
+        mprServiceEvents(dispatcher, remainingTime, MPR_SERVICE_ONE_THING | flags);
+#endif
     }
     if (addedHandler && conn->waitHandler.fd >= 0) {
         mprRemoveWaitHandler(&conn->waitHandler);
@@ -7921,7 +7932,7 @@ static bool parseRange(HttpConn *conn, char *value)
          */
         tok = stok(value, ",", &value);
         if (*tok != '-') {
-            range->start = stoi(tok, 10, NULL);
+            range->start = (ssize) stoi(tok, 10, NULL);
         } else {
             range->start = -1;
         }
@@ -7932,7 +7943,7 @@ static bool parseRange(HttpConn *conn, char *value)
                 /*
                     End is one beyond the range. Makes the math easier.
                  */
-                range->end = stoi(ep, 10, NULL) + 1;
+                range->end = (ssize) stoi(ep, 10, NULL) + 1;
             }
         }
         if (range->start >= 0 && range->end >= 0) {
@@ -8053,9 +8064,9 @@ cvoid *httpGetStageData(HttpConn *conn, cchar *key)
 
 
 static void addPacketForSend(HttpQueue *q, HttpPacket *packet);
-static void adjustSendVec(HttpQueue *q, int written);
+static void adjustSendVec(HttpQueue *q, ssize written);
 static int  buildSendVec(HttpQueue *q);
-static void freeSentPackets(HttpQueue *q, int written);
+static void freeSentPackets(HttpQueue *q, ssize written);
 static void sendIncomingService(HttpQueue *q);
 
 
@@ -8113,7 +8124,8 @@ void httpSendOutgoingService(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpTx      *tx;
-    int         written, ioCount, errCode;
+    ssize       written;
+    int         errCode, count;
 
     conn = q->conn;
     tx = conn->tx;
@@ -8149,9 +8161,9 @@ void httpSendOutgoingService(HttpQueue *q)
         /*
             Write the vector and file data. Exclude the file entry in the io vector.
          */
-        ioCount = q->ioIndex - q->ioFileEntry;
-        mprAssert(ioCount >= 0);
-        written = (int) mprSendFileToSocket(conn->sock, tx->file, tx->pos, q->ioCount, q->iovec, ioCount, NULL, 0);
+        count = q->ioIndex - q->ioFileEntry;
+        mprAssert(count >= 0);
+        written = mprSendFileToSocket(conn->sock, tx->file, (MprOffset) tx->pos, q->ioCount, q->iovec, count, NULL, 0);
         mprLog(5, "Send connector written %d", written);
         if (written < 0) {
             errCode = mprGetError(q);
@@ -8226,14 +8238,14 @@ static int buildSendVec(HttpQueue *q)
         }
         addPacketForSend(q, packet);
     }
-    return q->ioCount;
+    return (int) q->ioCount;
 }
 
 
 /*  
     Add one entry to the io vector
  */
-static void addToSendVector(HttpQueue *q, char *ptr, int bytes)
+static void addToSendVector(HttpQueue *q, char *ptr, ssize bytes)
 {
     mprAssert(bytes > 0);
 
@@ -8275,7 +8287,7 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
             addToSendVector(q, 0, httpGetPacketLength(packet));
             mprAssert(q->ioFileEntry == 0);
             q->ioFileEntry = 1;
-            q->ioFileOffset += httpGetPacketLength(packet);
+            q->ioFileOffset += (MprOffset) httpGetPacketLength(packet);
         }
     }
     item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
@@ -8290,10 +8302,10 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
     being full. Don't come here if we've seen all the packets and all the data has been completely written. ie. small files
     don't come here.
  */
-static void freeSentPackets(HttpQueue *q, int bytes)
+static void freeSentPackets(HttpQueue *q, ssize bytes)
 {
     HttpPacket  *packet;
-    int         len;
+    ssize       len;
 
     mprAssert(q->first);
     mprAssert(q->count >= 0);
@@ -8339,11 +8351,12 @@ static void freeSentPackets(HttpQueue *q, int bytes)
     being full. Don't come here if we've seen all the packets and all the data has been completely written. ie. small files
     don't come here.
  */
-static void adjustSendVec(HttpQueue *q, int written)
+static void adjustSendVec(HttpQueue *q, ssize written)
 {
     HttpTx      *tx;
     MprIOVec    *iovec;
-    int         i, j, len;
+    ssize       len;
+    int         i, j;
 
     tx = q->conn->tx;
 
@@ -8366,7 +8379,7 @@ static void adjustSendVec(HttpQueue *q, int written)
         mprAssert(q->ioCount >= 0);
         iovec = q->iovec;
         for (i = 0; i < q->ioIndex; i++) {
-            len = (int) iovec[i].len;
+            len = iovec[i].len;
             if (iovec[i].start) {
                 if (written < len) {
                     iovec[i].start += written;
@@ -9111,7 +9124,7 @@ int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext)
 }
 
 
-static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf, int len)
+static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf, ssize len)
 {
     cchar       *cp, *tag, *digits;
     char        *data, *dp;
@@ -9158,10 +9171,11 @@ static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf,
 }
 
 
-void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, int len, int total)
+void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssize len, ssize total)
 {
     HttpTrace   *trace;
-    int         size, level;
+    ssize       size;
+    int         level;
 
     trace = &conn->trace[dir];
     level = trace->levels[item];
@@ -9304,7 +9318,7 @@ static void addHeader(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(value);
 
     if (scasecmp(key, "content-length") == 0) {
-        conn->tx->length = stoi(value, 10, NULL);
+        conn->tx->length = (ssize) stoi(value, 10, NULL);
     }
     mprAddHash(conn->tx->headers, key, value);
 }
@@ -9601,7 +9615,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
 }
 
 
-void httpSetContentLength(HttpConn *conn, int length)
+void httpSetContentLength(HttpConn *conn, ssize length)
 {
     HttpTx      *tx;
 
@@ -9796,7 +9810,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
 }
 
 
-void httpSetEntityLength(HttpConn *conn, int len)
+void httpSetEntityLength(HttpConn *conn, ssize len)
 {
     HttpTx      *tx;
 
@@ -9980,7 +9994,7 @@ typedef struct Upload {
     HttpUploadFile  *currentFile;       /* Current file context */
     MprFile         *file;              /* Current file I/O object */
     char            *boundary;          /* Boundary signature */
-    int             boundaryLen;        /* Length of boundary */
+    ssize           boundaryLen;        /* Length of boundary */
     int             contentState;       /* Input states */
     char            *clientFilename;    /* Current file filename */
     char            *tmpPath;           /* Current temp filename for upload data */
@@ -9990,7 +10004,7 @@ typedef struct Upload {
 
 
 static void closeUpload(HttpQueue *q);
-static char *getBoundary(void *buf, int bufLen, void *boundary, int boundaryLen);
+static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundaryLen);
 static void incomingUploadData(HttpQueue *q, HttpPacket *packet);
 static void manageHttpUploadFile(HttpUploadFile *file, int flags);
 static void manageUpload(Upload *up, int flags);
@@ -10025,7 +10039,7 @@ static bool matchUpload(HttpConn *conn, HttpStage *filter)
 {
     HttpRx  *rx;
     char    *pat;
-    int     len;
+    ssize   len;
     
     rx = conn->rx;
     if (!(rx->flags & HTTP_POST) || rx->remainingContent <= 0) {
@@ -10035,7 +10049,7 @@ static bool matchUpload(HttpConn *conn, HttpStage *filter)
         return 0;
     }
     pat = "multipart/form-data";
-    len = (int) strlen(pat);
+    len = strlen(pat);
     if (sncasecmp(rx->mimeType, pat, len) == 0) {
         rx->upload = 1;
         return 1;
@@ -10068,7 +10082,7 @@ static void openUpload(HttpQueue *q)
 
     if (rx->uploadDir == 0) {
 #if BLD_WIN_LIKE
-        rx->uploadDir = mprGetNormalizedPath(rx, getenv("TEMP"));
+        rx->uploadDir = mprGetNormalizedPath(getenv("TEMP"));
 #else
         rx->uploadDir = sclone("/tmp");
 #endif
@@ -10135,7 +10149,8 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
     MprBuf      *content;
     Upload      *up;
     char        *line, *nextTok;
-    int         count, done, rc;
+    ssize       count;
+    int         done, rc;
     
     mprAssert(packet);
     
@@ -10394,17 +10409,17 @@ static void defineFileFields(HttpQueue *q, Upload *up)
     httpSetFormVar(conn, key, file->filename);
 
     key = sjoin("FILE_SIZE_", up->id, NULL);
-    httpSetIntFormVar(conn, key, file->size);
+    httpSetIntFormVar(conn, key, (int) file->size);
 }
 
 
-static int writeToFile(HttpQueue *q, char *data, int len)
+static int writeToFile(HttpQueue *q, char *data, ssize len)
 {
     HttpConn        *conn;
     HttpUploadFile  *file;
     HttpLimits      *limits;
     Upload          *up;
-    int             rc;
+    ssize           rc;
 
     conn = q->conn;
     limits = conn->limits;
@@ -10447,8 +10462,8 @@ static int processContentData(HttpQueue *q)
     HttpPacket      *packet;
     MprBuf          *content;
     Upload          *up;
+    ssize           size, dataLen;
     char            *data, *bp, *key;
-    int             size, dataLen;
 
     conn = q->conn;
     up = q->queueData;
@@ -10542,7 +10557,7 @@ static int processContentData(HttpQueue *q)
 /*  
     Find the boundary signature in memory. Returns pointer to the first match.
  */ 
-static char *getBoundary(void *buf, int bufLen, void *boundary, int boundaryLen)
+static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundaryLen)
 {
     char    *cp, *endp;
     char    first;
@@ -10724,13 +10739,17 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
             if (last_delim <= cp) {
                 up->ext = cp + 1;
 #if BLD_WIN_LIKE
-                slower(up->ext);
+                for (cp = up->ext; *cp; cp++) {
+                    *cp = (char) tolower((int) *cp);
+                }
 #endif
             }
         } else {
             up->ext = cp + 1;
 #if BLD_WIN_LIKE
-            slower(up->ext);
+            for (cp = up->ext; *cp; cp++) {
+                *cp = (char) tolower((int) *cp);
+            }
 #endif
         }
     }
@@ -10780,7 +10799,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
     if (host) {
         up->host = sclone(host);
         if ((cp = strchr(host, ':')) && port == 0) {
-            port = stoi(++cp, 10, NULL);
+            port = (int) stoi(++cp, 10, NULL);
         }
     } else if (complete) {
         host = "localhost";
@@ -10808,13 +10827,17 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
             if (last_delim <= cp) {
                 up->ext = cp + 1;
 #if BLD_WIN_LIKE
-                slower(up->ext);
+                for (cp = up->ext; *cp; cp++) {
+                    *cp = (char) tolower((int) *cp);
+                }
 #endif
             }
         } else {
             up->ext = cp + 1;
 #if BLD_WIN_LIKE
-            slower(up->ext);
+            for (cp = up->ext; *cp; cp++) {
+                *cp = (char) tolower((int) *cp);
+            }
 #endif
         }
     }
@@ -10869,13 +10892,17 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
             if (last_delim <= cp) {
                 up->ext = cp + 1;
 #if BLD_WIN_LIKE
-                slower(up->ext);
+                for (cp = up->ext; *cp; cp++) {
+                    *cp = (char) tolower((int) *cp);
+                }
 #endif
             }
         } else {
             up->ext = cp + 1;
 #if BLD_WIN_LIKE
-            slower(up->ext);
+            for (cp = up->ext; *cp; cp++) {
+                *cp = (char) tolower((int) *cp);
+            }
 #endif
         }
     }

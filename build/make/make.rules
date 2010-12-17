@@ -2,7 +2,7 @@
 #	make.rules -- Embedthis Build System rules
 #
 #	This file expects that the per-directory Makefiles will have included
-#	their .makedep files which will in-turn include buildConfig.make and 
+#	their .makedep files which will in-turn include buildConfig.h and 
 #	this file.
 #
 ################################################################################
@@ -31,7 +31,7 @@
 #
 #		BLD_TOP			Relative path to the top of the source tree
 #		EXPORT_OBJECTS	Create objects in top level object directories. Used 
-#						in buildConfig.make and buildConfig.sh
+#						in buildConfig.h and buildConfig.sh
 #		PRE_DIRS		Directories to recurse before the current directory
 #		POST_DIRS		Directories to recurse after the current directory
 #		MAKE_XXFLAGS    These are specified in user makefiles. Valid for IFLAGS,
@@ -82,14 +82,13 @@ do [ -d "$$i" ] || continue ;\
 		unset CDPATH EXPORT_OBJECTS BUILDING_NATIVE BLD_TOP ; \
         if [ -f "$(BLD_OUT_DIR)/.needDepend" -o \
                 ! -f "$$i/.makedep" -o \
-                "$(BLD_OUT_DIR)/buildConfig.make" -nt "$$i/.makedep" ] ; then \
+                "$(BLD_OUT_DIR)/buildConfig.h" -nt "$$i/.makedep" ] ; then \
             rm -f $(BLD_OUT_DIR)/.needDepend ; \
             $(call log) [Generate] "Makefile dependencies" ; \
             cd $(BLD_TOP) >/dev/null 2>&1 ; makedep ; \
             $(MAKE) -S --no-print-directory "_DPATH_=$(_DPATH_)/$$i" PRE=$(PRE) TRACE=$(TRACE) depend ; \
             cd - >/dev/null 2>&1 ; \
         fi ; \
-		[ "$(findstring TRACE=1,$(MAKEFLAGS))" != "" ] && echo -e "\# $(MAKE) -C \"$(_DPATH_)/$$i\" $$T" ; \
 		$(MAKE) -S -C "$$i" --no-print-directory "_DPATH_=$(_DPATH_)/$$i" PRE=$(PRE) TRACE=$(TRACE) $$T ; \
 		if [ $$? != 0 ] ; then \
 			echo "\# WARNING: Makefile error in `pwd`" ; \
@@ -107,9 +106,9 @@ DO_RECURSE=$(RECURSE)
 #
 ifneq ($(BLD_OS),WIN)
     ifeq ($(BLD_OS),MACOSX)
-        setlibpath = export DYLD_LIBRARY_PATH="$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
+        setlibpath = export DYLD_LIBRARY_PATH="$(BLD_BIN_DIR):$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
     else
-        setlibpath = export LD_LIBRARY_PATH="$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
+        setlibpath = export LD_LIBRARY_PATH="$(BLD_BIN_DIR):$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
     endif
     ifeq ($(BLD_OS),CYGWIN)
         export PATH:="$(BLD_TOP)/modules:$(PATH)"
@@ -171,8 +170,9 @@ dependCwd:
 		$(MAKE) -S --no-print-directory TRACE=$(TRACE) -C $(BLD_TOP)/build/src tools ; \
 	fi
 	[ "$(TRACE)" = 1 ] && \
-        echo $(TRACE) edep$(BLD_BUILD_EXE) --out $(BLD_OUT_DIR) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE) ; true
-	edep$(BLD_BUILD_EXE) --out "$(BLD_OUT_DIR)" $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE)
+	    echo $(TRACE) $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out $(BLD_OUT_DIR) $(MAKE_IFLAGS) $(BLD_IFLAGS) \
+            $(_IFLAGS) $(COMPILE) ; true
+	$(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out "$(BLD_OUT_DIR)" $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE)
 
 dependDirs:
 	if [ ! -f .makedep ] ; then \

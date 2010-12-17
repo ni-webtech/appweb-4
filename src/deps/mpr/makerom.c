@@ -88,9 +88,10 @@ static int binToC(MprList *files, char *romName, char *prefix)
 {
     MprPath         info;
     MprFile         *file;
+    ssize         len;
     char            buf[512];
     char            *filename, *cp, *sl, *p;
-    int             next, j, i, len;
+    int             next, j, i;
 
     mprPrintf("/*\n    %s -- Compiled Files\n */\n", romName);
 

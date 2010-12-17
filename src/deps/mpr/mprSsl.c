@@ -2,15 +2,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    .
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -219,8 +219,8 @@ static int      innerRead(MprSocket *sp, char *userBuf, int len);
 static int      listenMss(MprSocket *sp, cchar *host, int port, int flags);
 static int      matrixSslDestructor(MprSsl *ssl);
 static int      matrixSslSocketDestructor(MprSslSocket *msp);
-static size_t   readMss(MprSocket *sp, void *buf, size_t len);
-static size_t   writeMss(MprSocket *sp, void *buf, size_t len);
+static ssize   readMss(MprSocket *sp, void *buf, ssize len);
+static ssize   writeMss(MprSocket *sp, void *buf, ssize len);
 
 
 int mprCreateMatrixSslModule(bool lazy)
@@ -890,10 +890,10 @@ readError:
 /*
     Return number of bytes read. Return -1 on errors and EOF
  */
-static size_t readMss(MprSocket *sp, void *buf, size_t len)
+static ssize readMss(MprSocket *sp, void *buf, ssize len)
 {
     MprSslSocket  *msp;
-    size_t        bytes;
+    ssize        bytes;
 
     lock(sp);
     msp = (MprSslSocket*) sp->sslSocket;
@@ -936,7 +936,7 @@ static size_t readMss(MprSocket *sp, void *buf, size_t len)
     been encoded.  When it is completely flushed, we return the originally requested length, and resume normal 
     processing.
  */
-static size_t writeMss(MprSocket *sp, void *buf, size_t len)
+static ssize writeMss(MprSocket *sp, void *buf, ssize len)
 {
     MprSslSocket    *msp;
     sslBuf_t        *outsock;
@@ -1126,10 +1126,10 @@ static int      listenOss(MprSocket *sp, cchar *host, int port, int flags);
 static int      lockDestructor(void *ptr);
 static int      openSslDestructor(MprSsl *ssl);
 static int      openSslSocketDestructor(MprSslSocket *ssp);
-static size_t   readOss(MprSocket *sp, void *buf, size_t len);
+static ssize   readOss(MprSocket *sp, void *buf, ssize len);
 static RSA      *rsaCallback(SSL *ssl, int isExport, int keyLength);
 static int      verifyX509Certificate(int ok, X509_STORE_CTX *ctx);
-static size_t   writeOss(MprSocket *sp, void *buf, size_t len);
+static ssize   writeOss(MprSocket *sp, void *buf, ssize len);
 
 static DynLock  *sslCreateDynLock(const char *file, int line);
 static void     sslDynLock(int mode, DynLock *dl, const char *file, int line);
@@ -1710,7 +1710,7 @@ static void disconnectOss(MprSocket *sp)
 /*
     Return the number of bytes read. Return -1 on errors and EOF
  */
-static size_t readOss(MprSocket *sp, void *buf, size_t len)
+static ssize readOss(MprSocket *sp, void *buf, ssize len)
 {
     MprSslSocket    *osp;
     int             rc, error, retries, i;
@@ -1795,10 +1795,10 @@ static size_t readOss(MprSocket *sp, void *buf, size_t len)
 /*
     Write data. Return the number of bytes written or -1 on errors.
  */
-static size_t writeOss(MprSocket *sp, void *buf, size_t len)
+static ssize writeOss(MprSocket *sp, void *buf, ssize len)
 {
     MprSslSocket    *osp;
-    size_t          totalWritten;
+    ssize          totalWritten;
     int             rc;
 
     lock(sp);

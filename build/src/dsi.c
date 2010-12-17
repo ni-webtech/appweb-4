@@ -1,7 +1,7 @@
 /*
- *  dsi.c -- Development side includes
- *
- *  Copyright (c) All Rights Reserved. See details at the end of the file.
+    dsi.c -- Development side includes
+  
+    Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
 /******************************* Documentation ********************************/
@@ -79,13 +79,13 @@ int main(int argc, char *argv[])
 
 
 /*
- *  Read a list of files from stdin and patch each in-turn. Keep going on errors.
+    Read a list of files from stdin and patch each in-turn. Keep going on errors.
  */
 static int patchFileList(FILE *fp)
 {
     char    buf[MAX_FNAME];
     char    *cp;
-    int     len;
+    ssize   len;
 
     while (!finished && !feof(fp)) {
         if (fgets(buf, sizeof(buf), fp) == 0) {
@@ -106,7 +106,7 @@ static int patchFileList(FILE *fp)
 
 
 /*
- *  Patch a file
+    Patch a file
  */
 static int patch(char *path)
 {
@@ -117,7 +117,8 @@ static int patch(char *path)
     char        searchPat[MAX_FNAME], truePat[MAX_FNAME], falsePat[MAX_FNAME];
     char        *dsiBuf, *cp, *ep, *start, *end, *tok, *tag, *ext, *inBuf;
     char        *startDsi, *ip;
-    int         c, rc, i, level, len, line, patched;
+    ssize       len, rc;
+    int         c, i, level, line, patched;
     
     dsiBuf = 0;
     patched = 0;
@@ -211,8 +212,8 @@ static int patch(char *path)
                 for (start = end; *start && isspace((int) *start); start++);
 
                 /*
-                 *  Parse any pattern match args
-                 *      "searchPattern" "trueReplace" "falseReplace"
+                    Parse any pattern match args
+                        "searchPattern" "trueReplace" "falseReplace"
                  */
                 if (*start == '"') {
                     start = getNextTok(searchPat, sizeof(searchPat), start);
@@ -277,12 +278,12 @@ static int patch(char *path)
                 } else {
                     for (cp = dsiBuf; *cp; ) {
                         /*
-                         *  This is a very fragile parser. It really needs to be more flexible.
+                            This is a very fragile parser. It really needs to be more flexible.
                          */
 
                         /*
-                         *  <a href=
-                         *  <link .... href=
+                            <a href=
+                            <link .... href=
                          */
                         if (matchLink(ofp, " href=\"", &cp)) {
                             continue;
@@ -292,8 +293,8 @@ static int patch(char *path)
                         } 
 
                         /*
-                         *  <img src=
-                         *  <script ... src=
+                            <img src=
+                            <script ... src=
                          */
                         if (matchLink(ofp, " src=\"", &cp)) {
                             continue;
@@ -303,21 +304,21 @@ static int patch(char *path)
                         } 
 
                         /*
-                         *  <form ... action=
+                            <form ... action=
                          */
                         if (matchLink(ofp, "action=\"", &cp)) {
                             continue;
                         } 
 
                         /*
-                         *  _ROOT_ = "
+                            _ROOT_ = "
                          */
                         if (matchLink(ofp, "_ROOT_=\"", &cp)) {
                             continue;
                         } 
 
                         /*
-                         *  Special _DSI_ pattern editing
+                            Special _DSI_ pattern editing
                          */
                         tag = "_DSI_";
                         len = strlen(tag);
@@ -335,19 +336,19 @@ static int patch(char *path)
                         }
 
                         /*
-                         *  Javascript patches
+                            Javascript patches
                          */
                         ext = strchr(dsiPath, '.');
                         if (ext && strcmp(ext, ".js") == 0) {
                             /*
-                             *  = / *DSI* / "
+                                = / *DSI* / "
                              */
                             if (matchLink(ofp, "= /*DSI*/ \"", &cp)) {
                                 continue;
                             } 
 
                             /*
-                             *  src = '
+                                src = '
                              */
                             if (matchLink(ofp, "src == '", &cp)) {
                                 continue;
@@ -363,7 +364,7 @@ static int patch(char *path)
                 ip = &start[strlen(tok)];
                 
                 /*
-                 *  Cleanup if file has been corrupted by HTML editors
+                    Cleanup if file has been corrupted by HTML editors
                  */
                 if (ip[1] != '\0' && ip[2] != '\0' && ip[2] != '\n') {
                     fputc('\n', ofp);
@@ -416,7 +417,7 @@ error:
     
 
 /*
- *  Initialize signals
+    Initialize signals
  */
 static void openSignals() 
 {
@@ -439,8 +440,8 @@ static void catchInterrupt(int signo)
 
 
 /*
- *  Parse the next quoted string in the input beginning at start. Return the token (minus quotes) in the 
- *  tokBuf. Return with the input pointer one past the trailing quote. Return 0 on all errors.
+    Parse the next quoted string in the input beginning at start. Return the token (minus quotes) in the 
+    tokBuf. Return with the input pointer one past the trailing quote. Return 0 on all errors.
  */
 static char *getNextTok(char *tokBuf, int tokBufSize, char *start)
 {
@@ -478,11 +479,11 @@ static char *getNextTok(char *tokBuf, int tokBufSize, char *start)
 
 
 /*
- *  Match a link that needs patching 
+    Match a link that needs patching 
  */
 static int matchLink(FILE *ofp, char *tag, char **start)
 {
-    int     len;
+    ssize   len;
 
     len = strlen(tag);
     if (strncmp(*start, tag, len) == 0) {
@@ -498,31 +499,31 @@ static int matchLink(FILE *ofp, char *tag, char **start)
 }
 
 /*
- *  @copy   default
- *  
- *  Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
- *  Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
- *  
- *  This software is distributed under commercial and open source licenses.
- *  You may use the GPL open source license described below or you may acquire 
- *  a commerciar license from Embedthis Software. You agree to be fully bound 
- *  by the terms of either license. Consult the LICENSE.TXT distributed with 
- *  this software for full details.
- *  
- *  This software is open source; you can redistribute it and/or modify it 
- *  under the terms of the GNU General Public License as published by the 
- *  Free Software Foundation; either version 2 of the License, or (at your 
- *  option) any later version. See the GNU General Public License for more 
- *  details at: http://www.embedthis.com/downloads/gplLicense.html
- *  
- *  This program is distributed WITHOUT ANY WARRANTY; without even the 
- *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
- *  
- *  This GPL license does NOT permit incorporating this software into 
- *  proprietary programs. If you are unable to comply with the GPL, you must
- *  acquire a commercial license to use this software. Commercial licenses 
- *  for this software and support services are available from Embedthis 
- *  Software at http://www.embedthis.com 
- *
- *  @end
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commerciar license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+  
+    @end
  */

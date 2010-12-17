@@ -189,7 +189,7 @@ endif
 #
 #	If building with a static libc
 #
-ifeq ($(BLD_FEATURE_STATIC_LIBC),1)
+ifeq ($(BLD_STATIC_LIBC),1)
 	_LDFLAGS	+= -static-libgcc
 endif
 

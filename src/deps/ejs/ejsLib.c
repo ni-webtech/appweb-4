@@ -3,15 +3,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    LD_NAME Library Source.
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -511,7 +511,7 @@ static MprNumber parseNumber(Ejs *ejs, MprChar *str);
 static bool      parseBoolean(Ejs *ejs, MprChar *s);
 
 
-EjsAny *ejsAlloc(Ejs *ejs, EjsType *type, int extra)
+EjsAny *ejsAlloc(Ejs *ejs, EjsType *type, ssize extra)
 {
     EjsObj      *vp;
 
@@ -1676,7 +1676,9 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsAny *value, EjsAny *thisObj, Ejs
 
 #define GET_BYTE()      *(FRAME)->pc++
 #define GET_DOUBLE()    ejsDecodeDouble(ejs, &(FRAME)->pc)
-#define GET_INT()       GET_NUM()
+#define GET_INT()       ((int) GET_NUM())
+
+//  MOB OPT - returns 64 bits, but most cases only need 32 bits
 #define GET_NUM()       ejsDecodeNum(ejs, &(FRAME)->pc)
 #define GET_NAME()      getNameArg(ejs, FRAME)
 #define GET_STRING()    getStringArg(ejs, FRAME)
@@ -1686,7 +1688,6 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsAny *value, EjsAny *thisObj, Ejs
 #define THIS            FRAME->function.boundThis
 #define FILL(mark)      while (mark < FRAME->pc) { *mark++ = EJS_OP_NOP; }
 
-#define DEBUG_IDE 1
 #if BLD_DEBUG && DEBUG_IDE
     static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode);
     static int opcount[256];
@@ -1711,8 +1712,8 @@ static void callProperty(Ejs *ejs, EjsAny *obj, int slotNum, EjsAny *thisObj, in
 static void checkExceptionHandlers(Ejs *ejs);
 static void createExceptionBlock(Ejs *ejs, EjsEx *ex, int flags);
 static EjsAny *evalBinaryExpr(Ejs *ejs, EjsAny *lhs, EjsOpCode opcode, EjsAny *rhs);
-static inline uint findEndException(Ejs *ejs);
-static inline EjsEx *findExceptionHandler(Ejs *ejs, int kind);
+static uint findEndException(Ejs *ejs);
+static EjsEx *findExceptionHandler(Ejs *ejs, int kind);
 static EjsName getNameArg(Ejs *ejs, EjsFrame *fp);
 static EjsAny *getNthBase(Ejs *ejs, EjsAny *obj, int nthBase);
 static EjsAny *getNthBaseFromBottom(Ejs *ejs, EjsAny *obj, int nthBase);
@@ -4469,7 +4470,7 @@ EjsAny *ejsRunFunctionBySlot(Ejs *ejs, EjsAny *thisObj, int slotNum, int argc, v
         fun = ejsGetProperty(ejs, TYPE(thisObj)->prototype, slotNum);
     }
     if (fun == 0) {
-        ejsThrowReferenceError(ejs, "Can't find function at slot %d in %N", slotNum, TYPE(thisObj)->qname);
+        ejsThrowReferenceError(ejs, "Can't find function at slot %d in %N", slotNum, &TYPE(thisObj)->qname);
         return 0;
     }
     return ejsRunFunction(ejs, fun, thisObj, argc, argv);
@@ -4745,7 +4746,7 @@ static bool manageExceptions(Ejs *ejs)
 }
 
 
-static inline EjsEx *findExceptionHandler(Ejs *ejs, int kind)
+static EjsEx *findExceptionHandler(Ejs *ejs, int kind)
 {
     EjsEx       *ex;
     EjsFrame    *fp;
@@ -4775,7 +4776,7 @@ static inline EjsEx *findExceptionHandler(Ejs *ejs, int kind)
 }
 
 
-static inline EjsEx *inHandler(Ejs *ejs, int kind)
+static EjsEx *inHandler(Ejs *ejs, int kind)
 {
     EjsEx       *ex;
     EjsFrame    *fp;
@@ -4804,7 +4805,7 @@ static inline EjsEx *inHandler(Ejs *ejs, int kind)
 /*
     Find the end of the last catch/finally handler.
  */
-static inline uint findEndException(Ejs *ejs)
+static uint findEndException(Ejs *ejs)
 {
     EjsFrame    *fp;
     EjsEx       *best, *ex;
@@ -5756,7 +5757,7 @@ static void pushScope(EjsModule *mp, EjsBlock *block, EjsObj *obj);
 static char *search(Ejs *ejs, cchar *filename, int minVersion, int maxVersion);
 static int  trimModule(Ejs *ejs, char *name);
 
-#if !BLD_FEATURE_STATIC
+#if !BLD_STATIC
 static int  loadNativeLibrary(Ejs *ejs, EjsModule *mp, cchar *path);
 #endif
 
@@ -5834,7 +5835,7 @@ static int initializeModule(Ejs *ejs, EjsModule *mp)
             for a backing DSO.
          */
         if ((nativeModule = ejsLookupNativeModule(ejs, mp->name)) == 0) {
-#if !BLD_FEATURE_STATIC
+#if !BLD_STATIC
             loadNativeLibrary(ejs, mp, mp->path);
             nativeModule = ejsLookupNativeModule(ejs, mp->name);
 #endif
@@ -6060,11 +6061,11 @@ static EjsModule *loadModuleSection(Ejs *ejs, MprFile *file, EjsModuleHdr *hdr, 
     mp = &tmod;
     memset(&tmod, 0, sizeof(tmod));
     mp->file = file;
-    nameToken = ejsModuleReadNum(ejs, mp);
-    version   = ejsModuleReadNum(ejs, mp);
+    nameToken = ejsModuleReadInt(ejs, mp);
+    version   = ejsModuleReadInt(ejs, mp);
     checksum  = ejsModuleReadInt32(ejs, mp);
-    poolSize  = ejsModuleReadNum(ejs, mp);
-    poolCount = ejsModuleReadNum(ejs, mp);
+    poolSize  = ejsModuleReadInt(ejs, mp);
+    poolCount = ejsModuleReadInt(ejs, mp);
 
     if (mp->hasError || poolSize <= 0 || poolSize > EJS_MAX_POOL) {
         return 0;
@@ -6131,9 +6132,9 @@ static int loadDependencySection(Ejs *ejs, EjsModule *mp)
     mprAssert(mp);
 
     name = ejsModuleReadConst(ejs, mp);
-    checksum  = ejsModuleReadNum(ejs, mp);
-    minVersion = ejsModuleReadNum(ejs, mp);
-    maxVersion = ejsModuleReadNum(ejs, mp);
+    checksum  = ejsModuleReadInt(ejs, mp);
+    minVersion = ejsModuleReadInt(ejs, mp);
+    maxVersion = ejsModuleReadInt(ejs, mp);
     
     if (mp->hasError) {
         return MPR_ERR_CANT_READ;
@@ -6179,8 +6180,8 @@ static int loadBlockSection(Ejs *ejs, EjsModule *mp)
 
     qname.space = ejsCreateStringFromAsc(ejs, EJS_BLOCK_NAMESPACE);
     qname.name = ejsModuleReadConst(ejs, mp);
-    slotNum = ejsModuleReadNum(ejs, mp);
-    numSlot = ejsModuleReadNum(ejs, mp);
+    slotNum = ejsModuleReadInt(ejs, mp);
+    numSlot = ejsModuleReadInt(ejs, mp);
 
     if (mp->hasError) {
         return MPR_ERR_CANT_READ;
@@ -6234,12 +6235,12 @@ static int loadClassSection(Ejs *ejs, EjsModule *mp)
     ifixup = 0;
     
     qname = ejsModuleReadName(ejs, mp);
-    attributes = ejsModuleReadNum(ejs, mp);
-    slotNum = ejsModuleReadNum(ejs, mp);
+    attributes = ejsModuleReadInt(ejs, mp);
+    slotNum = ejsModuleReadInt(ejs, mp);
     ejsModuleReadType(ejs, mp, &baseType, &fixup, &baseClassName, 0);
-    numTypeProp = ejsModuleReadNum(ejs, mp);
-    numInstanceProp = ejsModuleReadNum(ejs, mp);
-    numInterfaces = ejsModuleReadNum(ejs, mp);
+    numTypeProp = ejsModuleReadInt(ejs, mp);
+    numInstanceProp = ejsModuleReadInt(ejs, mp);
+    numInterfaces = ejsModuleReadInt(ejs, mp);
 
     if (mp->hasError) {
         return MPR_ERR_CANT_READ;
@@ -6387,15 +6388,15 @@ static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
     strict = 0;
     qname = ejsModuleReadName(ejs, mp);
 
-    attributes = ejsModuleReadNum(ejs, mp);
+    attributes = ejsModuleReadInt(ejs, mp);
     strict = ejsModuleReadByte(ejs, mp);
     ejsModuleReadType(ejs, mp, &returnType, &fixup, &returnTypeName, 0);
-    slotNum = ejsModuleReadNum(ejs, mp);
-    numProp = ejsModuleReadNum(ejs, mp);
-    numArgs = ejsModuleReadNum(ejs, mp);
-    numDefault = ejsModuleReadNum(ejs, mp);
-    numExceptions = ejsModuleReadNum(ejs, mp);
-    codeLen = ejsModuleReadNum(ejs, mp);
+    slotNum = ejsModuleReadInt(ejs, mp);
+    numProp = ejsModuleReadInt(ejs, mp);
+    numArgs = ejsModuleReadInt(ejs, mp);
+    numDefault = ejsModuleReadInt(ejs, mp);
+    numExceptions = ejsModuleReadInt(ejs, mp);
+    codeLen = ejsModuleReadInt(ejs, mp);
     
     if (mp->hasError) {
         return MPR_ERR_CANT_READ;
@@ -6412,7 +6413,7 @@ static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
     mprAssert(numArgs >= 0 && numArgs < EJS_MAX_ARGS);
     mprAssert(numExceptions >= 0 && numExceptions < EJS_MAX_EXCEPTIONS);
 
-    mprLog(9, "Loading function %N at slot %d", qname, slotNum);
+    mprLog(9, "Loading function %N at slot %d", &qname, slotNum);
 
     /*
         Read the code
@@ -6572,12 +6573,12 @@ static int loadExceptionSection(Ejs *ejs, EjsModule *mp)
 
     for (i = 0; i < code->numHandlers; i++) {
         flags        = ejsModuleReadByte(ejs, mp);
-        tryStart     = ejsModuleReadNum(ejs, mp);
-        tryEnd       = ejsModuleReadNum(ejs, mp);
-        handlerStart = ejsModuleReadNum(ejs, mp);
-        handlerEnd   = ejsModuleReadNum(ejs, mp);
-        numBlocks    = ejsModuleReadNum(ejs, mp);
-        numStack     = ejsModuleReadNum(ejs, mp);
+        tryStart     = ejsModuleReadInt(ejs, mp);
+        tryEnd       = ejsModuleReadInt(ejs, mp);
+        handlerStart = ejsModuleReadInt(ejs, mp);
+        handlerEnd   = ejsModuleReadInt(ejs, mp);
+        numBlocks    = ejsModuleReadInt(ejs, mp);
+        numStack     = ejsModuleReadInt(ejs, mp);
         ejsModuleReadType(ejs, mp, &catchType, &fixup, 0, 0);
         if (mp->hasError) {
             return MPR_ERR_CANT_READ;
@@ -6610,8 +6611,8 @@ static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
     current = getCurrentBlock(mp);
     qname = ejsModuleReadName(ejs, mp);
     
-    attributes = ejsModuleReadNum(ejs, mp);
-    slotNum = ejsModuleReadNum(ejs, mp);
+    attributes = ejsModuleReadInt(ejs, mp);
+    slotNum = ejsModuleReadInt(ejs, mp);
     ejsModuleReadType(ejs, mp, &type, &fixup, &propTypeName, 0);
 
     /*
@@ -6628,7 +6629,7 @@ static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
         /*  Only doing for namespaces currently */
         value = (EjsObj*) ejsCreateNamespace(ejs, str);
     }
-    mprLog(9, "Loading property %N at slot %d", qname, slotNum);
+    mprLog(9, "Loading property %N at slot %d", &qname, slotNum);
 
     if (attributes & EJS_PROP_NATIVE) {
         mp->hasNative = 1;
@@ -6695,7 +6696,7 @@ static int loadDocSection(Ejs *ejs, EjsModule *mp)
 }
 
 
-#if !BLD_FEATURE_STATIC
+#if !BLD_STATIC
 /*
     Check if a native module exists at the given path. If so, load it. If the path is a scripted module
     but has a corresponding native module, then load that. Return 1 if loaded, -1 for errors, 0 if no
@@ -7250,7 +7251,7 @@ int ejsModuleReadType(Ejs *ejs, EjsModule *mp, EjsType **typeRef, EjsTypeFixup *
         typeName->name = 0;
         typeName->space = 0;
     }
-    t = ejsModuleReadNum(ejs, mp);
+    t = ejsModuleReadInt(ejs, mp);
     slot = -1;
     qname.name = 0;
     qname.space = 0;
@@ -7683,7 +7684,7 @@ static void manageConstants(EjsConstants *cp, int flags)
 }
 
 
-EjsConstants *ejsCreateConstants(Ejs *ejs, int count, size_t size)
+EjsConstants *ejsCreateConstants(Ejs *ejs, int count, ssize size)
 {
     EjsConstants    *constants;
 
@@ -7713,7 +7714,7 @@ EjsConstants *ejsCreateConstants(Ejs *ejs, int count, size_t size)
 }
 
 
-int ejsGrowConstants(Ejs *ejs, EjsConstants *constants, size_t len)
+int ejsGrowConstants(Ejs *ejs, EjsConstants *constants, ssize len)
 {
     int     indexSize;
 
@@ -7736,8 +7737,7 @@ int ejsGrowConstants(Ejs *ejs, EjsConstants *constants, size_t len)
 
 int ejsAddConstant(Ejs *ejs, EjsConstants *constants, cchar *str)
 {
-    size_t      len;
-    int         oldLen;
+    ssize       len, oldLen;
 
     if (constants->locked) {
         mprError("Constant pool for module is locked. Can't add constant \"%s\".",  str);
@@ -7788,7 +7788,7 @@ EjsString *ejsCreateStringFromConst(Ejs *ejs, EjsModule *mp, int index)
 EjsDebug *ejsCreateDebug(Ejs *ejs)
 {
     EjsDebug    *debug;
-    size_t      size;
+    ssize       size;
 
     size = sizeof(EjsDebug) + (EJS_DEBUG_INCR * sizeof(EjsLine));
     if ((debug = mprAllocBlock(size, MPR_ALLOC_MANAGER)) == 0) {
@@ -7805,7 +7805,7 @@ int ejsAddDebugLine(Ejs *ejs, EjsDebug **debugp, int offset, MprChar *source)
 {
     EjsDebug    *debug;
     EjsLine     *line;
-    size_t      len;
+    ssize       len;
 
     mprAssert(debugp);
     
@@ -7854,7 +7854,8 @@ static EjsDebug *loadDebug(Ejs *ejs, EjsFunction *fun)
     EjsLine     *line;
     EjsCode     *code;
     MprOffset   prior;
-    int         i, size, length;
+    ssize       size;
+    int         i, length;
 
     mp = fun->body.code->module;
     code = fun->body.code;
@@ -7875,7 +7876,7 @@ static EjsDebug *loadDebug(Ejs *ejs, EjsFunction *fun)
         mprAssert(0);
         return 0;
     }
-    length = ejsModuleReadNum(ejs, mp);
+    length = ejsModuleReadInt(ejs, mp);
     if (!mp->hasError) {
         size = sizeof(EjsDebug) + length * sizeof(EjsLine);
         if ((debug = mprAllocBlock(size, MPR_ALLOC_MANAGER)) != 0) {
@@ -7884,7 +7885,7 @@ static EjsDebug *loadDebug(Ejs *ejs, EjsFunction *fun)
             debug->numLines = length;
             for (i = 0; i < debug->numLines; i++) {
                 line = &debug->lines[i];
-                line->offset = ejsModuleReadNum(ejs, mp);
+                line->offset = ejsModuleReadInt(ejs, mp);
                 line->source = ejsModuleReadMultiAsWide(ejs, mp);
             }
         }
@@ -7908,14 +7909,13 @@ int ejsGetDebugInfo(Ejs *ejs, EjsFunction *fun, uchar *pc, char **pathp, int *li
     EjsCode     *code;
     EjsDebug    *debug;
     MprChar     *str, *tok, *path, *line, *source;
-    uint        offset;
-    int         i;
+    int         i, offset;
 
     code = fun->body.code;
     if (code == 0) {
         return MPR_ERR_CANT_FIND;
     }
-    offset = (uint) (pc - code->byteCode) - 1;
+    offset = (int) (pc - code->byteCode) - 1;
     debug = code->debug;
     if (debug == 0) {
         if (code->debugOffset == 0) {
@@ -7953,7 +7953,7 @@ int ejsGetDebugInfo(Ejs *ejs, EjsFunction *fun, uchar *pc, char **pathp, int *li
         *pathp = wclone(path);
     }
     if (linep) {
-        *linep = wtoi(line, 10, NULL);
+        *linep = (int) wtoi(line, 10, NULL);
     }
     if (sourcep) {
         *sourcep = wclone(source);
@@ -8156,7 +8156,7 @@ EjsString *ejsModuleReadConst(Ejs *ejs, EjsModule *mp)
 {
     int     t;
 
-    t = ejsModuleReadNum(ejs, mp);
+    t = ejsModuleReadInt(ejs, mp);
     return ejsCreateStringFromConst(ejs, mp, t);
 }
 
@@ -8190,7 +8190,7 @@ char *ejsModuleReadMulti(Ejs *ejs, EjsModule *mp)
 
     mprAssert(mp);
 
-    len = ejsModuleReadNum(ejs, mp);
+    len = ejsModuleReadInt(ejs, mp);
     if (mp->hasError || (buf = mprAlloc(len)) == 0) {
         return NULL;
     }
@@ -8217,6 +8217,12 @@ MprChar *ejsModuleReadMultiAsWide(Ejs *ejs, EjsModule *mp)
     result = amtow(str, NULL);
     mprFree(str);
     return result;
+}
+
+
+int ejsModuleReadInt(Ejs *ejs, EjsModule *mp)
+{
+    return (int) ejsModuleReadNum(ejs, mp);
 }
 
 
@@ -8264,9 +8270,9 @@ EjsName ejsModuleReadName(Ejs *ejs, EjsModule *mp)
     EjsName     qname;
     int         t;
 
-    t = ejsModuleReadNum(ejs, mp);
+    t = ejsModuleReadInt(ejs, mp);
     qname.name = ejsCreateStringFromConst(ejs, mp, t);
-    t = ejsModuleReadNum(ejs, mp);
+    t = ejsModuleReadInt(ejs, mp);
     qname.space = ejsCreateStringFromConst(ejs, mp, t);
     return qname;
 }
@@ -8301,7 +8307,7 @@ int64 ejsSwapInt64(Ejs *ejs, int64 a)
     }
     low = a & 0xFFFFFFFF;
     high = (a >> 32) & 0xFFFFFFFF;
-    return  (double) ((low & 0xFF) << 24 | (low & 0xFF00 << 8) | (low & 0xFF0000 >> 8) | (low & 0xFF000000 >> 16) |
+    return (int64) ((low & 0xFF) << 24 | (low & 0xFF00 << 8) | (low & 0xFF0000 >> 8) | (low & 0xFF000000 >> 16) |
             ((high & 0xFF) << 24 | (high & 0xFF00 << 8) | (high & 0xFF0000 >> 8) | (high & 0xFF000000 >> 16)) << 32);
 }
 
@@ -8317,7 +8323,7 @@ double ejsSwapDouble(Ejs *ejs, double a)
         return a;
     }
     alias.d = a;
-    return ejsSwapInt64(ejs, alias.i);
+    return (double) ejsSwapInt64(ejs, alias.i);
 }
 
 
@@ -8736,7 +8742,7 @@ void ejsShowCurrentScope(Ejs *ejs)
 
 
 
-static int allocNotifier(int flags, size_t size);
+static int allocNotifier(int flags, ssize size);
 static int  configureEjs(Ejs *ejs);
 static int  defineTypes(Ejs *ejs);
 static void manageEjs(Ejs *ejs, int flags);
@@ -8776,8 +8782,10 @@ static void manageEjsService(EjsService *sp, int flags)
         mprLock(sp->mutex);
         mprMarkHash(sp->nativeModules);
         mprUnlock(sp->mutex);
+
     } else if (flags & MPR_MANAGE_FREE) {
         mprRemoveRoot(sp);
+        sp->mutex = NULL;
     }
 }
 
@@ -8910,9 +8918,11 @@ static void manageEjs(Ejs *ejs, int flags)
         mprSetLogHandler(NULL, NULL);
 
         sp = ejs->service;
-        mprLock(sp->mutex);
-        mprRemoveItem(sp->vmlist, ejs);
-        mprUnlock(sp->mutex);
+        if (sp->mutex) {
+            lock(sp);
+            mprRemoveItem(sp->vmlist, ejs);
+            unlock(sp);
+        }
     }
 }
 
@@ -9037,7 +9047,7 @@ static int defineTypes(Ejs *ejs)
      */
     ejsAddNativeModule(ejs, ejsCreateStringFromAsc(ejs, "ejs"), configureEjs, _ES_CHECKSUM_ejs, 0);
 
-#if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_FEATURE_STATIC
+#if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_STATIC
 #if BLD_FEATURE_SQLITE
     ejs_db_sqlite_Init(ejs);
 #endif
@@ -9148,7 +9158,7 @@ void ejsSetSearchPath(Ejs *ejs, EjsArray *paths)
 EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
 {
     EjsArray    *ap;
-    char        *dir, *next, *tok;
+    char        *relModDir, *dir, *next, *tok;
 
     ap = ejsCreateArray(ejs, 0);
 
@@ -9162,6 +9172,7 @@ EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
         mprFree(next);
         return (EjsArray*) ap;
     }
+    relModDir = 0;
 #if VXWORKS
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, mprGetCurrentPath(ejs)));
 #else
@@ -9170,16 +9181,12 @@ EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
         "." : APP_EXE_DIR/../modules : /usr/lib/ejs/1.0.0/modules
      */
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, "."));
-    char *relModDir;
     relModDir = mprAsprintf("%s/../%s", mprGetAppDir(ejs), BLD_MOD_NAME);
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, mprGetAppDir(ejs)));
 #ifdef BLD_MOD_NAME
-{
-    char *relModDir;
     relModDir = mprAsprintf("%s/../%s", mprGetAppDir(ejs), BLD_MOD_NAME);
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, mprGetAbsPath(relModDir)));
     mprFree(relModDir);
-}
 #endif
 #ifdef BLD_MOD_PREFIX
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, BLD_MOD_PREFIX));
@@ -9632,7 +9639,7 @@ int ejsFreeze(Ejs *ejs, int freeze)
     Global memory allocation handler. This is invoked when there is no notifier to handle an allocation failure.
     The interpreter has an allocNotifier (see ejsService: allocNotifier) and it will handle allocation errors.
  */
-static int allocNotifier(int flags, size_t size)
+static int allocNotifier(int flags, ssize size)
 {
     EjsService  *sp;
     Ejs         *ejs;
@@ -10294,7 +10301,7 @@ static int deleteArrayProperty(Ejs *ejs, EjsArray *ap, int slot)
 static int deleteArrayPropertyByName(Ejs *ejs, EjsArray *ap, EjsName qname)
 {
     if (isdigit((int) qname.name->value[0])) {
-        return deleteArrayProperty(ejs, ap, wtoi(qname.name->value, 10, NULL));
+        return deleteArrayProperty(ejs, ap, (int) wtoi(qname.name->value, 10, NULL));
     }
     return (ejs->potHelpers.deletePropertyByName)(ejs, ap, qname);
 }
@@ -11633,7 +11640,7 @@ static EjsArray *unshiftArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 static int growArray(Ejs *ejs, EjsArray *ap, int len)
 {
     EjsObj      **dp;
-    int     i, size, count, factor;
+    int         i, size, count, factor;
 
     mprAssert(ap);
 
@@ -11643,7 +11650,7 @@ static int growArray(Ejs *ejs, EjsArray *ap, int len)
     if (len <= ap->length) {
         return 0;
     }
-    size = mprGetBlockSize(ap->data) / sizeof(EjsObj*);
+    size = (int) (mprGetBlockSize(ap->data) / sizeof(EjsObj*));
 
     /*
         Allocate or grow the data structures.
@@ -12552,7 +12559,7 @@ static EjsObj *ba_flush(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
 static EjsObj *ba_toString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
 
 static int  flushByteArray(Ejs *ejs, EjsByteArray *ap);
-static int  getInput(Ejs *ejs, EjsByteArray *ap, int required);
+static ssize  getInput(Ejs *ejs, EjsByteArray *ap, ssize required);
 static int  lookupByteArrayProperty(Ejs *ejs, EjsByteArray *ap, EjsName qname);
 
 static MPR_INLINE int swap16(EjsByteArray *ap, int a);
@@ -12563,7 +12570,7 @@ static int putByte(EjsByteArray *ap, int value);
 static int putInteger(EjsByteArray *ap, int value);
 static int putLong(EjsByteArray *ap, int64 value);
 static int putShort(EjsByteArray *ap, int value);
-static int putString(EjsByteArray *ap, EjsString *value, int len);
+static int putString(EjsByteArray *ap, EjsString *value, ssize len);
 static int putNumber(EjsByteArray *ap, MprNumber value);
 static int putDouble(EjsByteArray *ap, double value);
 
@@ -12640,7 +12647,7 @@ static int deleteByteArrayProperty(struct Ejs *ejs, EjsByteArray *ap, int slot)
 }
 
 
-static int getByteArrayPropertyCount(Ejs *ejs, EjsByteArray *ap)
+static ssize getByteArrayPropertyCount(Ejs *ejs, EjsByteArray *ap)
 {
     return ap->length;
 }
@@ -12867,7 +12874,7 @@ static EjsObj *ba_setAsync(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_available(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ap->writePosition - ap->readPosition);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (ap->writePosition - ap->readPosition));
 }
 
 
@@ -12911,7 +12918,7 @@ static EjsObj *ba_compact(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 static EjsObj *ba_copyIn(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     EjsByteArray    *src;
-    int             i, destOffset, srcOffset, count;
+    ssize           i, destOffset, srcOffset, count;
 
     destOffset = ejsGetInt(ejs, argv[0]);
     src = (EjsByteArray*) argv[1];
@@ -12936,7 +12943,7 @@ static EjsObj *ba_copyIn(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     for (i = 0; i < count; i++) {
         ap->value[destOffset++] = src->value[srcOffset++];
     }
-    return (EjsObj*) ejsCreateNumber(ejs, count);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -12947,7 +12954,8 @@ static EjsObj *ba_copyIn(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 static EjsObj *ba_copyOut(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     EjsByteArray    *dest;
-    int             i, srcOffset, destOffset, count;
+    ssize           count;
+    int             i, srcOffset, destOffset;
 
     srcOffset = ejsGetInt(ejs, argv[0]);
     dest = (EjsByteArray*) argv[1];
@@ -12968,7 +12976,7 @@ static EjsObj *ba_copyOut(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     for (i = 0; i < count; i++) {
         dest->value[destOffset++] = ap->value[srcOffset++];
     }
-    return (EjsObj*) ejsCreateNumber(ejs, count);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -13017,9 +13025,9 @@ static EjsObj *nextByteArrayKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **ar
         return 0;
     }
     if (ip->index < ap->readPosition) {
-        ip->index = ap->readPosition;
+        ip->index = (int) ap->readPosition;
     }
-    if (ip->index < ap->writePosition) {
+    if (ip->index < (int) ap->writePosition) {
         return (EjsObj*) ejsCreateNumber(ejs, ip->index++);
     }
     ejsThrowStopIteration(ejs);
@@ -13050,8 +13058,8 @@ static EjsObj *nextByteArrayValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **
         ejsThrowReferenceError(ejs, "Wrong type");
         return 0;
     }
-    if (ip->index < ap->readPosition) {
-        ip->index = ap->readPosition;
+    if (ip->index < (int) ap->readPosition) {
+        ip->index = (int) ap->readPosition;
     }
     if (ip->index < ap->writePosition) {
         return (EjsObj*) ejsCreateNumber(ejs, ap->value[ip->index++]);
@@ -13090,7 +13098,7 @@ static EjsObj *ba_flush(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_getLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ap->length);
+    return (EjsObj*) ejsCreateNumber(ejs, (int) ap->length);
 }
 
 
@@ -13124,7 +13132,7 @@ static EjsObj *ba_setLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_growable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ap->length);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ap->length);
 }
 
 
@@ -13137,13 +13145,14 @@ static EjsObj *ba_growable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 static EjsObj *ba_read(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     EjsByteArray    *buffer;
-    int             offset, count, i;
+    ssize           offset, count;
+    int             i;
 
     mprAssert(1 <= argc && argc <= 3);
 
     buffer = (EjsByteArray*) argv[0];
     offset = (argc == 2) ? ejsGetInt(ejs, argv[1]) : 0;
-    count = (argc == 3) ? ejsGetInt(ejs, argv[2]) : buffer->length;
+    count = (argc == 3) ? ejsGetInt(ejs, argv[2]) : (int) buffer->length;
 
     if (count < 0) {
         count = buffer->length;
@@ -13169,7 +13178,7 @@ static EjsObj *ba_read(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     if (ap->emitter && availableBytes(ap) && !ejs->exception) {
         ejsSendEvent(ejs, ap->emitter, "writable", NULL, (EjsObj*) ap);
     }
-    return (EjsObj*) ejsCreateNumber(ejs, count);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -13307,7 +13316,7 @@ static EjsObj *ba_readLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_readPosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ap->readPosition);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ap->readPosition);
 }
 
 
@@ -13360,7 +13369,7 @@ static EjsObj *ba_readShort(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 static EjsObj *ba_readString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     EjsObj  *result;
-    int     count;
+    ssize   count;
 
     count = (argc == 1) ? ejsGetInt(ejs, argv[0]) : -1;
 
@@ -13412,7 +13421,7 @@ static EjsObj *ba_off(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_room(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, room(ap));
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) room(ap));
 }
 
 
@@ -13437,7 +13446,8 @@ EjsNumber *ejsWriteToByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **ar
     EjsByteArray    *bp;
     EjsString       *sp;
     EjsObj          *vp;
-    int             i, len, wrote;
+    ssize           len, wrote;
+    int             i;
 
     mprAssert(argc == 1 && ejsIsArray(ejs, argv[0]));
 
@@ -13516,7 +13526,7 @@ EjsNumber *ejsWriteToByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **ar
     if (ap->emitter && wrote > 0 && availableBytes(ap) > 0) {
         ejsSendEvent(ejs, ap->emitter, "readable", NULL, (EjsObj*) ap);
     }
-    return ejsCreateNumber(ejs, wrote);
+    return ejsCreateNumber(ejs, (MprNumber) wrote);
 }
 
 
@@ -13612,7 +13622,7 @@ static EjsObj *ba_writeLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_writePosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ap->writePosition);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ap->writePosition);
 }
 
 
@@ -13656,7 +13666,7 @@ static int flushByteArray(Ejs *ejs, EjsByteArray *ap)
 }
 
 
-int ejsGrowByteArray(Ejs *ejs, EjsByteArray *ap, int len)
+int ejsGrowByteArray(Ejs *ejs, EjsByteArray *ap, ssize len)
 {
     if (len > ap->length) {
         ap->value = mprRealloc(ap->value, len);
@@ -13677,7 +13687,7 @@ int ejsGrowByteArray(Ejs *ejs, EjsByteArray *ap, int len)
     must be read. Short fills are not permitted. Return the count of bytes available or 0 if the required number of 
     bytes can't be read. Return -ve on errors.
  */
-static int getInput(Ejs *ejs, EjsByteArray *ap, int required)
+static ssize getInput(Ejs *ejs, EjsByteArray *ap, ssize required)
 {
     if (availableBytes(ap) == 0) {
         ap->writePosition = ap->readPosition = 0;
@@ -13694,9 +13704,9 @@ static int getInput(Ejs *ejs, EjsByteArray *ap, int required)
 }
 
 
-bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, int require)
+bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, ssize require)
 {
-    int     newLen;
+    ssize   newLen;
 
     if (room(ap) < require) {
         if (ap->emitter && availableBytes(ap)) {
@@ -13822,12 +13832,12 @@ static int putNumber(EjsByteArray *ap, MprNumber value)
 }
 
 
-static int putString(EjsByteArray *ap, EjsString *str, int len)
+static int putString(EjsByteArray *ap, EjsString *str, ssize len)
 {
     //  MOB -- this must do encoding
     mprMemcpy(&ap->value[ap->writePosition], room(ap), str->value, len);
     ap->writePosition += len;
-    return len;
+    return (int) len;
 }
 
 
@@ -13839,7 +13849,7 @@ void ejsResetByteArray(EjsByteArray *ba)
 }
 
 
-void ejsSetByteArrayPositions(Ejs *ejs, EjsByteArray *ba, int readPosition, int writePosition)
+void ejsSetByteArrayPositions(Ejs *ejs, EjsByteArray *ba, ssize readPosition, ssize writePosition)
 {
     if (readPosition >= 0) {
         ba->readPosition = readPosition;
@@ -13850,7 +13860,7 @@ void ejsSetByteArrayPositions(Ejs *ejs, EjsByteArray *ba, int readPosition, int 
 }
 
 
-int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, int offset, char *data, size_t length)
+int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, ssize offset, char *data, ssize length)
 {
     int     i;
 
@@ -13870,19 +13880,19 @@ int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, int offset, char *data, size_
 }
 
 
-int ejsGetByteArrayAvailable(EjsByteArray *ba)
+ssize ejsGetByteArrayAvailable(EjsByteArray *ba)
 {
     return availableBytes(ba);
 }
 
 
-int ejsGetByteArrayRoom(EjsByteArray *ba)
+ssize ejsGetByteArrayRoom(EjsByteArray *ba)
 {
     return room(ba);
 }
 
 
-EjsByteArray *ejsCreateByteArray(Ejs *ejs, int size)
+EjsByteArray *ejsCreateByteArray(Ejs *ejs, ssize size)
 {
     EjsByteArray    *ap;
 
@@ -15591,7 +15601,7 @@ void ejsConfigureErrorType(Ejs *ejs)
 static EjsObj *closeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv);
 static int mapMode(cchar *mode);
 static EjsObj *openFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv);
-static int readData(Ejs *ejs, EjsFile *fp, EjsByteArray *ap, int offset, int count);
+static ssize readData(Ejs *ejs, EjsFile *fp, EjsByteArray *ap, ssize offset, ssize count);
 
 #if BLD_CC_MMU && FUTURE
 static void *mapFile(EjsFile *fp, uint size, int mode);
@@ -16045,7 +16055,7 @@ static EjsObj *readFileBytes(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
     EjsByteArray    *result;
     MprPath         info;
-    int             count, totalRead;
+    ssize           count, totalRead;
 
     if (argc == 0) {
         count = -1;
@@ -16100,7 +16110,8 @@ static EjsObj *readFileString(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
     EjsString       *result;
     MprPath         info;
-    int             count, totalRead;
+    ssize           totalRead;
+    int             count;
 
     if (argc == 0) {
         count = -1;
@@ -16151,7 +16162,7 @@ static EjsObj *readFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
     EjsByteArray    *buffer;
     MprPath         info;
-    int             count, offset, totalRead;
+    ssize           offset, count, totalRead;
 
     mprAssert(1 <= argc && argc <= 3);
 
@@ -16193,7 +16204,7 @@ static EjsObj *readFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
         return (EjsObj*) ejs->zeroValue;
     }
     ejsSetByteArrayPositions(ejs, buffer, -1, offset + totalRead);
-    return (EjsObj*) ejsCreateNumber(ejs, totalRead);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) totalRead);
 }
 
 
@@ -16246,8 +16257,8 @@ EjsObj *writeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
     EjsObj          *vp;
     EjsString       *str;
     cchar           *buf;
-    size_t          len;
-    int             i, written;
+    ssize           len, written;
+    int             i;
 
     mprAssert(argc == 1 && ejsIsArray(ejs, argv[0]));
 
@@ -16286,7 +16297,7 @@ EjsObj *writeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
         written += len;
         /* Use GC to free buf as it may not be allocated */
     }
-    return (EjsObj*) ejsCreateNumber(ejs, written);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) written);
 }
 
 
@@ -16294,9 +16305,9 @@ EjsObj *writeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 /*  
     Read the specified count of bytes into the byte array. Grow the array if required and growable
  */
-static int readData(Ejs *ejs, EjsFile *fp, EjsByteArray *ap, int offset, int count)
+static ssize readData(Ejs *ejs, EjsFile *fp, EjsByteArray *ap, ssize offset, ssize count)
 {
-    int     len, bytes;
+    ssize   len, bytes;
 
     if (count <= 0) {
         return 0;
@@ -17345,7 +17356,7 @@ static void manageCode(EjsCode *code, int flags)
 }
 
 
-EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *byteCode, size_t len, 
+EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *byteCode, ssize len, 
     EjsDebug *debug)
 {
     EjsCode     *code;
@@ -17359,7 +17370,7 @@ EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *by
         return NULL;
     }
     mprSetManager(code, manageCode);
-    code->codeLen = len;
+    code->codeLen = (int) len;
     code->module = module;
     code->debug = debug;
     memcpy(code->byteCode, byteCode, len);
@@ -17370,7 +17381,7 @@ EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *by
 /*
     Set the byte code for a script function
  */
-int ejsSetFunctionCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *byteCode, size_t len, EjsDebug *debug)
+int ejsSetFunctionCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *byteCode, ssize len, EjsDebug *debug)
 {
     mprAssert(fun);
     mprAssert(byteCode);
@@ -17701,7 +17712,9 @@ void ejsConfigureGCType(Ejs *ejs)
         return;
     }
     ejsBindAccess(ejs, type, ES_GC_enabled, (EjsProc) getEnable, (EjsProc) setEnable);
+#if ES_GC_newQuota
     ejsBindAccess(ejs, type, ES_GC_newQuota, (EjsProc) getWorkQuota, (EjsProc) setWorkQuota);
+#endif
     ejsBindMethod(ejs, type, ES_GC_run, (EjsProc) runGC);
 }
 
@@ -17796,15 +17809,12 @@ static EjsObj *g_assert(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 static EjsObj *g_breakpoint(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
 #if BLD_DEBUG && DEBUG_IDE
-#if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
-#if WINCE
-    /* Do nothing */
-#elif BLD_WIN_LIKE
-    __asm { int 3 };
-#else
-    asm("int $03");
-#endif
-#endif
+	#if BLD_WIN_LIKE && !MPR_64_BIT
+        __asm { int 3 };
+    #elif (MACOSX || LINUX) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
+        asm("int $03");
+        /*  __asm__ __volatile__ ("int $03"); */
+    #endif
 #endif
     return 0;
 }
@@ -18093,7 +18103,8 @@ static EjsObj *g_printLine(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     EjsString   *s;
     EjsObj      *args, *vp;
     cchar       *data;
-    int         i, count, rc;
+    ssize       rc;
+    int         i, count;
 
     mprAssert(argc == 1 && ejsIsArray(ejs, argv[0]));
 
@@ -18107,7 +18118,7 @@ static EjsObj *g_printLine(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
                 return 0;
             }
             data = ejsToMulti(ejs, s);
-            rc = write(1, data, strlen(data));
+            rc = write(1, data, (int) strlen(data));
             if ((i+1) < count) {
                 rc = write(1, " ", 1);
             }
@@ -18238,13 +18249,13 @@ static EjsObj   *getStringHeader(Ejs *ejs, EjsHttp *hp, cchar *key);
 static int      httpCallback(EjsHttp *hp, MprEvent *event);
 static void     httpNotify(HttpConn *conn, int state, int notifyFlags);
 static void     prepForm(Ejs *ejs, EjsHttp *hp, char *prefix, EjsObj *data);
-static int      readTransfer(Ejs *ejs, EjsHttp *hp, int count);
+static ssize    readTransfer(Ejs *ejs, EjsHttp *hp, ssize count);
 static void     sendHttpCloseEvent(Ejs *ejs, EjsHttp *hp);
 static void     sendHttpErrorEvent(Ejs *ejs, EjsHttp *hp);
 static EjsObj   *startHttpRequest(Ejs *ejs, EjsHttp *hp, char *method, int argc, EjsObj **argv);
 static bool     waitForResponseHeaders(EjsHttp *hp, int timeout);
 static bool     waitForState(EjsHttp *hp, int state, int timeout, int throw);
-static int      writeHttpData(Ejs *ejs, EjsHttp *hp);
+static ssize    writeHttpData(Ejs *ejs, EjsHttp *hp);
 
 /*  
     function Http(uri: Uri = null)
@@ -18327,14 +18338,14 @@ EjsObj *http_set_async(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
  */
 EjsObj *http_available(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    int     len;
+    ssize     len;
 
     if (!waitForResponseHeaders(hp, -1)) {
         return 0;
     }
     len = httpGetContentLength(hp->conn);
     if (len > 0) {
-        return (EjsObj*) ejsCreateNumber(ejs, len);
+        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) len);
     }
     return (EjsObj*) ejs->minusOneValue;
 }
@@ -18397,13 +18408,13 @@ static EjsObj *http_set_certificate(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **ar
  */
 static EjsObj *http_contentLength(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    int     length;
+    ssize     length;
 
     if (!waitForResponseHeaders(hp, -1)) {
         return 0;
     }
     length = httpGetContentLength(hp->conn);
-    return (EjsObj*) ejsCreateNumber(ejs, length);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) length);
 }
 
 
@@ -18562,8 +18573,7 @@ static EjsObj *http_header(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
         return 0;
     }
     str = (char*) ejsToMulti(ejs, argv[0]);
-    str = sclone(str);
-    slower(str);
+    str = slower(str);
     value = httpGetHeader(hp->conn, str);
     mprFree(str);
     if (value) {
@@ -18709,7 +18719,7 @@ static EjsObj *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     EjsByteArray    *buffer;
     HttpConn        *conn;
-    int             offset, count, contentLength;
+    ssize           offset, count, contentLength;
 
     conn = hp->conn;
     buffer = (EjsByteArray*) argv[0];
@@ -18740,7 +18750,7 @@ static EjsObj *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     ejsCopyToByteArray(ejs, buffer, buffer->writePosition, (char*) mprGetBufStart(hp->responseContent), count);
     ejsSetByteArrayPositions(ejs, buffer, -1, buffer->writePosition + count);
     mprAdjustBufStart(hp->responseContent, count);
-    return (EjsObj*) ejsCreateNumber(ejs, count);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -18752,7 +18762,8 @@ static EjsObj *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     EjsObj      *result;
     HttpConn    *conn;
-    int         count, timeout;
+    ssize       count;
+    int         timeout;
     
     count = (argc == 1) ? ejsGetInt(ejs, argv[0]) : -1;
     conn = hp->conn;
@@ -19064,7 +19075,7 @@ static EjsObj *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
  */
 static EjsNumber *http_write(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    int     nbytes;
+    ssize     nbytes;
 
     hp->data = ejsCreateByteArray(ejs, -1);
     if (ejsWriteToByteArray(ejs, hp->data, 1, &argv[0]) < 0) {
@@ -19079,7 +19090,7 @@ static EjsNumber *http_write(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
             httpEnableConnEvents(hp->conn);
         }
     }
-    return ejsCreateNumber(ejs, nbytes);
+    return ejsCreateNumber(ejs, (MprNumber) nbytes);
 }
 
 
@@ -19093,7 +19104,7 @@ static EjsObj *startHttpRequest(Ejs *ejs, EjsHttp *hp, char *method, int argc, E
     EjsNumber       *written;
     EjsUri          *uriObj;
     HttpConn        *conn;
-    int             length, nbytes;
+    ssize           length, nbytes;
 
     conn = hp->conn;
     hp->responseCache = 0;
@@ -19204,11 +19215,11 @@ static void httpNotify(HttpConn *conn, int state, int notifyFlags)
     Read the required number of bytes into the response content buffer. Count < 0 means transfer the entire content.
     Returns the number of bytes read.
  */ 
-static int readTransfer(Ejs *ejs, EjsHttp *hp, int count)
+static ssize readTransfer(Ejs *ejs, EjsHttp *hp, ssize count)
 {
     MprBuf      *buf;
     HttpConn    *conn;
-    int         len, space, nbytes;
+    ssize       len, space, nbytes;
 
     conn = hp->conn;
 
@@ -19239,11 +19250,11 @@ static int readTransfer(Ejs *ejs, EjsHttp *hp, int count)
 /* 
     Write another block of data
  */
-static int writeHttpData(Ejs *ejs, EjsHttp *hp)
+static ssize writeHttpData(Ejs *ejs, EjsHttp *hp)
 {
     EjsByteArray    *ba;
     HttpConn        *conn;
-    int             count, nbytes;
+    ssize           count, nbytes;
 
     conn = hp->conn;
     ba = hp->data;
@@ -19574,60 +19585,62 @@ static bool waitForResponseHeaders(EjsHttp *hp, int timeout)
  */
 void ejsGetHttpLimits(Ejs *ejs, EjsObj *obj, HttpLimits *limits, int server) 
 {
-    ejsSetPropertyByName(ejs, obj, EN("chunk"), ejsCreateNumber(ejs, limits->chunkSize));
-    ejsSetPropertyByName(ejs, obj, EN("receive"), ejsCreateNumber(ejs, limits->receiveBodySize));
+    ejsSetPropertyByName(ejs, obj, EN("chunk"), ejsCreateNumber(ejs, (MprNumber) limits->chunkSize));
+    ejsSetPropertyByName(ejs, obj, EN("receive"), ejsCreateNumber(ejs, (MprNumber) limits->receiveBodySize));
     ejsSetPropertyByName(ejs, obj, EN("reuse"), ejsCreateNumber(ejs, limits->keepAliveCount));
-    ejsSetPropertyByName(ejs, obj, EN("transmission"), ejsCreateNumber(ejs, limits->transmissionBodySize));
-    ejsSetPropertyByName(ejs, obj, EN("upload"), ejsCreateNumber(ejs, limits->uploadSize));
+    ejsSetPropertyByName(ejs, obj, EN("transmission"), ejsCreateNumber(ejs, (MprNumber) limits->transmissionBodySize));
+    ejsSetPropertyByName(ejs, obj, EN("upload"), ejsCreateNumber(ejs, (MprNumber) limits->uploadSize));
     ejsSetPropertyByName(ejs, obj, EN("inactivityTimeout"), 
         ejsCreateNumber(ejs, limits->inactivityTimeout / MPR_TICKS_PER_SEC));
     ejsSetPropertyByName(ejs, obj, EN("requestTimeout"), ejsCreateNumber(ejs, limits->requestTimeout / MPR_TICKS_PER_SEC));
     ejsSetPropertyByName(ejs, obj, EN("sessionTimeout"), ejsCreateNumber(ejs, limits->sessionTimeout / MPR_TICKS_PER_SEC));
 
     if (server) {
-        ejsSetPropertyByName(ejs, obj, EN("clients"), ejsCreateNumber(ejs, limits->clientCount));
-        ejsSetPropertyByName(ejs, obj, EN("header"), ejsCreateNumber(ejs, limits->headerSize));
-        ejsSetPropertyByName(ejs, obj, EN("headers"), ejsCreateNumber(ejs, limits->headerCount));
-        ejsSetPropertyByName(ejs, obj, EN("requests"), ejsCreateNumber(ejs, limits->requestCount));
-        ejsSetPropertyByName(ejs, obj, EN("sessions"), ejsCreateNumber(ejs, limits->sessionCount));
-        ejsSetPropertyByName(ejs, obj, EN("stageBuffer"), ejsCreateNumber(ejs, limits->stageBufferSize));
-        ejsSetPropertyByName(ejs, obj, EN("uri"), ejsCreateNumber(ejs, limits->uriSize));
+        ejsSetPropertyByName(ejs, obj, EN("clients"), ejsCreateNumber(ejs, (MprNumber) limits->clientCount));
+        ejsSetPropertyByName(ejs, obj, EN("header"), ejsCreateNumber(ejs, (MprNumber) limits->headerSize));
+        ejsSetPropertyByName(ejs, obj, EN("headers"), ejsCreateNumber(ejs, (MprNumber) limits->headerCount));
+        ejsSetPropertyByName(ejs, obj, EN("requests"), ejsCreateNumber(ejs, (MprNumber) limits->requestCount));
+        ejsSetPropertyByName(ejs, obj, EN("sessions"), ejsCreateNumber(ejs, (MprNumber) limits->sessionCount));
+        ejsSetPropertyByName(ejs, obj, EN("stageBuffer"), ejsCreateNumber(ejs, (MprNumber) limits->stageBufferSize));
+        ejsSetPropertyByName(ejs, obj, EN("uri"), ejsCreateNumber(ejs, (MprNumber) limits->uriSize));
     }
 }
 
 
 /*
-    Set the limit field:    *limit = obj[field]
+    Set the limit field: 
+        *limit = obj[field]
  */
-static void setLimit(Ejs *ejs, EjsObj *obj, cchar *field, int *limit, int factor)
+static int setLimit(Ejs *ejs, EjsObj *obj, cchar *field, int factor)
 {
     EjsObj      *vp;
 
     if ((vp = ejsGetPropertyByName(ejs, obj, EN(field))) != 0) {
-        *limit = ejsGetInt(ejs, ejsToNumber(ejs, vp)) * factor;
+        return ejsGetInt(ejs, ejsToNumber(ejs, vp)) * factor;
     }
+    return 0;
 }
 
 
 void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server) 
 {
-    setLimit(ejs, obj, "chunk", &limits->chunkSize, 1);
-    setLimit(ejs, obj, "inactivityTimeout", &limits->inactivityTimeout, MPR_TICKS_PER_SEC);
-    setLimit(ejs, obj, "receive", &limits->receiveBodySize, 1);
-    setLimit(ejs, obj, "reuse", &limits->keepAliveCount, 1);
-    setLimit(ejs, obj, "requestTimeout", &limits->requestTimeout, MPR_TICKS_PER_SEC);
-    setLimit(ejs, obj, "sessionTimeout", &limits->sessionTimeout, MPR_TICKS_PER_SEC);
-    setLimit(ejs, obj, "transmission", &limits->transmissionBodySize, 1);
-    setLimit(ejs, obj, "upload", &limits->uploadSize, 1);
+    limits->chunkSize = setLimit(ejs, obj, "chunk", 1);
+    limits->inactivityTimeout = setLimit(ejs, obj, "inactivityTimeout", MPR_TICKS_PER_SEC);
+    limits->receiveBodySize = setLimit(ejs, obj, "receive", 1);
+    limits->keepAliveCount = setLimit(ejs, obj, "reuse", 1);
+    limits->requestTimeout = setLimit(ejs, obj, "requestTimeout", MPR_TICKS_PER_SEC);
+    limits->sessionTimeout = setLimit(ejs, obj, "sessionTimeout", MPR_TICKS_PER_SEC);
+    limits->transmissionBodySize = setLimit(ejs, obj, "transmission", 1);
+    limits->uploadSize = setLimit(ejs, obj, "upload", 1);
 
     if (server) {
-        setLimit(ejs, obj, "clients", &limits->clientCount, 1);
-        setLimit(ejs, obj, "requests", &limits->requestCount, 1);
-        setLimit(ejs, obj, "sessions", &limits->sessionCount, 1);
-        setLimit(ejs, obj, "stageBuffer", &limits->stageBufferSize, 1);
-        setLimit(ejs, obj, "uri", &limits->uriSize, 1);
-        setLimit(ejs, obj, "headers", &limits->headerCount, 1);
-        setLimit(ejs, obj, "header", &limits->headerSize, 1);
+        limits->clientCount = setLimit(ejs, obj, "clients", 1);
+        limits->requestCount = setLimit(ejs, obj, "requests", 1);
+        limits->sessionCount = setLimit(ejs, obj, "sessions", 1);
+        limits->stageBufferSize = setLimit(ejs, obj, "stageBuffer", 1);
+        limits->uriSize = setLimit(ejs, obj, "uri", 1);
+        limits->headerCount = setLimit(ejs, obj, "headers", 1);
+        limits->headerSize = setLimit(ejs, obj, "header", 1);
     }
 }
 
@@ -21053,7 +21066,7 @@ static EjsObj *getAllocatedMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (int) mem->bytesAllocated);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) mem->bytesAllocated);
 }
 
 
@@ -21083,7 +21096,7 @@ static EjsObj *getMaxMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (int) mem->maxMemory);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) mem->maxMemory);
 }
 
 
@@ -21110,7 +21123,7 @@ static EjsObj *getRedline(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (int) mem->redLine);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) mem->redLine);
 }
 
 
@@ -21141,7 +21154,7 @@ static EjsObj *getResident(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (int) mem->rss);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) mem->rss);
 }
 
 
@@ -22370,7 +22383,7 @@ static EjsObj *obj_create(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
             if ((type = ejsCreateArchetype(ejs, NULL, prototype)) == 0) {
                 return 0;
             }
-            ejsSetPropertyByName(ejs, prototype, qname, type);
+            ejsSetPropertyByName(ejs, prototype, EN("constructor"), type);
         }
     }
     obj = ejsCreate(ejs, type, 0);
@@ -22419,7 +22432,7 @@ static EjsObj *obj_defineProperty(Ejs *ejs, EjsObj *unused, int argc, EjsObj **a
     }
     if ((slotNum = ejsLookupProperty(ejs, obj, qname)) >= 0) {
         if (ejsPropertyHasTrait(ejs, obj, slotNum, EJS_TRAIT_FIXED)) {
-            ejsThrowTypeError(ejs, "Property \"%N\" is not configurable", qname);
+            ejsThrowTypeError(ejs, "Property \"%N\" is not configurable", &qname);
             return 0;
         }
     }
@@ -23423,8 +23436,8 @@ static EjsObj *copyPath(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
     MprFile     *from, *to;
     cchar       *toPath;
+    ssize       bytes;
     char        *buf;
-    int         bytes;
     int         rc;
 
     mprAssert(argc == 1);
@@ -23764,7 +23777,7 @@ static EjsObj *joinPathExt(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
  */
 static EjsObj *pathLength(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (int) strlen(fp->value));
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) strlen(fp->value));
 }
 
 
@@ -23989,7 +24002,7 @@ static EjsObj *getPortablePath(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     lower = (argc >= 1 && argv[0] == (EjsObj*) ejs->trueValue);
     path = mprGetPortablePath(fp->value);
     if (lower) {
-        slower(path);
+        path = slower(path);
     }
     return (EjsObj*) ejsCreatePathFromAsc(ejs, path);
 }
@@ -25096,7 +25109,7 @@ int ejsInsertPotProperties(Ejs *ejs, EjsPot *obj, int incr, int offset)
 static int growSlots(Ejs *ejs, EjsPot *obj, int slotCount)
 {
     EjsProperties   *props;
-    size_t          size;
+    ssize          size;
     int             factor, oldSize;
 
     mprAssert(obj);
@@ -26022,7 +26035,7 @@ static EjsObj *regex_exec(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
     EjsArray    *results;
     EjsString   *match, *str;
     int         matches[EJS_MAX_REGEX_MATCHES * 3];
-    int         start, len, i, count, index;
+    int         count, start, len, i, index;
 
     str = (EjsString*) argv[0];
     if (argc == 2) {
@@ -26032,7 +26045,7 @@ static EjsObj *regex_exec(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
     }
     rp->matched = 0;
     mprAssert(rp->compiled);
-    count = pcre_exec(rp->compiled, NULL, str->value, str->length, start, 0, matches, sizeof(matches) / sizeof(int));
+    count = pcre_exec(rp->compiled, NULL, str->value, (int) str->length, start, 0, matches, sizeof(matches) / sizeof(int));
     if (count < 0) {
         rp->endLastMatch = 0;
         return (EjsObj*) ejs->nullValue;
@@ -26107,7 +26120,7 @@ static EjsObj *regex_test(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 
     str = (EjsString*) argv[0];
     mprAssert(rp->compiled);
-    count = pcre_exec(rp->compiled, NULL, str->value, str->length, rp->endLastMatch, 0, 0, 0);
+    count = pcre_exec(rp->compiled, NULL, str->value, (int) str->length, rp->endLastMatch, 0, 0, 0);
     if (count < 0) {
         rp->endLastMatch = 0;
         return (EjsObj*) ejs->falseValue;
@@ -26540,7 +26553,7 @@ static EjsObj *sock_port(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 static EjsObj *sock_read(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
     EjsByteArray    *ba;
-    int             offset, count, nbytes;
+    ssize           nbytes, offset, count;
 
     ba = (EjsByteArray*) argv[0];
     offset = (argc >= 1) ? ejsGetInt(ejs, argv[1]) : 0;
@@ -26576,7 +26589,7 @@ static EjsObj *sock_read(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
     ba->writePosition += nbytes;
     sp->mask |= MPR_READABLE;
     enableSocketEvents(sp, socketIOEvent);
-    return (EjsObj*) ejsCreateNumber(ejs, nbytes);
+    return (EjsObj*) ejsCreateNumber(ejs, (int) nbytes);
 }
 
 
@@ -26599,10 +26612,10 @@ static EjsObj *sock_off(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 }
 
 
-static int writeSocketData(Ejs *ejs, EjsSocket *sp)
+static ssize writeSocketData(Ejs *ejs, EjsSocket *sp)
 {
     EjsByteArray    *ba;
-    int             count, nbytes;
+    ssize           nbytes, count;
 
     ba = sp->data;
     nbytes = 0;
@@ -26638,7 +26651,7 @@ static int writeSocketData(Ejs *ejs, EjsSocket *sp)
  */
 static EjsNumber *sock_write(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    int     nbytes;
+    ssize     nbytes;
 
     if (sp->data) {
         ejsResetByteArray(sp->data);
@@ -26655,7 +26668,7 @@ static EjsNumber *sock_write(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
     if (sp->async) {
         enableSocketEvents(sp, socketIOEvent);
     }
-    return ejsCreateNumber(ejs, nbytes);
+    return ejsCreateNumber(ejs, (MprNumber) nbytes);
 }
 
 
@@ -26834,11 +26847,11 @@ static int internHashSizes[] = {
 };
 
 
-static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, size_t len);
-static int indexof(MprChar *str, size_t len, EjsString *pattern, int patternLength, int dir);
-static inline void linkString(Ejs *ejs, EjsString *head, EjsString *sp);
+static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len);
+static int indexof(MprChar *str, ssize len, EjsString *pattern, int patternLength, int dir);
+static void linkString(Ejs *ejs, EjsString *head, EjsString *sp);
 static int rebuildIntern(Ejs *ejs);
-static inline void unlinkString(EjsString *sp);
+static void unlinkString(EjsString *sp);
 
 /*
     Cast the string operand to a primitive type
@@ -27173,7 +27186,7 @@ static EjsObj *charCodeAt(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     index = (argc == 1) ? ejsGetInt(ejs, argv[0]) : 0;
     if (index < 0) {
-        index = sp->length -1 ;
+        index = (int) sp->length -1 ;
     }
     if (index < 0 || index >= sp->length) {
         return (EjsObj*) ejs->nanValue;;
@@ -27228,7 +27241,7 @@ static EjsObj *containsString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         EjsRegExp   *rp;
         int         count;
         rp = (EjsRegExp*) argv[0];
-        count = pcre_exec(rp->compiled, NULL, sp->value, sp->length, 0, 0, 0, 0);
+        count = pcre_exec(rp->compiled, NULL, sp->value, (int) sp->length, 0, 0, 0, 0);
         return (EjsObj*) ejsCreateBoolean(ejs, count >= 0);
     }
     ejsThrowTypeError(ejs, "Wrong argument type");
@@ -27244,7 +27257,7 @@ static EjsObj *containsString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 static EjsObj *endsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString   *pattern;
-    int         len;
+    ssize       len;
 
     mprAssert(argc == 1 && ejsIsString(ejs, argv[0]));
 
@@ -27271,7 +27284,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     EjsString   *result;
     EjsObj      *value;
     MprChar     *buf, fmt[32];
-    size_t      i, flen;
+    ssize       i, flen;
     int         c, len, nextArg, start, kind, last;
 
     mprAssert(argc == 1 && ejsIsArray(ejs, argv[0]));
@@ -27475,7 +27488,7 @@ static EjsObj *getStringValues(Ejs *ejs, EjsObj *sp, int argc, EjsObj **argv)
 
 static EjsObj *stringLength(Ejs *ejs, EjsString *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ap->length);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ap->length);
 }
 
 
@@ -27493,7 +27506,7 @@ static EjsObj *indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     mprAssert(ejsIsString(ejs, argv[0]));
 
     pattern = (EjsString*) argv[0];
-    patternLength = pattern->length;
+    patternLength = (int) pattern->length;
 
     if (argc == 2) {
         start = ejsGetInt(ejs, argv[1]);
@@ -27623,12 +27636,12 @@ static EjsObj *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     mprAssert(1 <= argc && argc <= 2);
 
     pattern = (EjsString*) argv[0];
-    patternLength = pattern->length;
+    patternLength = (int) pattern->length;
 
     if (argc == 2) {
         start = ejsGetInt(ejs, argv[1]);
-        if (start >= sp->length) {
-            start = sp->length - 1;
+        if (start >= (int) sp->length) {
+            start = (int) sp->length - 1;
         }
         if (start < 0) {
             start = 0;
@@ -27753,7 +27766,7 @@ static EjsObj *quote(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 static EjsObj *removeCharsFromString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString       *result;
-    int             start, end, i, j;
+    ssize           start, end, i, j;
 
     mprAssert(1 <= argc && argc <= 2);
 
@@ -27987,20 +28000,17 @@ static EjsString *reverseString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv
  */
 static EjsObj *searchString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
+    EjsRegExp   *rp;
     EjsString   *pattern;
-    int         index, patternLength;
+    int         index, patternLength, count, matches[EJS_MAX_REGEX_MATCHES * 3];
 
     if (ejsIsString(ejs, argv[0])) {
         pattern = (EjsString*) argv[0];
-        patternLength = pattern->length;
-
+        patternLength = (int) pattern->length;
         index = indexof(sp->value, sp->length, pattern, patternLength, 1);
         return (EjsObj*) ejsCreateNumber(ejs, index);
 
     } else if (ejsIsRegExp(ejs, argv[0])) {
-        EjsRegExp   *rp;
-        int         matches[EJS_MAX_REGEX_MATCHES * 3];
-        int         count;
         rp = (EjsRegExp*) argv[0];
         count = pcre_exec(rp->compiled, NULL, sp->value, sp->length, 0, 0, matches, sizeof(matches) / sizeof(int));
         if (count < 0) {
@@ -28010,8 +28020,8 @@ static EjsObj *searchString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     } else {
         ejsThrowTypeError(ejs, "Wrong argument type");
-        return 0;
     }
+    return 0;
 }
 
 
@@ -28086,7 +28096,7 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     EjsArray    *results;
     EjsString   *elt, *delim;
     MprChar     *cp, *mark, *end;
-    size_t      limit;
+    ssize      limit;
 
     mprAssert(1 <= argc && argc <= 2);
 
@@ -28170,7 +28180,7 @@ static EjsObj *startsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
  */
 static EjsObj *substring(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
-    int     start, end, tmp;
+    ssize   start, end, tmp;
 
     start = ejsGetInt(ejs, argv[0]);
     if (argc == 2) {
@@ -28478,7 +28488,7 @@ static EjsObj *trimEndString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     Fast append a string. This modifies the original "dest" string. BEWARE: strings are meant to be immutable.
     Only use this when constructing strings.
  */
-static int catString(Ejs *ejs, EjsString *dest, char *str, size_t len)
+static int catString(Ejs *ejs, EjsString *dest, char *str, ssize len)
 {
     EjsString   *castSrc;
     char        *oldBuf, *buf;
@@ -28517,7 +28527,7 @@ static int catString(Ejs *ejs, EjsString *dest, char *str, size_t len)
 /*
     Append the given string to the result
  */
-static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, size_t len)
+static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len)
 {
     EjsString   *newBuf;
     int         size;
@@ -28546,7 +28556,7 @@ static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, size_t 
     Find a substring. Search forward or backwards. Return the index in the string where the pattern was found.
     Return -1 if not found.
  */
-static int indexof(MprChar *str, size_t len, EjsString *pattern, int patternLength, int dir)
+static int indexof(MprChar *str, ssize len, EjsString *pattern, int patternLength, int dir)
 {
     MprChar     *s1, *s2;
     int         i, j;
@@ -28583,7 +28593,7 @@ static int indexof(MprChar *str, size_t len, EjsString *pattern, int patternLeng
 
 
 #if UNUSED && MOVED_TO_MPR
-static int toMulti(char *dest, MprChar *src, size_t len)
+static int toMulti(char *dest, MprChar *src, ssize len)
 {
 #if BLD_CHAR_LEN == 1
     if (dest) {
@@ -28604,7 +28614,7 @@ static int toMulti(char *dest, MprChar *src, size_t len)
 }
 
 
-static int toUni(MprChar *dest, cchar *src, size_t len) 
+static int toUni(MprChar *dest, cchar *src, ssize len) 
 {
 #if BLD_CHAR_LEN == 1
     if (dest) {
@@ -28628,10 +28638,10 @@ static int toUni(MprChar *dest, cchar *src, size_t len)
 
 int ejsAtoi(Ejs *ejs, EjsString *sp, int radix)
 {
-    int         num, i;
+    int     num, i;
 
     num = 0;
-    for (i = 0; i < sp->length; i++) {
+    for (i = 0; i < (int) sp->length; i++) {
         num = num * radix + (sp->value[i] - '0');
     }
     return num;
@@ -28641,7 +28651,7 @@ int ejsAtoi(Ejs *ejs, EjsString *sp, int radix)
 EjsString *ejsCatString(Ejs *ejs, EjsString *dest, EjsString *src)
 {
     EjsString   *result;
-    int         len;
+    ssize       len;
 
     len = dest->length + src->length;
     if ((result = ejsCreateBareString(ejs, len)) == NULL) {
@@ -28661,7 +28671,7 @@ EjsString *ejsCatStrings(Ejs *ejs, EjsString *src, ...)
 {
     EjsString   *sp, *result;
     va_list     args;
-    int         len;
+    ssize       len;
 
     va_start(args, src);
     for (len = 0, sp = src; sp; ) {
@@ -28685,7 +28695,7 @@ EjsString *ejsCatStrings(Ejs *ejs, EjsString *src, ...)
 
 int ejsStartsWithMulti(Ejs *ejs, EjsString *sp, cchar *pat)
 {
-    int     i, j, len;
+    ssize   i, len;
 
     mprAssert(sp);
     mprAssert(pat);
@@ -28696,7 +28706,7 @@ int ejsStartsWithMulti(Ejs *ejs, EjsString *sp, cchar *pat)
     len = strlen(pat);
     
     for (i = 0; pat[i] && i < sp->length; i++) {
-        if (sp->value[i] != pat[j]) {
+        if (sp->value[i] != pat[i]) {
             break;
         }
     }
@@ -28777,7 +28787,7 @@ int ejsCompareString(Ejs *ejs, EjsString *sp1, EjsString *sp2)
 }
 
 
-int ejsCompareSubstring(Ejs *ejs, EjsString *sp1, EjsString *sp2, size_t offset, size_t len)
+int ejsCompareSubstring(Ejs *ejs, EjsString *sp1, EjsString *sp2, ssize offset, ssize len)
 {
     mprAssert(0 <= len && len < MAXINT);
 
@@ -28788,7 +28798,7 @@ int ejsCompareSubstring(Ejs *ejs, EjsString *sp1, EjsString *sp2, size_t offset,
 }
 
 
-int ejsCompareWide(Ejs *ejs, EjsString *sp1, MprChar *sp2, size_t len)
+int ejsCompareWide(Ejs *ejs, EjsString *sp1, MprChar *sp2, ssize len)
 {
     MprChar     *s1;
     MprChar     *s2;
@@ -28872,7 +28882,8 @@ int ejsContainsStringAnyCase(Ejs *ejs, EjsString *sp, EjsString *pat)
 
 int ejsContainsMulti(Ejs *ejs, EjsString *sp, cchar *pat)
 {
-    int     i, j, k, len;
+    ssize   len;
+    int     i, j, k;
 
     mprAssert(sp);
     mprAssert(pat);
@@ -28948,7 +28959,7 @@ EjsString *ejsSprintf(Ejs *ejs, cchar *fmt, ...)
 }
 
 
-EjsString *ejsSubstring(Ejs *ejs, EjsString *src, size_t start, size_t len)
+EjsString *ejsSubstring(Ejs *ejs, EjsString *src, ssize start, ssize len)
 {
     EjsString   *result;
 
@@ -29051,7 +29062,7 @@ EjsString *ejsTrimString(Ejs *ejs, EjsString *sp, cchar *pat, int flags)
 #endif
 
 
-EjsString *ejsTruncateString(Ejs *ejs, EjsString *sp, size_t len)
+EjsString *ejsTruncateString(Ejs *ejs, EjsString *sp, ssize len)
 {
     EjsString   *result;
 
@@ -29102,10 +29113,10 @@ EjsString *ejsInternString(Ejs *ejs, EjsString *str)
 /*
     Intern a wide C string and return an interned wide string
  */
-EjsString *ejsInternWide(Ejs *ejs, MprChar *value, size_t len)
+EjsString *ejsInternWide(Ejs *ejs, MprChar *value, ssize len)
 {
     EjsString   *head, *sp;
-    size_t      i, end;
+    ssize      i, end;
     int         index;
 
     mprAssert(0 <= len && len < MAXINT);
@@ -29142,10 +29153,10 @@ EjsString *ejsInternWide(Ejs *ejs, MprChar *value, size_t len)
 }
 
 
-EjsString *ejsInternAsc(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsInternAsc(Ejs *ejs, cchar *value, ssize len)
 {
     EjsString   *head, *sp;
-    size_t      i, end;
+    ssize      i, end;
     int         index;
 
     mprAssert(0 <= len && len < MAXINT);
@@ -29191,17 +29202,17 @@ EjsString *ejsInternAsc(Ejs *ejs, cchar *value, size_t len)
 
 
 #if BLD_CHAR_LEN == 1
-EjsString *ejsInternMulti(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsInternMulti(Ejs *ejs, cchar *value, ssize len)
 {
     return ejsInternAsc(ejs, value, len);
 }
 
 #else /* BLD_CHAR_LEN > 1 */
 
-EjsString *ejsInternMulti(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsInternMulti(Ejs *ejs, cchar *value, ssize len)
 {
     EjsString   *head, *sp, src;
-    size_t      i, end;
+    ssize      i, end;
     int         index;
 
     mprAssert(0 < len && len < MAXINT);
@@ -29371,7 +29382,7 @@ static void unlinkString(EjsString *sp)
 
 
 
-EjsString *ejsCreateString(Ejs *ejs, MprChar *value, size_t len)
+EjsString *ejsCreateString(Ejs *ejs, MprChar *value, ssize len)
 {
     mprAssert(0 <= len && len < MAXINT);
     return ejsInternWide(ejs, value, len);
@@ -29387,7 +29398,7 @@ EjsString *ejsCreateStringFromAsc(Ejs *ejs, cchar *value)
 }
 
 
-EjsString *ejsCreateStringFromMulti(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsCreateStringFromMulti(Ejs *ejs, cchar *value, ssize len)
 {
     if (value == NULL) {
         value = "";
@@ -29397,7 +29408,7 @@ EjsString *ejsCreateStringFromMulti(Ejs *ejs, cchar *value, size_t len)
 }
 
 
-EjsString *ejsCreateStringFromBytes(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsCreateStringFromBytes(Ejs *ejs, cchar *value, ssize len)
 {
     mprAssert(0 <= len && len < MAXINT);
     return ejsInternAsc(ejs, value, len);
@@ -29407,7 +29418,7 @@ EjsString *ejsCreateStringFromBytes(Ejs *ejs, cchar *value, size_t len)
 /*
     Create an empty string object and do not intern. Caller's should call ejsInternString when the string value is defined.
  */
-EjsString *ejsCreateBareString(Ejs *ejs, size_t len)
+EjsString *ejsCreateBareString(Ejs *ejs, ssize len)
 {
     EjsString   *sp;
     
@@ -29421,7 +29432,7 @@ EjsString *ejsCreateBareString(Ejs *ejs, size_t len)
 }
 
 
-EjsString *ejsCreateNonInternedString(Ejs *ejs, MprChar *value, size_t len)
+EjsString *ejsCreateNonInternedString(Ejs *ejs, MprChar *value, ssize len)
 {
     EjsString   *sp;
     
@@ -30393,7 +30404,7 @@ EjsType *ejsConfigureNativeType(Ejs *ejs, EjsName qname, int instanceSize, void 
     EjsType     *type;
 
     if ((type = ejsGetTypeByName(ejs, qname)) == 0) {
-        mprError("Can't find %N type", qname);
+        mprError("Can't find %N type", &qname);
         return 0;
     }
     type->instanceSize = instanceSize;
@@ -33429,8 +33440,8 @@ static EjsObj *xml_parent(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv);
 
 static bool allDigitsForXml(EjsString *name);
 static bool deepCompare(EjsXML *lhs, EjsXML *rhs);
-static int readStringData(MprXml *xp, void *data, char *buf, int size);
-static int readFileData(MprXml *xp, void *data, char *buf, int size);
+static ssize readStringData(MprXml *xp, void *data, char *buf, ssize size);
+static ssize readFileData(MprXml *xp, void *data, char *buf, ssize size);
 
 
 static EjsXML *createXml(Ejs *ejs, EjsType *type, int size)
@@ -34166,7 +34177,7 @@ static EjsObj *saveXml(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
     MprBuf      *buf;
     MprFile     *file;
     char        *filename;
-    int         bytes, len;
+    ssize       bytes, len;
 
     if (argc != 1 || !ejsIsString(ejs, argv[0])) {
         ejsThrowArgError(ejs, "Bad args. Usage: save(filename);");
@@ -34187,14 +34198,12 @@ static EjsObj *saveXml(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
         mprFree(buf);
         return 0;
     }
-
     file = mprOpen(filename,  O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
     if (file == 0) {
         ejsThrowIOError(ejs, "Can't open: %s, %d", filename, mprGetOsError(ejs));
         mprFree(filename);
         return 0;
     }
-
     len = mprGetBufLength(buf);
     bytes = mprWrite(file, buf->start, len);
     if (bytes != len) {
@@ -34383,7 +34392,7 @@ int ejsAppendAttributeToXML(Ejs *ejs, EjsXML *parent, EjsXML *node)
 }
 
 
-static int readFileData(MprXml *xp, void *data, char *buf, int size)
+static ssize readFileData(MprXml *xp, void *data, char *buf, ssize size)
 {
     mprAssert(xp);
     mprAssert(data);
@@ -34394,10 +34403,10 @@ static int readFileData(MprXml *xp, void *data, char *buf, int size)
 }
 
 
-static int readStringData(MprXml *xp, void *data, char *buf, int size)
+static ssize readStringData(MprXml *xp, void *data, char *buf, ssize size)
 {
     EjsXmlState *parser;
-    int         rc, len;
+    ssize       len, rc;
 
     mprAssert(xp);
     mprAssert(buf);
@@ -37475,7 +37484,7 @@ static EjsObj *createFiles(Ejs *ejs, EjsRequest *req)
             ejsSetPropertyByName(ejs, file, EN("clientFilename"), ejsCreateStringFromAsc(ejs, up->clientFilename));
             ejsSetPropertyByName(ejs, file, EN("contentType"), ejsCreateStringFromAsc(ejs, up->contentType));
             ejsSetPropertyByName(ejs, file, EN("name"), ejsCreateStringFromAsc(ejs, hp->key));
-            ejsSetPropertyByName(ejs, file, EN("size"), ejsCreateNumber(ejs, up->size));
+            ejsSetPropertyByName(ejs, file, EN("size"), ejsCreateNumber(ejs, (MprNumber) up->size));
             ejsSetPropertyByName(ejs, files, EN(hp->key), file);
         }
     }
@@ -37745,7 +37754,7 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return mapNull(ejs, value);
 
     case ES_ejs_web_Request_contentLength:
-        return ejsCreateNumber(ejs, conn ? conn->rx->length : 0);
+        return ejsCreateNumber(ejs, conn ? (MprNumber) conn->rx->length : 0);
 
     case ES_ejs_web_Request_contentType:
         if (conn) {
@@ -38336,7 +38345,7 @@ static EjsObj *req_on(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 static EjsObj *req_read(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
     EjsByteArray    *ba;
-    int             offset, count, nbytes;
+    ssize           offset, count, nbytes;
 
     if (!connOk(ejs, req, 1)) return 0;
 
@@ -38370,7 +38379,7 @@ static EjsObj *req_read(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         }
     }
     ba->writePosition += nbytes;
-    return (EjsObj*) ejsCreateNumber(ejs, nbytes);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) nbytes);
 }
 
 
@@ -38448,7 +38457,8 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     EjsByteArray    *ba;
     HttpQueue       *q;
     HttpConn        *conn;
-    int             err, len, written, i;
+    ssize           len, written;
+    int             err, i;
 
     if (!connOk(ejs, req, 1)) return 0;
 
@@ -38550,7 +38560,7 @@ static EjsObj *req_writeFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
  */
 static EjsObj *req_written(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, req->written);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) req->written);
 }
 
 
@@ -44082,8 +44092,7 @@ static void genLogicalOp(EcCompiler *cp, EcNode *np)
         popStack(cp, 1);
         processNode(cp, np->right);
     }
-
-    rightLen = mprGetBufLength(rightCode->buf);
+    rightLen = (int) mprGetBufLength(rightCode->buf);
 
     /*
         Now copy the code to the output code buffer
@@ -44100,7 +44109,6 @@ static void genLogicalOp(EcCompiler *cp, EcNode *np)
         ecEncodeOpcode(cp, (doneIfTrue) ? EJS_OP_BRANCH_TRUE: EJS_OP_BRANCH_FALSE);
         ecEncodeInt32(cp, rightLen);
     }
-
     copyCodeBuffer(cp, state->code, rightCode);
     mprAssert(state == cp->state);
     LEAVE(cp);
@@ -44694,8 +44702,9 @@ static int injectCode(Ejs *ejs, EjsFunction *fun, EcCodeGen *extra)
     }
     old = fun->body.code;
     codeLen = (fun->body.code) ? old->codeLen : 0;
-    extraCodeLen = mprGetBufLength(extra->buf);
+    extraCodeLen = (int) mprGetBufLength(extra->buf);
     len = codeLen + extraCodeLen;
+
     if (extraCodeLen == 0 || len == 0) {
         return 0;
     }
@@ -45175,10 +45184,10 @@ static void genDo(EcCompiler *cp, EcNode *np)
      */
     condLen = bodyLen = 0;
     if (np->forLoop.condCode) {
-        condLen = mprGetBufLength(np->forLoop.condCode->buf);
+        condLen = (int) mprGetBufLength(np->forLoop.condCode->buf);
     }
     if (np->forLoop.bodyCode) {
-        bodyLen = mprGetBufLength(np->forLoop.bodyCode->buf);
+        bodyLen = (int) mprGetBufLength(np->forLoop.bodyCode->buf);
     }
 
     /*
@@ -45199,7 +45208,7 @@ static void genDo(EcCompiler *cp, EcNode *np)
     if (np->forLoop.cond) {
         pushStack(cp, 1);
     }
-    continueLabel = mprGetBufLength(cp->state->code->buf);
+    continueLabel = (int) mprGetBufLength(cp->state->code->buf);
 
     /*
         Add the body
@@ -45224,7 +45233,7 @@ static void genDo(EcCompiler *cp, EcNode *np)
         popStack(cp, 1);
     }
 
-    breakLabel = mprGetBufLength(cp->state->code->buf);
+    breakLabel = (int) mprGetBufLength(cp->state->code->buf);
     patchJumps(cp, EC_JUMP_BREAK, breakLabel);
     patchJumps(cp, EC_JUMP_CONTINUE, continueLabel);
 
@@ -45316,13 +45325,13 @@ static void genFor(EcCompiler *cp, EcNode *np)
     perLoopLen = condLen = bodyLen = 0;
 
     if (np->forLoop.condCode) {
-        condLen = mprGetBufLength(np->forLoop.condCode->buf);
+        condLen = (int) mprGetBufLength(np->forLoop.condCode->buf);
     }
     if (np->forLoop.bodyCode) {
-        bodyLen = mprGetBufLength(np->forLoop.bodyCode->buf);
+        bodyLen = (int) mprGetBufLength(np->forLoop.bodyCode->buf);
     }
     if (np->forLoop.perLoopCode) {
-        perLoopLen = mprGetBufLength(np->forLoop.perLoopCode->buf);
+        perLoopLen = (int) mprGetBufLength(np->forLoop.perLoopCode->buf);
     }
 
     /*
@@ -45377,7 +45386,7 @@ static void genFor(EcCompiler *cp, EcNode *np)
     if (np->forLoop.bodyCode) {
         copyCodeBuffer(cp, state->code, np->forLoop.bodyCode);
     }
-    continueLabel = mprGetBufLength(state->code->buf);
+    continueLabel = (int) mprGetBufLength(state->code->buf);
     if (np->forLoop.perLoopCode) {
         copyCodeBuffer(cp, state->code, np->forLoop.perLoopCode);
     }
@@ -45393,7 +45402,7 @@ static void genFor(EcCompiler *cp, EcNode *np)
         ecEncodeOpcode(cp, EJS_OP_GOTO);
         ecEncodeInt32(cp, -len);
     }
-    breakLabel = mprGetBufLength(state->code->buf);
+    breakLabel = (int) mprGetBufLength(state->code->buf);
     discardStackItems(cp, startMark);
 
     patchJumps(cp, EC_JUMP_BREAK, breakLabel);
@@ -45555,7 +45564,7 @@ static void genForIn(EcCompiler *cp, EcNode *np)
     }
 #endif
     discardStackItems(cp, startMark);
-    breakLabel = mprGetBufLength(state->code->buf);
+    breakLabel = (int) mprGetBufLength(state->code->buf);
 
     patchJumps(cp, EC_JUMP_BREAK, breakLabel);
     patchJumps(cp, EC_JUMP_CONTINUE, 0);
@@ -45622,7 +45631,7 @@ static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun
     len = 4;
     for (next = firstDefault; next < count; next++) {
         if (buffers[next]) {
-            len = mprGetBufLength(buffers[next]->buf) + 4;
+            len = (int) mprGetBufLength(buffers[next]->buf) + 4;
             if (len >= 0x7f) {
                 needLongJump = 1;
                 break;
@@ -45649,7 +45658,7 @@ static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun
         } else {
             ecEncodeByte(cp, len);
         }
-        len += mprGetBufLength(buffers[next]->buf);
+        len += (int) mprGetBufLength(buffers[next]->buf);
     }
     /*
         Add one more jump to jump over the entire jump table
@@ -45879,8 +45888,8 @@ static void genIf(EcCompiler *cp, EcNode *np)
         Calculate jump lengths. Then length will vary depending on if the jump at the end of the "then" block
         can jump over the "else" block with a short jump.
      */
-    elseLen = (np->tenary.elseCode) ? mprGetBufLength(np->tenary.elseCode->buf) : 0;
-    thenLen = mprGetBufLength(np->tenary.thenCode->buf);
+    elseLen = (np->tenary.elseCode) ? (int) mprGetBufLength(np->tenary.elseCode->buf) : 0;
+    thenLen = (int) mprGetBufLength(np->tenary.thenCode->buf);
     thenLen += (elseLen < 0x7f && cp->optimizeLevel > 0) ? 2 : 5;
 
     /*
@@ -46488,7 +46497,7 @@ static void genSwitch(EcCompiler *cp, EcNode *np)
     }
     popStack(cp, 1);
 
-    totalLen = mprGetBufLength(state->code->buf);
+    totalLen = (int) mprGetBufLength(state->code->buf);
     patchJumps(cp, EC_JUMP_BREAK, totalLen);
 
     /*
@@ -47162,7 +47171,7 @@ static EcCodeGen *allocCodeBuffer(EcCompiler *cp)
 
 static int getCodeLength(EcCompiler *cp, EcCodeGen *code)
 {
-    return mprGetBufLength(code->buf);
+    return (int) mprGetBufLength(code->buf);
 }
 
 
@@ -47186,7 +47195,7 @@ static void copyCodeBuffer(EcCompiler *cp, EcCodeGen *dest, EcCodeGen *src)
     /*
         Copy the code
      */
-    baseOffset = mprGetBufLength(dest->buf);
+    baseOffset = (int) mprGetBufLength(dest->buf);
     if (mprPutBlockToBuf(dest->buf, mprGetBufStart(src->buf), len) != len) {
         mprAssert(0);
         return;
@@ -47266,7 +47275,7 @@ static int flushModule(MprFile *file, EcCodeGen *code)
 {
     int         len;
 
-    len = mprGetBufLength(code->buf);
+    len = (int) mprGetBufLength(code->buf);
     if (len > 0) {
         if (mprWrite(file, mprGetBufStart(code->buf), len) != len) {
             return EJS_ERR;
@@ -47302,7 +47311,7 @@ static void createInitializer(EcCompiler *cp, EjsModule *mp)
         LEAVE(cp);
         return;
     }
-    mprAssert(mprGetBufLength(mp->code->buf) > 0);
+    mprAssert((int) mprGetBufLength(mp->code->buf) > 0);
 
     if (cp->errorCount > 0) {
         LEAVE(cp);
@@ -47311,7 +47320,7 @@ static void createInitializer(EcCompiler *cp, EjsModule *mp)
     state->code = mp->code;
     cp->directiveState = state;
     code = cp->state->code;
-    len = mprGetBufLength(code->buf);
+    len = (int) mprGetBufLength(code->buf);
     mprAssert(len > 0);
     ecEncodeOpcode(cp, EJS_OP_END_CODE);
 
@@ -47456,7 +47465,7 @@ static void addDebug(EcCompiler *cp, EcNode *np)
     if (source[0] == '}' && source[1] == 0) {
         return;
     }
-    offset = mprGetBufLength(code->buf);
+    offset = (int) mprGetBufLength(code->buf);
     source = mfmt("%s|%d|%w", np->loc.filename, np->loc.lineNumber, np->loc.source);
     addDebugLine(cp, code, offset, source);
     code->lastLineNumber = np->loc.lineNumber;
@@ -47931,7 +47940,7 @@ static void setFunctionCode(EcCompiler *cp, EjsFunction *fun, EcCodeGen *code)
     EjsEx       *ex;
     int         next, len;
 
-    len = mprGetBufLength(code->buf);
+    len = (int) mprGetBufLength(code->buf);
     mprAssert(len >= 0);
     if (len > 0) {
         ejsSetFunctionCode(cp->ejs, fun, cp->state->currentModule, (uchar*) mprGetBufStart(code->buf), len, code->debug);
@@ -48155,6 +48164,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     EjsModule   *mp;
     MprList     *nodes;
     EjsBlock    *block;
+    EcLocation  loc;
     cchar       *ext;
     char        *msg;
     int         i, j, next, nextModule, lflags, rc, frozen;
@@ -48195,7 +48205,6 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
             lflags = cp->strict ? EJS_LOADER_STRICT : 0;
             if ((rc = ejsLoadModule(cp->ejs, ejsCreateStringFromAsc(ejs, argv[i]), -1, -1, lflags)) < 0) {
                 msg = mprAsprintf("Error initializing module %s\n%s", argv[i], ejsGetErrorMsg(cp->ejs, 1));
-                EcLocation loc;
                 loc.filename = sclone(argv[i]);
                 if (rc == MPR_ERR_CANT_INITIALIZE) {
                     ecError(cp, "Error", &loc, msg);
@@ -49636,7 +49645,7 @@ void ecManageStream(EcStream *sp, int flags)
 }
 
 
-void *ecCreateStream(EcCompiler *cp, size_t size, cchar *path, void *manager)
+void *ecCreateStream(EcCompiler *cp, ssize size, cchar *path, void *manager)
 {
     EcLocation  *loc;
     EcStream    *sp;
@@ -49657,7 +49666,7 @@ void *ecCreateStream(EcCompiler *cp, size_t size, cchar *path, void *manager)
 }
 
 
-void ecSetStreamBuf(EcStream *sp, cchar *contents, size_t len)
+void ecSetStreamBuf(EcStream *sp, cchar *contents, ssize len)
 {
     MprChar     *buf;
 
@@ -49723,7 +49732,7 @@ int ecOpenFileStream(EcCompiler *cp, cchar *path)
 }
 
 
-int ecOpenMemoryStream(EcCompiler *cp, cchar *contents, size_t len)
+int ecOpenMemoryStream(EcCompiler *cp, cchar *contents, ssize len)
 {
     EcMemStream     *ms;
 
@@ -49876,7 +49885,7 @@ int ecCreateModuleSection(EcCompiler *cp)
     mp->constants->locked = 1;
     ecEncodeNum(cp, constants->poolLength);
     ecEncodeNum(cp, constants->indexCount);
-    ecEncodeBlock(cp, (uchar*) constants->pool, constants->poolLength);
+    ecEncodeBlock(cp, (uchar*) constants->pool, (int) constants->poolLength);
 
     createDependencySection(cp);
     if (mp->hasInitializer) {
@@ -50768,7 +50777,7 @@ void ecEncodeMulti(EcCompiler *cp, cchar *str)
 
     mprAssert(cp);
 
-    len = strlen(str) + 1;
+    len = (int) strlen(str) + 1;
     mprAssert(len > 0);
     ecEncodeNum(cp, len);
     ecEncodeBlock(cp, (uchar*) str, len);
@@ -50778,15 +50787,15 @@ void ecEncodeMulti(EcCompiler *cp, cchar *str)
 void ecEncodeWideAsMulti(EcCompiler *cp, MprChar *str)
 {
     char    *mstr;
-    size_t  len;
+    ssize   len;
 
     mprAssert(cp);
 
     mstr = awtom(str, &len);
     len = strlen(mstr) + 1;
     mprAssert(len > 0);
-    ecEncodeNum(cp, len);
-    ecEncodeBlock(cp, (uchar*) str, len);
+    ecEncodeNum(cp, (int) len);
+    ecEncodeBlock(cp, (uchar*) str, (int) len);
 }
 
 
@@ -51033,8 +51042,8 @@ mprAssert(0 <= checksum && checksum < 0x1FFFFFFF);
 #define LEAVE(cp, np)   ecLeaveStateWithResult(cp, np)
 
 
-static void     addAscToLiteral(EcCompiler *cp, EcNode *np, cchar *str, size_t len);
-static void     addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, size_t len);
+static void     addAscToLiteral(EcCompiler *cp, EcNode *np, cchar *str, ssize len);
+static void     addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, ssize len);
 static void     addTokenToLiteral(EcCompiler *cp, EcNode *np);
 static void     appendDocString(EcCompiler *cp, EcNode *np, EcNode *parameter, EcNode *value);
 static EcNode   *appendNode(EcNode *top, EcNode *np);
@@ -51049,7 +51058,7 @@ static EcNode   *createNode(EcCompiler *cp, int kind, EjsString *name);
 static void     dummy(int junk);
 static EcNode   *expected(EcCompiler *cp, cchar *str);
 static int      getToken(EcCompiler *cp);
-static inline EjsString *tokenString(EcCompiler *cp);
+static EjsString *tokenString(EcCompiler *cp);
 static EcNode   *insertNode(EcNode *top, EcNode *np, int pos);
 static EcNode   *linkNode(EcNode *np, EcNode *node);
 static EcNode   *parseAnnotatableDirective(EcCompiler *cp, EcNode *attributes);
@@ -60942,7 +60951,7 @@ static void addTokenToLiteral(EcCompiler *cp, EcNode *np)
 }
 
 
-static void addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, size_t count)
+static void addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, ssize count)
 {
     MprBuf      *buf;
 
@@ -60954,7 +60963,7 @@ static void addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, size_t c
 }
 
 
-static void addAscToLiteral(EcCompiler *cp, EcNode *np, cchar *str, size_t count)
+static void addAscToLiteral(EcCompiler *cp, EcNode *np, cchar *str, ssize count)
 {
     MprBuf      *buf;
     MprChar     c;
@@ -61030,7 +61039,7 @@ void ecSetCertFile(EcCompiler *cp, cchar *certFile)
 }
 
 
-static inline EjsString *tokenString(EcCompiler *cp)
+static EjsString *tokenString(EcCompiler *cp)
 {
     if (cp->token) {
         return ejsCreateString(cp->ejs, cp->token->text, cp->token->length);

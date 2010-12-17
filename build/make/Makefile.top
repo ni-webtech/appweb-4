@@ -42,7 +42,7 @@ INS_WITH	= --with-conf="$(CONF)" --with-testweb
 SHELL		:= bash
 
 #
-#	Conditionally read in the Make rules and templates. The buildConfig.make
+#	Conditionally read in the Make rules and templates. The buildConfig.h
 #	file will not exist if configure has not been run. In that case, we must
 #	warn the user to run configure first. 
 #
@@ -70,7 +70,7 @@ endif
 #
 .PRECIOUS	: $(BLD_TOP)/build/src/.makedep
 
-$(BLD_TOP)/build/src/.makedep: $(BLD_OUT_DIR)/buildConfig.make
+$(BLD_TOP)/build/src/.makedep: $(BLD_OUT_DIR)/include/buildConfig.h
 	echo -e "\n  # Making dynamic makefile dependancies\n"
 	$(MAKE) TRACE=$(TRACE) --no-print-directory depend clean
 
@@ -278,14 +278,14 @@ installed-files:
 	) | sort | uniq
 
 cleanExtra:
-	find $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_MOD_DIR) $(BLD_LIB_DIR) -type f -print | grep -v buildConfig | xargs rm
+	find $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_MOD_DIR) $(BLD_LIB_DIR) -type f -print | grep -v buildConfig | xargs rm -f
 	[ "$(_RECURSIVE_)" = "" ] && \
 		$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) _RECURSIVE_=1 -C . clean ; true
 
 clobberExtra:
 	rm -fr $(BLD_OUT_DIR)
 
-buildConfig.sh buildConfig.h $(BLD_OUT_DIR)/buildConfig.make:
+buildConfig.sh buildConfig.h $(BLD_OUT_DIR)/buildConfig.h:
 
 #
 #	Do a new top level build after incrementing the build number

@@ -25,7 +25,7 @@ defineComponent() {
     libs="$name"
 
     optional="ssl"
-	if [ "$BLD_FEATURE_STATIC" = 1 ] ; then
+	if [ "$BLD_STATIC" = 1 ] ; then
 		if [ "$BLD_PRODUCT_APPWEB" = 1 ] ; then
         	if isdefined EJS ; then
 				optional="$optional ejs"

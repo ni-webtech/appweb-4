@@ -12,6 +12,7 @@ include .makedep
 dependExtra:
 	chmod +x *
 	chmod -x Makefile
+	rm -f dsi* edep* getpath*
 
 cleanExtra:
-    rm -f *.pdb *.exe
+	rm -f *.pdb *.exe

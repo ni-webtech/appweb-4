@@ -2,15 +2,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    Embedthis Ejscript Shell Source.
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -517,7 +517,6 @@ static char *readline(cchar *msg)
 static int consoleGets(EcStream *stream)
 {
     char    prompt[MPR_MAX_STRING], *line, *cp;
-    int     len;
 
     if (stream->flags & EC_STREAM_EOL) {
         return 0;
@@ -531,9 +530,9 @@ static int consoleGets(EcStream *stream)
         return -1;
     }
     cp = strim(line, "\r\n", MPR_TRIM_BOTH);
-    ecSetStreamBuf(stream, cp, strlen(cp));
+    ecSetStreamBuf(stream, cp, slen(cp));
     stream->flags |= EC_STREAM_EOL;
-    return len;
+    return (int) slen(cp);
 }
 
 
