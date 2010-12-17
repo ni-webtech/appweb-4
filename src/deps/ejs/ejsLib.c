@@ -3,15 +3,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    LD_NAME Library Source.
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -1711,8 +1711,8 @@ static void callProperty(Ejs *ejs, EjsAny *obj, int slotNum, EjsAny *thisObj, in
 static void checkExceptionHandlers(Ejs *ejs);
 static void createExceptionBlock(Ejs *ejs, EjsEx *ex, int flags);
 static EjsAny *evalBinaryExpr(Ejs *ejs, EjsAny *lhs, EjsOpCode opcode, EjsAny *rhs);
-static inline uint findEndException(Ejs *ejs);
-static inline EjsEx *findExceptionHandler(Ejs *ejs, int kind);
+static uint findEndException(Ejs *ejs);
+static EjsEx *findExceptionHandler(Ejs *ejs, int kind);
 static EjsName getNameArg(Ejs *ejs, EjsFrame *fp);
 static EjsAny *getNthBase(Ejs *ejs, EjsAny *obj, int nthBase);
 static EjsAny *getNthBaseFromBottom(Ejs *ejs, EjsAny *obj, int nthBase);
@@ -4469,7 +4469,7 @@ EjsAny *ejsRunFunctionBySlot(Ejs *ejs, EjsAny *thisObj, int slotNum, int argc, v
         fun = ejsGetProperty(ejs, TYPE(thisObj)->prototype, slotNum);
     }
     if (fun == 0) {
-        ejsThrowReferenceError(ejs, "Can't find function at slot %d in %N", slotNum, TYPE(thisObj)->qname);
+        ejsThrowReferenceError(ejs, "Can't find function at slot %d in %N", slotNum, &TYPE(thisObj)->qname);
         return 0;
     }
     return ejsRunFunction(ejs, fun, thisObj, argc, argv);
@@ -4745,7 +4745,7 @@ static bool manageExceptions(Ejs *ejs)
 }
 
 
-static inline EjsEx *findExceptionHandler(Ejs *ejs, int kind)
+static EjsEx *findExceptionHandler(Ejs *ejs, int kind)
 {
     EjsEx       *ex;
     EjsFrame    *fp;
@@ -4775,7 +4775,7 @@ static inline EjsEx *findExceptionHandler(Ejs *ejs, int kind)
 }
 
 
-static inline EjsEx *inHandler(Ejs *ejs, int kind)
+static EjsEx *inHandler(Ejs *ejs, int kind)
 {
     EjsEx       *ex;
     EjsFrame    *fp;
@@ -4804,7 +4804,7 @@ static inline EjsEx *inHandler(Ejs *ejs, int kind)
 /*
     Find the end of the last catch/finally handler.
  */
-static inline uint findEndException(Ejs *ejs)
+static uint findEndException(Ejs *ejs)
 {
     EjsFrame    *fp;
     EjsEx       *best, *ex;
@@ -5756,7 +5756,7 @@ static void pushScope(EjsModule *mp, EjsBlock *block, EjsObj *obj);
 static char *search(Ejs *ejs, cchar *filename, int minVersion, int maxVersion);
 static int  trimModule(Ejs *ejs, char *name);
 
-#if !BLD_FEATURE_STATIC
+#if !BLD_STATIC
 static int  loadNativeLibrary(Ejs *ejs, EjsModule *mp, cchar *path);
 #endif
 
@@ -5834,7 +5834,7 @@ static int initializeModule(Ejs *ejs, EjsModule *mp)
             for a backing DSO.
          */
         if ((nativeModule = ejsLookupNativeModule(ejs, mp->name)) == 0) {
-#if !BLD_FEATURE_STATIC
+#if !BLD_STATIC
             loadNativeLibrary(ejs, mp, mp->path);
             nativeModule = ejsLookupNativeModule(ejs, mp->name);
 #endif
@@ -6412,7 +6412,7 @@ static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
     mprAssert(numArgs >= 0 && numArgs < EJS_MAX_ARGS);
     mprAssert(numExceptions >= 0 && numExceptions < EJS_MAX_EXCEPTIONS);
 
-    mprLog(9, "Loading function %N at slot %d", qname, slotNum);
+    mprLog(9, "Loading function %N at slot %d", &qname, slotNum);
 
     /*
         Read the code
@@ -6628,7 +6628,7 @@ static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
         /*  Only doing for namespaces currently */
         value = (EjsObj*) ejsCreateNamespace(ejs, str);
     }
-    mprLog(9, "Loading property %N at slot %d", qname, slotNum);
+    mprLog(9, "Loading property %N at slot %d", &qname, slotNum);
 
     if (attributes & EJS_PROP_NATIVE) {
         mp->hasNative = 1;
@@ -6695,7 +6695,7 @@ static int loadDocSection(Ejs *ejs, EjsModule *mp)
 }
 
 
-#if !BLD_FEATURE_STATIC
+#if !BLD_STATIC
 /*
     Check if a native module exists at the given path. If so, load it. If the path is a scripted module
     but has a corresponding native module, then load that. Return 1 if loaded, -1 for errors, 0 if no
@@ -7683,7 +7683,7 @@ static void manageConstants(EjsConstants *cp, int flags)
 }
 
 
-EjsConstants *ejsCreateConstants(Ejs *ejs, int count, size_t size)
+EjsConstants *ejsCreateConstants(Ejs *ejs, int count, ssize size)
 {
     EjsConstants    *constants;
 
@@ -7713,7 +7713,7 @@ EjsConstants *ejsCreateConstants(Ejs *ejs, int count, size_t size)
 }
 
 
-int ejsGrowConstants(Ejs *ejs, EjsConstants *constants, size_t len)
+int ejsGrowConstants(Ejs *ejs, EjsConstants *constants, ssize len)
 {
     int     indexSize;
 
@@ -7736,7 +7736,7 @@ int ejsGrowConstants(Ejs *ejs, EjsConstants *constants, size_t len)
 
 int ejsAddConstant(Ejs *ejs, EjsConstants *constants, cchar *str)
 {
-    size_t      len;
+    ssize       len;
     int         oldLen;
 
     if (constants->locked) {
@@ -7788,7 +7788,7 @@ EjsString *ejsCreateStringFromConst(Ejs *ejs, EjsModule *mp, int index)
 EjsDebug *ejsCreateDebug(Ejs *ejs)
 {
     EjsDebug    *debug;
-    size_t      size;
+    ssize       size;
 
     size = sizeof(EjsDebug) + (EJS_DEBUG_INCR * sizeof(EjsLine));
     if ((debug = mprAllocBlock(size, MPR_ALLOC_MANAGER)) == 0) {
@@ -7805,7 +7805,7 @@ int ejsAddDebugLine(Ejs *ejs, EjsDebug **debugp, int offset, MprChar *source)
 {
     EjsDebug    *debug;
     EjsLine     *line;
-    size_t      len;
+    ssize       len;
 
     mprAssert(debugp);
     
@@ -8736,7 +8736,7 @@ void ejsShowCurrentScope(Ejs *ejs)
 
 
 
-static int allocNotifier(int flags, size_t size);
+static int allocNotifier(int flags, ssize size);
 static int  configureEjs(Ejs *ejs);
 static int  defineTypes(Ejs *ejs);
 static void manageEjs(Ejs *ejs, int flags);
@@ -8776,8 +8776,10 @@ static void manageEjsService(EjsService *sp, int flags)
         mprLock(sp->mutex);
         mprMarkHash(sp->nativeModules);
         mprUnlock(sp->mutex);
+
     } else if (flags & MPR_MANAGE_FREE) {
         mprRemoveRoot(sp);
+        sp->mutex = NULL;
     }
 }
 
@@ -8910,9 +8912,11 @@ static void manageEjs(Ejs *ejs, int flags)
         mprSetLogHandler(NULL, NULL);
 
         sp = ejs->service;
-        mprLock(sp->mutex);
-        mprRemoveItem(sp->vmlist, ejs);
-        mprUnlock(sp->mutex);
+        if (sp->mutex) {
+            lock(sp);
+            mprRemoveItem(sp->vmlist, ejs);
+            unlock(sp);
+        }
     }
 }
 
@@ -9037,7 +9041,7 @@ static int defineTypes(Ejs *ejs)
      */
     ejsAddNativeModule(ejs, ejsCreateStringFromAsc(ejs, "ejs"), configureEjs, _ES_CHECKSUM_ejs, 0);
 
-#if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_FEATURE_STATIC
+#if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_STATIC
 #if BLD_FEATURE_SQLITE
     ejs_db_sqlite_Init(ejs);
 #endif
@@ -9148,7 +9152,7 @@ void ejsSetSearchPath(Ejs *ejs, EjsArray *paths)
 EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
 {
     EjsArray    *ap;
-    char        *dir, *next, *tok;
+    char        *relModDir, *dir, *next, *tok;
 
     ap = ejsCreateArray(ejs, 0);
 
@@ -9162,6 +9166,7 @@ EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
         mprFree(next);
         return (EjsArray*) ap;
     }
+    relModDir = 0;
 #if VXWORKS
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, mprGetCurrentPath(ejs)));
 #else
@@ -9170,16 +9175,12 @@ EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
         "." : APP_EXE_DIR/../modules : /usr/lib/ejs/1.0.0/modules
      */
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, "."));
-    char *relModDir;
     relModDir = mprAsprintf("%s/../%s", mprGetAppDir(ejs), BLD_MOD_NAME);
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, mprGetAppDir(ejs)));
 #ifdef BLD_MOD_NAME
-{
-    char *relModDir;
     relModDir = mprAsprintf("%s/../%s", mprGetAppDir(ejs), BLD_MOD_NAME);
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, mprGetAbsPath(relModDir)));
     mprFree(relModDir);
-}
 #endif
 #ifdef BLD_MOD_PREFIX
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, BLD_MOD_PREFIX));
@@ -9632,7 +9633,7 @@ int ejsFreeze(Ejs *ejs, int freeze)
     Global memory allocation handler. This is invoked when there is no notifier to handle an allocation failure.
     The interpreter has an allocNotifier (see ejsService: allocNotifier) and it will handle allocation errors.
  */
-static int allocNotifier(int flags, size_t size)
+static int allocNotifier(int flags, ssize size)
 {
     EjsService  *sp;
     Ejs         *ejs;
@@ -13850,7 +13851,7 @@ void ejsSetByteArrayPositions(Ejs *ejs, EjsByteArray *ba, int readPosition, int 
 }
 
 
-int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, int offset, char *data, size_t length)
+int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, int offset, char *data, ssize length)
 {
     int     i;
 
@@ -16246,7 +16247,7 @@ EjsObj *writeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
     EjsObj          *vp;
     EjsString       *str;
     cchar           *buf;
-    size_t          len;
+    ssize          len;
     int             i, written;
 
     mprAssert(argc == 1 && ejsIsArray(ejs, argv[0]));
@@ -17345,7 +17346,7 @@ static void manageCode(EjsCode *code, int flags)
 }
 
 
-EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *byteCode, size_t len, 
+EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *byteCode, ssize len, 
     EjsDebug *debug)
 {
     EjsCode     *code;
@@ -17370,7 +17371,7 @@ EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *by
 /*
     Set the byte code for a script function
  */
-int ejsSetFunctionCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *byteCode, size_t len, EjsDebug *debug)
+int ejsSetFunctionCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *byteCode, ssize len, EjsDebug *debug)
 {
     mprAssert(fun);
     mprAssert(byteCode);
@@ -17701,7 +17702,9 @@ void ejsConfigureGCType(Ejs *ejs)
         return;
     }
     ejsBindAccess(ejs, type, ES_GC_enabled, (EjsProc) getEnable, (EjsProc) setEnable);
+#if ES_GC_newQuota
     ejsBindAccess(ejs, type, ES_GC_newQuota, (EjsProc) getWorkQuota, (EjsProc) setWorkQuota);
+#endif
     ejsBindMethod(ejs, type, ES_GC_run, (EjsProc) runGC);
 }
 
@@ -22419,7 +22422,7 @@ static EjsObj *obj_defineProperty(Ejs *ejs, EjsObj *unused, int argc, EjsObj **a
     }
     if ((slotNum = ejsLookupProperty(ejs, obj, qname)) >= 0) {
         if (ejsPropertyHasTrait(ejs, obj, slotNum, EJS_TRAIT_FIXED)) {
-            ejsThrowTypeError(ejs, "Property \"%N\" is not configurable", qname);
+            ejsThrowTypeError(ejs, "Property \"%N\" is not configurable", &qname);
             return 0;
         }
     }
@@ -25096,7 +25099,7 @@ int ejsInsertPotProperties(Ejs *ejs, EjsPot *obj, int incr, int offset)
 static int growSlots(Ejs *ejs, EjsPot *obj, int slotCount)
 {
     EjsProperties   *props;
-    size_t          size;
+    ssize          size;
     int             factor, oldSize;
 
     mprAssert(obj);
@@ -26540,7 +26543,8 @@ static EjsObj *sock_port(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 static EjsObj *sock_read(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
     EjsByteArray    *ba;
-    int             offset, count, nbytes;
+    ssize           nbytes;
+    int             offset, count;
 
     ba = (EjsByteArray*) argv[0];
     offset = (argc >= 1) ? ejsGetInt(ejs, argv[1]) : 0;
@@ -26602,7 +26606,8 @@ static EjsObj *sock_off(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 static int writeSocketData(Ejs *ejs, EjsSocket *sp)
 {
     EjsByteArray    *ba;
-    int             count, nbytes;
+    ssize           nbytes;
+    int             count;
 
     ba = sp->data;
     nbytes = 0;
@@ -26834,11 +26839,11 @@ static int internHashSizes[] = {
 };
 
 
-static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, size_t len);
-static int indexof(MprChar *str, size_t len, EjsString *pattern, int patternLength, int dir);
-static inline void linkString(Ejs *ejs, EjsString *head, EjsString *sp);
+static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len);
+static int indexof(MprChar *str, ssize len, EjsString *pattern, int patternLength, int dir);
+static void linkString(Ejs *ejs, EjsString *head, EjsString *sp);
 static int rebuildIntern(Ejs *ejs);
-static inline void unlinkString(EjsString *sp);
+static void unlinkString(EjsString *sp);
 
 /*
     Cast the string operand to a primitive type
@@ -27271,7 +27276,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     EjsString   *result;
     EjsObj      *value;
     MprChar     *buf, fmt[32];
-    size_t      i, flen;
+    ssize      i, flen;
     int         c, len, nextArg, start, kind, last;
 
     mprAssert(argc == 1 && ejsIsArray(ejs, argv[0]));
@@ -28086,7 +28091,7 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     EjsArray    *results;
     EjsString   *elt, *delim;
     MprChar     *cp, *mark, *end;
-    size_t      limit;
+    ssize      limit;
 
     mprAssert(1 <= argc && argc <= 2);
 
@@ -28478,7 +28483,7 @@ static EjsObj *trimEndString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     Fast append a string. This modifies the original "dest" string. BEWARE: strings are meant to be immutable.
     Only use this when constructing strings.
  */
-static int catString(Ejs *ejs, EjsString *dest, char *str, size_t len)
+static int catString(Ejs *ejs, EjsString *dest, char *str, ssize len)
 {
     EjsString   *castSrc;
     char        *oldBuf, *buf;
@@ -28517,7 +28522,7 @@ static int catString(Ejs *ejs, EjsString *dest, char *str, size_t len)
 /*
     Append the given string to the result
  */
-static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, size_t len)
+static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len)
 {
     EjsString   *newBuf;
     int         size;
@@ -28546,7 +28551,7 @@ static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, size_t 
     Find a substring. Search forward or backwards. Return the index in the string where the pattern was found.
     Return -1 if not found.
  */
-static int indexof(MprChar *str, size_t len, EjsString *pattern, int patternLength, int dir)
+static int indexof(MprChar *str, ssize len, EjsString *pattern, int patternLength, int dir)
 {
     MprChar     *s1, *s2;
     int         i, j;
@@ -28583,7 +28588,7 @@ static int indexof(MprChar *str, size_t len, EjsString *pattern, int patternLeng
 
 
 #if UNUSED && MOVED_TO_MPR
-static int toMulti(char *dest, MprChar *src, size_t len)
+static int toMulti(char *dest, MprChar *src, ssize len)
 {
 #if BLD_CHAR_LEN == 1
     if (dest) {
@@ -28604,7 +28609,7 @@ static int toMulti(char *dest, MprChar *src, size_t len)
 }
 
 
-static int toUni(MprChar *dest, cchar *src, size_t len) 
+static int toUni(MprChar *dest, cchar *src, ssize len) 
 {
 #if BLD_CHAR_LEN == 1
     if (dest) {
@@ -28777,7 +28782,7 @@ int ejsCompareString(Ejs *ejs, EjsString *sp1, EjsString *sp2)
 }
 
 
-int ejsCompareSubstring(Ejs *ejs, EjsString *sp1, EjsString *sp2, size_t offset, size_t len)
+int ejsCompareSubstring(Ejs *ejs, EjsString *sp1, EjsString *sp2, ssize offset, ssize len)
 {
     mprAssert(0 <= len && len < MAXINT);
 
@@ -28788,7 +28793,7 @@ int ejsCompareSubstring(Ejs *ejs, EjsString *sp1, EjsString *sp2, size_t offset,
 }
 
 
-int ejsCompareWide(Ejs *ejs, EjsString *sp1, MprChar *sp2, size_t len)
+int ejsCompareWide(Ejs *ejs, EjsString *sp1, MprChar *sp2, ssize len)
 {
     MprChar     *s1;
     MprChar     *s2;
@@ -28948,7 +28953,7 @@ EjsString *ejsSprintf(Ejs *ejs, cchar *fmt, ...)
 }
 
 
-EjsString *ejsSubstring(Ejs *ejs, EjsString *src, size_t start, size_t len)
+EjsString *ejsSubstring(Ejs *ejs, EjsString *src, ssize start, ssize len)
 {
     EjsString   *result;
 
@@ -29051,7 +29056,7 @@ EjsString *ejsTrimString(Ejs *ejs, EjsString *sp, cchar *pat, int flags)
 #endif
 
 
-EjsString *ejsTruncateString(Ejs *ejs, EjsString *sp, size_t len)
+EjsString *ejsTruncateString(Ejs *ejs, EjsString *sp, ssize len)
 {
     EjsString   *result;
 
@@ -29102,10 +29107,10 @@ EjsString *ejsInternString(Ejs *ejs, EjsString *str)
 /*
     Intern a wide C string and return an interned wide string
  */
-EjsString *ejsInternWide(Ejs *ejs, MprChar *value, size_t len)
+EjsString *ejsInternWide(Ejs *ejs, MprChar *value, ssize len)
 {
     EjsString   *head, *sp;
-    size_t      i, end;
+    ssize      i, end;
     int         index;
 
     mprAssert(0 <= len && len < MAXINT);
@@ -29142,10 +29147,10 @@ EjsString *ejsInternWide(Ejs *ejs, MprChar *value, size_t len)
 }
 
 
-EjsString *ejsInternAsc(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsInternAsc(Ejs *ejs, cchar *value, ssize len)
 {
     EjsString   *head, *sp;
-    size_t      i, end;
+    ssize      i, end;
     int         index;
 
     mprAssert(0 <= len && len < MAXINT);
@@ -29191,17 +29196,17 @@ EjsString *ejsInternAsc(Ejs *ejs, cchar *value, size_t len)
 
 
 #if BLD_CHAR_LEN == 1
-EjsString *ejsInternMulti(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsInternMulti(Ejs *ejs, cchar *value, ssize len)
 {
     return ejsInternAsc(ejs, value, len);
 }
 
 #else /* BLD_CHAR_LEN > 1 */
 
-EjsString *ejsInternMulti(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsInternMulti(Ejs *ejs, cchar *value, ssize len)
 {
     EjsString   *head, *sp, src;
-    size_t      i, end;
+    ssize      i, end;
     int         index;
 
     mprAssert(0 < len && len < MAXINT);
@@ -29371,7 +29376,7 @@ static void unlinkString(EjsString *sp)
 
 
 
-EjsString *ejsCreateString(Ejs *ejs, MprChar *value, size_t len)
+EjsString *ejsCreateString(Ejs *ejs, MprChar *value, ssize len)
 {
     mprAssert(0 <= len && len < MAXINT);
     return ejsInternWide(ejs, value, len);
@@ -29387,7 +29392,7 @@ EjsString *ejsCreateStringFromAsc(Ejs *ejs, cchar *value)
 }
 
 
-EjsString *ejsCreateStringFromMulti(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsCreateStringFromMulti(Ejs *ejs, cchar *value, ssize len)
 {
     if (value == NULL) {
         value = "";
@@ -29397,7 +29402,7 @@ EjsString *ejsCreateStringFromMulti(Ejs *ejs, cchar *value, size_t len)
 }
 
 
-EjsString *ejsCreateStringFromBytes(Ejs *ejs, cchar *value, size_t len)
+EjsString *ejsCreateStringFromBytes(Ejs *ejs, cchar *value, ssize len)
 {
     mprAssert(0 <= len && len < MAXINT);
     return ejsInternAsc(ejs, value, len);
@@ -29407,7 +29412,7 @@ EjsString *ejsCreateStringFromBytes(Ejs *ejs, cchar *value, size_t len)
 /*
     Create an empty string object and do not intern. Caller's should call ejsInternString when the string value is defined.
  */
-EjsString *ejsCreateBareString(Ejs *ejs, size_t len)
+EjsString *ejsCreateBareString(Ejs *ejs, ssize len)
 {
     EjsString   *sp;
     
@@ -29421,7 +29426,7 @@ EjsString *ejsCreateBareString(Ejs *ejs, size_t len)
 }
 
 
-EjsString *ejsCreateNonInternedString(Ejs *ejs, MprChar *value, size_t len)
+EjsString *ejsCreateNonInternedString(Ejs *ejs, MprChar *value, ssize len)
 {
     EjsString   *sp;
     
@@ -30393,7 +30398,7 @@ EjsType *ejsConfigureNativeType(Ejs *ejs, EjsName qname, int instanceSize, void 
     EjsType     *type;
 
     if ((type = ejsGetTypeByName(ejs, qname)) == 0) {
-        mprError("Can't find %N type", qname);
+        mprError("Can't find %N type", &qname);
         return 0;
     }
     type->instanceSize = instanceSize;
@@ -36271,236 +36276,6 @@ int ejs_db_sqlite_Init(Ejs *ejs)
 /************************************************************************/
 /*
  *  End of file "../../src/jems/ejs.db.sqlite/src/ejsSqlite.c"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/jems/ejs.web/src/ejsFilter.c"
- */
-/************************************************************************/
-
-/*
-    ejsFilter.c - Transfer chunk endociding filter.
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-
-#include    "http.h"
-
-#if 0
-
-static void incomingFilterData(HttpQueue *q, HttpPacket *packet);
-static bool matchFilter(HttpConn *conn, HttpStage *handler);
-static void openFilter(HttpQueue *q);
-static void outgoingFilterService(HttpQueue *q);
-static void setFilterPrefix(HttpQueue *q, HttpPacket *packet);
-
-#define availableBytes(ap)  (((EjsByteArray*) ap)->writePosition - ((EjsByteArray*) ap)->readPosition)
-
-typedef EjsFilter {
-    EjsObj          obj;
-    HttpQueue       q;
-    EjsFunction     *put;
-} struct EjsFilter;
-
-
-static void openFilter(HttpQueue *q)
-{
-    HttpConn        *conn;
-    HttpReceiver    *rec;
-
-    conn = q->conn;
-    rec = conn->receiver;
-
-    filter->put = ejsGetPropertyByName(ejs, filter, ejsName(&qname, "", "put"), filter, 1, &data);
-    if (filter->put == 0 || ejs->exception) {
-        return ejsThrow();
-    }
-}
-
-
-static void incomingFilterData(HttpQueue *q, HttpPacket *packet)
-{
-}
-
-
-static void outgoingFilterPut(HttpQueue *q)
-{
-    ejsRunFunction(ejs, ser, filter, data);
-}
-
-
-static void outgoingFilterService(HttpQueue *q)
-{
-    HttpConn        *conn;
-    HttpPacket      *packet;
-    HttpTransmitter *trans;
-
-    conn = q->conn;
-    trans = conn->transmitter;
-
-    //  MOB -- want packets joined.
-
-    filter = (EjsFilter*) q->pair->queueData;
-    ejsRunFunction(ejs, ser, filter, data);
-
-    if () {
-    }
-
-    if (trans->chunkSize <= 0 || trans->altBody) {
-        httpDefaultOutgoingServiceStage(q);
-    } else {
-        for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
-            if (!(packet->flags & HTTP_PACKET_HEADER)) {
-                httpJoinPackets(q, trans->chunkSize);
-                if (httpGetPacketLength(packet) > trans->chunkSize) {
-                    httpResizePacket(q, packet, trans->chunkSize);
-                }
-            }
-            if (!httpWillNextQueueAcceptPacket(q, packet)) {
-                httpPutBackPacket(q, packet);
-                return;
-            }
-            if (!(packet->flags & HTTP_PACKET_HEADER)) {
-                setFilterPrefix(q, packet);
-            }
-            httpSendPacketToNext(q, packet);
-        }
-    }
-}
-
-
-/*
-    function write(data): Number
- */
-static EjsObj *filter_write(Ejs *ejs, EjsObj *filter, int argc, EjsObj *argv)
-{
-    EjsObj      *data, *written;
-    HttpQueue   *q;
-    int         available, room;
-
-    data = argv[0];
-    mprAssert(ejsIsByteArray(data);
-    q = filter->q;
-
-    available = availableBytes(data);
-    written = ejsRunFunction(ejs, filter->put, filter, 1, &data);
-    if (ejs->exception) {
-        return 0;
-    }
-    if (ejsGetInt(ejs, written) < available) {
-        /*
-           Could not write all available data. Assume the downstream queue is full. Disable this queue and 
-           mark the downstream queue as full and service it immediately if not disabled.
-        */
-        httpDisbleQueue(q);
-        next->flags |= HTTP_QUEUE_FULL;
-        if (!(next->flags & HTTP_QUEUE_DISABLED)) {
-            httpScheduleQueue(next);
-        }
-    }
-}
-
-
-static int createEjsHttpFilter(Ejs *ejs)
-{
-    HttpStage     *stage;
-
-    mprAssert(ejs->http);
-
-    stage = httpCreateFilter(ejs->http, "ejsFilter", HTTP_STAGE_ALL);
-    if (stage == 0) {
-        return MPR_ERR_CANT_CREATE;
-    }
-    ejs->http->ejsFilter = stage;
-    stage->open = openFilter; 
-    stage->outgoingData = outgoingFilterData; 
-    stage->outgoingService = outgoingFilterService; 
-    stage->incomingData = incomingFilterData; 
-    stage->incomingService = incomingFilterService; 
-    return 0;
-}
-
-
-void ejsConfigureFilterType(Ejs *ejs)
-{
-    EjsType         *type;
-    EjsTypeHelpers  *helpers;
-    EjsObj          *prototype;
-
-    type = ejs->requestType = ejsConfigureNativeType(ejs, "ejs.web", "Filter", sizeof(EjsFilter));
-
-    helpers = &type->helpers;
-    helpers->mark = (EjsMarkHelper) markFilter;
-    helpers->clone = (EjsCloneHelper) ejsCloneFilter;
-    helpers->destroy = (EjsDestroyHelper) destroyFilter;
-    helpers->getProperty = (EjsGetPropertyHelper) getFilterProperty;
-    helpers->getPropertyCount = (EjsGetPropertyCountHelper) getFilterPropertyCount;
-    helpers->getPropertyName = (EjsGetPropertyNameHelper) getFilterPropertyName;
-    helpers->lookupProperty = (EjsLookupPropertyHelper) lookupFilterProperty;
-    helpers->setProperty = (EjsSetPropertyHelper) setFilterProperty;
-
-    createEjsHttpFilter(ejs);
-
-    prototype = type->prototype;
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_write, (EjsProc) filter_write);
-/*
-    ejsBindAccess(ejs, prototype, ES_ejs_web_Filter_async, (EjsProc) filter_async, (EjsProc) filter_set_async);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_close, (EjsProc) filter_close);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_destroySession, (EjsProc) filter_destroySession);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_dontFinalize, (EjsProc) filter_dontFinalize);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_finalize, (EjsProc) filter_finalize);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_flush, (EjsProc) filter_flush);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_header, (EjsProc) filter_header);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_limits, (EjsProc) filter_limits);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_off, (EjsProc) filter_off);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_read, (EjsProc) filter_read);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_sendFile, (EjsProc) filter_sendFile);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_setLimits, (EjsProc) filter_setLimits);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_setHeader, (EjsProc) filter_setHeader);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_trace, (EjsProc) filter_trace);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_write, (EjsProc) filter_write);
-*/
-}
-
-#endif /* 0 */
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.web/src/ejsFilter.c"
  */
 /************************************************************************/
 
@@ -48155,6 +47930,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     EjsModule   *mp;
     MprList     *nodes;
     EjsBlock    *block;
+    EcLocation  loc;
     cchar       *ext;
     char        *msg;
     int         i, j, next, nextModule, lflags, rc, frozen;
@@ -48195,7 +47971,6 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
             lflags = cp->strict ? EJS_LOADER_STRICT : 0;
             if ((rc = ejsLoadModule(cp->ejs, ejsCreateStringFromAsc(ejs, argv[i]), -1, -1, lflags)) < 0) {
                 msg = mprAsprintf("Error initializing module %s\n%s", argv[i], ejsGetErrorMsg(cp->ejs, 1));
-                EcLocation loc;
                 loc.filename = sclone(argv[i]);
                 if (rc == MPR_ERR_CANT_INITIALIZE) {
                     ecError(cp, "Error", &loc, msg);
@@ -49636,7 +49411,7 @@ void ecManageStream(EcStream *sp, int flags)
 }
 
 
-void *ecCreateStream(EcCompiler *cp, size_t size, cchar *path, void *manager)
+void *ecCreateStream(EcCompiler *cp, ssize size, cchar *path, void *manager)
 {
     EcLocation  *loc;
     EcStream    *sp;
@@ -49657,7 +49432,7 @@ void *ecCreateStream(EcCompiler *cp, size_t size, cchar *path, void *manager)
 }
 
 
-void ecSetStreamBuf(EcStream *sp, cchar *contents, size_t len)
+void ecSetStreamBuf(EcStream *sp, cchar *contents, ssize len)
 {
     MprChar     *buf;
 
@@ -49723,7 +49498,7 @@ int ecOpenFileStream(EcCompiler *cp, cchar *path)
 }
 
 
-int ecOpenMemoryStream(EcCompiler *cp, cchar *contents, size_t len)
+int ecOpenMemoryStream(EcCompiler *cp, cchar *contents, ssize len)
 {
     EcMemStream     *ms;
 
@@ -50778,7 +50553,7 @@ void ecEncodeMulti(EcCompiler *cp, cchar *str)
 void ecEncodeWideAsMulti(EcCompiler *cp, MprChar *str)
 {
     char    *mstr;
-    size_t  len;
+    ssize  len;
 
     mprAssert(cp);
 
@@ -51033,8 +50808,8 @@ mprAssert(0 <= checksum && checksum < 0x1FFFFFFF);
 #define LEAVE(cp, np)   ecLeaveStateWithResult(cp, np)
 
 
-static void     addAscToLiteral(EcCompiler *cp, EcNode *np, cchar *str, size_t len);
-static void     addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, size_t len);
+static void     addAscToLiteral(EcCompiler *cp, EcNode *np, cchar *str, ssize len);
+static void     addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, ssize len);
 static void     addTokenToLiteral(EcCompiler *cp, EcNode *np);
 static void     appendDocString(EcCompiler *cp, EcNode *np, EcNode *parameter, EcNode *value);
 static EcNode   *appendNode(EcNode *top, EcNode *np);
@@ -51049,7 +50824,7 @@ static EcNode   *createNode(EcCompiler *cp, int kind, EjsString *name);
 static void     dummy(int junk);
 static EcNode   *expected(EcCompiler *cp, cchar *str);
 static int      getToken(EcCompiler *cp);
-static inline EjsString *tokenString(EcCompiler *cp);
+static EjsString *tokenString(EcCompiler *cp);
 static EcNode   *insertNode(EcNode *top, EcNode *np, int pos);
 static EcNode   *linkNode(EcNode *np, EcNode *node);
 static EcNode   *parseAnnotatableDirective(EcCompiler *cp, EcNode *attributes);
@@ -60942,7 +60717,7 @@ static void addTokenToLiteral(EcCompiler *cp, EcNode *np)
 }
 
 
-static void addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, size_t count)
+static void addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, ssize count)
 {
     MprBuf      *buf;
 
@@ -60954,7 +60729,7 @@ static void addCharsToLiteral(EcCompiler *cp, EcNode *np, MprChar *str, size_t c
 }
 
 
-static void addAscToLiteral(EcCompiler *cp, EcNode *np, cchar *str, size_t count)
+static void addAscToLiteral(EcCompiler *cp, EcNode *np, cchar *str, ssize count)
 {
     MprBuf      *buf;
     MprChar     c;
@@ -61030,7 +60805,7 @@ void ecSetCertFile(EcCompiler *cp, cchar *certFile)
 }
 
 
-static inline EjsString *tokenString(EcCompiler *cp)
+static EjsString *tokenString(EcCompiler *cp)
 {
     if (cp->token) {
         return ejsCreateString(cp->ejs, cp->token->text, cp->token->length);

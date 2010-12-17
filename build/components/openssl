@@ -26,7 +26,7 @@ defineComponent() {
         #
         path=/usr/lib
         imports="$path/libssl $path/libcrypto"
-        extensions="so a"
+        extensions="a"
         libs="ssl crypto"
         iflags="-I$path/include"
 

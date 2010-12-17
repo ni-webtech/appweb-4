@@ -41,7 +41,7 @@ if [ $BLD_LIB_DIR != $BLD_MOD_DIR ] ; then
 #        libcFilter="$BLD_LIB_DIR}/libec-${BLD_VERSION}"
 #		cpy -s -m755 -f "${libcFilter}" -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
 		cpy -s -m 755 -d "${BLD_LIB_DIR}" "*${BLD_SHOBJ}*" "${BLD_LIB_PREFIX}"
-#       if [ "$BLD_FEATURE_STATIC" = 0 ] ; then
+#       if [ "$BLD_STATIC" = 0 ] ; then
 #           if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
 #               cpy -s -m 755 "${BLD_LIB_DIR}/libec-${BLD_VERSION}${BLD_SHOBJ}" "${BLD_LIB_PREFIX}"
 #           fi

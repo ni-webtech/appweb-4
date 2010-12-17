@@ -35,12 +35,11 @@ DRY_RUN=
 QUIET=0
 TASK=Package
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
-. ${BLD_OUT_DIR}/bin/buildConfig.sh
 
 #
 #   Find the top of the source tree and change directory to it. Set BLD_TOP
 #
-findtop() {
+findTop() {
     local dir
 
     dir=`pwd`
@@ -57,9 +56,7 @@ findtop() {
 }
 
 setup() {
-
     umask 022
-
     BLD_DATE=`date '+%c'`
 
     if [ ! -x ${BLD_TOP}/build/bin/getpath ] ; then
@@ -140,7 +137,7 @@ patchSource() {
                 find . -name '*.cpp'
             ) | while read f
             do
-                ${ABS_BLD_TOOLS_DIR}/defeature ${ABS_BLD_TOP}/build/bin/buildConfig.sh $f
+                ${ABS_BLD_TOOLS_DIR}/defeature ${ABS_BLD_TOP}/out/include/.buildConfig.sh $f
             done
         fi
         cd ${HOME}
@@ -424,7 +421,8 @@ createChecksums() {
 #
 #   Main
 #
-findtop
+findTop
+. `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 
 set -- ${OPTIONS} $*
 while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do

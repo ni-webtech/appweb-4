@@ -2,15 +2,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    Embedthis Ejscript Manager Source.
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -5668,7 +5668,7 @@ static void getGlobal(EjsMod *mp, char *buf, int buflen)
             vp = ejsGetProperty(ejs, ejs->global, slotNum);
         }
         if (vp && ejsIsType(ejs, vp)) {
-            mprSprintf(buf, buflen, "<type: 0x%x,  %N> ", t, ((EjsType*) vp)->qname);
+            mprSprintf(buf, buflen, "<type: 0x%x,  %N> ", t, &((EjsType*) vp)->qname);
         }
         break;
 

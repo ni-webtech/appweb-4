@@ -41,9 +41,6 @@ TASK=${TASK:-Install}
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
 
 ################################################################################
-#
-#   Copy packages
-#
 
 processPackage() {
     local fileList
@@ -57,9 +54,6 @@ processPackage() {
     . "${fileList}"
 }
 
-#
-#   Cleanup installed files
-#
 cleanupSystem() {
 
     [ $TASK = Remove ] && configureProduct cleanup
@@ -224,7 +218,7 @@ copyRemoveFiles() {
 #
 #   Find the top of the source tree and change directory to it. Set BLD_TOP
 #
-findtop() {
+findTop() {
     local dir
 
     dir=`pwd`
@@ -260,7 +254,7 @@ setup() {
     cd ${BLD_TOP}
     BLD_TOP=.
 
-    . ${BLD_OUT_DIR}/bin/buildConfig.sh
+    . `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 
     . ${BLD_TOP}/build/bin/makePackage.common
     . package/makeInstall.${BLD_PRODUCT}
@@ -410,7 +404,7 @@ without() {
 #
 #   Main
 #
-findtop
+findTop
 
 set -- ${OPTIONS} $*
 while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do

@@ -86,3 +86,4 @@ bin/*.res
 src/test/regress/tcp
 src/include/ejs.slots.h
 */x86_64-*
+out

@@ -4,7 +4,7 @@
 #   Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 #
 #	This file expects that the per-directory Makefiles will have included their .makedep 
-#	files which will in-turn include buildConfig.make and this file.
+#	files which will in-turn include buildConfig.h and this file.
 #
 ################################################################################
 
@@ -52,7 +52,7 @@ _CFLAGS             += -nologo -fp:fast -GR- -GS-
 
 ifeq ($(BLD_TYPE),DEBUG)
     _CFLAGS	        += -W3 -Zi -Od
-    ifeq ($(BLD_FEATURE_STATIC),0)
+    ifeq ($(BLD_STATIC),0)
         _CFLAGS 	+= -MDd
     else
         _CFLAGS 	+= -MTd
@@ -60,7 +60,7 @@ ifeq ($(BLD_TYPE),DEBUG)
     _LDFLAGS		+= -debug
 else
     _CFLAGS         += -O2
-    ifeq ($(BLD_FEATURE_STATIC),0)
+    ifeq ($(BLD_STATIC),0)
         _CFLAGS		+= -MD
     else
 	    _CFLAGS		+= -MT
@@ -73,13 +73,13 @@ _LDFLAGS		    += -nodefaultlib:oldnames.lib
 _LIBS          	    += winsock.lib secchk.lib coredll.lib corelibc.lib ole32.lib oleaut32.lib uuid.lib commctrl.lib
 
 ifeq ($(BLD_DEBUG),1)
-    ifeq ($(BLD_FEATURE_STATIC),1)
+    ifeq ($(BLD_STATIC),1)
         _LIBS       += libcmt.lib
     else
         _LIBS       += msvcrt.lib
     endif
 else
-    ifeq ($(BLD_FEATURE_STATIC),1)
+    ifeq ($(BLD_STATIC),1)
 	    _LIBS       += libcmt.lib
     else
 	    _LIBS       += msvcrt.lib

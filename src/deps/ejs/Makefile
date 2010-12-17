@@ -34,13 +34,13 @@ ifeq ($(BLD_EJS_DIR),)
 	TOOLS			+= $(BLD_BIN_DIR)/ejsmod$(BLD_EXE)
 
 	TARGETS		+= $(BLD_MOD_DIR)/ejs.mod
-	ifeq ($(BLD_FEATURE_STATIC),1) 
+	ifeq ($(BLD_STATIC),1) 
 		TARGETS	+= $(BLD_LIB_DIR)/libejs$(BLD_LIB)
 	endif
 	# MODULES += $(BLD_MOD_DIR)/mod_ejs$(BLD_SHOBJ)
 	GATE_OBJECTS += ejsAppwebHandler$(BLD_OBJ)
 	ifeq ($(BLD_OS),VXWORKS)
-	ifeq ($(BLD_FEATURE_STATIC),0)
+	ifeq ($(BLD_STATIC),0)
 		EXTRA_GATEWAY_OBJECTS += $(BLD_LIB_DIR)/libejs.out
 		ifeq ($(BLD_FEATURE_SQLITE),1)
 			EXTRA_GATEWAY_OBJECTS += $(BLD_LIB_DIR)/libsqlite3.out

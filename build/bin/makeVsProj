@@ -205,7 +205,7 @@ makeVsProj: usage: makeVsProj [options] objects ....
     --ldflags               Linker flags
     --library name          Name of library to link
     --libs libraries        Extra libraries to link with. Use shared or static 
-                            intelligently depending on BLD_FEATURE_STATIC.
+                            intelligently depending on BLD_STATIC.
     --omitstdlibs           Don't use standard libraries (UNIX only)
     --objects "objects..."  String containing objects to link
     --project               Project file name
@@ -221,7 +221,7 @@ makeVsProj: usage: makeVsProj [options] objects ....
 
     Environment variables used:
       BLD_TOP               Top of the source tree
-      BLD_FEATURE_STATIC    Build static libraries where relevant.
+      BLD_STATIC            Build static libraries where relevant.
 
     Configuration files used:
         buildConfig.sh
@@ -338,7 +338,7 @@ findTop() {
         top=.
         level=0
         while [ $level -lt 30 ] ; do
-            if [ -d $top/build -a -d $top/build/bin -a -d $top/bin ] ; then
+            if [ -d $top/build -a -d $top/build/bin -a -f $top/configure ] ; then
                 break
             fi
             top=$top/..
@@ -753,8 +753,8 @@ useArg() {
 BLD_TOP=`findTop`
 
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
-. ${BLD_OUT_DIR}/bin/buildConfig.sh
 
+. `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 parseArgs "$@"
 log "Generate" ${PROJECT}
 
@@ -780,7 +780,7 @@ IFLAGS=`echo $IFLAGS | sed 's/-I//g; s/ /;/g'`
 DFLAGS=`echo $DFLAGS ${MAKE_DFLAGS} ${_DFLAGS} ${BLD_DFLAGS} | sed 's/ -D/;/g' | sed 's/;_WIN32_WCE=0x420//'`
 
 if [ "$MAKE_STATIC" = "" ] ; then
-    MAKE_STATIC=$BLD_FEATURE_STATIC
+    MAKE_STATIC="$BLD_STATIC"
 fi
 
 #
@@ -872,7 +872,7 @@ if [ "$EXECUTABLE" ] ; then
 fi
 
 if [ "$OMITSTDLIBS" = "0" ] ; then
-    if [ "$BLD_FEATURE_STATIC" = "1" ] ; then
+    if [ "$BLD_STATIC" = "1" ] ; then
         STND_LIBS=$_STATIC_LIBS
     else
         STND_LIBS=$_SHARED_LIBS

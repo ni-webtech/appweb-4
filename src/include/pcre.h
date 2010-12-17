@@ -1,15 +1,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    .
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -72,7 +72,7 @@ imported have to be identified as such. When building PCRE, the appropriate
 export setting is defined in pcre_internal.h, which includes this file. So we
 don't change existing definitions of PCRE_EXP_DECL and PCRECPP_EXP_DECL. */
 
-#if BLD_FEATURE_STATIC
+#if BLD_STATIC
 #define PCRE_STATIC
 #endif
 

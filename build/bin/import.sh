@@ -12,6 +12,7 @@
 IDIR=.import
 PP_ARGS=
 PROGRAM=${0}
+export PATH=out/bin:$PATH
 
 log() {
     tag=$1
@@ -177,8 +178,11 @@ if [ "`git branch | grep master`" != "* master" ] ; then
     echo "Sync only in default branch" 
     echo 255 
 fi
-DIR=`getpath -a "."`
-ARCHIVE=`getpath -a "$1"`
+
+# DIR=`getpath -a "."`
+# ARCHIVE=`getpath -a "$1"`
+DIR=`pwd`
+ARCHIVE=`readlink -m "$1"`
 
 if [ ! -f "$ARCHIVE" ] ; then
     echo "Can't find $ARCHIVE"

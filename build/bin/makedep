@@ -4,8 +4,6 @@
 #
 #   Set env vars BLD_OUT_DIR and BLD_TOP to define the output directory and the top of the source tree
 #
-#BLD_TOP=${BLD_TOP:-.}
-#BLD_OUT_DIR=${BLD_OUT_DIR:-./out}
 
 makeDep() {
     local file top dir
@@ -30,12 +28,12 @@ makeDep() {
 all: compile
 
 BLD_TOP     := ${BLD_TOP:-${top}}
-BLD_OUT_DIR := ${BLD_OUT_DIR:-${top}/out}
+BLD_INC_DIR := ${BLD_INC_DIR:-${top}/out/include}
 
 #
 #   Read the build configuration, rules and per-os make definitions.
 #
-include \$(BLD_OUT_DIR)/buildConfig.make
+include \$(BLD_INC_DIR)/buildConfig.h
 include \$(BLD_TOP)/build/make/make.rules
 
 ifeq (\$(BUILDING_NATIVE),1)
@@ -54,7 +52,7 @@ TOP=.
 level=0
 while [ $level -lt 30 ] 
 do
-    if [ -d $TOP/build -a -d $TOP/build/bin -a -d $TOP/src ] ; then
+    if [ -d $TOP/build -a -d $TOP/build/bin -a -d $TOP/build/src ] ; then
         break
     fi
     TOP=$TOP/..
@@ -63,7 +61,7 @@ done
 TOP=${TOP#./}
 
 if [ $level -ge 30 ] ; then
-    echo "Can't find top level directory with build and src directories"
+    echo "Can't find top level directory with build directory"
     exit 255
 fi
 

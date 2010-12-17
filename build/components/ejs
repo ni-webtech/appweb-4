@@ -27,7 +27,7 @@ defineComponent() {
     fi
 
     optional="ssl"
-    if [ "$BLD_FEATURE_STATIC" = 1 ] ; then
+    if [ "$BLD_STATIC" = 1 ] ; then
         optional="$optional sqlite"
     else
         if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then

@@ -3,15 +3,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    .
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -225,7 +225,7 @@ them both to 0; an emulation function will be used. */
 
 /* Define if linking statically (TODO: make nice with Libtool) */
 /* #undef PCRE_STATIC */
-#if BLD_FEATURE_STATIC
+#if BLD_STATIC
 #define PCRE_STATIC
 #endif
 
@@ -513,7 +513,7 @@ to save lots of typing. I tried "uchar", but it causes problems on Digital
 Unix, where it is defined in sys/types, so use "uschar" instead. */
 
 /* EMBEDTHIS - added conditional */
-#if BLD_CHAR
+#ifdef BLD_CHAR
 typedef unsigned BLD_CHAR uschar;
 #else
 typedef unsigned char uschar;

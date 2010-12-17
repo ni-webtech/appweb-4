@@ -1,15 +1,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    Multithreaded Portable Runtime Header.
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -55,12 +55,19 @@
 #define MPR_CPU_UNIVERSAL   11          /* MAC OS X universal binaries */
 #define MPR_CPU_SH4         12
 
-
+/*
+    Out-of-order definitions and includes. Order really matters in this section
+ */
 #if WIN
     #define     _CRT_SECURE_NO_DEPRECATE 1
     #ifndef     _WIN32_WINNT
         #define _WIN32_WINNT 0x501
     #endif
+#endif
+
+#if VXWORKS
+    #include    <vxWorks.h>
+    #define     HAS_USHORT 1
 #endif
 
 #if BLD_WIN_LIKE
@@ -72,6 +79,7 @@
     #include    <shellapi.h>
     #include    <wincrypt.h>
 #endif
+
 #if WIN
     #include    <ws2tcpip.h>
     #include    <conio.h>
@@ -84,67 +92,92 @@
 #endif
 #undef     _WIN32_WINNT
 
-#if UNUSED
+/*
+    Includes in alphabetic order
+ */
+#if CYGWIN
     #include    <arpa/inet.h>
 #endif
+
     #include    <ctype.h>
+
 #if BLD_WIN_LIKE
     #include    <direct.h>
 #else
     #include    <dirent.h>
+#if !VXWORKS
     #include    <dlfcn.h>
 #endif
+#endif
+
     #include    <fcntl.h>
     #include    <errno.h>
+
 #if BLD_FEATURE_FLOAT || 1
     #include    <float.h>
     #define __USE_ISOC99 1
     #include    <math.h>
 #endif
-#if !BLD_WIN_LIKE
+
+#if BLD_UNIX_LIKE
     #include    <grp.h> 
 #endif
-#if UNUSED && BLD_WIN_LIKE
+
+#if BLD_WIN_LIKE
     #include    <io.h>
 #endif
+
 #if MACOSX
     #include    <libgen.h>
 #endif
+
     #include    <limits.h>
+
 #if UNUSED && BLD_WIN_LIKE
     #include    <malloc.h>
 #endif
-#if !BLD_WIN_LIKE
+
+#if BLD_UNIX_LIKE || VXWORKS
     #include    <netdb.h>
     #include    <net/if.h>
     #include    <netinet/in.h>
     #include    <netinet/tcp.h>
     #include    <netinet/ip.h>
+#endif
+
+#if BLD_UNIX_LIKE
     #include    <pthread.h> 
     #include    <pwd.h> 
 #if !CYGWIN
     #include    <resolv.h>
 #endif
 #endif
+
     #include    <setjmp.h>
     #include    <signal.h>
     #include    <stdarg.h>
+
 #if UNUSED && WINCE
     #include    <stddef.h>
 #endif
+
 #if BLD_UNIX_LIKE
     #include    <stdint.h>
 #endif
+
     #include    <stdio.h>
     #include    <stdlib.h>
     #include    <string.h>
+
 #if BLD_UNIX_LIKE
     #include    <syslog.h>
 #endif
+
 #if LINUX
     #include    <sys/epoll.h>
 #endif
-#if !BLD_WIN_LIKE
+
+#if BLD_UNIX_LIKE
     #include    <sys/ioctl.h>
     #include    <sys/mman.h>
 #if UNUSED && MACOSX
@@ -152,12 +185,16 @@
 #endif
     #include    <sys/poll.h>
 #endif
+
     #include    <sys/stat.h>
+
 #if LINUX
     #include    <sys/prctl.h>
 #endif
+
     #include    <sys/types.h>
-#if !BLD_WIN_LIKE
+
+#if BLD_UNIX_LIKE
     #include    <sys/resource.h>
     #include    <sys/sem.h>
 #if UNUSED
@@ -174,14 +211,24 @@
 #endif
     #include    <sys/wait.h>
 #endif
+
     #include    <time.h>
-#if !BLD_WIN_LIKE
+
+#if BLD_UNIX_LIKE
     #include    <unistd.h>
 #endif
+
 #if UNUSED && LINUX
     #include    <values.h>
 #endif
+
+#if !VXWORKS
     #include    <wchar.h>
+#endif
+
+/*
+    Extra includes per O/S
+ */
 #if LINUX && !__UCLIBC__
     #include    <sys/sendfile.h>
 #endif
@@ -216,53 +263,118 @@
 #if _WRS_VXWORKS_MAJOR >= 6
     #include    <wait.h>
 #endif
-#endif /* VXWORKS */
+#endif
 
 /*
     Standard types
  */
+#ifndef HAS_BOOL
+    #if !MACOSX
+        #define HAS_BOOL 1
+        typedef int bool;
+    #endif
+#endif
+
+#ifndef HAS_UCHAR
+    #define HAS_UCHAR 1
+    typedef unsigned char uchar;
+#endif
+
+#ifndef HAS_SCHAR
+    #define HAS_SCHAR 1
+    typedef signed char schar;
+#endif
+
+#ifndef HAS_CCHAR
+    #define HAS_CCHAR 1
+    typedef const char cchar;
+#endif
+
+#ifndef HAS_CUCHAR
+    #define HAS_CUCHAR 1
+    typedef const unsigned char cuchar;
+#endif
+
+#ifndef HAS_USHORT
+    #define HAS_USHORT 1
+    typedef unsigned short ushort;
+#endif
+
+#ifndef HAS_CUSHORT
+    #define HAS_CUSHORT 1
+    typedef const unsigned short cushort;
+#endif
+
+#ifndef HAS_CVOID
+    #define HAS_CVOID 1
+    typedef const void cvoid;
+#endif
+
+#ifndef HAS_INT32
+    #define HAS_INT32 1
+    typedef int int32;
+#endif
+
+#ifndef HAS_UINT32
+    #define HAS_UINT32 1
+    typedef unsigned int uint32;
+#endif
+
+#ifndef HAS_UINT
+    #define HAS_UINT 1
+    typedef unsigned int uint;
+#endif
+
+#ifndef HAS_ULONG
+    #define HAS_ULONG 1
+    typedef unsigned long ulong;
+#endif
+
+#ifndef HAS_SSIZE
+    #define HAS_SSIZE 1
+    #if BLD_UNIX_LIKE || VXWORKS
+        typedef ssize_t ssize;
+    #else
+        typedef SSIZE_T ssize;
+    #endif
+#endif
+
+#ifndef HAS_INT64
+    #if BLD_UNIX_LIKE
+        __extension__ typedef long long int int64;
+    #elif VXWORKS
+        typedef long long int int64;
+    #elif BLD_WIN_LIKE
+        typedef __int64 int64;
+    #else
+        typedef long long int int64;
+    #endif
+#endif
+
+#ifndef HAS_UINT64
+    #if BLD_UNIX_LIKE
+        __extension__ typedef unsigned long long int uint64;
+    #elif VXWORKS
+        typedef unsigned long long int uint64;
+    #elif BLD_WIN_LIKE
+        typedef unsigned __int64 uint64;
+    #else
+        typedef unsigned long long int uint64;
+    #endif
+#endif
+
+typedef off_t MprOffset;
+
 #if __WORDSIZE == 64 || __amd64 || __x86_64 || __x86_64__ || _WIN64
     #define MPR_64_BIT 1
 #else
     #define MPR_64_BIT 0
 #endif
 
-#if !MACOSX
-    typedef int bool;
-#endif
-typedef unsigned char uchar;
-typedef signed char schar;
-typedef const char cchar;
-typedef const unsigned char cuchar;
-typedef unsigned short ushort;
-typedef const unsigned short cushort;
-typedef const void cvoid;
-typedef int int32;
-typedef unsigned int uint32;
-typedef unsigned int uint;
-typedef unsigned long ulong;
-#if BLD_UNIX_LIKE
-    __extension__ typedef long long int int64;
-    __extension__ typedef unsigned long long int uint64;
-#elif BLD_WIN_LIKE
-    typedef __int64 int64;
-    typedef unsigned __int64 uint64;
-#else
-    typedef long long int int64;
-    typedef unsigned long long int uint64;
-#endif
-typedef off_t MprOffset;
-
-#if UNUSED
-typedef intptr_t pint;
-#endif
-
-/* To stop MatrixSSL from defining int32 */
-#define HAS_INT32 1
-
 #ifndef BITSPERBYTE
     #define BITSPERBYTE     (8 * sizeof(char))
 #endif
+
 #ifndef BITS
     #define BITS(type)      (BITSPERBYTE * (int) sizeof(type))
 #endif
@@ -370,7 +482,11 @@ typedef intptr_t pint;
 #ifndef R_OK
     #define R_OK    4
     #define W_OK    2
+#if BLD_WIN_LIKE
+    #define X_OK    R_OK
+#else
     #define X_OK    1
+#endif
     #define F_OK    0
 #endif
 
@@ -385,8 +501,6 @@ typedef intptr_t pint;
     #define closesocket(x)  close(x)
     #define MPR_BINARY      ""
     #define MPR_TEXT        ""
-    #define O_BINARY        0
-    #define O_TEXT          0
     #define SOCKET_ERROR    -1
     #ifndef PTHREAD_MUTEX_RECURSIVE_NP
         #define PTHREAD_MUTEX_RECURSIVE_NP PTHREAD_MUTEX_RECURSIVE
@@ -396,9 +510,16 @@ typedef intptr_t pint;
     #endif
 #endif
 
-#if MACOSX || VXWORKS || CYGWIN || BLD_WIN_LIKE
+#if !BLD_WIN_LIKE && !CYGWIN
+    #define O_BINARY        0
+    #define O_TEXT          0
+#endif
+
+#if !LINUX
     #define __WALL          0
+#if !CYGWIN
     #define MSG_NOSIGNAL    0
+#endif
 #endif
 
 #if FREEBSD
@@ -437,6 +558,8 @@ typedef intptr_t pint;
     #if _DIAB_TOOL
         #define inline __inline__
     #endif
+    #define closesocket(x)  close(x)
+    #define va_copy(d, s) ((d) = (s))
 #endif
 
 #if BLD_WIN_LIKE
@@ -797,8 +920,6 @@ extern "C" {
 #ifndef _h_MPR_TUNE
 #define _h_MPR_TUNE 1
 
-
-#include    "buildConfig.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1200,6 +1321,9 @@ struct  MprXml;
 
 #define MPR_STRINGIFY(s)    #s
 
+/*
+    Foundational types
+ */
 #if BLD_CHAR_LEN == 4
     typedef int MprChar;
     #define T(s) L ## s
@@ -1553,11 +1677,23 @@ extern void mprGlobalUnlock();
 #if MPR_64_BIT
     #define MPR_ALIGN               16
     #define MPR_ALIGN_SHIFT         4
+#if UNUSED
     #define MPR_SIZE_BITS           53
+#else
+    #define MPR_SIZE_BITS           64
+#endif
 #else
     #define MPR_ALIGN               8
     #define MPR_ALIGN_SHIFT         3
+#if UNUSED
     #define MPR_SIZE_BITS           21
+#else
+    #define MPR_SIZE_BITS           32
+#endif
+#endif
+
+#if FUTURE && KEEP
+#define MPR_ALLOC_MAX_BLOCK         ((uint)((INT64(1) << MPR_SIZE_BITS) - 1))
 #endif
 
 /**
@@ -1583,11 +1719,13 @@ extern void mprGlobalUnlock();
     @defgroup MprMem MprMem
     @see mprFree, mprRealloc, mprAlloc, mprAllocWithManager, mprAllocWithManagerZeroed, mprAllocZeroed, 
         mprIsParent, mprCreate, mprSetAllocLimits, mprAllocObjWithManager, mprAllocObjWithManagerZeroed,
-        mprHasMemError mprResetMemError, mprMemdup, mprStrndup, mprMemcpy, 
+        mprHasMemError mprResetMemError, mprMemdup, mprStrndup, mprMemcpy
  */
 typedef struct MprMem {
     struct MprMem   *prior;                     /**< Size of block prior to this block in memory */
-    size_t          size       : MPR_SIZE_BITS; /**< Internal block length including header (max size 16MB on 32 bit) */
+    //  MOB - pack
+    ssize         size    /* : MPR_SIZE_BITS*/; /**< Internal block length including header (max size 16MB on 32 bit) */
+    //  MOB - 8 bits
     uint            free       : 1;             /**< Block is free */
     uint            gen        : 2;             /**< Allocation generation for block */
     uint            hasManager : 1;             /**< Block has a manager function */
@@ -1613,8 +1751,8 @@ typedef struct MprMem {
 #define MPR_ALLOC_MAGIC             0xe814ecab
 #define MPR_ALLOC_MIN_SPLIT         (32 + sizeof(MprMem))
 #define MPR_ALLOC_ALIGN(x)          (((x) + MPR_ALIGN - 1) & ~(MPR_ALIGN - 1))
-#define MPR_PAGE_ALIGN(x, psize)    ((((size_t) (x)) + ((size_t) (psize)) - 1) & ~(((size_t) (psize)) - 1))
-#define MPR_PAGE_ALIGNED(x, psize)  ((((size_t) (x)) % ((size_t) (psize))) == 0)
+#define MPR_PAGE_ALIGN(x, psize)    ((((ssize) (x)) + ((ssize) (psize)) - 1) & ~(((ssize) (psize)) - 1))
+#define MPR_PAGE_ALIGNED(x, psize)  ((((ssize) (x)) % ((ssize) (psize))) == 0)
 #define MPR_ALLOC_BUCKET_SHIFT      4
 #define MPR_ALLOC_NUM_BITS          (sizeof(void*) * 8)
 #define MPR_ALLOC_NUM_GROUPS        (MPR_ALLOC_NUM_BITS - MPR_ALLOC_BUCKET_SHIFT - MPR_ALIGN_SHIFT - 1)
@@ -1633,10 +1771,13 @@ typedef struct MprMem {
  */
 #define MPR_ALLOC_BIG               (32 * 1024)
 #define MPR_REGION_MIN_SIZE         MPR_MEM_CHUNK_SIZE
+
+#if UNUSED
 #if BLD_TUNE == MPR_TUNE_SPEED
     #define MPR_REGION_MAX_SIZE     (4 * 1024 * 1024)
 #else
     #define MPR_REGION_MAX_SIZE     MPR_REGION_MIN_SIZE
+#endif
 #endif
 
 /*
@@ -1688,7 +1829,7 @@ typedef struct MprMem {
         return zero.
     @ingroup MprMem
  */
-typedef int (*MprMemNotifier)(int flags, size_t size);
+typedef int (*MprMemNotifier)(int flags, ssize size);
 
 /**
     Mpr memory block manager prototype
@@ -1702,12 +1843,12 @@ typedef void (*MprManager)(void *ptr, int flags);
  */
 typedef struct MprFreeMem {
     union {
-        MprMem          hdr;
+        MprMem          blk;
         struct {
             int         minSize;            /* Min size of block in queue */
             uint        count;              /* Number of blocks on the queue */
         } stats;
-    };
+    } info;
     struct MprFreeMem *next;                /* Next free block */
     struct MprFreeMem *prev;                /* Previous free block */
 } MprFreeMem;
@@ -1720,15 +1861,14 @@ typedef struct MprMemStats {
     int             inMemException;         /* Recursive protect */
     uint            errors;                 /* Allocation errors */
     uint            numCpu;                 /* Number of CPUs */
-    size_t          pageSize;               /* System page size */
-    size_t          bytesAllocated;         /* Bytes currently allocated */
-    size_t          bytesFree;              /* Bytes currently free */
-    size_t          redLine;                /* Warn if allocation exceeds this level */
-    size_t          maxMemory;              /* Max memory that can be allocated */
-    size_t          rss;                    /* OS calculated resident stack size in bytes */
-    size_t          ram;                    /* System RAM size in bytes */
-    size_t          user;                   /* System user RAM size in bytes (excludes kernel) */
-
+    uint            pageSize;               /* System page size */
+    ssize           bytesAllocated;         /* Bytes currently allocated */
+    ssize           bytesFree;              /* Bytes currently free */
+    ssize           redLine;                /* Warn if allocation exceeds this level */
+    ssize           maxMemory;              /* Max memory that can be allocated */
+    ssize           rss;                    /* OS calculated resident stack size in bytes */
+    ssize           ram;                    /* System RAM size in bytes */
+    ssize           user;                   /* System user RAM size in bytes (excludes kernel) */
     int             markVisited;
     int             marked;
     int             sweepVisited;
@@ -1754,7 +1894,7 @@ typedef struct MprMemStats {
 typedef struct MprRegion {
     struct MprRegion *next;                 /* Next region */
     MprMem           *start;                /* Start of region data */
-    size_t           size;                  /* Size of region including region header */
+    ssize           size;                  /* Size of region including region header */
     void             *pad;
 } MprRegion;
 
@@ -1765,8 +1905,8 @@ typedef struct MprRegion {
 typedef struct MprHeap {
     MprFreeMem      freeq[MPR_ALLOC_NUM_GROUPS * MPR_ALLOC_NUM_BUCKETS];
     MprFreeMem      *freeEnd;
-    size_t          groupMap;
-    size_t          bucketMap[MPR_ALLOC_NUM_GROUPS];
+    ssize          groupMap;
+    ulong            bucketMap[MPR_ALLOC_NUM_GROUPS];
     struct MprList  *roots;                 /**< List of GC root objects */
     MprMemStats     stats;
     MprMemNotifier  notifier;               /**< Memory allocation failure callback */
@@ -1826,7 +1966,7 @@ extern void mprDestroyMemService();
     @remarks Do not mix calls to malloc and mprAlloc.
     @ingroup MprMem
  */
-extern void *mprAllocBlock(size_t size, int flags);
+extern void *mprAllocBlock(ssize size, int flags);
 
 #if BLD_DEBUG && !DOXYGEN
     #define mprFree(ptr) mprFreeBlock(ptr, MPR_LOC);
@@ -1861,7 +2001,7 @@ extern MprMemStats *mprGetMemStats();
     amount of allocated heap memory.
     @returns the amount of memory used by the application in bytes.
  */
-extern size_t mprGetMem();
+extern ssize mprGetMem();
 
 /**
     Get the current O/S virtual page size
@@ -1874,7 +2014,7 @@ extern int mprGetPageSize();
     @param ptr Any memory allocated by mprAlloc
     @returns the block size in bytes
  */
-extern size_t mprGetBlockSize(cvoid *ptr);
+extern ssize mprGetBlockSize(cvoid *ptr);
 
 /**
     Determine if the MPR has encountered memory allocation errors.
@@ -1904,7 +2044,7 @@ extern int mprIsValid(cvoid*);
     @return Returns the number of characters in the allocated block.
     @ingroup MprString
  */
-extern int mprMemcpy(void *dest, int destMax, cvoid *src, int nbytes);
+extern ssize mprMemcpy(void *dest, ssize destMax, cvoid *src, ssize nbytes);
 
 /**
     Compare two byte strings.
@@ -1927,7 +2067,7 @@ extern int mprMemcmp(cvoid *b1, int b1Len, cvoid *b2, int b2Len);
     @return Returns an allocated block.
     @ingroup MprMem
  */
-extern void *mprMemdup(cvoid *ptr, size_t size);
+extern void *mprMemdup(cvoid *ptr, ssize size);
 
 /**
     Print a memory usage report to stdout
@@ -1947,7 +2087,7 @@ extern void mprPrintMem(cchar *msg, int detail);
     @remarks Do not mix calls to realloc and mprRealloc.
     @ingroup MprMem
  */
-extern void *mprRealloc(void *ptr, size_t size);
+extern void *mprRealloc(void *ptr, ssize size);
 
 /**
     Reset the memory allocation error flag
@@ -1981,7 +2121,7 @@ extern void mprSetMemError();
     @param maxMemory Hard memory limit. If exceeded, the request will not be granted, and the memory handler will be invoked.
     @ingroup MprMem
  */
-extern void mprSetMemLimits(int redline, int maxMemory);
+extern void mprSetMemLimits(ssize redline, ssize maxMemory);
 
 /**
     Set the memory allocation policy for when allocations fail.
@@ -2011,14 +2151,14 @@ extern void mprValidateBlock(void *ptr);
     @param size of virtual memory to map. This size will be rounded up to the nearest page boundary.
     @param mode Mask set to MPR_MAP_READ | MPR_MAP_WRITE
  */
-extern void *mprVirtAlloc(size_t size, int mode);
+extern void *mprVirtAlloc(ssize size, int mode);
 
 /**
     Free (unpin) a mapped section of virtual memory
     @param ptr Virtual address to free. Should be page aligned
     @param size Size of memory to free in bytes
  */
-extern void mprVirtFree(void *ptr, size_t size);
+extern void mprVirtFree(void *ptr, ssize size);
 
 /*
     Macros. When building documentation (DOXYGEN), define pretend function defintions for the documentation.
@@ -2027,10 +2167,7 @@ extern void mprVirtFree(void *ptr, size_t size);
     In debug mode, all memory blocks can have a debug name
  */
 #if BLD_MEMORY_DEBUG
-    static MPR_INLINE void *mprSetName(void *ptr, cchar *name) {
-        MPR_GET_MEM(ptr)->name = name;
-        return ptr;
-    }
+    extern void *mprSetName(void *ptr, cchar *name);
     #define mprGetName(ptr) (MPR_GET_MEM(ptr)->name)
     #define mprPassName(ptr, name) mprSetName(ptr, name)
 #else
@@ -2063,7 +2200,7 @@ typedef void *Type;
     @remarks Do not mix calls to malloc and mprAlloc.
     @ingroup MprMem
  */
-extern void *mprAlloc(size_t size);
+extern void *mprAlloc(ssize size);
 
 /**
     Allocate an object of a given type.
@@ -2090,12 +2227,12 @@ extern void *mprAllocObj(Type type, MprManager manage) { return 0;}
     @remarks Do not mix calls to malloc and mprAlloc.
     @ingroup MprMem
  */
-extern void *mprAllocZeroed(size_t size);
+extern void *mprAllocZeroed(ssize size);
 
 #else /* !DOXYGEN */
-extern void *mprAllocBlock(size_t size, int flags);
-extern void *mprRealloc(void *ptr, size_t size);
-extern void *mprMemdup(cvoid *ptr, size_t size);
+extern void *mprAllocBlock(ssize size, int flags);
+extern void *mprRealloc(void *ptr, ssize size);
+extern void *mprMemdup(cvoid *ptr, ssize size);
 extern void mprCheckBlock(MprMem *bp);
 #endif
 
@@ -2274,7 +2411,7 @@ extern int scmp(cchar *s1, cchar *s2);
     @return Returns a reference to the start of the pattern in the string. If not found, returns NULL.
     @ingroup MprString
  */
-extern char *scontains(cchar *str, cchar *pattern, size_t limit);
+extern char *scontains(cchar *str, cchar *pattern, ssize limit);
 
 /**
     Copy a string.
@@ -2288,7 +2425,7 @@ extern char *scontains(cchar *str, cchar *pattern, size_t limit);
     @return Returns the number of characters in the target string.
     @ingroup MprString
  */
-extern size_t scopy(char *dest, size_t destMax, cchar *src);
+extern ssize scopy(char *dest, ssize destMax, cchar *src);
 
 /**
     Test if the string ends with a given pattern.
@@ -2326,7 +2463,7 @@ extern char *sfmtv(cchar *fmt, va_list args);
     @param len Length in characters of the string to include in the hash code
     @return Returns an unsigned integer hash code
  */
-extern uint shash(cchar *str, size_t len);
+extern uint shash(cchar *str, ssize len);
 
 /**
     Compute a caseless hash code for a string
@@ -2335,7 +2472,7 @@ extern uint shash(cchar *str, size_t len);
     @param len Length in characters of the string to include in the hash code
     @return Returns an unsigned integer hash code
  */
-extern uint shashlower(cchar *str, size_t len);
+extern uint shashlower(cchar *str, ssize len);
 
 /**
     Catenate strings.
@@ -2369,16 +2506,15 @@ extern char *sjoinv(cchar *str, va_list args);
     @return Returns the length of the string
     @ingroup MprString
  */
-extern size_t slen(cchar *str);
+extern ssize slen(cchar *str);
 
-//  MOB - should slower, supper, wlower, wupper allocate a new string?
 /**
     Convert a string to lower case. 
-    @description Convert a string to its lower case equivalent. This overwrites the original string.
+    @description Convert a string to its lower case equivalent.
     @param str String to convert.
     @ingroup MprString
  */
-extern char *slower(char *str);
+extern char *slower(cchar *str);
 
 /**
     Compare strings ignoring case.
@@ -2391,7 +2527,7 @@ extern char *slower(char *str);
         or > 0 if it sorts higher.
     @ingroup MprString
  */
-extern int sncasecmp(cchar *s1, cchar *s2, size_t len);
+extern int sncasecmp(cchar *s1, cchar *s2, ssize len);
 
 /**
     Compare strings.
@@ -2403,7 +2539,7 @@ extern int sncasecmp(cchar *s1, cchar *s2, size_t len);
         or > 0 if it sorts higher.
     @ingroup MprString
  */
-extern int sncmp(cchar *s1, cchar *s2, size_t len);
+extern int sncmp(cchar *s1, cchar *s2, ssize len);
 
 /**
     Copy characters from a string.
@@ -2418,7 +2554,7 @@ extern int sncmp(cchar *s1, cchar *s2, size_t len);
     @return Returns a reference to the destination if successful or NULL if the string won't fit.
     @ingroup MprString
  */
-extern size_t sncopy(char *dest, size_t destMax, cchar *src, size_t len);
+extern ssize sncopy(char *dest, ssize destMax, cchar *src, ssize len);
 
 /**
     Locate the a character in a string.
@@ -2468,7 +2604,7 @@ extern char *srejoinv(char *buf, va_list args);
     @param set Set of characters to span
     @return Returns a reference to the first character after the spanning set.
   */
-extern size_t sspn(cchar *str, cchar *set);
+extern ssize sspn(cchar *str, cchar *set);
 
 /**
     Test if the string starts with a given pattern.
@@ -2507,18 +2643,16 @@ extern char *stok(char *str, cchar *delim, char **last);
     @param length Length of the substring in characters
     @return Returns a newly allocated substring
  */
-extern char *ssub(char *str, size_t offset, size_t length);
+extern char *ssub(char *str, ssize offset, ssize length);
 
-//  MOB - should slower, supper, wlower, wupper allocate a new string?
 /**
     Convert a string to upper case.
-    This modifies the original string.
     @description Convert a string to its upper case equivalent.
     @param str String to convert.
     @return Returns a pointer to the converted string. Will always equal str.
     @ingroup MprString
  */
-extern char *supper(char *s);
+extern char *supper(cchar *s);
 
 /**
     Trim a string.
@@ -2536,41 +2670,40 @@ extern char *strim(char *str, cchar *set, int where);
  */
 
 //  MOB DOC
-extern MprChar *amtow(cchar *src, size_t *len);
-extern char    *awtom(MprChar *src, size_t *len);
+extern MprChar *amtow(cchar *src, ssize *len);
+extern char    *awtom(MprChar *src, ssize *len);
 extern MprChar *wfmt(MprChar *fmt, ...);
 
 #if BLD_CHAR_LEN > 1
-extern size_t   wtom(char *dest, size_t count, MprChar *src, size_t len);
-extern size_t   mtow(MprChar *dest, size_t count, cchar *src, size_t len);
+extern ssize   wtom(char *dest, ssize count, MprChar *src, ssize len);
+extern ssize   mtow(MprChar *dest, ssize count, cchar *src, ssize len);
 
-extern MprChar *itow(MprChar *buf, size_t bufCount, int64 value, int radix);
+extern MprChar *itow(MprChar *buf, ssize bufCount, int64 value, int radix);
 extern MprChar *wchr(MprChar *s, int c);
 extern int      wcasecmp(MprChar *s1, MprChar *s2);
 extern MprChar *wclone(MprChar *str);
 extern int      wcmp(MprChar *s1, MprChar *s2);
-extern MprChar *wcontains(MprChar *str, MprChar *pattern, size_t limit);
-extern size_t   wcopy(MprChar *dest, size_t destMax, MprChar *src);
+extern MprChar *wcontains(MprChar *str, MprChar *pattern, ssize limit);
+extern ssize   wcopy(MprChar *dest, ssize destMax, MprChar *src);
 extern int      wends(MprChar *str, MprChar *suffix);
 extern MprChar *wfmtv(MprChar *fmt, va_list arg);
-extern uint     whash(MprChar *name, size_t len);
-extern uint     whashlower(MprChar *name, size_t len);
+extern uint     whash(MprChar *name, ssize len);
+extern uint     whashlower(MprChar *name, ssize len);
 extern MprChar *wjoin(MprChar *sep, ...);
 extern MprChar *wjoinv(MprChar *sep, va_list args);
-extern size_t   wlen(MprChar *s);
+extern ssize   wlen(MprChar *s);
 
-//  MOB - should slower, supper, wlower, wupper allocate a new string?
 extern MprChar *wlower(MprChar *s);
-extern int      wncasecmp(MprChar *s1, MprChar *s2, size_t len);
-extern int      wncmp(MprChar *s1, MprChar *s2, size_t len);
-extern size_t   wncopy(MprChar *dest, size_t destCount, MprChar *src, size_t len);
+extern int      wncasecmp(MprChar *s1, MprChar *s2, ssize len);
+extern int      wncmp(MprChar *s1, MprChar *s2, ssize len);
+extern ssize   wncopy(MprChar *dest, ssize destCount, MprChar *src, ssize len);
 extern MprChar *wpbrk(MprChar *str, MprChar *set);
 extern MprChar *wrchr(MprChar *s, int c);
 extern MprChar *wrejoin(MprChar *buf, MprChar *sep, ...);
 extern MprChar *wrejoinv(MprChar *buf, MprChar *sep, va_list args);
-extern size_t   wspn(MprChar *str, MprChar *set);
+extern ssize   wspn(MprChar *str, MprChar *set);
 extern int      wstarts(MprChar *str, MprChar *prefix);
-extern MprChar *wsub(MprChar *str, size_t offset, size_t len);
+extern MprChar *wsub(MprChar *str, ssize offset, ssize len);
 extern int64    wtoi(MprChar *str, int radix, int *err);
 extern MprChar *wtok(MprChar *str, MprChar *delim, MprChar **last);
 extern MprChar *wtrim(MprChar *str, MprChar *set, int where);
@@ -2619,20 +2752,20 @@ extern MprChar *wupper(MprChar *s);
 #if BLD_CHAR_LEN > 1
 extern int      mcasecmp(MprChar *s1, cchar *s2);
 extern int      mcmp(MprChar *s1, cchar *s2);
-extern MprChar *mcontains(MprChar *str, cchar *pattern, size_t limit);
-extern size_t   mcopy(MprChar *dest, size_t destMax, cchar *src);
+extern MprChar *mcontains(MprChar *str, cchar *pattern, ssize limit);
+extern ssize   mcopy(MprChar *dest, ssize destMax, cchar *src);
 extern int      mends(MprChar *str, cchar *suffix);
 extern MprChar *mfmt(cchar *fmt, ...);
 extern MprChar *mfmtv(cchar *fmt, va_list arg);
 extern MprChar *mjoin(cchar *sep, ...);
 extern MprChar *mjoinv(cchar *sep, va_list args);
-extern int      mncmp(MprChar *s1, cchar *s2, size_t len);
-extern int      mncasecmp(MprChar *s1, cchar *s2, size_t len);
-extern size_t   mncopy(MprChar *dest, size_t destMax, cchar *src, size_t len);
+extern int      mncmp(MprChar *s1, cchar *s2, ssize len);
+extern int      mncasecmp(MprChar *s1, cchar *s2, ssize len);
+extern ssize   mncopy(MprChar *dest, ssize destMax, cchar *src, ssize len);
 extern MprChar *mpbrk(MprChar *str, cchar *set);
 extern MprChar *mrejoin(MprChar *buf, cchar *sep, ...);
 extern MprChar *mrejoinv(MprChar *buf, cchar *sep, va_list args);
-extern size_t   mspn(MprChar *str, cchar *set);
+extern ssize   mspn(MprChar *str, cchar *set);
 extern int      mstarts(MprChar *str, cchar *prefix);
 extern MprChar *mtok(MprChar *str, cchar *delim, MprChar **last);
 extern MprChar *mtrim(MprChar *str, cchar *set, int where);
@@ -2724,7 +2857,7 @@ extern int mprIsNan(double value);
     @return Returns the number of bytes written
     @ingroup MprString
  */
-extern int mprPrintfError(cchar *fmt, ...);
+extern ssize mprPrintfError(cchar *fmt, ...);
 
 /**
     Formatted print. This is a secure verion of printf that can handle null args.
@@ -2734,7 +2867,7 @@ extern int mprPrintfError(cchar *fmt, ...);
     @return Returns the number of bytes written
     @ingroup MprString
  */
-extern int mprPrintf(cchar *fmt, ...);
+extern ssize mprPrintf(cchar *fmt, ...);
 
 /**
     Print a formatted message to a file descriptor
@@ -2746,7 +2879,7 @@ extern int mprPrintf(cchar *fmt, ...);
     @return Returns the number of bytes written
     @ingroup MprString
  */
-extern int mprFprintf(struct MprFile *file, cchar *fmt, ...);
+extern ssize mprFprintf(struct MprFile *file, cchar *fmt, ...);
 
 /**
     Format a string into a statically allocated buffer.
@@ -2759,7 +2892,7 @@ extern int mprFprintf(struct MprFile *file, cchar *fmt, ...);
     @return Returns the buffer.
     @ingroup MprString
  */
-extern char *mprSprintf(char *buf, int maxSize, cchar *fmt, ...);
+extern char *mprSprintf(char *buf, ssize maxSize, cchar *fmt, ...);
 
 /**
     Format a string into a statically allocated buffer.
@@ -2772,7 +2905,7 @@ extern char *mprSprintf(char *buf, int maxSize, cchar *fmt, ...);
     @return Returns the buffer;
     @ingroup MprString
  */
-extern char *mprSprintfv(char *buf, int maxSize, cchar *fmt, va_list args);
+extern char *mprSprintfv(char *buf, ssize maxSize, cchar *fmt, va_list args);
 
 /**
     Format a string into an allocated buffer.
@@ -2834,9 +2967,9 @@ typedef struct MprBuf {
     char            *endbuf;            /**< Pointer one past the end of buffer */
     char            *start;             /**< Pointer to next data char */
     char            *end;               /**< Pointer one past the last data chr */
-    size_t          buflen;             /**< Current size of buffer */
-    size_t          maxsize;            /**< Max size the buffer can ever grow */
-    int             growBy;             /**< Next growth increment to use */
+    ssize         buflen;             /**< Current size of buffer */
+    ssize         maxsize;            /**< Max size the buffer can ever grow */
+    ssize         growBy;             /**< Next growth increment to use */
     MprBufProc      refillProc;         /**< Auto-refill procedure */
     void            *refillArg;         /**< Refill arg */
 } MprBuf;
@@ -2849,7 +2982,7 @@ typedef struct MprBuf {
     @return a new buffer
     @ingroup MprBuf
  */
-extern MprBuf *mprCreateBuf(int initialSize, int maxSize);
+extern MprBuf *mprCreateBuf(ssize initialSize, ssize maxSize);
 
 /**
     Clone a buffer
@@ -2866,7 +2999,7 @@ extern MprBuf *mprCloneBuf(MprBuf *orig);
     @param maxSize New maximum size the buffer can grow to
     @ingroup MprBuf
  */
-extern void mprSetBufMax(MprBuf *buf, int maxSize);
+extern void mprSetBufMax(MprBuf *buf, ssize maxSize);
 
 /**
     Get a reference to the the buffer memory.
@@ -2897,7 +3030,7 @@ extern void mprAddNullToBuf(MprBuf *buf);
     @param count Positive or negative count of bytes to adjust the start position.
     @ingroup MprBuf
  */
-extern void mprAdjustBufStart(MprBuf *buf, int count);
+extern void mprAdjustBufStart(MprBuf *buf, ssize count);
 
 /**
     Adjust the buffer end position
@@ -2909,7 +3042,7 @@ extern void mprAdjustBufStart(MprBuf *buf, int count);
     @param count Positive or negative count of bytes to adjust the start position.
     @ingroup MprBuf
  */
-extern void mprAdjustBufEnd(MprBuf *buf, int count);
+extern void mprAdjustBufEnd(MprBuf *buf, ssize count);
 
 /**
     Compact the buffer contents
@@ -2943,10 +3076,10 @@ extern int mprGetCharFromBuf(MprBuf *buf);
     @param buf Buffer created via mprCreateBuf
     @param blk Destination block for the read data. 
     @param count Count of bytes to read from the buffer.
-    @return The count of bytes rread into the block or -1 if the buffer is empty.
+    @return The count of bytes read into the block or -1 if the buffer is empty.
     @ingroup MprBuf
  */
-extern int mprGetBlockFromBuf(MprBuf *buf, char *blk, int count);
+extern ssize mprGetBlockFromBuf(MprBuf *buf, char *blk, ssize count);
 
 /**
     Get the buffer content length.
@@ -2955,7 +3088,7 @@ extern int mprGetBlockFromBuf(MprBuf *buf, char *blk, int count);
     @returns The length of the content stored in the buffer in bytes
     @ingroup MprBuf
  */
-extern size_t mprGetBufLength(MprBuf *buf);
+extern ssize mprGetBufLength(MprBuf *buf);
 
 /**
     Get the origin of the buffer content storage.
@@ -2975,7 +3108,7 @@ extern char *mprGetBufOrigin(MprBuf *buf);
     @returns The size of the buffer content storage.
     @ingroup MprBuf
  */
-extern size_t mprGetBufSize(MprBuf *buf);
+extern ssize mprGetBufSize(MprBuf *buf);
 
 /**
     Get the space available to store content
@@ -2984,7 +3117,7 @@ extern size_t mprGetBufSize(MprBuf *buf);
     @returns The number of bytes available
     @ingroup MprBuf
  */
-extern size_t mprGetBufSpace(MprBuf *buf);
+extern ssize mprGetBufSpace(MprBuf *buf);
 
 /**
     Get the start of the buffer contents
@@ -3014,7 +3147,7 @@ extern char *mprGetBufEnd(MprBuf *buf);
     @returns Zero if successful and otherwise a negative error code 
     @ingroup MprBuf
  */
-extern int mprGrowBuf(MprBuf *buf, int count);
+extern int mprGrowBuf(MprBuf *buf, ssize count);
 
 /**
     Insert a character into the buffer
@@ -3065,7 +3198,7 @@ extern int mprPutCharToBuf(MprBuf *buf, int c);
     @returns Zero if successful and otherwise a negative error code 
     @ingroup MprBuf
  */
-extern size_t mprPutPadToBuf(MprBuf *buf, int c, size_t count);
+extern ssize mprPutPadToBuf(MprBuf *buf, int c, ssize count);
 
 /**
     Put a block to the buffer.
@@ -3076,17 +3209,17 @@ extern size_t mprPutPadToBuf(MprBuf *buf, int c, size_t count);
     @returns Zero if successful and otherwise a negative error code 
     @ingroup MprBuf
  */
-extern size_t mprPutBlockToBuf(MprBuf *buf, cchar *ptr, size_t size);
+extern ssize mprPutBlockToBuf(MprBuf *buf, cchar *ptr, ssize size);
 
 /**
     Put an integer to the buffer.
     @description Append a integer to the buffer at the end position and increment the end pointer.
     @param buf Buffer created via mprCreateBuf
     @param i Integer to append to the buffer
-    @returns Zero if successful and otherwise a negative error code 
+    @returns Number of characters added to the buffer, otherwise a negative error code 
     @ingroup MprBuf
  */
-extern int mprPutIntToBuf(MprBuf *buf, int i);
+extern ssize mprPutIntToBuf(MprBuf *buf, int i);
 
 /**
     Put a string to the buffer.
@@ -3096,7 +3229,7 @@ extern int mprPutIntToBuf(MprBuf *buf, int i);
     @returns Zero if successful and otherwise a negative error code 
     @ingroup MprBuf
  */
-extern int mprPutStringToBuf(MprBuf *buf, cchar *str);
+extern ssize mprPutStringToBuf(MprBuf *buf, cchar *str);
 
 /**
     Put a substring to the buffer.
@@ -3107,7 +3240,7 @@ extern int mprPutStringToBuf(MprBuf *buf, cchar *str);
     @returns Zero if successful and otherwise a negative error code 
     @ingroup MprBuf
  */
-extern int mprPutSubStringToBuf(MprBuf *buf, cchar *str, int count);
+extern ssize mprPutSubStringToBuf(MprBuf *buf, cchar *str, ssize count);
 
 /**
     Put a formatted string to the buffer.
@@ -3118,7 +3251,7 @@ extern int mprPutSubStringToBuf(MprBuf *buf, cchar *str, int count);
     @returns Zero if successful and otherwise a negative error code 
     @ingroup MprBuf
  */
-extern int mprPutFmtToBuf(MprBuf *buf, cchar *fmt, ...);
+extern ssize mprPutFmtToBuf(MprBuf *buf, cchar *fmt, ...);
 
 /**
     Refill the buffer with data
@@ -3151,7 +3284,7 @@ extern void mprResetBufIfEmpty(MprBuf *buf);
     @returns Zero if successful and otherwise a negative error code 
     @ingroup MprBuf
  */
-extern int mprSetBufSize(MprBuf *buf, int size, int maxSize);
+extern int mprSetBufSize(MprBuf *buf, ssize size, ssize maxSize);
 
 /**
     Get the buffer refill procedure
@@ -3548,7 +3681,7 @@ extern int mprInsertItemAtPos(MprList *list, int index, cvoid *item);
         Existing items are not freed, they are only removed from the list.
     @param list List pointer returned from mprCreateList.
     @param item Item pointer to remove. 
-    @return Returns zero if successful, otherwise a negative MPR error code.
+    @return Returns the positive index of the removed item, otherwise a negative MPR error code.
     @ingroup MprList
  */
 extern int mprRemoveItem(MprList *list, void *item);
@@ -3557,7 +3690,7 @@ extern int mprRemoveItem(MprList *list, void *item);
     Remove an item from the list
     @description Removes the element specified by \a index, from the list. The
         list index is provided by mprInsertItem.
-    @return Returns zero if successful, otherwise a negative MPR error code.
+    @return Returns the positive index of the removed item, otherwise a negative MPR error code.
     @ingroup MprList
  */
 extern int mprRemoveItemAtPos(MprList *list, int index);
@@ -3567,7 +3700,7 @@ extern int mprRemoveItemAtPos(MprList *list, int index);
     @description Remove the item at the highest index position.
         Existing items are not freed, they are only removed from the list.
     @param list List pointer returned from mprCreateList.
-    @return Returns zero if successful, otherwise a negative MPR error code.
+    @return Returns the positive index of the removed item, otherwise a negative MPR error code.
     @ingroup MprList
  */
 extern int mprRemoveLastItem(MprList *list);
@@ -3810,7 +3943,7 @@ typedef struct MprHash {
 } MprHash;
 
 
-typedef uint (*MprHashProc)(cvoid *name, int len);
+typedef uint (*MprHashProc)(cvoid *name, ssize len);
 
 /**
     Hash table control structure
@@ -3960,11 +4093,11 @@ typedef char            *(*MprGetPathLinkProc)(struct MprFileSystem *fs, cchar *
 typedef int             (*MprMakeDirProc)(struct MprFileSystem *fs, cchar *path, int perms);
 typedef int             (*MprMakeLinkProc)(struct MprFileSystem *fs, cchar *path, cchar *target, int hard);
 typedef int             (*MprCloseFileProc)(struct MprFile *file);
-typedef size_t          (*MprReadFileProc)(struct MprFile *file, void *buf, size_t size);
+typedef ssize          (*MprReadFileProc)(struct MprFile *file, void *buf, ssize size);
 typedef MprOffset       (*MprSeekFileProc)(struct MprFile *file, int seekType, MprOffset distance);
-typedef int             (*MprSetBufferedProc)(struct MprFile *file, int initialSize, int maxSize);
+typedef int             (*MprSetBufferedProc)(struct MprFile *file, ssize initialSize, ssize maxSize);
 typedef int             (*MprTruncateFileProc)(struct MprFileSystem *fs, cchar *path, MprOffset size);
-typedef size_t          (*MprWriteFileProc)(struct MprFile *file, cvoid *buf, size_t count);
+typedef ssize          (*MprWriteFileProc)(struct MprFile *file, cvoid *buf, ssize count);
 
 #if !DOXYGEN
 /* Work around doxygen bug */
@@ -4105,7 +4238,7 @@ extern void mprSetPathNewline(cchar *path, cchar *newline);
     @see MprFile mprClose mprGets mprOpen mprPutc mprPuts mprRead mprSeek mprWrite mprWriteString mprWriteFormat
         mprFlush MprFile mprGetc mprDisableFileBuffering mprEnableFileBuffering mprGetFileSize 
         mprGetFilePosition mprPeekc
- *
+
     @defgroup MprFile MprFile
  */
 typedef struct MprFile {
@@ -4171,7 +4304,7 @@ extern void mprDisableFileBuffering(MprFile *file);
     @param maxSize Maximum size the data buffer can grow to
     @ingroup MprFile
  */
-extern int mprEnableFileBuffering(MprFile *file, int size, int maxSize);
+extern int mprEnableFileBuffering(MprFile *file, ssize size, ssize maxSize);
 
 /**
     Flush any buffered write data
@@ -4210,7 +4343,7 @@ extern MprOffset mprGetFileSize(MprFile *file);
     @return An allocated string and sets *len to the number of bytes read. 
     @ingroup MprFile
  */
-extern char *mprGets(MprFile *file, size_t size, int *len);
+extern char *mprGets(MprFile *file, ssize size, ssize *len);
 
 /**
     Read a character from the file.
@@ -4280,7 +4413,7 @@ extern int mprPeekc(MprFile *file);
     @return One if successful, otherwise returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern int mprPutc(MprFile *file, int c);
+extern ssize mprPutc(MprFile *file, int c);
 
 /**
     Write a string to the file.
@@ -4290,7 +4423,7 @@ extern int mprPutc(MprFile *file, int c);
     @return The number of characters written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern int mprPuts(MprFile *file, cchar *str);
+extern ssize mprPuts(MprFile *file, cchar *str);
 
 /**
     Read data from a file.
@@ -4301,7 +4434,7 @@ extern int mprPuts(MprFile *file, cchar *str);
     @return The number of characters read from the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern int mprRead(MprFile *file, void *buf, size_t size);
+extern ssize mprRead(MprFile *file, void *buf, ssize size);
 
 /**
     Seek the I/O pointer to a new location in the file.
@@ -4337,7 +4470,7 @@ extern int mprTruncate(cchar *path, MprOffset size);
     @return The number of characters actually written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern int mprWrite(MprFile *file, cvoid *buf, size_t count);
+extern ssize mprWrite(MprFile *file, cvoid *buf, ssize count);
 
 /**
     Write a string to a file.
@@ -4347,7 +4480,7 @@ extern int mprWrite(MprFile *file, cvoid *buf, size_t count);
     @return The number of characters actually written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern int mprWriteString(MprFile *file, cchar *str);
+extern ssize mprWriteString(MprFile *file, cchar *str);
 
 /**
     Write formatted data to a file.
@@ -4357,7 +4490,7 @@ extern int mprWriteString(MprFile *file, cchar *str);
     @return The number of characters actually written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern int mprWriteFormat(MprFile *file, cchar *fmt, ...);
+extern ssize mprWriteFormat(MprFile *file, cchar *fmt, ...);
 
 extern int mprGetFileFd(MprFile *file);
 
@@ -4739,7 +4872,7 @@ extern int mprSamePath(cchar *path1, cchar *path2);
     @returns True if the file exists and can be accessed
     @ingroup MprPath
  */
-extern int mprSamePathCount(cchar *path1, cchar *path2, size_t len);
+extern int mprSamePathCount(cchar *path1, cchar *path2, ssize len);
 
 /**
     Search for a path
@@ -4993,11 +5126,6 @@ typedef struct MprEventService {
     struct MprMutex *mutex;             /**< Multi-thread sync */
 } MprEventService;
 
-/*
-    ServiceEvents parameters
- */
-#define MPR_SERVICE_ONE_THING   0x4         /**< Wait for one event or one I/O */
-
 /**
     Create a new event dispatcher
     @param name Useful name for debugging
@@ -5018,6 +5146,13 @@ extern MprDispatcher *mprGetDispatcher();
     @param dispatcher Dispatcher to enable
  */
 extern void mprEnableDispatcher(MprDispatcher *dispatcher);
+
+/*
+    mprServiceEvents parameters
+ */
+#define MPR_SERVICE_ONE_THING   0x4         /**< Wait for one event or one I/O */
+#define MPR_SERVICE_NO_GC       0x8         /**< Don't run GC */
+#define MPR_SERVICE_ONLY        0x10        /**< Service only this dispatcher */
 
 /*
     Schedule events. This can be called by any thread. Typically an app will dedicate one thread to be an event service 
@@ -5182,7 +5317,7 @@ typedef enum MprXmlToken {
 } MprXmlToken;
 
 typedef int (*MprXmlHandler)(struct MprXml *xp, int state, cchar *tagName, cchar* attName, cchar* value);
-typedef int (*MprXmlInputStream)(struct MprXml *xp, void *arg, char *buf, int size);
+typedef int (*MprXmlInputStream)(struct MprXml *xp, void *arg, char *buf, ssize size);
 
 /*
     Per XML session structure
@@ -5200,7 +5335,7 @@ typedef struct MprXml {
 } MprXml;
 
 //MOB MARK
-extern MprXml *mprXmlOpen(int initialSize, int maxSize);
+extern MprXml *mprXmlOpen(ssize initialSize, ssize maxSize);
 extern void mprXmlSetParserHandler(MprXml *xp, MprXmlHandler h);
 extern void mprXmlSetInputStream(MprXml *xp, MprXmlInputStream s, void *arg);
 extern int mprXmlParse(MprXml *xp);
@@ -5645,8 +5780,8 @@ typedef struct MprSocketProvider {
     void              (*disconnectSocket)(struct MprSocket *socket);
     int               (*flushSocket)(struct MprSocket *socket);
     int               (*listenSocket)(struct MprSocket *socket, cchar *host, int port, int flags);
-    size_t            (*readSocket)(struct MprSocket *socket, void *buf, size_t len);
-    size_t            (*writeSocket)(struct MprSocket *socket, void *buf, size_t len);
+    ssize            (*readSocket)(struct MprSocket *socket, void *buf, ssize len);
+    ssize            (*writeSocket)(struct MprSocket *socket, void *buf, ssize len);
 } MprSocketProvider;
 
 typedef int (*MprSocketPrebind)(struct MprSocket *sock);
@@ -5750,7 +5885,7 @@ typedef struct MprSocket {
  */
 typedef struct MprIOVec {
     char            *start;
-    size_t          len;
+    ssize          len;
 } MprIOVec;
 
 
@@ -5852,7 +5987,7 @@ extern int mprFlushSocket(MprSocket *sp);
     @return A count of bytes actually written. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern size_t mprWriteSocket(MprSocket *sp, void *buf, size_t len);
+extern ssize mprWriteSocket(MprSocket *sp, void *buf, ssize len);
 
 /**
     Write to a string to a socket
@@ -5863,7 +5998,7 @@ extern size_t mprWriteSocket(MprSocket *sp, void *buf, size_t len);
     @return A count of bytes actually written. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern int mprWriteSocketString(MprSocket *sp, cchar *str);
+extern ssize mprWriteSocketString(MprSocket *sp, cchar *str);
 
 /**
     Read from a socket
@@ -5875,7 +6010,7 @@ extern int mprWriteSocketString(MprSocket *sp, cchar *str);
     @return A count of bytes actually read. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern int mprReadSocket(MprSocket *sp, void *buf, int size);
+extern ssize mprReadSocket(MprSocket *sp, void *buf, ssize size);
 
 /**
     Get the socket blocking mode.
@@ -5978,7 +6113,7 @@ extern int mprGetSocketError(MprSocket *sp);
     @return A count of bytes actually written. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern MprOffset mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOffset offset, int bytes, MprIOVec *beforeVec, 
+extern ssize mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOffset offset, ssize bytes, MprIOVec *beforeVec, 
     int beforeCount, MprIOVec *afterVec, int afterCount);
 #endif
 
@@ -6007,7 +6142,7 @@ extern bool mprIsSocketSecure(MprSocket *sp);
     @return A count of bytes actually written. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern int mprWriteSocketVector(MprSocket *sp, MprIOVec *iovec, int count);
+extern ssize mprWriteSocketVector(MprSocket *sp, MprIOVec *iovec, int count);
 
 /**
     Enable socket events for a socket callback
@@ -6247,7 +6382,7 @@ extern char *mprEncode64(cchar *str);
     @param prefix String prefix to insert at the start of the result
     @returns An MD5 checksum string.
  */
-extern char *mprGetMD5Hash(cchar *buf, size_t len, cchar *prefix);
+extern char *mprGetMD5Hash(cchar *buf, ssize len, cchar *prefix);
 
 extern int mprCalcDigest(char **digest, cchar *userName, cchar *password, cchar *realm,
                 cchar *uri, cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);
@@ -6412,8 +6547,16 @@ typedef struct MprCmd {
     SEM_ID          exitCond;           /* Synchronization semaphore for task exit */
 #endif
     MprMutex        *mutex;             /* Multithread sync */
+    MprCond         *cond;              /* Multithread signalling */
 } MprCmd;
 
+
+/**
+    Close the command
+    @param cmd MprCmd object created via mprCreateCmd
+    @ingroup MprCmd
+ */
+extern void mprCloseCmd(MprCmd *cmd);
 
 /**
     Close the command channel
@@ -6506,7 +6649,7 @@ extern int mprMakeCmdIO(MprCmd *cmd);
     @return Zero if successful. Otherwise a negative MPR error code.
     @ingroup MprCmd
  */
-extern int mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, int bufsize);
+extern ssize mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, ssize bufsize);
 
 /**
     Reap the command. This waits for and collect the command exit status. 
@@ -6751,6 +6894,9 @@ extern Mpr *mprGetMpr();
  */
 extern Mpr *mprCreate(int argc, char **argv, int flags);
 
+//  MOB DOC
+extern int mprHasEventsThread();
+
 /**
     Start the Mpr services
     @param mpr Mpr object created via mprCreateMpr
@@ -6942,7 +7088,7 @@ extern void mprSetAltLogData(void *data);
 extern void mprSleep(int msec);
 
 #if BLD_WIN_LIKE
-extern int mprReadRegistry(char **buf, int max, cchar *key, cchar *val);
+extern int mprReadRegistry(char **buf, ssize max, cchar *key, cchar *val);
 extern int mprWriteRegistry(cchar *key, cchar *name, cchar *value);
 #endif
 
@@ -7161,6 +7307,7 @@ typedef struct MprTestGroup {
 
     void            *data;                  /* Test specific data */
     int             hasInternet;            /* Convenience flag for internet available for use */
+    int             hasIPv6;                /* Convenience flag for IPv6 service */
     MprMutex        *mutex;                 /* Multi-thread sync */
 } MprTestGroup;
 

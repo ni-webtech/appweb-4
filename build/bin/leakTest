@@ -6,7 +6,6 @@
 #
 
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
-. ${BLD_OUT_DIR}/bin/buildConfig.sh
 
 export LD_LIBRARY_PATH=$BLD_LIB_DIR:$LD_LIBRARY_PATH
 
@@ -67,6 +66,8 @@ trap "
         exit 2
     fi
 " SIGALRM
+
+. `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 
 #
 #   Can't do leak tests if doing cross-development

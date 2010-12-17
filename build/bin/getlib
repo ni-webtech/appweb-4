@@ -6,9 +6,9 @@
 #
 
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
-. ${BLD_OUT_DIR}/bin/buildConfig.sh
-
 files="$*"
+
+. `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 
 for path in $files
 do
@@ -32,7 +32,13 @@ do
         file=`basename $path`
         printf "%12s %s\n" "[Import]" $file
         cp "$path" "${BLD_LIB_DIR}/$file"
-        chmod 755 ${BLD_LIB_DIR}/$file
+        chmod 755 "${BLD_LIB_DIR}/$file"
+        if [ "${BLD_HOST_OS}" = "CYGWIN" ] ; then
+            dll="${path/\.a/.dll.a}"
+            f=`basename $dll`
+            cp "${dll}" "${BLD_LIB_DIR}/${f}"
+            chmod 755 "${BLD_LIB_DIR}/$f"
+        fi
 
         #
         #   Create symlink without library version

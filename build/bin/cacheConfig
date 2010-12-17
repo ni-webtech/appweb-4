@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+#   cacheConfig -- Cache a copy of buildConfig.h as .buildConfig.sh suitable for use by shell scripts.
+#   
+#   Echos the path to the cache file so it can be used as:
+#
+#   . `cacheConfig ${BLD_INC_DIR}/buildConfig.h`
+#
+#   Copyright (c) Embedthis LLC, 2003-2010. All Rights Reserved.
+#
+config="$1"
+cache="`dirname "$1"`/.buildConfig.sh"
+
+if [ "$cache" -ot "$config" ] ; then
+    cat "$config" | sed '1,/C Source Code/d;1,$s/.*#define /ZZZ/;/ZZZ/s/ /=/;s/ZZZ//' | egrep -v 'IGNORE|^endif' >"$cache"
+fi
+echo $cache

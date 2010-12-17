@@ -8,7 +8,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_STATIC || (!BLD_APPWEB_PRODUCT && BLD_APPWEB_BUILTIN)
+#if BLD_STATIC || (!BLD_APPWEB_PRODUCT && BLD_APPWEB_BUILTIN)
 /*********************************** Locals ***********************************/
 
 static MprList *staticModules;
@@ -68,7 +68,7 @@ void maUnloadStaticModules(MaAppweb *appweb)
 void maLoadStaticModules(MaAppweb *appweb) {}
 void maUnloadStaticModules(MaAppweb *appweb) {}
 
-#endif /* BLD_FEATURE_STATIC */
+#endif /* BLD_STATIC */
 
 /*
     @copy   default

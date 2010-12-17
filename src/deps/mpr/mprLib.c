@@ -2,15 +2,15 @@
 
 /******************************************************************************/
 /* 
-    This file is an amalgamation of all the individual source code files for
-     .
+    This file is an amalgamation of all the individual source code files for the
+    Multithreaded Portable Runtime Library Source.
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
     optimization.
   
-    If you want to modify , you can still get the whole source
-    as individual files if you need.
+    If you want to modify the product, you can still get the whole source as 
+    individual files if you need.
  */
 
 
@@ -40,7 +40,7 @@ static int stopSeqno = -1;
 #define GET_PTR(mp)             ((char*) (((char*) (mp)) + sizeof(MprMem)))
 #define GET_NEXT(mp)            ((mp)->last) ? NULL : ((MprMem*) ((char*) mp + mp->size))
 #define GET_REGION(mp)          ((MprRegion*) (((char*) mp) - sizeof(MprRegion)))
-#define GET_USIZE(mp)           (mp->size - sizeof(MprMem) - (mp->hasManager * sizeof(void*)))
+#define GET_USIZE(mp)           ((ssize) (mp->size - sizeof(MprMem) - (mp->hasManager * sizeof(void*))))
 
 /*
     Trailing block. This is optional and will look like:
@@ -120,24 +120,24 @@ static MprHeap  *heap;
 static int      padding[] = { 0, MANAGER_SIZE };
 
 
-static void allocException(size_t size, bool granted);
+static void allocException(ssize size, bool granted);
 static void deq(MprFreeMem *fp);
 static void enq(MprFreeMem *head, MprFreeMem *fp);
 static MprMem *freeBlock(MprMem *mp);
 static void *getNextRoot(int *indexp);
-static int getQueueIndex(size_t size, int roundup);
+static int getQueueIndex(ssize size, int roundup);
 static void getSystemInfo();
-static MprMem *growHeap(size_t size);
+static MprMem *growHeap(ssize size);
 static int initFree();
 static void initGen();
 static void linkFreeBlock(MprMem *mp); 
 static void mark();
 static void marker(void *unused, MprWorker *worker);
 static void markRoots();
-static int memoryNotifier(int flags, size_t size);
+static int memoryNotifier(int flags, ssize size);
 static void nextGen();
-static MprMem *searchFree(size_t size, int *indexp);
-static MprMem *splitBlock(MprMem *mp, size_t required, int qspare);
+static MprMem *searchFree(ssize size, int *indexp);
+static MprMem *splitBlock(MprMem *mp, ssize required, int qspare);
 static void sweep();
 static void sweeper(void *unused, MprWorker *worker);
 static void synchronize();
@@ -151,7 +151,7 @@ static void unlinkFreeBlock(MprFreeMem *fp);
     static int validBlk(MprMem *mp);
 #endif
 #if BLD_MEMORY_STATS
-    static MprFreeMem *getQueue(size_t size);
+    static MprFreeMem *getQueue(ssize size);
     static void printQueueStats();
     static void printGCStats();
 #endif
@@ -177,7 +177,7 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
     MprRegion   *region;
     MprHeap     initHeap;
     MprMem      *mp, *spare;
-    size_t      regionSize, size, mprSize;
+    ssize       regionSize, size, mprSize;
 
     heap = &initHeap;
     memset(heap, 0, sizeof(MprHeap));
@@ -271,11 +271,11 @@ void mprDestroyMemService()
 }
 
 
-void *mprAllocBlock(size_t usize, int flags)
+void *mprAllocBlock(ssize usize, int flags)
 {
     MprMem      *mp;
     void        *ptr;
-    size_t      maxBlock, size;
+    ssize       maxBlock, size;
     int         bucket, group, index, padWords;
 
     usize = max(usize, sizeof(MprFreeMem) - sizeof(MprMem));
@@ -290,11 +290,11 @@ void *mprAllocBlock(size_t usize, int flags)
     BREAKPOINT(mp);
     mprAssert(mp->size >= size);
 
-    if (mp->size >= (size + MPR_ALLOC_MIN_SPLIT)) {
+    if (mp->size >= ((ssize) (size + MPR_ALLOC_MIN_SPLIT))) {
         index = getQueueIndex(size, 1);
         group = index / MPR_ALLOC_NUM_BUCKETS;
         bucket = index % MPR_ALLOC_NUM_BUCKETS;
-        maxBlock = (((size_t) 1 ) << group | (((size_t) bucket) << (max(0, group - 1)))) << MPR_ALIGN_SHIFT;
+        maxBlock = (((ssize) 1 ) << group | (((ssize) bucket) << (max(0, group - 1)))) << MPR_ALIGN_SHIFT;
         maxBlock += sizeof(MprMem);
         if (mp->size > maxBlock) {
             splitBlock(mp, size, 1);
@@ -355,12 +355,14 @@ void mprFree(void *ptr)
 void mprFreeBlock(void *ptr, cchar *loc)
 {
     MprMem      *mp;
-    size_t      usize, len;
+    ssize       usize, len;
 
     if (ptr) {
         mp = GET_MEM(ptr);
         usize = GET_USIZE(mp);
+        
         mprFree(ptr);
+        
         len = min(slen(loc), usize - 1);
         strncpy(ptr, loc, len);
         ((char*) ptr)[len] = '\0';
@@ -369,7 +371,7 @@ void mprFreeBlock(void *ptr, cchar *loc)
 #endif
 
 
-void *mprRealloc(void *ptr, size_t usize)
+void *mprRealloc(void *ptr, ssize usize)
 {
     MprMem      *mp, *newb;
     void        *newptr;
@@ -403,7 +405,7 @@ void *mprRealloc(void *ptr, size_t usize)
 }
 
 
-void *mprMemdup(cvoid *ptr, size_t usize)
+void *mprMemdup(cvoid *ptr, ssize usize)
 {
     char    *newp;
 
@@ -440,7 +442,7 @@ int mprMemcmp(cvoid *s1, int s1Len, cvoid *s2, int s2Len)
 /*
     Supports insitu copy where src and destination overlap
  */
-int mprMemcpy(void *dest, int destMax, cvoid *src, int nbytes)
+ssize mprMemcpy(void *dest, ssize destMax, cvoid *src, ssize nbytes)
 {
     mprAssert(dest);
     mprAssert(destMax <= 0 || destMax >= nbytes);
@@ -474,7 +476,7 @@ int mprGetPageSize()
 }
 
 
-size_t mprGetBlockSize(cvoid *ptr)
+ssize mprGetBlockSize(cvoid *ptr)
 {
     MprMem      *mp;
 
@@ -492,7 +494,7 @@ void mprSetMemNotifier(MprMemNotifier cback)
 }
 
 
-void mprSetMemLimits(int redLine, int maxMemory)
+void mprSetMemLimits(ssize redLine, ssize maxMemory)
 {
     if (redLine > 0) {
         heap->stats.redLine = redLine;
@@ -570,25 +572,27 @@ void *mprSetManager(void *ptr, void *manager)
 static int initFree() 
 {
     MprFreeMem  *freeq;
+#if BLD_MEMORY_STATS
+    ssize       bit, size, groupBits, bucketBits;
+    int         index, group, bucket;
+#endif
     
     heap->freeEnd = &heap->freeq[MPR_ALLOC_NUM_GROUPS * MPR_ALLOC_NUM_BUCKETS];
     for (freeq = heap->freeq; freeq != heap->freeEnd; freeq++) {
 #if BLD_MEMORY_STATS
-        size_t      bit, size, groupBits, bucketBits;
-        int         index, group, bucket;
         /*
             NOTE: skip the buckets with MSB == 0 (round up)
          */
-        index = (freeq - heap->freeq);
+        index = (int) (freeq - heap->freeq);
         group = index / MPR_ALLOC_NUM_BUCKETS;
         bucket = index % MPR_ALLOC_NUM_BUCKETS;
 
         bit = (group != 0);
         groupBits = bit << (group + MPR_ALLOC_BUCKET_SHIFT - 1);
-        bucketBits = ((size_t) bucket) << (max(0, group - 1));
+        bucketBits = ((ssize) bucket) << (max(0, group - 1));
 
         size = groupBits | bucketBits;
-        freeq->stats.minSize = size << MPR_ALIGN_SHIFT;
+        freeq->info.stats.minSize = (int) (size << MPR_ALIGN_SHIFT);
 #endif
         freeq->next = freeq->prev = freeq;
     }
@@ -616,9 +620,9 @@ static void nextGen()
 }
 
 
-static int getQueueIndex(size_t size, int roundup)
+static int getQueueIndex(ssize size, int roundup)
 {   
-    size_t      usize, asize;
+    ssize       usize, asize;
     int         aligned, bucket, group, index, msb;
     
     mprAssert(MPR_ALLOC_ALIGN(size) == size);
@@ -630,8 +634,8 @@ static int getQueueIndex(size_t size, int roundup)
     usize = (size - sizeof(MprMem));
     asize = usize >> MPR_ALIGN_SHIFT;
 
-    //  Zero based most significant bit
-    msb = flsl(asize) - 1;
+    /* Zero based most significant bit */
+    msb = (flsl((int) asize) - 1);
 
     group = max(0, msb - MPR_ALLOC_BUCKET_SHIFT + 1);
     mprAssert(group < MPR_ALLOC_NUM_GROUPS);
@@ -643,7 +647,8 @@ static int getQueueIndex(size_t size, int roundup)
     mprAssert(index < (heap->freeEnd - heap->freeq));
     
 #if BLD_MEMORY_STATS
-    mprAssert(heap->freeq[index].stats.minSize <= (int) usize && (int) usize < heap->freeq[index + 1].stats.minSize);
+    mprAssert(heap->freeq[index].info.stats.minSize <= (int) usize && 
+        (int) usize < heap->freeq[index + 1].info.stats.minSize);
 #endif
     
     if (roundup) {
@@ -655,7 +660,7 @@ static int getQueueIndex(size_t size, int roundup)
             lowest size in the queue.
          */
         if (asize > 0x20) {
-            size_t mask = (((size_t) 1) << (msb - MPR_ALLOC_BUCKET_SHIFT)) - 1;
+            ssize mask = (((ssize) 1) << (msb - MPR_ALLOC_BUCKET_SHIFT)) - 1;
             aligned = (asize & mask) == 0;
             if (!aligned) {
                 index++;
@@ -667,7 +672,7 @@ static int getQueueIndex(size_t size, int roundup)
 
 
 #if BLD_MEMORY_STATS
-static MprFreeMem *getQueue(size_t size)
+static MprFreeMem *getQueue(ssize size)
 {   
     MprFreeMem  *freeq;
     int         index;
@@ -679,10 +684,10 @@ static MprFreeMem *getQueue(size_t size)
 #endif
 
 
-static MprMem *searchFree(size_t size, int *indexp)
+static MprMem *searchFree(ssize size, int *indexp)
 {
     MprFreeMem  *freeq, *fp;
-    size_t      groupMap, bucketMap;
+    ulong       groupMap, bucketMap;
     int         bucket, baseGroup, group, index;
     
     *indexp = index = getQueueIndex(size, 1);
@@ -694,16 +699,16 @@ static MprMem *searchFree(size_t size, int *indexp)
     INC(requests);
     
     /* Mask groups lower than the base group */
-    groupMap = heap->groupMap & ~((((size_t) 1) << baseGroup) - 1);
+    groupMap = heap->groupMap & ~((((ssize) 1) << baseGroup) - 1);
     while (groupMap) {
-        group = ffsl(groupMap) - 1;
-        if (groupMap & ((((size_t) 1) << group))) {
+        group = (int) (ffsl(groupMap) - 1);
+        if (groupMap & ((((ssize) 1) << group))) {
             bucketMap = heap->bucketMap[group];
             if (baseGroup == group) {
-                bucketMap &= ~((((size_t) 1) << bucket) - 1);
+                bucketMap &= ~((((ssize) 1) << bucket) - 1);
             }
             while (bucketMap) {
-                bucket = ffsl(bucketMap) - 1;
+                bucket = (int) (ffsl(bucketMap) - 1);
                 index = (group * MPR_ALLOC_NUM_BUCKETS) + bucket;
                 freeq = &heap->freeq[index];
                 if (freeq->next != freeq) {
@@ -714,11 +719,11 @@ static MprMem *searchFree(size_t size, int *indexp)
                     CHECK(fp);
                     return (MprMem*) fp;
                 }
-                bucketMap &= ~(((size_t) 1) << bucket);
-                heap->bucketMap[group] &= ~(((size_t) 1) << bucket);
+                bucketMap &= ~(((ssize) 1) << bucket);
+                heap->bucketMap[group] &= ~(((ssize) 1) << bucket);
             }
-            groupMap &= ~(((size_t) 1) << group);
-            heap->groupMap &= ~(((size_t) 1) << group);
+            groupMap &= ~(((ssize) 1) << group);
+            heap->groupMap &= ~(((ssize) 1) << group);
             /*
                 Put GC here so it is no in the common path above where the block can be satisfied from the free list
              */
@@ -792,15 +797,15 @@ static void linkFreeBlock(MprMem *mp)
     index = getQueueIndex(mp->size, 0);
     group = index / MPR_ALLOC_NUM_BUCKETS;
     bucket = index % MPR_ALLOC_NUM_BUCKETS;
-    heap->groupMap |= (((size_t) 1) << group);
-    heap->bucketMap[group] |= (((size_t) 1) << bucket);
+    heap->groupMap |= (((ssize) 1) << group);
+    heap->bucketMap[group] |= (((ssize) 1) << bucket);
 
     freeq = &heap->freeq[index];
     enq(freeq, fp);
 
     heap->stats.bytesFree += mp->size;
 #if BLD_MEMORY_STATS
-    freeq->stats.count++;
+    freeq->info.stats.count++;
 #endif
 }
 
@@ -819,14 +824,14 @@ static void unlinkFreeBlock(MprFreeMem *fp)
 #if BLD_MEMORY_STATS
 {
     MprFreeMem *freeq = getQueue(mp->size);
-    freeq->stats.count--;
-    mprAssert(freeq->stats.count >= 0);
+    freeq->info.stats.count--;
+    mprAssert(freeq->info.stats.count >= 0);
 }
 #endif
 }
 
 
-#if BLD_MEMORY_DEBUG
+#if BLD_CC_MMU && BLD_MEMORY_DEBUG
 static int isFirst(MprMem *mp)
 {
     MprRegion   *region;
@@ -843,9 +848,11 @@ static int isFirst(MprMem *mp)
 
 static MprMem *freeBlock(MprMem *mp)
 {
-    MprRegion   *region, *rp, *prior;
     MprMem      *prev, *next, *after;
-    size_t      size;
+    ssize       size;
+#if BLD_CC_MMU
+    MprRegion   *region, *rp, *prior;
+#endif
 
     BREAKPOINT(mp);
 
@@ -888,7 +895,7 @@ static MprMem *freeBlock(MprMem *mp)
         INC(joins);
     }
     next = GET_NEXT(mp);
-#if BLD_CC_MMU && 0
+#if BLD_CC_MMU
     /*
         Release entire regions back to the O/S. (Region has no prior and is also last when complete)
      */
@@ -929,10 +936,10 @@ static MprMem *freeBlock(MprMem *mp)
     Split a block. Required specifies the number of bytes needed in the block. If swap, then put mp back on the free
     queue instead of the second half.
  */
-static MprMem *splitBlock(MprMem *mp, size_t required, int qspare)
+static MprMem *splitBlock(MprMem *mp, ssize required, int qspare)
 {
     MprMem      *spare, *after;
-    size_t      size, extra;
+    ssize       size, extra;
 
     mprAssert(mp);
     mprAssert(required > 0);
@@ -967,18 +974,23 @@ static MprMem *splitBlock(MprMem *mp, size_t required, int qspare)
 /*
     Grow the heap and return a block of the required size (unqueued)
  */
-static MprMem *growHeap(size_t required)
+static MprMem *growHeap(ssize required)
 {
     MprRegion   *region;
     MprMem      *mp;
-    size_t      size, rsize;
+    ssize       size, rsize;
 
     mprAssert(required > 0);
 
     rsize = MPR_ALLOC_ALIGN(sizeof(MprRegion));
-    size = max(required + rsize, (size_t) heap->chunkSize);
+    size = max(required + rsize, (ssize) heap->chunkSize);
     size = MPR_PAGE_ALIGN(size, heap->pageSize);
-
+#if FUTURE && KEEP
+    if (size >= MPR_ALLOC_MAX_BLOCK) {
+        mprAssert(size < MPR_ALLOC_MAX_BLOCK);
+        return 0;
+    }
+#endif
     if ((region = mprVirtAlloc(size, MPR_MAP_READ | MPR_MAP_WRITE)) == NULL) {
         return 0;
     }
@@ -998,7 +1010,7 @@ static MprMem *growHeap(size_t required)
 }
 
 
-static void allocException(size_t size, bool granted)
+static void allocException(ssize size, bool granted)
 {
     heap->hasError = 1;
 
@@ -1040,9 +1052,9 @@ static void allocException(size_t size, bool granted)
     an application-wide memory allocation failure can be invoked proactively when a memory redline is exceeded. 
     It is the application's responsibility to set the red-line value suitable for the system.
  */
-void *mprVirtAlloc(size_t size, int mode)
+void *mprVirtAlloc(ssize size, int mode)
 {
-    size_t      used;
+    ssize       used;
     void        *ptr;
 
     used = mprGetMem();
@@ -1084,7 +1096,7 @@ void *mprVirtAlloc(size_t size, int mode)
 }
 
 
-void mprVirtFree(void *ptr, size_t size)
+void mprVirtFree(void *ptr, ssize size)
 {
 #if BLD_CC_MMU
     #if BLD_UNIX_LIKE
@@ -1099,6 +1111,8 @@ void mprVirtFree(void *ptr, size_t size)
 #else
     free(ptr);
 #endif
+    heap->stats.bytesAllocated -= size;
+    mprAssert(heap->stats.bytesAllocated >= 0);
 }
 
 
@@ -1137,7 +1151,7 @@ static void getSystemInfo()
 #elif FREEBSD
     {
         int     cmd[2];
-        size_t  len;
+        ssize   len;
 
         /*
             Get number of CPUs
@@ -1216,20 +1230,21 @@ MprMemStats *mprGetMemStats()
     size_t          len;
     int             fd;
 
-    heap->stats.ram = MAXINT64;
+    heap->stats.ram = MAXSIZE;
     if ((fd = open("/proc/meminfo", O_RDONLY)) >= 0) {
         if ((len = read(fd, buf, sizeof(buf) - 1)) > 0) {
             buf[len] = '\0';
             if ((cp = strstr(buf, "MemTotal:")) != 0) {
                 for (; *cp && !isdigit((int) *cp); cp++) {}
-                heap->stats.ram = ((size_t) atoi(cp) * 1024);
+                heap->stats.ram = ((ssize) atoi(cp) * 1024);
             }
         }
         close(fd);
     }
 #endif
 #if MACOSX || FREEBSD
-    size_t      ram, usermem, len;
+    ssize       ram, usermem;
+    size_t      len;
     int         mib[2];
 
     mib[0] = CTL_HW;
@@ -1253,7 +1268,7 @@ MprMemStats *mprGetMemStats()
 }
 
 
-size_t mprGetMem()
+ssize mprGetMem()
 {
 #if LINUX || MACOSX || FREEBSD
     struct rusage   rusage;
@@ -1332,8 +1347,8 @@ static void printQueueStats()
 
     printf("\nFree Queue Stats\n Bucket                     Size   Count\n");
     for (i = 0, freeq = heap->freeq; freeq != heap->freeEnd; freeq++, i++) {
-        index = (freeq - heap->freeq);
-        printf("%7d %24d %7d\n", i, freeq->stats.minSize, freeq->stats.count);
+        index = (int) (freeq - heap->freeq);
+        printf("%7d %24d %7d\n", i, freeq->info.stats.minSize, freeq->info.stats.count);
     }
 }
 
@@ -1342,10 +1357,12 @@ static void printGCStats()
 {
     MprRegion   *region;
     MprMem      *mp;
-    int         regionCount, i, freeCount, allocatedCount, counts[MPR_MAX_GEN + 2], bytes[MPR_MAX_GEN + 2], free;
+    ssize       bytes[MPR_MAX_GEN + 2];
+    int         regionCount, i, freeCount, allocatedCount, counts[MPR_MAX_GEN + 2], free;
 
     for (i = 0; i < (MPR_MAX_GEN + 2); i++) {
-        counts[i] = bytes[i] = 0;
+        counts[i] = 0;
+        bytes[i] = 0;
     }
     printf("\nRegion Stats\n");
     regionCount = 0;
@@ -1369,11 +1386,11 @@ static void printGCStats()
     printf("Regions: %d\n", regionCount);
 
     printf("\nGC Stats\n");
-    printf("  Eternal generation has %9d blocks, %12d bytes\n", counts[heap->eternal], bytes[heap->eternal]);
-    printf("  Stale generation has   %9d blocks, %12d bytes\n", counts[heap->stale], bytes[heap->stale]);
-    printf("  Active generation has  %9d blocks, %12d bytes\n", counts[heap->active], bytes[heap->active]);
-    printf("  Dead generation has    %9d blocks, %12d bytes\n", counts[heap->dead], bytes[heap->dead]);
-    printf("  Free generation has    %9d blocks, %12d bytes\n", counts[free], bytes[free]);
+    printf("  Eternal generation has %9d blocks, %12d bytes\n", counts[heap->eternal], (int) bytes[heap->eternal]);
+    printf("  Stale generation has   %9d blocks, %12d bytes\n", counts[heap->stale], (int) bytes[heap->stale]);
+    printf("  Active generation has  %9d blocks, %12d bytes\n", counts[heap->active], (int) bytes[heap->active]);
+    printf("  Dead generation has    %9d blocks, %12d bytes\n", counts[heap->dead], (int) bytes[heap->dead]);
+    printf("  Free generation has    %9d blocks, %12d bytes\n", counts[free], (int) bytes[free]);
 }
 #endif /* BLD_MEMORY_STATS */
 
@@ -1438,11 +1455,11 @@ static void breakpoint(MprMem *mp)
 static void startMemWorkers()
 {
     if (heap->flags & MPR_MARK_THREAD) {
-        mprLog(1, "DEBUG: startMemWorkers: start marker");
+        mprLog(7, "DEBUG: startMemWorkers: start marker");
         mprStartWorker(marker, NULL);
     }
     if (heap->flags & MPR_SWEEP_THREAD) {
-        mprLog(1, "DEBUG: startMemWorkers: start sweeper");
+        mprLog(7, "DEBUG: startMemWorkers: start sweeper");
         heap->hasSweeper = 1;
         mprStartWorker(sweeper, NULL);
     }
@@ -1455,13 +1472,13 @@ static void startMemWorkers()
 static void collectGarbage(int flags)
 {
     if (!heap->enabled) {
-        mprLog(1, "DEBUG: collectGarbage: Abort GC - GC disabled");
+        mprLog(7, "DEBUG: collectGarbage: Abort GC - GC disabled");
         return;
     }
     lockHeap();
     heap->newCount = 0;
     if (heap->collecting) {
-        mprLog(1, "DEBUG: collectGarbage: already collecting, returning");
+        mprLog(7, "DEBUG: collectGarbage: already collecting, returning");
         mprYieldThread(NULL);
         unlockHeap();
         return;
@@ -1479,10 +1496,10 @@ static void collectGarbage(int flags)
     mprAssert(mprGetCurrentThread()->yielded == 1);
 
     if (heap->flags & MPR_MARK_THREAD) {
-        mprLog(1, "DEBUG: collectGarbage: startMemWorkers");
+        mprLog(7, "DEBUG: collectGarbage: startMemWorkers");
         startMemWorkers();
     } else {
-        mprLog(1, "DEBUG: collectGarbage: mark");
+        mprLog(7, "DEBUG: collectGarbage: mark");
         mark();
     }
 }
@@ -1505,7 +1522,7 @@ void mprCollectGarbage(int flags)
         from = "other";
     }
     if (!heap->enabled) {
-        mprLog(1, "DEBUG: mprCollectGarbage: Abort GC from %s -  GC disabled", from);
+        mprLog(7, "DEBUG: mprCollectGarbage: Abort GC from %s -  GC disabled", from);
         return;
     }
     /*
@@ -1513,13 +1530,13 @@ void mprCollectGarbage(int flags)
      */
     if (flags & MPR_GC_FROM_SEARCH) {
         /* Not safe to yield from search */
-        mprLog(1, "DEBUG: mprCollectGarbage: abort collection from %s", from);
+        mprLog(7, "DEBUG: mprCollectGarbage: abort collection from %s", from);
     } else {
-        mprLog(1, "DEBUG: mprCollectGarbage: yield %s, thread %s", from, mprGetCurrentThreadName());
+        mprLog(7, "DEBUG: mprCollectGarbage: yield %s, thread %s", from, mprGetCurrentThreadName());
         mprYieldThread(NULL);
     }
     if (heap->newCount < heap->newQuota && !(flags & MPR_GC_FORCE)) {
-        mprLog(1, "DEBUG: mprCollectGarbage: GC not yet required from %s, new %d quota %d", 
+        mprLog(7, "DEBUG: mprCollectGarbage: GC not yet required from %s, new %d quota %d", 
             from, heap->newCount, heap->newQuota);
         return;
     }
@@ -1528,15 +1545,15 @@ void mprCollectGarbage(int flags)
         Initiate GC
      */
     if (heap->notifier && (heap->notifier)(MPR_MEM_GC, 0) == MPR_DELAY_GC) {
-        mprLog(1, "DEBUG: mprCollectGarbage: GC delay requested", from);
+        mprLog(7, "DEBUG: mprCollectGarbage: GC delay requested", from);
         /* Delayed GC requested - user must re-initiate GC when ready */
         return;
     }
     if (flags & heap->from) {
-        mprLog(1, "DEBUG: mprCollectGarbage: proceed with collection from %s", from);
+        mprLog(7, "DEBUG: mprCollectGarbage: proceed with collection from %s", from);
         collectGarbage(flags);
     } else {
-        mprLog(1, "DEBUG: mprCollectGarbage: skip collection from %s %x/%x", from, flags, heap->from);
+        mprLog(7, "DEBUG: mprCollectGarbage: skip collection from %s %x/%x", from, flags, heap->from);
     }
 }
 
@@ -1545,7 +1562,7 @@ void mprCollectAllGarbage(int flags)
 {
     int     i;
 
-    mprLog(1, "DEBUG: mprCollectAllGarbage");
+    mprLog(7, "DEBUG: mprCollectAllGarbage");
     for (i = 0; i < 3; i++) {
         mprCollectGarbage(MPR_GC_FORCE);
     }
@@ -1559,21 +1576,21 @@ void mprCollectAllGarbage(int flags)
  */
 static void synchronize()
 {
-    mprLog(1, "DEBUG: synchronize GC");
+    mprLog(4, "DEBUG: synchronize GC");
 
     heap->mustYield = 1;
     if (heap->notifier) {
-        mprLog(1, "DEBUG: Call notifier");
+        mprLog(4, "DEBUG: Call notifier");
         (heap->notifier)(MPR_MEM_YIELD, 0);
     }
     //  MOB - Need proper timeout here - should be short
     if (mprPauseForGCSync(120 * 1000)) {
-        mprLog(1, "DEBUG: Advance generation");
+        mprLog(7, "DEBUG: Advance generation");
         nextGen();
         heap->mustYield = 0;
         mprResumeThreadsAfterGC();
     } else {
-        mprLog(1, "DEBUG: Pause for GC sync timed out");
+        mprLog(7, "DEBUG: Pause for GC sync timed out");
         heap->mustYield = 0;
     }
 }
@@ -1581,7 +1598,7 @@ static void synchronize()
 
 static void mark()
 {
-    int     priorFree;
+    ssize     priorFree;
 
     priorFree = heap->stats.bytesFree;
     markRoots();
@@ -1600,11 +1617,10 @@ static void sweep()
 {
     MprRegion   *region, *nextRegion;
     MprMem      *mp, *next;
-MprMem *xnext, *onext;
-    int         total;
+    ssize       total;
     
     if (!heap->enabled) {
-        mprLog(1, "DEBUG: sweep: Abort sweep - GC disabled");
+        mprLog(7, "DEBUG: sweep: Abort sweep - GC disabled");
         return;
     }
     /*
@@ -1628,31 +1644,23 @@ MprMem *xnext, *onext;
     for (region = heap->regions; region; region = nextRegion) {
         nextRegion = region->next;
         for (mp = region->start; mp; mp = next) {
-            onext = GET_NEXT(mp);
-            if (onext) {
-                CHECK(onext);
-            }
             INC(sweepVisited);
             if (unlikely(mp->gen == heap->dead)) {
                 CHECK(mp);
                 BREAKPOINT(mp);
                 INC(swept);
                 total += mp->size;
-                xnext = freeBlock(mp);
+                next = freeBlock(mp);
             } else {
-                xnext = GET_NEXT(mp);
+                next = GET_NEXT(mp);
             }
-            if (onext != xnext) {
-                mprAssert(onext->magic == 0xfefefefe);
-            }
-            next = xnext;
             if (next) {
                 CHECK(next);
             }
         }
     }
     unlockHeap();
-    mprLog(1, "DEBUG: sweep swept %,d", total);
+    mprLog(7, "DEBUG: sweep swept %,d", total);
 }
 
 
@@ -1814,7 +1822,7 @@ void mprRelease(void *ptr)
 
 static void marker(void *unused, MprWorker *worker)
 {
-    mprLog(1, "DEBUG: marker thread started");
+    mprLog(7, "DEBUG: marker thread started");
     mprYieldThread(NULL);
     mark();
 }
@@ -1822,7 +1830,7 @@ static void marker(void *unused, MprWorker *worker)
 
 static void sweeper(void *unused, MprWorker *worker) 
 {
-    mprLog(1, "DEBUG: sweeper thread started");
+    mprLog(7, "DEBUG: sweeper thread started");
     sweep();
     /* Sync with marker */
     mprYieldThread(NULL);
@@ -1875,19 +1883,28 @@ static void *getNextRoot(int *indexp)
 }
 
 
+#ifndef mprSetName
+void *mprSetName(void *ptr, cchar *name) 
+{
+    MPR_GET_MEM(ptr)->name = name;
+    return ptr;
+}
+#endif
+
+
 /*
     Default memory handler
  */
-static int memoryNotifier(int flags, size_t size)
+static int memoryNotifier(int flags, ssize size)
 {
     if (flags & MPR_MEM_DEPLETED) {
-        mprPrintfError(NULL, "Can't allocate memory block of size %d\n", size);
-        mprPrintfError(NULL, "Total memory used %d\n", mprGetMem());
+        mprPrintfError("Can't allocate memory block of size %d\n", size);
+        mprPrintfError("Total memory used %d\n", mprGetMem());
         exit(255);
 
     } else if (flags & MPR_MEM_LOW) {
-        mprPrintfError(NULL, "Memory request for %d bytes exceeds memory red-line\n", size);
-        mprPrintfError(NULL, "Total memory used %d\n", mprGetMem());
+        mprPrintfError("Memory request for %d bytes exceeds memory red-line\n", size);
+        mprPrintfError("Total memory used %d\n", mprGetMem());
 
     } else if (flags & MPR_MEM_GC) {
         ;
@@ -1987,11 +2004,11 @@ Mpr *mprCreate(int argc, char **argv, int flags)
 
     if (mpr->argv && mpr->argv[0] && *mpr->argv[0]) {
         name = mpr->argv[0];
-        if ((cp = strchr(name, '/')) != 0) {
-            name = cp;
+        if ((cp = strrchr(name, '/')) != 0) {
+            name = &cp[1];
         }
         mpr->name = sclone(name);
-        if ((cp = strchr(mpr->name, '.')) != 0) {
+        if ((cp = strrchr(mpr->name, '.')) != 0) {
             *cp = '\0';
         }
     } else {
@@ -2140,7 +2157,6 @@ static void startThreads(int flags)
     Thread to service the event queue. Used if the user does not have their own main event loop.
  */
 int mprStartEventsThread()
-int mprStartEventsThread()
 {
     MprThread   *tp;
 
@@ -2194,7 +2210,8 @@ bool mprIsComplete()
 int mprMakeArgv(cchar *program, cchar *cmd, int *argcp, char ***argvp)
 {
     char        *cp, **argv, *buf, *args;
-    int         size, argc;
+    ssize       size;
+    int         argc;
 
     /*
         Allocate one buffer for argv and the actual args themselves
@@ -2626,7 +2643,7 @@ void mprWaitForIO(MprWaitService *ws, int timeout)
         SetTimer(ws->hwnd, 0, timeout, NULL);
 
         if (GetMessage(&msg, NULL, 0, 0) == 0) {
-            mprTerminate(ws, 1);
+            mprTerminate(1);
         } else {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -2827,7 +2844,7 @@ static void manageBuf(MprBuf *buf, int flags);
     used to define the amount to increase the size of the buffer each time if it becomes full. (Note: mprGrowBuf() will 
     exponentially increase this number for performance.)
  */
-MprBuf *mprCreateBuf(int initialSize, int maxSize)
+MprBuf *mprCreateBuf(ssize initialSize, ssize maxSize)
 {
     MprBuf      *bp;
     
@@ -2854,7 +2871,7 @@ static void manageBuf(MprBuf *bp, int flags)
 MprBuf *mprCloneBuf(MprBuf *orig)
 {
     MprBuf      *bp;
-    int         len;
+    ssize       len;
 
     if ((bp = mprCreateBuf(orig->growBy, orig->maxsize)) == 0) {
         return 0;
@@ -2877,7 +2894,7 @@ char *mprGet(MprBuf *bp)
 /*
     Set the current buffer size and maximum size limit.
  */
-int mprSetBufSize(MprBuf *bp, int initialSize, int maxSize)
+int mprSetBufSize(MprBuf *bp, ssize initialSize, ssize maxSize)
 {
     mprAssert(bp);
 
@@ -2918,7 +2935,7 @@ int mprSetBufSize(MprBuf *bp, int initialSize, int maxSize)
 }
 
 
-void mprSetBufMax(MprBuf *bp, int max)
+void mprSetBufMax(MprBuf *bp, ssize max)
 {
     bp->maxsize = max;
 }
@@ -2929,7 +2946,7 @@ void mprSetBufMax(MprBuf *bp, int max)
  */
 void mprAddNullToBuf(MprBuf *bp)
 {
-    size_t      space;
+    ssize      space;
 
     space = bp->endbuf - bp->end;
     if (space < sizeof(char)) {
@@ -2944,10 +2961,10 @@ void mprAddNullToBuf(MprBuf *bp)
 }
 
 
-void mprAdjustBufEnd(MprBuf *bp, int size)
+void mprAdjustBufEnd(MprBuf *bp, ssize size)
 {
     mprAssert(bp->buflen == (bp->endbuf - bp->data));
-    mprAssert(size <= (int) bp->buflen);
+    mprAssert(size <= bp->buflen);
     mprAssert((bp->end + size) >= bp->data);
     mprAssert((bp->end + size) <= bp->endbuf);
 
@@ -2965,10 +2982,10 @@ void mprAdjustBufEnd(MprBuf *bp, int size)
 /*
     Adjust the start pointer after a user copy. Note: size can be negative.
  */
-void mprAdjustBufStart(MprBuf *bp, int size)
+void mprAdjustBufStart(MprBuf *bp, ssize size)
 {
     mprAssert(bp->buflen == (bp->endbuf - bp->data));
-    mprAssert(size <= (int) bp->buflen);
+    mprAssert(size <= bp->buflen);
     mprAssert((bp->start + size) >= bp->data);
     mprAssert((bp->start + size) <= bp->end);
 
@@ -2998,9 +3015,9 @@ int mprGetCharFromBuf(MprBuf *bp)
 }
 
 
-int mprGetBlockFromBuf(MprBuf *bp, char *buf, int size)
+ssize mprGetBlockFromBuf(MprBuf *bp, char *buf, ssize size)
 {
-    int     thisLen, bytesRead;
+    ssize     thisLen, bytesRead;
 
     mprAssert(buf);
     mprAssert(size >= 0);
@@ -3027,19 +3044,19 @@ int mprGetBlockFromBuf(MprBuf *bp, char *buf, int size)
 }
 
 
-size_t mprGetBufLength(MprBuf *bp)
+ssize mprGetBufLength(MprBuf *bp)
 {
     return (bp->end - bp->start);
 }
 
 
-size_t mprGetBufSize(MprBuf *bp)
+ssize mprGetBufSize(MprBuf *bp)
 {
     return bp->buflen;
 }
 
 
-size_t mprGetBufSpace(MprBuf *bp)
+ssize mprGetBufSpace(MprBuf *bp)
 {
     return (bp->endbuf - bp->end);
 }
@@ -3095,8 +3112,8 @@ int mprLookAtLastCharInBuf(MprBuf *bp)
 
 int mprPutCharToBuf(MprBuf *bp, int c)
 {
-    char    *cp;
-    int     space;
+    char       *cp;
+    ssize      space;
 
     mprAssert(bp->buflen == (bp->endbuf - bp->data));
 
@@ -3117,9 +3134,9 @@ int mprPutCharToBuf(MprBuf *bp, int c)
 }
 
 
-size_t mprPutBlockToBuf(MprBuf *bp, cchar *str, size_t size)
+ssize mprPutBlockToBuf(MprBuf *bp, cchar *str, ssize size)
 {
-    size_t      thisLen, bytes, space;
+    ssize      thisLen, bytes, space;
 
     mprAssert(str);
     mprAssert(size >= 0);
@@ -3149,7 +3166,7 @@ size_t mprPutBlockToBuf(MprBuf *bp, cchar *str, size_t size)
 }
 
 
-int mprPutStringToBuf(MprBuf *bp, cchar *str)
+ssize mprPutStringToBuf(MprBuf *bp, cchar *str)
 {
     if (str) {
         return mprPutBlockToBuf(bp, str, strlen(str));
@@ -3158,9 +3175,9 @@ int mprPutStringToBuf(MprBuf *bp, cchar *str)
 }
 
 
-int mprPutSubStringToBuf(MprBuf *bp, cchar *str, int count)
+ssize mprPutSubStringToBuf(MprBuf *bp, cchar *str, ssize count)
 {
-    int     len;
+    ssize     len;
 
     if (str) {
         len = strlen(str);
@@ -3173,7 +3190,7 @@ int mprPutSubStringToBuf(MprBuf *bp, cchar *str, int count)
 }
 
 
-size_t mprPutPadToBuf(MprBuf *bp, int c, size_t count)
+ssize mprPutPadToBuf(MprBuf *bp, int c, ssize count)
 {
     mprAssert(count < MAXINT);
 
@@ -3186,11 +3203,11 @@ size_t mprPutPadToBuf(MprBuf *bp, int c, size_t count)
 }
 
 
-int mprPutFmtToBuf(MprBuf *bp, cchar *fmt, ...)
+ssize mprPutFmtToBuf(MprBuf *bp, cchar *fmt, ...)
 {
     va_list     ap;
     char        *buf;
-    int         rc, space;
+    ssize       rc, space;
 
     if (fmt == 0) {
         return 0;
@@ -3209,10 +3226,10 @@ int mprPutFmtToBuf(MprBuf *bp, cchar *fmt, ...)
 /*
     Grow the buffer. Return 0 if the buffer grows. Increase by the growBy size specified when creating the buffer. 
  */
-int mprGrowBuf(MprBuf *bp, int need)
+int mprGrowBuf(MprBuf *bp, ssize need)
 {
     char    *newbuf;
-    int     growBy;
+    ssize   growBy;
 
     if (bp->maxsize > 0 && bp->buflen >= bp->maxsize) {
         return MPR_ERR_TOO_MANY;
@@ -3257,10 +3274,10 @@ int mprGrowBuf(MprBuf *bp, int need)
 /*
     Add a number to the buffer (always null terminated).
  */
-int mprPutIntToBuf(MprBuf *bp, int i)
+ssize mprPutIntToBuf(MprBuf *bp, int i)
 {
-    char    numBuf[16];
-    int     rc;
+    char        numBuf[16];
+    ssize       rc;
 
     itos(numBuf, sizeof(numBuf), i, 10);
     rc = mprPutStringToBuf(bp, numBuf);
@@ -3268,7 +3285,6 @@ int mprPutIntToBuf(MprBuf *bp, int i)
     if (bp->end < bp->endbuf) {
         *((char*) bp->end) = (char) '\0';
     }
-
     return rc;
 }
 
@@ -3317,7 +3333,7 @@ void mprResetBufIfEmpty(MprBuf *bp)
 #if BLD_CHAR_LEN > 1
 void mprAddNullToWideBuf(MprBuf *bp)
 {
-    size_t      space;
+    ssize      space;
 
     space = bp->endbuf - bp->end;
     if (space < sizeof(MprChar)) {
@@ -3361,7 +3377,7 @@ int mprPutFmtToWideBuf(MprBuf *bp, cchar *fmt, ...)
     va_list     ap;
     MprChar     *wbuf;
     char        *buf;
-    size_t      len;
+    ssize       len;
     int         rc, space;
 
     if (fmt == 0) {
@@ -3383,7 +3399,7 @@ int mprPutFmtToWideBuf(MprBuf *bp, cchar *fmt, ...)
 int mprPutStringToWideBuf(MprBuf *bp, cchar *str)
 {
     MprChar     *wstr;
-    size_t      len;
+    ssize      len;
     int         result;
 
     if (str) {
@@ -3522,6 +3538,8 @@ MprCmd *mprCreateCmd(MprDispatcher *dispatcher)
         files[i].fd = -1;
     }
     cmd->mutex = mprCreateLock();
+    cmd->cond = mprCreateCond();
+
     cs = mprGetMpr()->cmdService;
     mprLock(cs->mutex);
     mprAddItem(cs->cmds, cmd);
@@ -3541,6 +3559,7 @@ static void manageCmd(MprCmd *cmd, int flags)
         mprMark(cmd->stdoutBuf);
         mprMark(cmd->stderrBuf);
         mprMark(cmd->mutex);
+		mprMark(cmd->cond);
 #if BLD_WIN_LIKE
         mprMark(cmd->command);
         mprMark(cmd->arg0);
@@ -3586,6 +3605,12 @@ static void vxCmdManager(MprCmd *cmd)
     }
 }
 #endif
+
+
+void mprCloseCmd(MprCmd *cmd)
+{
+    mprFree(cmd);
+}
 
 
 static void resetCmd(MprCmd *cmd)
@@ -3646,6 +3671,7 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
     /*
         Disconnect but don't free. This prevents some races with callbacks.
      */
+    mprLock(cmd->mutex);
     if (cmd->handlers[channel]) {
         mprRemoveWaitHandler(cmd->handlers[channel]);
         cmd->handlers[channel] = 0;
@@ -3662,6 +3688,7 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
             }
         }
     }
+    mprUnlock(cmd->mutex);
 }
 
 
@@ -3741,11 +3768,12 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
         return 0;
     }
     unlock(cmd);
+
     if (mprWaitForCmd(cmd, -1) < 0) {
         return MPR_ERR_NOT_READY;
     }
-    lock(cmd);
 
+    lock(cmd);
     if (mprGetCmdExitStatus(cmd, &status) < 0) {
         unlock(cmd);
         return MPR_ERR;
@@ -3921,14 +3949,14 @@ void mprStopCmd(MprCmd *cmd)
 /*
     Non-blocking read from a pipe. For windows which doesn't seem to have non-blocking pipes!
  */
-int mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, int bufsize)
+ssize mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 {
 #if BLD_WIN_LIKE && !WINCE
     int     count, rc;
 
     rc = PeekNamedPipe(cmd->files[channel].handle, NULL, 0, NULL, &count, NULL);
     if (rc && count > 0) {
-        return read(cmd->files[channel].fd, buf, bufsize);
+        return read(cmd->files[channel].fd, buf, (uint) bufsize);
     }
     if (cmd->process == 0) {
         return 0;
@@ -3994,9 +4022,11 @@ int mprWriteCmdPipe(MprCmd *cmd, int channel, char *buf, int bufsize)
 void mprEnableCmdEvents(MprCmd *cmd, int channel)
 {
 #if BLD_UNIX_LIKE || VXWORKS
+    mprLock(cmd->mutex);
     if (cmd->handlers[channel]) {
         mprEnableWaitEvents(cmd->handlers[channel], MPR_READABLE);
     }
+    mprUnlock(cmd->mutex);
 #endif
 }
 
@@ -4067,8 +4097,7 @@ void mprPollCmdPipes(MprCmd *cmd, int timeout)
  */
 int mprWaitForCmd(MprCmd *cmd, int timeout)
 {
-    MprTime     expires;
-    int         remaining, delay;
+    MprTime     expires, remaining, delay;
 
     if (timeout < 0) {
         timeout = MAXINT;
@@ -4079,29 +4108,32 @@ int mprWaitForCmd(MprCmd *cmd, int timeout)
     expires = mprGetTime() + timeout;
     remaining = timeout;
     do {
+        mprLock(cmd->mutex);
         if (cmd->eofCount >= cmd->requiredEof) {
+            /* WARNING: will block here if requiredEof is zero */
             if (mprReapCmd(cmd, 0) == 0) {
+                mprUnlock(cmd->mutex);
                 return 0;
             }
         }
-        delay = (cmd->eofCount == 0) ? 10 : remaining;
+        mprUnlock(cmd->mutex);
+
 #if BLD_WIN_LIKE && !WINCE
         mprPollCmdPipes(cmd, timeout);
-        remaining = (int) (expires - mprGetTime());
+        remaining = (expires - mprGetTime());
         if (cmd->pid == 0 || remaining <= 0) {
             break;
         }
-        mprServiceEvents(cmd->dispatcher, 10, MPR_SERVICE_ONE_THING);
+        delay = 10;
 #else
-        /*
-            MOB BUG - not ideal. Delay must be short as there is a race. The command may increment eofCount before we get
-            into mprServiceEvents if another thread is running mprServiceEvents. This can then hang a long time.
-            Set delay to 20 to be sure.
-         */
-        delay = 20;
-        mprServiceEvents(cmd->dispatcher, delay, MPR_SERVICE_ONE_THING);
+        delay = remaining;
 #endif
-        remaining = (int) (expires - mprGetTime());
+        if (MPR->heap.flags & (MPR_EVENTS_THREAD | MPR_USER_EVENTS_THREAD)) {
+            mprWaitForCond(cmd->cond, (int) delay);
+        } else {
+            mprServiceEvents(cmd->dispatcher, (int) delay, MPR_SERVICE_ONE_THING);
+        }
+        remaining = (expires - mprGetTime());
     } while (cmd->pid && remaining >= 0);
 
     if (cmd->pid) {
@@ -4120,7 +4152,10 @@ int mprWaitForCmd(MprCmd *cmd, int timeout)
 int mprReapCmd(MprCmd *cmd, int timeout)
 {
     MprTime     mark;
+    int         flags, rc, status, waitrc;
 
+    flags = rc = status = waitrc = 0;
+    mprLock(cmd->mutex);
     if (timeout < 0) {
         timeout = MAXINT;
     }
@@ -4128,20 +4163,29 @@ int mprReapCmd(MprCmd *cmd, int timeout)
 
     while (cmd->pid) {
 #if BLD_UNIX_LIKE
-        int     status, waitrc;
-        status = 0;
-        if ((waitrc = waitpid(cmd->pid, &status, WNOHANG | __WALL)) < 0) {
+        /*
+            WARNING: this will block here if the process has not completed and requiredEof is zero. Only happens
+            if creating a command and not opening any stdout or stderr output which users SHOULD do.
+         */
+        flags = (cmd->requiredEof) ? WNOHANG | __WALL : 0;
+        if ((waitrc = waitpid(cmd->pid, &status, flags)) < 0) {
             mprLog(0, "waitpid failed for pid %d, errno %d", cmd->pid, errno);
+            mprUnlock(cmd->mutex);
             return MPR_ERR_CANT_READ;
 
         } else if (waitrc == cmd->pid) {
+            mprLog(7, "waitpid pid %d, errno %d, thread %s", cmd->pid, errno, mprGetCurrentThreadName());
             if (!WIFSTOPPED(status)) {
                 if (WIFEXITED(status)) {
                     cmd->status = WEXITSTATUS(status);
                 } else if (WIFSIGNALED(status)) {
                     cmd->status = WTERMSIG(status);
+                } else {
+                    mprLog(0, "MOB waitpid FUNNY pid %d, errno %d", cmd->pid, errno);
                 }
                 cmd->pid = 0;
+            } else {
+                mprLog(0, "MOB waitpid ELSE pid %d, errno %d", cmd->pid, errno);
             }
             break;
             
@@ -4155,6 +4199,7 @@ int mprReapCmd(MprCmd *cmd, int timeout)
          */
         if (semTake(cmd->exitCond, MPR_TIMEOUT_STOP_TASK) != OK) {
             mprError("cmd: child %s did not exit, errno %d", cmd->program);
+            mprUnlock(cmd->mutex);
             return MPR_ERR_CANT_CREATE;
         }
         semDelete(cmd->exitCond);
@@ -4162,16 +4207,18 @@ int mprReapCmd(MprCmd *cmd, int timeout)
         cmd->pid = 0;
 #endif
 #if BLD_WIN_LIKE
-        int     status, rc;
         if ((rc = WaitForSingleObject(cmd->process, 10)) != WAIT_OBJECT_0) {
             if (rc == WAIT_TIMEOUT) {
+                mprUnlock(cmd->mutex);
                 return -MPR_ERR_TIMEOUT;
             }
             mprLog(6, "cmd: WaitForSingleObject no child to reap rc %d, %d", rc, GetLastError());
+            mprUnlock(cmd->mutex);
             return MPR_ERR_CANT_READ;
         }
         if (GetExitCodeProcess(cmd->process, (ulong*) &status) == 0) {
             mprLog(7, "cmd: GetExitProcess error");
+            mprUnlock(cmd->mutex);
             return MPR_ERR_CANT_READ;
         }
         if (status != STILL_ACTIVE) {
@@ -4189,6 +4236,10 @@ int mprReapCmd(MprCmd *cmd, int timeout)
             break;
         }
     }
+    if (cmd->pid == 0) {
+        mprSignalCond(cmd->cond);
+    }
+    mprUnlock(cmd->mutex);
     return (cmd->pid == 0) ? 0 : 1;
 }
 
@@ -4200,7 +4251,7 @@ int mprReapCmd(MprCmd *cmd, int timeout)
 static void cmdCallback(MprCmd *cmd, int channel, void *data)
 {
     MprBuf      *buf;
-    int         len, space;
+    ssize       len, space;
 
     /*
         Note: stdin, stdout and stderr are named from the client's perspective
@@ -4376,8 +4427,9 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 #endif
 
 #if BLD_WIN_LIKE
-    char    *program, *SYSTEMROOT, **ep, **ap, *destp, *cp, *localArgv[2], *saveArg0, *PATH, *endp;
-    int     i, len, hasPath, hasSystemRoot;
+    char        *program, *SYSTEMROOT, **ep, **ap, *destp, *cp, *localArgv[2], *saveArg0, *PATH, *endp;
+    ssize       len;
+    int         i, hasPath, hasSystemRoot;
 
     mprAssert(argc > 0 && argv[0] != NULL);
 
@@ -4441,7 +4493,7 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
     argv[0] = saveArg0;
 
     for (i = 0; i < argc; i++) {
-        mprLog(cmd, 4, "cmd: arg[%d]: %s", i, argv[i]);
+        mprLog(4, "cmd: arg[%d]: %s", i, argv[i]);
     }
 
     /*
@@ -4449,7 +4501,8 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
      */
     cmd->env = 0;
     if (env) {
-        for (hasSystemRoot =  hasPath = len = 0, ep = env; ep && *ep; ep++) {
+        len = 0;
+        for (hasSystemRoot = hasPath = 0, ep = env; ep && *ep; ep++) {
             len += strlen(*ep) + 1;
             if (strncmp(*ep, "PATH=", 5) == 0) {
                 hasPath++;
@@ -4469,17 +4522,17 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
         endp = &destp[len];
         cmd->env = (char**) destp;
         for (ep = env; ep && *ep; ep++) {
-            mprLog(cmd, 4, "cmd: env[%d]: %s", i, *ep);
+            mprLog(4, "cmd: env[%d]: %s", i, *ep);
             strcpy(destp, *ep);
-            mprLog(cmd, 7, "cmd: Set env variable: %s", destp);
+            mprLog(7, "cmd: Set env variable: %s", destp);
             destp += strlen(*ep) + 1;
         }
         if (!hasSystemRoot) {
-            mprSprintf(cmd, destp, (int) (endp - destp - 1), "SYSTEMROOT=%s", SYSTEMROOT);
+            mprSprintf(destp, (endp - destp - 1), "SYSTEMROOT=%s", SYSTEMROOT);
             destp += 12 + strlen(SYSTEMROOT);
         }
         if (!hasPath) {
-            mprSprintf(cmd, destp, (int) (endp - destp - 1), "PATH=%s", PATH);
+            mprSprintf(destp, (endp - destp - 1), "PATH=%s", PATH);
             destp += 6 + strlen(PATH);
         }
         *destp++ = '\0';
@@ -4540,9 +4593,9 @@ static int startProcess(MprCmd *cmd)
     if (! CreateProcess(0, cmd->command, 0, 0, 1, 0, cmd->env, cmd->dir, &startInfo, &procInfo)) {
         err = mprGetOsError();
         if (err == ERROR_DIRECTORY) {
-            mprError(cmd, "Can't create process: %s, directory %s is invalid", cmd->program, cmd->dir);
+            mprError("Can't create process: %s, directory %s is invalid", cmd->program, cmd->dir);
         } else {
-            mprError(cmd, "Can't create process: %s, %d", cmd->program, err);
+            mprError("Can't create process: %s, %d", cmd->program, err);
         }
         return MPR_ERR_CANT_CREATE;
     }
@@ -4644,7 +4697,7 @@ static int makeChannel(MprCmd *cmd, int index)
     att = (index == MPR_CMD_STDIN) ? &clientAtt : &serverAtt;
     readHandle = CreateNamedPipe(pipeBuf, openMode, pipeMode, 1, 0, 256 * 1024, 1, att);
     if (readHandle == INVALID_HANDLE_VALUE) {
-        mprError(cmd, "Can't create stdio pipes %s. Err %d\n", pipeBuf, mprGetOsError());
+        mprError("Can't create stdio pipes %s. Err %d\n", pipeBuf, mprGetOsError());
         return MPR_ERR_CANT_CREATE;
     }
     readFd = (int) (int64) _open_osfhandle((long) readHandle, 0);
@@ -4654,7 +4707,7 @@ static int makeChannel(MprCmd *cmd, int index)
     writeFd = (int) _open_osfhandle((long) writeHandle, 0);
 
     if (readFd < 0 || writeFd < 0) {
-        mprError(cmd, "Can't create stdio pipes %s. Err %d\n", pipeBuf, mprGetOsError());
+        mprError("Can't create stdio pipes %s. Err %d\n", pipeBuf, mprGetOsError());
         return MPR_ERR_CANT_CREATE;
     }
     if (index == MPR_CMD_STDIN) {
@@ -4829,16 +4882,16 @@ int startProcess(MprCmd *cmd)
         (int) cmd->program, (int) entryFn, (int) cmd, 0, 0, 0, 0, 0, 0, 0);
 
     if (cmd->pid < 0) {
-        mprError(cmd, "start: can't create task %s, errno %d", entryPoint, mprGetOsError());
+        mprError("start: can't create task %s, errno %d", entryPoint, mprGetOsError());
         mprFree(entryPoint);
         return MPR_ERR_CANT_CREATE;
     }
 
-    mprLog(cmd, 7, "cmd, child taskId %d", cmd->pid);
+    mprLog(7, "cmd, child taskId %d", cmd->pid);
     mprFree(entryPoint);
 
     if (semTake(cmd->startCond, MPR_TIMEOUT_START_TASK) != OK) {
-        mprError(cmd, "start: child %s did not initialize, errno %d", cmd->program, mprGetOsError());
+        mprError("start: child %s did not initialize, errno %d", cmd->program, mprGetOsError());
         return MPR_ERR_CANT_CREATE;
     }
     semDelete(cmd->startCond);
@@ -4897,12 +4950,12 @@ static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg)
     if (cmd->dir) {
         rc = chdir(cmd->dir);
     } else {
-        dir = mprGetPathDir(cmd, cmd->program);
+        dir = mprGetPathDir(cmd->program);
         rc = chdir(dir);
         mprFree(dir);
     }
     if (rc < 0) {
-        mprLog(cmd, 0, "cmd: Can't change directory to %s", cmd->dir);
+        mprLog(0, "cmd: Can't change directory to %s", cmd->dir);
         exit(255);
     }
 
@@ -4935,7 +4988,7 @@ static int makeChannel(MprCmd *cmd, int index)
     file->name = mprAsprintf("/pipe/%s_%d_%d", BLD_PRODUCT, taskIdSelf(), tempSeed++);
 
     if (pipeDevCreate(file->name, 5, MPR_BUFSIZE) < 0) {
-        mprError(cmd, "Can't create pipes to run %s", cmd->program);
+        mprError("Can't create pipes to run %s", cmd->program);
         return MPR_ERR_CANT_OPEN;
     }
     
@@ -4948,7 +5001,7 @@ static int makeChannel(MprCmd *cmd, int index)
         file->fd = open(file->name, O_RDONLY, 0644);
     }
     if (file->fd < 0) {
-        mprError(cmd, "Can't create stdio pipes. Err %d", mprGetOsError());
+        mprError("Can't create stdio pipes. Err %d", mprGetOsError());
         return MPR_ERR_CANT_CREATE;
     }
     return 0;
@@ -5086,7 +5139,6 @@ static void manageCond(MprCond *cp, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         mprAssert(cp->mutex);
-        mprLock(cp->mutex);
 #if BLD_WIN_LIKE
         CloseHandle(cp->cv);
 #elif VXWORKS
@@ -5497,7 +5549,8 @@ char *mprDecode64(cchar *s)
 {
     uint    bitBuf;
     char    *buffer, *bp;
-    int     len, c, i, j, shift;
+    ssize   len;
+    int     c, i, j, shift;
 
     len = strlen(s);
     if ((buffer = mprAlloc(len + 1)) == 0) {
@@ -5532,7 +5585,8 @@ char *mprEncode64(cchar *s)
 {
     uint    shiftbuf;
     char    *buffer, *bp;
-    int     len, x, i, j, shift;
+    ssize   len;
+    int     x, i, j, shift;
 
     len = strlen(s) * 2;
     if ((buffer = mprAlloc(len + 1)) == 0) {
@@ -5563,14 +5617,15 @@ char *mprEncode64(cchar *s)
 /*
     Return the MD5 hash of a block
  */
-char *mprGetMD5Hash(cchar *buf, size_t length, cchar *prefix)
+char *mprGetMD5Hash(cchar *buf, ssize length, cchar *prefix)
 {
     MD5CONTEXT      context;
     uchar           hash[CRYPT_HASH_SIZE];
     cchar           *hex = "0123456789abcdef";
     char            *r, *str;
     char            result[(CRYPT_HASH_SIZE * 2) + 1];
-    int             i, len;
+    ssize           len;
+    int             i;
 
     /*
         Take the MD5 hash of the string argument.
@@ -5931,16 +5986,16 @@ int mprCloseFile(MprFile *file)
 }
 
 
-static size_t readFile(MprFile *file, void *buf, size_t size)
+static ssize readFile(MprFile *file, void *buf, ssize size)
 {
     mprAssert(file);
     mprAssert(buf);
 
-    return read(file->fd, buf, size);
+    return read(file->fd, buf, (uint) size);
 }
 
 
-static size_t writeFile(MprFile *file, cvoid *buf, size_t count)
+static ssize writeFile(MprFile *file, cvoid *buf, ssize count)
 {
     mprAssert(file);
     mprAssert(buf);
@@ -5948,7 +6003,7 @@ static size_t writeFile(MprFile *file, cvoid *buf, size_t count)
 #if VXWORKS
     return write(file->fd, (void*) buf, count);
 #else
-    return write(file->fd, buf, count);
+    return write(file->fd, buf, (uint) count);
 #endif
 }
 
@@ -5986,7 +6041,7 @@ static int deletePath(MprDiskFileSystem *fileSystem, cchar *path)
             rc = 0;
             break;
         }
-        mprSleep(fileSystem, 10);
+        mprSleep(10);
     }
     return rc;
 }
@@ -6047,7 +6102,7 @@ static int getPathInfo(MprDiskFileSystem *fileSystem, cchar *path, MprPath *info
     info->isDir = (s.st_mode & S_IFDIR) != 0;
     info->isReg = (s.st_mode & S_IFREG) != 0;
     info->isLink = 0;
-    ext = mprGetPathExtension(fileSystem, path);
+    ext = mprGetPathExtension(path);
     if (ext && strcmp(ext, "lnk") == 0) {
         info->isLink = 1;
     }
@@ -6320,7 +6375,7 @@ MprDiskFileSystem *mprCreateDiskFileSystem(cchar *path)
 
 
 static void dequeueDispatcher(MprDispatcher *dispatcher);
-static int getIdleTime(MprEventService *ds, MprDispatcher *dispatcher);
+static MprTime getIdleTime(MprEventService *ds, MprDispatcher *dispatcher);
 static MprDispatcher *getNextReadyDispatcher(MprEventService *es);
 static void initDispatcherQ(MprEventService *ds, MprDispatcher *q, cchar *name);
 static bool isIdle(MprEventService *es, MprDispatcher *dispatcher);
@@ -6341,13 +6396,11 @@ static void serviceEvent(MprDispatcher *dp);
 MprEventService *mprCreateEventService()
 {
     MprEventService     *es;
-    Mpr                 *mpr;
 
-    mpr = mprGetMpr();
     if ((es = mprAllocObj(MprEventService, manageEventService)) == 0) {
         return 0;
     }
-    mpr->eventService = es;
+    MPR->eventService = es;
     es->now = mprGetTime();
     es->mutex = mprCreateLock();
     es->waitCond = mprCreateCond();
@@ -6357,7 +6410,7 @@ MprEventService *mprCreateEventService()
     initDispatcherQ(es, &es->waitQ, "waiting");
 
     //  MOB -- move this to MPR
-    mpr->dispatcher = mprCreateDispatcher("mpr", 1);
+    MPR->dispatcher = mprCreateDispatcher("mpr", 1);
     return es;
 }
 
@@ -6386,6 +6439,9 @@ static void manageEventService(MprEventService *es, int flags)
         for (dp = q->next; dp != q; dp = dp->next) {
             mprMark(dp);
         }
+    } else if (flags & MPR_MANAGE_FREE) {
+        /* Needed for race with manageDispatcher */
+        es->mutex = 0;
     }
 }
 
@@ -6497,56 +6553,65 @@ static void serviceDispatcher(MprDispatcher *dispatcher)
     @param timeout Time in milliseconds to wait. Set to zero for no wait. Set to -1 to wait forever.
     @returns Zero if not events occurred. Otherwise returns non-zero.
  */
-int mprServiceEvents(MprDispatcher *dispatcher, int timeout, int flags)
+int mprServiceEvents(MprDispatcher *primary, int timeout, int flags)
 {
     MprEventService     *es;
     MprDispatcher       *dp;
-    MprTime             expires;
-    Mpr                 *mpr;
-    int                 count, delay, wasRunning, beginEventCount, eventCount, justOne, idle;
+    MprTime             expires, delay, idle;
+    int                 count, wasRunning, beginEventCount, eventCount, justOne;
 
-    mpr = mprGetMpr();
-
-    es = mpr->eventService;
-    es->now = mprGetTime();
-    expires = timeout < 0 ? (es->now + MPR_MAX_TIMEOUT) : (es->now + timeout);
+    es = MPR->eventService;
     beginEventCount = eventCount = es->eventCount;
-    justOne = (flags & MPR_SERVICE_ONE_THING) ? 1 : 0;
+
+    es->now = mprGetTime();
     wasRunning = 0;
+    expires = timeout < 0 ? (es->now + MPR_MAX_TIMEOUT) : (es->now + timeout);
+    justOne = (flags & MPR_SERVICE_ONE_THING) ? 1 : 0;
 
     lock(es);
-    if (dispatcher) {
-        wasRunning = isRunning(dispatcher);
-        if (!isRunning(dispatcher)) {
-            queueDispatcher(&es->runQ, dispatcher);
+    if (primary) {
+        /*
+            We are pumping a specific dispatcher for events. Must make runnable if not already.
+         */
+        wasRunning = isRunning(primary);
+        if (!isRunning(primary)) {
+            queueDispatcher(&es->runQ, primary);
         }
     }
     unlock(es);
 
+    /*
+        Service dispatchers 
+     */
     do {
         eventCount = es->eventCount;
-        if (dispatcher) {
-            if ((count = dispatchEvents(dispatcher)) < 0) {
-                return abs(es->eventCount - eventCount);
+        if (primary) {
+            /*
+                Dispatch events for a specific requested dispatcher
+             */
+            if ((count = dispatchEvents(primary)) < 0) {
+                return abs(es->eventCount - beginEventCount);
             } else if (count > 0 && justOne) {
                 break;
             }
         }
-        delay = (int) (expires - es->now);
+        if (!(flags & MPR_SERVICE_ONLY)) {
+            while ((dp = getNextReadyDispatcher(es)) != NULL && !mprIsComplete()) {
+                mprAssert(isRunning(dp));
+                serviceEvent(dp);
+                if (justOne) {
+                    break;
+                }
+            } 
+        }
+        lock(es);
+        delay = (expires - es->now);
         if (delay > 0) {
-            idle = getIdleTime(es, dispatcher);
+            idle = getIdleTime(es, primary);
             delay = min(delay, idle);
         }
-        while ((dp = getNextReadyDispatcher(es)) != NULL && !mprIsComplete()) {
-            mprAssert(isRunning(dp));
-            serviceEvent(dp);
-            if (justOne) {
-                break;
-            }
-        } 
-        lock(es);
         if (delay > 0) {
-            if (es->eventCount == eventCount && isIdle(es, dispatcher)) {
+            if (es->eventCount == eventCount && isIdle(es, primary)) {
                 mprSetStickyYield(NULL, 1);
                 if (delay >= MPR_MIN_TIME_FOR_GC) {
                     mprCollectGarbage(MPR_GC_FROM_EVENTS);
@@ -6555,12 +6620,12 @@ int mprServiceEvents(MprDispatcher *dispatcher, int timeout, int flags)
                 }
                 if (es->waiting) {
                     unlock(es);
-                    mprWaitForMultiCond(es->waitCond, delay);
+                    mprWaitForMultiCond(es->waitCond, (int) delay);
                 } else {
                     es->waiting = 1;
-                    mpr->waitService->willAwake = es->now + delay;
+                    MPR->waitService->willAwake = es->now + delay;
                     unlock(es);
-                    mprWaitForIO(mpr->waitService, delay);
+                    mprWaitForIO(MPR->waitService, (int) delay);
                     es->waiting = 0;
                     mprSignalMultiCond(es->waitCond);
                 }
@@ -6571,10 +6636,10 @@ int mprServiceEvents(MprDispatcher *dispatcher, int timeout, int flags)
         es->now = mprGetTime();
     } while (es->now < expires && !justOne && !mprIsComplete());
 
-    if (dispatcher && !wasRunning) {
+    if (primary && !wasRunning) {
         lock(es);
-        dequeueDispatcher(dispatcher);
-        mprScheduleDispatcher(dispatcher);
+        dequeueDispatcher(primary);
+        mprScheduleDispatcher(primary);
         unlock(es);
     }
     return abs(es->eventCount - beginEventCount);
@@ -6603,7 +6668,8 @@ MprDispatcher *mprCreateDispatcher(cchar *name, int enable)
 
 static void manageDispatcher(MprDispatcher *dispatcher, int flags)
 {
-    MprEvent        *q, *event;
+    MprEventService     *es;
+    MprEvent            *q, *event;
 
     if (flags & MPR_MANAGE_MARK) {
         mprMark(dispatcher->name);
@@ -6614,16 +6680,16 @@ static void manageDispatcher(MprDispatcher *dispatcher, int flags)
             }
         }
     } else if (flags & MPR_MANAGE_FREE) {
-        MprEventService     *es;
         es = dispatcher->service;
-        lock(es);
-        dequeueDispatcher(dispatcher);
-        dispatcher->deleted = 1;
-        if (dispatcher->inUse) {
-            mprAssert(!dispatcher->inUse);
+        if (es->mutex) {
+            lock(es);
+            dequeueDispatcher(dispatcher);
+            dispatcher->deleted = 1;
+            if (dispatcher->inUse) {
+                mprAssert(!dispatcher->inUse);
+            }
             unlock(es);
         }
-        unlock(es);
     }
 }
 
@@ -6654,8 +6720,7 @@ void mprEnableDispatcher(MprDispatcher *dispatcher)
 
 
 /*
-    Relay an event to a new dispatcher. This invokes the callback proc as though it was invoked from the given
-    dispatcher. 
+    Relay an event to a new dispatcher. This invokes the callback proc as though it was invoked from the given dispatcher. 
  */
 void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, MprEvent *event)
 {
@@ -6675,15 +6740,14 @@ void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, Mpr
     unlock(es);
 
     dispatcher->inUse++;
-
     (proc)(data, event);
 
     if (--dispatcher->inUse == 0 && dispatcher->deleted) {
         mprFree(dispatcher);
     } else if (!wasRunning) {
-        //  MOB -- why reschedule?
         lock(es);
         dequeueDispatcher(dispatcher);
+        /* ScheduleDispatcher will requeue on the right run/idle/wait queue */
         mprScheduleDispatcher(dispatcher);
         unlock(es);
     }
@@ -6691,8 +6755,9 @@ void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, Mpr
 
 
 /*
-    Schedule the dispatcher. If the dispatcher is already running then it is not modified. If empty, it is moved to 
-    the idleQ. If there is a past-due event, it is moved to the readQ. If there is a future event, it is put on the waitQ.
+    Schedule the dispatcher. If the dispatcher is already running then it is not modified. If the event queue is empty, 
+    the dispatcher is moved to the idleQ. If there is a past-due event, it is moved to the readyQ. If there is a future 
+    event pending, it is put on the waitQ.
  */
 void mprScheduleDispatcher(MprDispatcher *dispatcher)
 {
@@ -6784,26 +6849,28 @@ static MprDispatcher *getNextReadyDispatcher(MprEventService *es)
     if (readyQ->next != readyQ) {
         dispatcher = readyQ->next;
         queueDispatcher(&es->runQ, dispatcher);
-        unlock(es);
         mprAssert(dispatcher->enabled);
-        mprAssert(isRunning(dispatcher));
-        return dispatcher;
+    } else {
+        dispatcher = NULL;
     }
     unlock(es);
-    return 0;
+    mprAssert(dispatcher == NULL || isRunning(dispatcher));
+    return dispatcher;
 }
 
 
-static int getIdleTime(MprEventService *es, MprDispatcher *dispatcher)
+/*
+    Get the time to sleep till the next pending event. Must be called locked.
+ */
+static MprTime getIdleTime(MprEventService *es, MprDispatcher *dispatcher)
 {
     MprDispatcher   *readyQ, *waitQ, *dp;
     MprEvent        *event;
-    int             delay;
+    MprTime         delay;
 
     waitQ = &es->waitQ;
     readyQ = &es->readyQ;
 
-    lock(es);
     if (readyQ->next != readyQ) {
         delay = 0;
     } else {
@@ -6814,7 +6881,7 @@ static int getIdleTime(MprEventService *es, MprDispatcher *dispatcher)
         if (dispatcher) {
             event = dispatcher->eventQ.next;
             if (event != &dispatcher->eventQ) {
-                delay = min(delay, (int) (event->due - es->now));
+                delay = min(delay, (event->due - es->now));
             }
         }
         /*
@@ -6823,14 +6890,13 @@ static int getIdleTime(MprEventService *es, MprDispatcher *dispatcher)
         for (dp = waitQ->next; dp != waitQ; dp = dp->next) {
             event = dp->eventQ.next;
             if (event != &dp->eventQ) {
-                delay = min(delay, (int) (event->due - es->now));
+                delay = min(delay, (event->due - es->now));
                 if (delay <= 0) {
                     break;
                 }
             }
         }
     }
-    unlock(es);
     return delay;
 }
 
@@ -6905,6 +6971,11 @@ void mprReleaseWorkerFromDispatcher(MprDispatcher *dispatcher, MprWorker *worker
     mprReleaseWorker(worker);
 }
 
+
+int mprHasEventsThread()
+{
+    return (MPR->heap.flags & (MPR_EVENTS_THREAD | MPR_USER_EVENTS_THREAD)) ? 1 : 0;
+}
 
 /*
     @copy   default
@@ -7349,7 +7420,8 @@ int mprCreateNotifierService(MprWaitService *ws)
 void mprManageEpoll(MprWaitService *ws, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        ;
+        mprMark(ws->events);
+    
     } else if (flags & MPR_MANAGE_FREE) {
         if (ws->epoll) {
             close(ws->epoll);
@@ -7898,7 +7970,7 @@ static void dequeueEvent(MprEvent *event)
 
 
 
-static int fillBuf(MprFile *file);
+static ssize fillBuf(MprFile *file);
 static void manageFile(MprFile *file, int flags);
 
 
@@ -7939,7 +8011,7 @@ int mprFlush(MprFile *file)
 {
     MprFileSystem   *fs;
     MprBuf          *bp;
-    int             len, rc;
+    ssize           len, rc;
 
     mprAssert(file);
     if (file == 0) {
@@ -7956,7 +8028,7 @@ int mprFlush(MprFile *file)
             len = mprGetBufLength(bp);
             rc = fs->writeFile(file, mprGetBufStart(bp), len);
             if (rc < 0) {
-                return rc;
+                return (int) rc;
             }
             mprAdjustBufStart(bp, rc);
         }
@@ -8007,8 +8079,8 @@ MprFile *mprGetStdout()
  */
 int mprGetc(MprFile *file)
 {
-    MprBuf  *bp;
-    int     len;
+    MprBuf      *bp;
+    ssize     len;
 
     mprAssert(file);
 
@@ -8016,7 +8088,7 @@ int mprGetc(MprFile *file)
         return MPR_ERR;
     }
     if (file->buf == 0) {
-        file->buf = mprCreateBuf(MPR_BUFSIZE, MPR_MAX_STRING);
+        file->buf = mprCreateBuf(MPR_BUFSIZE, MPR_BUFSIZE);
     }
     bp = file->buf;
 
@@ -8034,52 +8106,100 @@ int mprGetc(MprFile *file)
 }
 
 
+static char *findNewline(cchar *str, cchar *newline, ssize len, ssize *nlen)
+{
+    char    *start, *best;
+    ssize   newlines;
+    int     i;
+
+    mprAssert(str);
+    mprAssert(newline);
+    mprAssert(nlen);
+    mprAssert(len > 0);
+
+    if (str == NULL || newline == NULL) {
+        return NULL;
+    }
+    newlines = strlen(newline);
+    mprAssert(newlines == 1 || newlines == 2);
+
+    start = best = NULL;
+    *nlen = 0;
+    for (i = 0; i < newlines; i++) {
+        if ((start = memchr(str, newline[i], len)) != 0) {
+            if (best == NULL || start < best) {
+                best = start;
+                *nlen = 1;
+                if (newlines == 2 && best[1] == newline[!i]) {
+                    (*nlen)++;
+                }
+            }
+        }
+    }
+    return best;
+}
+
+
 /*
     Get a string from the file. This will put the file into buffered mode.
     Return NULL on eof.
  */
-char *mprGets(MprFile *file, size_t size, int *lenp)
+char *mprGets(MprFile *file, ssize maxline, ssize *lenp)
 {
     MprBuf          *bp;
     MprFileSystem   *fs;
-    cchar           *eol, *newline;
-    size_t          len;
-    int             count;
+    ssize           size, len, nlen, consumed;
+    cchar           *eol, *newline, *start;
+    char            *result;
 
     mprAssert(file);
+
     if (file == 0) {
         return NULL;
     }
-    if (size == 0) {
-        size = MAXSIZE;
+    if (lenp) {
+        *lenp = 0;
+    }
+    if (maxline <= 0) {
+        maxline = MPR_BUFSIZE;
     }
     fs = file->fileSystem;
     newline = fs->newline;
     if (file->buf == 0) {
-        file->buf = mprCreateBuf(size, size);
+        file->buf = mprCreateBuf(maxline, maxline);
     }
     bp = file->buf;
-    /*
-        Must leave room for null
-     */
-    count = 0;
-    while (--size > 0) {
+
+    result = NULL;
+    size = 0;
+    do {
         if (mprGetBufLength(bp) == 0) {
             if (fillBuf(file) <= 0) {
-                return NULL;
+                return result;
             }
         }
-        if ((eol = scontains(mprGetBufStart(bp), newline, mprGetBufLength(bp))) != 0) {
-            len = eol - mprGetBufStart(bp);
-            if (lenp) {
-                *lenp = len;
-            }
-            file->pos += len + slen(newline);
-            return ssub(mprGetBufStart(bp), 0, len);
+        start = mprGetBufStart(bp);
+        len = mprGetBufLength(bp);
+        if ((eol = findNewline(start, newline, len, &nlen)) != 0) {
+            len = eol - start;
+            consumed = len + nlen;
+        } else {
+            consumed = len;
         }
-    }
-    file->pos += size;
-    return ssub(mprGetBufStart(bp), 0, size);
+        file->pos += (MprOffset) consumed;
+        if (lenp) {
+            *lenp += len;
+        }
+        if ((result = mprRealloc(result, size + len + 1)) == 0) {
+            return NULL;
+        }
+        memcpy(&result[size], start, len);
+        size += len;
+        result[size] = '\0';
+        mprAdjustBufStart(bp, consumed);
+    } while (!eol);
+
+    return result;
 }
 
 
@@ -8112,11 +8232,11 @@ MprFile *mprOpen(cchar *path, int omode, int perms)
 /*
     Put a string to the file. This will put the file into buffered mode.
  */
-int mprPuts(MprFile *file, cchar *str)
+ssize mprPuts(MprFile *file, cchar *str)
 {
     MprBuf  *bp;
+    ssize   total, bytes, count;
     char    *buf;
-    size_t  total, bytes, count;
 
     mprAssert(file);
     count = strlen(str);
@@ -8152,7 +8272,7 @@ int mprPuts(MprFile *file, cchar *str)
         count -= bytes;
         buf += bytes;
         total += bytes;
-        file->pos += bytes;
+        file->pos += (MprOffset) bytes;
     }
     return total;
 }
@@ -8163,17 +8283,16 @@ int mprPuts(MprFile *file, cchar *str)
  */
 int mprPeekc(MprFile *file)
 {
-    MprBuf  *bp;
-    int     len;
+    MprBuf      *bp;
+    ssize       len;
 
     mprAssert(file);
 
     if (file == 0) {
         return MPR_ERR;
     }
-
     if (file->buf == 0) {
-        file->buf = mprCreateBuf(MPR_BUFSIZE, MPR_MAX_STRING);
+        file->buf = mprCreateBuf(MPR_BUFSIZE, MPR_BUFSIZE);
     }
     bp = file->buf;
 
@@ -8193,7 +8312,7 @@ int mprPeekc(MprFile *file)
 /*
     Put a character to the file. This will put the file into buffered mode.
  */
-int mprPutc(MprFile *file, int c)
+ssize mprPutc(MprFile *file, int c)
 {
     mprAssert(file);
 
@@ -8212,12 +8331,12 @@ int mprPutc(MprFile *file, int c)
 }
 
 
-int mprRead(MprFile *file, void *buf, size_t size)
+ssize mprRead(MprFile *file, void *buf, ssize size)
 {
     MprFileSystem   *fs;
     MprBuf          *bp;
+    ssize           bytes, totalRead;
     void            *bufStart;
-    size_t          bytes, totalRead;
 
     mprAssert(file);
     if (file == 0) {
@@ -8245,7 +8364,7 @@ int mprRead(MprFile *file, void *buf, size_t size)
         }
         totalRead = ((char*) buf - (char*) bufStart);
     }
-    file->pos += totalRead;
+    file->pos += (MprOffset) totalRead;
     return totalRead;
 }
 
@@ -8305,11 +8424,11 @@ int mprTruncate(cchar *path, MprOffset size)
 }
 
 
-int mprWrite(MprFile *file, cvoid *buf, size_t count)
+ssize mprWrite(MprFile *file, cvoid *buf, ssize count)
 {
     MprFileSystem   *fs;
     MprBuf          *bp;
-    size_t          bytes, written;
+    ssize           bytes, written;
 
     mprAssert(file);
     if (file == 0) {
@@ -8337,7 +8456,7 @@ int mprWrite(MprFile *file, cvoid *buf, size_t count)
             buf = (char*) buf + bytes;
         }
     }
-    file->pos += written;
+    file->pos += (MprOffset) written;
     if (file->pos > file->size) {
         file->size = file->pos;
     }
@@ -8345,17 +8464,17 @@ int mprWrite(MprFile *file, cvoid *buf, size_t count)
 }
 
 
-int mprWriteString(MprFile *file, cchar *str)
+ssize mprWriteString(MprFile *file, cchar *str)
 {
     return mprWrite(file, str, strlen(str));
 }
 
 
-int mprWriteFormat(MprFile *file, cchar *fmt, ...)
+ssize mprWriteFormat(MprFile *file, cchar *fmt, ...)
 {
     va_list     ap;
     char        *buf;
-    int         rc;
+    ssize       rc;
 
     rc = -1;
     va_start(ap, fmt);
@@ -8371,11 +8490,11 @@ int mprWriteFormat(MprFile *file, cchar *fmt, ...)
 /*
     Fill the read buffer. Return the new buffer length. Only called when the buffer is empty.
  */
-static int fillBuf(MprFile *file)
+static ssize fillBuf(MprFile *file)
 {
     MprFileSystem   *fs;
     MprBuf          *bp;
-    int             len;
+    ssize           len;
 
     bp = file->buf;
     fs = file->fileSystem;
@@ -8395,7 +8514,7 @@ static int fillBuf(MprFile *file)
 /*
     Enable and control file buffering
  */
-int mprEnableFileBuffering(MprFile *file, int initialSize, int maxSize)
+int mprEnableFileBuffering(MprFile *file, ssize initialSize, ssize maxSize)
 {
     mprAssert(file);
 
@@ -9454,7 +9573,7 @@ void mprInitList(MprList *lp)
  */
 int mprSetListLimits(MprList *lp, int initialSize, int maxSize)
 {
-    int         size;
+    int       size;
 
     if (initialSize <= 0) {
         initialSize = MPR_LIST_INCR;
@@ -9562,7 +9681,7 @@ void *mprSetItem(MprList *lp, int index, cvoid *item)
  */
 int mprAddItem(MprList *lp, cvoid *item)
 {
-    int     index;
+    int   index;
 
     mprAssert(lp);
     mprAssert(lp->capacity >= 0);
@@ -9573,7 +9692,7 @@ int mprAddItem(MprList *lp, cvoid *item)
             return MPR_ERR_TOO_MANY;
         }
     }
-    index = lp->length++;
+    index = (int) lp->length++;
     lp->items[index] = (void*) item;
     return index;
 }
@@ -9878,7 +9997,7 @@ int mprLookupItem(MprList *lp, cvoid *item)
  */
 static int growList(MprList *lp, int incr)
 {
-    int     len, memsize;
+    int   len, memsize;
 
     if (lp->maxSize <= 0) {
         lp->maxSize = MAXINT;
@@ -10414,15 +10533,11 @@ static void logOutput(int flags, int level, cchar *msg);
 void mprBreakpoint()
 {
 #if BLD_DEBUG && DEBUG_IDE
-    #if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
-        #if WINCE
-            /* Do nothing */
-        #elif BLD_WIN_LIKE
-            __asm { int 3 };
-        #else
-            asm("int $03");
-            /*  __asm__ __volatile__ ("int $03"); */
-        #endif
+	#if BLD_WIN_LIKE && !MPR_64_BIT
+        __asm { int 3 };
+    #elif (MACOSX || LINUX) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
+        asm("int $03");
+        /*  __asm__ __volatile__ ("int $03"); */
     #endif
 #endif
 }
@@ -10814,11 +10929,11 @@ int mcmp(MprChar *s1, cchar *s2)
 }
 
 
-MprChar *mcontains(MprChar *str, cchar *pattern, size_t limit)
+MprChar *mcontains(MprChar *str, cchar *pattern, ssize limit)
 {
     MprChar     *cp, *s1;
     cchar       *s2;
-    size_t      lim;
+    ssize       lim;
 
     mprAssert(0 <= limit && limit < MAXSIZE);
 
@@ -10846,9 +10961,9 @@ MprChar *mcontains(MprChar *str, cchar *pattern, size_t limit)
 /*
     destMax and len are character counts, not sizes in bytes
  */
-size_t mcopy(MprChar *dest, cchar *src)
+ssize mcopy(MprChar *dest, cchar *src)
 {
-    size_t      len;
+    ssize       len;
 
     mprAssert(src);
     mprAssert(dest);
@@ -10975,7 +11090,7 @@ MprChar *mjoinv(MprChar *buf, va_list args)
 /*
     Case insensitive string comparison. Limited by length
  */
-int mncasecmp(MprChar *s1, cchar *s2, size_t n)
+int mncasecmp(MprChar *s1, cchar *s2, ssize n)
 {
     int     rc;
 
@@ -11007,7 +11122,7 @@ int mncasecmp(MprChar *s1, cchar *s2, size_t n)
 
 
 
-int mncmp(MprChar *s1, cchar *s2, size_t n)
+int mncmp(MprChar *s1, cchar *s2, ssize n)
 {
     mprAssert(0 <= n && n < MAXSIZE);
 
@@ -11036,7 +11151,7 @@ int mncmp(MprChar *s1, cchar *s2, size_t n)
 }
 
 
-size_t mncopy(MprChar *dest, size_t destMax, cchar *src, size_t len)
+ssize mncopy(MprChar *dest, ssize destMax, cchar *src, ssize len)
 {
     mprAssert(0 <= len && len < MAXSIZE);
     mprAssert(0 < destMax && destMax < MAXSIZE);
@@ -11113,7 +11228,7 @@ MprChar *mrejoinv(MprChar *buf, va_list args)
 }
 
 
-size_t mspn(MprChar *str, cchar *set)
+ssize mspn(MprChar *str, cchar *set)
 {
     cchar   *sp;
     int     count;
@@ -11150,7 +11265,7 @@ int mstarts(MprChar *str, cchar *prefix)
 MprChar *mtok(MprChar *str, cchar *delim, MprChar **last)
 {
     MprChar    *start, *end;
-    size_t     i;
+    ssize      i;
 
     start = str ? str : *last;
 
@@ -11177,7 +11292,7 @@ MprChar *mtok(MprChar *str, cchar *delim, MprChar **last)
 
 MprChar *mtrim(MprChar *str, cchar *set, int where)
 {
-    size_t  len, i;
+    ssize   len, i;
 
     if (str == NULL || set == NULL) {
         return str;
@@ -11437,7 +11552,7 @@ void mprSetModuleSearchPath(char *searchPath)
             So dependent DLLs can be loaded by LoadLibrary
          */
         path = sjoin("PATH=", searchPath, ";", getenv("PATH"), NULL);
-        mprMapSeparators(mpr, path, '\\');
+        mprMapSeparators(path, '\\');
         putenv(path);
         mprFree(path);
     }
@@ -11704,8 +11819,8 @@ static MPR_INLINE char *lastSep(MprFileSystem *fs, cchar *path)
 int mprCopyPath(cchar *fromName, cchar *toName, int mode)
 {
     MprFile     *from, *to;
+    ssize       count;
     char        buf[MPR_BUFSIZE];
-    int         count;
 
     if ((from = mprOpen(fromName, O_RDONLY | O_BINARY, 0)) == 0) {
         mprError("Can't open %s", fromName);
@@ -11875,7 +11990,7 @@ char *mprGetPathDir(cchar *path)
     MprFileSystem   *fs;
     cchar           *cp;
     char            *result;
-    size_t          len;
+    ssize          len;
 
     mprAssert(path);
 
@@ -11918,7 +12033,8 @@ MprList *mprGetPathFiles(cchar *dir, bool enumDirs)
     MprDirEntry     *dp;
     MprPath         fileInfo;
     MprList         *list;
-    char            *seps, *path, pbuf[MPR_MAX_PATH];
+	cchar			*seps;
+    char            *path, pbuf[MPR_MAX_PATH];
 #if WINCE
     WIN32_FIND_DATAA findData;
 #else
@@ -11950,7 +12066,7 @@ MprList *mprGetPathFiles(cchar *dir, bool enumDirs)
                 mprFree(path);
                 return 0;
             }
-            dp->name = sclone(dp, findData.cFileName);
+            dp->name = sclone(findData.cFileName);
             if (dp->name == 0) {
                 mprFree(path);
                 return 0;
@@ -12130,7 +12246,8 @@ char *mprGetRelPath(cchar *pathArg)
 {
     MprFileSystem   *fs;
     char            home[MPR_MAX_FNAME], *hp, *cp, *result, *tmp, *path;
-    int             homeSegments, len, i, commonSegments, sep;
+    ssize           len;
+    int             homeSegments, i, commonSegments, sep;
 
     fs = mprLookupFileSystem(pathArg);
     
@@ -12154,7 +12271,7 @@ char *mprGetRelPath(cchar *pathArg)
     GetFullPathName(path, sizeof(apath) - 1, apath, NULL);
     apath[sizeof(apath) - 1] = '\0';
     path = apath;
-    mprMapSeparators(fs, path, sep);
+    mprMapSeparators(path, sep);
 }
 #endif
     /*
@@ -12503,7 +12620,7 @@ char *mprGetNormalizedPath(cchar *pathArg)
 {
     MprFileSystem   *fs;
     char            *dupPath, *path, *sp, *dp, *mark, **segments;
-    size_t          len;
+    ssize           len;
     int             addSep, i, segmentCount, hasDot, last, sep;
 
     if (pathArg == 0 || *pathArg == '\0') {
@@ -12575,8 +12692,8 @@ char *mprGetNormalizedPath(cchar *pathArg)
     /*
         NOTE: The root "/" for absolute paths will be stored as empty.
      */
-    i = len = 0;
-    for (mark = sp = path; *sp; sp++) {
+    len = 0;
+    for (i = 0, mark = sp = path; *sp; sp++) {
         if (isSep(fs, *sp)) {
             *sp = '\0';
             if (*mark == '.' && mark[1] == '\0' && segmentCount > 1) {
@@ -12600,7 +12717,7 @@ char *mprGetNormalizedPath(cchar *pathArg)
                 continue;
             }
             segments[i++] = mark;
-            len += (int) (sp - mark);
+            len += (sp - mark);
 #if KEEP
             if (i == 1 && segmentCount == 1 && fs->hasDriveSpecs && strchr(mark, ':') != 0) {
                 /*
@@ -12616,7 +12733,7 @@ char *mprGetNormalizedPath(cchar *pathArg)
 
     if (--sp > mark) {
         segments[i++] = mark;
-        len += (int) (sp - mark);
+        len += (sp - mark);
     }
     mprAssert(i <= segmentCount);
     segmentCount = i;
@@ -12827,7 +12944,7 @@ int mprSamePath(cchar *path1, cchar *path2)
 /*
     Compare two file path to determine if they point to the same file.
  */
-int mprSamePathCount(cchar *path1, cchar *path2, size_t len)
+int mprSamePathCount(cchar *path1, cchar *path2, ssize len)
 {
     MprFileSystem   *fs;
     char            *tmpPath1, *tmpPath2;
@@ -13492,8 +13609,8 @@ typedef struct Format {
     uchar   *endbuf;
     uchar   *start;
     uchar   *end;
-    int     growBy;
-    int     maxsize;
+    ssize   growBy;
+    ssize   maxsize;
     int     precision;
     int     radix;
     int     width;
@@ -13531,30 +13648,35 @@ typedef struct MprEjsString {
     void            *type;
     void            *next;
     void            *prev;
-    size_t          length;
+    ssize           length;
     MprChar         value[0];
 } MprEjsString;
+
+typedef struct MprEjsName {
+    MprEjsString    *name;
+    MprEjsString    *space;
+} MprEjsName;
 
 
 static int  getState(char c, int state);
 static int  growBuf(Format *fmt);
-static char *sprintfCore(char *buf, int maxsize, cchar *fmt, va_list arg);
+static char *sprintfCore(char *buf, ssize maxsize, cchar *fmt, va_list arg);
 static void outNum(Format *fmt, cchar *prefix, uint64 val);
-static void outString(Format *fmt, cchar *str, int len);
+static void outString(Format *fmt, cchar *str, ssize len);
 #if BLD_CHAR_LEN > 1
-static void outWideString(Format *fmt, MprChar *str, int len);
+static void outWideString(Format *fmt, MprChar *str, ssize len);
 #endif
 #if BLD_FEATURE_FLOAT
 static void outFloat(Format *fmt, char specChar, double value);
 #endif
 
 
-int mprPrintf(cchar *fmt, ...)
+ssize mprPrintf(cchar *fmt, ...)
 {
-    MprFileSystem   *fs;
     va_list         ap;
+    MprFileSystem   *fs;
     char            *buf;
-    int             len;
+    ssize           len;
 
     /* No asserts here as this is used as part of assert reporting */
 
@@ -13572,12 +13694,12 @@ int mprPrintf(cchar *fmt, ...)
 }
 
 
-int mprPrintfError(cchar *fmt, ...)
+ssize mprPrintfError(cchar *fmt, ...)
 {
     MprFileSystem   *fs;
     va_list         ap;
+    ssize           len;
     char            *buf;
-    int             len;
 
     /* No asserts here as this is used as part of assert reporting */
 
@@ -13597,11 +13719,11 @@ int mprPrintfError(cchar *fmt, ...)
 }
 
 
-int mprFprintf(MprFile *file, cchar *fmt, ...)
+ssize mprFprintf(MprFile *file, cchar *fmt, ...)
 {
+    ssize       len;
     va_list     ap;
     char        *buf;
-    int         len;
 
     if (file == 0) {
         return MPR_ERR_BAD_HANDLE;
@@ -13657,7 +13779,7 @@ int mprStaticPrintfError(cchar *fmt, ...)
 #endif
 
 
-char *mprSprintf(char *buf, int bufsize, cchar *fmt, ...)
+char *mprSprintf(char *buf, ssize bufsize, cchar *fmt, ...)
 {
     va_list     ap;
     char        *result;
@@ -13673,7 +13795,7 @@ char *mprSprintf(char *buf, int bufsize, cchar *fmt, ...)
 }
 
 
-char *mprSprintfv(char *buf, int bufsize, cchar *fmt, va_list arg)
+char *mprSprintfv(char *buf, ssize bufsize, cchar *fmt, va_list arg)
 {
     mprAssert(buf);
     mprAssert(fmt);
@@ -13769,14 +13891,16 @@ static int getState(char c, int state)
 }
 
 
-static char *sprintfCore(char *buf, int maxsize, cchar *spec, va_list arg)
+static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
 {
     Format        fmt;
     MprEjsString  *es;
-    char          c;
+    MprEjsName    qname;
+    ssize         len;
     int64         iValue;
     uint64        uValue;
-    int           len, state;
+    int           state;
+    char          c;
 
     if (spec == 0) {
         spec = "";
@@ -13909,19 +14033,19 @@ static char *sprintfCore(char *buf, int maxsize, cchar *spec, va_list arg)
 
             case 'N':
                 /* Name */
-                es = va_arg(arg, MprEjsString*);
-                if (es) {
+                qname = va_arg(arg, MprEjsName);
+                if (qname.name) {
 #if BLD_CHAR_LEN == 1
-                    outString(&fmt, es->value, es->length);
+                    outString(&fmt, qname.name->value, qname.name->length);
                     BPUT(&fmt, ':');
                     BPUT(&fmt, ':');
                     es = va_arg(arg, MprEjsString*);
-                    outString(&fmt, es->value, es->length);
+                    outString(&fmt, qname.space->value, qname.space->length);
 #else
-                    outWideString(&fmt, es->value, es->length);
+                    outWideString(&fmt, qname.name->value, qname.name->length);
                     BPUT(&fmt, ':');
                     es = va_arg(arg, MprEjsString*);
-                    outWideString(&fmt, es->value, es->length);
+                    outWideString(&fmt, qname.space->value, qname.space->length);
 #endif
                 } else {
                     outString(&fmt, NULL, 0);
@@ -14067,17 +14191,17 @@ static char *sprintfCore(char *buf, int maxsize, cchar *spec, va_list arg)
 }
 
 
-static void outString(Format *fmt, cchar *str, int len)
+static void outString(Format *fmt, cchar *str, ssize len)
 {
     cchar   *cp;
-    int     i;
+    ssize   i;
 
     if (str == NULL) {
         str = "null";
         len = 4;
     } else if (fmt->flags & SPRINTF_ALTERNATE) {
         str++;
-        len = (int) *str;
+        len = (ssize) *str;
     } else if (fmt->precision >= 0) {
         for (cp = str, len = 0; len < fmt->precision; len++) {
             if (*cp++ == '\0') {
@@ -14104,7 +14228,7 @@ static void outString(Format *fmt, cchar *str, int len)
 
 
 #if BLD_CHAR_LEN > 1
-static void outWideString(Format *fmt, MprChar *str, int len)
+static void outWideString(Format *fmt, MprChar *str, ssize len)
 {
     MprChar     *cp;
     int         i;
@@ -14117,7 +14241,7 @@ static void outWideString(Format *fmt, MprChar *str, int len)
         return;
     } else if (fmt->flags & SPRINTF_ALTERNATE) {
         str++;
-        len = (int) *str;
+        len = (ssize) *str;
     } else if (fmt->precision >= 0) {
         for (cp = str, len = 0; len < fmt->precision; len++) {
             if (*cp++ == 0) {
@@ -14195,7 +14319,7 @@ static void outNum(Format *fmt, cchar *prefix, uint64 value)
     fill = fmt->width - len;
 
     if (prefix != 0) {
-        fill -= strlen(prefix);
+        fill -= (int) strlen(prefix);
     }
     leadingZeros = (fmt->precision > len) ? fmt->precision - len : 0;
     fill -= leadingZeros;
@@ -14249,7 +14373,7 @@ static void outFloat(Format *fmt, char specChar, double value)
         // sprintf(result, "%*.*e", fmt->width, fmt->precision, value);
     }
 
-    len = strlen(result);
+    len = (int) strlen(result);
     fill = fmt->width - len;
     if (fmt->flags & SPRINTF_COMMA) {
         if (((len - 1) / 3) > 0) {
@@ -14371,7 +14495,7 @@ char *mprDtoa(double value, int ndigits, int mode, int flags)
             Note: ndigits < 0 seems to trim N digits from the end with rounding.
          */
         ip = intermediate = dtoa(value, mode, ndigits, &period, &sign, NULL);
-        len = strlen(intermediate);
+        len = (int) strlen(intermediate);
         exponent = period - 1;
 
         if (mode == MPR_DTOA_ALL_DIGITS && ndigits == 0) {
@@ -14418,7 +14542,7 @@ char *mprDtoa(double value, int ndigits, int mode, int flags)
                     }
                     totalDigits = count + ndigits;
                     if (period < totalDigits) {
-                        count = totalDigits + sign - mprGetBufLength(buf);
+                        count = totalDigits + sign - (int) mprGetBufLength(buf);
                         mprPutCharToBuf(buf, '.');
                         mprPutSubStringToBuf(buf, &ip[period], count);
                         mprPutPadToBuf(buf, '0', count - strlen(&ip[period]));
@@ -14465,7 +14589,7 @@ char *mprDtoa(double value, int ndigits, int mode, int flags)
 static int growBuf(Format *fmt)
 {
     uchar   *newbuf;
-    int     buflen;
+    ssize   buflen;
 
     buflen = (int) (fmt->endbuf - fmt->buf);
     if (fmt->maxsize >= 0 && buflen >= fmt->maxsize) {
@@ -14908,7 +15032,7 @@ int mprCreateNotifierService(MprWaitService *ws)
     for (rc = retries = 0; retries < maxTries; retries++) {
         breakSock = socket(AF_INET, SOCK_DGRAM, 0);
         if (breakSock < 0) {
-            mprLog(ws, MPR_WARN, "Can't open port %d to use for select. Retrying.\n");
+            mprLog(MPR_WARN, "Can't open port %d to use for select. Retrying.\n");
         }
 #if BLD_UNIX_LIKE
         fcntl(breakSock, F_SETFD, FD_CLOEXEC);
@@ -14938,7 +15062,7 @@ int mprCreateNotifierService(MprWaitService *ws)
     }
 
     if (breakSock < 0 || rc < 0) {
-        mprLog(ws, MPR_WARN, "Can't bind any port to use for select. Tried %d-%d\n", breakPort, breakPort - maxTries);
+        mprLog(MPR_WARN, "Can't bind any port to use for select. Tried %d-%d\n", breakPort, breakPort - maxTries);
         return MPR_ERR_CANT_OPEN;
     }
     ws->breakSock = breakSock;
@@ -14948,7 +15072,7 @@ int mprCreateNotifierService(MprWaitService *ws)
 }
 
 
-static void mprManageSelect(MprWaitService *ws, int flags)
+void mprManageSelect(MprWaitService *ws, int flags)
 {
     if (flags & MPR_MANAGE_FREE) {
         if (ws->breakSock >= 0) {
@@ -14978,7 +15102,7 @@ int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask)
 
     fd = wp->fd;
     if (fd >= FD_SETSIZE) {
-        mprError(ws, "File descriptor exceeds configured maximum in FD_SETSIZE (%d vs %d)", fd, FD_SETSIZE);
+        mprError("File descriptor exceeds configured maximum in FD_SETSIZE (%d vs %d)", fd, FD_SETSIZE);
         return MPR_ERR_CANT_INITIALIZE;
     }
     lock(ws);
@@ -15159,7 +15283,7 @@ void mprWakeNotifier()
         if (rc < 0) {
             static int warnOnce = 0;
             if (warnOnce++ == 0) {
-                mprLog(ws, 0, "Can't send wakeup to breakout socket: errno %d", errno);
+                mprLog(0, "Can't send wakeup to breakout socket: errno %d", errno);
             }
         }
     }
@@ -15259,8 +15383,8 @@ static int ipv6(cchar *ip);
 static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags);
 static void manageSocket(MprSocket *sp, int flags);
 static void manageSocketService(MprSocketService *ss, int flags);
-static size_t readSocket(MprSocket *sp, void *buf, size_t bufsize);
-static size_t writeSocket(MprSocket *sp, void *buf, size_t bufsize);
+static ssize readSocket(MprSocket *sp, void *buf, ssize bufsize);
+static ssize writeSocket(MprSocket *sp, void *buf, ssize bufsize);
 
 /*
     Open the socket service
@@ -15770,9 +15894,10 @@ static void disconnectSocket(MprSocket *sp)
 
 void mprCloseSocket(MprSocket *sp, bool gracefully)
 {
-    mprAssert(sp);
+    if (sp == NULL) {
+        return;
+    }
     mprAssert(sp->provider);
-
     if (sp->provider == 0) {
         return;
     }
@@ -15863,7 +15988,7 @@ static MprSocket *acceptSocket(MprSocket *listen)
     fd = (int) accept(listen->fd, addr, &addrlen);
     if (fd < 0) {
         if (mprGetError() != EAGAIN) {
-            mprLog(1, "socket: accept failed, errno %d", mprGetOsError());
+            mprLog(0, "socket: accept failed, errno %d", mprGetOsError());
         }
         return 0;
     }
@@ -15929,7 +16054,7 @@ static MprSocket *acceptSocket(MprSocket *listen)
 /*  
     Read data. Return -1 for EOF and errors. On success, return the number of bytes read
  */
-int mprReadSocket(MprSocket *sp, void *buf, int bufsize)
+ssize mprReadSocket(MprSocket *sp, void *buf, ssize bufsize)
 {
     mprAssert(sp);
     mprAssert(buf);
@@ -15947,11 +16072,11 @@ int mprReadSocket(MprSocket *sp, void *buf, int bufsize)
     Standard read from a socket (Non SSL)
     Return number of bytes read. Return -1 on errors and EOF.
  */
-static size_t readSocket(MprSocket *sp, void *buf, size_t bufsize)
+static ssize readSocket(MprSocket *sp, void *buf, ssize bufsize)
 {
     struct sockaddr_storage server;
     socklen_t               len;
-    size_t                  bytes;
+    ssize                   bytes;
     int                     errCode;
 
     mprAssert(buf);
@@ -15966,9 +16091,9 @@ static size_t readSocket(MprSocket *sp, void *buf, size_t bufsize)
 again:
     if (sp->flags & MPR_SOCKET_DATAGRAM) {
         len = sizeof(server);
-        bytes = recvfrom(sp->fd, buf, bufsize, MSG_NOSIGNAL, (struct sockaddr*) &server, (socklen_t*) &len);
+        bytes = recvfrom(sp->fd, buf, (int) bufsize, MSG_NOSIGNAL, (struct sockaddr*) &server, (socklen_t*) &len);
     } else {
-        bytes = recv(sp->fd, buf, bufsize, MSG_NOSIGNAL);
+        bytes = recv(sp->fd, buf, (int) bufsize, MSG_NOSIGNAL);
     }
     if (bytes < 0) {
         errCode = mprGetSocketError(sp);
@@ -16011,7 +16136,7 @@ again:
     Write data. Return the number of bytes written or -1 on errors. NOTE: this routine will return with a
     short write if the underlying socket can't accept any more data.
  */
-size_t mprWriteSocket(MprSocket *sp, void *buf, size_t bufsize)
+ssize mprWriteSocket(MprSocket *sp, void *buf, ssize bufsize)
 {
     mprAssert(sp);
     mprAssert(buf);
@@ -16028,11 +16153,12 @@ size_t mprWriteSocket(MprSocket *sp, void *buf, size_t bufsize)
 /*  
     Standard write to a socket (Non SSL)
  */
-static size_t writeSocket(MprSocket *sp, void *buf, size_t bufsize)
+static ssize writeSocket(MprSocket *sp, void *buf, ssize bufsize)
 {
     struct sockaddr     *addr;
     socklen_t           addrlen;
-    int                 family, protocol, sofar, errCode, len, written;
+    ssize               len, written, sofar;
+    int                 family, protocol, errCode;
 
     mprAssert(buf);
     mprAssert(bufsize >= 0);
@@ -16054,9 +16180,9 @@ static size_t writeSocket(MprSocket *sp, void *buf, size_t bufsize)
         while (len > 0) {
             unlock(sp);
             if ((sp->flags & MPR_SOCKET_BROADCAST) || (sp->flags & MPR_SOCKET_DATAGRAM)) {
-                written = sendto(sp->fd, &((char*) buf)[sofar], len, MSG_NOSIGNAL, addr, addrlen);
+                written = sendto(sp->fd, &((char*) buf)[sofar], (int) len, MSG_NOSIGNAL, addr, addrlen);
             } else {
-                written = send(sp->fd, &((char*) buf)[sofar], len, MSG_NOSIGNAL);
+                written = send(sp->fd, &((char*) buf)[sofar], (int) len, MSG_NOSIGNAL);
             }
             lock(sp);
             if (written < 0) {
@@ -16069,7 +16195,7 @@ static size_t writeSocket(MprSocket *sp, void *buf, size_t bufsize)
                         Windows sockets don't support blocking I/O. So we simulate here
                      */
                     if (sp->flags & MPR_SOCKET_BLOCK) {
-                        mprSleep(sp, 0);
+                        mprSleep(0);
                         continue;
                     }
 #endif
@@ -16091,16 +16217,16 @@ static size_t writeSocket(MprSocket *sp, void *buf, size_t bufsize)
 /*  
     Write a string to the socket
  */
-int mprWriteSocketString(MprSocket *sp, cchar *str)
+ssize mprWriteSocketString(MprSocket *sp, cchar *str)
 {
     return mprWriteSocket(sp, (void*) str, strlen(str));
 }
 
 
-int mprWriteSocketVector(MprSocket *sp, MprIOVec *iovec, int count)
+ssize mprWriteSocketVector(MprSocket *sp, MprIOVec *iovec, int count)
 {
-    char    *start;
-    int     total, len, i, written;
+    ssize       total, len, i, written;
+    char        *start;
 
 #if BLD_UNIX_LIKE
     if (sp->sslSocket == 0) {
@@ -16142,7 +16268,7 @@ int mprWriteSocketVector(MprSocket *sp, MprIOVec *iovec, int count)
 
 #if !BLD_FEATURE_ROMFS
 #if !LINUX || __UCLIBC__
-static int localSendfile(MprSocket *sp, MprFile *file, MprOffset offset, int len)
+static ssize localSendfile(MprSocket *sp, MprFile *file, MprOffset offset, ssize len)
 {
     char    buf[MPR_BUFSIZE];
 
@@ -16160,14 +16286,15 @@ static int localSendfile(MprSocket *sp, MprFile *file, MprOffset offset, int len
 /*  Write data from a file to a socket. Includes the ability to write header before and after the file data.
     Works even with a null "file" to just output the headers.
  */
-MprOffset mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOffset offset, int bytes, MprIOVec *beforeVec, 
+ssize mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOffset offset, ssize bytes, MprIOVec *beforeVec, 
     int beforeCount, MprIOVec *afterVec, int afterCount)
 {
 #if MACOSX && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1050
     struct sf_hdtr  def;
 #endif
-    off_t           written, off;
-    int             rc, i, done, toWriteBefore, toWriteAfter, toWriteFile;
+    ssize           rc, written;
+    off_t           off;
+    int             i, done, toWriteBefore, toWriteAfter, toWriteFile;
 
     rc = 0;
 
@@ -16179,7 +16306,9 @@ MprOffset mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOffset offset, 
     def.trailers = (afterCount > 0) ? (struct iovec*) afterVec: 0;
 
     if (file && file->fd >= 0) {
-        rc = sendfile(file->fd, sock->fd, offset, &written, &def, 0);
+        off_t       sent;
+        rc = sendfile(file->fd, sock->fd, offset, &sent, &def, 0);
+        written = (ssize) sent;
     } else
 #else
     if (1) 
@@ -16188,14 +16317,15 @@ MprOffset mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOffset offset, 
         /*
             Either !MACOSX or no file is opened
          */
-        done = written = 0;
+        done = 0;
+        written = 0;
         for (i = toWriteBefore = 0; i < beforeCount; i++) {
             toWriteBefore += (int) beforeVec[i].len;
         }
         for (i = toWriteAfter = 0; i < afterCount; i++) {
             toWriteAfter += (int) afterVec[i].len;
         }
-        toWriteFile = bytes - toWriteBefore - toWriteAfter;
+        toWriteFile = (int) bytes - toWriteBefore - toWriteAfter;
         mprAssert(toWriteFile >= 0);
 
         /*
@@ -16544,7 +16674,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
             mprUnlock(ss->mutex);
             return MPR_ERR_MEMORY;
         }
-        memcpy((char*) &sa6->sin6_addr, (char*) hostent->h_addr_list[0], (size_t) hostent->h_length);
+        memcpy((char*) &sa6->sin6_addr, (char*) hostent->h_addr_list[0], (ssize) hostent->h_length);
         sa6->sin6_family = hostent->h_addrtype;
         sa6->sin6_port = htons((short) (port & 0xFFFF));
         *addr = (struct sockaddr*) sa6;
@@ -16555,7 +16685,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
             mprUnlock(ss->mutex);
             return MPR_ERR_MEMORY;
         }
-        memcpy((char*) &sa->sin_addr, (char*) hostent->h_addr_list[0], (size_t) hostent->h_length);
+        memcpy((char*) &sa->sin_addr, (char*) hostent->h_addr_list[0], (ssize) hostent->h_length);
         sa->sin_family = hostent->h_addrtype;
         sa->sin_port = htons((short) (port & 0xFFFF));
         *addr = (struct sockaddr*) sa;
@@ -16618,7 +16748,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
                 return MPR_ERR_CANT_FIND;
             }
         }
-        memcpy((char*) &sa->sin_addr, (char*) hostent->h_addr_list[0], (size_t) hostent->h_length);
+        memcpy((char*) &sa->sin_addr, (char*) hostent->h_addr_list[0], (ssize) hostent->h_length);
 #endif
     }
     *addr = (struct sockaddr*) sa;
@@ -16897,9 +17027,9 @@ int scasecmp(cchar *s1, cchar *s2)
 }
 
 
-size_t scopy(char *dest, size_t destMax, cchar *src)
+ssize scopy(char *dest, ssize destMax, cchar *src)
 {
-    size_t      len;
+    ssize      len;
 
     mprAssert(src);
     mprAssert(dest);
@@ -16918,7 +17048,7 @@ size_t scopy(char *dest, size_t destMax, cchar *src)
 char *sclone(cchar *str)
 {
     char    *ptr;
-    size_t  size, len;
+    ssize   size, len;
 
     if (str == NULL) {
         str = "";
@@ -16983,7 +17113,7 @@ char *sfmtv(cchar *fmt, va_list arg)
     Compute a hash for a C string
     (Based on work by Paul Hsieh (c) 2004-2008, see http://www.azillionmonkeys.com/qed/hash.html)
  */
-uint shash(cchar *cname, size_t len)
+uint shash(cchar *cname, ssize len)
 {
     uchar   *name;
     uint    hash, rem, tmp;
@@ -16994,7 +17124,7 @@ uint shash(cchar *cname, size_t len)
     if (cname == NULL) {
         return 0;
     }
-    hash = len;
+    hash = (uint) len;
     rem = len & 3;
     name = (uchar*) cname;
     for (len >>= 2; len > 0; len--, name += 4) {
@@ -17033,7 +17163,7 @@ uint shash(cchar *cname, size_t len)
 /*
     Hash the lower case name
  */
-uint shashlower(cchar *cname, size_t len)
+uint shashlower(cchar *cname, ssize len)
 {
     uchar   *name;
     uint    hash, rem, tmp;
@@ -17044,7 +17174,7 @@ uint shashlower(cchar *cname, size_t len)
     if (cname == NULL) {
         return 0;
     }
-    hash = len;
+    hash = (uint) len;
     rem = len & 3;
     name = (uchar*) cname;
 
@@ -17099,7 +17229,7 @@ char *sjoinv(cchar *buf, va_list args)
 {
     va_list     ap;
     char        *dest, *str, *dp;
-    int         required;
+    ssize       required;
 
     mprAssert(buf);
 
@@ -17133,33 +17263,35 @@ char *sjoinv(cchar *buf, va_list args)
 }
 
 
-size_t slen(cchar *s)
+ssize slen(cchar *s)
 {
     return s ? strlen(s) : 0;
 }
 
 
 /*  
-    Map a string to lower case (overwrites original string)
+    Map a string to lower case. Allocates a new string 
  */
-char *slower(char *str)
+char *slower(cchar *str)
 {
-    char    *cp;
+    char    *cp, *s;
 
     mprAssert(str);
 
     if (str) {
-        for (cp = str; *cp; cp++) {
+        s = sclone(str);
+        for (cp = s; *cp; cp++) {
             if (isupper((int) *cp)) {
                 *cp = (char) tolower((int) *cp);
             }
         }
+        str = s;
     }
-    return str;
+    return (char*) str;
 }
 
 
-int sncasecmp(cchar *s1, cchar *s2, size_t n)
+int sncasecmp(cchar *s1, cchar *s2, ssize n)
 {
     int     rc;
 
@@ -17193,7 +17325,7 @@ int sncasecmp(cchar *s1, cchar *s2, size_t n)
 /*
     Case sensitive string comparison. Limited by length
  */
-int sncmp(cchar *s1, cchar *s2, size_t n)
+int sncmp(cchar *s1, cchar *s2, ssize n)
 {
     int     rc;
 
@@ -17228,9 +17360,9 @@ int sncmp(cchar *s1, cchar *s2, size_t n)
     This routine copies at most "count" characters from a string. It ensures the result is always null terminated and 
     the buffer does not overflow. Returns MPR_ERR_WONT_FIT if the buffer is too small.
  */
-size_t sncopy(char *dest, size_t destMax, cchar *src, size_t count)
+ssize sncopy(char *dest, ssize destMax, cchar *src, ssize count)
 {
-    size_t      len;
+    ssize      len;
 
     mprAssert(dest);
     mprAssert(src);
@@ -17296,7 +17428,7 @@ char *srejoinv(char *buf, va_list args)
 {
     va_list     ap;
     char        *dest, *str, *dp;
-    int         len, required;
+    ssize       len, required;
 
     va_copy(ap, args);
     len = slen(buf);
@@ -17322,7 +17454,7 @@ char *srejoinv(char *buf, va_list args)
 }
 
 
-size_t sspn(cchar *str, cchar *set)
+ssize sspn(cchar *str, cchar *set)
 {
 #if KEEP
     cchar       *sp;
@@ -17363,10 +17495,10 @@ int sstarts(cchar *str, cchar *prefix)
 }
 
 
-char *scontains(cchar *str, cchar *pattern, size_t limit)
+char *scontains(cchar *str, cchar *pattern, ssize limit)
 {
     cchar   *cp, *s1, *s2;
-    size_t  lim;
+    ssize   lim;
 
     mprAssert(0 <= limit && limit < MAXINT);
     
@@ -17510,10 +17642,10 @@ char *stok(char *str, cchar *delim, char **last)
 }
 
 
-char *ssub(char *str, size_t offset, size_t len)
+char *ssub(char *str, ssize offset, ssize len)
 {
     char    *result;
-    size_t  size;
+    ssize   size;
 
     mprAssert(str);
     mprAssert(offset >= 0);
@@ -17533,7 +17665,8 @@ char *ssub(char *str, size_t offset, size_t len)
 
 char *strim(char *str, cchar *set, int where)
 {
-    int     len, i;
+    ssize   len;
+    int     i;
 
     if (str == NULL || set == NULL) {
         return str;
@@ -17559,19 +17692,21 @@ char *strim(char *str, cchar *set, int where)
 /*  
     Map a string to upper case (overwrites buffer)
  */
-char *supper(char *str)
+char *supper(cchar *str)
 {
-    char    *cp;
+    char    *cp, *s;
 
     mprAssert(str);
     if (str) {
-        for (cp = str; *cp; cp++) {
+        s = sclone(str);
+        for (cp = s; *cp; cp++) {
             if (islower((int) *cp)) {
                 *cp = (char) toupper((int) *cp);
             }
         }
+        str = s;
     }
-    return str;
+    return (char*) str;
 }
 
 
@@ -17637,6 +17772,8 @@ static bool     filterTestCast(MprTestGroup *gp, MprTestCase *tc);
 static char     *getErrorMessage(MprTestGroup *gp);
 static void     manageTestService(MprTestService *ts, int flags);
 static int      parseFilter(MprTestService *sp, cchar *str);
+static void     runInit(MprTestGroup *parent);
+static void     runTerm(MprTestGroup *parent);
 static void     runTestGroup(MprTestGroup *gp);
 static void     runTestProc(MprTestGroup *gp, MprTestCase *test);
 static void     runTestThread(MprList *groups, void *threadp);
@@ -18001,7 +18138,7 @@ void runTestThread(MprList *groups, void *threadp)
 {
     MprTestService  *sp;
     MprTestGroup    *gp;
-    int             next, i;
+    int             next, i, count;
 
     /*
         Get the service pointer
@@ -18013,6 +18150,10 @@ void runTestThread(MprList *groups, void *threadp)
     sp = gp->service;
     mprAssert(sp);
 
+    for (next = 0; (gp = mprGetNextItem(groups, &next)) != 0; ) {
+        runInit(gp);
+    }
+    count = 0;
     for (i = (sp->iterations + sp->numThreads - 1) / sp->numThreads; i > 0; i--) {
         if (sp->totalFailedCount > 0 && !sp->continueOnFailures) {
             break;
@@ -18021,6 +18162,10 @@ void runTestThread(MprList *groups, void *threadp)
         while ((gp = mprGetNextItem(groups, &next)) != 0) {
             runTestGroup(gp);
         }
+        mprPrintf("%12s Iteration %d complete\n", "[Notice]", count++);
+    }
+    for (next = 0; (gp = mprGetNextItem(groups, &next)) != 0; ) {
+        runTerm(gp);
     }
     if (threadp) {
         adjustThreadCount(sp, -1);
@@ -18104,8 +18249,8 @@ static void manageTestGroup(MprTestGroup *gp, int flags)
         mprMark(gp->cond);
         mprMark(gp->cond2);
         mprMark(gp->conn);
-        mprMark(gp->data);
         mprMark(gp->mutex);
+        mprMark(gp->data);
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
@@ -18180,6 +18325,48 @@ void mprResetTestGroup(MprTestGroup *gp)
 }
 
 
+static void runInit(MprTestGroup *parent)
+{
+    MprTestGroup    *gp;
+    int             next;
+
+    next = 0; 
+    while ((gp = mprGetNextItem(parent->groups, &next)) != 0) {
+        if (! filterTestGroup(gp)) {
+            continue;
+        }
+        if (gp->def->init && (*gp->def->init)(gp) < 0) {
+            gp->failedCount++;
+            if (!gp->service->continueOnFailures) {
+                break;
+            }
+        }
+        runInit(gp);
+    }
+}
+
+
+static void runTerm(MprTestGroup *parent)
+{
+    MprTestGroup    *gp;
+    int             next;
+
+    next = 0; 
+    while ((gp = mprGetNextItem(parent->groups, &next)) != 0) {
+        if (! filterTestGroup(gp)) {
+            continue;
+        }
+        if (gp->def->term && (*gp->def->term)(gp) < 0) {
+            gp->failedCount++;
+            if (!gp->service->continueOnFailures) {
+                break;
+            }
+        }
+        runInit(gp);
+    }
+}
+
+
 static void runTestGroup(MprTestGroup *parent)
 {
     MprTestService  *sp;
@@ -18188,11 +18375,6 @@ static void runTestGroup(MprTestGroup *parent)
     int             count, nextItem;
 
     sp = parent->service;
-
-    if (parent->def->init && (*parent->def->init)(parent) < 0) {
-        parent->failedCount++;
-        return;
-    }
 
     /*
         Recurse over sub groups
@@ -18215,9 +18397,6 @@ static void runTestGroup(MprTestGroup *parent)
         }
         count = sp->totalFailedCount;
         if (count > 0 && !sp->continueOnFailures) {
-            if (parent->def->term) {
-                (*parent->def->term)(parent);
-            }
             return;
         }
 
@@ -18225,7 +18404,6 @@ static void runTestGroup(MprTestGroup *parent)
             Recurse over all tests in this group
          */
         runTestGroup(gp);
-
         gp->testCount++;
 
         if (! gp->success) {
@@ -18249,10 +18427,6 @@ static void runTestGroup(MprTestGroup *parent)
         }
         tc = mprGetNextItem(parent->cases, &nextItem);
     }
-
-    if (parent->def->term && (*parent->def->term)(parent) < 0) {
-        parent->failedCount++;
-    }
 }
 
 
@@ -18264,7 +18438,8 @@ static bool filterTestGroup(MprTestGroup *gp)
     MprTestService  *sp;
     MprList         *testFilter;
     char            *pattern;
-    int             len, next;
+    ssize           len;
+    int             next;
 
     sp = gp->service;
     testFilter = sp->testFilter;
@@ -18302,7 +18477,8 @@ static bool filterTestCast(MprTestGroup *gp, MprTestCase *tc)
     MprTestService  *sp;
     MprList         *testFilter;
     char            *pattern, *fullName;
-    int             len, next;
+    ssize           len;
+    int             next;
 
     sp = gp->service;
     testFilter = sp->testFilter;
@@ -18352,7 +18528,6 @@ static void runTestProc(MprTestGroup *gp, MprTestCase *test)
     } else if (sp->verbose) {
         mprPrintf("%12s Run test \"%s.%s\": ", "[Test]", gp->fullName, test->name);
     }
-
     if (gp->skip) {
         if (sp->verbose) {
             if (gp->skipWarned++ == 0) {
@@ -18458,7 +18633,7 @@ bool mprWaitForTestToComplete(MprTestGroup *gp, int timeout)
     
     mprAssert(gp->cond);
 
-    rc = (mprWaitForCond(gp->cond, timeout) == 0);
+    rc = mprWaitForCond(gp->cond, timeout) == 0;
     mprResetCond(gp->cond);
     return rc;
 }
@@ -18682,7 +18857,7 @@ void mprYieldThread(MprThread *tp)
     if (tp == NULL) {
         tp = mprGetCurrentThread();
     }
-    mprLog(2, "mprYieldThread %s yielded was %d", tp->name, tp->yielded);
+    mprLog(7, "mprYieldThread %s yielded was %d", tp->name, tp->yielded);
     tp->yielded = 1;
 
     /*
@@ -18690,7 +18865,7 @@ void mprYieldThread(MprThread *tp)
      */
     mprSignalCond(MPR->threadService->cond);
     while (tp->yielded && mprWaitForSync()) {
-        mprLog(2, "mprYieldThread %s must wait", tp->name);
+        mprLog(7, "mprYieldThread %s must wait", tp->name);
         mprWaitForCond(tp->cond, -1);
     }
 }
@@ -18730,7 +18905,7 @@ int mprPauseForGCSync(int timeout)
     int                 i, allYielded;
 
     ts = mprGetMpr()->threadService;
-    mprLog(1, "mprPauseForGCSync timeout %d", timeout);
+    mprLog(7, "mprPauseForGCSync timeout %d", timeout);
 
     //  MOB timeout
     do {
@@ -18747,11 +18922,11 @@ int mprPauseForGCSync(int timeout)
         if (allYielded) {
             break;
         }
-        mprLog(1, "mprPauseForGCSync: waiting for threads to yield");
+        mprLog(7, "mprPauseForGCSync: waiting for threads to yield");
         mprWaitForCond(ts->cond, MPR_GC_TIMEOUT);
     } while (!allYielded);
 
-    mprLog(1, "mprPauseForGCSync: complete %d", allYielded);
+    mprLog(7, "mprPauseForGCSync: complete %d", allYielded);
     //  MOB -- return if timeout failed
     return (allYielded) ? 1 : 0;
 }
@@ -18767,7 +18942,7 @@ void mprResumeThreadsAfterGC()
     int                 i;
 
     ts = mprGetMpr()->threadService;
-    mprLog(1, "mprResumeThreadsAfterGC sync");
+    mprLog(7, "mprResumeThreadsAfterGC sync");
 
     mprLock(ts->mutex);
     for (i = 0; i < ts->threads->length; i++) {
@@ -18984,7 +19159,7 @@ int mprStartThread(MprThread *tp)
         0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     if (taskHandle < 0) {
-        mprError(tp, "Can't create thread %s\n", tp->name);
+        mprError("Can't create thread %s\n", tp->name);
         return MPR_ERR_CANT_INITIALIZE;
     }
 }
@@ -19280,7 +19455,7 @@ int mprStartWorkerService()
      */
     ws = MPR->workerService;
     mprSetMinWorkers(ws->minThreads);
-    ws->pruneTimer = mprCreateTimerEvent(mprGetDispatcher(), "pruneTimer", MPR_TIMEOUT_PRUNER, (MprEventProc) pruneWorkers,
+    ws->pruneTimer = mprCreateTimerEvent(mprGetDispatcher(), "pruneWorkers", MPR_TIMEOUT_PRUNER, (MprEventProc) pruneWorkers,
         (void*) ws, 0);
     return 0;
 }
@@ -19525,7 +19700,7 @@ int mprGetAvailableWorkers()
     MprWorkerService  *ws;
 
     ws = mprGetMpr()->workerService;
-    return ws->idleThreads->length + (ws->maxThreads - ws->numThreads); 
+    return (int) ws->idleThreads->length + (ws->maxThreads - ws->numThreads); 
 }
 
 
@@ -20182,7 +20357,6 @@ static int getTimeZoneOffsetFromTm(struct tm *tp)
     if ((tze = getenv("TIMEZONE")) != 0) {
         if ((p = strchr(tze, ':')) != 0) {
             if ((p = strchr(tze, ':')) != 0) {
-                int64 value;
                 offset = - stoi(++p, 10, NULL) * MS_PER_MIN;
             }
         }
@@ -21103,9 +21277,7 @@ int mprParseTime(MprTime *time, cchar *dateString, int zoneFlags, struct tm *def
         Set to -1 to cause mktime will try to determine if DST is in effect
      */
     tm.tm_isdst = -1;
-
-    str = sclone(dateString);
-    slower(str);
+    str = slower(dateString);
 
     /*
         Handle ISO dates: "2009-05-21t16:06:05.000z
@@ -21835,7 +22007,7 @@ void mprSleep(int milliseconds)
 
 void mprUnloadModule(MprModule *mp)
 {
-    mprRemoveItem(mprGetMpr(mp)->moduleService->modules, mp);
+    mprRemoveItem(mprGetMpr()->moduleService->modules, mp);
     unldByModuleId((MODULE_ID) mp->handle, 0);
 }
 
@@ -21970,6 +22142,9 @@ static void manageWaitService(MprWaitService *ws, int flags)
         mprMark(ws->mutex);
         mprMark(ws->spin);
     }
+#if MPR_EVENT_ASYNC
+    /* Nothing to manage */
+#endif
 #if MPR_EVENT_KQUEUE
     mprManageKqueue(ws, flags);
 #endif
@@ -22053,6 +22228,9 @@ void mprRemoveWaitHandler(MprWaitHandler *wp)
 {
     MprWaitService      *ws;
 
+    if (wp == 0) {
+        return;
+    }
     ws = wp->service;
 
     /*
@@ -22210,7 +22388,7 @@ void mprDoWaitRecall(MprWaitService *ws)
 /*
     Format a number as a string. Support radix 10 and 16.
  */
-MprChar *itow(MprChar *buf, size_t count, int64 value, int radix)
+MprChar *itow(MprChar *buf, ssize count, int64 value, int radix)
 {
     MprChar     numBuf[32];
     MprChar     *cp, *dp, *endp;
@@ -22280,7 +22458,7 @@ int wcasecmp(MprChar *s1, MprChar *s2)
 MprChar *wclone(MprChar *str)
 {
     MprChar     *result, nullBuf[1];
-    size_t      len, size;
+    ssize       len, size;
 
     if (str == NULL) {
         nullBuf[0] = 0;
@@ -22309,10 +22487,10 @@ int wcmp(MprChar *s1, MprChar *s2)
 }
 
 
-MprChar *wcontains(MprChar *str, MprChar *pattern, size_t limit)
+MprChar *wcontains(MprChar *str, MprChar *pattern, ssize limit)
 {
     MprChar     *cp, *s1, *s2;
-    size_t      lim;
+    ssize       lim;
 
     mprAssert(0 <= limit && limit < MAXINT);
 
@@ -22345,9 +22523,9 @@ MprChar *wcontains(MprChar *str, MprChar *pattern, size_t limit)
 /*
     destMax and len are character counts, not sizes in bytes
  */
-size_t wcopy(MprChar *dest, size_t destMax, MprChar *src)
+ssize wcopy(MprChar *dest, ssize destMax, MprChar *src)
 {
-    size_t      len;
+    ssize      len;
 
     mprAssert(src);
     mprAssert(dest);
@@ -22413,7 +22591,7 @@ MprChar *wfmtv(MprChar *fmt, va_list arg)
     Compute a hash for a Unicode string 
     (Based on work by Paul Hsieh, see http://www.azillionmonkeys.com/qed/hash.html)
  */
-uint whash(MprChar *name, size_t len)
+uint whash(MprChar *name, ssize len)
 {
     uint    tmp, rem, hash;
 
@@ -22459,7 +22637,7 @@ uint whash(MprChar *name, size_t len)
 }
 
 
-uint whashlower(MprChar *name, size_t len)
+uint whashlower(MprChar *name, ssize len)
 {
     uint    tmp, rem, hash;
 
@@ -22561,9 +22739,9 @@ MprChar *wjoinv(MprChar *buf, va_list args)
 }
 
 
-size_t wlen(MprChar *s)
+ssize wlen(MprChar *s)
 {
-    size_t  i;
+    ssize  i;
 
     i = 0;
     if (s) {
@@ -22574,26 +22752,28 @@ size_t wlen(MprChar *s)
 
 
 /*  
-    Map a string to lower case (overwrites original string)
+    Map a string to lower case 
  */
 MprChar *wlower(MprChar *str)
 {
-    MprChar *cp;
+    MprChar *cp, *s;
 
     mprAssert(str);
 
     if (str) {
-        for (cp = str; *cp; cp++) {
+        s = wclone(str);
+        for (cp = s; *cp; cp++) {
             if (isupper((int) *cp)) {
                 *cp = (MprChar) tolower((int) *cp);
             }
         }
+        str = s;
     }
     return str;
 }
 
 
-int wncasecmp(MprChar *s1, MprChar *s2, size_t n)
+int wncasecmp(MprChar *s1, MprChar *s2, ssize n)
 {
     int     rc;
 
@@ -22624,7 +22804,7 @@ int wncasecmp(MprChar *s1, MprChar *s2, size_t n)
 }
 
 
-int wncmp(MprChar *s1, MprChar *s2, size_t n)
+int wncmp(MprChar *s1, MprChar *s2, ssize n)
 {
     int     rc;
 
@@ -22660,9 +22840,9 @@ int wncmp(MprChar *s1, MprChar *s2, size_t n)
     the buffer does not overflow. Returns MPR_ERR_WONT_FIT if the buffer is too small.
     destMax and len are character counts, not sizes in bytes
  */
-size_t wncopy(MprChar *dest, size_t destMax, MprChar *src, size_t count)
+ssize wncopy(MprChar *dest, ssize destMax, MprChar *src, ssize count)
 {
-    size_t      len;
+    ssize      len;
 
     mprAssert(dest);
     mprAssert(src);
@@ -22768,7 +22948,7 @@ MprChar *wrejoinv(MprChar *buf, va_list args)
 }
 
 
-size_t wspn(MprChar *str, MprChar *set)
+ssize wspn(MprChar *str, MprChar *set)
 {
     MprChar     *sp;
     int         count;
@@ -22817,7 +22997,7 @@ int64 wtoi(MprChar *str, int radix, int *err)
 MprChar *wtok(MprChar *str, MprChar *delim, MprChar **last)
 {
     MprChar    *start, *end;
-    size_t     i;
+    ssize      i;
 
     start = str ? str : *last;
 
@@ -22842,10 +23022,10 @@ MprChar *wtok(MprChar *str, MprChar *delim, MprChar **last)
 }
 
 
-MprChar *wsub(MprChar *str, size_t offset, size_t len)
+MprChar *wsub(MprChar *str, ssize offset, ssize len)
 {
     MprChar    *result;
-    size_t      size;
+    ssize      size;
 
     mprAssert(str);
     mprAssert(offset >= 0);
@@ -22870,7 +23050,7 @@ MprChar *wsub(MprChar *str, size_t offset, size_t len)
 
 MprChar *wtrim(MprChar *str, MprChar *set, int where)
 {
-    size_t  len, i;
+    ssize  len, i;
 
     if (str == NULL || set == NULL) {
         return str;
@@ -22893,19 +23073,21 @@ MprChar *wtrim(MprChar *str, MprChar *set, int where)
 
 
 /*  
-    Map a string to upper case (overwrites buffer)
+    Map a string to upper case
  */
 char *wupper(MprChar *str)
 {
-    MprChar     *cp;
+    MprChar     *cp, *s;
 
     mprAssert(str);
     if (str) {
-        for (cp = str; *cp; cp++) {
+        s = wclone(str);
+        for (cp = s; *cp; cp++) {
             if (islower((int) *cp)) {
                 *cp = (char) toupper((int) *cp);
             }
         }
+        str = s;
     }
     return str;
 }
@@ -22917,9 +23099,9 @@ char *wupper(MprChar *str)
     Return a count of characters copied or -1 if an invalid multibyte sequence was provided in src.
     NOTE: does not allocate.
  */
-size_t wtom(char *dest, size_t destCount, MprChar *src, size_t len)
+ssize wtom(char *dest, ssize destCount, MprChar *src, ssize len)
 {
-    size_t      size;
+    ssize      size;
 
     mprAssert(0 <= len && len < MAXINT);
 
@@ -22962,9 +23144,9 @@ size_t wtom(char *dest, size_t destCount, MprChar *src, size_t len)
     If dest is NULL, don't copy the string, just return the length.
     NOTE: does not allocate
  */
-size_t mtow(MprChar *dest, size_t destCount, cchar *src, size_t len) 
+ssize mtow(MprChar *dest, ssize destCount, cchar *src, ssize len) 
 {
-    size_t      size;
+    ssize      size;
 
     mprAssert(0 < destCount && len < MAXINT);
     mprAssert(0 <= len && len < MAXINT);
@@ -22997,10 +23179,10 @@ size_t mtow(MprChar *dest, size_t destCount, cchar *src, size_t len)
 }
 
 
-MprChar *amtow(cchar *src, size_t *lenp)
+MprChar *amtow(cchar *src, ssize *lenp)
 {
     MprChar     *dest;
-    size_t      len;
+    ssize       len;
 
     len = mtow(NULL, MAXSIZE, src, 0);
     if (len < 0) {
@@ -23016,10 +23198,10 @@ MprChar *amtow(cchar *src, size_t *lenp)
 }
 
 
-char *awtom(MprChar *src, size_t *lenp)
+char *awtom(MprChar *src, ssize *lenp)
 {
     char    *dest;
-    size_t  len;
+    ssize   len;
 
     len = wtom(NULL, MAXSIZE, src, 0);
     if (len < 0) {
@@ -23112,7 +23294,7 @@ static int isValidUtf8(cuchar *src, int len)
 //  MOB - CLEAN
 static int offsets[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL, 0xFA082080UL, 0x82082080UL };
 
-size_t xmtow(MprChar *dest, size_t destMax, cchar *src, size_t len) 
+ssize xmtow(MprChar *dest, ssize destMax, cchar *src, ssize len) 
 {
     MprChar     *dp, *dend;
     cchar       *sp, *send;
@@ -23198,7 +23380,7 @@ static cuchar marks[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
    end if
 */
 
-size_t xwtom(char *dest, size_t destMax, MprChar *src, size_t len)
+ssize xwtom(char *dest, ssize destMax, MprChar *src, ssize len)
 {
     MprChar     *sp, *send;
     char        *dp, *dend;
@@ -23263,7 +23445,7 @@ size_t xwtom(char *dest, size_t destMax, MprChar *src, size_t len)
 
 #else /* BLD_CHAR_LEN == 1 */
 
-MprChar *amtow(cchar *src, size_t *len)
+MprChar *amtow(cchar *src, ssize *len)
 {
     if (len) {
         *len = strlen(src);
@@ -23272,7 +23454,7 @@ MprChar *amtow(cchar *src, size_t *len)
 }
 
 
-char *awtom(MprChar *src, size_t *len)
+char *awtom(MprChar *src, ssize *len)
 {
     if (len) {
         *len = strlen(src);
@@ -23380,18 +23562,15 @@ void mprStopOsService()
 }
 
 
-long mprGetInst(Mpr *mpr)
+long mprGetInst()
 {
-    return (long) mpr->appInstance;
+    return (long) MPR->appInstance;
 }
 
 
 HWND mprGetHwnd()
 {
-    Mpr     *mpr;
-
-    mpr = mprGetMpr();
-    return mpr->waitService->hwnd;
+    return MPR->waitService->hwnd;
 }
 
 
@@ -23457,7 +23636,7 @@ MprModule *mprLoadModule(cchar *name, cchar *fun, void *data)
 }
 
 
-int mprReadRegistry(char **buf, int max, cchar *key, cchar *name)
+int mprReadRegistry(char **buf, ssize max, cchar *key, cchar *name)
 {
     HKEY        top, h;
     char        *value;
@@ -23507,27 +23686,21 @@ int mprReadRegistry(char **buf, int max, cchar *key, cchar *name)
 }
 
 
-void mprSetInst(Mpr *mpr, long inst)
+void mprSetInst(long inst)
 {
-    mpr->appInstance = inst;
+    MPR->appInstance = inst;
 }
 
 
 void mprSetHwnd(HWND h)
 {
-    Mpr     *mpr;
-
-    mpr = mprGetMpr();
-    mpr->waitService->hwnd = h;
+    MPR->waitService->hwnd = h;
 }
 
 
 void mprSetSocketMessage(int socketMessage)
 {
-    Mpr     *mpr;
-
-    mpr = mprGetMpr();
-    mpr->waitService->socketMessage = socketMessage;
+    MPR->waitService->socketMessage = socketMessage;
 }
 
 
@@ -23573,7 +23746,7 @@ void mprUnloadModule(MprModule *mp)
     if (mp->stop) {
         mp->stop(mp);
     }
-    mprRemoveItem(mprGetMpr(mp)->moduleService->modules, mp);
+    mprRemoveItem(MPR->moduleService->modules, mp);
     FreeLibrary((HINSTANCE) mp->handle);
 }
 
@@ -23609,7 +23782,7 @@ void mprWriteToOsLog(cchar *message, int flags, int level)
         if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, logName, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, &exists) == ERROR_SUCCESS) {
             value = "%SystemRoot%\\System32\\netmsg.dll";
             if (RegSetValueEx(hkey, "EventMessageFile", 0, REG_EXPAND_SZ, 
-                    (uchar*) value, strlen(value) + 1) != ERROR_SUCCESS) {
+                    (uchar*) value, (int) strlen(value) + 1) != ERROR_SUCCESS) {
                 RegCloseKey(hkey);
                 return;
             }
@@ -23657,7 +23830,7 @@ int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
         if (RegOpenKeyEx(top, key, 0, KEY_ALL_ACCESS, &h) != ERROR_SUCCESS) {
             return MPR_ERR_CANT_ACCESS;
         }
-        if (RegSetValueEx(h, name, 0, REG_SZ, value, strlen(value) + 1) != ERROR_SUCCESS) {
+        if (RegSetValueEx(h, name, 0, REG_SZ, value, (int) strlen(value) + 1) != ERROR_SUCCESS) {
             RegCloseKey(h);
             return MPR_ERR_CANT_READ;
         }
@@ -23687,7 +23860,7 @@ int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
 static cchar *getHive(cchar *keyPath, HKEY *hive)
 {
     char    key[MPR_MAX_STRING], *cp;
-    int     len;
+    ssize   len;
 
     mprAssert(keyPath && *keyPath);
 
@@ -24027,9 +24200,9 @@ void mprUnloadModule(MprModule *mp)
     mprAssert(mp->handle);
 
     if (mp->stop) {
-        mp->stop(mp);
+        mp->stop();
     }
-    mprRemoveItem(mprGetMpr(mp)->moduleService->modules, mp);
+    mprRemoveItem(mprGetMpr()->moduleService->modules, mp);
     FreeLibrary((HINSTANCE) mp->handle);
 }
 
@@ -24669,7 +24842,7 @@ DWORD GetModuleFileNameA(HMODULE module, LPSTR buf, DWORD size)
 {
     LPWSTR      wpath;
     LPSTR       mb;
-    size_t      ret;
+    ssize       ret;
 
     wpath = mprAlloc( size * sizeof(wchar_t));
     ret = GetModuleFileNameW(module, wpath, size);
@@ -24788,7 +24961,7 @@ static void xmlError(MprXml *xp, char *fmt, ...);
 static void trimToken(MprXml *xp);
 
 
-MprXml *mprXmlOpen(int initialSize, int maxSize)
+MprXml *mprXmlOpen(ssize initialSize, ssize maxSize)
 {
     MprXml  *xp;
 
@@ -25333,7 +25506,7 @@ static int scanFor(MprXml *xp, char *pattern)
             /*
                 Remove the pattern from the tokBuf
              */
-            mprAdjustBufEnd(tokBuf, -strlen(pattern));
+            mprAdjustBufEnd(tokBuf, - (int) strlen(pattern));
             trimToken(xp);
             return 1;
         }
@@ -25724,7 +25897,7 @@ typedef unsigned Long ULong;
 #ifdef KR_headers
 extern char *MALLOC();
 #else
-extern void *MALLOC(size_t);
+extern void *MALLOC(ssize);
 #endif
 #else
 #define MALLOC malloc

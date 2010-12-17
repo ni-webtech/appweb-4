@@ -200,7 +200,7 @@ bld: usage: bld [options] objects ....
 
     Environment variables used:
       BLD_TOP               Top of the source tree
-      BLD_FEATURE_STATIC    Build static libraries where relevant.
+      BLD_STATIC            Build static libraries where relevant.
 
     Configuration files used:
         buildConfig.sh
@@ -304,7 +304,7 @@ findLib() {
 
     if [ "$newName" != "" ] ; then
         base="${newName##*/}"
-        if [ "$newName" != "${newName%$BLD_ARCH}" ] ; then
+        if [ "$newName" != "${newName%$BLD_ARCH}" -a "$BLD_OS" != CYGWIN ] ; then
             #
             #   If static library, use actual path. This is for MAC OS X which insists on dynamic lib priority.
             #
@@ -412,7 +412,7 @@ findTop() {
         top=.
         level=0
         while [ $level -lt 30 ] ; do
-            if [ -d $top/build -a -d $top/build/bin -a -d $top/bin ] ; then
+            if [ -d $top/build -a -d $top/build/bin -a -f $top/configure ] ; then
                 break
             fi
             top=$top/..
@@ -421,7 +421,7 @@ findTop() {
         top=${top#./}
 
         if [ $level -ge 30 ] ; then
-            echo "Can't find top level directory with build and bin directories" >&2
+            echo "Can't find top level directory with build directory" >&2
             exit 255
         fi
     fi
@@ -516,7 +516,7 @@ useArg() {
 
 BLD_TOP=`findTop`
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
-. ${BLD_OUT_DIR}/bin/buildConfig.sh
+. `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 
 parseArgs "$@"
 argc=$#
@@ -525,7 +525,7 @@ shift $((_INDEX - 1))
 OS=${BLD_OS}
 
 if [ "$MAKE_STATIC" = "" ] ; then
-    MAKE_STATIC=$BLD_FEATURE_STATIC
+    MAKE_STATIC="$BLD_STATIC"
 fi
 
 #

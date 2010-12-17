@@ -5,7 +5,7 @@
 #
 
 BUILD_CROSS	= 0
-PRE_DIRS	= src
+PRE_DIRS	= src bin
 
 include 	.makedep
 
