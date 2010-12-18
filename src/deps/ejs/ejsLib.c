@@ -35876,7 +35876,6 @@ static EjsObj *sqliteConstructor(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **arg
 {
     sqlite3         *sdb;
     EjsObj          *options;
-    EjsName         qname;
     cchar           *path;
 
     sdb = 0;

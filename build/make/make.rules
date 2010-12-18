@@ -58,7 +58,7 @@ export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS BUILDING
 #
 #	Compute the directory path for display purposes
 #
-_DPATH_			?=	.
+_DPATH_			?= .
 BUILD_DEPTH     ?= 2
 BUILDING_NATIVE := 0
 MAKE			:= $(BLD_MAKE)

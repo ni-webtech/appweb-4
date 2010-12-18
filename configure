@@ -1504,7 +1504,7 @@ createConfigFooter()
         cat >>$FILE <<!EOF_CONFIG_FOOTER_MAKE
 # End of Makefile definitions
 else
-#else /* !IGNORE_IN_CODE */
+#else /* !IGNORE_IN_C_CODE */
 
 !EOF_CONFIG_FOOTER_MAKE
     else
@@ -1812,20 +1812,22 @@ createCrossConfig()
     done
 
     echo
-    eval v=\$BLD_${kind}_BIN_DIR ;      echo -e "${t}BLD_BIN_DIR=\"${v}\""
-    eval v=\$BLD_${kind}_OBJ_DIR ;      echo -e "${t}BLD_OBJ_DIR=\"${v}\""
-    eval v=\$BLD_${kind}_MOD_DIR ;      echo -e "${t}BLD_MOD_DIR=\"${v}\""
-    eval v=\$BLD_${kind}_JEM_DIR ;      echo -e "${t}BLD_JEM_DIR=\"${v}\""
-    eval v=\$BLD_${kind}_LIB_DIR ;      echo -e "${t}BLD_LIB_DIR=\"${v}\""
-    eval v=\$BLD_${kind}_INC_DIR ;      echo -e "${t}BLD_INC_DIR=\"${v}\""
+    eval v=\$BLD_${kind}_BIN_DIR ; echo -e "${t}BLD_BIN_DIR=\"${v}\""
+    eval v=\$BLD_${kind}_OBJ_DIR ; echo -e "${t}BLD_OBJ_DIR=\"${v}\""
+    eval v=\$BLD_${kind}_MOD_DIR ; echo -e "${t}BLD_MOD_DIR=\"${v}\""
+    eval v=\$BLD_${kind}_JEM_DIR ; echo -e "${t}BLD_JEM_DIR=\"${v}\""
+    eval v=\$BLD_${kind}_LIB_DIR ; echo -e "${t}BLD_LIB_DIR=\"${v}\""
+    eval v=\$BLD_${kind}_INC_DIR ; echo -e "${t}BLD_INC_DIR=\"${v}\""
 
     echo
-    eval v=\${BLD_${kind}_BIN_DIR} ;    v=`eval canonPath "${v}"` ;  echo -e "${t}BLD_ABS_BIN_DIR=\"${v}\"" ; mkdir -p "${v}"
-    eval v=\${BLD_${kind}_LIB_DIR} ;    v=`eval canonPath "${v}"` ;  echo -e "${t}BLD_ABS_LIB_DIR=\"${v}\"" ; mkdir -p "${v}"
-    eval v=\${BLD_${kind}_OBJ_DIR} ;    v=`eval canonPath "${v}"` ;  echo -e "${t}BLD_ABS_OBJ_DIR=\"${v}\"" ; mkdir -p "${v}"
-    eval v=\${BLD_${kind}_MOD_DIR} ;    v=`eval canonPath "${v}"` ;  echo -e "${t}BLD_ABS_MOD_DIR=\"${v}\"" ; mkdir -p "${v}"
-    eval v=\${BLD_${kind}_JEM_DIR} ;    v=`eval canonPath "${v}"` ;  echo -e "${t}BLD_ABS_JEM_DIR=\"${v}\"" ; mkdir -p "${v}"
-    eval v=\${BLD_${kind}_INC_DIR} ;    v=`eval canonPath "${v}"` ;  echo -e "${t}BLD_ABS_INC_DIR=\"${v}\"" ; mkdir -p "${v}"
+    eval v=\${BLD_${kind}_BIN_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_BIN_DIR=\"${v}\"" ; mkdir -p "${v}"
+    eval v=\${BLD_${kind}_LIB_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_LIB_DIR=\"${v}\"" ; mkdir -p "${v}"
+    eval v=\${BLD_${kind}_OBJ_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_OBJ_DIR=\"${v}\"" ; mkdir -p "${v}"
+    eval v=\${BLD_${kind}_MOD_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_MOD_DIR=\"${v}\"" ; mkdir -p "${v}"
+    if [ "$BLD_FEATURE_EJS" = 1 ] ; then
+        eval v=\${BLD_${kind}_JEM_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_JEM_DIR=\"${v}\"" ; mkdir -p "${v}"
+    fi
+    eval v=\${BLD_${kind}_INC_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_INC_DIR=\"${v}\"" ; mkdir -p "${v}"
 
     if [ $name != $CONFIG_SRC ] ; then
         #
