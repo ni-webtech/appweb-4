@@ -21973,7 +21973,7 @@ MprModule *mprLoadModule(cchar *name, cchar *initFunction, void *data)
                         mprError("Can't find symbol %s when loading %s", initFunction, path);
 
                     } else {
-                        mp = mprCreateModule(mprGetMpr(), name, data);
+                        mp = mprCreateModule(name, data);
                         mp->handle = handle;
                         if ((fn)(data) < 0) {
                             mprError("Initialization for %s failed.", path);
