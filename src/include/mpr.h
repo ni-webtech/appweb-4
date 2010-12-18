@@ -403,15 +403,24 @@ typedef off_t MprOffset;
 #endif
 #endif
 
+#ifndef MAXINT64
+    #define MAXINT64    INT64(0x7fffffffffffffff)
+#endif
+
 #if SIZE_T_MAX
     #define MAXSIZE     SIZE_T_MAX
 #elif MPR_64_BIT
-    #define MAXSIZE     INT64(0x7fffffffffffffff)
+    #define MAXSIZE     INT64(0xffffffffffffffff)
 #else
     #define MAXSIZE     MAXINT
 #endif
-#ifndef MAXINT64
-    #define MAXINT64    INT64(0x7fffffffffffffff)
+
+#if SSIZE_T_MAX
+    #define MAXSSIZE     SSIZE_T_MAX
+#elif MPR_64_BIT
+    #define MAXSSIZE     INT64(0x7fffffffffffffff)
+#else
+    #define MAXSSIZE     MAXINT
 #endif
 
 /*

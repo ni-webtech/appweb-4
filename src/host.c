@@ -381,7 +381,11 @@ int maInsertAlias(MaHost *host, MaAlias *newAlias)
         host->aliases = mprCloneList(host->parent->aliases);
     }
 #else
+    if (host->parent) {
         host->aliases = mprCloneList(host->parent->aliases);
+    } else {
+        host->aliases = mprCreateList();
+    }
 #endif
     /*  
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc. But we sort redirects with
@@ -421,7 +425,11 @@ int maInsertDir(MaHost *host, MaDir *newDir)
         host->dirs = mprCloneList(host->parent->dirs);
     }
 #else
+    if (host->parent) {
         host->dirs = mprCloneList(host->parent->dirs);
+    } else {
+        host->dirs = mprCreateList();
+    }
 #endif
 
     /*
@@ -459,7 +467,11 @@ int maAddLocation(MaHost *host, HttpLoc *newLocation)
         host->locations = mprCloneList(host->parent->locations);
     }
 #else
+    if (host->parent) {
         host->locations = mprCloneList(host->parent->locations);
+    } else {
+        host->locations = mprCreateList();
+    }
 #endif
 
     /*

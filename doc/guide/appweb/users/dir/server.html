@@ -178,7 +178,44 @@ application/x-appweb-php php
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="documentRoot" id="documentRoot"></a>
+            </table>
+            <a name="chroot" id="chroot"></a>
+            <h2>Chroot</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Directory containing a "chroot jail" in which for Appweb to execute. Once this 
+                            directive is parsed, all files outside the jail will be inaccessible.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Chroot directoryPath</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Entire Application</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Chroot /etc/appweb/jail</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>See <a href="http://en.wikipedia.org/wiki/Chroot">Wikipedia Chroot</a> for more
+                            information.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>A chroot jail enhances security by limiting system access should Appweb ever be compromised.
+                            When coupled with lowering the privilege for the <a href="#user">User</a> and 
+                            <a href="#group">Group</a> potential security exposures can be minimized.</td>
+                    </tr>
+                </tbody>
+            </table>
+            <a name="documentRoot" id="documentRoot"></a>
             <h2>DocumentRoot</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>

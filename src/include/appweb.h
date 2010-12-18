@@ -74,6 +74,8 @@ typedef struct MaAppweb {
     //  MOB - should this be in http?
     int                 uid;                    /**< User Id */
     int                 gid;                    /**< Group Id */
+    int                 userChanged;
+    int                 groupChanged;
 } MaAppweb;
 
 

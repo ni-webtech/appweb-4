@@ -32,8 +32,10 @@ MaAppweb *maCreateAppweb()
     httpSetContext(http, appweb);
     maGetUserGroup(appweb);
     maOpenDirHandler(http);
+    //  MOB - deprecate EGI
     maOpenEgiHandler(http);
     maOpenFileHandler(http);
+    //  MOB - wha about pass handler
     return appweb;
 }
 

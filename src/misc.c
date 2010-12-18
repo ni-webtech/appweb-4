@@ -60,6 +60,7 @@ int maSetHttpUser(MaAppweb *appweb, cchar *newUser)
         }
         appweb->uid = pp->pw_uid;
     }
+    appweb->userChanged = 1;
 #endif
     appweb->user = sclone(newUser);
     return 0;
@@ -86,6 +87,7 @@ int maSetHttpGroup(MaAppweb *appweb, cchar *newGroup)
         }
         appweb->gid = gp->gr_gid;
     }
+    appweb->groupChanged = 1;
 #endif
     appweb->group = sclone(newGroup);
     return 0;
@@ -95,7 +97,7 @@ int maSetHttpGroup(MaAppweb *appweb, cchar *newGroup)
 int maApplyChangedUser(MaAppweb *appweb)
 {
 #if BLD_UNIX_LIKE
-    if (appweb->uid >= 0) {
+    if (appweb->userChanged && appweb->uid >= 0) {
         if ((setuid(appweb->uid)) != 0) {
             mprError("Can't change user to: %s: %d\n"
                 "WARNING: This is a major security exposure", appweb->user, appweb->uid);
@@ -113,7 +115,7 @@ int maApplyChangedUser(MaAppweb *appweb)
 int maApplyChangedGroup(MaAppweb *appweb)
 {
 #if BLD_UNIX_LIKE
-    if (appweb->gid >= 0) {
+    if (appweb->groupChanged && appweb->gid >= 0) {
         if (setgid(appweb->gid) != 0) {
             mprError("Can't change group to %s: %d\n"
                 "WARNING: This is a major security exposure", appweb->group, appweb->gid);
@@ -139,7 +141,7 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
 
     if (strcmp(name, "authFilter") == 0 || strcmp(name, "rangeFilter") == 0 || strcmp(name, "uploadFilter") == 0 ||
             strcmp(name, "fileHandler") == 0 || strcmp(name, "egiHandler") == 0 || strcmp(name, "dirHandler") == 0) {
-        mprError("The %s module is now builtin. No need to use LoadModule", name);
+        mprLog(1, "The %s module is now builtin. No need to use LoadModule", name);
         return 0;
     }
     if (libname == 0) {
@@ -155,7 +157,7 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
     mprSprintf(entryPoint, sizeof(entryPoint), "ma%sInit", name);
     entryPoint[2] = toupper((int) entryPoint[2]);
 
-    if (mprLoadModule(path, entryPoint, NULL) == 0) {
+    if (mprLoadModule(path, entryPoint, MPR->httpService) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     mprLog(MPR_CONFIG, "Activating module (Loadable) %s", name);

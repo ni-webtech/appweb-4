@@ -22,33 +22,42 @@ static void printAuth(int fd, MaHost *host, HttpAuth *auth, int indent);
 /*  
     Configure the server
  */
-int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port)
+int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cchar *docRoot, cchar *ip, int port)
 {
     MaAppweb        *appweb;
+    MaHost          *host;
+    MaAlias         *alias;
     Http            *http;
-    char            *path;
+    HttpLoc         *loc;
+    char            *path, *searchPath, *dir;
 
     appweb = server->appweb;
     http = appweb->http;
+    dir = mprGetAppDir();
 
-#if UNUSED
-    if (ip && docRoot) {
+    if (configFile) {
+        path = mprGetAbsPath(configFile);
+        if (maParseConfig(server, path) < 0) {
+            /* mprUserError("Can't configure server using %s", path); */
+            return MPR_ERR_CANT_INITIALIZE;
+        }
+
+    } else {
+        //  MOB TEST THIS
         mprLog(2, "DocumentRoot %s", docRoot);
         if ((host = maCreateDefaultHost(server, docRoot, ip, port)) == 0) {
-            mprUserError(server, "Can't open server on %s", ip);
+            mprUserError("Can't open server on %s", ip);
             return MPR_ERR_CANT_OPEN;
         }
         loc = host->loc;
 #if WIN
-        searchPath = mprAsprintf(server, -1, "%s" MPR_SEARCH_SEP ".", mprGetAppDir(server));
+        searchPath = mprAsprintf("%s" MPR_SEARCH_SEP ".", dir);
 #else
-        searchPath = mprAsprintf(server, -1, "%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", mprGetAppDir(server),
-            mprSamePath(server, BLD_BIN_PREFIX, mprGetAppDir(server)) ? BLD_MOD_PREFIX: BLD_ABS_MOD_DIR);
+        searchPath = mprAsprintf("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
+            mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_MOD_PREFIX: BLD_ABS_MOD_DIR);
 #endif
         mprSetModuleSearchPath(searchPath);
-#if UNUSED
         httpSetConnector(loc, "netConnector");
-#endif
         /*  
             Auth must be added first to authorize all requests. File is last as a catch all.
          */
@@ -62,10 +71,10 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
                 Add cgi-bin with a loc block for the /cgi-bin URL prefix.
              */
             path = "cgi-bin";
-            if (mprPathExists(host, path, X_OK)) {
-                ap = maCreateAlias("/cgi-bin/", path, 0);
+            if (mprPathExists(path, X_OK)) {
+                alias = maCreateAlias("/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
-                maInsertAlias(host, ap);
+                maInsertAlias(host, alias);
                 loc = httpCreateInheritedLocation(http, host->loc);
                 httpSetLocationPrefix(loc, "/cgi-bin/");
                 httpSetHandler(loc, "cgiHandler");
@@ -83,13 +92,6 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
         if (httpLookupStage(http, "fileHandler")) {
             httpAddHandler(loc, "fileHandler", "");
         }
-    } else {
-#endif
-
-    path = mprGetAbsPath(configFile);
-    if (maParseConfig(server, path) < 0) {
-        /* mprUserError(server, "Can't configure server using %s", path); */
-        return MPR_ERR_CANT_INITIALIZE;
     }
 
     if (serverRoot) {
@@ -98,8 +100,8 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
     if (ip || port > 0) {
         maSetIpAddr(server, ip, port);
     }
-    if (documentRoot) {
-        maSetDocumentRoot(server, documentRoot);
+    if (docRoot) {
+        maSetDocumentRoot(server, docRoot);
     }
     return 0;
 }
@@ -759,7 +761,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     MprHash     *hp;
     char        ipAddrPort[MPR_MAX_IP_ADDR_PORT];
     char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *hostName;
-    char        *names, *type, *items, *include, *exclude;
+    char        *names, *type, *items, *include, *exclude, *when, *mimeTypes;
     int         len, port, rc, code, processed, num, flags, colonCount, mask, level;
 
     mprAssert(state);
@@ -942,7 +944,24 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'C':
-        if (scasecmp(key, "CustomLog") == 0) {
+        if (scasecmp(key, "Chroot") == 0) {
+#if BLD_UNIX_LIKE
+            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            if (chroot(path) < 0) {
+                if (errno == EPERM) {
+                    mprError("Must be super user to use the --chroot option\n");
+                } else {
+                    mprError("Can't change change root directory to %s, errno %d\n", path, errno);
+                }
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            return 1;
+#else
+            mprError("Chroot directive not supported on this operating system\n");
+            return MPR_ERR_BAD_SYNTAX;
+#endif
+
+        } else if (scasecmp(key, "CustomLog") == 0) {
 #if !BLD_FEATURE_ROMFS
             char *format, *end;
             if (*value == '\"') {
@@ -1029,6 +1048,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                     }
                 }
             }
+            return 1;
+
+        } else if (scasecmp(key, "Expires") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            when = stok(value, " \t", &mimeTypes);
+            httpAddLocationExpiry(loc, (MprTime) stoi(when, 10, NULL), mimeTypes);
             return 1;
         }
         break;

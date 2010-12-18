@@ -39,6 +39,7 @@ void maLoadStaticModules(MaAppweb *appweb)
     http = appweb->http;
     staticModules = mprCreateList(http);
 
+    //  MOB - need extensible API for adding static modules to this. 
 #if BLD_FEATURE_CGI
     loadStaticModule(http, "mod_cgi", maCgiHandlerInit);
 #endif
@@ -59,6 +60,7 @@ void maUnloadStaticModules(MaAppweb *appweb)
     MprModule   *mp;
     int         next;
 
+    //  MOB -- test unload. What if users unloaded before appweb exit?
     for (next = 0; (mp = mprGetNextItem(staticModules, &next)) != 0; ) {
         mprUnloadModule(mp);
     }

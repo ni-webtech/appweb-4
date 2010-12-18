@@ -178,10 +178,12 @@ static bool modifyRequest(HttpConn *conn)
     HttpRx          *rx;
     MprPath         *info;
     MprHash         *he;
+    MprList         *handlers;
     int             next;
 
     rx = conn->rx;
     tx = conn->tx;
+    handlers = NULL;
 
     if (tx->filename == 0) {
         tx->filename = makeFilename(conn, rx->alias, rx->uri, 1);
@@ -194,16 +196,25 @@ static bool modifyRequest(HttpConn *conn)
     if (loc) {
         for (next = 0; (handler = mprGetNextItem(loc->handlers, &next)) != 0; ) {
             if (handler->modify) {
-                if (handler->modify(conn, handler)) {
-                    return 1;
+                if (handlers == NULL) {
+                    handlers = mprCreateList();
+                }
+                if (mprLookupItem(handlers, handler) < 0) {
+                    mprAddItem(handlers, handler);
+                    if (handler->modify(conn, handler)) {
+                        return 1;
+                    }
                 }
             }
         }
         for (he = 0; (he = mprGetNextHash(loc->extensions, he)) != 0; ) {
             handler = (HttpStage*) he->data;
             if (handler->modify) {
-                if (handler->modify(conn, handler)) {
-                    return 1;
+                if (mprLookupItem(handlers, handler) < 0) {
+                    mprAddItem(handlers, handler);
+                    if (handler->modify(conn, handler)) {
+                        return 1;
+                    }
                 }
             }
         }

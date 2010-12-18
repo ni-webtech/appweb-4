@@ -1231,7 +1231,7 @@ MprMemStats *mprGetMemStats()
     size_t          len;
     int             fd;
 
-    heap->stats.ram = MAXSIZE;
+    heap->stats.ram = MAXSSIZE;
     if ((fd = open("/proc/meminfo", O_RDONLY)) >= 0) {
         if ((len = read(fd, buf, sizeof(buf) - 1)) > 0) {
             buf[len] = '\0';
@@ -10936,7 +10936,7 @@ MprChar *mcontains(MprChar *str, cchar *pattern, ssize limit)
     cchar       *s2;
     ssize       lim;
 
-    mprAssert(0 <= limit && limit < MAXSIZE);
+    mprAssert(0 <= limit && limit < MAXSSIZE);
 
     if (str == 0) {
         return 0;
@@ -11095,7 +11095,7 @@ int mncasecmp(MprChar *s1, cchar *s2, ssize n)
 {
     int     rc;
 
-    mprAssert(0 <= n && n < MAXSIZE);
+    mprAssert(0 <= n && n < MAXSSIZE);
 
     if (s1 == 0 || s2 == 0) {
         return -1;
@@ -11125,7 +11125,7 @@ int mncasecmp(MprChar *s1, cchar *s2, ssize n)
 
 int mncmp(MprChar *s1, cchar *s2, ssize n)
 {
-    mprAssert(0 <= n && n < MAXSIZE);
+    mprAssert(0 <= n && n < MAXSSIZE);
 
     if (s1 == 0 && s2 == 0) {
         return 0;
@@ -11154,8 +11154,8 @@ int mncmp(MprChar *s1, cchar *s2, ssize n)
 
 ssize mncopy(MprChar *dest, ssize destMax, cchar *src, ssize len)
 {
-    mprAssert(0 <= len && len < MAXSIZE);
-    mprAssert(0 < destMax && destMax < MAXSIZE);
+    mprAssert(0 <= len && len < MAXSSIZE);
+    mprAssert(0 < destMax && destMax < MAXSSIZE);
 
     return mtow(dest, destMax, src, len);
 }
@@ -23107,11 +23107,11 @@ ssize wtom(char *dest, ssize destCount, MprChar *src, ssize len)
     mprAssert(0 <= len && len < MAXINT);
 
     if (destCount < 0) {
-        destCount = MAXSIZE;
+        destCount = MAXSSIZE;
     }
 #if UNUSED
     if (len < 0) {
-        len = MAXSIZE;
+        len = MAXSSIZE;
     }
 #endif
     size = min(destCount, len + 1);
@@ -23153,7 +23153,7 @@ ssize mtow(MprChar *dest, ssize destCount, cchar *src, ssize len)
     mprAssert(0 <= len && len < MAXINT);
 
     if (destCount < 0) {
-        destCount = MAXSIZE;
+        destCount = MAXSSIZE;
     }
     size = min(destCount, len + 1);
     if (size > 0) {
@@ -23185,7 +23185,7 @@ MprChar *amtow(cchar *src, ssize *lenp)
     MprChar     *dest;
     ssize       len;
 
-    len = mtow(NULL, MAXSIZE, src, 0);
+    len = mtow(NULL, MAXSSIZE, src, 0);
     if (len < 0) {
         return NULL;
     }
@@ -23204,7 +23204,7 @@ char *awtom(MprChar *src, ssize *lenp)
     char    *dest;
     ssize   len;
 
-    len = wtom(NULL, MAXSIZE, src, 0);
+    len = wtom(NULL, MAXSSIZE, src, 0);
     if (len < 0) {
         return NULL;
     }

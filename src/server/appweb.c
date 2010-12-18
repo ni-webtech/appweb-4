@@ -18,14 +18,26 @@
 
 #include    "appweb.h"
 
+/********************************** Locals ************************************/
+
+typedef struct App {
+    char    *documentRoot;      //MOB UNUSED
+    char    *serverRoot;        //MOB UNUSED
+    char    *configFile;
+    char    *pathVar;
+} App;
+
+static App *app;
+
 /***************************** Forward Declarations ***************************/
 
 extern void appwebOsTerm();
-extern int  checkEnvironment(cchar *program);
-static char *findConfigFile(char *configFile);
+static int changeRoot(cchar *jail);
+extern int checkEnvironment(cchar *program);
+static void findConfigFile();
+static void manageApp(App *app, int flags);
 extern int  osInit();
-static MaAppweb *setup(cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
-        MprList *script, int workers);
+static MaAppweb *initialize(cchar *ip, int port, MprList *script, int workers);
 static void usageError();
 
 #if BLD_FEATURE_EJS
@@ -50,15 +62,13 @@ MAIN(appweb, int argc, char **argv)
     MaAppweb    *appweb;
     MaServer    *server;
     MprList     *scripts;
-    cchar       *ipAddrPort, *documentRoot, *argp, *logSpec;
-    char        *configFile, *ip, *homeDir;
+    cchar       *ipAddrPort, *argp, *logSpec, *jail;
+    char        *ip;
     int         workers, outputVersion, argind, port;
 
-    configFile = 0;
-    documentRoot = 0;
-    homeDir = 0;
     ipAddrPort = 0;
     ip = 0;
+    jail = 0;
     logSpec = 0;
     port = -1;
     outputVersion = 0;
@@ -66,9 +76,18 @@ MAIN(appweb, int argc, char **argv)
     scripts = 0;
     workers = -1;
 
-    mpr = mprCreate(argc, argv, 0);
+    mpr = mprCreate(argc, argv, MPR_USER_GC);
+
     argc = mpr->argc;
     argv = mpr->argv;
+
+    if ((app = mprAllocObj(App, manageApp)) == NULL) {
+        exit(1);
+    }
+    mprAddRoot(app);
+
+    app->serverRoot = mprGetCurrentPath();
+    app->documentRoot = app->serverRoot;
 
 #if BLD_FEATURE_ROMFS
     extern MprRomInode romFiles[];
@@ -93,23 +112,14 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            configFile = argv[++argind];
+            app->configFile = argv[++argind];
 
 #if BLD_UNIX_LIKE
         } else if (strcmp(argp, "--chroot") == 0) {
             if (argind >= argc) {
                 usageError();
             }
-            homeDir = mprGetAbsPath(argv[++argind]);
-            if (chroot(homeDir) < 0) {
-                if (errno == EPERM) {
-                    mprPrintfError("%s: Must be super user to use the --chroot option", mprGetAppName());
-                } else {
-                    mprPrintfError("%s: Can't change change root directory to %s, errno %d",
-                        mprGetAppName(), homeDir, errno);
-                }
-                exit(4);
-            }
+            jail = mprGetAbsPath(argv[++argind]);
 #endif
 
         } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-d") == 0) {
@@ -128,9 +138,9 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            homeDir = mprGetAbsPath(argv[++argind]);
-            if (chdir((char*) homeDir) < 0) {
-                mprPrintfError("%s: Can't change directory to %s\n", mprGetAppName(), homeDir);
+            app->serverRoot = mprGetAbsPath(argv[++argind]);
+            if (chdir(app->serverRoot) < 0) {
+                mprPrintfError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
                 exit(2);
             }
 
@@ -171,30 +181,29 @@ MAIN(appweb, int argc, char **argv)
         }
         ipAddrPort = argv[argind++];
         if (argc > argind) {
-            documentRoot = argv[argind++];
-        } else {
-            documentRoot = ".";
+            app->documentRoot = argv[argind++];
         }
     }
     if (outputVersion) {
         mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
         exit(0);
     }
-    if (configFile == 0) {
-        configFile = findConfigFile(configFile);
-    }
+    findConfigFile();
     if (ipAddrPort) {
         mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
     }
     if (checkEnvironment(argv[0]) < 0) {
         exit(3);
     }
-    if ((appweb = setup(configFile, homeDir, documentRoot, ip, port, scripts, workers)) == 0) {
+    if (jail && changeRoot(jail) < 0) {
+        exit(4);
+    }
+    if ((appweb = initialize(ip, port, scripts, workers)) == 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (maStartAppweb(appweb) < 0) {
         mprUserError("Can't start HTTP service, exiting.");
-        exit(7);
+        exit(5);
     }
 
     /*
@@ -212,8 +221,40 @@ MAIN(appweb, int argc, char **argv)
 }
 
 
-static MaAppweb *setup(cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port, 
-        MprList *scripts, int workers)
+static void manageApp(App *app, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(app->configFile);
+        mprMark(app->documentRoot);
+        mprMark(app->serverRoot);
+        mprMark(app->pathVar);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
+/*
+    Move into a chroot jail
+ */
+static int changeRoot(cchar *jail)
+{
+#if BLD_UNIX_LIKE
+    if (chroot(jail) < 0) {
+        if (errno == EPERM) {
+            mprPrintfError("%s: Must be super user to use the --chroot option", mprGetAppName());
+        } else {
+            mprPrintfError("%s: Can't change change root directory to %s, errno %d",
+                mprGetAppName(), jail, errno);
+        }
+        return MPR_ERR_CANT_INITIALIZE;
+    }
+#endif
+    return 0;
+}
+
+
+static MaAppweb *initialize(cchar *ip, int port, MprList *scripts, int workers)
 {
     MaAppweb    *appweb;
     MaServer    *server;
@@ -226,7 +267,7 @@ static MaAppweb *setup(cchar *configFile, cchar *serverRoot, cchar *documentRoot
         mprUserError("Can't create HTTP server for %s", mprGetAppName());
         return 0;
     }
-    if (maConfigureServer(server, configFile, serverRoot, documentRoot, ip, port) < 0) {
+    if (maConfigureServer(server, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
         /* mprUserError("Can't configure the server, exiting."); */
         exit(6);
     }
@@ -255,20 +296,22 @@ static MaAppweb *setup(cchar *configFile, cchar *serverRoot, cchar *documentRoot
 }
 
 
-static char *findConfigFile(char *configFile)
+static void findConfigFile()
 {
-    if (configFile == 0) {
-        configFile = mprJoinPathExt(mprGetAppName(), ".conf");
+    if (app->configFile == 0) {
+        app->configFile = mprJoinPathExt(mprGetAppName(), ".conf");
     }
-    if (!mprPathExists(configFile, R_OK)) {
+    if (!mprPathExists(app->configFile, R_OK)) {
         //  MOB -- will BLD_LIB_NAME be bad for cross-compilation?
-        configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
-        if (!mprPathExists(configFile, R_OK)) {
-            mprPrintfError("Can't open config file %s\n", configFile);
+        app->configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
+        if (!mprPathExists(app->configFile, R_OK)) {
+            mprPrintfError("Can't open config file %s\n", app->configFile);
             exit(2);
         }
     }
-    return mprGetAbsPath(configFile);
+#if UNUSED
+    return mprGetAbsPath(app->configFile);
+#endif
 }
 
 
@@ -377,7 +420,7 @@ int osInit()
 int checkEnvironment(cchar *program)
 {
 #if BLD_UNIX_LIKE
-    char   *home, *path;
+    char   *home;
     home = mprGetCurrentPath();
     if (unixSecurityChecks(program, home) < 0) {
         return -1;
@@ -385,8 +428,8 @@ int checkEnvironment(cchar *program)
     /*
         Ensure the binaries directory is in the path. Used by ejs to run ejsweb from /usr/local/bin
      */
-    path = sjoin("PATH=", getenv("PATH"), ":", mprGetAppDir(), NULL);
-    putenv(path);
+    app->pathVar = sjoin("PATH=", getenv("PATH"), ":", mprGetAppDir(), NULL);
+    putenv(app->pathVar);
 #endif
     return 0;
 }

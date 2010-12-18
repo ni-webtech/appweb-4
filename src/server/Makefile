@@ -78,11 +78,11 @@ $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(cal
 #	Patch the appweb.conf configuration file based on the configure --config=dir setting
 #
 appweb.conf: $(BLD_INC_DIR)/buildConfig.h
+	$(call log) "[Patch]" "appweb.conf"
 	(dir=`pwd` ; cd $(BLD_FEATURE_CONFIG) ; find . -type f | \
 		egrep -v 'CVS/|RCS/|SCCS/|.svn/' | cpio -pdum $$dir >/dev/null 2>&1)
 	BLD_CFG_PREFIX=. BLD_WEB_PREFIX=./web BLD_MOD_PREFIX=$(BLD_MOD_DIR) BLD_DOC_PREFIX=../../doc \
 	BLD_SERVER=`hostname` BLD_LOG_PREFIX=./logs BLD_HTTP_PORT=$(BLD_HTTP_PORT) BLD_SSL_PORT=$(BLD_SSL_PORT) \
-	$(call log) "[Patch]" "appweb.conf"
 	patchAppwebConf appweb.conf conf/hosts/ssl-default.conf conf/log.conf conf/doc.conf
 
 cgi-bin/cgiProgram$(BLD_EXE): $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
