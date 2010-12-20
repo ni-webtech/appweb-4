@@ -81,7 +81,6 @@ $(BLD_TOOLS_DIR)/edep$(BLD_EXE):
 	T=$(BLD_TOOLS_DIR)/src; $(DO_RECURSE)
 
 dependExtra:
-	mkdir -p releases
 	[ ! -L extensions ] && ln -s ../packages extensions ; true
 
 install install-%:

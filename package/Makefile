@@ -10,3 +10,6 @@ PRE_DIRS	= $(BLD_HOST_OS) all
 
 dependExtra:
 	[ "$(shell echo *.sh)" != "*.sh" ] && chmod +x *.sh ; true
+
+dist:
+	echo make dist not yet implemented

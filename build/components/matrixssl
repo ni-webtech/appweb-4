@@ -19,7 +19,6 @@ defineComponent() {
         warnComponent $name
         return
 	fi
-    CFG_HOST_SSL_MANDATORY=1
     if [ $BLD_HOST_OS = WIN ] ; then
         imports="$path/src/Release/libmatrixssl.dll"
         libs="libmatrixssl"
@@ -35,5 +34,6 @@ defineComponent() {
             return
         fi
     done
+    CFG_HOST_SSL_MANDATORY=1
     configureComponent --path "$path" --imports "$imports" --libs "$libs" --iflags "-I$path" $name
 }

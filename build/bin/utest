@@ -74,12 +74,12 @@ enumerable class Test {
         
     function Test() {
         program = Path(App.args[0]).basename
-        if ((path = searchUp("out/include/buildConfig.h")) == null) {
-            throw "Can't find out/include/buildConfig.h"
+        if ((path = searchUp("configure")) == null) {
+            throw "Can't find configure"
         }
-        _top = path.dirname.dirname.absolute
-        _bin = path.dirname.join("bin").absolute
-        _lib = path.dirname.join("lib").absolute
+        _top = path.dirname.absolute
+        _bin = _top.join("out/bin").absolute
+        _lib = _top.join("out/lib").absolute
         parseBuildConfig(path);
     }
 

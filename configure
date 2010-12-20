@@ -1820,6 +1820,7 @@ createCrossConfig()
     eval v=\$BLD_${kind}_INC_DIR ; echo -e "${t}BLD_INC_DIR=\"${v}\""
 
     echo
+    eval v=\${BLD_OUT_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_OUT_DIR=\"${v}\""
     eval v=\${BLD_${kind}_BIN_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_BIN_DIR=\"${v}\"" ; mkdir -p "${v}"
     eval v=\${BLD_${kind}_LIB_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_LIB_DIR=\"${v}\"" ; mkdir -p "${v}"
     eval v=\${BLD_${kind}_OBJ_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_OBJ_DIR=\"${v}\"" ; mkdir -p "${v}"

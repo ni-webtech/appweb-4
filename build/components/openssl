@@ -61,7 +61,6 @@ defineComponent() {
         warnComponent $name
         return
 	fi
-    CFG_HOST_SSL_MANDATORY=1
 
     resolved=
     for f in $imports
@@ -79,5 +78,7 @@ defineComponent() {
         fi
         resolved="${resolved} ${file}"
     done
+echo SET SET SET 
+    CFG_HOST_SSL_MANDATORY=1
     configureComponent --path "$path" --imports "$resolved" --libs "$libs" --iflags "$iflags" $name
 }

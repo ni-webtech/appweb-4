@@ -102,7 +102,8 @@ void ejsAttention(Ejs *ejs)
 
     mprLock(ejs->mutex);
     frame = ejs->state->fp;
-    if (frame && frame->attentionPc == 0 && !frame->freeze) {
+    /* Must still handle exceptions even if frozen */
+    if (frame && frame->attentionPc == 0 /* MOB && !frame->freeze */) {
         /*
             Order matters. Setting the pc to the trap byte code will redirect the VM to the ATTENTION op code which
             will call mprLock(ejs->mutex) preventing a race here.
@@ -525,7 +526,7 @@ EjsAny *ejsAlloc(Ejs *ejs, EjsType *type, ssize extra)
     mprAssert(type->manager);
     mprSetManager(vp, type->manager);
 #if UNUSED
-    //  MOB - OPT
+    //  MOB - Can't do this here as it would change the generation in frozen sections
     if (MPR->heap.requireGC) {
         ejsAttention(ejs);
     }
@@ -5584,7 +5585,7 @@ static void manageBreakpoint(Ejs *ejs)
     This code is only active when building in debug mode and debugging in an IDE
  */
 static int ejsOpCount = 0;
-static int doDebug = 0;
+static int doDebug = 1;
 
 static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode)
 {
@@ -6141,7 +6142,7 @@ static int loadDependencySection(Ejs *ejs, EjsModule *mp)
     }
     if (ejsLookupModule(ejs, name, minVersion, maxVersion) == 0) {
         saveCallback = ejs->loaderCallback;
-        nextModule = ejsGetLength(ejs, ejs->modules);
+        nextModule = mprGetListCount(ejs->modules);
         ejs->loaderCallback = NULL;
 
         mprLog(6, "    Load dependency section %@", name);
@@ -7543,6 +7544,7 @@ static void manageModule(EjsModule *mp, int flags)
         mprMark(mp->initializer);
         mprMark(mp->constants);
         mprMark(mp->doc);
+        mprMark(mp->scope);
         mprMark(mp->currentMethod);
         mprMarkList(mp->current);
 
@@ -7773,11 +7775,6 @@ EjsString *ejsCreateStringFromConst(Ejs *ejs, EjsModule *mp, int index)
     if (value & 0x1) {
         str = &constants->pool[value >> 1];
         constants->index[index] = sp = ejsInternMulti(ejs, str, slen(str));
-#if UNUSED
-        //  MOB - can't do this because multiple modules may share the same string. So hold/release may release
-        //  when another modules still needs the string. Must mark all intern in ejsManageIntern.
-        mprHold(sp);
-#endif
     }
     mprAssert(constants->index[index]);
     return constants->index[index];
@@ -26159,9 +26156,6 @@ EjsRegExp *ejsCreateRegExp(Ejs *ejs, EjsString *pattern)
             rp->options = parseFlags(rp, &flags[1]);
             *flags = 0;
         }
-        if (rp->compiled) {
-            free(rp->compiled);
-        }
         //  MOB - UNICODE is pattern meant to be 
         rp->compiled = pcre_compile2(rp->pattern, rp->options, &errCode, &errMsg, &column, NULL);
         if (rp->compiled == NULL) {
@@ -29357,6 +29351,7 @@ static void linkString(Ejs *ejs, EjsString *head, EjsString *sp)
     mprAssert(sp != head);
     mprAssert(sp->next == NULL);
     mprAssert(sp->prev == NULL);
+    mprAssert(sp->type);
 
     sp->next = head->next;
     sp->prev = head;
@@ -29476,11 +29471,18 @@ void ejsManageIntern(Ejs *ejs, int flags)
         }
 #endif
     } else if (flags & MPR_MANAGE_FREE) {
+        /*
+            MOB - Need to unlink strings now as when they are freed later, the intern structure may not exist in memory.
+         */
         for (i = intern->size - 1; i >= 0; i--) {
             head = &intern->buckets[i];
             for (sp = head->next; sp != head; sp = next) {
                 next = sp->next;
+#if UNUSED
                 mprFree(sp);
+#else
+                unlinkString(sp);
+#endif
             }
         }
     }
@@ -30976,6 +30978,8 @@ static void manageType(EjsType *type, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         ejsManageFunction(&type->constructor, flags);
+        mprMark(type->qname.name);
+        mprMark(type->qname.space);
         mprMark(type->prototype);
         mprMark(type->baseType);
         mprMarkList(type->implements);
@@ -32606,6 +32610,7 @@ static EjsObj *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
     EjsNamespace    *ns;
     EjsName         sname;
     cchar           *name;
+    static int      workerSeqno = 0;
 
     ejsFreeze(ejs, 1);
     worker->ejs = ejs;
@@ -32625,7 +32630,9 @@ static EjsObj *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
     if (name) {
         worker->name = sclone(name);
     } else {
-        worker->name = mprAsprintf("worker-%d", mprGetListCount(ejs->workers));
+        lock(ejs);
+        worker->name = mprAsprintf("worker-%d", workerSeqno++);
+        unlock(ejs);
     }
 
     /*
@@ -48200,7 +48207,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     for (i = 0; i < argc && !cp->fatalError; i++) {
         ext = mprGetPathExtension(argv[i]);
         if (scasecmp(ext, "mod") == 0 || scasecmp(ext, BLD_SHOBJ) == 0) {
-            nextModule = ejsGetLength(ejs, ejs->modules);
+            nextModule = mprGetListCount(ejs->modules);
             lflags = cp->strict ? EJS_LOADER_STRICT : 0;
             if ((rc = ejsLoadModule(cp->ejs, ejsCreateStringFromAsc(ejs, argv[i]), -1, -1, lflags)) < 0) {
                 msg = mprAsprintf("Error initializing module %s\n%s", argv[i], ejsGetErrorMsg(cp->ejs, 1));
@@ -51946,6 +51953,8 @@ static EcNode *parseQualifiedNameIdentifier(EcCompiler *cp)
             getToken(cp);
             np = createNode(cp, N_QNAME, NULL);
             vp = ejsParse(cp->ejs, cp->token->text, -1);
+            //  MOB - cant set literal.var in a QNAME. clashes with "name" union structure. Not marked.
+            mprAssert(0);
             np->literal.var = vp;
             break;
 
@@ -51953,6 +51962,7 @@ static EcNode *parseQualifiedNameIdentifier(EcCompiler *cp)
             getToken(cp);
             np = createNode(cp, N_QNAME, NULL);
             vp = (EjsObj*) tokenString(cp);
+            //  MOB - cant set literal.var in a QNAME. clashes with "name" union structure. Not marked.
             np->literal.var = vp;
             break;
 
