@@ -1,0 +1,71 @@
+/*
+    Initialize for Appweb unit tests
+ */
+require ejs.unix
+
+let conf         = Path("appweb.conf").readString()
+const PORT       = conf.replace(/.*Listen ([0-9]+) *# MAIN.*/ms, "$1")
+const SSL_PORT   = conf.replace(/.*Listen ([0-9]+) *# SSL.*/ms, "$1")
+const VHOST_PORT = conf.replace(/.*Listen ([0-9]+) *# VHOST.*/ms, "$1")
+const IPHOST     = conf.replace(/.*Listen ([0-9]+) *# IPHOST.*/ms, "$1")
+const LOCALHOST  = "127.0.0.1"
+const HTTP       = "http://" + LOCALHOST + ":" + PORT
+const HTTPS      = "https://" + LOCALHOST + ":" + SSL_PORT
+const PIDFILE    = ".pidfile"
+
+function start(cmd: String): Void {
+    stop()
+    if (!App.getenv("NOSERVER")) {
+        let pid = System.daemon(cmd)
+        Path(PIDFILE).write(pid)
+    }
+    let url = ":" + PORT + "/web/ready.ready"
+    for (i in 10) {
+        http = new Http
+        try { http.get(url); 
+            /* Expect to get a not-found response */
+            if (http.status == 404 || http.status == 200) {
+                break
+            }
+        } catch (e) { }
+        App.sleep(100)
+        http.close()
+    }
+    if (http.status != 404 && http.status != 200) {
+        throw "Can't start web server"
+    }
+    http.close()
+}
+
+function stop() {
+    if (Path(PIDFILE).exists) {
+        pid = Path(PIDFILE).readString()
+        Path(PIDFILE).remove()
+        try { kill(pid); } catch (e) { }
+    }           
+}
+
+let cmd = App.exeDir.join("appweb") + " --log trace.txt:0 --name forAppwebTest --config appweb.conf"
+
+if (test.phase == "init") {
+    if (!App.getenv("SECOND")) {
+        for each (file in find("cache", "*.mod")) {
+            rm(file)
+        }
+        cleanDir("web/tmp")
+        for each (f in find(".", "*.tdat", true)) {
+            rm(f)
+        }
+    }
+    start(cmd)
+} else {
+    stopService()
+}
+
+share("host", HTTP)
+share("port", PORT)
+share("http", "http://" + LOCALHOST + ":" + PORT)
+share("https", "https://" + LOCALHOST + ":" + SSL_PORT)
+share("vhost", "http://" + LOCALHOST + ":" + VHOST_PORT)
+share("vhostPort", VHOST_PORT)
+share("iphost", "http://" + LOCALHOST + ":" + IPHOST)
