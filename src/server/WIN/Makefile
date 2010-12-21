@@ -31,5 +31,5 @@ $(BLD_PRODUCT)Monitor$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
 #   tab-width: 4
 #   c-basic-offset: 4
 #   End:
-#   vim: sw=4 ts=4
+#   vim: sw=4 ts=4 noexpandtab
 #

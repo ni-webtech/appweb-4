@@ -13,5 +13,5 @@ MAKE_IFLAGS		:= $(BLD_OPENSSL_IFLAGS) $(BLD_MATRIXSSL_IFLAGS)
 #   tab-width: 4
 #   c-basic-offset: 4
 #   End:
-#   vim: sw=4 ts=4
+#   vim: sw=4 ts=4 noexpandtab
 #
