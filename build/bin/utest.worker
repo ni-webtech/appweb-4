@@ -151,31 +151,33 @@ public function stopService() {
 }
 
 
-public function startService(cmd: String): Void {
+public function startService(cmd: String, port: Number): Void {
     stopService()
     if (!App.getenv("NOSERVER")) {
         let pid = System.daemon(App.exePath + " " + cmd)
         Path(PIDFILE).write(pid)
-    }
-    let url = ":" + App.config.test.http_port + "/web/ready.ready"
-    for (i in 10) {
-        http = new Http
-        try { http.get(url); 
-            /* Expect to get a not-found response */
-            if (http.status == 404 || http.status == 200) {
-                break
-            }
-        } catch (e) { }
-        App.sleep(100)
+
+        port ||= App.config.test.http_port
+        let url = ":" + port + "/web/ready.ready"
+        for (i in 10) {
+            http = new Http
+            try { http.get(url); 
+                /* Expect to get a not-found response */
+                if (http.status == 404 || http.status == 200) {
+                    break
+                }
+            } catch (e) { }
+            App.sleep(100)
+            http.close()
+        }
+        if (http.status != 404 && http.status != 200) {
+            throw "Can't start web server"
+        }
         http.close()
     }
-    if (http.status != 404 && http.status != 200) {
-        throw "Can't start web server"
-    }
-    http.close()
 }
 
-public function httpService(cmd: String): Void {
+public function httpService(cmd: String, port: Number = 80): Void {
     if (test.phase == "init") {
         startService(cmd)
     } else {

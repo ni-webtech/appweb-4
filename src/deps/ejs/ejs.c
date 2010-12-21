@@ -67,7 +67,7 @@ MAIN(ejsMain, int argc, char **argv)
         Initialize Multithreaded Portable Runtime (MPR)
      */
 //MOB  mpr = mprCreate(argc, argv, MPR_MARK_THREAD | MPR_SWEEP_THREAD);
-    mpr = mprCreate(argc, argv, MPR_USER_GC);
+    mpr = mprCreate(argc, argv, MPR_USER_GC | MPR_USER_EVENTS_THREAD);
     mprSetAppName(argv[0], 0, 0);
     setupSignals();
     app = mprAllocObj(App, manageApp);

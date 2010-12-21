@@ -5668,7 +5668,7 @@ static void getGlobal(EjsMod *mp, char *buf, int buflen)
             vp = ejsGetProperty(ejs, ejs->global, slotNum);
         }
         if (vp && ejsIsType(ejs, vp)) {
-            mprSprintf(buf, buflen, "<type: 0x%x,  %N> ", t, &((EjsType*) vp)->qname);
+            mprSprintf(buf, buflen, "<type: 0x%x,  %N> ", t, ((EjsType*) vp)->qname);
         }
         break;
 

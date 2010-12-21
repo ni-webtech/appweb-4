@@ -4486,7 +4486,7 @@ EjsAny *ejsRunFunctionByName(Ejs *ejs, EjsAny *container, EjsName qname, EjsAny 
         thisObj = ejs->global;
     }
     if ((fun = ejsGetPropertyByName(ejs, container, qname)) == 0) {
-        ejsThrowReferenceError(ejs, "Can't find function %N", &qname);
+        ejsThrowReferenceError(ejs, "Can't find function %N", qname);
         return 0;
     }
     return ejsRunFunction(ejs, fun, thisObj, argc, argv);
@@ -6414,7 +6414,7 @@ static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
     mprAssert(numArgs >= 0 && numArgs < EJS_MAX_ARGS);
     mprAssert(numExceptions >= 0 && numExceptions < EJS_MAX_EXCEPTIONS);
 
-    mprLog(9, "Loading function %N at slot %d", &qname, slotNum);
+    mprLog(9, "Loading function %N at slot %d", qname, slotNum);
 
     /*
         Read the code
@@ -6630,7 +6630,7 @@ static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
         /*  Only doing for namespaces currently */
         value = (EjsObj*) ejsCreateNamespace(ejs, str);
     }
-    mprLog(9, "Loading property %N at slot %d", &qname, slotNum);
+    mprLog(9, "Loading property %N at slot %d", qname, slotNum);
 
     if (attributes & EJS_PROP_NATIVE) {
         mp->hasNative = 1;
@@ -19675,6 +19675,12 @@ static void manageHttp(EjsHttp *http, int flags)
         mprMark(http->emitter);
         mprMark(http->data);
         mprMark(http->limits);
+        mprMark(http->requestContent);
+        mprMark(http->responseContent);
+        mprMark(http->uri);
+        mprMark(http->method);
+        mprMark(http->keyFile);
+        mprMark(http->certFile);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (http->conn) {
@@ -21339,7 +21345,7 @@ EjsString *ejsFormatReservedNamespace(Ejs *ejs, EjsName *typeName, EjsString *sp
 
     if (typeName) {
         if (typeName->space && typeName->space == ejs->publicString) {
-            namespace = ejsSprintf(ejs, "[%N,%@]", typeName, spaceName);
+            namespace = ejsSprintf(ejs, "[%N,%@]", *typeName, spaceName);
         } else {
             namespace = ejsSprintf(ejs, "[%@,%@]", typeName->name, spaceName);
         }
@@ -22429,7 +22435,7 @@ static EjsObj *obj_defineProperty(Ejs *ejs, EjsObj *unused, int argc, EjsObj **a
     }
     if ((slotNum = ejsLookupProperty(ejs, obj, qname)) >= 0) {
         if (ejsPropertyHasTrait(ejs, obj, slotNum, EJS_TRAIT_FIXED)) {
-            ejsThrowTypeError(ejs, "Property \"%N\" is not configurable", &qname);
+            ejsThrowTypeError(ejs, "Property \"%N\" is not configurable", qname);
             return 0;
         }
     }
@@ -30406,7 +30412,7 @@ EjsType *ejsConfigureNativeType(Ejs *ejs, EjsName qname, int instanceSize, void 
     EjsType     *type;
 
     if ((type = ejsGetTypeByName(ejs, qname)) == 0) {
-        mprError("Can't find %N type", &qname);
+        mprError("Can't find %N type", qname);
         return 0;
     }
     type->instanceSize = instanceSize;

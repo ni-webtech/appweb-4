@@ -725,9 +725,10 @@ static int reportResponse(HttpConn *conn, cchar *url)
             }
         }
     }
+    httpDestroyRx(conn);
+
     if (status < 0) {
         mprError("Can't process request for \"%s\" %s", url, httpGetError(conn));
-        httpDestroyRx(conn);
         return MPR_ERR_CANT_READ;
 
     } else if (status == 0 && conn->protocol == 0) {
@@ -736,12 +737,9 @@ static int reportResponse(HttpConn *conn, cchar *url)
     } else if (!(200 <= status && status <= 206) && !(301 <= status && status <= 304)) {
         if (!app->showStatus) {
             mprError("Can't process request for \"%s\" (%d) %s", url, status, httpGetError(conn));
-            httpDestroyRx(conn);
             return MPR_ERR_CANT_READ;
         }
     }
-    httpDestroyRx(conn);
-
     mprLock(app->mutex);
     if (app->verbose && app->noout) {
         trace(conn, url, app->fetchCount, app->method, status, contentLen);

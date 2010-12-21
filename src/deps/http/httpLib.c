@@ -2316,7 +2316,12 @@ static void manageConn(HttpConn *conn, int flags)
             httpCloseConn(conn);
         }
         conn->input = 0;
-        httpDestroyRx(conn);
+        if (conn->rx) {
+            conn->rx->conn = 0;
+        }
+        if (conn->tx) {
+            conn->tx->conn = 0;
+        }
     }
 }
 
@@ -2363,12 +2368,12 @@ void httpPrepServerConn(HttpConn *conn)
         conn->error = 0;
         conn->errorMsg = 0;
         conn->flags = 0;
-        conn->rx = 0;
         conn->state = 0;
-        conn->tx = 0;
         conn->writeComplete = 0;
         httpSetState(conn, HTTP_STATE_BEGIN);
         httpInitSchedulerQueue(&conn->serviceq);
+        mprAssert(conn->rx == 0);
+        mprAssert(conn->tx == 0);
     }
 }
 
@@ -2491,8 +2496,7 @@ static void readEvent(HttpConn *conn)
 
     while ((packet = getPacket(conn, &len)) != 0) {
         nbytes = mprReadSocket(conn->sock, mprGetBufEnd(packet->content), len);
-        //  MOB - was 8
-        LOG(1, "http: read event. Got %d", nbytes);
+        LOG(8, "http: read event. Got %d", nbytes);
        
         if (nbytes > 0) {
             mprAdjustBufEnd(packet->content, nbytes);
@@ -3683,7 +3687,7 @@ static int httpTimer(Http *http, MprEvent *event)
                         "Request timed out, exceeded timeout %d sec", requestTimeout / 1000);
                 }
             } else {
-                mprLog(4, "Idle connection timed out");
+                mprLog(6, "Idle connection timed out");
                 conn->complete = 1;
                 mprDisconnectSocket(conn->sock);
             }
@@ -6545,22 +6549,17 @@ static void manageRx(HttpRx *rx, int flags)
         }
 
     } else if (flags & MPR_MANAGE_FREE) {
+        if (rx->conn) {
+            rx->conn->rx = 0;
+        }
     }
 }
 
 
 void httpDestroyRx(HttpConn *conn)
 {
-    if (conn->rx) {
-        if (conn->server) {
-            httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_REQUEST, conn);
-        }
-        /* Force destructor to run now */
-        mprFree(conn->rx);
+    if (conn) {
         conn->rx = 0;
-    }
-    if (conn->server) {
-        httpPrepServerConn(conn);
     }
 }
 
@@ -7455,26 +7454,21 @@ static bool processRunning(HttpConn *conn)
 static bool processCompletion(HttpConn *conn)
 {
     HttpPacket  *packet;
-    Mpr         *mpr;
     bool        more;
 
     mprAssert(conn->state == HTTP_STATE_COMPLETE);
 
-    mpr = mprGetMpr();
+    httpDestroyPipeline(conn);
 
-    packet = conn->input;
-    more = packet && !conn->connError && (mprGetBufLength(packet->content) > 0);
-#if UNUSED
-    if (!mprIsParent(conn, packet)) {
-        if (more) {
-            conn->input = httpSplitPacket(packet, 0);
-        } else {
-            conn->input = 0;
-        }
-    }
-#endif
     if (conn->server) {
-        httpDestroyRx(conn);
+        conn->rx = 0;
+        conn->tx = 0;
+        packet = conn->input;
+        more = packet && !conn->connError && (mprGetBufLength(packet->content) > 0);
+        if (conn->server) {
+            httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_REQUEST, conn);
+            httpPrepServerConn(conn);
+        }
         return more;
     }
     return 0;
@@ -9303,8 +9297,9 @@ static void manageTx(HttpTx *tx, int flags)
         mprMark(tx->extension);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        httpDestroyPipeline(tx->conn);
-        tx->conn->tx = 0;
+        if (tx->conn) {
+            tx->conn->tx = 0;
+        }
     }
 }
 

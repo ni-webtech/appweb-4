@@ -217,10 +217,11 @@ static int      flushMss(MprSocket *sp);
 static MprSsl   *getDefaultMatrixSsl();
 static int      innerRead(MprSocket *sp, char *userBuf, int len);
 static int      listenMss(MprSocket *sp, cchar *host, int port, int flags);
-static int      matrixSslDestructor(MprSsl *ssl);
-static int      matrixSslSocketDestructor(MprSslSocket *msp);
-static ssize   readMss(MprSocket *sp, void *buf, ssize len);
-static ssize   writeMss(MprSocket *sp, void *buf, ssize len);
+static void     manageMatrixSocket(MprSslSocket *msp, int flags);
+static void     manageMatrixSsl(MprSsl *ssl, int flags);
+static void     manageMatrixProvider(MprSocketProvider *provider, int flags);
+static ssize    readMss(MprSocket *sp, void *buf, ssize len);
+static ssize    writeMss(MprSocket *sp, void *buf, ssize len);
 
 
 int mprCreateMatrixSslModule(bool lazy)
@@ -272,11 +273,9 @@ static MprSsl *getDefaultMatrixSsl()
 
 static MprSocketProvider *createMatrixSslProvider()
 {
-    Mpr                 *mpr;
     MprSocketProvider   *provider;
 
-    mpr = mprGetMpr();
-    if ((provider = mprAllocObj(MprSocketProvider, NULL)) == NULL) {
+    if ((provider = mprAllocObj(MprSocketProvider, manageMatrixProvider)) == NULL) {
         return 0;
     }
     provider->name = "MatrixSsl";
@@ -294,14 +293,22 @@ static MprSocketProvider *createMatrixSslProvider()
 }
 
 
+static void manageMatrixProvider(MprSocketProvider *provider, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(provider->defaultSsl);
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 static int configureMss(MprSsl *ssl)
 {
     MprSocketService    *ss;
     char                *password;
 
     ss = mprGetMpr()->socketService;
-
-    mprSetManager(ssl, (MprManager) matrixSslDestructor);
+    mprSetManager(ssl, (MprManager) manageMatrixSsl);
 
     /*
         Read the certificate and the key file for this server. FUTURE - If using encrypted private keys, 
@@ -334,12 +341,23 @@ static int configureMss(MprSsl *ssl)
 }
 
 
-static int matrixSslDestructor(MprSsl *ssl)
+static void manageMatrixSsl(MprSsl *ssl, int flags)
 {
-    if (ssl->keys) {
-        matrixSslFreeKeys(ssl->keys);
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ssl->key);
+        mprMark(ssl->cert);
+        mprMark(ssl->keyFile);
+        mprMark(ssl->certFile);
+        mprMark(ssl->caFile);
+        mprMark(ssl->caPath);
+        mprMark(ssl->ciphers);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (ssl->keys) {
+            matrixSslFreeKeys(ssl->keys);
+            ssl->keys = 0;
+        }
     }
-    return 0;
 }
 
 
@@ -369,7 +387,7 @@ static MprSocket *createMss(MprSsl *ssl)
     lock(sp);
     sp->provider = ss->secureProvider;
 
-    msp = (MprSslSocket*) mprAllocObj(MprSslSocket, matrixSslSocketDestructor);
+    msp = (MprSslSocket*) mprAllocObj(MprSslSocket, manageMatrixSocket);
     if (msp == 0) {
         mprFree(sp);
         return 0;
@@ -386,20 +404,25 @@ static MprSocket *createMss(MprSsl *ssl)
 }
 
 
-/*
-    Called on mprFree
- */
-static int matrixSslSocketDestructor(MprSslSocket *msp)
+static void manageMatrixSocket(MprSslSocket *msp, int flags)
 {
-    if (msp->ssl) {
-        mprFree(msp->insock.buf);
-        mprFree(msp->outsock.buf);
-        if (msp->inbuf.buf) {
-            mprFree(msp->inbuf.buf);
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(msp->sock);
+        mprMark(msp->ssl);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (msp->ssl) {
+#if UNUSED
+            mprFree(msp->insock.buf);
+            mprFree(msp->outsock.buf);
+            if (msp->inbuf.buf) {
+                mprFree(msp->inbuf.buf);
+                msp->inbuf.buf = 0;
+            }
+#endif
+            matrixSslDeleteSession(msp->mssl);
         }
-        matrixSslDeleteSession(msp->mssl);
     }
-    return 0;
 }
 
 
@@ -1124,12 +1147,13 @@ static void     disconnectOss(MprSocket *sp);
 static int      flushOss(MprSocket *sp);
 static int      listenOss(MprSocket *sp, cchar *host, int port, int flags);
 static int      lockDestructor(void *ptr);
-static int      openSslDestructor(MprSsl *ssl);
-static int      openSslSocketDestructor(MprSslSocket *ssp);
-static ssize   readOss(MprSocket *sp, void *buf, ssize len);
+static void     manageOpenProvider(MprSocketProvider *provider, int flags);
+static void     manageOpenSocket(MprSslSocket *ssp, int flags);
+static void     manageOpenSsl(MprSsl *ssl, int flags);
+static ssize    readOss(MprSocket *sp, void *buf, ssize len);
 static RSA      *rsaCallback(SSL *ssl, int isExport, int keyLength);
 static int      verifyX509Certificate(int ok, X509_STORE_CTX *ctx);
-static ssize   writeOss(MprSocket *sp, void *buf, ssize len);
+static ssize    writeOss(MprSocket *sp, void *buf, ssize len);
 
 static DynLock  *sslCreateDynLock(const char *file, int line);
 static void     sslDynLock(int mode, DynLock *dl, const char *file, int line);
@@ -1242,7 +1266,7 @@ static MprSocketProvider *createOpenSslProvider()
     MprSocketProvider   *provider;
 
     mpr = mprGetMpr();
-    if ((provider = mprAllocObj(MprSocketProvider, NULL)) == NULL) {
+    if ((provider = mprAllocObj(MprSocketProvider, manageOpenProvider)) == NULL) {
         return 0;
     }
     provider->name = "OpenSsl";
@@ -1260,6 +1284,15 @@ static MprSocketProvider *createOpenSslProvider()
 }
 
 
+static void manageOpenProvider(MprSocketProvider *provider, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(provider->defaultSsl);
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 /*
     Configure the SSL configuration. Called from connect or explicitly in server code
     to setup various SSL contexts. Appweb uses this from location.c.
@@ -1272,7 +1305,7 @@ static int configureOss(MprSsl *ssl)
     uchar               resume[16];
 
     ss = mprGetMpr()->socketService;
-    mprSetManager(ssl, (MprManager) openSslDestructor);
+    mprSetManager(ssl, (MprManager) manageOpenSsl);
 
     context = SSL_CTX_new(SSLv23_method());
     if (context == 0) {
@@ -1411,24 +1444,34 @@ static int configureOss(MprSsl *ssl)
 /*
     Update the destructor for the MprSsl object. 
  */
-static int openSslDestructor(MprSsl *ssl)
+static void manageOpenSsl(MprSsl *ssl, int flags)
 {
-    if (ssl->context != 0) {
-        SSL_CTX_free(ssl->context);
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ssl->key);
+        mprMark(ssl->cert);
+        mprMark(ssl->keyFile);
+        mprMark(ssl->certFile);
+        mprMark(ssl->caFile);
+        mprMark(ssl->caPath);
+        mprMark(ssl->ciphers);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (ssl->context != 0) {
+            SSL_CTX_free(ssl->context);
+        }
+        if (ssl->rsaKey512) {
+            RSA_free(ssl->rsaKey512);
+        }
+        if (ssl->rsaKey1024) {
+            RSA_free(ssl->rsaKey1024);
+        }
+        if (ssl->dhKey512) {
+            DH_free(ssl->dhKey512);
+        }
+        if (ssl->dhKey1024) {
+            DH_free(ssl->dhKey1024);
+        }
     }
-    if (ssl->rsaKey512) {
-        RSA_free(ssl->rsaKey512);
-    }
-    if (ssl->rsaKey1024) {
-        RSA_free(ssl->rsaKey1024);
-    }
-    if (ssl->dhKey512) {
-        DH_free(ssl->dhKey512);
-    }
-    if (ssl->dhKey1024) {
-        DH_free(ssl->dhKey1024);
-    }
-    return 0;
 }
 
 
@@ -1525,7 +1568,7 @@ static MprSocket *createOss(MprSsl *ssl)
     /*
         Create a SslSocket object for ssl state. This logically extends MprSocket.
      */
-    osp = (MprSslSocket*) mprAllocObj(MprSslSocket, openSslSocketDestructor);
+    osp = (MprSslSocket*) mprAllocObj(MprSslSocket, manageOpenSocket);
     if (osp == 0) {
         mprFree(sp);
         return 0;
@@ -1545,14 +1588,19 @@ static MprSocket *createOss(MprSsl *ssl)
 /*
     Destructor for an MprSslSocket object
  */
-static int openSslSocketDestructor(MprSslSocket *osp)
+static void manageOpenSocket(MprSslSocket *osp, int flags)
 {
-    if (osp->osslStruct) {
-        SSL_set_shutdown(osp->osslStruct, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-        SSL_free(osp->osslStruct);
-        osp->osslStruct = 0;
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(osp->sock);
+        mprMark(osp->ssl);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (osp->osslStruct) {
+            SSL_set_shutdown(osp->osslStruct, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
+            SSL_free(osp->osslStruct);
+            osp->osslStruct = 0;
+        }
     }
-    return 0;
 }
 
 
@@ -2216,7 +2264,7 @@ MprModule *mprSslInit(cchar *path)
 }
 
 
-static int dummySslDestructor() { return 0; }
+static void dummySslDestructor(void *ptr, int flags) {}
 
 /*
     Create a new Ssl context object

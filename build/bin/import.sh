@@ -102,20 +102,21 @@ syncFiles() {
             status=$?
         fi
         if [ $status != 0 ] ; then
+            mkdir -p `dirname ${DIR}/${target}`
+            [ -d ${DIR}/${target} ] && continue
             if [ $import = 0 -a ${DIR}/${target} -nt $SRC/$file ] ; then
                 warn "WARNING" "${target} has been modified. Skipping"
                 continue
             fi
-            mkdir -p `dirname ${DIR}/${target}`
             [ -f ${DIR}/${target} ] && chmod +w "${DIR}/${target}"
             if [ "$patch" = "1" ] ; then
                 eval pp $PP_ARGS $SRC/$file > "${DIR}/${target}"
             else
                 log "Update" "${target#./}"
-                cp $SRC/$file ${DIR}/${target}
+                cp ${SRC}/${file} ${DIR}/${target}
             fi
-            if [ `uname` != "CYGWIN_NT-5.1" ] ; then
-                chmod -w ${DIR}/$target
+            if [ `uname` != "CYGWIN_NT-5.1" -a ! -d "${DIR}/target}" ] ; then
+                chmod -w "${DIR}/$target"
             fi
         fi
     done
