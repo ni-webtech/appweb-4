@@ -317,7 +317,7 @@ MAIN(ejsMain, int argc, char **argv)
         if (interpretCommands(cp, cmd) < 0) {
             err++;
         }
-    } else if (mprGetListCount(app->files) > 0) {
+    } else if (mprGetListLength(app->files) > 0) {
         if (interpretFiles(cp, app->files, argc - nextArg, &argv[nextArg], className, method) < 0) {
             err++;
         }

@@ -424,7 +424,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
     /*
         Validate configuration
      */
-    if (mprGetListCount(server->httpServers) == 0) {
+    if (mprGetListLength(server->httpServers) == 0) {
         mprError("Must have a Listen directive");
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -520,7 +520,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
         /*
             Ensure all hosts have mime types.
          */
-        if (hp->mimeTypes == 0 || mprGetHashCount(hp->mimeTypes) == 0) {
+        if (hp->mimeTypes == 0 || mprGetHashLength(hp->mimeTypes) == 0) {
             if (hp == defaultHost && defaultHost->mimeTypes) {
                 hp->mimeTypes = defaultHost->mimeTypes;
 
@@ -599,7 +599,7 @@ int maValidateConfiguration(MaServer *server)
 
     defaultHost = server->defaultHost;
 
-    if (mprGetListCount(server->httpServers) == 0) {
+    if (mprGetListLength(server->httpServers) == 0) {
         mprError("Must have a Listen directive");
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -685,7 +685,7 @@ int maValidateConfiguration(MaServer *server)
         /*
             Ensure all hosts have mime types.
          */
-        if (hp->mimeTypes == 0 || mprGetHashCount(hp->mimeTypes) == 0) {
+        if (hp->mimeTypes == 0 || mprGetHashLength(hp->mimeTypes) == 0) {
             if (hp == defaultHost && defaultHost->mimeTypes) {
                 hp->mimeTypes = defaultHost->mimeTypes;
 

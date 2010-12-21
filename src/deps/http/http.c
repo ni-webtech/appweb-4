@@ -813,11 +813,11 @@ static int setContentLength(HttpConn *conn)
         }
     }
     if (app->formData) {
-        count = mprGetListCount(app->formData);
+        count = mprGetListLength(app->formData);
         for (next = 0; (pair = mprGetNextItem(app->formData, &next)) != 0; ) {
             len += strlen(pair);
         }
-        len += mprGetListCount(app->formData) - 1;
+        len += mprGetListLength(app->formData) - 1;
     }
     if (app->bodyData) {
         len += mprGetBufLength(app->bodyData);
@@ -844,7 +844,7 @@ static int writeBody(HttpConn *conn)
         }
     } else {
         if (app->formData) {
-            count = mprGetListCount(app->formData);
+            count = mprGetListLength(app->formData);
             for (next = 0; !rc && (pair = mprGetNextItem(app->formData, &next)) != 0; ) {
                 len = strlen(pair);
                 if (next < count) {
@@ -860,7 +860,7 @@ static int writeBody(HttpConn *conn)
             }
         }
         if (app->files) {
-            mprAssert(mprGetListCount(app->files) == 1);
+            mprAssert(mprGetListLength(app->files) == 1);
             for (rc = next = 0; !rc && (path = mprGetNextItem(app->files, &next)) != 0; ) {
                 if (strcmp(path, "-") == 0) {
                     file = mprAttachFd(0, "stdin", O_RDONLY | O_BINARY);

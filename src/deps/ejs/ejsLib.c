@@ -5821,7 +5821,7 @@ int ejsLoadModule(Ejs *ejs, EjsString *path, int minVersion, int maxVersion, int
         status = loadScriptModule(ejs, trimmedPath, minVersion, maxVersion, flags);
 #if UNUSED
         EjsModule  *mp;
-        nextModule = mprGetListCount(ejs->modules);
+        nextModule = mprGetListLength(ejs->modules);
         if ((status = loadScriptModule(ejs, trimmedPath, minVersion, maxVersion, flags)) == 0) {
             /*
                 Do fixups and run initializers when all dependent modules are loaded. Solves forward ref problem.
@@ -5930,7 +5930,7 @@ static int loadSections(Ejs *ejs, MprFile *file, cchar *path, EjsModuleHdr *hdr,
 
     created = 0;
     mp = 0;
-    firstModule = mprGetListCount(ejs->modules);
+    firstModule = mprGetListLength(ejs->modules);
 
     while ((sectionType = mprGetc(file)) >= 0) {
         if (sectionType < 0 || sectionType >= EJS_SECT_MAX) {
@@ -6138,7 +6138,7 @@ static int loadEndModuleSection(Ejs *ejs, EjsModule *mp)
     if (ejs->loaderCallback) {
         (ejs->loaderCallback)(ejs, EJS_SECT_MODULE_END, mp);
     }
-    mprAssert(mprGetListCount(mp->current) == 1);
+    mprAssert(mprGetListLength(mp->current) == 1);
     mprFree(mp->current);
     mp->current = 0;
     mp->file = 0;
@@ -6166,7 +6166,7 @@ static int loadDependencySection(Ejs *ejs, EjsModule *mp)
     }
     if (ejsLookupModule(ejs, name, minVersion, maxVersion) == 0) {
         saveCallback = ejs->loaderCallback;
-        nextModule = mprGetListCount(ejs->modules);
+        nextModule = mprGetListLength(ejs->modules);
         ejs->loaderCallback = NULL;
 
         mprLog(6, "    Load dependency section %@", name);
@@ -6789,7 +6789,7 @@ static int loadScriptModule(Ejs *ejs, cchar *filename, int minVersion, int maxVe
     }
     mprLog(5, "Loading module %s", path);
     mprEnableFileBuffering(file, 0, 0);
-    firstModule = mprGetListCount(ejs->modules);
+    firstModule = mprGetListLength(ejs->modules);
 
     /*
         Read module file header
@@ -7247,7 +7247,7 @@ static EjsLoadState *createLoadState(Ejs *ejs, int flags)
 
     ls = mprAllocObj(EjsLoadState, manageLoadState);
     ls->typeFixups = mprCreateList(ejs);
-    ls->firstModule = mprGetListCount(ejs->modules);
+    ls->firstModule = mprGetListLength(ejs->modules);
     ls->flags = flags;
     return ls;
 }
@@ -8859,7 +8859,7 @@ Ejs *ejsCreateVm(cchar *searchPath, MprList *require, int argc, cchar **argv, in
     mprAddItem(sp->vmlist, ejs);
     mprUnlock(sp->mutex);
 
-    ejs->empty = require && mprGetListCount(require) == 0;
+    ejs->empty = require && mprGetListLength(require) == 0;
     ejs->mutex = mprCreateLock(ejs);
     ejs->argc = argc;
     ejs->argv = argv;
@@ -23737,7 +23737,7 @@ static EjsObj *nextPathKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
         ejsThrowReferenceError(ejs, "Wrong type");
         return 0;
     }
-    if (ip->index < mprGetListCount(fp->files)) {
+    if (ip->index < mprGetListLength(fp->files)) {
         return (EjsObj*) ejsCreateNumber(ejs, ip->index++);
     }
     ejsThrowStopIteration(ejs);
@@ -23771,7 +23771,7 @@ static EjsObj *nextPathValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
         ejsThrowReferenceError(ejs, "Wrong type");
         return 0;
     }
-    if (ip->index < mprGetListCount(fp->files)) {
+    if (ip->index < mprGetListLength(fp->files)) {
         dp = (MprDirEntry*) mprGetItem(fp->files, ip->index++);
         return (EjsObj*) ejsCreatePathFromAsc(ejs, dp->name);
     }
@@ -33068,7 +33068,7 @@ static int reapJoins(Ejs *ejs, EjsObj *workers)
 
     if (workers == 0 || workers == ejs->nullValue) {
         /* Join all */
-        count = mprGetListCount(ejs->workers);
+        count = mprGetListLength(ejs->workers);
         for (i = 0; i < count; i++) {
             worker = mprGetItem(ejs->workers, i);
             if (worker->state >= EJS_WORKER_COMPLETE) {
@@ -33771,7 +33771,7 @@ static EjsObj *castXml(Ejs *ejs, EjsXML *xml, EjsType *type)
             if (xml->elements == 0) {
                 return (EjsObj*) ejs->emptyString;
             }
-            if (xml->elements && mprGetListCount(xml->elements) == 1) {
+            if (xml->elements && mprGetListLength(xml->elements) == 1) {
                 //  TODO - what about PI and comments?
                 item = mprGetFirstItem(xml->elements);
                 if (item->kind == EJS_XML_TEXT) {
@@ -33857,7 +33857,7 @@ static EjsObj *nextXmlKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
         return 0;
     }
 
-    for (; ip->index < mprGetListCount(xml->elements); ip->index++) {
+    for (; ip->index < mprGetListLength(xml->elements); ip->index++) {
         return (EjsObj*) ejsCreateNumber(ejs, ip->index++);
     }
     ejsThrowStopIteration(ejs);
@@ -33890,7 +33890,7 @@ static EjsObj *nextXmlValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
         return 0;
     }
 
-    for (; ip->index < mprGetListCount(xml->elements); ip->index++) {
+    for (; ip->index < mprGetListLength(xml->elements); ip->index++) {
         vp = (EjsXML*) mprGetItem(xml->elements, ip->index);
         if (vp == 0) {
             continue;
@@ -33916,7 +33916,7 @@ static EjsObj *getXmlValues(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
 
 static int getXmlPropertyCount(Ejs *ejs, EjsXML *xml)
 {
-    return mprGetListCount(xml->elements);
+    return mprGetListLength(xml->elements);
 }
 
 
@@ -34057,7 +34057,7 @@ static int setXmlPropertyAttributeByName(Ejs *ejs, EjsXML *xml, EjsName qname, E
             return last;
 
         } else {
-            index = mprGetListCount(xml->attributes);
+            index = mprGetListLength(xml->attributes);
         }
     }
     //  TODO - namespace work to do here
@@ -34092,7 +34092,7 @@ static EjsXML *createValueNode(Ejs *ejs, EjsXML *elt, EjsObj *value)
     if ((str = (EjsString*) ejsCast(ejs, value, ejs->stringType)) == NULL) {
         return 0;
     }
-    if (mprGetListCount(elt->elements) == 1) {
+    if (mprGetListLength(elt->elements) == 1) {
         /*
             Update an existing text element
          */
@@ -34203,7 +34203,7 @@ static int setXmlPropertyByName(Ejs *ejs, EjsXML *xml, EjsName qname, EjsObj *va
         if (elt == 0) {
             return 0;
         }
-        index = mprGetListCount(xml->elements);
+        index = mprGetListLength(xml->elements);
         xml = ejsAppendToXML(ejs, xml, createValueNode(ejs, elt, value));
 
     } else {
@@ -34238,11 +34238,11 @@ static bool deepCompare(EjsXML *lhs, EjsXML *rhs)
     } else  if (lhs->qname.name != rhs->qname.name) {
         return 0;
 
-    } else if (mprGetListCount(lhs->attributes) != mprGetListCount(rhs->attributes)) {
+    } else if (mprGetListLength(lhs->attributes) != mprGetListLength(rhs->attributes)) {
         //  TODO - must compare all the attributes
         return 0;
 
-    } else if (mprGetListCount(lhs->elements) != mprGetListCount(rhs->elements)) {
+    } else if (mprGetListLength(lhs->elements) != mprGetListLength(rhs->elements)) {
         //  TODO - must compare all the children
         return 0;
 
@@ -34250,7 +34250,7 @@ static bool deepCompare(EjsXML *lhs, EjsXML *rhs)
         return 0;
 
     } else {
-        for (i = 0; i < mprGetListCount(lhs->elements); i++) {
+        for (i = 0; i < mprGetListLength(lhs->elements); i++) {
             l = mprGetItem(lhs->elements, i);
             r = mprGetItem(rhs->elements, i);
             if (! deepCompare(l, r)) {
@@ -34548,7 +34548,7 @@ static EjsObj *xmlToString(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
  */
 static EjsObj *xmlLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, mprGetListCount(xml->elements));
+    return (EjsObj*) ejsCreateNumber(ejs, mprGetListLength(xml->elements));
 }
 
 
@@ -34983,13 +34983,13 @@ static EjsObj *xlCast(Ejs *ejs, EjsXML *vp, EjsType *type)
 
     case ES_String:
         buf = mprCreateBuf(MPR_BUFSIZE, -1);
-        if (mprGetListCount(vp->elements) == 1) {
+        if (mprGetListLength(vp->elements) == 1) {
             elt = mprGetFirstItem(vp->elements);
             if (elt->kind == EJS_XML_ELEMENT) {
                 if (elt->elements == 0) {
                     return (EjsObj*) ejs->emptyString;
                 }
-                if (elt->elements && mprGetListCount(elt->elements) == 1) {
+                if (elt->elements && mprGetListLength(elt->elements) == 1) {
                     //  TODO - what about PI and comments?
                     item = mprGetFirstItem(elt->elements);
                     if (item->kind == EJS_XML_TEXT) {
@@ -35056,7 +35056,7 @@ static int deleteXmlListPropertyByName(Ejs *ejs, EjsXML *list, EjsName qname)
 
 static int getXmlListPropertyCount(Ejs *ejs, EjsXML *list)
 {
-    return mprGetListCount(list->elements);
+    return mprGetListLength(list->elements);
 }
 
 
@@ -35123,7 +35123,7 @@ static EjsObj *nextXmlListKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv
         return 0;
     }
 
-    for (; ip->index < mprGetListCount(xml->elements); ip->index++) {
+    for (; ip->index < mprGetListLength(xml->elements); ip->index++) {
         return (EjsObj*) ejsCreateNumber(ejs, ip->index++);
     }
     ejsThrowStopIteration(ejs);
@@ -35156,7 +35156,7 @@ static EjsObj *nextXmlListValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **ar
         return 0;
     }
 
-    for (; ip->index < mprGetListCount(xml->elements); ip->index++) {
+    for (; ip->index < mprGetListLength(xml->elements); ip->index++) {
         vp = (EjsXML*) mprGetItem(xml->elements, ip->index);
         if (vp == 0) {
             continue;
@@ -35272,7 +35272,7 @@ static EjsXML *createElement(Ejs *ejs, EjsXML *list, EjsXML *targetObject, EjsNa
             If the target is a list it must have 1 element. So switch to it.
             TODO - could we get resolve to do this?
          */
-        if (mprGetListCount(targetObject->elements) != 1) {
+        if (mprGetListLength(targetObject->elements) != 1) {
             /* Spec says so - TODO why no error? */
             return 0;
         }
@@ -35292,7 +35292,7 @@ static EjsXML *createElement(Ejs *ejs, EjsXML *list, EjsXML *targetObject, EjsNa
     if (list->targetProperty.name && list->targetProperty.name->value[0] == '@') {
         elt->kind = EJS_XML_ATTRIBUTE;
         attList = ejsGetPropertyByName(ejs, (EjsObj*) targetObject, list->targetProperty);
-        if (attList && mprGetListCount(attList->elements) > 0) {
+        if (attList && mprGetListLength(attList->elements) > 0) {
             /* Spec says so. But this surely means you can't update an attribute? */
             return 0;
         }
@@ -35301,7 +35301,7 @@ static EjsXML *createElement(Ejs *ejs, EjsXML *list, EjsXML *targetObject, EjsNa
         elt->qname.name = 0;
     }
 
-    index = mprGetListCount(list->elements);
+    index = mprGetListLength(list->elements);
 
     if (elt->kind != EJS_XML_ATTRIBUTE) {
         if (targetObject) {
@@ -35315,7 +35315,7 @@ static EjsXML *createElement(Ejs *ejs, EjsXML *list, EjsXML *targetObject, EjsNa
                 j = -1;
             } 
             if (j < 0) {
-                j = mprGetListCount(targetObject->elements) - 1;
+                j = mprGetListLength(targetObject->elements) - 1;
             }
             //  TODO - really need to wrap this ejsInsertXML(EjsXML *xml, int index, EjsXML *node)
             if (targetObject->elements == 0) {
@@ -35373,7 +35373,7 @@ static int updateElement(Ejs *ejs, EjsXML *list, EjsXML *elt, int index, EjsObj 
         if (elt->parent) {
             index = mprLookupItem(elt->parent->elements, elt);
             mprAssert(index >= 0);
-            for (j = 0; j < mprGetListCount(((EjsXML*) value)->elements); j++) {
+            for (j = 0; j < mprGetListLength(((EjsXML*) value)->elements); j++) {
                 mprInsertItemAtPos(elt->parent->elements, index, value);
             }
         }
@@ -35426,7 +35426,7 @@ static int setXmlListPropertyByName(Ejs *ejs, EjsXML *list, EjsName qname, EjsOb
         }
     }
     index = ejsAtoi(ejs, qname.name, 10);
-    if (index >= mprGetListCount(list->elements)) {
+    if (index >= mprGetListLength(list->elements)) {
         /*
             Create, then fall through to update
          */
@@ -35510,7 +35510,7 @@ static EjsXML *resolve(Ejs *ejs, EjsXML *xml)
         /* Resolved to an XML object */
         return xml;
     }
-    if (mprGetListCount(xml->elements) > 0) {
+    if (mprGetListLength(xml->elements) > 0) {
         /* Resolved to a list of items */
         return xml;
     }
@@ -35632,7 +35632,7 @@ static EjsObj *xmlListToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 
 static EjsObj *xlLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, mprGetListCount(xml->elements));
+    return (EjsObj*) ejsCreateNumber(ejs, mprGetListLength(xml->elements));
 }
 
 
@@ -39789,7 +39789,7 @@ int ecAstProcess(EcCompiler *cp)
         /*
             Loop over each source file
          */
-        count = mprGetListCount(cp->nodes);
+        count = mprGetListLength(cp->nodes);
         for (i = 0; i < count && !cp->fatalError; i++) {
             /*
                 Looping through the input source files. A single top level node describes the source file.
@@ -40239,7 +40239,7 @@ static void validateClass(EcCompiler *cp, EcNode *np)
         }
     }
     if (type->implements) {
-        if (mprGetListCount(type->implements) > 1 || 
+        if (mprGetListLength(type->implements) > 1 || 
                 (type->baseType && ejsCompareMulti(ejs, type->baseType->qname.name, "Object") != 0)) {
             //  MOB -- fix. Should support multiple implements
             astError(cp, np, "Only one implements or one extends supported");
@@ -40592,7 +40592,7 @@ static EjsFunction *defineFunction(EcCompiler *cp, EcNode *np)
         }
     }
     parameters = np->function.parameters;
-    numArgs = (parameters) ? mprGetListCount(parameters->children) : 0;
+    numArgs = (parameters) ? mprGetListLength(parameters->children) : 0;
     
     if (np->function.resultType) {
         np->attributes |= np->function.resultType->attributes;
@@ -43909,7 +43909,7 @@ int ecCodeGen(EcCompiler *cp)
     if (ecEnterState(cp) < 0) {
         return EJS_ERR;
     }
-    count = mprGetListCount(cp->nodes);
+    count = mprGetListLength(cp->nodes);
     for (i = 0; i < count && !cp->error; i++) {
         np = mprGetItem(cp->nodes, i);
         cp->fileState = cp->state;
@@ -43955,7 +43955,7 @@ int ecCodeGen(EcCompiler *cp)
             Don't generate the default module unless it contains some real code or definitions and 
             we have more than one module.
          */
-        if (mprGetListCount(cp->modules) == 1 || mp->globalProperties || mp->hasInitializer || 
+        if (mprGetListLength(cp->modules) == 1 || mp->globalProperties || mp->hasInitializer || 
                 ejsCompareMulti(cp->ejs, mp->name, EJS_DEFAULT_MODULE) != 0) {
             mp->initialized = 0;
             processModule(cp, mp);
@@ -44726,7 +44726,7 @@ static int genCallArgs(EcCompiler *cp, EcNode *np)
         return 0;
     }
     processNode(cp, np);
-    return mprGetListCount(np->children);
+    return mprGetListLength(np->children);
 }
 
 
@@ -45269,7 +45269,7 @@ static void genDassign(EcCompiler *cp, EcNode *np)
 
     ENTER(cp);
 
-    count = mprGetListCount(np->children);
+    count = mprGetListLength(np->children);
     for (next = 0; (field = getNextNode(cp, np, &next)) != 0; ) {
         mprAssert(field->kind == N_FIELD);
         if (next < count) {
@@ -45772,7 +45772,7 @@ static void genForIn(EcCompiler *cp, EcNode *np)
     state->captureBreak = 0;
     iterVar = np->forInLoop.iterVar;
     iterGet = np->forInLoop.iterGet;
-    varCount = mprGetListCount(iterVar->children);
+    varCount = mprGetListLength(iterVar->children);
 
     ecStartBreakableStatement(cp, EC_JUMP_BREAK | EC_JUMP_CONTINUE);
     processNode(cp, iterVar);
@@ -45932,7 +45932,7 @@ static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun
     parameters = np->function.parameters;
     mprAssert(parameters);
 
-    count = mprGetListCount(parameters->children);
+    count = mprGetListLength(parameters->children);
     buffers = (EcCodeGen**) mprAllocZeroed(count * sizeof(EcCodeGen*));
 
     for (next = 0; (child = getNextNode(cp, parameters, &next)) && !cp->error; ) {
@@ -46658,7 +46658,7 @@ static void genSuper(EcCompiler *cp, EcNode *np)
     mprAssert(np->kind == N_SUPER);
 
     if (np->left) {
-        argc = mprGetListCount(np->left->children);
+        argc = mprGetListLength(np->left->children);
         if (argc > 0) {
             processNode(cp, np->left);
         }
@@ -48543,7 +48543,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     for (i = 0; i < argc && !cp->fatalError; i++) {
         ext = mprGetPathExtension(argv[i]);
         if (scasecmp(ext, "mod") == 0 || scasecmp(ext, BLD_SHOBJ) == 0) {
-            nextModule = mprGetListCount(ejs->modules);
+            nextModule = mprGetListLength(ejs->modules);
             lflags = cp->strict ? EJS_LOADER_STRICT : 0;
             if ((rc = ejsLoadModule(cp->ejs, ejsCreateStringFromAsc(ejs, argv[i]), -1, -1, lflags)) < 0) {
                 msg = mprAsprintf("Error initializing module %s\n%s", argv[i], ejsGetErrorMsg(cp->ejs, 1));
@@ -50274,7 +50274,7 @@ static void createDependencySection(EcCompiler *cp)
         If merging, don't need references to dependent modules as they are aggregated onto the output
      */
     if (mp->dependencies && !cp->merge) {
-        count = mprGetListCount(mp->dependencies);
+        count = mprGetListLength(mp->dependencies);
         for (i = 0; i < count; i++) {
             module = (EjsModule*) mprGetItem(mp->dependencies, i);
 
@@ -50495,7 +50495,7 @@ static void createClassSection(EcCompiler *cp, EjsPot *block, int slotNum, EjsPo
     mprAssert(instanceTraits >= 0);
     ecEncodeNum(cp, instanceTraits);
     
-    interfaceCount = (type->implements) ? mprGetListCount(type->implements) : 00;
+    interfaceCount = (type->implements) ? mprGetListLength(type->implements) : 00;
     mprAssert(interfaceCount >= 0);
     ecEncodeNum(cp, interfaceCount);
 
@@ -57072,7 +57072,7 @@ static EcNode *parseForStatement(EcCompiler *cp)
     if (initializer == 0 && cp->error) {
         return LEAVE(cp, 0);
     }
-    if (initializer && mprGetListCount(initializer->children) > 2) {
+    if (initializer && mprGetListLength(initializer->children) > 2) {
         return LEAVE(cp, parseError(cp, "Too many iteration variables"));
     }
     if (getToken(cp) == T_SEMICOLON) {
@@ -59050,7 +59050,7 @@ static EcNode *parseParameterInit(EcCompiler *cp, EcNode *args)
          */
         assignOp = createNode(cp, N_ASSIGN_OP, NULL);
         assignOp = appendNode(assignOp, np->left);
-        mprAssert(mprGetListCount(np->children) == 1);
+        mprAssert(mprGetListLength(np->children) == 1);
 
         mprRemoveItemAtPos(np->children, 0);
         assignOp = appendNode(assignOp, parseNonAssignmentExpression(cp));
@@ -61180,7 +61180,7 @@ static EcNode *insertNode(EcNode *np, EcNode *child, int pos)
     if (index < 0) {
         return 0;
     }
-    len = mprGetListCount(list);
+    len = mprGetListLength(list);
     if (len > 0) {
         np->left = (EcNode*) list->items[0];
     }

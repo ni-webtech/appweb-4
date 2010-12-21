@@ -181,7 +181,7 @@ static void sortList(HttpConn *conn, MprList *list)
         return;
     }
 
-    count = mprGetListCount(list);
+    count = mprGetListLength(list);
     items = (MprDirEntry**) list->items;
     if (scasecmp(dir->sortField, "Name") == 0) {
         for (i = 1; i < count; i++) {

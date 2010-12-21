@@ -3651,7 +3651,7 @@ extern int mprGetListCapacity(MprList *list);
     @param list List pointer returned from mprCreateList.
     @ingroup MprList
  */
-extern int mprGetListCount(MprList *list);
+extern int mprGetListLength(MprList *list);
 
 /**
     Get the next item in the list.
@@ -3973,7 +3973,7 @@ typedef struct MprHashTable {
     MprHash         **buckets;          /**< Hash collision bucket table */
     MprHashProc     hash;               /**< Hash function */             
     int             hashSize;           /**< Size of the buckets array */
-    int             count;              /**< Number of symbols in the table */
+    int             length;             /**< Number of symbols in the table */
     int             flags;              /**< Hash control flags */
 } MprHashTable;
 
@@ -4063,7 +4063,7 @@ extern MprHash *mprGetNextHash(MprHashTable *table, MprHash *last);
     @return Integer count of the number of entries.
     @ingroup MprHash
  */
-extern int mprGetHashCount(MprHashTable *table);
+extern int mprGetHashLength(MprHashTable *table);
 
 /**
     Lookup a symbol in the hash table.

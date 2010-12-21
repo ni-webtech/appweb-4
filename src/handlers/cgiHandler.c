@@ -119,7 +119,7 @@ static void startCgi(HttpQueue *q)
         Build environment variables
      */
     vars = rx->formVars;
-    varCount = mprGetHashCount(vars) + mprGetHashCount(rx->headers);
+    varCount = mprGetHashLength(vars) + mprGetHashLength(rx->headers);
     if ((envv = mprAlloc((varCount + 1) * sizeof(char*))) != 0) {
         count = copyVars(envv, 0, rx->formVars, "");
         count = copyVars(envv, count, rx->headers, "HTTP_");

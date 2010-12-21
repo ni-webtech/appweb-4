@@ -2285,7 +2285,7 @@ int mprMakeArgv(cchar *program, cchar *cmd, int *argcp, char ***argvp)
 bool mprServicesAreIdle()
 {
 #if MOB
-    return mprGetListCount(MPR->workerService->busyThreads) == 0 && mprGetListCount(MPR->cmdService->cmds) == 0 && 
+    return mprGetListLength(MPR->workerService->busyThreads) == 0 && mprGetListLength(MPR->cmdService->cmds) == 0 && 
         //MOB -- dispatcher here not right
        !(MPR->dispatcher->flags & MPR_DISPATCHER_DO_EVENT);
 #endif
@@ -8885,7 +8885,7 @@ MprHashTable *mprCreateHash(int hashSize, int flags)
     }
     table->hashSize = hashSize;
     table->flags = flags;
-    table->count = 0;
+    table->length = 0;
     table->hashSize = hashSize;
     table->buckets = mprAllocZeroed(sizeof(MprHash*) * hashSize);
 #if BLD_CHAR_LEN > 1
@@ -8982,7 +8982,7 @@ MprHash *mprAddHash(MprHashTable *table, cvoid *key, cvoid *ptr)
     sp->bucket = index;
     sp->next = table->buckets[index];
     table->buckets[index] = sp;
-    table->count++;
+    table->length++;
     return sp;
 }
 
@@ -9012,7 +9012,7 @@ MprHash *mprAddDuplicateHash(MprHashTable *table, cvoid *key, cvoid *ptr)
     sp->bucket = index;
     sp->next = table->buckets[index];
     table->buckets[index] = sp;
-    table->count++;
+    table->length++;
     return sp;
 }
 
@@ -9033,7 +9033,7 @@ int mprRemoveHash(MprHashTable *table, cvoid *key)
     } else {
         table->buckets[index] = sp->next;
     }
-    table->count--;
+    table->length--;
     mprFree(sp);
     return 0;
 }
@@ -9117,9 +9117,9 @@ static MprHash *lookupHash(int *bucketIndex, MprHash **prevSp, MprHashTable *tab
 }
 
 
-int mprGetHashCount(MprHashTable *table)
+int mprGetHashLength(MprHashTable *table)
 {
-    return table->count;
+    return table->length;
 }
 
 
@@ -10038,7 +10038,7 @@ cvoid *mprPopItem(MprList *lp)
 }
 
 
-int mprGetListCount(MprList *lp)
+int mprGetListLength(MprList *lp)
 {
     if (lp == 0) {
         return 0;
@@ -18617,7 +18617,7 @@ static bool filterTestGroup(MprTestGroup *gp)
     /*
         See if this test has been filtered
      */
-    if (mprGetListCount(testFilter) > 0) {
+    if (mprGetListLength(testFilter) > 0) {
         next = 0;
         pattern = mprGetNextItem(testFilter, &next);
         while (pattern) {
@@ -18656,7 +18656,7 @@ static bool filterTestCast(MprTestGroup *gp, MprTestCase *tc)
     /*
         See if this test has been filtered
      */
-    if (mprGetListCount(testFilter) > 0) {
+    if (mprGetListLength(testFilter) > 0) {
         fullName = mprAsprintf("%s.%s", gp->fullName, tc->name);
         next = 0;
         pattern = mprGetNextItem(testFilter, &next);
@@ -20046,7 +20046,7 @@ static int changeState(MprWorker *worker, int state)
             lp = ws->idleThreads;
         }
 #if UNUSED
-        if (mprGetListCount(ws->busyThreads) == 0) {
+        if (mprGetListLength(ws->busyThreads) == 0) {
             print("NOW IDLE");
         }
 #endif
@@ -22364,7 +22364,7 @@ MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDisp
     mprAssert(fd >= 0);
 
     ws = mprGetMpr()->waitService;
-    if (mprGetListCount(ws->handlers) == FD_SETSIZE) {
+    if (mprGetListLength(ws->handlers) == FD_SETSIZE) {
         mprError("io: Too many io handlers: %d\n", FD_SETSIZE);
         return 0;
     }

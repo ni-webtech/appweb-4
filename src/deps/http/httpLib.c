@@ -8706,7 +8706,7 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
         }
         count = (int) PTOL(mprLookupHash(server->clients, conn->ip));
         mprAddHash(server->clients, conn->ip, ITOP(count + 1));
-        server->clientCount = mprGetHashCount(server->clients);
+        server->clientCount = mprGetHashLength(server->clients);
         break;
 
     case HTTP_VALIDATE_CLOSE_CONN:
@@ -8716,7 +8716,7 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
         } else {
             mprRemoveHash(server->clients, conn->ip);
         }
-        server->clientCount = mprGetHashCount(server->clients);
+        server->clientCount = mprGetHashLength(server->clients);
         mprLog(4, "Close connection %d. Active requests %d, active clients %d", 
             conn->seqno, server->requestCount, server->clientCount);
         break;
