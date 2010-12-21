@@ -58,6 +58,12 @@ extern int getDefaultPort(MprTestGroup *gp);
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
 
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 

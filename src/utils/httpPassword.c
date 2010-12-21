@@ -815,5 +815,11 @@ int _exit() {
     These notices must be retained in any copies of any part of this documentation 
     and/or software.
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
