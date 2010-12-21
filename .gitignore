@@ -87,3 +87,4 @@ src/test/regress/tcp
 src/include/ejs.slots.h
 */x86_64-*
 out
+src/server/conf/apps/web.conf
