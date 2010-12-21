@@ -93,7 +93,6 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
             httpAddHandler(loc, "fileHandler", "");
         }
     }
-
     if (serverRoot) {
         maSetServerRoot(server, path);
     }
@@ -947,6 +946,10 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         if (scasecmp(key, "Chroot") == 0) {
 #if BLD_UNIX_LIKE
             path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            if (chdir(path) < 0) {
+                mprError("Can't change working directory to %s", path);
+                return MPR_ERR_CANT_OPEN;
+            }
             if (chroot(path) < 0) {
                 if (errno == EPERM) {
                     mprError("Must be super user to use the --chroot option\n");
@@ -955,6 +958,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 }
                 return MPR_ERR_BAD_SYNTAX;
             }
+            mprLog(MPR_CONFIG, "Chroot to: \"%s\"", path);
             return 1;
 #else
             mprError("Chroot directive not supported on this operating system\n");
@@ -1521,13 +1525,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (scasecmp(key, "ServerRoot") == 0) {
             path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             maSetServerRoot(server, path);
-#if UNUSED
-#if BLD_FEATURE_ROMFS
-            mprLog(MPR_CONFIG, "Server Root \"%s\" in ROM", path);
-#else
             mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
-#endif
-#endif
             return 1;
 
         } else if (scasecmp(key, "SetConnector") == 0) {

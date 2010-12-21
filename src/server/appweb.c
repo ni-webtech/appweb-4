@@ -240,6 +240,10 @@ static void manageApp(App *app, int flags)
 static int changeRoot(cchar *jail)
 {
 #if BLD_UNIX_LIKE
+    if (chdir(app->serverRoot) < 0) {
+        mprPrintfError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
+        return MPR_ERR_CANT_INITIALIZE;
+    }
     if (chroot(jail) < 0) {
         if (errno == EPERM) {
             mprPrintfError("%s: Must be super user to use the --chroot option", mprGetAppName());

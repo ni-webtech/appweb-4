@@ -383,7 +383,11 @@ void maSetServerRoot(MaServer *server, cchar *path)
         return;
     }
 #endif
-    server->serverRoot = mprGetAbsPath(path);
+    if (chdir(path) < 0) {
+        mprError("Can't set server root to %s\n", path);
+    } else {
+        server->serverRoot = mprGetAbsPath(path);
+    }
 }
 
 

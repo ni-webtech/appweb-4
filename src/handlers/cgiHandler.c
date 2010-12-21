@@ -153,16 +153,13 @@ static void waitForCgiCompletion(HttpQueue *q)
     tx = conn->tx;
     cmd = (MprCmd*) q->queueData;
 
-    /*  
-        Because some platforms can't wait accross thread groups (uclibc) on the spawned child, the parent thread 
-        must block here and wait for the child and collect exit status.
-     */
     do {
         rc = mprWaitForCmd(cmd, 5 * 1000);
-    } while (rc < 0 && (mprGetElapsedTime(cmd, cmd->lastActivity) <= conn->timeout || mprGetDebugMode(q)));
+    } while (rc != 0 && (mprGetElapsedTime(cmd, cmd->lastActivity) <= conn->timeout || mprGetDebugMode(q)));
 
     if (cmd->pid) {
         mprStopCmd(cmd);
+        mprReapCmd(cmd, MPR_TIMEOUT_STOP_TASK);
         cmd->status = 250;
     }
 
@@ -677,8 +674,8 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     argind = 0;
     argc = *argcp;
 
-    if (rx->mimeType) {
-        actionProgram = maGetMimeActionProgram(host, rx->mimeType);
+    if (tx->extension) {
+        actionProgram = maGetMimeActionProgram(host, tx->extension);
         if (actionProgram != 0) {
             argc++;
         }
