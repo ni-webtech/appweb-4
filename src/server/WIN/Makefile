@@ -25,3 +25,11 @@ $(BLD_PRODUCT)Monitor$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
 		$(BLD_OBJ_DIR)/$(BLD_PRODUCT)Monitor$(BLD_OBJ) 
 	cp $(BLD_PRODUCT)Monitor$(BLD_EXE) $(BLD_BIN_DIR)/$(BLD_PRODUCT)Monitor$(BLD_EXE) 
 	cp $(BLD_PRODUCT)Monitor.ico $(BLD_BIN_DIR)
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

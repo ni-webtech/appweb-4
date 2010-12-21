@@ -11,3 +11,11 @@ include     .makedep
 cleanExtra:
 	echo rm -fr appweb*/Win32 appweb/*Pocket* 
 	rm -fr appweb*/Win32 appweb*/*Pocket* 
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

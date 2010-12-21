@@ -84,3 +84,11 @@ $(BLD_LIB_DIR)/appweb.conf: default.conf
 
 cleanExtra:
 	rm -f $(MODULES)
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

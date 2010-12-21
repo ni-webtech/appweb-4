@@ -134,3 +134,11 @@ cleanExtra:
 dependExtra:
 	mkdir -p web/upload web/tmp
 	chmod 777 web/upload web/tmp
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

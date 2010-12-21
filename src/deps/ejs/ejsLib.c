@@ -9001,30 +9001,30 @@ static void markValues(Ejs *ejs)
     for (i = 0; i < EJS_MAX_SPECIAL; i++) {
         mprMark(ejs->values[i]);
     }
-	mprMark(ejs->commaProtString);
-	mprMark(ejs->ejsSpace);
-	mprMark(ejs->emptySpace);
-	mprMark(ejs->emptyString);
-	mprMark(ejs->falseValue);
-	mprMark(ejs->infinityValue);
-	mprMark(ejs->internalSpace);
-	mprMark(ejs->iterator);
-	mprMark(ejs->iteratorSpace);
-	mprMark(ejs->lengthString);
-	mprMark(ejs->maxValue);
-	mprMark(ejs->minValue);
-	mprMark(ejs->minusOneValue);
-	mprMark(ejs->nanValue);
-	mprMark(ejs->negativeInfinityValue);
-	mprMark(ejs->nopFunction);
-	mprMark(ejs->nullValue);
-	mprMark(ejs->oneValue);
-	mprMark(ejs->publicSpace);
-	mprMark(ejs->publicString);
-	mprMark(ejs->trueValue);
-	mprMark(ejs->undefinedValue);
-	mprMark(ejs->zeroValue);
-	mprMark(ejs->nopFunction);
+    mprMark(ejs->commaProtString);
+    mprMark(ejs->ejsSpace);
+    mprMark(ejs->emptySpace);
+    mprMark(ejs->emptyString);
+    mprMark(ejs->falseValue);
+    mprMark(ejs->infinityValue);
+    mprMark(ejs->internalSpace);
+    mprMark(ejs->iterator);
+    mprMark(ejs->iteratorSpace);
+    mprMark(ejs->lengthString);
+    mprMark(ejs->maxValue);
+    mprMark(ejs->minValue);
+    mprMark(ejs->minusOneValue);
+    mprMark(ejs->nanValue);
+    mprMark(ejs->negativeInfinityValue);
+    mprMark(ejs->nopFunction);
+    mprMark(ejs->nullValue);
+    mprMark(ejs->oneValue);
+    mprMark(ejs->publicSpace);
+    mprMark(ejs->publicString);
+    mprMark(ejs->trueValue);
+    mprMark(ejs->undefinedValue);
+    mprMark(ejs->zeroValue);
+    mprMark(ejs->nopFunction);
 }
 
 
@@ -17938,7 +17938,7 @@ static EjsObj *g_assert(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 static EjsObj *g_breakpoint(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
 #if BLD_DEBUG && DEBUG_IDE
-	#if BLD_WIN_LIKE && !MPR_64_BIT
+    #if BLD_WIN_LIKE && !MPR_64_BIT
         __asm { int 3 };
     #elif (MACOSX || LINUX) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
         asm("int $03");
@@ -29736,18 +29736,18 @@ void ejsInitStringType(Ejs *ejs, EjsType *type)
     ejs->emptyString = (EjsString*) ejsCreateStringFromAsc(ejs, "");
 
 #if UNUSED
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_BLOCK_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_CONSTRUCTOR_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_EJS_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_INIT_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_INTERNAL_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_ITERATOR_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_META_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_PRIVATE_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_PROTECTED_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_PROTOTYPE_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_PUBLIC_NAMESPACE));
-	ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_WORKER_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_BLOCK_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_CONSTRUCTOR_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_EJS_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_INIT_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_INTERNAL_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_ITERATOR_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_META_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_PRIVATE_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_PROTECTED_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_PROTOTYPE_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_PUBLIC_NAMESPACE));
+    ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_WORKER_NAMESPACE));
     ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_CONSTRUCTOR_NAMESPACE));
     ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_EJS_NAMESPACE));
     ejsSetSpecial(ejs, -1, ejsCreateStringFromAsc(ejs, EJS_INITIALIZER_NAME));
@@ -53235,7 +53235,7 @@ static EcNode *parseComprehensionExpression(EcCompiler *cp, EcNode *literalEleme
 
     ENTER(cp);
     //  MOB
-	np = 0;
+    np = 0;
     return LEAVE(cp, np);
 }
 

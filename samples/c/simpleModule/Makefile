@@ -17,3 +17,11 @@ $(NAME)$(BLD_LIB): $(OBJECTS)
 
 projectsExtra:
 	@makeVsProj --project $(NAME).vcproj --library $(NAME) --libs "$(BLD_APPWEB_LIBS)" *.c
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

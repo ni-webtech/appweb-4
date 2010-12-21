@@ -23,3 +23,11 @@ endif
 ifeq ($(BLD_FEATURE_EGI),1)
 	PRE_DIRS 	+= simpleEgi
 endif
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

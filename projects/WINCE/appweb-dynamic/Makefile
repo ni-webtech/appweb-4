@@ -208,3 +208,11 @@ http.vcproj: Makefile buildConfig.override
 httpPassword.vcproj: Makefile buildConfig.override
 	@makeVsProj --project httpPassword.vcproj --exe httpPassword.exe --search "$(BLD_MPR_LIBPATHS)" \
 		--dflags "$(NATIVE_DFLAGS)" --libs "$(NATIVE_LIBS)" $(MPR_HDR) $(MPR_SRC) $(SRC)/utils/httpPassword.c
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

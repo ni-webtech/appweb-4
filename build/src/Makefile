@@ -28,3 +28,11 @@ $(BLD_BUILD_BIN_DIR)/edep$(BLD_EXE): $(BLD_OBJ_DIR)/edep$(BLD_OBJ) edep.c
 
 $(BLD_BUILD_BIN_DIR)/getpath$(BLD_EXE): $(BLD_OBJ_DIR)/getpath$(BLD_OBJ) getpath.c
 	bld --exe $(BLD_BUILD_BIN_DIR)/getpath$(BLD_EXE) getpath$(BLD_OBJ)
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

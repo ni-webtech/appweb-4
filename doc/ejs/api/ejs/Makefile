@@ -28,3 +28,11 @@ cleanExtra:
 clobberExtra:
 	rm -f ../ejs.html ../ejsBare.html ../mpr.html
 	rm -fr ./$(STAGING)
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

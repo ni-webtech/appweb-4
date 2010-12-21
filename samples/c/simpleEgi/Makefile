@@ -24,3 +24,11 @@ run:
 
 projectsExtra:
 	@makeVsProj --project $(NAME).vcproj --exe $(NAME).exe --libs "mod_egi $(BLD_APPWEB_LIBS)" *.c
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#

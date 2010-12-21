@@ -10793,9 +10793,9 @@ module ejs {
             if (inbuf.available == 0 && fill() <= 0) {
                 return null
             }
-			//  All systems strip both \n and \r\n to normalize text lines
+            //  All systems strip both \n and \r\n to normalize text lines
             //  MOB -- this should be a configurable option on a TextStream
-			let nl = "\r\n"
+            let nl = "\r\n"
             while (true) {
                 let nlchar = nl.charCodeAt(nl.length - 1)
                 let nlchar0 = nl.charCodeAt(0)
@@ -10803,12 +10803,12 @@ module ejs {
                     //  MOB OPT. If ByteArray had indexOf(nl), then this could be MUCH faster
                     if (inbuf[i] == nlchar) {
                         if (nl.length == 2 && i > inbuf.readPosition && nlchar0 == inbuf[i-1]) {
-							result = inbuf.readString(i - inbuf.readPosition - 1)
-							inbuf.readPosition += 2
+                            result = inbuf.readString(i - inbuf.readPosition - 1)
+                            inbuf.readPosition += 2
                         } else {
-							result = inbuf.readString(i - inbuf.readPosition)
-							inbuf.readPosition++
-						}
+                            result = inbuf.readString(i - inbuf.readPosition)
+                            inbuf.readPosition++
+                        }
                         return result
                     }
                 }
@@ -14757,12 +14757,12 @@ module ejs.db.mapper {
             if (col == undefined) {
                 return undefined
             }
-			if (value == undefined) {
-				throw new Error("Field \"" + field + "\" is undefined")
-			}
-			if (value == null) {
-				throw new Error("Field \"" + field + "\" is null")
-			}
+            if (value == undefined) {
+                throw new Error("Field \"" + field + "\" is undefined")
+            }
+            if (value == null) {
+                throw new Error("Field \"" + field + "\" is null")
+            }
             switch (col.ejsType) {
             case Boolean:
                 if (value is String) {

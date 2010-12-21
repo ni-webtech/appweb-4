@@ -25,3 +25,11 @@ ifeq	($(BLD_FEATURE_PHP),1)
 	find $(BLD_TOP)/projects/MACOSX -name Debug | while read d ; do \
 		cp $(BLD_PHP_IMPORTS) $$d ; done
 endif
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4
+#
