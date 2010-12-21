@@ -232,7 +232,7 @@ void httpInitAuth(Http *http)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -920,7 +920,7 @@ void __nativeAuthFile() {}
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -1416,7 +1416,7 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -1566,7 +1566,7 @@ void __pamAuth() {}
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -1849,7 +1849,7 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -2227,7 +2227,7 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -3092,7 +3092,7 @@ void httpConnError(HttpConn *conn, int status, cchar *fmt, ...)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -3429,7 +3429,7 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -3950,7 +3950,7 @@ static void updateCurrentDate(Http *http)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -4372,7 +4372,7 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -4719,7 +4719,7 @@ static void adjustNetVec(HttpQueue *q, ssize written)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -5217,7 +5217,7 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -5310,7 +5310,7 @@ int httpOpenPassHandler(Http *http)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -5673,7 +5673,7 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -6217,7 +6217,7 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -6540,7 +6540,7 @@ static bool fixRangeLength(HttpConn *conn)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -8128,7 +8128,7 @@ cvoid *httpGetStageData(HttpConn *conn, cchar *key)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -8534,7 +8534,7 @@ static void adjustSendVec(HttpQueue *q, ssize written)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -8939,7 +8939,7 @@ void httpSetListenCallback(HttpServer *server, HttpListenCallback fn)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -9152,7 +9152,7 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -9346,7 +9346,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -10078,7 +10078,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -10744,7 +10744,7 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -11498,7 +11498,7 @@ static void trimPathToDirname(HttpUri *uri)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */

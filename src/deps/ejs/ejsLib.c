@@ -70,7 +70,7 @@ EjsOptable *ejsGetOptable()
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -493,7 +493,7 @@ EjsObj *ejsGetException(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -1555,7 +1555,7 @@ void ejsMarkName(EjsName *qname)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -5726,7 +5726,7 @@ void ejsShowOpFrequency(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -7506,7 +7506,7 @@ static void popScope(EjsModule *mp, int keepScope)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -8400,7 +8400,7 @@ double ejsSwapDouble(Ejs *ejs, double a)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -8754,7 +8754,7 @@ void ejsShowCurrentScope(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -9859,7 +9859,7 @@ EjsAny *ejsGetSpecial(Ejs *ejs, int index)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -10209,7 +10209,7 @@ void ejsConfigureAppType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -12055,7 +12055,7 @@ void ejsConfigureArrayType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -12288,7 +12288,7 @@ void ejsCreateBlockType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -12598,7 +12598,7 @@ void ejsConfigureBooleanType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -14090,7 +14090,7 @@ void ejsConfigureByteArrayType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -14193,7 +14193,7 @@ void ejsCreateConfigType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -15367,7 +15367,7 @@ void ejsConfigureDateType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -15455,7 +15455,7 @@ void __dummyEjsDebug() {}
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -15659,7 +15659,7 @@ void ejsConfigureErrorType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -16617,7 +16617,7 @@ void ejsConfigureFileType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -16881,7 +16881,7 @@ void ejsConfigureFileSystemType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -17085,7 +17085,7 @@ void ejsCreateFrameType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -17734,7 +17734,7 @@ void ejsConfigureFunctionType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -17872,7 +17872,7 @@ void ejsConfigureGCType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -18353,7 +18353,7 @@ void ejsConfigureGlobalBlock(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -19918,7 +19918,7 @@ void ejsConfigureHttpType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -20084,7 +20084,7 @@ void ejsConfigureIteratorType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -20865,7 +20865,7 @@ void ejsConfigureLoggerType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -21198,7 +21198,7 @@ void ejsConfigureMathType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -21400,7 +21400,7 @@ void ejsConfigureMemoryType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -21619,7 +21619,7 @@ void ejsConfigureNamespaceType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -21877,7 +21877,7 @@ void ejsConfigureNullType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -22410,7 +22410,7 @@ void ejsConfigureNumberType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -23382,7 +23382,7 @@ void ejsConfigureObjectType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -24751,7 +24751,7 @@ void ejsConfigurePathType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -25902,7 +25902,7 @@ void ejsCreatePotHelpers(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -26137,7 +26137,7 @@ void dummy_Reflection() {}
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -26540,7 +26540,7 @@ void ejsConfigureRegExpType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -27037,7 +27037,7 @@ void ejsConfigureSocketType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -29855,7 +29855,7 @@ void ejsConfigureStringType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -30071,7 +30071,7 @@ void ejsConfigureSystemType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -30338,7 +30338,7 @@ void ejsConfigureTimerType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -31289,7 +31289,7 @@ void ejsCreateTypeType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -32556,7 +32556,7 @@ void ejsConfigureUriType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -32815,7 +32815,7 @@ void ejsConfigureVoidType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -33680,7 +33680,7 @@ void ejsConfigureWorkerType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -34882,7 +34882,7 @@ void ejsConfigureXMLType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -35775,7 +35775,7 @@ void ejsConfigureXMLListType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -36101,7 +36101,7 @@ static void indent(MprBuf *bp, int level)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -36573,7 +36573,7 @@ int ejs_db_sqlite_Init(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -36809,7 +36809,7 @@ void ejsConfigureFilterType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -37642,7 +37642,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -39062,7 +39062,7 @@ void ejsConfigureRequestType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -39473,7 +39473,7 @@ void ejsConfigureSessionType(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -39627,7 +39627,7 @@ int ejs_web_Init(Ejs *ejs)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -43745,7 +43745,7 @@ static void badAst(EcCompiler *cp, EcNode *np)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -48374,7 +48374,7 @@ static void badNode(EcCompiler *cp, EcNode *np)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -48926,7 +48926,7 @@ void ecSetRequire(EcCompiler *cp, MprList *modules)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -50144,7 +50144,7 @@ void ecCloseStream(EcCompiler *cp)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -51358,7 +51358,7 @@ mprAssert(0 <= checksum && checksum < 0x1FFFFFFF);
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -61781,7 +61781,7 @@ static void dummy(int junk) { }
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -61916,7 +61916,7 @@ EcNode *ecLeaveStateWithResult(EcCompiler *cp, EcNode *np)
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */

@@ -191,7 +191,7 @@ extern "C" {
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -769,7 +769,7 @@ extern EjsOptable *ejsGetOptable();
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -3937,7 +3937,7 @@ extern void ejsUnlockService(Ejs *ejs);
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -4346,7 +4346,7 @@ extern int          ejsRemoveModule(Ejs *ejs, EjsModule *up);
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -4409,7 +4409,7 @@ extern int          ejsRemoveModule(Ejs *ejs, EjsModule *up);
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -4638,7 +4638,7 @@ extern void ejsConfigureWebTypes(Ejs *ejs);
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
@@ -5586,7 +5586,7 @@ extern void     ecAdjustCodeLength(EcCompiler *cp, int adj);
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */

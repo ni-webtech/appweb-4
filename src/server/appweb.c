@@ -644,7 +644,7 @@ double  __dummy_appweb_floating_point_resolution(double a, double b, int64 c, in
     tab-width: 4
     c-basic-offset: 4
     End:
-    vim: sw=8 ts=8 expandtab
+    vim: sw=4 ts=4 expandtab
 
     @end
  */
