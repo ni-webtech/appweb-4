@@ -267,7 +267,7 @@ appweb: 1: HTTP services are ready (single-threaded)</b>
             <pre>
 ejsweb generate scaffold Post title:string body:text
 <b>[CREATED] Directory: views/Post
-[CREATED] Migration: "db/migrations/20100331134831_Create_Scaffold_Post.es"
+[CREATED] Migration: "db/migrations/20110331134831_Create_Scaffold_Post.es"
 [CREATED] Model: "models/Post.es"
 [CREATED] Controller: "controllers/Post.es"
 [CREATED] View: "views/Post/list.ejs"
@@ -280,7 +280,7 @@ ejsweb generate scaffold Post title:string body:text
             <p>To run the migration and update the database, we use ejsweb again.</p>
             <pre>
 ejsweb migrate
-<b>[MIGRATE]: Apply 20100331134831_Create_Scaffold_Post.es</b>
+<b>[MIGRATE]: Apply 20110331134831_Create_Scaffold_Post.es</b>
 </pre>
             <p>Now if you set your browser to the URL for the post controller, you will see your post listing screen.
             <img src="../../../images/webtour-postList.png" alt="postList" class="screen" /> <a name="newPosts" id=
@@ -384,7 +384,7 @@ public function validate() {
 <!-- BeginDsi "dsi/bottom.html" -->
 	<div class="bottom">
 		<p class="footnote"> 
-            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2010. 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
             All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>

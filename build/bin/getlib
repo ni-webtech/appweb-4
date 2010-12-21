@@ -2,7 +2,7 @@
 #
 #   getlib -- Copy a library to the local lib directory.
 #
-#   Copyright (c) Embedthis LLC, 2003-2010. All Rights Reserved.
+#   Copyright (c) Embedthis LLC, 2003-2011. All Rights Reserved.
 #
 
 : ${BLD_OUT_DIR:=$BLD_TOP/out}

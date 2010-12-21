@@ -2,7 +2,7 @@
 #	Makefile.top -- Top level Makefile for the Embedthis Build System
 #					Included by $(BLD_TOP)/Makefile only.
 #
-#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 #
 #	Standard Make targets supported are:

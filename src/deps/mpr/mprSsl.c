@@ -155,8 +155,8 @@ extern int mprCreateMatrixSslModule(bool lazy);
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -179,6 +179,12 @@ extern int mprCreateMatrixSslModule(bool lazy);
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -1065,8 +1071,8 @@ int mprCreateMatrixSslModule(bool lazy) { return -1; }
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -1089,6 +1095,12 @@ int mprCreateMatrixSslModule(bool lazy) { return -1; }
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -2163,8 +2175,8 @@ int mprCreateOpenSslModule(bool lazy) { return -1; }
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -2187,6 +2199,12 @@ int mprCreateOpenSslModule(bool lazy) { return -1; }
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -2437,8 +2455,8 @@ void mprVerifySslClients(MprSsl *ssl, bool on)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -2461,6 +2479,12 @@ void mprVerifySslClients(MprSsl *ssl, bool on)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/

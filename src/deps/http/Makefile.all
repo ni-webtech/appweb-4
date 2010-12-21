@@ -1,7 +1,7 @@
 #
 #	Makefile for the Http Library
 #
-#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 #	This is an all-in-one build where all the Http source files are catenated into as few files as possible. 
 #	See http://hg.embedthis.com/mpr if you require the full source for the Http.

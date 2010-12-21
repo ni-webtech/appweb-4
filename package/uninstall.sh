@@ -2,13 +2,13 @@
 #
 #	uninstall: Appweb uninstall script
 #
-#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 #	Usage: uninstall [configFile]
 #
 ################################################################################
 #
-#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #	The latest version of this code is available at http://www.embedthis.com
 #
 #	This software is open source; you can redistribute it and/or modify it 

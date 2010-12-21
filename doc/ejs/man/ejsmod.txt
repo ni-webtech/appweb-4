@@ -110,7 +110,7 @@ REPORTING BUGS
        Report bugs to dev@embedthis.com.
 
 COPYRIGHT
-       Copyright (C) 2004-2010 Embedthis Software.  Ejscript is a trademark of
+       Copyright (C) 2004-2011 Embedthis Software.  Ejscript is a trademark of
        Embedthis Software.
 
 SEE ALSO
@@ -118,4 +118,4 @@ SEE ALSO
 
 
 
-ejsmod                            March 2010                         EJSMOD(1)
+ejsmod                            March 2011                         EJSMOD(1)

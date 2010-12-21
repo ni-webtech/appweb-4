@@ -204,8 +204,8 @@ void httpInitAuth(Http *http)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -228,6 +228,12 @@ void httpInitAuth(Http *http)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -886,8 +892,8 @@ void __nativeAuthFile() {}
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You httpy use the GPL open source license described below or you may acquire 
@@ -910,6 +916,12 @@ void __nativeAuthFile() {}
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -1376,8 +1388,8 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -1400,6 +1412,12 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -1520,8 +1538,8 @@ void __pamAuth() {}
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -1544,6 +1562,12 @@ void __pamAuth() {}
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -1797,8 +1821,8 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -1821,6 +1845,12 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -2169,8 +2199,8 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -2192,6 +2222,12 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
 
     @end
  */
@@ -3028,8 +3064,8 @@ void httpConnError(HttpConn *conn, int status, cchar *fmt, ...)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -3052,6 +3088,12 @@ void httpConnError(HttpConn *conn, int status, cchar *fmt, ...)
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
  
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -3359,8 +3401,8 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -3383,6 +3425,12 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -3874,8 +3922,8 @@ static void updateCurrentDate(Http *http)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -3897,6 +3945,12 @@ static void updateCurrentDate(Http *http)
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
 
     @end
  */
@@ -4290,8 +4344,8 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -4314,6 +4368,12 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -4631,8 +4691,8 @@ static void adjustNetVec(HttpQueue *q, ssize written)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -4654,6 +4714,12 @@ static void adjustNetVec(HttpQueue *q, ssize written)
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
 
     @end
  */
@@ -5123,8 +5189,8 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -5147,6 +5213,12 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -5210,8 +5282,8 @@ int httpOpenPassHandler(Http *http)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -5233,6 +5305,12 @@ int httpOpenPassHandler(Http *http)
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
 
     @end
  */
@@ -5567,8 +5645,8 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -5590,6 +5668,12 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter)
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
 
     @end
  */
@@ -6105,8 +6189,8 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -6129,6 +6213,12 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -6422,8 +6512,8 @@ static bool fixRangeLength(HttpConn *conn)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -6446,6 +6536,12 @@ static bool fixRangeLength(HttpConn *conn)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -8004,8 +8100,8 @@ cvoid *httpGetStageData(HttpConn *conn, cchar *key)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -8027,6 +8123,12 @@ cvoid *httpGetStageData(HttpConn *conn, cchar *key)
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
 
     @end
  */
@@ -8404,8 +8506,8 @@ static void adjustSendVec(HttpQueue *q, ssize written)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -8428,6 +8530,12 @@ static void adjustSendVec(HttpQueue *q, ssize written)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -8803,8 +8911,8 @@ void httpSetListenCallback(HttpServer *server, HttpListenCallback fn)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -8827,6 +8935,12 @@ void httpSetListenCallback(HttpServer *server, HttpListenCallback fn)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -9010,8 +9124,8 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags)
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -9034,6 +9148,12 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags)
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -9198,8 +9318,8 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -9222,6 +9342,12 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
  
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -9924,8 +10050,8 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -9947,6 +10073,12 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
 
     @end
  */
@@ -10584,8 +10716,8 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 
@@ -10608,6 +10740,12 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
     for this software and support services are available from Embedthis 
     Software at http://www.embedthis.com 
     
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
+
     @end
  */
 /************************************************************************/
@@ -11332,8 +11470,8 @@ static void trimPathToDirname(HttpUri *uri)
 /*
     @copy   default
 
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -11355,6 +11493,12 @@ static void trimPathToDirname(HttpUri *uri)
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=8 ts=8 expandtab
 
     @end
  */

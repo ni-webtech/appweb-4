@@ -5,7 +5,7 @@
 #   Usage:
 #       import.sh [--diff|sync|import] [--dir dir] [--ignore xx] [--patch preserveFeature] dir
 #
-#   Copyright (c) Embedthis Software Inc, 2003-2010. All Rights Reserved.
+#   Copyright (c) Embedthis Software Inc, 2003-2011. All Rights Reserved.
 #   This file is for internal use only when importing all-in-one archives.
 #
 

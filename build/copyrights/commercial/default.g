@@ -1,5 +1,5 @@
 
-Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 Copyright (c) Michael O'Brien, 1994-2006. All Rights Reserved.
 Portions Copyright (c) GoAhead Software, 1995-2000. All Rights Reserved.
 

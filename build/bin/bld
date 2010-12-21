@@ -2,7 +2,7 @@
 #
 #   bld -- Build archives, shared libraries and executables (aka mini libtool)
 #
-#   Copyright (c) Embedthis LLC, 2003-2010. All Rights Reserved.
+#   Copyright (c) Embedthis LLC, 2003-2011. All Rights Reserved.
 #
 #   It is expected that bld is only invoked from the Embedthis build systems. It
 #   expects the Makefile and make.rules to have defined all the necessary compile 

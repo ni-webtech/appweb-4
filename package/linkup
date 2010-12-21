@@ -1,7 +1,7 @@
 #
 #   Create or modify symlinks for the most recent installed versions of Appweb
 #
-#   Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#   Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
 TASK=$1

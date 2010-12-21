@@ -1,7 +1,7 @@
 #
 #	Makefile for Ejscript combo distribution
 #
-#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 #	This is an all-in-one build where all the Ejscript source files are catenated into as few files as possible. 
 #	See http://hg.embedthis.com/ejs if you require the full source for the Ejscript.

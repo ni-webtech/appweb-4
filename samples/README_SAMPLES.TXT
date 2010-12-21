@@ -61,7 +61,7 @@ License. It includes paid support as part of the license benefits.
 
 --------------------------------------------------------------------------------
 
-Copyright (c) 2003-2010 Embedthis Software, LLC. All Rights Reserved.
+Copyright (c) 2003-2011 Embedthis Software, LLC. All Rights Reserved.
 Embedthis and Appweb are trademarks of Embedthis Software, LLC. Other 
 brands and their products are trademarks of their respective holders.
 
