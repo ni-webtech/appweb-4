@@ -1,6 +1,5 @@
 #!/bin/sh
 
-date >/tmp/ran
 echo "HTTP/1.0 200 OK"
 echo "Content-type: text/html"
 echo ""
