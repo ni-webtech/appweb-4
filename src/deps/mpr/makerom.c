@@ -105,13 +105,13 @@ static int binToC(MprList *files, char *romName, char *prefix)
         if (mprGetPathInfo(filename, &info) == 0 && info.isDir) {
             continue;
         } 
-        if ((file = mprOpen(filename, O_RDONLY | O_BINARY, 0666)) < 0) {
+        if ((file = mprOpenFile(filename, O_RDONLY | O_BINARY, 0666)) < 0) {
             mprError("Can't open file %s\n", filename);
             return -1;
         }
         mprPrintf("static uchar _file_%d[] = {\n", next);
 
-        while ((len = mprRead(file, buf, sizeof(buf))) > 0) {
+        while ((len = mprReadFile(file, buf, sizeof(buf))) > 0) {
             p = buf;
             for (i = 0; i < len; ) {
                 mprPrintf("    ");
@@ -123,7 +123,7 @@ static int binToC(MprList *files, char *romName, char *prefix)
             }
         }
         mprPrintf("    0 };\n\n");
-        mprFree(file);
+        mprCloseFile(file);
     }
 
     /*

@@ -147,15 +147,13 @@ module ejs {
          */
         native static function createSearch(searchPath: String? = null): Array
 
-//  MOB -- have 2 routines; doEvents, doOneEvent
         /** 
             Run the event loop. This is typically done automatically by the hosting program and is not normally required
                 in user programs.
             @param timeout Timeout to block waiting for an event in milliseconds before returning. If an event occurs, the
                 call returns immediately.
-            @param oneEvent If true, return immediately after servicing one event.
          */
-        native static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): Void
+        native static function eventLoop(timeout: Number = -1): Void
 
         /** 
             Change the application's Working directory
@@ -250,13 +248,13 @@ module ejs {
         # FUTURE
         native static function set locale(locale: String): Void
 
-        //  MOB TODO need a better name than noexit, TODO could add a max delay option.
         /** 
             Control whether an application will exit when global scripts have completed. Setting this to true will cause
             the application to continue servicing events until the $exit method is explicitly called. The default 
             application setting of noexit is false.
             @param exit If true, the application will exit when the last script completes.
          */
+        # DEPRECATED
         native static function noexit(exit: Boolean = true): Void
 
         /** 
@@ -336,13 +334,7 @@ module ejs {
          */
         # Config.Legacy
         static function serviceEvents(count: Number = -1, timeout: Number = -1): Void {
-            if (count < 0) {
-                eventLoop(timeout, false)
-            } else {
-                for (i in count) {
-                    eventLoop(timeout, true)
-                }
-            }
+            eventLoop(timeout)
         }
 
         static function updateLog(): Void {
@@ -352,7 +344,8 @@ module ejs {
             }
         }
 
-        /** @hide
+        /** 
+            @hide
             Wait for an event
             @param Observable object
             @param events Events to consider
@@ -362,9 +355,7 @@ module ejs {
             let done
             function callback(event) done = true
             obj.on(events, callback)
-            for (let mark = new Date; !done && mark.elapsed < timeout; ) {
-                App.eventLoop(timeout - mark.elapsed, 1)
-            }
+            App.eventLoop(timeout)
             obj.off(events, callback)
             return done
         }

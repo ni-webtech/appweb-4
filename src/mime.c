@@ -21,12 +21,12 @@ int maOpenMimeTypes(MaHost *host, cchar *path)
     if (host->mimeTypes == 0) {
         host->mimeTypes = mprCreateHash(HTTP_LARGE_HASH_SIZE, 0);
     }
-    file = mprOpen(path, O_RDONLY | O_TEXT, 0);
+    file = mprOpenFile(path, O_RDONLY | O_TEXT, 0);
     if (file == 0) {
         return MPR_ERR_CANT_OPEN;
     }
     line = 0;
-    while ((buf = mprGets(file, 0, NULL)) != 0) {
+    while ((buf = mprGetFileString(file, 0, NULL)) != 0) {
         line++;
         if (buf[0] == '#' || isspace((int) buf[0])) {
             continue;

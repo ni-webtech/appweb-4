@@ -253,7 +253,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
         /* End of input */
         if (rx->remainingContent > 0) {
             /* Short incoming body data. Just kill the CGI process.  */
-            mprFree(cmd);
+            mprDestroyCmd(cmd);
             q->queueData = 0;
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
         }
@@ -298,8 +298,6 @@ static void pushDataToCgi(HttpQueue *q)
             mprAdjustBufStart(buf, rc);
             if (mprGetBufLength(buf) > 0) {
                 httpPutBackPacket(q, packet);
-            } else {
-                httpFreePacket(q, packet);
             }
             if (rc < len) {
                 /*
@@ -878,7 +876,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     }
 #endif
 
-    if ((file = mprOpen(tx, path, O_RDONLY, 0)) != 0) {
+    if ((file = mprOpenFile(tx, path, O_RDONLY, 0)) != 0) {
         if (mprRead(file, buf, MPR_MAX_FNAME) > 0) {
             mprCloseFile(file);
             buf[MPR_MAX_FNAME] = '\0';

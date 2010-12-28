@@ -54,7 +54,7 @@ int maServiceWebServer(MaServer *server)
         mprError("Can't start the web server");
         return MPR_ERR_CANT_CREATE;
     }
-    mprServiceEvents(mprGetDispatcher(server), -1, 0);
+    mprServiceEvents(-1, 0);
     maStopServer(server);
     return 0;
 }
@@ -112,10 +112,9 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
         mprError("Can't start the web server");
         return MPR_ERR_CANT_CREATE;
     }
-    mprServiceEvents(mprGetDispatcher(mpr), -1, 0);
+    mprServiceEvents(-1, 0);
     maStopServer(server);
-    mprStop(mpr);
-    mprFree(mpr);
+    mprDestroy(mpr);
     return 0;
 }
 

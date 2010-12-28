@@ -319,21 +319,18 @@ static void generateImages(EjsMod *mp)
     for (df = docFiles; df->path; df++) {
         path = mprJoinPath(mp->docDir, df->path);
         rc = mprMakeDir(mprGetPathDir(path), 0775, 1);
-        file = mprOpen(path, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
+        file = mprOpenFile(path, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
         if (file == 0) {
             mprError("Can't create %s", path);
             mp->errorCount++;
-            mprFree(path);
             return;
         }
-        if (mprWrite(file, df->data, df->size) != df->size) {
+        if (mprWriteFile(file, df->data, df->size) != df->size) {
             mprError("Can't write to buffer");
             mp->errorCount++;
-            mprFree(path);
             return;
         }
-        mprFree(file);
-        mprFree(path);
+        mprCloseFile(file);
     }
 }
 
@@ -352,7 +349,7 @@ static void generateHomeFrameset(EjsMod *mp)
 {
     cchar   *script;
 
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = createFile(mp, "index.html");
     if (mp->file == 0) {
         return;
@@ -371,14 +368,14 @@ static void generateHomeFrameset(EjsMod *mp)
     out(mp, "</frameset>\n");
     out(mp, "</html>\n");
 
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
 }
 
 
 static void generateHomeTitle(EjsMod *mp)
 {
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = createFile(mp, "title.html");
     if (mp->file == 0) {
         return;
@@ -406,14 +403,14 @@ static void generateHomeTitle(EjsMod *mp)
 
     generateHtmlFooter(mp);
 
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
 }
 
 
 static void generateHomeNavigation(EjsMod *mp)
 {
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = createFile(mp, "__navigation-left.html");
     if (mp->file == 0) {
         return;
@@ -428,7 +425,7 @@ static void generateHomeNavigation(EjsMod *mp)
     out(mp, "</frameset>\n");
     out(mp, "</html>\n");
 
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
 }
 
@@ -491,7 +488,7 @@ static void generateNamespaceList(EjsMod *mp)
     out(mp, "</div>\n");
 
     generateHtmlFooter(mp);
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
 
     /*
@@ -501,7 +498,6 @@ static void generateNamespaceList(EjsMod *mp)
         generateNamespace(mp, namespace);
     }
     generateNamespace(mp, "__all");
-    mprFree(namespaces);
 }
 
 
@@ -514,7 +510,6 @@ static void generateNamespace(EjsMod *mp, cchar *namespace)
 
     path = sjoin(namespace, ".html", NULL);
     mp->file = createFile(mp, path);
-    mprFree(path);
     if (mp->file == 0) {
         mp->errorCount++;
         return;
@@ -527,7 +522,7 @@ static void generateNamespace(EjsMod *mp, cchar *namespace)
         generateNamespaceClassTable(mp, namespace);
     }
     generateContentFooter(mp);
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
 
     /*
@@ -575,7 +570,7 @@ static int generateNamespaceClassTableEntries(EjsMod *mp, cchar *namespace)
     ClassRec        *crec;
     MprList         *classes;
     char            *fmtName;
-    int             next, count;
+    int             next;
 
     ejs = mp->ejs;
 
@@ -596,9 +591,7 @@ static int generateNamespaceClassTableEntries(EjsMod *mp, cchar *namespace)
             out(mp, "<td>&nbsp;</td></tr>\n");
         }
     }
-    count = mprGetListLength(classes);
-    mprFree(classes);
-    return count;
+    return mprGetListLength(classes);
 }
 
 
@@ -691,7 +684,6 @@ static void generateClassList(EjsMod *mp, cchar *namespace)
 
     path = sjoin(namespace, "-classes.html", NULL);
     mp->file = createFile(mp, path);
-    mprFree(path);
     if (mp->file == 0) {
         mp->errorCount++;
         return;
@@ -737,15 +729,14 @@ static void generateClassList(EjsMod *mp, cchar *namespace)
     out(mp, "&nbsp;<br/>");
 
     generateHtmlFooter(mp);
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
-    mprFree(classes);
 }
 
 
 static void generateOverview(EjsMod *mp)
 {
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = createFile(mp, "__overview-page.html");
     if (mp->file == 0) {
         mp->errorCount++;
@@ -767,7 +758,7 @@ static void generateOverview(EjsMod *mp)
 
     generateContentFooter(mp);
 
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
 }
 
@@ -807,7 +798,6 @@ static void generateContentHeader(EjsMod *mp, cchar *fmt, ... )
     va_end(args);
 
     generateHtmlHeader(mp, NULL, title);
-    mprFree(title);
     
     out(mp, "<body>\n<div class='body'>\n\n");
     out(mp, "<div class=\"content\">\n\n");
@@ -847,13 +837,11 @@ static MprFile *createFile(EjsMod *mp, char *name)
     MprFile *file;
     char    *path;
 
-    mprFree(mp->path);
     path = mp->path = mprJoinPath(mp->docDir, name);
-    file = mprOpen(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    file = mprOpenFile(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (file == 0) {
         mprError("Can't open %s", path);
         mp->errorCount++;
-        mprFree(path);
         return 0;
     }
     return file;
@@ -885,7 +873,7 @@ static void generateClassPages(EjsMod *mp)
         /*
             Setup the output path, but create the file on demand when output is done
          */
-        mprFree(mp->file);
+        mprCloseFile(mp->file);
         mp->file = 0;
         mp->path = mprJoinPath(mp->docDir, getFilename(fmtType(ejs, type->qname)));
         if (mp->path == 0) {
@@ -896,7 +884,7 @@ static void generateClassPages(EjsMod *mp)
         if (doc && !doc->hide) {
             generateClassPage(mp, (EjsObj*) type, qname, trait, doc);
         }
-        mprFree(mp->file);
+        mprCloseFile(mp->file);
         mp->file = 0;
     }
 
@@ -931,10 +919,8 @@ static void generateClassPages(EjsMod *mp)
 
     generateClassPage(mp, ejs->global, qname, trait, doc);
 
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
-    mprFree(trait);
-    mprFree(doc);
 }
 
 
@@ -960,7 +946,6 @@ static void generateClassPage(EjsMod *mp, EjsObj *obj, EjsName name, EjsTrait *t
         generateMethodDetail(mp, methods);
     }
     generateContentFooter(mp);
-    mprFree(methods);
 }
 
 
@@ -2435,7 +2420,7 @@ static void out(EjsMod *mp, char *fmt, ...)
     char        *buf;
 
     if (mp->file == 0) {
-        mp->file = mprOpen(mp->path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        mp->file = mprOpenFile(mp->path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (mp->file == 0) {
             mprError("Can't open %s", mp->path);
             mp->errorCount++;
@@ -2444,10 +2429,9 @@ static void out(EjsMod *mp, char *fmt, ...)
     }
     va_start(args, fmt);
     buf = mprAsprintfv(fmt, args);
-    if (mprWriteString(mp->file, buf) < 0) {
+    if (mprWriteFileString(mp->file, buf) < 0) {
         mprError("Can't write to buffer");
     }
-    mprFree(buf);
 }
 
 
@@ -2792,7 +2776,6 @@ static EjsDoc *getDuplicateDoc(Ejs *ejs, MprChar *duplicate)
     //  TODO Functionalize
     ejs->state->bp = ejs->global;
     if ((slotNum = ejsLookupVar(ejs, ejs->global, WN(space, klass), &lookup)) < 0) {
-        mprFree(dup);
         return 0;
     }
     if (property == 0) {
@@ -2803,7 +2786,6 @@ static EjsDoc *getDuplicateDoc(Ejs *ejs, MprChar *duplicate)
             if (ejsIsType(ejs, vp)) {
                 vp = (EjsObj*) ((EjsType*) vp)->prototype;
                 if ((slotNum = ejsLookupVar(ejs, vp, WEN(property), &lookup)) < 0) {
-                    mprFree(dup);
                     return 0;
                 }
             }
@@ -2813,7 +2795,6 @@ static EjsDoc *getDuplicateDoc(Ejs *ejs, MprChar *duplicate)
                     /* Last chance - Not ideal */
                     space = mprAsprintf("%s-%s", space, BLD_VNUM);
                     if ((slotNum = ejsLookupVar(ejs, vp, ejsName(&qname, space, property), &lookup)) < 0) {
-                        mprFree(dup);
                         return 0;
                     }
                 }
@@ -2825,11 +2806,9 @@ static EjsDoc *getDuplicateDoc(Ejs *ejs, MprChar *duplicate)
     if (doc) {
         if (doc->docString == NULL || doc->docString->value[0] == '\0') {
             mprError("Duplicate entry %s provides no description", duplicate);
-            mprFree(dup);
             return 0;
         }
     }
-    mprFree(dup);
     return doc;
 }
 
@@ -4192,7 +4171,7 @@ MAIN(ejsmodMain, int argc, char **argv)
     /*
         Initialze the Multithreaded Portable Runtime (MPR)
      */
-    mpr = mprCreate(argc, argv, MPR_USER_GC);
+    mpr = mprCreate(argc, argv, 0);
     mprSetAppName(argv[0], 0, 0);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
@@ -4217,6 +4196,9 @@ MAIN(ejsmodMain, int argc, char **argv)
             mp->cslots = 1;
             mp->genSlots = 1;
             
+        } else if (strcmp(argp, "--debugger") == 0) {
+            mprSetDebugMode(1);
+
         } else if (strcmp(argp, "--depends") == 0) {
             mp->depends = 1;
             
@@ -4356,10 +4338,8 @@ MAIN(ejsmodMain, int argc, char **argv)
     if (mp->errorCount > 0) {
         err = -1;
     }
-    mprFree(ejs);
-    if (mprStop(mpr)) {
-        mprFree(mpr);
-    }
+    ejsDestroy(ejs);
+    mprDestroy(mpr);
     return err;
 }
 
@@ -4397,7 +4377,7 @@ static int process(EjsMod *mp, cchar *output, int argc, char **argv)
     ejs = mp->ejs;
     
     if (output) {
-        outfile = mprOpen(output, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0664);
+        outfile = mprOpenFile(output, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0664);
     } else {
         outfile = 0;
     }
@@ -4436,13 +4416,12 @@ static int process(EjsMod *mp, cchar *output, int argc, char **argv)
                     (next >= count) ? "" : " ");
             }
             printf("\n");
-            mprFree(depends);
         }
     }
     if (mp->html || mp->xml) {
         emCreateDoc(mp);
     }
-    mprFree(outfile);
+    mprCloseFile(outfile);
     return 0;
 }
 
@@ -4479,7 +4458,7 @@ static int setLogging(Mpr *mpr, char *logSpec)
     if (strcmp(logSpec, "stdout") == 0) {
         file = mpr->fileSystem->stdOutput;
     } else {
-        if ((file = mprOpen(logSpec, O_WRONLY, 0664)) == 0) {
+        if ((file = mprOpenFile(logSpec, O_WRONLY, 0664)) == 0) {
             mprPrintfError("Can't open log file %s\n", logSpec);
             return EJS_ERR;
         }
@@ -4659,7 +4638,6 @@ void emListingLoadCallback(Ejs *ejs, int kind, ...)
         modules = va_arg(args, MprList*);
         nextModule = va_arg(args, int);
         lstClose(mp, modules, nextModule);
-        mprFree(lst);
         return;
 
     case EJS_SECT_EXCEPTION:
@@ -4684,7 +4662,6 @@ void emListingLoadCallback(Ejs *ejs, int kind, ...)
         name = va_arg(args, char*);
         hdr = va_arg(args, EjsModuleHdr*);
         lstOpen(mp, name, hdr);
-        mprFree(lst);
         return;
 
     case EJS_SECT_PROPERTY:
@@ -4777,7 +4754,7 @@ static void lstClose(EjsMod *mp, MprList *modules, int firstModule)
             lstEndModule(mp, module);
         }
     }
-    mprFree(mp->file);
+    mprCloseFile(mp->file);
     mp->file = 0;
 }
 
@@ -4793,14 +4770,12 @@ static int lstOpen(EjsMod *mp, char *moduleFilename, EjsModuleHdr *hdr)
         *ext = '\0';
     }
     path = sjoin(name, EJS_LISTING_EXT, NULL);
-    if ((mp->file = mprOpen(path,  O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0664)) == 0) {
+    if ((mp->file = mprOpenFile(path,  O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0664)) == 0) {
         mprError("Can't create %s", path);
-        mprFree(path);
         return EJS_ERR;
     }
     mprEnableFileBuffering(mp->file, 0, 0);
     mprFprintf(mp->file, "#\n#  %s -- Module Listing for %s\n#\n", path, moduleFilename);
-    mprFree(path);
     return 0;
 }
 
@@ -5369,7 +5344,7 @@ static void lstSlotAssignments(EjsMod *mp, EjsModule *module, EjsObj *parent, in
     if (VISITED(obj)) {
         return;
     }
-    VISITED(obj) = 1;
+    SET_VISITED(obj, 1);
 
     if (obj == ejs->global) {
         type = (EjsType*) obj;
@@ -5508,7 +5483,7 @@ static void lstSlotAssignments(EjsMod *mp, EjsModule *module, EjsObj *parent, in
             lstSlotAssignments(mp, module, obj, i, vp);
         }
     }
-    VISITED(obj) = 0;
+    SET_VISITED(obj, 0);
 }
 
 
@@ -5849,13 +5824,12 @@ static int createSlotFile(EjsMod *bp, EjsModule *mp, MprFile *file)
 
     if (file == 0) {
         path = sjoin(ejsToMulti(ejs, mp->name), ".slots.h", NULL);
-        localFile = file = mprOpen(path, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0664);
+        localFile = file = mprOpenFile(path, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0664);
     } else {
         path = sclone(file->path);
     }
     if (file == 0) {
         mprError("Can't open %s", path);
-        mprFree(path);
         return MPR_ERR_CANT_OPEN;
     }
     mprEnableFileBuffering(file, 0, 0);
@@ -5881,19 +5855,17 @@ static int createSlotFile(EjsMod *bp, EjsModule *mp, MprFile *file)
     type = ejsCreateType(ejs, N(EJS_EJS_NAMESPACE, EJS_GLOBAL), NULL, NULL, NULL, sizeof(EjsType), slotNum, 
         ejsGetPropertyCount(ejs, ejs->global), 0, 0);
     type->constructor.block = *(EjsBlock*) ejs->global;
-    TYPE(type) = ejs->typeType;
+    SET_TYPE(type, ejs->typeType);
     type->constructor.block.pot.isType = 1;
 
     if (genType(bp, file, mp, type, mp->firstGlobal, mp->lastGlobal, 1) < 0) {
         mprError("Can't generate slot file for module %@", mp->name);
-        mprFree(path);
-        mprFree(localFile);
+        mprCloseFile(localFile);
         return EJS_ERR;
     }
     mprFprintf(file, "\n#define _ES_CHECKSUM_%s   %d\n", moduleName, mp->checksum);
     mprFprintf(file, "\n#endif\n");
-    mprFree(localFile);
-    mprFree(path);
+    mprCloseFile(localFile);
     return 0;
 }
 
@@ -5938,9 +5910,6 @@ static void defineSlot(EjsMod *bp, MprFile *file, EjsModule *mp, EjsType *type, 
             mprFprintf(file, "%-70s %d\n", nameBuf, slotNum);
         }
     }
-    mprFree(typeStr);
-    mprFree(funStr);
-    mprFree(nameStr);
 }
 
 
@@ -5950,7 +5919,6 @@ static void defineSlotCount(EjsMod *bp, MprFile *file, EjsModule *mp, EjsType *t
 
     typeStr = mapFullName(bp->ejs, &type->qname, 1);
     if (*typeStr == '\0') {
-        mprFree(typeStr);
         typeStr = sclone(EJS_GLOBAL);
     }
     for (sp = typeStr; *sp; sp++) {
@@ -5964,7 +5932,6 @@ static void defineSlotCount(EjsMod *bp, MprFile *file, EjsModule *mp, EjsType *t
         mprSprintf(name, sizeof(name), "#define ES_%s_NUM_INHERITED_PROP", typeStr);
         mprFprintf(file, "%-70s %d\n", name, type->numInherited);
     }
-    mprFree(typeStr);
 }
 
 
@@ -6105,14 +6072,14 @@ static int genType(EjsMod *bp, MprFile *file, EjsModule *mp, EjsType *type, int 
         if (nt->module != mp) {
             continue;
         }
-        VISITED(vp) = 1;
+        SET_VISITED(vp, 1);
 
         count = ejsGetPropertyCount(ejs, (EjsObj*) nt);
         if (genType(bp, file, mp, nt, 0, count, 0) < 0) {
-            VISITED(vp) = 0;
+            SET_VISITED(vp, 0);
             return EJS_ERR;
         }
-        VISITED(vp) = 0;
+        SET_VISITED(vp, 0);
     }
     return 0;
 }

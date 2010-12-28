@@ -114,7 +114,7 @@ MAIN(httpMain, int argc, char *argv[])
     processing();
 
     while (!mprIsComplete()) {
-        mprServiceEvents(mprGetDispatcher(), -1, 0);
+        mprServiceEvents(-1, 0);
     }
     if (app->benchmark) {
         elapsed = (double) (mprGetTime() - start);
@@ -574,8 +574,7 @@ static int processThread(HttpConn *conn, MprEvent *event)
             break;
         }
     }
-    //  MOB -- need httpCloseConn
-    mprFree(conn);
+    httpDestroyConn(conn);
     finishThread((MprThread*) event->data);
     return -1;
 }
@@ -586,6 +585,8 @@ static int prepRequest(HttpConn *conn)
     MprKeyValue     *header;
     char            seqBuf[16];
     int             next;
+
+    httpPrepClientConn(conn);
 
     for (next = 0; (header = mprGetNextItem(app->headers, &next)) != 0; ) {
         httpAppendHeader(conn, header->key, header->value);
@@ -627,12 +628,13 @@ static int sendRequest(HttpConn *conn, cchar *method, cchar *url)
             return MPR_ERR_CANT_WRITE;
         }
     }
+    mprAssert(!mprGetCurrentThread()->yielded);
     httpFinalize(conn);
     return 0;
 }
 
 
-static int retryRequest(HttpConn *conn, cchar *url) 
+static int issueRequest(HttpConn *conn, cchar *url) 
 {
     HttpRx      *rx;
     HttpUri     *target, *location;
@@ -644,11 +646,6 @@ static int retryRequest(HttpConn *conn, cchar *url)
     httpSetTimeout(conn, app->timeout, app->timeout);
 
     for (redirectCount = count = 0; count <= conn->retries && redirectCount < 16 && !mprIsExiting(conn); count++) {
-        if (count > 0) {
-            mprLog(MPR_DEBUG, "retry %d of %d for: %s %s", count, conn->retries, app->method, url);
-            httpSetKeepAliveCount(conn, -1);
-            httpPrepClientConn(conn, HTTP_RETRY_REQUEST);
-        }
         if (prepRequest(conn) < 0) {
             return MPR_ERR_CANT_OPEN;
         }
@@ -661,7 +658,7 @@ static int retryRequest(HttpConn *conn, cchar *url)
                     location = httpCreateUri(redirect, 0);
                     target = httpJoinUri(conn->tx->parsedUri, 1, &location);
                     url = httpUriToString(target, 1);
-                    httpPrepClientConn(conn, HTTP_NEW_REQUEST);
+                    httpPrepClientConn(conn);
                 }
                 /* Count redirects and auth retries */
                 redirectCount++;
@@ -680,6 +677,7 @@ static int retryRequest(HttpConn *conn, cchar *url)
                 break;
             }
         }
+        mprLog(MPR_DEBUG, "retry %d of %d for: %s %s", count, conn->retries, app->method, url);
     }
     if (conn->error || conn->errorMsg) {
         msg = (conn->errorMsg) ? conn->errorMsg : "";
@@ -691,7 +689,7 @@ static int retryRequest(HttpConn *conn, cchar *url)
 }
 
 
-static int reportResponse(HttpConn *conn, cchar *url)
+static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
 {
     HttpRx      *rx;
     cchar       *msg;
@@ -702,6 +700,7 @@ static int reportResponse(HttpConn *conn, cchar *url)
     if (mprIsExiting(conn)) {
         return 0;
     }
+
     status = httpGetStatus(conn);
     contentLen = httpGetContentLength(conn);
     if (contentLen < 0) {
@@ -709,6 +708,7 @@ static int reportResponse(HttpConn *conn, cchar *url)
     }
     msg = httpGetStatusMessage(conn);
 
+    mprLog(6, "Response status %d, elapsed %ld", status, elapsed);
     if (conn->error) {
         app->success = 0;
     }
@@ -725,8 +725,6 @@ static int reportResponse(HttpConn *conn, cchar *url)
             }
         }
     }
-    httpDestroyRx(conn);
-
     if (status < 0) {
         mprError("Can't process request for \"%s\" %s", url, httpGetError(conn));
         return MPR_ERR_CANT_READ;
@@ -772,7 +770,7 @@ static int doRequest(HttpConn *conn, cchar *url)
     mprLog(MPR_DEBUG, "fetch: %s %s", app->method, url);
     mark = mprGetTime();
 
-    if (retryRequest(conn, url) < 0) {
+    if (issueRequest(conn, url) < 0) {
         return MPR_ERR_CANT_CONNECT;
     }
     while (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprGetElapsedTime(mark) <= limits->requestTimeout) {
@@ -785,8 +783,10 @@ static int doRequest(HttpConn *conn, cchar *url)
     } else {
         readBody(conn);
     }
-    mprLog(6, "Response status %d, elapsed %d", httpGetStatus(conn), ((int) mprGetTime()) - mark);
-    reportResponse(conn, url);
+    reportResponse(conn, url, mprGetTime() - mark);
+
+    httpDestroyRx(conn->rx);
+    httpDestroyTx(conn->tx);
     return 0;
 }
 
@@ -863,9 +863,9 @@ static int writeBody(HttpConn *conn)
             mprAssert(mprGetListLength(app->files) == 1);
             for (rc = next = 0; !rc && (path = mprGetNextItem(app->files, &next)) != 0; ) {
                 if (strcmp(path, "-") == 0) {
-                    file = mprAttachFd(0, "stdin", O_RDONLY | O_BINARY);
+                    file = mprAttachFileFd(0, "stdin", O_RDONLY | O_BINARY);
                 } else {
-                    file = mprOpen(path, O_RDONLY | O_BINARY, 0);
+                    file = mprOpenFile(path, O_RDONLY | O_BINARY, 0);
                 }
                 if (file == 0) {
                     mprError("Can't open \"%s\"", path);
@@ -875,7 +875,7 @@ static int writeBody(HttpConn *conn)
                     //  MOB - should this be to stdout or stderr?
                     mprPrintf("uploading: %s\n", path);
                 }
-                while ((bytes = mprRead(file, buf, sizeof(buf))) > 0) {
+                while ((bytes = mprReadFile(file, buf, sizeof(buf))) > 0) {
                     if (httpWriteBlock(conn->writeq, buf, bytes) != bytes) {
                         mprCloseFile(file);
                         return MPR_ERR_CANT_WRITE;
@@ -1090,13 +1090,13 @@ static int startLogging(char *logSpec)
     if (strcmp(logSpec, "stdout") == 0) {
         file = MPR->fileSystem->stdOutput;
     } else {
-        if ((file = mprOpen(logSpec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
+        if ((file = mprOpenFile(logSpec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
             mprPrintfError("Can't open log file %s\n", logSpec);
             return -1;
         }
     }
     mprSetLogLevel(level);
-    mprSetLogHandler(logHandler, (void*) file);
+    mprSetLogHandler(logHandler, file);
     return 0;
 }
 

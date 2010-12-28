@@ -28,6 +28,7 @@ setCompilerOptions()
     eval cpu=\$BLD_${KIND}_CPU
     eval hasStackProtector=\${KIND}_HAS_STACK_PROTECTOR
     eval hasDoubleBraces=\${KIND}_HAS_DOUBLE_BRACES
+    eval hasSync=\${KIND}_HAS_SYNC
     eval hasLibEdit=\${KIND}_HAS_EDITLINE
     eval hasMtune=\${KIND}_HAS_MTUNE
     eval hasDynLoad=\${KIND}_HAS_DYN_LOAD
@@ -42,6 +43,7 @@ setCompilerOptions()
     eval $hasStackProtector=0
     eval $hasMtune=0
     eval ${hasDoubleBraces}=0
+    eval ${hasSync}=0
     eval ${hasDynLoad}=0
     eval ${hasLibEdit}=0
     eval ${hasMmu}=0
@@ -158,6 +160,19 @@ setCompilerOptions()
             if [ $? = 0 ] ; then
                 eval $hasDoubleBraces=1
             fi
+
+            #
+            #   sync builtins
+            #
+            if [ "$verbose" != 0 ] ; then
+                echo -e "    Checking for builtin sync primitives"
+                # echo "         ${cc}" -o $out -c $file 
+            fi
+            echo -e "#include <stdio.h>\nint main() { __sync_synchronize(); return 0; }\n" >$file
+            eval \"${cc}\" ${flags} -Werror -c -o $out -c $file >/dev/null 2>&1
+            if [ $? = 0 ] ; then
+                eval $hasSync=1
+            fi
         fi
         rm -f t$$.o ${file} ${out}
 
@@ -168,6 +183,7 @@ setCompilerOptions()
         eval $hasMmu=1
         eval $hasDynLoad=1
         eval $hasDoubleBraces=0
+        eval $hasSync=0
     fi
     if [ $os = VXWORKS ] ; then
         eval ${hasDynLoad}=1
@@ -198,5 +214,6 @@ emitCompilerOptions()
     eval v=\$${KIND}_HAS_WARN_UNUSED ;      echo -e "${t}BLD_CC_WARN_UNUSED=$v"
     eval v=\$${KIND}_HAS_EDITLINE ;         echo -e "${t}BLD_CC_EDITLINE=$v"
     eval v=\$${KIND}_HAS_STACK_PROTECTOR ;  echo -e "${t}BLD_CC_STACK_PROTECTOR=$v"
+    eval v=\$${KIND}_HAS_SYNC ;             echo -e "${t}BLD_CC_SYNC=$v"
 }
 

@@ -41,14 +41,14 @@ static void logHandler(int flags, int level, cchar *msg)
             This is important for memory allocation errors.
          */
         if (strlen(msg) < (MPR_MAX_STRING - 32)) {
-            mprWriteString(file, buf);
+            mprWriteFileString(file, buf);
         } else {
             mprFprintf(file, "%s: Error: %s\n", prefix, msg);
         }
 
     } else if (flags & MPR_FATAL_SRC) {
         mprSprintf(buf, sizeof(buf), "%s: Fatal: %s\n", prefix, msg);
-        mprWriteString(file, buf);
+        mprWriteFileString(file, buf);
         mprWriteToOsLog(buf, flags, level);
         
     } else if (flags & MPR_RAW) {
@@ -84,7 +84,7 @@ int maStartLogging(cchar *logSpec)
         if (strcmp(spec, "stdout") == 0) {
             file = mpr->fileSystem->stdOutput;
         } else {
-            if ((file = mprOpen(spec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
+            if ((file = mprOpenFile(spec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
                 mprPrintfError("Can't open log file %s\n", spec);
                 return -1;
             }
@@ -141,7 +141,7 @@ int maStartAccessLogging(MaHost *host)
 {
 #if !BLD_FEATURE_ROMFS
     if (host->logPath) {
-        host->accessLog = mprOpen(host->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
+        host->accessLog = mprOpenFile(host->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
         if (host->accessLog == 0) {
             mprError("Can't open log file %s", host->logPath);
         }
@@ -193,7 +193,7 @@ void maWriteAccessLogEntry(MaHost *host, cchar *buf, int len)
 {
     static int once = 0;
 
-    if (mprWrite(host->accessLog, (char*) buf, len) != len && once++ == 0) {
+    if (mprWriteFile(host->accessLog, (char*) buf, len) != len && once++ == 0) {
         mprError("Can't write to access log %s", host->logPath);
     }
 }
@@ -222,7 +222,7 @@ static void rotateAccessLog(MaHost *host)
 
         rename(host->logPath, bak);
         unlink(host->logPath);
-        host->accessLog = mprOpen(host->logPath, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
+        host->accessLog = mprOpenFile(host->logPath, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
     }
 }
 
@@ -355,8 +355,7 @@ void maLogRequest(HttpConn *conn)
     }
     mprPutCharToBuf(buf, '\n');
     mprAddNullToBuf(buf);
-    mprWrite(logHost->accessLog, mprGetBufStart(buf), mprGetBufLength(buf));
-
+    mprWriteFile(logHost->accessLog, mprGetBufStart(buf), mprGetBufLength(buf));
     rotateAccessLog(host);
 }
 

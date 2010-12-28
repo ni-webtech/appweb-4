@@ -232,12 +232,10 @@ static ssize    writeMss(MprSocket *sp, void *buf, ssize len);
 
 int mprCreateMatrixSslModule(bool lazy)
 {
-    Mpr                 *mpr;
     MprSocketService    *ss;
     MprSocketProvider   *provider;
 
-    mpr = mprGetMpr();
-    ss = mpr->socketService;
+    ss = MPR->socketService;
 
     /*
         Install this module as the SSL provider (can only have 1)
@@ -259,12 +257,10 @@ int mprCreateMatrixSslModule(bool lazy)
 
 static MprSsl *getDefaultMatrixSsl()
 {
-    Mpr                 *mpr;
     MprSocketService    *ss;
     MprSsl              *ssl;
 
-    mpr = mprGetMpr();
-    ss = mpr->socketService;
+    ss = MPR->socketService;
 
     if (ss->secureProvider->defaultSsl) {
         return ss->secureProvider->defaultSsl;
@@ -313,7 +309,7 @@ static int configureMss(MprSsl *ssl)
     MprSocketService    *ss;
     char                *password;
 
-    ss = mprGetMpr()->socketService;
+    ss = MPR->socketService;
     mprSetManager(ssl, (MprManager) manageMatrixSsl);
 
     /*
@@ -372,7 +368,6 @@ static void manageMatrixSsl(MprSsl *ssl, int flags)
  */
 static MprSocket *createMss(MprSsl *ssl)
 {
-    Mpr                 *mpr;
     MprSocketService    *ss;
     MprSocket           *sp;
     MprSslSocket        *msp;
@@ -384,8 +379,7 @@ static MprSocket *createMss(MprSsl *ssl)
     /*
         First get a standard socket
      */
-    mpr = mprGetMpr();
-    ss = mpr->socketService;
+    ss = MPR->socketService;
     sp = ss->standardProvider->createSocket(ssl);
     if (sp == 0) {
         return 0;
@@ -395,7 +389,6 @@ static MprSocket *createMss(MprSsl *ssl)
 
     msp = (MprSslSocket*) mprAllocObj(MprSslSocket, manageMatrixSocket);
     if (msp == 0) {
-        mprFree(sp);
         return 0;
     }
     sp->sslSocket = msp;
@@ -418,14 +411,6 @@ static void manageMatrixSocket(MprSslSocket *msp, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (msp->ssl) {
-#if UNUSED
-            mprFree(msp->insock.buf);
-            mprFree(msp->outsock.buf);
-            if (msp->inbuf.buf) {
-                mprFree(msp->inbuf.buf);
-                msp->inbuf.buf = 0;
-            }
-#endif
             matrixSslDeleteSession(msp->mssl);
         }
     }
@@ -746,7 +731,6 @@ static int innerRead(MprSocket *sp, char *userBuf, int len)
             inbuf->start += bytes;
             return bytes;
         }
-        mprFree(inbuf->buf);
         inbuf->buf = NULL;
     }
 
@@ -885,7 +869,6 @@ decodeMore:
         }
         if (!performRead) {
             performRead = 1;
-            mprFree(inbuf->buf);
             inbuf->buf = 0;
             goto readMore;
         }
@@ -899,7 +882,6 @@ decodeMore:
         mprAssert(inbuf->start == inbuf->end);
         inbuf->size *= 2;
         if (inbuf->buf != buf) {
-            mprFree(inbuf->buf);
             inbuf->buf = 0;
         }
         inbuf->start = mprAlloc(inbuf->size);
@@ -1169,7 +1151,9 @@ static ssize    writeOss(MprSocket *sp, void *buf, ssize len);
 
 static DynLock  *sslCreateDynLock(const char *file, int line);
 static void     sslDynLock(int mode, DynLock *dl, const char *file, int line);
+#if UNUSED
 static void     sslDestroyDynLock(DynLock *dl, const char *file, int line);
+#endif
 static void     sslStaticLock(int mode, int n, const char *file, int line);
 static ulong    sslThreadId(void);
 
@@ -1179,14 +1163,12 @@ static DH       *get_dh1024();
 
 int mprCreateOpenSslModule(bool lazy)
 {
-    Mpr                 *mpr;
     MprSocketService    *ss;
     MprSocketProvider   *provider;
     RandBuf             randBuf;
     int                 i;
 
-    mpr = mprGetMpr();
-    ss = mpr->socketService;
+    ss = MPR->socketService;
 
     /*
         Get some random bytes
@@ -1208,13 +1190,15 @@ int mprCreateOpenSslModule(bool lazy)
     locks = mprAllocBlock(numLocks * sizeof(MprMutex*), MPR_ALLOC_MANAGER);
     mprSetManager(locks, (MprManager) lockDestructor);
     for (i = 0; i < numLocks; i++) {
-        locks[i] = mprCreateLock(mpr);
+        locks[i] = mprCreateLock();
     }
     CRYPTO_set_id_callback(sslThreadId);
     CRYPTO_set_locking_callback(sslStaticLock);
 
     CRYPTO_set_dynlock_create_callback(sslCreateDynLock);
+#if UNUSED
     CRYPTO_set_dynlock_destroy_callback(sslDestroyDynLock);
+#endif
     CRYPTO_set_dynlock_lock_callback(sslDynLock);
 
 #if !BLD_WIN_LIKE
@@ -1243,12 +1227,10 @@ static int lockDestructor(void *ptr)
 
 static MprSsl *getDefaultOpenSsl()
 {
-    Mpr                 *mpr;
     MprSocketService    *ss;
     MprSsl              *ssl;
 
-    mpr = mprGetMpr();
-    ss = mpr->socketService;
+    ss = MPR->socketService;
 
     if (ss->secureProvider->defaultSsl) {
         return ss->secureProvider->defaultSsl;
@@ -1256,7 +1238,6 @@ static MprSsl *getDefaultOpenSsl()
     if ((ssl = mprCreateSsl(ss)) == 0) {
         return 0;
     }
-
     /*
         Pre-generate some keys that are slow to compute.
      */
@@ -1274,10 +1255,8 @@ static MprSsl *getDefaultOpenSsl()
  */
 static MprSocketProvider *createOpenSslProvider()
 {
-    Mpr                 *mpr;
     MprSocketProvider   *provider;
 
-    mpr = mprGetMpr();
     if ((provider = mprAllocObj(MprSocketProvider, manageOpenProvider)) == NULL) {
         return 0;
     }
@@ -1316,7 +1295,7 @@ static int configureOss(MprSsl *ssl)
     SSL_CTX             *context;
     uchar               resume[16];
 
-    ss = mprGetMpr()->socketService;
+    ss = MPR->socketService;
     mprSetManager(ssl, (MprManager) manageOpenSsl);
 
     context = SSL_CTX_new(SSLv23_method());
@@ -1556,7 +1535,6 @@ static int configureCertificateFiles(MprSsl *ssl, SSL_CTX *ctx, char *key, char 
  */
 static MprSocket *createOss(MprSsl *ssl)
 {
-    Mpr                 *mpr;
     MprSocketService    *ss;
     MprSocket           *sp;
     MprSslSocket        *osp;
@@ -1568,8 +1546,7 @@ static MprSocket *createOss(MprSsl *ssl)
     /*
         First get a standard socket
      */
-    mpr = mprGetMpr();
-    ss = mpr->socketService;
+    ss = MPR->socketService;
     sp = ss->standardProvider->createSocket(ssl);
     if (sp == 0) {
         return 0;
@@ -1582,7 +1559,6 @@ static MprSocket *createOss(MprSsl *ssl)
      */
     osp = (MprSslSocket*) mprAllocObj(MprSslSocket, manageOpenSocket);
     if (osp == 0) {
-        mprFree(sp);
         return 0;
     }
     sp->sslSocket = osp;
@@ -2034,10 +2010,11 @@ static DynLock *sslCreateDynLock(const char *file, int line)
 }
 
 
+#if UNUSED
 static void sslDestroyDynLock(DynLock *dl, const char *file, int line)
 {
-    mprFree(dl);
 }
+#endif
 
 
 static void sslDynLock(int mode, DynLock *dl, const char *file, int line)
@@ -2235,11 +2212,9 @@ int mprCreateOpenSslModule(bool lazy) { return -1; }
  */
 static MprModule *loadSsl(bool lazy)
 {
-    Mpr         *mpr;
     MprModule   *mp;
 
-    mpr = mprGetMpr();
-    if (mpr->flags & MPR_SSL_PROVIDER_LOADED) {
+    if (MPR->flags & MPR_SSL_PROVIDER_LOADED) {
         return mprLookupModule("sslModule");
     }
 
@@ -2262,7 +2237,7 @@ static MprModule *loadSsl(bool lazy)
     if ((mp = mprCreateModule("sslModule", NULL)) == 0) {
         return 0;
     }
-    mpr->flags |= MPR_SSL_PROVIDER_LOADED;
+    MPR->flags |= MPR_SSL_PROVIDER_LOADED;
     return mp;
 }
 
@@ -2308,7 +2283,7 @@ void mprConfigureSsl(MprSsl *ssl)
 {
     MprSocketProvider   *provider;
 
-    provider = mprGetMpr()->socketService->secureProvider;
+    provider = MPR->socketService->secureProvider;
     if (provider) {
         provider->configureSsl(ssl);
     } else {
@@ -2321,7 +2296,6 @@ void mprSetSslCiphers(MprSsl *ssl, cchar *ciphers)
 {
     mprAssert(ssl);
     
-    mprFree(ssl->ciphers);
     ssl->ciphers = sclone(ciphers);
 }
 
@@ -2330,7 +2304,6 @@ void mprSetSslKeyFile(MprSsl *ssl, cchar *keyFile)
 {
     mprAssert(ssl);
     
-    mprFree(ssl->keyFile);
     ssl->keyFile = sclone(keyFile);
 }
 
@@ -2339,7 +2312,6 @@ void mprSetSslCertFile(MprSsl *ssl, cchar *certFile)
 {
     mprAssert(ssl);
     
-    mprFree(ssl->certFile);
     ssl->certFile = sclone(certFile);
 }
 
@@ -2348,7 +2320,6 @@ void mprSetSslCaFile(MprSsl *ssl, cchar *caFile)
 {
     mprAssert(ssl);
     
-    mprFree(ssl->caFile);
     ssl->caFile = sclone(caFile);
 }
 
@@ -2357,7 +2328,6 @@ void mprSetSslCaPath(MprSsl *ssl, cchar *caPath)
 {
     mprAssert(ssl);
     
-    mprFree(ssl->caPath);
     ssl->caPath = sclone(caPath);
 }
 

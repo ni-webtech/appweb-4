@@ -245,7 +245,7 @@ static int updatePassFile(char *passFile)
     MprFile     *file;
 
     tempFile = mprAsprintf("%s.tmp", passFile);
-    file = mprOpen(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
+    file = mprOpenFile(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
     if (file == 0) {
         mprError("%s: Can't open %s", programName, tempFile);
         return MPR_ERR_CANT_OPEN;
@@ -253,7 +253,7 @@ static int updatePassFile(char *passFile)
     up = users;
     while (up) {
         sprintf(buf, "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
-        if (mprWrite(file, buf, strlen(buf)) < 0) {
+        if (mprWriteFile(file, buf, strlen(buf)) < 0) {
             mprError("%s: Can't write to %s", programName, tempFile);
             mprCloseFile(file);
             return MPR_ERR_CANT_WRITE;

@@ -146,8 +146,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
     state->lineNumber = 0;
 
     state->filename = (char*) configFile;
-
-    state->file = mprOpen(configFile, O_RDONLY | O_TEXT, 0444);
+    state->file = mprOpenFile(configFile, O_RDONLY | O_TEXT, 0444);
     if (state->file == 0) {
         mprError("Can't open %s for config directives", configFile);
         return MPR_ERR_CANT_OPEN;
@@ -169,7 +168,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
 
         state = &stack[top];
         mprAssert(state->file);
-        if ((buf = mprGets(state->file, 0, NULL)) == 0) {
+        if ((buf = mprGetFileString(state->file, 0, NULL)) == 0) {
             if (--top > 0 && strcmp(state->filename, stack[top].filename) == 0) {
                 mprError("Unclosed directives in %s", state->filename);
                 while (top >= 0 && strcmp(state->filename, state[top].filename) == 0) {
@@ -179,8 +178,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
             if (top >= 0 && state->file == stack[top].file) {
                 stack[top].lineNumber = state->lineNumber + 1;
             } else {
-                //  MOB - mprCloseFile?
-                mprFree(state->file);
+                mprCloseFile(state->file);
                 state->file = 0;
                 if (top >= 0) {
                     state = &stack[top];
@@ -225,7 +223,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 state = pushState(state, &top);
                 state->lineNumber = 0;
                 state->filename = mprJoinPath(server->serverRoot, value);
-                state->file = mprOpen(state->filename, O_RDONLY | O_TEXT, 0444);
+                state->file = mprOpenFile(state->filename, O_RDONLY | O_TEXT, 0444);
                 if (state->file == 0) {
                     mprError("Can't open include file %s for config directives", state->filename);
                     return MPR_ERR_CANT_OPEN;
@@ -250,7 +248,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 for (next = 0; (dp = mprGetNextItem(includes, &next)) != 0; ) {
                     state = pushState(state, &top);
                     state->filename = mprJoinPath(value, dp->name);
-                    state->file = mprOpen(state->filename, O_RDONLY | O_TEXT, 0444);
+                    state->file = mprOpenFile(state->filename, O_RDONLY | O_TEXT, 0444);
                     if (state->file == 0) {
                         mprError("Can't open include file %s for config directives", state->filename);
                         return MPR_ERR_CANT_OPEN;
@@ -346,7 +344,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 mprLog(2, "Virtual Host: %s ", value);
 #endif
                 if (maCreateHostAddresses(server, host, value) < 0) {
-                    mprFree(host);
+                    //MOB mprFree(host);
                     goto err;
                 }
 

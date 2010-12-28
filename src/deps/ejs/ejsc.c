@@ -56,7 +56,7 @@ MAIN(ejscMain, int argc, char **argv)
     /*
         Initialize the Multithreaded Portable Runtime (MPR)
      */
-    mpr = mprCreate(argc, argv, MPR_USER_GC);
+    mpr = mprCreate(argc, argv, 0);
     mprSetAppName(argv[0], 0, 0);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
@@ -93,6 +93,9 @@ MAIN(ejscMain, int argc, char **argv)
 
         } else if (strcmp(argp, "--debug") == 0) {
             debug = 1;
+
+        } else if (strcmp(argp, "--debugger") == 0) {
+            mprSetDebugMode(1);
 
         } else if (strcmp(argp, "--doc") == 0) {
             doc = 1;
@@ -305,9 +308,7 @@ MAIN(ejscMain, int argc, char **argv)
     if (cp->errorCount > 0) {
         err++;
     }
-    mprFree(app);
-    mprStop(mpr);
-    mprFree(mpr);
+    mprDestroy(mpr);
     return err;
 }
 

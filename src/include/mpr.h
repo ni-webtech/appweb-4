@@ -367,8 +367,9 @@ typedef off_t MprOffset;
 
 #if __WORDSIZE == 64 || __amd64 || __x86_64 || __x86_64__ || _WIN64
     #define MPR_64_BIT 1
+    #define MPR_BITS 64
 #else
-    #define MPR_64_BIT 0
+    #define MPR_BITS 32
 #endif
 
 #ifndef BITSPERBYTE
@@ -973,7 +974,7 @@ extern "C" {
     #define MPR_LIST_INCR           8             /**< Default list growth inc */
     #define MPR_FILES_HASH_SIZE     29            /**< Hash size for rom file system */
     #define MPR_TIME_HASH_SIZE      67            /**< Hash size for time token lookup */
-    #define MPR_MEM_CHUNK_SIZE      (128 * 1024)  /**< Memory allocation chunk size */
+    #define MPR_MEM_REGION_SIZE     (128 * 1024)  /**< Memory allocation chunk size */
     #define MPR_GC_LOW_MEM          (32 * 1024)   /**< Free memory low water mark before invoking GC */
     #define MPR_NEW_QUOTA           (4 * 1024)    /**< new allocations before a GC is worthwhile */
     #define MPR_GC_WORKERS          0             /**< Run garbage collection non-concurrently */
@@ -1001,7 +1002,7 @@ extern "C" {
     #define MPR_LIST_INCR           16
     #define MPR_FILES_HASH_SIZE     61
     #define MPR_TIME_HASH_SIZE      89
-    #define MPR_MEM_CHUNK_SIZE      (256 * 1024)
+    #define MPR_MEM_REGION_SIZE     (256 * 1024)
     #define MPR_GC_LOW_MEM          (64 * 1024)
     #define MPR_NEW_QUOTA           (16 * 1024) 
     #define MPR_GC_WORKERS          1
@@ -1028,7 +1029,7 @@ extern "C" {
     #define MPR_BUF_INCR            1024
     #define MPR_FILES_HASH_SIZE     61
     #define MPR_TIME_HASH_SIZE      97
-    #define MPR_MEM_CHUNK_SIZE      (1024 * 1024)
+    #define MPR_MEM_REGION_SIZE     (1024 * 1024)
     #define MPR_GC_LOW_MEM          (128 * 1024)
     #define MPR_NEW_QUOTA           (1024 * 32) 
     #define MPR_GC_WORKERS          2
@@ -1081,6 +1082,7 @@ extern "C" {
 #define MPR_TIMEOUT_STOP        5000        /**< Wait when stopping resources */
 #define MPR_TIMEOUT_LINGER      2000        /**< Close socket linger timeout */
 #define MPR_TIMEOUT_HANDLER     10000       /**< Wait period when removing a wait handler */
+#define MPR_TIMEOUT_GC_SYNC     15000       /**< Wait period for threads to synchronize */
 
 #define MPR_TICKS_PER_SEC       1000        /**< Time ticks per second */
 #define MPR_MAX_TIMEOUT         (MAXINT / MPR_TICKS_PER_SEC)
@@ -1132,7 +1134,6 @@ extern "C" {
     Garbage collector tuning
  */
 #define MPR_MIN_TIME_FOR_GC     2                               /**< Wait till 2 milliseconds of idle time possible */
-#define MPR_GC_TIMEOUT          (3600 * MPR_TICKS_PER_SEC)      /**< Cond var timeout */
     
 #ifdef __cplusplus
 }
@@ -1503,6 +1504,9 @@ typedef struct MprMutex {
     #else
         error("Unsupported OS");
     #endif
+#if BLD_DEBUG
+        MprOsThread owner;
+#endif
 } MprMutex;
 
 
@@ -1533,10 +1537,10 @@ typedef struct MprSpin {
 } MprSpin;
 
 
-#define lock(arg) mprLock(arg->mutex)
-#define unlock(arg) mprUnlock(arg->mutex)
-#define spinlock(arg) mprSpinLock(arg->spin)
-#define spinunlock(arg) mprSpinUnlock(arg->spin)
+#define lock(arg)       if (arg) mprLock(arg->mutex)
+#define unlock(arg)     if (arg) mprUnlock(arg->mutex)
+#define spinlock(arg)   if (arg) mprSpinLock(arg->spin)
+#define spinunlock(arg) if (arg) mprSpinUnlock(arg->spin)
 
 /**
     Create a Mutex lock object.
@@ -1604,34 +1608,34 @@ extern bool mprTrySpinLock(MprSpin *lock);
         Spin lock macros
      */
     #if MACOSX
-        #define mprSpinLock(lock)   OSSpinLockLock(&((lock)->cs))
-        #define mprSpinUnlock(lock) OSSpinLockUnlock(&((lock)->cs))
+        #define mprSpinLock(lock)   if (lock) OSSpinLockLock(&((lock)->cs))
+        #define mprSpinUnlock(lock) if (lock) OSSpinLockUnlock(&((lock)->cs))
     #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
-        #define mprSpinLock(lock)   pthread_spin_lock(&((lock)->cs))
-        #define mprSpinUnlock(lock) pthread_spin_unlock(&((lock)->cs))
+        #define mprSpinLock(lock)   if (lock) pthread_spin_lock(&((lock)->cs))
+        #define mprSpinUnlock(lock) if (lock) pthread_spin_unlock(&((lock)->cs))
     #elif BLD_UNIX_LIKE
-        #define mprSpinLock(lock)   pthread_mutex_lock(&((lock)->cs))
-        #define mprSpinUnlock(lock) pthread_mutex_unlock(&((lock)->cs))
+        #define mprSpinLock(lock)   if (lock) pthread_mutex_lock(&((lock)->cs))
+        #define mprSpinUnlock(lock) if (lock) pthread_mutex_unlock(&((lock)->cs))
     #elif BLD_WIN_LIKE
-        #define mprSpinLock(lock)   EnterCriticalSection(&((lock)->cs))
-        #define mprSpinUnlock(lock) LeaveCriticalSection(&((lock)->cs))
+        #define mprSpinLock(lock)   if (lock) EnterCriticalSection(&((lock)->cs))
+        #define mprSpinUnlock(lock) if (lock) LeaveCriticalSection(&((lock)->cs))
     #elif VXWORKS
-        #define mprSpinLock(lock)   semTake((lock)->cs, WAIT_FOREVER)
-        #define mprSpinUnlock(lock) semGive((lock)->cs)
+        #define mprSpinLock(lock)   if (lock) semTake((lock)->cs, WAIT_FOREVER)
+        #define mprSpinUnlock(lock) if (lock) semGive((lock)->cs)
     #endif
 
     /*
         Lock macros
      */
     #if BLD_UNIX_LIKE
-        #define mprLock(lock)       pthread_mutex_lock(&((lock)->cs))
-        #define mprUnlock(lock)     pthread_mutex_unlock(&((lock)->cs))
+        #define mprLock(lock)       if (lock) pthread_mutex_lock(&((lock)->cs))
+        #define mprUnlock(lock)     if (lock) pthread_mutex_unlock(&((lock)->cs))
     #elif BLD_WIN_LIKE
-        #define mprUnlock(lock)     LeaveCriticalSection(&((lock)->cs))
-        #define mprLock(lock)       EnterCriticalSection(&((lock)->cs))
+        #define mprUnlock(lock)     if (lock) LeaveCriticalSection(&((lock)->cs))
+        #define mprLock(lock)       if (lock) EnterCriticalSection(&((lock)->cs))
     #elif VXWORKS
-        #define mprUnlock(lock)     semGive((lock)->cs)
-        #define mprLock(lock)       semTake((lock)->cs, WAIT_FOREVER)
+        #define mprUnlock(lock)     if (lock) semGive((lock)->cs)
+        #define mprLock(lock)       if (lock) semTake((lock)->cs, WAIT_FOREVER)
     #endif
 #else
 
@@ -1682,6 +1686,19 @@ extern void mprGlobalLock();
 extern void mprGlobalUnlock();
 
 /*
+    Lock free primitives
+    TODO DOC
+ */
+extern void mprAtomListInsert(void * volatile *head, volatile void **link, void *item);
+
+extern void mprAtomTest();
+extern void mprAtomBarrier();
+extern int mprAtomCas(void * volatile * addr, void *expected, cvoid *value);
+extern void mprAtomAdd(volatile int *ptr, int value);
+extern void mprAtomAdd64(volatile int64 *ptr, int value);
+extern void *mprAtomExchange(void * volatile *addr, cvoid *value);
+
+/*
     Allocator debug and stats selection
  */
 #if BLD_DEBUG
@@ -1692,43 +1709,53 @@ extern void mprGlobalUnlock();
     #define BLD_MEMORY_STATS        0
 #endif
 
+
 /*
-    Alignment bit sizes for the allocator
+    Alignment bit sizes for the allocator. Blocks are aligned on 4 byte boundaries for 32 bits systems and 8 byte 
+    boundaries for 64 bit systems and those systems that require doubles to be 8 byte aligned.
  */
-#if MPR_64_BIT
-    #define MPR_ALIGN               16
-    #define MPR_ALIGN_SHIFT         4
-#if UNUSED
-    #define MPR_SIZE_BITS           53
-#else
-    #define MPR_SIZE_BITS           64
-#endif
+#if !MPR_64_BIT && !(MPR_CPU_MIPS)
+    #define MPR_ALIGN               4
+    #define MPR_ALIGN_SHIFT         2
 #else
     #define MPR_ALIGN               8
     #define MPR_ALIGN_SHIFT         3
-#if UNUSED
-    #define MPR_SIZE_BITS           21
-#else
-    #define MPR_SIZE_BITS           32
 #endif
-#endif
+#define MPR_SIZE_BITS               (MPR_BITS - 2)
 
-#if FUTURE && KEEP
-#define MPR_ALLOC_MAX_BLOCK         ((uint)((INT64(1) << MPR_SIZE_BITS) - 1))
-#endif
+/*
+    MprMem.prior field bits. Layout for 32 bits. This field must only be accessed (read|write) while locked.
+        prior | last/1 << 1 | hasManager/1
+ */
+#define MPR_SHIFT_HAS_MANAGER   0
+#define MPR_SHIFT_LAST          1
+#define MPR_SHIFT_PRIOR         0
+#define MPR_MASK_HAS_MANAGER    0x1
+#define MPR_MASK_LAST           (((size_t) 0x1) << MPR_SHIFT_LAST)
+#define MPR_MASK_PRIOR          ~(MPR_MASK_LAST | MPR_MASK_HAS_MANAGER)
+
+/*
+    MprMem.size field bits. Layout for 32 bits. This field can be read while unlocked.
+        gen/2 << 30 | free << 29 | size/29 | mark/2
+*/
+#define MPR_SHIFT_MARK          0
+#define MPR_SHIFT_SIZE          0
+#define MPR_SHIFT_FREE          (MPR_BITS - 3)
+#define MPR_SHIFT_GEN           (MPR_BITS - 2)
+#define MPR_MASK_MARK           (0x3)
+#define MPR_MASK_GEN            (((size_t) 0x3) << MPR_SHIFT_GEN)
+#define MPR_MASK_FREE           (((size_t) 0x1) << MPR_SHIFT_FREE)
+#define MPR_MASK_SIZE           ~(MPR_MASK_GEN | MPR_MASK_FREE | MPR_MASK_MARK)
 
 /**
-    - Not a general purpose 
-    - Relies on cooperation from user s/w (managers, yield, make/break)
-
     Memory Allocation Service.
-    @description The MPR provides a memory allocator to use instead of malloc. This allocator is tailored to the needs
-    of embedded applications and is faster than most general purpose malloc allocators. It provides deterministic, 
-    constant time O(1) for allocation and free services. It exhibits very low fragmentation and accurate coalescing. 
-    It will return chunks unused memory back to the O/S.
+    @description The MPR provides an application specific memory allocator to use instead of malloc. This allocator is 
+    tailored to the needs of embedded applications and is faster than most general purpose malloc allocators. It provides 
+    deterministic, constant time O(1) for allocation and free services. It exhibits very low fragmentation and accurate 
+    coalescing.
     \n\n
-    The allocator includes a garbage collector for freeing unused memory. The collector is a generational, cooperative,
-    non-compacting, parallel collect.
+    The allocator uses a garbage collector for freeing unused memory. The collector is a generational, cooperative,
+    non-compacting, parallel collector. It will return chunks unused memory back to the O/S.
     \n\n
     The allocator is optimized for frequent allocations of small blocks (< 4K) and uses a scheme of free queues for 
     fast allocation. Allocations are aligned on 16 byte boundaries on 64-bit systems and otherwise on 8 byte boundaries.
@@ -1738,45 +1765,76 @@ extern void mprGlobalUnlock();
 
     @stability Evolving
     @defgroup MprMem MprMem
-    @see mprFree, mprRealloc, mprAlloc, mprAllocWithManager, mprAllocWithManagerZeroed, mprAllocZeroed, 
-        mprIsParent, mprCreate, mprSetAllocLimits, mprAllocObjWithManager, mprAllocObjWithManagerZeroed,
-        mprHasMemError mprResetMemError, mprMemdup, mprStrndup, mprMemcpy
+    @see mprAlloc, mprRealloc, mprAllocObj, mprSetMemPolicy, mprHasMemError, mprIsValid, mprSetManager, 
+        mprIsParent, mprCreate, mprSetAllocLimits, mprHasMemError mprResetMemError, mprMemdup, mprMemcpy, mprMemcmp,
+        mprHold, mprRelease, mprMark, mprAddRoot, mprRemoveRoot, mprSetName, mprGetMpr, mprGetPageSize, mprGetBlockSize,
  */
 typedef struct MprMem {
-    struct MprMem   *prior;                     /**< Size of block prior to this block in memory */
-    //  MOB - pack
-    ssize         size    /* : MPR_SIZE_BITS*/; /**< Internal block length including header (max size 16MB on 32 bit) */
-    //  MOB - 8 bits
-    uint            free       : 1;             /**< Block is free */
-    uint            gen        : 2;             /**< Allocation generation for block */
-    uint            hasManager : 1;             /**< Block has a manager function */
-    uint            isRoot     : 1;             /**< Block is a root */
-    uint            last       : 1;             /**< Block is last in memory region chunk */
-    uint            mark       : 2;             /**< Inuse mark */
+#if FUTURE
+    union {
+        size_t      field1;                     /**< Pointer to adjacent, prior block in memory with last, manager fields */
+        struct {
+            ssize   pbits: MPR_BITS - 2;
+            uint    last: 1;
+            uint    hasManager: 1;
+        } prior;
+    }
+    union {
+        size_t      field2;                   /**< Internal block length including header with gen and mark fields */
+        struct {
+            uint    gen: 2;
+            uint    free: 1;
+            ssize   size: MPR_BITS - 5;
+            uint    mark: 2;
+        } size;
+    }
+#endif
 
     /*
-        Ejscript
+        Accesses to prior must only be done while locked. This includes read access as concurrent writes may leave "prior"
+        in a partially updated state. These bites are ored into the low order bits of "prior".
+
+        prior | last << 1 | hasManager
      */
-    //  MOB - just for Ejscript - remove somehow
-    uint            builtin    : 1;             /**< Part of core. Just for Ejscript */
-    uint            dynamic    : 1;             /**< Object may be modified. Just for Ejscript */
-    uint            visited    : 1;             /**< Has been traversed. Not used by MprMem - provided for upper layers */
+    size_t          field1;                     /**< Pointer to adjacent, prior block in memory with last, manager fields */
+
+    /*
+        Access to these fields may be done while unlocked as only the marker updates active blocks and does so in a 
+        lock-free manner. The size field includes other fields ored into the size field.
+
+        gen/2 << 30 | isFree << 29 | size/29 | mark/2
+     */ 
+    size_t          field2;                   /**< Internal block length including header with gen and mark fields */
 #if BLD_MEMORY_DEBUG
-    uint            magic;                      /* Unique signature */
-    uint            seqno;                      /* Allocation sequence number */
-    cchar           *name;                      /* Debug name */
+    uint            magic;                      /**< Unique signature */
+    uint            seqno;                      /**< Allocation sequence number */
+    cchar           *name;                      /**< Debug name */
 #endif
 } MprMem;
 
 
 #define MPR_ALLOC_MAGIC             0xe814ecab
+
+//  MOB - is this too small?
 #define MPR_ALLOC_MIN_SPLIT         (32 + sizeof(MprMem))
 #define MPR_ALLOC_ALIGN(x)          (((x) + MPR_ALIGN - 1) & ~(MPR_ALIGN - 1))
 #define MPR_PAGE_ALIGN(x, psize)    ((((ssize) (x)) + ((ssize) (psize)) - 1) & ~(((ssize) (psize)) - 1))
 #define MPR_PAGE_ALIGNED(x, psize)  ((((ssize) (x)) % ((ssize) (psize))) == 0)
+
+/*
+    The allocator free map is a two dimensional array of free queues. The first dimension is indexed by
+    the most significant bit (MSB) set in the requested block size. The second dimension is the next 
+    MPR_ALLOC_BUCKET_SHIFT (4) bits below the MSB.
+
+    +-------------------------------+
+    |       |MSB|  Bucket   | rest  |
+    +-------------------------------+
+    | 0 | 0 | 1 | 1 | 1 | 1 | X | X |
+    +-------------------------------+
+ */
 #define MPR_ALLOC_BUCKET_SHIFT      4
-#define MPR_ALLOC_NUM_BITS          (sizeof(void*) * 8)
-#define MPR_ALLOC_NUM_GROUPS        (MPR_ALLOC_NUM_BITS - MPR_ALLOC_BUCKET_SHIFT - MPR_ALIGN_SHIFT - 1)
+#define MPR_ALLOC_BITS_PER_GROUP    (sizeof(void*) * 8)
+#define MPR_ALLOC_NUM_GROUPS        (MPR_ALLOC_BITS_PER_GROUP - MPR_ALLOC_BUCKET_SHIFT - MPR_ALIGN_SHIFT - 1)
 #define MPR_ALLOC_NUM_BUCKETS       (1 << MPR_ALLOC_BUCKET_SHIFT)
 #define MPR_GET_PTR(bp)             ((void*) (((char*) (bp)) + sizeof(MprMem)))
 #define MPR_GET_MEM(ptr)            ((MprMem*) (((char*) (ptr)) - sizeof(MprMem)))
@@ -1784,22 +1842,8 @@ typedef struct MprMem {
 /*
     GC Object generations
  */
-#define MPR_GEN_ETERNAL             3           /**< Builtin objects that live forever */
+#define MPR_GEN_ETERNAL             3           /**< Objects immune from collection */
 #define MPR_MAX_GEN                 3           /**< Number of generations for object allocation */
-
-/*
-    Max/min O/S allocation chunk sizes
- */
-#define MPR_ALLOC_BIG               (32 * 1024)
-#define MPR_REGION_MIN_SIZE         MPR_MEM_CHUNK_SIZE
-
-#if UNUSED
-#if BLD_TUNE == MPR_TUNE_SPEED
-    #define MPR_REGION_MAX_SIZE     (4 * 1024 * 1024)
-#else
-    #define MPR_REGION_MAX_SIZE     MPR_REGION_MIN_SIZE
-#endif
-#endif
 
 /*
     Manager callback flags
@@ -1829,15 +1873,16 @@ typedef struct MprMem {
 /*
     Flags for MprMemNotifier
  */
-#define MPR_MEM_GC                  0x1         /**< System would benefit from a garbage collection */
 #define MPR_MEM_YIELD               0x2         /**< GC complete, threads must yield to sync new generation */
 #define MPR_MEM_LOW                 0x4         /**< Memory is low, no errors yet */
 #define MPR_MEM_DEPLETED            0x8         /**< Memory depleted. Cannot satisfy current request */
 
+#if UNUSED
 /*
     Return values for MprMemNotifier callback
  */
 #define MPR_DELAY_GC                0x1         /**< Delay GC */
+#endif
 
 /**
     Memory allocation error callback. Notifiers are called if mprSetNotifier has been called on a context and a 
@@ -1890,6 +1935,7 @@ typedef struct MprMemStats {
     ssize           rss;                    /* OS calculated resident stack size in bytes */
     ssize           ram;                    /* System RAM size in bytes */
     ssize           user;                   /* System user RAM size in bytes (excludes kernel) */
+    int             freed;                  /* Bytes freed in last sweep */
     int             markVisited;
     int             marked;
     int             sweepVisited;
@@ -1910,13 +1956,14 @@ typedef struct MprMemStats {
 
 
 /**
-   Memmory regions allocated from the O/S. On some systems, these are virtual.
+   Memmory regions allocated from the O/S
  */
 typedef struct MprRegion {
-    struct MprRegion *next;                 /* Next region */
-    MprMem           *start;                /* Start of region data */
-    ssize           size;                  /* Size of region including region header */
-    void             *pad;
+    struct MprRegion *next;                 /**< Next region */
+    MprMem           *start;                /**< Start of region data */
+    MprSpin          lock;                  /**< Region multithread lock */
+    ssize            size;                  /**< Size of region including region header */
+    int              freeable;              /**< Set to true when completely unused */
 } MprRegion;
 
 
@@ -1924,36 +1971,45 @@ typedef struct MprRegion {
     Memory allocator heap
  */
 typedef struct MprHeap {
-    MprFreeMem      freeq[MPR_ALLOC_NUM_GROUPS * MPR_ALLOC_NUM_BUCKETS];
-    MprFreeMem      *freeEnd;
-    ssize          groupMap;
+    MprFreeMem       freeq[MPR_ALLOC_NUM_GROUPS * MPR_ALLOC_NUM_BUCKETS];
+    MprFreeMem       *freeEnd;
+    ssize            groupMap;
     ulong            bucketMap[MPR_ALLOC_NUM_GROUPS];
-    struct MprList  *roots;                 /**< List of GC root objects */
-    MprMemStats     stats;
-    MprMemNotifier  notifier;               /**< Memory allocation failure callback */
-    MprSpin         heapLock;               /**< Heap allocation lock */
-    MprSpin         rootLock;               /**< Root locking */
-    MprRegion       *regions;               /**< List of memory regions */
-    int             eternal;                /**< Eternal generation (permanent and dead blocks) */
-    int             dead;                   /**< Dead generation (blocks about to be freed) */
-    int             stale;                  /**< Stale generation for blocks that may have no references*/
-    int             active;                 /**< Active generation for new and active blocks */
-    int             allocPolicy;            /**< Memory allocation depletion policy */
-    int             chunkSize;              /**< O/S memory allocation chunk size */
-    int             collecting;             /**< GC is running */
-    int             destroying;             /**< Destroying the heap */
-    int             enabled;                /**< GC is enabled */
-    int             flags;                  /**< GC operational control flags */
-    int             from;                   /**< Eligible mprCollectGarbage flags */
-    int             hasError;               /**< Memory allocation error */
-    int             hasSweeper;             /**< Has dedicated sweeper thread */
-    int             mustYield;              /**< Threads must yield for GC which is due */
-    uint            notified;               /**< Memory notifier has been informed */
-    int             newCount;               /**< Count of new gen allocations */
-    int             newQuota;               /**< Quota of new allocations before idle GC worthwhile */
-    int             nextSeqno;              /**< Next sequence number */
-    uint            pageSize;               /**< System page size */
-    uint            rescanRoots;            /**< Root set has changed. Must rescan */
+    struct MprList   *roots;                 /**< List of GC root objects */
+    MprMemStats      stats;
+    MprMemNotifier   notifier;               /**< Memory allocation failure callback */
+    MprCond          *markerCond;            /**< Marker sleep cond var */
+    MprSpin          heapLock;               /**< Heap allocation lock */
+    MprSpin          heapLock2;              /**< Heap allocation lock */
+    MprSpin          rootLock;               /**< Root locking */
+    MprRegion        *regions;               /**< List of memory regions */
+    struct MprThread *marker;                /**< Marker thread */
+    struct MprThread *sweeper;               /**< Optional sweeper thread */
+
+    int              eternal;                /**< Eternal generation (permanent and dead blocks) */
+    int              active;                 /**< Active generation for new and active blocks */
+    int              stale;                  /**< Stale generation for blocks that may have no references*/
+    int              dead;                   /**< Dead generation (blocks about to be freed) */
+
+    int              allocPolicy;            /**< Memory allocation depletion policy */
+    int              chunkSize;              /**< O/S memory allocation chunk size */
+#if UNUSED
+    int              collecting;             /**< GC is running */
+#endif
+    int              destroying;             /**< Destroying the heap */
+    int              enabled;                /**< GC is enabled */
+    int              flags;                  /**< GC operational control flags */
+    int              from;                   /**< Eligible mprCollectGarbage flags */
+    int              hasError;               /**< Memory allocation error */
+    int              hasSweeper;             /**< Has dedicated sweeper thread */
+    int              mustYield;              /**< Threads must yield for GC which is due */
+    int              newCount;               /**< Count of new gen allocations */
+    int              newQuota;               /**< Quota of new allocations before idle GC worthwhile */
+    int              nextSeqno;              /**< Next sequence number */
+    uint             gc;                    /**< GC has been requested */
+    uint             pageSize;               /**< System page size */
+    int              rootIndex;              /**< Marker root scan index */
+    int              sweeps;                 /**< Number of requested GC sweeps (3 for complete) */
 } MprHeap;
 
 /**
@@ -1963,6 +2019,8 @@ typedef struct MprHeap {
     @return The Mpr control structure
  */
 extern struct Mpr *mprCreateMemService(MprManager manager, int flags);
+extern void mprStartGCService();
+extern void mprStopGCService();
 
 /**
     Destroy the memory service. Called as the last thing before exiting
@@ -1989,10 +2047,6 @@ extern void mprDestroyMemService();
  */
 extern void *mprAllocBlock(ssize size, int flags);
 
-#if BLD_DEBUG && !DOXYGEN
-    #define mprFree(ptr) mprFreeBlock(ptr, MPR_LOC);
-    extern void mprFreeBlock(void *ptr, cchar *location);
-#else
 /**
     Free a block of memory.
     @description Mark a block as free and call any registered manager to release dependant resources. For most blocks,
@@ -2007,8 +2061,7 @@ extern void *mprAllocBlock(ssize size, int flags);
     @param ptr Memory to free. If NULL, take no action.
     @ingroup MprMem
  */
-    extern void mprFree(void *ptr);
-#endif
+extern void mprFree(void *ptr);
 
 /**
     Return the current allocation memory statistics block
@@ -2263,8 +2316,10 @@ extern void mprCheckBlock(MprMem *bp);
  */
 extern void mprAddRoot(void *ptr);
 
+#if UNUSED
 /*
-    Flags for mprCollectGarbage()
+    Flags for mprGC()
+    MOB -- fix
  */
 #define MPR_GC_FROM_EVENTS  0x1     /**<  */
 #define MPR_GC_FROM_SEARCH  0x2     /**<  */
@@ -2277,14 +2332,16 @@ extern void mprAddRoot(void *ptr);
     Collect garbage
     @description Initiates garbage collection to free unreachable memory blocks. This call may return before collection 
     is complete if garbage collection has been configured via mprCreate() to use dedicated threads for collection. 
-    A single garbage collection may not free all memory. Use mprCollectAllGarbage to free all memory blocks.
+    A single garbage collection may not free all memory. Use mprRequestGC(1) to free all unused memory blocks.
     @param flags Flags to control the collection. Set flags to MPR_GC_FORCE to force one sweep. Set to zero
     to perform a conditional sweep where the sweep is only performed if there is sufficient garbage to warrant a collection.
     Other flags include MPR_GC_FROM_EVENTS which must be specified if calling mprCollectGarbage from a routine that 
     also blocks on mprServiceEvents. Similarly, use MPR_GC_FROM_OWN if managing garbage collections manually.
   */
-extern void mprCollectGarbage(int flags);
-extern void mprCollectAllGarbage();
+extern void mprGC(int flags);
+#endif
+
+extern void mprRequestGC(int force, int complete);
 
 /**
     Enable or disable the garbage collector
@@ -2348,8 +2405,8 @@ extern void mprEternalize(void *ptr);
 extern int  mprCreateGCService();
 extern void mprDestroyGCService();
 extern int  mprWaitForSync();
-extern int  mprPauseForGCSync(int timeout);
-extern void mprResumeThreadsAfterGC();
+extern int  mprSyncThreads(int timeout);
+extern void mprResumeThreads();
 
 /**
     Safe String Module
@@ -2988,9 +3045,9 @@ typedef struct MprBuf {
     char            *endbuf;            /**< Pointer one past the end of buffer */
     char            *start;             /**< Pointer to next data char */
     char            *end;               /**< Pointer one past the last data chr */
-    ssize         buflen;             /**< Current size of buffer */
-    ssize         maxsize;            /**< Max size the buffer can ever grow */
-    ssize         growBy;             /**< Next growth increment to use */
+    ssize           buflen;             /**< Current size of buffer */
+    ssize           maxsize;            /**< Max size the buffer can ever grow */
+    ssize           growBy;             /**< Next growth increment to use */
     MprBufProc      refillProc;         /**< Auto-refill procedure */
     void            *refillArg;         /**< Refill arg */
 } MprBuf;
@@ -4307,7 +4364,7 @@ extern int mprCloseFile(MprFile *file);
     @return Returns an MprFile object to use in other file operations.
     @ingroup MprFile
  */
-extern MprFile *mprAttachFd(int fd, cchar *name, int omode);
+extern MprFile *mprAttachFileFd(int fd, cchar *name, int omode);
 
 /**
     Disable file buffering
@@ -4334,7 +4391,7 @@ extern int mprEnableFileBuffering(MprFile *file, ssize size, ssize maxSize);
     @return Zero if successful, otherwise a negative MPR error code.
     @ingroup MprFile
  */
-extern int mprFlush(MprFile *file);
+extern int mprFlushFile(MprFile *file);
 
 /**
     Return the current file position
@@ -4364,7 +4421,7 @@ extern MprOffset mprGetFileSize(MprFile *file);
     @return An allocated string and sets *len to the number of bytes read. 
     @ingroup MprFile
  */
-extern char *mprGets(MprFile *file, ssize size, ssize *len);
+extern char *mprGetFileString(MprFile *file, ssize size, ssize *len);
 
 /**
     Read a character from the file.
@@ -4374,7 +4431,7 @@ extern char *mprGets(MprFile *file, ssize size, ssize *len);
         End of file is signified by reading 0.
     @ingroup MprFile
  */
-extern int mprGetc(MprFile *file);
+extern int mprGetFileChar(MprFile *file);
 
 /**
     Return a file object for the Stdout I/O channel
@@ -4413,7 +4470,7 @@ extern MprFile *mprGetStderr();
     @return Returns an MprFile object to use in other file operations.
     @ingroup MprFile
  */
-extern MprFile *mprOpen(cchar *filename, int omode, int perms);
+extern MprFile *mprOpenFile(cchar *filename, int omode, int perms);
 
 /**
     Non-destructively read a character from the file.
@@ -4423,7 +4480,7 @@ extern MprFile *mprOpen(cchar *filename, int omode, int perms);
         End of file is signified by reading 0.
     @ingroup MprFile
  */
-extern int mprPeekc(MprFile *file);
+extern int mprPeekFileChar(MprFile *file);
 
 /**
     Write a character to the file.
@@ -4434,7 +4491,7 @@ extern int mprPeekc(MprFile *file);
     @return One if successful, otherwise returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern ssize mprPutc(MprFile *file, int c);
+extern ssize mprPutFileChar(MprFile *file, int c);
 
 /**
     Write a string to the file.
@@ -4444,7 +4501,7 @@ extern ssize mprPutc(MprFile *file, int c);
     @return The number of characters written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern ssize mprPuts(MprFile *file, cchar *str);
+extern ssize mprPutFileString(MprFile *file, cchar *str);
 
 /**
     Read data from a file.
@@ -4455,7 +4512,7 @@ extern ssize mprPuts(MprFile *file, cchar *str);
     @return The number of characters read from the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern ssize mprRead(MprFile *file, void *buf, ssize size);
+extern ssize mprReadFile(MprFile *file, void *buf, ssize size);
 
 /**
     Seek the I/O pointer to a new location in the file.
@@ -4470,7 +4527,7 @@ extern ssize mprRead(MprFile *file, void *buf, ssize size);
     @return Returns the new file position if successful otherwise a negative MPR error code is returned.
     @ingroup MprFile
  */
-extern MprOffset mprSeek(MprFile *file, int seekType, MprOffset distance);
+extern MprOffset mprSeekFile(MprFile *file, int seekType, MprOffset distance);
 
 /**
     Truncate a file
@@ -4480,7 +4537,7 @@ extern MprOffset mprSeek(MprFile *file, int seekType, MprOffset distance);
     @returns Zero if successful.
     @ingroup MprFile
  */
-extern int mprTruncate(cchar *path, MprOffset size);
+extern int mprTruncateFile(cchar *path, MprOffset size);
 
 /**
     Write data to a file.
@@ -4491,7 +4548,7 @@ extern int mprTruncate(cchar *path, MprOffset size);
     @return The number of characters actually written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern ssize mprWrite(MprFile *file, cvoid *buf, ssize count);
+extern ssize mprWriteFile(MprFile *file, cvoid *buf, ssize count);
 
 /**
     Write a string to a file.
@@ -4501,7 +4558,7 @@ extern ssize mprWrite(MprFile *file, cvoid *buf, ssize count);
     @return The number of characters actually written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern ssize mprWriteString(MprFile *file, cchar *str);
+extern ssize mprWriteFileString(MprFile *file, cchar *str);
 
 /**
     Write formatted data to a file.
@@ -4511,7 +4568,7 @@ extern ssize mprWriteString(MprFile *file, cchar *str);
     @return The number of characters actually written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern ssize mprWriteFormat(MprFile *file, cchar *fmt, ...);
+extern ssize mprWriteFileFormat(MprFile *file, cchar *fmt, ...);
 
 extern int mprGetFileFd(MprFile *file);
 
@@ -5077,7 +5134,7 @@ extern void mprUnloadModule(MprModule *mp);
  */
 #define MPR_EVENT_CONTINUOUS    0x1
 #define MPR_EVENT_STATIC        0x2
-#define MPR_EVENT_NO_THREAD     0x4
+#define MPR_EVENT_QUICK         0x4     /* Execute inline without executing via a thread */
 
 /**
     Event callback function
@@ -5099,7 +5156,7 @@ typedef void (*MprEventProc)(void *data, struct MprEvent *event);
     @defgroup MprEvent MprEvent
  */
 typedef struct MprEvent {
-    cchar               *name;          /**< Debug name of the event */
+    cchar               *name;          /**< Static debug name of the event */
     MprEventProc        proc;           /**< Callback procedure */
     MprTime             timestamp;      /**< When was the event created */
     MprTime             due;            /**< When is the event due */
@@ -5120,22 +5177,21 @@ typedef struct MprEvent {
 typedef struct MprDispatcher {
     cchar           *name;              /**< Dispatcher name / purpose */
     MprEvent        eventQ;             /**< Event queue */
-    int             deleted;            /**< Dispatcher deleted in callback */
+    MprCond         *cond;              /**< Multi-thread sync */
     int             enabled;            /**< Dispatcher enabled to run events */
-    int             inUse;              /**< Safe delete flag */
+    int             waitingOnCond;      /**< Waiting on the cond */
     struct MprDispatcher *next;         /**< Next dispatcher linkage */
     struct MprDispatcher *prev;         /**< Previous dispatcher linkage */
     struct MprDispatcher *parent;       /**< Queue pointer */
     struct MprEventService *service;
     struct MprWorker *requiredWorker;   /**< Worker affinity */
-#if BLD_DEBUG
-    struct MprThread *active;           /**< Dispatcher is servicing events */
-#endif
+    MprOsThread     owner;              /**< Owning thread of the dispatcher */
 } MprDispatcher;
 
 
 typedef struct MprEventService {
     MprTime         now;                /**< Current notion of time for the dispatcher service */
+    MprTime         willAwake;          /**< Time the even service will next awake */
     MprDispatcher   runQ;               /**< Queue of running dispatchers */
     MprDispatcher   readyQ;             /**< Queue of dispatchers with events ready to run */
     MprDispatcher   waitQ;              /**< Queue of waiting (future) events */
@@ -5160,6 +5216,7 @@ extern MprDispatcher *mprCreateDispatcher(cchar *name, int enable);
     @returns the MPR dispatcher object
  */
 extern MprDispatcher *mprGetDispatcher();
+extern MprDispatcher *mprGetNonBlockDispatcher();
 
 /**
     Enable a dispatcher to service events. The mprCreateDispatcher routiner creates dispatchers in the disabled state.
@@ -5173,7 +5230,9 @@ extern void mprEnableDispatcher(MprDispatcher *dispatcher);
  */
 #define MPR_SERVICE_ONE_THING   0x4         /**< Wait for one event or one I/O */
 #define MPR_SERVICE_NO_GC       0x8         /**< Don't run GC */
-#define MPR_SERVICE_ONLY        0x10        /**< Service only this dispatcher */
+#if UNUSED
+#define MPR_SERVICE_PRIMARY     0x10        /**< Service only this dispatcher */
+#endif
 
 /*
     Schedule events. This can be called by any thread. Typically an app will dedicate one thread to be an event service 
@@ -5186,7 +5245,9 @@ extern void mprEnableDispatcher(MprDispatcher *dispatcher);
     @returns The number of events serviced. Returns MPR_ERR_BUSY is another thread is servicing events and timeout is zero.
     @ingroup MprEvent
  */
-extern int mprServiceEvents(MprDispatcher *dispatcher, int delay, int flags);
+extern int mprServiceEvents(int delay, int flags);
+extern int mprWaitForEvent(MprDispatcher *dispatcher, int timeout);
+extern void mprSignalDispatcher(MprDispatcher *dispatcher);
 
 /**
     Create a new event
@@ -5519,9 +5580,6 @@ extern void mprSetThreadPriority(MprThread *thread, int priority);
  */
 extern int mprStartThread(MprThread *thread);
 
-//  MOB DOC
-extern void mprYieldThread(MprThread *tp);
-
 /*
     Somewhat internal APIs
  */
@@ -5531,7 +5589,10 @@ extern void mprSetThreadStackSize(int size);
 extern int mprSetThreadData(MprThreadLocal *tls, void *value);
 extern void *mprGetThreadData(MprThreadLocal *tls);
 extern MprThreadLocal *mprCreateThreadLocal();
-extern void mprSetStickyYield(MprThread *tp, int enable);
+
+//  MOB DOC
+extern void mprYield(MprThread *tp, int block);
+extern void mprStickyYield(MprThread *tp, int enable);
 
 #if UNUSED
 extern void mprResumeThread(MprThread *tp);
@@ -5554,10 +5615,9 @@ typedef struct MprWaitService {
     MprList         *handlers;              /* List of handlers */
     int             needRecall;             /* A handler needs a recall due to buffered data */
     int             wakeRequested;          /* Wakeup of the wait service has been requested */
-    MprTime         willAwake;              /* Latest time the dispatcher service will next awaken */
 #if MPR_EVENT_EPOLL
     int             epoll;                  /* Kqueue() return descriptor */
-    struct epoll_event *events;                /* Events triggered */
+    struct epoll_event *events;             /* Events triggered */
     int             eventsMax;              /* Max size of events/interest */
     struct MprWaitHandler **handlerMap;     /* Map of fds to handlers */
     int             handlerMax;             /* Size of the handlers array */
@@ -5652,6 +5712,7 @@ extern void mprWaitForIO(MprWaitService *ws, int timeout);
     Handler Flags
  */
 #define MPR_WAIT_RECALL_HANDLER 0x1     /* Must recall the handler asap */
+#define MPR_WAIT_ADDED          0x2     /* Handler added to wait service */
 
 /**
     Wait Handler Service
@@ -5694,6 +5755,7 @@ typedef struct MprWaitHandler {
  */
 extern MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher, MprEventProc proc, 
     void *data);
+extern void mprDestroyWaitHandler(MprWaitHandler *hp);
 
 /**
     Initialize a static wait handler
@@ -5801,8 +5863,8 @@ typedef struct MprSocketProvider {
     void              (*disconnectSocket)(struct MprSocket *socket);
     int               (*flushSocket)(struct MprSocket *socket);
     int               (*listenSocket)(struct MprSocket *socket, cchar *host, int port, int flags);
-    ssize            (*readSocket)(struct MprSocket *socket, void *buf, ssize len);
-    ssize            (*writeSocket)(struct MprSocket *socket, void *buf, ssize len);
+    ssize             (*readSocket)(struct MprSocket *socket, void *buf, ssize len);
+    ssize             (*writeSocket)(struct MprSocket *socket, void *buf, ssize len);
 } MprSocketProvider;
 
 typedef int (*MprSocketPrebind)(struct MprSocket *sock);
@@ -5906,7 +5968,7 @@ typedef struct MprSocket {
  */
 typedef struct MprIOVec {
     char            *start;
-    ssize          len;
+    ssize           len;
 } MprIOVec;
 
 
@@ -6569,15 +6631,10 @@ typedef struct MprCmd {
 #endif
     MprMutex        *mutex;             /* Multithread sync */
     MprCond         *cond;              /* Multithread signalling */
+    //  MOB
+    int lastRead;
 } MprCmd;
 
-
-/**
-    Close the command
-    @param cmd MprCmd object created via mprCreateCmd
-    @ingroup MprCmd
- */
-extern void mprCloseCmd(MprCmd *cmd);
 
 /**
     Close the command channel
@@ -6609,6 +6666,13 @@ extern void mprDisconnectCmd(MprCmd *cmd);
     @ingroup MprCmd
  */
 extern void mprDisableCmdEvents(MprCmd *cmd, int channel);
+
+/**
+    Destroy the command
+    @param cmd MprCmd object created via mprCreateCmd
+    @ingroup MprCmd
+ */
+extern void mprDestroyCmd(MprCmd *cmd);
 
 /**
     Enable command I/O events. This enables events on a given channel.
@@ -6858,6 +6922,7 @@ typedef struct Mpr {
     struct MprWaitService   *waitService;   /**< IO Waiting service object */
 
     struct MprDispatcher    *dispatcher;    /**< Primary dispatcher */
+    struct MprDispatcher    *nonBlock;      /**< Nonblocking dispatcher */
 
     void            *ejsService;            /**< Ejscript service */
     void            *httpService;           /**< Http service object */
@@ -6891,9 +6956,11 @@ extern Mpr *mprGetMpr();
 
 #define MPR_MARK_THREAD         0x1         /**< Start a dedicated marker thread for garbage collection */
 #define MPR_SWEEP_THREAD        0x2         /**< Start a dedicated sweeper thread for garbage collection */
-#define MPR_EVENTS_THREAD       0x4         /**< Invoke garbage collection from within mprServiceEvents */
 #define MPR_USER_EVENTS_THREAD  0x8         /**< User will explicitly manage own mprServiceEvents calls */
+#if UNUSED
+#define MPR_EVENTS_THREAD       0x4         /**< Invoke garbage collection from within mprServiceEvents */
 #define MPR_USER_GC             0x10        /**< User will managed garbage collection explicitly */
+#endif
 
 #if BLD_TUNE == MPR_TUNE_SPEED
     #define MPR_THREAD_PATTERN (MPR_MARK_THREAD | MPR_SWEEP_THREAD)
@@ -6914,19 +6981,17 @@ extern Mpr *mprGetMpr();
     @ingroup Mpr
  */
 extern Mpr *mprCreate(int argc, char **argv, int flags);
-
-//  MOB DOC
-extern int mprHasEventsThread();
+extern void mprDestroy(Mpr *mpr);
 
 /**
     Start the Mpr services
-    @param mpr Mpr object created via mprCreateMpr
+    @param mpr Mpr object created via mprCreate
  */
 extern int mprStart();
 
 /**
     Stop the MPR and shutdown all services. After this call, the MPR cannot be used.
-    @param mpr Mpr object created via mprCreateMpr
+    @param mpr Mpr object created via mprCreate
     @return True if all services have been successfully stopped. Otherwise false.
  */
 extern bool mprStop();
@@ -7115,7 +7180,7 @@ extern int mprWriteRegistry(cchar *key, cchar *name, cchar *value);
 
 /**
     Start an thread dedicated to servicing events. This will create a new thread and invoke mprServiceEvents.
-    @param mpr Mpr object created via mprCreateMpr
+    @param mpr Mpr object created via mprCreate
     @return Zero if successful.
  */
 extern int mprStartEventsThread();

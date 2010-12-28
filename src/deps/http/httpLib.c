@@ -763,10 +763,10 @@ int httpReadGroupFile(Http *http, HttpAuth *auth, char *path)
 
     auth->groupFile = sclone(path);
 
-    if ((file = mprOpen(path, O_RDONLY | O_TEXT, 0444)) == 0) {
+    if ((file = mprOpenFile(path, O_RDONLY | O_TEXT, 0444)) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    while ((buf = mprGets(file, MPR_BUFSIZE, NULL)) != NULL) {
+    while ((buf = mprGetFileString(file, MPR_BUFSIZE, NULL)) != NULL) {
         enabled = stok(buf, " :\t", &tok);
         for (cp = enabled; isspace((int) *cp); cp++) {
             ;
@@ -783,6 +783,7 @@ int httpReadGroupFile(Http *http, HttpAuth *auth, char *path)
         httpAddUsersToGroup(auth, group, users);
     }
     httpUpdateUserAcls(auth);
+    mprCloseFile(file);
     return 0;
 }
 
@@ -795,10 +796,10 @@ int httpReadUserFile(Http *http, HttpAuth *auth, char *path)
 
     auth->userFile = sclone(path);
 
-    if ((file = mprOpen(path, O_RDONLY | O_TEXT, 0444)) == 0) {
+    if ((file = mprOpenFile(path, O_RDONLY | O_TEXT, 0444)) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    while ((buf = mprGets(file, MPR_BUFSIZE, NULL)) != NULL) {
+    while ((buf = mprGetFileString(file, MPR_BUFSIZE, NULL)) != NULL) {
         enabled = stok(buf, " :\t", &tok);
         for (cp = enabled; isspace((int) *cp); cp++) {
             ;
@@ -817,6 +818,7 @@ int httpReadUserFile(Http *http, HttpAuth *auth, char *path)
         httpAddUser(auth, realm, user, password, (*enabled == '0' ? 0 : 1));
     }
     httpUpdateUserAcls(auth);
+    mprCloseFile(file);
     return 0;
 }
 
@@ -830,18 +832,18 @@ int httpWriteUserFile(Http *http, HttpAuth *auth, char *path)
     char            *tempFile;
 
     tempFile = mprGetTempPath(NULL);
-    if ((file = mprOpen(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
+    if ((file = mprOpenFile(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
         mprError("Can't open %s", tempFile);
         return MPR_ERR_CANT_OPEN;
     }
-
     hp = mprGetNextHash(auth->users, 0);
     while (hp) {
         up = (HttpUser*) hp->data;
         mprSprintf(buf, sizeof(buf), "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
-        mprWrite(file, buf, (int) strlen(buf));
+        mprWriteFile(file, buf, (int) strlen(buf));
         hp = mprGetNextHash(auth->users, hp);
     }
+    mprCloseFile(file);
     unlink(path);
     if (rename(tempFile, path) < 0) {
         mprError("Can't create new %s", path);
@@ -860,7 +862,7 @@ int httpWriteGroupFile(Http *http, HttpAuth *auth, char *path)
     int             next;
 
     tempFile = mprGetTempPath(NULL);
-    if ((file = mprOpen(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
+    if ((file = mprOpenFile(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
         mprError("Can't open %s", tempFile);
         return MPR_ERR_CANT_OPEN;
     }
@@ -869,14 +871,14 @@ int httpWriteGroupFile(Http *http, HttpAuth *auth, char *path)
     while (hp) {
         gp = (HttpGroup*) hp->data;
         mprSprintf(buf, sizeof(buf), "%d: %x: %s: ", gp->enabled, gp->acl, gp->name);
-        mprWrite(file, buf, strlen(buf));
+        mprWriteFile(file, buf, strlen(buf));
         for (next = 0; (name = mprGetNextItem(gp->users, &next)) != 0; ) {
-            mprWrite(file, name, strlen(name));
+            mprWriteFile(file, name, strlen(name));
         }
-        mprWrite(file, "\n", 1);
+        mprWriteFile(file, "\n", 1);
         hp = mprGetNextHash(auth->groups, hp);
     }
-
+    mprCloseFile(file);
     unlink(path);
     if (rename(tempFile, path) < 0) {
         mprError("Can't create new %s", path);
@@ -1716,7 +1718,9 @@ static void incomingChunkData(HttpQueue *q, HttpPacket *packet)
             rx->chunkState = HTTP_CHUNK_DATA;
         }
         mprAssert(mprGetBufLength(buf) == 0);
+#if UNUSED
         httpFreePacket(q, packet);
+#endif
         mprLog(5, "chunkFilter: start incoming chunk of %d bytes", rx->chunkSize);
         break;
 
@@ -1880,13 +1884,15 @@ HttpConn *httpCreateClient(Http *http, MprDispatcher *dispatcher)
     HttpConn    *conn;
 
     conn = httpCreateConn(http, NULL);
-    if (dispatcher == NULL) {
-        dispatcher = mprGetDispatcher(http);
-    }
     conn->dispatcher = dispatcher;
-    conn->rx = httpCreateRx(conn);
+#if UNUSED
+    /*
+        Pre-create Tx to store request headers
+     */
     conn->tx = httpCreateTx(conn, NULL);
+    conn->rx = httpCreateRx(conn);
     httpCreatePipeline(conn, NULL, NULL);
+#endif
     return conn;
 }
 
@@ -1929,8 +1935,8 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url)
         port = (uri->secure) ? 443 : 80;
     }
     if (conn && conn->sock) {
-        if (conn->keepAliveCount < 0 || port != conn->port || strcmp(ip, conn->ip) != 0) {
-            httpCloseClientConn(conn);
+        if (--conn->keepAliveCount < 0 || port != conn->port || strcmp(ip, conn->ip) != 0) {
+            httpCloseConn(conn);
         } else {
             mprLog(4, "Http: reusing keep-alive socket on: %s:%d", ip, port);
         }
@@ -2068,14 +2074,17 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     }
     mprLog(4, "Http: client request: %s %s", method, url);
 
+#if UNUSED
     if (conn->sock) {
         /* 
-            Callers requiring retry must call PrepClientConn(conn, HTTP_RETRY_REQUEST) themselves
+            Callers requiring retry must call httpPrepClientConn(conn, HTTP_RETRY_REQUEST) themselves
          */
-        httpPrepClientConn(conn, HTTP_NEW_REQUEST);
+        httpPrepClientConn(conn);
     }
+#endif
     http = conn->http;
     tx = conn->tx;
+    mprAssert(tx);
     mprAssert(conn->state == HTTP_STATE_BEGIN);
     httpSetState(conn, HTTP_STATE_CONNECTED);
     conn->sentCredentials = 0;
@@ -2147,18 +2156,18 @@ static int blockingFileCopy(HttpConn *conn, cchar *path)
     char        buf[MPR_BUFSIZE];
     ssize       bytes;
 
-    file = mprOpen(path, O_RDONLY | O_BINARY, 0);
+    file = mprOpenFile(path, O_RDONLY | O_BINARY, 0);
     if (file == 0) {
         mprError("Can't open %s", path);
         return MPR_ERR_CANT_OPEN;
     }
-    while ((bytes = mprRead(file, buf, sizeof(buf))) > 0) {
+    while ((bytes = mprReadFile(file, buf, sizeof(buf))) > 0) {
         if (httpWriteBlock(conn->writeq, buf, bytes) != bytes) {
-            mprFree(file);
+            mprCloseFile(file);
             return MPR_ERR_CANT_WRITE;
         }
     }
-    mprFree(file);
+    mprCloseFile(file);
     return 0;
 }
 
@@ -2295,6 +2304,36 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server)
 }
 
 
+/*
+    Destroy a connection. This removes the connection from the list of connections. Should GC after that.
+ */
+void httpDestroyConn(HttpConn *conn)
+{
+    if (conn->http) {
+        if (conn->server) {
+            httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_CONN, conn);
+        }
+        if (HTTP_STATE_PARSED <= conn->state && conn->state < HTTP_STATE_COMPLETE) {
+            HTTP_NOTIFY(conn, HTTP_STATE_COMPLETE, 0);
+        }
+        HTTP_NOTIFY(conn, -1, 0);
+        httpRemoveConn(conn->http, conn);
+        httpCloseConn(conn);
+        conn->input = 0;
+        if (conn->rx) {
+            conn->rx->conn = 0;
+            conn->rx = 0;
+        }
+        if (conn->tx) {
+            conn->tx->conn = 0;
+            conn->tx = 0;
+        }
+        conn->http = 0;
+        mprLog(0, "DEBUG: destroy/free conn %p", conn);
+    }
+}
+
+
 static void manageConn(HttpConn *conn, int flags)
 {
     mprAssert(conn);
@@ -2317,7 +2356,6 @@ static void manageConn(HttpConn *conn, int flags)
         if (conn->writeq) {
             httpManageQueue(conn->writeq, flags);
         }
-
         mprMark(conn->input);
         mprMark(conn->context);
         mprMark(conn->boundary);
@@ -2340,36 +2378,13 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->authPassword);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        if (conn->server) {
-            httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_CONN, conn);
-        }
-        if (HTTP_STATE_PARSED <= conn->state && conn->state < HTTP_STATE_COMPLETE) {
-            HTTP_NOTIFY(conn, HTTP_STATE_COMPLETE, 0);
-        }
-        HTTP_NOTIFY(conn, -1, 0);
-        httpRemoveConn(conn->http, conn);
-        if (conn->sock) {
-            httpCloseConn(conn);
-        }
-        conn->input = 0;
-        if (conn->rx) {
-            conn->rx->conn = 0;
-        }
-        if (conn->tx) {
-            conn->tx->conn = 0;
-        }
+        httpDestroyConn(conn);
     }
 }
 
 
-void httpCloseClientConn(HttpConn *conn)
-{
-    httpCloseConn(conn);
-}
-
-
 /*  
-    Close the connection (but don't free). 
+    Close the connection but don't destroy the conn object.
     WARNING: Once this is called, you can't get wait handler events. So handlers must not call this. 
     Rather, handlers should call mprDisconnectSocket that will cause a readable event to come and readEvent can
     then do an orderly close and free the connection structure.
@@ -2414,44 +2429,38 @@ void httpPrepServerConn(HttpConn *conn)
 }
 
 
-void httpPrepClientConn(HttpConn *conn, int retry)
+void httpPrepClientConn(HttpConn *conn)
 {
-    MprHashTable    *headers;
-    HttpTx          *tx;
-
     mprAssert(conn);
 
-    headers = 0;
-    if (conn->state != HTTP_STATE_BEGIN) {
-        if (conn->keepAliveCount >= 0) {
-            /* Eat remaining input incase last request did not consume all data */
-            httpConsumeLastRequest(conn);
-        } else {
-            conn->input = 0;
-        }
-        if (retry && (tx = conn->tx) != 0) {
-            headers = tx->headers;
-        }
-        conn->abortPipeline = 0;
-        conn->canProceed = 1;
-        conn->complete = 0;
-        conn->connError = 0;
-        conn->error = 0;
-        conn->errorMsg = 0;
-        conn->flags = 0;
-        conn->state = 0;
-        conn->writeComplete = 0;
-        httpSetState(conn, HTTP_STATE_BEGIN);
-        httpInitSchedulerQueue(&conn->serviceq);
-        mprFree(conn->tx);
-        mprFree(conn->rx);
-
-        conn->rx = httpCreateRx(conn);
-        conn->tx = httpCreateTx(conn, headers);
-        httpCreatePipeline(conn, NULL, NULL);
-
-        mprAssert(conn->input == 0 || mprIsValid(conn->input));
+    if (conn->keepAliveCount >= 0 && conn->sock) {
+        /* Eat remaining input incase last request did not consume all data */
+        httpConsumeLastRequest(conn);
+    } else {
+        conn->input = 0;
     }
+    conn->abortPipeline = 0;
+    conn->canProceed = 1;
+    conn->complete = 0;
+    conn->connError = 0;
+    conn->error = 0;
+    conn->errorMsg = 0;
+    conn->flags = 0;
+    conn->state = 0;
+    conn->writeComplete = 0;
+
+    if (conn->tx) {
+        conn->tx->conn = 0;
+    }
+    conn->tx = httpCreateTx(conn, NULL);
+    if (conn->rx) {
+        conn->rx->conn = 0;
+    }
+    conn->rx = httpCreateRx(conn);
+
+    httpSetState(conn, HTTP_STATE_BEGIN);
+    httpInitSchedulerQueue(&conn->serviceq);
+    httpCreatePipeline(conn, NULL, NULL);
 }
 
 
@@ -2514,7 +2523,7 @@ void httpEvent(HttpConn *conn, MprEvent *event)
                 It should respond to the "Connection: close" and thus initiate a client-led close. 
                 This reduces TIME_WAIT states on the server. 
              */
-            mprFree(conn);
+            httpDestroyConn(conn);
             return;
         }
     }
@@ -3443,12 +3452,12 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
 
 /************************************************************************/
 /*
- *  Start of file "../src/http.c"
+ *  Start of file "../src/httpService.c"
  */
 /************************************************************************/
 
 /*
-    http.c -- Http service. Includes timer for expired requests.
+    httpService.c -- Http service. Includes timer for expired requests.
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
@@ -3573,6 +3582,12 @@ static void manageHttp(Http *http, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
+}
+
+
+void httpDestroy(Http *http)
+{
+    mprGetMpr()->httpService = NULL;
 }
 
 
@@ -3742,7 +3757,7 @@ static int httpTimer(Http *http, MprEvent *event)
         }
     }
     if (connCount == 0) {
-        mprFree(event);
+        mprRemoveEvent(event);
         http->timer = 0;
     }
     unlock(http);
@@ -3956,7 +3971,7 @@ static void updateCurrentDate(Http *http)
  */
 /************************************************************************/
 /*
- *  End of file "../src/http.c"
+ *  End of file "../src/httpService.c"
  */
 /************************************************************************/
 
@@ -4435,6 +4450,8 @@ static void netOutgoingService(HttpQueue *q)
     conn = q->conn;
     tx = conn->tx;
     conn->lastActivity = conn->http->now;
+    mprAssert(!mprGetCurrentThread()->yielded);
+    mprLog(0, "NET");
     
     if (conn->sock == 0 || conn->writeComplete) {
         return;
@@ -4524,6 +4541,7 @@ static ssize buildNetVec(HttpQueue *q)
 
     conn = q->conn;
     tx = conn->tx;
+    mprAssert(!mprGetCurrentThread()->yielded);
 
     /*
         Examine each packet and accumulate as many packets into the I/O vector as possible. Leave the packets on the queue 
@@ -4629,9 +4647,13 @@ static void freeNetPackets(HttpQueue *q, ssize bytes)
             /*
                 This will remove the packet from the queue and will re-enable upstream disabled queues.
              */
+#if UNUSED
             if ((packet = httpGetPacket(q)) != 0) {
                 httpFreePacket(q, packet);
             }
+#else
+            httpGetPacket(q);
+#endif
         }
         mprAssert(bytes >= 0);
         if (bytes == 0 && (q->first == NULL || !(q->first->flags & HTTP_PACKET_END))) {
@@ -4789,12 +4811,12 @@ static void managePacket(HttpPacket *packet, int flags)
  */
 HttpPacket *httpCreateConnPacket(HttpConn *conn, ssize size)
 {
-    HttpPacket  *packet;
-    HttpRx      *rx;
-
     if (conn->state >= HTTP_STATE_COMPLETE) {
         return httpCreatePacket(size);
     }
+#if UNUSED
+    HttpPacket  *packet;
+    HttpRx      *rx;
     rx = conn->rx;
     if (rx) {
         if ((packet = rx->freePackets) != NULL && size <= packet->content->buflen) {
@@ -4804,13 +4826,14 @@ HttpPacket *httpCreateConnPacket(HttpConn *conn, ssize size)
             return packet;
         }
     }
+#endif
     return httpCreatePacket(size);
 }
 
 
+#if FUTURE
 void httpFreePacket(HttpQueue *q, HttpPacket *packet)
 {
-#if FUTURE
     HttpConn    *conn;
     HttpRx      *rx;
 
@@ -4836,8 +4859,8 @@ void httpFreePacket(HttpQueue *q, HttpPacket *packet)
     packet->flags = 0;
     packet->next = rx->freePackets;
     rx->freePackets = packet;
-#endif
 } 
+#endif
 
 
 HttpPacket *httpCreateDataPacket(ssize size)
@@ -4946,14 +4969,18 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
             old = q->first;
             packet = q->first->next;
             q->first = packet;
+#if UNUSED
             httpFreePacket(q, old);
+#endif
 
         } else {
             /*
                 Aggregate all data into one packet and free the packet.
              */
             httpJoinPacket(q->first, packet);
+#if UNUSED
             httpFreePacket(q, packet);
+#endif
         }
     }
     if (serviceQ && !(q->flags & HTTP_QUEUE_DISABLED))  {
@@ -4988,7 +5015,9 @@ void httpJoinPackets(HttpQueue *q, ssize size)
             if (next->content && (httpGetPacketLength(first) + httpGetPacketLength(next)) < maxPacketSize) {
                 httpJoinPacket(first, next);
                 first->next = next->next;
+#if UNUSED
                 httpFreePacket(q, next);
+#endif
             } else {
                 break;
             }
@@ -5403,6 +5432,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
         }
         mprAddItem(rx->inputPipeline, tx->handler);
     }
+    
     /* Incase a filter changed the handler */
     mprSetItem(tx->outputPipeline, 0, tx->handler);
     if (tx->handler->flags & HTTP_STAGE_THREAD && !conn->threaded) {
@@ -5575,6 +5605,7 @@ bool httpServiceQueues(HttpConn *conn)
         if (q->servicing) {
             q->flags |= HTTP_QUEUE_RESERVICE;
         } else {
+            mprAssert(q->schedulePrev == q->scheduleNext);
             httpServiceQueue(q);
             workDone = 1;
         }
@@ -5800,7 +5831,9 @@ void httpDiscardData(HttpQueue *q, bool removePackets)
                 }
                 q->count -= httpGetPacketLength(packet);
                 mprAssert(q->count >= 0);
+#if UNUSED
                 httpFreePacket(q, packet);
+#endif
                 continue;
             } else {
                 len = httpGetPacketLength(packet);
@@ -6059,6 +6092,8 @@ void httpScheduleQueue(HttpQueue *q)
 
 void httpServiceQueue(HttpQueue *q)
 {
+    q->conn->currentq = q;
+
     if (q->servicing) {
         q->flags |= HTTP_QUEUE_RESERVICE;
     } else {
@@ -6342,7 +6377,9 @@ static void rangeService(HttpQueue *q, HttpRangeProc fill)
             if (endpos < range->start) {
                 /* Packet is before the next range, so discard the entire packet */
                 tx->pos += bytes;
+#if UNUSED
                 httpFreePacket(q, packet);
+#endif
                 break;
 
             } else if (tx->pos > range->end) {
@@ -6609,8 +6646,6 @@ HttpRx *httpCreateRx(HttpConn *conn)
 
 static void manageRx(HttpRx *rx, int flags)
 {
-    HttpPacket  *packet;
-
     if (flags & MPR_MANAGE_MARK) {
         mprMark(rx->method);
         mprMark(rx->uri);
@@ -6640,11 +6675,15 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->alias);
         mprMark(rx->dir);
 
+#if UNUSED
+        HttpPacket  *packet;
         for (packet = rx->freePackets; packet; packet = packet->next) {
             mprMark(packet);
         }
+#endif
 
     } else if (flags & MPR_MANAGE_FREE) {
+        mprLog(0, "DEBUG free RX %p", rx);
         if (rx->conn) {
             rx->conn->rx = 0;
         }
@@ -6652,10 +6691,11 @@ static void manageRx(HttpRx *rx, int flags)
 }
 
 
-void httpDestroyRx(HttpConn *conn)
+void httpDestroyRx(HttpRx *rx)
 {
-    if (conn) {
-        conn->rx = 0;
+    if (rx->conn) {
+        rx->conn->rx = 0;
+        rx->conn = 0;
     }
 }
 
@@ -6720,13 +6760,20 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     if (conn->server && !httpValidateLimits(conn->server, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
         return 0;
     }
+    //  MOB
+    int created = 0;
     if (conn->rx == NULL) {
         conn->rx = httpCreateRx(conn);
         conn->tx = httpCreateTx(conn, NULL);
+        created = 1;
     }
     rx = conn->rx;
     tx = conn->tx;
-
+    
+//  MOB
+    int s = rx->status;
+    rx->status = s;
+    
     if ((len = mprGetBufLength(packet->content)) == 0) {
         return 0;
     }
@@ -7521,8 +7568,11 @@ static bool processRunning(HttpConn *conn)
 {
     int     canProceed;
 
+    canProceed = 0;
+
     if (conn->abortPipeline) {
         httpSetState(conn, HTTP_STATE_COMPLETE);
+        canProceed = 1;
     } else {
         if (conn->server) {
             httpProcessPipeline(conn);
@@ -7557,6 +7607,8 @@ static bool processCompletion(HttpConn *conn)
     httpDestroyPipeline(conn);
 
     if (conn->server) {
+        conn->rx->conn = 0;
+        conn->tx->conn = 0;
         conn->rx = 0;
         conn->tx = 0;
         packet = conn->input;
@@ -7807,11 +7859,7 @@ static void waitHandler(HttpConn *conn, struct MprEvent *event)
 {
     httpCallEvent(conn, event->mask);
     httpEnableConnEvents(conn);
-#if UNUSED
-    if (conn->cond) {
-        mprSignalCond(conn->cond);
-    }
-#endif
+    mprSignalDispatcher(conn->dispatcher);
 }
 
 
@@ -7822,7 +7870,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
 {
     Http        *http;
     MprTime     expire;
-    int         eventMask, remainingTime, addedHandler, saveAsync, flags;
+    int         eventMask, remainingTime, addedHandler, saveAsync;
 
     http = conn->http;
 
@@ -7845,29 +7893,16 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
     } else {
         addedHandler = 0;
     }
-#if UNUSED
-    if (conn->cond == 0) {
-        conn->cond = mprCreateCond();
-    }
-#endif
     http->now = mprGetTime(conn);
     expire = http->now + timeout;
+
     while (!conn->error && conn->state < state && conn->sock && !mprIsSocketEof(conn->sock)) {
         remainingTime = (int) (expire - http->now);
         if (remainingTime <= 0) {
             break;
         }
         mprAssert(!mprSocketHasPendingData(conn->sock));
-#if UNUSED
-        if (0 && mprHasEventsThread()) {
-            mprWaitForCond(conn->cond, remainingTime);
-        } else {
-            mprServiceEvents(dispatcher, remainingTime, MPR_SERVICE_ONE_THING);
-        }
-#else
-        flags = mprHasEventsThread() ? MPR_SERVICE_ONLY : 0;
-        mprServiceEvents(dispatcher, remainingTime, MPR_SERVICE_ONE_THING | flags);
-#endif
+        mprWaitForEvent(conn->dispatcher, remainingTime);
     }
     if (addedHandler && conn->waitHandler.fd >= 0) {
         mprRemoveWaitHandler(&conn->waitHandler);
@@ -8202,7 +8237,7 @@ void httpSendOpen(HttpQueue *q)
     q->packetSize = conn->limits->transmissionBodySize;
 
     if (!(tx->flags & HTTP_TX_NO_BODY)) {
-        tx->file = mprOpen(tx->filename, O_RDONLY | O_BINARY, 0);
+        tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
         if (tx->file == 0) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
         }
@@ -8430,9 +8465,12 @@ static void freeSentPackets(HttpQueue *q, ssize bytes)
             mprAssert(q->count >= 0);
         }
         if (httpGetPacketLength(packet) == 0) {
+#if UNUSED
             if ((packet = httpGetPacket(q)) != 0) {
                 httpFreePacket(q, packet);
             }
+#endif
+            httpGetPacket(q);
         }
         mprAssert(bytes >= 0);
         if (bytes == 0 && (q->first == NULL || !(q->first->flags & HTTP_PACKET_END))) {
@@ -8593,6 +8631,20 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
 }
 
 
+void httpDestroyServer(HttpServer *server)
+{
+    mprLog(4, "Destroy server %s", server->name);
+    if (server->waitHandler.fd >= 0) {
+        mprRemoveWaitHandler(&server->waitHandler);
+    }
+    destroyServerConnections(server);
+    if (server->sock) {
+        mprCloseSocket(server->sock, 0);
+        server->sock = 0;
+    }
+}
+
+
 static int manageServer(HttpServer *server, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
@@ -8612,12 +8664,7 @@ static int manageServer(HttpServer *server, int flags)
         mprMark(server->ssl);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        mprLog(4, "Destroy server %s", server->name);
-        if (server->waitHandler.fd >= 0) {
-            mprRemoveWaitHandler(&server->waitHandler);
-        }
-        destroyServerConnections(server);
-        mprFree(server->sock);
+        httpDestroyServer(server);
     }
     return 0;
 }
@@ -8635,8 +8682,7 @@ static int destroyServerConnections(HttpServer *server)
     for (next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; ) {
         if (conn->server == server) {
             conn->server = 0;
-            mprFree(conn);
-            /* Free will remove from the list */
+            httpDestroyConn(conn);
             next--;
         }
     }
@@ -8684,7 +8730,7 @@ int httpStartServer(HttpServer *server)
 
 void httpStopServer(HttpServer *server)
 {
-    mprFree(server->sock);
+    mprCloseSocket(server->sock, 0);
     server->sock = 0;
 }
 
@@ -8700,6 +8746,7 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
     switch (event) {
     case HTTP_VALIDATE_OPEN_CONN:
         if (server->clientCount >= limits->clientCount) {
+            //  MOB -- will CLOSE_CONN get called and thus set the limit to negative?
             httpConnError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, 
                 "Too many concurrent clients %d/%d", server->clientCount, limits->clientCount);
             return 0;
@@ -8723,6 +8770,7 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
     
     case HTTP_VALIDATE_OPEN_REQUEST:
         if (server->requestCount >= limits->requestCount) {
+            //  MOB -- will CLOSE_REQUEST get called and thus set the limit to negative?
             httpConnError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, 
                 "Too many concurrent requests %d/%d", server->requestCount, limits->requestCount);
             return 0;
@@ -8770,7 +8818,7 @@ HttpConn *httpAcceptConn(HttpServer *server)
 
     if ((conn = httpCreateConn(server->http, server)) == 0) {
         mprError("Can't create connect object. Insufficient memory.");
-        mprFree(sock);
+        mprCloseSocket(sock, 0);
         return 0;
     }
     conn->async = server->async;
@@ -8781,7 +8829,9 @@ HttpConn *httpAcceptConn(HttpServer *server)
     conn->secure = mprIsSocketSecure(sock);
 
     if (!httpValidateLimits(server, HTTP_VALIDATE_OPEN_CONN, conn)) {
-        mprFree(conn);
+        /* Prevent validate limits from */
+        conn->server = 0;
+        httpDestroyConn(conn);
         return 0;
     }
     mprAssert(conn->state == HTTP_STATE_BEGIN);
@@ -8818,7 +8868,6 @@ int httpGetServerAsync(HttpServer *server)
 
 void httpSetDocumentRoot(HttpServer *server, cchar *documentRoot)
 {
-    mprFree(server->documentRoot);
     server->documentRoot = sclone(documentRoot);
 }
 
@@ -8826,7 +8875,6 @@ void httpSetDocumentRoot(HttpServer *server, cchar *documentRoot)
 void httpSetIpAddr(HttpServer *server, cchar *ip, int port)
 {
     if (ip) {
-        mprFree(server->ip);
         server->ip = sclone(ip);
     }
     if (port >= 0) {
@@ -8866,7 +8914,6 @@ void httpSetServerContext(HttpServer *server, void *context)
 
 void httpSetServerLocation(HttpServer *server, HttpLoc *loc)
 {
-    mprFree(loc);
     server->loc = loc;
 }
 
@@ -8885,7 +8932,6 @@ void httpSetServerNotifier(HttpServer *server, HttpNotifier notifier)
 
 void httpSetServerRoot(HttpServer *server, cchar *serverRoot)
 {
-    mprFree(server->serverRoot);
     server->serverRoot = sclone(serverRoot);
 }
 
@@ -9383,6 +9429,9 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
 
     http = conn->http;
 
+    //  MOB - remove headers arg if not used anywhere
+    mprAssert(headers == NULL);
+
     if ((tx = mprAllocObj(HttpTx, manageTx)) == 0) {
         return 0;
     }
@@ -9395,6 +9444,8 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
     tx->chunkSize = -1;
 
     if (headers) {
+        //  MOB - remove headers arg if not used anywhere
+        mprAssert(!headers);
         tx->headers = headers;
     } else {
         tx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
@@ -9403,6 +9454,16 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
     httpInitQueue(conn, &tx->queue[HTTP_QUEUE_TRANS], "TxHead");
     httpInitQueue(conn, &tx->queue[HTTP_QUEUE_RECEIVE], "RxHead");
     return tx;
+}
+
+
+void httpDestroyTx(HttpTx *tx)
+{
+    mprCloseFile(tx->file);
+    if (tx->conn) {
+        tx->conn->tx = 0;
+        tx->conn = 0;
+    }
 }
 
 
@@ -9423,9 +9484,7 @@ static void manageTx(HttpTx *tx, int flags)
         mprMark(tx->extension);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        if (tx->conn) {
-            tx->conn->tx = 0;
-        }
+        httpDestroyTx(tx);
     }
 }
 
@@ -10364,8 +10423,12 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
         /* 
            Quicker to free the buffer so the packets don't have to be joined the next time 
          */
+#if UNUSED
         packet = httpGetPacket(q);
         httpFreePacket(q, packet);
+#else
+        httpGetPacket(q);
+#endif
         mprAssert(q->count >= 0);
     }
 }
@@ -10474,7 +10537,7 @@ static int processContentHeader(HttpQueue *q, char *line)
                 }
                 mprLog(5, "File upload of: %s stored as %s", up->clientFilename, up->tmpPath);
 
-                up->file = mprOpen(up->tmpPath, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
+                up->file = mprOpenFile(up->tmpPath, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
                 if (up->file == 0) {
                     httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't open upload temp file %s", up->tmpPath);
                     return MPR_ERR_BAD_STATE;
@@ -10562,7 +10625,7 @@ static int writeToFile(HttpQueue *q, char *data, ssize len)
         /*  
             File upload. Write the file data.
          */
-        rc = mprWrite(up->file, data, len);
+        rc = mprWriteFile(up->file, data, len);
         if (rc != len) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, 
                 "Can't write to upload temp file %s, rc %d, errno %d", up->tmpPath, rc, mprGetOsError(up));
@@ -10669,7 +10732,6 @@ static int processContentData(HttpQueue *q)
         /*  
             Now have all the data (we've seen the boundary)
          */
-        mprFree(up->file);
         up->file = 0;
         up->clientFilename = 0;
     }

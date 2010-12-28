@@ -65,7 +65,7 @@ static void openFile(HttpQueue *q)
                 Open the file if a body must be sent with the response. The file will be automatically closed when 
                 the response is freed. Cool eh?
              */
-            tx->file = mprOpen(tx->filename, O_RDONLY | O_BINARY, 0);
+            tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
             if (tx->file == 0) {
                 httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
             }
@@ -186,14 +186,12 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
             End of input
          */
         q->queueData = 0;
-        httpFreePacket(q, packet);
         return;
     }
     if (file == 0) {
         /*  
             Not a PUT so just ignore the incoming data.
          */
-        httpFreePacket(q, packet);
         return;
     }
     buf = packet->content;
@@ -201,14 +199,13 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
     mprAssert(len > 0);
 
     range = rx->inputRange;
-    if (range && ((MprOffset) mprSeek(file, SEEK_SET, (long) range->start)) != range->start) {
+    if (range && ((MprOffset) mprSeekFile(file, SEEK_SET, (long) range->start)) != range->start) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't seek to range start to %d", range->start);
     } else {
-        if (mprWrite(file, mprGetBufStart(buf), len) != len) {
+        if (mprWriteFile(file, mprGetBufStart(buf), len) != len) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't PUT to %s", tx->filename);
         }
     }
-    httpFreePacket(q, packet);
 }
 
 
@@ -241,10 +238,10 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
         /*  
             rangeService will have set tx->pos to the next read position already
          */
-        mprSeek(tx->file, SEEK_SET, tx->pos);
+        mprSeekFile(tx->file, SEEK_SET, tx->pos);
     }
 
-    if ((rc = mprRead(tx->file, mprGetBufStart(packet->content), len)) != len) {
+    if ((rc = mprReadFile(tx->file, mprGetBufStart(packet->content), len)) != len) {
         /*  
             As we may have sent some data already to the client, the only thing we can do is abort and hope the client 
             notices the short data.
@@ -282,18 +279,18 @@ static void handlePutRequest(HttpQueue *q)
         /*  
             Open an existing file with fall-back to create
          */
-        file = mprOpen(path, O_BINARY | O_WRONLY, 0644);
+        file = mprOpenFile(path, O_BINARY | O_WRONLY, 0644);
         if (file == 0) {
-            file = mprOpen(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
+            file = mprOpenFile(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
             if (file == 0) {
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create the put URI");
                 return;
             }
         } else {
-            mprSeek(file, SEEK_SET, 0);
+            mprSeekFile(file, SEEK_SET, 0);
         }
     } else {
-        file = mprOpen(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
+        file = mprOpenFile(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
         if (file == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create the put URI");
             return;

@@ -183,8 +183,6 @@ static void manageAngel(void *ptr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(serviceArgs);
-    } else {
-        ;
     }
 }
 
@@ -233,7 +231,6 @@ static void angel()
     mark = mprGetTime();
 
     while (! exiting) {
-        mprCollectGarbage(MPR_GC_FROM_EVENTS);
         if (mprGetElapsedTime(mark) > (3600 * 1000)) {
             mark = mprGetTime();
             restartCount = 0;
@@ -808,7 +805,6 @@ static void angel()
         GetModuleFileName(0, path, sizeof(path));
         dir = mprGetPathDir(path);
         mprSprintf(path, sizeof(path), "\"%s\\%s.exe\"", dir, BLD_PRODUCT);
-        mprFree(dir);
     } else {
         mprSprintf(path, sizeof(path), "\"%s\"", serviceProgram);
     }
@@ -872,8 +868,6 @@ static void angel()
             mprPrintf("%s will be restarted in 10 seconds\n", serviceProgram);
         }
     }
-    mprFree(homeDir);
-    mprFree(serviceArgs);
 }
 
 

@@ -58,7 +58,6 @@ MAIN(testAppWeb, int argc, char *argv[])
             "  Commands specifically for %s\n"
             "    --host ip:port      # Set the default host address for testing\n\n",
             mprGetAppName(mpr));
-        mprFree(mpr);
         exit(3);
     }
     

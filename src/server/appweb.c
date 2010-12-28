@@ -76,7 +76,7 @@ MAIN(appweb, int argc, char **argv)
     scripts = 0;
     workers = -1;
 
-    mpr = mprCreate(argc, argv, MPR_USER_GC);
+    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
 
     argc = mpr->argc;
     argv = mpr->argv;
@@ -99,7 +99,7 @@ MAIN(appweb, int argc, char **argv)
     }
     if (mprStart() < 0) {
         mprUserError("Can't start MPR for %s", mprGetAppName());
-        mprFree(mpr);
+        mprDestroy(mpr);
         return MPR_ERR_CANT_INITIALIZE;
     }
 
@@ -205,18 +205,16 @@ MAIN(appweb, int argc, char **argv)
         mprUserError("Can't start HTTP service, exiting.");
         exit(5);
     }
-
     /*
         Service I/O events until instructed to exit
      */
-    mprServiceEvents(mpr->dispatcher, -1, 0);
+    mprServiceEvents(-1, 0);
 
     mprLog(1, "Exiting ...");
     maStopAppweb(appweb);
     mprLog(1, "Exit complete");
 
-    mprStop(mpr);
-    mprFree(mpr);
+    mprDestroy(mpr);
     return 0;
 }
 
