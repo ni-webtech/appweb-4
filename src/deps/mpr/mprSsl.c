@@ -1173,7 +1173,7 @@ int mprCreateOpenSslModule(bool lazy)
     /*
         Get some random bytes
      */
-    randBuf.now = mprGetTime(ss);
+    randBuf.now = mprGetTime();
     randBuf.pid = getpid();
     RAND_seed((void*) &randBuf, sizeof(randBuf));
 

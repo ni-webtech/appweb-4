@@ -164,7 +164,7 @@ MAIN(ejscMain, int argc, char **argv)
                 err++;
             } else {
                 if (app->modules == 0) {
-                    app->modules = mprCreateList(mpr);
+                    app->modules = mprCreateList(-1, 0);
                 }
                 modules = sclone(argv[++nextArg]);
                 name = stok(modules, " \t,", &tok);
@@ -204,7 +204,7 @@ MAIN(ejscMain, int argc, char **argv)
 
         } else if (strcmp(argp, "--web") == 0) {
             if (app->modules == 0) {
-                app->modules = mprCreateList(mpr);
+                app->modules = mprCreateList(-1, 0);
             }
             require("ejs");
             require("ejs.unix");

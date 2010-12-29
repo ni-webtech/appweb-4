@@ -197,7 +197,7 @@ static bool modifyRequest(HttpConn *conn)
         for (next = 0; (handler = mprGetNextItem(loc->handlers, &next)) != 0; ) {
             if (handler->modify) {
                 if (handlers == NULL) {
-                    handlers = mprCreateList();
+                    handlers = mprCreateList(-1, 0);
                 }
                 if (mprLookupItem(handlers, handler) < 0) {
                     mprAddItem(handlers, handler);

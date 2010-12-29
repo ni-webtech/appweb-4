@@ -26,13 +26,13 @@ MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort
     if ((host = mprAllocObj(MaHost, NULL)) == NULL) {
         return 0;
     }
-    host->aliases = mprCreateList(host);
-    host->dirs = mprCreateList(host);
+    host->aliases = mprCreateList(-1, 0);
+    host->dirs = mprCreateList(-1, 0);
 #if UNUSED
-    host->connections = mprCreateList(host);
+    host->connections = mprCreateList(-1, 0);
 #endif
     host->httpServer = httpServer;
-    host->locations = mprCreateList(host);
+    host->locations = mprCreateList(-1, 0);
 
     if (ipAddrPort) {
         maSetHostIpAddrPort(host, ipAddrPort);
@@ -81,7 +81,7 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
     }
     host->parent = parent;
 #if UNUSED
-    host->connections = mprCreateList(host);
+    host->connections = mprCreateList(-1, 0);
 #endif
     if (ipAddrPort) {
         maSetHostIpAddrPort(host, ipAddrPort);
@@ -384,7 +384,7 @@ int maInsertAlias(MaHost *host, MaAlias *newAlias)
     if (host->parent) {
         host->aliases = mprCloneList(host->parent->aliases);
     } else {
-        host->aliases = mprCreateList();
+        host->aliases = mprCreateList(-1, 0);
     }
 #endif
     /*  
@@ -428,7 +428,7 @@ int maInsertDir(MaHost *host, MaDir *newDir)
     if (host->parent) {
         host->dirs = mprCloneList(host->parent->dirs);
     } else {
-        host->dirs = mprCreateList();
+        host->dirs = mprCreateList(-1, 0);
     }
 #endif
 
@@ -470,7 +470,7 @@ int maAddLocation(MaHost *host, HttpLoc *newLocation)
     if (host->parent) {
         host->locations = mprCloneList(host->parent->locations);
     } else {
-        host->locations = mprCreateList();
+        host->locations = mprCreateList(-1, 0);
     }
 #endif
 
@@ -640,7 +640,7 @@ MaHostAddress *maCreateHostAddress(cchar *ip, int port)
     hostAddress->flags = 0;
     hostAddress->ip = sclone(ip);
     hostAddress->port = port;
-    hostAddress->vhosts = mprCreateList(hostAddress);
+    hostAddress->vhosts = mprCreateList(-1, 0);
     return hostAddress;
 }
 

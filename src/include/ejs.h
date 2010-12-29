@@ -1040,11 +1040,6 @@ typedef struct EjsObj {
             ssize       typeBits: MPR_BITS - 2;
         } bits;
     };
-#if UNUSED
-    uint            builtin : 1;        /**< Part of core */
-    uint            dynamic : 1;        /**< Object may be modified */
-    uint            visited : 1;        /**< Has been traversed */
-#endif
 } EjsObj;
 
 typedef struct EjsString {
@@ -1115,14 +1110,15 @@ typedef struct EjsLoadState {
 typedef void (*EjsLoaderCallback)(struct Ejs *ejs, int kind, ...);
 
 /*
-    Interned unicode string hash
+    Interned string hash shared over all interpreters
  */
 typedef struct EjsIntern {
     EjsString       *buckets;               /**< Hash buckets and references to link chains of strings (unicode) */
+    MprSpin         *spin;                  /**< Multithread sync */
     int             size;                   /**< Size of hash */
     int             count;                  /**< Number of strings */
-    int             accesses;
     int             reuse;
+    uint64          accesses;
 } EjsIntern;
 
 
@@ -1176,7 +1172,7 @@ typedef struct Ejs {
     struct EjsState     *masterState;       /**< Owns the eval stack */
 
     struct EjsService   *service;           /**< Back pointer to the service */
-    EjsIntern           intern;             /**< Interned Unicode string hash */
+    EjsIntern           *intern;            /**< Interned Unicode string hash - shared over all interps */
     cchar               *bootSearch;        /**< Module search when bootstrapping the VM */
     struct EjsArray     *search;            /**< Module load search path */
     cchar               *className;         /**< Name of a specific class to run for a program */
@@ -1271,16 +1267,10 @@ typedef struct Ejs {
     int                 joining;            /**< In Worker.join */
     int                 serializeDepth;     /**< Serialization depth */
     int                 spreadArgs;         /**< Count of spread args */
-    int                 yieldRequired;      /**< GC yield required (don't make bit field) */
-#if UNUSED
     int                 gc;                 /**< GC required (don't make bit field) */
-#endif
     uint                compiling: 1;       /**< Currently executing the compiler */
     uint                empty: 1;           /**< Interpreter will be created empty */
     uint                exiting: 1;         /**< VM should exit */
-#if UNUSED
-    uint                finished: 1;        /**< Interpreter has finished processing and can be destroyed */
-#endif
     uint                freeze: 1;          /**< Freeze GC sync -- don't do a GC sync */
     uint                hasError: 1;        /**< Interpreter has an initialization error */
     uint                initialized: 1;     /**< Interpreter fully initialized and not empty */
@@ -3404,6 +3394,7 @@ typedef struct EjsType {
     struct EjsType  *baseType;                      /**< Base class */
     MprManager      manager;                        /**< Manager callback */
     struct Ejs      *ejs;                           /**< Interpreter reference */
+    MprMutex        *mutex;                         /**< Optional locking for types that require it */
 
     MprList         *implements;                    /**< List of implemented interfaces */
         
@@ -3655,9 +3646,6 @@ extern int      ejsCopyCoreTypes(Ejs *ejs);
 extern int      ejsDefineCoreTypes(Ejs *ejs);
 extern int      ejsDefineErrorTypes(Ejs *ejs);
 extern void     ejsInheritBaseClassNamespaces(Ejs *ejs, EjsType *type, EjsType *baseType);
-#if UNUSED
-extern void     ejsServiceEvents(Ejs *ejs, int timeout, int flags);
-#endif
 extern void     ejsSetSqliteMemCtx(MprThreadLocal *tls);
 extern void     ejsSetSqliteTls(MprThreadLocal *tls);
 
@@ -3735,6 +3723,7 @@ typedef struct EjsService {
     MprList         *vmlist;
     MprHashTable    *nativeModules;
     Http            *http;
+    EjsIntern       intern;             /**< Interned Unicode string hash - shared over all interps */
     MprMutex        *mutex;             /**< Multithread locking */
 } EjsService;
 

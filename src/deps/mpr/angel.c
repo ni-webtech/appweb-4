@@ -15,6 +15,7 @@
 #define RESTART_DELAY (0 * 1000)            /* Default heart beat period (30 sec) */
 #define RESTART_MAX   (100)                 /* Max restarts per hour */
 
+//  MOB -- need App here
 static Mpr          *mpr;                   /* Global MPR context */
 static cchar        *appName;               /* Angel name */
 static int          exiting;                /* Program should exit */
@@ -903,8 +904,7 @@ static int startDispatcher(LPSERVICE_MAIN_FUNCTION svcMain)
 
 
 /*
-    Should be called first thing after the service entry point is called by
-    the service manager
+    Should be called first thing after the service entry point is called by the service manager
  */
 
 static int registerService()

@@ -458,8 +458,7 @@ static void generateNamespaceList(EjsMod *mp)
     /*
         Build a sorted list of namespaces used by classes
      */
-    namespaces = mprCreateList(mp);
-
+    namespaces = mprCreateList(0, 0);
     count = ejsGetPropertyCount(ejs, ejs->global);
     for (slotNum = 0; slotNum < count; slotNum++) {
         trait = ejsGetPropertyTraits(ejs, ejs->global, slotNum);
@@ -611,8 +610,7 @@ static MprList *buildClassList(EjsMod *mp, cchar *namespace)
     /*
         Build a sorted list of classes
      */
-    classes = mprCreateList(mp);
-
+    classes = mprCreateList(0, 0);
     count = ejsGetPropertyCount(ejs, ejs->global);
     for (slotNum = 0; slotNum < count; slotNum++) {
         trait = ejsGetPropertyTraits(ejs, ejs->global, slotNum);
@@ -935,8 +933,7 @@ static void generateClassPage(EjsMod *mp, EjsObj *obj, EjsName name, EjsTrait *t
     }
     generateClassPageHeader(mp, obj, name, trait, doc);
     generatePropertyTable(mp, obj);
-
-    methods = mprCreateList(mp);
+    methods = mprCreateList(0, 0);
     buildMethodList(mp, methods, obj, obj, name);
     if (ejsIsType(ejs, obj)) {
         buildMethodList(mp, methods, (EjsObj*) ((EjsType*) obj)->prototype, obj, name);
@@ -1193,8 +1190,7 @@ static MprList *buildPropertyList(EjsMod *mp, EjsObj *obj, int numInherited)
     int             start, slotNum, numProp;
 
     ejs = mp->ejs;
-
-    list = mprCreateList(mp);
+    list = mprCreateList(0, 0);
 
     /*
         Loop over all the (non-inherited) properties
@@ -1246,8 +1242,7 @@ static MprList *buildGetterList(EjsMod *mp, EjsObj *obj, int numInherited)
     int             slotNum, numProp;
 
     ejs = mp->ejs;
-
-    list = mprCreateList(mp);
+    list = mprCreateList(0, 0);
 
     /*
         Loop over all the (non-inherited) properties
@@ -2019,12 +2014,12 @@ static EjsDoc *crackDoc(EjsMod *mp, EjsDoc *doc, EjsName qname)
         return doc;
     }
     doc->cracked = 1;
-    doc->params = mprCreateList(doc);
-    doc->options = mprCreateList(doc);
-    doc->events = mprCreateList(doc);
-    doc->defaults = mprCreateList(doc);
-    doc->see = mprCreateList(doc);
-    doc->throws = mprCreateList(doc);
+    doc->params = mprCreateList(0, 0);
+    doc->options = mprCreateList(0, 0);
+    doc->events = mprCreateList(0, 0);
+    doc->defaults = mprCreateList(0, 0);
+    doc->see = mprCreateList(0, 0);
+    doc->throws = mprCreateList(0, 0);
 
     str = mprMemdup(doc->docString->value, doc->docString->length);
     if (str == NULL) {
@@ -4183,8 +4178,8 @@ MAIN(ejsmodMain, int argc, char **argv)
         return MPR_ERR_MEMORY;
     }
     app->mod = mp;
-    mp->lstRecords = mprCreateList(mp);
-    mp->blocks = mprCreateList(mp);
+    mp->lstRecords = mprCreateList(0, 0);
+    mp->blocks = mprCreateList(0, 0);
     mp->docDir = ".";
     
     for (nextArg = 1; nextArg < argc; nextArg++) {
@@ -4258,7 +4253,7 @@ MAIN(ejsmodMain, int argc, char **argv)
                 err++;
             } else {
                 if (requiredModules == 0) {
-                    requiredModules = mprCreateList(mpr);
+                    requiredModules = mprCreateList(-1, 0);
                 }
                 modules = sclone(argv[++nextArg]);
                 name = stok(modules, " \t", &tok);
@@ -4288,7 +4283,7 @@ MAIN(ejsmodMain, int argc, char **argv)
         mp->listing = 1;
     }
     if (mp->depends && requiredModules == 0) {
-        requiredModules = mprCreateList(mpr);
+        requiredModules = mprCreateList(-1, 0);
     }
 
     if (err) {
@@ -4405,7 +4400,7 @@ static int process(EjsMod *mp, cchar *output, int argc, char **argv)
             }
         }
         if (mp->depends) {
-            depends = mprCreateList(ejs);
+            depends = mprCreateList(-1, 0);
             for (next = moduleCount; (module = mprGetNextItem(ejs->modules, &next)) != 0; ) {
                 getDepends(ejs, depends, module);
             }

@@ -73,8 +73,8 @@ static void manageAuth(HttpAuth *auth, int flags)
         mprMark(auth->qop);
         mprMark(auth->userFile);
         mprMark(auth->groupFile);
-        mprMarkHash(auth->users);
-        mprMarkHash(auth->groups);
+        mprMark(auth->users);
+        mprMark(auth->groups);
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
@@ -388,7 +388,7 @@ HttpGroup *httpCreateGroup(HttpAuth *auth, cchar *name, HttpAcl acl, bool enable
     gp->acl = acl;
     gp->name = sclone(name);
     gp->enabled = enabled;
-    gp->users = mprCreateList(gp);
+    gp->users = mprCreateList(0, 0);
     return gp;
 }
 
@@ -397,7 +397,7 @@ static void manageGroup(HttpGroup *group, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(group->name);
-        mprMarkList(group->users);
+        mprMark(group->users);
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
@@ -2000,7 +2000,7 @@ static int setClientHeaders(HttpConn *conn)
             conn->tx = 0;
             return MPR_ERR_CANT_CREATE;
         }
-        conn->authCnonce = mprAsprintf("%s:%s:%x", http->secret, conn->authRealm, (uint) mprGetTime(conn)); 
+        conn->authCnonce = mprAsprintf("%s:%s:%x", http->secret, conn->authRealm, (uint) mprGetTime()); 
 
         mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
         len = strlen(a1Buf);
@@ -2287,7 +2287,7 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server)
     conn->port = -1;
     conn->retries = HTTP_RETRIES;
     conn->server = server;
-    conn->time = mprGetTime(conn);
+    conn->time = mprGetTime();
     conn->lastActivity = conn->time;
     conn->callback = (HttpCallback) httpEvent;
     conn->callbackArg = conn;
@@ -2329,7 +2329,7 @@ void httpDestroyConn(HttpConn *conn)
             conn->tx = 0;
         }
         conn->http = 0;
-        mprLog(0, "DEBUG: destroy/free conn %p", conn);
+        // mprLog(0, "DEBUG: destroy/free conn %p", conn);
     }
 }
 
@@ -2473,7 +2473,7 @@ void httpConsumeLastRequest(HttpConn *conn)
     if (!conn->sock || conn->state < HTTP_STATE_FIRST) {
         return;
     }
-    mark = mprGetTime(conn);
+    mark = mprGetTime();
     requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
     while (!httpIsEof(conn) && mprGetRemainingTime(mark, requestTimeout) > 0) {
         if (httpRead(conn, junk, sizeof(junk)) <= 0) {
@@ -2491,7 +2491,7 @@ void httpCallEvent(HttpConn *conn, int mask)
     MprEvent    e;
 
     e.mask = mask;
-    e.timestamp = mprGetTime(conn);
+    e.timestamp = mprGetTime();
     httpEvent(conn, &e);
 }
 
@@ -3536,8 +3536,8 @@ Http *httpCreate()
     mprGetMpr()->httpService = http;
     http->protocol = "HTTP/1.1";
     http->mutex = mprCreateLock(http);
-    http->connections = mprCreateList(http);
-    http->stages = mprCreateHash(31, 0);
+    http->connections = mprCreateList(-1, 0);
+    http->stages = mprCreateHash(-1, 0);
 
     updateCurrentDate(http);
     http->statusCodes = mprCreateHash(41, 0);
@@ -3564,11 +3564,9 @@ Http *httpCreate()
 static void manageHttp(Http *http, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMarkList(http->connections);
-
-        //  MOB -- make these eternal?
-        mprMarkHash(http->stages);
-        mprMarkHash(http->mimeTypes);
+        mprMark(http->connections);
+        mprMark(http->stages);
+        mprMark(http->mimeTypes);
         mprMark(http->statusCodes);
         mprMark(http->clientLimits);
         mprMark(http->serverLimits);
@@ -3769,7 +3767,7 @@ void httpAddConn(Http *http, HttpConn *conn)
 {
     lock(http);
     mprAddItem(http->connections, conn);
-    conn->started = mprGetTime(conn);
+    conn->started = mprGetTime();
     conn->seqno = http->connCount++;
     if ((http->now + MPR_TICKS_PER_SEC) < conn->started) {
         updateCurrentDate(http);
@@ -3794,7 +3792,7 @@ int httpCreateSecret(Http *http)
 
     if (mprGetRandomBytes(bytes, sizeof(bytes), 0) < 0) {
         mprError("Can't get sufficient random data for secure SSL operation. If SSL is used, it may not be secure.");
-        now = mprGetTime(http); 
+        now = mprGetTime(); 
         pid = (int) getpid();
         cp = (char*) &now;
         bp = bytes;
@@ -4006,11 +4004,11 @@ HttpLoc *httpCreateLocation(Http *http)
     }
     loc->http = http;
     loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
-    loc->handlers = mprCreateList(loc);
+    loc->handlers = mprCreateList(-1, 0);
     loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
     loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
-    loc->inputStages = mprCreateList();
-    loc->outputStages = mprCreateList();
+    loc->inputStages = mprCreateList(-1, 0);
+    loc->outputStages = mprCreateList(-1, 0);
     loc->prefix = sclone("");
     loc->prefixLen = (int) strlen(loc->prefix);
     loc->auth = httpCreateAuth(0);
@@ -4023,12 +4021,12 @@ static void manageLoc(HttpLoc *loc, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(loc->auth);
         mprMark(loc->prefix);
-        mprMarkHash(loc->extensions);
-        mprMarkHash(loc->expires);
-        mprMarkList(loc->handlers);
-        mprMarkList(loc->inputStages);
-        mprMarkList(loc->outputStages);
-        mprMarkHash(loc->errorDocuments);
+        mprMark(loc->extensions);
+        mprMark(loc->expires);
+        mprMark(loc->handlers);
+        mprMark(loc->inputStages);
+        mprMark(loc->outputStages);
+        mprMark(loc->errorDocuments);
         mprMark(loc->context);
         mprMark(loc->uploadDir);
         mprMark(loc->searchPath);
@@ -4248,10 +4246,10 @@ void httpAddLocationExpiry(HttpLoc *loc, MprTime when, cchar *mimeTypes)
 void httpClearStages(HttpLoc *loc, int direction)
 {
     if (direction & HTTP_STAGE_INCOMING) {
-        loc->inputStages = mprCreateList(loc);
+        loc->inputStages = mprCreateList(-1, 0);
     }
     if (direction & HTTP_STAGE_OUTGOING) {
-        loc->outputStages = mprCreateList(loc);
+        loc->outputStages = mprCreateList(-1, 0);
     }
 }
 
@@ -4282,18 +4280,18 @@ void httpResetPipeline(HttpLoc *loc)
         loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
         loc->expires = mprCreateHash(0, 0);
         loc->extensions = mprCreateHash(0, 0);
-        loc->handlers = mprCreateList(loc);
-        loc->inputStages = mprCreateList(loc);
-        loc->inputStages = mprCreateList(loc);
+        loc->handlers = mprCreateList(-1, 0);
+        loc->inputStages = mprCreateList(-1, 0);
+        loc->inputStages = mprCreateList(-1, 0);
     }
-    loc->outputStages = mprCreateList(loc);
+    loc->outputStages = mprCreateList(-1, 0);
 }
 
 
 void httpResetHandlers(HttpLoc *loc)
 {
     graduate(loc);
-    loc->handlers = mprCreateList(loc);
+    loc->handlers = mprCreateList(-1, 0);
 }
 
 
@@ -5386,7 +5384,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
 
     loc = (loc) ? loc : http->clientLocation;
 
-    tx->outputPipeline = mprCreateList(tx);
+    tx->outputPipeline = mprCreateList(-1, 0);
     tx->handler = proposedHandler ? proposedHandler : http->passHandler;
 
     if (tx->handler) {
@@ -5420,7 +5418,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
         Create the receive pipeline for this request
      */
     if (rx->needInputPipeline) {
-        rx->inputPipeline = mprCreateList(tx);
+        rx->inputPipeline = mprCreateList(-1, 0);
         mprAddItem(rx->inputPipeline, http->netConnector);
         if (loc) {
             for (next = 0; (filter = mprGetNextItem(loc->inputStages, &next)) != 0; ) {
@@ -6651,18 +6649,18 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->uri);
         mprMark(rx->scriptName);
         mprMark(rx->pathInfo);
-        mprMarkList(rx->etags);
+        mprMark(rx->etags);
         mprMark(rx->headerPacket);
-        mprMarkHash(rx->headers);
-        mprMarkList(rx->inputPipeline);
+        mprMark(rx->headers);
+        mprMark(rx->inputPipeline);
         mprMark(rx->loc);
         mprMark(rx->parsedUri);
-        mprMarkHash(rx->requestData);
+        mprMark(rx->requestData);
         mprMark(rx->pathTranslated);
         mprMark(rx->pragma);
         mprMark(rx->redirect);
         mprMark(rx->referrer);
-        mprMarkHash(rx->formVars);
+        mprMark(rx->formVars);
         mprMark(rx->ranges);
         mprMark(rx->inputRange);
         mprMark(rx->auth);
@@ -6670,7 +6668,7 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->authDetails);
         mprMark(rx->authStale);
         mprMark(rx->authType);
-        mprMarkHash(rx->files);
+        mprMark(rx->files);
         mprMark(rx->uploadDir);
         mprMark(rx->alias);
         mprMark(rx->dir);
@@ -6754,6 +6752,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     ssize       len;
     char        *start, *end;
 
+int created = 0;
     if (packet == NULL) {
         return 0;
     }
@@ -6761,7 +6760,6 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         return 0;
     }
     //  MOB
-    int created = 0;
     if (conn->rx == NULL) {
         conn->rx = httpCreateRx(conn);
         conn->tx = httpCreateTx(conn, NULL);
@@ -7893,7 +7891,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
     } else {
         addedHandler = 0;
     }
-    http->now = mprGetTime(conn);
+    http->now = mprGetTime();
     expire = http->now + timeout;
 
     while (!conn->error && conn->state < state && conn->sock && !mprIsSocketEof(conn->sock)) {
@@ -7935,7 +7933,7 @@ static void addMatchEtag(HttpConn *conn, char *etag)
 
     rx = conn->rx;
     if (rx->etags == 0) {
-        rx->etags = mprCreateList(rx);
+        rx->etags = mprCreateList(-1, 0);
     }
     mprAddItem(rx->etags, etag);
 }
@@ -8842,7 +8840,7 @@ HttpConn *httpAcceptConn(HttpServer *server)
             conn->ip, conn->port, conn->sock->ip, conn->sock->port);
     }
     e.mask = MPR_READABLE;
-    e.timestamp = mprGetTime(server);
+    e.timestamp = mprGetTime();
     (conn->callback)(conn->callbackArg, &e);
     return conn;
 }
@@ -9118,7 +9116,7 @@ static void manageStage(HttpStage *stage, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(stage->name);
         mprMark(stage->stageData);
-        mprMarkHash(stage->extensions);
+        mprMark(stage->extensions);
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
@@ -9227,8 +9225,8 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags)
 void httpManageTrace(HttpTrace *trace, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMarkHash(trace->include);
-        mprMarkHash(trace->exclude);
+        mprMark(trace->include);
+        mprMark(trace->exclude);
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
@@ -9941,7 +9939,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
             expires = PTOL(mprLookupHash(rx->loc->expires, ""));
         }
         if (expires) {
-            mprDecodeUniversalTime(&tm, mprGetTime(conn) + (expires * MPR_TICKS_PER_SEC));
+            mprDecodeUniversalTime(&tm, mprGetTime() + (expires * MPR_TICKS_PER_SEC));
             hdr = mprFormatTime(MPR_HTTP_DATE, &tm);
             httpAddHeader(conn, "Cache-Control", "max-age=%d", expires);
             httpAddHeader(conn, "Expires", "%s", hdr);

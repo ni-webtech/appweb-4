@@ -139,9 +139,9 @@ MAIN(httpMain, int argc, char *argv[])
 static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMarkList(app->files);
-        mprMarkList(app->formData);
-        mprMarkList(app->headers);
+        mprMark(app->files);
+        mprMark(app->formData);
+        mprMark(app->headers);
         mprMark(app->bodyData);
         mprMark(app->http);
         mprMark(app->password);
@@ -167,7 +167,7 @@ static void initSettings()
     app->success = 1;
     app->timeout = 60;
     app->workers = 1;            
-    app->headers = mprCreateList();
+    app->headers = mprCreateList(0, 0);
     app->mutex = mprCreateLock();
 #if WIN
     _setmode(fileno(stdout), O_BINARY);
@@ -236,7 +236,7 @@ static bool parseArgs(int argc, char **argv)
                 return 0;
             } else {
                 if (app->formData == 0) {
-                    app->formData = mprCreateList();
+                    app->formData = mprCreateList(-1, 0);
                 }
                 addFormVars(argv[++nextArg]);
             }
@@ -421,7 +421,7 @@ static bool parseArgs(int argc, char **argv)
         /*
             Files present on command line
          */
-        app->files = mprCreateList();
+        app->files = mprCreateList(argc, 0);
         for (i = 0; i < argc; i++) {
             mprAddItem(app->files, argv[i]);
         }
@@ -552,7 +552,7 @@ static int processThread(HttpConn *conn, MprEvent *event)
                 } else {
                     url = app->target;
                 }
-                app->files = mprCreateList(conn);
+                app->files = mprCreateList(-1, -0);
                 mprAddItem(app->files, path);
                 url = resolveUrl(conn, url);
                 if (app->verbose) {

@@ -213,13 +213,10 @@ static void rotateAccessLog(MaHost *host)
         Rotate logs when full
      */
     if (mprGetPathInfo(host->logPath, &info) == 0 && info.size > MA_MAX_ACCESS_LOG) {
-
-        when = mprGetTime(host);
+        when = mprGetTime();
         mprDecodeUniversalTime(&tm, when);
-
         mprSprintf(bak, sizeof(bak), "%s-%02d-%02d-%02d-%02d:%02d:%02d", host->logPath, 
             tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
-
         rename(host->logPath, bak);
         unlink(host->logPath);
         host->accessLog = mprOpenFile(host->logPath, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
@@ -308,7 +305,7 @@ void maLogRequest(HttpConn *conn)
 
         case 't':                           /* Time */
             mprPutCharToBuf(buf, '[');
-            timeText = mprFormatLocalTime(mprGetTime(conn));
+            timeText = mprFormatLocalTime(mprGetTime());
             mprPutStringToBuf(buf, timeText);
             mprPutCharToBuf(buf, ']');
             break;

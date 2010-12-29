@@ -27,7 +27,7 @@ MaAppweb *maCreateAppweb()
     if ((appweb = mprAllocObj(MaAppweb, appwebDestructor)) == NULL) {
         return 0;
     }
-    appweb->servers = mprCreateList(appweb);
+    appweb->servers = mprCreateList(-1, 0);
     appweb->http = http = httpCreate(appweb);
     httpSetContext(http, appweb);
     maGetUserGroup(appweb);
@@ -89,7 +89,7 @@ int maStartAppweb(MaAppweb *appweb)
             return MPR_ERR_CANT_INITIALIZE;
         }
     }
-    timeText = mprFormatLocalTime(mprGetTime(appweb));
+    timeText = mprFormatLocalTime(mprGetTime());
     mprLog(1, "HTTP services Started at %s with max %d threads", timeText, mprGetMaxWorkers(appweb));
     return 0;
 }
@@ -122,9 +122,9 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, 
     if ((server = mprAllocObj(MaServer, NULL)) == NULL) {
         return 0;
     }
-    server->hosts = mprCreateList(server);
-    server->httpServers = mprCreateList(server);
-    server->hostAddresses = mprCreateList(server);
+    server->hosts = mprCreateList(-1, 0);
+    server->httpServers = mprCreateList(-1, 0);
+    server->hostAddresses = mprCreateList(-1, 0);
     server->name = sclone(name);
     server->appweb = appweb;
     server->http = appweb->http;

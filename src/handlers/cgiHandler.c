@@ -247,7 +247,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
 
     cmd = (MprCmd*) q->pair->queueData;
     mprAssert(cmd);
-    cmd->lastActivity = mprGetTime(cmd);
+    cmd->lastActivity = mprGetTime();
 
     if (httpGetPacketLength(packet) == 0) {
         /* End of input */
@@ -374,7 +374,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     mprLog(6, "CGI callback channel %d", channel);
     
     tx = conn->tx;
-    cmd->lastActivity = mprGetTime(cmd);
+    cmd->lastActivity = mprGetTime();
     q = conn->tx->queue[HTTP_QUEUE_TRANS].nextQ;
 
     switch (channel) {

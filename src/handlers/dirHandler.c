@@ -377,9 +377,8 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
     newPath = mprJoinPath(path, ep->name);
 
     if (mprGetPathInfo(newPath, &info) < 0) {
-        when = mprGetTime(q);
+        when = mprGetTime();
         isDir = 0;
-
     } else {
         isDir = info.isDir ? 1 : 0;
         when = (MprTime) info.mtime * MPR_TICKS_PER_SEC;

@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     err = 0;
     prefix = "";
     romName = "defaultRomFiles";
-    files = mprCreateList(mpr);
+    files = mprCreateList(-1, 0);
 
     for (nextArg = 1; nextArg < argc; nextArg++) {
         argp = argv[nextArg];

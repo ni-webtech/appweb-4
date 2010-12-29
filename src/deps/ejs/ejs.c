@@ -66,7 +66,7 @@ MAIN(ejsMain, int argc, char **argv)
     /*  
         Initialize Multithreaded Portable Runtime (MPR)
      */
-    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
+    mpr = mprCreate(argc, argv, MPR_OWN_GC);
     mprSetAppName(argv[0], 0, 0);
     setupSignals();
     app = mprAllocObj(App, manageApp);
@@ -76,7 +76,7 @@ MAIN(ejsMain, int argc, char **argv)
         mprError("Can't start mpr services");
         return EJS_ERR;
     }
-
+    
     err = 0;
     className = 0;
     cmd = 0;
@@ -90,7 +90,7 @@ MAIN(ejsMain, int argc, char **argv)
     warnLevel = 1;
     optimizeLevel = 9;
     strict = 0;
-    app->files = mprCreateList(mpr);
+    app->files = mprCreateList(-1, 0);
 
     for (nextArg = 1; nextArg < argc; nextArg++) {
         argp = argv[nextArg];
@@ -158,7 +158,7 @@ MAIN(ejsMain, int argc, char **argv)
                 extraFiles = sclone(argv[++nextArg]);
                 name = stok(extraFiles, " \t", &tok);
                 while (name != NULL) {
-                    mprAddItem(app->files, name);
+                    mprAddItem(app->files, sclone(name));
                     name = stok(NULL, " \t", &tok);
                 }
             }
@@ -218,7 +218,7 @@ MAIN(ejsMain, int argc, char **argv)
                 err++;
             } else {
                 if (app->modules == 0) {
-                    app->modules = mprCreateList(mpr);
+                    app->modules = mprCreateList(-1, 0);
                 }
                 modules = sclone(argv[++nextArg]);
                 name = stok(modules, " \t", &tok);
@@ -308,7 +308,7 @@ MAIN(ejsMain, int argc, char **argv)
     ecSetStrictMode(cp, strict);
 
     if (nextArg < argc) {
-        mprAddItem(app->files, argv[nextArg]);
+        mprAddItem(app->files, sclone(argv[nextArg]));
     }
     if (cmd) {
         if (interpretCommands(cp, cmd) < 0) {

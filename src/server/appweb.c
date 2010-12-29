@@ -130,7 +130,7 @@ MAIN(appweb, int argc, char **argv)
                 usageError();
             }
             if (scripts == 0) {
-                scripts = mprCreateList();
+                scripts = mprCreateList(-1, 0);
             }
             mprAddItem(scripts, argv[++argind]);
 
@@ -276,7 +276,7 @@ static MaAppweb *initialize(cchar *ip, int port, MprList *scripts, int workers)
 #if BLD_FEATURE_EJS
 #if BLD_EJS_PRODUCT && UNUSED
     if (scripts == 0) {
-        scripts = mprCreateList();
+        scripts = mprCreateList(-1, 0);
         mprAddItem(scripts, MA_EJS_STARTUP);
     }
 #endif
