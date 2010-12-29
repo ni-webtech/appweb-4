@@ -18201,7 +18201,7 @@ static EjsObj *g_printLine(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
                 return 0;
             }
             data = ejsToMulti(ejs, s);
-            rc = write(1, data, (int) strlen(data));
+            rc = write(1, (char*) data, (int) strlen(data));
             if ((i+1) < count) {
                 rc = write(1, " ", 1);
             }

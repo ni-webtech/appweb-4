@@ -1776,11 +1776,11 @@ typedef struct MprMem {
 
         prior | last << 1 | hasManager
      */
-#if DEBUG_IDE
+#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
     union {
 #endif
         size_t      field1;                     /**< Pointer to adjacent, prior block in memory with last, manager fields */
-#if DEBUG_IDE
+#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
         struct {
             uint    hasManager: 1;
             uint    last: 1;
@@ -1795,11 +1795,11 @@ typedef struct MprMem {
 
         gen/2 << 30 | isFree << 29 | size/29 | mark/2
      */ 
-#if DEBUG_IDE
+#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
     union {
 #endif
         size_t      field2;                   /**< Internal block length including header with gen and mark fields */
-#if DEBUG_IDE
+#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
         struct {
             uint    mark: 2;
             ssize   size: MPR_BITS - 5;
