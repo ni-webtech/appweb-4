@@ -1017,29 +1017,37 @@ typedef struct EjsLoc {
 //  MOB -- reorder this file
 
 
+#define EJS_SHIFT_VISITED       0
+#define EJS_SHIFT_DYNAMIC       1
+#define EJS_SHIFT_TYPE          0
+
 #define EJS_MASK_VISITED        0x1
 #define EJS_MASK_DYNAMIC        0x2
 #define EJS_MASK_TYPE           ~(EJS_MASK_VISITED | EJS_MASK_DYNAMIC)
 
-#define DYNAMIC(vp)             (((ssize) (((EjsObj*) vp)->type)) & EJS_MASK_DYNAMIC)
-#define VISITED(vp)             (((ssize) (((EjsObj*) vp)->type)) & EJS_MASK_VISITED)
-#define TYPE(vp)                ((EjsType*) (((ssize) (((EjsObj*) vp)->type)) & EJS_MASK_TYPE))
+#define DYNAMIC(vp)             ((((EjsObj*) vp)->xtype) & EJS_MASK_DYNAMIC)
+#define VISITED(vp)             ((((EjsObj*) vp)->xtype) & EJS_MASK_VISITED)
+#define TYPE(vp)                ((EjsType*) ((((EjsObj*) vp)->xtype) & EJS_MASK_TYPE))
 
-#define SET_VISITED(vp, value)  ((EjsObj*) vp)->bits.visited = value
-#define SET_DYNAMIC(vp, value)  ((EjsObj*) vp)->bits.dynamic = value
-#define SET_TYPE(vp, t)         ((EjsObj*) vp)->type = t
+#define SET_VISITED(vp, value)  ((EjsObj*) vp)->xtype = ((value) << EJS_SHIFT_VISITED) | (((EjsObj*) vp)->xtype & ~EJS_MASK_VISITED)
+#define SET_DYNAMIC(vp, value)  ((EjsObj*) vp)->xtype = (((size_t) value) << EJS_SHIFT_DYNAMIC) | (((EjsObj*) vp)->xtype & ~EJS_MASK_DYNAMIC)
+#define SET_TYPE(vp, value)     ((EjsObj*) vp)->xtype = (((size_t) value) << EJS_SHIFT_TYPE) | (((EjsObj*) vp)->xtype & ~EJS_MASK_TYPE)
 
 typedef void EjsAny;
 
 typedef struct EjsObj {
+#if DEBUG_IDE
     union {
-        struct EjsType  *type;
+#endif
+        ssize           xtype;
+#if DEBUG_IDE
         struct {
             uint        visited : 1;        /* Has been traversed */
             uint        dynamic : 1;        /* Object may be modified */
             ssize       typeBits: MPR_BITS - 2;
         } bits;
     };
+#endif
 } EjsObj;
 
 typedef struct EjsString {

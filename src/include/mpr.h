@@ -1776,14 +1776,18 @@ typedef struct MprMem {
 
         prior | last << 1 | hasManager
      */
+#if DEBUG_IDE
     union {
+#endif
         size_t      field1;                     /**< Pointer to adjacent, prior block in memory with last, manager fields */
+#if DEBUG_IDE
         struct {
             uint    hasManager: 1;
             uint    last: 1;
             ssize   pbits: MPR_BITS - 2;
         } bits1;
     };
+#endif
 
     /*
         Access to these fields may be done while unlocked as only the marker updates active blocks and does so in a 
@@ -1791,8 +1795,11 @@ typedef struct MprMem {
 
         gen/2 << 30 | isFree << 29 | size/29 | mark/2
      */ 
+#if DEBUG_IDE
     union {
+#endif
         size_t      field2;                   /**< Internal block length including header with gen and mark fields */
+#if DEBUG_IDE
         struct {
             uint    mark: 2;
             ssize   size: MPR_BITS - 5;
@@ -1800,6 +1807,7 @@ typedef struct MprMem {
             uint    gen: 2;
         } bits2;
     };
+#endif
 #if BLD_MEMORY_DEBUG
     uint            magic;                      /**< Unique signature */
     uint            seqno;                      /**< Allocation sequence number */

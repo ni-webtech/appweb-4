@@ -2623,7 +2623,7 @@ typedef struct  HttpServer {
     HttpLoc         *loc;                   /**< Default location block */
     HttpLimits      *limits;                /**< Server resource limits */
     MprWaitHandler  waitHandler;            /**< I/O wait handler */
-    MprHashTable    *clients;               /**< Table of active client IPs */
+    MprHashTable    *clientLoad;            /**< Table of active client IPs and connection counts */
     char            *serverRoot;            /**< Directory for server configuration */
     char            *documentRoot;          /**< Directory for documents */
     char            *name;                  /**< Published name of the server (ServerName directive) */

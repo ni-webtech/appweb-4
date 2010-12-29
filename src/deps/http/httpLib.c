@@ -3540,7 +3540,7 @@ Http *httpCreate()
     http->stages = mprCreateHash(-1, 0);
 
     updateCurrentDate(http);
-    http->statusCodes = mprCreateHash(41, 0);
+    http->statusCodes = mprCreateHash(41, MPR_HASH_STATIC_VALUES | MPR_HASH_STATIC_KEYS);
     for (code = HttpStatusCodes; code->code; code++) {
         mprAddHash(http->statusCodes, code->codeString, code);
     }
@@ -3577,6 +3577,8 @@ static void manageHttp(Http *http, int flags)
         mprMark(http->secret);
         mprMark(http->defaultHost);
         mprMark(http->proxyHost);
+        mprMark(http->currentDate);
+        mprMark(http->expiresDate);
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
@@ -3909,25 +3911,18 @@ void httpSetProxy(Http *http, cchar *host, int port)
 
 static void updateCurrentDate(Http *http)
 {
-    static char date[2][64];
-    static char expires[2][64];
-    static int  dateSelect, expiresSelect;
-    struct tm   tm;
-    char        *ds;
+    struct tm       tm;
+    static MprTime  recalcExpires = 0;
 
     lock(http);
     http->now = mprGetTime();
-    ds = httpGetDateString(NULL);
-    scopy(date[dateSelect], sizeof(date[0]) - 1, ds);
-    http->currentDate = date[dateSelect];
-    dateSelect = !dateSelect;
+    http->currentDate = httpGetDateString(NULL);
 
-    //  MOB - check. Could do this once per minute
-    mprDecodeUniversalTime(&tm, http->now + (86400 * 1000));
-    ds = mprFormatTime(HTTP_DATE_FORMAT, &tm);
-    scopy(expires[expiresSelect], sizeof(expires[0]) - 1, ds);
-    http->expiresDate = expires[expiresSelect];
-    expiresSelect = !expiresSelect;
+    if (http->expiresDate == 0 || recalcExpires < (http->now / (60 * 1000))) {
+        mprDecodeUniversalTime(&tm, http->now + (86400 * 1000));
+        http->expiresDate = mprFormatTime(HTTP_DATE_FORMAT, &tm);
+        recalcExpires = http->now / (60 * 1000);
+    }
     unlock(http);
 }
 
@@ -4449,7 +4444,6 @@ static void netOutgoingService(HttpQueue *q)
     tx = conn->tx;
     conn->lastActivity = conn->http->now;
     mprAssert(!mprGetCurrentThread()->yielded);
-    mprLog(0, "NET");
     
     if (conn->sock == 0 || conn->writeComplete) {
         return;
@@ -5449,12 +5443,10 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     for (next = 0; (stage = mprGetNextItem(rx->inputPipeline, &next)) != 0; ) {
         q = httpCreateQueue(conn, stage, HTTP_QUEUE_RECEIVE, q);
     }
-
     setEnvironment(conn);
 
     conn->writeq = conn->tx->queue[HTTP_QUEUE_TRANS].nextQ;
     conn->readq = conn->tx->queue[HTTP_QUEUE_RECEIVE].prevQ;
-
     httpPutForService(conn->writeq, httpCreateHeaderPacket(), 0);
 
     /*  
@@ -5767,15 +5759,16 @@ void httpManageQueue(HttpQueue *q, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(q->first);
         mprMark(q->queueData);
+        if (q->nextQ && q->nextQ->stage) {
+            /* Not a queue head */
+            mprMark(q->nextQ);
+        }
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
 
-/*  
-    Initialize a bare queue. Used for dummy heads.
- */
 void httpInitQueue(HttpConn *conn, HttpQueue *q, cchar *name)
 {
     q->conn = conn;
@@ -5938,6 +5931,7 @@ void httpInitSchedulerQueue(HttpQueue *q)
 
 /*  
     Insert a queue after the previous element
+    MOB - rename append
  */
 void httpInsertQueue(HttpQueue *prev, HttpQueue *q)
 {
@@ -6767,10 +6761,6 @@ int created = 0;
     }
     rx = conn->rx;
     tx = conn->tx;
-    
-//  MOB
-    int s = rx->status;
-    rx->status = s;
     
     if ((len = mprGetBufLength(packet->content)) == 0) {
         return 0;
@@ -8612,7 +8602,7 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
     if ((server = mprAllocObj(HttpServer, manageServer)) == 0) {
         return 0;
     }
-    server->clients = mprCreateHash(HTTP_CLIENTS_HASH, 0);
+    server->clientLoad = mprCreateHash(HTTP_CLIENTS_HASH, MPR_HASH_STATIC_VALUES);
     server->async = 1;
     server->http = http;
     server->port = port;
@@ -8649,7 +8639,7 @@ static int manageServer(HttpServer *server, int flags)
         mprMark(server->http);
         mprMark(server->loc);
         mprMark(server->limits);
-        mprMark(server->clients);
+        mprMark(server->clientLoad);
         mprMark(server->serverRoot);
         mprMark(server->documentRoot);
         mprMark(server->name);
@@ -8749,19 +8739,19 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
                 "Too many concurrent clients %d/%d", server->clientCount, limits->clientCount);
             return 0;
         }
-        count = (int) PTOL(mprLookupHash(server->clients, conn->ip));
-        mprAddHash(server->clients, conn->ip, ITOP(count + 1));
-        server->clientCount = mprGetHashLength(server->clients);
+        count = (int) PTOL(mprLookupHash(server->clientLoad, conn->ip));
+        mprAddHash(server->clientLoad, conn->ip, ITOP(count + 1));
+        server->clientCount = mprGetHashLength(server->clientLoad);
         break;
 
     case HTTP_VALIDATE_CLOSE_CONN:
-        count = (int) PTOL(mprLookupHash(server->clients, conn->ip));
+        count = (int) PTOL(mprLookupHash(server->clientLoad, conn->ip));
         if (count > 1) {
-            mprAddHash(server->clients, conn->ip, ITOP(count - 1));
+            mprAddHash(server->clientLoad, conn->ip, ITOP(count - 1));
         } else {
-            mprRemoveHash(server->clients, conn->ip);
+            mprRemoveHash(server->clientLoad, conn->ip);
         }
-        server->clientCount = mprGetHashLength(server->clients);
+        server->clientCount = mprGetHashLength(server->clientLoad);
         mprLog(4, "Close connection %d. Active requests %d, active clients %d", 
             conn->seqno, server->requestCount, server->clientCount);
         break;
@@ -9480,6 +9470,7 @@ static void manageTx(HttpTx *tx, int flags)
         mprMark(tx->file);
         mprMark(tx->filename);
         mprMark(tx->extension);
+        mprMark(tx->headers);
 
     } else if (flags & MPR_MANAGE_FREE) {
         httpDestroyTx(tx);
@@ -10046,17 +10037,16 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
         mprPutIntToBuf(buf, tx->status);
         mprPutCharToBuf(buf, ' ');
         mprPutStringToBuf(buf, httpLookupStatus(http, tx->status));
-        mprPutStringToBuf(buf, "\r\n");
     } else {
         mprPutStringToBuf(buf, tx->method);
         mprPutCharToBuf(buf, ' ');
         parsedUri = tx->parsedUri;
         if (http->proxyHost && *http->proxyHost) {
             if (parsedUri->query && *parsedUri->query) {
-                mprPutFmtToBuf(buf, "http://%s:%d%s?%s %s\r\n", http->proxyHost, http->proxyPort, 
+                mprPutFmtToBuf(buf, "http://%s:%d%s?%s %s", http->proxyHost, http->proxyPort, 
                     parsedUri->path, parsedUri->query, conn->protocol);
             } else {
-                mprPutFmtToBuf(buf, "http://%s:%d%s %s\r\n", http->proxyHost, http->proxyPort, parsedUri->path,
+                mprPutFmtToBuf(buf, "http://%s:%d%s %s", http->proxyHost, http->proxyPort, parsedUri->path,
                     conn->protocol);
             }
         } else {
@@ -10066,10 +10056,14 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
                 mprPutStringToBuf(buf, parsedUri->path);
                 mprPutCharToBuf(buf, ' ');
                 mprPutStringToBuf(buf, conn->protocol);
-                mprPutStringToBuf(buf, "\r\n");
             }
         }
     }
+    if ((level = httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_FIRST, NULL)) == mprGetLogLevel(tx)) {
+        mprAddNullToBuf(buf);
+        mprLog(level, "%s", mprGetBufStart(buf));
+    }
+    mprPutStringToBuf(buf, "\r\n");
 
     /* 
        Output headers
@@ -10097,10 +10091,6 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     }
     tx->headerSize = mprGetBufLength(buf);
     tx->flags |= HTTP_TX_HEADERS_CREATED;
-
-    if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) == mprGetLogLevel(tx)) {
-        mprLog(level, "%s %s %d", rx->method, rx->uri, tx->status);
-    }
 }
 
 

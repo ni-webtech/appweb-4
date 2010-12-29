@@ -600,13 +600,14 @@ EjsAny *ejsClone(Ejs *ejs, EjsAny *src, bool deep)
     }
     mprAssert(TYPE(src)->helpers.clone);
     if (VISITED(src) == 0) {
-        type = ((EjsObj*) src)->type;
+        type = TYPE(src);
         SET_VISITED(src, 1);
         dest = (TYPE(src)->helpers.clone)(ejs, src, deep);
 #if UNUSED
         BUILTIN(dest) = BUILTIN(src);
+        SET_TYPE(dest, type);
 #endif
-        ((EjsObj*) dest)->type = type;
+        SET_VISITED(src, 0);
     } else {
         dest = src;
     }
@@ -7686,7 +7687,7 @@ EjsConstants *ejsCreateConstants(Ejs *ejs, int count, ssize size)
         return NULL;
     }
     if (ejs->compiling) {
-        if ((constants->table = mprCreateHash(EJS_DOC_HASH_SIZE, 0)) == 0) {
+        if ((constants->table = mprCreateHash(EJS_DOC_HASH_SIZE, MPR_HASH_STATIC_VALUES)) == 0) {
             return 0;
         }
     }
@@ -21013,7 +21014,7 @@ static EjsObj *math_random(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     int64   data[16];
     int     i;
-    mprGetRandomBytes(ejs, (char*) data, sizeof(data), 0);
+    mprGetRandomBytes((char*) data, sizeof(data), 0);
     uvalue = 0;
     for (i = 0; i < sizeof(data) / sizeof(int64); i++) {
         uvalue += data[i];
@@ -30955,11 +30956,6 @@ int ejsBindAccess(Ejs *ejs, void *obj, int slotNum, void *getter, void *setter)
     }
     if (setter) {
         fun = ejsGetProperty(ejs, obj, slotNum);
-        int x = ejsIsFunction(ejs, fun);
-        if (fun->setter) {
-            x = ejsIsFunction(ejs, fun->setter);
-            x = ejsIsFunction(ejs, fun->setter);
-        }
         if (fun == 0 || !ejsIsFunction(ejs, fun) || fun->setter == 0 || !ejsIsFunction(ejs, fun->setter)) {
             ejs->hasError = 1;
             mprError("Attempt to bind non-existant setter function for slot %d in \"%s\"", slotNum, ejsGetName(obj));
@@ -38647,7 +38643,7 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     }
     for (i = 0; i < args->length; i++) {
         data = args->data[i];
-        switch (data->type->id) {
+        switch (TYPE(data)->id) {
         case ES_String:
             s = (EjsString*) data;
             if ((written = httpWriteBlock(q, s->value, s->length)) != s->length) {
@@ -48932,7 +48928,7 @@ void ecInitLexer(EcCompiler *cp)
     int             size;
 
     size = sizeof(keywords) / sizeof(ReservedWord);
-    if ((cp->keywords = mprCreateHash(size, MPR_HASH_UNICODE)) == 0) {
+    if ((cp->keywords = mprCreateHash(size, MPR_HASH_UNICODE | MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES)) == 0) {
         return;
     }
     for (rp = keywords; rp->name; rp++) {
@@ -51883,7 +51879,7 @@ static EcNode *parseXMLText(EcCompiler *cp, EcNode *np)
         if (getToken(cp) == T_EOF || cp->token->tokenId == T_ERR || cp->token->tokenId == T_NOP) {
             return 0;
         }
-        if (isalnum(cp->token->text[0]) && count > 0) {
+        if (isalnum((int) cp->token->text[0]) && count > 0) {
             addAscToLiteral(cp, np, " ", 1);
         }
         addTokenToLiteral(cp, np);
