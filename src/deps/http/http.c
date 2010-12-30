@@ -84,7 +84,7 @@ MAIN(httpMain, int argc, char *argv[])
     MprTime     start;
     double      elapsed;
 
-    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
+    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD | MPR_MARK_THREAD);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
 
@@ -658,7 +658,6 @@ static int issueRequest(HttpConn *conn, cchar *url)
                     location = httpCreateUri(redirect, 0);
                     target = httpJoinUri(conn->tx->parsedUri, 1, &location);
                     url = httpUriToString(target, 1);
-                    httpPrepClientConn(conn);
                 }
                 /* Count redirects and auth retries */
                 redirectCount++;

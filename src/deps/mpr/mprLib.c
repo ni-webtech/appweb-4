@@ -1129,14 +1129,14 @@ static void mark()
     heap->newCount = 0;
     priorFree = heap->stats.bytesFree;
 
-    mprLog(1, "DEBUG: mark started");
+    mprLog(5, "DEBUG: mark started");
 
     markRoots();
     if (!heap->hasSweeper) {
         sweep();
     }
 #if BLD_MEMORY_STATS
-    mprLog(2, "GC Complete: MARKED %d/%d, SWEPT %d/%d, freed %d, bytesFree %d (before %d), newCount %d/%d \n",
+    mprLog(4, "GC Complete: MARKED %d/%d, SWEPT %d/%d, freed %d, bytesFree %d (before %d), newCount %d/%d \n",
         heap->stats.marked, heap->stats.markVisited,
         heap->stats.swept, heap->stats.sweepVisited, 
         (int) heap->stats.freed, (int) heap->stats.bytesFree, priorFree, oldCount, heap->newQuota);
@@ -1165,7 +1165,7 @@ static void sweep()
         mprLog(7, "DEBUG: sweep: Abort sweep - GC disabled");
         return;
     }
-    mprLog(1, "DEBUG: sweep started");
+    mprLog(5, "DEBUG: sweep started");
     heap->stats.freed = 0;
 
     /*
@@ -1242,7 +1242,7 @@ static void sweep()
                     mprAssert(rp != NULL);
                 }
             }
-            mprLog(2, "DEBUG: Unpin %p to %p size %d", region, ((char*) region) + region->size, region->size);
+            mprLog(5, "DEBUG: Unpin %p to %p size %d", region, ((char*) region) + region->size, region->size);
             mprVirtFree(region, region->size);
         } else {
             prior = region;
@@ -1276,10 +1276,11 @@ void mprMarkBlock(cvoid *ptr)
         return;
     }
     mp = MPR_GET_MEM(ptr);
-    CHECK(mp);
-    INC(markVisited);
-
 #if BLD_DEBUG
+    if (!mprIsValid(ptr)) {
+        mprAssertError(NULL, "Memory block is either not dynamically allocated, or is corrupted");
+        return;
+    }
     /*
         MOB - must never mark a dead block as it means we are racing with the sweeper. Should not be able to 
         reference a dead block.
@@ -1291,6 +1292,9 @@ void mprMarkBlock(cvoid *ptr)
         return;
     }
 #endif
+    CHECK(mp);
+    INC(markVisited);
+
     if (GET_MARK(mp) != heap->active) {
         BREAKPOINT(mp);
         INC(marked);
@@ -1337,7 +1341,7 @@ void mprRelease(void *ptr)
  */
 static void marker(void *unused, MprThread *tp)
 {
-    mprLog(2, "DEBUG: marker thread started");
+    mprLog(5, "DEBUG: marker thread started");
     tp->stickyYield = 1;
     tp->yielded = 1;
 
@@ -1357,7 +1361,7 @@ static void marker(void *unused, MprThread *tp)
  */
 static void sweeper(void *unused, MprThread *tp) 
 {
-    mprLog(2, "DEBUG: sweeper thread started");
+    mprLog(5, "DEBUG: sweeper thread started");
 
     while (!mprIsExiting()) {
         sweep();
@@ -2121,7 +2125,11 @@ int mprIsValid(cvoid *ptr)
     }
     return 0;
 #else
+#if BLD_DEBUG
     return ptr && mp->magic == MPR_ALLOC_MAGIC && GET_SIZE(mp) > 0;
+#else
+    return ptr && GET_SIZE(mp) > 0;
+#endif
 #endif
 }
 
@@ -2440,6 +2448,16 @@ static void serviceEventsThread(void *data, MprThread *tp)
 }
 
 
+void mprSignalExit()
+{
+    mprSpinLock(MPR->spin);
+    MPR->flags |= MPR_EXITING;
+    mprSpinUnlock(MPR->spin);
+    mprWakeDispatchers();
+    mprWakeWaitService();
+}
+
+
 /*
     Exit the mpr gracefully. Instruct the event loop to exit.
  */
@@ -2469,12 +2487,7 @@ bool mprIsComplete()
  */
 bool mprServicesAreIdle()
 {
-#if MOB
-    return mprGetListLength(MPR->workerService->busyThreads) == 0 && mprGetListLength(MPR->cmdService->cmds) == 0 && 
-        //MOB -- dispatcher here not right
-       !(MPR->dispatcher->flags & MPR_DISPATCHER_DO_EVENT);
-#endif
-    return 1;
+    return mprGetListLength(MPR->workerService->busyThreads) == 0 && mprGetListLength(MPR->cmdService->cmds) == 0 && mprDispatchersAreIdle();
 }
 
 
@@ -2560,15 +2573,6 @@ MprIdleCallback mprSetIdleCallback(MprIdleCallback idleCallback)
     old = MPR->idleCallback;
     MPR->idleCallback = idleCallback;
     return old;
-}
-
-
-void mprSignalExit()
-{
-    mprSpinLock(MPR->spin);
-    MPR->flags |= MPR_EXITING;
-    mprSpinUnlock(MPR->spin);
-    mprWakeWaitService();
 }
 
 
@@ -6999,6 +7003,9 @@ void mprEnableDispatcher(MprDispatcher *dispatcher)
     MprEventService     *es;
     int                 mustWake;
 
+    if (dispatcher == 0) {
+        dispatcher = MPR->dispatcher;
+    }
     es = dispatcher->service;
     mustWake = 0;
     lock(es);
@@ -7140,6 +7147,42 @@ int mprWaitForEvent(MprDispatcher *dispatcher, int timeout)
         }
     }
     return signalled ? 0 : MPR_ERR_TIMEOUT;
+}
+
+
+void mprWakeDispatchers()
+{
+    MprEventService     *es;
+    MprDispatcher       *runQ, *dp;
+
+    es = MPR->eventService;
+    lock(es);
+    runQ = &es->runQ;
+    for (dp = runQ->next; dp != runQ; dp = dp->next) {
+        mprSignalCond(dp->cond);
+    }
+    unlock(es);
+}
+
+
+int mprDispatchersAreIdle()
+{
+    MprEventService     *es;
+    MprDispatcher       *runQ, *dispatcher;
+    int                 idle;
+
+    es = MPR->eventService;
+    runQ = &es->runQ;
+    idle = 0;
+    lock(es);
+    dispatcher = runQ->next;
+    if (dispatcher == runQ) {
+        idle = 1;
+    } else {
+        idle = (&dispatcher->eventQ == dispatcher->eventQ.next);
+    }
+    unlock(es);
+    return idle;
 }
 
 

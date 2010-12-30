@@ -1323,6 +1323,7 @@ typedef struct HttpConn {
     int             protoError;             /**< A protocol error has occurred - try to respond */
     int             threaded;               /**< Request running in a thread */
 
+    MprHashTable    *txheaders;             /**< Transmission headers */
     HttpCallback    callback;               /**< Http I/O event callback */
     void            *callbackArg;           /**< Arg to callback */
     HttpFillHeadersProc fillHeaders;        /**< Callback to fill headers */
@@ -2267,7 +2268,6 @@ typedef struct HttpTx {
     MprList         *outputPipeline;        /**< Output processing */
     HttpStage       *handler;               /**< Server-side request handler stage */
     HttpStage       *connector;             /**< Network connector to send / receive socket data */
-    MprHashTable    *headers;               /**< Custom transmission headers */
     HttpQueue       queue[2];               /**< Dummy head for the queues */
 
     HttpUri         *parsedUri;             /**< Request uri. Only used for requests */
@@ -2297,6 +2297,8 @@ typedef struct HttpTx {
     HttpRedirectCallback redirectCallback;  /**< Redirect callback */
     HttpEnvCallback envCallback;            /**< SetEnv callback */
 } HttpTx;
+
+extern void httpCreateTxHeaders(HttpConn *conn);
 
 /** 
     Add a header to the transmission using a format string.

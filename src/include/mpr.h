@@ -1537,10 +1537,10 @@ typedef struct MprSpin {
 } MprSpin;
 
 
-#define lock(arg)       if (arg) mprLock(arg->mutex)
-#define unlock(arg)     if (arg) mprUnlock(arg->mutex)
-#define spinlock(arg)   if (arg) mprSpinLock(arg->spin)
-#define spinunlock(arg) if (arg) mprSpinUnlock(arg->spin)
+#define lock(arg)       if (arg) mprLock((arg)->mutex)
+#define unlock(arg)     if (arg) mprUnlock((arg)->mutex)
+#define spinlock(arg)   if (arg) mprSpinLock((arg)->spin)
+#define spinunlock(arg) if (arg) mprSpinUnlock((arg)->spin)
 
 /**
     Create a Mutex lock object.
@@ -5237,6 +5237,8 @@ extern MprDispatcher *mprCreateDispatcher(cchar *name, int enable);
  */
 extern MprDispatcher *mprGetDispatcher();
 extern MprDispatcher *mprGetNonBlockDispatcher();
+extern void mprWakeDispatchers();
+extern int mprDispatchersAreIdle();
 
 /**
     Enable a dispatcher to service events. The mprCreateDispatcher routiner creates dispatchers in the disabled state.

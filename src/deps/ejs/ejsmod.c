@@ -4191,7 +4191,7 @@ MAIN(ejsmodMain, int argc, char **argv)
             mp->cslots = 1;
             mp->genSlots = 1;
             
-        } else if (strcmp(argp, "--debugger") == 0) {
+        } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
             mprSetDebugMode(1);
 
         } else if (strcmp(argp, "--depends") == 0) {
@@ -4318,7 +4318,7 @@ MAIN(ejsmodMain, int argc, char **argv)
     if (mp->html || mp->xml) {
         flags |= EJS_FLAG_DOC;
     }
-    ejs = ejsCreateVm(searchPath, requiredModules, 0, NULL, flags);
+    ejs = ejsCreate(searchPath, requiredModules, 0, NULL, flags);
     if (ejs == 0) {
         return MPR_ERR_MEMORY;
     }

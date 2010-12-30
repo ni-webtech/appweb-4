@@ -109,7 +109,7 @@ static int loadStartupScript(Http *http, HttpLoc *loc)
     char    *script;
     int     ver;
 
-    ejs = ejsCreateVm(NULL, NULL, 0, NULL, 0);
+    ejs = ejsCreate(NULL, NULL, 0, NULL, 0);
     if (ejs == 0) {
         return 0;
     }

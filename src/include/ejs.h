@@ -96,6 +96,7 @@ extern "C" {
 
 #define EJS_XML_BUF_MAX             (256 * 1024)    /* Max XML document size */
 #define EJS_HASH_MIN_PROP           8               /* Min props to hash */
+#define EJS_MAX_COLLISIONS          4               /* Max intern string collion chain */
 
 #define EJS_SQLITE_TIMEOUT          30000           /* Database busy timeout */
 #define EJS_SESSION_TIMEOUT         1800
@@ -1036,16 +1037,17 @@ typedef struct EjsLoc {
 typedef void EjsAny;
 
 typedef struct EjsObj {
-#if DEBUG_IDE
+#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
     union {
 #endif
         ssize           xtype;
-#if DEBUG_IDE
+#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
+        struct EjsType  *type;
         struct {
             uint        visited : 1;        /* Has been traversed */
             uint        dynamic : 1;        /* Object may be modified */
             ssize       typeBits: MPR_BITS - 2;
-        } bits;
+        };
     };
 #endif
 } EjsObj;
@@ -1123,8 +1125,8 @@ typedef void (*EjsLoaderCallback)(struct Ejs *ejs, int kind, ...);
 typedef struct EjsIntern {
     EjsString       *buckets;               /**< Hash buckets and references to link chains of strings (unicode) */
     MprSpin         *spin;                  /**< Multithread sync */
+    struct Ejs      *ejs;                   /**< Owning interpreter */
     int             size;                   /**< Size of hash */
-    int             count;                  /**< Number of strings */
     int             reuse;
     uint64          accesses;
 } EjsIntern;
@@ -1849,7 +1851,8 @@ extern EjsString *ejsInternMulti(struct Ejs *ejs, cchar *value, ssize len);
 extern EjsString *ejsInternAsc(struct Ejs *ejs, cchar *value, ssize len);
 extern EjsString *ejsInternWide(struct Ejs *ejs, MprChar *value, ssize len);
 extern void ejsManageIntern(Ejs *ejs, int flags);
-extern void ejsDestroyIntern(Ejs *ejs);
+extern EjsIntern *ejsCreateIntern(Ejs *ejs);
+extern void ejsDestroyIntern(EjsIntern *intern);
 
 extern int       ejsAtoi(Ejs *ejs, EjsString *sp, int radix);
 extern EjsString *ejsCatString(Ejs *ejs, EjsString *dest, EjsString *src);
@@ -3731,7 +3734,9 @@ typedef struct EjsService {
     MprList         *vmlist;
     MprHashTable    *nativeModules;
     Http            *http;
+#if FUTURE
     EjsIntern       intern;             /**< Interned Unicode string hash - shared over all interps */
+#endif
     MprMutex        *mutex;             /**< Multithread locking */
 } EjsService;
 
@@ -3768,11 +3773,11 @@ extern EjsService *ejsCreateService();
     @return A new interpreter
     @ingroup Ejs
  */
-extern Ejs *ejsCreateVm(cchar *search, MprList *require, int argc, cchar **argv, int flags);
+extern Ejs *ejsCreate(cchar *search, MprList *require, int argc, cchar **argv, int flags);
 extern void ejsDestroy(Ejs *ejs);
 
 /**
-    Create a search path array. This can be used in ejsCreateVm.
+    Create a search path array. This can be used in ejsCreate.
     @description Create and array of search paths.
     @param ejs Ejs interpreter
     @param searchPath Search path string. This is a colon (or semicolon on Windows) separated string of directories.

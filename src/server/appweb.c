@@ -122,7 +122,7 @@ MAIN(appweb, int argc, char **argv)
             jail = mprGetAbsPath(argv[++argind]);
 #endif
 
-        } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-d") == 0) {
+        } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
             mprSetDebugMode(1);
 
         } else if (strcmp(argp, "--ejs") == 0) {
@@ -532,12 +532,12 @@ static void catchSignal(int signo, siginfo_t *info, void *arg)
     }
 #endif
     mprLog(2, "Received signal %d", signo);
-    if (signo == SIGINT || signo == SIGTERM) {
-        mprLog(1, "Exiting immediately ...");
-        mprTerminate(0);
-    } else {
+    if (signo == SIGTERM) {
         mprLog(1, "Executing a graceful exit. Waiting for all requests to complete");
         mprTerminate(MPR_GRACEFUL);
+    } else {
+        mprLog(1, "Exiting immediately ...");
+        mprTerminate(0);
     }
 }
 #endif /* BLD_HOST_UNIX */

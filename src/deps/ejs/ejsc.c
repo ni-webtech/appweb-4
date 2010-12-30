@@ -94,7 +94,7 @@ MAIN(ejscMain, int argc, char **argv)
         } else if (strcmp(argp, "--debug") == 0) {
             debug = 1;
 
-        } else if (strcmp(argp, "--debugger") == 0) {
+        } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
             mprSetDebugMode(1);
 
         } else if (strcmp(argp, "--doc") == 0) {
@@ -269,7 +269,7 @@ MAIN(ejscMain, int argc, char **argv)
     if (doc) {
         ejsFlags |= EJS_FLAG_DOC;
     }
-    ejs = ejsCreateVm(searchPath, app->modules, 0, NULL, ejsFlags);
+    ejs = ejsCreate(searchPath, app->modules, 0, NULL, ejsFlags);
     if (ejs == 0) {
         return MPR_ERR_MEMORY;
     }
