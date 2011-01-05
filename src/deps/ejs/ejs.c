@@ -332,7 +332,8 @@ MAIN(ejsMain, int argc, char **argv)
         mprPrintMem("Memory Usage", 0);
     }
 #endif
-    mprDestroy(mpr);
+    ejsDestroy(ejs);
+    mprDestroy(MPR_GRACEFUL);
     return err;
 }
 

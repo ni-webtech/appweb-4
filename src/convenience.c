@@ -18,28 +18,29 @@ MaServer *maCreateWebServer(cchar *configFile)
     MaAppweb    *appweb;
     MaServer    *server;
 
-    /*  
-        Initialize and start the portable runtime services.
-     */
+    server = NULL;
     if ((mpr = mprCreate(0, NULL, 0)) == 0) {
         mprError("Can't create the web server runtime");
         return 0;
     }
     if (mprStart() < 0) {
         mprError("Can't start the web server runtime");
-        return 0;
+    } else {
+        if ((appweb = maCreateAppweb(mpr)) == 0) {
+            mprError("Can't create appweb object");
+        } else {
+            if ((server = maCreateServer(appweb, "default", ".", NULL, 0)) == 0) {
+                mprError("Can't create the web server");
+            } else {
+                if (maParseConfig(server, configFile) < 0) {
+                    mprError("Can't parse the config file %s", configFile);
+                    server = 0;
+                }
+            }
+        }
     }
-    if ((appweb = maCreateAppweb(mpr)) == 0) {
-        mprError("Can't create appweb object");
-        return 0;
-    }
-    if ((server = maCreateServer(appweb, "default", ".", NULL, 0)) == 0) {
-        mprError("Can't create the web server");
-        return 0;
-    }
-    if (maParseConfig(server, configFile) < 0) {
-        mprError("Can't parse the config file %s", configFile);
-        return 0;
+    if (server == NULL) {
+        mprDestroy(0);
     }
     return server;
 }
@@ -65,12 +66,16 @@ int maServiceWebServer(MaServer *server)
  */
 int maRunWebServer(cchar *configFile)
 {
-    MaServer  *server;
+    MaServer    *server;
+    int         rc;
 
     if ((server = maCreateWebServer(configFile)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    return maServiceWebServer(server);
+    mprAddRoot(server);
+    rc = maServiceWebServer(server);
+    mprRemoveRoot(server);
+    return rc;
 }
 
 
@@ -114,7 +119,7 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
     }
     mprServiceEvents(-1, 0);
     maStopServer(server);
-    mprDestroy(mpr);
+    mprDestroy(MPR_GRACEFUL);
     return 0;
 }
 

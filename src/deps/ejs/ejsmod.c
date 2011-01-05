@@ -4334,7 +4334,7 @@ MAIN(ejsmodMain, int argc, char **argv)
         err = -1;
     }
     ejsDestroy(ejs);
-    mprDestroy(mpr);
+    mprDestroy(MPR_GRACEFUL);
     return err;
 }
 

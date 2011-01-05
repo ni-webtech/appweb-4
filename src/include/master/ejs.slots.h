@@ -383,23 +383,24 @@
 #define ES_App_version                                                 11
 #define ES_App_args                                                    12
 #define ES_App_createSearch                                            13
-#define ES_App_eventLoop                                               14
-#define ES_App_chdir                                                   15
-#define ES_App_dir                                                     16
-#define ES_App_exeDir                                                  17
-#define ES_App_exePath                                                 18
-#define ES_App_errorStream                                             19
-#define ES_App_exit                                                    20
-#define ES_App_getenv                                                  21
-#define ES_App_inputStream                                             22
-#define ES_App_loadrc                                                  23
-#define ES_App_noexit                                                  24
-#define ES_App_outputStream                                            25
-#define ES_App_putenv                                                  26
+#define ES_App_chdir                                                   14
+#define ES_App_dir                                                     15
+#define ES_App_exeDir                                                  16
+#define ES_App_exePath                                                 17
+#define ES_App_errorStream                                             18
+#define ES_App_exit                                                    19
+#define ES_App_getenv                                                  20
+#define ES_App_inputStream                                             21
+#define ES_App_loadrc                                                  22
+#define ES_App_outputStream                                            23
+#define ES_App_putenv                                                  24
+#define ES_App_run                                                     25
+#define ES_App_eventLoop                                               26
 #define ES_App_search                                                  27
 #define ES_App_sleep                                                   28
-#define ES_App_waitForEvent                                            29
-#define ES_App_NUM_CLASS_PROP                                          30
+#define ES_App_updateLog                                               29
+#define ES_App_waitForEvent                                            30
+#define ES_App_NUM_CLASS_PROP                                          31
 
 /*
    Prototype (instance) slots for "App" type 
@@ -411,16 +412,17 @@
     Local slots for methods in type "App" 
  */
 #define ES_App_createSearch_searchPath                                 0
-#define ES_App_eventLoop_timeout                                       0
-#define ES_App_eventLoop_oneEvent                                      1
 #define ES_App_chdir_value                                             0
 #define ES_App_exit_status                                             0
 #define ES_App_getenv_name                                             0
 #define ES_App_loadrc_path                                             0
 #define ES_App_loadrc_overwrite                                        1
-#define ES_App_noexit_exit                                             0
 #define ES_App_putenv_name                                             0
 #define ES_App_putenv_value                                            1
+#define ES_App_run_timeout                                             0
+#define ES_App_run_oneEvent                                            1
+#define ES_App_eventLoop_timeout                                       0
+#define ES_App_eventLoop_oneEvent                                      1
 #define ES_App_sleep_delay                                             0
 #define ES_App_waitForEvent_obj                                        0
 #define ES_App_waitForEvent_events                                     1
@@ -1273,50 +1275,49 @@
 #define ES_Http_contentType                                            5
 #define ES_Http_date                                                   6
 #define ES_Http_encoding                                               7
-#define ES_Http_xh                                                     8
-#define ES_Http_fetch                                                  9
-#define ES_Http_finalize                                               10
-#define ES_Http_finalized                                              11
-#define ES_Http_flush                                                  12
-#define ES_Http_followRedirects                                        13
-#define ES_Http_form                                                   14
-#define ES_Http_jsonForm                                               15
-#define ES_Http_get                                                    16
-#define ES_Http_getRequestHeaders                                      17
-#define ES_Http_head                                                   18
-#define ES_Http_header                                                 19
-#define ES_Http_headers                                                20
-#define ES_Http_isSecure                                               21
-#define ES_Http_key                                                    22
-#define ES_Http_lastModified                                           23
-#define ES_Http_limits                                                 24
-#define ES_Http_method                                                 25
-#define ES_Http_off                                                    26
-#define ES_Http_on                                                     27
-#define ES_Http_post                                                   28
-#define ES_Http_put                                                    29
-#define ES_Http_read                                                   30
-#define ES_Http_readString                                             31
-#define ES_Http_readLines                                              32
-#define ES_Http_readXml                                                33
-#define ES_Http_reset                                                  34
-#define ES_Http_response                                               35
-#define ES_Http_retries                                                36
-#define ES_Http_sessionCookie                                          37
-#define ES_Http_setCookie                                              38
-#define ES_Http_setCredentials                                         39
-#define ES_Http_setHeader                                              40
-#define ES_Http_setHeaders                                             41
-#define ES_Http_setLimits                                              42
-#define ES_Http_status                                                 43
-#define ES_Http_statusMessage                                          44
-#define ES_Http_success                                                45
-#define ES_Http_trace                                                  46
-#define ES_Http_upload                                                 47
-#define ES_Http_uri                                                    48
-#define ES_Http_wait                                                   49
-#define ES_Http_write                                                  50
-#define ES_Http_NUM_INSTANCE_PROP                                      51
+#define ES_Http_fetch                                                  8
+#define ES_Http_finalize                                               9
+#define ES_Http_finalized                                              10
+#define ES_Http_flush                                                  11
+#define ES_Http_followRedirects                                        12
+#define ES_Http_form                                                   13
+#define ES_Http_jsonForm                                               14
+#define ES_Http_get                                                    15
+#define ES_Http_getRequestHeaders                                      16
+#define ES_Http_head                                                   17
+#define ES_Http_header                                                 18
+#define ES_Http_headers                                                19
+#define ES_Http_isSecure                                               20
+#define ES_Http_key                                                    21
+#define ES_Http_lastModified                                           22
+#define ES_Http_limits                                                 23
+#define ES_Http_method                                                 24
+#define ES_Http_off                                                    25
+#define ES_Http_on                                                     26
+#define ES_Http_post                                                   27
+#define ES_Http_put                                                    28
+#define ES_Http_read                                                   29
+#define ES_Http_readString                                             30
+#define ES_Http_readLines                                              31
+#define ES_Http_readXml                                                32
+#define ES_Http_reset                                                  33
+#define ES_Http_response                                               34
+#define ES_Http_retries                                                35
+#define ES_Http_sessionCookie                                          36
+#define ES_Http_setCookie                                              37
+#define ES_Http_setCredentials                                         38
+#define ES_Http_setHeader                                              39
+#define ES_Http_setHeaders                                             40
+#define ES_Http_setLimits                                              41
+#define ES_Http_status                                                 42
+#define ES_Http_statusMessage                                          43
+#define ES_Http_success                                                44
+#define ES_Http_trace                                                  45
+#define ES_Http_upload                                                 46
+#define ES_Http_uri                                                    47
+#define ES_Http_wait                                                   48
+#define ES_Http_write                                                  49
+#define ES_Http_NUM_INSTANCE_PROP                                      50
 #define ES_Http_NUM_INHERITED_PROP                                     0
 
 
@@ -1427,16 +1428,18 @@
 #define ES_Loader__initializer___Loader_                               0
 #define ES_Loader_mainId                                               1
 #define ES_Loader_signatures                                           2
-#define ES_Loader_timestamps                                           3
-#define ES_Loader_defaultExtensions                                    4
-#define ES_Loader_init                                                 5
-#define ES_Loader_require                                              6
-#define ES_Loader_load                                                 7
-#define ES_Loader_cached                                               8
-#define ES_Loader_wrap                                                 9
-#define ES_Loader_locate                                               10
-#define ES_Loader_setConfig                                            11
-#define ES_Loader_NUM_CLASS_PROP                                       12
+#define ES_Loader_initializers                                         3
+#define ES_Loader_timestamps                                           4
+#define ES_Loader_defaultExtensions                                    5
+#define ES_Loader_init                                                 6
+#define ES_Loader_register                                             7
+#define ES_Loader_require                                              8
+#define ES_Loader_load                                                 9
+#define ES_Loader_cached                                               10
+#define ES_Loader_wrap                                                 11
+#define ES_Loader_locate                                               12
+#define ES_Loader_setConfig                                            13
+#define ES_Loader_NUM_CLASS_PROP                                       14
 
 /*
    Prototype (instance) slots for "Loader" type 
@@ -1448,6 +1451,8 @@
     Local slots for methods in type "Loader" 
  */
 #define ES_Loader_init_mainId                                          0
+#define ES_Loader_register_id                                          0
+#define ES_Loader_register_fn                                          1
 #define ES_Loader_require_id                                           0
 #define ES_Loader_require_config                                       1
 #define ES_Loader_load_id                                              0
@@ -1457,7 +1462,8 @@
 #define ES_Loader_cached_id                                            0
 #define ES_Loader_cached_config                                        1
 #define ES_Loader_cached_cachedir                                      2
-#define ES_Loader_wrap_code                                            0
+#define ES_Loader_wrap_id                                              0
+#define ES_Loader_wrap_code                                            1
 #define ES_Loader_locate_id                                            0
 #define ES_Loader_locate_config                                        1
 #define ES_Loader_setConfig_newConfig                                  0
@@ -1496,30 +1502,32 @@
  */
 #define ES_Logger__filter                                              0
 #define ES_Logger__level                                               1
-#define ES_Logger__pattern                                             2
-#define ES_Logger__name                                                3
-#define ES_Logger__outStream                                           4
-#define ES_Logger_redirect                                             5
-#define ES_Logger_async                                                6
-#define ES_Logger_close                                                7
-#define ES_Logger_filter                                               8
-#define ES_Logger_flush                                                9
-#define ES_Logger_level                                                10
-#define ES_Logger_match                                                11
-#define ES_Logger_name                                                 12
-#define ES_Logger_outStream                                            13
-#define ES_Logger_debug                                                14
-#define ES_Logger_config                                               15
-#define ES_Logger_error                                                16
-#define ES_Logger_info                                                 17
-#define ES_Logger_activity                                             18
-#define ES_Logger_off                                                  19
-#define ES_Logger_on                                                   20
-#define ES_Logger_read                                                 21
-#define ES_Logger_write                                                22
-#define ES_Logger_warn                                                 23
-#define ES_Logger_emit                                                 24
-#define ES_Logger_NUM_INSTANCE_PROP                                    25
+#define ES_Logger__location                                            2
+#define ES_Logger__pattern                                             3
+#define ES_Logger__name                                                4
+#define ES_Logger__outStream                                           5
+#define ES_Logger_redirect                                             6
+#define ES_Logger_async                                                7
+#define ES_Logger_close                                                8
+#define ES_Logger_filter                                               9
+#define ES_Logger_flush                                                10
+#define ES_Logger_level                                                11
+#define ES_Logger_location                                             12
+#define ES_Logger_match                                                13
+#define ES_Logger_name                                                 14
+#define ES_Logger_outStream                                            15
+#define ES_Logger_debug                                                16
+#define ES_Logger_config                                               17
+#define ES_Logger_error                                                18
+#define ES_Logger_info                                                 19
+#define ES_Logger_activity                                             20
+#define ES_Logger_off                                                  21
+#define ES_Logger_on                                                   22
+#define ES_Logger_read                                                 23
+#define ES_Logger_write                                                24
+#define ES_Logger_warn                                                 25
+#define ES_Logger_emit                                                 26
+#define ES_Logger_NUM_INSTANCE_PROP                                    27
 #define ES_Logger_NUM_INHERITED_PROP                                   0
 
 
@@ -2346,11 +2354,9 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1324044
+#define _ES_CHECKSUM_ejs   1331739
 
 #endif
-
-//MOB
 /************************************************************************/
 /*
  *  End of file "../../src/include/master/ejs.slots.h"
@@ -2956,7 +2962,7 @@
 #define ES_ejs_web_Web_run_documentRoot                                1
 #define ES_ejs_web_Web_run_serverRoot                                  2
 
-#define _ES_CHECKSUM_ejs_web   761945
+#define _ES_CHECKSUM_ejs_web   763128
 
 #endif
 /************************************************************************/

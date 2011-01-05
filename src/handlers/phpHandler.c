@@ -232,7 +232,7 @@ static void processPhp(HttpQueue *q)
     }
 #endif
 
-    mprStickyYield(NULL, 1);
+    mprYield(MPR_YIELD_STICKY);
     zend_try {
         php_execute_script(&file_handle TSRMLS_CC);
         if (!SG(headers_sent)) {
@@ -248,7 +248,7 @@ static void processPhp(HttpQueue *q)
         php_request_shutdown(0);
     } zend_end_try();
 
-    mprStickyYield(NULL, 0);
+    mprResetYield();
     httpFinalize(conn);
 }
 

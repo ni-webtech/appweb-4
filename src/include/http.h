@@ -502,7 +502,7 @@ typedef struct HttpRange {
         The pipeline stages will fill or transform packet data as required.
     @stability Evolving
     @defgroup HttpPacket HttpPacket
-    @see HttpPacket HttpQueue httpCreatePacket, httpCreateConnPacket httpCreateDataPacket httpCreateEndPacket 
+    @see HttpPacket HttpQueue httpCreatePacket, ttphttpCreateDataPacket httpCreateEndPacket 
         httpJoinPacket httpSplitPacket httpGetPacketLength httpCreateHeaderPacket httpGetPacket
         httpJoinPacketForService httpPutForService httpIsPacketTooBig httpSendPacket httpPutBackPacket 
         httpSendPacketToNext httpResizePacket
@@ -526,24 +526,6 @@ typedef struct HttpPacket {
  */
 extern HttpPacket *httpCreatePacket(ssize size);
 extern HttpPacket *httpDup(HttpPacket *orig);
-
-/**
-    Create a connection packet packet
-    @description Create a packet of the required size that is owned by the connection
-    @param conn HttpConn connection object
-    @param size Size of the package data storage.
-    @return HttpPacket object.
-*/
-extern HttpPacket *httpCreateConnPacket(struct HttpConn *conn, ssize size);
-
-#if UNUSED
-/** 
-    Free a packet. This recycles a packet for rapid reuse
-    @param q Queue reference
-    @param packet Packet to free
- */
-extern void httpFreePacket(struct HttpQueue *q, HttpPacket *packet);
-#endif
 
 /** 
     Create a data packet
@@ -2352,10 +2334,11 @@ extern int httpConnect(HttpConn *conn, cchar *method, cchar *uri);
 /** 
     Create the tx object. This is used internally by the http library.
     @param conn HttpConn connection object created via $httpCreateConn
-    @param headers Hash table of Http headers. Used to preserve headers from one request to another.
     @returns A tx object
  */
-extern HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers);
+extern HttpTx *httpCreateTx(HttpConn *conn);
+
+//  MOB DOC
 extern void httpDestroyTx(HttpTx *tx);
 
 /** 

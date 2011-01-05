@@ -308,7 +308,7 @@ MAIN(ejscMain, int argc, char **argv)
     if (cp->errorCount > 0) {
         err++;
     }
-    mprDestroy(mpr);
+    mprDestroy(MPR_GRACEFUL);
     return err;
 }
 

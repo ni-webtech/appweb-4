@@ -3358,7 +3358,7 @@ static void *opcodeJump[] = {
                 mprResetMemError(ejs);
                 ejsThrowMemoryError(ejs);
             }
-            if (ejs->exiting || mprIsExiting(ejs)) {
+            if (ejs->exiting || mprIsStopping(ejs)) {
                 goto done;
             }
             if (ejs->exception && !manageExceptions(ejs)) {
@@ -4460,7 +4460,7 @@ EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, vo
         }
         VM(ejs, fun, thisObj, argc, 0);
         ejs->state->stack -= argc;
-        if (ejs->exiting || mprIsExiting(ejs)) {
+        if (ejs->exiting || mprIsStopping(ejs)) {
             ejsAttention(ejs);
         }
     }
@@ -4633,7 +4633,7 @@ static void callConstructor(Ejs *ejs, EjsType *type, int argc, int stackAdjust)
     } else {
         VM(ejs, (EjsFunction*) type, obj, argc, stackAdjust);
         ejs->state->stack -= (argc + stackAdjust);
-        if (ejs->exiting || mprIsExiting(ejs)) {
+        if (ejs->exiting || mprIsStopping(ejs)) {
             ejsAttention(ejs);
         }
     }
@@ -5293,7 +5293,7 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
         result = thisObj;
         if (!type->hasConstructor) {
             ejs->state->stack -= (argc + stackAdjust);
-            if (ejs->exiting || mprIsExiting(ejs)) {
+            if (ejs->exiting || mprIsStopping(ejs)) {
                 ejsAttention(ejs);
             }
             return;
@@ -8818,9 +8818,13 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     ejs->argv = argv;
 
     ejs->flags |= (flags & (EJS_FLAG_NO_INIT | EJS_FLAG_DOC));
-    ejs->dispatcher = mprCreateDispatcher(mprAsprintf("ejsDispatcher-%d", seqno++), 1);
     ejs->modules = mprCreateList(-1, 0);
     ejs->workers = mprCreateList(0, 0);
+
+    lock(sp);
+    ejs->name = mprAsprintf("ejs-%d", seqno++);
+    ejs->dispatcher = mprCreateDispatcher(mprAsprintf("ejsDispatcher-%d", seqno), 1);
+    unlock(sp);
         
     if ((ejs->bootSearch = searchPath) == 0) {
         ejs->bootSearch = getenv("EJSPATH");
@@ -8856,6 +8860,7 @@ void ejsDestroy(Ejs *ejs)
 
     sp = ejs->service;
     if (sp) {
+        ejsRemoveWorkers(ejs);
         state = ejs->masterState;
         if (state->stackBase) {
             mprVirtFree(state->stackBase, state->stackSize);
@@ -8877,6 +8882,7 @@ static void manageEjs(Ejs *ejs, int flags)
     EjsObj      *vp, **vpp, **top;
 
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(ejs->name);
         mprMark(ejs->modules);
         mprMark(ejs->applications);
         mprMark(ejs->coreTypes);
@@ -8897,16 +8903,18 @@ static void manageEjs(Ejs *ejs, int flags)
         /*
             Mark active call stack
          */
-        for (block = ejs->state->bp; block; block = block->prev) {
-            mprMark(block);
-        }
-        /*
-            Mark the evaluation stack. Stack itself is virtually allocated and immune from GC.
-         */
-        top = ejs->state->stack;
-        for (vpp = ejs->state->stackBase; vpp <= top; vpp++) {
-            if ((vp = *vpp) != NULL) {
-                mprMark(vp);
+        if (ejs->masterState) {
+            for (block = ejs->state->bp; block; block = block->prev) {
+                mprMark(block);
+            }
+            /*
+                Mark the evaluation stack. Stack itself is virtually allocated and immune from GC.
+             */
+            top = ejs->state->stack;
+            for (vpp = ejs->state->stackBase; vpp <= top; vpp++) {
+                if ((vp = *vpp) != NULL) {
+                    mprMark(vp);
+                }
             }
         }
         markValues(ejs);
@@ -9230,7 +9238,7 @@ int ejsEvalModule(cchar *path)
     } else if (ejsRun(ejs) < 0) {
         status = EJS_ERR;
     }
-    mprDestroy(mpr);
+    mprDestroy(MPR_GRACEFUL);
     return status;
 }
 
@@ -9954,7 +9962,7 @@ static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     int     status;
 
     status = argc == 0 ? 0 : ejsGetInt(ejs, argv[0]);
-    mprBreakpoint();
+    // mprBreakpoint();
     //  TODO -- Make more uniform. Zero status won't exit immediately but non-zero will????
     if (status != 0) {
         exit(status);
@@ -10062,15 +10070,40 @@ void ejsServiceEvents(Ejs *ejs, int timeout, int flags)
         if (ejs->exception) {
             ejsClearException(ejs);
         }
-    } while (remaining > 0 && !mprIsExiting(ejs) && !ejs->exiting && !ejs->exception);
+    } while (remaining > 0 && !mprIsStopping(ejs) && !ejs->exiting && !ejs->exception);
 }
 #endif
 
 
 /*  
-    static function eventLoop(timeout: Number = -1): void
+    static function run(timeout: Number = -1, oneEvent: Boolean = false): void
  */
-static EjsObj *app_eventLoop(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsObj *app_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    MprTime     mark, remaining;
+    int         oneEvent, timeout;
+
+    timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]) : INT_MAX;
+    oneEvent = (argc > 1) ? ejsGetInt(ejs, argv[1]) : 0;
+
+    if (timeout < 0) {
+        timeout = INT_MAX;
+    }
+    mark = mprGetTime();
+    remaining = timeout;
+    do {
+        mprWaitForEvent(ejs->dispatcher, remaining); 
+        remaining = mprGetRemainingTime(mark, timeout);
+    } while (!oneEvent && !ejs->exiting && remaining > 0 && !mprIsStopping());
+    return 0;
+}
+
+
+/*  
+    Pause the application. This services events while asleep.
+    static function sleep(delay: Number = -1): void
+ */
+static EjsObj *app_sleep(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprTime     mark, remaining;
     int         timeout;
@@ -10084,18 +10117,7 @@ static EjsObj *app_eventLoop(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     do {
         mprWaitForEvent(ejs->dispatcher, remaining); 
         remaining = mprGetRemainingTime(mark, timeout);
-    } while (!ejs->exiting && remaining > 0 && !mprIsComplete());
-    return 0;
-}
-
-
-/*  
-    Pause the application
-    static function sleep(delay: Number = -1): void
- */
-static EjsObj *app_sleep(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
-{
-    app_eventLoop(ejs, NULL, argc, argv);
+    } while (!ejs->exiting && remaining > 0 && !mprIsStopping());
     return 0;
 }
 
@@ -10127,8 +10149,10 @@ void ejsConfigureAppType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_App_noexit, (EjsProc) app_noexit);
 #endif
     ejsBindMethod(ejs, type, ES_App_createSearch, (EjsProc) app_createSearch);
+#if ES_App_run
+    ejsBindMethod(ejs, type, ES_App_run, (EjsProc) app_run);
+#endif
     ejsBindAccess(ejs, type, ES_App_search, (EjsProc) app_search, (EjsProc) app_set_search);
-    ejsBindMethod(ejs, type, ES_App_eventLoop, (EjsProc) app_eventLoop);
     ejsBindMethod(ejs, type, ES_App_sleep, (EjsProc) app_sleep);
 
 #if FUTURE
@@ -13952,7 +13976,7 @@ static void manageByteArray(EjsByteArray *ap, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ap->emitter);
         mprMark(ap->listeners);
-        //  MOB -- is this required
+        mprMark(ap->value);
         mprMark(TYPE(ap));
     }
 }
@@ -17749,7 +17773,7 @@ static EjsObj *runGC(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
     int     deep;
 
     deep = ((argc == 1) && ejsIsBoolean(ejs, argv[1]));
-    mprRequestGC(1, deep);
+    mprRequestGC(MPR_FORCE_GC | (deep ? MPR_COMPLETE_GC : 0));
     return 0;
 }
 
@@ -19564,7 +19588,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
         httpFinalize(conn);
     }
     while (conn->state < state && count < conn->retries && redirectCount < 16 && 
-           !conn->error && !ejs->exiting && !mprIsExiting(conn)) {
+           !conn->error && !ejs->exiting && !mprIsStopping(conn)) {
         count++;
         if ((rc = httpWait(conn, ejs->dispatcher, HTTP_STATE_PARSED, remaining)) == 0) {
             if (httpNeedRetry(conn, &url)) {
@@ -25735,6 +25759,7 @@ void *ejsCreatePot(Ejs *ejs, EjsType *type, int numProp)
         }
     }
 #if BLD_DEBUG
+    //  MOB - macro for this
     obj->mem = MPR_GET_MEM(obj);
 #endif
     return obj;
@@ -26505,7 +26530,9 @@ static EjsObj *sock_Socket(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
         ejsThrowMemoryError(ejs);
         return 0;
     }
+#if UNUSED
     sp->waitHandler.fd = -1;
+#endif
     return (EjsObj*) sp;
 }
 
@@ -26617,7 +26644,7 @@ static EjsObj *sock_connect(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
         ejsThrowStateError(ejs, "Socket is closed");
         return 0;
     }
-    if (mprOpenClientSocket(sp->sock, sp->address, sp->port, 0) < 0) {
+    if (mprConnectSocket(sp->sock, sp->address, sp->port, 0) < 0) {
         ejsThrowArgError(ejs, "Can't open client socket");
         return 0;
     }
@@ -26662,7 +26689,7 @@ static EjsObj *sock_listen(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
         ejsThrowStateError(ejs, "Socket is closed");
         return 0;
     }
-    if (mprOpenServerSocket(sp->sock, sp->address, sp->port, 0) < 0) {
+    if (mprListenOnSocket(sp->sock, sp->address, sp->port, 0) < 0) {
         ejsThrowArgError(ejs, "Can't open listening socket");
         return 0;
     }
@@ -26816,12 +26843,10 @@ static void enableSocketEvents(EjsSocket *sp, int (*proc)(EjsSocket *sp, MprEven
     Ejs     *ejs;
 
     ejs = TYPE(sp)->ejs;
-    if (sp->waitHandler.fd < 0) {
-        mprInitWaitHandler(&sp->waitHandler, sp->sock->fd, sp->mask, ejs->dispatcher, (MprEventProc) proc, sp);
+    if (sp->sock->handler == 0) {
+        mprAddSocketHandler(sp->sock, sp->mask, ejs->dispatcher, (MprEventProc) proc, sp);
     } else {
-        //  TODO - need API for this
-        sp->waitHandler.proc = (MprEventProc) proc;
-        mprEnableWaitEvents(&sp->waitHandler, sp->mask);
+        mprEnableSocketEvents(sp->sock, sp->mask);
     }
 }
 
@@ -26889,17 +26914,13 @@ static void manageSocket(EjsSocket *sp, int flags)
 }
 
 
-
 EjsSocket *ejsCreateSocket(Ejs *ejs)
 {
-    EjsSocket     *sp;
-
-    sp = ejsCreateObj(ejs, ejsGetTypeByName(ejs, N(EJS_EJS_NAMESPACE, "Socket")), 0);
-    if (sp == 0) {
-        return 0;
-    }
+    return ejsCreateObj(ejs, ejsGetTypeByName(ejs, N(EJS_EJS_NAMESPACE, "Socket")), 0);
+#if UNUSED
     sp->waitHandler.fd = -1;
     return sp;
+#endif
 }
 
 
@@ -29654,6 +29675,7 @@ void ejsInitStringType(Ejs *ejs, EjsType *type)
     type->helpers.lookupProperty = (EjsLookupPropertyHelper) lookupStringProperty;
     type->numericIndicies = 1;
     type->manager = (MprManager) ejsManageString;
+    type->qname = N("ejs", "String");
     
     /*
         Standard string values. Create here so modules do not have to export these strings
@@ -32878,12 +32900,33 @@ static void removeWorker(EjsWorker *worker)
     mprAssert(worker);
 
     ejs = worker->ejs;
-    lock(ejs);
-    mprRemoveItem(ejs->workers, worker);
-    if (ejs->joining) {
-        /* Must wake mprServiceEvents as the call to mprServiceEvents in join() has a race */
-        mprWakeWaitService(ejs);
+    if (ejs) {
+        lock(ejs);
+        if (ejs->workers) {
+            mprRemoveItem(ejs->workers, worker);
+        }
+        if (ejs->joining) {
+            mprSignalDispatcher(ejs->dispatcher);
+        }
+        worker->ejs = 0;
+        unlock(ejs);
     }
+}
+
+
+/*
+    Called when destroying ejs
+ */
+void ejsRemoveWorkers(Ejs *ejs)
+{
+    EjsWorker   *worker;
+    int         next;
+
+    lock(ejs);
+    for (next = 0; (worker = mprGetNextItem(ejs->workers, &next)) != NULL; ) {
+        worker->ejs = 0;
+    }
+    ejs->workers = 0;
     unlock(ejs);
 }
 
@@ -33412,7 +33455,10 @@ static EjsObj *workerTerminate(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **a
     ejs = (!worker->inside) ? worker->pair->ejs : ejs;
     worker->terminated = 1;
     ejs->exiting = 1;
-    mprWakeWaitService(ejs);
+    mprSignalDispatcher(ejs->dispatcher);
+#if UNUSED
+    mprWakeWaitService();
+#endif
     return 0;
 }
 
@@ -33517,12 +33563,9 @@ static void manageWorker(EjsWorker *worker, int flags)
     } else if (flags & MPR_MANAGE_FREE) {
         if (!worker->inside) {
             /* Remove here also incase an explicit mprFree on the worker */
-            removeWorker(worker);
-#if UNUSED
-            if (worker->pair) {
-                ejsDestroy(worker->pair->ejs);
+            if (worker->ejs) {
+                removeWorker(worker);
             }
-#endif
         }
         if (worker->pair) {
             if (worker->pair->pair) {
@@ -36021,13 +36064,10 @@ static void indent(MprBuf *bp, int level)
 //#define THREAD_STYLE SQLITE_CONFIG_SERIALIZED
 
 /*
-    Map mutex locking onto Ejscript/MPR locking routines for platforms not supported by SQLite
+    Map allocation and mutex routines
  */
-#if VXWORKS
+#define MAP_ALLOC   1
 #define MAP_MUTEXES 1
-#else
-#define MAP_MUTEXES 1
-#endif
 
 /*
     Ejscript Sqlite class object
@@ -36038,11 +36078,6 @@ typedef struct EjsSqlite {
     Ejs             *ejs;           /* Interp reference */
     int             memory;         /* In-memory database */
 } EjsSqlite;
-
-
-#if UNUSED
-static int sqldbDestructor(EjsSqlite **db);
-#endif
 
 /*
     DB Constructor and also used for constructor for sub classes.
@@ -36059,19 +36094,6 @@ static EjsObj *sqliteConstructor(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **arg
     db->ejs = ejs;
     options = argv[0];
     
-#if UNUSED
-    EjsSqlite       **dbp;
-    /*
-        Create a destructor object so we can cleanup and close the database. Must create after the ctx so it will be
-        invoked before the ctx is freed. 
-     */
-    if ((dbp = mprAllocObj(ejs, void*, sqldbDestructor)) == 0) {
-        ejsThrowMemoryError(ejs);
-        return 0;
-    }
-    *dbp = db;
-#endif
-
     /*
         MOB - this will create a database if it doesn't exist. Should have more control over creating databases.
      */
@@ -36094,7 +36116,7 @@ static EjsObj *sqliteConstructor(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **arg
                 return 0;
             }
             //  MOB TODO - should be configurable somewhere
-            sqlite3_soft_heap_limit(2 * 1024 * 1024);
+            sqlite3_soft_heap_limit(20 * 1024 * 1024);
             sqlite3_busy_timeout(sdb, EJS_SQLITE_TIMEOUT);
         } else {
             ejsThrowArgError(ejs, "Unknown SQLite database URI %s", path);
@@ -36102,24 +36124,8 @@ static EjsObj *sqliteConstructor(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **arg
         }
     }
     db->sdb = sdb;
-    return 0;
+    return (EjsObj*) db;
 }
-
-
-#if UNUSED
-static int sqldbDestructor(EjsSqlite **dbp)
-{
-    EjsSqlite   *db;
-
-    db = *dbp;
-
-    if (db->sdb) {
-        sqlite3_close(db->sdb);
-        db->sdb = 0;
-    }
-    return 0;
-}
-#endif
 
 
 /*
@@ -36233,7 +36239,7 @@ static EjsObj *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **argv)
                         qname = EN(tableName);
                     }
                     if (ejsLookupProperty(ejs, (EjsObj*) row, qname) < 0) {
-                        svalue = (EjsObj*) ejsCreateStringFromMulti(ejs, value, strlen(value));
+                        svalue = (EjsObj*) ejsCreateStringFromMulti(ejs, value, slen(value));
                         if (ejsSetPropertyByName(ejs, (EjsObj*) row, qname, svalue) < 0) {
                             ejsThrowIOError(ejs, "Can't update query result set name");
                             return 0;
@@ -36269,21 +36275,32 @@ static EjsObj *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **argv)
 }
 
 
+#if MAP_ALLOC
 
 static void *allocBlock(int size)
 {
-    return mprAlloc(size);
+    void    *ptr;
+
+    if ((ptr = mprAlloc(size)) != 0) {
+        mprHold(ptr);
+    }
+    return ptr;
 }
 
 
 static void freeBlock(void *ptr)
 {
+    mprRelease(ptr);
 }
 
 
 static void *reallocBlock(void *ptr, int size)
 {
-    return mprRealloc(ptr, size);
+    mprRelease(ptr);
+    if ((ptr =  mprRealloc(ptr, size)) == 0) {
+        mprHold(ptr);
+    }
+    return ptr;
 }
 
 
@@ -36313,6 +36330,8 @@ static void termAllocator(void *data)
 struct sqlite3_mem_methods mem = {
     allocBlock, freeBlock, reallocBlock, blockSize, roundBlockSize, initAllocator, termAllocator, NULL 
 };
+
+#endif /* MAP_ALLOC */
 
 /*
     Mutex mapping for platforms not yet supported by SQLite
@@ -36380,6 +36399,7 @@ struct sqlite3_mutex_methods mut = {
 static int manageSqlite(EjsSqlite *db, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        ejsManagePot(db, flags);
     } else if (flags & MPR_MANAGE_FREE) {
         if (db->sdb) {
             sqliteClose(db->ejs, db, 0, 0);
@@ -36400,7 +36420,9 @@ static int configureSqliteTypes(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_db_Sqlite_close, (EjsProc) sqliteClose);
     ejsBindMethod(ejs, prototype, ES_ejs_db_Sqlite_sql, (EjsProc) sqliteSql);
 
+#if MAP_ALLOC
     sqlite3_config(SQLITE_CONFIG_MALLOC, &mem);
+#endif
 #if MAP_MUTEXES
     sqlite3_config(SQLITE_CONFIG_MUTEX, &mut);
 #endif
@@ -37415,6 +37437,7 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         ejsManagePot(sp, flags);
+        mprMark(sp->ejs);
         mprMark(sp->server);
         mprMark(sp->sessionTimer);
         mprMark(sp->ssl);
@@ -37434,8 +37457,14 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
 
     } else {
         //  MOB - find better way. If ejs has been manageFreed, then the stack will be unpinned
-        if (!mprIsExiting()) {
+        if (!mprIsStopping() && sp->ejs && sp->ejs->service) {
             ejsSendEvent(sp->ejs, sp->emitter, "close", NULL, sp);
+        }
+        sp->sessions = 0;
+        //  MOB - locking race
+        if (sp->sessionTimer) {
+            mprRemoveEvent(sp->sessionTimer);
+            sp->sessionTimer = 0;
         }
         if (sp->server) {
             httpDestroyServer(sp->server);
@@ -37449,7 +37478,7 @@ static EjsHttpServer *createHttpServer(Ejs *ejs, EjsType *type, int size)
 {
     EjsHttpServer   *sp;
 
-    if ((sp = (EjsHttpServer*) ejsAlloc(ejs, type, 0)) == NULL) {
+    if ((sp = ejsCreatePot(ejs, type, 0)) == NULL) {
         return NULL;
     }
     sp->ejs = ejs;
@@ -39152,6 +39181,7 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     }
     session->id = sclone(id);
 
+    //  MOB - locking
     if (server->sessions == 0) {
         server->sessions = ejsCreateEmptyPot(ejs);
         ejsSetProperty(ejs, server, ES_ejs_web_HttpServer_sessions, server->sessions);
@@ -39231,6 +39261,7 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
 
     /*  
         This could be on the primary event thread. Can't block long.  MOB -- is this lock really needed
+        MOB -- BUG. Other locks are on the service object
      */
     if (sessions && server->server && mprTryLock(ejs->mutex)) {
         limits = server->server->limits;
@@ -39292,7 +39323,7 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
 static void manageSession(EjsSession *sp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        ;
+        ejsManagePot(sp, flags);
     } else {
         ;
     }
@@ -48445,7 +48476,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
             ejsFreeze(ejs, frozen);
         }
         if (!frozen) {
-            mprYield(NULL, 0);
+            mprGC(0);
         }
     }
 
@@ -48480,8 +48511,8 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     ejsPopBlock(ejs);
     cp->nodes = NULL;
     ejsFreeze(ejs, frozen);
-    if (!frozen) {
-        mprYield(NULL, 0);
+    if (!frozen && (ejs->gc || MPR->heap.gc)) {
+        mprGC(0);
     }
 
     if (cp->errorCount > 0) {
@@ -48621,21 +48652,21 @@ int ejsEvalFile(cchar *path)
 
     mpr = mprCreate(0, NULL, 0);
     if ((service = ejsCreateService(mpr)) == 0) {
-        mprDestroy(mpr);
+        mprDestroy(0);
         return MPR_ERR_MEMORY;
     }
     mprAddRoot(service);
     if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
-        mprDestroy(mpr);
+        mprDestroy(0);
         return MPR_ERR_MEMORY;
     }
     mprAddRoot(ejs);
     if (ejsLoadScriptFile(ejs, path, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_DEBUG) == 0) {
         ejsReportError(ejs, "Error in program");
-        mprDestroy(mpr);
+        mprDestroy(0);
         return MPR_ERR;
     }
-    mprDestroy(mpr);
+    mprDestroy(MPR_GRACEFUL);
     return 0;
 }
 
@@ -48651,21 +48682,21 @@ int ejsEvalScript(cchar *script)
 
     mpr = mprCreate(0, NULL, 0);
     if ((service = ejsCreateService(mpr)) == 0) {
-        mprDestroy(mpr);
+        mprDestroy(0);
         return MPR_ERR_MEMORY;
     }
     mprAddRoot(service);
     if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
-        mprDestroy(mpr);
+        mprDestroy(0);
         return MPR_ERR_MEMORY;
     }
     mprAddRoot(ejs);
     if (ejsLoadScriptLiteral(ejs, ejsCreateStringFromAsc(ejs, script), NULL, EC_FLAGS_NO_OUT | EC_FLAGS_DEBUG) == 0) {
         ejsReportError(ejs, "Error in program");
-        mprDestroy(mpr);
+        mprDestroy(0);
         return MPR_ERR;
     }
-    mprDestroy(mpr);
+    mprDestroy(MPR_GRACEFUL);
     return 0;
 }
 
@@ -58351,6 +58382,10 @@ static EcNode *parseVariableBinding(EcCompiler *cp, EcNode *np, EcNode *attribut
     case T_LBRACE:
         initialize = parsePattern(cp);
         for (next = 0; (elt = mprGetNextItem(initialize->children, &next)) != 0 && !cp->error; ) {
+            mprAssert(elt->kind == N_FIELD);
+            if (elt->field.expr->kind != N_QNAME) {
+                return LEAVE(cp, parseError(cp, "Bad destructuring variable declaration"));
+            }
             var = createNode(cp, N_VAR, NULL);
             var->qname = elt->field.expr->qname;
             var->name.varKind = np->def.varKind;

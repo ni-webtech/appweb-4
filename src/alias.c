@@ -10,12 +10,15 @@
 
 #include    "appweb.h"
 
+/********************************* Forwards ***********************************/
+
+static void manageAlias(MaAlias *alias, int flags);
+
 /*********************************** Code *************************************/
 /*
     Create an alias for a URI prefix. During processing, a request URI prefix is substituted to the target which
     may be either a physical path or a URI if a non-zero redirect code is supplied.
  */
-
 MaAlias *maCreateAlias(cchar *prefix, cchar *target, int code)
 {
     MaAlias     *ap;
@@ -25,14 +28,14 @@ MaAlias *maCreateAlias(cchar *prefix, cchar *target, int code)
     mprAssert(prefix);
     mprAssert(target && *target);
 
-    if ((ap = mprAllocObj(MaAlias, NULL)) == NULL) {
+    if ((ap = mprAllocObj(MaAlias, manageAlias)) == NULL) {
         return 0;
     }
     ap->prefix = sclone(prefix);
     ap->prefixLen = (int) strlen(prefix);
 
     /*  
-        Always strip trailing "/"
+        Always strip trailing "/" from the prefix
      */
     if (ap->prefixLen > 0 && ap->prefix[ap->prefixLen - 1] == '/') {
         ap->prefix[--ap->prefixLen] = '\0';
@@ -53,6 +56,18 @@ MaAlias *maCreateAlias(cchar *prefix, cchar *target, int code)
         }
     }
     return ap;
+}
+
+
+static void manageAlias(MaAlias *alias, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(alias->prefix);
+        mprMark(alias->filename);
+        mprMark(alias->uri);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
 }
 
 

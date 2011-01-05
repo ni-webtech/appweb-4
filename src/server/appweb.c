@@ -21,10 +21,15 @@
 /********************************** Locals ************************************/
 
 typedef struct App {
-    char    *documentRoot;      //MOB UNUSED
-    char    *serverRoot;        //MOB UNUSED
-    char    *configFile;
-    char    *pathVar;
+    Mpr         *mpr;
+    MaAppweb    *appweb;
+    MaServer    *server;
+    MprList     *scripts;
+    char        *documentRoot;      //MOB UNUSED
+    char        *serverRoot;        //MOB UNUSED
+    char        *configFile;
+    char        *pathVar;
+    int         workers;
 } App;
 
 static App *app;
@@ -37,11 +42,11 @@ extern int checkEnvironment(cchar *program);
 static void findConfigFile();
 static void manageApp(App *app, int flags);
 extern int  osInit();
-static MaAppweb *initialize(cchar *ip, int port, MprList *script, int workers);
+static MaAppweb *initialize(cchar *ip, int port);
 static void usageError();
 
 #if BLD_FEATURE_EJS
-static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts);
+static int setupEjsApps();
 #endif
 #if BLD_UNIX_LIKE
 static void catchSignal(int signo, siginfo_t *info, void *arg);
@@ -58,13 +63,10 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 
 MAIN(appweb, int argc, char **argv)
 {
-    Mpr         *mpr;
-    MaAppweb    *appweb;
-    MaServer    *server;
-    MprList     *scripts;
-    cchar       *ipAddrPort, *argp, *logSpec, *jail;
-    char        *ip;
-    int         workers, outputVersion, argind, port;
+    Mpr     *mpr;
+    cchar   *ipAddrPort, *argp, *logSpec, *jail;
+    char    *ip;
+    int     outputVersion, argind, port;
 
     ipAddrPort = 0;
     ip = 0;
@@ -72,18 +74,19 @@ MAIN(appweb, int argc, char **argv)
     logSpec = 0;
     port = -1;
     outputVersion = 0;
-    server = 0;
-    scripts = 0;
-    workers = -1;
 
-    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
+    if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
+        exit(1);
+    }
+    if ((app = mprAllocObj(App, manageApp)) == NULL) {
+        exit(2);
+    }
+    app->mpr = mpr;
+    app->workers = -1;
 
     argc = mpr->argc;
     argv = mpr->argv;
 
-    if ((app = mprAllocObj(App, manageApp)) == NULL) {
-        exit(1);
-    }
     mprAddRoot(app);
 
     app->serverRoot = mprGetCurrentPath();
@@ -95,11 +98,11 @@ MAIN(appweb, int argc, char **argv)
 #endif
 
     if (osInit() < 0) {
-        exit(2);
+        exit(3);
     }
     if (mprStart() < 0) {
         mprUserError("Can't start MPR for %s", mprGetAppName());
-        mprDestroy(mpr);
+        mprDestroy(0);
         return MPR_ERR_CANT_INITIALIZE;
     }
 
@@ -129,10 +132,10 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            if (scripts == 0) {
-                scripts = mprCreateList(-1, 0);
+            if (app->scripts == 0) {
+                app->scripts = mprCreateList(-1, 0);
             }
-            mprAddItem(scripts, argv[++argind]);
+            mprAddItem(app->scripts, argv[++argind]);
 
         } else if (strcmp(argp, "--home") == 0) {
             if (argind >= argc) {
@@ -141,7 +144,7 @@ MAIN(appweb, int argc, char **argv)
             app->serverRoot = mprGetAbsPath(argv[++argind]);
             if (chdir(app->serverRoot) < 0) {
                 mprPrintfError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
-                exit(2);
+                exit(4);
             }
 
         } else if (strcmp(argp, "--log") == 0 || strcmp(argp, "-l") == 0) {
@@ -161,7 +164,7 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            workers = atoi(argv[++argind]);
+            app->workers = atoi(argv[++argind]);
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
             maStartLogging("stdout:2");
@@ -172,7 +175,7 @@ MAIN(appweb, int argc, char **argv)
         } else {
             mprPrintfError("Unknown switch \"%s\"\n", argp);
             usageError();
-            exit(2);
+            exit(5);
         }
     }
     if (argc > argind) {
@@ -193,17 +196,17 @@ MAIN(appweb, int argc, char **argv)
         mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
     }
     if (checkEnvironment(argv[0]) < 0) {
-        exit(3);
+        exit(6);
     }
     if (jail && changeRoot(jail) < 0) {
-        exit(4);
+        exit(7);
     }
-    if ((appweb = initialize(ip, port, scripts, workers)) == 0) {
+    if ((app->appweb = initialize(ip, port)) == 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
-    if (maStartAppweb(appweb) < 0) {
+    if (maStartAppweb(app->appweb) < 0) {
         mprUserError("Can't start HTTP service, exiting.");
-        exit(5);
+        exit(8);
     }
     /*
         Service I/O events until instructed to exit
@@ -211,10 +214,10 @@ MAIN(appweb, int argc, char **argv)
     mprServiceEvents(-1, 0);
 
     mprLog(1, "Exiting ...");
-    maStopAppweb(appweb);
+    maStopAppweb(app->appweb);
     mprLog(1, "Exit complete");
 
-    mprDestroy(mpr);
+    mprDestroy(MPR_GRACEFUL);
     return 0;
 }
 
@@ -224,8 +227,10 @@ static void manageApp(App *app, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(app->configFile);
         mprMark(app->documentRoot);
-        mprMark(app->serverRoot);
         mprMark(app->pathVar);
+        mprMark(app->scripts);
+        mprMark(app->server);
+        mprMark(app->serverRoot);
 
     } else if (flags & MPR_MANAGE_FREE) {
     }
@@ -256,42 +261,41 @@ static int changeRoot(cchar *jail)
 }
 
 
-static MaAppweb *initialize(cchar *ip, int port, MprList *scripts, int workers)
+static MaAppweb *initialize(cchar *ip, int port)
 {
     MaAppweb    *appweb;
-    MaServer    *server;
-    
+
     if ((appweb = maCreateAppweb()) == 0) {
         mprUserError("Can't create HTTP service for %s", mprGetAppName());
         return 0;
     }
-    if ((server = maCreateServer(appweb, "default", NULL, NULL, -1)) == 0) {
+    if ((app->server = maCreateServer(appweb, "default", NULL, NULL, -1)) == 0) {
         mprUserError("Can't create HTTP server for %s", mprGetAppName());
         return 0;
     }
-    if (maConfigureServer(server, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
+    if (maConfigureServer(app->server, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
         /* mprUserError("Can't configure the server, exiting."); */
-        exit(6);
+        exit(9);
     }
 #if BLD_FEATURE_EJS
 #if BLD_EJS_PRODUCT && UNUSED
-    if (scripts == 0) {
-        scripts = mprCreateList(-1, 0);
-        mprAddItem(scripts, MA_EJS_STARTUP);
+    if (app->scripts == 0) {
+        app->scripts = mprCreateList(-1, 0);
+        mprAddItem(app->scripts, MA_EJS_STARTUP);
     }
 #endif
-    if (scripts) {
-        if (setupEjsApps(appweb, server, scripts) < 0) {
-            exit(7);
+    if (app->scripts) {
+        if (setupEjsApps() < 0) {
+            exit(10);
         }
     }
 #endif
-    if (workers >= 0) {
-        mprSetMaxWorkers(workers);
+    if (app->workers >= 0) {
+        mprSetMaxWorkers(app->workers);
     }
 #if BLD_WIN_LIKE
-    if (!scripts) {
-        writePort(server->defaultHost);
+    if (!app->scripts) {
+        writePort(app->server->defaultHost);
     }
 #endif
     return appweb;
@@ -308,7 +312,7 @@ static void findConfigFile()
         app->configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
         if (!mprPathExists(app->configFile, R_OK)) {
             mprPrintfError("Can't open config file %s\n", app->configFile);
-            exit(2);
+            exit(11);
         }
     }
 #if UNUSED
@@ -321,18 +325,18 @@ static void findConfigFile()
 /*
     Create the ejs application aliases
  */
-static int setupEjsApps(MaAppweb *appweb, MaServer *server, MprList *scripts)
+static int setupEjsApps(MaAppweb *appweb)
 {
     MaHost      *host;
     HttpLoc     *loc;
     char        *home, *path, *uri, *script;
     int         next;
 
-    host = server->defaultHost;
+    host = app->server->defaultHost;
     home = mprGetCurrentPath(appweb);
     uri = "/";
 
-    for (next = 0; (script = mprGetNextItem(scripts, &next)) != 0; ) {
+    for (next = 0; (script = mprGetNextItem(app->scripts, &next)) != 0; ) {
         path = mprGetPathDir(mprJoinPath(home, script));
 #if UNUSED
         alias = maCreateAlias("/", path, 0);
@@ -403,7 +407,7 @@ static void usageError(Mpr *mpr)
     "    --version              # Output version information\n\n"
     "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",
         name, name, name, name, name);
-    exit(2);
+    exit(12);
 }
 
 

@@ -80,7 +80,7 @@ enumerable class Test {
         _top = path.dirname.absolute
         _bin = _top.join("out/bin").absolute
         _lib = _top.join("out/lib").absolute
-        parseBuildConfig(path);
+        parseBuildConfig(_top.join("out/include/buildConfig.h"));
     }
 
     /*

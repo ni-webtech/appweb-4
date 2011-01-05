@@ -785,14 +785,12 @@ extern EjsOptable *ejsGetOptable();
 
 /************************************************************************/
 /*
- *  Start of file "../../src/include/ejsCore.h"
+ *  Start of file "../../src/include/ejs.h"
  */
 /************************************************************************/
 
 /*
-    ejsCore.h - Header for the core types.
-
-    The VM provides core types like numbers, strings and objects. This header provides their API.
+    ejs.h - Ejscript header
 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
@@ -1030,9 +1028,24 @@ typedef struct EjsLoc {
 #define VISITED(vp)             ((((EjsObj*) vp)->xtype) & EJS_MASK_VISITED)
 #define TYPE(vp)                ((EjsType*) ((((EjsObj*) vp)->xtype) & EJS_MASK_TYPE))
 
-#define SET_VISITED(vp, value)  ((EjsObj*) vp)->xtype = ((value) << EJS_SHIFT_VISITED) | (((EjsObj*) vp)->xtype & ~EJS_MASK_VISITED)
-#define SET_DYNAMIC(vp, value)  ((EjsObj*) vp)->xtype = (((size_t) value) << EJS_SHIFT_DYNAMIC) | (((EjsObj*) vp)->xtype & ~EJS_MASK_DYNAMIC)
-#define SET_TYPE(vp, value)     ((EjsObj*) vp)->xtype = (((size_t) value) << EJS_SHIFT_TYPE) | (((EjsObj*) vp)->xtype & ~EJS_MASK_TYPE)
+#define SET_VISITED(vp, value)  ((EjsObj*) vp)->xtype = \
+                                    ((value) << EJS_SHIFT_VISITED) | (((EjsObj*) vp)->xtype & ~EJS_MASK_VISITED)
+#define SET_DYNAMIC(vp, value)  ((EjsObj*) vp)->xtype = \
+                                    (((size_t) value) << EJS_SHIFT_DYNAMIC) | (((EjsObj*) vp)->xtype & ~EJS_MASK_DYNAMIC)
+#if BLD_DEBUG
+#define SET_TYPE_NAME(vp, t) if (t && ((EjsType*) t)->qname.name) { \
+                                    ((EjsObj*) vp)->kind = ((EjsType*) t)->qname.name->value; \
+                                    ((EjsObj*) vp)->type = ((EjsType*) t); \
+                                } else
+#else
+#define SET_TYPE_NAME(vp, type)
+#endif
+
+#define SET_TYPE(vp, value)      if (1) { \
+                                    ((EjsObj*) vp)->xtype = \
+                                        (((size_t) value) << EJS_SHIFT_TYPE) | (((EjsObj*) vp)->xtype & ~EJS_MASK_TYPE); \
+                                    SET_TYPE_NAME(vp, value); \
+                                } else
 
 typedef void EjsAny;
 
@@ -1042,13 +1055,16 @@ typedef struct EjsObj {
 #endif
         ssize           xtype;
 #if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
-        struct EjsType  *type;
         struct {
             uint        visited : 1;        /* Has been traversed */
             uint        dynamic : 1;        /* Object may be modified */
             ssize       typeBits: MPR_BITS - 2;
-        };
+        } bits;
     };
+#endif
+#if BLD_DEBUG
+    char                *kind;
+    struct EjsType      *type;
 #endif
 } EjsObj;
 
@@ -1176,6 +1192,7 @@ extern EjsAny *ejsGetSpecial(struct Ejs *ejs, int index);
     @see ejsCreate, ejsCreateService, ejsAppendSearchPath, ejsSetSearchPath, ejsEvalFile, ejsEvalScript, ejsExit
  */
 typedef struct Ejs {
+    char                *name;              /**< Unique interpreter name */
     EjsAny              *exception;         /**< Pointer to exception object */
     EjsAny              *result;            /**< Last expression result */
     struct EjsState     *state;             /**< Current evaluation state and stack */
@@ -3151,7 +3168,9 @@ typedef struct EjsSocket {
     EjsObj          *emitter;           /**< Event emitter */
     EjsByteArray    *data;              /**< Buffered write data */
     MprSocket       *sock;              /**< Underlying MPR socket object */
+#if UNUSED
     MprWaitHandler  waitHandler;        /**< I/O event wait handler */
+#endif
     cchar           *address;           /**< Remote address */
     int             port;               /**< Remote port */
     int             async;              /**< In async mode */
@@ -3222,6 +3241,7 @@ typedef struct EjsWorker {
 } EjsWorker;
 
 extern EjsWorker *ejsCreateWorker(Ejs *ejs);
+extern void ejsRemoveWorkers(Ejs *ejs);
 
 /** 
     Void class
@@ -3928,76 +3948,6 @@ extern void ejsUnlockVm(Ejs *ejs);
 extern void ejsLockService(Ejs *ejs);
 extern void ejsUnlockService(Ejs *ejs);
 
-#ifdef __cplusplus
-}
-#endif
-#endif /* _h_EJS_CORE */
-
-/*
-    @copy   default
- 
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
-    by the terms of either license. Consult the LICENSE.TXT distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
-
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-
-/************************************************************************/
-/*
- *  End of file "../../src/include/ejsCore.h"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/include/ejsModule.h"
- */
-/************************************************************************/
-
-/*
-    ejsModule.h - Module file format.
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-
-#ifndef _h_EJS_MODULE
-#define _h_EJS_MODULE 1
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
     A module file may contain multiple logical modules.
 
@@ -4294,11 +4244,6 @@ typedef struct EjsDoc {
 #define EJS_LOADER_BUILTIN    0x8                   /* Loading builtins */
 #define EJS_LOADER_DEP        0x10                  /* Loading a dependency */
 
-
-extern int          ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, int checksum, int flags);
-extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, EjsString *name);
-extern EjsModule    *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsConstants *constants);
-
 //  MOB -- would this be better with an ascii name?
 extern int          ejsLoadModule(Ejs *ejs, EjsString *name, int minVer, int maxVer, int flags);
 extern char         *ejsSearchForModule(Ejs *ejs, cchar *name, int minVer, int maxVer);
@@ -4337,14 +4282,18 @@ extern int          ejsAddModule(Ejs *ejs, EjsModule *up);
 extern EjsModule    *ejsLookupModule(Ejs *ejs, EjsString *name, int minVersion, int maxVersion);
 extern int          ejsRemoveModule(Ejs *ejs, EjsModule *up);
 
+extern int  ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, int checksum, int flags);
+extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, EjsString *name);
+extern EjsModule *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsConstants *constants);
+
 #ifdef __cplusplus
 }
 #endif
-#endif /* _h_EJS_MODULE */
+#endif /* _h_EJS_CORE */
 
 /*
     @copy   default
-
+ 
     Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
     Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
 
@@ -4377,69 +4326,7 @@ extern int          ejsRemoveModule(Ejs *ejs, EjsModule *up);
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "../../src/include/ejsModule.h"
- */
-/************************************************************************/
 
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/include/ejs.h"
- */
-/************************************************************************/
-
-/*
-    ejs.h - Ejscript top level header.
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-
-#ifndef _h_EJS_h
-#define _h_EJS_h 1
-
-#include    "mpr.h"
-
-#endif /* _h_EJS_h */
-
-/*
-    @copy   default
-
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
-    by the terms of either license. Consult the LICENSE.TXT distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
-
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
 /************************************************************************/
 /*
  *  End of file "../../src/include/ejs.h"

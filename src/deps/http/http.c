@@ -12,6 +12,13 @@
 
 /*********************************** Locals ***********************************/
 
+typedef struct ThreadData {
+    HttpConn        *conn;
+    MprDispatcher   *dispatcher;
+    char            *url;
+    MprList         *files;
+} ThreadData;
+
 typedef struct App {
     int      activeLoadThreads;  /* Still running test threads */
     int      benchmark;          /* Output benchmarks */
@@ -48,6 +55,7 @@ typedef struct App {
     char     *username;          /* User name for authentication of requests */
     int      verbose;            /* Trace progress */
     int      workers;            /* Worker threads. >0 if multi-threaded */
+    MprList  *threadData;        /* Per thread data */
     MprMutex *mutex;
 } App;
 
@@ -57,35 +65,39 @@ static App *app;
 
 static void     addFormVars(cchar *buf);
 static void     processing();
-static int      doRequest(HttpConn *conn, cchar *url);
+static int      doRequest(HttpConn *conn, cchar *url, MprList *files);
 static void     finishThread(MprThread *tp);
 static char     *getPassword();
 static void     initSettings();
 static bool     isPort(cchar *name);
 static bool     iterationsComplete();
 static void     manageApp(App *app, int flags);
+static void     manageThreadData(ThreadData *data, int flags);
 static bool     parseArgs(int argc, char **argv);
 static int      processThread(HttpConn *conn, MprEvent *event);
 static void     threadMain(void *data, MprThread *tp);
 static char     *resolveUrl(HttpConn *conn, cchar *url);
-static int      setContentLength(HttpConn *conn);
+static int      setContentLength(HttpConn *conn, MprList *files);
 static void     showOutput(HttpConn *conn, cchar *content, ssize contentLen);
 static void     showUsage();
 static int      startLogging(char *logSpec);
 static void     trace(HttpConn *conn, cchar *url, int fetchCount, cchar *method, int status, ssize contentLen);
 static void     waitForUser();
-static int      writeBody(HttpConn *conn);
+static int      writeBody(HttpConn *conn, MprList *files);
 
 /*********************************** Code *************************************/
 
 MAIN(httpMain, int argc, char *argv[])
 {
-    Mpr         *mpr;
     MprTime     start;
     double      elapsed;
 
-    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD | MPR_MARK_THREAD);
-    app = mprAllocObj(App, manageApp);
+    if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD | MPR_MARK_THREAD) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    if ((app = mprAllocObj(App, manageApp)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
     mprAddRoot(app);
 
     initSettings();
@@ -112,10 +124,8 @@ MAIN(httpMain, int argc, char *argv[])
     start = mprGetTime();
     app->http = httpCreate();
     processing();
+    mprServiceEvents(-1, 0);
 
-    while (!mprIsComplete()) {
-        mprServiceEvents(-1, 0);
-    }
     if (app->benchmark) {
         elapsed = (double) (mprGetTime() - start);
         if (app->fetchCount == 0) {
@@ -147,6 +157,8 @@ static void manageApp(App *app, int flags)
         mprMark(app->password);
         mprMark(app->ranges);
         mprMark(app->mutex);
+        mprMark(app->threadData);
+        
     } else if (flags & MPR_MANAGE_FREE) {
     }
 }
@@ -416,8 +428,7 @@ static bool parseArgs(int argc, char **argv)
     argc = argc - nextArg;
     argv = &argv[nextArg];
     app->target = argv[argc - 1];
-    argc--;
-    if (argc > 0) {
+    if (--argc > 0) {
         /*
             Files present on command line
          */
@@ -488,17 +499,36 @@ static void showUsage()
 static void processing()
 {
     MprThread   *tp;
+    ThreadData  *data;
     int         j;
 
     if (app->chunkSize > 0) {
         mprAddItem(app->headers, mprCreateKeyPair("X-Appweb-Chunk-Size", mprAsprintf("%d", app->chunkSize)));
     }
     app->activeLoadThreads = app->loadThreads;
+    app->threadData = mprCreateList(app->loadThreads, 0);
+
     for (j = 0; j < app->loadThreads; j++) {
         char name[64];
+        data = mprAllocObj(ThreadData, manageThreadData);
+        mprAddItem(app->threadData, data);
+
         mprSprintf(name, sizeof(name), "http.%d", j);
         tp = mprCreateThread(name, threadMain, NULL, 0); 
+        tp->data = data;
         mprStartThread(tp);
+    }
+}
+
+
+static void manageThreadData(ThreadData *data, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(data->url);
+        mprMark(data->files);
+        mprMark(data->conn);
+
+    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -508,12 +538,13 @@ static void processing()
  */ 
 static void threadMain(void *data, MprThread *tp)
 {
+    ThreadData      *td;
     HttpConn        *conn;
-    MprDispatcher   *dispatcher;
     MprEvent        e;
 
-    dispatcher = mprCreateDispatcher(tp->name, 1);
-    conn = httpCreateClient(app->http, dispatcher);
+    td = tp->data;
+    td->dispatcher = mprCreateDispatcher(tp->name, 1);
+    td->conn = conn = httpCreateClient(app->http, td->dispatcher);
 
     /*  
         Relay to processThread via the dispatcher. This serializes all activity on the conn->dispatcher
@@ -523,13 +554,15 @@ static void threadMain(void *data, MprThread *tp)
     mprRelayEvent(conn->dispatcher, (MprEventProc) processThread, conn, &e);
 }
 
-
 static int processThread(HttpConn *conn, MprEvent *event)
 {
+    ThreadData  *td;
+    MprList     *files;
     cchar       *path;
     char        *url;
     int         next;
 
+    td = mprGetCurrentThread()->data;
     httpFollowRedirects(conn, !app->nofollow);
     httpSetTimeout(conn, app->timeout, app->timeout);
 
@@ -543,29 +576,32 @@ static int processThread(HttpConn *conn, MprEvent *event)
         }
         httpSetCredentials(conn, app->username, app->password);
     }
-    while (!mprIsExiting(conn) && (app->success || app->continueOnErrors)) {
+    while (!mprIsStopping(conn) && (app->success || app->continueOnErrors)) {
         if (app->singleStep) waitForUser();
         if (app->files && !app->upload) {
             for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0; ) {
+                /*
+                    If URL ends with "/", assume it is a directory on the target and append each file name 
+                 */
                 if (app->target[strlen(app->target) - 1] == '/') {
                     url = mprJoinPath(app->target, mprGetPathBase(path));
                 } else {
                     url = app->target;
                 }
-                app->files = mprCreateList(-1, -0);
-                mprAddItem(app->files, path);
-                url = resolveUrl(conn, url);
+                files = mprCreateList(-1, -0);
+                mprAddItem(files, path);
+                td->url = url = resolveUrl(conn, url);
                 if (app->verbose) {
                     mprPrintf("putting: %s to %s\n", path, url);
                 }
-                if (doRequest(conn, url) < 0) {
+                if (doRequest(conn, url, files) < 0) {
                     app->success = 0;
                     break;
                 }
             }
         } else {
-            url = resolveUrl(conn, app->target);
-            if (doRequest(conn, url) < 0) {
+            td->url = url = resolveUrl(conn, app->target);
+            if (doRequest(conn, url, NULL) < 0) {
                 app->success = 0;
                 break;
             }
@@ -580,7 +616,7 @@ static int processThread(HttpConn *conn, MprEvent *event)
 }
 
 
-static int prepRequest(HttpConn *conn)
+static int prepRequest(HttpConn *conn, MprList *files)
 {
     MprKeyValue     *header;
     char            seqBuf[16];
@@ -605,14 +641,14 @@ static int prepRequest(HttpConn *conn)
     if (app->chunkSize > 0) {
         httpSetChunkSize(conn, app->chunkSize);
     }
-    if (setContentLength(conn) < 0) {
+    if (setContentLength(conn, files) < 0) {
         return MPR_ERR_CANT_OPEN;
     }
     return 0;
 }
 
 
-static int sendRequest(HttpConn *conn, cchar *method, cchar *url)
+static int sendRequest(HttpConn *conn, cchar *method, cchar *url, MprList *files)
 {
     if (httpConnect(conn, method, url) < 0) {
         mprError("Can't process request for \"%s\". %s.", url, httpGetError(conn));
@@ -622,8 +658,8 @@ static int sendRequest(HttpConn *conn, cchar *method, cchar *url)
         This program does not do full-duplex writes with reads. ie. if you have a request that sends and receives
         data in parallel -- http will do the writes first then read the response.
      */
-    if (app->bodyData || app->formData || app->files) {
-        if (writeBody(conn) < 0) {
+    if (app->bodyData || app->formData || files) {
+        if (writeBody(conn, files) < 0) {
             mprError("Can't write body data to \"%s\". %s", url, httpGetError(conn));
             return MPR_ERR_CANT_WRITE;
         }
@@ -634,7 +670,7 @@ static int sendRequest(HttpConn *conn, cchar *method, cchar *url)
 }
 
 
-static int issueRequest(HttpConn *conn, cchar *url) 
+static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
 {
     HttpRx      *rx;
     HttpUri     *target, *location;
@@ -645,11 +681,11 @@ static int issueRequest(HttpConn *conn, cchar *url)
     httpSetRetries(conn, app->retries);
     httpSetTimeout(conn, app->timeout, app->timeout);
 
-    for (redirectCount = count = 0; count <= conn->retries && redirectCount < 16 && !mprIsExiting(conn); count++) {
-        if (prepRequest(conn) < 0) {
+    for (redirectCount = count = 0; count <= conn->retries && redirectCount < 16 && !mprIsStopping(conn); count++) {
+        if (prepRequest(conn, files) < 0) {
             return MPR_ERR_CANT_OPEN;
         }
-        if (sendRequest(conn, app->method, url) < 0) {
+        if (sendRequest(conn, app->method, url, files) < 0) {
             return MPR_ERR_CANT_WRITE;
         }
         if (httpWait(conn, conn->dispatcher, HTTP_STATE_PARSED, conn->limits->requestTimeout) == 0) {
@@ -691,12 +727,11 @@ static int issueRequest(HttpConn *conn, cchar *url)
 static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
 {
     HttpRx      *rx;
-    cchar       *msg;
     char        *responseHeaders;
     ssize       contentLen;
     int         status;
 
-    if (mprIsExiting(conn)) {
+    if (mprIsStopping(conn)) {
         return 0;
     }
 
@@ -705,7 +740,6 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
     if (contentLen < 0) {
         contentLen = conn->rx->readContent;
     }
-    msg = httpGetStatusMessage(conn);
 
     mprLog(6, "Response status %d, elapsed %ld", status, elapsed);
     if (conn->error) {
@@ -756,20 +790,18 @@ static void readBody(HttpConn *conn)
     }
 }
 
-static int doRequest(HttpConn *conn, cchar *url)
+static int doRequest(HttpConn *conn, cchar *url, MprList *files)
 {
     MprTime         mark;
-    MprFile         *file;
     HttpLimits      *limits;
 
     mprAssert(url && *url);
-    file = 0;
     limits = conn->limits;
 
     mprLog(MPR_DEBUG, "fetch: %s %s", app->method, url);
     mark = mprGetTime();
 
-    if (issueRequest(conn, url) < 0) {
+    if (issueRequest(conn, url, files) < 0) {
         return MPR_ERR_CANT_CONNECT;
     }
     while (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprGetElapsedTime(mark) <= limits->requestTimeout) {
@@ -790,19 +822,19 @@ static int doRequest(HttpConn *conn, cchar *url)
 }
 
 
-static int setContentLength(HttpConn *conn)
+static int setContentLength(HttpConn *conn, MprList *files)
 {
     MprPath     info;
     char        *path, *pair;
     ssize       len;
-    int         next, count;
+    int         next;
 
     len = 0;
     if (app->upload) {
         httpEnableUpload(conn);
         return 0;
     }
-    for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0; ) {
+    for (next = 0; (path = mprGetNextItem(files, &next)) != 0; ) {
         if (strcmp(path, "-") != 0) {
             if (mprGetPathInfo(path, &info) < 0) {
                 mprError("Can't access file %s", path);
@@ -812,7 +844,6 @@ static int setContentLength(HttpConn *conn)
         }
     }
     if (app->formData) {
-        count = mprGetListLength(app->formData);
         for (next = 0; (pair = mprGetNextItem(app->formData, &next)) != 0; ) {
             len += strlen(pair);
         }
@@ -828,7 +859,7 @@ static int setContentLength(HttpConn *conn)
 }
 
 
-static int writeBody(HttpConn *conn)
+static int writeBody(HttpConn *conn, MprList *files)
 {
     MprFile     *file;
     char        buf[HTTP_BUFSIZE], *path, *pair;
@@ -858,9 +889,9 @@ static int writeBody(HttpConn *conn)
                 }
             }
         }
-        if (app->files) {
-            mprAssert(mprGetListLength(app->files) == 1);
-            for (rc = next = 0; !rc && (path = mprGetNextItem(app->files, &next)) != 0; ) {
+        if (files) {
+            mprAssert(mprGetListLength(files) == 1);
+            for (rc = next = 0; !rc && (path = mprGetNextItem(files, &next)) != 0; ) {
                 if (strcmp(path, "-") == 0) {
                     file = mprAttachFileFd(0, "stdin", O_RDONLY | O_BINARY);
                 } else {
@@ -924,11 +955,11 @@ static void finishThread(MprThread *tp)
 
 static void waitForUser()
 {
-    int     c, rc;
+    int     c;
 
     mprLock(app->mutex);
     mprPrintf("Pause: ");
-    rc = read(0, (char*) &c, 1);
+    (void) read(0, (char*) &c, 1);
     mprUnlock(app->mutex);
 }
 
@@ -986,7 +1017,6 @@ static char *resolveUrl(HttpConn *conn, cchar *url)
 static void showOutput(HttpConn *conn, cchar *buf, ssize count)
 {
     HttpRx      *rx;
-    ssize       rc;
     int         i, c;
     
     rx = conn->rx;
@@ -998,7 +1028,7 @@ static void showOutput(HttpConn *conn, cchar *buf, ssize count)
         return;
     }
     if (!app->printable) {
-        rc = write(1, (char*) buf, count);
+        (void) write(1, (char*) buf, count);
         return;
     }
 
@@ -1009,7 +1039,7 @@ static void showOutput(HttpConn *conn, cchar *buf, ssize count)
         }
     }
     if (!app->isBinary) {
-        rc = write(1, (char*) buf, count);
+        (void) write(1, (char*) buf, count);
         return;
     }
     for (i = 0; i < count; i++) {
