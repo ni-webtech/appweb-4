@@ -4136,7 +4136,9 @@ DocFile docFiles[] = {
 
 
 typedef struct App {
+#if UNUSED
     EjsService  *ejsService;
+#endif
     Ejs         *ejs;
     EjsMod      *mod;
 } App;
@@ -4310,10 +4312,12 @@ MAIN(ejsmodMain, int argc, char **argv)
     /*
         Need an interpreter to load modules
      */
+#if UNUSED
     app->ejsService = ejsCreateService(mpr); 
     if (app->ejsService == 0) {
         return MPR_ERR_MEMORY;
     }
+#endif
     flags = EJS_FLAG_NO_INIT;
     if (mp->html || mp->xml) {
         flags |= EJS_FLAG_DOC;
@@ -4342,11 +4346,11 @@ MAIN(ejsmodMain, int argc, char **argv)
 static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+#if UNUSED
         mprMark(app->ejsService);
+#endif
         mprMark(app->ejs);
         mprMark(app->mod);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 

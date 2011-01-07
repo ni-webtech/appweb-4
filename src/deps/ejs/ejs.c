@@ -38,12 +38,20 @@
 typedef struct App {
     MprList     *files;
     MprList     *modules;
+#if UNUSED
     EjsService  *ejsService;
+#endif
     Ejs         *ejs;
     EcCompiler  *compiler;
 } App;
 
 static App *app;
+
+#if BLD_CC_EDITLINE
+static History  *cmdHistory;
+static EditLine *eh; 
+static cchar    *prompt;
+#endif
 
 static int  consoleGets(EcStream *stream);
 static int  commandGets(EcStream *stream);
@@ -66,7 +74,7 @@ MAIN(ejsMain, int argc, char **argv)
     /*  
         Initialize Multithreaded Portable Runtime (MPR)
      */
-    mpr = mprCreate(argc, argv, MPR_OWN_GC);
+    mpr = mprCreate(argc, argv, 0);
     mprSetAppName(argv[0], 0, 0);
     setupSignals();
     app = mprAllocObj(App, manageApp);
@@ -271,7 +279,7 @@ MAIN(ejsMain, int argc, char **argv)
             "  --optimize level         # Set the optimization level (0-9 default is 9)\n"
             "  --search ejsPath         # Module search path\n"
             "  --standard               # Default compilation mode to standard (default)\n"
-            "  --stats                  # Print stats on exit\n"
+            "  --stats                  # Print memory stats on exit\n"
             "  --strict                 # Default compilation mode to strict\n"
             "  --require 'module,...'   # Required list of modules to pre-load\n"
             "  --verbose | -v           # Same as --log stdout:2 \n"
@@ -281,11 +289,13 @@ MAIN(ejsMain, int argc, char **argv)
         return -1;
     }
 
+#if UNUSED
     app->ejsService = ejsCreateService(mpr);
     if (app->ejsService == 0) {
         return MPR_ERR_MEMORY;
     }
     ejsInitCompiler(app->ejsService);
+#endif
     ejs = ejsCreate(searchPath, app->modules, argc - nextArg, (cchar **) &argv[nextArg], 0);
     if (ejs == 0) {
         return MPR_ERR_MEMORY;
@@ -342,12 +352,12 @@ static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(app->files);
+#if UNUSED
         mprMark(app->ejsService);
+#endif
         mprMark(app->ejs);
         mprMark(app->compiler);
         mprMark(app->modules);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -363,16 +373,12 @@ static int interpretFiles(EcCompiler *cp, MprList *files, int argc, char **argv,
     mprAssert(files);
 
     ejs = cp->ejs;
-#if UNUSED
-    ejs->argc = argc;
-    ejs->argv = argv;
-    mprSetAppName(cp, argv[0], argv[0], NULL);
-#endif
-
     if (ecCompile(cp, files->length, (char**) files->items) < 0) {
         mprRawLog(0, "%s\n", cp->errorMsg);
         return EJS_ERR;
     }
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+
     if (cp->errorCount == 0) {
         if (ejsRunProgram(ejs, className, method) < 0) {
             ejsReportError(ejs, "Error in program");
@@ -438,14 +444,12 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
 
 
 #if BLD_CC_EDITLINE
-//  MOB -- cleanup
-static History  *cmdHistory;
-static EditLine *eh; 
-static cchar    *prompt;
 
-static cchar *issuePrompt(EditLine *e) {
+static cchar *issuePrompt(EditLine *e) 
+{
     return prompt;
 }
+
 
 static EditLine *initEditLine()
 {
@@ -491,7 +495,7 @@ static char *readline(cchar *msg)
     return NULL; 
 } 
 
-#else
+#else /* BLD_CC_EDITLINE */
 
 static char *readline(cchar *msg)
 {
@@ -503,7 +507,7 @@ static char *readline(cchar *msg)
     }
     return strdup(buf);
 }
-#endif
+#endif /* BLD_CC_EDITLINE */
 
 
 /*  
@@ -524,7 +528,7 @@ static int consoleGets(EcStream *stream)
         mprPrintf("\n");
         return -1;
     }
-    cp = strim(line, "\r\n", MPR_TRIM_BOTH);
+    cp = sclone(strim(line, "\r\n", MPR_TRIM_BOTH));
     ecSetStreamBuf(stream, cp, slen(cp));
     stream->flags |= EC_STREAM_EOL;
     return (int) slen(cp);
@@ -566,9 +570,7 @@ static void catchSignal(int signo, siginfo_t *info, void *arg)
     mpr = mprGetMpr();
     if (mpr) {
 #if DEBUG_IDE
-        if (signo == SIGINT) {
-            return;
-        }
+        if (signo == SIGINT) return;
 #endif
         mprLog(2, "Received signal %d", signo);
         if (signo == SIGTERM) {
@@ -608,7 +610,7 @@ static void setupSignals()
     }
 
     /*
-        Catch thse signals
+        Catch these signals
      */
     sigaction(SIGINT, &act, 0);
     sigaction(SIGQUIT, &act, 0);

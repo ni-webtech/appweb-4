@@ -3511,7 +3511,7 @@ Http *httpCreate()
     mprGetMpr()->httpService = http;
     http->protocol = "HTTP/1.1";
     http->mutex = mprCreateLock(http);
-    http->connections = mprCreateList(-1, 0);
+    http->connections = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     http->stages = mprCreateHash(-1, 0);
 
     updateCurrentDate(http);
@@ -3702,6 +3702,7 @@ static int httpTimer(Http *http, MprEvent *event)
        Check for any inactive or expired connections (inactivityTimeout and requestTimeout)
      */
     lock(http);
+    mprLog(6, "httpTimer: %d active connections", mprGetListLength(http->connections));
     for (connCount = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; connCount++) {
         requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
         inactivityTimeout = conn->limits->inactivityTimeout ? conn->limits->inactivityTimeout : INT_MAX;
@@ -3719,10 +3720,11 @@ static int httpTimer(Http *http, MprEvent *event)
             if (conn->rx) {
                 if (inactivity) {
                     httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
-                        "Inactive request timed out, exceeded inactivity timeout %d sec", inactivityTimeout / 1000);
+                        "Inactive request timed out, exceeded inactivity timeout %d sec. Url %s", 
+                        inactivityTimeout / 1000, conn->rx->uri);
                 } else {
                     httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT, 
-                        "Request timed out, exceeded timeout %d sec", requestTimeout / 1000);
+                        "Request timed out, exceeded timeout %d sec. Url %s", requestTimeout / 1000, conn->rx->uri);
                 }
             } else {
                 mprLog(6, "Idle connection timed out");
@@ -4464,6 +4466,8 @@ static void netOutgoingService(HttpQueue *q)
         if (written < 0) {
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
+                /*  Socket full, wait for an I/O event */
+                httpWriteBlocked(conn);
                 break;
             }
             if (errCode != EPIPE && errCode != ECONNRESET) {
@@ -4474,9 +4478,7 @@ static void netOutgoingService(HttpQueue *q)
             break;
 
         } else if (written == 0) {
-            /*  
-                Socket full. Wait for an I/O event. Conn.c will setup listening for write events if the queue is non-empty
-             */
+            /*  Socket full, wait for an I/O event */
             httpWriteBlocked(conn);
             break;
 
@@ -6003,20 +6005,22 @@ void httpServiceQueue(HttpQueue *q)
     if (q->servicing) {
         q->flags |= HTTP_QUEUE_RESERVICE;
     } else {
-        q->servicing = 1;
         /*  
             Since we are servicing this "q" now, we can remove from the schedule queue if it is already queued.
          */
         if (q->conn->serviceq.scheduleNext == q) {
             httpGetNextQueueForService(&q->conn->serviceq);
         }
-        q->service(q);
-        if (q->flags & HTTP_QUEUE_RESERVICE) {
-            q->flags &= ~HTTP_QUEUE_RESERVICE;
-            httpScheduleQueue(q);
+        if (!(q->flags & HTTP_QUEUE_DISABLED)) {
+            q->servicing = 1;
+            q->service(q);
+            if (q->flags & HTTP_QUEUE_RESERVICE) {
+                q->flags &= ~HTTP_QUEUE_RESERVICE;
+                httpScheduleQueue(q);
+            }
+            q->flags |= HTTP_QUEUE_SERVICED;
+            q->servicing = 0;
         }
-        q->flags |= HTTP_QUEUE_SERVICED;
-        q->servicing = 0;
     }
 }
 
@@ -6047,6 +6051,7 @@ bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
         The downstream queue is full, so disable the queue and mark the downstream queue as full and service 
         if immediately if not disabled.  
      */
+    mprLog(7, "Disable queue %s", q->owner);
     httpDisableQueue(q);
     next->flags |= HTTP_QUEUE_FULL;
     if (!(next->flags & HTTP_QUEUE_DISABLED)) {
@@ -8179,6 +8184,8 @@ void httpSendOutgoingService(HttpQueue *q)
         if (written < 0) {
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
+                /* Socket is full. Wait for an I/O event */
+                httpWriteBlocked(conn);
                 break;
             }
             if (errCode != EPIPE && errCode != ECONNRESET) {

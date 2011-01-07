@@ -92,7 +92,7 @@ MAIN(httpMain, int argc, char *argv[])
     MprTime     start;
     double      elapsed;
 
-    if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD | MPR_MARK_THREAD) == 0) {
+    if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD) == 0) {
         return MPR_ERR_MEMORY;
     }
     if ((app = mprAllocObj(App, manageApp)) == 0) {
@@ -114,15 +114,13 @@ MAIN(httpMain, int argc, char *argv[])
     }
 #endif
 
-    /*  
-        Start the Timer, Socket and Worker services
-     */
     if (mprStart() < 0) {
         mprError("Can't start MPR for %s", mprGetAppTitle());
         exit(2);
     }
     start = mprGetTime();
     app->http = httpCreate();
+
     processing();
     mprServiceEvents(-1, 0);
 
@@ -158,8 +156,6 @@ static void manageApp(App *app, int flags)
         mprMark(app->ranges);
         mprMark(app->mutex);
         mprMark(app->threadData);
-        
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -493,9 +489,6 @@ static void showUsage()
 }
 
 
-/*
-    Process the requests
- */
 static void processing()
 {
     MprThread   *tp;
@@ -527,8 +520,6 @@ static void manageThreadData(ThreadData *data, int flags)
         mprMark(data->url);
         mprMark(data->files);
         mprMark(data->conn);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -553,6 +544,7 @@ static void threadMain(void *data, MprThread *tp)
     e.data = tp;
     mprRelayEvent(conn->dispatcher, (MprEventProc) processThread, conn, &e);
 }
+
 
 static int processThread(HttpConn *conn, MprEvent *event)
 {
@@ -790,6 +782,7 @@ static void readBody(HttpConn *conn)
     }
 }
 
+
 static int doRequest(HttpConn *conn, cchar *url, MprList *files)
 {
     MprTime         mark;
@@ -902,7 +895,6 @@ static int writeBody(HttpConn *conn, MprList *files)
                     return MPR_ERR_CANT_OPEN;
                 }
                 if (app->verbose) {
-                    //  MOB - should this be to stdout or stderr?
                     mprPrintf("uploading: %s\n", path);
                 }
                 while ((bytes = mprReadFile(file, buf, sizeof(buf))) > 0) {
@@ -1110,8 +1102,8 @@ static int startLogging(char *logSpec)
     int         level;
 
     level = 0;
+    logSpec = sclone(logSpec);
 
-    //  TODO - move should not be changing logSpec.
     if ((levelSpec = strchr(logSpec, ':')) != 0) {
         *levelSpec++ = '\0';
         level = atoi(levelSpec);

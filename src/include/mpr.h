@@ -932,6 +932,7 @@ extern "C" {
     #define MPR_MAX_URL             512           /**< Max URL size. Also request URL size. */
     #define MPR_DEFAULT_STACK       (64 * 1024)   /**< Default thread stack size (64K) */
     #define MPR_MAX_STRING          1024          /**< Maximum (stack) string size */
+    #define MPR_MAX_LOG             (8 * 1024)    /**< Maximum log message size (impacts stack) */
     #define MPR_DEFAULT_ALLOC       64            /**< Default small alloc size */
     #define MPR_DEFAULT_HASH_SIZE   23            /**< Default size of hash table */ 
     #define MPR_MAX_ARGC            128           /**< Reasonable max of args */
@@ -960,6 +961,7 @@ extern "C" {
     #define MPR_MAX_URL             2048
     #define MPR_DEFAULT_STACK       (128 * 1024)
     #define MPR_MAX_STRING          2048
+    #define MPR_MAX_LOG             (32 * 1024)
     #define MPR_DEFAULT_ALLOC       256
     #define MPR_DEFAULT_HASH_SIZE   43
     #define MPR_MAX_ARGC            256
@@ -986,6 +988,7 @@ extern "C" {
     #define MPR_MAX_PATH            2048
     #define MPR_MAX_URL             4096
     #define MPR_DEFAULT_STACK       (256 * 1024)
+    #define MPR_MAX_LOG             (64 * 1024)
     #define MPR_MAX_STRING          4096
     #define MPR_DEFAULT_ALLOC       512
     #define MPR_DEFAULT_HASH_SIZE   97
@@ -1772,49 +1775,19 @@ extern void *mprAtomicExchange(void * volatile *addr, cvoid *value);
 typedef struct MprMem {
     /*
         Accesses to field1 must only be done while locked. This includes read access as concurrent writes may leave 
-        field1 in a partially updated state.
+        field1 in a partially updated state. Access to field2 may be done while unlocked as only the marker updates 
+        active blocks and it does so, in a lock-free manner.
 
-            prior | last << 1 | hasManager
+            field1: prior | last << 1 | hasManager
+            field2: gen/2 << 30 | isFree << 29 | size/29 | mark/2
      */
-#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
-    union {
-#endif
-        size_t      field1;                     /**< Pointer to adjacent, prior block in memory with last, manager fields */
-#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
-        struct {
-            uint    hasManager: 1;
-            uint    last: 1;
-            ssize   prior: MPR_BITS - 2;
-        } bits1;
-    };
-#endif
+    size_t      field1;             /**< Pointer to adjacent, prior block in memory with last, manager fields */
+    size_t      field2;             /**< Internal block length including header with gen and mark fields */
 
-    /*
-        Access to field2 may be done while unlocked as only the marker updates active blocks and it does so, in a 
-        lock-free manner.
-            gen/2 << 30 | isFree << 29 | size/29 | mark/2
-     */ 
-#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
-    union {
-#endif
-        size_t      field2;                   /**< Internal block length including header with gen and mark fields */
-#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
-        struct {
-            ssize   size: MPR_BITS - 3;       /**< This size field will have low order bits set from "mark" */
-            uint    padding: 3;
-        };
-        struct {
-            uint    mark: 2;
-            ssize   sizeFiller: MPR_BITS - 5;
-            uint    free: 1;
-            uint    gen: 2;
-        } bits2;
-    };
-#endif
 #if BLD_MEMORY_DEBUG
-    uint            magic;                      /**< Unique signature */
-    uint            seqno;                      /**< Allocation sequence number */
-    cchar           *name;                      /**< Debug name */
+    uint            magic;          /**< Unique signature */
+    uint            seqno;          /**< Allocation sequence number */
+    cchar           *name;          /**< Debug name */
 #endif
 } MprMem;
 
@@ -1842,6 +1815,8 @@ typedef struct MprMem {
 #define MPR_ALLOC_NUM_BUCKETS       (1 << MPR_ALLOC_BUCKET_SHIFT)
 #define MPR_GET_PTR(bp)             ((void*) (((char*) (bp)) + sizeof(MprMem)))
 #define MPR_GET_MEM(ptr)            ((MprMem*) (((char*) (ptr)) - sizeof(MprMem)))
+#define MPR_GET_GEN(mp)             ((mp->field2 & MPR_MASK_GEN) >> MPR_SHIFT_GEN)
+#define MPR_GET_MARK(mp)            (mp->field2 & MPR_MASK_MARK)
 
 /*
     GC Object generations
@@ -1877,7 +1852,7 @@ typedef struct MprMem {
 /*
     Flags for MprMemNotifier
  */
-#define MPR_MEM_YIELD               0x2         /**< GC complete, threads must yield to sync new generation */
+#define MPR_MEM_ATTENTION           0x2         /**< GC needs attention, threads should yield */
 #define MPR_MEM_LOW                 0x4         /**< Memory is low, no errors yet */
 #define MPR_MEM_DEPLETED            0x8         /**< Memory depleted. Cannot satisfy current request */
 
@@ -2006,6 +1981,8 @@ typedef struct MprHeap {
     int              newQuota;               /**< Quota of new allocations before idle GC worthwhile */
     int              nextSeqno;              /**< Next sequence number */
     int              pageSize;               /**< System page size */
+    int              priorNewCount;          /**< Last sweep new count */
+    int              priorFree;              /**< Last sweep free memory */
     int              rootIndex;              /**< Marker root scan index */
     int              verify;                 /**< Verify memory contents (slow) */
 } MprHeap;
@@ -2413,7 +2390,6 @@ extern void mprDestroyGCService();
 extern void mprMarkBlock(cvoid *ptr);
 extern void mprResumeThreads();
 extern int  mprSyncThreads(int timeout);
-extern int  mprWaitForSync();
 
 /**
     Safe String Module
@@ -3974,7 +3950,7 @@ extern void mprMemoryError(cchar *fmt, ...);
 extern void mprSetLogHandler(MprLogHandler handler, void *handlerData);
 
 /*
-    Optimized calling sequence.
+    Optimized calling sequence
  */
 #if BLD_DEBUG
 #define LOG mprLog
@@ -6671,6 +6647,7 @@ typedef struct MprCmdFile {
  */
 typedef struct MprCmd {
     char            *program;           /* Program path name */
+    char            **makeArgv;         /* Allocated argv */ 
     char            **argv;             /* List of args. Null terminated */
     char            **env;              /* List of environment variables. Null terminated */
     char            *dir;               /* Current working dir for the process */
@@ -6932,6 +6909,8 @@ extern void mprPollCmdPipes(MprCmd *cmd, int timeout);
     @ingroup MprCmd
  */
 extern int mprWriteCmdPipe(MprCmd *cmd, int channel, char *buf, int bufsize);
+
+extern int mprIsCmdComplete(MprCmd *cmd);
 
 /*
     Mpr flags

@@ -46,33 +46,23 @@ static void checkCompletion(HttpQueue *q, MprEvent *event);
 #endif
 
 /************************************* Code ***********************************/
-/*
-    Open this handler instance for a new request
- */
+
 static void openCgi(HttpQueue *q)
 {
-    HttpRx      *rx;
-    HttpConn    *conn;
-
-    conn = q->conn;
-    rx = conn->rx;
-
-    /*  
-        If there is body content, it may arrive on another thread. Uclibc can't wait accross thread groups,
-        so we must ensure that further callback events come on the same thread that creates the CGI process.
-     */
-#if __UCLIBC__
-    if (rx->remainingContent > 0) {
-        mprDedicateWorkerToDispatcher(conn->dispatcher, mprGetCurrentWorker(conn));
-        mprAssert(conn->dispatcher->requiredWorker == mprGetCurrentWorker(conn));
-    }
-#endif
 }
 
 
 static void closeCgi(HttpQueue *q)
 {
-    mprDisconnectCmd((MprCmd*) q->queueData);
+    MprCmd  *cmd;
+
+    cmd = (MprCmd*) q->queueData;
+    if (cmd->pid) {
+        mprStopCmd(cmd);
+    }
+    mprDisconnectCmd(cmd);
+    
+    //  MOB -- more needed here to cleanup. Should this actually kill the cmd too?
 }
 
 
@@ -98,6 +88,10 @@ static void startCgi(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
+
+    /*
+        The command uses the conn dispatcher. This serializes all I/O for both the connection and the CGI gateway
+     */
     cmd = q->queueData = mprCreateCmd(conn->dispatcher);
 
     if (conn->http->forkCallback) {
@@ -137,45 +131,6 @@ static void startCgi(HttpQueue *q)
 }
 
 
-#if __UCLIBC__
-/*  
-    WARNING: Block and wait for the CGI program to complete. Required for UCLIBC because waitpid won't work across threads.
-    Wait for the CGI process to complete and collect status. Must run on the same thread as that initiated the CGI process.
- */
-static void waitForCgiCompletion(HttpQueue *q)
-{
-    HttpTx      *tx;
-    HttpConn    *conn;
-    MprCmd      *cmd;
-    int         rc;
-
-    conn = q->conn;
-    tx = conn->tx;
-    cmd = (MprCmd*) q->queueData;
-
-    do {
-        rc = mprWaitForCmd(cmd, 5 * 1000);
-    } while (rc != 0 && (mprGetElapsedTime(cmd, cmd->lastActivity) <= conn->timeout || mprGetDebugMode(q)));
-
-    if (cmd->pid) {
-        mprStopCmd(cmd);
-        mprReapCmd(cmd, MPR_TIMEOUT_STOP_TASK);
-        cmd->status = 250;
-    }
-
-    if (cmd->status != 0) {
-        httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE,
-            "CGI process %s: exited abnormally with exit status: %d.\nSee the server log for more information.\n", 
-            tx->filename, cmd->status);
-    }
-    httpFinalize(conn);
-    if (conn->state == HTTP_STATE_COMPLETE) {
-        httpAdvanceReceiver(conn, NULL);
-    }
-}
-#endif
-
-
 /*
     This routine runs after all incoming data has been received
     Must run on the same thread as that which initiated the CGI process. And must be called with the connection locked.
@@ -192,14 +147,6 @@ static void processCgi(HttpQueue *q)
         /*  Close the CGI program's stdin. This will allow it to exit if it was expecting input data.  */
         mprCloseCmdFd(cmd, MPR_CMD_STDIN);
     }
-#if __UCLIBC__
-    if (conn->dispatcher->requiredWorker) {
-        waitForCgiCompletion(q);
-        mprAssert(cmd->pid == 0);
-        mprAssert(conn->dispatcher->requiredWorker == mprGetCurrentWorker(conn));
-        mprReleaseWorkerFromDispatcher(conn->dispatcher, mprGetCurrentWorker(conn));
-    }
-#endif
 }
 
 
@@ -335,7 +282,8 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
             mprAdjustBufStart(buf, rc);
             mprResetBufIfEmpty(buf);
 
-        } else if (rc == 0) {
+        } 
+        if (rc <= 0 || mprGetBufLength(buf) == 0) {
             if (servicedQueues) {
                 /*
                     Can't write anymore data. Block the CGI gateway. outgoingCgiService will enable.
@@ -345,11 +293,9 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
                 cmd->userFlags |= MA_CGI_FLOW_CONTROL;
                 mprDisableCmdEvents(cmd, channel);
                 return MPR_ERR_CANT_WRITE;
-
-            } else {
-                httpServiceQueues(conn);
-                servicedQueues++;
             }
+            httpServiceQueues(conn);
+            servicedQueues++;
         }
     }
     return 0;
@@ -472,7 +418,6 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
     if (channel == MPR_CMD_STDERR) {
         mprLog(4, mprGetBufStart(buf));
         if (writeToClient(q, cmd, buf, channel) < 0) {
-            mprDisconnectSocket(conn->sock);
             return -1;
         }
         httpSetStatus(conn, HTTP_CODE_SERVICE_UNAVAILABLE);
@@ -484,7 +429,6 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
         } 
         if (cmd->userFlags & MA_CGI_SEEN_HEADER) {
             if (writeToClient(q, cmd, buf, channel) < 0) {
-                mprDisconnectSocket(conn->sock);
                 return -1;
             }
         }
@@ -507,7 +451,9 @@ static void enableCgiEvents(HttpQueue *q, MprCmd *cmd, int channel)
         mprEnableCmdEvents(cmd, MPR_CMD_STDERR);
         
     } else if (cmd->pid) {
-        mprEnableCmdEvents(cmd, channel);
+        if (channel != MPR_CMD_STDOUT || !(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
+            mprEnableCmdEvents(cmd, channel);
+        }
     }
 }
 

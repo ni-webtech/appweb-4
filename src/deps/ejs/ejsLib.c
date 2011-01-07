@@ -99,14 +99,13 @@ EjsOptable *ejsGetOptable()
 static uchar trapByteCode[] = { EJS_OP_ATTENTION };
 
 /*
-    Redirect the VM to the ATTENTION op code. This code must be async-thread safe. Do very, very little here.
+    Redirect the VM to the ATTENTION op code
  */
 void ejsAttention(Ejs *ejs)
 {
     EjsFrame    *frame;
     uchar       *pc;
 
-    mprLock(ejs->mutex);
     frame = ejs->state->fp;
     /* Must still handle exceptions even if frozen */
     if (frame && frame->attentionPc == 0 /* MOB && !frame->freeze */) {
@@ -118,7 +117,6 @@ void ejsAttention(Ejs *ejs)
         frame->pc = trapByteCode;
         frame->attentionPc = pc;
     }
-    mprUnlock(ejs->mutex);
 }
 
 
@@ -1691,6 +1689,7 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsAny *value, EjsAny *thisObj, Ejs
 /*
     Must clear attentionPc when changing the PC. Otherwise the next instruction will jump to a bad (stale) location.
  */
+//  MOB -- should not need to clear attentionPc
 #define SET_PC(fp, value) \
     if (1) { \
         (fp)->pc = (uchar*) (value); \
@@ -1729,6 +1728,8 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsAny *value, EjsAny *thisObj, Ejs
     #define CASE(opcode) case opcode
 #endif
 
+#define CHECK_GC if (MPR->heap.mustYield && !(ejs->freeze || ejs->state->fp->freeze)) mprYield(0)
+
 
 static void callInterfaceInitializers(Ejs *ejs, EjsType *type);
 static void callProperty(Ejs *ejs, EjsAny *obj, int slotNum, EjsAny *thisObj, int argc, int stackAdjust);
@@ -1744,8 +1745,8 @@ static EjsAny *getNthBlock(Ejs *ejs, int nth);
 static EjsString *getString(Ejs *ejs, EjsFrame *fp, int num);
 static EjsString *getStringArg(Ejs *ejs, EjsFrame *fp);
 static EjsObj *getGlobalArg(Ejs *ejs, EjsFrame *fp);
-static bool manageExceptions(Ejs *ejs);
 static EjsBlock *popExceptionBlock(Ejs *ejs);
+static bool processException(Ejs *ejs);
 static void storeProperty(Ejs *ejs, EjsObj *thisObj, EjsAny *obj, EjsName name, EjsObj *value);
 static void storePropertyToSlot(Ejs *ejs, EjsObj *thisObj, EjsAny *obj, int slotNum, EjsObj *value);
 static void storePropertyToScope(Ejs *ejs, EjsName qname, EjsObj *value);
@@ -1995,6 +1996,7 @@ static void *opcodeJump[] = {
     mprAssert(!mprHasMemError(ejs));
     mprAssert(!ejs->exception);
     mprAssert(ejs->state->fp == 0 || ejs->state->fp->attentionPc == 0);
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 
     vp = 0;
     slotNum = -1;
@@ -2047,6 +2049,7 @@ static void *opcodeJump[] = {
          */
         CASE (EJS_OP_RETURN_VALUE):
             ejs->result = pop(ejs);
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
             if (FRAME->caller == 0) {
                 goto done;
             }
@@ -2074,6 +2077,7 @@ static void *opcodeJump[] = {
                             }
                         }
                     }
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
                 }
             }
             if (FRAME->getter) {
@@ -2128,6 +2132,7 @@ static void *opcodeJump[] = {
          */
         CASE (EJS_OP_SAVE_RESULT):
             ejs->result = pop(ejs);
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
             BREAK;
 
         /* Load Constants ----------------------------------------------- */
@@ -3254,6 +3259,7 @@ static void *opcodeJump[] = {
                 }
             }
             ejs->result = type;
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
             BREAK;
 
         /*
@@ -3342,18 +3348,16 @@ static void *opcodeJump[] = {
             Special circumstances need attention. Exceptions, exiting and garbage collection.
          */
         CASE (EJS_OP_ATTENTION):
-            if (!FRAME->freeze && (ejs->gc || MPR->heap.gc)) {
-                mprGC(0);
+            if (!FRAME->freeze && ejs->gc) {
+                ejs->gc = 0;
+                mprYield(0);
             }
-            /* Must lock with ejsAttention */
-            mprLock(ejs->mutex);
             mprAssert(FRAME->attentionPc);
             if (FRAME->attentionPc) {
                 FRAME->pc = FRAME->attentionPc;
                 mprAssert(FRAME->pc);
                 FRAME->attentionPc = 0;
             }
-            mprUnlock(ejs->mutex);
             if (mprHasMemError(ejs) && !ejs->exception) {
                 mprResetMemError(ejs);
                 ejsThrowMemoryError(ejs);
@@ -3361,7 +3365,7 @@ static void *opcodeJump[] = {
             if (ejs->exiting || mprIsStopping(ejs)) {
                 goto done;
             }
-            if (ejs->exception && !manageExceptions(ejs)) {
+            if (ejs->exception && !processException(ejs)) {
                 goto done;
             }
             BREAK;
@@ -3377,6 +3381,7 @@ static void *opcodeJump[] = {
          */
         CASE (EJS_OP_POP):
             ejs->result = pop(ejs);
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
             mprAssert(ejs->exception || ejs->result);
             BREAK;
 
@@ -3509,6 +3514,7 @@ static void *opcodeJump[] = {
         CASE (EJS_OP_GOTO):
             offset = GET_WORD();
             SET_PC(FRAME, &FRAME->pc[offset]);
+            CHECK_GC;
             BREAK;
 
         /*
@@ -3518,6 +3524,7 @@ static void *opcodeJump[] = {
         CASE (EJS_OP_GOTO_8):
             offset = (schar) GET_BYTE();
             SET_PC(FRAME, &FRAME->pc[offset]);
+            CHECK_GC;
             BREAK;
 
         /*
@@ -3586,6 +3593,7 @@ static void *opcodeJump[] = {
                     SET_PC(FRAME, &FRAME->pc[offset]);
                 }
             }
+            CHECK_GC;
             BREAK;
 
         /*
@@ -3713,10 +3721,8 @@ static void *opcodeJump[] = {
             result = evalBinaryExpr(ejs, v1, opcode, v2);
             if (!ejsIsBoolean(ejs, result)) {
                 ejsThrowTypeError(ejs, "Result of a comparision must be boolean");
-            } else {
-                if (((EjsBoolean*) result)->value) {
-                    SET_PC(FRAME, &FRAME->pc[offset]);
-                }
+            } else if (((EjsBoolean*) result)->value) {
+                SET_PC(FRAME, &FRAME->pc[offset]);
             }
             BREAK;
 
@@ -3960,6 +3966,7 @@ static void *opcodeJump[] = {
             }
             push(obj);
             ejs->result = obj;
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
             BREAK;
                 
             /*
@@ -4260,6 +4267,7 @@ static void storePropertyToSlot(Ejs *ejs, EjsObj *thisObj, EjsAny *obj, int slot
     }
     ejsSetProperty(ejs, obj, slotNum, value);
     ejs->result = value;
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 }
 
 
@@ -4381,6 +4389,8 @@ EjsObj *ejsRunInitializer(Ejs *ejs, EjsModule *mp)
     EjsModule   *dp;
     int         next;
 
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+    
     if (mp->initialized || !mp->hasInitializer) {
         mp->initialized = 1;
         return ejs->nullValue;
@@ -4409,8 +4419,10 @@ int ejsRun(Ejs *ejs)
     EjsModule   *mp;
     int         next;
 
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+
     /*
-        This is used by ejs to interpret scripts. OPT. Should not run through old modules every time
+        This is used by ejs to interpret scripts. MOB OPT. Should not run through old modules every time
      */
     for (next = 0; (mp = (EjsModule*) mprGetNextItem(ejs->modules, &next)) != 0;) {
         //MOB - need to keep a list of non-initialized modules
@@ -4420,6 +4432,7 @@ int ejsRun(Ejs *ejs)
         if (ejsRunInitializer(ejs, mp) == 0) {
             return EJS_ERR;
         }
+        mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
     }
     return 0;
 }
@@ -4433,6 +4446,7 @@ EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, vo
     mprAssert(fun);
     mprAssert(ejsIsFunction(ejs, fun));
     mprAssert(ejs->exception == 0);
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 
     if (ejs->exception) {
         return 0;
@@ -4453,6 +4467,7 @@ EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, vo
         if (ejs->result == 0) {
             ejs->result = ejs->nullValue;
         }
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 
     } else {
         for (i = 0; i < argc; i++) {
@@ -4638,6 +4653,7 @@ static void callConstructor(Ejs *ejs, EjsType *type, int argc, int stackAdjust)
         }
     }
     ejs->result = obj;
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 }
 #endif
 
@@ -4737,8 +4753,7 @@ static EjsBlock *popExceptionBlock(Ejs *ejs)
 /*
     Manage exceptions. Bubble up the exception until we find an exception handler for it.
  */
-//MOB - rename 
-static bool manageExceptions(Ejs *ejs)
+static bool processException(Ejs *ejs)
 {
     EjsState        *state;
 
@@ -5068,19 +5083,19 @@ int ejsInitStack(Ejs *ejs)
 {
     EjsState    *state;
 
-    state = ejs->state = ejs->masterState = mprAllocBlock(sizeof(EjsState), MPR_ALLOC_ZERO);
+    if ((state = mprAllocBlock(sizeof(EjsState), MPR_ALLOC_ZERO)) == 0) {
+        mprSetMemError(ejs);
+        return EJS_ERR;
+    }
+    ejs->state = ejs->masterState = state;
 
     /*
         Allocate the stack
-     */
-    state->stackSize = MPR_PAGE_ALIGN(EJS_STACK_MAX, mprGetPageSize(ejs));
-
-    /*
         This will allocate memory virtually for systems with virutal memory. Otherwise, it will just use malloc.
         TODO - create a guard page
      */
-    state->stackBase = mprVirtAlloc(state->stackSize, MPR_MAP_READ | MPR_MAP_WRITE);
-    if (state->stackBase == 0) {
+    state->stackSize = MPR_PAGE_ALIGN(EJS_STACK_MAX, mprGetPageSize(ejs));
+    if ((state->stackBase = mprVirtAlloc(state->stackSize, MPR_MAP_READ | MPR_MAP_WRITE)) == 0) {
         mprSetMemError(ejs);
         return EJS_ERR;
     }
@@ -5277,7 +5292,8 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
 
     mprAssert(fun);
     mprAssert(ejs->exception == 0);
-    mprAssert(ejs->state->fp == 0 || ejs->state->fp->attentionPc == 0);    
+    mprAssert(ejs->state->fp == 0 || ejs->state->fp->attentionPc == 0);  
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 
     state = ejs->state;
     result = 0;
@@ -5351,10 +5367,13 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
             return;
         }
         ejsClearAttention(ejs);
+freezeState = ejs->state->fp->freeze;
         result = (fun->body.proc)(ejs, thisObj, argc, argv);
+ejs->state->fp->freeze = freezeState;
         if (result == 0) {
             result = ejs->nullValue;
         }
+mprAssert(result == 0 || (MPR_GET_GEN(MPR_GET_MEM(result)) != MPR->heap.dead));
         state->stack -= (argc + stackAdjust);
 
     } else {
@@ -5371,6 +5390,7 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
     if (result) {
         ejs->result = result;
     }
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 }
 
 
@@ -5551,7 +5571,7 @@ typedef struct EjsBreakpoint {
 } EjsBreakpoint;
 
 
-static void manageBreakpoint(Ejs *ejs)
+static void bkpt(Ejs *ejs)
 {
     EjsFrame        *fp;
     EjsState        *state;
@@ -7367,6 +7387,7 @@ static void setDoc(Ejs *ejs, EjsModule *mp, void *vp, int slotNum)
 }
 
 
+#if UNUSED
 static void manageDocStrings(MprHashTable *strings, int flags)
 {
     MprHash     *hp;
@@ -7377,6 +7398,7 @@ static void manageDocStrings(MprHashTable *strings, int flags)
         }
     }
 }
+#endif
 
 
 static void manageDoc(EjsDoc *doc, int flags)
@@ -7412,7 +7434,9 @@ EjsDoc *ejsCreateDoc(Ejs *ejs, void *vp, int slotNum, EjsString *docString)
     doc->docString = docString;
     if (ejs->doc == 0) {
         ejs->doc = mprCreateHash(EJS_DOC_HASH_SIZE, 0);
+#if UNUSED
         mprSetManager(ejs->doc, manageDocStrings);
+#endif
     }
     mprSprintf(key, sizeof(key), "%Lx %d", PTOL(vp), slotNum);
     mprAddHash(ejs->doc, key, doc);
@@ -7666,6 +7690,9 @@ static void manageConstants(EjsConstants *cp, int flags)
         mprMark(cp->pool);
         mprMark(cp->table);
         mprMark(cp->index);
+        /*
+            Racing here, but okay. May miss a few new elements, but they will be picked up on the next sweep.
+         */
         for (i = 0; i < cp->indexCount; i++) {
             if (!(PTOI(cp->index[i]) & 0x1)) {
                 mprMark(cp->index[i]);
@@ -7794,6 +7821,7 @@ int ejsAddDebugLine(Ejs *ejs, EjsDebug **debugp, int offset, MprChar *source)
     EjsDebug    *debug;
     EjsLine     *line;
     ssize       len;
+    int         numLines;
 
     mprAssert(debugp);
     
@@ -7811,11 +7839,14 @@ int ejsAddDebugLine(Ejs *ejs, EjsDebug **debugp, int offset, MprChar *source)
     }
     if (debug->numLines > 0 && offset == debug->lines[debug->numLines - 1].offset) {
         line = &debug->lines[debug->numLines - 1];
+        numLines = debug->numLines;
     } else {
-        line = &debug->lines[debug->numLines++];
+        line = &debug->lines[debug->numLines];
+        numLines = debug->numLines + 1;
     }
     line->source = source;
     line->offset = offset;
+    debug->numLines = numLines;
     return 0;
 }
 
@@ -8746,22 +8777,21 @@ static void logHandler(int flags, int level, cchar *msg);
 static int  runSpecificMethod(Ejs *ejs, cchar *className, cchar *methodName);
 static int  searchForMethod(Ejs *ejs, cchar *methodName, EjsType **typeReturn);
 
-/*  
-    Initialize the ejs subsystem
- */
-EjsService *ejsCreateService()
+
+static EjsService *createService()
 {
     EjsService  *sp;
 
     if ((sp = mprAllocObj(EjsService, manageEjsService)) == NULL) {
         return 0;
     }
-    mprGetMpr()->ejsService = sp;
+    MPR->ejsService = sp;
     mprSetMemNotifier((MprMemNotifier) allocNotifier);
 
     sp->nativeModules = mprCreateHash(-1, MPR_HASH_STATIC_KEYS | MPR_HASH_UNICODE);
     sp->mutex = mprCreateLock();
     sp->vmlist = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
+    ejsInitCompiler(sp);
     return sp;
 }
 
@@ -8780,11 +8810,12 @@ static void manageEjsService(EjsService *sp, int flags)
 }
 
 
+#if UNUSED
 EjsService *ejsGetService()
 {
-    return mprGetMpr()->ejsService;
+    return MPR->ejsService;
 }
-
+#endif
 
 /*  
     Create a new interpreter
@@ -8802,16 +8833,21 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     if ((ejs = mprAllocObj(Ejs, manageEjs)) == NULL) {
         return 0;
     }
-    sp = ejs->service = mprGetMpr()->ejsService;
-    lock(sp);
+    mprAddRoot(ejs);
+
+    if ((sp = MPR->ejsService) == 0) {
+        sp = createService();
+        sp->master = ejs;
+    }
+    ejs->service = sp;
     mprAddItem(sp->vmlist, ejs);
-    unlock(sp);
 
 #if FUTURE
     ejs->intern = &sp->intern;
 #else
     ejs->intern = ejsCreateIntern(ejs);
 #endif
+    ejs->freeze = 1;
     ejs->empty = require && mprGetListLength(require) == 0;
     ejs->mutex = mprCreateLock(ejs);
     ejs->argc = argc;
@@ -8831,6 +8867,7 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     }
     if (ejsInitStack(ejs) < 0) {
         ejsDestroy(ejs);
+        mprRemoveRoot(ejs);
         return 0;
     }
     if (defineTypes(ejs) < 0 || loadStandardModules(ejs, require) < 0) {
@@ -8838,6 +8875,7 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
             ejsReportError(ejs, "Can't initialize interpreter");
         }
         ejsDestroy(ejs);
+        mprRemoveRoot(ejs);
         return 0;
     }
     ejsFreezeGlobal(ejs);
@@ -8847,8 +8885,10 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     if (mprHasMemError(ejs)) {
         mprError("Memory allocation error during initialization");
         ejsDestroy(ejs);
+        mprRemoveRoot(ejs);
         return 0;
     }
+    mprRemoveRoot(ejs);
     return ejs;
 }
 
@@ -8865,11 +8905,10 @@ void ejsDestroy(Ejs *ejs)
         if (state->stackBase) {
             mprVirtFree(state->stackBase, state->stackSize);
             state->stackBase = 0;
-            ejs->masterState = 0;
+            //  MOB - was masterState
+            ejs->state = 0;
         }
-        lock(sp);
         mprRemoveItem(sp->vmlist, ejs);
-        unlock(sp);
         ejs->service = 0;
         ejsDestroyIntern(ejs->intern);
     }
@@ -8878,10 +8917,12 @@ void ejsDestroy(Ejs *ejs)
 
 static void manageEjs(Ejs *ejs, int flags)
 {
+    EjsState    *state;
     EjsBlock    *block;
     EjsObj      *vp, **vpp, **top;
 
     if (flags & MPR_MANAGE_MARK) {
+        mprAssert(!ejs->workerComplete);
         mprMark(ejs->name);
         mprMark(ejs->modules);
         mprMark(ejs->applications);
@@ -8893,17 +8934,23 @@ static void manageEjs(Ejs *ejs, int flags)
         mprMark(ejs->masterState);
         mprMark(ejs->mutex);
         mprMark(ejs->result);
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) == MPR->heap.active));
+
         mprMark(ejs->search);
         mprMark(ejs->dispatcher);
         mprMark(ejs->workers);
         mprMark(ejs->global);
         mprMark(ejs->intern);
 
-//  MOB - RACE
         /*
             Mark active call stack
          */
-        if (ejs->masterState) {
+        if (ejs->state) {
+            for (state = ejs->state; state; state = state->prev) {
+                mprMark(state->fp);
+                mprMark(state->bp);
+                mprMark(state->internal);
+            }
             for (block = ejs->state->bp; block; block = block->prev) {
                 mprMark(block);
             }
@@ -8982,6 +9029,9 @@ static void markValues(Ejs *ejs)
     mprMark(ejs->publicString);
     mprMark(ejs->trueValue);
     mprMark(ejs->undefinedValue);
+
+    //  MOB
+    mprAssert(ejs->undefinedValue == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->undefinedValue)) != MPR->heap.dead));
     mprMark(ejs->zeroValue);
     mprMark(ejs->nopFunction);
 }
@@ -9226,9 +9276,10 @@ int ejsEvalModule(cchar *path)
     if ((mpr = mprCreate(0, NULL, 0)) != 0) {
         status = MPR_ERR_MEMORY;
 
+#if UNUSED
     } else if ((service = ejsCreateService()) == 0) {
         status = MPR_ERR_MEMORY;
-
+#endif
     } else if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
         status = MPR_ERR_MEMORY;
 
@@ -9262,6 +9313,8 @@ static int runProgram(Ejs *ejs, MprEvent *event)
 
 int ejsRunProgram(Ejs *ejs, cchar *className, cchar *methodName)
 {
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+
     ejs->className = className;
     ejs->methodName = methodName;
     mprRelayEvent(ejs->dispatcher, (MprEventProc) runProgram, ejs, NULL);
@@ -9620,6 +9673,7 @@ int ejsFreeze(Ejs *ejs, int freeze)
     if (ejs->state->fp) {
         old = ejs->state->fp->freeze;
     } else {
+        //  MOB OPT - get rid of this and have a dummy state+frame at all times
         old = ejs->freeze;
     }
     if (freeze != -1) {
@@ -9652,12 +9706,14 @@ static int allocNotifier(int flags, ssize size)
         mprPrintfError("Memory request for %d bytes exceeds memory red-line\n", size);
         mprPrintfError("Total memory used %d\n", (int) mprGetMem());
 
-    } else if (flags & MPR_MEM_YIELD) {
+    } else if (flags & MPR_MEM_ATTENTION) {
         sp = MPR->ejsService;
         lock(sp);
         for (next = 0; (ejs = mprGetNextItem(sp->vmlist, &next)) != 0; ) {
             ejs->gc = 1;
+#if UNUSED
             ejsAttention(ejs);
+#endif
         }
         unlock(sp);
     }
@@ -9727,7 +9783,7 @@ void ejsReportError(Ejs *ejs, char *fmt, ...)
         msg = buf = mprAsprintfv(fmt, arg);
     }
     if (ejs->exception) {
-        char *name = mprGetMpr()->name;
+        char *name = MPR->name;
         mprRawLog(0, "%s: %s\n", name, msg);
     } else {
         mprError("%s", msg);
@@ -11916,6 +11972,7 @@ static void manageArray(EjsArray *ap, int flags)
     int         i;
 
     if (flags & MPR_MANAGE_MARK) {
+        //  MOB RACEX
         for (i = ap->length - 1; i >= 0; i--) {
             if ((vp = ap->data[i]) != 0) {
                 mprMark(vp);
@@ -16780,11 +16837,9 @@ static EjsObj *size(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 static void manageFileSystem(EjsFileSystem *fs, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        if (!VISITED(fs)) {
-            //  MOB -- type required
-            mprMark(TYPE(fs));
-            mprMark(fs->path);
-        }
+        //  MOB -- type required
+        mprMark(TYPE(fs));
+        mprMark(fs->path);
     }
 }
 
@@ -16893,6 +16948,7 @@ void ejsConfigureFileSystemType(Ejs *ejs)
 
 static void manageFrame(EjsFrame *frame, int flags)
 {
+    mprAssert(frame);
     if (frame) {
         if (flags & MPR_MANAGE_MARK) {
             ejsManageFunction((EjsFunction*) frame, flags);
@@ -19784,6 +19840,8 @@ static void manageHttp(EjsHttp *http, int flags)
         mprMark(http->method);
         mprMark(http->keyFile);
         mprMark(http->certFile);
+        mprMark(TYPE(http));
+        mprMark(http->conn);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (http->conn) {
@@ -26021,11 +26079,7 @@ EjsObj *ejsGetTypeOf(Ejs *ejs, EjsObj *vp)
 static void manageReflect(EjsReflect *rp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        if (rp->subject) {
-            mprmark(rp->subject);
-        }
-    } else if (flags & MPR_MANAGE_FREE) {
-        ;
+        mprMark(rp->subject);
     }
 }
 
@@ -27013,6 +27067,9 @@ static int internHashSizes[] = {
 
 static MprSpin      internLock;
 
+/*
+    FUTURE - this locking is for when the intern array works over all interpreters
+ */
 #define ilock()     mprSpinLock(&internLock);
 #define iunlock()   mprSpinUnlock(&internLock);
 
@@ -29265,10 +29322,8 @@ EjsString *ejsInternString(Ejs *ejs, EjsString *str)
                 }
                 if (i == sp->length && i == str->length) {
                     ejs->intern->reuse++;
-                    if (mprIsDead(sp)) {
-                        mprRevive(sp);
-                        break;
-                    }
+                    /* Revive incase almost stale or dead */
+                    mprRevive(sp);
                     iunlock();
                     return sp;
                 }
@@ -29311,10 +29366,8 @@ EjsString *ejsInternWide(Ejs *ejs, MprChar *value, ssize len)
                 }
                 if (i == sp->length) {
                     ejs->intern->reuse++;
-                    if (mprIsDead(sp)) {
-                        mprRevive(sp);
-                        break;
-                    }
+                    /* Revive incase almost stale or dead */
+                    mprRevive(sp);
                     iunlock();
                     return sp;
                 }
@@ -29359,11 +29412,8 @@ EjsString *ejsInternAsc(Ejs *ejs, cchar *value, ssize len)
                 }
                 if (i == sp->length) {
                     ejs->intern->reuse++;
-                    //  MOB - OPT this somehow
-                    if (mprIsDead(sp)) {
-                        mprRevive(sp);
-                        break;
-                    }
+                    /* Revive incase almost stale or dead */
+                    mprRevive(sp);
                     iunlock();
                     return sp;
                 }
@@ -29432,10 +29482,8 @@ EjsString *ejsInternMulti(Ejs *ejs, cchar *value, ssize len)
             }
             if (i == sp->length && value[i] == 0) {
                 ejs->intern->reuse++;
-                if (mprIsDead(sp)) {
-                    mprRevive(sp);
-                    break;
-                }
+                /* Revive incase almost stale or dead */
+                mprRevive(sp);
                 iunlock();
                 return sp;
             }
@@ -29609,7 +29657,10 @@ EjsString *ejsCreateNonInternedString(Ejs *ejs, MprChar *value, ssize len)
 
 void ejsManageString(EjsString *sp, int flags)
 {
-    if (flags & MPR_MANAGE_FREE) {
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(TYPE(sp));
+
+    } else if (flags & MPR_MANAGE_FREE) {
         ilock();
         unlinkString(TYPE(sp)->ejs, sp);
         iunlock();
@@ -29651,6 +29702,7 @@ static void manageIntern(EjsIntern *intern, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(intern->buckets);
+
     } else if (flags & MPR_MANAGE_FREE) {
         ejsDestroyIntern(intern);
     }
@@ -29834,8 +29886,7 @@ void ejsConfigureStringType(Ejs *ejs)
 static EjsObj *system_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprCmd      *cmd;
-    EjsString   *result;
-    cchar       *cmdline;
+    char        *cmdline;
     char        *err, *output;
     int         status;
 
@@ -29843,16 +29894,18 @@ static EjsObj *system_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 
     cmd = mprCreateCmd(ejs->dispatcher);
     cmdline = ejsToMulti(ejs, argv[0]);
+    mprHold(cmdline);
     status = mprRunCmd(cmd, cmdline, &output, &err, 0);
     if (status) {
         ejsThrowError(ejs, "Command failed: %s\n\nExit status: %d\n\nError Output: \n%s\nPrevious Output: \n%s\n", 
             cmdline, status, err, output);
         mprDestroyCmd(cmd);
+        mprRelease(cmdline);
         return 0;
     }
-    result = ejsCreateStringFromAsc(ejs, output);
     mprDestroyCmd(cmd);
-    return (EjsObj*) result;
+    mprRelease(cmdline);
+    return (EjsObj*) ejsCreateStringFromAsc(ejs, output);
 }
 
 
@@ -30175,7 +30228,9 @@ static int timerCallback(EjsTimer *tp, MprEvent *e)
         }
     }
     if (!tp->repeat) {
-        mprRelease(tp);
+        mprRemoveRoot(tp);
+        tp->event = 0;
+    } else {
     }
     return 0;
 }
@@ -30208,7 +30263,7 @@ static EjsObj *timer_stop(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 {
     if (tp->event) {
         mprRemoveEvent(tp->event);
-        mprRelease(tp);
+        mprRemoveRoot(tp);
         tp->event = 0;
     }
     return 0;
@@ -31174,8 +31229,10 @@ static void manageType(EjsType *type, int flags)
         mprMark(type->qname.space);
         mprMark(type->prototype);
         mprMark(type->baseType);
+        mprMark(type->mutex);
         mprMark(type->implements);
         mprMark(type->typeData);
+        mprMark(type->module);
     }
 }
 
@@ -32395,7 +32452,6 @@ static void manageUri(EjsUri *up, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(up->uri);
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -32908,7 +32964,12 @@ static void removeWorker(EjsWorker *worker)
         if (ejs->joining) {
             mprSignalDispatcher(ejs->dispatcher);
         }
-        worker->ejs = 0;
+        /* Accelerate GC */
+        worker->pair->ejs->workerComplete = 1;
+        worker->pair->ejs = 0;
+        worker->pair->pair = 0;
+        worker->pair = 0;
+        worker->ejs = 0;        
         unlock(ejs);
     }
 }
@@ -33080,7 +33141,7 @@ static int join(Ejs *ejs, EjsObj *workers, int timeout)
     }
     result = (ejs->joining) ? MPR_ERR_TIMEOUT: 0;
     ejs->joining = 0;
-    LOG(5, "Worker.join: result %d", result);
+    LOG(7, "Worker.join: result %d", result);
     return result;
 }
 
@@ -33324,8 +33385,6 @@ static void manageMessage(Message *msg, int flags)
         mprMark(msg->data);
         mprMark(msg->message);
         mprMark(msg->stack);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -34381,12 +34440,8 @@ static EjsObj *loadXml(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
     }
     mprXmlSetInputStream(xp, readFileData, (void*) file);
 
-    if (mprXmlParse(xp) < 0) {
-        if (! ejsHasException(ejs)) {
-            ejsThrowIOError(ejs, "Can't parse XML file: %s\nDetails %s",  filename, mprXmlGetErrorMsg(xp));
-        }
-        mprCloseFile(file);
-        return 0;
+    if (mprXmlParse(xp) < 0 && !ejsHasException(ejs)) {
+        ejsThrowIOError(ejs, "Can't parse XML file: %s\nDetails %s",  filename, mprXmlGetErrorMsg(xp));
     }
     mprCloseFile(file);
     return 0;
@@ -34691,7 +34746,7 @@ void ejsLoadXMLString(Ejs *ejs, EjsXML *xml, EjsString *xmlString)
     xp = ejsCreateXmlParser(ejs, xml, "string");
     parser = mprXmlGetParseArg(xp);
     parser->inputBuf = ejsToMulti(ejs, xmlString);
-    parser->inputSize = (int) strlen(parser->inputBuf);
+    parser->inputSize = slen(parser->inputBuf);
     mprXmlSetInputStream(xp, readStringData, (void*) 0);
 
     if (mprXmlParse(xp) < 0 && !ejsHasException(ejs)) {
@@ -35732,10 +35787,12 @@ static void indent(MprBuf *bp, int level);
 static int  parserHandler(MprXml *xp, int state, cchar *tagName, cchar *attName, cchar *value);
 
 
-//  MOB - unused
 static void manageXmlParser(EjsXmlState *parser, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(parser->inputBuf);
+        mprMark(parser->filename);
+
     } else if (flags & MPR_MANAGE_FREE) {
     }
 }
@@ -36073,7 +36130,7 @@ static void indent(MprBuf *bp, int level)
     Ejscript Sqlite class object
  */
 typedef struct EjsSqlite {
-    EjsObj          obj;            /* Extends Object */
+    EjsPot          pot;            /* Extends Object */
     sqlite3         *sdb;           /* Sqlite handle */
     Ejs             *ejs;           /* Interp reference */
     int             memory;         /* In-memory database */
@@ -36400,6 +36457,7 @@ static int manageSqlite(EjsSqlite *db, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         ejsManagePot(db, flags);
+
     } else if (flags & MPR_MANAGE_FREE) {
         if (db->sdb) {
             sqliteClose(db->ejs, db, 0, 0);
@@ -39324,8 +39382,6 @@ static void manageSession(EjsSession *sp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         ejsManagePot(sp, flags);
-    } else {
-        ;
     }
 }
 
@@ -41096,6 +41152,8 @@ static EjsObj *evalNode(EcCompiler *cp, EcNode *np)
     ejsSetPropertyName(ejs, (EjsObj*) ejs->configType, ES_Config_Legacy, EN("Legacy"));
     result = ejsRunInitializer(ejs, mp);
     cp->debug = saveDebug;
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+
     if (result == 0) {
         ejsClearException(ejs);
         return 0;
@@ -48351,6 +48409,7 @@ EcCompiler *ecCreateCompiler(Ejs *ejs, int flags)
 }
 
         
+//  MOB - remove
 void ecDestroyCompiler(EcCompiler *cp)
 {
 }
@@ -48475,10 +48534,16 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
             mprAddItem(nodes, ecParseFile(cp, argv[i]));
             ejsFreeze(ejs, frozen);
         }
+        mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+
         if (!frozen) {
-            mprGC(0);
+            mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+            mprYield(0);
+            mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
         }
     }
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+
 
     /*
         Allocate the eval frame stack. This is used for property lookups. We have one dummy block at the top always.
@@ -48509,25 +48574,25 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
         }
     }
     ejsPopBlock(ejs);
-    cp->nodes = NULL;
-    ejsFreeze(ejs, frozen);
-    if (!frozen && (ejs->gc || MPR->heap.gc)) {
-        mprGC(0);
-    }
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 
-    if (cp->errorCount > 0) {
-        return EJS_ERR;
-    }
     /*
         Add compiled modules to the interpreter
      */
     for (next = 0; ((mp = (EjsModule*) mprGetNextItem(cp->modules, &next)) != 0); ) {
         ejsAddModule(cp->ejs, mp);
     }
-    return 0;
+    cp->nodes = NULL;
+    ejsFreeze(ejs, frozen);
+    if (!frozen) {
+        mprYield(0);
+    }
+    mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+    return (cp->errorCount > 0) ? EJS_ERR: 0;
 }
 
 
+//  MOB - remove this
 int ejsInitCompiler(EjsService *service)
 {
     service->loadScriptLiteral = loadScriptLiteral;
@@ -48646,16 +48711,17 @@ int ejsLoadScriptLiteral(Ejs *ejs, EjsString *script, cchar *cache, int flags)
  */
 int ejsEvalFile(cchar *path)
 {
-    EjsService      *service;   
     Ejs             *ejs;
     Mpr             *mpr;
 
     mpr = mprCreate(0, NULL, 0);
+#if UNUSED
+    EjsService      *service;   
     if ((service = ejsCreateService(mpr)) == 0) {
         mprDestroy(0);
         return MPR_ERR_MEMORY;
     }
-    mprAddRoot(service);
+#endif
     if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
         mprDestroy(0);
         return MPR_ERR_MEMORY;
@@ -48676,16 +48742,18 @@ int ejsEvalFile(cchar *path)
  */
 int ejsEvalScript(cchar *script)
 {
-    EjsService      *service;   
     Ejs             *ejs;
     Mpr             *mpr;
 
     mpr = mprCreate(0, NULL, 0);
+#if UNUSED
+    EjsService      *service;   
     if ((service = ejsCreateService(mpr)) == 0) {
         mprDestroy(0);
         return MPR_ERR_MEMORY;
     }
     mprAddRoot(service);
+#endif
     if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
         mprDestroy(0);
         return MPR_ERR_MEMORY;

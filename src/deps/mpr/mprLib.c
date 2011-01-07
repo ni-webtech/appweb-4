@@ -104,10 +104,10 @@ static int stopSeqno = -1;
 #define CHECK_PTR(mp)           
 #define RESET_MEMORY(mp)           
 #define CHECK_FREE_MEMORY(mp)           
+#define SET_NAME(mp, value)
 #define SET_MAGIC(mp)
 #define SET_SEQ(mp)           
 #define VALID_BLK(mp)           1
-#define SET_NAME(mp, value)
 #endif
 
 #if BLD_MEMORY_STATS
@@ -168,10 +168,12 @@ static void marker(void *unused, MprThread *tp);
 static void markRoots();
 static int memoryNotifier(int flags, ssize size);
 static void nextGen();
+static void ownGC(int flags);
 static MprMem *searchFree(ssize size, int flags);
 static void sweep();
 static void sweeper(void *unused, MprThread *tp);
 static void synchronize();
+static int syncThreads(int timeout);
 static void unlinkBlock(MprFreeMem *fp);
 
 #if BLD_WIN_LIKE
@@ -190,8 +192,7 @@ static void unlinkBlock(MprFreeMem *fp);
     static void printQueueStats();
     static void printGCStats();
 #endif
-
-#if MALLOC
+#if USE_MALLOC
 #define mprVirtAlloc(size, flags) malloc(size)
 #define mprVirtFree(ptr, size) free(ptr)
 #endif
@@ -275,7 +276,7 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
 
 
 /*
-    Run managers on all allocated blocks
+    Shutdown memory service. Run managers on all allocated blocks
  */
 void mprDestroyMemService()
 {
@@ -326,49 +327,8 @@ void *mprAllocBlock(ssize usize, int flags)
 }
 
 
-#if FUTURE
-void *mprAllocObj(ssize usize, int flags)
-{
-    MprMem      *mp;
-    void        *ptr;
-    ssize       size;
-
-    size = usize + sizeof(MprMem) + (1 * sizeof(void*));
-    //  MOB - OPT if freeMem is smaller than align, don't need this test
-    size = max(size, usize + (ssize) sizeof(MprFreeMem));
-    size = MPR_ALLOC_ALIGN(size);
-    
-    if ((mp = searchFree(size, flags)) == NULL && (mp = growHeap(size, flags)) == NULL) {
-        return NULL;
-    }
-    ptr = GET_PTR(mp);
-    memset(ptr, 0, usize);
-    return ptr;
-}
-#endif
-
-
-#if FUTURE
-/*  
-    User free only supported when GC is disabled
- */
-void mprFreeX(void *ptr)
-{
-    MprMem      *mp;
-
-    if (ptr && !heap->enabled) {
-        mp = GET_MEM(ptr);
-        CHECK(mp);
-        BREAKPOINT(mp);
-        freeBlock(mp);
-        /* NOTE: not freeing regions */
-    }
-}
-#endif
-
-
 /*
-    New memory is zeroed
+    Realloc will always zero new memory
  */
 void *mprRealloc(void *ptr, ssize usize)
 {
@@ -444,7 +404,7 @@ int mprMemcmp(cvoid *s1, ssize s1Len, cvoid *s2, ssize s2Len)
 
 
 /*
-    Supports insitu copy where src and destination overlap
+    mprMemcpy will support insitu copy where src and destination overlap
  */
 ssize mprMemcpy(void *dest, ssize destMax, cvoid *src, ssize nbytes)
 {
@@ -577,8 +537,6 @@ static MprMem *searchFree(ssize required, int flags)
 {
     MprFreeMem  *freeq, *fp;
     MprMem      *mp, *after, *spare;
-//  MOB
-MprMem *next, *prev;    
     ssize       size, maxBlock;
     ulong       groupMap, bucketMap;
     int         bucket, baseGroup, group, index;
@@ -614,21 +572,21 @@ MprMem *next, *prev;
                 index = (group * MPR_ALLOC_NUM_BUCKETS) + bucket;
                 freeq = &heap->freeq[index];
 
-//  MOB -- this is singly linked - can use lock free here because we are taking off the front
                 if (freeq->next != freeq) {
                     fp = freeq->next;
                     mp = (MprMem*) fp;
-mprAssert(IS_FREE(mp));
+                    mprAssert(IS_FREE(mp));
                     unlinkBlock(fp);
-mprAssert(GET_GEN(mp) == heap->eternal);
+
+                    mprAssert(GET_GEN(mp) == heap->eternal);
                     SET_GEN(mp, heap->active);
+
                     //  MOB -- cleanup
                     mprAtomicBarrier();
                     if (flags & MPR_ALLOC_MANAGER) {
                         SET_MANAGER(mp, dummyManager);
                         SET_HAS_MANAGER(mp, 1);
                     }
-mprAssert(!IS_FREE(mp));
                     INC(reuse);
                     CHECK(mp);
                     CHECK_FREE_MEMORY(mp);
@@ -651,33 +609,7 @@ mprAssert(!IS_FREE(mp));
                             mprAtomicBarrier();
                             INC(splits);
                             linkBlock(spare);
-                            
-                            //  MOB -- REMOVE
-                            mp = (MprMem*) fp;
-                            next = GET_NEXT(mp);
-                            prev = GET_PRIOR(mp);
-                            mprAssert(IS_FREE(next));
-                            mprAssert(prev == 0 || !IS_FREE(prev));
-                            
-                        } else {
-                            
-                            //  MOB -- REMOVE
-                            MprMem *mp, *next, *prev;    
-                            mp = (MprMem*) fp;
-                            next = GET_NEXT(mp);
-                            prev = GET_PRIOR(mp);
-                            mprAssert(next == 0 || !IS_FREE(next));
-                            mprAssert(prev == 0 || !IS_FREE(prev));
                         }
-                    } else {
-                        
-                        //  MOB -- REMOVE
-                        MprMem *mp, *next, *prev;    
-                        mp = (MprMem*) fp;
-                        next = GET_NEXT(mp);
-                        prev = GET_PRIOR(mp);
-                        mprAssert(next == 0 || !IS_FREE(next));
-                        mprAssert(prev == 0 || !IS_FREE(prev));
                     }
                     unlockHeap();
                     return mp;
@@ -697,19 +629,20 @@ mprAssert(!IS_FREE(mp));
                 heap->gc = 1;
                 if (heap->flags & MPR_MARK_THREAD) {
                     mprSignalCond(heap->markerCond);
+                } else if (heap->flags & MPR_OWN_GC && heap->notifier) {
+                    (heap->notifier)(MPR_MEM_ATTENTION, 0);
                 }
             }
             lockHeap();
         }
     }
-#if UNUSED
-    mprPrintMem("NEED ALLOC", 1);
-#endif
     unlockHeap();
     if (!heap->gc && heap->newCount > heap->newQuota) {
         heap->gc = 1;
         if (heap->flags & MPR_MARK_THREAD) {
             mprSignalCond(heap->markerCond);
+        } else if (heap->flags & MPR_OWN_GC && heap->notifier) {
+            (heap->notifier)(MPR_MEM_ATTENTION, 0);
         }
     }
     return NULL;
@@ -756,7 +689,7 @@ static MprMem *freeBlock(MprMem *mp)
     next = GET_NEXT(mp);
     if (next && IS_FREE(next)) {
         BREAKPOINT(next);
-        //  MOB - lockfree race here as someone else may claim this block
+//  MOB - lockfree race here as someone else may claim this block
         unlinkBlock((MprFreeMem*) next);
         if ((after = GET_NEXT(next)) != NULL) {
             mprAssert(GET_PRIOR(after) == next);
@@ -766,11 +699,7 @@ static MprMem *freeBlock(MprMem *mp)
         }
         size += GET_SIZE(next);
         SET_SIZE(mp, size);
-        // printf("  JOIN NEXT %x size %d\n", next, size);
         INC(joins);
-        next = GET_NEXT(mp);
-        if (next) CHECK(next);
-        mprAssert(next == 0 || !IS_FREE(next));
     }
     /*
         Coalesce with previous if it is free
@@ -863,7 +792,7 @@ static MprMem *growHeap(ssize required, int flags)
     INIT_BLK(spare, size - required - rsize, 0, 1, mp);
     CHECK(spare);
 
-#if UNUSED
+#if MOB
     mprAtomicListInsert(&heap->regions, &region->next, region);
 #endif
     do {
@@ -874,15 +803,6 @@ static MprMem *growHeap(ssize required, int flags)
     INC(allocs);
     heap->stats.bytesAllocated += size;
     linkBlock(spare);
-
-{
-    //  MOB -- REMOVE
-    MprMem *next, *prev;    
-    next = GET_NEXT(mp);
-    prev = GET_PRIOR(mp);
-    mprAssert(IS_LAST(mp) || IS_FREE(next));
-    mprAssert(prev == 0);
-}
     unlockHeap();
     return mp;
 }
@@ -934,17 +854,6 @@ static void linkBlock(MprMem *mp)
 #if BLD_MEMORY_STATS
     freeq->info.stats.count++;
 #endif
-
-{
-    //  MOB -- REMOVE
-    MprMem *next, *prev;    
-    next = GET_NEXT(mp);
-    prev = GET_PRIOR(mp);
-    mprAssert(next == 0 || !IS_FREE(next));
-    mprAssert(prev == 0 || !IS_FREE(prev));
-    mprAssert(IS_FREE(mp));
-    mprAssert(GET_GEN(mp) == heap->eternal);
-}
 }
 
 
@@ -1055,7 +964,7 @@ void mprStartGCService()
 {
     if (heap->enabled) {
         if (heap->flags & MPR_MARK_THREAD) {
-            mprLog(7, "DEBUG: startMemWorkers: start marker");
+            LOG(7, "DEBUG: startMemWorkers: start marker");
             if ((heap->marker = mprCreateThread("marker", marker, NULL, 0)) == 0) {
                 mprError("Can't create marker thread");
                 MPR->hasError = 1;
@@ -1064,7 +973,7 @@ void mprStartGCService()
             }
         }
         if (heap->flags & MPR_SWEEP_THREAD) {
-            mprLog(7, "DEBUG: startMemWorkers: start sweeper");
+            LOG(7, "DEBUG: startMemWorkers: start sweeper");
             heap->hasSweeper = 1;
             if ((heap->sweeper = mprCreateThread("sweeper", sweeper, NULL, 0)) == 0) {
                 mprError("Can't create sweeper thread");
@@ -1089,18 +998,17 @@ void mprRequestGC(int flags)
     MprThread   *tp;
     int         wasSticky;
 
-    mprLog(7, "DEBUG: mprRequestGC");
+    LOG(7, "DEBUG: mprRequestGC");
 
     tp = mprGetCurrentThread();
     wasSticky = tp->stickyYield;
     if (flags & MPR_COMPLETE_GC) {
         mprYield(MPR_YIELD_STICKY);
     }
-
     if ((flags & MPR_FORCE_GC) || (heap->newCount > heap->newQuota)) {
         heap->extraSweeps = (flags & MPR_COMPLETE_GC) ? 3 : 0;
         if (heap->flags & MPR_OWN_GC) {
-            mprGC(flags);
+            ownGC(flags);
         } else {
             mprSignalCond(heap->markerCond);
             if (flags & MPR_WAIT_GC) {
@@ -1121,29 +1029,22 @@ void mprRequestGC(int flags)
  */
 static void synchronize()
 {
-    ssize       priorFree;
-    int         oldCount;
-
-    oldCount = heap->newCount;
-    priorFree = heap->stats.bytesFree;
-
 #if BLD_MEMORY_STATS
-    mprLog(7, "GC Complete: MARKED %d/%d, SWEPT %d/%d, freed %d, bytesFree %d (before %d), newCount %d/%d \n",
-           heap->stats.marked, heap->stats.markVisited,
-           heap->stats.swept, heap->stats.sweepVisited, 
-           (int) heap->stats.freed, (int) heap->stats.bytesFree, priorFree, oldCount, heap->newQuota);
+    LOG(7, "synchronize: MARKED %d/%d, SWEPT %d/%d, freed %d, bytesFree %d (prior %d), newCount %d/%d",
+           heap->stats.marked, heap->stats.markVisited, heap->stats.swept, heap->stats.sweepVisited, 
+           (int) heap->stats.freed, (int) heap->stats.bytesFree, heap->priorFree, heap->priorNewCount, heap->newQuota);
 #endif
     heap->mustYield = 1;
     if (heap->notifier) {
-        (heap->notifier)(MPR_MEM_YIELD, 0);
+        (heap->notifier)(MPR_MEM_ATTENTION, 0);
     }
-    if (mprSyncThreads(MPR_TIMEOUT_GC_SYNC * 100)) {
-        mprLog(7, "DEBUG: GC Advance generation");
+    if (syncThreads(MPR_TIMEOUT_GC_SYNC)) {
         nextGen();
+        LOG(7, "synchronize: advance generation, active %d, stale %d, dead %d", heap->active, heap->stale, heap->dead);
         heap->mustYield = 0;
         mprResumeThreads();
     } else {
-        mprLog(7, "DEBUG: Pause for GC sync timed out");
+        LOG(7, "DEBUG: Pause for GC sync timed out");
         heap->mustYield = 0;
         mprResumeThreads();
     }
@@ -1152,16 +1053,20 @@ static void synchronize()
 
 static void mark()
 {
-    mprLog(5, "DEBUG: mark started");
+    LOG(5, "DEBUG: mark started");
 
-    heap->gc = 0;
+    heap->priorNewCount = heap->newCount;
+    heap->priorFree = (int) heap->stats.bytesFree;
     heap->newCount = 0;
-
+    heap->gc = 0;
     markRoots();
     if (!heap->hasSweeper) {
         sweep();
     }
     synchronize();
+    if (heap->priorNewCount > 25000) {
+        heap->extraSweeps = 2;
+    }
 }
 
 
@@ -1180,10 +1085,10 @@ static void sweep()
     MprManager  mgr;
     
     if (!heap->enabled) {
-        mprLog(7, "DEBUG: sweep: Abort sweep - GC disabled");
+        LOG(7, "DEBUG: sweep: Abort sweep - GC disabled");
         return;
     }
-    mprLog(5, "DEBUG: sweep started");
+    LOG(5, "DEBUG: sweep started");
     heap->stats.freed = 0;
 
     /*
@@ -1258,7 +1163,7 @@ static void sweep()
                     mprAssert(rp != NULL);
                 }
             }
-            mprLog(5, "DEBUG: Unpin %p to %p size %d", region, ((char*) region) + region->size, region->size);
+            LOG(5, "DEBUG: Unpin %p to %p size %d", region, ((char*) region) + region->size, region->size);
             mprVirtFree(region, region->size);
         } else {
             prior = region;
@@ -1297,12 +1202,9 @@ void mprMarkBlock(cvoid *ptr)
         mprStaticError("Memory block is either not dynamically allocated, or is corrupted");
         return;
     }
-    /*
-        MOB - must never mark a dead block as it means we are racing with the sweeper. Should not be able to 
-        reference a dead block.
-     */
     mprAssert(!IS_FREE(mp));
     mprAssert(GET_MARK(mp) != heap->dead);
+    mprAssert(GET_GEN(mp) != heap->dead);
     if (GET_MARK(mp) == heap->dead || IS_FREE(mp)) {
         mprAssert(0);
         return;
@@ -1310,6 +1212,7 @@ void mprMarkBlock(cvoid *ptr)
 #endif
     CHECK(mp);
     INC(markVisited);
+    mprAssert((GET_MARK(mp) != heap->active) || GET_GEN(mp) == heap->active);
 
     if (GET_MARK(mp) != heap->active) {
         BREAKPOINT(mp);
@@ -1327,6 +1230,21 @@ void mprMarkBlock(cvoid *ptr)
 }
 
 
+#if MIN_MARK
+    if (ptr) {
+        MprMem *mp = GET_MEM(ptr);
+        int g = mp->field2 >> MPR_SHIFT_GEN;
+        if (g != eternal) {
+            g = active;
+        }
+        mp->field2 = (mp->field2 & ~MPR_MASK_GEN) || g << MPR_SHIFT_GEN)
+        if (mp->field1 & MPR_MASK_HAS_MANAGER) {
+            (GET_MANAGER(mp))(ptr, MPR_MANAGE_MARK);
+        }
+#endif
+
+
+//  MOB - these are dangerous as they don't hold component allocations
 void mprHold(void *ptr)
 {
     MprMem  *mp;
@@ -1357,7 +1275,7 @@ void mprRelease(void *ptr)
  */
 static void marker(void *unused, MprThread *tp)
 {
-    mprLog(5, "DEBUG: marker thread started");
+    LOG(5, "DEBUG: marker thread started");
     MPR->marking = 1;
     tp->stickyYield = 1;
     tp->yielded = 1;
@@ -1381,7 +1299,7 @@ static void marker(void *unused, MprThread *tp)
  */
 static void sweeper(void *unused, MprThread *tp) 
 {
-    mprLog(5, "DEBUG: sweeper thread started");
+    LOG(5, "DEBUG: sweeper thread started");
 
     MPR->sweeping = 1;
     while (!mprIsStoppingCore()) {
@@ -1392,13 +1310,11 @@ static void sweeper(void *unused, MprThread *tp)
 }
 
 
-
-
 /*
     Called by user code to signify the thread is ready for GC and all object references are saved. 
     If the GC marker is synchronizing, this call will block at the GC sync point (should be brief).
  */
-void mprGC(int flags)
+static void ownGC(int flags)
 {
     MprThread   *tp;
     int         sweeps, i;
@@ -1415,8 +1331,8 @@ void mprGC(int flags)
     lockHeap();
     if (heap->collecting) {
         unlockHeap();
-        while (tp->yielded && mprWaitForSync()) {
-            mprLog(7, "mprYieldThread %s must wait", tp->name);
+        while (tp->yielded && heap->mustYield) {
+            LOG(7, "mprYieldThread %s must wait", tp->name);
             mprWaitForCond(tp->cond, -1);
         }
     } else {
@@ -1443,19 +1359,16 @@ void mprYield(int flags)
     MprThread   *tp;
 
     tp = mprGetCurrentThread();
-    mprLog(7, "mprYield %s yielded was %d, block %d", tp->name, tp->yielded, flags & MPR_YIELD_BLOCK);
+    LOG(7, "mprYield thread \"%s\" yielded was %d, block %d", tp->name, tp->yielded, flags & MPR_YIELD_BLOCK);
     tp->yielded = 1;
     if (flags & MPR_YIELD_STICKY) {
         tp->stickyYield = 1;
     }
-    /*
-        Wake the marker to check if all threads are yielded and wait for the all clear
-     */
-    if (heap->flags & MPR_MARK_THREAD) {
-        mprSignalCond(MPR->threadService->cond);
-    }
-    while (tp->yielded && (mprWaitForSync() || (flags & MPR_YIELD_BLOCK))) {
-        mprLog(7, "mprYieldThread %s must wait", tp->name);
+    while (tp->yielded && (heap->mustYield || (flags & MPR_YIELD_BLOCK))) {
+        if (heap->flags & MPR_MARK_THREAD) {
+            mprSignalCond(MPR->threadService->cond);
+        }
+        LOG(7, "mprYieldThread thread \"%s\" must wait", tp->name);
         mprWaitForCond(tp->cond, -1);
         if (heap->extraSweeps <= 0) {
             flags &= ~MPR_YIELD_BLOCK;
@@ -1480,7 +1393,7 @@ void mprResetYield()
 /*
     Pause until all threads have yielded. Called by the GC marker only.
  */
-int mprSyncThreads(int timeout)
+static int syncThreads(int timeout)
 {
     MprThreadService    *ts;
     MprThread           *tp;
@@ -1488,9 +1401,11 @@ int mprSyncThreads(int timeout)
     int                 i, allYielded;
 
     ts = MPR->threadService;
-    mprLog(7, "mprSyncThreads timeout %d", timeout);
+    LOG(7, "syncThreads: wait for threads to yield, timeout %d", timeout);
     mark = mprGetTime();
-
+    if (mprGetDebugMode()) {
+        timeout = timeout * 500;
+    }
     do {
         allYielded = 1;
         mprLock(ts->mutex);
@@ -1505,13 +1420,13 @@ int mprSyncThreads(int timeout)
         if (allYielded) {
             break;
         }
-        mprLog(7, "mprSyncThreads: waiting for threads to yield");
-        mprWaitForCond(ts->cond, 10);
+        LOG(7, "syncThreads: waiting for threads to yield");
+        mprWaitForCond(ts->cond, 20);
 
     } while (!allYielded && mprGetElapsedTime(mark) < timeout);
 
     mprAssert(allYielded);
-    mprLog(6, "mprSyncThreads: complete %d", allYielded);
+    LOG(7, "syncThreads: all yielded %d", allYielded);
     return (allYielded) ? 1 : 0;
 }
 
@@ -1526,7 +1441,7 @@ void mprResumeThreads()
     int                 i;
 
     ts = MPR->threadService;
-    mprLog(7, "mprResumeThreadsAfterGC sync");
+    LOG(7, "mprResumeThreadsAfterGC sync");
 
     mprLock(ts->mutex);
     for (i = 0; i < ts->threads->length; i++) {
@@ -1558,7 +1473,6 @@ void mprVerifyMem()
         }
     }
     for (i = 0, freeq = heap->freeq; freeq != heap->freeEnd; freeq++, i++) {
-        // int index = (int) (freeq - heap->freeq);
         for (fp = freeq->next; fp != freeq; fp = fp->next) {
             mp = (MprMem*) fp;
             CHECK(mp);
@@ -1608,13 +1522,7 @@ void mprRevive(cvoid *ptr)
 
     mp = GET_MEM(ptr);
     SET_GEN(mp, heap->active);
-}
-
-
-
-int mprWaitForSync()
-{
-    return heap->mustYield;
+    SET_MARK(mp, heap->eternal);
 }
 
 
@@ -1697,7 +1605,6 @@ static void printQueueStats()
 
     printf("\nFree Queue Stats\n Bucket                     Size   Count\n");
     for (i = 0, freeq = heap->freeq; freeq != heap->freeEnd; freeq++, i++) {
-        // int index = (int) (freeq - heap->freeq);
         if (freeq->info.stats.count) {
             printf("%7d %24d %7d\n", i, freeq->info.stats.minSize, freeq->info.stats.count);
         }
@@ -1920,19 +1827,12 @@ static void getSystemInfo()
         int     cmd[2];
         ssize   len;
 
-        /*
-            Get number of CPUs
-         */
         cmd[0] = CTL_HW;
         cmd[1] = HW_NCPU;
         len = sizeof(ap->numCpu);
         if (sysctl(cmd, 2, &ap->numCpu, &len, 0, 0) < 0) {
             ap->numCpu = 1;
         }
-
-        /*
-            Get page size
-         */
         ap->pageSize = sysconf(_SC_PAGESIZE);
     }
 #elif LINUX
@@ -2629,28 +2529,27 @@ bool mprIsIdle()
  */
 int mprMakeArgv(cchar *program, cchar *cmd, int *argcp, char ***argvp)
 {
-    char        *cp, **argv, *buf, *args;
+    char        *cp, **argv, *vector, *args;
     ssize       size;
     int         argc;
 
     /*
-        Allocate one buffer for argv and the actual args themselves
+        Allocate one vector for argv and the actual args themselves
      */
     size = strlen(cmd) + 1;
 
-    buf = (char*) mprAlloc((MPR_MAX_ARGC * sizeof(char*)) + size);
-    if (buf == 0) {
+    vector = (char*) mprAlloc((MPR_MAX_ARGC * sizeof(char*)) + size);
+    if (vector == 0) {
         return MPR_ERR_MEMORY;
     }
-    args = &buf[MPR_MAX_ARGC * sizeof(char*)];
+    args = &vector[MPR_MAX_ARGC * sizeof(char*)];
     strcpy(args, cmd);
-    argv = (char**) buf;
+    argv = (char**) vector;
 
     argc = 0;
     if (program) {
         argv[argc++] = (char*) sclone(program);
     }
-
     for (cp = args; cp && *cp != '\0'; argc++) {
         if (argc >= MPR_MAX_ARGC) {
             mprAssert(argc < MPR_MAX_ARGC);
@@ -2688,7 +2587,6 @@ int mprMakeArgv(cchar *program, cchar *cmd, int *argcp, char ***argvp)
         *argcp = argc;
     }
     *argvp = argv;
-
     return argc;
 }
 
@@ -3026,6 +2924,7 @@ void mprWaitForIO(MprWaitService *ws, int timeout)
 
         mprYield(MPR_YIELD_STICKY);
         if (GetMessage(&msg, NULL, 0, 0) == 0) {
+            mprResetYield();
             mprTerminate(1);
         } else {
             mprResetYield();
@@ -4119,9 +4018,7 @@ MprCmd *mprCreateCmd(MprDispatcher *dispatcher)
     cmd->mutex = mprCreateLock();
 
     cs = MPR->cmdService;
-    lock(cs);
     mprAddItem(cs->cmds, cmd);
-    unlock(cs);
     return cmd;
 }
 
@@ -4134,6 +4031,7 @@ static void manageCmd(MprCmd *cmd, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(cmd->dir);
         mprMark(cmd->env);
+        mprMark(cmd->makeArgv);
         mprMark(cmd->program);
         mprMark(cmd->stdoutBuf);
         mprMark(cmd->stderrBuf);
@@ -4148,9 +4046,12 @@ static void manageCmd(MprCmd *cmd, int flags)
                 mprMark(cmd->env);
             }
         }
+        lock(cmd);
         for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
             mprMark(cmd->handlers[i]);
         }
+        unlock(cmd);
+
     } else if (flags & MPR_MANAGE_FREE) {
         cs = MPR->cmdService;
         lock(cs);
@@ -4280,6 +4181,12 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
 }
 
 
+int mprIsCmdComplete(MprCmd *cmd)
+{
+    return cmd->eofCount >= cmd->requiredEof;
+}
+
+
 /*
     Run a simple blocking command. See arg usage below in mprRunCmdV.
  */
@@ -4291,6 +4198,7 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, int flags)
     if (mprMakeArgv(NULL, command, &argc, &argv) < 0 || argv == 0) {
         return 0;
     }
+    cmd->makeArgv = argv;
     return mprRunCmdV(cmd, argc, argv, out, err, flags);
 }
 
@@ -4355,6 +4263,7 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
     unlock(cmd);
 
     if (mprWaitForCmd(cmd, -1) < 0) {
+        mprRemoveRoot(cmd);
         return MPR_ERR_NOT_READY;
     }
     lock(cmd);
@@ -4717,7 +4626,10 @@ int mprWaitForCmd(MprCmd *cmd, int timeout)
 #else
         delay = remaining;
 #endif
+        /* Add root to allow callers to use mprRunCmd without managing the cmd */
+        mprAddRoot(cmd);
         mprWaitForEvent(cmd->dispatcher, (int) delay);
+        mprRemoveRoot(cmd);
         remaining = (expires - mprGetTime());
     } while (cmd->pid && remaining >= 0);
 
@@ -4965,6 +4877,8 @@ void mprSetCmdDir(MprCmd *cmd, cchar *dir)
  */
 static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 {
+    char        **envp;
+
 #if VXWORKS
     cmd->argv = argv;
     cmd->argc = argc;
@@ -4983,7 +4897,7 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
         for (i = 0; env && env[i]; i++) {
             mprLog(6, "cmd: env[%d]: %s", i, env[i]);
         }
-        if ((cmd->env = mprAlloc((i + 3) * sizeof(char*))) == NULL) {
+        if ((envp = mprAlloc((i + 3) * sizeof(char*))) == NULL) {
             return MPR_ERR_MEMORY;
         }
         hasPath = hasLibPath = 0;
@@ -4994,25 +4908,26 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
             } else if  (strncmp(env[i], LD_LIBRARY_PATH "=", 16) == 0) {
                 hasLibPath++;
             }
-            cmd->env[index++] = env[i];
+            envp[index++] = env[i];
         }
 
         /*
             Add PATH and LD_LIBRARY_PATH 
          */
         if (!hasPath && (cp = getenv("PATH")) != 0) {
-            cmd->env[index++] = mprAsprintf("PATH=%s", cp);
+            envp[index++] = mprAsprintf("PATH=%s", cp);
         }
         if (!hasLibPath && (cp = getenv(LD_LIBRARY_PATH)) != 0) {
-            cmd->env[index++] = mprAsprintf("%s=%s", LD_LIBRARY_PATH, cp);
+            envp[index++] = mprAsprintf("%s=%s", LD_LIBRARY_PATH, cp);
         }
-        cmd->env[index++] = '\0';
+        envp[index++] = '\0';
         for (i = 0; i < argc; i++) {
             mprLog(4, "cmd: arg[%d]: %s", i, argv[i]);
         }
-        for (i = 0; cmd->env[i]; i++) {
-            mprLog(4, "cmd: env[%d]: %s", i, cmd->env[i]);
+        for (i = 0; envp[i]; i++) {
+            mprLog(4, "cmd: env[%d]: %s", i, envp[i]);
         }
+        cmd->env = envp;
     }
 #endif
 
@@ -7187,7 +7102,6 @@ int mprWaitForEvent(MprDispatcher *dispatcher, int timeout)
     if (dispatcher == NULL) {
         dispatcher = MPR->dispatcher;
     }
-    //  MOB -- should have a re-entrancy check
     mprAssert(!dispatcher->waitingOnCond);
     if (dispatcher->waitingOnCond) {
         return MPR_ERR_BUSY;
@@ -7308,6 +7222,7 @@ void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, Mpr
     makeRunnable(dispatcher);
     (proc)(data, event);
     scheduleDispatcher(dispatcher);
+    dispatcher->owner = 0;
 }
 
 
@@ -8394,6 +8309,9 @@ static void manageEvent(MprEvent *event, int flags)
         /*
             Events in dispatcher queues are marked by the dispatcher managers, not via event->next,prev
          */
+        mprMark(event->dispatcher);
+        mprMark(event->data);
+
     } else if (flags & MPR_MANAGE_FREE) {
         if (event->next) {
             mprRemoveEvent(event);
@@ -11343,18 +11261,21 @@ void mprBreakpoint()
 void mprLog(int level, cchar *fmt, ...)
 {
     va_list     args;
-    char        *buf;
+    char        buf[MPR_MAX_LOG];
 
     if (level > mprGetLogLevel()) {
         return;
     }
     va_start(args, fmt);
-    buf = mprAsprintfv(fmt, args);
+    mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
     logOutput(MPR_LOG_SRC, level, buf);
 }
 
 
+/*
+    RawLog will call alloc. 
+ */
 void mprRawLog(int level, cchar *fmt, ...)
 {
     va_list     args;
@@ -11374,10 +11295,10 @@ void mprRawLog(int level, cchar *fmt, ...)
 void mprError(cchar *fmt, ...)
 {
     va_list     args;
-    char        *buf;
+    char        buf[MPR_MAX_LOG];
 
     va_start(args, fmt);
-    buf = mprAsprintfv(fmt, args);
+    mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
     
     logOutput(MPR_ERROR_MSG | MPR_ERROR_SRC, 0, buf);
@@ -11388,13 +11309,13 @@ void mprError(cchar *fmt, ...)
 void mprMemoryError(cchar *fmt, ...)
 {
     va_list     args;
-    char        *buf;
+    char        buf[MPR_MAX_LOG];
 
     if (fmt == 0) {
         logOutput(MPR_ERROR_MSG | MPR_ERROR_SRC, 0, "Memory allocation error");
     } else {
         va_start(args, fmt);
-        buf = mprAsprintfv(fmt, args);
+        mprSprintfv(buf, sizeof(buf), fmt, args);
         va_end(args);
         logOutput(MPR_ERROR_MSG | MPR_ERROR_SRC, 0, buf);
     }
@@ -11404,10 +11325,10 @@ void mprMemoryError(cchar *fmt, ...)
 void mprUserError(cchar *fmt, ...)
 {
     va_list     args;
-    char        *buf;
+    char        buf[MPR_MAX_LOG];
 
     va_start(args, fmt);
-    buf = mprAsprintfv(fmt, args);
+    mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
     
     logOutput(MPR_USER_MSG | MPR_ERROR_SRC, 0, buf);
@@ -11417,10 +11338,10 @@ void mprUserError(cchar *fmt, ...)
 void mprFatalError(cchar *fmt, ...)
 {
     va_list     args;
-    char        *buf;
+    char        buf[MPR_MAX_LOG];
 
     va_start(args, fmt);
-    buf = mprAsprintfv(fmt, args);
+    mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
     
     logOutput(MPR_USER_MSG | MPR_FATAL_SRC, 0, buf);
@@ -11434,20 +11355,16 @@ void mprFatalError(cchar *fmt, ...)
 void mprStaticError(cchar *fmt, ...)
 {
     va_list     args;
-    char        msg[MPR_MAX_STRING];
+    char        buf[MPR_MAX_LOG];
 
     va_start(args, fmt);
-#if BLD_UNIX_LIKE
-    vsnprintf(msg, sizeof(msg), fmt, args);
-#else
-    vsprintf(msg, fmt, args);
-#endif
+    mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
 #if BLD_UNIX_LIKE || VXWORKS
-    (void) write(2, (char*) msg, strlen(msg));
+    (void) write(2, (char*) buf, strlen(buf));
     (void) write(2, (char*) "\n", 1);
 #elif BLD_WIN_LIKE
-    fprintf(stderr, "%s\n", msg);
+    fprintf(stderr, "%s\n", buf);
 #endif
     mprBreakpoint();
 }
@@ -11459,7 +11376,7 @@ void mprStaticError(cchar *fmt, ...)
 void mprAssertError(cchar *loc, cchar *msg)
 {
 #if BLD_FEATURE_ASSERT
-    char    buf[MPR_MAX_STRING];
+    char    buf[MPR_MAX_LOG];
 
     if (loc) {
 #if BLD_UNIX_LIKE
@@ -18405,6 +18322,10 @@ char *ssub(char *str, ssize offset, ssize len)
 }
 
 
+/*
+    WARNING: this modifies the original string
+    MOB -- should this allocate a new string -- probably
+ */
 char *strim(char *str, cchar *set, int where)
 {
     ssize   len;
@@ -19581,17 +19502,7 @@ static void manageThreadService(MprThreadService *ts, int flags)
 
 bool mprStopThreadService(int timeout)
 {
-    MprThreadService    *ts;
-
-    ts = MPR->threadService;
-#if UNUSED
-    //  MOB - moved to mprDestroy
-    while (timeout > 0 && ts->threads->length > 1) {
-        mprSleep(50);
-        timeout -= 50;
-    }
-#endif
-    return ts->threads->length <= 1;
+    return MPR->threadService->threads->length <= 1;
 }
 
 
@@ -20434,6 +20345,7 @@ static void workerMain(MprWorker *worker, MprThread *tp)
         changeState(worker, MPR_WORKER_SLEEPING);
 
         //  MOB -- is this used?
+        mprAssert(worker->cleanup == 0);
         if (worker->cleanup) {
             (*worker->cleanup)(worker->data, worker);
             worker->cleanup = NULL;
@@ -22768,6 +22680,7 @@ MprWaitService *mprCreateWaitService()
 
 static void manageWaitService(MprWaitService *ws, int flags)
 {
+    lock(ws);
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ws->handlers);
         mprMark(ws->handlerMap);
@@ -22789,6 +22702,7 @@ static void manageWaitService(MprWaitService *ws, int flags)
 #if MPR_EVENT_SELECT
     mprManageSelect(ws, flags);
 #endif
+    unlock(ws);
 }
 
 
@@ -22848,7 +22762,11 @@ MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher
 static void manageWaitHandler(MprWaitHandler *wp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        ;
+        mprMark(wp->thread);
+        mprMark(wp->callbackComplete);
+        mprMark(wp->requiredWorker);
+        mprMark(wp->handlerData);
+
     } else if (flags & MPR_MANAGE_FREE) {
         mprRemoveWaitHandler(wp);
     }
