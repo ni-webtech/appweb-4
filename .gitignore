@@ -88,3 +88,5 @@ src/include/ejs.slots.h
 */x86_64-*
 out
 src/server/conf/apps/web.conf
+project.xcworkspace
+xcuserdata
