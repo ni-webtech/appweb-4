@@ -8,8 +8,8 @@
 usePrefixes DOC INC MAN LIB 
 
 cpy -d src/include "*" "${BLD_INC_PREFIX}"
-if [ $BLD_WIN_LIKE ] ; then
-    cpy src/include/buildConfig.h "${BLD_INC_PREFIX}"
+if [ "$BLD_WIN_LIKE" = 1 ] ; then
+    cpy out/include/buildConfig.h "${BLD_INC_PREFIX}"
 fi
 cpy -m 755 -d ${BLD_LIB_DIR} "*${BLD_LIB}" "${BLD_LIB_PREFIX}"
 

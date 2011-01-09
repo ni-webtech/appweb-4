@@ -14,9 +14,6 @@ dependExtra:
 	chmod -x Makefile
 	rm -f dsi* edep* getpath*
 
-cleanExtra:
-	rm -f *.pdb *.exe
-
 #
 #   Local variables:
 #   tab-width: 4

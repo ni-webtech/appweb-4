@@ -15,7 +15,7 @@ makeDir "${DIR}/src/include" "${DIR}/build/bin" "${DIR}/obj" "${DIR}/bin" "${DIR
 cpy -e Makefile "${DIR}"
 cpy -w -e "*.TXT" "${DIR}"
 cpy -m 0755 configure "${DIR}"
-cpy -p obj/Makefile lib/Makefile modules/Makefile bin/Makefile "${DIR}"
+# cpy -p obj/Makefile lib/Makefile modules/Makefile bin/Makefile "${DIR}"
 cpy -p -d build -c "Makefile|Makefile.top|configure.${BLD_PRODUCT}|*.defaults|config.*|*.make" "*" "${DIR}"
 cpy -m 0755 -p -d build/bin bld getlib makedep priv fakePriv mkdmg utest utest.worker "${DIR}"
 cpy -m 0755 -p -d build/bin "make*Package*" makeInstall "${DIR}"
@@ -24,7 +24,7 @@ cpy -p -d build/src Makefile "*.c" "*.h" "${DIR}"
 cpy -p -d build/components "*" "${DIR}"
 cpy -p -d package Makefile "*.files" "${DIR}"
 cpy -m 0755 -p -d package "*.sh" makeInstall.appweb linkup "${DIR}"
-cpy -p -d package all LINUX MACOSX WIN "${DIR}"
+cpy -p -d package dist LINUX MACOSX WIN "${DIR}"
 
 #
 #   Source for mpr, ejs, server, http
@@ -42,7 +42,7 @@ cpy -f "${samplesFilter}" -p samples "${DIR}"
 projectsFilter="/Debug|/Release|\.user|\.suo|\.ncb|*.mode1v3|*.pbxuser|/appweb.build/|iphone"
 cpy -f "${projectsFilter}" -p projects "${DIR}"
 
-cat src/include/master/buildConfig.h | sed 's/-VERSION-/${BLD_VERSION}/;s/-NUMBER-/${BLD_NUMBER}/' \
+cat out/include/buildConfig.h | sed 's/-VERSION-/${BLD_VERSION}/;s/-NUMBER-/${BLD_NUMBER}/' \
     >"${DIR}/src/include/buildConfig.h"
 
 if [ $TASK = Remove ] ; then

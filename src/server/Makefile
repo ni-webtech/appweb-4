@@ -29,17 +29,13 @@ endif
 
 ifeq	($(BLD_FEATURE_STATIC),1)
 	ifeq	($(BLD_FEATURE_EJS),1)
-		VLIBDEP			+= ejs
+		VLIBDEP		+= ejs
 	endif
 endif
 
-ifeq	($(BUILD_CROSS_OR_COMPLETE_NATIVE),1)
-	TARGETS			+= $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)
-endif
+TARGETS				+= $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)
 ifeq	($(BLD_FEATURE_CGI),1)
-ifeq	($(BUILD_NATIVE_OR_COMPLETE_CROSS),1)
 	EXTRA_TARGETS 	+= cgi-bin/cgiProgram$(BLD_EXE)
-endif
 endif
 
 ifeq ($(BLD_OS),VXWORKS)

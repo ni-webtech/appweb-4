@@ -21,7 +21,6 @@ CONFIG_ARGS=.buildConfig.args
 CONFIG_H=buildConfig.h
 CONFIG_SRC=.buildConfig.tmp
 CONFIG_CACHE=.buildConfig.sh
-PATCH_SCRIPT=patchScript
 
 #
 #   This programs version
@@ -135,7 +134,7 @@ linkFile()
     dir=`dirname $2`
     base=`basename $2`
 
-    rm -f $2
+    rm -f "$2"
     if [ "$base" != "$2" ] ; then
         source=`echo $source | sed -e "s^${dir}/^^"`
     fi
@@ -1361,7 +1360,7 @@ createBuildConfig() {
     fi
     cat $CONFIG_SRC >>$CONFIG_H
     chmod 444 $CONFIG_H
-    rm -f ${BLD_OUT_DIR}/include/${CONFIG_CACHE}
+    rm -f "${BLD_OUT_DIR}/include/${CONFIG_CACHE}"
 
     >$CONFIG_ARGS
     for t in ANT AR BREW CC DOXYGEN CXX JAVAC JDK JAR LD LDXX MT MUNCH NM RANLIB RC STRIP
@@ -1399,64 +1398,6 @@ createBuildConfig() {
 }
 
 #
-#   Add scripts to buildConfig.sh
-#
-genScripts() {
-    local patch
-
-    out="$BLD_OUT_DIR"
-    patch=${BLD_OUT_DIR}/bin/${PATCH_SCRIPT}
-
-    cat >>"${patch}" <<!SCRIPT_EOF_0
-#
-#   Patch the !!BLD_XXX!! 
-#
-patchFile() {
-    local file arg
-
-    [ \$# -lt 1 ] && echo "Bad args: patchFile \$*" && exit 255
-
-    arg=1
-    while [ \$arg -le \$# ] ; do
-        file=\${!arg}
-        if [ -s "\${file}" ] ; then
-!SCRIPT_EOF_0
-
-    echo "            cp \"\${file}\" /tmp/in\$\$.tmp" >>"${patch}"
-
-    i=0
-    for v in BLD_ABS_BIN_DIR BLD_ABS_INC_DIR BLD_ABS_JEM_DIR BLD_ABS_LIB_DIR BLD_ABS_MOD_DIR BLD_ABS_OBJ_DIR BLD_APPWEB BLD_APPWEB_BUILTIN BLD_APPWEB_DEPENDENCIES BLD_APPWEB_LIBS BLD_APPWEB_OPTIONAL_DEPENDENCIES BLD_APPWEB_WITH BLD_AR BLD_ARCH BLD_AR_BUILTIN BLD_AR_WITH BLD_BIN_DIR BLD_BIN_NAME BLD_BIN_PREFIX BLD_BUILD_ARCH BLD_BUILD_CLASS BLD_BUILD_CPU BLD_BUILD_CPU_ARCH BLD_BUILD_CPU_MODEL BLD_BUILD_CPU_UPPER BLD_BUILD_EXE BLD_BUILD_OBJ BLD_BUILD_OS BLD_BUILD_PIOBJ BLD_BUILD_SHLIB BLD_BUILD_SHOBJ BLD_BUILD_SYSTEM BLD_BUILD_UNIX BLD_BUILD_WIN BLD_CC BLD_CC_BUILTIN BLD_CC_CYGWIN BLD_CC_DIAB BLD_CC_DYN_LOAD BLD_CC_MMU BLD_CC_MTUNE BLD_CC_STACK_PROTECTOR BLD_CC_WITH BLD_CFG_PREFIX BLD_CFLAGS BLD_CLASS BLD_CLEAN_INSTALL BLD_COMMERCIAL BLD_COMPANY BLD_COMPONENTS BLD_CPU BLD_CPU_ARCH BLD_CPU_MODEL BLD_CPU_UPPER BLD_CROSS BLD_DATE BLD_DEBUG BLD_DEFAULTS BLD_DFLAGS BLD_DIRS BLD_DIST BLD_DIST_VER BLD_DOC_PREFIX BLD_EXE BLD_FEATURE_APACHE BLD_FEATURE_APPWEB BLD_FEATURE_AR BLD_FEATURE_ASSERT BLD_FEATURE_CC BLD_FEATURE_DEVICE BLD_FEATURE_DOXYGEN BLD_FEATURE_EJS BLD_FEATURE_FLOAT BLD_FEATURE_LEGACY_API BLD_FEATURE_MAKE BLD_FEATURE_MATRIXSSL BLD_FEATURE_OPENSSL BLD_FEATURE_RANLIB BLD_FEATURE_REGEXP BLD_FEATURE_SQLITE BLD_FEATURE_SSL BLD_STATIC BLD_HOST_CPU BLD_HOST_CPU_ARCH BLD_HOST_CPU_MAPPED BLD_HOST_CPU_MODEL BLD_HOST_CPU_UPPER BLD_HOST_DIST BLD_HOST_DIST_VER BLD_HOST_OS BLD_HOST_SYSTEM BLD_HOST_UNIX BLD_HOST_WIN BLD_IFLAGS BLD_INC_DIR BLD_INC_NAME BLD_INC_PREFIX BLD_JEM_DIR BLD_JEM_PREFIX BLD_JFLAGS BLD_LDFLAGS BLD_LIB BLD_LIB_DIR BLD_LIB_NAME BLD_LIB_PREFIX BLD_LICENSE BLD_LOG_PREFIX BLD_MAKE BLD_MAKE_BUILTIN BLD_MAKE_WITH BLD_MAN_PREFIX BLD_MOD_DIR BLD_MOD_NAME BLD_MOD_PREFIX BLD_NAME BLD_NUMBER BLD_NUMBER_ONLY BLD_OBJ BLD_OBJ_DIR BLD_OBJ_NAME BLD_OS BLD_OSVER BLD_PIOBJ BLD_PRD_PREFIX BLD_PREFIX BLD_PRODUCT BLD_RANLIB BLD_RANLIB_BUILTIN BLD_RANLIB_WITH BLD_SAM_PREFIX BLD_SBIN_PREFIX BLD_SHLIB BLD_SHOBJ BLD_SRC_PREFIX BLD_TOOLS_DIR BLD_TUNE BLD_TYPE BLD_UNIX_LIKE BLD_VERSION BLD_VER_PREFIX BLD_WEB_PREFIX BLD_WIN_LIKE ORIG_BLD_BIN_PREFIX ORIG_BLD_CFG_PREFIX ORIG_BLD_DOC_PREFIX ORIG_BLD_INC_PREFIX ORIG_BLD_JEM_PREFIX ORIG_BLD_LIB_PREFIX ORIG_BLD_LOG_PREFIX ORIG_BLD_MAN_PREFIX ORIG_BLD_MOD_PREFIX ORIG_BLD_PRD_PREFIX ORIG_BLD_PREFIX ORIG_BLD_SAM_PREFIX ORIG_BLD_SBIN_PREFIX ORIG_BLD_SRC_PREFIX ORIG_BLD_VER_PREFIX ORIG_BLD_WEB_PREFIX ROOT_DIR
-    do
-        if [ $i -eq 0 ] ; then
-            echo "            sed -e \"" >>"${patch}"
-        fi
-        echo "s^!!${v}!!^\${$v}^g;" >>"${patch}"
-        i=$((i+1))
-        if [ $i -ge 50 ] ; then
-            echo "            \" < /tmp/in\$\$.tmp > /tmp/out\$\$.tmp" >>"${patch}"
-            echo "            mv /tmp/out\$\$.tmp /tmp/in\$\$.tmp" >>"${patch}"
-            i=0
-        fi
-    done
-    if [ $i -eq 0 ] ; then
-        echo "            mv /tmp/in\$\$.tmp \"\${file}\"" >>"${patch}"
-    else
-        echo "            \" < /tmp/in\$\$.tmp > /tmp/out\$\$.tmp" >>"${patch}"
-        echo "            rm -f /tmp/in\$\$.tmp" >>"${patch}"
-        echo "            mv /tmp/out\$\$.tmp \"\${file}\"" >>"${patch}"
-    fi
-
-    cat >>"${patch}" <<!SCRIPT_EOF_1
-        fi
-        arg=\$((arg + 1))
-    done
-}
-!SCRIPT_EOF_1
-    chmod 755 "${patch}"
-}
-
-
-#
 #   Create the buildConfig header
 #
 createConfigHeader()
@@ -1466,7 +1407,7 @@ createConfigHeader()
     FILE="$1"
     NAME=`basename $1`
 
-    rm -f $NAME
+    rm -f "$NAME"
     if [ "$NAME" = $CONFIG_SRC ]
     then
         cat >$FILE <<!EOF_CONFIG_HEADER_SRC
@@ -1528,10 +1469,10 @@ _#endif /* IGNORE_IN_C_CODE */
 #
 createConfig()
 {
-    local enabled kind d dir FILE
+    local enabled kind d dir FILE upper
 
     FILE="$1"
-    rm -f $FILE
+    rm -f "$FILE"
 
     createConfigHeader "$FILE"
 
@@ -1830,7 +1771,8 @@ createCrossConfig()
     eval v=\${BLD_${kind}_LIB_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_LIB_DIR=\"${v}\"" ; mkdir -p "${v}"
     eval v=\${BLD_${kind}_OBJ_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_OBJ_DIR=\"${v}\"" ; mkdir -p "${v}"
     eval v=\${BLD_${kind}_MOD_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_MOD_DIR=\"${v}\"" ; mkdir -p "${v}"
-    if [ "$BLD_FEATURE_EJS" = 1 ] ; then
+
+    if [ "$CFG_HOST_EJS_WITH" = 1 ] ; then
         eval v=\${BLD_${kind}_JEM_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_JEM_DIR=\"${v}\"" ; mkdir -p "${v}"
     fi
     eval v=\${BLD_${kind}_INC_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_INC_DIR=\"${v}\"" ; mkdir -p "${v}"
@@ -1991,10 +1933,15 @@ showBuildConfig() {
     for p in PRD VER CFG BIN JEM LIB MOD WEB INC
     do
         eval dir=\$BLD_${p}_PREFIX
-        if [ "$p" = "JEM" -a "$BLD_FEATURE_EJS" = 1 ] ; then
-            echo -e "  #   ${p}   ${dir}"
-        fi
-        if [ "$p" = "WEB" -a "$BLD_FEATURE_APPWEB" = 1 ] ; then
+        if [ "$p" = "JEM" ] ; then
+            if [ "$CFG_HOST_EJS_WITH" = 1 ] ; then
+                echo -e "  #   ${p}   ${dir}"
+            fi
+        elif [ "$p" = "WEB" ] ; then
+            if [ "$CFG_HOST_APPWEB_WITH" = 1 ] ; then
+                echo -e "  #   ${p}   ${dir}"
+            fi
+        else
             echo -e "  #   ${p}   ${dir}"
         fi
     done
@@ -2430,7 +2377,7 @@ while [ "${1#--}" != "$1" ] ; do
     out=*)
         BLD_OUT_DIR=`canonPath "${ARG}"`
         mkdir -p $BLD_OUT_DIR
-        rm -f out
+        rm -rf out
         ln -s $BLD_OUT_DIR out
         ;;
     prefix=*)
@@ -2550,7 +2497,6 @@ parseEnvVars
 findComponents
 manageFeatures
 createBuildConfig
-genScripts
 postGen
 showBuildConfig
 

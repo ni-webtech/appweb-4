@@ -277,7 +277,7 @@ installed-files:
 	) | sort | uniq
 
 cleanExtra:
-	find $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_MOD_DIR) $(BLD_LIB_DIR) -type f -print | grep -v buildConfig | xargs rm -f
+	find $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_MOD_DIR) $(BLD_LIB_DIR) -type f -print | egrep -v 'buildConfig' | xargs rm -f
 	[ "$(_RECURSIVE_)" = "" ] && \
 		$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) _RECURSIVE_=1 -C . clean ; true
 

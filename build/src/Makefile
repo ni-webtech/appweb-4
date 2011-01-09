@@ -10,7 +10,8 @@ include		.makedep
 
 TARGETS		= 	\
 	$(BLD_BUILD_BIN_DIR)/dsi$(BLD_EXE) \
-	$(BLD_BUILD_BIN_DIR)/edep$(BLD_EXE)
+	$(BLD_BUILD_BIN_DIR)/edep$(BLD_EXE) \
+	$(BLD_BUILD_BIN_DIR)/getpath$(BLD_EXE)
 
 compileFirst: tools 
 	

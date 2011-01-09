@@ -59,7 +59,7 @@ setup() {
     umask 022
     BLD_DATE=`date '+%c'`
 
-    if [ ! -x ${BLD_TOP}/build/bin/getpath ] ; then
+    if [ ! -x ${BLD_OUT_DIR}/bin/dsi${BLD_EXE} ] ; then
         echo "Must compile first before installing"
         exit 255
     fi
@@ -69,7 +69,7 @@ setup() {
     #
     ORIGINAL_ROOT_DIR="$ROOT_DIR"
     ROOT_DIR=${ROOT_DIR:-${BLD_TOP}/.tmp}
-    ROOT_DIR=`${BLD_TOP}/build/bin/getpath -a "${ROOT_DIR}"`
+    ROOT_DIR=`${BLD_OUT_DIR}/bin/getpath -a "${ROOT_DIR}"`
     mkdir -p "${ROOT_DIR}"
     chmod -R g-s "${ROOT_DIR}"
 
