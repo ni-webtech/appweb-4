@@ -5031,10 +5031,11 @@ typedef struct MprModule {
     Loadable module entry point signature. 
     @description Loadable modules can have an entry point that is invoked automatically when a module is loaded. 
     @param data Data passed to mprCreateModule
+    @param mp Module object reference returned from #mprCreateModule
     @return a new MprModule structure for the module. Return NULL if the module can't be initialized.
     @ingroup MprModule
  */
-typedef int (*MprModuleEntry)(void *data);
+typedef int (*MprModuleEntry)(void *data, MprModule *mp);
 
 /**
     Get the module search path

@@ -41,6 +41,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
             /* mprUserError("Can't configure server using %s", path); */
             return MPR_ERR_CANT_INITIALIZE;
         }
+        return 0;
 
     } else {
         //  MOB TEST THIS
@@ -108,7 +109,6 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
 
 int maParseConfig(MaServer *server, cchar *configFile)
 {
-    Mpr             *mpr;
     MprList         *includes;
     MaAppweb        *appweb;
     MaHost          *defaultHost;
@@ -120,13 +120,12 @@ int maParseConfig(MaServer *server, cchar *configFile)
     char            *buf, *cp, *tok, *key, *value, *path;
     int             i, rc, top, next, len;
 
-    mpr = mprGetMpr();
     mprLog(2, "Config File %s", configFile);
 
     appweb = server->appweb;
     http = appweb->http;
     memset(stack, 0, sizeof(stack));
-    server->alreadyLogging = mprGetLogHandler(server) ? 1 : 0;
+    server->alreadyLogging = mprGetLogHandler() ? 1 : 0;
 
     /*
         Create the default host and directory

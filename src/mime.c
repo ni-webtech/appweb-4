@@ -47,6 +47,18 @@ int maOpenMimeTypes(MaHost *host, cchar *path)
 }
 
 
+
+static void manageMimeType(MaMimeType *mt, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(mt->type);
+        mprMark(mt->actionProgram);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 /*
     Add a mime type to the mime lookup table. Action Programs are added separately.
  */
@@ -54,7 +66,7 @@ MaMimeType *maAddMimeType(MaHost *host, cchar *ext, cchar *mimeType)
 {
     MaMimeType  *mime;
 
-    if ((mime = mprAllocObj(MaMimeType, NULL)) == NULL) {
+    if ((mime = mprAllocObj(MaMimeType, manageMimeType)) == 0) {
         return 0;
     }
     mime->type = sclone(mimeType);

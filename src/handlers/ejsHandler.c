@@ -85,7 +85,7 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
  */
 static char *findScript(char *script)
 {
-    char    *base, *result;
+    char    *base;
 
     if (script == 0 || *script == '\0') {
         script = mprAsprintf("%s/../%s/%s", mprGetAppDir(), BLD_LIB_NAME, MA_EJS_START);
@@ -96,8 +96,7 @@ static char *findScript(char *script)
         }
     }
     if (mprPathExists(script, R_OK)) {
-        result = mprGetNativePath(script);
-        return result;
+        return mprGetNativePath(script);
     }
     return 0;
 }
@@ -125,7 +124,7 @@ static int loadStartupScript(Http *http, HttpLoc *loc)
     }
     LOG(2, "Loading Ejscript Server script: \"%s\"", script);
     if (ejsLoadScriptFile(ejs, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
-        mprError("Can't load \"%s\"", script);
+        mprError("Can't load \"%s\"\n%s", script, ejsGetErrorMsg(ejs, 1));
     }
     return 0;
 }
@@ -151,11 +150,6 @@ double  __ejsAppweb_floating_point_resolution(double a, double b, int64 c, int64
 int maEjsHandlerInit(Http *http, MprModule *mp)
 {
     HttpStage   *handler;
-    EjsService  *sp;
-
-    sp = ejsCreateService(http);
-    sp->http = http;
-    ejsInitCompiler(sp);
 
     /*
         Most of the Ejs handler is in ejsLib.c. Augment the handler with match, open and parse callbacks.
@@ -169,7 +163,7 @@ int maEjsHandlerInit(Http *http, MprModule *mp)
 }
 
 #else
-int maEjsHandlerInit(Http *http, MprModule *mp)
+int maEjsHandlerInit(Http *http, MprModule *mp, MprModule *mp, MprModule *mp, MprModule *mp)
 {
     return 0;
 }

@@ -605,22 +605,38 @@ static void parseWords(MprList *list, cchar *str)
 }
 
 
+static void manageDir(Dir *dir, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(dir->defaultIcon);
+        mprMark(dir->dirList);
+        mprMark(dir->extList);
+        mprMark(dir->ignoreList);
+        mprMark(dir->pattern);
+        mprMark(dir->sortField);
+        
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 /*
     Dynamic module initialization
  */
 int maOpenDirHandler(Http *http)
 {
-    HttpStage     *handler;
+    HttpStage   *handler;
     Dir         *dir;
 
-    handler = httpCreateHandler(http, "dirHandler", HTTP_STAGE_GET | HTTP_STAGE_HEAD);
-    if (handler == 0) {
+    if ((handler = httpCreateHandler(http, "dirHandler", HTTP_STAGE_GET | HTTP_STAGE_HEAD)) == 0) {
         return MPR_ERR_CANT_CREATE;
+    }
+    if ((handler->stageData = dir = mprAllocObj(Dir, manageDir)) == 0) {
+        return MPR_ERR_MEMORY;
     }
     handler->match = matchDir; 
     handler->process = processDir; 
     handler->parse = (HttpParse) parseDir; 
-    handler->stageData = dir = mprAllocObj(Dir, NULL);
     http->dirHandler = handler;
     dir->sortOrder = 1;
     return 0;

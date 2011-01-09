@@ -8,7 +8,22 @@
 
 #include    "appweb.h"
 
+/********************************* Forwards ************************************/
+
+static void manageDir(MaDir *dir, int flags);
+
 /************************************ Code *************************************/
+
+static void manageDir(MaDir *dir, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(dir->auth);
+        mprMark(dir->host);
+        mprMark(dir->indexName);
+        mprMark(dir->path);
+    }
+}
+
 
 MaDir *maCreateBareDir(MaHost *host, cchar *path)
 {
@@ -17,7 +32,7 @@ MaDir *maCreateBareDir(MaHost *host, cchar *path)
     mprAssert(host);
     mprAssert(path);
 
-    if ((dir = mprAllocObj(MaDir, NULL)) == NULL) {
+    if ((dir = mprAllocObj(MaDir, manageDir)) == 0) {
         return 0;
     }
     dir->indexName = sclone("index.html");
@@ -39,7 +54,7 @@ MaDir *maCreateDir(MaHost *host, cchar *path, MaDir *parent)
     mprAssert(path);
     mprAssert(parent);
 
-    if ((dir = mprAllocObj(MaDir, NULL)) == NULL) {
+    if ((dir = mprAllocObj(MaDir, manageDir)) == 0) {
         return 0;
     }
     dir->host = host;

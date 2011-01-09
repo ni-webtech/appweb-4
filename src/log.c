@@ -1,5 +1,5 @@
 /*
-    log.c -- Logging
+    log.c -- Error and access Logging
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */

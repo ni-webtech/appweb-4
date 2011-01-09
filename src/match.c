@@ -98,6 +98,7 @@ static HttpStage *matchHandler(HttpConn *conn)
     HttpStage   *handler;
     MaHost      *host;
     MaAlias     *alias;
+    MprPath     *info;
     bool        rescan;
     int         loopCount;
 
@@ -119,6 +120,13 @@ static HttpStage *matchHandler(HttpConn *conn)
     mprAssert(loc);
     rx->auth = loc->auth;        
 
+    if (tx->filename == 0) {
+        tx->filename = makeFilename(conn, rx->alias, rx->uri, 1);
+    }
+    info = &tx->fileInfo;
+    if (!info->checked) {
+        mprGetPathInfo(tx->filename, info);
+    }
     if (modifyRequest(conn)) {
         return NULL;
     }
@@ -176,7 +184,6 @@ static bool modifyRequest(HttpConn *conn)
     HttpLoc         *loc;
     HttpTx          *tx;
     HttpRx          *rx;
-    MprPath         *info;
     MprHash         *he;
     MprList         *handlers;
     int             next;
@@ -185,15 +192,9 @@ static bool modifyRequest(HttpConn *conn)
     tx = conn->tx;
     handlers = NULL;
 
-    if (tx->filename == 0) {
-        tx->filename = makeFilename(conn, rx->alias, rx->uri, 1);
-    }
-    info = &tx->fileInfo;
-    if (!info->checked) {
-        mprGetPathInfo(tx->filename, info);
-    }
     loc = conn->rx->loc;
     if (loc) {
+        //  MOB OPT set bit in loc for if any handlers have modify
         for (next = 0; (handler = mprGetNextItem(loc->handlers, &next)) != 0; ) {
             if (handler->modify) {
                 if (handlers == NULL) {

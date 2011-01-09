@@ -3978,7 +3978,7 @@ HttpLoc *httpCreateLocation(Http *http)
     loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
     loc->handlers = mprCreateList(-1, 0);
     loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
-    loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
+    loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     loc->inputStages = mprCreateList(-1, 0);
     loc->outputStages = mprCreateList(-1, 0);
     loc->prefix = sclone("");
@@ -4250,7 +4250,7 @@ void httpResetPipeline(HttpLoc *loc)
 {
     if (loc->parent == 0) {
         loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
-        loc->expires = mprCreateHash(0, 0);
+        loc->expires = mprCreateHash(0, MPR_HASH_STATIC_VALUES);
         loc->extensions = mprCreateHash(0, 0);
         loc->handlers = mprCreateList(-1, 0);
         loc->inputStages = mprCreateList(-1, 0);
@@ -4420,7 +4420,6 @@ static void netOutgoingService(HttpQueue *q)
     conn = q->conn;
     tx = conn->tx;
     conn->lastActivity = conn->http->now;
-    mprAssert(!mprGetCurrentThread()->yielded);
     
     if (conn->sock == 0 || conn->writeComplete) {
         return;
@@ -4509,7 +4508,6 @@ static ssize buildNetVec(HttpQueue *q)
 
     conn = q->conn;
     tx = conn->tx;
-    mprAssert(!mprGetCurrentThread()->yielded);
 
     /*
         Examine each packet and accumulate as many packets into the I/O vector as possible. Leave the packets on the queue 
@@ -8502,7 +8500,7 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
     if (server->ip && server->ip) {
         server->name = server->ip;
     }
-    server->software = HTTP_NAME;
+    server->software = sclone(HTTP_NAME);
     server->limits = httpCreateLimits(1);
     server->loc = httpInitLocation(http, 1);
     return server;

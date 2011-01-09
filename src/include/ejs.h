@@ -3683,16 +3683,19 @@ extern void     ejsInheritBaseClassNamespaces(Ejs *ejs, EjsType *type, EjsType *
 extern void     ejsSetSqliteMemCtx(MprThreadLocal *tls);
 extern void     ejsSetSqliteTls(MprThreadLocal *tls);
 
+#if UNUSED
 #if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_STATIC
 extern int      ejs_events_Init(Ejs *ejs);
 extern int      ejs_xml_Init(Ejs *ejs);
 extern int      ejs_io_Init(Ejs *ejs);
 extern int      ejs_sys_Init(Ejs *ejs);
+#endif
+#endif
+
 #if BLD_FEATURE_SQLITE
-extern int      ejs_db_sqlite_Init(Ejs *ejs);
+extern int      ejs_db_sqlite_Init(Ejs *ejs, MprModule *mp);
 #endif
-extern int      ejs_web_Init(Ejs *ejs);
-#endif
+extern int      ejs_web_Init(Ejs *ejs, MprModule *mp);
 
 /* 
     Move some ejsWeb.h declarations here so handlers can just include ejs.h whether they are using the
@@ -3700,9 +3703,6 @@ extern int      ejs_web_Init(Ejs *ejs);
  */
 extern HttpStage *ejsAddWebHandler(Http *http);
 extern int ejsHostHttpServer(HttpConn *conn);
-
-extern int ejs_db_sqlite_Init(Ejs *ejs);
-extern int ejs_web_init(Ejs *ejs);
 
 /**
     VM Evaluation state. 

@@ -5621,7 +5621,7 @@ static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode)
     EjsFrame        *fp;
     EjsState        *state;
     EjsOptable      *optable;
-    int             offset, save;
+    int             offset;
 #if UNUSED
     static int      showFrequency = 1;
 #endif
@@ -8810,13 +8810,6 @@ static void manageEjsService(EjsService *sp, int flags)
 }
 
 
-#if UNUSED
-EjsService *ejsGetService()
-{
-    return MPR->ejsService;
-}
-#endif
-
 /*  
     Create a new interpreter
     @param searchPath Array of paths to search for modules. Must be persistent.
@@ -8934,8 +8927,6 @@ static void manageEjs(Ejs *ejs, int flags)
         mprMark(ejs->masterState);
         mprMark(ejs->mutex);
         mprMark(ejs->result);
-mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) == MPR->heap.active));
-
         mprMark(ejs->search);
         mprMark(ejs->dispatcher);
         mprMark(ejs->workers);
@@ -9097,9 +9088,9 @@ static int defineTypes(Ejs *ejs)
 
 #if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_STATIC
 #if BLD_FEATURE_SQLITE
-    ejs_db_sqlite_Init(ejs);
+    ejs_db_sqlite_Init(ejs, NULL);
 #endif
-    ejs_web_Init(ejs);
+    ejs_web_Init(ejs, NULL);
 #endif
     if (ejs->hasError || mprHasMemError(ejs)) {
         mprError("Can't create core types");
@@ -9266,7 +9257,6 @@ void ejsSetServiceLocks(EjsService *sp, EjsLockFn lock, EjsUnlockFn unlock, void
 
 int ejsEvalModule(cchar *path)
 {
-    EjsService      *service;   
     Ejs             *ejs;
     Mpr             *mpr;
     int             status;
@@ -9276,10 +9266,6 @@ int ejsEvalModule(cchar *path)
     if ((mpr = mprCreate(0, NULL, 0)) != 0) {
         status = MPR_ERR_MEMORY;
 
-#if UNUSED
-    } else if ((service = ejsCreateService()) == 0) {
-        status = MPR_ERR_MEMORY;
-#endif
     } else if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
         status = MPR_ERR_MEMORY;
 
@@ -9711,9 +9697,6 @@ static int allocNotifier(int flags, ssize size)
         lock(sp);
         for (next = 0; (ejs = mprGetNextItem(sp->vmlist, &next)) != 0; ) {
             ejs->gc = 1;
-#if UNUSED
-            ejsAttention(ejs);
-#endif
         }
         unlock(sp);
     }
@@ -36493,7 +36476,7 @@ static int configureSqliteTypes(Ejs *ejs)
 }
 
 
-int ejs_db_sqlite_Init(Ejs *ejs)
+int ejs_db_sqlite_Init(Ejs *ejs, MprModule *mp)
 {
     return ejsAddNativeModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.db.sqlite"), configureSqliteTypes, 
         _ES_CHECKSUM_ejs_db_sqlite, EJS_LOADER_ETERNAL);
@@ -36858,7 +36841,7 @@ static EjsObj *hs_close(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         ejsSendEvent(ejs, sp->emitter, "close", NULL, (EjsObj*) sp);
         httpDestroyServer(sp->server);
         sp->server = 0;
-        mprRelease(sp);
+        mprRemoveRoot(sp);
     }
     return 0;
 }
@@ -36942,7 +36925,7 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         sp->server = 0;
     }
     if (endpoint == ejs->nullValue) {
-        mprHold(sp);
+        mprAddRoot(sp);
         if (ejs->loc) {
             ejs->loc->context = sp;
         } else {
@@ -36953,7 +36936,7 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     }
     if (ejs->loc) {
         /* Being called hosted - ignore endpoint value */
-        mprHold(sp);
+        mprAddRoot(sp);
         ejs->loc->context = sp;
         return (EjsObj*) ejs->nullValue;
     }
@@ -39551,7 +39534,7 @@ static int configureWebTypes(Ejs *ejs)
 /*  
     Module load entry point
  */
-int ejs_web_Init(Ejs *ejs)
+int ejs_web_Init(Ejs *ejs, MprModule *mp)
 {
     return ejsAddNativeModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.web"), configureWebTypes, 
         _ES_CHECKSUM_ejs_web, EJS_LOADER_ETERNAL);

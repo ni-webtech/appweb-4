@@ -13,7 +13,7 @@
 /************************************* Local **********************************/
 
 typedef struct MaEgi {
-    MprHashTable        *forms;
+    MprHashTable    *forms;
 } MaEgi;
 
 /************************************* Code ***********************************/
@@ -88,6 +88,15 @@ int maDefineEgiForm(Http *http, cchar *name, MaEgiForm *form)
 }
 
 
+static void manageEgi(MaEgi *egi, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(egi->forms);
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 int maOpenEgiHandler(Http *http)
 {
     HttpStage       *handler;
@@ -99,11 +108,14 @@ int maOpenEgiHandler(Http *http)
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
+    if ((handler->stageData = mprAllocObj(MaEgi, manageEgi)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    egi = handler->stageData;
     handler->match = matchEgi; 
     handler->start = startEgi; 
     handler->process = processEgi; 
-    handler->stageData = egi = mprAllocObj(MaEgi, NULL);
-    egi->forms = mprCreateHash(HTTP_LARGE_HASH_SIZE, 0);
+    egi->forms = mprCreateHash(HTTP_LARGE_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     return 0;
 }
 

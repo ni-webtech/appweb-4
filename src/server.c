@@ -13,7 +13,7 @@
 
 /***************************** Forward Declarations ***************************/
 
-static int appwebDestructor(MaAppweb *appweb);
+static void manageAppweb(MaAppweb *appweb, int flags);
 
 /************************************ Code ************************************/
 /*
@@ -24,7 +24,7 @@ MaAppweb *maCreateAppweb()
     MaAppweb    *appweb;
     Http        *http;
 
-    if ((appweb = mprAllocObj(MaAppweb, appwebDestructor)) == NULL) {
+    if ((appweb = mprAllocObj(MaAppweb, manageAppweb)) == NULL) {
         return 0;
     }
     appweb->servers = mprCreateList(-1, 0);
@@ -36,15 +36,24 @@ MaAppweb *maCreateAppweb()
     maOpenEgiHandler(http);
     maOpenFileHandler(http);
     //  MOB - wha about pass handler
-    return appweb;
+    return appweb; 
 }
 
 
-static int appwebDestructor(MaAppweb *appweb)
+static void manageAppweb(MaAppweb *appweb, int flags)
 {
-    /* TODO - should this call stop? */
-    maUnloadStaticModules(appweb);
-    return 0;
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(appweb->defaultServer);
+        mprMark(appweb->servers);
+        mprMark(appweb->http);
+        mprMark(appweb->user);
+        mprMark(appweb->group);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        /* TODO - should this call stop? */
+        maStopAppweb(appweb);
+        maUnloadStaticModules(appweb);
+    }
 }
 
 
@@ -107,6 +116,24 @@ int maStopAppweb(MaAppweb *appweb)
 }
 
 
+static void manageServer(MaServer *server, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(server->appweb);
+        mprMark(server->http);
+        mprMark(server->httpServers);
+        mprMark(server->defaultHost);
+        mprMark(server->hosts);
+        mprMark(server->hostAddresses);
+        mprMark(server->name);
+        mprMark(server->serverRoot);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        maStopServer(server);
+    }
+}
+
+
 /*  
     Create a new meta-server. This may manage may virtual hosts. If ip and port are supplied,
     create a HttpServer now on that endpoint. Otherwise, call maConfigureServer later.
@@ -119,7 +146,7 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, 
     mprAssert(appweb);
     mprAssert(name && *name);
 
-    if ((server = mprAllocObj(MaServer, NULL)) == NULL) {
+    if ((server = mprAllocObj(MaServer, manageServer)) == NULL) {
         return 0;
     }
     server->hosts = mprCreateList(-1, 0);

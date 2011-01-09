@@ -162,6 +162,17 @@
 		C9F683381116A0EF008107BE /* egiHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C976206B0FD04E38009C78E1 /* egiHandler.c */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXBuildRule section */
+		C9E1C9D712D7DC700029F527 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			fileType = pattern.proxy;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+/* End PBXBuildRule section */
+
 /* Begin PBXContainerItemProxy section */
 		C90A19900FD6D9E9006A9E86 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1544,6 +1555,7 @@
 				C9D817A7101D4C2A0039DD9D /* Frameworks */,
 			);
 			buildRules = (
+				C9E1C9D712D7DC700029F527 /* PBXBuildRule */,
 			);
 			dependencies = (
 				C9D817A2101D4C2A0039DD9D /* PBXTargetDependency */,
@@ -1613,7 +1625,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\nBLD_TOP=$TOP\nif [ -f $TOP/build/bin/buildConfig.sh ] ; then\n\t. $TOP/build/bin/buildConfig.sh\nfi\n\nmkdir -p $BUILT_PRODUCTS_DIR\nif [ $BLD_FEATURE_MATRIXSSL ] ; then\n\tfor f in $BLD_MATRIXSSL_IMPORTS\n\tdo\n\t\tif [ -f $f ] ; then\n\t\t\techo cp $f $BUILT_PRODUCTS_DIR\n\t\t\tcp $f $BUILT_PRODUCTS_DIR\n\t\tfi\n\tdone\nfi\nif [ $BLD_FEATURE_OPENSSL ] ; then\n\tfor f in $BLD_OPENSSL_IMPORTS\n\tdo\n\t\tif [ -f $f ] ; then\n\t\t\techo cp $f $BUILT_PRODUCTS_DIR\n\t\t\tcp $f $BUILT_PRODUCTS_DIR\n\t\tfi\n\tdone\nfi\n\nexit 0";
+			shellScript = "\nBLD_TOP=$TOP\n\nif [ -f $OUT/include/.buildConfig.sh ] ; then\n\t. $OUT/include/.buildConfig.sh\nfi\n\nmkdir -p $BUILT_PRODUCTS_DIR\n\nif [ $BLD_FEATURE_MATRIXSSL ] ; then\n\tfor f in $BLD_MATRIXSSL_IMPORTS\n\tdo\n\t\tif [ -f $f ] ; then\n\t\t\techo cp $f $BUILT_PRODUCTS_DIR\n\t\t\tcp $f $BUILT_PRODUCTS_DIR\n\t\tfi\n\tdone\nfi\nif [ $BLD_FEATURE_OPENSSL ] ; then\n\tfor f in $BLD_OPENSSL_IMPORTS\n\tdo\n\t\tif [ -f $f ] ; then\n\t\t\techo cp $f $BUILT_PRODUCTS_DIR\n\t\t\tcp $f $BUILT_PRODUCTS_DIR\n\t\tfi\n\tdone\nfi\nif [ $BLD_FEATURE_PHP ] ; then\n    for f in $BLD_PHP_IMPORTS\n    do\n        if [ -f $f ] ; then\n            echo cp $f $BUILT_PRODUCTS_DIR\n            cp $f $BUILT_PRODUCTS_DIR\n        fi\n    done\nfi\n\n\nexit 0";
 		};
 		C97623860FD06C9E009C78E1 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2185,10 +2197,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
 				INSTALL_PATH = /usr/local/bin;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				OTHER_LDFLAGS = "";
 				PREBINDING = NO;
@@ -2895,7 +2904,7 @@
 				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
 				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
 				COPY_PHASE_STRIP = NO;
-				ES = ../../../src/ejs;
+				ES = "$(PROJECT_DIR)/../../../src/ejs";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
@@ -2921,10 +2930,11 @@
 					../../../out/lib,
 					../../../out/modules,
 				);
+				OUT = "$(PROJECT_DIR)/../../../out";
 				PREBINDING = NO;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = YES;
-				SRC = ../../../src;
-				TOP = ../../..;
+				SRC = "$(PROJECT_DIR)/../../../src";
+				TOP = "$(PROJECT_DIR)/../../..";
 			};
 			name = Debug;
 		};
@@ -2934,9 +2944,10 @@
 				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
 				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
 				COPY_PHASE_STRIP = YES;
-				ES = ../../../src/ejs;
-				SRC = ../../../src;
-				TOP = ../../..;
+				ES = "$(PROJECT_DIR)/../../../src/ejs";
+				OUT = "$(PROJECT_DIR)/../../../out";
+				SRC = "$(PROJECT_DIR)/../../../src";
+				TOP = "$(PROJECT_DIR)/../../..";
 			};
 			name = Release;
 		};

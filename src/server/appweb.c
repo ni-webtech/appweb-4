@@ -19,14 +19,16 @@
 #include    "appweb.h"
 
 /********************************** Locals ************************************/
-
+/*
+    Global application object. Provides the top level roots of all data objects for the GC.
+ */
 typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaServer    *server;
     MprList     *scripts;
-    char        *documentRoot;      //MOB UNUSED
-    char        *serverRoot;        //MOB UNUSED
+    char        *documentRoot;
+    char        *serverRoot;
     char        *configFile;
     char        *pathVar;
     int         workers;
@@ -39,15 +41,16 @@ static App *app;
 extern void appwebOsTerm();
 static int changeRoot(cchar *jail);
 extern int checkEnvironment(cchar *program);
-static void findConfigFile();
+static int findConfigFile();
 static void manageApp(App *app, int flags);
 extern int  osInit();
-static MaAppweb *initialize(cchar *ip, int port);
+static int initialize(cchar *ip, int port);
 static void usageError();
 
 #if BLD_FEATURE_EJS
 static int setupEjsApps();
 #endif
+
 #if BLD_UNIX_LIKE
 static void catchSignal(int signo, siginfo_t *info, void *arg);
 static int  unixSecurityChecks(cchar *program, cchar *home);
@@ -64,14 +67,13 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 MAIN(appweb, int argc, char **argv)
 {
     Mpr     *mpr;
-    cchar   *ipAddrPort, *argp, *logSpec, *jail;
+    cchar   *ipAddrPort, *argp, *jail;
     char    *ip;
     int     outputVersion, argind, port;
 
     ipAddrPort = 0;
     ip = 0;
     jail = 0;
-    logSpec = 0;
     port = -1;
     outputVersion = 0;
 
@@ -81,13 +83,13 @@ MAIN(appweb, int argc, char **argv)
     if ((app = mprAllocObj(App, manageApp)) == NULL) {
         exit(2);
     }
+    mprAddRoot(app);
+    
     app->mpr = mpr;
     app->workers = -1;
 
     argc = mpr->argc;
     argv = mpr->argv;
-
-    mprAddRoot(app);
 
     app->serverRoot = mprGetCurrentPath();
     app->documentRoot = app->serverRoot;
@@ -100,12 +102,6 @@ MAIN(appweb, int argc, char **argv)
     if (osInit() < 0) {
         exit(3);
     }
-    if (mprStart() < 0) {
-        mprUserError("Can't start MPR for %s", mprGetAppName());
-        mprDestroy(0);
-        return MPR_ERR_CANT_INITIALIZE;
-    }
-
     for (argind = 1; argind < argc; argind++) {
         argp = argv[argind];
         if (*argp != '-') {
@@ -115,7 +111,7 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            app->configFile = argv[++argind];
+            app->configFile = sclone(argv[++argind]);
 
 #if BLD_UNIX_LIKE
         } else if (strcmp(argp, "--chroot") == 0) {
@@ -151,8 +147,7 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            logSpec = argv[++argind];
-            maStartLogging(logSpec);
+            maStartLogging(argv[++argind]);
 
         } else if (strcmp(argp, "--name") == 0 || strcmp(argp, "-n") == 0) {
             if (argind >= argc) {
@@ -184,14 +179,21 @@ MAIN(appweb, int argc, char **argv)
         }
         ipAddrPort = argv[argind++];
         if (argc > argind) {
-            app->documentRoot = argv[argind++];
+            app->documentRoot = sclone(argv[argind++]);
         }
     }
     if (outputVersion) {
         mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
         exit(0);
     }
-    findConfigFile();
+    if (mprStart() < 0) {
+        mprUserError("Can't start MPR for %s", mprGetAppName());
+        mprDestroy(0);
+        return MPR_ERR_CANT_INITIALIZE;
+    }
+    if (findConfigFile() < 0) {
+        exit(6);
+    }
     if (ipAddrPort) {
         mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
     }
@@ -201,7 +203,7 @@ MAIN(appweb, int argc, char **argv)
     if (jail && changeRoot(jail) < 0) {
         exit(7);
     }
-    if ((app->appweb = initialize(ip, port)) == 0) {
+    if (initialize(ip, port) < 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (maStartAppweb(app->appweb) < 0) {
@@ -231,8 +233,6 @@ static void manageApp(App *app, int flags)
         mprMark(app->scripts);
         mprMark(app->server);
         mprMark(app->serverRoot);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -261,33 +261,30 @@ static int changeRoot(cchar *jail)
 }
 
 
-static MaAppweb *initialize(cchar *ip, int port)
+static int initialize(cchar *ip, int port)
 {
-    MaAppweb    *appweb;
-
-    if ((appweb = maCreateAppweb()) == 0) {
+    if ((app->appweb = maCreateAppweb()) == 0) {
         mprUserError("Can't create HTTP service for %s", mprGetAppName());
-        return 0;
+        return MPR_ERR_CANT_CREATE;
     }
-    if ((app->server = maCreateServer(appweb, "default", NULL, NULL, -1)) == 0) {
+    if ((app->server = maCreateServer(app->appweb, "default", NULL, NULL, -1)) == 0) {
         mprUserError("Can't create HTTP server for %s", mprGetAppName());
-        return 0;
+        return MPR_ERR_CANT_CREATE;
     }
     if (maConfigureServer(app->server, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
         /* mprUserError("Can't configure the server, exiting."); */
-        exit(9);
+        return MPR_ERR_CANT_CREATE;
     }
 #if BLD_FEATURE_EJS
 #if BLD_EJS_PRODUCT && UNUSED
+    //  MOB - cleanup
     if (app->scripts == 0) {
         app->scripts = mprCreateList(-1, 0);
         mprAddItem(app->scripts, MA_EJS_STARTUP);
     }
 #endif
-    if (app->scripts) {
-        if (setupEjsApps() < 0) {
-            exit(10);
-        }
+    if (app->scripts && setupEjsApps() < 0) {
+        return MPR_ERR_CANT_CREATE;
     }
 #endif
     if (app->workers >= 0) {
@@ -298,11 +295,11 @@ static MaAppweb *initialize(cchar *ip, int port)
         writePort(app->server->defaultHost);
     }
 #endif
-    return appweb;
+    return 0;
 }
 
 
-static void findConfigFile()
+static int findConfigFile()
 {
     if (app->configFile == 0) {
         app->configFile = mprJoinPathExt(mprGetAppName(), ".conf");
@@ -312,12 +309,10 @@ static void findConfigFile()
         app->configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
         if (!mprPathExists(app->configFile, R_OK)) {
             mprPrintfError("Can't open config file %s\n", app->configFile);
-            exit(11);
+            return MPR_ERR_CANT_OPEN;
         }
     }
-#if UNUSED
-    return mprGetAbsPath(app->configFile);
-#endif
+    return 0;
 }
 
 

@@ -14,24 +14,52 @@
 /********************************** Forwards **********************************/
 
 static bool appwebIsIdle();
+static void manageHost(MaHost *host, int flags);
 
 /*********************************** Code *************************************/
 
-/*  Create a host from scratch
+static void manageHost(MaHost *host, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(host->server);
+        mprMark(host->httpServer);
+        mprMark(host->parent);
+        mprMark(host->accessLog);
+        mprMark(host->dirs);
+        mprMark(host->aliases);
+        mprMark(host->ipAddrPort);
+        mprMark(host->ip);
+        mprMark(host->documentRoot);
+        mprMark(host->traceInclude);
+        mprMark(host->traceExclude);
+        mprMark(host->loc);
+        mprMark(host->locations);
+        mprMark(host->logHost);
+        mprMark(host->mimeTypes);
+        mprMark(host->mimeFile);
+        mprMark(host->moduleDirs);
+        mprMark(host->name);
+        mprMark(host->logFormat);
+        mprMark(host->logPath);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
+/*  
+    Create a host from scratch
  */
 MaHost *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ipAddrPort, HttpLoc *loc)
 {
     MaHost      *host;
 
-    if ((host = mprAllocObj(MaHost, NULL)) == NULL) {
+    if ((host = mprAllocObj(MaHost, manageHost)) == 0) {
         return 0;
     }
+    host->httpServer = httpServer;
     host->aliases = mprCreateList(-1, 0);
     host->dirs = mprCreateList(-1, 0);
-#if UNUSED
-    host->connections = mprCreateList(-1, 0);
-#endif
-    host->httpServer = httpServer;
     host->locations = mprCreateList(-1, 0);
 
     if (ipAddrPort) {
@@ -76,7 +104,7 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
 {
     MaHost      *host;
 
-    if ((host = mprAllocObj(MaHost, NULL)) == NULL) {
+    if ((host = mprAllocObj(MaHost, manageHost)) == 0) {
         return 0;
     }
     host->parent = parent;
@@ -376,17 +404,10 @@ int maInsertAlias(MaHost *host, MaAlias *newAlias)
     MaAlias     *alias, *old;
     int         rc, next, index;
 
-#if MOB && TODO
-    if (host->parent == host->aliases->parent)) {
+    if (host->parent && host->aliases == host->parent->aliases) {
         host->aliases = mprCloneList(host->parent->aliases);
     }
-#else
-    if (host->parent) {
-        host->aliases = mprCloneList(host->parent->aliases);
-    } else {
-        host->aliases = mprCreateList(-1, 0);
-    }
-#endif
+
     /*  
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc. But we sort redirects with
         status codes first.
@@ -420,17 +441,9 @@ int maInsertDir(MaHost *host, MaDir *newDir)
     mprAssert(newDir);
     mprAssert(newDir->path);
     
-#if MOB && TODO
-    if (host->parent == host->dirs->parent)) {
+    if (host->parent && host->dirs == host->parent->dirs) {
         host->dirs = mprCloneList(host->parent->dirs);
     }
-#else
-    if (host->parent) {
-        host->dirs = mprCloneList(host->parent->dirs);
-    } else {
-        host->dirs = mprCreateList(-1, 0);
-    }
-#endif
 
     /*
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc
@@ -448,7 +461,6 @@ int maInsertDir(MaHost *host, MaDir *newDir)
             return 0;
         }
     }
-
     mprAddItem(host->dirs, newDir);
     return 0;
 }
@@ -462,17 +474,9 @@ int maAddLocation(MaHost *host, HttpLoc *newLocation)
     mprAssert(newLocation);
     mprAssert(newLocation->prefix);
     
-#if MOB && UNUSED
-    if (mprIsParent(host->parent, host->locations)) {
+    if (host->parent && host->locations == host->parent->locations) {
         host->locations = mprCloneList(host->parent->locations);
     }
-#else
-    if (host->parent) {
-        host->locations = mprCloneList(host->parent->locations);
-    } else {
-        host->locations = mprCreateList(-1, 0);
-    }
-#endif
 
     /*
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc
@@ -490,7 +494,6 @@ int maAddLocation(MaHost *host, HttpLoc *newLocation)
         }
     }
     mprAddItem(host->locations, newLocation);
-
     return 0;
 }
 
@@ -617,7 +620,7 @@ HttpLoc *maLookupBestLocation(MaHost *host, cchar *uri)
 
     if (uri) {
         for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
-            rc = strncmp(loc->prefix, uri, loc->prefixLen);
+            rc = sncmp(loc->prefix, uri, loc->prefixLen);
             if (rc == 0 && uri[loc->prefixLen] == '/') {
                 return loc;
             }
@@ -627,51 +630,62 @@ HttpLoc *maLookupBestLocation(MaHost *host, cchar *uri)
 }
 
 
+static void manageHostAddress(MaHostAddress *ha, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ha->ip);
+        mprMark(ha->vhosts);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 MaHostAddress *maCreateHostAddress(cchar *ip, int port)
 {
-    MaHostAddress   *hostAddress;
+    MaHostAddress   *ha;
 
     mprAssert(ip && ip);
     mprAssert(port >= 0);
 
-    if ((hostAddress = mprAllocObj(MaHostAddress, NULL)) == NULL) {
+    if ((ha = mprAllocObj(MaHostAddress, manageHostAddress)) == 0) {
         return 0;
     }
-    hostAddress->flags = 0;
-    hostAddress->ip = sclone(ip);
-    hostAddress->port = port;
-    hostAddress->vhosts = mprCreateList(-1, 0);
-    return hostAddress;
+    ha->flags = 0;
+    ha->ip = sclone(ip);
+    ha->port = port;
+    ha->vhosts = mprCreateList(-1, 0);
+    return ha;
 }
 
 
-void maInsertVirtualHost(MaHostAddress *hostAddress, MaHost *vhost)
+void maInsertVirtualHost(MaHostAddress *ha, MaHost *vhost)
 {
-    mprAddItem(hostAddress->vhosts, vhost);
+    mprAddItem(ha->vhosts, vhost);
 }
 
 
-bool maIsNamedVirtualHostAddress(MaHostAddress *hostAddress)
+bool maIsNamedVirtualHostAddress(MaHostAddress *ha)
 {
-    return hostAddress->flags & MA_IPADDR_VHOST;
+    return ha->flags & MA_IPADDR_VHOST;
 }
 
 
-void maSetNamedVirtualHostAddress(MaHostAddress *hostAddress)
+void maSetNamedVirtualHostAddress(MaHostAddress *ha)
 {
-    hostAddress->flags |= MA_IPADDR_VHOST;
+    ha->flags |= MA_IPADDR_VHOST;
 }
 
 
 /*
     Look for a host with the right host name (ServerName)
  */
-MaHost *maLookupVirtualHost(MaHostAddress *hostAddress, cchar *hostStr)
+MaHost *maLookupVirtualHost(MaHostAddress *ha, cchar *hostStr)
 {
     MaHost      *host;
     int         next;
 
-    for (next = 0; (host = mprGetNextItem(hostAddress->vhosts, &next)) != 0; ) {
+    for (next = 0; (host = mprGetNextItem(ha->vhosts, &next)) != 0; ) {
         /*  TODO  -- need to support aliases */
         if (hostStr == 0 || strcmp(hostStr, host->name) == 0) {
             return host;

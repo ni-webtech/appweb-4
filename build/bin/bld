@@ -203,7 +203,7 @@ bld: usage: bld [options] objects ....
       BLD_STATIC            Build static libraries where relevant.
 
     Configuration files used:
-        buildConfig.sh
+        buildConfig.h
 !EOF
     exit 255
 }

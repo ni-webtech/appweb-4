@@ -65,8 +65,6 @@ static void manageAlias(MaAlias *alias, int flags)
         mprMark(alias->prefix);
         mprMark(alias->filename);
         mprMark(alias->uri);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
