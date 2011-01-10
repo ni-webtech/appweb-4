@@ -1,5 +1,5 @@
 #
-#	Makefile to build the combo and flat Appweb distributions
+#	Makefile to build Appweb distributions
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
@@ -10,10 +10,10 @@ include 		.makedep
 STAGING			:= $(PWD)/staging
 TDIR			:= $(STAGING)/appweb-$(BLD_VERSION)
 REL_DIR			:= ../../releases
-COMBO_VER_NAME	:= appweb-$(BLD_VERSION)-combo.tgz
-COMBO_PERM_NAME	:= appweb-combo.tgz
-COMBO_VER		:= $(REL_DIR)/$(COMBO_VER_NAME)
-COMBO_PERM		:= $(REL_DIR)/$(COMBO_PERM_NAME)
+DIST_VER_NAME	:= appweb-$(BLD_VERSION)-dist.tgz
+DIST_PERM_NAME	:= appweb-dist.tgz
+DIST_VER		:= $(REL_DIR)/$(DIST_VER_NAME)
+DIST_PERM		:= $(REL_DIR)/$(DIST_PERM_NAME)
 FLAT_VER_NAME	:= appweb-$(BLD_VERSION)-flat.tgz
 FLAT_PERM_NAME	:= appweb-flat.tgz
 FLAT_VER		:= $(REL_DIR)/$(FLAT_VER_NAME)
@@ -29,11 +29,11 @@ TARGETS			+= $(patsubst %,$(DEST)/%, appwebLib.c appweb.c)
 APPWEB_HEADERS	+= $(patsubst %,$(SRC)/include/%.h, appweb appwebMonitor)
 LIB_SOURCES		+= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|server/|test|utils|sav') 
 
-combo packageExtra:	prep $(TARGETS) $(COMBO_VER) $(FLAT_VER)
+dist packageExtra:	prep $(TARGETS) $(DIST_VER) $(FLAT_VER)
 	
 prep:
-	@$(call log) "[Prepare]" "All-in-one combo package"
-	rm -fr $(STAGING) $(COMBO_VER) $(COMBO_PERM) $(FLAT_VER) $(FLAT_PERM)
+	@$(call log) "[Prepare]" "Package directories"
+	rm -fr $(STAGING) $(DIST_VER) $(DIST_PERM) $(FLAT_VER) $(FLAT_PERM)
 	mkdir -p $(TDIR)/src/include $(TDIR)/src/deps/appweb $(TDIR)/doc/api $(TDIR)/doc/man
 
 $(INC_DEST)/appweb.h: Makefile $(APPWEB_HEADERS)
@@ -49,12 +49,12 @@ $(DEST)/appweb.c: Makefile $(APPWEB_HEADERS) $(SRC)/server/appweb.c
 	echo '#include "appweb.h"' >$(DEST)/appweb.c
 	all-in-one $(SRC)/server/appweb.c | egrep -v '#include.*appweb|#include.*http' >>$(DEST)/appweb.c
 
-$(COMBO_VER):
+$(DIST_VER):
 	cp $(BLD_TOP)/doc/man/appweb.1 $(TDIR)/doc/man
 	cp $(BLD_TOP)/doc/man/appwebMonitor.1 $(TDIR)/doc/man
 	cp $(BLD_TOP)/doc/man/httpPassword.1 $(TDIR)/doc/man
-	@$(call log) "[Generate]" "tar cfz $(COMBO_VER) -C $(STAGING) ."
-	tar cfz $(COMBO_VER) -C $(STAGING) .
+	@$(call log) "[Generate]" "tar cfz $(DIST_VER) -C $(STAGING) ."
+	tar cfz $(DIST_VER) -C $(STAGING) .
 
 flat $(FLAT_VER):
 	mv $(TDIR)/src/deps/ejs/www $(TDIR)

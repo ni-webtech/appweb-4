@@ -262,7 +262,8 @@ static char *getExtension(HttpConn *conn)
             return ext;
         }
     }
-    return "";
+    //  MOB OPT - could have one global for this
+    return sclone("");
 }
 
 
@@ -294,7 +295,7 @@ static HttpStage *findHandler(HttpConn *conn, bool *rescan)
         if (*tx->extension) {
             handler = checkHandler(conn, httpGetHandlerByExtension(loc, tx->extension));
         }
-        if (handler == 0) {
+        if (handler == 0 && !tx->fileInfo.isDir) {
             /*
                 URI has no extension, check if the addition of configured  extensions results in a valid filename.
              */

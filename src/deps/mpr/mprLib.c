@@ -10086,7 +10086,7 @@ static void serviceIO(MprWaitService *ws, int count)
                 mask = wp->desiredMask;
                 mprRemoveNotifier(wp);
                 mprAddNotifier(ws, wp, mask);
-                mprLog(0, "kqueue: file descriptor closed and reopened, fd %d", wp->fd);
+                mprLog(7, "kqueue: file descriptor closed and reopened, fd %d", wp->fd);
             } else if (err == EBADF) {
                 /* File descriptor was closed */
                 mprRemoveNotifier(wp);

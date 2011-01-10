@@ -2322,14 +2322,6 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->rx);
         mprMark(conn->tx);
         mprMark(conn->txheaders);
-
-        httpManageQueue(&conn->serviceq, flags);
-        if (conn->readq) {
-            httpManageQueue(conn->readq, flags);
-        }
-        if (conn->writeq) {
-            httpManageQueue(conn->writeq, flags);
-        }
         mprMark(conn->input);
         mprMark(conn->context);
         mprMark(conn->boundary);
@@ -2337,6 +2329,11 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->host);
         mprMark(conn->ip);
 
+        if (conn->tx) {
+            mprMark(conn->readq);
+            mprMark(conn->writeq);
+            httpMarkQueueHead(&conn->serviceq);
+        }
         httpManageTrace(&conn->trace[0], flags);
         httpManageTrace(&conn->trace[1], flags);
 
@@ -3144,7 +3141,7 @@ void httpCreateEnvVars(HttpConn *conn)
     /*  Same as AUTH_USER (yes this is right) */
     mprAddHash(vars, "REMOTE_USER", (conn->authUser && *conn->authUser) ? conn->authUser : 0);
     mprAddHash(vars, "REQUEST_METHOD", rx->method);
-    mprAddHash(vars, "REQUEST_TRANSPORT", (char*) ((conn->secure) ? "https" : "http"));
+    mprAddHash(vars, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
     
     sock = conn->sock;
     mprAddHash(vars, "SERVER_ADDR", sock->acceptIp);
@@ -3511,8 +3508,12 @@ Http *httpCreate()
     mprGetMpr()->httpService = http;
     http->protocol = "HTTP/1.1";
     http->mutex = mprCreateLock(http);
-    http->connections = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     http->stages = mprCreateHash(-1, 0);
+
+    /*
+        Http manages connections and maintains a reference to the connection while it is open.
+     */
+    http->connections = mprCreateList(-1, 0);
 
     updateCurrentDate(http);
     http->statusCodes = mprCreateHash(41, MPR_HASH_STATIC_VALUES | MPR_HASH_STATIC_KEYS);
@@ -5636,6 +5637,9 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter)
 
 
 
+
+static void manageQueue(HttpQueue *q, int flags);
+
 /*  
     Createa a new queue for the given stage. If prev is given, then link the new queue after the previous queue.
  */
@@ -5643,7 +5647,7 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int direction, Http
 {
     HttpQueue   *q;
 
-    if ((q = mprAllocObj(HttpQueue, httpManageQueue)) == 0) {
+    if ((q = mprAllocObj(HttpQueue, manageQueue)) == 0) {
         return 0;
     }
     httpInitQueue(conn, q, stage->name);
@@ -5671,7 +5675,7 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int direction, Http
 }
 
 
-void httpManageQueue(HttpQueue *q, int flags)
+static void manageQueue(HttpQueue *q, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(q->first);
@@ -5680,8 +5684,14 @@ void httpManageQueue(HttpQueue *q, int flags)
             /* Not a queue head */
             mprMark(q->nextQ);
         }
+    }
+}
 
-    } else if (flags & MPR_MANAGE_FREE) {
+
+void httpMarkQueueHead(HttpQueue *q)
+{
+    if (q->nextQ && q->nextQ->stage) {
+        mprMark(q->nextQ);
     }
 }
 
@@ -6854,14 +6864,14 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     if (slen(rx->statusMessage) >= conn->limits->uriSize) {
         httpError(conn, HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad response. Status message too long");
     }
+    if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, conn->tx->extension)) >= 0) {
+        mprLog(level, "%s %d %s", protocol, rx->status, rx->statusMessage);
+    }
     if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
         content = packet->content;
         endp = strstr((char*) content->start, "\r\n\r\n");
         len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
         httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, packet, len, 0);
-
-    } else if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, conn->tx->extension)) >= 0) {
-        mprLog(level, "%s %d %s", protocol, rx->status, rx->statusMessage);
     }
 }
 
@@ -9101,8 +9111,6 @@ void httpManageTrace(HttpTrace *trace, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(trace->include);
         mprMark(trace->exclude);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -9332,8 +9340,8 @@ static void manageTx(HttpTx *tx, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(tx->outputPipeline);
-        httpManageQueue(&tx->queue[0], flags);
-        httpManageQueue(&tx->queue[1], flags);
+        httpMarkQueueHead(&tx->queue[0]);
+        httpMarkQueueHead(&tx->queue[1]);
         mprMark(tx->parsedUri);
         mprMark(tx->currentRange);
         mprMark(tx->rangeBoundary);

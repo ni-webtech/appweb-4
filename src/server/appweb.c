@@ -1,17 +1,18 @@
 /**
     appweb.c  -- AppWeb main program
 
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+
     usage: %s [options] [IpAddr][:port] [documentRoot]
             --config configFile     # Use given config file instead 
             --debugger              # Disable timeouts to make debugging easier
             --ejs name:path         # Create an ejs application at the path
+            --home path             # Set the home working directory
             --log logFile:level     # Log to file file at verbosity level
             --name uniqueName       # Name for this instance
             --threads maxThreads    # Set maximum worker threads
             --version               # Output version information
             -v                      # Same as --log stdout:2
-
-    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
 /********************************* Includes ***********************************/
@@ -26,7 +27,7 @@ typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaServer    *server;
-    MprList     *scripts;
+    char        *script;
     char        *documentRoot;
     char        *serverRoot;
     char        *configFile;
@@ -39,17 +40,13 @@ static App *app;
 /***************************** Forward Declarations ***************************/
 
 extern void appwebOsTerm();
-static int changeRoot(cchar *jail);
-extern int checkEnvironment(cchar *program);
-static int findConfigFile();
+static int  changeRoot(cchar *jail);
+extern int  checkEnvironment(cchar *program);
+static int  findConfigFile();
 static void manageApp(App *app, int flags);
 extern int  osInit();
-static int initialize(cchar *ip, int port);
+static int  initialize(cchar *ip, int port);
 static void usageError();
-
-#if BLD_FEATURE_EJS
-static int setupEjsApps();
-#endif
 
 #if BLD_UNIX_LIKE
 static void catchSignal(int signo, siginfo_t *info, void *arg);
@@ -69,13 +66,12 @@ MAIN(appweb, int argc, char **argv)
     Mpr     *mpr;
     cchar   *ipAddrPort, *argp, *jail;
     char    *ip;
-    int     outputVersion, argind, port;
+    int     argind, port;
 
     ipAddrPort = 0;
     ip = 0;
     jail = 0;
     port = -1;
-    outputVersion = 0;
 
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
@@ -87,12 +83,10 @@ MAIN(appweb, int argc, char **argv)
     
     app->mpr = mpr;
     app->workers = -1;
-
-    argc = mpr->argc;
-    argv = mpr->argv;
-
     app->serverRoot = mprGetCurrentPath();
     app->documentRoot = app->serverRoot;
+    argc = mpr->argc;
+    argv = mpr->argv;
 
 #if BLD_FEATURE_ROMFS
     extern MprRomInode romFiles[];
@@ -128,10 +122,7 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            if (app->scripts == 0) {
-                app->scripts = mprCreateList(-1, 0);
-            }
-            mprAddItem(app->scripts, argv[++argind]);
+            app->script = sclone(argv[++argind]);
 
         } else if (strcmp(argp, "--home") == 0) {
             if (argind >= argc) {
@@ -139,7 +130,7 @@ MAIN(appweb, int argc, char **argv)
             }
             app->serverRoot = mprGetAbsPath(argv[++argind]);
             if (chdir(app->serverRoot) < 0) {
-                mprPrintfError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
+                mprError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
                 exit(4);
             }
 
@@ -165,10 +156,11 @@ MAIN(appweb, int argc, char **argv)
             maStartLogging("stdout:2");
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
-            outputVersion++;
+            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
+            exit(0);
 
         } else {
-            mprPrintfError("Unknown switch \"%s\"\n", argp);
+            mprError("Unknown switch \"%s\"\n", argp);
             usageError();
             exit(5);
         }
@@ -182,10 +174,6 @@ MAIN(appweb, int argc, char **argv)
             app->documentRoot = sclone(argv[argind++]);
         }
     }
-    if (outputVersion) {
-        mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
-        exit(0);
-    }
     if (mprStart() < 0) {
         mprUserError("Can't start MPR for %s", mprGetAppName());
         mprDestroy(0);
@@ -198,17 +186,17 @@ MAIN(appweb, int argc, char **argv)
         mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
     }
     if (checkEnvironment(argv[0]) < 0) {
-        exit(6);
+        exit(7);
     }
     if (jail && changeRoot(jail) < 0) {
-        exit(7);
+        exit(8);
     }
     if (initialize(ip, port) < 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (maStartAppweb(app->appweb) < 0) {
         mprUserError("Can't start HTTP service, exiting.");
-        exit(8);
+        exit(9);
     }
     /*
         Service I/O events until instructed to exit
@@ -218,7 +206,6 @@ MAIN(appweb, int argc, char **argv)
     mprLog(1, "Exiting ...");
     maStopAppweb(app->appweb);
     mprLog(1, "Exit complete");
-
     mprDestroy(MPR_GRACEFUL);
     return 0;
 }
@@ -230,7 +217,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->configFile);
         mprMark(app->documentRoot);
         mprMark(app->pathVar);
-        mprMark(app->scripts);
+        mprMark(app->script);
         mprMark(app->server);
         mprMark(app->serverRoot);
     }
@@ -244,15 +231,14 @@ static int changeRoot(cchar *jail)
 {
 #if BLD_UNIX_LIKE
     if (chdir(app->serverRoot) < 0) {
-        mprPrintfError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
+        mprError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (chroot(jail) < 0) {
         if (errno == EPERM) {
-            mprPrintfError("%s: Must be super user to use the --chroot option", mprGetAppName());
+            mprError("%s: Must be super user to use the --chroot option", mprGetAppName());
         } else {
-            mprPrintfError("%s: Can't change change root directory to %s, errno %d",
-                mprGetAppName(), jail, errno);
+            mprError("%s: Can't change change root directory to %s, errno %d", mprGetAppName(), jail, errno);
         }
         return MPR_ERR_CANT_INITIALIZE;
     }
@@ -275,25 +261,14 @@ static int initialize(cchar *ip, int port)
         /* mprUserError("Can't configure the server, exiting."); */
         return MPR_ERR_CANT_CREATE;
     }
-#if BLD_FEATURE_EJS
-#if BLD_EJS_PRODUCT && UNUSED
-    //  MOB - cleanup
-    if (app->scripts == 0) {
-        app->scripts = mprCreateList(-1, 0);
-        mprAddItem(app->scripts, MA_EJS_STARTUP);
+    if (app->script) {
+        app->server->defaultHost->loc->script = app->script;
     }
-#endif
-    if (app->scripts && setupEjsApps() < 0) {
-        return MPR_ERR_CANT_CREATE;
-    }
-#endif
     if (app->workers >= 0) {
         mprSetMaxWorkers(app->workers);
     }
 #if BLD_WIN_LIKE
-    if (!app->scripts) {
-        writePort(app->server->defaultHost);
-    }
+    writePort(app->server->defaultHost);
 #endif
     return 0;
 }
@@ -305,10 +280,9 @@ static int findConfigFile()
         app->configFile = mprJoinPathExt(mprGetAppName(), ".conf");
     }
     if (!mprPathExists(app->configFile, R_OK)) {
-        //  MOB -- will BLD_LIB_NAME be bad for cross-compilation?
         app->configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
         if (!mprPathExists(app->configFile, R_OK)) {
-            mprPrintfError("Can't open config file %s\n", app->configFile);
+            mprError("Can't open config file %s\n", app->configFile);
             return MPR_ERR_CANT_OPEN;
         }
     }
@@ -316,72 +290,6 @@ static int findConfigFile()
 }
 
 
-#if BLD_FEATURE_EJS
-/*
-    Create the ejs application aliases
- */
-static int setupEjsApps(MaAppweb *appweb)
-{
-    MaHost      *host;
-    HttpLoc     *loc;
-    char        *home, *path, *uri, *script;
-    int         next;
-
-    host = app->server->defaultHost;
-    home = mprGetCurrentPath(appweb);
-    uri = "/";
-
-    for (next = 0; (script = mprGetNextItem(app->scripts, &next)) != 0; ) {
-        path = mprGetPathDir(mprJoinPath(home, script));
-#if UNUSED
-        alias = maCreateAlias("/", path, 0);
-        maInsertAlias(host, alias);
-#endif
-        mprLog(3, "Ejs Alias \"%s\" for \"%s\"", uri, path);
-
-        if (maLookupLocation(host, uri)) {
-            mprError("Location block already exists for \"%s\"", uri);
-            return MPR_ERR_ALREADY_EXISTS;
-        }
-        loc = httpCreateInheritedLocation(appweb->http, host->loc);
-#if UNUSED
-        httpSetLocationAuth(loc, host->loc->auth);
-#endif
-        httpSetLocationPrefix(loc, uri);
-        httpSetLocationScript(loc, script);
-        httpSetLocationAutoDelete(loc, 1);
-        maAddLocation(host, loc);
-        httpSetHandler(loc, "ejsHandler");
-        
-#if UNUSED
-        /* Make sure there is a directory for the alias target */
-        dir = maLookupBestDir(host, path);
-        if (dir == 0) {
-            parent = mprGetFirstItem(host->dirs);
-#if UNUSED
-            dir = maCreateDir(host, alias->filename, parent);
-#else
-            dir = maCreateDir(host, path, parent);
-#endif
-            dir = maCreateDir(host, alias->filename, parent);
-            maInsertDir(host, dir);
-        }
-#endif
-        uri = "/web";
-        if (!maLookupLocation(host, uri)) {
-            loc = httpCreateInheritedLocation(appweb->http, host->loc);
-            httpSetLocationPrefix(loc, uri);
-            maAddLocation(host, loc);
-        }
-    }
-    return 0;
-}
-#endif
-
-
-/*
-    Display the program command line usage
- */
 static void usageError(Mpr *mpr)
 {
     cchar   *name;
@@ -402,7 +310,7 @@ static void usageError(Mpr *mpr)
     "    --version              # Output version information\n\n"
     "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",
         name, name, name, name, name);
-    exit(12);
+    exit(10);
 }
 
 
@@ -551,6 +459,7 @@ static int writePort(MaHost *host)
     char    *cp, numBuf[16], *path;
     int     fd, port, len;
 
+    //  MOB - should really go to a BLD_LOG_DIR
     path = mprJoinPath(host, mprGetAppDir(host), "../.port.log");
     if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0) {
         mprError(host, "Could not create port file %s", path);
@@ -574,7 +483,6 @@ static int writePort(MaHost *host)
     close(fd);
     return 0;
 }
-
 #endif /* BLD_WIN_LIKE */
 
 

@@ -428,7 +428,7 @@ static bool parseArgs(int argc, char **argv)
         /*
             Files present on command line
          */
-        app->files = mprCreateList(argc, 0);
+        app->files = mprCreateList(argc, MPR_LIST_STATIC_VALUES);
         for (i = 0; i < argc; i++) {
             mprAddItem(app->files, argv[i]);
         }
@@ -503,7 +503,9 @@ static void processing()
 
     for (j = 0; j < app->loadThreads; j++) {
         char name[64];
-        data = mprAllocObj(ThreadData, manageThreadData);
+        if ((data = mprAllocObj(ThreadData, manageThreadData)) == 0) {
+            return;
+        }
         mprAddItem(app->threadData, data);
 
         mprSprintf(name, sizeof(name), "http.%d", j);

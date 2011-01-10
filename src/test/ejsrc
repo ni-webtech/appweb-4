@@ -12,9 +12,26 @@
         enable: true,
         location: "stdout",
         level: 0,
+        match: null,
+        showClient: true,
     },
     session: {
         enable: true,
         timeout: 1800,
+    },
+    web: {
+        inactivity: 3600,
+        timeout: 3600,
+        expires: {
+            "html": 86400,
+            "ejs": 86400,
+            "es": 86400,
+            "": 86400,
+        },
+        endpoint: "127.0.0.1:4000",
+        view: {
+            connectors: { },
+            formats: { },
+        },
     },
 }
