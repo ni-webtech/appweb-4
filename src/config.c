@@ -914,8 +914,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (scasecmp(key, "AuthDigestQop") == 0) {
-            value = strim(value, "\"", MPR_TRIM_BOTH);
-            slower(value);
+            value = slower(strim(value, "\"", MPR_TRIM_BOTH));
             if (strcmp(value, "none") != 0 && strcmp(value, "auth") != 0 && strcmp(value, "auth-int") != 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
@@ -1313,8 +1312,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 mprError("Bad LogTrace level %d, must be 0-9", level);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            items = stok(0, "\n", &tok);
-            slower(items);
+            items = slower(stok(0, "\n", &tok));
             mask = 0;
             if (strstr(items, "conn")) {
                 mask |= HTTP_TRACE_CONN;
@@ -1376,7 +1374,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (scasecmp(key, "MemoryDepletionPolicy") == 0) {
-            slower(value);
+            value = slower(value);
             if (strcmp(value, "exit") == 0) {
                 mprSetMemPolicy(MPR_ALLOC_POLICY_EXIT);
             } else if (strcmp(value, "restart") == 0) {

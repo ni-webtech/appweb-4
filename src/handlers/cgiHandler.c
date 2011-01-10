@@ -559,7 +559,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
                 value[len - 1] = '\0';
                 len--;
             }
-            slower(key);
+            key = slower(key);
 
             if (strcmp(key, "location") == 0) {
                 location = value;
@@ -627,7 +627,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
             This is an Apache compatible hack for PHP 5.3
          */
         itos(status, sizeof(status), HTTP_CODE_MOVED_TEMPORARILY, 10);
-        mprAddHash(rx->headers, "REDIRECT_STATUS", sclone(status));
+        mprAddKey(rx->headers, "REDIRECT_STATUS", sclone(status));
     }
 
     /*

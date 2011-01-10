@@ -718,7 +718,7 @@ void maSetHostTraceFilter(MaHost *host, int len, cchar *include, cchar *exclude)
             if (word[0] == '*' && word[1] == '.') {
                 word += 2;
             }
-            mprAddHash(host->traceInclude, word, host);
+            mprAddKey(host->traceInclude, word, host);
             word = stok(NULL, ", \t\r\n", &tok);
         }
     }
@@ -730,7 +730,7 @@ void maSetHostTraceFilter(MaHost *host, int len, cchar *include, cchar *exclude)
             if (word[0] == '*' && word[1] == '.') {
                 word += 2;
             }
-            mprAddHash(host->traceExclude, word, host);
+            mprAddKey(host->traceExclude, word, host);
             word = stok(NULL, ", \t\r\n", &tok);
         }
     }

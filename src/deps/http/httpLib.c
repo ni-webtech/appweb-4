@@ -117,7 +117,7 @@ void httpSetAuthQop(HttpAuth *auth, cchar *qop)
     if (strcmp(qop, "auth") == 0 || strcmp(qop, "auth-int") == 0) {
         auth->qop = sclone(qop);
     } else {
-        auth->qop = sclone("");
+        auth->qop = mprEmptyString();
     }
 }
 
@@ -424,7 +424,7 @@ int httpAddGroup(HttpAuth *auth, cchar *group, HttpAcl acl, bool enabled)
     if (mprLookupHash(auth->groups, group)) {
         return MPR_ERR_ALREADY_EXISTS;
     }
-    if (mprAddHash(auth->groups, group, gp) == 0) {
+    if (mprAddKey(auth->groups, group, gp) == 0) {
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -475,7 +475,7 @@ int httpAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool
     if (mprLookupHash(auth->users, key)) {
         return MPR_ERR_ALREADY_EXISTS;
     }
-    if (mprAddHash(auth->users, key, up) == 0) {
+    if (mprAddKey(auth->users, key, up) == 0) {
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -1107,8 +1107,8 @@ static void decodeBasicAuth(HttpConn *conn, AuthData *ad)
         ad->password = sclone(cp);
 
     } else {
-        ad->userName = sclone("");
-        ad->password = sclone("");
+        ad->userName = mprEmptyString();
+        ad->password = mprEmptyString();
     }
     httpSetAuthUser(conn, ad->userName);
 }
@@ -1254,7 +1254,7 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
         return MPR_ERR_BAD_ARGS;
     }
     if (ad->qop == 0) {
-        ad->qop = sclone("");
+        ad->qop = mprEmptyString();
     }
     httpSetAuthUser(conn, ad->userName);
     return 0;
@@ -3112,7 +3112,6 @@ void httpCreateEnvVars(HttpConn *conn)
     MprHash         *hp;
     HttpUploadFile  *up;
     HttpServer      *server;
-    char            port[16], size[16];
     int             index;
 
     rx = conn->rx;
@@ -3123,61 +3122,58 @@ void httpCreateEnvVars(HttpConn *conn)
     //  TODO - Vars for COOKIEs
     
     /*  Alias for REMOTE_USER. Define both for broader compatibility with CGI */
-    mprAddHash(vars, "AUTH_TYPE", rx->authType);
-    mprAddHash(vars, "AUTH_USER", (conn->authUser && *conn->authUser) ? conn->authUser : 0);
-    mprAddHash(vars, "AUTH_GROUP", conn->authGroup);
-    mprAddHash(vars, "AUTH_ACL", "");
-    mprAddHash(vars, "CONTENT_LENGTH", rx->contentLength);
-    mprAddHash(vars, "CONTENT_TYPE", rx->mimeType);
-    mprAddHash(vars, "GATEWAY_INTERFACE", "CGI/1.1");
-    mprAddHash(vars, "QUERY_STRING", rx->parsedUri->query);
+    mprAddKey(vars, "AUTH_TYPE", rx->authType);
+    mprAddKey(vars, "AUTH_USER", conn->authUser);
+    mprAddKey(vars, "AUTH_GROUP", conn->authGroup);
+    mprAddKey(vars, "AUTH_ACL", MPR->emptyString);
+    mprAddKey(vars, "CONTENT_LENGTH", rx->contentLength);
+    mprAddKey(vars, "CONTENT_TYPE", rx->mimeType);
+    mprAddKey(vars, "GATEWAY_INTERFACE", sclone("CGI/1.1"));
+    mprAddKey(vars, "QUERY_STRING", rx->parsedUri->query);
 
     if (conn->sock) {
-        mprAddHash(vars, "REMOTE_ADDR", conn->ip);
+        mprAddKey(vars, "REMOTE_ADDR", conn->ip);
     }
-    itos(port, sizeof(port) - 1, conn->port, 10);
-    mprAddHash(vars, "REMOTE_PORT", sclone(port));
+    mprAddKeyFmt(vars, "REMOTE_PORT", "%d", conn->port);
 
     /*  Same as AUTH_USER (yes this is right) */
-    mprAddHash(vars, "REMOTE_USER", (conn->authUser && *conn->authUser) ? conn->authUser : 0);
-    mprAddHash(vars, "REQUEST_METHOD", rx->method);
-    mprAddHash(vars, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
+    mprAddKey(vars, "REMOTE_USER", conn->authUser);
+    mprAddKey(vars, "REQUEST_METHOD", rx->method);
+    mprAddKey(vars, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
     
     sock = conn->sock;
-    mprAddHash(vars, "SERVER_ADDR", sock->acceptIp);
-    mprAddHash(vars, "SERVER_NAME", server->name);
-    itos(port, sizeof(port) - 1, sock->acceptPort, 10);
-    mprAddHash(vars, "SERVER_PORT", sclone(port));
+    mprAddKey(vars, "SERVER_ADDR", sock->acceptIp);
+    mprAddKey(vars, "SERVER_NAME", server->name);
+    mprAddKeyFmt(vars, "SERVER_PORT", "%d", sock->acceptPort);
 
     /*  HTTP/1.0 or HTTP/1.1 */
-    mprAddHash(vars, "SERVER_PROTOCOL", conn->protocol);
-    mprAddHash(vars, "SERVER_SOFTWARE", server->software);
+    mprAddKey(vars, "SERVER_PROTOCOL", conn->protocol);
+    mprAddKey(vars, "SERVER_SOFTWARE", server->software);
 
     /*  This is the complete URI before decoding */ 
-    mprAddHash(vars, "REQUEST_URI", rx->uri);
+    mprAddKey(vars, "REQUEST_URI", rx->uri);
 
     /*  URLs are broken into the following: http://{SERVER_NAME}:{SERVER_PORT}{SCRIPT_NAME}{PATH_INFO} */
-    mprAddHash(vars, "PATH_INFO", rx->pathInfo);
-    mprAddHash(vars, "SCRIPT_NAME", rx->scriptName);
-    mprAddHash(vars, "SCRIPT_FILENAME", tx->filename);
+    mprAddKey(vars, "PATH_INFO", rx->pathInfo);
+    mprAddKey(vars, "SCRIPT_NAME", rx->scriptName);
+    mprAddKey(vars, "SCRIPT_FILENAME", tx->filename);
 
     if (rx->pathTranslated) {
         /*  Only set PATH_TRANSLATED if PATH_INFO is set (CGI spec) */
-        mprAddHash(vars, "PATH_TRANSLATED", rx->pathTranslated);
+        mprAddKey(vars, "PATH_TRANSLATED", rx->pathTranslated);
     }
     //  MOB -- how do these relate to MVC apps and non-mvc apps
-    mprAddHash(vars, "DOCUMENT_ROOT", conn->documentRoot);
-    mprAddHash(vars, "SERVER_ROOT", server->serverRoot);
+    mprAddKey(vars, "DOCUMENT_ROOT", conn->documentRoot);
+    mprAddKey(vars, "SERVER_ROOT", server->serverRoot);
 
     if (rx->files) {
         for (index = 0, hp = 0; (hp = mprGetNextHash(conn->rx->files, hp)) != 0; index++) {
             up = (HttpUploadFile*) hp->data;
-            mprAddHash(vars, mprAsprintf("FILE_%d_FILENAME", index), up->filename);
-            mprAddHash(vars, mprAsprintf("FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
-            mprAddHash(vars, mprAsprintf("FILE_%d_CONTENT_TYPE", index), up->contentType);
-            mprAddHash(vars, mprAsprintf("FILE_%d_NAME", index), hp->key);
-            itos(size, sizeof(size) - 1, up->size, 10);
-            mprAddHash(vars, mprAsprintf("FILE_%d_SIZE", index), size);
+            mprAddKey(vars, mprAsprintf("FILE_%d_FILENAME", index), up->filename);
+            mprAddKey(vars, mprAsprintf("FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
+            mprAddKey(vars, mprAsprintf("FILE_%d_CONTENT_TYPE", index), up->contentType);
+            mprAddKey(vars, mprAsprintf("FILE_%d_NAME", index), hp->key);
+            mprAddKeyFmt(vars, mprAsprintf("FILE_%d_SIZE", index), "%d", up->size);
         }
     }
 }
@@ -3222,10 +3218,10 @@ void httpAddVars(HttpConn *conn, cchar *buf, ssize len)
             if (oldValue != 0 && *oldValue) {
                 if (*value) {
                     newValue = sjoin(oldValue, " ", value, NULL);
-                    mprAddHash(vars, keyword, newValue);
+                    mprAddKey(vars, keyword, newValue);
                 }
             } else {
-                mprAddHash(vars, keyword, value);
+                mprAddKey(vars, keyword, sclone(value));
             }
         }
         keyword = stok(0, "&", &tok);
@@ -3291,7 +3287,6 @@ int httpGetIntFormVar(HttpConn *conn, cchar *var, int defaultValue)
 }
 
 
-//  MOB - need formatted version
 void httpSetFormVar(HttpConn *conn, cchar *var, cchar *value) 
 {
     MprHashTable    *vars;
@@ -3301,8 +3296,7 @@ void httpSetFormVar(HttpConn *conn, cchar *var, cchar *value)
         /* This is allowed. Upload filter uses this when uploading to the file handler */
         return;
     }
-    //  MOB -- DUP?
-    mprAddHash(vars, var, (void*) value);
+    mprAddKey(vars, var, sclone(value));
 }
 
 
@@ -3315,7 +3309,7 @@ void httpSetIntFormVar(HttpConn *conn, cchar *var, int value)
         /* This is allowed. Upload filter uses this when uploading to the file handler */
         return;
     }
-    mprAddHash(vars, var, mprAsprintf("%d", value));
+    mprAddKey(vars, var, mprAsprintf("%d", value));
 }
 
 
@@ -3343,7 +3337,7 @@ void httpAddUploadFile(HttpConn *conn, cchar *id, HttpUploadFile *upfile)
     if (rx->files == 0) {
         rx->files = mprCreateHash(-1, 0);
     }
-    mprAddHash(rx->files, id, upfile);
+    mprAddKey(rx->files, id, upfile);
 }
 
 
@@ -3506,7 +3500,7 @@ Http *httpCreate()
         return 0;
     }
     mprGetMpr()->httpService = http;
-    http->protocol = "HTTP/1.1";
+    http->protocol = sclone("HTTP/1.1");
     http->mutex = mprCreateLock(http);
     http->stages = mprCreateHash(-1, 0);
 
@@ -3518,7 +3512,7 @@ Http *httpCreate()
     updateCurrentDate(http);
     http->statusCodes = mprCreateHash(41, MPR_HASH_STATIC_VALUES | MPR_HASH_STATIC_KEYS);
     for (code = HttpStatusCodes; code->code; code++) {
-        mprAddHash(http->statusCodes, code->codeString, code);
+        mprAddKey(http->statusCodes, code->codeString, code);
     }
     httpCreateSecret(http);
     httpInitAuth(http);
@@ -3555,8 +3549,7 @@ static void manageHttp(Http *http, int flags)
         mprMark(http->proxyHost);
         mprMark(http->currentDate);
         mprMark(http->expiresDate);
-
-    } else if (flags & MPR_MANAGE_FREE) {
+        mprMark(http->protocol);
     }
 }
 
@@ -3639,7 +3632,7 @@ HttpLimits *httpCreateLimits(int serverSide)
 
 void httpRegisterStage(Http *http, HttpStage *stage)
 {
-    mprAddHash(http->stages, stage->name, stage);
+    mprAddKey(http->stages, stage->name, stage);
 }
 
 
@@ -3982,7 +3975,7 @@ HttpLoc *httpCreateLocation(Http *http)
     loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     loc->inputStages = mprCreateList(-1, 0);
     loc->outputStages = mprCreateList(-1, 0);
-    loc->prefix = sclone("");
+    loc->prefix = mprEmptyString();
     loc->prefixLen = (int) strlen(loc->prefix);
     loc->auth = httpCreateAuth(0);
     return loc;
@@ -4115,7 +4108,7 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
             } else if (*word == '\"' && word[1] == '\"') {
                 word = "";
             }
-            mprAddHash(loc->extensions, word, handler);
+            mprAddKey(loc->extensions, word, handler);
             word = stok(0, " \t\r\n", &tok);
         }
 
@@ -4124,7 +4117,7 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
             /*
                 If a handler provides a custom match() routine, then don't match by extension.
              */
-            mprAddHash(loc->extensions, "", handler);
+            mprAddKey(loc->extensions, "", handler);
         }
         mprAddItem(loc->handlers, handler);
     }
@@ -4185,7 +4178,7 @@ int httpAddFilter(HttpLoc *loc, cchar *name, cchar *extensions, int direction)
             } else if (*word == '\"' && word[1] == '\"') {
                 word = "";
             }
-            mprAddHash(filter->extensions, word, filter);
+            mprAddKey(filter->extensions, word, filter);
             word = stok(0, " \t\r\n", &tok);
         }
     }
@@ -4209,7 +4202,7 @@ void httpAddLocationExpiry(HttpLoc *loc, MprTime when, cchar *mimeTypes)
         types = sclone(mimeTypes);
         mime = stok(types, " ,\t\r\n", &tok);
         while (mime) {
-            mprAddHash(loc->expires, mime, ITOP(when));
+            mprAddKey(loc->expires, mime, ITOP(when));
             mime = stok(0, " \t\r\n", &tok);
         }
     }
@@ -4311,7 +4304,7 @@ void httpSetLocationScript(HttpLoc *loc, cchar *script)
 void httpAddErrorDocument(HttpLoc *loc, cchar *code, cchar *url)
 {
     graduate(loc);
-    mprAddHash(loc->errorDocuments, code, sclone(url));
+    mprAddKey(loc->errorDocuments, code, sclone(url));
 }
 
 
@@ -5554,7 +5547,7 @@ static void setEnvironment(HttpConn *conn)
     if (tx->handler->flags & (HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS)) {
         rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
         if (rx->parsedUri->query) {
-            httpAddVars(conn, rx->parsedUri->query, strlen(rx->parsedUri->query));
+            httpAddVars(conn, rx->parsedUri->query, slen(rx->parsedUri->query));
         }
     }
     if (tx->handler && (tx->handler->flags & HTTP_STAGE_ENV_VARS)) {
@@ -6544,13 +6537,8 @@ HttpRx *httpCreateRx(HttpConn *conn)
     rx->length = -1;
     rx->ifMatch = 1;
     rx->ifModified = 1;
-    rx->remainingContent = 0;
-    rx->method = 0;
     rx->pathInfo = sclone("/");
-    rx->scriptName = sclone("");
-    rx->status = 0;
-    rx->statusMessage = "";
-    rx->mimeType = "";
+    rx->scriptName = mprEmptyString();
     rx->needInputPipeline = !conn->server;
     rx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     return rx;
@@ -6917,9 +6905,9 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             break;
         }
         if ((oldValue = mprLookupHash(rx->headers, key)) != 0) {
-            mprAddHash(rx->headers, key, mprAsprintf("%s, %s", oldValue, value));
+            mprAddKey(rx->headers, key, mprAsprintf("%s, %s", oldValue, value));
         } else {
-            mprAddHash(rx->headers, key, sclone(value));
+            mprAddKey(rx->headers, key, sclone(value));
         }
         switch (key[0]) {
         case 'a':
@@ -6929,13 +6917,13 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 rx->authDetails = tok;
 
             } else if (strcmp(key, "accept-charset") == 0) {
-                rx->acceptCharset = value;
+                rx->acceptCharset = sclone(value);
 
             } else if (strcmp(key, "accept") == 0) {
-                rx->accept = value;
+                rx->accept = sclone(value);
 
             } else if (strcmp(key, "accept-encoding") == 0) {
-                rx->acceptEncoding = value;
+                rx->acceptEncoding = sclone(value);
             }
             break;
 
@@ -6955,7 +6943,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                         "Request content length %d bytes is too big. Limit %d.", rx->length, conn->limits->receiveBodySize);
                     break;
                 }
-                rx->contentLength = value;
+                rx->contentLength = sclone(value);
                 mprAssert(rx->length >= 0);
                 if (conn->server || strcmp(tx->method, "HEAD") != 0) {
                     rx->remainingContent = rx->length;
@@ -6996,8 +6984,8 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 rx->inputRange = httpCreateRange(conn, start, end);
 
             } else if (strcmp(key, "content-type") == 0) {
-                rx->mimeType = value;
-                rx->form = strstr(rx->mimeType, "application/x-www-form-urlencoded") != 0;
+                rx->mimeType = sclone(value);
+                rx->form = scontains(rx->mimeType, "application/x-www-form-urlencoded", -1) != 0;
 
             } else if (strcmp(key, "cookie") == 0) {
                 if (rx->cookie && *rx->cookie) {
@@ -7007,7 +6995,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
 
             } else if (strcmp(key, "connection") == 0) {
-                rx->connection = value;
+                rx->connection = sclone(value);
                 if (scasecmp(value, "KEEP-ALIVE") == 0) {
                     keepAlive++;
                 } else if (scasecmp(value, "CLOSE") == 0) {
@@ -7018,7 +7006,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
         case 'h':
             if (strcmp(key, "host") == 0) {
-                rx->hostName = value;
+                rx->hostName = sclone(value);
             }
             break;
 
@@ -7110,7 +7098,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
             } else if (strcmp(key, "referer") == 0) {
                 /* NOTE: yes the header is misspelt in the spec */
-                rx->referrer = value;
+                rx->referrer = sclone(value);
             }
             break;
 
@@ -7143,7 +7131,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
         case 'u':
             if (strcmp(key, "user-agent") == 0) {
-                rx->userAgent = value;
+                rx->userAgent = sclone(value);
             }
             break;
 
@@ -7744,7 +7732,7 @@ int httpSetUri(HttpConn *conn, cchar *uri)
     rx->uri = rx->parsedUri->uri;
     conn->tx->extension = sclone(rx->parsedUri->ext);
     rx->pathInfo = httpNormalizeUriPath(mprUriDecode(rx->parsedUri->path));
-    rx->scriptName = sclone("");
+    rx->scriptName = mprEmptyString();
     return 0;
 }
 
@@ -8010,7 +7998,7 @@ void httpSetStageData(HttpConn *conn, cchar *key, cvoid *data)
     if (rx->requestData == 0) {
         rx->requestData = mprCreateHash(-1, 0);
     }
-    mprAddHash(rx->requestData, key, data);
+    mprAddKey(rx->requestData, key, data);
 }
 
 
@@ -8634,14 +8622,14 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
             return 0;
         }
         count = (int) PTOL(mprLookupHash(server->clientLoad, conn->ip));
-        mprAddHash(server->clientLoad, conn->ip, ITOP(count + 1));
+        mprAddKey(server->clientLoad, conn->ip, ITOP(count + 1));
         server->clientCount = mprGetHashLength(server->clientLoad);
         break;
 
     case HTTP_VALIDATE_CLOSE_CONN:
         count = (int) PTOL(mprLookupHash(server->clientLoad, conn->ip));
         if (count > 1) {
-            mprAddHash(server->clientLoad, conn->ip, ITOP(count - 1));
+            mprAddKey(server->clientLoad, conn->ip, ITOP(count - 1));
         } else {
             mprRemoveHash(server->clientLoad, conn->ip);
         }
@@ -9369,7 +9357,7 @@ static void addHeader(HttpConn *conn, cchar *key, cchar *value)
     if (scasecmp(key, "content-length") == 0) {
         conn->tx->length = (ssize) stoi(value, 10, NULL);
     }
-    mprAddHash(conn->txheaders, key, value);
+    mprAddKey(conn->txheaders, key, value);
 }
 
 
@@ -11198,7 +11186,7 @@ char *httpNormalizeUriPath(cchar *pathArg)
     int     firstc, j, i, nseg, len;
 
     if (pathArg == 0 || *pathArg == '\0') {
-        return sclone("");
+        return mprEmptyString();
     }
     len = (int) strlen(pathArg);
     if ((dupPath = mprAlloc(len + 2)) == 0) {

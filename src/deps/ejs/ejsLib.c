@@ -7439,7 +7439,7 @@ EjsDoc *ejsCreateDoc(Ejs *ejs, void *vp, int slotNum, EjsString *docString)
 #endif
     }
     mprSprintf(key, sizeof(key), "%Lx %d", PTOL(vp), slotNum);
-    mprAddHash(ejs->doc, key, doc);
+    mprAddKey(ejs->doc, key, doc);
     return doc;
 }
 
@@ -7608,7 +7608,7 @@ int ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, in
 
     sp = ejs->service;
     mprLock(sp->mutex);
-    if (mprAddHash(sp->nativeModules, nm->name->value, nm) == 0) {
+    if (mprAddKey(sp->nativeModules, nm->name->value, nm) == 0) {
         mprUnlock(sp->mutex);
         return EJS_ERR;
     }
@@ -7771,7 +7771,7 @@ int ejsAddConstant(Ejs *ejs, EjsConstants *constants, cchar *str)
     oldLen = constants->poolLength;
     constants->poolLength += len;
 
-    mprAddHash(constants->table, str, ITOP(constants->indexCount));
+    mprAddKey(constants->table, str, ITOP(constants->indexCount));
     constants->index[constants->indexCount] = ITOP(oldLen << 1 | 1);
     return constants->indexCount++;
 }
@@ -18724,8 +18724,7 @@ static EjsObj *http_header(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     if (!waitForResponseHeaders(hp, -1)) {
         return 0;
     }
-    str = (char*) ejsToMulti(ejs, argv[0]);
-    str = slower(str);
+    str = slower(ejsToMulti(ejs, argv[0]));
     value = httpGetHeader(hp->conn, str);
     if (value) {
         result = (EjsObj*) ejsCreateStringFromAsc(ejs, value);
@@ -19095,7 +19094,7 @@ static void setupTrace(Ejs *ejs, HttpTrace *trace, int dir, EjsObj *options)
         tp->include = mprCreateHash(0, 0);
         for (i = 0; i < extensions->length; i++) {
             if ((ext = ejsGetProperty(ejs, extensions, i)) != 0) {
-                mprAddHash(tp->include, ejsToMulti(ejs, ejsToString(ejs, ext)), "");
+                mprAddKey(tp->include, ejsToMulti(ejs, ejsToString(ejs, ext)), "");
             }
         }
     }
@@ -19107,7 +19106,7 @@ static void setupTrace(Ejs *ejs, HttpTrace *trace, int dir, EjsObj *options)
         tp->exclude = mprCreateHash(0, 0);
         for (i = 0; i < extensions->length; i++) {
             if ((ext = ejsGetProperty(ejs, extensions, i)) != 0) {
-                mprAddHash(tp->exclude, ejsToMulti(ejs, ejsToString(ejs, ext)), "");
+                mprAddKey(tp->exclude, ejsToMulti(ejs, ejsToString(ejs, ext)), "");
             }
         }
     }
@@ -49044,7 +49043,7 @@ void ecInitLexer(EcCompiler *cp)
 #if BLD_CHAR_LEN > 1
         rp->name = amtow(cp->keywords, rp->name, NULL);
 #endif
-        mprAddHash(cp->keywords, rp->name, rp);
+        mprAddKey(cp->keywords, rp->name, rp);
     }
 }
 
@@ -50924,7 +50923,7 @@ int ecAddModuleConstant(EcCompiler *cp, EjsModule *mp, cchar *str)
         return PTOI(hp->data);
     }
     index = ejsAddConstant(cp->ejs, constants, str);
-    mprAddHash(constants->table, str, ITOP(index));
+    mprAddKey(constants->table, str, ITOP(index));
     return index;
 }
 

@@ -1,5 +1,5 @@
 #
-#	Makefile for Ejscript combo distribution
+#	Makefile for Ejscript distribution
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #

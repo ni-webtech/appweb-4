@@ -76,7 +76,7 @@ MaMimeType *maAddMimeType(MaHost *host, cchar *ext, cchar *mimeType)
     if (*ext == '.') {
         ext++;
     }
-    mprAddHash(host->mimeTypes, ext, mime);
+    mprAddKey(host->mimeTypes, ext, mime);
     return mime;
 }
 

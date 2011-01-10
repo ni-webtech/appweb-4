@@ -322,10 +322,9 @@ void maLogRequest(HttpConn *conn)
                 c = *fmt++;
                 scopy(keyBuf, sizeof(keyBuf), "HTTP_");
                 scopy(&keyBuf[5], sizeof(keyBuf) - 5, qualifier);
-                supper(keyBuf);
                 switch (c) {
                 case 'i':
-                    value = (char*) mprLookupHash(rx->headers, keyBuf);
+                    value = (char*) mprLookupHash(rx->headers, supper(keyBuf));
                     mprPutStringToBuf(buf, value ? value : "-");
                     break;
                 default:

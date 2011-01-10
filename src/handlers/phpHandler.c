@@ -187,20 +187,14 @@ static void processPhp(HttpQueue *q)
         hp = mprGetFirstHash(rx->headers);
         while (hp) {
             if (hp->data) {
-                char key[MPR_MAX_STRING];
-                scopy(key, sizeof(key), hp->key);
-                supper(key);
-                php_register_variable(key, (char*) hp->data, php->var_array TSRMLS_CC);
+                php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
             }
             hp = mprGetNextHash(rx->headers, hp);
         }
         hp = mprGetFirstHash(rx->formVars);
         while (hp) {
             if (hp->data) {
-                char key[MPR_MAX_STRING];
-                scopy(key, sizeof(key), hp->key);
-                supper(key);
-                php_register_variable(key, (char*) hp->data, php->var_array TSRMLS_CC);
+                php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
             }
             hp = mprGetNextHash(rx->formVars, hp);
         }

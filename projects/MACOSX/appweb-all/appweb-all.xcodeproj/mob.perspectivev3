@@ -340,7 +340,6 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateExpansionKey</key>
 							<array>
 								<string>C9AFCC480FC521150080E908</string>
-								<string>C9AFCC5D0FC521A10080E908</string>
 								<string>C9817BA3110D13BC00F241EF</string>
 								<string>C9AFCC690FC522570080E908</string>
 								<string>C9817C13110D15C400F241EF</string>
@@ -356,12 +355,12 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>81</integer>
-									<integer>80</integer>
+									<integer>72</integer>
+									<integer>71</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 687}, {263, 958}}</string>
+							<string>{{0, 0}, {263, 958}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -392,7 +391,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>C90BD4D010CC46EE00C50CA5</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>match.c</string>
+								<string>mprLib.c</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -400,11 +399,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>C90BD4D110CC46EE00C50CA5</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>match.c</string>
+										<string>mprLib.c</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>C93E473B12DA9FBD005F3258</string>
+										<string>C93E47A412DAD91C005F3258</string>
 										<key>history</key>
 										<array>
 											<string>C9817C74110D195B00F241EF</string>
@@ -434,13 +433,13 @@
 											<string>C9AD327812BC475E0057EFAC</string>
 											<string>C9AD32D112BC6CE10057EFAC</string>
 											<string>C9AD32E812BC725F0057EFAC</string>
-											<string>C9AD32F212BC728E0057EFAC</string>
 											<string>C9AD331E12BC73F50057EFAC</string>
 											<string>C93E463312DA8CD5005F3258</string>
 											<string>C93E466B12DA8F6E005F3258</string>
-											<string>C93E468612DA90CA005F3258</string>
 											<string>C93E468C12DA9105005F3258</string>
-											<string>C93E468D12DA9105005F3258</string>
+											<string>C93E474012DA9FC7005F3258</string>
+											<string>C93E478312DAD569005F3258</string>
+											<string>C93E478212DAD55E005F3258</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -605,6 +604,8 @@
 			<key>Layout</key>
 			<array>
 				<dict>
+					<key>BecomeActive</key>
+					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXProjectModuleGUID</key>
@@ -617,7 +618,7 @@
 						<key>Frame</key>
 						<string>{{0, 0}, {1728, 303}}</string>
 						<key>RubberWindowFrame</key>
-						<string>389 508 1728 1017 0 0 2560 1578 </string>
+						<string>95 161 1728 1017 0 0 1920 1178 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXDebugCLIModule</string>
@@ -693,10 +694,10 @@
 							<key>Frame</key>
 							<string>{{0, 233}, {646, 435}}</string>
 							<key>RubberWindowFrame</key>
-							<string>389 508 1728 1017 0 0 2560 1578 </string>
+							<string>95 161 1728 1017 0 0 1920 1178 </string>
 						</dict>
 						<key>RubberWindowFrame</key>
-						<string>389 508 1728 1017 0 0 2560 1578 </string>
+						<string>95 161 1728 1017 0 0 1920 1178 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXDebugSessionModule</string>
@@ -743,7 +744,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>316317629.07950097</real>
+	<real>316332316.021299</real>
 	<key>ToolbarConfigUserDefaultsMinorVersion</key>
 	<string>2</string>
 	<key>ToolbarDisplayMode</key>
@@ -760,12 +761,13 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>C93E47A512DAD91C005F3258</string>
 		<string>C93E462512DA8C07005F3258</string>
 		<string>C93E462612DA8C07005F3258</string>
 		<string>/Users/mob/git/appweb/projects/MACOSX/appweb-all/appweb-all.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>389 508 1728 1017 0 0 2560 1578 </string>
+	<string>95 161 1728 1017 0 0 1920 1178 </string>
 	<key>WindowToolsV3</key>
 	<array>
 		<dict>

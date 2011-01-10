@@ -82,7 +82,7 @@ int maDefineEgiForm(Http *http, cchar *name, MaEgiForm *form)
     handler = httpLookupStage(http, "egiHandler");
     if (handler) {
         egi = (MaEgi*) handler->stageData;
-        mprAddHash(egi->forms, name, form);
+        mprAddKey(egi->forms, name, form);
     }
     return 0;
 }

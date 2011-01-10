@@ -2275,6 +2275,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->argv = argv;
     mpr->logFd = -1;
 
+    mpr->emptyString = sclone("");
     mpr->title = sclone(BLD_NAME);
     mpr->version = sclone(BLD_VERSION);
     mpr->idleCallback = mprServicesAreIdle;
@@ -2760,6 +2761,12 @@ int mprGetEndian()
     test = 1;
     probe = (char*) &test;
     return (*probe == 1) ? MPR_LITTLE_ENDIAN : MPR_BIG_ENDIAN;
+}
+
+
+char *mprEmptyString()
+{
+    return MPR->emptyString;
 }
 
 
@@ -7884,7 +7891,7 @@ cchar *mprLookupMimeType(cchar *ext)
     if (MPR->mimeTable == 0) {
         MPR->mimeTable = mprCreateHash(MIME_HASH_SIZE, MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES);
         for (cp = mimeTypes; cp[0]; cp += 2) {
-            mprAddHash(MPR->mimeTable, cp[0], cp[1]);
+            mprAddKey(MPR->mimeTable, cp[0], cp[1]);
         }
     }
     if ((ep = strrchr(ext, '.')) != 0) {
@@ -9482,7 +9489,7 @@ static void manageHashTable(MprHashTable *table, int flags)
                 mprAssert(mprIsValid(sp));
                 mprMark(sp);
                 if (!(table->flags & MPR_HASH_STATIC_VALUES)) {
-                    mprAssert(mprIsValid(sp->data));
+                    mprAssert(sp->data == 0 || mprIsValid(sp->data));
                     mprMark(sp->data);
                 }
                 if (!(table->flags & MPR_HASH_STATIC_KEYS)) {
@@ -9507,7 +9514,7 @@ MprHashTable *mprCloneHash(MprHashTable *master)
     }
     hp = mprGetFirstHash(master);
     while (hp) {
-        mprAddHash(table, hp->key, hp->data);
+        mprAddKey(table, hp->key, hp->data);
         hp = mprGetNextHash(master, hp);
     }
     return table;
@@ -9518,7 +9525,7 @@ MprHashTable *mprCloneHash(MprHashTable *master)
     Insert an entry into the hash table. If the entry already exists, update its value. 
     Order of insertion is not preserved.
  */
-MprHash *mprAddHash(MprHashTable *table, cvoid *key, cvoid *ptr)
+MprHash *mprAddKey(MprHashTable *table, cvoid *key, cvoid *ptr)
 {
     MprHash     *sp, *prevSp;
     int         index;
@@ -9555,12 +9562,24 @@ MprHash *mprAddHash(MprHashTable *table, cvoid *key, cvoid *ptr)
 }
 
 
+MprHash *mprAddKeyFmt(MprHashTable *table, cvoid *key, cchar *fmt, ...)
+{
+    va_list     ap;
+    char        *value;
+
+    va_start(ap, fmt);
+    value = mprAsprintfv(fmt, ap);
+    va_end(ap);
+    return mprAddKey(table, key, value);
+}
+
+
 /*
     Multiple insertion. Insert an entry into the hash table allowing for multiple entries with the same key.
     Order of insertion is not preserved. Lookup cannot be used to retrieve all duplicate keys, some will be shadowed. 
     Use enumeration to retrieve the keys.
  */
-MprHash *mprAddDuplicateHash(MprHashTable *table, cvoid *key, cvoid *ptr)
+MprHash *mprAddDuplicateKey(MprHashTable *table, cvoid *key, cvoid *ptr)
 {
     MprHash     *sp;
     int         index;
@@ -15540,7 +15559,7 @@ int mprSetRomFileSystem(MprRomInode *inodeList)
     rfs->fileIndex = mprCreateHash(rfs, MPR_FILES_HASH_SIZE, MPR_HASH_PERM_KEYS | MPR_HASH_STATIC_VALUES);
 
     for (ri = inodeList; ri->path; ri++) {
-        if (mprAddHash(rfs->fileIndex, ri->path, ri) < 0) {
+        if (mprAddKey(rfs->fileIndex, ri->path, ri) < 0) {
             return MPR_ERR_MEMORY;
         }
     }
@@ -18159,8 +18178,9 @@ char *scontains(cchar *str, cchar *pattern, ssize limit)
     cchar   *cp, *s1, *s2;
     ssize   lim;
 
-    mprAssert(0 <= limit && limit < MAXINT);
-    
+    if (limit < 0) {
+        limit = MAXINT;
+    }
     if (str == 0) {
         return 0;
     }
@@ -18272,6 +18292,7 @@ int64 stoi(cchar *str, int radix, int *err)
 
 /*
     Note "str" is modifed as per strtok()
+    MOB - should this allocate the result
  */
 char *stok(char *str, cchar *delim, char **last)
 {
@@ -18353,7 +18374,7 @@ char *strim(char *str, cchar *set, int where)
 
 
 /*  
-    Map a string to upper case (overwrites buffer)
+    Map a string to upper case
  */
 char *supper(cchar *str)
 {
@@ -20686,25 +20707,25 @@ int mprCreateTimeService()
     mpr = MPR;
     mpr->timeTokens = mprCreateHash(-1, MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES);
     for (tt = days; tt->name; tt++) {
-        mprAddHash(mpr->timeTokens, tt->name, (void*) tt);
+        mprAddKey(mpr->timeTokens, tt->name, (void*) tt);
     }
     for (tt = fullDays; tt->name; tt++) {
-        mprAddHash(mpr->timeTokens, tt->name, (void*) tt);
+        mprAddKey(mpr->timeTokens, tt->name, (void*) tt);
     }
     for (tt = months; tt->name; tt++) {
-        mprAddHash(mpr->timeTokens, tt->name, (void*) tt);
+        mprAddKey(mpr->timeTokens, tt->name, (void*) tt);
     }
     for (tt = fullMonths; tt->name; tt++) {
-        mprAddHash(mpr->timeTokens, tt->name, (void*) tt);
+        mprAddKey(mpr->timeTokens, tt->name, (void*) tt);
     }
     for (tt = ampm; tt->name; tt++) {
-        mprAddHash(mpr->timeTokens, tt->name, (void*) tt);
+        mprAddKey(mpr->timeTokens, tt->name, (void*) tt);
     }
     for (tt = zones; tt->name; tt++) {
-        mprAddHash(mpr->timeTokens, tt->name, (void*) tt);
+        mprAddKey(mpr->timeTokens, tt->name, (void*) tt);
     }
     for (tt = offsets; tt->name; tt++) {
-        mprAddHash(mpr->timeTokens, tt->name, (void*) tt);
+        mprAddKey(mpr->timeTokens, tt->name, (void*) tt);
     }
     return 0;
 }

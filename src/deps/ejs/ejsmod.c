@@ -897,7 +897,7 @@ static void generateClassPages(EjsMod *mp)
     doc->trait = trait;
 
     mprSprintf(key, sizeof(key), "%Lx %d", PTOL(0), 0);
-    mprAddHash(ejs->doc, key, doc);
+    mprAddKey(ejs->doc, key, doc);
 
     slotNum = ejsGetPropertyCount(ejs, ejs->global);
 
