@@ -1,0 +1,194 @@
+#
+#   patchFile -- Patch files
+#
+#   Copyright (c) Embedthis LLC, 2003-2011. All Rights Reserved.
+#
+#
+patchFile() {
+    local file arg
+
+    [ $# -lt 1 ] && echo "Bad args: patchFile $*" && exit 255
+
+    arg=1
+    while [ $arg -le $# ] ; do
+        file=${!arg}
+        if [ -s "${file}" ] ; then
+            cp "${file}" /tmp/in$$.tmp
+            sed -e "
+s^!!BLD_ABS_BIN_DIR!!^${BLD_ABS_BIN_DIR}^g;
+s^!!BLD_ABS_INC_DIR!!^${BLD_ABS_INC_DIR}^g;
+s^!!BLD_ABS_JEM_DIR!!^${BLD_ABS_JEM_DIR}^g;
+s^!!BLD_ABS_LIB_DIR!!^${BLD_ABS_LIB_DIR}^g;
+s^!!BLD_ABS_MOD_DIR!!^${BLD_ABS_MOD_DIR}^g;
+s^!!BLD_ABS_OBJ_DIR!!^${BLD_ABS_OBJ_DIR}^g;
+s^!!BLD_APPWEB!!^${BLD_APPWEB}^g;
+s^!!BLD_APPWEB_BUILTIN!!^${BLD_APPWEB_BUILTIN}^g;
+s^!!BLD_APPWEB_DEPENDENCIES!!^${BLD_APPWEB_DEPENDENCIES}^g;
+s^!!BLD_APPWEB_LIBS!!^${BLD_APPWEB_LIBS}^g;
+s^!!BLD_APPWEB_OPTIONAL_DEPENDENCIES!!^${BLD_APPWEB_OPTIONAL_DEPENDENCIES}^g;
+s^!!BLD_APPWEB_WITH!!^${BLD_APPWEB_WITH}^g;
+s^!!BLD_AR!!^${BLD_AR}^g;
+s^!!BLD_ARCH!!^${BLD_ARCH}^g;
+s^!!BLD_AR_BUILTIN!!^${BLD_AR_BUILTIN}^g;
+s^!!BLD_AR_WITH!!^${BLD_AR_WITH}^g;
+s^!!BLD_BIN_DIR!!^${BLD_BIN_DIR}^g;
+s^!!BLD_BIN_NAME!!^${BLD_BIN_NAME}^g;
+s^!!BLD_BIN_PREFIX!!^${BLD_BIN_PREFIX}^g;
+s^!!BLD_BUILD_ARCH!!^${BLD_BUILD_ARCH}^g;
+s^!!BLD_BUILD_CLASS!!^${BLD_BUILD_CLASS}^g;
+s^!!BLD_BUILD_CPU!!^${BLD_BUILD_CPU}^g;
+s^!!BLD_BUILD_CPU_ARCH!!^${BLD_BUILD_CPU_ARCH}^g;
+s^!!BLD_BUILD_CPU_MODEL!!^${BLD_BUILD_CPU_MODEL}^g;
+s^!!BLD_BUILD_CPU_UPPER!!^${BLD_BUILD_CPU_UPPER}^g;
+s^!!BLD_BUILD_EXE!!^${BLD_BUILD_EXE}^g;
+s^!!BLD_BUILD_OBJ!!^${BLD_BUILD_OBJ}^g;
+s^!!BLD_BUILD_OS!!^${BLD_BUILD_OS}^g;
+s^!!BLD_BUILD_PIOBJ!!^${BLD_BUILD_PIOBJ}^g;
+s^!!BLD_BUILD_SHLIB!!^${BLD_BUILD_SHLIB}^g;
+s^!!BLD_BUILD_SHOBJ!!^${BLD_BUILD_SHOBJ}^g;
+s^!!BLD_BUILD_SYSTEM!!^${BLD_BUILD_SYSTEM}^g;
+s^!!BLD_BUILD_UNIX!!^${BLD_BUILD_UNIX}^g;
+s^!!BLD_BUILD_WIN!!^${BLD_BUILD_WIN}^g;
+s^!!BLD_CC!!^${BLD_CC}^g;
+s^!!BLD_CC_BUILTIN!!^${BLD_CC_BUILTIN}^g;
+s^!!BLD_CC_CYGWIN!!^${BLD_CC_CYGWIN}^g;
+s^!!BLD_CC_DIAB!!^${BLD_CC_DIAB}^g;
+s^!!BLD_CC_DYN_LOAD!!^${BLD_CC_DYN_LOAD}^g;
+s^!!BLD_CC_MMU!!^${BLD_CC_MMU}^g;
+s^!!BLD_CC_MTUNE!!^${BLD_CC_MTUNE}^g;
+s^!!BLD_CC_STACK_PROTECTOR!!^${BLD_CC_STACK_PROTECTOR}^g;
+s^!!BLD_CC_WITH!!^${BLD_CC_WITH}^g;
+s^!!BLD_CFG_PREFIX!!^${BLD_CFG_PREFIX}^g;
+s^!!BLD_CFLAGS!!^${BLD_CFLAGS}^g;
+s^!!BLD_CLASS!!^${BLD_CLASS}^g;
+s^!!BLD_CLEAN_INSTALL!!^${BLD_CLEAN_INSTALL}^g;
+s^!!BLD_COMMERCIAL!!^${BLD_COMMERCIAL}^g;
+s^!!BLD_COMPANY!!^${BLD_COMPANY}^g;
+s^!!BLD_COMPONENTS!!^${BLD_COMPONENTS}^g;
+            " < /tmp/in$$.tmp > /tmp/out$$.tmp
+            mv /tmp/out$$.tmp /tmp/in$$.tmp
+            sed -e "
+s^!!BLD_CPU!!^${BLD_CPU}^g;
+s^!!BLD_CPU_ARCH!!^${BLD_CPU_ARCH}^g;
+s^!!BLD_CPU_MODEL!!^${BLD_CPU_MODEL}^g;
+s^!!BLD_CPU_UPPER!!^${BLD_CPU_UPPER}^g;
+s^!!BLD_CROSS!!^${BLD_CROSS}^g;
+s^!!BLD_DATE!!^${BLD_DATE}^g;
+s^!!BLD_DEBUG!!^${BLD_DEBUG}^g;
+s^!!BLD_DEFAULTS!!^${BLD_DEFAULTS}^g;
+s^!!BLD_DFLAGS!!^${BLD_DFLAGS}^g;
+s^!!BLD_DIRS!!^${BLD_DIRS}^g;
+s^!!BLD_DIST!!^${BLD_DIST}^g;
+s^!!BLD_DIST_VER!!^${BLD_DIST_VER}^g;
+s^!!BLD_DOC_PREFIX!!^${BLD_DOC_PREFIX}^g;
+s^!!BLD_EXE!!^${BLD_EXE}^g;
+s^!!BLD_FEATURE_APACHE!!^${BLD_FEATURE_APACHE}^g;
+s^!!BLD_FEATURE_APPWEB!!^${BLD_FEATURE_APPWEB}^g;
+s^!!BLD_FEATURE_AR!!^${BLD_FEATURE_AR}^g;
+s^!!BLD_FEATURE_ASSERT!!^${BLD_FEATURE_ASSERT}^g;
+s^!!BLD_FEATURE_CC!!^${BLD_FEATURE_CC}^g;
+s^!!BLD_FEATURE_DEVICE!!^${BLD_FEATURE_DEVICE}^g;
+s^!!BLD_FEATURE_DOXYGEN!!^${BLD_FEATURE_DOXYGEN}^g;
+s^!!BLD_FEATURE_EJS!!^${BLD_FEATURE_EJS}^g;
+s^!!BLD_FEATURE_FLOAT!!^${BLD_FEATURE_FLOAT}^g;
+s^!!BLD_FEATURE_LEGACY_API!!^${BLD_FEATURE_LEGACY_API}^g;
+s^!!BLD_FEATURE_MAKE!!^${BLD_FEATURE_MAKE}^g;
+s^!!BLD_FEATURE_MATRIXSSL!!^${BLD_FEATURE_MATRIXSSL}^g;
+s^!!BLD_FEATURE_OPENSSL!!^${BLD_FEATURE_OPENSSL}^g;
+s^!!BLD_FEATURE_RANLIB!!^${BLD_FEATURE_RANLIB}^g;
+s^!!BLD_FEATURE_REGEXP!!^${BLD_FEATURE_REGEXP}^g;
+s^!!BLD_FEATURE_SQLITE!!^${BLD_FEATURE_SQLITE}^g;
+s^!!BLD_FEATURE_SSL!!^${BLD_FEATURE_SSL}^g;
+s^!!BLD_STATIC!!^${BLD_STATIC}^g;
+s^!!BLD_HOST_CPU!!^${BLD_HOST_CPU}^g;
+s^!!BLD_HOST_CPU_ARCH!!^${BLD_HOST_CPU_ARCH}^g;
+s^!!BLD_HOST_CPU_MAPPED!!^${BLD_HOST_CPU_MAPPED}^g;
+s^!!BLD_HOST_CPU_MODEL!!^${BLD_HOST_CPU_MODEL}^g;
+s^!!BLD_HOST_CPU_UPPER!!^${BLD_HOST_CPU_UPPER}^g;
+s^!!BLD_HOST_DIST!!^${BLD_HOST_DIST}^g;
+s^!!BLD_HOST_DIST_VER!!^${BLD_HOST_DIST_VER}^g;
+s^!!BLD_HOST_OS!!^${BLD_HOST_OS}^g;
+s^!!BLD_HOST_SYSTEM!!^${BLD_HOST_SYSTEM}^g;
+s^!!BLD_HOST_UNIX!!^${BLD_HOST_UNIX}^g;
+s^!!BLD_HOST_WIN!!^${BLD_HOST_WIN}^g;
+s^!!BLD_IFLAGS!!^${BLD_IFLAGS}^g;
+s^!!BLD_INC_DIR!!^${BLD_INC_DIR}^g;
+s^!!BLD_INC_NAME!!^${BLD_INC_NAME}^g;
+s^!!BLD_INC_PREFIX!!^${BLD_INC_PREFIX}^g;
+s^!!BLD_JEM_DIR!!^${BLD_JEM_DIR}^g;
+s^!!BLD_JEM_PREFIX!!^${BLD_JEM_PREFIX}^g;
+s^!!BLD_JFLAGS!!^${BLD_JFLAGS}^g;
+            " < /tmp/in$$.tmp > /tmp/out$$.tmp
+            mv /tmp/out$$.tmp /tmp/in$$.tmp
+            sed -e "
+s^!!BLD_LDFLAGS!!^${BLD_LDFLAGS}^g;
+s^!!BLD_LIB!!^${BLD_LIB}^g;
+s^!!BLD_LIB_DIR!!^${BLD_LIB_DIR}^g;
+s^!!BLD_LIB_NAME!!^${BLD_LIB_NAME}^g;
+s^!!BLD_LIB_PREFIX!!^${BLD_LIB_PREFIX}^g;
+s^!!BLD_LICENSE!!^${BLD_LICENSE}^g;
+s^!!BLD_LOG_PREFIX!!^${BLD_LOG_PREFIX}^g;
+s^!!BLD_MAKE!!^${BLD_MAKE}^g;
+s^!!BLD_MAKE_BUILTIN!!^${BLD_MAKE_BUILTIN}^g;
+s^!!BLD_MAKE_WITH!!^${BLD_MAKE_WITH}^g;
+s^!!BLD_MAN_PREFIX!!^${BLD_MAN_PREFIX}^g;
+s^!!BLD_MOD_DIR!!^${BLD_MOD_DIR}^g;
+s^!!BLD_MOD_NAME!!^${BLD_MOD_NAME}^g;
+s^!!BLD_MOD_PREFIX!!^${BLD_MOD_PREFIX}^g;
+s^!!BLD_NAME!!^${BLD_NAME}^g;
+s^!!BLD_NUMBER!!^${BLD_NUMBER}^g;
+s^!!BLD_NUMBER_ONLY!!^${BLD_NUMBER_ONLY}^g;
+s^!!BLD_OBJ!!^${BLD_OBJ}^g;
+s^!!BLD_OBJ_DIR!!^${BLD_OBJ_DIR}^g;
+s^!!BLD_OBJ_NAME!!^${BLD_OBJ_NAME}^g;
+s^!!BLD_OS!!^${BLD_OS}^g;
+s^!!BLD_OSVER!!^${BLD_OSVER}^g;
+s^!!BLD_PIOBJ!!^${BLD_PIOBJ}^g;
+s^!!BLD_PRD_PREFIX!!^${BLD_PRD_PREFIX}^g;
+s^!!BLD_PREFIX!!^${BLD_PREFIX}^g;
+s^!!BLD_PRODUCT!!^${BLD_PRODUCT}^g;
+s^!!BLD_RANLIB!!^${BLD_RANLIB}^g;
+s^!!BLD_RANLIB_BUILTIN!!^${BLD_RANLIB_BUILTIN}^g;
+s^!!BLD_RANLIB_WITH!!^${BLD_RANLIB_WITH}^g;
+s^!!BLD_SAM_PREFIX!!^${BLD_SAM_PREFIX}^g;
+s^!!BLD_SBIN_PREFIX!!^${BLD_SBIN_PREFIX}^g;
+s^!!BLD_SHLIB!!^${BLD_SHLIB}^g;
+s^!!BLD_SHOBJ!!^${BLD_SHOBJ}^g;
+s^!!BLD_SRC_PREFIX!!^${BLD_SRC_PREFIX}^g;
+s^!!BLD_TOOLS_DIR!!^${BLD_TOOLS_DIR}^g;
+s^!!BLD_TUNE!!^${BLD_TUNE}^g;
+s^!!BLD_TYPE!!^${BLD_TYPE}^g;
+s^!!BLD_UNIX_LIKE!!^${BLD_UNIX_LIKE}^g;
+s^!!BLD_VERSION!!^${BLD_VERSION}^g;
+s^!!BLD_VER_PREFIX!!^${BLD_VER_PREFIX}^g;
+s^!!BLD_WEB_PREFIX!!^${BLD_WEB_PREFIX}^g;
+s^!!BLD_WIN_LIKE!!^${BLD_WIN_LIKE}^g;
+s^!!ORIG_BLD_BIN_PREFIX!!^${ORIG_BLD_BIN_PREFIX}^g;
+s^!!ORIG_BLD_CFG_PREFIX!!^${ORIG_BLD_CFG_PREFIX}^g;
+s^!!ORIG_BLD_DOC_PREFIX!!^${ORIG_BLD_DOC_PREFIX}^g;
+s^!!ORIG_BLD_INC_PREFIX!!^${ORIG_BLD_INC_PREFIX}^g;
+s^!!ORIG_BLD_JEM_PREFIX!!^${ORIG_BLD_JEM_PREFIX}^g;
+s^!!ORIG_BLD_LIB_PREFIX!!^${ORIG_BLD_LIB_PREFIX}^g;
+s^!!ORIG_BLD_LOG_PREFIX!!^${ORIG_BLD_LOG_PREFIX}^g;
+s^!!ORIG_BLD_MAN_PREFIX!!^${ORIG_BLD_MAN_PREFIX}^g;
+            " < /tmp/in$$.tmp > /tmp/out$$.tmp
+            mv /tmp/out$$.tmp /tmp/in$$.tmp
+            sed -e "
+s^!!ORIG_BLD_MOD_PREFIX!!^${ORIG_BLD_MOD_PREFIX}^g;
+s^!!ORIG_BLD_PRD_PREFIX!!^${ORIG_BLD_PRD_PREFIX}^g;
+s^!!ORIG_BLD_PREFIX!!^${ORIG_BLD_PREFIX}^g;
+s^!!ORIG_BLD_SAM_PREFIX!!^${ORIG_BLD_SAM_PREFIX}^g;
+s^!!ORIG_BLD_SBIN_PREFIX!!^${ORIG_BLD_SBIN_PREFIX}^g;
+s^!!ORIG_BLD_SRC_PREFIX!!^${ORIG_BLD_SRC_PREFIX}^g;
+s^!!ORIG_BLD_VER_PREFIX!!^${ORIG_BLD_VER_PREFIX}^g;
+s^!!ORIG_BLD_WEB_PREFIX!!^${ORIG_BLD_WEB_PREFIX}^g;
+s^!!ROOT_DIR!!^${ROOT_DIR}^g;
+            " < /tmp/in$$.tmp > /tmp/out$$.tmp
+            rm -f /tmp/in$$.tmp
+            mv /tmp/out$$.tmp "${file}"
+        fi
+        arg=$((arg + 1))
+    done
+}
+
+patchFile $*
