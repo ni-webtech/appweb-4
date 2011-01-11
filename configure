@@ -986,7 +986,7 @@ configureComponent() {
     #
     new=""
     for i in $imports ; do
-        new="$new `relativePath "$i"`"
+        new="`relativePath "$i"` $new"
     done
     imports="$new"
 
@@ -1127,7 +1127,7 @@ probe()
                     if [ "$emitdir" = "1" ] ; then
                         found="$d"
                     else
-                        found=${d}/${file}
+                        found=${f}
                     fi
                     search=
                     [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
@@ -1986,14 +1986,14 @@ postGen() {
     done
 
     #
-    #   Touch all headers and remove objects to force a (somewhat) clean build
+    #   Touch all headers to force a (somewhat) clean build
     #
     echo -e "  # Generate stub make dependencies ..."
     build/bin/makedep
     touch "${CONFIG_H}"
     touch ${BLD_OUT_DIR}/.needDepend
-    echo -e "  # Clean old objects ..."
-    make clean 2>&1 >/dev/null
+#   echo -e "  # Clean old objects ..."
+#   make clean 2>&1 >/dev/null
 }
 
 

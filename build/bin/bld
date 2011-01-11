@@ -233,7 +233,7 @@ searchLib()
     fi
     extraSysLib=/usr/local/lib
 
-    for path in ${LIBRARY_PATHS} "${BLD_LIB_DIR}" "${BLD_MOD_DIR}" "$syslib" "$extraSysLib"
+    for path in "${BLD_LIB_DIR}" "${BLD_MOD_DIR}" ${LIBRARY_PATHS} "$syslib" "$extraSysLib"
     do
         # MOB removed ""
         for suffix in `echo $suffixes`
@@ -602,8 +602,8 @@ MODULES=`echo ${MODULES} | tr ' ' '\n' | uniq | tr '\n' ' '`
 #
 #   Prepare for action
 #
-if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
-    paths=
+if [ "$BLD_WIN_LIKE" = 1 ] ; then
+    paths="-libpath:${BLD_LIB_DIR} -libpath:${BLD_MOD_DIR}"
     for p in ${LIBRARY_PATHS} ; do
         if [ "${p}" != "" ] ; then
             paths="${paths} -libpath:${p}"
@@ -668,7 +668,7 @@ else
     #
     #   Unix / Linux / MacOS / FreeBSD
     #
-    paths=
+    paths="-L${BLD_LIB_DIR} -L${BLD_MOD_DIR}"
     for p in ${LIBRARY_PATHS} ; do
         if [ "${p}" != "" ] ; then
             paths="${paths} -L${p}"
@@ -772,7 +772,7 @@ fi
 #
 #   Now we do the actual work
 #
-if [ "$BLD_WIN_LIKE" = 1 -o "$OS" = "BREW" -o "$OS" = "BREWSIM" ] ; then
+if [ "$BLD_WIN_LIKE" = 1 ] ; then
     if [ "$LIBRARY" != "" ] ; then
 
         if [ $MAKE_STATIC = 1 ] ; then

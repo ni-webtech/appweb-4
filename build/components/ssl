@@ -2,15 +2,16 @@
 #   SSL
 #
 defineComponent() {
-	local iflags libpaths deps path search ver builtin
+	local iflags libpaths deps path search ver builtin imports
 
     path="${1:-.}"
-    iflags=-I`probe --name mprSsl.h --search "$path:$path/src/deps/mpr:$path/src/include" --dir "mprSsl.h"`
-    libpaths=`probe --name libmprssl --search "$path:$path/out/lib" --dir "libmprssl" `
-    if [ "$libpaths" = "" -a "$path" != "." ] ; then
+    iflags=-I`probe --name mprSsl.h --dir --search "$path:$path/src/deps/mpr:$path/src/include" "mprSsl.h"`
+    imports=`probe --name libmprssl --search "$path:$path/out/lib" "libmprssl" `
+    if [ "$imports" = "" -a "$path" != "." ] ; then
         warnComponent mprSsl "Can't locate libmprssl"
         return
     fi
+    libpaths="${imports%/*}"
     deps=
     if isdefined MATRIXSSL ; then
         deps="$deps matrixssl"
@@ -20,5 +21,6 @@ defineComponent() {
     fi
     deps="$deps mpr"
     builtin=`[ $path = . ] && echo --builtin`
-    configureComponent --libs "mprssl" --libpaths "$libpaths" --iflags "$iflags" --dependencies "$deps" $builtin ssl
+    configureComponent --libs "mprssl" --libpaths "$libpaths" --iflags "$iflags" --dependencies "$deps" $builtin \
+        --imports "$imports" ssl
 }

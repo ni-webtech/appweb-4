@@ -1,5 +1,5 @@
 #
-#	Makefile for the http handlers
+#	Makefile for the handlers
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
@@ -17,8 +17,7 @@ compileExtra: 	$(IMPORTED) export
 
 $(IMPORTED): $(IMPORTS)
 	getlib $^
-	$(call log) "[Export]" "$(BLD_PHP_IMPORTS)"
-	$(call log) "[Export]" "$(BLD_OPENSSL_IMPORTS)"
+	$(call log) "[Import]" "$(IMPORTS)"
 	
 export:
 ifeq	($(BLD_FEATURE_PHP),1)

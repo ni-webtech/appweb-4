@@ -330,7 +330,7 @@ functions whose names all begin with "_pcre_". */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 /* Define DEBUG to get debugging output on stdout. */
 
 #if VXWORKS
@@ -1505,7 +1505,7 @@ extern BOOL         _pcre_xclass(int, const uschar *);
 #endif
 
 /* End of pcre_internal.h */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_internal.h"
@@ -1526,7 +1526,7 @@ extern BOOL         _pcre_xclass(int, const uschar *);
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 #ifndef _UCP_H
 #define _UCP_H
@@ -1657,7 +1657,7 @@ enum {
 #endif
 
 /* End of ucp.h */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/ucp.h"
@@ -1681,7 +1681,7 @@ enum {
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 /* Internal header file defining the layout of the bits in each pair of 32-bit
 words that form a data item in the table. */
@@ -1765,7 +1765,7 @@ When searching the data, proceed as follows:
     (2).
 */
 
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 #endif /* _UCPINTERNAL_H */
 
 /* End of ucpinternal.h */
@@ -1789,7 +1789,7 @@ This version was made from the Unicode 5.0.0 tables. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 static const cnode ucp_table[] = {
   { 0x09800000, 0x0000001f },
@@ -4876,7 +4876,7 @@ static const cnode ucp_table[] = {
   { 0x09900000, 0x0c00fffd },
 };
 
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 
 /************************************************************************/
 /*
@@ -4916,7 +4916,7 @@ unit might reference this" and so it will always be supplied to the linker. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 
 const unsigned char _pcre_default_tables[] = {
@@ -5089,7 +5089,7 @@ graph, print, punct, and cntrl. Other classes are built from combinations. */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};/* 248-255 */
 
 /* End of pcre_chartables.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_chartables.c"
@@ -5150,7 +5150,7 @@ supporting internal functions that are not used by other modules. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 /* EMBEDTHIS */
 #undef NLBLOCK
@@ -11539,7 +11539,7 @@ return (pcre *)re;
 }
 
 /* End of pcre_compile.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_compile.c"
@@ -11600,7 +11600,7 @@ possible. There are also some static supporting functions. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 #undef NLBLOCK
 #define NLBLOCK md             /* Block containing newline information */
@@ -16536,7 +16536,7 @@ else
 }
 
 /* End of pcre_exec.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_exec.c"
@@ -16601,7 +16601,7 @@ differently, and global variables are not used (see pcre.in). */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 #ifndef VPCOMPAT
 PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = malloc;
@@ -16612,7 +16612,7 @@ PCRE_EXP_DATA_DEFN int   (*pcre_callout)(pcre_callout_block *) = NULL;
 #endif
 
 /* End of pcre_globals.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_globals.c"
@@ -16678,7 +16678,7 @@ http://unicode.org/unicode/reports/tr18/. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 
 
@@ -16789,7 +16789,7 @@ else switch(c)
 }
 
 /* End of pcre_newline.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_newline.c"
@@ -16849,7 +16849,7 @@ character value into a UTF8 string. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 
 /*************************************************
@@ -16887,7 +16887,7 @@ return 0;   /* Keep compiler happy; this function won't ever be */
 }
 
 /* End of pcre_ord2utf8.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_ord2utf8.c"
@@ -16949,7 +16949,7 @@ clashes with the library. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 
 /* Table of sizes for the fixed-length opcodes. It's defined in a macro so that
@@ -17217,7 +17217,7 @@ const int _pcre_utt_size = sizeof(_pcre_utt)/sizeof(ucp_type_table);
 #endif  /* SUPPORT_UTF8 */
 
 /* End of pcre_tables.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_tables.c"
@@ -17279,7 +17279,7 @@ auxiliary local function to flip the appropriate bytes. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 
 /*************************************************
@@ -17367,7 +17367,7 @@ return internal_re;
 }
 
 /* End of pcre_tryflipped.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_try_flipped.c"
@@ -17427,7 +17427,7 @@ properties. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 
 
@@ -17556,7 +17556,7 @@ return (offset == 0)? NOTACHAR : c + offset;
 
 
 /* End of pcre_ucp_searchfuncs.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_ucp_searchfuncs.c"
@@ -17617,7 +17617,7 @@ strings. */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 
 /*************************************************
@@ -17731,7 +17731,7 @@ return -1;
 }
 
 /* End of pcre_valid_utf8.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_valid_utf8.c"
@@ -17793,7 +17793,7 @@ pcre_exec() and pcre_def_exec(). */
 
 #include "buildConfig.h"
 
-#if BLD_FEATURE_REGEXP
+#if BLD_FEATURE_PCRE
 
 
 /*************************************************
@@ -17892,7 +17892,7 @@ return negated;   /* char did not match */
 }
 
 /* End of pcre_xclass.c */
-#endif /* BLD_FEATURE_REGEXP */
+#endif /* BLD_FEATURE_PCRE */
 /************************************************************************/
 /*
  *  End of file "../src/pcre_xclass.c"

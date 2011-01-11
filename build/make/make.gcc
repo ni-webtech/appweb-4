@@ -246,7 +246,7 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
         $(BLD_CC) -E $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
     fi
 	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
-	else d=$(_DPATH_)/$< ; d=$${d#./} ; $(call log) "[Compile]" $(subst $(BLD_OUT_DIR)/,,$@) ; fi
+	else $(call log) "[Compile]" "$(_DPATH_)/$<" ; fi
 	@$(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
 	if [ $$? != 0 -a "$(TRACE)" != 1 ] ; then \
 	    $(call log) "[DETAILS]" "$(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@\n" ; \

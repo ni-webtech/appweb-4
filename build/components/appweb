@@ -5,10 +5,11 @@ defineComponent() {
 	local iflags libpaths path search optional libs builtin
 
     path=${1:-.}
-    if [ "$path" != "" ] ; then
+    iflags=-I`probe --name appweb --dir --search "$path:$path/src/include" "appweb.h"`
+
+    if [ "$path" != "." ] ; then
         libpaths=`probe --name appweb --dir --search "$path:$path/out/lib" "libappweb" `
-        iflags=-I`probe --name appweb --dir --search "$path:$path/src/include" "appweb.h"`
-        if [ "$libpaths" = "" -a "$path" != "." ] ; then
+        if [ "$libpaths" = "" ; then
             warnComponent appweb "Can't locate libappweb"
             return
         fi
@@ -34,7 +35,6 @@ defineComponent() {
         deps="$deps http"
     fi
     builtin=`[ "$path" = . ] && echo --builtin`
-
     configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" $builtin \
         --dependencies "$deps" --optional-dependencies "$optional" appweb
 }

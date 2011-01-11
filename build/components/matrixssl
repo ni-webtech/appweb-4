@@ -2,20 +2,20 @@
 #   MatrixSSL
 #
 defineComponent() {
-	local path iflags libpaths search ver libs
+	local path iflags libpaths search ver libs imports
 
     path=$1
     ver="latest"
     search="."
 
     if [ "$path" != "" ] ; then
-        libpaths=`probe --name libmatrixssl --search "$path" --dir libmatrixsslstatic`
-        iflags=-I`probe --name matrixSsl.h --search "$path" --dir matrixSsl.h`
+        imports=`probe --name matrixssl --search "$path" libmatrixsslstatic`
+        iflags=-I`probe --name matrixssl --dir --search "$path" matrixSsl.h`
     else
-        libpaths=`probe --name libmatrixssl --search "extensions/matrixssl/$ver/src" --dir libmatrixsslstatic`
-        iflags=-I`probe --name matrixSsl.h --search "extensions/matrixssl/$ver" --dir matrixSsl.h`
+        imports=`probe --name matrixssl --search "extensions/matrixssl/$ver/src" libmatrixsslstatic`
+        iflags=-I`probe --name matrixssl --dir --search "extensions/matrixssl/$ver" matrixSsl.h`
     fi
-    if [ "$libpaths" = "" -o "$iflags" = "" ] ; then
+    if [ "$imports" = "" -o "$iflags" = "" ] ; then
         warnComponent matrixssl
         return
     fi
@@ -25,5 +25,6 @@ defineComponent() {
         libs="matrixsslstatic.a"
     fi
     CFG_HOST_SSL_MANDATORY=1
-    configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" matrixssl
+    libpaths="${imports%/*}"
+    configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" --imports "$imports" matrixssl
 }

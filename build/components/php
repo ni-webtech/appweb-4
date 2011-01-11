@@ -2,7 +2,7 @@
 #   PHP
 #
 defineComponent() {
-	local path search ver libs iflags idir file
+	local path search ver libs iflags idir file imports libpaths
 
     ver="latest"
     if [ $BLD_HOST_OS = MACOSX ] ; then
@@ -11,21 +11,20 @@ defineComponent() {
         path="${1:-.}"
     fi
     if [ $BLD_HOST_OS = WIN ] ; then
-        if [ -x $path/Release_TS ] ; then
-            imports="$path/Release_TS/php5ts"
-        else 
-            imports="$path/Release/php5"
+        imports=`probe --name php --search "$path:extensions/php/$ver" "Release_TS/php5ts" `
+        if [ "$imports" = "" ] ; then
+            imports=`probe --name php --search "$path:extensions/php/$ver" "Release/php5" `
         fi
-        libs="php5"
     else
-        libpaths=`probe --name php --search "$path:extensions/php/$ver/libs" --dir "libphp5" `
-        idir=`probe --name php --search "$path:extensions/php/$ver" --dir "main/php.h"`
-        libs="php5"
+        imports=`probe --name php --search "$path:extensions/php/$ver/libs" "libphp5" `
     fi
+    libs="php5"
+    libpaths="${imports%/*}"
+    idir=`probe --name php --search "$path:extensions/php/$ver" --dir "main/php.h"`
     if [ "$idir" = "" -o "$libpaths" = "" ] ; then
         warnComponent "php"
         return
     fi
     iflags="-I${idir} -I${idir}/main -I${idir}/Zend -I${idir}/TSRM"
-    configureComponent --libs "$libs" --libpaths "$libpaths" --dependencies "mpr" --iflags "$iflags" php
+    configureComponent --libs "$libs" --libpaths "$libpaths" --dependencies "mpr" --iflags "$iflags" --imports "$imports" php
 }

@@ -2,7 +2,7 @@
 #   OpenSSL
 #
 defineComponent() {
-	local path search ver libs libpaths
+	local path search ver libs libpaths imports
 
     ver="latest"
 
@@ -13,6 +13,7 @@ defineComponent() {
     fi
     if [ $BLD_HOST_OS = WIN ] ; then
         path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" --dir $name`
+        imports="$path/out32dll/libeay32.dll $path/out32dll/ssleay32.dll"
         libs="libeay32 ssleay32"
         iflags="-I$path/inc32"
 
@@ -21,6 +22,7 @@ defineComponent() {
         #   Use system libraries
         #
         path=/usr/lib
+        imports="$path/libssl.a $path/libcrypto.a"
         libs="ssl crypto"
         iflags="-I$path/include"
 
@@ -28,12 +30,14 @@ defineComponent() {
         libpaths=`probe --name libcrypto --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
         iflags=-I`probe --name openssl.h --search "$path:$extensions/opensl/$ver/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
+        if [ $BLD_HOST_OS != MACOSX ] ; then
+            imports="$libpaths/libssl.so $libpaths/libcrypto.so"
+        fi
     fi
-
     if [ "$iflags" = "-I" ] ; then
         warnComponent "openssl"
         return
     fi
     CFG_HOST_SSL_MANDATORY=1
-    configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" openssl
+    configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" --imports "$imports" openssl
 }

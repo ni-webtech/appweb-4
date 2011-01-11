@@ -2,17 +2,18 @@
 #   Pcre
 #
 defineComponent() {
-	local builtin iflags imports path name
+	local builtin iflags libpaths imports path name
 
-    #
-    #   Always use builtin (requires Javascript mode)
-    #
-    path=.
-    libpaths=`probe --name libpcre --dir --search "$path:$path/src/deps/pcre:$path/out/lib" "libpcre" `
-    iflags=-I`probe --name pcre.h --dir --search "$path:$path/src/deps/pcre:$path/src/include" "pcre.h"`
-    if [ "$libpaths" = "" -a "$path" != "." ] ; then
-        warnComponent pcre "Can't locate libpcre"
-        return
+    path=${1:-.}
+    iflags=-I`probe --name pcre --dir --search "$path:$path/src/deps/pcre:$path/src/include" "pcre.h"`
+    if [ "$path" != "." ] ; then
+        imports=`probe --name pcre --search "$path:$path/src/deps/pcre:$path/out/lib" "libpcre" `
+        if [ "$imports" = "" ] ; then
+            warnComponent pcre "Can't locate libpcre"
+            return
+        fi
     fi
-    configureComponent --builtin --libs "pcre" --libpaths "$libpaths" --iflags "$iflags" pcre
+    libpaths="${imports%/*}"
+    builtin=`[ $path = . ] && echo --builtin`
+    configureComponent --libs "pcre" --libpaths "$libpaths" --iflags "$iflags" --imports "$imports" $builtin pcre
 }
