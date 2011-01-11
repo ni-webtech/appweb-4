@@ -57,6 +57,7 @@ endif
 ifeq	($(BLD_CC_EDITLINE),1)
 	EJS_LIBS	+= edit curses
 endif
+MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS) $(BLD_PCRE_IFLAGS) $(BLD_EJS_IFLAGS)
 
 #	TODO - remove this
 DOC_DIR		:= $(BLD_TOP)/doc/api/ejscript
@@ -92,27 +93,27 @@ $(BLD_MOD_DIR)/ejs.mod: $(BLD_INC_DIR)/ejs.slots.h *.es $(TOOLS)
 #
 #	Build the ejs, ejsc, and sqlite libraries
 #	
-$(BLD_LIB_DIR)/libejs$(BLD_LIB): $(OBJECTS) $(call lib, mpr)
+$(BLD_LIB_DIR)/libejs$(BLD_LIB): $(OBJECTS)
 	bld --library $(BLD_LIB_DIR)/libejs --search "$(BLD_EJS_WITHPATHS)" \
 		--libs "mpr http $(BLD_EJS_WITHLIBS)" $(EJS_OBJECTS)
 
-$(BLD_LIB_DIR)/libsqlite3$(BLD_LIB): $(OBJECTS) $(call lib, mpr)
+$(BLD_LIB_DIR)/libsqlite3$(BLD_LIB): $(OBJECTS)
 	bld --library $(BLD_LIB_DIR)/libsqlite3 --search "$(BLD_SQLITE_WITHPATHS)" --libs "$(BLD_SQLITE_WITHLIBS)" \
 		sqlite3$(BLD_OBJ)
 
-$(BLD_BIN_DIR)/ejsc$(BLD_EXE): $(OBJECTS) $(call lib, mpr) $(call vlib, ejs)
+$(BLD_BIN_DIR)/ejsc$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/ejsc$(BLD_EXE) --search "$(BLD_EJS_LIBPATHS)" --libs "$(BLD_EJS_LIBS)" ejsc$(BLD_OBJ)
 
-$(BLD_BIN_DIR)/ejs$(BLD_EXE): $(OBJECTS) $(call lib, mpr) $(call vlib, ejs)
+$(BLD_BIN_DIR)/ejs$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/ejs$(BLD_EXE) --search "$(BLD_EJS_LIBPATHS)" --libs "$(BLD_EJS_LIBS) $(EJS_LIBS)" ejs$(BLD_OBJ)
 
-$(BLD_BIN_DIR)/ejsmod$(BLD_EXE): $(OBJECTS) $(call lib, mpr) $(call vlib, ejs)
+$(BLD_BIN_DIR)/ejsmod$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/ejsmod$(BLD_EXE) --search "$(BLD_EJS_LIBPATHS)" --libs "$(BLD_EJS_LIBS)" ejsmod$(BLD_OBJ)
 
-$(BLD_BIN_DIR)/ejssql$(BLD_EXE): $(OBJECTS) $(call lib, mpr) $(call vlib, ejs)
+$(BLD_BIN_DIR)/ejssql$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/ejssql$(BLD_EXE) --search "$(BLD_EJS_LIBPATHS)" --libs "$(BLD_EJS_LIBS)" ejssql$(BLD_OBJ)
 
-# $(BLD_MOD_DIR)/mod_ejs$(BLD_SHOBJ): $(OBJECTS) $(call lib, mpr) $(call vlib, ejs)
+# $(BLD_MOD_DIR)/mod_ejs$(BLD_SHOBJ): $(OBJECTS)
 # 	bld --shared --library $(BLD_MOD_DIR)/mod_ejs --search "$(BLD_APPWEB_LIBPATHS)" \
 # 		--libs "$(BLD_APPWEB_LIBS) $(BLD_EJS_LIBS)" ejsAppwebHandler$(BLD_OBJ) $(EXTRA_GATEWAY_OBJECTS)
 

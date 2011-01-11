@@ -47,22 +47,6 @@
 extern "C" {
 #endif
 
-/* *********************************** Defines ********************************/
-
-#if MOVED
-/*
-    SSL protocols
- */
-#define MPR_PROTO_SSLV2    0x1
-#define MPR_PROTO_SSLV3    0x2
-#define MPR_PROTO_TLSV1    0x4
-#define MPR_PROTO_ALL      0x7
-
-/*
-    Default SSL configuration
- */
-#define MPR_DEFAULT_CIPHER_SUITE        "ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL"
-#endif
 
 #define MPR_DEFAULT_SERVER_CERT_FILE    "server.crt"
 #define MPR_DEFAULT_SERVER_KEY_FILE     "server.key.pem"
@@ -125,18 +109,6 @@ typedef struct MprSslSocket
 #endif
 } MprSslSocket;
 
-
-#if MOVED
-extern MprModule *mprSslInit(cchar *path);
-extern MprSsl *mprCreateSsl();
-extern void mprSetSslCiphers(MprSsl *ssl, cchar *ciphers);
-extern void mprSetSslKeyFile(MprSsl *ssl, cchar *keyFile);
-extern void mprSetSslCertFile(MprSsl *ssl, cchar *certFile);
-extern void mprSetSslCaFile(MprSsl *ssl, cchar *caFile);
-extern void mprSetSslCaPath(MprSsl *ssl, cchar *caPath);
-extern void mprSetSslProtocols(MprSsl *ssl, int protocols);
-extern void mprVerifySslClients(MprSsl *ssl, bool on);
-#endif
 
 #if BLD_FEATURE_OPENSSL
 extern int mprCreateOpenSslModule(bool lazy);

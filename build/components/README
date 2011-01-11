@@ -36,11 +36,10 @@ component along the configured search path.
 
 The probe function supports the following usage:
 
-  probe [--path path] [--partial file] [--emit-dir] [--search searchPath] name
-   --emit-dir      # Return the directory portion. Otherwise return the path.
-   --partial file  # Test if this partial file exists along the search path
-   --path path     # Test first if this path exists, if found, use it
-   --search path   # Override search path
+  probe [--name NAME] [--extensions EXT] [--search searchPath] file
+   --name            # Component name
+   --extensions EXT  # File extensions to append to "file" in search
+   --search path     # Override search path
 
 If the existence of the component can be verified, the component script 
 should then call "configureComponent" to add the component to the configuration. 
@@ -54,7 +53,6 @@ The configureComponent function supports the following usage:
         --emitter           # Define an emitter function
         --iflags IFLAGS     # Define IFLAGS to pass to the compiler
         --imports IMPORTS   # Define libraries to import when building
-        --jflags JFLAGS     # Define JFLAGS for java builds
         --ldflags LDFLAGS   # Define LDFLAGS to pass to the linker
         --libpaths PATHS    # Define linker library search paths to use when
                             # linking with the components

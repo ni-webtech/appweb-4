@@ -2,20 +2,15 @@
 #   SQLite
 #
 defineComponent() {
-	local iflags builtin path name search
+    local libpaths iflags path builtin 
 
-    name="sqlite"
-    path="$1"
-    search="src/jems/ejs.db.sqlite/src:src/db/sqlite:src/deps/ejs"
-
-    path=`probe --emit-dir --path "$path" --partial "sqlite3.c" --search "$search" $name`
-    if [ "$path" = "" ] ; then
-        warnComponent $name
+    path="${1:-.}"
+    iflags=-I`probe --name sqlite --dir --warn --search "$path:$path/src/deps/ejs:$path/src/include" "sqlite3.h"`
+    libpaths=`probe --name sqlite --dir --search "$path:$path/out/lib" "libsqlite3"`
+    if [ "$libpaths" = "" -a "$iflags" = "-I" ] ; then
+        warnComponent sqlite "Can't locate libsqlite3"
         return
-	fi
-    if isExternal "$path" ; then
-        iflags="-I$path/include"
-        libpaths="$path/lib"
     fi
-    configureComponent --dependencies "mpr" --libs "sqlite3" --path "$path" --iflags "$iflags" $builtin $name
+    builtin=`[ "$path" = . ] && echo --builtin`
+    configureComponent --libs "sqlite3" --libpaths "$libpaths" --iflags "$iflags" $builtin sqlite
 }

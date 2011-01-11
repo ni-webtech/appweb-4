@@ -29,6 +29,7 @@ else
 	SOURCES		+= $(shell ls *.c handlers/fileHandler.c handlers/dirHandler.c handlers/egiHandler.c | egrep -v 'deps')
 endif
 OBJECTS			= $(patsubst %.c,$(BLD_OBJ_DIR)/%$(BLD_OBJ),$(notdir $(SOURCES)))
+MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
 #
 #	Order of modules matters. Dependencies must be earlier in the list.
@@ -46,6 +47,15 @@ ifeq ($(BLD_FEATURE_SSL),1)
 	MODULES		+= $(BLD_MOD_DIR)/$(SSL)$(BLD_SHOBJ)
 endif
 TARGETS			+= $(BLD_LIB_DIR)/appweb.conf
+
+compileFirst: tools
+
+tools:
+	echo
+	$(call log) [Notice] "Building Native Ejs Toolchain"
+	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) -C deps compile
+	echo
+	$(call log) [Notice] "Building For Target"
 
 compileExtra: $(TARGETS)
 ifeq ($(BLD_STATIC),0)
@@ -69,14 +79,16 @@ $(BLD_MOD_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB
 	bld --shared --library $(BLD_MOD_DIR)/$(CGI) --libs "$(LIBS)" $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
 
 $(BLD_MOD_DIR)/$(EJS)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_MOD_DIR)/$(EJS) --libs "$(LIBS) $(BLD_EJS_LIBS)" $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
+	bld --shared --library $(BLD_MOD_DIR)/$(EJS) --search "$(BLD_EJS_LIBPATHS)" --libs "$(LIBS) $(BLD_EJS_LIBS)" \
+		$(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
 
 $(BLD_MOD_DIR)/$(PHP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_MOD_DIR)/$(PHP) --rpath "$(BLD_MOD_PREFIX)" \
-		--search "$(BLD_PHP_LIBPATHS)" --libs "$(BLD_PHP_WITHLIBS) $(LIBS)" $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ)
+		--search "$(BLD_PHP_LIBPATHS)" --libs "$(BLD_PHP_LIBS) $(LIBS)" $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ)
 
 $(BLD_MOD_DIR)/$(SSL)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_MOD_DIR)/$(SSL) --libs "$(LIBS) $(BLD_SSL_LIBS)" $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ)
+	bld --shared --library $(BLD_MOD_DIR)/$(SSL) --search "$(BLD_SSL_LIBPATHS)" --libs "$(LIBS) $(BLD_SSL_LIBS)" \
+		$(BLD_OBJ_DIR)/sslModule$(BLD_OBJ)
 
 $(BLD_LIB_DIR)/appweb.conf: default.conf
 	$(call log) "[Install]" "$(BLD_LIB_DIR)/appweb.conf"

@@ -6,15 +6,31 @@
 
 include 		.makedep
 
-ifeq ($(BLD_MPR_DIR),)
-	PRE_DIRS	+= mpr
+ifeq ($(BLD_MPR_BUILTIN),1)
+	PRE_DIRS    += mpr
 endif
-PRE_DIRS		+= pcre 
-PRE_DIRS		+= http 
-ifeq ($(BLD_FEATURE_EJS),1)
-ifeq ($(BLD_EJS_DIR),)
-	PRE_DIRS	+= ejs 
+ifeq ($(BLD_PCRE_BUILTIN),1)
+	PRE_DIRS    += pcre
 endif
+ifeq ($(BLD_HTTP_BUILTIN),1)
+	PRE_DIRS    += http
+endif
+ifeq ($(BLD_EJS_BUILTIN),1)
+	PRE_DIRS    += ejs
+endif
+
+clobberExtra:
+ifeq ($(BLD_MPR_BUILTIN),1)
+	rm -f mpr/*.c mpr/*.h
+endif
+ifeq ($(BLD_PCRE_BUILTIN),1)
+	rm -f pcre/*.c pcre/*.h
+endif
+ifeq ($(BLD_HTTP_BUILTIN),1)
+	rm -f http/*.c http/*.h
+endif
+ifeq ($(BLD_EJS_BUILTIN),1)
+	rm -f ejs/*.c ejs/*.h
 endif
 
 #

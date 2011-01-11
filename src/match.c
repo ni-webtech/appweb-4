@@ -595,6 +595,7 @@ static void prepRequest(HttpConn *conn, HttpStage *handler)
         /*
             Define an Etag for physical entities. Redo the file info if not valid now that extra path has been removed.
          */
+//  MOB - already done
         info = &tx->fileInfo;
         if (!info->checked) {
             mprGetPathInfo(tx->filename, info);

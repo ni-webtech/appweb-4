@@ -2,21 +2,17 @@
 #   OpenSSL
 #
 defineComponent() {
-	local path name search ver imports libs extensions resolved
+	local path search ver libs libpaths
 
-    if [ $KIND = "BUILD" -a $BLD_CROSS = 1 ] ; then
-        echo "only used as a host component"
-        return 0
-    fi
-    path=$1
-    name="openssl"
     ver="latest"
-    search="."
 
+    if [ $BLD_HOST_OS = MACOSX ] ; then
+        path=${1:-/usr/include:/usr/lib}
+    else
+        path="${1:-.}"
+    fi
     if [ $BLD_HOST_OS = WIN ] ; then
-        path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" $name`
-        imports="$path/out32dll/libeay32 $path/out32dll/ssleay32"
-        extensions="dll lib"
+        path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" --dir $name`
         libs="libeay32 ssleay32"
         iflags="-I$path/inc32"
 
@@ -25,59 +21,19 @@ defineComponent() {
         #   Use system libraries
         #
         path=/usr/lib
-        imports="$path/libssl $path/libcrypto"
-        extensions="a"
-        libs="ssl crypto"
-        iflags="-I$path/include"
-
-    elif [ $BLD_HOST_OS = MACOSX ] ; then
-        #
-        #   Use system libraries
-        #       path=/usr/lib
-        #       libs="ssl crypto"
-        #       iflags="-I$path/include"
-        #
-        #   Use shared libraries
-        #
-        #       path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" $name`
-        #       imports="$path/libssl.dylib $path/libcrypto.dylib"
-        #       path=/usr/lib
-        #       libs="ssl crypto"
-        #       iflags="-I$path/include"
-        path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" $name`
-        imports="$path/libssl $path/libcrypto"
-        extensions="dylib a"
         libs="ssl crypto"
         iflags="-I$path/include"
 
     else 
-        path=`probe --path "$path" --partial "extensions/$name/$ver" --search "$search" $name`
-        imports="$path/libssl $path/libcrypto"
-        extensions="so a"
+        libpaths=`probe --name libcrypto --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
+        iflags=-I`probe --name openssl.h --search "$path:$extensions/opensl/$ver/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
-        iflags="-I$path/include"
     fi
-    if [ "$path" = "" ] ; then
-        warnComponent $name
-        return
-	fi
 
-    resolved=
-    for f in $imports
-    do
-        for ext in $extensions
-        do
-            file="${f}.${ext}"
-            if [ -f "$file" ] ; then
-                break
-            fi
-        done
-        if [ ! -f "$file" ] ; then
-            warnComponent $name "Can't locate $file"
-            return
-        fi
-        resolved="${resolved} ${file}"
-    done
+    if [ "$iflags" = "-I" ] ; then
+        warnComponent "openssl"
+        return
+    fi
     CFG_HOST_SSL_MANDATORY=1
-    configureComponent --path "$path" --imports "$resolved" --libs "$libs" --iflags "$iflags" $name
+    configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" openssl
 }

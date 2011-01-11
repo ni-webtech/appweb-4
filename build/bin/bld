@@ -235,14 +235,14 @@ searchLib()
 
     for path in ${LIBRARY_PATHS} "${BLD_LIB_DIR}" "${BLD_MOD_DIR}" "$syslib" "$extraSysLib"
     do
-        for suffix in `echo $suffixes` ""
+        # MOB removed ""
+        for suffix in `echo $suffixes`
         do
             for prefix in lib ""
             do
                 [ "$path" = "" ] && continue
 
                 # Windows: name* is needed to match name-version
-                # for file in "${path}/${prefix}${name}${suffix}"* "${path}/${prefix}${name}"${suffix}* ; do
                 for file in "${path}/${prefix}${name}${suffix}"* "${path}/${prefix}${name}"*${suffix}* ; do
                     [ "$VERBOSE" -gt 0 ] && echo "bld: TESTING ${file}" >&2
 
@@ -253,6 +253,8 @@ searchLib()
                         if [ "$BLD_WIN_LIKE" = 1 ] ; then
                             echo "${file}"
                         else 
+# echo SUFFIX $suffix >/dev/tty
+# echo file $file >/dev/tty
                             if [ "${name%${BLD_ARCH}}" != "${name}" ] ; then
                                 echo "${file}"
                             else

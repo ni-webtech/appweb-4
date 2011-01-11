@@ -300,9 +300,7 @@ static void registerServerVars(zval *track_vars_array TSRMLS_DC)
 
 static void logMessage(char *message)
 {
-#if FUTURE
     mprLog(0, "phpModule: %s", message);
-#endif
 }
 
 
@@ -439,7 +437,6 @@ static int initializePhp(Http *http)
         mprError("PHP did not initialize");
         return MPR_ERR_CANT_INITIALIZE;
     }
-
 #if ZTS
     zend_llist_init(&global_vars, sizeof(char *), 0, 0);
 #endif

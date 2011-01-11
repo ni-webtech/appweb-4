@@ -2,17 +2,13 @@
 #   library archiver (ld, lib)
 #
 defineComponent() {
-    local name path
+    local file path
 
-    path="$1"
+    eval file=\$BLD_${KIND}_AR
 
-    #
-    # Name comes from build/config/config.*
-    #
-    eval name=\$BLD_${KIND}_AR
-    path=`probe --path "$path" --partial $name $name`
+    path=`probe --name ar $file`
     if [ "$path" = "" ] ; then
-        warnComponent ar $name
+        warnComponent $file
         return
 	fi
     configureComponent --path "$path" ar

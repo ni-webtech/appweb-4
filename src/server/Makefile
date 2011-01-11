@@ -45,6 +45,7 @@ ifeq ($(BLD_FEATURE_STATIC),0)
 endif
 endif
 TARGETS				+= appweb.conf
+MAKE_IFLAGS			+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
 compileExtra: $(TARGETS) $(EXTRA_TARGETS)
 

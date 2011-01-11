@@ -423,14 +423,13 @@ parseEnvVars() {
     #
     #   Set default tool value if corresponding environment variable is defined
     #
-    for t in ANT AR BREW CC DOXYGEN CXX JAVAC JDK JAR LD LDXX MT MUNCH NM RANLIB RC STRIP
+    for t in AR CC DOXYGEN CXX LD LDXX MT MUNCH NM RANLIB RC STRIP
     do
         eval value="\$${t}"
         if [ "$value" != "" ] ; then
-            if [ $BLD_CROSS = 1 ] ; then
-                eval BLD_HOST_${t}=\"$value\"
-                eval CFG_HOST_${t}=\"$value\"
-            else
+            eval BLD_HOST_${t}=\"$value\"
+            eval CFG_HOST_${t}=\"$value\"
+            if [ $BLD_CROSS = 0 ] ; then
                 eval BLD_BUILD_${t}=\"$value\"
                 eval CFG_BUILD_${t}=\"$value\"
             fi
@@ -455,7 +454,7 @@ parseEnvVars() {
         eval value="\$${t}FLAGS"
         if [ "$value" != "" ] ; then
             eval BLD_HOST_${t}FLAGS=\"$value\"
-            if [ "${BLD_HOST_SYSTEM}" = "${BLD_BUILD_SYSTEM}" ] ; then
+            if [ "${BLD_CROSS}" = 0 ] ; then
                 eval BLD_BUILD_${t}FLAGS=\"$value\"
             fi
         fi
@@ -806,19 +805,16 @@ findComponents() {
 
 
 warnComponent() {
-    local kind upper actual
+    local kind upper
     kind=$KIND
 
     name=$1
-    actual=$2
-    if [ "$actual" = "" ] ; then
-        actual="$name"
-    fi
     upper=`upper ${name}`
     eval mandatory="\$CFG_${kind}_${upper}_MANDATORY" 2>/dev/null
 
     if [ "$mandatory" = 1 ] ; then
-        echo -e "\n\nCan't find required component: $name\n" >&2
+        echo -e "\n\nCan't find required component: $name" >&2
+        shift
         echo -e "$*\n" >&2
         exit 255
     fi
@@ -831,25 +827,11 @@ warnComponent() {
 
 
 #
-#   Return true if not builtin
-#
-isExternal() {
-    local path dir
-
-    dir=`canonPath "$PWD"`
-    path=`canonPath "$1"`
-    if [ "$path" != "." -a "$path" = "${path#$dir}" ] ; then
-        return 0
-    fi
-    return 1
-}
-
-#
 #   Configure a component. Called by build/components/*
 #
 configureComponent() {
-    local cflags dflags dependencies kind iflags imports jflags ldflags libpaths libs name upperDep new
-    local path withlibs withpaths upper builtin priorMandatory priorPath emitter disable optional extra
+    local cflags dflags dependencies kind iflags imports ldflags libpaths libs name upperDep new
+    local path withlibs withpaths upper priorMandatory priorPath emitter disable optional v tag builtin
 
     kind=$KIND
     builtin=0
@@ -883,9 +865,6 @@ configureComponent() {
         imports)
             shift ; imports="$1"
             ;;
-        jflags)
-            shift ; jflags="$1"
-            ;;
         ldflags)
             shift ; ldflags="$1"
             ;;
@@ -914,6 +893,7 @@ configureComponent() {
     done
 
     name=$1
+    tag=${path:-$libpaths}
     if [ "$name" = "" ] ; then
         echo "configureComponent: component missing name"  1>&2
         exit 255
@@ -923,14 +903,14 @@ configureComponent() {
         return 0
     fi
 
-    if [ "$HAS_CYGPATH" = 1 ] ; then
-        local p1 cpwd
-        p1=`canonPath "$path"`
-        cpwd=`canonPath "$PWD"`
-        [ "$p1" != "${p1#$cpwd}" ] && builtin=1
-    else 
-        [ "$path" != "${path#$PWD}" ] && builtin=1
-    fi
+#    if [ "$HAS_CYGPATH" = 1 ] ; then
+#        local p1 cpwd
+#        p1=`canonPath "$path"`
+#        cpwd=`canonPath "$PWD"`
+#        [ "$p1" != "${p1#$cpwd}" ] && builtin=1
+#    else 
+#        [ "$path" != "${path#$PWD}" ] && builtin=1
+#    fi
 
     [ $BLD_CROSS = 0 ] && kind=HOST
 
@@ -941,12 +921,12 @@ configureComponent() {
     if [ "$priorPath" != "" ] ; then
         path="$priorPath"
     fi
-    eval unset CFG_${kind}_${upper}
+    eval unset "CFG_${kind}_${upper}"
 
     for dep in $dependencies 
     do
         upperDep=`upper ${dep}`
-        if [ "`compath $dep`" = "" ] ; then
+        if ! isdefined "$dep" ; then
             if [ "$mandatory" = 1 ] ; then
                 echo "configureComponent: Missing dependency \"${dep}\" for mandatory component: ${name}" 1>&2
                 exit 255
@@ -960,10 +940,14 @@ configureComponent() {
             udep=`upper ${dep}`
             eval present=\$CFG_${kind}_${udep}
             if [ "$present" != "" ] ; then
-                eval extra=\$CFG_${kind}_${udep}_LIBPATHS
-                [ "$extra" != "" ] && libpaths="$libpaths $extra"
-                eval extra=\$CFG_${kind}_${udep}_LIBS
-                [ "$extra" != "" ] && libs="$libs $extra"
+                eval v=\$CFG_${kind}_${udep}_LIBS
+                [ "$v" != "" ] && libs="$libs $v"
+                eval v=\$CFG_${kind}_${udep}_WITHLIBS
+                [ "$v" != "" ] && withlibs="$withlibs $v"
+                eval v=\$CFG_${kind}_${udep}_LIBPATHS
+                [ "$v" != "" ] && libpaths="$libpaths $v"
+                eval v=\$CFG_${kind}_${udep}_WITHPATHS
+                [ "$v" != "" ] && withpaths="$withpaths $v"
             fi
         done
     else
@@ -971,14 +955,20 @@ configureComponent() {
         do
             udep=`upper ${dep}`
             eval present=\$CFG_${kind}_${udep}
-            if [ "$present" != "" ] ; then
-                eval extra=\$CFG_${kind}_${udep}_LIBPATHS
-                [ "$extra" != "" ] && libpaths="$libpaths $extra"
-                [ "$extra" != "" ] && withpaths="$withpaths $extra"
 
-                eval extra=\$CFG_${kind}_${udep}_LIBS
-                [ "$extra" != "" ] && libs="$libs $extra"
-                [ "$extra" != "" ] && withlibs="$withlibs $extra"
+            if [ "$present" != "" ] ; then
+
+                eval v=\$CFG_${kind}_${udep}_LIBS
+                [ "$v" != "" ] && libs="$libs $v"
+                [ "$v" != "" ] && withlibs="$withlibs $v"
+                eval v=\$CFG_${kind}_${udep}_LIBPATHS
+                [ "$v" != "" ] && libpaths="$libpaths $v"
+                [ "$v" != "" ] && withpaths="$withpaths $v"
+
+                eval v=\$CFG_${kind}_${udep}_WITHLIBS
+                [ "$v" != "" ] && withlibs="$withlibs $v"
+                eval v=\$CFG_${kind}_${udep}_WITHPATHS
+                [ "$v" != "" ] && withpaths="$withpaths $v"
             fi
         done
     fi
@@ -1008,7 +998,13 @@ configureComponent() {
         withlibs=`unique $withlibs`
     fi
 
-    eval CFG_${kind}_${upper}=\"${path}\"
+    eval BLD_FEATURE_${upper}=1
+    value=${path}
+    [ "$value" = "" ] && value=1
+    [ "$path" = "" -a "$libpaths" = "" ] && builtin=1
+    [ "$iflags" = "-I/usr/include" ] && iflags=
+
+    eval CFG_${kind}_${upper}=\"${value}\"
     eval CFG_${kind}_${upper}_BUILTIN=\"$builtin\"
     eval CFG_${kind}_${upper}_CFLAGS=\"$cflags\"
     eval CFG_${kind}_${upper}_DEPENDENCIES=\"$dependencies\"
@@ -1016,48 +1012,52 @@ configureComponent() {
     eval CFG_${kind}_${upper}_EMITTER=$emitter
     eval CFG_${kind}_${upper}_IFLAGS=\"$iflags\"
     eval CFG_${kind}_${upper}_IMPORTS=\"'$imports'\"
-    eval CFG_${kind}_${upper}_JFLAGS=\"$jflags\"
     eval CFG_${kind}_${upper}_LDFLAGS=\"$ldflags\"
-    eval CFG_${kind}_${upper}_LIBPATHS=\"$libpaths\"
     eval CFG_${kind}_${upper}_LIBS=\"$libs\"
+    eval CFG_${kind}_${upper}_LIBPATHS=\"$libpaths\"
     eval CFG_${kind}_${upper}_MANDATORY=\"$mandatory\"
     eval CFG_${kind}_${upper}_OPTIONAL_DEPENDENCIES=\"$optional\"
     eval CFG_${kind}_${upper}_WITHLIBS=\"$withlibs\"
     eval CFG_${kind}_${upper}_WITHPATHS=\"$withpaths\"
-
     eval ${kind}_COMPONENTS=\"\$${kind}_COMPONENTS ${name}\"
-    [ $quiet = 0 -a $verbose = 0 -a $kind = HOST ] && echo "$path"
+    tag=${tag:-builtin}
+    [ $quiet = 0 -a $verbose = 0 -a $kind = HOST ] && echo "$tag"
 }
 
 
 #
-#   probe [--path path] [--partial file] [--emit-dir] [--search searchPath] component  
+#   probe [--name NAME] [--search searchPath] item  
 #
+#   --dir               Emit the dir component
+#   --name NAME         Component name
 #   --path path         Test first if this path exists, if so, return it.
-#   --partial file      Test if this partial file exists along the search path
 #   --search path       Use this instead of the default search path.
-#   --emit-dir          Emit the directory portion. Otherwise return the full matching path.
 #
-#   Can supply both dir and file options. Will search using dir first
+#   Emits the directory containing the item
 #
 probe()
 {
-    local name args d emitdir f partial found path search trace SAVE_IFS OLD_PATH
+    local args emitdir extensions name d e f file found path search arch shobj exe trace warn SAVE_IFS OLD_PATH
 
-    trace=$verbose
     args="$@"
-    emitdir=0
+    trace=$verbose
+
+    eval arch=\$BLD_${KIND}_ARCH
+    eval shobj=\$BLD_${KIND}_SHOBJ
+    eval exe=\$BLD_${KIND}_EXE
+    extensions="$exe $shobj $arch .h"
+    warn=0
 
     while [ "${1#--}" != "$1" ] ; do
         case ${1#--} in
-        emitdir|emit-dir)
+        dir)
             emitdir=1
             ;;
-        partial)
-            shift ; partial=$1
+        extensions)
+            shift ; extensions=$1
             ;;
-        path)
-            shift ; path=$1
+        name)
+            shift ; name=$1
             ;;
         search)
             shift ; search=$1
@@ -1065,29 +1065,31 @@ probe()
         verbose)
             trace=1
             ;;
+        warn)
+           warn=1
+            ;;
         esac
         shift
     done
 
-    name=$1
     if [ "$name" = "" ] ; then
-        echo "probe: Missing name" 1>&2
+        echo "probe: Missing component name" 1>&2
         exit 255
     fi
-
     [ "$trace" != 0 ] && echo -e "    probe $args" 1>&2
 
-    if [ "$partial" = "" -a "$path" = "" ] ; then
-        echo -e "\nprobe: $name did not specifiy a partial or path" >&2
+    file=$1
+    if [ "$file" = "" ] ; then
+        echo -e "\nprobe: did not specifiy a file to locate" >&2
         exit 255
     fi
 
-    if [ "$path" != "" ] ; then
-        if [ -f "$path" -o -x "$path" -o -d "$path" ] ; then
+    if [ "$file" != "" ] ; then
+        if [ -f "$file" -o -x "$file" -o -d "$file" ] ; then
             if [ "$emitdir" = 1 ] ; then
-                found=${found#${partial}}
+                found=${found#${file}}
             fi
-            found=`canonPath "${path}"`
+            found=`canonPath "${file}"`
             [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
         fi
     fi
@@ -1099,10 +1101,10 @@ probe()
         [ "$search" = "" ] && search="$SEARCH_PATH"
         OLD_PATH="$PATH"
         PATH="$search"
-        found=`type -P "$partial" 2>/dev/null`
+        found=`type -P "$file" 2>/dev/null`
         PATH=$OLD_PATH
         if [ "$emitdir" = "1" ] ; then
-            found=${found%${partial}}
+            found=${found%${file}}
             found=${found%/}
         fi
         [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: $name at found $found" 1>&2
@@ -1114,29 +1116,35 @@ probe()
     if [ "$found" = "" ] ; then
         SAVE_IFS=$IFS
         IFS=":"
-
         for d in $search ; do
+            IFS=$SAVE_IFS
             [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: testing $name at $d" 1>&2
             [ "${d}" = "/" ] && d=
-            f=${d}/${partial}
-            if [ -f "${f}" -o -d "${f}" ] ; then
-                [ "${d}" = "" ] && d=/
-                if [ "$emitdir" = "1" ] ; then
-                    found="$d"
-                else
-                    found=${d}/${partial}
+            for e in "" $extensions ; do
+                f=${d}/${file}${e}
+                if [ -f "${f}" -o -d "${f}" ] ; then
+                    [ "${d}" = "" ] && d=/
+                    if [ "$emitdir" = "1" ] ; then
+                        found="$d"
+                    else
+                        found=${d}/${file}
+                    fi
+                    search=
+                    [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
+                    break
                 fi
-                search=
-                [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
-                break
-            fi
+            done
+            [ "$found" != "" ] && break
+            IFS=":"
         done
         IFS="$SAVE_IFS"
     fi
 
     if [ "$found" = "" ] ; then
         [ "$trace" != 0 ] && echo "    probe: $name not found" 1>&2
-        echo $found
+        if [ "$warn" = 1 ] ; then
+            warnComponent $name "Can't locate $file" >&2
+        fi
     else
         canonPath "${found%*/}"
     fi
@@ -1147,7 +1155,7 @@ locate() {
     local file="$1"
     local search="$2"
     search=`convertSearchPath "$search"`
-    local dir=`probe --partial "$file" --search "$search" "$file"`
+    local dir=`probe --name "$file" --search "$search" "$file"`
     dir=`cygpath -u "$dir"`
     echo "'"`dirname "$dir"`"'"
 }
@@ -1215,7 +1223,7 @@ with() {
                 eval CFG_${kind}_${upperName}=$dir
                 eval CFG_${kind}_${upperName}_WITH=1
                 eval CFG_${kind}_${upperName}_MANDATORY=$mandatory
-    # eval CFG_${kind}_${upper}_IFLAGS=\"$iflags\"
+#               eval CFG_${kind}_${upper}_IFLAGS=\"$iflags\"
             fi
         done
     done
@@ -1841,8 +1849,9 @@ emitComponents() {
             echo -e "${t}BLD_FEATURE_${p}=1" 
         fi
 
-        set | grep "^CFG_${kind}_${p}" | egrep -v "_EMITTER|_WITH_|_MANDATORY" | while read v
+        set | grep "^CFG_${kind}_${p}" | egrep -v "_EMITTER|_WITH=|_WITH_|_MANDATORY=" | while read v
         do
+            [ "$v" = "CFG_${kind}_${p}=1" ] && continue
             v=${v%=*}
             eval value=\$$v
             v=${v/CFG/BLD}
@@ -2129,11 +2138,11 @@ upper() {
 }
 
 
-compath() {
-    local upperName
-    upperName=`upper $*`
-    eval echo \$CFG_${KIND}_${upperName}
-}
+# compath() {
+#     local upperName
+#     upperName=`upper $*`
+#     eval echo \$CFG_${KIND}_${upperName}
+# }
 
 isdefined() {
     local upperName

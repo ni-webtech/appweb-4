@@ -2,30 +2,15 @@
 #   Ejs
 #
 defineComponent() {
-    local builtin deps libs name optional path libpaths
+    local deps iflags libs optional path libpaths builtin
 
-    name="ejs"
-    path="$1"
-    search="src/deps:src:."
-
-    if [ -d src/vm ] ; then
-        path=`canonPath "."`
-        builtin=--builtin
-
-    elif [ -d src/deps/ejs ] ; then
-        builtin=--builtin
-        path=`probe --path "src/deps/ejs" --partial "ejsLib.c" $name`
-    else
-        path=`probe --path "$path" --partial "ejs" $name`
-    fi
-    if [ "$path" = "" ] ; then
-        warnComponent $name
+    path="${1:-.}"
+    iflags=-I`probe --name ejs.h --dir --search "$path:$path/src/deps/ejs:$path/src/include" "ejs.h"`
+    libpaths=`probe --name libejs --dir --search "$path:$path/out/lib" "libejs" `
+    if [ "$libpaths" = "" -a "$path" != "." ] ; then
+        warnComponent ejs "Can't locate libejs"
         return
     fi
-    if isExternal "$path" ; then
-        libpaths="$path/lib"
-    fi
-
     optional="ssl"
     if [ "$BLD_STATIC" = 1 ] ; then
         optional="$optional sqlite"
@@ -36,22 +21,11 @@ defineComponent() {
             fi
         fi
     fi
-    deps="mpr"
-    if [ -d src/deps ] ; then
-        deps="$deps http"
-    fi
-    if [ -f src/mpr/mprPcre.c ] ; then
-        withlibs="$withlibs pcre"
-        libs="$libs pcre"
-    fi
+    deps="mpr http"
+    withlibs="$withlibs pcre"
+    libs="$libs pcre"
+    builtin=`[ $path = . ] && echo --builtin`
 
-    if [ "$BLD_PRODUCT_APPWEB" = 1 -a ! -d src/deps ] ; then
-        # Version 3.1.X
-        libname="ajs"
-    else
-        libname="ejs"
-    fi
-
-    configureComponent --path "$path" --dependencies "$deps" --optional-dependencies "$optional" \
-        $builtin --libs "$libname $libs" --withlibs "$withlibs" $name
+    configureComponent --libs "ejs $libs" --libpaths "$libpaths" --iflags "$iflags" --withlibs "$withlibs" $builtin \
+        --dependencies "$deps" --optional-dependencies "$optional" ejs
 }

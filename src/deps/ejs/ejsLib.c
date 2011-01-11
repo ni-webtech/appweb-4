@@ -37445,7 +37445,7 @@ static void processEjs(HttpQueue *q)
 
 
 /* 
-    One time initialization of the http pipeline handler
+    Create the http pipeline handler for ejs.
  */
 HttpStage *ejsAddWebHandler(Http *http)
 {
@@ -37456,8 +37456,8 @@ HttpStage *ejsAddWebHandler(Http *http)
     if (http->ejsHandler) {
         return http->ejsHandler;
     }
-    handler = httpCreateHandler(http, "ejsHandler",
-        HTTP_STAGE_GET | HTTP_STAGE_HEAD | HTTP_STAGE_POST | HTTP_STAGE_PUT | HTTP_STAGE_VARS);
+    //  MOB HTTP_STAGE_THREAD
+    handler = httpCreateHandler(http, "ejsHandler", HTTP_STAGE_ALL | HTTP_STAGE_VARS);
     if (handler == 0) {
         return 0;
     }

@@ -9,7 +9,7 @@
 
 include 			.makedep
 
-MAKE_IFLAGS			+= $(BLD_HTTP_IFLAGS)
+MAKE_IFLAGS			+= $(BLD_HTTP_IFLAGS) $(BLD_MPR_IFLAGS)
 HTTP_LIB			+= $(BLD_LIB_DIR)/libhttp$(BLD_LIB)
 HTTP_OBJECTS		+= httpLib
 TARGETS				+= $(HTTP_LIB) $(BLD_BIN_DIR)/http$(BLD_EXE)

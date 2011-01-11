@@ -2329,11 +2329,7 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->host);
         mprMark(conn->ip);
 
-        if (conn->tx) {
-            mprMark(conn->readq);
-            mprMark(conn->writeq);
-            httpMarkQueueHead(&conn->serviceq);
-        }
+        httpMarkQueueHead(&conn->serviceq);
         httpManageTrace(&conn->trace[0], flags);
         httpManageTrace(&conn->trace[1], flags);
 
@@ -2395,6 +2391,7 @@ void httpPrepServerConn(HttpConn *conn)
         conn->writeq = 0;
         conn->writeComplete = 0;
         conn->txheaders = 0;
+        conn->dispatcher = (conn->server) ? conn->server->dispatcher : mprGetDispatcher();
         httpSetState(conn, HTTP_STATE_BEGIN);
         httpInitSchedulerQueue(&conn->serviceq);
         mprAssert(conn->rx == 0);
@@ -2497,6 +2494,7 @@ void httpEvent(HttpConn *conn, MprEvent *event)
                 It should respond to the "Connection: close" and thus initiate a client-led close. 
                 This reduces TIME_WAIT states on the server. 
              */
+            printf("DESTROY conn\n");
             httpDestroyConn(conn);
             return;
         }
@@ -3748,6 +3746,7 @@ void httpAddConn(Http *http, HttpConn *conn)
     if (http->timer == 0) {
         startTimer(http);
     }
+    printf("ADD CONN\n");
     unlock(http);
 }
 
@@ -3857,6 +3856,7 @@ void httpRemoveConn(Http *http, HttpConn *conn)
 {
     lock(http);
     mprRemoveItem(http->connections, conn);
+    printf("REMOVE CONN\n");
     unlock(http);
 }
 
@@ -5342,7 +5342,8 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     mprSetItem(tx->outputPipeline, 0, tx->handler);
     if (tx->handler->flags & HTTP_STAGE_THREAD && !conn->threaded) {
         /* Start with dispatcher disabled. Conn.c will enable */
-        conn->dispatcher = mprCreateDispatcher(tx->handler->name, 0);
+        tx->dispatcher = mprCreateDispatcher(tx->handler->name, 0);
+        conn->dispatcher = tx->dispatcher;
     }
 
     /*  Create the outgoing queue heads and open the queues */
@@ -9317,6 +9318,9 @@ HttpTx *httpCreateTx(HttpConn *conn)
 void httpDestroyTx(HttpTx *tx)
 {
     mprCloseFile(tx->file);
+    if (tx->dispatcher) {
+        mprDestroyDispatcher(tx->dispatcher);
+    }
     if (tx->conn) {
         tx->conn->tx = 0;
         tx->conn = 0;

@@ -18,6 +18,7 @@ ifeq			($(BLD_FEATURE_CGI),1)
 	CGIP		:= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	TARGETS		+= cgi-bin/testScript cgi-bin/cgiProgram$(BLD_EXE)
 endif
+MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
 compileExtra: 	$(TARGETS)
 
@@ -25,7 +26,7 @@ compileExtra: 	$(TARGETS)
 #	Build testAppweb
 #
 $(BLD_BIN_DIR)/testAppweb$(BLD_EXE): $(OBJECTS) $(call lib, appweb)
-	bld --exe $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) --libs "http $(BLD_APPWEB_LIBS)" \
+	bld --exe $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "http $(BLD_APPWEB_LIBS)" \
 		testHttp$(BLD_OBJ) testAppweb$(BLD_OBJ)
 
 #

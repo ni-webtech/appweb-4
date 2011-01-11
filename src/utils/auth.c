@@ -1,5 +1,5 @@
 /*
-    httpPassword.c -- Manage passwords for HTTP authorization.
+    auth.c -- Manage passwords for HTTP authorization.
 
     This file provides facilities for creating passwords for Appweb. It uses basic encoding and decoding using the 
     base64 encoding scheme and the MD5 Message-Digest algorithms developed by RSA. This module is used by both basic 

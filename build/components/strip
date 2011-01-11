@@ -2,15 +2,12 @@
 #   Strip
 #
 defineComponent() {
-    local name path
+    local file path
 
-    #
-    #   Name comes from build/config/config.*
-    #
-    eval name=\$BLD_${KIND}_STRIP
-    path=`probe --path "$1" --partial $name $name`
+    eval file=\$BLD_${KIND}_STRIP
+    path=`probe --name strip $file`
     if [ "$path" = "" ] ; then
-        warnComponent strip $name
+        warnComponent $file
 	fi
     configureComponent --path "$path" strip
 }

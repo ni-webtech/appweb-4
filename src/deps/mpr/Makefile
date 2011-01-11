@@ -37,7 +37,7 @@ $(MPR_LIB): $(OBJECTS)
 	bld --library $(MPR_LIB) $(MPR_OBJECTS)
 
 $(MPRSSL_LIB): $(OBJECTS)
-	bld --library $(MPRSSL_LIB) --search "$(BLD_SSL_WITHLIBPATHS)" --libs "mpr $(BLD_SSL_WITHLIBS)" $(SSL_OBJECTS)
+	bld --library $(MPRSSL_LIB) --search "$(BLD_SSL_WITHPATHS)" --libs "mpr $(BLD_SSL_WITHLIBS)" $(SSL_OBJECTS)
 
 $(BLD_BIN_DIR)/makerom$(BLD_EXE): $(OBJECTS) $(MPR_LIB)
 	bld --exe $(BLD_BIN_DIR)/makerom$(BLD_EXE) --search "$(BLD_SSL_LIBPATHS)" --libs "mpr $(BLD_SSL_LIBS)" makerom

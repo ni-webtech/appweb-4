@@ -48,11 +48,11 @@ with --os=wince ld
 
 with --build --optional doxygen
 with --os=win --build --optional pkg
-with --optional regexp
 with mpr 
 with http
 with --host --optional matrixssl openssl ssl php
 with --optional sqlite 
+with --optional pcre
 with --optional ejs
 with appweb
 

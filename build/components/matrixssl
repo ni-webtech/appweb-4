@@ -2,38 +2,28 @@
 #   MatrixSSL
 #
 defineComponent() {
-	local path name search ver imports libs
-
-    if [ $KIND = "BUILD" -a $BLD_CROSS = 1 ] ; then
-        echo "only used as a host component"
-        return 0
-    fi
+	local path iflags libpaths search ver libs
 
     path=$1
-    name="matrixssl"
     ver="latest"
     search="."
 
-    path=`probe --path "$path" --partial "extensions/matrixssl/$ver" --search "$search" $name`
-    if [ "$path" = "" ] ; then
-        warnComponent $name
+    if [ "$path" != "" ] ; then
+        libpaths=`probe --name libmatrixssl --search "$path" --dir libmatrixsslstatic`
+        iflags=-I`probe --name matrixSsl.h --search "$path" --dir matrixSsl.h`
+    else
+        libpaths=`probe --name libmatrixssl --search "extensions/matrixssl/$ver/src" --dir libmatrixsslstatic`
+        iflags=-I`probe --name matrixSsl.h --search "extensions/matrixssl/$ver" --dir matrixSsl.h`
+    fi
+    if [ "$libpaths" = "" -o "$iflags" = "" ] ; then
+        warnComponent matrixssl
         return
-	fi
+    fi
     if [ $BLD_HOST_OS = WIN ] ; then
-        imports="$path/src/Release/libmatrixssl.dll"
         libs="libmatrixssl"
     else
-        imports="$path/src/libmatrixsslstatic.a"
         libs="matrixsslstatic.a"
     fi
-
-    for i in $imports
-    do
-        if [ ! -f "$i" ] ; then
-            warnComponent $name "Can't locate $i"
-            return
-        fi
-    done
     CFG_HOST_SSL_MANDATORY=1
-    configureComponent --path "$path" --imports "$imports" --libs "$libs" --iflags "-I$path" $name
+    configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" matrixssl
 }

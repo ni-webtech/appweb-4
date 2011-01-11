@@ -2,26 +2,15 @@
 #   Mpr
 #
 defineComponent() {
-    local libpaths name path
+    local libpaths iflags path builtin
 
-    name="mpr"
-    path="$1"
-    search="src/deps:src"
-
-    if [ -f src/mpr.c -o -f src/mpr/mprLib.c ] ; then
-        path="src/mpr"
-    elif [ -d src/deps/mpr ] ; then
-        path="src/deps/mpr"
-    else
-        path=`probe --path "$path" --partial "mpr" $name`
-    fi
-    if [ "$path" = "" ] ; then
-        warnComponent $name
+    path="${1:-.}"
+    iflags=-I`probe --name mpr --dir --warn --search "$path:$path/src/deps/mpr:$path/src/include" "mpr.h"`
+    libpaths=`probe --name mpr --dir --search "$path:$path/out/lib" "libmpr"`
+    if [ "$libpaths" = "" -a "$path" != "." ] ; then
+        warnComponent mpr "Can't locate libmpr"
         return
     fi
-    if isExternal "$path" ; then
-        libpaths="$path/lib"
-    fi
-    configureComponent --builtin --libs "mpr" --path "$path" --libpaths "$libpaths" $name
-    BLD_FEATURE_MPR_ALL_IN_ONE=1
+    builtin=`[ $path = . ] && echo --builtin`
+    configureComponent --libs "mpr" --libpaths "$libpaths" --iflags "$iflags" $builtin mpr
 }
