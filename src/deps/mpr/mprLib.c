@@ -2353,6 +2353,7 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->version);
         mprMark(mpr->waitService);
         mprMark(mpr->workerService);
+        mprMark(mpr->emptyString);
         mprMark(mpr->heap.markerCond);
     }
 }
@@ -7231,6 +7232,8 @@ void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, Mpr
 {
     mprAssert(!isRunning(dispatcher));
     mprAssert(dispatcher->owner == 0);
+    //  MOB -- just for debug
+    MprThread *tp = mprGetCurrentThread();
 
     if (event) {
         event->timestamp = dispatcher->service->now;

@@ -2494,7 +2494,6 @@ void httpEvent(HttpConn *conn, MprEvent *event)
                 It should respond to the "Connection: close" and thus initiate a client-led close. 
                 This reduces TIME_WAIT states on the server. 
              */
-            printf("DESTROY conn\n");
             httpDestroyConn(conn);
             return;
         }
@@ -3746,7 +3745,6 @@ void httpAddConn(Http *http, HttpConn *conn)
     if (http->timer == 0) {
         startTimer(http);
     }
-    printf("ADD CONN\n");
     unlock(http);
 }
 
@@ -3856,7 +3854,6 @@ void httpRemoveConn(Http *http, HttpConn *conn)
 {
     lock(http);
     mprRemoveItem(http->connections, conn);
-    printf("REMOVE CONN\n");
     unlock(http);
 }
 

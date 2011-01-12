@@ -306,7 +306,11 @@ static HttpStage *findHandler(HttpConn *conn, bool *rescan)
                     if (mprGetPathInfo(path, &tx->fileInfo) == 0) {
                         mprLog(5, "findHandler: Adding extension, new path %s\n", path);
                         tx->filename = path;
-                        httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL));
+                        if (rx->parsedUri->query && rx->parsedUri->query[0]) {
+                            httpSetUri(conn, sjoin(rx->uri, ".", hp->key, "?", rx->parsedUri->query, NULL));
+                        } else {
+                            httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL));
+                        }
                         break;
                     }
                 }

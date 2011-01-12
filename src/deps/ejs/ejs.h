@@ -2003,7 +2003,10 @@ typedef struct EjsBlock {
     uint            isGlobal: 1;                    /**< Block is the global block */
     uint            nobind: 1;                      /**< Don't bind to properties in this block */
 #if BLD_DEBUG
+#if UNUSED
     EjsLoc          loc;
+#endif
+    struct EjsLine  *line;
 #endif
 } EjsBlock;
 
@@ -2059,7 +2062,7 @@ extern EjsBlock *ejsRemoveScope(EjsBlock *block);
 extern void     ejsResetBlockNamespaces(Ejs *ejs, EjsBlock *block);
 
 #if BLD_DEBUG
-extern void     ejsSetBlockLocation(EjsBlock *block, EjsLoc *loc);
+#define ejsSetBlockLocation(block, loc) block->line = loc
 #else
 #define ejsSetBlockLocation(block, loc)
 #endif
@@ -2115,6 +2118,7 @@ typedef struct EjsDebug {
 
 extern EjsDebug *ejsCreateDebug(Ejs *ejs);
 extern int ejsAddDebugLine(Ejs *ejs, EjsDebug **debug, int offset, MprChar *source);
+extern EjsLine *ejsGetDebugLine(Ejs *ejs, struct EjsFunction *fun, uchar *pc);
 extern int ejsGetDebugInfo(Ejs *ejs, struct EjsFunction *fun, uchar *pc, char **path, int *lineNumber, MprChar **source);
 
 // TODO OPT. Could compress this.
@@ -2326,7 +2330,7 @@ typedef struct EjsFrame {
     uint            freeze: 1;              /**< Garbage collection frozen */
     uint            getter: 1;              /**< Frame is a getter */
 #if BLD_DEBUG
-    EjsLoc          loc;
+    EjsLine         *line;
 #endif
 } EjsFrame;
 
@@ -3206,6 +3210,7 @@ extern EjsSocket *ejsCreateSocket(Ejs *ejs);
  */
 typedef struct EjsTimer {
     EjsObj          obj;                /**< Base object */
+    Ejs             *ejs;               /**< Interp reference - needed for background timers */
     MprEvent        *event;             /**< MPR event for the timer */
     int             drift;              /**< Timer event is allowed to drift if system conditions requrie */
     int             repeat;             /**< Timer repeatedly fires */
