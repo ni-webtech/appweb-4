@@ -9,6 +9,7 @@ POST_DIRS			:= package
 include 			.makedep 
 
 PRE_DIRS			+= $(BLD_OS) test
+MAKE_IFLAGS			+= $(BLD_MPR_IFLAGS)
 
 #
 #	Extra libraries

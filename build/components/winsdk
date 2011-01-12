@@ -4,30 +4,29 @@
 defineComponent() {
     local name path partial
 
+    path=${1:-.}
+
     if [ $BLD_CROSS = 1 -a $KIND = HOST -a $BLD_HOST_OS != "WIN" ] ; then 
         return 0
     fi
     name=winsdk
-    path=`probe --emit-dir --path "$1" --partial "Include/WinBase.h" $name`
+    path=`probe --name winsdk --dir --search "$1" "Include/WinBase.h"`
     if [ "$path" = "" ] ; then
-        warnComponent "Windows SDK" \
-            "Download from http://msdn.microsoft.com/en-us/windowsserver/bb980924.aspx\n"
+        warnComponent "Windows SDK" "Download from http://msdn.microsoft.com/en-us/windowsserver/bb980924.aspx\n"
         return
 	fi
-    configureComponent --path "$path" --emitter emitWinOptions $name
-    # [ $KIND = BUILD ] && setWinEnv
+    configureComponent --path "$path" --emitter emitWinOptions winsdk
     setWinEnv
 }
 
 
 setWinEnv()
 {
-    local file path cc version file os cc cpu bldPath bldInclude bldLib vs VS WINSDK cl
+    local file cc version file os cc cpu bldPath bldInclude bldLib vs VS WINSDK cl
 
     name=cc
     eval file=\$BLD_${KIND}_CC
-	eval path=\$CFG_${KIND}_CC
-    cc=`probe --path "$1" --partial $file $name`
+    cc=`probe --name winsdk --search "$1" $file`
 
     eval WINSDK=\$CFG_${KIND}_WINSDK
     if [ "$WINSDK" = "" ] ; then

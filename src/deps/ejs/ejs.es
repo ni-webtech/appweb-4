@@ -13292,6 +13292,7 @@ module ejs.unix {
         if (Config.OS == "WIN" || Config.OS == "CYGWIN") {
             Cmd.run("/bin/kill -f -" + signal + " " + pid)
         } else {
+            print("RUN " + "/bin/kill -" + signal + " " + pid)
             Cmd.run("/bin/kill -" + signal + " " + pid)
         }
     }

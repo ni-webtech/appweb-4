@@ -7230,10 +7230,13 @@ int mprDispatchersAreIdle()
  */
 void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, MprEvent *event)
 {
+#if BLD_DEBUG
+    //  MOB TEMP -- just for debug
+    MprThread *tp = mprGetCurrentThread();
+#endif
+
     mprAssert(!isRunning(dispatcher));
     mprAssert(dispatcher->owner == 0);
-    //  MOB -- just for debug
-    MprThread *tp = mprGetCurrentThread();
 
     if (event) {
         event->timestamp = dispatcher->service->now;

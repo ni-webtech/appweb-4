@@ -11953,17 +11953,18 @@ EjsArray *ejsCreateArray(Ejs *ejs, int size)
 
 static void manageArray(EjsArray *ap, int flags)
 {
-    EjsObj      *vp;
-    int         i;
+    EjsObj      *vp, **data;
+    int         i, length;
 
     if (flags & MPR_MANAGE_MARK) {
-        //  MOB RACEX
-        for (i = ap->length - 1; i >= 0; i--) {
-            if ((vp = ap->data[i]) != 0) {
+        mprMark(ap->data);
+        length = ap->length;
+        data = ap->data;
+        for (i = length - 1; i >= 0; i--) {
+            if ((vp = data[i]) != 0) {
                 mprMark(vp);
             }
         }
-        mprMark(ap->data);
 #if MOB && CONSIDER
         mprMark(ap->pot.type);
 #endif
@@ -32957,10 +32958,12 @@ static void removeWorker(EjsWorker *worker)
             mprSignalDispatcher(ejs->dispatcher);
         }
         /* Accelerate GC */
-        worker->pair->ejs->workerComplete = 1;
-        worker->pair->ejs = 0;
-        worker->pair->pair = 0;
-        worker->pair = 0;
+        if (worker->pair) {
+            worker->pair->ejs->workerComplete = 1;
+            worker->pair->ejs = 0;
+            worker->pair->pair = 0;
+            worker->pair = 0;
+        }
         worker->ejs = 0;        
         unlock(ejs);
     }
@@ -33613,7 +33616,7 @@ static void manageWorker(EjsWorker *worker, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (!worker->inside) {
-            /* Remove here also incase an explicit mprFree on the worker */
+            //  MOB - race with freeing ejs
             if (worker->ejs) {
                 removeWorker(worker);
             }

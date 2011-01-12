@@ -984,11 +984,19 @@ configureComponent() {
     #
     #   Imports must be relative because they are used as targets
     #
-    new=""
-    for i in $imports ; do
-        new="`relativePath "$i"` $new"
-    done
-    imports="$new"
+    if [ "$HAS_CYGPATH" = 1 ] ; then
+        new=""
+        for i in $imports ; do
+            new="`relativePath "$i"` $new"
+        done
+        imports="$new"
+        new=""
+        for i in $iflags ; do
+            i=${i#-I}
+            new="-I`relativePath "$i"` $new"
+        done
+        iflags="$new"
+    fi
 
     #
     #   Don't make unique if static on Linux. ld does not rescan.
@@ -1010,7 +1018,7 @@ configureComponent() {
     eval CFG_${kind}_${upper}_DEPENDENCIES=\"$dependencies\"
     eval CFG_${kind}_${upper}_DFLAGS=\"$dflags\"
     eval CFG_${kind}_${upper}_EMITTER=$emitter
-    eval CFG_${kind}_${upper}_IFLAGS=\"$iflags\"
+    eval CFG_${kind}_${upper}_IFLAGS=\"'$iflags'\"
     eval CFG_${kind}_${upper}_IMPORTS=\"'$imports'\"
     eval CFG_${kind}_${upper}_LDFLAGS=\"$ldflags\"
     eval CFG_${kind}_${upper}_LIBS=\"$libs\"
@@ -1223,7 +1231,6 @@ with() {
                 eval CFG_${kind}_${upperName}=$dir
                 eval CFG_${kind}_${upperName}_WITH=1
                 eval CFG_${kind}_${upperName}_MANDATORY=$mandatory
-#               eval CFG_${kind}_${upper}_IFLAGS=\"$iflags\"
             fi
         done
     done

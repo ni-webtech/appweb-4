@@ -2,27 +2,23 @@
 #   MatrixSSL
 #
 defineComponent() {
-	local path iflags libpaths search ver libs imports
+	local path iflags libpaths ver libs imports
 
-    path=$1
+    path="${1:-.}"
     ver="latest"
-    search="."
 
-    if [ "$path" != "" ] ; then
-        imports=`probe --name matrixssl --search "$path" libmatrixsslstatic`
-        iflags=-I`probe --name matrixssl --dir --search "$path" matrixSsl.h`
-    else
-        imports=`probe --name matrixssl --search "extensions/matrixssl/$ver/src" libmatrixsslstatic`
-        iflags=-I`probe --name matrixssl --dir --search "extensions/matrixssl/$ver" matrixSsl.h`
+    if [ $OS = WIN ] ; then
+        imports=`probe --name matrixssl --search "$path:extensions/matrixssl/$ver/src/Release" libmatrixssl`
+        iflags=-I`probe --name matrixssl --dir --search "$path:extensions/matrixssl/$ver" matrixSsl.h`
+        libs="libmatrixssl"
+    else 
+        imports=`probe --name matrixssl --search "$path:extensions/matrixssl/$ver/src" libmatrixssl`
+        iflags=-I`probe --name matrixssl --dir --search "$path:extensions/matrixssl/$ver" matrixSsl.h`
+        libs="matrixsslstatic.a"
     fi
-    if [ "$imports" = "" -o "$iflags" = "" ] ; then
+    if [ "$imports" = "" -o "$iflags" = "-I" ] ; then
         warnComponent matrixssl
         return
-    fi
-    if [ $BLD_HOST_OS = WIN ] ; then
-        libs="libmatrixssl"
-    else
-        libs="matrixsslstatic.a"
     fi
     CFG_HOST_SSL_MANDATORY=1
     libpaths="${imports%/*}"
