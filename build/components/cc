@@ -114,6 +114,9 @@ setCompilerOptions()
             if [ $? = 0 ] ; then
                 eval $hasMmu=1
             fi
+            if [ "$BLD_MMU_OVERRIDE" != "" ] ; then
+                eval $hasMmu=$BLD_MMU_OVERRIDE
+            fi
 
             #
             #   Search for dlopen() / libdl

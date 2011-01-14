@@ -146,7 +146,7 @@ public function stopService() {
     if (Path(PIDFILE).exists) {
         pid = Path(PIDFILE).readString()
         Path(PIDFILE).remove()
-        try { kill(pid); } catch (e) { }
+        try { kill(pid, 9); } catch (e) { }
     }
 }
 

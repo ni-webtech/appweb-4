@@ -1751,7 +1751,7 @@ server.on("readable", function (event, request) {
 
 App.log.info("Listen on", App.config.web.endpoint)
 server.listen(App.config.web.endpoint)
-App.eventLoop()
+App.run()
 '
 
     /*
@@ -1807,7 +1807,7 @@ module App {
 
     <p>Ejscript has an application generator, templating engine, a Model/View/Controller framework and a library 
         of Ajax view controls. Enjoy!</p>
-	<br/>
+    <br/>
 
     <h2>Quick Start</h2>
     <ol>
@@ -1837,8 +1837,8 @@ module App {
             http://ejscript.org/products/ejs/doc/product/index.html</a> for the latest Ejscript documentation. 
             Here you can read quick tours, overviews and access all the Ejscript APIs.</b>
         </li>
-		<li><b>Enjoy!</b></li>
-		<p>&nbsp;</p>
+        <li><b>Enjoy!</b></li>
+        <p>&nbsp;</p>
 </div>
 
 <div class="contentRight">
@@ -1864,8 +1864,8 @@ EjsMvc().main()
 /*
     @copy   default
   
-    Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2010. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
   
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire
@@ -1888,5 +1888,11 @@ EjsMvc().main()
     for this software and support services are available from Embedthis
     Software at http://www.embedthis.com
   
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
     @end
  */

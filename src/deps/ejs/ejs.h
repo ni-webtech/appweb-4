@@ -837,9 +837,7 @@ struct EjsXML;
 /*
     Trait, type, function and property attributes. These are sometimes combined into a single attributes word.
  */
-#if UNUSED
-#define EJS_TRAIT_BUILTIN               0x1         /**< */
-#endif
+//  MOB - renumber from 0x1
 #define EJS_TRAIT_CAST_NULLS            0x2         /**< Property casts nulls */
 #define EJS_TRAIT_DELETED               0x4         /**< Property has been deleted */
 #define EJS_TRAIT_GETTER                0x8         /**< Property is a getter */
@@ -1033,8 +1031,10 @@ typedef struct EjsLoc {
 #define SET_DYNAMIC(vp, value)  ((EjsObj*) vp)->xtype = \
                                     (((size_t) value) << EJS_SHIFT_DYNAMIC) | (((EjsObj*) vp)->xtype & ~EJS_MASK_DYNAMIC)
 #if BLD_DEBUG
-#define SET_TYPE_NAME(vp, t) if (t && ((EjsType*) t)->qname.name) { \
-                                    ((EjsObj*) vp)->kind = ((EjsType*) t)->qname.name->value; \
+#define SET_TYPE_NAME(vp, t)    if (1) { \
+                                    if (t && ((EjsType*) t)->qname.name) { \
+                                        ((EjsObj*) vp)->kind = ((EjsType*) t)->qname.name->value; \
+                                    } \
                                     ((EjsObj*) vp)->type = ((EjsType*) t); \
                                 } else
 #else
@@ -1049,25 +1049,29 @@ typedef struct EjsLoc {
 
 typedef void EjsAny;
 
+/*
+    WARNING: changes to this structure require changes to mpr/src/mprPrintf.c
+ */
 typedef struct EjsObj {
-#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
-    union {
-#endif
-        ssize           xtype;
-#if DEBUG_IDE && BLD_CC_UNNAMED_UNIONS
-        struct {
-            uint        visited : 1;        /* Has been traversed */
-            uint        dynamic : 1;        /* Object may be modified */
-            ssize       typeBits: MPR_BITS - 2;
-        } bits;
-    };
-#endif
+    ssize           xtype;              /* xtype: typeBits | dynamic << 1 | visited */
 #if BLD_DEBUG
-    char                *kind;
-    struct EjsType      *type;
+    char            *kind;              /* Type name of object (Type->qname.name) */
+    struct EjsType  *type;              /* Pointer to object type */
+    MprMem          *mem;               /* Pointer to underlying memory block */
 #endif
 } EjsObj;
 
+    
+#if BLD_DEBUG
+    #define ejsSetMemRef(obj) if (1) { ((EjsObj*) obj)->mem = MPR_GET_MEM(obj); } else 
+#else
+    #define ejsSetMemRef(obj) 
+#endif
+
+    
+/*
+    WARNING: changes to this structure require changes to mpr/src/mprPrintf.c
+ */
 typedef struct EjsString {
     EjsObj           obj;
     struct EjsString *next;              /* Hash chain link when interning */
@@ -1455,9 +1459,6 @@ typedef struct EjsPot {
     EjsProperties   *properties;                /** Object properties */
     //  TODO - OPT - merge numProp with bits above (24 bits)
     int             numProp;                    /** Number of properties */
-#if BLD_DEBUG
-    MprMem          *mem;                       /**< Pointer to underlying memory block */
-#endif
 } EjsPot;
 
 #define POT(ejs, ptr)  (TYPE(ptr)->isPot)
@@ -1465,14 +1466,10 @@ typedef struct EjsPot {
 extern int ejsIs(EjsAny *obj, int slot);
 #define ejsIsPot(ejs, obj) (obj && POT(ejs, obj))
 
+//  MOB -- remove ejs versions and just use mpr version
 #define ejsGetName(ptr) mprGetName(ptr)
 #define ejsSetName(ptr, name) mprSetName(ptr, name)
 #define ejsCopyName(dest, src) mprSetName(dest, mprGetName(src))
-#if BLD_DEBUG
-    #define ejsSetMemRef(obj) if (1) { obj->mem = MPR_GET_MEM(obj); } else 
-#else
-    #define ejsSetMemRef(obj) 
-#endif
 
 /** 
     Allocate a new variable
@@ -2096,6 +2093,8 @@ typedef struct EjsConstants {
     int           locked;                   /**< No more additions allowed */
     MprHashTable  *table;                   /**< Hash table for fast lookup when compiling */
     EjsString     **index;                  /**< Interned string index */
+//  MOB - remove
+    struct EjsModule     *mp;
 } EjsConstants;
 
 extern EjsConstants *ejsCreateConstants(Ejs *ejs, int count, ssize size);
@@ -3972,32 +3971,29 @@ extern void ejsUnlockService(Ejs *ejs);
         unresolved or primitive (builtin). The relevant mask is ored into the lower 2 bits. Slot numbers and
         name tokens are shifted up 2 bits. Zero means untyped.
 
-    ModuleHeader {
+    ModuleHeader
         short       magic
         int         fileVersion
         int         version
         int         flags
-    }
 
-    Module {
+    Module
         byte        section
         string      name
         number      version
         number      checksum
         number      constantPoolLength
         block       constantPool
-    }
 
-    Dependencies {
+    Dependencies
         byte        section
         string      moduleName
         number      minVersion
         number      maxVersion
         number      checksum
         byte        flags
-    }
 
-    Type {
+    Type
         byte        section
         string      typeName
         string      namespace
@@ -4009,18 +4005,16 @@ extern void ejsUnlockService(Ejs *ejs);
         number      numInterfaces
         type        Interfaces ...
         ...
-    }
 
-    Property {
+    Property
         byte        section
         string      name
         string      namespace
         number      attributes
         number      slot
         type        property type
-    }
 
-    Function {
+    Function
         byte        section
         string      name
         string      namespace
@@ -4035,9 +4029,8 @@ extern void ejsUnlockService(Ejs *ejs);
         number      exceptionCount
         number      codeLength
         block       code        
-    }
 
-    Exception {
+    Exception
         byte        section
         byte        flags
         number      tryStartOffset
@@ -4046,28 +4039,24 @@ extern void ejsUnlockService(Ejs *ejs);
         number      handlerEndOffset
         number      numOpenBlocks
         type        catchType
-    }
 
-    Debug {
+    Debug
         byte        section
         number      countOfLines
         string      fileName
         number      startLine
         number      addressOffset      
         ...
-    }
 
-    Block {
+    Block
         byte        section
         string      name
         number      slot
         number      propCount
-    }
 
-    Documentation {
+    Documentation
         byte        section
         string      text
-    }
  */
 
 /*
@@ -4166,49 +4155,50 @@ typedef struct EjsModuleHdr {
 typedef struct EjsModule {
     EjsString       *name;                  /* Name of this module */
     EjsString       *vname;                 /* Versioned name */
-    char            *path;                  /* Module file path name */
     int             version;                /* Made with EJS_MAKE_VERSION */
     int             minVersion;             /* Minimum version when used as a dependency */
     int             maxVersion;             /* Maximum version when used as a dependency */
     int             checksum;               /* Checksum of slots and names */
 
-    EjsLoadState    *loadState;             /* State while loading */
-    MprList         *dependencies;          /* Module file dependencies. List of EjsModules */
-    MprFile         *file;                  /* File handle for loading and code generation */
-
-    /*
-        Used during code generation
-        MOB - move to separate struct
-     */
-    struct EcCodeGen *code;                 /* Code generation buffer */
-    MprList         *globalProperties;      /* List of global properties */
-    EjsFunction     *initializer;           /* Initializer method */
-
-    /*
-        Used only while loading modules
-        MOB move into separate struct
-     */
-    MprList         *current;               /* Current stack of open objects */
-    EjsBlock        *scope;                 /* Lexical scope chain */
     EjsConstants    *constants;             /* Constant pool */
-    int             nameToken;              /* */
-    int             firstGlobal;            /* First global property */
-    int             lastGlobal;             /* Last global property + 1*/
-    struct EjsFunction *currentMethod;      /* Current method being loaded */
+    EjsFunction     *initializer;           /* Initializer method */
+    Ejs             *ejs;                   /* Back reference for GC */
 
     uint            compiling       : 1;    /* Module currently being compiled from source */
     uint            configured      : 1;    /* Module types have been configured with native code */
-
-    //  MOB -- used to test if a module should be compiled
     uint            loaded          : 1;    /* Module has been loaded from an external file */
     uint            nativeLoaded    : 1;    /* Backing shared library loaded */
-    uint            hasNative       : 1;    /* Has native property definitions */
-    uint            hasInitializer  : 1;    /* Has initializer function */
-    uint            initialized     : 1;    /* Initializer has run */
     uint            hasError        : 1;    /* Module has a loader error */
+    uint            hasInitializer  : 1;    /* Has initializer function */
+    uint            hasNative       : 1;    /* Has native property definitions */
+    uint            initialized     : 1;    /* Initializer has run */
     uint            visited         : 1;    /* Module has been traversed */
     int             flags;                  /* Loading flags */
+
+    /*
+        Module loading and residuals 
+     */
+    EjsLoadState    *loadState;             /* State while loading */
+    MprList         *dependencies;          /* Module file dependencies. List of EjsModules */
+    MprFile         *file;                  /* File handle for loading and code generation */
+    MprList         *current;               /* Current stack of open objects */
+    EjsFunction     *currentMethod;         /* Current method being loaded */
+    EjsBlock        *scope;                 /* Lexical scope chain */
     EjsString       *doc;                   /* Current doc string */
+    char            *path;                  /* Module file path name */
+    int             firstGlobal;            /* First global property */
+    int             lastGlobal;             /* Last global property + 1*/
+
+    /*
+        Used during code generation
+     */
+    struct EcCodeGen *code;                 /* Code generation buffer */
+    MprList         *globalProperties;      /* List of global properties */
+
+#if UNUSED
+    int             nameToken;              /* */
+#endif
+
 } EjsModule;
 
 
@@ -4294,6 +4284,7 @@ extern EjsDoc       *ejsCreateDoc(Ejs *ejs, void *vp, int slotNum, EjsString *do
 extern int          ejsAddModule(Ejs *ejs, EjsModule *up);
 extern EjsModule    *ejsLookupModule(Ejs *ejs, EjsString *name, int minVersion, int maxVersion);
 extern int          ejsRemoveModule(Ejs *ejs, EjsModule *up);
+extern void         ejsRemoveModules(Ejs *ejs);
 
 extern int  ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, int checksum, int flags);
 extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, EjsString *name);
@@ -4302,6 +4293,12 @@ extern EjsModule *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsCon
 #ifdef __cplusplus
 }
 #endif
+
+/*
+    Allow user overrides
+ */
+#include    "customize.h"
+
 #endif /* _h_EJS_CORE */
 
 /*

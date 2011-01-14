@@ -607,6 +607,11 @@ extern int maDefineEgiForm(Http *http, cchar *name, MaEgiForm *form);
 } /* extern C */
 #endif
 
+/*
+    Permit overrides
+ */
+#include    "customize.h"
+
 #endif /* _h_APPWEB */
 
 /*

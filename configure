@@ -58,6 +58,11 @@ else
     MAKE=make
 fi
 
+#
+#   Feature defaults
+#
+BLD_FEATURE_VALLOC=1
+
 ###############################################################################
 #
 #   Check the software installation and O/S
@@ -1635,6 +1640,7 @@ BLD_FEATURE_ASSERT=$BLD_FEATURE_ASSERT
 BLD_FEATURE_DEVICE=$BLD_FEATURE_DEVICE
 BLD_FEATURE_FLOAT=$BLD_FEATURE_FLOAT
 BLD_FEATURE_LEGACY_API=$BLD_FEATURE_LEGACY_API
+BLD_FEATURE_VALLOC=$BLD_FEATURE_VALLOC
 
 !EOF_STANDARD_FEATURES
 
@@ -2330,6 +2336,12 @@ while [ "${1#--}" != "$1" ] ; do
     disable-legacy|disable-legacy-api)
         BLD_FEATURE_LEGACY_API=0
         ;;
+    disable-mmu)
+        BLD_MMU_OVERRIDE=0
+        ;;
+    disable-valloc)
+        BLD_FEATURE_VALLOC=0
+        ;;
     disable-rom-fs|disable-rom|disable-romfs)
         BLD_FEATURE_ROMFS=0
         ;;
@@ -2349,6 +2361,12 @@ while [ "${1#--}" != "$1" ] ; do
         ;;
     enable-legacy|enable-legacy-api|legacy)
         BLD_FEATURE_LEGACY_API=1
+        ;;
+    enable-valloc)
+        BLD_FEATURE_VALLOC=1
+        ;;
+    enable-mmu)
+        BLD_MMU_OVERRIDE=1
         ;;
     enable-rom-fs|enable-rom|enable-romfs|rom)
         BLD_FEATURE_ROMFS=1

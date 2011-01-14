@@ -431,7 +431,11 @@ static int initializePhp(Http *http)
 #endif
 
     appweb = httpGetContext(http);
+#ifdef BLD_FEATURE_PHP_INI
+    phpSapiBlock.php_ini_path_override = BLD_FEATURE_PHP_INI;
+#else
     phpSapiBlock.php_ini_path_override = appweb->defaultServer->serverRoot;
+#endif
     sapi_startup(&phpSapiBlock);
     if (php_module_startup(&phpSapiBlock, 0, 0) == FAILURE) {
         mprError("PHP did not initialize");

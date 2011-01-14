@@ -2462,11 +2462,11 @@ module ejs {
 
 /*
     Ease backward compatibility
-*/
 
-module ejs.xml { }
-module ejs.sys { }
-module ejs.io { }
+    module ejs.xml { }
+    module ejs.sys { }
+    module ejs.io { }
+*/
 
 /*
     @copy   default
@@ -13292,7 +13292,7 @@ module ejs.unix {
         if (Config.OS == "WIN" || Config.OS == "CYGWIN") {
             Cmd.run("/bin/kill -f -" + signal + " " + pid)
         } else {
-            print("RUN " + "/bin/kill -" + signal + " " + pid)
+            // print("RUN " + "/bin/kill -" + signal + " " + pid)
             Cmd.run("/bin/kill -" + signal + " " + pid)
         }
     }
