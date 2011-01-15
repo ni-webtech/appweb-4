@@ -7660,6 +7660,7 @@ int ejsAddModule(Ejs *ejs, EjsModule *mp)
     //MOB
     mprAssert(ejs->modules->length < 40);
     mp->ejs = ejs;
+    //MOB printf("Add modules (before) len %d mustYield %d newCount %d\n", ejs->modules->length, MPR->heap.mustYield, MPR->heap.newCount);
     return mprAddItem(ejs->modules, mp);
 }
 
@@ -7668,6 +7669,7 @@ int ejsRemoveModule(Ejs *ejs, EjsModule *mp)
 {
     mprAssert(ejs->modules);
     mp->ejs = 0;
+    //MOB printf("Remove modules (before) %d\n", ejs->modules->length);
     return mprRemoveItem(ejs->modules, mp);
 }
 
@@ -9701,10 +9703,6 @@ int ejsFreeze(Ejs *ejs, int freeze)
  */
 static int allocNotifier(int flags, ssize size)
 {
-    EjsService  *sp;
-    Ejs         *ejs;
-    int         next;
-
     if (flags & MPR_MEM_DEPLETED) {
         mprPrintfError("Can't allocate memory block of size %d\n", size);
         mprPrintfError("Total memory used %d\n", (int) mprGetMem());
@@ -9713,14 +9711,18 @@ static int allocNotifier(int flags, ssize size)
     } else if (flags & MPR_MEM_LOW) {
         mprPrintfError("Memory request for %d bytes exceeds memory red-line\n", size);
         mprPrintfError("Total memory used %d\n", (int) mprGetMem());
-
+#if UNUSED
     } else if (flags & MPR_MEM_ATTENTION) {
+        EjsService  *sp;
+        Ejs         *ejs;
+        int         next;
         sp = MPR->ejsService;
         lock(sp);
         for (next = 0; (ejs = mprGetNextItem(sp->vmlist, &next)) != 0; ) {
             ejs->gc = 1;
         }
         unlock(sp);
+#endif
     }
     return 0;
 }
@@ -25205,8 +25207,8 @@ int ejsGetSlot(Ejs *ejs, EjsPot *obj, int slotNum)
     }
     mprAssert(obj->numProp <= obj->properties->size);
 #if BLD_DEBUG
-    if (obj == ejs->global && obj->numProp > 180) {
-        mprAssert(obj != ejs->global || obj->numProp < 180);
+    if (obj == ejs->global && obj->numProp > 220) {
+        mprAssert(obj != ejs->global || obj->numProp < 220);
         mprBreakpoint();
     }
 #endif
@@ -40237,7 +40239,7 @@ static EjsType *defineClass(EcCompiler *cp, EcNode *np)
         fatt = EJS_TRAIT_HIDDEN | EJS_PROP_STATIC;
         ejsDefineProperty(ejs, (EjsObj*) type, 0, qname, ejs->functionType, fatt, ejs->nullValue);
         constructorNode = np->klass.constructor;
-        if (constructorNode && !constructorNode->function.isDefaultConstructor) {
+        if (constructorNode && !constructorNode->function.isDefault) {
             type->hasConstructor = 1;
         }
 #if MOB
@@ -40441,7 +40443,7 @@ static void astClass(EcCompiler *cp, EcNode *np)
         Only need to do this if this is a default constructor, ie. does not exist in the class body.
      */
     constructor = np->klass.constructor;
-    if (constructor && constructor->function.isDefaultConstructor) {
+    if (constructor && constructor->function.isDefault) {
         astFunction(cp, constructor);
     }
     removeScope(cp);
@@ -40639,8 +40641,12 @@ static EjsFunction *defineFunction(EcCompiler *cp, EcNode *np)
         block = getBlockForDefinition(cp, np, state->varBlock, np->attributes);
 
     } else {
-        block = state->optimizedLetBlock;
-        if (state->optimizedLetBlock != state->varBlock) {
+        if (np->function.isExpression) {
+            block = state->letBlock;
+        } else {
+            block = state->optimizedLetBlock;
+        }
+        if (block != state->varBlock && block != ejs->global) {
             state->letBlockNode->createBlockObject = 1;
         }
     }
@@ -40850,6 +40856,8 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
 
     if (np->function.isMethod) {
         block = getBlockForDefinition(cp, np, state->varBlock, np->attributes);
+    } else if (np->function.isExpression) {
+        block = state->letBlock;
     } else {
         block = state->optimizedLetBlock;
     }
@@ -45220,11 +45228,7 @@ static void genClass(EcCompiler *cp, EcNode *np)
 
         constructor = state->currentFunction = (EjsFunction*) type;
         mprAssert(constructor);
-#if UNUSED
-        state->currentFunctionName = constructorNode->qname.name;
-#endif
-
-        if (constructorNode->function.isDefaultConstructor) {
+        if (constructorNode->function.isDefault) {
             /*
                 No constructor exists, so generate the default constructor. Append the default constructor 
                 instructions after any initialization code. Will only get here if there is no required instance 
@@ -45271,9 +45275,6 @@ static void genClass(EcCompiler *cp, EcNode *np)
                         }
                     }
                 }
-#if UNUSED
-                ejsSetFunctionCode(ejs, constructor, state->currentModule, byteCode, len, debug);
-#endif
                 /*
                     Adjust existing exception blocks to accomodate injected code.
                     Then define new try/catch blocks encountered.
@@ -52815,6 +52816,7 @@ static EcNode *parseFunctionExpression(EcCompiler *cp)
         return LEAVE(cp, unexpected(cp));
     }
     np = createNode(cp, N_FUNCTION, NULL);
+    np->function.isExpression = 1;
 
     if (peekToken(cp) == T_ID) {
         getToken(cp);
@@ -59545,7 +59547,7 @@ static EcNode *parseClassDefinition(EcCompiler *cp, EcNode *attributeNode)
         applyAttributes(cp, constructor, 0, ejsCreateStringFromAsc(cp->ejs, EJS_PUBLIC_NAMESPACE));
         constructor->function.isMethod = 1;
         constructor->function.isConstructor = 1;
-        constructor->function.isDefaultConstructor = 1;
+        constructor->function.isDefault = 1;
     }
     return LEAVE(cp, np);
 }
@@ -61597,7 +61599,9 @@ static void manageNode(EcNode *node, int flags)
             mprMark(node->function.body);
             mprMark(node->function.parameters);
             mprMark(node->function.constructorSettings);
+#if UNUSED
             mprMark(node->function.expressionRef);
+#endif
             mprMark(node->function.functionVar);
             break;
 

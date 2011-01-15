@@ -4754,12 +4754,6 @@ typedef struct EcNode {
 #if BLD_CC_UNNAMED_UNIONS
     union {
 #endif
-#if UNUSED
-        struct {
-            EcCodeGen   *rightCode;
-        } binary;
-#endif
-
         struct {
             Node        expression;
             EcCodeGen   *expressionCode;        /* Code buffer for the case expression */
@@ -4778,15 +4772,6 @@ typedef struct EcNode {
             int         varKind;                /* Variable definition kind */
         } def;
 
-#if UNUSED
-        struct {
-            Node        cond;
-            Node        body;
-            EcCodeGen   *condCode;
-            EcCodeGen   *bodyCode;
-        } doWhile;
-#endif
-
         struct {
             /* Children are the catch clauses */
             Node        tryBlock;               /* Try code */
@@ -4794,12 +4779,6 @@ typedef struct EcNode {
             Node        finallyBlock;           /* Finally code */
             int         numBlocks;              /* Count of open blocks in the try block */
         } exception;
-
-#if UNUSED
-        struct {
-            char        *space;                 /* Namespace qualifier */
-        } expr;
-#endif
 
         struct {
             Node        expr;                   /* Field expression */
@@ -4814,7 +4793,9 @@ typedef struct EcNode {
             Node        body;                   /* Function body */
             Node        parameters;             /* Function formal parameters */
             Node        constructorSettings;    /* Constructor settings */
+#if UNUSED
             Node        expressionRef;          /* Reference to the function expression name */
+#endif
             EjsFunction *functionVar;           /* Function variable */
             uint        operatorFn    : 1;      /* operator function */
             uint        getter        : 1;      /* getter function */
@@ -4825,7 +4806,8 @@ typedef struct EcNode {
             uint        hasReturn     : 1;      /* Has a return statement */
             uint        isMethod      : 1;      /* Is a class method */
             uint        isConstructor : 1;      /* Is constructor method */
-            uint        isDefaultConstructor : 1; /* Is default constructor */
+            uint        isDefault     : 1;      /* Is default constructor */
+            uint        isExpression  : 1;      /* Is a function expression */
         } function;
 
         struct {
@@ -4909,19 +4891,8 @@ typedef struct EcNode {
             int         isArray;            /* Array literal */
         } objectLiteral;
 
-#if UNUSED
-        struct {
-            char        *type;              /* Parameter type */
-            char        *value;             /* Default value */
-            int         isRest1;            /* Is rest parameter */
-        } parameter;
-#endif
-
         struct {
             uint        strict;             /* Strict mode */
-#if UNUSED
-            char        *moduleName;        /* Module name value */
-#endif
         } pragma;
 
         struct {
