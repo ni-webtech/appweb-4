@@ -2,28 +2,24 @@
 #   VxWorks
 #
 defineComponent() {
-	local name path partial
+	local path partial
 
     if [ $KIND = "BUILD" -a $BLD_CROSS = 1 ] ; then
         echo "only used as a host component"
         return 0
     fi
-
-    name=vxworks
-    partial="target/h/vxWorks.h"
-    path=`probe --emit-dir --path "$1" --partial "$partial" $name`
+    path=`probe --name vxworks --dir --search "$1" "target/h/vxWorks.h"`
     if [ "$path" = "" ] ; then
-        warnComponent $name \
+        warnComponent "VxWorks" \
             "Set WIND_HOME to the VxWorks directory containing the \"target\" directory (${partial})\n" \
             "This is usually /Tornado or /WindRiver/VxWorks\n"
         return
 	fi
     if [ "$BLD_CC_DIAB" != 1 ] ; then
-        configureComponent --path "$path" --iflags "-I$path/target/h -I$path/target/h/wrn/coreip" $name
+        configureComponent --path "$path" --iflags "-I$path/target/h -I$path/target/h/wrn/coreip" vxworks
     else
-        configureComponent --path "$path" --iflags "-I$path/target/h -I$path/target/h/wrn/coreip -I$path/target/usr/h" $name
+        configureComponent --path "$path" --iflags "-I$path/target/h -I$path/target/h/wrn/coreip -I$path/target/usr/h" vxworks
     fi
-
     setVxEnv "$path"
 }
 
@@ -77,18 +73,6 @@ setVxEnv()
     WIND_HOST_TYPE="$BLD_BUILD_SYSTEM_VX"
     BLD_HOST_DIST=WindRiver
     BLD_HOST_DIST_VER=$version
-
-#    eval cc=\$BLD_${KIND}_CC
-#    if [ "$bldPath" = "" ] ; then
-#        bldPath="`dirname $cc`"
-#    else
-#        bldPath="$bldPath:`dirname $cc`"
-#    fi
-#    if [ "$KIND" = HOST ] ; then
-#        CFG_HOST_PATH="$bldPath"
-#    else
-#        CFG_BUILD_PATH="$bldPath"
-#    fi
 
 	eval BLD_${kind}_IFLAGS=\"$BLD_HOST_IFLAGS $CFG_HOST_VXWORKS_IFLAGS\"
 

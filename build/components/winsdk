@@ -4,8 +4,6 @@
 defineComponent() {
     local name path partial
 
-    path=${1:-.}
-
     if [ $BLD_CROSS = 1 -a $KIND = HOST -a $BLD_HOST_OS != "WIN" ] ; then 
         return 0
     fi

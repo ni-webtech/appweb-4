@@ -7892,7 +7892,7 @@ static EjsDebug *loadDebug(Ejs *ejs, EjsFunction *fun)
 
     if (mp->file == 0) {
         if ((mp->file = mprOpenFile(mp->path, O_RDONLY | O_BINARY, 0666)) == NULL) {
-            ejsThrowIOError(ejs, "Can't open module file %s", mp->path);
+            mprLog(5, "Can't open module file %s", mp->path);
             return NULL;
         }
         mprEnableFileBuffering(mp->file, 0, 0);
