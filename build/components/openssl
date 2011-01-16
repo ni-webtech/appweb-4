@@ -28,7 +28,7 @@ defineComponent() {
 
     else 
         libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
-        iflags=-I`probe --name openssl --search "$path:$extensions/opensl/$ver/include" --dir "openssl/ssl.h"`
+        iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
         if [ $OS != MACOSX ] ; then
             imports="$libpaths/libssl.so $libpaths/libcrypto.so"
