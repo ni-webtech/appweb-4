@@ -5607,7 +5607,7 @@ extern void mprManageSelect(MprWaitService *ws, int flags);
 #endif
 
 #if BLD_WIN_LIKE
-extern int  mprInitWindow(MprWaitService *ws);
+extern int  mprInitWindow();
 extern void mprSetWinMsgCallback(MprWaitService *ws, MprMsgCallback callback);
 extern void mprServiceWinIO(MprWaitService *ws, int sockFd, int winMask);
 #endif
@@ -6845,6 +6845,7 @@ typedef struct Mpr {
     char            *serverName;            /**< Server name portion (no domain) */
     char            *appPath;               /**< Path name of application executable */
     char            *appDir;                /**< Path of directory containing app executable */
+    int             eventing;               /**< Servicing events thread is active */
     int             flags;                  /**< Misc flags */
     int             hasError;               /**< Mpr has an initialization error */
     int             logFd;                  /**< Logging file descriptor */

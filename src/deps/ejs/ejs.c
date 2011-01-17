@@ -616,6 +616,10 @@ static void setupSignals()
     sigaction(SIGQUIT, &act, 0);
     sigaction(SIGTERM, &act, 0);
     sigaction(SIGUSR1, &act, 0);
+
+sigaction(SIGABRT, &act, 0);
+sigaction(SIGSYS, &act, 0);
+sigaction(SIGBUS, &act, 0);
     
     /*
         Ignore pipe signals

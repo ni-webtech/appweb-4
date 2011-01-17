@@ -2002,7 +2002,7 @@ postGen() {
     #   Touch all headers to force a (somewhat) clean build
     #
     echo -e "  # Generate stub make dependencies ..."
-    build/bin/makedep
+    BLD_TOP=. build/bin/makedep
     touch "${CONFIG_H}"
     touch ${BLD_OUT_DIR}/.needDepend
 #   echo -e "  # Clean old objects ..."
