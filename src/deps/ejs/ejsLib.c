@@ -7976,7 +7976,6 @@ int ejsGetDebugInfo(Ejs *ejs, EjsFunction *fun, uchar *pc, char **pathp, int *li
 {
     EjsLine     *line;
     MprChar     *str, *tok, *path, *lineno, *source;
-    int         i;
 
     if ((line = ejsGetDebugLine(ejs, fun, pc)) == 0) {
         return MPR_ERR_CANT_FIND;
@@ -7994,7 +7993,7 @@ int ejsGetDebugInfo(Ejs *ejs, EjsFunction *fun, uchar *pc, char **pathp, int *li
     if (sourcep) {
         *sourcep = wclone(source);
     }
-    return i;
+    return 0;
 }
 
 
@@ -17882,7 +17881,7 @@ static EjsObj *runGC(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 /*
     native static function get newQuota(): Number
  */
-static EjsObj *getWorkQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsObj *getNewQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejsCreateNumber(ejs, mprGetMpr()->heap.newQuota);
 }
@@ -17891,7 +17890,7 @@ static EjsObj *getWorkQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 /*
     native static function set newQuota(quota: Number): Void
  */
-static EjsObj *setWorkQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsObj *setNewQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     int     quota;
 
@@ -17916,9 +17915,7 @@ void ejsConfigureGCType(Ejs *ejs)
         return;
     }
     ejsBindAccess(ejs, type, ES_GC_enabled, (EjsProc) getEnable, (EjsProc) setEnable);
-#if ES_GC_newQuota
-    ejsBindAccess(ejs, type, ES_GC_newQuota, (EjsProc) getWorkQuota, (EjsProc) setWorkQuota);
-#endif
+    ejsBindAccess(ejs, type, ES_GC_newQuota, (EjsProc) getNewQuota, (EjsProc) setNewQuota);
     ejsBindMethod(ejs, type, ES_GC_run, (EjsProc) runGC);
 }
 

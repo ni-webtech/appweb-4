@@ -1867,7 +1867,6 @@ typedef struct MprHeap {
  */
 extern struct Mpr *mprCreateMemService(MprManager manager, int flags);
 extern void mprStartGCService();
-extern void mprWakeGCService();
 
 /**
     Destroy the memory service. Called as the last thing before exiting
@@ -2199,8 +2198,11 @@ extern void mprAddRoot(void *ptr);
     Other flags include MPR_GC_FROM_EVENTS which must be specified if calling mprCollectGarbage from a routine that 
     also blocks on mprServiceEvents. Similarly, use MPR_GC_FROM_OWN if managing garbage collections manually.
   */
+#if UNUSED
 extern void mprGC(int flags);
+#endif
 extern void mprRequestGC(int flags);
+//  MOB DOC
 
 /**
     Enable or disable the garbage collector
@@ -2258,7 +2260,7 @@ extern void mprRemoveRoot(void *ptr);
     Internal
  */
 extern int  mprCreateGCService();
-extern void mprDestroyGCService();
+extern void mprWakeGCService();
 extern void mprMarkBlock(cvoid *ptr);
 extern void mprResumeThreads();
 extern int  mprSyncThreads(int timeout);
@@ -5219,6 +5221,7 @@ extern void mprRescheduleEvent(MprEvent *event, int period);
 /* Internal API */
 extern void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, MprEvent *event);
 extern MprEventService *mprCreateEventService();
+extern void mprStopEventService();
 extern MprEvent *mprGetNextEvent(MprDispatcher *dispatcher);
 extern int mprGetEventCount(MprDispatcher *dispatcher);
 extern void mprInitEventQ(MprEvent *q);
@@ -5358,7 +5361,7 @@ typedef struct MprThreadService {
 typedef void (*MprThreadProc)(void *arg, struct MprThread *tp);
 
 extern MprThreadService *mprCreateThreadService();
-extern bool mprStopThreadService(int timeout);
+extern void mprStopThreadService();
 
 /**
     Thread Service. 
@@ -6262,7 +6265,7 @@ typedef struct MprWorkerService {
 
 extern MprWorkerService *mprCreateWorkerService();
 extern int mprStartWorkerService();
-extern bool mprStopWorkerService();
+extern void mprWakeWorkers();
 
 /**
     Get the count of available worker threads
@@ -6466,6 +6469,7 @@ typedef struct MprCmdService {
 } MprCmdService;
 
 extern MprCmdService *mprCreateCmdService();
+extern void mprStopCmdService();
 
 /*
     Child status structure. Designed to be async-thread safe.
@@ -6897,7 +6901,9 @@ extern Mpr *mprGetMpr();
 #endif
 
 #define MPR_DISABLE_GC          0x1         /**< Disable GC */
+#if UNUSED
 #define MPR_OWN_GC              0x2         /**< User will explicitly manage calls to mprManualGC */
+#endif
 #define MPR_MARK_THREAD         0x4         /**< Start a dedicated marker thread for garbage collection */
 #define MPR_SWEEP_THREAD        0x8         /**< Start a dedicated sweeper thread for garbage collection */
 #define MPR_USER_EVENTS_THREAD  0x10        /**< User will explicitly manage own mprServiceEvents calls */
@@ -6976,6 +6982,9 @@ extern bool mprServicesAreIdle();
     @return True if the App are idle.
  */
 extern bool mprIsIdle();
+
+//  MOB DOC
+extern void mprWaitTillIdle();
 
 /**
     Define a new idle callback to be invoked by mprIsIdle().
@@ -7160,7 +7169,7 @@ extern int mprStartEventsThread();
     @stability Evolving.
     @ingroup Mpr
  */
-extern void mprTerminate(bool graceful);
+extern void mprTerminate(int flags);
 
 extern bool mprIsService();
 extern void mprSetPriority(int pri);

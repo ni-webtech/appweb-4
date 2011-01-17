@@ -186,7 +186,7 @@ static void sweep();
 static void sweeper(void *unused, MprThread *tp);
 static void synchronize();
 static int syncThreads(int timeout);
-static void triggerGC(int force);
+static void triggerGC(int flags);
 
 #if BLD_WIN_LIKE
     static int winPageModes(int flags);
@@ -242,9 +242,7 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
     ssize       regionSize;
 #endif
 
-    if (!(flags & MPR_OWN_GC)) {
-        flags |= MPR_THREAD_PATTERN;
-    }
+    flags |= MPR_THREAD_PATTERN;
     heap = &initHeap;
     memset(heap, 0, sizeof(MprHeap));
     heap->stats.maxMemory = MAXINT;
@@ -1039,12 +1037,15 @@ void mprWakeGCService()
 {
     mprSignalCond(heap->markerCond);
     mprResumeThreads();
+#if UNUSED
+    triggerGC(1);
+#endif
 }
 
 
-static void triggerGC(int force)
+static void triggerGC(int flags)
 {
-    if (!heap->gc && (force || (heap->newCount > heap->newQuota))) {
+    if (!heap->gc && ((flags & MPR_FORCE_GC) || (heap->newCount > heap->newQuota))) {
         heap->gc = 1;
 #if !PARALLEL_GC
         heap->mustYield = 1;
@@ -1053,6 +1054,12 @@ static void triggerGC(int force)
             mprSignalCond(heap->markerCond);
         }
     }
+}
+
+
+void mprWakeGC()
+{
+    triggerGC(1);
 }
 
 
@@ -1066,34 +1073,10 @@ void mprRequestGC(int flags)
     for (i = 0; i < count; i++) {
         if ((flags & MPR_FORCE_GC) || (heap->newCount > heap->newQuota)) {
             heap->mustYield = 1;
-            triggerGC(1);
+            triggerGC(MPR_FORCE_GC);
         }
         mprYield((flags & MPR_WAIT_GC) ? MPR_YIELD_BLOCK: 0);
     }
-#if OLD
-    MprThread   *tp;
-    int         wasSticky;
-
-    tp = mprGetCurrentThread();
-    wasSticky = tp->stickyYield;
-
-    if (flags & MPR_COMPLETE_GC) {
-        mprYield(MPR_YIELD_STICKY);
-    }
-    if ((flags & MPR_FORCE_GC) || (heap->newCount > heap->newQuota)) {
-        if (heap->flags & MPR_OWN_GC) {
-            ownGC(flags);
-        } else {
-            mprSignalCond(heap->markerCond);
-            if (flags & MPR_WAIT_GC) {
-                mprYield(MPR_YIELD_BLOCK);
-            } else {
-                mprYield(0);
-            }
-        }
-    }
-    tp->stickyYield = wasSticky;
-#endif
 }
 
 
@@ -1459,7 +1442,7 @@ void mprYield(int flags)
     if (flags & MPR_YIELD_STICKY) {
         tp->stickyYield = 1;
     }
-    while (tp->yielded && (heap->mustYield || (flags & MPR_YIELD_BLOCK))) {
+    while (tp->yielded && MPR->marking && (heap->mustYield || (flags & MPR_YIELD_BLOCK))) {
         if (heap->flags & MPR_MARK_THREAD) {
             mprSignalCond(ts->cond);
         }
@@ -2463,18 +2446,24 @@ static void manageMpr(Mpr *mpr, int flags)
  */
 void mprDestroy(int flags)
 {
-    MprTime     mark;
+    int     gcflags;
 
     mprYield(MPR_YIELD_STICKY);
+    mprTerminate(flags);
+
+    gcflags = MPR_FORCE_GC | MPR_COMPLETE_GC | ((flags & MPR_GRACEFUL) ? MPR_WAIT_GC : 0);
+    mprRequestGC(gcflags);
+
     if (flags & MPR_GRACEFUL) {
-        mprTerminate(MPR_GRACEFUL);
-        for (mark = mprGetTime(); !mprIsIdle() && mprGetRemainingTime(mark, MPR_TIMEOUT_STOP) > 0; mprSleep(10)) ;
-    } else {
-        mprTerminate(0);
-        /* App will be exited here */
+        mprWaitTillIdle();
     }
-    MPR->state = MPR_FINISHED;
+    MPR->state = MPR_STOPPING_CORE;
+    mprStopCmdService();
     mprStopModuleService();
+    mprStopEventService();
+    mprRequestGC(gcflags);
+    mprStopThreadService();
+    MPR->state = MPR_FINISHED;
     mprStopOsService();
     mprDestroyMemService();
 }
@@ -2483,36 +2472,28 @@ void mprDestroy(int flags)
 /*
     Start termination of the Mpr. May be called by mprDestroy or elsewhere.
  */
-void mprTerminate(bool graceful)
+void mprTerminate(int flags)
 {
+    if (! (flags & MPR_GRACEFUL)) {
+        exit(0);
+    }
+
     /*
         Set the stopping flag. Services should stop accepting new requests.
      */
     if (MPR->state >= MPR_STOPPING) {
         return;
     }
-    MPR->state = MPR_STOPPING;
     mprLog(MPR_CONFIG, "Exiting started");
     
     /*
-        Request a full GC sweep to allow managers to close files, commands and the like.
+        Set stopping state and wake up everybody
      */
-    mprRequestGC(MPR_FORCE_GC | MPR_COMPLETE_GC | ((graceful) ? MPR_WAIT_GC : 0));
-
-    /*
-        Wake up everybody. Services and GC threads should exit immediately.
-        Disptachers will keep running until finished is true. Request a GC to wakeup the GC marker.
-     */
-    MPR->state = MPR_STOPPING_CORE;
-    mprRequestGC(MPR_FORCE_GC);
-    mprResumeThreads();
-    mprStopWorkerService();
+    MPR->state = MPR_STOPPING;
     mprWakeDispatchers();
+    mprWakeWorkers();
+    mprWakeGCService();
     mprWakeWaitService();
-
-    if (! graceful) {
-        exit(0);
-    }
 }
 
 
@@ -2577,6 +2558,17 @@ bool mprIsFinished()
 }
 
 
+void mprWaitTillIdle()
+{
+    MprTime     mark;
+
+    mark = mprGetTime(); 
+    while (!mprIsIdle() && mprGetRemainingTime(mark, MPR_TIMEOUT_STOP) > 0) {
+        mprSleep(10);
+    }
+}
+
+
 /*
     Test if the Mpr services are idle. Use mprIsIdle to determine if the entire process is idle.
  */
@@ -2586,9 +2578,7 @@ bool mprServicesAreIdle()
 
     idle = mprGetListLength(MPR->workerService->busyThreads) == 0 && 
            mprGetListLength(MPR->cmdService->cmds) == 0 && 
-           mprDispatchersAreIdle() &&
-           MPR->marking == 0 &&
-           MPR->sweeping == 0;
+           mprDispatchersAreIdle();
     if (!idle) {
         mprLog(1, "Testing idle: cmds %d, threads %d, dispatchers %d, marking %d, sweeping %d",
             mprGetListLength(MPR->workerService->busyThreads),
@@ -3011,7 +3001,7 @@ void mprWaitForIO(MprWaitService *ws, int timeout)
         mprYield(MPR_YIELD_STICKY);
         if (GetMessage(&msg, NULL, 0, 0) == 0) {
             mprResetYield();
-            mprTerminate(1);
+            mprTerminate(MPR_GRACEFUL);
         } else {
             mprResetYield();
             TranslateMessage(&msg);
@@ -4065,11 +4055,21 @@ MprCmdService *mprCreateCmdService(Mpr *mpr)
 }
 
 
+void mprStopCmdService()
+{
+    mprClearList(MPR->cmdService->cmds);
+}
+
+
 static void manageCmdService(MprCmdService *cs, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(cs->cmds);
         mprMark(cs->mutex);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        mprStopCmdService();
+        cs->mutex = 0;
     }
 }
 
@@ -4140,13 +4140,17 @@ static void manageCmd(MprCmd *cmd, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         cs = MPR->cmdService;
-        lock(cs);
+        if (cs->mutex) {
+            lock(cs);
+        }
         resetCmd(cmd);
 #if VXWORKS
         vxCmdManager(cmd);
 #endif
         mprRemoveItem(cs->cmds, cmd);
-        unlock(cs);
+        if (cs->mutex) {
+            unlock(cs);
+        }
     }
 }
 
@@ -4963,8 +4967,6 @@ void mprSetCmdDir(MprCmd *cmd, cchar *dir)
  */
 static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 {
-    char        **envp;
-
 #if VXWORKS
     cmd->argv = argv;
     cmd->argc = argc;
@@ -4972,7 +4974,7 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 #endif
 
 #if BLD_UNIX_LIKE
-    char    *cp;
+    char    *cp, **envp;
     int     index, i, hasPath, hasLibPath;
 
     cmd->argv = argv;
@@ -7031,6 +7033,13 @@ static void manageEventService(MprEventService *es, int flags)
 }
 
 
+void mprStopEventService()
+{
+    mprWakeDispatchers();
+    mprWakeWaitService();
+}
+
+
 /*
     Create a disabled dispatcher. A dispatcher schedules events on a single dispatch queue.
  */
@@ -7145,17 +7154,8 @@ int mprServiceEvents(int timeout, int flags)
 
     do {
         eventCount = es->eventCount;
-        /* 
-            If stopping, switch to a short timeout. Keep servicing events until finished to allow upper level services 
-            to complete current requests.
-         */
         if (mprIsStopping()) {
-            if (mprIsStoppingCore()) {
-                break;
-            }
-            if (!mprGetDebugMode()) {
-                expires = min(expires, start + MPR_TIMEOUT_STOP);
-            }
+            break;
         }
         while ((dp = getNextReadyDispatcher(es)) != NULL) {
             serviceDispatcher(dp);
@@ -7228,12 +7228,7 @@ int mprWaitForEvent(MprDispatcher *dispatcher, int timeout)
             to complete current requests.
          */
         if (mprIsStopping()) {
-            if (mprIsStoppingCore()) {
-                break;
-            }
-            if (!mprGetDebugMode()) {
-                expires = min(expires, start + MPR_TIMEOUT_STOP);
-            }
+            break;
         }
         if (runEvents) {
             makeRunnable(dispatcher);
@@ -7503,7 +7498,7 @@ static MprTime getIdleTime(MprEventService *es, MprTime timeout)
 
     if (readyQ->next != readyQ) {
         delay = 0;
-    } else if (mprIsStoppingCore()) {
+    } else if (mprIsStopping()) {
         delay = 10;
     } else {
         delay = MPR_MAX_TIMEOUT;
@@ -8416,6 +8411,7 @@ static void manageEvent(MprEvent *event, int flags)
         mprMark(event->data);
 
     } else if (flags & MPR_MANAGE_FREE) {
+        //  MOBZZ - should be okay
         if (event->next) {
             mprRemoveEvent(event);
         }
@@ -10205,7 +10201,7 @@ static void serviceIO(MprWaitService *ws, int count)
             } else if (err == EBADF) {
                 /* File descriptor was closed */
                 mprRemoveNotifier(wp);
-                mprLog(0, "kqueue: invalid file descriptor %d, fd %d", wp->fd);
+                mprLog(7, "kqueue: invalid file descriptor %d, fd %d", wp->fd);
             }
             continue;
         }
@@ -16331,6 +16327,7 @@ static void manageSocket(MprSocket *sp, int flags)
         mprMark(sp->handler);
 
     } else if (flags & MPR_MANAGE_FREE) {
+        //  MOBZZ -OK
         if (sp->fd >= 0) {
             sp->mutex = 0;
             mprCloseSocket(sp, 1);
@@ -19626,19 +19623,23 @@ MprThreadService *mprCreateThreadService()
 }
 
 
+void mprStopThreadService()
+{
+    mprClearList(MPR->threadService->threads);
+    MPR->threadService->mutex = 0;
+}
+
+
 static void manageThreadService(MprThreadService *ts, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ts->threads);
         mprMark(ts->cond);
         mprMark(ts->mutex);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        mprStopThreadService();
     }
-}
-
-
-bool mprStopThreadService(int timeout)
-{
-    return MPR->threadService->threads->length <= 1;
 }
 
 
@@ -19738,6 +19739,7 @@ MprThread *mprCreateThread(cchar *name, MprThreadProc entry, void *data, int sta
 #endif
 
     if (ts && ts->threads) {
+        //  MOB -- should be able to remove lock
         mprLock(ts->mutex);
         if (mprAddItem(ts->threads, tp) < 0) {
             mprUnlock(ts->mutex);
@@ -19761,9 +19763,11 @@ static void manageThread(MprThread *tp, int flags)
         mprMark(tp->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        lock(ts);
-        mprRemoveItem(MPR->threadService->threads, tp);
-        unlock(ts);
+        if (ts->mutex) {
+            lock(ts);
+            mprRemoveItem(MPR->threadService->threads, tp);
+            unlock(ts);
+        }
 #if BLD_WIN_LIKE
         if (tp->threadHandle) {
             CloseHandle(tp->threadHandle);
@@ -20155,7 +20159,7 @@ int mprStartWorkerService()
 }
 
 
-bool mprStopWorkerService()
+void mprWakeWorkers()
 {
     MprWorkerService    *ws;
     MprWorker           *worker;
@@ -20175,7 +20179,6 @@ bool mprStopWorkerService()
         changeState(worker, MPR_WORKER_BUSY);
     }
     mprUnlock(ws->mutex);
-    return ws->numThreads == 0;
 }
 
 
@@ -20452,11 +20455,6 @@ static void manageWorker(MprWorker *worker, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(worker->thread);
         mprMark(worker->idleCond);
-
-    } else if (flags & MPR_MANAGE_FREE) {
-        if (worker->thread != 0) {
-            mprAssert(worker->thread);
-        }
     }
 }
 
@@ -20565,6 +20563,7 @@ static int changeState(MprWorker *worker, int state)
     worker->state = state;
 
     if (lp) {
+        //  MOB -- should be able to remove lock
         if (mprAddItem(lp, worker) < 0) {
             mprUnlock(ws->mutex);
             return MPR_ERR_MEMORY;
@@ -22904,6 +22903,7 @@ static void manageWaitHandler(MprWaitHandler *wp, int flags)
         mprMark(wp->handlerData);
 
     } else if (flags & MPR_MANAGE_FREE) {
+        //  MOBZZ
         mprRemoveWaitHandler(wp);
     }
 }
