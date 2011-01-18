@@ -244,13 +244,15 @@ static HttpStage *findLocationHandler(HttpConn *conn)
 /*
     Get an extension used for mime type matching. NOTE: this does not permit any kind of platform specific filename.
     Rather only those suitable as mime type extensions (simple alpha numeric extensions)
+    MOB -- remove this function.
  */
 static char *getExtension(HttpConn *conn)
 {
+#if OLD_USED_URI && MOB
     HttpRx      *rx;
     char        *cp;
     char        *ep, *ext;
-
+    
     rx = conn->rx;
     if (rx && rx->pathInfo) {
         if ((cp = strrchr(&rx->pathInfo[rx->alias->prefixLen], '.')) != 0) {
@@ -262,6 +264,15 @@ static char *getExtension(HttpConn *conn)
             return ext;
         }
     }
+#else
+    HttpTx      *tx;
+    
+    tx = conn->tx;
+    if (tx && tx->filename) {
+        return mprGetPathExtension(tx->filename);
+    }
+#endif
+    
     //  MOB OPT - could have one global for this
     return sclone("");
 }

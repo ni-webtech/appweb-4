@@ -8,10 +8,10 @@
     directories: {
         cache: "cache",
     },
-    log: {
+    _log: {
         enable: true,
         location: "stdout",
-        level: 0,
+        level: 4,
         match: null,
         showClient: true,
     },

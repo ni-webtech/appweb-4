@@ -6533,6 +6533,14 @@ static void decode(uint *output, uchar *input, uint len)
 
 #if !BLD_FEATURE_ROMFS
 
+#if WIN
+/*
+    Open/Delete retries to circumvent windows pending delete problems
+ */
+#define RETRIES 40
+#endif
+
+
 static int closeFile(MprFile *file);
 static void manageDiskFile(MprFile *file, int flags);
 static int getPathInfo(MprDiskFileSystem *fileSystem, cchar *path, MprPath *info);
@@ -6551,7 +6559,26 @@ static MprFile *openFile(MprFileSystem *fileSystem, cchar *path, int omode, int 
     file->path = sclone(path);
     file->fd = open(path, omode, perms);
     if (file->fd < 0) {
-        return NULL;
+        /*
+            File opens can fail of immediately following a delete. Windows uses pending deletes which prevent opens.
+         */
+#if WIN
+        int i, err = GetLastError();
+        if (err == ERROR_ACCESS_DENIED) {
+            for (i = 0; i < RETRIES; i++) {
+                file->fd = open(path, omode, perms);
+                if (file->fd >= 0) {
+                    break;
+                }
+                mprSleep(10);
+            }
+            if (file->fd < 0) {
+                file = NULL;
+            }
+        }
+#else
+        file = NULL;
+#endif
     }
     return file;
 }
@@ -6638,17 +6665,27 @@ static int deletePath(MprDiskFileSystem *fileSystem, cchar *path)
     }
 #if WIN
 {
-    int i, rc, retries;
-    retries = 20;
-    for (i = 0; i < retries; i++) {
-        rc = DeleteFile((char*) path);
-        if (rc != 0) {
-            rc = 0;
+    /*
+        NOTE: Windows delete makes a file pending delete which prevents immediate recreation. Rename and then delete.
+     */
+    int i, err;
+    for (i = 0; i < RETRIES; i++) {
+        if (DeleteFile((char*) path) != 0) {
+            return 0;
+        }
+        err = GetLastError();
+        if (err != ERROR_SHARING_VIOLATION) {
             break;
         }
+#if UNUSED
+        if (err == ERROR_FILE_NOT_FOUND) {
+            break;
+        }
+#endif
+        //  MOB - must be a better way
         mprSleep(10);
     }
-    return (i == retries) ? MPR_ERR_CANT_DELETE : 0;
+    return MPR_ERR_CANT_DELETE;
 }
 #else
     return unlink((char*) path);
@@ -12678,7 +12715,7 @@ static MPR_INLINE char *lastSep(MprFileSystem *fs, cchar *path)
 }
 
 /*
-    This copies the filename at the designated path
+    This copies a file.
  */
 int mprCopyPath(cchar *fromName, cchar *toName, int mode)
 {
@@ -12697,6 +12734,8 @@ int mprCopyPath(cchar *fromName, cchar *toName, int mode)
     while ((count = mprReadFile(from, buf, sizeof(buf))) > 0) {
         mprWriteFile(to, buf, count);
     }
+    mprCloseFile(from);
+    mprCloseFile(to);
     return 0;
 }
 
@@ -13028,15 +13067,15 @@ char *mprGetPathLink(cchar *path)
     Return the extension portion of a pathname.
     Return the extension without the "."
  */
-cchar *mprGetPathExtension(cchar *path)
+char *mprGetPathExtension(cchar *path)
 {
     MprFileSystem  *fs;
     char            *cp;
 
-    if ((cp = strrchr(path, '.')) != NULL) {
+    if ((cp = srchr(path, '.')) != NULL) {
         fs = mprLookupFileSystem(path);
         if (firstSep(fs, cp) == 0) {
-            return ++cp;
+            return sclone(++cp);
         }
     } 
     return 0;
@@ -13271,7 +13310,7 @@ char *mprJoinPathExt(cchar *path, cchar *ext)
     if (ext == NULL || *ext == '\0') {
         return sclone(path);
     }
-    cp = strrchr(path, '.');
+    cp = srchr(path, '.');
     if (cp && firstSep(fs, cp) == 0) {
         return sclone(path);
     }
@@ -13344,9 +13383,7 @@ char *mprGetTempPath(cchar *tempDir)
     } else {
         dir = sclone(tempDir);
     }
-
     now = ((int) mprGetTime() & 0xFFFF) % 64000;
-
     file = 0;
     path = 0;
 
@@ -13870,7 +13907,7 @@ char *mprTrimPathExtension(cchar *path)
 
     fs = mprLookupFileSystem(path);
     ext = sclone(path);
-    if ((cp = strrchr(ext, '.')) != NULL) {
+    if ((cp = srchr(ext, '.')) != NULL) {
         if (firstSep(fs, cp) == 0) {
             *cp = '\0';
         }
@@ -20516,6 +20553,8 @@ static void manageWorker(MprWorker *worker, int flags)
 static void workerMain(MprWorker *worker, MprThread *tp)
 {
     MprWorkerService    *ws;
+	int state = worker->state;
+	int state2;
 
     ws = MPR->workerService;
     mprAssert(worker->state == MPR_WORKER_BUSY);
@@ -20524,6 +20563,7 @@ static void workerMain(MprWorker *worker, MprThread *tp)
     mprLock(ws->mutex);
 
     while (!(worker->state & MPR_WORKER_PRUNED) && !mprIsStopping()) {
+		state2 = worker->state;
         if (worker->proc) {
             mprUnlock(ws->mutex);
             (*worker->proc)(worker->data, worker);
@@ -20559,13 +20599,15 @@ static int changeState(MprWorker *worker, int state)
 {
     MprWorkerService    *ws;
     MprList             *lp;
+    int                 wake;
 
     mprAssert(worker->state != state);
 
-    ws = worker->workerService;
-
+    wake = 0;
     lp = 0;
+    ws = worker->workerService;
     mprLock(ws->mutex);
+
     switch (worker->state) {
     case MPR_WORKER_BUSY:
         lp = ws->busyThreads;
@@ -20579,7 +20621,7 @@ static int changeState(MprWorker *worker, int state)
         if (!(worker->flags & MPR_WORKER_DEDICATED)) {
             lp = ws->idleThreads;
         }
-        mprSignalCond(worker->idleCond); 
+        wake = 1;
         break;
         
     case MPR_WORKER_PRUNED:
@@ -20603,11 +20645,6 @@ static int changeState(MprWorker *worker, int state)
         if (!(worker->flags & MPR_WORKER_DEDICATED)) {
             lp = ws->idleThreads;
         }
-#if UNUSED
-        if (mprGetListLength(ws->busyThreads) == 0) {
-            print("NOW IDLE");
-        }
-#endif
         break;
 
     case MPR_WORKER_PRUNED:
@@ -20624,6 +20661,9 @@ static int changeState(MprWorker *worker, int state)
         }
     }
     mprUnlock(ws->mutex);
+    if (wake) {
+        mprSignalCond(worker->idleCond); 
+    }
     return 0;
 }
 

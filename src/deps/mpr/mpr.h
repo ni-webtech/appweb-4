@@ -4606,10 +4606,10 @@ extern MprList *mprGetPathFiles(cchar *dir, bool enumDirs);
     @description Get the file extension portion of a path. The file extension is the portion starting with the last "."
         in the path. It thus includes "." as the first charcter.
     @param path Path name to examine
-    @returns A path extension. The extension is a reference into the original file string and should not be freed.
+    @returns A path extension. 
     @ingroup MprPath
  */
-extern cchar *mprGetPathExtension(cchar *path);
+extern char *mprGetPathExtension(cchar *path);
 
 /**
     Return information about a file represented by a path.

@@ -6717,7 +6717,6 @@ static int traceRequest(HttpConn *conn, HttpPacket *packet)
     cchar   *endp;
     int     len;
 
-    mprLog(6, "Request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
     if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
         content = packet->content;
         endp = strstr((char*) content->start, "\r\n\r\n");
@@ -6737,7 +6736,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
     char        *method, *uri, *protocol;
-    int         methodFlags, traced, level;
+    int         methodFlags, level;
 
     mprLog(4, "New request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->ip, conn->sock->port);
 
@@ -6823,10 +6822,10 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     }
     httpSetState(conn, HTTP_STATE_FIRST);
 
-    traced = traceRequest(conn, packet);
-    if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) >= 0) {
+    if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) >= 0) {
         mprLog(level, "%s %s %s", rx->method, uri, protocol);
     }
+    traceRequest(conn, packet);
 }
 
 
@@ -7148,11 +7147,12 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
         case 'w':
             if (strcmp(key, "www-authenticate") == 0) {
-                conn->authType = value = slower(value);
+                conn->authType = value;
                 while (*value && !isspace((int) *value)) {
                     value++;
                 }
                 *value++ = '\0';
+                conn->authType = slower(conn->authType);
                 if (!parseAuthenticate(conn, value)) {
                     httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad Authentication header");
                     break;
@@ -7239,7 +7239,7 @@ static bool parseAuthenticate(HttpConn *conn, char *authDetails)
         switch (tolower((int) *key)) {
         case 'a':
             if (scasecmp(key, "algorithm") == 0) {
-                rx->authAlgorithm = value;
+                rx->authAlgorithm = sclone(value);
                 break;
             }
             break;
@@ -11146,7 +11146,7 @@ HttpUri *httpJoinUri(HttpUri *uri, int argc, HttpUri **others)
             uri->query = sclone(other->query);
         }
     }
-    uri->ext = (char*) mprGetPathExtension(uri->path);
+    uri->ext = mprGetPathExtension(uri->path);
     return uri;
 }
 
@@ -11286,7 +11286,7 @@ HttpUri *httpResolveUri(HttpUri *base, int argc, HttpUri **others, int local)
             current->query = sclone(other->query);
         }
     }
-    current->ext = (char*) mprGetPathExtension(current->path);
+    current->ext = mprGetPathExtension(current->path);
     return current;
 }
 
