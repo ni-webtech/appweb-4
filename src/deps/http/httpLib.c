@@ -6560,6 +6560,7 @@ static void manageRx(HttpRx *rx, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(rx->method);
         mprMark(rx->uri);
+        mprMark(rx->hostName);
         mprMark(rx->scriptName);
         mprMark(rx->pathInfo);
         mprMark(rx->etags);
@@ -10664,70 +10665,53 @@ static int getDefaultPort(cchar *scheme);
 static void manageUri(HttpUri *uri, int flags);
 static void trimPathToDirname(HttpUri *uri);
 
-
-/*  Create and initialize a URI. This accepts full URIs with schemes (http:) and partial URLs
+/*  
+    Create and initialize a URI. This accepts full URIs with schemes (http:) and partial URLs
  */
 HttpUri *httpCreateUri(cchar *uri, int complete)
 {
     HttpUri     *up;
-    char        *tok, *cp, *last_delim, *hostbuf;
-    int         c, len, ulen;
+    char        *tok, *cp;
 
     mprAssert(uri);
 
     if ((up = mprAllocObj(HttpUri, manageUri)) == 0) {
         return 0;
     }
-
-    /*  Allocate a single buffer to hold all the cracked fields.  */
-    ulen = (int) strlen(uri);
-    len = ulen *  2 + 3;
     up->uri = sclone(uri);
-    up->parsedUriBuf = mprAlloc(len *  sizeof(char));
 
-    hostbuf = &up->parsedUriBuf[ulen+1];
-    strcpy(up->parsedUriBuf, uri);
-    tok = 0;
-
-    if (strchr(up->parsedUriBuf, ':')) {
-        if (strncmp(up->parsedUriBuf, "https://", 8) == 0) {
-            up->scheme = up->parsedUriBuf;
+    tok = up->uri;
+    if (schr(tok, ':')) {
+        if (sncmp(up->uri, "https://", 8) == 0) {
+            up->scheme = sclone("https");
             up->secure = 1;
             if (complete) {
                 up->port = 443;
             }
-            tok = &up->scheme[8];
-            tok[-3] = '\0';
-        } else if (strncmp(up->parsedUriBuf, "http://", 7) == 0) {
-            up->scheme = up->parsedUriBuf;
-            tok = &up->scheme[7];
-            tok[-3] = '\0';
+            tok = &up->uri[8];
+
+        } else if (sncmp(up->uri, "http://", 7) == 0) {
+            up->scheme = sclone("http");
+            tok = &up->uri[7];
+
         } else {
-            tok = up->parsedUriBuf;
             up->scheme = 0;
+            tok = up->uri;
         }
-        up->host = tok;
-        for (cp = tok; *cp; cp++) {
-            if (*cp == '/') {
-                break;
-            }
-            if (*cp == ':') {
-                *cp++ = '\0';
-                up->port = atoi(cp);
-                tok = cp;
-            }
+        if ((cp = spbrk(tok, ":/")) == NULL) {
+            up->host = sclone(tok);
+
+        } else if (*cp == ':') {
+            up->host = snclone(tok, cp - tok);
+            up->port = atoi(++cp);
+
+        } else if (*cp == '/') {
+            up->host = snclone(tok, cp - tok);
         }
-        if ((cp = strchr(tok, '/')) != NULL) {
-            c = *cp;
-            *cp = '\0';
-            scopy(hostbuf, ulen + 1, up->host);
-            *cp = c;
-            up->host = hostbuf;
-            up->path = cp;
-            while (cp[0] == '/' && cp[1] == '/')
-                cp++;
-            tok = cp;
+        if (complete && up->port == 0) {
+            up->port = 80;
         }
+        tok = schr(cp, '/');
 
     } else {
         if (complete) {
@@ -10735,31 +10719,31 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
             up->host = "localhost";
             up->port = 80;
         }
-        tok = up->path = up->parsedUriBuf;
+        tok = up->uri;
     }
 
-    /*  
-        Split off the reference fragment
-     */
-    if ((cp = strchr(tok, '#')) != NULL) {
-        *cp++ = '\0';
-        up->reference = cp;
-        tok = cp;
+    if ((cp = spbrk(tok, "#?")) == NULL) {
+        up->path = sclone(tok);
+
+    } else {
+        up->path = snclone(tok, cp - tok);
+        tok = cp + 1;
+        if (*cp == '#') {
+            if ((cp = schr(tok, '?')) != NULL) {
+                up->reference = snclone(tok, cp - tok);
+                up->query = sclone(++cp);
+            } else {
+                up->reference = sclone(tok);
+            }
+        } else {
+            up->query = sclone(tok);
+        }
     }
 
-    /*  
-        Split off the query string.
-     */
-    if ((cp = strchr(tok, '?')) != NULL) {
-        *cp++ = '\0';
-        up->query = cp;
-        /* tok = up->query; */
-    }
-
-    if (up->path && (cp = strrchr(up->path, '.')) != NULL) {
-        if ((last_delim = strrchr(up->path, '/')) != NULL) {
-            if (last_delim <= cp) {
-                up->ext = cp + 1;
+    if (up->path && (tok = srchr(up->path, '.')) != NULL) {
+        if ((cp = srchr(up->path, '/')) != NULL) {
+            if (cp <= tok) {
+                up->ext = sclone(++tok);
 #if BLD_WIN_LIKE
                 for (cp = up->ext; *cp; cp++) {
                     *cp = (char) tolower((int) *cp);
@@ -10767,7 +10751,7 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
 #endif
             }
         } else {
-            up->ext = cp + 1;
+            up->ext = sclone(++tok);
 #if BLD_WIN_LIKE
             for (cp = up->ext; *cp; cp++) {
                 *cp = (char) tolower((int) *cp);
@@ -10776,7 +10760,7 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
         }
     }
     if (up->path == 0) {
-        up->path = "/";
+        up->path = sclone("/");
     }
     return up;
 }
@@ -10785,18 +10769,13 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
 static void manageUri(HttpUri *uri, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-#if UNUSED
         mprMark(uri->scheme);
         mprMark(uri->host);
         mprMark(uri->path);
         mprMark(uri->ext);
         mprMark(uri->reference);
         mprMark(uri->query);
-#endif
         mprMark(uri->uri);
-        mprMark(uri->parsedUriBuf);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -10808,7 +10787,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
         int complete)
 {
     HttpUri     *up;
-    char        *cp, *last_delim;
+    char        *cp, *tok;
 
     if ((up = mprAllocObj(HttpUri, NULL)) == 0) {
         return 0;
@@ -10820,7 +10799,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
     }
     if (host) {
         up->host = sclone(host);
-        if ((cp = strchr(host, ':')) && port == 0) {
+        if ((cp = schr(host, ':')) && port == 0) {
             port = (int) stoi(++cp, 10, NULL);
         }
     } else if (complete) {
@@ -10844,10 +10823,10 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
     if (query) {
         up->query = sclone(query);
     }
-    if ((cp = strrchr(up->path, '.')) != NULL) {
-        if ((last_delim = strrchr(up->path, '/')) != NULL) {
-            if (last_delim <= cp) {
-                up->ext = cp + 1;
+    if ((tok = srchr(up->path, '.')) != NULL) {
+        if ((cp = srchr(up->path, '/')) != NULL) {
+            if (cp <= tok) {
+                up->ext = tok + 1;
 #if BLD_WIN_LIKE
                 for (cp = up->ext; *cp; cp++) {
                     *cp = (char) tolower((int) *cp);
@@ -10855,7 +10834,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
 #endif
             }
         } else {
-            up->ext = cp + 1;
+            up->ext = tok + 1;
 #if BLD_WIN_LIKE
             for (cp = up->ext; *cp; cp++) {
                 *cp = (char) tolower((int) *cp);
@@ -10870,7 +10849,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
 HttpUri *httpCloneUri(HttpUri *base, int complete)
 {
     HttpUri     *up;
-    char        *path, *cp, *last_delim;
+    char        *path, *cp, *tok;
     int         port;
 
     if ((up = mprAllocObj(HttpUri, NULL)) == 0) {
@@ -10886,7 +10865,7 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
     }
     if (base->host) {
         up->host = sclone(base->host);
-        if ((cp = strchr(base->host, ':')) && port == 0) {
+        if ((cp = schr(base->host, ':')) && port == 0) {
             port = (int) stoi(++cp, 10, NULL);
         }
     } else if (complete) {
@@ -10909,10 +10888,10 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
     if (base->query) {
         up->query = sclone(base->query);
     }
-    if ((cp = strrchr(up->path, '.')) != NULL) {
-        if ((last_delim = strrchr(up->path, '/')) != NULL) {
-            if (last_delim <= cp) {
-                up->ext = cp + 1;
+    if ((tok = srchr(up->path, '.')) != NULL) {
+        if ((cp = srchr(up->path, '/')) != NULL) {
+            if (cp <= tok) {
+                up->ext = tok + 1;
 #if BLD_WIN_LIKE
                 for (cp = up->ext; *cp; cp++) {
                     *cp = (char) tolower((int) *cp);
@@ -10920,7 +10899,7 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
 #endif
             }
         } else {
-            up->ext = cp + 1;
+            up->ext = tok + 1;
 #if BLD_WIN_LIKE
             for (cp = up->ext; *cp; cp++) {
                 *cp = (char) tolower((int) *cp);
@@ -10980,7 +10959,7 @@ char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *re
 
     /*  Hosts with integral port specifiers override
      */
-    if (host && strchr(host, ':')) {
+    if (host && schr(host, ':')) {
         portDelim = 0;
     } else {
         if (port != 0 && port != getDefaultPort(scheme)) {
@@ -11041,10 +11020,10 @@ HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int dup)
         /* If target is relative, just use it. If base is relative, can't use it because we don't know where it is */
         return (dup) ? httpCloneUri(target, 0) : target;
     }
-    if (base->scheme && target->scheme && strcmp(base->scheme, target->scheme) != 0) {
+    if (base->scheme && target->scheme && scmp(base->scheme, target->scheme) != 0) {
         return (dup) ? httpCloneUri(target, 0) : target;
     }
-    if (base->host && target->host && (base->host && strcmp(base->host, target->host) != 0)) {
+    if (base->host && target->host && (base->host && scmp(base->host, target->host) != 0)) {
         return (dup) ? httpCloneUri(target, 0) : target;
     }
     if (getPort(base) != getPort(target)) {
@@ -11100,7 +11079,7 @@ HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int dup)
     uri->scheme = 0;
     uri->port = 0;
 
-    uri->path = cp = mprAlloc(baseSegments * 3 + (int) strlen(target->path) + 2);
+    uri->path = cp = mprAlloc(baseSegments * 3 + (int) slen(target->path) + 2);
     for (i = commonSegments; i < baseSegments; i++) {
         *cp++ = '.';
         *cp++ = '.';
@@ -11131,7 +11110,7 @@ HttpUri *httpJoinUriPath(HttpUri *result, HttpUri *base, HttpUri *other)
     if (other->path[0] == '/') {
         result->path = sclone(other->path);
     } else {
-        sep = ((base->path[0] == '\0' || base->path[strlen(base->path) - 1] == '/') || 
+        sep = ((base->path[0] == '\0' || base->path[slen(base->path) - 1] == '/') || 
                (other->path[0] == '\0' || other->path[0] == '/'))  ? "" : "/";
         result->path = sjoin(base->path, sep, other->path, NULL);
     }
@@ -11201,7 +11180,7 @@ char *httpNormalizeUriPath(cchar *pathArg)
     if (pathArg == 0 || *pathArg == '\0') {
         return mprEmptyString();
     }
-    len = (int) strlen(pathArg);
+    len = (int) slen(pathArg);
     if ((dupPath = mprAlloc(len + 2)) == 0) {
         return NULL;
     }
@@ -11254,7 +11233,7 @@ char *httpNormalizeUriPath(cchar *pathArg)
     if ((path = mprAlloc(len + nseg + 1)) != 0) {
         for (i = 0, dp = path; i < nseg; ) {
             strcpy(dp, segments[i]);
-            len = (int) strlen(segments[i]);
+            len = (int) slen(segments[i]);
             dp += len;
             if (++i < nseg || (nseg == 1 && *segments[0] == '\0' && firstc == '/')) {
                 *dp++ = '/';
@@ -11323,13 +11302,13 @@ static int getPort(HttpUri *uri)
     if (uri->port) {
         return uri->port;
     }
-    return (uri->scheme && strcmp(uri->scheme, "https") == 0) ? 443 : 80;
+    return (uri->scheme && scmp(uri->scheme, "https") == 0) ? 443 : 80;
 }
 
 
 static int getDefaultPort(cchar *scheme)
 {
-    return (scheme && strcmp(scheme, "https") == 0) ? 443 : 80;
+    return (scheme && scmp(scheme, "https") == 0) ? 443 : 80;
 }
 
 
@@ -11339,13 +11318,13 @@ static void trimPathToDirname(HttpUri *uri)
     int         len;
 
     path = uri->path;
-    len = (int) strlen(path);
+    len = (int) slen(path);
     if (path[len - 1] == '/') {
         if (len > 1) {
             path[len - 1] = '\0';
         }
     } else {
-        if ((cp = strrchr(path, '/')) != 0) {
+        if ((cp = srchr(path, '/')) != 0) {
             if (cp > path) {
                 *cp = '\0';
             } else {

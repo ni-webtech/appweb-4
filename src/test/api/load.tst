@@ -8,11 +8,11 @@ if (false && test.depth >= 3) {
 
     testCmd(command)
     if (test.multithread) {
-        testCmdNoCapture(command + "--threads " + 2)
+        sh(command + "--threads " + 2)
     }
     if (test.multithread) {
         for each (count in [2, 4, 8, 16]) {
-            testCmdNoCapture(command + "--threads " + count)
+            sh(command + "--threads " + count)
         }
     }
 } else {

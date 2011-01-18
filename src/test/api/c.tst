@@ -3,4 +3,4 @@
  */
 
 let command = locate("testAppweb") + " --host " + tsession["host"] + " --name appweb.api.c " + test.mapVerbosity(-3)
-testCmdNoCapture(command)
+sh(command)

@@ -1300,6 +1300,7 @@ typedef struct Ejs {
     int                 spreadArgs;         /**< Count of spread args */
     int                 gc;                 /**< GC required (don't make bit field) */
     uint                compiling: 1;       /**< Currently executing the compiler */
+    uint                destroying: 1;      /**< Interpreter is being destroyed */
     uint                empty: 1;           /**< Interpreter will be created empty */
     uint                exiting: 1;         /**< VM should exit */
     uint                freeze: 1;          /**< Freeze GC sync -- don't do a GC sync */
@@ -4283,7 +4284,7 @@ extern EjsDoc       *ejsCreateDoc(Ejs *ejs, void *vp, int slotNum, EjsString *do
 
 extern int          ejsAddModule(Ejs *ejs, EjsModule *up);
 extern EjsModule    *ejsLookupModule(Ejs *ejs, EjsString *name, int minVersion, int maxVersion);
-extern int          ejsRemoveModule(Ejs *ejs, EjsModule *up);
+extern void         ejsRemoveModule(Ejs *ejs, EjsModule *up);
 extern void         ejsRemoveModules(Ejs *ejs);
 
 extern int  ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, int checksum, int flags);

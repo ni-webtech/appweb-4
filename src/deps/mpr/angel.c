@@ -1249,7 +1249,7 @@ static int initWindow()
     app->hwnd = CreateWindow(app->appName, app->appTitle, WS_OVERLAPPED, CW_USEDEFAULT, 0, 0, 0, NULL, NULL, 
         app->appInst, NULL);
     if (! app->hwnd) {
-        mprError("Can't create window");
+        mprError("Can't create window. Error: %d", GetLastError());
         return -1;
     }
     return 0;

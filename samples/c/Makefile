@@ -12,7 +12,7 @@ ifeq ($(BLD_FEATURE_HTTP_CLIENT),1)
 	PRE_DIRS 	+= simpleClient 
 endif
 
-ifeq ($(BLD_FEATURE_STATIC),0)
+ifeq ($(BLD_STATIC),0)
 	PRE_DIRS 	+= handler
 endif
 

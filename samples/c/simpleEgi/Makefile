@@ -10,7 +10,7 @@ include 		.makedep
 
 TARGETS			+= $(NAME)$(BLD_EXE)
 LIBS			+= $(BLD_APPWEB_LIBS)
-ifeq ($(BLD_FEATURE_STATIC),0)
+ifeq ($(BLD_STATIC),0)
 	MODS		+= mod_egi$(BLD_SHOBJ)
 endif
 

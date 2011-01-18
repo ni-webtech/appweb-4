@@ -38,7 +38,7 @@ endif
 BLD_FEATURE_MATRIXSSL = 0
 BLD_FEATURE_OPENSSL = 0
 BLD_FEATURE_PHP = 0
-BLD_FEATURE_STATIC = 0
+BLD_STATIC = 0
 
 CROSS_DFLAGS= _WIN32_WCE=\$$(CEVER);UNDER_CE;\$$(PLATFORMDEFINES);\$$(ARCHFAM);\$$(_ARCHFAM_)
 CROSS_LIBS	= winsock.lib secchk.lib coredll.lib corelibc.lib ole32.lib oleaut32.lib uuid.lib commctrl.lib

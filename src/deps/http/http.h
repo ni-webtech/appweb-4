@@ -377,9 +377,6 @@ extern HttpLimits *httpCreateLimits(int serverSide);
     @defgroup HttpUri HttpUri
  */
 typedef struct HttpUri {
-    /*  
-        These are pointers into the parsedUriBuf.
-     */
     char        *scheme;                /**< URI scheme (http|https|...) */
     char        *host;                  /**< Host name */
     char        *path;                  /**< Uri path (without scheme, host, query or fragements) */
@@ -390,7 +387,6 @@ typedef struct HttpUri {
     int         flags;                  /** Flags */
     int         secure;                 /** Using https */
     char        *uri;                   /**< Original URI (not decoded) */
-    char        *parsedUriBuf;          /**< Allocated storage for parsed uri */
 } HttpUri;
 
 /*  

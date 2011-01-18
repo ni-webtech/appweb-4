@@ -7552,6 +7552,8 @@ EjsModule *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsConstants 
 
 static void manageModule(EjsModule *mp, int flags)
 {
+    Ejs     *ejs;
+
     if (flags & MPR_MANAGE_MARK) {
         mprMark(mp->name);
         mprMark(mp->vname);
@@ -7570,9 +7572,10 @@ static void manageModule(EjsModule *mp, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         mprCloseFile(mp->file);
-        if (mp->ejs) {
-            mprAssert(mp->ejs->name);
-            ejsRemoveModule(mp->ejs, mp);
+        ejs = mp->ejs;
+        if (ejs && ejs->modules) {
+            mprAssert(ejs->name);
+            ejsRemoveModule(ejs, mp);
         }
     }
 }
@@ -7665,12 +7668,12 @@ int ejsAddModule(Ejs *ejs, EjsModule *mp)
 }
 
 
-int ejsRemoveModule(Ejs *ejs, EjsModule *mp)
+void ejsRemoveModule(Ejs *ejs, EjsModule *mp)
 {
-    mprAssert(ejs->modules);
     mp->ejs = 0;
-    //MOB printf("Remove modules (before) %d\n", ejs->modules->length);
-    return mprRemoveItem(ejs->modules, mp);
+    if (ejs->modules) {
+        mprRemoveItem(ejs->modules, mp);
+    }
 }
 
 
@@ -7682,6 +7685,7 @@ void ejsRemoveModules(Ejs *ejs)
     for (next = 0; (mp = mprGetNextItem(ejs->modules, &next)) != 0; ) {
         mp->ejs = 0;
     }
+    ejs->modules = 0;
 }
 
 
@@ -8903,7 +8907,6 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     }
     mprRemoveRoot(ejs);
     ejs->freeze = 0;
-    // printf("CREATE %s\n", ejs->name);
     return ejs;
 }
 
@@ -8913,6 +8916,7 @@ void ejsDestroy(Ejs *ejs)
     EjsService  *sp;
     EjsState    *state;
 
+    ejs->destroying = 1;
     sp = ejs->service;
     if (sp) {
         ejsRemoveModules(ejs);
@@ -10153,7 +10157,7 @@ static EjsObj *app_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     mark = mprGetTime();
     remaining = timeout;
     do {
-        mprWaitForEvent(ejs->dispatcher, remaining); 
+        mprWaitForEvent(ejs->dispatcher, (int) remaining); 
         remaining = mprGetRemainingTime(mark, timeout);
     } while (!oneEvent && !ejs->exiting && remaining > 0 && !mprIsStopping());
     return 0;
@@ -10176,7 +10180,7 @@ static EjsObj *app_sleep(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     mark = mprGetTime();
     remaining = timeout;
     do {
-        mprWaitForEvent(ejs->dispatcher, remaining); 
+        mprWaitForEvent(ejs->dispatcher, (int) remaining); 
         remaining = mprGetRemainingTime(mark, timeout);
     } while (!ejs->exiting && remaining > 0 && !mprIsStopping());
     return 0;
@@ -18574,7 +18578,9 @@ static EjsObj *http_close(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
         httpSetConnNotifier(hp->conn, httpNotify);
         httpSetConnContext(hp->conn, hp);
     }
+#if UNUSED
     mprRemoveRoot(hp);
+#endif
     return 0;
 }
 
@@ -19346,12 +19352,16 @@ static EjsObj *startHttpRequest(Ejs *ejs, EjsHttp *hp, char *method, int argc, E
         ejsThrowIOError(ejs, "Can't issue request for \"%s\"", hp->uri);
         return 0;
     }
+#if UNUSED
     mprAddRoot(hp);
+#endif
 
     if (mprGetBufLength(hp->requestContent) > 0) {
         nbytes = httpWriteBlock(conn->writeq, mprGetBufStart(hp->requestContent), mprGetBufLength(hp->requestContent));
         if (nbytes < 0) {
+#if UNUSED
             mprRemoveRoot(hp);
+#endif
             ejsThrowIOError(ejs, "Can't write request data for \"%s\"", hp->uri);
             return 0;
         } else if (nbytes > 0) {
@@ -19398,7 +19408,9 @@ static void httpNotify(HttpConn *conn, int state, int notifyFlags)
             }
             sendHttpCloseEvent(ejs, hp);
         }
+#if UNUSED
         mprRemoveRoot(hp);
+#endif
         break;
 
     case 0:
@@ -25202,7 +25214,7 @@ int ejsGetSlot(Ejs *ejs, EjsPot *obj, int slotNum)
         obj->numProp = slotNum + 1;
     }
     mprAssert(obj->numProp <= obj->properties->size);
-#if BLD_DEBUG
+#if BLD_DEBUG && 0
     if (obj == ejs->global && obj->numProp > 220) {
         mprAssert(obj != ejs->global || obj->numProp < 220);
         mprBreakpoint();
@@ -29466,6 +29478,7 @@ EjsString *ejsInternAsc(Ejs *ejs, cchar *value, ssize len)
     step = 0;
     ilock();
     ejs->intern->accesses++;
+    mprAssert(ejs->intern->size > 0);
     index = shash(value, len) % ejs->intern->size;
     if ((head = &ejs->intern->buckets[index]) != NULL) {
         for (sp = head->next; sp != head; sp = sp->next, step++) {
@@ -29970,7 +29983,6 @@ static EjsObj *system_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     mprHold(cmdline);
     status = mprRunCmd(cmd, cmdline, &output, &err, 0);
     if (status) {
-        if (strstr(cmdline, "ejs drawing.mod") == 0) { mprBreakpoint(); }
         ejsThrowError(ejs, "Command failed: %s\n\nExit status: %d\n\nError Output: \n%s\nPrevious Output: \n%s\n", 
             cmdline, status, err, output);
         mprDestroyCmd(cmd);
@@ -33067,12 +33079,10 @@ void ejsRemoveWorkers(Ejs *ejs)
     EjsWorker   *worker;
     int         next;
 
-    lock(ejs);
     for (next = 0; (worker = mprGetNextItem(ejs->workers, &next)) != NULL; ) {
         worker->ejs = 0;
     }
     ejs->workers = 0;
-    unlock(ejs);
 }
 
 
@@ -33624,7 +33634,7 @@ static EjsObj *workerWaitForMessage(Ejs *ejs, EjsWorker *worker, int argc, EjsOb
 
     worker->gotMessage = 0;
     do {
-        mprWaitForEvent(ejs->dispatcher, remaining);
+        mprWaitForEvent(ejs->dispatcher, (int) remaining);
         remaining = mprGetRemainingTime(mark, timeout);
     } while (!worker->gotMessage && remaining > 0 && !ejs->exception);
 
@@ -33705,10 +33715,7 @@ static void manageWorker(EjsWorker *worker, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (!worker->inside) {
-            //  MOB - race with freeing ejs
-            if (worker->ejs) {
-                removeWorker(worker);
-            }
+            removeWorker(worker);
         }
         if (worker->pair) {
             if (worker->pair->pair) {
@@ -50134,7 +50141,7 @@ int ecOpenFileStream(EcCompiler *cp, cchar *path)
         return MPR_ERR_CANT_READ;
     }
     contents[info.size] = '\0';
-    ecSetStreamBuf((EcStream*) fs, contents, info.size);
+    ecSetStreamBuf((EcStream*) fs, contents, (ssize) info.size);
     return 0;
 }
 

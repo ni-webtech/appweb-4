@@ -2327,6 +2327,17 @@ extern int scasecmp(cchar *s1, cchar *s2);
 extern char *sclone(cchar *str);
 
 /**
+    Clone a substring.
+    @description Copy a substring into a newly allocated block.
+    @param str Pointer to the block to duplicate.
+    @param len Number of bytes to copy. The actual length copied is the minimum of the given length and the length of
+        the supplied string. The result is null terminated.
+    @return Returns a newly allocated string.
+    @ingroup MprMem
+ */
+extern char *snclone(cchar *str, ssize len);
+
+/**
     Compare strings.
     @description Compare two strings. This is a safe replacement for strcmp. It can handle null args.
     @param s1 First string to compare.

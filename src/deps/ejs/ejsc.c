@@ -20,7 +20,7 @@
  */
 /************************************************************************/
 
-/**
+/** 
     ejsc.c - Ejscript Compiler main program
 
     This compiler will compile the files given on the command line.

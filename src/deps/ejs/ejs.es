@@ -6781,8 +6781,12 @@ module ejs {
         /** 
             Close the logger 
          */
-        function close(): Void
+        function close(): Void {
+            if (_outStream) {
+                _outStream.close()
+            }
             _outStream = null
+        }
 
         /** 
             Filter function for this logger. The filter function is called with the following signature:

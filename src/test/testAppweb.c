@@ -41,7 +41,7 @@ MAIN(testAppWeb, int argc, char *argv[])
     MprTestGroup    *gp;
     int             rc;
 
-    mpr = mprCreate(argc, argv, 0);
+    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
     mprSetAppName(argv[0], argv[0], BLD_VERSION);
 
     defaultHost = "127.0.0.1";
@@ -52,7 +52,6 @@ MAIN(testAppWeb, int argc, char *argv[])
         mprError("Can't create test service");
         exit(2);
     }
-    
     if (mprParseTestArgs(ts, argc, argv) < 0) {
         mprPrintfError("\n"
             "  Commands specifically for %s\n"
@@ -60,7 +59,6 @@ MAIN(testAppWeb, int argc, char *argv[])
             mprGetAppName(mpr));
         exit(3);
     }
-    
     parseHostSwitch(&defaultHost, &defaultPort);
     gp = mprAddTestGroup(ts, &master);
     if (gp == 0) {
@@ -72,7 +70,6 @@ MAIN(testAppWeb, int argc, char *argv[])
         return 0;
     }
 #endif
-
     /*
         Need a background event thread as we use the main thread to run the tests.
      */
@@ -80,13 +77,12 @@ MAIN(testAppWeb, int argc, char *argv[])
         mprError("Can't start mpr services");
         exit(5);
     }
-
     /*
         Run the tests and return zero if 100% success
      */
     rc = mprRunTests(ts);
     mprReportTestResults(ts);
-
+    mprDestroy(MPR_GRACEFUL);
     return (rc == 0) ? 0 : -1;
 }
 

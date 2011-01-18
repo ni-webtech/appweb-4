@@ -139,7 +139,7 @@ vxdeploy:
 	cp $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(VXDEPLOY)
 	[ -f $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) ] && \
 		cp $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) $(VXDEPLOY)/cgi-bin ; true
-	[ $(BLD_FEATURE_STATIC) = 0 ] && cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(VXDEPLOY) ; true
+	[ $(BLD_STATIC) = 0 ] && cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(VXDEPLOY) ; true
 	cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*.mod $(VXDEPLOY)
 	sed -e 's/UploadDir.*/UploadDir ./' < src/server/template/flat/appweb.conf >$(VXDEPLOY)/appweb.conf
 	cp -r src/server/*.db $(VXDEPLOY)
@@ -155,7 +155,7 @@ cedeploy:
 	rm -f $(CEDEPLOY)/*$(BLD_EXE)
 	[ -f $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) ] && \
 		cp $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) $(CEDEPLOY)/cgi-bin ; true
-	[ $(BLD_FEATURE_STATIC) = 0 ] && cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(CEDEPLOY) ; true
+	[ $(BLD_STATIC) = 0 ] && cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(CEDEPLOY) ; true
 	cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*.mod $(CEDEPLOY)
 	sed -e 's/UploadDir.*/UploadDir ./' < src/server/template/flat/appweb.conf >$(CEDEPLOY)/appweb.conf
 	cp -r src/server/*.db $(CEDEPLOY)
@@ -176,7 +176,7 @@ remoteDeploy:
 	rm -f $(REMOTE)/*$(BLD_EXE)
 	cp bin/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(REMOTE)
 	cp bin/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) $(REMOTE)/cgi-bin
-	[ "$(BLD_FEATURE_STATIC)" = 0 ] && cp modules/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(REMOTE) ; true
+	[ "$(BLD_STATIC)" = 0 ] && cp modules/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(REMOTE) ; true
 	cp -r src/server/template/flat/appweb.conf $(DEPLOY)/appweb.conf
 	cp -r src/server/*.db $(REMOTE)
 	cp -r src/server/web/* $(REMOTE)/web

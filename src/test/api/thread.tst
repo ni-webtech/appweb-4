@@ -7,7 +7,7 @@ if (false && test.multithread) {
         test.mapVerbosity(-2)
 
     for each (threadCount in [2, 4, 8, 16]) {
-        testCmdNoCapture(command + "--threads " + threadCount)
+        sh(command + "--threads " + threadCount)
     }
 } else {
     test.skip("Run if multithreaded")

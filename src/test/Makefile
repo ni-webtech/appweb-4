@@ -1,7 +1,7 @@
 #
-# Makefile for the Appweb unit tests
+#	Makefile for the Appweb unit tests
 #
-# Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
 BUILD_DEPTH		?= 2
@@ -10,17 +10,17 @@ TEST_SYSTEM		:= 127.0.0.1:4100
 include 		.makedep
 
 TARGETS			+= $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) 
-ifeq ($(BLD_FEATURE_STATIC),0)
-	TARGETS		+= $(BLD_MOD_DIR)/egiTest$(BLD_SHOBJ)
+ifeq ($(BLD_STATIC),0)
+	MODULES		+= $(BLD_MOD_DIR)/egiTest$(BLD_SHOBJ)
 endif
 
-ifeq			($(BLD_FEATURE_CGI),1)
+ifeq ($(BLD_FEATURE_CGI),1)
 	CGIP		:= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	TARGETS		+= cgi-bin/testScript cgi-bin/cgiProgram$(BLD_EXE)
 endif
 MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
-compileExtra: 	$(TARGETS)
+compileExtra: 	$(TARGETS) $(MODULES)
 
 #
 #	Build testAppweb

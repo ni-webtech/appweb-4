@@ -1082,8 +1082,7 @@ void mprRequestGC(int flags)
 static void synchronize()
 {
 #if BLD_MEMORY_STATS
-    //7
-    LOG(2, "GC: MARKED %,d/%,d, SWEPT %,d/%,d, freed %,d, bytesFree %,d (prior %,d), newCount %,d/%,d, " 
+    LOG(7, "GC: MARKED %,d/%,d, SWEPT %,d/%,d, freed %,d, bytesFree %,d (prior %,d), newCount %,d/%,d, " 
             "blocks %,d bytes %,d",
             heap->stats.marked, heap->stats.markVisited, heap->stats.swept, heap->stats.sweepVisited, 
             (int) heap->stats.freed, (int) heap->stats.bytesFree, (int) heap->priorFree, heap->priorNewCount, heap->newQuota,
@@ -1109,8 +1108,7 @@ static void synchronize()
 
 static void mark()
 {
-    //7
-    LOG(2, "GC: mark started");
+    LOG(7, "GC: mark started");
 
 #if !PARALLEL_GC
     heap->mustYield = 1;
@@ -1155,8 +1153,7 @@ static void sweep()
         LOG(7, "DEBUG: sweep: Abort sweep - GC disabled");
         return;
     }
-    //7
-    LOG(2, "GC: sweep started");
+    LOG(7, "GC: sweep started");
     heap->stats.freed = 0;
 
     if (heap->newCount > heap->earlyYieldQuota) {
@@ -1627,7 +1624,7 @@ static void nextGen()
     heap->stale = (active - 1 + MPR_MAX_GEN) % MPR_MAX_GEN;
     heap->dead = (active - 2 + MPR_MAX_GEN) % MPR_MAX_GEN;
     heap->iteration++;
-    LOG(2, "GC: Iteration %d, active %d, stale %d, dead %d, eternal %d",
+    LOG(7, "GC: Iteration %d, active %d, stale %d, dead %d, eternal %d",
         heap->iteration, heap->active, heap->stale, heap->dead, heap->eternal);
 }
 
@@ -2910,6 +2907,8 @@ int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask)
 {
     int     winMask;
 
+    mprAssert(ws->hwnd);
+
     lock(ws);
     winMask = 0;
     if (wp->desiredMask != mask) {
@@ -2932,6 +2931,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
     MprWaitService      *ws;
 
     ws = wp->service;
+    mprAssert(ws->hwnd);
     lock(ws);
     mprAssert(wp->fd >= 0);
     WSAAsyncSelect(wp->fd, ws->hwnd, ws->socketMessage, 0);
@@ -7147,10 +7147,14 @@ int mprServiceEvents(int timeout, int flags)
     MprTime             start, expires, delay;
     int                 beginEventCount, eventCount, justOne;
 
+    if (MPR->eventing) {
+        mprError("mprServiceEvents() called reentrantly");
+        return 0;
+    }
+    MPR->eventing = 1;
 #if WIN
     mprInitWindow();
 #endif
-    MPR->eventing = 1;
     es = MPR->eventService;
     beginEventCount = eventCount = es->eventCount;
 
@@ -11001,14 +11005,13 @@ MprMutex *mprCreateLock()
 
 static void manageLock(MprMutex *lock, int flags)
 {
-    if (flags & MPR_MANAGE_MARK) {
-        ;
-    } else if (flags & MPR_MANAGE_FREE) {
+    if (flags & MPR_MANAGE_FREE) {
         mprAssert(lock);
 #if BLD_UNIX_LIKE
         pthread_mutex_destroy(&lock->cs);
 #elif BLD_WIN_LIKE
         DeleteCriticalSection(&lock->cs);
+        lock->cs.SpinCount = 0;
 #elif VXWORKS
         semDelete(lock->cs);
 #endif
@@ -11055,7 +11058,12 @@ bool mprTryLock(MprMutex *lock)
 #if BLD_UNIX_LIKE
     rc = pthread_mutex_trylock(&lock->cs) != 0;
 #elif BLD_WIN_LIKE
-    rc = TryEnterCriticalSection(&lock->cs) == 0;
+    /* Rely on SpinCount being non-zero */
+    if (lock->cs.SpinCount) {
+        rc = TryEnterCriticalSection(&lock->cs) == 0;
+    } else {
+        rc = 0;
+    }
 #elif VXWORKS
     rc = semTake(lock->cs, NO_WAIT) != OK;
 #endif
@@ -11092,6 +11100,7 @@ MprSpin *mprCreateSpinLock()
 #elif WINCE
     InitializeCriticalSection(&lock->cs);
 #elif BLD_WIN_LIKE
+    //  MOB -- should use inline asm
     InitializeCriticalSectionAndSpinCount(&lock->cs, 5000);
 #elif VXWORKS
     /* Removed SEM_INVERSION_SAFE */
@@ -11122,6 +11131,7 @@ static void manageSpinLock(MprSpin *lock, int flags)
         pthread_mutex_destroy(&lock->cs);
 #elif BLD_WIN_LIKE
         DeleteCriticalSection(&lock->cs);
+        lock->cs.SpinCount = 0;
 #elif VXWORKS
         semDelete(lock->cs);
 #endif
@@ -11186,7 +11196,12 @@ bool mprTrySpinLock(MprSpin *lock)
 #elif BLD_UNIX_LIKE
     rc = pthread_mutex_trylock(&lock->cs) != 0;
 #elif BLD_WIN_LIKE
-    rc = TryEnterCriticalSection(&lock->cs) == 0;
+    /* Rely on SpinCount being non-zero */
+    if (lock->cs.SpinCount) {
+        rc = TryEnterCriticalSection(&lock->cs) == 0;
+    } else {
+        rc = 0;
+    }
 #elif VXWORKS
     rc = semTake(lock->cs, NO_WAIT) != OK;
 #endif
@@ -11238,7 +11253,10 @@ void mprLock(MprMutex *lock)
 #if BLD_UNIX_LIKE
     pthread_mutex_lock(&lock->cs);
 #elif BLD_WIN_LIKE
-    EnterCriticalSection(&lock->cs);
+    /* Rely on SpinCount being non-zero */
+    if (lock->cs.SpinCount) {
+        EnterCriticalSection(&lock->cs);
+    }
 #elif VXWORKS
     semTake(lock->cs, WAIT_FOREVER);
 #endif
@@ -11288,7 +11306,9 @@ void mprSpinLock(MprSpin *lock)
 #elif BLD_UNIX_LIKE
     pthread_mutex_lock(&lock->cs);
 #elif BLD_WIN_LIKE
-    EnterCriticalSection(&lock->cs);
+    if (lock->cs.SpinCount) {
+        EnterCriticalSection(&lock->cs);
+    }
 #elif VXWORKS
     semTake(lock->cs, WAIT_FOREVER);
 #endif
@@ -12021,7 +12041,7 @@ MprChar *mpbrk(MprChar *str, cchar *set)
     if (str == NULL || set == NULL) {
         return 0;
     }
-    for (count = 0; *str; count++) {
+    for (count = 0; *str; count++, str++) {
         for (sp = set; *sp; sp++) {
             if (*str == *sp) {
                 return str;
@@ -17806,6 +17826,9 @@ char *itos(char *buf, int count, int64 value, int radix)
 
 char *schr(cchar *s, int c)
 {
+    if (s == NULL) {
+        return 0;
+    }
     return strchr(s, c);
 }
 
@@ -17853,6 +17876,25 @@ char *sclone(cchar *str)
         str = "";
     }
     len = strlen(str);
+    size = len + 1;
+    if ((ptr = mprAlloc(size)) != NULL) {
+        memcpy(ptr, str, len);
+        ptr[len] = '\0';
+    }
+    return ptr;
+}
+
+
+char *snclone(cchar *str, ssize len)
+{
+    char    *ptr;
+    ssize   size, l;
+
+    if (str == NULL) {
+        str = "";
+    }
+    l = slen(str);
+    len = min(l, len);
     size = len + 1;
     if ((ptr = mprAlloc(size)) != NULL) {
         memcpy(ptr, str, len);
@@ -18194,7 +18236,7 @@ char *spbrk(cchar *str, cchar *set)
     if (str == NULL || set == NULL) {
         return 0;
     }
-    for (count = 0; *str; count++) {
+    for (count = 0; *str; count++, str++) {
         for (sp = set; *sp; sp++) {
             if (*str == *sp) {
                 return (char*) str;
@@ -18207,6 +18249,9 @@ char *spbrk(cchar *str, cchar *set)
 
 char *srchr(cchar *s, int c)
 {
+    if (s == NULL) {
+        return NULL;
+    }
     return strrchr(s, c);
 }
 
@@ -23594,7 +23639,7 @@ MprChar *wpbrk(MprChar *str, MprChar *set)
     if (str == NULL || set == NULL) {
         return 0;
     }
-    for (count = 0; *str; count++) {
+    for (count = 0; *str; count++, str++) {
         for (sp = set; *sp; sp++) {
             if (*str == *sp) {
                 return str;
