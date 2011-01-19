@@ -149,8 +149,9 @@ upload:
 	fi
 
 testExtraExtra:
-	#	ejs is needed to run the build farm
-	if [ "$(BUILD_DEPTH)" -ge 3 -a "$(BLD_PRODUCT)" != ejs ] ; then \
+
+disabled:
+	if [ "$(BUILD_DEPTH)" -ge 5 -a "$(BLD_PRODUCT)" != ejs ] ; then \
 		$(MAKE) test-installed ; \
 		$(MAKE) uninstall ; \
 		$(MAKE) test-removed ; \
