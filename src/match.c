@@ -121,7 +121,7 @@ static HttpStage *matchHandler(HttpConn *conn)
     rx->auth = loc->auth;        
 
     if (tx->filename == 0) {
-        tx->filename = makeFilename(conn, rx->alias, rx->uri, 1);
+        tx->filename = makeFilename(conn, rx->alias, rx->pathInfo, 1);
     }
     info = &tx->fileInfo;
     if (!info->checked) {
@@ -303,10 +303,10 @@ static HttpStage *findHandler(HttpConn *conn, bool *rescan)
         handler = http->passHandler;
     } else {
         tx->extension = getExtension(conn);
-        if (*tx->extension) {
+        if (tx->extension) {
             handler = checkHandler(conn, httpGetHandlerByExtension(loc, tx->extension));
         }
-        if (handler == 0 && !tx->fileInfo.isDir) {
+        if (handler == 0 && !tx->fileInfo.valid) {
             /*
                 URI has no extension, check if the addition of configured  extensions results in a valid filename.
              */
@@ -326,12 +326,17 @@ static HttpStage *findHandler(HttpConn *conn, bool *rescan)
                     }
                 }
             }
+            if (hp == 0) {
+                handler = 0;
+            }
         }
         if (handler == 0) {
             /*
                 Failed to match by extension, so perform custom handler matching on all defined handlers
              */
+#if UNUSED
             tx->filename = makeFilename(conn, rx->alias, rx->pathInfo, 1);
+#endif
             for (next = 0; (handler = mprGetNextItem(loc->handlers, &next)) != 0; ) {
                 if (checkHandler(conn, handler)) {
                     break;
@@ -399,9 +404,11 @@ static bool mapToFile(HttpConn *conn, HttpStage *handler, bool *rescan)
     if (handler->flags & HTTP_STAGE_VIRTUAL) {
         return 1;
     }
+#if UNUSED
     if (tx->filename == 0) {
         tx->filename = makeFilename(conn, rx->alias, rx->pathInfo, 1);
     }
+#endif
     rx->dir = maLookupBestDir(host, tx->filename);
     if (rx->dir == 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Missing directory block for %s", tx->filename);
@@ -541,7 +548,9 @@ static void setPathInfo(HttpConn *conn, HttpStage *handler)
      */
     last = 0;
     scriptName = rx->scriptName = rx->pathInfo;
+#if UNUSED
     tx->filename = makeFilename(conn, alias, rx->pathInfo, 1);
+#endif
     seps = mprGetPathSeparators(tx->filename);
     for (cp = start = &tx->filename[strlen(alias->filename)]; cp; ) {
         if ((cp = strchr(cp, seps[0])) != 0) {

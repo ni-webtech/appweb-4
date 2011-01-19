@@ -2053,7 +2053,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     mprLog(4, "Http: client request: %s %s", method, url);
 
     if (conn->tx == 0 || conn->state != HTTP_STATE_BEGIN) {
-        httpPrepClientConn(conn);
+        httpPrepClientConn(conn, 0);
     }
     mprAssert(conn->state == HTTP_STATE_BEGIN);
     httpSetState(conn, HTTP_STATE_CONNECTED);
@@ -2268,8 +2268,6 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server)
     if (server) {
         conn->dispatcher = server->dispatcher;
         conn->notifier = server->notifier;
-    } else {
-        httpCreateTxHeaders(conn);
     }
     httpSetState(conn, HTTP_STATE_BEGIN);
     httpAddConn(http, conn);
@@ -2321,7 +2319,9 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->documentRoot);
         mprMark(conn->rx);
         mprMark(conn->tx);
+#if UNUSED
         mprMark(conn->txheaders);
+#endif
         mprMark(conn->input);
         mprMark(conn->context);
         mprMark(conn->boundary);
@@ -2390,7 +2390,9 @@ void httpPrepServerConn(HttpConn *conn)
         conn->readq = 0;
         conn->writeq = 0;
         conn->writeComplete = 0;
+#if UNUSED
         conn->txheaders = 0;
+#endif
         conn->dispatcher = (conn->server) ? conn->server->dispatcher : mprGetDispatcher();
         httpSetState(conn, HTTP_STATE_BEGIN);
         httpInitSchedulerQueue(&conn->serviceq);
@@ -2400,8 +2402,10 @@ void httpPrepServerConn(HttpConn *conn)
 }
 
 
-void httpPrepClientConn(HttpConn *conn)
+void httpPrepClientConn(HttpConn *conn, int retry)
 {
+    MprHashTable    *headers;
+
     mprAssert(conn);
 
     if (conn->keepAliveCount >= 0 && conn->sock) {
@@ -2423,7 +2427,8 @@ void httpPrepClientConn(HttpConn *conn)
     if (conn->tx) {
         conn->tx->conn = 0;
     }
-    conn->tx = httpCreateTx(conn);
+    headers = (retry && conn->tx) ? conn->tx->headers: NULL;
+    conn->tx = httpCreateTx(conn, headers);
     if (conn->rx) {
         conn->rx->conn = 0;
     }
@@ -3588,6 +3593,7 @@ HttpLoc *httpInitLocation(Http *http, int serverSide)
 
 void httpInitLimits(HttpLimits *limits, int serverSide)
 {
+    memset(limits, 0, sizeof(HttpLimits));
     limits->chunkSize = HTTP_MAX_CHUNK;
     limits->headerCount = HTTP_MAX_NUM_HEADERS;
     limits->headerSize = HTTP_MAX_HEADERS;
@@ -6666,7 +6672,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     }
     if (conn->rx == NULL) {
         conn->rx = httpCreateRx(conn);
-        conn->tx = httpCreateTx(conn);
+        conn->tx = httpCreateTx(conn, NULL);
     }
     rx = conn->rx;
     tx = conn->tx;
@@ -7377,8 +7383,10 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     nbytes = min(remaining, mprGetBufLength(content));
     mprAssert(nbytes >= 0);
 
-    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, NULL) >= 0) {
-        httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, 0);
+    if (nbytes > 0) {
+        if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, NULL) >= 0) {
+            httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, 0);
+        }
     }
     LOG(7, "processContent: packet of %d bytes, remaining %d", mprGetBufLength(content), remaining);
 
@@ -9300,7 +9308,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
 static void manageTx(HttpTx *tx, int flags);
 
 
-HttpTx *httpCreateTx(HttpConn *conn)
+HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
 {
     HttpTx      *tx;
 
@@ -9317,9 +9325,14 @@ HttpTx *httpCreateTx(HttpConn *conn)
     httpInitQueue(conn, &tx->queue[HTTP_QUEUE_TRANS], "TxHead");
     httpInitQueue(conn, &tx->queue[HTTP_QUEUE_RECEIVE], "RxHead");
 
-    if (conn->server) {
-        mprAssert(!conn->txheaders);
-        httpCreateTxHeaders(conn);
+    if (headers) {
+        tx->headers = headers;
+    } else if ((tx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS)) != 0) {
+        if (conn->server) {
+            httpAddSimpleHeader(conn, "Server", conn->server->software);
+        } else {
+            httpAddSimpleHeader(conn, "User-Agent", sclone(HTTP_NAME));
+        }
     }
     return tx;
 }
@@ -9353,6 +9366,7 @@ static void manageTx(HttpTx *tx, int flags)
         mprMark(tx->file);
         mprMark(tx->filename);
         mprMark(tx->extension);
+        mprMark(tx->headers);
 
     } else if (flags & MPR_MANAGE_FREE) {
         httpDestroyTx(tx);
@@ -9371,15 +9385,14 @@ static void addHeader(HttpConn *conn, cchar *key, cchar *value)
     if (scasecmp(key, "content-length") == 0) {
         conn->tx->length = (ssize) stoi(value, 10, NULL);
     }
-    mprAddKey(conn->txheaders, key, value);
+    mprAddKey(conn->tx->headers, key, value);
 }
 
 
 int httpRemoveHeader(HttpConn *conn, cchar *key)
 {
     mprAssert(key && *key);
-
-    return mprRemoveHash(conn->txheaders, key);
+    return mprRemoveHash(conn->tx->headers, key);
 }
 
 
@@ -9398,7 +9411,7 @@ void httpAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     value = mprAsprintfv(fmt, vargs);
     va_end(vargs);
 
-    if (!mprLookupHash(conn->txheaders, key)) {
+    if (!mprLookupHash(conn->tx->headers, key)) {
         addHeader(conn, key, value);
     }
 }
@@ -9413,7 +9426,7 @@ void httpAddSimpleHeader(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(key && *key);
     mprAssert(value);
 
-    if (!mprLookupHash(conn->txheaders, key)) {
+    if (!mprLookupHash(conn->tx->headers, key)) {
         addHeader(conn, key, sclone(value));
     }
 }
@@ -9436,7 +9449,7 @@ void httpAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     value = mprAsprintfv(fmt, vargs);
     va_end(vargs);
 
-    oldValue = mprLookupHash(conn->txheaders, key);
+    oldValue = mprLookupHash(conn->tx->headers, key);
     if (oldValue) {
         addHeader(conn, key, mprAsprintf("%s, %s", oldValue, value));
     } else {
@@ -9720,18 +9733,6 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
 }
 
 
-void httpCreateTxHeaders(HttpConn *conn)
-{
-    if ((conn->txheaders = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS)) != 0) {
-        if (conn->server) {
-            httpAddSimpleHeader(conn, "Server", conn->server->software);
-        } else {
-            httpAddSimpleHeader(conn, "User-Agent", sclone(HTTP_NAME));
-        }
-    }
-}
-
-
 /*  
     Set headers for httpWriteHeaders. This defines standard headers.
  */
@@ -9775,7 +9776,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         httpAddSimpleHeader(conn, "Cache-Control", "no-cache");
 
     } else if (rx->loc && rx->loc->expires) {
-        mimeType = mprLookupHash(conn->txheaders, "Content-Type");
+        mimeType = mprLookupHash(tx->headers, "Content-Type");
         expires = PTOL(mprLookupHash(rx->loc->expires, mimeType ? mimeType : ""));
         if (expires == 0) {
             expires = PTOL(mprLookupHash(rx->loc->expires, ""));
@@ -9917,7 +9918,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     /* 
        Output headers
      */
-    hp = mprGetFirstHash(conn->txheaders);
+    hp = mprGetFirstHash(conn->tx->headers);
     while (hp) {
         mprPutStringToBuf(packet->content, hp->key);
         mprPutStringToBuf(packet->content, ": ");
@@ -9925,7 +9926,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
             mprPutStringToBuf(packet->content, hp->data);
         }
         mprPutStringToBuf(packet->content, "\r\n");
-        hp = mprGetNextHash(conn->txheaders, hp);
+        hp = mprGetNextHash(conn->tx->headers, hp);
     }
 
     /* 

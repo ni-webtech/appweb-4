@@ -5,7 +5,7 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-test = { os: "MACOSX" }
+// test = { os: "MACOSX" }
 
 /* Tests */
 
@@ -16,7 +16,6 @@ function basic() {
 }
 
 function forms() {
-breakpoint();
     http.get(HTTP + "/ejsProgram.ejs")
     assert(http.status == 200)
     deserialize(http.response)
@@ -70,10 +69,7 @@ function query() {
 }
 
 function encoding() {
-//http.close()
-print("HERE")
     http.get(HTTP + "/ejsProgram.ejs?var%201=value%201")
-print("THERE")
     let resp = deserialize(http.response)
     assert(resp.query == "var%201=value%201")
     assert(resp.pathInfo == "/ejsProgram.ejs")
@@ -133,10 +129,7 @@ forms()
     alias()
 */
 query()
-print("MOB4")
 encoding()
-print("MOB5")
 status()
-print("MOB6")
 location()
 quoting()

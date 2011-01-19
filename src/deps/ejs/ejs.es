@@ -420,7 +420,9 @@ module ejs {
             if (log.match) {
                 App.log.match = log.match
             }
-            Logger.nativeLevel = log.level
+            /* MOB - This messes up Appweb 
+                Logger.nativeLevel = log.level
+             */
         }
 
         /*  Append search paths */
@@ -5667,6 +5669,7 @@ FUTURE & KEEP
                 http.upload(URL, files, fields)
          */
         function upload(uri: String, files: Object, fields: Object? = null): Void {
+            reset()
             let boundary = "<<Upload Boundary - " + md5(Date.now()) + ">>"
             setHeader("Content-Type", "multipart/form-data; boundary=" + boundary)
             post(uri)
@@ -6818,9 +6821,11 @@ module ejs {
 
         function set level(level: Number): void {
             _level = level
-            if (this == App.log) {
-                nativeLogLevel = level
-            }
+            /*
+                if (this == App.log) {
+                    nativeLogLevel = level
+                }
+             */
         }
 
         function get location()

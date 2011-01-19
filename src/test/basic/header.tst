@@ -20,6 +20,7 @@ http.post(HTTP + "/index.html")
 assert(http.status == 200)
 
 //  Request headers
-http.addHeader("key", "value")
+http.reset()
+http.setHeader("key", "value")
 http.get(HTTP + "/index.html")
 assert(http.status == 200)

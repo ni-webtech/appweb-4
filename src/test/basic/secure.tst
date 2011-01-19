@@ -4,7 +4,7 @@
 
 if (!test || test.config["ssl"] == 1) {
     const HTTP = (global.tsession && tsession["http"]) || ":4100"
-    const HTTPS = (global.tsession && tsession["https"]) || ":4100"
+    const HTTPS = (global.tsession && tsession["https"]) || "https://127.0.0.1:4110"
     let http: Http = new Http
 
     http.get(HTTP + "/index.html")

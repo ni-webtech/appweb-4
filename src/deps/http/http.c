@@ -610,13 +610,13 @@ static int processThread(HttpConn *conn, MprEvent *event)
 }
 
 
-static int prepRequest(HttpConn *conn, MprList *files)
+static int prepRequest(HttpConn *conn, MprList *files, int retry)
 {
     MprKeyValue     *header;
     char            seqBuf[16];
     int             next;
 
-    httpPrepClientConn(conn);
+    httpPrepClientConn(conn, retry);
 
     for (next = 0; (header = mprGetNextItem(app->headers, &next)) != 0; ) {
         httpAppendHeader(conn, header->key, header->value);
@@ -676,7 +676,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
     httpSetTimeout(conn, app->timeout, app->timeout);
 
     for (redirectCount = count = 0; count <= conn->retries && redirectCount < 16 && !mprIsStopping(conn); count++) {
-        if (prepRequest(conn, files) < 0) {
+        if (prepRequest(conn, files, count) < 0) {
             return MPR_ERR_CANT_OPEN;
         }
         if (sendRequest(conn, app->method, url, files) < 0) {
@@ -688,6 +688,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
                     location = httpCreateUri(redirect, 0);
                     target = httpJoinUri(conn->tx->parsedUri, 1, &location);
                     url = httpUriToString(target, 1);
+                    count = 0;
                 }
                 /* Count redirects and auth retries */
                 redirectCount++;

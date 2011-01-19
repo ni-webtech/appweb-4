@@ -19,6 +19,10 @@ if (test && test.config["debug"] == 1 && test.config["static"] == 0) {
     }
 
     function match(key: String, value: String): Void {
+        if (keyword(key) != value) {
+            print("Key " + keyword(key) + " not equal to expected: " + value)
+            print(http.response)
+        }
         assert(keyword(key) == value)
     }
 
