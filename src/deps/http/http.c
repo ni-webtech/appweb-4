@@ -747,9 +747,9 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
         if (app->showHeaders) {
             responseHeaders = httpGetHeaders(conn);
             rx = conn->rx;
-            mprPrintfError("\nHeaders\n-------\n%s %d %s\n", conn->protocol, rx->status, rx->statusMessage);
+            mprPrintf("%s %d %s\n", conn->protocol, rx->status, rx->statusMessage);
             if (responseHeaders) {
-                mprPrintfError("%s\n", responseHeaders);
+                mprPrintf("%s\n", responseHeaders);
             }
         }
     }

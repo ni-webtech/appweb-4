@@ -2,7 +2,7 @@
  *  load.tst - Load tests
  */
 
-if (false && test.depth >= 3) {
+if (test.depth >= 4) {
     let command = locate("testAppweb") + " --host " + tsession["host"] + " --name mpr.api.c --iterations 400 " + 
         test.mapVerbosity(-2)
 
@@ -16,5 +16,5 @@ if (false && test.depth >= 3) {
         }
     }
 } else {
-    test.skip("Runs at depth 3")
+    test.skip("Runs at depth 4")
 }

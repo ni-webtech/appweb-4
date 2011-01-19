@@ -2782,6 +2782,7 @@ void httpSetCredentials(HttpConn *conn, cchar *user, cchar *password)
     conn->authUser = sclone(user);
     if (password == NULL && strchr(user, ':') != 0) {
         conn->authUser = stok(conn->authUser, ":", &conn->authPassword);
+        conn->authPassword = sclone(conn->authPassword);
     } else {
         conn->authPassword = sclone(password);
     }
@@ -5105,7 +5106,7 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
     size = max(count, HTTP_BUFSIZE);
     size = HTTP_PACKET_ALIGN(size);
 
-    if ((packet = httpCreatePacket(orig->entityLength ? 0 : size)) == 0) {
+    if ((packet = httpCreatePacket((orig->content == 0) ? 0 : size)) == 0) {
         return 0;
     }
     packet->flags = orig->flags;
@@ -9396,6 +9397,9 @@ static void addHeader(HttpConn *conn, cchar *key, cchar *value)
 int httpRemoveHeader(HttpConn *conn, cchar *key)
 {
     mprAssert(key && *key);
+    if (conn->tx == 0) {
+        return MPR_ERR_CANT_ACCESS;
+    }
     return mprRemoveHash(conn->tx->headers, key);
 }
 
