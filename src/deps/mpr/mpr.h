@@ -3381,6 +3381,27 @@ extern char *mprFormatTime(cchar *fmt, struct tm *timep);
 extern MprTime mprGetTime();
 
 /**
+    Get the CPU tick count.
+    @description Get the elapsed CPU tick count. Will return the system time if CPU ticks are not available.
+    @return Returns the CPU time in ticks
+    @ingroup MprTime
+ */
+extern uint64 mprGetTicks();
+
+#if BLD_DEBUG
+#define MEASURE(tag1, tag2, op) \
+    if (1) { \
+        MprTime start = mprGetTime(); \
+        uint64  ticks = mprGetTicks(); \
+        op; \
+        mprLog(4, "TIME: %s.%s elapsed %,d msec, %,d ticks", tag1, tag2, \
+            mprGetTime() - start, mprGetTicks() - ticks); \
+    } else 
+#else
+#define MEASURE(tag, op) 
+#endif
+
+/**
     Return the time remaining until a timeout has elapsed
     @param mark Starting time stamp 
     @param timeout Time in milliseconds

@@ -1252,7 +1252,8 @@ extern void httpSendOutgoingService(HttpQueue *q);
 #define HTTP_TRACE_FIRST            1       /**< First line of header only */
 #define HTTP_TRACE_HEADER           2       /**< Header */
 #define HTTP_TRACE_BODY             3       /**< Body content */
-#define HTTP_TRACE_MAX_ITEM         4
+#define HTTP_TRACE_TIME             4       /**< Instrument http pipeline */
+#define HTTP_TRACE_MAX_ITEM         5
 
 typedef struct HttpTrace {
     int             disable;                     /**< If tracing is disabled for this request */
@@ -1263,6 +1264,15 @@ typedef struct HttpTrace {
 } HttpTrace;
 
 extern void httpManageTrace(HttpTrace *trace, int flags);
+
+#if BLD_DEBUG
+#define HTTP_TIME(conn, tag1, tag2, op) \
+    if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, NULL)) { \
+        MEASURE(tag1, tag2, op); \
+    } else
+#else
+#define HTTP_TIME(conn, tag1, tag2, op) op
+#endif
 
 /** 
     Notifier and event callbacks.
@@ -1920,11 +1930,6 @@ typedef struct HttpRx {
 
     HttpConn        *conn;                  /**< Connection object */
 
-#if UNUSED
-    //  MOB -- do we need to keep free packet list now?
-    HttpPacket      *freePackets;           /**< Free list of packets */
-#endif
-
     MprList         *etags;                 /**< Document etag to uniquely identify the document version */
     HttpPacket      *headerPacket;          /**< HTTP headers */
     MprHashTable    *headers;               /**< Header variables */
@@ -2000,6 +2005,13 @@ typedef struct HttpRx {
      */
     struct MaAlias  *alias;                 /**< Matching alias */
     struct MaDir    *dir;                   /**< Best matching dir (PTR only) */
+
+#if BLD_DEBUG
+    MprTime         startTime;              /**< Start time of request */
+    uint64          startTicks;             /**< Start tick time of request */
+#endif
+
+
 } HttpRx;
 
 

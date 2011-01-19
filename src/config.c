@@ -1332,6 +1332,9 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (strstr(items, "response") || strstr(items, "receive")) {
                 mask |= HTTP_TRACE_RX;
             }
+            if (strstr(items, "time")) {
+                mask |= HTTP_TRACE_TIME;
+            }
             maSetHostTrace(host, level, mask);
             return 1;
 
