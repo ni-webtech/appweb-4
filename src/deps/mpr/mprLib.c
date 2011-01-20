@@ -2601,6 +2601,7 @@ int mprMakeArgv(cchar *program, cchar *cmd, int *argcp, char ***argvp)
 
     vector = (char*) mprAlloc((MPR_MAX_ARGC * sizeof(char*)) + size);
     if (vector == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     args = &vector[MPR_MAX_ARGC * sizeof(char*)];
@@ -3482,6 +3483,7 @@ int mprSetBufSize(MprBuf *bp, ssize initialSize, ssize maxSize)
         return 0;
     }
     if ((bp->data = mprAlloc(initialSize)) == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     bp->growBy = initialSize;
@@ -3694,6 +3696,10 @@ int mprPutCharToBuf(MprBuf *bp, int c)
 }
 
 
+/*
+    Return the number of bytes written to the buffer. If no more bytes will fit, may return less than size.
+    Never returns < 0.
+ */
 ssize mprPutBlockToBuf(MprBuf *bp, cchar *str, ssize size)
 {
     ssize      thisLen, bytes, space;
@@ -3798,6 +3804,7 @@ int mprGrowBuf(MprBuf *bp, ssize need)
         growBy = bp->growBy;
     }
     if ((newbuf = mprAlloc(bp->buflen + growBy)) == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     if (bp->data) {
@@ -4398,6 +4405,7 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
     cmd->flags = flags;
 
     if (sanitizeArgs(cmd, argc, argv, envp) < 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     if (access(program, X_OK) < 0) {
@@ -4989,6 +4997,7 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
             mprLog(6, "cmd: env[%d]: %s", i, env[i]);
         }
         if ((envp = mprAlloc((i + 3) * sizeof(char*))) == NULL) {
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         cmd->env = envp;
@@ -8170,6 +8179,7 @@ static int growEvents(MprWaitService *ws)
 {
     ws->eventsMax *= 2;
     if ((ws->events = mprRealloc(ws->events, sizeof(struct epoll_event) * ws->eventsMax)) == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -8200,6 +8210,7 @@ int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask)
             oldlen = ws->handlerMax;
             ws->handlerMax = fd + 32;
             if ((ws->handlerMap = mprRealloc(ws->handlerMap, sizeof(MprWaitHandler*) * ws->handlerMax)) == 0) {
+                mprAssert(!MPR_ERR_MEMORY);
                 return MPR_ERR_MEMORY;
             }
         }
@@ -10042,6 +10053,7 @@ static int growEvents(MprWaitService *ws)
     ws->interest = mprRealloc(ws->interest, sizeof(struct kevent) * ws->interestMax);
     ws->events = mprRealloc(ws->events, sizeof(struct kevent) * ws->eventsMax);
     if (ws->interest == 0 || ws->events == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -10090,6 +10102,7 @@ int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask)
         if (fd >= ws->handlerMax) {
             ws->handlerMax = fd + 32;
             if ((ws->handlerMap = mprRealloc(ws->handlerMap, sizeof(MprWaitHandler*) * ws->handlerMax)) == 0) {
+                mprAssert(!MPR_ERR_MEMORY);
                 return MPR_ERR_MEMORY;
             }
         }
@@ -10442,6 +10455,7 @@ int mprSetListLimits(MprList *lp, int initialSize, int maxSize)
     if (lp->items == 0) {
         lp->items = mprAlloc(size);
         if (lp->items == 0) {
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         memset(lp->items, 0, size);
@@ -10460,10 +10474,12 @@ int mprCopyList(MprList *dest, MprList *src)
     mprClearList(dest);
 
     if (mprSetListLimits(dest, src->capacity, src->maxSize) < 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     for (next = 0; (item = mprGetNextItem(src, &next)) != 0; ) {
         if (mprAddItem(dest, item) < 0) {
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
     }
@@ -10917,6 +10933,7 @@ static int growList(MprList *lp, int incr)
         Lock free realloc. Old list will be intact via lp->items until mprRealloc returns.
      */
     if ((lp->items = mprRealloc(lp->items, memsize)) == NULL) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     lp->capacity = len;
@@ -14125,6 +14142,7 @@ static int growFds(MprWaitService *ws)
 {
     ws->fdMax *= 2;
     if ((ws->fds = mprRealloc(ws->fds, sizeof(struct pollfd) * ws->fdMax)) == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -14135,6 +14153,7 @@ static int growHandlers(MprWaitService *ws, int fd)
 {
     ws->handlerMax = fd + 1;
     if ((ws->handlerMap = mprRealloc(ws->handlerMap, sizeof(MprWaitHandler*) * ws->handlerMax)) == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -14152,6 +14171,7 @@ int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask)
         if (wp->notifierIndex < 0) {
             if (ws->fdsCount >= ws->fdMax && growFds(ws) < 0) {
                 unlock(ws);
+                mprAssert(!MPR_ERR_MEMORY);
                 return MPR_ERR_MEMORY;
             }
             if (fd >= ws->handlerMax && growHandlers(ws, fd) < 0) {
@@ -15454,6 +15474,7 @@ static int growBuf(Format *fmt)
     }
     newbuf = mprAlloc(buflen + fmt->growBy);
     if (newbuf == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     if (fmt->buf) {
@@ -15745,6 +15766,7 @@ int mprSetRomFileSystem(MprRomInode *inodeList)
 
     for (ri = inodeList; ri->path; ri++) {
         if (mprAddKey(rfs->fileIndex, ri->path, ri) < 0) {
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
     }
@@ -15948,6 +15970,7 @@ static int growFds(MprWaitService *ws)
     growFds(ws);
     ws->handlerMax *= 2;
     if ((ws->handlerMap = mprRealloc(ws->handlerMap, sizeof(MprWaitHandler*) * ws->handlerMax)) == 0) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -15967,6 +15990,7 @@ int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask)
     if (wp->desiredMask != mask) {
         if (fd >= ws->handlerMax && growFds(ws) < 0) {
             unlock(ws);
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         if (mask & MPR_READABLE) {
@@ -17532,6 +17556,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
         sa6 = mprAllocZeroed(len);
         if (sa6 == 0) {
             mprUnlock(ss->mutex);
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         memcpy((char*) &sa6->sin6_addr, (char*) hostent->h_addr_list[0], (ssize) hostent->h_length);
@@ -17543,6 +17568,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
         sa = mprAllocZeroed(len);
         if (sa == 0) {
             mprUnlock(ss->mutex);
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         memcpy((char*) &sa->sin_addr, (char*) hostent->h_addr_list[0], (ssize) hostent->h_length);
@@ -17571,6 +17597,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
     ss = MPR->socketService;
 
     if ((sa = mprAllocObj(struct sockaddr_in, NULL)) == NULL) {
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     memset((char*) sa, '\0', sizeof(struct sockaddr_in));
@@ -18895,6 +18922,7 @@ static int parseFilter(MprTestService *sp, cchar *filter)
     word = stok(str, " \t\r\n", &tok);
     while (word) {
         if (mprAddItem(sp->testFilter, sclone(word)) < 0) {
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         word = stok(0, " \t\r\n", &tok);
@@ -18965,9 +18993,11 @@ int mprRunTests(MprTestService *sp)
     for (i = 0; i < sp->numThreads; i++) {
         mprSprintf(tName, sizeof(tName), "test.%d", i);
         if ((lp = copyGroups(sp, sp->groups)) == 0) {
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         if (mprAddItem(sp->threadData, lp) < 0) {
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         /*
@@ -18979,6 +19009,7 @@ int mprRunTests(MprTestService *sp)
         }
         tp = mprCreateThread(tName, (MprThreadProc) runTestThread, (void*) lp, 0);
         if (tp == 0) {
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         if (mprStartThread(tp) < 0) {
@@ -19463,6 +19494,7 @@ static int addFailure(MprTestGroup *gp, cchar *loc, cchar *message)
     fp = createFailure(gp, loc, message);
     if (fp == 0) {
         mprAssert(fp);
+        mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
     mprAddItem(gp->failures, fp);
@@ -20662,6 +20694,7 @@ static int changeState(MprWorker *worker, int state)
         //  MOB -- should be able to remove lock
         if (mprAddItem(lp, worker) < 0) {
             mprUnlock(ws->mutex);
+            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
     }
@@ -22379,7 +22412,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 /*
     High resolution timer
  */
-#if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
+#if MPR_HIGH_RES_TIMER
     #if BLD_UNIX_LIKE
         uint64 mprGetTicks() {
             uint64  now;
@@ -22402,7 +22435,6 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
         return (uint64) mprGetTime();
     }
 #endif
-
 
 
 /*
@@ -25874,6 +25906,7 @@ static int parseNext(MprXml *xp, int state)
                 state = MPR_XML_NEW_ELT;
                 tname = sclone(mprGetBufStart(tokBuf));
                 if (tname == 0) {
+                    mprAssert(!MPR_ERR_MEMORY);
                     return MPR_ERR_MEMORY;
                 }
                 rc = (*handler)(xp, state, tname, 0, 0);

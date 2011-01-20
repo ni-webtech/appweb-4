@@ -234,14 +234,15 @@ static void pushDataToCgi(HttpQueue *q)
         len = mprGetBufLength(buf);
         mprAssert(len > 0);
         rc = mprWriteCmdPipe(cmd, MPR_CMD_STDIN, mprGetBufStart(buf), len);
+        mprLog(5, "CGI: write %d bytes to gateway. Rc rc %d, errno %d", len, rc, mprGetOsError());
         if (rc < 0) {
-            mprLog(2, "CGI: write to gateway failed for %d bytes, rc %d, errno %d\n", len, rc, mprGetOsError());
+            mprLog(2, "CGI: write to gateway failed for %d bytes, rc %d, errno %d", len, rc, mprGetOsError());
             mprCloseCmdFd(cmd, MPR_CMD_STDIN);
             httpError(conn, HTTP_CODE_BAD_GATEWAY, "Can't write body data to CGI gateway");
             break;
 
         } else {
-            mprLog(5, "CGI: write to gateway %d bytes asked to write %d\n", rc, len);
+            mprLog(5, "CGI: write to gateway %d bytes asked to write %d", rc, len);
             mprAdjustBufStart(buf, rc);
             if (mprGetBufLength(buf) > 0) {
                 httpPutBackPacket(q, packet);
@@ -317,7 +318,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     mprAssert(conn);
     mprAssert(conn->tx);
 
-    mprLog(6, "CGI callback channel %d", channel);
+    mprLog(6, "CGI gateway I/O event on channel %d, state %d", channel, conn->state);
     
     tx = conn->tx;
     cmd->lastActivity = mprGetTime();
@@ -371,6 +372,8 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 }
             }
             nbytes = mprReadCmdPipe(cmd, channel, mprGetBufEnd(buf), space);
+            mprLog(5, "CGI: read from gateway %d on channel %d. errno %d", nbytes, channel, 
+                nbytes >= 0 ? 0 : mprGetOsError());
             if (nbytes < 0) {
                 err = mprGetError();
                 if (err == EINTR) {
@@ -542,7 +545,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
     }
     
     if (strchr(mprGetBufStart(buf), ':')) {
-        mprLog(4, "CGI: parseHeader: header\n%s\n", headers);
+        mprLog(4, "CGI: parseHeader: header\n%s", headers);
 
         while (mprGetBufLength(buf) > 0 && buf->start[0] && (buf->start[0] != '\r' && buf->start[0] != '\n')) {
 

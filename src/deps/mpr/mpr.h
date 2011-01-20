@@ -3388,18 +3388,38 @@ extern MprTime mprGetTime();
  */
 extern uint64 mprGetTicks();
 
-#if BLD_DEBUG
-#define MEASURE(tag1, tag2, op) \
-    if (1) { \
-        MprTime start = mprGetTime(); \
-        uint64  ticks = mprGetTicks(); \
-        op; \
-        mprLog(4, "TIME: %s.%s elapsed %,d msec, %,d ticks", tag1, tag2, \
-            mprGetTime() - start, mprGetTicks() - ticks); \
-    } else 
+#if (BLD_UNIX_LIKE || BLD_WIN_LIKE) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
+    #define MPR_HIGH_RES_TIMER 1
 #else
-#define MEASURE(tag, op) 
+    #define MPR_HIGH_RES_TIMER 0
 #endif
+
+#if BLD_DEBUG
+    #if MPR_HIGH_RES_TIMER
+        #define MEASURE(tag1, tag2, op) \
+            if (1) { \
+                MprTime elapsed, start = mprGetTime(); \
+                uint64  ticks = mprGetTicks(); \
+                op; \
+                elapsed = mprGetTime() - start; \
+                if (elapsed < 1000) { \
+                    mprLog(4, "TIME: %s.%s elapsed %,d msec, %,d ticks", tag1, tag2, elapsed, mprGetTicks() - ticks); \
+                } else { \
+                    mprLog(4, "TIME: %s.%s elapsed %,d msec", tag1, tag2, elapsed); \
+                } \
+            } else 
+    #else
+        #define MEASURE(tag1, tag2, op) \
+            if (1) { \
+                MprTime start = mprGetTime(); \
+                op; \
+                mprLog(4, "TIME: %s.%s elapsed %,d msec", tag1, tag2, mprGetTime() - start); \
+            } else 
+    #endif
+#else
+    #define MEASURE(tag1, tag2, op) op
+#endif
+
 
 /**
     Return the time remaining until a timeout has elapsed

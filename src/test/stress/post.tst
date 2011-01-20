@@ -24,23 +24,26 @@ count = sizes[test.depth] * 1024
 // print("Writing " + count * buf.available)
 
 function postTest(url: String) {
+    // print("@@@@ Writing " + count * buf.available + " to " + url)
     http.post(HTTP + url)
     for (i in count) {
         http.write(buf)
     }
     assert(http.status == 200)
+    assert(http.response)
     http.close()
 }
 
 postTest("/index.html")
-postTest("/form.ejs")
+if (test.config["ejs"] == 1) {
+    postTest("/form.ejs")
+}
 if (test.config["debug"] == 1) {
     postTest("/egiProgram.egi")
 }
-if (0 && test.config["php"] == 1) {
+if (test.config["php"] == 1) {
     postTest("/form.php")
 }
-
-/* TODO BUG - fails
+if (test.config["cgi"] == 1) {
     postTest("/cgi-bin/cgiProgram")
-*/
+}

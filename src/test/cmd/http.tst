@@ -120,6 +120,12 @@ if (test.depth > 1) {
         run("-i 2000 /index.html")
         run("-i 2000 /big.txt")
     }
+    
+    //  Cleanup
+    for each (f in Path("web/tmp").files()) {
+        Path(f).remove()
+    }
+
 
 } else {
     test.skip("Test runs at depth 2")

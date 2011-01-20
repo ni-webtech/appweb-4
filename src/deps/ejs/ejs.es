@@ -4906,11 +4906,22 @@ module ejs {
     /** 
         Print the arguments to the standard output with a new line appended. This call evaluates the arguments, 
         converts the result to strings and prints the result to the standard output. Arguments are converted to 
-        strings by calling their toString method. This method invokes $output as its implementation. 
+        strings by calling their toString method. 
         @param args Variables to print
         @spec ejs
      */
     native function print(...args): void
+
+    /** 
+        Print the arguments to the standard output using the supplied format template. This call evaluates the arguments, 
+        converts the result to strings and invokes String.format to format the args. The result is then printed to the
+        standard output. Arguments are converted to strings by calling their toString method. 
+        @param args Variables to print
+        @spec ejs
+     */
+    native function print(...args): void
+    function printf(fmt, ...args)
+        App.outputStream.write(fmt.format(args))
 
     /** 
         Parse a string and convert to a primitive type

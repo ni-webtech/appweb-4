@@ -4924,7 +4924,11 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
  */
 int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 {
-    if (mprPutBlockToBuf(packet->content, mprGetBufStart(p->content), httpGetPacketLength(p)) < 0) {
+    int     len;
+
+    len = httpGetPacketLength(p);
+
+    if (mprPutBlockToBuf(packet->content, mprGetBufStart(p->content), len) != len) {
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -5128,7 +5132,9 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
 
     if (orig->content && httpGetPacketLength(orig) > 0) {
         mprAdjustBufEnd(orig->content, -count);
-        mprPutBlockToBuf(packet->content, mprGetBufEnd(orig->content), count);
+        if (mprPutBlockToBuf(packet->content, mprGetBufEnd(orig->content), count) != count) {
+            return 0;
+        }
 #if BLD_DEBUG
         mprAddNullToBuf(orig->content);
 #endif
@@ -6103,11 +6109,14 @@ ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size)
         }
         if (packet == 0 || mprGetBufSpace(packet->content) == 0) {
             packetSize = (tx->chunkSize > 0) ? tx->chunkSize : q->packetSize;
-            if ((packet = httpCreateDataPacket(packetSize)) != 0) {
-                httpPutForService(q, packet, 0);
+            if ((packet = httpCreateDataPacket(packetSize)) == 0) {
+                return MPR_ERR_MEMORY;
             }
+            httpPutForService(q, packet, 0);
         }
-        bytes = mprPutBlockToBuf(packet->content, buf, size);
+        if ((bytes = mprPutBlockToBuf(packet->content, buf, size)) == 0) {
+            return MPR_ERR_MEMORY;
+        }
         buf += bytes;
         size -= bytes;
         q->count += bytes;
@@ -6599,8 +6608,13 @@ void httpDestroyRx(HttpRx *rx)
 {
 #if BLD_DEBUG
     if (httpShouldTrace(rx->conn, 0, HTTP_TRACE_TIME, NULL)) {
-        mprLog(4, "TIME: Request %s took %,d msec %,d ticks", rx->uri, mprGetTime() - rx->startTime,
-            mprGetTicks() - rx->startTicks);
+        MprTime     elapsed = mprGetTime() - rx->startTime;
+#if MPR_HIGH_RES_TIMER
+        if (elapsed < 1000) {
+            mprLog(4, "TIME: Request %s took %,d msec %,d ticks", rx->uri, elapsed, mprGetTicks() - rx->startTicks);
+        } else
+#endif
+            mprLog(4, "TIME: Request %s took %,d msec", rx->uri, elapsed);
     }
 #endif
     if (rx->conn) {
@@ -7448,6 +7462,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         return 0;
     }
     if (conn->complete || conn->connError || rx->remainingContent <= 0) {
+        //  MOB -- this needs checking - upload too much data
         httpSetState(conn, HTTP_STATE_RUNNING);
         return 1;
     }
