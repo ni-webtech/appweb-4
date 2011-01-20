@@ -90,3 +90,5 @@ out
 src/server/conf/apps/web.conf
 project.xcworkspace
 xcuserdata
+*.pbxuser
+*.perspectivev3
