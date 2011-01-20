@@ -14235,7 +14235,7 @@ int mprWaitForSingleIO(int fd, int mask, int timeout)
 
     rc = poll(fds, 1, timeout);
     if (rc < 0) {
-        mprLog(2, "Poll returned %d, errno %d", rc, mprGetOsError());
+        mprLog(8, "Poll returned %d, errno %d", rc, mprGetOsError());
     } else if (rc > 0) {
         if (fds[0].revents & POLLIN) {
             mask |= MPR_READABLE;

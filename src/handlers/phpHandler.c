@@ -65,6 +65,7 @@ typedef struct MaPhp {
 /****************************** Forward Declarations **********************/
 
 static void flushOutput(void *context);
+static int initializePhp(Http *http);
 static void logMessage(char *message);
 static char *readCookies(TSRMLS_D);
 static int  readBodyData(char *buffer, uint len TSRMLS_DC);
@@ -116,6 +117,12 @@ static void openPhp(HttpQueue *q)
 
     rx = q->conn->rx;
 
+    if (!q->stage->stageData) {
+        if (initializePhp(q->conn->http) < 0) {
+            httpError(q->conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");
+        }
+        q->stage->stageData = (void*) 1;
+    }
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
         q->queueData = mprAllocObj(MaPhp, NULL);
     } else {
@@ -271,6 +278,7 @@ static int writeBlock(cchar *str, uint len TSRMLS_DC)
         return -1;
     }
     written = httpWriteBlock(conn->tx->queue[HTTP_QUEUE_TRANS].nextQ, str, len);
+    mprLog(6, "php: write %d", written);
     if (written <= 0) {
         php_handle_aborted_connection();
     }
@@ -318,6 +326,7 @@ static int sendHeaders(sapi_headers_struct *phpHeaders TSRMLS_DC)
     HttpConn      *conn;
 
     conn = (HttpConn*) SG(server_context);
+    mprLog(6, "php: send headers");
     httpSetStatus(conn, phpHeaders->http_response_code);
     httpSetMimeType(conn, phpHeaders->mimetype);
     return SAPI_HEADER_SENT_SUCCESSFULLY;
@@ -385,7 +394,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     HttpConn    *conn;
     HttpQueue   *q;
     MprBuf      *content;
-    int         len;
+    int         len, nbytes;
 
     conn = (HttpConn*) SG(server_context);
     q = conn->tx->queue[HTTP_QUEUE_RECEIVE].prevQ;
@@ -395,9 +404,11 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     content = q->first->content;
     len = min(mprGetBufLength(content), (int) bufsize);
     if (len > 0) {
-        mprMemcpy(buffer, len, mprGetBufStart(content), len);
+        nbytes = mprMemcpy(buffer, len, mprGetBufStart(content), len);
+        mprAssert(nbytes == len);
         mprAdjustBufStart(content, len);
     }
+    mprLog(6, "php: read post data %d remaining %d", len, mprGetBufLength(content));
     return len;
 }
 
@@ -408,9 +419,6 @@ static int startup(sapi_module_struct *sapi_module)
 }
 
 
-/*
-    Initialze the php module
- */
 static int initializePhp(Http *http)
 {
     MaAppweb                *appweb;
@@ -430,6 +438,7 @@ static int initializePhp(Http *http)
     tsrm_ls = (void***) ts_resource(0);
 #endif
 
+    mprLog(2, "php: initialize php library");
     appweb = httpGetContext(http);
 #ifdef BLD_FEATURE_PHP_INI
     phpSapiBlock.php_ini_path_override = BLD_FEATURE_PHP_INI;
@@ -481,7 +490,6 @@ int maPhpHandlerInit(Http *http, MprModule *mp)
     handler->process = processPhp;
     http->phpHandler = handler;
     mp->stop = finalizePhp;
-    initializePhp(http);
     return 0;
 }
 

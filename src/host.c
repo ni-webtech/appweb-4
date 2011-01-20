@@ -123,6 +123,7 @@ MaHost *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *parent)
     host->server = parent->server;
     host->flags = parent->flags;
     host->httpVersion = parent->httpVersion;
+    host->mimeTypes = parent->mimeTypes;
 #if UNUSED
     host->timeout = parent->timeout;
     host->limits = parent->limits;
