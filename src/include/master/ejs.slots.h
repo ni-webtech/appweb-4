@@ -669,11 +669,12 @@
     Class property slots for the "Date" type 
  */
 #define ES_Date_now                                                    0
-#define ES_Date_parseDate                                              1
-#define ES_Date_parseUTCDate                                           2
-#define ES_Date_parse                                                  3
-#define ES_Date_UTC                                                    4
-#define ES_Date_NUM_CLASS_PROP                                         5
+#define ES_Date_ticks                                                  1
+#define ES_Date_parseDate                                              2
+#define ES_Date_parseUTCDate                                           3
+#define ES_Date_parse                                                  4
+#define ES_Date_UTC                                                    5
+#define ES_Date_NUM_CLASS_PROP                                         6
 
 /*
    Prototype (instance) slots for "Date" type 
@@ -2357,7 +2358,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1333273
+#define _ES_CHECKSUM_ejs   1333816
 
 #endif
 /************************************************************************/

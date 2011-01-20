@@ -15033,7 +15033,7 @@ static EjsObj *date_nextDay(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 
 
 /*
-    function now(): Number
+    static function now(): Number
  */
 static EjsObj *date_now(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
 {
@@ -15229,6 +15229,15 @@ static EjsObj *date_setUTCSeconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv
 
 
 /*
+    static function ticks(): Number
+ */
+static EjsObj *date_ticks(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
+{
+    return (EjsObj*) ejsCreateNumber(ejs, mprGetTicks());
+}
+
+
+/*
     Get the number of millseconds since Jan 1, 1970 UTC.
     function get time(): Number
  */
@@ -15386,6 +15395,9 @@ void ejsConfigureDateType(Ejs *ejs)
     type->helpers.invokeOperator = (EjsInvokeOperatorHelper) invokeDateOperator;
 
     ejsBindMethod(ejs, type, ES_Date_now, (EjsProc) date_now);
+#if ES_Date_ticks
+    ejsBindAccess(ejs, type, ES_Date_ticks, (EjsProc) date_ticks, NULL);
+#endif
     ejsBindMethod(ejs, type, ES_Date_parseDate, (EjsProc) date_parseDate);
     ejsBindMethod(ejs, type, ES_Date_parseUTCDate, (EjsProc) date_parseUTCDate);
     ejsBindMethod(ejs, type, ES_Date_parse, (EjsProc) date_parse);

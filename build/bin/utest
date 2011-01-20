@@ -112,7 +112,7 @@ enumerable class Test {
                     _depth = 1
                 }
                 break
-            case "--debug":
+            case "--debug": case "-D":
 //  MOB -- App.debug
                 debug = true
                 break

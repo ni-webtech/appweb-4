@@ -299,6 +299,8 @@ static HttpStage *findHandler(HttpConn *conn, bool *rescan)
     handler = 0;
     *rescan = 0;
     
+    //  MOB CLEANUP
+    mprAssert(rx->pathInfo);
     if (rx->pathInfo == 0) {
         handler = http->passHandler;
     } else {
@@ -397,6 +399,8 @@ static bool mapToFile(HttpConn *conn, HttpStage *handler, bool *rescan)
     HttpTx      *tx;
     MaHost      *host;
 
+    mprAssert(handler);
+
     rx = conn->rx;
     tx = conn->tx;
     host = httpGetConnHost(conn);
@@ -417,12 +421,14 @@ static bool mapToFile(HttpConn *conn, HttpStage *handler, bool *rescan)
     if (rx->loc->auth->type == 0) {
         rx->auth = rx->dir->auth;
     }
-    if (!tx->fileInfo.checked && mprGetPathInfo(tx->filename, &tx->fileInfo) < 0) {
-        mprAssert(handler);
-        if (!(rx->flags & HTTP_PUT) && handler->flags & HTTP_STAGE_VERIFY_ENTITY) {
-            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
-            return 0;
-        }
+    //  MOB CLEANUP
+    mprAssert(tx->fileInfo.checked);
+    if (!tx->fileInfo.checked) {
+        mprGetPathInfo(tx->filename, &tx->fileInfo);
+    }
+    if (!tx->fileInfo.valid && !(rx->flags & HTTP_PUT) && (handler->flags & HTTP_STAGE_VERIFY_ENTITY)) {
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
+        return 0;
     }
     return 1;
 }
@@ -600,7 +606,6 @@ static void prepRequest(HttpConn *conn, HttpStage *handler)
     host = httpGetConnHost(conn);
 
     setPathInfo(conn, handler);
-
     if (tx->extension == 0) {
         tx->extension = getExtension(conn);
     }

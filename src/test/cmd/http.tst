@@ -14,6 +14,7 @@ if (test.depth > 1) {
     function run(args): String {
         test.log(2, "[TestRun]", command + args)
         try {
+print(command + args)
             result = Cmd.run(command + args)
             assert(true)
         } catch (e) {
@@ -66,22 +67,22 @@ if (test.depth > 1) {
     assert(data.contains('"name": "John Smith"'))
 
     //  PUT file
-    run("cmd/test.dat /tmp/day.tmp")
+    run("test.dat /tmp/day.tmp")
     if (test.threads == 1) {
-        assert(exists("web/tmp/day.tmp"))
+        assert(exists("../web/tmp/day.tmp"))
     }
 
     let files = Path("basic").files().join(" ")
     run(files + " /tmp/")
     if (test.threads == 1) {
-        assert(exists("web/tmp/methods.tst"))
+        assert(exists("../web/tmp/methods.tst"))
     }
 
     //  DELETE
-    run("cmd/test.dat /tmp/test.dat")
-    assert(exists("web/tmp/test.dat"))
+    run("test.dat /tmp/test.dat")
+    assert(exists("../web/tmp/test.dat"))
     run("--method DELETE /tmp/test.dat")
-    assert(!exists("web/tmp/test.dat"))
+    assert(!exists("../web/tmp/test.dat"))
 
     //  Options with show status
     run("--method OPTIONS /index.html")
@@ -97,7 +98,7 @@ if (test.depth > 1) {
     data = run("--upload " + files + " /upload.ejs")
     assert(data.contains('"clientFilename": "methods.tst"'))
     if (test.threads == 1) {
-        assert(exists("web/tmp/methods.tst"))
+        assert(exists("../web/tmp/methods.tst"))
     }
 
     let files = Path("basic").files().join(" ")
@@ -122,7 +123,7 @@ if (test.depth > 1) {
     }
     
     //  Cleanup
-    for each (f in Path("web/tmp").files()) {
+    for each (f in Path("../web/tmp").files()) {
         Path(f).remove()
     }
 

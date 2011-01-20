@@ -121,7 +121,7 @@ static void openPhp(HttpQueue *q)
         if (initializePhp(q->conn->http) < 0) {
             httpError(q->conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");
         }
-        q->stage->stageData = (void*) 1;
+        q->stage->stageData = mprAlloc(1);
     }
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
         q->queueData = mprAllocObj(MaPhp, NULL);

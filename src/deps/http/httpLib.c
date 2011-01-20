@@ -2062,6 +2062,11 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     conn->tx->method = supper(method);
     conn->tx->parsedUri = httpCreateUri(url, 0);
 
+#if BLD_DEBUG
+    conn->startTime = mprGetTime();
+    conn->startTicks = mprGetTicks();
+#endif
+
     if (openConnection(conn, url) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
@@ -6606,17 +6611,6 @@ static void manageRx(HttpRx *rx, int flags)
 
 void httpDestroyRx(HttpRx *rx)
 {
-#if BLD_DEBUG
-    if (httpShouldTrace(rx->conn, 0, HTTP_TRACE_TIME, NULL)) {
-        MprTime     elapsed = mprGetTime() - rx->startTime;
-#if MPR_HIGH_RES_TIMER
-        if (elapsed < 1000) {
-            mprLog(4, "TIME: Request %s took %,d msec %,d ticks", rx->uri, elapsed, mprGetTicks() - rx->startTicks);
-        } else
-#endif
-            mprLog(4, "TIME: Request %s took %,d msec", rx->uri, elapsed);
-    }
-#endif
     if (rx->conn) {
         rx->conn->rx = 0;
         rx->conn = 0;
@@ -6765,8 +6759,8 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     methodFlags = 0;
 
 #if BLD_DEBUG
-    rx->startTime = mprGetTime();
-    rx->startTicks = mprGetTicks();
+    conn->startTime = mprGetTime();
+    conn->startTicks = mprGetTicks();
 #endif
 
     method = getToken(conn, " ");
@@ -7518,6 +7512,29 @@ static bool processRunning(HttpConn *conn)
 }
 
 
+#if BLD_DEBUG
+static void measure(HttpConn *conn)
+{
+    MprTime     elapsed;
+    cchar       *uri;
+
+    uri = (conn->server) ? conn->rx->uri : conn->tx->parsedUri->path;
+   
+    if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, NULL) >= 0) {
+        elapsed = mprGetTime() - conn->startTime;
+#if MPR_HIGH_RES_TIMER
+        if (elapsed < 1000) {
+            mprLog(4, "TIME: Request %s took %,d msec %,d ticks", uri, elapsed, mprGetTicks() - conn->startTicks);
+        } else
+#endif
+            mprLog(4, "TIME: Request %s took %,d msec", uri, elapsed);
+    }
+}
+#else
+#define measure(conn)
+#endif
+
+
 static bool processCompletion(HttpConn *conn)
 {
     HttpPacket  *packet;
@@ -7526,6 +7543,7 @@ static bool processCompletion(HttpConn *conn)
     mprAssert(conn->state == HTTP_STATE_COMPLETE);
 
     httpDestroyPipeline(conn);
+    measure(conn);
 
     if (conn->server) {
         conn->rx->conn = 0;
@@ -9028,8 +9046,6 @@ static void manageStage(HttpStage *stage, int flags)
         mprMark(stage->name);
         mprMark(stage->stageData);
         mprMark(stage->extensions);
-
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -9932,7 +9948,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
             }
         }
     }
-    if ((level = httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_FIRST, NULL)) == mprGetLogLevel(tx)) {
+    if ((level = httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_FIRST, NULL)) >= mprGetLogLevel(tx)) {
         mprAddNullToBuf(buf);
         mprLog(level, "%s", mprGetBufStart(buf));
     }

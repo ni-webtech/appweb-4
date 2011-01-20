@@ -437,7 +437,7 @@ static bool parseArgs(int argc, char **argv)
         app->workers = app->loadThreads + 2;
     }
     if (app->method == 0) {
-        if (app->bodyData || app->formData || app->files) {
+        if (app->bodyData || app->formData) {
             app->method = "POST";
         } else if (app->files) {
             app->method = "PUT";

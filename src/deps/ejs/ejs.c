@@ -522,7 +522,9 @@ static int consoleGets(EcStream *stream)
     }
     mprSprintf(prompt, sizeof(prompt), "%s-%d> ", EJS_NAME, stream->compiler->state->blockNestCount);
 
+    mprYield(MPR_YIELD_STICKY);
     line = readline(prompt);
+    mprResetYield();
     if (line == NULL) {
         stream->eof = 1;
         mprPrintf("\n");

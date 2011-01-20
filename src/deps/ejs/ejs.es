@@ -2947,6 +2947,13 @@ module ejs {
         static native function now(): Number
 
         /**
+            Return a high resolution CPU tick counter. If the platform cannot provide such a counter, the call
+            will return the $now value in milliseconds.
+            @spec ejs
+         */
+        static native function get ticks(): Number
+
+        /**
             Parse a date string and Return a new Date object. If $dateString does not contain a timezone,
                 the date string will be interpreted as a local date/time.  This is similar to parse() but it returns a
                 date object.
@@ -3219,7 +3226,7 @@ module ejs {
             @param milliseconds Milliseconds of second
             @return The number of milliseconds since January 1, 1970 00:00:00 UTC.
          */
-        native static function UTC(year: Number, month: Number, day: Number, hours: Number = 0, 
+        static native function UTC(year: Number, month: Number, day: Number, hours: Number = 0, 
             minutes: Number = 0, seconds: Number = 0, milliseconds: Number = 0): Number
 
         /**
