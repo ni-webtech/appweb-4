@@ -19302,6 +19302,17 @@ module ejs.web {
             }
         }
 
+        function showRequest(): Void {
+            write("request: {\r\n") 
+            for (let [key,value] in this) {
+                if (key == "server" || key == "config") {
+                    continue
+                }
+                write("  " + key + ": " +  serialize(value, {pretty: true}) + ",\r\n")
+            }
+            write("}\r\n")
+        }
+
         /**
             Configure tracing for this request. Tracing is initialized by the owning HttpServer and is typically
             defined to trace the first line of requests and responses at level 2, headers at level 3 and body content
@@ -21523,20 +21534,22 @@ module ejs.web {
      */
     function parseCookies(cookieHeader: String): Object {
         let cookies = {}
+        let cookie
         /*
             Input example: 
             $Version="1"; NAME="value"; $Path="PATH"; $Domain="DOMAIN"; NAME="value"; $Path="PATH"; $Domain="DOMAIN"; 
          */
         for each (c in cookieHeader.split(";")) {
-            parts = c.split("=")
-            key = parts[0].toLowerCase().trim("$")
-            if (key == "version") {
-                continue
+            let [key,value] = c.trim().split("=")
+            key = key.toLowerCase().trimStart("$")
+            if (key == "domain" || key == "path" || key == "version") {
+                if (cookie) {
+                    cookie[key] = value
+                }
+            } else {
+                cookie = { name: key, value: value }
+                cookies[key] = cookie
             }
-            if (key == "name") {
-                cookies[name] = cookie = {}
-            }
-            cookies[key] = parts[1]
         }
         return cookies
     }

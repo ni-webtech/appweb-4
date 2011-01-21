@@ -3,7 +3,7 @@
  */
 
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
-const TESTFILE = "stress/upload-" + hashcode(self) + ".tdat"
+const TESTFILE = "upload-" + hashcode(self) + ".tdat"
 
 let http: Http = new Http
 
@@ -37,7 +37,7 @@ if (test.threads == 1) {
     http.upload(HTTP + "/upload.ejs", { file: TESTFILE })
     assert(http.status == 200)
 
-    let uploaded = Path("web/tmp").join(Path(TESTFILE).basename)
+    let uploaded = Path("../web/tmp").join(Path(TESTFILE).basename)
     assert(uploaded.size == size)
     sh("diff " + uploaded + " " + TESTFILE)
 }

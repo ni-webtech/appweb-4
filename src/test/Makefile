@@ -16,7 +16,7 @@ endif
 
 ifeq ($(BLD_FEATURE_CGI),1)
 	CGIP		:= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
-	TARGETS		+= cgi-bin/testScript cgi-bin/cgiProgram$(BLD_EXE)
+	TARGETS		+= cgi-bin/testScript web/cgiProgram.cgi
 endif
 MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
@@ -43,10 +43,10 @@ testExtra:
 		if ! which ejs >/dev/null ; then \
 			$(call log) "[Test]" "Skip unit tests. Required \"ejs\" is installed." ; \
 		else \
-			ejs $(BLD_TOOLS_DIR)/utest -v ; \
+			ejs $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH); \
 		fi ; \
 	else \
-		$(BLD_BIN_DIR)/ejs $(BLD_TOOLS_DIR)/utest -v ; \
+		$(BLD_BIN_DIR)/ejs $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH); \
 	fi
 endif
 
@@ -60,7 +60,7 @@ cgi-bin/testScript: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
 #
 #	cgiProgram
 #
-cgi-bin/cgiProgram$(BLD_EXE): $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
+web/cgiProgram.cgi: $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) Makefile
 	cp $(CGIP)  cgi-bin/cgiProgram$(BLD_EXE)
 	cp $(CGIP)  cgi-bin/nph-cgiProgram$(BLD_EXE)
 	cp $(CGIP) 'cgi-bin/cgi Program$(BLD_EXE)'
@@ -77,10 +77,10 @@ server:
 	$(BLD_BIN_DIR)/appweb --log stdout:1
 
 first:
-	utest -n -v -i 9999999 --threads 8 ; \
+	utest -n -v -i 9999999 --threads 8 -d $(BUILD_DEPTH); \
 
 second:
-	utest -2 -v -i 9999999 --threads 8 ; \
+	utest -2 -v -i 9999999 --threads 8 -d $(BUILD_DEPTH); \
 
 #
 #	Test using the http program

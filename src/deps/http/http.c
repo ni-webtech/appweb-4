@@ -437,7 +437,7 @@ static bool parseArgs(int argc, char **argv)
         app->workers = app->loadThreads + 2;
     }
     if (app->method == 0) {
-        if (app->bodyData || app->formData) {
+        if (app->bodyData || app->formData || app->upload) {
             app->method = "POST";
         } else if (app->files) {
             app->method = "PUT";
@@ -595,7 +595,7 @@ static int processThread(HttpConn *conn, MprEvent *event)
             }
         } else {
             td->url = url = resolveUrl(conn, app->target);
-            if (doRequest(conn, url, NULL) < 0) {
+            if (doRequest(conn, url, app->files) < 0) {
                 app->success = 0;
                 break;
             }

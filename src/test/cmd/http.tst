@@ -14,7 +14,7 @@ if (test.depth > 1) {
     function run(args): String {
         test.log(2, "[TestRun]", command + args)
         try {
-print(command + args)
+            // print(command + args)
             result = Cmd.run(command + args)
             assert(true)
         } catch (e) {
@@ -72,10 +72,10 @@ print(command + args)
         assert(exists("../web/tmp/day.tmp"))
     }
 
-    let files = Path("basic").files().join(" ")
+    let files = Path(".").files().join(" ")
     run(files + " /tmp/")
     if (test.threads == 1) {
-        assert(exists("../web/tmp/methods.tst"))
+        assert(exists("../web/tmp/http.tst"))
     }
 
     //  DELETE
@@ -91,24 +91,24 @@ print(command + args)
 
     //  Show headers
     data = run("--showHeaders /index.html")
-    assert(data.contains('Content-Type'))
+    assert(data.contains('content-type'))
 
     //  Upload
-    let files = Path("basic").files().join(" ")
+    let files = Path(".").files().join(" ")
     data = run("--upload " + files + " /upload.ejs")
-    assert(data.contains('"clientFilename": "methods.tst"'))
+    assert(data.contains('"clientFilename": "http.tst"'))
     if (test.threads == 1) {
-        assert(exists("../web/tmp/methods.tst"))
+        assert(exists("../web/tmp/http.tst"))
     }
 
-    let files = Path("basic").files().join(" ")
+    let files = Path(".").files().join(" ")
     data = run("--upload --form 'name=John+Smith&address=300+Park+Avenue' " + files + " /upload.ejs")
     assert(data.contains('"address": "300 Park Avenue"'))
-    assert(data.contains('"clientFilename": "methods.tst"'))
+    assert(data.contains('"clientFilename": "http.tst"'))
 
     data = run("--cookie 'test-id=12341234; $domain=site.com; $path=/dir/' /form.ejs")
+
     assert(data.contains('"test-id": '))
-    assert(data.contains('"name": "test-id"'))
     assert(data.contains('"domain": "site.com"'))
     assert(data.contains('"path": "/dir/"'))
 

@@ -1113,7 +1113,8 @@ static void mark()
 #if !PARALLEL_GC
     heap->mustYield = 1;
     if (!syncThreads(MPR_TIMEOUT_GC_SYNC)) {
-        LOG(0, "DEBUG: Pause for GC sync timed out");
+        LOG(0, "DEBUG: GC synchronization timed out, some threads did not yield.");
+        LOG(0, "This is most often caused by a thread doing a long running operation and not first calling mprYield.");
         return;
     }
 #else
@@ -19076,7 +19077,7 @@ void runTestThread(MprList *groups, MprThread *tp)
         while ((gp = mprGetNextItem(groups, &next)) != 0) {
             runTestGroup(gp);
         }
-        mprPrintf("%12s Iteration %d complete\n", "[Notice]", count++);
+        mprPrintf("%12s Iteration %d complete (%s)\n", "[Notice]", count++, tp->name);
     }
     for (next = 0; (gp = mprGetNextItem(groups, &next)) != 0; ) {
         runTerm(gp);
@@ -22420,10 +22421,10 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
             return now;
         }
     #elif BLD_WIN_LIKE
-        int64 mprGetTicks() {
+        uint64 mprGetTicks() {
             LARGE_INTEGER  now;
             QueryPerformanceCounter(&now);
-            return (uint64) now;
+            return (((uint64) now.HighPart) << 32) + now.LowPart;
         }
     #else
         uint64 mprGetTicks() {

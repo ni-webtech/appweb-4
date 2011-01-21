@@ -1453,7 +1453,6 @@ static int configureCertificateFiles(MprSsl *ssl, SSL_CTX *ctx, char *key, char 
             return -1;
         }
     }
-
     key = (key == 0) ? cert : key;
     if (key) {
         if (SSL_CTX_use_PrivateKey_file(ctx, key, SSL_FILETYPE_PEM) <= 0) {

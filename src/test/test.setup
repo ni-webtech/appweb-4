@@ -32,7 +32,7 @@ function start(cmd: String): Void {
         http.close()
     }
     if (http.status != 404 && http.status != 200) {
-        throw "Can't start web server"
+        throw "Cant start web server"
     }
     http.close()
 }

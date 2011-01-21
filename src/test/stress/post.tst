@@ -35,11 +35,9 @@ function postTest(url: String) {
 }
 
 postTest("/index.html")
+
 if (test.config["ejs"] == 1) {
     postTest("/form.ejs")
-}
-if (test.config["debug"] == 1) {
-    postTest("/egiProgram.egi")
 }
 if (test.config["php"] == 1) {
     postTest("/form.php")
@@ -47,3 +45,11 @@ if (test.config["php"] == 1) {
 if (test.config["cgi"] == 1) {
     postTest("/cgi-bin/cgiProgram")
 }
+
+/*  
+    The testEgi modules doesn't currently handle post data
+
+if (test.config["debug"] == 1) {
+    postTest("/egiProgram.egi")
+}
+*/

@@ -11,12 +11,8 @@ defineComponent() {
         imports=`probe --name matrixssl --search "$path:extensions/matrixssl/$ver/src/Release" libmatrixssl`
         iflags=-I`probe --name matrixssl --dir --search "$path:extensions/matrixssl/$ver" matrixSsl.h`
         libs="libmatrixssl"
-    elif [ $OS = MACOSX ] ; then
+    else
         imports=`probe --name matrixssl --search "$path:extensions/matrixssl/$ver/src" libmatrixsslstatic.a`
-        iflags=-I`probe --name matrixssl --dir --search "$path:extensions/matrixssl/$ver" matrixSsl.h`
-        libs="matrixsslstatic.a"
-    else 
-        imports=`probe --name matrixssl --search "$path:extensions/matrixssl/$ver/src" libmatrixssl`
         iflags=-I`probe --name matrixssl --dir --search "$path:extensions/matrixssl/$ver" matrixSsl.h`
         libs="matrixsslstatic.a"
     fi

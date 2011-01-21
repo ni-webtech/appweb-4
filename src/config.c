@@ -751,7 +751,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     MaDir       *dir;
     Http        *http;
     HttpAuth    *auth;
-    HttpLimits  limits;
+    HttpLimits  *limits;
     HttpStage   *stage;
     HttpServer  *httpServer;
     MprHash     *hp;
@@ -765,12 +765,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
     appweb = server->appweb;
     http = appweb->http;
+    limits = http->serverLimits;
     httpServer = 0;
     host = state->host;
     dir = state->dir;
     loc = state->loc;
     mprAssert(state->loc->prefix);
-    httpInitLimits(&limits, 1);
 
     mprAssert(host);
     mprAssert(dir);
@@ -1072,13 +1072,13 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     case 'K':
         if (scasecmp(key, "KeepAlive") == 0) {
             if (scasecmp(value, "on") != 0) {
-                limits.keepAliveCount = 0;
+                limits->keepAliveCount = 0;
             }
             return 1;
 
         } else if (scasecmp(key, "KeepAliveTimeout") == 0) {
             if (! mprGetDebugMode(server)) {
-                limits.inactivityTimeout = atoi(value);
+                limits->inactivityTimeout = atoi(value) * MPR_TICKS_PER_SEC;
             }
             return 1;
         }
@@ -1090,7 +1090,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_CHUNK_SIZE || num > MA_TOP_CHUNK_SIZE) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits.chunkSize = num;
+            limits->chunkSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitClients") == 0) {
@@ -1110,7 +1110,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_BODY || num > MA_TOP_BODY) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits.receiveBodySize = num;
+            limits->receiveBodySize = num;
             return 1;
 
         //  MOB -- Deprecate Field and update doc
@@ -1120,7 +1120,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_NUM_HEADERS || num > MA_TOP_NUM_HEADERS) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits.headerCount = num;
+            limits->headerCount = num;
             return 1;
 
         //  MOB -- Deprecate Field and update doc
@@ -1129,7 +1129,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_HEADER || num > MA_TOP_HEADER) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits.headerSize = num;
+            limits->headerSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitResponseBody") == 0) {
@@ -1137,7 +1137,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_RESPONSE_BODY || num > MA_TOP_RESPONSE_BODY) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits.transmissionBodySize = num;
+            limits->transmissionBodySize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitStageBuffer") == 0) {
@@ -1145,7 +1145,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_STAGE_BUFFER || num > MA_TOP_STAGE_BUFFER) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits.stageBufferSize = num;
+            limits->stageBufferSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitUrl") == 0) {
@@ -1153,7 +1153,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (num < MA_BOT_URL || num > MA_TOP_URL){
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits.uriSize = num;
+            limits->uriSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitUploadSize") == 0) {
@@ -1162,7 +1162,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 //  TODO - should emit a message for all these cases
                 return MPR_ERR_BAD_SYNTAX;
             }
-            limits.uploadSize = num;
+            limits->uploadSize = num;
             return 1;
 
 #if DEPRECATED
@@ -1279,7 +1279,6 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             }
             httpServer = httpCreateServer(http, hostName, port, NULL);
             mprAddItem(server->httpServers, httpServer);
-            *httpServer->limits = limits;
             host->httpServer = httpServer;
             /*
                 Set the host ip spec if not already set
@@ -1373,7 +1372,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
     case 'M':
         if (scasecmp(key, "MaxKeepAliveRequests") == 0) {
-            limits.keepAliveCount = atoi(value);
+            limits->keepAliveCount = atoi(value);
             return 1;
 
         } else if (scasecmp(key, "MemoryDepletionPolicy") == 0) {
@@ -1572,11 +1571,11 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (scasecmp(key, "Timeout") == 0) {
-            limits.requestTimeout = atoi(value);
+            limits->requestTimeout = atoi(value) * MPR_TICKS_PER_SEC;
             return 1;
 
         } else if (scasecmp(key, "TraceMethod") == 0) {
-            limits.enableTraceMethod = (scasecmp(value, "on") == 0);
+            limits->enableTraceMethod = (scasecmp(value, "on") == 0);
             return 1;
 
         } else if (scasecmp(key, "TypesConfig") == 0) {

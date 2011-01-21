@@ -194,7 +194,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
 
     cmd = (MprCmd*) q->pair->queueData;
     mprAssert(cmd);
-    cmd->lastActivity = mprGetTime();
+    conn->lastActivity = mprGetTime();
 
     if (httpGetPacketLength(packet) == 0) {
         /* End of input */
@@ -321,7 +321,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     mprLog(6, "CGI gateway I/O event on channel %d, state %d", channel, conn->state);
     
     tx = conn->tx;
-    cmd->lastActivity = mprGetTime();
+    conn->lastActivity = mprGetTime();
     q = conn->tx->queue[HTTP_QUEUE_TRANS].nextQ;
 
     switch (channel) {
@@ -402,6 +402,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 traceData(cmd, mprGetBufStart(buf), nbytes);
                 mprAddNullToBuf(buf);
             }
+            conn->lastActivity = mprGetTime();
         } while ((space = mprGetBufSpace(buf)) > 0);
 
         if (mprGetBufLength(buf) == 0 || processCgiData(q, cmd, channel, buf) < 0) {

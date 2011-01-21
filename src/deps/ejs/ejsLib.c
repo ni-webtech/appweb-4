@@ -9828,10 +9828,10 @@ void ejsUnlockService(Ejs *ejs)
 void ejsLoadHttpService(Ejs *ejs)
 {
     ejsLockService(ejs);
-    if (ejs->service->http == 0) {
-        ejs->service->http = httpCreate(ejs->service);
+    if (mprGetMpr()->httpService == 0) {
+        httpCreate(ejs->service);
     }
-    ejs->http = ejs->service->http;
+    ejs->http = ejs->service->http = mprGetMpr()->httpService;
     ejsUnlockService(ejs);
 }
 
@@ -19494,7 +19494,9 @@ static ssize writeHttpData(Ejs *ejs, EjsHttp *hp)
             ejsThrowIOError(ejs, "Can't write to socket");
             return 0;
         }
+        mprYield(MPR_YIELD_STICKY);
         nbytes = httpWriteBlock(conn->writeq, (cchar*) &ba->value[ba->readPosition], count);
+        mprResetYield();
         if (nbytes < 0) {
             ejsThrowIOError(ejs, "Can't write to socket");
             return 0;
@@ -33703,10 +33705,14 @@ static void handleError(Ejs *ejs, EjsWorker *worker, EjsObj *exception, int thro
         msg->stack = ejsGetPropertyByName(ejs, e, EN("stack"));
     } else {
         msg->message = e;
-        msg->stack = (EjsObj*) ejs->emptyString;
+        msg->stack = 0;
     }
     if (throwOutside) {
-        ejsThrowStateError(ejs, "%@\n%@", ejsToString(ejs, msg->message), ejsToString(ejs, msg->stack));
+        if (msg->stack) {
+            ejsThrowStateError(ejs, "%@\n%@", ejsToString(ejs, msg->message), ejsToString(ejs, msg->stack));
+        } else {
+            ejsThrowStateError(ejs, "%@", ejsToString(ejs, msg->message));
+        }
     }
     dispatcher = ejs->dispatcher;
     mprCreateEvent(dispatcher, "doMessage-error", 0, (MprEventProc) doMessage, msg, 0);

@@ -102,8 +102,7 @@ int maOpenEgiHandler(Http *http)
     HttpStage       *handler;
     MaEgi           *egi;
 
-    handler = httpCreateHandler(http, "egiHandler", 
-        HTTP_STAGE_GET | HTTP_STAGE_HEAD | HTTP_STAGE_POST | HTTP_STAGE_PUT | HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | 
+    handler = httpCreateHandler(http, "egiHandler", HTTP_STAGE_ALL | HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | 
         HTTP_STAGE_VIRTUAL | HTTP_STAGE_THREAD);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
