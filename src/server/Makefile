@@ -91,7 +91,7 @@ run:
 	$(call setlibpath) ; $(BLD_BIN_DIR)/$(BLD_PRODUCT) --log stdout:2 --config appweb.conf
 
 cleanExtra:
-	rm -f $(TARGETS) $(BLD_PRODUCT)$(BLD_EXE)
+	rm -f $(TARGETS) $(BLD_PRODUCT)$(BLD_EXE) $(EXTRA_TARGETS)
 	rm -f trace.txt access.log error.log leak.log
 	rm -f *.obj *.pdb
 	rm -f logs/*.log logs/*.old

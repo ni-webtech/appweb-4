@@ -128,6 +128,7 @@ cleanExtra:
 	rm -f $(MODULES) $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) testAppweb$(BLD_EXE)
 	rm -f *.o *.lo *.obj *.out */*.mod */*/*.mod
 	rm -f ../cgi-bin/*cgi* ../cgi-bin/testScript
+	rm -f web/cgiProgram.cgi
 
 #
 #	Don't copy this. Ensure you set minimal permissions on upload and temp directories

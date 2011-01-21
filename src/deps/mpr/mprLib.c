@@ -1276,6 +1276,9 @@ void mprMarkBlock(cvoid *ptr)
 {
     MprMem      *mp;
     int         gen;
+#if BLD_DEBUG
+    static int  depth = 0;
+#endif
 
     if (ptr == 0) {
         return;
@@ -1308,7 +1311,13 @@ void mprMarkBlock(cvoid *ptr)
         /* Lock-free update */
         SET_FIELD2(mp, GET_SIZE(mp), gen, heap->active, 0);
         if (HAS_MANAGER(mp)) {
+#if BLD_DEBUG
+            if (++depth > 100) mprBreakpoint();
+#endif
             (GET_MANAGER(mp))((void*) ptr, MPR_MANAGE_MARK);
+#if BLD_DEBUG
+            --depth;
+#endif
         }
     }
 }
