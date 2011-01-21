@@ -61,8 +61,6 @@ static void closeCgi(HttpQueue *q)
         mprStopCmd(cmd);
     }
     mprDisconnectCmd(cmd);
-    
-    //  MOB -- more needed here to cleanup. Should this actually kill the cmd too?
 }
 
 
@@ -123,8 +121,9 @@ static void startCgi(HttpQueue *q)
     cmd->stderrBuf = mprCreateBuf(HTTP_BUFSIZE, -1);
 
     mprSetCmdDir(cmd, mprGetPathDir(fileName));
-    mprSetCmdCallback(cmd, cgiCallback, conn);
+    mprSetCmdCallback(cmd, cgiCallback, tx);
 
+    //  MOB Break here kills stress/post
     if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR) < 0) {
         httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't run CGI process: %s, URI %s", fileName, rx->uri);
     }
@@ -268,12 +267,13 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
     int         servicedQueues, rc, len;
 
     conn = q->conn;
+    mprAssert(conn->tx);
 
     /*
         Write to the browser. We write as much as we can. Service queues to get the filters and connectors pumping.
      */
-    for (servicedQueues = 0; (len = mprGetBufLength(buf)) > 0 ; ) {
-        if (conn->state < HTTP_STATE_COMPLETE) {
+    for (servicedQueues = 0; conn->tx && (len = mprGetBufLength(buf)) > 0 ; ) {
+        if (conn->tx && conn->state < HTTP_STATE_COMPLETE) {
             rc = httpWriteBlock(q, mprGetBufStart(buf), len);
             mprLog(5, "Write to browser ask %d, actual %d", len, rc);
         } else {
@@ -314,13 +314,19 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     HttpConn    *conn;
     HttpTx      *tx;
 
-    conn = (HttpConn*) data;
-    mprAssert(conn);
+    tx = (HttpTx*) data;
+    conn = tx->conn;
+    if (conn == 0) {
+        return;
+    }
+
     mprAssert(conn->tx);
+    mprAssert(conn->rx);
 
     mprLog(6, "CGI gateway I/O event on channel %d, state %d", channel, conn->state);
     
     tx = conn->tx;
+    mprAssert(tx);
     conn->lastActivity = mprGetTime();
     q = conn->tx->queue[HTTP_QUEUE_TRANS].nextQ;
 
@@ -358,6 +364,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
 
     conn = q->conn;
     tx = conn->tx;
+    mprAssert(tx);
     mprResetBufIfEmpty(buf);
 
     while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock) {
@@ -372,6 +379,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 }
             }
             nbytes = mprReadCmdPipe(cmd, channel, mprGetBufEnd(buf), space);
+            mprAssert(conn->tx);
             mprLog(5, "CGI: read from gateway %d on channel %d. errno %d", nbytes, channel, 
                 nbytes >= 0 ? 0 : mprGetOsError());
             if (nbytes < 0) {
@@ -391,9 +399,6 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                  */
                 mprLog(5, "CGI EOF for %s", (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
                 mprCloseCmdFd(cmd, channel);
-                if (cmd->pid == 0) {
-                    httpFinalize(conn);
-                }
                 break;
 
             } else {
@@ -409,7 +414,11 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
             break;
         }
     }
-    enableCgiEvents(q, cmd, channel);
+    if (cmd->pid == 0) {
+        httpFinalize(conn);
+    } else {    
+        enableCgiEvents(q, cmd, channel);
+    }
 }
 
 
@@ -418,6 +427,7 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
     HttpConn    *conn;
 
     conn = q->conn;
+    mprAssert(conn->tx);
 
     if (channel == MPR_CMD_STDERR) {
         mprLog(4, mprGetBufStart(buf));
@@ -531,9 +541,10 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
     } else {
         len = 4;
     }
-
-    endHeaders[len - 1] = '\0';
-    endHeaders += len;
+    if (endHeaders) {
+        endHeaders[len - 1] = '\0';
+        endHeaders += len;
+    }
 
     /*
         Want to be tolerant of CGI programs that omit the status line.
@@ -545,7 +556,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
         }
     }
     
-    if (strchr(mprGetBufStart(buf), ':')) {
+    if (endHeaders && strchr(mprGetBufStart(buf), ':')) {
         mprLog(4, "CGI: parseHeader: header\n%s", headers);
 
         while (mprGetBufLength(buf) > 0 && buf->start[0] && (buf->start[0] != '\r' && buf->start[0] != '\n')) {

@@ -2,5 +2,7 @@
     c.tst - Test the Appweb C API
  */
 
-let command = locate("testAppweb") + " --host " + tsession["host"] + " --name appweb.api.c " + test.mapVerbosity(-3)
+const HOST = (global.tsession && tsession["host"]) || "http://127.0.0.1:4100"
+
+let command = locate("testAppweb") + " --host " + HOST + " --name appweb.api.c " + test.mapVerbosity(-3)
 sh(command)

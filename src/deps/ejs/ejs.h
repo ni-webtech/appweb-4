@@ -1924,7 +1924,7 @@ extern EjsString *ejsStringToJSON(Ejs *ejs, EjsObj *obj);
 
 /** 
     Array class
-    @description Arrays provide a growable, integer indexed, in-memory store for objects. An array can be treated as a 
+    @description Arrays provide a resizable, integer indexed, in-memory store for objects. An array can be treated as a 
         stack (FIFO or LIFO) or a list (ordered). Insertions can be done at the beginning or end of the stack or at an 
         indexed location within a list. The Array class can store objects with numerical indicies and can also store 
         any named properties. The named properties are stored in the obj field, whereas the numeric indexed values are
@@ -2418,7 +2418,7 @@ extern bool ejsGetBoolean(Ejs *ejs, EjsAny *obj);
 
 /** 
     ByteArray class
-    @description ByteArrays provide a growable, integer indexed, in-memory store for bytes. ByteArrays can be used as a 
+    @description ByteArrays provide a resizable, integer indexed, in-memory store for bytes. ByteArrays can be used as a 
     simple array type to store and encode data as bytes or they can be used as buffered Streams implementing the Stream 
     interface.
     \n\n
@@ -2426,7 +2426,7 @@ extern bool ejsGetBoolean(Ejs *ejs, EjsAny *obj);
     extract bytes. The index operator [] can be used to access individual bytes and the copyIn and copyOut methods 
     can be used to get and put blocks of data. In this mode, the read and write position properties are ignored. 
     Access to the byte array is from index zero up to the size defined by the length property. When constructed, 
-    the ByteArray can be designated as growable, in which case the initial size will grow as required to accomodate 
+    the ByteArray can be designated as resizable, in which case the initial size will grow as required to accomodate 
     data and the length property will be updated accordingly.
     \n\n
     When used as a Stream, the byte array additional write methods to store data at the location specified by the 
@@ -2455,7 +2455,7 @@ typedef struct EjsByteArray {
     ssize           readPosition;       /**< Current read position */
     ssize           writePosition;      /**< Current write position */
     int             swap;               /**< I/O must swap bytes due to endian byte ordering */
-    bool            growable;           /**< Aray is growable */
+    bool            resizable;          /**< Aray is resizable */
     EjsObj          *listeners;         /**< Event listeners in async mode */
 } EjsByteArray;
 

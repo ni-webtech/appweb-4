@@ -21,16 +21,23 @@
 
 /********************************** Includes **********************************/
 
-#include "mpr.h"
+#include <errno.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 /*********************************** Locals ***********************************/
 
-#define MAX_ARGV    64
+#define MAX_ARGV                64
+#define MPR_CMD_VXWORKS_EOF     "_ _EOF_ _"
+#define MPR_CMD_VXWORKS_EOF_LEN 9
 
 static char     *argvList[MAX_ARGV];
 static int      getArgv(int *argc, char ***argv, int originalArgc, char **originalArgv);
 static int      hasError;
-static Mpr      *mpr;
 static int      nonParsedHeader;
 static int      numPostKeys;
 static int      numQueryKeys;
@@ -39,7 +46,8 @@ static char     **originalArgv;
 static int      outputArgs, outputEnv, outputPost, outputQuery;
 static int      outputBytes, outputHeaderLines, responseStatus;
 static char     *outputLocation;
-static MprBuf   *postBuf;
+static char     *postBuf;
+static int      postBufLen;
 static char     **postKeys;
 static char     *queryBuf;
 static int      queryLen;
@@ -49,30 +57,22 @@ static int      timeout;
 
 /***************************** Forward Declarations ***************************/
 
-static void     printQuery();
-static void     printPost(MprBuf *buf);
-static int      getVars(char ***cgiKeys, char *buf, int buflen);
-static int      getPostData(MprBuf *buf);
-static int      getQueryString(char **buf, int *buflen);
+static void     error(char *fmt, ...);
 static void     descape(char *src);
 static char     hex2Char(char *s); 
-static char     *safeGetenv(char *key);
-static void     error(char *fmt, ...);
-
-#if !VXWORKS && !WINCE
+static int      getVars(char ***cgiKeys, char *buf, int len);
+static int      getPostData(char **buf, int *len);
+static int      getQueryString(char **buf, int *len);
 static void     printEnv(char **env);
-#endif
+static void     printQuery();
+static void     printPost(char *buf, int len);
+static char     *safeGetenv(char *key);
 
 /******************************************************************************/
 /*
- *  Test program entry point
+    Test program entry point
  */
-
-#if VXWORKS || WINCE
-MAIN(cgiProgramMain, int argc, char *argv[])
-#else
 int main(int argc, char *argv[], char *envp[])
-#endif
 {
     char    *cp, *method;
     int     i, j, err;
@@ -92,22 +92,18 @@ int main(int argc, char *argv[], char *envp[])
     originalArgc = argc;
     originalArgv = argv;
 
-    mpr = mprCreate(argc, argv, 0);
-
 #if _WIN32 && !WINCE
     _setmode(0, O_BINARY);
     _setmode(1, O_BINARY);
     _setmode(2, O_BINARY);
 #endif
 
-    if (strncmp(mprGetPathBase(argv[0]), "nph-", 4) == 0) {
+    if (strstr(argv[0], "nph-") == 0) {
         nonParsedHeader++;
     }
-
     if (getArgv(&argc, &argv, originalArgc, originalArgv) < 0) {
         error("Can't read CGI input");
     }
-
     for (i = 1; i < argc; i++) {
         if (argv[i][0] != '-') {
             continue;
@@ -185,10 +181,10 @@ int main(int argc, char *argv[], char *envp[])
         }
     }
     if (err) {
-        mprError("usage: cgiProgram -aenp [-b bytes] [-h lines]\n"
+        fprintf(stderr, "usage: cgiProgram -aenp [-b bytes] [-h lines]\n"
             "\t[-l location] [-s status] [-t timeout]\n"
             "\tor set the HTTP_SWITCHES environment variable\n");
-        mprError("Error at cgiProgram:%d\n", __LINE__);
+        fprintf(stderr, "Error at cgiProgram:%d\n", __LINE__);
         exit(255);
     }
 
@@ -197,50 +193,49 @@ int main(int argc, char *argv[], char *envp[])
         method = "GET";
     } else {
         if (strcmp(method, "POST") == 0) {
-            postBuf = mprCreateBuf(-1, -1);
-            if (getPostData(postBuf) < 0) {
+            if (getPostData(&postBuf, &postBufLen) < 0) {
                 error("Can't read CGI input");
             }
             if (strcmp(safeGetenv("CONTENT_TYPE"), "application/x-www-form-urlencoded") == 0) {
-                numPostKeys = getVars(&postKeys, mprGetBufStart(postBuf), mprGetBufLength(postBuf));
+                numPostKeys = getVars(&postKeys, postBuf, postBufLen);
             }
         }
     }
 
     if (hasError) {
         if (! nonParsedHeader) {
-            mprPrintf("HTTP/1.0 %d %s\r\n\r\n", responseStatus, responseMsg);
-            mprPrintf("<HTML><BODY><p>Error: %d -- %s</p></BODY></HTML>\r\n", responseStatus, responseMsg);
+            printf("HTTP/1.0 %d %s\r\n\r\n", responseStatus, responseMsg);
+            printf("<HTML><BODY><p>Error: %d -- %s</p></BODY></HTML>\r\n", responseStatus, responseMsg);
         }
         exit(2);
     }
 
     if (nonParsedHeader) {
         if (responseStatus == 0) {
-            mprPrintf("HTTP/1.0 200 OK\r\n");
+            printf("HTTP/1.0 200 OK\r\n");
         } else {
-            mprPrintf("HTTP/1.0 %d %s\r\n", responseStatus, responseMsg ? responseMsg: "");
+            printf("HTTP/1.0 %d %s\r\n", responseStatus, responseMsg ? responseMsg: "");
         }
-        mprPrintf("Connection: close\r\n");
-        mprPrintf("X-CGI-CustomHeader: Any value at all\r\n");
+        printf("Connection: close\r\n");
+        printf("X-CGI-CustomHeader: Any value at all\r\n");
     }
 
-    mprPrintf("Content-type: %s\r\n", "text/html");
+    printf("Content-type: %s\r\n", "text/html");
 
     if (outputHeaderLines) {
         j = 0;
         for (i = 0; i < outputHeaderLines; i++) {
-            mprPrintf("X-CGI-%d: A loooooooooooooooooooooooong string\r\n", i);
+            printf("X-CGI-%d: A loooooooooooooooooooooooong string\r\n", i);
         }
     }
 
     if (outputLocation) {
-        mprPrintf("Location: %s\r\n", outputLocation);
+        printf("Location: %s\r\n", outputLocation);
     }
     if (responseStatus) {
-        mprPrintf("Status: %d\r\n", responseStatus);
+        printf("Status: %d\r\n", responseStatus);
     }
-    mprPrintf("\r\n");
+    printf("\r\n");
 
     if ((outputBytes + outputArgs + outputEnv + outputQuery + outputPost + outputLocation + responseStatus) == 0) {
         outputArgs++;
@@ -265,45 +260,35 @@ int main(int argc, char *argv[], char *envp[])
             }
         }
 
-    //  MOB - fix
-    } /* else */ {
-        mprPrintf("<HTML><TITLE>cgiProgram: Output</TITLE><BODY>\r\n");
-        if (outputArgs) {
+    } 
+    printf("<HTML><TITLE>cgiProgram: Output</TITLE><BODY>\r\n");
+    if (outputArgs) {
 #if _WIN32
-            mprPrintf("<P>CommandLine: %s</P>\r\n", GetCommandLine());
+        printf("<P>CommandLine: %s</P>\r\n", GetCommandLine());
 #endif
-            mprPrintf("<H2>Args</H2>\r\n");
-            for (i = 0; i < argc; i++) {
-                mprPrintf("<P>ARG[%d]=%s</P>\r\n", i, argv[i]);
-            }
+        printf("<H2>Args</H2>\r\n");
+        for (i = 0; i < argc; i++) {
+            printf("<P>ARG[%d]=%s</P>\r\n", i, argv[i]);
         }
-#if !VXWORKS && !WINCE
-        if (outputEnv) {
-            printEnv(envp);
-        }
-#endif
-        if (outputQuery) {
-            printQuery();
-        }
-        if (outputPost) {
-            printPost(postBuf);
-        }
-        if (timeout) {
-            mprSleep(timeout * MPR_TICKS_PER_SEC);
-        }
-        mprPrintf("</BODY></HTML>\r\n");
     }
+    if (outputEnv) {
+        printEnv(envp);
+    }
+    if (outputQuery) {
+        printQuery();
+    }
+    if (outputPost) {
+        printPost(postBuf, postBufLen);
+    }
+    printf("</BODY></HTML>\r\n");
+
 #if VXWORKS
     /*
         VxWorks pipes need an explicit eof string
+        Must not call exit(0) in Vxworks as that will exit the task before the CGI handler can cleanup. Must use return 0.
      */
-    
     write(1, MPR_CMD_VXWORKS_EOF, MPR_CMD_VXWORKS_EOF_LEN);
     write(2, MPR_CMD_VXWORKS_EOF, MPR_CMD_VXWORKS_EOF_LEN);
-
-    /*
-     *  Must not call exit(0) in Vxworks as that will exit the task before the CGI handler can cleanup. Must use return 0.
-     */
 #endif
     return 0;
 }
@@ -355,46 +340,46 @@ static int getArgv(int *pargc, char ***pargv, int originalArgc, char **originalA
 }
 
 
-#if !VXWORKS && !WINCE
 static void printEnv(char **envp)
 {
-    mprPrintf("<H2>Environment Variables</H2>\r\n");
-    mprPrintf("<P>AUTH_TYPE=%s</P>\r\n", safeGetenv("AUTH_TYPE"));
-    mprPrintf("<P>CONTENT_LENGTH=%s</P>\r\n", safeGetenv("CONTENT_LENGTH"));
-    mprPrintf("<P>CONTENT_TYPE=%s</P>\r\n", safeGetenv("CONTENT_TYPE"));
-    mprPrintf("<P>DOCUMENT_ROOT=%s</P>\r\n", safeGetenv("DOCUMENT_ROOT"));
-    mprPrintf("<P>GATEWAY_INTERFACE=%s</P>\r\n", safeGetenv("GATEWAY_INTERFACE"));
-    mprPrintf("<P>HTTP_ACCEPT=%s</P>\r\n", safeGetenv("HTTP_ACCEPT"));
-    mprPrintf("<P>HTTP_CONNECTION=%s</P>\r\n", safeGetenv("HTTP_CONNECTION"));
-    mprPrintf("<P>HTTP_HOST=%s</P>\r\n", safeGetenv("HTTP_HOST"));
-    mprPrintf("<P>HTTP_USER_AGENT=%s</P>\r\n", safeGetenv("HTTP_USER_AGENT"));
-    mprPrintf("<P>PATH_INFO=%s</P>\r\n", safeGetenv("PATH_INFO"));
-    mprPrintf("<P>PATH_TRANSLATED=%s</P>\r\n", safeGetenv("PATH_TRANSLATED"));
-    mprPrintf("<P>QUERY_STRING=%s</P>\r\n", safeGetenv("QUERY_STRING"));
-    mprPrintf("<P>REMOTE_ADDR=%s</P>\r\n", safeGetenv("REMOTE_ADDR"));
-    mprPrintf("<P>REQUEST_METHOD=%s</P>\r\n", safeGetenv("REQUEST_METHOD"));
-    mprPrintf("<P>REQUEST_URI=%s</P>\r\n", safeGetenv("REQUEST_URI"));
-    mprPrintf("<P>REMOTE_USER=%s</P>\r\n", safeGetenv("REMOTE_USER"));
-    mprPrintf("<P>SCRIPT_NAME=%s</P>\r\n", safeGetenv("SCRIPT_NAME"));
-    mprPrintf("<P>SERVER_ADDR=%s</P>\r\n", safeGetenv("SERVER_ADDR"));
-    mprPrintf("<P>SERVER_HOST=%s</P>\r\n", safeGetenv("SERVER_HOST"));
-    mprPrintf("<P>SERVER_NAME=%s</P>\r\n", safeGetenv("SERVER_NAME"));
-    mprPrintf("<P>SERVER_PORT=%s</P>\r\n", safeGetenv("SERVER_PORT"));
-    mprPrintf("<P>SERVER_PROTOCOL=%s</P>\r\n", safeGetenv("SERVER_PROTOCOL"));
-    mprPrintf("<P>SERVER_SOFTWARE=%s</P>\r\n", safeGetenv("SERVER_SOFTWARE"));
+#if !VXWORKS && !WINCE
+    printf("<H2>Environment Variables</H2>\r\n");
+    printf("<P>AUTH_TYPE=%s</P>\r\n", safeGetenv("AUTH_TYPE"));
+    printf("<P>CONTENT_LENGTH=%s</P>\r\n", safeGetenv("CONTENT_LENGTH"));
+    printf("<P>CONTENT_TYPE=%s</P>\r\n", safeGetenv("CONTENT_TYPE"));
+    printf("<P>DOCUMENT_ROOT=%s</P>\r\n", safeGetenv("DOCUMENT_ROOT"));
+    printf("<P>GATEWAY_INTERFACE=%s</P>\r\n", safeGetenv("GATEWAY_INTERFACE"));
+    printf("<P>HTTP_ACCEPT=%s</P>\r\n", safeGetenv("HTTP_ACCEPT"));
+    printf("<P>HTTP_CONNECTION=%s</P>\r\n", safeGetenv("HTTP_CONNECTION"));
+    printf("<P>HTTP_HOST=%s</P>\r\n", safeGetenv("HTTP_HOST"));
+    printf("<P>HTTP_USER_AGENT=%s</P>\r\n", safeGetenv("HTTP_USER_AGENT"));
+    printf("<P>PATH_INFO=%s</P>\r\n", safeGetenv("PATH_INFO"));
+    printf("<P>PATH_TRANSLATED=%s</P>\r\n", safeGetenv("PATH_TRANSLATED"));
+    printf("<P>QUERY_STRING=%s</P>\r\n", safeGetenv("QUERY_STRING"));
+    printf("<P>REMOTE_ADDR=%s</P>\r\n", safeGetenv("REMOTE_ADDR"));
+    printf("<P>REQUEST_METHOD=%s</P>\r\n", safeGetenv("REQUEST_METHOD"));
+    printf("<P>REQUEST_URI=%s</P>\r\n", safeGetenv("REQUEST_URI"));
+    printf("<P>REMOTE_USER=%s</P>\r\n", safeGetenv("REMOTE_USER"));
+    printf("<P>SCRIPT_NAME=%s</P>\r\n", safeGetenv("SCRIPT_NAME"));
+    printf("<P>SERVER_ADDR=%s</P>\r\n", safeGetenv("SERVER_ADDR"));
+    printf("<P>SERVER_HOST=%s</P>\r\n", safeGetenv("SERVER_HOST"));
+    printf("<P>SERVER_NAME=%s</P>\r\n", safeGetenv("SERVER_NAME"));
+    printf("<P>SERVER_PORT=%s</P>\r\n", safeGetenv("SERVER_PORT"));
+    printf("<P>SERVER_PROTOCOL=%s</P>\r\n", safeGetenv("SERVER_PROTOCOL"));
+    printf("<P>SERVER_SOFTWARE=%s</P>\r\n", safeGetenv("SERVER_SOFTWARE"));
 
-    mprPrintf("\r\n<H2>All Defined Environment Variables</H2>\r\n"); 
+    printf("\r\n<H2>All Defined Environment Variables</H2>\r\n"); 
     if (envp) {
         char    *p;
         int     i;
         for (i = 0, p = envp[0]; envp[i]; i++) {
             p = envp[i];
-            mprPrintf("<P>%s</P>\r\n", p);
+            printf("<P>%s</P>\r\n", p);
         }
     }
-    mprPrintf("\r\n");
-}
+    printf("\r\n");
 #endif
+}
 
 
 static void printQuery()
@@ -402,43 +387,42 @@ static void printQuery()
     int     i;
 
     if (numQueryKeys == 0) {
-        mprPrintf("<H2>No Query String Found</H2>\r\n");
+        printf("<H2>No Query String Found</H2>\r\n");
     } else {
-        mprPrintf("<H2>Decoded Query String Variables</H2>\r\n");
+        printf("<H2>Decoded Query String Variables</H2>\r\n");
         for (i = 0; i < (numQueryKeys * 2); i += 2) {
             if (queryKeys[i+1] == 0) {
-                mprPrintf("<p>QVAR %s=</p>\r\n", queryKeys[i]);
+                printf("<p>QVAR %s=</p>\r\n", queryKeys[i]);
             } else {
-                mprPrintf("<p>QVAR %s=%s</p>\r\n", queryKeys[i], queryKeys[i+1]);
+                printf("<p>QVAR %s=%s</p>\r\n", queryKeys[i], queryKeys[i+1]);
             }
         }
     }
-    mprPrintf("\r\n");
+    printf("\r\n");
 }
 
  
-static void printPost(MprBuf *buf)
+static void printPost(char *buf, int len)
 {
-    int     i, len;
+    int     i;
 
     if (numPostKeys) {
-        mprPrintf("<H2>Decoded Post Variables</H2>\r\n");
+        printf("<H2>Decoded Post Variables</H2>\r\n");
         for (i = 0; i < (numPostKeys * 2); i += 2) {
-            mprPrintf("<p>PVAR %s=%s</p>\r\n", postKeys[i], postKeys[i+1]);
+            printf("<p>PVAR %s=%s</p>\r\n", postKeys[i], postKeys[i+1]);
         }
 
     } else if (buf) {
-        len = mprGetBufLength(buf);
         if (len < (50 * 1000)) {
-            write(1, mprGetBufStart(buf), len);
+            write(1, buf, len);
         } else {
-            mprPrintf("<H2>Post Data %d bytes found</H2>\r\n", len);
+            printf("<H2>Post Data %d bytes found</H2>\r\n", len);
         }
 
     } else {
-        mprPrintf("<H2>No Post Data Found</H2>\r\n");
+        printf("<H2>No Post Data Found</H2>\r\n");
     }
-    mprPrintf("\r\n");
+    printf("\r\n");
 }
 
 
@@ -448,51 +432,58 @@ static int getQueryString(char **buf, int *buflen)
     *buf = 0;
 
     if (getenv("QUERY_STRING") == 0) {
-        *buf = sclone("");
+        *buf = "";
         *buflen = 0;
     } else {
-        *buf = sclone(getenv("QUERY_STRING"));
+        *buf = getenv("QUERY_STRING");
         *buflen = strlen(*buf);
     }
     return 0;
 }
 
 
-static int getPostData(MprBuf *buf)
+static int getPostData(char **bufp, int *lenp)
 {
-    char    *contentLength;
-    int     bytes, len, space;
+    char    *contentLength, *buf;
+    int     bufsize, bytes, size, limit, len;
 
     if ((contentLength = getenv("CONTENT_LENGTH")) != 0) {
-        len = atoi(contentLength);
+        size = atoi(contentLength);
+        limit = size;
     } else {
-        len = MAXINT;
+        size = 4096;
+        limit = INT_MAX;
     }
-    while (len > 0) {
-        space = mprGetBufSpace(buf);
-        if (space < MPR_BUFSIZE) {
-            if (mprGrowBuf(buf, MPR_BUFSIZE) < 0) {
+    if ((buf = malloc(size + 1)) == 0) {
+        error("Couldn't allocate memory to read post data");
+        return -1;
+    }
+    bufsize = size + 1;
+    len = 0;
+
+    while (len < limit) {
+        if ((len + size + 1) > bufsize) {
+            if ((buf = realloc(buf, len + size + 1)) == 0) {
                 error("Couldn't allocate memory to read post data");
                 return -1;
             }
+            bufsize = len + size + 1;
         }
-        space = mprGetBufSpace(buf);
-        bytes = read(0, mprGetBufEnd(buf), space);
-
+        bytes = read(0, &buf[len], size);
         if (bytes < 0) {
             error("Couldn't read CGI input %d", errno);
             return -1;
-
         } else if (bytes == 0) {
             if (contentLength == 0) {
                 /* EOF */
                 break;
             }
         }
-        mprAdjustBufEnd(buf, bytes);
-        len -= bytes;
+        len += bytes;
     }
-    mprAddNullToBuf(buf);
+    buf[len] = 0;
+    *lenp = len;
+    *bufp = buf;
     return 0;
 }
 
@@ -504,7 +495,7 @@ static int getVars(char ***cgiKeys, char *buf, int buflen)
     int     i, keyCount;
 
     /*
-     *  Change all plus signs back to spaces
+        Change all plus signs back to spaces
      */
     keyCount = (buflen > 0) ? 1 : 0;
     for (cp = buf; cp < &buf[buflen]; cp++) {
@@ -520,9 +511,9 @@ static int getVars(char ***cgiKeys, char *buf, int buflen)
     }
 
     /*
-     *  Crack the input into name/value pairs 
+        Crack the input into name/value pairs 
      */
-    keyList = mprAlloc((keyCount * 2) * sizeof(char**));
+    keyList = malloc((keyCount * 2) * sizeof(char**));
 
     i = 0;
     for (pp = strtok(buf, "&"); pp; pp = strtok(0, "&")) {
@@ -602,7 +593,7 @@ void error(char *fmt, ...)
         va_start(args, fmt);
         vsprintf(buf, fmt, args);
         responseStatus = 400;
-        responseMsg = sclone(buf);
+        responseMsg = strdup(buf);
         va_end(args);
     }
     hasError++;

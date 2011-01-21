@@ -2,7 +2,7 @@
     thread.tst - Multithreaded test of the Appweb
  */
 
-if (false && test.multithread) {
+if (test.multithread) {
     let command = locate("testAppweb") + " --host " + tsession["host"] + " --name mpr.api.c --iterations 5 " + 
         test.mapVerbosity(-2)
 

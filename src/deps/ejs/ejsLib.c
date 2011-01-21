@@ -12955,10 +12955,8 @@ static EjsObj *invokeByteArrayOperator(Ejs *ejs, EjsObj *lhs, int opcode,  EjsOb
  */
 static int setByteArrayProperty(struct Ejs *ejs, EjsByteArray *ap, int slotNum,  EjsObj *value)
 {
-    if (slotNum >= ap->length) {
-        if (ejsGrowByteArray(ejs, ap, slotNum + 1) < 0) {
-            return EJS_ERR;
-        }
+    if (slotNum >= ap->length && ejsGrowByteArray(ejs, ap, slotNum + 1) < 0) {
+        return EJS_ERR;
     }
     if (ejsIsNumber(ejs, value)) {
         ap->value[slotNum] = ejsGetInt(ejs, value);
@@ -12973,11 +12971,11 @@ static int setByteArrayProperty(struct Ejs *ejs, EjsByteArray *ap, int slotNum, 
 
 
 /*
-    function ByteArray(size: Number = -1, growable: Boolean = true): ByteArray
+    function ByteArray(size: Number = -1, resizable: Boolean = true): ByteArray
  */
 static EjsObj *ba_ByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    bool    growable;
+    bool    resizable;
     int     size;
 
     mprAssert(0 <= argc && argc <= 2);
@@ -12986,16 +12984,15 @@ static EjsObj *ba_ByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     if (size <= 0) {
         size = 1;
     }
-    growable = (argc == 2) ? ejsGetBoolean(ejs, argv[1]): 1;
-
+    resizable = (argc == 2) ? ejsGetBoolean(ejs, argv[1]): 1;
+    ap->growInc = (resizable) ? MPR_BUFSIZE : 0;
+    ap->endian = mprGetEndian(ejs);
+    ap->resizable = 1;
     if (ejsGrowByteArray(ejs, ap, size) < 0) {
         return 0;
     }
+    ap->resizable = resizable;
     mprAssert(ap->value);
-    ap->growable = growable;
-    ap->growInc = MPR_BUFSIZE;
-    ap->length = size;
-    ap->endian = mprGetEndian(ejs);
     return (EjsObj*) ap;
 }
 
@@ -13291,11 +13288,11 @@ static EjsObj *ba_setLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 /*
     Get the length of an array.
     @return Returns the number of items in the array
-    function growable(): Boolean
+    function resizable(): Boolean
  */
-static EjsObj *ba_growable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsObj *ba_resizable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ap->length);
+    return (EjsObj*) ap->resizable ? ejs->trueValue : ejs->falseValue;
 }
 
 
@@ -13829,11 +13826,18 @@ static int flushByteArray(Ejs *ejs, EjsByteArray *ap)
 }
 
 
+/*
+    Grow the byte array up to the given length, but not over the maximum. Return the length or an error code.
+    This routine always throws an exception.
+ */
 int ejsGrowByteArray(Ejs *ejs, EjsByteArray *ap, ssize len)
 {
     if (len > ap->length) {
-        ap->value = mprRealloc(ap->value, len);
-        if (ap->value == 0) {
+        if (!ap->resizable) {
+            ejsThrowResourceError(ejs, "Byte array is too small. Need room for %d bytes.", len);
+            return EJS_ERR;
+        }
+        if ((ap->value = mprRealloc(ap->value, len)) == 0) {
             ejsThrowMemoryError(ejs);
             return EJS_ERR;
         }
@@ -13877,10 +13881,7 @@ bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, ssize require)
         }
         if (room(ap) < require) {
             newLen = max(ap->length + require, ap->length + ap->growInc);
-            if (!ap->growable || ejsGrowByteArray(ejs, ap, newLen) < 0) {
-                if (!ejs->exception) {
-                    ejsThrowResourceError(ejs, "Byte array is too small. Need room for %d bytes", require);
-                }
+            if (ejsGrowByteArray(ejs, ap, newLen) < 0) {
                 return 0;
             }
         }
@@ -14069,14 +14070,13 @@ EjsByteArray *ejsCreateByteArray(Ejs *ejs, ssize size)
     if (size <= 0) {
         size = MPR_BUFSIZE;
     }
+    ap->async = -1;
+    ap->resizable = 1;
+    ap->growInc = MPR_BUFSIZE;
+    ap->endian = mprGetEndian(ejs);
     if (ejsGrowByteArray(ejs, ap, size) < 0) {
         return 0;
     }
-    ap->length = size;
-    ap->async = -1;
-    ap->growable = 1;
-    ap->growInc = MPR_BUFSIZE;
-    ap->endian = mprGetEndian(ejs);
     return ap;
 }
 
@@ -14124,7 +14124,7 @@ void ejsConfigureByteArrayType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ByteArray_copyOut, (EjsProc) ba_copyOut);
     ejsBindAccess(ejs, prototype, ES_ByteArray_endian, (EjsProc) endian, (EjsProc) setEndian);
     ejsBindMethod(ejs, prototype, ES_ByteArray_flush, (EjsProc) ba_flush);
-    ejsBindMethod(ejs, prototype, ES_ByteArray_growable, (EjsProc) ba_growable);
+    ejsBindMethod(ejs, prototype, ES_ByteArray_resizable, (EjsProc) ba_resizable);
     ejsBindMethod(ejs, prototype, ES_ByteArray_length, (EjsProc) ba_getLength);
     ejsBindMethod(ejs, prototype, ES_ByteArray_iterator_get, (EjsProc) ba_get);
     ejsBindMethod(ejs, prototype, ES_ByteArray_iterator_getValues, (EjsProc) ba_getValues);
@@ -16516,7 +16516,9 @@ static ssize readData(Ejs *ejs, EjsFile *fp, EjsByteArray *ap, ssize offset, ssi
     }
     len = ap->length - offset;
     if (len < count) {
-        ejsGrowByteArray(ejs, ap, ap->length + (count - len));
+        if (ap->resizable) {
+            ejsGrowByteArray(ejs, ap, ap->length + (count - len));
+        }
         len = ap->length - offset;
     }
     bytes = mprReadFile(fp->file, &ap->value[offset], len);

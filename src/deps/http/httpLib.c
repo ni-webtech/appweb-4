@@ -2324,9 +2324,6 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->documentRoot);
         mprMark(conn->rx);
         mprMark(conn->tx);
-#if UNUSED
-        mprMark(conn->txheaders);
-#endif
         mprMark(conn->input);
         mprMark(conn->context);
         mprMark(conn->boundary);
@@ -2395,9 +2392,6 @@ void httpPrepServerConn(HttpConn *conn)
         conn->readq = 0;
         conn->writeq = 0;
         conn->writeComplete = 0;
-#if UNUSED
-        conn->txheaders = 0;
-#endif
         conn->dispatcher = (conn->server) ? conn->server->dispatcher : mprGetDispatcher();
         httpSetState(conn, HTTP_STATE_BEGIN);
         httpInitSchedulerQueue(&conn->serviceq);
@@ -2497,7 +2491,6 @@ void httpEvent(HttpConn *conn, MprEvent *event)
         readEvent(conn);
     }
     if (conn->server) {
-        //  MOB BUG - if still processing a request, EOF should not free the request
         if (conn->connError || mprIsSocketEof(conn->sock) || (!conn->rx && conn->keepAliveCount < 0)) {
             /*  
                 NOTE: compare keepAliveCount with "< 0" so that the client can have one more keep alive request. 
@@ -2505,6 +2498,7 @@ void httpEvent(HttpConn *conn, MprEvent *event)
                 This reduces TIME_WAIT states on the server. 
              */
             httpDestroyConn(conn);
+            /* NOTE: conn structure and memory is still intact but conn->sock is zero */
             return;
         }
     }
@@ -2569,6 +2563,8 @@ void httpEnableConnEvents(HttpConn *conn)
     HttpQueue   *q;
     int         eventMask;
 
+    mprLog(7, "EnableConnEvents");
+
     if (!conn->async) {
         return;
     }
@@ -2601,7 +2597,6 @@ void httpEnableConnEvents(HttpConn *conn)
                 conn->waitHandler.fd = -1;
             }
         }
-        mprLog(7, "EnableConnEvents mask %x", eventMask);
         if (eventMask) {
             if (conn->waitHandler.fd < 0) {
                 mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, 
@@ -4771,9 +4766,10 @@ static void managePacket(HttpPacket *packet, int flags)
         mprMark(packet->prefix);
         mprMark(packet->content);
         mprMark(packet->suffix);
+#if UNUSED
+        //  Move to manageQueue to reduce stack depth
         mprMark(packet->next);
-
-    } else if (flags & MPR_MANAGE_FREE) {
+#endif
     }
 }
 
@@ -5691,8 +5687,12 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int direction, Http
 
 static void manageQueue(HttpQueue *q, int flags)
 {
+    HttpPacket      *packet;
+
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(q->first);
+        for (packet = q->first; packet; packet = packet->next) {
+            mprMark(packet);
+        }
         mprMark(q->queueData);
         if (q->nextQ && q->nextQ->stage) {
             /* Not a queue head */
@@ -5913,13 +5913,13 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
     HttpRx      *rx;
     MprBuf      *content;
     ssize       nbytes, len;
-    int         events, inactivityTimeout;
 
     q = conn->readq;
     rx = conn->rx;
     
     while (q->count == 0 && !conn->async && conn->sock && (conn->state <= HTTP_STATE_CONTENT)) {
         httpServiceQueues(conn);
+#if UNUSED
         events = MPR_READABLE;
         if (conn->sock && !mprSocketHasPendingData(conn->sock)) {
             if (mprIsSocketEof(conn->sock)) {
@@ -5931,7 +5931,15 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
         if (events) {
             httpCallEvent(conn, MPR_READABLE);
         }
+#else
+        if (conn->sock) {
+            httpWait(conn, conn->dispatcher, 0, MPR_TIMEOUT_SOCKETS);
+        }
+#endif
     }
+    //  MOB - better place for this?
+    conn->lastActivity = conn->http->now;
+
     for (nbytes = 0; size > 0 && q->count > 0; ) {
         if ((packet = q->first) == 0) {
             break;
@@ -7521,6 +7529,9 @@ static void measure(HttpConn *conn)
     MprTime     elapsed;
     cchar       *uri;
 
+    if (conn->rx == 0 || conn->tx == 0) {
+        return;
+    }
     uri = (conn->server) ? conn->rx->uri : conn->tx->parsedUri->path;
    
     if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, NULL) >= 0) {
@@ -7798,7 +7809,9 @@ int httpSetUri(HttpConn *conn, cchar *uri)
 static void waitHandler(HttpConn *conn, struct MprEvent *event)
 {
     httpCallEvent(conn, event->mask);
+#if UNUSED
     httpEnableConnEvents(conn);
+#endif
     mprSignalDispatcher(conn->dispatcher);
 }
 
@@ -7810,12 +7823,20 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
 {
     Http        *http;
     MprTime     expire;
-    int         eventMask, remainingTime, addedHandler, saveAsync;
+    int         eventMask, remainingTime, addedHandler, saveAsync, justOne;
 
     http = conn->http;
+    //  MOB -- if always true, could remove dispatcher arg.
+    mprAssert(dispatcher == conn->dispatcher);
 
     if (timeout <= 0) {
         timeout = 0;
+    }
+    if (state == 0) {
+        state = HTTP_STATE_COMPLETE;
+        justOne = 1;
+    } else {
+        justOne = 0;
     }
     if (conn->state <= HTTP_STATE_BEGIN) {
         mprAssert(conn->state >= HTTP_STATE_BEGIN);
@@ -7843,6 +7864,9 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
         }
         mprAssert(!mprSocketHasPendingData(conn->sock));
         mprWaitForEvent(conn->dispatcher, remainingTime);
+        if (justOne) {
+            break;
+        }
     }
     if (addedHandler && conn->waitHandler.fd >= 0) {
         mprRemoveWaitHandler(&conn->waitHandler);
@@ -7851,7 +7875,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
     if (conn->sock == 0 || conn->error) {
         return MPR_ERR_CANT_CONNECT;
     }
-    if (conn->state < state) {
+    if (!justOne && conn->state < state) {
         return MPR_ERR_TIMEOUT;
     }
     return 0;
@@ -11074,11 +11098,6 @@ HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int dup)
     if (getPort(base) != getPort(target)) {
         return (dup) ? httpCloneUri(target, 0) : target;
     }
-
-#if UNUSED
-    //  OPT -- Could avoid free if already normalized
-    targetPath = httpNormalizeUriPath(target->path);
-#endif
     basePath = httpNormalizeUriPath(base->path);
 
     /* Count trailing "/" */

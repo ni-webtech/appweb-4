@@ -1246,7 +1246,7 @@ static void sweep()
                     mprAssert(rp != NULL);
                 }
             }
-            LOG(5, "DEBUG: Unpin %p to %p size %d", region, ((char*) region) + region->size, region->size);
+            LOG(9, "DEBUG: Unpin %p to %p size %d", region, ((char*) region) + region->size, region->size);
             mprVirtFree(region, region->size);
         } else {
             prior = region;
@@ -4130,6 +4130,7 @@ static void manageCmd(MprCmd *cmd, int flags)
         mprMark(cmd->stderrBuf);
         mprMark(cmd->mutex);
         mprMark(cmd->dispatcher);
+        mprMark(cmd->callbackData);
 #if BLD_WIN_LIKE
         mprMark(cmd->command);
         mprMark(cmd->arg0);
@@ -4238,7 +4239,6 @@ void mprDisconnectCmd(MprCmd *cmd)
     lock(cmd);
     for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
         if (cmd->handlers[i]) {
-            // mprLog(0, "DISCONNECT CMD - remove handlers");
             mprRemoveWaitHandler(cmd->handlers[i]);
             cmd->handlers[i] = 0;
         }
@@ -23005,6 +23005,7 @@ MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDisp
     wp->flags           = 0;
     wp->handlerData     = data;
     wp->service         = ws;
+    wp->state           = MPR_HANDLER_DISABLED;
 
     if (mask) {
         lock(ws);
@@ -23089,6 +23090,8 @@ void mprQueueIOEvent(MprWaitHandler *wp)
     MprEvent        *event;
 
     mprAssert(wp->state == MPR_HANDLER_ENABLED);
+    mprAssert(wp->desiredMask == 0);
+
     wp->state = MPR_HANDLER_QUEUED;
 
     dispatcher = (wp->dispatcher) ? wp->dispatcher: mprGetDispatcher();
@@ -23107,6 +23110,7 @@ static void ioEvent(void *data, MprEvent *event)
 
     wp = event->handler;
     mprAssert(wp->state == MPR_HANDLER_QUEUED);
+    mprAssert(wp->desiredMask == 0);
     wp->state = MPR_HANDLER_ACTIVE;
     wp->proc(data, event);
 }

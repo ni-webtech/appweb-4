@@ -10,7 +10,15 @@
 
 /****************************** Test Definitions ******************************/
 
+typedef struct App {
+    char        *postData;
+    char        *host;
+    int         port;
+} App;
+
+static App *app;
 extern MprTestDef testHttp;
+
 static MprTestDef *groups[] = 
 {
     &testHttp,
@@ -24,14 +32,12 @@ static MprTestDef master = {
     { { 0 } },
 };
 
-
-static MprTestService  *ts;
-static int             defaultPort;
-static char            *defaultHost;
+static MprTestService   *ts;
 
 /******************************* Forward Declarations *************************/
 
-static void parseHostSwitch(char **host, int *port);
+static void manageApp(App *app, int flags);
+static void parseArgs(App *app);
 
 /************************************* Code ***********************************/
 
@@ -43,9 +49,11 @@ MAIN(testAppWeb, int argc, char *argv[])
 
     mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
     mprSetAppName(argv[0], argv[0], BLD_VERSION);
+    app = mprAllocObj(App, manageApp);
+    mprAddRoot(app);
 
-    defaultHost = "127.0.0.1";
-    defaultPort = 4100;
+    app->host = sclone("127.0.0.1");
+    app->port = 4100;
 
     ts = mprCreateTestService(mpr);
     if (ts == 0) {
@@ -59,7 +67,7 @@ MAIN(testAppWeb, int argc, char *argv[])
             mprGetAppName(mpr));
         exit(3);
     }
-    parseHostSwitch(&defaultHost, &defaultPort);
+    parseArgs(app);
     gp = mprAddTestGroup(ts, &master);
     if (gp == 0) {
         exit(4);
@@ -87,31 +95,38 @@ MAIN(testAppWeb, int argc, char *argv[])
 }
 
 
-static void parseHostSwitch(char **host, int *port) 
+static void manageApp(App *app, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(app->postData);
+        mprMark(app->host);
+    }
+}
+
+
+static void parseArgs(App *app)
 {
     char    *ip, *cp;
     int     i;
 
-    mprAssert(host);
-    mprAssert(port);
+    mprAssert(app);
 
     for (i = 0; i < ts->argc; i++) {
-        if (strcmp(ts->argv[i], "--host") == 0 || strcmp(ts->argv[i], "-h") == 0) {
+        if (scmp(ts->argv[i], "--host") == 0 || scmp(ts->argv[i], "-h") == 0) {
             ip = ts->argv[++i];
             if (ip == 0) {
                 continue;
             }
-            if (strncmp(ip, "http://", 7) == 0) {
+            if (sncmp(ip, "http://", 7) == 0) {
                 ip += 7;
             }
-            ip = sclone(ip);
             if ((cp = strchr(ip, ':')) != 0) {
                 *cp++ = '\0';
-                *port = atoi(cp);
+                app->port = atoi(cp);
             } else {
-                *port = 80;
+                app->port = 80;
             }
-            *host = ip;
+            app->host = sclone(ip);
         }
     }
 }
@@ -126,8 +141,8 @@ int startRequest(MprTestGroup *gp, cchar *method, cchar *uri)
     http = getHttp(gp);
 
     if (*uri == '/') {
-        httpSetDefaultPort(http, defaultPort);
-        httpSetDefaultHost(http, defaultHost);
+        httpSetDefaultPort(http, app->port);
+        httpSetDefaultHost(http, app->host);
     }
     gp->conn = conn = httpCreateClient(http, NULL);
     if (httpConnect(conn, method, uri) < 0) {
@@ -182,13 +197,12 @@ bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
     if (startRequest(gp, "POST", uri) < 0) {
         return 0;
     }
-
     http = getHttp(gp);
     conn = getConn(gp);
 
     if (formData) {
         httpSetHeader(conn, "Content-Type", "application/x-www-form-urlencoded");
-        len = strlen(formData);
+        len = slen(formData);
         if (httpWrite(conn->writeq, formData, len) != len) {
             return MPR_ERR_CANT_WRITE;
         }
@@ -218,7 +232,6 @@ bool simplePost(MprTestGroup *gp, char *uri, char *bodyData, int len, int expect
     int         contentLen, status;
 
     contentLen = 0;
-    
     conn = getConn(gp);
 
     if (expectStatus <= 0) {
@@ -258,7 +271,7 @@ bool bulkPost(MprTestGroup *gp, char *url, int size, int expectStatus)
     int     i, j;
     bool    success;
 
-    post = (char*) mprAlloc(size + 1);
+    app->postData = post = (char*) mprAlloc(size + 1);
     assert(post != 0);
 
     for (i = 0; i < size; i++) {
@@ -275,8 +288,9 @@ bool bulkPost(MprTestGroup *gp, char *url, int size, int expectStatus)
     }
     post[i] = '\0';
 
-    success = simplePost(gp, url, post, strlen(post), expectStatus);
+    success = simplePost(gp, url, post, slen(post), expectStatus);
     assert(success);
+    app->postData = 0;
     return success;
 }
 
@@ -313,7 +327,7 @@ bool match(MprTestGroup *gp, char *key, char *value)
         return 1;
     }
     trim = strim(vp, "\"", MPR_TRIM_BOTH);
-    if (vp == 0 || value == 0 || strcmp(trim, value) != 0) {
+    if (vp == 0 || value == 0 || scmp(trim, value) != 0) {
         mprLog(1, "Match %s failed. Got \"%s\" expected \"%s\"", key, vp, value);
         mprLog(1, "Content %s", gp->content);
         return 0;
@@ -337,7 +351,7 @@ bool matchAnyCase(MprTestGroup *gp, char *key, char *value)
 #if BLD_WIN_LIKE
     if (vp == 0 || sncasecmp(trim, value) != 0)
 #else
-    if (vp == 0 || value == 0 || strcmp(trim, value) != 0)
+    if (vp == 0 || value == 0 || scmp(trim, value) != 0)
 #endif
     {
         mprLog(1, "Match %s failed. Got %s expected %s", key, vp, value);
@@ -382,7 +396,7 @@ char *lookupValue(MprTestGroup *gp, char *key)
     if (gp->content == 0 || (nextToken = strstr(gp->content, key)) == 0) {
         return 0;
     }
-    nextToken += strlen(key);
+    nextToken += slen(key);
     if (*nextToken != '=' && *nextToken != ':' && *nextToken != '"') {
         return 0;
     }
@@ -399,7 +413,7 @@ char *lookupValue(MprTestGroup *gp, char *key)
         ;
     }
     *bp++ = '\0';
-    if (strcmp(result, "null") == 0) {
+    if (scmp(result, "null") == 0) {
         return 0;
     }
     return result;
@@ -408,13 +422,13 @@ char *lookupValue(MprTestGroup *gp, char *key)
 
 int getDefaultPort(MprTestGroup *gp)
 {
-    return defaultPort;
+    return app->port;
 }
 
 
 char *getDefaultHost(MprTestGroup *gp)
 {
-    return defaultHost;
+    return app->host;
 }
 
 

@@ -28,7 +28,7 @@ f = File(TESTFILE).open({mode: "w"})
 for (i in (sizes[test.depth] * 1024)) {
     f.write(buf)
 }
-f.close
+f.close()
 f.open()
 
 if (test.threads == 1) {

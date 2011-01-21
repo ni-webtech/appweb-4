@@ -21,13 +21,15 @@ for (i in 64) {
 //  Scale the count by the test depth
 count = sizes[test.depth] * 1024
 
-// print("Writing " + count * buf.available)
-
 function postTest(url: String) {
     // print("@@@@ Writing " + count * buf.available + " to " + url)
     http.post(HTTP + url)
     for (i in count) {
-        http.write(buf)
+        let n = http.write(buf)
+    }
+    if (http.status != 200) {
+        print("STATUS " + http.status)
+        print(http.response)
     }
     assert(http.status == 200)
     assert(http.response)
@@ -48,8 +50,7 @@ if (test.config["cgi"] == 1) {
 
 /*  
     The testEgi modules doesn't currently handle post data
-
-if (test.config["debug"] == 1) {
-    postTest("/egiProgram.egi")
-}
+    if (test.config["debug"] == 1) {
+        postTest("/egiProgram.egi")
+    }
 */
