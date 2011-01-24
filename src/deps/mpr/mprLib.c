@@ -32,8 +32,8 @@
 /*
     Set this address to break when this address is allocated or freed
  */
-static MprMem *stopAlloc = 0;
-static int stopSeqno = -1;
+MprMem *stopAlloc = 0;
+int stopSeqno = -1;
 #endif
 
 #define GET_MEM(ptr)                ((MprMem*) (((char*) (ptr)) - sizeof(MprMem)))
@@ -185,7 +185,7 @@ static void nextGen();
 static void sweep();
 static void sweeper(void *unused, MprThread *tp);
 static void synchronize();
-static int syncThreads(int timeout);
+static int syncThreads();
 static void triggerGC(int flags);
 
 #if BLD_WIN_LIKE
@@ -1093,13 +1093,15 @@ static void synchronize()
     if (heap->notifier) {
         (heap->notifier)(MPR_MEM_ATTENTION, 0);
     }
-    if (syncThreads(MPR_TIMEOUT_GC_SYNC)) {
+    if (syncThreads()) {
         nextGen();
     } else {
         LOG(7, "DEBUG: Pause for GC sync timed out");
     }
 #else
+#if UNUSED
     nextGen();
+#endif
 #endif
     heap->mustYield = 0;
     mprResumeThreads();
@@ -1110,25 +1112,36 @@ static void mark()
 {
     LOG(7, "GC: mark started");
 
-#if !PARALLEL_GC
+    /*
+        MOB DOC here on how marking strategy works
+        When parallel, we mark blocks using the current heap->active mark. After marking, synchronization will rotate
+        the active/stale/dead markers. After this, existing alive blocks may be marked stale. No blocks will be marked
+        active.
+        When !parallel, we swap the active/dead markers first and mark all blocks. After marking and synchronization, 
+        existing alive blocks will always be marked active.
+     */
+#if PARALLEL_GC
+    if (heap->newCount > heap->earlyYieldQuota) {
+        heap->mustYield = 1;
+    }
+#else
     heap->mustYield = 1;
-    if (!syncThreads(MPR_TIMEOUT_GC_SYNC)) {
+    if (!syncThreads()) {
         LOG(0, "DEBUG: GC synchronization timed out, some threads did not yield.");
         LOG(0, "This is most often caused by a thread doing a long running operation and not first calling mprYield.");
         return;
     }
-#else
-    if (heap->newCount > heap->earlyYieldQuota) {
-        heap->mustYield = 1;
-    }
+    nextGen();
 #endif
     heap->priorNewCount = heap->newCount;
     heap->priorFree = heap->stats.bytesFree;
     heap->newCount = 0;
     heap->gc = 0;
+    MPR->marking = 1;
     markRoots();
+    MPR->marking = 0;
     if (!heap->hasSweeper) {
-        sweep();
+        MEASURE("GC", "sweep", sweep());
     }
     synchronize();
 }
@@ -1290,12 +1303,14 @@ void mprMarkBlock(cvoid *ptr)
         return;
     }
     mprAssert(!IS_FREE(mp));
+#if PARALLEL_GC
     mprAssert(GET_MARK(mp) != heap->dead);
     mprAssert(GET_GEN(mp) != heap->dead);
     if (GET_MARK(mp) == heap->dead || IS_FREE(mp)) {
         mprAssert(0);
         return;
     }
+#endif
 #endif
     CHECK(mp);
     INC(markVisited);
@@ -1355,7 +1370,7 @@ void mprRelease(void *ptr)
 static void marker(void *unused, MprThread *tp)
 {
     LOG(5, "DEBUG: marker thread started");
-    MPR->marking = 1;
+    MPR->marker = 1;
     tp->stickyYield = 1;
     tp->yielded = 1;
 
@@ -1363,11 +1378,10 @@ static void marker(void *unused, MprThread *tp)
         if (!heap->mustYield) {
             mprWaitForCond(heap->markerCond, -1);
         }
-        mark();
+        MEASURE("GC", "mark", mark());
     }
-    //  MOB - is this ever used?
-    MPR->marking = 0;
     heap->mustYield = 0;
+    MPR->marker = 0;
     mprResumeThreads();
 }
 
@@ -1379,12 +1393,12 @@ static void sweeper(void *unused, MprThread *tp)
 {
     LOG(5, "DEBUG: sweeper thread started");
 
-    MPR->sweeping = 1;
+    MPR->sweeper = 1;
     while (!mprIsStoppingCore()) {
-        sweep();
+        MEASURE("GC", "sweep", sweep());
         mprYield(MPR_YIELD_BLOCK);
     }
-    MPR->sweeping = 0;
+    MPR->sweeper = 0;
 }
 
 
@@ -1443,7 +1457,7 @@ void mprYield(int flags)
     if (flags & MPR_YIELD_STICKY) {
         tp->stickyYield = 1;
     }
-    while (tp->yielded && MPR->marking && (heap->mustYield || (flags & MPR_YIELD_BLOCK))) {
+    while (tp->yielded && MPR->marker && (heap->mustYield || (flags & MPR_YIELD_BLOCK))) {
         if (heap->flags & MPR_MARK_THREAD) {
             mprSignalCond(ts->cond);
         }
@@ -1454,6 +1468,7 @@ void mprYield(int flags)
     if (!tp->stickyYield) {
         tp->yielded = 0;
     }
+    mprAssert(!MPR->marking);
 }
 
 
@@ -1464,6 +1479,12 @@ void mprResetYield()
     tp = mprGetCurrentThread();
     tp->stickyYield = 0;
     tp->yielded = 0;
+    /* Flush yielded */
+    mprAtomicBarrier();
+    if (MPR->marking) {
+        mprYield(0);
+    }
+    mprAssert(!MPR->marking);
 }
 
 
@@ -1472,14 +1493,20 @@ void mprResetYield()
     MOB - this functions differently if parallel. If so, then it will abort waiting. If !parallel, it waits for all
     threads to yield.
  */
-static int syncThreads(int timeout)
+static int syncThreads()
 {
     MprThreadService    *ts;
     MprThread           *tp;
     MprTime             mark;
-    int                 i, allYielded;
+    int                 i, allYielded, timeout;
+
+#if BLD_DEBUG
+    uint64  ticks = mprGetTicks();
+#endif
 
     ts = MPR->threadService;
+    timeout = MPR_TIMEOUT_GC_SYNC;
+
     LOG(7, "syncThreads: wait for threads to yield, timeout %d", timeout);
     mark = mprGetTime();
     if (mprGetDebugMode()) {
@@ -1492,6 +1519,9 @@ static int syncThreads(int timeout)
             tp = (MprThread*) mprGetItem(ts->threads, i);
             if (!tp->yielded) {
                 allYielded = 0;
+                if (mprGetElapsedTime(mark) > 1000) {
+                    LOG(7, "Thread %s is not yielding", tp->name);
+                }
                 break;
             }
         }
@@ -1506,7 +1536,9 @@ static int syncThreads(int timeout)
     } while (!allYielded && mprGetElapsedTime(mark) < timeout);
 
     mprAssert(allYielded);
-    LOG(7, "syncThreads: all yielded %d", allYielded);
+#if BLD_DEBUG
+    LOG(5, "TIME: syncThreads elapsed %,d msec, %,d ticks", mprGetElapsedTime(mark), mprGetTicks() - ticks);
+#endif
     return (allYielded) ? 1 : 0;
 }
 
@@ -1620,8 +1652,12 @@ static void initGen()
 {
     heap->eternal = MPR_GEN_ETERNAL;
     heap->active = heap->eternal - 1;
+#if PARALLEL_GC
     heap->stale = heap->active - 1;
     heap->dead = heap->stale - 1;
+#else
+    heap->dead = heap->active - 1;
+#endif
 }
 
 
@@ -1629,13 +1665,21 @@ static void nextGen()
 {
     int     active;
 
+#if PARALLEL_GC
     active = (heap->active + 1) % MPR_MAX_GEN;
     heap->active = active;
     heap->stale = (active - 1 + MPR_MAX_GEN) % MPR_MAX_GEN;
     heap->dead = (active - 2 + MPR_MAX_GEN) % MPR_MAX_GEN;
-    heap->iteration++;
     LOG(7, "GC: Iteration %d, active %d, stale %d, dead %d, eternal %d",
         heap->iteration, heap->active, heap->stale, heap->dead, heap->eternal);
+#else
+    active = heap->active;
+    heap->active = heap->dead;
+    heap->dead = active;
+    LOG(7, "GC: Iteration %d, active %d, dead %d, eternal %d",
+        heap->iteration, heap->active, heap->dead, heap->eternal);
+#endif
+    heap->iteration++;
 }
 
 
@@ -1731,7 +1775,9 @@ static void printGCStats()
 
     printf("\nGC Stats\n");
     printf("  Eternal generation has %9d blocks, %12d bytes\n", counts[heap->eternal], (int) bytes[heap->eternal]);
+#if PARALLEL_GC
     printf("  Stale generation has   %9d blocks, %12d bytes\n", counts[heap->stale], (int) bytes[heap->stale]);
+#endif
     printf("  Active generation has  %9d blocks, %12d bytes\n", counts[heap->active], (int) bytes[heap->active]);
     printf("  Dead generation has    %9d blocks, %12d bytes\n", counts[heap->dead], (int) bytes[heap->dead]);
     printf("  Free generation has    %9d blocks, %12d bytes\n", counts[free], (int) bytes[free]);
@@ -2581,9 +2627,9 @@ bool mprServicesAreIdle()
            mprGetListLength(MPR->cmdService->cmds) == 0 && 
            mprDispatchersAreIdle() && !MPR->eventing;
     if (!idle) {
-        mprLog(1, "Testing idle: cmds %d, threads %d, dispatchers %d, marking %d, sweeping %d",
+        mprLog(1, "Testing idle: cmds %d, threads %d, dispatchers %d, marker %d, sweeper %d",
             mprGetListLength(MPR->workerService->busyThreads),
-           mprDispatchersAreIdle(), mprGetListLength(MPR->cmdService->cmds), MPR->marking, MPR->sweeping);
+           mprDispatchersAreIdle(), mprGetListLength(MPR->cmdService->cmds), MPR->marker, MPR->sweeper);
     }
     return idle;
 }
@@ -8486,9 +8532,9 @@ static void manageEvent(MprEvent *event, int flags)
          */
         mprMark(event->dispatcher);
         mprMark(event->data);
+        mprMark(event->handler);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        //  MOBZZ - should be okay
         if (event->next) {
             mprRemoveEvent(event);
         }
@@ -16433,9 +16479,11 @@ static void manageSocket(MprSocket *sp, int flags)
         mprMark(sp->provider);
         mprMark(sp->mutex);
         mprMark(sp->handler);
+        mprMark(sp->sslSocket);
+        mprMark(sp->ssl);
+        mprMark(sp->listenSock);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        //  MOBZZ -OK
         if (sp->fd >= 0) {
             sp->mutex = 0;
             mprCloseSocket(sp, 1);
@@ -19739,6 +19787,7 @@ MprThreadService *mprCreateThreadService()
     if (ts == 0) {
         return 0;
     }
+    //  MOB - not used
     if ((ts->mutex = mprCreateLock()) == 0) {
         return 0;
     }
@@ -19801,19 +19850,19 @@ MprThread *mprGetCurrentThread()
     int                 i;
 
     ts = MPR->threadService;
-    if (ts->mutex) {
-        mprLock(ts->mutex);
-    }
     id = mprGetCurrentOsThread();
+    if (ts->threads->mutex) {
+        lock(ts->threads);
+    }
     for (i = 0; i < ts->threads->length; i++) {
         tp = (MprThread*) mprGetItem(ts->threads, i);
         if (tp->osThread == id) {
-            mprUnlock(ts->mutex);
+            unlock(ts->threads);
             return tp;
         }
     }
-    if (ts->mutex) {
-        mprUnlock(ts->mutex);
+    if (ts->threads->mutex) {
+        unlock(ts->threads);
     }
     return 0;
 }
@@ -19826,8 +19875,7 @@ cchar *mprGetCurrentThreadName()
 {
     MprThread       *tp;
 
-    tp = mprGetCurrentThread();
-    if (tp == 0) {
+    if ((tp = mprGetCurrentThread()) == 0) {
         return 0;
     }
     return tp->name;
@@ -19841,8 +19889,7 @@ void mprSetCurrentThreadPriority(int pri)
 {
     MprThread       *tp;
 
-    tp = mprGetCurrentThread();
-    if (tp == 0) {
+    if ((tp = mprGetCurrentThread()) == 0) {
         return;
     }
     mprSetThreadPriority(tp, pri);
@@ -19880,13 +19927,9 @@ MprThread *mprCreateThread(cchar *name, MprThreadProc entry, void *data, int sta
 #endif
 
     if (ts && ts->threads) {
-        //  MOB -- should be able to remove lock
-        mprLock(ts->mutex);
         if (mprAddItem(ts->threads, tp) < 0) {
-            mprUnlock(ts->mutex);
             return 0;
         }
-        mprUnlock(ts->mutex);
     }
     return tp;
 }
@@ -19904,10 +19947,8 @@ static void manageThread(MprThread *tp, int flags)
         mprMark(tp->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        if (ts->mutex) {
-            lock(ts);
-            mprRemoveItem(MPR->threadService->threads, tp);
-            unlock(ts);
+        if (ts->threads) {
+            mprRemoveItem(ts->threads, tp);
         }
 #if BLD_WIN_LIKE
         if (tp->threadHandle) {
@@ -19969,7 +20010,8 @@ static void threadProc(MprThread *tp)
  */
 int mprStartThread(MprThread *tp)
 {
-    mprLock(tp->mutex);
+    //  MOB - is this needed
+    lock(tp);
 
 #if BLD_WIN_LIKE
 {
@@ -20017,7 +20059,7 @@ int mprStartThread(MprThread *tp)
     pthread_attr_destroy(&attr);
 }
 #endif
-    mprUnlock(tp->mutex);
+    unlock(tp);
     return 0;
 }
 
@@ -20038,8 +20080,7 @@ void mprSetThreadPriority(MprThread *tp, int newPriority)
 {
     int     osPri;
 
-    mprLock(tp->mutex);
-
+    lock(tp);
     osPri = mprMapMprPriorityToOs(newPriority);
 
 #if BLD_WIN_LIKE
@@ -20050,7 +20091,7 @@ void mprSetThreadPriority(MprThread *tp, int newPriority)
     setpriority(PRIO_PROCESS, tp->pid, osPri);
 #endif
     tp->priority = newPriority;
-    mprUnlock(tp->mutex);
+    unlock(tp);
 }
 
 
@@ -23053,7 +23094,6 @@ static void manageWaitHandler(MprWaitHandler *wp, int flags)
         mprMark(wp->handlerData);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        //  MOBZZ
         mprRemoveWaitHandler(wp);
     }
 }

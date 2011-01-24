@@ -379,6 +379,9 @@ static void manageMatrixSocket(MprSslSocket *msp, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(msp->sock);
         mprMark(msp->ssl);
+        mprMark(msp->insock.start);
+        mprMark(msp->outsock.start);
+        mprMark(msp->inbuf.start);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (msp->ssl) {
@@ -1082,15 +1085,18 @@ int mprCreateMatrixSslModule(bool lazy) { return -1; }
 
 #include    <openssl/dh.h>
 
-/*
-    OpenSSL requires this static code. Ugh!
- */
+
+typedef struct MprOpenssl {
+    MprMutex    **locks;
+} MprOpenssl;
+
+static MprOpenssl *osl;
+
 typedef struct RandBuf {
     MprTime     now;
     int         pid;
 } RandBuf;
 
-static MprMutex **locks;
 static int      numLocks;
 
 struct CRYPTO_dynlock_value {
@@ -1101,7 +1107,7 @@ typedef struct CRYPTO_dynlock_value DynLock;
 
 static MprSocket *acceptOss(MprSocket *sp);
 static void     closeOss(MprSocket *sp, bool gracefully);
-static MprSsl   *getDefaultOpenSsl();
+static MprSsl   *getDefaultSslSettings();
 static int      configureCertificateFiles(MprSsl *ssl, SSL_CTX *ctx, char *key, char *cert);
 static int      configureOss(MprSsl *ssl);
 static int      connectOss(MprSocket *sp, cchar *host, int port, int flags);
@@ -1111,10 +1117,10 @@ static DH       *dhCallback(SSL *ssl, int isExport, int keyLength);
 static void     disconnectOss(MprSocket *sp);
 static int      flushOss(MprSocket *sp);
 static int      listenOss(MprSocket *sp, cchar *host, int port, int flags);
-static int      lockDestructor(void *ptr);
+static void     manageOpenssl(MprOpenssl *osl, int flags);
 static void     manageOpenProvider(MprSocketProvider *provider, int flags);
 static void     manageOpenSocket(MprSslSocket *ssp, int flags);
-static void     manageOpenSsl(MprSsl *ssl, int flags);
+static void     manageSslStruct(MprSsl *ssl, int flags);
 static ssize    readOss(MprSocket *sp, void *buf, ssize len);
 static RSA      *rsaCallback(SSL *ssl, int isExport, int keyLength);
 static int      verifyX509Certificate(int ok, X509_STORE_CTX *ctx);
@@ -1122,16 +1128,16 @@ static ssize    writeOss(MprSocket *sp, void *buf, ssize len);
 
 static DynLock  *sslCreateDynLock(const char *file, int line);
 static void     sslDynLock(int mode, DynLock *dl, const char *file, int line);
-#if UNUSED
 static void     sslDestroyDynLock(DynLock *dl, const char *file, int line);
-#endif
 static void     sslStaticLock(int mode, int n, const char *file, int line);
 static ulong    sslThreadId(void);
 
 static DH       *get_dh512();
 static DH       *get_dh1024();
 
-
+/*
+    Create the Openssl module. This is called only once
+ */
 int mprCreateOpenSslModule(bool lazy)
 {
     MprSocketService    *ss;
@@ -1140,6 +1146,9 @@ int mprCreateOpenSslModule(bool lazy)
     int                 i;
 
     ss = MPR->socketService;
+    if ((osl = mprAllocObj(MprOpenssl, manageOpenssl)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
 
     /*
         Get some random bytes
@@ -1158,18 +1167,15 @@ int mprCreateOpenSslModule(bool lazy)
         Configure the global locks
      */
     numLocks = CRYPTO_num_locks();
-    locks = mprAllocBlock(numLocks * sizeof(MprMutex*), MPR_ALLOC_MANAGER);
-    mprSetManager(locks, (MprManager) lockDestructor);
+    osl->locks = mprAlloc(numLocks * sizeof(MprMutex*));
     for (i = 0; i < numLocks; i++) {
-        locks[i] = mprCreateLock();
+        osl->locks[i] = mprCreateLock();
     }
     CRYPTO_set_id_callback(sslThreadId);
     CRYPTO_set_locking_callback(sslStaticLock);
 
     CRYPTO_set_dynlock_create_callback(sslCreateDynLock);
-#if UNUSED
     CRYPTO_set_dynlock_destroy_callback(sslDestroyDynLock);
-#endif
     CRYPTO_set_dynlock_lock_callback(sslDynLock);
 
 #if !BLD_WIN_LIKE
@@ -1181,22 +1187,31 @@ int mprCreateOpenSslModule(bool lazy)
     if ((provider = createOpenSslProvider()) == 0) {
         return MPR_ERR_MEMORY;
     }
+    provider->data = osl;
     mprSetSecureProvider(provider);
     if (!lazy) {
-        getDefaultOpenSsl();
+        getDefaultSslSettings();
     }
     return 0;
 }
 
 
-static int lockDestructor(void *ptr)
+static void manageOpenssl(MprOpenssl *osl, int flags)
 {
-    locks = 0;
-    return 0;
+    int     i;
+
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(osl->locks);
+        for (i = 0; i < numLocks; i++) {
+            mprMark(osl->locks[i]);
+        }
+    } else if (flags & MPR_MANAGE_FREE) {
+        osl->locks = 0;
+    }
 }
 
 
-static MprSsl *getDefaultOpenSsl()
+static MprSsl *getDefaultSslSettings()
 {
     MprSocketService    *ss;
     MprSsl              *ssl;
@@ -1250,6 +1265,7 @@ static void manageOpenProvider(MprSocketProvider *provider, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(provider->defaultSsl);
+        mprMark(provider->data);
     }
 }
 
@@ -1266,7 +1282,7 @@ static int configureOss(MprSsl *ssl)
     uchar               resume[16];
 
     ss = MPR->socketService;
-    mprSetManager(ssl, (MprManager) manageOpenSsl);
+    mprSetManager(ssl, manageSslStruct);
 
     context = SSL_CTX_new(SSLv23_method());
     if (context == 0) {
@@ -1388,7 +1404,7 @@ static int configureOss(MprSsl *ssl)
      */
     SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
 
-    if ((defaultSsl = getDefaultOpenSsl()) == 0) {
+    if ((defaultSsl = getDefaultSslSettings()) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (ssl != defaultSsl) {
@@ -1405,7 +1421,7 @@ static int configureOss(MprSsl *ssl)
 /*
     Update the destructor for the MprSsl object. 
  */
-static void manageOpenSsl(MprSsl *ssl, int flags)
+static void manageSslStruct(MprSsl *ssl, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ssl->key);
@@ -1419,18 +1435,25 @@ static void manageOpenSsl(MprSsl *ssl, int flags)
     } else if (flags & MPR_MANAGE_FREE) {
         if (ssl->context != 0) {
             SSL_CTX_free(ssl->context);
+            ssl->context = 0;
         }
-        if (ssl->rsaKey512) {
-            RSA_free(ssl->rsaKey512);
-        }
-        if (ssl->rsaKey1024) {
-            RSA_free(ssl->rsaKey1024);
-        }
-        if (ssl->dhKey512) {
-            DH_free(ssl->dhKey512);
-        }
-        if (ssl->dhKey1024) {
-            DH_free(ssl->dhKey1024);
+        if (ssl == MPR->socketService->secureProvider->defaultSsl) {
+            if (ssl->rsaKey512) {
+                RSA_free(ssl->rsaKey512);
+                ssl->rsaKey512 = 0;
+            }
+            if (ssl->rsaKey1024) {
+                RSA_free(ssl->rsaKey1024);
+                ssl->rsaKey1024 = 0;
+            }
+            if (ssl->dhKey512) {
+                DH_free(ssl->dhKey512);
+                ssl->dhKey512 = 0;
+            }
+            if (ssl->dhKey1024) {
+                DH_free(ssl->dhKey1024);
+                ssl->dhKey1024 = 0;
+            }
         }
     }
 }
@@ -1620,7 +1643,7 @@ static int connectOss(MprSocket *sp, cchar *host, int port, int flags)
     mprAssert(osp);
 
     if (ss->secureProvider->defaultSsl == 0) {
-        if ((ssl = getDefaultOpenSsl()) == 0) {
+        if ((ssl = getDefaultSslSettings()) == 0) {
             unlock(sp);
             return MPR_ERR_CANT_INITIALIZE;
         }
@@ -1931,11 +1954,11 @@ static void sslStaticLock(int mode, int n, const char *file, int line)
 {
     mprAssert(0 <= n && n < numLocks);
 
-    if (locks) {
+    if (osl->locks) {
         if (mode & CRYPTO_LOCK) {
-            mprLock(locks[n]);
+            mprLock(osl->locks[n]);
         } else {
-            mprUnlock(locks[n]);
+            mprUnlock(osl->locks[n]);
         }
     }
 }
@@ -1947,15 +1970,18 @@ static DynLock *sslCreateDynLock(const char *file, int line)
 
     dl = mprAllocZeroed(sizeof(DynLock));
     dl->mutex = mprCreateLock(dl);
+    mprHold(dl->mutex);
     return dl;
 }
 
 
-#if UNUSED
 static void sslDestroyDynLock(DynLock *dl, const char *file, int line)
 {
+    if (dl->mutex) {
+        mprRelease(dl->mutex);
+        dl->mutex = 0;
+    }
 }
-#endif
 
 
 static void sslDynLock(int mode, DynLock *dl, const char *file, int line)
@@ -2168,7 +2194,6 @@ static MprModule *loadSsl(bool lazy)
     if (mprCreateOpenSslModule(lazy) < 0) {
         return 0;
     }
-
 #elif BLD_FEATURE_MATRIXSSL
     mprLog(2, "Loading MatrixSSL module");
     if (mprCreateMatrixSslModule(lazy) < 0) {

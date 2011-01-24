@@ -1200,8 +1200,9 @@ typedef struct Ejs {
     EjsAny              *exception;         /**< Pointer to exception object */
     EjsAny              *result;            /**< Last expression result */
     struct EjsState     *state;             /**< Current evaluation state and stack */
+#if UNUSED
     struct EjsState     *masterState;       /**< Owns the eval stack */
-
+#endif
     struct EjsService   *service;           /**< Back pointer to the service */
     EjsIntern           *intern;            /**< Interned Unicode string hash - shared over all interps */
     cchar               *bootSearch;        /**< Module search when bootstrapping the VM */
@@ -1303,7 +1304,6 @@ typedef struct Ejs {
     uint                destroying: 1;      /**< Interpreter is being destroyed */
     uint                empty: 1;           /**< Interpreter will be created empty */
     uint                exiting: 1;         /**< VM should exit */
-    uint                freeze: 1;          /**< Freeze GC sync -- don't do a GC sync */
     uint                hasError: 1;        /**< Interpreter has an initialization error */
     uint                initialized: 1;     /**< Interpreter fully initialized and not empty */
     uint                workerComplete: 1;  /**< TEMP MOB */
@@ -2327,7 +2327,6 @@ typedef struct EjsFrame {
     uchar           *attentionPc;           /**< Restoration PC value after attention */
     uint            argc;                   /**< Actual parameter count */
     int             slotNum;                /**< Slot in owner */
-    uint            freeze: 1;              /**< Garbage collection frozen */
     uint            getter: 1;              /**< Frame is a getter */
 #if BLD_DEBUG
     EjsLine         *line;
@@ -3723,6 +3722,8 @@ typedef struct EjsState {
     struct EjsState     *prev;              /* Previous state */
     struct EjsNamespace *internal;          /* Current internal namespace */
     int                 stackSize;          /* Stack size */
+    uint                frozen: 1;          /* Garbage collection frozen */
+    EjsObj              *t1;                /* Temp one for GC */
 } EjsState;
 
 
