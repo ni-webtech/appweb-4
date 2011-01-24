@@ -14254,7 +14254,7 @@ void ejsCreateConfigType(Ejs *ejs)
     char        version[16];
 
     //  MOB -- Config should just be converted back to a non-native type
-    type = ejsCreateNativeType(ejs, N("ejs", "Config"), ES_Config, sizeof(EjsObj), NULL, EJS_POT_HELPERS);
+    type = ejsCreateNativeType(ejs, N("ejs", "Config"), ES_Config, sizeof(EjsObj), ejsManagePot, EJS_POT_HELPERS);
     ejs->configType = type;
 
     ejsSetProperty(ejs, type, ES_Config_Debug, BLD_DEBUG ? ejs->trueValue: ejs->falseValue);
@@ -15703,12 +15703,9 @@ static EjsType *defineType(Ejs *ejs, cchar *name, int id)
 {
     EjsType     *type;
 
-    //  MOB -- remove this type and just use EjsObj - bug what about castError helper
-    type = ejsCreateNativeType(ejs, N("ejs", name), id, sizeof(EjsError), NULL, EJS_POT_HELPERS);
-
+    type = ejsCreateNativeType(ejs, N("ejs", name), id, sizeof(EjsError), ejsManagePot, EJS_POT_HELPERS);
     //  MOB -- why?
     type->constructor.block.nobind = 1;
-
     type->helpers.cast = (EjsCastHelper) castError;
     return type;
 }
@@ -18748,10 +18745,13 @@ static EjsObj *http_form(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     EjsObj  *data;
 
     if (argc == 2 && argv[1] != ejs->nullValue) {
+#if UNUSED
         /*
             Must prep here to re-create a new Tx headers store
+            MOB - why. This prevents Http.setHeaders
          */
         httpPrepClientConn(hp->conn, 0);
+#endif
         mprFlushBuf(hp->requestContent);
         data = argv[1];
         if (ejsGetPropertyCount(ejs, data) > 0) {
@@ -19760,8 +19760,10 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
                 if (url) {
                     uri = httpCreateUri(url, 0);
                     hp->uri = httpUriToString(uri, 1);
+#if UNUSED
                     httpPrepClientConn(conn, count);
                     count = 0;
+#endif
                 }
                 count--; 
                 redirectCount++;
@@ -19799,11 +19801,11 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
         if (hp->requestContentCount > 0) {
             mprAdjustBufStart(hp->requestContent, -hp->requestContentCount);
         }
-        /* Force a new connection */
+        /* Force a new connection - MOB why. Slow for ordinary redirects */
         if (conn->rx == 0 || conn->rx->status != HTTP_CODE_UNAUTHORIZED) {
             httpSetKeepAliveCount(conn, -1);
         }
-        httpPrepClientConn(conn, count);
+        httpPrepClientConn(conn, 1);
         if (startHttpRequest(ejs, hp, NULL, 0, NULL) < 0) {
             return 0;
         }
@@ -30719,8 +30721,9 @@ int ejsBootstrapTypes(Ejs *ejs)
 static int defaultManager(EjsObj *ev, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprAssert(!TYPE(ev)->isPot);
 #if UNUSED
-        //  MOB -- should not do this
+            //  MOB -- should this be done?
             mprMark(ev->type);
         }
 #endif
@@ -30789,6 +30792,7 @@ EjsType *ejsCreateNativeType(Ejs *ejs, EjsName qname, int id, int instanceSize, 
     type->manager = manager ? manager : defaultManager;
     if (helpers == EJS_POT_HELPERS) {
         ejsClonePotHelpers(ejs, type);
+        mprAssert(manager);
     } else if (helpers == EJS_OBJ_HELPERS) {
         ejsCloneObjHelpers(ejs, type);
     }
