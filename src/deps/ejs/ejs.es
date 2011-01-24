@@ -20203,8 +20203,6 @@ module ejs.web {
             let log = request.log
             log.debug(5, "Routing " + request.pathInfo)
             if (request.method == "POST") {
-print("HEADERS")
-dump(request.headers)
                 let method = request.params["-ejs-method-"] || request.header("X-HTTP-METHOD-OVERRIDE")
                 if (method && method.toUpperCase() != request.method) {
                     log.debug(3, "Change method from " + request.method + " TO " + method + " for " + request.uri)

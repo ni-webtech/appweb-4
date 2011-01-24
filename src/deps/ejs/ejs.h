@@ -989,9 +989,6 @@ typedef BLD_FEATURE_NUM_TYPE MprNumber;
 #define EJS_GLOBAL                  "global"
 #define EJS_DEFAULT_MODULE          "default"
 #define EJS_DEFAULT_MODULE_NAME     EJS_DEFAULT_MODULE EJS_MODULE_EXT
-#if UNUSED
-#define EJS_BUILTIN_MODULE_NAME     "ejs"  EJS_MODULE_EXT
-#endif
 #define EJS_DEFAULT_CLASS_NAME      "__defaultClass__"
 #define EJS_INITIALIZER_NAME        "__initializer__"
 
@@ -1200,9 +1197,6 @@ typedef struct Ejs {
     EjsAny              *exception;         /**< Pointer to exception object */
     EjsAny              *result;            /**< Last expression result */
     struct EjsState     *state;             /**< Current evaluation state and stack */
-#if UNUSED
-    struct EjsState     *masterState;       /**< Owns the eval stack */
-#endif
     struct EjsService   *service;           /**< Back pointer to the service */
     EjsIntern           *intern;            /**< Interned Unicode string hash - shared over all interps */
     cchar               *bootSearch;        /**< Module search when bootstrapping the VM */
@@ -1379,10 +1373,6 @@ extern EjsName ejsName(Ejs *ejs, cchar *space, cchar *name);
 #define EN(name) ejsEmptyName(ejs, name)
 #define N(space, name) ejsName(ejs, space, name)
 #define WN(space, name) ejsWideName(ejs, space, name)
-
-#if UNUSED
-#define NS(space, name) ejsName(ejs, space, name)
-#endif
 
 /** 
     Property traits. 
@@ -2001,9 +1991,6 @@ typedef struct EjsBlock {
     uint            isGlobal: 1;                    /**< Block is the global block */
     uint            nobind: 1;                      /**< Don't bind to properties in this block */
 #if BLD_DEBUG
-#if UNUSED
-    EjsLoc          loc;
-#endif
     struct EjsLine  *line;
 #endif
 } EjsBlock;
@@ -3174,9 +3161,6 @@ typedef struct EjsSocket {
     EjsObj          *emitter;           /**< Event emitter */
     EjsByteArray    *data;              /**< Buffered write data */
     MprSocket       *sock;              /**< Underlying MPR socket object */
-#if UNUSED
-    MprWaitHandler  waitHandler;        /**< I/O event wait handler */
-#endif
     cchar           *address;           /**< Remote address */
     int             port;               /**< Remote port */
     int             async;              /**< In async mode */
@@ -3770,23 +3754,9 @@ typedef struct EjsService {
     MprMutex        *mutex;             /**< Multithread locking */
 } EjsService;
 
-#if UNUSED
-extern EjsService *ejsGetService();
-#endif
 extern int ejsInitCompiler(EjsService *service);
 extern void ejsAttention(Ejs *ejs);
 extern void ejsClearAttention(Ejs *ejs);
-
-#if UNUSED
-/**
-    Open the Ejscript service
-    @description One Ejscript service object is required per application. From this service, interpreters
-        can be created.
-    @return An ejs service object
-    @ingroup Ejs
- */
-extern EjsService *ejsCreateService();
-#endif
 
 /**
     Create an ejs virtual machine 
@@ -4196,10 +4166,6 @@ typedef struct EjsModule {
      */
     struct EcCodeGen *code;                 /* Code generation buffer */
     MprList         *globalProperties;      /* List of global properties */
-
-#if UNUSED
-    int             nameToken;              /* */
-#endif
 
 } EjsModule;
 
