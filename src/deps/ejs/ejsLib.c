@@ -48717,6 +48717,8 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     cchar       *ext;
     char        *msg;
     int         i, j, next, nextModule, lflags, rc, frozen;
+//  MOB Debug
+    MprThread *tp = mprGetCurrentThread();
 
     ejs = cp->ejs;
     if ((nodes = mprCreateList(-1, 0)) == 0) {
@@ -48747,7 +48749,6 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     /*
         Compile source files and load any module files
      */
-    MprThread *tp = mprGetCurrentThread();
     mprAssert(tp->yielded == 0);
     
     for (i = 0; i < argc && !cp->fatalError; i++) {
