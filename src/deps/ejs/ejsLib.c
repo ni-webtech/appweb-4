@@ -39497,14 +39497,8 @@ static void startSessionTimer(Ejs *ejs, EjsHttpServer *server)
         // printf("START TIMER %s\n", server->name);
         //  MOB - should session timers run on the ejs->dispatcher or nonblock. Are sessions owned by one interp
         //  or by the service
-#if MOB
         server->sessionTimer = mprCreateTimerEvent(ejs->dispatcher, "sessionTimer", EJS_TIMER_PERIOD, 
             (MprEventProc) sessionTimer, server, 0 /* | MPR_EVENT_QUICK */);
-#else
-        server->sessionTimer = mprCreateEvent(ejs->dispatcher, "sessionTimer", EJS_TIMER_PERIOD, 
-                                                   (MprEventProc) sessionTimer, server, 0);
-        
-#endif
     }
     mprUnlock(sessionLock);
 }
@@ -39527,10 +39521,6 @@ void ejsStopSessionTimer(EjsHttpServer *server)
  */
 static void sessionTimer(EjsHttpServer *server, MprEvent *event)
 {
-    mprAssert(!server->ejs->destroying);
-    mprAssert(server->ejs->name);
-    mprLog(0, "@@@@@@ RUN TIMER %s in ejs %s", server->name, server->ejs->name);
-#if UNUSED
     Ejs             *ejs;
     EjsPot          *sessions;
     EjsSession      *session;
@@ -39538,13 +39528,14 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
     HttpLimits      *limits;
     int             i, count, removed, soon, redline;
 
+    mprAssert(!server->ejs->destroying);
+    mprAssert(server->ejs->name);
+
     sessions = server->sessions;
     ejs = server->ejs;
     mprAssert(!ejs->destroying);
     mprAssert(ejs->name);
-    // mprLog(0, "TIMER %s", ejs->name);
 
-//  MOB - locking
     /*  
         This could be on the primary event thread. Can't block long.  MOB -- is this lock really needed
      */
@@ -39606,7 +39597,6 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
         }
         mprUnlock(sessionLock);
     }
-#endif
 }
 
 

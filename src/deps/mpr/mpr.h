@@ -1857,7 +1857,8 @@ typedef struct MprHeap {
     int              priorNewCount;          /**< Last sweep new count */
     ssize            priorFree;              /**< Last sweep free memory */
     int              rootIndex;              /**< Marker root scan index */
-    int              verify;                 /**< Verify memory contents (slow) */
+    int              scribble;               /**< Scribble over freed memory (slow) */
+    int              verify;                 /**< Verify memory contents (very slow) */
 } MprHeap;
 
 /**
