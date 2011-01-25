@@ -4260,8 +4260,9 @@ extern EjsModule    *ejsLookupModule(Ejs *ejs, EjsString *name, int minVersion, 
 extern void         ejsRemoveModule(Ejs *ejs, EjsModule *up);
 extern void         ejsRemoveModules(Ejs *ejs);
 
-extern int  ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, int checksum, int flags);
-extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, EjsString *name);
+extern int  ejsAddNativeModule(Ejs *ejs, cchar *name, EjsNativeCallback callback, int checksum, int flags);
+extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, cchar *name);
+
 extern EjsModule *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsConstants *constants);
 
 #ifdef __cplusplus

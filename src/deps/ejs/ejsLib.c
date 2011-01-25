@@ -5881,10 +5881,10 @@ static int initializeModule(Ejs *ejs, EjsModule *mp)
             See if a native module initialization routine has been registered. If so, use that. Otherwise, look
             for a backing DSO.
          */
-        if ((nativeModule = ejsLookupNativeModule(ejs, mp->name)) == 0) {
+        if ((nativeModule = ejsLookupNativeModule(ejs, ejsToMulti(ejs, mp->name))) == 0) {
 #if !BLD_STATIC
             loadNativeLibrary(ejs, mp, mp->path);
-            nativeModule = ejsLookupNativeModule(ejs, mp->name);
+            nativeModule = ejsLookupNativeModule(ejs, ejsToMulti(ejs, mp->name));
 #endif
             if (nativeModule == NULL) {
                 if (ejs->exception == 0) {
@@ -7621,20 +7621,23 @@ static void manageNativeModule(EjsNativeModule *nm, int flags)
     Register a native module callback to be invoked when it it time to configure the module. This is used by loadable modules
     when they are built statically.
  */
-int ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, int checksum, int flags)
+int ejsAddNativeModule(Ejs *ejs, cchar *name, EjsNativeCallback callback, int checksum, int flags)
 {
     EjsService          *sp;
     EjsNativeModule     *nm;
 
+    sp = ejs->service;
+    if (ejsLookupNativeModule(ejs, name)) {
+        return 0;
+    }
     if ((nm = mprAllocObj(EjsNativeModule, manageNativeModule)) == NULL) {
         return MPR_ERR_MEMORY;
     }
-    nm->name = sclone(name->value);
+    nm->name = sclone(name);
     nm->callback = callback;
     nm->checksum = checksum;
     nm->flags = flags;
 
-    sp = ejs->service;
     if (mprAddKey(sp->nativeModules, nm->name, nm) == 0) {
         return EJS_ERR;
     }
@@ -7642,9 +7645,9 @@ int ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, in
 }
 
 
-EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, EjsString *name) 
+EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, cchar *name) 
 {
-    return mprLookupHash(ejs->service->nativeModules, name->value);
+    return mprLookupHash(ejs->service->nativeModules, name);
 }
 
 
@@ -8843,7 +8846,7 @@ static EjsService *createService()
     MPR->ejsService = sp;
     mprSetMemNotifier((MprMemNotifier) allocNotifier);
 
-    sp->nativeModules = mprCreateHash(-1, MPR_HASH_STATIC_KEYS | MPR_HASH_UNICODE);
+    sp->nativeModules = mprCreateHash(-1, MPR_HASH_STATIC_KEYS);
     sp->mutex = mprCreateLock();
     sp->vmlist = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     ejsInitCompiler(sp);
@@ -8858,6 +8861,7 @@ static void manageEjsService(EjsService *sp, int flags)
         mprMark(sp->mutex);
         mprMark(sp->vmlist);
         mprMark(sp->nativeModules);
+
     } else if (flags & MPR_MANAGE_FREE) {
         sp->mutex = NULL;
     }
@@ -9161,7 +9165,7 @@ static int defineTypes(Ejs *ejs)
     /*  
         Define the native module configuration routines.
      */
-    ejsAddNativeModule(ejs, ejsCreateStringFromAsc(ejs, "ejs"), configureEjs, _ES_CHECKSUM_ejs, 0);
+    ejsAddNativeModule(ejs, "ejs", configureEjs, _ES_CHECKSUM_ejs, 0);
 
 #if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_STATIC
 #if BLD_FEATURE_SQLITE
@@ -9872,9 +9876,12 @@ void ejsLoadHttpService(Ejs *ejs)
 {
     ejsLockService(ejs);
     if (mprGetMpr()->httpService == 0) {
-        httpCreate(ejs->service);
+        httpCreate();
     }
     ejs->http = ejs->service->http = mprGetMpr()->httpService;
+    if (ejs->http == 0) {
+        mprError("Can't load Http Service");
+    }
     ejsUnlockService(ejs);
 }
 
@@ -13334,7 +13341,7 @@ static EjsObj *ba_setLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_resizable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ap->resizable ? ejs->trueValue : ejs->falseValue;
+    return ap->resizable ? (EjsObj*) ejs->trueValue : (EjsObj*) ejs->falseValue;
 }
 
 
@@ -36646,6 +36653,7 @@ static int configureSqliteTypes(Ejs *ejs)
 {
     EjsType     *type;
     EjsPot      *prototype;
+    static int  initialized = 0;
     
     type = (EjsType*) ejsConfigureNativeType(ejs, N("ejs.db", "Sqlite"), sizeof(EjsSqlite), manageSqlite, EJS_POT_HELPERS);
     prototype = type->prototype;
@@ -36653,25 +36661,30 @@ static int configureSqliteTypes(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_db_Sqlite_close, (EjsProc) sqliteClose);
     ejsBindMethod(ejs, prototype, ES_ejs_db_Sqlite_sql, (EjsProc) sqliteSql);
 
+    if (!initialized) {
+        initialized++;
 #if MAP_ALLOC
-    sqlite3_config(SQLITE_CONFIG_MALLOC, &mem);
+        sqlite3_config(SQLITE_CONFIG_MALLOC, &mem);
 #endif
 #if MAP_MUTEXES
-    sqlite3_config(SQLITE_CONFIG_MUTEX, &mut);
+        sqlite3_config(SQLITE_CONFIG_MUTEX, &mut);
 #endif
-    sqlite3_config(THREAD_STYLE);
-    if (sqlite3_initialize() != SQLITE_OK) {
-        mprError("Can't initialize SQLite");
-        return MPR_ERR_CANT_INITIALIZE;
+        sqlite3_config(THREAD_STYLE);
+        if (sqlite3_initialize() != SQLITE_OK) {
+            mprError("Can't initialize SQLite");
+            return MPR_ERR_CANT_INITIALIZE;
+        }
     }
     return 0;
 }
 
 
+/*
+    Module load entry point. This must be idempotent as it will be called for each new interpreter created.
+ */
 int ejs_db_sqlite_Init(Ejs *ejs, MprModule *mp)
 {
-    return ejsAddNativeModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.db.sqlite"), configureSqliteTypes, 
-        _ES_CHECKSUM_ejs_db_sqlite, EJS_LOADER_ETERNAL);
+    return ejsAddNativeModule(ejs, "ejs.db.sqlite", configureSqliteTypes, _ES_CHECKSUM_ejs_db_sqlite, EJS_LOADER_ETERNAL);
 }
 
 #endif /* BLD_FEATURE_SQLITE */
@@ -39775,12 +39788,11 @@ static int configureWebTypes(Ejs *ejs)
 
 
 /*  
-    Module load entry point
+    Module load entry point. This must be idempotent as it will be called for each new interpreter created.
  */
 int ejs_web_Init(Ejs *ejs, MprModule *mp)
 {
-    return ejsAddNativeModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.web"), configureWebTypes, 
-        _ES_CHECKSUM_ejs_web, EJS_LOADER_ETERNAL);
+    return ejsAddNativeModule(ejs, "ejs.web", configureWebTypes, _ES_CHECKSUM_ejs_web, EJS_LOADER_ETERNAL);
 }
 
 

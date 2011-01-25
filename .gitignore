@@ -92,3 +92,4 @@ project.xcworkspace
 xcuserdata
 *.pbxuser
 *.perspectivev3
+.ejs.slots.h
