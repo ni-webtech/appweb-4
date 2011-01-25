@@ -1030,7 +1030,8 @@ struct  MprXml;
 #define MPR_TIMEOUT_STOP        5000        /**< Wait when stopping resources */
 #define MPR_TIMEOUT_LINGER      2000        /**< Close socket linger timeout */
 #define MPR_TIMEOUT_HANDLER     10000       /**< Wait period when removing a wait handler */
-#define MPR_TIMEOUT_GC_SYNC     5000        /**< Wait period for threads to synchronize */
+//  MOB - lower
+#define MPR_TIMEOUT_GC_SYNC     30000       /**< Wait period for threads to synchronize */
 #define MPR_TIMEOUT_NAP         20          /**< Short pause */
 
 #define MPR_TICKS_PER_SEC       1000        /**< Time ticks per second */
@@ -5054,6 +5055,9 @@ extern void mprUnloadModule(MprModule *mp);
 #define MPR_EVENT_STATIC        0x2
 #define MPR_EVENT_QUICK         0x4     /* Execute inline without executing via a thread */
 
+#define MPR_EVENT_MAGIC         0x12348765
+#define MPR_DISPATCHER_MAGIC    0x23418877
+
 /**
     Event callback function
     @return Return non-zero if the dispatcher is deleted. Otherwise return 0
@@ -5074,6 +5078,7 @@ typedef void (*MprEventProc)(void *data, struct MprEvent *event);
     @defgroup MprEvent MprEvent
  */
 typedef struct MprEvent {
+    int magic;
     cchar               *name;          /**< Static debug name of the event */
     MprEventProc        proc;           /**< Callback procedure */
     MprTime             timestamp;      /**< When was the event created */
@@ -5094,8 +5099,10 @@ typedef struct MprEvent {
     Event Dispatcher
  */
 typedef struct MprDispatcher {
+    int magic;
     cchar           *name;              /**< Dispatcher name / purpose */
     MprEvent        eventQ;             /**< Event queue */
+    MprEvent        *current;           /**< Current event */
     MprCond         *cond;              /**< Multi-thread sync */
     int             enabled;            /**< Dispatcher enabled to run events */
     int             waitingOnCond;      /**< Waiting on the cond */

@@ -12,7 +12,7 @@
 #if BLD_FEATURE_EJS
 /*********************************** Forwards *********************************/
 
-static int loadStartupScript(Http *http, HttpLoc *loc);
+static int loadStartupScript(Ejs *ejs, cchar *script);
 
 /************************************* Code ***********************************/
 
@@ -45,6 +45,7 @@ static void openEjs(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpLoc     *loc;
+    Ejs         *ejs;
     
     conn = q->conn;
     loc = conn->rx->loc;
@@ -52,7 +53,13 @@ static void openEjs(HttpQueue *q)
         /*
             On-demand loading of the startup script
          */
-        if (loadStartupScript(conn->http, loc) < 0) {
+        if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create Ejs interpreter.");
+            return;
+        }
+        q->stage->stageData = ejs;
+        ejs->loc = loc;
+        if (loadStartupScript(ejs, loc->script) < 0) {
             //  MOB -- should this set an error somewhere?
             return;
         }
@@ -83,7 +90,7 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 /*
     Find a start script. Default to /usr/lib/PRODUCT/lib/PRODUCT.es.
  */
-static char *findScript(char *script)
+static char *findScript(cchar *script)
 {
     char    *base;
 
@@ -102,35 +109,30 @@ static char *findScript(char *script)
 }
 
 
-static int loadStartupScript(Http *http, HttpLoc *loc)
+static int loadStartupScript(Ejs *ejs, cchar *script)
 {
-    Ejs     *ejs;
-    char    *script;
+    char    *path;
     int     ver;
 
-    ejs = ejsCreate(NULL, NULL, 0, NULL, 0);
-    if (ejs == 0) {
-        return 0;
-    }
-    ejs->loc = loc;
     ver = 0;
     if (ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.web"), ver, ver, 0) < 0) {
         mprError("Can't load ejs.web.mod: %s", ejsGetErrorMsg(ejs, 1));
         return MPR_ERR_CANT_INITIALIZE;
     }
-    if ((script = findScript(loc->script)) == 0) {
-        mprError("Can't find script file %s", loc->script);
+    if ((path = findScript(script)) == 0) {
+        mprError("Can't find script file %s", script);
         return MPR_ERR_CANT_OPEN;
     }
-    LOG(2, "Loading Ejscript Server script: \"%s\"", script);
+    LOG(2, "Loading Ejscript Server script: \"%s\"", path);
     if (ejsLoadScriptFile(ejs, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
-        mprError("Can't load \"%s\"\n%s", script, ejsGetErrorMsg(ejs, 1));
+        mprError("Can't load \"%s\"\n%s", path, ejsGetErrorMsg(ejs, 1));
     }
     return 0;
 }
 
 
 #if VXWORKS
+//  MOB - is this still needed?
 /*
     Create a routine to pull in the GCC support routines for double and int64 manipulations for some platforms. Do this
     incase modules reference these routines. Without this, the modules have to reference them. Which leads to multiple 

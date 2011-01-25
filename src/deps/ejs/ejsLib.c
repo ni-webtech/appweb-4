@@ -4443,9 +4443,14 @@ EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, vo
     if (ejs->exception) {
         return 0;
     }
+    //  MOB -is this required 
+#if TEST
+    mprAssert(ejs->state->fp->attentionPc == 0);
+#endif
     ejsClearAttention(ejs);
     
     if (thisObj == 0) {
+        //  MOB - simplify
         if ((thisObj = fun->boundThis) == 0) {
             thisObj = ejs->state->fp->function.boundThis;
         }
@@ -4455,7 +4460,13 @@ EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, vo
             ejsThrowArgError(ejs, "Native function is not defined");
             return 0;
         }
+//  MOB - need faster solution
+//  MOB -- just so that all args get marked
+for (i = 0; i < argc; i++) {
+    pushOutside(ejs, ((EjsAny**) argv)[i]);
+}
         ejs->result = (fun->body.proc)(ejs, thisObj, argc, argv);
+ejs->state->stack -= argc;
         if (ejs->result == 0) {
             ejs->result = ejs->nullValue;
         }
@@ -5295,8 +5306,6 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
 
     state = ejs->state;
     result = 0;
-//  MOB
-int oldFstate = state->frozen;
 
 #if UNUSED
     if (MPR->heap.mustYield && !state->frozen) { 
@@ -5641,7 +5650,7 @@ static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode)
     fp = state->fp;
     opcount[opcode]++;
 
-    if (1 || ejs->initialized && doDebug) {
+    if (ejs->initialized && doDebug) {
         offset = (int) (fp->pc - fp->function.body.code->byteCode) - 1;
         if (offset < 0) {
             offset = 0;
@@ -5649,18 +5658,11 @@ static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode)
         optable = ejsGetOptable(ejs);
         fp->line = ejsGetDebugLine(ejs, (EjsFunction*) fp, fp->pc);
 #if UNUSED
-        if (ejsGetDebugInfo(ejs, (EjsFunction*) fp, fp->pc, &fp->loc.filename, &fp->loc.lineNumber, &fp->loc.source) >= 0) {
-            mprLog(6, "%0s %04d: [%d] %02x: %-35s # %s:%d %w",
-                mprGetCurrentThreadName(fp), offset, (int) (state->stack - fp->stackReturn),
-                (uchar) opcode, optable[opcode].name, fp->loc.filename, fp->loc.lineNumber, fp->loc.source);
-        }
-#if UNUSED
         if (showFrequency && ((once % 1000) == 999)) {
             ejsShowOpFrequency(ejs);
         }
 #endif
         mprAssert(state->stack >= fp->stackReturn);
-#endif
     }
     ejsOpCount++;
     return opcode;
@@ -7627,13 +7629,13 @@ int ejsAddNativeModule(Ejs *ejs, EjsString *name, EjsNativeCallback callback, in
     if ((nm = mprAllocObj(EjsNativeModule, manageNativeModule)) == NULL) {
         return MPR_ERR_MEMORY;
     }
-    nm->name = name;
+    nm->name = sclone(name->value);
     nm->callback = callback;
     nm->checksum = checksum;
     nm->flags = flags;
 
     sp = ejs->service;
-    if (mprAddKey(sp->nativeModules, nm->name->value, nm) == 0) {
+    if (mprAddKey(sp->nativeModules, nm->name, nm) == 0) {
         return EJS_ERR;
     }
     return 0;
@@ -7839,18 +7841,21 @@ EjsString *ejsCreateStringFromConst(Ejs *ejs, EjsModule *mp, int index)
 
 
 
-EjsDebug *ejsCreateDebug(Ejs *ejs)
+EjsDebug *ejsCreateDebug(Ejs *ejs, int length)
 {
     EjsDebug    *debug;
     ssize       size;
+    int         count;
 
-    size = sizeof(EjsDebug) + (EJS_DEBUG_INCR * sizeof(EjsLine));
+    count = (length > 0) ? length : EJS_DEBUG_INCR;
+    size = sizeof(EjsDebug) + (count * sizeof(EjsLine));
     if ((debug = mprAllocBlock(size, MPR_ALLOC_MANAGER)) == 0) {
         return NULL;
     }
     mprSetManager(debug, manageDebug);
-    debug->size = EJS_DEBUG_INCR;
-    debug->numLines = 0;
+    debug->size = count;
+    debug->numLines = length;
+    debug->magic = EJS_DEBUG_MAGIC;
     return debug;
 }
 
@@ -7865,9 +7870,10 @@ int ejsAddDebugLine(Ejs *ejs, EjsDebug **debugp, int offset, MprChar *source)
     mprAssert(debugp);
     
     if (*debugp == 0) {
-        *debugp = ejsCreateDebug(ejs);
+        *debugp = ejsCreateDebug(ejs, 0);
     }
     debug = *debugp;
+    mprAssert(debug->magic == EJS_DEBUG_MAGIC);
     if (debug->numLines >= debug->size) {
         debug->size += EJS_DEBUG_INCR;
         len = sizeof(EjsDebug) + (debug->size * sizeof(EjsLine));
@@ -7886,6 +7892,8 @@ int ejsAddDebugLine(Ejs *ejs, EjsDebug **debugp, int offset, MprChar *source)
     line->source = source;
     line->offset = offset;
     debug->numLines = numLines;
+    //  MOB
+    mprAssert(debug->numLines < 20000);
     return 0;
 }
 
@@ -7894,10 +7902,14 @@ static void manageDebug(EjsDebug *debug, int flags)
 {
     int     i;
 
+    mprAssert(debug->magic == EJS_DEBUG_MAGIC);
+
     if (flags & MPR_MANAGE_MARK) {
         for (i = 0; i < debug->numLines; i++) {
             mprMark(debug->lines[i].source);
         }
+    } else if (flags & MPR_MANAGE_FREE) {
+        debug->magic = 7;
     }
 }
 
@@ -7912,7 +7924,6 @@ static EjsDebug *loadDebug(Ejs *ejs, EjsFunction *fun)
     EjsLine     *line;
     EjsCode     *code;
     MprOffset   prior;
-    ssize       size;
     int         i, length;
 
     mp = fun->body.code->module;
@@ -7936,11 +7947,8 @@ static EjsDebug *loadDebug(Ejs *ejs, EjsFunction *fun)
     }
     length = ejsModuleReadInt(ejs, mp);
     if (!mp->hasError) {
-        size = sizeof(EjsDebug) + length * sizeof(EjsLine);
-        if ((debug = mprAllocBlock(size, MPR_ALLOC_MANAGER)) != 0) {
-            mprSetManager(debug, manageDebug);
-            debug->size = length;
-            debug->numLines = length;
+        if ((debug = ejsCreateDebug(ejs, length)) != 0) {
+            mprAssert(debug->numLines == length);
             for (i = 0; i < debug->numLines; i++) {
                 line = &debug->lines[i];
                 line->offset = ejsModuleReadInt(ejs, mp);
@@ -8908,8 +8916,9 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     //  MOB Refactor
     lock(sp);
     ejs->name = mprAsprintf("ejs-%d", seqno++);
-    unlock(sp);
     ejs->dispatcher = mprCreateDispatcher(mprAsprintf("ejsDispatcher-%d", seqno), 1);
+    // printf("CREATE DISPATCHER %s\n", ejs->dispatcher->name);
+    unlock(sp);
         
     if ((ejs->bootSearch = searchPath) == 0) {
         ejs->bootSearch = getenv("EJSPATH");
@@ -8967,6 +8976,7 @@ void ejsDestroy(Ejs *ejs)
         ejs->service = 0;
         ejsDestroyIntern(ejs->intern);
         ejs->result = 0;
+        mprDestroyDispatcher(ejs->dispatcher);
     }
 }
 
@@ -8988,9 +8998,6 @@ mprLog(0, "MARK EJS %s", ejs->name);
         mprMark(ejs->errorMsg);
         mprMark(ejs->exception);
         mprMark(ejs->exceptionArg);
-#if UNUSED
-        mprMark(ejs->masterState);
-#endif
         mprMark(ejs->mutex);
         mprMark(ejs->result);
         mprMark(ejs->search);
@@ -11100,7 +11107,6 @@ static EjsObj *findAll(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
         ejsThrowMemoryError(ejs);
         return 0;
     }
-
     for (i = 0; i < ap->length; i++) {
         funArgs[0] = ap->obj.properties.slots[i];         /* Array element */
         funArgs[1] = ejsCreateNumber(ejs, i);             /* element index */
@@ -17596,9 +17602,14 @@ static void manageCode(EjsCode *code, int flags)
 {
     int     i;
 
+    mprAssert(code->magic == EJS_CODE_MAGIC);
+
     if (flags & MPR_MANAGE_MARK) {
         mprMark(code->module);
         mprMark(code->debug);
+        if (code->debug) {
+            mprAssert(code->debug->magic == EJS_DEBUG_MAGIC);
+        }
         if (code->handlers) {
             mprMark(code->handlers);
             for (i = 0; i < code->numHandlers; i++) {
@@ -17627,6 +17638,7 @@ EjsCode *ejsCreateCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *by
     code->codeLen = (int) len;
     code->module = module;
     code->debug = debug;
+    code->magic = EJS_CODE_MAGIC;
     memcpy(code->byteCode, byteCode, len);
     return code;
 }
@@ -17923,8 +17935,12 @@ static EjsObj *runGC(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     int     deep;
 
-    deep = ((argc == 1) && ejsIsBoolean(ejs, argv[1]));
-    mprRequestGC(MPR_FORCE_GC | (deep ? MPR_COMPLETE_GC : 0));
+    mprAssert(!ejs->state->frozen);
+    
+    if (!ejs->state->frozen) {
+        deep = ((argc == 1) && ejsIsBoolean(ejs, argv[1]));
+        mprRequestGC(MPR_FORCE_GC | (deep ? MPR_COMPLETE_GC : 0));
+    }
     return 0;
 }
 
@@ -18745,13 +18761,12 @@ static EjsObj *http_form(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     EjsObj  *data;
 
     if (argc == 2 && argv[1] != ejs->nullValue) {
-#if UNUSED
         /*
-            Must prep here to re-create a new Tx headers store
-            MOB - why. This prevents Http.setHeaders
+            Prep here to reset the state. The ensures the current headers will be preserved.
+            Users may have called setHeader to define custom headers. Users must call reset if they want to clear 
+            prior headers.
          */
-        httpPrepClientConn(hp->conn, 0);
-#endif
+        httpPrepClientConn(hp->conn, 1);
         mprFlushBuf(hp->requestContent);
         data = argv[1];
         if (ejsGetPropertyCount(ejs, data) > 0) {
@@ -37017,6 +37032,9 @@ static EjsObj *hs_close(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     if (sp->server) {
         ejsSendEvent(ejs, sp->emitter, "close", NULL, (EjsObj*) sp);
         httpDestroyServer(sp->server);
+#if MOB
+        ejsStopSessionTimer(sp);
+#endif
         sp->server = 0;
         mprRemoveRoot(sp);
     }
@@ -37675,7 +37693,7 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
         mprMark(sp->sessions);
         mprMark(sp->outgoingStages);
         mprMark(sp->incomingStages);
-
+        
     } else {
 #if UNUSED
         mprLog(0, "FREE httpServer for %s", sp->ejs->name);
@@ -37684,12 +37702,13 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
             ejsSendEvent(sp->ejs, sp->emitter, "close", NULL, sp);
         }
 #endif
+#if UNUSED 
+        mprLog(0, "DESTROY HttpServer %s in %s", sp->name, sp->ejs->name);
+#endif
         sp->sessions = 0;
-        //  MOB - locking race
-        if (sp->sessionTimer) {
-            mprRemoveEvent(sp->sessionTimer);
-            sp->sessionTimer = 0;
-        }
+#if MOB
+        ejsStopSessionTimer(sp);
+#endif
         if (sp->server) {
             httpDestroyServer(sp->server);
             sp->server = 0;
@@ -37706,10 +37725,15 @@ static EjsHttpServer *createHttpServer(Ejs *ejs, EjsType *type, int size)
         return NULL;
     }
     sp->ejs = ejs;
+#if UNUSED
+    static int serverCount = 0;
+    //  Messes up the real server name
+    sp->name = mprAsprintf("server-%d", serverCount++);
+#endif
     sp->async = 1;
     httpInitTrace(sp->trace);
 #if UNUSED
-    mprLog(0, "CREATE HttpServer %p for %s", sp, sp->ejs->name);
+    mprLog(0, "CREATE HttpServer %s in %s", sp->name, sp->ejs->name);
 #endif
     return sp;
 }
@@ -37721,6 +37745,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ejsConfigureNativeType(ejs, N("ejs.web", "HttpServer"), sizeof(EjsHttpServer), manageHttpServer, EJS_POT_HELPERS);
+    ejs->httpServerType = type;
     type->helpers.create = (EjsCreateHelper) createHttpServer;
 
     prototype = type->prototype;
@@ -37742,6 +37767,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_verifyClients, (EjsProc) hs_verifyClients);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_software, (EjsProc) hs_software);
 
+    /* One time initializations */
     ejsLoadHttpService(ejs);
     ejsAddWebHandler(ejs->http);
 }
@@ -39228,15 +39254,19 @@ void ejsConfigureRequestType(Ejs *ejs)
 
 
 
+static MprMutex     *sessionLock;
+
+
 static void noteSessionActivity(Ejs *ejs, EjsSession *sp);
 static void sessionTimer(EjsHttpServer *sp, MprEvent *event);
+static void startSessionTimer(Ejs *ejs, EjsHttpServer *server);
 
 
 static EjsObj *getSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum)
 {
     EjsObj      *vp;
 
-    ejsLockService(ejs);
+    mprLock(sessionLock);
     vp = ejs->potHelpers.getProperty(ejs, (EjsObj*) sp, slotNum);
     if (vp) {
         vp = ejsDeserialize(ejs, (EjsString*) vp);
@@ -39245,7 +39275,7 @@ static EjsObj *getSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum)
         vp = (EjsObj*) ejs->emptyString;
     }
     noteSessionActivity(ejs, sp);
-    ejsUnlockService(ejs);
+    mprUnlock(sessionLock);
     return vp;
 }
 
@@ -39255,7 +39285,7 @@ static EjsObj *getSessionPropertyByName(Ejs *ejs, EjsSession *sp, EjsName qname)
     EjsObj      *vp;
     int         slotNum;
 
-    ejsLockService(ejs);
+    mprLock(sessionLock);
 
     qname.space = ejs->emptyString;
     slotNum = ejs->potHelpers.lookupProperty(ejs, sp, qname);
@@ -39271,20 +39301,19 @@ static EjsObj *getSessionPropertyByName(Ejs *ejs, EjsSession *sp, EjsName qname)
         }
     }
     noteSessionActivity(ejs, sp);
-    ejsUnlockService(ejs);
+    mprUnlock(sessionLock);
     return vp;
 }
 
 
 static int setSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum, EjsObj *value)
 {
-    ejsLockService(ejs);
-
+    mprLock(sessionLock);
     //  MOB BUG - this won't work multithreaded
     value = (EjsObj*) ejsToJSON(ejs, value, NULL);
     slotNum = ejs->potHelpers.setProperty(ejs, (EjsObj*) sp, slotNum, value);
     noteSessionActivity(ejs, sp);
-    ejsUnlockService(ejs);
+    mprUnlock(sessionLock);
     return slotNum;
 }
 
@@ -39322,6 +39351,9 @@ void ejsUpdateSessionLimits(Ejs *ejs, EjsHttpServer *server)
 }
 
 
+/*
+    Return the session object corresponding to a request cookie
+ */
 EjsSession *ejsGetSession(Ejs *ejs, EjsRequest *req)
 {
     EjsSession      *session;
@@ -39389,26 +39421,25 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     }
     now = mprGetTime();
 
-    ejsLockService(ejs);
     if ((session = ejsCreateObj(ejs, ejs->sessionType, 0)) == 0) {
-        ejsUnlockService(ejs);
         return 0;
     }
     session->timeout = timeout;
     session->expire = now + timeout;
+
     /*  
         Use an MD5 prefix of "x" to avoid the hash being interpreted as a numeric index.
      */
+    mprLock(sessionLock);
     next = ejs->nextSession++;
     mprSprintf(idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(ejs) + PTOI(session->expire), (int) now, next);
     id = mprGetMD5Hash(idBuf, sizeof(idBuf), "x");
     if (id == 0) {
-        ejsUnlockService(ejs);
+        mprUnlock(sessionLock);
         return 0;
     }
     session->id = sclone(id);
 
-    //  MOB - locking
     if (server->sessions == 0) {
         server->sessions = ejsCreateEmptyPot(ejs);
         ejsSetProperty(ejs, server, ES_ejs_web_HttpServer_sessions, server->sessions);
@@ -39416,28 +39447,17 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     count = ejsGetPropertyCount(ejs, (EjsObj*) server->sessions);
     if (count >= limits->sessionCount) {
         ejsThrowResourceError(ejs, "Too many sessions: %d, limit %d", count, limits->sessionCount);
-        ejsUnlockService(ejs);
+        mprUnlock(sessionLock);
         return 0;
     }
     slotNum = ejsSetPropertyByName(ejs, server->sessions, EN(session->id), session);
     if (slotNum < 0) {
-        ejsUnlockService(ejs);
+        mprUnlock(sessionLock);
         return 0;
     }
     session->index = slotNum;
-
-    if (server->sessionTimer == 0) {
-#if UNUSED
-        extern int stopSeqno;
-        if (stopSeqno == -1) {
-            MprMem *mp = MPR_GET_MEM(server);
-            stopSeqno = mp->seqno;
-        }
-#endif
-        server->sessionTimer = mprCreateTimerEvent(ejs->dispatcher, "sessionTimer", EJS_TIMER_PERIOD, 
-            (MprEventProc) sessionTimer, server, MPR_EVENT_CONTINUOUS);
-    }
-    ejsUnlockService(ejs);
+    startSessionTimer(ejs, server);
+    mprUnlock(sessionLock);
 
     mprLog(3, "Created new session %s. Count %d/%d", id, slotNum + 1, limits->sessionCount);
     if (server->emitter) {
@@ -39454,28 +39474,52 @@ int ejsDestroySession(Ejs *ejs, EjsHttpServer *server, EjsSession *session)
 {
     int     slotNum;
 
+    mprLock(sessionLock);
     if (session && server->sessions) {
         if (server) {
             ejsSendEvent(ejs, server->emitter, "destroySession", NULL, (EjsObj*) ejsCreateStringFromAsc(ejs, session->id));
         }
         if ((slotNum = ejsLookupProperty(ejs, server->sessions, EN(session->id))) >= 0) {
             ejsDeleteProperty(ejs, server->sessions, slotNum);
+            mprUnlock(sessionLock);
             return 1;
         }
     }
+    mprUnlock(sessionLock);
     return 0;
 }
 
 
-#if UNUSED
-/*  
-    function get count(): Number
- */
-static EjsObj *sess_count(Ejs *ejs, EjsSession *sp, int argc, EjsObj **argv)
+static void startSessionTimer(Ejs *ejs, EjsHttpServer *server)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ejsGetPropertyCount(ejs, ejs->sessions));
-}
+    mprLock(sessionLock);
+    if (server->sessionTimer == 0) {
+        // printf("START TIMER %s\n", server->name);
+        //  MOB - should session timers run on the ejs->dispatcher or nonblock. Are sessions owned by one interp
+        //  or by the service
+#if MOB
+        server->sessionTimer = mprCreateTimerEvent(ejs->dispatcher, "sessionTimer", EJS_TIMER_PERIOD, 
+            (MprEventProc) sessionTimer, server, 0 /* | MPR_EVENT_QUICK */);
+#else
+        server->sessionTimer = mprCreateEvent(ejs->dispatcher, "sessionTimer", EJS_TIMER_PERIOD, 
+                                                   (MprEventProc) sessionTimer, server, 0);
+        
 #endif
+    }
+    mprUnlock(sessionLock);
+}
+
+
+void ejsStopSessionTimer(EjsHttpServer *server)
+{
+    mprLock(sessionLock);
+    if (server->sessionTimer) {
+        mprLog(0, "STOP TIMER %s %s\n", server->name, server->ejs->name);
+        mprRemoveEvent(server->sessionTimer);
+        server->sessionTimer = 0;
+    }
+    mprUnlock(sessionLock);
+}
 
 
 /*  
@@ -39483,21 +39527,29 @@ static EjsObj *sess_count(Ejs *ejs, EjsSession *sp, int argc, EjsObj **argv)
  */
 static void sessionTimer(EjsHttpServer *server, MprEvent *event)
 {
+    mprAssert(!server->ejs->destroying);
+    mprAssert(server->ejs->name);
+    mprLog(0, "@@@@@@ RUN TIMER %s in ejs %s", server->name, server->ejs->name);
+#if UNUSED
     Ejs             *ejs;
     EjsPot          *sessions;
     EjsSession      *session;
     MprTime         now;
     HttpLimits      *limits;
-    int             i, count, soon, redline;
+    int             i, count, removed, soon, redline;
 
     sessions = server->sessions;
     ejs = server->ejs;
+    mprAssert(!ejs->destroying);
+    mprAssert(ejs->name);
+    // mprLog(0, "TIMER %s", ejs->name);
 
+//  MOB - locking
     /*  
         This could be on the primary event thread. Can't block long.  MOB -- is this lock really needed
-        MOB -- BUG. Other locks are on the service object
      */
-    if (sessions && server->server && mprTryLock(ejs->mutex)) {
+    if (sessions && server->server && mprTryLock(sessionLock)) {
+        removed = 0;
         limits = server->server->limits;
         count = ejsGetPropertyCount(ejs, (EjsObj*) sessions);
         mprLog(6, "Check for sessions count %d/%d", count, limits->sessionCount);
@@ -39508,9 +39560,9 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
          */
         redline = limits->sessionCount * 8 / 10;
         if (count > redline) {
-            /* Expire oldest sessions */
             /*
-                One quick swipe to find sessions that are 80% expired
+                Over redline. Must prune some sessions. Expire the oldest sessions.
+                One quick swipe to find sessions that are 80% expired.
              */
             soon = limits->sessionTimeout / 5;
             for (i = count - 1; soon > 0 && i >= 0; i--) {
@@ -39520,7 +39572,7 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
                 if ((session->expire - now) < soon) {
                     mprLog(3, "Too many sessions. Pruning session %s", session->id);
                     ejsDeleteProperty(ejs, (EjsObj*) sessions, i);
-                    count--;
+                    removed++;
                 }
             }
         }
@@ -39541,16 +39593,20 @@ static void sessionTimer(EjsHttpServer *server, MprEvent *event)
                     mprLog(3, "Session expired: %s (timeout %d secs)", 
                         session->id, session->timeout / MPR_TICKS_PER_SEC);
                     ejsDeleteProperty(ejs, (EjsObj*) sessions, i);
+                    removed++;
                 }
             }
         }
-        count = ejsCompactPot(ejs, sessions);
+        if (removed) {
+            count = ejsCompactPot(ejs, sessions);
+        }
         if (count == 0) {
             server->sessionTimer = 0;
             mprRemoveEvent(event);
         }
-        mprUnlock(ejs->mutex);
+        mprUnlock(sessionLock);
     }
+#endif
 }
 
 
@@ -39570,14 +39626,17 @@ void ejsConfigureSessionType(Ejs *ejs)
 
     type = ejs->sessionType = ejsConfigureNativeType(ejs, N("ejs.web", "Session"), sizeof(EjsSession), manageSession, 
         EJS_POT_HELPERS);
+    mprAssert(type->mutex == 0);
+    if (sessionLock == 0) {
+        sessionLock = type->mutex = mprCreateLock();
+        //  MOB -- redo
+        mprHold(sessionLock);
+    }
+
     helpers = &type->helpers;
     helpers->getProperty = (EjsGetPropertyHelper) getSessionProperty;
     helpers->getPropertyByName = (EjsGetPropertyByNameHelper) getSessionPropertyByName;
     helpers->setProperty = (EjsSetPropertyHelper) setSessionProperty;
-
-#if UNUSED
-    ejsBindMethod(ejs, type, ES_ejs_web_Session_count, (EjsFun) sess_count);
-#endif
 }
 
 
@@ -45206,7 +45265,8 @@ static int injectCode(Ejs *ejs, EjsFunction *fun, EcCodeGen *extra)
     debug = old->debug;
     if (debug && debug->numLines > 0) {
         for (i = 0; i < debug->numLines; i++) {
-            if (ejsAddDebugLine(ejs, &fun->body.code->debug, debug->lines[i].offset + extraCodeLen, debug->lines[i].source) < 0) {
+            if (ejsAddDebugLine(ejs, &fun->body.code->debug, debug->lines[i].offset + extraCodeLen, 
+                    debug->lines[i].source) < 0) {
                 return MPR_ERR_MEMORY;
             }
         }
@@ -45350,6 +45410,7 @@ static void genClass(EcCompiler *cp, EcNode *np)
                 }
                 if (constructor->body.code) {
                     debug = constructor->body.code->debug;
+                    mprAssert(debug->magic == EJS_DEBUG_MAGIC);
                     if (debug && debug->numLines > 0) {
                         for (i = 0; i < debug->numLines; i++) {
                             addDebugLine(cp, code, debug->lines[i].offset, debug->lines[i].source);
@@ -47590,6 +47651,9 @@ static void manageCodeGen(EcCodeGen *code, int flags)
         mprMark(code->buf);
         mprMark(code->jumps);
         mprMark(code->exceptions);
+        if (code->debug) {
+            mprAssert(code->debug->magic == EJS_DEBUG_MAGIC);
+        }
         mprMark(code->debug);
     }
 }
@@ -47919,6 +47983,7 @@ static int mapToken(EcCompiler *cp, int tokenId)
 
 static void addDebugLine(EcCompiler *cp, EcCodeGen *code, int offset, MprChar *source)
 {
+    mprAssert(code->debug == 0 || code->debug->magic == EJS_DEBUG_MAGIC);
     if (ejsAddDebugLine(cp->ejs, &code->debug, offset, source) < 0) {
         genError(cp, 0, "Can't allocate memory for debug section");
         return;

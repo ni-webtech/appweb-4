@@ -1520,7 +1520,7 @@ extern void httpPrepServerConn(HttpConn *conn);
 #define HTTP_RETRY_REQUEST 1
 #endif
     
-extern void httpPrepClientConn(HttpConn *conn, int retry);
+extern void httpPrepClientConn(HttpConn *conn, int keepHeaders);
 extern void httpConsumeLastRequest(HttpConn *conn);
 
 /**

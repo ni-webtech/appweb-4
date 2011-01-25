@@ -1223,6 +1223,7 @@ typedef struct Ejs {
     struct EjsType      *fileSystemType;    /**< FileSystem type */
     struct EjsType      *functionType;      /**< Function type */
     struct EjsType      *httpType;          /**< Http type */
+    struct EjsType      *httpServerType;    /**< HttpServer type */
     struct EjsType      *iteratorType;      /**< Iterator type */
     struct EjsType      *mathType;          /**< Math type */
     struct EjsType      *namespaceType;     /**< Namespace type */
@@ -2097,13 +2098,17 @@ typedef struct EjsLine {
 } EjsLine;
 
 
+#define EJS_DEBUG_MAGIC     0x78654423
+#define EJS_CODE_MAGIC      0x91917128
+
 typedef struct EjsDebug {
+    int         magic;
     ssize      size;                        /**< Size of lines[] in elements */
     int        numLines;                    /**< Number of entries in lines[] */
     EjsLine    lines[0];
 } EjsDebug;
 
-extern EjsDebug *ejsCreateDebug(Ejs *ejs);
+extern EjsDebug *ejsCreateDebug(Ejs *ejs, int length);
 extern int ejsAddDebugLine(Ejs *ejs, EjsDebug **debug, int offset, MprChar *source);
 extern EjsLine *ejsGetDebugLine(Ejs *ejs, struct EjsFunction *fun, uchar *pc);
 extern int ejsGetDebugInfo(Ejs *ejs, struct EjsFunction *fun, uchar *pc, char **path, int *lineNumber, MprChar **source);
@@ -2116,6 +2121,7 @@ extern int ejsGetDebugInfo(Ejs *ejs, struct EjsFunction *fun, uchar *pc, char **
     @ingroup EjsFunction
  */
 typedef struct EjsCode {
+    int              magic;                  /**< Debug magic id */
     struct EjsModule *module;                /**< Module owning this function */
     EjsDebug         *debug;                 /**< Source code debug information */
     EjsEx            **handlers;             /**< Exception handlers */
@@ -4174,7 +4180,7 @@ typedef int (*EjsNativeCallback)(Ejs *ejs);
 
 typedef struct EjsNativeModule {
     EjsNativeCallback callback;             /* Callback to configure module native types and properties */
-    EjsString       *name;                  /* Module name */
+    char            *name;                  /* Module name */
     int             checksum;               /* Checksum expected by native code */
     int             flags;                  /* Configuration flags */
 } EjsNativeModule;
@@ -4487,6 +4493,7 @@ extern void ejsUpdateSessionLimits(Ejs *ejs, EjsHttpServer *server);
 
 extern void ejsSendRequestCloseEvent(Ejs *ejs, EjsRequest *req);
 extern void ejsSendRequestErrorEvent(Ejs *ejs, EjsRequest *req);
+extern void ejsStopSessionTimer(EjsHttpServer *server);
 
 
 extern void ejsConfigureHttpServerType(Ejs *ejs);

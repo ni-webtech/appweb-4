@@ -565,7 +565,7 @@
 #define ES_ByteArray_encoding                                          6
 #define ES_ByteArray_endian                                            7
 #define ES_ByteArray_flush                                             8
-#define ES_ByteArray_growable                                          9
+#define ES_ByteArray_resizable                                         9
 #define ES_ByteArray_iterator_get                                      10
 #define ES_ByteArray_iterator_getValues                                11
 #define ES_ByteArray_length                                            12
@@ -2358,7 +2358,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1333816
+#define _ES_CHECKSUM_ejs   1334146
 
 #endif
 /************************************************************************/

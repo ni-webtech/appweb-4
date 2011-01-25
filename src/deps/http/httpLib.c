@@ -2053,6 +2053,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     mprLog(4, "Http: client request: %s %s", method, url);
 
     if (conn->tx == 0 || conn->state != HTTP_STATE_BEGIN) {
+        /* WARNING: this will erase headers */
         httpPrepClientConn(conn, 0);
     }
     mprAssert(conn->state == HTTP_STATE_BEGIN);
@@ -2401,7 +2402,7 @@ void httpPrepServerConn(HttpConn *conn)
 }
 
 
-void httpPrepClientConn(HttpConn *conn, int retry)
+void httpPrepClientConn(HttpConn *conn, int keepHeaders)
 {
     MprHashTable    *headers;
 
@@ -2426,7 +2427,7 @@ void httpPrepClientConn(HttpConn *conn, int retry)
     if (conn->tx) {
         conn->tx->conn = 0;
     }
-    headers = (retry && conn->tx) ? conn->tx->headers: NULL;
+    headers = (keepHeaders && conn->tx) ? conn->tx->headers: NULL;
     conn->tx = httpCreateTx(conn, headers);
     if (conn->rx) {
         conn->rx->conn = 0;
@@ -9447,9 +9448,12 @@ static void addHeader(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(key && *key);
     mprAssert(value);
 
+#if UNUSED
+    //  MOB - remove this test
     if (scasecmp(key, "content-length") == 0) {
         conn->tx->length = (ssize) stoi(value, 10, NULL);
     }
+#endif
     mprAddKey(conn->tx->headers, key, value);
 }
 

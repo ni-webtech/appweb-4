@@ -138,7 +138,6 @@ if (test && test.config["debug"] == 1 && test.config["static"] == 0) {
     status()
     location()
     quoting()
-
 } else {
     test.skip("Run only for debug shared builds")
 }

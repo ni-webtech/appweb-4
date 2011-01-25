@@ -81,6 +81,7 @@ $(BLD_MOD_DIR)/ejs.mod: $(BLD_INC_DIR)/ejs.slots.h *.es $(TOOLS)
 	$(call setlibpath) ; ejsmod --showDebug --cslots --require "" --out .ejs.slots.h $(BLD_MOD_DIR)/ejs.mod \
 		|| rm -f $(BLD_MOD_DIR)/ejs.mod
 	if [ "`grep CHECKSUM .ejs.slots.h | sum`" != "`grep CHECKSUM $(BLD_INC_DIR)/ejs.slots.h | sum`" ] ; then \
+		$(call log) "[Generate]" $(BLD_INC_DIR)/ejs.slots.h ; \
 		chmod +w $(BLD_INC_DIR)/ejs.slots.h ; \
 		cp .ejs.slots.h $(BLD_INC_DIR)/ejs.slots.h ; \
 		touch .ejs.slots.h ; \
