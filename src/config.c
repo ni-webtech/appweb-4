@@ -765,7 +765,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
     appweb = server->appweb;
     http = appweb->http;
-    limits = http->serverLimits;
+    limits = server->limits;
     httpServer = 0;
     host = state->host;
     dir = state->dir;
@@ -1278,6 +1278,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 }
             }
             httpServer = httpCreateServer(http, hostName, port, NULL);
+            httpServer->limits = limits;
             mprAddItem(server->httpServers, httpServer);
             host->httpServer = httpServer;
             /*

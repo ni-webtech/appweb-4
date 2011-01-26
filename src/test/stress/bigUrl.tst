@@ -22,6 +22,7 @@ for (iter in test.depth) {
     query = query.trim("&")
 
     // Test /index.html
+    // print("URI length " + (HTTP + "/index.html?" + query).length)
     http.get(HTTP + "/index.html?" + query)
     assert(http.status == 200)
     assert(http.response.contains("Hello /index.html"))

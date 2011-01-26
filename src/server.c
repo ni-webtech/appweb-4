@@ -153,6 +153,7 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, 
     server->httpServers = mprCreateList(-1, 0);
     server->hostAddresses = mprCreateList(-1, 0);
     server->name = sclone(name);
+    server->limits = httpCreateLimits(1);
     server->appweb = appweb;
     server->http = appweb->http;
 

@@ -206,6 +206,7 @@ extern void maSetNamedVirtualHostAddress(MaHostAddress *hostAddress);
 typedef struct MaServer {
     MaAppweb        *appweb;                /**< Appweb control object */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
+    HttpLimits      *limits;                /**< Limits for this server */
     MprList         *httpServers;           /**< List of MaServers */
     struct MaHost   *defaultHost;           /**< Primary host */
     MprList         *hosts;                 /**< List of host objects */
