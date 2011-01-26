@@ -8574,7 +8574,7 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
     server->clientLoad = mprCreateHash(HTTP_CLIENTS_HASH, MPR_HASH_STATIC_VALUES);
     server->async = 1;
     server->http = http;
-    server->limits = http->serverLimits;
+    server->limits = mprMemdup(http->serverLimits, sizeof(HttpLimits));
     server->port = port;
     server->ip = sclone(ip);
     server->waitHandler.fd = -1;
