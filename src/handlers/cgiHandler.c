@@ -696,7 +696,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 
         len = strlen(cmdScript) + 2 + 1;
         cmdBuf = mprAlloc(len);
-        mprSprintf(conn, cmdBuf, len, "\"%s\"", cmdScript);
+        mprSprintf(cmdBuf, len, "\"%s\"", cmdScript);
         argv[argind++] = cmdBuf;
 
         mprSetCmdDir(cmd, cmdScript);
@@ -838,19 +838,19 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     }
 #endif
 
-    if ((file = mprOpenFile(tx, path, O_RDONLY, 0)) != 0) {
+    if ((file = mprOpenFile(path, O_RDONLY, 0)) != 0) {
         if (mprReadFile(file, buf, MPR_MAX_FNAME) > 0) {
             mprCloseFile(file);
             buf[MPR_MAX_FNAME] = '\0';
             if (buf[0] == '#' && buf[1] == '!') {
                 cmdShell = stok(&buf[2], " \t\r\n", &tok);
-                if (mprIsAbsPath(tx, cmdShell)) {
+                if (mprIsAbsPath(cmdShell)) {
                     /*
                         If we can't access the command shell and the command is not an absolute path, 
                         look in the same directory as the script.
                      */
-                    if (mprPathExists(tx, cmdShell, X_OK)) {
-                        cmdShell = mprJoinPath(tx, mprGetPathDir(path), cmdShell);
+                    if (mprPathExists(cmdShell, X_OK)) {
+                        cmdShell = mprJoinPath(mprGetPathDir(path), cmdShell);
                     }
                 }
                 if (actionProgram) {
