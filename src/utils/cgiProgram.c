@@ -35,6 +35,9 @@
 #else
 #include <unistd.h>
 #endif
+#if VXWORKS
+extern char *strdup(const char *);
+#endif
 
 /*********************************** Locals ***********************************/
 
