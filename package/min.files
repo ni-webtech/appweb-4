@@ -64,6 +64,9 @@ if [ $BLD_HOST_OS = WIN ] ; then
     clversion=$BLD_CC_CL_VERSION
     if [ "$clversion" = 15 ] ; then
         cpy -d "lib/msvcrt/$BLD_CC_CL_VERSION" msvcr90.dll Microsoft.VC90.CRT.manifest "${ROOT_DIR}"
+    elif [ "$clversion" = 16 -a -f lib/msvcrt/$BLD_CC_CL_VERSION/msvcr100.dll ] ; then
+        cpy -d "lib/msvcrt/$BLD_CC_CL_VERSION" msvcr100.dll "${BLD_BIN_PREFIX}"
+    fi
     fi
 	cpy ${BLD_BIN_DIR}/appwebMonitor.ico "${ROOT_DIR}"
 fi

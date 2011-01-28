@@ -7,6 +7,9 @@ if (test.depth > 1) {
     const HTTP = (global.tsession && tsession["http"]) || ":4100"
 
     let command = "/usr/bin/env http --host " + HTTP + " "
+    if (Config.OS == "WIN") {
+        command = "/usr/bin/env http --host " + HTTP + " "
+    }
     if (test.verbosity > 2) {
         command += "-v "
     }

@@ -8299,7 +8299,7 @@ int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask)
         memset(&ev, 0, sizeof(ev));
         ev.data.fd = fd;
         if (mask & MPR_READABLE) {
-            ev.events |= EPOLLIN;
+            ev.events |= (EPOLLIN | EPOLLHUP);
         }
         if (mask & MPR_WRITABLE) {
             ev.events |= EPOLLOUT;
@@ -8362,7 +8362,7 @@ int mprWaitForSingleIO(int fd, int mask, int timeout)
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (mask & MPR_READABLE) {
-        ev.events = EPOLLIN;
+        ev.events = (EPOLLIN | EPOLLHUP);
         epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev);
     }
     if (mask & MPR_WRITABLE) {
@@ -14245,7 +14245,7 @@ int mprCreateNotifierService(MprWaitService *ws)
     fd = ws->breakPipe[MPR_READ_PIPE];
     pollfd = &ws->fds[ws->fdsCount];
     pollfd->fd = ws->breakPipe[MPR_READ_PIPE];
-    pollfd->events = POLLIN;
+    pollfd->events = POLLIN | POLLHUP;
     ws->fdsCount++;
     return 0;
 }
@@ -14319,7 +14319,7 @@ int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask)
         }
         pollfd->events = 0;
         if (mask & MPR_READABLE) {
-            pollfd->events |= POLLIN;
+            pollfd->events |= POLLIN | POLLHUP;
         }
         if (mask & MPR_WRITABLE) {
             pollfd->events |= POLLOUT;
@@ -14376,7 +14376,7 @@ int mprWaitForSingleIO(int fd, int mask, int timeout)
     fds[0].revents = 0;
 
     if (mask & MPR_READABLE) {
-        fds[0].events |= POLLIN;
+        fds[0].events |= POLLIN | POLLHUP;
     }
     if (mask & MPR_WRITABLE) {
         fds[0].events |= POLLOUT;
@@ -14387,7 +14387,7 @@ int mprWaitForSingleIO(int fd, int mask, int timeout)
     if (rc < 0) {
         mprLog(8, "Poll returned %d, errno %d", rc, mprGetOsError());
     } else if (rc > 0) {
-        if (fds[0].revents & POLLIN) {
+        if (fds[0].revents & (POLLIN | POLLHUP)) {
             mask |= MPR_READABLE;
         }
         if (fds[0].revents & POLLOUT) {

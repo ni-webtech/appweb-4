@@ -481,6 +481,7 @@ int maPhpHandlerInit(Http *http, MprModule *mp)
 {
     HttpStage     *handler;
 
+    //  MOB - need to associate module with handler
     handler = httpCreateHandler(http, "phpHandler", HTTP_STAGE_ALL | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | 
         HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_THREAD | HTTP_STAGE_MISSING_EXT);
     if (handler == 0) {
@@ -489,6 +490,11 @@ int maPhpHandlerInit(Http *http, MprModule *mp)
     handler->open = openPhp;
     handler->process = processPhp;
     http->phpHandler = handler;
+    //  MOB - really need an API for this (mprSetModuleFinalizer)
+#if FUTURE
+    maSetModuleFinalizer(handler, finalizePhp); 
+    maSetModuleTimeout(handler, xx); 
+#endif
     mp->stop = finalizePhp;
     return 0;
 }

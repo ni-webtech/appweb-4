@@ -47,6 +47,7 @@ static void checkCompletion(HttpQueue *q, MprEvent *event);
 
 /************************************* Code ***********************************/
 
+//  MOB - delete
 static void openCgi(HttpQueue *q)
 {
 }

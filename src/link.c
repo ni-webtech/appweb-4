@@ -52,6 +52,10 @@ void maLoadStaticModules(MaAppweb *appweb)
 #if BLD_FEATURE_PHP
     loadStaticModule(http, "mod_php", maPhpHandlerInit);
 #endif
+#ifdef BLD_STATIC_MODULE
+    loadStaticModule(http, "static", BLD_STATIC_MODULE);
+#endif
+
 }
 
 

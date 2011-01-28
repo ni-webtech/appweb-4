@@ -45,6 +45,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
 
     } else {
         //  MOB TEST THIS
+        //  MOB - bug appweb is always calling this with a configFile defined - never empty
         mprLog(2, "DocumentRoot %s", docRoot);
         if ((host = maCreateDefaultHost(server, docRoot, ip, port)) == 0) {
             mprUserError("Can't open server on %s", ip);

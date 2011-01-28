@@ -4477,7 +4477,7 @@ static void netOutgoingService(HttpQueue *q)
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
                 /*  Socket full, wait for an I/O event */
-                httpWriteBlocked(conn);
+                httpSetWriteBlocked(conn);
                 break;
             }
             if (errCode != EPIPE && errCode != ECONNRESET) {
@@ -4489,7 +4489,7 @@ static void netOutgoingService(HttpQueue *q)
 
         } else if (written == 0) {
             /*  Socket full, wait for an I/O event */
-            httpWriteBlocked(conn);
+            httpSetWriteBlocked(conn);
             break;
 
         } else if (written > 0) {
@@ -7886,7 +7886,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
 /*  
     Set the connector as write blocked and can't proceed.
  */
-void httpWriteBlocked(HttpConn *conn)
+void httpSetWriteBlocked(HttpConn *conn)
 {
     mprLog(7, "Write Blocked");
     conn->canProceed = 0;
@@ -8264,7 +8264,7 @@ void httpSendOutgoingService(HttpQueue *q)
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
                 /* Socket is full. Wait for an I/O event */
-                httpWriteBlocked(conn);
+                httpSetWriteBlocked(conn);
                 break;
             }
             if (errCode != EPIPE && errCode != ECONNRESET) {
@@ -8276,7 +8276,7 @@ void httpSendOutgoingService(HttpQueue *q)
 
         } else if (written == 0) {
             /* Socket is full. Wait for an I/O event */
-            httpWriteBlocked(conn);
+            httpSetWriteBlocked(conn);
             break;
 
         } else if (written > 0) {

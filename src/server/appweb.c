@@ -59,6 +59,13 @@ static int writePort(MaHost *host);
 static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 #endif
 
+#ifndef BLD_SERVER_ROOT
+    #define BLD_SERVER_ROOT mprGetCurrentPath()
+#endif
+#ifndef BLD_CONFIG_FILE
+    #define BLD_CONFIG_FILE NULL
+#endif
+
 /*********************************** Code *************************************/
 
 MAIN(appweb, int argc, char **argv)
@@ -81,12 +88,13 @@ MAIN(appweb, int argc, char **argv)
     }
     mprAddRoot(app);
     
-    app->mpr = mpr;
-    app->workers = -1;
-    app->serverRoot = mprGetCurrentPath();
-    app->documentRoot = app->serverRoot;
     argc = mpr->argc;
     argv = mpr->argv;
+    app->mpr = mpr;
+    app->workers = -1;
+    app->configFile = BLD_CONFIG_FILE;
+    app->serverRoot = BLD_SERVER_ROOT;
+    app->documentRoot = app->serverRoot;
 
 #if BLD_FEATURE_ROMFS
     extern MprRomInode romFiles[];
@@ -276,6 +284,9 @@ static int initialize(cchar *ip, int port)
 
 static int findConfigFile()
 {
+#ifdef BLD_CONFIG_FILE
+    app->configFile = sclone(BLD_CONFIG_FILE);
+#endif
     if (app->configFile == 0) {
         app->configFile = mprJoinPathExt(mprGetAppName(), ".conf");
     }
@@ -296,6 +307,7 @@ static void usageError(Mpr *mpr)
 
     name = mprGetAppName();
 
+    //  MOB - test the ipaddress:port docroot invocation
     mprPrintfError("\n\n%s Usage:\n\n"
     "  %s [options] [IPaddress][:port] [documentRoot]\n\n"
     "  Options:\n"
