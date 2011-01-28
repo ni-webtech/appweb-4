@@ -1308,6 +1308,7 @@ typedef struct Ejs {
     MprDispatcher       *dispatcher;        /**< Event dispatcher */
     MprList             *workers;           /**< Worker interpreters */
     MprList             *modules;           /**< Loaded modules */
+    struct EjsFile      *nativeStream;      /**< Native log output stream */
 
     void                (*loaderCallback)(struct Ejs *ejs, int kind, ...);
 

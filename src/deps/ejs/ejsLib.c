@@ -19653,7 +19653,7 @@ static void prepForm(Ejs *ejs, EjsHttp *hp, char *prefix, EjsObj *data)
                 newPrefix = mprAsprintf("%s.%@", prefix, qname.name);
                 prepForm(ejs, hp, newPrefix, vp);
             } else {
-                prepForm(ejs, hp, (char*) qname.name, vp);
+                prepForm(ejs, hp, (char*) qname.name->value, vp);
             }
         } else {
             key = ejsToMulti(ejs, qname.name);
@@ -20966,10 +20966,15 @@ static EjsObj *logger_nativeStream(Ejs *ejs, EjsObj *unused, int argc, EjsObj **
 {
     int     fd;
 
-    if ((fd = mprGetLogFd(ejs)) >= 0) {
-        return (EjsObj*) ejsCreateFileFromFd(ejs, fd, "mpr-logger", O_WRONLY);
+    if (ejs->nativeStream == 0) {
+        if ((fd = mprGetLogFd(ejs)) >= 0) {
+            ejs->nativeStream = ejsCreateFileFromFd(ejs, fd, "mpr-logger", O_WRONLY);
+            return (EjsObj*) ejs->nativeStream;
+        } else {
+            ejs->nativeStream = (EjsFile*) ejs->nullValue;
+        }
     }
-    return (EjsObj*) ejs->nullValue;
+    return (EjsObj*) ejs->nativeStream;
 }
 
 

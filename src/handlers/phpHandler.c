@@ -464,12 +464,21 @@ static int initializePhp(Http *http)
 
 static int finalizePhp(MprModule *mp)
 {
+    Http        *http;
+    HttpStage   *stage;
+
+    mprLog(4, "php: Finalize library before unloading");
+
     TSRMLS_FETCH();
     php_module_shutdown(TSRMLS_C);
     sapi_shutdown();
 #if ZTS
     tsrm_shutdown();
 #endif
+    http = MPR->httpService;
+    if ((stage = httpLookupStage(http, "phpHandler")) != 0) {
+        stage->stageData = 0;
+    }
     return 0;
 }
 
@@ -481,12 +490,17 @@ int maPhpHandlerInit(Http *http, MprModule *mp)
 {
     HttpStage     *handler;
 
-    //  MOB - need to associate module with handler
-    handler = httpCreateHandler(http, "phpHandler", HTTP_STAGE_ALL | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | 
-        HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_THREAD | HTTP_STAGE_MISSING_EXT);
-    if (handler == 0) {
-        return MPR_ERR_CANT_CREATE;
+    if ((handler = httpLookupStage(http, "phpHandler")) == 0) {
+        handler = httpCreateHandler(http, "phpHandler", HTTP_STAGE_ALL | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | 
+            HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_THREAD | HTTP_STAGE_MISSING_EXT);
+        if (handler == 0) {
+            return MPR_ERR_CANT_CREATE;
+        }
     }
+    //  MOB - need to associate module with handler
+    handler->module = mp;
+    handler->path = sclone(mp->path);
+
     handler->open = openPhp;
     handler->process = processPhp;
     http->phpHandler = handler;

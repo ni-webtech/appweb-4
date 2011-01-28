@@ -4941,6 +4941,12 @@ extern void mprStopModuleService();
  */ 
 typedef int (*MprModuleProc)(struct MprModule *mp);
 
+/*
+    Module flags
+ */
+#define MPR_MODULE_STARTED     0x1     /* Module stared **/
+#define MPR_MODULE_STOPPED     0x2     /* Module stopped */
+
 /**
     Loadable Module Service
     @description The MPR provides services to load and unload shared libraries.
@@ -4951,8 +4957,12 @@ typedef int (*MprModuleProc)(struct MprModule *mp);
  */
 typedef struct MprModule {
     char            *name;              /**< Unique module name */
+    char            *path;              /**< Module library filename */
     void            *moduleData;        /**< Module specific data */
     void            *handle;            /**< O/S shared library load handle */
+    MprTime         lastActivity;       /**< When the module was last used */
+    int             timeout;            /**< Inactivity unload timeout */
+    int             flags;              /**< Module control flags */
     MprModuleProc   start;              /**< Start the module */
     MprModuleProc   stop;               /**< Stop the module. Should be unloadable after stopping */
 } MprModule;
@@ -5038,6 +5048,22 @@ extern int mprSearchForModule(cchar *module, char **path);
     @ingroup MprModule
  */
 extern void mprSetModuleSearchPath(char *searchPath);
+
+/**
+ *  Start a module
+ *  @description Invoke the module start entry point. The start routine is only called once.
+ *  @param mp Module object returned via #mprLookupModule
+ *  @ingroup MprModule
+ */
+extern int mprStartModule(MprModule *mp);
+
+/**
+ *  Stop a module
+ *  @description Invoke the module stop entry point. The stop routine is only called once.
+ *  @param mp Module object returned via #mprLookupModule
+ *  @ingroup MprModule
+ */
+extern void mprStopModule(MprModule *mp);
 
 /**
     Unload a module
@@ -6567,6 +6593,7 @@ typedef void (*MprCmdProc)(struct MprCmd *cmd, int channel, void *data);
 #define MPR_CMD_IN              0x1000  /* Connect to stdin */
 #define MPR_CMD_OUT             0x2000  /* Capture stdout */
 #define MPR_CMD_ERR             0x4000  /* Capture stdout */
+#define MPR_CMD_ASYNC           0x8000  /* Run in async mode */
 
 typedef struct MprCmdFile {
     char            *name;

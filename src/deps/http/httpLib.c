@@ -3697,8 +3697,10 @@ static void startTimer(Http *http)
 static int httpTimer(Http *http, MprEvent *event)
 {
     HttpConn    *conn;
+    HttpStage   *stage;
+    MprModule   *module;
     int64       diff;
-    int         next, connCount, inactivity, requestTimeout, inactivityTimeout;
+    int         next, count, inactivity, requestTimeout, inactivityTimeout;
 
     mprAssert(event);
     
@@ -3712,7 +3714,7 @@ static int httpTimer(Http *http, MprEvent *event)
      */
     lock(http);
     mprLog(6, "httpTimer: %d active connections", mprGetListLength(http->connections));
-    for (connCount = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; connCount++) {
+    for (count = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; count++) {
         requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
         inactivityTimeout = conn->limits->inactivityTimeout ? conn->limits->inactivityTimeout : INT_MAX;
         /* 
@@ -3742,7 +3744,30 @@ static int httpTimer(Http *http, MprEvent *event)
             }
         }
     }
-    if (connCount == 0) {
+    /*
+        Check for unloadable modules
+     */
+    for (next = 0; (module = mprGetNextItem(MPR->moduleService->modules, &next)) != 0; ) {
+        if (module->timeout) {
+            if (module->lastActivity + module->timeout < http->now) {
+                if ((stage = httpLookupStage(http, module->name)) != 0) {
+                    mprLog(2, "Unloading inactive module %s", module->name);
+                    if (stage->match) {
+                        mprError("Can't unload modules with match routines");
+                        module->timeout = 0;
+                    } else {
+                        mprUnloadModule(module);
+                        stage->flags |= HTTP_STAGE_UNLOADED;
+                    }
+                } else {
+                    mprUnloadModule(module);
+                }
+            } else {
+                count++;
+            }
+        }
+    }
+    if (count == 0) {
         mprRemoveEvent(event);
         http->timer = 0;
     }
@@ -5893,8 +5918,22 @@ bool httpIsQueueEmpty(HttpQueue *q)
 
 void httpOpenQueue(HttpQueue *q, ssize chunkSize)
 {
+    Http        *http;
+    HttpStage   *stage;
+
+    stage = q->stage;
+    http = q->conn->http;
+
     if (chunkSize > 0) {
         q->packetSize = min(q->packetSize, chunkSize);
+    }
+    if (stage->flags & HTTP_STAGE_UNLOADED) {
+        mprAssert(stage->path);
+        mprLog(2, "Loading module for %s", stage->name);
+        mprLoadModule(stage->name, stage->path, q->conn->http);
+    }
+    if (stage->module) {
+        stage->module->lastActivity = http->now;
     }
     q->flags |= HTTP_QUEUE_OPEN;
     if (q->open) {
@@ -9074,6 +9113,8 @@ static void manageStage(HttpStage *stage, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(stage->name);
+        mprMark(stage->path);
+        mprMark(stage->module);
         mprMark(stage->stageData);
         mprMark(stage->extensions);
     }

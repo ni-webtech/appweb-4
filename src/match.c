@@ -663,8 +663,11 @@ static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage)
     if ((stage->flags & HTTP_STAGE_ALL & rx->flags) == 0) {
         return 0;
     }
-    if (stage->match && !stage->match(conn, stage)) {
-        return 0;
+    if (stage->match && !(stage->flags & HTTP_STAGE_UNLOADED)) {
+        /* Can't have match routines on unloaded modules */
+        if (!stage->match(conn, stage)) {
+            return 0;
+        }
     }
     return stage;
 }

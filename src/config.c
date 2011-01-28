@@ -756,6 +756,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     HttpStage   *stage;
     HttpServer  *httpServer;
     MprHash     *hp;
+    MprModule   *module;
     char        ipAddrPort[MPR_MAX_IP_ADDR_PORT];
     char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *hostName;
     char        *names, *type, *items, *include, *exclude, *when, *mimeTypes;
@@ -1592,7 +1593,22 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         break;
 
     case 'U':
-        if (scasecmp(key, "UploadDir") == 0 || scasecmp(key, "FileUploadDir") == 0) {
+        if (scasecmp(key, "UnloadModule") == 0) {
+            name = stok(value, " \t", &tok);
+            if (name == 0) {
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            if ((cp = stok(0, "\n", &tok)) == 0) {
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            if ((module = mprLookupModule(name)) == 0) {
+                mprError("Can't find module stage %s", name);
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            module->timeout = stoi(cp, 10, NULL) * MPR_TICKS_PER_SEC;
+            return 1;
+
+        } else if (scasecmp(key, "UploadDir") == 0 || scasecmp(key, "FileUploadDir") == 0) {
             path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             loc->uploadDir = sclone(path);
             mprLog(MPR_CONFIG, "Upload directory: %s", path);

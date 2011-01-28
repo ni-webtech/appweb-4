@@ -2648,6 +2648,7 @@ bool mprIsIdle()
 
 /*
     Make an argv array
+    MOB - genericize and remove "program"
  */
 int mprMakeArgv(cchar *program, cchar *cmd, int *argcp, char ***argvp)
 {
@@ -2660,6 +2661,7 @@ int mprMakeArgv(cchar *program, cchar *cmd, int *argcp, char ***argvp)
      */
     size = strlen(cmd) + 1;
 
+    //  MOB - remove MPR_MAX_ARGC and calculate it
     vector = (char*) mprAlloc((MPR_MAX_ARGC * sizeof(char*)) + size);
     if (vector == 0) {
         mprAssert(!MPR_ERR_MEMORY);
@@ -4108,6 +4110,17 @@ static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg);
 static void vxCmdManager(MprCmd *cmd);
 #endif
 
+/*
+    Cygwin process creation is not thread-safe (1.7). Use a global lock.
+ */
+#if CYGWIN
+#define glock(cmd) mprGlobalLock(cmd)
+#define gunlock(cmd) mprGlobalUnlock(cmd)
+#else
+#define glock(cmd) 
+#define gunlock(cmd) 
+#endif
+
 
 MprCmdService *mprCreateCmdService(Mpr *mpr)
 {
@@ -4141,12 +4154,8 @@ static void manageCmdService(MprCmdService *cs, int flags)
 }
 
 
-/*
-    Create a new command object
- */
 MprCmd *mprCreateCmd(MprDispatcher *dispatcher)
 {
-    MprCmdService   *cs;
     MprCmd          *cmd;
     MprCmdFile      *files;
     int             i;
@@ -4169,9 +4178,7 @@ MprCmd *mprCreateCmd(MprDispatcher *dispatcher)
         files[i].fd = -1;
     }
     cmd->mutex = mprCreateLock();
-
-    cs = MPR->cmdService;
-    mprAddItem(cs->cmds, cmd);
+    mprAddItem(MPR->cmdService->cmds, cmd);
     return cmd;
 }
 
@@ -4314,15 +4321,10 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
 {
     mprAssert(0 <= channel && channel <= MPR_CMD_MAX_PIPE);
 
-    /*
-        Disconnect but don't free. This prevents some races with callbacks.
-        Wait handlers MUST be removed before closing the file handle.
-     */
     lock(cmd);
     if (cmd->handlers[channel]) {
         mprRemoveWaitHandler(cmd->handlers[channel]);
         cmd->handlers[channel] = 0;
-        // mprLog(0, "CLOSE Channel %d, remove handler", channel);
     }
     if (cmd->files[channel].fd != -1) {
         close(cmd->files[channel].fd);
@@ -4460,6 +4462,19 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
     if (argc <= 0 || argv == NULL || argv[0] == NULL) {
         return MPR_ERR_BAD_STATE;
     }
+    /*
+        Windows and VxWorks can't do async. There really isn't a good way to not block on windows. You can't use
+        PeekNamedPipe because it will hang if the gateway is blocked reading it. You can't use NtQueryInformationFile 
+        on Windows SDK 6.0+. You also can't put the socket into non-blocking mode because Windows pipes share the
+        blocking mode for both ends. VxWorks can't reliably detect EOF on pipes.
+     */
+#if VXWORKS || BLD_WIN_LIKE
+    if (flags & MPR_CMD_ASYNC) {
+        mprError("Async mode not supported for commands on this platform");
+        return MPR_ERR_BAD_STATE;
+    }
+#endif
+
     resetCmd(cmd);
     program = argv[0];
     cmd->program = sclone(program);
@@ -4481,19 +4496,11 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
         return MPR_ERR_CANT_ACCESS;
     }
 
-#if CYGWIN
-    /*
-        Cygwin process creation is not thread-safe (1.7)
-     */
-    mprGlobalLock(cmd);
-#endif
+    glock(cmd);
     if (mprMakeCmdIO(cmd) < 0) {
-#if CYGWIN
-        mprGlobalUnlock(cmd);
-#endif
+        gunlock(cmd);
         return MPR_ERR_CANT_OPEN;
     }
-
     /*
         Determine how many end-of-files will be seen when the child dies
      */
@@ -4506,7 +4513,7 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
     }
 
 #if BLD_UNIX_LIKE || VXWORKS
-    {
+    if (cmd->flags & MPR_CMD_ASYNC) {
         int     stdoutFd, stderrFd, mask;
       
         stdoutFd = cmd->files[MPR_CMD_STDOUT].fd; 
@@ -4538,7 +4545,6 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
         if (stdoutFd >= 0) {
             cmd->handlers[MPR_CMD_STDOUT] = mprCreateWaitHandler(stdoutFd, MPR_READABLE, cmd->dispatcher,
                 (MprEventProc) stdoutCallback, cmd);
-            // mprLog(0, "Set STDOUT wait handler %p desired %d", cmd->handlers[MPR_CMD_STDOUT], cmd->handlers[MPR_CMD_STDOUT]->desiredMask);
         }
         if (stderrFd >= 0) {
             /*
@@ -4547,22 +4553,11 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
             mask = (stdoutFd < 0) ? MPR_READABLE : 0;
             cmd->handlers[MPR_CMD_STDERR] = mprCreateWaitHandler(stderrFd, mask, cmd->dispatcher,
                 (MprEventProc) stderrCallback, cmd);
-#if UNUSED
-            if (stdoutFd >= 0) {
-                /*
-                    Delay enabling stderr events until stdout is complete. 
-                    TODO OPT. Could omit this can just create the wait handler later
-                 */
-                mprDisableWaitEvents(cmd->handlers[MPR_CMD_STDERR]);
-            }
-#endif
         }
     }
 #endif
     rc = startProcess(cmd);
-#if CYGWIN
-    mprGlobalUnlock(cmd);
-#endif
+    gunlock(cmd);
     return rc;
 }
 
@@ -4604,10 +4599,7 @@ void mprStopCmd(MprCmd *cmd)
 }
 
 
-/*
-    Non-blocking read from a pipe. For windows which doesn't seem to have non-blocking pipes!
- */
-ssize mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, ssize bufsize)
+static ssize asyncRead(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 {
 #if BLD_WIN_LIKE && !WINCE
     int     count, rc;
@@ -4627,13 +4619,13 @@ ssize mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, ssize bufsize)
     }
     errno = EAGAIN;
     return -1;
-
 #elif VXWORKS
     int     rc;
     rc = read(cmd->files[channel].fd, buf, bufsize);
 
     /*
         VxWorks can't signal EOF on non-blocking pipes. Need a pattern indicator.
+        MOB - better to just make VxWorks a non-async platform
      */
     if (rc == MPR_CMD_VXWORKS_EOF_LEN && strncmp(buf, MPR_CMD_VXWORKS_EOF, MPR_CMD_VXWORKS_EOF_LEN) == 0) {
         /* EOF */
@@ -4646,11 +4638,17 @@ ssize mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, ssize bufsize)
     return rc;
 
 #else
-    /*
-        File is already in non-blocking mode
-     */
     return read(cmd->files[channel].fd, buf, bufsize);
 #endif
+}
+
+
+ssize mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, ssize bufsize)
+{
+    if (cmd->flags & MPR_CMD_ASYNC) {
+        return asyncRead(cmd, channel, buf, bufsize);
+    }
+    return read(cmd->files[channel].fd, buf, bufsize);
 }
 
 
@@ -4667,12 +4665,6 @@ int mprWriteCmdPipe(MprCmd *cmd, int channel, char *buf, int bufsize)
         return -1;
     }
 #endif
-    /*
-        Non-windows, this is a non-blocking write. There really isn't a good way to not block on windows. You can't use
-        PeekNamedPipe because it will hang if the gateway is blocked reading it. You can't use NtQueryInformationFile 
-        on Windows SDK 6.0+. You also can't put the socket into non-blocking mode because Windows pipes share the
-        blocking mode for both ends. So we block on Windows.
-     */
     return write(cmd->files[channel].fd, buf, bufsize);
 }
 
@@ -4682,6 +4674,7 @@ void mprEnableCmdEvents(MprCmd *cmd, int channel)
 #if BLD_UNIX_LIKE || VXWORKS
     lock(cmd);
     if (cmd->handlers[channel]) {
+        mprAssert(cmd->flags & MPR_CMD_ASYNC);
         mprEnableWaitEvents(cmd->handlers[channel], MPR_READABLE);
     }
     unlock(cmd);
@@ -4692,9 +4685,12 @@ void mprEnableCmdEvents(MprCmd *cmd, int channel)
 void mprDisableCmdEvents(MprCmd *cmd, int channel)
 {
 #if BLD_UNIX_LIKE || VXWORKS
+    lock(cmd);
     if (cmd->handlers[channel]) {
+        mprAssert(cmd->flags & MPR_CMD_ASYNC);
         mprDisableWaitEvents(cmd->handlers[channel]);
     }
+    unlock(cmd);
 #endif
 }
 
@@ -4729,13 +4725,15 @@ static int serviceWinCmdEvents(MprCmd *cmd, int channel, int timeout)
     }
     return 0;
 }
+#endif /* BLD_WIN_LIKE && !WINCE */
 
 
 /*
-    Windows pipes don't trigger EOF, so we need some extra assist here. This polls for I/O from the command.
+    Poll for I/O events on CGI pipes
  */
 void mprPollCmdPipes(MprCmd *cmd, int timeout)
 {
+#if BLD_WIN_LIKE && !WINCE
     if (cmd->files[MPR_CMD_STDOUT].handle) {
         if (serviceWinCmdEvents(cmd, MPR_CMD_STDOUT, timeout) > 0 && (cmd->flags & MPR_CMD_OUT)) {
             stdoutCallback(cmd, NULL);
@@ -4745,8 +4743,18 @@ void mprPollCmdPipes(MprCmd *cmd, int timeout)
             stderrCallback(cmd, NULL);
         }
     }
+#else
+    if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
+        if (mprWaitForSingleIO(cmd->files[MPR_CMD_STDOUT].fd, MPR_READABLE, timeout)) {
+            stdoutCallback(cmd, NULL);
+        }
+    } else if (cmd->files[MPR_CMD_STDERR].fd >= 0) {
+        if (mprWaitForSingleIO(cmd->files[MPR_CMD_STDERR].fd, MPR_READABLE, timeout)) {
+            stderrCallback(cmd, NULL);
+        }
+    }
+#endif
 }
-#endif /* BLD_WIN_LIKE && !WINCE */
 
 
 /*
@@ -4775,21 +4783,19 @@ int mprWaitForCmd(MprCmd *cmd, int timeout)
             }
         }
         unlock(cmd);
-
-#if BLD_WIN_LIKE && !WINCE
         mprPollCmdPipes(cmd, timeout);
         remaining = (expires - mprGetTime());
         if (cmd->pid == 0 || remaining <= 0) {
             break;
         }
-        delay = 10;
-#else
         delay = remaining;
-#endif
-        /* Add root to allow callers to use mprRunCmd without managing the cmd */
-        mprAddRoot(cmd);
-        mprWaitForEvent(cmd->dispatcher, (int) delay);
-        mprRemoveRoot(cmd);
+
+        if (cmd->flags & MPR_CMD_ASYNC) {
+            /* Add root to allow callers to use mprRunCmd without first managing the cmd */
+            mprAddRoot(cmd);
+            mprWaitForEvent(cmd->dispatcher, (int) delay);
+            mprRemoveRoot(cmd);
+        }
         remaining = (expires - mprGetTime());
     } while (cmd->pid && remaining >= 0);
 
@@ -12441,6 +12447,7 @@ void dummyWide() {}
 
 
 
+static void manageModule(MprModule *mp, int flags);
 static void manageModuleService(MprModuleService *ms, int flags);
 
 /*
@@ -12502,7 +12509,7 @@ int mprStartModuleService()
     mprAssert(ms);
 
     for (next = 0; (mp = mprGetNextItem(ms->modules, &next)) != 0; ) {
-        if (mp->start && mp->start(mp) < 0) {
+        if (mprStartModule(mp) < 0) {
             return MPR_ERR_CANT_INITIALIZE;
         }
     }
@@ -12526,9 +12533,7 @@ void mprStopModuleService()
     mprAssert(ms);
     mprLock(ms->mutex);
     for (next = 0; (mp = mprGetNextItem(ms->modules, &next)) != 0; ) {
-        if (mp->stop) {
-            mp->stop(mp);
-        }
+        mprStopModule(mp);
     }
     mprUnlock(ms->mutex);
 }
@@ -12546,19 +12551,58 @@ MprModule *mprCreateModule(cchar *name, void *data)
     ms = MPR->moduleService;
     mprAssert(ms);
 
-    if ((mp = mprAllocObj(MprModule, NULL)) == 0) {
+    if ((mp = mprAllocObj(MprModule, manageModule)) == 0) {
         return 0;
     }
     index = mprAddItem(ms->modules, mp);
     mp->name = sclone(name);
     mp->moduleData = data;
+    mp->lastActivity = mprGetTime();
     mp->handle = 0;
     mp->start = 0;
     mp->stop = 0;
+    mp->timeout = 0;
+
     if (index < 0 || mp->name == 0) {
         return 0;
     }
     return mp;
+}
+
+
+static void manageModule(MprModule *mp, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(mp->name);
+        mprMark(mp->path);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
+int mprStartModule(MprModule *mp)
+{
+    mprAssert(mp);
+
+    if (mp->start && !(mp->flags & MPR_MODULE_STARTED)) {
+        if (mp->start(mp) < 0) {
+            return MPR_ERR_CANT_INITIALIZE;
+        }
+    }
+    mp->flags |= MPR_MODULE_STARTED;
+    return 0;
+}
+
+
+void mprStopModule(MprModule *mp)
+{
+    mprAssert(mp);
+
+    if (mp->stop && (mp->flags & MPR_MODULE_STARTED) && !(mp->flags & MPR_MODULE_STOPPED)) {
+        mp->stop(mp);
+    }
+    mp->flags |= MPR_MODULE_STOPPED;
 }
 
 
@@ -22737,9 +22781,7 @@ void mprSleep(int milliseconds)
 
 void mprUnloadModule(MprModule *mp)
 {
-    /*
-        The Module stop entry point should have been called.
-     */
+    mprStopModule(mp);
     if (mp->handle) {
         dlclose(mp->handle);
     }
@@ -22947,6 +22989,7 @@ void mprSleep(int milliseconds)
 
 void mprUnloadModule(MprModule *mp)
 {
+    mprStopModule(mp);
     mprRemoveItem(mprGetMpr()->moduleService->modules, mp);
     unldByModuleId((MODULE_ID) mp->handle, 0);
 }
@@ -24720,9 +24763,7 @@ void mprUnloadModule(MprModule *mp)
 {
     mprAssert(mp->handle);
 
-    if (mp->stop) {
-        mp->stop(mp);
-    }
+    mprStopModule(mp);
     mprRemoveItem(MPR->moduleService->modules, mp);
     FreeLibrary((HINSTANCE) mp->handle);
 }
@@ -25164,9 +25205,7 @@ void mprUnloadModule(MprModule *mp)
 {
     mprAssert(mp->handle);
 
-    if (mp->stop) {
-        mp->stop();
-    }
+    mprStopModule(mp);
     mprRemoveItem(MPR->moduleService->modules, mp);
     FreeLibrary((HINSTANCE) mp->handle);
 }

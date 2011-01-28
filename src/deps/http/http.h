@@ -940,6 +940,7 @@ extern void httpMarkQueueHead(HttpQueue *q);
 #define HTTP_STAGE_VERIFY_ENTITY  0x200000          /**< Verify the request entity exists */
 #define HTTP_STAGE_THREAD         0x400000          /**< Run handler dispatcher in a worker thread */
 #define HTTP_STAGE_MISSING_EXT    0x800000          /**< Support URIs with missing extensions */
+#define HTTP_STAGE_UNLOADED       0x1000000         /**< Stage module library has been unloaded */
 
 #define HTTP_STAGE_INCOMING       0x1000000
 #define HTTP_STAGE_OUTGOING       0x2000000
@@ -962,8 +963,10 @@ typedef int (*HttpParse)(Http *http, cchar *key, char *value, void *state);
  */
 typedef struct HttpStage {
     char            *name;                  /**< Stage name */
+    char            *path;                  /**< Backing module path (from LoadModule) */
     int             flags;                  /**< Stage flags */
     void            *stageData;             /**< Private stage data */
+    MprModule       *module;                /**< Backing module */
     MprHashTable    *extensions;            /**< Matching extensions for this filter */
 
     /**

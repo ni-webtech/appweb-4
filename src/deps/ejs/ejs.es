@@ -408,6 +408,7 @@ module ejs {
         if (log.enable) {
             let stream = Logger.nativeStream
             if (stream) {
+                /* Native log defined via --log switch. Adopt native log level. ie. overrides config */
                 log.level = Logger.nativeLevel
             } else if (log.location == "stdout") {
                 stream = App.outputStream
@@ -6781,7 +6782,7 @@ module ejs {
                 } else {
                     stream = File(path).open("wa+")
                 }
-                if (_outStream && stream != _outStream) {
+                if (_outStream && stream != _outStream && _outStream != Logger.nativeStream) {
                     _outStream.close()
                 }
                 _outStream = stream
