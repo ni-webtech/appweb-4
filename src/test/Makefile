@@ -36,7 +36,7 @@ $(BLD_MOD_DIR)/egiTest$(BLD_SHOBJ): $(call lib, appweb) $(BLD_OBJ_DIR)/testEgi$(
 	bld --shared --library $(BLD_MOD_DIR)/egiTest --libs "$(LIBS) $(BLD_APPWEB_LIBS)" testEgi$(BLD_OBJ)
 
 ifneq	($(BUILDING_CROSS),1)
-testExtra:
+DISABLEtestExtra:
 	mkdir -p web/tmp
 	find . -name '*.mod' | xargs rm -f >/dev/null 2>&1 ; true
 	if [ ! -f $(BLD_BIN_DIR)/ejs ] ; then \

@@ -12572,11 +12572,9 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
     ms = MPR->moduleService;
     mprAssert(ms);
 
-    if (path) {
-        if ((path = mprSearchForModule(path)) == 0) {
-            mprError("Can't find module \"%s\" in search path \"%s\"", path, mprGetModuleSearchPath());
-            return 0;
-        }
+    if (path && ((path = mprSearchForModule(path)) == 0)) {
+        mprError("Can't find module \"%s\" in search path \"%s\"", path, mprGetModuleSearchPath());
+        return 0;
     }
     if ((mp = mprAllocObj(MprModule, manageModule)) == 0) {
         return 0;
@@ -12721,6 +12719,7 @@ int mprLoadModule(MprModule *mp)
     if (mprLoadNativeModule(mp) < 0) {
         return MPR_ERR_CANT_READ;
     }
+    mprStartModule(mp);
     return 0;
 #else
     mprError("Product built without the ability to load modules dynamically");

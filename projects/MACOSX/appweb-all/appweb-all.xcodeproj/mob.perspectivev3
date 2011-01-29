@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>ActivePerspectiveName</key>
-	<string>Project</string>
+	<string>Debug</string>
 	<key>AllowedModules</key>
 	<array>
 		<dict>
@@ -304,8 +304,6 @@
 			<key>Layout</key>
 			<array>
 				<dict>
-					<key>BecomeActive</key>
-					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -381,8 +379,6 @@
 							<string>MainColumn</string>
 							<real>263</real>
 						</array>
-						<key>RubberWindowFrame</key>
-						<string>757 616 1582 962 0 0 2560 1578 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -410,7 +406,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>C91284C912F3AD56001EE12C</string>
+										<string>C91284DD12F3AEAA001EE12C</string>
 										<key>history</key>
 										<array>
 											<string>C9817C74110D195B00F241EF</string>
@@ -449,7 +445,7 @@
 											<string>C91284AD12F3AB7E001EE12C</string>
 											<string>C91284AE12F3AB7E001EE12C</string>
 											<string>C91284C812F3AD56001EE12C</string>
-											<string>C91284C512F3AD44001EE12C</string>
+											<string>C91284D912F3AE91001EE12C</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -464,8 +460,6 @@
 							<dict>
 								<key>Frame</key>
 								<string>{{0, 0}, {1297, 621}}</string>
-								<key>RubberWindowFrame</key>
-								<string>757 616 1582 962 0 0 2560 1578 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -543,8 +537,6 @@
 									<dict>
 										<key>Frame</key>
 										<string>{{10, 27}, {1297, 268}}</string>
-										<key>RubberWindowFrame</key>
-										<string>757 616 1582 962 0 0 2560 1578 </string>
 									</dict>
 									<key>Module</key>
 									<string>PBXBuildResultsModule</string>
@@ -629,6 +621,8 @@
 					<dict>
 						<key>Frame</key>
 						<string>{{0, 0}, {1582, 245}}</string>
+						<key>RubberWindowFrame</key>
+						<string>757 616 1582 962 0 0 2560 1578 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXDebugCLIModule</string>
@@ -703,7 +697,11 @@
 							</array>
 							<key>Frame</key>
 							<string>{{0, 270}, {676, 401}}</string>
+							<key>RubberWindowFrame</key>
+							<string>757 616 1582 962 0 0 2560 1578 </string>
 						</dict>
+						<key>RubberWindowFrame</key>
+						<string>757 616 1582 962 0 0 2560 1578 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXDebugSessionModule</string>
@@ -750,7 +748,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>317959510.13288498</real>
+	<real>317959850.40934801</real>
 	<key>ToolbarConfigUserDefaultsMinorVersion</key>
 	<string>2</string>
 	<key>ToolbarDisplayMode</key>
@@ -767,6 +765,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>1C530D5B069F1CE1000CFCEE</string>
 		<string>C912847612F37D0D001EE12C</string>
 		<string>C912847712F37D0D001EE12C</string>
 		<string>/Users/mob/git/appweb/projects/MACOSX/appweb-all/appweb-all.xcodeproj</string>
@@ -1122,7 +1121,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {440, 359}}</string>
 								<key>RubberWindowFrame</key>
-								<string>417 755 440 400 0 0 1920 1178 </string>
+								<string>597 1142 440 400 0 0 2560 1578 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXDebugCLIModule</string>
@@ -1145,13 +1144,13 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>1C530D5B069F1CE1000CFCEE</string>
-				<string>C961771412DCF882002702E0</string>
+				<string>C91284DE12F3AEAA001EE12C</string>
 				<string>1C78EAAC065D492600B07095</string>
 			</array>
 			<key>ToolbarConfiguration</key>
 			<string>xcode.toolbar.config.consoleV3</string>
 			<key>WindowString</key>
-			<string>417 755 440 400 0 0 1920 1178 </string>
+			<string>597 1142 440 400 0 0 2560 1578 </string>
 			<key>WindowToolGUID</key>
 			<string>1C530D5B069F1CE1000CFCEE</string>
 			<key>WindowToolIsVisible</key>
