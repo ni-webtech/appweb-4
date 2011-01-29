@@ -3748,8 +3748,8 @@ static int httpTimer(Http *http, MprEvent *event)
     for (next = 0; (module = mprGetNextItem(MPR->moduleService->modules, &next)) != 0; ) {
         if (module->timeout) {
             if (module->lastActivity + module->timeout < http->now) {
+                mprLog(2, "Unloading inactive module %s", module->name);
                 if ((stage = httpLookupStage(http, module->name)) != 0) {
-                    mprLog(2, "Unloading inactive module %s", module->name);
                     if (stage->match) {
                         mprError("Can't unload modules with match routines");
                         module->timeout = 0;
