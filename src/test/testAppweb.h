@@ -24,7 +24,7 @@ extern bool match(MprTestGroup *gp, char *key, char *value);
 extern bool matchAnyCase(MprTestGroup *gp, char *key, char *value);
 extern bool simpleForm(MprTestGroup *gp, char *uri, char *formBody, int expectCode);
 extern bool simpleGet(MprTestGroup *gp, cchar *uri, int expect);
-extern bool simplePost(MprTestGroup *gp, char *uri, char *postBody, int len, int expectCode);
+extern bool simplePost(MprTestGroup *gp, char *uri, char *postBody, ssize len, int expectCode);
 
 extern HttpConn *getConn(MprTestGroup *gp);
 extern Http *getHttp(MprTestGroup *gp);

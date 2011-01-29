@@ -2271,7 +2271,8 @@ extern int  mprSyncThreads(int timeout);
     Safe String Module
     @description The MPR provides a suite of safe ascii string manipulation routines to help prevent buffer overflows
         and other potential security traps.
-    @see MprString, mprAsprintf, mprAllocStrcpy, mprAtoi, mprItoa, mprMemcpy,
+    MOB -- doc not right. Some of these don't exist
+    @see MprString, mprAsprintf, mprAllocStrcpy, mprMemcpy,
         mprPrintf, mprReallocStrcat, mprSprintf, mprStrLower, mprStrTok, mprStrTrim, mprStrUpper,
         mprStrcmpAnyCase, mprStrcmpAnyCaseCount, mprStrcpy, mprStrlen, mprVsprintf, mprPrintfError,
         mprStrcat, mprAllocStrcpy, mprReallocStrcat, mprVasprintf

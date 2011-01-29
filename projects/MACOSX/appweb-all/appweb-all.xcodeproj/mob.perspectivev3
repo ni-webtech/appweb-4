@@ -393,7 +393,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>C90BD4D010CC46EE00C50CA5</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>phpHandler.c</string>
+								<string>testAppweb.h</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -401,11 +401,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>C90BD4D110CC46EE00C50CA5</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>phpHandler.c</string>
+										<string>testAppweb.h</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>C912849E12F39900001EE12C</string>
+										<string>C91284B712F3AC96001EE12C</string>
 										<key>history</key>
 										<array>
 											<string>C9817C74110D195B00F241EF</string>
@@ -414,7 +414,6 @@
 											<string>C9817CFA110D237B00F241EF</string>
 											<string>C9817E73110E094F00F241EF</string>
 											<string>C94C15BF1116269F007F01C6</string>
-											<string>C94C161611163A24007F01C6</string>
 											<string>C9E2A4BE1116922700756446</string>
 											<string>C9F683331116A05C008107BE</string>
 											<string>C99EC26A112E079900A8752D</string>
@@ -439,11 +438,13 @@
 											<string>C970203C12EF86DF00375A7D</string>
 											<string>C970214012EFA96800375A7D</string>
 											<string>C970214A12EFA9AB00375A7D</string>
-											<string>C912847012F37C3F001EE12C</string>
 											<string>C912847112F37C3F001EE12C</string>
 											<string>C912848112F38D6F001EE12C</string>
 											<string>C912849412F3906F001EE12C</string>
-											<string>C912849512F3906F001EE12C</string>
+											<string>C91284AC12F3AB7E001EE12C</string>
+											<string>C91284AD12F3AB7E001EE12C</string>
+											<string>C91284AE12F3AB7E001EE12C</string>
+											<string>C91284AF12F3AB7E001EE12C</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -608,8 +609,6 @@
 			<key>Layout</key>
 			<array>
 				<dict>
-					<key>BecomeActive</key>
-					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXProjectModuleGUID</key>
@@ -748,7 +747,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>317954304.89418799</real>
+	<real>317959318.53575701</real>
 	<key>ToolbarConfigUserDefaultsMinorVersion</key>
 	<string>2</string>
 	<key>ToolbarDisplayMode</key>
@@ -765,7 +764,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>C912849F12F39900001EE12C</string>
+		<string>C91284B212F3AB90001EE12C</string>
 		<string>C912847612F37D0D001EE12C</string>
 		<string>C912847712F37D0D001EE12C</string>
 		<string>/Users/mob/git/appweb/projects/MACOSX/appweb-all/appweb-all.xcodeproj</string>
