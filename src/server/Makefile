@@ -45,6 +45,7 @@ ifeq ($(BLD_STATIC),0)
 	# EXTRA_OBJECTS	+= $(patsubst %, $(BLD_LIB_DIR)/lib%-$(BLD_VERSION).out, mpr pcre)
 endif
 endif
+
 TARGETS				+= appweb.conf
 MAKE_IFLAGS			+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
