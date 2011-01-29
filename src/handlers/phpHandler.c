@@ -467,9 +467,9 @@ static int finalizePhp(MprModule *mp)
     Http        *http;
     HttpStage   *stage;
 
-    mprLog(4, "php: Finalize library before unloading");
-
     TSRMLS_FETCH();
+
+    mprLog(4, "php: Finalize library before unloading");
     php_module_shutdown(TSRMLS_C);
     sapi_shutdown();
 #if ZTS

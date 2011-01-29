@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>ActivePerspectiveName</key>
-	<string>Debug</string>
+	<string>Project</string>
 	<key>AllowedModules</key>
 	<array>
 		<dict>
@@ -304,6 +304,8 @@
 			<key>Layout</key>
 			<array>
 				<dict>
+					<key>BecomeActive</key>
+					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -358,6 +360,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
+									<integer>77</integer>
 									<integer>76</integer>
 								</array>
 							</array>
@@ -378,6 +381,8 @@
 							<string>MainColumn</string>
 							<real>263</real>
 						</array>
+						<key>RubberWindowFrame</key>
+						<string>757 616 1582 962 0 0 2560 1578 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -393,7 +398,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>C90BD4D010CC46EE00C50CA5</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>testAppweb.h</string>
+								<string>httpLib.c</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -401,11 +406,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>C90BD4D110CC46EE00C50CA5</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>testAppweb.h</string>
+										<string>httpLib.c</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>C91284B712F3AC96001EE12C</string>
+										<string>C91284C912F3AD56001EE12C</string>
 										<key>history</key>
 										<array>
 											<string>C9817C74110D195B00F241EF</string>
@@ -435,7 +440,6 @@
 											<string>C96D38ED12EF734300C04DE3</string>
 											<string>C970200E12EF826F00375A7D</string>
 											<string>C970201512EF827500375A7D</string>
-											<string>C970203C12EF86DF00375A7D</string>
 											<string>C970214012EFA96800375A7D</string>
 											<string>C970214A12EFA9AB00375A7D</string>
 											<string>C912847112F37C3F001EE12C</string>
@@ -444,7 +448,8 @@
 											<string>C91284AC12F3AB7E001EE12C</string>
 											<string>C91284AD12F3AB7E001EE12C</string>
 											<string>C91284AE12F3AB7E001EE12C</string>
-											<string>C91284AF12F3AB7E001EE12C</string>
+											<string>C91284C812F3AD56001EE12C</string>
+											<string>C91284C512F3AD44001EE12C</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -459,6 +464,8 @@
 							<dict>
 								<key>Frame</key>
 								<string>{{0, 0}, {1297, 621}}</string>
+								<key>RubberWindowFrame</key>
+								<string>757 616 1582 962 0 0 2560 1578 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -536,6 +543,8 @@
 									<dict>
 										<key>Frame</key>
 										<string>{{10, 27}, {1297, 268}}</string>
+										<key>RubberWindowFrame</key>
+										<string>757 616 1582 962 0 0 2560 1578 </string>
 									</dict>
 									<key>Module</key>
 									<string>PBXBuildResultsModule</string>
@@ -620,8 +629,6 @@
 					<dict>
 						<key>Frame</key>
 						<string>{{0, 0}, {1582, 245}}</string>
-						<key>RubberWindowFrame</key>
-						<string>757 616 1582 962 0 0 2560 1578 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXDebugCLIModule</string>
@@ -696,11 +703,7 @@
 							</array>
 							<key>Frame</key>
 							<string>{{0, 270}, {676, 401}}</string>
-							<key>RubberWindowFrame</key>
-							<string>757 616 1582 962 0 0 2560 1578 </string>
 						</dict>
-						<key>RubberWindowFrame</key>
-						<string>757 616 1582 962 0 0 2560 1578 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXDebugSessionModule</string>
@@ -747,7 +750,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>317959318.53575701</real>
+	<real>317959510.13288498</real>
 	<key>ToolbarConfigUserDefaultsMinorVersion</key>
 	<string>2</string>
 	<key>ToolbarDisplayMode</key>
@@ -764,7 +767,6 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>C91284B212F3AB90001EE12C</string>
 		<string>C912847612F37D0D001EE12C</string>
 		<string>C912847712F37D0D001EE12C</string>
 		<string>/Users/mob/git/appweb/projects/MACOSX/appweb-all/appweb-all.xcodeproj</string>
