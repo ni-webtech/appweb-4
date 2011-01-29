@@ -187,7 +187,8 @@ bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
 {
     Http        *http;
     HttpConn    *conn;
-    int         len, contentLen, status;
+    ssize       len, contentLen;
+    int         status;
 
     contentLen = 0;
     
@@ -226,10 +227,11 @@ bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
 }
 
 
-bool simplePost(MprTestGroup *gp, char *uri, char *bodyData, int len, int expectStatus)
+bool simplePost(MprTestGroup *gp, char *uri, char *bodyData, ssize len, int expectStatus)
 {
     HttpConn    *conn;
-    int         contentLen, status;
+    ssize       contentLen;
+    int         status;
 
     contentLen = 0;
     conn = getConn(gp);
@@ -349,7 +351,7 @@ bool matchAnyCase(MprTestGroup *gp, char *key, char *value)
     }
     trim = strim(vp, "\"", MPR_TRIM_BOTH);
 #if BLD_WIN_LIKE
-    if (vp == 0 || sncasecmp(trim, value) != 0)
+    if (vp == 0 || scasecmp(trim, value) != 0)
 #else
     if (vp == 0 || value == 0 || scmp(trim, value) != 0)
 #endif

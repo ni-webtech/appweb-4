@@ -839,7 +839,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
 #endif
 
     if ((file = mprOpenFile(tx, path, O_RDONLY, 0)) != 0) {
-        if (mprRead(file, buf, MPR_MAX_FNAME) > 0) {
+        if (mprReadFile(file, buf, MPR_MAX_FNAME) > 0) {
             mprCloseFile(file);
             buf[MPR_MAX_FNAME] = '\0';
             if (buf[0] == '#' && buf[1] == '!') {

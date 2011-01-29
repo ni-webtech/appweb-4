@@ -484,7 +484,7 @@ static int writePort(MaHost *host)
     } else {
         port = 80;
     }
-    mprItoa(numBuf, sizeof(numBuf), port, 10);
+    mprSprintf(numBuf, sizeof(numBuf), "%d", port);
 
     len = (int) strlen(numBuf);
     numBuf[len++] = '\n';

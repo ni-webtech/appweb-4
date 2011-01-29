@@ -1,9 +1,9 @@
 /**
- *  appwebMonitor.c  -- Windows Appweb Monitor program
- *
- *  The Appweb Monitor is a windows monitor program that interacts with the Appweb angel program.
+    appwebMonitor.c  -- Windows Appweb Monitor program
+  
+    The Appweb Monitor is a windows monitor program that interacts with the Appweb angel program.
 
- *  Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
 /********************************* Includes ***********************************/
@@ -17,18 +17,19 @@
 #if BLD_WIN_LIKE
 /*********************************** Locals ***********************************/
 
-static Mpr          *mpr;
-static cchar        *appName;           /* Name of appweb */
-static cchar        *appTitle;          /* Title of appweb */
-static HINSTANCE    appInst;            /* Current application instance */
-static HWND         appHwnd;            /* Application window handle */
-static HMENU        subMenu;            /* As the name says */
-static cchar        *serviceName;       /* Name of appweb service */
-static cchar        *serviceTitle;      /* Title of appweb service */
-static cchar        *serviceWindowName; /* Name of appweb service */
-static cchar        *serviceWindowTitle;/* Title of appweb service */
-static int          taskBarIcon;        /* Icon in the task bar */
-static HMENU        monitorMenu;        /* As the name says */
+typedef struct App {
+    cchar        *serviceName;          /* Name of appweb service */
+    cchar        *serviceTitle;         /* Title of appweb service */
+    cchar        *serviceWindowName;    /* Name of appweb service */
+    cchar        *serviceWindowTitle;   /* Title of appweb service */
+    int          taskBarIcon;           /* Icon in the task bar */
+    HINSTANCE    appInst;               /* Current application instance */
+    HWND         appHwnd;               /* Application window handle */
+    HMENU        subMenu;               /* As the name says */
+    HMENU        monitorMenu;           /* As the name says */
+} App;
+
+static App *app;
 
 #define APPWEB_ICON             "appwebMonitor.ico"
 #define APPWEB_MONITOR_ID       0x100
@@ -53,8 +54,9 @@ static void     closeMonitorIcon();
 static int      getAppwebPort();
 static char     *getBrowserPath(int size);
 static int      findInstance();
-static int      initWindow(Mpr *mpr);
-static void     logHandler(MprCtx ctx, int flags, int level, cchar *msg);
+static int      initWindow();
+static void     logHandler(int flags, int level, cchar *msg);
+static void     manageApp(App *app, int flags);
 static long     msgProc(HWND hwnd, uint msg, uint wp, long lp);
 static int      openMonitorIcon();
 static uint     queryService();
@@ -72,29 +74,31 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     char    **argv, *argp;
     int     argc, err, nextArg, manage, stop;
 
-    mpr = mprCreate(0, NULL, NULL);
+    if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD) == NULL) {
+        exit(1);
+    }
+    if ((app = mprAllocObj(App, manageApp)) == NULL) {
+        exit(2);
+    }
+    mprAddRoot(app);
 
     err = 0;
-    manage = 0;
-    appInst = inst;
     stop = 0;
-    serviceName = BLD_COMPANY "-" BLD_PRODUCT;
-    serviceTitle = BLD_NAME;
-    serviceWindowName = BLD_PRODUCT "Angel";
-    serviceWindowTitle = BLD_NAME "Angel";
+    manage = 0;
+    app->appInst = inst;
+    app->serviceName = sclone(BLD_COMPANY "-" BLD_PRODUCT);
+    app->serviceTitle = sclone(BLD_NAME);
+    app->serviceWindowName = sclone(BLD_PRODUCT "Angel");
+    app->serviceWindowTitle = sclone(BLD_NAME "Angel");
 
-    mprSetAppName(mpr, BLD_PRODUCT "Monitor", BLD_NAME " Monitor", BLD_VERSION);
-    appName = mprGetAppName(mpr);
-    appTitle = mprGetAppTitle(mpr);
-
-    mprSetLogHandler(mpr, logHandler, NULL);
-
-    chdir(mprGetAppDir(mpr));
+    mprSetAppName(BLD_PRODUCT "Monitor", BLD_NAME " Monitor", BLD_VERSION);
+    mprSetLogHandler(logHandler, NULL);
+    chdir(mprGetAppDir());
 
     /*
-     *  Parse command line arguments
+        Parse command line arguments
      */
-    if (mprMakeArgv(mpr, "", args, &argc, &argv) < 0) {
+    if (mprMakeArgv("", args, &argc, &argv) < 0) {
         return FALSE;
     }
     for (nextArg = 1; nextArg < argc; nextArg++) {
@@ -113,12 +117,12 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
         }
 
         if (err) {
-            mprUserError(mpr, "Bad command line: %s\n"
+            mprUserError("Bad command line: %s\n"
                 "  Usage: %s [options]\n"
                 "  Switches:\n"
                 "    --manage             # Launch browser to manage",
                 "    --stop               # Stop a running monitor",
-                args, appName);
+                args, mprGetAppName());
             return -1;
         }
     }
@@ -128,60 +132,66 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
         return 0;
     }
 
-    if (findInstance(mpr)) {
-        mprUserError(mpr, "Application %s is already active.", mprGetAppTitle(mpr));
+    if (findInstance()) {
+        mprUserError("Application %s is already active.", mprGetAppTitle());
         return MPR_ERR_BUSY;
     }
 
     /*
-     *  Create the window
+        Create the window
      */ 
-    if (initWindow(mpr) < 0) {
-        mprUserError(mpr, "Can't initialize application Window");
+    if (initWindow() < 0) {
+        mprUserError("Can't initialize application Window");
         return MPR_ERR_CANT_INITIALIZE;
     }
-
     if (manage) {
         /*
-         *  Launch the browser 
+            Launch the browser 
          */
         runBrowser("/index.html");
 
     } else {
 
         if (openMonitorIcon() < 0) {
-            mprUserError(mpr, "Can't open %s tray", appName);
+            mprUserError("Can't open %s tray", mprGetAppName());
 
         } else {
             eventLoop();
             closeMonitorIcon();
         }
     }
-
-    // mprFree(mpr);
-
     return 0;
 }
 
 
+static void manageApp(App *app, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(app->serviceName);
+        mprMark(app->serviceTitle);
+        mprMark(app->serviceWindowName);
+        mprMark(app->serviceWindowTitle);
+    } else if (flags & MPR_MANAGE_FREE) {
+    }
+}
+
+
 /*
- *  Sample main event loop. This demonstrates how to integrate Mpr with your
- *  applications event loop using select()
+    Sample main event loop. This demonstrates how to integrate Mpr with your
+    applications event loop using select()
  */
 void eventLoop()
 {
     MSG     msg;
 
     /*
-     *  If single threaded or if you desire control over the event loop, you 
-     *  should code an event loop similar to that below:
+        If single threaded or if you desire control over the event loop, you 
+        should code an event loop similar to that below:
      */
-    while (!mprIsExiting(mpr)) {
-
-        // SetTimer(appHwnd, 0, till, NULL);
-
+    while (!mprIsStopping()) {
+        // SetTimer(app->appHwnd, 0, till, NULL);
         /*
-         *  Socket events will be serviced in the msgProc
+            Socket events will be serviced in the msgProc
          */
         if (GetMessage(&msg, NULL, 0, 0) == 0) {
             /*  WM_QUIT received */
@@ -194,13 +204,13 @@ void eventLoop()
 
 
 /*
- *  See if an instance of this product is already running
+    See if an instance of this product is already running
  */
-static int findInstance(Mpr *mpr)
+static int findInstance()
 {
     HWND    hwnd;
 
-    hwnd = FindWindow(mprGetAppName(mpr), mprGetAppTitle(mpr));
+    hwnd = FindWindow(mprGetAppName(), mprGetAppTitle());
 
     if (hwnd) {
         if (IsIconic(hwnd)) {
@@ -214,9 +224,9 @@ static int findInstance(Mpr *mpr)
 
 
 /*
- *  Initialize the applications's window
+    Initialize the applications's window
  */ 
-static int initWindow(Mpr *mpr)
+static int initWindow()
 {
     WNDCLASS    wc;
     int         rc;
@@ -226,26 +236,25 @@ static int initWindow(Mpr *mpr)
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
     wc.cbClsExtra       = 0;
     wc.cbWndExtra       = 0;
-    wc.hInstance        = (HINSTANCE) appInst;
+    wc.hInstance        = (HINSTANCE) app->appInst;
     wc.hIcon            = NULL;
     wc.lpfnWndProc      = (WNDPROC) msgProc;
-    wc.lpszMenuName     = wc.lpszClassName = mprGetAppName(mpr);
+    wc.lpszMenuName     = wc.lpszClassName = mprGetAppName();
 
     rc = RegisterClass(&wc);
     if (rc == 0) {
-        mprError(mpr, "Can't register windows class");
+        mprError("Can't register windows class");
         return -1;
     }
-
-    appHwnd = CreateWindow(mprGetAppName(mpr), mprGetAppTitle(mpr), 
+    app->appHwnd = CreateWindow(mprGetAppName(), mprGetAppTitle(), 
         WS_OVERLAPPED, CW_USEDEFAULT, 0, 0, 0, NULL, NULL, 0, NULL);
-    if (! appHwnd) {
-        mprError(mpr, "Can't create window");
+    if (! app->appHwnd) {
+        mprError("Can't create window");
         return -1;
     }
-    if (taskBarIcon > 0) {
-        ShowWindow(appHwnd, SW_MINIMIZE);
-        UpdateWindow(appHwnd);
+    if (app->taskBarIcon > 0) {
+        ShowWindow(app->appHwnd, SW_MINIMIZE);
+        UpdateWindow(app->appHwnd);
     }
     return 0;
 }
@@ -255,7 +264,7 @@ static void stopMonitor()
 {
     HWND    hwnd;
 
-    hwnd = FindWindow(mprGetAppName(mpr), mprGetAppTitle(mpr));
+    hwnd = FindWindow(mprGetAppName(), mprGetAppTitle());
     if (hwnd) {
         PostMessage(hwnd, WM_QUIT, 0, 0L);
     }
@@ -263,7 +272,7 @@ static void stopMonitor()
 
 
 /*
- *  Windows message processing loop
+    Windows message processing loop
  */ BOOL CALLBACK dialogProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch(Message) {
@@ -281,7 +290,7 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
     switch (msg) {
     case WM_DESTROY:
     case WM_QUIT:
-        mprSignalExit(mpr);
+        mprTerminate(MPR_GRACEFUL);
         break;
     
     case APPWEB_MONITOR_MESSAGE:
@@ -310,36 +319,36 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
 
         case MA_MENU_ABOUT:
             /*
-             *  Single-threaded users beware. This blocks !!
+                Single-threaded users beware. This blocks !!
              */
             mprSprintf(buf, sizeof(buf), "%s %s-%s", BLD_NAME, BLD_VERSION, BLD_NUMBER);
-            MessageBoxEx(NULL, buf, mprGetAppTitle(mpr), MB_OK, 0);
+            MessageBoxEx(NULL, buf, mprGetAppTitle(), MB_OK, 0);
             break;
 
         case MA_MENU_EXIT:
             /* 
-             *  FUTURE
+                FUTURE
              *
-             *  h = CreateDialog(appInst, MAKEINTRESOURCE(IDD_EXIT), appHwnd, dialogProc);
-             *  ShowWindow(h, SW_SHOW);
+                h = CreateDialog(app->appInst, MAKEINTRESOURCE(IDD_EXIT), app->appHwnd, dialogProc);
+                ShowWindow(h, SW_SHOW);
              */
             PostMessage(hwnd, WM_QUIT, 0, 0L);
             break;
 
         default:
-            return DefWindowProc(hwnd, msg, wp, lp);
+            return (long) DefWindowProc(hwnd, msg, wp, lp);
         }
         break;
 
     default:
-        return DefWindowProc(hwnd, msg, wp, lp);
+        return (long) DefWindowProc(hwnd, msg, wp, lp);
     }
     return 0;
 }
 
 
 /*
- *  Can be called multiple times 
+    Can be called multiple times 
  */
 static int openMonitorIcon()
 {
@@ -349,39 +358,36 @@ static int openMonitorIcon()
     static int      doOnce = 0;
     int             rc;
 
-    if (monitorMenu == NULL) {
-        monitorMenu = LoadMenu(appInst, "monitorMenu");
-        if (! monitorMenu) {
-            mprError(mpr, "Can't locate monitorMenu");
+    if (app->monitorMenu == NULL) {
+        app->monitorMenu = LoadMenu(app->appInst, "monitorMenu");
+        if (! app->monitorMenu) {
+            mprError("Can't locate monitorMenu");
             return MPR_ERR_CANT_OPEN;
         }
     }
-
-    if (subMenu == NULL) {
-        subMenu = GetSubMenu(monitorMenu, 0);
-        go = LoadBitmap(appInst, MAKEINTRESOURCE(IDB_GO));
+    if (app->subMenu == NULL) {
+        app->subMenu = GetSubMenu(app->monitorMenu, 0);
+        go = LoadBitmap(app->appInst, MAKEINTRESOURCE(IDB_GO));
         rc = GetLastError();
-        stop = LoadBitmap(appInst, MAKEINTRESOURCE(IDB_STOP));
-        SetMenuItemBitmaps(subMenu, MA_MENU_STATUS, MF_BYCOMMAND, stop, go);
+        stop = LoadBitmap(app->appInst, MAKEINTRESOURCE(IDB_STOP));
+        SetMenuItemBitmaps(app->subMenu, MA_MENU_STATUS, MF_BYCOMMAND, stop, go);
     }
 
-    iconHandle = (HICON) LoadImage(appInst, APPWEB_ICON, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+    iconHandle = (HICON) LoadImage(app->appInst, APPWEB_ICON, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
     if (iconHandle == 0) {
-        mprError(mpr, "Can't load icon %s", APPWEB_ICON);
+        mprError("Can't load icon %s", APPWEB_ICON);
         return MPR_ERR_CANT_INITIALIZE;
     }
 
     data.uID = APPWEB_MONITOR_ID;
-    data.hWnd = appHwnd;
+    data.hWnd = app->appHwnd;
     data.hIcon = iconHandle;
     data.cbSize = sizeof(NOTIFYICONDATA);
     data.uCallbackMessage = APPWEB_MONITOR_MESSAGE;
     data.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
 
-    mprStrcpy(data.szTip, sizeof(data.szTip), mprGetAppTitle(mpr));
-
+    scopy(data.szTip, sizeof(data.szTip), mprGetAppTitle());
     Shell_NotifyIcon(NIM_ADD, &data);
-
     if (iconHandle) {
         DestroyIcon(iconHandle);
     }
@@ -390,29 +396,29 @@ static int openMonitorIcon()
 
 
 /*
- *  Can be caleld multiple times
+    Can be caleld multiple times
  */
 static void closeMonitorIcon()
 {
     NOTIFYICONDATA  data;
 
     data.uID = APPWEB_MONITOR_ID;
-    data.hWnd = appHwnd;
+    data.hWnd = app->appHwnd;
     data.cbSize = sizeof(NOTIFYICONDATA);
     Shell_NotifyIcon(NIM_DELETE, &data);
-    if (monitorMenu) {
-        DestroyMenu(monitorMenu);
-        monitorMenu = NULL;
+    if (app->monitorMenu) {
+        DestroyMenu(app->monitorMenu);
+        app->monitorMenu = NULL;
     }
-    if (subMenu) {
-        DestroyMenu(subMenu);
-        subMenu = NULL;
+    if (app->subMenu) {
+        DestroyMenu(app->subMenu);
+        app->subMenu = NULL;
     }
 }
 
 
 /*
- *  Respond to monitor icon events
+    Respond to monitor icon events
  */
 static int monitorEvent(HWND hwnd, WPARAM wp, LPARAM lp)
 {
@@ -426,7 +432,7 @@ static int monitorEvent(HWND hwnd, WPARAM wp, LPARAM lp)
     msg = (uint) lp;
 
     /*
-     *  Show the menu on single right click
+        Show the menu on single right click
      */
     if (msg == WM_RBUTTONUP) {
         state = queryService();
@@ -444,7 +450,7 @@ static int monitorEvent(HWND hwnd, WPARAM wp, LPARAM lp)
         }
 
         /*
-         *  Popup the context menu. Position near the bottom of the screen
+            Popup the context menu. Position near the bottom of the screen
          */
         h = GetDesktopWindow();
         GetWindowRect(h, &windowRect);
@@ -453,16 +459,15 @@ static int monitorEvent(HWND hwnd, WPARAM wp, LPARAM lp)
         p.x = pos.x;
         p.y = windowRect.bottom - 20;
 
-        SetForegroundWindow(appHwnd);
-        TrackPopupMenu(subMenu, TPM_RIGHTALIGN | TPM_RIGHTBUTTON, p.x, p.y, 0, appHwnd, NULL);
+        SetForegroundWindow(app->appHwnd);
+        TrackPopupMenu(app->subMenu, TPM_RIGHTALIGN | TPM_RIGHTBUTTON, p.x, p.y, 0, app->appHwnd, NULL);
         /* Required Windows work-around */
-        PostMessage(appHwnd, WM_NULL, 0, 0);
-
+        PostMessage(app->appHwnd, WM_NULL, 0, 0);
         return 0;
     }
 
     /*
-     *  Launch the Appweb Monitor Manager on a double click
+        Launch the Appweb Monitor Manager on a double click
      */
     if (msg == WM_LBUTTONDBLCLK) {
         runBrowser("/index.html");
@@ -473,9 +478,9 @@ static int monitorEvent(HWND hwnd, WPARAM wp, LPARAM lp)
 
 
 /*
- *  Update menu string if text is non-null
- *  Update enable / disable if "enable" is non-zero. Positive will enable. Negative will disable.
- *  Update checked status if "check" is non-zero. Positive will enable, negative will disable.
+    Update menu string if text is non-null
+    Update enable / disable if "enable" is non-zero. Positive will enable. Negative will disable.
+    Update checked status if "check" is non-zero. Positive will enable, negative will disable.
  */
 static void updateMenu(int id, char *text, int enable, int check)
 {
@@ -490,78 +495,74 @@ static void updateMenu(int id, char *text, int enable, int check)
         menuInfo.dwTypeData = NULL;
         menuInfo.fMask = MIIM_STRING;
         menuInfo.dwTypeData = text;
-        menuInfo.cch = strlen(text) + 1;
-        rc = SetMenuItemInfo(subMenu, id, FALSE, &menuInfo);
+        menuInfo.cch = (uint) slen(text) + 1;
+        rc = SetMenuItemInfo(app->subMenu, id, FALSE, &menuInfo);
     }
-
     if (enable > 0) {
-        rc = EnableMenuItem(subMenu, id, MF_BYCOMMAND | MF_ENABLED);
+        rc = EnableMenuItem(app->subMenu, id, MF_BYCOMMAND | MF_ENABLED);
     } else if (enable < 0) {
-        rc = EnableMenuItem(subMenu, id, MF_BYCOMMAND | MF_GRAYED);
+        rc = EnableMenuItem(app->subMenu, id, MF_BYCOMMAND | MF_GRAYED);
     }
-
     if (check > 0) {
-        rc = CheckMenuItem(subMenu, id, MF_BYCOMMAND | MF_CHECKED);
+        rc = CheckMenuItem(app->subMenu, id, MF_BYCOMMAND | MF_CHECKED);
     } else if (check < 0) {
-        rc = CheckMenuItem(subMenu, id, MF_BYCOMMAND | MF_UNCHECKED);
+        rc = CheckMenuItem(app->subMenu, id, MF_BYCOMMAND | MF_UNCHECKED);
     }
-    rc = DrawMenuBar(appHwnd);
+    rc = DrawMenuBar(app->appHwnd);
 }
 
 
 /*
- *  Default log output is just to the console
+    Default log output is just to the console
  */
-static void logHandler(MprCtx ctx, int flags, int level, cchar *msg)
+static void logHandler(int flags, int level, cchar *msg)
 {
-    MessageBoxEx(NULL, msg, mprGetAppTitle(ctx), MB_OK, 0);
+    MessageBoxEx(NULL, msg, mprGetAppTitle(), MB_OK, 0);
 }
 
 
 /*
- *  Gracefull shutdown for Appweb
+    Gracefull shutdown for Appweb
  */
 static void shutdownAppweb()
 {
     HWND    hwnd;
     int     i;
 
-    hwnd = FindWindow(serviceWindowName, serviceWindowTitle);
+    hwnd = FindWindow(app->serviceWindowName, app->serviceWindowTitle);
     if (hwnd) {
-
         PostMessage(hwnd, WM_QUIT, 0, 0L);
 
         /*
-         *  Wait for up to ten seconds while the service exits
+            Wait for up to ten seconds while the service exits
          */
         for (i = 0; hwnd && i < 100; i++) {
-            mprSleep(mpr, 100);
-            hwnd = FindWindow(serviceWindowName, serviceWindowTitle);
+            mprSleep(100);
+            hwnd = FindWindow(app->serviceWindowName, app->serviceWindowTitle);
         }
 
     } else {
-        mprError(mpr, "Can't find %s to kill", serviceWindowTitle);
+        mprError("Can't find %s to kill", app->serviceWindowTitle);
         return;
     }
 }
 
 
 /*
- *  Get local port used by Appweb
+    Get local port used by Appweb
  */
 static int getAppwebPort()
 {
     char    *path, portBuf[32];
     int     fd;
 
-    path = mprJoinPath(mpr, mprGetAppDir(mpr), "../.port.log");
-
+    path = mprJoinPath(mprGetAppDir(), "../.port.log");
     if ((fd = open(path, O_RDONLY, 0666)) < 0) {
-        mprError(mpr, "Could not read port file %s", path);
+        mprError("Could not read port file %s", path);
         return -1;
     }
     if (read(fd, portBuf, sizeof(portBuf)) < 0) {
-        mprError(mpr, "Read from port file %s failed", path);
+        mprError("Read from port file %s failed", path);
         close(fd);
         return 80;
     }
@@ -571,7 +572,7 @@ static int getAppwebPort()
 
 
 /*
- *  Start the user's default browser
+    Start the user's default browser
  */
 static int runBrowser(char *page)
 {
@@ -584,13 +585,13 @@ static int runBrowser(char *page)
 
     port = getAppwebPort();
     if (port < 0) {
-        mprError(mpr, "Can't get Appweb listening port");
+        mprError("Can't get Appweb listening port");
         return -1;
     }
 
     path = getBrowserPath(MPR_MAX_STRING);
     if (path == 0) {
-        mprError(mpr, "Can't get browser startup command");
+        mprError("Can't get browser startup command");
         return -1;
     }
 
@@ -604,45 +605,39 @@ static int runBrowser(char *page)
 
     } else {
         /*
-         *  Patch out the "%1"
+            Patch out the "%1"
          */
         *pathArg = '\0';
         mprSprintf(cmdBuf, MPR_MAX_STRING, "%s \"http://localhost:%d/%s\"", path, port, page);
     }
 
-    mprLog(mpr, 4, "Running %s\n", cmdBuf);
+    mprLog(4, "Running %s\n", cmdBuf);
 
     memset(&startInfo, 0, sizeof(startInfo));
     startInfo.cb = sizeof(startInfo);
 
     if (! CreateProcess(0, cmdBuf, 0, 0, FALSE, 0, 0, 0, &startInfo, &procInfo)) {
-        mprError(mpr, "Can't create process: %s, %d", cmdBuf, mprGetOsError());
+        mprError("Can't create process: %s, %d", cmdBuf, mprGetOsError());
         return -1;
     }
     CloseHandle(procInfo.hProcess);
-
-    mprFree(path);
     return 0;
 }
 
 
 /*
- *  Return the path to run the user's default browser. Caller must free the return string.
+    Return the path to run the user's default browser. Caller must free the return string.
  */ 
 static char *getBrowserPath(int size)
 {
     char    cmd[MPR_MAX_STRING];
     char    *type, *cp, *path;
 
-    if (mprReadRegistry(mpr, &type, MPR_MAX_STRING, "HKEY_CLASSES_ROOT\\.htm", "") < 0) {
+    if (mprReadRegistry(&type, MPR_MAX_STRING, "HKEY_CLASSES_ROOT\\.htm", "") < 0) {
         return 0;
     }
-
     mprSprintf(cmd, MPR_MAX_STRING, "HKEY_CLASSES_ROOT\\%s\\shell\\open\\command", type);
-    mprFree(type);
-
-    if (mprReadRegistry(mpr, &path, size, cmd, "") < 0) {
-        mprFree(cmd);
+    if (mprReadRegistry(&path, size, cmd, "") < 0) {
         return 0;
     }
     for (cp = path; *cp; cp++) {
@@ -651,13 +646,13 @@ static char *getBrowserPath(int size)
         }
         *cp = tolower(*cp);
     }
-    mprLog(mpr, 4, "Browser path: %s\n", path);
+    mprLog(4, "Browser path: %s\n", path);
     return path;
 }
 
 
 /*
- *  Start the window's service
+    Start the window's service
  */ 
 static int startService()
 {
@@ -666,18 +661,18 @@ static int startService()
 
     mgr = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (! mgr) {
-        mprError(mpr, "Can't open service manager");
+        mprError("Can't open service manager");
         return MPR_ERR_CANT_ACCESS;
     }
-    svc = OpenService(mgr, serviceName, SERVICE_ALL_ACCESS);
+    svc = OpenService(mgr, app->serviceName, SERVICE_ALL_ACCESS);
     if (! svc) {
-        mprError(mpr, "Can't open service");
+        mprError("Can't open service");
         CloseServiceHandle(mgr);
         return MPR_ERR_CANT_OPEN;
     }
     rc = StartService(svc, 0, NULL);
     if (rc == 0) {
-        mprError(mpr, "Can't start %s service: %d", serviceName, GetLastError());
+        mprError("Can't start %s service: %d", app->serviceName, GetLastError());
         return MPR_ERR_CANT_INITIALIZE;
     }
     CloseServiceHandle(svc);
@@ -687,7 +682,7 @@ static int startService()
 
 
 /*
- *  Stop the service in the current process. 
+    Stop the service in the current process. 
  */ 
 static int stopService()
 {
@@ -697,18 +692,18 @@ static int stopService()
 
     mgr = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (! mgr) {
-        mprError(mpr, "Can't open service manager");
+        mprError("Can't open service manager");
         return MPR_ERR_CANT_ACCESS;
     }
-    svc = OpenService(mgr, serviceName, SERVICE_ALL_ACCESS);
+    svc = OpenService(mgr, app->serviceName, SERVICE_ALL_ACCESS);
     if (! svc) {
-        mprError(mpr, "Can't open service");
+        mprError("Can't open service");
         CloseServiceHandle(mgr);
         return MPR_ERR_CANT_OPEN;
     }
     rc = ControlService(svc, SERVICE_CONTROL_STOP, &status);
     if (rc == 0) {
-        mprError(mpr, "Can't stop %s service: %d", serviceName, GetLastError());
+        mprError("Can't stop %s service: %d", app->serviceName, GetLastError());
         return MPR_ERR_CANT_INITIALIZE;
     }
     CloseServiceHandle(svc);
@@ -718,15 +713,15 @@ static int stopService()
 
 
 /*
- *  Query the service. Return the service state:
- *
- *      SERVICE_CONTINUE_PENDING
- *      SERVICE_PAUSE_PENDING
- *      SERVICE_PAUSED
- *      SERVICE_RUNNING
- *      SERVICE_START_PENDING
- *      SERVICE_STOP_PENDING
- *      SERVICE_STOPPED
+    Query the service. Return the service state:
+  
+        SERVICE_CONTINUE_PENDING
+        SERVICE_PAUSE_PENDING
+        SERVICE_PAUSED
+        SERVICE_RUNNING
+        SERVICE_START_PENDING
+        SERVICE_STOP_PENDING
+        SERVICE_STOPPED
  */ 
 static uint queryService()
 {
@@ -736,10 +731,10 @@ static uint queryService()
 
     mgr = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (! mgr) {
-        mprError(mpr, "Can't open service manager");
+        mprError("Can't open service manager");
         return MPR_ERR_CANT_ACCESS;
     }
-    svc = OpenService(mgr, serviceName, SERVICE_ALL_ACCESS);
+    svc = OpenService(mgr, app->serviceName, SERVICE_ALL_ACCESS);
     if (! svc) {
         /* No warnings on error. Makes Monitor more useful */
         CloseServiceHandle(mgr);
@@ -747,7 +742,7 @@ static uint queryService()
     }
     rc = QueryServiceStatus(svc, &status);
     if (rc == 0) {
-        mprError(mpr, "Can't start %s service: %d", serviceName, GetLastError());
+        mprError("Can't start %s service: %d", app->serviceName, GetLastError());
         return 0;
     }
     CloseServiceHandle(svc);
@@ -758,33 +753,33 @@ static uint queryService()
 #endif /* WIN */
 
 /*
- *  @copy   default
- *
- *  Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
- *  Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
- *
- *  This software is distributed under commercial and open source licenses.
- *  You may use the GPL open source license described below or you may acquire
- *  a commercial license from Embedthis Software. You agree to be fully bound
- *  by the terms of either license. Consult the LICENSE.TXT distributed with
- *  this software for full details.
- *
- *  This software is open source; you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License as published by the
- *  Free Software Foundation; either version 2 of the License, or (at your
- *  option) any later version. See the GNU General Public License for more
- *  details at: http://www.embedthis.com/downloads/gplLicense.html
- *
- *  This program is distributed WITHOUT ANY WARRANTY; without even the
- *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- *  This GPL license does NOT permit incorporating this software into
- *  proprietary programs. If you are unable to comply with the GPL, you must
- *  acquire a commercial license to use this software. Commercial licenses
- *  for this software and support services are available from Embedthis
- *  Software at http://www.embedthis.com
- *
- *  Local variables:
+    @copy   default
+  
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+  
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+  
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+  
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+  
+    Local variables:
     tab-width: 4
     c-basic-offset: 4
     End:
