@@ -4645,10 +4645,29 @@ static ssize asyncRead(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 
 ssize mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 {
+#if BLD_WIN_LIKE
+{
+    int     rc, count;
+    /*
+        Need to detect EOF in windows. Pipe always in blocking mode, but reads block even with noone on the other end.
+     */
+    rc = PeekNamedPipe(cmd->files[channel].handle, NULL, 0, NULL, &count, NULL);
+    if (rc > 0 && count > 0) {
+        return read(cmd->files[channel].fd, buf, bufsize);
+    } 
+    if (cmd->process == 0 || WaitForSingleObject(cmd->process, 0) == WAIT_OBJECT_0) {
+        /* Process has exited - EOF */
+        return 0;
+    }
+    errno = EAGAIN;
+    return -1;
+}
+#else
     if (cmd->flags & MPR_CMD_ASYNC) {
         return asyncRead(cmd, channel, buf, bufsize);
     }
     return read(cmd->files[channel].fd, buf, bufsize);
+#endif
 }
 
 
@@ -5515,6 +5534,7 @@ static int makeChannel(MprCmd *cmd, int index)
 int startProcess(MprCmd *cmd)
 {
     MprCmdTaskFn    entryFn;
+    MprModule       *mp;
     SYM_TYPE        symType;
     char            *entryPoint, *program;
     int             i, pri;
@@ -5539,7 +5559,11 @@ int startProcess(MprCmd *cmd)
 #endif
     }
     if (symFindByName(sysSymTbl, entryPoint, (char**) &entryFn, &symType) < 0) {
-        if (mprLoadModule(cmd->program, NULL, NULL) < 0) {
+        if ((mp = mprCreateModule(cmd->program, cmd->program, entryPoint, NULL)) == 0) {
+            mprError("start: can't create module");
+            return MPR_ERR_CANT_CREATE;
+        }
+        if (mprLoadModule(mp) < 0) {
             mprError("start: can't load DLL %s, errno %d", program, mprGetOsError());
             return MPR_ERR_CANT_READ;
         }
@@ -12539,10 +12563,7 @@ void mprStopModuleService()
 }
 
 
-/*
-    Create a new module
- */
-MprModule *mprCreateModule(cchar *name, void *data)
+MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
 {
     MprModuleService    *ms;
     MprModule           *mp;
@@ -12551,18 +12572,21 @@ MprModule *mprCreateModule(cchar *name, void *data)
     ms = MPR->moduleService;
     mprAssert(ms);
 
+    if (path) {
+        if ((path = mprSearchForModule(path)) == 0) {
+            mprError("Can't find module \"%s\" in search path \"%s\"", path, mprGetModuleSearchPath());
+            return 0;
+        }
+    }
     if ((mp = mprAllocObj(MprModule, manageModule)) == 0) {
         return 0;
     }
-    index = mprAddItem(ms->modules, mp);
     mp->name = sclone(name);
+    mp->path = sclone(path);
+    mp->entry = sclone(entry);
     mp->moduleData = data;
     mp->lastActivity = mprGetTime();
-    mp->handle = 0;
-    mp->start = 0;
-    mp->stop = 0;
-    mp->timeout = 0;
-
+    index = mprAddItem(ms->modules, mp);
     if (index < 0 || mp->name == 0) {
         return 0;
     }
@@ -12575,8 +12599,10 @@ static void manageModule(MprModule *mp, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(mp->name);
         mprMark(mp->path);
+        mprMark(mp->entry);
 
     } else if (flags & MPR_MANAGE_FREE) {
+        //  MOB - should this unload the module?
     }
 }
 
@@ -12641,6 +12667,18 @@ void *mprLookupModuleData(cchar *name)
 }
 
 
+void mprSetModuleTimeout(MprModule *module, int timeout)
+{
+    module->timeout = timeout;
+}
+
+
+void mprSetModuleFinalizer(MprModule *module, MprModuleProc stop)
+{
+    module->stop = stop;
+}
+
+
 void mprSetModuleSearchPath(char *searchPath)
 {
     MprModuleService    *ms;
@@ -12671,31 +12709,57 @@ cchar *mprGetModuleSearchPath()
 }
 
 
+/*
+    Load a module. The module is located by searching for the filename by optionally using the module search path.
+ */
+int mprLoadModule(MprModule *mp)
+{
+#if BLD_CC_DYN_LOAD
+    mprAssert(mp);
+
+    mprLog(6, "Loading native module %s from %s", mp->name, mp->path);
+    if (mprLoadNativeModule(mp) < 0) {
+        return MPR_ERR_CANT_READ;
+    }
+    return 0;
+#else
+    mprError("Product built without the ability to load modules dynamically");
+    return MPR_ERR_BAD_STATE;
+#endif
+}
+
+
+void mprUnloadModule(MprModule *mp)
+{
+    mprStopModule(mp);
+#if BLD_CC_DYN_LOAD
+    mprUnloadNativeModule(mp);
+#endif
+    mprRemoveItem(MPR->moduleService->modules, mp);
+}
+
+
 #if BLD_CC_DYN_LOAD
 /*
     Return true if the shared library in "file" can be found. Return the actual path in *path. The filename
     may not have a shared library extension which is typical so calling code can be cross platform.
  */
-static int probe(cchar *filename, char **pathp)
+static char *probe(cchar *filename)
 {
     char    *path;
 
     mprAssert(filename && *filename);
-    mprAssert(pathp);
 
-    *pathp = 0;
     mprLog(6, "Probe for native module %s", filename);
     if (mprPathExists(filename, R_OK)) {
-        *pathp = sclone(filename);
-        return 1;
+        return sclone(filename);
     }
 
     if (strstr(filename, BLD_SHOBJ) == 0) {
         path = sjoin(filename, BLD_SHOBJ, NULL);
         mprLog(6, "Probe for native module %s", path);
         if (mprPathExists(path, R_OK)) {
-            *pathp = path;
-            return 1;
+            return path;
         }
     }
     return 0;
@@ -12703,36 +12767,37 @@ static int probe(cchar *filename, char **pathp)
 
 
 /*
-    Search for a module in the modulePath.
+    Search for a module "filename" in the modulePath. Return the result in "result"
  */
-int mprSearchForModule(cchar *name, char **path)
+char *mprSearchForModule(cchar *filename)
 {
-    char    *fileName, *searchPath, *dir, *tok;
+    char    *path, *f, *searchPath, *dir, *tok;
+
+    filename = mprGetNormalizedPath(filename);
 
     /*
-        Search for path directly
+        Search for the path directly
      */
-    if (probe(name, path)) {
-        mprLog(6, "Found native module %s at %s", name, *path);
-        return 0;
+    if ((path = probe(filename)) != 0) {
+        mprLog(6, "Found native module %s at %s", filename, path);
+        return path;
     }
 
     /*
         Search in the searchPath
      */
     searchPath = sclone(mprGetModuleSearchPath());
-
     tok = 0;
     dir = stok(searchPath, MPR_SEARCH_SEP, &tok);
     while (dir && *dir) {
-        fileName = mprJoinPath(dir, name);
-        if (probe(fileName, path)) {
-            mprLog(6, "Found native module %s at %s", name, *path);
-            return 0;
+        f = mprJoinPath(dir, filename);
+        if ((path = probe(f)) != 0) {
+            mprLog(6, "Found native module %s at %s", filename, path);
+            return path;
         }
         dir = stok(0, MPR_SEARCH_SEP, &tok);
     }
-    return MPR_ERR_CANT_FIND;
+    return 0;
 }
 #endif
 
@@ -22719,50 +22784,45 @@ int mprGetRandomBytes(char *buf, int length, int block)
 }
 
 
-/*
-    Load a module specified by "name". The module is located by searching using the module search path
- */
-MprModule *mprLoadModule(cchar *name, cchar *fun, void *data)
-{
 #if BLD_CC_DYN_LOAD
+int mprLoadNativeModule(MprModule *mp)
+{
     MprModuleEntry  fn;
-    MprModule       *mp;
-    char            *path, *moduleName;
     void            *handle;
 
-    mprAssert(name && *name);
+    mprAssert(mp);
 
-    moduleName = mprGetNormalizedPath(name);
+    if ((handle = dlopen(mp->path, RTLD_LAZY | RTLD_GLOBAL)) == 0) {
+        mprError("Can't load module %s\nReason: \"%s\"", mp->path, dlerror());
+        return MPR_ERR_CANT_OPEN;
+    } 
+    mp->handle = handle;
 
-    mp = 0;
-    path = 0;
-    if (mprSearchForModule(moduleName, &path) < 0) {
-        mprError("Can't find module \"%s\" in search path \"%s\"", name, mprGetModuleSearchPath());
-    } else {
-        mprLog(6, "Loading native module %s from %s", moduleName, path);
-        if ((handle = dlopen(path, RTLD_LAZY | RTLD_GLOBAL)) == 0) {
-            mprError("Can't load module %s\nReason: \"%s\"",  path, dlerror());
-        } else if (fun) {
-            if ((fn = (MprModuleEntry) dlsym(handle, fun)) != 0) {
-                mp = mprCreateModule(name, data);
-                mp->handle = handle;
-                if ((fn)(data, mp) < 0) {
-                    mprError("Initialization for module %s failed", name);
-                    dlclose(handle);
-                    mp = 0;
-                }
-            } else {
-                mprError("Can't load module %s\nReason: can't find function \"%s\"",  path, fun);
+    if (mp->entry) {
+        if ((fn = (MprModuleEntry) dlsym(handle, mp->entry)) != 0) {
+            if ((fn)(mp->moduleData, mp) < 0) {
+                mprError("Initialization for module %s failed", mp->name);
                 dlclose(handle);
+                return MPR_ERR_CANT_INITIALIZE;
             }
+        } else {
+            mprError("Can't load module %s\nReason: can't find function \"%s\"", mp->path, mp->entry);
+            dlclose(handle);
+            return MPR_ERR_CANT_READ;
         }
     }
-    return mp;
-#else
-    mprError("Product built without the ability to load modules dynamically");
     return 0;
-#endif
 }
+
+
+int mprUnloadNativeModule(MprModule *mp)
+{
+    if (mp->handle) {
+        return dlclose(mp->handle);
+    }
+    return 0;
+}
+#endif
 
 
 void mprSleep(int milliseconds)
@@ -22776,16 +22836,6 @@ void mprSleep(int milliseconds)
     do {
         rc = nanosleep(&timeout, &timeout);
     } while (rc < 0 && errno == EINTR);
-}
-
-
-void mprUnloadModule(MprModule *mp)
-{
-    mprStopModule(mp);
-    if (mp->handle) {
-        dlclose(mp->handle);
-    }
-    mprRemoveItem(MPR->moduleService->modules, mp);
 }
 
 
@@ -22911,65 +22961,58 @@ int mprGetRandomBytes(char *buf, int length, int block)
 }
 
 
-MprModule *mprLoadModule(cchar *name, cchar *initFunction, void *data)
+int mprLoadNativeModule(MprModule *mp)
 {
-    MprModule       *mp;
     MprModuleEntry  fn;
     SYM_TYPE        symType;
     void            *handle;
-    char            entryPoint[MPR_MAX_FNAME], *module, *path;
+    char            entryPoint[MPR_MAX_FNAME];
     int             fd;
 
-    mprAssert(name && *name);
+    mprAssert(mp);
 
-    mp = 0;
-    path = 0;
-    module = mprGetNormalizedPath(name);
-
-    if (mprSearchForModule(module, &path) < 0) {
-        mprError("Can't find module \"%s\" in search path \"%s\"", name, mprGetModuleSearchPath());
-
-    } else if (moduleFindByName((char*) path) == 0) {
-        if ((fd = open(path, O_RDONLY, 0664)) < 0) {
-            mprError("Can't open module \"%s\"", path);
-
-        } else {
-            mprLog(5, "Loading module %s", name);
-            errno = 0;
-            handle = loadModule(fd, LOAD_GLOBAL_SYMBOLS);
-            if (handle == 0 || errno != 0) {
-                close(fd);
-                if (handle) {
-                    unldByModuleId(handle, 0);
-                }
-                mprError("Can't load module %s", path);
-
-            } else {
-                close(fd);
-                if (initFunction) {
+    if (moduleFindByName(mp->path) != 0) {
+        return 0;
+    }
+    if ((fd = open(mp->path, O_RDONLY, 0664)) < 0) {
+        mprError("Can't open module \"%s\"", mp->path);
+        return MPR_ERR_CANT_OPEN;
+    }
+    errno = 0;
+    handle = loadModule(fd, LOAD_GLOBAL_SYMBOLS);
+    if (handle == 0 || errno != 0) {
+        close(fd);
+        if (handle) {
+            unldByModuleId(handle, 0);
+        }
+        mprError("Can't load module %s", mp->path);
+        return MPR_ERR_CANT_READ;
+    }
+    close(fd);
+    if (mp->entry) {
 #if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
-                    mprSprintf(entryPoint, sizeof(entryPoint), "_%s", initFunction);
+        mprSprintf(entryPoint, sizeof(entryPoint), "_%s", mp->entry);
 #else
-                    scopy(entryPoint, sizeof(entryPoint), initFunction);
+        scopy(entryPoint, sizeof(entryPoint), mp->entry);
 #endif
-                    fn = 0;
-                    if (symFindByName(sysSymTbl, entryPoint, (char**) &fn, &symType) == -1) {
-                        mprError("Can't find symbol %s when loading %s", initFunction, path);
-
-                    } else {
-                        mp = mprCreateModule(name, data);
-                        mp->handle = handle;
-                        if ((fn)(data, mp) < 0) {
-                            mprError("Initialization for %s failed.", path);
-                        } else {
-                            mp = NULL;
-                        }
-                    }
-                }
-            }
+        fn = 0;
+        if (symFindByName(sysSymTbl, entryPoint, (char**) &fn, &symType) == -1) {
+            mprError("Can't find symbol %s when loading %s", mp->entry, mp->path);
+            return MPR_ERR_CANT_READ;
+        }
+        mp->handle = handle;
+        if ((fn)(mp->moduleData, mp) < 0) {
+            mprError("Initialization for %s failed.", mp->path);
+            return MPR_ERR_CANT_INITIALIZE;
         }
     }
-    return mp;
+    return 0;
+}
+
+
+void mprUnloadNativeModule(MprModule *mp)
+{
+    unldByModuleId((MODULE_ID) mp->handle, 0);
 }
 
 
@@ -22984,14 +23027,6 @@ void mprSleep(int milliseconds)
     do {
         rc = nanosleep(&timeout, &timeout);
     } while (rc < 0 && errno == EINTR);
-}
-
-
-void mprUnloadModule(MprModule *mp)
-{
-    mprStopModule(mp);
-    mprRemoveItem(mprGetMpr()->moduleService->modules, mp);
-    unldByModuleId((MODULE_ID) mp->handle, 0);
 }
 
 
@@ -24617,44 +24652,39 @@ int mprGetRandomBytes(char *buf, int length, int block)
 }
 
 
-MprModule *mprLoadModule(cchar *name, cchar *fun, void *data)
+int mprLoadNativeModule(MprModule *mp)
 {
-    MprModule       *mp;
     MprModuleEntry  fn;
-    char            *path, *moduleName;
+    char            *baseName;
     void            *handle;
 
-    mprAssert(name && *name);
-
-    mp = 0;
-    path = 0;
-    moduleName = mprGetNormalizedPath(name);
-
-    if (mprSearchForModule(moduleName, &path) < 0) {
-        mprError("Can't find module \"%s\" in search path \"%s\"", name, mprGetModuleSearchPath());
-    } else {
-        mprLog(5, "Loading native module %s from %s", moduleName, path);
-        //  CHANGE - was doing basename here on path
-        if ((handle = GetModuleHandle(name)) == 0 && (handle = LoadLibrary(path)) == 0) {
-            mprError("Can't load module %s\nReason: \"%d\"\n",  path, mprGetOsError());
-
-        } else if (fun) {
-            if ((fn = (MprModuleEntry) GetProcAddress((HINSTANCE) handle, fun)) != 0) {
-                mp = mprCreateModule(name, data);
-                mp->handle = handle;
-                if ((fn)(data, mp) < 0) {
-                    mprError("Initialization for module %s failed", name);
-                    FreeLibrary((HINSTANCE) handle);
-                    mp = NULL;
-                }
-
-            } else {
-                mprError("Can't load module %s\nReason: can't find function \"%s\"\n", name, fun);
-                FreeLibrary((HINSTANCE) handle);
-            }
+    mprAssert(mp);
+    baseName = mprGetPathBase(mp->path);
+    if ((handle = GetModuleHandle(baseName)) == 0 && (handle = LoadLibrary(mp->path)) == 0) {
+        mprError("Can't load module %s\nReason: \"%d\"\n", mp->path, mprGetOsError());
+        return MPR_ERR_CANT_READ;
+    } 
+    mp->handle = handle;
+    if (mp->entry) {
+        if ((fn = (MprModuleEntry) GetProcAddress((HINSTANCE) handle, mp->entry)) == 0) {
+            mprError("Can't load module %s\nReason: can't find function \"%s\"\n", mp->name, mp->entry);
+            FreeLibrary((HINSTANCE) handle);
+            return MPR_ERR_CANT_ACCESS;
+        }
+        if ((fn)(mp->moduleData, mp) < 0) {
+            mprError("Initialization for module %s failed", mp->name);
+            FreeLibrary((HINSTANCE) handle);
+            return MPR_ERR_CANT_INITIALIZE;
         }
     }
-    return mp;
+    return 0;
+}
+
+
+int mprUnloadNativeModule(MprModule *mp)
+{
+    mprAssert(mp->handle);
+    return FreeLibrary((HINSTANCE) mp->handle) != 0 ? 0 : MPR_ERR_ABORTED;
 }
 
 
@@ -24757,16 +24787,6 @@ char *mprToMulti(cuni *w)
     return str;
 }
 #endif
-
-
-void mprUnloadModule(MprModule *mp)
-{
-    mprAssert(mp->handle);
-
-    mprStopModule(mp);
-    mprRemoveItem(MPR->moduleService->modules, mp);
-    FreeLibrary((HINSTANCE) mp->handle);
-}
 
 
 void mprWriteToOsLog(cchar *message, int flags, int level)
@@ -25041,47 +25061,32 @@ int mprGetRandomBytes(char *buf, int length, int block)
 }
 
 
-MprModule *mprLoadModule(cchar *moduleName, cchar *initFunction)
+int mprLoadModule(MprModule *mp)
+    cchar *moduleName, cchar *initFunction)
 {
-    MprModule       *mp;
     MprModuleEntry  fn;
-    char            *module;
-    char            *path, *name;
     void            *handle;
+    char            *baseName;
 
     mprAssert(moduleName && *moduleName);
 
-    mp = 0;
-    name = path = 0;
-    module = mprGetAbsPath(moduleName);
-
-    if (mprSearchForModule(module, &path) < 0) {
-        mprError("Can't find module \"%s\" in search path \"%s\"", moduleName, mprGetModuleSearchPath());
-
-    } else {
-        name = mprGetPathBase(module);
-        path = mprGetPathBase(path, path);
-
-        mprLog(MPR_INFO, "Loading native module %s from %s", moduleName, path);
-
-        if ((handle = GetModuleHandle(name)) == 0 && (handle = LoadLibrary(path)) == 0) {
-            mprError("Can't load module %s\nReason: \"%d\"\n",  path, mprGetOsError());
-
-        } else if (initFunction) {
-            if ((fn = (MprModuleEntry) GetProcAddress((HINSTANCE) handle, initFunction)) != 0) {
-                mp = mprCreateModule(name, data);
-                if ((fn)(data, mp)) < 0) {
-                    mprError("Initialization for module %s failed", name);
-                    FreeLibrary((HINSTANCE) handle);
-
-                } else {
-                    mp->handle = handle;
-                }
-            } else {
-                mprError("Can't load module %s\nReason: can't find function \"%s\"\n",  name, initFunction);
+    baseName = mprGetPathBase(mp->path);
+    if ((handle = GetModuleHandle(baseName)) == 0 && (handle = LoadLibrary(mp->path)) == 0) {
+        mprError("Can't load module %s\nReason: \"%d\"\n", mp->path, mprGetOsError());
+        return MPR_ERR_CANT_READ;
+    } 
+    mp->handle = handle;
+    if (mp->entry) {
+        if ((fn = (MprModuleEntry) GetProcAddress((HINSTANCE) handle, mp->entry)) != 0) {
+            if ((fn)(mp->moduleData, mp)) < 0) {
+                mprError("Initialization for module %s failed", mp->name);
                 FreeLibrary((HINSTANCE) handle);
-
+                return MPR_ERR_CANT_ACCESS;
             }
+        } else {
+            mprError("Can't load module %s\nReason: can't find function \"%s\"\n", mp->name, mp->entry);
+            FreeLibrary((HINSTANCE) handle);
+            return MPR_ERR_CANT_INITIALIZE;
         }
     }
     return mp;

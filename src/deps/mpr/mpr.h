@@ -4958,6 +4958,7 @@ typedef int (*MprModuleProc)(struct MprModule *mp);
 typedef struct MprModule {
     char            *name;              /**< Unique module name */
     char            *path;              /**< Module library filename */
+    char            *entry;             /**< Module library init entry point */
     void            *moduleData;        /**< Module specific data */
     void            *handle;            /**< O/S shared library load handle */
     MprTime         lastActivity;       /**< When the module was last used */
@@ -4991,27 +4992,35 @@ extern cchar *mprGetModuleSearchPath();
     @description This call will create a module object for a loadable module. This should be invoked by the 
         module itself in its module entry point to register itself with the MPR.
     @param name Name of the module
-    @param data to associate with this module
+    @param path Optional filename of a module library to load. When loading, the filename will be searched using 
+        the defined module search path (see #mprSetModuleSearchPath). The filename may or may not include a platform 
+        specific shared library extension such as .dll, .so or .dylib. By omitting the library extension, code can 
+        portably load shared libraries.
+    @param entry Name of function to invoke after loading the module.
+    @param data Arbitrary data pointer. This will be defined in MprModule.data and passed into the module initialization
+        entry point.
     @returns A module object for this module
     @ingroup MprModule
  */
-extern MprModule *mprCreateModule(cchar *name, void *data);
+extern MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data);
 
 /**
     Load a module
-    @description Load a module into the MPR. This will load a dynamic shared object (shared library) and call the
-        modules entry point. If the module has already been loaded, it this call will do nothing and will just
-        return the already defined module object. 
-    @param name Name of the module to load. The module will be searched using the defined module search path 
-        (see #mprSetModuleSearchPath). The filename may or may not include a platform specific shared library extension such
-        as .dll, .so or .dylib. By omitting the library extension, code can portably load shared libraries.
-    @param entryPoint Name of function to invoke after loading the module.
-    @param data Arbitrary data pointer. This will be defined in MprModule.data and passed into the module initialization
-        entry point.
-    @returns A module object for this module created in the module entry point by calling #mprCreateModule
+    @description Load a module library. This will load a dynamic shared object (shared library) and call the
+        modules library entry point. If the module is already loaded, this call will do nothing.
+    @param mp Module object created via $mprCreateModule.
+    @returns Zero if successful, otherwise a negative MPR error code.
     @ingroup MprModule
  */
-extern MprModule *mprLoadModule(cchar *name, cchar *entryPoint, void *data);
+extern int mprLoadModule(MprModule *mp);
+
+#if BLD_CC_DYN_LOAD 
+//  MOB DOC
+extern int mprLoadNativeModule(MprModule *mp);
+extern int mprUnloadNativeModule(MprModule *mp);
+#endif
+extern void mprSetModuleTimeout(MprModule *module, int timeout);
+extern void mprSetModuleFinalizer(MprModule *module, MprModuleProc stop);
 
 /**
     Lookup a module
@@ -5034,10 +5043,9 @@ extern void *mprLookupModuleData(cchar *name);
 /**
     Search for a module on the current module path
     @param module Name of the module to locate.
-    @param path Pointer to a string that will receive the module path.
-    @returns 0 if the module was found and path set to the location of the module.
+    @return A string containing the full path to the module. Returns NULL if the module filename cannot be found.
  */
-extern int mprSearchForModule(cchar *module, char **path);
+extern char *mprSearchForModule(cchar *module);
 
 /**
     Set the module search path

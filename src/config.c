@@ -1605,7 +1605,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                 mprError("Can't find module stage %s", name);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            module->timeout = stoi(cp, 10, NULL) * MPR_TICKS_PER_SEC;
+            module->timeout = (int) stoi(cp, 10, NULL) * MPR_TICKS_PER_SEC;
             return 1;
 
         } else if (scasecmp(key, "UploadDir") == 0 || scasecmp(key, "FileUploadDir") == 0) {

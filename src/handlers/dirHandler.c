@@ -628,7 +628,7 @@ int maOpenDirHandler(Http *http)
     HttpStage   *handler;
     Dir         *dir;
 
-    if ((handler = httpCreateHandler(http, "dirHandler", HTTP_STAGE_GET | HTTP_STAGE_HEAD)) == 0) {
+    if ((handler = httpCreateHandler(http, "dirHandler", HTTP_STAGE_GET | HTTP_STAGE_HEAD, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     if ((handler->stageData = dir = mprAllocObj(Dir, manageDir)) == 0) {

@@ -2200,7 +2200,7 @@ static MprModule *loadSsl(bool lazy)
         return 0;
     }
 #endif
-    if ((mp = mprCreateModule("sslModule", NULL)) == 0) {
+    if ((mp = mprCreateModule("sslModule", NULL, NULL, NULL)) == 0) {
         return 0;
     }
     MPR->flags |= MPR_SSL_PROVIDER_LOADED;

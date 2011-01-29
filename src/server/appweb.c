@@ -284,9 +284,6 @@ static int initialize(cchar *ip, int port)
 
 static int findConfigFile()
 {
-#ifdef BLD_CONFIG_FILE
-    app->configFile = sclone(BLD_CONFIG_FILE);
-#endif
     if (app->configFile == 0) {
         app->configFile = mprJoinPathExt(mprGetAppName(), ".conf");
     }

@@ -1007,12 +1007,12 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
 /*  
     Dynamic module initialization
  */
-int maCgiHandlerInit(Http *http, MprModule *mp)
+int maCgiHandlerInit(Http *http, MprModule *module)
 {
     HttpStage     *handler;
 
     handler = httpCreateHandler(http, "cgiHandler", HTTP_STAGE_ALL | HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | 
-        HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT | HTTP_STAGE_THREAD);
+        HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT | HTTP_STAGE_THREAD, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

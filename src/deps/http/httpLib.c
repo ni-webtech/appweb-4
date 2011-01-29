@@ -978,8 +978,7 @@ int httpOpenAuthFilter(Http *http)
 {
     HttpStage     *filter;
 
-    filter = httpCreateFilter(http, "authFilter", HTTP_STAGE_ALL);
-    if (filter == 0) {
+    if ((filter = httpCreateFilter(http, "authFilter", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     http->authFilter = filter;
@@ -1607,8 +1606,7 @@ int httpOpenChunkFilter(Http *http)
 {
     HttpStage     *filter;
 
-    filter = httpCreateFilter(http, "chunkFilter", HTTP_STAGE_ALL);
-    if (filter == 0) {
+    if ((filter = httpCreateFilter(http, "chunkFilter", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     http->chunkFilter = filter;
@@ -3645,7 +3643,7 @@ HttpLimits *httpCreateLimits(int serverSide)
 }
 
 
-void httpRegisterStage(Http *http, HttpStage *stage)
+void httpAddStage(Http *http, HttpStage *stage)
 {
     mprAddKey(http->stages, stage->name, stage);
 }
@@ -4436,8 +4434,7 @@ int httpOpenNetConnector(Http *http)
 {
     HttpStage     *stage;
 
-    stage = httpCreateConnector(http, "netConnector", HTTP_STAGE_ALL);
-    if (stage == 0) {
+    if ((stage = httpCreateConnector(http, "netConnector", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     stage->outgoingService = netOutgoingService;
@@ -5251,13 +5248,12 @@ int httpOpenPassHandler(Http *http)
 {
     HttpStage     *stage;
 
-    stage = httpCreateHandler(http, "passHandler", HTTP_STAGE_ALL | HTTP_STAGE_VIRTUAL);
-    if (stage == 0) {
+    if ((stage = httpCreateHandler(http, "passHandler", HTTP_STAGE_ALL | HTTP_STAGE_VIRTUAL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
+    http->passHandler = stage;
     stage->process = processPass;
     stage->open = openPass;
-    http->passHandler = stage;
     return 0;
 }
 
@@ -5916,21 +5912,29 @@ bool httpIsQueueEmpty(HttpQueue *q)
 }
 
 
-void httpOpenQueue(HttpQueue *q, ssize chunkSize)
+int httpOpenQueue(HttpQueue *q, ssize chunkSize)
 {
     Http        *http;
+    HttpConn    *conn;
     HttpStage   *stage;
+    MprModule   *module;
 
     stage = q->stage;
+    conn = q->conn;
     http = q->conn->http;
 
     if (chunkSize > 0) {
         q->packetSize = min(q->packetSize, chunkSize);
     }
-    if (stage->flags & HTTP_STAGE_UNLOADED) {
-        mprAssert(stage->path);
+    if (stage->flags & HTTP_STAGE_UNLOADED && stage->module) {
+        module = stage->module;
         mprLog(2, "Loading module for %s", stage->name);
-        mprLoadModule(stage->name, stage->path, q->conn->http);
+        module = mprCreateModule(module->name, module->path, module->entry, http);
+        if (mprLoadModule(module) < 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load module %s", module->name);
+            return MPR_ERR_CANT_READ;
+        }
+        stage->module = module;
     }
     if (stage->module) {
         stage->module->lastActivity = http->now;
@@ -5939,6 +5943,7 @@ void httpOpenQueue(HttpQueue *q, ssize chunkSize)
     if (q->open) {
         HTTP_TIME(q->conn, q->stage->name, "open", q->stage->open(q));
     }
+    return 0;
 }
 
 
@@ -6278,8 +6283,7 @@ int httpOpenRangeFilter(Http *http)
 {
     HttpStage     *filter;
 
-    filter = httpCreateFilter(http, "rangeFilter", HTTP_STAGE_ALL);
-    if (filter == 0) {
+    if ((filter = httpCreateFilter(http, "rangeFilter", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     http->rangeFilter = filter;
@@ -8209,8 +8213,7 @@ int httpOpenSendConnector(Http *http)
 {
     HttpStage     *stage;
 
-    stage = httpCreateConnector(http, "sendConnector", HTTP_STAGE_ALL);
-    if (stage == 0) {
+    if ((stage = httpCreateConnector(http, "sendConnector", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     stage->open = httpSendOpen;
@@ -9086,14 +9089,19 @@ static void incomingService(HttpQueue *q)
 }
 
 
-HttpStage *httpCreateStage(Http *http, cchar *name, int flags)
+HttpStage *httpCreateStage(Http *http, cchar *name, int flags, MprModule *module)
 {
     HttpStage     *stage;
 
     mprAssert(http);
     mprAssert(name && *name);
 
-    if ((stage = mprAllocObj(HttpStage, manageStage)) == 0) {
+    if ((stage = httpLookupStage(http, name)) != 0) {
+        if (!(stage->flags & HTTP_STAGE_UNLOADED)) {
+            mprError("Stage %s already exists", name);
+            return 0;
+        }
+    } else if ((stage = mprAllocObj(HttpStage, manageStage)) == 0) {
         return 0;
     }
     stage->flags = flags;
@@ -9104,7 +9112,8 @@ HttpStage *httpCreateStage(Http *http, cchar *name, int flags)
     stage->incomingService = incomingService;
     stage->outgoingData = outgoingData;
     stage->outgoingService = httpDefaultOutgoingServiceStage;
-    httpRegisterStage(http, stage);
+    stage->module = module;
+    httpAddStage(http, stage);
     return stage;
 }
 
@@ -9133,33 +9142,21 @@ HttpStage *httpCloneStage(Http *http, HttpStage *stage)
 }
 
 
-HttpStage *httpCreateHandler(Http *http, cchar *name, int flags)
+HttpStage *httpCreateHandler(Http *http, cchar *name, int flags, MprModule *module)
 {
-    HttpStage     *stage;
-    
-    stage = httpCreateStage(http, name, flags);
-    stage->flags |= HTTP_STAGE_HANDLER;
-    return stage;
+    return httpCreateStage(http, name, flags | HTTP_STAGE_HANDLER, module);
 }
 
 
-HttpStage *httpCreateFilter(Http *http, cchar *name, int flags)
+HttpStage *httpCreateFilter(Http *http, cchar *name, int flags, MprModule *module)
 {
-    HttpStage     *stage;
-    
-    stage = httpCreateStage(http, name, flags);
-    stage->flags |= HTTP_STAGE_FILTER;
-    return stage;
+    return httpCreateStage(http, name, flags | HTTP_STAGE_FILTER, module);
 }
 
 
-HttpStage *httpCreateConnector(Http *http, cchar *name, int flags)
+HttpStage *httpCreateConnector(Http *http, cchar *name, int flags, MprModule *module)
 {
-    HttpStage     *stage;
-    
-    stage = httpCreateStage(http, name, flags);
-    stage->flags |= HTTP_STAGE_CONNECTOR;
-    return stage;
+    return httpCreateStage(http, name, flags | HTTP_STAGE_CONNECTOR, module);
 }
 
 
@@ -10156,8 +10153,7 @@ int httpOpenUploadFilter(Http *http)
 {
     HttpStage     *filter;
 
-    filter = httpCreateFilter(http, "uploadFilter", HTTP_STAGE_ALL);
-    if (filter == 0) {
+    if ((filter = httpCreateFilter(http, "uploadFilter", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     http->uploadFilter = filter;

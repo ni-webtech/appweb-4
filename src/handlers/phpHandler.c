@@ -484,32 +484,22 @@ static int finalizePhp(MprModule *mp)
 
 
 /*
-    Dynamic module initialization
+    Module initialization. Called when doing both dynamic or static linking.
  */
-int maPhpHandlerInit(Http *http, MprModule *mp)
+int maPhpHandlerInit(Http *http, MprModule *module)
 {
     HttpStage     *handler;
 
-    if ((handler = httpLookupStage(http, "phpHandler")) == 0) {
-        handler = httpCreateHandler(http, "phpHandler", HTTP_STAGE_ALL | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | 
-            HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_THREAD | HTTP_STAGE_MISSING_EXT);
-        if (handler == 0) {
-            return MPR_ERR_CANT_CREATE;
-        }
-    }
-    //  MOB - need to associate module with handler
-    handler->module = mp;
-    handler->path = sclone(mp->path);
+    mprSetModuleFinalizer(module, finalizePhp); 
 
+    handler = httpCreateHandler(http, module->name, HTTP_STAGE_ALL | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | 
+        HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_THREAD | HTTP_STAGE_MISSING_EXT, module);
+    if (handler == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
     handler->open = openPhp;
     handler->process = processPhp;
     http->phpHandler = handler;
-    //  MOB - really need an API for this (mprSetModuleFinalizer)
-#if FUTURE
-    maSetModuleFinalizer(handler, finalizePhp); 
-    maSetModuleTimeout(handler, xx); 
-#endif
-    mp->stop = finalizePhp;
     return 0;
 }
 

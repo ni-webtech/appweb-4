@@ -157,7 +157,8 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
     mprSprintf(entryPoint, sizeof(entryPoint), "ma%sInit", name);
     entryPoint[2] = toupper((int) entryPoint[2]);
 
-    if (mprLoadModule(path, entryPoint, MPR->httpService) == 0) {
+    module = mprCreateModule(name, path, entryPoint, MPR->httpService);
+    if (mprLoadModule(module) < 0) {
         return MPR_ERR_CANT_CREATE;
     }
     mprLog(MPR_CONFIG, "Activating module (Loadable) %s", name);

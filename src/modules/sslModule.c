@@ -122,14 +122,14 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
 /*
     Loadable module initialization. 
  */
-int maSslModuleInit(Http *http, MprModule *mp)
+int maSslModuleInit(Http *http, MprModule *module)
 {
     HttpStage     *stage;
 
     if (mprLoadSsl(1) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    if ((stage = httpCreateStage(http, "sslModule", HTTP_STAGE_MODULE)) == 0) {
+    if ((stage = httpCreateStage(http, "sslModule", HTTP_STAGE_MODULE, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     stage->parse = (HttpParse) parseSsl; 

@@ -15,7 +15,7 @@ static MprList *staticModules;
 
 /*********************************** Code *************************************/
 
-static int loadStaticModule(Http *http, cchar *name, int (*callback)(Http *http, MprModule *mp))
+static int loadStaticModule(Http *http, cchar *name, MprModuleEntry entry)
 {
     MprModule   *mp;
     int         rc;
@@ -23,9 +23,8 @@ static int loadStaticModule(Http *http, cchar *name, int (*callback)(Http *http,
     mprAssert(staticModules);
     mprAssert(name && *name);
 
-    mp = mprCreateModule(http, name, NULL);
-    rc = (callback)(http, mp);
-    if (rc == 0) {
+    mp = mprCreateModule(name, NULL, NULL, NULL);
+    if ((entry)(http, mp) == 0) {
         mprAddItem(staticModules, mp);
     }
     return rc;
@@ -41,19 +40,19 @@ void maLoadStaticModules(MaAppweb *appweb)
 
     //  MOB - need extensible API for adding static modules to this. 
 #if BLD_FEATURE_CGI
-    loadStaticModule(http, "mod_cgi", maCgiHandlerInit);
+    loadStaticModule(http, "cgiHandler", maCgiHandlerInit);
 #endif
 #if BLD_FEATURE_EJS
-    loadStaticModule(http, "mod_ejs", maEjsHandlerInit);
-#endif
-#if BLD_FEATURE_SSL
-    loadStaticModule(http, "mod_ssl", maSslModuleInit);
+    loadStaticModule(http, "ejsHandler", maEjsHandlerInit);
 #endif
 #if BLD_FEATURE_PHP
-    loadStaticModule(http, "mod_php", maPhpHandlerInit);
+    loadStaticModule(http, "phpHandler", maPhpHandlerInit);
 #endif
-#ifdef BLD_STATIC_MODULE
-    loadStaticModule(http, "static", BLD_STATIC_MODULE);
+#if BLD_FEATURE_SSL
+    loadStaticModule(http, "sslModule", maSslModuleInit);
+#endif
+#ifdef BLD_MODULE_NAME && BLD_MODULE_ENTRY
+    loadStaticModule(http, BLD_MODULE_NAME, BLD_MODULE_ENTRY);
 #endif
 
 }
