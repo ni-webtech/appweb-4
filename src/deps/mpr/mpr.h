@@ -495,10 +495,13 @@ typedef off_t MprOffset;
 #endif
 
 
+#if BLD_UNIX_LIKE || VXWORKS
+    #define MPR_TEXT        ""
+    #define MPR_BINARY      ""
+#endif
+
 #if BLD_UNIX_LIKE
     #define closesocket(x)  close(x)
-    #define MPR_BINARY      ""
-    #define MPR_TEXT        ""
     #define SOCKET_ERROR    -1
     #ifndef PTHREAD_MUTEX_RECURSIVE_NP
         #define PTHREAD_MUTEX_RECURSIVE_NP PTHREAD_MUTEX_RECURSIVE
