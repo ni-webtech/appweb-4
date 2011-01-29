@@ -36,8 +36,10 @@ endif
 compileExtra: prep $(PROJECTS)
 
 prep:
-	if ls ../../../bin/*.def >/dev/null 2>&1 ; then \
-		cp ../../../bin/*.def . ; \
+	if ls $(BLD_BIN_DIR)/*.def >/dev/null 2>&1 ; then \
+		for f in $(BLD_BIN_DIR)/*.def ; do \
+			cp $$f $$.tmp ; cat $$.tmp | grep -v mask@@NegDouble >$$f ; rm -f $$.tmp ; \
+		done ; \
 	fi
 
 libmpr.vcproj: Makefile buildConfig.override

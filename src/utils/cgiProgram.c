@@ -27,7 +27,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#if _WIN32 || WINCE
+#include <fcntl.h>
+#include <io.h>
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 
 /*********************************** Locals ***********************************/
 
