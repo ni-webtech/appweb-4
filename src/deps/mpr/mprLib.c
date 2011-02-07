@@ -4544,7 +4544,7 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
 #endif
         if (stdoutFd >= 0) {
             cmd->handlers[MPR_CMD_STDOUT] = mprCreateWaitHandler(stdoutFd, MPR_READABLE, cmd->dispatcher,
-                (MprEventProc) stdoutCallback, cmd);
+                (MprEventProc) stdoutCallback, cmd, 0);
         }
         if (stderrFd >= 0) {
             /*
@@ -4552,7 +4552,7 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
              */
             mask = (stdoutFd < 0) ? MPR_READABLE : 0;
             cmd->handlers[MPR_CMD_STDERR] = mprCreateWaitHandler(stderrFd, mask, cmd->dispatcher,
-                (MprEventProc) stderrCallback, cmd);
+                (MprEventProc) stderrCallback, cmd, 0);
         }
     }
 #endif
@@ -7554,7 +7554,7 @@ void mprScheduleDispatcher(MprDispatcher *dispatcher)
 
 
 /*
-    Dispatch events for a dispatcher. A dispatcher is ever only run on one thread, and so this code is single-threaded.
+    Dispatch events for a dispatcher
  */
 static int dispatchEvents(MprDispatcher *dispatcher)
 {
@@ -7569,7 +7569,6 @@ static int dispatchEvents(MprDispatcher *dispatcher)
 
 //  MOB -- locking because another thread may queue an event
     lock(es);
-    /* MOB - not true. No locking because this must run in a single owning thread */
     for (count = 0; (event = mprGetNextEvent(dispatcher)) != 0; count++) {
         mprAssert(event->magic == MPR_EVENT_MAGIC);
         dispatcher->current = event;
@@ -16831,7 +16830,8 @@ static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
 }
 
 
-MprWaitHandler *mprAddSocketHandler(MprSocket *sp, int mask, MprDispatcher *dispatcher, MprEventProc proc, void *data)
+MprWaitHandler *mprAddSocketHandler(MprSocket *sp, int mask, MprDispatcher *dispatcher, MprEventProc proc, void *data, 
+        int flags)
 {
     mprAssert(sp);
     mprAssert(sp->fd >= 0);
@@ -16843,7 +16843,7 @@ MprWaitHandler *mprAddSocketHandler(MprSocket *sp, int mask, MprDispatcher *disp
     if (sp->handler) {
         mprRemoveWaitHandler(sp->handler);
     }
-    sp->handler = mprCreateWaitHandler(sp->fd, mask, dispatcher, proc, data);
+    sp->handler = mprCreateWaitHandler(sp->fd, mask, dispatcher, proc, data, flags);
     return sp->handler;
 }
 
@@ -20818,6 +20818,7 @@ static void manageWorker(MprWorker *worker, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(worker->thread);
         mprMark(worker->idleCond);
+        mprMark(worker->data);
     }
 }
 
@@ -20847,6 +20848,7 @@ static void workerMain(MprWorker *worker, MprThread *tp)
             (*worker->cleanup)(worker->data, worker);
             worker->cleanup = NULL;
         }
+        worker->data = 0;
         mprUnlock(ws->mutex);
 
         /*
@@ -23183,7 +23185,7 @@ static void manageWaitService(MprWaitService *ws, int flags)
 
 
 MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDispatcher *dispatcher, 
-        MprEventProc proc, void *data)
+        MprEventProc proc, void *data, int flags)
 {
     MprWaitService  *ws;
 
@@ -23207,6 +23209,7 @@ MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDisp
     wp->handlerData     = data;
     wp->service         = ws;
     wp->state           = MPR_HANDLER_DISABLED;
+    wp->flags           = flags;
 
     if (mask) {
         lock(ws);
@@ -23223,7 +23226,7 @@ MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDisp
 }
 
 
-MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher, MprEventProc proc, void *data)
+MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher, MprEventProc proc, void *data, int flags)
 {
     MprWaitHandler  *wp;
 
@@ -23232,7 +23235,7 @@ MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher
     if ((wp = mprAllocObj(MprWaitHandler, manageWaitHandler)) == 0) {
         return 0;
     }
-    return mprInitWaitHandler(wp, fd, mask, dispatcher, proc, data);
+    return mprInitWaitHandler(wp, fd, mask, dispatcher, proc, data, flags);
 }
 
 
@@ -23292,9 +23295,12 @@ void mprQueueIOEvent(MprWaitHandler *wp)
     mprAssert(wp->state == MPR_HANDLER_ENABLED);
     mprAssert(wp->desiredMask == 0);
 
+    if (wp->flags & MPR_WAIT_NEW_DISPATCHER) {
+        dispatcher = mprCreateDispatcher("IO", 1);
+    } else {
+        dispatcher = (wp->dispatcher) ? wp->dispatcher: mprGetDispatcher();
+    }
     wp->state = MPR_HANDLER_QUEUED;
-
-    dispatcher = (wp->dispatcher) ? wp->dispatcher: mprGetDispatcher();
     event = &wp->event;
     mprInitEvent(dispatcher, event, "IOEvent", 0, ioEvent, (void*) wp->handlerData, MPR_EVENT_STATIC);
     event->fd = wp->fd;
@@ -23318,7 +23324,7 @@ static void ioEvent(void *data, MprEvent *event)
 
 void mprDisableWaitEvents(MprWaitHandler *wp)
 {
-    //  Check events already disabled - generally a programming error
+    //  MOB Check events already disabled - generally a programming error
     mprAssert(wp->desiredMask);
     mprAssert(wp->state == MPR_HANDLER_ENABLED);
 

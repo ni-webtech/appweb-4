@@ -45,6 +45,9 @@ HttpAuth *httpCreateAuth(HttpAuth *parent)
         auth->flags = parent->flags;
         auth->order = parent->order;
         auth->qop = parent->qop;
+        auth->requiredRealm = parent->requiredRealm;
+        auth->requiredUsers = parent->requiredUsers;
+        auth->requiredGroups = parent->requiredGroups;
 
         auth->userFile = parent->userFile;
         auth->groupFile = parent->groupFile;
@@ -1460,7 +1463,7 @@ typedef struct {
 static int pamChat(int msgCount, const struct pam_message **msg, struct pam_response **resp, void *data);
 
 
-cchar *maGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user)
+cchar *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user)
 {
     /*  Can't return the password.
      */
@@ -1468,7 +1471,7 @@ cchar *maGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user)
 }
 
 
-bool maValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, cchar *requiredPass, char **msg)
+bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, cchar *requiredPass, char **msg)
 {
     pam_handle_t        *pamh;
     UserInfo            info;
@@ -1863,6 +1866,7 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
 
 /*
     client.c -- Client side specific support.
+
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
@@ -1873,7 +1877,7 @@ HttpConn *httpCreateClient(Http *http, MprDispatcher *dispatcher)
 {
     HttpConn    *conn;
 
-    conn = httpCreateConn(http, NULL);
+    conn = httpCreateConn(http, NULL, NULL);
     conn->dispatcher = dispatcher;
     return conn;
 }
@@ -2244,7 +2248,7 @@ static void writeEvent(HttpConn *conn);
 /*
     Create a new connection object.
  */
-HttpConn *httpCreateConn(Http *http, HttpServer *server)
+HttpConn *httpCreateConn(Http *http, HttpServer *server, MprDispatcher *dispatcher)
 {
     HttpConn    *conn;
 
@@ -2261,16 +2265,20 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server)
     conn->port = -1;
     conn->retries = HTTP_RETRIES;
     conn->server = server;
-    conn->time = mprGetTime();
-    conn->lastActivity = conn->time;
+    conn->lastActivity = http->now;
     conn->callback = (HttpCallback) httpEvent;
     conn->callbackArg = conn;
 
     httpInitTrace(conn->trace);
     httpInitSchedulerQueue(&conn->serviceq);
-    conn->dispatcher = mprGetDispatcher();
-    if (server) {
+    if (dispatcher) {
+        conn->dispatcher = dispatcher;
+    } else if (server) {
         conn->dispatcher = server->dispatcher;
+    } else {
+        conn->dispatcher = mprGetDispatcher();
+    }
+    if (server) {
         conn->notifier = server->notifier;
     }
     httpSetState(conn, HTTP_STATE_BEGIN);
@@ -2480,8 +2488,12 @@ void httpEvent(HttpConn *conn, MprEvent *event)
 {
     LOG(7, "httpEvent for fd %d, mask %d\n", conn->sock->fd, event->mask);
 
+#if UNUSED
     conn->lastActivity = conn->time = event->timestamp;
     mprAssert(conn->time);
+#else
+    conn->lastActivity = conn->http->now;
+#endif
 
     if (event->mask & MPR_WRITABLE) {
         writeEvent(conn);
@@ -2569,7 +2581,11 @@ void httpEnableConnEvents(HttpConn *conn)
     }
     tx = conn->tx;
     eventMask = 0;
+#if UNUSED
     conn->lastActivity = conn->time;
+#else
+    conn->lastActivity = conn->http->now;
+#endif
 
     if (conn->state < HTTP_STATE_COMPLETE && conn->sock && !mprIsSocketEof(conn->sock)) {
         if (tx) {
@@ -2599,7 +2615,7 @@ void httpEnableConnEvents(HttpConn *conn)
         if (eventMask) {
             if (conn->waitHandler.fd < 0) {
                 mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, 
-                    (MprEventProc) conn->callback, conn->callbackArg);
+                    (MprEventProc) conn->callback, conn->callbackArg, 0);
             } else if (eventMask != conn->waitHandler.desiredMask) {
                 mprEnableWaitEvents(&conn->waitHandler, eventMask);
             }
@@ -5385,12 +5401,13 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     
     /* Incase a filter changed the handler */
     mprSetItem(tx->outputPipeline, 0, tx->handler);
+#if UNUSED
     if (tx->handler->flags & HTTP_STAGE_THREAD && !conn->threaded) {
         /* Start with dispatcher disabled. Conn.c will enable */
         tx->dispatcher = mprCreateDispatcher(tx->handler->name, 0);
         conn->dispatcher = tx->dispatcher;
     }
-
+#endif
     /*  Create the outgoing queue heads and open the queues */
     q = &tx->queue[HTTP_QUEUE_TRANS];
     for (next = 0; (stage = mprGetNextItem(tx->outputPipeline, &next)) != 0; ) {
@@ -6474,10 +6491,12 @@ static HttpPacket *createFinalRangePacket(HttpConn *conn)
 static void createRangeBoundary(HttpConn *conn)
 {
     HttpTx      *tx;
+    int         when;
 
     tx = conn->tx;
     mprAssert(tx->rangeBoundary == 0);
-    tx->rangeBoundary = mprAsprintf("%08X%08X", PTOI(tx) + PTOI(conn) * (int) conn->time, (int) conn->time);
+    when = (int) conn->http->now;
+    tx->rangeBoundary = mprAsprintf("%08X%08X", PTOI(tx) + PTOI(conn) * when, when);
 }
 
 
@@ -7530,6 +7549,8 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         }
         httpSetState(conn, HTTP_STATE_RUNNING);
         return 1;
+    } else {
+        mprYield(0);
     }
     httpServiceQueues(conn);
     return conn->connError || (conn->input ? mprGetBufLength(conn->input->content) : 0);
@@ -7893,7 +7914,8 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
         if (!conn->writeComplete) {
             eventMask |= MPR_WRITABLE;
         }
-        mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, (MprEventProc)waitHandler, conn);
+        mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, (MprEventProc) waitHandler, 
+                conn, 0);
         addedHandler = 1;
     } else {
         addedHandler = 0;
@@ -8620,7 +8642,7 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
     server->port = port;
     server->ip = sclone(ip);
     server->waitHandler.fd = -1;
-    server->dispatcher = (dispatcher) ? dispatcher : mprGetDispatcher(http);
+    server->dispatcher = dispatcher;
     if (server->ip && server->ip) {
         server->name = server->ip;
     }
@@ -8714,7 +8736,7 @@ int httpStartServer(HttpServer *server)
     }
     if (server->async) {
         mprInitWaitHandler(&server->waitHandler, server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
-            (MprEventProc) httpAcceptConn, server);
+            (MprEventProc) httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
     } else {
         mprSetSocketBlockingMode(server->sock, 1);
     }
@@ -8793,11 +8815,12 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
     Accept a new client connection on a new socket. If multithreaded, this will come in on a worker thread 
     dedicated to this connection. This is called from the listen wait handler.
  */
-HttpConn *httpAcceptConn(HttpServer *server)
+HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
 {
     HttpConn        *conn;
     MprSocket       *sock;
     MprEvent        e;
+    MprDispatcher   *dispatcher;
     int             level;
 
     mprAssert(server);
@@ -8812,21 +8835,22 @@ HttpConn *httpAcceptConn(HttpServer *server)
     if (sock == 0) {
         return 0;
     }
+    dispatcher = (event && server->dispatcher == 0) ? event->dispatcher: server->dispatcher;
     mprLog(4, "New connection from %s:%d to %s:%d %s",
         sock->ip, sock->port, sock->acceptIp, sock->acceptPort, server->sock->sslSocket ? "(secure)" : "");
 
-    if ((conn = httpCreateConn(server->http, server)) == 0) {
+    if ((conn = httpCreateConn(server->http, server, dispatcher)) == 0) {
         mprError("Can't create connect object. Insufficient memory.");
         mprCloseSocket(sock, 0);
         return 0;
     }
+    conn->notifier = server->notifier;
     conn->async = server->async;
     conn->server = server;
     conn->sock = sock;
     conn->port = sock->port;
     conn->ip = sclone(sock->ip);
     conn->secure = mprIsSocketSecure(sock);
-
     if (!httpValidateLimits(server, HTTP_VALIDATE_OPEN_CONN, conn)) {
         /* Prevent validate limits from */
         conn->server = 0;
@@ -9445,9 +9469,11 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
 void httpDestroyTx(HttpTx *tx)
 {
     mprCloseFile(tx->file);
+#if UNUSED
     if (tx->dispatcher) {
         mprDestroyDispatcher(tx->dispatcher);
     }
+#endif
     if (tx->conn) {
         tx->conn->tx = 0;
         tx->conn = 0;
@@ -9822,7 +9848,7 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
         domainAtt = "";
     }
     if (lifetime > 0) {
-        mprDecodeUniversalTime(&tm, conn->time + (lifetime * MPR_TICKS_PER_SEC));
+        mprDecodeUniversalTime(&tm, conn->http->now + (lifetime * MPR_TICKS_PER_SEC));
         expiresAtt = "; expires=";
         expires = mprFormatTime(MPR_HTTP_DATE, &tm);
 

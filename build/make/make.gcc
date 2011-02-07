@@ -208,9 +208,6 @@ ifeq			($(BLD_OS),LINUX)
     _LIBS	    += -ldl
 endif
 endif
-ifeq 			($(BLD_FEATURE_AUTH_PAM),1)
-    _LIBS       += -lpam
-endif
 _LIBS      	    += -lm
 endif
 
@@ -246,7 +243,7 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
         $(BLD_CC) -E $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
     fi
 	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
-	else $(call log) "[Compile]" "$(_DPATH_)/$<" ; fi
+	else $(call log) "[Compile]" "$(DIR)/$<" ; fi
 	@$(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
 	if [ $$? != 0 -a "$(TRACE)" != 1 ] ; then \
 	    $(call log) "[DETAILS]" "$(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@\n" ; \
@@ -259,7 +256,7 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
 #
 $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.cpp
 	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CXX) -c  $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(_CXXFLAGS) $(BLD_CFLAGS) $(BLD_CXXFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@  ; \
-	else d=$(_DPATH_)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
+	else d=$(DIR)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
 	@$(BLD_CXX) -c  $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(_CXXFLAGS) $(BLD_CFLAGS) $(BLD_CXXFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ 
 
 #
@@ -267,7 +264,7 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.cpp
 #
 ${BLD_OBJ_DIR}/classes/${SRC_PATH}/%${BLD_CLASS}: ${BLD_OBJ_DIR}/src/${SRC_PATH}/%.java
 	@if [ "$(TRACE)" = 1 ] ; then echo "$(BLD_JAVAC)" $(JAVA_TARGET) $(JAVA_VERSION) -d $(BLD_OBJ_DIR)/classes $(JDEBUG) $(JFLAGS) $< ; \
-	else d=$(_DPATH_)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
+	else d=$(DIR)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
 	@"$(BLD_JAVAC)" $(JAVA_TARGET) $(JAVA_VERSION) -d $(BLD_OBJ_DIR)/classes $(JDEBUG) $(JFLAGS) $<
 
 $(BLD_OBJ_DIR)/src/$(SRC_PATH)/%.java: %.java

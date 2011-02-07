@@ -23,7 +23,6 @@ BLD_CHAR=char
 BLD_CLEAN_INSTALL=0						# Overwrite existing installations
 BLD_LICENSE=gpl
 BLD_COMMERCIAL=0
-BLD_STATIC=0
 
 #
 #
@@ -86,7 +85,7 @@ if [ "$BLD_FEATURE_DEVICE" = "" ] ; then
 fi
 
 #
-#   Floating point support
+#   Floating point support (required for Ejscript)
 #
 BLD_FEATURE_FLOAT=1
 

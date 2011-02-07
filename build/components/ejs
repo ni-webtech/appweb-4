@@ -17,13 +17,9 @@ defineComponent() {
     fi
 
     optional=""
-    if [ "$BLD_STATIC" = 1 ] ; then
-        optional="$optional sqlite"
-    else
-        if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
-            if isdefined SQLITE ; then
-                optional="$optional sqlite"
-            fi
+    if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
+        if isdefined SQLITE ; then
+            optional="$optional sqlite"
         fi
     fi
     optional="$optional ssl"

@@ -938,45 +938,27 @@ configureComponent() {
             fi
         fi
     done
-    if [ "$BLD_STATIC" = 1 ] ; then
 
-        for dep in $optional $dependencies
-        do
-            udep=`upper ${dep}`
-            eval present=\$CFG_${kind}_${udep}
-            if [ "$present" != "" ] ; then
-                eval v=\$CFG_${kind}_${udep}_LIBS
-                [ "$v" != "" ] && libs="$libs $v"
-                eval v=\$CFG_${kind}_${udep}_WITHLIBS
-                [ "$v" != "" ] && withlibs="$withlibs $v"
-                eval v=\$CFG_${kind}_${udep}_LIBPATHS
-                [ "$v" != "" ] && libpaths="$libpaths $v"
-                eval v=\$CFG_${kind}_${udep}_WITHPATHS
-                [ "$v" != "" ] && withpaths="$withpaths $v"
-            fi
-        done
-    else
-        for dep in $optional $dependencies
-        do
-            udep=`upper ${dep}`
-            eval present=\$CFG_${kind}_${udep}
+    for dep in $optional $dependencies
+    do
+        udep=`upper ${dep}`
+        eval present=\$CFG_${kind}_${udep}
 
-            if [ "$present" != "" ] ; then
+        if [ "$present" != "" ] ; then
 
-                eval v=\$CFG_${kind}_${udep}_LIBS
-                [ "$v" != "" ] && libs="$libs $v"
-                [ "$v" != "" ] && withlibs="$withlibs $v"
-                eval v=\$CFG_${kind}_${udep}_LIBPATHS
-                [ "$v" != "" ] && libpaths="$libpaths $v"
-                [ "$v" != "" ] && withpaths="$withpaths $v"
+            eval v=\$CFG_${kind}_${udep}_LIBS
+            [ "$v" != "" ] && libs="$libs $v"
+            [ "$v" != "" ] && withlibs="$withlibs $v"
+            eval v=\$CFG_${kind}_${udep}_LIBPATHS
+            [ "$v" != "" ] && libpaths="$libpaths $v"
+            [ "$v" != "" ] && withpaths="$withpaths $v"
 
-                eval v=\$CFG_${kind}_${udep}_WITHLIBS
-                [ "$v" != "" ] && withlibs="$withlibs $v"
-                eval v=\$CFG_${kind}_${udep}_WITHPATHS
-                [ "$v" != "" ] && withpaths="$withpaths $v"
-            fi
-        done
-    fi
+            eval v=\$CFG_${kind}_${udep}_WITHLIBS
+            [ "$v" != "" ] && withlibs="$withlibs $v"
+            eval v=\$CFG_${kind}_${udep}_WITHPATHS
+            [ "$v" != "" ] && withpaths="$withpaths $v"
+        fi
+    done
 
     #
     #   Cleanup leading spaces
@@ -1004,9 +986,9 @@ configureComponent() {
     fi
 
     #
-    #   Don't make unique if static on Linux. ld does not rescan.
+    #   Don't make libraries unique on Linux. ld does not rescan.
     #
-    if [ "$BLD_STATIC" != 1 -o "${BLD_HOST_OS}" != "LINUX" ] ; then
+    if [ "${BLD_HOST_OS}" != "LINUX" ] ; then
         libs=`unique $libs`
         withlibs=`unique $withlibs`
     fi
@@ -1034,6 +1016,7 @@ configureComponent() {
     eval CFG_${kind}_${upper}_WITHPATHS=\"$withpaths\"
     eval ${kind}_COMPONENTS=\"\$${kind}_COMPONENTS ${name}\"
     tag=${tag:-builtin}
+    [ "$builtin" = 1 ] && tag=builtin
     [ $quiet = 0 -a $verbose = 0 -a $kind = HOST ] && echo "$tag"
 }
 
@@ -1519,7 +1502,6 @@ BLD_NAME="$BLD_NAME"
 BLD_TYPE="$BLD_TYPE"
 BLD_VERSION="$BLD_VERSION"
 BLD_NUMBER="$BLD_NUMBER"
-BLD_STATIC=$BLD_STATIC
 BLD_TUNE=$BLD_TUNE
 BLD_CHAR_LEN=$BLD_CHAR_LEN
 BLD_CHAR=$BLD_CHAR
@@ -1725,7 +1707,7 @@ createCrossConfig()
         fi
     fi
 
-    echo -e "${t}#\n${t}#\tO/S and CPU settings\n${t}#"
+    echo -e "\n${t}#\n${t}#\tO/S and CPU settings\n${t}#"
     eval v=\$BLD_${kind}_OS ;           echo -e "${t}$v=1"
     eval v=\$BLD_${kind}_OS ;           echo -e "${t}BLD_OS=\"$v\""
     eval v=\$BLD_${kind}_CPU_ARCH ;     echo -e "${t}BLD_CPU_ARCH=$v"
@@ -1746,21 +1728,15 @@ createCrossConfig()
 
     echo -e "\n${t}#\n${t}#\tFile extensions\n${t}#"
 
-    eval v=\$BLD_${kind}_ARCH  ;        echo -e "${t}BLD_ARCH=\"${v}\""
-    eval v=\$BLD_${kind}_EXE   ;        echo -e "${t}BLD_EXE=\"${v}\""
-    eval v=\$BLD_${kind}_CLASS ;        echo -e "${t}BLD_CLASS=\"${v}\""
-    eval v=\$BLD_${kind}_SHLIB ;        echo -e "${t}BLD_SHLIB=\"${v}\""
-    eval v=\$BLD_${kind}_SHOBJ ;        echo -e "${t}BLD_SHOBJ=\"${v}\""
+    eval v=\$BLD_${kind}_ARCH  ;    echo -e "${t}BLD_ARCH=\"${v}\""
+    eval v=\$BLD_${kind}_EXE   ;    echo -e "${t}BLD_EXE=\"${v}\""
+    eval v=\$BLD_${kind}_CLASS ;    echo -e "${t}BLD_CLASS=\"${v}\""
+    eval v=\$BLD_${kind}_SHLIB ;    echo -e "${t}BLD_SHLIB=\"${v}\""
+    eval v=\$BLD_${kind}_SHOBJ ;    echo -e "${t}BLD_SHOBJ=\"${v}\""
 
-    if [ "${BLD_STATIC}" = "0" ] ; then
-        eval v=\$BLD_${kind}_SHOBJ ;    echo -e "${t}BLD_LIB=\"${v}\""            
-        eval v=\$BLD_${kind}_PIOBJ ;    echo -e "${t}BLD_OBJ=\"${v}\""            
-        eval v=\$BLD_${kind}_PIOBJ ;    echo -e "${t}BLD_PIOBJ=\"${v}\""            
-    else
-        eval v=\$BLD_${kind}_ARCH ;     echo -e "${t}BLD_LIB=\"${v}\""            
-        eval v=\$BLD_${kind}_OBJ ;      echo -e "${t}BLD_OBJ=\"${v}\""            
-        eval v=\$BLD_${kind}_PIOBJ ;    echo -e "${t}BLD_PIOBJ=\"${v}\""            
-    fi
+    eval v=\$BLD_${kind}_SHOBJ ;    echo -e "${t}BLD_LIB=\"${v}\""            
+    eval v=\$BLD_${kind}_PIOBJ ;    echo -e "${t}BLD_OBJ=\"${v}\""            
+    eval v=\$BLD_${kind}_PIOBJ ;    echo -e "${t}BLD_PIOBJ=\"${v}\""            
 
     echo -e "\n${t}#\n${t}#\tOutput Directories \n${t}#"
 
@@ -1913,31 +1889,30 @@ showBuildConfig() {
     fi
     echo "  #   Debug Type:            ${BLD_TYPE}"
     echo "  #   Tune for:              ${BLD_TUNE}"
-    if [ "$BLD_STATIC" = 1 ] ; then
-        echo "  #   Linking                static"
-    else
-        echo "  #   Linking                shared"
-    fi
-    echo -n "  #   Build components:      "
-    i=0
-    for p in ${BUILD_COMPONENTS}
-    do
-        echo -n "$p "
-        i=$((i +1))
-        if [ $i -gt 8 ] ; then
-            i=0
-            echo -e -n "\n  #                          "
-        fi
-    done
-    echo
+
     if [ $BLD_CROSS = 1 ] ; then
-        echo -n "  #   Host components:       "
-        for p in ${HOST_COMPONENTS}
+        echo -n "  #   Build components:      "
+        i=0
+        for p in ${BUILD_COMPONENTS}
         do
             echo -n "$p "
+            i=$((i +1))
+            if [ $i -gt 8 ] ; then
+                i=0
+                echo -e -n "\n  #                          "
+            fi
         done
         echo
+        echo -n "  #   Host components:       "
+    else
+        echo -n "  #   Components:            "
     fi
+    for p in ${HOST_COMPONENTS}
+    do
+        echo -n "$p "
+    done
+    echo
+    
     echo -e "  #\n  # Output Directories:"
     eval where=${BLD_OUT_DIR}
     printf "  #   %-15s %s\n" "BLD_OUT_DIR" ${where}
@@ -2019,70 +1994,33 @@ emitHelp()
 
 usage: configure [OPTIONS]...
 
-Installation directories:
-  When doing a "make install" the --prefix and --binDir are used. The other
-  directory options are not yet fully supported.
-
-  --prefix=PATH            Set the default base installation directory for 
-                             the product. Default is /usr/lib/${BLD_PRODUCT} on 
-                             Unix, /Program/Files/${BLD_NAME} on Windows.
-  --datadir                Directory for generic data files. Typically
-                             /usr/share on Unix systems.
-  --docdir=PATH            Set the directory for the documentation.
-  --incdir=PATH            Set the directory for include headers. --includedir and
-                             --oldincludedir are aliases.
-  --localstatedir          Set the directory for modifiable files. Typically 
-                              /var on Unix. 
-  --logdir=PATH            Set the directory for logging.
-  --mandir=PATH            Set the directory for the manual pages (UNIX only).
-  --samdir=PATH            Set the directory for the samples.
-  --sbindir=PATH           Set the directory for system binaries.
-  --srcdir=PATH            Set the directory for source files.
-  --sysconfdir=PATH        Set the directory for read-only data for the product. 
-                             Default is /etc/${BLD_PRODUCT} on Unix.
-  --webdir=PATH            Set the directory for web files
-
-Standard options that are ignored but provided for compatibility with autoconf.
-  --exec-prefix
-  --sbindir
-  --sharedstatedir
-  --infodir
-  --out=PATH               Directory for output objects, binaries and files.
-  --program-prefix
-  --program-suffix
-  --program-transform-name
-
-System Types:
+System Type Options:
   --build=BUILD            Configure for building on BUILD [Default is guessed].
-                             BUILD format is cpu-vendor-os.
+                             Format: cpu-vendor-os. Example: i386-apple-macosx.
   --host=HOST              Cross-compile for ${BLD_PRODUCT} to run on HOST
-                             [Default is set to BUILD]. HOST format is
-                             cpu-vendor-os. Can also use --target as an alias
-                             for --host. WARNING: WindRiver calls the build 
-                             system the host system.
-                           and the host system, they call the target.
+                             [Default is set to BUILD]. Format: cpu-vendor-os. 
+                             Can also use --target as an alias for --host. 
+                             WARNING: WindRiver calls the build system the host
+                             system, and they call the host system, the target.
   --device=DEVICE          Device or emulator. On CE set to PocketPC2003 or 
                              Smartphone2003.
 
-General Features:
-  --buildNumber=NUMBER     Set the build number part of the version (1.0.0.X).
-  --defaults=FILE          Set the file name of the defaults master in conf
+General Options:
   --help                   Display this message.
   --char=N                 Set the character size for Unicode characters.
   --cygwin                 Use the cygwin compiler in preference if a Microsoft
                            Visual Studio compiler is also installed.
-  --diab                   Use the diab compiler for VxWorks
+  --diab                   Use the diab compiler for VxWorks.
   --name=NAME              Set the full product name (BLD_NAME define).
+  --out=PATH               Directory for output objects, binaries and files.
   --product=NAME           Set the one word (no spaces) name of the product.
   --quiet, -q, --silent    Run quietly.
   --search path            Search this path first for components.
-  --setLibVersion=X.X.X    Set the shared library version number.
-  --setVersion=X.X.X       Set the product version number.
   --type=BUILD             Set the build type to (DEBUG|RELEASE).
-                           Can also use --debug or --release
+                           Can also use --debug or --release.
   --tune=KIND              Set the tune kind to (SIZE|BALANCED|SPEED).
 
-Optional Build Features:   (See more features below)
+Features Selection:
   --disable-FEATURE        Do not include the FEATURE.
   --enable-FEATURE         Include the FEATURE.
 
@@ -2095,14 +2033,6 @@ Optional Build Features:   (See more features below)
   --enable-rom             Build with the ability to load files from ROM.
 !EOF_HELP
 
-    if [ "$BLD_NO_STATIC_SUPPORT" = "" ] ; then
-        cat <<!EOF_HELP2
-  --shared                 Build an ${BLD_PRODUCT} shared library and program. [default]
-                           Use either --shared or --static but not both.
-  --static                 Build a static ${BLD_PRODUCT} library and program. [default]
-!EOF_HELP2
-    fi
-
     help
 
     cat <<!EOF_HELP3
@@ -2111,9 +2041,9 @@ Components are searched for using the PATH environment variable, the --host-sear
 
 Environment Variables:
 
-Some important environment variables that may be defined to control
-building for the destination host. Note that environment variables will have
-no effect when passed into makefiles, they must be passed via configure.
+  Some important environment variables that may be defined to control
+  building for the destination host. Note that environment variables will have
+  no effect when passed into makefiles, they must be passed via configure.
 
   AR                       Archiver command
   CC                       C/C++ compiler command.
@@ -2136,6 +2066,31 @@ Variables for native compilation of tools needed by the build process.
   BUILD_LD                 Linker to use for native /local linking on the
                            build system.
   BUILD_MT                 Windows manifest command.
+
+Installation Directory Options:
+  When doing a "make install" the --prefix and --binDir are used. The other
+  directory options are not yet fully supported.
+
+  --prefix=PATH            Set the default base installation directory for 
+                             the product. Default is /usr/lib/${BLD_PRODUCT} on 
+                             Unix, /Program/Files/${BLD_NAME} on Windows.
+  --datadir                Directory for generic data files. Typically under
+                             /usr/share on Unix systems.
+  --docdir=PATH            Set the directory for the documentation.
+  --incdir=PATH            Set the directory for include headers.
+  --localstatedir          Set the directory for modifiable files. Web documents
+                              are stored here. Typically under /var on Unix. 
+  --logdir=PATH            Set the directory for log files.
+  --mandir=PATH            Set the directory for the manual pages (UNIX only).
+  --samdir=PATH            Set the directory for the samples.
+  --srcdir=PATH            Set the directory for source files.
+  --sysconfdir=PATH        Set the directory for read-only data for the product. 
+                             Default is /etc/${BLD_PRODUCT} on Unix.
+  --webdir=PATH            Set the directory for web files
+
+  Standard options that are ignored but provided for compatibility with autoconf.
+    --exec-prefix, --sbindir, --sharedstatedir, --infodir, --program-prefix,
+    --program-suffix, --program-transform-name
 
 !EOF_HELP3
 }
@@ -2225,6 +2180,10 @@ while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
         ;;
     diab)
         BLD_CC_DIAB=1
+        ;;
+    help|-\?)
+        emitHelp
+        exit 0
         ;;
     host=*|target=*|host|target)
         ARG="${1#*=}"
@@ -2345,14 +2304,6 @@ while [ "${1#--}" != "$1" ] ; do
     disable-rom-fs|disable-rom|disable-romfs)
         BLD_FEATURE_ROMFS=0
         ;;
-    disable-shared)
-        if [ "$BLD_NO_STATIC_SUPPORT" = "" ] ; then
-            BLD_STATIC=1
-        fi
-        ;;
-    disable-static)
-        BLD_STATIC=0
-        ;;
     enable-assert)
         BLD_FEATURE_ASSERT=1
         ;;
@@ -2370,17 +2321,6 @@ while [ "${1#--}" != "$1" ] ; do
         ;;
     enable-rom-fs|enable-rom|enable-romfs|rom)
         BLD_FEATURE_ROMFS=1
-        ;;
-    enable-shared|shared)
-        BLD_STATIC=0
-        ;;
-    enable-static|static)
-        if [ "$BLD_NO_STATIC_SUPPORT" = "" ] ; then
-            BLD_STATIC=1
-        else
-            echo "Static builds are not supported"
-            exit 255
-        fi
         ;;
     docdir=*)
         BLD_DOC_PREFIX=`canonPath "${ARG}"`

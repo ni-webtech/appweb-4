@@ -24,7 +24,7 @@ IMPORTS=
 LIBRARY=
 LIBRARY_PATHS=
 LIBS=
-MAKE_STATIC=
+MAKE_STATIC=0
 MERGE_DIR=.merge
 MODULES=
 OMITSTDLIBS=0
@@ -200,7 +200,6 @@ bld: usage: bld [options] objects ....
 
     Environment variables used:
       BLD_TOP               Top of the source tree
-      BLD_STATIC            Build static libraries where relevant.
 
     Configuration files used:
         buildConfig.h
@@ -526,9 +525,9 @@ shift $((_INDEX - 1))
 
 OS=${BLD_OS}
 
-if [ "$MAKE_STATIC" = "" ] ; then
-    MAKE_STATIC="$BLD_STATIC"
-fi
+# if [ "$MAKE_STATIC" = "" ] ; then
+#     MAKE_STATIC="$BLD_STATIC"
+# fi
 
 #
 #   Prioritize library suffix search order
@@ -884,7 +883,6 @@ else
     #   Unix (Linux, Solaris, VxWorks, MacOSX)
     #
     if [ "$LIBRARY" ] ; then
-
         if [ "$MAKE_STATIC" = 1 ] ; then
             ARCHIVE=${LIBRARY}${BLD_ARCH}
             rm -f ${ARCHIVE}

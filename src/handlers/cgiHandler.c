@@ -27,7 +27,7 @@ static char *getCgiToken(MprBuf *buf, cchar *delim);
 static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd);
 static bool parseHeader(HttpConn *conn, MprCmd *cmd);
 static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
-static void pushDataToCgi(HttpQueue *q);
+static void writeToCGI(HttpQueue *q);
 static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
 static void startCgi(HttpQueue *q);
 
@@ -46,12 +46,6 @@ static void checkCompletion(HttpQueue *q, MprEvent *event);
 #endif
 
 /************************************* Code ***********************************/
-
-//  MOB - delete
-static void openCgi(HttpQueue *q)
-{
-}
-
 
 static void closeCgi(HttpQueue *q)
 {
@@ -125,7 +119,7 @@ static void startCgi(HttpQueue *q)
     mprSetCmdCallback(cmd, cgiCallback, tx);
 
     //  MOB Break here kills stress/post
-    if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR) < 0) {
+    if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR | MPR_CMD_ASYNC) < 0) {
         httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't run CGI process: %s, URI %s", fileName, rx->uri);
     }
 }
@@ -143,7 +137,7 @@ static void processCgi(HttpQueue *q)
     conn = q->conn;
     cmd = (MprCmd*) q->queueData;
 
-    if (q->queueData) {
+    if (cmd) {
         /*  Close the CGI program's stdin. This will allow it to exit if it was expecting input data.  */
         mprCloseCmdFd(cmd, MPR_CMD_STDIN);
     }
@@ -194,7 +188,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
 
     cmd = (MprCmd*) q->pair->queueData;
     mprAssert(cmd);
-    conn->lastActivity = mprGetTime();
+    conn->lastActivity = conn->http->now;
 
     if (httpGetPacketLength(packet) == 0) {
         /* End of input */
@@ -206,10 +200,10 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
         }
         httpAddVarsFromQueue(q);
     } else {
-        /* No service routine, we just need it to be queued for pushDataToCgi */
+        /* No service routine, we just need it to be queued for writeToCGI */
         httpPutForService(q, packet, 0);
     }
-    pushDataToCgi(q);
+    writeToCGI(q);
 }
 
 
@@ -217,7 +211,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
     Write data to the CGI program. (may block). This is called from incomingCgiData and from the cgiCallback when the pipe
     to the CGI program becomes writable. Must be locked when called.
  */
-static void pushDataToCgi(HttpQueue *q)
+static void writeToCGI(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpPacket  *packet;
@@ -230,9 +224,15 @@ static void pushDataToCgi(HttpQueue *q)
     conn = q->conn;
 
     for (packet = httpGetPacket(q); packet && conn->state < HTTP_STATE_COMPLETE; packet = httpGetPacket(q)) {
+        conn->lastActivity = conn->http->now;
+//  MOB
+        printf("PUSH TO CGI %ld\n", (long int) conn->http->now);
+        printf("CONN %p, uri %s\n", conn, conn->rx->uri);
+
         buf = packet->content;
         len = mprGetBufLength(buf);
         mprAssert(len > 0);
+//  MOB - do we need a yield here 
         rc = mprWriteCmdPipe(cmd, MPR_CMD_STDIN, mprGetBufStart(buf), len);
         mprLog(5, "CGI: write %d bytes to gateway. Rc rc %d, errno %d", len, rc, mprGetOsError());
         if (rc < 0) {
@@ -240,20 +240,18 @@ static void pushDataToCgi(HttpQueue *q)
             mprCloseCmdFd(cmd, MPR_CMD_STDIN);
             httpError(conn, HTTP_CODE_BAD_GATEWAY, "Can't write body data to CGI gateway");
             break;
-
-        } else {
-            mprLog(5, "CGI: write to gateway %d bytes asked to write %d", rc, len);
-            mprAdjustBufStart(buf, rc);
-            if (mprGetBufLength(buf) > 0) {
-                httpPutBackPacket(q, packet);
-            }
-            if (rc < len) {
-                /*
-                    CGI gateway didn't accept all the data. Enable CGI write events to be notified when the gateway
-                    can read more data.
-                 */
-                mprEnableCmdEvents(cmd, MPR_CMD_STDIN);
-            }
+        }
+        mprLog(5, "CGI: write to gateway %d bytes asked to write %d", rc, len);
+        mprAdjustBufStart(buf, rc);
+        if (mprGetBufLength(buf) > 0) {
+            httpPutBackPacket(q, packet);
+        }
+        if (rc < len) {
+            /*
+                CGI gateway didn't accept all the data. Enable CGI write events to be notified when the gateway
+                can read more data.
+             */
+            mprEnableCmdEvents(cmd, MPR_CMD_STDIN);
         }
     }
 }
@@ -283,7 +281,6 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
         if (rc > 0) {
             mprAdjustBufStart(buf, rc);
             mprResetBufIfEmpty(buf);
-
         } 
         if (rc <= 0 || mprGetBufLength(buf) == 0) {
             if (servicedQueues) {
@@ -328,7 +325,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     
     tx = conn->tx;
     mprAssert(tx);
-    conn->lastActivity = mprGetTime();
+    conn->lastActivity = conn->http->now;
     q = conn->tx->queue[HTTP_QUEUE_TRANS].nextQ;
 
     switch (channel) {
@@ -336,7 +333,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
         /* CGI's stdin is now accepting more data */
         //  MOB -- check this
         mprDisableCmdEvents(cmd, MPR_CMD_STDIN);
-        pushDataToCgi(q->pair);
+        writeToCGI(q->pair);
         enableCgiEvents(q, cmd, channel);
         break;
 
@@ -379,8 +376,9 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                     break;
                 }
             }
+            mprYield(MPR_YIELD_STICKY);
             nbytes = mprReadCmdPipe(cmd, channel, mprGetBufEnd(buf), space);
-            mprAssert(conn->tx);
+            mprResetYield();
             mprLog(5, "CGI: read from gateway %d on channel %d. errno %d", nbytes, channel, 
                 nbytes >= 0 ? 0 : mprGetOsError());
             if (nbytes < 0) {
@@ -408,7 +406,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 traceData(cmd, mprGetBufStart(buf), nbytes);
                 mprAddNullToBuf(buf);
             }
-            conn->lastActivity = mprGetTime();
+            conn->lastActivity = conn->http->now;
         } while ((space = mprGetBufSpace(buf)) > 0);
 
         if (mprGetBufLength(buf) == 0 || processCgiData(q, cmd, channel, buf) < 0) {
@@ -1012,12 +1010,11 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     HttpStage     *handler;
 
     handler = httpCreateHandler(http, "cgiHandler", HTTP_STAGE_ALL | HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | 
-        HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT | HTTP_STAGE_THREAD, module);
+        HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     http->cgiHandler = handler;
-    handler->open = openCgi; 
     handler->close = closeCgi; 
     handler->outgoingService = outgoingCgiService;
     handler->incomingData = incomingCgiData; 

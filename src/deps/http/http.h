@@ -939,7 +939,9 @@ extern void httpMarkQueueHead(HttpQueue *q);
 #define HTTP_STAGE_PATH_INFO      0x80000           /**< Always do path info processing */
 #define HTTP_STAGE_AUTO_DIR       0x100000          /**< Want auto directory redirection */
 #define HTTP_STAGE_VERIFY_ENTITY  0x200000          /**< Verify the request entity exists */
+#if UNUSED
 #define HTTP_STAGE_THREAD         0x400000          /**< Run handler dispatcher in a worker thread */
+#endif
 #define HTTP_STAGE_MISSING_EXT    0x800000          /**< Support URIs with missing extensions */
 #define HTTP_STAGE_UNLOADED       0x1000000         /**< Stage module library has been unloaded */
 
@@ -1318,9 +1320,10 @@ typedef struct HttpConn {
     int             connError;              /**< A connection error has occurred */
     int             protoError;             /**< A protocol error has occurred - try to respond */
 
+#if UNUSED
     //  MOB implement
     int             threaded;               /**< Request running in a thread */
-
+#endif
     HttpCallback    callback;               /**< Http I/O event callback */
     void            *callbackArg;           /**< Arg to callback */
     HttpFillHeadersProc fillHeaders;        /**< Callback to fill headers */
@@ -1346,7 +1349,9 @@ typedef struct HttpConn {
     HttpQueue       *writeq;                /**< Start of the write pipeline */
     MprTime         started;                /**< When the connection started */
     MprTime         lastActivity;           /**< Last activity on the connection */
+#if UNUSED
     MprTime         time;                   /**< Cached current time */
+#endif
     MprEvent        runEvent;               /**< Event when running the handler */
     void            *context;               /**< Embedding context */
     char            *boundary;              /**< File upload boundary */
@@ -1433,7 +1438,7 @@ extern void httpCompleteRequest(HttpConn *conn);
     @param server Server object owning the connection.
     @returns A new connection object
 */
-extern HttpConn *httpCreateConn(Http *http, struct HttpServer *server);
+extern HttpConn *httpCreateConn(Http *http, struct HttpServer *server, MprDispatcher *dispatcher);
 extern void httpDestroyConn(HttpConn *conn);
 
 /**
@@ -2268,7 +2273,9 @@ typedef struct HttpTx {
 
     HttpUri         *parsedUri;             /**< Request uri. Only used for requests */
     HttpRange       *currentRange;          /**< Current range being fullfilled */
+#if UNUSED
     MprDispatcher   *dispatcher;            /**< Request has its own dispatcher */
+#endif
     MprHashTable    *headers;               /**< Transmission headers */
     char            *rangeBoundary;         /**< Inter-range boundary */
 
@@ -2669,7 +2676,7 @@ typedef struct  HttpServer {
 extern HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dispatcher);
 extern void httpDestroyServer(HttpServer *server);
 
-extern HttpConn *httpAcceptConn(HttpServer *server);
+extern HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event);
 extern int httpValidateLimits(HttpServer *server, int event, HttpConn *conn);
 
 /**

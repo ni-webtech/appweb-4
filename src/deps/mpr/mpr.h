@@ -5731,6 +5731,7 @@ extern void mprWaitForIO(MprWaitService *ws, int timeout);
  */
 #define MPR_WAIT_RECALL_HANDLER 0x1     /* Must recall the handler asap */
 #define MPR_WAIT_ADDED          0x2     /* Handler added to wait service */
+#define MPR_WAIT_NEW_DISPATCHER 0x4     /* Create a new dispatcher for each I/O event */
 
 /*
     Handler states
@@ -5781,7 +5782,7 @@ typedef struct MprWaitHandler {
     @ingroup MprWaitHandler
  */
 extern MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher, MprEventProc proc, 
-    void *data);
+    void *data, int flags);
 
 /**
     Initialize a static wait handler
@@ -5797,7 +5798,7 @@ extern MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dis
     @ingroup MprWaitHandler
  */
 extern MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDispatcher *dispatcher, 
-        MprEventProc proc, void *data);
+        MprEventProc proc, void *data, int flags);
 
 /**
     Disconnect a wait handler from its underlying file descriptor. This is used to prevent further I/O wait events while
@@ -6279,7 +6280,7 @@ extern int mprParseIp(cchar *ipSpec, char **ip, int *port, int defaultPort);
     @ingroup MprSocket
  */
 extern MprWaitHandler *mprAddSocketHandler(MprSocket *sp, int mask, MprDispatcher *dispatcher, MprEventProc proc, 
-        void *data);
+        void *data, int flags);
 
 /**
     Remove a socket wait handler.

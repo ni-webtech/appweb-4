@@ -15,5 +15,12 @@ defineComponent() {
     fi
     builtin=`[ $path = . ] && echo --builtin`
     libpaths="${imports%/*}"
-    configureComponent --libs "http" --libpaths "$libpaths" --iflags "$iflags" $builtin --imports "$imports" http
+    libs="http"
+
+    if [ `eval echo \\$${KIND}_HAS_PAM` = 1 ] ; then
+        libs="$libs pam"
+        withlibs="$withlibs pam"
+    fi
+    configureComponent --libs "$libs" --withlibs "$withlibs" --libpaths "$libpaths" --iflags "$iflags" $builtin \
+        --imports "$imports" http
 }

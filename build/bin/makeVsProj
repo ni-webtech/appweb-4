@@ -204,8 +204,7 @@ makeVsProj: usage: makeVsProj [options] objects ....
     --iflags flags          Include search path
     --ldflags               Linker flags
     --library name          Name of library to link
-    --libs libraries        Extra libraries to link with. Use shared or static 
-                            intelligently depending on BLD_STATIC.
+    --libs libraries        Extra libraries to link with.
     --omitstdlibs           Don't use standard libraries (UNIX only)
     --objects "objects..."  String containing objects to link
     --project               Project file name
@@ -221,7 +220,6 @@ makeVsProj: usage: makeVsProj [options] objects ....
 
     Environment variables used:
       BLD_TOP               Top of the source tree
-      BLD_STATIC            Build static libraries where relevant.
 
     Configuration files used:
         buildConfig.sh
@@ -779,9 +777,9 @@ IFLAGS=`echo $IFLAGS | sed 's/-I//g; s/ /;/g'`
 
 DFLAGS=`echo $DFLAGS ${MAKE_DFLAGS} ${_DFLAGS} ${BLD_DFLAGS} | sed 's/ -D/;/g' | sed 's/;_WIN32_WCE=0x420//'`
 
-if [ "$MAKE_STATIC" = "" ] ; then
-    MAKE_STATIC="$BLD_STATIC"
-fi
+# if [ "$MAKE_STATIC" = "" ] ; then
+#     MAKE_STATIC="$BLD_STATIC"
+# fi
 
 #
 #   Prioritize library suffix search order
@@ -872,11 +870,11 @@ if [ "$EXECUTABLE" ] ; then
 fi
 
 if [ "$OMITSTDLIBS" = "0" ] ; then
-    if [ "$BLD_STATIC" = "1" ] ; then
-        STND_LIBS=$_STATIC_LIBS
-    else
+#    if [ "$BLD_STATIC" = "1" ] ; then
+#        STND_LIBS=$_STATIC_LIBS
+#    else
         STND_LIBS=$_SHARED_LIBS
-    fi
+#    fi
 fi
 
 

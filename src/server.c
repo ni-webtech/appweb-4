@@ -161,6 +161,7 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, 
     maSetServerRoot(server, root);
 
     if (ip && port > 0) {
+        /* Passing NULL for the dispatcher will cause a new dispatcher to be created for each accepted connection */
         maAddHttpServer(server, httpCreateServer(appweb->http, ip, port, NULL));
         maAddHostAddress(server, ip, port);
     }

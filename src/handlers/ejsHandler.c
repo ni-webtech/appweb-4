@@ -7,9 +7,11 @@
 
 #include    "http.h"
 #include    "appweb.h"
-#include    "ejs.h"
 
 #if BLD_FEATURE_EJS
+
+#include    "ejs.h"
+
 /*********************************** Forwards *********************************/
 
 static int loadStartupScript(Ejs *ejs, cchar *script);
@@ -165,7 +167,7 @@ int maEjsHandlerInit(Http *http, MprModule *mp)
 }
 
 #else
-int maEjsHandlerInit(Http *http, MprModule *mp, MprModule *mp, MprModule *mp, MprModule *mp)
+int maEjsHandlerInit(Http *http, MprModule *mp)
 {
     return 0;
 }

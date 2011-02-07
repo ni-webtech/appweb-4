@@ -27056,7 +27056,7 @@ static void enableSocketEvents(EjsSocket *sp, int (*proc)(EjsSocket *sp, MprEven
 
     ejs = TYPE(sp)->ejs;
     if (sp->sock->handler == 0) {
-        mprAddSocketHandler(sp->sock, sp->mask, ejs->dispatcher, (MprEventProc) proc, sp);
+        mprAddSocketHandler(sp->sock, sp->mask, ejs->dispatcher, (MprEventProc) proc, sp, 0);
     } else {
         mprEnableSocketEvents(sp->sock, sp->mask);
     }
@@ -27224,12 +27224,13 @@ static int internHashSizes[] = {
 };
 
 static MprSpin      internLock;
+static MprSpin      *ispin = &internLock;
 
 /*
     FUTURE - this locking is for when the intern array works over all interpreters
  */
-#define ilock()     mprSpinLock(&internLock);
-#define iunlock()   mprSpinUnlock(&internLock);
+#define ilock()     mprSpinLock(ispin);
+#define iunlock()   mprSpinUnlock(ispin);
 
 
 static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len);
@@ -37017,7 +37018,7 @@ static EjsObj *hs_accept(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     HttpConn    *conn;
 
-    if ((conn = httpAcceptConn(sp->server)) == 0) {
+    if ((conn = httpAcceptConn(sp->server, NULL)) == 0) {
         /* Just ignore */
         mprError("Can't accept connection");
         return 0;

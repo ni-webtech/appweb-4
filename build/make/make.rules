@@ -58,14 +58,14 @@ export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS BUILDING
 #
 #	Compute the directory path for display purposes
 #
-_DPATH_			?= .
+# DIR			    ?= .
 BUILD_DEPTH     ?= 2
 BUILDING_NATIVE := 0
 MAKE			:= $(BLD_MAKE)
 MAKE			?= make
 TEMP			?= /tmp
 ifeq ($(TRACE),)
-    MAKEFLAGS   += -s TRACE=0 MOB=$(TRACE)
+    MAKEFLAGS   += -s TRACE=0
 endif
 ifeq ($(findstring TRACE=0,$(MAKEFLAGS)),)
     TRACE       = 1
@@ -78,18 +78,18 @@ RECURSE=\
 for i in $$D "" ; \
 do [ -d "$$i" ] || continue ;\
 	set -e ; \
+    dir=$${DIR}/$$i ; dir=$${dir\#/} ; \
 	if [ -f "$$i/Makefile" ] ; then \
 		unset CDPATH EXPORT_OBJECTS BUILDING_NATIVE BLD_TOP ; \
-        if [ -f "$(BLD_OUT_DIR)/.needDepend" -o \
-                ! -f "$$i/.makedep" -o \
+        if [ -f "$(BLD_OUT_DIR)/.needDepend" -o ! -f "$$i/.makedep" -o \
                 "$(BLD_OUT_DIR)/buildConfig.h" -nt "$$i/.makedep" ] ; then \
             rm -f $(BLD_OUT_DIR)/.needDepend ; \
             $(call log) [Generate] "Makefile dependencies" ; \
             cd $(BLD_TOP) >/dev/null 2>&1 ; makedep ; \
-            $(MAKE) -S --no-print-directory "_DPATH_=$(_DPATH_)/$$i" PRE=$(PRE) TRACE=$(TRACE) depend ; \
+            $(MAKE) -S --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) depend ; \
             cd - >/dev/null 2>&1 ; \
         fi ; \
-		$(MAKE) -S -C "$$i" --no-print-directory "_DPATH_=$(_DPATH_)/$$i" PRE=$(PRE) TRACE=$(TRACE) $$T ; \
+		$(MAKE) -S -C "$$i" --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) $$T ; \
 		if [ $$? != 0 ] ; then \
 			echo "\# WARNING: Makefile error in `pwd`" ; \
 			exit 255 ; \
@@ -284,7 +284,12 @@ projectsExtra:
 #
 #	Create a redistributable package
 #
-package: $(BUILD_CHECK) packagePriv packageDirs packageExtra
+package: $(BUILD_CHECK) packagePrepFirst packagePriv packageDirs packageExtra
+
+packagePrepFirst:
+	@T=packagePrep ; D="$(PRE_DIRS)" ; $(DO_RECURSE) 
+
+packagePrep:
 
 packagePriv:
 

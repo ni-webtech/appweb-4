@@ -38,18 +38,18 @@ _CFLAGS             += -nologo -GR-
 
 ifeq ($(BLD_TYPE),DEBUG)
     _CFLAGS	        += -W3 -Zi -Od
-    ifeq ($(BLD_STATIC),0)
-        _CFLAGS 	+= -MDd
-    else
+    ifeq ($(BLD_STATIC),1)
         _CFLAGS 	+= -MTd
+    else
+        _CFLAGS 	+= -MDd
     endif
     _LDFLAGS		+= -debug
 else
     _CFLAGS         += -O2
-    ifeq ($(BLD_STATIC),0)
-        _CFLAGS		+= -MD
-    else
+    ifeq ($(BLD_STATIC),1)
 	    _CFLAGS		+= -MT
+    else
+        _CFLAGS		+= -MD
     endif
 endif
 
@@ -106,7 +106,7 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
 		"$(BLD_CC)" -E $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< > `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
     fi
 	@if [ "$(TRACE)" = 1 ] ; then echo "$(BLD_CC)" -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ -Fd$(BLD_OBJ_DIR)/ ; \
-	else d=$(_DPATH_)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
+	else d=$(DIR)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
 	@"$(BLD_CC)" -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ -Fd$(BLD_OBJ_DIR)/ >.$$$$.cltmp ; \
 	status=$$? ; \
 	if [ $$status -ne 0 -o "$(TRACE)" = "1" ] ; then cat .$$$$.cltmp ; rm -f .$$$$.cltmp ; \
@@ -123,7 +123,7 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.cpp
 		"$(BLD_CC)" -E $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< > `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
     fi
 	@if [ "$(TRACE)" = 1 ] ; then echo "$(BLD_CXX)" -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@
-	else d=$(_DPATH_)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
+	else d=$(DIR)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
 	@"$(BLD_CXX)" -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@
 
 

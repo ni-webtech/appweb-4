@@ -20,7 +20,10 @@ defineComponent() {
         deps="$deps openssl"
     fi
     deps="$deps mpr"
-    builtin=`[ $path = . ] && echo --builtin`
+    if [ "$path" = . ] ; then
+        builtin="--builtin"
+        libpaths=
+    fi
     configureComponent --libs "mprssl" --libpaths "$libpaths" --iflags "$iflags" --dependencies "$deps" $builtin \
         --imports "$imports" ssl
 }

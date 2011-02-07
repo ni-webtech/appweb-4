@@ -237,7 +237,7 @@ static MprSsl *getDefaultMatrixSsl()
     if (ss->secureProvider->defaultSsl) {
         return ss->secureProvider->defaultSsl;
     }
-    if ((ssl = mprCreateSsl(ss)) == 0) {
+    if ((ssl = mprCreateSsl()) == 0) {
         return 0;
     }
     ss->secureProvider->defaultSsl = ssl;
@@ -1221,7 +1221,7 @@ static MprSsl *getDefaultSslSettings()
     if (ss->secureProvider->defaultSsl) {
         return ss->secureProvider->defaultSsl;
     }
-    if ((ssl = mprCreateSsl(ss)) == 0) {
+    if ((ssl = mprCreateSsl()) == 0) {
         return 0;
     }
     /*

@@ -23,17 +23,14 @@ manageFeatures()
 
     BLD_FEATURE_MPR=1
 
-    if [ "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
-        if [ "$BLD_FEATURE_EJS" = 1 ] ; then
-            BLD_FEATURE_EJS_CROSS_COMPILER=1
+    if [ "$BLD_FEATURE_EJS" = 1 ] ; then
+        if [ "$BLD_FEATURE_FLOAT" != 1 ] ; then
+            echo " "
+            echo "Floating point support is required for Ejscript."
+            echo "Enabling the floating point support."
+            BLD_FEATURE_FLOAT=1
         fi
     fi
-    if [ "$BLD_FEATURE_EJS" = 0 ] ; then
-        BLD_FEATURE_EJS_ALL_IN_ONE=0
-        BLD_FEATURE_EJS_AUTO_COMPILE=0
-        BLD_FEATURE_EJS_CROSS_COMPILER=0
-    fi
-
     if [ "$BLD_FEATURE_SEND" = 1 ] ; then
         if [ "$BLD_FEATURE_ROMFS" = 1 ] ; then
             BLD_FEATURE_SEND=0
@@ -72,7 +69,6 @@ BLD_FEATURE_AUTH_FILE=$BLD_FEATURE_AUTH_FILE
 BLD_FEATURE_AUTH_PAM=$BLD_FEATURE_AUTH_PAM
 BLD_FEATURE_CGI=$BLD_FEATURE_CGI
 BLD_FEATURE_CONFIG=$BLD_FEATURE_CONFIG
-BLD_FEATURE_EJS_ALL_IN_ONE=$BLD_FEATURE_EJS_ALL_IN_ONE
 
 #
 #   Default port configuration
@@ -95,12 +91,13 @@ Additional Appweb Features:
   --sslPort=PORT           Set the default SSL port to use for the product.
   --webDir=PATH            Set the directory for web documents (DocumentRoot).
 
-Optional Components: cgi, ejs, matrixssl, mysql, openssl, php, sqlite
+Optional Components: cgi, ejs, matrixssl, openssl, php, sqlite
 
-  --with-NAME=[DIR]        Support the NAME package. The build/components/NAME
-                           file will describe compile and linker switches. DIR 
-                           is the base directory to find the module.
-  --without-NAME           Do not include support for the NAME.
+  --with-NAME=[DIR]        Support the NAME component. DIR is the base 
+                           directory to find the component.  The 
+                           build/components/NAME files describe compile and 
+                           linker switches. 
+  --without-NAME           Do not include support for the NAME component.
 
 Examples:
   ./configure --with-openssl=/usr/src/openssl
@@ -144,9 +141,6 @@ parseArg()
         BLD_FEATURE_AUTH_FILE=1
         BLD_FEATURE_AUTH_PAM=0
         BLD_FEATURE_CGI=0
-        BLD_FEATURE_EJS_ALL_IN_ONE=0
-        BLD_FEATURE_EJS_AUTO_COMPILE=0
-        BLD_FEATURE_EJS_CROSS_COMPILER=0
         BLD_FEATURE_LEGACY_API=0
         BLD_FEATURE_ROMFS=0
         ;;
@@ -158,7 +152,6 @@ parseArg()
         BLD_FEATURE_AUTH_FILE=1
         BLD_FEATURE_AUTH_PAM=1
         BLD_FEATURE_CGI=1
-        BLD_FEATURE_EJS_ALL_IN_ONE=1
         BLD_FEATURE_LEGACY_API=1
         BLD_FEATURE_ROMFS=0
         if [ "$BLD_HOST_OS" != WIN -a "$BLD_HOST_OS" != VXWORKS ] ; then
@@ -167,14 +160,8 @@ parseArg()
             BLD_FEATURE_AUTH_PAM=0
         fi
         ;;
-    enable-auto-compile)
-        BLD_FEATURE_EJS_AUTO_COMPILE=1
-        ;;
     enable-cgi)
         BLD_FEATURE_CGI=1
-        ;;
-    enable-cross-compiler)
-        BLD_FEATURE_EJS_CROSS_COMPILER=1
         ;;
     port=*)
         BLD_HTTP_PORT=${ARG}

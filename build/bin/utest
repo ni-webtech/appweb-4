@@ -505,7 +505,6 @@ enumerable class Test {
         _hostOs = getKey(data, "BLD_HOST_OS")
         config = {}
         config["debug"] = getKey(data, "BLD_DEBUG")
-        config["static"] = getKey(data, "BLD_STATIC")
         data = data.match(/BLD_FEATURE.*|BLD_HTTP_PORT.*|BLD_SSL_PORT.*/g)
         for each (item in data) {
             pair = item.split("=")

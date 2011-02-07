@@ -17,19 +17,6 @@ defineComponent() {
     libs="appweb"
 
     optional="ssl"
-	if [ "$BLD_STATIC" = 1 ] ; then
-		if [ "$BLD_PRODUCT_APPWEB" = 1 ] ; then
-        	if isdefined EJS ; then
-				optional="$optional ejs"
-                # NOTE: ejs second because required on Linux static builds for appweb
-				libs="$libs ejs"
-			fi
-			if isdefined PHP ; then
-				optional="$optional php"
-			fi
-		fi 
-	fi
-
     deps="mpr"
     if [ -d src/deps ] ; then
         deps="$deps http"

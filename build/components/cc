@@ -17,7 +17,7 @@ defineComponent() {
 
 setCompilerOptions()
 {
-    local out file cc cpu file hasGcc hasStackProtector hasMtune hasDynLoad hasSync hasUnnamedUnions tune flags
+    local out file cc cpu file hasGcc hasStackProtector hasMtune hasDynLoad hasPam hasSync hasUnnamedUnions tune flags
 
     eval os=\$BLD_${KIND}_OS
     eval cc=\$CFG_${KIND}_CC
@@ -25,9 +25,11 @@ setCompilerOptions()
     eval hasStackProtector=\${KIND}_HAS_STACK_PROTECTOR
     eval hasDoubleBraces=\${KIND}_HAS_DOUBLE_BRACES
     eval hasSync=\${KIND}_HAS_SYNC
+    eval hasPam=\${KIND}_HAS_PAM
     eval hasLibEdit=\${KIND}_HAS_EDITLINE
     eval hasMtune=\${KIND}_HAS_MTUNE
     eval hasDynLoad=\${KIND}_HAS_DYN_LOAD
+    eval hasPam=\${KIND}_HAS_PAM
     eval hasMmu=\${KIND}_HAS_MMU
     eval hasCygwin=\${KIND}_HAS_CYGWIN
     eval hasDiab=\${KIND}_HAS_DIAB
@@ -42,6 +44,7 @@ setCompilerOptions()
     eval ${hasDoubleBraces}=0
     eval ${hasSync}=0
     eval ${hasDynLoad}=0
+    eval ${hasPam}=0
     eval ${hasLibEdit}=0
     eval ${hasMmu}=0
     eval ${hasUnnamedUnions}=0
@@ -150,6 +153,19 @@ setCompilerOptions()
             fi
 
             #
+            #   Search for libpam
+            #
+            if [ "$verbose" != 0 ] ; then
+                echo -e "    Checking for libpam()"
+                # echo "         ${cc}" -o $out -c $file 
+            fi
+            echo -e "extern pam_start(); \nint main() { void *x = pam_start; return 0; }\n" >$file
+            eval \"${cc}\" ${flags} -lpam -o $out $file >/dev/null 2>&1
+            if [ $? = 0 ] ; then
+                eval $hasPam=1
+            fi
+
+            #
             #   Check for braces around initializers
             #
             if [ "$verbose" != 0 ] ; then
@@ -197,6 +213,7 @@ setCompilerOptions()
         eval $hasMmu=1
         eval $hasDynLoad=1
         eval $hasDoubleBraces=0
+        eval $hasPam=0
         eval $hasSync=0
         eval $hasUnnamedUnions=1
     fi
@@ -228,6 +245,7 @@ emitCompilerOptions()
     eval v=\$${KIND}_HAS_MMU ;              echo -e "${t}BLD_CC_MMU=$v"
     eval v=\$${KIND}_HAS_WARN_UNUSED ;      echo -e "${t}BLD_CC_WARN_UNUSED=$v"
     eval v=\$${KIND}_HAS_EDITLINE ;         echo -e "${t}BLD_CC_EDITLINE=$v"
+    eval v=\$${KIND}_HAS_PAM ;              echo -e "${t}BLD_CC_PAM=$v"
     eval v=\$${KIND}_HAS_STACK_PROTECTOR ;  echo -e "${t}BLD_CC_STACK_PROTECTOR=$v"
     eval v=\$${KIND}_HAS_SYNC ;             echo -e "${t}BLD_CC_SYNC=$v"
     eval v=\$${KIND}_HAS_UNNAMED_UNIONS ;   echo -e "${t}BLD_CC_UNNAMED_UNIONS=$v"

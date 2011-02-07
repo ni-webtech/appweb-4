@@ -47,14 +47,13 @@ makeProj: usage: makeProj [options] objects ....
     --sources               String containing source files for project
     --sourceList file       File with a list of the source files for project
     --smartLibs libraries   Use shared or static intelligently depending on
-                            --preferShared, --preferStatic and BLD_STATIC.
+                            --preferShared, --preferStatic.
     --syslibs libraries     Extra system libraries to link with 
     --top dir               Nominate the top source directory
     --version               Print the bld version
 
     Environment variables used:
         BLD_TOP             Top of the source tree
-        BLD_STATIC          Build static libraries where relevant.
 
     Configuration files used:
         config.sh
@@ -229,7 +228,7 @@ parseArgs() {
     LIB_LIST=
     for l in ${SMART_LIBS} 
     do
-        if [ "$BLD_STATIC" = 1 -a $PREFER_STATIC = 1 ]
+        if [ $PREFER_STATIC = 1 ]
         then
             lib=`echo lib${l}Static${BLD_ARCH} | \
                 sed 's/StaticStatic/Static/'`
@@ -251,7 +250,7 @@ parseArgs() {
 
     if [ "$LIBRARY" != "" ]
     then
-        if [ "$BLD_STATIC" = "0" -a "$ENTRY" = "" ]
+        if [ "$ENTRY" = "" ]
         then
             ENTRY="_DllMainCRTStartup@12"
         fi
@@ -796,7 +795,7 @@ then
     exit 255
 fi
 
-if [ "$BLD_STATIC" = 1 -a "$PREFER_SHARED" = 1 ]
+if [ "$PREFER_SHARED" = 1 ]
 then
     PREFER_STATIC=1
 fi

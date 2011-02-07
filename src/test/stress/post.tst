@@ -27,6 +27,7 @@ function postTest(url: String) {
     for (i in count) {
         let n = http.write(buf)
     }
+    http.wait(120 * 1000)
     if (http.status != 200) {
         print("STATUS " + http.status)
         print(http.response)
@@ -36,6 +37,7 @@ function postTest(url: String) {
     http.close()
 }
 
+/*
 postTest("/index.html")
 
 if (test.config["ejs"] == 1) {
@@ -44,6 +46,8 @@ if (test.config["ejs"] == 1) {
 if (test.config["php"] == 1) {
     postTest("/form.php")
 }
+*/
+
 if (test.config["cgi"] == 1) {
     postTest("/cgi-bin/cgiProgram")
 }
