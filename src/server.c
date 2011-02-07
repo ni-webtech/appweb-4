@@ -52,7 +52,6 @@ static void manageAppweb(MaAppweb *appweb, int flags)
     } else if (flags & MPR_MANAGE_FREE) {
         /* TODO - should this call stop? */
         maStopAppweb(appweb);
-        maUnloadStaticModules(appweb);
     }
 }
 
@@ -141,7 +140,6 @@ static void manageServer(MaServer *server, int flags)
 MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int port)
 {
     MaServer    *server;
-    static int  staticModulesLoaded = 0;
 
     mprAssert(appweb);
     mprAssert(name && *name);
@@ -166,11 +164,6 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, 
         maAddHostAddress(server, ip, port);
     }
     maSetDefaultServer(appweb, server);
-
-    if (!staticModulesLoaded) {
-        staticModulesLoaded = 1;
-        maLoadStaticModules(appweb);
-    }
     return server;
 }
 

@@ -73,7 +73,7 @@ $(BLD_LIB_DIR)/libappweb$(BLD_LIB): Makefile $(OBJECTS) $(BLD_MPR_MAKEDEP)
 	bld --library $(BLD_LIB_DIR)/libappweb --search "$(BLD_APPWEB_LIBPATHS)" --libs "http $(BLD_APPWEB_WITHLIBS)" $(OBJECTS)
 
 #
-#	Build Modules -- Always build all modules -- even if statically linking
+#	Build Modules
 #
 $(BLD_MOD_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_MOD_DIR)/$(CGI) --libs "$(LIBS)" $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)

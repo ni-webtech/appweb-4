@@ -135,6 +135,7 @@ void httpSetAuthRequiredGroups(HttpAuth *auth, cchar *groups)
 {
     auth->requiredGroups = sclone(groups);
     auth->flags |= HTTP_AUTH_REQUIRED;
+    auth->anyValidUser = 0;
 }
 
 
@@ -142,6 +143,7 @@ void httpSetAuthRequiredUsers(HttpAuth *auth, cchar *users)
 {
     auth->requiredUsers = sclone(users);
     auth->flags |= HTTP_AUTH_REQUIRED;
+    auth->anyValidUser = 0;
 }
 
 

@@ -136,7 +136,6 @@ extern int          maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname);
 
 //  MOB - name
 extern void maSetDefaultServer(MaAppweb *appweb, struct MaServer *server);
-extern void maUnloadStaticModules(MaAppweb *appweb);
 
 extern void maSetKeepAliveTimeout(MaAppweb *appweb, int timeout);
 extern void maSetTimeout(MaAppweb *appweb, int timeout);
@@ -201,7 +200,7 @@ extern void maSetNamedVirtualHostAddress(MaHostAddress *hostAddress);
     @stability Evolving
     @defgroup MaServer MaServer
     @see MaServer maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateServer 
-        maConfigureServer maLoadStaticModules maUnloadStaticModules maSplitConfigValue
+        maConfigureServer maSplitConfigValue
  */
 typedef struct MaServer {
     MaAppweb        *appweb;                /**< Appweb control object */
@@ -288,16 +287,6 @@ extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, ccha
  */
 extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cchar *documentRoot, 
         cchar *ip, int port);
-
-/**
-    Load static modules
-    @description Load the statically configured modules, handlers, filters and connectors. The configure program
-        can specify a static or shared build of Appweb. The #maCreateServer routine will call maLoadStaticModules
-        automatically. It should not be called by in user programs.
-    @param http Http object created via #maCreateHttp
-    @ingroup MaServer
- */
-extern void maLoadStaticModules(MaAppweb *appweb);
 
 extern void     maAddHost(MaServer *server, struct MaHost *host);
 extern MaHostAddress *maAddHostAddress(MaServer *server, cchar *ip, int port);
