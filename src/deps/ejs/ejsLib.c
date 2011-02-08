@@ -23872,12 +23872,12 @@ static EjsObj *getPathExists(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
  */
 static EjsObj *getPathExtension(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
-    char    *cp;
+    char    *ext;
 
-    if ((cp = strrchr(fp->value, '.')) == 0) {
+    if ((ext = mprGetPathExtension(fp->value)) == 0) {
         return (EjsObj*) ejs->emptyString;
     }
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, &cp[1]);
+    return (EjsObj*) ejsCreateStringFromAsc(ejs, ext);
 }
 
 
