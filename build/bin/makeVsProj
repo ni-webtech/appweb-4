@@ -777,10 +777,6 @@ IFLAGS=`echo $IFLAGS | sed 's/-I//g; s/ /;/g'`
 
 DFLAGS=`echo $DFLAGS ${MAKE_DFLAGS} ${_DFLAGS} ${BLD_DFLAGS} | sed 's/ -D/;/g' | sed 's/;_WIN32_WCE=0x420//'`
 
-# if [ "$MAKE_STATIC" = "" ] ; then
-#     MAKE_STATIC="$BLD_STATIC"
-# fi
-
 #
 #   Prioritize library suffix search order
 #
@@ -869,15 +865,7 @@ if [ "$EXECUTABLE" ] ; then
     fi
 fi
 
-if [ "$OMITSTDLIBS" = "0" ] ; then
-#    if [ "$BLD_STATIC" = "1" ] ; then
-#        STND_LIBS=$_STATIC_LIBS
-#    else
-        STND_LIBS=$_SHARED_LIBS
-#    fi
-fi
-
-
+STND_LIBS=$_SHARED_LIBS
 rm -f $PROJECT
 
 outputHeader

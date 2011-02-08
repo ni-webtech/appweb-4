@@ -23,11 +23,7 @@ PRE_DIRS		+= handlers filters modules
 POST_DIRS		+= utils server test
 
 TARGETS			+= $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-ifeq ($(BLD_STATIC),1)
-	SOURCES		+= $(shell ls *.c handlers/*.c modules/*.c | egrep -v 'deps')
-else
-	SOURCES		+= $(shell ls *.c handlers/fileHandler.c handlers/dirHandler.c handlers/egiHandler.c | egrep -v 'deps')
-endif
+SOURCES			+= $(shell ls *.c handlers/fileHandler.c handlers/dirHandler.c handlers/egiHandler.c | egrep -v 'deps')
 OBJECTS			= $(patsubst %.c,$(BLD_OBJ_DIR)/%$(BLD_OBJ),$(notdir $(SOURCES)))
 MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
@@ -58,13 +54,9 @@ tools:
 	$(call log) [Notice] "Building For Target"
 
 compileExtra: $(TARGETS)
-ifeq ($(BLD_STATIC),0)
 	@T=modules D=deps/ejs ; $(DO_RECURSE)
-endif
 
-ifeq ($(BLD_STATIC),0)
 compileFinal: $(MODULES)
-endif
 
 #
 #	Build the appweb library. Includes dirHandler, fileHandler

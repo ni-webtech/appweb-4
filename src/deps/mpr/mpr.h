@@ -3402,24 +3402,24 @@ extern uint64 mprGetTicks();
 
 #if BLD_DEBUG
     #if MPR_HIGH_RES_TIMER
-        #define MEASURE(tag1, tag2, op) \
+        #define MEASURE(level, tag1, tag2, op) \
             if (1) { \
                 MprTime elapsed, start = mprGetTime(); \
                 uint64  ticks = mprGetTicks(); \
                 op; \
                 elapsed = mprGetTime() - start; \
                 if (elapsed < 1000) { \
-                    mprLog(5, "TIME: %s.%s elapsed %,d msec, %,d ticks", tag1, tag2, elapsed, mprGetTicks() - ticks); \
+                    mprLog(level, "TIME: %s.%s elapsed %,d msec, %,d ticks", tag1, tag2, elapsed, mprGetTicks() - ticks); \
                 } else { \
-                    mprLog(5, "TIME: %s.%s elapsed %,d msec", tag1, tag2, elapsed); \
+                    mprLog(level, "TIME: %s.%s elapsed %,d msec", tag1, tag2, elapsed); \
                 } \
             } else 
     #else
-        #define MEASURE(tag1, tag2, op) \
+        #define MEASURE(level, tag1, tag2, op) \
             if (1) { \
                 MprTime start = mprGetTime(); \
                 op; \
-                mprLog(5, "TIME: %s.%s elapsed %,d msec", tag1, tag2, mprGetTime() - start); \
+                mprLog(level, "TIME: %s.%s elapsed %,d msec", tag1, tag2, mprGetTime() - start); \
             } else 
     #endif
 #else
@@ -5913,8 +5913,6 @@ typedef struct MprSocketService {
 
 
 extern MprSocketService *mprCreateSocketService();
-extern int  mprStartSocketService();
-extern void mprStopSocketService();
 extern void mprSetSecureProvider(MprSocketProvider *provider);
 
 /**

@@ -225,9 +225,6 @@ static void writeToCGI(HttpQueue *q)
 
     for (packet = httpGetPacket(q); packet && conn->state < HTTP_STATE_COMPLETE; packet = httpGetPacket(q)) {
         conn->lastActivity = conn->http->now;
-//  MOB
-        printf("PUSH TO CGI %ld\n", (long int) conn->http->now);
-        printf("CONN %p, uri %s\n", conn, conn->rx->uri);
 
         buf = packet->content;
         len = mprGetBufLength(buf);

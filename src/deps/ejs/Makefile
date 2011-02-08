@@ -34,18 +34,13 @@ ifeq ($(BLD_EJS_DIR),)
 	TOOLS			+= $(BLD_BIN_DIR)/ejsmod$(BLD_EXE)
 
 	TARGETS		+= $(BLD_MOD_DIR)/ejs.mod
-	ifeq ($(BLD_STATIC),1) 
-		TARGETS	+= $(BLD_LIB_DIR)/libejs$(BLD_LIB)
-	endif
 	# MODULES += $(BLD_MOD_DIR)/mod_ejs$(BLD_SHOBJ)
 	GATE_OBJECTS += ejsAppwebHandler$(BLD_OBJ)
 	ifeq ($(BLD_OS),VXWORKS)
-	ifeq ($(BLD_STATIC),0)
 		EXTRA_GATEWAY_OBJECTS += $(BLD_LIB_DIR)/libejs.out
 		ifeq ($(BLD_FEATURE_SQLITE),1)
 			EXTRA_GATEWAY_OBJECTS += $(BLD_LIB_DIR)/libsqlite3.out
 		endif
-	endif
 	endif
 	TARGETS		+= $(BLD_LIB_DIR)/www
 	ifeq ($(BLD_HOST_OS),WIN)
@@ -78,7 +73,7 @@ $(BLD_MOD_DIR)/ejs.mod: $(BLD_INC_DIR)/ejs.slots.h *.es $(TOOLS)
 	$(call log) "[Generate]" ejs.mod
 	$(call setlibpath) ; \
 		ejsc $(ESFLAGS) --bind --require "" --out $(BLD_MOD_DIR)/ejs.mod ejs.es
-	$(call setlibpath) ; ejsmod --showDebug --cslots --require "" --out .ejs.slots.h $(BLD_MOD_DIR)/ejs.mod \
+	$(call setlibpath) ; ejsmod --cslots --require "" --out .ejs.slots.h $(BLD_MOD_DIR)/ejs.mod \
 		|| rm -f $(BLD_MOD_DIR)/ejs.mod
 	if [ "`grep CHECKSUM .ejs.slots.h | sum`" != "`grep CHECKSUM $(BLD_INC_DIR)/ejs.slots.h | sum`" ] ; then \
 		$(call log) "[Generate]" $(BLD_INC_DIR)/ejs.slots.h ; \

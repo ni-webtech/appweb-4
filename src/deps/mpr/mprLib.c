@@ -1146,7 +1146,7 @@ static void mark()
     markRoots();
     MPR->marking = 0;
     if (!heap->hasSweeper) {
-        MEASURE("GC", "sweep", sweep());
+        MEASURE(7, "GC", "sweep", sweep());
     }
     synchronize();
 }
@@ -1383,7 +1383,7 @@ static void marker(void *unused, MprThread *tp)
         if (!heap->mustYield) {
             mprWaitForCond(heap->markerCond, -1);
         }
-        MEASURE("GC", "mark", mark());
+        MEASURE(7, "GC", "mark", mark());
     }
     heap->mustYield = 0;
     MPR->marker = 0;
@@ -1400,7 +1400,7 @@ static void sweeper(void *unused, MprThread *tp)
 
     MPR->sweeper = 1;
     while (!mprIsStoppingCore()) {
-        MEASURE("GC", "sweep", sweep());
+        MEASURE(7, "GC", "sweep", sweep());
         mprYield(MPR_YIELD_BLOCK);
     }
     MPR->sweeper = 0;
@@ -1542,7 +1542,7 @@ static int syncThreads()
 
     mprAssert(allYielded);
 #if BLD_DEBUG
-    LOG(5, "TIME: syncThreads elapsed %,d msec, %,d ticks", mprGetElapsedTime(mark), mprGetTicks() - ticks);
+    LOG(7, "TIME: syncThreads elapsed %,d msec, %,d ticks", mprGetElapsedTime(mark), mprGetTicks() - ticks);
 #endif
     return (allYielded) ? 1 : 0;
 }
@@ -2556,7 +2556,6 @@ int mprStart()
     rc = mprStartOsService();
     rc += mprStartModuleService();
     rc += mprStartWorkerService();
-    rc += mprStartSocketService();
     if (rc != 0) {
         mprUserError("Can't start MPR services");
         return MPR_ERR_CANT_INITIALIZE;
@@ -12566,14 +12565,18 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
 {
     MprModuleService    *ms;
     MprModule           *mp;
+    char                *at;
     int                 index;
 
     ms = MPR->moduleService;
     mprAssert(ms);
 
-    if (path && ((path = mprSearchForModule(path)) == 0)) {
-        mprError("Can't find module \"%s\" in search path \"%s\"", path, mprGetModuleSearchPath());
-        return 0;
+    if (path) {
+        if ((at = mprSearchForModule(path)) == 0) {
+            mprError("Can't find module \"%s\" in search path \"%s\"", path, mprGetModuleSearchPath());
+            return 0;
+        }
+        path = at;
     }
     if ((mp = mprAllocObj(MprModule, manageModule)) == 0) {
         return 0;
@@ -12731,7 +12734,10 @@ void mprUnloadModule(MprModule *mp)
 {
     mprStopModule(mp);
 #if BLD_CC_DYN_LOAD
-    mprUnloadNativeModule(mp);
+    if (mp->handle) {
+        mprUnloadNativeModule(mp);
+        mp->handle = 0;
+    }
 #endif
     mprRemoveItem(MPR->moduleService->modules, mp);
 }
@@ -16520,6 +16526,7 @@ static ssize writeSocket(MprSocket *sp, void *buf, ssize bufsize);
 MprSocketService *mprCreateSocketService()
 {
     MprSocketService    *ss;
+    char                hostName[MPR_MAX_IP_NAME], serverName[MPR_MAX_IP_NAME], domainName[MPR_MAX_IP_NAME], *dp;
 
     ss = mprAllocObj(MprSocketService, manageSocketService);
     if (ss == 0) {
@@ -16529,44 +16536,17 @@ MprSocketService *mprCreateSocketService()
     ss->maxClients = MAXINT;
     ss->numClients = 0;
 
-    ss->standardProvider = createStandardProvider(ss);
-    if (ss->standardProvider == NULL) {
-        return NULL;
+    if ((ss->standardProvider = createStandardProvider(ss)) == 0) {
+        return 0;
     }
     ss->secureProvider = NULL;
-    ss->mutex = mprCreateLock();
-    if (ss->mutex == 0) {
-        return NULL;
+    if ((ss->mutex = mprCreateLock()) == 0) {
+        return 0;
     }
-    return ss;
-}
-
-
-static void manageSocketService(MprSocketService *ss, int flags)
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(ss->mutex);
-        mprMark(ss->standardProvider);
-        mprMark(ss->secureProvider);
-    }
-}
-
-
-/*
-    Start the socket service
- */
-int mprStartSocketService()
-{
-    MprSocketService    *ss;
-    char                hostName[MPR_MAX_IP_NAME], serverName[MPR_MAX_IP_NAME], domainName[MPR_MAX_IP_NAME], *dp;
-
-    ss = MPR->socketService;
-    mprAssert(ss);
 
     serverName[0] = '\0';
     domainName[0] = '\0';
     hostName[0] = '\0';
-
     if (gethostname(serverName, sizeof(serverName)) < 0) {
         scopy(serverName, sizeof(serverName), "localhost");
         mprUserError("Can't get host name. Using \"localhost\".");
@@ -16583,7 +16563,17 @@ int mprStartSocketService()
     mprSetServerName(serverName);
     mprSetDomainName(domainName);
     mprSetHostName(hostName);
-    return 0;
+    return ss;
+}
+
+
+static void manageSocketService(MprSocketService *ss, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ss->mutex);
+        mprMark(ss->standardProvider);
+        mprMark(ss->secureProvider);
+    }
 }
 
 
@@ -22818,10 +22808,7 @@ int mprLoadNativeModule(MprModule *mp)
 
 int mprUnloadNativeModule(MprModule *mp)
 {
-    if (mp->handle) {
-        return dlclose(mp->handle);
-    }
-    return 0;
+    return dlclose(mp->handle);
 }
 #endif
 
@@ -23246,6 +23233,7 @@ static void manageWaitHandler(MprWaitHandler *wp, int flags)
         mprMark(wp->callbackComplete);
         mprMark(wp->requiredWorker);
         mprMark(wp->handlerData);
+        mprMark(wp->dispatcher);
 
     } else if (flags & MPR_MANAGE_FREE) {
         mprRemoveWaitHandler(wp);
@@ -24690,7 +24678,11 @@ int mprLoadNativeModule(MprModule *mp)
 int mprUnloadNativeModule(MprModule *mp)
 {
     mprAssert(mp->handle);
-    return FreeLibrary((HINSTANCE) mp->handle) != 0 ? 0 : MPR_ERR_ABORTED;
+
+    if (FreeLibrary((HINSTANCE) mp->handle) == 0) {
+        return MPR_ERR_ABORTED;
+    }
+    return 0;
 }
 
 

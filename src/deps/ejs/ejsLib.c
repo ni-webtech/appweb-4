@@ -5798,6 +5798,7 @@ static int  loadDebugSection(Ejs *ejs, EjsModule *mp);
 static int  loadExceptionSection(Ejs *ejs, EjsModule *mp);
 static int  loadFunctionSection(Ejs *ejs, EjsModule *mp);
 static EjsModule *loadModuleSection(Ejs *ejs, MprFile *file, EjsModuleHdr *hdr, int *created, int flags);
+static int  loadNativeLibrary(Ejs *ejs, EjsModule *mp, cchar *path);
 static int  loadSections(Ejs *ejs, MprFile *file, cchar *path, EjsModuleHdr *hdr, int flags);
 static int  loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType);
 static int  loadScriptModule(Ejs *ejs, cchar *filename, int minVersion, int maxVersion, int flags);
@@ -5806,11 +5807,6 @@ static void popScope(EjsModule *mp, int keepScope);
 static void pushScope(EjsModule *mp, EjsBlock *block, EjsObj *obj);
 static char *search(Ejs *ejs, cchar *filename, int minVersion, int maxVersion);
 static int  trimModule(Ejs *ejs, char *name);
-
-#if !BLD_STATIC
-static int  loadNativeLibrary(Ejs *ejs, EjsModule *mp, cchar *path);
-#endif
-
 static void setDoc(Ejs *ejs, EjsModule *mp, void *vp, int slotNum);
 
 /**
@@ -5882,10 +5878,8 @@ static int initializeModule(Ejs *ejs, EjsModule *mp)
             for a backing DSO.
          */
         if ((nativeModule = ejsLookupNativeModule(ejs, ejsToMulti(ejs, mp->name))) == 0) {
-#if !BLD_STATIC
             loadNativeLibrary(ejs, mp, mp->path);
             nativeModule = ejsLookupNativeModule(ejs, ejsToMulti(ejs, mp->name));
-#endif
             if (nativeModule == NULL) {
                 if (ejs->exception == 0) {
                     ejsThrowIOError(ejs, "Can't load or initialize the native module file \"%s\"", mp->path);
@@ -6746,7 +6740,6 @@ static int loadDocSection(Ejs *ejs, EjsModule *mp)
 }
 
 
-#if !BLD_STATIC
 /*
     Check if a native module exists at the given path. If so, load it. If the path is a scripted module
     but has a corresponding native module, then load that.
@@ -6789,7 +6782,6 @@ static int loadNativeLibrary(Ejs *ejs, EjsModule *mp, cchar *modPath)
     }
     return 0;
 }
-#endif
 
 
 static int loadScriptModule(Ejs *ejs, cchar *filename, int minVersion, int maxVersion, int flags)
@@ -9169,7 +9161,7 @@ static int defineTypes(Ejs *ejs)
      */
     ejsAddNativeModule(ejs, "ejs", configureEjs, _ES_CHECKSUM_ejs, 0);
 
-#if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_STATIC
+#if BLD_FEATURE_EJS_ALL_IN_ONE
 #if BLD_FEATURE_SQLITE
     ejs_db_sqlite_Init(ejs, NULL);
 #endif
@@ -19093,6 +19085,7 @@ EjsObj *http_off(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
  */
 static EjsObj *http_reset(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
+    httpResetCredentials(hp->conn);
     httpPrepClientConn(hp->conn, 0);
     return 0;
 }
@@ -19145,7 +19138,11 @@ static EjsObj *http_set_retries(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
  */
 static EjsObj *http_setCredentials(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    httpSetCredentials(hp->conn, ejsToMulti(ejs, argv[0]), ejsToMulti(ejs, argv[1]));
+    if (ejsIsNull(ejs, argv[0])) {
+        httpResetCredentials(hp->conn);
+    } else {
+        httpSetCredentials(hp->conn, ejsToMulti(ejs, argv[0]), ejsToMulti(ejs, argv[1]));
+    }
     return 0;
 }
 
@@ -37545,33 +37542,29 @@ static EjsHttpServer *getServerContext(HttpConn *conn)
     if ((sp = httpGetServerContext(conn->server)) != 0) {
         return sp;
     }
-    if (conn->tx->handler->match) {
-        /*
-            Hosted handler. Must supply a location block which defines the HttpServer instance.
-         */
-        loc = conn->rx->loc;
-        if (loc == 0 || loc->context == 0) {
-            mprError("Location block is not defined for request");
-            return 0;
-        }
-        sp = (EjsHttpServer*) loc->context;
-        ejs = sp->ejs;
-        dirPath = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
-        dir = (dirPath && ejsIsPath(ejs, dirPath)) ? dirPath->value : conn->documentRoot;
-        if (sp->server == 0) {
-            /* Don't set limits or pipeline. That will come from the embedding server */
-            sp->server = conn->server;
-            sp->server->ssl = loc->ssl;
-            sp->ip = sclone(conn->server->ip);
-            sp->port = conn->server->port;
-            sp->dir = sclone(dir);
-        }
-        httpSetServerContext(conn->server, sp);
-        httpSetRequestNotifier(conn, (HttpNotifier) stateChangeNotifier);
-        return sp;
+    /*
+        Hosted handler. Must supply a location block which defines the HttpServer instance.
+     */
+    loc = conn->rx->loc;
+    if (loc == 0 || loc->context == 0) {
+        mprError("Location block is not defined for request");
+        return 0;
     }
-    mprError("Server context not defined for request");
-    return NULL;
+    sp = (EjsHttpServer*) loc->context;
+    ejs = sp->ejs;
+    dirPath = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
+    dir = (dirPath && ejsIsPath(ejs, dirPath)) ? dirPath->value : conn->documentRoot;
+    if (sp->server == 0) {
+        /* Don't set limits or pipeline. That will come from the embedding server */
+        sp->server = conn->server;
+        sp->server->ssl = loc->ssl;
+        sp->ip = sclone(conn->server->ip);
+        sp->port = conn->server->port;
+        sp->dir = sclone(dir);
+    }
+    httpSetServerContext(conn->server, sp);
+    httpSetRequestNotifier(conn, (HttpNotifier) stateChangeNotifier);
+    return sp;
 }
 
 
@@ -37668,7 +37661,7 @@ static void processEjs(HttpQueue *q)
 /* 
     Create the http pipeline handler for ejs.
  */
-HttpStage *ejsAddWebHandler(Http *http)
+HttpStage *ejsAddWebHandler(Http *http, MprModule *module)
 {
     HttpStage   *handler;
 
@@ -37677,9 +37670,7 @@ HttpStage *ejsAddWebHandler(Http *http)
     if (http->ejsHandler) {
         return http->ejsHandler;
     }
-    //  MOB HTTP_STAGE_THREAD
-    //  MOB -- should there be a module here
-    handler = httpCreateHandler(http, "ejsHandler", HTTP_STAGE_ALL | HTTP_STAGE_VARS, NULL);
+    handler = httpCreateHandler(http, "ejsHandler", HTTP_STAGE_ALL | HTTP_STAGE_VARS, module);
     if (handler == 0) {
         return 0;
     }
@@ -37795,7 +37786,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
 
     /* One time initializations */
     ejsLoadHttpService(ejs);
-    ejsAddWebHandler(ejs->http);
+    ejsAddWebHandler(ejs->http, NULL);
 }
 
 

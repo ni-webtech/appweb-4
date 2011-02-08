@@ -186,13 +186,6 @@ ifneq ($(findstring -march=,$(BLD_CFLAGS) $(BLD_DFLAGS)),)
     _CFLAGS   := $(patsubst -march=%,,$(_CFLAGS)) 
 endif
 
-#
-#	If building with a static libc
-#
-ifeq ($(BLD_STATIC_LIBC),1)
-	_LDFLAGS	+= -static-libgcc
-endif
-
 _LDPATH			= $(BLD_ABS_LIB_DIR)
 
 # ifeq ($(BLD_OS),LINUX)

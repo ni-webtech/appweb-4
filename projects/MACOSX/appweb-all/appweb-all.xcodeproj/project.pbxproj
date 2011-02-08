@@ -123,7 +123,6 @@
 		C9817C2C110D173400F241EF /* convenience.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C1E110D170500F241EF /* convenience.c */; };
 		C9817C2D110D173400F241EF /* dir.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C1F110D170500F241EF /* dir.c */; };
 		C9817C2E110D173400F241EF /* host.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C20110D170500F241EF /* host.c */; };
-		C9817C2F110D173400F241EF /* link.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C21110D170500F241EF /* link.c */; };
 		C9817C31110D173400F241EF /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C23110D170500F241EF /* log.c */; };
 		C9817C33110D173400F241EF /* mime.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C25110D170500F241EF /* mime.c */; };
 		C9817C35110D173400F241EF /* appweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C95C31E80FC5292A00FB3105 /* appweb.c */; };
@@ -667,7 +666,6 @@
 		C9817C1E110D170500F241EF /* convenience.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = convenience.c; path = ../../../src/convenience.c; sourceTree = SOURCE_ROOT; };
 		C9817C1F110D170500F241EF /* dir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dir.c; path = ../../../src/dir.c; sourceTree = SOURCE_ROOT; };
 		C9817C20110D170500F241EF /* host.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = host.c; path = ../../../src/host.c; sourceTree = SOURCE_ROOT; };
-		C9817C21110D170500F241EF /* link.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = link.c; path = ../../../src/link.c; sourceTree = SOURCE_ROOT; };
 		C9817C23110D170500F241EF /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ../../../src/log.c; sourceTree = SOURCE_ROOT; };
 		C9817C25110D170500F241EF /* mime.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mime.c; path = ../../../src/mime.c; sourceTree = SOURCE_ROOT; };
 		C9817C51110D183800F241EF /* libhttp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libhttp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -912,7 +910,6 @@
 				C9817C1E110D170500F241EF /* convenience.c */,
 				C9817C1F110D170500F241EF /* dir.c */,
 				C9817C20110D170500F241EF /* host.c */,
-				C9817C21110D170500F241EF /* link.c */,
 				C9817C23110D170500F241EF /* log.c */,
 				C94C145111160231007F01C6 /* match.c */,
 				C9817C25110D170500F241EF /* mime.c */,
@@ -1697,7 +1694,6 @@
 				C9817C2C110D173400F241EF /* convenience.c in Sources */,
 				C9817C2D110D173400F241EF /* dir.c in Sources */,
 				C9817C2E110D173400F241EF /* host.c in Sources */,
-				C9817C2F110D173400F241EF /* link.c in Sources */,
 				C9817C31110D173400F241EF /* log.c in Sources */,
 				C9817C33110D173400F241EF /* mime.c in Sources */,
 				C9817D2F110D2D8600F241EF /* misc.c in Sources */,

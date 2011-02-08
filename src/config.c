@@ -267,6 +267,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
 
             /*
                 Keywords outside of a virtual host or directory section
+                MOB - some errors should abort processing. Support return codes to exit appweb (could use mprFatalError)
              */
             rc = processSetting(server, key, value, state);
             if (rc == 0) {
@@ -279,12 +280,11 @@ int maParseConfig(MaServer *server, cchar *configFile)
                     extraMsg = "";
                 }
                 mprError("Ignoring unknown directive \"%s\"\nAt line %d in %s\n\n"
-                    "Make sure the required modules are loaded. %s\n",
-                    key, state->lineNumber, state->filename, extraMsg);
+                    "Make sure the required modules are loaded. %s\n", key, state->lineNumber, state->filename, extraMsg);
                 continue;
 
             } else if (rc < 0) {
-                mprError("Ignoring bad directive \"%s\" at %s:%d in %s", key, state->filename, state->lineNumber, 
+                mprError("Ignoring bad directive \"%s\" at %s:%d in %s\n", key, state->filename, state->lineNumber, 
                     configFile);
             }
             continue;

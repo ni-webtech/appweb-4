@@ -28,22 +28,9 @@ ifeq	($(BLD_FEATURE_SSL),1)
 	VLIBDEP			+= mprssl
 endif
 
-ifeq	($(BLD_STATIC),1)
-	ifeq	($(BLD_FEATURE_EJS),1)
-		VLIBDEP		+= ejs
-	endif
-endif
-
 TARGETS				+= $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)
 ifeq	($(BLD_FEATURE_CGI),1)
 	EXTRA_TARGETS 	+= cgi-bin/cgiProgram$(BLD_EXE)
-endif
-
-ifeq ($(BLD_OS),VXWORKS)
-ifeq ($(BLD_STATIC),0)
-	# EXTRA_OBJECTS	+= $(patsubst %, $(BLD_LIB_DIR)/lib%.out, appweb)
-	# EXTRA_OBJECTS	+= $(patsubst %, $(BLD_LIB_DIR)/lib%-$(BLD_VERSION).out, mpr pcre)
-endif
 endif
 
 TARGETS				+= appweb.conf

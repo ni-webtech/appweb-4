@@ -69,25 +69,22 @@ typedef struct EjsMod {
 
     int         cslots;                     /* Create C slot definitions */
     int         depends;                    /* Print module dependencies */
+    int         error;                      /* Unresolved error */
+    int         errorCount;                 /* Count of all errors */
     int         exitOnError;                /* Exit if module file errors are detected */
+    int         fatalError;                 /* Any a fatal error - Can't continue */
     int         firstGlobal;                /* First global to examine */
     int         genSlots;                   /* Set if either cslots || jsslots */
     int         listing;                    /* Generate listing file */
-    int         showDebug;                  /* Show debug instructions */
+    int         memError;                   /* Memory error */
+    int         showAsm;                    /* Show assembly bytes */
     int         verbosity;                  /* Verbosity level */
+    int         warningCount;               /* Count of all warnings */
     int         warnOnError;                /* Warn if module file errors are detected */
 
     char        *docDir;                    /* Directory to generate HTML doc */
     bool        html;                       /* Generate HTML doc */
     bool        xml;                        /* Generate XML doc */
-    
-    int         error;                      /* Unresolved error */
-    int         fatalError;                 /* Any a fatal error - Can't continue */
-    int         memError;                   /* Memory error */
-    
-    int         errorCount;                 /* Count of all errors */
-    int         warningCount;               /* Count of all warnings */
-    int         showAsm;                    /* Display assember bytes */
     
     char        *path;                      /* Current output file path */
     MprFile     *file;                      /* Current output file handle */
@@ -4203,6 +4200,7 @@ MAIN(ejsmodMain, int argc, char **argv)
             
         } else if (strcmp(argp, "--listing") == 0) {
             mp->listing = 1;
+            mp->showAsm = 1;
             
         } else if (strcmp(argp, "--log") == 0) {
             /*
@@ -4229,9 +4227,6 @@ MAIN(ejsmodMain, int argc, char **argv)
             } else {
                 searchPath = argv[++nextArg];
             }
-
-        } else if (strcmp(argp, "--showDebug") == 0) {
-            mp->showDebug++;
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintfError("%s %s-%s\n", BLD_NAME, BLD_VERSION, BLD_NUMBER);  
@@ -4287,7 +4282,6 @@ MAIN(ejsmodMain, int argc, char **argv)
             "  --out                 # Output file for all C slots (implies --cslots)\n"
             "  --require \"modules\"   # List of modules to preload\n"
             "  --search ejsPath      # Module file search path\n"
-            "  --showDebug           # Show debug instructions\n"
             "  --version             # Emit the program version information\n"
             "  --warn                # Warn about undocumented methods or parameters in doc\n\n", mpr->name);
         return -1;
@@ -5220,16 +5214,12 @@ static void interp(EjsMod *mp, EjsModule *module, EjsFunction *fun)
         }
         opt = &optable[opcode];
 
-        if (mp->showDebug) {
+        if (mp->showAsm) {
             /*
                 Output address [stack] opcode
                 Format:  "address: [stackDepth] opcode <args> ..."
              */
             mprFprintf(mp->file,  "    %04d: [%d] %02x ", address, stack, opcode);
-            mp->showAsm = 1;
-
-        } else {
-            mp->showAsm = 0;
         }
         nbytes = decodeOperands(mp, opt, argbuf, (int) sizeof(argbuf), (int) (mp->pc - start), &stackEffect);
 

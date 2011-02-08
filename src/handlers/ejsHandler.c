@@ -18,7 +18,7 @@ static int loadStartupScript(Ejs *ejs, cchar *script);
 
 /************************************* Code ***********************************/
 
-static bool matchEjs(HttpConn *conn, HttpStage *handler)
+static void setScriptName(HttpConn *conn)
 {
     HttpRx      *rx;
     MaAlias     *alias;
@@ -39,7 +39,6 @@ static bool matchEjs(HttpConn *conn, HttpStage *handler)
         rx->scriptName = alias->prefix;
         rx->pathInfo = (char*) uri;
     }
-    return 1;
 }
 
 
@@ -50,6 +49,8 @@ static void openEjs(HttpQueue *q)
     Ejs         *ejs;
     
     conn = q->conn;
+    setScriptName(conn);
+
     loc = conn->rx->loc;
     if (loc == 0 || loc->context == 0) {
         /*
@@ -149,17 +150,16 @@ double  __ejsAppweb_floating_point_resolution(double a, double b, int64 c, int64
 
 
 /*  
-    Ejs handler initialization
+    Ejs module and handler initialization
  */
-int maEjsHandlerInit(Http *http, MprModule *mp)
+int maEjsHandlerInit(Http *http, MprModule *module)
 {
     HttpStage   *handler;
 
     /*
         Most of the Ejs handler is in ejsLib.c. Augment the handler with match, open and parse callbacks.
      */
-    if ((handler = ejsAddWebHandler(http)) != 0) {
-        handler->match = matchEjs;
+    if ((handler = ejsAddWebHandler(http, module)) != 0) {
         handler->open = openEjs;
         handler->parse = (HttpParse) parseEjs;
     }
@@ -167,7 +167,7 @@ int maEjsHandlerInit(Http *http, MprModule *mp)
 }
 
 #else
-int maEjsHandlerInit(Http *http, MprModule *mp)
+int maEjsHandlerInit(Http *http, MprModule *module)
 {
     return 0;
 }

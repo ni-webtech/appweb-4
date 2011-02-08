@@ -1278,7 +1278,7 @@ extern void httpManageTrace(HttpTrace *trace, int flags);
 #if BLD_DEBUG
 #define HTTP_TIME(conn, tag1, tag2, op) \
     if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, NULL) >= 0) { \
-        MEASURE(tag1, tag2, op); \
+        MEASURE(5, tag1, tag2, op); \
     } else op
 #else
 #define HTTP_TIME(conn, tag1, tag2, op) op
@@ -1568,6 +1568,14 @@ extern void httpSetAsync(HttpConn *conn, int enable);
     @ingroup HttpConn
  */
 extern void httpSetCredentials(HttpConn *conn, cchar *user, cchar *password);
+
+/** 
+    Reset the current security credentials
+    @description Remove any existing security credentials.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @ingroup HttpConn
+ */
+extern void httpResetCredentials(HttpConn *conn);
 
 /** 
     Define an callback for IO events on this connection.

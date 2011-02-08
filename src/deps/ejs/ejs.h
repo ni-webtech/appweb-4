@@ -3678,15 +3678,6 @@ extern void     ejsInheritBaseClassNamespaces(Ejs *ejs, EjsType *type, EjsType *
 extern void     ejsSetSqliteMemCtx(MprThreadLocal *tls);
 extern void     ejsSetSqliteTls(MprThreadLocal *tls);
 
-#if UNUSED
-#if BLD_FEATURE_EJS_ALL_IN_ONE || BLD_STATIC
-extern int      ejs_events_Init(Ejs *ejs);
-extern int      ejs_xml_Init(Ejs *ejs);
-extern int      ejs_io_Init(Ejs *ejs);
-extern int      ejs_sys_Init(Ejs *ejs);
-#endif
-#endif
-
 #if BLD_FEATURE_SQLITE
 extern int      ejs_db_sqlite_Init(Ejs *ejs, MprModule *mp);
 #endif
@@ -3696,7 +3687,7 @@ extern int      ejs_web_Init(Ejs *ejs, MprModule *mp);
     Move some ejsWeb.h declarations here so handlers can just include ejs.h whether they are using the
     all-in-one ejs.h or the pure ejs.h
  */
-extern HttpStage *ejsAddWebHandler(Http *http);
+extern HttpStage *ejsAddWebHandler(Http *http, MprModule *module);
 extern int ejsHostHttpServer(HttpConn *conn);
 
 /**

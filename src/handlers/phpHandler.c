@@ -484,7 +484,7 @@ static int finalizePhp(MprModule *mp)
 
 
 /*
-    Module initialization. Called when doing both dynamic or static linking.
+    Module initialization
  */
 int maPhpHandlerInit(Http *http, MprModule *module)
 {

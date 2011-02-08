@@ -38,19 +38,11 @@ _CFLAGS             += -nologo -GR-
 
 ifeq ($(BLD_TYPE),DEBUG)
     _CFLAGS	        += -W3 -Zi -Od
-    ifeq ($(BLD_STATIC),1)
-        _CFLAGS 	+= -MTd
-    else
-        _CFLAGS 	+= -MDd
-    endif
+    _CFLAGS 	    += -MDd
     _LDFLAGS		+= -debug
 else
     _CFLAGS         += -O2
-    ifeq ($(BLD_STATIC),1)
-	    _CFLAGS		+= -MT
-    else
-        _CFLAGS		+= -MD
-    endif
+    _CFLAGS		    += -MD
 endif
 
 _LDFLAGS		    += -nodefaultlib -incremental:no -nologo
@@ -64,21 +56,13 @@ _LDPATH			    = $(BLD_LIB_DIR)
 _LIBS          	    += ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib
 
 ifeq ($(BLD_DEBUG),1)
-    ifeq ($(BLD_STATIC),1)
-        _LIBS       += libcmtd.lib
+    ifeq ($(BLD_EMBEDTHIS),1)
+        _LIBS       += msvcrtd.lib
     else
-        ifeq ($(BLD_EMBEDTHIS),1)
-            _LIBS   += msvcrtd.lib
-        else
-            _LIBS   += msvcrt.lib
-        endif
+        _LIBS       += msvcrt.lib
     endif
 else
-    ifeq ($(BLD_STATIC),1)
-	    _LIBS       += libcmt.lib
-    else
-	    _LIBS       += msvcrt.lib
-    endif
+    _LIBS           += msvcrt.lib
 endif
 
 CLEANIT		        += *.a *.tmp *.bak *.out *.obj *.map *.res *.sym *.lst *.mdp *.pbi *.pbo *.pbt *.pdb *.pch \
@@ -112,7 +96,6 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
 	if [ $$status -ne 0 -o "$(TRACE)" = "1" ] ; then cat .$$$$.cltmp ; rm -f .$$$$.cltmp ; \
     else true ; fi ; rm -f .$$$$.cltmp ; \
 	if [ $$status -ne 0 ] ; then exit 255; else true ; fi
-
 
 #
 #	Build rule for C++ source

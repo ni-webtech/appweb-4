@@ -52,19 +52,11 @@ _CFLAGS             += -nologo -fp:fast -GR- -GS-
 
 ifeq ($(BLD_TYPE),DEBUG)
     _CFLAGS	        += -W3 -Zi -Od
-    ifeq ($(BLD_STATIC),1)
-        _CFLAGS 	+= -MTd
-    else
-        _CFLAGS 	+= -MDd
-    endif
+    _CFLAGS 	    += -MDd
     _LDFLAGS		+= -debug
 else
     _CFLAGS         += -O2
-    ifeq ($(BLD_STATIC),1)
-	    _CFLAGS		+= -MT
-    else
-        _CFLAGS		+= -MD
-    endif
+    _CFLAGS		    += -MD
 endif
 
 _LDFLAGS			+= -machine:$(BLD_CPU)
@@ -73,17 +65,9 @@ _LDFLAGS		    += -nodefaultlib:oldnames.lib
 _LIBS          	    += winsock.lib secchk.lib coredll.lib corelibc.lib ole32.lib oleaut32.lib uuid.lib commctrl.lib
 
 ifeq ($(BLD_DEBUG),1)
-    ifeq ($(BLD_STATIC),1)
-        _LIBS       += libcmt.lib
-    else
-        _LIBS       += msvcrt.lib
-    endif
+    _LIBS           += msvcrt.lib
 else
-    ifeq ($(BLD_STATIC),1)
-	    _LIBS       += libcmt.lib
-    else
-	    _LIBS       += msvcrt.lib
-    endif
+    _LIBS           += msvcrt.lib
 endif
 
 CLEANIT		        += *.a *.tmp *.bak *.out *.obj *.map *.res *.sym *.lst *.mdp *.pbi *.pbo *.pbt *.pdb *.pch \

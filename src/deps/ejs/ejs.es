@@ -5560,7 +5560,8 @@ FUTURE & KEEP
             XML(response)
 
         /**
-            Reset the Http object to prepare for a new request. This will not close the connection.
+            Reset the Http object to prepare for a new request. This will discard existing headers and security 
+            credentials. It will not close the connection.
          */
         native function reset(): Void
 
@@ -5604,6 +5605,8 @@ FUTURE & KEEP
 
         /** 
             Set the user credentials to use if the request requires authentication.
+            @param username String user name to use. If null, then reset the current credentials.
+            @param password Un-encrypted string password to use 
          */
         native function setCredentials(username: String, password: String): Void
 

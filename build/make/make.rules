@@ -89,6 +89,7 @@ do [ -d "$$i" ] || continue ;\
             $(MAKE) -S --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) depend ; \
             cd - >/dev/null 2>&1 ; \
         fi ; \
+        [ "$(TRACE)" = 1 ] && echo "cd $$i" ; \
 		$(MAKE) -S -C "$$i" --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) $$T ; \
 		if [ $$? != 0 ] ; then \
 			echo "\# WARNING: Makefile error in `pwd`" ; \

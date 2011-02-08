@@ -525,10 +525,6 @@ shift $((_INDEX - 1))
 
 OS=${BLD_OS}
 
-# if [ "$MAKE_STATIC" = "" ] ; then
-#     MAKE_STATIC="$BLD_STATIC"
-# fi
-
 #
 #   Prioritize library suffix search order
 #
