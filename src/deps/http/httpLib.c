@@ -5443,9 +5443,10 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
 
     /*  
         Open the queues (keep going on errors)
+        Open in reverse order so the handler is opened last. This lets authFilter go early.
      */
     qhead = &tx->queue[HTTP_QUEUE_TRANS];
-    for (q = qhead->nextQ; q != qhead; q = q->nextQ) {
+    for (q = qhead->prevQ; q != qhead; q = q->prevQ) {
         if (q->open && !(q->flags & HTTP_QUEUE_OPEN)) {
             q->flags |= HTTP_QUEUE_OPEN;
             httpOpenQueue(q, conn->tx->chunkSize);
@@ -5454,7 +5455,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
 
     if (rx->needInputPipeline) {
         qhead = &tx->queue[HTTP_QUEUE_RECEIVE];
-        for (q = qhead->nextQ; q != qhead; q = q->nextQ) {
+        for (q = qhead->prevQ; q != qhead; q = q->prevQ) {
             if (q->open && !(q->flags & HTTP_QUEUE_OPEN)) {
                 if (q->pair == 0 || !(q->pair->flags & HTTP_QUEUE_OPEN)) {
                     q->flags |= HTTP_QUEUE_OPEN;
