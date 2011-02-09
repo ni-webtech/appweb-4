@@ -951,6 +951,7 @@ print(e)
         makeDir(dirs.views.join("Base"))
         makeDir(dirs.layouts)
         makeDir(dirs.static)
+//  MOB - what is the default dir for?
         makeDir(dirs.static.join("default"))
         makeDir(dirs.static.join("images"))
         makeDir(dirs.static.join("themes"))
@@ -1173,7 +1174,8 @@ print(e)
         }
     }
 
-    /*  generate migration description model [field:type ...]
+    /*  
+        generate migration description model [field:type ...]
      */
     function generateMigration(args: Array): Void {
         if (args.length < 2) {
@@ -1184,7 +1186,8 @@ print(e)
         createMigration(model, args.slice(2), comment, true)
     }
 
-    /*  generate model name [field:type ...]
+    /*  
+        generate model name [field:type ...]
      */
     function generateModel(args: Array, comment: String): Void {
         let model: String = args[0].toPascal()
@@ -1202,7 +1205,8 @@ print(e)
         makeFile(path, data, "Model")
     }
 
-    /*  generate scaffold model [field:type ...]
+    /*  
+        generate scaffold model [field:type ...]
      */
     function generateScaffold(args: Array): Void {
         let model = args[0]
@@ -1222,7 +1226,8 @@ print(e)
         }
     }
 
-    /*  Create a controller with scaffolding. Usage: controllerName [actions ...]
+    /*  
+        Create a controller with scaffolding. Usage: controllerName [actions ...]
      */
     function generateScaffoldController(controller: String, model: String, extraActions: Array? = null): Void {
         let name = controller.toPascal()
@@ -1254,7 +1259,8 @@ print(e)
         makeFile(path, data, "Controller")
     }
 
-    /*  Create a scaffold views.  Usage: controllerName [actions ...]
+    /*  
+        Create a scaffold views.  Usage: controllerName [actions ...]
      */
     function generateScaffoldViews(controller: String, model: String, extraActions: Array? = null): Void {
         let stndActions: Array = [ "create", "destroy", "edit", "index", "init", "show", "update" ]
@@ -1710,7 +1716,6 @@ These Directories are created via command "ejsmvc generate app"
     db                        SQL databases and database scripts
     db/migrations             SQL database migration scripts
     doc                       Documentation for the application
-    ejsrc                     Primary configuration file
     layouts                   Page template layout files
     models                    Database models
     src                       Extra application source
@@ -1723,6 +1728,7 @@ These files are also created:
 
     ejsrc                     Configuration file
     layouts/default.ejs       Default template layout page
+    start.es                  Startup script for web serving
     static/layout.css         Default layout style sheet
     static/themes/default.css Default theme style sheet
     static/images/banner.jpg  Default UI banner
@@ -1742,7 +1748,7 @@ These files are also created:
 require ejs.web
     
 let server: HttpServer = new HttpServer
-var router = new Router
+var router = new Router(Router.Restful)
 
 server.on("readable", function (event, request) {
     App.log.info(request.method, request.uri, request.scheme)
@@ -1780,7 +1786,7 @@ module App {
 
 <body>
     <div class="top">
-        <h1><% anchor("${NAME} Application", request.home) %></h1>
+        <h1><% label("${NAME} Application", request.home) %></h1>
     </div>
     <div id="logo">EJScript&trade;</div>
 

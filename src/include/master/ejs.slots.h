@@ -1211,7 +1211,8 @@
 #define ES_GC_enabled                                                  0
 #define ES_GC_newQuota                                                 1
 #define ES_GC_run                                                      2
-#define ES_GC_NUM_CLASS_PROP                                           3
+#define ES_GC_verify                                                   3
+#define ES_GC_NUM_CLASS_PROP                                           4
 
 /*
    Prototype (instance) slots for "GC" type 
@@ -2358,7 +2359,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1334146
+#define _ES_CHECKSUM_ejs   1334808
 
 #endif
 /************************************************************************/

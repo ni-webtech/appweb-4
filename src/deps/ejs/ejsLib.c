@@ -1768,6 +1768,8 @@ static void VM(Ejs *ejs, EjsFunction *fun, EjsAny *otherThis, int argc, int stac
     uchar       *mark;
     int         i, offset, count, opcode, attributes, frozen;
 
+    MPR_VERIFY_MEM();
+
 #if BLD_UNIX_LIKE || VXWORKS 
     /*
         Direct threading computed goto processing. Include computed goto jump table.
@@ -3188,7 +3190,9 @@ mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->hea
                 AddNamespaceRef
          */
         CASE (EJS_OP_ADD_NAMESPACE_REF):
+            MPR_VERIFY_MEM();
             ejsAddNamespaceToBlock(ejs, state->bp, (EjsNamespace*) pop(ejs));
+            MPR_VERIFY_MEM();
             BREAK;
 
         /*
@@ -3239,6 +3243,7 @@ mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->hea
                 DefineClass <type>
          */
         CASE (EJS_OP_DEFINE_CLASS):
+            MPR_VERIFY_MEM();
             type = GET_TYPE();
             if (type == 0 || !ejsIsType(ejs, type)) {
                 ejsThrowReferenceError(ejs, "Reference is not a class");
@@ -3246,11 +3251,14 @@ mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->hea
                 type->constructor.block.scope = state->bp;
                 if (type && type->hasInitializer) {
                     fun = ejsGetProperty(ejs, (EjsObj*) type, 0);
+                    MPR_VERIFY_MEM();
                     callFunction(ejs, fun, (EjsObj*) type, 0, 0);
+                    MPR_VERIFY_MEM();
                     if (type->implements && !ejs->exception) {
                         callInterfaceInitializers(ejs, type);
                     }
                     state->bp = &FRAME->function.block;
+                    MPR_VERIFY_MEM();
                 }
             }
             ejs->result = type;
@@ -4014,7 +4022,8 @@ frozen = ejsFreeze(ejs, 1);
                     EjsName qname = { nameVar, spaceVar };
                     ejsDefineProperty(ejs, vp, -1, qname, NULL, attributes, v1);
                 }
-            }
+            } 
+            MPR_VERIFY_MEM();
             state->stack -= (argc * 3);
             push(vp);
             state->t1 = 0;
@@ -4421,6 +4430,7 @@ int ejsRun(Ejs *ejs)
         if (mp->initialized) {
             continue;
         }
+        MPR_VERIFY_MEM();
         if (ejsRunInitializer(ejs, mp) == 0) {
             return EJS_ERR;
         }
@@ -4439,6 +4449,7 @@ EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, vo
     mprAssert(ejsIsFunction(ejs, fun));
     mprAssert(ejs->exception == 0);
     mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
+    MPR_VERIFY_MEM();
 
     if (ejs->exception) {
         return 0;
@@ -5645,6 +5656,7 @@ static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode)
     static int      showFrequency = 1;
 #endif
 
+    MPR_VERIFY_MEM();
     mprAssert(!MPR->marking);
     state = ejs->state;
     fp = state->fp;
@@ -12353,12 +12365,14 @@ if (block == block->pot.obj.type->ejs->globalBlock) {
             ejsManagePot(block, flags);
             mprMark(block->prevException);
 
-            if (block->namespaces.length > 0) {
-                mprMark(block->namespaces.items);
-                for (next = 0; ((item = (EjsObj*) mprGetNextItem(&block->namespaces, &next)) != 0); ) {
-                    mprMark(item);
-                }
+            /*
+                Must mark each item of the list as the list itself is not allocated
+             */
+            mprMark(block->namespaces.items);
+            for (next = 0; ((item = (EjsObj*) mprGetNextItem(&block->namespaces, &next)) != 0); ) {
+                mprMark(item);
             }
+
             /* This is the lexical block scope */
             for (b = block->scope; b; b = b->scope) {
 #if FUTURE
@@ -17911,7 +17925,7 @@ void ejsConfigureFunctionType(Ejs *ejs)
 /*
     native static function get enabled(): Boolean
  */
-static EjsObj *getEnable(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsObj *gc_enabled(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     return (EjsObj*) ((mprGetMpr()->heap.enabled) ? ejs->trueValue: ejs->falseValue);
 }
@@ -17920,7 +17934,7 @@ static EjsObj *getEnable(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 /*
     native static function set enabled(on: Boolean): Void
  */
-static EjsObj *setEnable(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsObj *gc_set_enabled(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     mprAssert(argc == 1 && ejsIsBoolean(ejs, argv[0]));
     mprGetMpr()->heap.enabled = ejsGetBoolean(ejs, argv[0]);
@@ -17932,7 +17946,7 @@ static EjsObj *setEnable(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
     run(deep: Boolean = false)
     MOB -- change args to be a string "check", "all"
  */
-static EjsObj *runGC(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsObj *gc_run(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     int     deep;
 
@@ -17949,7 +17963,7 @@ static EjsObj *runGC(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 /*
     native static function get newQuota(): Number
  */
-static EjsObj *getNewQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsObj *gc_newQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     return (EjsObj*) ejsCreateNumber(ejs, mprGetMpr()->heap.newQuota);
 }
@@ -17958,7 +17972,7 @@ static EjsObj *getNewQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 /*
     native static function set newQuota(quota: Number): Void
  */
-static EjsObj *setNewQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsObj *gc_set_newQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     int     quota;
 
@@ -17974,6 +17988,16 @@ static EjsObj *setNewQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 }
 
 
+/*
+    verify(): Void
+ */
+static EjsObj *gc_verify(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+{
+    mprVerifyMem();
+    return 0;
+}
+
+
 void ejsConfigureGCType(Ejs *ejs)
 {
     EjsType         *type;
@@ -17982,9 +18006,12 @@ void ejsConfigureGCType(Ejs *ejs)
         mprError("Can't find GC type");
         return;
     }
-    ejsBindAccess(ejs, type, ES_GC_enabled, (EjsProc) getEnable, (EjsProc) setEnable);
-    ejsBindAccess(ejs, type, ES_GC_newQuota, (EjsProc) getNewQuota, (EjsProc) setNewQuota);
-    ejsBindMethod(ejs, type, ES_GC_run, (EjsProc) runGC);
+    ejsBindAccess(ejs, type, ES_GC_enabled, gc_enabled, gc_set_enabled);
+    ejsBindAccess(ejs, type, ES_GC_newQuota, gc_newQuota, gc_set_newQuota);
+    ejsBindMethod(ejs, type, ES_GC_run, gc_run);
+#if ES_GC_verify
+    ejsBindMethod(ejs, type, ES_GC_verify, gc_verify);
+#endif
 }
 
 /*
@@ -18178,9 +18205,11 @@ static EjsObj *g_eval(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     } else {
         cache = ejsToMulti(ejs, argv[1]);
     }
+    MPR_VERIFY_MEM();
     if (ejsLoadScriptLiteral(ejs, script, cache, EC_FLAGS_NO_OUT | EC_FLAGS_DEBUG | EC_FLAGS_THROW | EC_FLAGS_VISIBLE) < 0) {
         return 0;
     }
+    MPR_VERIFY_MEM();
     return ejs->result;
 }
 
@@ -18243,6 +18272,8 @@ static EjsObj *g_load(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     cchar       *path, *cache, *cp;
 
+    MPR_VERIFY_MEM();
+
     path = ejsToMulti(ejs, argv[0]);
     cache = (argc < 2) ? 0 : ejsToMulti(ejs, argv[1]);
 
@@ -18269,6 +18300,7 @@ static EjsObj *g_md5(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     EjsString   *str;
     char        *hash;
 
+    MPR_VERIFY_MEM();
     str = (EjsString*) argv[0];
     hash = mprGetMD5Hash(ejsToMulti(ejs, str), str->length, NULL);
     return (EjsObj*) ejsCreateStringFromAsc(ejs, hash);
@@ -25802,6 +25834,7 @@ int ejsMakeHash(Ejs *ejs, EjsPot *obj)
         hash->size = newHashSize;
         mprAssert(newHashSize > 0);
         obj->properties->hash = hash;
+        obj->separateHash = 1;
     }
     hash = obj->properties->hash;
     mprAssert(hash);
@@ -25815,7 +25848,6 @@ int ejsMakeHash(Ejs *ejs, EjsPot *obj)
             sp->hashChain = -1;
         }
     }
-    obj->separateHash = 1;
 
     /*
         Rehash existing properties
@@ -48879,6 +48911,7 @@ int ejsInitCompiler(EjsService *service)
  */
 static EjsObj *loadScriptFile(Ejs *ejs, cchar *path, cchar *cache)
 {
+    MPR_VERIFY_MEM();
     if (ejsLoadScriptFile(ejs, path, cache, EC_FLAGS_NO_OUT | EC_FLAGS_DEBUG | EC_FLAGS_THROW) < 0) {
         return 0;
     }
@@ -48970,7 +49003,8 @@ int ejsLoadScriptLiteral(Ejs *ejs, EjsString *script, cchar *cache, int flags)
     ecCloseStream(cp);
     mprRemoveRoot(cp);
     ecDestroyCompiler(cp);
-
+    MPR_VERIFY_MEM();
+    
     if (ejsRun(ejs) < 0) {
         return EJS_ERR;
     }
@@ -60724,7 +60758,7 @@ static EcNode *parseProgram(EcCompiler *cp, cchar *path)
     int         next;
 
     ENTER(cp);
-
+    
     ejs = cp->ejs;
     state = cp->state;
     state->strict = cp->strict;
@@ -61917,6 +61951,7 @@ static EcNode *createNode(EcCompiler *cp, int kind, EjsString *name)
         peekToken(cp);
     }
     token = cp->token;
+
     if (token) {
         np->tokenId = token->tokenId;
         np->groupMask = token->groupMask;

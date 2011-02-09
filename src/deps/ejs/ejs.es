@@ -4607,16 +4607,10 @@ module ejs {
 
         use default namespace public
 
-        //  MOB TODO - should be "enable"
         /**
             Is the garbage collector is enabled.  Enabled by default.
          */
         native static function get enabled(): Boolean
-
-        /**
-            @duplicate GC.enabled
-            @param on Set to true to enable the collector.
-         */
         native static function set enabled(on: Boolean): Void
 
         /**
@@ -4634,6 +4628,13 @@ module ejs {
                 geneartion of objects.
          */
         native static function run(deep: Boolean = false): void
+
+        /**
+            Verify memory. In debug builds, this call verifies all memory blocks by checking a per-block signature.
+            This is very slow so call sparingly. In release builds, this call does nothing.
+         */
+        native static function verify(): Void
+
     }
 }
 
@@ -16274,7 +16275,7 @@ module ejs.web {
          */
         private function openDatabase(request: Request) {
             let dbconfig = config.database
-            let dbclass = dbconfig["dbclass"]
+            let dbclass = dbconfig["class"]
             let options = dbconfig[config.mode]
             if (dbclass) {
                 if (dbconfig.module && !global[dbclass]) {

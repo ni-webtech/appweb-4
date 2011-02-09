@@ -1721,8 +1721,10 @@ typedef struct MprMem {
 
 #if BLD_MEMORY_DEBUG
     #define MPR_CHECK_BLOCK(bp)     mprCheckBlock(bp)
+    #define MPR_VERIFY_MEM()        if (MPR->heap.verify) { mprVerifyMem(); } else
 #else
     #define MPR_CHECK_BLOCK(bp) 
+    #define MPR_VERIFY_MEM()        
 #endif
 
 /*
