@@ -400,10 +400,12 @@ void maSetVirtualHost(MaHost *host)
 }
 
 
+//  MOB -- should this be moved to "http"?
+
 int maInsertAlias(MaHost *host, MaAlias *newAlias)
 {
-    MaAlias     *alias, *old;
-    int         rc, next, index;
+    MaAlias     *alias;
+    int         rc, next;
 
     if (host->parent && host->aliases == host->parent->aliases) {
         host->aliases = mprCloneList(host->parent->aliases);
@@ -416,11 +418,15 @@ int maInsertAlias(MaHost *host, MaAlias *newAlias)
     for (next = 0; (alias = mprGetNextItem(host->aliases, &next)) != 0; ) {
         rc = strcmp(newAlias->prefix, alias->prefix);
         if (rc == 0) {
-            index = mprLookupItem(host->aliases, alias);
-            old = (MaAlias*) mprGetItem(host->aliases, index);
-            mprRemoveItem(host->aliases, alias);
-            mprInsertItemAtPos(host->aliases, next - 1, newAlias);
-            return 0;
+            if (newAlias->redirectCode == alias->redirectCode) {
+                mprRemoveItem(host->aliases, alias);
+                mprInsertItemAtPos(host->aliases, next - 1, newAlias);
+                return 0;
+
+            } else if (newAlias->redirectCode > alias->redirectCode) {
+                mprInsertItemAtPos(host->aliases, next - 1, newAlias);
+                return 0;
+            }
             
         } else if (rc > 0) {
             if (newAlias->redirectCode >= alias->redirectCode) {

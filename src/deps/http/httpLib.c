@@ -3763,23 +3763,25 @@ static int httpTimer(Http *http, MprEvent *event)
     /*
         Check for unloadable modules
      */
-    for (next = 0; (module = mprGetNextItem(MPR->moduleService->modules, &next)) != 0; ) {
-        if (module->timeout) {
-            if (module->lastActivity + module->timeout < http->now) {
-                mprLog(2, "Unloading inactive module %s", module->name);
-                if ((stage = httpLookupStage(http, module->name)) != 0) {
-                    if (stage->match) {
-                        mprError("Can't unload modules with match routines");
-                        module->timeout = 0;
+    if (mprGetListLength(http->connections) == 0) {
+        for (next = 0; (module = mprGetNextItem(MPR->moduleService->modules, &next)) != 0; ) {
+            if (module->timeout) {
+                if (module->lastActivity + module->timeout < http->now) {
+                    mprLog(2, "Unloading inactive module %s", module->name);
+                    if ((stage = httpLookupStage(http, module->name)) != 0) {
+                        if (stage->match) {
+                            mprError("Can't unload modules with match routines");
+                            module->timeout = 0;
+                        } else {
+                            mprUnloadModule(module);
+                            stage->flags |= HTTP_STAGE_UNLOADED;
+                        }
                     } else {
                         mprUnloadModule(module);
-                        stage->flags |= HTTP_STAGE_UNLOADED;
                     }
                 } else {
-                    mprUnloadModule(module);
+                    count++;
                 }
-            } else {
-                count++;
             }
         }
     }

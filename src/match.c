@@ -62,6 +62,7 @@ void maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
             }
         }
         mprAssert(host);
+        mprLog(3, "Select host: \"%s\"", host->name);
         httpSetConnHost(conn, host);
         conn->documentRoot = host->documentRoot;
         conn->server->serverRoot = server->serverRoot;
@@ -107,6 +108,9 @@ static HttpStage *matchHandler(HttpConn *conn)
     tx = conn->tx;
     host = conn->host;
 
+    loc = rx->loc = maLookupBestLocation(host, rx->pathInfo);
+    mprAssert(loc);
+
     /*
         Find the alias that applies for this url. There is always a catch-all alias for the document root.
      */
@@ -116,8 +120,6 @@ static HttpStage *matchHandler(HttpConn *conn)
         httpRedirect(conn, alias->redirectCode, alias->uri);
         return NULL;
     }
-    loc = rx->loc = maLookupBestLocation(host, rx->pathInfo);
-    mprAssert(loc);
     rx->auth = loc->auth;        
 
     if (tx->filename == 0) {
@@ -173,7 +175,7 @@ static HttpStage *matchHandler(HttpConn *conn)
         tx->connector = http->netConnector;
     }
     prepRequest(conn, handler);
-    mprLog(4, "Select handler: \"%s\" for \"%s\"", handler->name, rx->uri);
+    mprLog(3, "Select handler: \"%s\" for \"%s\"", handler->name, rx->uri);
     return handler;
 }
 

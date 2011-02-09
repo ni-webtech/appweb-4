@@ -284,11 +284,16 @@ static int initialize(cchar *ip, int port)
 
 static int findConfigFile()
 {
+    cchar   *userPath;
+
+    userPath = app->configFile;
     if (app->configFile == 0) {
         app->configFile = mprJoinPathExt(mprGetAppName(), ".conf");
     }
     if (!mprPathExists(app->configFile, R_OK)) {
-        app->configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
+        if (!userPath) {
+            app->configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
+        }
         if (!mprPathExists(app->configFile, R_OK)) {
             mprError("Can't open config file %s\n", app->configFile);
             return MPR_ERR_CANT_OPEN;

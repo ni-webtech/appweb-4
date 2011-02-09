@@ -16,8 +16,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 470;
-		location = mod_php.dylib;
-		modificationTime = 318900500.379173;
+		modificationTime = 318920048.81469;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -40,16 +39,6 @@
 		rType = 0;
 		vrLen = 947;
 		vrLoc = 13777;
-	};
-	C91284AD12F3AB7E001EE12C /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = C9817C1C110D170500F241EF /* config.c */;
-		name = "config.c: 1356";
-		rLen = 0;
-		rLoc = 47645;
-		rType = 0;
-		vrLen = 1390;
-		vrLoc = 47327;
 	};
 	C91284AE12F3AB7E001EE12C /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -84,8 +73,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 478;
-		location = mod_php.dylib;
-		modificationTime = 318900500.379389;
+		modificationTime = 318920048.81601;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -103,7 +91,7 @@
 		ignoreCount = 0;
 		lineNumber = 351;
 		location = libappweb.dylib;
-		modificationTime = 318900502.831522;
+		modificationTime = 318915933.271555;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -159,7 +147,7 @@
 		ignoreCount = 0;
 		lineNumber = 3017;
 		location = libhttp.dylib;
-		modificationTime = 318900502.730544;
+		modificationTime = 318915933.189347;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -237,7 +225,7 @@
 		);
 		argumentStrings = (
 			"-D --log stdout:4 --config xcode.conf",
-			" --log stdout:2 --config xcode.conf",
+			" --log stdout:2 --config xxcode.conf",
 			"-v",
 		);
 		autoAttachOnCrash = 1;
@@ -584,9 +572,9 @@
 	};
 	C95C31E80FC5292A00FB3105 /* appweb.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1049, 8775}}";
-			sepNavSelRange = "{8357, 0}";
-			sepNavVisRange = "{2568, 904}";
+			sepNavIntBoundsRect = "{{0, 0}, {775, 8745}}";
+			sepNavSelRange = "{16154, 0}";
+			sepNavVisRange = "{7774, 994}";
 		};
 	};
 	C95EB49C12FBA04E00DE6C64 /* PBXTextBookmark */ = {
@@ -639,8 +627,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 13316;
-		location = libejs.dylib;
-		modificationTime = 318900500.377288;
+		modificationTime = 318920048.812879;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -658,7 +645,7 @@
 		ignoreCount = 0;
 		lineNumber = 16373;
 		location = libejs.dylib;
-		modificationTime = 318900500.377507;
+		modificationTime = 318915932.99824;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -685,7 +672,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 314;
-		modificationTime = 318900522.117977;
+		modificationTime = 318920048.815188;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -702,7 +689,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 297;
-		modificationTime = 318900522.119184;
+		modificationTime = 318920048.813411;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -719,7 +706,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 4166;
-		modificationTime = 318900522.119441;
+		modificationTime = 318920048.815461;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -736,7 +723,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 4329;
-		modificationTime = 318900522.119697;
+		modificationTime = 318920048.815756;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -753,7 +740,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 4330;
-		modificationTime = 318900522.118673;
+		modificationTime = 318920048.81367;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -777,11 +764,11 @@
 		delayBeforeContinue = 0;
 		fileReference = C9817C11110D157800F241EF /* mprLib.c */;
 		functionName = "sweep()";
-		hitCount = 0;
+		hitCount = 1;
 		ignoreCount = 0;
 		lineNumber = 11609;
 		location = libmpr.dylib;
-		modificationTime = 318900502.889062;
+		modificationTime = 318915933.651293;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -951,8 +938,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 37301;
-		location = libejs.dylib;
-		modificationTime = 318900500.375495;
+		modificationTime = 318920048.81495;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -1001,9 +987,9 @@
 	};
 	C9817C11110D157800F241EF /* mprLib.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1049, 456975}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1049, 457305}}";
 			sepNavSelRange = "{792338, 0}";
-			sepNavVisRange = "{231891, 1143}";
+			sepNavVisRange = "{231879, 1095}";
 			sepNavWindowFrame = "{{15, 97}, {1243, 1076}}";
 		};
 	};
@@ -1045,9 +1031,9 @@
 	};
 	C9817C1C110D170500F241EF /* config.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {832, 35775}}";
-			sepNavSelRange = "{48069, 0}";
-			sepNavVisRange = "{47153, 1143}";
+			sepNavIntBoundsRect = "{{0, 0}, {1049, 35745}}";
+			sepNavSelRange = "{47929, 0}";
+			sepNavVisRange = "{47312, 1333}";
 		};
 	};
 	C9817C1F110D170500F241EF /* dir.c */ = {
@@ -1218,7 +1204,7 @@
 		ignoreCount = 0;
 		lineNumber = 70;
 		location = libappweb.dylib;
-		modificationTime = 318900502.65059;
+		modificationTime = 318915933.118871;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -1236,7 +1222,7 @@
 		ignoreCount = 0;
 		lineNumber = 44;
 		location = libappweb.dylib;
-		modificationTime = 318900502.683865;
+		modificationTime = 318915933.143158;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -1254,7 +1240,7 @@
 		ignoreCount = 0;
 		lineNumber = 19504;
 		location = libmpr.dylib;
-		modificationTime = 318900502.794818;
+		modificationTime = 318915933.238959;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -1271,7 +1257,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 85;
-		modificationTime = 318900522.118414;
+		modificationTime = 318920048.812484;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -1414,13 +1400,12 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 318900326;
-			PBXWorkspaceStateSaveDate = 318900326;
+			PBXPerProjectTemplateStateSaveDate = 318915907;
+			PBXWorkspaceStateSaveDate = 318915907;
 		};
 		perUserProjectItems = {
 			C912847112F37C3F001EE12C /* PBXTextBookmark */ = C912847112F37C3F001EE12C /* PBXTextBookmark */;
 			C91284AC12F3AB7E001EE12C /* PBXTextBookmark */ = C91284AC12F3AB7E001EE12C /* PBXTextBookmark */;
-			C91284AD12F3AB7E001EE12C /* PBXTextBookmark */ = C91284AD12F3AB7E001EE12C /* PBXTextBookmark */;
 			C91284AE12F3AB7E001EE12C /* PBXTextBookmark */ = C91284AE12F3AB7E001EE12C /* PBXTextBookmark */;
 			C91284C812F3AD56001EE12C /* PBXTextBookmark */ = C91284C812F3AD56001EE12C /* PBXTextBookmark */;
 			C921AB8712E8F705001EC88C /* PBXTextBookmark */ = C921AB8712E8F705001EC88C /* PBXTextBookmark */;
@@ -1446,10 +1431,11 @@
 			C9AD32D112BC6CE10057EFAC /* PBXTextBookmark */ = C9AD32D112BC6CE10057EFAC /* PBXTextBookmark */;
 			C9AECBF412E61A2B00D96BC1 /* PBXTextBookmark */ = C9AECBF412E61A2B00D96BC1 /* PBXTextBookmark */;
 			C9B9526E113C4EE00048E0A2 /* PBXTextBookmark */ = C9B9526E113C4EE00048E0A2 /* PBXTextBookmark */;
-			C9BC70A2130208AF006AD551 /* PBXTextBookmark */ = C9BC70A2130208AF006AD551 /* PBXTextBookmark */;
 			C9BC70A3130208AF006AD551 /* PBXTextBookmark */ = C9BC70A3130208AF006AD551 /* PBXTextBookmark */;
-			C9BC70A4130208AF006AD551 /* PBXTextBookmark */ = C9BC70A4130208AF006AD551 /* PBXTextBookmark */;
-			C9BC70AD1302092B006AD551 /* PBXTextBookmark */ = C9BC70AD1302092B006AD551 /* PBXTextBookmark */;
+			C9BC70D21302555E006AD551 /* PBXTextBookmark */ = C9BC70D21302555E006AD551 /* PBXTextBookmark */;
+			C9BC70DF13025571006AD551 /* PBXTextBookmark */ = C9BC70DF13025571006AD551 /* PBXTextBookmark */;
+			C9BC70E013025571006AD551 /* PBXTextBookmark */ = C9BC70E013025571006AD551 /* PBXTextBookmark */;
+			C9BC70E113025571006AD551 /* PBXTextBookmark */ = C9BC70E113025571006AD551 /* PBXTextBookmark */;
 			C9D7057C1300FFE0007CF085 /* PBXTextBookmark */ = C9D7057C1300FFE0007CF085 /* PBXTextBookmark */;
 			C9D705CF1301160C007CF085 /* PBXTextBookmark */ = C9D705CF1301160C007CF085 /* PBXTextBookmark */;
 			C9D705F813011D03007CF085 /* PBXTextBookmark */ = C9D705F813011D03007CF085 /* PBXTextBookmark */;
@@ -1505,16 +1491,6 @@
 		vrLen = 1074;
 		vrLoc = 1579;
 	};
-	C9BC70A2130208AF006AD551 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = C95C31E80FC5292A00FB3105 /* appweb.c */;
-		name = "appweb.c: 291";
-		rLen = 0;
-		rLoc = 8357;
-		rType = 0;
-		vrLen = 904;
-		vrLoc = 2568;
-	};
 	C9BC70A3130208AF006AD551 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = C9817C0D110D153D00F241EF /* ejsLib.c */;
@@ -1525,22 +1501,45 @@
 		vrLen = 1003;
 		vrLoc = 1085702;
 	};
-	C9BC70A4130208AF006AD551 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = C9817C11110D157800F241EF /* mprLib.c */;
-		rLen = 0;
-		rLoc = 8636;
-		rType = 1;
-	};
-	C9BC70AD1302092B006AD551 /* PBXTextBookmark */ = {
+	C9BC70D21302555E006AD551 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = C9817C11110D157800F241EF /* mprLib.c */;
 		name = "mprLib.c: 30888";
 		rLen = 0;
 		rLoc = 792338;
 		rType = 0;
-		vrLen = 1143;
-		vrLoc = 231891;
+		vrLen = 1095;
+		vrLoc = 231879;
+	};
+	C9BC70DF13025571006AD551 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = C95C31E80FC5292A00FB3105 /* appweb.c */;
+		name = "appweb.c: 570";
+		rLen = 0;
+		rLoc = 16154;
+		rType = 0;
+		vrLen = 822;
+		vrLoc = 7974;
+	};
+	C9BC70E013025571006AD551 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = C9817C1C110D170500F241EF /* config.c */;
+		name = "config.c: 1355";
+		rLen = 0;
+		rLoc = 47645;
+		rType = 0;
+		vrLen = 1277;
+		vrLoc = 47312;
+	};
+	C9BC70E113025571006AD551 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = C9817C1C110D170500F241EF /* config.c */;
+		name = "config.c: 1362";
+		rLen = 0;
+		rLoc = 47929;
+		rType = 0;
+		vrLen = 1333;
+		vrLoc = 47312;
 	};
 	C9C789B31145CA8E00D07686 /* ejsLib.c:5748 */ = {
 		isa = PBXFileBreakpoint;
@@ -1556,7 +1555,7 @@
 		ignoreCount = 0;
 		lineNumber = 5748;
 		location = libejs.dylib;
-		modificationTime = 318900500.374574;
+		modificationTime = 318915932.97808;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -1574,7 +1573,7 @@
 		ignoreCount = 0;
 		lineNumber = 5713;
 		location = libejs.dylib;
-		modificationTime = 318900500.375026;
+		modificationTime = 318915932.979366;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -1589,7 +1588,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libSystem.B.dylib;
-		modificationTime = 318900502.937018;
+		modificationTime = 318915933.360195;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = malloc_error_break;
@@ -1605,7 +1604,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libSystem.B.dylib;
-		modificationTime = 318900502.959332;
+		modificationTime = 318915933.385164;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = malloc_error_break;
@@ -1621,7 +1620,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libSystem.B.dylib;
-		modificationTime = 318900503.000361;
+		modificationTime = 318915933.427256;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = malloc_error_break;
@@ -1637,7 +1636,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libobjc.A.dylib;
-		modificationTime = 318900522.118939;
+		modificationTime = 318920048.813943;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = objc_exception_throw;
@@ -1653,7 +1652,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libSystem.B.dylib;
-		modificationTime = 318900503.043411;
+		modificationTime = 318915933.458469;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = malloc_error_break;
@@ -1671,8 +1670,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 31873;
-		location = libejs.dylib;
-		modificationTime = 318900500.375261;
+		modificationTime = 318920048.814181;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -1699,8 +1697,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 5884;
-		location = libejs.dylib;
-		modificationTime = 318900500.379652;
+		modificationTime = 318920048.814424;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -1717,8 +1714,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 36699;
-		location = libejs.dylib;
-		modificationTime = 318900500.392064;
+		modificationTime = 318920048.813138;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
