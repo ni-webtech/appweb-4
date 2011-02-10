@@ -3747,7 +3747,7 @@ static int httpTimer(Http *http, MprEvent *event)
             if (conn->rx) {
                 if (inactivity) {
                     httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
-                        "Inactive request timed out, exceeded inactivity timeout %d sec. Url %s", 
+                        "Inactive request timed out. Exceeded inactivity timeout of %d sec. Uri: \"%s\"", 
                         inactivityTimeout / 1000, conn->rx->uri);
                 } else {
                     httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT, 

@@ -36497,9 +36497,10 @@ static EjsObj *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **argv)
                     } else {
                         /*
                             Append the table name for columns from foreign tables. Convert to camel case (tableColumn)
+                            MOB - refactor crude singularization.
                          */
                         len = strlen(tableName) + 1;
-                        tableName = sjoin(tableName, "_", colName, NULL);
+                        tableName = sjoin("_", tableName, colName, NULL);
                         if (len > 3 && tableName[len - 1] == 's' && tableName[len - 2] == 'e' && tableName[len - 3] == 'i') {
                             tableName[len - 3] = 'y';
                             strcpy(&tableName[len - 2], colName);

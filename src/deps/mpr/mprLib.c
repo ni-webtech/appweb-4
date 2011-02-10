@@ -1137,8 +1137,8 @@ static void mark()
 #else
     heap->mustYield = 1;
     if (!syncThreads()) {
-        LOG(0, "DEBUG: GC synchronization timed out, some threads did not yield.");
-        LOG(0, "This is most often caused by a thread doing a long running operation and not first calling mprYield.");
+        LOG(6, "DEBUG: GC synchronization timed out, some threads did not yield.");
+        LOG(6, "This is most often caused by a thread doing a long running operation and not first calling mprYield.");
         return;
     }
     nextGen();
@@ -1337,7 +1337,7 @@ void mprMarkBlock(cvoid *ptr)
         SET_FIELD2(mp, GET_SIZE(mp), gen, heap->active, 0);
         if (HAS_MANAGER(mp)) {
 #if BLD_DEBUG
-            if (++depth > 100) mprBreakpoint();
+            if (++depth > 200) mprBreakpoint();
 #endif
             (GET_MANAGER(mp))((void*) ptr, MPR_MANAGE_MARK);
 #if BLD_DEBUG
@@ -1545,7 +1545,6 @@ static int syncThreads()
 
     } while (!allYielded && mprGetElapsedTime(mark) < timeout);
 
-    mprAssert(allYielded);
 #if BLD_DEBUG
     LOG(7, "TIME: syncThreads elapsed %,d msec, %,d ticks", mprGetElapsedTime(mark), mprGetTicks() - ticks);
 #endif

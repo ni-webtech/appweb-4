@@ -4930,6 +4930,8 @@ module ejs {
         @spec ejs
      */
     native function print(...args): void
+
+    //  MOB DOC
     function printf(fmt, ...args)
         App.outputStream.write(fmt.format(args))
 
@@ -13733,6 +13735,7 @@ module ejs.db {
             @TODO Refactor logging when Log class implemented
          */
         function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
+            //  MOB - refactor tracing. Sqlite does tracing too
             if (options.trace || trace) {
                 print(tag + ": " + cmd)
             }
@@ -14065,29 +14068,29 @@ module ejs.db.mapper {
         
         //  MOB -- these should be private. Also need a default namesapce
 
-        static var  _assocName: String        //  Name for use in associations. Lower case class name
-        static var  _belongsTo: Array         //  List of belonging associations
-        static var  _className: String        //  Model class name
-        static var  _columns: Object          //  List of columns in this database table
-        static var  _hasOne: Array            //  List of 1-1 containment associations
-        static var  _hasMany: Array           //  List of 1-many containment  associations
+        static var  _assocName: String          //  Name for use in associations. Lower case class name
+        static var  _belongsTo: Array = null    //  List of belonging associations
+        static var  _className: String          //  Model class name
+        static var  _columns: Object            //  List of columns in this database table
+        static var  _hasOne: Array = null       //  List of 1-1 containment associations
+        static var  _hasMany: Array = null      //  List of 1-many containment  associations
 
-        static var  _db: Database             //  Hosting database
-        static var  _foreignId: String        //  Camel case class name with "Id". (userCartId))
-        static var  _keyName: String          //  Name of the key column (typically "id")
-        static var  _model: Type              //  Model class
-        static var  _tableName: String        //  Name of the database table. Plural, PascalCase
-        static var  _trace: Boolean           //  Trace database SQL statements
-        static var  _validations: Array
+        static var  _db: Database               //  Hosting database
+        static var  _foreignId: String          //  Camel case class name with "Id". (userCartId))
+        static var  _keyName: String            //  Name of the key column (typically "id")
+        static var  _model: Type                //  Model class
+        static var  _tableName: String          //  Name of the database table. Plural, PascalCase
+        static var  _trace: Boolean             //  Trace database SQL statements
+        static var  _validations: Array = null
 
-        static var  _beforeFilters: Array     //  Filters that run before saving data
-        static var  _afterFilters: Array      //  Filters that run after saving data
-        static var  _wrapFilters: Array       //  Filters that run before and after saving data
+        static var  _beforeFilters: Array = null//  Filters that run before saving data
+        static var  _afterFilters: Array = null //  Filters that run after saving data
+        static var  _wrapFilters: Array = null  //  Filters that run before and after saving data
 
-        var _keyValue: Object                 //  Record key column value
-        var _errors: Object                   //  Error message aggregation
-        var _cacheAssoc: Object               //  Cached association data
-        var _imodel: Type                     //  Model class
+        var _keyValue: Object                   //  Record key column value
+        var _errors: Object                     //  Error message aggregation
+        var _cacheAssoc: Object                 //  Cached association data
+        var _imodel: Type                       //  Model class
 
         static var ErrorMessages = {
             accepted: "must be accepted",
@@ -14116,7 +14119,6 @@ module ejs.db.mapper {
         _foreignId = _className.toCamel() + _keyName.toPascal()
         _tableName = plural(_className).toPascal()
 
-        // use namespace "ejs.db.mapper.int"
         use default namespace public
 
         /*
@@ -14261,7 +14263,9 @@ module ejs.db.mapper {
          */
         private static function createAssociations(rec: Record, set: Array, preload, options): Void {
             for each (let model in set) {
-                if (model is Array) model = model[0]
+                if (model is Array) {
+                    model = model[0]
+                }
                 // print("   Create Assoc for " + _tableName + "[" + model._assocName + "] for " + model._tableName + "[" + 
                 //    rec[model._foreignId] + "]")
                 if (preload == true || (preload && preload.contains(model))) {
@@ -14270,7 +14274,9 @@ module ejs.db.mapper {
                         then remove from rec and replace with an association reference. 
                      */
                     let association = {}
-                    if (!model._columns) model.getSchema()
+                    if (!model._columns) {
+                        model.getSchema()
+                    }
                     for (let field: String in model._columns) {
                         let f: String = "_" + model._className + field.toPascal()
                         association[field] = rec[f]
@@ -14306,7 +14312,6 @@ module ejs.db.mapper {
                 subOptions.depth = options.depth
                 subOptions.depth--
             }
-
             if (options.include) {
                 createAssociations(rec, options.include, true, subOptions)
             }
@@ -14754,11 +14759,11 @@ module ejs.db.mapper {
 
             let results: Array
             try {
-                // print("TRACE " + _trace)
-                if (_trace || 1) {
-                    // let start = new Date
+                if (_trace) {
+                    let start = new Date
                     results = _db.query(cmd, "find", _trace)
-                    // print("@@@@@@@@@ Query Time: " + start.elapsed())
+                    App.log.activity("TIME", "Query Time:", start.elapsed)
+                    App.log.info("Query Time:", start.elapsed)
                 } else {
                     results = _db.query(cmd, "find", _trace)
                 }
@@ -15515,6 +15520,7 @@ module ejs.db.sqlite {
         function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
             //  TODO - need to access Database.traceAll
             //  TODO - need to better logging framework
+            //  MOB -- but Database does tracing outside this 
             if (trace) {
                 print(tag + ": " + cmd)
             }
@@ -18323,10 +18329,7 @@ module ejs.web {
             let dirs = config.directories
             let appmod = dirs.cache.join(config.mvc.appmod)
 
-            //  MOB -- fix when allowing loading multiple applications
-            if (!global.BaseController) {
-                global.load(appmod)
-            }
+//  MOB - document preloaded
             if (!config.cache.preloaded) {
                 let ext = config.extensions
                 let dir = request.dir
@@ -18356,6 +18359,8 @@ module ejs.web {
                 } else {
                     loadComponent(request, mod)
                 }
+            } else if (!global.BaseController) {
+                global.load(appmod)
             }
             // FUTURE request.logger = logger
         }
@@ -19423,7 +19428,7 @@ module ejs.web {
                 let title = "Request Error for \"" + pathInfo + "\""
                 if (config.log.showClient) {
                     let text = "<pre>" + escapeHtml(msg) + "</pre>\r\n" +
-                        '<p>To prevent errors being displayed in the "browser, ' + 
+                        '<p>To prevent errors being displayed in the browser, ' + 
                         'set <b>log.showClient</b> to false in the ejsrc file.</p>\r\n'
                     try {
                         setHeader("Content-Type", "text/html")
@@ -22052,7 +22057,11 @@ MOB - uri not supported
                 case "string":
                 case "time":
                 case "timestamp":
+                    text(name, options)
+                    break
                 case "text":
+                    options.cols ||= 60
+                    options.rows ||= 10
                     text(name, options)
                     break
                 case "boolean":
@@ -22062,6 +22071,7 @@ MOB - uri not supported
                     throw "input control: Unknown field type: " + datatype + " for field " + name
                 }
             } catch (e) {
+//  MOB
 print("CATCH " + e)
                 text(name, options)
             }

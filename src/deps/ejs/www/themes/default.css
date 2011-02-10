@@ -348,7 +348,8 @@ table.-ejs-table thead {
 table.-ejs-table thead tr td {
 	text-align: left;
 	font-weight: bold;
-    padding: 2px 4px 2px 10px;
+    font-size: 110%;
+    padding: 0px 0px 4px 0px;
     border: none;
 }
 
@@ -357,7 +358,7 @@ table.-ejs-table th {
     background: -webkit-gradient(linear, left top, left bottom, from(rgba(150,200,140,.25)), color-stop(1, #eff));
 	color: #106010;
     font-weight: bold;
-    font-size: 100%;
+    font-size: 90%;
 	text-align: center;
 	border: 1px solid #666;
     padding: 6px 4px 6px 10px;

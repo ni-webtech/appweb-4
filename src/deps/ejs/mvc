@@ -1689,7 +1689,8 @@ require ejs.db.mapper
 public class Migration {
 
     public function forward(db) {
-${FORWARD}    }
+${FORWARD}    
+    }
 
     public function backward(db) {
 ${BACKWARD}
