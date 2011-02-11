@@ -185,14 +185,12 @@ class EjsMvc {
             }
             process()
         } catch (e) {
-print(e)
             if (e is String) {
                 msg = e
                 error("mvc: Error: " + msg + "\n")
             } else {
                 msg = e.message
                 error("mvc: Error: " + msg + "\n")
-                error(e.stack + "\n")
             }
             App.exit(2)
         }

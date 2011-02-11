@@ -168,8 +168,8 @@ static HttpStage *matchHandler(HttpConn *conn)
     loc = rx->loc;
     if (loc && loc->connector) {
         tx->connector = loc->connector;
-    } else if (handler == http->fileHandler && !rx->ranges && !conn->secure && tx->chunkSize <= 0 
-            /* MOB && !conn->traceMask */) {
+    } else if (handler == http->fileHandler && (rx->flags & HTTP_GET) && !rx->ranges && 
+            !conn->secure && tx->chunkSize <= 0){
         tx->connector = http->sendConnector;
     } else {
         tx->connector = http->netConnector;

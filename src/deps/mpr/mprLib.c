@@ -4823,7 +4823,7 @@ int mprWaitForCmd(MprCmd *cmd, int timeout)
         if (cmd->flags & MPR_CMD_ASYNC) {
             /* Add root to allow callers to use mprRunCmd without first managing the cmd */
             mprAddRoot(cmd);
-            mprWaitForEvent(cmd->dispatcher, (int) delay);
+            mprWaitForEvent(cmd->dispatcher, delay);
             mprRemoveRoot(cmd);
         }
         remaining = (expires - mprGetTime());
@@ -7312,7 +7312,7 @@ void mprEnableDispatcher(MprDispatcher *dispatcher)
     @param timeout Time in milliseconds to wait. Set to zero for no wait. Set to -1 to wait forever.
     @returns Zero if not events occurred. Otherwise returns non-zero.
  */
-int mprServiceEvents(int timeout, int flags)
+int mprServiceEvents(MprTime timeout, int flags)
 {
     MprEventService     *es;
     MprDispatcher       *dp;
@@ -7370,7 +7370,7 @@ int mprServiceEvents(int timeout, int flags)
     Wait for an event to occur. Expect the event to signal the cond var.
     WARNING: this will enable GC while sleeping
  */
-int mprWaitForEvent(MprDispatcher *dispatcher, int timeout)
+int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
 {
     MprEventService     *es;
     MprTime             start, expires, delay;
@@ -19796,7 +19796,7 @@ bool mprWaitForTestToComplete(MprTestGroup *gp, int timeout)
     expires = mprGetTime() + timeout;
     remaining = timeout;
     do {
-        mprWaitForEvent(gp->dispatcher, (int) remaining);
+        mprWaitForEvent(gp->dispatcher, remaining);
         remaining = expires - mprGetTime();
     } while (!gp->testComplete && remaining > 0);
     rc = gp->testComplete;

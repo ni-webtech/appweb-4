@@ -5214,8 +5214,8 @@ extern void mprEnableDispatcher(MprDispatcher *dispatcher);
     @returns The number of events serviced. Returns MPR_ERR_BUSY is another thread is servicing events and timeout is zero.
     @ingroup MprEvent
  */
-extern int mprServiceEvents(int delay, int flags);
-extern int mprWaitForEvent(MprDispatcher *dispatcher, int timeout);
+extern int mprServiceEvents(MprTime delay, int flags);
+extern int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout);
 extern void mprSignalDispatcher(MprDispatcher *dispatcher);
 
 /**
