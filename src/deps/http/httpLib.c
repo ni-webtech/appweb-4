@@ -2261,7 +2261,6 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server, MprDispatcher *dispatch
     conn->canProceed = 1;
     conn->limits = (server) ? server->limits : http->clientLimits;
     conn->keepAliveCount = (conn->limits->keepAliveCount) ? conn->limits->keepAliveCount : -1;
-    conn->waitHandler.fd = -1;
 
     conn->protocol = http->protocol;
     conn->port = -1;
@@ -2339,6 +2338,7 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->errorMsg);
         mprMark(conn->host);
         mprMark(conn->ip);
+        mprMark(conn->waitHandler);
 
         httpMarkQueueHead(&conn->serviceq);
         httpManageTrace(&conn->trace[0], flags);
@@ -2373,8 +2373,9 @@ void httpCloseConn(HttpConn *conn)
 
     if (conn->sock) {
         mprLog(6, "Closing connection");
-        if (conn->waitHandler.fd >= 0) {
-            mprRemoveWaitHandler(&conn->waitHandler);
+        if (conn->waitHandler) {
+            mprRemoveWaitHandler(conn->waitHandler);
+            conn->waitHandler = 0;
         }
         mprCloseSocket(conn->sock, 0);
         conn->sock = 0;
@@ -2609,21 +2610,21 @@ void httpEnableConnEvents(HttpConn *conn)
         }
         if (conn->startingThread) {
             conn->startingThread = 0;
-            if (conn->waitHandler.fd >= 0) {
-                mprRemoveWaitHandler(&conn->waitHandler);
-                conn->waitHandler.fd = -1;
+            if (conn->waitHandler) {
+                mprRemoveWaitHandler(conn->waitHandler);
+                conn->waitHandler = 0;
             }
         }
         if (eventMask) {
-            if (conn->waitHandler.fd < 0) {
-                mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, 
+            if (conn->waitHandler == 0) {
+                conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, 
                     (MprEventProc) conn->callback, conn->callbackArg, 0);
-            } else if (eventMask != conn->waitHandler.desiredMask) {
-                mprEnableWaitEvents(&conn->waitHandler, eventMask);
+            } else if (eventMask != conn->waitHandler->desiredMask) {
+                mprEnableWaitEvents(conn->waitHandler, eventMask);
             }
         } else {
-            if (conn->waitHandler.fd >= 0 && eventMask != conn->waitHandler.desiredMask) {
-                mprEnableWaitEvents(&conn->waitHandler, eventMask);
+            if (conn->waitHandler && eventMask != conn->waitHandler->desiredMask) {
+                mprEnableWaitEvents(conn->waitHandler, eventMask);
             }
         }
         mprEnableDispatcher(conn->dispatcher);
@@ -7913,14 +7914,14 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
         return MPR_ERR_BAD_STATE;
     } 
     saveAsync = conn->async;
-    if (conn->waitHandler.fd < 0) {
+    if (conn->waitHandler == 0) {
         conn->async = 1;
         eventMask = MPR_READABLE;
         if (!conn->writeComplete) {
             eventMask |= MPR_WRITABLE;
         }
-        mprInitWaitHandler(&conn->waitHandler, conn->sock->fd, eventMask, conn->dispatcher, (MprEventProc) waitHandler, 
-                conn, 0);
+        conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, (MprEventProc) waitHandler, 
+            conn, 0);
         addedHandler = 1;
     } else {
         addedHandler = 0;
@@ -7939,8 +7940,9 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
             break;
         }
     }
-    if (addedHandler && conn->waitHandler.fd >= 0) {
-        mprRemoveWaitHandler(&conn->waitHandler);
+    if (addedHandler && conn->waitHandler) {
+        mprRemoveWaitHandler(conn->waitHandler);
+        conn->waitHandler = 0;
         conn->async = saveAsync;
     }
     if (conn->sock == 0 || conn->error) {
@@ -8646,7 +8648,6 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
     server->limits = mprMemdup(http->serverLimits, sizeof(HttpLimits));
     server->port = port;
     server->ip = sclone(ip);
-    server->waitHandler.fd = -1;
     server->dispatcher = dispatcher;
     if (server->ip && server->ip) {
         server->name = server->ip;
@@ -8660,8 +8661,9 @@ HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dis
 void httpDestroyServer(HttpServer *server)
 {
     mprLog(4, "Destroy server %s", server->name);
-    if (server->waitHandler.fd >= 0) {
-        mprRemoveWaitHandler(&server->waitHandler);
+    if (server->waitHandler) {
+        mprRemoveWaitHandler(server->waitHandler);
+        server->waitHandler = 0;
     }
     destroyServerConnections(server);
     if (server->sock) {
@@ -8688,6 +8690,7 @@ static int manageServer(HttpServer *server, int flags)
         mprMark(server->sock);
         mprMark(server->dispatcher);
         mprMark(server->ssl);
+        mprMark(server->waitHandler);
 
     } else if (flags & MPR_MANAGE_FREE) {
         httpDestroyServer(server);
@@ -8739,8 +8742,8 @@ int httpStartServer(HttpServer *server)
             return MPR_ERR_CANT_OPEN;
         }
     }
-    if (server->async) {
-        mprInitWaitHandler(&server->waitHandler, server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
+    if (server->async && server->waitHandler ==  0) {
+        server->waitHandler = mprCreateWaitHandler(server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
             (MprEventProc) httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
     } else {
         mprSetSocketBlockingMode(server->sock, 1);
@@ -8834,8 +8837,8 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
         This will block in sync mode until a connection arrives
      */
     sock = mprAcceptSocket(server->sock);
-    if (server->waitHandler.fd >= 0) {
-        mprEnableWaitEvents(&server->waitHandler, MPR_READABLE);
+    if (server->waitHandler) {
+        mprEnableWaitEvents(server->waitHandler, MPR_READABLE);
     }
     if (sock == 0) {
         return 0;

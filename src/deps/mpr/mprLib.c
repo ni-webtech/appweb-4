@@ -23182,7 +23182,9 @@ static void manageWaitService(MprWaitService *ws, int flags)
 }
 
 
-MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDispatcher *dispatcher, 
+//  MOB -- inline in createWaitHandler
+
+static MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDispatcher *dispatcher, 
         MprEventProc proc, void *data, int flags)
 {
     MprWaitService  *ws;

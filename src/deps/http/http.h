@@ -1334,7 +1334,7 @@ typedef struct HttpConn {
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
     HttpNotifier    notifier;               /**< Connection Http state change notification callback */
     HttpNotifier    requestNotifier;        /**< Request Http state change notification callback */
-    MprWaitHandler  waitHandler;            /**< I/O wait handler */
+    MprWaitHandler  *waitHandler;           /**< I/O wait handler */
     struct HttpServer *server;              /**< Server object (if releveant) */
     MprSocket       *sock;                  /**< Underlying socket handle */
 
@@ -2641,7 +2641,7 @@ typedef struct  HttpServer {
     Http            *http;                  /**< Http service object */
     HttpLoc         *loc;                   /**< Default location block */
     HttpLimits      *limits;                /**< Server resource limits */
-    MprWaitHandler  waitHandler;            /**< I/O wait handler */
+    MprWaitHandler  *waitHandler;           /**< I/O wait handler */
     MprHashTable    *clientLoad;            /**< Table of active client IPs and connection counts */
     char            *serverRoot;            /**< Directory for server configuration */
     char            *documentRoot;          /**< Directory for documents */
