@@ -34,7 +34,7 @@ defineComponent() {
             imports="$libpaths/libssl.so $libpaths/libcrypto.so"
         fi
     fi
-    if [ "$iflags" = "-I" ] ; then
+    if [ "$libpaths" = "" ] ; then
         warnComponent "openssl"
         return
     fi
