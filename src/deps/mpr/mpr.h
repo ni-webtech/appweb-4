@@ -1784,8 +1784,8 @@ typedef struct MprMemStats {
     ssize           redLine;                /* Warn if allocation exceeds this level */
     ssize           maxMemory;              /* Max memory that can be allocated */
     ssize           rss;                    /* OS calculated resident stack size in bytes */
-    ssize           ram;                    /* System RAM size in bytes */
     ssize           user;                   /* System user RAM size in bytes (excludes kernel) */
+    int64           ram;                    /* System RAM size in bytes */
     int             freed;                  /* Bytes freed in last sweep */
     int             markVisited;
     int             marked;

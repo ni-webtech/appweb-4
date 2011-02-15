@@ -2055,16 +2055,16 @@ MprMemStats *mprGetMemStats()
     }
 #endif
 #if MACOSX || FREEBSD
-    ssize       ram, usermem;
     size_t      len;
     int         mib[2];
-
-    mib[0] = CTL_HW;
 #if FREEBSD
+    ssize       ram, usermem;
     mib[1] = HW_MEMSIZE;
 #else
+    int64       ram, usermem;
     mib[1] = HW_PHYSMEM;
 #endif
+    mib[0] = CTL_HW;
     len = sizeof(ram);
     sysctl(mib, 2, &ram, &len, NULL, 0);
     heap->stats.ram = ram;

@@ -2317,14 +2317,12 @@ typedef struct EjsFrame {
     struct EjsFrame *caller;                /**< Previous invoking frame */
     EjsObj          **stackBase;            /**< Start of stack in this function */
     EjsObj          **stackReturn;          /**< Top of stack to return to */
+    EjsLine         *line;                  /**< Debug source line */
     uchar           *pc;                    /**< Program counter */
     uchar           *attentionPc;           /**< Restoration PC value after attention */
     uint            argc;                   /**< Actual parameter count */
     int             slotNum;                /**< Slot in owner */
     uint            getter: 1;              /**< Frame is a getter */
-#if BLD_DEBUG
-    EjsLine         *line;
-#endif
 } EjsFrame;
 
 #if DOXYGEN
