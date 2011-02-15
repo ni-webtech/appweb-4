@@ -159,7 +159,6 @@ module ejs {
          */
         native static function get dir(): Path
 
-
         /** 
             The directory containing the application executable
          */
@@ -306,7 +305,7 @@ module ejs {
         native static function setEnv(name: String, value: String): Boolean
 
         /** 
-            Sleep the application for the given number of milliseconds
+            Sleep the application for the given number of milliseconds. Events will be serviced while asleep.
             @param delay Time in milliseconds to sleep. Set to -1 to sleep forever.
          */
         native static function sleep(delay: Number = -1): Void
@@ -6488,6 +6487,7 @@ module ejs {
                 } else {
                     /* Missing cache mod file */
                     if (initializers[path] && config.cache.preloaded) {
+                        //  Everything compiled flat - everything in App.mod
                         //  MOB -- warning. This prevents reload working. Should rebuild all and reload.
                         initializer = initializers[path]
                         signatures[path] = exports = {}
@@ -6527,6 +6527,7 @@ module ejs {
         public static function cached(id: Path, config = App.config, cachedir: Path = null): Path {
             config ||= App.config
             if (id && config.cache.enable) {
+                //  MOB - should Path("cache") be used?
                 let dir = cachedir || Path(config.directories.cache) || Path("cache")
                 if (dir.exists) {
                     return Path(dir).join(md5(id)).joinExt('.mod')
@@ -13445,6 +13446,13 @@ module ejs.unix {
         }
     }
 
+    /** 
+        Sleep the application for the given number of milliseconds. Events will be serviced while asleep.
+        @param delay Time in milliseconds to sleep. Set to -1 to sleep forever.
+     */
+    function sleep(delay: Number): void
+        App.sleep(delay)
+
     /**
         Create a temporary file. Creates a new, uniquely named temporary file.
         @param directory Directory in which to create the temp file.
@@ -14111,13 +14119,14 @@ module ejs.db.mapper {
         /*
             Initialize the model. This should be called by the model as its very first call.
          */
-        _keyName = "id"
-        _className = Object.getName(this)
-
-        _model = this
-        _assocName = _className.toCamel()
-        _foreignId = _className.toCamel() + _keyName.toPascal()
-        _tableName = plural(_className).toPascal()
+        if (Object.getName(this) != "Record") {
+            _keyName = "id"
+            _className = Object.getName(this)
+            _model = this
+            _assocName = _className.toCamel()
+            _foreignId = _className.toCamel() + _keyName.toPascal()
+            _tableName = plural(_className).toPascal()
+        }
 
         use default namespace public
 
@@ -18235,7 +18244,7 @@ module ejs.web {
 /************************************************************************/
 
 /**
-    Mvc.es -- MVC web app management
+    Mvc.es -- Model View Controller (MVC) web app management
  */
 
 module ejs.web {
@@ -18329,8 +18338,11 @@ module ejs.web {
             let dirs = config.directories
             let appmod = dirs.cache.join(config.mvc.appmod)
 
-//  MOB - document preloaded
-            if (!config.cache.preloaded) {
+            if (config.cache.flat) {
+                if (!global.BaseController) {
+                    global.load(appmod)
+                }
+            } else {
                 let ext = config.extensions
                 let dir = request.dir
                 request.log.debug(4, "MVC init at \"" + dir + "\"")
@@ -18352,15 +18364,15 @@ module ejs.web {
                 }
                 let controller = params.controller = params.controller.toPascal()
                 let mod = dirs.cache.join(controller).joinExt(ext.mod)
-                if (!mod.exists || config.cache.reload) {
-                    files = [dirs.controllers.join(controller).joinExt(ext.es)]
-                    deps = [dirs.controllers.join("Base").joinExt(ext.es)]
-                    loadComponent(request, mod, files, deps)
-                } else {
-                    loadComponent(request, mod)
+                if (controller != "Base") {
+                    if (!global[controller + "Controller"] || (mod.exists && !config.cache.reload)) {
+                        loadComponent(request, mod)
+                    } else {
+                        files = [dirs.controllers.join(controller).joinExt(ext.es)]
+                        deps = [dirs.controllers.join("Base").joinExt(ext.es)]
+                        loadComponent(request, mod, files, deps)
+                    }
                 }
-            } else if (!global.BaseController) {
-                global.load(appmod)
             }
             // FUTURE request.logger = logger
         }
@@ -18375,7 +18387,7 @@ module ejs.web {
                 }
                 code += path.readString()
             }
-            request.log.debug(2, "Rebuild component: " + mod + " files: " + files)
+            request.log.debug(4, "Rebuild component: " + mod + " files: " + files)
             eval(code, mod)
         }
 
@@ -18388,33 +18400,28 @@ module ejs.web {
             @param deps Extra file dependencies
          */
         public function loadComponent(request: Request, mod: Path, files: Array? = null, deps: Array? = null) {
-            let rebuild
-            if (mod.exists) {
-                rebuild = false
-                if (request.config.cache.reload) {
-                    let when = mod.modified
-                    for each (file in (files + deps)) {
-                        if (file.exists && file.modified > when) {
-                            rebuild = true
-                        }
+            let rebuild = false
+            if (mod.exists && request.config.cache.reload) {
+                let when = mod.modified
+                for each (file in (files + deps)) {
+                    if (file.exists && file.modified > when) {
+                        rebuild = true
                     }
                 }
-            } else {
-                rebuild = true
             }
             if (rebuild) {
                 rebuildComponent(request, mod, files)
-            } else if (!loaded[mod]) {
-                request.log.debug(4, "Reload component : " + mod)
+            } else if (loaded[mod]) {
+                request.log.debug(4, "Mvc.loadComponent: component already loaded: " + mod)
+            } else {
                 try {
+                    request.log.debug(4, "Mvc.loadComponent: load component : " + mod)
                     global.load(mod)
                     loaded[mod] = new Date
                 } catch (e) {
+                    request.log.debug(4, "Mvc.loadComponent: Load failed, rebuild component: " + mod)
                     rebuildComponent(request, mod, files)
                 }
-
-            } else {
-                request.log.debug(4, "Use existing component: " + mod)
             }
         }
     }

@@ -4122,9 +4122,14 @@ typedef struct EjsModuleHdr {
 } EjsModuleHdr;
 
 
+/*
+    MOB DOC
+    A module is uniquely defined by the basename of its filename without the ".mod" extension.
+ */
 typedef struct EjsModule {
-    EjsString       *name;                  /* Name of this module */
-    EjsString       *vname;                 /* Versioned name */
+    EjsString       *name;                  /* Name of this module - basename of the filename without .mod extension */
+    //  MOB - document the version format
+    EjsString       *vname;                 /* Versioned name - name with optional version suffix */
     int             version;                /* Made with EJS_MAKE_VERSION */
     int             minVersion;             /* Minimum version when used as a dependency */
     int             maxVersion;             /* Maximum version when used as a dependency */
@@ -4212,6 +4217,7 @@ typedef struct EjsDoc {
 #define EJS_LOADER_ETERNAL    0x4                   /* Make all types eternal */
 #define EJS_LOADER_BUILTIN    0x8                   /* Loading builtins */
 #define EJS_LOADER_DEP        0x10                  /* Loading a dependency */
+#define EJS_LOADER_RELOAD     0x20                  /* Force a reload if already loaded */
 
 //  MOB -- would this be better with an ascii name?
 extern int          ejsLoadModule(Ejs *ejs, EjsString *name, int minVer, int maxVer, int flags);

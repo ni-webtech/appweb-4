@@ -3396,7 +3396,7 @@ extern MprTime mprGetTime();
  */
 extern uint64 mprGetTicks();
 
-#if (BLD_UNIX_LIKE || BLD_WIN_LIKE) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
+#if (LINUX || MACOSX || WIN) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
     #define MPR_HIGH_RES_TIMER 1
 #else
     #define MPR_HIGH_RES_TIMER 0

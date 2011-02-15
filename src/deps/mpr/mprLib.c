@@ -19998,6 +19998,7 @@ MprThreadService *mprCreateThreadService()
 void mprStopThreadService()
 {
     mprClearList(MPR->threadService->threads);
+    MPR->threadService->threads->mutex = 0;
     MPR->threadService->mutex = 0;
 }
 
@@ -24608,17 +24609,17 @@ static cchar    *getHive(cchar *key, HKEY *root);
 
 int mprCreateOsService()
 {
+    WSADATA     wsaData;
+
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        return -1;
+    }
     return 0;
 }
 
 
 int mprStartOsService()
 {
-    WSADATA     wsaData;
-
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        return -1;
-    }
     return 0;
 }
 

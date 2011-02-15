@@ -60,6 +60,7 @@ class EjsMvc {
             cache: Path("cache"),
             controllers: Path("controllers"),
             layouts: Path("layouts"),
+            migrations: Path("db/migrations"),
             models: Path("models"),
             views: Path("views"),
             src: Path("src"),
@@ -352,7 +353,7 @@ class EjsMvc {
                 Make flat configuration file
              */
             flat = dirs.cache.join("_flat_.es")
-            makeFile(flat, "App.config.cache.preloaded = true", "Flat Configuration")
+            makeFile(flat, "App.config.cache.flat = true", "Flat Configuration")
             esPages += [flat]
 
             files += esPages
@@ -384,7 +385,7 @@ class EjsMvc {
                 }
             } else {
                 for each (name in rest) {
-                    buildController(dirs.controllers.join(name.toUpperCase()).joinExt(ext.es))
+                    buildController(dirs.controllers.join(name.toPascal()).joinExt(ext.es))
                 }
             }
             break
@@ -775,7 +776,7 @@ class EjsMvc {
         mvc migrate backward     # Migrate backward one
      */
     function migrate(args: Array? = null): Void {
-        let files = Path("db/migrations").files().sort()
+        let files = dirs.migrations.files().sort()
         let onlyOne = false
         let backward = false
         let targetSeq = null
@@ -938,18 +939,16 @@ class EjsMvc {
             makeDir("test")
         }
 
-        //  MOB - all these should come from dirs?
         makeDir(dirs.cache)
         makeDir(dirs.controllers)
-        makeDir("db")
-        makeDir("db/migrations")
+        makeDir(dirs.db)
+        makeDir(dirs.migrations)
         makeDir(dirs.models)
-        makeDir("src")
+        makeDir(dirs.src)
         makeDir(dirs.views)
         makeDir(dirs.views.join("Base"))
         makeDir(dirs.layouts)
         makeDir(dirs.static)
-//  MOB - what is the default dir for?
         makeDir(dirs.static.join("default"))
         makeDir(dirs.static.join("images"))
         makeDir(dirs.static.join("themes"))
@@ -967,6 +966,7 @@ class EjsMvc {
         }
         generateDatabase()
 
+        //  MOB - use dirs.src
         let files = ["src/App.es", dirs.controllers.join("Base.es")]
         buildFiles(dirs.cache.join("App").joinExt(ext.mod), files)
         App.chdir("..")
@@ -1457,9 +1457,12 @@ class Templates {
     
     directories: {
         cache: "cache",
-        views: "views",
+        db: "db",
+        migrations: "db/migrations",
         layouts: "layouts",
+        src: "src",
         static: "static",
+        views: "views",
     },
 
     log: {

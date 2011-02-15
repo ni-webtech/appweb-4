@@ -1663,7 +1663,7 @@ static void incomingChunkData(HttpQueue *q, HttpPacket *packet)
     conn = q->conn;
     rx = conn->rx;
 
-    if (!(rx->flags & HTTP_REC_CHUNKED)) {
+    if (!(rx->flags & HTTP_CHUNKED)) {
         httpSendPacketToNext(q, packet);
         return;
     }
@@ -2669,7 +2669,7 @@ static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead)
              */
             if (req->remainingContent) {
                 len = req->remainingContent;
-                if (req->flags & HTTP_REC_CHUNKED) {
+                if (req->flags & HTTP_CHUNKED) {
                     len = max(len, HTTP_BUFSIZE);
                 }
             }
@@ -7135,7 +7135,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 if (newDate) {
                     rx->since = newDate;
                     rx->ifModified = ifModified;
-                    rx->flags |= HTTP_REC_IF_MODIFIED;
+                    rx->flags |= HTTP_IF_MODIFIED;
                 }
 
             } else if ((strcmp(key, "if-match") == 0) || (strcmp(key, "if-none-match") == 0)) {
@@ -7146,7 +7146,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     *tok = '\0';
                 }
                 rx->ifMatch = ifMatch;
-                rx->flags |= HTTP_REC_IF_MODIFIED;
+                rx->flags |= HTTP_IF_MODIFIED;
                 value = sclone(value);
                 word = stok(value, " ,", &tok);
                 while (word) {
@@ -7161,7 +7161,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     *tok = '\0';
                 }
                 rx->ifMatch = 1;
-                rx->flags |= HTTP_REC_IF_MODIFIED;
+                rx->flags |= HTTP_IF_MODIFIED;
                 value = sclone(value);
                 word = stok(value, " ,", &tok);
                 while (word) {
@@ -7214,7 +7214,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         case 't':
             if (strcmp(key, "transfer-encoding") == 0) {
                 if (scasecmp(value, "chunked") == 0) {
-                    rx->flags |= HTTP_REC_CHUNKED;
+                    rx->flags |= HTTP_CHUNKED;
                     /*  
                         This will be revised by the chunk filter as chunks are processed and will be set to zero when the
                         last chunk has been received.
@@ -7263,7 +7263,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
     if (conn->protocol == 0 && !keepAlive) {
         conn->keepAliveCount = 0;
     }
-    if (!(rx->flags & HTTP_REC_CHUNKED)) {
+    if (!(rx->flags & HTTP_CHUNKED)) {
         /*  
             Step over "\r\n" after headers. As an optimization, don't do this if chunked so chunking can parse a single
             chunk delimiter of "\r\nSIZE ...\r\n"
@@ -7462,7 +7462,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     q = &tx->queue[HTTP_QUEUE_RECEIVE];
 
     content = packet->content;
-    if (rx->flags & HTTP_REC_CHUNKED) {
+    if (rx->flags & HTTP_CHUNKED) {
         if ((remaining = getChunkPacketSize(conn, content)) == 0) {
             /* Need more data or bad chunk specification */
             if (mprGetBufLength(content) > 0) {
@@ -7549,7 +7549,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         return conn->error;
     }
     if (rx->remainingContent == 0) {
-        if (!(rx->flags & HTTP_REC_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)) {
+        if (!(rx->flags & HTTP_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)) {
             rx->eof = 1;
             httpSendPacketToNext(q, httpCreateEndPacket());
         }
@@ -7724,7 +7724,7 @@ bool httpContentNotModified(HttpConn *conn)
     rx = conn->rx;
     tx = conn->tx;
 
-    if (rx->flags & HTTP_REC_IF_MODIFIED) {
+    if (rx->flags & HTTP_IF_MODIFIED) {
         /*  
             If both checks, the last modification time and etag, claim that the request doesn't need to be
             performed, skip the transfer. TODO - need to check if fileInfo is actually set.
@@ -10218,7 +10218,7 @@ static bool matchUpload(HttpConn *conn, HttpStage *filter)
     pat = "multipart/form-data";
     len = strlen(pat);
     if (sncasecmp(rx->mimeType, pat, len) == 0) {
-        rx->upload = 1;
+        rx->flags |= HTTP_UPLOAD;
         return 1;
     } else {
         return 0;

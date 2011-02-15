@@ -5844,34 +5844,18 @@ int ejsLoadModule(Ejs *ejs, EjsString *path, int minVersion, int maxVersion, int
 
     mprAssert(path);
 
+    /*
+        Note the cannonical name for a module is the basename of the module without extension
+     */
     trimmedPath = sclone(ejsToMulti(ejs, path));
     if ((version = trimModule(ejs, trimmedPath)) != 0) {
         minVersion = maxVersion = version;
     }
     name = mprGetPathBase(trimmedPath);
 
-    if ((status = alreadyLoaded(ejs, ejsCreateStringFromAsc(ejs, name), minVersion, maxVersion)) == 0) {
+    if (flags & EJS_LOADER_RELOAD ||
+            (status = alreadyLoaded(ejs, ejsCreateStringFromAsc(ejs, name), minVersion, maxVersion)) == 0) {
         status = loadScriptModule(ejs, trimmedPath, minVersion, maxVersion, flags);
-#if UNUSED
-        EjsModule  *mp;
-        nextModule = mprGetListLength(ejs->modules);
-        if ((status = loadScriptModule(ejs, trimmedPath, minVersion, maxVersion, flags)) == 0) {
-            /*
-                Do fixups and run initializers when all dependent modules are loaded. Solves forward ref problem.
-             */
-            if (fixupTypes(ejs, ejs->loadState->typeFixups) == 0) {
-                //  MOB rationalize down to just ejs flag
-                if (!ejs->empty && !(flags & EJS_LOADER_NO_INIT) && !(ejs->flags & EJS_FLAG_NO_INIT)) {
-                    for (next = nextModule; (mp = mprGetNextItem(ejs->modules, &next)) != 0; ) {
-                        if ((status = initializeModule(ejs, mp)) < 0) {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        ejs->loadState = 0;
-#endif
     }
     return status;
 }
@@ -5887,7 +5871,7 @@ static int initializeModule(Ejs *ejs, EjsModule *mp)
     if (mp->hasNative && !mp->configured) {
         /*
             See if a native module initialization routine has been registered. If so, use that. Otherwise, look
-            for a backing DSO.
+            for a backing shared library.
          */
         if ((nativeModule = ejsLookupNativeModule(ejs, ejsToMulti(ejs, mp->name))) == 0) {
             loadNativeLibrary(ejs, mp, mp->path);
@@ -6015,6 +5999,7 @@ static int loadSections(Ejs *ejs, MprFile *file, cchar *path, EjsModuleHdr *hdr,
             if ((mp = loadModuleSection(ejs, file, hdr, &created, flags)) == 0) {
                 return MPR_ERR_CANT_LOAD;
             }
+            // MOB - should remove the old module?
             ejsAddModule(ejs, mp);
             mp->path = sclone(path);
             mp->file = file;
@@ -6132,6 +6117,7 @@ static EjsModule *loadModuleSection(Ejs *ejs, MprFile *file, EjsModuleHdr *hdr, 
         return 0;
     }
     mp->constants = constants;
+    //  MOB - this is storing just the name base not the full path. This is correct!
     name = ejsCreateStringFromConst(ejs, mp, nameToken);
     if ((mp = ejsCreateModule(ejs, name, version, constants)) == NULL) {
         return 0;
@@ -6288,6 +6274,7 @@ static int loadClassSection(Ejs *ejs, EjsModule *mp)
     ifixup = 0;
     
     qname = ejsModuleReadName(ejs, mp);
+//    mprAssert(strcmp(qname.name->value, "Record") != 0);
     attributes = ejsModuleReadInt(ejs, mp);
     slotNum = ejsModuleReadInt(ejs, mp);
     ejsModuleReadType(ejs, mp, &baseType, &fixup, &baseClassName, 0);
@@ -7240,6 +7227,7 @@ static int alreadyLoaded(Ejs *ejs, EjsString *name, int minVersion, int maxVersi
 {
     EjsModule   *mp;
 
+    //  MOB - this is looking up full path as the name of the module. This is not right.
     if ((mp = ejsLookupModule(ejs, name, minVersion, maxVersion)) == 0) {
         return 0;
     }
@@ -7707,6 +7695,7 @@ int ejsAddModule(Ejs *ejs, EjsModule *mp)
 
 void ejsRemoveModule(Ejs *ejs, EjsModule *mp)
 {
+    mprLog(2, "Remove module: %@", mp->name); 
     mp->ejs = 0;
     if (ejs->modules) {
         mprRemoveItem(ejs->modules, mp);
@@ -9249,16 +9238,10 @@ static int loadStandardModules(Ejs *ejs, MprList *require)
     if (require) {
         for (next = 0; rc == 0 && (name = mprGetNextItem(require, &next)) != 0; ) {
             flags = EJS_LOADER_STRICT;
-#if UNUSED
-            if (strcmp(name, "ejs") == 0) {
-                flags |= EJS_LOADER_BUILTIN;
-            }
-#endif
             rc += ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, name), ver, ver, flags);
         }
     } else {
-        rc += ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, "ejs"), ver, ver, 
-                EJS_LOADER_STRICT /* UNUSED | EJS_LOADER_BUILTIN */);
+        rc += ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, "ejs"), ver, ver, EJS_LOADER_STRICT);
     }
     return rc;
 }
@@ -18284,7 +18267,7 @@ static EjsObj *g_load(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
             return (ejs->service->loadScriptFile)(ejs, path, cache);
         }
     } else {
-        ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, path), -1, -1, 0);
+        ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, path), -1, -1, EJS_LOADER_RELOAD);
         return (ejs->exception) ? 0 : ejs->result;
     }
     return 0;
@@ -31009,6 +30992,7 @@ static int inheritProperties(Ejs *ejs, EjsType *type, EjsPot *obj, int destOffse
         int count, bool resetScope)
 {
     EjsFunction     *fun;
+    EjsObj          *vp;
     int             i;
 
     mprAssert(obj);
@@ -31030,6 +31014,13 @@ static int inheritProperties(Ejs *ejs, EjsType *type, EjsPot *obj, int destOffse
                 fun->boundThis = 0;
                 fun->boundArgs = 0;
                 fun->block.scope = (EjsBlock*) type;
+            }
+        }
+    }
+    for (i = destOffset; i < (destOffset + count); i++) {
+        if ((vp = ejsGetProperty(ejs, obj, i)) != 0 && !ejsIsNull(ejs, vp) && !ejsIsFunction(ejs, vp)) {
+            if (ejsIsType(ejs, vp)) {
+                ejsSetProperty(ejs, obj, i, ejs->nullValue);
             }
         }
     }
@@ -33399,7 +33390,7 @@ static void loadFile(EjsWorker *worker, cchar *path)
 
     } else {
         /* Error reporting via thrown exceptions */
-        ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, path), -1, -1, 0);
+        ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, path), -1, -1, EJS_LOADER_RELOAD);
     }
 }
 
@@ -37674,7 +37665,7 @@ static void startEjs(HttpQueue *q)
     HttpRx      *rx;
 
     rx = q->conn->rx;
-    if (!rx->form && !rx->upload) {
+    if (!rx->form && !(rx->flags & HTTP_UPLOAD)) {
         runEjs(q);
     }
 }
@@ -37685,7 +37676,7 @@ static void processEjs(HttpQueue *q)
     HttpRx      *rx;
 
     rx = q->conn->rx;
-    if (rx->form || rx->upload) {
+    if (rx->form || (rx->flags & HTTP_UPLOAD)) {
         runEjs(q);
     }
 }
@@ -39763,7 +39754,7 @@ static EjsObj *req_worker(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         return 0;
     }
     nejs->loc = ejs->loc;
-    if (ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.web"), -1, -1, 0) < 0) {
+    if (ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.web"), -1, -1, EJS_LOADER_RELOAD) < 0) {
         mprError("Can't load ejs.web.mod: %s", ejsGetErrorMsg(ejs, 1));
         return 0;
     }
@@ -40376,7 +40367,6 @@ static EjsType *defineClass(EcCompiler *cp, EcNode *np)
     if (np->klass.isInterface) {
         attributes |= EJS_TYPE_INTERFACE;
     }
-    
     type = ejsCreateType(ejs, np->qname, state->currentModule, NULL, NULL, sizeof(EjsPot), slotNum, 0, 0, attributes);
     if (type == 0) {
         astError(cp, np, "Can't create type %s", type->qname.name);
@@ -41127,7 +41117,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
 
     if (!np->function.isConstructor) {
         if (resolveName(cp, np, (EjsObj*) block, np->qname) < 0) {
-            astError(cp, np, "Internal error. Can't resolve function %s", np->qname.name);
+            astError(cp, np, "Internal error. Can't resolve function %@", np->qname.name);
         }
         if (np->lookup.slotNum >= 0) {
             setAstDocString(ejs, np, np->lookup.obj, np->lookup.slotNum);
@@ -41137,7 +41127,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
         qname.name = np->qname.name;
         if (resolveName(cp, np, ejs->global, qname) < 0) {
             if (resolveName(cp, np, ejs->global, np->qname) < 0) {
-                astError(cp, np, "Internal error. Can't resolve constructor %s", np->qname.name);
+                astError(cp, np, "Internal error. Can't resolve constructor %@", np->qname.name);
             }
         }
         if (np->lookup.slotNum >= 0) {
@@ -42896,7 +42886,7 @@ static EjsModule *createModule(EcCompiler *cp, EcNode *np)
             mp->compiling = 1;
         }
     }
-    if (mp->initializer == 0 || mp->initializer->activation) {
+    if (mp->initializer == 0 /* MOB BUG || mp->initializer->activation */) {
         mp->initializer = createModuleInitializer(cp, np, mp);
     }
     np->module.ref = mp;
@@ -50517,9 +50507,7 @@ int ecCreateModuleSection(EcCompiler *cp)
     if (cp->fatalError) {
         return MPR_ERR_CANT_WRITE;
     }
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     mp->checksum += (sumString(mp->name) & EJS_ENCODE_MAX_WORD);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     ecEncodeInt32AtPos(cp, checksumOffset, mp->checksum);
     return 0;
 }
@@ -50566,9 +50554,7 @@ static void createDependencySection(EcCompiler *cp)
             if (cp->fatalError) {
                 return;
             }
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);  //MOB
             mp->checksum += sumString(module->name);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
             mprLog(7, "    dependency section for %s from module %s", module->name, mp->name);
         }
     }
@@ -50802,11 +50788,8 @@ static void createClassSection(EcCompiler *cp, EjsPot *block, int slotNum, EjsPo
             createSection(cp, prototype, slotNum);
         }
     }
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     mp->checksum += sumNum(ejsGetPropertyCount(ejs, type) + instanceTraits + interfaceCount);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     mp->checksum += sumString(type->qname.name);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     ecEncodeByte(cp, EJS_SECT_CLASS_END);
 }
 
@@ -50909,20 +50892,14 @@ static void createFunctionSection(EcCompiler *cp, EjsPot *block, int slotNum, Ej
         createSection(cp, activation, i);
     }
     ecEncodeByte(cp, EJS_SECT_FUNCTION_END);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     mp->checksum += sumNum(fun->numArgs + numProp - fun->numArgs);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     if (code && code->numHandlers) {
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
         mp->checksum += sumNum(code->numHandlers);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     }
     if (ejsContainsMulti(ejs, qname.name, "--fun_")) {
         /* Don't sum the name for dynamic functions */
     } else {
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
         mp->checksum += sumString(qname.name);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     }
 }
 
@@ -51061,9 +51038,7 @@ static void createPropertySection(EcCompiler *cp, EjsPot *block, int slotNum, Ej
             ecEncodeConst(cp, 0);
         }
     }
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
     mp->checksum += sumString(qname.name);
-mprAssert(0 <= mp->checksum && mp->checksum < 0x1FFFFFFF);
 }
 
 
@@ -51588,7 +51563,6 @@ static int sumString(EjsString *name)
             checksum += *cp;
         }
     }
-mprAssert(0 <= checksum && checksum < 0x1FFFFFFF);
     return checksum;
 }
 
@@ -58134,6 +58108,7 @@ static EcNode *parseDirective(EcCompiler *cp)
 
     /* EmptyStatement */
     case T_SEMICOLON:
+        getToken(cp);
         np = parseEmptyStatement(cp);
         break;
 
@@ -61552,7 +61527,7 @@ static void applyAttributes(EcCompiler *cp, EcNode *np, EcNode *attributeNode, E
             nspace = ejsFormatReservedNamespace(cp->ejs, &state->currentClassName, nspace);
         }
     } else {
-        if (cp->visibleGlobals) {
+        if (cp->visibleGlobals && !(attributeNode && attributeNode->qname.space)) {
             nspace = ejsCreateStringFromAsc(cp->ejs, EJS_EMPTY_NAMESPACE);
         } else if (ejsCompareMulti(cp->ejs, nspace, EJS_INTERNAL_NAMESPACE) == 0) {
             nspace = cp->fileState->nspace;
