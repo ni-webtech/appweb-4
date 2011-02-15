@@ -482,6 +482,7 @@ print(e)
                     addToTar(tar, f)
                 }
             } else {
+                //  MOB -- need better filtering. Perhaps a file list would be better
                 files =  find(".", "*" + libext, true)
                 files += find(".", "*.mod", true)
                 files += find(".", "*.es", true)
