@@ -82,6 +82,14 @@ static void startCgi(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
 
+    if (rx->flags & HTTP_UPLOAD && conn->state <= HTTP_STATE_CONTENT) {
+        /*
+            Delay start while the upload filter extracts the uploaded files so the CGI process can be informed via
+            env vars of the file details.
+        */
+        return;
+    }
+
     /*
         The command uses the conn dispatcher. This serializes all I/O for both the connection and the CGI gateway
      */
@@ -137,6 +145,14 @@ static void processCgi(HttpQueue *q)
     conn = q->conn;
     cmd = (MprCmd*) q->queueData;
 
+    if (cmd == 0) {
+        /* Start CGI if doing file upload and delayed start */
+        startCgi(q);
+        cmd = (MprCmd*) q->queueData;
+        if (q->count > 0) {
+            writeToCGI(q);
+        }
+    }
     if (cmd) {
         /*  Close the CGI program's stdin. This will allow it to exit if it was expecting input data.  */
         mprCloseCmdFd(cmd, MPR_CMD_STDIN);
