@@ -2143,7 +2143,7 @@ extern void httpProtocolError(struct HttpConn *conn, int status, cchar *fmt, ...
 extern void httpProcess(HttpConn *conn, HttpPacket *packet);
 extern void httpProcessWriteEvent(HttpConn *conn);
 extern bool httpProcessCompletion(HttpConn *conn);
-extern int  httpSetUri(HttpConn *conn, cchar *newUri);
+extern int  httpSetUri(HttpConn *conn, cchar *newUri, cchar *query);
 extern void httpSetEtag(HttpConn *conn, MprPath *info);
 extern bool httpMatchEtag(HttpConn *conn, char *requestedEtag);
 extern bool httpMatchModified(HttpConn *conn, MprTime time);

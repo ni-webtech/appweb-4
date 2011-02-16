@@ -896,6 +896,9 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             } else if (scasecmp(value, "Digest") == 0) {
                 auth->type = HTTP_AUTH_DIGEST;
 
+            } else if (scasecmp(value, "None") == 0) {
+                auth->type = 0;
+
             } else {
                 mprError("Unsupported authorization protocol");
                 return MPR_ERR_BAD_SYNTAX;

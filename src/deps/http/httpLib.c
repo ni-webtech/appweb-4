@@ -6915,12 +6915,9 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     }
     rx->flags |= methodFlags;
     rx->method = supper(method);
+    rx->uri = uri;
 
-    if (httpSetUri(conn, uri) < 0) {
-        httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad URL format");
-    }
     httpSetState(conn, HTTP_STATE_FIRST);
-
     if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) >= 0) {
         mprLog(level, "%s %s %s", rx->method, uri, protocol);
     }
@@ -7274,6 +7271,11 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
     }
     if (rx->remainingContent == 0) {
         rx->eof = 1;
+    }
+    if (conn->server) {
+        if (httpSetUri(conn, rx->uri, "") < 0) {
+            httpProtocolError(conn, HTTP_CODE_BAD_REQUEST, "Bad URL format");
+        }
     }
 }
 
@@ -7852,20 +7854,22 @@ char *httpGetStatusMessage(HttpConn *conn)
 }
 
 
-int httpSetUri(HttpConn *conn, cchar *uri)
+int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
 {
-    HttpRx   *rx;
+    HttpRx  *rx;
+    char    *oldQuery;
 
     rx = conn->rx;
+    oldQuery = rx->parsedUri ? rx->parsedUri->query : 0;
 
-    /*  
-        Parse and tokenize the uri. Then decode and validate the URI path portion.
-     */
-    rx->parsedUri = httpCreateUri(uri, 0);
-    if (rx->parsedUri == 0) {
+    if ((rx->parsedUri = httpCreateUri(uri, 0)) == 0) {
         return MPR_ERR_BAD_ARGS;
     }
-
+    if (query == 0) {
+        rx->parsedUri->query = oldQuery;
+    } else if (*query) {
+        rx->parsedUri->query = sclone(query);
+    }
     /*
         Start out with no scriptName and the entire URI in the pathInfo. Stages may rewrite.
      */
@@ -7873,6 +7877,18 @@ int httpSetUri(HttpConn *conn, cchar *uri)
     conn->tx->extension = sclone(rx->parsedUri->ext);
     rx->pathInfo = httpNormalizeUriPath(mprUriDecode(rx->parsedUri->path));
     rx->scriptName = mprEmptyString();
+
+    /*  
+        MOB -- should this be doing
+
+        alias = rx->alias = maGetAlias(host, rx->pathInfo);
+        if (alias->redirectCode) {
+            httpRedirect(conn, alias->redirectCode, alias->uri);
+            return NULL;
+        }
+        tx->filename = makeFilename(conn, rx->alias, rx->pathInfo, 1);
+        mprGetPathInfo(tx->filename, &tx->fileInfo);
+     */
     return 0;
 }
 

@@ -1202,7 +1202,9 @@ static void sweep()
                 mprAssert(!IS_FREE(mp));
                 CHECK(mp);
                 BREAKPOINT(mp);
-                (mgr)(GET_PTR(mp), MPR_MANAGE_FREE);
+                if (mgr) {
+                    (mgr)(GET_PTR(mp), MPR_MANAGE_FREE);
+                }
             }
         }
 #if BLD_FEATURE_VALLOC

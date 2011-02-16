@@ -166,7 +166,6 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
 }
 
 
-
 #if BLD_UNIX_LIKE
 static int allDigits(cchar *s)
 {

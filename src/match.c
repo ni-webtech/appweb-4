@@ -321,11 +321,7 @@ static HttpStage *findHandler(HttpConn *conn, bool *rescan)
                     if (mprGetPathInfo(path, &tx->fileInfo) == 0) {
                         mprLog(5, "findHandler: Adding extension, new path %s\n", path);
                         tx->filename = path;
-                        if (rx->parsedUri->query && rx->parsedUri->query[0]) {
-                            httpSetUri(conn, sjoin(rx->uri, ".", hp->key, "?", rx->parsedUri->query, NULL));
-                        } else {
-                            httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL));
-                        }
+                        httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL), NULL);
                         break;
                     }
                 }
@@ -476,7 +472,7 @@ static void processDirectory(HttpConn *conn, bool *rescan)
                 Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
                 Must rematch the handler on return.
              */
-            httpSetUri(conn, addIndexToUrl(conn, index));
+            httpSetUri(conn, addIndexToUrl(conn, index), NULL);
             tx->filename = path;
             mprGetPathInfo(tx->filename, &tx->fileInfo);
             tx->extension = getExtension(conn);
@@ -549,6 +545,8 @@ static void setPathInfo(HttpConn *conn, HttpStage *handler)
     if (!(handler && handler->flags & HTTP_STAGE_PATH_INFO)) {
         return;
     }
+
+    //  MOB -- get rid of this logic - use new definition of path info or just assume first "abc.ext" is the script
     /*  
         Find the longest subset of the filename that matches a real file. Test each segment to see if 
         it corresponds to a real physical file. This also defines a new response filename after trimming the 

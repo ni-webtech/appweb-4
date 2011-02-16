@@ -270,11 +270,10 @@ static void handlePutRequest(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
+    mprAssert(tx->filename);
+    mprAssert(tx->fileInfo.checked);
+
     path = tx->filename;
-    if (path == 0) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't map URI to file storage");
-        return;
-    }
     if (rx->ranges) {
         /*  
             Open an existing file with fall-back to create
@@ -309,21 +308,18 @@ static void handleDeleteRequest(HttpQueue *q)
     HttpConn    *conn;
     HttpRx      *rx;
     HttpTx      *tx;
-    char        *path;
 
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
-    path = tx->filename;
-    if (path == 0) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't map URI to file storage");
-        return;
-    }
-    if (!conn->tx->fileInfo.isReg) {
+    mprAssert(tx->filename);
+    mprAssert(tx->fileInfo.checked);
+
+    if (!tx->fileInfo.isReg) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "URI not found");
         return;
     }
-    if (mprDeletePath(path) < 0) {
+    if (mprDeletePath(tx->filename) < 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't remove URI");
         return;
     }

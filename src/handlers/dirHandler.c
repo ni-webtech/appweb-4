@@ -43,17 +43,13 @@ static void sortList(HttpConn *conn, MprList *list);
 static bool matchDir(HttpConn *conn, HttpStage *handler)
 {
     HttpTx      *tx;
-    MprPath     *info;
     Dir         *dir;
 
     tx = conn->tx;
-    info = &tx->fileInfo;
+    mprAssert(tx->filename);
+    mprAssert(tx->fileInfo.checked);
     dir = handler->stageData;
-    
-    if (!info->valid && mprGetPathInfo(tx->filename, info) < 0) {
-        return 0;
-    }
-    return dir->enabled && info->isDir;
+    return dir->enabled && tx->fileInfo.isDir;
 }
 
 

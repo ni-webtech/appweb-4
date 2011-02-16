@@ -242,7 +242,7 @@ acmeUsers: coyote roadRunner
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>AuthType [Basic | Digest]</td>
+                        <td>AuthType [Basic | Digest | None]</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -258,7 +258,7 @@ acmeUsers: coyote roadRunner
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The AuthType directive specifies the style of authorization to perform when validating
-                            users.</p>
+                            users. AuthType is inherited from outer hosts and blocks in the config file.</p>
                         </td>
                     </tr>
                     <tr>
@@ -439,6 +439,7 @@ Deny from www.myCompetitor.com
                             of all the group masks for which they are a member. To be granted access, the logical OR of
                             the users ACL and the Required ACL must be non-zero. For example, if the groups file
                             contained:</p>
+                            <p>The Require directive is inherited from outer hosts and blocks in the config file.</p>
                             <pre>
 1: 0x111: powerUsers: peter
 1: 0x1: users: julie
