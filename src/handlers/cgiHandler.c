@@ -802,7 +802,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     *program = 0;
     path = 0;
 
-    actionProgram = maGetMimeActionProgram(conn->host, rx->mimeType);
+    actionProgram = mprGetMimeProgram(conn->host->mimeTypes, rx->mimeType);
     ext = tx->extension;
 
     /*

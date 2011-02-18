@@ -471,22 +471,15 @@ static void catchSignal(int signo, siginfo_t *info, void *arg)
 static int writePort(HttpHost *host)
 {
     char    *cp, numBuf[16], *path;
-    int     fd, port, len;
+    int     fd, len;
 
     //  MOB - should really go to a BLD_LOG_DIR
-    path = mprJoinPath(host, mprGetAppDir(host), "../.port.log");
+    path = mprJoinPath(mprGetAppDir(), "../.port.log");
     if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0) {
-        mprError(host, "Could not create port file %s", path);
+        mprError("Could not create port file %s", path);
         return MPR_ERR_CANT_CREATE;
     }
-
-    cp = host->ipAddrPort;
-    if ((cp = strchr(host->ipAddrPort, ':')) != 0) {
-        port = atoi(++cp);
-    } else {
-        port = 80;
-    }
-    mprSprintf(numBuf, sizeof(numBuf), "%d", port);
+    mprSprintf(numBuf, sizeof(numBuf), "%d", host->port);
 
     len = (int) strlen(numBuf);
     numBuf[len++] = '\n';
