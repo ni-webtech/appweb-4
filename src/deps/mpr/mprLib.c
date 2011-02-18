@@ -2427,6 +2427,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->title = sclone(BLD_NAME);
     mpr->version = sclone(BLD_VERSION);
     mpr->idleCallback = mprServicesAreIdle;
+    mpr->mimeTypes = mprCreateMimeTypes(NULL);
 
     if (mpr->argv && mpr->argv[0] && *mpr->argv[0]) {
         name = mpr->argv[0];
@@ -2471,36 +2472,36 @@ Mpr *mprCreate(int argc, char **argv, int flags)
 static void manageMpr(Mpr *mpr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(mpr->logData);
         mprMark(mpr->altLogData);
+        mprMark(mpr->mimeTypes);
+        mprMark(mpr->timeTokens);
+        mprMark(mpr->name);
+        mprMark(mpr->title);
+        mprMark(mpr->version);
+        mprMark(mpr->domainName);
+        mprMark(mpr->hostName);
+        mprMark(mpr->ip);
+        mprMark(mpr->serverName);
         mprMark(mpr->appDir);
         mprMark(mpr->appPath);
         mprMark(mpr->cmdService);
-        mprMark(mpr->dispatcher);
-        mprMark(mpr->domainName);
-        mprMark(mpr->ejsService);
-        mprMark(mpr->testService);
-        mprMark(mpr->httpService);
-        mprMark(mpr->appwebService);
-        mprMark(mpr->eventService);
         mprMark(mpr->fileSystem);
-        mprMark(mpr->hostName);
-        mprMark(mpr->ip);
-        mprMark(mpr->logData);
+        mprMark(mpr->eventService);
         mprMark(mpr->moduleService);
-        mprMark(mpr->mutex);
-        mprMark(mpr->name);
-        mprMark(mpr->nonBlock);
         mprMark(mpr->osService);
-        mprMark(mpr->serverName);
-        mprMark(mpr->spin);
         mprMark(mpr->socketService);
         mprMark(mpr->threadService);
-        mprMark(mpr->mimeTable);
-        mprMark(mpr->timeTokens);
-        mprMark(mpr->title);
-        mprMark(mpr->version);
-        mprMark(mpr->waitService);
         mprMark(mpr->workerService);
+        mprMark(mpr->waitService);
+        mprMark(mpr->dispatcher);
+        mprMark(mpr->nonBlock);
+        mprMark(mpr->ejsService);
+        mprMark(mpr->httpService);
+        mprMark(mpr->appwebService);
+        mprMark(mpr->testService);
+        mprMark(mpr->mutex);
+        mprMark(mpr->spin);
         mprMark(mpr->emptyString);
         mprMark(mpr->heap.markerCond);
     }
@@ -3501,6 +3502,7 @@ static void manageBuf(MprBuf *bp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(bp->data);
+        mprMark(bp->refillArg);
     } 
 }
 
@@ -4201,15 +4203,18 @@ static void manageCmd(MprCmd *cmd, int flags)
     int             i;
 
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(cmd->dir);
-        mprMark(cmd->env);
-        mprMark(cmd->makeArgv);
         mprMark(cmd->program);
-        mprMark(cmd->stdoutBuf);
-        mprMark(cmd->stderrBuf);
+        mprMark(cmd->makeArgv);
+        mprMark(cmd->argv);
+        mprMark(cmd->env);
+        mprMark(cmd->dir);
         mprMark(cmd->mutex);
         mprMark(cmd->dispatcher);
         mprMark(cmd->callbackData);
+        mprMark(cmd->forkData);
+        mprMark(cmd->stdoutBuf);
+        mprMark(cmd->stderrBuf);
+        mprMark(cmd->userData);
 #if BLD_WIN_LIKE
         mprMark(cmd->command);
         mprMark(cmd->arg0);
@@ -7018,6 +7023,9 @@ static void manageDiskFileSystem(MprDiskFileSystem *dfs, int flags)
         mprMark(dfs->separators);
         mprMark(dfs->newline);
         mprMark(dfs->root);
+#if BLD_WIN_LIKE
+        mprMark(dfs->cygdrive);
+#endif
     }
 #endif
 }
@@ -7149,7 +7157,7 @@ static int dispatchEvents(MprDispatcher *dispatcher);
 static MprTime getDispatcherIdleTime(MprDispatcher *dispatcher, MprTime timeout);
 static MprTime getIdleTime(MprEventService *es, MprTime timeout);
 static MprDispatcher *getNextReadyDispatcher(MprEventService *es);
-static void initDispatcherQ(MprEventService *es, MprDispatcher *q, cchar *name);
+static void initDispatcher(MprDispatcher *q);
 static int makeRunnable(MprDispatcher *dispatcher);
 static void manageDispatcher(MprDispatcher *dispatcher, int flags);
 static void manageEventService(MprEventService *es, int flags);
@@ -7158,9 +7166,9 @@ static void scheduleDispatcher(MprDispatcher *dispatcher);
 static void serviceDispatcherMain(MprDispatcher *dispatcher);
 static void serviceDispatcher(MprDispatcher *dp);
 
-#define isRunning(dispatcher) (dispatcher->parent == &dispatcher->service->runQ)
-#define isReady(dispatcher) (dispatcher->parent == &dispatcher->service->readyQ)
-#define isWaiting(dispatcher) (dispatcher->parent == &dispatcher->service->waitQ)
+#define isRunning(dispatcher) (dispatcher->parent == dispatcher->service->runQ)
+#define isReady(dispatcher) (dispatcher->parent == dispatcher->service->readyQ)
+#define isWaiting(dispatcher) (dispatcher->parent == dispatcher->service->waitQ)
 #define isEmpty(dispatcher) (dispatcher->eventQ.next == &dispatcher->eventQ)
 
 /*
@@ -7177,10 +7185,10 @@ MprEventService *mprCreateEventService()
     es->now = mprGetTime();
     es->mutex = mprCreateLock();
     es->waitCond = mprCreateCond();
-    initDispatcherQ(es, &es->runQ, "running");
-    initDispatcherQ(es, &es->readyQ, "ready");
-    initDispatcherQ(es, &es->idleQ, "idle");
-    initDispatcherQ(es, &es->waitQ, "waiting");
+    es->runQ = mprCreateDispatcher("running", 0);
+    es->readyQ = mprCreateDispatcher("ready", 0);
+    es->idleQ = mprCreateDispatcher("idle", 0);
+    es->waitQ = mprCreateDispatcher("waiting", 0);
     return es;
 }
 
@@ -7190,6 +7198,10 @@ static void manageEventService(MprEventService *es, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(es->waitCond);
         mprMark(es->mutex);
+        mprMark(es->runQ);
+        mprMark(es->readyQ);
+        mprMark(es->idleQ);
+        mprMark(es->waitQ);
 
     } else if (flags & MPR_MANAGE_FREE) {
         /* Needed for race with manageDispatcher */
@@ -7222,7 +7234,11 @@ MprDispatcher *mprCreateDispatcher(cchar *name, int enable)
     dispatcher->magic = MPR_DISPATCHER_MAGIC;
     es = dispatcher->service = MPR->eventService;
     mprInitEventQ(&dispatcher->eventQ);
-    queueDispatcher(&es->idleQ, dispatcher);
+    if (enable) {
+        queueDispatcher(es->idleQ, dispatcher);
+    } else {
+        initDispatcher(dispatcher);
+    }
     return dispatcher;
 }
 
@@ -7262,6 +7278,11 @@ static void manageDispatcher(MprDispatcher *dispatcher, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(dispatcher->name);
         mprMark(dispatcher->cond);
+        mprMark(dispatcher->next);
+        mprMark(dispatcher->prev);
+        mprMark(dispatcher->parent);
+        mprMark(dispatcher->service);
+        mprMark(dispatcher->requiredWorker);
         lock(es);
         q = &dispatcher->eventQ;
         if (dispatcher->current && !(dispatcher->current->flags & MPR_EVENT_STATIC)) {
@@ -7297,7 +7318,7 @@ void mprEnableDispatcher(MprDispatcher *dispatcher)
         dispatcher->enabled = 1;
         LOG(7, "mprEnableDispatcher: %s", dispatcher->name);
         if (!isEmpty(dispatcher) && !isReady(dispatcher) && !isRunning(dispatcher)) {
-            queueDispatcher(&es->readyQ, dispatcher);
+            queueDispatcher(es->readyQ, dispatcher);
             if (es->waiting) {
                 mustWake = 1;
             }
@@ -7462,7 +7483,7 @@ void mprWakeDispatchers()
 
     es = MPR->eventService;
     lock(es);
-    runQ = &es->runQ;
+    runQ = es->runQ;
     for (dp = runQ->next; dp != runQ; dp = dp->next) {
         mprAssert(dp->magic == MPR_DISPATCHER_MAGIC);
         mprSignalCond(dp->cond);
@@ -7478,7 +7499,7 @@ int mprDispatchersAreIdle()
     int                 idle;
 
     es = MPR->eventService;
-    runQ = &es->runQ;
+    runQ = es->runQ;
     lock(es);
     dispatcher = runQ->next;
     if (dispatcher == runQ) {
@@ -7542,7 +7563,7 @@ void mprScheduleDispatcher(MprDispatcher *dispatcher)
 
     } else {
         if (isEmpty(dispatcher)) {
-            queueDispatcher(&es->idleQ, dispatcher);
+            queueDispatcher(es->idleQ, dispatcher);
             unlock(es);
             return;
         }
@@ -7550,13 +7571,13 @@ void mprScheduleDispatcher(MprDispatcher *dispatcher)
         mprAssert(event->magic == MPR_EVENT_MAGIC);
         mustWakeWaitService = mustWakeCond = 0;
         if (event->due > es->now) {
-            queueDispatcher(&es->waitQ, dispatcher);
+            queueDispatcher(es->waitQ, dispatcher);
             if (event->due < es->willAwake) {
                 mustWakeWaitService = 1;
                 mustWakeCond = dispatcher->waitingOnCond;
             }
         } else {
-            queueDispatcher(&es->readyQ, dispatcher);
+            queueDispatcher(es->readyQ, dispatcher);
             mustWakeWaitService = es->waiting;
             mustWakeCond = dispatcher->waitingOnCond;
         }
@@ -7628,7 +7649,7 @@ static void serviceDispatcher(MprDispatcher *dispatcher)
     } else {
         if (mprStartWorker((MprWorkerProc) serviceDispatcherMain, dispatcher) < 0) {
             /* Can't start a worker thread. Put back on the wait queue */
-            queueDispatcher(&dispatcher->service->waitQ, dispatcher);
+            queueDispatcher(dispatcher->service->waitQ, dispatcher);
         } 
     }
 }
@@ -7657,8 +7678,8 @@ static MprDispatcher *getNextReadyDispatcher(MprEventService *es)
     MprDispatcher   *dp, *next, *readyQ, *waitQ, *dispatcher;
     MprEvent        *event;
 
-    waitQ = &es->waitQ;
-    readyQ = &es->readyQ;
+    waitQ = es->waitQ;
+    readyQ = es->readyQ;
 
     lock(es);
     if (readyQ->next == readyQ) {
@@ -7671,14 +7692,14 @@ static MprDispatcher *getNextReadyDispatcher(MprEventService *es)
             event = dp->eventQ.next;
             mprAssert(event->magic == MPR_EVENT_MAGIC);
             if (event->due <= es->now) {
-                queueDispatcher(&es->readyQ, dp);
+                queueDispatcher(es->readyQ, dp);
                 break;
             }
         }
     }
     if (readyQ->next != readyQ) {
         dispatcher = readyQ->next;
-        queueDispatcher(&es->runQ, dispatcher);
+        queueDispatcher(es->runQ, dispatcher);
         mprAssert(dispatcher->enabled);
         dispatcher->owner = 0;
     } else {
@@ -7700,8 +7721,8 @@ static MprTime getIdleTime(MprEventService *es, MprTime timeout)
     MprEvent        *event;
     MprTime         delay;
 
-    waitQ = &es->waitQ;
-    readyQ = &es->readyQ;
+    waitQ = es->waitQ;
+    readyQ = es->readyQ;
 
     if (readyQ->next != readyQ) {
         delay = 0;
@@ -7753,13 +7774,11 @@ static MprTime getDispatcherIdleTime(MprDispatcher *dispatcher, MprTime timeout)
 }
 
 
-static void initDispatcherQ(MprEventService *es, MprDispatcher *q, cchar *name)
+static void initDispatcher(MprDispatcher *q)
 {
     q->next = q;
     q->prev = q;
     q->parent = q;
-    q->name = name;
-    q->service = es;
 }
 
 
@@ -7822,7 +7841,7 @@ static int makeRunnable(MprDispatcher *dispatcher)
     lock(es);
     wasRunning = isRunning(dispatcher);
     if (!isRunning(dispatcher)) {
-        queueDispatcher(&es->runQ, dispatcher);
+        queueDispatcher(es->runQ, dispatcher);
     }
     unlock(es);
     return wasRunning;
@@ -7931,58 +7950,6 @@ static uchar charMatch[256] = {
     0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,
     0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,
     0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c,0x3c 
-};
-
-/*  Basic mime type support
- */
-static char *mimeTypes[] = {
-    "ai", "application/postscript",
-    "asc", "text/plain",
-    "au", "audio/basic",
-    "avi", "video/x-msvideo",
-    "bin", "application/octet-stream",
-    "bmp", "image/bmp",
-    "class", "application/octet-stream",
-    "css", "text/css",
-    "dll", "application/octet-stream",
-    "doc", "application/msword",
-    "ejs", "text/html",
-    "eps", "application/postscript",
-    "es", "application/x-javascript",
-    "exe", "application/octet-stream",
-    "gif", "image/gif",
-    "gz", "application/x-gzip",
-    "htm", "text/html",
-    "html", "text/html",
-    "ico", "image/x-icon",
-    "jar", "application/octet-stream",
-    "jpeg", "image/jpeg",
-    "jpg", "image/jpeg",
-    "js", "application/javascript",
-    "json", "application/json",
-    "mp3", "audio/mpeg",
-    "pdf", "application/pdf",
-    "png", "image/png",
-    "ppt", "application/vnd.ms-powerpoint",
-    "ps", "application/postscript",
-    "ra", "audio/x-realaudio",
-    "ram", "audio/x-pn-realaudio",
-    "rmm", "audio/x-pn-realaudio",
-    "rtf", "text/rtf",
-    "rv", "video/vnd.rn-realvideo",
-    "so", "application/octet-stream",
-    "swf", "application/x-shockwave-flash",
-    "tar", "application/x-tar",
-    "tgz", "application/x-gzip",
-    "tiff", "image/tiff",
-    "txt", "text/plain",
-    "wav", "audio/x-wav",
-    "xls", "application/vnd.ms-excel",
-    "zip", "application/zip",
-    "php", "application/x-appweb-php",
-    "pl", "application/x-appweb-perl",
-    "py", "application/x-appweb-python",
-    NULL, NULL,
 };
 
 /*  
@@ -8180,31 +8147,6 @@ char *mprEscapeHtml(cchar *html)
     mprAssert(op < &result[len]);
     *op = '\0';
     return result;
-}
-
-
-cchar *mprLookupMimeType(cchar *ext)
-{
-    char    **cp;
-    cchar   *ep, *mtype;
-
-    if (ext == 0 || *ext == '\0') {
-        return "";
-    }
-    if (MPR->mimeTable == 0) {
-        MPR->mimeTable = mprCreateHash(MIME_HASH_SIZE, MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES);
-        for (cp = mimeTypes; cp[0]; cp += 2) {
-            mprAddKey(MPR->mimeTable, cp[0], cp[1]);
-        }
-    }
-    if ((ep = strrchr(ext, '.')) != 0) {
-        ext = &ep[1];
-    }
-    mtype = (cchar*) mprLookupHash(MPR->mimeTable, ext);
-    if (mtype == 0) {
-        return "application/octet-stream";
-    }
-    return mtype;
 }
 
 
@@ -8624,8 +8566,15 @@ static void manageEvent(MprEvent *event, int flags)
             Events in dispatcher queues are marked by the dispatcher managers, not via event->next,prev
          */
         mprAssert(event->dispatcher == 0 || event->dispatcher->magic == MPR_DISPATCHER_MAGIC);
-        mprMark(event->dispatcher);
+        mprMark(event->name);
         mprMark(event->data);
+        mprMark(event->dispatcher);
+        if (event->next != &event->dispatcher->eventQ) {
+            mprMark(event->next);
+        }
+        if (event->prev != &event->dispatcher->eventQ) {
+            mprMark(event->prev);
+        }
         mprMark(event->handler);
 
     } else if (flags & MPR_MANAGE_FREE) {
@@ -8654,7 +8603,7 @@ void mprInitEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, int p
     mprAssert(event->prev == 0);
 
     dispatcher->service->now = mprGetTime();
-    event->name = name;
+    event->name = sclone(name);
     event->timestamp = dispatcher->service->now;
     event->proc = proc;
     event->period = period;
@@ -9020,6 +8969,7 @@ MprOffset mprGetFileSize(MprFile *file)
 MprFile *mprGetStderr()
 {
     MprFileSystem   *fs;
+
     fs = mprLookupFileSystem(NULL);
     return fs->stdError;
 }
@@ -9028,6 +8978,7 @@ MprFile *mprGetStderr()
 MprFile *mprGetStdin()
 {
     MprFileSystem   *fs;
+
     fs = mprLookupFileSystem(NULL);
     return fs->stdInput;
 }
@@ -9036,6 +8987,7 @@ MprFile *mprGetStdin()
 MprFile *mprGetStdout()
 {
     MprFileSystem   *fs;
+
     fs = mprLookupFileSystem(NULL);
     return fs->stdOutput;
 }
@@ -11128,7 +11080,6 @@ static void manageKeyValue(MprKeyValue *pair, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(pair->key);
         mprMark(pair->value);
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -11357,9 +11308,7 @@ MprSpin *mprCreateSpinLock()
 
 static void manageSpinLock(MprSpin *lock, int flags)
 {
-    if (flags & MPR_MANAGE_MARK) {
-        ;
-    } else if (flags & MPR_MANAGE_FREE) {
+    if (flags & MPR_MANAGE_FREE) {
         mprAssert(lock);
 #if USE_MPR_LOCK || MACOSX
         ;
@@ -12020,6 +11969,302 @@ int _cmp(char *s1, char *s2)
 
 /************************************************************************/
 /*
+ *  Start of file "../src/mprMime.c"
+ */
+/************************************************************************/
+
+/* 
+    mprMime.c - Mime type handling
+
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+ */
+
+
+
+/*  
+    Inbuilt mime type support
+ */
+static char *standardMimeTypes[] = {
+    "ai",    "application/postscript",
+    "asc",   "text/plain",
+    "au",    "audio/basic",
+    "avi",   "video/x-msvideo",
+    "bin",   "application/octet-stream",
+    "bmp",   "image/bmp",
+    "class", "application/octet-stream",
+    "css",   "text/css",
+    "dll",   "application/octet-stream",
+    "doc",   "application/msword",
+    "ejs",   "text/html",
+    "eps",   "application/postscript",
+    "es",    "application/x-javascript",
+    "exe",   "application/octet-stream",
+    "gif",   "image/gif",
+    "gz",    "application/x-gzip",
+    "htm",   "text/html",
+    "html",  "text/html",
+    "ico",   "image/x-icon",
+    "jar",   "application/octet-stream",
+    "jpeg",  "image/jpeg",
+    "jpg",   "image/jpeg",
+    "js",    "application/javascript",
+    "json",  "application/json",
+    "mp3",   "audio/mpeg",
+    "pdf",   "application/pdf",
+    "png",   "image/png",
+    "ppt",   "application/vnd.ms-powerpoint",
+    "ps",    "application/postscript",
+    "ra",    "audio/x-realaudio",
+    "ram",   "audio/x-pn-realaudio",
+    "rmm",   "audio/x-pn-realaudio",
+    "rtf",   "text/rtf",
+    "rv",    "video/vnd.rn-realvideo",
+    "so",    "application/octet-stream",
+    "swf",   "application/x-shockwave-flash",
+    "tar",   "application/x-tar",
+    "tgz",   "application/x-gzip",
+    "tiff",  "image/tiff",
+    "txt",   "text/plain",
+    "wav",   "audio/x-wav",
+    "xls",   "application/vnd.ms-excel",
+    "zip",   "application/zip",
+    "php",   "application/x-appweb-php",
+    "pl",    "application/x-appweb-perl",
+    "py",    "application/x-appweb-python",
+    "ai",    "application/postscript",
+    "asc",   "text/plain",
+    "au",    "audio/basic",
+    "avi",   "video/x-msvideo",
+    "bin",   "application/octet-stream",
+    "bmp",   "image/bmp",
+    "class", "application/octet-stream",
+    "css",   "text/css",
+    "dll",   "application/octet-stream",
+    "doc",   "application/msword",
+    "ejs",   "text/html",
+    "eps",   "application/postscript",
+    "es",    "application/x-javascript",
+    "exe",   "application/octet-stream",
+    "gif",   "image/gif",
+    "gz",    "application/x-gzip",
+    "htm",   "text/html",
+    "html",  "text/html",
+    "ico",   "image/x-icon",
+    "jar",   "application/octet-stream",
+    "jpeg",  "image/jpeg",
+    "jpg",   "image/jpeg",
+    "js",    "application/javascript",
+    "mp3",   "audio/mpeg",
+    "pdf",   "application/pdf",
+    "png",   "image/png",
+    "ppt",   "application/vnd.ms-powerpoint",
+    "ps",    "application/postscript",
+    "ra",    "audio/x-realaudio",
+    "ram",   "audio/x-pn-realaudio",
+    "rmm",   "audio/x-pn-realaudio",
+    "rtf",   "text/rtf",
+    "rv",    "video/vnd.rn-realvideo",
+    "so",    "application/octet-stream",
+    "swf",   "application/x-shockwave-flash",
+    "tar",   "application/x-tar",
+    "tgz",   "application/x-gzip",
+    "tiff",  "image/tiff",
+    "txt",   "text/plain",
+    "wav",   "audio/x-wav",
+    "xls",   "application/vnd.ms-excel",
+    "zip",   "application/zip",
+    "php",   "application/x-appweb-php",
+    "pl",    "application/x-appweb-perl",
+    "py",    "application/x-appweb-python",
+    0,       0,
+};
+
+
+static void addStandardMimeTypes(MprHashTable *table);
+static void manageMimeType(MprMime *mt, int flags);
+
+
+MprHashTable *mprCreateMimeTypes(cchar *path)
+{
+    MprHashTable    *table;
+    MprFile         *file;
+    char            *buf, *tok, *ext, *type;
+    int             line;
+
+    if (path) {
+        if ((file = mprOpenFile(path, O_RDONLY | O_TEXT, 0)) == 0) {
+            return 0;
+        }
+        if ((table = mprCreateHash(MPR_DEFAULT_HASH_SIZE, 0)) == 0) {
+            mprCloseFile(file);
+            return 0;
+        }
+        line = 0;
+        while ((buf = mprGetFileString(file, 0, NULL)) != 0) {
+            line++;
+            if (buf[0] == '#' || isspace((int) buf[0])) {
+                continue;
+            }
+            type = stok(buf, " \t\n\r", &tok);
+            ext = stok(0, " \t\n\r", &tok);
+            if (type == 0 || ext == 0) {
+                mprError("Bad mime type in %s at line %d", path, line);
+                continue;
+            }
+            while (ext) {
+                mprAddMime(table, ext, type);
+                ext = stok(0, " \t\n\r", &tok);
+            }
+        }
+        mprCloseFile(file);
+
+    } else {
+        if ((table = mprCreateHash(MPR_DEFAULT_HASH_SIZE, 0)) == 0) {
+            return 0;
+        }
+        addStandardMimeTypes(table);
+    }
+    return table;
+}
+
+
+static void addStandardMimeTypes(MprHashTable *table)
+{
+    char    **cp;
+
+    for (cp = standardMimeTypes; cp[0]; cp += 2) {
+        mprAddMime(table, cp[0], cp[1]);
+    }
+}
+
+
+static void manageMimeType(MprMime *mt, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(mt->type);
+        mprMark(mt->program);
+    }
+}
+
+
+MprMime *mprAddMime(MprHashTable *table, cchar *ext, cchar *mimeType)
+{
+    MprMime  *mt;
+
+    if ((mt = mprAllocObj(MprMime, manageMimeType)) == 0) {
+        return 0;
+    }
+    mt->type = sclone(mimeType);
+    if (*ext == '.') {
+        ext++;
+    }
+    mprAddKey(table, ext, mt);
+    return mt;
+}
+
+
+int mprSetMimeProgram(MprHashTable *table, cchar *mimeType, cchar *program)
+{
+    MprHash     *hp;
+    MprMime     *mt;
+    
+    hp = 0;
+    mt = 0;
+    while ((hp = mprGetNextHash(table, hp)) != 0) {
+        mt = (MprMime*) hp->data;
+        if (mt->type[0] == mimeType[0] && strcmp(mt->type, mimeType) == 0) {
+            break;
+        }
+    }
+    if (mt == 0) {
+        mprError("Can't find mime type %s for action program %s", mimeType, program);
+        return MPR_ERR_CANT_FIND;
+    }
+    mt->program = sclone(program);
+    return 0;
+}
+
+
+cchar *mprGetMimeProgram(MprHashTable *table, cchar *mimeType)
+{
+    MprMime      *mt;
+
+    if (mimeType == 0 || *mimeType == '\0') {
+        return 0;
+    }
+    if ((mt = mprLookupHash(table, mimeType)) == 0) {
+        return 0;
+    }
+    return mt->program;
+}
+
+
+cchar *mprLookupMime(MprHashTable *table, cchar *ext)
+{
+    MprMime     *mt;
+    cchar       *ep;
+
+    if (ext == 0 || *ext == '\0') {
+        return "";
+    }
+    if ((ep = strrchr(ext, '.')) != 0) {
+        ext = &ep[1];
+    }
+    if (table == 0) {
+        table = MPR->mimeTypes;
+    }
+    if ((mt = mprLookupHash(table, ext)) == 0) {;
+        return "application/octet-stream";
+    }
+    return mt->type;
+}
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../src/mprMime.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "../src/mprMixed.c"
  */
 /************************************************************************/
@@ -12618,6 +12863,7 @@ static void manageModule(MprModule *mp, int flags)
         mprMark(mp->name);
         mprMark(mp->path);
         mprMark(mp->entry);
+        mprMark(mp->moduleData);
 
     } else if (flags & MPR_MANAGE_FREE) {
         //  MOB - should this unload the module?
@@ -13288,6 +13534,14 @@ MprList *mprGetPathFiles(cchar *dir, bool enumDirs)
 #endif /* WIN */
 
 
+static void manageDirEntry(MprDirEntry *dp, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(dp->name);
+    }
+}
+
+
 #if BLD_UNIX_LIKE || VXWORKS || CYGWIN
 MprList *mprGetPathFiles(cchar *path, bool enumDirs)
 {
@@ -13312,8 +13566,7 @@ MprList *mprGetPathFiles(cchar *path, bool enumDirs)
         fileName = mprJoinPath(path, dirent->d_name);
         rc = mprGetPathInfo(fileName, &fileInfo);
         if (enumDirs || (rc == 0 && !fileInfo.isDir)) { 
-            dp = mprAlloc(sizeof(MprDirEntry));
-            if (dp == 0) {
+            if ((dp = mprAllocObj(MprDirEntry, manageDirEntry)) == 0) {
                 return 0;
             }
             dp->name = sclone(dirent->d_name);
@@ -15862,8 +16115,10 @@ static MprFile *openFile(MprFileSystem *fileSystem, cchar *path, int flags, int 
 static void manageRomFile(MprFile *file, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(file->fileSystem);
         mprMark(file->path);
         mprMark(file->buf);
+        mprMark(file->inode);
     }
 }
 
@@ -16018,7 +16273,7 @@ static MprRomInode *lookup(MprRomFileSystem *rfs, cchar *path)
 
 int mprSetRomFileSystem(MprRomInode *inodeList)
 {
-    MprRomFileSystem     rfs;
+    MprRomFileSystem    rfs;
     MprRomInode         *ri;
 
     rfs = (MprRomFileSystem*) MPR->fileSystem;
@@ -16035,13 +16290,36 @@ int mprSetRomFileSystem(MprRomInode *inodeList)
 }
 
 
+void manageRomFileSystem(MprRomFileSystem *rfs, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+{
+#if !WINCE
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(rfs->stdError);
+        mprMark(rfs->stdInput);
+        mprMark(rfs->stdOutput);
+        mprMark(rfs->separators);
+        mprMark(rfs->newline);
+        mprMark(rfs->root);
+#if BLD_WIN_LIKE
+        mprMark(rfs->cygdrive);
+#endif
+        mprMark(rfs->fileIndex);
+        mprMark(rfs->romInodes);
+    }
+#endif
+}
+    }
+}
+
+
 MprRomFileSystem *mprCreateRomFileSystem(cchar *path)
 {
     MprFileSystem      *fs;
     MprRomFileSystem   *rfs;
 
-    rfs = mprAlloc(sizeof(MprRomFileSystem));
-    if (rfs == 0) {
+    if ((rfs = mprAllocObj(sizeof(MprRomFileSystem, manageRomFileSystem))) == 0) {
         return rfs;
     }
     fs = &rfs->fileSystem;
@@ -16588,9 +16866,9 @@ MprSocketService *mprCreateSocketService()
 static void manageSocketService(MprSocketService *ss, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(ss->mutex);
         mprMark(ss->standardProvider);
         mprMark(ss->secureProvider);
+        mprMark(ss->mutex);
     }
 }
 
@@ -16663,14 +16941,16 @@ static MprSocket *createSocket(struct MprSsl *ssl)
 static void manageSocket(MprSocket *sp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(sp->service);
+        mprMark(sp->dispatcher);
+        mprMark(sp->handler);
         mprMark(sp->acceptIp);
         mprMark(sp->ip);
         mprMark(sp->provider);
-        mprMark(sp->mutex);
-        mprMark(sp->handler);
+        mprMark(sp->listenSock);
         mprMark(sp->sslSocket);
         mprMark(sp->ssl);
-        mprMark(sp->listenSock);
+        mprMark(sp->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (sp->fd >= 0) {
@@ -17716,7 +17996,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
         Note that IPv6 does not support broadcast, there is no 255.255.255.255 equivalent.
         Multicast can be used over a specific link, but the user must provide that address plus %scope_id.
      */
-    if (ip == 0 || strcmp(ip, "") == 0) {
+    if (ip == 0 || ip[0] == '\0') {
         ip = 0;
         hints.ai_flags |= AI_PASSIVE;           /* Bind to 0.0.0.0 and :: */
     }
@@ -17952,12 +18232,12 @@ static int ipv6(cchar *ip)
     or
         [aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh:iiii]:port
  */
-int mprParseIp(cchar *ipAddrPort, char **ipAddrRef, int *port, int defaultPort)
+int mprParseIp(cchar *ipAddrPort, char **pip, int *pport, int defaultPort)
 {
-    char    *ipAddr;
+    char    *ip;
     char    *cp;
 
-    ipAddr = NULL;
+    ip = 0;
     if (defaultPort < 0) {
         defaultPort = 80;
     }
@@ -17971,60 +18251,70 @@ int mprParseIp(cchar *ipAddrPort, char **ipAddrRef, int *port, int defaultPort)
         if ((cp = strchr(ipAddrPort, ']')) != 0) {
             cp++;
             if ((*cp) && (*cp == ':')) {
-                *port = (*++cp == '*') ? -1 : atoi(cp);
+                *pport = (*++cp == '*') ? -1 : atoi(cp);
 
                 /* Set ipAddr to ipv6 address without brackets */
-                ipAddr = sclone(ipAddrPort+1);
-                cp = strchr(ipAddr, ']');
+                ip = sclone(ipAddrPort+1);
+                cp = strchr(ip, ']');
                 *cp = '\0';
 
             } else {
                 /* Handles [a:b:c:d:e:f:g:h:i] case (no port)- should not occur */
-                ipAddr = sclone(ipAddrPort+1);
-                cp = strchr(ipAddr, ']');
-                *cp = '\0';
-
+                ip = sclone(ipAddrPort + 1);
+                if ((cp = strchr(ip, ']')) != 0) {
+                    *cp = '\0';
+                }
+                if (*ip == '\0') {
+                    ip = 0;
+                }
                 /* No port present, use callers default */
-                *port = defaultPort;
+                *pport = defaultPort;
             }
         } else {
             /* Handles a:b:c:d:e:f:g:h:i case (no port) */
-            ipAddr = sclone(ipAddrPort);
+            ip = sclone(ipAddrPort);
 
             /* No port present, use callers default */
-            *port = defaultPort;
+            *pport = defaultPort;
         }
 
     } else {
         /*  
             ipv4 
          */
-        ipAddr = sclone(ipAddrPort);
+        ip = sclone(ipAddrPort);
 
-        if ((cp = strchr(ipAddr, ':')) != 0) {
+        if ((cp = strchr(ip, ':')) != 0) {
             *cp++ = '\0';
             if (*cp == '*') {
-                *port = -1;
+                *pport = -1;
             } else {
-                *port = atoi(cp);
+                *pport = atoi(cp);
             }
-            if (*ipAddr == '*') {
-                ipAddr = sclone("127.0.0.1");
+            if (*ip == '*') {
+#if UNUSED
+                //  MOB - should this not be null for wildcarding?
+                ip = sclone("127.0.0.1");
+#else
+                ip = 0;
+#endif
             }
 
         } else {
-            if (isdigit((int) *ipAddr)) {
-                *port = atoi(ipAddr);
-                ipAddr = sclone("127.0.0.1");
+            if (isdigit((int) *ip)) {
+                *pport = atoi(ip);
+#if UNUSED
+                ip = sclone("127.0.0.1");
+#endif
 
             } else {
                 /* No port present, use callers default */
-                *port = defaultPort;
+                *pport = defaultPort;
             }
         }
     }
-    if (ipAddrRef) {
-        *ipAddrRef = ipAddr;
+    if (pip) {
+        *pip = ip;
     }
     return 0;
 }
@@ -18225,8 +18515,8 @@ char *snclone(cchar *str, ssize len)
 
 int scmp(cchar *s1, cchar *s2)
 {
-    if (s1 == 0 || s2 == 0) {
-        return -1;
+    if (s1 == s2) {
+        return 0;
     } else if (s1 == 0) {
         return -1;
     } else if (s2 == 0) {
@@ -18980,10 +19270,11 @@ static void manageTestService(MprTestService *ts, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ts->commandLine);
-        mprMark(ts->mutex);
         mprMark(ts->groups);
-        mprMark(ts->testFilter);
         mprMark(ts->threadData);
+        mprMark(ts->name);
+        mprMark(ts->testFilter);
+        mprMark(ts->mutex);
     }
 }
 
@@ -18999,7 +19290,7 @@ int mprParseTestArgs(MprTestService *sp, int argc, char *argv[])
     outputVersion = 0;
 
     programName = mprGetPathBase(argv[0]);
-    sp->name = BLD_PRODUCT;
+    sp->name = sclone(BLD_PRODUCT);
 
     /*
         Save the command line
@@ -19408,14 +19699,20 @@ static void manageTestGroup(MprTestGroup *gp, int flags)
         mprMark(gp->name);
         mprMark(gp->fullName);
         mprMark(gp->failures);
+        mprMark(gp->service);
+        mprMark(gp->dispatcher);
+        mprMark(gp->parent);
+        mprMark(gp->root);
         mprMark(gp->groups);
         mprMark(gp->cases);
-        mprMark(gp->dispatcher);
+#if UNUSED
+        mprMark(gp->def);
+#endif
+        mprMark(gp->http);
         mprMark(gp->conn);
-        mprMark(gp->mutex);
+        mprMark(gp->content);
         mprMark(gp->data);
-
-    } else if (flags & MPR_MANAGE_FREE) {
+        mprMark(gp->mutex);
     }
 }
 
@@ -19754,7 +20051,6 @@ static void manageTestFailure(MprTestFailure *fp, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(fp->loc);
         mprMark(fp->message);
-    } else if (flags & MPR_MANAGE_FREE) {
     }
 }
 
@@ -20014,8 +20310,9 @@ static void manageThreadService(MprThreadService *ts, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ts->threads);
-        mprMark(ts->cond);
+        mprMark(ts->mainThread);
         mprMark(ts->mutex);
+        mprMark(ts->cond);
 
     } else if (flags & MPR_MANAGE_FREE) {
         mprStopThreadService();
@@ -20133,6 +20430,7 @@ static void manageThread(MprThread *tp, int flags)
 
     if (flags & MPR_MANAGE_MARK) {
         mprMark(tp->name);
+        mprMark(tp->data);
         mprMark(tp->cond);
         mprMark(tp->mutex);
 
@@ -20507,11 +20805,10 @@ MprWorkerService *mprCreateWorkerService()
 static void manageWorkerService(MprWorkerService *ws, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprLock(ws->mutex);
         mprMark(ws->busyThreads);
         mprMark(ws->idleThreads);
         mprMark(ws->mutex);
-        mprUnlock(ws->mutex);
+        mprMark(ws->pruneTimer);
     }
 }
 
@@ -20825,9 +21122,10 @@ static MprWorker *createWorker(MprWorkerService *ws, int stackSize)
 static void manageWorker(MprWorker *worker, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(worker->thread);
-        mprMark(worker->idleCond);
         mprMark(worker->data);
+        mprMark(worker->thread);
+        mprMark(worker->workerService);
+        mprMark(worker->idleCond);
     }
 }
 
@@ -23250,11 +23548,14 @@ MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher
 static void manageWaitHandler(MprWaitHandler *wp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(wp->thread);
-        mprMark(wp->callbackComplete);
-        mprMark(wp->requiredWorker);
         mprMark(wp->handlerData);
         mprMark(wp->dispatcher);
+        mprMark(wp->service);
+        mprMark(wp->next);
+        mprMark(wp->prev);
+        mprMark(wp->requiredWorker);
+        mprMark(wp->thread);
+        mprMark(wp->callbackComplete);
 
     } else if (flags & MPR_MANAGE_FREE) {
         mprRemoveWaitHandler(wp);
@@ -23553,8 +23854,8 @@ MprChar *wclone(MprChar *str)
 
 int wcmp(MprChar *s1, MprChar *s2)
 {
-    if (s1 == 0 || s2 == 0) {
-        return -1;
+    if (s1 == s2) {
+        return 0;
     } else if (s1 == 0) {
         return -1;
     } else if (s2 == 0) {
@@ -25961,6 +26262,8 @@ static void manageXml(MprXml *xml, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(xml->inBuf);
         mprMark(xml->tokBuf);
+        mprMark(xml->parseArg);
+        mprMark(xml->inputArg);
         mprMark(xml->errMsg);
     }
 }

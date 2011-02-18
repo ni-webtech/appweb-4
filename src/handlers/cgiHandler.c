@@ -339,7 +339,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     tx = conn->tx;
     mprAssert(tx);
     conn->lastActivity = conn->http->now;
-    q = conn->tx->queue[HTTP_QUEUE_TRANS].nextQ;
+    q = conn->tx->queue[HTTP_QUEUE_TRANS]->nextQ;
 
     switch (channel) {
     case MPR_CMD_STDIN:
@@ -525,7 +525,6 @@ static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd)
 static bool parseHeader(HttpConn *conn, MprCmd *cmd)
 {
     HttpTx      *tx;
-    HttpQueue   *q;
     MprBuf      *buf;
     char        *endHeaders, *headers, *key, *value, *location;
     int         fd, len;
@@ -610,7 +609,6 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
 
     if (location) {
         httpRedirect(conn, tx->status, location);
-        q = tx->queue[HTTP_QUEUE_TRANS].nextQ;
         httpFinalize(conn);
         if (conn->state == HTTP_STATE_COMPLETE) {
             httpProcess(conn, NULL);
@@ -627,7 +625,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    MaHost      *host;
+    HttpHost      *host;
     char        *fileName, **argv, *program, *cmdScript, status[8], *indexQuery, *cp, *tok;
     cchar       *actionProgram;
     size_t      len;
@@ -646,7 +644,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     argc = *argcp;
 
     if (tx->extension) {
-        actionProgram = maGetMimeActionProgram(host, tx->extension);
+        actionProgram = mprGetMimeProgram(host->mimeTypes, tx->extension);
         if (actionProgram != 0) {
             argc++;
         }
@@ -966,21 +964,21 @@ static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix)
 static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpLoc     *loc;
-    MaServer    *server;
-    MaHost      *host;
-    MaAlias     *alias;
-    MaDir       *dir, *parent;
+    MaMeta      *meta;
+    HttpHost    *host;
+    HttpAlias   *alias;
+    HttpDir     *dir, *parent;
     char        *program, *mimeType, *prefix, *path;
 
     host = state->host;
-    server = state->server;
+    meta = state->meta;
     loc = state->loc;
 
     if (scasecmp(key, "Action") == 0) {
         if (maSplitConfigValue(&mimeType, &program, value, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        maSetMimeActionProgram(host, mimeType, program);
+        mprSetMimeProgram(host->mimeTypes, mimeType, program);
         return 1;
 
     } else if (scasecmp(key, "ScriptAlias") == 0) {
@@ -990,21 +988,21 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
         /*
             Create an alias and location with a cgiHandler and pathInfo processing
          */
-        path = maMakePath(host, path);
-        dir = maLookupDir(host, path);
-        if (maLookupDir(host, path) == 0) {
+        path = httpMakePath(host, path);
+        dir = httpLookupDir(host, path);
+        if (httpLookupDir(host, path) == 0) {
             parent = mprGetFirstItem(host->dirs);
-            dir = maCreateDir(host, path, parent);
+            dir = httpCreateDir(path, parent);
         }
-        alias = maCreateAlias(prefix, path, 0);
+        alias = httpCreateAlias(prefix, path, 0);
         mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
-        maInsertAlias(host, alias);
+        httpAddAlias(host, alias);
 
-        if ((loc = maLookupLocation(host, prefix)) == 0) {
-            loc = httpCreateInheritedLocation(server->http, state->loc);
+        if ((loc = httpLookupLocation(host, prefix)) == 0) {
+            loc = httpCreateInheritedLocation(state->loc);
             httpSetLocationAuth(loc, state->dir->auth);
             httpSetLocationPrefix(loc, prefix);
-            maAddLocation(host, loc);
+            httpAddLocation(host, loc);
         } else {
             httpSetLocationPrefix(loc, prefix);
         }
@@ -1022,8 +1020,8 @@ int maCgiHandlerInit(Http *http, MprModule *module)
 {
     HttpStage     *handler;
 
-    handler = httpCreateHandler(http, "cgiHandler", HTTP_STAGE_ALL | HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | 
-        HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT, module);
+    handler = httpCreateHandler(http, "cgiHandler", 
+        HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

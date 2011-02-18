@@ -21,7 +21,7 @@ static int loadStartupScript(Ejs *ejs, cchar *script);
 static void setScriptName(HttpConn *conn)
 {
     HttpRx      *rx;
-    MaAlias     *alias;
+    HttpAlias     *alias;
     char        *uri;
 
     rx = conn->rx;

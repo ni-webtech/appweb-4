@@ -337,10 +337,7 @@ int maOpenFileHandler(Http *http)
     /* 
         This handler serves requests without using thread workers.
      */
-    handler = httpCreateHandler(http, "fileHandler", 
-        HTTP_STAGE_GET | HTTP_STAGE_HEAD | HTTP_STAGE_POST | HTTP_STAGE_PUT | HTTP_STAGE_DELETE | HTTP_STAGE_VERIFY_ENTITY, 
-        NULL);
-    if (handler == 0) {
+    if ((handler = httpCreateHandler(http, "fileHandler", HTTP_STAGE_VERIFY_ENTITY, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openFile;

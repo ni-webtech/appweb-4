@@ -14,15 +14,13 @@
 static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpLoc     *loc;
-    MaServer    *server;
-    MaHost      *host;
-    char        *path, prefix[MPR_MAX_FNAME];
-    char        *tok, *word, *enable, *provider;
-    int         protoMask, mask;
+    HttpHost    *host;
+    char        *path, *ip, *tok, *word, *enable, *provider;
+    char        prefix[MPR_MAX_FNAME];
+    int         protoMask, mask, port;
     static int  hasBeenWarned = 0;
 
     host = state->host;
-    server = state->server;
     loc = state->loc;
 
     scopy(prefix, sizeof(prefix), key);
@@ -41,15 +39,26 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
     if (loc->ssl == 0) {
         loc->ssl = mprCreateSsl(loc);
     }
-    if (scasecmp(key, "SSLEngine") == 0) {
+    if (scasecmp(key, "SSLEngine") == 0 || scasecmp(key, "SSL") == 0) {
         enable = stok(value, " \t", &tok);
         provider = stok(0, " \t", &tok);
-        if (scasecmp(value, "on") == 0) {
-            maSecureHost(host, loc->ssl);
+        if (scasecmp(value, "on") == 0 || *value == '\0') {
+            if (httpSecureServer(host->ip, host->port, loc->ssl) < 0) {
+                mprError("No HttpServer at %s:%d to secure", host->ip, host->port);
+            }
+        } else if (scasecmp(value, "off") == 0) {
+            if (httpSecureServer(host->ip, host->port, 0) < 0) {
+                mprError("No HttpServer at %s:%d to disable SSL", host->ip, host->port);
+            }
+        } else {
+            mprParseIp(value, &ip, &port, -1);
+            if (httpSecureServer(ip, port, loc->ssl) < 0) {
+                mprError("No HttpServer at %s:%d to secure", ip, port);
+            }
         }
         return 1;
     }
-    path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+    path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
 
     if (scasecmp(key, "SSLCACertificatePath") == 0) {
         mprSetSslCaPath(loc->ssl, path);

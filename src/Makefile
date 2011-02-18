@@ -7,13 +7,8 @@
 LIBS			:= appweb http mpr
 CGI				:= mod_cgi
 FILE			:= mod_file
-DIR				:= mod_dir
 EJS				:= mod_ejs
 PHP				:= mod_php
-UPLOAD			:= mod_upload
-AUTH			:= mod_auth
-CHUNK			:= mod_chunk
-RANGE			:= mod_range
 SSL				:= mod_ssl
 
 include 		.makedep

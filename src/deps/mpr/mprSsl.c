@@ -252,7 +252,7 @@ static MprSocketProvider *createMatrixSslProvider()
     if ((provider = mprAllocObj(MprSocketProvider, manageMatrixProvider)) == NULL) {
         return 0;
     }
-    provider->name = "MatrixSsl";
+    provider->name = sclone("MatrixSsl");
     provider->acceptSocket = acceptMss;
     provider->closeSocket = closeMss;
     provider->configureSsl = configureMss;
@@ -271,6 +271,8 @@ static void manageMatrixProvider(MprSocketProvider *provider, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(provider->defaultSsl);
+        mprMark(provider->name);
+        mprMark(provider->data);
     }
 }
 
@@ -1246,7 +1248,7 @@ static MprSocketProvider *createOpenSslProvider()
     if ((provider = mprAllocObj(MprSocketProvider, manageOpenProvider)) == NULL) {
         return 0;
     }
-    provider->name = "OpenSsl";
+    provider->name = sclone("OpenSsl");
     provider->acceptSocket = acceptOss;
     provider->closeSocket = closeOss;
     provider->configureSsl = configureOss;
@@ -1264,6 +1266,7 @@ static MprSocketProvider *createOpenSslProvider()
 static void manageOpenProvider(MprSocketProvider *provider, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(provider->name);
         mprMark(provider->defaultSsl);
         mprMark(provider->data);
     }

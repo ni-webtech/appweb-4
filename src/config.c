@@ -11,34 +11,35 @@
 
 static bool featureSupported(char *key);
 static MaConfigState *pushState(MaConfigState *state, int *top);
-static int processSetting(MaServer *server, char *key, char *value, MaConfigState *state);
+static int processSetting(MaMeta *server, char *key, char *value, MaConfigState *state);
 
 #if BLD_FEATURE_CONFIG_SAVE
 static void tabs(int fd, int indent);
-static void printAuth(int fd, MaHost *host, HttpAuth *auth, int indent);
+static void printAuth(int fd, HttpHost *host, HttpAuth *auth, int indent);
 #endif
 
 /******************************************************************************/
 /*  
-    Configure the server
+    Configure the meta-server
  */
-int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cchar *docRoot, cchar *ip, int port)
+int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *docRoot, cchar *ip, int port)
 {
     MaAppweb        *appweb;
-    MaHost          *host;
-    MaAlias         *alias;
     Http            *http;
+    HttpServer      *server;
+    HttpHost        *host;
+    HttpAlias       *alias;
     HttpLoc         *loc;
     char            *path, *searchPath, *dir;
 
-    appweb = server->appweb;
+    appweb = meta->appweb;
     http = appweb->http;
     dir = mprGetAppDir();
 
     if (configFile) {
         path = mprGetAbsPath(configFile);
-        if (maParseConfig(server, path) < 0) {
-            /* mprUserError("Can't configure server using %s", path); */
+        if (maParseConfig(meta, path) < 0) {
+            /* mprUserError("Can't configure meta-server using %s", path); */
             return MPR_ERR_CANT_INITIALIZE;
         }
         return 0;
@@ -47,10 +48,12 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
         //  MOB TEST THIS
         //  MOB - bug appweb is always calling this with a configFile defined - never empty
         mprLog(2, "DocumentRoot %s", docRoot);
-        if ((host = maCreateDefaultHost(server, docRoot, ip, port)) == 0) {
-            mprUserError("Can't open server on %s", ip);
+        if ((server = httpCreateConfiguredServer(docRoot, ip, port)) == 0) {
             return MPR_ERR_CANT_OPEN;
         }
+        host = meta->defaultHost = mprGetFirstItem(server->hosts);
+        mprAssert(host);
+
         loc = host->loc;
 #if WIN
         searchPath = mprAsprintf("%s" MPR_SEARCH_SEP ".", dir);
@@ -74,13 +77,13 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
              */
             path = "cgi-bin";
             if (mprPathExists(path, X_OK)) {
-                alias = maCreateAlias("/cgi-bin/", path, 0);
+                alias = httpCreateAlias("/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
-                maInsertAlias(host, alias);
-                loc = httpCreateInheritedLocation(http, host->loc);
+                httpAddAlias(host, alias);
+                loc = httpCreateInheritedLocation(host->loc);
                 httpSetLocationPrefix(loc, "/cgi-bin/");
                 httpSetHandler(loc, "cgiHandler");
-                maAddLocation(host, loc);
+                httpAddLocation(host, loc);
             }
         }
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
@@ -96,50 +99,48 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cc
         }
     }
     if (serverRoot) {
-        maSetServerRoot(server, path);
+        maSetMetaRoot(meta, path);
     }
     if (ip || port > 0) {
-        maSetIpAddr(server, ip, port);
+        maSetMetaAddress(meta, ip, port);
     }
+#if UNUSED
     if (docRoot) {
-        maSetDocumentRoot(server, docRoot);
+        httpSetDocumentRoot(meta, docRoot);
     }
+#endif
     return 0;
 }
 
 
-int maParseConfig(MaServer *server, cchar *configFile)
+int maParseConfig(MaMeta *meta, cchar *configFile)
 {
-    MprList         *includes;
     MaAppweb        *appweb;
-    MaHost          *defaultHost;
-    MaConfigState   stack[MA_MAX_CONFIG_DEPTH], *state;
+    HttpHost        *defaultHost;
     Http            *http;
-    MaDir           *dir;
-    MaHost          *host;
+    HttpDir         *dir;
+    HttpHost        *host;
     MprDirEntry     *dp;
-    char            *buf, *cp, *tok, *key, *value, *path;
-    int             i, rc, top, next, len;
+    MprList         *includes;
+    MaConfigState   stack[MA_MAX_CONFIG_DEPTH], *state;
+    char            *buf, *cp, *tok, *key, *value, *path, *ip;
+    int             i, rc, top, next, len, port;
 
     mprLog(2, "Config File %s", configFile);
 
-    appweb = server->appweb;
+    appweb = meta->appweb;
     http = appweb->http;
     memset(stack, 0, sizeof(stack));
-    server->alreadyLogging = mprGetLogHandler() ? 1 : 0;
+    meta->alreadyLogging = mprGetLogHandler() ? 1 : 0;
 
-    /*
-        Create the default host and directory
-     */
-    defaultHost = host = maCreateHost(server, NULL, NULL, NULL);
-    server->defaultHost = defaultHost;
-    mprAddItem(server->hosts, host);
+    defaultHost = host = httpCreateHost(NULL, 0, NULL);
+    meta->defaultHost = defaultHost;
 
     top = 0;
     state = &stack[top];
-    state->server = server;
+    state->meta = meta;
     state->host = host;
-    state->dir = maCreateBareDir(host, ".");
+    state->dir = httpCreateBareDir(".");
     state->loc = defaultHost->loc;
     state->loc->connector = http->netConnector;
     state->enabled = 1;
@@ -158,8 +159,8 @@ int maParseConfig(MaServer *server, cchar *configFile)
     state->loc->auth = state->dir->auth;
     state->auth = state->dir->auth;
 
-    maInsertDir(host, state->dir);
-    maSetHostName(host, "Main Server");
+    httpAddDir(host, state->dir);
+    httpSetHostName(host, "Main Server");
 
     /*
         Parse each line in the config file
@@ -222,7 +223,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
             if ((cp = strchr(value, '*')) == 0) {
                 state = pushState(state, &top);
                 state->lineNumber = 0;
-                state->filename = mprJoinPath(server->serverRoot, value);
+                state->filename = mprJoinPath(meta->serverRoot, value);
                 state->file = mprOpenFile(state->filename, O_RDONLY | O_TEXT, 0444);
                 if (state->file == 0) {
                     mprError("Can't open include file %s for config directives", state->filename);
@@ -239,12 +240,12 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 if (value[len - 1] == '/') {
                     value[len - 1] = '\0';
                 }
-                cp = mprJoinPath(server->serverRoot, value);
+                cp = mprJoinPath(meta->serverRoot, value);
                 includes = mprGetPathFiles(cp, 0);
                 if (includes == 0) {
                     continue;
                 }
-                value = mprJoinPath(server->serverRoot, value);
+                value = mprJoinPath(meta->serverRoot, value);
                 for (next = 0; (dp = mprGetNextItem(includes, &next)) != 0; ) {
                     state = pushState(state, &top);
                     state->filename = mprJoinPath(value, dp->name);
@@ -269,7 +270,7 @@ int maParseConfig(MaServer *server, cchar *configFile)
                 Keywords outside of a virtual host or directory section
                 MOB - some errors should abort processing. Support return codes to exit appweb (could use mprFatalError)
              */
-            rc = processSetting(server, key, value, state);
+            rc = processSetting(meta, key, value, state);
             if (rc == 0) {
                 char    *extraMsg;
                 if (strcmp(key, "SSLEngine") == 0) {
@@ -330,29 +331,27 @@ int maParseConfig(MaServer *server, cchar *configFile)
             } else if (scasecmp(key, "VirtualHost") == 0) {
                 value = strim(value, "\"", MPR_TRIM_BOTH);
                 state = pushState(state, &top);
-                state->host = host = maCreateVirtualHost(server, value, host);
+                mprParseIp(value, &ip, &port, -1);
+                state->host = host = httpCreateVirtualHost(ip, port, host);
                 state->loc = host->loc;
                 state->auth = host->loc->auth;
-
-                maAddHost(server, host);
-                maSetVirtualHost(host);
-
-                state->dir = maCreateDir(host, stack[top - 1].dir->path, stack[top - 1].dir);
+                state->dir = httpCreateDir(stack[top - 1].dir->path, stack[top - 1].dir);
                 state->auth = state->dir->auth;
-                maInsertDir(host, state->dir);
+                httpAddDir(host, state->dir);
 #if UNUSED
                 mprLog(2, "Virtual Host: %s ", value);
 #endif
-                if (maCreateHostAddresses(server, host, value) < 0) {
-                    //MOB mprFree(host);
+#if MOB && FIX
+                if (httpCreateEndpoints(host, value) < 0) {
                     goto err;
                 }
+#endif
 
             } else if (scasecmp(key, "Directory") == 0) {
-                path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+                path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
                 state = pushState(state, &top);
 
-                if ((dir = maLookupDir(host, path)) != 0) {
+                if ((dir = httpLookupDir(host, path)) != 0) {
                     /*
                         Allow multiple occurences of the same directory. Append directives.
                      */  
@@ -363,24 +362,22 @@ int maParseConfig(MaServer *server, cchar *configFile)
                         Create a new directory inherit and parent directory settings. This means inherit authorization from
                         the enclosing host.
                      */
-                    state->dir = maCreateDir(host, path, stack[top - 1].dir);
-                    maInsertDir(host, state->dir);
+                    state->dir = httpCreateDir(path, stack[top - 1].dir);
+                    httpAddDir(host, state->dir);
                 }
                 state->auth = state->dir->auth;
 
             } else if (scasecmp(key, "Location") == 0) {
                 value = strim(value, "\"", MPR_TRIM_BOTH);
-                if (maLookupLocation(host, value)) {
+                if (httpLookupLocation(host, value)) {
                     mprError("Location block already exists for \"%s\"", value);
                     goto err;
                 }
                 state = pushState(state, &top);
-                state->loc = httpCreateInheritedLocation(http, state->loc);
+                state->loc = httpCreateInheritedLocation(state->loc);
                 state->auth = state->loc->auth;
-
                 httpSetLocationPrefix(state->loc, value);
-
-                if (maAddLocation(host, state->loc) < 0) {
+                if (httpAddLocation(host, state->loc) < 0) {
                     mprError("Can't add location %s", value);
                     goto err;
                 }
@@ -417,156 +414,13 @@ int maParseConfig(MaServer *server, cchar *configFile)
             }
         }
     }
-
-#if UNUSED
-    /*
-        Validate configuration
-     */
-    if (mprGetListLength(server->httpServers) == 0) {
-        mprError("Must have a Listen directive");
-        return MPR_ERR_BAD_SYNTAX;
+    if (!maValidateConfiguration(meta)) {
+        return MPR_ERR_BAD_ARGS;
     }
-    if (defaultHost->documentRoot == 0) {
-        maSetHostDocumentRoot(defaultHost, ".");
-    }
-
-    /*
-        TODO -- should test here that all location handlers are defined
-     */
-    limits = http->limits;
-    if (limits->threadCount > 0) {
-        mprSetMaxWorkers(limits->threadCount);
-        mprSetMinWorkers(limits->minThreadCount);
-    }
-
-    /*
-        Add default server listening addresses to the HostAddress hash. We pretend it is a vhost. Insert at the
-        end of the vhost list so we become the default if no other vhost matches. Ie. vhosts take precedence
-     */
-    for (next = 0; (httpServer = mprGetNextItem(server->httpServers, &next)) != 0; ) {
-        address = (MaHostAddress*) maLookupHostAddress(server, httpServer->ip, httpServer->port);
-        if (address == 0) {
-            address = maCreateHostAddress(httpServer->ip, httpServer->port);
-            mprAddItem(server->hostAddresses, address);
-        }
-        maInsertVirtualHost(address, defaultHost);
-    }
-
-    if (strcmp(defaultHost->name, "Main Server") == 0) {
-        defaultHost->name = 0;
-    }
-
-#if KEEP
-    natServerName = 0;
-    needServerName = (defaultHost->name == 0);
-
-    for (next = 0; (httpServer = mprGetNextItem(server->httpServer, &next)) != 0; ) {
-        ip = httpServer->ip;
-        if (needServerName && *ip != '\0') {
-            /*
-                Try to get the most accessible server name possible.
-             */
-            if (strncmp(ip, "127.", 4) == 0 || strncmp(ip, "localhost:", 10) == 0) {
-                if (! natServerName) {
-                    maSetHostName(defaultHost, ip);
-                    needServerName = 0;
-                }
-            } else {
-                if (strncmp(ip, "10.", 3) == 0 || strncmp(ip, "192.168.", 8) == 0 || 
-                        strncmp(ip, "172.16.", 7) == 0) {
-                    natServerName = 1;
-                } else {
-                    maSetHostName(defaultHost, ip);
-                    needServerName = 0;
-                }
-            }
-        }
-    }
-
-    /*
-        Last try to setup the server name if we don't have a non-local name.
-     */
-    if (needServerName && !natServerName) {
-        /*
-            This code is undesirable as it makes us dependent on DNS -- bad
-         */
-        if (natServerName) {
-            /*
-                TODO - but this code is not doing a DNS server lookup anymore
-             */
-            cchar *hostName = mprGetServerName(server);
-            mprLog(0, "WARNING: Missing ServerName directive, doing DNS lookup.");
-            httpServer = mprGetFirstItem(server->httpServers);
-            mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
-            maSetHostName(defaultHost, hostName);
-
-        } else {
-            maSetHostName(defaultHost, defaultHost->ipAddrPort);
-        }
-        mprLog(2, "Missing ServerName directive, ServerName set to: \"%s\"", defaultHost->name);
-    }
-#endif
-
-    /*
-        Validate all the hosts
-     */
-    for (next = 0; (hp = mprGetNextItem(server->hosts, &next)) != 0; ) {
-        if (hp->documentRoot == 0) {
-            maSetHostDocumentRoot(hp, defaultHost->documentRoot);
-        }
-
-        /*
-            Ensure all hosts have mime types.
-         */
-        if (hp->mimeTypes == 0 || mprGetHashLength(hp->mimeTypes) == 0) {
-            if (hp == defaultHost && defaultHost->mimeTypes) {
-                hp->mimeTypes = defaultHost->mimeTypes;
-
-            } else if (maOpenMimeTypes(hp, "mime.types") < 0) {
-                static int once = 0;
-                /*
-                    Do minimal mime types configuration
-                 */
-                maAddStandardMimeTypes(hp);
-                if (once++ == 0) {
-                    mprLog(2, "No supplied \"mime.types\" file, using builtin mime configuration");
-                }
-            }
-        }
-
-        /*
-            Check aliases have directory blocks. We must be careful to inherit authorization from the best 
-            matching directory.
-         */
-        for (nextAlias = 0; (alias = mprGetNextItem(hp->aliases, &nextAlias)) != 0; ) {
-            if (alias->filename) {
-                // mprLog(0, "Alias \"%s\" %s", alias->prefix, alias->filename);
-                path = maMakePath(hp, alias->filename);
-                bestDir = maLookupBestDir(hp, path);
-                if (bestDir == 0) {
-                    bestDir = maCreateDir(hp, alias->filename, stack[0].dir);
-                    maInsertDir(hp, bestDir);
-                }
-            }
-        }
-
-        /*
-            Define a ServerName if one has not been defined. Just use the IP:Port if defined.
-         */
-        if (host->name == 0) {
-            if (host->ipAddrPort) {
-                maSetHostName(hp, host->ipAddrPort);
-            } else {
-                maSetHostName(hp, mprGetHostName(host));
-            }
-        }
-    }
-
-    if (mprHasAllocError()) {
+    if (mprHasMemError()) {
         mprError("Memory allocation error when initializing");
         return MPR_ERR_MEMORY;
     }
-#endif
     return 0;
 
 syntaxErr:
@@ -579,162 +433,72 @@ err:
 }
 
 
-
-int maValidateConfiguration(MaServer *server)
+// MOB - this does more than validation?
+int maValidateConfiguration(MaMeta *meta)
 {
-    MaAlias         *alias;
     MaAppweb        *appweb;
-    MaDir           *bestDir;
-    MaHost          *defaultHost, *hp;
-    MaHostAddress   *address;
     Http            *http;
-    HttpServer      *httpServer;
+    HttpAlias       *alias;
+    HttpDir         *bestDir;
+    HttpHost        *host, *defaultHost;
     char            *path;
-    int             next, nextAlias;
+    int             nextAlias, nextHost;
 
-    appweb = server->appweb;
+    appweb = meta->appweb;
     http = appweb->http;
+    defaultHost = meta->defaultHost;
+    mprAssert(defaultHost);
 
-    defaultHost = server->defaultHost;
-
-    if (mprGetListLength(server->httpServers) == 0) {
-        mprError("Must have a Listen directive");
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    if (defaultHost->documentRoot == 0) {
-        maSetHostDocumentRoot(defaultHost, ".");
+    if (mprGetListLength(meta->servers) == 0) {
+        mprError("Missing listening HttpServer. Must have a Listen directive.");
+        return 0;
     }
 
     /*
-        Add default server listening addresses to the HostAddress hash. We pretend it is a vhost. Insert at the
-        end of the vhost list so we become the default if no other vhost matches. Ie. vhosts take precedence
+        Validate the hosts
      */
-    for (next = 0; (httpServer = mprGetNextItem(server->httpServers, &next)) != 0; ) {
-        address = (MaHostAddress*) maLookupHostAddress(server, httpServer->ip, httpServer->port);
-        if (address == 0) {
-            address = maCreateHostAddress(httpServer->ip, httpServer->port);
-            mprAddItem(server->hostAddresses, address);
+    for (nextHost = 0; (host = mprGetNextItem(http->hosts, &nextHost)) != 0; ) {
+        mprAssert(host->ip);
+        mprAssert(host->port > 0);
+        if (httpAddHostToServers(http, host) < 0) {
+            mprError("Missing a listen directive for %s:%d", host->ip, host->port);
+            return 0;
         }
-        maInsertVirtualHost(address, defaultHost);
-    }
-
-    if (strcmp(defaultHost->name, "Main Server") == 0) {
-        defaultHost->name = 0;
-    }
-
-#if KEEP
-    natServerName = 0;
-    needServerName = (defaultHost->name == 0);
-
-    for (next = 0; (httpServer = mprGetNextItem(server->httpServer, &next)) != 0; ) {
-        ip = httpServer->ip;
-        if (needServerName && *ip != '\0') {
-            /*
-                Try to get the most accessible server name possible.
-             */
-            if (strncmp(ip, "127.", 4) == 0 || strncmp(ip, "localhost:", 10) == 0) {
-                if (! natServerName) {
-                    maSetHostName(defaultHost, ip);
-                    needServerName = 0;
-                }
-            } else {
-                if (strncmp(ip, "10.", 3) == 0 || strncmp(ip, "192.168.", 8) == 0 || 
-                        strncmp(ip, "172.16.", 7) == 0) {
-                    natServerName = 1;
-                } else {
-                    maSetHostName(defaultHost, ip);
-                    needServerName = 0;
-                }
-            }
+        if (host->documentRoot == 0) {
+            httpSetHostDocumentRoot(host, defaultHost->documentRoot);
         }
-    }
-
-    /*
-        Last try to setup the server name if we don't have a non-local name.
-     */
-    if (needServerName && !natServerName) {
-        /*
-            This code is undesirable as it makes us dependent on DNS -- bad
-         */
-        if (natServerName) {
-            /*
-                TODO - but this code is not doing a DNS server lookup anymore
-             */
-            cchar *hostName = mprGetServerName(server);
-            mprLog(0, "WARNING: Missing ServerName directive, doing DNS lookup.");
-            httpServer = mprGetFirstItem(server->httpServers);
-            mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, httpServer->port);
-            maSetHostName(defaultHost, hostName);
-
-        } else {
-            maSetHostName(defaultHost, defaultHost->ipAddrPort);
+        if (host->serverRoot == 0) {
+            httpSetHostServerRoot(host, defaultHost->serverRoot);
         }
-        mprLog(2, "Missing ServerName directive, ServerName set to: \"%s\"", defaultHost->name);
-    }
-#endif
-
-    /*
-        Validate all the hosts
-     */
-    for (next = 0; (hp = mprGetNextItem(server->hosts, &next)) != 0; ) {
-        if (hp->documentRoot == 0) {
-            maSetHostDocumentRoot(hp, defaultHost->documentRoot);
+        if (host->mimeTypes == 0) {
+            host->mimeTypes = defaultHost->mimeTypes;
         }
         /*
-            Ensure all hosts have mime types.
+            Check aliases have directory blocks. Inherit authorization from the best matching directory
          */
-        if (hp->mimeTypes == 0 || mprGetHashLength(hp->mimeTypes) == 0) {
-            if (hp == defaultHost && defaultHost->mimeTypes) {
-                hp->mimeTypes = defaultHost->mimeTypes;
-
-            } else if (maOpenMimeTypes(hp, "mime.types") < 0) {
-                /*
-                    Do minimal mime types configuration
-                 */
-                maAddStandardMimeTypes(hp);
-#if UNUSED
-                static int once = 0;
-                if (once++ == 0) {
-                    mprLog(2, "No supplied \"mime.types\" file, using builtin mime configuration");
-                }
-#endif
-            }
-        }
-
-        /*
-            Check aliases have directory blocks. We must be careful to inherit authorization from the best matching directory
-         */
-        for (nextAlias = 0; (alias = mprGetNextItem(hp->aliases, &nextAlias)) != 0; ) {
-            path = maMakePath(hp, alias->filename);
-            bestDir = maLookupBestDir(hp, path);
-            if (bestDir == 0) {
-                bestDir = maCreateBareDir(hp, alias->filename);
-                maInsertDir(hp, bestDir);
+        for (nextAlias = 0; (alias = mprGetNextItem(host->aliases, &nextAlias)) != 0; ) {
+            path = httpMakePath(host, alias->filename);
+            if ((bestDir = httpLookupBestDir(host, path)) == 0) {
+                //  MOB Old code would use bestDir = maCreateDir(hp, alias->filename, stack[0].dir);
+                bestDir = httpCreateBareDir(alias->filename);
+                httpAddDir(host, bestDir);
             }
         }
 
         /*
             Define a ServerName if one has not been defined. Just use the IP:Port if defined.
          */
-        if (hp->name == 0) {
-            if (hp->ipAddrPort) {
-                maSetHostName(hp, hp->ipAddrPort);
+        if (host->name == 0) {
+            if (host->port) {
+                httpSetHostName(host, mprAsprintf("%s:%d", (host->ip && *host->ip) ? host->ip : "*", host->port));
             } else {
-                maSetHostName(hp, mprGetHostName(hp));
+                httpSetHostName(host, mprGetHostName(host));
             }
         }
+        mprLog(MPR_CONFIG, "Host \"%s\" has ServerRoot \"%s\", DocumentRoot: \"%s\"", host->name, host->serverRoot, 
+            host->documentRoot);
     }
-    if (mprHasMemError()) {
-        mprError("Memory allocation error when initializing");
-        return MPR_ERR_MEMORY;
-    }
-#if BLD_FEATURE_ROMFS
-     mprLog(MPR_CONFIG, "Server Root \"%s\" in ROM", server->serverRoot);
-#else
-     mprLog(MPR_CONFIG, "Server Root \"%s\"", server->serverRoot);
-#endif
-     mprLog(MPR_CONFIG, "Default Document Root \"%s\"", defaultHost->documentRoot);
-    return 0;
+    return 1;
 }
 
 
@@ -743,32 +507,31 @@ int maValidateConfiguration(MaServer *server)
     Return < 0 for errors, zero if directive not found, otherwise 1 is success.
     TODO -- this function is quite big. Could be subject to a FEATURE.
  */
-static int processSetting(MaServer *server, char *key, char *value, MaConfigState *state)
+static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *state)
 {
     MaAppweb    *appweb;
-    MaAlias     *alias;
+    HttpAlias   *alias;
     HttpLoc     *loc;
-    MaHost      *host;
-    MaDir       *dir;
+    HttpHost    *host;
+    HttpDir     *dir;
     Http        *http;
     HttpAuth    *auth;
     HttpLimits  *limits;
     HttpStage   *stage;
-    HttpServer  *httpServer;
+    HttpServer  *server;
     MprHash     *hp;
     MprModule   *module;
-    char        ipAddrPort[MPR_MAX_IP_ADDR_PORT];
-    char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *hostName;
+    char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *ip;
     char        *names, *type, *items, *include, *exclude, *when, *mimeTypes;
     int         len, port, rc, code, processed, num, flags, colonCount, mask, level;
 
     mprAssert(state);
     mprAssert(key);
 
-    appweb = server->appweb;
+    appweb = meta->appweb;
     http = appweb->http;
-    limits = server->limits;
-    httpServer = 0;
+    limits = meta->limits;
+    server = 0;
     host = state->host;
     dir = state->dir;
     loc = state->loc;
@@ -789,15 +552,15 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (maSplitConfigValue(&prefix, &path, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            prefix = maReplaceReferences(host, prefix);
-            path = maMakePath(host, path);
-            if (maLookupAlias(host, prefix)) {
+            prefix = httpReplaceReferences(host, prefix);
+            path = httpMakePath(host, path);
+            if (httpLookupAlias(host, prefix)) {
                 mprError("Alias \"%s\" already exists", prefix);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            alias = maCreateAlias(prefix, path, 0);
+            alias = httpCreateAlias(prefix, path, 0);
             mprLog(4, "Alias: \"%s for \"%s\"", prefix, path);
-            if (maInsertAlias(host, alias) < 0) {
+            if (httpAddAlias(host, alias) < 0) {
                 mprError("Can't insert alias: %s", prefix);
                 return MPR_ERR_BAD_SYNTAX;
             }
@@ -843,7 +606,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (maSplitConfigValue(&mimeType, &ext, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            maAddMimeType(host, ext, mimeType);
+            mprAddMime(host->mimeTypes, ext, mimeType);
             return 1;
 
         } else if (scasecmp(key, "Allow") == 0) {
@@ -858,7 +621,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (scasecmp(key, "AuthGroupFile") == 0) {
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belongs elsewhere
-            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             if (httpReadGroupFile(http, auth, path) < 0) {
                 mprError("Can't open AuthGroupFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
@@ -908,7 +671,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (scasecmp(key, "AuthUserFile") == 0) {
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belons elsewhere
-            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             if (httpReadUserFile(http, auth, path) < 0) {
                 mprError("Can't open AuthUserFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
@@ -946,7 +709,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
     case 'C':
         if (scasecmp(key, "Chroot") == 0) {
 #if BLD_UNIX_LIKE
-            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             if (chdir(path) < 0) {
                 mprError("Can't change working directory to %s", path);
                 return MPR_ERR_CANT_OPEN;
@@ -988,9 +751,11 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (path == 0 || format == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            path = maMakePath(host, path);
+            path = httpMakePath(host, path);
             maSetAccessLog(host, path, strim(format, "\"", MPR_TRIM_BOTH));
+#if UNUSED
             maSetLogHost(host, host);
+#endif
 #endif
             return 1;
         }
@@ -1010,13 +775,13 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (dir == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            maSetDirIndex(dir, value);
+            httpSetDirIndex(dir, value);
             return 1;
 
         } else if (scasecmp(key, "DocumentRoot") == 0) {
-            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
-            maSetHostDocumentRoot(host, path);
-            maSetDirPath(dir, path);
+            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            httpSetHostDocumentRoot(host, path);
+            httpSetDirPath(dir, path);
 #if UNUSED
             mprLog(MPR_CONFIG, "DocRoot (%s): \"%s\"", host->name, path);
 #endif
@@ -1037,12 +802,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         } else if (scasecmp(key, "ErrorLog") == 0) {
             path = strim(value, "\"", MPR_TRIM_BOTH);
             if (path && *path) {
-                if (server->alreadyLogging) {
+                if (meta->alreadyLogging) {
                     mprLog(4, "Already logging. Ignoring ErrorLog directive");
                 } else {
-                    maStopLogging(server);
+                    maStopLogging(meta);
                     if (strncmp(path, "stdout", 6) != 0) {
-                        path = maMakePath(host, path);
+                        path = httpMakePath(host, path);
                         rc = maStartLogging(path);
                     } else {
                         rc = maStartLogging(path);
@@ -1082,7 +847,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (scasecmp(key, "KeepAliveTimeout") == 0) {
-            if (! mprGetDebugMode(server)) {
+            if (! mprGetDebugMode()) {
                 limits->inactivityTimeout = atoi(value) * MPR_TICKS_PER_SEC;
             }
             return 1;
@@ -1153,7 +918,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             limits->stageBufferSize = num;
             return 1;
 
-        } else if (scasecmp(key, "LimitUrl") == 0) {
+        } else if (scasecmp(key, "LimitUrl") == 0 || scasecmp(key, "LimitUri") == 0) {
             num = atoi(value);
             if (num < MA_BOT_URL || num > MA_TOP_URL){
                 return MPR_ERR_BAD_SYNTAX;
@@ -1209,10 +974,10 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                     ip = (MprInterface*) ipList->getNext(ip);
                     continue;
                 }
-                server.insert(new HttpServer(ip->ip, port));
+                meta.insert(new HttpServer(ip->ip, port));
                 if (host->ipAddrPort == 0) {
                     mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip->ip, port);
-                    maSetIpAddrPort(host, ipAddrPort);
+                    maSetHostAddress(host, ipAddrPort);
                 }
                 break;
             }
@@ -1238,8 +1003,10 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                     mprError("Bad listen port number %d", port);
                     return MPR_ERR_BAD_SYNTAX;
                 }
-                hostName = "";
+                ip = 0;
+#if UNUSED
                 flags = MA_LISTEN_WILD_IP;
+#endif
 
             } else {
                 colonCount = 0;
@@ -1253,53 +1020,63 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
                  */
                 if (colonCount > 1) {
                     /* ipv6 */
-                    hostName = value;
+                    ip = value;
                     if (*value == '[' && (cp = strrchr(cp, ':')) != 0) {
                         *cp++ = '\0';
                         port = atoi(cp);
                     } else {
                         port = HTTP_DEFAULT_PORT;
+#if UNUSED
                         flags = MA_LISTEN_DEFAULT_PORT;
+#endif
                     }
 
                 } else {
                     /* ipv4 */
-                    hostName = value;
+                    ip = value;
                     if ((cp = strrchr(value, ':')) != 0) {
                         *cp++ = '\0';
                         port = atoi(cp);
 
                     } else {
                         port = HTTP_DEFAULT_PORT;
+#if UNUSED
                         flags = MA_LISTEN_DEFAULT_PORT;
+#endif
                     }
-                    if (*hostName == '[') {
-                        hostName++;
+                    if (*ip == '[') {
+                        ip++;
                     }
-                    len = strlen(hostName);
-                    if (hostName[len - 1] == ']') {
-                        hostName[len - 1] = '\0';
+                    len = strlen(ip);
+                    if (ip[len - 1] == ']') {
+                        ip[len - 1] = '\0';
                     }
                 }
+                if (ip && *ip == '*') {
+                    ip = 0;
+                }
             }
-            httpServer = httpCreateServer(http, hostName, port, NULL);
-            httpServer->limits = limits;
-            mprAddItem(server->httpServers, httpServer);
-            host->httpServer = httpServer;
-            /*
-                Set the host ip spec if not already set
-             */
-            if (host->ipAddrPort == 0) {
-                mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", hostName, port);
-                maSetHostIpAddrPort(host, ipAddrPort);
+            if (port == 0) {
+                mprError("Bad or missing port %d in Listen directive", port);
+                //  MOB -- should be able to abort the parsing
+                return -1;
+            }
+            server = httpCreateServer(ip, port, NULL, 0);
+            httpSetMetaServer(server, meta);
+            //  MOB should limits be in the constructor or need an API for this
+            server->limits = limits;
+            mprAddItem(meta->servers, server);
+            if (host->port == 0) {
+                httpSetHostAddress(host, ip, port);
             }
             return 1;
 
         } else if (scasecmp(key, "LogFormat") == 0) {
+            //  MOB -- what should this do?
             return 1;
 
         } else if (scasecmp(key, "LogLevel") == 0) {
-            if (server->alreadyLogging) {
+            if (meta->alreadyLogging) {
                 mprLog(4, "Already logging. Ignoring LogLevel directive");
 
             } else {
@@ -1340,7 +1117,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             if (strstr(items, "time")) {
                 mask |= HTTP_TRACE_TIME;
             }
-            maSetHostTrace(host, level, mask);
+            httpSetHostTrace(host, level, mask);
             return 1;
 
         } else if (scasecmp(key, "LogTraceFilter") == 0) {
@@ -1350,12 +1127,12 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             exclude = stok(0, " \t", &tok);
             include = strim(include, "\"", MPR_TRIM_BOTH);
             exclude = strim(exclude, "\"", MPR_TRIM_BOTH);
-            maSetHostTraceFilter(host, len, include, exclude);
+            httpSetHostTraceFilter(host, len, include, exclude);
             return 1;
 
         } else if (scasecmp(key, "LoadModulePath") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
-            path = sjoin(value, MPR_SEARCH_SEP, mprGetAppDir(server), NULL);
+            path = sjoin(value, MPR_SEARCH_SEP, mprGetAppDir(meta), NULL);
             mprSetModuleSearchPath(path);
             return 1;
 
@@ -1395,12 +1172,14 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
     case 'N':
         if (scasecmp(key, "NameVirtualHost") == 0) {
-#if UNUSED
-            mprLog(2, "NameVirtual Host: %s ", value);
-#endif
-            if (maCreateHostAddresses(server, 0, value) < 0) {
+            mprLog(4, "NameVirtual Host: %s ", value);
+            mprParseIp(value, &ip, &port, -1);
+            httpSetNamedVirtualServers(http, ip, port); 
+#if MOB && FIX
+            if (httpCreateEndpoints(NULL, value) < 0) {
                 return -1;
             }
+#endif
             return 1;
         }
         break;
@@ -1418,10 +1197,9 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 
     case 'P':
         if (scasecmp(key, "Protocol") == 0) {
-            if (strcmp(value, "HTTP/1.0") == 0) {
-                maSetHttpVersion(host, 0);
-            } else if (strcmp(value, "HTTP/1.1") == 0) {
-                maSetHttpVersion(host, 1);
+            httpSetHostProtocol(host, value);
+            if (strcmp(value, "HTTP/1.0") != 0 && strcmp(value, "HTTP/1.1") != 0) {
+                mprError("Unknown http protocol %s. Should be HTTP/1.0 or HTTP/1.1", value);
             }
             return 1;
 
@@ -1472,8 +1250,8 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             url = strim(url, "\"", MPR_TRIM_BOTH);
             newUrl = strim(newUrl, "\"", MPR_TRIM_BOTH);
             mprLog(4, "insertAlias: Redirect %d from \"%s\" to \"%s\"", code, url, newUrl);
-            alias = maCreateAlias(url, newUrl, code);
-            maInsertAlias(host, alias);
+            alias = httpCreateAlias(url, newUrl, code);
+            httpAddAlias(host, alias);
             return 1;
 
         } else if (scasecmp(key, "Require") == 0) {
@@ -1519,20 +1297,22 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
         if (scasecmp(key, "ServerName") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
             if (strncmp(value, "http://", 7) == 0) {
-                maSetHostName(host, &value[7]);
+                httpSetHostName(host, &value[7]);
             } else {
-                maSetHostName(host, value);
+                httpSetHostName(host, value);
             }
             return 1;
 
         } else if (scasecmp(key, "ServerRoot") == 0) {
-            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
-            maSetServerRoot(server, path);
+            path = httpReplaceReferences(host, strim(value, "\"", MPR_TRIM_BOTH));
+            //  MOB -- what does this really do?
+            maSetMetaRoot(meta, path);
+            httpSetHostServerRoot(host, path);
             mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
             return 1;
 
         } else if (scasecmp(key, "SetConnector") == 0) {
-            /* Scope: server, host, loc */
+            /* Scope: meta, host, loc */
             value = strim(value, "\"", MPR_TRIM_BOTH);
             if (httpSetConnector(loc, value) < 0) {
                 mprError("Can't add handler %s", value);
@@ -1541,7 +1321,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (scasecmp(key, "SetHandler") == 0) {
-            /* Scope: server, host, location */
+            /* Scope: meta, host, location */
             name = stok(value, " \t", &extensions);
             if (httpSetHandler(state->loc, name) < 0) {
                 mprError("Can't add handler %s", name);
@@ -1585,10 +1365,10 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (scasecmp(key, "TypesConfig") == 0) {
-            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
-            if (maOpenMimeTypes(host, path) < 0) {
+            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            if ((host->mimeTypes = mprCreateMimeTypes(path)) == 0) {
                 mprError("Can't open TypesConfig mime file %s", path);
-                maAddStandardMimeTypes(host);
+                host->mimeTypes = mprCreateMimeTypes(NULL);
                 return MPR_ERR_BAD_SYNTAX;
             }
             return 1;
@@ -1612,7 +1392,7 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
             return 1;
 
         } else if (scasecmp(key, "UploadDir") == 0 || scasecmp(key, "FileUploadDir") == 0) {
-            path = maMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             loc->uploadDir = sclone(path);
             mprLog(MPR_CONFIG, "Upload directory: %s", path);
             return 1;
@@ -1657,123 +1437,34 @@ static int processSetting(MaServer *server, char *key, char *value, MaConfigStat
 HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixArg, cchar *pathArg, cchar *handlerName, 
         int flags)
 {
-    MaHost      *host;
-    MaAlias     *alias;
+    HttpHost      *host;
+    HttpAlias     *alias;
     HttpLoc     *loc;
     char        *path, *prefix;
 
     host = state->host;
 
-    prefix = maReplaceReferences(host, prefixArg);
-    path = maMakePath(host, pathArg);
+    prefix = httpReplaceReferences(host, prefixArg);
+    path = httpMakePath(host, pathArg);
 
     /*
         Create an ejs application location block and alias
      */
-    alias = maCreateAlias(prefix, path, 0);
-    maInsertAlias(host, alias);
+    alias = httpCreateAlias(prefix, path, 0);
+    httpAddAlias(host, alias);
     mprLog(4, "Alias \"%s\" for \"%s\"", prefix, path);
 
-    if (maLookupLocation(host, prefix)) {
+    if (httpLookupLocation(host, prefix)) {
         mprError("Location block already exists for \"%s\"", prefix);
         return 0;
     }
-    loc = httpCreateInheritedLocation(http, state->loc);
+    loc = httpCreateInheritedLocation(state->loc);
     httpSetLocationAuth(loc, state->dir->auth);
     httpSetLocationPrefix(loc, prefix);
-    maAddLocation(host, loc);
+    httpAddLocation(host, loc);
     httpSetLocationFlags(loc, flags);
     httpSetHandler(loc, handlerName);
     return loc;
-}
-
-
-/*
-    Make a path name. This replaces $references, converts to an absolute path name, cleans the path and maps delimiters.
- */
-char *maMakePath(MaHost *host, cchar *file)
-{
-    MaServer      *server;
-    char        *result, *path;
-
-    mprAssert(file);
-
-    server = host->server;
-
-    if ((path = maReplaceReferences(host, file)) == 0) {
-        /*  Overflow */
-        return 0;
-    }
-    if (*path == '\0' || strcmp(path, ".") == 0) {
-        result = sclone(server->serverRoot);
-
-#if BLD_WIN_LIKE
-    } else if (*path != '/' && path[1] != ':' && path[2] != '/') {
-        result = mprJoinPath(server->serverRoot, path);
-#elif VXWORKS
-    } else if (strchr((path), ':') == 0 && *path != '/') {
-        result = mprJoinPath(server->serverRoot, path);
-#else
-    } else if (*path != '/') {
-        result = mprJoinPath(server->serverRoot, path);
-#endif
-    } else {
-        result = mprGetAbsPath(path);
-    }
-    return result;
-}
-
-
-static int matchRef(cchar *key, char **src)
-{
-    int     len;
-
-    mprAssert(src);
-    mprAssert(key && *key);
-
-    len = strlen(key);
-    if (strncmp(*src, key, len) == 0) {
-        *src += len;
-        return 1;
-    }
-    return 0;
-}
-
-
-/*
-    Replace a limited set of $VAR references. Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT
-    TODO - Expand and formalize this. Should support many more variables.
- */
-char *maReplaceReferences(MaHost *host, cchar *str)
-{
-    MprBuf  *buf;
-    char    *src;
-    char    *result;
-
-    buf = mprCreateBuf(0, 0);
-    if (str) {
-        for (src = (char*) str; *src; ) {
-            if (*src == '$') {
-                ++src;
-                if (matchRef("DOCUMENT_ROOT", &src)) {
-                    mprPutStringToBuf(buf, host->documentRoot);
-                    continue;
-
-                } else if (matchRef("SERVER_ROOT", &src)) {
-                    mprPutStringToBuf(buf, host->server->serverRoot);
-                    continue;
-
-                } else if (matchRef("PRODUCT", &src)) {
-                    mprPutStringToBuf(buf, BLD_PRODUCT);
-                    continue;
-                }
-            }
-            mprPutCharToBuf(buf, *src++);
-        }
-    }
-    mprAddNullToBuf(buf);
-    result = sclone(mprGetBufStart(buf));
-    return result;
 }
 
 
@@ -1795,7 +1486,7 @@ static MaConfigState *pushState(MaConfigState *state, int *top)
         return 0;
     }
     next = state + 1;
-    next->server = state->server;
+    next->meta = state->meta;
     next->host = state->host;
     next->loc = state->loc;
     next->dir = state->dir;
@@ -1892,493 +1583,6 @@ int maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes)
     }
     return 0;
 }
-
-
-#if BLD_FEATURE_CONFIG_SAVE
-/*
-    Save the configuration to the named config file
- */
-int HttpServer::saveConfig(char *configFile)
-{
-    MaAlias         *alias;
-    MaDir           *dp, *defaultDp;
-    MprFile         out;
-    HttpStage       *hanp;
-    MaHost          *host, *defaultHost;
-    HttpLimits      *limits;
-    HttpServer      *listen;
-    HttpLoc         *loc;
-    MaMimeHashEntry *mt;
-    MprHashTable    *mimeTypes;
-    MprList         *aliases;
-    MaModule        *mp;
-    MprList         *modules;
-    MprLogService   *logService;
-    char            *ext, *path, *cp, *mimeFile;
-    char            *hostName, *actionProgram;
-    int             fd, indent, flags, first, code;
-    char            *logSpec;
-
-    indent = 0;
-    host = 0;
-    defaultHost = (MaHost*) hosts.getFirst();
-
-    fd = open(configFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0666);
-    if (fd < 0) {
-        mprLog(0, "saveConfig: Can't open %s", configFile);
-        return MPR_ERR_CANT_OPEN;
-    }
-
-    mprFprintf(fd, \
-    "#\n"
-    "#  Configuration for %s\n"
-    "#\n"
-    "#  This file is dynamically generated. If you edit this file, your\n"
-    "#  changes may not be preserved by the manager. PLEASE keep a backup of\n"
-    "#  the file before and after all manual changes.\n"
-    "#\n"
-    "#  The order of configuration directives matters as this file is parsed\n"
-    "#  only once. You must put the server root and error log definitions\n"
-    "#  first ensure configuration errors are logged.\n"
-    "#\n\n", BLD_NAME);
-
-    mprFprintf(fd, "ServerRoot \"%s\"\n", serverRoot);
-
-    logService = mprGetMpr()->logService;
-    logSpec = sclone(logService->getLogSpec());
-    if ((cp = strchr(logSpec, ':')) != 0) {
-        *cp = '\0';
-    }
-    mprFprintf(fd, "ErrorLog \"%s\"\n", logSpec);
-    mprFprintf(fd, "LogLevel %d\n", logService->getDefaultLevel());
-
-    /*
-        Listen directives
-     */
-    listen = (HttpServer*) servers.getFirst();
-    while (listen) {
-        flags = listen->getFlags();
-        if (flags & MA_LISTEN_DEFAULT_PORT) {
-            mprFprintf(fd, "Listen %s # %d\n", listen->getIpAddr(), listen->getPort());
-        } else if (flags & MA_LISTEN_WILD_IP) {
-            mprFprintf(fd, "Listen %d\n", listen->getPort());
-        } else if (flags & MA_LISTEN_WILD_IP2) {
-            /*  Ignore */
-        } else {
-            if (strchr(listen->getIpAddr(), '.') != 0) {
-                mprFprintf(fd, "Listen %s:%d\n", listen->getIpAddr(),
-                    listen->getPort());
-            } else {
-                mprFprintf(fd, "Listen [%s]:%d\n", listen->getIpAddr(),
-                    listen->getPort());
-            }
-        }
-        listen = (HttpServer*) servers.getNext(listen);
-    }
-
-    /*
-        Global directives
-     */
-    mprFprintf(fd, "User %s\n", http->getUser());
-    mprFprintf(fd, "Group %s\n", http->getGroup());
-
-    mprFprintf(fd, "\n#\n#  Loadable Modules\n#\n");
-    mprFprintf(fd, "LoadModulePath %s\n", defaultHost->getModuleDirs());
-    modules = http->getModules();
-    mp = (MaModule*) modules->getFirst();
-    while (mp) {
-        mprFprintf(fd, "LoadModule %s lib%sModule\n", mp->name, mp->name);
-        mp = (MaModule*) modules->getNext(mp);
-    }
-
-    /*
-        For clarity, always print the ThreadLimit even if default.
-     */
-    limits = http->getLimits();
-    mprFprintf(fd, "ThreadLimit %d\n", limits->threadCount);
-    if (limits->threadStackSize != 0) {
-        mprFprintf(fd, "ThreadStackSize %d\n", limits->threadStackSize);
-    }
-    if (limits->minThreadCount != 0) {
-        mprFprintf(fd, "\nStartThreads %d\n", limits->minThreadCount);
-    }
-    if (limits->maxReceiveBody != MA_MAX_BODY) {
-        mprFprintf(fd, "LimitRequestBody %d\n", limits->maxReceiveBody);
-    }
-    if (limits->maxTransmissionBody != MA_MAX_RESPONSE_BODY) {
-        mprFprintf(fd, "LimitResponseBody %d\n", limits->maxTransmissionBody);
-    }
-    if (limits->maxNumHeaders != MA_MAX_NUM_HEADERS) {
-        mprFprintf(fd, "LimitRequestFields %d\n", limits->maxNumHeaders);
-    }
-    if (limits->maxHeader != MA_MAX_HEADERS) {
-        mprFprintf(fd, "LimitRequestFieldSize %d\n", limits->maxHeader);
-    }
-    if (limits->maxUri != MPR_MAX_URL) {
-        mprFprintf(fd, "LimitUrl %d\n", limits->maxUri);
-    }
-    if (limits->maxUploadSize != MA_MAX_UPLOAD_SIZE) {
-        mprFprintf(fd, "LimitUploadSize %d\n", limits->maxUploadSize);
-    }
-
-    /*
-        Virtual hosts. The first host is the default server
-     */
-    host = (MaHost*) hosts.getFirst();
-    while (host) {
-        mprFprintf(fd, "\n");
-        if (host->isVhost()) {
-            if (host->isNamedVhost()) {
-                mprFprintf(fd, "NameVirtualHost %s\n", host->getIpSpec());
-            }
-            mprFprintf(fd, "<VirtualHost %s>\n", host->getIpSpec());
-            indent++;
-        }
-
-        hostName = host->getName();
-        if (strcmp(hostName, "default") != 0) {
-            tabs(fd, indent);
-            mprFprintf(fd, "ServerName http://%s\n", hostName);
-        }
-
-        tabs(fd, indent);
-        mprFprintf(fd, "DocumentRoot %s\n", host->getDocumentRoot());
-
-        /*
-            Handlers
-         */
-        flags = host->getFlags();
-        if (flags & MA_ADD_HANDLER) {
-            mprFprintf(fd, "\n");
-            if (flags & MA_RESET_HANDLERS) {
-                tabs(fd, indent);
-                mprFprintf(fd, "ResetPipeline\n");
-            }
-            hanp = (HttpStage*) host->getHandlers()->getFirst();
-            while (hanp) {
-                ext = (char*) (hanp->getExtensions() ?
-                    hanp->getExtensions() : "");
-                tabs(fd, indent);
-                mprFprintf(fd, "AddHandler %s %s\n", hanp->getName(), ext);
-                hanp = (HttpStage*) host->getHandlers()->getNext(hanp);
-            }
-        }
-
-#if BLD_FEATURE_SSL
-        /*
-            SSL configuration
-         */
-        if (host->isSecure()) {
-            MaSslConfig *sslConfig;
-            MaSslModule *sslModule;
-
-            mprFprintf(fd, "\n");
-            tabs(fd, indent);
-            mprFprintf(fd, "SSLEngine on\n");
-            sslModule = (MaSslModule*) http->findModule("ssl");
-            if (sslModule != 0) {
-                sslConfig = sslModule->getSslConfig(host->getName());
-                if (sslConfig != 0) {
-
-                    tabs(fd, indent);
-                    mprFprintf(fd, "SSLCipherSuite %s\n",
-                        sslConfig->getCipherSuite());
-
-                    tabs(fd, indent);
-                    mprFprintf(fd, "SSLProtocol ");
-                    int protoMask = sslConfig->getSslProto();
-                    if (protoMask == MA_PROTO_ALL) {
-                        mprFprintf(fd, "ALL");
-                    } else if (protoMask ==
-                        (MA_PROTO_ALL & ~MA_PROTO_SSLV2)) {
-                        mprFprintf(fd, "ALL -SSLV2");
-                    } else {
-                        if (protoMask & MA_PROTO_SSLV2) {
-                            mprFprintf(fd, "SSLv2 ");
-                        }
-                        if (protoMask & MA_PROTO_SSLV3) {
-                            mprFprintf(fd, "SSLv3 ");
-                        }
-                        if (protoMask & MA_PROTO_TLSV1) {
-                            mprFprintf(fd, "TLSv1 ");
-                        }
-                    }
-                    mprFprintf(fd, "\n");
-
-                    if ((path = sslConfig->getCertFile()) != 0) {
-                        tabs(fd, indent);
-                        mprFprintf(fd, "SSLCertificateFile %s\n", path);
-                    }
-                    if ((path = sslConfig->getKeyFile()) != 0) {
-                        tabs(fd, indent);
-                        mprFprintf(fd, "SSLCertificateKeyFile %s\n", path);
-                    }
-                    if (sslConfig->getVerifyClient()) {
-                        tabs(fd, indent);
-                        mprFprintf(fd, "SSLVerifyClient require\n");
-                        if ((path = sslConfig->getCaFile()) != 0) {
-                            tabs(fd, indent);
-                            mprFprintf(fd, "SSLCaCertificateFile %s\n", path);
-                        }
-                        if ((path = sslConfig->getCaPath()) != 0) {
-                            tabs(fd, indent);
-                            mprFprintf(fd, "SSLCertificatePath %s\n", path);
-                        }
-                    }
-                }
-            }
-        }
-#endif
-        /*
-            General per-host directives
-         */
-        if (! host->getKeepAlive()) {
-            tabs(fd, indent);
-            mprFprintf(fd, "KeepAlive off\n");
-        } else {
-            if (host->getMaxKeepAlive() != defaultHost->getMaxKeepAlive()) {
-                tabs(fd, indent);
-                mprFprintf(fd, "MaxKeepAliveRequests %d\n",
-                    host->getMaxKeepAlive());
-            }
-            if (host->getKeepAliveTimeout() != defaultHost->getKeepAliveTimeout()) {
-                tabs(fd, indent);
-                mprFprintf(fd, "KeepAliveTimeout %d\n", host->getKeepAliveTimeout() / 1000);
-            }
-        }
-        mimeFile = host->getMimeFile();
-        if (mimeFile && *mimeFile) {
-            mprFprintf(fd, "TypesConfig %s\n", mimeFile);
-        }
-        if (host->getTimeout() != defaultHost->getTimeout()) {
-            tabs(fd, indent);
-            mprFprintf(fd, "Timeout %d\n", host->getTimeout() / 1000);
-        }
-
-        if (host->getSessionTimeout() != defaultHost->getSessionTimeout()) {
-            tabs(fd, indent);
-            mprFprintf(fd, "SessionTimeout %d\n", host->getSessionTimeout());
-        }
-#if !BLD_FEATURE_ROMFS
-        if (host->getLogHost() == host) {
-            char    format[MPR_MAX_FNAME * 2];
-            char    *fp;
-            fp = format;
-            format[0] = '\0';
-            for (cp = host->getLogFormat();
-                    cp && *cp && fp < &format[sizeof(format) - 4]; cp++) {
-                if (*cp == '\"') {
-                    *fp++ = '\\';
-                    *fp++ = *cp;
-                } else {
-                    *fp++ = *cp;
-                }
-            }
-            *fp++ = '\0';
-            tabs(fd, indent);
-            mprFprintf(fd, "CustomLog %s \"%s\"\n", host->getLogPath(), format);
-        }
-#endif
-
-        /*
-            ActionPrograms. One mimeTypes table is shared among all hosts.
-         */
-        if (host == defaultHost) {
-            mimeTypes = host->getMimeTypes();
-            mt = (MaMimeHashEntry*) mimeTypes->getFirst();
-            first = 1;
-            while (mt) {
-                actionProgram = mt->getActionProgram();
-                if (actionProgram && *actionProgram) {
-                    if (first) {
-                        mprFprintf(fd, "\n");
-                        first = 0;
-                    }
-                    tabs(fd, indent);
-                    mprFprintf(fd, "Action %s %s\n", mt->getMimeType(),
-                        mt->getActionProgram());
-                }
-                mt = (MaMimeHashEntry*) mimeTypes->getNext(mt);
-            }
-        }
-
-        /*
-            Aliases
-         */
-        aliases = host->getAliases();
-        alias = (MaAlias*) aliases->getFirst();
-        first = 1;
-        while (alias) {
-            /*
-                Must skip the catchall alias which has an empty prefix
-             */
-            if (alias->getPrefix()[0] != '\0' && !alias->isInherited()) {
-                if (first) {
-                    mprFprintf(fd, "\n");
-                    first = 0;
-                }
-                tabs(fd, indent);
-                code = alias->getRedirectCode();
-                if (code != 0) {
-                    mprFprintf(fd, "Redirect %d %s \"%s\"\n", code, alias->getPrefix(), alias->getName());
-                } else {
-                    mprFprintf(fd, "Alias %s \"%s\"\n", alias->getPrefix(), alias->getName());
-                }
-            }
-            alias = (MaAlias*) aliases->getNext(alias);
-        }
-
-        /*
-            Directories -- Do in reverse order
-         */
-        defaultDp = dp = (MaDir*) host->getDirs()->getLast();
-        first = 1;
-        while (dp) {
-            if (dp->isInherited()) {
-                dp = (MaDir*) host->getDirs()->getPrev(dp);
-                continue;
-            }
-            path = dp->getPath();
-            if (*path) {
-                if (!first) {
-                    mprFprintf(fd, "\n");
-                    tabs(fd, indent++);
-                    mprFprintf(fd, "<Directory %s>\n", dp->getPath());
-                }
-            }
-            if (strcmp(dp->getIndex(), defaultDp->getIndex()) != 0) {
-                tabs(fd, indent);
-                mprFprintf(fd, "DirectoryIndex %s\n", dp->getIndex());
-            }
-
-            printAuth(fd, host, dp, indent);
-
-            if (*path && !first) {
-                tabs(fd, --indent);
-                mprFprintf(fd, "</Directory>\n");
-            }
-            first = 0;
-            dp = (MaDir*) host->getDirs()->getPrev(dp);
-        }
-
-        /*
-            Locations
-         */
-        loc = (HttpLoc*) host->getLocations()->getLast();
-        while (loc) {
-            if (loc->isInherited()) {
-                loc = (HttpLoc*) host->getLocations()->getPrev(loc);
-                continue;
-            }
-            mprFprintf(fd, "\n");
-            tabs(fd, indent++);
-            mprFprintf(fd, "<Location %s>\n", loc->getPrefix());
-
-            if (loc->getHandlerName()) {
-                tabs(fd, indent);
-                //  TODO - not supported
-                mprFprintf(fd, "SetHandler %s\n", loc->getHandlerName());
-            }
-
-            printAuth(fd, host, loc, indent);
-
-            tabs(fd, --indent);
-            mprFprintf(fd, "</Location>\n");
-
-            loc = (HttpLoc*) host->getLocations()->getPrev(loc);
-        }
-
-        /*
-            Close out the VirtualHosts
-         */
-        if (host->isVhost()) {
-            tabs(fd, --indent);
-            mprFprintf(fd, "</VirtualHost>\n");
-        }
-        host = (MaHost*) hosts.getNext(host);
-    }
-    close(fd);
-    return 0;
-}
-
-
-/*
-    Print Authorization configuration
- */
-static void printAuth(int fd, MaHost *host, HttpAuth *auth, int indent)
-{
-    HttpAuthType        authType;
-    HttpAuthHandler     *handler;
-    HttpAcl             acl;
-    char                *users, *groups, *realm;
-
-    if (auth->isAuthInherited()) {
-        return;
-    }
-
-    handler = (HttpAuthHandler*) host->lookupHandler("auth");
-    if (handler) {
-        char    *path;
-        path = handler->getGroupFile();
-        if (path) {
-            tabs(fd, indent);
-            mprFprintf(fd, "AuthGroupFile %s\n", path);
-        }
-        path = handler->getUserFile();
-        if (path) {
-            tabs(fd, indent);
-            mprFprintf(fd, "AuthUserFile %s\n", path);
-        }
-    }
-
-    authType = auth->getType();
-    if (authType == HTTP_AUTH_BASIC) {
-        tabs(fd, indent);
-        mprFprintf(fd, "AuthType basic\n");
-    } else if (authType == HTTP_AUTH_DIGEST) {
-        char *qop = auth->getQop();
-
-        tabs(fd, indent);
-        mprFprintf(fd, "AuthType digest\n");
-        tabs(fd, indent);
-        if (qop && *qop) {
-            mprFprintf(fd, "AuthDigestQop %s\n", qop);
-        }
-    }
-
-    realm = auth->getRealm();
-    groups = auth->getRequiredGroups();
-    users = auth->getRequiredUsers();
-    acl = auth->getRequiredAcl();
-
-    if (realm && *realm) {
-        tabs(fd, indent);
-        mprFprintf(fd, "AuthName \"%s\"\n", realm);
-    }
-    if (auth->getAnyValidUser()) {
-        tabs(fd, indent);
-        mprFprintf(fd, "Require valid-user\n");
-    } else if (groups && *groups) {
-        tabs(fd, indent);
-        mprFprintf(fd, "Require group %s\n", groups);
-    } else if (users && *users) {
-        tabs(fd, indent);
-        mprFprintf(fd, "Require user %s\n", users);
-    } else if (acl) {
-        tabs(fd, indent);
-        mprFprintf(fd, "Require acl 0x%x\n", acl);
-    }
-}
-
-
-static void tabs(int fd, int indent)
-{
-    for (int i = 0; i < indent; i++) {
-        write(fd, "\t", 1);
-    }
-}
-
-#endif /* BLD_FEATURE_CONFIG_SAVE */
 
 /*
     @copy   default

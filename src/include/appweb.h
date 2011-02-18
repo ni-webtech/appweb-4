@@ -51,7 +51,7 @@ extern "C" {
 
 #if !DOXYGEN
 struct MaSsl;
-struct MaServer;
+struct MaMeta;
 #endif
 
 /********************************** Defines ***********************************/
@@ -64,16 +64,16 @@ struct MaServer;
     @see Http maCreateApweb maStartApweb maStopApweb
  */
 typedef struct MaAppweb {
-    struct MaServer     *defaultServer;         /**< Default web server object */
-    MprList             *servers;               /**< List of meta server objects */
-    Http                *http;                  /**< Http service object */
+    struct MaMeta       *defaultMeta;       /**< Default meta server object */
+    MprList             *metas;             /**< List of meta server objects */
+    Http                *http;              /**< Http service object */
 
-    char                *user;                  /**< O/S application user name */
-    char                *group;                 /**< O/S application group name */
+    char                *user;              /**< O/S application user name */
+    char                *group;             /**< O/S application group name */
 
     //  MOB - should this be in http?
-    int                 uid;                    /**< User Id */
-    int                 gid;                    /**< Group Id */
+    int                 uid;                /**< User Id */
+    int                 gid;                /**< Group Id */
     int                 userChanged;
     int                 groupChanged;
 } MaAppweb;
@@ -128,14 +128,13 @@ extern void maGetUserGroup(MaAppweb *appweb);
  */
 extern int maSetHttpGroup(MaAppweb *appweb, cchar *group);
 
-extern void         maAddServer(MaAppweb *appweb, struct MaServer *server);
+extern void         maAddMeta(MaAppweb *appweb, struct MaMeta *meta);
 extern int          maApplyChangedGroup(MaAppweb *appweb);
 extern int          maApplyChangedUser(MaAppweb *appweb);
-extern struct MaServer *maLookupServer(MaAppweb *appweb, cchar *name);
+extern struct MaMeta *maLookupMeta(MaAppweb *appweb, cchar *name);
 extern int          maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname);
 
-//  MOB - name
-extern void maSetDefaultServer(MaAppweb *appweb, struct MaServer *server);
+extern void maSetDefaultMeta(MaAppweb *appweb, struct MaMeta *meta);
 
 extern void maSetKeepAliveTimeout(MaAppweb *appweb, int timeout);
 extern void maSetTimeout(MaAppweb *appweb, int timeout);
@@ -158,62 +157,40 @@ extern int maSslModuleInit(Http *http, MprModule *mp);
 extern int maUploadFilterInit(Http *http, MprModule *mp);
 
 /********************************************************************************/
-
+#if UNUSED
 #define MA_LISTEN_DEFAULT_PORT  0x1         /* Use default port 80 */
 #define MA_LISTEN_WILD_PORT     0x2         /* Port spec missing */
 #define MA_LISTEN_WILD_IP       0x4         /* IP spec missing (first endpoint) */
 #define MA_LISTEN_WILD_IP2      0x8         /* IP spec missing (second+ endpoint) */
+#endif
 
-/******************************** MaHostAddress *******************************/
-/*  
-    Flags
- */
-#define MA_IPADDR_VHOST 0x1
-
-/** Host Address Mapping
-    @stability Evolving
-    @defgroup MaHostAddress MaHostAddress
-    @see MaHostAddress
- */
-typedef struct MaHostAddress {
-    char            *ip;                    /**< IP Address for this endpoint */
-    int             port;                   /**< Port for this endpoint */
-    int             flags;                  /**< Mapping flags */
-    MprList         *vhosts;                /**< Vhosts using this address */
-} MaHostAddress;
-
-
-extern MaHostAddress *maCreateHostAddress(cchar *ip, int port);
-extern MaHostAddress *maLookupHostAddress(struct MaServer *server, cchar *ip, int port);
-extern struct MaHost *maLookupVirtualHost(MaHostAddress *hostAddress, cchar *hostStr);
-extern void maInsertVirtualHost(MaHostAddress *hostAddress, struct MaHost *vhost);
-extern bool maIsNamedVirtualHostAddress(MaHostAddress *hostAddress);
-extern void maSetNamedVirtualHostAddress(MaHostAddress *hostAddress);
-
-/********************************** MaServer **********************************/
+/********************************** MaMeta **********************************/
 /**
-    MaServer Control - 
+    MaMeta Control - 
     An application may have any number of HTTP servers, each managed by an instance of the Server class. Typically
     there will be only one server in an application. There may be multiple virtual hosts and one default host for
     each server class. A server will typically be configured by calling the configure method for each server which
     parses a file to define the server and virtual host configuration.
     @stability Evolving
-    @defgroup MaServer MaServer
-    @see MaServer maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateServer 
+    @defgroup MaMeta MaMeta
+    @see MaMeta maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateServer 
         maConfigureServer maSplitConfigValue
  */
-typedef struct MaServer {
+typedef struct MaMeta {
+    char            *name;                  /**< Unique name for this meta-server */
     MaAppweb        *appweb;                /**< Appweb control object */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
     HttpLimits      *limits;                /**< Limits for this server */
-    MprList         *httpServers;           /**< List of MaServers */
-    struct MaHost   *defaultHost;           /**< Primary host */
-    MprList         *hosts;                 /**< List of host objects */
-    MprList         *hostAddresses;         /**< List of HostAddress objects */
-    char            *name;                  /**< Unique name for this meta-server */
+    MprList         *servers;               /**< List of HttpServers */
+    struct HttpHost *defaultHost;           /**< Primary host */
     char            *serverRoot;            /**< Server root */
     bool            alreadyLogging;         /**< Already logging */
-} MaServer;
+
+#if UNUSED
+    MprList         *hosts;                 /**< List of host objects */
+    MprList         *hostAddresses;         /**< List of HostAddress objects */
+#endif
+} MaMeta;
 
 /** Create a web server
     @description Create a web server configuration based on the supplied config file. Once created, the
@@ -221,18 +198,18 @@ typedef struct MaServer {
         object. If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @return Http object.
-    @ingroup MaServer
+    @ingroup MaMeta
  */
-extern MaServer *maCreateWebServer(cchar *configFile);
+extern MaMeta *maCreateWebServer(cchar *configFile);
 
 /** Service a web server
     @description Run a web server configuration. This is will start http services via #maStartHttp and will service
         incoming Http requests until instructed to exit. This is often used in conjunction with #maCreateWebServer.
     @param http Http object created via #maCreateWebServer or #maCreateHttp.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup MaServer
+    @ingroup MaMeta
  */
-extern int maServiceWebServer(MaServer *server);
+extern int maServiceWebServer(MaMeta *meta);
 
 /** Create and run a web server based on a configuration file
     @description Create a web server configuration based on the supplied config file. This routine provides 
@@ -240,7 +217,7 @@ extern int maServiceWebServer(MaServer *server);
         instead. If you need more control, try #maCreateWebServer which exposes the Http object.
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup MaServer
+    @ingroup MaMeta
  */
 extern int maRunWebServer(cchar *configFile);
 
@@ -253,12 +230,12 @@ extern int maRunWebServer(cchar *configFile);
     @param port Port number to listen to
     @param docRoot Directory containing the documents to serve.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup MaServer
+    @ingroup MaMeta
  */
 extern int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot);
 
-/** Create an MaServer object
-    @description Create new MaServer object. This routine creates a bare MaServer object, loads any required static
+/** Create an MaMeta object
+    @description Create new MaMeta object. This routine creates a bare MaMeta object, loads any required static
         modules  and performs minimal configuration. To use the server object created, more configuration will be 
         required before starting Http services.
         If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
@@ -268,46 +245,47 @@ extern int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot);
     @param ip If not-null, create and open a listening endpoint on this IP address. If you are configuring via a
         config file, use #maConfigureServer and set ip to null.
     @param port Port number to listen on. Set to -1 if you do not want to open a listening endpoint on ip:port
-    @return MaServer A newly created MaServer object. Use mprFree to free and release.
-    @ingroup MaServer
+    @return MaMeta A newly created MaMeta object. Use mprFree to free and release.
+    @ingroup MaMeta
  */
-extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int port);
+extern MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int port);
 
-/** Configure a web server.
+/** 
+    Configure a web server.
     @description This will configure a web server based on either a configuration file or using the supplied
         IP address and port. 
-    @param server MaServer object created via #maCreateServer
+    @param server MaMeta object created via #maCreateServer
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @param serverRoot Admin directory for the server. This overrides the value in the config file.
     @param documentRoot Default directory for web documents to serve. This overrides the value in the config file.
     @param ip IP address to listen on. This overrides the value specified in the config file.
     @param port Port address to listen on. This overrides the value specified in the config file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup MaServer
+    @ingroup MaMeta
  */
-extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *serverRoot, cchar *documentRoot, 
-        cchar *ip, int port);
+extern int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port);
 
-extern void     maAddHost(MaServer *server, struct MaHost *host);
-extern MaHostAddress *maAddHostAddress(MaServer *server, cchar *ip, int port);
-
-//  MOB -- is this right?
-extern void     maAddHttpServer(MaServer *server, HttpServer *httpServer);
-extern int      maCreateHostAddresses(MaServer *server, struct MaHost *host, cchar *value);
-extern struct MaHost *maLookupHost(MaServer *server, cchar *name);
+extern void     maAddServer(MaMeta *meta, HttpServer *server);
 extern int      maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes);
-extern void     maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags);
-extern int      maParseConfig(MaServer *server, cchar *configFile);
-extern MaHostAddress *maRemoveHostFromHostAddress(MaServer *server, cchar *ip, int port, struct MaHost *host);
-extern void     maSetDefaultHost(MaServer *server, struct MaHost *host);
-extern void     maSetDefaultIndex(MaServer *server, cchar *path, cchar *filename);
-extern void     maSetDocumentRoot(MaServer *server, cchar *path);
-extern void     maSetIpAddr(MaServer *server, cchar *ip, int port);
-extern void     maSetServerRoot(MaServer *server, cchar *path);
+extern int      maParseConfig(MaMeta *meta, cchar *configFile);
+extern void     maSetMetaAddress(MaMeta *meta, cchar *ip, int port);
+extern void     maSetMetaRoot(MaMeta *meta, cchar *path);
 extern int      maSplitConfigValue(char **s1, char **s2, char *buf, int quotes);
-extern int      maStartServer(MaServer *server);
-extern int      maStopServer(MaServer *server);
-extern int      maValidateConfiguration(MaServer *server);
+extern int      maStartMeta(MaMeta *meta);
+extern int      maStopMeta(MaMeta *meta);
+extern int      maValidateConfiguration(MaMeta *meta);
+
+#if UNUSED
+extern void     maAddHost(MaMeta *meta, struct HttpHost *host);
+extern HttpHostAddress *maAddHostAddress(MaMeta *meta, cchar *ip, int port);
+extern int      maCreateHostAddresses(MaMeta *meta, struct HttpHost *host, cchar *value);
+extern struct HttpHost *maLookupHost(MaMeta *meta, cchar *name);
+extern void     maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags);
+extern HttpHostAddress *maRemoveHostFromHostAddress(MaMeta *meta, cchar *ip, int port, struct HttpHost *host);
+extern void     maSetDefaultHost(MaMeta *meta, struct HttpHost *host);
+extern void     maSetDefaultIndex(MaMeta *meta, cchar *path, cchar *filename);
+extern void     maSetDocumentRoot(MaMeta *meta, cchar *path);
+#endif
 
 /************************************* Auth *********************************/
 #if BLD_FEATURE_AUTH_FILE
@@ -360,16 +338,16 @@ extern bool     maIsGroupEnabled(HttpAuth *auth, cchar *group);
 extern bool     maIsUserEnabled(HttpAuth *auth, cchar *realm, cchar *user);
 extern HttpAcl    maParseAcl(HttpAuth *auth, cchar *aclStr);
 extern int      maRemoveGroup(HttpAuth *auth, cchar *group);
-extern int      maReadGroupFile(MaServer *server, HttpAuth *auth, char *path);
-extern int      maReadUserFile(MaServer *server, HttpAuth *auth, char *path);
+extern int      maReadGroupFile(MaMeta *meta, HttpAuth *auth, char *path);
+extern int      maReadUserFile(MaMeta *meta, HttpAuth *auth, char *path);
 extern int      maRemoveUser(HttpAuth *auth, cchar *realm, cchar *user);
 extern int      maRemoveUserFromGroup(MaGroup *gp, cchar *user);
 extern int      maRemoveUsersFromGroup(HttpAuth *auth, cchar *group, cchar *users);
 extern int      maSetGroupAcl(HttpAuth *auth, cchar *group, HttpAcl acl);
 extern void     maSetRequiredAcl(HttpAuth *auth, HttpAcl acl);
 extern void     maUpdateUserAcls(HttpAuth *auth);
-extern int      maWriteUserFile(MaServer *server, HttpAuth *auth, char *path);
-extern int      maWriteGroupFile(MaServer *server, HttpAuth *auth, char *path);
+extern int      maWriteUserFile(MaMeta *meta, HttpAuth *auth, char *path);
+extern int      maWriteGroupFile(MaMeta *meta, HttpAuth *auth, char *path);
 extern bool     maValidateNativeCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
                     cchar *requiredPass, char **msg);
 #endif /* AUTH_FILE */
@@ -380,30 +358,6 @@ extern bool     maValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *us
                     cchar *requiredPass, char **msg);
 #endif /* AUTH_PAM */
 
-/************************************ MaDir ***********************************/
-/**
-    Directory Control
-    @stability Evolving
-    @defgroup MaDir MaDir
-    @see MaDir
- */
-typedef struct  MaDir {
-#if UNUSED
-    struct MaHost   *parent;                /**< Owner of the directory */
-#endif
-    HttpAuth        *auth;                  /**< Authorization control */
-    //TODO MOB - Hosts don't own directories. They are outside hosts
-    struct MaHost   *host;                  /**< Host owning this directory */
-    char            *indexName;             /**< Default index document name */
-    char            *path;                  /**< Directory filename */
-    size_t          pathLen;                /**< Length of the directory path */
-} MaDir;
-
-extern MaDir    *maCreateBareDir(struct MaHost *host, cchar *path);
-extern MaDir    *maCreateDir(struct MaHost *host, cchar *path, MaDir *parent);
-extern void     maSetDirIndex(MaDir *dir, cchar *name) ;
-extern void     maSetDirPath(MaDir *dir, cchar *filename);
-
 /********************************** MaUploadFile *********************************/
 
 extern int maOpenDirHandler(Http *http);
@@ -411,26 +365,7 @@ extern int maOpenEgiHandler(Http *http);
 extern int maOpenFileHandler(Http *http);
 extern int maOpenSendConnector(Http *http);
 
-/*********************************** MaAlias **********************************/
-/**
-    Aliases 
-    @stability Evolving
-    @defgroup MaAlias MaAlias
-    @see MaAlias maCreateAlias
- */
-typedef struct MaAlias {
 #if UNUSED
-    struct MaHost   *parent;                /**< Owner of the alias */
-#endif
-    char            *prefix;                /**< Original URI prefix */
-    int             prefixLen;              /**< Prefix length */
-    char            *filename;              /**< Alias to a physical path name */
-    char            *uri;                   /**< Redirect to a uri */
-    int             redirectCode;
-} MaAlias;
-
-extern MaAlias *maCreateAlias(cchar *prefix, cchar *name, int code);
-
 /******************************* MaMimeType ******************************/
 /**
     Mime Type hash table entry (the URL extension is the key)
@@ -443,99 +378,7 @@ typedef struct MaMimeType {
     char            *actionProgram;
 } MaMimeType;
 
-/************************************ MaHost **********************************/
-/*
-    Flags
- */
-#define MA_HOST_VHOST           0x2         /* Is a virtual host */
-#define MA_HOST_NAMED_VHOST     0x4         /* Named virtual host */
-#define MA_HOST_NO_TRACE        0x40        /* Prevent use of TRACE */
-
-/**
-    Host Object
-    A Host object represents a logical host. It may be single listening HTTP connection endpoint or it may be a virtual host.
-    @stability Evolving
-    @defgroup MaHost MaHost
-    @see MaHost
- */
-typedef struct MaHost {
-    MaServer        *server;                /**< Meta-server owning this host */
-    HttpServer      *httpServer;            /**< HttpServer backing this host */
-    struct MaHost   *parent;                /**< Parent host for virtual hosts */
-    MprFile         *accessLog;             /**< File object for access logging */
-    MprList         *dirs;                  /**< List of Directory definitions */
-    MprList         *aliases;               /**< List of Alias definitions */
-
-    //  MOB - who is this used with
-    char            *ipAddrPort;            /**< IP:PORT address (with wildcards) */
-    char            *ip;                    /**< IP address */
-    int             port;                   /**< Listening port number */
-
-    char            *documentRoot;          /**< Default directory for web documents */
-    int             flags;                  /**< Host flags */
-
-    //  MOB -- has been moved to Http
-    int             traceLevel;             /**< Trace activation level */
-    int             traceMaxLength;         /**< Maximum trace file length (if known) */
-    int             traceMask;              /**< Request/response trace mask */
-    MprHashTable    *traceInclude;          /**< Extensions to include in trace */
-    MprHashTable    *traceExclude;          /**< Extensions to exclude from trace */
-
-    int             httpVersion;            /**< HTTP/1.X */
-    HttpLoc         *loc;                   /**< Default location */
-    MprList         *locations;             /**< List of Location defintions */
-    struct MaHost   *logHost;               /**< If set, use this hosts logs */
-    MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
-    char            *mimeFile;              /**< Name of the mime types file */
-    char            *moduleDirs;            /**< Directories for modules */
-
-    //  MOB -- should this not be down in http?
-    char            *name;                  /**< ServerName directive - used for redirects */
-
-    char            *logFormat;             /**< Access log format */
-    char            *logPath;               /**< Access log filename */
-} MaHost;
-
-
-/*
-    All these APIs are internal
- */
-extern void         maAddConn(MaHost *host, struct HttpConn *conn);
-extern void         maAddStandardMimeTypes(MaHost *host);
-extern MaHost       *maCreateDefaultHost(MaServer *server, cchar *docRoot, cchar *ip, int port);
-extern int          maCreateRequestPipeline(MaHost *host, struct HttpConn *conn, MaAlias *alias);
-extern MaAlias      *maGetAlias(MaHost *host, cchar *uri);
-extern MaAlias      *maLookupAlias(MaHost *host, cchar *prefix);
-extern MaDir        *maLookupBestDir(MaHost *host, cchar *path);
-extern MaDir        *maLookupDir(MaHost *host, cchar *path);
-extern HttpLoc      *maLookupBestLocation(MaHost *host, cchar *uri);
-extern MaHost       *maCreateHost(MaServer *server, HttpServer *httpServer, cchar *ip, HttpLoc *loc);
-extern MaHost       *maCreateVirtualHost(MaServer *server, cchar *ipAddrPort, MaHost *host);
-extern HttpLoc      *maLookupLocation(MaHost *host, cchar *prefix);
-extern MaMimeType   *maAddMimeType(MaHost *host, cchar *ext, cchar *mimetype);
-extern cchar        *maGetMimeActionProgram(MaHost *host, cchar *mimetype);
-extern cchar        *maLookupMimeType(MaHost *host, cchar *ext);
-extern int          maInsertAlias(MaHost *host, MaAlias *newAlias);
-extern int          maAddLocation(MaHost *host, HttpLoc *newLocation);
-extern int          maInsertDir(MaHost *host, MaDir *newDir);
-extern int          maOpenMimeTypes(MaHost *host, cchar *path);
-extern void         maRemoveConn(MaHost *host, struct HttpConn *conn);
-extern void         maSetHostDocumentRoot(MaHost *host, cchar *path);
-extern int          maSetMimeActionProgram(MaHost *host, cchar *mimetype, cchar *actionProgram);
-extern int          maStartHost(MaHost *host);
-extern int          maStopHost(MaHost *host);
-extern void         maSetHostIpAddrPort(MaHost *host, cchar *ipAddrPort);
-extern void         maSetHostName(MaHost *host, cchar *name);
-extern void         maSetHostDirs(MaHost *host, cchar *path);
-extern void         maSetHostTrace(MaHost *host, int level, int mask);
-extern void         maSetHostTraceFilter(MaHost *host, int len, cchar *include, cchar *exclude);
-extern void         maSetHttpVersion(MaHost *host, int version);
-extern void         maSetNamedVirtualHost(MaHost *host);
-extern void         maSecureHost(MaHost *host, struct MprSsl *ssl);
-extern void         maSetHostFilter(MaHost *host, int length, cchar *include, cchar *exclude);
-extern int          maSetupTrace(MaHost *host, cchar *ext);
-extern void         maSetVirtualHost(MaHost *host);
-
+#endif
 #if FUTURE
 /******************************** HttpReceiverMatch ******************************/
 /*
@@ -565,28 +408,28 @@ typedef struct  HttpReceiverModified {
     @see MaConfigState
  */
 typedef struct MaConfigState {
-    MaServer    *server;                    /**< Current meta-server */
-    MaHost      *host;                      /**< Current host */
-    MaDir       *dir;                       /**< Current directory block */
-    HttpLoc     *loc;                       /**< Current location */
-    HttpAuth    *auth;                      /**< Current auth object */
-    MprFile     *file;                      /**< Config file handle */
-    char        *filename;                  /**< Config file name */
-    int         lineNumber;                 /**< Current line number */
-    int         enabled;                    /**< True if the current block is enabled */
+    MaMeta      *meta;                  /**< Current meta-server */
+    HttpHost    *host;                  /**< Current host */
+    HttpDir     *dir;                   /**< Current directory block */
+    HttpLoc     *loc;                   /**< Current location */
+    HttpAuth    *auth;                  /**< Current auth object */
+    MprFile     *file;                  /**< Config file handle */
+    char        *filename;              /**< Config file name */
+    int         lineNumber;             /**< Current line number */
+    int         enabled;                /**< True if the current block is enabled */
 } MaConfigState;
 
 extern HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefix, cchar *path, 
         cchar *handlerName, int flags);
 
-extern char         *maMakePath(MaHost *host, cchar *file);
-extern char         *maReplaceReferences(MaHost *host, cchar *str);
-extern void         maSetAccessLog(MaHost *host, cchar *path, cchar *format);
+extern char         *maMakePath(HttpHost *host, cchar *file);
+extern char         *maReplaceReferences(HttpHost *host, cchar *str);
+extern void         maSetAccessLog(HttpHost *host, cchar *path, cchar *format);
 extern int          maStopLogging();
 extern int          maStartLogging(cchar *logSpec);
-extern void         maSetLogHost(MaHost *host, MaHost *logHost);
-extern int          maStartAccessLogging(MaHost *host);
-extern int          maStopAccessLogging(MaHost *host);
+extern void         maSetLogHost(HttpHost *host, HttpHost *logHost);
+extern int          maStartAccessLogging(HttpHost *host);
+extern int          maStopAccessLogging(HttpHost *host);
 
 /************************************ EGI *************************************/
 

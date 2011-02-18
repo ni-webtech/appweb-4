@@ -67,11 +67,11 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		C92D5C6B130DF56C0097EBA8 /* meta.c in Sources */ = {isa = PBXBuildFile; fileRef = C92D5C6A130DF56C0097EBA8 /* meta.c */; };
 		C938480F1123BD80002AD34B /* ejsHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C938480E1123BD80002AD34B /* ejsHandler.c */; };
 		C94086AF101A665B0019809C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C94086D8101A672F0019809C /* testAppweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086CB101A672F0019809C /* testAppweb.c */; };
 		C94086DE101A672F0019809C /* testHttp.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086D2101A672F0019809C /* testHttp.c */; };
-		C94C145311160231007F01C6 /* match.c in Sources */ = {isa = PBXBuildFile; fileRef = C94C145111160231007F01C6 /* match.c */; };
 		C96176F412DCE345002702E0 /* auth.c in Sources */ = {isa = PBXBuildFile; fileRef = C96176F312DCE345002702E0 /* auth.c */; };
 		C96176F712DCE387002702E0 /* libphp5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C96176F612DCE369002702E0 /* libphp5.dylib */; };
 		C96176FB12DCE3AE002702E0 /* libmatrixsslstatic.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C96176F512DCE369002702E0 /* libmatrixsslstatic.a */; };
@@ -118,13 +118,9 @@
 		C97DCABC101D5088008EB048 /* sslModule.c in Sources */ = {isa = PBXBuildFile; fileRef = C97620760FD04E38009C78E1 /* sslModule.c */; };
 		C97DCAC6101D50EB008EB048 /* libmprssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */; };
 		C9817C18110D162E00F241EF /* pcre.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C17110D162E00F241EF /* pcre.c */; };
-		C9817C27110D173400F241EF /* alias.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C19110D170500F241EF /* alias.c */; };
 		C9817C2A110D173400F241EF /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C1C110D170500F241EF /* config.c */; };
 		C9817C2C110D173400F241EF /* convenience.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C1E110D170500F241EF /* convenience.c */; };
-		C9817C2D110D173400F241EF /* dir.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C1F110D170500F241EF /* dir.c */; };
-		C9817C2E110D173400F241EF /* host.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C20110D170500F241EF /* host.c */; };
 		C9817C31110D173400F241EF /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C23110D170500F241EF /* log.c */; };
-		C9817C33110D173400F241EF /* mime.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C25110D170500F241EF /* mime.c */; };
 		C9817C35110D173400F241EF /* appweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C95C31E80FC5292A00FB3105 /* appweb.c */; };
 		C9817C3B110D177600F241EF /* mprSsl.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C12110D157800F241EF /* mprSsl.c */; };
 		C9817C46110D181600F241EF /* mprLib.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C11110D157800F241EF /* mprLib.c */; };
@@ -148,8 +144,6 @@
 		C9817CD3110D22BB00F241EF /* libhttp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9817C51110D183800F241EF /* libhttp.dylib */; };
 		C9817CD9110D230600F241EF /* http.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C14110D15DF00F241EF /* http.c */; };
 		C9817CDC110D231500F241EF /* libhttp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9817C51110D183800F241EF /* libhttp.dylib */; };
-		C9817D2F110D2D8600F241EF /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817D2B110D2D8600F241EF /* misc.c */; };
-		C9817D30110D2D8600F241EF /* server.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817D2C110D2D8600F241EF /* server.c */; };
 		C9817E00110D7D3100F241EF /* fileHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C976206C0FD04E38009C78E1 /* fileHandler.c */; };
 		C98181B9110EC20600F241EF /* dirHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C976206A0FD04E38009C78E1 /* dirHandler.c */; };
 		C9C2BEEC100EF66D009B160F /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
@@ -617,12 +611,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C92D5C6A130DF56C0097EBA8 /* meta.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = meta.c; path = ../../../src/meta.c; sourceTree = SOURCE_ROOT; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C94086CB101A672F0019809C /* testAppweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testAppweb.c; path = ../../../src/test/testAppweb.c; sourceTree = SOURCE_ROOT; };
 		C94086D2101A672F0019809C /* testHttp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testHttp.c; path = ../../../src/test/testHttp.c; sourceTree = SOURCE_ROOT; };
 		C94086E3101A67470019809C /* testAppweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testAppweb.h; path = ../../../src/test/testAppweb.h; sourceTree = SOURCE_ROOT; };
-		C94C145111160231007F01C6 /* match.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = match.c; path = ../../../src/match.c; sourceTree = SOURCE_ROOT; };
 		C95C31E80FC5292A00FB3105 /* appweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = appweb.c; path = ../../../src/server/appweb.c; sourceTree = SOURCE_ROOT; };
 		C96176F312DCE345002702E0 /* auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = auth.c; path = ../../../src/utils/auth.c; sourceTree = SOURCE_ROOT; };
 		C96176F512DCE369002702E0 /* libmatrixsslstatic.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmatrixsslstatic.a; path = ../../../out/lib/libmatrixsslstatic.a; sourceTree = SOURCE_ROOT; };
@@ -661,17 +655,11 @@
 		C9817C14110D15DF00F241EF /* http.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = http.c; path = ../../../src/deps/http/http.c; sourceTree = SOURCE_ROOT; };
 		C9817C15110D15DF00F241EF /* httpLib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = httpLib.c; path = ../../../src/deps/http/httpLib.c; sourceTree = SOURCE_ROOT; };
 		C9817C17110D162E00F241EF /* pcre.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pcre.c; path = ../../../src/deps/pcre/pcre.c; sourceTree = SOURCE_ROOT; };
-		C9817C19110D170500F241EF /* alias.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = alias.c; path = ../../../src/alias.c; sourceTree = SOURCE_ROOT; };
 		C9817C1C110D170500F241EF /* config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = config.c; path = ../../../src/config.c; sourceTree = SOURCE_ROOT; };
 		C9817C1E110D170500F241EF /* convenience.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = convenience.c; path = ../../../src/convenience.c; sourceTree = SOURCE_ROOT; };
-		C9817C1F110D170500F241EF /* dir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dir.c; path = ../../../src/dir.c; sourceTree = SOURCE_ROOT; };
-		C9817C20110D170500F241EF /* host.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = host.c; path = ../../../src/host.c; sourceTree = SOURCE_ROOT; };
 		C9817C23110D170500F241EF /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ../../../src/log.c; sourceTree = SOURCE_ROOT; };
-		C9817C25110D170500F241EF /* mime.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mime.c; path = ../../../src/mime.c; sourceTree = SOURCE_ROOT; };
 		C9817C51110D183800F241EF /* libhttp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libhttp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9817CF0110D234800F241EF /* makerom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = makerom.c; path = ../../../src/deps/mpr/makerom.c; sourceTree = SOURCE_ROOT; };
-		C9817D2B110D2D8600F241EF /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = ../../../src/misc.c; sourceTree = SOURCE_ROOT; };
-		C9817D2C110D2D8600F241EF /* server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = server.c; path = ../../../src/server.c; sourceTree = SOURCE_ROOT; };
 		C9818173110EC04900F241EF /* ejssql */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ejssql; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9AD318612BC39300057EFAC /* buildConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buildConfig.h; path = ../../../out/include/buildConfig.h; sourceTree = SOURCE_ROOT; };
 		C9AFCC560FC521440080E908 /* appweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appweb; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -901,20 +889,14 @@
 		C95C31E70FC528C700FB3105 /* server */ = {
 			isa = PBXGroup;
 			children = (
+				C92D5C6A130DF56C0097EBA8 /* meta.c */,
 				C97620660FD04E38009C78E1 /* handlers */,
 				C97620730FD04E38009C78E1 /* modules */,
 				C976205D0FD04E0A009C78E1 /* connectors */,
-				C9817C19110D170500F241EF /* alias.c */,
 				C95C31E80FC5292A00FB3105 /* appweb.c */,
 				C9817C1C110D170500F241EF /* config.c */,
 				C9817C1E110D170500F241EF /* convenience.c */,
-				C9817C1F110D170500F241EF /* dir.c */,
-				C9817C20110D170500F241EF /* host.c */,
 				C9817C23110D170500F241EF /* log.c */,
-				C94C145111160231007F01C6 /* match.c */,
-				C9817C25110D170500F241EF /* mime.c */,
-				C9817D2B110D2D8600F241EF /* misc.c */,
-				C9817D2C110D2D8600F241EF /* server.c */,
 			);
 			name = server;
 			sourceTree = "<group>";
@@ -1689,20 +1671,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9817C27110D173400F241EF /* alias.c in Sources */,
 				C9817C2A110D173400F241EF /* config.c in Sources */,
 				C9817C2C110D173400F241EF /* convenience.c in Sources */,
-				C9817C2D110D173400F241EF /* dir.c in Sources */,
-				C9817C2E110D173400F241EF /* host.c in Sources */,
 				C9817C31110D173400F241EF /* log.c in Sources */,
-				C9817C33110D173400F241EF /* mime.c in Sources */,
-				C9817D2F110D2D8600F241EF /* misc.c in Sources */,
 				C9817C35110D173400F241EF /* appweb.c in Sources */,
 				C98181B9110EC20600F241EF /* dirHandler.c in Sources */,
 				C9F683381116A0EF008107BE /* egiHandler.c in Sources */,
 				C9817E00110D7D3100F241EF /* fileHandler.c in Sources */,
-				C9817D30110D2D8600F241EF /* server.c in Sources */,
-				C94C145311160231007F01C6 /* match.c in Sources */,
+				C92D5C6B130DF56C0097EBA8 /* meta.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

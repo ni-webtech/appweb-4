@@ -26,7 +26,7 @@
 typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
-    MaServer    *server;
+    MaMeta    *server;
     char        *script;
     char        *documentRoot;
     char        *serverRoot;
@@ -55,7 +55,7 @@ static int  setupUnixSignals();
 #endif
 
 #if BLD_WIN_LIKE
-static int writePort(MaHost *host);
+static int writePort(HttpHost *host);
 static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 #endif
 
@@ -261,11 +261,11 @@ static int initialize(cchar *ip, int port)
         mprUserError("Can't create HTTP service for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;
     }
-    if ((app->server = maCreateServer(app->appweb, "default", NULL, NULL, -1)) == 0) {
+    if ((app->server = maCreateMeta(app->appweb, "default", NULL, NULL, -1)) == 0) {
         mprUserError("Can't create HTTP server for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;
     }
-    if (maConfigureServer(app->server, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
+    if (maConfigureMeta(app->server, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
         /* mprUserError("Can't configure the server, exiting."); */
         return MPR_ERR_CANT_CREATE;
     }
@@ -468,7 +468,7 @@ static void catchSignal(int signo, siginfo_t *info, void *arg)
 /*
     Write the port so the monitor can manage
  */ 
-static int writePort(MaHost *host)
+static int writePort(HttpHost *host)
 {
     char    *cp, numBuf[16], *path;
     int     fd, port, len;

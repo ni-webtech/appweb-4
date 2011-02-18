@@ -4136,7 +4136,7 @@ typedef struct MprFileSystem {
     char                *newline;       /**< Newline for text files */
     cchar               *root;          /**< Root file path */
 #if BLD_WIN_LIKE
-    char            *cygdrive;          /**< Cygwin drive root */
+    char                *cygdrive;      /**< Cygwin drive root */
 #endif
 } MprFileSystem;
 
@@ -4156,7 +4156,6 @@ typedef struct MprRomFileSystem {
     MprFileSystem   fileSystem;
     MprHashTable    *fileIndex;
     MprRomInode     *romInodes;
-    char            *root;
     int             rootLen;
 } MprRomFileSystem;
 #else /* !BLD_FEATURE_ROMFS */
@@ -5140,7 +5139,7 @@ typedef struct MprEvent {
     Event Dispatcher
  */
 typedef struct MprDispatcher {
-    int magic;
+    int             magic;
     cchar           *name;              /**< Dispatcher name / purpose */
     MprEvent        eventQ;             /**< Event queue */
     MprEvent        *current;           /**< Current event */
@@ -5159,10 +5158,10 @@ typedef struct MprDispatcher {
 typedef struct MprEventService {
     MprTime         now;                /**< Current notion of time for the dispatcher service */
     MprTime         willAwake;          /**< Time the even service will next awake */
-    MprDispatcher   runQ;               /**< Queue of running dispatchers */
-    MprDispatcher   readyQ;             /**< Queue of dispatchers with events ready to run */
-    MprDispatcher   waitQ;              /**< Queue of waiting (future) events */
-    MprDispatcher   idleQ;              /**< Queue of idle dispatchers */
+    MprDispatcher   *runQ;              /**< Queue of running dispatchers */
+    MprDispatcher   *readyQ;            /**< Queue of dispatchers with events ready to run */
+    MprDispatcher   *waitQ;             /**< Queue of waiting (future) events */
+    MprDispatcher   *idleQ;             /**< Queue of idle dispatchers */
     MprOsThread     serviceThread;      /**< Thread running the dispatcher service */
     int             eventCount;         /**< Count of events */
     int             waiting;            /**< Waiting for I/O (sleeping) */
@@ -6303,7 +6302,11 @@ extern void mprRemoveSocketHandler(MprSocket *sp);
 /*
     Default SSL configuration
  */
-#define MPR_DEFAULT_CIPHER_SUITE        "ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL"
+#if OLD
+#define MPR_DEFAULT_CIPHER_SUITE    "ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL"
+#endif
+
+#define MPR_DEFAULT_CIPHER_SUITE    "HIGH:MEDIUM"
 
 /**
     Load the SSL module.
@@ -6538,14 +6541,8 @@ extern char *mprEscapeCmd(cchar *cmd, int escChar);
  */
 extern char *mprEscapeHtml(cchar *html);
 
-/** Get the mime type for an extension.
-    This call will return the mime type from a limited internal set of mime types for the given path or extension.
-    @param ext Path or extension to examine
-    @returns Mime type. This is a static string.
- */
-extern cchar *mprLookupMimeType(cchar *ext);
-
-/** Encode a string by escaping URI characters
+/** 
+    Encode a string by escaping URI characters
     @description Encode a string escaping all characters that have meaning for URIs.
     @param uri URI to encode
     @param map Map to encode characters. Select from MPR_ENCODE_URI or MPR_ENCODE_URI_COMPONENT.
@@ -6554,7 +6551,8 @@ extern cchar *mprLookupMimeType(cchar *ext);
  */
 extern char *mprUriEncode(cchar *uri, int map);
 
-/** Decode a URI string by de-scaping URI characters
+/** 
+    Decode a URI string by de-scaping URI characters
     @description Decode a string with www-encoded characters that have meaning for URIs.
     @param uri URI to decode
     @return A reference to the buf argument.
@@ -6611,7 +6609,9 @@ typedef void (*MprCmdProc)(struct MprCmd *cmd, int channel, void *data);
 #define MPR_CMD_ASYNC           0x8000  /* Run in async mode */
 
 typedef struct MprCmdFile {
+#if UNUSED
     char            *name;
+#endif
     int             fd;
     int             clientFd;
 #if BLD_WIN_LIKE
@@ -6674,7 +6674,9 @@ typedef struct MprCmd {
     SEM_ID          exitCond;           /* Synchronization semaphore for task exit */
 #endif
     MprMutex        *mutex;             /* Multithread sync */
+#if UNUSED
     MprCond         *cond;              /* Multithread signalling */
+#endif
 } MprCmd;
 
 
@@ -6899,6 +6901,31 @@ extern int mprWriteCmdPipe(MprCmd *cmd, int channel, char *buf, int bufsize);
 
 extern int mprIsCmdComplete(MprCmd *cmd);
 
+/**
+    Mime Type hash table entry (the URL extension is the key)
+    @stability Evolving
+    @defgroup MprMime MprMime
+    @see MprMime
+ */
+typedef struct MprMime {
+    char    *type;
+    char    *program;
+} MprMime;
+
+/** 
+    Get the mime type for an extension.
+    This call will return the mime type from a limited internal set of mime types for the given path or extension.
+    @param ext Path or extension to examine
+    @returns Mime type. This is a static string.
+ */
+extern cchar *mprLookupMime(MprHashTable *table, cchar *ext);
+
+//  DOC
+extern MprHashTable *mprCreateMimeTypes(cchar *path);
+extern MprMime *mprAddMime(MprHashTable *table, cchar *ext, cchar *mimeType);
+extern int mprSetMimeProgram(MprHashTable *table, cchar *mimeType, cchar *program);
+extern cchar *mprGetMimeProgram(MprHashTable *table, cchar *mimeType);
+
 /*
     Mpr state
  */
@@ -6937,7 +6964,7 @@ typedef struct Mpr {
     MprLogHandler   logHandler;             /**< Current log handler callback */
     void            *logData;               /**< Handle data for log handler */
     void            *altLogData;            /**< Alternate handle data for log handler */
-    MprHashTable    *mimeTable;             /**< Table of mime types */
+    MprHashTable    *mimeTypes;             /**< Table of mime types */
     MprHashTable    *timeTokens;            /**< Date/Time parsing tokens */
     char            *name;                  /**< Product name */
     char            *title;                 /**< Product title */
@@ -6963,8 +6990,8 @@ typedef struct Mpr {
         Service pointers
      */
     struct MprCmdService    *cmdService;    /**< Command service object */
-    struct MprFileSystem    *fileSystem;    /**< File system service object */
     struct MprEventService  *eventService;  /**< Event service object */
+    struct MprFileSystem    *fileSystem;    /**< File system service object */
     struct MprModuleService *moduleService; /**< Module service object */
     struct MprOsService     *osService;     /**< O/S service object */
     struct MprSocketService *socketService; /**< Socket service object */

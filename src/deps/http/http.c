@@ -186,7 +186,7 @@ static void initSettings()
 static bool parseArgs(int argc, char **argv)
 {
     char    *argp, *key, *value;
-    int     i, setWorkers, httpVersion, nextArg;
+    int     i, setWorkers, nextArg;
 
     setWorkers = 0;
 
@@ -272,6 +272,7 @@ static bool parseArgs(int argc, char **argv)
                 app->host = argv[++nextArg];
             }
 
+#if UNUSED
         } else if (strcmp(argp, "--http") == 0) {
             //  DEPRECATED
             if (nextArg >= argc) {
@@ -280,7 +281,7 @@ static bool parseArgs(int argc, char **argv)
                 httpVersion = atoi(argv[++nextArg]);
                 app->protocol = (httpVersion == 0) ? "HTTP/1.0" : "HTTP/1.1";
             }
-
+#endif
         } else if (strcmp(argp, "--iterations") == 0 || strcmp(argp, "-i") == 0) {
             if (nextArg >= argc) {
                 return 0;

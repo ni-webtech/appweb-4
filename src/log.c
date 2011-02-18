@@ -137,12 +137,12 @@ int maStopLogging()
 }
 
 
-int maStartAccessLogging(MaHost *host)
+int maStartAccessLogging(HttpHost *host)
 {
 #if !BLD_FEATURE_ROMFS
     if (host->logPath) {
-        host->accessLog = mprOpenFile(host->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
-        if (host->accessLog == 0) {
+        host->log = mprOpenFile(host->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
+        if (host->log == 0) {
             mprError("Can't open log file %s", host->logPath);
         }
     }
@@ -151,14 +151,14 @@ int maStartAccessLogging(MaHost *host)
 }
 
 
-int maStopAccessLogging(MaHost *host)
+int maStopAccessLogging(HttpHost *host)
 {
-    host->accessLog = 0;
+    host->log = 0;
     return 0;
 }
 
 
-void maSetAccessLog(MaHost *host, cchar *path, cchar *format)
+void maSetAccessLog(HttpHost *host, cchar *path, cchar *format)
 {
     char    *src, *dest;
 
@@ -183,17 +183,19 @@ void maSetAccessLog(MaHost *host, cchar *path, cchar *format)
 }
 
 
-void maSetLogHost(MaHost *host, MaHost *logHost)
+#if UNUSED
+void maSetLogHost(HttpHost *host, HttpHost *logHost)
 {
     host->logHost = logHost;
 }
+#endif
 
 
-void maWriteAccessLogEntry(MaHost *host, cchar *buf, int len)
+void maWriteAccessLogEntry(HttpHost *host, cchar *buf, int len)
 {
     static int once = 0;
 
-    if (mprWriteFile(host->accessLog, (char*) buf, len) != len && once++ == 0) {
+    if (mprWriteFile(host->log, (char*) buf, len) != len && once++ == 0) {
         mprError("Can't write to access log %s", host->logPath);
     }
 }
@@ -202,7 +204,7 @@ void maWriteAccessLogEntry(MaHost *host, cchar *buf, int len)
 /*
     Called to rotate the access log
  */
-static void rotateAccessLog(MaHost *host)
+static void rotateAccessLog(HttpHost *host)
 {
     MprPath         info;
     struct tm       tm;
@@ -219,14 +221,14 @@ static void rotateAccessLog(MaHost *host)
             tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
         rename(host->logPath, bak);
         unlink(host->logPath);
-        host->accessLog = mprOpenFile(host->logPath, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
+        host->log = mprOpenFile(host->logPath, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
     }
 }
 
 
 void maLogRequest(HttpConn *conn)
 {
-    MaHost      *host, *logHost;
+    HttpHost    *host;
     HttpRx      *rx;
     HttpTx      *tx;
     MprBuf      *buf;
@@ -236,12 +238,14 @@ void maLogRequest(HttpConn *conn)
     rx = conn->rx;
     tx = conn->tx;
     host = httpGetConnContext(conn);
-
-    logHost = host->logHost;
-    if (logHost == 0) {
+    if (host == 0) {
         return;
     }
-    fmt = logHost->logFormat;
+
+#if UNUSED
+    host = host->logHost;
+#endif
+    fmt = host->logFormat;
     if (fmt == 0) {
         return;
     }
@@ -351,7 +355,7 @@ void maLogRequest(HttpConn *conn)
     }
     mprPutCharToBuf(buf, '\n');
     mprAddNullToBuf(buf);
-    mprWriteFile(logHost->accessLog, mprGetBufStart(buf), mprGetBufLength(buf));
+    mprWriteFile(host->log, mprGetBufStart(buf), mprGetBufLength(buf));
     rotateAccessLog(host);
 }
 

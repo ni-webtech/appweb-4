@@ -38,18 +38,21 @@ extern "C" {
 
 #if !DOXYGEN
 struct Http;
+struct HttpAlias;
 struct HttpAuth;
 struct HttpConn;
+struct HttpDir;
 struct HttpLoc;
+struct HttpHost;
 struct HttpPacket;
 struct HttpLimits;
 struct HttpQueue;
 struct HttpRx;
 struct HttpServer;
 struct HttpStage;
+struct HttpServer;
 struct HttpTx;
-struct MaAlias;
-struct MaDir;
+struct HttpUri;
 #endif
 
 
@@ -123,6 +126,7 @@ struct MaDir;
 #define HTTP_RANGE_BUFSIZE        128               /**< Size of a range boundary */
 #define HTTP_RETRIES              3                 /**< Default number of retries for client requests */
 #define HTTP_TIMER_PERIOD         1000              /**< Timer checks ever 1 second */
+#define HTTP_MAX_REWRITE          20                /**< Maximum URI rewrites */
 
 #define HTTP_INACTIVITY_TIMEOUT   (60  * 1000)      /**< Keep connection alive timeout */
 #define HTTP_SESSION_TIMEOUT      (3600 * 1000)     /**< One hour */
@@ -190,6 +194,25 @@ typedef bool (*HttpValidateCred)(struct HttpAuth *auth, cchar *realm, char *user
 typedef void (*HttpNotifier)(struct HttpConn *conn, int state, int flags);
 
 /** 
+    Callbacks
+ */
+typedef void (*HttpMatchCallback)(struct HttpConn *conn);
+
+/** 
+    Define an callback for IO events on this connection.
+    @description The event callback will be invoked in response to I/O events.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param fn Callback function. 
+    @param arg Data argument to provide to the callback function.
+    @ingroup HttpConn
+ */
+typedef cchar *(*HttpRedirectCallback)(struct HttpConn *conn, int *code, struct HttpUri *uri);
+typedef void (*HttpEnvCallback)(struct HttpConn *conn);
+typedef int (*HttpListenCallback)(struct HttpServer *server);
+
+extern void httpSetForkCallback(struct Http *http, MprForkCallback proc, void *arg);
+
+/** 
     Http service object
     The Http service is managed by a single service object.
     @stability Evolving
@@ -198,9 +221,11 @@ typedef void (*HttpNotifier)(struct HttpConn *conn, int state, int flags);
     httpSetDefaultHost httpSetDefaultPort httpSetProxy
  */
 typedef struct Http {
+    MprList         *servers;               /**< Currently configured servers */
+    MprList         *hosts;                 /**< List of host objects */
+    MprList         *endpoints;             /**< List of listening Endpoint objects */
     MprList         *connections;           /**< Currently open connection requests */
     MprHashTable    *stages;                /**< Possible stages in connection pipelines */
-    MprHashTable    *mimeTypes;             /**< Mime Types */
     MprHashTable    *statusCodes;           /**< Http status codes */
 
     /*  
@@ -229,7 +254,7 @@ typedef struct Http {
     MprMutex        *mutex;
     HttpGetPassword getPassword;            /**< Lookup password callback */
     HttpValidateCred validateCred;          /**< Validate user credentials callback */
-    MprForkCallback forkCallback;
+    char            *software;              /**< Software name and version */
     void            *forkData;
 
     int             connCount;              /**< Count of connections for Conn.seqno */
@@ -237,14 +262,25 @@ typedef struct Http {
     char            *currentDate;           /**< Date string for HTTP response headers */
     char            *expiresDate;           /**< Convenient expiry date (1 day in advance) */
     char            *secret;                /**< Random bytes for authentication */
-    char            *defaultHost;           /**< Default ip address */
-    int             defaultPort;            /**< Default port */
+
+    char            *defaultClientHost;     /**< Default ip address */
+    int             defaultClientPort;      /**< Default port */
+
     char            *protocol;              /**< HTTP/1.0 or HTTP/1.1 */
     char            *proxyHost;             /**< Proxy ip address */
     int             proxyPort;              /**< Proxy port */
     int             sslLoaded;              /**< True when the SSL provider has been loaded */
 
     void            (*rangeService)(struct HttpQueue *q, HttpRangeProc fill);
+
+    /*
+        Callbacks
+     */
+    HttpEnvCallback     envCallback;        /**< SetEnv callback */
+    MprForkCallback     forkCallback;       /**< Callback in child after fork() */
+    HttpListenCallback  listenCallback;     /**< Invoked when creating listeners */
+    HttpMatchCallback   matchCallback;      /**< Match host callback */
+    HttpRedirectCallback redirectCallback;  /**< Redirect callback */
 } Http;
 
 /**
@@ -255,6 +291,7 @@ typedef struct Http {
     @ingroup Http
  */
 extern Http *httpCreate();
+//  MOB - consistency - should not have to provide http
 extern void httpDestroy(Http *http);
 
 /**
@@ -263,6 +300,7 @@ extern void httpDestroy(Http *http);
     @param dispatcher Dispatcher to use. Can be null.
     @return Returns a HttpConn connection object
  */
+//  MOB - consistency - should not have to provide http
 extern struct HttpConn *httpCreateClient(Http *http, MprDispatcher *dispatcher);
 
 /**  
@@ -272,6 +310,7 @@ extern struct HttpConn *httpCreateClient(Http *http, MprDispatcher *dispatcher);
     @return Zero if successful, otherwise a negative MPR error code
     @ingroup Http
  */
+//  MOB - consistency - should not have to provide http
 extern int httpCreateSecret(Http *http);
 
 /**
@@ -286,6 +325,7 @@ extern void httpEnableTraceMethod(struct HttpLimits *limits, bool on);
     @param http Http service object.
     @return The http context object defined via httpSetContext
  */
+//  MOB - consistency - should not have to provide http
 extern void *httpGetContext(Http *http);
 
 /**
@@ -304,22 +344,22 @@ extern char *httpGetDateString(MprPath *sbuf);
 extern void httpSetContext(Http *http, void *context);
 
 /** 
-    Define a default host
-    @description Define a default host to use for connections if the URI does not specify a host
+    Define a default client host
+    @description Define a default host to use for client connections if the URI does not specify a host
     @param http Http object created via $httpCreateConn
     @param host Host or IP address
     @ingroup HttpConn
  */
-extern void httpSetDefaultHost(Http *http, cchar *host);
+extern void httpSetDefaultClientHost(Http *http, cchar *host);
 
 /** 
-    Define a default port
-    @description Define a default port to use for connections if the URI does not define a port
+    Define a default client port
+    @description Define a default port to use for client connections if the URI does not define a port
     @param http Http object created via $httpCreateConn
     @param port Integer port number
     @ingroup HttpConn
  */
-extern void httpSetDefaultPort(Http *http, int port);
+extern void httpSetDefaultClientPort(Http *http, int port);
 
 /** 
     Define a Http proxy host to use for all client connect requests.
@@ -333,9 +373,16 @@ extern void httpSetProxy(Http *http, cchar *host, int port);
 
 /* Internal APIs */
 extern void httpAddConn(Http *http, struct HttpConn *conn);
+extern int httpAddHostToServers(Http *http, struct HttpHost *host);
 extern void httpRemoveConn(Http *http, struct HttpConn *conn);
 extern cchar *httpLookupStatus(Http *http, int status);
-extern void httpSetForkCallback(Http *http, MprForkCallback callback, void *data);
+extern void httpAddServer(Http *http, struct HttpServer *server);
+extern struct HttpServer *httpLookupServer(Http *http, cchar *ip, int port);
+extern int httpSetNamedVirtualServers(Http *http, cchar *ip, int port);
+extern void httpRemoveServer(Http *http, struct HttpServer *server);
+extern void httpSetSoftware(Http *http, cchar *software);
+extern void httpAddHost(Http *http, struct HttpHost *host);
+extern void httpRemoveHost(Http *http, struct HttpHost *host);
 
 /** 
     Http limits
@@ -384,8 +431,8 @@ typedef struct HttpUri {
     char        *reference;             /**< Reference fragment within the specified resource */
     char        *query;                 /**< Query string */
     int         port;                   /**< Port number */
-    int         flags;                  /** Flags */
-    int         secure;                 /** Using https */
+    int         flags;                  /**< Flags */
+    int         secure;                 /**< Using https */
     char        *uri;                   /**< Original URI (not decoded) */
 } HttpUri;
 
@@ -907,7 +954,8 @@ extern ssize httpWriteString(HttpQueue *q, cchar *s);
 /* Internal */
 extern HttpQueue *httpFindPreviousQueue(HttpQueue *q);
 extern bool httpFlushQueue(HttpQueue *q, bool block);
-extern HttpQueue *httpCreateQueue(struct HttpConn *conn, struct HttpStage *stage, int direction, HttpQueue *prev);
+extern HttpQueue *httpCreateQueueHead(struct HttpConn *conn, cchar *name);
+extern HttpQueue *httpCreateQueue(struct HttpConn *conn, struct HttpStage *stage, int dir, HttpQueue *prev);
 extern HttpQueue *httpGetNextQueueForService(HttpQueue *q);
 extern void httpInitQueue(struct HttpConn *conn, HttpQueue *q, cchar *name);
 extern void httpInitSchedulerQueue(HttpQueue *q);
@@ -927,7 +975,9 @@ extern void httpMarkQueueHead(HttpQueue *q);
 #define HTTP_STAGE_POST           HTTP_POST         /**< Support POST requests */
 #define HTTP_STAGE_PUT            HTTP_PUT          /**< Support PUT requests */
 #define HTTP_STAGE_TRACE          HTTP_TRACE        /**< Support TRACE requests */
-#define HTTP_STAGE_ALL            HTTP_METHOD_MASK  /**< Mask for all methods */
+#define HTTP_STAGE_UNKNOWN        HTTP_UNKNOWN      /**< Support TRACE requests */
+#define HTTP_STAGE_METHODS        (HTTP_DELETE|HTTP_GET|HTTP_HEAD|HTTP_POST|HTTP_PUT) /**< Support default methods */
+#define HTTP_STAGE_ALL            HTTP_METHOD_MASK  /**< Mask for every possible method including custom methods */
 
 #define HTTP_STAGE_CONNECTOR      0x1000            /**< Stage is a connector  */
 #define HTTP_STAGE_HANDLER        0x2000            /**< Stage is a handler  */
@@ -973,14 +1023,14 @@ typedef struct HttpStage {
     MprHashTable    *extensions;            /**< Matching extensions for this filter */
 
     /**
-        Modify a request
-        @description This method is invoked to potentially modify a request. 
+        Rewrite a request
+        @description This method is invoked to potentially rewrite a request. 
         @param conn MaConn connection object
         @param stage Stage object
         @return True if the stage wishes to process this request.
         @ingroup MaStage
      */
-    bool (*modify)(struct HttpConn *conn, struct HttpStage *stage);
+    bool (*rewrite)(struct HttpConn *conn, struct HttpStage *stage);
 
     /** 
         Match a request
@@ -1213,6 +1263,7 @@ extern int httpOpenUploadFilter(Http *http);
 
 extern void httpSendOpen(HttpQueue *q);
 extern void httpSendOutgoingService(HttpQueue *q);
+extern void httpHandleOptionsTrace(HttpQueue *q);
 
 /* 
     Connection flags
@@ -1284,12 +1335,9 @@ extern void httpManageTrace(HttpTrace *trace, int flags);
 #define HTTP_TIME(conn, tag1, tag2, op) op
 #endif
 
-/** 
-    Notifier and event callbacks.
- */
-typedef MprEventProc HttpCallback;
-
-typedef int (*HttpFillHeadersProc)(void *data);
+typedef int (*HttpHeadersCallback)(void *arg);
+typedef void (*HttpIOCallback)(struct HttpConn *conn, MprEvent *event);
+extern void httpSetIOCallback(struct HttpConn *conn, HttpIOCallback fn);
 
 /** 
     Http Connections
@@ -1301,7 +1349,7 @@ typedef int (*HttpFillHeadersProc)(void *data);
     @see HttpConn HttpRx HttpRx HttpTx HttpQueue HttpStage
         httpCreateConn httpCloseConn httpCompleteRequest httpCreatePipeline httpDestroyPipeline httpDiscardTransmitData
         httpError httpGetAsync httpGetConnContext httpGetError httpGetKeepAliveCount httpPrepConn httpProcessPipeline
-        httpServiceQueues httpSetAsync httpSetCredentials httpSetCallback httpSetConnContext
+        httpServiceQueues httpSetAsync httpSetCredentials httpSetConnContext
         httpSetConnNotifier httpSetKeepAliveCount httpSetProtocol httpSetRetries httpSetState httpSetTimeout
         httpStartPipeline httpWritable
  */
@@ -1310,6 +1358,9 @@ typedef struct HttpConn {
 
     struct HttpRx *rx;                      /**< Rx object */
     struct HttpTx *tx;                      /**< Tx object */
+    struct HttpServer *server;              /**< Server object (if releveant) */
+    struct HttpHost *host;                  /**< Host object (if releveant) */
+
     int             state;                  /**< Connection state */
     int             flags;                  /**< Connection flags */
     int             abortPipeline;          /**< Connection errors (not proto errors) abort the pipeline */
@@ -1324,10 +1375,6 @@ typedef struct HttpConn {
     //  MOB implement
     int             threaded;               /**< Request running in a thread */
 #endif
-    HttpCallback    callback;               /**< Http I/O event callback */
-    void            *callbackArg;           /**< Arg to callback */
-    HttpFillHeadersProc fillHeaders;        /**< Callback to fill headers */
-    void            *fillHeadersArg;        /**< Arg to fillHeaders */
     HttpLimits      *limits;                /**< Service limits */
     Http            *http;                  /**< Http service object  */
     MprHashTable    *stages;                /**< Stages in pipeline */
@@ -1335,13 +1382,9 @@ typedef struct HttpConn {
     HttpNotifier    notifier;               /**< Connection Http state change notification callback */
     HttpNotifier    requestNotifier;        /**< Request Http state change notification callback */
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
-    struct HttpServer *server;              /**< Server object (if releveant) */
     MprSocket       *sock;                  /**< Underlying socket handle */
 
-    /* NOTE: documentRoot may be different for virtual hosts, so can't use server->documentRoot */
-    char            *documentRoot;          /**< Directory for documents */
-
-    struct HttpQueue serviceq;              /**< List of queues that require service for request pipeline */
+    struct HttpQueue *serviceq;             /**< List of queues that require service for request pipeline */
     struct HttpQueue *currentq;             /**< Current queue being serviced */
 
     HttpPacket      *input;                 /**< Header packet */
@@ -1349,14 +1392,10 @@ typedef struct HttpConn {
     HttpQueue       *writeq;                /**< Start of the write pipeline */
     MprTime         started;                /**< When the connection started */
     MprTime         lastActivity;           /**< Last activity on the connection */
-#if UNUSED
-    MprTime         time;                   /**< Cached current time */
-#endif
     MprEvent        runEvent;               /**< Event when running the handler */
     void            *context;               /**< Embedding context */
     char            *boundary;              /**< File upload boundary */
     char            *errorMsg;              /**< Error message for the last request (if any) */
-    void            *host;                  /**< Embedding host */
     char            *ip;                    /**< Remote client IP address */
     cchar           *protocol;              /**< HTTP protocol */
     int             async;                  /**< Connection is in async mode (non-blocking) */
@@ -1388,6 +1427,11 @@ typedef struct HttpConn {
     char            *authUser;              /**< User name credentials for authorized client requests */
     char            *authPassword;          /**< Password credentials for authorized client requests */
     int             sentCredentials;        /**< Sent authorization credentials */
+
+    HttpIOCallback  ioCallback;             /**< I/O event callback */
+    HttpHeadersCallback headersCallback;    /**< Callback to fill headers */
+    void            *headersCallbackArg;    /**< Arg to fillHeaders */
+
 #if BLD_DEBUG
     MprTime         startTime;              /**< Start time of request */
     uint64          startTicks;             /**< Start tick time of request */
@@ -1410,7 +1454,7 @@ extern void httpCallEvent(HttpConn *conn, int mask);
     @param conn HttpConn object created via $httpCreateConn
     @param event Event structure
  */
-extern void httpEvent(HttpConn *conn, MprEvent *event);
+extern void httpEvent(struct HttpConn *conn, MprEvent *event);
 
 /** 
     Close a connection
@@ -1578,16 +1622,6 @@ extern void httpSetCredentials(HttpConn *conn, cchar *user, cchar *password);
 extern void httpResetCredentials(HttpConn *conn);
 
 /** 
-    Define an callback for IO events on this connection.
-    @description The event callback will be invoked in response to I/O events.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param fn Callback function. 
-    @param arg Data argument to provide to the callback function.
-    @ingroup HttpConn
- */
-extern void httpSetCallback(HttpConn *conn, HttpCallback fn, void *arg);
-
-/** 
     Set the chunk size for transfer chunked encoding. When set a "Transfer-Encoding: Chunked" header will
     be added to the request and all write data will be broken into chunks of the requested size.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -1694,6 +1728,29 @@ extern void httpInitTrace(HttpTrace *trace);
 extern int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext);
 extern void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssize len, ssize total);
 extern HttpLimits *httpSetUniqueConnLimits(HttpConn *conn);
+extern void httpMatchHost(HttpConn *conn);
+extern void httpMatchHandler(HttpConn *conn);
+
+extern char *httpGetExtension(HttpConn *conn);
+
+/**
+    Aliases 
+    @stability Evolving
+    @defgroup HttpAlias HttpAlias
+    @see HttpAlias maCreateAlias
+ */
+typedef struct HttpAlias {
+    char            *prefix;                /**< Original URI prefix */
+    int             prefixLen;              /**< Prefix length */
+    char            *filename;              /**< Alias to a physical path name */
+    char            *uri;                   /**< Redirect to a uri */
+    int             redirectCode;
+} HttpAlias;
+
+extern HttpAlias *httpCreateAlias(cchar *prefix, cchar *name, int code);
+
+//  MOB - move
+extern char *httpMakeFilename(HttpConn *conn, HttpAlias *alias, cchar *url, bool skipAliasPrefix);
 
 /*  
     Deny/Allow order. TODO - this is not yet implemented.
@@ -1842,6 +1899,25 @@ extern bool     httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *
                     cchar *requiredPass, char **msg);
 #endif /* AUTH_PAM */
 
+/**
+    Directory Control
+    @stability Evolving
+    @defgroup HttpDir HttpDir
+    @see HttpDir
+ */
+typedef struct  HttpDir {
+    HttpAuth        *auth;                  /**< Authorization control */
+    char            *indexName;             /**< Default index document name */
+    char            *path;                  /**< Directory filename */
+    size_t          pathLen;                /**< Length of the directory path */
+} HttpDir;
+
+extern HttpDir *httpCreateBareDir(cchar *path);
+extern HttpDir *httpCreateDir(cchar *path, HttpDir *parent);
+extern void httpSetDirPath(HttpDir *dir, cchar *filename);
+extern void httpSetDirPath(HttpDir *dir, cchar *filename);
+extern void httpSetDirIndex(HttpDir *dir, cchar *name);
+
 
 #define HTTP_LOC_PUT_DELETE       0x20      /**< Support PUT|DELETE */
 
@@ -1892,8 +1968,8 @@ extern void httpSetLocationScript(HttpLoc *location, cchar *script);
 extern int httpSetConnector(HttpLoc *location, cchar *name);
 extern int httpAddHandler(HttpLoc *location, cchar *name, cchar *extensions);
 
-extern HttpLoc *httpCreateLocation(Http *http);
-extern HttpLoc *httpCreateInheritedLocation(Http *http, HttpLoc *location);
+extern HttpLoc *httpCreateLocation();
+extern HttpLoc *httpCreateInheritedLocation(HttpLoc *location);
 extern int httpSetHandler(HttpLoc *location, cchar *name);
 extern int httpAddFilter(HttpLoc *location, cchar *name, cchar *extensions, int direction);
 extern void httpClearStages(HttpLoc *location, int direction);
@@ -1927,11 +2003,12 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
 #define HTTP_POST               0x10        /**< Post method */
 #define HTTP_PUT                0x20        /**< PUT method  */
 #define HTTP_TRACE              0x40        /**< TRACE method  */
-#define HTTP_METHOD_MASK        0x7F        /**< Method mask */
-#define HTTP_CREATE_ENV         0x80        /**< Must create env for this request */
-#define HTTP_IF_MODIFIED        0x100       /**< If-[un]modified-since supplied */
-#define HTTP_CHUNKED            0x200       /**< Content is chunk encoded */
-#define HTTP_UPLOAD             0x400       /**< Content has uploaded file content */
+#define HTTP_UNKNOWN            0x800       /**< Unknown method  */
+#define HTTP_METHOD_MASK        0xFFF       /**< Method mask */
+#define HTTP_CREATE_ENV         0x100       /**< Must create env for this request */
+#define HTTP_IF_MODIFIED        0x200       /**< If-[un]modified-since supplied */
+#define HTTP_CHUNKED            0x400       /**< Content is chunk encoded */
+#define HTTP_UPLOAD             0x800       /**< Content has uploaded file content */
 
 /*  
     Incoming chunk encoding states
@@ -1966,12 +2043,14 @@ typedef struct HttpRx {
     MprTime         since;                  /**< If-Modified date */
 
     int             eof;                    /**< All read data has been received (eof) */
-    ssize           length;                 /**< Declared content length (ENV: CONTENT_LENGTH) */
     int             chunkState;             /**< Chunk encoding state */
-    ssize           chunkSize;              /**< Size of the next chunk */
     int             chunkRemainingData;     /**< Remaining chunk data to read */
     int             flags;                  /**< Rx modifiers */
     int             needInputPipeline;      /**< Input pipeline required to process received data */
+    int             rewrites;               /**< Count of request rewrites */
+
+    ssize           length;                 /**< Declared content length (ENV: CONTENT_LENGTH) */
+    ssize           chunkSize;              /**< Size of the next chunk */
     ssize           remainingContent;       /**< Remaining content data to read (in next chunk if chunked) */
     ssize           receivedContent;        /**< Length of content actually received */
     ssize           readContent;            /**< Length of content read by user */
@@ -2028,8 +2107,8 @@ typedef struct HttpRx {
     /*
         Extensions for Appweb. Inline for performance.
      */
-    struct MaAlias  *alias;                 /**< Matching alias */
-    struct MaDir    *dir;                   /**< Best matching dir (PTR only) */
+    struct HttpAlias  *alias;                 /**< Matching alias */
+    struct HttpDir    *dir;                   /**< Best matching dir (PTR only) */
 } HttpRx;
 
 
@@ -2136,9 +2215,10 @@ extern cvoid *httpGetStageData(HttpConn *conn, cchar *key);
 extern HttpRx *httpCreateRx(HttpConn *conn);
 extern void httpDestroyRx(HttpRx *rx);
 extern void httpCloseRx(struct HttpConn *conn);
+extern void httpConnError(struct HttpConn *conn, int status, cchar *fmt, ...);
 extern bool httpContentNotModified(HttpConn *conn);
 extern HttpRange *httpCreateRange(HttpConn *conn, int start, int end);
-extern void httpConnError(struct HttpConn *conn, int status, cchar *fmt, ...);
+extern int  httpMapToStorage(HttpConn *conn);
 extern void httpProtocolError(struct HttpConn *conn, int status, cchar *fmt, ...);
 extern void httpProcess(HttpConn *conn, HttpPacket *packet);
 extern void httpProcessWriteEvent(HttpConn *conn);
@@ -2259,9 +2339,6 @@ extern void httpCreateEnvVars(HttpConn *conn);
 #define HTTP_TX_HEADERS_CREATED     0x4     /**< Response headers have been created */
 #define HTTP_TX_SENDFILE            0x8     /**< Relay output via Send connector */
 
-typedef cchar *(*HttpRedirectCallback)(HttpConn *conn, int *code, HttpUri *uri);
-typedef void (*HttpEnvCallback)(HttpConn *conn);
-
 /** 
     Http Tx
     @description The tx object controls the transmission of data. This may be client requests or responses to
@@ -2277,13 +2354,10 @@ typedef struct HttpTx {
     MprList         *outputPipeline;        /**< Output processing */
     HttpStage       *handler;               /**< Server-side request handler stage */
     HttpStage       *connector;             /**< Network connector to send / receive socket data */
-    HttpQueue       queue[2];               /**< Dummy head for the queues */
+    HttpQueue       *queue[2];              /**< Dummy head for the queues */
 
     HttpUri         *parsedUri;             /**< Request uri. Only used for requests */
     HttpRange       *currentRange;          /**< Current range being fullfilled */
-#if UNUSED
-    MprDispatcher   *dispatcher;            /**< Request has its own dispatcher */
-#endif
     MprHashTable    *headers;               /**< Transmission headers */
     char            *rangeBoundary;         /**< Inter-range boundary */
 
@@ -2306,14 +2380,7 @@ typedef struct HttpTx {
     ssize           entityLength;           /**< Original content length before range subsetting */
     ssize           bytesWritten;           /**< Bytes written including headers */
     ssize           headerSize;             /**< Size of the header written */
-
-    HttpRedirectCallback redirectCallback;  /**< Redirect callback */
-    HttpEnvCallback envCallback;            /**< SetEnv callback */
 } HttpTx;
-
-#if UNUSED
-extern void httpCreateTxHeaders(HttpConn *conn);
-#endif
 
 /** 
     Add a header to the transmission using a format string.
@@ -2628,8 +2695,30 @@ extern ssize httpWriteUploadData(HttpConn *conn, MprList *formData, MprList *fil
  */
 extern void httpSetWriteBlocked(HttpConn *conn);
 
+#if UNUSED
 
-typedef int (*HttpListenCallback)(struct HttpServer *server);
+/** Host Address Mapping
+    @stability Evolving
+    @defgroup HttpEndpoint HttpEndpoint
+    @see HttpEndpoint
+ */
+typedef struct HttpEndpoint {
+    //  MOB - should be a hash based on host name
+    MprList         *hosts;                 /**< Hosts using this address */
+    char            *ip;                    /**< IP Address for this endpoint */
+    int             port;                   /**< Port for this endpoint */
+    int             flags;                  /**< Mapping flags */
+} HttpEndpoint;
+
+extern void httpAddEndpoint(Http *http, HttpEndpoint *endpoint);
+extern HttpEndpoint *httpLookupEndpoint(Http *http, cchar *ip, int port);
+extern HttpEndpoint *httpRemoveHostFromEndpoint(Http *http, cchar *ip, int port, struct HttpHost *host);
+#endif
+
+/*  
+    Flags
+ */
+#define HTTP_IPADDR_VHOST 0x1
 
 /** 
     Server endpoint
@@ -2637,27 +2726,26 @@ typedef int (*HttpListenCallback)(struct HttpServer *server);
     @defgroup HttpServer HttpServer
     @see HttpServer httpCreateServer httpStartServer httpStopServer
  */
-typedef struct  HttpServer {
+typedef struct HttpServer {
     Http            *http;                  /**< Http service object */
+    MprList         *hosts;                 /**< List of host objects */
     HttpLoc         *loc;                   /**< Default location block */
-    HttpLimits      *limits;                /**< Server resource limits */
+    HttpLimits      *limits;                /**< Alias for first host resource limits */
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
     MprHashTable    *clientLoad;            /**< Table of active client IPs and connection counts */
-    char            *serverRoot;            /**< Directory for server configuration */
-    char            *documentRoot;          /**< Directory for documents */
     char            *name;                  /**< Published name of the server (ServerName directive) */
     char            *ip;                    /**< Listen IP address */
     int             port;                   /**< Listen port */
     int             async;                  /**< Listening is in async mode (non-blocking) */
     int             clientCount;            /**< Count of current active clients */
     int             requestCount;           /**< Count of current active requests */
+    int             flags;                  /**< Server control flags */
     void            *context;               /**< Embedding context */
+    //  MOB is this needed?
     void            *meta;                  /**< Meta server object */
-    char            *software;              /**< Server software name and version */
     MprSocket       *sock;                  /**< Listening socket */
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
     HttpNotifier    notifier;               /**< Http state change notification callback */
-    HttpListenCallback listenCallback;      /**< Invoked when creating listeners */
     struct MprSsl   *ssl;                   /**< Server SSL configuration */
 } HttpServer;
 
@@ -2671,8 +2759,13 @@ typedef struct  HttpServer {
         } \
     } else \
 
+/*
+    Flags for httpCreateServer
+ */
+#define HTTP_CREATE_HOST    0x1     /**< CreateServer should also create a default host object */
+
 /** 
-    Create a server endpoint.
+    Create a server object.
     @description Creates a listening server on the given IP:PORT. Use httpStartServer to begin listening for client
         connections.
     @param http Http object created via #httpCreate
@@ -2681,7 +2774,7 @@ typedef struct  HttpServer {
     @param dispatcher Dispatcher to use. Can be null.
     @ingroup HttpServer
  */
-extern HttpServer *httpCreateServer(Http *http, cchar *ip, int port, MprDispatcher *dispatcher);
+extern HttpServer *httpCreateServer(cchar *ip, int port, MprDispatcher *dispatcher, int flags);
 extern void httpDestroyServer(HttpServer *server);
 
 extern HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event);
@@ -2709,8 +2802,7 @@ extern int httpGetServerAsync(HttpServer *server);
 extern void *httpGetServerContext(HttpServer *server);
 
 extern void httpSetServerName(HttpServer *server, cchar *name);
-extern void httpSetServerSoftware(HttpServer *server, cchar *software);
-extern void httpSetServerSsl(HttpServer *server, struct MprSsl *ssl);
+//  MOB - consistency - should not have to provide http
 extern int httpLoadSsl(Http *http);
 
 /**
@@ -2760,10 +2852,101 @@ extern int httpStartServer(HttpServer *server);
  */
 extern void httpStopServer(HttpServer *server);
 
-//  MOB
-extern void httpSetDocumentRoot(HttpServer *server, cchar *path);
-extern void httpSetServerRoot(HttpServer *server, cchar *path);
-extern void httpSetIpAddr(HttpServer *server, cchar *ip, int port);
+//  MOB DOC
+extern int httpSecureServer(cchar *ip, int port, struct MprSsl *ssl);
+extern void httpSetServerAddress(HttpServer *server, cchar *ip, int port);
+extern struct HttpHost *httpLookupHostByName(HttpServer *server, cchar *name);
+
+extern HttpServer *httpCreateConfiguredServer(cchar *docRoot, cchar *ip, int port);
+
+
+/*
+    Flags
+ */
+#define HTTP_HOST_VHOST         0x1         /* Is a virtual host */
+#define HTTP_HOST_NAMED_VHOST   0x2         /* Named virtual host */
+
+//  MOB -- should be better way than this
+#define HTTP_HOST_NO_TRACE      0x10        /* Prevent use of TRACE */
+
+/**
+    Host Object
+    A Host object represents a logical host. Several logical hosts may share a single HttpServer. Hosts may represent 
+    a single listening HTTP connection endpoint or they may be a named virtual host sharing an endpoint.
+    @stability Evolving
+    @defgroup HttpHost HttpHost
+    @see HttpHost
+*/
+typedef struct HttpHost {
+    char            *name;                  /**< ServerName directive - used for redirects */
+#if UNUSED
+    HttpServer      *server;                /**< HttpServer backing this host */
+#endif
+    struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, locations */
+
+    MprList         *aliases;               /**< List of Alias definitions */
+    MprList         *dirs;                  /**< List of Directory definitions */
+    MprList         *locations;             /**< List of Location defintions */
+    HttpLimits      *limits;                /**< Host resource limits */
+
+    //  MOB - reorder and cleanup
+    //  MOB - rename
+    HttpLoc         *loc;                   /**< Default location */
+    MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
+
+    char            *documentRoot;          /**< Default directory for web documents */
+    char            *serverRoot;            /**< Directory for configuration files */
+    char            *ip;                    /**< IP address */
+    int             port;                   /**< Listening port number */
+
+    int             traceLevel;             /**< Trace activation level */
+    int             traceMaxLength;         /**< Maximum trace file length (if known) */
+    int             traceMask;              /**< Request/response trace mask */
+    MprHashTable    *traceInclude;          /**< Extensions to include in trace */
+    MprHashTable    *traceExclude;          /**< Extensions to exclude from trace */
+
+    char            *protocol;              /**< Defaults to "HTTP/1.1" */
+    int             flags;                  /**< Host flags */
+
+    MprFile         *log;                   /**< File object for access logging */
+    char            *logFormat;             /**< Access log format */
+    char            *logPath;               /**< Access log filename */
+
+    MprMutex        *mutex;                 /**< Multithread sync */
+#if UNUSED
+    //  MOB - must mark if enabled
+    MaServer        *meta;                  /**< Meta-server owning this host */
+    struct MaHost   *logHost;               /**< If set, use this hosts logs */
+    char            *mimeFile;              /**< Name of the mime types file */
+#endif
+} HttpHost;
+
+//  MOB DOC
+extern int  httpAddAlias(HttpHost *host, HttpAlias *newAlias);
+extern int httpAddDir(HttpHost *host, HttpDir *dir);
+extern int  httpAddLocation(HttpHost *host, HttpLoc *newLocation);
+extern HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc);
+extern HttpHost *httpCreateVirtualHost(cchar *ip, int port, HttpHost *parent);
+extern HttpAlias *httpGetAlias(HttpHost *host, cchar *uri);
+extern HttpAlias *httpLookupAlias(HttpHost *host, cchar *prefix);
+extern HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg);
+extern HttpLoc *httpLookupBestLocation(HttpHost *host, cchar *uri);
+extern HttpLoc *httpLookupLocation(HttpHost *host, cchar *prefix);
+extern HttpDir *httpLookupBestDir(HttpHost *host, cchar *path);
+extern char *httpMakePath(HttpHost *host, cchar *file);
+extern char *httpReplaceReferences(HttpHost *host, cchar *str);
+extern void httpSetHostAddress(HttpHost *host, cchar *ip, int port);
+extern void httpSetHostDocumentRoot(HttpHost *host, cchar *dir);
+extern void httpSetHostName(HttpHost *host, cchar *name);
+extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
+extern void httpSetHostTrace(HttpHost *host, int level, int mask);
+extern void httpSetHostTraceFilter(HttpHost *host, int len, cchar *include, cchar *exclude);
+extern void httpSetHostServerRoot(HttpHost *host, cchar *dir);
+extern int  httpSetupTrace(HttpHost *host, cchar *ext);
+extern void httpAddHostToServer(HttpServer *server, HttpHost *host);
+extern bool httpIsNamedVirtualServer(HttpServer *server);
+extern HttpHost *httpLookupVirtualHost(HttpServer *server, cchar *hostStr);
+extern void httpSetNamedVirtualServer(HttpServer *server);
 
 #ifdef __cplusplus
 } /* extern C */

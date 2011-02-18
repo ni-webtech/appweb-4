@@ -141,8 +141,8 @@ int startRequest(MprTestGroup *gp, cchar *method, cchar *uri)
     http = getHttp(gp);
 
     if (*uri == '/') {
-        httpSetDefaultPort(http, app->port);
-        httpSetDefaultHost(http, app->host);
+        httpSetDefaultClientPort(http, app->port);
+        httpSetDefaultClientHost(http, app->host);
     }
     gp->conn = conn = httpCreateClient(http, NULL);
     if (httpConnect(conn, method, uri) < 0) {

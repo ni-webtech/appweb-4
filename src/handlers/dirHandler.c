@@ -345,7 +345,7 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
     MprPath     info;
     Dir         *dir;
     MprTime     when;
-    MaHost      *host;
+    HttpHost      *host;
     char        *newPath, sizeBuf[16], timeBuf[48], *icon;
     struct tm   tm;
     bool        isDir;
@@ -385,7 +385,7 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
     } else {
         host = httpGetConnHost(q->conn);
         ext = mprGetPathExtension(ep->name);
-        if ((mimeType = maLookupMimeType(host, ext)) != 0) {
+        if ((mimeType = mprLookupMime(host->mimeTypes, ext)) != 0) {
             if (strcmp(ext, "es") == 0 || strcmp(ext, "ejs") == 0 || strcmp(ext, "php") == 0) {
                 icon = "text";
             } else if (strstr(mimeType, "text") != 0) {

@@ -277,7 +277,7 @@ static int writeBlock(cchar *str, uint len TSRMLS_DC)
     if (conn == 0) {
         return -1;
     }
-    written = httpWriteBlock(conn->tx->queue[HTTP_QUEUE_TRANS].nextQ, str, len);
+    written = httpWriteBlock(conn->tx->queue[HTTP_QUEUE_TRANS]->nextQ, str, len);
     mprLog(6, "php: write %d", written);
     if (written <= 0) {
         php_handle_aborted_connection();
@@ -397,7 +397,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     int         len, nbytes;
 
     conn = (HttpConn*) SG(server_context);
-    q = conn->tx->queue[HTTP_QUEUE_RECEIVE].prevQ;
+    q = conn->tx->queue[HTTP_QUEUE_RECEIVE]->prevQ;
     if (q->first == 0) {
         return 0;
     }
@@ -443,7 +443,7 @@ static int initializePhp(Http *http)
 #ifdef BLD_FEATURE_PHP_INI
     phpSapiBlock.php_ini_path_override = BLD_FEATURE_PHP_INI;
 #else
-    phpSapiBlock.php_ini_path_override = appweb->defaultServer->serverRoot;
+    phpSapiBlock.php_ini_path_override = appweb->defaultMeta->serverRoot;
 #endif
     sapi_startup(&phpSapiBlock);
     if (php_module_startup(&phpSapiBlock, 0, 0) == FAILURE) {
@@ -492,8 +492,8 @@ int maPhpHandlerInit(Http *http, MprModule *module)
 
     mprSetModuleFinalizer(module, finalizePhp); 
 
-    handler = httpCreateHandler(http, module->name, HTTP_STAGE_ALL | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | 
-        HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_MISSING_EXT, module);
+    handler = httpCreateHandler(http, module->name, 
+        HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
