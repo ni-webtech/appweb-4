@@ -516,9 +516,9 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
     appweb = meta->appweb;
     http = appweb->http;
-    limits = meta->limits;
     server = 0;
     host = state->host;
+    limits = host->limits;
     dir = state->dir;
     loc = state->loc;
     mprAssert(state->loc->prefix);
