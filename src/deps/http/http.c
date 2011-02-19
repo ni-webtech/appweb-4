@@ -538,7 +538,7 @@ static void threadMain(void *data, MprThread *tp)
 
     td = tp->data;
     td->dispatcher = mprCreateDispatcher(tp->name, 1);
-    td->conn = conn = httpCreateClient(app->http, td->dispatcher);
+    td->conn = conn = httpCreateConn(app->http, NULL, td->dispatcher);
 
     /*  
         Relay to processThread via the dispatcher. This serializes all activity on the conn->dispatcher
@@ -683,7 +683,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
         if (sendRequest(conn, app->method, url, files) < 0) {
             return MPR_ERR_CANT_WRITE;
         }
-        if (httpWait(conn, conn->dispatcher, HTTP_STATE_PARSED, conn->limits->requestTimeout) == 0) {
+        if (httpWait(conn, HTTP_STATE_PARSED, conn->limits->requestTimeout) == 0) {
             if (httpNeedRetry(conn, &redirect)) {
                 if (redirect) {
                     location = httpCreateUri(redirect, 0);
@@ -802,7 +802,7 @@ static int doRequest(HttpConn *conn, cchar *url, MprList *files)
         return MPR_ERR_CANT_CONNECT;
     }
     while (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprGetElapsedTime(mark) <= limits->requestTimeout) {
-        httpWait(conn, conn->dispatcher, HTTP_STATE_COMPLETE, 10);
+        httpWait(conn, HTTP_STATE_COMPLETE, 10);
         readBody(conn);
     }
     if (conn->state < HTTP_STATE_COMPLETE && !conn->error) {

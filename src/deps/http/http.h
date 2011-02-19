@@ -290,9 +290,9 @@ typedef struct Http {
     @ingroup Http
  */
 extern Http *httpCreate();
-//  MOB - consistency - should not have to provide http
 extern void httpDestroy(Http *http);
 
+#if UNUSED
 /**
     Create a Http client
     @param http HttpConn object created via $httpCreateConn
@@ -301,6 +301,7 @@ extern void httpDestroy(Http *http);
  */
 //  MOB - consistency - should not have to provide http
 extern struct HttpConn *httpCreateClient(Http *http, MprDispatcher *dispatcher);
+#endif
 
 /**  
     Create the Http secret data for crypto
@@ -2656,13 +2657,12 @@ extern void httpSetSimpleHeader(HttpConn *conn, cchar *key, cchar *value);
 /** 
     Wait for the connection to achieve the requested state Used for blocking client requests.
     @param conn HttpConn connection object created via $httpCreateConn
-    @param dispatcher Mpr dispatcher to use for waiting
     @param state HTTP_STATE_XXX to wait for.
     @param timeout Timeout in milliseconds to wait 
     @return MOB
     @ingroup HttpTx
  */
-extern int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout);
+extern int httpWait(HttpConn *conn, int state, MprTime timeout);
 
 /** 
     Write the transmission headers

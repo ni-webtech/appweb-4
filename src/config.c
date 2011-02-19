@@ -480,8 +480,9 @@ int maValidateConfiguration(MaMeta *meta)
                 httpSetHostName(host, mprGetHostName(host));
             }
         }
-        mprLog(MPR_CONFIG, "Host \"%s\" has ServerRoot \"%s\", DocumentRoot: \"%s\"", host->name, host->serverRoot, 
-            host->documentRoot);
+        mprLog(MPR_CONFIG, "Host \"%s\"", host->name);
+        mprLog(MPR_CONFIG, "    ServerRoot \"%s\"", host->serverRoot);
+        mprLog(MPR_CONFIG, "    DocumentRoot: \"%s\"", host->documentRoot);
     }
     return 1;
 }

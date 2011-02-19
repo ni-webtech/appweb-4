@@ -144,7 +144,7 @@ int startRequest(MprTestGroup *gp, cchar *method, cchar *uri)
         httpSetDefaultClientPort(http, app->port);
         httpSetDefaultClientHost(http, app->host);
     }
-    gp->conn = conn = httpCreateClient(http, NULL);
+    gp->conn = conn = httpCreateConn(http, NULL, NULL);
     if (httpConnect(conn, method, uri) < 0) {
         return MPR_ERR_CANT_OPEN;
     }
@@ -165,7 +165,7 @@ bool simpleGet(MprTestGroup *gp, cchar *uri, int expectStatus)
     }
     conn = getConn(gp);
     httpFinalize(conn);
-    if (httpWait(conn, NULL, HTTP_STATE_COMPLETE, -1) < 0) {
+    if (httpWait(conn, HTTP_STATE_COMPLETE, -1) < 0) {
         return MPR_ERR_CANT_READ;
     }
     status = httpGetStatus(gp->conn);
@@ -179,6 +179,8 @@ bool simpleGet(MprTestGroup *gp, cchar *uri, int expectStatus)
     gp->content = httpReadString(gp->conn);
     assert(gp->content != NULL);
     mprLog(4, "Response content %s", gp->content);
+    httpDestroyConn(gp->conn);
+    gp->conn = 0;
     return 1;
 }
 
@@ -209,7 +211,7 @@ bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
         }
     }
     httpFinalize(conn);
-    if (httpWait(conn, NULL, HTTP_STATE_COMPLETE, -1) < 0) {
+    if (httpWait(conn, HTTP_STATE_COMPLETE, -1) < 0) {
         return MPR_ERR_CANT_READ;
     }
     status = httpGetStatus(conn);
@@ -248,7 +250,7 @@ bool simplePost(MprTestGroup *gp, char *uri, char *bodyData, ssize len, int expe
         }
     }
     httpFinalize(conn);
-    if (httpWait(conn, NULL, HTTP_STATE_COMPLETE, -1) < 0) {
+    if (httpWait(conn, HTTP_STATE_COMPLETE, -1) < 0) {
         return MPR_ERR_CANT_READ;
     }
 

@@ -1175,7 +1175,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     }
 
     if (auth->type == HTTP_AUTH_DIGEST) {
-        if (strcmp(ad->qop, auth->qop) != 0) {
+        if (scmp(ad->qop, auth->qop) != 0) {
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied. Protection quality does not match", 0);
             return 1;
         }
@@ -1188,7 +1188,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
          */
         when = 0; secret = 0; etag = 0; realm = 0;
         parseDigestNonce(ad->nonce, &secret, &etag, &realm, &when);
-        if (strcmp(secret, http->secret) != 0 || strcmp(etag, tx->etag) != 0 || strcmp(realm, auth->requiredRealm) != 0) {
+        if (scmp(secret, http->secret) != 0 || scmp(etag, tx->etag) != 0 || scmp(realm, auth->requiredRealm) != 0) {
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce mismatch");
         } else if ((when + (5 * 60 * MPR_TICKS_PER_SEC)) < http->now) {
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce is stale");
@@ -1397,12 +1397,12 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
         etag = tx->etag ? tx->etag : "";
         nonce = createDigestNonce(conn->http->secret, etag, auth->requiredRealm);
 
-        if (strcmp(qopClass, "auth") == 0) {
+        if (scmp(qopClass, "auth") == 0) {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
                 "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
                 auth->requiredRealm, conn->server->name, nonce, etag);
 
-        } else if (strcmp(qopClass, "auth-int") == 0) {
+        } else if (scmp(qopClass, "auth-int") == 0) {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
                 "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
                 auth->requiredRealm, conn->server->name, nonce, etag);
@@ -1450,7 +1450,7 @@ static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **r
 
 static char *md5(cchar *string)
 {
-    return mprGetMD5Hash(string, strlen(string), NULL);
+    return mprGetMD5Hash(string, slen(string), NULL);
 }
 
 
@@ -1485,10 +1485,10 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
     /*
         H(HA1:nonce:HA2)
      */
-    if (strcmp(qop, "auth") == 0) {
+    if (scmp(qop, "auth") == 0) {
         mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
 
-    } else if (strcmp(qop, "auth-int") == 0) {
+    } else if (scmp(qop, "auth-int") == 0) {
         mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
 
     } else {
@@ -1983,16 +1983,6 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
  */
 
 
-
-
-HttpConn *httpCreateClient(Http *http, MprDispatcher *dispatcher)
-{
-    HttpConn    *conn;
-
-    conn = httpCreateConn(http, NULL, NULL);
-    conn->dispatcher = dispatcher;
-    return conn;
-}
 
 
 static HttpConn *openConnection(HttpConn *conn, cchar *url)
@@ -4782,7 +4772,7 @@ static bool isIdle()
     for (next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; ) {
         if (conn->state != HTTP_STATE_BEGIN) {
             if (lastTrace < now) {
-                mprLog(0, "Waiting for request %s to complete", *conn->rx->uri ? conn->rx->uri : conn->rx->pathInfo);
+                mprLog(0, "Waiting for request %s to complete", conn->rx->uri ? conn->rx->uri : conn->rx->pathInfo);
                 lastTrace = now;
             }
             unlock(http);
@@ -5698,7 +5688,9 @@ static HttpStage *findHandler(HttpConn *conn)
                 path = sjoin(tx->filename, ".", hp->key, NULL);
                 if (mprGetPathInfo(path, &tx->fileInfo) == 0) {
                     mprLog(5, "findHandler: Adding extension, new path %s\n", path);
+#if UNUSED
                     tx->filename = path;
+#endif
                     httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL), NULL);
                     break;
                 }
@@ -5762,6 +5754,7 @@ static HttpStage *mapToFile(HttpConn *conn, HttpStage *handler)
                 if (mprGetPathInfo(gfile, &ginfo) == 0) {
                     tx->filename = gfile;
                     tx->fileInfo = ginfo;
+                    tx->etag = mprAsprintf("\"%x-%Lx-%Lx\"", ginfo.inode, ginfo.size, ginfo.mtime);
                     httpSetHeader(conn, "Content-Encoding", "gzip");
                     return handler;
                 }
@@ -7647,7 +7640,7 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
         }
 #else
         if (conn->sock) {
-            httpWait(conn, conn->dispatcher, 0, MPR_TIMEOUT_SOCKETS);
+            httpWait(conn, 0, MPR_TIMEOUT_SOCKETS);
         }
 #endif
     }
@@ -9521,17 +9514,22 @@ int httpMapToStorage(HttpConn *conn)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpHost    *host;
+    MprPath     *info;
 
     rx = conn->rx;
     tx = conn->tx;
     host = conn->host;
+    info = &tx->fileInfo;
 
     rx->loc = httpLookupBestLocation(host, rx->pathInfo);
     rx->auth = rx->loc->auth;
     rx->alias = httpGetAlias(host, rx->pathInfo);
     tx->filename = httpMakeFilename(conn, rx->alias, rx->pathInfo, 1);
-    mprGetPathInfo(tx->filename, &tx->fileInfo);
     tx->extension = httpGetExtension(conn);
+    mprGetPathInfo(tx->filename, info);
+    if (info->valid) {
+        tx->etag = mprAsprintf("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+    }
     return 0;
 }
 
@@ -9580,18 +9578,15 @@ static void waitHandler(HttpConn *conn, struct MprEvent *event)
 /*  
     Wait for the Http object to achieve a given state. Timeout is total wait time in msec. If <= 0, then dont wait.
  */
-int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
+int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
     Http        *http;
-    MprTime     expire;
-    int         eventMask, remainingTime, addedHandler, saveAsync, justOne;
+    MprTime     expire, remainingTime;
+    int         eventMask, addedHandler, saveAsync, justOne;
 
     http = conn->http;
-    //  MOB -- if always true, could remove dispatcher arg.
-    mprAssert(dispatcher == conn->dispatcher);
-
     if (timeout <= 0) {
-        timeout = 0;
+        timeout = MAXINT64;
     }
     if (state == 0) {
         state = HTTP_STATE_COMPLETE;
@@ -9620,7 +9615,7 @@ int httpWait(HttpConn *conn, MprDispatcher *dispatcher, int state, int timeout)
     expire = http->now + timeout;
 
     while (!conn->error && conn->state < state && conn->sock && !mprIsSocketEof(conn->sock)) {
-        remainingTime = (int) (expire - http->now);
+        remainingTime = (expire - http->now);
         if (remainingTime <= 0) {
             break;
         }
@@ -11812,9 +11807,11 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
             httpAddHeader(conn, "Expires", "%s", hdr);
         }
     }
+#if UNUSED
     if (tx->etag == 0 && info->valid) {
         tx->etag = mprAsprintf("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
     }
+#endif
     if (tx->etag) {
         httpAddHeader(conn, "ETag", "%s", tx->etag);
     }
