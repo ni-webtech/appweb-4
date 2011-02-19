@@ -2274,7 +2274,7 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
             name = mprGetPathBase(path);
             rc += httpWrite(conn->writeq, "%s\r\nContent-Disposition: form-data; name=\"file%d\"; filename=\"%s\"\r\n", 
                 conn->boundary, next - 1, name);
-            rc += httpWrite(conn->writeq, "Content-Type: %s\r\n\r\n", mprLookupMime(conn->host->mimeTypes, path));
+            rc += httpWrite(conn->writeq, "Content-Type: %s\r\n\r\n", mprLookupMime(MPR->mimeTypes, path));
             rc += blockingFileCopy(conn, path);
             rc += httpWrite(conn->writeq, "\r\n");
         }

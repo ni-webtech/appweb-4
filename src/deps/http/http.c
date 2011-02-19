@@ -274,7 +274,6 @@ static bool parseArgs(int argc, char **argv)
 
 #if UNUSED
         } else if (strcmp(argp, "--http") == 0) {
-            //  DEPRECATED
             if (nextArg >= argc) {
                 return 0;
             } else {
@@ -282,6 +281,7 @@ static bool parseArgs(int argc, char **argv)
                 app->protocol = (httpVersion == 0) ? "HTTP/1.0" : "HTTP/1.1";
             }
 #endif
+
         } else if (strcmp(argp, "--iterations") == 0 || strcmp(argp, "-i") == 0) {
             if (nextArg >= argc) {
                 return 0;
