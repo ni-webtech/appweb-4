@@ -5089,11 +5089,16 @@ extern void mprStopModule(MprModule *mp);
 extern void mprUnloadModule(MprModule *mp);
 
 /*
-    Flags for mprInitEvent and mprCreateEvent
+    Flags for mprCreateEvent
  */
-#define MPR_EVENT_CONTINUOUS    0x1
+#define MPR_EVENT_CONTINUOUS        0x1
+#define MPR_EVENT_QUICK             0x2     /* Execute inline without executing via a thread */
+#define MPR_EVENT_DONT_QUEUE        0x4     /* Don't queue the event. User must call mprQueueEvent */
+#define MPR_EVENT_STATIC_DATA       0x8     /* Event data is permanent and should not be marked by GC */
+
+#if UNUSED
 #define MPR_EVENT_STATIC        0x2
-#define MPR_EVENT_QUICK         0x4     /* Execute inline without executing via a thread */
+#endif
 
 #define MPR_EVENT_MAGIC         0x12348765
 #define MPR_DISPATCHER_MAGIC    0x23418877
@@ -5112,7 +5117,7 @@ typedef void (*MprEventProc)(void *data, struct MprEvent *event);
         be continuously rescheduled according to a specified period. The event subsystem provides the basis for 
         callback timers. 
     @see MprEvent, 
-        mprCreateEvent, mprInitEvent, mprQueueEvent, mprCreateTimerEvent, mprRescheduleEvent, mprStopContinuousEvent, 
+        mprCreateEvent, mprQueueEvent, mprCreateTimerEvent, mprRescheduleEvent, mprStopContinuousEvent, 
         mprRestartContinuousEvent, MprEventProc, mprCreateEventService, mprCreateDispatcher, mprEnableDispatcher,
         mprServiceEvents
     @defgroup MprEvent MprEvent
@@ -5141,7 +5146,7 @@ typedef struct MprEvent {
 typedef struct MprDispatcher {
     int             magic;
     cchar           *name;              /**< Dispatcher name / purpose */
-    MprEvent        eventQ;             /**< Event queue */
+    MprEvent        *eventQ;            /**< Event queue */
     MprEvent        *current;           /**< Current event */
     MprCond         *cond;              /**< Multi-thread sync */
     int             enabled;            /**< Dispatcher enabled to run events */
@@ -5231,17 +5236,19 @@ extern void mprSignalDispatcher(MprDispatcher *dispatcher);
     @ingroup MprEvent
  */
 extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, MprEventProc proc, void *data, int flgs);
+extern MprEvent *mprCreateEventQueue();
 
 /**
-    Queue a new event for service. This is typically used if mprInitEvent is used to statically initialize an
-    event. It is not used often as mprCreateEvent will create and queue the event.
+    Queue a new event for service.
     @description Queue an event for service
     @param dispatcher Dispatcher object created via mprCreateDispatcher
     @param event Event object to queue
     @ingroup MprEvent
+    @hide
  */
 extern void mprQueueEvent(MprDispatcher *dispatcher, MprEvent *event);
 
+#if UNUSED
 /**
     Initialize an event
     @description Statically initialize an event.
@@ -5257,6 +5264,7 @@ extern void mprQueueEvent(MprDispatcher *dispatcher, MprEvent *event);
  */
 extern void mprInitEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, int period, MprEventProc proc, 
     void *data, int flags);
+#endif
 
 /**
     Remove an event
@@ -5758,7 +5766,7 @@ typedef struct MprWaitHandler {
     int             notifierIndex;      /**< Index for notifier */
     int             flags;              /**< Control flags */
     void            *handlerData;       /**< Argument to pass to proc */
-    MprEvent        event;              /**< Inline event object to process I/O events */
+    MprEvent        *event;             /**< Event object to process I/O events */
     MprWaitService  *service;           /**< Wait service pointer */
     MprDispatcher   *dispatcher;        /**< Event dispatcher to use for I/O events */
     MprEventProc    proc;               /**< Callback event procedure */
@@ -6609,9 +6617,7 @@ typedef void (*MprCmdProc)(struct MprCmd *cmd, int channel, void *data);
 #define MPR_CMD_ASYNC           0x8000  /* Run in async mode */
 
 typedef struct MprCmdFile {
-#if UNUSED
     char            *name;
-#endif
     int             fd;
     int             clientFd;
 #if BLD_WIN_LIKE

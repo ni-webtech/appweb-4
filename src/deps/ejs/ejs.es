@@ -21039,7 +21039,7 @@ module ejs.web {
             if ((encoding = request.header("Accept-Encoding")) && encoding.contains("gzip")) {
                 let compressed = Path(filename + ".gz")
                 if (compressed.exists) {
-                    request.filename = compressed
+                    filename = request.filename = compressed
                     headers["Content-Encoding"] = "gzip"
                 }
             }

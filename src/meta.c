@@ -195,26 +195,13 @@ int maStartMeta(MaMeta *meta)
     HttpHost    *host;
     int         next, nextHost, count, warned;
 
-#if UNUSED
-    for (next = 0; (host = mprGetNextItem(meta->hosts, &next)) != 0; ) {
-        if (maStartHost(host) < 0) {
-            return MPR_ERR_CANT_INITIALIZE;
-        }
-    }
-#endif
-
     /*  
         Start the Http servers and being listening for requests
+        MOB - refactor and cleanup
      */
     warned = 0;
     count = 0;
     for (next = 0; (server = mprGetNextItem(meta->servers, &next)) != 0; ) {
-#if UNUSED
-        /*
-            Define a server notifier. This will be inherited by all accepted connections on the server.
-         */
-        httpSetServerNotifier(server, (HttpNotifier) notifyServerStateChange);
-#endif
         if (httpStartServer(server) < 0) {
             warned++;
             break;
@@ -288,6 +275,7 @@ void maSetMetaRoot(MaMeta *meta, cchar *path)
         mprError("Can't set server root to %s\n", path);
     } else {
         meta->serverRoot = mprGetAbsPath(path);
+        mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->serverRoot);
     }
 }
 

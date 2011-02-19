@@ -27,8 +27,7 @@ static void openFile(HttpQueue *q)
     HttpTx      *tx;
     HttpLoc     *loc;
     HttpConn    *conn;
-    MprPath     ginfo;
-    char        *date, *gfile;
+    char        *date;
 
     conn = q->conn;
     tx = conn->tx;
@@ -36,16 +35,6 @@ static void openFile(HttpQueue *q)
     loc = rx->loc;
 
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
-        if (rx->acceptEncoding) {
-            if (strstr(rx->acceptEncoding, "gzip") != 0) {
-                gfile = mprAsprintf("%s.gz", tx->filename);
-                if (mprGetPathInfo(gfile, &ginfo) == 0) {
-                    tx->filename = gfile;
-                    tx->fileInfo = ginfo;
-                    httpSetHeader(conn, "Content-Encoding", "gzip");
-                }
-            }
-        }
         if (tx->fileInfo.valid && tx->fileInfo.mtime) {
             //  TODO - OPT could cache this
             date = httpGetDateString(&tx->fileInfo);

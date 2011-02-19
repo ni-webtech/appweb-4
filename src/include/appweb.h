@@ -156,14 +156,6 @@ extern int maRangeFilterInit(Http *http, MprModule *mp);
 extern int maSslModuleInit(Http *http, MprModule *mp);
 extern int maUploadFilterInit(Http *http, MprModule *mp);
 
-/********************************************************************************/
-#if UNUSED
-#define MA_LISTEN_DEFAULT_PORT  0x1         /* Use default port 80 */
-#define MA_LISTEN_WILD_PORT     0x2         /* Port spec missing */
-#define MA_LISTEN_WILD_IP       0x4         /* IP spec missing (first endpoint) */
-#define MA_LISTEN_WILD_IP2      0x8         /* IP spec missing (second+ endpoint) */
-#endif
-
 /********************************** MaMeta **********************************/
 /**
     MaMeta Control - 
@@ -185,11 +177,6 @@ typedef struct MaMeta {
     struct HttpHost *defaultHost;           /**< Primary host */
     char            *serverRoot;            /**< Server root */
     bool            alreadyLogging;         /**< Already logging */
-
-#if UNUSED
-    MprList         *hosts;                 /**< List of host objects */
-    MprList         *hostAddresses;         /**< List of HostAddress objects */
-#endif
 } MaMeta;
 
 /** Create a web server
@@ -365,20 +352,6 @@ extern int maOpenEgiHandler(Http *http);
 extern int maOpenFileHandler(Http *http);
 extern int maOpenSendConnector(Http *http);
 
-#if UNUSED
-/******************************* MaMimeType ******************************/
-/**
-    Mime Type hash table entry (the URL extension is the key)
-    @stability Evolving
-    @defgroup MaMimeType MaMimeType
-    @see MaMimeType
- */
-typedef struct MaMimeType {
-    char            *type;
-    char            *actionProgram;
-} MaMimeType;
-
-#endif
 #if FUTURE
 /******************************** HttpReceiverMatch ******************************/
 /*

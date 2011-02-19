@@ -442,7 +442,10 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
     mprAssert(conn->tx);
 
     if (channel == MPR_CMD_STDERR) {
-        mprLog(4, mprGetBufStart(buf));
+        /*
+            Write stderr to the log AND write to the client
+         */
+        mprError("Error output from CGI command for \"%s\"\n\n%s", conn->rx->uri, mprGetBufStart(buf));
         if (writeToClient(q, cmd, buf, channel) < 0) {
             return -1;
         }

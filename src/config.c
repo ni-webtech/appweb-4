@@ -20,7 +20,7 @@ static void printAuth(int fd, HttpHost *host, HttpAuth *auth, int indent);
 
 /******************************************************************************/
 /*  
-    Configure the meta-server
+    Configure the meta-server. If the configFile is defined, use it. If not, then consider serverRoot, docRoot, ip and port.
  */
 int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *docRoot, cchar *ip, int port)
 {
@@ -104,11 +104,6 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
     if (ip || port > 0) {
         maSetMetaAddress(meta, ip, port);
     }
-#if UNUSED
-    if (docRoot) {
-        httpSetDocumentRoot(meta, docRoot);
-    }
-#endif
     return 0;
 }
 
@@ -194,7 +189,6 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
         if (*cp == '\0' || *cp == '#') {
             continue;
         }
-
         cp = strim(cp, "\r\n\t ", MPR_TRIM_BOTH);
         key = stok(cp, " \t\n", &tok);
         value = stok(0, "\n", &tok);
@@ -212,7 +206,6 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 }
                 *++cp = '\0';
             }
-
         } else {
             value = "";
         }
@@ -265,7 +258,6 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 mprLog(8, "Skipping key %s at %s:%d", key, state->filename, state->lineNumber);
                 continue;
             }
-
             /*
                 Keywords outside of a virtual host or directory section
                 MOB - some errors should abort processing. Support return codes to exit appweb (could use mprFatalError)
@@ -307,12 +299,10 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 mprLog(8, "Skipping key %s at %s:%d", key, state->filename, state->lineNumber);
                 continue;
             }
-
             i = (int) strlen(value) - 1;
             if (value[i] == '>') {
                 value[i] = '\0';
             }
-
             /*
                 Opening tags
              */
@@ -332,20 +322,15 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 value = strim(value, "\"", MPR_TRIM_BOTH);
                 state = pushState(state, &top);
                 mprParseIp(value, &ip, &port, -1);
-                state->host = host = httpCreateVirtualHost(ip, port, host);
+                state->host = httpCreateVirtualHost(ip, port, host);
+                httpSetHostDocumentRoot(state->host, host->documentRoot);
+                httpSetHostServerRoot(state->host, host->serverRoot);
+                host = state->host;
                 state->loc = host->loc;
                 state->auth = host->loc->auth;
                 state->dir = httpCreateDir(stack[top - 1].dir->path, stack[top - 1].dir);
                 state->auth = state->dir->auth;
                 httpAddDir(host, state->dir);
-#if UNUSED
-                mprLog(2, "Virtual Host: %s ", value);
-#endif
-#if MOB && FIX
-                if (httpCreateEndpoints(host, value) < 0) {
-                    goto err;
-                }
-#endif
 
             } else if (scasecmp(key, "Directory") == 0) {
                 path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
@@ -545,6 +530,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
     //  TODO - crashes with missing value
     //  TODO - need a real parser
+
     switch (toupper((int) key[0])) {
     case 'A':
         if (scasecmp(key, "Alias") == 0) {

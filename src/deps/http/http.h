@@ -223,7 +223,6 @@ extern void httpSetForkCallback(struct Http *http, MprForkCallback proc, void *a
 typedef struct Http {
     MprList         *servers;               /**< Currently configured servers */
     MprList         *hosts;                 /**< List of host objects */
-    MprList         *endpoints;             /**< List of listening Endpoint objects */
     MprList         *connections;           /**< Currently open connection requests */
     MprHashTable    *stages;                /**< Possible stages in connection pipelines */
     MprHashTable    *statusCodes;           /**< Http status codes */
@@ -2879,9 +2878,6 @@ extern HttpServer *httpCreateConfiguredServer(cchar *docRoot, cchar *ip, int por
 */
 typedef struct HttpHost {
     char            *name;                  /**< ServerName directive - used for redirects */
-#if UNUSED
-    HttpServer      *server;                /**< HttpServer backing this host */
-#endif
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, locations */
 
     MprList         *aliases;               /**< List of Alias definitions */

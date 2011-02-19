@@ -8940,8 +8940,8 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     }
     mprRemoveRoot(ejs);
     ejs->state->frozen = 0;
-#if UNUSED
-    mprLog(0, "CREATE %s", ejs->name);
+#if DEBUG_IDE
+    mprLog(0, "CREATE %s, length %d", ejs->name, sp->vmlist->length);
 #endif
     return ejs;
 }
@@ -8952,8 +8952,8 @@ void ejsDestroy(Ejs *ejs)
     EjsService  *sp;
     EjsState    *state;
 
-#if UNUSED
-    mprLog(0, "DESTROY %s", ejs->name);
+#if DEBUG_IDE
+    mprLog(0, "DESTROY %s, length %d", ejs->name, ejs->service->vmlist->length);
 #endif
     ejs->destroying = 1;
     sp = ejs->service;
@@ -8981,8 +8981,8 @@ static void manageEjs(Ejs *ejs, int flags)
     EjsObj      *vp, **vpp, **top;
 
     if (flags & MPR_MANAGE_MARK) {
-#if UNUSED
-mprLog(0, "MARK EJS %s", ejs->name);
+#if DEBUG_IDE
+mprLog(0, "MARK EJS %s, length %d", ejs->name, ejs->service->vmlist->length);
 #endif
         mprMark(ejs->global);
         mprMark(ejs->name);
@@ -9027,9 +9027,6 @@ mprLog(0, "MARK EJS %s", ejs->name);
 
     } else if (flags & MPR_MANAGE_FREE) {
         ejsDestroy(ejs);
-#if UNUSED
-        mprLog(0, "AFTER DESTROY %s", ejs->name);
-#endif
     }
 }
 
@@ -33431,7 +33428,6 @@ static EjsObj *workerLookup(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Process a message sent from postMessage. This may run inside the worker or outside in the parent depending on the
     direction of the message. But it ALWAYS runs in the appropriate thread for the interpreter.
  */
-
 static int doMessage(Message *msg, MprEvent *mprEvent)
 {
     Ejs         *ejs;
@@ -34965,28 +34961,14 @@ void ejsLoadXMLCString(Ejs *ejs, EjsXML *xml, cchar *xmlString)
 void ejsManageXML(EjsXML *xml, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        if (xml->parent && !VISITED(xml->parent)) {
-            mprMark(xml->parent);
-        }
-        if (xml->targetObject && !VISITED(xml->targetObject)) {
-            mprMark(xml->targetObject);
-        }
+        mprMark(xml->parent);
+        mprMark(xml->targetObject);
         mprMark(xml->attributes);
         mprMark(xml->elements);
         mprMark(xml->namespaces);
-#if UNUSED
-        EjsObj          *item;
-        int             next;
-        for (next = 0; (item = mprGetNextItem(xml->attributes, &next)) != 0; ) {
-            mprMark(item);
-        }
-        for (next = 0; (item = mprGetNextItem(xml->elements, &next)) != 0; ) {
-            mprMark(item);
-        }
-        for (next = 0; (item = mprGetNextItem(xml->namespaces, &next)) != 0; ) {
-            mprMark(item);
-        }
-#endif
+        mprMark(xml->qname.name);
+        mprMark(xml->qname.space);
+        mprMark(xml->value);
     }
 }
 
@@ -37748,9 +37730,7 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
         mprLog(0, "DESTROY HttpServer %s in %s", sp->name, sp->ejs->name);
 #endif
         sp->sessions = 0;
-#if MOB
         ejsStopSessionTimer(sp);
-#endif
         if (sp->server) {
             httpDestroyServer(sp->server);
             sp->server = 0;
@@ -39538,7 +39518,7 @@ static void startSessionTimer(Ejs *ejs, EjsHttpServer *server)
         //  MOB - should session timers run on the ejs->dispatcher or nonblock. Are sessions owned by one interp
         //  or by the service
         server->sessionTimer = mprCreateTimerEvent(ejs->dispatcher, "sessionTimer", EJS_TIMER_PERIOD, 
-            (MprEventProc) sessionTimer, server, 0 /* | MPR_EVENT_QUICK */);
+            (MprEventProc) sessionTimer, server, MPR_EVENT_STATIC_DATA /* | MPR_EVENT_QUICK */);
     }
     mprUnlock(sessionLock);
 }
@@ -39548,7 +39528,6 @@ void ejsStopSessionTimer(EjsHttpServer *server)
 {
     mprLock(sessionLock);
     if (server->sessionTimer) {
-        mprLog(0, "STOP TIMER %s %s\n", server->name, server->ejs->name);
         mprRemoveEvent(server->sessionTimer);
         server->sessionTimer = 0;
     }

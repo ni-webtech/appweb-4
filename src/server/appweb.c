@@ -26,7 +26,7 @@
 typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
-    MaMeta    *server;
+    MaMeta      *meta;
     char        *script;
     char        *documentRoot;
     char        *serverRoot;
@@ -226,7 +226,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->documentRoot);
         mprMark(app->pathVar);
         mprMark(app->script);
-        mprMark(app->server);
+        mprMark(app->meta);
         mprMark(app->serverRoot);
     }
 }
@@ -261,22 +261,22 @@ static int initialize(cchar *ip, int port)
         mprUserError("Can't create HTTP service for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;
     }
-    if ((app->server = maCreateMeta(app->appweb, "default", NULL, NULL, -1)) == 0) {
+    if ((app->meta = maCreateMeta(app->appweb, "default", NULL, NULL, -1)) == 0) {
         mprUserError("Can't create HTTP server for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;
     }
-    if (maConfigureMeta(app->server, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
+    if (maConfigureMeta(app->meta, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
         /* mprUserError("Can't configure the server, exiting."); */
         return MPR_ERR_CANT_CREATE;
     }
     if (app->script) {
-        app->server->defaultHost->loc->script = app->script;
+        app->meta->defaultHost->loc->script = app->script;
     }
     if (app->workers >= 0) {
         mprSetMaxWorkers(app->workers);
     }
 #if BLD_WIN_LIKE
-    writePort(app->server->defaultHost);
+    writePort(app->meta->defaultHost);
 #endif
     return 0;
 }
