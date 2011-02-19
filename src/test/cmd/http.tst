@@ -51,13 +51,13 @@ if (test.depth > 1) {
     run("--chunk 100 -i 300 /index.html")
 
     //  HTTP/1.0
-    run("--http 0 /index.html")
-    run("-i 10 --http 0 /index.html")
+    run("--protocol HTTP/1.0 /index.html")
+    run("-i 10 --protocol HTTP/1.0 /index.html")
 
     //  Explicit HTTP/1.1
-    run("--http 1 /index.html")
-    run("-i 20 --http 0 /index.html")
-    run("-i 20 --http 1 /index.html")
+    run("--protocol HTTP/1.1 /index.html")
+    run("-i 20 --protocol HTTP/1.0 /index.html")
+    run("-i 20 --protocol HTTP/1.1 /index.html")
 
     //  Auth
     //  TODO - should test failure
