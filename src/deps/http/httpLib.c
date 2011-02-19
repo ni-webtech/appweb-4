@@ -3837,7 +3837,7 @@ void httpSetHostDocumentRoot(HttpHost *host, cchar *dir)
 
 void httpSetHostServerRoot(HttpHost *host, cchar *serverRoot)
 {
-    host->serverRoot = sclone(serverRoot);
+    host->serverRoot = mprGetAbsPath(serverRoot);
 }
 
 
@@ -5860,7 +5860,7 @@ static void setScriptName(HttpConn *conn)
     HttpAlias   *alias;
     HttpRx      *rx;
     HttpTx      *tx;
-    char        *cp, *extraPath, *start;
+    char        *cp, *extraPath, *start, *pathInfo;
     int         scriptLen;
 
     rx = conn->rx;
@@ -5884,6 +5884,10 @@ static void setScriptName(HttpConn *conn)
         if (rx->pathInfo[0]) {
             rx->pathTranslated = httpMakeFilename(conn, alias, rx->pathInfo, 0);
         }
+    } else {
+        pathInfo = rx->pathInfo;
+        rx->scriptName = rx->pathInfo;
+        rx->pathInfo = 0;
     }
 }
 
@@ -6973,9 +6977,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     rx = conn->rx;
     tx = conn->tx;
 
-    mprAssert(rx->pathInfo);
     mprAssert(!conn->server || tx->filename);
-
     loc = (loc) ? loc : http->clientLocation;
 
     tx->outputPipeline = mprCreateList(-1, 0);
