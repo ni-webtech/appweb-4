@@ -20,11 +20,15 @@ function forms() {
     assert(http.status == 200)
     deserialize(http.response)
 
-    if (test.os == "WIN") {
-        http.get(HTTP + "/ejsProgRAM.eJS")
-        assert(http.status == 200)
-        deserialize(http.response)
-    }
+    /* 
+        Not supporting caseless extension matching 
+
+        if (test.os == "WIN") {
+            http.get(HTTP + "/ejsProgRAM.eJS")
+            assert(http.status == 200)
+            deserialize(http.response)
+        }
+    */
 }
 
 /*  MOB - not yet supported
