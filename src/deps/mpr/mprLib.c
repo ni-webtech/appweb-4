@@ -2431,7 +2431,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
 
     if (mpr->argv && mpr->argv[0] && *mpr->argv[0]) {
         name = mpr->argv[0];
-        if ((cp = strrchr(name, '/')) != 0) {
+        if ((cp = strrchr(name, '/')) != 0 || (cp = strrchr(name, '\\')) != 0) {
             name = &cp[1];
         }
         mpr->name = sclone(name);
@@ -4630,7 +4630,7 @@ int mprStopCmd(MprCmd *cmd, int signal)
     }
     if (cmd->pid) {
 #if BLD_WIN_LIKE
-        return TerminateProcess(cmd->process, 2);
+        return TerminateProcess(cmd->process, 2) == 0;
 #elif VXWORKS
         return taskDelete(cmd->pid);
 #else
