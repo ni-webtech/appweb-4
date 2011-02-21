@@ -2513,10 +2513,12 @@ extern bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, ssize require);
 /** 
     Cmd class
  */
-typedef struct ejsCmd {
+typedef struct EjsCmd {
     EjsPot          pot;                /**< Property storage */
     EjsObj          *emitter;           /**< Event emitter for listeners */
     MprCmd          *mc;
+    MprBuf          *stdoutBuf;         /**< Stdout from the command */
+    MprBuf          *stderrBuf;         /**< Stderr from the command */
     EjsAny          *command;
     EjsAny          *env;
     EjsAny          *options;

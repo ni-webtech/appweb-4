@@ -95,7 +95,8 @@ public function cleanDir(path) {
  */
 public function sh(args): String {
     test.log(2, "[Run]", "Run: " + args)
-    return Cmd.sh(args)
+    // return Cmd.sh(args)
+    return System.run(("/bin/sh -c \"" + args.replace(/\\/g, "\\\\") + "\"").trim('\n'))
 }
 
 
@@ -107,7 +108,7 @@ public function testCmdNoCapture(args): Boolean {
     test.log(2, "[Test]", "Run test: " + args)
     try {
         args = args.toString().toJSON().trim('"')
-        Cmd.runx(("/bin/sh -c \"" + args + "\"").trim('\n'))
+        System.runx(("/bin/sh -c \"" + args + "\"").trim('\n'))
         assert(true)
         return true
     } catch (e) {
@@ -124,7 +125,7 @@ public function testCmd(args): Boolean {
     test.log(2, "[Test]", "Run test: " + args)
     try {
         args = args.toString().toJSON().trim('"')
-        Cmd.run(("/bin/sh -c \"" + args + "\"").trim('\n'))
+        System.run(("/bin/sh -c \"" + args + "\"").trim('\n'))
         assert(true)
         return true
     } catch (e) {
