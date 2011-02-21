@@ -16,6 +16,9 @@ assert(http.status == 201 || http.status == 204)
 
 //  Delete
 http.connect("DELETE", HTTP + "/tmp/test.dat")
+if (http.status != 204) {
+    print("STATUS IS " + http.status)
+}
 assert(http.status == 204)
 
 //  Post
