@@ -24,11 +24,7 @@ setWinEnv()
 
     name=cc
     eval file=\$BLD_${KIND}_CC
-
-echo PROBE --name winsdk --search "$1" $file
-echo PATH $PATH
-    cc=`probe --verbose --name winsdk --search "$1" $file`
-
+    cc=`probe --name winsdk --search "$1" $file`
     eval WINSDK=\$CFG_${KIND}_WINSDK
     if [ "$WINSDK" = "" ] ; then
 		echo "Can't find required component: Windows SDK"

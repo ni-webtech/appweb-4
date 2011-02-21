@@ -12,6 +12,7 @@
 ###############################################################################
 
 unset CDPATH
+export PATH=/bin:/usr/bin:$PATH
 export CYGWIN=nodosfilewarning
 
 #
