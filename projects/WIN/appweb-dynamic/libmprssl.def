@@ -1,12 +1,10 @@
 LIBRARY libmprssl.dll
 EXPORTS
-  __mprOpenSslModuleDummy
   mprConfigureSsl
   mprCreateMatrixSslModule
   mprCreateOpenSslModule
   mprCreateSsl
   mprLoadSsl
-  mprMatrixSslModuleDummy
   mprSetSocketSslConfig
   mprSetSslCaFile
   mprSetSslCaPath

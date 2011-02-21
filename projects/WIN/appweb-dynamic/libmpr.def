@@ -1,72 +1,75 @@
 LIBRARY libmpr.dll
 EXPORTS
-  __dummyMprSelectWait
-  __dummyMprUnix
-  __dummyMprVxWorks
-  __dummyMprWince
-  __dummy_romfs
-  __mprDummyEpoll
-  __mprDummyKqueue
-  __mprDummyPollWait
-  __mprDummyUnicode
-  _mprAlloc
-  _mprAllocWithDestructor
-  _mprAllocWithDestructorZeroed
-  _mprAllocZeroed
-  _mprMemdup
-  _mprRealloc
-  _mprStrdup
-  _mprStrndup
-  _unused_strtod
+  MemoryBarrier
+  amtow
   assertTrue
+  awtom
   dtoa
+  dummyWide
   floorDiv
   freedtoa
   gethex
   gettimeofday
+  itos
   mprAcceptSocket
   mprActivateWorker
-  mprAddDuplicateHash
+  mprAddDuplicateKey
   mprAddFileSystem
-  mprAddHash
   mprAddItem
+  mprAddKey
+  mprAddKeyFmt
+  mprAddMime
   mprAddNotifier
   mprAddNullToBuf
+  mprAddRoot
+  mprAddSocketHandler
   mprAddTestGroup
   mprAdjustBufEnd
   mprAdjustBufStart
-  mprAllocArena
-  mprAllocHeap
-  mprAllocSlab
+  mprAllocBlock
   mprAppendList
   mprAsprintf
-  mprAtoi
-  mprAttachFd
+  mprAsprintfv
+  mprAssertError
+  mprAtomicAdd
+  mprAtomicAdd64
+  mprAtomicBarrier
+  mprAtomicCas
+  mprAtomicExchange
+  mprAtomicListInsert
+  mprAttachFileFd
   mprBreakpoint
+  mprCheckBlock
   mprClearList
+  mprCloneBuf
+  mprCloneHash
+  mprCloneList
   mprCloseCmdFd
+  mprCloseFile
   mprCloseSocket
   mprCompactBuf
   mprCompareTime
-  mprCopyHash
+  mprConnectSocket
   mprCopyList
   mprCopyPath
   mprCopyright
   mprCreate
-  mprCreateAllocService
   mprCreateBuf
   mprCreateCmd
+  mprCreateCmdService
   mprCreateCond
   mprCreateDiskFileSystem
   mprCreateDispatcher
   mprCreateEvent
+  mprCreateEventQueue
   mprCreateEventService
-  mprCreateEx
   mprCreateFileSystem
   mprCreateHash
   mprCreateKeyPair
   mprCreateList
   mprCreateLock
+  mprCreateMemService
+  mprCreateMimeTypes
   mprCreateModule
   mprCreateModuleService
   mprCreateNotifierService
@@ -89,35 +92,40 @@ EXPORTS
   mprDedicateWorker
   mprDedicateWorkerToDispatcher
   mprDeletePath
+  mprDestroy
+  mprDestroyCmd
+  mprDestroyDispatcher
+  mprDestroyMemService
   mprDisableCmdEvents
   mprDisableFileBuffering
   mprDisableWaitEvents
   mprDisconnectCmd
   mprDisconnectSocket
+  mprDispatchersAreIdle
   mprDoWaitRecall
   mprDtoa
-  mprDupBuf
-  mprDupList
+  mprEmptyString
   mprEnableCmdEvents
   mprEnableContinuousEvent
   mprEnableDispatcher
   mprEnableFileBuffering
+  mprEnableGC
+  mprEnableSocketEvents
   mprEnableWaitEvents
   mprEncode64
   mprError
   mprEscapeCmd
   mprEscapeHtml
   mprFatalError
-  mprFlush
+  mprFinalizeCmd
   mprFlushBuf
+  mprFlushFile
   mprFlushSocket
   mprFormatLocalTime
   mprFormatTime
   mprFprintf
-  mprFree
-  mprFreeChildren
+  mprGet
   mprGetAbsPath
-  mprGetAllocStats
   mprGetAppDir
   mprGetAppName
   mprGetAppPath
@@ -125,6 +133,7 @@ EXPORTS
   mprGetAppVersion
   mprGetAvailableWorkers
   mprGetBlockFromBuf
+  mprGetBlockSize
   mprGetBufEnd
   mprGetBufLength
   mprGetBufOrigin
@@ -147,14 +156,17 @@ EXPORTS
   mprGetElapsedTime
   mprGetEndian
   mprGetError
+  mprGetEventCount
+  mprGetFileChar
   mprGetFileFd
   mprGetFilePosition
   mprGetFileSize
+  mprGetFileString
   mprGetFirstHash
   mprGetFirstItem
   mprGetFirstPathSeparator
-  mprGetHashCount
-  mprGetHeap
+  mprGetHashLength
+  mprGetHeapFlags
   mprGetHostName
   mprGetHwnd
   mprGetInst
@@ -163,23 +175,25 @@ EXPORTS
   mprGetLastItem
   mprGetLastPathSeparator
   mprGetListCapacity
-  mprGetListCount
+  mprGetListLength
   mprGetLogFd
   mprGetLogHandler
   mprGetLogLevel
   mprGetMD5Hash
   mprGetMaxWorkers
+  mprGetMem
+  mprGetMemStats
+  mprGetMimeProgram
   mprGetModuleSearchPath
   mprGetMpr
-  mprGetName
   mprGetNativePath
   mprGetNextEvent
   mprGetNextHash
   mprGetNextItem
+  mprGetNonBlockDispatcher
   mprGetNormalizedPath
   mprGetOsError
   mprGetPageSize
-  mprGetParent
   mprGetPathBase
   mprGetPathDir
   mprGetPathExtension
@@ -188,7 +202,6 @@ EXPORTS
   mprGetPathLink
   mprGetPathNewline
   mprGetPathParent
-  mprGetPathSeparator
   mprGetPathSeparators
   mprGetPortablePath
   mprGetPrevItem
@@ -200,51 +213,51 @@ EXPORTS
   mprGetSocketError
   mprGetSocketFd
   mprGetSocketFlags
+  mprGetSocketInfo
   mprGetSocketPort
   mprGetStderr
   mprGetStdin
   mprGetStdout
   mprGetTempPath
   mprGetThreadData
+  mprGetTicks
   mprGetTime
   mprGetTimeZoneOffset
   mprGetTransformedPath
-  mprGetUsedMemory
-  mprGetWordTok
   mprGetWorkerServiceStats
-  mprGetc
-  mprGets
   mprGlobalLock
   mprGlobalUnlock
   mprGrowBuf
-  mprHasAllocError
+  mprHasMemError
   mprHasSecureSockets
-  mprInitBlock
-  mprInitEvent
-  mprInitEventQ
+  mprHold
   mprInitList
   mprInitLock
   mprInitSpinLock
-  mprInitWaitHandler
   mprInitWindow
   mprInsertCharToBuf
   mprInsertItemAtPos
   mprIsAbsPath
+  mprIsCmdComplete
   mprIsCmdRunning
-  mprIsExiting
+  mprIsDead
+  mprIsFinished
+  mprIsIdle
   mprIsInfinite
   mprIsNan
   mprIsPathSeparator
   mprIsRelPath
   mprIsSocketEof
   mprIsSocketSecure
+  mprIsStopping
+  mprIsStoppingCore
   mprIsValid
   mprIsZero
-  mprItoa
   mprJoinPath
   mprJoinPathExt
   mprListenOnSocket
   mprLoadModule
+  mprLoadNativeModule
   mprLock
   mprLog
   mprLookAtLastCharInBuf
@@ -253,59 +266,59 @@ EXPORTS
   mprLookupHash
   mprLookupHashEntry
   mprLookupItem
-  mprLookupMimeType
+  mprLookupMime
   mprLookupModule
+  mprLookupModuleData
   mprMakeArgv
   mprMakeCmdIO
   mprMakeDir
   mprMakeLink
   mprMakeTime
   mprMakeUniversalTime
-  mprMapAlloc
-  mprMapFree
   mprMapMprPriorityToOs
   mprMapOsPriorityToMpr
   mprMapSeparators
+  mprMarkBlock
   mprMemcmp
   mprMemcpy
+  mprMemdup
   mprMemoryError
   mprNop
-  mprOpen
-  mprOpenClientSocket
-  mprOpenServerSocket
+  mprOpenFile
   mprParseIp
-  mprParseNumber
   mprParseTestArgs
   mprParseTime
   mprPathExists
-  mprPeekc
-  mprPollCmdPipes
+  mprPeekFileChar
+  mprPollCmd
   mprPopItem
-  mprPrintAllocReport
+  mprPrintMem
   mprPrintf
   mprPrintfError
   mprPushItem
   mprPutBlockToBuf
   mprPutCharToBuf
+  mprPutFileChar
+  mprPutFileString
   mprPutFmtToBuf
   mprPutIntToBuf
   mprPutPadToBuf
   mprPutStringToBuf
   mprPutSubStringToBuf
-  mprPutc
-  mprPuts
   mprQueueEvent
   mprQueueIOEvent
+  mprRandom
   mprRawLog
-  mprRead
-  mprReadCmdPipe
+  mprReadCmd
+  mprReadFile
   mprReadRegistry
   mprReadSocket
-  mprReallocStrcat
+  mprRealloc
   mprReapCmd
   mprRecallWaitHandler
   mprRefillBuf
   mprRelayEvent
+  mprRelease
   mprReleaseWorker
   mprReleaseWorkerFromDispatcher
   mprRemoveEvent
@@ -315,16 +328,21 @@ EXPORTS
   mprRemoveLastItem
   mprRemoveNotifier
   mprRemoveRangeOfItems
+  mprRemoveRoot
+  mprRemoveSocketHandler
   mprRemoveWaitHandler
-  mprReparentBlock
   mprReportTestResults
+  mprRequestGC
   mprRescheduleEvent
-  mprResetAllocError
   mprResetBufIfEmpty
   mprResetCond
+  mprResetMemError
   mprResetTestGroup
+  mprResetYield
   mprResolvePath
   mprRestartContinuousEvent
+  mprResumeThreads
+  mprRevive
   mprRunCmd
   mprRunCmdV
   mprRunTests
@@ -333,14 +351,11 @@ EXPORTS
   mprScheduleDispatcher
   mprSearchForModule
   mprSearchPath
-  mprSeek
+  mprSeekFile
   mprSendFileToSocket
   mprServiceEvents
   mprServiceWinIO
-  mprSetAllocCallback
-  mprSetAllocError
-  mprSetAllocLimits
-  mprSetAllocPolicy
+  mprServicesAreIdle
   mprSetAltLogData
   mprSetAppName
   mprSetBufMax
@@ -351,12 +366,10 @@ EXPORTS
   mprSetCmdTimeout
   mprSetCurrentThreadPriority
   mprSetDebugMode
-  mprSetDestructor
   mprSetDomainName
-  mprSetDynamicName
-  mprSetHashCase
   mprSetHostName
   mprSetHwnd
+  mprSetIdleCallback
   mprSetInst
   mprSetIpAddr
   mprSetItem
@@ -364,10 +377,18 @@ EXPORTS
   mprSetLogFd
   mprSetLogHandler
   mprSetLogLevel
+  mprSetManager
   mprSetMaxSocketClients
   mprSetMaxWorkers
+  mprSetMemError
+  mprSetMemLimits
+  mprSetMemNotifier
+  mprSetMemPolicy
+  mprSetMimeProgram
   mprSetMinWorkers
+  mprSetModuleFinalizer
   mprSetModuleSearchPath
+  mprSetModuleTimeout
   mprSetName
   mprSetPathNewline
   mprSetPathSeparators
@@ -377,13 +398,14 @@ EXPORTS
   mprSetSocketEof
   mprSetSocketMessage
   mprSetSocketNoDelay
+  mprSetSocketPrebindCallback
   mprSetThreadData
   mprSetThreadPriority
   mprSetThreadStackSize
   mprSetWinMsgCallback
   mprSetWorkerStackSize
   mprSignalCond
-  mprSignalExit
+  mprSignalDispatcher
   mprSignalMultiCond
   mprSignalTestComplete
   mprSleep
@@ -392,74 +414,60 @@ EXPORTS
   mprSpinLock
   mprSpinUnlock
   mprSprintf
-  mprStackCheck
+  mprSprintfv
   mprStart
   mprStartCmd
-  mprStartEventsThread
+  mprStartGCService
+  mprStartModule
   mprStartModuleService
   mprStartOsService
-  mprStartSocketService
   mprStartThread
   mprStartWorker
   mprStartWorkerService
-  mprStaticAssert
   mprStaticError
-  mprStaticPrintf
-  mprStaticPrintfError
-  mprStealBlock
-  mprStealBuf
-  mprStop
   mprStopCmd
+  mprStopCmdService
   mprStopContinuousEvent
+  mprStopEventService
+  mprStopModule
   mprStopModuleService
   mprStopOsService
-  mprStopSocketService
   mprStopThreadService
-  mprStopWorkerService
-  mprStrLower
-  mprStrTok
-  mprStrTrim
-  mprStrUpper
-  mprStrcat
-  mprStrcatV
-  mprStrcmp
-  mprStrcmpAnyCase
-  mprStrcmpAnyCaseCount
-  mprStrcpy
-  mprStrcpyCount
-  mprStrlen
-  mprStrnstr
   mprTerminate
-  mprToAsc
-  mprToUni
   mprTrimPathExtension
-  mprTruncatePath
+  mprTruncateFile
   mprTryLock
   mprTrySpinLock
   mprUnloadModule
+  mprUnloadNativeModule
   mprUnlock
   mprUriDecode
   mprUriEncode
   mprUserError
-  mprValidateBlock
-  mprVasprintf
-  mprVsprintf
+  mprVerifyMem
+  mprVirtAlloc
+  mprVirtFree
   mprWaitForCmd
   mprWaitForCond
+  mprWaitForEvent
   mprWaitForIO
   mprWaitForMultiCond
   mprWaitForSingleIO
   mprWaitForTestToComplete
+  mprWaitTillIdle
+  mprWakeDispatchers
+  mprWakeGCService
   mprWakeNotifier
   mprWakeWaitService
-  mprWrite
-  mprWriteCmdPipe
-  mprWriteFormat
+  mprWakeWorkers
+  mprWriteCmd
+  mprWriteFile
+  mprWriteFileFormat
+  mprWriteFileString
   mprWriteRegistry
   mprWriteSocket
   mprWriteSocketString
   mprWriteSocketVector
-  mprWriteString
   mprWriteToOsLog
   mprXmlGetErrorMsg
   mprXmlGetLineNumber
@@ -469,5 +477,47 @@ EXPORTS
   mprXmlSetInputStream
   mprXmlSetParseArg
   mprXmlSetParserHandler
+  mprYield
   print
+  scasecmp
+  schr
+  sclone
+  scmp
+  scontains
+  scopy
+  sends
+  sfmt
+  sfmtv
+  shash
+  shashlower
+  sjoin
+  sjoinv
+  slen
+  slower
+  sncasecmp
+  snclone
+  sncmp
+  sncopy
+  spbrk
+  srchr
+  srejoin
+  srejoinv
+  sspn
+  sstarts
+  ssub
+  stoi
+  stok
+  stopAlloc
+  stopSeqno
+  strim
+  stubMmprEpoll
+  stubMprKqueue
+  stubMprPollWait
+  stubMprSelectWait
+  stubMprUnix
+  stubMprVxWorks
+  stubMprWince
+  stubRomfs
+  supper
   universalTime
+  unused_strtod

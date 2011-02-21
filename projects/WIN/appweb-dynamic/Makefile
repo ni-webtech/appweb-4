@@ -38,7 +38,8 @@ compileExtra: prep $(PROJECTS)
 prep:
 	if ls $(BLD_BIN_DIR)/*.def >/dev/null 2>&1 ; then \
 		for f in $(BLD_BIN_DIR)/*.def ; do \
-			cp $$f $$.tmp ; cat $$.tmp | grep -v mask@@NegDouble >$$f ; rm -f $$.tmp ; \
+			base=`basename "$$f"` ; \
+			cp $$f $$.tmp ; cat $$.tmp | grep -v mask@@NegDouble >"$$base" ; rm -f $$.tmp ; \
 		done ; \
 	fi
 

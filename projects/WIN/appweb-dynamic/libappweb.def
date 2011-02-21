@@ -1,97 +1,44 @@
 LIBRARY libappweb.dll
 EXPORTS
-  maAddHost
-  maAddHostAddress
-  maAddHttpServer
-  maAddLocation
-  maAddMimeType
+  maAddMeta
   maAddServer
-  maAddStandardMimeTypes
   maApplyChangedGroup
   maApplyChangedUser
-  maConfigureServer
-  maCreateAlias
+  maConfigureMeta
   maCreateAppweb
-  maCreateBareDir
-  maCreateDefaultHost
-  maCreateDir
-  maCreateHost
-  maCreateHostAddress
-  maCreateHostAddresses
   maCreateLocationAlias
-  maCreateServer
-  maCreateVirtualHost
+  maCreateMeta
   maCreateWebServer
   maDefineEgiForm
-  maGetAlias
   maGetConfigValue
-  maGetMimeActionProgram
   maGetUserGroup
-  maInsertAlias
-  maInsertDir
-  maInsertVirtualHost
-  maIsNamedVirtualHostAddress
   maLoadModule
-  maLoadStaticModules
   maLogRequest
-  maLookupAlias
-  maLookupBestDir
-  maLookupBestLocation
-  maLookupDir
-  maLookupHost
-  maLookupHostAddress
-  maLookupLocation
-  maLookupMimeType
-  maLookupServer
-  maLookupVirtualHost
-  maMakePath
-  maNotifyServerStateChange
+  maLookupMeta
   maOpenDirHandler
   maOpenEgiHandler
   maOpenFileHandler
-  maOpenMimeTypes
   maParseConfig
-  maRemoveHostFromHostAddress
-  maReplaceReferences
-  maRewriteUri
+  maRemoveServer
   maRunSimpleWebServer
   maRunWebServer
-  maSecureHost
   maServiceWebServer
   maSetAccessLog
   maSetDefaultHost
-  maSetDefaultServer
-  maSetDirIndex
-  maSetDirPath
-  maSetDocumentRoot
-  maSetHostDirs
-  maSetHostDocumentRoot
-  maSetHostIpAddrPort
-  maSetHostName
-  maSetHostTrace
-  maSetHostTraceFilter
+  maSetDefaultMeta
+  maSetForkCallback
   maSetHttpGroup
   maSetHttpUser
-  maSetHttpVersion
-  maSetIpAddr
-  maSetLogHost
-  maSetMimeActionProgram
-  maSetNamedVirtualHost
-  maSetNamedVirtualHostAddress
-  maSetServerRoot
-  maSetVirtualHost
-  maSetupTrace
+  maSetMetaAddress
+  maSetMetaRoot
   maSplitConfigValue
   maStartAccessLogging
   maStartAppweb
-  maStartHost
   maStartLogging
-  maStartServer
+  maStartMeta
   maStopAccessLogging
   maStopAppweb
-  maStopHost
   maStopLogging
-  maStopServer
-  maUnloadStaticModules
+  maStopMeta
   maValidateConfiguration
   maWriteAccessLogEntry

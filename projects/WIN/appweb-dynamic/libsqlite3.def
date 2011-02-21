@@ -1,6 +1,5 @@
 LIBRARY libsqlite3.dll
 EXPORTS
-
   sqlite3_aggregate_context
   sqlite3_aggregate_count
   sqlite3_auto_extension
@@ -151,6 +150,7 @@ EXPORTS
   sqlite3_stmt_status
   sqlite3_strnicmp
   sqlite3_table_column_metadata
+  sqlite3_temp_directory
   sqlite3_test_control
   sqlite3_thread_cleanup
   sqlite3_threadsafe
@@ -171,6 +171,7 @@ EXPORTS
   sqlite3_value_text16be
   sqlite3_value_text16le
   sqlite3_value_type
+  sqlite3_version
   sqlite3_vfs_find
   sqlite3_vfs_register
   sqlite3_vfs_unregister

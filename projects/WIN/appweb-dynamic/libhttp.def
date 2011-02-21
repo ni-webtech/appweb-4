@@ -1,15 +1,24 @@
 LIBRARY libhttp.dll
 EXPORTS
-
+  HttpStatusCodes
   __pamAuth
   httpAcceptConn
+  httpAddAlias
   httpAddConn
+  httpAddDir
   httpAddErrorDocument
   httpAddFilter
   httpAddGroup
   httpAddHandler
   httpAddHeader
+  httpAddHost
+  httpAddHostToServer
+  httpAddHostToServers
+  httpAddLocation
+  httpAddLocationExpiry
+  httpAddServer
   httpAddSimpleHeader
+  httpAddStage
   httpAddUploadFile
   httpAddUser
   httpAddUserToGroup
@@ -19,11 +28,10 @@ EXPORTS
   httpAppendHeader
   httpAppendQueue
   httpCallEvent
-  httpClearHeaders
   httpClearStages
+  httpClonePacket
   httpCloneStage
   httpCloneUri
-  httpCloseClientConn
   httpCloseConn
   httpCloseRx
   httpCompareFormVar
@@ -35,24 +43,28 @@ EXPORTS
   httpConsumeLastRequest
   httpContentNotModified
   httpCreate
+  httpCreateAlias
   httpCreateAuth
-  httpCreateClient
+  httpCreateBareDir
+  httpCreateConfiguredServer
   httpCreateConn
-  httpCreateConnPacket
   httpCreateConnector
   httpCreateDataPacket
+  httpCreateDir
   httpCreateEndPacket
   httpCreateEnvVars
   httpCreateFilter
   httpCreateGroup
   httpCreateHandler
   httpCreateHeaderPacket
+  httpCreateHost
   httpCreateInheritedLocation
   httpCreateLimits
   httpCreateLocation
   httpCreatePacket
   httpCreatePipeline
   httpCreateQueue
+  httpCreateQueueHead
   httpCreateRange
   httpCreateRx
   httpCreateSecret
@@ -62,16 +74,20 @@ EXPORTS
   httpCreateUri
   httpCreateUriFromParts
   httpCreateUser
+  httpCreateVirtualHost
   httpDefaultOutgoingServiceStage
+  httpDestroy
+  httpDestroyConn
   httpDestroyPipeline
   httpDestroyRx
+  httpDestroyServer
+  httpDestroyTx
   httpDisableGroup
   httpDisableQueue
   httpDisableUser
   httpDiscardData
   httpDiscardTransmitData
   httpDontCache
-  httpDupPacket
   httpEnableConnEvents
   httpEnableGroup
   httpEnableQueue
@@ -90,7 +106,7 @@ EXPORTS
   httpFormatError
   httpFormatErrorV
   httpFormatUri
-  httpFreePacket
+  httpGetAlias
   httpGetAsync
   httpGetChunkSize
   httpGetConnContext
@@ -99,9 +115,10 @@ EXPORTS
   httpGetContext
   httpGetCookies
   httpGetDateString
-  httpGetDefaultHost
-  httpGetDefaultPort
+  httpGetDefaultClientHost
+  httpGetDefaultClientPort
   httpGetError
+  httpGetExtension
   httpGetFormVar
   httpGetGroupAcl
   httpGetHandlerByExtension
@@ -119,8 +136,10 @@ EXPORTS
   httpGetRelativeUri
   httpGetServerAsync
   httpGetServerContext
+  httpGetStageData
   httpGetStatus
   httpGetStatusMessage
+  httpHandleOptionsTrace
   httpInitAuth
   httpInitLimits
   httpInitLocation
@@ -131,6 +150,7 @@ EXPORTS
   httpIsEof
   httpIsFinalized
   httpIsGroupEnabled
+  httpIsNamedVirtualServer
   httpIsPacketTooBig
   httpIsQueueEmpty
   httpIsUserEnabled
@@ -141,11 +161,24 @@ EXPORTS
   httpJoinUriPath
   httpLimitError
   httpLoadSsl
+  httpLookupAlias
+  httpLookupBestDir
+  httpLookupBestLocation
+  httpLookupDir
   httpLookupErrorDocument
+  httpLookupHostByName
+  httpLookupLocation
+  httpLookupServer
   httpLookupStage
   httpLookupStatus
+  httpMakeFilename
+  httpMakePath
   httpMakeUriLocal
+  httpManageTrace
+  httpMapToStorage
   httpMatchEtag
+  httpMatchHandler
+  httpMatchHost
   httpMatchModified
   httpNeedRetry
   httpNormalizeUri
@@ -172,21 +205,25 @@ EXPORTS
   httpReadString
   httpReadUserFile
   httpRedirect
-  httpRegisterStage
   httpRemoveAllUploadedFiles
   httpRemoveConn
   httpRemoveGroup
   httpRemoveHeader
+  httpRemoveHost
   httpRemoveQueue
+  httpRemoveServer
   httpRemoveUploadFile
   httpRemoveUser
   httpRemoveUserFromGroup
   httpRemoveUsersFromGroup
+  httpReplaceReferences
   httpResetCredentials
+  httpResetHandlers
   httpResetPipeline
   httpResizePacket
   httpResolveUri
   httpScheduleQueue
+  httpSecureServer
   httpSendOpen
   httpSendOutgoingService
   httpSendPacket
@@ -205,7 +242,6 @@ EXPORTS
   httpSetAuthRequiredGroups
   httpSetAuthRequiredUsers
   httpSetAuthUser
-  httpSetCallback
   httpSetChunkSize
   httpSetConnContext
   httpSetConnHost
@@ -215,25 +251,38 @@ EXPORTS
   httpSetContext
   httpSetCookie
   httpSetCredentials
-  httpSetDefaultHost
-  httpSetDefaultPort
-  httpSetDocumentRoot
+  httpSetDefaultClientHost
+  httpSetDefaultClientPort
+  httpSetDirIndex
+  httpSetDirPath
   httpSetEntityLength
-  httpSetFillHeaders
+  httpSetForkCallback
   httpSetFormVar
   httpSetGroupAcl
   httpSetHandler
   httpSetHeader
+  httpSetHeadersCallback
+  httpSetHostAddress
+  httpSetHostDocumentRoot
+  httpSetHostName
+  httpSetHostProtocol
+  httpSetHostServerRoot
+  httpSetHostTrace
+  httpSetHostTraceFilter
+  httpSetIOCallback
   httpSetIntFormVar
-  httpSetIpAddr
   httpSetKeepAliveCount
+  httpSetListenCallback
   httpSetLocationAuth
   httpSetLocationAutoDelete
   httpSetLocationFlags
   httpSetLocationPrefix
   httpSetLocationScript
+  httpSetMatchCallback
   httpSetMetaServer
   httpSetMimeType
+  httpSetNamedVirtualServer
+  httpSetNamedVirtualServers
   httpSetPipeHandler
   httpSetProtocol
   httpSetProxy
@@ -242,20 +291,22 @@ EXPORTS
   httpSetResponseBody
   httpSetRetries
   httpSetSendConnector
+  httpSetServerAddress
   httpSetServerAsync
   httpSetServerContext
   httpSetServerLocation
   httpSetServerName
   httpSetServerNotifier
-  httpSetServerRoot
-  httpSetServerSoftware
-  httpSetServerSsl
   httpSetSimpleHeader
+  httpSetSoftware
+  httpSetStageData
   httpSetState
   httpSetStatus
   httpSetTimeout
   httpSetUniqueConnLimits
   httpSetUri
+  httpSetWriteBlocked
+  httpSetupTrace
   httpShouldTrace
   httpSplitPacket
   httpStartPipeline
@@ -272,7 +323,6 @@ EXPORTS
   httpWritable
   httpWrite
   httpWriteBlock
-  httpWriteBlocked
   httpWriteGroupFile
   httpWriteHeaders
   httpWriteString

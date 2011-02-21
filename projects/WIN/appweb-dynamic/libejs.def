@@ -1,22 +1,14 @@
 LIBRARY libejs.dll
 EXPORTS
-
-  __dummyEjsDebug
-  _ejsGetBoolean
-  _ejsGetDouble
-  _ejsGetInt
-  _ejsGetNumber
-  _ejsGetString
-  _ejsIs
-  deserialize
   dummy_Reflection
-  ecAddConstant
+  ecAddCStringConstant
   ecAddConstants
   ecAddDocConstant
   ecAddFunctionConstants
   ecAddModule
   ecAddModuleConstant
   ecAddNameConstant
+  ecAddStringConstant
   ecAdjustCodeLength
   ecAppendNode
   ecAstProcess
@@ -26,43 +18,46 @@ EXPORTS
   ecCompile
   ecCopyCode
   ecCreateCompiler
-  ecCreateLexer
   ecCreateModuleHeader
   ecCreateModuleSection
   ecCreateNode
-  ecDestroyLexer
+  ecCreateStream
+  ecDestroyCompiler
   ecEncodeBlock
   ecEncodeByte
   ecEncodeByteAtPos
+  ecEncodeConst
   ecEncodeDouble
   ecEncodeGlobal
+  ecEncodeInt32
+  ecEncodeInt32AtPos
+  ecEncodeMulti
   ecEncodeName
-  ecEncodeNumber
+  ecEncodeNum
   ecEncodeOpcode
-  ecEncodeString
-  ecEncodeWord
-  ecEncodeWordAtPos
+  ecEncodeWideAsMulti
   ecEnterState
-  ecFreeToken
+  ecError
+  ecErrorv
   ecGenConditionalCode
   ecGetCodeLen
   ecGetCodeOffset
-  ecGetInputStreamName
   ecGetRegExpToken
   ecGetToken
+  ecInitLexer
   ecLeaveState
   ecLeaveStateWithResult
   ecLinkNode
   ecLookupModule
   ecLookupScope
   ecLookupVar
+  ecManageStream
+  ecMarkLocation
   ecOpenConsoleStream
   ecOpenFileStream
   ecOpenMemoryStream
-  ecParseWarning
+  ecParseFile
   ecPeekToken
-  ecPopState
-  ecPushState
   ecPutSpecificToken
   ecPutToken
   ecRemoveModule
@@ -71,60 +66,65 @@ EXPORTS
   ecResetModuleList
   ecResetParser
   ecSetCertFile
-  ecSetError
   ecSetOptimizeLevel
   ecSetOutputFile
+  ecSetRequire
+  ecSetStreamBuf
   ecSetStrictMode
   ecSetTabWidth
   ecSetWarnLevel
   ecStartBreakableStatement
   ecTakeToken
+  ejsAddConstant
+  ejsAddDebugLine
   ejsAddException
   ejsAddItem
-  ejsAddItemToSharedList
   ejsAddModule
   ejsAddNamespaceToBlock
   ejsAddNativeModule
   ejsAddObserver
-  ejsAddToGcStats
   ejsAddWebHandler
   ejsAlloc
-  ejsAllocName
-  ejsAllocPooled
-  ejsAllocVar
+  ejsAppendArray
   ejsAppendAttributeToXML
-  ejsAppendList
   ejsAppendToXML
+  ejsAtoi
   ejsAttention
   ejsBindAccess
   ejsBindConstructor
   ejsBindFunction
   ejsBindMethod
   ejsBlendObject
-  ejsBlendTypeProperties
   ejsBootstrapTypes
   ejsCaptureStack
   ejsCast
+  ejsCatString
+  ejsCatStrings
+  ejsClearArray
   ejsClearAttention
   ejsClearException
-  ejsClearList
-  ejsClearObjHash
+  ejsClearPotHash
   ejsClone
+  ejsCloneArray
   ejsCloneBlock
   ejsCloneBlockHelpers
   ejsCloneFunction
-  ejsCloneObject
-  ejsCloneObjectHelpers
+  ejsCloneObjHelpers
+  ejsClonePot
+  ejsClonePotHelpers
   ejsCoerceOperands
-  ejsCollectGarbage
-  ejsCompactObject
-  ejsCompleteType
-  ejsComputeHashCode
+  ejsCompactPot
+  ejsCompareMulti
+  ejsCompareString
+  ejsCompareSubstring
+  ejsCompareWide
   ejsConfigureAppType
   ejsConfigureArrayType
   ejsConfigureBooleanType
   ejsConfigureByteArrayType
+  ejsConfigureCmdType
   ejsConfigureDateType
+  ejsConfigureDebugType
   ejsConfigureErrorType
   ejsConfigureFileSystemType
   ejsConfigureFileType
@@ -158,8 +158,9 @@ EXPORTS
   ejsConfigureXML
   ejsConfigureXMLListType
   ejsConfigureXMLType
-  ejsCopyList
-  ejsCopyName
+  ejsContainsChar
+  ejsContainsMulti
+  ejsContainsString
   ejsCopySlots
   ejsCopyToByteArray
   ejsCreate
@@ -173,11 +174,14 @@ EXPORTS
   ejsCreateBoolean
   ejsCreateBooleanType
   ejsCreateByteArray
+  ejsCreateCode
   ejsCreateCompilerFrame
   ejsCreateConfigType
-  ejsCreateCoreType
+  ejsCreateConstants
   ejsCreateDate
+  ejsCreateDebug
   ejsCreateDoc
+  ejsCreateEmptyPot
   ejsCreateError
   ejsCreateErrorType
   ejsCreateException
@@ -188,44 +192,45 @@ EXPORTS
   ejsCreateFrameType
   ejsCreateFunction
   ejsCreateFunctionType
-  ejsCreateGCService
   ejsCreateGlobalBlock
   ejsCreateInstance
+  ejsCreateIntern
   ejsCreateIterator
   ejsCreateIteratorType
   ejsCreateModule
   ejsCreateNamespace
   ejsCreateNamespaceType
   ejsCreateNativeType
+  ejsCreateNonInternedString
   ejsCreateNull
   ejsCreateNullType
   ejsCreateNumber
   ejsCreateNumberType
-  ejsCreateObject
-  ejsCreateObjectHelpers
+  ejsCreateObj
+  ejsCreateObjHelpers
   ejsCreatePath
-  ejsCreatePathAndFree
+  ejsCreatePathFromAsc
+  ejsCreatePot
+  ejsCreatePotHelpers
   ejsCreateRegExp
   ejsCreateRegExpType
   ejsCreateRequest
   ejsCreateReservedNamespace
   ejsCreateSearchPath
-  ejsCreateService
   ejsCreateSession
   ejsCreateSimpleFunction
-  ejsCreateSimpleObject
   ejsCreateSocket
   ejsCreateString
-  ejsCreateStringAndFree
-  ejsCreateStringType
-  ejsCreateStringWithLength
+  ejsCreateStringFromAsc
+  ejsCreateStringFromBytes
+  ejsCreateStringFromConst
+  ejsCreateStringFromMulti
   ejsCreateType
   ejsCreateTypeType
   ejsCreateUndefined
   ejsCreateUri
-  ejsCreateUriAndFree
+  ejsCreateUriFromMulti
   ejsCreateUriFromParts
-  ejsCreateVm
   ejsCreateVoidType
   ejsCreateWorker
   ejsCreateXML
@@ -234,8 +239,8 @@ EXPORTS
   ejsCreateXMLType
   ejsCreateXmlParser
   ejsDecodeDouble
+  ejsDecodeInt32
   ejsDecodeNum
-  ejsDecodeWord
   ejsDeepCopyXML
   ejsDefineGlobalFunction
   ejsDefineProperty
@@ -245,122 +250,136 @@ EXPORTS
   ejsDeletePropertyByName
   ejsDeserialize
   ejsDestroy
-  ejsDestroyGCService
+  ejsDestroyIntern
   ejsDestroySession
   ejsDisableFunction
-  ejsDupName
-  ejsDupString
-  ejsEnableGC
+  ejsEmptyName
+  ejsEmptyWideName
   ejsEncodeByteAtPos
   ejsEncodeDouble
+  ejsEncodeInt32
+  ejsEncodeInt32AtPos
   ejsEncodeNum
-  ejsEncodeUint
-  ejsEncodeWord
-  ejsEncodeWordAtPos
   ejsEvalFile
   ejsEvalModule
   ejsEvalScript
   ejsExit
   ejsFixupType
   ejsFormatReservedNamespace
-  ejsFree
-  ejsFreeVar
+  ejsFreeze
   ejsFreezeGlobal
+  ejsGetBoolean
   ejsGetByteArrayAvailable
   ejsGetByteArrayRoom
+  ejsGetDebugInfo
+  ejsGetDebugLine
+  ejsGetDouble
   ejsGetErrorMsg
   ejsGetException
+  ejsGetFirstItem
   ejsGetGlobalObject
   ejsGetHashSize
   ejsGetHttpLimits
+  ejsGetInt
   ejsGetItem
   ejsGetLastItem
-  ejsGetListCount
-  ejsGetModuleList
+  ejsGetLength
   ejsGetNamespaceCount
   ejsGetNextItem
-  ejsGetNumOption
+  ejsGetNumber
   ejsGetOptable
+  ejsGetPotPropertyName
   ejsGetPrevItem
   ejsGetProperty
   ejsGetPropertyByName
-  ejsGetPropertyCount
   ejsGetPropertyName
-  ejsGetService
+  ejsGetPropertyTraits
+  ejsGetPrototype
   ejsGetSession
   ejsGetSlot
-  ejsGetStrOption
-  ejsGetTrait
-  ejsGetTraitAttributes
-  ejsGetTraitType
+  ejsGetSpecial
   ejsGetType
   ejsGetTypeByName
   ejsGetTypeName
   ejsGetTypeOf
-  ejsGetTypePropertyAttributes
-  ejsGetTypeSize
   ejsGetVarByName
-  ejsGracefulDegrade
   ejsGrowByteArray
-  ejsGrowObject
+  ejsGrowConstants
+  ejsGrowPot
   ejsHasException
   ejsHasObservers
-  ejsHasTrait
   ejsInheritBaseClassNamespaces
   ejsInitCompiler
   ejsInitFunction
-  ejsInitList
   ejsInitSearchPath
   ejsInitStack
-  ejsInsertGrowObject
+  ejsInitStringType
+  ejsInsertItem
+  ejsInsertPotProperties
+  ejsInternAsc
+  ejsInternMulti
+  ejsInternString
+  ejsInternWide
   ejsInvokeOperator
+  ejsInvokeOperatorDefault
   ejsIsA
   ejsIsInfinite
-  ejsIsTimeForGC
   ejsIsTypeSubType
+  ejsLoadHttpService
   ejsLoadModule
   ejsLoadScriptFile
   ejsLoadScriptLiteral
+  ejsLoadXMLCString
   ejsLoadXMLString
+  ejsLockService
   ejsLockVm
   ejsLog
   ejsLookupItem
   ejsLookupModule
   ejsLookupNativeModule
+  ejsLookupPotProperty
   ejsLookupProperty
   ejsLookupScope
   ejsLookupVar
   ejsLookupVarWithNamespaces
-  ejsMakeEternalPermanent
-  ejsMakeObjHash
-  ejsMakePermanent
+  ejsMakeHash
   ejsMakeRoomInByteArray
-  ejsMakeTransient
-  ejsMark
-  ejsMarkBlock
-  ejsMarkFunction
-  ejsMarkObject
-  ejsMarkXML
-  ejsMemoryFailure
+  ejsManageBlock
+  ejsManageFunction
+  ejsManagePot
+  ejsManageString
+  ejsManageXML
+  ejsMarkName
+  ejsModuleReadBlock
   ejsModuleReadByte
-  ejsModuleReadNumber
-  ejsModuleReadString
+  ejsModuleReadConst
+  ejsModuleReadInt
+  ejsModuleReadInt32
+  ejsModuleReadMulti
+  ejsModuleReadMultiAsWide
+  ejsModuleReadName
+  ejsModuleReadNum
   ejsModuleReadType
   ejsName
-  ejsObjectOperator
+  ejsObjToJSON
+  ejsObjToString
   ejsOffsetExceptions
+  ejsOptable
   ejsParse
   ejsParseModuleVersion
   ejsPopBlock
   ejsPopBlockNamespaces
-  ejsPrintAllocReport
+  ejsPropertyHasTrait
   ejsPushBlock
   ejsRegExpToString
+  ejsRemoveItem
   ejsRemoveItemAtPos
   ejsRemoveLastItem
   ejsRemoveModule
+  ejsRemoveModules
   ejsRemoveObserver
-  ejsRemoveProperty
+  ejsRemovePotProperty
+  ejsRemoveWorkers
   ejsReportError
   ejsResetBlockNamespaces
   ejsResetByteArray
@@ -376,30 +395,33 @@ EXPORTS
   ejsSendRequestCloseEvent
   ejsSendRequestErrorEvent
   ejsSendRequestEvent
-  ejsServiceEvents
+  ejsSerialize
   ejsSetByteArrayPositions
   ejsSetFunctionCode
   ejsSetFunctionName
-  ejsSetGeneration
   ejsSetHttpLimits
-  ejsSetListLimits
   ejsSetModuleConstants
   ejsSetProperty
   ejsSetPropertyByName
   ejsSetPropertyName
+  ejsSetPropertyTraits
   ejsSetSearchPath
   ejsSetSessionTimeout
-  ejsSetTraitAttributes
-  ejsSetTraitDetails
-  ejsSetTraitType
+  ejsSetSpecial
   ejsSetTypeName
   ejsSetXML
   ejsSetupTrace
   ejsShowBlockScope
   ejsShowCurrentScope
+  ejsSprintf
   ejsStartMprLogging
-  ejsStrcat
-  ejsStrdup
+  ejsStartsWithMulti
+  ejsStopSessionTimer
+  ejsStringToJSON
+  ejsSubstring
+  ejsSwapDouble
+  ejsSwapInt32
+  ejsSwapInt64
   ejsThrowArgError
   ejsThrowArithmeticError
   ejsThrowAssertError
@@ -418,29 +440,39 @@ EXPORTS
   ejsThrowTypeError
   ejsToBoolean
   ejsToJSON
+  ejsToLower
+  ejsToMulti
   ejsToNumber
   ejsToPath
   ejsToString
+  ejsToUpper
   ejsToUri
+  ejsTruncateString
+  ejsUnlockService
   ejsUnlockVm
   ejsUpdateSessionLimits
   ejsUseActivation
+  ejsWideName
   ejsWriteToByteArray
   ejsXMLDescendants
   ejsXMLToString
   ejsZeroSlots
   ejs_db_sqlite_Init
   ejs_web_Init
+  g_deserialize
   getMimeType
   getNextJsonToken
   http_async
   http_available
+  http_off
   http_on
-  http_removeObserver
   http_setHeader
   http_set_async
-  markHttp
-  markType
+  manageFileStream
+  manageLoadState
+  mem
+  mut
+  nodes
   parseXMLAttribute
   parseXMLAttributes
   parseXMLElement
@@ -455,5 +487,6 @@ EXPORTS
   sock_async
   sock_on
   sock_set_async
+  tokenNames
   truncateFile
   writeFile
