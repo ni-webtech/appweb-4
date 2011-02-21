@@ -60,16 +60,10 @@ static void openFile(HttpQueue *q)
             }
         }
 
-    } else if (rx->flags & (HTTP_PUT | HTTP_DELETE)) {
-        if (loc->flags & HTTP_LOC_PUT_DELETE) {
-            httpOmitBody(conn);
-        } else {
-            httpError(q->conn, HTTP_CODE_BAD_METHOD, 
-                "Method %s not supported by file handler at this location %s", rx->method, loc->prefix);
-        }
+    } else if ((rx->flags & (HTTP_PUT | HTTP_DELETE)) && (loc->flags & HTTP_LOC_PUT_DELETE)) {
+        httpOmitBody(conn);
     } else {
-        httpError(q->conn, HTTP_CODE_BAD_METHOD, 
-            "Method %s not supported by file handler at this location %s", rx->method, loc->prefix);
+        httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method \"%s\" is not supported by file handler", rx->method);
     }
 }
 

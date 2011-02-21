@@ -1027,7 +1027,7 @@ struct  MprXml;
 #define MPR_TIMEOUT_SOCKETS     10000       /**< General sockets timeout */
 #define MPR_TIMEOUT_LOG_STAMP   3600000     /**< Time between log time stamps (1 hr) */
 #define MPR_TIMEOUT_PRUNER      600000      /**< Time between pruner runs (10 min) */
-#define MPR_TIMEOUT_START_TASK  2000        /**< Time to start tasks running */
+#define MPR_TIMEOUT_START_TASK  10000       /**< Time to start tasks running */
 #define MPR_TIMEOUT_STOP_TASK   10000       /**< Time to stop or reap tasks */
 #define MPR_TIMEOUT_STOP_THREAD 10000       /**< Time to stop running threads */
 #define MPR_TIMEOUT_STOP        5000        /**< Wait when stopping resources */
@@ -1314,6 +1314,7 @@ extern void mprResetCond(MprCond *cond);
     @return Zero if the event was signalled. Returns < 0 for a timeout.
     @ingroup MprSynch
  */
+//  MOB - should be MprTime
 extern int mprWaitForCond(MprCond *cond, int timeout);
 
 /**
@@ -5713,8 +5714,8 @@ extern void mprManagePoll(MprWaitService *ws, int flags);
 extern void mprManageSelect(MprWaitService *ws, int flags);
 #endif
 
-#if BLD_WIN_LIKE
 extern int  mprInitWindow();
+#if BLD_WIN_LIKE
 extern void mprSetWinMsgCallback(MprWaitService *ws, MprMsgCallback callback);
 extern void mprServiceWinIO(MprWaitService *ws, int sockFd, int winMask);
 #endif
@@ -6631,8 +6632,8 @@ typedef struct MprCmdFile {
         read, write and error data with the command. 
     @stability Evolving.
     @see mprGetCmdBuf mprCreateCmd mprIsCmdRunning mprStartCmd mprGetCmdExitStatus mprGetCmdFd mprMakeCmdIO 
-        mprReadCmdPipe mprReapCmd mprRunCmd mprRunCmdV mprWaitForCmd mprWriteCmdPipe mprCloseCmdFd 
-        mprDisableCmdEvents mprDisconnectCmd mprEnableCmdEvents mprPollCmdPipes mprSetCmdCallback mprSetCmdDir 
+        mprReadCmd mprReapCmd mprRunCmd mprRunCmdV mprWaitForCmd mprWriteCmd mprCloseCmdFd 
+        mprDisableCmdEvents mprDisconnectCmd mprEnableCmdEvents mprPollCmd mprSetCmdCallback mprSetCmdDir 
         mprSetCmdEnv mprStopCmd
     @defgroup MprCmd MprCmd
  */
@@ -6732,6 +6733,8 @@ extern void mprDestroyCmd(MprCmd *cmd);
  */
 extern void mprEnableCmdEvents(MprCmd *cmd, int channel);
 
+extern void mprFinalizeCmd(MprCmd *cmd);
+
 /**
     Get the command exit status
     @param cmd MprCmd object created via mprCreateCmd
@@ -6784,7 +6787,7 @@ extern int mprMakeCmdIO(MprCmd *cmd);
     @return Zero if successful. Otherwise a negative MPR error code.
     @ingroup MprCmd
  */
-extern ssize mprReadCmdPipe(MprCmd *cmd, int channel, char *buf, ssize bufsize);
+extern ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
 
 /**
     Reap the command. This waits for and collect the command exit status. 
@@ -6855,8 +6858,8 @@ extern void mprSetCmdDir(MprCmd *cmd, cchar *dir);
 extern void mprSetCmdEnv(MprCmd *cmd, cchar **env);
 
 /**
-    Start the command. This starts the command but does not wait for its completion. Once started, mprWriteCmdPipe
-    can be used to write to the command and response data can be received via mprReadCmdPipe.
+    Start the command. This starts the command but does not wait for its completion. Once started, mprWriteCmd
+    can be used to write to the command and response data can be received via mprReadCmd.
     @param cmd MprCmd object created via mprCreateCmd
     @param argc Count of arguments in argv
     @param argv Command arguments array
@@ -6876,7 +6879,7 @@ extern int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flag
     @param cmd MprCmd object created via mprCreateCmd
     @ingroup MprCmd
  */
-extern void mprStopCmd(MprCmd *cmd);
+extern int mprStopCmd(MprCmd *cmd, int signal);
 
 /**
     Wait for the command to complete.
@@ -6893,7 +6896,7 @@ extern int mprWaitForCmd(MprCmd *cmd, int timeout);
     @param timeout Time in milliseconds to wait for the command to complete and exit.
     @ingroup MprCmd
  */
-extern void mprPollCmdPipes(MprCmd *cmd, int timeout);
+extern void mprPollCmd(MprCmd *cmd, int timeout);
 
 /**
     Write data to an I/O channel
@@ -6903,7 +6906,7 @@ extern void mprPollCmdPipes(MprCmd *cmd, int timeout);
     @param bufsize Size of buffer
     @ingroup MprCmd
  */
-extern int mprWriteCmdPipe(MprCmd *cmd, int channel, char *buf, int bufsize);
+extern int mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
 
 extern int mprIsCmdComplete(MprCmd *cmd);
 
@@ -7016,6 +7019,7 @@ typedef struct Mpr {
     MprOsThread     mainOsThread;           /**< Main OS thread ID */
     MprMutex        *mutex;                 /**< Thread synchronization */
     MprSpin         *spin;                  /**< Quick thread synchronization */
+    MprCond         *cond;                  /**< Sync after starting events thread */
 
     char            *emptyString;           /**< Empty string */
 #if BLD_WIN_LIKE

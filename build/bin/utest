@@ -30,7 +30,6 @@ enumerable class Test {
     var config: Object                      // BuildConfig.make features
     var continueOnErrors: Boolean = false   // Continue on errors 
     var data: Object                        // Opaque data
-    var debug: Boolean = false              // Run in debug mode 
     var _depth: Number = 1                  // Test level. Higher levels mean deeper testing.
     var echo: Boolean = false               // Echo the command line 
     var errorMsg: String                    // Worker callback error msg
@@ -113,8 +112,7 @@ enumerable class Test {
                 }
                 break
             case "--debug": case "-D":
-//  MOB -- App.debug
-                debug = true
+                Debug.mode = true
                 break
             case "-e": case "--echo":
                 echo = true

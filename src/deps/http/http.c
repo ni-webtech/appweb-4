@@ -113,7 +113,6 @@ MAIN(httpMain, int argc, char *argv[])
         exit(1);
     }
 #endif
-
     if (mprStart() < 0) {
         mprError("Can't start MPR for %s", mprGetAppTitle());
         exit(2);

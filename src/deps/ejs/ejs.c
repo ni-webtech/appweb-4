@@ -288,14 +288,6 @@ MAIN(ejsMain, int argc, char **argv)
             mpr->name);
         return -1;
     }
-
-#if UNUSED
-    app->ejsService = ejsCreateService(mpr);
-    if (app->ejsService == 0) {
-        return MPR_ERR_MEMORY;
-    }
-    ejsInitCompiler(app->ejsService);
-#endif
     ejs = ejsCreate(searchPath, app->modules, argc - nextArg, (cchar **) &argv[nextArg], 0);
     if (ejs == 0) {
         return MPR_ERR_MEMORY;

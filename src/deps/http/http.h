@@ -1397,7 +1397,7 @@ typedef struct HttpConn {
     char            *boundary;              /**< File upload boundary */
     char            *errorMsg;              /**< Error message for the last request (if any) */
     char            *ip;                    /**< Remote client IP address */
-    cchar           *protocol;              /**< HTTP protocol */
+    char            *protocol;              /**< HTTP protocol */
     int             async;                  /**< Connection is in async mode (non-blocking) */
     int             canProceed;             /**< State machine should continue to process the request */
     int             followRedirects;        /**< Follow redirects for client requests */

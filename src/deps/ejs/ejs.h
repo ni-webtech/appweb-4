@@ -1255,7 +1255,8 @@ typedef struct Ejs {
 
     EjsAny              *values[EJS_MAX_SPECIAL];
 
-    //  MOB -- remove most of these
+    //  MOB -- move most of these into values above
+    //  MOB - need simpler true/false   ejs->true, ejs->false
     EjsAny              *falseValue;        /**< The "false" value */
     struct EjsNumber    *infinityValue;     /**< The infinity number value */
     struct EjsIterator  *iterator;          /**< Default iterator */
@@ -2447,7 +2448,9 @@ typedef struct EjsByteArray {
     ssize           writePosition;      /**< Current write position */
     int             swap;               /**< I/O must swap bytes due to endian byte ordering */
     bool            resizable;          /**< Aray is resizable */
+#if UNUSED
     EjsObj          *listeners;         /**< Event listeners in async mode */
+#endif
 } EjsByteArray;
 
 #if DOXYGEN
@@ -2505,6 +2508,25 @@ extern int ejsGrowByteArray(Ejs *ejs, EjsByteArray *ap, ssize size);
 
 extern struct EjsNumber *ejsWriteToByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
 extern bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, ssize require);
+
+
+/** 
+    Cmd class
+ */
+typedef struct ejsCmd {
+    EjsPot          pot;                /**< Property storage */
+    EjsObj          *emitter;           /**< Event emitter for listeners */
+    MprCmd          *mc;
+    EjsAny          *command;
+    EjsAny          *env;
+    EjsAny          *options;
+    struct EjsFile  *error;             /**< Error stream */
+    char            **argv;
+    int             argc;
+    int             async;              /**< Async mode */
+    int             throw;
+} EjsCmd;
+
 
 /** 
     Date class
@@ -3634,6 +3656,7 @@ extern void     ejsConfigureAppType(Ejs *ejs);
 extern void     ejsConfigureArrayType(Ejs *ejs);
 extern void     ejsConfigureBooleanType(Ejs *ejs);
 extern void     ejsConfigureByteArrayType(Ejs *ejs);
+extern void     ejsConfigureCmdType(Ejs *ejs);
 extern void     ejsConfigureDateType(Ejs *ejs);
 extern void     ejsConfigureSqliteTypes(Ejs *ejs);
 extern void     ejsConfigureDebugType(Ejs *ejs);

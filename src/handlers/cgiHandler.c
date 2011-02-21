@@ -53,7 +53,7 @@ static void closeCgi(HttpQueue *q)
 
     cmd = (MprCmd*) q->queueData;
     if (cmd->pid) {
-        mprStopCmd(cmd);
+        mprStopCmd(cmd, -1);
     }
     mprDisconnectCmd(cmd);
 }
@@ -105,8 +105,7 @@ static void startCgi(HttpQueue *q)
     fileName = argv[0];
 
     baseName = mprGetPathBase(fileName);
-    if (strncmp(baseName, "nph-", 4) == 0 || 
-            (strlen(baseName) > 4 && strcmp(&baseName[strlen(baseName) - 4], "-nph") == 0)) {
+    if (strncmp(baseName, "nph-", 4) == 0 || (strlen(baseName) > 4 && strcmp(&baseName[strlen(baseName) - 4], "-nph") == 0)){
         /* Pretend we've seen the header for Non-parsed Header CGI programs */
         cmd->userFlags |= MA_CGI_SEEN_HEADER;
     }
@@ -246,7 +245,7 @@ static void writeToCGI(HttpQueue *q)
         len = mprGetBufLength(buf);
         mprAssert(len > 0);
 //  MOB - do we need a yield here 
-        rc = mprWriteCmdPipe(cmd, MPR_CMD_STDIN, mprGetBufStart(buf), len);
+        rc = mprWriteCmd(cmd, MPR_CMD_STDIN, mprGetBufStart(buf), len);
         mprLog(5, "CGI: write %d bytes to gateway. Rc rc %d, errno %d", len, rc, mprGetOsError());
         if (rc < 0) {
             mprLog(2, "CGI: write to gateway failed for %d bytes, rc %d, errno %d", len, rc, mprGetOsError());
@@ -390,7 +389,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 }
             }
             mprYield(MPR_YIELD_STICKY);
-            nbytes = mprReadCmdPipe(cmd, channel, mprGetBufEnd(buf), space);
+            nbytes = mprReadCmd(cmd, channel, mprGetBufEnd(buf), space);
             mprResetYield();
             mprLog(5, "CGI: read from gateway %d on channel %d. errno %d", nbytes, channel, 
                 nbytes >= 0 ? 0 : mprGetOsError());
