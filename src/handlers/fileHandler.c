@@ -164,17 +164,20 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
     rx = conn->rx;
     file = (MprFile*) q->queueData;
     
-    if (httpGetPacketLength(packet) == 0) {
-        /*
-            End of input
-         */
-        q->queueData = 0;
-        return;
-    }
     if (file == 0) {
         /*  
             Not a PUT so just ignore the incoming data.
          */
+        return;
+    }
+    if (httpGetPacketLength(packet) == 0) {
+        /*
+            End of input
+         */
+        if (file) {
+            mprCloseFile(file);
+        }
+        q->queueData = 0;
         return;
     }
     buf = packet->content;
