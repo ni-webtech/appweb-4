@@ -52,7 +52,7 @@ $(DEST)/appweb.c: Makefile $(APPWEB_HEADERS) $(SRC)/server/appweb.c
 $(DIST_VER):
 	cp $(BLD_TOP)/doc/man/appweb.1 $(TDIR)/doc/man
 	cp $(BLD_TOP)/doc/man/appwebMonitor.1 $(TDIR)/doc/man
-	cp $(BLD_TOP)/doc/man/httpPassword.1 $(TDIR)/doc/man
+	cp $(BLD_TOP)/doc/man/auth.1 $(TDIR)/doc/man
 	@$(call log) "[Generate]" "tar cfz $(DIST_VER) -C $(STAGE_DIR) ."
 	tar cfz $(DIST_VER) -C $(STAGE_DIR) .
 

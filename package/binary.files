@@ -30,7 +30,7 @@ if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
     if [ "$BLD_FEATURE_HTTP_CLIENT" = 1 ] ; then
         cpy -s -m 755 ${BLD_BIN_DIR}/http${BLD_EXE} "${BLD_BIN_PREFIX}"
     fi
-    cpy -s -m 755 -d ${BLD_BIN_DIR} httpPassword${BLD_EXE} makerom${BLD_EXE} "${BLD_BIN_PREFIX}"
+    cpy -s -m 755 -d ${BLD_BIN_DIR} auth${BLD_EXE} makerom${BLD_EXE} "${BLD_BIN_PREFIX}"
 fi
 
 if `ls ${BLD_MOD_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then

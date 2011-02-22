@@ -7690,7 +7690,8 @@ int ejsAddModule(Ejs *ejs, EjsModule *mp)
 
 void ejsRemoveModule(Ejs *ejs, EjsModule *mp)
 {
-    mprLog(2, "Remove module: %@", mp->name); 
+    //  MOB
+    mprLog(6, "Remove module: %@", mp->name); 
     mp->ejs = 0;
     if (ejs->modules) {
         mprRemoveItem(ejs->modules, mp);
