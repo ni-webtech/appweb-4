@@ -1213,21 +1213,32 @@ struct  MprXml;
     #define T(s) s
 #endif
 
+typedef struct MprArgs {
+    cchar   *program;
+    cchar   *args;
+} MprArgs;
+
 /*
     Convenience define to declare a main program entry point that works for Windows, VxWorks and Posix
  */
 #if VXWORKS
     #define MAIN(name, _argc, _argv)  \
-        int name(_argc, _argv) { \
+        int name() { \
+            MprArgs args; \
+            args.program = #name; \
+            args.args = 0; \
             extern int main(); \
-            return main(argc, #name); \
+            return main(0, (char**) &args); \
         } \
         int main(_argc, _argv)
 #elif WINCE
     #define MAIN(name, argc, argv)  \
-        APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, LPWSTR args, int junk2) { \
+        APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, LPWSTR command, int junk2) { \
+            MprArgs args; \
+            args.program = #name; \
+            args.args = (char*) command; \
             extern int main(); \
-            main((int) args, #name); \
+            main(0, (char**) &args); \
         } \
         int main(argc, argv)
 #else
@@ -7260,7 +7271,9 @@ extern int mprGetOsError();
  */
 extern int mprGetError();
 
-extern int mprMakeArgv(cchar *prog, cchar *cmd, int *argc, char ***argv);
+#define MPR_ARGV_ARGS_ONLY    0x1     /**< Command is missing program name */
+
+extern int mprMakeArgv(cchar *cmd, int *argc, char ***argv, int flags);
 
 /** 
     Turn on debug mode.

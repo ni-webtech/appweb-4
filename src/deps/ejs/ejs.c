@@ -75,7 +75,9 @@ MAIN(ejsMain, int argc, char **argv)
         Initialize Multithreaded Portable Runtime (MPR)
      */
     mpr = mprCreate(argc, argv, 0);
+#if UNUSED
     mprSetAppName(argv[0], 0, 0);
+#endif
     setupSignals();
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
@@ -140,7 +142,7 @@ MAIN(ejsMain, int argc, char **argv)
                         mprPrintfError("%s: Can't change change root directory to %s, errno %d",
                             mprGetAppName(), homeDir, errno);
                     }
-                    exit(4);
+                    return 4;
                 }
             }
 #endif
@@ -241,7 +243,7 @@ MAIN(ejsMain, int argc, char **argv)
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintfError("%s %s-%s\n", BLD_NAME, BLD_VERSION, BLD_NUMBER);
-            exit(0);
+            return 0;
 
         } else if (strcmp(argp, "--warn") == 0) {
             if (nextArg >= argc) {

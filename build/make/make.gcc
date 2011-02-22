@@ -75,8 +75,8 @@ ifeq ($(BLD_TYPE),RELEASE)
         endif
     endif
 else
-    _CFLAGS 	+= -g3
-    _LDFLAGS	+= -g3
+    _CFLAGS 	+= -g
+    _LDFLAGS	+= -g
 endif
 
 

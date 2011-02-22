@@ -2391,6 +2391,7 @@ static void showMem(MprMem *mp)
 
 
 
+static void getArgs(Mpr *mpr, int argc, char **argv);
 static void manageMpr(Mpr *mpr, int flags);
 static void serviceEventsThread(void *data, MprThread *tp);
 static void startThreads(int flags);
@@ -2410,19 +2411,8 @@ Mpr *mprCreate(int argc, char **argv, int flags)
         mprAssert(mpr);
         return 0;
     }
-    /*
-        Wince and Vxworks passes an arg via argc, and the program name in argv. NOTE: this will only work on 32-bit systems.
-        TODO - refactor this
-     */
-#if WINCE
-    mprMakeArgv((char*) argv, mprToMulti((uni*) argc), &argc, &argv);
-#elif VXWORKS
-    mprMakeArgv(NULL, (char*) argc, &argc, &argv);
-#endif
-    mpr->argc = argc;
-    mpr->argv = argv;
+    getArgs(mpr, argc, argv);
     mpr->logFd = -1;
-
     mpr->emptyString = sclone("");
     mpr->title = sclone(BLD_NAME);
     mpr->version = sclone(BLD_VERSION);
@@ -2564,6 +2554,25 @@ void mprTerminate(int flags)
 }
 
 
+/*
+    Wince and Vxworks passes an arg via argc, and the program name in argv. NOTE: this will only work on 32-bit systems.
+ */
+static void getArgs(Mpr *mpr, int argc, char **argv) 
+{
+#if WINCE
+    MprArgs *args = (MprArgs*) argv;
+    command = mprToMulti((uni*) args->command);
+    mprMakeArgv(command, &argc, &argv, MPR_ARGV_ARGS_ONLY);
+    argv[0] = sclone(args->program);
+#elif VXWORKS
+    mprMakeArgv("", &argc, &argv, MPR_ARGV_ARGS_ONLY);
+    argv[0] = sclone(args->program);
+#endif
+    mpr->argc = argc;
+    mpr->argv = argv;
+}
+
+
 int mprStart()
 {
     int     rc;
@@ -2667,73 +2676,110 @@ bool mprIsIdle()
 
 
 /*
-    Make an argv array
-    MOB - genericize and remove "program"
+    parse the args and return the count of args. If argv is NULL, the args are parsed read-only. If argv is set,
+    then the args will be extracted, back-quotes removed and argv will be set to point to all the args.
  */
-int mprMakeArgv(cchar *program, cchar *cmd, int *argcp, char ***argvp)
+static int parseArgs(char *args, char **argv)
 {
-    char        *cp, **argv, *vector, *args;
-    ssize       size;
-    int         argc;
+    char    *dest, *src, *start;
+    int     quote, argc;
+
+    for (argc = 0, src = args; src && *src != '\0'; argc++) {
+        while (isspace((int) *src)) {
+            src++;
+        }
+        if (*src == '\0')  {
+            break;
+        }
+        start = dest = src;
+        if (*src == '"' || *src == '\'') {
+            quote = *src;
+            src++; 
+            dest++;
+            if (argv) {
+                argv[argc] = src;
+            }
+            while (*src && (*src != quote || (src > start && src[-1] == '\\'))) {
+                if (argv) {
+                    *dest++ = *src;
+                }
+                src++;
+            }
+        } else {
+            while (*src && src > start && *src == '\\') {
+                src++;
+                if (argv) {
+                    *dest++ = *src;
+                }
+                src++;
+            }
+            if (argv) {
+                argv[argc] = src;
+            }
+            //  Parse the arg, remove back-quotes and stop at the first non-back-quoted space
+            while (*src) {
+                if (*src == '\\' && src[1]) {
+                    src++;
+                    if (argv) {
+                        if (argv[argc] == &src[-1]) {
+                            argv[argc] = dest = src;
+                        }
+                        *dest++ = *src;
+                    }
+                } else {
+                    if (isspace((int) *src)) {
+                        break;
+                    }
+                    if (argv) {
+                        *dest++ = *src;
+                    }
+                }
+                src++;
+            }
+        }
+        if (*src != '\0') {
+            src++;
+        }
+        if (argv) {
+            *dest++ = '\0';
+        }
+    }
+    return argc;
+}
+
+
+/*
+    Make an argv array
+ */
+int mprMakeArgv(cchar *command, int *argcp, char ***argvp, int flags)
+{
+    char    **argv, *vector, *args;
+    ssize   len;
+    int     argc;
+
+    mprAssert(command);
 
     /*
         Allocate one vector for argv and the actual args themselves
      */
-    size = strlen(cmd) + 1;
-
-    //  MOB - remove MPR_MAX_ARGC and calculate it
-    vector = (char*) mprAlloc((MPR_MAX_ARGC * sizeof(char*)) + size);
-    if (vector == 0) {
+    len = strlen(command) + 1;
+    argc = parseArgs((char*) command, NULL);
+    if (flags & MPR_ARGV_ARGS_ONLY) {
+        argc++;
+    }
+    if ((vector = (char*) mprAlloc(((argc + 1) * sizeof(char*)) + len)) == 0) {
         mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
-    args = &vector[MPR_MAX_ARGC * sizeof(char*)];
-    strcpy(args, cmd);
+    args = &vector[(argc + 1) * sizeof(char*)];
+    strcpy(args, command);
     argv = (char**) vector;
 
-    argc = 0;
-    if (program) {
-        argv[argc++] = (char*) sclone(program);
-    }
-    for (cp = args; cp && *cp != '\0'; argc++) {
-        if (argc >= MPR_MAX_ARGC) {
-            mprAssert(argc < MPR_MAX_ARGC);
-            *argvp = 0;
-            if (argcp) {
-                *argcp = 0;
-            }
-            return MPR_ERR_TOO_MANY;
-        }
-        while (isspace((int) *cp)) {
-            cp++;
-        }
-        if (*cp == '\0')  {
-            break;
-        }
-        if (*cp == '"') {
-            cp++;
-            argv[argc] = cp;
-            while ((*cp != '\0') && (*cp != '"')) {
-                cp++;
-            }
-        } else if (*cp == '\'') {
-            cp++;
-            argv[argc] = cp;
-            while ((*cp != '\0') && (*cp != '\'')) {
-                cp++;
-            }
-        } else {
-            argv[argc] = cp;
-            while (*cp != '\0' && !isspace((int) *cp)) {
-                cp++;
-            }
-        }
-        if (*cp != '\0') {
-            *cp++ = '\0';
-        }
+    parseArgs(args, argv);
+    if (flags & MPR_ARGV_ARGS_ONLY) {
+        argv[0] = sclone("");
     }
     argv[argc] = 0;
-
     if (argcp) {
         *argcp = argc;
     }
@@ -4396,7 +4442,7 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, int flags)
     char    **argv;
     int     argc;
 
-    if (mprMakeArgv(NULL, command, &argc, &argv) < 0 || argv == 0) {
+    if (mprMakeArgv(command, &argc, &argv, 0) < 0 || argv == 0) {
         return 0;
     }
     cmd->makeArgv = argv;

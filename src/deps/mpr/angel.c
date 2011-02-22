@@ -277,7 +277,7 @@ static void angel()
                     close(i);
                 }
                 if (app->serviceArgs && *app->serviceArgs) {
-                    mprMakeArgv("", app->serviceArgs, &ac, &av);
+                    mprMakeArgv(app->serviceArgs, &ac, &av, MPR_ARGV_ARGS_ONLY);
                 } else {
                     ac = 0;
                 }
@@ -604,11 +604,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
         mprError("Can't initialize application Window");
         return FALSE;
     }
-
-    /*
-        Parse command line arguments
-     */
-    if (mprMakeArgv("", args, &argc, &argv) < 0) {
+    if (mprMakeArgv(args, &argc, &argv, MPR_ARGV_ARGS_ONLY) < 0) {
         return FALSE;
     }
     for (nextArg = 1; nextArg < argc; nextArg++) {
