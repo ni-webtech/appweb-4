@@ -18,7 +18,7 @@ if (test.depth > 1) {
         test.log(2, "[TestRun]", command + args)
         try {
             // print(command + args)
-            result = Cmd.run(command + args)
+            result = System.run(command + args)
             assert(true)
         } catch (e) {
             assert(false, e)

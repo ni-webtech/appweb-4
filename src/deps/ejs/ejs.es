@@ -13537,7 +13537,7 @@ module ejs.unix {
 
 /* MOB
     function cmd(args): String
-        Cmd.sh(args)
+        System.sh(args)
 */
 
     /**
@@ -13598,10 +13598,10 @@ module ejs.unix {
      */
     function kill(pid: Number, signal: Number = 2): Void {
         if (Config.OS == "WIN" || Config.OS == "CYGWIN") {
-            Cmd.run("/bin/kill -f -" + signal + " " + pid)
+            System.run("/bin/kill -f -" + signal + " " + pid)
         } else {
             // print("RUN " + "/bin/kill -" + signal + " " + pid)
-            Cmd.run("/bin/kill -" + signal + " " + pid)
+            System.run("/bin/kill -" + signal + " " + pid)
         }
     }
 

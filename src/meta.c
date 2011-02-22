@@ -500,7 +500,9 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
     mprSprintf(entryPoint, sizeof(entryPoint), "ma%sInit", name);
     entryPoint[2] = toupper((int) entryPoint[2]);
 
-    module = mprCreateModule(name, path, entryPoint, MPR->httpService);
+    if ((module = mprCreateModule(name, path, entryPoint, MPR->httpService)) == 0) {
+        return 0;
+    }
     if (mprLoadModule(module) < 0) {
         return MPR_ERR_CANT_CREATE;
     }
