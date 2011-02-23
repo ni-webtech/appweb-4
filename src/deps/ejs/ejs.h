@@ -2509,13 +2509,14 @@ extern int ejsGrowByteArray(Ejs *ejs, EjsByteArray *ap, ssize size);
 
 extern struct EjsNumber *ejsWriteToByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
 extern bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, ssize require);
-
+extern void ejsResetByteArrayIfEmpty(Ejs *ejs, EjsByteArray *ap);
 
 /** 
     Cmd class
  */
 typedef struct EjsCmd {
     EjsPot          pot;                /**< Property storage */
+    Ejs             *ejs;               /**< Interpreter back link */
     EjsObj          *emitter;           /**< Event emitter for listeners */
     MprCmd          *mc;
     MprBuf          *stdoutBuf;         /**< Stdout from the command */
@@ -2523,7 +2524,7 @@ typedef struct EjsCmd {
     EjsAny          *command;
     EjsAny          *env;
     EjsAny          *options;
-    struct EjsFile  *error;             /**< Error stream */
+    struct EjsByteArray *error;         /**< Error stream */
     char            **argv;
     int             argc;
     int             async;              /**< Async mode */

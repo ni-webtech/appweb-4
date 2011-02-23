@@ -22,7 +22,8 @@ function start(cmd: String): Void {
     let url = ":" + PORT + "/web/ready.ready"
     for (i in 10) {
         http = new Http
-        try { http.get(url); 
+        try { 
+            http.get(url); 
             /* Expect to get a not-found response */
             if (http.status == 404 || http.status == 200) {
                 break

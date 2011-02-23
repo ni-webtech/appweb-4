@@ -689,7 +689,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
             Cmd/Batch script (.bat | .cmd)
             Convert the command to the form where there are 4 elements in argv
             that cmd.exe can interpret.
-         *
+
                 argv[0] = cmd.exe
                 argv[1] = /Q
                 argv[2] = /C
@@ -735,7 +735,6 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
         len = (argc + 1) * sizeof(char*);
         argv = (char**) mprAlloc(len);
         memset(argv, 0, len);
-
         if (actionProgram) {
             argv[argind++] = sclone(actionProgram);
         }
