@@ -245,7 +245,6 @@ createArchives() {
 }
 
 createScripts() {
-
     cp package/install.sh ${ROOT_DIR}/install
     cp package/uninstall.sh ${ROOT_DIR}/uninstall
 

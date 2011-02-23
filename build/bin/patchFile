@@ -216,8 +216,9 @@ s^!!ROOT_DIR!!^${ROOT_DIR}^g;
     done
 }
 
+unset BLD_TOP
 BLD_TOP=`findTop`
-: ${BLD_OUT_DIR:=$BLD_TOP/out}
+BLD_OUT_DIR=$BLD_TOP/out
 . `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 
 patchFile $*
