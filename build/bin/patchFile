@@ -4,6 +4,32 @@
 #   Copyright (c) Embedthis LLC, 2003-2011. All Rights Reserved.
 #
 #
+
+findTop() {
+    local top level
+
+    top=$BLD_TOP
+    if [ "$top" = "" ] ; then
+        top=.
+        level=0
+        while [ $level -lt 30 ] ; do
+            if [ -d $top/build -a -d $top/build/bin -a -f $top/configure ] ; then
+                break
+            fi
+            top=$top/..
+            level=$((level + 1))
+        done
+        top=${top#./}
+
+        if [ $level -ge 30 ] ; then
+            echo "Can't find top level directory with build directory" >&2
+            exit 255
+        fi
+    fi
+    echo $top
+}
+
+
 patchFile() {
     local file arg
 
@@ -189,5 +215,9 @@ s^!!ROOT_DIR!!^${ROOT_DIR}^g;
         arg=$((arg + 1))
     done
 }
+
+BLD_TOP=`findTop`
+: ${BLD_OUT_DIR:=$BLD_TOP/out}
+. `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 
 patchFile $*
