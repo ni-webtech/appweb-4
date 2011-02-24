@@ -269,6 +269,7 @@ module ejs {
          */
         native static function putenv(name: String, value: String): Void
 
+        //  MOB -- could return Boolean - true if one event was serviced
         /** 
             Run the application event loop. This is typically done automatically by the hosting program and is not 
             normally required in user programs.
@@ -285,6 +286,7 @@ module ejs {
                 call returns immediately. Set to -1 for no timeout.
             @param oneEvent If true, return immediately after servicing at least one ejs event.
             @hide
+            MOB - remove
          */
         static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): Void
             run(timeout, oneEvent)
@@ -1822,7 +1824,6 @@ module ejs {
          */
         native function readShort(): Number
 
-//  MOB -- 
         /** 
             Read a data from the array as a string. Read data from the $readPosition to a string up to the $writePosition,
             but not more than count characters. If insufficient data, a "writable" event will be issued indicating that 
@@ -2048,79 +2049,79 @@ module ejs {
         private var _response: String
 
         /**
-            Create an Cmd object. The Cmd object is initialized with the optional command line. If a command line is
-            provided, the command is immediately started.
-            @param cmdline The (optional) command line to initialize with. If a command line is provided, the start()
-                method is automatically invoked after the command is constructed. The cmdline may be either a string or
-                an array of arguments.
+            Create an Cmd object. If a command line is provided, the command is immediately started.
+            @param command The (optional) command line to initialize with. If a command line is provided, the start()
+                method is automatically invoked after the command is constructed. The command may be either a string or
+                an array of arguments. Using an array of args can simplify quoting if the args have embedded spaces or
+                quotes.
             @param options. Command options hash. Supported options are:
             @options detach Boolean If true, run the command in the background. Do not capture the command's stdout or
                 stderr, nor collect status. Defaults to false.
             @options dir Path or String. Directory to set as the current working directory for the command.
             @options exception Boolean If true, throw exceptions if the command returns a non-zero status code. 
                 Defaults to false.
+            @options timeout Number This is the default number of milliseconds for the command to complete.
          */
-        native function Cmd(cmdline: Object = null, options: Object = null)
+        native function Cmd(command: Object = null, options: Object = null)
 
         /**
             Close the connection to the command and free up all associated resources. It is not normally required to call 
-            $close. But it can be useful to force a command termination. After calling close, the command status and
+            $close, but it can be useful to force a command termination. After calling close, the command status and
             unread response data are not accessible.
-MOB - TEST
          */
         native function close(): Void 
 
         /**
-            The error stream object for the command's stderr output 
-MOB - TEST
+            The error stream object for the command's standard error output 
          */
         native function get error(): Stream
 
         /**
-            Hash of environment strings for the command.
-MOB - TEST
+            Hash of environment strings to pass to the command.
          */
         native function get env(): Object
         native function set env(values: Object): Void
 
         /** 
-            Signals the end of write data. Finalize() must be called to properly signify the end of write data.
-MOB - TEST
+            Signal the end of write data. The finalize() call must be invoked to properly signify the end of write data.
          */
         native function finalize(): Void 
 
         /**
+            This call has no effect
             @duplicate Stream.flush
-MOB - TEST
+            @hide
          */
-//  MOB - what does this do?
         native function flush(dir: Number = Stream.BOTH): Void
 
         /** 
             @duplicate Stream.on
             @event readable Issued when output data to read.
-            @event writable Issued when the connection to the command is writable to accept data.
+            @event writable Issued when the command can accept more write data.
             @event complete Issued when the command completes
             @event error Issued if the $error stream is readable.
 
             All events are called with the signature:
             function (event: String, cmd: Cmd): Void
-MOB - why have cmd as an arg. Surely "this" will be set to the cmd?
-MOB - TEST
          */
         native function on(name, listener: Function): Void
 
         /** 
+            This call is not supported.
             @duplicate Stream.off
-MOB - TEST
+            @hide
          */
         native function off(name, listener: Function): Void
 
-        //  MOB - return 0 if command not started or killed
+        /**
+            Process ID of the the command. This is set to the process ID (PID) of the command. If no command has 
+            started or the command has called $close, the call with throw an exception.
+         */
         native function get pid(): Number
 
         /**
             @duplicate Stream.read
+            If no listener has been defined via $on(), this call will block if there is no data to be read.
          */
         native function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number
 
@@ -2171,8 +2172,7 @@ MOB - TEST
             @param options Command options. Sames as options in $Cmd
             @throws IOError if the request was cannot be issued to the remote server.
          */
-// MOB - confusing allowing Cmd(command) and Cmd().start(command)
-        native function start(cmdline: Object, options: Object = {}): Void
+        native function start(cmdline: Object, options: Object = null): Void
 
         /**
             Get the command exit status. This command will block until the command has completed. Use wait(0) to 
@@ -2181,43 +2181,60 @@ MOB - TEST
          */
         native function get status(): Number
 
+        /**
+            Stop the current command. After stopping, the command exit status and any response or error data are
+            available for interrogation.
+            @param signal Signal to send the the active process.
+            @return True if successful
+          */
         native function stop(signal: Number = 2): Boolean
 
         /**
-            Command timeout before the command is forcibly killed and a completion event issued. 
-            This is the number of milliseconds for the command to complete.
-MOB - TEST
+            Default command timeout for wait(), read(), and blocking start(). If the timeout expires, the command is
+            not killed. Rather any blocking calls will simply return. 
+            This is the number of milliseconds for the call to complete.
          */
         native function get timeout(): Number
         native function set timeout(msec: Number): Void
 
         /**
-            Wait for a command to complete.
-            @param timeout Time in seconds to wait for the command to complete. If unspecified the $timeout propoperty
-                value is used instead
+            Wait for a command to complete. 
+            @param timeout Time in seconds to wait for the command to complete. If unspecified, the $timeout propoperty
+                value is used instead.
             @return True if the request successfully completes.
-MOB - TEST
          */
         native function wait(timeout: Number = -1): Boolean
 
         /**
             @duplicate Stream.write
-            Call finalize to signify the end of write data.
+            Call finalize() to signify the end of write data.
          */
         native function write(...data): Number
 
 
         /* Static Helper Methods */
 
-        static function daemon(cmdline: Object): Number {
+        /**
+            Start a command in the background as a daemon. 
+            @return The process ID. This pid can be used with kill().
+         */
+        static function daemon(cmdline: Object, options: Object = null): Number {
             let cmd = new Cmd
-            cmd.start(cmdline, {detach: true})
+            options ||= {}
+            blend(options, {detach: true})
+            cmd.start(cmdline, options)
             cmd.start()
             return cmd.pid
         }
 
-        //  MOB - similar to start, but replaces the current process
-        native function exec(cmdline: String = null, options: Object = {}): Void
+        /**
+            Execute a new program by the current process. This Replaces the current program with another without
+            creating a new process.
+            @param cmdline Command line to use. The cmdline may be either a string or an array of strings.
+            @param options Command options. Sames as options in $Cmd
+            @throws IOError if the request was cannot be issued to the remote server.
+         */
+        native static function exec(cmdline: String = null, options: Object = {}): Void
 
         /**
             @param signal If pid is greater than zero, the signal is sent to the process whoes ID is pid. If pid is
@@ -2234,18 +2251,18 @@ MOB - TEST
             @throws IOError if the command exits with non-zero status. The exception object will contain the command's
                 standard error output. 
          */
-        static function run(cmdline: Object, data: Object = null): String {
+        static function run(command: Object, data: Object = null): String {
             let cmd = new Cmd
-            cmd.start(cmdline)
+            cmd.start(command)
             if (data) {
                 cmd.write(data)
                 cmd.finalize()
             }
             cmd.wait()
             if (cmd.status != 0) {
-                //  MOB - error does not have readString()
-print("Cmd.run error: status " + cmd.status)
-                throw new IOError(cmd.error.readString())
+                let msg = new ByteArray
+                cmd.error.read(msg)
+                throw new IOError(msg.toString())
             }
             return cmd.readString()
         }
@@ -2253,11 +2270,9 @@ print("Cmd.run error: status " + cmd.status)
         /*
             Run a command using the system command shell and wait for completion. This supports pipelines.
             Any response trailing newline is trimmed.
-MOB - describe throw
          */
         static function sh(command: Object, data: Object = null): String {
             if (command is String) {
-                //  MOB - validate quoting and look on forum
                 return run(("/bin/sh -c \"" + command.replace(/\\/g, "\\\\") + "\"").trim('\n'), data).trimEnd()
             } else {
                 let args = command.join(" ").replace(/\\/g, "\\\\").trim('\n')
@@ -2265,11 +2280,6 @@ MOB - describe throw
             }
         }
     }
-
-    //  DOC
-    //  MOB - or should this be named sh()
-    function sh(cmdline: Object, data: Object = null): String
-        Cmd.sh(cmdline, data)
 }
 
 
@@ -3572,6 +3582,7 @@ module ejs {
 
 module ejs {
 
+    //  MOB - rename emitter to something else
     /** 
         The emitter class provides a publish/subscribe model of communication. It supports the registration of observers
         who want to subscribe to events of interest. 
@@ -10030,6 +10041,7 @@ module ejs {
          */
         function off(name, observer: Function): Void
 
+        //  MOB - define what this is set to in the callback
         /** 
             Add an observer to the stream for the named events. 
             @param name Name of the event to listen for. The name may be an array of events.
@@ -13443,11 +13455,6 @@ module ejs.unix {
     function close(file: File): Void
      */
 
-/* MOB
-    function cmd(args): String
-        System.sh(args)
-*/
-
     /**
         Copy a file. If the destination file already exists, the old copy will be overwritten as part of the copy operation.
         @param fromPath Original file to copy.
@@ -13504,14 +13511,8 @@ module ejs.unix {
         @hide
         @deprecated 2.0.0
      */
-    function kill(pid: Number, signal: Number = 2): Void {
-        if (Config.OS == "WIN" || Config.OS == "CYGWIN") {
-            System.run("/bin/kill -f -" + signal + " " + pid)
-        } else {
-            // print("RUN " + "/bin/kill -" + signal + " " + pid)
-            System.run("/bin/kill -" + signal + " " + pid)
-        }
-    }
+    function kill(pid: Number, signal: Number = 2): Void 
+        Cmd.kill(pid, signal)
 
     //  TODO - good to add ability to do a regexp on the path or a filter function
     //  TODO - good to add ** to go recursively to any depth
