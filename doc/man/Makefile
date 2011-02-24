@@ -1,16 +1,16 @@
 #
 #	Makefile -- Man page makefile
 #
-#	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
 include		.makedep
 
 compileExtra: \
-	appweb.txt  angel.txt  appwebMonitor.txt  http.txt  makerom.txt  httpPassword.txt \
-	appweb.html angel.html appwebMonitor.html http.html makerom.html httpPassword.html \
-	ejsc.txt  ejsweb.txt  ejs.txt  ejsmod.txt  ejsvm.txt \
-	ejsc.html ejsweb.html ejs.html ejsmod.html ejsvm.html \
+	appweb.txt  angel.txt  appwebMonitor.txt  http.txt  makerom.txt  auth.txt \
+	appweb.html angel.html appwebMonitor.html http.html makerom.html auth.html \
+	ejsc.txt  ejsweb.txt  ejs.txt  ejsmod.txt  \
+	ejsc.html ejsweb.html ejs.html ejsmod.html \
 	regexp.txt \
 	regexp.html
 

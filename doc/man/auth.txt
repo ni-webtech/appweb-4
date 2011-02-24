@@ -1,9 +1,9 @@
-HTTPPASSWORD(1)                  User Commands                 HTTPPASSWORD(1)
+AUTH(1)                          User Commands                         AUTH(1)
 
 
 
 NAME
-       httpPassword - Create and manage passwords
+       auth - Create and manage passwords
 
 SYNOPSIS
        httpComp [-c] [-p password] passwordFile realm userName
@@ -16,16 +16,16 @@ OPTIONS
 
 
 DESCRIPTION
-       The  httpPassword  program  is used to create user passwords in a nomi-
-       nated password file. Unlike Apache, Appweb uses the same  authorization
-       file  and  format  for Digest and Basic authentication. This simplifies
-       administration.
+       The  auth program is used to create user passwords in a nominated pass-
+       word file. Unlike Apache, Appweb uses the same authorization file ande-
+       format for Digest and Basic authentication. This simplifies administra-
+       tion.
 
 REPORTING BUGS
        Report bugs to <dev@embedthis.com>.
 
 COPYRIGHT
-       Copyright (C) 2003-2010 Embedthis Software.
+       Copyright (C) 2003-2011 Embedthis Software.
 
 SEE ALSO
-httpPassword                     February 2010                 HTTPPASSWORD(1)
+auth                             February 2011                         AUTH(1)

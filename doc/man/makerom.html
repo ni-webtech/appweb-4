@@ -7,7 +7,7 @@ MAKEROM(1)                       User Commands                      MAKEROM(1)
 <B>SYNOPSIS</B>
        <B>makerom [options] files ... &gtoutput.c</B>
 
-       [<I>--files fileList</I>] [<I>--prefix prefix</I>] [<I>--name structName</I>]
+       [<I>--files fileList</I>] [<I>--name structName</I>] [<I>--prefix prefix</I>]
 
 <B>DESCRIPTION</B>
        To  enable files to be accessed on embedded systems without a file sys-
@@ -30,8 +30,12 @@ MAKEROM(1)                       User Commands                      MAKEROM(1)
               Specifies  the name of top level C structure that holds the con-
               verted files.
 
+       <B>--prefix prefix</B>
+              Specifies a leading file name prefix to  remove  from  the  file
+              names.
+
 <B>EXAMPLE</B>
-       This example will create a list of web files  and  then  convert  these
+       This  example  will  create  a list of web files and then convert these
        files into C structures in the file romFiles.c.
 
            find web -type f -print &gtfileList
@@ -44,8 +48,8 @@ MAKEROM(1)                       User Commands                      MAKEROM(1)
        Report bugs to &ltdev@embedthis.com&gt.
 
 <B>COPYRIGHT</B>
-       Copyright (C) 2003-2010 Embedthis Software.
+       Copyright (C) 2003-2011 Embedthis Software.
 
 <B>SEE ALSO</B>
-makerom                           March 2010                        MAKEROM(1)
+makerom                           March 2011                        MAKEROM(1)
 </PRE></BODY>

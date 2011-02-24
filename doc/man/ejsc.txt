@@ -6,10 +6,10 @@ NAME
        ejsc - Ejscript compiler.
 
 SYNOPSIS
-       ejsc  [--bind]  [--debug]  [--doc] [--lang [ecma|plus|fixed]] [--empty]
-       [--noout] [--optimize level] [--out filename] [--parse] [--search  ejs-
-       Path]   [--standard]  [--strict]  [--use  'module,  ...']   [--version]
-       [--warn level] files...
+       ejsc  [--bind]  [--debug]  [--doc] [--lang [ecma|plus|fixed]] [--noout]
+       [--optimize level] [--out filename] [--parse] [--require 'module  ...']
+       [--search  ejsPath]  [--standard] [--strict] [--version] [--warn level]
+       files...
 
 DESCRIPTION
        The ejsc command compiles Ejscript programs to produce Ejscript  module
@@ -100,43 +100,40 @@ OPTIONS
               using these doc strings. The format of the doc strings resembles
               that of Javadoc.
 
-       --empty
-              Start with an empty interpreter without the core language  types
-              such  as  Object, Array and Number. This option is used to build
-              the foundation ejs.mod module which  contains  the  core  system
-              types.
-
        --lang [ecma|plus|fixed]
               Set the language compliance mode. Use ecma for strict ECMAScript
-              Edition 3 compliance. Use plus for close  ECMAScript  compliance
-              plus  Ejscript  enhancements.  Select  fixed mode for ECMAScript
+              Edition  3  compliance. Use plus for close ECMAScript compliance
+              plus Ejscript enhancements. Select  fixed  mode  for  ECMAScript
               features  plus  enhancements  and  some  compatibility  breaking
               fixes.
 
        --merge
-              Merge  all input files and modules together into a single output
+              Merge all input files and modules together into a single  output
               module. This option acts like a link-editor combining all inputs
               together. Useful if you want to distribute your application as a
               single module file.
 
        --optimize level
-              Set the code optimization level. Level values must be between  0
+              Set  the code optimization level. Level values must be between 0
               (least) and 9 (most). Default is 9.
 
        --parse
               Just parse the source scripts. Don't verify, execute or generate
               output. Useful to check the script syntax only.
 
+       --require 'module ...'
+              List of modules to preload before compiling input files.
+
        --search ejsPath
-              Set the module search path. The module search path is a  set  of
-              directories  that  the  ejsc  command will use when locating and
+              Set  the  module search path. The module search path is a set of
+              directories that the ejsc command will  use  when  locating  and
               loading Ejscript modules.  The search path will always have some
-              system  directories  appended  to  the  end. These include paths
-              specified via the  EJSPATH environment variable and  key  system
+              system directories appended to  the  end.  These  include  paths
+              specified  via  the  EJSPATH environment variable and key system
               directories such as the Ejscript system module directory and the
               directory containing the ejsc command.
 
-              The search path value is similar in format to  the  system  PATH
+              The  search  path  value is similar in format to the system PATH
               variable format.  On windows, path segments are separated by ";"
               and on Linux, Unix, FreeBSD and MAC, the path segments are sepa-
               rated by ":" delimiters.
@@ -153,32 +150,29 @@ OPTIONS
               4. Search for a module file named c.mod in the search path
 
        --standard
-              Run  scripts  in  standard  mode.  Ejscript supports two parsing
+              Run scripts in standard  mode.  Ejscript  supports  two  parsing
               modes: strict and standard. Standard mode does not require vari-
               ables be declared and typed before use.
 
        --strict
-              Run  scripts  in  standard  mode.  Ejscript supports two parsing
-              modes: strict and standard. Strict mode requires that all  vari-
+              Run scripts in standard  mode.  Ejscript  supports  two  parsing
+              modes:  strict and standard. Strict mode requires that all vari-
               ables be declared and typed.
-
-       --use 'module, ...'
-              List of modules to preload before compiling input files.
 
        --version
               Print the ejsc command version and exit.
 
        --warn level
-              Set  the  compiler warning verbosity level. Level values must be
+              Set the compiler warning verbosity level. Level values  must  be
               between 0 (least verbose) and 9 (most). Default is 0.
 
 BACKGROUND
-       Ejscript is an enhanced implementation of the JavaScript  language  for
-       use  in  embedded applications such as web servers, embedded and mobile
-       devices. It is especially suited for Server-Side JavaScript web  appli-
+       Ejscript  is  an enhanced implementation of the JavaScript language for
+       use in embedded applications such as web servers, embedded  and  mobile
+       devices.  It is especially suited for Server-Side JavaScript web appli-
        cations.
 
-       Ejscript  is a dynamic, interpreted, object-oriented scripting language
+       Ejscript is a dynamic, interpreted, object-oriented scripting  language
        that supports classes, objects, exceptions, statements, expressions and
        a powerful suite of data types.
 
@@ -186,7 +180,7 @@ REPORTING BUGS
        Report bugs to dev@embedthis.com.
 
 COPYRIGHT
-       Copyright (C) 2004-2010 Embedthis Software.  Ejscript is a trademark of
+       Copyright (C) 2004-2011 Embedthis Software.  Ejscript is a trademark of
        Embedthis Software.
 
 SEE ALSO
@@ -194,4 +188,4 @@ SEE ALSO
 
 
 
-ejsc                              March 2010                             EC(1)
+ejsc                              March 2011                             EC(1)

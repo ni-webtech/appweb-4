@@ -5,10 +5,10 @@ EC(1)                            User Commands                           EC(1)
        ejsc - Ejscript compiler.
 
 <B>SYNOPSIS</B>
-       <B>ejsc  </B>[<I>--bind</I>]  [<I>--debug</I>]  [<I>--doc</I>] [<I>--lang [ecma|plus|fixed]</I>] [<I>--empty</I>]
-       [<I>--noout</I>] [<I>--optimize level</I>] [<I>--out filename</I>] [<I>--parse</I>] [<I>--search  ejs-</I>
-       <I>Path</I>]   [<I>--standard</I>]  [<I>--strict</I>]  [<I>--use  'module,  ...'</I>]   [<I>--version</I>]
-       [<I>--warn level</I>] files...
+       <B>ejsc  </B>[<I>--bind</I>]  [<I>--debug</I>]  [<I>--doc</I>] [<I>--lang [ecma|plus|fixed]</I>] [<I>--noout</I>]
+       [<I>--optimize level</I>] [<I>--out filename</I>] [<I>--parse</I>] [<I>--require 'module  ...'</I>]
+       [<I>--search  ejsPath</I>]  [<I>--standard</I>] [<I>--strict</I>] [<I>--version</I>] [<I>--warn level</I>]
+       files...
 
 <B>DESCRIPTION</B>
        The <B>ejsc </B>command compiles Ejscript programs to produce Ejscript  module
@@ -99,43 +99,40 @@ EC(1)                            User Commands                           EC(1)
               using these doc strings. The format of the doc strings resembles
               that of Javadoc.
 
-       <B>--empty</B>
-              Start with an empty interpreter without the core language  types
-              such  as  Object, Array and Number. This option is used to build
-              the foundation ejs.mod module which  contains  the  core  system
-              types.
-
        <B>--lang [ecma|plus|fixed]</B>
               Set the language compliance mode. Use <B>ecma </B>for strict ECMAScript
-              Edition 3 compliance. Use <B>plus </B>for close  ECMAScript  compliance
-              plus  Ejscript  enhancements.  Select  <B>fixed </B>mode for ECMAScript
+              Edition  3  compliance. Use <B>plus </B>for close ECMAScript compliance
+              plus Ejscript enhancements. Select  <B>fixed  </B>mode  for  ECMAScript
               features  plus  enhancements  and  some  compatibility  breaking
               fixes.
 
        <B>--merge</B>
-              Merge  all input files and modules together into a single output
+              Merge all input files and modules together into a single  output
               module. This option acts like a link-editor combining all inputs
               together. Useful if you want to distribute your application as a
               single module file.
 
        <B>--optimize level</B>
-              Set the code optimization level. Level values must be between  0
+              Set  the code optimization level. Level values must be between 0
               (least) and 9 (most). Default is 9.
 
        <B>--parse</B>
               Just parse the source scripts. Don't verify, execute or generate
               output. Useful to check the script syntax only.
 
+       <B>--require 'module ...'</B>
+              List of modules to preload before compiling input files.
+
        <B>--search ejsPath</B>
-              Set the module search path. The module search path is a  set  of
-              directories  that  the  <B>ejsc  </B>command will use when locating and
+              Set  the  module search path. The module search path is a set of
+              directories that the <B>ejsc </B>command will  use  when  locating  and
               loading Ejscript modules.  The search path will always have some
-              system  directories  appended  to  the  end. These include paths
-              specified via the  <B>EJSPATH </B>environment variable and  key  system
+              system directories appended to  the  end.  These  include  paths
+              specified  via  the  <B>EJSPATH </B>environment variable and key system
               directories such as the Ejscript system module directory and the
               directory containing the <B>ejsc </B>command.
 
-              The search path value is similar in format to  the  system  PATH
+              The  search  path  value is similar in format to the system PATH
               variable format.  On windows, path segments are separated by ";"
               and on Linux, Unix, FreeBSD and MAC, the path segments are sepa-
               rated by ":" delimiters.
@@ -152,32 +149,29 @@ EC(1)                            User Commands                           EC(1)
               4. Search for a module file named c.mod in the search path
 
        <B>--standard</B>
-              Run  scripts  in  standard  mode.  Ejscript supports two parsing
+              Run scripts in standard  mode.  Ejscript  supports  two  parsing
               modes: strict and standard. Standard mode does not require vari-
               ables be declared and typed before use.
 
        <B>--strict</B>
-              Run  scripts  in  standard  mode.  Ejscript supports two parsing
-              modes: strict and standard. Strict mode requires that all  vari-
+              Run scripts in standard  mode.  Ejscript  supports  two  parsing
+              modes:  strict and standard. Strict mode requires that all vari-
               ables be declared and typed.
-
-       <B>--use 'module, ...'</B>
-              List of modules to preload before compiling input files.
 
        <B>--version</B>
               Print the <B>ejsc </B>command version and exit.
 
        <B>--warn level</B>
-              Set  the  compiler warning verbosity level. Level values must be
+              Set the compiler warning verbosity level. Level values  must  be
               between 0 (least verbose) and 9 (most). Default is 0.
 
 <B>BACKGROUND</B>
-       Ejscript is an enhanced implementation of the JavaScript  language  for
-       use  in  embedded applications such as web servers, embedded and mobile
-       devices. It is especially suited for Server-Side JavaScript web  appli-
+       Ejscript  is  an enhanced implementation of the JavaScript language for
+       use in embedded applications such as web servers, embedded  and  mobile
+       devices.  It is especially suited for Server-Side JavaScript web appli-
        cations.
 
-       Ejscript  is a dynamic, interpreted, object-oriented scripting language
+       Ejscript is a dynamic, interpreted, object-oriented scripting  language
        that supports classes, objects, exceptions, statements, expressions and
        a powerful suite of data types.
 
@@ -185,11 +179,11 @@ EC(1)                            User Commands                           EC(1)
        Report bugs to dev@embedthis.com.
 
 <B>COPYRIGHT</B>
-       Copyright (C) 2004-2010 Embedthis Software.  Ejscript is a trademark of
+       Copyright (C) 2004-2011 Embedthis Software.  Ejscript is a trademark of
        Embedthis Software.
 
 <B>SEE ALSO</B>
        ejsgen, ejs, ejsmod, ejsvm
 
-ejsc                              March 2010                             EC(1)
+ejsc                              March 2011                             EC(1)
 </PRE></BODY>

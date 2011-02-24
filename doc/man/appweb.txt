@@ -9,8 +9,8 @@ SYNOPSIS
        appweb [options]
        appweb [options] [IP][:port] [documentRoot]
 
-       appweb [--config configFile] [--chroot directory] [--debug] [--ejs app-
-       Spec] [--log logSpec] [--home directory]  [--threads  threads]  [--ver-
+       appweb  [--config  configFile] [--chroot directory] [--debugger] [--ejs
+       appSpec] [--log logSpec] [--home directory] [--threads threads] [--ver-
        sion] [--verbose]
 
 DESCRIPTION
@@ -42,7 +42,7 @@ OPTIONS
               chroot jail so that the Appweb process cannot access  any  files
               outside the given directory.
 
-       --debug
+       --debugger
               Run Appweb in debug mode and disable all timeouts. This disables
               request and session timeouts.  The -d option  is  an  alias  for
               --debug.
@@ -90,11 +90,11 @@ REPORTING BUGS
        Report bugs to <dev@embedthis.com>.
 
 COPYRIGHT
-       Copyright (C) 2003-2010 Embedthis Software.
+       Copyright (C) 2003-2011 Embedthis Software.
 
 SEE ALSO
        http
 
 
 
-appweb                            March 2010                         APPWEB(1)
+appweb                            March 2011                         APPWEB(1)
