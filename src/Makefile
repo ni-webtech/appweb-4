@@ -37,7 +37,7 @@ endif
 ifeq ($(BLD_FEATURE_SSL),1)
 	MODULES		+= $(BLD_MOD_DIR)/$(SSL)$(BLD_SHOBJ)
 endif
-TARGETS			+= $(BLD_LIB_DIR)/appweb.conf
+# TARGETS			+= $(BLD_LIB_DIR)/appweb.conf
 
 compileFirst: tools
 
