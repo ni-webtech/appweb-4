@@ -77,9 +77,9 @@ $(BLD_MOD_DIR)/$(SSL)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ) $(BLD_LIB_
 	bld --shared --library $(BLD_MOD_DIR)/$(SSL) --search "$(BLD_SSL_LIBPATHS)" --libs "$(LIBS) $(BLD_SSL_LIBS)" \
 		$(BLD_OBJ_DIR)/sslModule$(BLD_OBJ)
 
-$(BLD_LIB_DIR)/appweb.conf: default.conf
-	$(call log) "[Install]" "$(BLD_LIB_DIR)/appweb.conf"
-	cp default.conf $(BLD_LIB_DIR)/appweb.conf
+#$(BLD_LIB_DIR)/appweb.conf: default.conf
+#	$(call log) "[Install]" "$(BLD_LIB_DIR)/appweb.conf"
+#	cp default.conf $(BLD_LIB_DIR)/appweb.conf
 
 cleanExtra:
 	rm -f $(MODULES)

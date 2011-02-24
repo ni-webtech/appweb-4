@@ -9293,13 +9293,9 @@ EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *search)
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, "."));
     relModDir = mprAsprintf("%s/../%s", mprGetAppDir(ejs), BLD_MOD_NAME);
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, mprGetAppDir(ejs)));
-#ifdef BLD_MOD_NAME
     relModDir = mprAsprintf("%s/../%s", mprGetAppDir(ejs), BLD_MOD_NAME);
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, mprGetAbsPath(relModDir)));
-#endif
-#ifdef BLD_MOD_PREFIX
     ejsSetProperty(ejs, ap, -1, ejsCreatePathFromAsc(ejs, BLD_MOD_PREFIX));
-#endif
 #endif
     return (EjsArray*) ap;
 }
@@ -10144,7 +10140,6 @@ static EjsObj *app_createSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
     cchar   *searchPath;
 
-    //  MOB -- should this be EjsString?
     searchPath = (argc == 0) ? NULL : ejsToMulti(ejs, argv[0]);
     return (EjsObj*) ejsCreateSearchPath(ejs, searchPath);
 }

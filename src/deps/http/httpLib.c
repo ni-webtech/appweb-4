@@ -1093,6 +1093,7 @@ int httpOpenAuthFilter(Http *http)
 {
     HttpStage     *filter;
 
+    mprLog(5, "Open auth filter");
     if ((filter = httpCreateFilter(http, "authFilter", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -1154,7 +1155,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     } else {
         actualAuthType = HTTP_AUTH_UNKNOWN;
     }
-    mprLog(4, "run: type %d, url %s\nDetails %s\n", auth->type, rx->pathInfo, rx->authDetails);
+    mprLog(4, "matchAuth: type %d, url %s\nDetails %s\n", auth->type, rx->pathInfo, rx->authDetails);
 
     if (ad->userName == 0) {
         formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing user name", 0);
@@ -1173,7 +1174,6 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
         formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, authentication error", "User not defined");
         return 1;
     }
-
     if (auth->type == HTTP_AUTH_DIGEST) {
         if (scmp(ad->qop, auth->qop) != 0) {
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied. Protection quality does not match", 0);
@@ -1721,6 +1721,7 @@ int httpOpenChunkFilter(Http *http)
 {
     HttpStage     *filter;
 
+    mprLog(5, "Open chunk filter");
     if ((filter = httpCreateFilter(http, "chunkFilter", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -2504,7 +2505,6 @@ void httpPrepServerConn(HttpConn *conn)
         conn->abortPipeline = 0;
         conn->canProceed = 1;
         conn->complete = 0;
-        conn->connError = 0;
         conn->error = 0;
         conn->errorMsg = 0;
         conn->flags = 0;
@@ -3825,6 +3825,13 @@ void httpSetHostDocumentRoot(HttpHost *host, cchar *dir)
 }
 
 
+void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize)
+{
+    host->logCount = logCount;
+    host->logSize = logSize;
+}
+
+
 void httpSetHostServerRoot(HttpHost *host, cchar *serverRoot)
 {
     host->serverRoot = mprGetAbsPath(serverRoot);
@@ -4060,7 +4067,7 @@ HttpLoc *httpLookupBestLocation(HttpHost *host, cchar *uri)
     if (uri) {
         for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
             rc = sncmp(loc->prefix, uri, loc->prefixLen);
-            if (rc == 0 && uri[loc->prefixLen] == '/') {
+            if (rc == 0 /* UNUSED MOB && uri[loc->prefixLen] == '/' */) {
                 return loc;
             }
         }
@@ -5533,7 +5540,7 @@ void httpMatchHandler(HttpConn *conn)
     }
     if (handler == 0 || conn->error || ((tx->flags & HTTP_TX_NO_BODY) && !(rx->flags & HTTP_HEAD))) {
         handler = http->passHandler;
-        if (rx->rewrites >= HTTP_MAX_REWRITE) {
+        if (!conn->error && rx->rewrites >= HTTP_MAX_REWRITE) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
         }
     }
@@ -6014,6 +6021,7 @@ int httpOpenNetConnector(Http *http)
 {
     HttpStage     *stage;
 
+    mprLog(5, "Open net connector");
     if ((stage = httpCreateConnector(http, "netConnector", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -6358,7 +6366,7 @@ HttpPacket *httpCreatePacket(ssize size)
             return 0;
         }
     }
-    mprLog(5, "DEBUG: httpCreate new packet %d\n", packet->entityLength);
+    mprLog(8, "DEBUG: httpCreate new packet %d", packet->entityLength);
     return packet;
 }
 
@@ -6826,7 +6834,6 @@ void httpHandleOptionsTrace(HttpQueue *q)
         q->pair->packetSize = q->packetSize;
     }
 #endif
-
     if (rx->flags & HTTP_TRACE) {
         if (!conn->limits->enableTraceMethod) {
             tx->status = HTTP_CODE_NOT_ACCEPTABLE;
@@ -6858,7 +6865,7 @@ static void openPass(HttpQueue *q)
         q->pair->packetSize = q->packetSize;
     }
 #endif
-
+    mprLog(5, "Open passHandler");
     if (q->conn->rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q);
     }
@@ -7922,6 +7929,7 @@ int httpOpenRangeFilter(Http *http)
 {
     HttpStage     *filter;
 
+    mprLog(5, "Open range filter");
     if ((filter = httpCreateFilter(http, "rangeFilter", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -8032,7 +8040,7 @@ static void rangeService(HttpQueue *q, HttpRangeProc fill)
                 count = min(count, q->nextQ->packetSize);
                 mprAssert(count > 0);
                 if (count < bytes) {
-                    //  TODO OPT> Only need to resize if this completes all the range data.
+                    //  TODO OPT. Only need to resize if this completes all the range data.
                     httpResizePacket(q, packet, count);
                 }
                 if (!httpWillNextQueueAcceptPacket(q, packet)) {
@@ -8122,7 +8130,8 @@ static void createRangeBoundary(HttpConn *conn)
 }
 
 
-/*  Ensure all the range limits are within the entity size limits. Fixup negative ranges.
+/*  
+    Ensure all the range limits are within the entity size limits. Fixup negative ranges.
  */
 static bool fixRangeLength(HttpConn *conn)
 {
@@ -8228,6 +8237,9 @@ static bool fixRangeLength(HttpConn *conn)
  */
 
 
+
+
+static char *authTypes[] = { "none", "basic", "digest" };
 
 
 static void addMatchEtag(HttpConn *conn, char *etag);
@@ -8424,9 +8436,6 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         }
         mprLog(3, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
         httpSetState(conn, HTTP_STATE_PARSED);        
-#if UNUSED
-        loc = (rx->loc) ? rx->loc : conn->server->loc;
-#endif
         httpCreatePipeline(conn, rx->loc, tx->handler);
 
 #if FUTURE
@@ -8639,7 +8648,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
     limits = conn->limits;
     keepAlive = 0;
 
-    for (count = 0; content->start[0] != '\r' && !conn->error; count++) {
+    for (count = 0; content->start[0] != '\r' && !conn->connError; count++) {
         if (count >= limits->headerCount) {
             httpLimitError(conn, HTTP_CODE_BAD_REQUEST, "Too many headers");
             break;
@@ -9178,15 +9187,14 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     rx = conn->rx;
     q = conn->tx->queue[HTTP_QUEUE_RECEIVE];
 
-    if (packet == NULL) {
-        return 0;
-    }
     if (conn->complete || conn->connError || rx->remainingContent <= 0) {
         //  MOB -- this needs checking - upload too much data
         httpSetState(conn, HTTP_STATE_RUNNING);
         return 1;
     }
-    mprAssert(packet);
+    if (packet == NULL) {
+        return 0;
+    }
     if (!analyseContent(conn, packet)) {
         if (conn->connError) {
             /* Abort the content state if there is a connection oriented error */
@@ -9194,7 +9202,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         }
         return conn->error;
     }
-    if (rx->remainingContent == 0) {
+    if (rx->remainingContent == 0 || conn->error) {
         if (!(rx->flags & HTTP_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)) {
             rx->eof = 1;
             httpSendPacketToNext(q, httpCreateEndPacket());
@@ -9523,6 +9531,10 @@ int httpMapToStorage(HttpConn *conn)
     if (info->valid) {
         tx->etag = mprAsprintf("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
     }
+    mprLog(5, "Request Details: uri \"%s\"", rx->uri);
+    mprLog(5, "Filename: \"%s\", extension: \"%s\"", tx->filename, tx->extension);
+    mprLog(5, "Location: \"%s\", alias: \"%s\" => \"%s\"", rx->loc->prefix, rx->alias->prefix, rx->alias->filename);
+    mprLog(5, "Auth: \"%s\"", authTypes[rx->auth->type]);
     return 0;
 }
 
@@ -9918,6 +9930,7 @@ int httpOpenSendConnector(Http *http)
 {
     HttpStage     *stage;
 
+    mprLog(5, "Open send connector");
     if ((stage = httpCreateConnector(http, "sendConnector", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -12089,10 +12102,10 @@ static bool matchUpload(HttpConn *conn, HttpStage *filter)
     len = strlen(pat);
     if (sncasecmp(rx->mimeType, pat, len) == 0) {
         rx->flags |= HTTP_UPLOAD;
+        mprLog(5, "matchUpload for %s", rx->uri);
         return 1;
-    } else {
-        return 0;
-    }   
+    }
+    return 0;
 }
 
 
@@ -12109,6 +12122,7 @@ static void openUpload(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
 
+    mprLog(5, "Open upload filter");
     if ((up = mprAllocObj(Upload, manageUpload)) == 0) {
         return;
     }
@@ -12122,6 +12136,8 @@ static void openUpload(HttpQueue *q)
         rx->uploadDir = sclone("/tmp");
 #endif
     }
+    mprLog(5, "Upload directory is %s", rx->uploadDir);
+
     if ((boundary = strstr(rx->mimeType, "boundary=")) != 0) {
         boundary += 9;
         up->boundary = sjoin("--", boundary, NULL);
@@ -12162,7 +12178,6 @@ static void closeUpload(HttpQueue *q)
     
     if (up->currentFile) {
         file = up->currentFile;
-        mprDeletePath(file->filename);
         file->filename = 0;
     }
     if (rx->autoDelete) {
@@ -12570,6 +12585,7 @@ static int processContentData(HttpQueue *q)
         /*  
             Now have all the data (we've seen the boundary)
          */
+        mprCloseFile(up->file);
         up->file = 0;
         up->clientFilename = 0;
     }

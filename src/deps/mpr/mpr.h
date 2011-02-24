@@ -6987,6 +6987,7 @@ typedef struct Mpr {
     void            *altLogData;            /**< Alternate handle data for log handler */
     MprHashTable    *mimeTypes;             /**< Table of mime types */
     MprHashTable    *timeTokens;            /**< Date/Time parsing tokens */
+    char            *searchPath;            /**< Cached PATH for program execution */
     char            *name;                  /**< Product name */
     char            *title;                 /**< Product title */
     char            *version;               /**< Product version */

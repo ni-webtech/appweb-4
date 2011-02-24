@@ -49,6 +49,9 @@ static bool matchDir(HttpConn *conn, HttpStage *handler)
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
     dir = handler->stageData;
+    if (dir) {
+        mprLog(5, "Directory handler matched");
+    }
     return dir->enabled && tx->fileInfo.isDir;
 }
 
@@ -70,6 +73,7 @@ static void processDir(HttpQueue *q)
     tx = conn->tx;
     dir = q->stage->stageData;
 
+    mprLog(5, "processDir");
     filename = tx->filename;
     mprAssert(filename);
 

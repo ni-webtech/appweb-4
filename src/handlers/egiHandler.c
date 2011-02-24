@@ -25,6 +25,7 @@ static bool matchEgi(HttpConn *conn, HttpStage *handler)
     /*  
         Rewrite the entire URL as the script name 
      */
+    mprLog(5, "matchEgi");
     rx = conn->rx;
     rx->scriptName = rx->pathInfo;
     rx->pathInfo = "";
@@ -46,6 +47,7 @@ static void runEgi(HttpQueue *q)
     rx = conn->rx;
     egi = (MaEgi*) q->stage->stageData;
     
+    mprLog(5, "runEgi");
     form = (MaEgiForm*) mprLookupHash(egi->forms, rx->scriptName);
     if (form == 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Egi Form: \"%s\" is not defined", rx->scriptName);

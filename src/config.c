@@ -795,9 +795,9 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                     maStopLogging(meta);
                     if (strncmp(path, "stdout", 6) != 0) {
                         path = httpMakePath(host, path);
-                        rc = maStartLogging(path);
+                        rc = maStartLogging(host, path);
                     } else {
-                        rc = maStartLogging(path);
+                        rc = maStartLogging(host, path);
                     }
                     if (rc < 0) {
                         mprError("Can't write to ErrorLog");
@@ -1058,20 +1058,21 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             }
             return 1;
 
-        } else if (scasecmp(key, "LogFormat") == 0) {
-            //  MOB -- what should this do?
-            return 1;
-
         } else if (scasecmp(key, "LogLevel") == 0) {
             if (meta->alreadyLogging) {
                 mprLog(4, "Already logging. Ignoring LogLevel directive");
-
             } else {
-                int level;
                 value = strim(value, "\"", MPR_TRIM_BOTH);
                 level = atoi(value);
                 mprSetLogLevel(level);
             }
+            return 1;
+
+        } else if (scasecmp(key, "LogRotation") == 0) {
+            value = stok(value, " \t", &tok);
+            host->logCount = stoi(value, 10, NULL);
+            value = stok(0, "\n", &tok);
+            host->logSize = stoi(value, 10, NULL) * (1024 * 1024);
             return 1;
 
         } else if (scasecmp(key, "LogTrace") == 0) {

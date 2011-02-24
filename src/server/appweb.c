@@ -146,7 +146,7 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            maStartLogging(argv[++argind]);
+            maStartLogging(NULL, argv[++argind]);
 
         } else if (strcmp(argp, "--name") == 0 || strcmp(argp, "-n") == 0) {
             if (argind >= argc) {
@@ -161,7 +161,7 @@ MAIN(appweb, int argc, char **argv)
             app->workers = atoi(argv[++argind]);
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
-            maStartLogging("stdout:2");
+            maStartLogging(NULL, "stdout:2");
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);

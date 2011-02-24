@@ -38,6 +38,7 @@ static void setScriptName(HttpConn *conn)
         }
         rx->scriptName = alias->prefix;
         rx->pathInfo = (char*) uri;
+        mprLog(5, "ejs: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
     }
 }
 
@@ -56,6 +57,7 @@ static void openEjs(HttpQueue *q)
         /*
             On-demand loading of the startup script
          */
+        mprLog(5, "ejs: create ejs interpreter");
         if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create Ejs interpreter.");
             return;

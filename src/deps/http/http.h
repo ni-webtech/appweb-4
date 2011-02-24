@@ -2868,6 +2868,9 @@ extern HttpServer *httpCreateConfiguredServer(cchar *docRoot, cchar *ip, int por
 //  MOB -- should be better way than this
 #define HTTP_HOST_NO_TRACE      0x10        /* Prevent use of TRACE */
 
+#define HTTP_LOG_ROTATE         0x1         /* Rotate log on startup */
+#define HTTP_LOG_TRUNCATE       0x2         /* Truncate log on startup */
+
 /**
     Host Object
     A Host object represents a logical host. Several logical hosts may share a single HttpServer. Hosts may represent 
@@ -2908,6 +2911,9 @@ typedef struct HttpHost {
     char            *logFormat;             /**< Access log format */
     char            *logPath;               /**< Access log filename */
 
+    int             logCount;               /**< Number of log files to preserve */
+    int             logSize;                /**< Max log size */
+
     MprMutex        *mutex;                 /**< Multithread sync */
 #if UNUSED
     //  MOB - must mark if enabled
@@ -2933,6 +2939,7 @@ extern char *httpMakePath(HttpHost *host, cchar *file);
 extern char *httpReplaceReferences(HttpHost *host, cchar *str);
 extern void httpSetHostAddress(HttpHost *host, cchar *ip, int port);
 extern void httpSetHostDocumentRoot(HttpHost *host, cchar *dir);
+extern void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize);
 extern void httpSetHostName(HttpHost *host, cchar *name);
 extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
 extern void httpSetHostTrace(HttpHost *host, int level, int mask);

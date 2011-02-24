@@ -51,6 +51,7 @@ static void closeCgi(HttpQueue *q)
 {
     MprCmd  *cmd;
 
+    mprLog(5, "Close cgiHandler");
     cmd = (MprCmd*) q->queueData;
     if (cmd->pid) {
         mprStopCmd(cmd, -1);
@@ -77,6 +78,8 @@ static void startCgi(HttpQueue *q)
     argv = 0;
     vars = 0;
     argc = 0;
+
+    mprLog(5, "Start cgiHandler");
 
     conn = q->conn;
     rx = conn->rx;
@@ -144,6 +147,7 @@ static void processCgi(HttpQueue *q)
     conn = q->conn;
     cmd = (MprCmd*) q->queueData;
 
+    mprLog(5, "processCgi: Any (and all) post data received");
     if (cmd == 0) {
         /* Start CGI if doing file upload and delayed start */
         startCgi(q);
@@ -568,12 +572,10 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
             return 0;
         }
     }
-    
     if (endHeaders && strchr(mprGetBufStart(buf), ':')) {
         mprLog(4, "CGI: parseHeader: header\n%s", headers);
 
         while (mprGetBufLength(buf) > 0 && buf->start[0] && (buf->start[0] != '\r' && buf->start[0] != '\n')) {
-
             if ((key = getCgiToken(buf, ":")) == 0) {
                 httpConnError(conn, HTTP_CODE_BAD_REQUEST, "Bad header format");
                 return 0;
@@ -631,7 +633,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     char        *fileName, **argv, *program, *cmdScript, status[8], *indexQuery, *cp, *tok;
     cchar       *actionProgram;
     size_t      len;
-    int         argc, argind;
+    int         argc, argind, i;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -773,6 +775,11 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     argv[argind] = 0;
     *argcp = argc;
     *argvp = argv;
+
+    mprLog(5, "CGI command:");
+    for (i = 0; i < argind; i++) {
+        mprLog(5, "   argv[%d] = %s", i, argv[i]);
+    }
 }
 
 

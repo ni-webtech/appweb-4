@@ -60,12 +60,13 @@ static void logHandler(int flags, int level, cchar *msg)
 /*
     Start error and information logging. Note: this is not per-request access logging
  */
-int maStartLogging(cchar *logSpec)
+int maStartLogging(HttpHost *host, cchar *logSpec)
 {
     Mpr         *mpr;
     MprFile     *file;
+    MprPath     info;
     char        *levelSpec, *spec;
-    int         level;
+    int         level, mode;
     static int  once = 0;
 
     level = 0;
@@ -80,11 +81,20 @@ int maStartLogging(cchar *logSpec)
             *levelSpec++ = '\0';
             level = atoi(levelSpec);
         }
-
         if (strcmp(spec, "stdout") == 0) {
             file = mpr->fileSystem->stdOutput;
         } else {
-            if ((file = mprOpenFile(spec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
+            mode = O_CREAT | O_WRONLY | O_TEXT;
+            if (host && host->logCount) {
+                mode |= O_APPEND;
+                mprGetPathInfo(spec, &info);
+                if (host->logSize <= 0 || (info.valid && info.size > host->logSize)) {
+                    maRotateAccessLog(spec, host->logCount, host->logSize);
+                }
+            } else {
+                mode |= O_TRUNC;
+            }
+            if ((file = mprOpenFile(spec, mode, 0664)) == 0) {
                 mprPrintfError("Can't open log file %s\n", spec);
                 return -1;
             }
@@ -201,27 +211,16 @@ void maWriteAccessLogEntry(HttpHost *host, cchar *buf, int len)
 }
 
 
-/*
-    Called to rotate the access log
- */
-static void rotateAccessLog(HttpHost *host)
+void maRotateAccessLog(cchar *path, int count, int maxSize)
 {
-    MprPath         info;
-    struct tm       tm;
-    MprTime         when;
-    char            bak[MPR_MAX_FNAME];
+    char    *from, *to;
+    int     i;
 
-    /*
-        Rotate logs when full
-     */
-    if (mprGetPathInfo(host->logPath, &info) == 0 && info.size > MA_MAX_ACCESS_LOG) {
-        when = mprGetTime();
-        mprDecodeUniversalTime(&tm, when);
-        mprSprintf(bak, sizeof(bak), "%s-%02d-%02d-%02d-%02d:%02d:%02d", host->logPath, 
-            tm.tm_mon, tm.tm_mday, tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
-        rename(host->logPath, bak);
-        unlink(host->logPath);
-        host->log = mprOpenFile(host->logPath, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
+    for (i = count - 1; i > 0; i--) {
+        from = mprAsprintf("%s.%d", path, i);
+        to = mprAsprintf("%s.%d", path, i - 1);
+        unlink(to);
+        rename(from, to);
     }
 }
 
@@ -241,7 +240,6 @@ void maLogRequest(HttpConn *conn)
     if (host == 0) {
         return;
     }
-
 #if UNUSED
     host = host->logHost;
 #endif
@@ -356,7 +354,6 @@ void maLogRequest(HttpConn *conn)
     mprPutCharToBuf(buf, '\n');
     mprAddNullToBuf(buf);
     mprWriteFile(host->log, mprGetBufStart(buf), mprGetBufLength(buf));
-    rotateAccessLog(host);
 }
 
 

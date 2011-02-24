@@ -117,6 +117,7 @@ static void openPhp(HttpQueue *q)
 
     rx = q->conn->rx;
 
+    mprLog(5, "Open php handler");
     if (!q->stage->stageData) {
         if (initializePhp(q->conn->http) < 0) {
             httpError(q->conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");
@@ -147,6 +148,7 @@ static void processPhp(HttpQueue *q)
 
     TSRMLS_FETCH();
 
+    mprLog(5, "processPhp");
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
@@ -195,6 +197,8 @@ static void processPhp(HttpQueue *q)
         while (hp) {
             if (hp->data) {
                 php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
+                mprLog(6, "php: header var %s = %s", hp->key, hp->data);
+
             }
             hp = mprGetNextHash(rx->headers, hp);
         }
@@ -202,6 +206,7 @@ static void processPhp(HttpQueue *q)
         while (hp) {
             if (hp->data) {
                 php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
+                mprLog(6, "php: form var %s = %s", hp->key, hp->data);
             }
             hp = mprGetNextHash(rx->formVars, hp);
         }

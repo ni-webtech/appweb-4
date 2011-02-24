@@ -2449,6 +2449,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
 
     mpr->dispatcher = mprCreateDispatcher("main", 1);
     mpr->nonBlock = mprCreateDispatcher("nonblock", 1);
+    mpr->searchPath = sclone(getenv("PATH"));
 
     startThreads(flags);
 
@@ -2493,6 +2494,7 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->mutex);
         mprMark(mpr->spin);
         mprMark(mpr->emptyString);
+        mprMark(mpr->searchPath);
         mprMark(mpr->heap.markerCond);
     }
 }
@@ -4633,13 +4635,12 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
         mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
-    if (access(program, X_OK) < 0) {
-        program = mprJoinPathExt(program, BLD_EXE);
-        if (access(program, X_OK) < 0) {
-            mprLog(1, "cmd: can't access %s, errno %d", program, mprGetOsError());
-            return MPR_ERR_CANT_ACCESS;
-        }
+    if ((program = mprSearchPath(program, MPR_SEARCH_EXE, MPR->searchPath, NULL)) == 0) {
+        mprLog(1, "cmd: can't access %s, errno %d", cmd->program, mprGetOsError());
+        return MPR_ERR_CANT_ACCESS;
     }
+    cmd->program = cmd->argv[0] = program;
+
     if (mprGetPathInfo(program, &info) == 0 && info.isDir) {
         mprLog(1, "cmd: program \"%s\", is a directory", program);
         return MPR_ERR_CANT_ACCESS;
@@ -4835,8 +4836,9 @@ static int serviceWinCmdEvents(MprCmd *cmd, int channel, int timeout)
 {
     int     rc, count, status;
 
-    if (mprGetDebugMode()) {
-        timeout = MAXINT;
+    if (channel == MPR_CMD_STDIN) {
+        /* Nothing better to do */
+        return 1;
     }
     if (cmd->files[channel].handle) {
         rc = PeekNamedPipe(cmd->files[channel].handle, NULL, 0, NULL, &count, NULL);
@@ -4846,6 +4848,9 @@ static int serviceWinCmdEvents(MprCmd *cmd, int channel, int timeout)
     }
     if (cmd->process == 0) {
         return 1;
+    }
+    if (mprGetDebugMode()) {
+        timeout = MAXINT;
     }
     if ((status = WaitForSingleObject(cmd->process, timeout)) == WAIT_OBJECT_0) {
         if (cmd->requiredEof == 0) {
@@ -4882,6 +4887,11 @@ void mprPollCmd(MprCmd *cmd, int timeout)
 
     channel = -1;
 #if BLD_WIN_LIKE && !WINCE
+    if (cmd->files[MPR_CMD_STDIN].handle) {
+        if (serviceWinCmdEvents(cmd, MPR_CMD_STDIN, timeout) > 0 && (cmd->flags & MPR_CMD_IN)) {
+            invokeCallback(cmd, MPR_CMD_STDIN);
+        }
+    }
     if (cmd->files[MPR_CMD_STDOUT].handle) {
         if (serviceWinCmdEvents(cmd, MPR_CMD_STDOUT, timeout) > 0 && (cmd->flags & MPR_CMD_OUT)) {
             invokeCallback(cmd, MPR_CMD_STDOUT);
@@ -4891,13 +4901,6 @@ void mprPollCmd(MprCmd *cmd, int timeout)
             invokeCallback(cmd, MPR_CMD_STDERR);
         }
     }
-#if UNUSED
-    if (cmd->files[MPR_CMD_STDIN].handle) {
-        if (serviceWinCmdEvents(cmd, MPR_CMD_STDIN, timeout) > 0 && (cmd->flags & MPR_CMD_IN)) {
-            invokeCallback(cmd, MPR_CMD_STDIN);
-        }
-    }
-#endif
 #else
     if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
         if (mprWaitForSingleIO(cmd->files[MPR_CMD_STDOUT].fd, MPR_READABLE, timeout)) {
@@ -4923,7 +4926,7 @@ void mprPollCmd(MprCmd *cmd, int timeout)
  */
 int mprWaitForCmd(MprCmd *cmd, int timeout)
 {
-    MprTime     expires, remaining, delay;
+    MprTime     expires, remaining;
 
     if (timeout < 0) {
         timeout = MAXINT;
@@ -4943,28 +4946,16 @@ int mprWaitForCmd(MprCmd *cmd, int timeout)
             }
         }
         unlock(cmd);
-
-#if UNUSED
-        mprPollCmd(cmd, timeout);
-        remaining = (expires - mprGetTime());
-        if (cmd->pid == 0 || remaining <= 0) {
-            break;
-        }
-#else
-        if (cmd->pid == 0 || remaining <= 0) {
-            break;
-        }
-#endif
-        //  MOB - remove delay
-        delay = remaining;
-
-        if (cmd->flags & MPR_CMD_ASYNC) {
-            /* Add root to allow callers to use mprRunCmd without first managing the cmd */
-            mprAddRoot(cmd);
-            mprWaitForEvent(cmd->dispatcher, delay);
-            mprRemoveRoot(cmd);
-        } else {
-            mprPollCmd(cmd, timeout);
+        if (cmd->pid) {
+            if (cmd->flags & MPR_CMD_ASYNC && !BLD_WIN_LIKE) {
+                /* Add root to allow callers to use mprRunCmd without first managing the cmd */
+                mprAddRoot(cmd);
+                mprWaitForEvent(cmd->dispatcher, remaining);
+                mprRemoveRoot(cmd);
+            } else {
+                mprPollCmd(cmd, timeout);
+                mprWaitForEvent(cmd->dispatcher, 0);
+            }
         }
         remaining = (expires - mprGetTime());
     } while (cmd->pid && remaining >= 0);
@@ -14535,9 +14526,12 @@ char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
     va_start(args, search);
     access = (flags & MPR_SEARCH_EXE) ? X_OK : R_OK;
 
-    for (nextDir = (char*) search; nextDir; nextDir = va_arg(args, char*)) {
-
-        if (strchr(nextDir, MPR_SEARCH_SEP_CHAR)) {
+    if (mprIsAbsPath(file)) {
+        if (mprPathExists(file, access)) {
+            return sclone(file);
+        }
+    } else {
+        for (nextDir = (char*) search; nextDir; nextDir = va_arg(args, char*)) {
             tok = NULL;
             nextDir = sclone(nextDir);
             dir = stok(nextDir, MPR_SEARCH_SEP, &tok);
@@ -14548,15 +14542,14 @@ char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
                     mprLog(5, "mprSearchForFile: found %s", path);
                     return mprGetNormalizedPath(path);
                 }
+                if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
+                    path = mprJoinPathExt(path, BLD_EXE);
+                    if (mprPathExists(path, access)) {
+                        mprLog(5, "mprSearchForFile: found %s", path);
+                        return mprGetNormalizedPath(path);
+                    }
+                }
                 dir = stok(0, MPR_SEARCH_SEP, &tok);
-            }
-
-        } else {
-            mprLog(5, "mprSearchForFile: %s in directory %s", file, nextDir);
-            path = mprJoinPath(nextDir, file);
-            if (mprPathExists(path, access)) {
-                mprLog(5, "mprSearchForFile: found %s", path);
-                return mprGetNormalizedPath(path);
             }
         }
     }

@@ -140,9 +140,9 @@ module ejs {
         native static function get args(): Array
 
         /** 
-            Create a search path array.
+            Create a search path array for locating ejs modules.
             @param searchPath String containing a colon separated (or semi-colon on Windows) set of paths.
-                If search path is null, the default system search paths are returned
+                If search path is null, the default system search paths are returned.
             @return An array of search paths.
          */
         native static function createSearch(searchPath: String? = null): Array
