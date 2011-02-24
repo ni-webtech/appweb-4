@@ -50,12 +50,12 @@ ldconfig -n !!ORIG_BLD_LIB_PREFIX!!
 #	Dev package
 #
 %package dev
-Summary: Embedthis Appweb -- Development headers for !!ORIG_BLD_NAME!!
+Summary: Embedthis Appweb -- Development headers for !!BLD_NAME!!
 Group: Applications/Internet
 Prefix: !!ORIG_BLD_INC_PREFIX!!
 
 %description dev
-Development headers for !!ORIG_BLD_NAME!!
+Development headers for !!BLD_NAME!!
 
 %files dev -f devFiles.txt
 
@@ -63,11 +63,11 @@ Development headers for !!ORIG_BLD_NAME!!
 #	Source package
 #
 %package src
-Summary: Embedthis Appweb -- Source code for !!ORIG_BLD_NAME!!
+Summary: Embedthis Appweb -- Source code for !!BLD_NAME!!
 Group: Applications/Internet
 Prefix: !!ORIG_BLD_SRC_PREFIX!!
 
 %description src
-Source code for !!ORIG_BLD_NAME!!
+Source code for !!BLD_NAME!!
 
 %files src -f srcFiles.txt

@@ -70,6 +70,7 @@ setup() {
     ORIGINAL_ROOT_DIR="$ROOT_DIR"
     ROOT_DIR=${ROOT_DIR:-${BLD_TOP}/.tmp}
     ROOT_DIR=`${BLD_OUT_DIR}/bin/getpath -a "${ROOT_DIR}"`
+    export ROOT_DIR ORIGINAL_ROOT_DIR
     mkdir -p "${ROOT_DIR}"
     chmod -R g-s "${ROOT_DIR}"
 

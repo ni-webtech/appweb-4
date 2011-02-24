@@ -244,6 +244,7 @@ setup() {
     #
     ORIGINAL_ROOT_DIR="$ROOT_DIR"
     ROOT_DIR=${ROOT_DIR:-/}
+    export ROOT_DIR ORIGINAL_ROOT_DIR
 
     cd ${BLD_TOP}
     BLD_TOP=.
