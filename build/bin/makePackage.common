@@ -432,7 +432,7 @@ preparePrefixes() {
     do
         eval path="\${BLD_${name}}"
         path=`getpath -a "${path}"`
-        eval ORIG_BLD_${name}=\"${path}\"
+        eval export ORIG_BLD_${name}=\"${path}\"
         d=BLD_${name}
         eval dir=\$BLD_${name}
 

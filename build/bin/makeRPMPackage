@@ -32,10 +32,9 @@ createSpecFile() {
 
     cp package/${BLD_HOST_OS}/rpm.spec $RPM_SPEC_FILE
     cp package/${BLD_HOST_OS}/rpm.spec $RPM_SPEC_FILE
+    patchFile $RPM_SPEC_FILE
     if [ "$BLD_CPU" = i686 ] ; then
-        BLD_CPU=i386 patchFile $RPM_SPEC_FILE
-    else 
-        patchFile $RPM_SPEC_FILE
+        cp $RPM_SPEC_FILE /tmp/$$ ; cat /tmp/$$ | sed 's/i686/i386/g' >$RPM_SPEC_FILE ; rm -f /tmp/$$
     fi
 
     #
