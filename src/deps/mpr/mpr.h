@@ -6671,9 +6671,6 @@ typedef struct MprCmd {
     void            *forkData;
     MprBuf          *stdoutBuf;         /* Standard output from the client */
     MprBuf          *stderrBuf;         /* Standard error output from the client */
-#if UNUSED
-    MprTime         lastActivity;       /* Time of last I/O */
-#endif
     int             pid;                /* Process ID of the created process */
     void            *userData;          /* User data storage */
     int             userFlags;          /* User flags storage */
@@ -6692,9 +6689,6 @@ typedef struct MprCmd {
     SEM_ID          exitCond;           /* Synchronization semaphore for task exit */
 #endif
     MprMutex        *mutex;             /* Multithread sync */
-#if UNUSED
-    MprCond         *cond;              /* Multithread signalling */
-#endif
 } MprCmd;
 
 

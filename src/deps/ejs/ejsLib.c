@@ -5307,7 +5307,7 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
     EjsFrame        *fp;
     EjsType         *type;
     EjsObj          **argv;
-    EjsObj          *result, **sp;
+    EjsObj          **sp;
     int             count, i, fstate;
 
     mprAssert(fun);
@@ -5316,20 +5316,13 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
     mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
 
     state = ejs->state;
-    result = 0;
-
-#if UNUSED
-    if (MPR->heap.mustYield && !state->frozen) { 
-        mprYield(0); 
-    }
-#endif
 
     if (unlikely(ejsIsType(ejs, fun))) {
         type = (EjsType*) fun;
         if (thisObj == NULL) {
             thisObj = ejsCreateObj(ejs, type, 0);
         }
-        result = thisObj;
+        ejs->result = thisObj;
         if (!type->hasConstructor) {
             ejs->state->stack -= (argc + stackAdjust);
             if (ejs->exiting || mprIsStopping(ejs)) {
@@ -5391,12 +5384,12 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
         }
         ejsClearAttention(ejs);
 fstate = state->frozen;
-        result = (fun->body.proc)(ejs, thisObj, argc, argv);
+        ejs->result = (fun->body.proc)(ejs, thisObj, argc, argv);
 state->frozen = fstate;
-        if (result == 0) {
-            result = ejs->nullValue;
+        if (ejs->result == 0) {
+            ejs->result = ejs->nullValue;
         }
-mprAssert(result == 0 || (MPR_GET_GEN(MPR_GET_MEM(result)) != MPR->heap.dead));
+mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
         state->stack -= (argc + stackAdjust);
 
     } else {
@@ -5408,9 +5401,6 @@ mprAssert(result == 0 || (MPR_GET_GEN(MPR_GET_MEM(result)) != MPR->heap.dead));
         state->fp = fp;
         state->bp = (EjsBlock*) fp;
         ejsClearAttention(ejs);
-    }
-    if (result) {
-        ejs->result = result;
     }
 mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
     //  MOB - is this the best place for this?
@@ -14710,10 +14700,12 @@ static EjsObj *cmd_start(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         return 0;
     }
     if (!(flags & MPR_CMD_DETACH)) {
+        mprAssert(cmd->mc);
         if (mprWaitForCmd(cmd->mc, cmd->timeout) < 0) {
             //  MOB - more diagnostics - why cant wait
             ejsThrowStateError(ejs, "Timeout %d msec waiting for command to complete: %s", cmd->timeout, cmd->argv[0]);
         }
+        mprAssert(cmd->mc);
         if (cmd->throw) {
             if (mprGetCmdExitStatus(cmd->mc, &status) < 0 || status != 0) {
                 ejsThrowIOError(ejs, "Command failure: %s", mprGetBufStart(cmd->stderrBuf));

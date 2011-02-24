@@ -9203,7 +9203,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         return conn->error;
     }
     if (rx->remainingContent == 0 || conn->error) {
-        if (!(rx->flags & HTTP_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)) {
+        if (!(rx->flags & HTTP_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF) || conn->error) {
             rx->eof = 1;
             httpSendPacketToNext(q, httpCreateEndPacket());
         }
@@ -9229,7 +9229,8 @@ static bool processRunning(HttpConn *conn)
             httpProcessPipeline(conn);
         }
         if (conn->server) {
-            if (conn->complete || conn->writeComplete || conn->error) {
+            //  MOB - simplify test
+            if (conn->complete || conn->writeComplete) {
                 httpSetState(conn, HTTP_STATE_COMPLETE);
                 canProceed = 1;
             } else {
@@ -11613,6 +11614,7 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *msg)
         emsg = mprEscapeHtml(msg);
         httpFormatBody(conn, statusMsg, "<h2>Access Error: %d -- %s</h2>\r\n<p>%s</p>\r\n", status, statusMsg, emsg);
     }
+    httpDontCache(conn);
 }
 
 
@@ -12209,7 +12211,6 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
     if (httpGetPacketLength(packet) == 0) {
         if (up->contentState != HTTP_UPLOAD_CONTENT_END) {
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient upload data");
-            return;
         }
         httpSendPacketToNext(q, packet);
         return;
@@ -12472,8 +12473,7 @@ static int writeToFile(HttpQueue *q, char *data, ssize len)
     file = up->currentFile;
 
     if ((file->size + len) > limits->uploadSize) {
-        httpLimitError(conn, HTTP_CODE_REQUEST_TOO_LARGE, "Uploaded file %s exceeds maximum %d", 
-            up->tmpPath, limits->uploadSize);
+        httpLimitError(conn, HTTP_CODE_REQUEST_TOO_LARGE, "Uploaded file exceeds maximum %d", limits->uploadSize);
         return MPR_ERR_CANT_WRITE;
     }
     if (len > 0) {

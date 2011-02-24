@@ -4266,9 +4266,7 @@ static void manageCmd(MprCmd *cmd, int flags)
         mprMark(cmd->program);
         mprMark(cmd->makeArgv);
         mprMark(cmd->argv);
-        mprMark(cmd->env);
         mprMark(cmd->dir);
-        mprMark(cmd->mutex);
         mprMark(cmd->dispatcher);
         mprMark(cmd->callbackData);
         mprMark(cmd->forkData);
@@ -4278,10 +4276,10 @@ static void manageCmd(MprCmd *cmd, int flags)
         for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
             mprMark(cmd->files[i].name);
         }
+        mprMark(cmd->env);
 #if BLD_WIN_LIKE
         mprMark(cmd->command);
         mprMark(cmd->arg0);
-        mprMark(cmd->env);
 #else
         if (cmd->env) {
             for (i = 0; cmd->env[i]; i++) {
@@ -4294,25 +4292,14 @@ static void manageCmd(MprCmd *cmd, int flags)
             mprMark(cmd->handlers[i]);
         }
         unlock(cmd);
+        mprMark(cmd->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
-#if UNUSED
-        cs = MPR->cmdService;
-        if (cs->mutex) {
-            //  MOB - why lock the cmd service? 
-            lock(cs);
-        }
-#endif
         resetCmd(cmd);
 #if VXWORKS
         vxCmdManager(cmd);
 #endif
         mprRemoveItem(MPR->cmdService->cmds, cmd);
-#if UNUSED
-        if (cs->mutex) {
-            unlock(cs);
-        }
-#endif
     }
 }
 
@@ -4349,6 +4336,7 @@ static void vxCmdManager(MprCmd *cmd)
 
 void mprDestroyCmd(MprCmd *cmd)
 {
+    mprAssert(cmd);
     resetCmd(cmd);
     mprRemoveItem(MPR->cmdService->cmds, cmd);
 }
@@ -4359,6 +4347,7 @@ static void resetCmd(MprCmd *cmd)
     MprCmdFile      *files;
     int             i;
 
+    mprAssert(cmd);
     files = cmd->files;
     for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
         if (cmd->handlers[i]) {
@@ -4389,6 +4378,7 @@ void mprDisconnectCmd(MprCmd *cmd)
 {
     int     i;
 
+    mprAssert(cmd);
     lock(cmd);
     for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
         if (cmd->handlers[i]) {
@@ -4450,6 +4440,7 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, int flags)
     char    **argv;
     int     argc;
 
+    mprAssert(cmd);
     if (mprMakeArgv(command, &argc, &argv, 0) < 0 || argv == 0) {
         return 0;
     }
@@ -4470,6 +4461,7 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
 {
     int     rc, status;
 
+    mprAssert(cmd);
     if (err) {
         *err = 0;
         flags |= MPR_CMD_ERR;
@@ -4608,6 +4600,7 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
     char        *program;
     int         rc;
 
+    mprAssert(cmd);
     mprAssert(argv);
     mprAssert(argc > 0);
 
@@ -4927,6 +4920,8 @@ void mprPollCmd(MprCmd *cmd, int timeout)
 int mprWaitForCmd(MprCmd *cmd, int timeout)
 {
     MprTime     expires, remaining;
+
+    mprAssert(cmd);
 
     if (timeout < 0) {
         timeout = MAXINT;
@@ -14529,6 +14524,12 @@ char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
     if (mprIsAbsPath(file)) {
         if (mprPathExists(file, access)) {
             return sclone(file);
+        }
+        if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
+            path = mprJoinPathExt(file, BLD_EXE);
+            if (mprPathExists(path, access)) {
+                return sclone(path);
+            }
         }
     } else {
         for (nextDir = (char*) search; nextDir; nextDir = va_arg(args, char*)) {
