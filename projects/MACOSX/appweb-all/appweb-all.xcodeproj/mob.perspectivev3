@@ -398,7 +398,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>C9DC67B6131739D200E18F46</string>
+										<string>C9DC67B713173A4200E18F46</string>
 										<key>history</key>
 										<array>
 											<string>C9817CEA110D232600F241EF</string>
@@ -734,7 +734,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>320289234.68801898</real>
+	<real>320289346.62923998</real>
 	<key>ToolbarConfigUserDefaultsMinorVersion</key>
 	<string>2</string>
 	<key>ToolbarDisplayMode</key>
@@ -751,7 +751,6 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>C9DC67B21317398F00E18F46</string>
 		<string>C9DC6787131734DC00E18F46</string>
 		<string>C9DC6788131734DC00E18F46</string>
 		<string>/Users/mob/git/appweb/projects/MACOSX/appweb-all/appweb-all.xcodeproj</string>

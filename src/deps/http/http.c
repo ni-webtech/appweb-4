@@ -149,6 +149,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->files);
         mprMark(app->formData);
         mprMark(app->headers);
+        mprMark(app->host);
         mprMark(app->bodyData);
         mprMark(app->http);
         mprMark(app->password);
@@ -166,7 +167,7 @@ static void initSettings()
     app->continueOnErrors = 0;
     app->showHeaders = 0;
 
-    app->host = "localhost";
+    app->host = sclone("localhost");
     app->iterations = 1;
     app->loadThreads = 1;
     app->protocol = "HTTP/1.1";
@@ -269,6 +270,14 @@ static bool parseArgs(int argc, char **argv)
                 return 0;
             } else {
                 app->host = argv[++nextArg];
+                if (*app->host == ':') {
+                    app->host = &app->host[1];
+                } 
+                if (isPort(app->host)) {
+                    app->host = mprAsprintf("http://127.0.0.1:%s", app->host);
+                } else {
+                    app->host = sclone(app->host);
+                }
             }
 
 #if UNUSED
@@ -986,7 +995,6 @@ static bool isPort(cchar *name)
 
 static char *resolveUrl(HttpConn *conn, cchar *url)
 {
-    //  TODO replace with Url join
     if (*url == '/') {
         if (app->host) {
             if (sncasecmp(app->host, "http://", 7) != 0 && sncasecmp(app->host, "https://", 8) != 0) {
