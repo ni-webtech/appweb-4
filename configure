@@ -113,6 +113,7 @@ checkSetup() {
     BLD_TOP=`canonPath .`
     BLD_TOOLS_DIR=${BLD_TOP}/build/bin
     BLD_OUT_DIR=out
+    rm -rf $BLD_OUT_DIR
 
     #
     #   Sleuth the product. By convention products put a configure.PRODUCT file under the build directory.
@@ -1600,12 +1601,9 @@ BLD_WEB_PREFIX="$BLD_WEB_PREFIX"
 #   v=`eval relativePath "${BLD_BUILD_MOD_DIR}"` 
 #   echo -e "BLD_BUILD_MOD_DIR=\"${v}\""      >>$FILE
 
-    v=`eval echo "${BLD_BUILD_BIN_DIR}"` 
-    echo -e "BLD_BUILD_BIN_DIR=\"${v}\""      >>$FILE
-    v=`eval echo "${BLD_BUILD_LIB_DIR}"` 
-    echo -e "BLD_BUILD_LIB_DIR=\"${v}\""      >>$FILE
-    v=`eval echo "${BLD_BUILD_MOD_DIR}"` 
-    echo -e "BLD_BUILD_MOD_DIR=\"${v}\""      >>$FILE
+    echo -e "BLD_BUILD_BIN_DIR=\"${BLD_BUILD_BIN_DIR}\""      >>$FILE
+    echo -e "BLD_BUILD_LIB_DIR=\"${BLD_BUILD_LIB_DIR}\""      >>$FILE
+    echo -e "BLD_BUILD_MOD_DIR=\"${BLD_BUILD_MOD_DIR}\""      >>$FILE
 
     cat >>$FILE <<!EOF_CONFIG2a
 
