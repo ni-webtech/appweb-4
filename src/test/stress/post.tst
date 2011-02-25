@@ -37,7 +37,6 @@ function postTest(url: String) {
     http.close()
 }
 
-/*
 postTest("/index.html")
 
 if (test.config["ejs"] == 1) {
@@ -46,7 +45,6 @@ if (test.config["ejs"] == 1) {
 if (test.config["php"] == 1) {
     postTest("/form.php")
 }
-*/
 
 if (test.config["cgi"] == 1) {
     postTest("/cgi-bin/cgiProgram")

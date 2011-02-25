@@ -4510,7 +4510,6 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
     unlock(cmd);
 
     if (mprWaitForCmd(cmd, -1) < 0) {
-        mprRemoveRoot(cmd);
         return MPR_ERR_NOT_READY;
     }
     lock(cmd);
