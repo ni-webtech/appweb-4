@@ -2567,6 +2567,7 @@ static void getArgs(Mpr *mpr, int argc, char **argv)
     mprMakeArgv(command, &argc, &argv, MPR_ARGV_ARGS_ONLY);
     argv[0] = sclone(args->program);
 #elif VXWORKS
+    MprArgs *args = (MprArgs*) argv;
     mprMakeArgv("", &argc, &argv, MPR_ARGV_ARGS_ONLY);
     argv[0] = sclone(args->program);
 #endif
@@ -5065,6 +5066,7 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
 }
 
 
+#if CMD_ASYNC
 static void stdinCallback(MprCmd *cmd, MprEvent *event)
 {
     if (cmd->callback) {
@@ -5087,6 +5089,7 @@ static void stderrCallback(MprCmd *cmd, MprEvent *event)
         (cmd->callback)(cmd, MPR_CMD_STDERR, cmd->callbackData);
     }
 }
+#endif
 
 
 void mprSetCmdCallback(MprCmd *cmd, MprCmdProc proc, void *data)
