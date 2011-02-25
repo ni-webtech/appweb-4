@@ -157,6 +157,10 @@ setSystemConfiguration() {
     [ "$BLD_HOST_SYSTEM" = "" ] && BLD_HOST_SYSTEM=`bash build/bin/config.guess`
     [ "$BLD_BUILD_SYSTEM" = "" ] && BLD_BUILD_SYSTEM=`bash build/bin/config.guess`
 
+    #   Temp to switch back to win-32 builds
+    [ "$BLD_HOST_SYSTEM" = "x86_64-pc-cygwin" ] && BLD_HOST_SYSTEM="i686-pc-cygwin"
+    [ "$BLD_BUILD_SYSTEM" = "x86_64-pc-cygwin" ] && BLD_BUILD_SYSTEM="i686-pc-cygwin"
+
     parseSystemConfiguration HOST 
     parseSystemConfiguration BUILD 
 
@@ -716,7 +720,6 @@ convertSearchPath() {
         sed "s/[ \)\(]/?/g" | grep -v '^$' | while read x
         do
             [ "$x" = "" ] && continue
-            # [ "$verbose" != 0 ] && echo -e "\nConvert: \"$x\" => \n    \"`eval ls -d1 "$x" 2>/dev/null | sort -r`\"" 1>&2
             if [ "$BLD_BUILD_OS" = WIN ] ; then
                 eval ls -d1 "$x" 2>/dev/null | sort -r | while read f
                 do
