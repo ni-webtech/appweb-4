@@ -20,7 +20,7 @@ cpy -t -w -e -d doc/product README.TXT "${BLD_DOC_PREFIX}/product"
 
 if [ $BLD_UNIX_LIKE ] ; then
     makeDir "${BLD_MAN_PREFIX}/man1"
-    cpy -z -d doc/man appweb.1 angel.1 appwebMonitor.1 http.1 httpPassword.1 makerom.1 "${BLD_MAN_PREFIX}/man1"
+    cpy -z -d doc/man appweb.1 angel.1 appwebMonitor.1 http.1 auth.1 makerom.1 "${BLD_MAN_PREFIX}/man1"
 fi
 
 if [ ${TASK} = Install -a ${BLD_HOST_OS} != "WIN" -a -f "${BLD_BIN_PREFIX}/linkup" ] ; then
