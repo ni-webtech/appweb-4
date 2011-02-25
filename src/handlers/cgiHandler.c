@@ -816,8 +816,9 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     /*
         If not found, go looking for the fileName with the extensions defined in appweb.conf. 
         NOTE: we don't use PATH deliberately!!!
+        MOB - add extensions just incase the ext is wrong due to a directory with embedded "."
      */
-    if (access(fileName, X_OK) < 0 && *ext == '\0') {
+    if (access(fileName, X_OK) < 0 /* MOB && *ext == '\0' */) {
         for (hp = 0; (hp = mprGetNextHash(loc->extensions, hp)) != 0; ) {
             path = sjoin(fileName, ".", hp->key, NULL);
             if (access(path, X_OK) == 0) {
