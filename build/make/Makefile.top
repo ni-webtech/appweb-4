@@ -109,7 +109,6 @@ package-only:
 packageExtra:
 	if [ -d package -a -f package/binary.files ] ; then \
 		if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
-			mkdir -p $(BLD_TOP)/releases ; \
 			export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
 			fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
 				$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \

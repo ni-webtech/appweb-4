@@ -3087,7 +3087,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
     Wait for I/O on a single descriptor. Return the number of I/O events found. Mask is the events of interest.
     Timeout is in milliseconds.
  */
-int mprWaitForSingleIO(int fd, int desiredMask, int timeout)
+int mprWaitForSingleIO(int fd, int desiredMask, MprTime timeout)
 {
     HANDLE      h;
     int         winMask;
@@ -3104,7 +3104,7 @@ int mprWaitForSingleIO(int fd, int desiredMask, int timeout)
     }
     h = CreateEvent(NULL, FALSE, FALSE, "mprWaitForSingleIO");
     WSAEventSelect(fd, h, winMask);
-    if (WaitForSingleObject(h, timeout) == WAIT_OBJECT_0) {
+    if (WaitForSingleObject(h, (DWORD) timeout) == WAIT_OBJECT_0) {
         CloseHandle(h);
         return desiredMask;
     }
@@ -3117,7 +3117,7 @@ int mprWaitForSingleIO(int fd, int desiredMask, int timeout)
     Wait for I/O on all registered descriptors. Timeout is in milliseconds. Return the number of events serviced.
     Should only be called by the thread that calls mprServiceEvents
  */
-void mprWaitForIO(MprWaitService *ws, int timeout)
+void mprWaitForIO(MprWaitService *ws, MprTime timeout)
 {
     MSG     msg;
 
@@ -3132,7 +3132,7 @@ void mprWaitForIO(MprWaitService *ws, int timeout)
         mprDoWaitRecall(ws);
         return;
     }
-    SetTimer(ws->hwnd, 0, timeout, NULL);
+    SetTimer(ws->hwnd, 0, (UINT) timeout, NULL);
 
     mprYield(MPR_YIELD_STICKY);
     if (GetMessage(&msg, NULL, 0, 0) == 0) {
@@ -3426,7 +3426,7 @@ void mprAtomicAdd64(volatile int64 *ptr, int value)
 #if MACOSX
     OSAtomicAdd64(value, ptr);
 #elif BLD_WIN_LIKE && MPR_64_BIT
-    return InterlockedExchangeAdd64(ptr, value);
+    InterlockedExchangeAdd64(ptr, value);
 #elif BLD_UNIX_LIKE && 0
     MOB
     asm volatile ("lock; xaddl %0,%1"
@@ -4196,6 +4196,16 @@ static void vxCmdManager(MprCmd *cmd);
 #define gunlock(cmd) 
 #endif
 
+/*
+    Windows and VxWorks do not support async I/O
+    VxWorks can't signal EOF on non-blocking pipes and Windows can't select on named pipes. 
+ */
+#if BLD_WIN_LIKE || VXWORKS
+#define CMD_ASYNC 0
+#else
+#define CMD_ASYNC 1
+#endif
+
 
 MprCmdService *mprCreateCmdService(Mpr *mpr)
 {
@@ -4276,6 +4286,7 @@ static void manageCmd(MprCmd *cmd, int flags)
         for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
             mprMark(cmd->files[i].name);
         }
+        //  MOB - refactor
         mprMark(cmd->env);
 #if BLD_WIN_LIKE
         mprMark(cmd->command);
@@ -4532,31 +4543,13 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
 
 void mprAddCmdHandlers(MprCmd *cmd)
 {
-#if BLD_UNIX_LIKE || VXWORKS
+#if CMD_ASYNC
     int     stdinFd, stdoutFd, stderrFd, mask;
   
     stdinFd = cmd->files[MPR_CMD_STDIN].fd; 
     stdoutFd = cmd->files[MPR_CMD_STDOUT].fd; 
     stderrFd = cmd->files[MPR_CMD_STDERR].fd; 
 
-    /*
-        Put the stdout and stderr into non-blocking mode. Windows can't do this because both ends of the pipe
-        share the same blocking mode (Ugh!). So Windows must poll.
-     */
-#if VXWORKS
-    {
-        int nonBlock = 1;
-        if (stdinFd >= 0) {
-            ioctl(stdinFd, FIONBIO, (int) &nonBlock);
-        }
-        if (stdoutFd >= 0) {
-            ioctl(stdoutFd, FIONBIO, (int) &nonBlock);
-        }
-        if (stderrFd >= 0) {
-            ioctl(stderrFd, FIONBIO, (int) &nonBlock);
-        }
-    }
-#else
     if (stdinFd >= 0) {
         fcntl(stdinFd, F_SETFL, fcntl(stdinFd, F_GETFL) | O_NONBLOCK);
     }
@@ -4566,7 +4559,6 @@ void mprAddCmdHandlers(MprCmd *cmd)
     if (stderrFd >= 0) {
         fcntl(stderrFd, F_SETFL, fcntl(stderrFd, F_GETFL) | O_NONBLOCK);
     }
-#endif
     if (stdinFd >= 0) {
         cmd->handlers[MPR_CMD_STDIN] = mprCreateWaitHandler(stdinFd, MPR_WRITABLE, cmd->dispatcher,
             (MprEventProc) stdinCallback, cmd, 0);
@@ -4583,8 +4575,8 @@ void mprAddCmdHandlers(MprCmd *cmd)
         cmd->handlers[MPR_CMD_STDERR] = mprCreateWaitHandler(stderrFd, mask, cmd->dispatcher,
             (MprEventProc) stderrCallback, cmd, 0);
     }
-#endif
     cmd->flags |= MPR_CMD_ASYNC;
+#endif
 }
 
 
@@ -4606,18 +4598,6 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
     if (argc <= 0 || argv == NULL || argv[0] == NULL) {
         return MPR_ERR_BAD_STATE;
     }
-    /*
-        Windows and VxWorks can't do async. There really isn't a good way to not block on windows. You can't use
-        PeekNamedPipe because it will hang if the gateway is blocked reading it. You can't use NtQueryInformationFile 
-        on Windows SDK 6.0+. You also can't put the socket into non-blocking mode because Windows pipes share the
-        blocking mode for both ends. VxWorks can't reliably detect EOF on pipes.
-     */
-#if VXWORKS || BLD_WIN_LIKE
-    if (flags & MPR_CMD_ASYNC) {
-        mprError("Async mode not supported for commands on this platform");
-        return MPR_ERR_BAD_STATE;
-    }
-#endif
     resetCmd(cmd);
     program = argv[0];
     cmd->program = sclone(program);
@@ -4653,7 +4633,7 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
     if (cmd->flags & MPR_CMD_ERR) {
         cmd->requiredEof++;
     }
-    if (cmd->flags & MPR_CMD_ASYNC) {
+    if ((cmd->flags & MPR_CMD_ASYNC) && CMD_ASYNC) {
         mprAddCmdHandlers(cmd);
     }
     rc = startProcess(cmd);
@@ -4682,7 +4662,6 @@ int mprMakeCmdIO(MprCmd *cmd)
 
 /*
     Stop the command
-    MOB - should take signal arg
  */
 int mprStopCmd(MprCmd *cmd, int signal)
 {
@@ -4704,50 +4683,6 @@ int mprStopCmd(MprCmd *cmd, int signal)
 }
 
 
-static ssize asyncRead(MprCmd *cmd, int channel, char *buf, ssize bufsize)
-{
-#if BLD_WIN_LIKE && !WINCE
-    int     count, rc;
-
-    rc = PeekNamedPipe(cmd->files[channel].handle, NULL, 0, NULL, &count, NULL);
-    if (rc && count > 0) {
-        return read(cmd->files[channel].fd, buf, (uint) bufsize);
-    }
-    if (cmd->process == 0) {
-        return 0;
-    }
-    /*
-        No waiting. Use this just to check if the process has exited and thus EOF on the pipe.
-     */
-    if (WaitForSingleObject(cmd->process, 0) == WAIT_OBJECT_0) {
-        return 0;
-    }
-    errno = EAGAIN;
-    return -1;
-#elif VXWORKS
-    int     rc;
-    rc = read(cmd->files[channel].fd, buf, bufsize);
-
-    /*
-        VxWorks can't signal EOF on non-blocking pipes. Need a pattern indicator.
-        MOB - better to just make VxWorks a non-async platform
-     */
-    if (rc == MPR_CMD_VXWORKS_EOF_LEN && strncmp(buf, MPR_CMD_VXWORKS_EOF, MPR_CMD_VXWORKS_EOF_LEN) == 0) {
-        /* EOF */
-        return 0;
-
-    } else if (rc == 0) {
-        rc = -1;
-        errno = EAGAIN;
-    }
-    return rc;
-
-#else
-    return read(cmd->files[channel].fd, buf, bufsize);
-#endif
-}
-
-
 ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 {
 #if BLD_WIN_LIKE
@@ -4758,7 +4693,7 @@ ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
      */
     rc = PeekNamedPipe(cmd->files[channel].handle, NULL, 0, NULL, &count, NULL);
     if (rc > 0 && count > 0) {
-        return read(cmd->files[channel].fd, buf, bufsize);
+        return read(cmd->files[channel].fd, buf, (uint) bufsize);
     } 
     if (cmd->process == 0 || WaitForSingleObject(cmd->process, 0) == WAIT_OBJECT_0) {
         /* Process has exited - EOF */
@@ -4768,9 +4703,6 @@ ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
     return -1;
 }
 #else
-    if (cmd->flags & MPR_CMD_ASYNC) {
-        return asyncRead(cmd, channel, buf, bufsize);
-    }
     return read(cmd->files[channel].fd, buf, bufsize);
 #endif
 }
@@ -4786,16 +4718,14 @@ int mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
         return -1;
     }
 #endif
-    return write(cmd->files[channel].fd, buf, bufsize);
+    return write(cmd->files[channel].fd, buf, (uint) bufsize);
 }
 
 
 void mprEnableCmdEvents(MprCmd *cmd, int channel)
 {
-    int     mask;
-
-    mask = (channel == MPR_CMD_STDIN) ? MPR_WRITABLE : MPR_READABLE;
-#if BLD_UNIX_LIKE || VXWORKS
+#if CMD_ASYNC
+    int mask = (channel == MPR_CMD_STDIN) ? MPR_WRITABLE : MPR_READABLE;
     lock(cmd);
     if (cmd->handlers[channel]) {
         mprAssert(cmd->flags & MPR_CMD_ASYNC);
@@ -4808,7 +4738,7 @@ void mprEnableCmdEvents(MprCmd *cmd, int channel)
 
 void mprDisableCmdEvents(MprCmd *cmd, int channel)
 {
-#if BLD_UNIX_LIKE || VXWORKS
+#if CMD_ASYNC
     lock(cmd);
     if (cmd->handlers[channel]) {
         mprAssert(cmd->flags & MPR_CMD_ASYNC);
@@ -4824,7 +4754,7 @@ void mprDisableCmdEvents(MprCmd *cmd, int channel)
     Service I/O and return a count of characters that can be read without blocking. If the proces has completed,
     then return 1 to indicate that EOF can be read.
  */
-static int serviceWinCmdEvents(MprCmd *cmd, int channel, int timeout)
+static int serviceWinCmdEvents(MprCmd *cmd, int channel, MprTime timeout)
 {
     int     rc, count, status;
 
@@ -4844,7 +4774,7 @@ static int serviceWinCmdEvents(MprCmd *cmd, int channel, int timeout)
     if (mprGetDebugMode()) {
         timeout = MAXINT;
     }
-    if ((status = WaitForSingleObject(cmd->process, timeout)) == WAIT_OBJECT_0) {
+    if ((status = WaitForSingleObject(cmd->process, (DWORD) timeout)) == WAIT_OBJECT_0) {
         if (cmd->requiredEof == 0) {
             mprReapCmd(cmd, MPR_TIMEOUT_STOP_TASK);
             return 0;
@@ -4873,7 +4803,7 @@ static void invokeCallback(MprCmd *cmd, int channel)
 /*
     Poll for I/O events on CGI pipes
  */
-void mprPollCmd(MprCmd *cmd, int timeout)
+void mprPollCmd(MprCmd *cmd, MprTime timeout)
 {
     int     channel;
 
@@ -4916,7 +4846,7 @@ void mprPollCmd(MprCmd *cmd, int timeout)
     Wait for a command to complete. Return 0 if the command completed, otherwise it will return MPR_ERR_TIMEOUT. 
     This will call mprReapCmd if required.
  */
-int mprWaitForCmd(MprCmd *cmd, int timeout)
+int mprWaitForCmd(MprCmd *cmd, MprTime timeout)
 {
     MprTime     expires, remaining;
 
@@ -4941,15 +4871,15 @@ int mprWaitForCmd(MprCmd *cmd, int timeout)
         }
         unlock(cmd);
         if (cmd->pid) {
-            if (cmd->flags & MPR_CMD_ASYNC && !BLD_WIN_LIKE) {
-                /* Add root to allow callers to use mprRunCmd without first managing the cmd */
-                mprAddRoot(cmd);
+            /* Add root to allow callers to use mprRunCmd without first managing the cmd */
+            mprAddRoot(cmd);
+            if ((cmd->flags & MPR_CMD_ASYNC) && CMD_ASYNC) {
                 mprWaitForEvent(cmd->dispatcher, remaining);
-                mprRemoveRoot(cmd);
             } else {
                 mprPollCmd(cmd, timeout);
                 mprWaitForEvent(cmd->dispatcher, 0);
             }
+            mprRemoveRoot(cmd);
         }
         remaining = (expires - mprGetTime());
     } while (cmd->pid && remaining >= 0);
@@ -4967,7 +4897,7 @@ int mprWaitForCmd(MprCmd *cmd, int timeout)
     we make this the case for all O/Ss. Return zero if the exit status is successfully reaped. Return -1 if an error 
     and return > 0 if process still running.
  */
-int mprReapCmd(MprCmd *cmd, int timeout)
+int mprReapCmd(MprCmd *cmd, MprTime timeout)
 {
     MprTime     mark;
     int         status;
@@ -5185,7 +5115,7 @@ bool mprIsCmdRunning(MprCmd *cmd)
 }
 
 
-void mprSetCmdTimeout(MprCmd *cmd, int timeout)
+void mprSetCmdTimeout(MprCmd *cmd, MprTime timeout)
 {
     cmd->timeoutPeriod = timeout;
 }
@@ -6007,7 +5937,7 @@ static void manageCond(MprCond *cp, int flags)
     triggered, then it will return immediately. Timeout of -1 means wait forever. Timeout of 0 means no wait.
     Returns 0 if the event was signalled. Returns < 0 for a timeout.
  */
-int mprWaitForCond(MprCond *cp, int timeout)
+int mprWaitForCond(MprCond *cp, MprTime timeout)
 {
     MprTime     now, expire;
     int         rc;
@@ -6130,7 +6060,7 @@ void mprResetCond(MprCond *cp)
     A timeout of -1 means wait forever. Timeout of 0 means no wait.  Returns 0 if the event was signalled. 
     Returns < 0 for a timeout.
  */
-int mprWaitForMultiCond(MprCond *cp, int timeout)
+int mprWaitForMultiCond(MprCond *cp, MprTime timeout)
 {
     int         rc;
 #if BLD_UNIX_LIKE
@@ -8471,7 +8401,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
     Wait for I/O on a single file descriptor. Return a mask of events found. Mask is the events of interest.
     timeout is in milliseconds.
  */
-int mprWaitForSingleIO(int fd, int mask, int timeout)
+int mprWaitForSingleIO(int fd, int mask, MprTime timeout)
 {
     MprWaitService      *ws;
     struct epoll_event  ev, events[2];
@@ -8519,7 +8449,7 @@ int mprWaitForSingleIO(int fd, int mask, int timeout)
 /*
     Wait for I/O on all registered file descriptors. Timeout is in milliseconds. Return the number of events detected. 
  */
-void mprWaitForIO(MprWaitService *ws, int timeout)
+void mprWaitForIO(MprWaitService *ws, MprTime timeout)
 {
     int     rc;
 
@@ -10440,7 +10370,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
     Wait for I/O on a single file descriptor. Return a mask of events found. Mask is the events of interest.
     timeout is in milliseconds.
  */
-int mprWaitForSingleIO(int fd, int mask, int timeout)
+int mprWaitForSingleIO(int fd, int mask, MprTime timeout)
 {
     struct timespec ts;
     struct kevent   interest[2], events[1];
@@ -10482,7 +10412,7 @@ int mprWaitForSingleIO(int fd, int mask, int timeout)
 /*
     Wait for I/O on all registered file descriptors. Timeout is in milliseconds. Return the number of events detected.
  */
-void mprWaitForIO(MprWaitService *ws, int timeout)
+void mprWaitForIO(MprWaitService *ws, MprTime timeout)
 {
     struct timespec ts;
     int             rc;
@@ -13084,7 +13014,7 @@ void *mprLookupModuleData(cchar *name)
 }
 
 
-void mprSetModuleTimeout(MprModule *module, int timeout)
+void mprSetModuleTimeout(MprModule *module, MprTime timeout)
 {
     module->timeout = timeout;
 }
@@ -14908,7 +14838,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
     Wait for I/O on a single file descriptor. Return a mask of events found. Mask is the events of interest.
     timeout is in milliseconds.
  */
-int mprWaitForSingleIO(int fd, int mask, int timeout)
+int mprWaitForSingleIO(int fd, int mask, MprTime timeout)
 {
     struct pollfd   fds[1];
     int             rc;
@@ -14946,7 +14876,7 @@ int mprWaitForSingleIO(int fd, int mask, int timeout)
 /*
     Wait for I/O on all registered file descriptors. Timeout is in milliseconds. Return the number of events detected.
  */
-void mprWaitForIO(MprWaitService *ws, int timeout)
+void mprWaitForIO(MprWaitService *ws, MprTime timeout)
 {
     int     count, rc;
 
@@ -16740,7 +16670,7 @@ void mprRemoveNotifier(MprWaitHandler *wp)
     Wait for I/O on a single file descriptor. Return a mask of events found. Mask is the events of interest.
     timeout is in milliseconds.
  */
-int mprWaitForSingleIO(int fd, int mask, int timeout)
+int mprWaitForSingleIO(int fd, int mask, MprTime timeout)
 {
     MprWaitService  *ws;
     struct timeval  tval;
@@ -16781,7 +16711,7 @@ int mprWaitForSingleIO(int fd, int mask, int timeout)
 /*
     Wait for I/O on all registered file descriptors. Timeout is in milliseconds. Return the number of events detected.
  */
-void mprWaitForIO(MprWaitService *ws, int timeout)
+void mprWaitForIO(MprWaitService *ws, MprTime timeout)
 {
     struct timeval  tval;
     int             rc, maxfd;
@@ -20246,7 +20176,7 @@ bool assertTrue(MprTestGroup *gp, cchar *loc, bool isTrue, cchar *msg)
 }
 
 
-bool mprWaitForTestToComplete(MprTestGroup *gp, int timeout)
+bool mprWaitForTestToComplete(MprTestGroup *gp, MprTime timeout)
 {
     MprTime     expires, remaining;
     int         rc;

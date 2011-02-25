@@ -11782,7 +11782,8 @@ static EjsArray *unshiftArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 static int growArray(Ejs *ejs, EjsArray *ap, int len)
 {
     EjsObj      **dp;
-    int         i, size, count, factor;
+    ssize       size, factor, count;
+    int         i;
 
     mprAssert(ap);
 
@@ -11792,15 +11793,8 @@ static int growArray(Ejs *ejs, EjsArray *ap, int len)
     if (len <= ap->length) {
         return 0;
     }
-#if UNUSED || 1
     size = mprGetBlockSize(ap->data);
-    mprAssert(size == mprGetBlockSize(ap->data));
-    mprAssert(size == mprGetBlockSize(ap->data));
-    mprAssert(size == mprGetBlockSize(ap->data));
     size = (int) (mprGetBlockSize(ap->data) / sizeof(EjsObj*));
-#else
-    size = ap->length;
-#endif
 
     /*
         Allocate or grow the data structures.
@@ -11824,24 +11818,10 @@ static int growArray(Ejs *ejs, EjsArray *ap, int len)
             if ((ap->data = mprAllocZeroed(sizeof(EjsObj*) * count)) == 0) {
                 return EJS_ERR;
             }
-            {
-                int i, size;
-                size = mprGetBlockSize(ap->data) / sizeof(EjsObj*);
-                for (i = 0; i < size; i++) {
-                    mprAssert(ap->data[i] == 0 || mprIsValid(ap->data[i]));
-                }
-            }
         } else {
             mprAssert(size > 0);
             if ((ap->data = mprRealloc(ap->data, sizeof(EjsObj*) * count)) == 0) {
                 return EJS_ERR;
-            }
-            {
-                int i, size;
-                size = mprGetBlockSize(ap->data) / sizeof(EjsObj*);
-                for (i = 0; i < size; i++) {
-                    mprAssert(ap->data[i] == 0 || mprIsValid(ap->data[i]));
-                }
             }
         }
         dp = &ap->data[ap->length];
@@ -14457,7 +14437,7 @@ static EjsNumber *cmd_read(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
     ejsCopyToByteArray(ejs, buffer, buffer->writePosition, (char*) mprGetBufStart(cmd->stdoutBuf), count);
     ejsSetByteArrayPositions(ejs, buffer, -1, buffer->writePosition + count);
     mprAdjustBufStart(cmd->stdoutBuf, count);
-    return ejsCreateNumber(ejs, count);
+    return ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -14768,7 +14748,7 @@ static EjsObj *cmd_stop(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
  */
 static EjsNumber *cmd_timeout(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 {
-    return ejsCreateNumber(ejs, cmd->timeout);
+    return ejsCreateNumber(ejs, (MprNumber) cmd->timeout);
 }
 
 
@@ -14787,7 +14767,7 @@ static EjsObj *cmd_set_timeout(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
  */
 static EjsObj *cmd_wait(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 {
-    int     timeout;
+    MprTime     timeout;
 
     timeout = argc > 0 ? ejsGetInt(ejs, argv[0]) : cmd->timeout;
     if (cmd->mc == 0) {
@@ -14810,7 +14790,8 @@ static EjsNumber *cmd_write(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
     EjsByteArray    *bp;
     EjsString       *sp;
     EjsObj          *vp;
-    int             i, wrote, len;
+    ssize           len;
+    int             i, wrote;
 
     mprAssert(argc == 1 && ejsIsArray(ejs, argv[0]));
 
@@ -27976,7 +27957,7 @@ static MprSpin      *ispin = &internLock;
 
 
 static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len);
-static int indexof(MprChar *str, ssize len, EjsString *pattern, int patternLength, int dir);
+static ssize indexof(MprChar *str, ssize len, EjsString *pattern, ssize patternLength, int dir);
 static void linkString(Ejs *ejs, EjsString *head, EjsString *sp);
 static void manageIntern(EjsIntern *intern, int flags);
 static int rebuildIntern(EjsIntern *intern);
@@ -28413,8 +28394,8 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     EjsString   *result;
     EjsObj      *value;
     MprChar     *buf, fmt[32];
-    ssize       i, flen;
-    int         c, len, nextArg, start, kind, last;
+    ssize       i, flen, start, len, last;
+    int         c, nextArg, kind;
 
     mprAssert(argc == 1 && ejsIsArray(ejs, argv[0]));
 
@@ -28629,7 +28610,7 @@ static EjsObj *stringLength(Ejs *ejs, EjsString *ap, int argc, EjsObj **argv)
 static EjsObj *indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     EjsString   *pattern;
-    int         index, start, patternLength;
+    ssize       start, index, patternLength;
 
     mprAssert(1 <= argc && argc <= 2);
     mprAssert(ejsIsString(ejs, argv[0]));
@@ -28652,7 +28633,7 @@ static EjsObj *indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     if (index < 0) {
         return (EjsObj*) ejs->minusOneValue;
     }
-    return (EjsObj*) ejsCreateNumber(ejs, index + start);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (index + start));
 }
 
 
@@ -28760,7 +28741,7 @@ static EjsObj *isUpper(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 static EjsObj *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     EjsString   *pattern;
-    int         start, patternLength, index;
+    ssize       start, patternLength, index;
 
     mprAssert(1 <= argc && argc <= 2);
 
@@ -28782,7 +28763,7 @@ static EjsObj *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     if (index < 0) {
         return (EjsObj*) ejs->minusOneValue;
     }
-    return (EjsObj*) ejsCreateNumber(ejs, index);
+    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) index);
 }
 
 
@@ -28805,7 +28786,7 @@ static EjsObj *match(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     resultCount = 0;
 
     do {
-        count = pcre_exec(rp->compiled, NULL, sp->value, sp->length, rp->endLastMatch, 0, matches, 
+        count = (int) pcre_exec(rp->compiled, NULL, sp->value, (int) sp->length, rp->endLastMatch, 0, matches, 
             sizeof(matches) / sizeof(int));
         if (count <= 0) {
             break;
@@ -28834,7 +28815,8 @@ static EjsObj *printable(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString       *result;
     MprChar         buf[16];
-    int             i, j, k, len, nonprint;
+    ssize           len;
+    int             i, j, k, nonprint;
 
     nonprint = 0;
     for (i = 0; i < sp->length; i++)  {
@@ -28856,7 +28838,7 @@ static EjsObj *printable(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             result->value[j++] = 'u';
             itow(buf, 4, (uchar) sp->value[i], 16);
             len = wlen(buf);
-            for (k = len; k < 4; k++) {
+            for (k = (int) len; k < 4; k++) {
                 result->value[j++] = '0';
             }
             for (k = 0; buf[k]; k++) {
@@ -28966,8 +28948,8 @@ static EjsObj *replace(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     EjsString   *result, *replacement, *pattern;
     EjsFunction *replacementFunction;
     MprChar     cbuf[1];
-    int         matches[EJS_MAX_REGEX_MATCHES * 3];
-    int         index, patternLength, enabled;
+    ssize       patternLength, index;
+    int         matches[EJS_MAX_REGEX_MATCHES * 3], enabled;
 
     result = 0;
     if (ejsIsFunction(ejs, argv[1])) {
@@ -28989,8 +28971,8 @@ static EjsObj *replace(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             result->length = 0;
             result = buildString(ejs, result, sp->value, index);
             if (replacementFunction) {
-                matches[0] = matches[2] = index;
-                matches[1] = matches[3] = index + patternLength;
+                matches[0] = matches[2] = (int) index;
+                matches[1] = matches[3] = (int) (index + patternLength);
                 enabled = mprEnableGC(0);
                 replacement = getReplacementText(ejs, replacementFunction, 2, matches, sp);
                 mprEnableGC(enabled);
@@ -29019,7 +29001,7 @@ static EjsObj *replace(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             if (startNextMatch > sp->length) {
                 break;
             }
-            count = pcre_exec(rp->compiled, NULL, sp->value, sp->length, startNextMatch, 0, matches, 
+            count = pcre_exec(rp->compiled, NULL, sp->value, (int) sp->length, startNextMatch, 0, matches, 
                     sizeof(matches) / sizeof(int));
             if (count <= 0) {
                 break;
@@ -29107,7 +29089,7 @@ static EjsString *reverseString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv
 {
     EjsString   *rp;
     MprChar     *cp;
-    int         i;
+    ssize       i;
 
     if (sp->length <= 1) {
         return sp;
@@ -29127,25 +29109,26 @@ static EjsString *reverseString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv
     Search for a pattern
     function search(pattern: (String | RegExp)): Number
  */
-static EjsObj *searchString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsNumber *searchString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsRegExp   *rp;
     EjsString   *pattern;
-    int         index, patternLength, count, matches[EJS_MAX_REGEX_MATCHES * 3];
+    ssize       index, patternLength;
+    int         count, matches[EJS_MAX_REGEX_MATCHES * 3];
 
     if (ejsIsString(ejs, argv[0])) {
         pattern = (EjsString*) argv[0];
         patternLength = (int) pattern->length;
         index = indexof(sp->value, sp->length, pattern, patternLength, 1);
-        return (EjsObj*) ejsCreateNumber(ejs, index);
+        return ejsCreateNumber(ejs, (MprNumber) index);
 
     } else if (ejsIsRegExp(ejs, argv[0])) {
         rp = (EjsRegExp*) argv[0];
-        count = pcre_exec(rp->compiled, NULL, sp->value, sp->length, 0, 0, matches, sizeof(matches) / sizeof(int));
+        count = pcre_exec(rp->compiled, NULL, sp->value, (int) sp->length, 0, 0, matches, sizeof(matches) / sizeof(int));
         if (count < 0) {
-            return (EjsObj*) ejs->minusOneValue;
+            return ejs->minusOneValue;
         }
-        return (EjsObj*) ejsCreateNumber(ejs, matches[0]);
+        return ejsCreateNumber(ejs, matches[0]);
 
     } else {
         ejsThrowTypeError(ejs, "Wrong argument type");
@@ -29162,7 +29145,7 @@ static EjsObj *searchString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString       *result;
-    int             start, end, step, i, j, size;
+    ssize           start, end, step, i, j, size;
 
     mprAssert(1 <= argc && argc <= 3);
 
@@ -29197,7 +29180,7 @@ static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         step = 1;
     }
     size = (start < end) ? end - start : start - end;
-    if ((result = ejsCreateBareString(ejs, size / abs(step) + 1)) == NULL) {
+    if ((result = ejsCreateBareString(ejs, ((size / (ssize) abs(((int) step))) + 1))) == NULL) {
         return 0;
     }
     if (step > 0) {
@@ -29262,7 +29245,7 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         rp->endLastMatch = 0;
         resultCount = 0;
         do {
-            count = pcre_exec(rp->compiled, NULL, sp->value, sp->length, rp->endLastMatch, 0, matches, 
+            count = (int) pcre_exec(rp->compiled, NULL, sp->value, (int) sp->length, rp->endLastMatch, 0, matches, 
                 sizeof(matches) / sizeof(int));
             if (count <= 0) {
                 break;
@@ -29497,7 +29480,7 @@ static EjsObj *tokenize(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 static EjsObj *trim(Ejs *ejs, EjsString *sp, EjsString *pattern, int where)
 {
     MprChar     *start, *end, *mark;
-    int         index, patternLength;
+    ssize       index, patternLength;
 
     if (pattern == 0) {
         start = sp->value;
@@ -29656,7 +29639,7 @@ static int catString(Ejs *ejs, EjsString *dest, char *str, ssize len)
 static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len)
 {
     EjsString   *newBuf;
-    int         size;
+    ssize       size;
 
     mprAssert(result);
 
@@ -29682,10 +29665,10 @@ static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize l
     Find a substring. Search forward or backwards. Return the index in the string where the pattern was found.
     Return -1 if not found.
  */
-static int indexof(MprChar *str, ssize len, EjsString *pattern, int patternLength, int dir)
+static ssize indexof(MprChar *str, ssize len, EjsString *pattern, ssize patternLength, int dir)
 {
     MprChar     *s1, *s2;
-    int         i, j;
+    ssize       i, j;
 
     mprAssert(dir == 1 || dir == -1);
 

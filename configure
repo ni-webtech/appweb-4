@@ -1593,11 +1593,18 @@ BLD_WEB_PREFIX="$BLD_WEB_PREFIX"
 #
 !EOF_CONFIG2
 
-    v=`eval relativePath "${BLD_BUILD_BIN_DIR}"` 
+#   v=`eval relativePath "${BLD_BUILD_BIN_DIR}"` 
+#   echo -e "BLD_BUILD_BIN_DIR=\"${v}\""      >>$FILE
+#   v=`eval relativePath "${BLD_BUILD_LIB_DIR}"` 
+#   echo -e "BLD_BUILD_LIB_DIR=\"${v}\""      >>$FILE
+#   v=`eval relativePath "${BLD_BUILD_MOD_DIR}"` 
+#   echo -e "BLD_BUILD_MOD_DIR=\"${v}\""      >>$FILE
+
+    v=`eval echo "${BLD_BUILD_BIN_DIR}"` 
     echo -e "BLD_BUILD_BIN_DIR=\"${v}\""      >>$FILE
-    v=`eval relativePath "${BLD_BUILD_LIB_DIR}"` 
+    v=`eval echo "${BLD_BUILD_LIB_DIR}"` 
     echo -e "BLD_BUILD_LIB_DIR=\"${v}\""      >>$FILE
-    v=`eval relativePath "${BLD_BUILD_MOD_DIR}"` 
+    v=`eval echo "${BLD_BUILD_MOD_DIR}"` 
     echo -e "BLD_BUILD_MOD_DIR=\"${v}\""      >>$FILE
 
     cat >>$FILE <<!EOF_CONFIG2a
@@ -1744,7 +1751,7 @@ createCrossConfig()
     if [ "${BLD_OUT_DIR//\//}" = "${BLD_OUT_DIR}" ] ; then
         echo -e "${t}BLD_OUT_DIR=\"\${BLD_TOP}/${BLD_OUT_DIR}\""
     else
-        echo -e "${t}BLD_OUT_DIR=\"\${BLD_OUT_DIR}\""
+        echo -e "${t}BLD_OUT_DIR=\"${BLD_OUT_DIR}\""
     fi
     echo -e "${t}BLD_TOOLS_DIR=\"\${BLD_TOP}/build/bin\""
     echo

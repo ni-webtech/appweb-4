@@ -422,6 +422,7 @@ createChecksums() {
 #   Main
 #
 findTop
+BLD_OUT_DIR=$BLD_TOP/out
 . `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
 
 set -- ${OPTIONS} $*

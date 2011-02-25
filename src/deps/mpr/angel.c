@@ -44,7 +44,7 @@ static void manageApp(void *unused, int flags);
 static int  readAngelPid();
 static void setAppDefaults(Mpr *mpr);
 static int  setupUnixSignals();
-static void stopService(int timeout);
+static void stopService(MprTime timeout);
 static int  writeAngelPid(int pid);
 
 /*********************************** Code *************************************/
@@ -333,7 +333,7 @@ static void angel()
 /*
     Stop an another instance of the angel
  */
-static void stopService(int timeout)
+static void stopService(MprTime timeout)
 {
     int     pid;
 
@@ -554,7 +554,7 @@ static int      installService();
 static void     logHandler(int flags, int level, cchar *msg);
 static int      registerService();
 static int      removeService(int removeFromScmDb);
-static void     shutdownAppweb(int timeout);
+static void     shutdownAppweb(MprTime timeout);
 static int      startDispatcher(LPSERVICE_MAIN_FUNCTION svcMain);
 static int      startService();
 static int      stopService(int cmd);
@@ -1287,7 +1287,7 @@ static void logHandler(int flags, int level, cchar *msg)
 /*
     Gracefull shutdown for Appweb
  */
-static void shutdownAppweb(int timeout)
+static void shutdownAppweb(MprTime timeout)
 {
     HWND    hwnd;
 

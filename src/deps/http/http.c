@@ -1031,7 +1031,7 @@ static void showOutput(HttpConn *conn, cchar *buf, ssize count)
         return;
     }
     if (!app->printable) {
-        (void) write(1, (char*) buf, count);
+        (void) write(1, buf, (int) count);
         return;
     }
 
@@ -1042,7 +1042,7 @@ static void showOutput(HttpConn *conn, cchar *buf, ssize count)
         }
     }
     if (!app->isBinary) {
-        (void) write(1, (char*) buf, count);
+        (void) write(1, (char*) buf, (int) count);
         return;
     }
     for (i = 0; i < count; i++) {
