@@ -236,7 +236,7 @@ static void writeToCGI(HttpQueue *q)
     HttpPacket  *packet;
     MprCmd      *cmd;
     MprBuf      *buf;
-    int         len, rc;
+    int         len, rc, err;
 
     cmd = (MprCmd*) q->pair->queueData;
     mprAssert(cmd);
@@ -252,6 +252,12 @@ static void writeToCGI(HttpQueue *q)
         rc = mprWriteCmd(cmd, MPR_CMD_STDIN, mprGetBufStart(buf), len);
         mprLog(5, "CGI: write %d bytes to gateway. Rc rc %d, errno %d", len, rc, mprGetOsError());
         if (rc < 0) {
+            err = mprGetError();
+            if (err == EINTR) {
+                continue;
+            } else if (err == EAGAIN || err == EWOULDBLOCK) {
+                break;
+            }
             mprLog(2, "CGI: write to gateway failed for %d bytes, rc %d, errno %d", len, rc, mprGetOsError());
             mprCloseCmdFd(cmd, MPR_CMD_STDIN);
             httpError(conn, HTTP_CODE_BAD_GATEWAY, "Can't write body data to CGI gateway");
@@ -264,10 +270,11 @@ static void writeToCGI(HttpQueue *q)
         }
         if (rc < len) {
             /*
-                CGI gateway didn't accept all the data. Enable CGI write events to be notified when the gateway
-                can read more data.
+                CGI gateway is blocked. CGI write events will be issued when the gateway can accept more data.
              */
+#if UNUSED
             mprEnableCmdEvents(cmd, MPR_CMD_STDIN);
+#endif
         }
     }
 }
@@ -346,9 +353,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
 
     switch (channel) {
     case MPR_CMD_STDIN:
-        /* CGI's stdin is now accepting more data */
-        //  MOB -- check this
-        mprDisableCmdEvents(cmd, MPR_CMD_STDIN);
+        /* CGI's stdin can now accept more data */
         writeToCGI(q->pair);
         enableCgiEvents(q, cmd, channel);
         break;

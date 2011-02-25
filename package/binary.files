@@ -114,7 +114,7 @@ if [ "$BLD_FEATURE_EJS" = 1 ] ; then
 #   cpy -d ${BLD_MOD_DIR} "ejs-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
     cpy -d ${BLD_MOD_DIR} "ejs.mod" "${BLD_MOD_PREFIX}"
     if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
-        cpy -m 644 -d "${BLD_LIB_DIR}" appweb.conf "${BLD_LIB_PREFIX}"
+#       cpy -m 644 -d "${BLD_LIB_DIR}" appweb.conf "${BLD_LIB_PREFIX}"
 #       if [ $BLD_HOST_OS = WIN ] ; then
 #           cpy -d ${BLD_MOD_DIR} "ejsweb-${BLD_VERSION}.mod" "${BLD_MOD_PREFIX}"
 #       fi
