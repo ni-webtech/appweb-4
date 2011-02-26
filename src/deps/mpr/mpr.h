@@ -1232,10 +1232,10 @@ typedef struct MprArgs {
 #if VXWORKS
     #define MAIN(name, _argc, _argv)  \
         int name() { \
+            extern int main(); \
             MprArgs args; \
             args.program = #name; \
             args.args = 0; \
-            extern int main(); \
             return main(0, (char**) &args); \
         } \
         int main(_argc, _argv)

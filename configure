@@ -113,6 +113,7 @@ checkSetup() {
     BLD_TOP=`canonPath .`
     BLD_TOOLS_DIR=${BLD_TOP}/build/bin
     BLD_OUT_DIR=out
+    rm -rf $BLD_OUT_DIR
 
     #
     #   Sleuth the product. By convention products put a configure.PRODUCT file under the build directory.
@@ -719,7 +720,6 @@ convertSearchPath() {
         sed "s/[ \)\(]/?/g" | grep -v '^$' | while read x
         do
             [ "$x" = "" ] && continue
-            # [ "$verbose" != 0 ] && echo -e "\nConvert: \"$x\" => \n    \"`eval ls -d1 "$x" 2>/dev/null | sort -r`\"" 1>&2
             if [ "$BLD_BUILD_OS" = WIN ] ; then
                 eval ls -d1 "$x" 2>/dev/null | sort -r | while read f
                 do
@@ -1597,12 +1597,16 @@ BLD_WEB_PREFIX="$BLD_WEB_PREFIX"
 #
 !EOF_CONFIG2
 
-    v=`eval relativePath "${BLD_BUILD_BIN_DIR}"` 
-    echo -e "BLD_BUILD_BIN_DIR=\"${v}\""      >>$FILE
-    v=`eval relativePath "${BLD_BUILD_LIB_DIR}"` 
-    echo -e "BLD_BUILD_LIB_DIR=\"${v}\""      >>$FILE
-    v=`eval relativePath "${BLD_BUILD_MOD_DIR}"` 
-    echo -e "BLD_BUILD_MOD_DIR=\"${v}\""      >>$FILE
+#   v=`eval relativePath "${BLD_BUILD_BIN_DIR}"` 
+#   echo -e "BLD_BUILD_BIN_DIR=\"${v}\""      >>$FILE
+#   v=`eval relativePath "${BLD_BUILD_LIB_DIR}"` 
+#   echo -e "BLD_BUILD_LIB_DIR=\"${v}\""      >>$FILE
+#   v=`eval relativePath "${BLD_BUILD_MOD_DIR}"` 
+#   echo -e "BLD_BUILD_MOD_DIR=\"${v}\""      >>$FILE
+
+    echo -e "BLD_BUILD_BIN_DIR=\"${BLD_BUILD_BIN_DIR}\""      >>$FILE
+    echo -e "BLD_BUILD_LIB_DIR=\"${BLD_BUILD_LIB_DIR}\""      >>$FILE
+    echo -e "BLD_BUILD_MOD_DIR=\"${BLD_BUILD_MOD_DIR}\""      >>$FILE
 
     cat >>$FILE <<!EOF_CONFIG2a
 
@@ -1748,7 +1752,7 @@ createCrossConfig()
     if [ "${BLD_OUT_DIR//\//}" = "${BLD_OUT_DIR}" ] ; then
         echo -e "${t}BLD_OUT_DIR=\"\${BLD_TOP}/${BLD_OUT_DIR}\""
     else
-        echo -e "${t}BLD_OUT_DIR=\"\${BLD_OUT_DIR}\""
+        echo -e "${t}BLD_OUT_DIR=\"${BLD_OUT_DIR}\""
     fi
     echo -e "${t}BLD_TOOLS_DIR=\"\${BLD_TOP}/build/bin\""
     echo

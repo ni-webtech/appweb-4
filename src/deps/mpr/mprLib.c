@@ -2567,6 +2567,7 @@ static void getArgs(Mpr *mpr, int argc, char **argv)
     mprMakeArgv(command, &argc, &argv, MPR_ARGV_ARGS_ONLY);
     argv[0] = sclone(args->program);
 #elif VXWORKS
+    MprArgs *args = (MprArgs*) argv;
     mprMakeArgv("", &argc, &argv, MPR_ARGV_ARGS_ONLY);
     argv[0] = sclone(args->program);
 #endif
@@ -4164,6 +4165,16 @@ int mprPutStringToWideBuf(MprBuf *bp, cchar *str)
 
 
 
+/*
+    Windows and VxWorks do not support async I/O
+    VxWorks can't signal EOF on non-blocking pipes and Windows can't select on named pipes. 
+ */
+#if BLD_WIN_LIKE || VXWORKS
+#define CMD_ASYNC 0
+#else
+#define CMD_ASYNC 1
+#endif
+
 static void closeFiles(MprCmd *cmd);
 static void cmdCallback(MprCmd *cmd, int channel, void *data);
 static int makeChannel(MprCmd *cmd, int index);
@@ -4172,9 +4183,12 @@ static void manageCmd(MprCmd *cmd, int flags);
 static void resetCmd(MprCmd *cmd);
 static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env);
 static int startProcess(MprCmd *cmd);
+
+#if CMD_ASYNC
 static void stdinCallback(MprCmd *cmd, MprEvent *event);
 static void stdoutCallback(MprCmd *cmd, MprEvent *event);
 static void stderrCallback(MprCmd *cmd, MprEvent *event);
+#endif
 
 #if BLD_UNIX_LIKE
 static char **fixenv(MprCmd *cmd);
@@ -5062,6 +5076,7 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
 }
 
 
+#if CMD_ASYNC
 static void stdinCallback(MprCmd *cmd, MprEvent *event)
 {
     if (cmd->callback) {
@@ -5084,6 +5099,7 @@ static void stderrCallback(MprCmd *cmd, MprEvent *event)
         (cmd->callback)(cmd, MPR_CMD_STDERR, cmd->callbackData);
     }
 }
+#endif
 
 
 void mprSetCmdCallback(MprCmd *cmd, MprCmdProc proc, void *data)
@@ -19324,7 +19340,7 @@ static MprTestGroup *createTestGroup(MprTestService *sp, MprTestDef *def, MprTes
 static bool     filterTestGroup(MprTestGroup *gp);
 static bool     filterTestCast(MprTestGroup *gp, MprTestCase *tc);
 static char     *getErrorMessage(MprTestGroup *gp);
-static int      loadModule(MprTestService *sp, cchar *fileName);
+static int      loadTestModule(MprTestService *sp, cchar *fileName);
 static void     manageTestService(MprTestService *ts, int flags);
 static int      parseFilter(MprTestService *sp, cchar *str);
 static void     runInit(MprTestGroup *parent);
@@ -19442,7 +19458,7 @@ int mprParseTestArgs(MprTestService *sp, int argc, char *argv[])
         } else if (strcmp(argp, "--module") == 0) {
             if (nextArg >= argc) {
                 err++;
-            } else if (loadModule(sp, argv[++nextArg]) < 0) {
+            } else if (loadTestModule(sp, argv[++nextArg]) < 0) {
                 return MPR_ERR_CANT_OPEN;
             }
 
@@ -19558,7 +19574,7 @@ static int parseFilter(MprTestService *sp, cchar *filter)
 }
 
 
-static int loadModule(MprTestService *sp, cchar *fileName)
+static int loadTestModule(MprTestService *sp, cchar *fileName)
 {
     MprModule   *mp;
     char        *cp, *base, entry[MPR_MAX_FNAME], path[MPR_MAX_FNAME];
