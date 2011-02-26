@@ -5246,7 +5246,7 @@ extern void mprSignalDispatcher(MprDispatcher *dispatcher);
     @return Returns the event object if successful.
     @ingroup MprEvent
  */
-extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, MprEventProc proc, void *data, int flgs);
+extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flgs);
 extern MprEvent *mprCreateEventQueue();
 
 /**
@@ -5273,7 +5273,7 @@ extern void mprQueueEvent(MprDispatcher *dispatcher, MprEvent *event);
         event which will be automatically rescheduled accoring to the specified period.
     @ingroup MprEvent
  */
-extern void mprInitEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, int period, MprEventProc proc, 
+extern void mprInitEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, int period, void *proc, 
     void *data, int flags);
 #endif
 
@@ -5324,7 +5324,7 @@ extern void mprEnableContinuousEvent(MprEvent *event, int enable);
     @param flags Not used.
     @ingroup MprEvent
  */
-extern MprEvent *mprCreateTimerEvent(MprDispatcher *dispatcher, cchar *name, int period, MprEventProc proc, void *data, 
+extern MprEvent *mprCreateTimerEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, 
     int flags);
 
 /**
@@ -5337,7 +5337,7 @@ extern MprEvent *mprCreateTimerEvent(MprDispatcher *dispatcher, cchar *name, int
 extern void mprRescheduleEvent(MprEvent *event, int period);
 
 /* Internal API */
-extern void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, MprEvent *event);
+extern void mprRelayEvent(MprDispatcher *dispatcher, void *proc, void *data, MprEvent *event);
 extern MprEventService *mprCreateEventService();
 extern void mprStopEventService();
 extern MprEvent *mprGetNextEvent(MprDispatcher *dispatcher);
@@ -5801,8 +5801,7 @@ typedef struct MprWaitHandler {
     @returns A new wait handler registered with the MPR event mechanism
     @ingroup MprWaitHandler
  */
-extern MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher, MprEventProc proc, 
-    void *data, int flags);
+extern MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher, void *proc, void *data, int flags);
 
 #if UNUSED
 /**
@@ -5819,7 +5818,7 @@ extern MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dis
     @ingroup MprWaitHandler
  */
 extern MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDispatcher *dispatcher, 
-        MprEventProc proc, void *data, int flags);
+        void *proc, void *data, int flags);
 #endif
 
 /**
@@ -6299,7 +6298,7 @@ extern int mprParseIp(cchar *ipSpec, char **ip, int *port, int defaultPort);
     @returns A new wait handler registered with the MPR event mechanism
     @ingroup MprSocket
  */
-extern MprWaitHandler *mprAddSocketHandler(MprSocket *sp, int mask, MprDispatcher *dispatcher, MprEventProc proc, 
+extern MprWaitHandler *mprAddSocketHandler(MprSocket *sp, int mask, MprDispatcher *dispatcher, void *proc, 
         void *data, int flags);
 
 /**

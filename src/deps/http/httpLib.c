@@ -2376,6 +2376,9 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server, MprDispatcher *dispatch
     } else {
         conn->limits = http->clientLimits;
     }
+    mprAssert(conn->limits->requestTimeout > 0);
+    mprAssert(conn->limits->inactivityTimeout > 0);
+
     conn->serviceq = httpCreateQueueHead(conn, "serviceq");
 
     //  MOB -- this just sets to defaults. Who sets to what the config file has defined?
@@ -2451,6 +2454,7 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->ip);
         mprMark(conn->protocol);
         mprMark(conn->headersCallbackArg);
+        mprMark(conn->timeout);
 
         httpManageTrace(&conn->trace[0], flags);
         httpManageTrace(&conn->trace[1], flags);
@@ -2494,13 +2498,53 @@ void httpCloseConn(HttpConn *conn)
 }
 
 
+void httpConnTimeout(HttpConn *conn)
+{
+    HttpRx      *rx;
+    HttpLimits  *limits;
+    MprTime     now;
+
+    rx = conn->rx;
+    now = conn->http->now;
+    mprAssert(rx);
+    limits = conn->limits;
+    mprAssert(limits);
+
+    if (conn->state < HTTP_STATE_PARSED) {
+        mprLog(6, "Inactive connection timed out");
+        mprDisconnectSocket(conn->sock);
+    } else {
+        if ((conn->lastActivity + limits->inactivityTimeout) < now) {
+            httpError(conn, HTTP_CODE_REQUEST_TIMEOUT,
+                "Inactive request timed out. Exceeded inactivity timeout of %d sec. Uri: \"%s\"", 
+                limits->requestTimeout / 1000, rx->uri);
+
+        } else if ((conn->started + limits->requestTimeout) < now) {
+            httpError(conn, HTTP_CODE_REQUEST_TIMEOUT, 
+                "Request timed out, exceeded timeout %d sec. Url %s", limits->requestTimeout / 1000, rx->uri);
+        }
+    }
+}
+
+
 /*  
     Prepare a connection for a new request after completing a prior request.
  */
 void httpPrepServerConn(HttpConn *conn)
 {
+    Http    *http;
+
     mprAssert(conn);
 
+    /*
+        Race with httpTimer
+     */ 
+    http = conn->http;
+    lock(http);
+
+    if (conn->timeout) {
+        mprRemoveEvent(conn->timeout);
+    }
     if (conn->state != HTTP_STATE_BEGIN) {
         conn->abortPipeline = 0;
         conn->canProceed = 1;
@@ -2518,15 +2562,27 @@ void httpPrepServerConn(HttpConn *conn)
         mprAssert(conn->rx == 0);
         mprAssert(conn->tx == 0);
     }
+    conn->lastActivity = conn->http->now;
+    unlock(http);
 }
 
 
 void httpPrepClientConn(HttpConn *conn, int keepHeaders)
 {
+    Http            *http;
     MprHashTable    *headers;
 
     mprAssert(conn);
 
+    /*
+        Race with httpTimer
+     */ 
+    http = conn->http;
+    lock(http);
+
+    if (conn->timeout) {
+        mprRemoveEvent(conn->timeout);
+    }
     if (conn->keepAliveCount >= 0 && conn->sock) {
         /* Eat remaining input incase last request did not consume all data */
         httpConsumeLastRequest(conn);
@@ -2542,6 +2598,7 @@ void httpPrepClientConn(HttpConn *conn, int keepHeaders)
     conn->flags = 0;
     conn->state = 0;
     conn->writeComplete = 0;
+    conn->lastActivity = conn->http->now;
 
     if (conn->tx) {
         conn->tx->conn = 0;
@@ -2556,6 +2613,7 @@ void httpPrepClientConn(HttpConn *conn, int keepHeaders)
     httpSetState(conn, HTTP_STATE_BEGIN);
     httpInitSchedulerQueue(conn->serviceq);
     httpCreatePipeline(conn, NULL, NULL);
+    unlock(http);
 }
 
 
@@ -2655,7 +2713,7 @@ static void readEvent(HttpConn *conn)
             }
             break;
         }
-        if (nbytes == 0 || conn->connError || conn->state >= HTTP_STATE_RUNNING || conn->startingThread) {
+        if (nbytes == 0 || conn->connError || conn->state >= HTTP_STATE_RUNNING) {
             break;
         }
     }
@@ -2708,17 +2766,10 @@ void httpEnableConnEvents(HttpConn *conn)
         } else {
             eventMask |= MPR_READABLE;
         }
-        if (conn->startingThread) {
-            conn->startingThread = 0;
-            if (conn->waitHandler) {
-                mprRemoveWaitHandler(conn->waitHandler);
-                conn->waitHandler = 0;
-            }
-        }
         if (eventMask) {
             if (conn->waitHandler == 0) {
-                conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, 
-                    (MprEventProc) conn->ioCallback, conn, 0);
+                conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, conn->ioCallback, 
+                    conn, 0);
             } else if (eventMask != conn->waitHandler->desiredMask) {
                 mprEnableWaitEvents(conn->waitHandler, eventMask);
             }
@@ -3016,10 +3067,6 @@ void httpWritable(HttpConn *conn)
 
 void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
 {
-    /*
-        Lock as this may be called by httpTimer
-     */
-    mprLock(conn->http->mutex);
     conn->errorMsg = mprAsprintfv(fmt, args);
     if (status) {
         if (conn->server && conn->tx) {
@@ -3028,7 +3075,6 @@ void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
             conn->rx->status = status;
         }
     }
-    mprUnlock(conn->http->mutex);
 }
 
 
@@ -4333,7 +4379,7 @@ HttpStatusCode HttpStatusCodes[] = {
 };
 
 
-static int httpTimer(Http *http, MprEvent *event);
+static void httpTimer(Http *http, MprEvent *event);
 static bool isIdle();
 static void manageHttp(Http *http, int flags);
 static void updateCurrentDate(Http *http);
@@ -4572,7 +4618,7 @@ void httpInitLimits(HttpLimits *limits, int serverSide)
     limits->uriSize = MPR_MAX_URL;
 
     limits->inactivityTimeout = HTTP_INACTIVITY_TIMEOUT;
-    limits->requestTimeout = 0;
+    limits->requestTimeout = INT_MAX;
     limits->sessionTimeout = HTTP_SESSION_TIMEOUT;
 
     limits->clientCount = HTTP_MAX_CLIENTS;
@@ -4661,8 +4707,8 @@ void httpSetMatchCallback(Http *http, HttpMatchCallback fn)
 static void startTimer(Http *http)
 {
     updateCurrentDate(http);
-    http->timer = mprCreateTimerEvent(NULL, "httpTimer", HTTP_TIMER_PERIOD, (MprEventProc) httpTimer, 
-        http, MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
+    http->timer = mprCreateTimerEvent(NULL, "httpTimer", HTTP_TIMER_PERIOD, httpTimer, http, 
+        MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
 }
 
 
@@ -4671,49 +4717,38 @@ static void startTimer(Http *http)
     When multi-threaded, the http timer runs as an event off the service thread. Because we lock the http here,
     connections cannot be deleted while we are modifying the list.
  */
-static int httpTimer(Http *http, MprEvent *event)
+static void httpTimer(Http *http, MprEvent *event)
 {
     HttpConn    *conn;
     HttpStage   *stage;
+    HttpRx      *rx;
+    HttpLimits  *limits;
     MprModule   *module;
-    int64       diff;
-    int         next, count, inactivity, requestTimeout, inactivityTimeout;
+    int         next, count;
 
     mprAssert(event);
     
     updateCurrentDate(http);
     if (mprGetDebugMode(http)) {
-        return 0;
+        return;
     }
 
     /* 
-       Check for any inactive or expired connections (inactivityTimeout and requestTimeout)
+       Check for any inactive connections or expired requests (inactivityTimeout and requestTimeout)
      */
     lock(http);
     mprLog(8, "httpTimer: %d active connections", mprGetListLength(http->connections));
     for (count = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; count++) {
-        //  MOB - refactor this and have limits always set
-        requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
-        inactivityTimeout = conn->limits->inactivityTimeout ? conn->limits->inactivityTimeout : INT_MAX;
-        /* 
-            Workaround for a GCC bug when comparing two 64bit numerics directly. Need a temporary.
-         */
-        diff = (conn->lastActivity + inactivityTimeout) - http->now;
-        inactivity = 1;
-        if (diff > 0 && conn->rx) {
-            diff = (conn->lastActivity + requestTimeout) - http->now;
-            inactivity = 0;
-        }
-
-        if (diff < 0 && !conn->complete) {
-            if (conn->rx) {
-                if (inactivity) {
-                    httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
-                        "Inactive request timed out. Exceeded inactivity timeout of %d sec. Uri: \"%s\"", 
-                        inactivityTimeout / 1000, conn->rx->uri);
-                } else {
-                    httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT, 
-                        "Request timed out, exceeded timeout %d sec. Url %s", requestTimeout / 1000, conn->rx->uri);
+        rx = conn->rx;
+        limits = conn->limits;
+        if ((conn->lastActivity + limits->requestTimeout) < http->now || 
+            (conn->started + limits->requestTimeout) < http->now) {
+            if (rx) {
+                /*
+                    Don't call APIs on the onn directly (thread-race). Schedule a timer on the connection's dispatcher
+                 */
+                if (!conn->timeout) {
+                    conn->timeout = mprCreateEvent(conn->dispatcher, "connTimeout", 0, httpConnTimeout, conn, 0);
                 }
             } else {
                 mprLog(6, "Idle connection timed out");
@@ -4722,6 +4757,7 @@ static int httpTimer(Http *http, MprEvent *event)
             }
         }
     }
+
     /*
         Check for unloadable modules
      */
@@ -4752,7 +4788,6 @@ static int httpTimer(Http *http, MprEvent *event)
         http->timer = 0;
     }
     unlock(http);
-    return 0;
 }
 
 
@@ -8439,13 +8474,6 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         httpSetState(conn, HTTP_STATE_PARSED);        
         httpCreatePipeline(conn, rx->loc, tx->handler);
 
-#if FUTURE
-        //  MOB -- TODO
-        if (0 && tx->handler->flags & HTTP_STAGE_THREAD && !conn->threaded) {
-            threadRequest(conn);
-            return 0;
-        }
-#endif
     } else if (!(100 <= rx->status && rx->status < 200)) {
         httpSetState(conn, HTTP_STATE_PARSED);        
     }
@@ -9070,27 +9098,6 @@ static bool parseAuthenticate(HttpConn *conn, char *authDetails)
 }
 
 
-#if FUTURE
-static void httpThreadEvent(HttpConn *conn)
-{
-    httpCallEvent(conn, 0);
-}
-
-
-static void threadRequest(HttpConn *conn)
-{
-    mprAssert(!conn->dispatcher->enabled);
-    mprAssert(conn->dispatcher != conn->server->dispatcher);
-
-    conn->threaded = 1;
-    conn->startingThread = 1;
-    mprInitEvent(conn->dispatcher, &conn->runEvent, "runEvent", 0, (MprEventProc) httpThreadEvent, conn, 0);
-    mprQueueEvent(conn->dispatcher, &conn->runEvent);
-    mprAssert(!conn->dispatcher->enabled);
-}
-#endif
-
-
 static bool processParsed(HttpConn *conn)
 {
     if (!conn->abortPipeline) {
@@ -9188,6 +9195,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     rx = conn->rx;
     q = conn->tx->queue[HTTP_QUEUE_RECEIVE];
 
+    //  MOB - if we should consume the data, then remove conn->complete
     if (conn->complete || conn->connError || rx->remainingContent <= 0) {
         //  MOB -- this needs checking - upload too much data
         httpSetState(conn, HTTP_STATE_RUNNING);
@@ -9609,8 +9617,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         if (!conn->writeComplete) {
             eventMask |= MPR_WRITABLE;
         }
-        conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, (MprEventProc) waitHandler, 
-            conn, 0);
+        conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, waitHandler, conn, 0);
         addedHandler = 1;
     } else {
         addedHandler = 0;
@@ -10493,7 +10500,7 @@ int httpStartServer(HttpServer *server)
     }
     if (server->async && server->waitHandler ==  0) {
         server->waitHandler = mprCreateWaitHandler(server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
-            (MprEventProc) httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
+            httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
     } else {
         mprSetSocketBlockingMode(server->sock, 1);
     }

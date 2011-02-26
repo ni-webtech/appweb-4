@@ -1363,8 +1363,12 @@ typedef struct HttpConn {
 
     int             state;                  /**< Connection state */
     int             flags;                  /**< Connection flags */
+//  MOB - remove use connError + protoError if possible
     int             abortPipeline;          /**< Connection errors (not proto errors) abort the pipeline */
+
+//  MOB - is this used?
     int             advancing;              /**< In httpProcess (reentrancy prevention) */
+//  MOB - remove complete if possible - need to advance through states
     int             complete;               /**< Request is complete and should step through all remaining states */
     int             writeComplete;          /**< All write data has been sent for the current request */
     int             error;                  /**< A request error has occurred */
@@ -1392,7 +1396,7 @@ typedef struct HttpConn {
     HttpQueue       *writeq;                /**< Start of the write pipeline */
     MprTime         started;                /**< When the connection started */
     MprTime         lastActivity;           /**< Last activity on the connection */
-    MprEvent        runEvent;               /**< Event when running the handler */
+    MprEvent        *timeout;               /**< Connection or request has timed out */
     void            *context;               /**< Embedding context */
     char            *boundary;              /**< File upload boundary */
     char            *errorMsg;              /**< Error message for the last request (if any) */
@@ -1403,7 +1407,7 @@ typedef struct HttpConn {
     int             followRedirects;        /**< Follow redirects for client requests */
     int             keepAliveCount;         /**< Count of remaining keep alive requests for this connection */
     int             http10;                 /**< Using legacy HTTP/1.0 */
-    int             startingThread;         /**< Need to allocate worker thread */
+
     int             port;                   /**< Remote port */
     int             retries;                /**< Client request retries */
     int             secure;                 /**< Using https */
@@ -1732,6 +1736,7 @@ extern void httpMatchHost(HttpConn *conn);
 extern void httpMatchHandler(HttpConn *conn);
 
 extern char *httpGetExtension(HttpConn *conn);
+extern void httpConnTimeout(HttpConn *conn);
 
 /**
     Aliases 

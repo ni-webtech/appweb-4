@@ -4210,16 +4210,6 @@ static void vxCmdManager(MprCmd *cmd);
 #define gunlock(cmd) 
 #endif
 
-/*
-    Windows and VxWorks do not support async I/O
-    VxWorks can't signal EOF on non-blocking pipes and Windows can't select on named pipes. 
- */
-#if BLD_WIN_LIKE || VXWORKS
-#define CMD_ASYNC 0
-#else
-#define CMD_ASYNC 1
-#endif
-
 
 MprCmdService *mprCreateCmdService(Mpr *mpr)
 {
@@ -4574,20 +4564,17 @@ void mprAddCmdHandlers(MprCmd *cmd)
         fcntl(stderrFd, F_SETFL, fcntl(stderrFd, F_GETFL) | O_NONBLOCK);
     }
     if (stdinFd >= 0) {
-        cmd->handlers[MPR_CMD_STDIN] = mprCreateWaitHandler(stdinFd, MPR_WRITABLE, cmd->dispatcher,
-            (MprEventProc) stdinCallback, cmd, 0);
+        cmd->handlers[MPR_CMD_STDIN] = mprCreateWaitHandler(stdinFd, MPR_WRITABLE, cmd->dispatcher, stdinCallback, cmd, 0);
     }
     if (stdoutFd >= 0) {
-        cmd->handlers[MPR_CMD_STDOUT] = mprCreateWaitHandler(stdoutFd, MPR_READABLE, cmd->dispatcher,
-            (MprEventProc) stdoutCallback, cmd, 0);
+        cmd->handlers[MPR_CMD_STDOUT] = mprCreateWaitHandler(stdoutFd, MPR_READABLE, cmd->dispatcher, stdoutCallback, cmd,0);
     }
     if (stderrFd >= 0) {
         /*
             Delay enabling stderr events until stdout is complete. 
          */
         mask = (stdoutFd < 0) ? MPR_READABLE : 0;
-        cmd->handlers[MPR_CMD_STDERR] = mprCreateWaitHandler(stderrFd, mask, cmd->dispatcher,
-            (MprEventProc) stderrCallback, cmd, 0);
+        cmd->handlers[MPR_CMD_STDERR] = mprCreateWaitHandler(stderrFd, mask, cmd->dispatcher, stderrCallback, cmd, 0);
     }
     cmd->flags |= MPR_CMD_ASYNC;
 #endif
@@ -7599,14 +7586,8 @@ int mprDispatchersAreIdle()
 /*
     Relay an event to a new dispatcher. This invokes the callback proc as though it was invoked from the given dispatcher. 
  */
-void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, MprEvent *event)
+void mprRelayEvent(MprDispatcher *dispatcher, void *proc, void *data, MprEvent *event)
 {
-#if BLD_DEBUG
-    //  MOB TEMP -- just for debug
-    MprThread *tp = mprGetCurrentThread();
-    mprNop(tp);
-#endif
-
     mprAssert(!isRunning(dispatcher));
     mprAssert(dispatcher->owner == 0);
     mprAssert(dispatcher->magic == MPR_DISPATCHER_MAGIC);
@@ -7617,7 +7598,7 @@ void mprRelayEvent(MprDispatcher *dispatcher, MprEventProc proc, void *data, Mpr
     dispatcher->enabled = 1;
     dispatcher->owner = mprGetCurrentOsThread();
     makeRunnable(dispatcher);
-    (proc)(data, event);
+    ((MprEventProc) proc)(data, event);
     scheduleDispatcher(dispatcher);
     dispatcher->owner = 0;
 }
@@ -8618,8 +8599,7 @@ void stubMmprEpoll() {}
 
 
 static void dequeueEvent(MprEvent *event);
-static void initEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, int period, MprEventProc proc, void *data, 
-    int flags);
+static void initEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, int period, void *proc, void *data, int flgs);
 static void initEventQ(MprEvent *q);
 static void manageEvent(MprEvent *event, int flags);
 static void queueEvent(MprEvent *prior, MprEvent *event);
@@ -8644,7 +8624,7 @@ MprEvent *mprCreateEventQueue(cchar *name)
     Create and queue a new event for service. Period is used as the delay before running the event and as the period between 
     events for continuous events.
  */
-MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, MprEventProc proc, void *data, int flags)
+MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags)
 {
     MprEvent    *event;
 
@@ -8691,7 +8671,7 @@ static void manageEvent(MprEvent *event, int flags)
 }
 
 
-static void initEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, int period, MprEventProc proc, void *data, 
+static void initEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, int period, void *proc, void *data, 
     int flags)
 {
     mprAssert(dispatcher);
@@ -8718,7 +8698,7 @@ static void initEvent(MprDispatcher *dispatcher, MprEvent *event, cchar *name, i
 /*
     Create an interval timer
  */
-MprEvent *mprCreateTimerEvent(MprDispatcher *dispatcher, cchar *name, int period, MprEventProc proc, void *data, int flags)
+MprEvent *mprCreateTimerEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags)
 {
     return mprCreateEvent(dispatcher, name, period, proc, data, MPR_EVENT_CONTINUOUS | flags);
 }
@@ -17225,8 +17205,7 @@ static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
 }
 
 
-MprWaitHandler *mprAddSocketHandler(MprSocket *sp, int mask, MprDispatcher *dispatcher, MprEventProc proc, void *data, 
-        int flags)
+MprWaitHandler *mprAddSocketHandler(MprSocket *sp, int mask, MprDispatcher *dispatcher, void *proc, void *data, int flags)
 {
     mprAssert(sp);
     mprAssert(sp->fd >= 0);
@@ -20929,8 +20908,7 @@ int mprStartWorkerService()
      */
     ws = MPR->workerService;
     mprSetMinWorkers(ws->minThreads);
-    ws->pruneTimer = mprCreateTimerEvent(NULL, "pruneWorkers", MPR_TIMEOUT_PRUNER, (MprEventProc) pruneWorkers,
-        (void*) ws, MPR_EVENT_QUICK);
+    ws->pruneTimer = mprCreateTimerEvent(NULL, "pruneWorkers", MPR_TIMEOUT_PRUNER, pruneWorkers, ws, MPR_EVENT_QUICK);
     return 0;
 }
 
@@ -23608,8 +23586,8 @@ static void manageWaitService(MprWaitService *ws, int flags)
 
 //  MOB -- inline in createWaitHandler
 
-static MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDispatcher *dispatcher, 
-        MprEventProc proc, void *data, int flags)
+static MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, MprDispatcher *dispatcher, void *proc, 
+    void *data, int flags)
 {
     MprWaitService  *ws;
 
@@ -23650,7 +23628,7 @@ static MprWaitHandler *mprInitWaitHandler(MprWaitHandler *wp, int fd, int mask, 
 }
 
 
-MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher, MprEventProc proc, void *data, int flags)
+MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dispatcher, void *proc, void *data, int flags)
 {
     MprWaitHandler  *wp;
 
