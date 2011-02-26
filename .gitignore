@@ -125,3 +125,4 @@ The most commonly used git commands are:
 See 'git help COMMAND' for more information on a specific command.
 .rpmmacros
 rpm.log
+*.cltmp
