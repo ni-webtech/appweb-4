@@ -32,7 +32,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
 static void startCgi(HttpQueue *q);
 
 #if BLD_DEBUG
-static void traceCGIData(MprCmd *cmd, char *src, int size);
+static void traceCGIData(MprCmd *cmd, char *src, ssize size);
 #define traceData(cmd, src, size) traceCGIData(cmd, src, size)
 #else
 #define traceData(cmd, src, size)
@@ -137,7 +137,6 @@ static void startCgi(HttpQueue *q)
 
 /*
     This routine runs after all incoming data has been received
-    Must run on the same thread as that which initiated the CGI process. And must be called with the connection locked.
  */
 static void processCgi(HttpQueue *q)
 {
@@ -152,13 +151,28 @@ static void processCgi(HttpQueue *q)
         /* Start CGI if doing file upload and delayed start */
         startCgi(q);
         cmd = (MprCmd*) q->queueData;
-        if (q->count > 0) {
-            writeToCGI(q);
+    }
+    if (q->count > 0) {
+        writeToCGI(q);
+    }
+    /*  Close the CGI program's stdin. This will allow the gateway to exit if it was expecting input data */
+    mprCloseCmdFd(cmd, MPR_CMD_STDIN);
+
+    if (conn->error) {
+        httpPutForService(q, httpCreateEndPacket(q), 1);
+        return;
+    }
+    while (mprWaitForCmd(cmd, 1000) < 0) {
+        if (mprGetElapsedTime(conn->lastActivity) >= conn->limits->inactivityTimeout) {
+            break;
         }
     }
-    if (cmd) {
-        /*  Close the CGI program's stdin. This will allow it to exit if it was expecting input data.  */
-        mprCloseCmdFd(cmd, MPR_CMD_STDIN);
+    if (cmd->pid == 0) {
+        httpPutForService(q, httpCreateEndPacket(q), 1);
+    } else {
+        mprStopCmd(cmd, -1);
+        mprReapCmd(cmd, MPR_TIMEOUT_STOP_TASK);
+        cmd->status = 255;
     }
 }
 
@@ -236,7 +250,8 @@ static void writeToCGI(HttpQueue *q)
     HttpPacket  *packet;
     MprCmd      *cmd;
     MprBuf      *buf;
-    int         len, rc, err;
+    ssize       len;
+    int         rc, err;
 
     cmd = (MprCmd*) q->pair->queueData;
     mprAssert(cmd);
@@ -286,7 +301,8 @@ static void writeToCGI(HttpQueue *q)
 static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
 {
     HttpConn    *conn;
-    int         servicedQueues, rc, len;
+    ssize       len, rc;
+    int         servicedQueues;
 
     conn = q->conn;
     mprAssert(conn->tx);
@@ -379,7 +395,8 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
 {
     HttpConn    *conn;
     HttpTx      *tx;
-    int         space, nbytes, err;
+    ssize       space, nbytes;
+    int         err;
 
     conn = q->conn;
     tx = conn->tx;
@@ -907,7 +924,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
 static char *getCgiToken(MprBuf *buf, cchar *delim)
 {
     char    *token, *nextToken;
-    int     len;
+    ssize   len;
 
     len = mprGetBufLength(buf);
     if (len == 0) {
@@ -932,7 +949,7 @@ static char *getCgiToken(MprBuf *buf, cchar *delim)
 /*
     Trace output received from the cgi process
  */
-static void traceCGIData(MprCmd *cmd, char *src, int size)
+static void traceCGIData(MprCmd *cmd, char *src, ssize size)
 {
     char    dest[512];
     int     index, i;

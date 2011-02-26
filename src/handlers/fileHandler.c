@@ -159,7 +159,7 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
     HttpRange   *range;
     MprBuf      *buf;
     MprFile     *file;
-    int         len;
+    ssize       len;
 
     conn = q->conn;
     tx = conn->tx;
@@ -205,7 +205,7 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
     HttpConn    *conn;
     HttpTx      *tx;
     HttpRx      *rx;
-    int         len, rc;
+    ssize       len, rc;
 
     conn = q->conn;
     tx = conn->tx;
@@ -226,7 +226,7 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
         /*  
             rangeService will have set tx->pos to the next read position already
          */
-        mprSeekFile(tx->file, SEEK_SET, tx->pos);
+        mprSeekFile(tx->file, SEEK_SET, (MprOffset) tx->pos);
     }
 
     if ((rc = mprReadFile(tx->file, mprGetBufStart(packet->content), len)) != len) {
@@ -238,7 +238,7 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
         return MPR_ERR_CANT_READ;
     }
     mprAdjustBufEnd(packet->content, len);
-    return len;
+    return (int) len;
 }
 
 

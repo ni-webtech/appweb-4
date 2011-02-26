@@ -354,7 +354,7 @@ static void printUsage(cchar *programName)
 
 static char* trimWhiteSpace(char *str)
 {
-    int     len;
+    ssize   len;
 
     if (str == 0) {
         return str;
@@ -484,7 +484,7 @@ char *maMD5binary(uchar *buf, int length)
  */
 char *maMD5(char *string)
 {
-    return maMD5binary((uchar*)string, strlen(string));
+    return maMD5binary((uchar*)string, (int) slen(string));
 }
 
 

@@ -2943,7 +2943,7 @@ extern void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize);
 extern void httpSetHostName(HttpHost *host, cchar *name);
 extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
 extern void httpSetHostTrace(HttpHost *host, int level, int mask);
-extern void httpSetHostTraceFilter(HttpHost *host, int len, cchar *include, cchar *exclude);
+extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude);
 extern void httpSetHostServerRoot(HttpHost *host, cchar *dir);
 extern int  httpSetupTrace(HttpHost *host, cchar *ext);
 extern void httpAddHostToServer(HttpServer *server, HttpHost *host);

@@ -182,7 +182,7 @@ static void printBodyData(HttpQueue *q)
     }
     buf = q->pair->first->content;
     mprAddNullToBuf(buf);
-    numKeys = getVars(q, &keys, mprGetBufStart(buf), mprGetBufLength(buf));
+    numKeys = getVars(q, &keys, mprGetBufStart(buf), (int) mprGetBufLength(buf));
 
     if (numKeys == 0) {
         httpWrite(q, "<H2>No Body Data Found</H2>\r\n");

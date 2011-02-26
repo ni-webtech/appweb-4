@@ -41,7 +41,7 @@ HttpAlias *httpCreateAlias(cchar *prefix, cchar *target, int code)
 {
     HttpAlias   *ap;
     cchar       *seps;
-    int         len;
+    ssize       len;
 
     mprAssert(prefix);
     mprAssert(target && *target);
@@ -4028,7 +4028,8 @@ HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg)
 HttpDir *httpLookupBestDir(HttpHost *host, cchar *path)
 {
     HttpDir *dir;
-    int     next, len, dlen;
+    ssize   dlen;
+    int     next, len;
 
     len = (int) strlen(path);
 
@@ -4085,11 +4086,11 @@ void httpSetHostTrace(HttpHost *host, int level, int mask)
 }
 
 
-void httpSetHostTraceFilter(HttpHost *host, int len, cchar *include, cchar *exclude)
+void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude)
 {
     char    *word, *tok, *line;
 
-    host->traceMaxLength = len;
+    host->traceMaxLength = (int) len;
 
     if (include && strcmp(include, "*") != 0) {
         host->traceInclude = mprCreateHash(0, 0);
@@ -4167,7 +4168,7 @@ char *httpMakePath(HttpHost *host, cchar *file)
 
 static int matchRef(cchar *key, char **src)
 {
-    int     len;
+    ssize   len;
 
     mprAssert(src);
     mprAssert(key && *key);
@@ -4691,6 +4692,7 @@ static int httpTimer(Http *http, MprEvent *event)
     lock(http);
     mprLog(8, "httpTimer: %d active connections", mprGetListLength(http->connections));
     for (count = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; count++) {
+        //  MOB - refactor this and have limits always set
         requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
         inactivityTimeout = conn->limits->inactivityTimeout ? conn->limits->inactivityTimeout : INT_MAX;
         /* 
@@ -5852,7 +5854,7 @@ static void setScriptName(HttpConn *conn)
     HttpRx      *rx;
     HttpTx      *tx;
     char        *cp, *extraPath, *start, *pathInfo;
-    int         scriptLen;
+    ssize       scriptLen;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -6536,10 +6538,9 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
  */
 int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 {
-    int     len;
+    ssize   len;
 
     len = httpGetPacketLength(p);
-
     if (mprPutBlockToBuf(packet->content, mprGetBufStart(p->content), len) != len) {
         return MPR_ERR_MEMORY;
     }

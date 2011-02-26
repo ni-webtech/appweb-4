@@ -21,6 +21,8 @@
 
 /********************************** Includes **********************************/
 
+#define _CRT_SECURE_NO_WARNINGS 1
+
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -32,12 +34,33 @@
 #include <fcntl.h>
 #include <io.h>
 #include <windows.h>
+
+	#define access   _access
+	#define close    _close
+	#define fileno   _fileno
+	#define fstat    _fstat
+	#define getpid   _getpid
+	#define open     _open
+	#define putenv   _putenv
+	#define read     _read
+	#define stat     _stat
+	#define umask    _umask
+	#define unlink   _unlink
+	#define write    _write
+	#define strdup   _strdup
+	#define lseek    _lseek
+	#define getcwd   _getcwd
+	#define chdir    _chdir
+	#define strnset  _strnset
+	#define chmod    _chmod
+	
+	#define mkdir(a,b)  _mkdir(a)
+	#define rmdir(a)    _rmdir(a)
 #else
 #include <unistd.h>
-#endif
-
 /* Just for VxWorks */
 extern char *strdup(const char *);
+#endif
 
 /*********************************** Locals ***********************************/
 
@@ -292,6 +315,7 @@ int main(int argc, char *argv[], char *envp[])
     }
     printf("</BODY></HTML>\r\n");
 
+    //  MOB - VXWORKS is not defined
 #if VXWORKS
     /*
         VxWorks pipes need an explicit eof string
@@ -446,7 +470,7 @@ static int getQueryString(char **buf, int *buflen)
         *buflen = 0;
     } else {
         *buf = getenv("QUERY_STRING");
-        *buflen = strlen(*buf);
+        *buflen = (int) strlen(*buf);
     }
     return 0;
 }
