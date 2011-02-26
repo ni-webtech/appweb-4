@@ -509,7 +509,8 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     MprModule   *module;
     char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *ip;
     char        *names, *type, *items, *include, *exclude, *when, *mimeTypes;
-    int         len, port, rc, code, processed, num, flags, colonCount, mask, level;
+    ssize       len;
+    int         port, rc, code, processed, num, flags, colonCount, mask, level;
 
     mprAssert(state);
     mprAssert(key);
@@ -1034,7 +1035,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                     if (*ip == '[') {
                         ip++;
                     }
-                    len = strlen(ip);
+                    len = slen(ip);
                     if (ip[len - 1] == ']') {
                         ip[len - 1] = '\0';
                     }
@@ -1070,9 +1071,9 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
         } else if (scasecmp(key, "LogRotation") == 0) {
             value = stok(value, " \t", &tok);
-            host->logCount = stoi(value, 10, NULL);
+            host->logCount = (int) stoi(value, 10, NULL);
             value = stok(0, "\n", &tok);
-            host->logSize = stoi(value, 10, NULL) * (1024 * 1024);
+            host->logSize = (int) stoi(value, 10, NULL) * (1024 * 1024);
             return 1;
 
         } else if (scasecmp(key, "LogTrace") == 0) {

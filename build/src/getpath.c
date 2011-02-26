@@ -108,7 +108,7 @@ static char *trim(char *path)
     int     len;
 
     while (1) {
-        len = strlen(path);
+        len = (int) strlen(path);
         if (path[len - 1] == '/') {
             path[len - 1] = '\0';
         } else {
@@ -194,7 +194,7 @@ static char *absolutePath(char *path)
         fprintf(stderr, "Cant get working directory");
         exit(255);
     }
-    len = strlen(cwd);
+    len = (int) strlen(cwd);
     result = malloc(len + strlen(path) + 2);
 
     strcpy(result, cwd);
@@ -237,7 +237,7 @@ static char *relativePath(char *path)
     upLevels = cwdCount - commonLevels;
     len = (upLevels * 3);
     for (; i < strCount; i++) {
-        len += strlen(strSegments[i]) + 1;
+        len += (int) strlen(strSegments[i]) + 1;
     }
 
     cp = result = malloc(len + 1);
@@ -317,7 +317,7 @@ static char *canonPath(char *path)
         *cp++ = '/';
     }
     for (i = 0; i < to; i++) {
-        len = strlen(segments[i]);
+        len = (int) strlen(segments[i]);
         strcpy(cp, segments[i]);
         cp += len;
         if ((i + 1) < to) {

@@ -226,7 +226,7 @@ static char *mprGetDirName(char *buf, int bufsize, const char *path)
         return buf;
     }
 
-    dlen = cp - path;
+    dlen = (int) (cp - path);
     if (dlen < bufsize) {
         if (dlen == 0) {
             dlen++;
@@ -243,7 +243,7 @@ static int mprStrcpy(char *dest, int destMax, const char *src)
 {
     int     len;
 
-    len = strlen(src);
+    len = (int) strlen(src);
     if (destMax > 0 && len >= destMax && len > 0) {
         return -1;
     }
