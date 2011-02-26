@@ -272,12 +272,12 @@ void maLogRequest(HttpConn *conn)
             if (tx->bytesWritten == 0) {
                 mprPutCharToBuf(buf, '-');
             } else {
-                mprPutIntToBuf(buf, tx->bytesWritten);
+                mprPutIntToBuf(buf, (int) tx->bytesWritten);
             } 
             break;
 
         case 'B':                           /* Bytes written (minus headers) */
-            mprPutIntToBuf(buf, tx->bytesWritten - tx->headerSize);
+            mprPutIntToBuf(buf, (int) (tx->bytesWritten - tx->headerSize));
             break;
 
         case 'h':                           /* Remote host */
@@ -294,7 +294,7 @@ void maLogRequest(HttpConn *conn)
             break;
 
         case 'O':                           /* Bytes written (including headers) */
-            mprPutIntToBuf(buf, tx->bytesWritten);
+            mprPutIntToBuf(buf, (int) tx->bytesWritten);
             break;
 
         case 'r':                           /* First line of request */
