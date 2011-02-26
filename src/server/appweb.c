@@ -470,7 +470,7 @@ static void catchSignal(int signo, siginfo_t *info, void *arg)
  */ 
 static int writePort(HttpHost *host)
 {
-    char    *cp, numBuf[16], *path;
+    char    numBuf[16], *path;
     int     fd, len;
 
     //  MOB - should really go to a BLD_LOG_DIR
@@ -484,7 +484,7 @@ static int writePort(HttpHost *host)
     len = (int) strlen(numBuf);
     numBuf[len++] = '\n';
     if (write(fd, numBuf, len) != len) {
-        mprError(host, "Write to file %s failed", path);
+        mprError("Write to file %s failed", path);
         return MPR_ERR_CANT_WRITE;
     }
     close(fd);

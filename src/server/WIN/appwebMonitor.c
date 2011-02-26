@@ -69,12 +69,16 @@ static void     updateMenu(int id, char *text, int enable, int check);
 
 /*********************************** Code *************************************/
 
-int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
+int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
 {
+    MprArgs args;
     char    **argv, *argp;
     int     argc, err, nextArg, manage, stop;
 
-    if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD) == NULL) {
+    args.program = "AppwebMonitor";
+    args.args = (char*) command;
+
+    if (mprCreate(0, (char**) &args, MPR_USER_EVENTS_THREAD) == NULL) {
         exit(1);
     }
     if ((app = mprAllocObj(App, manageApp)) == NULL) {
@@ -98,7 +102,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     /*
         Parse command line arguments
      */
-    if (mprMakeArgv("", args, &argc, &argv) < 0) {
+    if (mprMakeArgv(command, &argc, &argv, 0) < 0) {
         return FALSE;
     }
     for (nextArg = 1; nextArg < argc; nextArg++) {
@@ -122,7 +126,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
                 "  Switches:\n"
                 "    --manage             # Launch browser to manage",
                 "    --stop               # Stop a running monitor",
-                args, mprGetAppName());
+                command, mprGetAppName());
             return -1;
         }
     }
