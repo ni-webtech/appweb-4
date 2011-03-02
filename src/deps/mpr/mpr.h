@@ -886,6 +886,7 @@ struct  MprModule;
 struct  MprMutex;
 struct  MprOsService;
 struct  MprPath;
+struct  MprSignal;
 struct  MprSocket;
 struct  MprSocketService;
 struct  MprSsl;
@@ -1101,15 +1102,6 @@ struct  MprXml;
     #define MPR_EVENT_ASYNC     1
 #else
     #define MPR_EVENT_POLL      1
-#endif
-
-#if UNUSED
-#undef MPR_EVENT_EPOLL
-#undef MPR_EVENT_POLL
-#undef MPR_EVENT_SELECT
-#undef MPR_EVENT_ASYNC
-#undef MPR_EVENT_KQUEUE
-#define MPR_EVENT_SELECT 1
 #endif
 
 /*
@@ -5538,7 +5530,7 @@ typedef struct MprThreadLocal {
     @returns A MprThread object
     @ingroup MprThread
  */
-extern MprThread *mprCreateThread(cchar *name, MprThreadProc proc, void *data, int stackSize);
+extern MprThread *mprCreateThread(cchar *name, void *proc, void *data, int stackSize);
 
 /**
     Return the name of the current thread
@@ -6579,6 +6571,43 @@ extern char *mprUriEncode(cchar *uri, int map);
 extern char *mprUriDecode(cchar *uri);
 
 
+#define MPR_MAX_SIGNAL      (40)
+#define MPR_SIGNAL_BEFORE   0x1
+#define MPR_SIGNAL_AFTER    0x2
+#define MPR_SIGNAL_NATIVE   0x4
+
+typedef void (*MprSignalProc)(void *arg, struct MprSignal *sp);
+
+typedef struct MprSignal {
+    union {
+        struct MprSignal *sp;               /* */
+        void             (*sigaction)();    /* */
+    } chain;
+    MprSignalProc   handler;                /* */
+    void            *data;                  /* */
+    MprDispatcher   *dispatcher;            /* */
+    MprEvent        *event;                 /* */
+    int             flags;                  /* Control flags */
+    int             triggered;              /* */
+    int             signo;                  /* Signal number */
+    siginfo_t       info;                   /* Triggered signal info */
+    void            *arg;                   /* Triggered signal arg */
+} MprSignal;
+
+extern MprSignal *mprAddSignalHandler(int signo, void *handler, void *arg, MprDispatcher *dispatcher, int flags);
+extern int mprRemoveSignalHandler(MprSignal *sp);
+extern void mprAddStandardSignals();
+extern void mprServiceSignals();
+
+typedef struct MprSignalService {
+    MprSignal       **signals;              /**< Signal handlers */
+    int             hasSignals;
+    MprMutex        *mutex;
+} MprSignalService;
+
+extern MprSignalService *mprCreateSignalService();
+
+
 typedef void (*MprForkCallback)(void *arg);
 
 typedef struct MprCmdService {
@@ -6624,7 +6653,6 @@ typedef void (*MprCmdProc)(struct MprCmd *cmd, int channel, void *data);
 #define MPR_CMD_IN              0x1000  /* Connect to stdin */
 #define MPR_CMD_OUT             0x2000  /* Capture stdout */
 #define MPR_CMD_ERR             0x4000  /* Capture stdout */
-#define MPR_CMD_ASYNC           0x8000  /* Run in async mode */
 
 typedef struct MprCmdFile {
     char            *name;
@@ -6640,23 +6668,28 @@ typedef struct MprCmdFile {
     @description The MprCmd service enables execution of local commands. It uses three full-duplex pipes to communicate
         read, write and error data with the command. 
     @stability Evolving.
-    @see mprGetCmdBuf mprCreateCmd mprIsCmdRunning mprStartCmd mprGetCmdExitStatus mprGetCmdFd mprMakeCmdIO 
+    @see mprGetCmdBuf mprCreateCmd mprIsCmdRunning mprStartCmd mprGetCmdExitStatus mprGetCmdFd
         mprReadCmd mprReapCmd mprRunCmd mprRunCmdV mprWaitForCmd mprWriteCmd mprCloseCmdFd 
         mprDisableCmdEvents mprDisconnectCmd mprEnableCmdEvents mprPollCmd mprSetCmdCallback mprSetCmdDir 
         mprSetCmdEnv mprStopCmd
     @defgroup MprCmd MprCmd
  */
 typedef struct MprCmd {
+    /*  Ordered for debugging */
+
     char            *program;           /* Program path name */
+    int             pid;                /* Process ID of the created process */
+    int             status;             /* Command exit status */
+    int             flags;              /* Control flags (userFlags not here) */
+    int             eofCount;           /* Count of end-of-files */
+    int             requiredEof;        /* Number of EOFs required for an exit */
+    int             complete;           /* All channels EOF and status gathered */
+
     char            **makeArgv;         /* Allocated argv */ 
     char            **argv;             /* List of args. Null terminated */
     char            **env;              /* List of environment variables. Null terminated */
     char            *dir;               /* Current working dir for the process */
     int             argc;               /* Count of args in argv */
-    int             status;             /* Command exit status */
-    int             flags;              /* Control flags (userFlags not here) */
-    int             eofCount;           /* Count of end-of-files */
-    int             requiredEof;        /* Number of EOFs required for an exit */
     MprTime         timestamp;          /* Timeout timestamp for last I/O  */
     MprTime         timeoutPeriod;      /* Timeout value */
     int             timedout;           /* Request has timedout */
@@ -6666,10 +6699,10 @@ typedef struct MprCmd {
     MprCmdProc      callback;           /* Handler for client output and completion */
     void            *callbackData;
     MprForkCallback forkCallback;       /* Forked client callback */
+    MprSignal       *signal;            /* Signal handler for SIGCHLD */
     void            *forkData;
     MprBuf          *stdoutBuf;         /* Standard output from the client */
     MprBuf          *stderrBuf;         /* Standard error output from the client */
-    int             pid;                /* Process ID of the created process */
     void            *userData;          /* User data storage */
     int             userFlags;          /* User flags storage */
 #if BLD_WIN_LIKE
@@ -6741,11 +6774,11 @@ extern void mprFinalizeCmd(MprCmd *cmd);
 /**
     Get the command exit status
     @param cmd MprCmd object created via mprCreateCmd
-    @param status Reference to an integer to receive the command exit status. This is typically zero for success, but this
-        is platform specific.
+    @return status If the command has exited, a status between 0 and 255 is returned. Otherwise, a negative error
+    code is returned.
     @ingroup MprCmd
  */
-extern int mprGetCmdExitStatus(MprCmd *cmd, int *status);
+extern int mprGetCmdExitStatus(MprCmd *cmd);
 
 /**
     Get the underlying file descriptor for an I/O channel
@@ -6773,6 +6806,7 @@ extern MprBuf *mprGetCmdBuf(MprCmd *cmd, int channel);
  */
 extern bool mprIsCmdRunning(MprCmd *cmd);
 
+#if UNUSED
 /**
     Make the I/O channels to send and receive data to and from the command.
     @param cmd MprCmd object created via mprCreateCmd
@@ -6780,6 +6814,7 @@ extern bool mprIsCmdRunning(MprCmd *cmd);
     @ingroup MprCmd
  */
 extern int mprMakeCmdIO(MprCmd *cmd);
+#endif
 
 /**
     Make the I/O channels to send and receive data to and from the command.
@@ -6912,7 +6947,6 @@ extern void mprPollCmd(MprCmd *cmd, MprTime timeout);
 extern int mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
 
 extern int mprIsCmdComplete(MprCmd *cmd);
-extern void mprAddCmdHandlers(MprCmd *cmd);
 
 /**
     Mime Type hash table entry (the URL extension is the key)
@@ -7008,6 +7042,7 @@ typedef struct Mpr {
     struct MprFileSystem    *fileSystem;    /**< File system service object */
     struct MprModuleService *moduleService; /**< Module service object */
     struct MprOsService     *osService;     /**< O/S service object */
+    struct MprSignalService *signalService; /**< Signal service object */
     struct MprSocketService *socketService; /**< Socket service object */
     struct MprThreadService *threadService; /**< Thread service object */
     struct MprWorkerService *workerService; /**< Worker service object */
@@ -7295,7 +7330,7 @@ extern void mprSetAltLogData(void *data);
     Sleep for a while
     @param msec Number of milliseconds to sleep
 */
-extern void mprSleep(int msec);
+extern void mprSleep(MprTime msec);
 
 #if BLD_WIN_LIKE
 extern int mprReadRegistry(char **buf, ssize max, cchar *key, cchar *val);

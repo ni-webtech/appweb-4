@@ -2439,6 +2439,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     fs = mprCreateFileSystem("/");
     mprAddFileSystem(fs);
 
+    mpr->signalService = mprCreateSignalService();
     mpr->threadService = mprCreateThreadService();
     mpr->moduleService = mprCreateModuleService();
     mpr->eventService = mprCreateEventService();
@@ -2481,6 +2482,7 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->eventService);
         mprMark(mpr->moduleService);
         mprMark(mpr->osService);
+        mprMark(mpr->signalService);
         mprMark(mpr->socketService);
         mprMark(mpr->threadService);
         mprMark(mpr->workerService);
@@ -2664,9 +2666,9 @@ bool mprServicesAreIdle()
            mprGetListLength(MPR->cmdService->cmds) == 0 && 
            mprDispatchersAreIdle() && !MPR->eventing;
     if (!idle) {
-        mprLog(1, "Testing idle: cmds %d, threads %d, dispatchers %d, marker %d, sweeper %d",
-            mprGetListLength(MPR->workerService->busyThreads),
-           mprDispatchersAreIdle(), mprGetListLength(MPR->cmdService->cmds), MPR->marker, MPR->sweeper);
+        mprLog(1, "Not idle: cmds %d, busy threads %d, dispatchers %d, eventing %d",
+            mprGetListLength(MPR->cmdService->cmds), mprGetListLength(MPR->workerService->busyThreads),
+           !mprDispatchersAreIdle(), MPR->eventing);
     }
     return idle;
 }
@@ -3329,7 +3331,7 @@ void stubMprAsync() {}
 /************************************************************************/
 
 /**
-    mprAtomicic.c - Atomic operations
+    mprAtomic.c - Atomic operations
 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
@@ -4165,34 +4167,24 @@ int mprPutStringToWideBuf(MprBuf *bp, cchar *str)
 
 
 
-/*
-    Windows and VxWorks do not support async I/O
-    VxWorks can't signal EOF on non-blocking pipes and Windows can't select on named pipes. 
- */
-#if BLD_WIN_LIKE || VXWORKS
-#define CMD_ASYNC 0
-#else
-#define CMD_ASYNC 1
-#endif
-
 static void closeFiles(MprCmd *cmd);
 static void cmdCallback(MprCmd *cmd, int channel, void *data);
 static int makeChannel(MprCmd *cmd, int index);
+static int makeCmdIO(MprCmd *cmd);
 static void manageCmdService(MprCmdService *cmd, int flags);
 static void manageCmd(MprCmd *cmd, int flags);
+static void reapCmd(MprCmd *cmd);
 static void resetCmd(MprCmd *cmd);
 static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env);
 static int startProcess(MprCmd *cmd);
-
-#if CMD_ASYNC
 static void stdinCallback(MprCmd *cmd, MprEvent *event);
 static void stdoutCallback(MprCmd *cmd, MprEvent *event);
 static void stderrCallback(MprCmd *cmd, MprEvent *event);
-#endif
 
 #if BLD_UNIX_LIKE
 static char **fixenv(MprCmd *cmd);
 #endif
+
 #if VXWORKS
 typedef int (*MprCmdTaskFn)(int argc, char **argv, char **envp);
 static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg);
@@ -4200,14 +4192,14 @@ static void vxCmdManager(MprCmd *cmd);
 #endif
 
 /*
-    Cygwin process creation is not thread-safe (1.7). Use a global lock.
+    Cygwin process creation is not thread-safe (1.7)
  */
 #if CYGWIN
-#define glock(cmd) mprGlobalLock(cmd)
-#define gunlock(cmd) mprGlobalUnlock(cmd)
+#define slock(cmd) mprLock(MPR->cmdService)
+#define sunlock(cmd) mprUnlock(MPR->cmdService)
 #else
-#define glock(cmd) 
-#define gunlock(cmd) 
+#define slock(cmd) 
+#define sunlock(cmd) 
 #endif
 
 
@@ -4256,6 +4248,7 @@ MprCmd *mprCreateCmd(MprDispatcher *dispatcher)
     cmd->timestamp = mprGetTime();
     cmd->forkCallback = (MprForkCallback) closeFiles;
     cmd->dispatcher = dispatcher ? dispatcher : MPR->dispatcher;
+    cmd->status = -1;
 
 #if VXWORKS
     cmd->startCond = semCCreate(SEM_Q_PRIORITY, SEM_EMPTY);
@@ -4266,6 +4259,9 @@ MprCmd *mprCreateCmd(MprDispatcher *dispatcher)
         files[i].clientFd = -1;
         files[i].fd = -1;
     }
+#if BLD_UNIX_LIKE
+    cmd->signal = mprAddSignalHandler(SIGCHLD, reapCmd, cmd, dispatcher, MPR_SIGNAL_BEFORE);
+#endif
     cmd->mutex = mprCreateLock();
     mprAddItem(MPR->cmdService->cmds, cmd);
     return cmd;
@@ -4279,7 +4275,10 @@ static void manageCmd(MprCmd *cmd, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(cmd->program);
         mprMark(cmd->makeArgv);
+#if UNUSED
+        /* ARGV is passed in */
         mprMark(cmd->argv);
+#endif
         mprMark(cmd->dir);
         mprMark(cmd->dispatcher);
         mprMark(cmd->callbackData);
@@ -4290,7 +4289,6 @@ static void manageCmd(MprCmd *cmd, int flags)
         for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
             mprMark(cmd->files[i].name);
         }
-        //  MOB - refactor
         mprMark(cmd->env);
 #if BLD_WIN_LIKE
         mprMark(cmd->command);
@@ -4302,11 +4300,9 @@ static void manageCmd(MprCmd *cmd, int flags)
             }
         }
 #endif
-        lock(cmd);
         for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
             mprMark(cmd->handlers[i]);
         }
-        unlock(cmd);
         mprMark(cmd->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
@@ -4314,6 +4310,10 @@ static void manageCmd(MprCmd *cmd, int flags)
 #if VXWORKS
         vxCmdManager(cmd);
 #endif
+        if (cmd->signal) {
+            mprRemoveSignalHandler(cmd->signal);
+            cmd->signal = 0;
+        }
         mprRemoveItem(MPR->cmdService->cmds, cmd);
     }
 }
@@ -4353,7 +4353,10 @@ void mprDestroyCmd(MprCmd *cmd)
 {
     mprAssert(cmd);
     resetCmd(cmd);
-    mprRemoveItem(MPR->cmdService->cmds, cmd);
+    if (cmd->signal) {
+        mprRemoveSignalHandler(cmd->signal);
+        cmd->signal = 0;
+    }
 }
 
 
@@ -4379,11 +4382,13 @@ static void resetCmd(MprCmd *cmd)
         }
     }
     cmd->eofCount = 0;
+    cmd->complete = 0;
     cmd->status = -1;
 
     if (cmd->pid && !(cmd->flags & MPR_CMD_DETACH)) {
         mprStopCmd(cmd, -1);
-        mprReapCmd(cmd, 0);
+        mprWaitForCmd(cmd, MPR_TIMEOUT_STOP_TASK);
+        reapCmd(cmd);
         cmd->pid = 0;
     }
 }
@@ -4394,14 +4399,13 @@ void mprDisconnectCmd(MprCmd *cmd)
     int     i;
 
     mprAssert(cmd);
-    lock(cmd);
+
     for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
         if (cmd->handlers[i]) {
             mprRemoveWaitHandler(cmd->handlers[i]);
             cmd->handlers[i] = 0;
         }
     }
-    unlock(cmd);
 }
 
 
@@ -4413,7 +4417,6 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
     mprAssert(cmd);
     mprAssert(0 <= channel && channel <= MPR_CMD_MAX_PIPE);
 
-    lock(cmd);
     if (cmd->handlers[channel]) {
         mprRemoveWaitHandler(cmd->handlers[channel]);
         cmd->handlers[channel] = 0;
@@ -4425,17 +4428,19 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
         cmd->files[channel].handle = 0;
 #endif
         if (channel != MPR_CMD_STDIN) {
-            if (++cmd->eofCount >= cmd->requiredEof) {
-                mprReapCmd(cmd, MPR_TIMEOUT_STOP_TASK);
+            cmd->eofCount++;
+            if (cmd->eofCount >= cmd->requiredEof && cmd->pid == 0) {
+                cmd->complete = 1;
             }
         }
     }
-    unlock(cmd);
+    mprLog(6, "Close channel %d eof %d/%d, pid %d", channel, cmd->eofCount, cmd->requiredEof, cmd->pid);
 }
 
 
 void mprFinalizeCmd(MprCmd *cmd)
 {
+    mprLog(6, "mprFinalizeCmd");
     mprAssert(cmd);
     mprCloseCmdFd(cmd, MPR_CMD_STDIN);
 }
@@ -4443,7 +4448,7 @@ void mprFinalizeCmd(MprCmd *cmd)
 
 int mprIsCmdComplete(MprCmd *cmd)
 {
-    return cmd->eofCount >= cmd->requiredEof;
+    return cmd->complete;
 }
 
 
@@ -4496,14 +4501,13 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
         cmd->stderrBuf = mprCreateBuf(MPR_BUFSIZE, -1);
     }
     mprSetCmdCallback(cmd, cmdCallback, NULL);
-    lock(cmd);
     rc = mprStartCmd(cmd, argc, argv, NULL, flags);
 
     /*
         Close the pipe connected to the client's stdin
      */
     if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
-        mprCloseCmdFd(cmd, MPR_CMD_STDIN);
+        mprFinalizeCmd(cmd);
     }
     if (rc < 0) {
         if (err) {
@@ -4515,21 +4519,15 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
                 *err = mprAsprintf("Can't create process for %s", cmd->program);
             }
         }
-        unlock(cmd);
         return rc;
     }
     if (cmd->flags & MPR_CMD_DETACH) {
-        unlock(cmd);
         return 0;
     }
-    unlock(cmd);
-
     if (mprWaitForCmd(cmd, -1) < 0) {
         return MPR_ERR_NOT_READY;
     }
-    lock(cmd);
-    if (mprGetCmdExitStatus(cmd, &status) < 0) {
-        unlock(cmd);
+    if ((status = mprGetCmdExitStatus(cmd)) < 0) {
         return MPR_ERR;
     }
     if (err && flags & MPR_CMD_ERR) {
@@ -4540,44 +4538,27 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
         mprAddNullToBuf(cmd->stdoutBuf);
         *out = mprGetBufStart(cmd->stdoutBuf);
     }
-    unlock(cmd);
     return status;
 }
 
 
-void mprAddCmdHandlers(MprCmd *cmd)
+static void addCmdHandlers(MprCmd *cmd)
 {
-#if CMD_ASYNC
-    int     stdinFd, stdoutFd, stderrFd, mask;
+    int     stdinFd, stdoutFd, stderrFd;
   
     stdinFd = cmd->files[MPR_CMD_STDIN].fd; 
     stdoutFd = cmd->files[MPR_CMD_STDOUT].fd; 
     stderrFd = cmd->files[MPR_CMD_STDERR].fd; 
 
-    if (stdinFd >= 0) {
-        fcntl(stdinFd, F_SETFL, fcntl(stdinFd, F_GETFL) | O_NONBLOCK);
-    }
-    if (stdoutFd >= 0) {
-        fcntl(stdoutFd, F_SETFL, fcntl(stdoutFd, F_GETFL) | O_NONBLOCK);
-    }
-    if (stderrFd >= 0) {
-        fcntl(stderrFd, F_SETFL, fcntl(stderrFd, F_GETFL) | O_NONBLOCK);
-    }
-    if (stdinFd >= 0) {
+    if (stdinFd >= 0 && cmd->handlers[MPR_CMD_STDIN] == 0) {
         cmd->handlers[MPR_CMD_STDIN] = mprCreateWaitHandler(stdinFd, MPR_WRITABLE, cmd->dispatcher, stdinCallback, cmd, 0);
     }
-    if (stdoutFd >= 0) {
+    if (stdoutFd >= 0 && cmd->handlers[MPR_CMD_STDOUT] == 0) {
         cmd->handlers[MPR_CMD_STDOUT] = mprCreateWaitHandler(stdoutFd, MPR_READABLE, cmd->dispatcher, stdoutCallback, cmd,0);
     }
-    if (stderrFd >= 0) {
-        /*
-            Delay enabling stderr events until stdout is complete. 
-         */
-        mask = (stdoutFd < 0) ? MPR_READABLE : 0;
-        cmd->handlers[MPR_CMD_STDERR] = mprCreateWaitHandler(stderrFd, mask, cmd->dispatcher, stderrCallback, cmd, 0);
+    if (stderrFd >= 0 && cmd->handlers[MPR_CMD_STDERR] == 0) {
+        cmd->handlers[MPR_CMD_STDERR] = mprCreateWaitHandler(stderrFd, MPR_READABLE, cmd->dispatcher, stderrCallback, cmd,0);
     }
-    cmd->flags |= MPR_CMD_ASYNC;
-#endif
 }
 
 
@@ -4619,9 +4600,9 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
         return MPR_ERR_CANT_ACCESS;
     }
 
-    glock(cmd);
-    if (mprMakeCmdIO(cmd) < 0) {
-        gunlock(cmd);
+    slock(cmd);
+    if (makeCmdIO(cmd) < 0) {
+        sunlock(cmd);
         return MPR_ERR_CANT_OPEN;
     }
     /*
@@ -4634,16 +4615,15 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
     if (cmd->flags & MPR_CMD_ERR) {
         cmd->requiredEof++;
     }
-    if ((cmd->flags & MPR_CMD_ASYNC) && CMD_ASYNC) {
-        mprAddCmdHandlers(cmd);
-    }
+    addCmdHandlers(cmd);
+    mprLog(4, "mprStartCmd %s", cmd->program);
     rc = startProcess(cmd);
-    gunlock(cmd);
+    sunlock(cmd);
     return rc;
 }
 
 
-int mprMakeCmdIO(MprCmd *cmd)
+static int makeCmdIO(MprCmd *cmd)
 {
     int     rc;
 
@@ -4684,13 +4664,16 @@ int mprStopCmd(MprCmd *cmd, int signal)
 }
 
 
+/*
+    Do non-blocking I/O - except on windows - will block
+ */
 ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 {
 #if BLD_WIN_LIKE
 {
     int     rc, count;
     /*
-        Need to detect EOF in windows. Pipe always in blocking mode, but reads block even with noone on the other end.
+        Need to detect EOF in windows. Pipe always in blocking mode, but reads block even with no one on the other end.
      */
     rc = PeekNamedPipe(cmd->files[channel].handle, NULL, 0, NULL, &count, NULL);
     if (rc > 0 && count > 0) {
@@ -4709,13 +4692,16 @@ ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 }
 
 
+/*
+    Do non-blocking I/O - except on windows - will block
+ */
 int mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 {
 #if BLD_WIN_LIKE
     /*
         No waiting. Use this just to check if the process has exited and thus EOF on the pipe.
      */
-    if (WaitForSingleObject(cmd->process, 0) == WAIT_OBJECT_0) {
+    if (cmd->pid == 0 || WaitForSingleObject(cmd->process, 0) == WAIT_OBJECT_0) {
         return -1;
     }
 #endif
@@ -4725,122 +4711,62 @@ int mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 
 void mprEnableCmdEvents(MprCmd *cmd, int channel)
 {
-#if CMD_ASYNC
     int mask = (channel == MPR_CMD_STDIN) ? MPR_WRITABLE : MPR_READABLE;
-    lock(cmd);
     if (cmd->handlers[channel]) {
-        mprAssert(cmd->flags & MPR_CMD_ASYNC);
         mprEnableWaitEvents(cmd->handlers[channel], mask);
     }
-    unlock(cmd);
-#endif
 }
 
 
 void mprDisableCmdEvents(MprCmd *cmd, int channel)
 {
-#if CMD_ASYNC
-    lock(cmd);
     if (cmd->handlers[channel]) {
-        mprAssert(cmd->flags & MPR_CMD_ASYNC);
         mprDisableWaitEvents(cmd->handlers[channel]);
     }
-    unlock(cmd);
-#endif
 }
 
 
 #if BLD_WIN_LIKE && !WINCE
 /*
-    Service I/O and return a count of characters that can be read without blocking. If the proces has completed,
-    then return 1 to indicate that EOF can be read.
+    Windows only routine to wait for I/O on the channels to the gateway and the child process.
+    NamedPipes can't use WaitForMultipleEvents (can use overlapped I/O)
  */
-static int serviceWinCmdEvents(MprCmd *cmd, int channel, MprTime timeout)
+static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
 {
-    int     rc, count, status;
+    MprTime mark, remaining;
+    HANDLE  handles[MPR_CMD_MAX_PIPE];
+    int     i, rc, nbytes;
 
-    if (channel == MPR_CMD_STDIN) {
-        /* Nothing better to do */
-        return 1;
-    }
-    if (cmd->files[channel].handle) {
-        rc = PeekNamedPipe(cmd->files[channel].handle, NULL, 0, NULL, &count, NULL);
-        if (rc && count > 0) {
-            return count;
+    mark = mprGetTime();
+    for (i = MPR_CMD_STDOUT; i < MPR_CMD_MAX_PIPE; i++) {
+        if (cmd->files[i].handle) {
+            rc = PeekNamedPipe(cmd->files[i].handle, NULL, 0, NULL, &nbytes, NULL);
+            if (rc && nbytes > 0 || cmd->process == 0) {
+                mprQueueIOEvent(cmd->handlers[i]);
+                mprWaitForEvent(cmd->dispatcher, remaining);
+                return;
+            }
         }
     }
-    if (cmd->process == 0) {
-        return 1;
-    }
-    if (mprGetDebugMode()) {
-        timeout = MAXINT;
-    }
-    if ((status = WaitForSingleObject(cmd->process, (DWORD) timeout)) == WAIT_OBJECT_0) {
-        if (cmd->requiredEof == 0) {
-            mprReapCmd(cmd, MPR_TIMEOUT_STOP_TASK);
-            return 0;
+    if (cmd->process) {
+        if (WaitForSingleObject(cmd->process, (cmd->eofCount == cmd->requiredEof) ? remaining : 0) == WAIT_OBJECT_0) {
+            reapCmd(cmd);
+            return;
         }
-        return 1;
+        /* Stop busy waiting */
+        mprSleep(10);
     }
-    return 0;
+    if (cmd->eofCount == cmd->requiredEof && cmd->process) {
+        rc = WaitForSingleObject(cmd->process, (DWORD) remaining);
+        if (rc == WAIT_OBJECT_0) {
+            reapCmd(cmd);
+        } else {
+            mprError("Error waiting CGI I/O, error %d", mprGetOsError());
+        }
+    }
+    return;
 }
-#endif /* BLD_WIN_LIKE && !WINCE */
-
-
-static void invokeCallback(MprCmd *cmd, int channel)
-{
-    mprAssert(cmd);
-    mprAssert(channel >= 0);
-
-    /*
-        Don't invoke the callback if a handler is already defined
-     */
-    if (channel >= 0 && cmd->callback && cmd->handlers[channel] == 0) {
-        (cmd->callback)(cmd, channel, cmd->callbackData);
-    }
-}
-
-
-/*
-    Poll for I/O events on CGI pipes
- */
-void mprPollCmd(MprCmd *cmd, MprTime timeout)
-{
-    int     channel;
-
-    channel = -1;
-#if BLD_WIN_LIKE && !WINCE
-    if (cmd->files[MPR_CMD_STDIN].handle) {
-        if (serviceWinCmdEvents(cmd, MPR_CMD_STDIN, timeout) > 0 && (cmd->flags & MPR_CMD_IN)) {
-            invokeCallback(cmd, MPR_CMD_STDIN);
-        }
-    }
-    if (cmd->files[MPR_CMD_STDOUT].handle) {
-        if (serviceWinCmdEvents(cmd, MPR_CMD_STDOUT, timeout) > 0 && (cmd->flags & MPR_CMD_OUT)) {
-            invokeCallback(cmd, MPR_CMD_STDOUT);
-        }
-    } else if (cmd->files[MPR_CMD_STDERR].handle) {
-        if (serviceWinCmdEvents(cmd, MPR_CMD_STDERR, timeout) > 0 && (cmd->flags & MPR_CMD_ERR)) {
-            invokeCallback(cmd, MPR_CMD_STDERR);
-        }
-    }
-#else
-    if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
-        if (mprWaitForSingleIO(cmd->files[MPR_CMD_STDOUT].fd, MPR_READABLE, timeout)) {
-            invokeCallback(cmd, MPR_CMD_STDOUT);
-        }
-    } else if (cmd->files[MPR_CMD_STDERR].fd >= 0) {
-        if (mprWaitForSingleIO(cmd->files[MPR_CMD_STDERR].fd, MPR_READABLE, timeout)) {
-            invokeCallback(cmd, MPR_CMD_STDERR);
-        }
-    }
-    if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
-        if (mprWaitForSingleIO(cmd->files[MPR_CMD_STDIN].fd, MPR_WRITABLE, timeout)) {
-            invokeCallback(cmd, MPR_CMD_STDIN);
-        }
-    }
 #endif
-}
 
 
 /*
@@ -4861,146 +4787,108 @@ int mprWaitForCmd(MprCmd *cmd, MprTime timeout)
     }
     expires = mprGetTime() + timeout;
     remaining = timeout;
-    do {
-        lock(cmd);
-        if (cmd->eofCount >= cmd->requiredEof) {
-            /* WARNING: will block here if requiredEof is zero */
-            if (mprReapCmd(cmd, 0) == 0) {
-                unlock(cmd);
-                return 0;
-            }
-        }
-        unlock(cmd);
-        if (cmd->pid) {
-            /* Add root to allow callers to use mprRunCmd without first managing the cmd */
-            mprAddRoot(cmd);
-            if ((cmd->flags & MPR_CMD_ASYNC) && CMD_ASYNC) {
-                mprWaitForEvent(cmd->dispatcher, remaining);
-            } else {
-                mprPollCmd(cmd, timeout);
-                mprWaitForEvent(cmd->dispatcher, 0);
-            }
-            mprRemoveRoot(cmd);
-        }
-        remaining = (expires - mprGetTime());
-    } while (cmd->pid && remaining >= 0);
 
+    /* Add root to allow callers to use mprRunCmd without first managing the cmd */
+    mprAddRoot(cmd);
+
+    while (!cmd->complete && remaining > 0) {
+#if BLD_WIN_LIKE
+        waitForWinEvent(cmd, remaining);
+#else
+        mprWaitForEvent(cmd->dispatcher, remaining);
+#endif
+        remaining = (expires - mprGetTime());
+    }
+    mprRemoveRoot(cmd);
     if (cmd->pid) {
         return MPR_ERR_TIMEOUT;
     }
-    mprLog(7, "cmd: waitForChild: status %d", cmd->status);
+    mprLog(6, "cmd: waitForChild: status %d", cmd->status);
     return 0;
 }
 
 
 /*
-    Collect the child's exit status. The initiating thread must do this on some operating systems. For consistency,
-    we make this the case for all O/Ss. Return zero if the exit status is successfully reaped. Return -1 if an error 
-    and return > 0 if process still running.
+    Gather the child's exit status. This routine is idempotent.
+    WARNING: this may be called with a false-positive, ie. SIGCHLD will get invoked for all process deaths and not just
+    when this cmd has completed.
  */
-int mprReapCmd(MprCmd *cmd, MprTime timeout)
+static void reapCmd(MprCmd *cmd)
 {
-    MprTime     mark;
-    int         status;
+    int     status, rc;
 
+    mprLog(6, "reapCmd pid %d, eof %d, required %d\n", cmd->pid, cmd->eofCount, cmd->requiredEof);
+    
     status = 0;
-    lock(cmd);
-    if (timeout < 0) {
-        timeout = MAXINT;
+    if (cmd->pid == 0) {
+        return;
     }
-    mark = mprGetTime();
-
-    while (cmd->pid) {
 #if BLD_UNIX_LIKE
-{
-        int     flags, waitrc;
+    if ((rc = waitpid(cmd->pid, &status, WNOHANG | __WALL)) < 0) {
+        mprLog(0, "waitpid failed for pid %d, errno %d", cmd->pid, errno);
 
-        /*
-            WARNING: this will block here if the process has not completed and requiredEof is zero. Only happens
-            if creating a command and not opening any stdout or stderr output which users SHOULD do.
-         */
-        flags = (cmd->requiredEof) ? WNOHANG | __WALL : 0;
-        if ((waitrc = waitpid(cmd->pid, &status, flags)) < 0) {
-            mprLog(0, "waitpid failed for pid %d, errno %d", cmd->pid, errno);
-            unlock(cmd);
-            return MPR_ERR_CANT_READ;
-
-        } else if (waitrc == cmd->pid) {
-            mprLog(7, "waitpid pid %d, errno %d, thread %s", cmd->pid, errno, mprGetCurrentThreadName());
-            if (!WIFSTOPPED(status)) {
-                if (WIFEXITED(status)) {
-                    cmd->status = WEXITSTATUS(status);
-                } else if (WIFSIGNALED(status)) {
-                    cmd->status = WTERMSIG(status);
-                } else {
-                    mprLog(7, "waitpid FUNNY pid %d, errno %d", cmd->pid, errno);
-                }
-                cmd->pid = 0;
+    } else if (rc == cmd->pid) {
+        mprLog(7, "waitpid pid %d, errno %d, thread %s", cmd->pid, errno, mprGetCurrentThreadName());
+        if (!WIFSTOPPED(status)) {
+            if (WIFEXITED(status)) {
+                cmd->status = WEXITSTATUS(status);
+            } else if (WIFSIGNALED(status)) {
+                cmd->status = WTERMSIG(status);
             } else {
-                mprLog(7, "waitpid ELSE pid %d, errno %d", cmd->pid, errno);
+                mprLog(7, "waitpid FUNNY pid %d, errno %d", cmd->pid, errno);
             }
-            break;
-            
+            cmd->pid = 0;
+            mprAssert(cmd->signal);
+            mprRemoveSignalHandler(cmd->signal);
+            cmd->signal = 0;
         } else {
-            mprAssert(waitrc == 0);
+            mprLog(7, "waitpid ELSE pid %d, errno %d", cmd->pid, errno);
         }
-}
+    }
 #endif
 #if VXWORKS
-        /*
-            The command exit status (cmd->status) is set in cmdTaskEntry
-         */
-        if (semTake(cmd->exitCond, MPR_TIMEOUT_STOP_TASK) != OK) {
-            mprError("cmd: child %s did not exit, errno %d", cmd->program);
-            mprUnlock(cmd->mutex);
-            return MPR_ERR_CANT_CREATE;
-        }
-        semDelete(cmd->exitCond);
-        cmd->exitCond = 0;
-        cmd->pid = 0;
+    /*
+        The command exit status (cmd->status) is set in cmdTaskEntry
+     */
+    if (semTake(cmd->exitCond, MPR_TIMEOUT_STOP_TASK) != OK) {
+        mprError("cmd: child %s did not exit, errno %d", cmd->program);
+        return;
+    }
+    semDelete(cmd->exitCond);
+    cmd->exitCond = 0;
+    cmd->pid = 0;
+    rc = 0;
 #endif
 #if BLD_WIN_LIKE
-{
-        int     rc;
-
-        if ((rc = WaitForSingleObject(cmd->process, 10)) != WAIT_OBJECT_0) {
-            if (rc == WAIT_TIMEOUT) {
-                mprUnlock(cmd->mutex);
-                return -MPR_ERR_TIMEOUT;
-            }
-            mprLog(6, "cmd: WaitForSingleObject no child to reap rc %d, %d", rc, GetLastError());
-            unlock(cmd);
-            return MPR_ERR_CANT_READ;
+#if UNUSED
+    //  MOB - should not need to do this again
+    if ((rc = WaitForSingleObject(cmd->process, 10)) != WAIT_OBJECT_0) {
+        if (rc == WAIT_TIMEOUT) {
+            return;
         }
-        if (GetExitCodeProcess(cmd->process, (ulong*) &status) == 0) {
-            mprLog(7, "cmd: GetExitProcess error");
-            unlock(cmd);
-            return MPR_ERR_CANT_READ;
-        }
-        if (status != STILL_ACTIVE) {
-            cmd->status = status;
-            rc = CloseHandle(cmd->process);
-            mprAssert(rc != 0);
-            rc = CloseHandle(cmd->thread);
-            mprAssert(rc != 0);
-            cmd->process = 0;
-            cmd->thread = 0;
-            cmd->pid = 0;
-            break;
-        }
-}
+        mprLog(6, "cmd: WaitForSingleObject no child to reap rc %d, %d", rc, GetLastError());
+        return;
+    }
 #endif
-        /* Prevent busy waiting */
-        mprSleep(10);
-        if (mprGetElapsedTime(mark) > timeout) {
-            break;
-        }
+    if (GetExitCodeProcess(cmd->process, (ulong*) &status) == 0) {
+        mprLog(3, "cmd: GetExitProcess error");
+        return;
     }
-    if (cmd->pid == 0) {
-        mprSignalDispatcher(cmd->dispatcher);
+    if (status != STILL_ACTIVE) {
+        cmd->status = status;
+        rc = CloseHandle(cmd->process);
+        mprAssert(rc != 0);
+        rc = CloseHandle(cmd->thread);
+        mprAssert(rc != 0);
+        cmd->process = 0;
+        cmd->thread = 0;
+        cmd->pid = 0;
     }
-    unlock(cmd);
-    return (cmd->pid == 0) ? 0 : 1;
+#endif
+    if (cmd->pid == 0 && cmd->eofCount >= cmd->requiredEof) {
+        cmd->complete = 1;
+    }
+    mprLog(6, "Cmd reaped: status %d, pid %d, eof %d / %d\n", cmd->status, cmd->pid, cmd->eofCount, cmd->requiredEof);
 }
 
 
@@ -5019,8 +4907,8 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
     buf = 0;
     switch (channel) {
     case MPR_CMD_STDIN:
-        mprAssert(0);
-        // mprEnableCmdEvents(cmd, MPR_CMD_STDIN, MPR_WRITABLE);
+        //  MOB - what should be done here
+        // MOB mprEnableCmdEvents(cmd, MPR_CMD_STDIN, MPR_WRITABLE);
         return;
     case MPR_CMD_STDOUT:
         buf = cmd->stdoutBuf;
@@ -5041,19 +4929,11 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
         space = mprGetBufSpace(buf);
     }
     len = mprReadCmd(cmd, channel, mprGetBufEnd(buf), space);
+    mprLog(6, "cmdCallback channel %d, read len %d, pid %d, eof %d/%d", channel, len, cmd->pid, cmd->eofCount, 
+        cmd->requiredEof);
     if (len <= 0) {
         if (len == 0 || (len < 0 && !(errno == EAGAIN || EWOULDBLOCK))) {
-            if (channel == MPR_CMD_STDOUT && cmd->flags & MPR_CMD_ERR) {
-                /*
-                    Now that stdout is complete, enable stderr to receive an EOF or any error output.
-                    This is serialized to eliminate both stdin and stdout events on different threads at the same time.
-                    Do before closing as the stderr event may come on another thread and we want to ensure avoid locking.
-                 */
-                mprCloseCmdFd(cmd, channel);
-                mprEnableCmdEvents(cmd, MPR_CMD_STDERR);
-            } else {
-                mprCloseCmdFd(cmd, channel);
-            }
+            mprCloseCmdFd(cmd, channel);
             return;
         }
     } else {
@@ -5063,7 +4943,6 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
 }
 
 
-#if CMD_ASYNC
 static void stdinCallback(MprCmd *cmd, MprEvent *event)
 {
     if (cmd->callback) {
@@ -5086,7 +4965,6 @@ static void stderrCallback(MprCmd *cmd, MprEvent *event)
         (cmd->callback)(cmd, MPR_CMD_STDERR, cmd->callbackData);
     }
 }
-#endif
 
 
 void mprSetCmdCallback(MprCmd *cmd, MprCmdProc proc, void *data)
@@ -5096,19 +4974,14 @@ void mprSetCmdCallback(MprCmd *cmd, MprCmdProc proc, void *data)
 }
 
 
-//  MOB - need option to supply no timeout
-int mprGetCmdExitStatus(MprCmd *cmd, int *statusp)
+int mprGetCmdExitStatus(MprCmd *cmd)
 {
-    mprAssert(statusp);
+    mprAssert(cmd);
 
-    if (cmd->pid) {
-        mprReapCmd(cmd, MPR_TIMEOUT_STOP_TASK);
-        if (cmd->pid) {
-            return MPR_ERR_NOT_READY;
-        }
+    if (cmd->pid == 0) {
+        return cmd->status;
     }
-    *statusp = cmd->status;
-    return 0;
+    return MPR_ERR_NOT_READY;
 }
 
 
@@ -5315,12 +5188,6 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
         *destp++ = '\0';
         *destp++ = '\0';                        /* Windows requires two nulls */
         mprAssert(destp <= endp);
-#if TEST
-        for (cp = (char*) cmd->env; *cp; cp++) {
-            print("ENV %s\n", cp);
-            cp += strlen(cp);
-        }
-#endif
     }
 #endif /* BLD_WIN_LIKE */
     return 0;
@@ -5384,6 +5251,7 @@ static int startProcess(MprCmd *cmd)
 
 
 #if WINCE
+//  MOB - merge this with WIN
 static int makeChannel(MprCmd *cmd, int index)
 {
     SECURITY_ATTRIBUTES clientAtt, serverAtt, *att;
@@ -5505,6 +5373,62 @@ static int makeChannel(MprCmd *cmd, int index)
 
 
 #elif BLD_UNIX_LIKE
+
+static int makeChannel(MprCmd *cmd, int index)
+{
+    MprCmdFile      *file;
+    int             fds[2];
+
+    file = &cmd->files[index];
+
+    if (pipe(fds) < 0) {
+        mprError("Can't create stdio pipes. Err %d", mprGetOsError());
+        return MPR_ERR_CANT_CREATE;
+    }
+    if (index == MPR_CMD_STDIN) {
+        file->clientFd = fds[0];        /* read fd */
+        file->fd = fds[1];              /* write fd */
+    } else {
+        file->clientFd = fds[1];        /* write fd */
+        file->fd = fds[0];              /* read fd */
+    }
+    fcntl(file->fd, F_SETFL, fcntl(file->fd, F_GETFL) | O_NONBLOCK);
+    mprLog(7, "makeCmdIO: pipe handles[%d] read %d, write %d", index, fds[0], fds[1]);
+    return 0;
+}
+
+#elif VXWORKS
+static int makeChannel(MprCmd *cmd, int index)
+{
+    MprCmdFile      *file;
+    static int      tempSeed = 0;
+
+    file = &cmd->files[index];
+    file->name = mprAsprintf("/pipe/%s_%d_%d", BLD_PRODUCT, taskIdSelf(), tempSeed++);
+
+    if (pipeDevCreate(file->name, 5, MPR_BUFSIZE) < 0) {
+        mprError("Can't create pipes to run %s", cmd->program);
+        return MPR_ERR_CANT_OPEN;
+    }
+    /*
+        Open the server end of the pipe. MPR_CMD_STDIN is from the client's perspective.
+     */
+    if (index == MPR_CMD_STDIN) {
+        file->fd = open(file->name, O_WRONLY, 0644);
+    } else {
+        file->fd = open(file->name, O_RDONLY, 0644);
+    }
+    if (file->fd < 0) {
+        mprError("Can't create stdio pipes. Err %d", mprGetOsError());
+        return MPR_ERR_CANT_CREATE;
+    }
+    fcntl(file->fd, F_SETFL, fcntl(file->fd, F_GETFL) | O_NONBLOCK);
+    return 0;
+}
+#endif
+
+
+#if BLD_UNIX_LIKE
 static int startProcess(MprCmd *cmd)
 {
     MprCmdFile      *files;
@@ -5588,31 +5512,7 @@ static int startProcess(MprCmd *cmd)
 }
 
 
-static int makeChannel(MprCmd *cmd, int index)
-{
-    MprCmdFile      *file;
-    int             fds[2];
-
-    file = &cmd->files[index];
-
-    if (pipe(fds) < 0) {
-        mprError("Can't create stdio pipes. Err %d", mprGetOsError());
-        return MPR_ERR_CANT_CREATE;
-    }
-    if (index == MPR_CMD_STDIN) {
-        file->clientFd = fds[0];        /* read fd */
-        file->fd = fds[1];              /* write fd */
-    } else {
-        file->clientFd = fds[1];        /* write fd */
-        file->fd = fds[0];              /* read fd */
-    }
-    mprLog(7, "mprMakeCmdIO: pipe handles[%d] read %d, write %d", index, fds[0], fds[1]);
-    return 0;
-}
-#endif /* BLD_UNIX_LIKE */
-
-
-#if VXWORKS
+#elif VXWORKS
 /*
     Start the command to run (stdIn and stdOut are named from the client's perspective)
  */
@@ -5758,33 +5658,6 @@ static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg)
 }
 
 
-static int makeChannel(MprCmd *cmd, int index)
-{
-    MprCmdFile      *file;
-    static int      tempSeed = 0;
-
-    file = &cmd->files[index];
-    file->name = mprAsprintf("/pipe/%s_%d_%d", BLD_PRODUCT, taskIdSelf(), tempSeed++);
-
-    if (pipeDevCreate(file->name, 5, MPR_BUFSIZE) < 0) {
-        mprError("Can't create pipes to run %s", cmd->program);
-        return MPR_ERR_CANT_OPEN;
-    }
-    
-    /*
-        Open the server end of the pipe. MPR_CMD_STDIN is from the client's perspective.
-     */
-    if (index == MPR_CMD_STDIN) {
-        file->fd = open(file->name, O_WRONLY, 0644);
-    } else {
-        file->fd = open(file->name, O_RDONLY, 0644);
-    }
-    if (file->fd < 0) {
-        mprError("Can't create stdio pipes. Err %d", mprGetOsError());
-        return MPR_ERR_CANT_CREATE;
-    }
-    return 0;
-}
 #endif /* VXWORKS */
 
 
@@ -7438,6 +7311,9 @@ int mprServiceEvents(MprTime timeout, int flags)
         if (mprIsStopping()) {
             break;
         }
+        if (MPR->signalService->hasSignals) {
+            mprServiceSignals();
+        }
         while ((dp = getNextReadyDispatcher(es)) != NULL) {
             mprAssert(dp->magic == MPR_DISPATCHER_MAGIC);
             serviceDispatcher(dp);
@@ -7477,6 +7353,10 @@ int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
     int                 claimed, signalled, wasRunning, runEvents;
 
     mprAssert(dispatcher->magic == MPR_DISPATCHER_MAGIC);
+    //  MOB -- should (nearly) always call Relay before calling this. Otherwise ioEvent may claim the dispatcher.
+    //  MOB - if this is true, cleanup wasRunning below
+    mprAssert(isRunning(dispatcher));
+
     es = MPR->eventService;
     start = es->now = mprGetTime();
 
@@ -7584,7 +7464,7 @@ int mprDispatchersAreIdle()
 
 
 /*
-    Relay an event to a new dispatcher. This invokes the callback proc as though it was invoked from the given dispatcher. 
+    Relay an event to a dispatcher. This invokes the callback proc as though it was invoked from the given dispatcher. 
  */
 void mprRelayEvent(MprDispatcher *dispatcher, void *proc, void *data, MprEvent *event)
 {
@@ -7685,7 +7565,7 @@ static int dispatchEvents(MprDispatcher *dispatcher)
         mprAssert(event->proc);
         unlock(es);
         LOG(7, "Call event %s", event->name);
-        (*event->proc)(event->data, event);
+        (event->proc)(event->data, event);
         dispatcher->current = 0;
         lock(es);
     }
@@ -8520,6 +8400,7 @@ static void serviceIO(MprWaitService *ws, int count)
 
 /*
     Wake the wait service. WARNING: This routine must not require locking. MprEvents in scheduleDispatcher depends on this.
+    Must be async-safe.
  */
 void mprWakeNotifier()
 {
@@ -8656,7 +8537,6 @@ static void manageEvent(MprEvent *event, int flags)
         mprMark(event->handler);
         mprMark(event->next);
         mprMark(event->prev);
-
         if (!(event->flags & MPR_EVENT_STATIC_DATA)) {
             mprMark(event->data);
         }
@@ -10510,6 +10390,7 @@ static void serviceIO(MprWaitService *ws, int count)
 
 /*
     Wake the wait service. WARNING: This routine must not require locking. MprEvents in scheduleDispatcher depends on this.
+    Must be async-safe.
  */
 void mprWakeNotifier()
 {
@@ -14446,37 +14327,34 @@ char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
     va_start(args, search);
     access = (flags & MPR_SEARCH_EXE) ? X_OK : R_OK;
 
-    if (mprIsAbsPath(file)) {
-        if (mprPathExists(file, access)) {
-            return sclone(file);
+    if (mprPathExists(file, access)) {
+        return sclone(file);
+    }
+    if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
+        path = mprJoinPathExt(file, BLD_EXE);
+        if (mprPathExists(path, access)) {
+            return sclone(path);
         }
-        if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
-            path = mprJoinPathExt(file, BLD_EXE);
+    }
+    for (nextDir = (char*) search; nextDir; nextDir = va_arg(args, char*)) {
+        tok = NULL;
+        nextDir = sclone(nextDir);
+        dir = stok(nextDir, MPR_SEARCH_SEP, &tok);
+        while (dir && *dir) {
+            mprLog(5, "mprSearchForFile: %s in directory %s", file, nextDir);
+            path = mprJoinPath(dir, file);
             if (mprPathExists(path, access)) {
-                return sclone(path);
+                mprLog(5, "mprSearchForFile: found %s", path);
+                return mprGetNormalizedPath(path);
             }
-        }
-    } else {
-        for (nextDir = (char*) search; nextDir; nextDir = va_arg(args, char*)) {
-            tok = NULL;
-            nextDir = sclone(nextDir);
-            dir = stok(nextDir, MPR_SEARCH_SEP, &tok);
-            while (dir && *dir) {
-                mprLog(5, "mprSearchForFile: %s in directory %s", file, nextDir);
-                path = mprJoinPath(dir, file);
+            if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
+                path = mprJoinPathExt(path, BLD_EXE);
                 if (mprPathExists(path, access)) {
                     mprLog(5, "mprSearchForFile: found %s", path);
                     return mprGetNormalizedPath(path);
                 }
-                if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
-                    path = mprJoinPathExt(path, BLD_EXE);
-                    if (mprPathExists(path, access)) {
-                        mprLog(5, "mprSearchForFile: found %s", path);
-                        return mprGetNormalizedPath(path);
-                    }
-                }
-                dir = stok(0, MPR_SEARCH_SEP, &tok);
             }
+            dir = stok(0, MPR_SEARCH_SEP, &tok);
         }
     }
     va_end(args);
@@ -14949,6 +14827,7 @@ static void serviceIO(MprWaitService *ws, struct pollfd *fds, int count)
 
 /*
     Wake the wait service. WARNING: This routine must not require locking. MprEvents in scheduleDispatcher depends on this.
+    Must be async-safe.
  */
 void mprWakeNotifier()
 {
@@ -16779,6 +16658,7 @@ static void serviceIO(MprWaitService *ws, int maxfd)
 
 /*
     Wake the wait service. WARNING: This routine must not require locking. MprEvents in scheduleDispatcher depends on this.
+    Must be async-safe.
  */
 void mprWakeNotifier()
 {
@@ -16856,6 +16736,317 @@ void stubMprSelectWait() {}
 /************************************************************************/
 /*
  *  End of file "../src/mprSelect.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../src/mprSignal.c"
+ */
+/************************************************************************/
+
+/**
+    mprSignal.c - Signal handling for Unix systems
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+
+
+#if BLD_UNIX_LIKE
+
+static void manageSignal(MprSignal *sp, int flags);
+static void manageSignalService(MprSignalService *ssp, int flags);
+static void signalEvent(MprSignal *sp, MprEvent *event);
+static void signalHandler(int signo, siginfo_t *info, void *arg);
+
+
+MprSignalService *mprCreateSignalService()
+{
+    MprSignalService    *ssp;
+
+    if ((ssp = mprAllocObj(MprSignalService, manageSignalService)) == 0) {
+        return 0;
+    }
+    ssp->mutex = mprCreateLock();
+    ssp->signals = mprAllocZeroed(sizeof(MprSignal*) * MPR_MAX_SIGNAL);
+    return ssp;
+}
+
+
+static void manageSignalService(MprSignalService *ssp, int flags)
+{
+    MprSignal   *sp;
+    int         i;
+
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ssp->mutex);
+        mprMark(ssp->signals);
+        for (i = 0; i < MPR_MAX_SIGNAL; i++) {
+            if ((sp = ssp->signals[i]) != 0) {
+                mprMark(sp);
+            }
+        }
+    }
+}
+
+
+/*
+    Add a safe-signal handler. This creates a signal handler that will run from a dispatcher without the
+    normal async-safe strictures of normal signal handlers. This manages a chain of signal handlers and ensures
+    that prior handlers will be called appropriately.
+ */
+MprSignal *mprAddSignalHandler(int signo, void *handler, void *data, MprDispatcher *dispatcher, int flags)
+{
+    MprSignal           *sp;
+    MprSignalService    *ssp;
+    struct sigaction    act, old;
+    int                 rc;
+
+    if (signo < 0 || signo >= MPR_MAX_SIGNAL) {
+        mprError("Bad signal: %d", signo);
+        return 0;
+    }
+    if (!(flags & MPR_SIGNAL_BEFORE)) {
+        flags |= MPR_SIGNAL_AFTER;
+    }
+    if ((sp = mprAllocObj(MprSignal, manageSignal)) == 0) {
+        return 0;
+    }
+    sp->signo = signo;
+    sp->flags = flags;
+    sp->handler = handler;
+    sp->dispatcher = dispatcher;
+    sp->data = data;
+    ssp = MPR->signalService;
+    lock(ssp);
+    if (ssp->signals[signo] != 0) {
+        sp->chain.sp = ssp->signals[signo];
+    } else {
+        rc = sigaction(signo, 0, &old);
+        if (old.sa_sigaction && old.sa_sigaction != signalHandler) {
+            sp->chain.sigaction = old.sa_sigaction;
+            sp->flags |= MPR_SIGNAL_NATIVE;
+        }
+    }
+    ssp->signals[signo] = sp;
+    memset(&act, 0, sizeof(act));
+    act.sa_sigaction = signalHandler;
+    sigemptyset(&act.sa_mask);
+
+    /* Mask these when processing signals */
+    sigaddset(&act.sa_mask, SIGALRM);
+    sigaddset(&act.sa_mask, SIGCHLD);
+    sigaddset(&act.sa_mask, SIGPIPE);
+    sigaddset(&act.sa_mask, SIGTERM);
+    sigaddset(&act.sa_mask, SIGUSR1);
+    sigaddset(&act.sa_mask, SIGUSR2);
+    if (!mprGetDebugMode(NULL)) {
+        sigaddset(&act.sa_mask, SIGINT);
+    }
+    if (sigaction(signo, &act, 0) != 0) {
+        mprError("Can't add signal %d, errno %d", mprGetOsError());
+        return 0;
+    }
+    unlock(ssp);
+    return sp;
+}
+
+
+int mprRemoveSignalHandler(MprSignal *sp)
+{
+    MprSignalService    *ssp;
+    MprSignal           *np, *prev;
+    struct sigaction    old;
+    int                 rc;
+
+    ssp = MPR->signalService;
+    lock(ssp);
+    for (prev = 0, np = ssp->signals[sp->signo]; np; ) {
+        if (sp == np) {
+            if (prev) {
+                prev->chain.sp = sp;
+            } else {
+                ssp->signals[sp->signo] = 0;
+                if (np->flags & MPR_SIGNAL_NATIVE) {
+                    rc = sigaction(sp->signo, 0, &old);
+                    if (old.sa_sigaction == signalHandler) {
+                        old.sa_sigaction = sp->chain.sigaction;
+                        rc = sigaction(sp->signo, &old, 0);
+                    }
+                }
+            }
+            return 0;
+        }
+        prev = np;
+        np = (np->flags & MPR_SIGNAL_NATIVE) ? 0 : np->chain.sp;
+    }
+    unlock(ssp);
+    return MPR_ERR_CANT_FIND;
+}
+
+
+static void manageSignal(MprSignal *sp, int flags)
+{
+    MprSignalService    *ssp;
+    
+    ssp = MPR->signalService;
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(sp->dispatcher);
+        mprMark(sp->data);
+        mprMark((sp->flags & MPR_SIGNAL_NATIVE) ? 0 : sp->chain.sp);
+    }
+}
+
+
+/*
+    Actual signal handler - must be async-safe. Do very, very little here. Just set a global flag and wakeup
+    the wait service (mprWakeWaitService is async safe).
+    WARNING: Don't put memory allocation or logging here.
+ */
+static void signalHandler(int signo, siginfo_t *info, void *arg)
+{
+    MprSignal           *sp;
+    MprSignalService    *ssp;
+
+    if (signo < 0 || signo >= MPR_MAX_SIGNAL) {
+        return;
+    }
+    ssp = MPR->signalService;
+    if ((sp = ssp->signals[signo]) != 0) {
+        mprAssert(sp);
+        mprAssert(sp->signo == signo);
+        sp->info = *info;
+        sp->arg = arg;
+        sp->triggered = 1;
+        ssp->hasSignals = 1;
+        mprWakeWaitService();
+    }
+}
+
+
+void mprServiceSignals()
+{
+    MprSignalService    *ssp;
+    MprSignal           *sp;
+    int                 i;
+
+    ssp = MPR->signalService;
+    //  MOB - OPT if these were linked or kept min/max limits
+    for (i = 0; i < MPR_MAX_SIGNAL; i++) {
+        if ((sp = ssp->signals[i]) != 0 && sp->triggered) {
+            sp->triggered = 0;
+            mprCreateEvent(sp->dispatcher, "signalEvent", 0, signalEvent, sp, 0);
+        }
+    }
+}
+
+
+/*
+    Invoke chain of signal handlers. Runs from the dispatcher so signal handlers don't have to be async-safe.
+ */
+static void signalEvent(MprSignal *sp, MprEvent *event)
+{
+    mprAssert(sp);
+    mprAssert(event);
+
+    mprLog(7, "signalEvent signo %d, flags %x", sp->signo, sp->flags);
+    do {
+        if (sp->flags & MPR_SIGNAL_BEFORE) {
+            (sp->handler)(sp->data, sp);
+        } 
+        if (sp->chain.sp && sp->flags & MPR_SIGNAL_NATIVE) {
+            (sp->chain.sigaction)(sp->signo, &sp->info, sp->arg);
+        }
+        if (sp->flags & MPR_SIGNAL_AFTER) {
+            (sp->handler)(sp->data, sp);
+        }
+        sp = (sp->flags & MPR_SIGNAL_NATIVE) ? 0 : sp->chain.sp;
+    } while (sp);
+}
+
+
+/*
+    Standard signal handler. Do graceful shutdown for SIGTERM. Ignore SIGPIPE and SIGXFSZ. All others do immediate exit.
+ */
+static void standardSignalHandler(void *ignored, MprSignal *sp)
+{
+    mprLog(7, "standardSignalHandler signo %d, flags %x", sp->signo, sp->flags);
+#if DEBUG_IDE
+    if (sp->signo == SIGINT) return;
+#endif
+    mprLog(2, "Received signal %d", sp->signo);
+    if (sp->signo == SIGTERM) {
+        mprLog(1, "Executing a graceful exit. Waiting for all requests to complete.");
+        mprTerminate(MPR_GRACEFUL);
+    } else if (sp->signo == SIGPIPE || sp->signo == SIGXFSZ) {
+        /* Ignore */
+    } else {
+        mprLog(1, "Exiting immediately ...");
+        mprTerminate(0);
+    }
+}
+
+
+void mprAddStandardSignals()
+{
+    mprAddSignalHandler(SIGINT,  standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
+    mprAddSignalHandler(SIGQUIT, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
+    mprAddSignalHandler(SIGTERM, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
+    mprAddSignalHandler(SIGUSR1, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
+    mprAddSignalHandler(SIGPIPE, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
+#if SIGXFSZ
+    mprAddSignalHandler(SIGXFSZ, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
+#endif
+}
+
+#else /* BLD_UNIX_LIKE */
+
+MprSignalService *mprCreateSignalService() { return mprAlloc(0); }
+int mprRemoveSignalHandler(MprSignal *sp) { return 0; }
+void mprServiceSignals() {}
+#endif /* BLD_UNIX_LIKE */
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../src/mprSignal.c"
  */
 /************************************************************************/
 
@@ -17375,6 +17566,7 @@ static void disconnectSocket(MprSocket *sp)
             Read any outstanding read data to minimize resets. Then do a shutdown to send a FIN and read 
             outstanding data.  All non-blocking.
          */
+        mprLog(6, "Disconnect socket %d", sp->fd);
         mprSetSocketBlockingMode(sp, 0);
         while (recv(sp->fd, buf, sizeof(buf), 0) > 0) {
             ;
@@ -17425,6 +17617,7 @@ static void closeSocket(MprSocket *sp, bool gracefully)
             Read any outstanding read data to minimize resets. Then do a shutdown to send a FIN and read outstanding 
             data. All non-blocking.
          */
+        mprLog(6, "Close socket %d, graceful %d", sp->fd, gracefully);
         if (gracefully) {
             mprSetSocketBlockingMode(sp, 0);
             while (recv(sp->fd, buf, sizeof(buf), 0) > 0) {
@@ -19310,8 +19503,8 @@ char *supper(cchar *str)
 
 
 
-static void     adjustFailedCount(MprTestService *sp, int adj);
-static void     adjustThreadCount(MprTestService *sp, int adj);
+static void     adjustFailedCount(int adj);
+static void     adjustThreadCount(int adj);
 static void     buildFullNames(MprTestGroup *gp, cchar *runName);
 static MprList  *copyGroups(MprTestService *sp, MprList *groups);
 static MprTestFailure *createFailure(MprTestGroup *gp, cchar *loc, cchar *message);
@@ -19322,6 +19515,7 @@ static char     *getErrorMessage(MprTestGroup *gp);
 static int      loadTestModule(MprTestService *sp, cchar *fileName);
 static void     manageTestService(MprTestService *ts, int flags);
 static int      parseFilter(MprTestService *sp, cchar *str);
+static void     relayEvent(MprList *groups, MprThread *tp);
 static void     runInit(MprTestGroup *parent);
 static void     runTerm(MprTestGroup *parent);
 static void     runTestGroup(MprTestGroup *gp);
@@ -19488,7 +19682,8 @@ int mprParseTestArgs(MprTestService *sp, int argc, char *argv[])
             break;
 
         } else {
-            /* Ignore unknown args */
+            mprError("Unknown arg %s", argp);
+            err++;
         }
     }
 
@@ -19631,8 +19826,7 @@ int mprRunTests(MprTestService *sp)
         while ((gp = mprGetNextItem(lp, &next)) != 0) {
             buildFullNames(gp, gp->name);
         }
-        tp = mprCreateThread(tName, (MprThreadProc) runTestThread, (void*) lp, 0);
-        if (tp == 0) {
+        if ((tp = mprCreateThread(tName, relayEvent, lp, 0)) == 0) {
             mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
@@ -19670,22 +19864,32 @@ static MprList *copyGroups(MprTestService *sp, MprList *groups)
 
 
 /*
+    Relay the event to claim the dispatcher
+ */
+static void relayEvent(MprList *groups, MprThread *tp)
+{
+    MprTestGroup    *gp;
+
+    gp = mprGetFirstItem(groups);
+    mprAssert(gp);
+
+    mprRelayEvent(gp->dispatcher, runTestThread, groups, NULL);
+    if (tp) {
+        adjustThreadCount(-1);
+    }
+}
+
+
+/*
     Run the test groups. One invocation per thread. Used even if not multithreaded.
  */
-void runTestThread(MprList *groups, MprThread *tp)
+static void runTestThread(MprList *groups, MprThread *tp)
 {
     MprTestService  *sp;
     MprTestGroup    *gp;
     int             next, i, count;
 
-    /*
-        Get the service pointer
-     */
-    gp = mprGetFirstItem(groups);
-    if (gp == 0) {
-        return;
-    }
-    sp = gp->service;
+    sp = MPR->testService;
     mprAssert(sp);
 
     for (next = 0; (gp = mprGetNextItem(groups, &next)) != 0; ) {
@@ -19700,13 +19904,10 @@ void runTestThread(MprList *groups, MprThread *tp)
         while ((gp = mprGetNextItem(groups, &next)) != 0) {
             runTestGroup(gp);
         }
-        mprPrintf("%12s Iteration %d complete (%s)\n", "[Notice]", count++, tp->name);
+        mprPrintf("%12s Iteration %d complete (%s)\n", "[Notice]", count++, mprGetCurrentThreadName());
     }
     for (next = 0; (gp = mprGetNextItem(groups, &next)) != 0; ) {
         runTerm(gp);
-    }
-    if (tp) {
-        adjustThreadCount(sp, -1);
     }
 }
 
@@ -20165,7 +20366,7 @@ bool assertTrue(MprTestGroup *gp, cchar *loc, bool isTrue, cchar *msg)
         }
         addFailure(gp, loc, msg);
         gp->failedCount++;
-        adjustFailedCount(gp->service, 1);
+        adjustFailedCount(1);
     }
     return isTrue;
 }
@@ -20201,8 +20402,11 @@ void mprSignalTestComplete(MprTestGroup *gp)
 }
 
 
-static void adjustThreadCount(MprTestService *sp, int adj)
+static void adjustThreadCount(int adj)
 {
+    MprTestService  *sp;
+
+    sp = MPR->testService;
     mprLock(sp->mutex);
     sp->activeThreadCount += adj;
     if (sp->activeThreadCount <= 0) {
@@ -20212,8 +20416,11 @@ static void adjustThreadCount(MprTestService *sp, int adj)
 }
 
 
-static void adjustFailedCount(MprTestService *sp, int adj)
+static void adjustFailedCount(int adj)
 {
+    MprTestService  *sp;
+
+    sp = MPR->testService;
     mprLock(sp->mutex);
     sp->totalFailedCount += adj;
     mprUnlock(sp->mutex);
@@ -20472,7 +20679,7 @@ void mprSetCurrentThreadPriority(int pri)
 /*
     Create a main thread
  */
-MprThread *mprCreateThread(cchar *name, MprThreadProc entry, void *data, int stackSize)
+MprThread *mprCreateThread(cchar *name, void *entry, void *data, int stackSize)
 {
     MprThreadService    *ts;
     MprThread           *tp;
@@ -23215,17 +23422,23 @@ int mprUnloadNativeModule(MprModule *mp)
 #endif
 
 
-void mprSleep(int milliseconds)
+void mprSleep(MprTime timeout)
 {
-    struct timespec timeout;
+    MprTime         remaining, mark;
+    struct timespec t;
     int             rc;
 
-    mprAssert(milliseconds >= 0);
-    timeout.tv_sec = milliseconds / 1000;
-    timeout.tv_nsec = (milliseconds % 1000) * 1000000;
+    mprAssert(timeout >= 0);
+    
+    mark = mprGetTime();
+    remaining = timeout;
     do {
-        rc = nanosleep(&timeout, &timeout);
-    } while (rc < 0 && errno == EINTR);
+        /* MAC OS X corrupts the timeout if using the 2nd paramater, so recalc each time */
+        t.tv_sec = remaining / 1000;
+        t.tv_nsec = (remaining % 1000) * 1000000;
+        rc = nanosleep(&t, NULL);
+        remaining = mprGetRemainingTime(mark, timeout);
+    } while (rc < 0 && errno == EINTR && remaining > 0);
 }
 
 
@@ -23689,6 +23902,7 @@ void mprRemoveWaitHandler(MprWaitHandler *wp)
 }
 
 
+//  MOB - remove
 void mprWakeWaitService()
 {
     mprWakeNotifier();
@@ -23701,8 +23915,8 @@ void mprQueueIOEvent(MprWaitHandler *wp)
     MprEvent        *event;
 
     mprAssert(wp->state == MPR_HANDLER_ENABLED);
-    mprAssert(wp->desiredMask == 0);
 
+    wp->desiredMask = 0;
     if (wp->flags & MPR_WAIT_NEW_DISPATCHER) {
         dispatcher = mprCreateDispatcher("IO", 1);
     } else {

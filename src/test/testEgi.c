@@ -26,7 +26,7 @@ static void printBodyData(HttpQueue *q);
 static void simpleTest(HttpQueue *q)
 {
     httpWrite(q, "Hello %s\r\n", httpGetFormVar(q->conn, "name", "unknown"));
-    httpCompleteRequest(q->conn);
+    httpFinalize(q->conn);
 }
 
 
@@ -37,13 +37,13 @@ static void bigTest(HttpQueue *q)
     for (i = 0; i < 200; i++) {
         httpWrite(q, "line %04d 012345678901234567890123456789012345678901234567890123456789\r\n", i);
     }
-    httpCompleteRequest(q->conn);
+    httpFinalize(q->conn);
 }
 
 
 static void exitApp(HttpQueue *q)
 {
-    httpCompleteRequest(q->conn);
+    httpFinalize(q->conn);
     mprLog(0, "Instructed to exit ...");
     mprTerminate(1);
 }
@@ -110,7 +110,7 @@ static void printVars(HttpQueue *q)
         printBodyData(q);
         httpWrite(q, "</BODY></HTML>\r\n");
     }
-    httpCompleteRequest(q->conn);
+    httpFinalize(q->conn);
 }
 
 
@@ -288,7 +288,7 @@ static void upload(HttpQueue *q)
         printBodyData(q);
         httpWrite(q, "</BODY></HTML>\r\n");
     }
-    httpCompleteRequest(q->conn);
+    httpFinalize(q->conn);
 }
 
 

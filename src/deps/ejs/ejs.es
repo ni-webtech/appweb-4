@@ -2047,6 +2047,7 @@ module ejs {
             @hide
          */
         private var _response: String
+        private var _errorResponse: String
 
         /**
             Create an Cmd object. If a command line is provided, the command is immediately started.
@@ -2072,15 +2073,26 @@ module ejs {
         native function close(): Void 
 
         /**
-            The error stream object for the command's standard error output 
-         */
-        native function get error(): Stream
-
-        /**
             Hash of environment strings to pass to the command.
          */
         native function get env(): Object
         native function set env(values: Object): Void
+
+        /**
+            Eommand error output data as a string. The first time this property is read, the error content will be read 
+            and buffered.
+         */
+        function get error(): String {
+            if (!_errorResponse) {
+                _errorResponse = errorStream.toString()
+            }
+            return _errorResponse
+        }
+
+        /**
+            The error stream object for the command's standard error output 
+         */
+        native function get errorStream(): Stream
 
         /** 
             Signal the end of write data. The finalize() call must be invoked to properly signify the end of write data.
@@ -2154,10 +2166,8 @@ module ejs {
             XML(readString())
 
         /**
-            Return the command output data as a string. This is an alias for $readString() but it will cache the 
+            Command output data as a string. This is an alias for $readString() but it will cache the 
                 output data and may be called multiple times. This reads from the command's standard output.
-            @returns the output as a string of characters.
-            @throws IOError if an I/O error occurs.
          */
         function get response(): String {
             if (!_response) {
@@ -2253,16 +2263,14 @@ module ejs {
          */
         static function run(command: Object, data: Object = null): String {
             let cmd = new Cmd
-            cmd.start(command)
+            cmd.start(command, {detach: true})
             if (data) {
                 cmd.write(data)
-                cmd.finalize()
             }
+            cmd.finalize()
             cmd.wait()
             if (cmd.status != 0) {
-                let msg = new ByteArray
-                cmd.error.read(msg)
-                throw new IOError(msg.toString())
+                throw new IOError(cmd.error)
             }
             return cmd.readString()
         }
@@ -2272,12 +2280,13 @@ module ejs {
             Any response trailing newline is trimmed.
          */
         static function sh(command: Object, data: Object = null): String {
-            if (command is String) {
-                return run(("/bin/sh -c \"" + command.replace(/\\/g, "\\\\") + "\"").trim('\n'), data).trimEnd()
-            } else {
-                let args = command.join(" ").replace(/\\/g, "\\\\").trim('\n')
-                return run(["/bin/sh", "-c"] + [args], data).trimEnd()
+            if (command is Array) {
+                for (let arg in command) {
+                    command[arg] = '"' + command[arg].toString().replace(/\\/g, "\\\\").trimEnd('\n') + '"'
+                }
+                return run(["/bin/sh", "-c"] + [command.join(" ")], data).trimEnd()
             }
+            return run(["/bin/sh", "-c", command.toString().trim('\n')], data).trimEnd()
         }
     }
 }
@@ -5750,9 +5759,9 @@ FUTURE & KEEP
         native function reset(): Void
 
         /** 
-            Response body content. The first time this property is read, the response content will be read and buffered.
-            Don't use this property in async mode as it will block. Set to the response as a string of characters. If 
-            the response has no body content, the empty string will be returned.
+            Response body content as a string. The first time this property is read, the response content will be read 
+            and buffered.  Don't use this property in async mode as it will block. Set to the response as a string of 
+            characters. If the response has no body content, the empty string will be returned.
             @throws IOError if an I/O error occurs.
          */
         native function get response(): String

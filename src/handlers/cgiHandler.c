@@ -129,7 +129,7 @@ static void startCgi(HttpQueue *q)
     mprSetCmdCallback(cmd, cgiCallback, tx);
 
     //  MOB Break here kills stress/post
-    if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR | MPR_CMD_ASYNC) < 0) {
+    if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR) < 0) {
         httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't run CGI process: %s, URI %s", fileName, rx->uri);
     }
 }
@@ -590,7 +590,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
      */
     if (strncmp((char*) buf->start, "HTTP/1.", 7) == 0) {
         if (!parseFirstCgiResponse(conn, cmd)) {
-            /* httpConnError already called */
+            /* httpError already called */
             return 0;
         }
     }
@@ -599,8 +599,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
 
         while (mprGetBufLength(buf) > 0 && buf->start[0] && (buf->start[0] != '\r' && buf->start[0] != '\n')) {
             if ((key = getCgiToken(buf, ":")) == 0) {
-                httpConnError(conn, HTTP_CODE_BAD_REQUEST, "Bad header format");
-                return 0;
+                key = "Bad Header";
             }
             value = getCgiToken(buf, "\n");
             while (isspace((int) *value)) {

@@ -62,9 +62,7 @@ MAIN(ejscMain, int argc, char **argv)
     mprSetAppName(argv[0], 0, 0);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
-
-    //  MOB -- remove this
-    mprEnableGC(0);
+    mprAddStandardSignals();
 
     if (mprStart() < 0) {
         mprError("Can't start mpr services");

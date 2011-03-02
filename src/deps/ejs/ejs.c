@@ -59,7 +59,6 @@ static int  interpretCommands(EcCompiler*cp, cchar *cmd);
 static int  interpretFiles(EcCompiler *cp, MprList *files, int argc, char **argv, cchar *className, cchar *method);
 static void manageApp(App *app, int flags);
 static void require(cchar *name);
-static void setupSignals();
 
 
 MAIN(ejsMain, int argc, char **argv)
@@ -75,18 +74,14 @@ MAIN(ejsMain, int argc, char **argv)
         Initialize Multithreaded Portable Runtime (MPR)
      */
     mpr = mprCreate(argc, argv, 0);
-#if UNUSED
-    mprSetAppName(argv[0], 0, 0);
-#endif
-    setupSignals();
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
+    mprAddStandardSignals();
 
     if (mprStart(mpr) < 0) {
         mprError("Can't start mpr services");
         return EJS_ERR;
     }
-    
     err = 0;
     className = 0;
     cmd = 0;
@@ -551,80 +546,6 @@ static void require(cchar *name)
         mprAddItem(app->modules, sclone(name));
     }
 }
-
-
-#if BLD_UNIX_LIKE 
-/*
-    Catch signals. Do a graceful shutdown.
- */
-static void catchSignal(int signo, siginfo_t *info, void *arg)
-{
-    Mpr     *mpr;
-
-    mpr = mprGetMpr();
-    if (mpr) {
-#if DEBUG_IDE
-        if (signo == SIGINT) return;
-#endif
-        mprLog(2, "Received signal %d", signo);
-        if (signo == SIGTERM) {
-            mprLog(1, "Executing a graceful exit. Waiting for all requests to complete.");
-            mprTerminate(MPR_GRACEFUL);
-        } else {
-            mprLog(1, "Exiting immediately ...");
-            mprTerminate(0);
-        }
-    }
-}
-#endif /* BLD_HOST_UNIX */
-
-
-static void setupSignals()
-{
-#if BLD_UNIX_LIKE
-    struct sigaction    act;
-
-    memset(&act, 0, sizeof(act));
-    act.sa_sigaction = catchSignal;
-    act.sa_flags = 0;
-   
-    /*
-        Mask these when processing signals
-     */
-    sigemptyset(&act.sa_mask);
-    sigaddset(&act.sa_mask, SIGALRM);
-    sigaddset(&act.sa_mask, SIGCHLD);
-    sigaddset(&act.sa_mask, SIGPIPE);
-    sigaddset(&act.sa_mask, SIGTERM);
-    sigaddset(&act.sa_mask, SIGUSR1);
-    sigaddset(&act.sa_mask, SIGUSR2);
-
-    if (!mprGetDebugMode(NULL)) {
-        sigaddset(&act.sa_mask, SIGINT);
-    }
-
-    /*
-        Catch these signals
-     */
-    sigaction(SIGINT, &act, 0);
-    sigaction(SIGQUIT, &act, 0);
-    sigaction(SIGTERM, &act, 0);
-    sigaction(SIGUSR1, &act, 0);
-
-    /*
-        Ignore pipe signals
-     */
-    signal(SIGPIPE, SIG_IGN);
-
-#if LINUX
-    /*
-        Ignore signals from write requests to large files
-     */
-    signal(SIGXFSZ, SIG_IGN);
-#endif
-#endif /* BLD_UNIX_LIKE */
-}
-
 
 /*
     @copy   default

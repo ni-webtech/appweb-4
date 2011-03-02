@@ -99,6 +99,7 @@ MAIN(httpMain, int argc, char *argv[])
         return MPR_ERR_MEMORY;
     }
     mprAddRoot(app);
+    mprAddStandardSignals();
 
     initSettings();
     if (!parseArgs(argc, argv)) {
@@ -706,7 +707,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
                 break;
             }
         } else if (!conn->error) {
-            httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
+            httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TIMEOUT,
                 "Inactive request timed out, exceeded request timeout %d", app->timeout);
         }
         if ((rx = conn->rx) != 0) {
@@ -814,7 +815,7 @@ static int doRequest(HttpConn *conn, cchar *url, MprList *files)
         readBody(conn);
     }
     if (conn->state < HTTP_STATE_COMPLETE && !conn->error) {
-        httpConnError(conn, HTTP_CODE_REQUEST_TIMEOUT,
+        httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TIMEOUT,
             "Inactive request timed out, exceeded request timeout %d", app->timeout);
     } else {
         readBody(conn);
