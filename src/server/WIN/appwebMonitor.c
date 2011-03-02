@@ -294,7 +294,7 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
     switch (msg) {
     case WM_DESTROY:
     case WM_QUIT:
-        mprTerminate(MPR_GRACEFUL);
+        mprTerminate(MPR_EXIT_GRACEFUL);
         break;
     
     case APPWEB_MONITOR_MESSAGE:
