@@ -17125,6 +17125,7 @@ void mprAddStandardSignals()
 
 
 #else /* BLD_UNIX_LIKE */
+    void mprAddStandardSignals() {}
     MprSignalService *mprCreateSignalService() { return mprAlloc(0); }
     void mprStopSignalService() {};
     void mprRemoveSignalHandler(MprSignal *sp) { }
