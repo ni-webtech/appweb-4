@@ -126,3 +126,4 @@ See 'git help COMMAND' for more information on a specific command.
 .rpmmacros
 rpm.log
 *.cltmp
+src/server/appweb.conf
