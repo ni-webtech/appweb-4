@@ -347,6 +347,7 @@ void mprDestroyMemService()
         }
     }
     heap = 0;
+    MPR = 0;
 }
 
 
@@ -2544,7 +2545,6 @@ void mprDestroy(int how)
     MPR->state = MPR_FINISHED;
     mprStopOsService();
     mprDestroyMemService();
-    MPR = 0;
 }
 
 
@@ -3301,7 +3301,7 @@ static LRESULT msgProc(HWND hwnd, uint msg, uint wp, long lp)
     ws = MPR->waitService;
 
     if (msg == WM_DESTROY || msg == WM_QUIT) {
-        mprTerminate(EXIT_DEFAULT);
+        mprTerminate(MPR_EXIT_DEFAULT);
 
     } else if (msg && msg == ws->socketMessage) {
         sock = wp;
@@ -17126,7 +17126,8 @@ void mprAddStandardSignals()
 
 #else /* BLD_UNIX_LIKE */
     MprSignalService *mprCreateSignalService() { return mprAlloc(0); }
-    int mprRemoveSignalHandler(MprSignal *sp) { return 0; }
+    void mprStopSignalService() {};
+    void mprRemoveSignalHandler(MprSignal *sp) { }
     void mprServiceSignals() {}
 #endif /* BLD_UNIX_LIKE */
 
