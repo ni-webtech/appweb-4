@@ -119,11 +119,12 @@ ifeq		($(BLD_OS),MACOSX)
 	#	x86_64 for 64 bit binaries. (-arch options are: i386, ppc, ppc64, x86_64)
 	#
 	ifeq ($(BLD_CPU),universal)
-        _CFLAGS     += -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc
+        # _CFLAGS   += -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc
+        _CFLAGS     += -arch i386 -arch ppc
 		_LDFLAGS    += -arch i386 -arch ppc
 	else
+        # _CFLAGS   += -isysroot /Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.5
         _CFLAGS	    += -arch $(BLD_CPU)
-        _CFLAGS     += -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5
         _LDFLAGS    += -arch $(BLD_CPU)
 	endif
 

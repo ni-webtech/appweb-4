@@ -171,7 +171,7 @@ static void processCgi(HttpQueue *q)
         httpPutForService(q, httpCreateEndPacket(q), 1);
     } else {
         mprStopCmd(cmd, -1);
-        mprReapCmd(cmd, MPR_TIMEOUT_STOP_TASK);
+        mprDestroyCmd(cmd);
         cmd->status = 255;
     }
 }
