@@ -8889,6 +8889,7 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     ejs->mutex = mprCreateLock(ejs);
     ejs->argc = argc;
     ejs->argv = argv;
+    ejs->dontExit = sp->dontExit;
     ejs->flags |= (flags & (EJS_FLAG_NO_INIT | EJS_FLAG_DOC));
 
     /*
@@ -9330,7 +9331,7 @@ int ejsEvalModule(cchar *path)
     } else if (ejsRun(ejs) < 0) {
         status = EJS_ERR;
     }
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return status;
 }
 
@@ -9874,6 +9875,16 @@ EjsAny *ejsGetSpecial(Ejs *ejs, int index)
     return ejs->values[index];
 }
 
+void ejsDisableExit(Ejs *ejs)
+{
+    EjsService  *sp;
+
+    sp = MPR->ejsService;
+    if (sp) {
+        sp->dontExit = 1;
+    }
+}
+
 /*
     @copy   default
  
@@ -10045,21 +10056,31 @@ static EjsObj *app_exePath(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 
 /*  
     Exit the application
-    static function exit(status: Number): void
+    static function exit(status: Number, how: String = "default"): void
  */
 static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    int     status;
+    cchar   *how;
+    int     status, mode;
 
-    if (!ejs->dontExit) {
-        status = argc == 0 ? 0 : ejsGetInt(ejs, argv[0]);
-        if (status != 0) {
-            exit(status);
-        } else {
-            mprTerminate(MPR_GRACEFUL);
-            ejsAttention(ejs);
-        }
+    if (ejs->dontExit) {
+        ejsThrowStateError(ejs, "App.exit has been disabled");
+        return 0;
     }
+    status = argc >= 1 ? ejsGetInt(ejs, argv[0]) : 0;
+    how = ejsToMulti(ejs, argc >= 2 ? ejsToString(ejs, argv[1]): ejs->emptyString);
+
+    if (scmp(how, "default") == 0) {
+        mode = MPR_EXIT_DEFAULT;
+    } else if (scmp(how, "immediate") == 0) {
+        mode = MPR_EXIT_IMMEDIATE;
+    } else if (scmp(how, "graceful") == 0) {
+        mode = MPR_EXIT_GRACEFUL;
+    } else {
+        mode = MPR_EXIT_NORMAL;
+    }
+    mprTerminate(mode);
+    ejsAttention(ejs);
     return 0;
 }
 
@@ -10072,30 +10093,6 @@ static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 static EjsObj *app_noexit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     ejs->flags |= EJS_FLAG_NOEXIT;
-    return 0;
-}
-#endif
-
-
-#if UNUSED
-/*  
-    static function name(): String
- */
-static EjsObj *app_name(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
-{
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprGetAppName(ejs));
-}
-
-
-/*  
-    static function set name(str: String): Void
- */
-static EjsObj *app_set_name(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
-{
-    cchar   *name;
-
-    name = ejsToMulti(argv[0]);
-    mprSetAppName(ejs, name, name, NULL);
     return 0;
 }
 #endif
@@ -10133,35 +10130,6 @@ static EjsObj *app_createSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
     searchPath = (argc == 0) ? NULL : ejsToMulti(ejs, argv[0]);
     return (EjsObj*) ejsCreateSearchPath(ejs, searchPath);
 }
-
-
-#if UNUSED
-/*  
-    Need this routine because ejs->exiting must be tested by workers
- */
-void ejsServiceEvents(Ejs *ejs, int timeout, int flags)
-{
-    MprTime     expires;
-    int         rc, remaining;
-
-    mprAssert(0);
-    if (timeout < 0) {
-        timeout = INT_MAX;
-    }
-    expires = mprGetTime() + timeout;
-    remaining = timeout;
-    do {
-        rc = mprWaitForEvent(ejs->dispatcher, remaining);
-        if (rc > 0 && flags & MPR_SERVICE_ONE_THING) {
-            break;
-        }
-        remaining = (int) (expires - mprGetTime());
-        if (ejs->exception) {
-            ejsClearException(ejs);
-        }
-    } while (remaining > 0 && !mprIsStopping(ejs) && !ejs->exiting && !ejs->exception);
-}
-#endif
 
 
 /*  
@@ -10231,16 +10199,11 @@ void ejsConfigureAppType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_App_exit, (EjsProc) app_exit);
     ejsBindMethod(ejs, type, ES_App_getenv, (EjsProc) app_getenv);
     ejsBindMethod(ejs, type, ES_App_putenv, (EjsProc) app_putenv);
-#if ES_App_name && UNUSED
-    ejsBindAccess(ejs, type, ES_App_name, (EjsProc) app_name, (EjsProc) app_set_name);
-#endif
 #if UNUSED
     ejsBindMethod(ejs, type, ES_App_noexit, (EjsProc) app_noexit);
 #endif
     ejsBindMethod(ejs, type, ES_App_createSearch, (EjsProc) app_createSearch);
-#if ES_App_run
     ejsBindMethod(ejs, type, ES_App_run, (EjsProc) app_run);
-#endif
     ejsBindAccess(ejs, type, ES_App_search, (EjsProc) app_search, (EjsProc) app_set_search);
     ejsBindMethod(ejs, type, ES_App_sleep, (EjsProc) app_sleep);
 
@@ -30030,7 +29993,9 @@ int ejsContainsString(Ejs *ejs, EjsString *sp, EjsString *pat)
 
 char *ejsToMulti(Ejs *ejs, EjsAny *ev)
 {
-    mprAssert(ev);
+    if (ev == 0) {
+        ev = ejs->emptyString;
+    }
     if (!ejsIsString(ejs, ev)) {
         if ((ev = ejsCast(ejs, ev, ejs->stringType)) == 0) {
             return "";
@@ -34036,6 +34001,10 @@ static int join(Ejs *ejs, EjsObj *workers, int timeout)
         if (!ejs->joining) {
             break;
         }
+        if (mprShouldAbortRequests()) {
+            ejsThrowStateError(ejs, "Program instructed to exit");
+            break;
+        }
         mprWaitForEvent(ejs->dispatcher, remaining);
         remaining = (int) mprGetRemainingTime(mark, timeout);
     } while (remaining > 0 && !ejs->exception);
@@ -36984,23 +36953,6 @@ static void indent(MprBuf *bp, int level)
 /************************************************************************/
 /*
  *  End of file "../../src/core/src/ejsXMLLoader.c"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/core/test/cmd/t.c"
- */
-/************************************************************************/
-
-int main() {
-    return 1;
-}
-/************************************************************************/
-/*
- *  End of file "../../src/core/test/cmd/t.c"
  */
 /************************************************************************/
 
@@ -49731,7 +49683,7 @@ int ejsEvalFile(cchar *path)
         mprDestroy(0);
         return MPR_ERR;
     }
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return 0;
 }
 
@@ -49763,7 +49715,7 @@ int ejsEvalScript(cchar *script)
         mprDestroy(0);
         return MPR_ERR;
     }
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return 0;
 }
 

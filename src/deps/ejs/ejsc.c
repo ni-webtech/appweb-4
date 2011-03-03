@@ -312,7 +312,7 @@ MAIN(ejscMain, int argc, char **argv)
     if (cp->errorCount > 0) {
         err++;
     }
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return err;
 }
 

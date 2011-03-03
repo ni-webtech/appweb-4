@@ -44,17 +44,12 @@ static int  changeRoot(cchar *jail);
 extern int  checkEnvironment(cchar *program);
 static int  findConfigFile();
 static void manageApp(App *app, int flags);
-extern int  osInit();
 static int  initialize(cchar *ip, int port);
 static void usageError();
 
 #if BLD_UNIX_LIKE
-static void catchSignal(int signo, siginfo_t *info, void *arg);
 static int  unixSecurityChecks(cchar *program, cchar *home);
-static int  setupUnixSignals();
-#endif
-
-#if BLD_WIN_LIKE
+#elif BLD_WIN_LIKE
 static int writePort(HttpHost *host);
 static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 #endif
@@ -87,6 +82,7 @@ MAIN(appweb, int argc, char **argv)
         exit(2);
     }
     mprAddRoot(app);
+    mprAddStandardSignals();
     
     argc = mpr->argc;
     argv = mpr->argv;
@@ -101,9 +97,6 @@ MAIN(appweb, int argc, char **argv)
     mprSetRomFileSystem(romFiles);
 #endif
 
-    if (osInit() < 0) {
-        exit(3);
-    }
     for (argind = 1; argind < argc; argind++) {
         argp = argv[argind];
         if (*argp != '-') {
@@ -184,7 +177,7 @@ MAIN(appweb, int argc, char **argv)
     }
     if (mprStart() < 0) {
         mprUserError("Can't start MPR for %s", mprGetAppName());
-        mprDestroy(0);
+        mprDestroy(MPR_EXIT_DEFAULT);
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (findConfigFile() < 0) {
@@ -214,7 +207,7 @@ MAIN(appweb, int argc, char **argv)
     mprLog(1, "Exiting ...");
     maStopAppweb(app->appweb);
     mprLog(1, "Exit complete");
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return 0;
 }
 
@@ -328,15 +321,6 @@ static void usageError(Mpr *mpr)
 }
 
 
-int osInit()
-{
-#if BLD_UNIX_LIKE
-    setupUnixSignals();
-#endif
-    return 0;
-}
-
-
 /*
     Security checks. Make sure we are staring with a safe environment
  */
@@ -393,73 +377,6 @@ static int unixSecurityChecks(cchar *program, cchar *home)
         }
     }
     return 0;
-}
-
-
-static int setupUnixSignals()
-{
-    struct sigaction    act;
-
-    memset(&act, 0, sizeof(act));
-    act.sa_sigaction = catchSignal;
-    act.sa_flags = 0;
-   
-    /*
-        Mask these when processing signals
-     */
-    sigemptyset(&act.sa_mask);
-    sigaddset(&act.sa_mask, SIGALRM);
-    sigaddset(&act.sa_mask, SIGCHLD);
-    sigaddset(&act.sa_mask, SIGPIPE);
-    sigaddset(&act.sa_mask, SIGTERM);
-    sigaddset(&act.sa_mask, SIGUSR1);
-    sigaddset(&act.sa_mask, SIGUSR2);
-
-    if (!mprGetDebugMode()) {
-        sigaddset(&act.sa_mask, SIGINT);
-    }
-
-    /*
-        Catch thse signals
-     */
-    sigaction(SIGINT, &act, 0);
-    sigaction(SIGQUIT, &act, 0);
-    sigaction(SIGTERM, &act, 0);
-    sigaction(SIGUSR1, &act, 0);
-    
-    /*
-        Ignore pipe signals
-     */
-    signal(SIGPIPE, SIG_IGN);
-
-#if LINUX
-    /*
-        Ignore signals from write requests to large files
-     */
-    signal(SIGXFSZ, SIG_IGN);
-#endif
-    return 0;
-}
-
-
-/*
-    Catch signals. Do a graceful shutdown.
- */
-static void catchSignal(int signo, siginfo_t *info, void *arg)
-{
-#if DEBUG_IDE
-    if (signo == SIGINT) {
-        return;
-    }
-#endif
-    mprLog(2, "Received signal %d", signo);
-    if (signo == SIGTERM) {
-        mprLog(1, "Executing a graceful exit. Waiting for all requests to complete");
-        mprTerminate(MPR_GRACEFUL);
-    } else {
-        mprLog(1, "Exiting immediately ...");
-        mprTerminate(0);
-    }
 }
 #endif /* BLD_HOST_UNIX */
 

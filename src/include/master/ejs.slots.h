@@ -399,12 +399,11 @@
 #define ES_App_outputStream                                            23
 #define ES_App_putenv                                                  24
 #define ES_App_run                                                     25
-#define ES_App_eventLoop                                               26
-#define ES_App_search                                                  27
-#define ES_App_sleep                                                   28
-#define ES_App_updateLog                                               29
-#define ES_App_waitForEvent                                            30
-#define ES_App_NUM_CLASS_PROP                                          31
+#define ES_App_search                                                  26
+#define ES_App_sleep                                                   27
+#define ES_App_updateLog                                               28
+#define ES_App_waitForEvent                                            29
+#define ES_App_NUM_CLASS_PROP                                          30
 
 /*
    Prototype (instance) slots for "App" type 
@@ -418,6 +417,7 @@
 #define ES_App_createSearch_searchPath                                 0
 #define ES_App_chdir_value                                             0
 #define ES_App_exit_status                                             0
+#define ES_App_exit_how                                                1
 #define ES_App_getenv_name                                             0
 #define ES_App_loadrc_path                                             0
 #define ES_App_loadrc_overwrite                                        1
@@ -425,8 +425,6 @@
 #define ES_App_putenv_value                                            1
 #define ES_App_run_timeout                                             0
 #define ES_App_run_oneEvent                                            1
-#define ES_App_eventLoop_timeout                                       0
-#define ES_App_eventLoop_oneEvent                                      1
 #define ES_App_sleep_delay                                             0
 #define ES_App_waitForEvent_obj                                        0
 #define ES_App_waitForEvent_events                                     1
@@ -2401,7 +2399,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1370173
+#define _ES_CHECKSUM_ejs   1367938
 
 #endif
 /************************************************************************/

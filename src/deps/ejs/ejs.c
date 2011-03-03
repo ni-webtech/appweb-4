@@ -332,7 +332,7 @@ MAIN(ejsMain, int argc, char **argv)
     }
 #endif
     ejsDestroy(ejs);
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return err;
 }
 
@@ -396,7 +396,7 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
     ecResetInput(cp);
     tmpArgv[0] = EC_INPUT_STREAM;
 
-    while (!cp->stream->eof) {
+    while (!cp->stream->eof && !mprIsStopping()) {
         err = 0;
         cp->uid = 0;
         if (ecCompile(cp, 1, tmpArgv) < 0) {

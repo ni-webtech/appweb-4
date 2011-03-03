@@ -118,7 +118,7 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
     }
     mprServiceEvents(-1, 0);
     maStopMeta(meta);
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return 0;
 }
 

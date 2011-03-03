@@ -4310,7 +4310,7 @@ MAIN(ejsmodMain, int argc, char **argv)
     }
     mprRemoveRoot(mp);
     ejsDestroy(ejs);
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return err;
 }
 

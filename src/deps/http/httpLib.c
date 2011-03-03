@@ -2382,8 +2382,8 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server, MprDispatcher *dispatch
 
     conn->serviceq = httpCreateQueueHead(conn, "serviceq");
 
-    //  MOB -- this just sets to defaults. Who sets to what the config file has defined?
     httpInitTrace(conn->trace);
+
     if (dispatcher) {
         conn->dispatcher = dispatcher;
     } else if (server) {
@@ -2540,11 +2540,12 @@ static void commonPrep(HttpConn *conn)
     conn->flags = 0;
     conn->state = 0;
     conn->writeComplete = 0;
-
+#if UNUSED
     if (conn->dispatcher == 0) {
         mprAssert(0);
         conn->dispatcher = (conn->server) ? conn->server->dispatcher : mprGetDispatcher();
     }
+#endif
     conn->lastActivity = conn->http->now;
     httpSetState(conn, HTTP_STATE_BEGIN);
     httpInitSchedulerQueue(conn->serviceq);
@@ -2560,10 +2561,14 @@ void httpPrepServerConn(HttpConn *conn)
     mprAssert(conn);
     mprAssert(conn->rx == 0);
     mprAssert(conn->tx == 0);
+    mprAssert(conn->server);
 
     conn->readq = 0;
     conn->writeq = 0;
+#if UNUSED
     conn->dispatcher = (conn->server) ? conn->server->dispatcher : mprGetDispatcher();
+            httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
+#endif
     commonPrep(conn);
 }
 
@@ -9383,19 +9388,19 @@ MprHashTable *httpGetHeaderHash(HttpConn *conn)
 
 cchar *httpGetQueryString(HttpConn *conn)
 {
-    return conn->rx->parsedUri->query;
+    return (conn->rx && conn->rx->parsedUri) ? conn->rx->parsedUri->query : 0;
 }
 
 
 int httpGetStatus(HttpConn *conn)
 {
-    return conn->rx->status;
+    return (conn->rx) ? conn->rx->status : 0;
 }
 
 
 char *httpGetStatusMessage(HttpConn *conn)
 {
-    return conn->rx->statusMessage;
+    return (conn->rx) ? conn->rx->statusMessage : 0;
 }
 
 
@@ -10380,6 +10385,7 @@ int httpStartServer(HttpServer *server)
         return MPR_ERR_CANT_OPEN;
     }
     if (server->async && server->waitHandler ==  0) {
+        //  MOB -- this really should be in server->listen->handler
         server->waitHandler = mprCreateWaitHandler(server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
             httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
     } else {
@@ -10481,7 +10487,12 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
     if (sock == 0) {
         return 0;
     }
-    dispatcher = (event && server->dispatcher == 0) ? event->dispatcher: server->dispatcher;
+
+    //  MOB - is this logic sufficient.
+    //  MOB - better to just do dispatcher =
+    // dispatcher = (event && server->dispatcher == 0) ? event->dispatcher: server->dispatcher;
+    dispatcher = event->dispatcher;
+
     mprLog(4, "New connection from %s:%d to %s:%d %s",
         sock->ip, sock->port, sock->acceptIp, sock->acceptPort, server->sock->sslSocket ? "(secure)" : "");
 

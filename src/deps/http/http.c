@@ -580,7 +580,7 @@ static int processThread(HttpConn *conn, MprEvent *event)
         }
         httpSetCredentials(conn, app->username, app->password);
     }
-    while (!mprIsStopping(conn) && (app->success || app->continueOnErrors)) {
+    while (!mprShouldDenyNewRequests(conn) && (app->success || app->continueOnErrors)) {
         if (app->singleStep) waitForUser();
         if (app->files && !app->upload) {
             for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0; ) {
@@ -685,7 +685,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
     httpSetRetries(conn, app->retries);
     httpSetTimeout(conn, app->timeout, app->timeout);
 
-    for (redirectCount = count = 0; count <= conn->retries && redirectCount < 16 && !mprIsStopping(conn); count++) {
+    for (redirectCount = count = 0; count <= conn->retries && redirectCount < 16 && !mprShouldAbortRequests(conn); count++) {
         if (prepRequest(conn, files, count) < 0) {
             return MPR_ERR_CANT_OPEN;
         }
@@ -736,7 +736,7 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
     ssize       contentLen;
     int         status;
 
-    if (mprIsStopping(conn)) {
+    if (mprShouldAbortRequests(conn)) {
         return 0;
     }
 
@@ -951,7 +951,7 @@ static void finishThread(MprThread *tp)
         mprLock(app->mutex);
         app->activeLoadThreads--;
         if (--app->activeLoadThreads <= 0) {
-            mprTerminate(MPR_GRACEFUL);
+            mprTerminate(MPR_EXIT_DEFAULT);
         }
         mprUnlock(app->mutex);
     }

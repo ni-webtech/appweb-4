@@ -162,6 +162,7 @@ static void processCgi(HttpQueue *q)
         httpPutForService(q, httpCreateEndPacket(q), 1);
         return;
     }
+    //  MOB - why block here?
     while (mprWaitForCmd(cmd, 1000) < 0) {
         if (mprGetElapsedTime(conn->lastActivity) >= conn->limits->inactivityTimeout) {
             break;
@@ -496,6 +497,7 @@ static void enableCgiEvents(HttpQueue *q, MprCmd *cmd, int channel)
     if (cmd->pid == 0) {
         return;
     }
+#if UNUSED
     if (channel == MPR_CMD_STDOUT && mprGetCmdFd(cmd, channel) < 0) {
         /*
             Now that stdout is complete, enable stderr to receive an EOF or any error output. This is 
@@ -508,6 +510,11 @@ static void enableCgiEvents(HttpQueue *q, MprCmd *cmd, int channel)
         if (channel != MPR_CMD_STDOUT || !(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
             mprEnableCmdEvents(cmd, channel);
         }
+    }
+#endif
+    //  MOB - is this flow control right?
+    if (!(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
+        mprEnableCmdEvents(cmd, channel);
     }
 }
 

@@ -5233,12 +5233,12 @@ extern void mprSignalDispatcher(MprDispatcher *dispatcher);
     @param period Time in milliseconds used by continuous events between firing of the event.
     @param proc Function to invoke when the event is run
     @param data Data to associate with the event and stored in event->data.
-    @param flgs Flags to modify the behavior of the event. Valid values are: MPR_EVENT_CONTINUOUS to create an 
+    @param flags Flags to modify the behavior of the event. Valid values are: MPR_EVENT_CONTINUOUS to create an 
         event which will be automatically rescheduled accoring to the specified period.
     @return Returns the event object if successful.
     @ingroup MprEvent
  */
-extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flgs);
+extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags);
 extern MprEvent *mprCreateEventQueue();
 
 /**
@@ -6571,41 +6571,55 @@ extern char *mprUriEncode(cchar *uri, int map);
 extern char *mprUriDecode(cchar *uri);
 
 
-#define MPR_MAX_SIGNAL      40
+#if MACOSX
+#define MPR_MAX_SIGNALS      40
+#elif LINUX
+#define MPR_MAX_SIGNALS      48
+#else
+#define MPR_MAX_SIGNALS      40
+#endif
+
 #define MPR_SIGNAL_BEFORE   0x1
 #define MPR_SIGNAL_AFTER    0x2
-#define MPR_SIGNAL_NATIVE   0x4
 
 typedef void (*MprSignalProc)(void *arg, struct MprSignal *sp);
 
+
+typedef struct MprSignalInfo {
+    siginfo_t       siginfo;
+    void            *arg;
+    int             triggered;
+} MprSignalInfo;
+
+
 typedef struct MprSignal {
-    union {
-        struct MprSignal *sp;               /* */
-        void             (*sigaction)();    /* */
-    } chain;
-    MprSignalProc   handler;                /* */
-    void            *data;                  /* */
-    MprDispatcher   *dispatcher;            /* */
-    MprEvent        *event;                 /* */
-    int             flags;                  /* Control flags */
-    int             triggered;              /* */
-    int             signo;                  /* Signal number */
-    siginfo_t       info;                   /* Triggered signal info */
-    void            *arg;                   /* Triggered signal arg */
+    struct MprSignal *next;                 /**< Chain of handlers on the same signo */
+    MprSignalProc   handler;                /**< Signal handler (non-native) */
+    void            (*sigaction)();         /**< Prior sigaction handler */
+    void            *data;                  /**< Handler data */
+    MprDispatcher   *dispatcher;            /**< Dispatcher to service handler */
+    int             flags;                  /**< Control flags */
+    int             signo;                  /**< Signal number */
+    MprSignalInfo   info;                   /**< Signal info */
 } MprSignal;
 
-extern MprSignal *mprAddSignalHandler(int signo, void *handler, void *arg, MprDispatcher *dispatcher, int flags);
-extern int mprRemoveSignalHandler(MprSignal *sp);
-extern void mprAddStandardSignals();
-extern void mprServiceSignals();
 
 typedef struct MprSignalService {
     MprSignal       **signals;              /**< Signal handlers */
-    int             hasSignals;
-    MprMutex        *mutex;
+    MprList         *standard;              /**< Standard signal handlers */
+    MprMutex        *mutex;                 /**< Multithread sync */
+    MprSignalInfo   info[MPR_MAX_SIGNALS];  /**< Actual signal info and arg */
+    void            *prior[MPR_MAX_SIGNALS];/**< Prior sigaction handler before hooking */
+    int             hasSignals;             /**< Signal sent to process */
 } MprSignalService;
 
+
 extern MprSignalService *mprCreateSignalService();
+extern void mprStopSignalService();
+extern MprSignal *mprAddSignalHandler(int signo, void *handler, void *arg, MprDispatcher *dispatcher, int flags);
+extern void mprRemoveSignalHandler(MprSignal *sp);
+extern void mprAddStandardSignals();
+extern void mprServiceSignals();
 
 
 typedef void (*MprForkCallback)(void *arg);
@@ -7026,6 +7040,7 @@ typedef struct Mpr {
     char            *appPath;               /**< Path name of application executable */
     char            *appDir;                /**< Path of directory containing app executable */
     int             eventing;               /**< Servicing events thread is active */
+    int             exitStrategy;           /**< How to exit the app (normal, immediate, graceful) */
     int             flags;                  /**< Misc flags */
     int             hasError;               /**< Mpr has an initialization error */
     int             logFd;                  /**< Logging file descriptor */
@@ -7133,6 +7148,8 @@ extern bool mprStop();
 //  MOB DOC
 extern bool mprIsStopping();
 extern bool mprIsStoppingCore();
+extern bool mprShouldDenyNewRequests();
+extern bool mprShouldAbortRequests();
 
 /**
     Determine if the MPR is exiting
@@ -7168,7 +7185,7 @@ extern bool mprServicesAreIdle();
 extern bool mprIsIdle();
 
 //  MOB DOC
-extern void mprWaitTillIdle();
+extern void mprWaitTillIdle(MprTime timeout);
 
 /**
     Define a new idle callback to be invoked by mprIsIdle().
@@ -7344,7 +7361,13 @@ extern int mprWriteRegistry(cchar *key, cchar *name, cchar *value);
  */
 extern int mprStartEventsThread();
 
-#define MPR_GRACEFUL     1           /* Do a graceful shutdown */
+/*
+    Terminate and Destroy flags
+ */
+#define MPR_EXIT_DEFAULT    0           /* Exit as per MPR->defaultStrategy */
+#define MPR_EXIT_IMMEDIATE  1           /* Do an immediate exit - finalizers will not run */
+#define MPR_EXIT_NORMAL     2           /* Do a normal shutdown - run GC for all finalizers to run */
+#define MPR_EXIT_GRACEFUL   3           /* Do a graceful shutdown */
 
 /**
     Terminate the MPR.
@@ -7391,6 +7414,7 @@ extern void mprSetLogFd(int fd);
 
 //  MOB DOC
 extern char* mprEmptyString();
+extern void mprSetExitStrategy(int strategy);
 
 /*
    External dependencies
@@ -7454,8 +7478,10 @@ typedef struct MprTestService {
     MprMutex        *mutex;                 /* Multi-thread sync */
 } MprTestService;
 
+typedef int (*MprTestParser)(int argc, char **argv);
+
 extern MprTestService *mprCreateTestService();
-extern int          mprParseTestArgs(MprTestService *ts, int argc, char **argv);
+extern int          mprParseTestArgs(MprTestService *ts, int argc, char **argv, MprTestParser extraParser);
 extern int          mprRunTests(MprTestService *sp);
 extern void         mprReportTestResults(MprTestService *sp);
 

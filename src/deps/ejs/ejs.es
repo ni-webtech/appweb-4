@@ -188,8 +188,13 @@ module ejs {
             Stop the program and exit.
             @param status The optional exit code to provide the environment. If running inside the ejs command program,
                 the status is used as process exit status.
+            @param how How the exit should proceed. Options are: "normal", "immediate" or "graceful". A normal exit
+                will close write buffered and outstanding data, flush buffers, close files and resources and then exit 
+                without waiting.  An immediate exit will exit without writing buffered data. A graceful exit will wait
+                until the system is idle and then do a normal exit. A system is idle when it has no running commands, 
+                sockets or worker threads.
          */
-        native static function exit(status: Number = 0): Void
+        native static function exit(status: Number = 0, how: String = "normal"): Void
 
 //  MOB -- need get env()
         /** 
@@ -286,8 +291,8 @@ module ejs {
                 call returns immediately. Set to -1 for no timeout.
             @param oneEvent If true, return immediately after servicing at least one ejs event.
             @hide
-            MOB - remove
          */
+        # DEPRECATE
         static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): Void
             run(timeout, oneEvent)
 

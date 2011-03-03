@@ -346,6 +346,7 @@ void mprDestroyMemService()
             }
         }
     }
+    heap = 0;
 }
 
 
@@ -1488,9 +1489,10 @@ void mprResetYield()
 {
     MprThread   *tp;
 
-    tp = mprGetCurrentThread();
-    tp->stickyYield = 0;
-    tp->yielded = 0;
+    if ((tp = mprGetCurrentThread()) != 0) {
+        tp->stickyYield = 0;
+        tp->yielded = 0;
+    }
     /* Flush yielded */
     mprAtomicBarrier();
     if (MPR->marking) {
@@ -1820,7 +1822,7 @@ void mprPrintMem(cchar *msg, int detail)
     printf("  Memory redline      %14d MB (%d %%)\n",    (int) (ap->redLine / (1024 * 1024)),
        percent(ap->bytesAllocated / 1024, ap->redLine / 1024));
 
-    printf("  Memory requests     %14Ld\n",              ap->requests);
+    printf("  Memory requests     %14d\n",               (int) ap->requests);
     printf("  O/S allocations     %14d %%\n",            percent(ap->allocs, ap->requests));
     printf("  Block unpinns       %14d %%\n",            percent(ap->unpins, ap->requests));
     printf("  Block reuse         %14d %%\n",            percent(ap->reuse, ap->requests));
@@ -2412,6 +2414,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
         return 0;
     }
     getArgs(mpr, argc, argv);
+    mpr->exitStrategy = MPR_EXIT_NORMAL;
     mpr->logFd = -1;
     mpr->emptyString = sclone("");
     mpr->title = sclone(BLD_NAME);
@@ -2505,52 +2508,76 @@ static void manageMpr(Mpr *mpr, int flags)
 /*
     Destroy the Mpr and all services
  */
-void mprDestroy(int flags)
+void mprDestroy(int how)
 {
-    int     gcflags;
+    int     gmode;
 
+    if (how != MPR_EXIT_DEFAULT) {
+        MPR->exitStrategy = how;
+    }
+    how = MPR->exitStrategy;
+    if (how == MPR_EXIT_IMMEDIATE) {
+        exit(0);
+    }
     mprYield(MPR_YIELD_STICKY);
-    mprTerminate(flags);
+    if (MPR->state < MPR_STOPPING) {
+        mprTerminate(how);
+    }
+    gmode = MPR_FORCE_GC | MPR_COMPLETE_GC | (how & MPR_EXIT_IMMEDIATE) ? 0 : MPR_WAIT_GC;
+    mprRequestGC(gmode);
 
-    gcflags = MPR_FORCE_GC | MPR_COMPLETE_GC | ((flags & MPR_GRACEFUL) ? MPR_WAIT_GC : 0);
-    mprRequestGC(gcflags);
-
-    if (flags & MPR_GRACEFUL) {
-        mprWaitTillIdle();
+    if (how == MPR_EXIT_GRACEFUL) {
+        mprWaitTillIdle(MPR_TIMEOUT_STOP);
     }
     MPR->state = MPR_STOPPING_CORE;
+    MPR->exitStrategy = MPR_EXIT_IMMEDIATE;
+
     mprStopCmdService();
     mprStopModuleService();
     mprStopEventService();
-    mprRequestGC(gcflags);
+    mprStopSignalService();
+
+    /* Final GC to run all finalizers */
+    mprRequestGC(gmode);
+
     mprStopThreadService();
     MPR->state = MPR_FINISHED;
     mprStopOsService();
     mprDestroyMemService();
+    MPR = 0;
 }
 
 
 /*
     Start termination of the Mpr. May be called by mprDestroy or elsewhere.
  */
-void mprTerminate(int flags)
+void mprTerminate(int how)
 {
-    if (! (flags & MPR_GRACEFUL)) {
+    if (how != MPR_EXIT_DEFAULT) {
+        MPR->exitStrategy = how;
+    }
+    how = MPR->exitStrategy;
+    if (how == MPR_EXIT_IMMEDIATE) {
+        mprLog(1, "Executing an immediate exit. Aborting all requests and services.");
         exit(0);
+    } else if (how == MPR_EXIT_NORMAL) {
+        mprLog(1, "Executing a normal exit. Flush buffers, close files and aborting existing requests.");
+    } else if (how == MPR_EXIT_GRACEFUL) {
+        mprLog(1, "Executing a graceful exit. Waiting for existing requests to complete.");
     }
 
     /*
-        Set the stopping flag. Services should stop accepting new requests.
+        Set the stopping flag. Services should stop accepting new requests. Current requests should be allowed to
+        complete if graceful exit strategy.
      */
     if (MPR->state >= MPR_STOPPING) {
         return;
     }
-    mprLog(MPR_CONFIG, "Exiting started");
-    
     /*
         Set stopping state and wake up everybody
      */
     MPR->state = MPR_STOPPING;
+    mprLog(MPR_CONFIG, "Exiting started");
     mprWakeDispatchers();
     mprWakeWorkers();
     mprWakeGCService();
@@ -2626,6 +2653,18 @@ static void serviceEventsThread(void *data, MprThread *tp)
 /*
     Services should call this to determine if they should accept new services
  */
+bool mprShouldAbortRequests()
+{
+    return (mprIsStopping() && MPR->exitStrategy != MPR_EXIT_GRACEFUL);
+}
+
+
+bool mprShouldDenyNewRequests()
+{
+    return mprIsStopping();
+}
+
+
 bool mprIsStopping()
 {
     return MPR->state >= MPR_STOPPING;
@@ -2644,13 +2683,13 @@ bool mprIsFinished()
 }
 
 
-void mprWaitTillIdle()
+void mprWaitTillIdle(MprTime timeout)
 {
     MprTime     mark;
 
     mark = mprGetTime(); 
-    while (!mprIsIdle() && mprGetRemainingTime(mark, MPR_TIMEOUT_STOP) > 0) {
-        mprSleep(10);
+    while (!mprIsIdle() && mprGetRemainingTime(mark, timeout) > 0) {
+        mprSleep(1);
     }
 }
 
@@ -2661,6 +2700,8 @@ void mprWaitTillIdle()
 bool mprServicesAreIdle()
 {
     bool    idle;
+
+    //  MOB - should also measure open sockets?
 
     idle = mprGetListLength(MPR->workerService->busyThreads) == 0 && 
            mprGetListLength(MPR->cmdService->cmds) == 0 && 
@@ -2976,6 +3017,12 @@ char *mprEmptyString()
 }
 
 
+void mprSetExitStrategy(int strategy)
+{
+    MPR->exitStrategy = strategy;
+}
+
+
 void mprNop(void *ptr) {}
 
 /*
@@ -3140,7 +3187,7 @@ void mprWaitForIO(MprWaitService *ws, MprTime timeout)
     mprYield(MPR_YIELD_STICKY);
     if (GetMessage(&msg, NULL, 0, 0) == 0) {
         mprResetYield();
-        mprTerminate(MPR_GRACEFUL);
+        mprTerminate(MPR_EXIT_DEFAULT);
     } else {
         mprResetYield();
         TranslateMessage(&msg);
@@ -3254,7 +3301,7 @@ static LRESULT msgProc(HWND hwnd, uint msg, uint wp, long lp)
     ws = MPR->waitService;
 
     if (msg == WM_DESTROY || msg == WM_QUIT) {
-        mprTerminate(MPR_GRACEFUL);
+        mprTerminate(EXIT_DEFAULT);
 
     } else if (msg && msg == ws->socketMessage) {
         sock = wp;
@@ -4180,6 +4227,7 @@ static int startProcess(MprCmd *cmd);
 static void stdinCallback(MprCmd *cmd, MprEvent *event);
 static void stdoutCallback(MprCmd *cmd, MprEvent *event);
 static void stderrCallback(MprCmd *cmd, MprEvent *event);
+static void vxCmdManager(MprCmd *cmd);
 
 #if BLD_UNIX_LIKE
 static char **fixenv(MprCmd *cmd);
@@ -4188,7 +4236,6 @@ static char **fixenv(MprCmd *cmd);
 #if VXWORKS
 typedef int (*MprCmdTaskFn)(int argc, char **argv, char **envp);
 static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg);
-static void vxCmdManager(MprCmd *cmd);
 #endif
 
 /*
@@ -4283,6 +4330,7 @@ static void manageCmd(MprCmd *cmd, int flags)
         mprMark(cmd->dispatcher);
         mprMark(cmd->callbackData);
         mprMark(cmd->forkData);
+        mprMark(cmd->signal);
         mprMark(cmd->stdoutBuf);
         mprMark(cmd->stderrBuf);
         mprMark(cmd->userData);
@@ -4307,9 +4355,7 @@ static void manageCmd(MprCmd *cmd, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         resetCmd(cmd);
-#if VXWORKS
         vxCmdManager(cmd);
-#endif
         if (cmd->signal) {
             mprRemoveSignalHandler(cmd->signal);
             cmd->signal = 0;
@@ -4319,9 +4365,9 @@ static void manageCmd(MprCmd *cmd, int flags)
 }
 
 
-#if VXWORKS
 static void vxCmdManager(MprCmd *cmd)
 {
+#if VXWORKS
     MprCmdFile      *files;
     int             i;
 
@@ -4345,8 +4391,8 @@ static void vxCmdManager(MprCmd *cmd)
             }
         }
     }
-}
 #endif
+}
 
 
 void mprDestroyCmd(MprCmd *cmd)
@@ -4387,7 +4433,10 @@ static void resetCmd(MprCmd *cmd)
 
     if (cmd->pid && !(cmd->flags & MPR_CMD_DETACH)) {
         mprStopCmd(cmd, -1);
+#if UNUSED
+        //  MOB - can't wait from manage
         mprWaitForCmd(cmd, MPR_TIMEOUT_STOP_TASK);
+#endif
         reapCmd(cmd);
         cmd->pid = 0;
     }
@@ -4792,6 +4841,9 @@ int mprWaitForCmd(MprCmd *cmd, MprTime timeout)
     mprAddRoot(cmd);
 
     while (!cmd->complete && remaining > 0) {
+        if (mprShouldAbortRequests()) {
+            break;
+        }
 #if BLD_WIN_LIKE
         waitForWinEvent(cmd, remaining);
 #else
@@ -4932,7 +4984,7 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
     mprLog(6, "cmdCallback channel %d, read len %d, pid %d, eof %d/%d", channel, len, cmd->pid, cmd->eofCount, 
         cmd->requiredEof);
     if (len <= 0) {
-        if (len == 0 || (len < 0 && !(errno == EAGAIN || EWOULDBLOCK))) {
+        if (len == 0 || (len < 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))) {
             mprCloseCmdFd(cmd, channel);
             return;
         }
@@ -7148,6 +7200,13 @@ void mprStopEventService()
 {
     mprWakeDispatchers();
     mprWakeWaitService();
+#if FUTURE
+    MprTime     mark;
+    mark = mprGetTime();
+    while (MPR->eventing && mprGetRemainingTime(mark, 25) > 0) {
+        mprSleep(1);
+    }
+#endif
 }
 
 
@@ -7306,11 +7365,8 @@ int mprServiceEvents(MprTime timeout, int flags)
     expires = timeout < 0 ? (es->now + MPR_MAX_TIMEOUT) : (es->now + timeout);
     justOne = (flags & MPR_SERVICE_ONE_THING) ? 1 : 0;
 
-    do {
+    while (es->now < expires && !mprIsStoppingCore()) {
         eventCount = es->eventCount;
-        if (mprIsStopping()) {
-            break;
-        }
         if (MPR->signalService->hasSignals) {
             mprServiceSignals();
         }
@@ -7328,13 +7384,19 @@ int mprServiceEvents(MprTime timeout, int flags)
                 es->waiting = 1;
                 es->willAwake = es->now + delay;
                 unlock(es);
+                if (mprIsStopping()) {
+                    break;
+                }
                 mprWaitForIO(MPR->waitService, (int) delay);
             } else {
                 unlock(es);
             }
         }
         es->now = mprGetTime();
-    } while (es->now < expires && !justOne);
+        if (justOne) {
+            break;
+        }
+    }
 
     MPR->eventing = 0;
     return abs(es->eventCount - beginEventCount);
@@ -7353,10 +7415,6 @@ int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
     int                 claimed, signalled, wasRunning, runEvents;
 
     mprAssert(dispatcher->magic == MPR_DISPATCHER_MAGIC);
-    //  MOB -- should (nearly) always call Relay before calling this. Otherwise ioEvent may claim the dispatcher.
-    //  MOB - if this is true, cleanup wasRunning below
-    mprAssert(isRunning(dispatcher));
-
     es = MPR->eventService;
     start = es->now = mprGetTime();
 
@@ -7386,14 +7444,7 @@ int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
     }
     unlock(es);
 
-    do {
-        /* 
-            If stopping, switch to a short timeout. Keep servicing events until finished to allow upper level services 
-            to complete current requests.
-         */
-        if (mprIsStopping()) {
-            break;
-        }
+    while (es->now < expires && !mprIsStoppingCore()) {
         if (runEvents) {
             makeRunnable(dispatcher);
             if (dispatchEvents(dispatcher)) {
@@ -7415,7 +7466,7 @@ int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
         dispatcher->waitingOnCond = 0;
         mprResetYield();
         es->now = mprGetTime();
-    } while (es->now < expires && !mprIsFinished());
+    }
 
     if (!wasRunning) {
         scheduleDispatcher(dispatcher);
@@ -12765,9 +12816,6 @@ int mprStartModuleService()
 }
 
 
-/*
-    Stop all modules
- */
 void mprStopModuleService()
 {
     MprModuleService    *ms;
@@ -16757,10 +16805,12 @@ void stubMprSelectWait() {}
 
 #if BLD_UNIX_LIKE
 
+
 static void manageSignal(MprSignal *sp, int flags);
 static void manageSignalService(MprSignalService *ssp, int flags);
 static void signalEvent(MprSignal *sp, MprEvent *event);
 static void signalHandler(int signo, siginfo_t *info, void *arg);
+static void unhookSignal(int signo);
 
 
 MprSignalService *mprCreateSignalService()
@@ -16771,41 +16821,172 @@ MprSignalService *mprCreateSignalService()
         return 0;
     }
     ssp->mutex = mprCreateLock();
-    ssp->signals = mprAllocZeroed(sizeof(MprSignal*) * MPR_MAX_SIGNAL);
+    ssp->signals = mprAllocZeroed(sizeof(MprSignal*) * MPR_MAX_SIGNALS);
+    ssp->standard = mprCreateList(-1, 0);
     return ssp;
 }
 
 
 static void manageSignalService(MprSignalService *ssp, int flags)
 {
-    MprSignal   *sp;
-    int         i;
-
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ssp->mutex);
         mprMark(ssp->signals);
-        for (i = 0; i < MPR_MAX_SIGNAL; i++) {
+        mprMark(ssp->standard);
+#if UNUSED
+        for (i = 0; i < MPR_MAX_SIGNALS; i++) {
             if ((sp = ssp->signals[i]) != 0) {
                 mprMark(sp);
             }
         }
+#endif
+    }
+}
+
+
+void mprStopSignalService()
+{
+    int     i;
+
+    for (i = 0; i < MPR_MAX_SIGNALS; i++) {
+        unhookSignal(i);
     }
 }
 
 
 /*
+    Signals are hooked on demand and remain till the Mpr is destroyed
+ */
+static void hookSignal(int signo, MprSignal *sp)
+{
+    MprSignalService    *ssp;
+    struct sigaction    act, old;
+    int                 rc;
+
+    ssp = MPR->signalService;
+    lock(ssp);
+    rc = sigaction(signo, 0, &old);
+    if (rc == 0 && old.sa_sigaction != signalHandler) {
+        sp->sigaction = old.sa_sigaction;
+        memset(&act, 0, sizeof(act));
+        act.sa_sigaction = signalHandler;
+        sigfillset(&act.sa_mask);
+        if (sigaction(signo, &act, 0) != 0) {
+            mprError("Can't add signal %d, errno %d", mprGetOsError());
+        }
+    }
+    unlock(ssp);
+}
+
+
+static void unhookSignal(int signo)
+{
+    MprSignalService    *ssp;
+    struct sigaction    act;
+
+    ssp = MPR->signalService;
+    lock(ssp);
+    sigaction(signo, 0, &act);
+    if (act.sa_sigaction == signalHandler) {
+        act.sa_sigaction = ssp->prior[signo];
+        sigaction(signo, &act, 0);
+    }
+    unlock(ssp);
+}
+
+
+static void maskSignal(int signo)
+{
+    sigset_t    set;
+
+    sigprocmask(0, 0, &set);
+    sigaddset(&set, signo);
+    sigprocmask(SIG_BLOCK, &set, 0);
+}
+
+
+static void unmaskSignal(int signo)
+{
+    sigset_t    set;
+
+    sigprocmask(0, 0, &set);
+    sigaddset(&set, signo);
+    sigprocmask(SIG_UNBLOCK, &set, 0);
+}
+
+
+/*
+    Actual signal handler - must be async-safe. Do very, very little here. Just set a global flag and wakeup
+    the wait service (mprWakeWaitService is async safe).
+    WARNING: Don't put memory allocation or logging here.
+ */
+static void signalHandler(int signo, siginfo_t *info, void *arg)
+{
+    MprSignalService    *ssp;
+    MprSignalInfo       *ip;
+
+    if (signo < 0 || signo >= MPR_MAX_SIGNALS || MPR == 0) {
+        return;
+    }
+    ssp = MPR->signalService;
+    maskSignal(signo);
+    ip = &ssp->info[signo];
+    ip->siginfo = *info;
+    ip->siginfo.si_signo = signo;
+    ip->arg = arg;
+    ip->triggered = 1;
+    ssp->hasSignals = 1;
+    mprWakeWaitService();
+}
+
+
+static void linkSignalHandler(MprSignal *sp)
+{
+    MprSignalService    *ssp;
+
+    ssp = MPR->signalService;
+    lock(ssp);
+    sp->next = ssp->signals[sp->signo];
+    ssp->signals[sp->signo] = sp;
+    unlock(ssp);
+}
+
+
+static void unlinkSignalHandler(MprSignal *sp)
+{
+    MprSignalService    *ssp;
+    MprSignal           *np, *prev;
+
+    ssp = MPR->signalService;
+    lock(ssp);
+    for (prev = 0, np = ssp->signals[sp->signo]; np; np = np->next) {
+        if (sp == np) {
+            if (prev) {
+                prev->next = sp->next;
+            } else {
+                ssp->signals[sp->signo] = 0;
+            }
+            break;
+        }
+        prev = np;
+    }
+    sp->next = 0;
+    unlock(ssp);
+}
+
+
+/*
     Add a safe-signal handler. This creates a signal handler that will run from a dispatcher without the
-    normal async-safe strictures of normal signal handlers. This manages a chain of signal handlers and ensures
+    normal async-safe strictures of normal signal handlers. This manages a next of signal handlers and ensures
     that prior handlers will be called appropriately.
  */
 MprSignal *mprAddSignalHandler(int signo, void *handler, void *data, MprDispatcher *dispatcher, int flags)
 {
     MprSignal           *sp;
     MprSignalService    *ssp;
-    struct sigaction    act, old;
-    int                 rc;
 
-    if (signo < 0 || signo >= MPR_MAX_SIGNAL) {
+    ssp = MPR->signalService;
+    if (signo < 0 || signo >= MPR_MAX_SIGNALS) {
         mprError("Bad signal: %d", signo);
         return 0;
     }
@@ -16820,71 +17001,9 @@ MprSignal *mprAddSignalHandler(int signo, void *handler, void *data, MprDispatch
     sp->handler = handler;
     sp->dispatcher = dispatcher;
     sp->data = data;
-    ssp = MPR->signalService;
-    lock(ssp);
-    if (ssp->signals[signo] != 0) {
-        sp->chain.sp = ssp->signals[signo];
-    } else {
-        rc = sigaction(signo, 0, &old);
-        if (old.sa_sigaction && old.sa_sigaction != signalHandler) {
-            sp->chain.sigaction = old.sa_sigaction;
-            sp->flags |= MPR_SIGNAL_NATIVE;
-        }
-    }
-    ssp->signals[signo] = sp;
-    memset(&act, 0, sizeof(act));
-    act.sa_sigaction = signalHandler;
-    sigemptyset(&act.sa_mask);
-
-    /* Mask these when processing signals */
-    sigaddset(&act.sa_mask, SIGALRM);
-    sigaddset(&act.sa_mask, SIGCHLD);
-    sigaddset(&act.sa_mask, SIGPIPE);
-    sigaddset(&act.sa_mask, SIGTERM);
-    sigaddset(&act.sa_mask, SIGUSR1);
-    sigaddset(&act.sa_mask, SIGUSR2);
-    if (!mprGetDebugMode(NULL)) {
-        sigaddset(&act.sa_mask, SIGINT);
-    }
-    if (sigaction(signo, &act, 0) != 0) {
-        mprError("Can't add signal %d, errno %d", mprGetOsError());
-        return 0;
-    }
-    unlock(ssp);
+    linkSignalHandler(sp);
+    hookSignal(signo, sp);
     return sp;
-}
-
-
-int mprRemoveSignalHandler(MprSignal *sp)
-{
-    MprSignalService    *ssp;
-    MprSignal           *np, *prev;
-    struct sigaction    old;
-    int                 rc;
-
-    ssp = MPR->signalService;
-    lock(ssp);
-    for (prev = 0, np = ssp->signals[sp->signo]; np; ) {
-        if (sp == np) {
-            if (prev) {
-                prev->chain.sp = sp;
-            } else {
-                ssp->signals[sp->signo] = 0;
-                if (np->flags & MPR_SIGNAL_NATIVE) {
-                    rc = sigaction(sp->signo, 0, &old);
-                    if (old.sa_sigaction == signalHandler) {
-                        old.sa_sigaction = sp->chain.sigaction;
-                        rc = sigaction(sp->signo, &old, 0);
-                    }
-                }
-            }
-            return 0;
-        }
-        prev = np;
-        np = (np->flags & MPR_SIGNAL_NATIVE) ? 0 : np->chain.sp;
-    }
-    unlock(ssp);
-    return MPR_ERR_CANT_FIND;
 }
 
 
@@ -16896,56 +17015,50 @@ static void manageSignal(MprSignal *sp, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(sp->dispatcher);
         mprMark(sp->data);
-        mprMark((sp->flags & MPR_SIGNAL_NATIVE) ? 0 : sp->chain.sp);
+        /* Don't mark next as it will prevent other signal handlers being reclaimed */
+    }
+}
+
+
+void mprRemoveSignalHandler(MprSignal *sp)
+{
+    if (sp) {
+        unlinkSignalHandler(sp);
     }
 }
 
 
 /*
-    Actual signal handler - must be async-safe. Do very, very little here. Just set a global flag and wakeup
-    the wait service (mprWakeWaitService is async safe).
-    WARNING: Don't put memory allocation or logging here.
+    Called by mprServiceEvents after a signal has been received. Create an event and queue on the appropriate dispatcher
  */
-static void signalHandler(int signo, siginfo_t *info, void *arg)
-{
-    MprSignal           *sp;
-    MprSignalService    *ssp;
-
-    if (signo < 0 || signo >= MPR_MAX_SIGNAL) {
-        return;
-    }
-    ssp = MPR->signalService;
-    if ((sp = ssp->signals[signo]) != 0) {
-        mprAssert(sp);
-        mprAssert(sp->signo == signo);
-        sp->info = *info;
-        sp->arg = arg;
-        sp->triggered = 1;
-        ssp->hasSignals = 1;
-        mprWakeWaitService();
-    }
-}
-
-
 void mprServiceSignals()
 {
     MprSignalService    *ssp;
     MprSignal           *sp;
-    int                 i;
+    MprSignalInfo       *ip;
+    int                 signo;
 
     ssp = MPR->signalService;
-    //  MOB - OPT if these were linked or kept min/max limits
-    for (i = 0; i < MPR_MAX_SIGNAL; i++) {
-        if ((sp = ssp->signals[i]) != 0 && sp->triggered) {
-            sp->triggered = 0;
-            mprCreateEvent(sp->dispatcher, "signalEvent", 0, signalEvent, sp, 0);
+    ssp->hasSignals = 0;
+    for (ip = ssp->info; ip < &ssp->info[MPR_MAX_SIGNALS]; ip++) {
+        if (ip->triggered) {
+            ip->triggered = 0;
+            signo = ip->siginfo.si_signo;
+            mprAssert(0 <= signo && signo < MPR_MAX_SIGNALS);
+            mprLog(5, "Caught signal %d", signo);
+            sp = ssp->signals[signo];
+            if (sp) {
+                sp->info = *ip;
+                mprCreateEvent(sp->dispatcher, "signalEvent", 0, signalEvent, sp, 0);
+            }
+            unmaskSignal(signo);
         }
     }
 }
 
 
 /*
-    Invoke chain of signal handlers. Runs from the dispatcher so signal handlers don't have to be async-safe.
+    Invoke the next signal handler. Runs from the dispatcher so signal handlers don't have to be async-safe.
  */
 static void signalEvent(MprSignal *sp, MprEvent *event)
 {
@@ -16953,60 +17066,68 @@ static void signalEvent(MprSignal *sp, MprEvent *event)
     mprAssert(event);
 
     mprLog(7, "signalEvent signo %d, flags %x", sp->signo, sp->flags);
-    do {
-        if (sp->flags & MPR_SIGNAL_BEFORE) {
-            (sp->handler)(sp->data, sp);
-        } 
-        if (sp->chain.sp && sp->flags & MPR_SIGNAL_NATIVE) {
-            (sp->chain.sigaction)(sp->signo, &sp->info, sp->arg);
-        }
-        if (sp->flags & MPR_SIGNAL_AFTER) {
-            (sp->handler)(sp->data, sp);
-        }
-        sp = (sp->flags & MPR_SIGNAL_NATIVE) ? 0 : sp->chain.sp;
-    } while (sp);
+
+    if (sp->flags & MPR_SIGNAL_BEFORE) {
+        (sp->handler)(sp->data, sp);
+    } 
+    if (sp->sigaction) {
+        (sp->sigaction)(sp->signo, &sp->info.siginfo, sp->info.arg);
+    }
+    if (sp->flags & MPR_SIGNAL_AFTER) {
+        (sp->handler)(sp->data, sp);
+    }
+    if ((sp = sp->next) != 0) {
+        /* Create new event for each handler so we get the right dispatcher for each */
+        mprCreateEvent(sp->dispatcher, "signalEvent", 0, signalEvent, sp, 0);
+    }
 }
 
 
 /*
-    Standard signal handler. Do graceful shutdown for SIGTERM. Ignore SIGPIPE and SIGXFSZ. All others do immediate exit.
+    Standard signal handler.  Ignore signals SIGPIPE and SIGXFSZ. 
+    Do graceful shutdown for SIGTERM, immediate exit for SIGABRT.  All other signals do normal exit.
  */
 static void standardSignalHandler(void *ignored, MprSignal *sp)
 {
-    mprLog(7, "standardSignalHandler signo %d, flags %x", sp->signo, sp->flags);
+    mprLog(6, "standardSignalHandler signo %d, flags %x", sp->signo, sp->flags);
 #if DEBUG_IDE
     if (sp->signo == SIGINT) return;
 #endif
-    mprLog(2, "Received signal %d", sp->signo);
     if (sp->signo == SIGTERM) {
-        mprLog(1, "Executing a graceful exit. Waiting for all requests to complete.");
-        mprTerminate(MPR_GRACEFUL);
+        mprTerminate(MPR_EXIT_GRACEFUL);
+
+    } else if (sp->signo == SIGINT) {
+        mprTerminate(MPR_EXIT_IMMEDIATE);
+
     } else if (sp->signo == SIGPIPE || sp->signo == SIGXFSZ) {
         /* Ignore */
+
     } else {
-        mprLog(1, "Exiting immediately ...");
-        mprTerminate(0);
+        mprTerminate(MPR_EXIT_DEFAULT);
     }
 }
 
 
 void mprAddStandardSignals()
 {
-    mprAddSignalHandler(SIGINT,  standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
-    mprAddSignalHandler(SIGQUIT, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
-    mprAddSignalHandler(SIGTERM, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
-    mprAddSignalHandler(SIGUSR1, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
-    mprAddSignalHandler(SIGPIPE, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
+    MprSignalService    *ssp;
+
+    ssp = MPR->signalService;
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGINT,  standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGQUIT, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGTERM, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGUSR1, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGPIPE, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
 #if SIGXFSZ
-    mprAddSignalHandler(SIGXFSZ, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER);
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGXFSZ, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
 #endif
 }
 
-#else /* BLD_UNIX_LIKE */
 
-MprSignalService *mprCreateSignalService() { return mprAlloc(0); }
-int mprRemoveSignalHandler(MprSignal *sp) { return 0; }
-void mprServiceSignals() {}
+#else /* BLD_UNIX_LIKE */
+    MprSignalService *mprCreateSignalService() { return mprAlloc(0); }
+    int mprRemoveSignalHandler(MprSignal *sp) { return 0; }
+    void mprServiceSignals() {}
 #endif /* BLD_UNIX_LIKE */
 
 /*
@@ -19557,11 +19678,11 @@ static void manageTestService(MprTestService *ts, int flags)
 }
 
 
-int mprParseTestArgs(MprTestService *sp, int argc, char *argv[])
+int mprParseTestArgs(MprTestService *sp, int argc, char *argv[], MprTestParser extraParser)
 {
     cchar       *programName;
     char        *argp;
-    int         err, i, depth, nextArg, outputVersion;
+    int         rc, err, i, depth, nextArg, outputVersion;
 
     i = 0;
     err = 0;
@@ -19681,6 +19802,13 @@ int mprParseTestArgs(MprTestService *sp, int argc, char *argv[])
         } else if (*argp != '-') {
             break;
 
+        } else if (extraParser) {
+            rc = extraParser(argc - nextArg, &argv[nextArg]);
+            if (rc < 0) {
+                err++;
+            } else {
+                nextArg += rc;
+            }
         } else {
             mprError("Unknown arg %s", argp);
             err++;
@@ -20410,7 +20538,7 @@ static void adjustThreadCount(int adj)
     mprLock(sp->mutex);
     sp->activeThreadCount += adj;
     if (sp->activeThreadCount <= 0) {
-        mprTerminate(MPR_GRACEFUL);
+        mprTerminate(MPR_EXIT_DEFAULT);
     }
     mprUnlock(sp->mutex);
 }
@@ -20593,7 +20721,10 @@ MprThreadService *mprCreateThreadService()
 
 void mprStopThreadService()
 {
+#if UNUSED
+    //  MOB - this prevents GetCurrentThread from working
     mprClearList(MPR->threadService->threads);
+#endif
     MPR->threadService->threads->mutex = 0;
     MPR->threadService->mutex = 0;
 }
@@ -20619,9 +20750,6 @@ void mprSetThreadStackSize(int size)
 }
 
 
-/*
-    Return the current thread object
- */
 MprThread *mprGetCurrentThread()
 {
     MprThreadService    *ts;
@@ -20648,9 +20776,6 @@ MprThread *mprGetCurrentThread()
 }
 
 
-/*
-    Return the current thread object
- */
 cchar *mprGetCurrentThreadName()
 {
     MprThread       *tp;
@@ -23349,7 +23474,7 @@ int mprStartOsService()
 #if SOLARIS
     openlog(mprGetAppName(), LOG_CONS, LOG_LOCAL0);
 #else
-    openlog(mprGetAppName(), LOG_CONS || LOG_PERROR, LOG_LOCAL0);
+    openlog(mprGetAppName(), LOG_CONS | LOG_PERROR, LOG_LOCAL0);
 #endif
     return 0;
 }

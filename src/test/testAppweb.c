@@ -36,8 +36,8 @@ static MprTestService   *ts;
 
 /******************************* Forward Declarations *************************/
 
+static int  parseArgs(int argc, char **argv);
 static void manageApp(App *app, int flags);
-static void parseArgs(App *app);
 
 /************************************* Code ***********************************/
 
@@ -60,14 +60,13 @@ MAIN(testAppWeb, int argc, char *argv[])
         mprError("Can't create test service");
         exit(2);
     }
-    if (mprParseTestArgs(ts, argc, argv) < 0) {
+    if (mprParseTestArgs(ts, argc, argv, parseArgs) < 0) {
         mprPrintfError("\n"
             "  Commands specifically for %s\n"
             "    --host ip:port      # Set the default host address for testing\n\n",
             mprGetAppName(mpr));
         exit(3);
     }
-    parseArgs(app);
     gp = mprAddTestGroup(ts, &master);
     if (gp == 0) {
         exit(4);
@@ -90,7 +89,7 @@ MAIN(testAppWeb, int argc, char *argv[])
      */
     rc = mprRunTests(ts);
     mprReportTestResults(ts);
-    mprDestroy(MPR_GRACEFUL);
+    mprDestroy(MPR_EXIT_DEFAULT);
     return (rc == 0) ? 0 : -1;
 }
 
@@ -104,31 +103,30 @@ static void manageApp(App *app, int flags)
 }
 
 
-static void parseArgs(App *app)
+static int parseArgs(int argc, char **argv)
 {
-    char    *ip, *cp;
-    int     i;
+    char    *argp, *ip, *cp;
 
     mprAssert(app);
+    argp = argv[argc];
 
-    for (i = 0; i < ts->argc; i++) {
-        if (scmp(ts->argv[i], "--host") == 0 || scmp(ts->argv[i], "-h") == 0) {
-            ip = ts->argv[++i];
-            if (ip == 0) {
-                continue;
-            }
-            if (sncmp(ip, "http://", 7) == 0) {
-                ip += 7;
-            }
-            if ((cp = strchr(ip, ':')) != 0) {
-                *cp++ = '\0';
-                app->port = atoi(cp);
-            } else {
-                app->port = 80;
-            }
-            app->host = sclone(ip);
+    if (scmp(argp, "--host") == 0 || scmp(argp, "-h") == 0) {
+        ip = argv[++argc];
+        if (ip == 0) {
+            return MPR_ERR_BAD_ARGS;
         }
+        if (sncmp(ip, "http://", 7) == 0) {
+            ip += 7;
+        }
+        if ((cp = strchr(ip, ':')) != 0) {
+            *cp++ = '\0';
+            app->port = atoi(cp);
+        } else {
+            app->port = 80;
+        }
+        app->host = sclone(ip);
     }
+    return argc;
 }
 
 
