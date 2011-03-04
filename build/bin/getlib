@@ -50,7 +50,8 @@ do
         if [ "${BLD_HOST_OS}" = "LINUX" ] ; then
             if [ -f /etc/redhat-release -a -x /usr/bin/chcon ] ; then 
                 if [ "`sestatus | grep enabled`" != "" ] ; then 
-                    priv chcon /usr/bin/chcon -t texrel_shlib_t ${BLD_LIB_DIR}/$file
+                    # priv chcon /usr/bin/chcon -t texrel_shlib_t ${BLD_LIB_DIR}/$file
+                    chcon -t texrel_shlib_t ${BLD_LIB_DIR}/$file
                 fi
             fi
             [ -x /sbin/ldconfig ] && ldconfig -n ${BLD_LIB_DIR}
