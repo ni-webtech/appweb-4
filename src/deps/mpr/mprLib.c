@@ -16855,16 +16855,20 @@ static void hookSignal(int signo, MprSignal *sp)
     struct sigaction    act, old;
     int                 rc;
 
+    mprAssert(0 <= signo && signo < MPR_MAX_SIGNALS);
+
     ssp = MPR->signalService;
     lock(ssp);
     rc = sigaction(signo, 0, &old);
     if (rc == 0 && old.sa_sigaction != signalHandler) {
         sp->sigaction = old.sa_sigaction;
+        ssp->prior[signo] = old;
         memset(&act, 0, sizeof(act));
         act.sa_sigaction = signalHandler;
+        act.sa_flags |= SA_SIGINFO | SA_RESTART;
         sigfillset(&act.sa_mask);
         if (sigaction(signo, &act, 0) != 0) {
-            mprError("Can't add signal %d, errno %d", mprGetOsError());
+            mprError("Can't hook signal %d, errno %d", signo, mprGetOsError());
         }
     }
     unlock(ssp);
@@ -16880,8 +16884,9 @@ static void unhookSignal(int signo)
     lock(ssp);
     sigaction(signo, 0, &act);
     if (act.sa_sigaction == signalHandler) {
-        act.sa_sigaction = ssp->prior[signo];
-        sigaction(signo, &act, 0);
+        if (sigaction(signo, &ssp->prior[signo], 0) != 0) {
+            mprError("Can't unhook signal %d, errno %d", signo, mprGetOsError());
+        }
     }
     unlock(ssp);
 }
@@ -16956,7 +16961,7 @@ static void unlinkSignalHandler(MprSignal *sp)
             if (prev) {
                 prev->next = sp->next;
             } else {
-                ssp->signals[sp->signo] = 0;
+                ssp->signals[sp->signo] = sp->next;
             }
             break;
         }
@@ -17054,10 +17059,14 @@ void mprServiceSignals()
  */
 static void signalEvent(MprSignal *sp, MprEvent *event)
 {
+    MprSignal   *np;
+    
     mprAssert(sp);
     mprAssert(event);
 
     mprLog(7, "signalEvent signo %d, flags %x", sp->signo, sp->flags);
+
+    np = sp->next;
 
     if (sp->flags & MPR_SIGNAL_BEFORE) {
         (sp->handler)(sp->data, sp);
@@ -17068,9 +17077,9 @@ static void signalEvent(MprSignal *sp, MprEvent *event)
     if (sp->flags & MPR_SIGNAL_AFTER) {
         (sp->handler)(sp->data, sp);
     }
-    if ((sp = sp->next) != 0) {
+    if (np) {
         /* Create new event for each handler so we get the right dispatcher for each */
-        mprCreateEvent(sp->dispatcher, "signalEvent", 0, signalEvent, sp, 0);
+        mprCreateEvent(np->dispatcher, "signalEvent", 0, signalEvent, np, 0);
     }
 }
 
