@@ -5068,14 +5068,15 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 
 #if BLD_UNIX_LIKE
     char    *cp, **envp;
-    int     index, i, hasPath, hasLibPath;
+    int     ecount, index, i, hasPath, hasLibPath;
 
     cmd->argv = argv;
     cmd->argc = argc;
     cmd->env = 0;
 
     if (env) {
-        if ((envp = mprAlloc((i + 3) * sizeof(char*))) == NULL) {
+        for (ecount = 0; env && env[ecount]; ecount++) ;
+        if ((envp = mprAlloc((ecount + 3) * sizeof(char*))) == NULL) {
             mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
@@ -5113,6 +5114,15 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 #endif
 
 #if BLD_WIN_LIKE
+    /*
+        WARNING: If starting a program compiled with Cygwin, there is a bug in Cygwin's parsing of the command
+        string where embedded quotes are parsed incorrectly by the Cygwin CRT runtime. If an arg starts with a 
+        drive spec, embedded backquoted quotes will be stripped and the backquote will be passed in. Windows CRT 
+        handles this correctly.  For example:  
+            ./args "c:/path \"a b\"
+            Cygwin will parse as  argv[1] == c:/path \a \b
+            Windows will parse as argv[1] == c:/path "a b"
+     */
     char        *program, *SYSTEMROOT, **ep, **ap, *dp, *cp, *localArgv[2], *saveArg0, *PATH, *endp, *start;
     ssize       len;
     int         i, hasPath, hasSystemRoot, quote;
@@ -5164,13 +5174,6 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
     dp = cmd->command;
     for (ap = &argv[0]; *ap; ) {
         start = cp = *ap;
-#if UNUSED
-        if (*cp == '"' || *cp == '\"') {
-            quote = *cp++;
-        } else {
-            quote = '"';
-        }
-#endif
         quote = '"';
         for (*dp++ = quote; *cp; ) {
             if (*cp == quote && !(cp > start && cp[-1] == '\\')) {
@@ -5179,11 +5182,6 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
             *dp++ = *cp++;
         }
         *dp++ = quote;
-#if UNUSED
-        if (*start != quote) {
-            *dp++ = quote;
-        }
-#endif
         if (*++ap) {
             *dp++ = ' ';
         }
@@ -5924,8 +5922,11 @@ int mprWaitForCond(MprCond *cp, MprTime timeout)
             rc = pthread_cond_timedwait(&cp->cv, &cp->mutex->cs,  &waitTill);
             if (rc == ETIMEDOUT) {
                 rc = MPR_ERR_TIMEOUT;
+            } else if (rc == EAGAIN) {
+                rc = 0;
             } else if (rc != 0) {
                 mprAssert(rc == 0);
+                mprError("pthread_cond_timedwait error rc %d", rc);
                 rc = MPR_ERR;
             }
 #endif
