@@ -2558,12 +2558,14 @@ void mprTerminate(int how)
     }
     how = MPR->exitStrategy;
     if (how == MPR_EXIT_IMMEDIATE) {
-        mprLog(1, "Executing an immediate exit. Aborting all requests and services.");
+        mprLog(2, "Immediate exit. Aborting all requests and services.");
         exit(0);
     } else if (how == MPR_EXIT_NORMAL) {
-        mprLog(1, "Executing a normal exit. Flush buffers, close files and aborting existing requests.");
+        mprLog(2, "Normal exit. Flush buffers, close files and aborting existing requests.");
     } else if (how == MPR_EXIT_GRACEFUL) {
-        mprLog(1, "Executing a graceful exit. Waiting for existing requests to complete.");
+        mprLog(2, "Graceful exit. Waiting for existing requests to complete.");
+    } else {
+        mprLog(2, "HOW %d", how);
     }
 
     /*
@@ -2577,7 +2579,6 @@ void mprTerminate(int how)
         Set stopping state and wake up everybody
      */
     MPR->state = MPR_STOPPING;
-    mprLog(MPR_CONFIG, "Exiting started");
     mprWakeDispatchers();
     mprWakeWorkers();
     mprWakeGCService();
@@ -2728,13 +2729,12 @@ bool mprIsIdle()
 static int parseArgs(char *args, char **argv)
 {
     char    *dest, *src, *start;
-    int     bquote, quote, argc;
+    int     quote, argc;
 
-#if BLD_WIN_LIKE
-    bquote = 0;
-#else
-    bquote = '\\';
-#endif
+    /*
+        Example     "showColors" red 'light blue' "yellow white" 'Can\'t \"render\"'
+        Becomes:    ["showColors", "red", "light blue", "yellow white", "Can't \"render\""]
+     */
     for (argc = 0, src = args; src && *src != '\0'; argc++) {
         while (isspace((int) *src)) {
             src++;
@@ -2747,46 +2747,28 @@ static int parseArgs(char *args, char **argv)
             quote = *src;
             src++; 
             dest++;
-            if (argv) {
-                argv[argc] = src;
-            }
-            while (*src && (*src != quote || (src > start && src[-1] == bquote))) {
-                if (argv) {
-                    *dest++ = *src;
-                }
-                src++;
-            }
         } else {
-            while (*src && src > start && *src == bquote) {
+            quote = 0;
+        }
+        if (argv) {
+            argv[argc] = src;
+        }
+        while (*src) {
+            if (*src == '\\' && src[1] && (src[1] == '\\' || src[1] == '"' || src[1] == '\'')) { 
                 src++;
-                if (argv) {
-                    *dest++ = *src;
-                }
-                src++;
-            }
-            if (argv) {
-                argv[argc] = src;
-            }
-            //  Parse the arg, remove back-quotes and stop at the first non-back-quoted space
-            while (*src) {
-                if (*src == bquote && src[1]) {
-                    src++;
-                    if (argv) {
-                        if (argv[argc] == &src[-1]) {
-                            argv[argc] = dest = src;
-                        }
-                        *dest++ = *src;
-                    }
-                } else {
-                    if (isspace((int) *src)) {
+            } else {
+                if (quote) {
+                    if (*src == quote && !(src > start && src[-1] == '\\')) {
                         break;
                     }
-                    if (argv) {
-                        *dest++ = *src;
-                    }
+                } else if (*src == ' ') {
+                    break;
                 }
-                src++;
             }
+            if (argv) {
+                *dest++ = *src;
+            }
+            src++;
         }
         if (*src != '\0') {
             src++;
@@ -4322,35 +4304,32 @@ static void manageCmd(MprCmd *cmd, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(cmd->program);
         mprMark(cmd->makeArgv);
-#if UNUSED
-        /* ARGV is passed in */
-        mprMark(cmd->argv);
-#endif
-        mprMark(cmd->dir);
-        mprMark(cmd->dispatcher);
-        mprMark(cmd->callbackData);
-        mprMark(cmd->forkData);
-        mprMark(cmd->signal);
-        mprMark(cmd->stdoutBuf);
-        mprMark(cmd->stderrBuf);
-        mprMark(cmd->userData);
-        for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
-            mprMark(cmd->files[i].name);
-        }
         mprMark(cmd->env);
-#if BLD_WIN_LIKE
-        mprMark(cmd->command);
-        mprMark(cmd->arg0);
-#else
+#if BLD_UNIX_LIKE
         if (cmd->env) {
             for (i = 0; cmd->env[i]; i++) {
                 mprMark(cmd->env);
             }
         }
 #endif
+        mprMark(cmd->dir);
+        for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
+            mprMark(cmd->files[i].name);
+        }
         for (i = 0; i < MPR_CMD_MAX_PIPE; i++) {
             mprMark(cmd->handlers[i]);
         }
+        mprMark(cmd->dispatcher);
+        mprMark(cmd->callbackData);
+        mprMark(cmd->signal);
+        mprMark(cmd->forkData);
+        mprMark(cmd->stdoutBuf);
+        mprMark(cmd->stderrBuf);
+        mprMark(cmd->userData);
+#if BLD_WIN_LIKE
+        mprMark(cmd->command);
+        mprMark(cmd->arg0);
+#endif
         mprMark(cmd->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
@@ -4665,7 +4644,6 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
         cmd->requiredEof++;
     }
     addCmdHandlers(cmd);
-    mprLog(4, "mprStartCmd %s", cmd->program);
     rc = startProcess(cmd);
     sunlock(cmd);
     return rc;
@@ -4782,11 +4760,11 @@ void mprDisableCmdEvents(MprCmd *cmd, int channel)
  */
 static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
 {
-    MprTime mark, remaining;
-    HANDLE  handles[MPR_CMD_MAX_PIPE];
-    int     i, rc, nbytes;
+    MprTime     mark, remaining, delay;
+    int         i, rc, nbytes;
 
     mark = mprGetTime();
+    remaining = timeout;
     for (i = MPR_CMD_STDOUT; i < MPR_CMD_MAX_PIPE; i++) {
         if (cmd->files[i].handle) {
             rc = PeekNamedPipe(cmd->files[i].handle, NULL, 0, NULL, &nbytes, NULL);
@@ -4797,8 +4775,15 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
             }
         }
     }
+    if (cmd->files[MPR_CMD_STDIN].handle) {
+        /* Not finalized */
+        mprQueueIOEvent(cmd->handlers[MPR_CMD_STDIN]);
+        mprWaitForEvent(cmd->dispatcher, remaining);
+        return;
+    }
     if (cmd->process) {
-        if (WaitForSingleObject(cmd->process, (cmd->eofCount == cmd->requiredEof) ? remaining : 0) == WAIT_OBJECT_0) {
+        delay = (cmd->eofCount == cmd->requiredEof && cmd->files[MPR_CMD_STDIN].handle == 0) ? remaining : 0;
+        if (WaitForSingleObject(cmd->process, (DWORD) delay) == WAIT_OBJECT_0) {
             reapCmd(cmd);
             return;
         }
@@ -4806,6 +4791,7 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
         mprSleep(10);
     }
     if (cmd->eofCount == cmd->requiredEof && cmd->process) {
+        remaining = mprGetRemainingTime(mark, timeout);
         rc = WaitForSingleObject(cmd->process, (DWORD) remaining);
         if (rc == WAIT_OBJECT_0) {
             reapCmd(cmd);
@@ -5089,9 +5075,6 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
     cmd->env = 0;
 
     if (env) {
-        for (i = 0; env && env[i]; i++) {
-            mprLog(6, "cmd: env[%d]: %s", i, env[i]);
-        }
         if ((envp = mprAlloc((i + 3) * sizeof(char*))) == NULL) {
             mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
@@ -5119,19 +5102,20 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
             envp[index++] = mprAsprintf("%s=%s", LD_LIBRARY_PATH, cp);
         }
         envp[index++] = '\0';
+        mprLog(4, "mprStartCmd %s", cmd->program);
         for (i = 0; i < argc; i++) {
-            mprLog(4, "cmd: arg[%d]: %s", i, argv[i]);
+            mprLog(4, "    arg[%d]: %s", i, argv[i]);
         }
         for (i = 0; envp[i]; i++) {
-            mprLog(4, "cmd: env[%d]: %s", i, envp[i]);
+            mprLog(4, "    env[%d]: %s", i, envp[i]);
         }
     }
 #endif
 
 #if BLD_WIN_LIKE
-    char        *program, *SYSTEMROOT, **ep, **ap, *destp, *cp, *localArgv[2], *saveArg0, *PATH, *endp;
+    char        *program, *SYSTEMROOT, **ep, **ap, *dp, *cp, *localArgv[2], *saveArg0, *PATH, *endp, *start;
     ssize       len;
-    int         i, hasPath, hasSystemRoot;
+    int         i, hasPath, hasSystemRoot, quote;
 
     mprAssert(argc > 0 && argv[0] != NULL);
 
@@ -5166,36 +5150,51 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
     argv[0] = program;
     argc = 0;
     for (len = 0, ap = argv; *ap; ap++) {
-        len += strlen(*ap) + 1 + 2;         /* Space and possible quotes */
+        len += (strlen(*ap) * 2) + 1 + 2;         /* Space and possible quotes and worst case backquoting */
         argc++;
     }
     cmd->command = mprAlloc(len + 1);
     cmd->command[len] = '\0';
     
     /*
-        Add quotes to all args that have spaces in them including "program"
+        Add quotes around all args and backquote [", ', \\]
+        Example:    ["showColors", "red", "light blue", "Can't \"render\""]
+        Becomes:    "showColors" "red" "light blue" "Can't \"render\""
      */
-    destp = cmd->command;
+    dp = cmd->command;
     for (ap = &argv[0]; *ap; ) {
-        cp = *ap;
-        if ((strchr(cp, ' ') != 0) && cp[0] != '\"') {
-            *destp++ = '\"';
-            strcpy(destp, cp);
-            destp += strlen(cp);
-            *destp++ = '\"';
+        start = cp = *ap;
+#if UNUSED
+        if (*cp == '"' || *cp == '\"') {
+            quote = *cp++;
         } else {
-            strcpy(destp, cp);
-            destp += strlen(cp);
+            quote = '"';
         }
+#endif
+        quote = '"';
+        for (*dp++ = quote; *cp; ) {
+            if (*cp == quote && !(cp > start && cp[-1] == '\\')) {
+                *dp++ = '\\';
+            }
+            *dp++ = *cp++;
+        }
+        *dp++ = quote;
+#if UNUSED
+        if (*start != quote) {
+            *dp++ = quote;
+        }
+#endif
         if (*++ap) {
-            *destp++ = ' ';
+            *dp++ = ' ';
         }
     }
-    *destp = '\0';
+    *dp = '\0';
+
     argv[0] = saveArg0;
 
+    mprLog(4, "mprStartCmd %s", cmd->command);
     for (i = 0; i < argc; i++) {
-        mprLog(4, "cmd: arg[%d]: %s", i, argv[i]);
+        mprLog(5, "    arg[%d]: %s", i, argv[i]);
     }
 
     /*
@@ -5220,26 +5219,25 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
         }
         len += 2;       /* Windows requires 2 nulls for the block end */
 
-        destp = (char*) mprAlloc(len);
-        endp = &destp[len];
-        cmd->env = (char**) destp;
+        dp = (char*) mprAlloc(len);
+        endp = &dp[len];
+        cmd->env = (char**) dp;
         for (ep = env; ep && *ep; ep++) {
-            mprLog(4, "cmd: env[%d]: %s", i, *ep);
-            strcpy(destp, *ep);
-            mprLog(7, "cmd: Set env variable: %s", destp);
-            destp += strlen(*ep) + 1;
+            mprLog(4, "    env[%d]: %s", i, *ep);
+            strcpy(dp, *ep);
+            dp += strlen(*ep) + 1;
         }
         if (!hasSystemRoot) {
-            mprSprintf(destp, (endp - destp - 1), "SYSTEMROOT=%s", SYSTEMROOT);
-            destp += 12 + strlen(SYSTEMROOT);
+            mprSprintf(dp, (endp - dp - 1), "SYSTEMROOT=%s", SYSTEMROOT);
+            dp += 12 + strlen(SYSTEMROOT);
         }
         if (!hasPath) {
-            mprSprintf(destp, (endp - destp - 1), "PATH=%s", PATH);
-            destp += 6 + strlen(PATH);
+            mprSprintf(dp, (endp - dp - 1), "PATH=%s", PATH);
+            dp += 6 + strlen(PATH);
         }
-        *destp++ = '\0';
-        *destp++ = '\0';                        /* Windows requires two nulls */
-        mprAssert(destp <= endp);
+        *dp++ = '\0';
+        *dp++ = '\0';                        /* Windows requires two nulls */
+        mprAssert(dp <= endp);
     }
 #endif /* BLD_WIN_LIKE */
     return 0;
@@ -16805,7 +16803,6 @@ void stubMprSelectWait() {}
 
 #if BLD_UNIX_LIKE
 
-
 static void manageSignal(MprSignal *sp, int flags);
 static void manageSignalService(MprSignalService *ssp, int flags);
 static void signalEvent(MprSignal *sp, MprEvent *event);
@@ -16831,15 +16828,9 @@ static void manageSignalService(MprSignalService *ssp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ssp->mutex);
-        mprMark(ssp->signals);
         mprMark(ssp->standard);
-#if UNUSED
-        for (i = 0; i < MPR_MAX_SIGNALS; i++) {
-            if ((sp = ssp->signals[i]) != 0) {
-                mprMark(sp);
-            }
-        }
-#endif
+        mprMark(ssp->signals);
+        /* Don't mark signals elements as it will prevent signal handlers being reclaimed */
     }
 }
 
@@ -20026,7 +20017,7 @@ static void runTestThread(MprList *groups, MprThread *tp)
         runInit(gp);
     }
     count = 0;
-    for (i = (sp->iterations + sp->numThreads - 1) / sp->numThreads; i >= 0; i--) {
+    for (i = (sp->iterations + sp->numThreads - 1) / sp->numThreads; i > 0; i--) {
         if (sp->totalFailedCount > 0 && !sp->continueOnFailures) {
             break;
         }
@@ -20034,7 +20025,7 @@ static void runTestThread(MprList *groups, MprThread *tp)
         while ((gp = mprGetNextItem(groups, &next)) != 0) {
             runTestGroup(gp);
         }
-        mprPrintf("%12s Iteration %d complete (%s)\n", "[Notice]", count++, mprGetCurrentThreadName());
+        mprPrintf("%12s Iteration %d complete (%s)\n", "[Notice]", ++count, mprGetCurrentThreadName());
     }
     for (next = 0; (gp = mprGetNextItem(groups, &next)) != 0; ) {
         runTerm(gp);

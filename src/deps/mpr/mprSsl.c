@@ -2226,7 +2226,19 @@ MprModule *mprSslInit(cchar *path)
 }
 
 
-static void dummySslDestructor(void *ptr, int flags) {}
+static void defaultSslManager(MprSsl *ssl, int flags) 
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ssl->key);
+        mprMark(ssl->cert);
+        mprMark(ssl->keyFile);
+        mprMark(ssl->certFile);
+        mprMark(ssl->caFile);
+        mprMark(ssl->caPath);
+        mprMark(ssl->ciphers);
+    }
+}
+
 
 /*
     Create a new Ssl context object
@@ -2235,10 +2247,7 @@ MprSsl *mprCreateSsl()
 {
     MprSsl      *ssl;
 
-    /*
-        Create with a dummy destructor. Providers will can install one if required.
-     */
-    if ((ssl = mprAllocObj(MprSsl, dummySslDestructor)) == 0) {
+    if ((ssl = mprAllocObj(MprSsl, defaultSslManager)) == 0) {
         return 0;
     }
     ssl->ciphers = sclone(MPR_DEFAULT_CIPHER_SUITE);

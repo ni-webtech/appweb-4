@@ -2061,8 +2061,8 @@ module ejs {
                 an array of arguments. Using an array of args can simplify quoting if the args have embedded spaces or
                 quotes.
             @param options. Command options hash. Supported options are:
-            @options detach Boolean If true, run the command in the background. Do not capture the command's stdout or
-                stderr, nor collect status. Defaults to false.
+            @options detach Boolean If true, run the command and return immediately. If detached, finalize() must be
+                called to signify the end of data being written to the command's stdin.
             @options dir Path or String. Directory to set as the current working directory for the command.
             @options exception Boolean If true, throw exceptions if the command returns a non-zero status code. 
                 Defaults to false.
@@ -2222,7 +2222,8 @@ module ejs {
 
         /**
             @duplicate Stream.write
-            Call finalize() to signify the end of write data.
+            Call finalize() to signify the end of write data. Failure to call finalize() may prevent some commands 
+            from exiting.
          */
         native function write(...data): Number
 
@@ -2230,7 +2231,7 @@ module ejs {
         /* Static Helper Methods */
 
         /**
-            Start a command in the background as a daemon. 
+            Start a command in the background as a daemon.  No data can be written to the daemon's stdin.
             @return The process ID. This pid can be used with kill().
          */
         static function daemon(cmdline: Object, options: Object = null): Number {
@@ -2239,6 +2240,7 @@ module ejs {
             blend(options, {detach: true})
             cmd.start(cmdline, options)
             cmd.start()
+            cmd.finalize()
             return cmd.pid
         }
 
@@ -2280,18 +2282,43 @@ module ejs {
             return cmd.readString()
         }
 
-        /*
-            Run a command using the system command shell and wait for completion. This supports pipelines.
-            Any response trailing newline is trimmed.
+        /**
+            Run a command using the system command shell and wait for completion. On Windows, this requires that
+            /bin/sh.exe is installed (See Cygwin). 
+            @param command The (optional) command line to initialize with. The command may be either a string or
+                an array of arguments. 
          */
         static function sh(command: Object, data: Object = null): String {
+            /*
+                The form is:  /bin/sh -c "command args"
+                The args must be wrapped in single quotes if they contain spaces. 
+                Example:
+                    This:       ["showColors", "red", "light blue", "Can't \"render\""]
+                    Becomes:    /bin/sh -c "showColors red 'light blue' 'Can\'t \"render\"'
+             */
             if (command is Array) {
                 for (let arg in command) {
-                    command[arg] = '"' + command[arg].toString().replace(/\\/g, "\\\\").trimEnd('\n') + '"'
+                    /*  
+                        Backquote backslashes and backquote quotes. Then wrap in single quotes. Single quotes are 
+                        required because Cmd on Windows must format the entire command as a single string (not argv[])
+                     */
+                    let s = command[arg].toString().trimEnd('\n')           // .replace(/\\/g, "\\\\")
+                    s = s.replace(/\"/g, '\\\"').replace(/\'/g, '\\\'')
+                    command[arg] = "'" + s + "'"
                 }
                 return run(["/bin/sh", "-c"] + [command.join(" ")], data).trimEnd()
             }
-            return run(["/bin/sh", "-c", command.toString().trim('\n')], data).trimEnd()
+            /*
+                Must quote single and double quotes as the comand will be wrapped in quotes on Windows.
+                WARNING: If starting a program compiled with Cygwin, Cygwin has a bug where embedded quotes are parsed
+                incorrectly by the Cygwin crt runtime startup. If an arg starts with a drive spec, embedded backquoted 
+                quotes will be stripped and the backquote will be passed in. Windows crt runtime handles this correctly.
+                For example:  ./args "c:/path \"a b\"
+                    Cygwin will parse as  argv[1] == c:/path \a \b
+                    Windows will parse as argv[1] == c:/path "a b"
+             */
+            command = command.toString().trimEnd('\n').replace(/\"/g, '\\\"')   // .replace(/\'/g, '\\\'')
+            return run(["/bin/sh", "-c", command], data).trimEnd()
         }
     }
 }
