@@ -32227,6 +32227,7 @@ static EjsUri *cloneUri(Ejs *ejs, EjsUri *src, bool deep)
 {
     EjsUri     *dest;
 
+    //  MOB - should clone the pot properties
     dest = ejsCreateObj(ejs, TYPE(src), 0);
     /*  Deep copy will complete the uri */
     dest->uri = httpCloneUri(src->uri, deep);
@@ -33302,8 +33303,7 @@ EjsUri *ejsCreateUriFromParts(Ejs *ejs, cchar *scheme, cchar *host, int port, cc
 {
     EjsUri      *up;
 
-    up = ejsCreateObj(ejs, ejs->uriType, 0);
-    if (up == 0) {
+    if ((up = ejsCreateObj(ejs, ejs->uriType, 0)) == 0) {
         return 0;
     }
     up->uri = httpCreateUriFromParts(scheme, host, port, path, reference, query, complete);
@@ -33314,7 +33314,6 @@ EjsUri *ejsCreateUriFromParts(Ejs *ejs, cchar *scheme, cchar *host, int port, cc
 static void manageUri(EjsUri *up, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        ejsManagePot(up, flags);
         mprMark(up->uri);
     }
 }
