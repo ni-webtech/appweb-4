@@ -332,9 +332,14 @@ void mprDestroyMemService()
 {
     volatile MprRegion  *region;
     MprMem              *mp, *next;
+    MprTime             mark;
 
     if (heap->destroying) {
         return;
+    }
+    mark = mprGetTime();
+    while (MPR->marker && mprGetRemainingTime(mark, MPR_TIMEOUT_STOP) > 0) {
+        mprSleep(1);
     }
     heap->destroying = 1;
     for (region = heap->regions; region; region = region->next) {
@@ -1047,9 +1052,6 @@ void mprWakeGCService()
 {
     mprSignalCond(heap->markerCond);
     mprResumeThreads();
-#if UNUSED
-    triggerGC(1);
-#endif
 }
 
 
@@ -1110,10 +1112,6 @@ static void synchronize()
     } else {
         LOG(7, "DEBUG: Pause for GC sync timed out");
     }
-#else
-#if UNUSED
-    nextGen();
-#endif
 #endif
     heap->mustYield = 0;
     mprResumeThreads();
@@ -1388,7 +1386,7 @@ static void marker(void *unused, MprThread *tp)
     tp->stickyYield = 1;
     tp->yielded = 1;
 
-    while (!mprIsStoppingCore()) {
+    while (!mprIsFinished()) {
         if (!heap->mustYield) {
             mprWaitForCond(heap->markerCond, -1);
         }
@@ -1471,7 +1469,7 @@ void mprYield(int flags)
     if (flags & MPR_YIELD_STICKY) {
         tp->stickyYield = 1;
     }
-    while (tp->yielded && MPR->marker && (heap->mustYield || (flags & MPR_YIELD_BLOCK))) {
+    while (tp->yielded && (heap->mustYield || (flags & MPR_YIELD_BLOCK)) && MPR->marker) {
         if (heap->flags & MPR_MARK_THREAD) {
             mprSignalCond(ts->cond);
         }
@@ -1497,9 +1495,9 @@ void mprResetYield()
     /* Flush yielded */
     mprAtomicBarrier();
     if (MPR->marking) {
+        //  MOB - why?
         mprYield(0);
     }
-    mprAssert(!MPR->marking);
 }
 
 
@@ -2511,7 +2509,8 @@ static void manageMpr(Mpr *mpr, int flags)
  */
 void mprDestroy(int how)
 {
-    int     gmode;
+    MprTime     mark;
+    int         gmode;
 
     if (how != MPR_EXIT_DEFAULT) {
         MPR->exitStrategy = how;
@@ -2524,7 +2523,7 @@ void mprDestroy(int how)
     if (MPR->state < MPR_STOPPING) {
         mprTerminate(how);
     }
-    gmode = MPR_FORCE_GC | MPR_COMPLETE_GC | (how & MPR_EXIT_IMMEDIATE) ? 0 : MPR_WAIT_GC;
+    gmode = MPR_FORCE_GC | MPR_COMPLETE_GC | MPR_WAIT_GC;
     mprRequestGC(gmode);
 
     if (how == MPR_EXIT_GRACEFUL) {
@@ -2539,13 +2538,25 @@ void mprDestroy(int how)
     mprStopSignalService();
 
     /* Final GC to run all finalizers */
-    mprRequestGC(gmode);
-
-    mprStopThreadService();
     MPR->state = MPR_FINISHED;
+    mprRequestGC(gmode);
+    mprAssert(!MPR->marker);
+    mprStopThreadService();
+
+    /*
+        Must wait for the GC, ServiceEvents and worker threads to exit. Otherwise we have races when freeing memory.
+     */
+    mark = mprGetTime();
+    while (MPR->marker || MPR->eventing || mprGetListLength(MPR->workerService->busyThreads) > 0) {
+        if (mprGetRemainingTime(mark, MPR_TIMEOUT_STOP) <= 0) {
+            break;
+        }
+        mprSleep(10);
+    }
     mprStopOsService();
     mprDestroyMemService();
 }
+
 
 
 /*
@@ -4412,10 +4423,6 @@ static void resetCmd(MprCmd *cmd)
 
     if (cmd->pid && !(cmd->flags & MPR_CMD_DETACH)) {
         mprStopCmd(cmd, -1);
-#if UNUSED
-        //  MOB - can't wait from manage
-        mprWaitForCmd(cmd, MPR_TIMEOUT_STOP_TASK);
-#endif
         reapCmd(cmd);
         cmd->pid = 0;
     }
@@ -4898,16 +4905,6 @@ static void reapCmd(MprCmd *cmd)
     rc = 0;
 #endif
 #if BLD_WIN_LIKE
-#if UNUSED
-    //  MOB - should not need to do this again
-    if ((rc = WaitForSingleObject(cmd->process, 10)) != WAIT_OBJECT_0) {
-        if (rc == WAIT_TIMEOUT) {
-            return;
-        }
-        mprLog(6, "cmd: WaitForSingleObject no child to reap rc %d, %d", rc, GetLastError());
-        return;
-    }
-#endif
     if (GetExitCodeProcess(cmd->process, (ulong*) &status) == 0) {
         mprLog(3, "cmd: GetExitProcess error");
         return;
@@ -5818,8 +5815,7 @@ MprCond *mprCreateCond()
 {
     MprCond     *cp;
 
-    cp = mprAllocObj(MprCond, manageCond);
-    if (cp == 0) {
+    if ((cp = mprAllocObj(MprCond, manageCond)) == 0) {
         return 0;
     }
     cp->triggered = 0;
@@ -7253,9 +7249,6 @@ void mprDestroyDispatcher(MprDispatcher *dispatcher)
                 mprRemoveEvent(event);
             }
         }
-#if UNUSED
-        dispatcher->service = 0;
-#endif
         unlock(es);
     }
 }
@@ -7278,25 +7271,14 @@ static void manageDispatcher(MprDispatcher *dispatcher, int flags)
         mprMark(dispatcher->parent);
         mprMark(dispatcher->service);
         mprMark(dispatcher->requiredWorker);
+
         lock(es);
-#if UNUSED
-        if (dispatcher->current && !(dispatcher->current->flags & MPR_EVENT_STATIC)) {
-            mprMark(dispatcher->current);
-        }
-#else
-        mprMark(dispatcher->current);
-#endif
         q = dispatcher->eventQ;
         for (event = q->next; event != q; event = event->next) {
             mprAssert(event->magic == MPR_EVENT_MAGIC);
-#if UNUSED
-            if (!(event->flags & MPR_EVENT_STATIC)) {
-#endif
-                mprMark(event);
-#if UNUSED
-            }
-#endif
+            mprMark(event);
         }
+        mprMark(dispatcher->current);
         mprMark(dispatcher->eventQ);
         unlock(es);
         
@@ -11613,6 +11595,16 @@ void mprBreakpoint()
         asm("int $03");
         /*  __asm__ __volatile__ ("int $03"); */
     #endif
+#endif
+#if DEBUG_PAUSE
+    {
+        static int  paused = 1;
+        int         i;
+        printf("Paused to permit debugger to attach - will awake in 2 minutes\n");
+        for (i = 0; i < 120 && paused; i++) {
+            mprSleep(1000);
+        }
+    }
 #endif
 }
 
@@ -20124,9 +20116,6 @@ static void manageTestGroup(MprTestGroup *gp, int flags)
         mprMark(gp->root);
         mprMark(gp->groups);
         mprMark(gp->cases);
-#if UNUSED
-        mprMark(gp->def);
-#endif
         mprMark(gp->http);
         mprMark(gp->conn);
         mprMark(gp->content);
@@ -20725,10 +20714,6 @@ MprThreadService *mprCreateThreadService()
 
 void mprStopThreadService()
 {
-#if UNUSED
-    //  MOB - this prevents GetCurrentThread from working
-    mprClearList(MPR->threadService->threads);
-#endif
     MPR->threadService->threads->mutex = 0;
     MPR->threadService->mutex = 0;
 }

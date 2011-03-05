@@ -2216,9 +2216,6 @@ extern void mprAddRoot(void *ptr);
     Other flags include MPR_GC_FROM_EVENTS which must be specified if calling mprCollectGarbage from a routine that 
     also blocks on mprServiceEvents. Similarly, use MPR_GC_FROM_OWN if managing garbage collections manually.
   */
-#if UNUSED
-extern void mprGC(int flags);
-#endif
 extern void mprRequestGC(int flags);
 //  MOB DOC
 
@@ -5099,10 +5096,6 @@ extern void mprUnloadModule(MprModule *mp);
 #define MPR_EVENT_DONT_QUEUE        0x4     /* Don't queue the event. User must call mprQueueEvent */
 #define MPR_EVENT_STATIC_DATA       0x8     /* Event data is permanent and should not be marked by GC */
 
-#if UNUSED
-#define MPR_EVENT_STATIC        0x2
-#endif
-
 #define MPR_EVENT_MAGIC         0x12348765
 #define MPR_DISPATCHER_MAGIC    0x23418877
 
@@ -6605,12 +6598,12 @@ typedef struct MprSignal {
 
 
 typedef struct MprSignalService {
-#if BLD_UNIX_LIKE
     MprSignal       **signals;              /**< Signal handlers */
     MprList         *standard;              /**< Standard signal handlers */
     MprMutex        *mutex;                 /**< Multithread sync */
     MprSignalInfo   info[MPR_MAX_SIGNALS];  /**< Actual signal info and arg */
     int             hasSignals;             /**< Signal sent to process */
+#if BLD_UNIX_LIKE
     struct sigaction prior[MPR_MAX_SIGNALS];/**< Prior sigaction handler before hooking */
 #endif
 } MprSignalService;
@@ -7102,9 +7095,6 @@ extern Mpr *mprGetMpr();
 #endif
 
 #define MPR_DISABLE_GC          0x1         /**< Disable GC */
-#if UNUSED
-#define MPR_OWN_GC              0x2         /**< User will explicitly manage calls to mprManualGC */
-#endif
 #define MPR_MARK_THREAD         0x4         /**< Start a dedicated marker thread for garbage collection */
 #define MPR_SWEEP_THREAD        0x8         /**< Start a dedicated sweeper thread for garbage collection */
 #define MPR_USER_EVENTS_THREAD  0x10        /**< User will explicitly manage own mprServiceEvents calls */
