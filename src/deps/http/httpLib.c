@@ -2514,12 +2514,13 @@ void httpConnTimeout(HttpConn *conn)
         if ((conn->lastActivity + limits->inactivityTimeout) < now) {
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT,
                 "Inactive request timed out. Exceeded inactivity timeout of %d sec. Uri: \"%s\"", 
-                limits->requestTimeout / 1000, rx->uri);
+                limits->inactivityTimeout / 1000, rx->uri);
 
         } else if ((conn->started + limits->requestTimeout) < now) {
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT, 
                 "Request timed out, exceeded timeout %d sec. Url %s", limits->requestTimeout / 1000, rx->uri);
         }
+        httpFinalize(conn);
     }
 }
 
@@ -2691,13 +2692,10 @@ static void readEvent(HttpConn *conn)
                 break;
             } else if (conn->state < HTTP_STATE_COMPLETE) {
                 httpProcess(conn, packet);
-#if UNUSED
-                //  MOB - should be detected when request tries to write
                 if (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprIsSocketEof(conn->sock)) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_COMMS_ERROR, "Connection lost");
                     break;
                 }
-#endif
             }
             break;
         }
@@ -4667,11 +4665,11 @@ static void httpTimer(Http *http, MprEvent *event)
     for (count = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; count++) {
         rx = conn->rx;
         limits = conn->limits;
-        if ((conn->lastActivity + limits->requestTimeout) < http->now || 
+        if ((conn->lastActivity + limits->inactivityTimeout) < http->now || 
             (conn->started + limits->requestTimeout) < http->now) {
             if (rx) {
                 /*
-                    Don't call APIs on the onn directly (thread-race). Schedule a timer on the connection's dispatcher
+                    Don't call APIs on the conn directly (thread-race). Schedule a timer on the connection's dispatcher
                  */
                 if (!conn->timeout) {
                     conn->timeout = mprCreateEvent(conn->dispatcher, "connTimeout", 0, httpConnTimeout, conn, 0);
@@ -6003,10 +6001,12 @@ static void netOutgoingService(HttpQueue *q)
         httpDiscardData(q, 1);
     }
     if ((tx->bytesWritten + q->count) > conn->limits->transmissionBodySize) {
-        httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE, 
+        httpError(conn, HTTP_CODE_REQUEST_TOO_LARGE | ((tx->bytesWritten) ? HTTP_ABORT : 0),
             "Http transmission aborted. Exceeded transmission max body of %d bytes", conn->limits->transmissionBodySize);
-        httpCompleteWriting(conn);
-        return;
+        if (tx->bytesWritten) {
+            httpCompleteWriting(conn);
+            return;
+        }
     }
     if (tx->flags & HTTP_TX_SENDFILE) {
         /* Relay via the send connector */
@@ -7104,6 +7104,9 @@ void httpStartPipeline(HttpConn *conn)
 }
 
 
+/*
+    Note: this may be called multiple times
+ */
 void httpProcessPipeline(HttpConn *conn)
 {
     HttpQueue   *q;
@@ -8639,7 +8642,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 if (rx->length >= conn->limits->receiveBodySize) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
-                        "Request content length %d bytes is too big. Limit %d.", rx->length, conn->limits->receiveBodySize);
+                        "Request content length %d bytes is too big. Limit %d", rx->length, conn->limits->receiveBodySize);
                     break;
                 }
                 rx->contentLength = sclone(value);
@@ -9060,10 +9063,9 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
         rx->receivedContent += nbytes;
 
         if (rx->receivedContent >= conn->limits->receiveBodySize) {
-            httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE, 
-                "Request body of %d bytes is too big. Limit %d.", rx->receivedContent, conn->limits->receiveBodySize);
-            httpSetState(conn, HTTP_STATE_RUNNING);
-            return 0;
+            httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
+                "Request body of %d bytes is too big. Limit %d", rx->receivedContent, conn->limits->receiveBodySize);
+            return 1;
         }
         if (packet == rx->headerPacket) {
             /* Preserve headers if more data to come. Otherwise handlers may free the packet and destory the headers */
@@ -9105,21 +9107,26 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     if (packet == NULL) {
         return 0;
     }
-    if (analyseContent(conn, packet)) {
-        if (conn->connError || 
-                (rx->remainingContent == 0 && (!(rx->flags & HTTP_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)))) {
-            rx->eof = 1;
-            httpSendPacketToNext(q, httpCreateEndPacket());
-            httpSetState(conn, HTTP_STATE_RUNNING);
-            return 1;
-        }
-    }
+    //  MOB - is this the best place? - move
     mprYield(0);
+    if (!analyseContent(conn, packet)) {
+        return 0;
+    }
+    if (conn->connError || 
+            (rx->remainingContent == 0 && (!(rx->flags & HTTP_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)))) {
+        rx->eof = 1;
+        httpSendPacketToNext(q, httpCreateEndPacket());
+        httpSetState(conn, HTTP_STATE_RUNNING);
+        return 1;
+    }
     httpServiceQueues(conn);
     return conn->error || (conn->input ? mprGetBufLength(conn->input->content) : 0);
 }
 
 
+/*
+    Note: may be called multiple times
+ */
 static bool processRunning(HttpConn *conn)
 {
     int     canProceed;
@@ -9483,7 +9490,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
     Http        *http;
     MprTime     expire, remainingTime;
-    int         eventMask, addedHandler, saveAsync, justOne;
+    int         eventMask, addedHandler, saveAsync, justOne, workDone;
 
     http = conn->http;
     if (timeout <= 0) {
@@ -9514,15 +9521,15 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
     http->now = mprGetTime();
     expire = http->now + timeout;
 
-    while (!conn->error && conn->state < state && conn->sock && !mprIsSocketEof(conn->sock)) {
-        httpServiceQueues(conn);
+    while (!conn->error && conn->state < state) {
+        workDone = httpServiceQueues(conn);
         remainingTime = (expire - http->now);
         if (remainingTime <= 0) {
             break;
         }
         mprAssert(!mprSocketHasPendingData(conn->sock));
         mprWaitForEvent(conn->dispatcher, remainingTime);
-        if (justOne) {
+        if (justOne || (conn->sock && mprIsSocketEof(conn->sock) && !workDone)) {
             break;
         }
     }
@@ -9535,7 +9542,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         return MPR_ERR_CANT_CONNECT;
     }
     if (!justOne && conn->state < state) {
-        return MPR_ERR_TIMEOUT;
+        return (remainingTime <= 0) ? MPR_ERR_TIMEOUT : MPR_ERR_CANT_READ;
     }
     return 0;
 }
@@ -9893,10 +9900,12 @@ void httpSendOutgoingService(HttpQueue *q)
         httpDiscardData(q, 1);
     }
     if ((tx->bytesWritten + q->ioCount) > conn->limits->transmissionBodySize) {
-        httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
+        httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE | ((tx->bytesWritten) ? HTTP_ABORT : 0),
             "Http transmission aborted. Exceeded max body of %d bytes", conn->limits->transmissionBodySize);
-        httpCompleteWriting(conn);
-        return;
+        if (tx->bytesWritten) {
+            httpCompleteWriting(conn);
+            return;
+        }
     }
     /*
         Loop doing non-blocking I/O until blocked or all the packets received are written.
@@ -10476,6 +10485,7 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
     int             level;
 
     mprAssert(server);
+    mprAssert(event);
 
     /*
         This will block in sync mode until a connection arrives

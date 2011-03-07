@@ -14294,7 +14294,7 @@ static EjsObj *cmd_kill(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         pid = ejsGetInt(ejs, argv[0]);
     } 
     if (argc >= 2) {
-        signal = ejsGetInt(ejs, argv[0]);
+        signal = ejsGetInt(ejs, argv[1]);
     }
 #if BLD_WIN_LIKE
 {
@@ -19310,6 +19310,8 @@ EjsObj *http_available(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 static EjsObj *http_close(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     if (hp->conn) {
+        //  MOB - should this do more to 
+        httpFinalize(hp->conn);
         sendHttpCloseEvent(ejs, hp);
         httpDestroyConn(hp->conn);
         hp->conn = httpCreateConn(ejs->http, NULL, ejs->dispatcher);
@@ -19317,9 +19319,6 @@ static EjsObj *http_close(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
         httpSetConnNotifier(hp->conn, httpNotify);
         httpSetConnContext(hp->conn, hp);
     }
-#if UNUSED
-    mprRemoveRoot(hp);
-#endif
     return 0;
 }
 
@@ -20100,16 +20099,9 @@ static EjsObj *startHttpRequest(Ejs *ejs, EjsHttp *hp, char *method, int argc, E
         ejsThrowIOError(ejs, "Can't issue request for \"%s\"", hp->uri);
         return 0;
     }
-#if UNUSED
-    mprAddRoot(hp);
-#endif
-
     if (mprGetBufLength(hp->requestContent) > 0) {
         nbytes = httpWriteBlock(conn->writeq, mprGetBufStart(hp->requestContent), mprGetBufLength(hp->requestContent));
         if (nbytes < 0) {
-#if UNUSED
-            mprRemoveRoot(hp);
-#endif
             ejsThrowIOError(ejs, "Can't write request data for \"%s\"", hp->uri);
             return 0;
         } else if (nbytes > 0) {
@@ -20156,9 +20148,6 @@ static void httpNotify(HttpConn *conn, int state, int notifyFlags)
             }
             sendHttpCloseEvent(ejs, hp);
         }
-#if UNUSED
-        mprRemoveRoot(hp);
-#endif
         break;
 
     case 0:
@@ -20448,7 +20437,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
     if (!conn->async) {
         httpFinalize(conn);
     }
-    while (conn->state < state && count < conn->retries && redirectCount < 16 && 
+    while (conn->state < state && count <= conn->retries && redirectCount < 16 && 
            !conn->error && !ejs->exiting && !mprIsStopping(conn)) {
         count++;
         if ((rc = httpWait(conn, HTTP_STATE_PARSED, remaining)) == 0) {
@@ -37690,8 +37679,11 @@ static EjsObj *hs_address(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 static EjsObj *hs_accept(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     HttpConn    *conn;
+    MprEvent    event;
 
-    if ((conn = httpAcceptConn(sp->server, NULL)) == 0) {
+    memset(&event, 0, sizeof(MprEvent));
+    event.dispatcher = sp->server->dispatcher;
+    if ((conn = httpAcceptConn(sp->server, &event)) == 0) {
         /* Just ignore */
         mprError("Can't accept connection");
         return 0;
@@ -38143,10 +38135,10 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
         /*  IO event notification for the request.  */
         if (req && req->emitter) {
             if (notifyFlags & HTTP_NOTIFY_READABLE) {
-                ejsSendEvent(ejs, req->emitter, "readable", NULL, (EjsObj*) req);
+                ejsSendEvent(ejs, req->emitter, "readable", NULL, req);
             } 
             if (notifyFlags & HTTP_NOTIFY_WRITABLE) {
-                ejsSendEvent(ejs, req->emitter, "writable", NULL, (EjsObj*) req);
+                ejsSendEvent(ejs, req->emitter, "writable", NULL, req);
             }
         }
         break;
@@ -38185,16 +38177,10 @@ static void incomingEjsData(HttpQueue *q, HttpPacket *packet)
         if (rx->form) {
             httpAddVarsFromQueue(q);
         }
-        HTTP_NOTIFY(q->conn, 0, HTTP_NOTIFY_READABLE);
-
-#if UNUSED
-    } else if (conn->writeComplete) {
-        httpFreePacket(q, packet);
-#endif
     } else {
         httpJoinPacketForService(q, packet, 0);
-        HTTP_NOTIFY(q->conn, 0, HTTP_NOTIFY_READABLE);
     }
+    HTTP_NOTIFY(q->conn, 0, HTTP_NOTIFY_READABLE);
 }
 
 
@@ -38292,6 +38278,9 @@ static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn)
 }
 
 
+/*
+    Note: this may be called multiple times for async, long-running requests.
+ */
 static void runEjs(HttpQueue *q)
 {
     EjsHttpServer   *sp;
@@ -38329,13 +38318,19 @@ static void startEjs(HttpQueue *q)
 }
 
 
+//  MOB - does this get called once or multiple times?
 static void processEjs(HttpQueue *q)
 {
+    HttpConn    *conn;
     HttpRx      *rx;
 
-    rx = q->conn->rx;
+    conn = q->conn;
+    rx = conn->rx;
     if (rx->form || (rx->flags & HTTP_UPLOAD)) {
         runEjs(q);
+    }
+    if (conn->error) {
+        httpFinalize(conn);
     }
 }
 
@@ -59978,10 +59973,10 @@ static EcNode *parseParameter(EcCompiler *cp, bool rest)
 
     np = parseParameterKind(cp);
     parameter = parseTypedPattern(cp);
-    parameter->qname.space = cp->ejs->emptyString;
-
+    if (parameter) {
+        parameter->qname.space = cp->ejs->emptyString;
+    }
     np = appendNode(np, parameter);
-
     if (parameter) {
         if (STRICT_MODE(cp)) {
             if (parameter->typeNode == 0 && !rest) {
