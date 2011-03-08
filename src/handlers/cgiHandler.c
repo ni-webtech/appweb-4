@@ -61,8 +61,8 @@ static void closeCgi(HttpQueue *q)
 
 
 /*  
-    Start the CGI command program. This commences the CGI gateway program. Body data from the client may flow 
-    to the command and response data may be received back.
+    Start the CGI command program. This commences the CGI gateway program. This will be called after content for
+    form and upload requests (or if "RunHandler" before specified), otherwise it runs before receiving content data.
  */
 static void startCgi(HttpQueue *q)
 {
@@ -85,13 +85,16 @@ static void startCgi(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
 
-    if (rx->flags & HTTP_UPLOAD && conn->state <= HTTP_STATE_CONTENT) {
+    mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->loc->flags & HTTP_LOC_AFTER);
+#if UNUSED
+    if (rx->upload && conn->state <= HTTP_STATE_CONTENT) {
         /*
             Delay start while the upload filter extracts the uploaded files so the CGI process can be informed via
             env vars of the file details.
          */
         return;
     }
+#endif
 
     /*
         The command uses the conn dispatcher. This serializes all I/O for both the connection and the CGI gateway
@@ -145,13 +148,17 @@ static void processCgi(HttpQueue *q)
 
     conn = q->conn;
     cmd = (MprCmd*) q->queueData;
+    mprAssert(cmd);
 
-    mprLog(5, "processCgi: Any (and all) post data received");
+    mprLog(5, "processCgi");
+#if UNUSED
     if (cmd == 0) {
         /* Start CGI if doing file upload and delayed start */
         startCgi(q);
         cmd = (MprCmd*) q->queueData;
     }
+#endif
+
     if (q->count > 0) {
         writeToCGI(q);
     }
@@ -232,7 +239,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
             q->queueData = 0;
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
         }
-        httpAddVarsFromQueue(q);
+        rx->formVars = httpAddVarsFromQueue(rx->formVars, q);
     } else {
         /* No service routine, we just need it to be queued for writeToCGI */
         httpPutForService(q, packet, 0);
@@ -552,7 +559,7 @@ static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd)
 /*
     Parse the CGI output headers. 
     Sample CGI program:
- *
+
     Content-type: text/html
    
     <html.....
@@ -1058,7 +1065,8 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     HttpStage     *handler;
 
     handler = httpCreateHandler(http, "cgiHandler", 
-        HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT, module);
+        HTTP_STAGE_HEADER_VARS | HTTP_STAGE_QUERY_VARS | HTTP_STAGE_FORM_VARS | HTTP_STAGE_CGI_VARS | 
+        HTTP_STAGE_PATH_INFO | HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

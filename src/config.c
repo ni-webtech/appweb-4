@@ -1279,6 +1279,20 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "ResetPipeline") == 0) {
             httpResetPipeline(loc);
             return 1;
+
+        } else if (scasecmp(key, "RunHandler") == 0) {
+            name = stok(value, " \t", &value);
+            value = slower(strim(value, "\"", MPR_TRIM_BOTH));
+            if (scmp(value, "before") == 0) {
+                state->loc->flags |= HTTP_LOC_BEFORE;
+            } else if (scmp(value, "after") == 0) {
+                state->loc->flags |= HTTP_LOC_AFTER;
+            } else if (scmp(value, "smart") == 0) {
+                state->loc->flags |= HTTP_LOC_SMART;
+            } else {
+                mprError("Unknown RunHandler argument %s, valid [before|after|smart]", value);
+                return MPR_ERR_BAD_SYNTAX;
+            }
         }
         break;
 

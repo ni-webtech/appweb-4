@@ -27,8 +27,9 @@
     #undef pclose
     #define PHP_WIN32 1
     #define ZEND_WIN32 1
-    #define ZTS 1
 #endif
+
+    #define ZTS 1
     #undef ulong
     #undef HAVE_SOCKLEN_T
 
@@ -52,9 +53,7 @@
     #include <main/php_ini.h>
     #include <main/php_globals.h>
     #include <main/php_main.h>
-#if ZTS
     #include <TSRM/TSRM.h>
-#endif
 
 /********************************** Defines ***********************************/
 
@@ -177,6 +176,7 @@ static void processPhp(HttpQueue *q)
         PG(max_input_time) = -1;
         EG(timeout_seconds) = 0;
 
+        /* The readPostData callback may be invoked during startup */
         php_request_startup(TSRMLS_C);
         CG(zend_lineno) = 0;
 
@@ -189,9 +189,6 @@ static void processPhp(HttpQueue *q)
         return;
     } zend_end_try();
 
-    /*
-        Define header variables
-     */
     zend_try {
         hp = mprGetFirstHash(rx->headers);
         while (hp) {
@@ -202,13 +199,15 @@ static void processPhp(HttpQueue *q)
             }
             hp = mprGetNextHash(rx->headers, hp);
         }
-        hp = mprGetFirstHash(rx->formVars);
-        while (hp) {
-            if (hp->data) {
-                php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
-                mprLog(6, "php: form var %s = %s", hp->key, hp->data);
+        if (rx->formVars) {
+            hp = mprGetFirstHash(rx->formVars);
+            while (hp) {
+                if (hp->data) {
+                    php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
+                    mprLog(6, "php: form var %s = %s", hp->key, hp->data);
+                }
+                hp = mprGetNextHash(rx->formVars, hp);
             }
-            hp = mprGetNextHash(rx->formVars, hp);
         }
     } zend_end_try();
 
@@ -427,7 +426,6 @@ static int startup(sapi_module_struct *sapi_module)
 static int initializePhp(Http *http)
 {
     MaAppweb                *appweb;
-#if ZTS
     void                    ***tsrm_ls;
     php_core_globals        *core_globals;
     sapi_globals_struct     *sapi_globals;
@@ -441,7 +439,6 @@ static int initializePhp(Http *http)
     core_globals = (php_core_globals*) ts_resource(core_globals_id);
     sapi_globals = (sapi_globals_struct*) ts_resource(sapi_globals_id);
     tsrm_ls = (void***) ts_resource(0);
-#endif
 
     mprLog(2, "php: initialize php library");
     appweb = httpGetContext(http);
@@ -455,9 +452,7 @@ static int initializePhp(Http *http)
         mprError("PHP did not initialize");
         return MPR_ERR_CANT_INITIALIZE;
     }
-#if ZTS
     zend_llist_init(&global_vars, sizeof(char *), 0, 0);
-#endif
 
     SG(options) |= SAPI_OPTION_NO_CHDIR;
     zend_alter_ini_entry("register_argc_argv", 19, "0", 1, PHP_INI_SYSTEM, PHP_INI_STAGE_ACTIVATE);
@@ -477,9 +472,7 @@ static int finalizePhp(MprModule *mp)
     mprLog(4, "php: Finalize library before unloading");
     php_module_shutdown(TSRMLS_C);
     sapi_shutdown();
-#if ZTS
     tsrm_shutdown();
-#endif
     http = MPR->httpService;
     if ((stage = httpLookupStage(http, "phpHandler")) != 0) {
         stage->stageData = 0;
@@ -498,7 +491,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     mprSetModuleFinalizer(module, finalizePhp); 
 
     handler = httpCreateHandler(http, module->name, 
-        HTTP_STAGE_ENV_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_MISSING_EXT, module);
+        HTTP_STAGE_HEADER_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

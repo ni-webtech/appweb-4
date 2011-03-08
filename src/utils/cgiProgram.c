@@ -508,10 +508,11 @@ static int getPostData(char **bufp, int *lenp)
             error("Couldn't read CGI input %d", errno);
             return -1;
         } else if (bytes == 0) {
-            if (contentLength == 0) {
-                /* EOF */
-                break;
+            /* EOF */
+            if (len > 0) {
+                error("Missing content data (Content-Length %s)", contentLength);
             }
+            break;
         }
         len += bytes;
     }

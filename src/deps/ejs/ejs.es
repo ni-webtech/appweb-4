@@ -5474,6 +5474,7 @@ module ejs {
         native function get async(): Boolean
         native function set async(enable: Boolean): Void
 
+        //  MOB - does this do an abortive close?
         /** 
             @duplicate Stream.close 
             This closes any open network connection and resets the http object to be ready for another connection. 
@@ -19070,6 +19071,7 @@ module ejs.web {
         native function get async(): Boolean
         native function set async(enable: Boolean): Void
 
+//  MOB - rename
         /** 
             Finalize the request if dontAutoFinalize has not been called. Finalization signals the end of any write data 
             and flushes any buffered write data to the client. This routine is used by frameworks to allow users to 
@@ -19116,6 +19118,7 @@ module ejs.web {
             return session
         }
 
+//  MOB - rename
         /**
             Stop auto-finalizing the request. Some web frameworks will "auto-finalize" requests by calling finalize()
             automatically at the conclusion of the request. Applications that wish to keep the connection open to the
@@ -19687,10 +19690,12 @@ module ejs.web {
         */
         function writeResponse(response: Object): Void {
             status = response.status || 200
-            if (response.headers)
+            if (response.headers) {
                 setHeaders(response.headers)
-            if (response.body)
+            }
+            if (response.body) {
                 write(response.body)
+            }
             autoFinalize()
         }
 

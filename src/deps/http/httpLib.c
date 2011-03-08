@@ -2514,12 +2514,13 @@ void httpConnTimeout(HttpConn *conn)
         if ((conn->lastActivity + limits->inactivityTimeout) < now) {
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT,
                 "Inactive request timed out. Exceeded inactivity timeout of %d sec. Uri: \"%s\"", 
-                limits->requestTimeout / 1000, rx->uri);
+                limits->inactivityTimeout / 1000, rx->uri);
 
         } else if ((conn->started + limits->requestTimeout) < now) {
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT, 
                 "Request timed out, exceeded timeout %d sec. Url %s", limits->requestTimeout / 1000, rx->uri);
         }
+        httpFinalize(conn);
     }
 }
 
@@ -2691,13 +2692,10 @@ static void readEvent(HttpConn *conn)
                 break;
             } else if (conn->state < HTTP_STATE_COMPLETE) {
                 httpProcess(conn, packet);
-#if UNUSED
-                //  MOB - should be detected when request tries to write
                 if (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprIsSocketEof(conn->sock)) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_COMMS_ERROR, "Connection lost");
                     break;
                 }
-#endif
             }
             break;
         }
@@ -3327,9 +3325,9 @@ void httpSetDirIndex(HttpDir *dir, cchar *name)
 
 
 /*
-    Define standard CGI environment variables
+    Define standard CGI variables
  */
-void httpCreateEnvVars(HttpConn *conn)
+void httpCreateCGIVars(HttpConn *conn)
 {
     HttpRx          *rx;
     HttpTx          *tx;
@@ -3415,17 +3413,13 @@ void httpCreateEnvVars(HttpConn *conn)
     Make variables for each keyword in a query string. The buffer must be url encoded (ie. key=value&key2=value2..., 
     spaces converted to '+' and all else should be %HEX encoded).
  */
-void httpAddVars(HttpConn *conn, cchar *buf, ssize len)
+MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len)
 {
-    HttpRx          *rx;
-    MprHashTable    *vars;
     cchar           *oldValue;
     char            *newValue, *decoded, *keyword, *value, *tok;
 
-    rx = conn->rx;
-    vars = rx->formVars;
-    if (vars == 0) {
-        return;
+    if (table == 0) {
+        table = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
     }
     decoded = mprAlloc(len + 1);
     decoded[len] = '\0';
@@ -3445,23 +3439,23 @@ void httpAddVars(HttpConn *conn, cchar *buf, ssize len)
             /*  
                 Append to existing keywords.
              */
-            oldValue = mprLookupHash(vars, keyword);
+            oldValue = mprLookupHash(table, keyword);
             if (oldValue != 0 && *oldValue) {
                 if (*value) {
                     newValue = sjoin(oldValue, " ", value, NULL);
-                    mprAddKey(vars, keyword, newValue);
+                    mprAddKey(table, keyword, newValue);
                 }
             } else {
-                mprAddKey(vars, keyword, sclone(value));
+                mprAddKey(table, keyword, sclone(value));
             }
         }
         keyword = stok(0, "&", &tok);
     }
-    /*  Must not free "decoded". This will be freed when the response completes */
+    return table;
 }
 
 
-void httpAddVarsFromQueue(HttpQueue *q)
+MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q)
 {
     HttpConn        *conn;
     MprBuf          *content;
@@ -3470,11 +3464,13 @@ void httpAddVarsFromQueue(HttpQueue *q)
     
     conn = q->conn;
     if (conn->rx->form && q->first && q->first->content) {
+        httpJoinPackets(q, -1);
         content = q->first->content;
         mprAddNullToBuf(content);
         mprLog(3, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
-        httpAddVars(conn, mprGetBufStart(content), mprGetBufLength(content));
+        table = httpAddVars(table, mprGetBufStart(content), mprGetBufLength(content));
     }
+    return table;
 }
 
 
@@ -3482,8 +3478,7 @@ int httpTestFormVar(HttpConn *conn, cchar *var)
 {
     MprHashTable    *vars;
     
-    vars = conn->rx->formVars;
-    if (vars == 0) {
+    if ((vars = conn->rx->formVars) == 0) {
         return 0;
     }
     return vars && mprLookupHash(vars, var) != 0;
@@ -3495,8 +3490,7 @@ cchar *httpGetFormVar(HttpConn *conn, cchar *var, cchar *defaultValue)
     MprHashTable    *vars;
     cchar           *value;
     
-    vars = conn->rx->formVars;
-    if (vars) {
+    if ((vars = conn->rx->formVars) == 0) {
         value = mprLookupHash(vars, var);
         return (value) ? value : defaultValue;
     }
@@ -3509,8 +3503,7 @@ int httpGetIntFormVar(HttpConn *conn, cchar *var, int defaultValue)
     MprHashTable    *vars;
     cchar           *value;
     
-    vars = conn->rx->formVars;
-    if (vars) {
+    if ((vars = conn->rx->formVars) == 0) {
         value = mprLookupHash(vars, var);
         return (value) ? (int) stoi(value, 10, NULL) : defaultValue;
     }
@@ -3522,8 +3515,7 @@ void httpSetFormVar(HttpConn *conn, cchar *var, cchar *value)
 {
     MprHashTable    *vars;
     
-    vars = conn->rx->formVars;
-    if (vars == 0) {
+    if ((vars = conn->rx->formVars) == 0) {
         /* This is allowed. Upload filter uses this when uploading to the file handler */
         return;
     }
@@ -3535,8 +3527,7 @@ void httpSetIntFormVar(HttpConn *conn, cchar *var, int value)
 {
     MprHashTable    *vars;
     
-    vars = conn->rx->formVars;
-    if (vars == 0) {
+    if ((vars = conn->rx->formVars) == 0) {
         /* This is allowed. Upload filter uses this when uploading to the file handler */
         return;
     }
@@ -3548,9 +3539,7 @@ int httpCompareFormVar(HttpConn *conn, cchar *var, cchar *value)
 {
     MprHashTable    *vars;
     
-    vars = conn->rx->formVars;
-    
-    if (vars == 0) {
+    if ((vars = conn->rx->formVars) == 0) {
         return 0;
     }
     if (strcmp(value, httpGetFormVar(conn, var, " __UNDEF__ ")) == 0) {
@@ -4667,11 +4656,11 @@ static void httpTimer(Http *http, MprEvent *event)
     for (count = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; count++) {
         rx = conn->rx;
         limits = conn->limits;
-        if ((conn->lastActivity + limits->requestTimeout) < http->now || 
+        if ((conn->lastActivity + limits->inactivityTimeout) < http->now || 
             (conn->started + limits->requestTimeout) < http->now) {
             if (rx) {
                 /*
-                    Don't call APIs on the onn directly (thread-race). Schedule a timer on the connection's dispatcher
+                    Don't call APIs on the conn directly (thread-race). Schedule a timer on the connection's dispatcher
                  */
                 if (!conn->timeout) {
                     conn->timeout = mprCreateEvent(conn->dispatcher, "connTimeout", 0, httpConnTimeout, conn, 0);
@@ -5000,6 +4989,7 @@ HttpLoc *httpCreateLocation()
     loc->prefix = mprEmptyString();
     loc->prefixLen = (int) strlen(loc->prefix);
     loc->auth = httpCreateAuth(0);
+    loc->flags = HTTP_LOC_SMART;
     return loc;
 }
 
@@ -5081,11 +5071,9 @@ static void graduate(HttpLoc *loc)
 
 void httpFinalizeLocation(HttpLoc *loc)
 {
-#if BLD_FEATURE_SSL
     if (loc->ssl) {
         mprConfigureSsl(loc->ssl);
     }
-#endif
 }
 
 
@@ -5402,7 +5390,6 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
 
 
 
-static char *addIndexToUrl(HttpConn *conn, cchar *index);
 static char *getExtension(HttpConn *conn, cchar *path);
 static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage);
 static HttpStage *findHandler(HttpConn *conn);
@@ -5730,29 +5717,34 @@ static HttpStage *processDirectory(HttpConn *conn, HttpStage *handler)
     HttpTx      *tx;
     MprPath     *info;
     HttpHost    *host;
-    char        *path, *index;
+    HttpUri     *prior;
+    char        *path, *index, *pathInfo, *uri;
 
     rx = conn->rx;
     tx = conn->tx;
     host = conn->host;
     info = &tx->fileInfo;
+    prior = rx->parsedUri;
 
     mprAssert(rx->dir);
     mprAssert(rx->pathInfo);
     mprAssert(info->isDir);
 
     index = rx->dir->indexName;
+    path = mprJoinPath(tx->filename, index);
+
     if (rx->pathInfo[slen(rx->pathInfo) - 1] == '/') {
         /*  
             Internal directory redirections
          */
-        path = mprJoinPath(tx->filename, index);
         if (mprPathExists(path, R_OK)) {
             /*  
                 Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
                 Return zero so the request will be rematched on return.
              */
-            httpSetUri(conn, addIndexToUrl(conn, index), NULL);
+            pathInfo = mprJoinPath(rx->pathInfo, index);
+            httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
+            httpSetUri(conn, uri, 0);
             return 0;
         }
     } else {
@@ -5760,15 +5752,13 @@ static HttpStage *processDirectory(HttpConn *conn, HttpStage *handler)
             External redirect. Ask the client to re-issue a request for a new location. See if an index exists and if so, 
             construct a new location for the index. If the index can't be accessed, append a "/" to the URI and redirect.
          */
-        if (rx->parsedUri->query && rx->parsedUri->query[0]) {
-            path = mprAsprintf("%s/%s?%s", rx->pathInfo, index, rx->parsedUri->query);
-        } else {
-            path = mprJoinPath(rx->pathInfo, index);
-        }
         if (!mprPathExists(path, R_OK)) {
-            path = sjoin(rx->pathInfo, "/", NULL);
+            pathInfo = mprJoinPath(rx->pathInfo, index);
+        } else {
+            pathInfo = mprJoinPath(rx->pathInfo, "/");
         }
-        httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, path);
+        uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
+        httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
         handler = conn->http->passHandler;
     }
     return handler;
@@ -5832,20 +5822,6 @@ static void setScriptName(HttpConn *conn)
         rx->scriptName = rx->pathInfo;
         rx->pathInfo = 0;
     }
-}
-
-
-static char *addIndexToUrl(HttpConn *conn, cchar *index)
-{
-    HttpRx      *rx;
-    char        *path;
-
-    rx = conn->rx;
-    path = mprJoinPath(rx->pathInfo, index);
-    if (rx->parsedUri->query && rx->parsedUri->query[0]) {
-        return srejoin(path, "?", rx->parsedUri->query, NULL);
-    }
-    return path;
 }
 
 
@@ -6003,10 +5979,12 @@ static void netOutgoingService(HttpQueue *q)
         httpDiscardData(q, 1);
     }
     if ((tx->bytesWritten + q->count) > conn->limits->transmissionBodySize) {
-        httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE, 
+        httpError(conn, HTTP_CODE_REQUEST_TOO_LARGE | ((tx->bytesWritten) ? HTTP_ABORT : 0),
             "Http transmission aborted. Exceeded transmission max body of %d bytes", conn->limits->transmissionBodySize);
-        httpCompleteWriting(conn);
-        return;
+        if (tx->bytesWritten) {
+            httpCompleteWriting(conn);
+            return;
+        }
     }
     if (tx->flags & HTTP_TX_SENDFILE) {
         /* Relay via the send connector */
@@ -6498,15 +6476,21 @@ int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
  */
 void httpJoinPackets(HttpQueue *q, ssize size)
 {
-    HttpPacket  *first, *next;
+    HttpPacket  *packet, *first, *next;
     ssize       maxPacketSize;
 
+    if (size < 0) {
+        size = MAXINT;
+    }
     if ((first = q->first) != 0 && first->next) {
+        if (first->flags & HTTP_PACKET_HEADER) {
+            first = first->next;
+        }
         maxPacketSize = min(q->nextQ->packetSize, size);
-        while ((next = first->next) != 0) {
-            if (next->content && (httpGetPacketLength(first) + httpGetPacketLength(next)) < maxPacketSize) {
-                httpJoinPacket(first, next);
-                first->next = next->next;
+        for (packet = first->next; packet; packet = next) {
+            next = packet->next;
+            if (packet->content && (httpGetPacketLength(first) + httpGetPacketLength(packet)) < maxPacketSize) {
+                httpJoinPacket(first, packet);
             } else {
                 break;
             }
@@ -6896,7 +6880,7 @@ int httpOpenPassHandler(Http *http)
 
 
 static bool matchFilter(HttpConn *conn, HttpStage *filter);
-static void setEnvironment(HttpConn *conn);
+static void setVars(HttpConn *conn);
 
 /*  
     Create processing pipeline
@@ -6981,7 +6965,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     for (next = 0; (stage = mprGetNextItem(rx->inputPipeline, &next)) != 0; ) {
         q = httpCreateQueue(conn, stage, HTTP_QUEUE_RECEIVE, q);
     }
-    setEnvironment(conn);
+    setVars(conn);
 
     conn->writeq = tx->queue[HTTP_QUEUE_TRANS]->nextQ;
     conn->readq = tx->queue[HTTP_QUEUE_RECEIVE]->prevQ;
@@ -7024,6 +7008,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
             }
         }
     }
+
     conn->flags |= HTTP_CONN_PIPE_CREATED;
 }
 
@@ -7101,13 +7086,24 @@ void httpStartPipeline(HttpConn *conn)
             }
         }
     }
+    if (!conn->error && !conn->writeComplete && conn->rx->remainingContent > 0) {
+        /* If no remaining content, wait till the processing stage to avoid duplicate writable events */
+        httpWritable(conn);
+    }
 }
 
 
+/*
+    Note: this may be called multiple times
+ */
 void httpProcessPipeline(HttpConn *conn)
 {
     HttpQueue   *q;
     
+    if (conn->error) {
+        //  MOB -- is this the right place?
+        httpFinalize(conn);
+    }
     q = conn->tx->queue[HTTP_QUEUE_TRANS]->nextQ;
     if (q->stage->process) {
         HTTP_TIME(conn, q->stage->name, "process", q->stage->process(q));
@@ -7156,7 +7152,7 @@ void httpDiscardTransmitData(HttpConn *conn)
 /*
     Create the form variables based on the URI query. Also create formVars for CGI style programs (cgi | egi)
  */
-static void setEnvironment(HttpConn *conn)
+static void setVars(HttpConn *conn)
 {
     HttpRx      *rx;
     HttpTx      *tx;
@@ -7166,14 +7162,11 @@ static void setEnvironment(HttpConn *conn)
 
     mprAssert(tx->handler);
 
-    if (tx->handler->flags & (HTTP_STAGE_VARS | HTTP_STAGE_ENV_VARS)) {
-        rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
-        if (rx->parsedUri->query && (tx->handler->flags & HTTP_STAGE_VARS)) {
-            httpAddVars(conn, rx->parsedUri->query, slen(rx->parsedUri->query));
-        }
+    if (tx->handler->flags & HTTP_STAGE_QUERY_VARS && rx->parsedUri->query) {
+        rx->formVars = httpAddVars(rx->formVars, rx->parsedUri->query, slen(rx->parsedUri->query));
     }
-    if (tx->handler->flags & HTTP_STAGE_ENV_VARS) {
-        httpCreateEnvVars(conn);
+    if (tx->handler->flags & HTTP_STAGE_CGI_VARS) {
+        httpCreateCGIVars(conn);
     }
 }
 
@@ -8333,6 +8326,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
     HttpTx      *tx;
+    HttpLoc     *loc;
     ssize       len;
     char        *start, *end;
 
@@ -8368,21 +8362,26 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     } else {
         parseResponseLine(conn, packet);
     }
-    if (!conn->connError) {
-        parseHeaders(conn, packet);
-    }
+    parseHeaders(conn, packet);
     if (conn->server) {
         httpMatchHost(conn);
         if (httpSetUri(conn, rx->uri, "") < 0) {
             httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad URL format");
             return 0;
         }
+        if (conn->secure) {
+            rx->parsedUri->scheme = sclone("https");
+        }
+        rx->parsedUri->port = conn->sock->port;
         if (!tx->handler) {
             httpMatchHandler(conn);  
         }
+        loc = rx->loc;
+        rx->startAfterContent = (loc->flags & HTTP_LOC_AFTER || ((rx->form || rx->upload) && loc->flags & HTTP_LOC_SMART));
+
         mprLog(3, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
         httpSetState(conn, HTTP_STATE_PARSED);        
-        httpCreatePipeline(conn, rx->loc, tx->handler);
+        httpCreatePipeline(conn, loc, tx->handler);
 
     } else if (!(100 <= rx->status && rx->status < 200)) {
         httpSetState(conn, HTTP_STATE_PARSED);        
@@ -8639,7 +8638,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 if (rx->length >= conn->limits->receiveBodySize) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
-                        "Request content length %d bytes is too big. Limit %d.", rx->length, conn->limits->receiveBodySize);
+                        "Request content length %d bytes is too big. Limit %d", rx->length, conn->limits->receiveBodySize);
                     break;
                 }
                 rx->contentLength = sclone(value);
@@ -9004,15 +9003,13 @@ static bool parseAuthenticate(HttpConn *conn, char *authDetails)
 }
 
 
+/*
+    Called once the entire request / response header has been parsed
+ */
 static bool processParsed(HttpConn *conn)
 {
-    if (!conn->connError) {
+    if (!conn->rx->startAfterContent) {
         httpStartPipeline(conn);
-        if (!conn->error && !conn->writeComplete && conn->rx->remainingContent > 0) {
-            //  MOB - why testing remainingContent above?
-            /* If no remaining content, wait till the processing stage to avoid duplicate writable events */
-            httpWritable(conn);
-        }
     }
     httpSetState(conn, HTTP_STATE_CONTENT);
     return 1;
@@ -9060,10 +9057,9 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
         rx->receivedContent += nbytes;
 
         if (rx->receivedContent >= conn->limits->receiveBodySize) {
-            httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE, 
-                "Request body of %d bytes is too big. Limit %d.", rx->receivedContent, conn->limits->receiveBodySize);
-            httpSetState(conn, HTTP_STATE_RUNNING);
-            return 0;
+            httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
+                "Request body of %d bytes is too big. Limit %d", rx->receivedContent, conn->limits->receiveBodySize);
+            return 1;
         }
         if (packet == rx->headerPacket) {
             /* Preserve headers if more data to come. Otherwise handlers may free the packet and destory the headers */
@@ -9105,21 +9101,30 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     if (packet == NULL) {
         return 0;
     }
-    if (analyseContent(conn, packet)) {
-        if (conn->connError || 
-                (rx->remainingContent == 0 && (!(rx->flags & HTTP_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)))) {
-            rx->eof = 1;
-            httpSendPacketToNext(q, httpCreateEndPacket());
-            httpSetState(conn, HTTP_STATE_RUNNING);
-            return 1;
-        }
-    }
+    //  MOB - is this the best place? - move
     mprYield(0);
+    if (!analyseContent(conn, packet)) {
+        return 0;
+    }
+    if (conn->connError || 
+            (rx->remainingContent == 0 && (!(rx->flags & HTTP_CHUNKED) || (rx->chunkState == HTTP_CHUNK_EOF)))) {
+        rx->eof = 1;
+        httpSendPacketToNext(q, httpCreateEndPacket());
+        if (rx->startAfterContent) {
+            httpStartPipeline(conn);
+        }
+        httpSetState(conn, HTTP_STATE_RUNNING);
+        return 1;
+    }
     httpServiceQueues(conn);
     return conn->error || (conn->input ? mprGetBufLength(conn->input->content) : 0);
 }
 
 
+/*
+    In the running state after all content has been received
+    Note: may be called multiple times
+ */
 static bool processRunning(HttpConn *conn)
 {
     int     canProceed;
@@ -9443,18 +9448,26 @@ int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpHost    *host;
-    char        *oldQuery;
+    HttpUri     *prior;
 
     rx = conn->rx;
     tx = conn->tx;
     host = conn->host;
-    oldQuery = rx->parsedUri ? rx->parsedUri->query : 0;
+    prior = rx->parsedUri;
 
     if ((rx->parsedUri = httpCreateUri(uri, 0)) == 0) {
         return MPR_ERR_BAD_ARGS;
     }
-    if (query == 0) {
-        rx->parsedUri->query = oldQuery;
+    if (prior) {
+        if (rx->parsedUri->scheme == 0) {
+            rx->parsedUri->scheme = prior->scheme;
+        }
+        if (rx->parsedUri->port == 0) {
+            rx->parsedUri->port = prior->port;
+        }
+    }
+    if (query == 0 && prior) {
+        rx->parsedUri->query = prior->query;
     } else if (*query) {
         rx->parsedUri->query = sclone(query);
     }
@@ -9483,7 +9496,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
     Http        *http;
     MprTime     expire, remainingTime;
-    int         eventMask, addedHandler, saveAsync, justOne;
+    int         eventMask, addedHandler, saveAsync, justOne, workDone;
 
     http = conn->http;
     if (timeout <= 0) {
@@ -9514,15 +9527,15 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
     http->now = mprGetTime();
     expire = http->now + timeout;
 
-    while (!conn->error && conn->state < state && conn->sock && !mprIsSocketEof(conn->sock)) {
-        httpServiceQueues(conn);
+    while (!conn->error && conn->state < state) {
+        workDone = httpServiceQueues(conn);
         remainingTime = (expire - http->now);
         if (remainingTime <= 0) {
             break;
         }
         mprAssert(!mprSocketHasPendingData(conn->sock));
         mprWaitForEvent(conn->dispatcher, remainingTime);
-        if (justOne) {
+        if (justOne || (conn->sock && mprIsSocketEof(conn->sock) && !workDone)) {
             break;
         }
     }
@@ -9535,7 +9548,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         return MPR_ERR_CANT_CONNECT;
     }
     if (!justOne && conn->state < state) {
-        return MPR_ERR_TIMEOUT;
+        return (remainingTime <= 0) ? MPR_ERR_TIMEOUT : MPR_ERR_CANT_READ;
     }
     return 0;
 }
@@ -9893,10 +9906,12 @@ void httpSendOutgoingService(HttpQueue *q)
         httpDiscardData(q, 1);
     }
     if ((tx->bytesWritten + q->ioCount) > conn->limits->transmissionBodySize) {
-        httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
+        httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE | ((tx->bytesWritten) ? HTTP_ABORT : 0),
             "Http transmission aborted. Exceeded max body of %d bytes", conn->limits->transmissionBodySize);
-        httpCompleteWriting(conn);
-        return;
+        if (tx->bytesWritten) {
+            httpCompleteWriting(conn);
+            return;
+        }
     }
     /*
         Loop doing non-blocking I/O until blocked or all the packets received are written.
@@ -10476,6 +10491,7 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
     int             level;
 
     mprAssert(server);
+    mprAssert(event);
 
     /*
         This will block in sync mode until a connection arrives
@@ -12003,7 +12019,7 @@ static bool matchUpload(HttpConn *conn, HttpStage *filter)
     pat = "multipart/form-data";
     len = strlen(pat);
     if (sncasecmp(rx->mimeType, pat, len) == 0) {
-        rx->flags |= HTTP_UPLOAD;
+        rx->upload = 1;
         mprLog(5, "matchUpload for %s", rx->uri);
         return 1;
     }

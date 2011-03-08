@@ -70,12 +70,6 @@ MAIN(ejsMain, int argc, char **argv)
     char            *argp, *searchPath, *modules, *name, *tok, *extraFiles;
     int             nextArg, err, ecFlags, stats, merge, bind, noout, debug, optimizeLevel, warnLevel, strict;
 
-int i;
-FILE *fp = fopen("/tmp/a.tmp", "wt");
-for (i = 0; i < argc; i++) {
-    fprintf(fp, "ARG[%d] = %s\n", i, argv[i]);
-}
-fclose(fp);
     /*  
         Initialize Multithreaded Portable Runtime (MPR)
      */
