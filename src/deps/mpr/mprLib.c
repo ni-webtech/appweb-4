@@ -5418,7 +5418,6 @@ static int makeChannel(MprCmd *cmd, int index)
 
 
 #elif BLD_UNIX_LIKE
-
 static int makeChannel(MprCmd *cmd, int index)
 {
     MprCmdFile      *file;
@@ -5446,6 +5445,7 @@ static int makeChannel(MprCmd *cmd, int index)
 static int makeChannel(MprCmd *cmd, int index)
 {
     MprCmdFile      *file;
+    int             nonBlock;
     static int      tempSeed = 0;
 
     file = &cmd->files[index];
@@ -5467,7 +5467,9 @@ static int makeChannel(MprCmd *cmd, int index)
         mprError("Can't create stdio pipes. Err %d", mprGetOsError());
         return MPR_ERR_CANT_CREATE;
     }
-    fcntl(file->fd, F_SETFL, fcntl(file->fd, F_GETFL) | O_NONBLOCK);
+    nonBlock = 1;
+    ioctl(file->fd, FIONBIO, (int) &nonBlock);
+#else
     return 0;
 }
 #endif
@@ -23740,7 +23742,7 @@ int mprUnloadNativeModule(MprModule *mp)
 }
 
 
-void mprSleep(int milliseconds)
+void mprSleep(MprTime milliseconds)
 {
     struct timespec timeout;
     int             rc;
