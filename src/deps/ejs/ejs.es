@@ -2260,6 +2260,7 @@ module ejs {
          */
         native static function kill(pid: Number, signal: Number = 2): Boolean
 
+        //  MOB - should this take options as an arg?
         /**
             Execute a command/program. The call blocks while executing the command.
             @param command Command or program to execute
@@ -2282,6 +2283,7 @@ module ejs {
             return cmd.readString()
         }
 
+        //  MOB - should this take options as an arg?
         /**
             Run a command using the system command shell and wait for completion. On Windows, this requires that
             /bin/sh.exe is installed (See Cygwin). 
@@ -18111,7 +18113,11 @@ MOB - more explanation about what is in the ServerRoot
             }
             let dirs = config.directories
             for (let [key,value] in dirs) {
-                dirs[key] = documentRoot.join(value)
+                //  MOB - multiple servers will keep prepending the doc root
+                //  MOB - TEMP hack
+                if (!value.toString().startsWith(documentRoot)) {
+                    dirs[key] = documentRoot.join(value)
+                }
             }
         }
 
@@ -21258,6 +21264,7 @@ module ejs.web {
         let filename = request.filename
         let status = Http.Ok, body
 
+    print("IN STATIC APP")
         let headers = {
             "Content-Type": Uri(request.uri).mimeType,
         }
@@ -21306,6 +21313,7 @@ module ejs.web {
                 }
             }
         }
+print("AAA")
 
         /*
             Must not return NotModified if an If-None-Match failed
@@ -21322,10 +21330,10 @@ module ejs.web {
                 status = Http.PrecondFailed
             }
         }
+print("BBB Status " + status)
         if (status != Http.Ok) {
             return { status: status }
         }
-
         let expires = request.config.web.expires
         if (expires) {
             let lifetime = expires[request.extension] || expires[""]
@@ -21336,13 +21344,16 @@ module ejs.web {
                 headers["Expires"] = when.toUTCString()
             }
         }
+print("METHOD " + request.method)
         if (request.method == "GET" || request.method == "POST") {
+print("HERE")
             headers["Content-Length"] = filename.size
             if (request.config.web.nosend) {
                 body = File(filename, "r")
             } else {
                 body = filename
             }
+print("CCC body " + body)
 
         } else if (request.method == "DELETE") {
             status = Http.NoContent
@@ -21367,6 +21378,7 @@ module ejs.web {
             status = Http.BadMethod
             body = errorBody("Unsupported method ", "Method " + escapeHtml(request.method) + " is not supported")
         }
+print("CCC RETURNING ")
         return {
             status: status,
             headers: headers,
@@ -21375,18 +21387,23 @@ module ejs.web {
 
         /* Inline function to handle put requests */
         function put(request: Request) {
+print("IN PUT ")
             //  MOB -- how to handle ranges?
             let path = request.dir.join(request.pathInfo.trimStart('/'))
             request.status = path.exists ? Http.NoContent : Http.Created
 
             let file = new File(path, "w")
             file.position = 0;
+print("FILE  " + file)
 
             request.input.on("readable", function () {
+print("READABLE")
                 buf = new ByteArray
                 if (request.read(buf)) {
+print('WRITE')
                     file.write(buf)
                 } else {
+print('CLOSE')
                     file.close()
                     request.finalize()
                 }
@@ -21410,6 +21427,7 @@ module ejs.web {
         @stability prototype
      */
     function StaticBuilder(request: Request): Function {
+print("IN STATIC BUILDER")
         //  MOB -- BUG should not need "ejs.web"
         return "ejs.web"::StaticApp
     }

@@ -177,6 +177,7 @@ static MprMem   headBlock, *head;
 
 
 static void allocException(ssize size, bool granted);
+static void checkYielded();
 static void dummyManager(void *ptr, int flags);
 static void *getNextRoot();
 static void getSystemInfo();
@@ -362,6 +363,8 @@ void *mprAllocBlock(ssize usize, int flags)
     void        *ptr;
     ssize       size;
     int         padWords;
+
+    mprAssert(!MPR->marking);
 
     padWords = padding[flags & MPR_ALLOC_PAD_MASK];
     size = usize + sizeof(MprMem) + (padWords * sizeof(void*));
@@ -1143,11 +1146,12 @@ static void mark()
     }
     nextGen();
 #endif
+    MPR->marking = 1;
     heap->priorNewCount = heap->newCount;
     heap->priorFree = heap->stats.bytesFree;
     heap->newCount = 0;
     heap->gc = 0;
-    MPR->marking = 1;
+    checkYielded();
     markRoots();
     MPR->marking = 0;
     if (!heap->hasSweeper) {
@@ -1291,6 +1295,7 @@ static void markRoots()
 
     heap->rootIndex = 0;
     while ((root = getNextRoot()) != 0) {
+        checkYielded();
         mprMark(root);
     }
     heap->rootIndex = -1;
@@ -1382,6 +1387,7 @@ void mprRelease(void *ptr)
 static void marker(void *unused, MprThread *tp)
 {
     LOG(5, "DEBUG: marker thread started");
+    //  MOB -- rename from marker to marking?
     MPR->marker = 1;
     tp->stickyYield = 1;
     tp->yielded = 1;
@@ -1469,6 +1475,7 @@ void mprYield(int flags)
     if (flags & MPR_YIELD_STICKY) {
         tp->stickyYield = 1;
     }
+    mprAssert(tp->yielded);
     while (tp->yielded && (heap->mustYield || (flags & MPR_YIELD_BLOCK)) && MPR->marker) {
         if (heap->flags & MPR_MARK_THREAD) {
             mprSignalCond(ts->cond);
@@ -1490,14 +1497,9 @@ void mprResetYield()
 
     if ((tp = mprGetCurrentThread()) != 0) {
         tp->stickyYield = 0;
-        tp->yielded = 0;
     }
-    /* Flush yielded */
-    mprAtomicBarrier();
-    if (MPR->marking) {
-        //  MOB - why?
-        mprYield(0);
-    }
+    /* This ensures if marking, we will be not yielded on return */
+    mprYield(0);
 }
 
 
@@ -1551,6 +1553,9 @@ static int syncThreads()
 #if BLD_DEBUG
     LOG(7, "TIME: syncThreads elapsed %,d msec, %,d ticks", mprGetElapsedTime(mark), mprGetTicks() - ticks);
 #endif
+    if (allYielded) {
+        checkYielded();
+    }
     return (allYielded) ? 1 : 0;
 }
 
@@ -2333,6 +2338,22 @@ static void showMem(MprMem *mp)
 }
 #endif
 
+
+//  MOB - remove
+static void checkYielded()
+{
+    MprThreadService    *ts;
+    MprThread           *tp;
+    int                 i;
+
+    ts = MPR->threadService;
+    mprLock(ts->mutex);
+    for (i = 0; i < ts->threads->length; i++) {
+        tp = (MprThread*) mprGetItem(ts->threads, i);
+        mprAssert(tp->yielded);
+    }
+    mprUnlock(ts->mutex);
+}
 
 /*
     @copy   default
@@ -5469,7 +5490,6 @@ static int makeChannel(MprCmd *cmd, int index)
     }
     nonBlock = 1;
     ioctl(file->fd, FIONBIO, (int) &nonBlock);
-#else
     return 0;
 }
 #endif
@@ -7441,13 +7461,13 @@ int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
         
         mprYield(MPR_YIELD_STICKY);
         if (mprWaitForCond(dispatcher->cond, (int) delay) == 0) {
+            mprResetYield();
             signalled++;
             dispatcher->waitingOnCond = 0;
-            mprResetYield();
             break;
         }
-        dispatcher->waitingOnCond = 0;
         mprResetYield();
+        dispatcher->waitingOnCond = 0;
         es->now = mprGetTime();
     }
 
@@ -7502,6 +7522,10 @@ int mprDispatchersAreIdle()
  */
 void mprRelayEvent(MprDispatcher *dispatcher, void *proc, void *data, MprEvent *event)
 {
+#if BLD_DEBUG
+    MprThread   *tp = mprGetCurrentThread();
+    mprNop(tp);
+#endif
     mprAssert(!isRunning(dispatcher));
     mprAssert(dispatcher->owner == 0);
     mprAssert(dispatcher->magic == MPR_DISPATCHER_MAGIC);
@@ -10347,13 +10371,13 @@ void mprWaitForIO(MprWaitService *ws, MprTime timeout)
     /* Preserve the wakeup pipe fd */
     ws->interestCount = 1;
     unlock(ws);
-    mprYield(MPR_YIELD_STICKY);
 
     LOG(8, "kevent sleep for %d", timeout);
+    mprYield(MPR_YIELD_STICKY);
     rc = kevent(ws->kq, ws->stableInterest, ws->stableInterestCount, ws->events, ws->eventsMax, &ts);
+    mprResetYield();
     LOG(8, "kevent wakes rc %d", rc);
 
-    mprResetYield();
     if (rc < 0) {
         mprLog(6, "Kevent returned %d, errno %d", rc, mprGetOsError());
     } else if (rc > 0) {
@@ -14811,8 +14835,8 @@ void mprWaitForIO(MprWaitService *ws, MprTime timeout)
         return;
     }
     unlock(ws);
-    mprYield(MPR_YIELD_STICKY);
 
+    mprYield(MPR_YIELD_STICKY);
     rc = poll(ws->pollFds, count, timeout);
     mprResetYield();
 
@@ -16653,10 +16677,11 @@ void mprWaitForIO(MprWaitService *ws, MprTime timeout)
     ws->stableWriteMask = ws->writeMask;
     maxfd = ws->highestFd + 1;
     unlock(ws);
-    mprYield(MPR_YIELD_STICKY);
 
+    mprYield(MPR_YIELD_STICKY);
     rc = select(maxfd, &ws->stableReadMask, &ws->stableWriteMask, NULL, &tval);
     mprResetYield();
+
     if (rc > 0) {
         serviceIO(ws, maxfd);
     }
