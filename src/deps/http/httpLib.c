@@ -5071,9 +5071,11 @@ static void graduate(HttpLoc *loc)
 
 void httpFinalizeLocation(HttpLoc *loc)
 {
+#if BLD_FEATURE_SSL
     if (loc->ssl) {
         mprConfigureSsl(loc->ssl);
     }
+#endif
 }
 
 

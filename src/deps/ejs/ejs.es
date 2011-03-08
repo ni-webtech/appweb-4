@@ -21397,7 +21397,7 @@ print("IN PUT ")
 print("FILE  " + file)
 
             request.input.on("readable", function () {
-print("READABLE")
+print("PUT - got readable ")
                 buf = new ByteArray
                 if (request.read(buf)) {
 print('WRITE')
@@ -21409,6 +21409,7 @@ print('CLOSE')
                 }
             })
             request.input.on(["close", "complete", "error"], function (event, request) {
+print("PUT - got event " + event)
                 if (event == "error") {
                     file.close()
                     file.remove()
