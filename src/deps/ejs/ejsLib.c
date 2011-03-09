@@ -38190,7 +38190,7 @@ static void incomingEjsData(HttpQueue *q, HttpPacket *packet)
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
         }
         httpPutForService(q, packet, 0);
-        if (rx->form) {
+        if (rx->form || rx->upload) {
             rx->formVars = httpAddVarsFromQueue(rx->formVars, q);
         }
     } else {
