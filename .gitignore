@@ -127,3 +127,4 @@ See 'git help COMMAND' for more information on a specific command.
 rpm.log
 *.cltmp
 src/server/appweb.conf
+.embedthis
