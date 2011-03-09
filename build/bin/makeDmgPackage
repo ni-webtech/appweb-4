@@ -82,7 +82,7 @@ makeDmgPackage() {
         updateScripts $kind
         upper=`echo $kind | tr '[:lower:]' '[:upper:]'`
 
-        log Run "PackageMaker --domain anywhere --root ${ROOT_DIR}/$upper --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg"
+        log Run "PackageMaker"
         ${PMAKER} --domain anywhere --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
             --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1
         if [ $? != 0 ] 

@@ -3457,13 +3457,16 @@ MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len)
 
 MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q)
 {
-    HttpConn        *conn;
-    MprBuf          *content;
+    HttpConn    *conn;
+    HttpRx      *rx;
+    MprBuf      *content;
 
     mprAssert(q);
     
     conn = q->conn;
-    if (conn->rx->form && q->first && q->first->content) {
+    rx = conn->rx;
+
+    if ((rx->form || rx->upload) && q->first && q->first->content) {
         httpJoinPackets(q, -1);
         content = q->first->content;
         mprAddNullToBuf(content);
@@ -6290,8 +6293,7 @@ HttpPacket *httpCreatePacket(ssize size)
         return 0;
     }
     if (size != 0) {
-        packet->content = mprCreateBuf(size < 0 ? HTTP_BUFSIZE: size, -1);
-        if (packet->content == 0) {
+        if ((packet->content = mprCreateBuf(size < 0 ? HTTP_BUFSIZE: size, -1)) == 0) {
             return 0;
         }
     }
@@ -9526,10 +9528,11 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
     }
     http->now = mprGetTime();
     expire = http->now + timeout;
+    remainingTime = expire - http->now;
 
     while (!conn->error && conn->state < state) {
         workDone = httpServiceQueues(conn);
-        remainingTime = (expire - http->now);
+        remainingTime = expire - http->now;
         if (remainingTime <= 0) {
             break;
         }
@@ -12020,6 +12023,8 @@ static bool matchUpload(HttpConn *conn, HttpStage *filter)
     len = strlen(pat);
     if (sncasecmp(rx->mimeType, pat, len) == 0) {
         rx->upload = 1;
+        mprAssert(rx->formVars == 0);
+        rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
         mprLog(5, "matchUpload for %s", rx->uri);
         return 1;
     }
@@ -12200,7 +12205,7 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
 
     if (mprGetBufLength(content) == 0) {
         /* 
-           Quicker to free the buffer so the packets don't have to be joined the next time 
+           Quicker to remove the buffer so the packets don't have to be joined the next time 
          */
         httpGetPacket(q);
         mprAssert(q->count >= 0);
@@ -12453,11 +12458,8 @@ static int processContentData(HttpQueue *q)
         }
     }
     data = mprGetBufStart(content);
-    if (bp) {
-        dataLen = (int) (bp - data);
-    } else {
-        dataLen = mprGetBufLength(content);
-    }
+    dataLen = (bp) ? (bp - data) : mprGetBufLength(content);
+
     if (dataLen > 0) {
         mprAdjustBufStart(content, dataLen);
         /*  
@@ -12485,6 +12487,7 @@ static int processContentData(HttpQueue *q)
             key = mprUriDecode(up->id);
             data = mprUriDecode(data);
             httpSetFormVar(conn, key, data);
+#if UNUSED
             if (packet == 0) {
                 packet = httpCreatePacket(HTTP_BUFSIZE);
             }
@@ -12495,6 +12498,7 @@ static int processContentData(HttpQueue *q)
                 mprPutCharToBuf(packet->content, '&');
             }
             mprPutFmtToBuf(packet->content, "%s=%s", up->id, data);
+#endif
         }
     }
     if (up->clientFilename) {
