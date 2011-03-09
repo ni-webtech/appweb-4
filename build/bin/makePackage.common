@@ -419,8 +419,10 @@ preparePrefixes() {
     local name dir d subdir path
 
     cd ${BLD_TOP} >/dev/null ; ABS_BLD_TOP=`pwd` ; cd - >/dev/null
+    cd ${BLD_OUT_DIR} >/dev/null ; ABS_BLD_OUT_DIR=`pwd` ; cd - >/dev/null
     cd ${BLD_BIN_DIR} >/dev/null ; ABS_BLD_BIN_DIR=`pwd` ; cd - >/dev/null
     cd ${BLD_TOOLS_DIR} >/dev/null ; ABS_BLD_TOOLS_DIR=`pwd` ; cd - >/dev/null
+    cd ${BLD_OUT_DIR}/releases >/dev/null ; ABS_BLD_REL_DIR=`pwd` ; cd - >/dev/null
 
     export PATH="$ABS_BLD_BIN_DIR:$ABS_BLD_TOOLS_DIR:$PATH"
 
@@ -462,3 +464,11 @@ preparePrefixes() {
         fi
     done
 }
+
+
+log() {
+    tag=$1
+    shift
+    printf "%12s %s\n" "[$tag]" "$*"
+}
+

@@ -48,7 +48,7 @@ diff import sync:
 	fi
 	echo
 
-DISABLEtestExtra: test-projects
+testExtra: test-projects
 
 test-projects:
 ifeq    ($(BLD_HOST_OS),WIN)

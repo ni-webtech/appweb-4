@@ -94,8 +94,12 @@ uninstall uninstall-%:
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
 		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
 	
+compileFinal: dist
+
 dist:
-	if [ -d package/dist ] ; then \
+	if [ ! -f .embedthis ] ; then \
+		true ; \
+	elif [ -d package/dist ] ; then \
 		make -C package/dist dist ; \
 	elif [ -f package/Makefile ] ; then \
 		make -C package dist ; \

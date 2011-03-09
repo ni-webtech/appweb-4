@@ -10,8 +10,7 @@ PMAKER=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/Package
 export BLD_HOST_CPU_MAPPED=$BLD_HOST_CPU
 
 setupDmg() {
-    echo -e "\n#\n#  Create the MAC packages ...\n# "
-
+    log Generate MAC packages
     if [ "$BLD_HOST_CPU_ARCH" = "MPR_CPU_IX86" ] ; then
         BLD_HOST_CPU_MAPPED=i386
     fi
@@ -83,7 +82,7 @@ makeDmgPackage() {
         updateScripts $kind
         upper=`echo $kind | tr '[:lower:]' '[:upper:]'`
 
-        echo "PackageMaker --domain anywhere --root ${ROOT_DIR}/$upper --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1"
+        log Run "PackageMaker --domain anywhere --root ${ROOT_DIR}/$upper --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg"
         ${PMAKER} --domain anywhere --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
             --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1
         if [ $? != 0 ] 
@@ -101,10 +100,9 @@ makeDmgPackage() {
     #   Make a disk image
     #
     name="${ROOT_DIR}/`createPackageName ${BLD_PRODUCT}`.dmg"
-    echo "mkdmg ${BLD_PRODUCT}-${BLD_VERSION} ${dir} ${name}"
+    log run "mkdmg ${BLD_PRODUCT}-${BLD_VERSION} ${dir} ${name}"
     mkdmg ${BLD_PRODUCT}-${BLD_VERSION} ${dir} ${name} 2>&1 >>build.log
-    if [ $? != 0 ] 
-    then
+    if [ $? != 0 ] ; then
         echo "mkdmg failed "
         cat ${HOME}/build.log
         exit 255

@@ -50,7 +50,7 @@ processPackage() {
         echo -e "\nCan't open $fileList. Exiting" 1>&2
         exit 255
     fi
-    [ "$QUIET" = 0 ] && echo -e "#  ${VERB} ${fileList} ..."
+    [ "$QUIET" = 0 ] && log ${VERB} ${fileList} ...
     . "${fileList}"
 }
 
@@ -192,7 +192,7 @@ copyRemoveFiles() {
 
     local home dir packName root
 
-    [ "$QUIET" = 0 ] && echo -e "#  $VERB file packages ..."
+    [ "$QUIET" = 0 ] && log $VERB File packages
 
     for packName in $PACKS
     do
@@ -279,7 +279,7 @@ setup() {
     fi
 
     [ $TASK = Install ] && VERB=Installing
-    [ $TASK = Package ] && VERB=Processing
+    [ $TASK = Package ] && VERB=Copy
     [ $TASK = Remove ] && VERB=Removing
 
     if [ $TASK = Package ] ; then
@@ -319,9 +319,9 @@ setup() {
 
 header() {
     if [ "$TASK" = Remove ] ; then
-        echo -e "#\n#  ${TASK} \"${BLD_NAME} ${BLD_VERSION}-${BLD_NUMBER}\" from \"${ROOT_DIR}\"\n#"
+        log Create ${TASK} \"${BLD_NAME} ${BLD_VERSION}-${BLD_NUMBER}\" from \"${ROOT_DIR}\"
     else
-        echo -e "#\n#  ${TASK} \"${BLD_NAME} ${BLD_VERSION}-${BLD_NUMBER}\" to \"${ROOT_DIR}\"\n#"
+        log Create ${TASK} \"${BLD_NAME} ${BLD_VERSION}-${BLD_NUMBER}\" to \"${ROOT_DIR}\"
     fi
 }
 

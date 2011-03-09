@@ -34,7 +34,9 @@
 DRY_RUN=
 QUIET=0
 TASK=Package
+MD5=
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
+: ${ABS_BLD_REL_DIR:=$BLD_OUT_DIR/releases}
 
 #
 #   Find the top of the source tree and change directory to it. Set BLD_TOP
@@ -86,18 +88,10 @@ setup() {
 
     preparePrefixes
 
-    echo -e "#\n#  Clean the image area ...\n#"
-    echo "rm -fr ${BLD_TOP}/releases/${BLD_PRODUCT}-*"
-    ${RM} -fr ${BLD_TOP}/releases/${BLD_PRODUCT}-*
-    echo "rm -fr ${BLD_TOP}/releases/md5-${BLD_PRODUCT}-*"
-    ${RM} -fr ${BLD_TOP}/releases/md5-${BLD_PRODUCT}-*
-
-    type pp >/dev/null 2>&1
-    if [ $? != 0 -a -f ${ABS_BLD_TOP}/embedthis ]
-    then
-        echo "Can't find pp. This is required when making Embedthis packages."
-        exit 2
-    fi
+    log Clean Image area
+    mkdir -p ${ABS_BLD_REL_DIR}
+    ${RM} -fr ${ABS_BLD_REL_DIR}/${BLD_PRODUCT}-*
+    ${RM} -fr ${ABS_BLD_REL_DIR}/md5-${BLD_PRODUCT}-*
 
     #
     #   Remove extended attributes on Mac OS X
@@ -107,6 +101,17 @@ setup() {
         for i in $(ls -Rl@ | grep '^	' | awk '{print $1}' | sort -u); do \
             find . | xargs xattr -d $i 2>/dev/null ; done
         cd ${BLD_TOP}
+    fi
+
+    for n in md5 md5sum ; do
+        if type $n >/dev/null 2>&1 ; then
+            MD5=$n
+            break
+        fi
+    done
+    if [ "$MD5" = "" ] ; then
+        echo "Can't find md5 or md5sum, required for packaging"
+        exit 255
     fi
 }
 
@@ -149,12 +154,9 @@ createArchives() {
     local base dir name listLoc fromFiles
 
     for suffix in bin dev src ; do
-        echo -en "\n#\n#  "
-
         name="${BLD_PRODUCT}-${suffix}"
         dir=`echo "${suffix}" | tr '[:lower:]' '[:upper:]'`
-
-        echo -e "Create raw tar images for: ${ROOT_DIR}/${dir} ...\n#"
+        log Generate Raw tar images for: ${ROOT_DIR}/${dir}
 
         case $suffix in
         bin)
@@ -200,17 +202,16 @@ createArchives() {
 
             ${RM} -f ${file} ${file}.gz
 
-            echo "tar -cf ${file} --files-from=$fromFiles"
+            log Run tar -cf ${file} --files-from=$fromFiles
             tar -cf ${file} --files-from=$fromFiles
             gzip ${file}
 
-            echo -e "\n#\n#  Create zip images for the src distribution ... \n#"
+            log Generate zip images for the src distribution
 
             file=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}.zip`
             file="${ROOT_DIR}/$file"
             [ $BLD_HOST_OS = WIN ] && file=`cygpath "${file}"`
             ${RM} -f "${file}"
-            echo "cat fileList.txt | zip -q ${file} -@"
             cat "$dir/fileList.txt" | zip -q "${file}" -@
             cd $HOME >/dev/null
 
@@ -229,14 +230,11 @@ createArchives() {
             find $dir -type f -print > $fromFiles
             find $dir -type l -print >>$fromFiles
 
-            echo "tar -cf ${file} --files-from=${fromFiles}"
+            log Run "tar -cf ${file} --files-from=${fromFiles}"
             tar -cf ${file} --files-from=${fromFiles}
             gzip ${file}
-
             if [ "$suffix" = "src" ] ; then
-                echo -en "\n#\n# "
-                echo -e "Create zip images for the src distribution ...\n#"
-                echo "cat fileList.txt | zip -q ${file} -@"
+                log Generate Zip images for the src distribution
                 cat "$dir/fileList.txt" | zip -q "${ROOT_DIR}/${file}" -@
             fi
             cd $HOME >/dev/null
@@ -289,15 +287,15 @@ sum() {
     dir=${file%/*}                  # dirname
 
     cd "$dir" >/dev/null
-    echo "md5sum ${base} md5-${base}.txt"
-    md5sum "${base}" | awk '{ print $1 }' > "${dir}/md5-${base}.txt"
+    log Checksum "$MD5 ${base} md5-${base}.txt"
+    $MD5 "${base}" | awk '{ print $1 }' > "${dir}/md5-${base}.txt"
     chmod 755 "${dir}/md5-${base}.txt"
     chown `id -ru` "${dir}/md5-${base}.txt"
     cd $HOME >/dev/null
 }
 
 cleanup() {
-    echo -e "\n#\n#  Package Complete \n#\n"
+    log Complete "Package Complete"
 
     if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 ] ; then
         echo -e "\nWARNING: Non-root package. Installed files will be owned by `id -nu`\n"
@@ -340,11 +338,7 @@ createEnvelopes() {
     if [ $BLD_HOST_OS = MACOSX ] ; then
         return
     fi
-
-    echo -ne "\n#\n# "
-    echo -e "Create envelopes ...\n#"
-
-    mkdir -p ${ABS_BLD_TOP}/releases
+    log Generate Package envelopes
 
     #
     #   Envelope the platform packages with readme and optionally install/uninstall scripts.
@@ -358,7 +352,6 @@ createEnvelopes() {
         if ! ls *.${fmt} >/dev/null 2>&1 ; then
             continue
         fi
-
         name="${baseName}.${fmt}"
 
         if [ $fmt = exe ] ; then
@@ -374,9 +367,9 @@ createEnvelopes() {
             files="*.$fmt"
             srcPkg=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}.${fmt}`
             files=`echo $files | sed "s^$srcPkg^^"`
-            echo "tar -cf `basename ${env}` COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files"
+            log Run "tar -cf `basename ${env}` COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files"
             tar -cf ${env} COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files
-            echo "gzip ${env}"
+            log Run "gzip ${env}"
             gzip ${env}
         fi
         count=`expr $count + 1`
@@ -384,12 +377,9 @@ createEnvelopes() {
     cd ${HOME} >/dev/null
 
     if [ "$count" = 0 ] ; then
-        # TODO - temporary until we have a mac installation
-        if [ $BLD_BUILD_OS != MACOSX ] ; then
-            echo "Could not find any packages to envelope in $ROOT_DIR"
-            echo "Using base name $baseName"
-            exit 255
-        fi
+        echo "Could not find any packages to envelope in $ROOT_DIR"
+        echo "Using base name $baseName"
+        exit 255
     fi
 }
 
@@ -398,20 +388,19 @@ copyImages() {
 
     for ext in dmg deb rpm gz zip ; do
         if ls ${ROOT_DIR}/${BLD_PRODUCT}*${ext} >/dev/null 2>&1 ; then
-            cp ${ROOT_DIR}/${BLD_PRODUCT}*${ext} ${ABS_BLD_TOP}/releases
+            cp ${ROOT_DIR}/${BLD_PRODUCT}*${ext} ${ABS_BLD_REL_DIR}
         fi
     done
-    chown `id -ru` ${ABS_BLD_TOP}/releases/${BLD_PRODUCT}-*
+    chown `id -ru` ${ABS_BLD_REL_DIR}/${BLD_PRODUCT}-*
 }
 
 createChecksums() {
     local file
 
-    if ls ${ABS_BLD_TOP}/releases/${BLD_PRODUCT}-* >/dev/null 2>&1
+    if ls ${ABS_BLD_REL_DIR}/${BLD_PRODUCT}-* >/dev/null 2>&1
     then
-        echo -ne "\n#\n#  "
-        echo -e "Create checksums ...\n#"
-        ls ${ABS_BLD_TOP}/releases/${BLD_PRODUCT}-* | \
+        log Checksum Create checksums
+        ls ${ABS_BLD_REL_DIR}/${BLD_PRODUCT}-* | \
         while read file ; do
             sum "${file}"
         done
