@@ -5744,7 +5744,7 @@ static HttpStage *processDirectory(HttpConn *conn, HttpStage *handler)
                 Return zero so the request will be rematched on return.
              */
             pathInfo = mprJoinPath(rx->pathInfo, index);
-            httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
+            uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
             httpSetUri(conn, uri, 0);
             return 0;
         }
