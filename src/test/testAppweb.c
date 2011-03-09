@@ -44,19 +44,18 @@ static void manageApp(App *app, int flags);
 MAIN(testAppWeb, int argc, char *argv[]) 
 {
     Mpr             *mpr;
-    MprTestGroup    *gp;
     int             rc;
 
     mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
-    mprSetAppName(argv[0], argv[0], BLD_VERSION);
+    mprAddStandardSignals();
+
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
 
     app->host = sclone("127.0.0.1");
     app->port = 4100;
 
-    ts = mprCreateTestService(mpr);
-    if (ts == 0) {
+    if ((ts = mprCreateTestService(mpr)) == 0) {
         mprError("Can't create test service");
         exit(2);
     }
@@ -67,8 +66,7 @@ MAIN(testAppWeb, int argc, char *argv[])
             mprGetAppName(mpr));
         exit(3);
     }
-    gp = mprAddTestGroup(ts, &master);
-    if (gp == 0) {
+    if (mprAddTestGroup(ts, &master) == 0) {
         exit(4);
     }
 
@@ -142,7 +140,7 @@ int startRequest(MprTestGroup *gp, cchar *method, cchar *uri)
         httpSetDefaultClientPort(http, app->port);
         httpSetDefaultClientHost(http, app->host);
     }
-    gp->conn = conn = httpCreateConn(http, NULL, NULL);
+    gp->conn = conn = httpCreateConn(http, NULL, gp->dispatcher);
     if (httpConnect(conn, method, uri) < 0) {
         return MPR_ERR_CANT_OPEN;
     }

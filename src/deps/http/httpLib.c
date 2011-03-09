@@ -8373,7 +8373,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         if (conn->secure) {
             rx->parsedUri->scheme = sclone("https");
         }
-        rx->parsedUri->port = conn->sock->port;
+        rx->parsedUri->port = conn->sock->listenSock->port;
         if (!tx->handler) {
             httpMatchHandler(conn);  
         }
@@ -9500,7 +9500,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
 
     http = conn->http;
     if (timeout <= 0) {
-        timeout = MAXINT64;
+        timeout = MAXINT;
     }
     if (state == 0) {
         state = HTTP_STATE_COMPLETE;

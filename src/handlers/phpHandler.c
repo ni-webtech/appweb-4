@@ -237,7 +237,12 @@ static void processPhp(HttpQueue *q)
     }
 #endif
 
+#if UNUSED
+    // Can't do as this may call back into writeBlock and others 
     mprYield(MPR_YIELD_STICKY);
+#else
+    mprYield(0);
+#endif
     zend_try {
         php_execute_script(&file_handle TSRMLS_CC);
         if (!SG(headers_sent)) {
@@ -252,8 +257,9 @@ static void processPhp(HttpQueue *q)
     zend_try {
         php_request_shutdown(0);
     } zend_end_try();
-
+#if UNUSED
     mprResetYield();
+#endif
     httpFinalize(conn);
 }
 
