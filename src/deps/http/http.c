@@ -1032,7 +1032,7 @@ static void showOutput(HttpConn *conn, cchar *buf, ssize count)
         return;
     }
     if (!app->printable) {
-        (void) write(1, buf, (int) count);
+        (void) write(1, (char*) buf, (int) count);
         return;
     }
 
