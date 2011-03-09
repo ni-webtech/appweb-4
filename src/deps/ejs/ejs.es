@@ -21264,7 +21264,6 @@ module ejs.web {
         let filename = request.filename
         let status = Http.Ok, body
 
-    print("IN STATIC APP")
         let headers = {
             "Content-Type": Uri(request.uri).mimeType,
         }
@@ -21313,7 +21312,6 @@ module ejs.web {
                 }
             }
         }
-print("AAA")
 
         /*
             Must not return NotModified if an If-None-Match failed
@@ -21330,7 +21328,6 @@ print("AAA")
                 status = Http.PrecondFailed
             }
         }
-print("BBB Status " + status)
         if (status != Http.Ok) {
             return { status: status }
         }
@@ -21344,16 +21341,13 @@ print("BBB Status " + status)
                 headers["Expires"] = when.toUTCString()
             }
         }
-print("METHOD " + request.method)
         if (request.method == "GET" || request.method == "POST") {
-print("HERE")
             headers["Content-Length"] = filename.size
             if (request.config.web.nosend) {
                 body = File(filename, "r")
             } else {
                 body = filename
             }
-print("CCC body " + body)
 
         } else if (request.method == "DELETE") {
             status = Http.NoContent
@@ -21378,7 +21372,6 @@ print("CCC body " + body)
             status = Http.BadMethod
             body = errorBody("Unsupported method ", "Method " + escapeHtml(request.method) + " is not supported")
         }
-print("CCC RETURNING ")
         return {
             status: status,
             headers: headers,
@@ -21387,23 +21380,18 @@ print("CCC RETURNING ")
 
         /* Inline function to handle put requests */
         function put(request: Request) {
-print("IN PUT ")
             //  MOB -- how to handle ranges?
             let path = request.dir.join(request.pathInfo.trimStart('/'))
             request.status = path.exists ? Http.NoContent : Http.Created
 
             let file = new File(path, "w")
             file.position = 0;
-print("FILE  " + file)
 
             request.input.on("readable", function () {
-print("READABLE")
                 buf = new ByteArray
                 if (request.read(buf)) {
-print('WRITE')
                     file.write(buf)
                 } else {
-print('CLOSE')
                     file.close()
                     request.finalize()
                 }
@@ -21427,7 +21415,6 @@ print('CLOSE')
         @stability prototype
      */
     function StaticBuilder(request: Request): Function {
-print("IN STATIC BUILDER")
         //  MOB -- BUG should not need "ejs.web"
         return "ejs.web"::StaticApp
     }

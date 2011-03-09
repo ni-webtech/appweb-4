@@ -4644,10 +4644,9 @@ static void httpTimer(Http *http, MprEvent *event)
     mprAssert(event);
     
     updateCurrentDate(http);
-    if (mprGetDebugMode(http)) {
+    if (mprGetDebugMode()) {
         return;
     }
-
     /* 
        Check for any inactive connections or expired requests (inactivityTimeout and requestTimeout)
      */
@@ -5071,9 +5070,11 @@ static void graduate(HttpLoc *loc)
 
 void httpFinalizeLocation(HttpLoc *loc)
 {
+#if BLD_FEATURE_SSL
     if (loc->ssl) {
         mprConfigureSsl(loc->ssl);
     }
+#endif
 }
 
 
@@ -8377,11 +8378,11 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
             httpMatchHandler(conn);  
         }
         loc = rx->loc;
-        rx->startAfterContent = (loc->flags & HTTP_LOC_AFTER || ((rx->form || rx->upload) && loc->flags & HTTP_LOC_SMART));
 
         mprLog(3, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
         httpSetState(conn, HTTP_STATE_PARSED);        
         httpCreatePipeline(conn, loc, tx->handler);
+        rx->startAfterContent = (loc->flags & HTTP_LOC_AFTER || ((rx->form || rx->upload) && loc->flags & HTTP_LOC_SMART));
 
     } else if (!(100 <= rx->status && rx->status < 200)) {
         httpSetState(conn, HTTP_STATE_PARSED);        
@@ -9130,7 +9131,6 @@ static bool processRunning(HttpConn *conn)
     int     canProceed;
 
     canProceed = 1;
-
     if (conn->connError) {
         httpSetState(conn, HTTP_STATE_COMPLETE);
     } else {

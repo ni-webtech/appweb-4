@@ -975,7 +975,7 @@ static void addFormVars(cchar *buf)
 
     pair = stok(sclone(buf), "&", &tok);
     while (pair != 0) {
-        mprAddItem(app->formData, pair);
+        mprAddItem(app->formData, sclone(pair));
         pair = stok(0, "&", &tok);
     }
 }

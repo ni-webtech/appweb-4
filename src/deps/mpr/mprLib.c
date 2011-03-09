@@ -2590,14 +2590,14 @@ void mprTerminate(int how)
     }
     how = MPR->exitStrategy;
     if (how == MPR_EXIT_IMMEDIATE) {
-        mprLog(2, "Immediate exit. Aborting all requests and services.");
+        mprLog(5, "Immediate exit. Aborting all requests and services.");
         exit(0);
     } else if (how == MPR_EXIT_NORMAL) {
-        mprLog(2, "Normal exit. Flush buffers, close files and aborting existing requests.");
+        mprLog(5, "Normal exit. Flush buffers, close files and aborting existing requests.");
     } else if (how == MPR_EXIT_GRACEFUL) {
-        mprLog(2, "Graceful exit. Waiting for existing requests to complete.");
+        mprLog(5, "Graceful exit. Waiting for existing requests to complete.");
     } else {
-        mprLog(2, "HOW %d", how);
+        mprLog(7, "HOW %d", how);
     }
 
     /*

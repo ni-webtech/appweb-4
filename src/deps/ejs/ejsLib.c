@@ -20426,6 +20426,8 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
     }
     if (timeout < 0) {
         timeout = 0;
+    } else if (mprGetDebugMode()) {
+        timeout = INT_MAX;
     }
     remaining = timeout;
     mark = mprGetTime();
@@ -20583,6 +20585,15 @@ void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server)
     limits->sessionTimeout = setLimit(ejs, obj, "sessionTimeout", MPR_TICKS_PER_SEC);
     limits->transmissionBodySize = setLimit(ejs, obj, "transmission", 1);
     limits->uploadSize = setLimit(ejs, obj, "upload", 1);
+    if (limits->requestTimeout <= 0) {
+        limits->requestTimeout = MPR_MAX_TIMEOUT;
+    }
+    if (limits->inactivityTimeout <= 0) {
+        limits->inactivityTimeout = MPR_MAX_TIMEOUT;
+    }
+    if (limits->sessionTimeout <= 0) {
+        limits->sessionTimeout = MPR_MAX_TIMEOUT;
+    }
 
     if (server) {
         limits->clientCount = setLimit(ejs, obj, "clients", 1);
@@ -37725,7 +37736,7 @@ static EjsObj *hs_set_async(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
 static EjsObj *hs_close(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     if (sp->server) {
-        ejsSendEvent(ejs, sp->emitter, "close", NULL, (EjsObj*) sp);
+        ejsSendEvent(ejs, sp->emitter, "close", NULL, sp);
         httpDestroyServer(sp->server);
 #if MOB
         ejsStopSessionTimer(sp);
@@ -38289,49 +38300,46 @@ static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn)
 static void startEjs(HttpQueue *q)
 {
     EjsHttpServer   *sp;
+    EjsRequest      *req;
+    HttpConn        *conn;
 
-    mprAssert(httpGetConnContext(q->conn) == 0);
+    conn = q->conn;
+    mprAssert(httpGetConnContext(conn) == 0);
    
-    if ((sp = getServerContext(q->conn)) == 0) {
+    if ((sp = getServerContext(conn)) == 0) {
         return;
     }
-    createRequest(sp, q->conn);
-
-#if UNUSED
-    if ((req = httpGetConnContext(conn)) == 0) {
-        if ((sp = getServerContext(conn)) == 0) {
-            return;
-        }
-        if ((req = createRequest(sp, conn)) == 0) {
-            return;
-        }
-    }
-    sp = httpGetServerContext(conn->server);
-    if (!req->accepted) {
+    createRequest(sp, conn);
+    req = httpGetConnContext(conn);
+    if (req && !req->accepted) {
         /* Server accept event */
         req->accepted = 1;
-        ejsSendEvent(sp->ejs, sp->emitter, "readable", (EjsObj*) req, (EjsObj*) req);
+        ejsSendEvent(sp->ejs, sp->emitter, "readable", req, req);
+        if (conn->rx->startAfterContent && conn->rx->eof) {
+            /* 
+                If form or upload, then all content is already buffered and no more input data will arrive. So can send
+                the EOF notification here
+             */
+            HTTP_NOTIFY(conn, 0, HTTP_NOTIFY_READABLE);
+        }
     }
-#endif
 }
 
 
 static void processEjs(HttpQueue *q)
 {
     HttpConn        *conn;
+    
+    conn = q->conn;
+#if UNUSED
     EjsHttpServer   *sp;
     EjsRequest      *req;
-
-    conn = q->conn;
-
     sp = httpGetServerContext(conn->server);
     req = httpGetConnContext(conn);
+#endif
 
-    if (sp && req && !req->accepted) {
-        //  MOB - is this the best place for this?
-        /* Server accept event */
-        req->accepted = 1;
-        ejsSendEvent(sp->ejs, sp->emitter, "readable", (EjsObj*) req, (EjsObj*) req);
+    if (conn->readq->count > 0) {
+        HTTP_NOTIFY(conn, 0, HTTP_NOTIFY_READABLE);
     }
 }
 
@@ -39612,6 +39620,7 @@ static EjsObj *req_trace(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 
 /*  
     Write text to the client. This call writes the arguments back to the client's browser. 
+ 
     function write(data: Object): Void
  */
 static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
