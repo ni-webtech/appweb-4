@@ -13726,7 +13726,7 @@ static EjsObj *ba_writeInteger(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **ar
     }
     putInteger(ap, ejsGetInt(ejs, argv[0]));
     if (ap->emitter) {
-        ejsSendEvent(ejs, ap->emitter, "readable", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "readable", NULL, ap);
     }
     return 0;
 }

@@ -44,7 +44,7 @@ ifeq ($(BLD_EJS_DIR),)
 	endif
 	TARGETS		+= $(BLD_LIB_DIR)/www
 	ifeq ($(BLD_HOST_OS),WIN)
-		TARGETS	+= $(BLD_BIN_DIR)/ejsmvc.cmd
+		TARGETS	+= $(BLD_BIN_DIR)/mvc.cmd
 		TARGETS	+= $(BLD_BIN_DIR)/ejspage.cmd
 		TARGETS	+= $(BLD_BIN_DIR)/jem.cmd
 	endif
@@ -118,10 +118,10 @@ $(BLD_LIB_DIR)/www: Makefile www/*
 	mkdir -p $(BLD_LIB_DIR)/www
 	cp -r www/* $(BLD_LIB_DIR)/www
 
-$(BLD_BIN_DIR)/ejsmvc.cmd: ejsmvc.cmd
-	$(call log) "[Generate]" "ejsmvc.cmd"
-	cp ejsmvc.cmd $(BLD_BIN_DIR)/ejsmvc.cmd
-	chmod 755 $(BLD_BIN_DIR)/ejsmvc.cmd
+$(BLD_BIN_DIR)/mvc.cmd: mvc.cmd
+	$(call log) "[Generate]" "mvc.cmd"
+	cp mvc.cmd $(BLD_BIN_DIR)/mvc.cmd
+	chmod 755 $(BLD_BIN_DIR)/mvc.cmd
 
 $(BLD_BIN_DIR)/ejspage.cmd: ejspage.cmd
 	$(call log) "[Generate]" "ejspage.cmd"
