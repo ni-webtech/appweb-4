@@ -182,10 +182,10 @@ makeWinPackage() {
     name=`createPackageName ${BLD_PRODUCT}`.exe
 
     drive=`cygpath -m / | sed -e 's/:.*//'`
-    echo "${drive}:/Program Files/Inno Setup 5/iscc" install.iss
-    "${drive}:/Program Files/Inno Setup 5/iscc" install.iss >../ino.log 2>&1
-    if [ $? != 0 ]
-    then
+    # echo "${drive}:/Program Files/Inno Setup 5/iscc" install.iss
+    # "${drive}:/Program Files/Inno Setup 5/iscc" install.iss >../ino.log 2>&1
+    "${BLD_PKG}" install.iss >../ino.log 2>&1
+    if [ $? != 0 ] ; then
         echo "Inno Setup error. Log:"
         cat ../ino.log
         exit 255
