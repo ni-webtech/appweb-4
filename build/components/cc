@@ -35,7 +35,7 @@ setCompilerOptions()
     eval hasDiab=\${KIND}_HAS_DIAB
     eval hasWarnUnused=\${KIND}_HAS_WARN_UNUSED
     eval hasUnnamedUnions=\${KIND}_HAS_UNNAMED_UNIONS
-    eval flags=\"-Wnoerror \$BLD_${KIND}_CFLAGS \$BLD_${KIND}_DFLAGS \$BLD_${KIND}_IFLAGS \$BLD_${KIND}_LDFLAGS\"
+    eval flags=\"-Werror \$BLD_${KIND}_CFLAGS \$BLD_${KIND}_DFLAGS \$BLD_${KIND}_IFLAGS \$BLD_${KIND}_LDFLAGS\"
     if [ $os = MACOSX -a "${flags}" = "${flags/-arch/}" ] ; then
         flags="$flags -arch $cpu"
     fi
