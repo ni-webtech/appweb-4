@@ -3698,7 +3698,13 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
     if ((host = mprAllocObj(HttpHost, manageHost)) == 0) {
         return 0;
     }
-    host->name = mprAsprintf("%s:%d", ip ? ip : "*", port);
+    if (ip) {
+        if (port) {
+            host->name = mprAsprintf("%s:%d", ip, port);
+        } else {
+            host->name = sclone(ip);
+        }
+    }
     host->mutex = mprCreateLock();
     host->aliases = mprCreateList(-1, 0);
     host->dirs = mprCreateList(-1, 0);
@@ -3805,6 +3811,12 @@ void httpSetHostServerRoot(HttpHost *host, cchar *serverRoot)
 void httpSetHostName(HttpHost *host, cchar *name)
 {
     host->name = sclone(name);
+}
+
+
+void httpSetHostInfoName(HttpHost *host, cchar *name)
+{
+    host->infoName = sclone(name);
 }
 
 
@@ -4483,23 +4495,6 @@ void httpRemoveHost(Http *http, HttpHost *host)
 {
     mprRemoveItem(http->hosts, host);
 }
-
-
-#if UNUSED
-//  MOB is this used?
-HttpHost *httpLookupHost(Http *http, cchar *name)
-{
-    HttpHost  *host;
-    int         next;
-
-    for (next = 0; (host = mprGetNextItem(http->hosts, &next)) != 0; ) {
-        if (strcmp(host->name, name) == 0) {
-            return host;
-        }
-    }
-    return 0;
-}
-#endif
 
 
 //  MOB - rename
@@ -8376,7 +8371,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
             rx->parsedUri->scheme = sclone("https");
         }
         rx->parsedUri->port = conn->sock->listenSock->port;
-        rx->parsedUri->host = conn->host->name;
+        rx->parsedUri->host = rx->hostName ? rx->hostName : conn->host->name;
         if (!tx->handler) {
             httpMatchHandler(conn);  
         }
@@ -8535,10 +8530,18 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     MprBuf      *content;
     cchar       *endp;
     char        *protocol, *status;
-    int         len, level;
+    int         len, level, traced;
 
     rx = conn->rx;
+    traced = 0;
 
+    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
+        content = packet->content;
+        endp = strstr((char*) content->start, "\r\n\r\n");
+        len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
+        httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, packet, len, 0);
+        traced = 1;
+    }
     protocol = conn->protocol = supper(getToken(conn, " "));
     if (strcmp(protocol, "HTTP/1.0") == 0) {
         conn->http10 = 1;
@@ -8555,14 +8558,8 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     if (slen(rx->statusMessage) >= conn->limits->uriSize) {
         httpError(conn, HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad response. Status message too long");
     }
-    if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, conn->tx->extension)) >= 0) {
+    if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, conn->tx->extension)) >= 0) {
         mprLog(level, "%s %d %s", protocol, rx->status, rx->statusMessage);
-    }
-    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
-        content = packet->content;
-        endp = strstr((char*) content->start, "\r\n\r\n");
-        len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
-        httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, packet, len, 0);
     }
 }
 
@@ -10716,91 +10713,6 @@ HttpHost *httpLookupHostByName(HttpServer *server, cchar *name)
     }
     return 0;
 }
-
-
-#if UNUSED
-void httpSetServerLimits(HttpServer *server, HttpLimits *limits)
-{
-    server->limits = limits;
-}
-
-
-/*  
-    Create the host addresses for a host. Called for hosts or for NameVirtualHost directives (host == 0).
- */
-int httpCreateEndpoints(HttpHost *host, cchar *configValue)
-{
-    Http            *http;
-    HttpServer      *server;
-    HttpServer      *endpoint;
-    char            *ipAddrPort, *ip, *value, *tok;
-    int             next, port;
-
-    http = MPR->httpService;
-    endpoint = 0;
-    value = sclone(configValue);
-    ipAddrPort = stok(value, " \t", &tok);
-
-    while (ipAddrPort) {
-        if (scasecmp(ipAddrPort, "_default_") == 0) {
-            //  TODO is this used?
-            mprAssert(0);
-            ipAddrPort = "*:*";
-        }
-        if (mprParseIp(ipAddrPort, &ip, &port, -1) < 0) {
-            mprError("Can't parse ipAddr %s", ipAddrPort);
-            continue;
-        }
-        mprAssert(ip && *ip);
-        if (ip[0] == '*') {
-            ip = sclone("");
-        }
-
-        /*  
-            For each listening endpiont
-         */
-        for (next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
-            if (port > 0 && port != server->port) {
-                continue;
-            }
-            if (server->ip[0] != '\0' && ip[0] != '\0' && strcmp(ip, server->ip) != 0) {
-                continue;
-            }
-
-            /*
-                Find the matching endpoint or create a new one
-             */
-            if ((endpoint = httpLookupEndpoint(http, server->ip, server->port)) == 0) {
-                endpoint = httpCreateEndpoint(server->ip, server->port);
-                mprAddItem(http->servers, endpoint);
-            }
-            if (host == 0) {
-                httpSetNamedVirtualEndpoint(endpoint);
-
-            } else {
-                httpAddHostToEndpoint(endpoint, host);
-                if (server->ip[0] != '\0') {
-                    httpSetHostName(host, mprAsprintf("%s:%d", server->ip, server->port));
-                } else {
-                    httpSetHostName(host, mprAsprintf("%s:%d", ip, server->port));
-                }
-            }
-        }
-        ipAddrPort = stok(0, " \t", &tok);
-    }
-    if (host) {
-        if (endpoint == 0) {
-            mprError("No valid IP address for host %s", host->name);
-            return MPR_ERR_CANT_INITIALIZE;
-        }
-        if (httpIsNamedVirtualEndpoint(endpoint)) {
-            httpSetNamedVirtualHost(host);
-        }
-    }
-    return 0;
-}
-#endif
-
 
 /*
     @copy   default

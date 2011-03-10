@@ -155,7 +155,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     state->auth = state->dir->auth;
 
     httpAddDir(host, state->dir);
-    httpSetHostName(host, "Main Server");
+    httpSetHostInfoName(host, "Main Server");
 
     /*
         Parse each line in the config file
@@ -471,13 +471,15 @@ int maValidateConfiguration(MaMeta *meta)
         }
 
         /*
-            Define a ServerName if one has not been defined. Just use the IP:Port if defined.
+            Define a informational host name if one has not been defined via ServerName
          */
         if (host->name == 0) {
             if (host->port) {
-                httpSetHostName(host, mprAsprintf("%s:%d", (host->ip && *host->ip) ? host->ip : "*", host->port));
+                httpSetHostInfoName(host, mprAsprintf("%s:%d", (host->ip && *host->ip) ? host->ip : "*", host->port));
+                httpSetHostName(host, mprAsprintf("%s:%d", mprGetHostName(), host->port));
             } else {
-                httpSetHostName(host, mprGetHostName(host));
+                httpSetHostName(host, mprGetHostName());
+                httpSetHostInfoName(host, mprGetHostName());
             }
         }
         mprLog(MPR_CONFIG, "Host \"%s\"", host->name);
@@ -1301,8 +1303,10 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             value = strim(value, "\"", MPR_TRIM_BOTH);
             if (strncmp(value, "http://", 7) == 0) {
                 httpSetHostName(host, &value[7]);
+                httpSetHostInfoName(host, &value[7]);
             } else {
                 httpSetHostName(host, value);
+                httpSetHostInfoName(host, value);
             }
             return 1;
 

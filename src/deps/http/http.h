@@ -2880,6 +2880,7 @@ extern HttpServer *httpCreateConfiguredServer(cchar *docRoot, cchar *ip, int por
 */
 typedef struct HttpHost {
     char            *name;                  /**< ServerName directive - used for redirects */
+    char            *infoName;              /**< Informational host name - used in logs */
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, locations */
 
     MprList         *aliases;               /**< List of Alias definitions */
@@ -2938,6 +2939,7 @@ extern char *httpMakePath(HttpHost *host, cchar *file);
 extern char *httpReplaceReferences(HttpHost *host, cchar *str);
 extern void httpSetHostAddress(HttpHost *host, cchar *ip, int port);
 extern void httpSetHostDocumentRoot(HttpHost *host, cchar *dir);
+extern void httpSetHostInfoName(HttpHost *host, cchar *name);
 extern void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize);
 extern void httpSetHostName(HttpHost *host, cchar *name);
 extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
