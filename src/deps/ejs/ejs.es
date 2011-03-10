@@ -266,6 +266,11 @@ module ejs {
             }
             stdout = TextStream(_outputStream)
         }
+
+        /**
+            The process ID of the application
+         */
+        native static function get pid(): Number
         
         /** 
             Update an environment variable.

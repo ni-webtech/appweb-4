@@ -8376,6 +8376,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
             rx->parsedUri->scheme = sclone("https");
         }
         rx->parsedUri->port = conn->sock->listenSock->port;
+        rx->parsedUri->host = conn->host->name;
         if (!tx->handler) {
             httpMatchHandler(conn);  
         }
@@ -9470,6 +9471,7 @@ int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
     }
     if (query == 0 && prior) {
         rx->parsedUri->query = prior->query;
+        rx->parsedUri->host = prior->host;
     } else if (*query) {
         rx->parsedUri->query = sclone(query);
     }

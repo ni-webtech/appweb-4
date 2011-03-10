@@ -10133,6 +10133,15 @@ static EjsObj *app_createSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 
 
 /*  
+    static function get pid (): void
+ */
+static EjsNumber *app_pid(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    return ejsCreateNumber(ejs, getpid());
+}
+
+
+/*  
     static function run(timeout: Number = -1, oneEvent: Boolean = false): void
  */
 static EjsObj *app_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
@@ -10192,6 +10201,7 @@ void ejsConfigureAppType(Ejs *ejs)
     ejsSetProperty(ejs, type, ES_App__errorStream, ejsCreateFileFromFd(ejs, 2, "stderr", O_WRONLY));
 
     ejsBindMethod(ejs, type, ES_App_args, (EjsProc) app_args);
+    ejsBindMethod(ejs, type, ES_App_createSearch, (EjsProc) app_createSearch);
     ejsBindMethod(ejs, type, ES_App_dir, (EjsProc) app_dir);
     ejsBindMethod(ejs, type, ES_App_chdir, (EjsProc) app_chdir);
     ejsBindMethod(ejs, type, ES_App_exeDir, (EjsProc) app_exeDir);
@@ -10202,7 +10212,9 @@ void ejsConfigureAppType(Ejs *ejs)
 #if UNUSED
     ejsBindMethod(ejs, type, ES_App_noexit, (EjsProc) app_noexit);
 #endif
-    ejsBindMethod(ejs, type, ES_App_createSearch, (EjsProc) app_createSearch);
+#if ES_App_pid
+    ejsBindMethod(ejs, type, ES_App_pid, (EjsProc) app_pid);
+#endif
     ejsBindMethod(ejs, type, ES_App_run, (EjsProc) app_run);
     ejsBindAccess(ejs, type, ES_App_search, (EjsProc) app_search, (EjsProc) app_set_search);
     ejsBindMethod(ejs, type, ES_App_sleep, (EjsProc) app_sleep);
@@ -14301,7 +14313,11 @@ static EjsObj *cmd_kill(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 #if BLD_WIN_LIKE
 {
     HANDLE	handle;
-	handle = OpenProcess(DELETE, 0, pid);
+	handle = OpenProcess(PROCESS_TERMINATE, 0, pid);
+    if (handle == 0) {
+        ejsThrowIOError(ejs, "Can't find process ID %d", pid);
+        return 0;
+    }
     rc = TerminateProcess(handle, signal) == 0;
 }
 #elif VXWORKS
