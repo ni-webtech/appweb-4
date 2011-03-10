@@ -383,7 +383,7 @@ cchar *ejsGetErrorMsg(Ejs *ejs, int withStack)
 {
     EjsString   *str, *tag, *msg, *message;
     EjsObj      *stack, *error, *saveException;
-    char        *buf;
+    char        *buf, *stackStr;
 
     error = ejs->exception;
     message = 0;
@@ -419,7 +419,8 @@ cchar *ejsGetErrorMsg(Ejs *ejs, int withStack)
         msg = ejsToString(ejs, message);
     }
     if (ejsIsA(ejs, error, ejs->errorType)) {
-        if (stack) {
+        stackStr = (stack) ? ejsToMulti(ejs, stack) : 0;
+        if (stackStr && *stackStr) {
             buf = mprAsprintf("%@: %@\nStack:\n%s", tag, msg, (stack) ? ejsToMulti(ejs, stack) : "");
         } else {
             buf = mprAsprintf("%@: %@", tag, msg);
@@ -49460,6 +49461,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
             lflags = cp->strict ? EJS_LOADER_STRICT : 0;
             if ((rc = ejsLoadModule(cp->ejs, ejsCreateStringFromAsc(ejs, argv[i]), -1, -1, lflags)) < 0) {
                 msg = mprAsprintf("Error initializing module %s\n%s", argv[i], ejsGetErrorMsg(cp->ejs, 1));
+                memset(&loc, 0, sizeof(EcLocation));
                 loc.filename = sclone(argv[i]);
                 if (rc == MPR_ERR_CANT_INITIALIZE) {
                     ecError(cp, "Error", &loc, msg);
@@ -51032,7 +51034,7 @@ int ecOpenConsoleStream(EcCompiler *cp, EcStreamGet getInput, cchar *contents)
         return MPR_ERR_MEMORY;
     }
     cs->stream.getInput = getInput;
-    ecSetStreamBuf((EcStream*) cs, contents, contents ? strlen(contents) : 0);
+    ecSetStreamBuf((EcStream*) cs, sclone(contents), contents ? strlen(contents) : 0);
     return 0;
 }
 

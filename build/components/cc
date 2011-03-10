@@ -35,7 +35,7 @@ setCompilerOptions()
     eval hasDiab=\${KIND}_HAS_DIAB
     eval hasWarnUnused=\${KIND}_HAS_WARN_UNUSED
     eval hasUnnamedUnions=\${KIND}_HAS_UNNAMED_UNIONS
-    eval flags=\"\$BLD_${KIND}_CFLAGS \$BLD_${KIND}_DFLAGS \$BLD_${KIND}_IFLAGS \$BLD_${KIND}_LDFLAGS\"
+    eval flags=\"-Wnoerror \$BLD_${KIND}_CFLAGS \$BLD_${KIND}_DFLAGS \$BLD_${KIND}_IFLAGS \$BLD_${KIND}_LDFLAGS\"
     if [ $os = MACOSX -a "${flags}" = "${flags/-arch/}" ] ; then
         flags="$flags -arch $cpu"
     fi
@@ -65,16 +65,16 @@ setCompilerOptions()
         >${file}
         if [ "$verbose" != 0 ] ; then
             echo -e "    Checking for compiler -mtune support"
-            # echo -e "        ${cc}" -arch ${cpu} -mtune=${cpu} -c $file "\n"
+            # echo -e "        ${cc}" -Werror -arch ${cpu} -mtune=${cpu} -c $file "\n"
         fi
 		eval tune=\$BLD_${KIND}_CFLAGS
 		tune=`echo $tune | sed 's/.*-mtune=//' | sed 's/ .*//'`
 		tune=${tune:=generic}
-        eval \"${cc}\" -mtune=$tune -c $file >/dev/null 2>&1
+        eval \"${cc}\" -Werror -mtune=$tune -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
             eval $hasMtune=1
 		else
-			eval \"${cc}\" -mtune=${cpu} -c $file >/dev/null 2>&1
+			eval \"${cc}\" -Werror -mtune=${cpu} -c $file >/dev/null 2>&1
 			if [ $? = 0 ] ; then
 				eval $hasMtune=1
 			fi
@@ -85,9 +85,9 @@ setCompilerOptions()
         #
         if [ "$verbose" != 0 ] ; then
             echo -e "    Checking for compiler -fno-stack-protector support"
-            # echo -e "        ${cc}" -fno-stack-protector -c $file "\n"
+            # echo -e "        ${cc}" -Werror -fno-stack-protector -c $file "\n"
         fi
-        eval \"${cc}\" -fno-stack-protector -c $file >/dev/null 2>&1
+        eval \"${cc}\" -Werror -fno-stack-protector -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
             eval $hasStackProtector=1
         fi
@@ -97,9 +97,9 @@ setCompilerOptions()
         #
         if [ "$verbose" != 0 ] ; then
             echo -e "    Checking for compiler -Wno-unused-result support"
-            # echo -e "        ${cc}" -Wno-unused-result -c $file "\n"
+            # echo -e "        ${cc}" -Werror -Wno-unused-result -c $file "\n"
         fi
-        eval \"${cc}\" -Wno-unused-result -c $file >/dev/null 2>&1
+        eval \"${cc}\" -Werror -Wno-unused-result -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
             eval $hasWarnUnused=1
         fi

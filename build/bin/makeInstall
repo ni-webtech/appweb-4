@@ -57,11 +57,7 @@ processPackage() {
 cleanupSystem() {
 
     [ $TASK = Remove ] && configureProduct cleanup
-
-    #
-    #   Clean the required prefix directories
-    #
-    [ "$QUIET" = 0 ] && echo -e "#  Cleaning directories"
+    [ "$QUIET" = 0 ] && log Clean Directories
 
     for p in $PREFIXES
     do
@@ -367,7 +363,7 @@ launchBrowser() {
         return
     fi
 
-    [ "$QUIET" = 0 ] && echo -e "#\n#  Starting browser to view the $BLD_NAME Documentation."
+    [ "$QUIET" = 0 ] && log Start "Browser to view the $BLD_NAME Documentation."
     sleep 4
     if [ "$BLD_OS" = MACOSX ] ; then
         open $url

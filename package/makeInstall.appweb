@@ -30,11 +30,11 @@ configureProduct() {
 		;;
 
     complete)
-        [ $TASK != Package -a $QUIET = 0 ] && echo -e "#\n#  ${TASK} Complete\n#" ; true
+        [ $TASK != Package -a $QUIET = 0 ] && log ${TASK} Complete ; true
         ;;
 
 	configure)
-		[ $QUIET = 0 ] && echo -e "#  Configuring ${BLD_PRODUCT}"
+		[ $QUIET = 0 ] && log Configure ${BLD_PRODUCT} ; true
 		if [ $TASK = Install -a "${DO_BINARY}" = "1" ] ; then
 			BLD_CFG_PREFIX="$ORIG_BLD_CFG_PREFIX" BLD_WEB_PREFIX="$ORIG_BLD_WEB_PREFIX" \
 			BLD_DOC_PREFIX="$ORIG_BLD_DOC_PREFIX" BLD_MOD_PREFIX="$ORIG_BLD_MOD_PREFIX" \
@@ -62,12 +62,11 @@ configureProduct() {
 		;;
 
 	initialize)
-		# echo -e "#  Initializing ..."
 		;;
 	
 	install)
 		[ $QUIET = 0 ] && 
-		echo -e "#  Installing ${BLD_PRODUCT} as a service/daemon"
+		log Installing "${BLD_PRODUCT} service"
 		if [ $BLD_HOST_OS = WIN ] ; then
 			if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
 				"$BLD_BIN_PREFIX/angel" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
@@ -92,7 +91,7 @@ configureProduct() {
 		;;
 
 	uninstall)
-		[ $TASK = Remove -a $QUIET = 0 ] && echo -e "#  Uninstalling the ${BLD_PRODUCT} service"
+		[ $TASK = Remove -a $QUIET = 0 ] && log Uninstall "${BLD_PRODUCT} service"
 		if [ $BLD_HOST_OS = WIN ] ; then
 			if [ -x "$BLD_BIN_DIR/angel.exe" ] ; then
 				"$BLD_BIN_DIR/angel" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
@@ -114,10 +113,10 @@ configureProduct() {
 	start|stop)
 		if [ $action = start ] ; then
 			verb=Starting
-            [ $QUIET = 0 ] && echo -e "#  $verb $BLD_PRODUCT"
+            [ $QUIET = 0 ] && log $verb $BLD_PRODUCT
 		else
 			verb=Stopping
-            [ $TASK = Remove -a $QUIET = 0 ] && echo -e "#  $verb $BLD_PRODUCT"
+            [ $TASK = Remove -a $QUIET = 0 ] && log Stop $BLD_PRODUCT
 		fi
 
 		if [ $BLD_HOST_OS = WIN ] ; then
