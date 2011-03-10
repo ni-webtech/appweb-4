@@ -13457,825 +13457,6 @@ module ejs.cjs {
 
 /************************************************************************/
 /*
- *  Start of file "../../src/jems/ejs.unix/Unix.es"
- */
-/************************************************************************/
-
-/*
-    Unix.es -- Unix compatibility functions
- *
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-module ejs.unix {
-
-    use default namespace public
-
-    /**
-        Get the base name of a file. Returns the base name portion of a file name. The base name portion is the 
-        trailing portion without any directory elements.
-        @return A string containing the base name portion of the file name.
-     */
-    function basename(path: String): Path
-        Path(path).basename
-    
-    //  TODO - should this be cd()
-    /**
-        Change the current working directory
-        @param dir Directory String or path to change to
-     */
-    function chdir(dir: Object): Void
-        App.chdir(dir)
-
-    /**
-        Set the permissions of a file or directory
-        @param path File or directory to modify
-        @param perms Posix style permission mask
-     */
-    function chmod(path: String, perms: Number): Void
-        Path(path).perms = perms
-
-    /*
-        Close the file and free up all associated resources.
-        @param file Open file object previously opened via $open or $File
-        @hide
-        @deprecated 2.0.0
-    function close(file: File): Void
-     */
-
-    /**
-        Copy a file. If the destination file already exists, the old copy will be overwritten as part of the copy operation.
-        @param fromPath Original file to copy.
-        @param toPath New destination file path name.
-        @throws IOError if the copy is not successful.
-     */
-    function cp(fromPath: String, toPath: String): void
-        Path(fromPath).copy(toPath) 
-
-    /**
-        Get the directory name portion of a file. The dirname name portion is the leading portion including all 
-        directory elements and excluding the base name. On some systems, it will include a drive specifier.
-        @return A string containing the directory name portion of the file name.
-     */
-    function dirname(path: String): Path
-        Path(path).dirname
-
-    /**
-        Does a file exist. Return true if the specified file exists and can be accessed.
-        @param path Filename path to examine.
-        @return True if the file can be accessed
-     */
-    function exists(path: String): Boolean
-        Path(path).exists
-
-    /**
-        Get the file extension portion of the file name. The file extension is the portion after the last "."
-        in the path.
-        @param path Filename path to examine
-        @return String containing the file extension. It excludes "." as the first character.
-     */
-    function extension(path: String): String
-        Path(path).extension
-
-    /**
-        Return the free space in the file system.
-        @return The number of 1M blocks (1024 * 1024 bytes) of free space in the file system.
-     */
-    function freeSpace(path: String? = null): Number
-        FileSystem(path).freeSpace()
-
-    /**
-        Is a file a directory. Return true if the specified path exists and is a directory
-        @param path Directory path to examine.
-        @return True if the file can be accessed
-     */
-    function isDir(path: String): Boolean
-        Path(path).isDir
-
-    /**
-        Kill a process
-        @param pid Process ID to kill
-        @param signal Signal number to use when killing the process.
-        @hide
-        @deprecated 2.0.0
-     */
-    function kill(pid: Number, signal: Number = 2): Void 
-        Cmd.kill(pid, signal)
-
-    //  TODO - good to add ability to do a regexp on the path or a filter function
-    //  TODO - good to add ** to go recursively to any depth
-    /**
-        Get a list of files in a directory. The returned array contains the base file name portion only.
-        @param path Directory path to enumerate.
-        @param enumDirs If set to true, then dirList will include sub-directories in the returned list of files.
-        @return An Array of strings containing the filenames in the directory.
-     */
-    function ls(path: String = ".", enumDirs: Boolean = false): Array
-        Path(path).files(enumDirs)
-
-    //  TODO - need option to exclude directories
-    /**
-        Find matching files. Files are listed in a depth first order.
-        @param path Starting path from which to find matching files.
-        @param glob Glob style Pattern that files must match. This is similar to a ls() style pattern.
-        @param recurse Set to true to examine sub-directories. 
-        @return Return a list of matching files
-     */
-    function find(path: Object, glob: String = "*", recurse: Boolean = true): Array {
-        let result = []
-        if (path is Array) {
-            let paths = path
-            for each (path in paths) {
-                result += Path(path).find(glob, recurse)
-            }
-        } else {
-            result += Path(path).find(glob, recurse)
-        }
-        return result
-    }
-
-    /**
-        Make a new directory. Makes a new directory and all required intervening directories. If the directory 
-        already exists, the function returns without throwing an exception.
-        @param path Filename path to use.
-        @param permissions Optional posix permissions mask number. e.g. 0664.
-        @throws IOError if the directory cannot be created.
-     */
-    function mkdir(path: String, permissions: Number = 0755): void
-        Path(path).makeDir({permissions: permissions})
-    
-    /**
-        Rename a file. If the new file name exists it is removed before the rename.
-        @param fromFile Original file name.
-        @param toFile New file name.
-        @throws IOError if the original file does not exist or cannot be renamed.
-     */
-    function mv(fromFile: String, toFile: String): void
-        Path(fromFile).rename(toFile)
-
-    /**  
-        Open or create a file
-        @param path Filename path to open
-        @param mode optional file access mode with values values from: Read, Write, Append, Create, Open, Truncate. 
-            Defaults to Read.
-        @param permissions optional permissions. Defaults to App.permissions
-        @return a File object which implements the Stream interface
-        @throws IOError if the path or file cannot be opened or created.
-        @hide
-        @deprecated 2.0.0
-     */
-    # Config.Legacy
-    function open(path: String, mode: String = "r", permissions: Number = 0644): File
-        new File(path, { mode: mode, permissions: permissions})
-
-    /**
-        Get the current working directory
-        @return A Path containing the current working directory
-     */
-    function pwd(): Path
-        App.dir
-
-    /**  
-        Read data bytes from a file and return a byte array containing the data.
-        @param file Open file object previously opened via $open or $File
-        @param count Number of bytes to read
-        @return A byte array containing the read data
-        @throws IOError if the file could not be read.
-        @hide
-        @deprecated 2.0.0
-     */
-    # Config.Legacy
-    function read(file: File, count: Number): ByteArray
-        file.read(count)
-
-    //  TODO - nice to allow wild cards for the path. Also allow ... for more files
-    /**
-        Remove a file from the file system.
-        @param path Filename path to delete.
-        @throws IOError if the file exists and cannot be removed.
-     */
-    function rm(path: Path): void {
-        if (path.isDir) {
-            throw new ArgError(path.toString() + " is a directory")
-        } 
-        Path(path).remove()
-    }
-
-    /**
-        Removes a directory. This can remove a directory and its contents.  
-        @param path Filename path to remove.
-        @param contents If true, remove the directory contents including files and sub-directories.
-        @throws IOError if the directory exists and cannot be removed.
-     */
-    function rmdir(path: Path, contents: Boolean = false): void {
-        if (contents) {
-            Path(path).removeAll()
-        } else {
-            Path(path).remove()
-        }
-    }
-
-    /** 
-        Sleep the application for the given number of milliseconds. Events will be serviced while asleep.
-        @param delay Time in milliseconds to sleep. Set to -1 to sleep forever.
-     */
-    function sleep(delay: Number): void
-        App.sleep(delay)
-
-    /**
-        Create a temporary file. Creates a new, uniquely named temporary file.
-        @param directory Directory in which to create the temp file.
-        @returns a closed File object after creating an empty temporary file.
-     */
-    function tempname(directory: String? = null): File
-        Path(directory).makeTemp()
-
-    /**
-        Write data to the file. If the stream is in sync mode, the write call blocks until the underlying stream or 
-        endpoint absorbes all the data. If in async-mode, the call accepts whatever data can be accepted immediately 
-        and returns a count of the elements that have been written.
-        @param file Open file object previously opened via $open or $File
-        @param items The data argument can be ByteArrays, strings or Numbers. All other types will call serialize
-        first before writing. Note that numbers will not be written in a cross platform manner. If that is required, use
-        the BinaryStream class to write Numbers.
-        @returns the number of bytes written.  
-        @throws IOError if the file could not be written.
-        @hide
-        @deprecated 2.0.0
-     */
-    # Config.Legacy
-    function write(file: File, ...items): Number
-        file.write(items)
-}
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.unix/Unix.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/jems/ejs.db/Database.es"
- */
-/************************************************************************/
-
-/**
-    Database.es -- Database class
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-module ejs.db {
-
-    /**
-        SQL Database support. The Database class provides an interface over other database adapter classes such as 
-        SQLite or MySQL. Not all the functionality expressed by this API may be implemented by a specific database adapter.
-        @spec ejs
-        @stability evolving
-     */
-    class Database {
-        private static var defaultDb: Database
-
-        private var adapter: Object
-        private var options: Object
-
-        use default namespace public
-
-        /**
-            Initialize a database connection using the supplied database connection string. The first opened database
-            will also be defined as the default database.
-            @param adapter Database adapter to use. E.g. "sqlite". Sqlite is currently the only supported adapter.
-            @param options Connection options. This may be filename or an object hash of properties. If set to a filename
-                they type must be either String or Path and it should contain the filename of the database on the local
-                system. If options is set ot an object hash. It should contain adapter specific properties that specify 
-                how to attach to the database. Typical fields include:
-                <ul>
-                    <li>name - Database URI
-                        Examples: http://example.com:1234/database.db,
-                        Examples: file://var/spool/db/database.db
-                    </li>
-                    <li>username - Database username</li>
-                    <li>password - Database password</li>
-                    <li>trace - Trace database commands to the log
-                    <li>socket - /var/run/mysqld/mysqld.sock
-                </ul>
-         */
-        function Database(adapter: String, options: Object) {
-            Database.defaultDb ||= this
-            if (adapter == "sqlite3") adapter = "sqlite"
-            if (options is String || options is Path) {
-                let name = Path(options)
-                options = { name: name }
-            }
-            options.trace ||= false
-            this.options = options
-            let adapterClass = adapter.toPascal()
-            if (!global."ejs.db"::[adapterClass]) {
-                load("ejs.db." + adapter + ".mod")
-            }
-            if (!global."ejs.db"::[adapterClass]) {
-                throw "Can't find database connector for " + adapter
-            }
-            this.adapter = new global."ejs.db"::[adapterClass](options)
-        }
-
-        /**
-            Add a column to a table.
-            @param table Name of the table
-            @param column Name of the column to add
-            @param datatype Database independant type of the column. Valid types are: binary, boolean, date,
-                datetime, decimal, float, integer, number, string, text, time and timestamp.
-            @param options Optional parameters
-         */
-        function addColumn(table: String, column: String, datatype: String, options = null): Void
-            adapter.addColumn(table, column, datatype, options)
-
-        /**
-            Add an index on a column
-            @param table Name of the table
-            @param column Name of the column to add
-            @param index Name of the index
-         */
-        function addIndex(table: String, column: String, index: String): Void
-            adapter.addIndex(table, column, index)
-
-        /**
-            Change a column
-            @param table Name of the table holding the column
-            @param column Name of the column to change
-            @param datatype Database independant type of the column. Valid types are: binary, boolean, date,
-                datetime, decimal, float, integer, number, string, text, time and timestamp.
-            @param options Optional parameters
-         */
-        function changeColumn(table: String, column: String, datatype: String, options: Object? = null): Void
-            adapter.changeColumn(table, column, datatype, options)
-
-        /**
-            Close the database connection. Database connections should be closed when no longer needed rather than waiting
-            for the garbage collector to automatically close the connection when disposing the database instance.
-         */
-        function close(): Void
-            adapter.close()
-
-        /**
-            Commit a database transaction
-         */
-        function commit(): Void
-            adapter.commit()
-
-        //  TODO - implement
-        /**
-            Reconnect to the database using new connection options
-            @param connectionString See Database() for information about connection options.
-            @hide
-         */
-        function connect(options: Object): Void
-            adapter.connect(options)
-
-        /**
-            The database connection options
-         */
-        function get connectionOptions(): Object
-            options
-
-        /**
-            Create a new database
-            @param name Name of the database
-            @options Optional parameters
-         */
-        function createDatabase(name: String, options: Object? = null): Void
-            adapter.createDatabase(name, options)
-
-        /**
-            Create a new table
-            @param table Name of the table
-            @param columns Array of column descriptor tuples consisting of name:datatype
-         */
-        function createTable(table: String, columns: Array? = null): Void
-            adapter.createTable(table, columns)
-
-        /**
-            Map the database independant data type to a database dependant SQL data type
-            @param dataType Data type to map
-            @returns The corresponding SQL database type
-         */
-        function dataTypeToSqlType(dataType:String): String
-            adapter.dataTypeToSqlType(dataType)
-
-        /**
-            The default database for the application.
-         */
-        static function get defaultDatabase(): Database
-            defaultDb
-
-        /**
-            Set the default database for the application.
-            @param db the default database to define
-         */
-        static function set defaultDatabase(db: Database): Void 
-            defaultDb = db
-
-        /**
-            Destroy a database
-            @param name Name of the database to remove
-         */
-        function destroyDatabase(name: String): Void
-            adapter.destroyDatabase(name)
-
-        /**
-            Destroy a table
-            @param table Name of the table to destroy
-         */
-        function destroyTable(table: String): Void
-            adapter.destroyTable(table)
-
-        /**
-            End a transaction
-         */
-        function endTransaction(): Void
-            adapter.endTransaction()
-
-        /**
-            Get column information 
-            @param table Name of the table to examine
-            @return An array of column data. This is database specific content and will vary depending on the
-                database connector in use.
-         */
-        function getColumns(table: String): Array
-            adapter.getColumns(table)
-
-        /**
-            Return list of tables in a database
-            @returns an array containing list of table names present in the currently opened database.
-         */
-        function getTables(): Array
-            adapter.getTables()
-
-        /**
-            Return the number of rows in a table
-            @returns the count of rows in a table in the currently opened database.
-         */
-        function getNumRows(table: String): Number
-            adapter.getNumRows(table)
-
-        /**
-            The name of the database
-         */
-        function get name(): String
-            options.name
-
-        /**
-            Execute a SQL command on the database.
-            @param cmd SQL command string
-            @param tag Debug tag to use when logging the command
-            @param trace Set to true to eanble logging this command.
-            @returns An array of row results where each row is represented by an Object hash containing the 
-                column names and values
-            @TODO Refactor logging when Log class implemented
-         */
-        function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
-            //  MOB - refactor tracing. Sqlite does tracing too
-            if (options.trace || trace) {
-                print(tag + ": " + cmd)
-            }
-            return adapter.sql(cmd)
-        }
-
-        /**
-            Remove columns from a table
-            @param table Name of the table to modify
-            @param columns Array of column names to remove
-         */
-        function removeColumns(table: String, columns: Array): Void
-            adapter.removeColumns(table, columns)
-
-        /**
-            Remove an index
-            @param table Name of the table to modify
-            @param index Name of the index to remove
-         */
-        function removeIndex(table: String, index: String): Void
-            adapter.removeIndex(table, index)
-
-        /**
-            Rename a column
-            @param table Name of the table to modify
-            @param oldColumn Old column name
-            @param newColumn New column name
-         */
-        function renameColumn(table: String, oldColumn: String, newColumn: String): Void
-            adapter.renameColumn(table, oldColumn, newColumn)
-
-        /**
-            Rename a table
-            @param oldTable Old table name
-            @param newTable New table name
-         */
-        function renameTable(oldTable: String, newTable: String): Void
-            adapter.renameTable(oldTable, newTable)
-
-        /**
-            Rollback an uncommited database transaction
-            @hide
-         */
-        function rollback(): Void
-            adapter.rollback()
-
-        /**
-            Execute a SQL command on the database. This is a low level SQL command interface that bypasses logging.
-                Use @query instead.
-            @param cmd SQL command to issue. Note: "SELECT" is automatically prepended and ";" is appended for you.
-            @returns An array of row results where each row is represented by an Object hash containing the column 
-                names and values
-         */
-        function sql(cmd: String): Array
-            adapter.sql(cmd)
-
-        /**
-            Map the SQL type to a database independant data type
-            @param sqlType Data type to map
-            @returns The corresponding database independant type
-         */
-        function sqlTypeToDataType(sqlType: String): String
-            adapter.sqlTypeToDataType(sqlType)
-
-        /**
-            Map the SQL type to an Ejscript type class
-            @param sqlType Data type to map
-            @returns The corresponding type class
-         */
-        function sqlTypeToEjsType(sqlType: String): Type
-            adapter.sqlTypeToEjsType(sqlType)
-
-        /**
-            Start a new database transaction
-         */
-        function startTransaction(): Void
-            adapter.startTransaction()
-
-//  MOB -- should be setter/getter
-        /**
-            Trace all SQL statements on this database. Control whether trace is enabled for all SQL statements 
-            issued against the database.
-            @param on If true, display each SQL statement to the log
-         */
-        function trace(on: Boolean): void
-            options.trace = on
-
-        /**
-            Execute a database transaction
-            @param code Function to run inside a database transaction
-         */
-        function transaction(code: Function): Void {
-            startTransaction()
-            try {
-                code()
-            } catch (e: Error) {
-                rollback();
-            } finally {
-                endTransaction()
-            }
-        }
-
-        /**
-            Quote ", ', --, ;
-            @hide
-         */
-        static function quote(str: String): String  {
-            // str.replace(/'/g, "''").replace(/[#;\x00\x1a\r\n",;\\-]/g, "\\$0")
-            // return str.replace(/'/g, "''").replace(/[#;",;\\-]/g, "\\$0")
-            // return str.replace(/'/g, "''").replace(/[#";\\]/g, "\\$0")
-            // return str.replace(/'/g, "''").replace(/[;\\]/g, "\\$0")
-            return str.toString().replace(/'/g, "''")
-        }
-    }
-}
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.db/Database.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/jems/ejs.db/DatabaseConnector.es"
- */
-/************************************************************************/
-
-/*
-    DatabaseConnector.es -- Database Connector interface
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-module ejs.db {
-
-    /**
-        Database interface connector. This interface is implemented by database connectors such as SQLite and MYSQL.
-        @spec ejs
-        @stability evolving
-     */
-    interface DatabaseConnector {
-
-        use default namespace public
-
-        // function DatabaseConnector(connectionString: String)
-
-        /** @duplicate ejs.db::Database.addColumn */
-        function addColumn(table: String, column: String, datatype: String, options: Object? = null): Void
-
-        /** @duplicate ejs.db::Database.addIndex */
-        function addIndex(table: String, column: String, index: String): Void
-
-        /** @duplicate ejs.db::Database.changeColumn */
-        function changeColumn(table: String, column: String, datatype: String, options: Object? = null): Void
-
-        /** @duplicate ejs.db::Database.close */
-        function close(): Void
-
-        /** @duplicate ejs.db::Database.commit */
-        function commit(): Void
-
-        /** @duplicate ejs.db::Database.connect 
-            @hide
-         */
-        function connect(connectionString: String): Void
-
-        /** @duplicate ejs.db::Database.createDatabase */
-        function createDatabase(name: String, options: Object? = null): Void
-
-        /** @duplicate ejs.db::Database.createTable */
-        function createTable(table: String, columns: Array? = null): Void
-
-        /** @duplicate ejs.db::Database.dataTypeToSqlType */
-        function dataTypeToSqlType(dataType:String): String
-
-        /** @duplicate ejs.db::Database.destroyDatabase */
-        function destroyDatabase(name: String): Void
-
-        /** @duplicate ejs.db::Database.destroyTable */
-        function destroyTable(table: String): Void
-
-        /** @duplicate ejs.db::Database.getColumns */
-        function getColumns(table: String): Array
-
-        /** @duplicate ejs.db::Database.getTables */
-        function getTables(): Array
-
-        /** @duplicate ejs.db::Database.removeColumns */
-        function removeColumns(table: String, columns: Array): Void 
-
-        /** @duplicate ejs.db::Database.removeIndex */
-        function removeIndex(table: String, index: String): Void
-
-        /** @duplicate ejs.db::Database.renameColumn */
-        function renameColumn(table: String, oldColumn: String, newColumn: String): Void
-
-        /** @duplicate ejs.db::Database.renameTable */
-        function renameTable(oldTable: String, newTable: String): Void
-
-        /** @duplicate ejs.db::Database.rollback 
-            @hide
-         */
-        function rollback(): Void
-
-        /** @duplicate ejs.db::Database.sql */
-        function sql(cmd: String): Array
-
-        /** @duplicate ejs.db::Database.sqlTypeToDataType */
-        function sqlTypeToDataType(sqlType: String): String
-
-        /** @duplicate ejs.db::Database.sqlTypeToEjsType */
-        function sqlTypeToEjsType(sqlType: String): String
-
-        /** @duplicate ejs.db::Database.startTransaction */
-        function startTransaction(): Void
-    }
-}
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.db/DatabaseConnector.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "../../src/jems/ejs.db.mapper/Record.es"
  */
 /************************************************************************/
@@ -15820,6 +15001,1168 @@ module ejs.db.sqlite {
 /************************************************************************/
 /*
  *  End of file "../../src/jems/ejs.db.sqlite/Sqlite.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/jems/ejs.db/Database.es"
+ */
+/************************************************************************/
+
+/**
+    Database.es -- Database class
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+module ejs.db {
+
+    /**
+        SQL Database support. The Database class provides an interface over other database adapter classes such as 
+        SQLite or MySQL. Not all the functionality expressed by this API may be implemented by a specific database adapter.
+        @spec ejs
+        @stability evolving
+     */
+    class Database {
+        private static var defaultDb: Database
+
+        private var adapter: Object
+        private var options: Object
+
+        use default namespace public
+
+        /**
+            Initialize a database connection using the supplied database connection string. The first opened database
+            will also be defined as the default database.
+            @param adapter Database adapter to use. E.g. "sqlite". Sqlite is currently the only supported adapter.
+            @param options Connection options. This may be filename or an object hash of properties. If set to a filename
+                they type must be either String or Path and it should contain the filename of the database on the local
+                system. If options is set ot an object hash. It should contain adapter specific properties that specify 
+                how to attach to the database. Typical fields include:
+                <ul>
+                    <li>name - Database URI
+                        Examples: http://example.com:1234/database.db,
+                        Examples: file://var/spool/db/database.db
+                    </li>
+                    <li>username - Database username</li>
+                    <li>password - Database password</li>
+                    <li>trace - Trace database commands to the log
+                    <li>socket - /var/run/mysqld/mysqld.sock
+                </ul>
+         */
+        function Database(adapter: String, options: Object) {
+            Database.defaultDb ||= this
+            if (adapter == "sqlite3") adapter = "sqlite"
+            if (options is String || options is Path) {
+                let name = Path(options)
+                options = { name: name }
+            }
+            options.trace ||= false
+            this.options = options
+            let adapterClass = adapter.toPascal()
+            if (!global."ejs.db"::[adapterClass]) {
+                load("ejs.db." + adapter + ".mod")
+            }
+            if (!global."ejs.db"::[adapterClass]) {
+                throw "Can't find database connector for " + adapter
+            }
+            this.adapter = new global."ejs.db"::[adapterClass](options)
+        }
+
+        /**
+            Add a column to a table.
+            @param table Name of the table
+            @param column Name of the column to add
+            @param datatype Database independant type of the column. Valid types are: binary, boolean, date,
+                datetime, decimal, float, integer, number, string, text, time and timestamp.
+            @param options Optional parameters
+         */
+        function addColumn(table: String, column: String, datatype: String, options = null): Void
+            adapter.addColumn(table, column, datatype, options)
+
+        /**
+            Add an index on a column
+            @param table Name of the table
+            @param column Name of the column to add
+            @param index Name of the index
+         */
+        function addIndex(table: String, column: String, index: String): Void
+            adapter.addIndex(table, column, index)
+
+        /**
+            Change a column
+            @param table Name of the table holding the column
+            @param column Name of the column to change
+            @param datatype Database independant type of the column. Valid types are: binary, boolean, date,
+                datetime, decimal, float, integer, number, string, text, time and timestamp.
+            @param options Optional parameters
+         */
+        function changeColumn(table: String, column: String, datatype: String, options: Object? = null): Void
+            adapter.changeColumn(table, column, datatype, options)
+
+        /**
+            Close the database connection. Database connections should be closed when no longer needed rather than waiting
+            for the garbage collector to automatically close the connection when disposing the database instance.
+         */
+        function close(): Void
+            adapter.close()
+
+        /**
+            Commit a database transaction
+         */
+        function commit(): Void
+            adapter.commit()
+
+        //  TODO - implement
+        /**
+            Reconnect to the database using new connection options
+            @param connectionString See Database() for information about connection options.
+            @hide
+         */
+        function connect(options: Object): Void
+            adapter.connect(options)
+
+        /**
+            The database connection options
+         */
+        function get connectionOptions(): Object
+            options
+
+        /**
+            Create a new database
+            @param name Name of the database
+            @options Optional parameters
+         */
+        function createDatabase(name: String, options: Object? = null): Void
+            adapter.createDatabase(name, options)
+
+        /**
+            Create a new table
+            @param table Name of the table
+            @param columns Array of column descriptor tuples consisting of name:datatype
+         */
+        function createTable(table: String, columns: Array? = null): Void
+            adapter.createTable(table, columns)
+
+        /**
+            Map the database independant data type to a database dependant SQL data type
+            @param dataType Data type to map
+            @returns The corresponding SQL database type
+         */
+        function dataTypeToSqlType(dataType:String): String
+            adapter.dataTypeToSqlType(dataType)
+
+        /**
+            The default database for the application.
+         */
+        static function get defaultDatabase(): Database
+            defaultDb
+
+        /**
+            Set the default database for the application.
+            @param db the default database to define
+         */
+        static function set defaultDatabase(db: Database): Void 
+            defaultDb = db
+
+        /**
+            Destroy a database
+            @param name Name of the database to remove
+         */
+        function destroyDatabase(name: String): Void
+            adapter.destroyDatabase(name)
+
+        /**
+            Destroy a table
+            @param table Name of the table to destroy
+         */
+        function destroyTable(table: String): Void
+            adapter.destroyTable(table)
+
+        /**
+            End a transaction
+         */
+        function endTransaction(): Void
+            adapter.endTransaction()
+
+        /**
+            Get column information 
+            @param table Name of the table to examine
+            @return An array of column data. This is database specific content and will vary depending on the
+                database connector in use.
+         */
+        function getColumns(table: String): Array
+            adapter.getColumns(table)
+
+        /**
+            Return list of tables in a database
+            @returns an array containing list of table names present in the currently opened database.
+         */
+        function getTables(): Array
+            adapter.getTables()
+
+        /**
+            Return the number of rows in a table
+            @returns the count of rows in a table in the currently opened database.
+         */
+        function getNumRows(table: String): Number
+            adapter.getNumRows(table)
+
+        /**
+            The name of the database
+         */
+        function get name(): String
+            options.name
+
+        /**
+            Execute a SQL command on the database.
+            @param cmd SQL command string
+            @param tag Debug tag to use when logging the command
+            @param trace Set to true to eanble logging this command.
+            @returns An array of row results where each row is represented by an Object hash containing the 
+                column names and values
+            @TODO Refactor logging when Log class implemented
+         */
+        function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
+            //  MOB - refactor tracing. Sqlite does tracing too
+            if (options.trace || trace) {
+                print(tag + ": " + cmd)
+            }
+            return adapter.sql(cmd)
+        }
+
+        /**
+            Remove columns from a table
+            @param table Name of the table to modify
+            @param columns Array of column names to remove
+         */
+        function removeColumns(table: String, columns: Array): Void
+            adapter.removeColumns(table, columns)
+
+        /**
+            Remove an index
+            @param table Name of the table to modify
+            @param index Name of the index to remove
+         */
+        function removeIndex(table: String, index: String): Void
+            adapter.removeIndex(table, index)
+
+        /**
+            Rename a column
+            @param table Name of the table to modify
+            @param oldColumn Old column name
+            @param newColumn New column name
+         */
+        function renameColumn(table: String, oldColumn: String, newColumn: String): Void
+            adapter.renameColumn(table, oldColumn, newColumn)
+
+        /**
+            Rename a table
+            @param oldTable Old table name
+            @param newTable New table name
+         */
+        function renameTable(oldTable: String, newTable: String): Void
+            adapter.renameTable(oldTable, newTable)
+
+        /**
+            Rollback an uncommited database transaction
+            @hide
+         */
+        function rollback(): Void
+            adapter.rollback()
+
+        /**
+            Execute a SQL command on the database. This is a low level SQL command interface that bypasses logging.
+                Use @query instead.
+            @param cmd SQL command to issue. Note: "SELECT" is automatically prepended and ";" is appended for you.
+            @returns An array of row results where each row is represented by an Object hash containing the column 
+                names and values
+         */
+        function sql(cmd: String): Array
+            adapter.sql(cmd)
+
+        /**
+            Map the SQL type to a database independant data type
+            @param sqlType Data type to map
+            @returns The corresponding database independant type
+         */
+        function sqlTypeToDataType(sqlType: String): String
+            adapter.sqlTypeToDataType(sqlType)
+
+        /**
+            Map the SQL type to an Ejscript type class
+            @param sqlType Data type to map
+            @returns The corresponding type class
+         */
+        function sqlTypeToEjsType(sqlType: String): Type
+            adapter.sqlTypeToEjsType(sqlType)
+
+        /**
+            Start a new database transaction
+         */
+        function startTransaction(): Void
+            adapter.startTransaction()
+
+//  MOB -- should be setter/getter
+        /**
+            Trace all SQL statements on this database. Control whether trace is enabled for all SQL statements 
+            issued against the database.
+            @param on If true, display each SQL statement to the log
+         */
+        function trace(on: Boolean): void
+            options.trace = on
+
+        /**
+            Execute a database transaction
+            @param code Function to run inside a database transaction
+         */
+        function transaction(code: Function): Void {
+            startTransaction()
+            try {
+                code()
+            } catch (e: Error) {
+                rollback();
+            } finally {
+                endTransaction()
+            }
+        }
+
+        /**
+            Quote ", ', --, ;
+            @hide
+         */
+        static function quote(str: String): String  {
+            // str.replace(/'/g, "''").replace(/[#;\x00\x1a\r\n",;\\-]/g, "\\$0")
+            // return str.replace(/'/g, "''").replace(/[#;",;\\-]/g, "\\$0")
+            // return str.replace(/'/g, "''").replace(/[#";\\]/g, "\\$0")
+            // return str.replace(/'/g, "''").replace(/[;\\]/g, "\\$0")
+            return str.toString().replace(/'/g, "''")
+        }
+    }
+}
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.db/Database.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/jems/ejs.db/DatabaseConnector.es"
+ */
+/************************************************************************/
+
+/*
+    DatabaseConnector.es -- Database Connector interface
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+module ejs.db {
+
+    /**
+        Database interface connector. This interface is implemented by database connectors such as SQLite and MYSQL.
+        @spec ejs
+        @stability evolving
+     */
+    interface DatabaseConnector {
+
+        use default namespace public
+
+        // function DatabaseConnector(connectionString: String)
+
+        /** @duplicate ejs.db::Database.addColumn */
+        function addColumn(table: String, column: String, datatype: String, options: Object? = null): Void
+
+        /** @duplicate ejs.db::Database.addIndex */
+        function addIndex(table: String, column: String, index: String): Void
+
+        /** @duplicate ejs.db::Database.changeColumn */
+        function changeColumn(table: String, column: String, datatype: String, options: Object? = null): Void
+
+        /** @duplicate ejs.db::Database.close */
+        function close(): Void
+
+        /** @duplicate ejs.db::Database.commit */
+        function commit(): Void
+
+        /** @duplicate ejs.db::Database.connect 
+            @hide
+         */
+        function connect(connectionString: String): Void
+
+        /** @duplicate ejs.db::Database.createDatabase */
+        function createDatabase(name: String, options: Object? = null): Void
+
+        /** @duplicate ejs.db::Database.createTable */
+        function createTable(table: String, columns: Array? = null): Void
+
+        /** @duplicate ejs.db::Database.dataTypeToSqlType */
+        function dataTypeToSqlType(dataType:String): String
+
+        /** @duplicate ejs.db::Database.destroyDatabase */
+        function destroyDatabase(name: String): Void
+
+        /** @duplicate ejs.db::Database.destroyTable */
+        function destroyTable(table: String): Void
+
+        /** @duplicate ejs.db::Database.getColumns */
+        function getColumns(table: String): Array
+
+        /** @duplicate ejs.db::Database.getTables */
+        function getTables(): Array
+
+        /** @duplicate ejs.db::Database.removeColumns */
+        function removeColumns(table: String, columns: Array): Void 
+
+        /** @duplicate ejs.db::Database.removeIndex */
+        function removeIndex(table: String, index: String): Void
+
+        /** @duplicate ejs.db::Database.renameColumn */
+        function renameColumn(table: String, oldColumn: String, newColumn: String): Void
+
+        /** @duplicate ejs.db::Database.renameTable */
+        function renameTable(oldTable: String, newTable: String): Void
+
+        /** @duplicate ejs.db::Database.rollback 
+            @hide
+         */
+        function rollback(): Void
+
+        /** @duplicate ejs.db::Database.sql */
+        function sql(cmd: String): Array
+
+        /** @duplicate ejs.db::Database.sqlTypeToDataType */
+        function sqlTypeToDataType(sqlType: String): String
+
+        /** @duplicate ejs.db::Database.sqlTypeToEjsType */
+        function sqlTypeToEjsType(sqlType: String): String
+
+        /** @duplicate ejs.db::Database.startTransaction */
+        function startTransaction(): Void
+    }
+}
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.db/DatabaseConnector.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/jems/ejs.template/TemplateParser.es"
+ */
+/************************************************************************/
+
+/*
+    TemplateParser.es -- Ejscript web templating parser. 
+ */
+
+module ejs.template  {
+
+    /*
+        MOB TODO implement these directives
+          -%>  Omit newline after tag
+          <%s   For safe output Html escape the output
+     */
+
+    /** 
+        Web Page Template Parser - Parse an ejs web page and emit an Ejscript source file (.es).
+      
+        This parser handles embedded Ejscript using <% %> directives. It supports:
+        <ul>
+          <li>&lt;%       Begin an ejs directive section containing statements</li>
+          <li>&lt;%=      Begin an ejs directive section that contains an expression to evaluate and substitute</li>
+          <li>%&gt;          End an ejs directive</li>
+          <li>&lt;%&#64; include "file" %> Include an ejs file</li>
+          <li>&lt;%&#64 layout "file" %>  Specify a layout page to use. Use layout "" to disable layout management.</li>
+          <li>&lt;%&#64 view "[module::]class" %>  Specify a view class to use with optional module.</li>
+        </ul>
+        Directives for use outside of &lt;% %&gt; 
+        <ul>
+          <li>&#64;&#64var &mdash; To expand the value of "var". Var can also be simple expressions (without spaces).</li>
+        </ul>
+
+        @spec ejs
+        @stability prototype
+     */
+    public class TemplateParser {
+        private const ContentMarker: String  = "__ejs:CONTENT:ejs__"
+        private const ContentPattern: RegExp = new RegExp(ContentMarker)
+
+        private var script: String
+        private var pos: Number = 0
+        private var lineNumber: Number = 0
+        private var viewClass: String = "View"
+        private var viewModule: String
+
+        /**
+            Build a templated page
+            @param script String containing the script to parse
+            @param options Object hash with options to control parsing
+            @options layout Path Layout file
+            @options dir Path Base directory to use for including files and for resolving layout directives
+         */
+        public function build(script: String, options: Object = {}): String {
+            let code = parse(script, options)
+            return "require ejs.web\n" + 
+                ((viewModule) ? ("require " + viewModule + "\n") : "") + 
+                "\nexports.app = function (request: Request) {\n" + 
+                "    " + viewClass + "(request).render(function(request: Request) {\n" + code + "\n    })\n}\n"
+        }
+
+        /**
+            Template parser. Parse the given script and return the compiled (Ejscript) result
+            @param script String containing the script to parse
+            @param options Object hash with options to control parsing
+            @options layout Path Layout file
+            @options dir Path Base directory to use for including files and for resolving layout directives
+            @return The parsed and expanded template 
+         */
+        public function parse(script: String, options: Object = {}): String {
+            var token: ByteArray = new ByteArray
+            var out: ByteArray = new ByteArray
+            var dir: Path = options.dir || Path(".")
+            var tid: Number
+            var layoutPage: Path
+
+            if (options.layout) {
+                layoutPage = Path(options.layout)
+            }
+            this.script = script
+            while ((tid = getToken(token)) != Token.Eof) {
+                // print("getToken => " + Token.tokens[tid + 1] + " TOKEN => \"" + token + "\"")
+
+                switch (tid) {
+                case Token.Literal:
+                    //  MOB -- should amalgamate writes
+                    out.write("\n        write(\"" + token + "\");")
+                    break
+
+                case Token.Var:
+                    /*
+                        Trick to get undefined variables to evaluate to "".
+                        Catenate with "" to cause toString to run.
+                        Write safely by HTML escaping the expression
+                     */
+                    out.write("\n        writeSafe(\"\" + ", token, ");\n")
+                    break
+
+                case Token.Equals:
+                    /* Write safely by HTML escaping the expression */
+                    out.write("\n        writeSafe(\"\" + (", token, "));\n")
+                    break
+
+                case Token.EjsTag:
+                    /*
+                        Just copy the Ejscript code straight through
+                     */
+                    out.write(token.toString())
+                    break
+
+                case Token.Control:
+                    let args: Array = token.toString().split(/\s/g)
+                    let cmd: String = args[0]
+
+                    switch (cmd) {
+                    case "include":
+                        let path = args[1].trim("'").trim('"')
+                        let incPath = dir.join(path)
+                        /*
+                            Recurse and process the include script
+                         */
+                        let inc: TemplateParser = new TemplateParser
+                        out.write(inc.parse(incPath.readString(), options))
+                        break
+
+                    case "layout":
+                        let layouts = options.layouts || App.config.directories.layouts || "layouts"
+                        let path = args[1]
+                        if (path == "" || path == '""') {
+                            layoutPage = undefined
+                        } else {
+                            layoutPage = Path(args[1].trim("'").trim('"').trim('.ejs') + ".ejs")
+                            if (!layoutPage.exists) {
+                                layoutPage = Path(layouts).join(layoutPage)
+                                if (!layoutPage.exists) {
+                                    throw "Can't find layout page " + layoutPage
+                                }
+                            }
+                        }
+                        break
+
+                    case "view":
+                        viewClass = args[1].trim("'").trim('"')
+                        if (viewClass.contains("::")) {
+                            [viewModule, viewClass] = viewClass.split("::")
+                        }
+                        viewClass ||= "View"
+                        break
+
+                    case "content":
+                        out.write(ContentMarker)
+                        break
+
+                    default:
+                        throw "Bad control directive: " + cmd
+                    }
+                    break
+
+                default:
+                case Token.Err:
+                    //  TODO - should report line numbers
+                    throw "Bad input token: " + token
+
+                }
+            }
+            if (layoutPage && layoutPage != options.currentLayout) {
+                let layoutOptions = blend(options.clone(), { currentLayout: layoutPage })
+                let layoutText: String = new TemplateParser().parse(layoutPage.readString(), layoutOptions)
+                return layoutText.replace(ContentPattern, out.toString().replace(/\$/g, "$$$$"))
+            }
+            return out.toString()
+        }
+
+        /*
+         *  Get the next input token. Read from script[pos]. Return the next token ID and update the token byte array
+         */
+        function getToken(token: ByteArray): Number {
+            var tid = Token.Literal
+            token.flush(Stream.BOTH)
+            var c
+            while (pos < script.length) {
+                c = script[pos++]
+                switch (c) {
+                case '<':
+                    if (script[pos] == '%' && (pos < 2 || script[pos - 2] != '\\')) {
+                        if (token.available > 0) {
+                            pos--
+                            return Token.Literal
+                        }
+                        pos++
+                        eatSpace()
+                        if (script[pos] == '=') {
+                            /*
+                                <%=  directive
+                             */
+                            pos++
+                            eatSpace()
+                            while (pos < script.length && (c = script[pos]) != undefined && 
+                                    (c != '%' || script[pos+1] != '>' || script[pos-1] == '\\')) {
+                                token.write(c)
+                                pos++
+                            }
+                            pos += 2
+                            return Token.Equals
+
+                        } else if (script[pos] == '@') {
+                            /*
+                                <%@  directive
+                             */
+                            pos++
+                            eatSpace()
+                            while (pos < script.length && (c = script[pos]) != undefined && 
+                                    (c != '%' || script[pos+1] != '>')) {
+                                token.write(c)
+                                pos++
+                            }
+                            pos += 2
+                            return Token.Control
+
+                        } else {
+                            while (pos < script.length && 
+                                    (c = script[pos]) != undefined && 
+                                    (c != '%' || script[pos+1] != '>' || script[pos-1] == '\\')) {
+                                token.write(c)
+                                pos++
+                            }
+                            pos += 2
+                            return Token.EjsTag
+                        }
+                    }
+                    token.write(c)
+                    break
+
+                case '@':
+                    if (script[pos] == '@' && (pos < 1 || script[pos-1] != '\\')) {
+                        if (token.available > 0) {
+                            pos--
+                            return Token.Literal
+                        }
+                        pos++
+                        c = script[pos++]
+                        while (c.isAlpha || c.isDigit || c == '[' || c == ']' || c == '.' || c == '$' || c == '_' || 
+                                c == "'") {
+                            token.write(c)
+                            c = script[pos++]
+                        }
+                        pos--
+                        return Token.Var
+                    }
+                    token.write(c)
+                    break
+
+                case "\r":
+                case "\n":
+                    lineNumber++
+                    token.write(c)
+                    tid = Token.Literal
+                    break
+
+                default:
+                    //  TODO - triple quotes would eliminate the need for this
+                    if (c == '\"' || c == '\\') {
+                        token.write('\\')
+                    }
+                    token.write(c)
+                    break
+                }
+            }
+            if (token.available == 0 && pos >= script.length) {
+                return Token.Eof
+            }
+            return tid
+        }
+
+        private function eatSpace(): Void {
+            while (pos < script.length && script[pos].isSpace) {
+                pos++
+            }
+        }
+    }
+
+    /**
+        Parser tokens
+        @hide
+     */
+    class Token {
+        public static const Err         = -1        /* Any input error */
+        public static const Eof         = 0         /* End of file */
+        public static const EjsTag      = 1         /* <% text %> */
+        public static const Var         = 2         /* @@var */
+        public static const Literal     = 3         /* literal HTML */
+        public static const Equals      = 4         /* <%= expression */
+        public static const Control     = 6         /* <%@ control */
+
+        public static var tokens = [ "Err", "Eof", "EjsTag", "Var", "Literal", "Equals", "Control" ]
+    }
+}
+
+/*
+    @copy   default
+  
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+  
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+  
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+  
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+  
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.template/TemplateParser.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/jems/ejs.unix/Unix.es"
+ */
+/************************************************************************/
+
+/*
+    Unix.es -- Unix compatibility functions
+ *
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+module ejs.unix {
+
+    use default namespace public
+
+    /**
+        Get the base name of a file. Returns the base name portion of a file name. The base name portion is the 
+        trailing portion without any directory elements.
+        @return A string containing the base name portion of the file name.
+     */
+    function basename(path: String): Path
+        Path(path).basename
+    
+    //  TODO - should this be cd()
+    /**
+        Change the current working directory
+        @param dir Directory String or path to change to
+     */
+    function chdir(dir: Object): Void
+        App.chdir(dir)
+
+    /**
+        Set the permissions of a file or directory
+        @param path File or directory to modify
+        @param perms Posix style permission mask
+     */
+    function chmod(path: String, perms: Number): Void
+        Path(path).perms = perms
+
+    /*
+        Close the file and free up all associated resources.
+        @param file Open file object previously opened via $open or $File
+        @hide
+        @deprecated 2.0.0
+    function close(file: File): Void
+     */
+
+    /**
+        Copy a file. If the destination file already exists, the old copy will be overwritten as part of the copy operation.
+        @param fromPath Original file to copy.
+        @param toPath New destination file path name.
+        @throws IOError if the copy is not successful.
+     */
+    function cp(fromPath: String, toPath: String): void
+        Path(fromPath).copy(toPath) 
+
+    /**
+        Get the directory name portion of a file. The dirname name portion is the leading portion including all 
+        directory elements and excluding the base name. On some systems, it will include a drive specifier.
+        @return A string containing the directory name portion of the file name.
+     */
+    function dirname(path: String): Path
+        Path(path).dirname
+
+    /**
+        Does a file exist. Return true if the specified file exists and can be accessed.
+        @param path Filename path to examine.
+        @return True if the file can be accessed
+     */
+    function exists(path: String): Boolean
+        Path(path).exists
+
+    /**
+        Get the file extension portion of the file name. The file extension is the portion after the last "."
+        in the path.
+        @param path Filename path to examine
+        @return String containing the file extension. It excludes "." as the first character.
+     */
+    function extension(path: String): String
+        Path(path).extension
+
+    /**
+        Return the free space in the file system.
+        @return The number of 1M blocks (1024 * 1024 bytes) of free space in the file system.
+     */
+    function freeSpace(path: String? = null): Number
+        FileSystem(path).freeSpace()
+
+    /**
+        Is a file a directory. Return true if the specified path exists and is a directory
+        @param path Directory path to examine.
+        @return True if the file can be accessed
+     */
+    function isDir(path: String): Boolean
+        Path(path).isDir
+
+    /**
+        Kill a process
+        @param pid Process ID to kill
+        @param signal Signal number to use when killing the process.
+        @hide
+        @deprecated 2.0.0
+     */
+    function kill(pid: Number, signal: Number = 2): Void 
+        Cmd.kill(pid, signal)
+
+    //  TODO - good to add ability to do a regexp on the path or a filter function
+    //  TODO - good to add ** to go recursively to any depth
+    /**
+        Get a list of files in a directory. The returned array contains the base file name portion only.
+        @param path Directory path to enumerate.
+        @param enumDirs If set to true, then dirList will include sub-directories in the returned list of files.
+        @return An Array of strings containing the filenames in the directory.
+     */
+    function ls(path: String = ".", enumDirs: Boolean = false): Array
+        Path(path).files(enumDirs)
+
+    //  TODO - need option to exclude directories
+    /**
+        Find matching files. Files are listed in a depth first order.
+        @param path Starting path from which to find matching files.
+        @param glob Glob style Pattern that files must match. This is similar to a ls() style pattern.
+        @param recurse Set to true to examine sub-directories. 
+        @return Return a list of matching files
+     */
+    function find(path: Object, glob: String = "*", recurse: Boolean = true): Array {
+        let result = []
+        if (path is Array) {
+            let paths = path
+            for each (path in paths) {
+                result += Path(path).find(glob, recurse)
+            }
+        } else {
+            result += Path(path).find(glob, recurse)
+        }
+        return result
+    }
+
+    /**
+        Make a new directory. Makes a new directory and all required intervening directories. If the directory 
+        already exists, the function returns without throwing an exception.
+        @param path Filename path to use.
+        @param permissions Optional posix permissions mask number. e.g. 0664.
+        @throws IOError if the directory cannot be created.
+     */
+    function mkdir(path: String, permissions: Number = 0755): void
+        Path(path).makeDir({permissions: permissions})
+    
+    /**
+        Rename a file. If the new file name exists it is removed before the rename.
+        @param fromFile Original file name.
+        @param toFile New file name.
+        @throws IOError if the original file does not exist or cannot be renamed.
+     */
+    function mv(fromFile: String, toFile: String): void
+        Path(fromFile).rename(toFile)
+
+    /**  
+        Open or create a file
+        @param path Filename path to open
+        @param mode optional file access mode with values values from: Read, Write, Append, Create, Open, Truncate. 
+            Defaults to Read.
+        @param permissions optional permissions. Defaults to App.permissions
+        @return a File object which implements the Stream interface
+        @throws IOError if the path or file cannot be opened or created.
+        @hide
+        @deprecated 2.0.0
+     */
+    # Config.Legacy
+    function open(path: String, mode: String = "r", permissions: Number = 0644): File
+        new File(path, { mode: mode, permissions: permissions})
+
+    /**
+        Get the current working directory
+        @return A Path containing the current working directory
+     */
+    function pwd(): Path
+        App.dir
+
+    /**  
+        Read data bytes from a file and return a byte array containing the data.
+        @param file Open file object previously opened via $open or $File
+        @param count Number of bytes to read
+        @return A byte array containing the read data
+        @throws IOError if the file could not be read.
+        @hide
+        @deprecated 2.0.0
+     */
+    # Config.Legacy
+    function read(file: File, count: Number): ByteArray
+        file.read(count)
+
+    //  TODO - nice to allow wild cards for the path. Also allow ... for more files
+    /**
+        Remove a file from the file system.
+        @param path Filename path to delete.
+        @throws IOError if the file exists and cannot be removed.
+     */
+    function rm(path: Path): void {
+        if (path.isDir) {
+            throw new ArgError(path.toString() + " is a directory")
+        } 
+        Path(path).remove()
+    }
+
+    /**
+        Removes a directory. This can remove a directory and its contents.  
+        @param path Filename path to remove.
+        @param contents If true, remove the directory contents including files and sub-directories.
+        @throws IOError if the directory exists and cannot be removed.
+     */
+    function rmdir(path: Path, contents: Boolean = false): void {
+        if (contents) {
+            Path(path).removeAll()
+        } else {
+            Path(path).remove()
+        }
+    }
+
+    /** 
+        Sleep the application for the given number of milliseconds. Events will be serviced while asleep.
+        @param delay Time in milliseconds to sleep. Set to -1 to sleep forever.
+     */
+    function sleep(delay: Number): void
+        App.sleep(delay)
+
+    /**
+        Create a temporary file. Creates a new, uniquely named temporary file.
+        @param directory Directory in which to create the temp file.
+        @returns a closed File object after creating an empty temporary file.
+     */
+    function tempname(directory: String? = null): File
+        Path(directory).makeTemp()
+
+    /**
+        Write data to the file. If the stream is in sync mode, the write call blocks until the underlying stream or 
+        endpoint absorbes all the data. If in async-mode, the call accepts whatever data can be accepted immediately 
+        and returns a count of the elements that have been written.
+        @param file Open file object previously opened via $open or $File
+        @param items The data argument can be ByteArrays, strings or Numbers. All other types will call serialize
+        first before writing. Note that numbers will not be written in a cross platform manner. If that is required, use
+        the BinaryStream class to write Numbers.
+        @returns the number of bytes written.  
+        @throws IOError if the file could not be written.
+        @hide
+        @deprecated 2.0.0
+     */
+    # Config.Legacy
+    function write(file: File, ...items): Number
+        file.write(items)
+}
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/jems/ejs.unix/Unix.es"
  */
 /************************************************************************/
 
@@ -23262,349 +23605,6 @@ module ejs.web {
 /************************************************************************/
 /*
  *  End of file "../../src/jems/ejs.web/Web.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/jems/ejs.template/TemplateParser.es"
- */
-/************************************************************************/
-
-/*
-    TemplateParser.es -- Ejscript web templating parser. 
- */
-
-module ejs.template  {
-
-    /*
-        MOB TODO implement these directives
-          -%>  Omit newline after tag
-          <%s   For safe output Html escape the output
-     */
-
-    /** 
-        Web Page Template Parser - Parse an ejs web page and emit an Ejscript source file (.es).
-      
-        This parser handles embedded Ejscript using <% %> directives. It supports:
-        <ul>
-          <li>&lt;%       Begin an ejs directive section containing statements</li>
-          <li>&lt;%=      Begin an ejs directive section that contains an expression to evaluate and substitute</li>
-          <li>%&gt;          End an ejs directive</li>
-          <li>&lt;%&#64; include "file" %> Include an ejs file</li>
-          <li>&lt;%&#64 layout "file" %>  Specify a layout page to use. Use layout "" to disable layout management.</li>
-          <li>&lt;%&#64 view "[module::]class" %>  Specify a view class to use with optional module.</li>
-        </ul>
-        Directives for use outside of &lt;% %&gt; 
-        <ul>
-          <li>&#64;&#64var &mdash; To expand the value of "var". Var can also be simple expressions (without spaces).</li>
-        </ul>
-
-        @spec ejs
-        @stability prototype
-     */
-    public class TemplateParser {
-        private const ContentMarker: String  = "__ejs:CONTENT:ejs__"
-        private const ContentPattern: RegExp = new RegExp(ContentMarker)
-
-        private var script: String
-        private var pos: Number = 0
-        private var lineNumber: Number = 0
-        private var viewClass: String = "View"
-        private var viewModule: String
-
-        /**
-            Build a templated page
-            @param script String containing the script to parse
-            @param options Object hash with options to control parsing
-            @options layout Path Layout file
-            @options dir Path Base directory to use for including files and for resolving layout directives
-         */
-        public function build(script: String, options: Object = {}): String {
-            let code = parse(script, options)
-            return "require ejs.web\n" + 
-                ((viewModule) ? ("require " + viewModule + "\n") : "") + 
-                "\nexports.app = function (request: Request) {\n" + 
-                "    " + viewClass + "(request).render(function(request: Request) {\n" + code + "\n    })\n}\n"
-        }
-
-        /**
-            Template parser. Parse the given script and return the compiled (Ejscript) result
-            @param script String containing the script to parse
-            @param options Object hash with options to control parsing
-            @options layout Path Layout file
-            @options dir Path Base directory to use for including files and for resolving layout directives
-            @return The parsed and expanded template 
-         */
-        public function parse(script: String, options: Object = {}): String {
-            var token: ByteArray = new ByteArray
-            var out: ByteArray = new ByteArray
-            var dir: Path = options.dir || Path(".")
-            var tid: Number
-            var layoutPage: Path
-
-            if (options.layout) {
-                layoutPage = Path(options.layout)
-            }
-            this.script = script
-            while ((tid = getToken(token)) != Token.Eof) {
-                // print("getToken => " + Token.tokens[tid + 1] + " TOKEN => \"" + token + "\"")
-
-                switch (tid) {
-                case Token.Literal:
-                    //  MOB -- should amalgamate writes
-                    out.write("\n        write(\"" + token + "\");")
-                    break
-
-                case Token.Var:
-                    /*
-                        Trick to get undefined variables to evaluate to "".
-                        Catenate with "" to cause toString to run.
-                        Write safely by HTML escaping the expression
-                     */
-                    out.write("\n        writeSafe(\"\" + ", token, ");\n")
-                    break
-
-                case Token.Equals:
-                    /* Write safely by HTML escaping the expression */
-                    out.write("\n        writeSafe(\"\" + (", token, "));\n")
-                    break
-
-                case Token.EjsTag:
-                    /*
-                        Just copy the Ejscript code straight through
-                     */
-                    out.write(token.toString())
-                    break
-
-                case Token.Control:
-                    let args: Array = token.toString().split(/\s/g)
-                    let cmd: String = args[0]
-
-                    switch (cmd) {
-                    case "include":
-                        let path = args[1].trim("'").trim('"')
-                        let incPath = dir.join(path)
-                        /*
-                            Recurse and process the include script
-                         */
-                        let inc: TemplateParser = new TemplateParser
-                        out.write(inc.parse(incPath.readString(), options))
-                        break
-
-                    case "layout":
-                        let layouts = options.layouts || App.config.directories.layouts || "layouts"
-                        let path = args[1]
-                        if (path == "" || path == '""') {
-                            layoutPage = undefined
-                        } else {
-                            layoutPage = Path(args[1].trim("'").trim('"').trim('.ejs') + ".ejs")
-                            if (!layoutPage.exists) {
-                                layoutPage = Path(layouts).join(layoutPage)
-                                if (!layoutPage.exists) {
-                                    throw "Can't find layout page " + layoutPage
-                                }
-                            }
-                        }
-                        break
-
-                    case "view":
-                        viewClass = args[1].trim("'").trim('"')
-                        if (viewClass.contains("::")) {
-                            [viewModule, viewClass] = viewClass.split("::")
-                        }
-                        viewClass ||= "View"
-                        break
-
-                    case "content":
-                        out.write(ContentMarker)
-                        break
-
-                    default:
-                        throw "Bad control directive: " + cmd
-                    }
-                    break
-
-                default:
-                case Token.Err:
-                    //  TODO - should report line numbers
-                    throw "Bad input token: " + token
-
-                }
-            }
-            if (layoutPage && layoutPage != options.currentLayout) {
-                let layoutOptions = blend(options.clone(), { currentLayout: layoutPage })
-                let layoutText: String = new TemplateParser().parse(layoutPage.readString(), layoutOptions)
-                return layoutText.replace(ContentPattern, out.toString().replace(/\$/g, "$$$$"))
-            }
-            return out.toString()
-        }
-
-        /*
-         *  Get the next input token. Read from script[pos]. Return the next token ID and update the token byte array
-         */
-        function getToken(token: ByteArray): Number {
-            var tid = Token.Literal
-            token.flush(Stream.BOTH)
-            var c
-            while (pos < script.length) {
-                c = script[pos++]
-                switch (c) {
-                case '<':
-                    if (script[pos] == '%' && (pos < 2 || script[pos - 2] != '\\')) {
-                        if (token.available > 0) {
-                            pos--
-                            return Token.Literal
-                        }
-                        pos++
-                        eatSpace()
-                        if (script[pos] == '=') {
-                            /*
-                                <%=  directive
-                             */
-                            pos++
-                            eatSpace()
-                            while (pos < script.length && (c = script[pos]) != undefined && 
-                                    (c != '%' || script[pos+1] != '>' || script[pos-1] == '\\')) {
-                                token.write(c)
-                                pos++
-                            }
-                            pos += 2
-                            return Token.Equals
-
-                        } else if (script[pos] == '@') {
-                            /*
-                                <%@  directive
-                             */
-                            pos++
-                            eatSpace()
-                            while (pos < script.length && (c = script[pos]) != undefined && 
-                                    (c != '%' || script[pos+1] != '>')) {
-                                token.write(c)
-                                pos++
-                            }
-                            pos += 2
-                            return Token.Control
-
-                        } else {
-                            while (pos < script.length && 
-                                    (c = script[pos]) != undefined && 
-                                    (c != '%' || script[pos+1] != '>' || script[pos-1] == '\\')) {
-                                token.write(c)
-                                pos++
-                            }
-                            pos += 2
-                            return Token.EjsTag
-                        }
-                    }
-                    token.write(c)
-                    break
-
-                case '@':
-                    if (script[pos] == '@' && (pos < 1 || script[pos-1] != '\\')) {
-                        if (token.available > 0) {
-                            pos--
-                            return Token.Literal
-                        }
-                        pos++
-                        c = script[pos++]
-                        while (c.isAlpha || c.isDigit || c == '[' || c == ']' || c == '.' || c == '$' || c == '_' || 
-                                c == "'") {
-                            token.write(c)
-                            c = script[pos++]
-                        }
-                        pos--
-                        return Token.Var
-                    }
-                    token.write(c)
-                    break
-
-                case "\r":
-                case "\n":
-                    lineNumber++
-                    token.write(c)
-                    tid = Token.Literal
-                    break
-
-                default:
-                    //  TODO - triple quotes would eliminate the need for this
-                    if (c == '\"' || c == '\\') {
-                        token.write('\\')
-                    }
-                    token.write(c)
-                    break
-                }
-            }
-            if (token.available == 0 && pos >= script.length) {
-                return Token.Eof
-            }
-            return tid
-        }
-
-        private function eatSpace(): Void {
-            while (pos < script.length && script[pos].isSpace) {
-                pos++
-            }
-        }
-    }
-
-    /**
-        Parser tokens
-        @hide
-     */
-    class Token {
-        public static const Err         = -1        /* Any input error */
-        public static const Eof         = 0         /* End of file */
-        public static const EjsTag      = 1         /* <% text %> */
-        public static const Var         = 2         /* @@var */
-        public static const Literal     = 3         /* literal HTML */
-        public static const Equals      = 4         /* <%= expression */
-        public static const Control     = 6         /* <%@ control */
-
-        public static var tokens = [ "Err", "Eof", "EjsTag", "Var", "Literal", "Equals", "Control" ]
-    }
-}
-
-/*
-    @copy   default
-  
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-  
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
-    by the terms of either license. Consult the LICENSE.TXT distributed with
-    this software for full details.
-  
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-  
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
-  
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.template/TemplateParser.es"
  */
 /************************************************************************/
 
