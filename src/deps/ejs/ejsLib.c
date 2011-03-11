@@ -4570,6 +4570,9 @@ static void cmdIOCallback(MprCmd *mc, int channel, void *data)
     case MPR_CMD_STDERR:
         buf = cmd->stderrBuf;
         break;
+    default:
+        /* Child death */
+        return;
     }
     /*
         Read and aggregate the result into a single string
