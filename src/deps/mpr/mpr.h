@@ -1497,7 +1497,7 @@ extern bool mprTrySpinLock(MprSpin *lock);
         #define mprSpinLock(lock)   if (lock) pthread_mutex_lock(&((lock)->cs))
         #define mprSpinUnlock(lock) if (lock) pthread_mutex_unlock(&((lock)->cs))
     #elif BLD_WIN_LIKE
-        #define mprSpinLock(lock)   if (lock) EnterCriticalSection(&((lock)->cs))
+        #define mprSpinLock(lock)   if (lock && (((MprSpin*)(lock))->cs.SpinCount)) EnterCriticalSection(&((lock)->cs))
         #define mprSpinUnlock(lock) if (lock) LeaveCriticalSection(&((lock)->cs))
     #elif VXWORKS
         #define mprSpinLock(lock)   if (lock) semTake((lock)->cs, WAIT_FOREVER)
@@ -1511,11 +1511,11 @@ extern bool mprTrySpinLock(MprSpin *lock);
         #define mprLock(lock)       if (lock) pthread_mutex_lock(&((lock)->cs))
         #define mprUnlock(lock)     if (lock) pthread_mutex_unlock(&((lock)->cs))
     #elif BLD_WIN_LIKE
+        #define mprLock(lock)       if (lock && (((MprSpin*)(lock))->cs.SpinCount)) EnterCriticalSection(&((lock)->cs))
         #define mprUnlock(lock)     if (lock) LeaveCriticalSection(&((lock)->cs))
-        #define mprLock(lock)       if (lock) EnterCriticalSection(&((lock)->cs))
     #elif VXWORKS
-        #define mprUnlock(lock)     if (lock) semGive((lock)->cs)
         #define mprLock(lock)       if (lock) semTake((lock)->cs, WAIT_FOREVER)
+        #define mprUnlock(lock)     if (lock) semGive((lock)->cs)
     #endif
 #else
 

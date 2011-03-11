@@ -6,7 +6,7 @@
 ################################################################################
 
 setupWin() {
-    echo -e "\n#\n#  Create the Windows installation packages ...\n#"
+    log Generate Windows installation packages
 }
 
 ################################################################################
@@ -15,8 +15,7 @@ createInnoSetupFile() {
 
     local count f dir flags name base
 
-    echo "#  Creating binary file list ..."
-
+    log Create Binary file list
     cp package/WIN/install.iss "$ROOT_DIR"
     patchFile "$ROOT_DIR/install.iss"
 
@@ -54,7 +53,7 @@ createInnoSetupFile() {
         if [ $? != 0 ]
         then
             cd "${BLD_WEB_PREFIX}"
-            echo "#  Creating web file list ..."
+            log Create  Web file list
             find . -print | while read f
             do
                 if [ ! -d "$f" ]
@@ -76,8 +75,7 @@ createInnoSetupFile() {
     #
     if [ -d "${BLD_INC_PREFIX}" ] ; then
         cd "${BLD_INC_PREFIX}"
-        echo "#  Creating development headers file list ..."
-
+        log Create Development headers file list
         find . -print | while read f
         do
             if [ ! -d "$f" ]
@@ -98,7 +96,7 @@ createInnoSetupFile() {
     base=${BLD_DOC_PREFIX##*/} 
     if [ -d "${BLD_DOC_PREFIX}" ] ; then
         cd "${BLD_DOC_PREFIX}"
-        echo "#  Creating documentation file list ..."
+        log Create Documentation file list
 
         find . -print | while read f
         do
@@ -120,7 +118,7 @@ createInnoSetupFile() {
 ##  base=${BLD_SAM_PREFIX##*/} 
 ##  if [ -d "${BLD_SAM_PREFIX}" ] ; then
 ##      cd "${BLD_SAM_PREFIX}"
-##      echo "#  Creating samples file list ..."
+##      log Create Samples file list
 ##      find . -print | while read f
 ##      do
 ##          if [ ! -d "$f" ]
@@ -139,7 +137,7 @@ createInnoSetupFile() {
 ##  #   Add src (includes samples)
 ##  #
 ##  cd "${BLD_SRC_PREFIX}"
-##  echo "#  Creating source file list"
+##  log Create Source file list
  
 ##  find . -print | while read f
 ##  do
@@ -175,7 +173,7 @@ makeWinPackage() {
 
     local drive
 
-    echo -e "\n#\n# Creating windows installer package ...\n#"
+    log Create Windows installer package
 
     cd "${ROOT_DIR}"
 

@@ -166,7 +166,7 @@ parseArgs() {
     done
 
     if [ "$VERBOSE" = 0 -a "$TRACE" = "0" ] ; then
-        [ "$EXECUTABLE" ] && log "Link" ${EXECUTABLE/${BLD_OUT_DIR}\/}${BLD_EXE}
+        [ "$EXECUTABLE" ] && log "Link" ${EXECUTABLE/${BLD_OUT_DIR}\/}
         [ "$LIBRARY" ] && [ $MAKE_STATIC = 1 ] && log "Link" ${LIBRARY/${BLD_OUT_DIR}\/}${BLD_ARCH}
         [ "$LIBRARY" ] && [ $MAKE_STATIC = 0 ] && log "Link" ${LIBRARY/${BLD_OUT_DIR}\/}${BLD_SHOBJ}
     fi

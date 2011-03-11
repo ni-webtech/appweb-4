@@ -10,6 +10,8 @@
 
 . build/config/config.base
 
+eval BLD_${KIND}_PKG=iscc
+
 eval BLD_${KIND}_ARCH=.a
 eval BLD_${KIND}_EXE=.exe
 eval BLD_${KIND}_OBJ=.obj

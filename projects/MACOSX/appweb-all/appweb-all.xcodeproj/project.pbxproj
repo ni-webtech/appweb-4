@@ -882,7 +882,6 @@
 		C95C31E70FC528C700FB3105 /* server */ = {
 			isa = PBXGroup;
 			children = (
-				C92D5C6A130DF56C0097EBA8 /* meta.c */,
 				C97620660FD04E38009C78E1 /* handlers */,
 				C97620730FD04E38009C78E1 /* modules */,
 				C976205D0FD04E0A009C78E1 /* connectors */,
@@ -890,6 +889,7 @@
 				C9817C1C110D170500F241EF /* config.c */,
 				C9817C1E110D170500F241EF /* convenience.c */,
 				C9817C23110D170500F241EF /* log.c */,
+				C92D5C6A130DF56C0097EBA8 /* meta.c */,
 			);
 			name = server;
 			sourceTree = "<group>";

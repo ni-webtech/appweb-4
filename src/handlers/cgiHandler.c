@@ -53,10 +53,12 @@ static void closeCgi(HttpQueue *q)
 
     mprLog(5, "Close cgiHandler");
     cmd = (MprCmd*) q->queueData;
-    if (cmd->pid) {
-        mprStopCmd(cmd, -1);
+    if (cmd) {
+        if (cmd->pid) {
+            mprStopCmd(cmd, -1);
+        }
+        mprDisconnectCmd(cmd);
     }
-    mprDisconnectCmd(cmd);
 }
 
 
@@ -139,7 +141,8 @@ static void startCgi(HttpQueue *q)
 
 
 /*
-    This routine runs after all incoming data has been received
+    This routine runs after all incoming data has been received and while the gateway is still running.
+    It may be called multiple times until the gateway exits.
  */
 static void processCgi(HttpQueue *q)
 {
@@ -151,36 +154,15 @@ static void processCgi(HttpQueue *q)
     mprAssert(cmd);
 
     mprLog(5, "processCgi");
-#if UNUSED
-    if (cmd == 0) {
-        /* Start CGI if doing file upload and delayed start */
-        startCgi(q);
-        cmd = (MprCmd*) q->queueData;
-    }
-#endif
 
-    if (q->count > 0) {
-        writeToCGI(q);
+    if (q->pair->count > 0) {
+        writeToCGI(q->pair);
     }
-    /*  Close the CGI program's stdin. This will allow the gateway to exit if it was expecting input data */
-    mprCloseCmdFd(cmd, MPR_CMD_STDIN);
-
-    if (conn->error) {
-        httpPutForService(q, httpCreateEndPacket(q), 1);
-        return;
-    }
-    //  MOB - why block here?
-    while (mprWaitForCmd(cmd, 1000) < 0) {
-        if (mprGetElapsedTime(conn->lastActivity) >= conn->limits->inactivityTimeout) {
-            break;
+    if (q->pair->count == 0) {
+        /*  Close the CGI program's stdin (idempotent). This will allow the gateway to exit if it was expecting input data */
+        if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
+            mprCloseCmdFd(cmd, MPR_CMD_STDIN);
         }
-    }
-    if (cmd->pid == 0) {
-        httpPutForService(q, httpCreateEndPacket(q), 1);
-    } else {
-        mprStopCmd(cmd, -1);
-        mprDestroyCmd(cmd);
-        cmd->status = 255;
     }
 }
 
@@ -204,6 +186,7 @@ static void outgoingCgiService(HttpQueue *q)
      */ 
     httpDefaultOutgoingServiceStage(q);
     if (cmd->userFlags & MA_CGI_FLOW_CONTROL && q->count < q->low) {
+        //  MOB -- check flow control
         cmd->userFlags &= ~MA_CGI_FLOW_CONTROL;
         mprEnableCmdEvents(cmd, MPR_CMD_STDOUT);
     }
@@ -228,14 +211,15 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
     rx = conn->rx;
 
     cmd = (MprCmd*) q->pair->queueData;
-    mprAssert(cmd);
     conn->lastActivity = conn->http->now;
 
     if (httpGetPacketLength(packet) == 0) {
         /* End of input */
         if (rx->remainingContent > 0) {
             /* Short incoming body data. Just kill the CGI process.  */
-            mprDestroyCmd(cmd);
+            if (cmd) {
+                mprDestroyCmd(cmd);
+            }
             q->queueData = 0;
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
         }
@@ -244,7 +228,9 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
         /* No service routine, we just need it to be queued for writeToCGI */
         httpPutForService(q, packet, 0);
     }
-    writeToCGI(q);
+    if (cmd) {
+        writeToCGI(q);
+    }
 }
 
 
@@ -272,6 +258,7 @@ static void writeToCGI(HttpQueue *q)
         len = mprGetBufLength(buf);
         mprAssert(len > 0);
 //  MOB - do we need a yield here 
+//  MOB -- ideal to be able to trace this data
         rc = mprWriteCmd(cmd, MPR_CMD_STDIN, mprGetBufStart(buf), len);
         mprLog(5, "CGI: write %d bytes to gateway. Rc rc %d, errno %d", len, rc, mprGetOsError());
         if (rc < 0) {
@@ -291,14 +278,14 @@ static void writeToCGI(HttpQueue *q)
         if (mprGetBufLength(buf) > 0) {
             httpPutBackPacket(q, packet);
         }
+#if UNUSED
         if (rc < len) {
             /*
                 CGI gateway is blocked. CGI write events will be issued when the gateway can accept more data.
              */
-#if UNUSED
             mprEnableCmdEvents(cmd, MPR_CMD_STDIN);
-#endif
         }
+#endif
     }
 }
 
@@ -389,6 +376,12 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     case MPR_CMD_STDERR:
         readCgiResponseData(q, cmd, channel, cmd->stderrBuf);
         break;
+            
+    default:
+        /* Child death notification */
+        if (cmd->pid == 0 && cmd->complete) {
+            httpFinalize(conn);
+        }
     }
     if (conn->state == HTTP_STATE_COMPLETE) {
         httpProcess(conn, NULL);
@@ -424,6 +417,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
             }
             mprYield(MPR_YIELD_STICKY);
             nbytes = mprReadCmd(cmd, channel, mprGetBufEnd(buf), space);
+//  MOB -- ideal to be able to trace this data
             mprResetYield();
             mprLog(5, "CGI: read from gateway %d on channel %d. errno %d", nbytes, channel, 
                 nbytes >= 0 ? 0 : mprGetOsError());
@@ -459,7 +453,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
             break;
         }
     }
-    if (cmd->pid == 0) {
+    if (cmd->complete) {
         httpFinalize(conn);
     } else {    
         enableCgiEvents(q, cmd, channel);

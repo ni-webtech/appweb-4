@@ -357,8 +357,6 @@ createEnvelopes() {
         if [ $fmt = exe ] ; then
             env=${ROOT_DIR}/$name.zip
             ${RM} -f $zip 
-            echo "ls -1 COPYRIGHT.TXT README.TXT LICENSE.TXT *.$fmt | grep -v "${BLD_PRODUCT}-src" | \\"
-            echo "zip -q ${env} -@"
             ls -1 COPYRIGHT.TXT README.TXT LICENSE.TXT *.$fmt | grep -v "${BLD_PRODUCT}-src" | zip -q ${env} -@
             ls -1 COPYRIGHT.TXT README.TXT LICENSE.TXT *.$fmt | zip -q "${env}" -@
         else
