@@ -183,7 +183,7 @@ static char *absolutePath(char *path)
     if (*str == '/') {
         return str;
     }
-#if _WIN32
+#if _WIN32 || __CYGWIN__
     if (strlen(path) > 3 && isalpha(path[0]) && path[1] == ':' && path[2] == '/') {
         return str;
     }

@@ -334,7 +334,7 @@ createEnvelopes() {
 
     local baseName name env fmt files
 
-    if [ $BLD_HOST_OS = MACOSX -o $BLD_HOST_OS = VXWORKS ] ; then
+    if [ $BLD_HOST_OS = MACOSX -o $BLD_HOST_OS = VXWORKS -o $BLD_HOST_OS = CYGWIN ] ; then
         return
     fi
     log Generate Package envelopes
