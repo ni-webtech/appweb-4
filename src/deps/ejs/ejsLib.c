@@ -51376,7 +51376,7 @@ static void createClassSection(EcCompiler *cp, EjsPot *block, int slotNum, EjsPo
     qname = ejsGetPropertyName(ejs, ejs->global, slotNum);
     mprAssert(qname.name);
 
-    mprLog(7, "    type section %s for module %s", qname.name, mp->name);
+    mprLog(7, "    type section %@ for module %@", qname.name, mp->name);
     
     type = ejsGetProperty(ejs, ejs->global, slotNum);
     mprAssert(type);
@@ -51691,7 +51691,7 @@ static void createPropertySection(EcCompiler *cp, EjsPot *block, int slotNum, Ej
     trait = ejsGetPropertyTraits(ejs, block, slotNum);
     attributes = trait->attributes;
 
-    mprLog(7, "    global property section %s", qname.name);
+    mprLog(7, "    global property section %@", qname.name);
 
     if (trait->type) {
         if (trait->type == ejs->namespaceType || 

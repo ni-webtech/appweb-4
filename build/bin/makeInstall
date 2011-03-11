@@ -2,7 +2,7 @@
 #
 #   makeInstall - Install and Uninstall a package. Also used by makePackage.
 #
-#   usage: makeInstall --browser --dry --quiet --trace --root=/myDir [--install|--remove|--package]
+#   usage: makeInstall [--bare] [--browser] [--dry] [--quiet] [--trace] [--root=/myDir] [--install|--remove|--package]
 #
 #
 ################################################################################
@@ -28,6 +28,7 @@
 ################################################################################
 
 PACKS=
+BARE=0
 BROWSER=
 BLD_DATE=`date '+%c'`
 DEFAULT_PERM=644
@@ -37,8 +38,6 @@ OPTIONS=
 QUIET=${QUIET:-0}
 SKIP_PERMS=${SKIP_PERMS:-0}
 TASK=${TASK:-Install}
-
-: ${BLD_OUT_DIR:=$BLD_TOP/out}
 
 ################################################################################
 
@@ -228,6 +227,8 @@ findTop() {
         dir=`pwd`
     done
     BLD_TOP=`pwd`
+    BLD_OUT_DIR=$BLD_TOP/out
+
 }
 
 setup() {
@@ -250,8 +251,12 @@ setup() {
     . ${BLD_TOP}/build/bin/makePackage.common
     . package/makeInstall.${BLD_PRODUCT}
 
-    if [ ! -x ${BLD_OUT_DIR}/bin/dsi${BLD_EXE} ] ; then
-        echo "Must compile first before installing"
+    [ $TASK = Install ] && VERB=Installing
+    [ $TASK = Package ] && VERB=Copy
+    [ $TASK = Remove ] && VERB=Removing
+
+    if [ ! -x ${BLD_BUILD_BIN_DIR}/dsi* ] ; then
+        echo "Must compile first before $VERB"
         exit 255
     fi
     ROOT_DIR=`${BLD_OUT_DIR}/bin/getpath -a "${ROOT_DIR}"`
@@ -273,10 +278,6 @@ setup() {
         ROOT_DIR=`cygpath -u $ROOT_DIR`
         ROOT_DIR=`cygpath -am $ROOT_DIR`
     fi
-
-    [ $TASK = Install ] && VERB=Installing
-    [ $TASK = Package ] && VERB=Copy
-    [ $TASK = Remove ] && VERB=Removing
 
     if [ $TASK = Package ] ; then
         dir=$ROOT_DIR
@@ -409,6 +410,9 @@ while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
     [ "$ARG" = "$1" ] && ARG=
     SW=`echo ${1#--} | tr '[:upper:]' '[:lower:]'`
     case ${SW} in
+    bare)
+        BARE=1
+        ;;
     browser)
         BROWSER=1
         ;;
@@ -462,6 +466,27 @@ else
     copyRemoveFiles
 fi
 
-[ "$BROWSER" != "" -a "$DRY_RUN" = "" ] && launchBrowser
+[ "$BROWSER" = 1 -a "$DRY_RUN" = "" ] && launchBrowser
 
 configureProduct complete
+
+if [ "$BARE" = 1 ] ; then
+    #
+    #   Flatten the tree
+    #
+    if [ "$ROOT_DIR" = "/" -o "$ROOT_DIR" = "c:/" ] ; then
+        echo "WARNING: Can't do bare deploy to the root directory"
+        exit 255
+    fi
+    mkdir -p ${ROOT_DIR}/bin ${ROOT_DIR}/lib ${ROOT_DIR}/mod
+	mv ${BLD_BIN_PREFIX}/* ${ROOT_DIR}/bin
+	mv ${BLD_LIB_PREFIX}/* ${ROOT_DIR}/lib
+	mv ${BLD_MOD_PREFIX}/* ${ROOT_DIR}/mod
+	rm -f ${BLD_MOD_PREFIX}/fileList.txt
+    #
+    #   Try to be careful with removals
+    #
+	rm -fr ${ROOT_DIR}/usr/lib/${BLD_PRODUCT}
+	rmdir ${ROOT_DIR}/usr/lib
+	rmdir ${ROOT_DIR}/usr
+fi

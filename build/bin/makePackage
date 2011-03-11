@@ -61,8 +61,8 @@ setup() {
     umask 022
     BLD_DATE=`date '+%c'`
 
-    if [ ! -x ${BLD_OUT_DIR}/bin/dsi${BLD_EXE} ] ; then
-        echo "Must compile first before installing"
+    if [ ! -x ${BLD_BUILD_BIN_DIR}/dsi* ] ; then
+        echo "MOB2 Must compile first before installing"
         exit 255
     fi
 
@@ -180,7 +180,7 @@ createArchives() {
             file=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}.tar`
             file="${ROOT_DIR}/$file"
             ${RM} -f "${file}" "${file}.gz"
-            [ $BLD_HOST_OS = WIN ] && file=`cygpath "${file}"`
+            [ $BLD_BUILD_OS = WIN ] && file=`cygpath "${file}"`
 
             #
             #   cd SRC/usr/src/product-version
@@ -210,7 +210,7 @@ createArchives() {
 
             file=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}.zip`
             file="${ROOT_DIR}/$file"
-            [ $BLD_HOST_OS = WIN ] && file=`cygpath "${file}"`
+            [ $BLD_BUILD_OS = WIN ] && file=`cygpath "${file}"`
             ${RM} -f "${file}"
             cat "$dir/fileList.txt" | zip -q "${file}" -@
             cd $HOME >/dev/null
@@ -262,7 +262,7 @@ createScripts() {
     patchFile install uninstall COPYRIGHT.TXT README.TXT LICENSE.TXT
     chmod 755 install uninstall
     chmod 644 COPYRIGHT.TXT README.TXT LICENSE.TXT
-    if [ $BLD_HOST_OS = WIN ] ; then
+    if [ $BLD_BUILD_OS = WIN ] ; then
         if type dos2unix >/dev/null 2>&1 ; then
             foldFile README.TXT
             foldFile LICENSE.TXT
@@ -287,7 +287,7 @@ sum() {
     dir=${file%/*}                  # dirname
 
     cd "$dir" >/dev/null
-    log Checksum "$MD5 ${base} md5-${base}.txt"
+    log Checksum "$MD5 ${base}"
     $MD5 "${base}" | awk '{ print $1 }' > "${dir}/md5-${base}.txt"
     chmod 755 "${dir}/md5-${base}.txt"
     chown `id -ru` "${dir}/md5-${base}.txt"
@@ -311,7 +311,6 @@ createPlatformPackages() {
     if [ -x "$BLD_PKG" ] ; then
         . ${BLD_TOOLS_DIR}/makeWinPackage
     fi
-
     if [ $BLD_HOST_OS = MACOSX ] ; then
         . ${BLD_TOOLS_DIR}/makeDmgPackage
 
@@ -335,7 +334,7 @@ createEnvelopes() {
 
     local baseName name env fmt files
 
-    if [ $BLD_HOST_OS = MACOSX ] ; then
+    if [ $BLD_HOST_OS = MACOSX -o $BLD_HOST_OS = VXWORKS ] ; then
         return
     fi
     log Generate Package envelopes

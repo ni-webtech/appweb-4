@@ -10,28 +10,23 @@ usePrefixes CFG BIN JEM LIB LOG MOD PRD VER WEB
 
 ${CHMOD} 755 "${BLD_CFG_PREFIX}"
 
-if [ "${TASK}" = Remove -a -f "${BLD_BIN_PREFIX}/linkup" ] ; then
-    cp "${BLD_BIN_PREFIX}/linkup" /tmp/linkup$$
-fi
-
-cpy -w -t -e doc/licenses/LICENSE.TXT doc/product/README.TXT doc/product/COPYRIGHT.TXT "${BLD_CFG_PREFIX}"
-if [ "$WITH_OPENWRT" != 1 ] ; then
-	cpy -e -m 0755 package/uninstall.sh "${BLD_BIN_PREFIX}/uninstall"
-fi
-cpy -e -m 0755 package/linkup "${BLD_BIN_PREFIX}/linkup"
-
-cpy -s -m 755 "${BLD_BIN_DIR}/appweb${BLD_EXE}" "${BLD_BIN_PREFIX}"
-
-if [ -x $BLD_BIN_DIR/angel${BLD_EXE} ] ; then
-    cpy -s -m 755 "${BLD_BIN_DIR}/angel${BLD_EXE}" "${BLD_BIN_PREFIX}"
-fi
-
-if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
-    if [ "$BLD_FEATURE_HTTP_CLIENT" = 1 ] ; then
-        cpy -s -m 755 ${BLD_BIN_DIR}/http${BLD_EXE} "${BLD_BIN_PREFIX}"
+if [ "$BARE" = 0 ] ; then
+    if [ "${TASK}" = Remove -a -f "${BLD_BIN_PREFIX}/linkup" ] ; then
+        cp "${BLD_BIN_PREFIX}/linkup" /tmp/linkup$$
+    fi
+    cpy -w -t -e doc/licenses/LICENSE.TXT doc/product/README.TXT doc/product/COPYRIGHT.TXT "${BLD_CFG_PREFIX}"
+    if [ "$WITH_OPENWRT" != 1 ] ; then
+        cpy -e -m 0755 package/uninstall.sh "${BLD_BIN_PREFIX}/uninstall"
+    fi
+    cpy -e -m 0755 package/linkup "${BLD_BIN_PREFIX}/linkup"
+    if [ -x $BLD_BIN_DIR/angel${BLD_EXE} ] ; then
+        cpy -s -m 755 "${BLD_BIN_DIR}/angel${BLD_EXE}" "${BLD_BIN_PREFIX}"
     fi
     cpy -s -m 755 -d ${BLD_BIN_DIR} auth${BLD_EXE} makerom${BLD_EXE} "${BLD_BIN_PREFIX}"
+    cpy -s -m 755 ${BLD_BIN_DIR}/http${BLD_EXE} "${BLD_BIN_PREFIX}"
 fi
+
+cpy -s -m 755 "${BLD_BIN_DIR}/appweb${BLD_EXE}" "${BLD_BIN_PREFIX}"
 
 if `ls ${BLD_MOD_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then
 	cpy -s -m 755 -d ${BLD_MOD_DIR} "*${BLD_SHOBJ}" "${BLD_MOD_PREFIX}"
@@ -75,8 +70,10 @@ else
     cpy "$WITH_CONF" "${BLD_CFG_PREFIX}/appweb.conf"
 fi
 
-makeDir "${BLD_LOG_PREFIX}"
-touch "${BLD_LOG_PREFIX}"/error.log
+if [ "$BARE" = 0 ] ; then
+    makeDir "${BLD_LOG_PREFIX}"
+    touch "${BLD_LOG_PREFIX}"/error.log
+fi
 
 #
 #   Patch appweb.conf and other config files
@@ -84,6 +81,7 @@ touch "${BLD_LOG_PREFIX}"/error.log
 rm -f "${BLD_CFG_PREFIX}/conf/appweb.conf"
 if [ "${TASK}" != Remove ] ; then
     (
+        # MOB - if using BARE - should be using flat config
         dir=$BLD_CFG_PREFIX
         for v in BLD_CFG_PREFIX BLD_WEB_PREFIX BLD_DOC_PREFIX BLD_MOD_PREFIX BLD_LOG_PREFIX ; do
             eval export $v=$`echo ORIG_${v}`
@@ -122,8 +120,10 @@ if [ "$BLD_FEATURE_EJS" = 1 ] ; then
 #   MOB - need mvc, ejspage
 #       cpy -m 755 -d ${BLD_BIN_DIR} mvc "${BLD_BIN_PREFIX}"
         cpy -s -m 755 -d ${BLD_BIN_DIR} ejsc${BLD_EXE} "${BLD_BIN_PREFIX}"
-        makeDir "${BLD_LIB_DIR}/www"
-        cpy -m 644 -d "${BLD_LIB_DIR}/www" "*" "${BLD_LIB_PREFIX}/www"
+        if [ "$BARE" = 0 ] ; then
+            makeDir "${BLD_LIB_DIR}/www"
+            cpy -m 644 -d "${BLD_LIB_DIR}/www" "*" "${BLD_LIB_PREFIX}/www"
+        fi
     fi
     if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
         cpy -s -m 755 -d ${BLD_BIN_DIR} ejs${BLD_EXE} ejsmod${BLD_EXE} "${BLD_BIN_PREFIX}"
@@ -134,68 +134,72 @@ if [ "$BLD_FEATURE_EJS" = 1 ] ; then
 fi
 
 #
-#   Service startup scripts.
+#   Service startup scripts
 #
-if [ $BLD_HOST_OS = MACOSX ] ; then
-    makeDir ${BLD_ROOT_PREFIX}/Library/LaunchDaemons
-    cpy -m 644 -e package/MACOSX/com.embedthis.appweb.plist "${BLD_ROOT_PREFIX}/Library/LaunchDaemons"
+if [ "$BARE" = 0 ] ; then
+    if [ $BLD_HOST_OS = MACOSX ] ; then
+        makeDir ${BLD_ROOT_PREFIX}/Library/LaunchDaemons
+        cpy -m 644 -e package/MACOSX/com.embedthis.appweb.plist "${BLD_ROOT_PREFIX}/Library/LaunchDaemons"
 
-elif [ $BLD_HOST_OS = LINUX ] ; then
-    makeDir ${BLD_ROOT_PREFIX}/etc/init.d
-    if [ "${TASK}" = Package ] ; then
-        cpy -m 0755 -e package/LINUX/${BLD_PRODUCT}.init ${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}
-    else
-        if [ `id -u` = 0 -o "$ROOT_DIR" != "" ] ; then
-            if [ "$WITH_OPENWRT" = 1 ] ; then
-				makeDir "${BLD_ROOT_PREFIX}/CONTROL"
-				cpy -e -m 0755 package/LINUX/deb.bin/p* "${BLD_ROOT_PREFIX}/CONTROL"
-                cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.openwrt "${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}"
-            else
-                #
-                #	Daemon start / stop scripts
-                #
-                cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.init "${BLD_ROOT_PREFIX}/etc/rc.d/${BLD_PRODUCT}"
-                cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.init "${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}"
+    elif [ $BLD_HOST_OS = LINUX ] ; then
+        makeDir ${BLD_ROOT_PREFIX}/etc/init.d
+        if [ "${TASK}" = Package ] ; then
+            cpy -m 0755 -e package/LINUX/${BLD_PRODUCT}.init ${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}
+        else
+            if [ `id -u` = 0 -o "$ROOT_DIR" != "" ] ; then
+                if [ "$WITH_OPENWRT" = 1 ] ; then
+                    makeDir "${BLD_ROOT_PREFIX}/CONTROL"
+                    cpy -e -m 0755 package/LINUX/deb.bin/p* "${BLD_ROOT_PREFIX}/CONTROL"
+                    cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.openwrt "${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}"
+                else
+                    #
+                    #	Daemon start / stop scripts
+                    #
+                    cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.init "${BLD_ROOT_PREFIX}/etc/rc.d/${BLD_PRODUCT}"
+                    cpy -e -m 0755 package/LINUX/${BLD_PRODUCT}.init "${BLD_ROOT_PREFIX}/etc/init.d/${BLD_PRODUCT}"
 
-                d=`getpath "${BLD_ROOT_PREFIX}/etc"`
-                for i in 2 3 4 5 ; do
-                    ${RM} -f "${d}/rc${i}.d/S81${BLD_PRODUCT}"
-                    if [ $TASK != Remove ] ; then
-                        makeDir "${d}"/rc${i}.d
-                        ${LN} -s "${d}/init.d/${BLD_PRODUCT}" "${d}/rc${i}.d/S81${BLD_PRODUCT}"
-                    fi
-                done
-                for i in 0 1 6 ; do
-                    ${RM} -f "${d}/rc${i}.d/K15${BLD_PRODUCT}"
-                    if [ $TASK != Remove ] ; then
-                        makeDir "${d}"/rc${i}.d
-                        ${LN} -s "${d}/init.d/${BLD_PRODUCT}" "${d}/rc${i}.d/K15${BLD_PRODUCT}"
-                    fi
-                done
+                    d=`getpath "${BLD_ROOT_PREFIX}/etc"`
+                    for i in 2 3 4 5 ; do
+                        ${RM} -f "${d}/rc${i}.d/S81${BLD_PRODUCT}"
+                        if [ $TASK != Remove ] ; then
+                            makeDir "${d}"/rc${i}.d
+                            ${LN} -s "${d}/init.d/${BLD_PRODUCT}" "${d}/rc${i}.d/S81${BLD_PRODUCT}"
+                        fi
+                    done
+                    for i in 0 1 6 ; do
+                        ${RM} -f "${d}/rc${i}.d/K15${BLD_PRODUCT}"
+                        if [ $TASK != Remove ] ; then
+                            makeDir "${d}"/rc${i}.d
+                            ${LN} -s "${d}/init.d/${BLD_PRODUCT}" "${d}/rc${i}.d/K15${BLD_PRODUCT}"
+                        fi
+                    done
+                fi
             fi
         fi
     fi
-fi
 
-if [ $BLD_HOST_OS = WIN ] ; then
-    clversion=$BLD_CC_CL_VERSION
-    if [ "$clversion" = 15 -a -f lib/msvcrt/$BLD_CC_CL_VERSION/msvcr90.dll ] ; then
-        cpy -d "lib/msvcrt/$BLD_CC_CL_VERSION" msvcr90.dll Microsoft.VC90.CRT.manifest "${BLD_BIN_PREFIX}"
-    elif [ "$clversion" = 16 -a -f lib/msvcrt/$BLD_CC_CL_VERSION/msvcr100.dll ] ; then
-        cpy -d "lib/msvcrt/$BLD_CC_CL_VERSION" msvcr100.dll "${BLD_BIN_PREFIX}"
+    if [ $BLD_HOST_OS = WIN ] ; then
+        clversion=$BLD_CC_CL_VERSION
+        if [ "$clversion" = 15 -a -f lib/msvcrt/$BLD_CC_CL_VERSION/msvcr90.dll ] ; then
+            cpy -d "lib/msvcrt/$BLD_CC_CL_VERSION" msvcr90.dll Microsoft.VC90.CRT.manifest "${BLD_BIN_PREFIX}"
+        elif [ "$clversion" = 16 -a -f lib/msvcrt/$BLD_CC_CL_VERSION/msvcr100.dll ] ; then
+            cpy -d "lib/msvcrt/$BLD_CC_CL_VERSION" msvcr100.dll "${BLD_BIN_PREFIX}"
+        fi
+        cpy ${BLD_BIN_DIR}/appwebMonitor${BLD_EXE} "${BLD_BIN_PREFIX}"
+        cpy ${BLD_BIN_DIR}/appwebMonitor.ico "${BLD_BIN_PREFIX}"
+        cpy ${BLD_BIN_DIR}/ejs${BLD_EXE}* "${BLD_BIN_PREFIX}"
+        cpy ${BLD_BIN_DIR}/removeFiles${BLD_EXE}* "${BLD_BIN_PREFIX}"
+        cpy package/WIN/patchConfig.es "${BLD_BIN_PREFIX}"
+        cpy -m 755 -d ${BLD_BIN_DIR} mvc.cmd ejspage.cmd jem.cmd "${BLD_BIN_PREFIX}"
     fi
-	cpy ${BLD_BIN_DIR}/appwebMonitor${BLD_EXE} "${BLD_BIN_PREFIX}"
-	cpy ${BLD_BIN_DIR}/appwebMonitor.ico "${BLD_BIN_PREFIX}"
-	cpy ${BLD_BIN_DIR}/ejs${BLD_EXE}* "${BLD_BIN_PREFIX}"
-    cpy ${BLD_BIN_DIR}/removeFiles${BLD_EXE}* "${BLD_BIN_PREFIX}"
-	cpy package/WIN/patchConfig.es "${BLD_BIN_PREFIX}"
-    cpy -m 755 -d ${BLD_BIN_DIR} mvc.cmd ejspage.cmd jem.cmd "${BLD_BIN_PREFIX}"
 fi
 
 if [ ${BLD_HOST_OS} != "WIN" ] ; then
     export BLD_PRD_PREFIX BLD_INC_PREFIX
     if [ "${TASK}" = Install ] ; then
-        bash "${BLD_BIN_PREFIX}/linkup" $TASK "$ROOT_DIR"
+        if [ "$BARE" = 0 ] ; then
+            bash "${BLD_BIN_PREFIX}/linkup" $TASK "$ROOT_DIR"
+        fi
     elif [ -f /tmp/linkup$$ ] ; then
         bash /tmp/linkup$$ $TASK "$ROOT_DIR"
         rm -f /tmp/linkup$$

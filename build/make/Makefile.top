@@ -83,6 +83,12 @@ $(BLD_TOOLS_DIR)/edep$(BLD_EXE):
 dependExtra:
 	[ ! -L extensions ] && ln -s ../packages extensions ; true
 
+deploy deploy-%:
+	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
+	if [ "$$ROOT_DIR" = "" ] ; then echo -n "Enter deployment directory : " ; read ROOT_DIR ; fi ; \
+	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
+		$$BROWSER --root=$$ROOT_DIR --bare --install --with-conf="$(CONF)" pre $$packs post ; \
+
 install install-%:
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
 	[ "$$packs" = "binary dev" ] && BROWSER=--browser ; \
