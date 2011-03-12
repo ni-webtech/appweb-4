@@ -419,7 +419,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
             nbytes = mprReadCmd(cmd, channel, mprGetBufEnd(buf), space);
 //  MOB -- ideal to be able to trace this data
             mprResetYield();
-            mprLog(5, "CGI: read from gateway %d on channel %d. errno %d", nbytes, channel, 
+            mprLog(5, "CGI: read from channel %d, got %d bytes. errno %d", channel, nbytes, 
                 nbytes >= 0 ? 0 : mprGetOsError());
             if (nbytes < 0) {
                 err = mprGetError();
