@@ -131,7 +131,7 @@ int main(int argc, char *argv[], char *envp[])
     _setmode(2, O_BINARY);
 #endif
 
-    if (strstr(argv[0], "nph-") == 0) {
+    if (strstr(argv[0], "nph-") != 0) {
         nonParsedHeader++;
     }
     if (getArgv(&argc, &argv, originalArgc, originalArgv) < 0) {
@@ -240,6 +240,7 @@ int main(int argc, char *argv[], char *envp[])
             printf("HTTP/1.0 %d %s\r\n\r\n", responseStatus, responseMsg);
             printf("<HTML><BODY><p>Error: %d -- %s</p></BODY></HTML>\r\n", responseStatus, responseMsg);
         }
+        fprintf(stderr, "cgiProgram: ERROR: %s\n", responseMsg);
         exit(2);
     }
 
@@ -509,8 +510,8 @@ static int getPostData(char **bufp, int *lenp)
             return -1;
         } else if (bytes == 0) {
             /* EOF */
-            if (len > 0) {
-                error("Missing content data (Content-Length %s)", contentLength);
+            if (contentLength && len != limit) {
+                error("Missing content data (Content-Length: %s)", contentLength ? contentLength : "unspecified");
             }
             break;
         }
