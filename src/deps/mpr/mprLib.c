@@ -4894,7 +4894,7 @@ static void reapCmd(MprCmd *cmd)
         mprLog(0, "waitpid failed for pid %d, errno %d", cmd->pid, errno);
 
     } else if (rc == cmd->pid) {
-        mprLog(6, "waitpid pid %d, errno %d, thread %s", cmd->pid, errno, mprGetCurrentThreadName());
+        mprLog(6, "waitpid pid %d, thread %s", cmd->pid, mprGetCurrentThreadName());
         if (!WIFSTOPPED(status)) {
             if (WIFEXITED(status)) {
                 cmd->status = WEXITSTATUS(status);
