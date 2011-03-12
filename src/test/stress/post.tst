@@ -33,13 +33,10 @@ function postTest(url: String) {
         print(http.response)
     }
     assert(http.status == 200)
-print("STATUS " + http.status)
-print("RESPONSE " + http.response)
     assert(http.response)
     http.close()
 }
 
-/*MOB
 postTest("/index.html")
 
 if (test.config["ejs"] == 1) {
@@ -48,7 +45,6 @@ if (test.config["ejs"] == 1) {
 if (test.config["php"] == 1) {
     postTest("/form.php")
 }
-*/
 
 if (test.config["cgi"] == 1) {
     postTest("/cgi-bin/cgiProgram")
