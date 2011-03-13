@@ -423,7 +423,6 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
         ecResetInput(cp);
         cp->errorCount = 0;
         cp->fatalError = 0;
-        err = 0;
     }
     ecCloseStream(cp);
     return 0;
@@ -503,11 +502,13 @@ static char *readline(cchar *msg)
 static int consoleGets(EcStream *stream)
 {
     char    prompt[MPR_MAX_STRING], *line, *cp;
+    int     level;
 
     if (stream->flags & EC_STREAM_EOL) {
         return 0;
     }
-    mprSprintf(prompt, sizeof(prompt), "%s-%d> ", EJS_NAME, stream->compiler->state->blockNestCount);
+    level = stream->compiler->state ? stream->compiler->state->blockNestCount : 0;
+    mprSprintf(prompt, sizeof(prompt), "%s-%d> ", EJS_NAME, level);
 
     mprYield(MPR_YIELD_STICKY);
     line = readline(prompt);
@@ -530,12 +531,15 @@ static int consoleGets(EcStream *stream)
 static int commandGets(EcStream *stream)
 {
     /*  
-        We only get to execute one string of commands. So we only come here once. Second time round, nextChar will be set.
+        Execute one string of commands. So we only come here once. Second time round, nextChar will be set.
+        MOB - this logic is not right
      */
     if (stream->nextChar) {
         stream->eof = 1;
         return -1;
     }
+    mprAssert(0);
+    //  MOB -- because of the test above, nextChar must be zero
     return (int) (stream->end - stream->nextChar);
 }
 

@@ -7267,7 +7267,7 @@ void mprDestroyDispatcher(MprDispatcher *dispatcher)
     MprEventService     *es;
     MprEvent            *q, *event, *next;
 
-    if (dispatcher && dispatcher->service) {
+    if (dispatcher && dispatcher->name) {
         mprAssert(dispatcher->magic == MPR_DISPATCHER_MAGIC);
         es = dispatcher->service;
         lock(es);
@@ -7280,6 +7280,7 @@ void mprDestroyDispatcher(MprDispatcher *dispatcher)
                 mprRemoveEvent(event);
             }
         }
+        dispatcher->name = 0;
         unlock(es);
     }
 }
@@ -8702,10 +8703,10 @@ void mprRemoveEvent(MprEvent *event)
         if (event->next) {
             dequeueEvent(event);
         }
-        event->dispatcher = 0;
         if (dispatcher->enabled && event->due == es->willAwake && dispatcher->eventQ->next != dispatcher->eventQ) {
             mprScheduleDispatcher(dispatcher);
         }
+        event->dispatcher = 0;
         unlock(es);
     }
 }

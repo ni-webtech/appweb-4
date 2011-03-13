@@ -2454,7 +2454,7 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->ip);
         mprMark(conn->protocol);
         mprMark(conn->headersCallbackArg);
-        mprMark(conn->timeout);
+        mprMark(conn->timeoutEvent);
 
         httpManageTrace(&conn->trace[0], flags);
         httpManageTrace(&conn->trace[1], flags);
@@ -2532,8 +2532,8 @@ static void commonPrep(HttpConn *conn)
     http = conn->http;
     lock(http);
 
-    if (conn->timeout) {
-        mprRemoveEvent(conn->timeout);
+    if (conn->timeoutEvent) {
+        mprRemoveEvent(conn->timeoutEvent);
     }
     conn->canProceed = 1;
     conn->error = 0;
@@ -2604,14 +2604,12 @@ void httpConsumeLastRequest(HttpConn *conn)
 {
     MprTime     mark;
     char        junk[4096];
-    int         requestTimeout;
 
     if (!conn->sock || conn->state < HTTP_STATE_FIRST) {
         return;
     }
     mark = mprGetTime();
-    requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
-    while (!httpIsEof(conn) && mprGetRemainingTime(mark, requestTimeout) > 0) {
+    while (!httpIsEof(conn) && mprGetRemainingTime(mark, conn->limits->requestTimeout) > 0) {
         if (httpRead(conn, junk, sizeof(junk)) <= 0) {
             break;
         }
@@ -3007,13 +3005,24 @@ void httpSetState(HttpConn *conn, int state)
 }
 
 
+/*
+    Set each timeout arg to -1 to skip. Set to zero for no timeout. Otherwise set to number of seconds
+ */
 void httpSetTimeout(HttpConn *conn, int requestTimeout, int inactivityTimeout)
 {
     if (requestTimeout >= 0) {
-        conn->limits->requestTimeout = requestTimeout * MPR_TICKS_PER_SEC;
+        if (requestTimeout == 0) {
+            conn->limits->requestTimeout = INT_MAX;
+        } else {
+            conn->limits->requestTimeout = requestTimeout * MPR_TICKS_PER_SEC;
+        }
     }
     if (inactivityTimeout >= 0) {
-        conn->limits->inactivityTimeout = inactivityTimeout * MPR_TICKS_PER_SEC;
+        if (inactivityTimeout == 0) {
+            conn->limits->inactivityTimeout = INT_MAX;
+        } else {
+            conn->limits->inactivityTimeout = inactivityTimeout * MPR_TICKS_PER_SEC;
+        }
     }
 }
 
@@ -4662,8 +4671,8 @@ static void httpTimer(Http *http, MprEvent *event)
                 /*
                     Don't call APIs on the conn directly (thread-race). Schedule a timer on the connection's dispatcher
                  */
-                if (!conn->timeout) {
-                    conn->timeout = mprCreateEvent(conn->dispatcher, "connTimeout", 0, httpConnTimeout, conn, 0);
+                if (!conn->timeoutEvent) {
+                    conn->timeoutEvent = mprCreateEvent(conn->dispatcher, "connTimeout", 0, httpConnTimeout, conn, 0);
                 }
             } else {
                 mprLog(6, "Idle connection timed out");
@@ -6012,7 +6021,7 @@ static void netOutgoingService(HttpQueue *q)
          */
         mprAssert(q->ioIndex > 0);
         written = mprWriteSocketVector(conn->sock, q->iovec, q->ioIndex);
-        LOG(5, "Net connector written %d", written);
+        LOG(5, "Net connector wrote %d, written so far %d", written, tx->bytesWritten);
         if (written < 0) {
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
@@ -9934,7 +9943,7 @@ void httpSendOutgoingService(HttpQueue *q)
         count = q->ioIndex - q->ioFileEntry;
         mprAssert(count >= 0);
         written = mprSendFileToSocket(conn->sock, tx->file, (MprOffset) tx->pos, q->ioCount, q->iovec, count, NULL, 0);
-        mprLog(5, "Send connector written %d", written);
+        mprLog(5, "Send connector wrote %d, written so far %d", written, tx->bytesWritten);
         if (written < 0) {
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {

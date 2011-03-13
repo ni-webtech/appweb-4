@@ -174,7 +174,9 @@ static void initSettings()
     app->protocol = "HTTP/1.1";
     app->retries = HTTP_RETRIES;
     app->success = 1;
-    app->timeout = 60;
+
+    /* zero means no timeout */
+    app->timeout = 0;
     app->workers = 1;            
     app->headers = mprCreateList(0, 0);
     app->mutex = mprCreateLock();
@@ -921,7 +923,6 @@ static int writeBody(HttpConn *conn, MprList *files)
         }
         if (app->bodyData) {
             mprAddNullToBuf(app->bodyData);
-            len = strlen(app->bodyData->start);
             len = mprGetBufLength(app->bodyData);
             if (httpWriteBlock(conn->writeq, mprGetBufStart(app->bodyData), len) != len) {
                 return MPR_ERR_CANT_WRITE;

@@ -184,7 +184,7 @@ static char *absolutePath(char *path)
         return str;
     }
 #if _WIN32 || __CYGWIN__
-    if (strlen(path) > 3 && isalpha(path[0]) && path[1] == ':' && path[2] == '/') {
+    if (strlen(path) > 3 && isalpha((int) path[0]) && path[1] == ':' && path[2] == '/') {
         return str;
     }
 #endif

@@ -10424,15 +10424,9 @@ module ejs {
         native function quote(): String
 
         /**
-            Remove characters from a string. Remove the elements from @start to Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end inclusive. 
-            @param start Numeric index of the first element to remove. Negative indicies measure from the end of the string.
-            -1 is the last character element.
+            Remove characters from a string. Remove the elements from @start to @end inclusive. 
+            @param start Numeric index of the first element to remove. Negative indicies measure from the end of 
+            the string.  -1 is the last character element.
             @param end Numeric index of one past the last element to remove
             @return A new string with the characters removed
             @spec ejs
@@ -10448,8 +10442,8 @@ module ejs {
                 replacement string can contain special replacement patterns: "$$" inserts a "$", "$&" inserts the
                 matched substring, "$`" inserts the portion that preceeds the matched substring, "$'" inserts the
                 portion that follows the matched substring, and "$N" inserts the Nth parenthesized substring.
-                The replacement parameter can also be a function which will be invoked and the function return value will
-                be used as the resplacement text. The function will be invoked multiple times for each match to be 
+                The replacement parameter can also be a function which will be invoked and the function return value 
+                will be used as the resplacement text. The function will be invoked multiple times for each match to be 
                 replaced if the regular expression is global. The function will be invoked with the signature:
 
                 function (matched, submatch_1, submatch_2, ..., matched_offset, original_string)
@@ -10467,7 +10461,7 @@ module ejs {
 
         /**
             Search for a pattern.
-            @param pattern Regular expression pattern to search for in the string.
+            @param pattern Regular expression or string pattern to search for in the string.
             @return Return the starting index of the pattern in the string. Return -1 if not found.
          */
         native function search(pattern: Object): Number
@@ -10475,8 +10469,9 @@ module ejs {
         /**
             Extract a substring.
             @param start The position of the first character to slice.
-            @param end The position one after the last character. Negative indicies are measured from the end of the string.
-                The -1 index means the last character, so slice(0, -1) will return all characters except the last.
+            @param end The position one after the last character. Negative indicies are measured from the end of the 
+                string.  The -1 index means the last character, so slice(0, -1) will return all characters except the 
+                last.
             @param step Extract every "step" character.
          */ 
         native function slice(start: Number, end: Number = -1, step: Number = 1): String
@@ -12094,9 +12089,10 @@ module ejs {
          */
         var name: String
 
+//  MOB -- should the worker exit when the script completes. Same question for terminate
         /**
             Create a new Worker instance. This call returns an outside worker object for using in the calling interpreter.
-                Inside the worker interpreter, a corresponding "insdie" worker object is created that is paired to the
+                Inside the worker interpreter, a corresponding "inside" worker object is created that is paired to the
                 outside worker.
             @params script Optional path to a script or module to execute. If supplied, then a new Worker instance will
                 invoke load() to execute the script.
@@ -15921,7 +15917,8 @@ module ejs.unix {
      */
 
     /**
-        Copy a file. If the destination file already exists, the old copy will be overwritten as part of the copy operation.
+        Copy a file. If the destination file already exists, the old copy will be overwritten as part of the 
+        copy operation.
         @param fromPath Original file to copy.
         @param toPath New destination file path name.
         @throws IOError if the copy is not successful.
@@ -15978,6 +15975,24 @@ module ejs.unix {
      */
     function kill(pid: Number, signal: Number = 2): Void 
         Cmd.kill(pid, signal)
+
+    /** @hide */
+    function killall(name: Object, signal: Number = 2, ...except): Void {
+        let cmd = new Cmd
+        if (Config.OS == "WIN") {
+            cmd.start(["/bin/sh", "-c", "/bin/ps -W | awk '{print $4,$8}'"])
+        } else {
+            cmd.start(["/bin/sh", "-c", "/bin/ps -e | awk '{print $1,$4}'"])
+        }
+        for each (line in cmd.readLines()) {
+            let [pid,command] = line.split(" ")
+            if ((name is Regexp && name.test(command)) || command.search(name.toString())) {
+                if (except.length == 0 || !except.find(function(e, index, arrr) { return e == pid })) {
+                    Cmd.kill(pid, signal)
+                }
+            }
+        }
+    }
 
     //  TODO - good to add ability to do a regexp on the path or a filter function
     //  TODO - good to add ** to go recursively to any depth

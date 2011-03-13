@@ -24037,6 +24037,9 @@ static EjsObj *workerEval(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
  */
 static EjsObj *workerExit(Ejs *ejs, EjsWorker *unused, int argc, EjsObj **argv)
 {
+    /*
+        Setting exiting causes the VM to suspend processing this interpreter
+     */
     ejs->exiting = 1;
     ejsAttention(ejs);
     return 0;
@@ -24496,12 +24499,10 @@ static EjsObj *workerTerminate(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **a
      */
     mprAssert(worker->pair && worker->pair->ejs);
     ejs = (!worker->inside) ? worker->pair->ejs : ejs;
+    //  MOB - who else uses this?
     worker->terminated = 1;
     ejs->exiting = 1;
     mprSignalDispatcher(ejs->dispatcher);
-#if UNUSED
-    mprWakeWaitService();
-#endif
     return 0;
 }
 
@@ -35905,6 +35906,9 @@ static void manageEjsService(EjsService *sp, int flags)
 }
 
 
+static int ecount = 0;
+static int emax = 0;
+
 /*  
     Create a new interpreter
     @param searchPath Array of paths to search for modules. Must be persistent.
@@ -35957,6 +35961,11 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
 
     //  MOB Refactor
     lock(sp);
+if (++ecount > emax) {
+    emax = ecount;
+    mprLog(2, "\n@@@@@@@@@@@@@@@@@ EMAX %d\n", emax);
+    mprNop(0);
+}
     ejs->name = mprAsprintf("ejs-%d", seqno++);
     ejs->dispatcher = mprCreateDispatcher(mprAsprintf("ejsDispatcher-%d", seqno), 1);
     // printf("CREATE DISPATCHER %s\n", ejs->dispatcher->name);
@@ -36008,6 +36017,9 @@ void ejsDestroy(Ejs *ejs)
     ejs->destroying = 1;
     sp = ejs->service;
     if (sp) {
+lock(sp);
+ecount--;
+unlock(sp);
         ejsRemoveModules(ejs);
         ejsRemoveWorkers(ejs);
         state = ejs->state;
@@ -37140,7 +37152,7 @@ static EjsObj *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **argv)
         defaultTableName = 0;
         ncol = sqlite3_column_count(stmt);
         for (rowNum = 0; ; rowNum++) {
-            if ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
                 row = ejsCreateEmptyPot(ejs);
                 if (row == 0) {
                     sqlite3_finalize(stmt);
@@ -37197,7 +37209,6 @@ static EjsObj *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **argv)
             } else {
                 rc = sqlite3_finalize(stmt);
                 stmt = 0;
-
                 if (rc != SQLITE_SCHEMA) {
                     retries = 0;
                     for (cmd = tail; isspace((int) *cmd); cmd++) {
@@ -38096,7 +38107,7 @@ static void setHttpPipeline(Ejs *ejs, EjsHttpServer *sp)
             vs = ejsGetProperty(ejs, sp->outgoingStages, i);
             if (vs && ejsIsString(ejs, vs)) {
                 name = vs->value;
-                if ((stage = httpLookupStage(http, name)) == 0) {
+                if (httpLookupStage(http, name) == 0) {
                     ejsThrowArgError(ejs, "Can't find pipeline stage name %s", name);
                     return;
                 }
@@ -38110,7 +38121,7 @@ static void setHttpPipeline(Ejs *ejs, EjsHttpServer *sp)
             vs = ejsGetProperty(ejs, sp->incomingStages, i);
             if (vs && ejsIsString(ejs, vs)) {
                 name = vs->value;
-                if ((stage = httpLookupStage(http, name)) == 0) {
+                if (httpLookupStage(http, name) == 0) {
                     ejsThrowArgError(ejs, "Can't find pipeline stage name %s", name);
                     return;
                 }
@@ -38200,11 +38211,9 @@ static void closeEjs(HttpQueue *q)
 static void incomingEjsData(HttpQueue *q, HttpPacket *packet)
 {
     HttpConn        *conn;
-    HttpTx          *trans;
     HttpRx          *rx;
 
     conn = q->conn;
-    trans = conn->tx;
     rx = conn->rx;
 
     if (httpGetPacketLength(packet) == 0) {
@@ -38922,7 +38931,10 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
                 scheme = conn->secure ? "https" : "http";
                 ip = conn->sock ? conn->sock->acceptIp : req->server->ip;
                 port = conn->sock ? conn->sock->acceptPort : req->server->port;
+#if UNUSED
                 uri = mprAsprintf("%s://%s:%d%s/", scheme, conn->sock->ip, req->server->port, conn->rx->scriptName);
+#endif
+                uri = mprAsprintf("%s://%s:%d%s/", scheme, ip, port, conn->rx->scriptName);
                 req->absHome = (EjsObj*) ejsCreateUriFromMulti(ejs, uri);
             } else {
                 req->absHome = ejs->nullValue;
