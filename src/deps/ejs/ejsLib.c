@@ -62263,13 +62263,13 @@ void ecResetInput(EcCompiler *cp)
 {
     EcToken     *tp;
 
-    while ((tp = cp->putback) != 0 && (tp->tokenId == T_EOF || tp->tokenId == T_NOP)) {
-        ecGetToken(cp);
-    }
     cp->stream->flags &= ~EC_STREAM_EOL;
     cp->error = 0;
     cp->ejs->exception = 0;
     cp->ejs->result = cp->ejs->undefinedValue;
+    while ((tp = cp->putback) != 0 && (tp->tokenId == T_EOF || tp->tokenId == T_NOP)) {
+        ecGetToken(cp);
+    }
 }
 
 

@@ -393,7 +393,7 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
         mprError("Can't open input");
         return EJS_ERR;
     }
-    ecResetInput(cp);
+    // MOB ecResetInput(cp);
     tmpArgv[0] = EC_INPUT_STREAM;
 
     while (!cp->stream->eof && !mprIsStopping()) {
