@@ -21759,14 +21759,14 @@ static int changeState(MprWorker *worker, int state)
     outside the range of 32 bits are unreliable. This means there is a minimum and maximum year that 
     can be analysed using the O/S localtime routines. However, we really want to use the O/S 
     calculations for daylight savings time, so when a date is outside a 32 bit time_t range, we use
-    some trickery to remap the year to a valid year when using localtime.
+    some trickery to remap the year to a temporary (current) year so localtime can be used.
     FYI: 32 bit time_t expires at: 03:14:07 UTC on Tuesday, 19 January 2038
  */
-#define MAX_TIME    (((time_t) -1) & ~(((time_t) 1) << 31))
-#define MIN_TIME    (((time_t) 1) << 31)
-
 #define MIN_YEAR    1901
 #define MAX_YEAR    2037
+
+#define MAX_TIME    0x7FFFFFFF
+#define MIN_TIME    -(MAX_TIME)
 
 /*
     Token types or'd into the TimeToken value
@@ -22270,7 +22270,7 @@ MprTime floorDiv(MprTime x, MprTime divisor)
  */
 static void decodeTime(struct tm *tp, MprTime when, bool local)
 {
-    MprTime     timeForZoneCalc;
+    MprTime     timeForZoneCalc, secs;
     struct tm   t;
     char        *zoneName;
     int         year, offset, dst;
@@ -22281,12 +22281,14 @@ static void decodeTime(struct tm *tp, MprTime when, bool local)
     if (local) {
         //  MOB -- cache the results somehow
         timeForZoneCalc = when;
-        if (when < MIN_TIME || when > MAX_TIME) {
+        secs = when / MS_PER_SEC;
+        if (secs < MIN_TIME || secs > MAX_TIME) {
             /*
+                On some systems, localTime won't work for very small (negative) or very large times. 
                 Can't be certain localTime will work for all O/Ss with this year.  Map to an a date with a valid year.
              */
             decodeTime(&t, when, 0);
-            t.tm_year = 110;
+            t.tm_year = 111;
             timeForZoneCalc = makeTime(&t);
         }
         t.tm_isdst = -1;

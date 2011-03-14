@@ -24263,7 +24263,7 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
     }
     if (callback == 0 || callback == ejs->nullValue) {
         if (msg->callbackSlot == ES_Worker_onmessage) {
-            mprLog(1, "Discard message as no onmessage handler defined for worker");
+            mprLog(6, "Discard message as no onmessage handler defined for worker");
             
         } else if (msg->callbackSlot == ES_Worker_onerror) {
             if (msg->message && ejsIsString(ejs, msg->message)) {
@@ -24284,9 +24284,6 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
     }
     if (msg->callbackSlot == ES_Worker_onclose) {
         mprAssert(!worker->inside);
-#if UNUSED
-        worker->ejs->finished = 1;
-#endif
         worker->state = EJS_WORKER_COMPLETE;
         LOG(5, "Worker.doMessage: complete");
         /* Worker and insider interpreter are now eligible for garbage collection */
@@ -24493,14 +24490,11 @@ static EjsObj *workerTerminate(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **a
     if (worker->state >= EJS_WORKER_COMPLETE) {
         return 0;
     }
-  
     /*
         Switch to the inside worker if called from outside
      */
     mprAssert(worker->pair && worker->pair->ejs);
     ejs = (!worker->inside) ? worker->pair->ejs : ejs;
-    //  MOB - who else uses this?
-    worker->terminated = 1;
     ejs->exiting = 1;
     mprSignalDispatcher(ejs->dispatcher);
     return 0;
@@ -24600,13 +24594,13 @@ EjsWorker *ejsCreateWorker(Ejs *ejs)
 static void manageWorker(EjsWorker *worker, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(worker->ejs);
         ejsManagePot(worker, flags);
         mprMark(worker->event);
         mprMark(worker->name);
         mprMark(worker->scriptFile);
         mprMark(worker->scriptLiteral);
         mprMark(worker->pair);
-        mprMark(worker->ejs);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (!worker->inside) {
@@ -35906,9 +35900,6 @@ static void manageEjsService(EjsService *sp, int flags)
 }
 
 
-static int ecount = 0;
-static int emax = 0;
-
 /*  
     Create a new interpreter
     @param searchPath Array of paths to search for modules. Must be persistent.
@@ -35961,14 +35952,8 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
 
     //  MOB Refactor
     lock(sp);
-if (++ecount > emax) {
-    emax = ecount;
-    mprLog(2, "\n@@@@@@@@@@@@@@@@@ EMAX %d\n", emax);
-    mprNop(0);
-}
     ejs->name = mprAsprintf("ejs-%d", seqno++);
     ejs->dispatcher = mprCreateDispatcher(mprAsprintf("ejsDispatcher-%d", seqno), 1);
-    // printf("CREATE DISPATCHER %s\n", ejs->dispatcher->name);
     unlock(sp);
         
     if ((ejs->bootSearch = searchPath) == 0) {
@@ -35998,7 +35983,7 @@ if (++ecount > emax) {
     mprRemoveRoot(ejs);
     ejs->state->frozen = 0;
 #if DEBUG_IDE
-    mprLog(2, "CREATE %s, length %d", ejs->name, sp->vmlist->length);
+    mprLog(5, "CREATE %s, length %d", ejs->name, sp->vmlist->length);
 #endif
     return ejs;
 }
@@ -36011,15 +35996,12 @@ void ejsDestroy(Ejs *ejs)
 
 #if DEBUG_IDE
     if (ejs->service) {
-        mprLog(2, "DESTROY %s, length %d", ejs->name, ejs->service->vmlist->length);
+        mprLog(5, "DESTROY %s, length %d", ejs->name, ejs->service->vmlist->length);
     }
 #endif
     ejs->destroying = 1;
     sp = ejs->service;
     if (sp) {
-lock(sp);
-ecount--;
-unlock(sp);
         ejsRemoveModules(ejs);
         ejsRemoveWorkers(ejs);
         state = ejs->state;

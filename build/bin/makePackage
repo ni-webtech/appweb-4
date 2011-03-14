@@ -300,8 +300,8 @@ cleanup() {
     if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 ] ; then
         echo -e "\nWARNING: Non-root package. Installed files will be owned by `id -nu`\n"
     fi
-    # ${RM} -rf ${ROOT_DIR}
-    # rm -f install.log
+    ${RM} -rf ${ROOT_DIR}
+    rm -f install.log
 }
 
 createPlatformPackages() {

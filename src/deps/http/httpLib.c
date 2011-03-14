@@ -3734,7 +3734,7 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
     host->traceLevel = 3;
     host->traceMaxLength = INT_MAX;
 
-    host->loc = (loc) ? loc : httpCreateLocation(http);
+    host->loc = (loc) ? loc : httpCreateLocation();
     httpAddLocation(host, host->loc);
     host->loc->auth = httpCreateAuth(host->loc->auth);
     httpAddHost(http, host);
@@ -4517,7 +4517,7 @@ HttpLoc *httpInitLocation(Http *http, int serverSide)
     /*
         Create default incoming and outgoing pipelines. Order matters.
      */
-    loc = httpCreateLocation(http);
+    loc = httpCreateLocation();
     httpAddFilter(loc, http->authFilter->name, NULL, HTTP_STAGE_OUTGOING);
     httpAddFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_OUTGOING);
     httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_OUTGOING);

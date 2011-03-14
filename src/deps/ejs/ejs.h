@@ -3260,7 +3260,6 @@ typedef struct EjsWorker {
     int             inside;             /**< Running inside the worker */
     int             complete;           /**< Worker has completed its work */
     int             gotMessage;         /**< Worker has received a message */
-    int             terminated;         /**< Worker has had terminate() called */
 } EjsWorker;
 
 extern EjsWorker *ejsCreateWorker(Ejs *ejs);
