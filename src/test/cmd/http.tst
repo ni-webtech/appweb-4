@@ -12,7 +12,7 @@ if (test.depth > 1) {
     }
 
     function run(args): String {
-        test.log(2, "[TestRun]", command + args)
+        App.log.debug(2, "[TestRun]", command + args)
         try {
             // print(command + args)
             result = System.run(command + args)

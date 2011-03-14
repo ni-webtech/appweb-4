@@ -18,10 +18,12 @@ enumerable public class Test {
     public var hostOs: Path
     public var verbosity: Number = false
 
-    var out = App.outputStream
+    var log = App.log
 
+/*MOB
     public function log(level: Number, name: String, ...items) {
         if (verbosity >= level) {
+            App.log.activity(name, ...items)
             out.write("%12s " % [name])
             out.write(items)
             if (verbosity > 1) {
@@ -31,6 +33,7 @@ enumerable public class Test {
             }
         }
     }
+*/
 
     public function mapVerbosity(adj: Number): String {
         str = ""
@@ -54,6 +57,7 @@ enumerable public class Test {
         return null
     }
 
+/*MOB
     public function setLogPath(path: Path): Void {
         if (path) {
             out = File(path).open("aw")
@@ -61,6 +65,7 @@ enumerable public class Test {
             out = App.outputStream
         }
     }
+*/
 
     public function skip(message: String): Void
         postMessage({ skip: message })
@@ -94,7 +99,7 @@ public function cleanDir(path) {
     Used to start support programs. This does capture output.
  */
 public function sh(args): String {
-    test.log(2, "[Run]", "Run: " + args)
+    App.log.activity("Run", "Run: " + args)
     // return Cmd.sh(args)
     return System.run(("/bin/sh -c \"" + args.replace(/\\/g, "\\\\") + "\"").trim('\n'))
 }
@@ -105,7 +110,7 @@ public function sh(args): String {
     MOB - what does this function really do?
  */
 public function testCmdNoCapture(args): Boolean {
-    test.log(2, "[Test]", "Run test: " + args)
+    App.log.activity("Test", "Run test: " + args)
     try {
         args = args.toString().toJSON().trim('"')
         System.runx(("/bin/sh -c \"" + args + "\"").trim('\n'))
@@ -122,7 +127,7 @@ public function testCmdNoCapture(args): Boolean {
 // MOB - what does this function really do? - why not just use sh?
 
 public function testCmd(args): Boolean {
-    test.log(2, "[Test]", "Run test: " + args)
+    App.log.activity("Test", "Run test: " + args)
     try {
         args = args.toString().toJSON().trim('"')
         System.run(("/bin/sh -c \"" + args + "\"").trim('\n'))

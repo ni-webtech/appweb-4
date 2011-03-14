@@ -7566,6 +7566,11 @@ typedef struct MprTestFailure {
 
     @end
  */
+
+#if MOB
+extern int closex(int fd);
+#define close(fd) closex(fd)
+#endif
 /************************************************************************/
 /*
  *  End of file "../src/include/mpr.h"
