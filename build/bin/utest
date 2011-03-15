@@ -407,7 +407,10 @@ enumerable class Test {
     function runPrePost(path: Path, suffix: String = "pre"): Boolean {
         let file = path.join(path.absolute.basename.toString()).joinExt(suffix)
         if (file.exists) {
-            for each (pat in filters) {
+            if (filters.length == 0) {
+                runTest(file)
+                return !skipTest 
+            } else for each (pat in filters) {
                 if (file.toString().match(pat)) {
                     runTest(file)
                     return !skipTest 
@@ -424,7 +427,10 @@ enumerable class Test {
     function runSetup(path: Path, phase: String): Boolean {
         let file = path.join("test.setup")
         if (file.exists) {
-            for each (pat in filters) {
+            if (filters.length == 0) {
+                runTest(file, phase)
+                return !skipTest 
+            } else for each (pat in filters) {
                 if (file.toString().match(pat)) {
                     runTest(file, phase)
                     return !skipTest 

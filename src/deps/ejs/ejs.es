@@ -2244,7 +2244,6 @@ module ejs {
             options ||= {}
             blend(options, {detach: true})
             cmd.start(cmdline, options)
-            cmd.start()
             cmd.finalize()
             return cmd.pid
         }
@@ -2259,11 +2258,74 @@ module ejs {
         native static function exec(cmdline: String = null, options: Object = {}): Void
 
         /**
+            Kill the specified process.
             @param signal If pid is greater than zero, the signal is sent to the process whoes ID is pid. If pid is
-                zero, the signal is sent to all processes in the process group.
+                zero, the process is tested but no signal is sent. 
             @return True if successful
+            @throws IOError if the pid is invalid or if the requesting process does not have sufficient privilege to
+                send the signal.
          */
         native static function kill(pid: Number, signal: Number = 2): Boolean
+
+        /** 
+            Kill all matching processes. This call enables selection of the processes to kill a pattern match over
+            the processes command line.
+            @param pattern of processes to kill. This can be a string name or a regular expression to match with.
+            @param signal Signal number to send to the processes to kill. If the signal is null, then the system default
+                signal is sent (SIGTERM).
+            @param preserve Optional set of process IDs to preserve
+            @hide 
+         */
+        static function killall(pattern: Object, signal: Number, ...preserve): Void {
+            if (!(signal is Number)) {
+                signal = 15
+            }
+            let cmd = new Cmd
+            if (Config.OS == "WIN") {
+                // cmd.start(["cmd", "/c", "WMIC PROCESS get Processid,Commandline | type"])
+                cmd.start(["/bin/sh", "-c", "/bin/ps -W | awk '{print $4,$8}'"])
+            } else {
+                cmd.start(["/bin/sh", "-c", "/bin/ps -e | awk '{print $1,$4}'"])
+            }
+            for each (line in cmd.readLines()) {
+                let [pid,command] = line.split(" ")
+                if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
+                    if (preserve.length == 0 || !preserve.find(function(e, index, arrr) { return e == pid })) {
+                        // print("KILL " + pid + " pattern " + pattern + " signal " + signal)
+                        Cmd.kill(pid, signal)
+                    }
+                }
+            }
+            cmd.close()
+        }
+
+        /** 
+            Return a list of processes running on the system. This enables selection of processes by string pattern or by
+            a regular expression against the entire process command line.
+            @param pattern Pattern to use when selecting matching processes. This can be a string name or a regular 
+            expression to match with. A string name will match if the processes's command line contains the pattern as
+            a sub-string.
+            @return An array of matching processes. Each array entry is an object with properties "pid" and "command".
+            @hide 
+         */
+        static function ps(pattern: Object): Array {
+            let result = []
+            let cmd = new Cmd
+            if (Config.OS == "WIN") {
+                // cmd.start(["cmd", "/c", "WMIC PROCESS get Processid,Commandline | type"])
+                cmd.start(["/bin/sh", "-c", "/bin/ps -W | awk '{print $4,$8}'"])
+            } else {
+                cmd.start(["/bin/sh", "-c", "/bin/ps -e | awk '{print $1,$4}'"])
+            }
+            for each (line in cmd.readLines()) {
+                let [pid,command] = line.split(" ")
+                if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
+                    result.append({pid: pid, command: command})
+                }
+            }
+            cmd.close()
+            return result
+        }
 
         //  MOB - should this take options as an arg?
         /**
@@ -15979,24 +16041,6 @@ module ejs.unix {
      */
     function kill(pid: Number, signal: Number = 2): Void 
         Cmd.kill(pid, signal)
-
-    /** @hide */
-    function killall(name: Object, signal: Number = 2, ...except): Void {
-        let cmd = new Cmd
-        if (Config.OS == "WIN") {
-            cmd.start(["/bin/sh", "-c", "/bin/ps -W | awk '{print $4,$8}'"])
-        } else {
-            cmd.start(["/bin/sh", "-c", "/bin/ps -e | awk '{print $1,$4}'"])
-        }
-        for each (line in cmd.readLines()) {
-            let [pid,command] = line.split(" ")
-            if ((name is Regexp && name.test(command)) || command.search(name.toString())) {
-                if (except.length == 0 || !except.find(function(e, index, arrr) { return e == pid })) {
-                    Cmd.kill(pid, signal)
-                }
-            }
-        }
-    }
 
     //  TODO - good to add ability to do a regexp on the path or a filter function
     //  TODO - good to add ** to go recursively to any depth
