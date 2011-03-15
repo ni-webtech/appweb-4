@@ -1364,8 +1364,9 @@ createBuildConfig() {
     if [ "$BLD_HOST_OS" = WIN ] ; then
         cp $CONFIG_SRC /tmp/config$$.tmp
         cat /tmp/config$$.tmp | grep -v 'BLD_ABS_' >$CONFIG_SRC
-        rm -f /tmp/config$$.tmp 
     fi
+    rm -f /tmp/config$$.tmp 
+
     cat $CONFIG_SRC >>$CONFIG_H
     chmod 444 $CONFIG_H
     rm -f "${BLD_OUT_DIR}/include/${CONFIG_CACHE}"

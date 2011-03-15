@@ -160,7 +160,7 @@ createArchives() {
 
         case $suffix in
         bin)
-            listLoc="${BLD_PRD_PREFIX}"
+            listLoc="${BLD_VER_PREFIX}"
             ;;
         dev)
             listLoc="${BLD_INC_PREFIX}"
@@ -300,7 +300,7 @@ cleanup() {
     if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 ] ; then
         echo -e "\nWARNING: Non-root package. Installed files will be owned by `id -nu`\n"
     fi
-    ${RM} -rf ${ROOT_DIR}
+    [ "$KEEP" != "1" ] && ${RM} -rf ${ROOT_DIR}
     rm -f install.log
 }
 

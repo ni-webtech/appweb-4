@@ -349,7 +349,7 @@ cleanDir() {
 	fi
 	find . -type d -print | sort -r | grep -v '^\.$' | while read d
 	do
-		count=`ls "$d" | wc -l | sed -e 's/ *//'`
+		count=`ls "$d" 2>/dev/null | wc -l | sed -e 's/ *//'`
 		[ "$count" = "0" ] && rmdir "$d"
 		if [ "$count" != "0" ] ; then
 			f=`echo "$d" | sed -e 's/\.\///'`
@@ -359,7 +359,7 @@ cleanDir() {
 
     if [ -d $cdir ] ; then
         cd $cdir
-        count=`ls "$dir" | wc -l | sed -e 's/ *//'`
+        count=`ls "$dir" 2>/dev/null | wc -l | sed -e 's/ *//'`
         [ "$count" = "0" ] && rmdir "$dir"
         if [ "$count" != "0" ] ; then
             echo "Directory ${dir}, still has user data"

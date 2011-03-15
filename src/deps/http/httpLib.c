@@ -12986,6 +12986,7 @@ HttpUri *httpJoinUriPath(HttpUri *result, HttpUri *base, HttpUri *other)
 {
     char    *sep;
 
+    //  MOB -- should allow result to be null
     if (other->path[0] == '/') {
         result->path = sclone(other->path);
     } else {

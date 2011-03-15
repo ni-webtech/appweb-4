@@ -20,7 +20,7 @@ fi
 
 prefix="${ROOT_DIR}/usr/lib/${PRODUCT}"
 version=
-for v in `ls $prefix | egrep -v '[a-zA-Z@!_\-]' | sort -n -r`
+for v in `ls $prefix 2>/dev/null | egrep -v '[a-zA-Z@!_\-]' | sort -n -r`
 do
     if [ -x "$prefix/$v/bin/ejs" ] ; then
         version=$v
