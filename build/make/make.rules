@@ -156,6 +156,7 @@ compileExtra:
 
 compileTargets: 
 
+# MOB - should be compileLast
 compileFinal:
 
 compileDirs:

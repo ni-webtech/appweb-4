@@ -8684,7 +8684,7 @@ module ejs {
         native function get isAbsolute(): Boolean
 
         /**
-            Is the path a directory
+            Is the path a directory. If the path is a symbolic link, the target of the link is tested.
             @return true if the file is a directory
          */
         native function get isDir(): Boolean
@@ -8696,7 +8696,7 @@ module ejs {
         native function get isLink(): Boolean
 
         /**
-            Is the path a regular file
+            Is the path a regular file. If the path is a symbolic link, the target of the link is tested.
             @return true if the file is a regular file and not a directory
          */
         native function get isRegular(): Boolean

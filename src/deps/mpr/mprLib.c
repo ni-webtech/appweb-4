@@ -2983,19 +2983,6 @@ void mprSetDebugMode(bool on)
 }
 
 
-void mprSetLogHandler(MprLogHandler handler, void *handlerData)
-{
-    MPR->logHandler = handler;
-    MPR->logData = handlerData;
-}
-
-
-MprLogHandler mprGetLogHandler()
-{
-    return MPR->logHandler;
-}
-
-
 MprDispatcher *mprGetDispatcher()
 {
     return MPR->dispatcher;
@@ -11796,6 +11783,19 @@ int mprGetLogLevel()
 }
 
 
+MprLogHandler mprGetLogHandler()
+{
+    return MPR->logHandler;
+}
+
+
+void mprSetLogHandler(MprLogHandler handler, void *handlerData)
+{
+    MPR->logHandler = handler;
+    MPR->logData = handlerData;
+}
+
+
 void mprSetLogLevel(int level)
 {
     MPR->logLevel = level;
@@ -16144,8 +16144,7 @@ static MprFile *openFile(MprFileSystem *fileSystem, cchar *path, int flags, int 
     file->fileSystem = fileSystem;
     file->mode = omode;
     file->fd = -1;
-    file->path = sclone(file, path);
-
+    file->path = sclone(path);
     if ((file->inode = lookup(rfs, path)) == 0) {
         return 0;
     }
@@ -16161,6 +16160,12 @@ static void manageRomFile(MprFile *file, int flags)
         mprMark(file->buf);
         mprMark(file->inode);
     }
+}
+
+
+static int closeFile(MprFile *file)
+{
+    return 0;
 }
 
 
@@ -16279,7 +16284,7 @@ static int getPathInfo(MprRomFileSystem *rfs, cchar *path, MprPath *info)
 static int getPathLink(MprRomFileSystem *rfs, cchar *path)
 {
     /* Links not supported on ROMfs */
-    return NULL;
+    return -1;
 }
 
 
@@ -16314,12 +16319,12 @@ static MprRomInode *lookup(MprRomFileSystem *rfs, cchar *path)
 
 int mprSetRomFileSystem(MprRomInode *inodeList)
 {
-    MprRomFileSystem    rfs;
+    MprRomFileSystem    *rfs;
     MprRomInode         *ri;
 
     rfs = (MprRomFileSystem*) MPR->fileSystem;
     rfs->romInodes = inodeList;
-    rfs->fileIndex = mprCreateHash(rfs, MPR_FILES_HASH_SIZE, MPR_HASH_PERM_KEYS | MPR_HASH_STATIC_VALUES);
+    rfs->fileIndex = mprCreateHash(MPR_FILES_HASH_SIZE, MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES);
 
     for (ri = inodeList; ri->path; ri++) {
         if (mprAddKey(rfs->fileIndex, ri->path, ri) < 0) {
@@ -16334,23 +16339,20 @@ int mprSetRomFileSystem(MprRomInode *inodeList)
 void manageRomFileSystem(MprRomFileSystem *rfs, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-{
 #if !WINCE
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(rfs->stdError);
-        mprMark(rfs->stdInput);
-        mprMark(rfs->stdOutput);
-        mprMark(rfs->separators);
-        mprMark(rfs->newline);
-        mprMark(rfs->root);
+        MprFileSystem *fs = (MprFileSystem*) rfs;
+        mprMark(fs->stdError);
+        mprMark(fs->stdInput);
+        mprMark(fs->stdOutput);
+        mprMark(fs->separators);
+        mprMark(fs->newline);
+        mprMark(fs->root);
 #if BLD_WIN_LIKE
-        mprMark(rfs->cygdrive);
+        mprMark(fs->cygdrive);
 #endif
         mprMark(rfs->fileIndex);
         mprMark(rfs->romInodes);
-    }
 #endif
-}
     }
 }
 
@@ -16360,7 +16362,7 @@ MprRomFileSystem *mprCreateRomFileSystem(cchar *path)
     MprFileSystem      *fs;
     MprRomFileSystem   *rfs;
 
-    if ((rfs = mprAllocObj(sizeof(MprRomFileSystem, manageRomFileSystem))) == 0) {
+    if ((rfs = mprAllocObj(MprRomFileSystem, manageRomFileSystem)) == 0) {
         return rfs;
     }
     fs = &rfs->fileSystem;
@@ -16371,10 +16373,10 @@ MprRomFileSystem *mprCreateRomFileSystem(cchar *path)
     fs->makeDir = (MprMakeDirProc) makeDir;
     fs->makeLink = (MprMakeLinkProc) makeLink;
     fs->openFile = (MprOpenFileProc) openFile;
-    fs->closeFile = closeFile;
-    fs->readFile = readFile;
-    fs->seekFile = seekFile;
-    fs->writeFile = writeFile;
+    fs->closeFile = (MprCloseFileProc) closeFile;
+    fs->readFile = (MprReadFileProc) readFile;
+    fs->seekFile = (MprSeekFileProc) seekFile;
+    fs->writeFile = (MprWriteFileProc) writeFile;
 
 #if !WINCE
     fs->stdError = mprAllocZeroed(sizeof(MprFile));

@@ -80,10 +80,10 @@ else
 endif
 
 
-ifeq ($(BUILDING_CROSS),1)
-    _DFLAGS		+= -DBUILDING_CROSS=$(BUILDING_CROSS)
-endif
 _DLFAGS     	+= -D_REENTRANT
+ifeq ($(BUILDING_NATIVE),1)
+    _DFLAGS  	+= -DBUILDING_NATIVE=1
+endif
 ifneq ($(BLD_OS),VXWORKS)
 	_LIBS   	+= -lpthread
 endif

@@ -109,7 +109,7 @@ MAIN(ejscMain, int argc, char **argv)
             if (nextArg >= argc) {
                 err++;
             } else {
-                ejsStartMprLogging(argv[++nextArg]);
+                ejsRedirectLogging(argv[++nextArg]);
             }
 
         } else if (strcmp(argp, "--merge") == 0) {

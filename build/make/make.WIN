@@ -30,12 +30,7 @@ _DFLAGS  			+= -DBUILDING_NATIVE=1
 endif
 _IFLAGS			    += -I$(BLD_INC_DIR) -I$(BLD_TOP)/src/include
 
-# TODO - missing BUILDING_CROSS
-#
-# TODO - DONT rely on linker getting CLFAGS. Must put into LDFLAGS
-
 _CFLAGS             += -nologo -GR-
-
 ifeq ($(BLD_TYPE),DEBUG)
     _CFLAGS	        += -W3 -Zi -Od
     _CFLAGS 	    += -MDd

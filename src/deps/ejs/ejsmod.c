@@ -4131,11 +4131,9 @@ DocFile docFiles[] = {
 
 
 static void getDepends(Ejs *ejs, MprList *list, EjsModule *mp);
-static void logger(int flags, int level, const char *msg);
 static void manageMod(EjsMod *mp, int flags);
 static int  process(EjsMod *mp, cchar *output, int argc, char **argv);
 static void require(MprList *list, cchar *name);
-static int  setLogging(Mpr *mpr, char *logSpec);
 
 
 MAIN(ejsmodMain, int argc, char **argv)
@@ -4209,7 +4207,7 @@ MAIN(ejsmodMain, int argc, char **argv)
             if (nextArg >= argc) {
                 err++;
             } else {
-                setLogging(mpr, argv[++nextArg]);
+                ejsRedirectLogging(argv[++nextArg]);
             }
 
         } else if (strcmp(argp, "--out") == 0) {
@@ -4421,6 +4419,7 @@ static void getDepends(Ejs *ejs, MprList *list, EjsModule *mp)
 }
 
 
+#if UNUSED
 static int setLogging(Mpr *mpr, char *logSpec)
 {
     MprFile     *file;
@@ -4433,7 +4432,6 @@ static int setLogging(Mpr *mpr, char *logSpec)
         *levelSpec++ = '\0';
         level = atoi(levelSpec);
     }
-
     if (strcmp(logSpec, "stdout") == 0) {
         file = mpr->fileSystem->stdOutput;
     } else {
@@ -4442,10 +4440,8 @@ static int setLogging(Mpr *mpr, char *logSpec)
             return EJS_ERR;
         }
     }
-
     mprSetLogLevel(level);
     mprSetLogHandler(logger, (void*) file);
-
     return 0;
 }
 
@@ -4464,7 +4460,6 @@ static void logger(int flags, int level, const char *msg)
         mprFprintf(file, "\n");
         msg++;
     }
-
     if (flags & MPR_LOG_SRC) {
         mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
     } else if (flags & MPR_ERROR_SRC) {
@@ -4478,6 +4473,7 @@ static void logger(int flags, int level, const char *msg)
         mprBreakpoint();
     }
 }
+#endif
 
 
 /*

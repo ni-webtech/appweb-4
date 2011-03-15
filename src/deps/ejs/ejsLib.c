@@ -6309,9 +6309,6 @@ void ejsConfigureDateType(Ejs *ejs)
  */
 static EjsObj *debug_breakpoint(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    write(2, "MOB\n", 5);    
-    
-
 #if BLD_DEBUG && DEBUG_IDE
     #if BLD_WIN_LIKE && !MPR_64_BIT
         __asm { int 3 };
@@ -35898,7 +35895,9 @@ static EjsService *createService()
     }
     MPR->ejsService = sp;
     mprSetMemNotifier((MprMemNotifier) allocNotifier);
-
+    if (mprGetLogHandler() != logHandler) {
+        ejsRedirectLogging("stdout:1");
+    }
     sp->nativeModules = mprCreateHash(-1, MPR_HASH_STATIC_KEYS);
     sp->mutex = mprCreateLock();
     sp->vmlist = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
@@ -35951,7 +35950,6 @@ Ejs *ejsCreate(cchar *searchPath, MprList *require, int argc, cchar **argv, int 
     if ((ejs->state = mprAllocZeroed(sizeof(EjsState))) == 0) {
         return 0;
     }
-
 #if FUTURE
     ejs->intern = &sp->intern;
 #else
@@ -36646,56 +36644,17 @@ static int searchForMethod(Ejs *ejs, cchar *methodName, EjsType **typeReturn)
 }
 
 
-#if UNUSED && KEEP
-typedef struct EjsLogData {
-    Ejs         *ejs;
-    EjsObj      *log;
-    EjsFunction *loggerWrite;
-    int         writeSlot;
-} EjsLogData;
-
-
-/*
-    Set Mpr log data to go via ejs
- */
-static int startLogging(Ejs *ejs)
-{
-    EjsLogData  *ld;
-    EjsObj      *app;
-
-    if ((ld = mprAllocObj(ejs, EjsLogData, NULL))  == 0) {
-        return MPR_ERR_MEMORY;
-    }
-    ld->ejs = ejs;
-
-    if ((app = ejsGetPropertyByName(ejs, ejs->global, N(EJS_EJS_NAMESPACE, "App"))) == 0) {
-        return MPR_ERR_CANT_READ;
-    }
-    if ((ld->log = ejsGetPropertyByName(ejs, app, N(EJS_PUBLIC_NAMESPACE, "log"))) == 0) {
-        return MPR_ERR_CANT_READ;
-    }
-    if ((ld->loggerWrite = ejsGetPropertyByName(ejs, TYPE(ld->log)->prototype, N(EJS_PUBLIC_NAMESPACE, "write"))) < 0) {
-        return MPR_ERR_CANT_READ;
-    }
-    mprSetAltLogData(ejs, ld);
-    return 0;
-}
-#endif
-
-
 static void logHandler(int flags, int level, cchar *msg)
 {
-    Mpr         *mpr;
     MprFile     *file;
-    static int  solo = 0;
     char        *prefix, *tag, *amsg, lbuf[16], buf[MPR_MAX_STRING];
+    static int  solo = 0;
 
     if (solo > 0) {
         return;
     }
-    solo++;
-    mpr = mprGetMpr();
-    prefix = mpr->name;
+    solo = 1;
+    prefix = MPR->name;
     amsg = NULL;
 
     if (flags & MPR_ERROR_SRC) {
@@ -36716,44 +36675,24 @@ static void logHandler(int flags, int level, cchar *msg)
             msg = amsg = mprAsprintf("%s: %s: %s\n", prefix, tag, msg);
         }
     }
-#if UNUSED && KEEP
-    /*
-        Direct Mpr log data via App.log
-     */
-    EjsLogData  *ld;
-    EjsObj      *str, *saveException;
-    ld = (EjsLogData*) mpr->altLogData;
-    if (ld && ld->loggerWrite) {
-        Ejs  *ejs;
-        ejs = ld->ejs;
-        str = (EjsObj*) ejsCreateStringFromAsc(ejs, msg);
-        saveException = ejs->exception;
-        ejsClearException(ejs);
-        ejsRunFunction(ejs, ld->loggerWrite, ld->log, 1, &str);
-        ejs->exception = saveException;
-
-    } else 
-#endif
-    if (mpr->logData) {
-        file = (MprFile*) mpr->logData;
+    if (MPR->logData) {
+        file = (MprFile*) MPR->logData;
         mprFprintf(file, "%s", msg);
     } else {
-        file = (MprFile*) mpr->logData;
+        file = (MprFile*) MPR->logData;
         mprPrintfError("%s", msg);
     }
-    solo--;
+    solo = 0;
 }
 
 
-int ejsStartMprLogging(char *logSpec)
+int ejsRedirectLogging(char *logSpec)
 {
-    Mpr         *mpr;
     MprFile     *file;
     char        *levelSpec;
     int         level;
 
     level = 0;
-    mpr = mprGetMpr();
     logSpec = sclone(logSpec);
 
     if ((levelSpec = strchr(logSpec, ':')) != 0) {
@@ -36761,10 +36700,10 @@ int ejsStartMprLogging(char *logSpec)
         level = atoi(levelSpec);
     }
     if (strcmp(logSpec, "stdout") == 0) {
-        file = mpr->fileSystem->stdOutput;
+        file = MPR->fileSystem->stdOutput;
 
     } else if (strcmp(logSpec, "stderr") == 0) {
-        file = mpr->fileSystem->stdError;
+        file = MPR->fileSystem->stdError;
 
     } else {
         if ((file = mprOpenFile(logSpec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
@@ -36772,9 +36711,8 @@ int ejsStartMprLogging(char *logSpec)
             return EJS_ERR;
         }
     }
-    mprSetLogFd(mprGetFileFd(file));
     mprSetLogLevel(level);
-    mprSetLogHandler(logHandler, (void*) file);
+    mprSetLogHandler(logHandler, file);
     return 0;
 }
 

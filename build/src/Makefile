@@ -16,7 +16,9 @@ TARGETS		= 	\
 compileFirst: tools 
 	
 tools:
-	$(call log) [Notice] "Building required tools"
+ifeq ($(BLD_CROSS),1)
+	$(call log) [Notice] "Building Required Toolchain for ($(BLD_BUILD_SYSTEM))"
+endif
 	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) -C . targets
 
 targets: check $(TARGETS)

@@ -42,11 +42,11 @@ endif
 compileFirst: tools
 
 tools:
-	echo
-	$(call log) [Notice] "Building Native Ejs Toolchain"
 	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) -C deps compile
+ifeq ($(BLD_CROSS),1)
 	echo
-	$(call log) [Notice] "Building For Target"
+	$(call log) [Notice] "Building $(BLD_NAME) for ($(BLD_HOST_SYSTEM))"
+endif
 
 compileExtra: $(TARGETS)
 	@T=modules D=deps/ejs ; $(DO_RECURSE)

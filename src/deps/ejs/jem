@@ -742,7 +742,7 @@ print(e)
             log(1, "INSTALL", "Jem mismatch: ", serialize(jem))
             throw "Jem package is missing version information"
         }
-        let path = jem.local.join(jem.vername + ext.jem)
+        let path = jem.local.join(jem.vername + ext.jem).absolute
         let tar = new Tar(path)
         let data = tar.cat(filenames.package)
         let package = deserialize(data)
@@ -999,7 +999,7 @@ print(e)
             //  TODO - really need to update the catalog
             let from = jem.path
             let dir = repo.join(jem.vername)
-            let target = dir.join(jem.path.basename)
+            let target = dir.join(jem.path.basename).absolute
             //  MOB -- must cleanup if cp or makedir fails
             makeDir(target.dirname)
             cp(from, target)

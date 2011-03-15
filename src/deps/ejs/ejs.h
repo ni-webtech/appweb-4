@@ -3944,7 +3944,7 @@ extern void ejsSetHandle(Ejs *ejs, void *handle);
 extern void ejsShowCurrentScope(Ejs *ejs);
 extern void ejsShowStack(Ejs *ejs, EjsFunction *fp);
 extern void ejsShowBlockScope(Ejs *ejs, EjsBlock *block);
-extern int ejsStartMprLogging(char *logSpec);
+extern int  ejsRedirectLogging(char *logSpec);
 extern void ejsCreateObjHelpers(Ejs *ejs);
 extern void ejsCloneObjHelpers(Ejs *ejs, EjsType *type);
 extern void ejsClonePotHelpers(Ejs *ejs, EjsType *type);

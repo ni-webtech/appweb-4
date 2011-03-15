@@ -23,6 +23,12 @@ manageFeatures()
 
     BLD_FEATURE_MPR=1
 
+    if [ "$BLD_FEATURE_ROMFS" = 1 -a "$BLD_CROSS" = 0 ] ; then
+        echo
+        echo "ROM-based storage is only supported if doing cross-compilation"
+        echo
+        exit 255
+    fi
     if [ "$BLD_FEATURE_EJS" = 1 ] ; then
         if [ "$BLD_FEATURE_FLOAT" != 1 ] ; then
             echo " "
