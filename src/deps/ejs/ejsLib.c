@@ -6309,7 +6309,7 @@ void ejsConfigureDateType(Ejs *ejs)
  */
 static EjsObj *debug_breakpoint(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-#if BLD_DEBUG && DEBUG_IDE
+#if BLD_DEBUG && DEBUG_IDE && 0
     #if BLD_WIN_LIKE && !MPR_64_BIT
         __asm { int 3 };
     #elif (MACOSX || LINUX) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
@@ -23324,7 +23324,6 @@ static HttpUri *createHttpUriFromHash(Ejs *ejs, EjsObj *arg, int complete)
     if (uriObj) {
         return toHttpUri(ejs, uriObj, 1);
     }
-
     schemeObj = ejsGetPropertyByName(ejs, arg, EN("scheme"));
     scheme = (schemeObj && ejsIsString(ejs, schemeObj)) ? ejsToMulti(ejs, schemeObj) : 0;
 
@@ -28773,7 +28772,7 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsAny *value, EjsAny *thisObj, Ejs
 #define THIS            FRAME->function.boundThis
 #define FILL(mark)      while (mark < FRAME->pc) { *mark++ = EJS_OP_NOP; }
 
-#if DEBUG_IDE
+#if DEBUG_IDE && 0
     static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode);
     static int opcount[256];
 #else
@@ -32700,7 +32699,7 @@ static void bkpt(Ejs *ejs)
 #endif
 
 
-#if DEBUG_IDE 
+#if DEBUG_IDE && 0
 /*
     This code is only active when building in debug mode and debugging in an IDE
  */
@@ -36015,7 +36014,7 @@ void ejsDestroy(Ejs *ejs)
     EjsService  *sp;
     EjsState    *state;
 
-#if DEBUG_IDE
+#if DEBUG_IDE && 0
     if (ejs->service) {
         mprLog(5, "DESTROY %s, length %d", ejs->name, ejs->service->vmlist->length);
     }

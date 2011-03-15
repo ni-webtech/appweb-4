@@ -12698,7 +12698,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
         up->path = sclone(path);
     }
     if (up->path == 0) {
-        up->path = "/";
+        up->path = sclone("/");
     }
     if (reference) {
         up->reference = sclone(reference);

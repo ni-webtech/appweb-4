@@ -11611,14 +11611,6 @@ static void logOutput(int flags, int level, cchar *msg);
  */
 void mprBreakpoint()
 {
-#if BLD_DEBUG && DEBUG_IDE
-    #if BLD_WIN_LIKE && !MPR_64_BIT
-        __asm { int 3 };
-    #elif (MACOSX || LINUX) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
-        asm("int $03");
-        /*  __asm__ __volatile__ ("int $03"); */
-    #endif
-#endif
 #if DEBUG_PAUSE
     {
         static int  paused = 1;
