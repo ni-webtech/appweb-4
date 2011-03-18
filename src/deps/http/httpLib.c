@@ -2376,12 +2376,8 @@ HttpConn *httpCreateConn(Http *http, HttpServer *server, MprDispatcher *dispatch
     } else {
         conn->limits = http->clientLimits;
     }
-    mprAssert(conn->limits->requestTimeout > 0);
-    mprAssert(conn->limits->inactivityTimeout > 0);
     conn->keepAliveCount = conn->limits->keepAliveCount;
-
     conn->serviceq = httpCreateQueueHead(conn, "serviceq");
-
     httpInitTrace(conn->trace);
 
     if (dispatcher) {
@@ -2422,7 +2418,6 @@ void httpDestroyConn(HttpConn *conn)
             conn->tx = 0;
         }
         conn->http = 0;
-        // mprLog(0, "DEBUG: destroy/free conn %p", conn);
     }
 }
 
@@ -2438,6 +2433,7 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->http);
         mprMark(conn->stages);
         mprMark(conn->dispatcher);
+        mprMark(conn->newDispatcher);
         mprMark(conn->waitHandler);
         mprMark(conn->server);
         mprMark(conn->host);
@@ -2455,6 +2451,8 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->protocol);
         mprMark(conn->headersCallbackArg);
         mprMark(conn->timeoutEvent);
+        mprMark(conn->workerEvent);
+        mprMark(conn->mark);
 
         httpManageTrace(&conn->trace[0], flags);
         httpManageTrace(&conn->trace[1], flags);
@@ -2541,12 +2539,6 @@ static void commonPrep(HttpConn *conn)
     conn->flags = 0;
     conn->state = 0;
     conn->writeComplete = 0;
-#if UNUSED
-    if (conn->dispatcher == 0) {
-        mprAssert(0);
-        conn->dispatcher = (conn->server) ? conn->server->dispatcher : mprGetDispatcher();
-    }
-#endif
     conn->lastActivity = conn->http->now;
     httpSetState(conn, HTTP_STATE_BEGIN);
     httpInitSchedulerQueue(conn->serviceq);
@@ -2566,10 +2558,6 @@ void httpPrepServerConn(HttpConn *conn)
 
     conn->readq = 0;
     conn->writeq = 0;
-#if UNUSED
-    conn->dispatcher = (conn->server) ? conn->server->dispatcher : mprGetDispatcher();
-            httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
-#endif
     commonPrep(conn);
 }
 
@@ -2631,10 +2619,10 @@ void httpCallEvent(HttpConn *conn, int mask)
 
 
 /*  
-    IO event handler. This is invoked by the wait subsystem in response to I/O events. It is also invoked via relay
-    when an accept event is received by the server. Initially the conn->dispatcher will be set to the server->dispatcher 
-    and the first I/O event will be handled on the server thread (or main thread). A request handler may create a 
-    new conn->dispatcher and transfer execution to a worker thread if required.
+    IO event handler. This is invoked by the wait subsystem in response to I/O events. It is also invoked via relay when 
+    an accept event is received by the server. Initially the conn->dispatcher will be set to the server->dispatcher and 
+    the first I/O event will be handled on the server thread (or main thread). A request handler may create a new 
+    conn->dispatcher and transfer execution to a worker thread if required.
  */
 void httpEvent(HttpConn *conn, MprEvent *event)
 {
@@ -2647,22 +2635,17 @@ void httpEvent(HttpConn *conn, MprEvent *event)
     if (event->mask & MPR_READABLE) {
         readEvent(conn);
     }
-    if (conn->server) {
-#if UNUSED
-        if (conn->keepAliveCount < 0 || mprIsSocketEof(conn->sock))
-#endif
-        if (conn->keepAliveCount < 0) {
-            /*  
-                NOTE: compare keepAliveCount with "< 0" so that the client can have one more keep alive request. 
-                It should respond to the "Connection: close" and thus initiate a client-led close. This reduces 
-                TIME_WAIT states on the server. NOTE: after httpDestroyConn, conn structure and memory is still 
-                intact but conn->sock is zero.
-             */
-            httpDestroyConn(conn);
-            return;
-        }
+    if (conn->server && conn->keepAliveCount < 0) {
+        /*  
+            NOTE: compare keepAliveCount with "< 0" so that the client can have one more keep alive request. 
+            It should respond to the "Connection: close" and thus initiate a client-led close. This reduces 
+            TIME_WAIT states on the server. NOTE: after httpDestroyConn, conn structure and memory is still 
+            intact but conn->sock is zero.
+         */
+        httpDestroyConn(conn);
+    } else {
+        httpEnableConnEvents(conn);
     }
-    httpEnableConnEvents(conn);
 }
 
 
@@ -2697,7 +2680,7 @@ static void readEvent(HttpConn *conn)
             }
             break;
         }
-        if (nbytes == 0 || conn->state >= HTTP_STATE_RUNNING) {
+        if (nbytes == 0 || conn->state >= HTTP_STATE_RUNNING || conn->workerEvent) {
             break;
         }
     }
@@ -2721,6 +2704,7 @@ void httpEnableConnEvents(HttpConn *conn)
 {
     HttpTx      *tx;
     HttpQueue   *q;
+    MprEvent    *event;
     int         eventMask;
 
     mprLog(7, "EnableConnEvents");
@@ -2733,6 +2717,13 @@ void httpEnableConnEvents(HttpConn *conn)
     conn->lastActivity = conn->http->now;
 
     if (conn->state < HTTP_STATE_COMPLETE && conn->sock && !mprIsSocketEof(conn->sock)) {
+        lock(conn->http);
+        if (conn->workerEvent) {
+            event = conn->workerEvent;
+            conn->workerEvent = 0;
+            conn->dispatcher = conn->newDispatcher;
+            mprQueueEvent(conn->dispatcher, event);
+        }
         if (tx) {
             if (tx->queue[HTTP_QUEUE_TRANS]->prevQ->count > 0) {
                 eventMask |= MPR_WRITABLE;
@@ -2762,7 +2753,11 @@ void httpEnableConnEvents(HttpConn *conn)
                 mprEnableWaitEvents(conn->waitHandler, eventMask);
             }
         }
+        mprAssert(conn->dispatcher->enabled);
+#if UNUSED
         mprEnableDispatcher(conn->dispatcher);
+#endif
+        unlock(conn->http);
     }
 }
 
@@ -3006,7 +3001,7 @@ void httpSetState(HttpConn *conn, int state)
 
 
 /*
-    Set each timeout arg to -1 to skip. Set to zero for no timeout. Otherwise set to number of seconds
+    Set each timeout arg to -1 to skip. Set to zero for no timeout. Otherwise set to number of msecs
  */
 void httpSetTimeout(HttpConn *conn, int requestTimeout, int inactivityTimeout)
 {
@@ -3014,14 +3009,14 @@ void httpSetTimeout(HttpConn *conn, int requestTimeout, int inactivityTimeout)
         if (requestTimeout == 0) {
             conn->limits->requestTimeout = INT_MAX;
         } else {
-            conn->limits->requestTimeout = requestTimeout * MPR_TICKS_PER_SEC;
+            conn->limits->requestTimeout = requestTimeout;
         }
     }
     if (inactivityTimeout >= 0) {
         if (inactivityTimeout == 0) {
             conn->limits->inactivityTimeout = INT_MAX;
         } else {
-            conn->limits->inactivityTimeout = inactivityTimeout * MPR_TICKS_PER_SEC;
+            conn->limits->inactivityTimeout = inactivityTimeout;
         }
     }
 }
@@ -6953,16 +6948,8 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
         mprAddItem(rx->inputPipeline, tx->handler);
     }
     
-    /* Incase a filter changed the handler */
+    /* Set the zero'th entry Incase a filter changed tx->handler */
     mprSetItem(tx->outputPipeline, 0, tx->handler);
-
-#if UNUSED && FUTURE
-    if (tx->handler->flags & HTTP_STAGE_THREAD && !conn->threaded) {
-        /* Start with dispatcher disabled. Conn.c will enable */
-        tx->dispatcher = mprCreateDispatcher(tx->handler->name, 0);
-        conn->dispatcher = tx->dispatcher;
-    }
-#endif
 
     /*  Create the outgoing queue heads and open the queues */
     q = tx->queue[HTTP_QUEUE_TRANS];
@@ -6986,6 +6973,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
      */
     qhead = tx->queue[HTTP_QUEUE_TRANS];
     rqhead = tx->queue[HTTP_QUEUE_RECEIVE];
+    mprAssert(q->nextQ != qhead);
     for (q = qhead->nextQ; q != qhead; q = q->nextQ) {
         for (rq = rqhead->nextQ; rq != rqhead; rq = rq->nextQ) {
             if (q->stage == rq->stage) {
@@ -6996,21 +6984,13 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     }
 
     /*  
-        Open the queues (keep going on errors)
-        Open in reverse order so the handler is opened last. This lets authFilter go early.
+        Open the queues (keep going on errors). Open in data flow order (input first). Handler is last.
      */
-    qhead = tx->queue[HTTP_QUEUE_TRANS];
-    for (q = qhead->prevQ; q != qhead; q = q->prevQ) {
-        if (q->open && !(q->flags & HTTP_QUEUE_OPEN)) {
-            q->flags |= HTTP_QUEUE_OPEN;
-            httpOpenQueue(q, conn->tx->chunkSize);
-        }
-    }
-
     if (rx->needInputPipeline) {
         qhead = tx->queue[HTTP_QUEUE_RECEIVE];
-        for (q = qhead->prevQ; q != qhead; q = q->prevQ) {
-            if (q->open && !(q->flags & HTTP_QUEUE_OPEN)) {
+        //  MOB - check if this order is right. Auth must be last?
+        for (q = qhead->nextQ; q->nextQ != qhead; q = q->nextQ) {
+            if (q->open && !(q->flags & (HTTP_QUEUE_OPEN))) {
                 if (q->pair == 0 || !(q->pair->flags & HTTP_QUEUE_OPEN)) {
                     q->flags |= HTTP_QUEUE_OPEN;
                     httpOpenQueue(q, conn->tx->chunkSize);
@@ -7018,7 +6998,20 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
             }
         }
     }
-
+    qhead = tx->queue[HTTP_QUEUE_TRANS];
+    for (q = qhead->prevQ; q->prevQ != qhead; q = q->prevQ) {
+        if (q->open && !(q->flags & HTTP_QUEUE_OPEN)) {
+            q->flags |= HTTP_QUEUE_OPEN;
+            httpOpenQueue(q, conn->tx->chunkSize);
+        }
+    }
+    /* Open the handler last */
+    q = qhead->nextQ;
+    if (q->open) {
+        mprAssert(!(q->flags & HTTP_QUEUE_OPEN));
+        q->flags |= HTTP_QUEUE_OPEN;
+        httpOpenQueue(q, conn->tx->chunkSize);
+    }
     conn->flags |= HTTP_CONN_PIPE_CREATED;
 }
 
@@ -7081,17 +7074,10 @@ void httpStartPipeline(HttpConn *conn)
     HttpTx      *tx;
     
     tx = conn->tx;
-    qhead = tx->queue[HTTP_QUEUE_TRANS];
-    for (q = qhead->nextQ; q != qhead; q = q->nextQ) {
-        if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
-            q->flags |= HTTP_QUEUE_STARTED;
-            HTTP_TIME(conn, q->stage->name, "start", q->stage->start(q));
-        }
-    }
 
     if (conn->rx->needInputPipeline) {
         qhead = tx->queue[HTTP_QUEUE_RECEIVE];
-        for (q = qhead->nextQ; q != qhead; q = q->nextQ) {
+        for (q = qhead->nextQ; q->nextQ != qhead; q = q->nextQ) {
             if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
                 if (q->pair == 0 || !(q->pair->flags & HTTP_QUEUE_STARTED)) {
                     q->flags |= HTTP_QUEUE_STARTED;
@@ -7100,6 +7086,21 @@ void httpStartPipeline(HttpConn *conn)
             }
         }
     }
+    qhead = tx->queue[HTTP_QUEUE_TRANS];
+    for (q = qhead->prevQ; q->prevQ != qhead; q = q->prevQ) {
+        if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
+            q->flags |= HTTP_QUEUE_STARTED;
+            HTTP_TIME(conn, q->stage->name, "start", q->stage->start(q));
+        }
+    }
+    /* Start the handler last */
+    q = qhead->nextQ;
+    if (q->start) {
+        mprAssert(!(q->flags & HTTP_QUEUE_STARTED));
+        q->flags |= HTTP_QUEUE_STARTED;
+        HTTP_TIME(conn, q->stage->name, "start", q->stage->start(q));
+    }
+
     if (!conn->error && !conn->writeComplete && conn->rx->remainingContent > 0) {
         /* If no remaining content, wait till the processing stage to avoid duplicate writable events */
         httpWritable(conn);
@@ -9027,6 +9028,9 @@ static bool processParsed(HttpConn *conn)
 {
     if (!conn->rx->startAfterContent) {
         httpStartPipeline(conn);
+        if (conn->workerEvent) {
+            return 0;
+        }
     }
     httpSetState(conn, HTTP_STATE_CONTENT);
     return 1;
@@ -9129,6 +9133,9 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         httpSendPacketToNext(q, httpCreateEndPacket());
         if (rx->startAfterContent) {
             httpStartPipeline(conn);
+            if (conn->workerEvent) {
+                return 0;
+            }
         }
         httpSetState(conn, HTTP_STATE_RUNNING);
         return 1;
@@ -10426,6 +10433,9 @@ int httpStartServer(HttpServer *server)
     }
     if (server->async && server->waitHandler ==  0) {
         //  MOB -- this really should be in server->listen->handler
+        //  MOB - add comment for who is using this. Ejs use seems to have server->dispatcher already set
+        //  MOB - does appweb have server->dispatcher == 0
+        mprAssert(server->dispatcher);
         server->waitHandler = mprCreateWaitHandler(server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
             httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
     } else {

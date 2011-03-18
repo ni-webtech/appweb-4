@@ -3788,6 +3788,7 @@ extern void ejsClearAttention(Ejs *ejs);
         interpreters. One interpreter can be designated as a master interpreter and then it can be cloned by supplying 
         the master interpreter to this call. A master interpreter provides the standard system types and clone interpreters 
         can quickly be created an utilize the master interpreter's types. This saves memory and speeds initialization.
+    @param dispatcher Mpr event dispatcher to use for servicing I/O and other events.
     @param search Module search path to use. Set to NULL for the default search path.
     @param require Optional list of required modules to load. If NULL, the following modules will be loaded:
         ejs, ejs.io, ejs.events, ejs.xml, ejs.sys and ejs.unix.
@@ -3801,7 +3802,7 @@ extern void ejsClearAttention(Ejs *ejs);
     @return A new interpreter
     @ingroup Ejs
  */
-extern Ejs *ejsCreate(cchar *search, MprList *require, int argc, cchar **argv, int flags);
+extern Ejs *ejsCreate(MprDispatcher *dispatcher, cchar *search, MprList *require, int argc, cchar **argv, int flags);
 extern void ejsDestroy(Ejs *ejs);
 
 /**
@@ -4406,6 +4407,7 @@ typedef struct EjsHttpServer {
     EjsArray        *outgoingStages;            /**< Outgoing Http pipeline stages */
 } EjsHttpServer;
 
+extern EjsHttpServer *ejsCloneHttpServer(Ejs *ejs, EjsHttpServer *server, bool deep);
 
 /** 
     Request Class
@@ -4421,6 +4423,7 @@ typedef struct EjsRequest {
     HttpConn        *conn;              /**< Underlying Http connection object */
     EjsHttpServer   *server;            /**< Owning server */
 
+    EjsObj          *app;               /**< Application build function. Used when threaded */
     EjsObj          *absHome;           /**< Absolute URI to the home of the application from this request */
     EjsObj          *emitter;           /**< Event emitter */
     EjsPath         *dir;               /**< Home directory containing the application */
@@ -4469,7 +4472,7 @@ typedef struct EjsRequest {
 extern EjsRequest *ejsCreateRequest(Ejs *ejs, EjsHttpServer *server, HttpConn *conn, cchar *dir);
 
 /** 
-    Clone a new request. This is used to clone a request from one interpreter into another.
+    Clone a request into another interpreter.
     @param ejs Ejs interpreter handle returned from $ejsCreate
     @param req Original request to copy
     @param deep Ignored

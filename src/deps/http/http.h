@@ -409,6 +409,7 @@ typedef struct HttpLimits {
     int     requestCount;           /**< Max number of simultaneous concurrent requests */
     int     sessionCount;           /**< Max number of opened session state stores */
 
+    //  MOB - should these be int64?
     int     inactivityTimeout;      /**< Default timeout for keep-alive and idle requests (msec) */
     int     requestTimeout;         /**< Default time a request can take (msec) */
     int     sessionTimeout;         /**< Default time a session can persist (msec) */
@@ -1372,6 +1373,7 @@ typedef struct HttpConn {
     Http            *http;                  /**< Http service object  */
     MprHashTable    *stages;                /**< Stages in pipeline */
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
+    MprDispatcher   *newDispatcher;         /**< New dispatcher if using a worker thread */
     HttpNotifier    notifier;               /**< Connection Http state change notification callback */
     HttpNotifier    requestNotifier;        /**< Request Http state change notification callback */
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
@@ -1386,7 +1388,9 @@ typedef struct HttpConn {
     MprTime         started;                /**< When the connection started */
     MprTime         lastActivity;           /**< Last activity on the connection */
     MprEvent        *timeoutEvent;          /**< Connection or request timeout event */
+    MprEvent        *workerEvent;           /**< Event for running connection via a worker thread */
     void            *context;               /**< Embedding context */
+    void            *mark;                  /**< Reference for GC marking */
     char            *boundary;              /**< File upload boundary */
     char            *errorMsg;              /**< Error message for the last request (if any) */
     char            *ip;                    /**< Remote client IP address */
@@ -1691,8 +1695,8 @@ extern void httpSetState(HttpConn *conn, int state);
     Set the Http inactivity timeout
     @description Define an inactivity timeout after which the Http connection will be closed. 
     @param conn HttpConn object created via $httpCreateConn
-    @param requestTimeout Request timeout in seconds. This is the total time for the request
-    @param inactivityTimeout Inactivity timeout in seconds. This is maximum connection idle time.
+    @param requestTimeout Request timeout in msec. This is the total time for the request
+    @param inactivityTimeout Inactivity timeout in msec. This is maximum connection idle time.
     @ingroup HttpConn
  */
 extern void httpSetTimeout(HttpConn *conn, int requestTimeout, int inactivityTimeout);

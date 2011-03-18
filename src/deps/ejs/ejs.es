@@ -20653,7 +20653,6 @@ module ejs.web {
             case Top:
                 addHandlers()
                 addDefault(StaticBuilder)
-                // addCatchall()
                 break
             case Restful:
                 addHome("@Base/")
@@ -20938,7 +20937,7 @@ module ejs.web {
             } else if (!template) {
                 template = "*"
             }
-            let line = "  %-24s %-24s %-7s %s".format(r.name, target, method, template)
+            let line = "  %-24s %s %-24s %-7s %s".format(r.name, r.threaded ? "T": " ", target, method, template)
             if (extra) {
                 if (params && Object.getOwnPropertyCount(params) > 0) {
                     if (!(params.action && Object.getOwnPropertyCount(params) == 1)) {
@@ -23444,9 +23443,13 @@ module ejs.web {
         static native function worker(app: Function, request: Request): Void
 
         private static function workerHelper(app: Function, request: Request): Void {
+print("WORK HELPER")
             try {
+print("BEFORE PROCESS")
                 process(app, request)
+print("AFTER PROCESS")
             } catch (e) {
+print("CATCH " + e)
                 request.writeError(Http.ServerError, e)
             }
         }
@@ -23528,8 +23531,12 @@ module ejs.web {
             @param app Web application function 
          */
         static function process(app: Function, request: Request, finalize: Boolean = true): Void {
+print("AA")
+print("request.server " + request.server)
             request.config = request.server.config
+dump("CONFIG", request.config)
             try {
+print("ROUTE " + request.route)
                 if (request.route && request.route.middleware) {
                     app = Middleware(app, request.route.middleware)
                 }

@@ -50,7 +50,7 @@ typedef struct App {
     int      showHeaders;        /* Output the response headers */
     int      singleStep;         /* Pause between requests */
     char     *target;            /* Destination url */
-    int      timeout;            /* Timeout in secs for a non-responsive server */
+    int      timeout;            /* Timeout in msecs for a non-responsive server */
     int      upload;             /* Upload using multipart mime */
     char     *username;          /* User name for authentication of requests */
     int      verbose;            /* Trace progress */
@@ -237,7 +237,7 @@ static bool parseArgs(int argc, char **argv)
         } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
             mprSetDebugMode(1);
             app->retries = 0;
-            app->timeout = INT_MAX / MPR_TICKS_PER_SEC;
+            app->timeout = INT_MAX;
 
         } else if (strcmp(argp, "--delete") == 0) {
             app->method = "DELETE";
@@ -386,7 +386,7 @@ static bool parseArgs(int argc, char **argv)
             if (nextArg >= argc) {
                 return 0;
             } else {
-                app->timeout = atoi(argv[++nextArg]);
+                app->timeout = atoi(argv[++nextArg]) * MPR_TICKS_PER_SEC;
             }
 
         } else if (strcmp(argp, "--upload") == 0 || strcmp(argp, "-u") == 0) {
@@ -682,7 +682,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
     HttpUri     *target, *location;
     char        *redirect;
     cchar       *msg, *sep;
-    int         count, redirectCount;
+    int         count, redirectCount, rc;
 
     httpSetRetries(conn, app->retries);
     httpSetTimeout(conn, app->timeout, app->timeout);
@@ -694,7 +694,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
         if (sendRequest(conn, app->method, url, files) < 0) {
             return MPR_ERR_CANT_WRITE;
         }
-        if (httpWait(conn, HTTP_STATE_PARSED, conn->limits->requestTimeout) == 0) {
+        if ((rc = httpWait(conn, HTTP_STATE_PARSED, conn->limits->requestTimeout)) == 0) {
             if (httpNeedRetry(conn, &redirect)) {
                 if (redirect) {
                     location = httpCreateUri(redirect, 0);
@@ -709,8 +709,12 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
                 break;
             }
         } else if (!conn->error) {
-            httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TIMEOUT,
-                "Inactive request timed out, exceeded request timeout %d", app->timeout);
+            if (rc == MPR_ERR_TIMEOUT) {
+                httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TIMEOUT,
+                    "Inactive request timed out, exceeded request timeout %d", app->timeout);
+            } else {
+                httpError(conn, HTTP_ABORT | HTTP_CODE_COMMS_ERROR, "Connection I/O error");
+            }
         }
         if ((rx = conn->rx) != 0) {
             if (rx->status == HTTP_CODE_REQUEST_TOO_LARGE || rx->status == HTTP_CODE_REQUEST_URL_TOO_LARGE ||

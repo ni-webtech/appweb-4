@@ -262,18 +262,11 @@ MAIN(ejscMain, int argc, char **argv)
             mpr->name);
         return -1;
     }
-
-#if UNUSED
-    app->ejsService = ejsCreateService(mpr);
-    if (app->ejsService == 0) {
-        return MPR_ERR_MEMORY;
-    }
-#endif
     ejsFlags = EJS_FLAG_NO_INIT;
     if (doc) {
         ejsFlags |= EJS_FLAG_DOC;
     }
-    ejs = ejsCreate(searchPath, app->modules, 0, NULL, ejsFlags);
+    ejs = ejsCreate(NULL, searchPath, app->modules, 0, NULL, ejsFlags);
     if (ejs == 0) {
         return MPR_ERR_MEMORY;
     }

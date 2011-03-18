@@ -58,7 +58,7 @@ static void openEjs(HttpQueue *q)
             On-demand loading of the startup script
          */
         mprLog(5, "ejs: create ejs interpreter");
-        if ((ejs = ejsCreate(NULL, NULL, 0, NULL, 0)) == 0) {
+        if ((ejs = ejsCreate(NULL, NULL, NULL, 0, NULL, 0)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create Ejs interpreter.");
             return;
         }

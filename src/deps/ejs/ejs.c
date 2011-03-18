@@ -285,8 +285,7 @@ MAIN(ejsMain, int argc, char **argv)
             mpr->name);
         return -1;
     }
-    ejs = ejsCreate(searchPath, app->modules, argc - nextArg, (cchar **) &argv[nextArg], 0);
-    if (ejs == 0) {
+    if ((ejs = ejsCreate(NULL, searchPath, app->modules, argc - nextArg, (cchar **) &argv[nextArg], 0)) == 0) {
         return MPR_ERR_MEMORY;
     }
     app->ejs = ejs;
