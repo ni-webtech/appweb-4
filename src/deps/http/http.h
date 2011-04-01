@@ -1374,6 +1374,7 @@ typedef struct HttpConn {
     MprHashTable    *stages;                /**< Stages in pipeline */
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
     MprDispatcher   *newDispatcher;         /**< New dispatcher if using a worker thread */
+    MprDispatcher   *oldDispatcher;         /**< Original dispatcher if using a worker thread */
     HttpNotifier    notifier;               /**< Connection Http state change notification callback */
     HttpNotifier    requestNotifier;        /**< Request Http state change notification callback */
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */

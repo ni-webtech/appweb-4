@@ -1901,6 +1901,12 @@ void *mprSetName(void *ptr, cchar *name)
 }
 
 
+void *mprCopyName(void *dest, void *src) 
+{
+    return mprSetName(dest, mprGetName(src));
+}
+
+
 #else
 void mprCheckBlock(MprMem *mp) {}
 #undef mprSetName
@@ -12332,13 +12338,16 @@ MprChar *mcontains(MprChar *str, cchar *pattern, ssize limit)
 
     mprAssert(0 <= limit && limit < MAXSSIZE);
 
+    if (limit < 0) {
+        limit = MAXINT;
+    }
     if (str == 0) {
         return 0;
     }
     if (pattern == 0 || *pattern == '\0') {
         return (MprChar*) str;
     }
-    for (cp = str; *cp; cp++) {
+    for (cp = str; *cp && limit > 0; cp++, limit--) {
         s1 = cp;
         s2 = pattern;
         for (lim = limit; *s1 && *s2 && (*s1 == (uchar) *s2) && lim > 0; lim--) {
@@ -19389,7 +19398,7 @@ char *scontains(cchar *str, cchar *pattern, ssize limit)
     if (pattern == 0 || *pattern == '\0') {
         return 0;
     }
-    for (cp = str; *cp; cp++) {
+    for (cp = str; *cp && limit > 0; cp++, limit--) {
         s1 = cp;
         s2 = pattern;
         for (lim = limit; *s1 && *s2 && (*s1 == *s2) && lim > 0; lim--) {
@@ -24333,18 +24342,16 @@ MprChar *wcontains(MprChar *str, MprChar *pattern, ssize limit)
 
     mprAssert(0 <= limit && limit < MAXINT);
 
-#if UNUSED
     if (limit < 0) {
         limit = MAXINT;
     }
-#endif
     if (str == 0) {
         return 0;
     }
     if (pattern == 0 || *pattern == '\0') {
         return str;
     }
-    for (cp = str; *cp; cp++) {
+    for (cp = str; *cp && limit > 0; cp++, limit--) {
         s1 = cp;
         s2 = pattern;
         for (lim = limit; *s1 && *s2 && (*s1 == *s2) && lim > 0; lim--) {

@@ -2428,7 +2428,7 @@ static void out(EjsMod *mp, char *fmt, ...)
 static EjsString *fmtModule(Ejs *ejs, EjsString *name)
 {
     if (ejsCompareMulti(ejs, name, EJS_DEFAULT_MODULE) == 0) {
-        return ejs->emptyString;
+        return S(empty);
     }
     return name;
 }
@@ -4238,6 +4238,12 @@ MAIN(ejsmodMain, int argc, char **argv)
                     requiredModules = mprCreateList(-1, 0);
                 }
                 modules = sclone(argv[++nextArg]);
+#if MACOSX
+                //  FIX FOR XCODE MANGLING COMMAND LINE ARGS
+                if (modules[0] == ' ') {
+                    modules[0] = '\0';                    
+                }
+#endif
                 name = stok(modules, " \t", &tok);
                 while (name != NULL) {
                     require(requiredModules, name);
@@ -4881,7 +4887,7 @@ static void lstFunction(EjsMod *mp, EjsModule *module, EjsObj *block, int slotNu
     }
 
     resultType = fun->resultType;
-    mprFprintf(mp->file,  ") : %@\n", resultType ? resultType->qname.name : ejs->voidType->qname.name);
+    mprFprintf(mp->file,  ") : %@\n", resultType ? resultType->qname.name : ST(Void)->qname.name);
 
     /*
         Repeat the args
@@ -4952,7 +4958,7 @@ void lstException(EjsMod *mp, EjsModule *module, EjsFunction *fun)
         mprFprintf(mp->file,
             "%-3d %-10s %5d   %5d      %5d        %5d       %@\n",
             i, exKind, ex->tryStart, ex->tryEnd, ex->handlerStart, ex->handlerEnd,
-            ex->catchType ? ex->catchType->qname.name : ejs->emptyString);
+            ex->catchType ? ex->catchType->qname.name : S(empty));
     }
     mprFprintf(mp->file, "\n");
 }
@@ -5264,22 +5270,26 @@ static void interp(EjsMod *mp, EjsModule *module, EjsFunction *fun)
 
 static void lstVarSlot(EjsMod *mp, EjsModule *module, EjsName *qname, EjsTrait *trait, int slotNum)
 {
+    Ejs         *ejs;
     EjsString   *space;
 
     mprAssert(slotNum >= 0);
     mprAssert(qname);
 
-    space = mapSpace(mp->ejs, qname->space);
+    ejs = mp->ejs;
+    space = mapSpace(ejs, qname->space);
 
     if (qname->name == 0 || qname->name->value[0] == '\0') {
         mprFprintf(mp->file, "%04d    <inherited>\n", slotNum);
 
     } else if (trait && trait->type) {
-        if (trait->type == mp->ejs->functionType) {
+        if (trait->type == ST(Function)) {
             mprFprintf(mp->file, "%04d    %@ function %@\n", slotNum, space, qname->name);
 
-        } else if (trait->type == mp->ejs->functionType) {
+#if UNUSED
+        } else if (trait->type == ejs->functionType) {
             mprFprintf(mp->file, "%04d    %@ class %@\n", slotNum, space, qname->name);
+#endif
 
         } else {
             mprFprintf(mp->file, "%04d    %@ var %@: %@\n", slotNum, space, qname->name, trait->type->qname.name);
@@ -5819,10 +5829,10 @@ static int createSlotFile(EjsMod *bp, EjsModule *mp, MprFile *file)
     mprFprintf(file, "\n/*\n   Slots for the \"%@\" module \n */\n", mp->name);
 
     slotNum = ejsGetPropertyCount(ejs, ejs->global);
-    type = ejsCreateType(ejs, N(EJS_EJS_NAMESPACE, EJS_GLOBAL), NULL, NULL, NULL, sizeof(EjsType), slotNum, 
+    type = ejsCreateType(ejs, N(EJS_EJS_NAMESPACE, EJS_GLOBAL), NULL, NULL, NULL, sizeof(EjsType), -1, 
         ejsGetPropertyCount(ejs, ejs->global), 0, 0);
     type->constructor.block = *(EjsBlock*) ejs->global;
-    SET_TYPE(type, ejs->typeType);
+    SET_TYPE(type, ST(Type));
     type->constructor.block.pot.isType = 1;
 
     if (genType(bp, file, mp, type, mp->firstGlobal, mp->lastGlobal, 1) < 0) {
@@ -5981,7 +5991,7 @@ static int genType(EjsMod *bp, MprFile *file, EjsModule *mp, EjsType *type, int 
         if (trait == 0 || qname.name == 0) {
             continue;
         }
-        if (trait->type != ejs->functionType) {
+        if (trait->type != ST(Function)) {
             continue;
         }
         vp = ejsGetProperty(ejs, (EjsObj*) type, slotNum);

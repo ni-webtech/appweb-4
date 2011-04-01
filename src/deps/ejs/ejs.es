@@ -525,7 +525,7 @@ module ejs {
         indexed location within a list.
         @stability evolving
      */
-    dynamic native class Array {
+    dynamic class Array {
 
         use default namespace public
 
@@ -1439,7 +1439,7 @@ module ejs {
         @stability stable
         @spec ejs
      */
-    native final class Block { }
+    final class Block { }
 }
 
 
@@ -1504,7 +1504,7 @@ module ejs {
         Boolean class. The Boolean class is used to create two immutable boolean values: "true" and "false".
         @stability stable
      */
-    native final class Boolean {
+    final class Boolean {
         /**
             Boolean constructor. Construct a Boolean object and initialize its value. Since Boolean values are 
             immutable, this constructor will return a reference to either the "true" or "false" values.
@@ -2820,7 +2820,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    enumerable native class Config {
+    enumerable class Config {
 
         use default namespace public
 
@@ -3951,8 +3951,7 @@ module ejs {
         the call stack for an outer handler to process.
         @stability evolving
      */
-    //  MOB -- make this not a native class
-    native dynamic class Error {
+    dynamic class Error {
 
         use default namespace public
 
@@ -4027,7 +4026,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native dynamic class ArgError extends Error {
+    dynamic class ArgError extends Error {
         /**
             ArgError constructor.
             @params message Message to use when defining the Error.message property
@@ -4041,7 +4040,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native dynamic class ArithmeticError extends Error {
+    dynamic class ArithmeticError extends Error {
         /**
             ArithmeticError constructor.
             @params message Message to use when defining the Error.message property
@@ -4054,7 +4053,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native dynamic class AssertError extends Error {
+    dynamic class AssertError extends Error {
         /**
             AssertError constructor.
             @params message Message to use when defining the Error.message property
@@ -4069,7 +4068,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native dynamic class InstructionError extends Error {
+    dynamic class InstructionError extends Error {
         /**
             InstructionError constructor.
             @params message Message to use when defining the Error.message property
@@ -4083,7 +4082,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native dynamic class IOError extends Error {
+    dynamic class IOError extends Error {
         /**
             IOError constructor.
             @params message Message to use when defining the Error.message property
@@ -4097,7 +4096,7 @@ module ejs {
         @stability evolving
         @hide
      */
-    native dynamic class InternalError extends Error {
+    dynamic class InternalError extends Error {
         /**
             InternalError constructor.
             @params message Message to use when defining the Error.message property
@@ -4111,7 +4110,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native dynamic class MemoryError extends Error {
+    dynamic class MemoryError extends Error {
         /**
             MemoryError constructor.
             @params message Message to use when defining the Error.message property
@@ -4128,7 +4127,7 @@ module ejs {
         @stability evolving
         @hide
      */
-    native dynamic class OutOfBoundsError extends Error {
+    dynamic class OutOfBoundsError extends Error {
         /**
             OutOfBoundsError constructor.
             @params message Message to use when defining the Error.message property
@@ -4141,7 +4140,7 @@ module ejs {
         invoked on an object whose type does not define that method.
         @stability evolving
      */
-    native dynamic class ReferenceError extends Error {
+    dynamic class ReferenceError extends Error {
         /**
             ReferenceError constructor.
             @params message Message to use when defining the Error.message property
@@ -4155,7 +4154,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native dynamic class ResourceError extends Error {
+    dynamic class ResourceError extends Error {
         /**
             ResourceError constructor.
             @params message Message to use when defining the Error.message property
@@ -4171,7 +4170,7 @@ module ejs {
         @stability evolving
         @hide
      */
-    native dynamic class SecurityError extends Error {
+    dynamic class SecurityError extends Error {
         /**
             SecurityError constructor.
             @params message Message to use when defining the Error.message property
@@ -4185,7 +4184,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native dynamic class StateError extends Error {
+    dynamic class StateError extends Error {
         /**
             StateError constructor.
             @params message Message to use when defining the Error.message property
@@ -4198,7 +4197,7 @@ module ejs {
         purpose, e.g. a regular expression containing invalid characters.
         @stability evolving
      */
-    native dynamic class SyntaxError extends Error {
+    dynamic class SyntaxError extends Error {
         /**
             SyntaxError constructor.
             @params message Message to use when defining the Error.message property
@@ -4212,7 +4211,7 @@ module ejs {
         creation or when an object cannot be instantiated given the values passed into "new".
         @stability evolving
      */
-    native dynamic class TypeError extends Error {
+    dynamic class TypeError extends Error {
         /**
             TypeError constructor.
             @params message Message to use when defining the Error.message property
@@ -4226,7 +4225,7 @@ module ejs {
         @stability prototype
         @hide
      */
-    native dynamic class URIError extends Error {
+    dynamic class URIError extends Error {
         /**
             URIError constructor.
             @params message Message to use when defining the Error.message property
@@ -4693,8 +4692,7 @@ module ejs {
         The Frame type is used for activation call frames. 
         @stability evolving
      */
-    native final class Frame extends Function {
-    }
+    final class Frame extends Function { }
 }
 
 /*
@@ -4758,7 +4756,7 @@ module ejs {
         reference to the code to execute, the execution scope and possibly a bound "this" reference.
         @stability evolving
      */
-    native class Function {
+    class Function {
 
         use default namespace public
 
@@ -6476,7 +6474,7 @@ module ejs {
         Iterator is a helper class to implement iterators.
         @hide
      */
-    iterator native final class Iterator {
+    iterator final class Iterator {
 
         use default namespace public
 
@@ -6492,8 +6490,7 @@ module ejs {
         StopIteration class. Iterators throw the StopIteration class instance to signal the end of iteration in for/in loops.
         @spec ejs
      */
-    iterator native final class StopIteration {}
-
+    iterator final class StopIteration {}
 }
 
 
@@ -7788,8 +7785,7 @@ module ejs {
         @hide
         @stability prototype
      */
-    native final class Namespace {
-    }
+    final class Namespace { }
 }
 
 /*
@@ -7854,7 +7850,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native final class Null {
+    final class Null {
 
         /* WARNING: Do not add properties here. Null must have no properties beyond those inherited by Object */
 
@@ -7935,7 +7931,7 @@ module ejs {
         integral (not double) then some of these routines may not be relevant.
         @stability evolving
      */
-    native final class Number {
+    final class Number {
 
         use default namespace public
 
@@ -8206,7 +8202,7 @@ module ejs {
         objects, providing information about base classes, serialization and deserialization and iteration. 
         @stability evolving
      */
-    dynamic native class Object implements Iterable {
+    dynamic class Object implements Iterable {
 
         use default namespace public
 
@@ -9754,7 +9750,7 @@ module ejs {
         </table>
         @spec evolving
      */
-    native final class RegExp {
+    final class RegExp {
 
         use default namespace public
 
@@ -10264,7 +10260,7 @@ module ejs {
         for: comparison, concatenation, copying, searching, conversion, matching, replacement, and, subsetting.
         @spec evolving
      */
-    native final class String {
+    final class String {
 
         use default namespace public
 
@@ -11468,7 +11464,7 @@ module ejs {
         @spec ejs
         @stability evolving
      */
-    native final class Type { }
+    final class Type { }
 }
 
 /*
@@ -12041,7 +12037,7 @@ module ejs {
         @spec ejs
         @spec evolving
      */
-    native final class Void {
+    final class Void {
 
         /* WARNING: Do not add properties here. Null must have no properties beyond those inherited by Object */
 
@@ -12349,9 +12345,9 @@ module ejs {
 module ejs {
 
     /**
-     *  The XML class provides a simple ability to load, parse and save XML documents.
+        The XML class provides a simple ability to load, parse and save XML documents.
      */
-    final native class XML {
+    final class XML {
 
         use default namespace public
 
@@ -13030,7 +13026,7 @@ module ejs {
         @spec ejs
         @hide
      */
-    final native class XMLList {
+    final class XMLList {
 
         use default namespace public
 
@@ -18417,6 +18413,7 @@ module ejs.web {
          */
         enumerable var config: Object
 
+//  MOB - better named documents
         /** 
             Default local directory for web documents to serve. This is used as the default Request.dir value.
          */
@@ -18464,6 +18461,7 @@ module ejs.web {
         native function get port(): Number 
 
 
+//  MOB - better named home
         /** 
             Default root directory for the server. The app does not change its current directory to this path.
          */
@@ -18510,6 +18508,15 @@ MOB - more explanation about what is in the ServerRoot
                 })
             }
             server.listen("127.0.0.1:7777")
+
+//  MOB - better HttpServer(options)
+            {
+                home: "dir"
+                documents: "web"
+                threaded: true
+                ejsrc: "ejsrc"
+                other config to blend
+            }
          */
         function HttpServer(documentRoot: Path = ".", serverRoot: Path = ".") {
             this.documentRoot = documentRoot
@@ -19004,7 +19011,7 @@ module ejs.web {
                 let controller = params.controller = params.controller.toPascal()
                 let mod = dirs.cache.join(controller).joinExt(ext.mod)
                 if (controller != "Base") {
-                    if (!global[controller + "Controller"] || (mod.exists && !config.cache.reload)) {
+                    if (!global[controller + "Controller"] && mod.exists && !config.cache.reload) {
                         loadComponent(request, mod)
                     } else {
                         files = [dirs.controllers.join(controller).joinExt(ext.es)]
@@ -21751,6 +21758,7 @@ module ejs.web {
                 headers["Expires"] = when.toUTCString()
             }
         }
+//  MOB OPT cache request.method
         if (request.method == "GET" || request.method == "POST") {
             headers["Content-Length"] = filename.size
             if (request.config.web.nosend) {
@@ -21777,6 +21785,7 @@ module ejs.web {
         } else if (request.method == "HEAD") {
             /* No need to calculate the content */
             headers["Content-Length"] = filename.size
+            // request.setHeader("Content-Length", filename.size)
 
         } else {
             status = Http.BadMethod
@@ -23531,12 +23540,8 @@ print("CATCH " + e)
             @param app Web application function 
          */
         static function process(app: Function, request: Request, finalize: Boolean = true): Void {
-print("AA")
-print("request.server " + request.server)
             request.config = request.server.config
-dump("CONFIG", request.config)
             try {
-print("ROUTE " + request.route)
                 if (request.route && request.route.middleware) {
                     app = Middleware(app, request.route.middleware)
                 }

@@ -2128,9 +2128,11 @@ extern void mprVirtFree(void *ptr, ssize size);
  */
 #if BLD_MEMORY_DEBUG
     extern void *mprSetName(void *ptr, cchar *name);
+    extern void *mprCopyName(void *dest, void *src);
     #define mprGetName(ptr) (MPR_GET_MEM(ptr)->name)
     #define mprPassName(ptr, name) mprSetName(ptr, name)
 #else
+    #define mprCopyName(dest, src)
     #define mprGetName(ptr) ""
     #define mprPassName(ptr, name) ptr
     #define mprSetName(ptr, name)

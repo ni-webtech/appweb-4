@@ -169,6 +169,12 @@ MAIN(ejscMain, int argc, char **argv)
                     app->modules = mprCreateList(-1, 0);
                 }
                 modules = sclone(argv[++nextArg]);
+#if MACOSX
+                //  FIX FOR XCODE MANGLING COMMAND LINE ARGS
+                if (modules[0] == ' ') {
+                    modules[0] = '\0';                    
+                }
+#endif
                 name = stok(modules, " \t,", &tok);
                 while (name != NULL) {
                     require(name);
@@ -298,8 +304,10 @@ MAIN(ejscMain, int argc, char **argv)
             optionally also save to module files.
          */
         if (ecCompile(cp, argc - nextArg, &argv[nextArg]) < 0) {
-            mprRawLog(0, "%s\n", cp->errorMsg);
             err++;
+        }
+        if (cp->warningCount > 0 || cp->errorCount > 0) {
+            mprRawLog(0, "%s\n", cp->errorMsg);
         }
     }
     if (cp->errorCount > 0) {
@@ -314,9 +322,6 @@ static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(app->compiler);
-#if UNUSED
-        mprMark(app->ejsService);
-#endif
         mprMark(app->ejs);
         mprMark(app->modules);
     }
