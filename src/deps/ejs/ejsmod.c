@@ -235,6 +235,7 @@ static void      buildMethodList(EjsMod *mp, MprList *methods, EjsObj *obj, EjsO
 static int       compareClasses(ClassRec **c1, ClassRec **c2);
 static int       compareFunctions(FunRec **f1, FunRec **f2);
 static int       compareProperties(PropRec **p1, PropRec **p2);
+static int       compareStrings(EjsString **q1, EjsString **q2);
 static int       compareNames(char **q1, char **q2);
 static EjsDoc    *crackDoc(EjsMod *mp, EjsDoc *doc, EjsName qname);
 static MprFile   *createFile(EjsMod *mp, char *name);
@@ -462,7 +463,7 @@ static void generateNamespaceList(EjsMod *mp)
         }
         type = ejsGetProperty(ejs, ejs->global, slotNum);
         qname = ejsGetPropertyName(ejs, ejs->global, slotNum);
-        if (type == 0 || !ejsIsType(ejs, type) || qname.name == 0 || ejsCompareMulti(ejs, qname.space, "internal-") != 0) {
+        if (type == 0 || !ejsIsType(ejs, type) || qname.name == 0 || ejsStartsWithMulti(ejs, qname.space, "internal-")) {
             continue;
         }
         doc = getDoc(ejs, ejs->global, slotNum);
@@ -1756,7 +1757,7 @@ static void generateMethod(EjsMod *mp, FunRec *fp)
                 defaultValue = getDefault(doc, param->key);
                 i = findArg(ejs, fun, param->key);
                 if (i < 0) {
-                    mprError("Bad @param reference for \"%s\" in function \"%s\" in type \"%s\"", param->key, 
+                    mprError("Bad @param reference for \"%s\" in function \"%@\" in type \"%@\"", param->key, 
                         qname.name, fp->ownerName.name);
                 } else {
                     argName = ejsGetPropertyName(ejs, fun->activation, i);
@@ -2493,7 +2494,7 @@ static char *fmtType(Ejs *ejs, EjsName qname)
     }
     if (*namespace) {
         if (*namespace) {
-            mprSprintf(buf, sizeof(buf), "%N", namespace, qname.name);
+            mprSprintf(buf, sizeof(buf), "%s::%@", namespace, qname.name);
         } else {
             mprSprintf(buf, sizeof(buf), "%@", qname.name);
         }
@@ -2642,19 +2643,19 @@ static void getKeyValue(MprChar *str, MprChar **key, MprChar **value)
 
 static int compareProperties(PropRec **p1, PropRec **p2)
 {
-    return compareNames((char**) &(*p1)->qname.name, (char**) &(*p2)->qname.name);
+    return compareStrings(&(*p1)->qname.name, &(*p2)->qname.name);
 }
 
 
 static int compareFunctions(FunRec **f1, FunRec **f2)
 {
-    return compareNames((char**) &(*f1)->qname.name, (char**) &(*f2)->qname.name);
+    return compareStrings(&(*f1)->qname.name, &(*f2)->qname.name);
 }
 
 
 static int compareClasses(ClassRec **c1, ClassRec **c2)
 {
-    return compareNames((char**) &(*c1)->qname.name, (char**) &(*c2)->qname.name);
+    return compareStrings(&(*c1)->qname.name, &(*c2)->qname.name);
 }
 
 
@@ -2678,13 +2679,30 @@ static cchar *demangleCS(cchar *name)
 
 static int compareNames(char **q1, char **q2)
 {
-    char    *s1, *s2, *cp;
+    cchar    *s1, *s2, *cp;
 
-    s1 = *q1;
-    s2 = *q2;
+    s1 = demangleCS(*q1);
+    s2 = demangleCS(*q2);
 
-    s1 = (char*) demangleCS(s1);
-    s2 = (char*) demangleCS(s2);
+    /*
+        Don't sort on the namespace portions of the name
+     */
+    if ((cp = strrchr(s1, ':')) != 0) {
+        s1 = cp + 1;
+    }
+    if ((cp = strrchr(s2, ':')) != 0) {
+        s2 = cp + 1;
+    }
+    return scasecmp(s1, s2);
+}
+
+
+static int compareStrings(EjsString **q1, EjsString **q2)
+{
+    cchar    *s1, *s2, *cp;
+
+    s1 = demangle(ejs, *q1);
+    s2 = demangle(ejs, *q2);
 
     /*
         Don't sort on the namespace portions of the name
