@@ -135,3 +135,17 @@ $(BLD_BIN_DIR)/jem.cmd: jem.cmd
 
 cleanExtra:
 	rm -fr $(BLD_LIB_DIR)/www
+
+dependExtra: $(BLD_INC_DIR)/ejs.slots.h
+
+$(BLD_INC_DIR)/ejs.slots.h: slots.h
+	rm -f $(BLD_INC_DIR)/ejs.slots.h
+	cp slots.h $(BLD_INC_DIR)/ejs.slots.h
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4 noexpandtab
+#

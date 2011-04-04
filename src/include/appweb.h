@@ -81,7 +81,6 @@ typedef struct MaAppweb {
 
 /** Create the Appweb object.
     @description Appweb uses a singleton Appweb object to manage multiple web servers instances.
-    @param ctx Any memory context object returned by mprAlloc
     @return A Http object. Use mprFree to close and release.
     @ingroup Appweb
  */
@@ -90,7 +89,7 @@ extern MaAppweb *maCreateAppweb();
 /**
     Start Appweb services
     @description This starts listening for requests on all configured servers.
-    @param http Http object created via #maCreateHttp
+    @param appweb Appweb object created via #maCreateAppweb
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
  */
@@ -99,7 +98,7 @@ extern int maStartAppweb(MaAppweb *appweb);
 /**
     Stop Appweb services
     @description This stops listening for requests on all configured servers. Shutdown is somewhat graceful.
-    @param http Http object created via #maCreateHttp
+    @param appweb Appweb object created via #maCreateAppweb
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
  */
@@ -108,7 +107,7 @@ extern int maStopAppweb(MaAppweb *appweb);
 /**
     Set the Http User
     @description Define the user name under which to run the Appweb service
-    @param http Http object created via #maCreateHttp
+    @param appweb Appweb object created via #maCreateAppweb
     @param user User name. Must be defined in the system password file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
@@ -121,7 +120,7 @@ extern void maGetUserGroup(MaAppweb *appweb);
 /**
     Set the Http Group
     @description Define the group name under which to run the Appweb service
-    @param http Http object created via #maCreateHttp
+    @param appweb Appweb object created via #maCreateAppweb
     @param group Group name. Must be defined in the system group file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
@@ -165,8 +164,8 @@ extern int maUploadFilterInit(Http *http, MprModule *mp);
     parses a file to define the server and virtual host configuration.
     @stability Evolving
     @defgroup MaMeta MaMeta
-    @see MaMeta maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateServer 
-        maConfigureServer maSplitConfigValue
+    @see MaMeta maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateMeta 
+        maConfigureMeta maSplitConfigValue
  */
 typedef struct MaMeta {
     char            *name;                  /**< Unique name for this meta-server */
@@ -190,9 +189,9 @@ typedef struct MaMeta {
 extern MaMeta *maCreateWebServer(cchar *configFile);
 
 /** Service a web server
-    @description Run a web server configuration. This is will start http services via #maStartHttp and will service
+    @description Run a web server configuration. This is will start http services via $maStartMeta and will service
         incoming Http requests until instructed to exit. This is often used in conjunction with #maCreateWebServer.
-    @param http Http object created via #maCreateWebServer or #maCreateHttp.
+    @param meta Meta server object created via #maCreateWebServer or #maCreateMeta.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup MaMeta
  */
@@ -226,11 +225,11 @@ extern int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot);
         modules  and performs minimal configuration. To use the server object created, more configuration will be 
         required before starting Http services.
         If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
-    @param http Http object returned from #maCreateHttp
+    @param appweb Http object returned from #maCreateAppweb
     @param name Name of the web server. This name is used as the initial server name.
     @param root Server root directory
     @param ip If not-null, create and open a listening endpoint on this IP address. If you are configuring via a
-        config file, use #maConfigureServer and set ip to null.
+        config file, use #maConfigureMeta and set ip to null.
     @param port Port number to listen on. Set to -1 if you do not want to open a listening endpoint on ip:port
     @return MaMeta A newly created MaMeta object. Use mprFree to free and release.
     @ingroup MaMeta
@@ -241,7 +240,7 @@ extern MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *i
     Configure a web server.
     @description This will configure a web server based on either a configuration file or using the supplied
         IP address and port. 
-    @param server MaMeta object created via #maCreateServer
+    @param meta MaMeta object created via #maCreateMeta
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @param serverRoot Admin directory for the server. This overrides the value in the config file.
     @param documentRoot Default directory for web documents to serve. This overrides the value in the config file.
@@ -258,6 +257,11 @@ extern int      maParseConfig(MaMeta *meta, cchar *configFile);
 extern void     maSetMetaAddress(MaMeta *meta, cchar *ip, int port);
 extern void     maSetMetaRoot(MaMeta *meta, cchar *path);
 extern int      maSplitConfigValue(char **s1, char **s2, char *buf, int quotes);
+
+/**
+    Start a meta server
+    @param meta Object created via #maCreateMeta
+ */
 extern int      maStartMeta(MaMeta *meta);
 extern int      maStopMeta(MaMeta *meta);
 extern int      maValidateConfiguration(MaMeta *meta);

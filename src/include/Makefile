@@ -6,16 +6,6 @@
 
 include		.makedep
 
-dependExtra:
-	chmod +w $(BLD_INC_DIR)/*.h
-	rm -f $(BLD_INC_DIR)/*.slots.h
-	cp master/*slots.h $(BLD_INC_DIR)
-
-cleanExtra:
-	mkdir -p $(BLD_INC_DIR)
-	rm -f $(BLD_INC_DIR)/*.slots.h
-	cp master/*slots.h $(BLD_INC_DIR)
-
 #
 #   Local variables:
 #   tab-width: 4

@@ -55,6 +55,7 @@ $(DIST_VER):
 	cp $(BLD_TOP)/doc/man/auth.1 $(TDIR)/doc/man
 	@$(call log) "[Generate]" "tar cfz $(DIST_VER) -C $(STAGE_DIR) ."
 	tar cfz $(DIST_VER) -C $(STAGE_DIR) .
+	cd $(REL_DIR) ; ln -s $(DIST_VER_NAME) $(DIST_PERM_NAME)
 
 flat $(FLAT_VER):
 	cp -r $(BLD_LIB_DIR)/www $(TDIR)

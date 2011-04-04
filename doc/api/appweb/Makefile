@@ -8,12 +8,15 @@ STAGING		:= staging
 include		.makedep
 
 gen:
-	make -C ../../../package/all combo
+	make -C ../../../package/dist dist
 	rm -fr ./$(STAGING) xml html
 	mkdir -p ./$(STAGING) xml html
-	tar xf ../../../releases/$(BLD_PRODUCT)-all.tgz -C $(STAGING)
+	tar xf $(BLD_OUT_DIR)/releases/$(BLD_PRODUCT)-dist.tgz -C $(STAGING)
+	mv $(STAGING)/appweb-$(BLD_VERSION)/* $(STAGING)
+	rmdir $(STAGING)/appweb-$(BLD_VERSION)
 	$(call log) "[Generate]" "doxygen appweb.spec"
 	doxygen appweb.spec
+	$(call log) "[Transform]" "gendoc"
 	ejs $(BLD_TOOLS_DIR)/gendoc.es --bare --title "Appweb Native API" --tags ../appweb.tags \
 		xml/appweb_8h.xml xml/group* xml/struct_*.xml >../appwebBare.html
 	ejs $(BLD_TOOLS_DIR)/gendoc.es --title "Appweb Native API" --tags ../appweb.tags \

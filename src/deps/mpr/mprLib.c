@@ -2724,7 +2724,7 @@ bool mprIsFinished()
 }
 
 
-void mprWaitTillIdle(MprTime timeout)
+int mprWaitTillIdle(MprTime timeout)
 {
     MprTime     mark;
 
@@ -2732,6 +2732,7 @@ void mprWaitTillIdle(MprTime timeout)
     while (!mprIsIdle() && mprGetRemainingTime(mark, timeout) > 0) {
         mprSleep(1);
     }
+    return mprIsIdle();
 }
 
 

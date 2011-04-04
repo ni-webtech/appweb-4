@@ -1390,20 +1390,28 @@ typedef EjsFun EjsNativeFunction;
 typedef int (*EjsSortFn)(Ejs *ejs, EjsAny *p1, EjsAny *p2, cchar *name, int order);
 
 /**
-    Initialize a Qualified Name structure
+    Initialize a Qualified Name structure using a wide namespace and name
     @description Initialize the statically allocated qualified name structure using a name and namespace.
-    @param qname Reference to an existing, uninitialized EjsName structure
+        @param ejs Interpreter instance returned from #ejsCreate
     @param space Namespace string
     @param name Name string
     @return A reference to the qname structure
     @ingroup EjsName
  */
+extern EjsName ejsWideName(Ejs *ejs, MprChar *space, MprChar *name);
 
-//  MOB -- NAMING
+/**
+    Initialize a Qualified Name structure
+    @description Initialize the statically allocated qualified name structure using a name and namespace.
+    @param ejs Interpreter instance returned from #ejsCreate
+    @param space Namespace string
+    @param name Name string
+    @return A reference to the qname structure
+    @ingroup EjsName
+ */
+extern EjsName ejsName(Ejs *ejs, cchar *space, cchar *name);
 extern EjsName ejsEmptyWideName(Ejs *ejs, MprChar *name);
 extern EjsName ejsEmptyName(Ejs *ejs, cchar *name);
-extern EjsName ejsWideName(Ejs *ejs, MprChar *space, MprChar *name);
-extern EjsName ejsName(Ejs *ejs, cchar *space, cchar *name);
 
 //  MOB -- NAMING
 #define WEN(name) ejsEmptyWideName(ejs, name)
@@ -1494,6 +1502,7 @@ typedef struct EjsPot {
     /** 
         Determine if a variable is a Pot.
         @description This call tests if the variable is a Pot.
+        @param ejs Interpreter instance returned from #ejsCreate
         @param obj Object to test
         @returns True if the variable is based on EjsPot
         @ingroup EjsPot
@@ -1690,7 +1699,7 @@ extern EjsAny *ejsInvokeOperatorDefault(Ejs *ejs, EjsAny *obj, int opCode, EjsAn
     @param ejs Interpreter instance returned from #ejsCreate
     @param obj Variable to examine
     @param qname Qualified name of the property to search for.
-    @return The slot number containing the property. Then use #ejsGetProperty to retrieve the property or alternatively
+    @return The slot number containing the property. Then use $ejsGetProperty to retrieve the property or alternatively
         use ejsGetPropertyByName to lookup and retrieve in one step.
     @ingroup EjsAny
  */
@@ -1769,7 +1778,7 @@ extern EjsAny *ejsCreateEmptyPot(Ejs *ejs);
 /** 
     Create an object instance of the specified type
     @description Create a new object using the specified type as a base class. 
-        Note: the constructor is not called. If you require the constructor to be invoked, use #ejsCreateInstance
+        Note: the constructor is not called. If you require the constructor to be invoked, use ejsCreateInstance
     @param ejs Interpreter instance returned from #ejsCreate
     @param type Base type to use when creating the object instance
     @param size Number of extra slots to allocate when creating the object
@@ -1817,8 +1826,8 @@ extern int ejsGrowPot(Ejs *ejs, EjsPot *obj, int numSlots);
     Mark an object as currently in use.
     @description Mark an object as currently active so the garbage collector will preserve it. This routine should
         be called by native types that extend EjsObj in their markVar helper.
-    @param ejs Interpreter instance returned from #ejsCreate
     @param obj Object to mark as currently being used.
+    @param flags manager flags
     @ingroup EjsObj
  */
 extern void ejsManagePot(void *obj, int flags);
@@ -1864,6 +1873,7 @@ extern bool ejsMatchName(Ejs *ejs, EjsName *a, EjsName *b);
     Create a string object
     @param ejs Ejs reference returned from #ejsCreate
     @param value C string value to define for the string object. Note: this will soon be changed to unicode.
+    @param len Length of string to examine in value
     @stability Prototype
     @return A string object
     @ingroup EjsString
@@ -1890,8 +1900,7 @@ extern EjsString *ejsCreateNonInternedString(Ejs *ejs, MprChar *value, ssize len
 /** 
     Intern a string object. This stores the string in the internal string pool. This is required if the string was
     created via ejsCreateBareString. The ejsCreateString routine will intern the string automatcially.
-    @param ejs Ejs reference returned from #ejsCreate
-    @param len Length of space to reserve for future string data
+    @param sp String object to intern
     @return The internalized string object. NOTE: this may be different to the object passed in, if the string value
         was already present in the intern pool.
     @ingroup EjsString
@@ -2022,6 +2031,7 @@ typedef struct EjsBlock {
     /** 
         Determine if a variable is a block.
         @description This call tests if the variable is a block.
+        @param ejs Interpreter instance returned from #ejsCreate
         @param obj Object to test
         @returns True if the variable is based on EjsBlock
         @ingroup EjsBlock
@@ -2115,7 +2125,7 @@ extern int ejsAddConstant(Ejs *ejs, EjsConstants *constants, cchar *str);
 
 typedef struct EjsLine {
     int         offset;                     /**< Optional PC offsets of each line in function */
-    MprChar     *source;                    /**< Program source code. Format: path@line: code */         
+    MprChar     *source;                    /**< Program source code. Format: path line: code */         
 } EjsLine;
 
 
@@ -2212,6 +2222,7 @@ typedef struct EjsFunction {
     /** 
         Determine if a variable is a function. This will return true if the variable is a function of any kind, including
             methods, native and script functions or initializers.
+        @param ejs Interpreter instance returned from #ejsCreate
         @param obj Variable to test
         @return True if the variable is a function
         @ingroup EjsFunction
@@ -2221,6 +2232,7 @@ typedef struct EjsFunction {
     /** 
         Determine if the function is a native function. Functions can be either native - meaning the implementation is
             via a C function, or can be scripted.
+        @param ejs Interpreter instance returned from #ejsCreate
         @param obj Object to test
         @return True if the variable is a native function.
         @ingroup EjsFunction
@@ -2230,6 +2242,7 @@ typedef struct EjsFunction {
     /** 
         Determine if the function is an initializer. Initializers are special functions created by the compiler to do
             static and instance initialization of classes during construction.
+        @param ejs Interpreter instance returned from #ejsCreate
         @param obj Object to test
         @return True if the variable is an initializer
         @ingroup EjsFunction
@@ -2345,6 +2358,7 @@ typedef struct EjsFrame {
 #if DOXYGEN
     /** 
         Determine if a variable is a frame. Only used internally in the VM.
+        @param ejs Interpreter instance returned from #ejsCreate
         @param obj Object to test
         @return True if the variable is a frame. 
         @ingroup EjsFrame
@@ -3211,7 +3225,8 @@ typedef struct EjsXML {
 #if DOXYGEN
     /** 
         Determine if a variable is an XML object
-        @param Object to test
+        @param ejs Ejs reference returned from #ejsCreate
+        @param obj Object to test
         @return true if the variable is an XML or XMLList object
         @ingroup EjsXML
      */
@@ -3345,6 +3360,7 @@ typedef struct EjsType {
 #if DOXYGEN
     /** 
         Determine if a variable is an type
+        @param ejs Ejs reference returned from #ejsCreate
         @param obj Object to test
         @return True if the variable is a type
         @ingroup EjsType
@@ -3353,6 +3369,7 @@ typedef struct EjsType {
 
     /** 
         Determine if a variable is a prototype object. Types store the template for instance properties in a prototype object
+        @param ejs Ejs reference returned from #ejsCreate
         @param obj Object to test
         @return True if the variable is a prototype object.
         @ingroup EjsType
@@ -3373,26 +3390,30 @@ typedef struct EjsType {
     @param baseType Base type for this type.
     @param prototype Prototype object instance properties of this type.
     @param size Size of instances. This is the size in bytes of an instance object.
-    @param slotNum Slot number that the type will be installed at. This is used by core types to define a unique type ID. 
-        For non-core types, set to -1.
+    @param sid Unique type ID for core types. For non-core types, set to -1.
     @param numTypeProp Number of type (class) properties for the type. These include static properties and methods.
     @param numInstanceProp Number of instance properties.
     @param attributes Attribute mask to modify how the type is initialized.
-    @param data
     @ingroup EjsType EjsType
  */
 extern EjsType *ejsCreateType(Ejs *ejs, EjsName name, struct EjsModule *up, EjsType *baseType, EjsPot *prototype,
-    int size, int typeId, int numTypeProp, int numInstanceProp, int64 attributes);
+    int size, int sid, int numTypeProp, int numInstanceProp, int64 attributes);
+
+//  DOC
 extern EjsType *ejsConfigureType(Ejs *ejs, EjsType *type, struct EjsModule *up, EjsType *baseType, 
     int numTypeProp, int numInstanceProp, int64 attributes);
 
 #define EJS_OBJ_HELPERS 1
 #define EJS_POT_HELPERS  2
 
+//  DOC
 extern EjsType  *ejsCreateNativeType(Ejs *ejs, EjsName qname, int size, int sid, int numProp, void *manager, int helpers);
+//  DOC
 extern EjsType  *ejsConfigureNativeType(Ejs *ejs, EjsName qname, int size, void *manager, int helpers);
 
+//  DOC
 extern EjsObj *ejsCreatePrototype(Ejs *ejs, EjsType *type, int numProp);
+//  DOC
 extern EjsType *ejsCreateArchetype(Ejs *ejs, struct EjsFunction *fun, EjsPot *prototype);
 
 /** 
