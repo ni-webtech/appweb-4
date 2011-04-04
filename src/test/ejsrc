@@ -2,7 +2,7 @@
 {
     mode: "debug",
     cache: {
-        enable: false,
+        enable: true,
         reload: false,
     },
     directories: {

@@ -101,7 +101,8 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
             once = 0;
         }
         mprSetLogLevel(level);
-        mprSetLogHandler(logHandler, (void*) file);
+        mprSetLogHandler(logHandler);
+        mprSetLogFile(file);
 #if FUTURE && !BLD_WIN_LIKE
         /*
             TODO - The currently breaks MprCmd as it will close stderr.

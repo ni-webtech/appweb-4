@@ -882,7 +882,6 @@ struct EjsXML;
 #define EJS_FLAG_NO_INIT        0x8         /**< Don't initialize any modules*/
 #define EJS_FLAG_DOC            0x40        /**< Load documentation from modules */
 #define EJS_FLAG_NOEXIT         0x200       /**< App should service events and not exit */
-#define EJS_FLAG_DYNAMIC        0x400       /**< Make a type that is dynamic itself */
 #define EJS_STACK_ARG           -1          /* Offset to locate first arg */
 
 /** 
@@ -1141,10 +1140,6 @@ typedef void (*EjsLoaderCallback)(struct Ejs *ejs, int kind, ...);
  */
 typedef struct EjsIntern {
     EjsString       *buckets;               /**< Hash buckets and references to link chains of strings (unicode) */
-#if XXX
-    MprSpin         *spin;                  /**< Multithread sync */
-    struct Ejs      *ejs;                   /**< Owning interpreter */
-#endif
     int             size;                   /**< Size of hash */
     int             reuse;
     uint64          accesses;
@@ -1157,6 +1152,7 @@ typedef struct EjsIntern {
 #define S_Block                 2
 #define S_Boolean               3
 #define S_ByteArray             4
+#define S_Config                5
 #define S_Date                  6
 #define S_Error                 7
 #define S_ErrorEvent            8
@@ -1181,17 +1177,9 @@ typedef struct EjsIntern {
 #define S_Worker                40
 #define S_XML                   41
 #define S_XMLList               42
-
 #define S_Request               43
 #define S_Session               44
 #define S_Web                   45
-
-#if UNUSED
-#define S_Config                5
-#define S_HttpServer            15
-#define S_Math                  17
-#define S_Socket                33
-#endif
 
 #define S_commaProt             50
 #define S_empty                 51
@@ -1241,9 +1229,6 @@ typedef struct Ejs {
     EjsAny              *result;            /**< Last expression result */
     struct EjsState     *state;             /**< Current evaluation state and stack */
     struct EjsService   *service;           /**< Back pointer to the service */
-#if XXX
-    EjsIntern           *intern;            /**< Interned Unicode string hash - shared over all interps */
-#endif
     cchar               *bootSearch;        /**< Module search when bootstrapping the VM */
     struct EjsArray     *search;            /**< Module load search path */
     cchar               *className;         /**< Name of a specific class to run for a program */
@@ -1344,6 +1329,7 @@ typedef struct Ejs {
     int                 serializeDepth;     /**< Serialization depth */
     int                 spreadArgs;         /**< Count of spread args */
     int                 gc;                 /**< GC required (don't make bit field) */
+    uint                configSet: 1;       /**< Config properties defined */
     uint                compiling: 1;       /**< Currently executing the compiler */
     uint                destroying: 1;      /**< Interpreter is being destroyed */
     uint                dontExit: 1;        /**< Prevent App.exit() from exiting */
@@ -1915,9 +1901,6 @@ extern EjsString *ejsInternMulti(struct Ejs *ejs, cchar *value, ssize len);
 extern EjsString *ejsInternAsc(struct Ejs *ejs, cchar *value, ssize len);
 extern EjsString *ejsInternWide(struct Ejs *ejs, MprChar *value, ssize len);
 extern void ejsManageIntern(Ejs *ejs, int flags);
-#if XXX
-extern EjsIntern *ejsCreateIntern(Ejs *ejs);
-#endif
 extern void ejsDestroyIntern(EjsIntern *intern);
 
 extern int       ejsAtoi(Ejs *ejs, EjsString *sp, int radix);
@@ -3406,7 +3389,7 @@ extern EjsType *ejsConfigureType(Ejs *ejs, EjsType *type, struct EjsModule *up, 
 #define EJS_OBJ_HELPERS 1
 #define EJS_POT_HELPERS  2
 
-extern EjsType  *ejsCreateNativeType(Ejs *ejs, EjsName qname, int id, int size, void *manager, int helpers);
+extern EjsType  *ejsCreateNativeType(Ejs *ejs, EjsName qname, int size, int sid, int numProp, void *manager, int helpers);
 extern EjsType  *ejsConfigureNativeType(Ejs *ejs, EjsName qname, int size, void *manager, int helpers);
 
 extern EjsObj *ejsCreatePrototype(Ejs *ejs, EjsType *type, int numProp);
@@ -3420,7 +3403,6 @@ extern EjsType *ejsCreateArchetype(Ejs *ejs, struct EjsFunction *fun, EjsPot *pr
         create the function/method definitions. Then use #ejsBindMethod to associate a C function with a property.
     @ingroup EjsType
  */
-//  XX
 extern int ejsDefineGlobalFunction(Ejs *ejs, EjsString *name, EjsFun fn);
 
 /*
@@ -3592,6 +3574,7 @@ extern int      ejsDefineErrorTypes(Ejs *ejs);
 extern void     ejsInheritBaseClassNamespaces(Ejs *ejs, EjsType *type, EjsType *baseType);
 extern void     ejsSetSqliteMemCtx(MprThreadLocal *tls);
 extern void     ejsSetSqliteTls(MprThreadLocal *tls);
+extern void     ejsDefineConfigProperties(Ejs *ejs);
 
 #if BLD_FEATURE_SQLITE
 extern int      ejs_db_sqlite_Init(Ejs *ejs, MprModule *mp);
@@ -3662,17 +3645,13 @@ typedef struct EjsService {
     MprHashTable    *nativeModules;
     Http            *http;
     uint            dontExit: 1;        /**< Prevent App.exit() from exiting */
-#if XXX || 1
     EjsIntern       *intern;            /**< Interned Unicode string hash - shared over all interps */
     EjsObj          *foundation;        /**< Foundational native types */
     EjsAny          *values[EJS_MAX_SPECIAL];
-#endif
     MprMutex        *mutex;             /**< Multithread locking */
 } EjsService;
 
-#if XXX || 1
 extern EjsIntern *ejsCreateIntern(EjsService *sp);
-#endif
 extern int ejsInitCompiler(EjsService *sp);
 extern void ejsAttention(Ejs *ejs);
 extern void ejsClearAttention(Ejs *ejs);
@@ -3841,6 +3820,7 @@ extern void ejsShowCurrentScope(Ejs *ejs);
 extern void ejsShowStack(Ejs *ejs, EjsFunction *fp);
 extern void ejsShowBlockScope(Ejs *ejs, EjsBlock *block);
 extern int  ejsRedirectLogging(char *logSpec);
+extern void ejsRedirectLoggingToFile(MprFile *file, int level);
 extern void ejsCreateObjHelpers(Ejs *ejs);
 extern void ejsCloneObjHelpers(Ejs *ejs, EjsType *type);
 extern void ejsClonePotHelpers(Ejs *ejs, EjsType *type);
@@ -4295,6 +4275,7 @@ typedef struct EjsHttpServer {
     char            *name;                      /**< Server name */
     int             port;                       /**< Listening port */
     int             async;                      /**< Async mode */
+    int             cloned;                     /**< Server was cloned */
     EjsObj          *emitter;                   /**< Event emitter */
     EjsObj          *limits;                    /**< Limits object */
     EjsPot          *sessions;                  /**< Session cache */

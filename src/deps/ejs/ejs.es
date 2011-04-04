@@ -4692,7 +4692,7 @@ module ejs {
         The Frame type is used for activation call frames. 
         @stability evolving
      */
-    final class Frame extends Function { }
+    dynamic class Frame extends Function { }
 }
 
 /*
@@ -6764,23 +6764,26 @@ module ejs {
             let initializer, code
             let cache: Path = cached(id, config)
             if (path) {
-                if (cache && cache.exists && cache.modified >= path.modified) {
+                if (cache && cache.exists && (!config.cache.reload || cache.modified > path.modified)) {
                     /* Cache mod file exists and is current */
-                    App.log.debug(4, "Use cache for: " + path)
                     if (initializers[path]) {
+                        App.log.debug(4, "Use memory cache for \"" + path + "\"")
                         initializer = initializers[path]
                         signatures[path] = exports = {}
                         initializer(require, exports, {id: id, path: path}, null)
                         return exports
                     }
-                    initializer = global.load(cache)
+                    App.log.debug(4, "Use disk cache for \"" + path + "\" from \"" + cache + "\"")
+                    try { initializer = global.load(cache); } catch {}
+
                 } else {
-                    /* Missing cache mod file */
+                    /* Missing or out of date cache mod file */
                     if (initializers[path] && config.cache.preloaded) {
                         //  Everything compiled flat - everything in App.mod
                         //  MOB -- warning. This prevents reload working. Should rebuild all and reload.
                         initializer = initializers[path]
                         signatures[path] = exports = {}
+                        App.log.debug(4, "Use preloaded \"" + path + "\"")
                         initializer(require, exports, {id: id, path: path}, null)
                         return exports
                     }
@@ -6793,12 +6796,16 @@ module ejs {
                         code = wrap(id, path.readString())
                     }
                     if (cache) {
-                        App.log.debug(4, "Recompile module to: " + cache)
+                        App.log.debug(4, "Recompile \"" + path + "\" to \"" + cache + "\"")
+                    } else {
+                        App.log.debug(4, "Compile \"" + path + "\" no caching")
                     }
                     initializer = eval(code, cache)
                 }
                 timestamps[path] = path.modified
-            } else {
+            }
+            if (initializer == null) {
+                App.log.debug(4, "Compile \"" + path + "\" to \"" + cache + "\"")
                 if (codeReader) {
                     code = codeReader(id, path)
                 } else {
@@ -6822,7 +6829,7 @@ module ejs {
                 if (dir.exists) {
                     return Path(dir).join(md5(id)).joinExt('.mod')
                 } else {
-                    App.log.error("Can't find cache directory: " + dir)
+                    App.log.error("Can't find cache directory: \"" + dir + "\"")
                 }
             }
             return null
@@ -7291,8 +7298,9 @@ module ejs {
             if (_pattern && !origin.match(_pattern)) {
                 return
             }
-            if (_filter && !filter(this, origin, level, kind, msg))
+            if (_filter && !filter(this, origin, level, kind, msg)) {
                 return
+            }
             if (_outStream is Logger) {
                 _outStream.emit(origin, level, kind, msg)
             } else {
@@ -18449,7 +18457,7 @@ module ejs.web {
 
         /**
             The authorized public host name for the server. If defined, this name will be used in preference for 
-            request redirections. Defaults to the listening IP address if specified.
+            request redirections. If no name is defined, redirections will use to the listening IP address by default.
          */
         native function get name(): String 
         native function set name(hostname: String): Void
@@ -18483,10 +18491,8 @@ module ejs.web {
             If an "ejsrc" file exists in the server root, it will be loaded and update the "$config" properties.
             @param documentRoot Directory containing web documents to serve. If set to null and the HttpServer is hosted,
                 the documentRoot will be defined by the web server.
-MOB - more explanation about what is in the ServerRoot
-            @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
-                the serverRoot will be defined by the web server. The serverRoot directory may contain an optional "ejsrc"
-                configuration file to load.
+            @param serverRoot Base directory for the server ejsrc configuration file. If set to null and the HttpServer is 
+                hosted, the serverRoot will be defined by the web server.
             @spec ejs
             @stability prototype
             @example: This is a fully async server:
@@ -18529,14 +18535,19 @@ MOB - more explanation about what is in the ServerRoot
                     App.updateLog()
                 }
             }
-            let dirs = config.directories
-            for (let [key,value] in dirs) {
-                //  MOB - multiple servers will keep prepending the doc root
-                //  MOB - TEMP hack
-                if (!value.toString().startsWith(documentRoot)) {
-                    dirs[key] = documentRoot.join(value)
+        /* UNUSED
+            directories must be relative to the serverRoot directory
+            if (1 || documentRoot != ".") {
+                let dirs = config.directories
+                for (let [key,value] in dirs) {
+                    //  MOB - multiple servers will keep prepending the doc root
+                    //  MOB - TEMP hack
+                    if (!value.toString().startsWith(documentRoot)) {
+                        dirs[key] = documentRoot.join(value)
+                    }
                 }
             }
+        */
         }
 
         /** 
@@ -20879,7 +20890,6 @@ module ejs.web {
             for each (r in routeSet) {
                 log.debug(5, "Test route \"" + r.name + "\"")
                 if (r.match(request)) {
-                    log.debug(3, "Match route \"" + r.name + "\"")
                     return makeApp(request, r)
                 }
             }
@@ -20887,7 +20897,6 @@ module ejs.web {
             for each (r in routeSet) {
                 log.debug(5, "Test route \"" + r.name + "\"")
                 if (r.match(request)) {
-                    log.debug(3, "Match route \"" + r.name + "\"")
                     return makeApp(request, r)
                 }
             }
@@ -23355,8 +23364,7 @@ module ejs.web {
         private static var defaultConfig = {
             cache: {
                 enable: true,
-                //  MOB - not yet supported
-                reload: false,
+                reload: true,
             },
             directories: {
                 cache: Path("cache"),
@@ -23452,13 +23460,10 @@ module ejs.web {
         static native function worker(app: Function, request: Request): Void
 
         private static function workerHelper(app: Function, request: Request): Void {
-print("WORK HELPER")
+print("Multithreaded request")
             try {
-print("BEFORE PROCESS")
                 process(app, request)
-print("AFTER PROCESS")
             } catch (e) {
-print("CATCH " + e)
                 request.writeError(Http.ServerError, e)
             }
         }

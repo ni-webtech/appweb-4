@@ -594,8 +594,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     mprSetAppName(BLD_PRODUCT "Angel", BLD_NAME "Angel", BLD_VERSION);
     app->appName = mprGetAppName();
     app->appTitle = mprGetAppTitle(mpr);
-
-    mprSetLogHandler(logHandler, NULL);
+    mprSetLogHandler(logHandler);
 
     /*
         Create the window 

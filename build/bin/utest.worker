@@ -99,7 +99,7 @@ public function cleanDir(path) {
     Used to start support programs. This does capture output.
  */
 public function sh(args): String {
-    App.log.activity("Run", "Run: " + args)
+    // App.log.activity("Run", "Run: " + args)
     // return Cmd.sh(args)
     return System.run(("/bin/sh -c \"" + args.replace(/\\/g, "\\\\") + "\"").trim('\n'))
 }

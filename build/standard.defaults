@@ -62,17 +62,6 @@ with appweb
 BLD_FEATURE_ASSERT=1
 
 #
-#   Do a complete cross-build of everything including dev tools.
-#
-BLD_FEATURE_COMPLETE_CROSS=0
-
-#
-#   Do a complete build of everything for the native (build system).
-#   This includes programs that normally only run on the target.
-#
-BLD_FEATURE_COMPLETE_NATIVE=1
-
-#
 #	Name of the config directory to use. Can be an absolute path or be relative to src/server
 #
 BLD_FEATURE_CONFIG=template/standard

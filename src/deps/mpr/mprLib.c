@@ -1344,7 +1344,10 @@ void mprMarkBlock(cvoid *ptr)
         SET_FIELD2(mp, GET_SIZE(mp), gen, heap->active, 0);
         if (HAS_MANAGER(mp)) {
 #if BLD_DEBUG
-            if (++depth > 200) mprBreakpoint();
+            if (++depth > 200) {
+                fprintf(stderr, "WARNING: marking depth exceeds 200\n");
+                mprBreakpoint();
+            }
 #endif
             (GET_MANAGER(mp))((void*) ptr, MPR_MANAGE_MARK);
 #if BLD_DEBUG
@@ -2442,7 +2445,6 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     }
     getArgs(mpr, argc, argv);
     mpr->exitStrategy = MPR_EXIT_NORMAL;
-    mpr->logFd = -1;
     mpr->emptyString = sclone("");
     mpr->title = sclone(BLD_NAME);
     mpr->version = sclone(BLD_VERSION);
@@ -2494,8 +2496,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
 static void manageMpr(Mpr *mpr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(mpr->logData);
-        mprMark(mpr->altLogData);
+        mprMark(mpr->logFile);
         mprMark(mpr->mimeTypes);
         mprMark(mpr->timeTokens);
         mprMark(mpr->name);
@@ -7291,9 +7292,11 @@ static void manageDispatcher(MprDispatcher *dispatcher, int flags)
         mprMark(dispatcher->name);
         mprMark(dispatcher->eventQ);
         mprMark(dispatcher->cond);
+#if UNUSED
         mprMark(dispatcher->next);
         mprMark(dispatcher->prev);
         mprMark(dispatcher->parent);
+#endif
         mprMark(dispatcher->service);
         mprMark(dispatcher->requiredWorker);
 
@@ -11776,9 +11779,7 @@ int mprGetLogLevel()
 {
     Mpr     *mpr;
 
-    /*
-        Leave the code like this so debuggers can patch logLevel before returning.
-     */
+    /* Leave the code like this so debuggers can patch logLevel before returning */
     mpr = MPR;
     return mpr->logLevel;
 }
@@ -11790,22 +11791,27 @@ MprLogHandler mprGetLogHandler()
 }
 
 
-void mprSetLogHandler(MprLogHandler handler, void *handlerData)
+MprFile *mprGetLogFile()
+{
+    return MPR->logFile;
+}
+
+
+void mprSetLogHandler(MprLogHandler handler)
 {
     MPR->logHandler = handler;
-    MPR->logData = handlerData;
+}
+
+
+void mprSetLogFile(MprFile *file)
+{
+    MPR->logFile = file;
 }
 
 
 void mprSetLogLevel(int level)
 {
     MPR->logLevel = level;
-}
-
-
-void mprSetAltLogData(void *data)
-{
-    MPR->altLogData = data;
 }
 
 
@@ -11870,18 +11876,6 @@ int mprGetOsError()
 #else
     return 0;
 #endif
-}
-
-
-int mprGetLogFd()
-{
-    return MPR->logFd;
-}
-
-
-void mprSetLogFd(int fd)
-{
-    MPR->logFd = fd;
 }
 
 
@@ -20596,7 +20590,7 @@ static void logHandler(int flags, int level, cchar *msg)
     MprFile     *file;
     char        *prefix;
 
-    file = (MprFile*) MPR->logData;
+    file = MPR->logFile;
     prefix = MPR->name;
 
     while (*msg == '\n') {
@@ -20644,7 +20638,8 @@ static int setLogging(char *logSpec)
         }
     }
     mprSetLogLevel(level);
-    mprSetLogHandler(logHandler, (void*) file);
+    mprSetLogHandler(logHandler);
+    mprSetLogFile(file);
     return 0;
 }
 

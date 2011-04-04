@@ -3850,6 +3850,7 @@ extern void mprFatalError(cchar *fmt, ...);
     @ingroup MprLog
  */
 extern MprLogHandler mprGetLogHandler();
+extern struct MprFile *mprGetLogFile();
 
 /**
     Write a message to the diagnostic log file.
@@ -3883,7 +3884,8 @@ extern void mprMemoryError(cchar *fmt, ...);
     @param handlerData Callback handler data
     @ingroup MprLog
  */
-extern void mprSetLogHandler(MprLogHandler handler, void *handlerData);
+extern void mprSetLogHandler(MprLogHandler handler);
+extern void mprSetLogFile(struct MprFile *file);
 
 /*
     Optimized calling sequence
@@ -7021,8 +7023,7 @@ typedef struct Mpr {
     bool            debugMode;              /**< Run in debug mode (no timers) */
     int             logLevel;               /**< Log trace level */
     MprLogHandler   logHandler;             /**< Current log handler callback */
-    void            *logData;               /**< Handle data for log handler */
-    void            *altLogData;            /**< Alternate handle data for log handler */
+    MprFile         *logFile;               /**< Log file */
     MprHashTable    *mimeTypes;             /**< Table of mime types */
     MprHashTable    *timeTokens;            /**< Date/Time parsing tokens */
     char            *searchPath;            /**< Cached PATH for program execution */
@@ -7041,7 +7042,6 @@ typedef struct Mpr {
     int             exitStrategy;           /**< How to exit the app (normal, immediate, graceful) */
     int             flags;                  /**< Misc flags */
     int             hasError;               /**< Mpr has an initialization error */
-    int             logFd;                  /**< Logging file descriptor */
     int             marker;                 /**< Marker thread is active */
     int             marking;                /**< Actually marking objects now */
     int             state;                  /**< Processing state */
@@ -7336,7 +7336,6 @@ extern void mprSetDebugMode(bool on);
     @ingroup MprLog
  */
 extern void mprSetLogLevel(int level);
-extern void mprSetAltLogData(void *data);
 
 /**
     Sleep for a while
@@ -7394,18 +7393,6 @@ extern int mprGetRandomBytes(char *buf, int size, int block);
     @return MPR_LITTLE_ENDIAN or MPR_BIG_ENDIAN.
  */
 extern int mprGetEndian();
-
-/**
-    Get the file descriptor associated with the current log output stream
-    @return An integer file descriptor handle
- */
-extern int mprGetLogFd();
-
-/**
-    Set the log output stream to the given file descriptor.
-    @param fd An integer file descriptor.
- */
-extern void mprSetLogFd(int fd);
 
 //  MOB DOC
 extern char* mprEmptyString();
