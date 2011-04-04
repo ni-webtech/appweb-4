@@ -5178,7 +5178,7 @@ typedef struct EcCompiler {
     MprHashTable *keywords;
     EcStream    *stream;
     EcToken     *putback;                   /* List of active putback tokens */
-    EjsString   *docToken;                  /* Last doc token */
+    char        *docToken;                  /* Last doc token */
 
     EcState     *fileState;                 /* Top level state for the file */
 //  MOB -- these are risky and should be moved into state. A nested block, directive class etc willl modify

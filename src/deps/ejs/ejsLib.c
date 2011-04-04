@@ -20172,6 +20172,10 @@ EjsString *ejsSprintf(Ejs *ejs, cchar *fmt, ...)
 }
 
 
+/*
+    Get a substring from "src" starting at "start" of length "len"
+    If len < 0, use entire string.
+ */
 EjsString *ejsSubstring(Ejs *ejs, EjsString *src, ssize start, ssize len)
 {
     EjsString   *result;
@@ -20183,7 +20187,7 @@ EjsString *ejsSubstring(Ejs *ejs, EjsString *src, ssize start, ssize len)
     if (len < 0) {
         len = src->length - start;
     }
-    if ((start + len) > src->length || start < 0) {
+    if (len < 0 || (start + len) > src->length || start < 0) {
         return S(empty);
     }
     len = min(len, src->length);
@@ -28395,8 +28399,8 @@ EjsName ejsWideName(Ejs *ejs, MprChar *space, MprChar *name)
 {
     EjsName     n;
 
-    n.name = ejsCreateString(ejs, name, -1);
-    n.space = ejsCreateString(ejs, space, -1);
+    n.name = ejsCreateString(ejs, name, wlen(name));
+    n.space = ejsCreateString(ejs, space, wlen(space));
     return n;
 }
 
@@ -61990,7 +61994,7 @@ static void setNodeDoc(EcCompiler *cp, EcNode *np)
     ejs = cp->ejs;
 
     if (ejs->flags & EJS_FLAG_DOC && cp->doc) {
-        np->doc = cp->docToken;
+        np->doc = ejsCreateStringFromAsc(ejs, cp->docToken);
         cp->docToken = 0;
     }
 }
@@ -62040,9 +62044,9 @@ static void appendDocString(EcCompiler *cp, EcNode *np, EcNode *parameter, EcNod
             }
         }
         if (found) {
-            np->doc = ejsSprintf(ejs, "%s\n@default %@ %@", np->doc, parameter->qname.name, defaultValue);
+            np->doc = ejsSprintf(ejs, "%@\n@default %@ %@", np->doc, parameter->qname.name, defaultValue);
         } else {
-            np->doc = ejsSprintf(ejs, "%s\n@param %@\n@default %@ %@", np->doc, parameter->qname.name,
+            np->doc = ejsSprintf(ejs, "%@\n@param %@\n@default %@ %@", np->doc, parameter->qname.name,
                 parameter->qname.name, defaultValue);
         }
     }

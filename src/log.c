@@ -20,7 +20,7 @@ static void logHandler(int flags, int level, cchar *msg)
     char        *prefix, buf[MPR_MAX_STRING];
 
     mpr = mprGetMpr();
-    if ((file = (MprFile*) mpr->logData) == 0) {
+    if ((file = mpr->logFile) == 0) {
         return;
     }
     prefix = mpr->name;
@@ -138,11 +138,11 @@ int maStopLogging()
 
     mpr = mprGetMpr();
 
-    file = mpr->logData;
+    file = mpr->logFile;
     if (file) {
         mprCloseFile(file);
-        mpr->logData = 0;
-        mprSetLogHandler(0, 0);
+        mprSetLogHandler(0);
+        mprSetLogFile(0);
     }
     return 0;
 }

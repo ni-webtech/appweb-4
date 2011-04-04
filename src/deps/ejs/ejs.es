@@ -366,6 +366,9 @@ module ejs {
             }
         }
 
+        /**
+            Redirect the Application's logger based on an update App.config.log setting
+         */
         static function updateLog(): Void {
             let log = config.log
             if (log && log.enable) {
@@ -2259,6 +2262,7 @@ module ejs {
 
         /**
             Kill the specified process.
+            @param pid Process ID of the process to kill
             @param signal If pid is greater than zero, the signal is sent to the process whoes ID is pid. If pid is
                 zero, the process is tested but no signal is sent. 
             @return True if successful
