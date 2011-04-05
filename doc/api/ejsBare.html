@@ -1785,3 +1785,2433 @@ Return type cannot be null.
     </table></dd></dl>
   </div>
 </div>
+<a name="group___ejs_function_1ga5bf8e2a9af6557492e6ba315d5a3188b"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_function" class="ref">EjsFunction</a> *
+    ejsCreateFunction
+(Ejs *ejs, EjsString *name, cuchar *code, int codeLen, int numArgs, int numDefault, int numExceptions, struct EjsType *returnType, int attributes, struct EjsModule *module, EjsBlock *scope, int strict)
+  </div>
+  <div class="apiDetail">
+<p>Create a function object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This creates a function object and optionally associates byte code with the function.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">name</td><td>Function name used in stack backtraces.</td>
+    <tr><td class="param">code</td><td>Pointer to the byte code. The byte code is not copied so this must be a persistent pointer.</td>
+    <tr><td class="param">codeLen</td><td>Length of the code.</td>
+    <tr><td class="param">numArgs</td><td>Number of formal arguments to the function.</td>
+    <tr><td class="param">numDefault</td><td>Number of default args to the function.</td>
+    <tr><td class="param">numExceptions</td><td>Number of exception handlers.</td>
+    <tr><td class="param">returnType</td><td>Return type of the function. Set to NULL for no defined type.</td>
+    <tr><td class="param">attributes</td><td>Integer mask of access attributes.</td>
+    <tr><td class="param">module</td><td>Reference to the module owning the function.</td>
+    <tr><td class="param">scope</td><td>Reference to the chain of blocks that that comprises the lexical scope chain for this function.</td>
+    <tr><td class="param">strict</td><td>Run code in strict mode (vs standard).</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>An initialized function object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_function" class="ref">EjsFunction</a>, <a href="#group___ejs_function_1ga7127ecf0788bd034597366ea9e8eb215" class="ref">ejsIsFunction</a>, <a href="#group___ejs_function_1gafe317233b001bbca1b86cedf96c3b5a7" class="ref">ejsIsInitializer</a>, <a href="#group___ejs_function_1gab8d9707a7fb66beea580dab3f897a65d" class="ref">ejsIsNativeFunction</a>, <a href="#group___ejs_function_1gad27776daa4c1446ecf1ea222d8ec5080" class="ref">ejsRunFunction</a>, <a href="#group___ejs_function_1ga9b6990680a7a2201f9c67aa0f8ec7e16" class="ref">ejsRunFunctionBySlot</a>, <a href="#group___ejs_function_1ga5a7d2ad5dd3cf09e90d6288ac2ba73fc" class="ref">ejsRunInitializer</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_function_1ga7127ecf0788bd034597366ea9e8eb215"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsFunction
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Determine if a variable is a function.</p>
+This will return true if the variable is a function of any kind, including methods, native and script functions or initializers
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable to test.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the variable is a function.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_function" class="ref">EjsFunction</a>, <a href="#group___ejs_function_1ga5bf8e2a9af6557492e6ba315d5a3188b" class="ref">ejsCreateFunction</a>, <a href="#group___ejs_function_1gafe317233b001bbca1b86cedf96c3b5a7" class="ref">ejsIsInitializer</a>, <a href="#group___ejs_function_1gab8d9707a7fb66beea580dab3f897a65d" class="ref">ejsIsNativeFunction</a>, <a href="#group___ejs_function_1gad27776daa4c1446ecf1ea222d8ec5080" class="ref">ejsRunFunction</a>, <a href="#group___ejs_function_1ga9b6990680a7a2201f9c67aa0f8ec7e16" class="ref">ejsRunFunctionBySlot</a>, <a href="#group___ejs_function_1ga5a7d2ad5dd3cf09e90d6288ac2ba73fc" class="ref">ejsRunInitializer</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_function_1gafe317233b001bbca1b86cedf96c3b5a7"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsInitializer
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Determine if the function is an initializer.</p>
+Initializers are special functions created by the compiler to do static and instance initialization of classes during construction
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to test.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the variable is an initializer.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_function" class="ref">EjsFunction</a>, <a href="#group___ejs_function_1ga5bf8e2a9af6557492e6ba315d5a3188b" class="ref">ejsCreateFunction</a>, <a href="#group___ejs_function_1ga7127ecf0788bd034597366ea9e8eb215" class="ref">ejsIsFunction</a>, <a href="#group___ejs_function_1gab8d9707a7fb66beea580dab3f897a65d" class="ref">ejsIsNativeFunction</a>, <a href="#group___ejs_function_1gad27776daa4c1446ecf1ea222d8ec5080" class="ref">ejsRunFunction</a>, <a href="#group___ejs_function_1ga9b6990680a7a2201f9c67aa0f8ec7e16" class="ref">ejsRunFunctionBySlot</a>, <a href="#group___ejs_function_1ga5a7d2ad5dd3cf09e90d6288ac2ba73fc" class="ref">ejsRunInitializer</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_function_1gab8d9707a7fb66beea580dab3f897a65d"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsNativeFunction
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Determine if the function is a native function.</p>
+Functions can be either native - meaning the implementation is via a C function, or can be scripted
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to test.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the variable is a native function.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_function" class="ref">EjsFunction</a>, <a href="#group___ejs_function_1ga5bf8e2a9af6557492e6ba315d5a3188b" class="ref">ejsCreateFunction</a>, <a href="#group___ejs_function_1ga7127ecf0788bd034597366ea9e8eb215" class="ref">ejsIsFunction</a>, <a href="#group___ejs_function_1gafe317233b001bbca1b86cedf96c3b5a7" class="ref">ejsIsInitializer</a>, <a href="#group___ejs_function_1gad27776daa4c1446ecf1ea222d8ec5080" class="ref">ejsRunFunction</a>, <a href="#group___ejs_function_1ga9b6990680a7a2201f9c67aa0f8ec7e16" class="ref">ejsRunFunctionBySlot</a>, <a href="#group___ejs_function_1ga5a7d2ad5dd3cf09e90d6288ac2ba73fc" class="ref">ejsRunInitializer</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_function_1gad27776daa4c1446ecf1ea222d8ec5080"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsRunFunction
+(Ejs *ejs, EjsFunction *fn, EjsAny *thisObj, int argc, void *argv)
+  </div>
+  <div class="apiDetail">
+<p>Run a function.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Run a function with the given actual parameters.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">fn</td><td>Function object to run.</td>
+    <tr><td class="param">thisObj</td><td>Object to use as the &quot;this&quot; object when running the function.</td>
+    <tr><td class="param">argc</td><td>Count of actual parameters.</td>
+    <tr><td class="param">argv</td><td>Vector of actual parameters.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The return value from the function. If an exception is thrown, NULL will be returned and ejs-&gt;exception will be set to the exception object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_function" class="ref">EjsFunction</a>, <a href="#group___ejs_function_1ga5bf8e2a9af6557492e6ba315d5a3188b" class="ref">ejsCreateFunction</a>, <a href="#group___ejs_function_1ga7127ecf0788bd034597366ea9e8eb215" class="ref">ejsIsFunction</a>, <a href="#group___ejs_function_1gafe317233b001bbca1b86cedf96c3b5a7" class="ref">ejsIsInitializer</a>, <a href="#group___ejs_function_1gab8d9707a7fb66beea580dab3f897a65d" class="ref">ejsIsNativeFunction</a>, <a href="#group___ejs_function_1ga9b6990680a7a2201f9c67aa0f8ec7e16" class="ref">ejsRunFunctionBySlot</a>, <a href="#group___ejs_function_1ga5a7d2ad5dd3cf09e90d6288ac2ba73fc" class="ref">ejsRunInitializer</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_function_1ga9b6990680a7a2201f9c67aa0f8ec7e16"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsRunFunctionBySlot
+(Ejs *ejs, EjsAny *obj, int slotNum, int argc, void *argv)
+  </div>
+  <div class="apiDetail">
+<p>Run a function by slot number.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Run a function identified by slot number with the given actual parameters. This will run the function stored at slotNum in the obj variable.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object that holds the function at its &quot;slotNum&quot; slot. Also use this object as the &quot;this&quot; object when running the function.</td>
+    <tr><td class="param">slotNum</td><td>Slot number in obj that contains the function to run.</td>
+    <tr><td class="param">argc</td><td>Count of actual parameters.</td>
+    <tr><td class="param">argv</td><td>Vector of actual parameters.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The return value from the function. If an exception is thrown, NULL will be returned and ejs-&gt;exception will be set to the exception object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_function" class="ref">EjsFunction</a>, <a href="#group___ejs_function_1ga5bf8e2a9af6557492e6ba315d5a3188b" class="ref">ejsCreateFunction</a>, <a href="#group___ejs_function_1ga7127ecf0788bd034597366ea9e8eb215" class="ref">ejsIsFunction</a>, <a href="#group___ejs_function_1gafe317233b001bbca1b86cedf96c3b5a7" class="ref">ejsIsInitializer</a>, <a href="#group___ejs_function_1gab8d9707a7fb66beea580dab3f897a65d" class="ref">ejsIsNativeFunction</a>, <a href="#group___ejs_function_1gad27776daa4c1446ecf1ea222d8ec5080" class="ref">ejsRunFunction</a>, <a href="#group___ejs_function_1ga5a7d2ad5dd3cf09e90d6288ac2ba73fc" class="ref">ejsRunInitializer</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_function_1ga5a7d2ad5dd3cf09e90d6288ac2ba73fc"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#struct_ejs_obj" class="ref">EjsObj</a> *
+    ejsRunInitializer
+(Ejs *ejs, struct EjsModule *module)
+  </div>
+  <div class="apiDetail">
+<p>Run the initializer for a module.</p>
+    <dl><dt><b>Description</b>:</dt><dd>A module&apos;s initializer runs global code defined in the module.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">module</td><td>Module object reference.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The last expression result of global code executed.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_function" class="ref">EjsFunction</a>, <a href="#group___ejs_function_1ga5bf8e2a9af6557492e6ba315d5a3188b" class="ref">ejsCreateFunction</a>, <a href="#group___ejs_function_1ga7127ecf0788bd034597366ea9e8eb215" class="ref">ejsIsFunction</a>, <a href="#group___ejs_function_1gafe317233b001bbca1b86cedf96c3b5a7" class="ref">ejsIsInitializer</a>, <a href="#group___ejs_function_1gab8d9707a7fb66beea580dab3f897a65d" class="ref">ejsIsNativeFunction</a>, <a href="#group___ejs_function_1gad27776daa4c1446ecf1ea222d8ec5080" class="ref">ejsRunFunction</a>, <a href="#group___ejs_function_1ga9b6990680a7a2201f9c67aa0f8ec7e16" class="ref">ejsRunFunctionBySlot</a></dd></dl>
+  </div>
+</div>
+<h1>EjsHttp</h1>
+<a name="group___ejs_http"></a>
+<div class="api">
+  <div class="prototype">EjsHttp</div>
+  <div class="apiDetail">
+<p>Http Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd></dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_http_1ga35375f154c987c2f3838c2e58a76ca3c" class="ref">ejsCreateHttp</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">char *</td><td><td>certFile</td><td>
+SSL certificate file.
+</td>
+    <tr><td class="param">int</td><td><td>closed</td><td>
+Http is closed and &quot;close&quot; event has been issued.
+</td>
+    <tr><td class="param">HttpConn *</td><td><td>conn</td><td>
+Http connection object.
+</td>
+    <tr><td class="param">EjsByteArray *</td><td><td>data</td><td>
+Buffered write data.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>emitter</td><td>
+Event emitter.
+</td>
+    <tr><td class="param">int</td><td><td>error</td><td>
+Http errored and &quot;error&quot; event has been issued.
+</td>
+    <tr><td class="param">char *</td><td><td>keyFile</td><td>
+SSL key file.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>limits</td><td>
+Limits object.
+</td>
+    <tr><td class="param">char *</td><td><td>method</td><td>
+HTTP method.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">ssize</td><td><td>readCount</td><td>
+Count of body bytes read.
+</td>
+    <tr><td class="param">MprBuf *</td><td><td>requestContent</td><td>
+Request body data supplied.
+</td>
+    <tr><td class="param">ssize</td><td><td>requestContentCount</td><td>
+Count of bytes written from requestContent.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>responseCache</td><td>
+Cached response (only used if response() is used).
+</td>
+    <tr><td class="param">MprBuf *</td><td><td>responseContent</td><td>
+Response data.
+</td>
+    <tr><td class="param">char *</td><td><td>uri</td><td>
+Target uri.
+</td>
+    <tr><td class="param">ssize</td><td><td>writeCount</td><td>
+Count of bytes written via write().
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_http_1ga35375f154c987c2f3838c2e58a76ca3c"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_http" class="ref">EjsHttp</a> *
+    ejsCreateHttp
+(Ejs *ejs)
+  </div>
+  <div class="apiDetail">
+<p>Create a new Http object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new Http object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_http" class="ref">EjsHttp</a></dd></dl>
+  </div>
+</div>
+<h1>EjsHttpServer</h1>
+<a name="group___ejs_http_server"></a>
+<div class="api">
+  <div class="prototype">EjsHttpServer</div>
+  <div class="apiDetail">
+<p>HttpServer Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd></dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">int</td><td><td>async</td><td>
+Async mode.
+</td>
+    <tr><td class="param">char *</td><td><td>certFile</td><td>
+SSL certificate file.
+</td>
+    <tr><td class="param">char *</td><td><td>ciphers</td><td>
+SSL ciphers.
+</td>
+    <tr><td class="param">int</td><td><td>cloned</td><td>
+Server was cloned.
+</td>
+    <tr><td class="param">cchar *</td><td><td>connector</td><td>
+Pipeline connector.
+</td>
+    <tr><td class="param">cchar *</td><td><td>dir</td><td>
+Directory containing web documents.
+</td>
+    <tr><td class="param">Ejs *</td><td><td>ejs</td><td>
+Ejscript interpreter handle.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>emitter</td><td>
+Event emitter.
+</td>
+    <tr><td class="param">EjsArray *</td><td><td>incomingStages</td><td>
+Incoming Http pipeline stages.
+</td>
+    <tr><td class="param">char *</td><td><td>ip</td><td>
+Listening address.
+</td>
+    <tr><td class="param">char *</td><td><td>keyFile</td><td>
+SSL key file.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>limits</td><td>
+Limits object.
+</td>
+    <tr><td class="param">char *</td><td><td>name</td><td>
+Server name.
+</td>
+    <tr><td class="param">EjsArray *</td><td><td>outgoingStages</td><td>
+Outgoing Http pipeline stages.
+</td>
+    <tr><td class="param">int</td><td><td>port</td><td>
+Listening port.
+</td>
+    <tr><td class="param">EjsPot</td><td><td>pot</td><td>
+Extends Object.
+</td>
+    <tr><td class="param">char *</td><td><td>protocols</td><td>
+SSL protocols.
+</td>
+    <tr><td class="param">HttpServer *</td><td><td>server</td><td>
+Http server object.
+</td>
+    <tr><td class="param">EjsPot *</td><td><td>sessions</td><td>
+Session cache.
+</td>
+    <tr><td class="param">MprEvent *</td><td><td>sessionTimer</td><td>
+Session expiry timer.
+</td>
+    <tr><td class="param">struct MprSsl *</td><td><td>ssl</td><td>
+SSL configuration.
+</td>
+    <tr><td class="param">HttpTrace</td><td><td>trace[2]</td><td>
+Default tracing for requests.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<h1>EjsIterator</h1>
+<a name="group___ejs_iterator"></a>
+<div class="api">
+  <div class="prototype">EjsIterator</div>
+  <div class="apiDetail">
+<p>Iterator Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Iterator is a helper class to implement iterators in other native classes.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_iterator_1ga5256b5c11a386a5208f51a772ca1c109" class="ref">ejsCreateIterator</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">bool</td><td><td>deep</td><td>
+Iterator deep (recursively over all properties).
+</td>
+    <tr><td class="param">int</td><td><td>index</td><td>
+Current index.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>indexVar</td><td>
+Reference to current item.
+</td>
+    <tr><td class="param">EjsArray *</td><td><td>namespaces</td><td>
+Namespaces to consider in iteration.
+</td>
+    <tr><td class="param">EjsFun</td><td><td>nativeNext</td><td>
+Native next function.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>target</td><td>
+Object to be enumerated.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_iterator_1ga5256b5c11a386a5208f51a772ca1c109"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_iterator" class="ref">EjsIterator</a> *
+    ejsCreateIterator
+(Ejs *ejs, EjsAny *target, EjsFun next, bool deep, EjsArray *namespaces)
+  </div>
+  <div class="apiDetail">
+<p>Create an iterator object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The EjsIterator object is a helper class for native types to implement iteration and enumeration.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">target</td><td>Target variable to iterate or enumerate.</td>
+    <tr><td class="param">next</td><td>Function to invoke to step to the next element.</td>
+    <tr><td class="param">deep</td><td>Set to true to do a deep iteration/enumeration.</td>
+    <tr><td class="param">namespaces</td><td>Reserved and not used. Supply NULL.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new EjsIterator object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_iterator" class="ref">EjsIterator</a></dd></dl>
+  </div>
+</div>
+<h1>EjsName</h1>
+<a name="group___ejs_name"></a>
+<div class="api">
+  <div class="prototype">EjsName</div>
+  <div class="apiDetail">
+<p>Qualified name structure.</p>
+    <dl><dt><b>Description</b>:</dt><dd>All names in Ejscript consist of a property name and a name space. Namespaces provide discrete spaces to manage and minimize name conflicts. These names will soon be converted to unicode.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_name_1ga0ebbe182fcbf0b758756169635fd5cd6" class="ref">ejsName</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">EjsString *</td><td><td>name</td><td>
+Property name.
+</td>
+    <tr><td class="param">EjsString *</td><td><td>space</td><td>
+Property namespace.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_name_1ga0ebbe182fcbf0b758756169635fd5cd6"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_name" class="ref">EjsName</a>
+    ejsName
+(Ejs *ejs, cchar *space, cchar *name)
+  </div>
+  <div class="apiDetail">
+<p>Initialize a Qualified Name structure.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Initialize the statically allocated qualified name structure using a name and namespace.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">space</td><td>Namespace string.</td>
+    <tr><td class="param">name</td><td>Name string.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A reference to the qname structure.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_name" class="ref">EjsName</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_name_1gaf8a1e4e971849cee102c8c0e88d4e9d3"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_name" class="ref">EjsName</a>
+    ejsWideName
+(Ejs *ejs, MprChar *space, MprChar *name)
+  </div>
+  <div class="apiDetail">
+<p>Initialize a Qualified Name structure using a wide namespace and name.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Initialize the statically allocated qualified name structure using a name and namespace.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">space</td><td>Namespace string.</td>
+    <tr><td class="param">name</td><td>Name string.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A reference to the qname structure.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_name" class="ref">EjsName</a>, <a href="#group___ejs_name_1ga0ebbe182fcbf0b758756169635fd5cd6" class="ref">ejsName</a></dd></dl>
+  </div>
+</div>
+<h1>EjsNamespace</h1>
+<a name="group___ejs_namespace"></a>
+<div class="api">
+  <div class="prototype">EjsNamespace</div>
+  <div class="apiDetail">
+<p>Namespace Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Namespaces are used to qualify names into discrete spaces.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_namespace_1ga970be270f8abe248d46bedcfbc022698" class="ref">ejsCreateNamespace</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The Reflect class permits introspection into the type and attributes of objects and properties.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">EjsString *</td><td><td>value</td><td>
+Textual name of the namespace.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_namespace_1ga970be270f8abe248d46bedcfbc022698"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_namespace" class="ref">EjsNamespace</a> *
+    ejsCreateNamespace
+(Ejs *ejs, EjsString *name)
+  </div>
+  <div class="apiDetail">
+<p>Create a namespace object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">name</td><td>Space name to use for the namespace.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new namespace object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<h1>EjsNull</h1>
+<a name="group___ejs_null"></a>
+<div class="api">
+  <div class="prototype">EjsNull</div>
+  <div class="apiDetail">
+<p>Null Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The Null class provides the base class for the singleton null instance. This instance is stored in ejs-&gt;nullValue.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<h1>EjsNumber</h1>
+<a name="group___ejs_number"></a>
+<div class="api">
+  <div class="prototype">EjsNumber</div>
+  <div class="apiDetail">
+<p>Number class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The Number class provide the base class for all numeric values. The primitive number storage data type may be set via the configure program to be either double, float, int or int64.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_number_1gabbc997d13a55ae22b87abb9d3b1df9ec" class="ref">ejsCreateNumber</a>, <a href="#group___ejs_number_1ga0c9faf471c0f3aeef26c9cba92a66bc9" class="ref">ejsGetDouble</a>, <a href="#group___ejs_number_1gabf01f6ec8d3b5f95a9547c535d716ca4" class="ref">ejsGetInt</a>, <a href="#group___ejs_number_1ga45311f2f0ea79363270b212e9690546f" class="ref">ejsGetNumber</a>, <a href="#group___ejs_number_1gac0e2e92ac62007eeda560430c45b8616" class="ref">ejsToNumber</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">MprNumber</td><td><td>value</td><td>
+Numeric value.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_number_1gabbc997d13a55ae22b87abb9d3b1df9ec"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_number" class="ref">EjsNumber</a> *
+    ejsCreateNumber
+(Ejs *ejs, MprNumber value)
+  </div>
+  <div class="apiDetail">
+<p>Create a number object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">value</td><td>Numeric value to initialize the number object.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A number object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_number" class="ref">EjsNumber</a>, <a href="#group___ejs_number_1ga0c9faf471c0f3aeef26c9cba92a66bc9" class="ref">ejsGetDouble</a>, <a href="#group___ejs_number_1gabf01f6ec8d3b5f95a9547c535d716ca4" class="ref">ejsGetInt</a>, <a href="#group___ejs_number_1ga45311f2f0ea79363270b212e9690546f" class="ref">ejsGetNumber</a>, <a href="#group___ejs_number_1gac0e2e92ac62007eeda560430c45b8616" class="ref">ejsToNumber</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_number_1ga0c9faf471c0f3aeef26c9cba92a66bc9"></a>
+<div class="api">
+  <div class="prototype">
+    double
+    ejsGetDouble
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Get the numeric value stored in a EjsNumber object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to examine.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A double value.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_number" class="ref">EjsNumber</a>, <a href="#group___ejs_number_1gabbc997d13a55ae22b87abb9d3b1df9ec" class="ref">ejsCreateNumber</a>, <a href="#group___ejs_number_1gabf01f6ec8d3b5f95a9547c535d716ca4" class="ref">ejsGetInt</a>, <a href="#group___ejs_number_1ga45311f2f0ea79363270b212e9690546f" class="ref">ejsGetNumber</a>, <a href="#group___ejs_number_1gac0e2e92ac62007eeda560430c45b8616" class="ref">ejsToNumber</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_number_1gabf01f6ec8d3b5f95a9547c535d716ca4"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsGetInt
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Get the numeric value stored in a EjsNumber object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to examine.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>An integer value.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_number" class="ref">EjsNumber</a>, <a href="#group___ejs_number_1gabbc997d13a55ae22b87abb9d3b1df9ec" class="ref">ejsCreateNumber</a>, <a href="#group___ejs_number_1ga0c9faf471c0f3aeef26c9cba92a66bc9" class="ref">ejsGetDouble</a>, <a href="#group___ejs_number_1ga45311f2f0ea79363270b212e9690546f" class="ref">ejsGetNumber</a>, <a href="#group___ejs_number_1gac0e2e92ac62007eeda560430c45b8616" class="ref">ejsToNumber</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_number_1ga45311f2f0ea79363270b212e9690546f"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1aefb40e15c552f1286f8e00ec8fb6d9c4" class="ref">MprNumber</a>
+    ejsGetNumber
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Get the numeric value stored in a EjsNumber object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to examine.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A numeric value.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_number" class="ref">EjsNumber</a>, <a href="#group___ejs_number_1gabbc997d13a55ae22b87abb9d3b1df9ec" class="ref">ejsCreateNumber</a>, <a href="#group___ejs_number_1ga0c9faf471c0f3aeef26c9cba92a66bc9" class="ref">ejsGetDouble</a>, <a href="#group___ejs_number_1gabf01f6ec8d3b5f95a9547c535d716ca4" class="ref">ejsGetInt</a>, <a href="#group___ejs_number_1gac0e2e92ac62007eeda560430c45b8616" class="ref">ejsToNumber</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_number_1gac0e2e92ac62007eeda560430c45b8616"></a>
+<div class="api">
+  <div class="prototype">
+    struct EjsNumber *
+    EjsNumber* ejsToNumber
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Cast a variable to a number.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to cast.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A number object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_number" class="ref">EjsNumber</a>, <a href="#group___ejs_number_1gabbc997d13a55ae22b87abb9d3b1df9ec" class="ref">ejsCreateNumber</a>, <a href="#group___ejs_number_1ga0c9faf471c0f3aeef26c9cba92a66bc9" class="ref">ejsGetDouble</a>, <a href="#group___ejs_number_1gabf01f6ec8d3b5f95a9547c535d716ca4" class="ref">ejsGetInt</a>, <a href="#group___ejs_number_1ga45311f2f0ea79363270b212e9690546f" class="ref">ejsGetNumber</a></dd></dl>
+  </div>
+</div>
+<h1>EjsPath</h1>
+<a name="group___ejs_path"></a>
+<div class="api">
+  <div class="prototype">EjsPath</div>
+  <div class="apiDetail">
+<p>Path class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The Path class provides file path name services.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_file" class="ref">EjsFile</a>, <a href="#group___ejs_path_1ga89c88658e009637fe471fef151e9b599" class="ref">ejsCreatePath</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">MprList *</td><td><td>files</td><td>
+File list for enumeration.
+</td>
+    <tr><td class="param">MprPath</td><td><td>info</td><td>
+Cached file info.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">cchar *</td><td><td>value</td><td>
+Filename path.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_path_1ga50234ab8d65dd433fea18ff170f62f15"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_file_system" class="ref">EjsFileSystem</a> *
+    ejsCreateFileSystem
+(Ejs *ejs, cchar *path)
+  </div>
+  <div class="apiDetail">
+<p>Create a FileSystem object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Create a file system object associated with the given pathname.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">path</td><td>Path to describe the file system. Can be any path in the file system.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new file system object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_file" class="ref">EjsFile</a>, <a href="#group___ejs_path_1ga89c88658e009637fe471fef151e9b599" class="ref">ejsCreatePath</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_path_1ga89c88658e009637fe471fef151e9b599"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_path" class="ref">EjsPath</a> *
+    ejsCreatePath
+(Ejs *ejs, EjsString *path)
+  </div>
+  <div class="apiDetail">
+<p>Create a Path object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Create a file object associated with the given filename. The filename is not opened, just stored.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">path</td><td>Path file name.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new Path object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_file" class="ref">EjsFile</a></dd></dl>
+  </div>
+</div>
+<h1>EjsPot</h1>
+<a name="group___ejs_pot"></a>
+<div class="api">
+  <div class="prototype">EjsPot</div>
+  <div class="apiDetail">
+<p>Object Type.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The EjsPot type is the foundation for all types, blocks, functions and scripted classes. It provides storage and hashed lookup for properties. <br/><br/>
+ EjsPot stores properties in an array of slots. These slots store a reference to the property value. Property names are stored in a names hash. Dynamic objects own their own name hash. Sealed object instances of a type, will simply refer to the hash of names owned by the type. <br/><br/>
+ EjsPots may be either dynamic or sealed. Dynamic objects can grow the number of properties. Sealed objects cannot. Sealed objects will store the slot array as part of the EjsPot memory chunk. Dynamic objects will perform a separate allocation for the slot array so that it can grow.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_pot_1ga2bf4d8cac958a8e198be9c698e74f082" class="ref">ejsIsPot</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">uint</td><td><td>isBlock</td><td>
+Instance is a block.
+</td>
+    <tr><td class="param">uint</td><td><td>isFrame</td><td>
+Instance is a frame.
+</td>
+    <tr><td class="param">uint</td><td><td>isFunction</td><td>
+Instance is a function.
+</td>
+    <tr><td class="param">uint</td><td><td>isPrototype</td><td>
+Object is a type prototype object.
+</td>
+    <tr><td class="param">uint</td><td><td>isType</td><td>
+Instance is a type object.
+</td>
+    <tr><td class="param">int</td><td><td>numProp</td><td>
+Object properties.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">uint</td><td><td>separateHash</td><td>
+Object has separate hash memory.
+</td>
+    <tr><td class="param">uint</td><td><td>separateSlots</td><td>
+Object has separate slots[] memory.
+</td>
+    <tr><td class="param">uint</td><td><td>shortScope</td><td>
+Don&apos;t follow type or base classes.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_pot_1ga2bf4d8cac958a8e198be9c698e74f082"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsPot
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Determine if a variable is a Pot.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This call tests if the variable is a Pot.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to test.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the variable is based on EjsPot.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_pot" class="ref">EjsPot</a></dd></dl>
+  </div>
+</div>
+<h1>EjsRegExp</h1>
+<a name="group___ejs_reg_exp"></a>
+<div class="api">
+  <div class="prototype">EjsRegExp</div>
+  <div class="apiDetail">
+<p>RegExp Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The regular expression class provides string pattern matching and substitution.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_reg_exp_1gac9a6378d8053367d37657d26c816fa50" class="ref">ejsCreateRegExp</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">void *</td><td><td>compiled</td><td>
+Compiled pattern.
+</td>
+    <tr><td class="param">int</td><td><td>endLastMatch</td><td>
+End of the last match (one past end).
+</td>
+    <tr><td class="param">bool</td><td><td>global</td><td>
+Search for pattern globally (multiple times).
+</td>
+    <tr><td class="param">bool</td><td><td>ignoreCase</td><td>
+Do case insensitive matching.
+</td>
+    <tr><td class="param">EjsString *</td><td><td>matched</td><td>
+Last matched component.
+</td>
+    <tr><td class="param">bool</td><td><td>multiline</td><td>
+Match patterns over multiple lines.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">int</td><td><td>options</td><td>
+Pattern matching options.
+</td>
+    <tr><td class="param">MprChar *</td><td><td>pattern</td><td>
+Pattern to match.
+</td>
+    <tr><td class="param">int</td><td><td>startLastMatch</td><td>
+Start of the last match.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_reg_exp_1gac9a6378d8053367d37657d26c816fa50"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_reg_exp" class="ref">EjsRegExp</a> *
+    ejsCreateRegExp
+(Ejs *ejs, EjsString *pattern)
+  </div>
+  <div class="apiDetail">
+<p>Create a new regular expression object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">pattern</td><td>Regular expression pattern string.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A EjsRegExp object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_reg_exp" class="ref">EjsRegExp</a></dd></dl>
+  </div>
+</div>
+<h1>EjsRequest</h1>
+<a name="group___ejs_request"></a>
+<div class="api">
+  <div class="prototype">EjsRequest</div>
+  <div class="apiDetail">
+<p>Request Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd></dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">EjsObj *</td><td><td>absHome</td><td>
+Absolute URI to the home of the application from this request.
+</td>
+    <tr><td class="param">int</td><td><td>accepted</td><td>
+Request has been accepted from the HttpServer.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>app</td><td>
+Application build function. 
+Used when threaded.
+</td>
+    <tr><td class="param">int</td><td><td>closed</td><td>
+Request closed and &quot;close&quot; event has been issued.
+</td>
+    <tr><td class="param">HttpConn *</td><td><td>conn</td><td>
+Underlying Http connection object.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>cookies</td><td>
+Cached cookies.
+</td>
+    <tr><td class="param">EjsPath *</td><td><td>dir</td><td>
+Home directory containing the application.
+</td>
+    <tr><td class="param">int</td><td><td>dontAutoFinalize</td><td>
+Suppress auto-finalization.
+</td>
+    <tr><td class="param">Ejs *</td><td><td>ejs</td><td>
+Ejscript interpreter handle.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>emitter</td><td>
+Event emitter.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>env</td><td>
+Request.env.
+</td>
+    <tr><td class="param">int</td><td><td>error</td><td>
+Request errored and &quot;error&quot; event has been issued.
+</td>
+    <tr><td class="param">EjsPath *</td><td><td>filename</td><td>
+Physical resource filename.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>files</td><td>
+Files object.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>headers</td><td>
+Headers object.
+</td>
+    <tr><td class="param">EjsUri *</td><td><td>home</td><td>
+Relative URI to the home of the application from this request.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>host</td><td>
+Host property.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>limits</td><td>
+Limits object.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>log</td><td>
+Log object.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>originalMethod</td><td>
+Saved original method.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>originalUri</td><td>
+Saved original URI.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>params</td><td>
+Form variables.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>pathInfo</td><td>
+PathInfo property.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>port</td><td>
+Port property.
+</td>
+    <tr><td class="param">EjsPot</td><td><td>pot</td><td>
+Base object storage.
+</td>
+    <tr><td class="param">int</td><td><td>probedSession</td><td>
+Determined if a session exists.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>query</td><td>
+Query property.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>reference</td><td>
+Reference property.
+</td>
+    <tr><td class="param">int</td><td><td>responded</td><td>
+Request has done some output or changed status.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>responseHeaders</td><td>
+Headers object.
+</td>
+    <tr><td class="param">int</td><td><td>running</td><td>
+Request has started.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>scheme</td><td>
+Scheme property.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>scriptName</td><td>
+ScriptName property.
+</td>
+    <tr><td class="param">EjsHttpServer *</td><td><td>server</td><td>
+Owning server.
+</td>
+    <tr><td class="param">struct EjsSession *</td><td><td>session</td><td>
+Current session.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>uri</td><td>
+Complete uri.
+</td>
+    <tr><td class="param">ssize</td><td><td>written</td><td>
+Count of data bytes written to the client.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<h1>EjsSession</h1>
+<a name="group___ejs_session"></a>
+<div class="api">
+  <div class="prototype">EjsSession</div>
+  <div class="apiDetail">
+<p>Session Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd></dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    </table></dd></dl>
+  </div>
+</div>
+<h1>EjsSocket</h1>
+<a name="group___ejs_socket"></a>
+<div class="api">
+  <div class="prototype">EjsSocket</div>
+  <div class="apiDetail">
+<p>Socket Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd></dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_socket_1ga4e359dc0db9f78ff9cc2969f12102370" class="ref">ejsCreateSocket</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">cchar *</td><td><td>address</td><td>
+Remote address.
+</td>
+    <tr><td class="param">int</td><td><td>async</td><td>
+In async mode.
+</td>
+    <tr><td class="param">EjsByteArray *</td><td><td>data</td><td>
+Buffered write data.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>emitter</td><td>
+Event emitter.
+</td>
+    <tr><td class="param">int</td><td><td>mask</td><td>
+IO event mask.
+</td>
+    <tr><td class="param">MprMutex *</td><td><td>mutex</td><td>
+Multithread sync.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">int</td><td><td>port</td><td>
+Remote port.
+</td>
+    <tr><td class="param">MprSocket *</td><td><td>sock</td><td>
+Underlying MPR socket object.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_socket_1ga4e359dc0db9f78ff9cc2969f12102370"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_socket" class="ref">EjsSocket</a> *
+    ejsCreateSocket
+(Ejs *ejs)
+  </div>
+  <div class="apiDetail">
+<p>Create a new Socket object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new Socket object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_socket" class="ref">EjsSocket</a></dd></dl>
+  </div>
+</div>
+<h1>EjsString</h1>
+<a name="group___ejs_string"></a>
+<div class="api">
+  <div class="prototype">EjsString</div>
+  <div class="apiDetail">
+<p>String Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The String class provides the base class for all strings. Each String object represents a single immutable linear sequence of characters. Strings have operators for: comparison, concatenation, copying, searching, conversion, matching, replacement, and, subsetting. <br/><br/>
+ Strings are currently sequences of Unicode characters. Depending on the configuration, they may be 8, 16 or 32 bit code point values.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_string_1ga062ee027f2845d94ecb15c6941cbe42b" class="ref">ejsCreateBareString</a>, <a href="#group___ejs_string_1gab55a2ec920805f58db1f75cc2747d543" class="ref">ejsCreateString</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_string_1ga062ee027f2845d94ecb15c6941cbe42b"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_string" class="ref">EjsString</a> *
+    ejsCreateBareString
+(Ejs *ejs, ssize len)
+  </div>
+  <div class="apiDetail">
+<p>Create an empty string object.</p>
+This creates an uninitialized string object of the requrired size. Once initialized, the string must be &quot;interned&quot; via $ejsInternString
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">len</td><td>Length of space to reserve for future string data.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A string object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_string" class="ref">EjsString</a>, <a href="#group___ejs_string_1gab55a2ec920805f58db1f75cc2747d543" class="ref">ejsCreateString</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_string_1gab55a2ec920805f58db1f75cc2747d543"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_string" class="ref">EjsString</a> *
+    ejsCreateString
+(Ejs *ejs, MprChar *value, ssize len)
+  </div>
+  <div class="apiDetail">
+<p>Create a string object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">value</td><td>C string value to define for the string object. Note: this will soon be changed to unicode.</td>
+    <tr><td class="param">len</td><td>Length of string to examine in value.</td>
+    </table></dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>Returns:</dt><dd>A string object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_string" class="ref">EjsString</a>, <a href="#group___ejs_string_1ga062ee027f2845d94ecb15c6941cbe42b" class="ref">ejsCreateBareString</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_string_1ga634237154071579455c008c164c39553"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_string" class="ref">EjsString</a> *
+    ejsInternString
+(EjsString *sp)
+  </div>
+  <div class="apiDetail">
+<p>Intern a string object.</p>
+This stores the string in the internal string pool. This is required if the string was created via ejsCreateBareString. The ejsCreateString routine will intern the string automatcially
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">sp</td><td>String object to intern.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The internalized string object. NOTE: this may be different to the object passed in, if the string value was already present in the intern pool.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_string" class="ref">EjsString</a>, <a href="#group___ejs_string_1ga062ee027f2845d94ecb15c6941cbe42b" class="ref">ejsCreateBareString</a>, <a href="#group___ejs_string_1gab55a2ec920805f58db1f75cc2747d543" class="ref">ejsCreateString</a></dd></dl>
+  </div>
+</div>
+<h1>EjsTimer</h1>
+<a name="group___ejs_timer"></a>
+<div class="api">
+  <div class="prototype">EjsTimer</div>
+  <div class="apiDetail">
+<p>Timer Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Timers manage the scheduling and execution of Ejscript functions. Timers run repeatedly until stopped by calling the stop method and are scheduled with a granularity of 1 millisecond.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">EjsArray *</td><td><td>args</td><td>
+Callback args.
+</td>
+    <tr><td class="param">EjsFunction *</td><td><td>callback</td><td>
+Callback function.
+</td>
+    <tr><td class="param">int</td><td><td>drift</td><td>
+Timer event is allowed to drift if system conditions requrie.
+</td>
+    <tr><td class="param">Ejs *</td><td><td>ejs</td><td>
+Interp reference - needed for background timers.
+</td>
+    <tr><td class="param">MprEvent *</td><td><td>event</td><td>
+MPR event for the timer.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">EjsFunction *</td><td><td>onerror</td><td>
+onerror function.
+</td>
+    <tr><td class="param">int</td><td><td>period</td><td>
+Time in msec between invocations.
+</td>
+    <tr><td class="param">int</td><td><td>repeat</td><td>
+Timer repeatedly fires.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<h1>EjsType</h1>
+<a name="group___ejs_type"></a>
+<div class="api">
+  <div class="prototype">EjsType</div>
+  <div class="apiDetail">
+<p>Type class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Classes in Ejscript are represented by instances of an EjsType. Types are templates for creating instances of the given type, but they are also are runtime accessible objects. Types contain the static properties and methods for objects and store these in their object slots array. They store the instance properties in the type-&gt;instance object. EjsType inherits from EjsBlock, EjsObj and EjsObj.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">struct EjsType *</td><td><td>baseType</td><td>
+Base class.
+</td>
+    <tr><td class="param">uint</td><td><td>callsSuper</td><td>
+Constructor calls super().
+</td>
+    <tr><td class="param">EjsFunction</td><td><td>constructor</td><td>
+Constructor function and type properties.
+</td>
+    <tr><td class="param">uint</td><td><td>dynamicInstance</td><td>
+Object instances may add properties.
+</td>
+    <tr><td class="param">struct Ejs *</td><td><td>ejs</td><td>
+Interpreter reference.
+</td>
+    <tr><td class="param">uint</td><td><td>final</td><td>
+Type is final.
+</td>
+    <tr><td class="param">uint</td><td><td>hasBaseConstructors</td><td>
+Base types has constructors.
+</td>
+    <tr><td class="param">uint</td><td><td>hasBaseInitializers</td><td>
+Base types have initializers.
+</td>
+    <tr><td class="param">uint</td><td><td>hasConstructor</td><td>
+Type has a constructor.
+</td>
+    <tr><td class="param">uint</td><td><td>hasInitializer</td><td>
+Type has static level initialization code.
+</td>
+    <tr><td class="param">uint</td><td><td>hasInstanceVars</td><td>
+Type has non-function instance vars (state).
+</td>
+    <tr><td class="param">uint</td><td><td>hasMeta</td><td>
+Type has meta methods.
+</td>
+    <tr><td class="param">uint</td><td><td>hasScriptFunctions</td><td>
+Block has non-native functions requiring namespaces.
+</td>
+    <tr><td class="param"><a class="ref" href="#struct_ejs_helpers">EjsHelpers</a></td><td><td>helpers</td><td>
+Type helper methods.
+</td>
+    <tr><td class="param">uint</td><td><td>immutable</td><td>
+Instances are immutable.
+</td>
+    <tr><td class="param">MprList *</td><td><td>implements</td><td>
+List of implemented interfaces.
+</td>
+    <tr><td class="param">uint</td><td><td>initialized</td><td>
+Static initializer has run.
+</td>
+    <tr><td class="param">ushort</td><td><td>instanceSize</td><td>
+Size of instances in bytes.
+</td>
+    <tr><td class="param">uint</td><td><td>isInterface</td><td>
+Interface vs class.
+</td>
+    <tr><td class="param">uint</td><td><td>isPot</td><td>
+Instances are based on EjsPot.
+</td>
+    <tr><td class="param">MprManager</td><td><td>manager</td><td>
+Manager callback.
+</td>
+    <tr><td class="param">struct EjsModule *</td><td><td>module</td><td>
+Module owning the type - stores the constant pool.
+</td>
+    <tr><td class="param">MprMutex *</td><td><td>mutex</td><td>
+Optional locking for types that require it.
+</td>
+    <tr><td class="param">uint</td><td><td>needFixup</td><td>
+Slots need fixup.
+</td>
+    <tr><td class="param">uint</td><td><td>numericIndicies</td><td>
+Instances support direct numeric indicies.
+</td>
+    <tr><td class="param">ushort</td><td><td>numInherited</td><td>
+Number of inherited prototype properties.
+</td>
+    <tr><td class="param">EjsPot *</td><td><td>prototype</td><td>
+Prototype for instances when using prototype inheritance (only).
+</td>
+    <tr><td class="param">EjsName</td><td><td>qname</td><td>
+Qualified name of the type. 
+Type name and namespace.
+</td>
+    <tr><td class="param">short</td><td><td>sid</td><td>
+Special value Index into ejs-&gt;values[].
+</td>
+    <tr><td class="param">void *</td><td><td>typeData</td><td>
+Type specific data.
+</td>
+    <tr><td class="param">uint</td><td><td>virtualSlots</td><td>
+Properties are not stored in slots[].
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1gab82b7d4399c850e420a2c5388c836cb5"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsBindFunction
+(Ejs *ejs, EjsAny *obj, int slotNum, void *fun)
+  </div>
+  <div class="apiDetail">
+<p>Bind a native C function to a function property.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Bind a native C function to an existing javascript function. Functions are typically created by compiling a script file of native function definitions into a mod file. When loaded, this mod file will create the function properties. This routine will then bind the specified C function to the function property.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object containing the function property to bind.</td>
+    <tr><td class="param">slotNum</td><td>Slot number of the method property.</td>
+    <tr><td class="param">fun</td><td>Native C function to bind.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsBindMethod
+(Ejs *ejs, EjsAny *obj, int slotNum, void *fn)
+  </div>
+  <div class="apiDetail">
+<p>Bind a native C function to a method property.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Bind a native C function to an existing javascript method. Method functions are typically created by compiling a script file of native method definitions into a mod file. When loaded, this mod file will create the method properties. This routine will then bind the specified C function to the method property.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Type containing the function property to bind.</td>
+    <tr><td class="param">slotNum</td><td>Slot number of the method property.</td>
+    <tr><td class="param">fn</td><td>Native C function to bind.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_type" class="ref">EjsType</a> *
+    ejsCreateType
+(Ejs *ejs, EjsName name, struct EjsModule *up, EjsType *baseType, EjsPot *prototype, int size, int sid, int numTypeProp, int numInstanceProp, int64 attributes)
+  </div>
+  <div class="apiDetail">
+<p>Create a new type object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Create a new type object.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">name</td><td>Qualified name to give the type. This name is merely referenced by the type and must be persistent. This name is not used to define the type as a global property.</td>
+    <tr><td class="param">up</td><td>Reference to a module that will own the type. Set to null if not owned by any module.</td>
+    <tr><td class="param">baseType</td><td>Base type for this type.</td>
+    <tr><td class="param">prototype</td><td>Prototype object instance properties of this type.</td>
+    <tr><td class="param">size</td><td>Size of instances. This is the size in bytes of an instance object.</td>
+    <tr><td class="param">sid</td><td>Unique type ID for core types. For non-core types, set to -1.</td>
+    <tr><td class="param">numTypeProp</td><td>Number of type (class) properties for the type. These include static properties and methods.</td>
+    <tr><td class="param">numInstanceProp</td><td>Number of instance properties.</td>
+    <tr><td class="param">attributes</td><td>Attribute mask to modify how the type is initialized.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1gadc628d9b88ec1f4a806a3f27818ab439"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsDefineGlobalFunction
+(Ejs *ejs, EjsString *name, EjsFun fn)
+  </div>
+  <div class="apiDetail">
+<p>Define a global function.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Define a global public function and bind it to the C native function. This is a simple one liner to define a public global function. The more typical paradigm to define functions is to create a script file of native method definitions and and compile it. This results in a mod file that can be loaded which will create the function/method definitions. Then use <a class="ref" href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d">ejsBindMethod</a> to associate a C function with a property.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsDefineInstanceProperty
+(Ejs *ejs, EjsType *type, int slotNum, EjsName name, EjsType *propType, int attributes, EjsAny *value)
+  </div>
+  <div class="apiDetail">
+<p>Define an instance property.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Define an instance property on a type. This routine should not normally be called manually. Instance properties are best created by creating a script file of native property definitions and then loading the resultant mod file.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">type</td><td>Type in which to create the instance property.</td>
+    <tr><td class="param">slotNum</td><td>Instance slot number in the type that will hold the property. Set to -1 to allocate the next available free slot.</td>
+    <tr><td class="param">name</td><td>Qualified name for the property including namespace and name.</td>
+    <tr><td class="param">propType</td><td>Type of the instance property.</td>
+    <tr><td class="param">attributes</td><td>Integer mask of access attributes.</td>
+    <tr><td class="param">value</td><td>Initial value of the instance property.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The slot number used for the property.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_type" class="ref">EjsType</a> *
+    ejsGetType
+(Ejs *ejs, int slotNum)
+  </div>
+  <div class="apiDetail">
+<p>Get a type.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Get the type installed at the given slot number. All core-types are installed a specific global slots. When Ejscript is built, these slots are converted into C program defines of the form: ES_TYPE where TYPE is the name of the type concerned. For example, you can get the String type object via:.</dd></dl>
+    <dl><dt></dt><dd>EjsGetType(ejs, ES_String).</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">slotNum</td><td>Slot number of the type to retrieve. Use ES_TYPE defines.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A type object if successful or zero if the type could not be found.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsA
+(Ejs *ejs, EjsAny *target, EjsType *type)
+  </div>
+  <div class="apiDetail">
+<p>Test if an variable is an instance of a given type.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Perform an &quot;is a&quot; test. This tests if a variable is a direct instance or subclass of a given base type.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">target</td><td>Target object to test.</td>
+    <tr><td class="param">type</td><td>Type to compare with the target.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if target is an instance of &quot;type&quot; or an instance of a subclass of &quot;type&quot;.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1ga2f1e87fc744789876dbac6f8a01383f1"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsPrototype
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Determine if a variable is a prototype object.</p>
+Types store the template for instance properties in a prototype object
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to test.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the variable is a prototype object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsType
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Determine if a variable is an type.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to test.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the variable is a type.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca" class="ref">ejsIsTypeSubType</a></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_type_1ga1c07c5c5908c4a6db4b35f765efa31ca"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsTypeSubType
+(Ejs *ejs, EjsType *target, EjsType *baseType)
+  </div>
+  <div class="apiDetail">
+<p>Test if a type is a derived type of a given base type.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Test if a type subclasses a base type.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">target</td><td>Target type to test.</td>
+    <tr><td class="param">baseType</td><td>Base class to see if the target subclasses it.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if target is a &quot;baseType&quot; or a subclass of &quot;baseType&quot;.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_type" class="ref">EjsType</a>, <a href="#group___ejs_type_1gae3fdfd951bab3f60fd44b3159ab3669d" class="ref">ejsBindMethod</a>, <a href="#group___ejs_type_1ga8587bb81b34dcbace79ef9c28280fa2f" class="ref">ejsCreateType</a>, <a href="#group___ejs_type_1ga7db7fe9549a45074b1cd21d3a34942a5" class="ref">ejsDefineInstanceProperty</a>, <a href="#group___ejs_type_1gaf41edbabce385e7cb73ed6526aa2cf22" class="ref">ejsGetType</a>, <a href="#group___ejs_type_1ga9ca081fd373eaca45ddcd175bb512ddd" class="ref">ejsIsA</a>, <a href="#group___ejs_type_1gab7d43b404ca6cfb96ea7c17bdbfd9ae1" class="ref">ejsIsType</a></dd></dl>
+  </div>
+</div>
+<h1>EjsUri</h1>
+<a name="group___ejs_uri"></a>
+<div class="api">
+  <div class="prototype">EjsUri</div>
+  <div class="apiDetail">
+<p>Uri class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The Uri class provides file path name services.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_file" class="ref">EjsFile</a>, <a href="#group___ejs_uri_1gae6752aaa05bbde3fbd49c8426b131a70" class="ref">ejsCreateUri</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">HttpUri *</td><td><td>uri</td><td>
+Decoded URI.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_uri_1gae6752aaa05bbde3fbd49c8426b131a70"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_uri" class="ref">EjsUri</a> *
+    ejsCreateUri
+(Ejs *ejs, EjsString *uri)
+  </div>
+  <div class="apiDetail">
+<p>Create a Uri object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Create a URI object associated with the given URI string.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">uri</td><td>Uri string to parse.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new Uri object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_file" class="ref">EjsFile</a></dd></dl>
+  </div>
+</div>
+<h1>EjsVoid</h1>
+<a name="group___ejs_void"></a>
+<div class="api">
+  <div class="prototype">EjsVoid</div>
+  <div class="apiDetail">
+<p>Void class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The Void class provides the base class for the singleton &quot;undefined&quot; instance. This instance is stored in ejs-&gt;undefinedValue.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<h1>EjsWorker</h1>
+<a name="group___ejs_worker"></a>
+<div class="api">
+  <div class="prototype">EjsWorker</div>
+  <div class="apiDetail">
+<p>Worker Class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The Worker class provides the ability to create new interpreters in dedicated threads.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">int</td><td><td>complete</td><td>
+Worker has completed its work.
+</td>
+    <tr><td class="param">Ejs *</td><td><td>ejs</td><td>
+Interpreter.
+</td>
+    <tr><td class="param">EjsAny *</td><td><td>event</td><td>
+Current event object.
+</td>
+    <tr><td class="param">int</td><td><td>gotMessage</td><td>
+Worker has received a message.
+</td>
+    <tr><td class="param">int</td><td><td>inside</td><td>
+Running inside the worker.
+</td>
+    <tr><td class="param">char *</td><td><td>name</td><td>
+Optional worker name.
+</td>
+    <tr><td class="param">struct EjsWorker *</td><td><td>pair</td><td>
+Corresponding worker object in other thread.
+</td>
+    <tr><td class="param">EjsPot</td><td><td>pot</td><td>
+Property storage.
+</td>
+    <tr><td class="param">char *</td><td><td>scriptFile</td><td>
+Script or module to run.
+</td>
+    <tr><td class="param">EjsString *</td><td><td>scriptLiteral</td><td>
+Literal script string to run.
+</td>
+    <tr><td class="param">int</td><td><td>state</td><td>
+Worker state.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<h1>EjsXML</h1>
+<a name="group___ejs_x_m_l"></a>
+<div class="api">
+  <div class="prototype">EjsXML</div>
+  <div class="apiDetail">
+<p>XML class.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The XML class and API is based on ECMA-357 -- ECMAScript for XML (E4X). The XML class is a core class in the E4X specification; it provides the ability to load, parse and save XML documents.</dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_x_m_l_1gae3cb29b339874d4ae21b3bb64d4a5a87" class="ref">ejsIsXML</a></dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">MprList *</td><td><td>attributes</td><td>
+Node attributes.
+</td>
+    <tr><td class="param">MprList *</td><td><td>elements</td><td>
+List elements or child nodes.
+</td>
+    <tr><td class="param">int</td><td><td>kind</td><td>
+Kind of XML node.
+</td>
+    <tr><td class="param">MprList *</td><td><td>namespaces</td><td>
+List of namespaces as Namespace objects.
+</td>
+    <tr><td class="param">EjsObj</td><td><td>obj</td><td>
+Base object.
+</td>
+    <tr><td class="param">struct EjsXML *</td><td><td>parent</td><td>
+Parent node reference (XML or XMLList).
+</td>
+    <tr><td class="param">EjsName</td><td><td>qname</td><td>
+XML node name (e.g. 
+tagName).
+</td>
+    <tr><td class="param">struct EjsXML *</td><td><td>targetObject</td><td>
+XML/XMLList object modified when items inserted into an empty list.
+</td>
+    <tr><td class="param">EjsName</td><td><td>targetProperty</td><td>
+XML property modified when items inserted into an empty list.
+</td>
+    <tr><td class="param">EjsString *</td><td><td>value</td><td>
+Value of text|attribute|comment|pi.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="group___ejs_x_m_l_1gae3cb29b339874d4ae21b3bb64d4a5a87"></a>
+<div class="api">
+  <div class="prototype">
+    boolean
+    ejsIsXML
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Determine if a variable is an XML object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to test.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the variable is an XML or XMLList object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ejs_x_m_l" class="ref">EjsXML</a></dd></dl>
+  </div>
+</div>
+<h2>Functions</h2>
+<a name="ejs_8h_1a20db9f00da32519edbfc01ae05506d0f"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsAlloc
+(Ejs *ejs, struct EjsType *type, ssize extra)
+  </div>
+  <div class="apiDetail">
+<p>Allocate a new variable.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This will allocate space for a bare variable. This routine should only be called by type factories when implementing the createVar helper.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">type</td><td>Type object from which to create an object instance.</td>
+    <tr><td class="param">extra</td><td>Size of extra property slots to reserve. This is used for dynamic objects.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle of the variable.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a86d9596c0e3798f368f348c781794597"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsCastType
+(Ejs *ejs, EjsAny *obj, struct EjsType *type)
+  </div>
+  <div class="apiDetail">
+<p>Cast a variable to a new type.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Cast a variable and return a new variable of the required type.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to cast.</td>
+    <tr><td class="param">type</td><td>Type to cast to.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle of the variable.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a994ef331160672ffe24e71722af2afbd"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsClone
+(Ejs *ejs, EjsAny *obj, bool deep)
+  </div>
+  <div class="apiDetail">
+<p>Clone a variable.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Copy a variable and create a new copy. This may do a shallow or deep copy. A shallow copy will not copy the property instances, rather it will only duplicate the property reference. A deep copy will recursively clone all the properties of the variable.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to clone.</td>
+    <tr><td class="param">deep</td><td>Set to true to do a deep copy.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle of the variable.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a5b75189cd94bc67905b3bb05955737be"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsClonePot
+(Ejs *ejs, EjsAny *src, bool deep)
+  </div>
+  <div class="apiDetail">
+<p>Copy an object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Copy an object create a new instance. This may do a shallow or deep copy depending on the value of deep. A shallow copy will not copy the property instances, rather it will only duplicate the property reference. A deep copy will recursively clone all the properties of the variable.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">src</td><td>Source object to copy.</td>
+    <tr><td class="param">deep</td><td>Set to true to do a deep copy.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A newly allocated object. Caller must not free as the GC will manage the lifecycle of the variable.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a1f8c776a032ffd7b147cbb0dc094c2e7"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_request" class="ref">EjsRequest</a> *
+    ejsCloneRequest
+(Ejs *ejs, EjsRequest *req, bool deep)
+  </div>
+  <div class="apiDetail">
+<p>Clone a request into another interpreter.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs interpreter handle returned from $ejsCreate.</td>
+    <tr><td class="param">req</td><td>Original request to copy.</td>
+    <tr><td class="param">deep</td><td>Ignored.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new request object.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a4ef7ee31a22286d2684b1044b8fb7099"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsCopyToByteArray
+(Ejs *ejs, EjsByteArray *ba, ssize offset, char *data, ssize length)
+  </div>
+  <div class="apiDetail">
+<p>Copy data into a byte array.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Copy data into a byte array at a specified offset.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">ba</td><td>Byte array object.</td>
+    <tr><td class="param">offset</td><td>Offset in the byte array to which to copy the data.</td>
+    <tr><td class="param">data</td><td>Pointer to the source data.</td>
+    <tr><td class="param">length</td><td>Length of the data to copy.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a4cc68285ab8faaa3343af1d228bdbf51"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsCreateEmptyPot
+(Ejs *ejs)
+  </div>
+  <div class="apiDetail">
+<p>Create an empty property object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Create a simple object using Object as its base type.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new object instance.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a6582129e0e72ac2c47d86f3da6aa70b1"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsCreateInstance
+(Ejs *ejs, struct EjsType *type, int argc, void *argv)
+  </div>
+  <div class="apiDetail">
+<p>Create a new variable instance.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Create a new variable instance and invoke any required constructors with the given arguments.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">type</td><td>Type from which to create a new instance.</td>
+    <tr><td class="param">argc</td><td>Count of args in argv.</td>
+    <tr><td class="param">argv</td><td>Vector of arguments. Each arg is an EjsAny.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle of the variable.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a6fef857b0036bffaacef456cb47eff3b"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsCreateObj
+(Ejs *ejs, struct EjsType *type, int numSlots)
+  </div>
+  <div class="apiDetail">
+<p>Create a variable.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Create a variable of the required type. This invokes the createVar helper method for the specified type.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">type</td><td>Type to cast to.</td>
+    <tr><td class="param">numSlots</td><td>Size of extra property slots to reserve. This is used for dynamic objects.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A newly allocated variable of the requested type. Caller must not free as the GC will manage the lifecycle of the variable.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a281f6a70443ee9769a1f62e7763c1e77"></a>
+<div class="api">
+  <div class="prototype">
+    void *
+    ejsCreatePot
+(Ejs *ejs, struct EjsType *type, int size)
+  </div>
+  <div class="apiDetail">
+<p>Create an object instance of the specified type.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Create a new object using the specified type as a base class. Note: the constructor is not called. If you require the constructor to be invoked, use ejsCreateInstance.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">type</td><td>Base type to use when creating the object instance.</td>
+    <tr><td class="param">size</td><td>Number of extra slots to allocate when creating the object.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new object instance.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1ae4d5165d879868c4cea4a78939c46cb8"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_request" class="ref">EjsRequest</a> *
+    ejsCreateRequest
+(Ejs *ejs, EjsHttpServer *server, HttpConn *conn, cchar *dir)
+  </div>
+  <div class="apiDetail">
+<p>Create a new request.</p>
+Create a new request object associated with the given Http connection
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs interpreter handle returned from $ejsCreate.</td>
+    <tr><td class="param">server</td><td>EjsHttpServer owning this request.</td>
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">dir</td><td>Default directory containing web documents.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new request object.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1adb3f131c39450c515666f4d84c26b33b"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_session" class="ref">EjsSession</a> *
+    ejsCreateSession
+(Ejs *ejs, struct EjsRequest *req, int timeout, bool secure)
+  </div>
+  <div class="apiDetail">
+<p>Create a session object.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs interpreter handle returned from $ejsCreate.</td>
+    <tr><td class="param">req</td><td>Request object creating the session.</td>
+    <tr><td class="param">timeout</td><td>Timeout in milliseconds.</td>
+    <tr><td class="param">secure</td><td>If the session is to be given a cookie that is designated as only for secure sessions (SSL).</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A new session object.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1abae9345552bc5c55d435589f881e5d4e"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsDefineProperty
+(Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname, struct EjsType *type, int64 attributes, EjsAny *value)
+  </div>
+  <div class="apiDetail">
+<p>Define a property.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Define a property in a variable and give it a name, base type, attributes and default value.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object in which to define a property.</td>
+    <tr><td class="param">slotNum</td><td>Slot number in the variable for the property. Slots are numbered sequentially from zero. Set to -1 to request the next available slot number.</td>
+    <tr><td class="param">qname</td><td>Qualified name containing a name and a namespace.</td>
+    <tr><td class="param">type</td><td>Base type of the property. Set to ejs-&gt;voidType to leave as untyped.</td>
+    <tr><td class="param">attributes</td><td>Attribute traits. Useful attributes include: <ul><li>EJS_FUN_OVERRIDE </li><li>EJS_ATTR_CONST </li><li>EJS_ATTR_ENUMERABLE </li></ul>.</td>
+    <tr><td class="param">value</td><td>Initial value of the property.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A postitive slot number or a negative MPR error code.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1ac517100e83b31a89d7770a6868d56e33"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsDeleteProperty
+(Ejs *ejs, EjsAny *obj, int slotNum)
+  </div>
+  <div class="apiDetail">
+<p>Delete a property.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Delete a variable&apos;s property and set its slot to null. The slot is not reclaimed and subsequent properties are not compacted.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable in which to delete the property.</td>
+    <tr><td class="param">slotNum</td><td>Slot number in the variable for the property to delete.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a9aabd9755b8bea71f98e0237d048639e"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsDeletePropertyByName
+(Ejs *ejs, EjsAny *obj, EjsName qname)
+  </div>
+  <div class="apiDetail">
+<p>Delete a property by name.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Delete a variable&apos;s property by name and set its slot to null. The property is resolved by using ejsLookupProperty with the specified name. Once deleted, the slot is not reclaimed and subsequent properties are not compacted.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable in which to delete the property.</td>
+    <tr><td class="param">qname</td><td>Qualified name for the property including name and namespace.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a4814d6300c229a734d92fff69aa83a24"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsDestroySession
+(Ejs *ejs, EjsHttpServer *server, EjsSession *session)
+  </div>
+  <div class="apiDetail">
+<p>Destroy as session.</p>
+This destroys the session object so that subsequent requests will need to establish a new session
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs interpreter handle returned from $ejsCreate.</td>
+    <tr><td class="param">server</td><td>Server object owning the session.</td>
+    <tr><td class="param">session</td><td>Session object created via ejsCreateSession().</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a54e1605894366dc559915afb024dc0b7"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsGetLength
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Get a count of properties in a variable.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Get a property from a variable at a given slot.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable to examine.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A positive integer count of the properties stored by the variable.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a1ed91c82c9413c3954a2bb8b23e100a0"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsGetProperty
+(Ejs *ejs, EjsAny *obj, int slotNum)
+  </div>
+  <div class="apiDetail">
+<p>Get a property.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Get a property from a variable at a given slot.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to examine.</td>
+    <tr><td class="param">slotNum</td><td>Slot number for the requested property.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The variable property stored at the nominated slot.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1ae3e172b89698f1ec047b762e3a73accd"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsGetPropertyByName
+(Ejs *ejs, EjsAny *obj, EjsName qname)
+  </div>
+  <div class="apiDetail">
+<p>Get a property by name.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Get a property from a variable by name.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to examine.</td>
+    <tr><td class="param">qname</td><td>Qualified name specifying both a namespace and name.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The variable property stored at the nominated slot.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a39e47e460f99340d355cb4c37135c6a0"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_name" class="ref">EjsName</a>
+    ejsGetPropertyName
+(Ejs *ejs, EjsAny *obj, int slotNum)
+  </div>
+  <div class="apiDetail">
+<p>Get a variable property&apos;s name.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Get a property name for the property at a given slot in the variable.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to examine.</td>
+    <tr><td class="param">slotNum</td><td>Slot number for the requested property.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The qualified property name including namespace and name. Caller must not free.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1aaba9b399c9cb11564755d224b9954b2d"></a>
+<div class="api">
+  <div class="prototype">
+    struct EjsTrait *
+    EjsTrait* ejsGetPropertyTraits
+(Ejs *ejs, EjsAny *obj, int slotNum)
+  </div>
+  <div class="apiDetail">
+<p>Get a property&apos;s traits.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Get a property&apos;s trait description. The property traits define the properties base type, and access attributes.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable to examine.</td>
+    <tr><td class="param">slotNum</td><td>Slot number for the requested property.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A trait structure reference for the property.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a37fc60d8eee2e4dbdfa4891a5ce84924"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsGrowPot
+(Ejs *ejs, EjsPot *obj, int numSlots)
+  </div>
+  <div class="apiDetail">
+<p>Grow a pot object.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Grow the property storage for an object. Object properties are stored in slots. To store more properties, you need to grow the slots.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object reference to grow.</td>
+    <tr><td class="param">numSlots</td><td>New minimum count of properties. If size is less than the current number of properties, the call will be ignored, i.e. it will not shrink objects.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a0566fd5299746e61ae95de3cbaf54fa2"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#ejs_8h_1a6b33ea7ff8884b09e08ff69d698eb4e9" class="ref">EjsAny</a> *
+    ejsInvokeOperator
+(Ejs *ejs, EjsAny *obj, int opCode, EjsAny *rhs)
+  </div>
+  <div class="apiDetail">
+<p>Invoke an opcode on a native type.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Invoke an Ejscript byte code operator on the specified variable given the expression right hand side. Native types would normally implement the invokeOperator helper function to respond to this function call.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable to examine.</td>
+    <tr><td class="param">opCode</td><td>Byte ope code to execute.</td>
+    <tr><td class="param">rhs</td><td>Expression right hand side for binary expression op codes. May be null for other op codes.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The result of the op code or NULL if the opcode does not require a result.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1adedcb4d617bcaae8cb975249a763b36c"></a>
+<div class="api">
+  <div class="prototype">
+    bool
+    ejsIsFrame
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Determine if a variable is a frame.</p>
+Only used internally in the VM
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to test.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the variable is a frame.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1ac5c83751581f5fcc76ec38635a6d73f8"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsLookupProperty
+(Ejs *ejs, EjsAny *obj, EjsName qname)
+  </div>
+  <div class="apiDetail">
+<p>Lookup a property by name.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Search for a property by name in the given variable.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable to examine.</td>
+    <tr><td class="param">qname</td><td>Qualified name of the property to search for.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The slot number containing the property. Then use $ejsGetProperty to retrieve the property or alternatively use ejsGetPropertyByName to lookup and retrieve in one step.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1aee3f4884a4fe9af1fcde057db8c6b69f"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    ejsManagePot
+(void *obj, int flags)
+  </div>
+  <div class="apiDetail">
+<p>Mark an object as currently in use.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Mark an object as currently active so the garbage collector will preserve it. This routine should be called by native types that extend EjsObj in their markVar helper.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">obj</td><td>Object to mark as currently being used.</td>
+    <tr><td class="param">flags</td><td>manager flags.</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1ae495143fc6f3c61d4884289f8fe60450"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsRun
+(Ejs *ejs)
+  </div>
+  <div class="apiDetail">
+<p>Run a script.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Run a script that has previously ben compiled by ecCompile.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpeter object returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a non-zero Mpr error code.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a1ec2f882ca5a1396e47f62079bc2e0d5"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsSetProperty
+(Ejs *ejs, void *obj, int slotNum, void *value)
+  </div>
+  <div class="apiDetail">
+<p>Set a property&apos;s value.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Set a value for a property at a given slot in the specified variable.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to examine.</td>
+    <tr><td class="param">slotNum</td><td>Slot number for the requested property.</td>
+    <tr><td class="param">value</td><td>Reference to a value to store.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The slot number of the property updated.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a45cd5640470482063816220547248eb2"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsSetPropertyByName
+(Ejs *ejs, void *obj, EjsName qname, void *value)
+  </div>
+  <div class="apiDetail">
+<p>Set a property&apos;s value.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Set a value for a property. The property is located by name in the specified variable.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to examine.</td>
+    <tr><td class="param">qname</td><td>Qualified property name.</td>
+    <tr><td class="param">value</td><td>Reference to a value to store.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The slot number of the property updated.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1afb4a386b0f091bde2cb1a966a07ae4e8"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsSetPropertyName
+(Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname)
+  </div>
+  <div class="apiDetail">
+<p>Set a property&apos;s name.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Set a qualified name for a property at the specified slot in the variable. The qualified name consists of a namespace and name - both of which must be persistent. A typical paradigm is for these name strings to be owned by the memory context of the variable.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable to examine.</td>
+    <tr><td class="param">slotNum</td><td>Slot number of the property in the variable.</td>
+    <tr><td class="param">qname</td><td>Qualified property name.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The slot number of the property updated.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1aff9be67192a49b10ed04ab7c2dc7fbea"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ejsSetPropertyTraits
+(Ejs *ejs, EjsAny *obj, int slotNum, struct EjsType *type, int attributes)
+  </div>
+  <div class="apiDetail">
+<p>Set a property&apos;s traits.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Set the traits describing a property. These include the property&apos;s base type and access attributes.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Interpreter instance returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Variable to examine.</td>
+    <tr><td class="param">slotNum</td><td>Slot number of the property in the variable.</td>
+    <tr><td class="param">type</td><td>Base type for the property. Set to NULL for an untyped property.</td>
+    <tr><td class="param">attributes</td><td>Integer mask of access attributes.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The slot number of the property updated.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1a0d892b6a5ea4591b8c1a663b7e3122ac"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_string" class="ref">EjsString</a> *
+    ejsToJSON
+(Ejs *ejs, EjsAny *obj, EjsObj *options)
+  </div>
+  <div class="apiDetail">
+<p>Convert a variable to a string in JSON format.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Value to cast.</td>
+    <tr><td class="param">options</td><td>Encoding options. See serialize for details.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A string object.</dd></dl>
+  </div>
+</div>
+<a name="ejs_8h_1aebbc0b0666e25fddfbb39055ef427cea"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___ejs_string" class="ref">EjsString</a> *
+    ejsToString
+(Ejs *ejs, EjsAny *obj)
+  </div>
+  <div class="apiDetail">
+<p>Cast a variable to a string.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">ejs</td><td>Ejs reference returned from <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</td>
+    <tr><td class="param">obj</td><td>Object to convert.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A string object.</dd></dl>
+  </div>
+</div>
+<h2>Typedefs</h2>
+<a name="struct_ejs_cmd"></a>
+<div class="api">
+  <div class="prototype">EjsCmd</div>
+  <div class="apiDetail">
+<p>Cmd class.</p>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">int</td><td><td>async</td><td>
+Async mode.
+</td>
+    <tr><td class="param">Ejs *</td><td><td>ejs</td><td>
+Interpreter back link.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>emitter</td><td>
+Event emitter for listeners.
+</td>
+    <tr><td class="param">struct EjsByteArray *</td><td><td>error</td><td>
+Error stream.
+</td>
+    <tr><td class="param">EjsPot</td><td><td>pot</td><td>
+Property storage.
+</td>
+    <tr><td class="param">MprBuf *</td><td><td>stderrBuf</td><td>
+Stderr from the command.
+</td>
+    <tr><td class="param">MprBuf *</td><td><td>stdoutBuf</td><td>
+Stdout from the command.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="struct_ejs_code"></a>
+<div class="api">
+  <div class="prototype">EjsCode</div>
+  <div class="apiDetail">
+<p>Byte code.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This structure describes a sequence of byte code for a function. It also defines a set of execption handlers pertaining to this byte code.</dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">uchar</td><td><td>byteCode[0]</td><td>
+Byte code.
+</td>
+    <tr><td class="param">int</td><td><td>codeLen</td><td>
+Byte code length.
+</td>
+    <tr><td class="param">EjsDebug *</td><td><td>debug</td><td>
+Source code debug information.
+</td>
+    <tr><td class="param">int</td><td><td>debugOffset</td><td>
+Offset in mod file for debug info.
+</td>
+    <tr><td class="param"><a class="ref" href="#struct_ejs_ex">EjsEx</a> **</td><td><td>handlers</td><td>
+Exception handlers.
+</td>
+    <tr><td class="param">int</td><td><td>magic</td><td>
+Debug magic id.
+</td>
+    <tr><td class="param">struct EjsModule *</td><td><td>module</td><td>
+Module owning this function.
+</td>
+    <tr><td class="param">int</td><td><td>numHandlers</td><td>
+Number of exception handlers.
+</td>
+    <tr><td class="param">int</td><td><td>sizeHandlers</td><td>
+Size of handlers array.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="struct_ejs_ex"></a>
+<div class="api">
+  <div class="prototype">EjsEx</div>
+  <div class="apiDetail">
+<p>Exception Handler Record.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Each exception handler has an exception handler record allocated that describes it.</dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">struct EjsType *</td><td><td>catchType</td><td>
+Type of error to catch.
+</td>
+    <tr><td class="param">uint</td><td><td>flags</td><td>
+Exception flags.
+</td>
+    <tr><td class="param">uint</td><td><td>handlerEnd</td><td>
+Ptr to one past the end.
+</td>
+    <tr><td class="param">uint</td><td><td>handlerStart</td><td>
+Ptr to start of catch/finally block.
+</td>
+    <tr><td class="param">uint</td><td><td>numBlocks</td><td>
+Count of blocks opened before the try block.
+</td>
+    <tr><td class="param">uint</td><td><td>numStack</td><td>
+Count of stack slots pushed before the try block.
+</td>
+    <tr><td class="param">uint</td><td><td>tryEnd</td><td>
+Ptr to one past the end.
+</td>
+    <tr><td class="param">uint</td><td><td>tryStart</td><td>
+Ptr to start of try block.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="struct_ejs_helpers"></a>
+<div class="api">
+  <div class="prototype">EjsHelpers</div>
+  <div class="apiDetail">
+<p>Allocation and Type Helpers.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The type helpers interface defines the set of primitive operations a type must support to interact with the virtual machine.</dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    </table></dd></dl>
+  </div>
+</div>
+<a name="struct_ejs_lookup"></a>
+<div class="api">
+  <div class="prototype">EjsLookup</div>
+  <div class="apiDetail">
+<p>Lookup State.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Location information returned when looking up properties.</dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    </table></dd></dl>
+  </div>
+</div>
+<a name="struct_ejs_service"></a>
+<div class="api">
+  <div class="prototype">EjsService</div>
+  <div class="apiDetail">
+<p>Ejscript Service structure.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The Ejscript service manages the overall language runtime. It is the factory that creates interpreter instances via <a class="ref" href="#group___ejs_1ga75cce70e794158ee54ddb800509060e0">ejsCreate</a>.</dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">uint</td><td><td>dontExit</td><td>
+Prevent App.exit() from exiting.
+</td>
+    <tr><td class="param">EjsObj *</td><td><td>foundation</td><td>
+Foundational native types.
+</td>
+    <tr><td class="param">EjsIntern *</td><td><td>intern</td><td>
+Interned Unicode string hash - shared over all interps.
+</td>
+    <tr><td class="param">Ejs *</td><td><td>master</td><td>
+Master interpreter.
+</td>
+    <tr><td class="param">MprMutex *</td><td><td>mutex</td><td>
+Multithread locking.
+</td>
+    </table></dd></dl>
+  </div>
+</div>
+<a name="struct_ejs_state"></a>
+<div class="api">
+  <div class="prototype">EjsState</div>
+  <div class="apiDetail">
+<p>VM Evaluation state.</p>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    </table></dd></dl>
+  </div>
+</div>
+<a name="struct_ejs_trait"></a>
+<div class="api">
+  <div class="prototype">EjsTrait</div>
+  <div class="apiDetail">
+<p>Property traits.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Property traits describe the type and access attributes of a property. The Trait structure is used by EjsBlock to describe the attributes of properties defined within a block. Note: These traits apply to a property definition and not to the referenced object. ie. two property definitions may have different traits but will refer to the same object.</dd></dl>
+    <dl><dt>Fields:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">int</td><td><td>attributes</td><td>
+Modifier attributes.
+</td>
+    <tr><td class="param">struct EjsType *</td><td><td>type</td><td>
+Property type (prototype).
+</td>
+    </table></dd></dl>
+    <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
+  </div>
+</div>
