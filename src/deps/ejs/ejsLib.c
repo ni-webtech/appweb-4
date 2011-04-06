@@ -6954,7 +6954,7 @@ static EjsObj *getFilePosition(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
  */
 static EjsObj *setFilePosition(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
-    long        pos;
+    MprOff      pos;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], Number));
     pos = ejsGetInt(ejs, argv[0]);
@@ -6965,7 +6965,7 @@ static EjsObj *setFilePosition(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
     }
     pos = ejsGetInt(ejs, argv[0]);
     if (mprSeekFile(fp->file, SEEK_SET, pos) != pos) {
-        ejsThrowIOError(ejs, "Can't seek to %ld", pos);
+        ejsThrowIOError(ejs, "Can't seek to %Ld", pos);
     }
     return 0;
 }
@@ -10253,7 +10253,6 @@ static ssize readHttpData(Ejs *ejs, EjsHttp *hp, ssize count)
 
     conn = hp->conn;
 
-    //  MOB -- does this block in sync mode?
     buf = hp->responseContent;
     while (count < 0 || mprGetBufLength(buf) < count) {
         len = (count < 0) ? HTTP_BUFSIZE : (count - mprGetBufLength(buf));
@@ -38148,6 +38147,7 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
         setupConnTrace(conn);
         break;
 
+            
     case HTTP_STATE_FIRST:
         if (!(conn->rx->flags & (HTTP_OPTIONS | HTTP_TRACE))) {
             conn->tx->handler = (conn->error) ? conn->http->passHandler : conn->http->ejsHandler;

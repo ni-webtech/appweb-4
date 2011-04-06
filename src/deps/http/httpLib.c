@@ -8067,7 +8067,7 @@ static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range)
     packet->flags |= HTTP_PACKET_RANGE;
     mprPutFmtToBuf(packet->content, 
         "\r\n--%s\r\n"
-        "Content-Range: bytes %d-%d/%s\r\n\r\n",
+        "Content-Range: bytes %Ld-%Ld/%s\r\n\r\n",
         tx->rangeBoundary, range->start, range->end - 1, lenBuf);
     return packet;
 }
@@ -9115,10 +9115,6 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
             conn->input = httpSplitPacket(packet, nbytes);
         }
         httpSendPacketToNext(q, packet);
-        if ((conn->readq->count + httpGetPacketLength(packet)) > conn->readq->max) {
-            return 0;
-        }
-
     } else {
         conn->input = 0;
     }
@@ -9162,6 +9158,10 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         return 1;
     }
     httpServiceQueues(conn);
+
+    if ((conn->readq->count + httpGetPacketLength(packet)) > conn->readq->max) {
+        return 0;
+    }
     return conn->error || (conn->input ? mprGetBufLength(conn->input->content) : 0);
 }
 
@@ -11722,9 +11722,9 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         if (rx->ranges->next == 0) {
             range = rx->ranges;
             if (tx->entityLength > 0) {
-                httpSetHeader(conn, "Content-Range", "bytes %d-%d/%d", range->start, range->end, tx->entityLength);
+                httpSetHeader(conn, "Content-Range", "bytes %Ld-%Ld/%Ld", range->start, range->end, tx->entityLength);
             } else {
-                httpSetHeader(conn, "Content-Range", "bytes %d-%d/*", range->start, range->end);
+                httpSetHeader(conn, "Content-Range", "bytes %Ld-%Ld/*", range->start, range->end);
             }
         } else {
             httpSetHeader(conn, "Content-Type", "multipart/byteranges; boundary=%s", tx->rangeBoundary);

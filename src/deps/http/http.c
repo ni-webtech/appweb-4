@@ -753,7 +753,7 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
         contentLen = conn->rx->readContent;
     }
 
-    mprLog(6, "Response status %d, elapsed %ld", status, elapsed);
+    mprLog(6, "Response status %d, elapsed %Ld", status, elapsed);
     if (conn->error) {
         app->success = 0;
     }
