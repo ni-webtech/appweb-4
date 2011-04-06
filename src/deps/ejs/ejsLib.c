@@ -243,11 +243,11 @@ static EjsObj *app_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     MprTime     mark, remaining;
     int         oneEvent, timeout;
 
-    timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]) : INT_MAX;
+    timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]) : MAXINT;
     oneEvent = (argc > 1) ? ejsGetInt(ejs, argv[1]) : 0;
 
     if (timeout < 0) {
-        timeout = INT_MAX;
+        timeout = MAXINT;
     }
     mark = mprGetTime();
     remaining = timeout;
@@ -268,9 +268,9 @@ static EjsObj *app_sleep(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     MprTime     mark, remaining;
     int         timeout;
 
-    timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]) : INT_MAX;
+    timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]) : MAXINT;
     if (timeout < 0) {
-        timeout = INT_MAX;
+        timeout = MAXINT;
     }
     mark = mprGetTime();
     remaining = timeout;
@@ -9804,7 +9804,7 @@ static EjsObj *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     } else {
         timeout = conn->limits->inactivityTimeout;
         if (timeout <= 0) {
-            timeout = INT_MAX;
+            timeout = MAXINT;
         }
     }
     if (!waitForState(hp, HTTP_STATE_CONTENT, timeout, 1)) {
@@ -10095,7 +10095,7 @@ static EjsObj *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     if (timeout < 0) {
         timeout = hp->conn->limits->requestTimeout;
         if (timeout == 0) {
-            timeout = INT_MAX;
+            timeout = MAXINT;
         }
     }
     mark = mprGetTime();
@@ -10445,8 +10445,8 @@ static bool expired(EjsHttp *hp)
 {
     int     requestTimeout, inactivityTimeout, diff, inactivity;
 
-    requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : INT_MAX;
-    inactivityTimeout = conn->limits->inactivityTimeout ? conn->limits->inactivityTimeout : INT_MAX;
+    requestTimeout = conn->limits->requestTimeout ? conn->limits->requestTimeout : MAXINT;
+    inactivityTimeout = conn->limits->inactivityTimeout ? conn->limits->inactivityTimeout : MAXINT;
 
     /* 
         Workaround for a GCC bug when comparing two 64bit numerics directly. Need a temporary.
@@ -10504,7 +10504,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
     if (timeout < 0) {
         timeout = 0;
     } else if (mprGetDebugMode()) {
-        timeout = INT_MAX;
+        timeout = MAXINT;
     }
     remaining = timeout;
     mark = mprGetTime();
@@ -10600,7 +10600,7 @@ static bool waitForResponseHeaders(EjsHttp *hp, int timeout)
     if (timeout < 0) {
         timeout = hp->conn->limits->inactivityTimeout;
         if (timeout <= 0) {
-            timeout = INT_MAX;
+            timeout = MAXINT;
         }
     }
     if (hp->conn->state < HTTP_STATE_PARSED && !waitForState(hp, HTTP_STATE_PARSED, timeout, 1)) {
@@ -12017,7 +12017,7 @@ static EjsObj *math_random(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     }
 }
 #endif
-    value = ((MprNumber) (uvalue & 0x7FFFFFFF)) / INT_MAX;
+    value = ((MprNumber) (uvalue & 0x7FFFFFFF)) / MAXINT;
     return (EjsObj*) ejsCreateNumber(ejs, value);
 }
 
@@ -12234,7 +12234,7 @@ static EjsObj *setRedline(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
     redline = ejsGetInt(ejs, argv[0]);
     if (redline <= 0) {
         //  TODO - 64 bit
-        redline = INT_MAX;
+        redline = MAXINT;
     }
     mprSetMemLimits(redline, -1);
     return 0;
@@ -30334,7 +30334,6 @@ mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->hea
                 }
             }
             ejs->result = type;
-mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
             BREAK;
 
         /*
@@ -30453,7 +30452,6 @@ mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->hea
          */
         CASE (EJS_OP_POP):
             ejs->result = pop(ejs);
-mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
             mprAssert(ejs->exception || ejs->result);
             BREAK;
 
@@ -31248,10 +31246,10 @@ ejsFreeze(ejs, frozen);
                 EjsName n = { nameVar, NULL };
                 slotNum = ejsLookupProperty(ejs, v1, n);
                 if (slotNum < 0) {
-                    //  MOB -- Reconsider
-                    slotNum = ejsLookupVar(ejs, v1, qname, &lookup);
+                    n.space = S(empty);
+                    slotNum = ejsLookupVar(ejs, v1, n, &lookup);
                     if (slotNum < 0 && ejsIsType(ejs, v1)) {
-                        slotNum = ejsLookupVar(ejs, (EjsObj*) ((EjsType*) v1)->prototype, qname, &lookup);
+                        slotNum = ejsLookupVar(ejs, (EjsObj*) ((EjsType*) v1)->prototype, n, &lookup);
                     }
                 }
                 push(ejsCreateBoolean(ejs, slotNum >= 0));
@@ -34995,7 +34993,7 @@ static EjsDebug *loadDebug(Ejs *ejs, EjsFunction *fun)
     EjsDebug    *debug;
     EjsLine     *line;
     EjsCode     *code;
-    MprOffset   prior;
+    MprOff      prior;
     int         i, length;
 
     mp = fun->body.code->module;

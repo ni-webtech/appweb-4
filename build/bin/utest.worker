@@ -127,7 +127,7 @@ public function testCmdNoCapture(args): Boolean {
 // MOB - what does this function really do? - why not just use sh?
 
 public function testCmd(args): Boolean {
-    App.log.activity("Test", "Run test: " + args)
+    App.log.debug(4, "Run test: " + args)
     try {
         args = args.toString().toJSON().trim('"')
         System.run(("/bin/sh -c \"" + args + "\"").trim('\n'))

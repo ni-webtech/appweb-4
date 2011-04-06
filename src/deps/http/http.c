@@ -120,6 +120,7 @@ MAIN(httpMain, int argc, char *argv[])
     }
     start = mprGetTime();
     app->http = httpCreate();
+    httpEaseLimits(app->http->clientLimits);
 
     processing();
     mprServiceEvents(-1, 0);
@@ -237,7 +238,7 @@ static bool parseArgs(int argc, char **argv)
         } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
             mprSetDebugMode(1);
             app->retries = 0;
-            app->timeout = INT_MAX;
+            app->timeout = MAXINT;
 
         } else if (strcmp(argp, "--delete") == 0) {
             app->method = "DELETE";
@@ -817,7 +818,7 @@ static int doRequest(HttpConn *conn, cchar *url, MprList *files)
         return MPR_ERR_CANT_CONNECT;
     }
     while (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprGetElapsedTime(mark) <= limits->requestTimeout) {
-        httpWait(conn, HTTP_STATE_COMPLETE, 10);
+        httpWait(conn, HTTP_STATE_CONTENT, 10);
         readBody(conn);
     }
     if (conn->state < HTTP_STATE_COMPLETE && !conn->error) {
@@ -838,7 +839,7 @@ static int setContentLength(HttpConn *conn, MprList *files)
 {
     MprPath     info;
     char        *path, *pair;
-    ssize       len;
+    MprOff      len;
     int         next;
 
     len = 0;
@@ -852,7 +853,7 @@ static int setContentLength(HttpConn *conn, MprList *files)
                 mprError("Can't access file %s", path);
                 return MPR_ERR_CANT_ACCESS;
             }
-            len += (int) info.size;
+            len += info.size;
         }
     }
     if (app->formData) {
@@ -890,7 +891,7 @@ static int writeBody(HttpConn *conn, MprList *files)
             for (next = 0; !rc && (pair = mprGetNextItem(app->formData, &next)) != 0; ) {
                 len = strlen(pair);
                 if (next < count) {
-                    len = strlen(pair);
+                    len = slen(pair);
                     if (httpWrite(conn->writeq, pair, len) != len || httpWrite(conn->writeq, "&", 1) != 1) {
                         return MPR_ERR_CANT_WRITE;
                     }
@@ -1205,6 +1206,7 @@ static char *getPassword()
 int _cleanup() {
     return 0;
 }
+
 int _exit() {
     return 0;
 }

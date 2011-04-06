@@ -2681,7 +2681,8 @@ static void readEvent(HttpConn *conn)
             }
             break;
         }
-        if (nbytes == 0 || conn->state >= HTTP_STATE_RUNNING || conn->workerEvent) {
+        if (nbytes == 0 || conn->state >= HTTP_STATE_RUNNING || conn->workerEvent || 
+                (conn->readq && conn->readq->count > conn->readq->max)) {
             break;
         }
     }
@@ -2783,7 +2784,7 @@ static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead)
     HttpPacket  *packet;
     MprBuf      *content;
     HttpRx      *rx;
-    ssize       len;
+    MprOff      len;
 
     rx = conn->rx;
     len = HTTP_BUFSIZE;
@@ -3014,14 +3015,14 @@ void httpSetTimeout(HttpConn *conn, int requestTimeout, int inactivityTimeout)
 {
     if (requestTimeout >= 0) {
         if (requestTimeout == 0) {
-            conn->limits->requestTimeout = INT_MAX;
+            conn->limits->requestTimeout = MAXINT;
         } else {
             conn->limits->requestTimeout = requestTimeout;
         }
     }
     if (inactivityTimeout >= 0) {
         if (inactivityTimeout == 0) {
-            conn->limits->inactivityTimeout = INT_MAX;
+            conn->limits->inactivityTimeout = MAXINT;
         } else {
             conn->limits->inactivityTimeout = inactivityTimeout;
         }
@@ -3734,7 +3735,7 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
     //  MOB -- not right
     host->traceMask = HTTP_TRACE_TX | HTTP_TRACE_RX | HTTP_TRACE_FIRST | HTTP_TRACE_HEADER;
     host->traceLevel = 3;
-    host->traceMaxLength = INT_MAX;
+    host->traceMaxLength = MAXINT;
 
     host->loc = (loc) ? loc : httpCreateLocation();
     httpAddLocation(host, host->loc);
@@ -4545,7 +4546,7 @@ void httpInitLimits(HttpLimits *limits, int serverSide)
     limits->uriSize = MPR_MAX_URL;
 
     limits->inactivityTimeout = HTTP_INACTIVITY_TIMEOUT;
-    limits->requestTimeout = INT_MAX;
+    limits->requestTimeout = MAXINT;
     limits->sessionTimeout = HTTP_SESSION_TIMEOUT;
 
     limits->clientCount = HTTP_MAX_CLIENTS;
@@ -4580,6 +4581,14 @@ HttpLimits *httpCreateLimits(int serverSide)
         httpInitLimits(limits, serverSide);
     }
     return limits;
+}
+
+
+void httpEaseLimits(HttpLimits *limits)
+{
+    limits->receiveBodySize = MAXOFF;
+    limits->transmissionBodySize = MAXOFF;
+    limits->uploadSize = MAXOFF;
 }
 
 
@@ -6295,7 +6304,7 @@ static void managePacket(HttpPacket *packet, int flags);
     used for incoming body content. If size > 0, then create a non-growable buffer 
     of the requested size.
  */
-HttpPacket *httpCreatePacket(ssize size)
+HttpPacket *httpCreatePacket(MprOff size)
 {
     HttpPacket  *packet;
 
@@ -6358,7 +6367,7 @@ void httpFreePacket(HttpQueue *q, HttpPacket *packet)
 #endif
 
 
-HttpPacket *httpCreateDataPacket(ssize size)
+HttpPacket *httpCreateDataPacket(MprOff size)
 {
     HttpPacket    *packet;
 
@@ -6434,7 +6443,7 @@ HttpPacket *httpGetPacket(HttpQueue *q)
  */
 bool httpIsPacketTooBig(HttpQueue *q, HttpPacket *packet)
 {
-    ssize   size;
+    MprOff      size;
     
     size = mprGetBufLength(packet->content);
     return size > q->max || size > q->packetSize;
@@ -6474,7 +6483,7 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
  */
 int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 {
-    ssize   len;
+    MprOff      len;
 
     len = httpGetPacketLength(p);
     if (mprPutBlockToBuf(packet->content, mprGetBufStart(p->content), len) != len) {
@@ -6487,10 +6496,10 @@ int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 /*
     Join queue packets up to the maximum of the given size and the downstream queue packet size.
  */
-void httpJoinPackets(HttpQueue *q, ssize size)
+void httpJoinPackets(HttpQueue *q, MprOff size)
 {
     HttpPacket  *packet, *first, *next;
-    ssize       maxPacketSize;
+    MprOff      maxPacketSize;
 
     if (size < 0) {
         size = MAXINT;
@@ -6559,15 +6568,14 @@ void httpPutForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
     Split a packet if required so it fits in the downstream queue. Put back the 2nd portion of the split packet on the queue.
     Ensure that the packet is not larger than "size" if it is greater than zero.
  */
-int httpResizePacket(HttpQueue *q, HttpPacket *packet, ssize size)
+int httpResizePacket(HttpQueue *q, HttpPacket *packet, MprOff size)
 {
     HttpPacket  *tail;
-    ssize       len;
+    MprOff      len;
     
     if (size <= 0) {
         size = MAXINT;
     }
-
     /*  
         Calculate the size that will fit
      */
@@ -6652,10 +6660,10 @@ void httpSendPackets(HttpQueue *q)
     Split a packet at a given offset and return a new packet containing the data after the offset.
     The suffix data migrates to the new packet. 
  */
-HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
+HttpPacket *httpSplitPacket(HttpPacket *orig, MprOff offset)
 {
     HttpPacket  *packet;
-    ssize       count, size;
+    MprOff      count, size;
 
     if (offset >= httpGetPacketLength(orig)) {
         mprAssert(0);
@@ -6927,12 +6935,11 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
         }
     }
     if (tx->connector == 0) {
-        //  MOB loc->connector is set to never selecting sendConnector
-        if (loc && loc->connector) {
-            tx->connector = loc->connector;
-        } else if (tx->handler == http->fileHandler && !rx->ranges && !conn->secure && tx->chunkSize <= 0) {
+        if (tx->handler == http->fileHandler && rx->flags & HTTP_GET && !rx->ranges && !conn->secure && tx->chunkSize <= 0) {
             //  MOB - should not use this if tracing content is requested
             tx->connector = http->sendConnector;
+        } else if (loc && loc->connector) {
+            tx->connector = loc->connector;
         } else {
             tx->connector = http->netConnector;
         }
@@ -7391,7 +7398,7 @@ void httpDisableQueue(HttpQueue *q)
 void httpDiscardData(HttpQueue *q, bool removePackets)
 {
     HttpPacket  *packet, *prev, *next;
-    ssize       len;
+    MprOff      len;
 
     for (prev = 0, packet = q->first; packet; packet = next) {
         next = packet->next;
@@ -7626,7 +7633,7 @@ char *httpReadString(HttpConn *conn)
 {
     HttpRx      *rx;
     char        *content;
-    ssize       remaining, sofar, nbytes;
+    MprOff      remaining, sofar, nbytes;
 
     rx = conn->rx;
 
@@ -7719,12 +7726,16 @@ void httpServiceQueue(HttpQueue *q)
 bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
 {
     HttpQueue   *next;
-    ssize       size;
+    MprOff      size;
 
     next = q->nextQ;
 
+#if UNUSED
     size = packet->content ? mprGetBufLength(packet->content) : 0;
-    if (size == 0 || (size <= next->packetSize && (size + next->count) <= next->max)) {
+#else
+    size = httpGetPacketLength(packet);
+#endif
+    if (size <= next->packetSize && (size + next->count) <= next->max) {
         return 1;
     }
     if (httpResizePacket(q, packet, 0) < 0) {
@@ -8657,7 +8668,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Mulitple content length headers");
                     break;
                 }
-                rx->length = atoi(value);
+                rx->length = stoi(value, 10, 0);
                 if (rx->length < 0) {
                     httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad content length");
                     break;
@@ -9054,7 +9065,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     HttpTx      *tx;
     HttpQueue   *q;
     MprBuf      *content;
-    ssize       nbytes, remaining;
+    MprOff      nbytes, remaining;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -9103,11 +9114,10 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
             LOG(7, "processContent: Split packet of %d at %d", httpGetPacketLength(packet), nbytes);
             conn->input = httpSplitPacket(packet, nbytes);
         }
-        if ((q->count + httpGetPacketLength(packet)) > q->max) {
-            //  MOB - is this right?
+        httpSendPacketToNext(q, packet);
+        if ((conn->readq->count + httpGetPacketLength(packet)) > conn->readq->max) {
             return 0;
         }
-        httpSendPacketToNext(q, packet);
 
     } else {
         conn->input = 0;
@@ -9527,6 +9537,10 @@ static void waitHandler(HttpConn *conn, struct MprEvent *event)
 }
 
 
+/*
+    Wait for an Http event until the http reaches a specified state or a timeout expires
+    If timeout is == -1, then no timeout is used. If state is zero, it waits for just one event.
+ */
 int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
     Http        *http;
@@ -9928,8 +9942,8 @@ void httpSendOutgoingService(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpTx      *tx;
-    ssize       written;
-    int         errCode, count;
+    ssize       written, count;
+    int         errCode;
 
     conn = q->conn;
     tx = conn->tx;
@@ -9965,7 +9979,7 @@ void httpSendOutgoingService(HttpQueue *q)
          */
         count = q->ioIndex - q->ioFileEntry;
         mprAssert(count >= 0);
-        written = mprSendFileToSocket(conn->sock, tx->file, (MprOffset) tx->pos, q->ioCount, q->iovec, count, NULL, 0);
+        written = mprSendFileToSocket(conn->sock, tx->file, tx->pos, q->ioCount, q->iovec, count, NULL, 0);
         mprLog(5, "Send connector wrote %d, written so far %d", written, tx->bytesWritten);
         if (written < 0) {
             errCode = mprGetError(q);
@@ -10087,7 +10101,7 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
             addToSendVector(q, 0, httpGetPacketLength(packet));
             mprAssert(q->ioFileEntry == 0);
             q->ioFileEntry = 1;
-            q->ioFileOffset += (MprOffset) httpGetPacketLength(packet);
+            q->ioFileOffset += httpGetPacketLength(packet);
         }
     }
     item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
@@ -10857,6 +10871,7 @@ static void incomingData(HttpQueue *q, HttpPacket *packet)
         httpSendPacketToNext(q, packet);
     } else {
         /* This queue is the last queue in the pipeline */
+        //  MOB - should this call WillAccept?
         if (httpGetPacketLength(packet) > 0) {
             httpJoinPacketForService(q, packet, 0);
             HTTP_NOTIFY(q->conn, 0, HTTP_NOTIFY_READABLE);
@@ -11139,7 +11154,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
         return;
     }
     if (len <= 0) {
-        len = INT_MAX;
+        len = MAXINT;
     }
     if (packet->prefix) {
         size = mprGetBufLength(packet->prefix);
@@ -11577,7 +11592,7 @@ void httpSetContentLength(HttpConn *conn, ssize length)
         return;
     }
     tx->length = length;
-    httpSetHeader(conn, "Content-Length", "%d", tx->length);
+    httpSetHeader(conn, "Content-Length", "%Ld", tx->length);
 }
 
 
@@ -11701,7 +11716,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
             httpSetSimpleHeader(conn, "Transfer-Encoding", "chunked");
         }
     } else if (tx->length > 0) {
-        httpSetHeader(conn, "Content-Length", "%d", tx->length);
+        httpSetHeader(conn, "Content-Length", "%Ld", tx->length);
     }
     if (rx->ranges) {
         if (rx->ranges->next == 0) {
@@ -11733,7 +11748,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
 }
 
 
-void httpSetEntityLength(HttpConn *conn, ssize len)
+void httpSetEntityLength(HttpConn *conn, int64 len)
 {
     HttpTx      *tx;
 

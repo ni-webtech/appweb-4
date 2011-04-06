@@ -509,6 +509,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     HttpServer  *server;
     MprHash     *hp;
     MprModule   *module;
+    MprOff      onum;
     char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *ip;
     char        *names, *type, *items, *include, *exclude, *when, *mimeTypes;
     ssize       len;
@@ -847,9 +848,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     case 'L':
         if (scasecmp(key, "LimitChunkSize") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_CHUNK_SIZE || num > MA_TOP_CHUNK_SIZE) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->chunkSize = num;
             return 1;
 
@@ -858,70 +856,45 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "LimitMemoryMax") == 0) {
-            mprSetMemLimits(-1, atoi(value));
+            mprSetMemLimits(-1, stoi(value, 10, 0));
             return 1;
 
         } else if (scasecmp(key, "LimitMemoryRedline") == 0) {
-            mprSetMemLimits(atoi(value), -1);
+            mprSetMemLimits(stoi(value, 10, 0), -1);
             return 1;
 
         } else if (scasecmp(key, "LimitRequestBody") == 0) {
-            num = atoi(value);
-            if (num < MA_BOT_BODY || num > MA_TOP_BODY) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
-            limits->receiveBodySize = num;
+            onum = stoi(value, 10, 0);
+            limits->receiveBodySize = onum;
             return 1;
 
-        //  MOB -- Deprecate Field and update doc
-        } else if (scasecmp(key, "LimitRequestFields") == 0 || 
-                scasecmp(key, "LimitRequestHeaderCount") == 0) {
+        } else if (scasecmp(key, "LimitRequestFields") == 0 || scasecmp(key, "LimitRequestHeaderCount") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_NUM_HEADERS || num > MA_TOP_NUM_HEADERS) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->headerCount = num;
             return 1;
 
-        //  MOB -- Deprecate Field and update doc
         } else if (scasecmp(key, "LimitRequestFieldSize") == 0 || scasecmp(key, "LimitRequestHeaderSize") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_HEADER || num > MA_TOP_HEADER) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->headerSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitResponseBody") == 0) {
-            num = atoi(value);
-            if (num < MA_BOT_RESPONSE_BODY || num > MA_TOP_RESPONSE_BODY) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
-            limits->transmissionBodySize = num;
+            onum = stoi(value, 10, 0);
+            limits->transmissionBodySize = onum;
             return 1;
 
         } else if (scasecmp(key, "LimitStageBuffer") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_STAGE_BUFFER || num > MA_TOP_STAGE_BUFFER) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->stageBufferSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitUrl") == 0 || scasecmp(key, "LimitUri") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_URL || num > MA_TOP_URL){
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->uriSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitUploadSize") == 0) {
-            num = atoi(value);
-            if (num != -1 && (num < MA_BOT_UPLOAD_SIZE || num > MA_TOP_UPLOAD_SIZE)){
-                //  TODO - should emit a message for all these cases
-                return MPR_ERR_BAD_SYNTAX;
-            }
+            num = stoi(value, 10, 0);
             limits->uploadSize = num;
             return 1;
 
@@ -1338,9 +1311,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
         } else if (scasecmp(key, "StartThreads") == 0) {
             num = atoi(value);
-            if (num < 0 || num > MA_TOP_THREADS) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             mprSetMinWorkers(num);
             return 1;
         }
@@ -1349,17 +1319,11 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     case 'T':
         if (scasecmp(key, "ThreadLimit") == 0) {
             num = atoi(value);
-            if (num < 0 || num > MA_TOP_THREADS) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             mprSetMaxWorkers(num);
             return 1;
 
         } else if (scasecmp(key, "ThreadStackSize") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_STACK || num > MA_TOP_STACK) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             mprSetThreadStackSize(num);
             return 1;
 
@@ -1415,7 +1379,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         }
         break;
     }
-
     rc = 0;
 
     /*

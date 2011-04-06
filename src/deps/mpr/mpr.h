@@ -358,7 +358,7 @@
     #endif
 #endif
 
-typedef off_t MprOffset;
+typedef off_t MprOff;
 
 /**
     Date and Time Service
@@ -425,6 +425,12 @@ typedef int64 MprTime;
     #define MAXSSIZE     INT64(0x7fffffffffffffff)
 #else
     #define MAXSSIZE     MAXINT
+#endif
+
+#if OFF_T_MAX
+    #define MAXOFF          OFF_T_MAX
+#else
+    #define MAXOFF          INT64(0x7fffffffffffffff)
 #endif
 
 /*
@@ -1602,7 +1608,7 @@ extern void *mprAtomicExchange(void * volatile *addr, cvoid *value);
     #define MPR_ALIGN               8
     #define MPR_ALIGN_SHIFT         3
 #endif
-#define MPR_SIZE_BITS               (MPR_BITS - 2)
+#define MPR_SIZE_BITS               (MPR_BITS - 3)
 
 /*
     MprMem.prior field bits. Layout for 32 bits. This field must only be accessed (read|write) while locked.
@@ -4119,15 +4125,15 @@ typedef bool            (*MprAccessFileProc)(struct MprFileSystem *fs, cchar *pa
 typedef int             (*MprDeleteFileProc)(struct MprFileSystem *fs, cchar *path);
 typedef int             (*MprDeleteDirProc)(struct MprFileSystem *fs, cchar *path);
 typedef int             (*MprGetPathInfoProc)(struct MprFileSystem *fs, cchar *path, struct MprPath *info);
-typedef char            *(*MprGetPathLinkProc)(struct MprFileSystem *fs, cchar *path);
+typedef char           *(*MprGetPathLinkProc)(struct MprFileSystem *fs, cchar *path);
 typedef int             (*MprMakeDirProc)(struct MprFileSystem *fs, cchar *path, int perms);
 typedef int             (*MprMakeLinkProc)(struct MprFileSystem *fs, cchar *path, cchar *target, int hard);
 typedef int             (*MprCloseFileProc)(struct MprFile *file);
-typedef ssize          (*MprReadFileProc)(struct MprFile *file, void *buf, ssize size);
-typedef MprOffset       (*MprSeekFileProc)(struct MprFile *file, int seekType, MprOffset distance);
+typedef ssize           (*MprReadFileProc)(struct MprFile *file, void *buf, ssize size);
+typedef MprOff          (*MprSeekFileProc)(struct MprFile *file, int seekType, MprOff distance);
 typedef int             (*MprSetBufferedProc)(struct MprFile *file, ssize initialSize, ssize maxSize);
-typedef int             (*MprTruncateFileProc)(struct MprFileSystem *fs, cchar *path, MprOffset size);
-typedef ssize          (*MprWriteFileProc)(struct MprFile *file, cvoid *buf, ssize count);
+typedef int             (*MprTruncateFileProc)(struct MprFileSystem *fs, cchar *path, MprOff size);
+typedef ssize           (*MprWriteFileProc)(struct MprFile *file, cvoid *buf, ssize count);
 
 #if !DOXYGEN
 /* Work around doxygen bug */
@@ -4274,9 +4280,9 @@ typedef struct MprFile {
     char            *path;              /**< Filename */
     MprFileSystem   *fileSystem;        /**< File system owning this file */
     MprBuf          *buf;               /**< Buffer for I/O if buffered */
-    MprOffset       pos;                /**< Current read position  */
-    MprOffset       iopos;              /**< Raw I/O position  */
-    MprOffset       size;               /**< Current file size */
+    MprOff          pos;                /**< Current read position  */
+    MprOff          iopos;              /**< Raw I/O position  */
+    MprOff          size;               /**< Current file size */
     int             mode;               /**< File open mode */
     int             perms;              /**< File permissions */
     int             fd;                 /**< File handle */
@@ -4350,7 +4356,7 @@ extern int mprFlushFile(MprFile *file);
     @returns The current file offset position if successful. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern MprOffset mprGetFilePosition(MprFile *file);
+extern MprOff mprGetFilePosition(MprFile *file);
 
 /**
     Get the size of the file
@@ -4359,7 +4365,7 @@ extern MprOffset mprGetFilePosition(MprFile *file);
     @returns The current file size if successful. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern MprOffset mprGetFileSize(MprFile *file);
+extern MprOff mprGetFileSize(MprFile *file);
 
 /**
     Read a line from the file.
@@ -4478,7 +4484,7 @@ extern ssize mprReadFile(MprFile *file, void *buf, ssize size);
     @return Returns the new file position if successful otherwise a negative MPR error code is returned.
     @ingroup MprFile
  */
-extern MprOffset mprSeekFile(MprFile *file, int seekType, MprOffset distance);
+extern MprOff mprSeekFile(MprFile *file, int seekType, MprOff distance);
 
 /**
     Truncate a file
@@ -4488,7 +4494,7 @@ extern MprOffset mprSeekFile(MprFile *file, int seekType, MprOffset distance);
     @returns Zero if successful.
     @ingroup MprFile
  */
-extern int mprTruncateFile(cchar *path, MprOffset size);
+extern int mprTruncateFile(cchar *path, MprOff size);
 
 /**
     Write data to a file.
@@ -4558,7 +4564,7 @@ typedef struct MprPath {
 typedef struct MprDirEntry {
     char            *name;              /**< Name of the file */
     MprTime         lastModified;       /**< Time the file was last modified */
-    MprOffset       size;               /**< Size of the file */
+    MprOff          size;               /**< Size of the file */
     bool            isDir;              /**< True if the file is a directory */
     bool            isLink;             /**< True if the file is a symbolic link */
 } MprDirEntry;
@@ -6237,8 +6243,8 @@ extern int mprGetSocketError(MprSocket *sp);
     @return A count of bytes actually written. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern ssize mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOffset offset, ssize bytes, MprIOVec *beforeVec, 
-    int beforeCount, MprIOVec *afterVec, int afterCount);
+extern ssize mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, ssize bytes, MprIOVec *beforeVec, 
+    ssize beforeCount, MprIOVec *afterVec, ssize afterCount);
 #endif
 
 /**

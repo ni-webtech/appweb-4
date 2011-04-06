@@ -397,11 +397,12 @@ extern void httpRemoveHost(Http *http, struct HttpHost *host);
 typedef struct HttpLimits {
     ssize   chunkSize;              /**< Max chunk size for transfer encoding */
     ssize   headerSize;             /**< Max size of the total header */
-    ssize   receiveBodySize;        /**< Max size of receive body data */
     ssize   stageBufferSize;        /**< Max buffering by any pipeline stage */
-    ssize   transmissionBodySize;   /**< Max size of transmission body content */
-    ssize   uploadSize;             /**< Max size of an uploaded file */
     ssize   uriSize;                /**< Max size of a uri */
+
+    MprOff  receiveBodySize;        /**< Max size of receive body data */
+    MprOff  transmissionBodySize;   /**< Max size of transmission body content */
+    MprOff  uploadSize;             /**< Max size of an uploaded file */
 
     int     clientCount;            /**< Max number of simultaneous clients endpoints */
     int     headerCount;            /**< Max number of header lines */
@@ -419,6 +420,8 @@ typedef struct HttpLimits {
 
 extern void httpInitLimits(HttpLimits *limits, int serverSide);
 extern HttpLimits *httpCreateLimits(int serverSide);
+extern void httpEaseLimits(HttpLimits *limits);
+
 
 /** 
     URI management
@@ -525,9 +528,9 @@ extern HttpUri *httpMakeUriLocal(HttpUri *uri);
     @see HttpRange
  */
 typedef struct HttpRange {
-    ssize               start;                  /**< Start of range */
-    ssize               end;                    /**< End byte of range + 1 */
-    ssize               len;                    /**< Redundant range length */
+    MprOff              start;                  /**< Start of range */
+    MprOff              end;                    /**< End byte of range + 1 */
+    MprOff              len;                    /**< Redundant range length */
     struct HttpRange    *next;                  /**< Next range */
 } HttpRange;
 
@@ -559,7 +562,7 @@ typedef struct HttpPacket {
     MprBuf          *prefix;                /**< Prefix message to be emitted before the content */
     MprBuf          *content;               /**< Chunk content */
     MprBuf          *suffix;                /**< Prefix message to be emitted after the content */
-    ssize           entityLength;           /**< Entity length. Content is null. */
+    MprOff          entityLength;           /**< Entity length. Content is null. */
     int             flags;                  /**< Packet flags */
     struct HttpPacket *next;                /**< Next packet in chain */
 } HttpPacket;
@@ -572,7 +575,7 @@ typedef struct HttpPacket {
     @return HttpPacket object.
     @ingroup HttpPacket
  */
-extern HttpPacket *httpCreatePacket(ssize size);
+extern HttpPacket *httpCreatePacket(MprOff size);
 extern HttpPacket *httpDup(HttpPacket *orig);
 
 /** 
@@ -583,7 +586,7 @@ extern HttpPacket *httpDup(HttpPacket *orig);
     @return HttpPacket object.
     @ingroup HttpPacket
  */
-extern HttpPacket *httpCreateDataPacket(ssize size);
+extern HttpPacket *httpCreateDataPacket(MprOff size);
 
 /** 
     Create an eof packet
@@ -626,18 +629,19 @@ extern int httpJoinPacket(HttpPacket *packet, HttpPacket *other);
         running request. Otherwise the packet memory will be released automatically when the request completes.
     @ingroup HttpPacket
  */
-extern HttpPacket *httpSplitPacket(HttpPacket *packet, ssize offset);
+extern HttpPacket *httpSplitPacket(HttpPacket *packet, MprOff offset);
 
 #if DOXYGEN
 /** 
     Get the length of the packet data contents
     @description Get the content length of a packet. This does not include the prefix or suffix data length -- just
-        the pure data contents.
+        the pure data contents. A packet may describe a physical entity (such as a file) and thus not actually buffer
+        any data. In this case the entityLength describes the length of data.
     @param packet Packet to examine.
     @return Count of bytes contained by the packet.
     @ingroup HttpPacket
  */
-extern int httpGetPacketLength(HttpPacket *packet);
+extern MprOff httpGetPacketLength(HttpPacket *packet);
 #else
 #define httpGetPacketLength(p) (p->content ? mprGetBufLength(p->content) : p->entityLength)
 #endif
@@ -725,7 +729,7 @@ extern void httpSendPacketToNext(struct HttpQueue *q, HttpPacket *packet);
     @return Zero if successful, otherwise a negative Mpr error code
     @ingroup HttpQueue
  */
-extern int httpResizePacket(struct HttpQueue *q, HttpPacket *packet, ssize size);
+extern int httpResizePacket(struct HttpQueue *q, HttpPacket *packet, MprOff size);
 
 /*  
     Queue directions
@@ -792,7 +796,7 @@ typedef struct HttpQueue {
     struct HttpQueue    *pair;                  /**< Queue for the same stage in the opposite direction */
     HttpPacket          *first;                 /**< First packet in queue (singly linked) */
     HttpPacket          *last;                  /**< Last packet in queue (tail pointer) */
-    ssize               count;                  /**< Bytes in queue */
+    MprOff              count;                  /**< Bytes in queue (may be virtual if sending static entity) */
     ssize               max;                    /**< Maxiumum queue size */
     ssize               low;                    /**< Low water mark for flow control */
     int                 flags;                  /**< Queue flags */
@@ -806,9 +810,9 @@ typedef struct HttpQueue {
      */
     MprIOVec            iovec[HTTP_MAX_IOVEC];
     int                 ioIndex;                /**< Next index into iovec */
-    ssize               ioCount;                /**< Count of bytes in iovec */
     int                 ioFileEntry;            /**< Has file entry in iovec */
-    MprOffset           ioFileOffset;           /**< The next file position to use */
+    ssize               ioCount;                /**< Count of bytes in iovec */
+    MprOff              ioFileOffset;           /**< The next file position to use */
 } HttpQueue;
 
 
@@ -966,7 +970,7 @@ extern void httpInitQueue(struct HttpConn *conn, HttpQueue *q, cchar *name);
 extern void httpInitSchedulerQueue(HttpQueue *q);
 extern void httpInsertQueue(HttpQueue *prev, HttpQueue *q);
 extern int httpIsEof(struct HttpConn *conn);
-extern void httpJoinPackets(HttpQueue *q, ssize size);
+extern void httpJoinPackets(HttpQueue *q, MprOff size);
 extern void httpMarkQueueHead(HttpQueue *q);
 
 /*
@@ -2057,11 +2061,11 @@ typedef struct HttpRx {
     int             rewrites;               /**< Count of request rewrites */
     int             upload;                 /**< Request is using file upload */
 
-    ssize           length;                 /**< Declared content length (ENV: CONTENT_LENGTH) */
     ssize           chunkSize;              /**< Size of the next chunk */
-    ssize           remainingContent;       /**< Remaining content data to read (in next chunk if chunked) */
-    ssize           receivedContent;        /**< Length of content actually received */
-    ssize           readContent;            /**< Length of content read by user */
+    MprOff          length;                 /**< Declared content length (ENV: CONTENT_LENGTH) */
+    MprOff          remainingContent;       /**< Remaining content data to read (in next chunk if chunked) */
+    MprOff          receivedContent;        /**< Length of content actually received */
+    MprOff          readContent;            /**< Length of content read by user */
 
     bool            ifModified;             /**< If-Modified processing requested */
     bool            ifMatch;                /**< If-Match processing requested */
@@ -2372,8 +2376,8 @@ typedef struct HttpTx {
     ssize           chunkSize;              /**< Chunk size to use when using transfer encoding. Zero for unchunked. */
     int             flags;                  /**< Response flags */
     int             finalized;              /**< Finalization done */
-    ssize           length;                 /**< Transmission content length */
-    ssize           pos;                    /**< Current I/O position */
+    MprOff          length;                 /**< Transmission content length */
+    MprOff          pos;                    /**< Current I/O position */
     int             status;                 /**< HTTP request status */
     int             traceMethods;           /**< Handler methods supported */
 
@@ -2382,8 +2386,8 @@ typedef struct HttpTx {
     MprPath         fileInfo;               /**< File information if there is a real file to serve */
     char            *filename;              /**< Name of a real file being served (typically pathInfo mapped) */
     cchar           *extension;             /**< Filename extension */
-    ssize           entityLength;           /**< Original content length before range subsetting */
-    ssize           bytesWritten;           /**< Bytes written including headers */
+    MprOff          entityLength;           /**< Original content length before range subsetting */
+    MprOff          bytesWritten;           /**< Bytes written including headers */
     ssize           headerSize;             /**< Size of the header written */
 } HttpTx;
 
@@ -2610,12 +2614,12 @@ extern void httpSetContentLength(HttpConn *conn, ssize length);
 extern void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, int lifetime, bool secure);
 
 /**
-    Define the length of the transmission content. When a static content is used for the transmission body, defining
+    Define the length of the transmission content. When static content is used for the transmission body, defining
     the entity length permits the request pipeline to know when all the data has been sent.
     @param conn HttpConn connection object created via $httpCreateConn
     @param len Transmission body length in bytes
  */
-extern void httpSetEntityLength(HttpConn *conn, ssize len);
+extern void httpSetEntityLength(HttpConn *conn, MprOff len);
 
 /** 
     Set a transmission header

@@ -884,7 +884,6 @@
 			children = (
 				C97620660FD04E38009C78E1 /* handlers */,
 				C97620730FD04E38009C78E1 /* modules */,
-				C976205D0FD04E0A009C78E1 /* connectors */,
 				C95C31E80FC5292A00FB3105 /* appweb.c */,
 				C9817C1C110D170500F241EF /* config.c */,
 				C9817C1E110D170500F241EF /* convenience.c */,
@@ -901,14 +900,6 @@
 				C9761E880FD0442C009C78E1 /* cgiProgram.c */,
 			);
 			name = utils;
-			sourceTree = "<group>";
-		};
-		C976205D0FD04E0A009C78E1 /* connectors */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = connectors;
-			path = ../../../src/connectors;
 			sourceTree = "<group>";
 		};
 		C97620660FD04E38009C78E1 /* handlers */ = {
@@ -2876,8 +2867,8 @@
 		C9AFCC4B0FC521150080E908 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
 				COPY_PHASE_STRIP = NO;
 				ES = "$(PROJECT_DIR)/../../../src/ejs";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -2920,8 +2911,8 @@
 		C9AFCC4C0FC521150080E908 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
 				COPY_PHASE_STRIP = YES;
 				ES = "$(PROJECT_DIR)/../../../src/ejs";
 				OUT = "$(PROJECT_DIR)/../../../out";

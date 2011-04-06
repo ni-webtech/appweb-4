@@ -45,7 +45,7 @@ static void openFile(HttpQueue *q)
             httpSetStatus(conn, HTTP_CODE_NOT_MODIFIED);
             httpOmitBody(conn);
         } else {
-            httpSetEntityLength(conn, (int) tx->fileInfo.size);
+            httpSetEntityLength(conn, tx->fileInfo.size);
         }
         if (!tx->fileInfo.isReg && !tx->fileInfo.isLink) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't locate document: %s", rx->uri);
@@ -116,7 +116,7 @@ static void outgoingFileService(HttpQueue *q)
     HttpTx      *tx;
     HttpPacket  *packet;
     bool        usingSend;
-    int         len;
+    MprOff      len;
 
     conn = q->conn;
     rx = conn->rx;
@@ -141,8 +141,8 @@ static void outgoingFileService(HttpQueue *q)
                 if ((len = readFileData(q, packet)) < 0) {
                     return;
                 }
-                mprLog(7, "OutgoingFileService readData %d", len);
                 tx->pos += len;
+                mprLog(7, "OutgoingFileService readData %d", len);
             }
             httpSendPacketToNext(q, packet);
         }
@@ -187,7 +187,7 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
     mprAssert(len > 0);
 
     range = rx->inputRange;
-    if (range && ((MprOffset) mprSeekFile(file, SEEK_SET, (long) range->start)) != range->start) {
+    if (range && mprSeekFile(file, SEEK_SET, range->start) != range->start) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't seek to range start to %d", range->start);
     } else {
         if (mprWriteFile(file, mprGetBufStart(buf), len) != len) {
@@ -205,7 +205,8 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
     HttpConn    *conn;
     HttpTx      *tx;
     HttpRx      *rx;
-    ssize       len, rc;
+    MprOff      len;
+    ssize       rc;
 
     conn = q->conn;
     tx = conn->tx;
@@ -213,6 +214,9 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
 
     if (packet->content == 0) {
         len = packet->entityLength;
+        if (len > q->max) {
+            len = q->max;
+        }
         if ((packet->content = mprCreateBuf(len, len)) == 0) {
             return MPR_ERR_MEMORY;
         }
@@ -226,7 +230,7 @@ static int readFileData(HttpQueue *q, HttpPacket *packet)
         /*  
             rangeService will have set tx->pos to the next read position already
          */
-        mprSeekFile(tx->file, SEEK_SET, (MprOffset) tx->pos);
+        mprSeekFile(tx->file, SEEK_SET, tx->pos);
     }
 
     if ((rc = mprReadFile(tx->file, mprGetBufStart(packet->content), len)) != len) {
