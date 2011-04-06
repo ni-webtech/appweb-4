@@ -1,4 +1,4 @@
-//XX
+
 /******************************************************************************/
 /* 
     This file is an amalgamation of all the individual source code files for the
@@ -390,24 +390,25 @@
 #define ES_App_createSearch                                            13
 #define ES_App_chdir                                                   14
 #define ES_App_dir                                                     15
-#define ES_App_exeDir                                                  16
-#define ES_App_exePath                                                 17
-#define ES_App_errorStream                                             18
-#define ES_App_exit                                                    19
-#define ES_App_getenv                                                  20
-#define ES_App_inputStream                                             21
-#define ES_App_loadrc                                                  22
-#define ES_App_outputStream                                            23
-#define ES_App_pid                                                     24
-#define ES_App_putenv                                                  25
-#define ES_App_run                                                     26
-#define ES_App_search                                                  27
-#define ES_App_sleep                                                   28
-#define ES_App_searchPath                                              29
-#define ES_App_serviceEvents                                           30
-#define ES_App_updateLog                                               31
-#define ES_App_waitForEvent                                            32
-#define ES_App_NUM_CLASS_PROP                                          33
+#define ES_App_env                                                     16
+#define ES_App_exeDir                                                  17
+#define ES_App_exePath                                                 18
+#define ES_App_errorStream                                             19
+#define ES_App_exit                                                    20
+#define ES_App_getenv                                                  21
+#define ES_App_inputStream                                             22
+#define ES_App_loadrc                                                  23
+#define ES_App_outputStream                                            24
+#define ES_App_pid                                                     25
+#define ES_App_putenv                                                  26
+#define ES_App_run                                                     27
+#define ES_App_search                                                  28
+#define ES_App_sleep                                                   29
+#define ES_App_searchPath                                              30
+#define ES_App_serviceEvents                                           31
+#define ES_App_updateLog                                               32
+#define ES_App_waitForEvent                                            33
+#define ES_App_NUM_CLASS_PROP                                          34
 
 /*
    Prototype (instance) slots for "App" type 
@@ -2450,7 +2451,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1415271
+#define _ES_CHECKSUM_ejs   1415605
 
 #endif
 /************************************************************************/

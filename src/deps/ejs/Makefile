@@ -139,6 +139,7 @@ cleanExtra:
 dependExtra: $(BLD_INC_DIR)/ejs.slots.h
 
 $(BLD_INC_DIR)/ejs.slots.h: slots.h
+	$(call log) "[Generate]" "ejs.slots.h"
 	rm -f $(BLD_INC_DIR)/ejs.slots.h
 	cp slots.h $(BLD_INC_DIR)/ejs.slots.h
 
