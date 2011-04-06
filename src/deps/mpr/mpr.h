@@ -3856,7 +3856,7 @@ extern int mprPushItem(MprList *list, cvoid *item);
     @stability Evolving
     @defgroup MprLog MprLog
     @see mprError, mprLog, mprSetLogHandler, mprSetLogLevel, mprUserError, mprRawLog, mprFatalError, MprLogHandler
-        mprGetLogHandler, mprMemoryError, mprAssertError
+        mprGetLogHandler, mprMemoryError, mprAssertError, mprUsingDefaultLogHandler
  */
 typedef struct MprLog { int dummy; } MprLog;
 
@@ -3912,6 +3912,21 @@ extern void mprFatalError(cchar *fmt, ...);
     @ingroup MprLog
  */
 extern MprLogHandler mprGetLogHandler();
+
+/**
+    Determine if the app is using the default MPR log handler.
+    @description Returns true if no custom log handler has been installed.
+    @returns True if using the default log handler
+    @ingroup MprLog
+ */
+extern int mprUsingDefaultLogHandler();
+
+/**
+    Get the log file object
+    @description Returns the MprFile object used for logging
+    @returns An MprFile object for logging
+    @ingroup MprLog
+ */
 extern struct MprFile *mprGetLogFile();
 
 /**

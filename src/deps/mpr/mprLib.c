@@ -11796,6 +11796,12 @@ MprLogHandler mprGetLogHandler()
 }
 
 
+int mprUsingDefaultLogHandler()
+{
+    return MPR->logHandler == defaultLogHandler;
+}
+
+
 MprFile *mprGetLogFile()
 {
     return MPR->logFile;

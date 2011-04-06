@@ -35911,7 +35911,7 @@ static EjsService *createService()
     }
     MPR->ejsService = sp;
     mprSetMemNotifier((MprMemNotifier) allocNotifier);
-    if (mprGetLogHandler() != logHandler) {
+    if (mprUsingDefaultLogHandler()) {
         ejsRedirectLogging("stdout:1");
     }
     sp->nativeModules = mprCreateHash(-1, MPR_HASH_STATIC_KEYS);
