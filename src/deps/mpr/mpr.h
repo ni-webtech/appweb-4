@@ -269,56 +269,89 @@
 
 #ifndef HAS_UCHAR
     #define HAS_UCHAR 1
+    /**
+        Unsigned char data type.
+     */
     typedef unsigned char uchar;
 #endif
 
 #ifndef HAS_SCHAR
     #define HAS_SCHAR 1
+    /**
+        Signed char data type.
+     */
     typedef signed char schar;
 #endif
 
 #ifndef HAS_CCHAR
     #define HAS_CCHAR 1
+    /**
+        Constant char data type.
+     */
     typedef const char cchar;
 #endif
 
 #ifndef HAS_CUCHAR
     #define HAS_CUCHAR 1
+    /**
+        Unsigned char data type.
+     */
     typedef const unsigned char cuchar;
 #endif
 
 #ifndef HAS_USHORT
     #define HAS_USHORT 1
+    /**
+        Unsigned short data type.
+     */
     typedef unsigned short ushort;
 #endif
 
 #ifndef HAS_CUSHORT
     #define HAS_CUSHORT 1
+    /**
+        Constant unsigned short data type.
+     */
     typedef const unsigned short cushort;
 #endif
 
 #ifndef HAS_CVOID
     #define HAS_CVOID 1
+    /**
+        Constant void data type.
+     */
     typedef const void cvoid;
 #endif
 
 #ifndef HAS_INT32
     #define HAS_INT32 1
+    /**
+        Integer 32 bits data type.
+     */
     typedef int int32;
 #endif
 
 #ifndef HAS_UINT32
     #define HAS_UINT32 1
+    /**
+        Unsigned integer 32 bits data type.
+     */
     typedef unsigned int uint32;
 #endif
 
 #ifndef HAS_UINT
     #define HAS_UINT 1
+    /**
+        Unsigned integer (machine dependent bit size) data type.
+     */
     typedef unsigned int uint;
 #endif
 
 #ifndef HAS_ULONG
     #define HAS_ULONG 1
+    /**
+        Unsigned long (machine dependent bit size) data type.
+     */
     typedef unsigned long ulong;
 #endif
 
@@ -337,7 +370,10 @@
 #ifndef HAS_INT64
     #if BLD_UNIX_LIKE
         __extension__ typedef long long int int64;
-    #elif VXWORKS
+    #elif VXWORKS || DOXYGEN
+        /**
+            Integer 64 bit data type.
+         */
         typedef long long int int64;
     #elif BLD_WIN_LIKE
         typedef __int64 int64;
@@ -349,7 +385,10 @@
 #ifndef HAS_UINT64
     #if BLD_UNIX_LIKE
         __extension__ typedef unsigned long long int uint64;
-    #elif VXWORKS
+    #elif VXWORKS || DOXYGEN
+        /**
+            Unsigned integer 64 bit data type.
+         */
         typedef unsigned long long int uint64;
     #elif BLD_WIN_LIKE
         typedef unsigned __int64 uint64;
@@ -358,7 +397,10 @@
     #endif
 #endif
 
-typedef off_t MprOff;
+/**
+    Signed file offset data type. Supports large files greater than 4GB in size.
+ */
+typedef int64 MprOff;
 
 /**
     Date and Time Service
