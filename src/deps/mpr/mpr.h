@@ -1217,18 +1217,19 @@ struct  MprXml;
     Error source flags
  */
 #define MPR_ERROR_SRC       0x10        /* Originated from mprError */
-#define MPR_LOG_SRC         0x20        /* Originated from mprLog */
-#define MPR_ASSERT_SRC      0x40        /* Originated from mprAssert */
-#define MPR_FATAL_SRC       0x80        /* Fatal error. Log and exit */
+#define MPR_WARN_SRC        0x20        /* Originated from mprWarn */
+#define MPR_LOG_SRC         0x40        /* Originated from mprLog */
+#define MPR_ASSERT_SRC      0x80        /* Originated from mprAssert */
+#define MPR_FATAL_SRC       0x100       /* Fatal error. Log and exit */
 
 /*
     Log message type flags. Specify what kind of log / error message it is. Listener handlers examine this flag
-    to determine if they should process the message.Assert messages are trapped when in DEV mode. Otherwise ignored.
+    to determine if they should process the message. Assert messages are trapped when in DEV mode. Otherwise ignored.
  */
-#define MPR_LOG_MSG         0x100       /* Log trace message - not an error */
-#define MPR_ERROR_MSG       0x200       /* General error */
-#define MPR_ASSERT_MSG      0x400       /* Assert flags -- trap in debugger */
-#define MPR_USER_MSG        0x800       /* User message */
+#define MPR_LOG_MSG         0x1000      /* Log trace message - not an error */
+#define MPR_ERROR_MSG       0x2000      /* General error */
+#define MPR_ASSERT_MSG      0x4000      /* Assert flags -- trap in debugger */
+#define MPR_USER_MSG        0x8000      /* User message */
 
 /*
     Log output modifiers
@@ -2663,7 +2664,7 @@ extern char *stok(char *str, cchar *delim, char **last);
     @return Returns a newly allocated substring
     @ingroup MprString
  */
-extern char *ssub(char *str, ssize offset, ssize length);
+extern char *ssub(cchar *str, ssize offset, ssize length);
 
 /**
     Convert a string to upper case.
@@ -2690,7 +2691,7 @@ extern char *supper(cchar *str);
     @return Returns a pointer to the trimmed string. May not equal \a str.
     @ingroup MprString
  */
-extern char *strim(char *str, cchar *set, int where);
+extern char *strim(cchar *str, cchar *set, int where);
 
 /*
     Low-level unicode wide string support. Unicode characters are build-time configurable to be 1, 2 or 4 bytes
@@ -3812,7 +3813,7 @@ extern int mprSetListLimits(MprList *list, int initialSize, int maxSize);
     @param compare Comparison function. If null, then a default string comparison is used.
     @ingroup MprList
  */
-extern void mprSortList(MprList *list, MprListCompareProc compare);
+extern void mprSortList(MprList *list, void *compare);
 
 /**
     Key value pairs for use with MprList or MprHash
@@ -3883,6 +3884,17 @@ typedef void (*MprLogHandler)(int flags, int level, cchar *msg);
     @ingroup MprLog
  */
 extern void mprError(cchar *fmt, ...);
+
+/**
+    Log a warning message.
+    @description Send a warning message to the MPR debug logging subsystem. The 
+        message will be to the log handler defined by #mprSetLogHandler. It 
+        is up to the log handler to respond appropriately and log the message.
+    @param fmt Printf style format string. Variable number of arguments to 
+    @param ... Variable number of arguments for printf data
+    @ingroup MprLog
+ */
+extern void mprWarn(cchar *fmt, ...);
 
 /**
     Display an error message to the console without allocating any memory.
@@ -7110,6 +7122,7 @@ typedef struct Mpr {
     int             eventing;               /**< Servicing events thread is active */
     int             exitStrategy;           /**< How to exit the app (normal, immediate, graceful) */
     int             flags;                  /**< Misc flags */
+    int             logging;                /**< App has specified --log */
     int             hasError;               /**< Mpr has an initialization error */
     int             marker;                 /**< Marker thread is active */
     int             marking;                /**< Actually marking objects now */

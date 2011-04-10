@@ -32,8 +32,12 @@ static void logHandler(int flags, int level, cchar *msg)
     if (flags & MPR_LOG_SRC) {
         mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
 
-    } else if (flags & MPR_ERROR_SRC) {
-        mprSprintf(buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
+    } else if (flags & (MPR_WARN_SRC | MPR_ERROR_SRC)) {
+        if (flags & MPR_WARN_SRC) {
+            mprSprintf(buf, sizeof(buf), "%s: Warning: %s\n", prefix, msg);
+        } else {
+            mprSprintf(buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
+        }
         mprWriteToOsLog(buf, flags, level);
 
         /*

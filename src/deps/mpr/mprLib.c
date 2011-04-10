@@ -632,7 +632,7 @@ static MprMem *growHeap(ssize required, int flags)
 {
     MprRegion           *region;
     MprMem              *mp, *spare;
-    ssize               size, rsize;
+    ssize               size, rsize, spareLen;
     int                 hasManager;
 
     mprAssert(required > 0);
@@ -652,26 +652,27 @@ static MprMem *growHeap(ssize required, int flags)
     region->start = (MprMem*) (((char*) region) + rsize);
     mp = (MprMem*) region->start;
     hasManager = (flags & MPR_ALLOC_MANAGER) ? 1 : 0;
-    INIT_BLK(mp, required, hasManager, 0, NULL);
+    spareLen = size - required - rsize;
+    INIT_BLK(mp, required, hasManager, (spareLen > 0) ? 0 : 1, NULL);
     if (hasManager) {
         SET_MANAGER(mp, dummyManager);
     }
     CHECK(mp);
 
-    spare = (MprMem*) ((char*) mp + required);
-    INIT_BLK(spare, size - required - rsize, 0, 1, mp);
-    CHECK(spare);
-
-#if MOB
-    mprAtomicListInsert(&heap->regions, &region->next, region);
-#endif
     do {
         region->next = heap->regions;
     } while (!mprAtomicCas((void* volatile*) &heap->regions, region->next, region));
 
+    if (spareLen > 0) {
+        spare = (MprMem*) ((char*) mp + required);
+        INIT_BLK(spare, spareLen, 0, 1, mp);
+        CHECK(spare);
+    }
     lockHeap();
     INC(allocs);
-    linkBlock(spare);
+    if (spareLen > 0) {
+        linkBlock(spare);
+    }
     unlockHeap();
     return mp;
 }
@@ -1996,6 +1997,7 @@ static void getSystemInfo()
         cmd[0] = CTL_HW;
         cmd[1] = HW_NCPU;
         len = sizeof(ap->numCpu);
+        ap->numCpu = 0;
         if (sysctl(cmd, 2, &ap->numCpu, &len, 0, 0) < 0) {
             ap->numCpu = 1;
         }
@@ -2087,12 +2089,14 @@ MprMemStats *mprGetMemStats()
 #endif
     mib[0] = CTL_HW;
     len = sizeof(ram);
+    ram = 0;
     sysctl(mib, 2, &ram, &len, NULL, 0);
     heap->stats.ram = ram;
 
     mib[0] = CTL_HW;
     mib[1] = HW_USERMEM;
     len = sizeof(usermem);
+    usermem = 0;
     sysctl(mib, 2, &usermem, &len, NULL, 0);
     heap->stats.user = usermem;
 #endif
@@ -11101,7 +11105,7 @@ static int growList(MprList *lp, int incr)
 }
 
 
-void mprSortList(MprList *lp, MprListCompareProc compare)
+void mprSortList(MprList *lp, void *compare)
 {
     qsort(lp->items, lp->length, sizeof(void*), compare);
 }
@@ -11689,6 +11693,20 @@ void mprError(cchar *fmt, ...)
 }
 
 
+void mprWarn(cchar *fmt, ...)
+{
+    va_list     args;
+    char        buf[MPR_MAX_LOG];
+
+    va_start(args, fmt);
+    mprSprintfv(buf, sizeof(buf), fmt, args);
+    va_end(args);
+    
+    logOutput(MPR_ERROR_MSG | MPR_WARN_SRC, 0, buf);
+    mprBreakpoint();
+}
+
+
 void mprMemoryError(cchar *fmt, ...)
 {
     va_list     args;
@@ -11858,6 +11876,8 @@ static void defaultLogHandler(int flags, int level, cchar *msg)
         mprPrintfError("%s: %d: %s\n", prefix, level, msg);
     } else if (flags & MPR_ERROR_SRC) {
         mprPrintfError("%s: Error: %s\n", prefix, msg);
+    } else if (flags & MPR_WARN_SRC) {
+        mprPrintfError("%s: Warning: %s\n", prefix, msg);
     } else if (flags & MPR_FATAL_SRC) {
         mprPrintfError("%s: Fatal: %s\n", prefix, msg);
     } else if (flags & MPR_RAW) {
@@ -12695,25 +12715,27 @@ MprChar *mtok(MprChar *str, cchar *delim, MprChar **last)
 
 MprChar *mtrim(MprChar *str, cchar *set, int where)
 {
-    ssize   len, i;
+    MprChar     s;
+    ssize       len, i;
 
     if (str == NULL || set == NULL) {
         return str;
     }
+    s = wclone(str);
     if (where & MPR_TRIM_START) {
-        i = mspn(str, set);
+        i = mspn(s, set);
     } else {
         i = 0;
     }
-    str += i;
+    s += i;
     if (where & MPR_TRIM_END) {
-        len = wlen(str);
-        while (len > 0 && mspn(&str[len - 1], set) > 0) {
-            str[len - 1] = '\0';
+        len = wlen(s);
+        while (len > 0 && mspn(&s[len - 1], set) > 0) {
+            s[len - 1] = '\0';
             len--;
         }
     }
-    return str;
+    return s;
 }
 
 #else
@@ -18871,7 +18893,7 @@ char *itos(char *buf, int count, int64 value, int radix)
 
 char *schr(cchar *s, int c)
 {
-    if (s == NULL) {
+    if (s == 0) {
         return 0;
     }
     return strchr(s, c);
@@ -18880,6 +18902,7 @@ char *schr(cchar *s, int c)
 
 /*
     Case insensitive string comparison. Limited by length
+    MOB - name is not great. scaselesscmp, sncaselesscmp
  */
 int scasecmp(cchar *s1, cchar *s2)
 {
@@ -18917,12 +18940,12 @@ char *sclone(cchar *str)
     char    *ptr;
     ssize   size, len;
 
-    if (str == NULL) {
+    if (str == 0) {
         str = "";
     }
     len = strlen(str);
     size = len + 1;
-    if ((ptr = mprAlloc(size)) != NULL) {
+    if ((ptr = mprAlloc(size)) != 0) {
         memcpy(ptr, str, len);
         ptr[len] = '\0';
     }
@@ -18935,13 +18958,13 @@ char *snclone(cchar *str, ssize len)
     char    *ptr;
     ssize   size, l;
 
-    if (str == NULL) {
+    if (str == 0) {
         str = "";
     }
     l = slen(str);
     len = min(l, len);
     size = len + 1;
-    if ((ptr = mprAlloc(size)) != NULL) {
+    if ((ptr = mprAlloc(size)) != 0) {
         memcpy(ptr, str, len);
         ptr[len] = '\0';
     }
@@ -18964,7 +18987,7 @@ int scmp(cchar *s1, cchar *s2)
 
 int sends(cchar *str, cchar *suffix)
 {
-    if (str == NULL || suffix == NULL) {
+    if (str == 0 || suffix == 0) {
         return 0;
     }
     if (strcmp(&str[strlen(str) - strlen(suffix) - 1], suffix) == 0) {
@@ -19007,7 +19030,7 @@ uint shash(cchar *cname, ssize len)
     mprAssert(cname);
     mprAssert(0 <= len && len < MAXINT);
 
-    if (cname == NULL) {
+    if (cname == 0) {
         return 0;
     }
     hash = (uint) len;
@@ -19057,7 +19080,7 @@ uint shashlower(cchar *cname, ssize len)
     mprAssert(cname);
     mprAssert(0 <= len && len < MAXINT);
 
-    if (cname == NULL) {
+    if (cname == 0) {
         return 0;
     }
     hash = (uint) len;
@@ -19274,7 +19297,7 @@ char *spbrk(cchar *str, cchar *set)
     cchar       *sp;
     int         count;
 
-    if (str == NULL || set == NULL) {
+    if (str == 0 || set == 0) {
         return 0;
     }
     for (count = 0; *str; count++, str++) {
@@ -19290,8 +19313,8 @@ char *spbrk(cchar *str, cchar *set)
 
 char *srchr(cchar *s, int c)
 {
-    if (s == NULL) {
-        return NULL;
+    if (s == 0) {
+        return 0;
     }
     return strrchr(s, c);
 }
@@ -19345,7 +19368,7 @@ ssize sspn(cchar *str, cchar *set)
     cchar       *sp;
     int         count;
 
-    if (str == NULL || set == NULL) {
+    if (str == 0 || set == 0) {
         return 0;
     }
     for (count = 0; *str; count++, str++) {
@@ -19360,7 +19383,7 @@ ssize sspn(cchar *str, cchar *set)
     }
     return count;
 #else
-    if (str == NULL || set == NULL) {
+    if (str == 0 || set == 0) {
         return 0;
     }
     return strspn(str, set);
@@ -19370,7 +19393,7 @@ ssize sspn(cchar *str, cchar *set)
 
 int sstarts(cchar *str, cchar *prefix)
 {
-    if (str == NULL || prefix == NULL) {
+    if (str == 0 || prefix == 0) {
         return 0;
     }
     if (strncmp(str, prefix, strlen(prefix)) == 0) {
@@ -19529,7 +19552,7 @@ char *stok(char *str, cchar *delim, char **last)
 }
 
 
-char *ssub(char *str, ssize offset, ssize len)
+char *ssub(cchar *str, ssize offset, ssize len)
 {
     char    *result;
     ssize   size;
@@ -19538,44 +19561,41 @@ char *ssub(char *str, ssize offset, ssize len)
     mprAssert(offset >= 0);
     mprAssert(0 <= len && len < MAXINT);
 
-    if (str == NULL) {
-        return NULL;
+    if (str == 0) {
+        return 0;
     }
     size = len + 1;
-    if ((result = mprAlloc(size)) == NULL) {
-        return NULL;
+    if ((result = mprAlloc(size)) == 0) {
+        return 0;
     }
     sncopy(result, size, &str[offset], len);
     return result;
 }
 
 
-/*
-    WARNING: this modifies the original string
-    MOB -- should this allocate a new string -- probably
- */
-char *strim(char *str, cchar *set, int where)
+char *strim(cchar *str, cchar *set, int where)
 {
-    ssize   len;
-    int     i;
+    char    *s;
+    ssize   len, i;
 
-    if (str == NULL || set == NULL) {
-        return str;
+    if (str == 0 || set == 0) {
+        return 0;
     }
+    s = sclone(str);
     if (where & MPR_TRIM_START) {
-        i = (int) strspn(str, set);
+        i = strspn(s, set);
     } else {
         i = 0;
     }
-    str += i;
+    s += i;
     if (where & MPR_TRIM_END) {
-        len = strlen(str);
-        while (len > 0 && strspn(&str[len - 1], set) > 0) {
-            str[len - 1] = '\0';
+        len = strlen(s);
+        while (len > 0 && strspn(&s[len - 1], set) > 0) {
+            s[len - 1] = '\0';
             len--;
         }
     }
-    return str;
+    return s;
 }
 
 
@@ -24881,25 +24901,27 @@ MprChar *wsub(MprChar *str, ssize offset, ssize len)
 
 MprChar *wtrim(MprChar *str, MprChar *set, int where)
 {
-    ssize  len, i;
+    MprChar     s;
+    ssize       len, i;
 
     if (str == NULL || set == NULL) {
         return str;
     }
+    s = wclone(str);
     if (where & MPR_TRIM_START) {
-        i = wspn(str, set);
+        i = wspn(s, set);
     } else {
         i = 0;
     }
-    str += i;
+    s += i;
     if (where & MPR_TRIM_END) {
-        len = wlen(str);
-        while (len > 0 && wspn(&str[len - 1], set) > 0) {
-            str[len - 1] = '\0';
+        len = wlen(s);
+        while (len > 0 && wspn(&s[len - 1], set) > 0) {
+            s[len - 1] = '\0';
             len--;
         }
     }
-    return str;
+    return s;
 }
 
 

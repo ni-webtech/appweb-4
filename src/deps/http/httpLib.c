@@ -9918,8 +9918,6 @@ void httpSendOpen(HttpQueue *q)
     /*  
         To write an entire file, reset the maximum and packet size to the maximum response body size (LimitResponseBody)
      */
-    //  MOB -- are these enforced somewhere as the packet will be empty
-    //  MOB -- should these not be set elsewhere?
     q->max = conn->limits->transmissionBodySize;
     q->packetSize = conn->limits->transmissionBodySize;
 
@@ -12131,7 +12129,6 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
             mprAdjustBufStart(content, (int) (nextTok - line));
             line = strim(line, "\r", MPR_TRIM_END);
         }
-
         switch (up->contentState) {
         case HTTP_UPLOAD_BOUNDARY:
             if (processContentBoundary(q, line) < 0) {

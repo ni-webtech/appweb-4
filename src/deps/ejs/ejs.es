@@ -48,10 +48,9 @@ module ejs {
     public var stdout: TextStream
 
     /** 
-        Application configuration state. The App class is a singleton class object. The App class is accessed via
-        the App global type object. It provides  methods to interrogate and control the applications environment including
-        the current working directory, application command line arguments, path to the application's executable and
-        input and output streams.
+        Application configuration state. The App class is a singleton class object and that accesses and controls 
+        the applications execution environment including the current working directory, application command line 
+        arguments, environment strings, path to the application's executable and input and output streams.
         @spec ejs
         @stability evolving
      */
@@ -60,7 +59,7 @@ module ejs {
         use default namespace public
 
         /** 
-            Configuration environment specified in the .ejsrc/ejsrc configuration files.
+            Configuration environment specified in the ~/.ejsrc or ejsrc configuration files.
          */
         static var config: Object
 
@@ -106,30 +105,38 @@ module ejs {
         }
 
         /**
-            Default event Emitter for the application
+            Default event Emitter for the application.
          */
         static var emitter: Emitter = new Emitter
 
         /** 
-            Default application logger. This is set to stderr unless the program specifies an output log via the --log 
-            command line switch. At startup, the ejsrc log.location field is used to initialize the App.log property,
-            and the native code logging stream (Logger.nativeStream) is set to this location. Once initialized, changes to
-            App.log will not update the native logging stream which must be explicitly updated.
+            Application logger. This singleton object respresents the Application default logger.
+            If the ejsrc startup configuration file defines a log.location field, the log logger will send messages to
+            the defined location. Otherwise, messages will be sent to the LogFile stream. 
          */
         public static var log: Logger
 
         /** 
-            Application name. Set to a single word, lower-case name for the application.
+            Application LogFile object. This singleton object represents the Application log file specified via the
+            --log command line switch.
+         */
+        public static var logFile: LogFile
+
+        /** 
+            Application name. Single word, lower-case name for the application. This is initialized to the name of
+            the script or "ejs" if running interactively.
          */
         static var name: String
 
         /** 
-            Application title name. Multi-word, Camel Case name for the application suitable for display.
+            Application title name. Multi-word, Camel Case name for the application suitable for display. This is 
+            initialized to the name of the script or "Embedthis Ejscript" if running interactively.
          */
         static var title: String
 
         /** 
-            Application version string. Set to a version string of the format Major.Minor.Patch-Build. For example: 1.1.2-3.
+            Application version string. Set to a version string [format Major.Minor.Patch-Build]. For example: 1.1.2-3.
+            Initialized to the ejs version.
          */
         static var version: String
 
@@ -140,7 +147,8 @@ module ejs {
         native static function get args(): Array
 
         /** 
-            Create a search path array for locating ejs modules.
+            Create a search path array for locating ejs modules. This converts a delimited PATH to an array of 
+            paths suitable for use by the $search property. NOTE: this does not modify the application's search path.
             @param searchPath String containing a colon separated (or semi-colon on Windows) set of paths.
                 If search path is null, the default system search paths are returned.
             @return An array of search paths.
@@ -148,7 +156,7 @@ module ejs {
         native static function createSearch(searchPath: String? = null): Array
 
         /** 
-            Change the application's Working directory
+            Change the application's working directory
             @param value The path to the new working directory
          */
         native static function chdir(value: Object): Void
@@ -194,14 +202,13 @@ module ejs {
             @param status The optional exit code to provide the environment. If running inside the ejs command program,
                 the status is used as process exit status.
             @param how How the exit should proceed. Options are: "normal", "immediate" or "graceful". A normal exit
-                will close write buffered and outstanding data, flush buffers, close files and resources and then exit 
-                without waiting.  An immediate exit will exit without writing buffered data. A graceful exit will wait
+                will flush buffered data and close files and resources and then exit without waiting.  
+                An immediate exit will exit without writing buffered data or closing files. A graceful exit will wait
                 until the system is idle and then do a normal exit. A system is idle when it has no running commands, 
-                sockets or worker threads.
+                sockets, Http requests or worker threads.
          */
         native static function exit(status: Number = 0, how: String = "normal"): Void
 
-//  MOB -- need get env()
         /** 
             Get an environment variable.
             @param name The name of the environment variable to retrieve.
@@ -250,15 +257,6 @@ module ejs {
         native static function set locale(locale: String): Void
 
         /** 
-            Control whether an application will exit when global scripts have completed. Setting this to true will cause
-            the application to continue servicing events until the $exit method is explicitly called. The default 
-            application setting of noexit is false.
-            @param exit If true, the application will exit when the last script completes.
-         */
-        # DEPRECATED
-        native static function noexit(exit: Boolean = true): Void
-
-        /** 
             The standard output stream. Changing the output stream will close and reopen stdout.
          */
         static function get outputStream(): Stream
@@ -286,40 +284,21 @@ module ejs {
 
         //  MOB -- could return Boolean - true if one event was serviced
         /** 
-            Run the application event loop. This is typically done automatically by the hosting program and is not 
-            normally required in user programs.
+            Run the application event loop. 
+            A script may call run() to service events. The ejs shell will exit when it has executed the last statement
+            in the script. Calling run() will cause the ejs shell to wait and service events until instructed to exit.
             @param timeout Timeout to block waiting for an event in milliseconds before returning. If an event occurs, the
                 call returns immediately. Set to -1 for no timeout.
             @param oneEvent If true, return immediately after servicing at least one ejs event.
+            @return True if an event happened. Otherwise return false if the timeout expired before any event.
          */
-        native static function run(timeout: Number = -1, oneEvent: Boolean = false): Void
-
-        /**
-            Run the application event loop. This is typically done automatically by the hosting program and is not 
-            normally required in user programs.
-            @param timeout Timeout to block waiting for an event in milliseconds before returning. If an event occurs, the
-                call returns immediately. Set to -1 for no timeout.
-            @param oneEvent If true, return immediately after servicing at least one ejs event.
-            @hide
-         */
-        # DEPRECATE
-        static function eventLoop(timeout: Number = -1, oneEvent: Boolean = false): Void
-            run(timeout, oneEvent)
+        native static function run(timeout: Number = -1, oneEvent: Boolean = false): Boolean
 
         /** 
             The current module search path. Set to an array of Paths.
          */
         native static function get search(): Array
         native static function set search(paths: Array): Void
-
-        /** 
-            Set an environment variable.
-            @param env The name of the environment variable to set.
-            @param value The new value.
-            @return True if the environment variable was successfully set.
-         */
-        # FUTURE
-        native static function setEnv(name: String, value: String): Boolean
 
         /** 
             Sleep the application for the given number of milliseconds. Events will be serviced while asleep.
@@ -372,7 +351,7 @@ module ejs {
         }
 
         /**
-            Redirect the Application's logger based on an update App.config.log setting
+            Redirect the Application's logger based on the App.config.log setting
          */
         static function updateLog(): Void {
             let log = config.log
@@ -404,9 +383,10 @@ module ejs {
         @hide
      */
     function appInit(): Void {
-
         App.name = App.args[0] || Config.Product
         App.title = App.args[0] || Config.Title
+        App.version = Config.Version
+        App.logFile = new LogFile
 
         /*  
             Load ~/.ejsrc and ejsrc
@@ -424,11 +404,12 @@ module ejs {
         stdin = TextStream(App.inputStream)
 
         let log = config.log
+        let stream
         if (log.enable) {
-            let stream = Logger.nativeStream
-            if (stream) {
-                /* Native log defined via --log switch. Adopt native log level. ie. overrides config */
-                log.level = Logger.nativeLevel
+            if (App.logFile.logging) {
+                /* App invoked with a --log switch */
+                log.level = App.logFile.level
+                stream = App.logFile;
             } else if (log.location == "stdout") {
                 stream = App.outputStream
             } else if (log.location == "stderr") {
@@ -1509,14 +1490,14 @@ module ejs {
 module ejs {
 
     /**
-        Boolean class. The Boolean class is used to create two immutable boolean values: "true" and "false".
+        Boolean class from which to create true and false values.
         @stability stable
      */
     final class Boolean {
         /**
             Boolean constructor. Construct a Boolean object and initialize its value. Since Boolean values are 
             immutable, this constructor will return a reference to either the "true" or "false" values.
-            @param value. Optional value to use in creating the Boolean object. If the value is omitted or 0, -1, NaN,
+            @param value Optional value to use in creating the Boolean object. If the value is omitted or 0, -1, NaN,
                 false, null, undefined or the empty string, then the object will be created and set to false.
          */
         native function Boolean(value: Boolean? = false)
@@ -2053,7 +2034,7 @@ module ejs {
 module ejs {
 
     /**
-        The Cmd class supports invoking other programs on the same system. 
+        The Cmd class supports invoking other programs as separate processes on the same system. 
         @spec ejs
      */
     class Cmd implements Stream {
@@ -2097,7 +2078,7 @@ module ejs {
         native function set env(values: Object): Void
 
         /**
-            Eommand error output data as a string. The first time this property is read, the error content will be read 
+            Command error output data as a string. The first time this property is read, the error content will be read 
             and buffered.
          */
         function get error(): String {
@@ -2113,7 +2094,8 @@ module ejs {
         native function get errorStream(): Stream
 
         /** 
-            Signal the end of write data. The finalize() call must be invoked to properly signify the end of write data.
+            Signal the end of writing data to the command. The finalize() call must be invoked to properly 
+            signify the end of write data.
          */
         native function finalize(): Void 
 
@@ -2244,7 +2226,8 @@ module ejs {
         /* Static Helper Methods */
 
         /**
-            Start a command in the background as a daemon.  No data can be written to the daemon's stdin.
+            Start a command in the background as a daemon.  The daemon command is detached and the application 
+            continues immediately in the foreground. Note: No data can be written to the daemon's stdin.
             @param cmdline Command line to use. The cmdline may be either a string or an array of strings.
             @return The process ID. This pid can be used with kill().
          */
@@ -2459,7 +2442,7 @@ module ejs {
 module ejs {
 
     /**
-        The CmdArgs class parses the command line options and arguments. The template of permissible args is 
+        The CmdArgs class parses the Application's command line options and arguments. The template of permissible args is 
         passed to the CmdArgs constructor. CmdArgs supports command options that begin with "-" or "--" and parses
         option arguments of the forms: "-flag x" and "-flag=x". An option may have multiple forms (e.g. --verbose or -v).
         The primary option form must be specified first as it is the first option that will have its value defined in
@@ -2467,18 +2450,18 @@ module ejs {
         @spec ejs
         @stability prototype
         @example 
-        cmd = CmdArgs({
-            [ "depth", Number ]
-            [ "quiet", null, false ]
-            [ [ "verbose", "v", ], true ]
-            [ "log", /\w+(:\d)/, "stdout:4" ],
-            [ "mode", [ "low", "medium", "high" ], "high" ]
-        })
-        let options = cmd.options
-        if (options.verbose) { }
-        for each (file in cmd.args) {
-            ...
-        }
+cmd = CmdArgs({
+    [ "depth", Number ]
+    [ "quiet", null, false ]
+    [ [ "verbose", "v", ], true ]
+    [ "log", /\w+(:\d)/, "stdout:4" ],
+    [ "mode", [ "low", "medium", "high" ], "high" ]
+})
+let options = cmd.options
+if (options.verbose) { }
+for each (file in cmd.args) {
+    ...
+}
      */
     class CmdArgs {
         /* User supplied arguments */
@@ -3625,9 +3608,10 @@ module ejs {
         native static function breakpoint(): void
 
         /**
-            The current debug mode. This property is read-write. Setting mode to true will put the application in 
-            debug mode. When debug mode is enabled, the runtime will typically suspend timeouts and will take other 
-            actions to make debugging easier.
+            The current debug mode.  Setting mode to true will put the application in debug mode. When debug mode 
+            is enabled, the runtime will typically suspend timeouts and will take other actions to make debugging easier.
+            Invoking the ejs shell with a -D command line switch will also enable debug mode.
+            This property is read-write. 
          */
         native static function get mode(): Boolean
 
@@ -3700,15 +3684,15 @@ module ejs {
  */
 
 module ejs {
-
     //  MOB - rename emitter to something else
     /** 
-        The emitter class provides a publish/subscribe model of communication. It supports the registration of observers
+        The emitter class provides a publish/subscribe model of communication via events. It supports the 
+        registration of observers
         who want to subscribe to events of interest. 
         @example
             events.on(event, function (event, ...args) {
                 //  Do something
-            }
+            })
             events.fire("topic", 1, 2, 3)
         @stability prototype
      */
@@ -3827,7 +3811,7 @@ module ejs {
         }
 
         /** 
-            Add an observer on a set of events.
+            Add an observer for a set of named event.
             The callback will be invoked when the requested event is fired by calling Emitter.fire. When the callback 
             runs, it will be invoked with the value of "this" relevant to the context of the callback. If the callback
             is a class method, the value of "this" will be the object instance. Global functions will have "this" set to
@@ -4018,7 +4002,7 @@ module ejs {
         /**
             Format the captured stack
             @return A string containing the formatted stack backtrace. Format is:
-                [INDEX FILENAME, line LINENO, FUNCTION, CODE_LINE
+                [INDEX FILENAME, line LINENO, FUNCTION, CODE_LINE]
          */
         function formatStack(): String {
             let result = ""
@@ -4032,7 +4016,7 @@ module ejs {
 
     /**
         Arguments error exception class. 
-        Thrown the arguments are not compatible with the required function  parameters.
+        Thrown when function arguments are not compatible with the required function parameters.
         @spec ejs
         @stability evolving
      */
@@ -4044,9 +4028,8 @@ module ejs {
         native function ArgError(message: String? = null) 
     }
 
-//MOB Who is using this? Delete
     /**
-        Arithmetic error exception class. Thrown when the system cannot perform an arithmetic operation, 
+        Arithmetic error exception class. Thrown when the system cannot perform an arithmetic or math operation, 
         @spec ejs
         @stability evolving
      */
@@ -4059,7 +4042,7 @@ module ejs {
     }
 
     /**
-        Assertion error exception class. Thrown when the $assert method is invoked with a false value.
+        Assertion error exception class. Thrown when the $global.assert method is invoked with a false value.
         @spec ejs
         @stability evolving
      */
@@ -4190,7 +4173,7 @@ module ejs {
 
     /**
         State error exception class. Thrown when an object cannot be transitioned from its current state to the 
-        desired state, e.g. calling "sleep" on an interrupted thread.
+        desired state.
         @spec ejs
         @stability evolving
      */
@@ -4217,8 +4200,7 @@ module ejs {
 
     /**
         Type error exception class. Thrown when a type casting or creation operation fails, e.g. when an operand 
-        cannot be cast to a type that allows completion of a statement or when a type cannot be found for object 
-        creation or when an object cannot be instantiated given the values passed into "new".
+        cannot be cast to a required parameter type.
         @stability evolving
      */
     dynamic class TypeError extends Error {
@@ -4389,7 +4371,6 @@ module ejs {
 
         /** 
             Is the file open
-            MOB - doc
          */
         native function get isOpen(): Boolean
 
@@ -4563,7 +4544,7 @@ module ejs {
 module ejs {
 
     /** 
-        The FileSystem objects provide statistics and data about file systems.
+        The FileSystem objects provide global information about a file systems.
         @spec ejs
         @stability prototype
      */
@@ -4572,8 +4553,8 @@ module ejs {
         use default namespace public
 
         /** 
-            Create a new FileSystem object based on the given path.
-            @param path String or Path of the file system
+            Create a new FileSystem object for the file system that contains the given path.
+            @param path String or Path of a file that would reside in the file system.
          */
         native function FileSystem(path: Object? = null)
 
@@ -4699,7 +4680,8 @@ module ejs {
 module ejs {
 
     /** 
-        The Frame type is used for activation call frames. 
+        Function call frame class. The Frame type is used internally by the ejs virtual machine to manage
+        function calls and store function local variables.
         @stability evolving
      */
     dynamic class Frame extends Function { }
@@ -4808,6 +4790,7 @@ module ejs {
         /** 
             Bind the value of "this" for the function. This can set the value of "this" for the function. If
             $overwrite is false, it will only define the value of "this" if it is not already defined.
+            Use $bound to examine the bound "this" value.
             @param thisObj Value of "this" to define
             @param args Function arguments to supply to the function. These arguments preceed any caller supplied
                 arguments when the function is actually invoked.
@@ -4816,6 +4799,7 @@ module ejs {
 
         /** 
             The bound object representing the "this" object for the function. Will be set to null if no object is bound.
+            Use $bind() to set the bound "this" object.
             @see bind
          */
         native function get bound(): Object
@@ -4925,8 +4909,10 @@ module ejs {
 
         /**
             Run the garbage collector and reclaim memory allocated to objects and properties that are no longer reachable. 
-            When objects and properties are freed, any registered destructors will be called. The run function will run 
-            the garbage collector even if the $enable property is set to false. 
+            When objects and properties are freed, any registered native destructors will be called. The run function will 
+            run the garbage collector even if the $enable property is set to false. 
+            It is normally not required to manually call the $run method as the ejs virtual machine runtime will 
+            automatically run the garbage collector as required.
             @param deep If set to true, will collect from all generations. The default is to collect only the youngest
                 geneartion of objects.
          */
@@ -4934,7 +4920,7 @@ module ejs {
 
         /**
             Verify memory. In debug builds, this call verifies all memory blocks by checking a per-block signature.
-            This is very slow so call sparingly. In release builds, this call does nothing.
+            This is very slow, so call sparingly. In release builds, this call does nothing.
          */
         native static function verify(): Void
 
@@ -5347,7 +5333,7 @@ module ejs {
 module ejs {
 
     /** 
-        The Http object represents a Hypertext Transfer Protocol version 1/1 client connection. It is used to issue 
+        The Http object represents a Hypertext Transfer Protocol version 1.1 client connection. It is used to issue 
         HTTP requests and capture responses. It supports the HTTP/1.1 standard including methods for GET, POST, 
         PUT, DELETE, OPTIONS, and TRACE. It also supports Keep-Alive and SSL connections. 
         @spec ejs
@@ -5568,8 +5554,8 @@ module ejs {
         /** 
             Commence a HTTP request for the current method and uri. The HTTP method should be defined via the $method 
             property and Uri via the $uri property. This routine is typically not used. Rather it is invoked via one 
-            of the Http methods get(), head(), post() instead. This call, and the Http method calls  may not immediately
-            initiate the connection. The Http class will delay connections until finalize() is called explicitly or 
+            of the Http methods $get(), $head(), $post() instead. This call, and the Http method calls  may not immediately
+            initiate the connection. The Http class will delay connections until $finalize() is called explicitly or 
             implicitly reading $status or response content. This enables the request content length to be determined 
             automatically for smaller requests where the request body data can be buffered and measured before sending 
             the request headers.  
@@ -5625,7 +5611,7 @@ module ejs {
             @param method Http method. This is typically "GET" or "POST"
             @param uri URL to fetch
             @param data Body data to send with the request. Set to null for no data. If set to null, the request
-                will be finalized. If not set to null, finalize() must be called after writing all data.
+                will be finalized. If not set to null, $finalize() must be called after writing all data.
             @param callback Optional function to invoke on completion of the request.
           */
         function fetch(method: String, uri: Uri, data: *, callback: Function = null) {
@@ -5658,7 +5644,7 @@ module ejs {
         native function get finalized(): Boolean 
 
         /** 
-            Flush request data. Calling flush(Sream.WRITE) or finalize() is required to ensure write data is sent to 
+            Flush request data. Calling $flush(Sream.WRITE) or $finalize() is required to ensure write data is sent to 
             the server.
             @duplicate Stream.flush
          */
@@ -5672,9 +5658,9 @@ module ejs {
         native function set followRedirects(flag: Boolean): Void
 
         /** 
-            Commence a POST request with www-url encoded key=value data. See connect() for connection details.
+            Commence a POST request with www-url encoded key=value data. See $connect() for connection details.
             This will encode each data objects as a string of "key=value" pairs separated by "&" characters.
-            After writing data, form() will call finalize().
+            After writing data, $form() will call $finalize().
             @param uri Optional request uri. If non-null, this overrides any previously defined uri for the Http object.
                 If null, use a previously defined uri.
             @param data Optional object hash of key value pairs to use as the post data. These are www-url-encoded and
@@ -5685,7 +5671,7 @@ module ejs {
 
         /**
 FUTURE & KEEP
-            Commence a POST request with form data the current uri. See connect() for connection details.
+            Commence a POST request with form data the current uri. See $connect() for connection details.
             @param uri Optional request uri. If non-null, this overrides any previously defined uri for the Http object.
                 If null, use the previously defined uri.
             @param data Data objects to pass with the POST request. The objects are json encoded and the Content-Type is
@@ -5699,9 +5685,9 @@ FUTURE & KEEP
         native function jsonForm(uri: Uri, ...data): Void
 
         /** 
-            Commence a GET request for the current uri. See connect() for connection details.
+            Commence a GET request for the current uri. See $connect() for connection details.
             This call initiates a GET request. It does not wait for the request to complete. 
-            The get() method will call finalize. If you need to send body content with a get request, use connect(). 
+            The $get() method will call finalize. If you need to send body content with a get request, use $connect(). 
             Once initiated, one of the $read or response routines  may be used to receive the response data.
             @param uri The uri to get. This overrides any previously defined uri for the Http object. If null, use
                 a previously defined uri.
@@ -5720,7 +5706,7 @@ FUTURE & KEEP
         native function getRequestHeaders(): Object
 
         /** 
-            Commence a HEAD request for the current uri. See connect() for connection details.
+            Commence a HEAD request for the current uri. See $connect() for connection details.
             @param uri The request uri. This overrides any previously defined uri for the Http object.
                 If null, use a previously defined uri.
             @throws IOError if the request cannot be issued to the remote server.
@@ -5734,7 +5720,7 @@ FUTURE & KEEP
         native function header(key: String): String
 
         /** 
-            Response headers. Use header() to retrieve a single header value.
+            Response headers. Use $header() to retrieve a single header value.
             Set to an object filled with all the response headers. If multiple headers of the same key value are
                 defined, their contents will be catenated with a ", " separator as per the HTTP/1.1 specification.
          */
@@ -5809,7 +5795,7 @@ FUTURE & KEEP
         /** 
             Initiate a POST request. This call initiates a POST request. It does not wait for the request to complete. 
             Posted data is NOT URL encoded. If you want to post data to a form, consider using the $form method instead 
-            which automatically URL encodes the data. After writing data, post() will call finalize(). Post data may be 
+            which automatically URL encodes the data. After writing data, $post() will call $finalize(). Post data may be 
             supplied may alternatively via $write. 
             @param uri Optional request uri. If non-null, this overrides any previously defined uri for the Http object. 
                 If null, use a previously defined uri.
@@ -5819,7 +5805,7 @@ FUTURE & KEEP
         native function post(uri: Uri, ...data): Void
 
         /** 
-            Commence a PUT request for the current uri. See connect() for connection details.
+            Commence a PUT request for the current uri. See $connect() for connection details.
             If a contentLength has not been previously defined for this request, chunked transfer encoding will be enabled.
             @param uri The uri to put. This overrides any previously defined uri for the Http object.
                 If null, use a previously defined uri.
@@ -5917,7 +5903,7 @@ FUTURE & KEEP
         native function setCredentials(username: String, password: String): Void
 
         /** 
-            Set a request header. Use setHeaders() to set all the headers. Use getRequestHeaders() to retrieve and examine
+            Set a request header. Use setHeaders() to set all the headers. Use $getRequestHeaders() to retrieve and examine
             the request header set.
             @param key The header keyword for the request, e.g. "accept".
             @param value The value to associate with the header, e.g. "yes"
@@ -5928,7 +5914,7 @@ FUTURE & KEEP
         native function setHeader(key: String, value: String, overwrite: Boolean = true): Void
 
         /** 
-            Set request headers. Use setHeader() to set a single header. Use getRequestHeaders() to retrieve and examine 
+            Set request headers. Use setHeader() to set a single header. Use $getRequestHeaders() to retrieve and examine 
             the request headers set.
             @param headers Object hash of headers to set.
             @param overwrite If true, the new set of headers completely replaces the existing set of request headers.
@@ -6035,7 +6021,7 @@ FUTURE & KEEP
         native function set uri(newUri: Uri): Void
 
         /** 
-            Wait for a request to complete. This will call finalize() if in sync mode and the request is not already 
+            Wait for a request to complete. This will call $finalize() if in sync mode and the request is not already 
             finalized.
             @param timeout Timeout in milliseconds to wait for the request to complete. A timeout of zero means no 
             timeout, ie. wait forever. A timeout of < 0 (default), means use the default request timeout.
@@ -6044,7 +6030,7 @@ FUTURE & KEEP
         native function wait(timeout: Number = -1): Boolean
 
         /** 
-            Write body data to the server. This will buffer the written data until either flush() or finalize() is called. 
+            Write body data to the server. This will buffer the written data until either $flush() or $finalize() is called. 
             The Http "Content-Length" header should normally be set prior to writing any data for optimial data transfter.
             If the Content-Length header has not been defined, the data will be transferred using chunked transfers. 
             @duplicate Stream.write
@@ -6121,7 +6107,7 @@ FUTURE & KEEP
             header("content-encoding")
 
         /** 
-            Commence a DELETE request for the current uri. See connect() for connection details.
+            Commence a DELETE request for the current uri. See $connect() for connection details.
             @param uri The uri to delete. This overrides any previously defined uri for the Http object.
                 If null, use a previously defined uri.
             @param data Data objects to send with the request. Data is written raw and is not encoded or converted. 
@@ -6151,7 +6137,7 @@ FUTURE & KEEP
             Uri(path)..mimeType
 
         /** 
-            Commence an OPTIONS request for the current uri. See connect() for connection details.
+            Commence an OPTIONS request for the current uri. See $connect() for connection details.
             @param uri New uri to use. This overrides any previously defined uri for the Http object.
                 If null, use a previously defined uri.
             @throws IOError if the request cannot be issued to the remote server.
@@ -6171,7 +6157,7 @@ FUTURE & KEEP
         }
 
         /** 
-            Commence a TRACE request for the current uri. See connect() for connection details.
+            Commence a TRACE request for the current uri. See $connect() for connection details.
             @param uri New uri to use. This overrides any previously defined uri for the Http object.
                 If null, use a previously defined uri.
             @throws IOError if the request cannot be issued to the remote server.
@@ -6240,6 +6226,7 @@ FUTURE & KEEP
 module ejs {
 
     /** 
+        Inflector class to convert singular to plural and vice-versa.
         The Inflector class emulates the Rails Inflector. 
         See: http://api.rubyonrails.org/classes/ActiveSupport/Inflector.html
      */
@@ -6309,6 +6296,8 @@ module ejs {
             "sheep",
             "species",
         ]
+
+        use default namespace public
 
         /**
             Add a new irregular mapping
@@ -6410,6 +6399,8 @@ module ejs {
             return word
         }
     }
+
+    use default namespace public
 
     /**
         Convert a number to an ordinal string
@@ -6566,7 +6557,8 @@ module ejs {
 module ejs {
 
     /**
-        JavaScript Object Notation. This class supports the JSON data exchange format as described by:
+        Encoding and decoding to JavaScript Object Notation strings (JSON). 
+        This class supports the JSON data exchange format as described by: 
         RFC 4627 at (http://www.ietf.org/rfc/rfc4627.txt).
         @stability evolving
      */
@@ -6707,7 +6699,8 @@ module ejs {
 module ejs {
 
     /** 
-        Loader for CommonJS modules
+        Loader for CommonJS modules. The Loader class provides provides a $require() function to load
+            script files.
         @param id Module identifier. May be top level or may be an identifier relative to the loading script.
         @returns An object hash of exports from the module
         @spec ejs
@@ -6733,9 +6726,8 @@ module ejs {
             UNUSED - not yet used
             @hide
          */
-        public static function init(mainId: String? = null) {
+        public static function init(mainId: String? = null)
             require.main = mainId
-        }
 
         /**
             Register a CommonJS module initializer
@@ -6770,8 +6762,8 @@ module ejs {
         }
 
         /** 
-            Load a CommonJS module and return the exports object. After the first load, the CJS module will be compiled
-            and cached as a byte-code module.
+            Load a CommonJS module and return the exports object. After the first load, the script module will be compiled
+            and cached as a byte-code module. It will be recompiled if the script source is modified or missing.
             @param id Unique name of the module to load. The id may be a unique ID, an absolute path, relative path or a 
                 path fragment that is resolved relative to the App search path. Ids may or may not include a ".es" or 
                 ".js" extension.
@@ -6889,7 +6881,7 @@ module ejs {
             determine the eligible file extensions to use when searching for modules.
             @param newConfig Configuration options hash.
          */
-        public static function setConfig(newConfig): Void
+        public static function setConfig(newConfig: Object): Void
             config = newConfig
     }
 }
@@ -6995,6 +6987,117 @@ module ejs {
 
 /************************************************************************/
 /*
+ *  Start of file "../../src/core/LogFile.es"
+ */
+/************************************************************************/
+
+/*
+    LogFile.es - Application Log File class
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+module ejs {
+
+    /** 
+        The LogFile class manages the Application's log mechanism. If the Application was started with a 
+        "--log" command line switch, the application will write log messages to the specified file, otherwise 
+        messages will be sent to the standard error console. The Application will have a single instance of the 
+        LogFile class created and stored in the App.logFile property.
+
+        The Logger class can be used to create higher level logging filters and aggregators and use the LogFile as the
+        final output stream.
+
+        @spec ejs
+        @stability prototype
+     */
+    class LogFile implements Stream {
+
+        use default namespace public
+
+        /** 
+            Sync/async mode. Not supported.
+            @hide
+         */
+        function get async(): Boolean
+            false
+
+        function set async(enable: Boolean): Void {
+            throw "Async mode not supported"
+        }
+
+        /** 
+            Close the LogFile and stop logging
+            @hide
+         */
+        function close(): Void {}
+
+        /**
+            Is the Application is using logging. ie. Has been invoked with a --log switch.
+         */
+        native function get logging(): Boolean
+
+        /** 
+            Emit messages to the LogFile stream at a given level
+            @param level Verbosity level at which to emit the message (0-9).
+            @param data Data messages to emit
+         */
+        native function emit(level: Number, ...data): Number
+
+        /**
+            @hide
+         */
+        function flush(dir: Number = Stream.BOTH): Void { }
+
+        /** 
+            The numeric verbosity setting (0-9) of this LogFile. Zero is least verbose, nine is the most verbose.
+            Messages with a lower (or equal) verbosity level than the LogFile's level are emitted.
+            WARNING: Changing the logging verbosity level will affect logging for all interpreters.
+         */
+        native function get level(): Number
+        native function set level(level: Number): void 
+
+        /** @hide */
+        function off(name, observer: Function): Void {
+            throw "off is not supported"
+        }
+
+        /** @hide */
+        function on(name, observer: Function): Void {
+            throw "on is not supported"
+        }
+
+        /** @hide */
+        function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number  {
+            throw "Read not supported"
+            return null
+        }
+
+        /** 
+            Redirect log output. WARNING: Redirecting the logging output will redirect messages for all interpreters.
+            @param location Output location to send messages to.
+            @param level Verbosity level for logging. 
+         */
+        native function redirect(location: String, level: Number = null): Void
+
+        /** 
+            Write messages to the LogFile stream at level 0
+            @duplicate Stream.write
+         */
+        function write(...data): Number
+            emit(0, ...data)
+    }
+}
+/************************************************************************/
+/*
+ *  End of file "../../src/core/LogFile.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "../../src/core/Logger.es"
  */
 /************************************************************************/
@@ -7007,21 +7110,23 @@ module ejs {
 
 module ejs {
 
-    //  MOB -- should this be a stream?
     /** 
         Logger objects provide a convenient and consistent method to capture and store logging information.
-        Loggers can direct output to streams and may be aggregated in a hierarchical manner. The verbosity of 
+        Loggers can direct output to Streams and may be aggregated in a hierarchical manner. The verbosity of 
         logging can be managed and messages can be filtered.
    
-        A logger may have a "parent" logger in order to create hierarchies of loggers for granular control of logging.
+        Hierarchies of loggers can be constructed by specifying a parent logger when creating a logger instance.
         For example, a logger can be created for each class in a package with all such loggers having a single parent. 
         Loggers can send log messages to their parent and inherit their parent's log level. 
         The top level logger for an application is defined by App.log.
  
-        Loggers may define a filter function that returns true or false depending on whether a specific message 
-        should be logged or not. A matching pattern can alternatively be used to filter messages based on the logger name.
+        Each logger may define a filter function that returns true or false depending on whether a specific message 
+        should be logged or not. A matching pattern can alternatively be used to filter messages.
 
-        Loggers are themselves Streams and Stream filters can be stacked atop Loggers.
+        An Application will have a default Logger instance created and stored in App.log at startup. This Logger uses
+        the LogFile class to communicate with the Application's native log file. This is typically initialized
+        by the "--log" command line switch and otherwise defaults to send messages to the standard error console.
+
         @spec ejs
         @stability prototype
      */
@@ -7091,6 +7196,8 @@ module ejs {
             Redirect log output.
             @param location Optional output stream or Logger to send messages to. If a parent Logger instance is 
                 provided for the output parameter, messages are sent to the parent for rendering.
+            @param level Optional integer verbosity level. Messages with a message level less than or equal to the defined
+                logger level will be emitted. Range is 0 (least verbose) to 9.
          */
         function redirect(location, level: Number = null): Void {
             if (location is Stream) {
@@ -7107,12 +7214,6 @@ module ejs {
                 } else {
                     stream = File(path).open("wa+")
                 }
-                /*
-                    Rely on GC to close. Otherwise this may close stderr
-                    if (_outStream && stream != _outStream && _outStream != Logger.nativeStream) {
-                        _outStream.close()
-                    }
-                 */
                 _outStream = stream
             }
             _location = location
@@ -7163,19 +7264,21 @@ module ejs {
 
         /** 
             The numeric verbosity setting (0-9) of this logger. Zero is least verbose, nine is the most verbose.
+            Messages with a lower (or equal) verbosity level than the logger's level are emitted.
          */
         function get level(): Number
             _level
 
         function set level(level: Number): void {
             _level = level
-            /*
-                if (this == App.log) {
-                    nativeLogLevel = level
-                }
-             */
+            if (_outStream is Log) {
+                _outStream.level = level
+            }
         }
 
+        /**
+            The logging location parameter specified when constructing or redirecting the logger. 
+         */
         function get location()
             _location
 
@@ -7188,20 +7291,6 @@ module ejs {
 
         function set match(pattern: RegExp): void 
             _pattern = pattern
-
-        /**
-            Logging level for native code instrumentation. 
-            This controls logging from C code.
-         */
-        static native function get nativeLevel(): Number
-        static native function set nativeLevel(level: Number): Void
-
-        /**
-            Logging stream for native code logging instrumentation.  This controls logging from C code.
-            This is initialized at startup via a command line "--log spec" switch and/or the ejsrc "log.location" field.
-         */
-        static native function get nativeStream(): Stream
-        static native function set nativeStream(stream: Stream): Void
 
         /** 
             The name of this logger.
@@ -7270,14 +7359,14 @@ module ejs {
             @hide
          */
         function off(name, observer: Function): Void {
-            throw "observe is not supported"
+            throw "off is not supported"
         }
 
         /** 
             @hide
          */
         function on(name, observer: Function): Void {
-            throw "observe is not supported"
+            throw "on is not supported"
         }
 
         /** 
@@ -7289,7 +7378,7 @@ module ejs {
         }
 
         /** 
-            Write raw data to the logger stream.
+            Write messages to the logger stream.
             @duplicate Stream.write
          */
         function write(...data): Number
@@ -7324,10 +7413,10 @@ module ejs {
             }
             if (_outStream is Logger) {
                 _outStream.emit(origin, level, kind, msg)
+            } else if (kind) {
+                _outStream.write(origin + ": " + kind + ": " + msg)
             } else {
-                if (kind)
-                    _outStream.write(origin + ": " + kind + ": " + msg)
-                else _outStream.write(origin + ": " + level + ": " + msg)
+                _outStream.write(origin + ": " + level + ": " + msg)
             }
         }
     }
@@ -8248,12 +8337,12 @@ module ejs {
         native function clone(deep: Boolean = true) : Object
 
         /** 
-            Create a new object, set the prototype and properties.
+            Create a new object, set the object prototype and properties.
             @param prototype Prototype object
-            @param props Properties for the new object
+            @param properties Properties for the new object
             @return The created object
          */
-        static native function create(prototype: Object, props: Object = undefined): Object 
+        static native function create(prototype: Object, properties: Object = undefined): Object 
 
         /** 
             Define or redefine a property on the given object
@@ -8586,7 +8675,7 @@ MOB -- inconsistent with JSON.baseClasses
 module ejs {
 
     /**
-        Path class. Paths are filenames and may or may not represent physical files in a file system. That is, the 
+        Paths are filename objects and may or may not represent physical files in a file system. That is, the 
         corresponding file or directory for the Path  may or may not exist. Once created, Paths are immutable and their
         path value cannot be changed.
         @spec ejs
@@ -8884,7 +8973,7 @@ module ejs {
 
         /**
             Open a path and return a File object.
-            @params options
+            @param options
             @options mode optional file access mode string. Use "r" for read, "w" for write, "a" for append to existing
                 content, "+" never truncate.
             @options permissions optional Posix permissions number mask. Defaults to 0664.
@@ -8898,7 +8987,7 @@ module ejs {
 
         /**
             Open a file and return a TextStream object.
-            @params options Optional options object
+            @param options Optional options object
             @options mode optional file access mode string. Use "r" for read, "w" for write, "a" for append to existing
                 content, "+" never truncate.
             @options encoding Text encoding format
@@ -8913,7 +9002,7 @@ module ejs {
 
         /**
             Open a file and return a BinaryStream object.
-            @params options Optional options object
+            @param options Optional options object
             @options mode optional file access mode with values ored from: Read, Write, Append, Create, Open, Truncate. 
                 Defaults to Read.
             @options permissions optional Posix permissions number mask. Defaults to 0664.
@@ -9076,7 +9165,7 @@ module ejs {
 
             Resolve is useful for creating paths in the region of the current path and gracefully handles both 
             absolute and relative path segments.
-            @params otherPaths Paths to resolve in the region of this path.
+            @param otherPaths Paths to resolve in the region of this path.
             @return A new Path object that is resolved against the prior path. 
          */
         native function resolve(...otherPaths): Path
@@ -10134,13 +10223,13 @@ module ejs {
 
         use default namespace public
 
-        /** Read direction constant for flush() */
+        /** Read direction constant for $flush() */
         static const READ = 0x1
 
-        /** Write direction constant for flush() */
+        /** Write direction constant for $flush() */
         static const WRITE = 0x2
 
-        /** Both directions constant for flush() */
+        /** Both directions constant for $flush() */
         static const BOTH = 0x3
 
         /** 
@@ -10165,10 +10254,10 @@ module ejs {
         /**
             Flush the stream and underlying streams. A supplied flush $direction argument modifies the effect of this call.
             If direction is set to Stream.READ, then all read data is discarded. If direction is set to Stream.WRITE, 
-            any buffered data is written. Stream.BOTH will cause both directions to be flushed.  If the stream is in 
+            any buffered data is written. Stream.BOTH will cause both directions to be flushed. If the stream is in 
             sync mode, this call will block until all data is written. If the stream is in async mode, it will attempt 
-            to write all data but will return immediately.
-            @param
+            to write all data but will return immediately. Defaults to Stream.WRITE.
+            @param dir direction to flush. Set to $READ, $WRITE or $BOTH.
          */
         function flush(dir: Number): Void 
 
@@ -10182,7 +10271,7 @@ module ejs {
         //  MOB - define what this is set to in the callback
         /** 
             Add an observer to the stream for the named events. 
-            @param name Name of the event to listen for. The name may be an array of events.
+            @param name :[String|Array] Name of the event to listen for. The name may be an array of events.
             @param observer Callback observer function. The function is called with the following signature:
                 function observer(event: String, ...args): Void
             @event readable Issued when the stream becomes readable. 
@@ -10214,7 +10303,7 @@ module ejs {
             If the stream can accept all the write data, the call returns immediately with the number of bytes written. 
             If writing more data than the stream can absorb in sync mode, the call will block until the data is written.
             If writing more data than the stream can absorb in async mode, the call will not block and will buffer the
-            data and return immediately. Some streams will require a flush() call to actually send the data.
+            data and return immediately. Some streams will require a $flush() call to actually send the data.
             A "writable" event will be issued when the stream can again absorb more data.
             @param data Data to write. 
             @returns a count of the bytes actually written.
@@ -10529,9 +10618,9 @@ module ejs {
             and replace it with the replace text. If the pattern is a string, only the first occurrence is replaced.
             @param pattern The regular expression or string pattern to search for.
             @param replacement The string to replace the match with or a function to generate the replacement text. The
-                replacement string can contain special replacement patterns: "$$" inserts a "$", "$&" inserts the
-                matched substring, "$`" inserts the portion that preceeds the matched substring, "$'" inserts the
-                portion that follows the matched substring, and "$N" inserts the Nth parenthesized substring.
+                replacement string can contain special replacement patterns: "$$" inserts a "\$", "\$&" inserts the
+                matched substring, "\$`" inserts the portion that preceeds the matched substring, "\$'" inserts the
+                portion that follows the matched substring, and "\$N" inserts the Nth parenthesized substring.
                 The replacement parameter can also be a function which will be invoked and the function return value 
                 will be used as the resplacement text. The function will be invoked multiple times for each match to be 
                 replaced if the regular expression is global. The function will be invoked with the signature:
@@ -10861,8 +10950,9 @@ module ejs {
 
         use default namespace public
 
-        //  MOB - Should be many more system contants. Is this the right place for them?
-        //  MOB - should be tunable
+        /**
+            Default buffer size 
+         */
         public static const Bufsize: Number = 1024
 
         /**
@@ -10982,7 +11072,7 @@ module ejs {
 module ejs {
 
     /**
-        TextStreams interpret data as a stream of Unicode characters. They provide methods to read and write data
+        TextStreams interpret data as a stream of characters. They provide methods to read and write data
         in various text encodings and to read/write lines of text appending appropriate system dependent new line 
         terminators. TextStreams can be stacked upon other Streams such as files, byte arrays, sockets, or Http objects.
         @spec ejs
@@ -11312,7 +11402,7 @@ module ejs {
 
     /**
         Timers manage the execution of functions at some point in the future. Timers may run once, or they can be 
-        scheduled to run repeatedly, until stopped by calling the stop() method. Timers are scheduled with a granularity 
+        scheduled to run repeatedly, until stopped by calling the $stop() method. Timers are scheduled with a granularity 
         of 1 millisecond. However, many systems are not capable of supporting this granularity and make only best efforts 
         to schedule events at the desired time.
         @Example
@@ -11327,8 +11417,6 @@ module ejs {
 
         /**
             Constructor for Timer. The timer is will not be called until $start is called.
-            When the callback is invoked, it will be invoked with the value of "this" set to the timer unless the
-                function has bound a "this" value via Function.bind.
             @param period Delay in milliseconds before the timer will run
             @param callback Function to invoke when the timer is due. The callback is invoked with the following signature:
                 function callback(error: Error): Void
@@ -11339,11 +11427,9 @@ module ejs {
         /**
             The current drift setting. If drift is true, the timer is allowed to drift its execution time due to 
             other system events when attempting to optimize overall system performance.
-            If the drift value is set to false, reschedule the timer so that the time period between callback start 
-            times does not drift and is best-efforts equal to the timer reschedule period. The timer subsystem will 
-            delay other low priority events or timers, with drift equal to true, if necessary to ensure non-drifting 
-            timers are scheduled exactly. Setting drift to true will schedule the timer so that the time between the 
-            end of the callback and the start of the next callback invocation is equal to the period. 
+            If the drift value is set to false, the timer is scheduled so that the period between callback start 
+            times does not gradually drift. When using non-drifting timers, the timer subsystem will 
+            delay other low priority events or timers, if necessary to ensure non-drifting timers are scheduled exactly. 
          */
         native function get drift(): Boolean
         native function set drift(enable: Boolean): Void
@@ -11371,6 +11457,8 @@ module ejs {
         /**
             Start a timer running. The timer will be repeatedly invoked if the $repeat property is true, otherwise it 
             will be invoked once.
+            When the timer callback is invoked, it will be invoked with the value of "this" set to the timer unless the
+                function has bound a "this" value via Function.bind.
          */
         native function start(): Void
 
@@ -11552,10 +11640,9 @@ module ejs {
 
 module ejs {
     /**
-        Uri class to manage Uris
-        @stability evolving
+        The URI class to provides the ability to create, and manipulate URIs and their constituent components.
         @spec ejs
-        @stability prototype
+        @stability evolving
      */
     class Uri {
         use default namespace public
@@ -13477,7 +13564,7 @@ module ejs {
 module ejs.cjs {
 
     /**
-        System for CommonJS. This is the base class for "system"
+        CommonJS System class. This is provided for compatibility with the CommonJS environment.
      */
     enumerable dynamic class CommonSystem {
         use default namespace public
@@ -13510,23 +13597,55 @@ module ejs.cjs {
         function print(...args): Void
             global.print(...args)
      */
+        /** @hide */
         function log(...msgs): Void
             App.logger.info(...msgs)
     }
 
+    /**
+        CommonJS File class. This is provided for compatibility with the CommonJS environment.
+     */
     class CommonFile {
         use default namespace public
 
-        //  MOB -- options differ
+        /**
+            Open a path and return a File object.
+            @param path Filename to open
+            @param options Open options
+            @options mode optional file access mode string. Use "r" for read, "w" for write, "a" for append to existing
+                content, "+" never truncate.
+            @options permissions optional Posix permissions number mask. Defaults to 0664.
+            @options owner String representing the file owner (Not implemented)
+            @options group String representing the file group (Not implemented)
+            @return a File stream object which implements the Stream interface.
+            @throws IOError if the path or file cannot be created.
+         */
         function open(path: String, options): Stream
             File(path, options)
 
-        function read(path: String, options): String
+        /**
+            Read a file and return a string
+            @param path Filename to read from
+            @param options Ignored
+            @return File data as a string
+         */
+        function read(path: String, options = null): String
             Path(path).readString()
 
+       /**
+            The base of portion of the path. The base portion is the trailing portion without any directory elements.
+            @param path Path name to examine
+            @param extension Ignored
+            @return the base portion of the path as a string
+        */
         function basename(path: String, extension: String = ""): String
             Path(path).basename
 
+        /**
+            Write data to a file.
+            @param path Filename to write to
+            @param data Data to write to the file
+         */
         function write(path: String, data): Void
             Path(path).write(data)
     }
@@ -13564,7 +13683,8 @@ module ejs.db.mapper {
         in the Record instance for each column in the database table. Users should subclass the Record class for each 
         database table to manage. When users subclass Record to create models, they should use "implement" rather than
         extend.
-        @example public dynamic class MyModel implements Record {}
+        @example 
+        public dynamic class MyModel implements Record {}
         @spec ejs
         @stability prototype
      */
@@ -14869,7 +14989,8 @@ module ejs.db.sqlite {
         /** @duplicate ejs.db::Database.close */
         native function close(): Void
 
-        /** @duplicate ejs.db::Database.commit */
+        /** @duplicate ejs.db::Database.commit 
+            @hide*/
         function commit(): Void {}
 
         //  TODO - implement in native code
@@ -14917,7 +15038,8 @@ module ejs.db.sqlite {
         function destroyTable(table: String): Void
             query("DROP TABLE IF EXISTS " + table + ";")
 
-        /** @duplicate ejs.db::Database.endTransaction */
+        /** @duplicate ejs.db::Database.endTransaction 
+            @hide */
         function endTransaction(): Void {}
 
         /** @duplicate ejs.db::Database.getColumns */
@@ -15043,7 +15165,8 @@ module ejs.db.sqlite {
         function sqlTypeToEjsType(sqlType: String): Type
             "ejs.db"::Sqlite.SqlTypeToEjsType[sqlType]
 
-        /** @duplicate ejs.db::Database.startTransaction */
+        /** @duplicate ejs.db::Database.startTransaction 
+            @hide */
         function startTransaction(): Void {}
     }
 }
@@ -15198,6 +15321,7 @@ module ejs.db {
 
         /**
             Commit a database transaction
+            @hide
          */
         function commit(): Void
             adapter.commit()
@@ -15236,7 +15360,7 @@ module ejs.db {
         /**
             Map the database independant data type to a database dependant SQL data type
             @param dataType Data type to map
-            @returns The corresponding SQL database type
+            @returns A string containing the name of the the corresponding SQL database type
          */
         function dataTypeToSqlType(dataType:String): String
             adapter.dataTypeToSqlType(dataType)
@@ -15270,6 +15394,7 @@ module ejs.db {
 
         /**
             End a transaction
+            @hide
          */
         function endTransaction(): Void
             adapter.endTransaction()
@@ -15388,6 +15513,7 @@ module ejs.db {
 
         /**
             Start a new database transaction
+            @hide
          */
         function startTransaction(): Void
             adapter.startTransaction()
@@ -15404,6 +15530,7 @@ module ejs.db {
         /**
             Execute a database transaction
             @param code Function to run inside a database transaction
+            @hide
          */
         function transaction(code: Function): Void {
             startTransaction()
@@ -15489,7 +15616,8 @@ module ejs.db {
 module ejs.db {
 
     /**
-        Database interface connector. This interface is implemented by database connectors such as SQLite and MYSQL.
+        Database Connector interface. The database connector interface is the contract implemented by 
+        concrete database implementations. This interface is implemented by database connectors such as SQLite and MYSQL.
         @spec ejs
         @stability evolving
      */
@@ -15511,7 +15639,9 @@ module ejs.db {
         /** @duplicate ejs.db::Database.close */
         function close(): Void
 
-        /** @duplicate ejs.db::Database.commit */
+        /** @duplicate ejs.db::Database.commit 
+            @hide
+         */
         function commit(): Void
 
         /** @duplicate ejs.db::Database.connect 
@@ -15566,7 +15696,8 @@ module ejs.db {
         /** @duplicate ejs.db::Database.sqlTypeToEjsType */
         function sqlTypeToEjsType(sqlType: String): String
 
-        /** @duplicate ejs.db::Database.startTransaction */
+        /** @duplicate ejs.db::Database.startTransaction 
+            @hide */
         function startTransaction(): Void
     }
 }
@@ -15972,7 +16103,7 @@ module ejs.template  {
 
 module ejs.unix {
 
-    use default namespace public
+    // use default namespace public
 
     /**
         Get the base name of a file. Returns the base name portion of a file name. The base name portion is the 
@@ -16361,6 +16492,7 @@ module ejs.web {
         return (new CommonLogClass(app, logger)).app
     }
 
+    //  MOB - not a great name having Class in the name
     /**
         Common Log web server logging.
         This logs each HTTP request to a file in the Common Log format defined by the Apache web server.
@@ -16369,6 +16501,11 @@ module ejs.web {
         var innerApp: Function
         var logger: Stream
 
+        /**
+            Constructor for the CommonLogClass
+            @param app Application function
+            @param logger Optional logger. Defaults to App.log
+         */
         function CommonLogClass(app, logger: Stream = App.log) {
             this.innerApp = app
             this.logger = logger
@@ -16538,13 +16675,13 @@ module ejs.web {
      */
     namespace action = "action"
 
+    //  MOB - need more doc here on controllers
     /** 
-        Web framework controller class. The controller classes can accept web requests and direct them to action methods
-        which generate the response. Controllers are responsible for either generating output for the client or invoking
+        Web framework controller class. The Controller class is part of the Ejscript Model View Controller (MVC) web
+        framework. Controller class instances can accept web requests and direct them to action methods for servicing
+        which generates the response. Controllers are responsible for either generating output for the client or invoking
         a View which will create the response. By convention, all Controllers should be defined with a "Controller" 
-        suffix. This permits similar Controller and Model to exist in the same namespace.
-
-        MOB - Need intro to controllers here
+        suffix. This permits similar Controller and Model classes to exist in the same namespace.
 
         Action methods will autoFinalize by calling Request.autoFinalize unless Request.dontAutoFinalize has been called.
         If the Controller action wants to keep the request connection to the client open, you must call dontAutoFinalize
@@ -16564,23 +16701,23 @@ module ejs.web {
         private var _afterCheckers: Array
         private var _beforeCheckers: Array
 
-        /** Name of the action being run */
+        /** Name of the Controller action method being run for this request */
         var actionName:  String 
 
-        /** Configuration settings - reference to Request.config */
+        /** Configuration settings. This is a reference to $ejs.web::Request.config */
         var config: Object 
 
 //  MOB -- rename to "name"
         /** Pascal case controller name */
         var controllerName: String
 
-        /** Logger stream - reference to Request.log */
+        /** Logger stream - reference to $ejs.web::Request.log */
         var log: Logger
 
-        /** Form and query parameters - reference to the Request.params object. */
+        /** Form and query parameters. This is a reference to the $ejs.web::Request.params object. */
         var params: Object
 
-        /** Reference to the current Request object */
+        /** Reference to the current $ejs.web::Request object */
         var request: Request
 
         /***************************************** Convenience Getters  ***************************************/
@@ -16625,7 +16762,7 @@ module ejs.web {
         }
 
         /** 
-            Create and initialize a controller. This may be called directly by class constructors or via 
+            Create and initialize a controller. This may be called directly or via 
             the Controller.create factory method.
             @param req Web request object
          */
@@ -16648,11 +16785,13 @@ module ejs.web {
         }
 
         /** 
-            Run an action checker function after running the action
+            Run an check function after running the action
             @param fn Function callback to invoke
-            @param options Checker options. 
-            @option only Only run the checker for this action name
-            @option except Run the checker for all actions except this name
+            @param options Check function options. 
+            @option only [String|Array] Only run the checker for this action name. This can be a string action name or
+                an array of action names.
+            @option except [String|Array] Run the check function for all actions except this name.
+                This can be a string action name or an array of action names.
          */
         function after(fn, options: Object = null): Void {
             _afterCheckers ||= []
@@ -16660,8 +16799,9 @@ module ejs.web {
         }
 
         /** 
-            Controller web application. This function will run the controller action method and return a response object. 
-            The action method may be specified by the $aname parameter or it may be supplied via params.action.
+            Controller web application. This function will run a controller action method and return a response object. 
+            The action method may be specified by the $aname parameter or it may be supplied via 
+            $ejs.web::Request.params.action.
             @param request Request object
             @param aname Optional action method name. If not supplied, params.action is consulted. If that is absent too, 
                 "index" is used as the action method name.
@@ -16710,8 +16850,10 @@ module ejs.web {
             checker does write a response, it must call finalize.
             @param fn Function callback to invoke
             @param options Checker options. 
-            @option only Only run the checker for this action name
-            @option except Run the checker for all actions except this name
+            @option only [String|Array] Only run the checker for this action name. This can be a string action name or
+                an array of action names.
+            @option except [String|Array] Run the checker for all actions except this name
+                This can be a string action name or an array of action names.
          */
         function before(fn, options: Object = null): Void {
             _beforeCheckers ||= []
@@ -16762,6 +16904,7 @@ module ejs.web {
 
         /** 
             Missing action method. This method will be called if the requested action routine does not exist.
+            It should be overridden in user controller classes by using the "override" keyword.
          */
         action function missing() {
             throw "Missing Action: " + params.action + ": could not be found for controller: " + controllerName
@@ -16811,13 +16954,21 @@ module ejs.web {
             request.status = status
 
         /** 
-            Render the raw data back to the client. 
+            Low-level write data to the client. This will buffer the written data until either flush() or finalize() 
+            is called.
             If an action method does call a write data back to the client and has not called finalize() or 
             dontAutoFinalize(), a default view template will be generated when the action method returns. 
-            @param args Arguments to write to the client.  The args are converted to strings.
+            @param args Arguments to write to the client. The args are converted to strings.
+            @return The number of bytes written to the client
          */
-        function write(...args): Void
+        function write(...args): Number
             request.write(...args)
+
+        /** 
+            @duplicate ejs.web::Request.warn
+         */
+        function warn(msg: String): Void
+            request.warn(msg)
 
         /**
             @duplicate ejs.web::Request.writeContent
@@ -16915,25 +17066,10 @@ module ejs.web {
             Web.process(app, request, false)
         }
 
-        /** 
-            @duplicate ejs.web::Request.warn
-         */
-        function warn(msg: String): Void
-            request.warn(msg)
-
-        /** 
-            Low-level write data to the client. This will buffer the written data until either flush() or finalize() 
-            is called.
-            @duplicate ejs.web::Request.write
-         */
-        function write(...data): Number
-            request.write(...data)
-
         /**************************************** Private ******************************************/
 
-        private function checkSecurityToken() {
+        private function checkSecurityToken()
             request.checkSecurityToken()
-        }
 
         /*
             Open database. Expects ejsrc configuration:
@@ -18412,6 +18548,13 @@ module ejs.web {
 
 module ejs.web {
 
+    /**
+        HttpServer objects represents the server-side of a Hypertext Transfer Protocol (HTTP) version 1.1 connection. 
+        It is used to receive HTTP requests and generate responses. It supports the HTTP/1.1 standard
+        including methods for GET, POST, PUT, DELETE, OPTIONS, and TRACE. It also supports Keep-Alive and SSL connections.
+        @spec ejs
+        @stability evolving
+     */
     enumerable dynamic class HttpServer {
         use default namespace public
 
@@ -18419,7 +18562,7 @@ module ejs.web {
             Index files list. Index files are used by various handlers when requests to directories are made. The 
             indicies are tried in turn for the first valid index file.
           */
-        static var indicies = ["index.ejs", "index.html"]
+        static var indicies: Array = ["index.ejs", "index.html"]
 
         /** 
             Get the local IP address bound to this socket.
@@ -18502,11 +18645,21 @@ module ejs.web {
         var sessions: Object
 
         /** 
-            Software details for the web server
+            Software description for the web server
             @return A string containing the name and version of the web server software
          */
         native function get software(): String
 
+        /*
+            //  MOB - better HttpServer(options)
+            {
+                home: "dir"
+                documents: "web"
+                threaded: true
+                ejsrc: "ejsrc"
+                other config to blend
+            }
+        */
         /** 
             Create a HttpServer object. The server is created in async mode by default.
             If an "ejsrc" file exists in the server root, it will be loaded and update the "$config" properties.
@@ -18517,33 +18670,23 @@ module ejs.web {
             @spec ejs
             @stability prototype
             @example: This is a fully async server:
-
-            let server: HttpServer = new HttpServer(".", "web")
-            let router = Router(Router.Restful)
-            server.on("readable", function (event: String, request: Request) {
-                request.status = 200
-                request.setHeaders({"Content-Type": "text/plain"})
-                request.on("readable", function (event, request) {
-                    let data = new ByteArray
-                    if (request.read(data) == null) {
-                        print("EOF")
-                    }
-                })
-                request.on("writable", function (event) {
-                    request.write("Hello World")
-                    request.finalize()
-                })
-            }
-            server.listen("127.0.0.1:7777")
-
-//  MOB - better HttpServer(options)
-            {
-                home: "dir"
-                documents: "web"
-                threaded: true
-                ejsrc: "ejsrc"
-                other config to blend
-            }
+let server: HttpServer = new HttpServer(".", "web")
+let router = Router(Router.Restful)
+server.on("readable", function (event: String, request: Request) {
+    request.status = 200
+    request.setHeaders({"Content-Type": "text/plain"})
+    request.on("readable", function (event, request) {
+        let data = new ByteArray
+        if (request.read(data) == null) {
+            print("EOF")
+        }
+    })
+    request.on("writable", function (event) {
+        request.write("Hello World")
+        request.finalize()
+    })
+}
+server.listen("127.0.0.1:7777")
          */
         function HttpServer(documentRoot: Path = ".", serverRoot: Path = ".") {
             this.documentRoot = documentRoot
@@ -19214,8 +19357,8 @@ module ejs.web {
         private var lastFlash: Object
 
         /** 
-            Absolute Uri for the top-level of the application. This returns an absolute Uri (includes scheme and host) 
-            for the top-most application Uri. See $home to get a relative Uri.
+            Uri for the top-level of the application. This is an absolute Uri that includes scheme and host components.
+            See $home to get a relative Uri.
          */ 
         native enumerable var absHome: Uri
 
@@ -19239,17 +19382,16 @@ module ejs.web {
         native enumerable var authUser: String
 
         /** 
-            Stop auto-finalizing the request. Some web frameworks will "auto-finalize" requests by calling finalize()
-            automatically at the conclusion of the request. Applications that wish to keep the connection open to the
-            client can defeat this auto-finalization by calling dontAutoFinalize().
-
-            Auto-finalization control. Set to true if the request will be finalized automatically at the conclusion of 
-            the request. Defaults to true and is set to false if dontAutoFinalize() is called. 
+            Control whether auto-finalizing will be used for the request. If autoFinalizing is false, a request must
+            call $finalize() to signal the end of write data. If autoFinalize is true, the Request class will automatically 
+            call finalize at the conclusion of the request.
+            Applications that wish to keep the request open to the client can suppress auto-finalization by 
+            setting autoFinalizing to false or by calling $dontAutoFinalize(). This property defaults to true.
          */
         native enumerable var autoFinalizing: Boolean
 
         /** 
-            Request configuration. Initially refers to App.config which is filled with the aggregated "ejsrc" content.
+            Request configuration. Initially refers to $App.config which is filled with the aggregated "ejsrc" content.
             Middleware may modify to refer to a request local configuration object.
          */
         native enumerable var config: Object
@@ -19310,14 +19452,12 @@ module ejs.web {
          */
         native enumerable var filename: Path
 
-        /** 
-            Notification "flash" messages to pass to the next request (only). By convention, the following keys are used:
-            @option error    Negative errors (Warnings and errors)
-            @option inform   Informational / postitive feedback (note)
-            @option warn     Negative feedback (Warnings and errors)
-            @option *        Other feedback (reminders, suggestions...)
-        */
 //  MOB -- why public here
+        /** 
+            Notification "flash" messages to pass to the next request (only). By convention, the following keys are used.
+            error: Negative errors (Warnings and errors), inform: Informational / postitive feedback (note),
+            warn: Negative feedback (Warnings and errors), *: Other feedback (reminders, suggestions...)
+        */
         public var flash: Object
 
         /** 
@@ -19401,7 +19541,7 @@ module ejs.web {
         native enumerable var params: Object
 
         /** 
-            Portion of the request URL after the scriptName. This is the location of the request within the application.
+            Location of the request within the application. This is the portion of the request URL after the scriptName. 
             The pathInfo is originally derrived from uri.path after splitting off the scriptName. Changes to the uri or 
             scriptName properties will not affect the pathInfo property.
          */
@@ -19485,7 +19625,8 @@ module ejs.web {
         /** 
             Session state object. The session state object can be used to share state between requests.
             If a session has not already been created, accessing this property automatically creates a new session 
-            and sets the $sessionID property and a cookie containing a session ID sent to the client with the response.
+            and sets the $ejs.web::Request.sessionID property and a cookie containing a session ID sent to the client 
+            with the response.
             To test if a session has been created, test the sessionID property which will not auto-create a session.
             Objects are stored in the session state using JSON serialization.
          */
@@ -19527,13 +19668,10 @@ module ejs.web {
         native function get async(): Boolean
         native function set async(enable: Boolean): Void
 
-//  MOB - rename
         /** 
-            Finalize the request if dontAutoFinalize has not been called. Finalization signals the end of any write data 
-            and flushes any buffered write data to the client. This routine is used by frameworks to allow users to 
-            defeat finalization by calling dontAutoFinalize. Users can then call finalize() to explictly control when
-            all the response data has been written. If dontAutoFinalize() has been called, this call will have no effect. 
-            In that case, call finalize() to finalize the request.
+            Finalize the request if $autoFinalizing is true. Finalization signals the end of any write data 
+            and flushes any buffered write data to the client. This routine is used by frameworks to finalize
+            requests if required. 
          */
         native function autoFinalize(): Void 
 
@@ -19574,11 +19712,11 @@ module ejs.web {
             return session
         }
 
-//  MOB - rename
         /**
-            Stop auto-finalizing the request. Some web frameworks will "auto-finalize" requests by calling finalize()
-            automatically at the conclusion of the request. Applications that wish to keep the connection open to the
-            client can defeat this auto-finalization by calling dontAutoFinalize().
+            Stop auto-finalizing the request. This will set $autoFinalizing to false. Some web frameworks will 
+            "auto-finalize" requests by calling finalize() automatically at the conclusion of the request. 
+            Applications that wish to keep the connection open to the client can defeat this auto-finalization by 
+            calling dontAutoFinalize().
          */
         native function dontAutoFinalize(): Void
 
@@ -19654,7 +19792,7 @@ module ejs.web {
         native function header(key: String): String
 
         /** 
-            Set a informational flash notification message.
+            Set an informational flash notification message.
             Flash messages persist for only one request and are a convenient way to pass state information or 
             feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
             be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
@@ -19664,6 +19802,7 @@ module ejs.web {
         function inform(msg: String): Void
             notify("inform", msg)
 
+        // MOB - OPT make native
         /** 
             Create a URI link. The target parameter may contain partial or complete URI information. The missing parts 
             are supplied using the current request and route tables. The resulting URI is a normalized, server-local 
@@ -19681,9 +19820,9 @@ module ejs.web {
                 name will be used. If these don't result in a usable route, the "default" route will be used. See the
                 Router for more details.
                
-                If the target is a string that begins with "@" it will be interpreted as a controller/action pair of the 
-                form "@Controller/action". If the "controller/" portion is absent, the current controller is used. If 
-                the action component is missing, the "index" action is used. A bare "@" refers to the "index" action 
+                If the target is a string that begins with "\@" it will be interpreted as a controller/action pair of the 
+                form "\@Controller/action". If the "controller/" portion is absent, the current controller is used. If 
+                the action component is missing, the "index" action is used. A bare "\@" refers to the "index" action 
                 of the current controller.
 
                 Lastly, the target object hash may contain an override "uri" property. If specified, the value of the 
@@ -19700,30 +19839,27 @@ module ejs.web {
             @option action String Action to invoke. This can be a URI string or a Controller action of the form
                 @Controller/action.
             @option route String Route name to use for the URI template
-            @example
-                Given a current request of http://example.com/samples/demo" and "r" == the current request:
-
-
-                r.link("images/splash.png")                  returns "/samples/images/splash.png"
-                r.link("images/splash.png").complete(r.uri)  returns "http://example.com/samples/images/splash.png"
-                r.link("images/splash.png").relative(r.uri)  returns "images/splash.png"
-
-                r.link("http://example.com/index.html")
-                r.link("/path/to/index.html")
-                r.link("@Controller/checkout")
-                r.link("@Controller/")
-                r.link("@checkout")
-                r.link("@")
-                r.link({action: "checkout")
-                r.link({action: "logout", controller: "Admin")
-                r.link({action: "Admin/logout")
-                r.link({action: "@Admin/logout")
-                r.link({uri: "http://example.com/checkout"})
-                r.link({route: "default", action: "@checkout")
-                r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}")
-
             @return A normalized, server-local Uri object.
-            MOB - OPT make native
+            @example
+Given a current request of http://example.com/samples/demo" and "r" == the current request:
+
+r.link("images/splash.png")                  # "/samples/images/splash.png"
+r.link("images/splash.png").complete(r.uri)  # "http://example.com/samples/images/splash.png"
+r.link("images/splash.png").relative(r.uri)  # "images/splash.png"
+
+r.link("http://example.com/index.html")
+r.link("/path/to/index.html")
+r.link("\@Controller/checkout")
+r.link("\@Controller/")
+r.link("\@checkout")
+r.link("\@")
+r.link({action: "checkout")
+r.link({action: "logout", controller: "Admin")
+r.link({action: "Admin/logout")
+r.link({action: "\@Admin/logout")
+r.link({uri: "http://example.com/checkout"})
+r.link({route: "default", action: "\@checkout")
+r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}")
          */
         function link(target: Object): Uri {
             if (target is Uri) {
@@ -19866,8 +20002,8 @@ module ejs.web {
             by the $url.  Optionally, a redirection code may be provided. Normally this code is set to be the HTTP 
             code 302 which means a temporary redirect. A 301, permanent redirect code may be explicitly set.
             @param target Uri to redirect the client toward. This can be a relative or absolute string URI or it can be
-                a hash of URI components. For example, the following are valid inputs: "../index.ejs", 
-                "http://www.example.com/home.html", "@list".
+                a hash of URI components. For example, the following are valid inputs: ../index.ejs, 
+                http://www.example.com/home.html, \@list.
             @param status Optional HTTP redirection status
          */
         function redirect(target: *, status: Number = Http.MovedTemporarily): Void {
@@ -19893,7 +20029,7 @@ module ejs.web {
         }
 
         /** 
-            Define a cookie header to send with the response. Path, domain and lifetime can be set to null for 
+            Define a cookie header to send with the response. The Path, domain and expires properties can be set to null for 
                 default values.
             @param name Cookie name
             @param options Cookie field options
@@ -19954,7 +20090,7 @@ module ejs.web {
 
         /**
             Convenience routine to define an application at a given Uri prefix and directory location. This is typically
-                called from routing tables.
+                called from routing tables. This sets the $pathInfo, $scriptName and $dir properties.
             @param prefix The leading Uri prefix for the application. This prefix is removed from the pathInfo and the
                 $scriptName property is set to the prefix. The script name should begin with "/".
             @param location Path to where the application home directory is. This sets the $dir property to the $location
@@ -20072,7 +20208,6 @@ module ejs.web {
             @returns a count of the bytes actually written. Returns null on eof.
             @event writable Issued when the connection can absorb more data.
 
-            MOB - same for Http and other streams
          */
         # FUTURE
         native function writeBlock(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
@@ -20409,27 +20544,27 @@ module ejs.web {
 module ejs.web {
 
     /** 
-        Web router class. Routes incoming client HTTP requests to the appropriate location. The Route class supports 
-        configurable user-defined routes.  Each application should create a Router instance and then attach matching routes.
+        The Router class manages incoming HTTP requests to the appropriate location application for servicing. 
+        The Route class supports configurable user-defined routes. Each application should create a Router 
+        instance and then attach matching routes.
 
         The Router works by defining routes in a route table. For rapid routing, routes are grouped into sets of 
         routes with the same leading URI path segment. For example: the route template "/User/login" would be put into
         the "User" route set. If a route template is a function or regular expression, the route is added to the "Global"
         route set.
         
-        The pathInfo and other request properties are examined when selecting a matching route. The request's leading 
-        URI pathInfo segment is used to select a route set and then the request is matched against each route in that set.
-        Routes are matched in the order in which they are defined.
+        The $ejs.web::Request.pathInfo and other Request properties are examined when selecting a matching route. 
+        The request's leading URI pathInfo segment is used to select a route set and then the request is matched 
+        against each route in that set. Routes are matched in the order in which they are defined.
 
         @example:
-
         var r = new Router
-
+        
         //  Match /some/path and run the custom builder. Target is data for the customBuilder.
         r.add("/some/path", {run: customBuilder, target: "/other/path"})
 
         //  Match /some/path and run MvcBuilder with controller == User and action == "register"
-        r.add("@/User/register")
+        r.add("\@/User/register")
 
         //  Add route for files with a ".es" extension and use the ScriptBuilder to run
         r.add(/\.es$/, {run: ScriptBuilder})
@@ -20450,15 +20585,16 @@ module ejs.web {
         r.add("/{controller}/{id}",      {action: "destroy", method: "DELETE"})
         r.add("/{controller}(/do/{action})")
         
-        //  Add route for upper or lower case "D" or "d". Run the default app: MvcBuilder, Dash contoller, refresh action.
-        r.add("/[Dd]ash/refresh", "@Dash/refresh")
+        //  Add route for upper or lower case "D" or "d". Run the default app: MvcBuilder, 
+        //  Dash contoller, refresh action.
+        r.add("/[Dd]ash/refresh", "\@Dash/refresh")
 
-        //  Add route for an "admin" application. This sets the scriptName to "admin" and expects an application to be
-        //      located at the directory "myApp"
+        //  Add route for an "admin" application. This sets the scriptName to "admin" and 
+        //  expects an application to be located at the directory "myApp"
         r.add("/admin/", {location: { scriptName: "/control", dir: "my"})
 
         //  Rewrite a request for "old.html" to new.html
-        r.add("/web/old.html",  {rewrite: function(request) { request.pathInfo = "/web/new.html"}})
+        r.add("/web/old.html", {rewrite: function(request) { request.pathInfo = "/web/new.html"}})  
 
         //  Handle a request with a literal response
         r.add("/oldStuff/", {run: {body: "Not found"} })
@@ -20492,7 +20628,9 @@ module ejs.web {
         r.add("/comment", {target: "/comment/{action}/{id}", outer: outer})
 
         //  Match with regular expression. The sub-match is available via $N parameters
-        r.add(/^\/Dash-((Mini)|(Full))$/, {controller: "post", action: "list", params: {kind: "$1"}})
+        r.add(/^\/Dash-((Mini)|(Full))$/, 
+            {controller: "post", action: "list", params: {kind: "$1"}}
+        )
         
         //  Conditional matching. Surround optional tokens in "()"
         r.add("/Dash(/{product}(/{branch}(/{configuration})))", {   
@@ -20518,7 +20656,7 @@ module ejs.web {
             route for static pages. 
             Use of this constant will not add routes for MVC content or RESTful resources. 
          */ 
-        public static const Top = "top"
+        public static const Top: String = "top"
 
         /**
             Max calls to route() per request
@@ -20529,14 +20667,14 @@ module ejs.web {
             Symbolic constant for Router() to add top-level routes for directory, *.es, *.ejs, generic routes for
             RESTful resources and a catchall route for static pages
          */ 
-        public static const Restful = "restful"
+        public static const Restful: String = "restful"
 
         /**
             Default builder to use when unspecified by a route
          */
-        public var defaultBuilder = MvcBuilder
+        public var defaultBuilder: Function = MvcBuilder
 
-        /*
+        /**
             Routes indexed by first component of the URI path/template
          */
         public var routes: Object = {}
@@ -20718,10 +20856,10 @@ module ejs.web {
             Add a route
             @param template String or Regular Expression defining the form of a matching URI (Request.pathInfo).
             @param options Route options representing the URI and options to use when servicing the request. If it
-                is a string, it may begin with an "@" and be of the form "@[controller/]action". In this case, if there
+                is a string, it may begin with a "\@" and be of the form "\@[controller/]action". In this case, if there
                 is a "/" delimiter, the first portion is a controller and the second is the controller action to invoke.
-                The controller or action may be absent. For example: "@Controller/", "@action", "@controller/action".
-                If the string does not begin with an "@", it is interpreted as a literal URI. For example: "/web/index.html".
+                The controller or action may be absent. For example: "\@Controller/", "\@action", "\@controller/action".
+                If the string does not begin with an "\@", it is interpreted as a literal URI. For example: "/web/index.html".
                 If the options is an object hash, it may contain the options below:
             @option action Action method to service the request if using controllers. This may also be of the form 
                 "controller/action" to set both the action and controller in one property.
@@ -20756,7 +20894,7 @@ module ejs.web {
                     function (request: Request): Object
             @option set Route set name in which to add this route. Defaults to the first component of the template if
                 the template is a string, otherwise "".
-            @option target Target for the route. This can be a Uri path or a controller/action pair: "@[controller/]action".
+            @option target Target for the route. This can be a Uri path or a controller/action pair: "\@[controller/]action".
             @example:
                 r.add("/User/{action}", {controller: "User"})
          */
@@ -20991,8 +21129,8 @@ module ejs.web {
     }
 
     /** 
-        Route class. A Route describes a mapping from a URI to a web application. A route has a URI template and a
-        serving function.
+        A Route describes a mapping from a URI to a web application. A route has a URI template for matching with
+        candidate request URIs and a serving function to respond to the request.
 
         If the URI template is a regular expression, it is used to match against the request pathInfo. If it matches,
         the pathInfo is matched and sub-expressions may be referenced in the override parameters by using $1, $2 and
@@ -21154,11 +21292,11 @@ module ejs.web {
             create and install routes into the Router.
             @param template String or Regular Expression defining the form of a matching URI (Request.pathInfo).
             @param options Route options representing the URI and options to use when servicing the request. If it
-                is a string, it may begin with an "@" and be of the form "@[controller/]action". In this case, if there
+                is a string, it may begin with an "\@" and be of the form "\@[controller/]action". In this case, if there
                 is a "/" delimiter, the first portion is a controller and the second is the controller action to invoke.
-                The controller or action may be absent. For example: "@Controller/", "@action", "@controller/action".
-                If the string does not begin with an "@", it is interpreted as a literal URI. For example: "/web/index.html".
-                If the options is an object hash, it may contain the options below:
+                The controller or action may be absent. For example: "\@Controller/", "\@action", "\@controller/action".
+                If the string does not begin with an "\@", it is interpreted as a literal URI. 
+                For example: "/web/index.html". If the options is an object hash, it may contain the options below:
             @option action Action method to service the request. This may be of the form "controller/action" or "controller/"
             @option controller Controller to service the request.
             @option name Name to give to the route. If absent, the name is created from the controller and action names.
@@ -21568,8 +21706,12 @@ module ejs.web {
 module ejs.web {
     /** 
         Session state storage class. 
+        The session state objects can be used to share state between requests. The $ejs.web::Request object has
+        a $ejs.web::Request.session property that stores an Session instance. Storing objects into the session instance
+        will cause the object to be serialized for later retrieveal.
+
         @spec ejs
-     */
+    */
     dynamic class Session { }
 }
 
@@ -22049,8 +22191,8 @@ module ejs.web {
 module ejs.web {
 
     /** 
-        Upload file class. Instances of UploadFile are created for each uploaded file when POST requests using
-        multi-part mime body content are received. The UploadFile instances are stored in the request.files property.
+        Instances of UploadFile are created for each uploaded file.
+        The UploadFile instances are stored in the request.files property.
         Users should not create instances of UploadFile manually.
         @spec ejs
         @stability evolving
@@ -22353,7 +22495,8 @@ module ejs.web {
         web pages. Ejscript web pages are compiled to create a new View class which extends the View base class.  
         This class provides a suite of high-level control methods that generate HTML for input, output and 
         presentation needs.  In addition to the properties defined by this class, user view classes will typically 
-        inherit at runtime, all public properites of any associated controller object defined in Request.controller.
+        inherit at runtime, all public properites of any associated controller object defined in 
+        $ejs.web::Request.controller.
 
         <h4>Control Methods</h4>
         Control methods are grouped into two families: input form controls and general output controls. Input controls
@@ -22368,7 +22511,7 @@ module ejs.web {
 
         Various controls have custom options, but most share the following common set of option properties. 
         @option action String Action to invoke. This can be a URI string or a Controller action of the form
-            @Controller/action.
+            \@Controller/action.
         @option apply String Client JQuery selector identifying the element to apply the remote update.
             Typically "div.ID" where ID is the DOM ID for the element.
         @option background String Background color. This is a CSS RGB color specification. For example "FF0000" for red.
@@ -22410,7 +22553,7 @@ module ejs.web {
         @option remote (String|URI|Object) Perform the request in the background without changing the browser location.
         @option refresh (String|URI|Object) URI to invoke in the background to refresh the control's data every $period.
             milliseconds. If period is undefined or zero, a persistent connection may be used to refresh data.
-            The refresh option may use the "@Controller/action" form.
+            The refresh option may use the "\@Controller/action" form.
         @option size (Number|String) Size of the element.
         @option style String CSS Style to use for the table.
         @option value Object Override value to display if used without a form control record.
@@ -22549,7 +22692,7 @@ module ejs.web {
             @param text Text to display in the button. The text can contain embedded HTML.
             @param options Options specifying the target URI to invoke. See $View for a list of the standard options.
             @example
-                buttonLink("Cancel" "@")
+                buttonLink("Cancel" "\@")
          */
         function buttonLink(text: String, options: Object = {}): Void {
             options = getOptions(options)
@@ -22573,7 +22716,7 @@ module ejs.web {
                 linechart, imagelinechart, imagepiechart, scatterchart (and more)
             @example
                 <% chart(grid, { refresh: "/getData", period: 2000" }) %>
-                <% chart(data, { click: "@update" }) %>
+                <% chart(data, { click: "\@update" }) %>
          */
         function chart(data: Array, options: Object = {}): Void {
             options = getOptions(options)
@@ -22704,11 +22847,10 @@ MOB -- much more doc here
             @param options Optional extra options. See $View for a list of the standard options.
             @examples
                 <% image("pic.gif") %>
-                <% image("pic.gif", { refresh: "@store/getData", period: 2000, style: "myStyle" }) %>
-MOB - uri not supported
-                <% image("pic.gif", { click: "@foreground/click" }) %>
-                <% image("checkout.gif", { click: "@checkout" }) %>
-                <% image("pic.gif", { remote: "@store/update" }) %>
+                <% image("pic.gif", { refresh: "\@store/getData", period: 2000, style: "myStyle" }) %>
+                <% image("pic.gif", { click: "\@foreground/click" }) %>
+                <% image("checkout.gif", { click: "\@checkout" }) %>
+                <% image("pic.gif", { remote: "\@store/update" }) %>
          */
         function image(src: String, options: Object = {}): Void {
             options = getOptions(options)
@@ -22776,7 +22918,7 @@ print("CATCH " + e)
                 <% label("Hello World") %>
                 <% label("Hello", { refresh: "/getData", period: 2000, style: "myStyle" }) %>
                 <% label("Hello", { click: "/foreground/link" }) %>
-                <% label("Checkout", { click: "@checkout" }) %>
+                <% label("Checkout", { click: "\@checkout" }) %>
          */
         function label(text: String, options: Object = {}): Void {
             options = getOptions(options)
@@ -22959,11 +23101,11 @@ print("CATCH " + e)
             </ul>
         
             @example
-                <% table(gridData, { refresh: "@update", period: 1000, pivot: true" }) %>
-                <% table(gridData, { click: "@edit" }) %>
+                <% table(gridData, { refresh: "\@update", period: 1000, pivot: true" }) %>
+                <% table(gridData, { click: "\@edit" }) %>
                 <% table(Table.findAll()) %>
                 <% table(gridData, {
-                    click: "@edit",
+                    click: "\@edit",
                     sort: "Product",
                     columns: {
                         product:    { header: "Product", width: "20%" }
@@ -22997,7 +23139,7 @@ print("CATCH " + e)
             @option toggle Set to true to show the selected pane and hide other panes.
             @example
                 tabs({Status: "pane-1", "Edit: "pane-2"})
-                tabs([{Status: "/url-1"}, {"Edit: "/url-2"}], { click: "@someAction"})
+                tabs([{Status: "/url-1"}, {"Edit: "/url-2"}], { click: "\@someAction"})
          */
         function tabs(data: Object, options: Object = {}): Void {
             options = getOptions(options)
@@ -23377,7 +23519,7 @@ MOB -- review and rethink this
 module ejs.web {
     /** 
         Web class manages web applications. This class initializes the web framework and loads web applications. 
-        Apps may be JSGI apps with a *.es extension, template apps with a ".ejs" extension or MVC applications.
+        Apps may be JSGI apps with an "es" extension, template apps with an "ejs" extension or MVC applications.
         @spec ejs
         @stability prototype
      */

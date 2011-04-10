@@ -1345,7 +1345,9 @@ typedef struct Ejs {
     MprDispatcher       *dispatcher;        /**< Event dispatcher */
     MprList             *workers;           /**< Worker interpreters */
     MprList             *modules;           /**< Loaded modules */
+#if UNUSED
     struct EjsFile      *nativeStream;      /**< Native log output stream */
+#endif
 
     void                (*loaderCallback)(struct Ejs *ejs, int kind, ...);
 
@@ -3570,7 +3572,7 @@ extern void     ejsConfigureFunctionType(Ejs *ejs);
 extern void     ejsConfigureHttpType(Ejs *ejs);
 extern void     ejsConfigureIteratorType(Ejs *ejs);
 extern void     ejsConfigureJSONType(Ejs *ejs);
-extern void     ejsConfigureLoggerType(Ejs *ejs);
+extern void     ejsConfigureLogFileType(Ejs *ejs);
 extern void     ejsConfigureNamespaceType(Ejs *ejs);
 extern void     ejsConfigureMemoryType(Ejs *ejs);
 extern void     ejsConfigureMathType(Ejs *ejs);
@@ -3664,15 +3666,16 @@ typedef struct EjsLookup {
 typedef struct EjsService {
     EjsObj          *(*loadScriptLiteral)(Ejs *ejs, EjsString *script, cchar *cache);
     EjsObj          *(*loadScriptFile)(Ejs *ejs, cchar *path, cchar *cache);
-    Ejs             *master;            /**< Master interpreter */
+    Ejs             *master;                /**< Master interpreter */
     MprList         *vmlist;
     MprHashTable    *nativeModules;
     Http            *http;
-    uint            dontExit: 1;        /**< Prevent App.exit() from exiting */
-    EjsIntern       *intern;            /**< Interned Unicode string hash - shared over all interps */
-    EjsObj          *foundation;        /**< Foundational native types */
+    uint            dontExit: 1;            /**< Prevent App.exit() from exiting */
+    uint            logging: 1;             /**< Using --log */
+    EjsIntern       *intern;                /**< Interned Unicode string hash - shared over all interps */
+    EjsObj          *foundation;            /**< Foundational native types */
     EjsAny          *values[EJS_MAX_SPECIAL];
-    MprMutex        *mutex;             /**< Multithread locking */
+    MprMutex        *mutex;                 /**< Multithread locking */
 } EjsService;
 
 extern EjsIntern *ejsCreateIntern(EjsService *sp);
@@ -3843,7 +3846,7 @@ extern void ejsSetHandle(Ejs *ejs, void *handle);
 extern void ejsShowCurrentScope(Ejs *ejs);
 extern void ejsShowStack(Ejs *ejs, EjsFunction *fp);
 extern void ejsShowBlockScope(Ejs *ejs, EjsBlock *block);
-extern int  ejsRedirectLogging(char *logSpec);
+extern int  ejsRedirectLogging(cchar *logSpec);
 extern void ejsRedirectLoggingToFile(MprFile *file, int level);
 extern void ejsCreateObjHelpers(Ejs *ejs);
 extern void ejsCloneObjHelpers(Ejs *ejs, EjsType *type);

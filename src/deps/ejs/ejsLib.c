@@ -236,12 +236,12 @@ static EjsNumber *app_pid(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 
 
 /*  
-    static function run(timeout: Number = -1, oneEvent: Boolean = false): void
+    static function run(timeout: Number = -1, oneEvent: Boolean = false): Boolean
  */
 static EjsObj *app_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprTime     mark, remaining;
-    int         oneEvent, timeout;
+    int         rc, oneEvent, timeout;
 
     timeout = (argc > 0) ? ejsGetInt(ejs, argv[0]) : MAXINT;
     oneEvent = (argc > 1) ? ejsGetInt(ejs, argv[1]) : 0;
@@ -252,10 +252,10 @@ static EjsObj *app_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     mark = mprGetTime();
     remaining = timeout;
     do {
-        mprWaitForEvent(ejs->dispatcher, (int) remaining); 
+        rc = mprWaitForEvent(ejs->dispatcher, remaining); 
         remaining = mprGetRemainingTime(mark, timeout);
     } while (!oneEvent && !ejs->exiting && remaining > 0 && !mprIsStopping());
-    return 0;
+    return (rc == 0) ? S(true) : S(false);
 }
 
 
@@ -301,9 +301,7 @@ void ejsConfigureAppType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_App_chdir, (EjsProc) app_chdir);
     ejsBindMethod(ejs, type, ES_App_exeDir, (EjsProc) app_exeDir);
     ejsBindMethod(ejs, type, ES_App_exePath, (EjsProc) app_exePath);
-#if ES_App_env
     ejsBindMethod(ejs, type, ES_App_env, (EjsProc) app_env);
-#endif
     ejsBindMethod(ejs, type, ES_App_exit, (EjsProc) app_exit);
     ejsBindMethod(ejs, type, ES_App_getenv, (EjsProc) app_getenv);
     ejsBindMethod(ejs, type, ES_App_putenv, (EjsProc) app_putenv);
@@ -4996,44 +4994,49 @@ void ejsDefineConfigProperties(Ejs *ejs)
 {
     EjsType     *type;
     char        version[16];
+    int         att;
 
     if (ejs->configSet) {
         return;
     }
     ejs->configSet = 1;
     type = ST(Config);
-    ejsDefineProperty(ejs, type, ES_Config_Debug, N("public", "Debug"), 0, 0, BLD_DEBUG ? S(true): S(false));
-    ejsDefineProperty(ejs, type, ES_Config_CPU, N("public", "CPU"), 0, 0, ejsCreateStringFromAsc(ejs, BLD_HOST_CPU));
-    ejsDefineProperty(ejs, type, ES_Config_OS, N("public", "OS"), 0, 0, ejsCreateStringFromAsc(ejs, BLD_OS));
-    ejsDefineProperty(ejs, type, ES_Config_Product, N("public", "Product"), 0, 0, ejsCreateStringFromAsc(ejs, BLD_PRODUCT));
-
-    ejsDefineProperty(ejs, type, ES_Config_Title, N("public", "Title"), 0, 0, ejsCreateStringFromAsc(ejs, BLD_NAME));
+    att = EJS_PROP_STATIC | EJS_PROP_ENUMERABLE;
+    ejsDefineProperty(ejs, type, ES_Config_Debug, N("public", "Debug"), 0, att, BLD_DEBUG ? S(true): S(false));
+    ejsDefineProperty(ejs, type, ES_Config_CPU, N("public", "CPU"), 0, att, ejsCreateStringFromAsc(ejs, BLD_HOST_CPU));
+    ejsDefineProperty(ejs, type, ES_Config_OS, N("public", "OS"), 0, att, ejsCreateStringFromAsc(ejs, BLD_OS));
+    ejsDefineProperty(ejs, type, ES_Config_Product, N("public", "Product"), 0, att, 
+        ejsCreateStringFromAsc(ejs, BLD_PRODUCT));
+    ejsDefineProperty(ejs, type, ES_Config_Title, N("public", "Title"), 0, att, ejsCreateStringFromAsc(ejs, BLD_NAME));
     mprSprintf(version, sizeof(version), "%s-%s", BLD_VERSION, BLD_NUMBER);
-    ejsDefineProperty(ejs, type, ES_Config_Version, N("public", "Version"), 0, 0, ejsCreateStringFromAsc(ejs, version));
+    ejsDefineProperty(ejs, type, ES_Config_Version, N("public", "Version"), 0, att, ejsCreateStringFromAsc(ejs, version));
 
-    ejsDefineProperty(ejs, type, ES_Config_Legacy, N("public", "Legacy"), 0, 0, ejsCreateBoolean(ejs, BLD_FEATURE_LEGACY_API));
+    ejsDefineProperty(ejs, type, ES_Config_Legacy, N("public", "Legacy"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_LEGACY_API));
     //  MOB - should genercise this
-    ejsDefineProperty(ejs, type, ES_Config_SSL, N("public", "SSL"), 0, 0, ejsCreateBoolean(ejs, BLD_FEATURE_SSL));
-    ejsDefineProperty(ejs, type, ES_Config_SQLITE, N("public", "SQLITE"), 0, 0, ejsCreateBoolean(ejs, BLD_FEATURE_SQLITE));
+    ejsDefineProperty(ejs, type, ES_Config_SSL, N("public", "SSL"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_SSL));
+    ejsDefineProperty(ejs, type, ES_Config_SQLITE, N("public", "SQLITE"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_SQLITE));
 
 #if BLD_WIN_LIKE
 {
     EjsString    *path;
 
     path = ejsCreateStringFromAsc(ejs, mprGetAppDir(ejs));
-    ejsDefineProperty(ejs, type, ES_Config_BinDir, N("public", "BinDir"), 0, 0, path);
-    ejsDefineProperty(ejs, type, ES_Config_ModDir, N("public", "ModDir"), 0, 0, path);
-    ejsDefineProperty(ejs, type, ES_Config_LibDir, N("public", "LibDir"), 0, 0, path);
+    ejsDefineProperty(ejs, type, ES_Config_BinDir, N("public", "BinDir"), 0, att, path);
+    ejsDefineProperty(ejs, type, ES_Config_ModDir, N("public", "ModDir"), 0, att, path);
+    ejsDefineProperty(ejs, type, ES_Config_LibDir, N("public", "LibDir"), 0, att, path);
 }
 #else
 #ifdef BLD_BIN_PREFIX
-    ejsDefineProperty(ejs, type, ES_Config_BinDir, N("public", "BinDir"), 0, 0, ejsCreateStringFromAsc(ejs, BLD_BIN_PREFIX));
+    ejsDefineProperty(ejs, type, ES_Config_BinDir, N("public", "BinDir"), 0, att, 
+        ejsCreateStringFromAsc(ejs, BLD_BIN_PREFIX));
 #endif
 #ifdef BLD_MOD_PREFIX
-    ejsDefineProperty(ejs, type, ES_Config_ModDir, N("public", "ModDir"), 0, 0, ejsCreateStringFromAsc(ejs, BLD_MOD_PREFIX));
+    ejsDefineProperty(ejs, type, ES_Config_ModDir, N("public", "ModDir"), 0, att, 
+        ejsCreateStringFromAsc(ejs, BLD_MOD_PREFIX));
 #endif
 #ifdef BLD_LIB_PREFIX
-    ejsDefineProperty(ejs, type, ES_Config_LibDir, N("public", "LibDir"), 0, 0, ejsCreateStringFromAsc(ejs, BLD_LIB_PREFIX));
+    ejsDefineProperty(ejs, type, ES_Config_LibDir, N("public", "LibDir"), 0, att, 
+        ejsCreateStringFromAsc(ejs, BLD_LIB_PREFIX));
 #endif
 #endif
 }
@@ -11680,6 +11683,177 @@ void ejsConfigureJSONType(Ejs *ejs)
 
 /************************************************************************/
 /*
+ *  Start of file "../../src/core/src/ejsLogFile.c"
+ */
+/************************************************************************/
+
+/*
+    ejsLogFile.c -- LogFile class
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+
+
+/*
+    function emit(level: Number, ...data): Number
+ */
+static EjsNumber *lf_emit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    EjsArray        *args;
+    EjsByteArray    *ap;
+    EjsObj          *vp;
+    EjsString       *str;
+    char            *msg, *arg;
+    ssize           len, written;
+    int             i, level, frozen;
+
+    mprAssert(argc >= 2 && ejsIs(ejs, argv[1], Array));
+
+    level = ejsGetInt(ejs, argv[0]);
+    args = (EjsArray*) argv[1];
+    written = 0;
+    msg = 0;
+    frozen = ejsFreeze(ejs, 1);
+
+    for (i = 0; i < args->length; i++) {
+        vp = ejsGetProperty(ejs, (EjsObj*) args, i);
+        mprAssert(vp);
+        switch (TYPE(vp)->sid) {
+        case S_ByteArray:
+            ap = (EjsByteArray*) vp;
+            //  MOB ENCODING
+            arg = (char*) &ap->value[ap->readPosition];
+            len = ap->writePosition - ap->readPosition;
+            break;
+
+        case S_String:
+            arg = awtom(((EjsString*) vp)->value, &len);
+            break;
+
+        default:
+            str = ejsToString(ejs, vp);
+            arg = awtom(((EjsString*) str)->value, &len);
+            break;
+        }
+        msg = srejoin(msg, arg);
+    }
+    if (msg) {
+        mprRawLog(level, "%s", msg);
+        written += slen(msg);
+    }
+    ejsFreeze(ejs, frozen);
+    return ejsCreateNumber(ejs, (MprNumber) slen(msg));
+}
+
+
+/*  
+    function get logging(): Boolean
+ */
+static EjsBoolean *lf_logging(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    return ejsCreateBoolean(ejs, MPR->logging);
+}
+
+/*  
+    function get level(): Number
+ */
+static EjsNumber *lf_level(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    return ejsCreateNumber(ejs, mprGetLogLevel(ejs));
+}
+
+
+/*  
+    function set level(value: Number): Void
+ */
+static EjsObj *lf_set_level(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    mprSetLogLevel(ejsGetInt(ejs, argv[0]));
+    return 0;
+}
+
+
+/*  
+    function redirect(location: String, level: Number = null): Void
+ */
+static EjsFile *lf_redirect(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+{
+    cchar   *logSpec;
+    int     level;
+
+    logSpec = ejsToMulti(ejs, argv[0]);
+    level = (argc >= 2) ? ejsGetInt(ejs, argv[1]) : -1;
+
+    ejsRedirectLogging(logSpec);
+    if (level >= 0) {
+        mprSetLogLevel(level);
+    }
+    return 0;
+}
+
+
+
+void ejsConfigureLogFileType(Ejs *ejs)
+{
+    EjsType     *type;
+    EjsPot      *prototype;
+
+    type = ejsGetTypeByName(ejs, N("ejs", "LogFile"));
+    mprAssert(type);
+    prototype = type->prototype;
+
+    ejsBindAccess(ejs, prototype, ES_LogFile_logging, lf_logging, 0);
+    ejsBindMethod(ejs, prototype, ES_LogFile_emit, lf_emit);
+    ejsBindAccess(ejs, prototype, ES_LogFile_level, lf_level, lf_set_level);
+    ejsBindMethod(ejs, prototype, ES_LogFile_redirect, lf_redirect);
+}
+
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/core/src/ejsLogFile.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "../../src/core/src/ejsLogger.c"
  */
 /************************************************************************/
@@ -11691,6 +11865,7 @@ void ejsConfigureJSONType(Ejs *ejs)
 
 
 
+#if UNUSED
 /*  
     function get nativeLevel(): Number
  */
@@ -11747,10 +11922,12 @@ static EjsObj *logger_set_nativeStream(Ejs *ejs, EjsObj *unused, int argc, EjsOb
     return 0;
 }
 
+#endif
 
-
+//  MOB -- convert logger to be fully script - not native:
 void ejsConfigureLoggerType(Ejs *ejs)
 {
+#if UNUSED
     EjsType         *type;
 
     type = ejsGetTypeByName(ejs, N("ejs", "Logger"));
@@ -11758,6 +11935,7 @@ void ejsConfigureLoggerType(Ejs *ejs)
 
     ejsBindAccess(ejs, type, ES_Logger_nativeLevel, logger_nativeLevel, logger_set_nativeLevel);
     ejsBindAccess(ejs, type, ES_Logger_nativeStream, logger_nativeStream, logger_set_nativeStream);
+#endif
 }
 
 
@@ -12185,12 +12363,12 @@ static EjsObj *setRedlineCallback(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **
 /*
     native static function get maximum(): Number
  */
-static EjsObj *getMaxMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsNumber *getMaxMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) mem->maxMemory);
+    return ejsCreateNumber(ejs, (MprNumber) mem->maxMemory);
 }
 
 
@@ -12212,12 +12390,12 @@ static EjsObj *setMaxMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 /*
     native static function get redline(): Number
  */
-static EjsObj *getRedline(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsNumber *getRedline(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) mem->redLine);
+    return ejsCreateNumber(ejs, (MprNumber) mem->redLine);
 }
 
 
@@ -12243,24 +12421,24 @@ static EjsObj *setRedline(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 /*
     native static function get resident(): Number
  */
-static EjsObj *getResident(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsNumber *getResident(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) mem->rss);
+    return ejsCreateNumber(ejs, (MprNumber) mem->rss);
 }
 
 
 /*
     native static function get system(): Number
  */
-static EjsObj *getSystemRam(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsNumber *getSystemRam(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (double) mem->ram);
+    return ejsCreateNumber(ejs, (double) mem->ram);
 }
 
 
@@ -19808,6 +19986,7 @@ int ejsAtoi(Ejs *ejs, EjsString *sp, int radix)
 }
 
 
+// MOB - rename to join
 EjsString *ejsCatString(Ejs *ejs, EjsString *dest, EjsString *src)
 {
     EjsString   *result;
@@ -19826,6 +20005,7 @@ EjsString *ejsCatString(Ejs *ejs, EjsString *dest, EjsString *src)
 
 /*
     Catenate a set of unicode string arguments onto another.
+    MOB - rename to join
  */
 EjsString *ejsCatStrings(Ejs *ejs, EjsString *src, ...)
 {
@@ -34514,14 +34694,17 @@ EjsDoc *ejsCreateDoc(Ejs *ejs, cchar *tag, void *vp, int slotNum, EjsString *doc
     EjsDoc      *doc;
     char        key[32];
 
-    if ((doc = mprAllocObj(EjsDoc, manageDoc)) == 0) {
-        return 0;
-    }
-    doc->docString = docString;
     if (ejs->doc == 0) {
         ejs->doc = mprCreateHash(EJS_DOC_HASH_SIZE, 0);
     }
     mprSprintf(key, sizeof(key), "%s %Lx %d", tag, PTOL(vp), slotNum);
+    if ((doc = mprLookupHash(ejs->doc, key)) != 0) {
+        return doc;
+    }
+    if ((doc = mprAllocObj(EjsDoc, manageDoc)) == 0) {
+        return 0;
+    }
+    doc->docString = docString;
     mprAddKey(ejs->doc, key, doc);
     return doc;
 }
@@ -35912,7 +36095,7 @@ static EjsService *createService()
     MPR->ejsService = sp;
     mprSetMemNotifier((MprMemNotifier) allocNotifier);
     if (mprUsingDefaultLogHandler()) {
-        ejsRedirectLogging("stdout:1");
+        ejsRedirectLogging(0);
     }
     sp->nativeModules = mprCreateHash(-1, MPR_HASH_STATIC_KEYS);
     sp->mutex = mprCreateLock();
@@ -36290,7 +36473,7 @@ static int configureEjs(Ejs *ejs)
     ejsConfigureGCType(ejs);
     ejsConfigureHttpType(ejs);
     ejsConfigureJSONType(ejs);
-    ejsConfigureLoggerType(ejs);
+    ejsConfigureLogFileType(ejs);
     ejsConfigureMathType(ejs);
     ejsConfigureMemoryType(ejs);
     ejsConfigureNamespaceType(ejs);
@@ -36685,7 +36868,9 @@ static void logHandler(int flags, int level, cchar *msg)
     prefix = MPR->name;
     amsg = NULL;
 
-    if (flags & MPR_ERROR_SRC) {
+    if (flags & MPR_WARN_SRC) {
+        tag = "Warning";
+    } else if (flags & MPR_ERROR_SRC) {
         tag = "Error";
     } else if (flags & MPR_FATAL_SRC) {
         tag = "Fatal";
@@ -36711,29 +36896,33 @@ static void logHandler(int flags, int level, cchar *msg)
     solo = 0;
 }
 
-
-int ejsRedirectLogging(char *logSpec)
+int ejsRedirectLogging(cchar *logSpec)
 {
     MprFile     *file;
-    char        *levelSpec;
+    char        *spec, *levelSpec;
     int         level;
 
     level = 0;
-    logSpec = sclone(logSpec);
+    if (logSpec == 0) {
+        logSpec = "stdout:1";
+    } else {
+        MPR->logging = 1;
+    }
+    spec = sclone(logSpec);
 
-    if ((levelSpec = strchr(logSpec, ':')) != 0) {
+    if ((levelSpec = strchr(spec, ':')) != 0) {
         *levelSpec++ = '\0';
         level = atoi(levelSpec);
     }
-    if (strcmp(logSpec, "stdout") == 0) {
+    if (strcmp(spec, "stdout") == 0) {
         file = MPR->fileSystem->stdOutput;
 
-    } else if (strcmp(logSpec, "stderr") == 0) {
+    } else if (strcmp(spec, "stderr") == 0) {
         file = MPR->fileSystem->stdError;
 
     } else {
-        if ((file = mprOpenFile(logSpec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
-            mprPrintfError("Can't open log file %s\n", logSpec);
+        if ((file = mprOpenFile(spec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
+            mprPrintfError("Can't open log file %s\n", spec);
             return EJS_ERR;
         }
     }
@@ -39408,6 +39597,8 @@ static EjsObj *req_set_async(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 
 /*  
     function autoFinalize(): Void
+
+    Auto-finalize the request if dontAutoFinalize has not been set.
  */
 static EjsObj *req_autoFinalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
@@ -61957,7 +62148,6 @@ static void appendDocString(EcCompiler *cp, EcNode *np, EcNode *parameter, EcNod
     if (np == 0 || parameter == 0 || parameter->kind != N_QNAME || value == 0) {
         return;
     }
-
     defaultValue = 0;
     if (value->kind == N_QNAME) {
         defaultValue = value->qname.name;
@@ -61973,11 +62163,10 @@ static void appendDocString(EcCompiler *cp, EcNode *np, EcNode *parameter, EcNod
     if (defaultValue == 0) {
         defaultValue = ejsCreateStringFromAsc(ejs, "expression");
     }
-
     if (np->doc) {
         found = 0;
         mprSprintf(arg, sizeof(arg), "@param %@ ", parameter->qname.name);
-        if (ejsContainsMulti(ejs, np->doc, arg) != 0) {
+        if (ejsContainsMulti(ejs, np->doc, arg) != 0 || ejsContainsMulti(ejs, np->doc, "@duplicate") != 0) {
             found++;
         } else {
             mprSprintf(arg, sizeof(arg), "@params %@ ", parameter->qname.name);

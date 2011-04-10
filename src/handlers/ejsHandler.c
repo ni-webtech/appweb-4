@@ -80,12 +80,10 @@ static void openEjs(HttpQueue *q)
 static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpLoc     *loc;
-    char        *path;
     
     if (scasecmp(key, "EjsStartup") == 0) {
-        path = strim(value, "\"", MPR_TRIM_BOTH);
         loc = state->loc;
-        loc->script = sclone(path);
+        loc->script = strim(value, "\"", MPR_TRIM_BOTH);
         return 1;
     }
     return 0;
