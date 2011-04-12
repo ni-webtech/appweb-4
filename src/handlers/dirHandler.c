@@ -389,7 +389,7 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
     } else {
         host = httpGetConnHost(q->conn);
         ext = mprGetPathExtension(ep->name);
-        if ((mimeType = mprLookupMime(host->mimeTypes, ext)) != 0) {
+        if (ext && (mimeType = mprLookupMime(host->mimeTypes, ext)) != 0) {
             if (strcmp(ext, "es") == 0 || strcmp(ext, "ejs") == 0 || strcmp(ext, "php") == 0) {
                 icon = "text";
             } else if (strstr(mimeType, "text") != 0) {

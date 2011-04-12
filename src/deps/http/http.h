@@ -296,17 +296,7 @@ typedef struct Http {
 extern Http *httpCreate();
 extern void httpDestroy(Http *http);
 
-#if UNUSED
-/**
-    Create a Http client
-    @param http HttpConn object created via $httpCreateConn
-    @param dispatcher Dispatcher to use. Can be null.
-    @return Returns a HttpConn connection object
- */
 //  MOB - consistency - should not have to provide http
-extern struct HttpConn *httpCreateClient(Http *http, MprDispatcher *dispatcher);
-#endif
-
 /**  
     Create the Http secret data for crypto
     @description Create http secret data that is used to seed SSL based communications.
@@ -314,7 +304,6 @@ extern struct HttpConn *httpCreateClient(Http *http, MprDispatcher *dispatcher);
     @return Zero if successful, otherwise a negative MPR error code
     @ingroup Http
  */
-//  MOB - consistency - should not have to provide http
 extern int httpCreateSecret(Http *http);
 
 /**
@@ -2036,7 +2025,7 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
  */
 typedef struct HttpRx {
     char            *method;                /**< Request method */
-    char            *uri;                   /**< Original URI (alias for parsedUri->uri) (not decoded) */
+    char            *uri;                   /**< URI (alias for parsedUri->uri) (not decoded) */
     char            *scriptName;            /**< ScriptName portion of the url (Decoded). May be empty or start with "/" */
     char            *pathInfo;              /**< Path information after the scriptName (Decoded and normalized) */
 
@@ -2091,6 +2080,7 @@ typedef struct HttpRx {
     char            *pathTranslated;        /**< Mapped pathInfo to storage. Set by handlers if required. (Decoded) */
     char            *pragma;                /**< Pragma header */
     char            *mimeType;              /**< Mime type of the request payload (ENV: CONTENT_TYPE) */
+    char            *originalUri;           /**< Original URI passed by the client */
     char            *redirect;              /**< Redirect location header */
     char            *referrer;              /**< Refering URL */
     char            *userAgent;             /**< User-Agent header */
@@ -2409,12 +2399,12 @@ extern void httpAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
     @description Add a header if it does not already exits.
     @param conn HttpConn connection object created via $httpCreateConn
     @param key Http response header key
-    @param value Key value to use
+    @param value Value to set for the header
     @return Zero if successful, otherwise a negative MPR error code. Returns MPR_ERR_ALREADY_EXISTS if the header already
         exists.
     @ingroup HttpTx
  */
-extern void httpAddSimpleHeader(HttpConn *conn, cchar *key, cchar *value);
+extern void httpAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /** 
     Append a transmission header
@@ -2426,6 +2416,16 @@ extern void httpAddSimpleHeader(HttpConn *conn, cchar *key, cchar *value);
     @ingroup HttpTx
  */
 extern void httpAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
+
+/** 
+    Append a transmission header string
+    @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param key Http response header key
+    @param value Value to set for the header
+    @ingroup HttpTx
+ */
+extern void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /** 
     Connect to a server and issue Http client request.
@@ -2661,7 +2661,7 @@ extern void httpSetMimeType(HttpConn *conn, cchar *mimeType);
     @param value String value for the key
     @ingroup HttpTx
  */
-extern void httpSetSimpleHeader(HttpConn *conn, cchar *key, cchar *value);
+extern void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /** 
     Wait for the connection to achieve the requested state Used for blocking client requests.

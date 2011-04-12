@@ -2126,20 +2126,24 @@ static int setClientHeaders(HttpConn *conn)
         }
         conn->sentCredentials = 1;
     }
-    httpSetSimpleHeader(conn, "Host", conn->ip);
+    if (conn->port != 80) {
+        httpSetHeader(conn, "Host", "%s:%d", conn->ip, conn->port);
+    } else {
+        httpSetHeaderString(conn, "Host", conn->ip);
+    }
 
     if (strcmp(conn->protocol, "HTTP/1.1") == 0) {
         /* If zero, we ask the client to close one request early. This helps with client led closes */
         if (conn->keepAliveCount > 0) {
-            httpSetSimpleHeader(conn, "Connection", "Keep-Alive");
+            httpSetHeaderString(conn, "Connection", "Keep-Alive");
         } else {
-            httpSetSimpleHeader(conn, "Connection", "close");
+            httpSetHeaderString(conn, "Connection", "close");
         }
 
     } else {
         /* Set to zero to let the client initiate the close */
         conn->keepAliveCount = 0;
-        httpSetSimpleHeader(conn, "Connection", "close");
+        httpSetHeaderString(conn, "Connection", "close");
     }
     return 0;
 }
@@ -3391,8 +3395,8 @@ void httpCreateCGIVars(HttpConn *conn)
     mprAddKey(table, "SERVER_PROTOCOL", conn->protocol);
     mprAddKey(table, "SERVER_SOFTWARE", server->http->software);
 
-    /*  This is the complete URI before decoding */ 
-    mprAddKey(table, "REQUEST_URI", rx->uri);
+    /*  This is the original URI before decoding */ 
+    mprAddKey(table, "REQUEST_URI", rx->originalUri);
 
     /*  URLs are broken into the following: http://{SERVER_NAME}:{SERVER_PORT}{SCRIPT_NAME}{PATH_INFO} */
     mprAddKey(table, "PATH_INFO", rx->pathInfo);
@@ -4042,6 +4046,8 @@ HttpLoc *httpLookupLocation(HttpHost *host, cchar *prefix)
     HttpLoc     *loc;
     int         next;
 
+    mprAssert(host);
+
     for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
         if (strcmp(prefix, loc->prefix) == 0) {
             return loc;
@@ -4057,6 +4063,7 @@ HttpLoc *httpLookupBestLocation(HttpHost *host, cchar *uri)
     int         next, rc;
 
     if (uri) {
+        mprAssert(host);
         for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
             rc = sncmp(loc->prefix, uri, loc->prefixLen);
             if (rc == 0) {
@@ -5450,6 +5457,7 @@ void httpMatchHost(HttpConn *conn)
         if ((host = httpLookupHostByName(server, rx->hostName)) == 0) {
             httpSetConnHost(conn, host);
             httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", rx->hostName);
+            conn->host = mprGetFirstItem(server->hosts);
             return;
         }
     }
@@ -5771,15 +5779,20 @@ static HttpStage *processDirectory(HttpConn *conn, HttpStage *handler)
             return 0;
         }
     } else {
+#if UNUSED
         /*  
             External redirect. Ask the client to re-issue a request for a new location. See if an index exists and if so, 
             construct a new location for the index. If the index can't be accessed, append a "/" to the URI and redirect.
          */
-        if (!mprPathExists(path, R_OK)) {
+        if (mprPathExists(path, R_OK)) {
             pathInfo = mprJoinPath(rx->pathInfo, index);
         } else {
-            pathInfo = mprJoinPath(rx->pathInfo, "/");
+            pathInfo = sjoin(rx->pathInfo, "/", NULL);
         }
+#else
+        /* Must not append the index for the external redirect - Messes up PHP wordpress */
+        pathInfo = sjoin(rx->pathInfo, "/", NULL);
+#endif
         uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
         httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
         handler = conn->http->passHandler;
@@ -6977,6 +6990,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     for (next = 0; (stage = mprGetNextItem(rx->inputPipeline, &next)) != 0; ) {
         q = httpCreateQueue(conn, stage, HTTP_QUEUE_RECEIVE, q);
     }
+    //  MOB - don't want to call this when using file handler
     setVars(conn);
 
     conn->writeq = tx->queue[HTTP_QUEUE_TRANS]->nextQ;
@@ -8255,6 +8269,7 @@ static void manageRx(HttpRx *rx, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(rx->method);
+        mprMark(rx->originalUri);
         mprMark(rx->uri);
         mprMark(rx->scriptName);
         mprMark(rx->pathInfo);
@@ -8544,7 +8559,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
         httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
     }
     rx->flags |= methodFlags;
-    rx->uri = uri;
+    rx->originalUri = rx->uri = sclone(uri);
 
     httpSetState(conn, HTTP_STATE_FIRST);
 #if UNUSED
@@ -9519,7 +9534,7 @@ int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
     /*
         Start out with no scriptName and the entire URI in the pathInfo. Stages may rewrite.
      */
-    rx->uri = rx->parsedUri->uri;
+    rx->uri = rx->parsedUri->path;
     rx->pathInfo = httpNormalizeUriPath(mprUriDecode(rx->parsedUri->path));
     rx->scriptName = mprEmptyString();
     httpMapToStorage(conn);
@@ -9977,8 +9992,10 @@ void httpSendOutgoingService(HttpQueue *q)
          */
         count = q->ioIndex - q->ioFileEntry;
         mprAssert(count >= 0);
-        written = mprSendFileToSocket(conn->sock, tx->file, tx->pos, q->ioCount, q->iovec, count, NULL, 0);
-        mprLog(5, "Send connector wrote %d, written so far %d", written, tx->bytesWritten);
+        written = mprSendFileToSocket(conn->sock, q->ioFileEntry ? tx->file: 0, tx->pos, q->ioCount, q->iovec, 
+            count, NULL, 0);
+        mprLog(0, "Send connector ioCount %d, wrote %d, written so far %d, fileEntry %d", 
+            q->ioCount, written, tx->bytesWritten, q->ioFileEntry);
         if (written < 0) {
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
@@ -10177,9 +10194,11 @@ static void adjustSendVec(HttpQueue *q, ssize written)
         /*  
             Entire vector written. Just reset.
          */
+        tx->pos = q->ioFileOffset;
         q->ioIndex = 0;
         q->ioCount = 0;
-        tx->pos = q->ioFileOffset;
+        q->ioFileEntry = 0;
+        q->ioFileOffset = 0;
 
     } else {
         /*  
@@ -11249,9 +11268,9 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
         tx->headers = headers;
     } else if ((tx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS)) != 0) {
         if (conn->server) {
-            httpAddSimpleHeader(conn, "Server", conn->http->software);
+            httpAddHeaderString(conn, "Server", conn->http->software);
         } else {
-            httpAddSimpleHeader(conn, "User-Agent", sclone(HTTP_NAME));
+            httpAddHeaderString(conn, "User-Agent", sclone(HTTP_NAME));
         }
     }
     return tx;
@@ -11344,9 +11363,9 @@ void httpAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 
 
 /*
-    Add a simple (non-formatted) header if not already defined
+    Add a header string if not already defined
  */
-void httpAddSimpleHeader(HttpConn *conn, cchar *key, cchar *value)
+void httpAddHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
 
     mprAssert(key && *key);
@@ -11384,6 +11403,26 @@ void httpAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 }
 
 
+/* 
+   Append a header string. If already defined, the value is catenated to the pre-existing value after a ", " separator.
+   As per the HTTP/1.1 spec.
+ */
+void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value)
+{
+    cchar   *oldValue;
+
+    mprAssert(key && *key);
+    mprAssert(value && *value);
+
+    oldValue = mprLookupHash(conn->tx->headers, key);
+    if (oldValue) {
+        addHeader(conn, key, mprAsprintf("%s, %s", oldValue, value));
+    } else {
+        addHeader(conn, key, value);
+    }
+}
+
+
 /*  
     Set a http header. Overwrite if present.
  */
@@ -11402,7 +11441,7 @@ void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 }
 
 
-void httpSetSimpleHeader(HttpConn *conn, cchar *key, cchar *value)
+void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
     mprAssert(key && *key);
     mprAssert(value);
@@ -11575,8 +11614,8 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
         "<!DOCTYPE html>\r\n"
         "<html><head><title>%s</title></head>\r\n"
         "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p>\r\n"
-        "<address>%s at %s Port %d</address></body>\r\n</html>\r\n",
-        msg, msg, targetUri, HTTP_NAME, conn->server->name, prev->port);
+        "<address>%s at %s</address></body>\r\n</html>\r\n",
+        msg, msg, targetUri, HTTP_NAME, conn->host->name);
     httpOmitBody(conn);
 }
 
@@ -11680,10 +11719,10 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     tx = conn->tx;
     info = &tx->fileInfo;
 
-    httpAddSimpleHeader(conn, "Date", conn->http->currentDate);
+    httpAddHeaderString(conn, "Date", conn->http->currentDate);
 
     if (tx->flags & HTTP_TX_DONT_CACHE) {
-        httpAddSimpleHeader(conn, "Cache-Control", "no-cache");
+        httpAddHeaderString(conn, "Cache-Control", "no-cache");
 
     } else if (rx->loc && rx->loc->expires) {
         mimeType = mprLookupHash(tx->headers, "Content-Type");
@@ -11711,9 +11750,9 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     }
     if (tx->chunkSize > 0 && !tx->altBody) {
         if (!(rx->flags & HTTP_HEAD)) {
-            httpSetSimpleHeader(conn, "Transfer-Encoding", "chunked");
+            httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
         }
-    } else if (tx->length > 0) {
+    } else if (tx->length > 0 || conn->server) {
         httpSetHeader(conn, "Content-Length", "%Ld", tx->length);
     }
     if (rx->ranges) {
@@ -11731,16 +11770,16 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     }
     if (tx->extension) {
         if ((mimeType = (char*) mprLookupMime(conn->host->mimeTypes, tx->extension)) != 0) {
-            httpAddSimpleHeader(conn, "Content-Type", mimeType);
+            httpAddHeaderString(conn, "Content-Type", mimeType);
         }
     }
     if (conn->server) {
         if (--conn->keepAliveCount > 0) {
-            httpSetSimpleHeader(conn, "Connection", "keep-alive");
+            httpSetHeaderString(conn, "Connection", "keep-alive");
             httpSetHeader(conn, "Keep-Alive", "timeout=%d, max=%d", conn->limits->inactivityTimeout / 1000, 
                 conn->keepAliveCount);
         } else {
-            httpSetSimpleHeader(conn, "Connection", "close");
+            httpSetHeaderString(conn, "Connection", "close");
         }
     }
 }
@@ -11769,7 +11808,7 @@ void httpSetStatus(HttpConn *conn, int status)
 
 void httpSetMimeType(HttpConn *conn, cchar *mimeType)
 {
-    httpSetSimpleHeader(conn, "Content-Type", sclone(mimeType));
+    httpSetHeaderString(conn, "Content-Type", sclone(mimeType));
 }
 
 

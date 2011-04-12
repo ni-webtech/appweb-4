@@ -9921,9 +9921,9 @@ EjsObj *http_setHeader(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     value = ejsToMulti(ejs, argv[1]);
     overwrite = (argc == 3) ? ejsGetBoolean(ejs, argv[2]) : 1;
     if (overwrite) {
-        httpSetSimpleHeader(hp->conn, key, value);
+        httpSetHeaderString(hp->conn, key, value);
     } else {
-        httpAppendHeader(hp->conn, key, "%s", value);
+        httpAppendHeaderString(hp->conn, key, value);
     }
     return 0;
 }
@@ -38426,10 +38426,8 @@ static void setupConnTrace(HttpConn *conn)
 static EjsHttpServer *getServerContext(HttpConn *conn)
 {
     Ejs             *ejs;
-    EjsPath         *dirPath;
     EjsHttpServer   *sp;
     HttpLoc         *loc;
-    cchar           *dir;
 
     if ((sp = httpGetServerContext(conn->server)) != 0) {
         return sp;
@@ -38439,20 +38437,31 @@ static EjsHttpServer *getServerContext(HttpConn *conn)
      */
     loc = conn->rx->loc;
     if (loc == 0 || loc->context == 0) {
-        mprError("Location block is not defined for request");
+        if (!conn->error) {
+            mprError("Location block is not defined for request");
+        }
         return 0;
     }
     sp = (EjsHttpServer*) loc->context;
     ejs = sp->ejs;
+#if UNUSED
+    EjsPath         *dirPath;
+    cchar           *dir;
     dirPath = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
     dir = (dirPath && ejsIs(ejs, dirPath, Path)) ? dirPath->value : conn->host->documentRoot;
+#endif
+    
     if (sp->server == 0) {
         /* Don't set limits or pipeline. That will come from the embedding server */
         sp->server = conn->server;
         sp->server->ssl = loc->ssl;
         sp->ip = sclone(conn->server->ip);
         sp->port = conn->server->port;
+#if UNUSED
         sp->dir = sclone(dir);
+#else
+        sp->dir = sclone(conn->host->documentRoot);
+#endif
     }
     httpSetServerContext(conn->server, sp);
     httpSetRequestNotifier(conn, (HttpNotifier) stateChangeNotifier);
@@ -38464,13 +38473,16 @@ static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn)
 {
     Ejs             *ejs;
     EjsRequest      *req;
-    EjsPath         *dirPath;
     cchar           *dir;
 
     ejs = sp->ejs;
+#if UNUSED
+    EjsPath         *dirPath;
     dirPath = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
     dir = (dirPath && ejsIs(ejs, dirPath, Path)) ? dirPath->value : ".";
-
+#else
+    dir = conn->host->documentRoot;
+#endif
     req = ejsCreateRequest(ejs, sp, conn, dir);
     httpSetConnContext(conn, req);
 #if UNUSED
@@ -38936,7 +38948,7 @@ static int fillResponseHeaders(EjsRequest *req)
             if (n.name && vp && req->conn) {
                 if (ejsIsDefined(ejs, vp)) {
                     value = ejsToMulti(ejs, vp);
-                    httpSetSimpleHeader(req->conn, ejsToMulti(ejs, n.name), value);
+                    httpSetHeaderString(req->conn, ejsToMulti(ejs, n.name), value);
                 }
             }
         }

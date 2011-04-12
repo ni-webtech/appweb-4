@@ -155,14 +155,13 @@ static void processCgi(HttpQueue *q)
 
     mprLog(5, "processCgi");
 
-    if (q->pair->count > 0) {
-        writeToCGI(q->pair);
-    }
-    if (q->pair->count == 0) {
+    if (q->pair == 0 || q->pair->count == 0) {
         /*  Close the CGI program's stdin (idempotent). This will allow the gateway to exit if it was expecting input data */
         if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
             mprCloseCmdFd(cmd, MPR_CMD_STDIN);
         }
+    } else {
+        writeToCGI(q->pair);
     }
 }
 
@@ -627,7 +626,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
                 httpSetStatus(conn, atoi(value));
 
             } else if (strcmp(key, "content-type") == 0) {
-                httpSetSimpleHeader(conn, "Content-Type", value);
+                httpSetHeaderString(conn, "Content-Type", value);
 
             } else {
                 /*
@@ -983,7 +982,12 @@ static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix)
 
     for (hp = 0; (hp = mprGetNextHash(vars, hp)) != 0; ) {
         if (hp->data) {
-            cp = envv[index] = sjoin(hp->key, "=", (char*) hp->data, NULL);
+            if (prefix) {
+                cp = sjoin(prefix, hp->key, "=", (char*) hp->data, NULL);
+            } else {
+                cp = sjoin(hp->key, "=", (char*) hp->data, NULL);
+            }
+            envv[index] = cp;
             for (; *cp != '='; cp++) {
                 if (*cp == '-') {
                     *cp = '_';

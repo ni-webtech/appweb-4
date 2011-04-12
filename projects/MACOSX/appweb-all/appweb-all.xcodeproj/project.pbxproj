@@ -1603,7 +1603,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=${BUILT_PRODUCTS_DIR}:$PATH\nexport DYLD_LIBRARY_PATH=${BUILT_PRODUCTS_DIR}:$DYLD_LIBRARY_PATH\n\ncd $PROJECT_DIR/../../../src/deps/ejs\n\nNAME=\"ejs\"\nFILES=\"ejs.es\"\nTARGET=$BUILT_PRODUCTS_DIR/$NAME.mod\n\n$BUILT_PRODUCTS_DIR/ejsc  --debug --optimize 9 --bind --require \"\" --out $TARGET $FILES\n$BUILT_PRODUCTS_DIR/ejsmod --showDebug --require \"\" --cslots --listing --out .$NAME.slots.h $TARGET\n\ndiff .$NAME.slots.h $OUT/include >/dev/null 2>&1 || cp .$NAME.slots.h $OUT/include\n\nset +x\nexit 0";
+			shellScript = "export PATH=${BUILT_PRODUCTS_DIR}:$PATH\nexport DYLD_LIBRARY_PATH=${BUILT_PRODUCTS_DIR}:$DYLD_LIBRARY_PATH\n\ncd $PROJECT_DIR/../../../src/deps/ejs\n\nNAME=\"ejs\"\nFILES=\"ejs.es\"\nTARGET=$BUILT_PRODUCTS_DIR/$NAME.mod\n\nset -x\n$BUILT_PRODUCTS_DIR/ejsc  --debug --optimize 9 --bind --require ' ' --out $TARGET $FILES\n$BUILT_PRODUCTS_DIR/ejsmod --require ' ' --cslots --listing --out .$NAME.slots.h $TARGET\n\ndiff .$NAME.slots.h $OUT/include >/dev/null 2>&1 || cp .$NAME.slots.h $OUT/include\n\nexit 0";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -2363,7 +2363,7 @@
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				PREBINDING = NO;
-				PRODUCT_NAME = libajs;
+				PRODUCT_NAME = libejs;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2441,7 +2441,7 @@
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				PREBINDING = NO;
-				PRODUCT_NAME = libsqlite3;
+				PRODUCT_NAME = libsqlite;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2475,7 +2475,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = ajs;
+				PRODUCT_NAME = ejs;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2505,7 +2505,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = ajsc;
+				PRODUCT_NAME = ejsc;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2535,7 +2535,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = ajsmod;
+				PRODUCT_NAME = ejsmod;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2565,7 +2565,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = ajssql;
+				PRODUCT_NAME = ejssql;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2632,7 +2632,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = httpPassword;
+				PRODUCT_NAME = auth;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2714,7 +2714,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/lib;
 				PREBINDING = NO;
-				PRODUCT_NAME = mod_egi;
+				PRODUCT_NAME = egiTest;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2818,7 +2818,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../out/lib\"";
 				PREBINDING = NO;
-				PRODUCT_NAME = mod_cgi;
+				PRODUCT_NAME = mod_ssl;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2859,7 +2859,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				OTHER_LDFLAGS = "";
 				PREBINDING = NO;
-				PRODUCT_NAME = libmpr;
+				PRODUCT_NAME = libhttp;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2867,8 +2867,8 @@
 		C9AFCC4B0FC521150080E908 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
+				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
 				COPY_PHASE_STRIP = NO;
 				ES = "$(PROJECT_DIR)/../../../src/ejs";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -2911,8 +2911,8 @@
 		C9AFCC4C0FC521150080E908 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
+				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
 				COPY_PHASE_STRIP = YES;
 				ES = "$(PROJECT_DIR)/../../../src/ejs";
 				OUT = "$(PROJECT_DIR)/../../../out";
@@ -3027,7 +3027,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6 = "\"$(SRCROOT)/../../../out/lib\"";
 				PREBINDING = NO;
-				PRODUCT_NAME = mod_cgi;
+				PRODUCT_NAME = mod_php;
 				ZERO_LINK = NO;
 			};
 			name = Release;

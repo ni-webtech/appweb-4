@@ -367,7 +367,7 @@ static bool parseArgs(int argc, char **argv)
         } else if (strcmp(argp, "--sequence") == 0) {
             app->sequence++;
 
-        } else if (strcmp(argp, "--showHeaders") == 0 || strcmp(argp, "--show") == 0) {
+        } else if (strcmp(argp, "--showHeaders") == 0 || strcmp(argp, "--show") == 0 || strcmp(argp, "-s") == 0) {
             app->showHeaders++;
 
         } else if (strcmp(argp, "--showStatus") == 0 || strcmp(argp, "--showCode") == 0) {

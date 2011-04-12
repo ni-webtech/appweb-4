@@ -142,7 +142,7 @@ static void processPhp(HttpQueue *q)
     MprHash             *hp;
     MaPhp               *php;
     FILE                *fp;
-    char                shebang[MPR_MAX_STRING];
+    char                shebang[MPR_MAX_STRING], *key;
     zend_file_handle    file_handle;
 
     TSRMLS_FETCH();
@@ -193,8 +193,9 @@ static void processPhp(HttpQueue *q)
         hp = mprGetFirstHash(rx->headers);
         while (hp) {
             if (hp->data) {
-                php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
-                mprLog(6, "php: header var %s = %s", hp->key, hp->data);
+                key = sjoin("HTTP_", supper(hp->key), NULL);
+                php_register_variable(key, (char*) hp->data, php->var_array TSRMLS_CC);
+                mprLog(4, "php: header %s = %s", key, hp->data);
 
             }
             hp = mprGetNextHash(rx->headers, hp);
@@ -204,7 +205,7 @@ static void processPhp(HttpQueue *q)
             while (hp) {
                 if (hp->data) {
                     php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
-                    mprLog(6, "php: form var %s = %s", hp->key, hp->data);
+                    mprLog(4, "php: form var %s = %s", hp->key, hp->data);
                 }
                 hp = mprGetNextHash(rx->formVars, hp);
             }
@@ -377,11 +378,11 @@ static int writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sapi
             return 0;
 
         case SAPI_HEADER_REPLACE:
-            httpSetHeader(conn, key, value);
+            httpSetHeaderString(conn, key, value);
             return SAPI_HEADER_ADD;
 
         case SAPI_HEADER_ADD:
-            httpAppendHeader(conn, key, value);
+            httpAppendHeaderString(conn, key, value);
             return SAPI_HEADER_ADD;
 
         default:
@@ -390,9 +391,9 @@ static int writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sapi
 #else
     allowMultiple = !sapiHeader->replace;
     if (allowMultiple) {
-        httpAppendHeader(conn, key, value);
+        httpAppendHeaderString(conn, key, value);
     } else {
-        httpSetHeader(conn, key, value);
+        httpSetHeaderString(conn, key, value);
     }
     return SAPI_HEADER_ADD;
 #endif
@@ -418,7 +419,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
         mprAssert(nbytes == len);
         mprAdjustBufStart(content, len);
     }
-    mprLog(6, "php: read post data %d remaining %d", len, mprGetBufLength(content));
+    mprLog(0, "php: read post data %d remaining %d, data %s", len, mprGetBufLength(content), buffer);
     return len;
 }
 
@@ -453,6 +454,7 @@ static int initializePhp(Http *http)
 #else
     phpSapiBlock.php_ini_path_override = appweb->defaultMeta->serverRoot;
 #endif
+    mprLog(2, "Look for php.ini at %s", phpSapiBlock.php_ini_path_override);
     sapi_startup(&phpSapiBlock);
     if (php_module_startup(&phpSapiBlock, 0, 0) == FAILURE) {
         mprError("PHP did not initialize");
@@ -497,7 +499,8 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     mprSetModuleFinalizer(module, finalizePhp); 
 
     handler = httpCreateHandler(http, module->name, 
-        HTTP_STAGE_HEADER_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_VERIFY_ENTITY | HTTP_STAGE_MISSING_EXT, module);
+        HTTP_STAGE_CGI_VARS | HTTP_STAGE_HEADER_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_VERIFY_ENTITY | 
+        HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

@@ -14,7 +14,7 @@
 
 /*********************************** Forwards *********************************/
 
-static int loadStartupScript(Ejs *ejs, cchar *script);
+static int loadStartupScript(Ejs *ejs, HttpConn *conn, cchar *script);
 
 /************************************* Code ***********************************/
 
@@ -64,13 +64,12 @@ static void openEjs(HttpQueue *q)
         }
         q->stage->stageData = ejs;
         ejs->loc = loc;
-        if (loadStartupScript(ejs, loc->script) < 0) {
-            //  MOB -- should this set an error somewhere?
+        if (loadStartupScript(ejs, conn, loc->script) < 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load startup script.");
             return;
         }
         if (loc == 0 || loc->context == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Undefined location context. Check EjsStartup script.");
-            //  MOB -- should this set an error somewhere?
             return;
         }
     }
@@ -112,23 +111,24 @@ static char *findScript(cchar *script)
 }
 
 
-static int loadStartupScript(Ejs *ejs, cchar *script)
+static int loadStartupScript(Ejs *ejs, HttpConn *conn, cchar *script)
 {
     char    *path;
     int     ver;
 
     ver = 0;
     if (ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, "ejs.web"), ver, ver, 0) < 0) {
-        mprError("Can't load ejs.web.mod: %s", ejsGetErrorMsg(ejs, 1));
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load ejs.web.mod: %s", ejsGetErrorMsg(ejs, 1));
         return MPR_ERR_CANT_INITIALIZE;
     }
     if ((path = findScript(script)) == 0) {
-        mprError("Can't find script file %s", script);
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find ejs start script file \"%s\"", script);
         return MPR_ERR_CANT_OPEN;
     }
     LOG(2, "Loading Ejscript Server script: \"%s\"", path);
     if (ejsLoadScriptFile(ejs, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
-        mprError("Can't load \"%s\"\n%s", path, ejsGetErrorMsg(ejs, 1));
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load \"%s\"\n%s", path, ejsGetErrorMsg(ejs, 1));
+        return MPR_ERR_CANT_OPEN;
     }
     return 0;
 }

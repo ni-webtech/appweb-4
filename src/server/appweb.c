@@ -166,6 +166,14 @@ MAIN(appweb, int argc, char **argv)
             exit(5);
         }
     }
+    if (mprStart() < 0) {
+        mprUserError("Can't start MPR for %s", mprGetAppName());
+        mprDestroy(MPR_EXIT_DEFAULT);
+        return MPR_ERR_CANT_INITIALIZE;
+    }
+    if (checkEnvironment(argv[0]) < 0) {
+        exit(6);
+    }
     if (argc > argind) {
         if (argc > (argind + 2)) {
             usageError();
@@ -174,19 +182,9 @@ MAIN(appweb, int argc, char **argv)
         if (argc > argind) {
             app->documentRoot = sclone(argv[argind++]);
         }
-    }
-    if (mprStart() < 0) {
-        mprUserError("Can't start MPR for %s", mprGetAppName());
-        mprDestroy(MPR_EXIT_DEFAULT);
-        return MPR_ERR_CANT_INITIALIZE;
-    }
-    if (findConfigFile() < 0) {
-        exit(6);
-    }
-    if (ipAddrPort) {
         mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
-    }
-    if (checkEnvironment(argv[0]) < 0) {
+        
+    } else if (findConfigFile() < 0) {
         exit(7);
     }
     if (jail && changeRoot(jail) < 0) {

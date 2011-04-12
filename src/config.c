@@ -45,12 +45,11 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         return 0;
 
     } else {
-        //  MOB TEST THIS
-        //  MOB - bug appweb is always calling this with a configFile defined - never empty
         mprLog(2, "DocumentRoot %s", docRoot);
         if ((server = httpCreateConfiguredServer(docRoot, ip, port)) == 0) {
             return MPR_ERR_CANT_OPEN;
         }
+        maAddServer(meta, server);
         host = meta->defaultHost = mprGetFirstItem(server->hosts);
         mprAssert(host);
 
@@ -89,6 +88,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
             httpAddHandler(loc, "ejsHandler", ".ejs");
+            httpSetLocationScript(loc, "start.es");
         }
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
@@ -99,7 +99,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         }
     }
     if (serverRoot) {
-        maSetMetaRoot(meta, path);
+        maSetMetaRoot(meta, serverRoot);
     }
     if (ip || port > 0) {
         maSetMetaAddress(meta, ip, port);
@@ -1274,13 +1274,14 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     case 'S':
         if (scasecmp(key, "ServerName") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
-            if (strncmp(value, "http://", 7) == 0) {
-                httpSetHostName(host, &value[7]);
-                httpSetHostInfoName(host, &value[7]);
-            } else {
-                httpSetHostName(host, value);
-                httpSetHostInfoName(host, value);
+            if (host->port != 80) {
+                value = sfmt("%s:%d", value, host->port);
             }
+            if (strncmp(value, "http://", 7) == 0) {
+                value = &value[7];
+            }
+            httpSetHostName(host, value);
+            httpSetHostInfoName(host, value);
             return 1;
 
         } else if (scasecmp(key, "ServerRoot") == 0) {

@@ -18683,7 +18683,10 @@ static int ipv6(cchar *ip)
 
 
 /*  
-    Parse ipAddrPort and return the IP address and port components. Handles ipv4 and ipv6 addresses. When an ipAddrPort
+    Parse ipAddrPort and return the IP address and port components. Handles ipv4 and ipv6 addresses. 
+    If the IP portion is absent, *pip is set to null. If the port portion is absent, port is set to the defaultPort.
+    If a ":*" port specifier is used, *pport is set to -1;
+    When an ipAddrPort
     contains an ipv6 port it should be written as
 
         aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh:iiii
@@ -18750,21 +18753,13 @@ int mprParseIp(cchar *ipAddrPort, char **pip, int *pport, int defaultPort)
                 *pport = atoi(cp);
             }
             if (*ip == '*') {
-#if UNUSED
-                //  MOB - should this not be null for wildcarding?
-                ip = sclone("127.0.0.1");
-#else
                 ip = 0;
-#endif
             }
 
         } else {
             if (isdigit((int) *ip)) {
                 *pport = atoi(ip);
-#if UNUSED
-                ip = sclone("127.0.0.1");
-#endif
-
+                ip = 0;
             } else {
                 /* No port present, use callers default */
                 *pport = defaultPort;
@@ -23638,7 +23633,7 @@ void mprWriteToOsLog(cchar *message, int flags, int level)
         msg = "error: ";
         sflag = LOG_WARNING;
     }
-    syslog(sflag, "%s %s: %s\n", mprGetAppName(), msg, message);
+    syslog(sflag, "%s", message);
 }
 
 
