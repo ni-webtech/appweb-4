@@ -9535,6 +9535,8 @@ static EjsObj *http_form(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
         }
         mprAddNullToBuf(hp->requestContent);
         httpSetHeader(hp->conn, "Content-Type", "application/x-www-form-urlencoded");
+        /* Ensure this gets recomputed */
+        httpRemoveHeader(hp->conn, "Content-Length");
     }
     return startHttpRequest(ejs, hp, "POST", argc, argv);
 }

@@ -69,20 +69,20 @@ if (test.depth > 1) {
     //  PUT file
     run("test.dat /tmp/day.tmp")
     if (test.threads == 1) {
-        assert(exists("../web/tmp/day.tmp"))
+        assert(Path("../web/tmp/day.tmp").exists)
     }
 
     let files = Path(".").files().join(" ")
     run(files + " /tmp/")
     if (test.threads == 1) {
-        assert(exists("../web/tmp/http.tst"))
+        assert(Path("../web/tmp/http.tst").exists)
     }
 
     //  DELETE
     run("test.dat /tmp/test.dat")
-    assert(exists("../web/tmp/test.dat"))
+    assert(Path("../web/tmp/test.dat").exists)
     run("--method DELETE /tmp/test.dat")
-    assert(!exists("../web/tmp/test.dat"))
+    assert(!Path("../web/tmp/test.dat").exists)
 
     //  Options with show status
     run("--method OPTIONS /index.html")
@@ -98,7 +98,7 @@ if (test.depth > 1) {
     data = run("--upload " + files + " /upload.ejs")
     assert(data.contains('"clientFilename": "http.tst"'))
     if (test.threads == 1) {
-        assert(exists("../web/tmp/http.tst"))
+        assert(Path("../web/tmp/http.tst").exists)
     }
 
     let files = Path(".").files().join(" ")

@@ -5934,13 +5934,22 @@ extern void mprDisableWaitEvents(MprWaitHandler *wp);
 extern void mprEnableWaitEvents(MprWaitHandler *wp, int desiredMask);
 
 /**
+    Recall a wait handler by fd
+    @description Signal that a wait handler should be recalled at the earliest opportunity. This is useful
+        when a protocol stack has buffered data that must be processed regardless of whether more I/O occurs. 
+    @param fd File descriptor to recall
+    @ingroup MprWaitHandler
+ */
+extern void mprRecallWaitHandlerByFd(int fd);
+
+/**
     Recall a wait handler
     @description Signal that a wait handler should be recalled at the earliest opportunity. This is useful
         when a protocol stack has buffered data that must be processed regardless of whether more I/O occurs. 
     @param fd File descriptor to recall
     @ingroup MprWaitHandler
  */
-extern void mprRecallWaitHandler(int fd);
+extern void mprRecallWaitHandler(MprWaitHandler *wp);
 
 /**
     Apply wait handler updates. While a wait handler is in use, wait event updates are buffered. This routine applies

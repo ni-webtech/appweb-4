@@ -2764,10 +2764,10 @@ void httpEnableConnEvents(HttpConn *conn)
                 mprEnableWaitEvents(conn->waitHandler, eventMask);
             }
         }
+        if (conn->input && httpGetPacketLength(conn->input) > 0 && conn->waitHandler) {
+            mprRecallWaitHandler(conn->waitHandler);
+        }
         mprAssert(conn->dispatcher->enabled);
-#if UNUSED
-        mprEnableDispatcher(conn->dispatcher);
-#endif
         unlock(conn->http);
     }
 }
@@ -3712,10 +3712,7 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
     HttpHost    *host;
     Http        *http;
 
-    mprAssert(port);
-
     http = MPR->httpService;
-
     if ((host = mprAllocObj(HttpHost, manageHost)) == 0) {
         return 0;
     }
@@ -3727,7 +3724,9 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
             host->name = sclone(ip);
         }
     } else {
-        host->name = mprAsprintf("*:%d", port);
+        if (port) {
+            host->name = mprAsprintf("*:%d", port);
+        }
     }
     host->mutex = mprCreateLock();
     host->aliases = mprCreateList(-1, 0);
@@ -7370,16 +7369,6 @@ static void manageQueue(HttpQueue *q, int flags)
 }
 
 
-#if UNUSED
-void httpMarkQueueHead(HttpQueue *q)
-{
-    if (q->nextQ && q->nextQ->stage) {
-        mprMark(q->nextQ);
-    }
-}
-#endif
-
-
 void httpInitQueue(HttpConn *conn, HttpQueue *q, cchar *name)
 {
     q->conn = conn;
@@ -9550,9 +9539,6 @@ int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
 static void waitHandler(HttpConn *conn, struct MprEvent *event)
 {
     httpCallEvent(conn, event->mask);
-#if UNUSED
-    httpEnableConnEvents(conn);
-#endif
     mprSignalDispatcher(conn->dispatcher);
 }
 
@@ -9581,23 +9567,25 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         mprAssert(conn->state >= HTTP_STATE_BEGIN);
         return MPR_ERR_BAD_STATE;
     } 
-    saveAsync = conn->async;
-    if (conn->waitHandler == 0) {
-        conn->async = 1;
-        eventMask = MPR_READABLE;
-        if (!conn->writeComplete) {
-            eventMask |= MPR_WRITABLE;
-        }
-        conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, waitHandler, conn, 0);
-        addedHandler = 1;
-    } else {
-        addedHandler = 0;
+    if (conn->input && httpGetPacketLength(conn->input) > 0) {
+        httpProcess(conn, conn->input);
     }
     http->now = mprGetTime();
     expire = http->now + timeout;
     remainingTime = expire - http->now;
+    saveAsync = conn->async;
+    addedHandler = 0;
 
     while (!conn->error && conn->state < state) {
+        if (conn->waitHandler == 0) {
+            conn->async = 1;
+            eventMask = MPR_READABLE;
+            if (!conn->writeComplete) {
+                eventMask |= MPR_WRITABLE;
+            }
+            conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, waitHandler, conn, 0);
+            addedHandler = 1;
+        }
         workDone = httpServiceQueues(conn);
         remainingTime = expire - http->now;
         if (remainingTime <= 0) {
@@ -10449,14 +10437,6 @@ static bool validateServer(HttpServer *server)
     if (mprGetListLength(host->aliases) == 0) {
         httpAddAlias(host, httpCreateAlias("", host->documentRoot, 0));
     }
-#if UNUSED
-    if (!host->documentRoot) {
-        host->documentRoot = server->documentRoot;
-    }
-    if (!host->serverRoot) {
-        host->serverRoot = server->serverRoot;
-    }
-#endif
     return 1;
 }
 
@@ -10743,24 +10723,6 @@ void httpAddHostToServer(HttpServer *server, HttpHost *host)
         server->limits = host->limits;
     }
 }
-
-
-#if UNUSED
-HttpServer *httpRemoveHostFromServer(Http *http, cchar *ip, int port, HttpHost *host)
-{
-    HttpServer  *server;
-    int         next;
-
-    for (next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
-        if (server->port < 0 || port < 0 || server->port == port) {
-            if (ip == 0 || server->ip == 0 || strcmp(server->ip, ip) == 0) {
-                mprRemoveItem(server->hosts, host);
-            }
-        }
-    }
-    return 0;
-}
-#endif
 
 
 bool httpIsNamedVirtualServer(HttpServer *server)
@@ -11326,12 +11288,6 @@ static void addHeader(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(key && *key);
     mprAssert(value);
 
-#if UNUSED
-    //  MOB - remove this test
-    if (scasecmp(key, "content-length") == 0) {
-        conn->tx->length = (ssize) stoi(value, 10, NULL);
-    }
-#endif
     mprAddKey(conn->tx->headers, key, value);
 }
 
@@ -11742,11 +11698,6 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
             httpAddHeader(conn, "Expires", "%s", hdr);
         }
     }
-#if UNUSED
-    if (tx->etag == 0 && info->valid) {
-        tx->etag = mprAsprintf("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
-    }
-#endif
     if (tx->etag) {
         httpAddHeader(conn, "ETag", "%s", tx->etag);
     }

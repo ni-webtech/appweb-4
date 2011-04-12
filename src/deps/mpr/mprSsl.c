@@ -897,7 +897,7 @@ static ssize readMss(MprSocket *sp, void *buf, ssize len)
      */
     if (isBufferedData(msp)) {
         sp->flags |= MPR_SOCKET_PENDING;
-        mprRecallWaitHandler(sp->fd);
+        mprRecallWaitHandlerByFd(sp->fd);
     }
     unlock(sp);
     return bytes;
@@ -1788,7 +1788,7 @@ static ssize readOss(MprSocket *sp, void *buf, ssize len)
         }
     } else if (SSL_pending(osp->osslStruct) > 0) {
         sp->flags |= MPR_SOCKET_PENDING;
-        mprRecallWaitHandler(sp->fd);
+        mprRecallWaitHandlerByFd(sp->fd);
     }
     unlock(sp);
     return rc;

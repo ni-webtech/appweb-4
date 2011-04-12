@@ -21,12 +21,13 @@ if (!test || test.config["php"] == 1) {
     assert(http.status == 200)
     assert(http.response.contains("name is John Smith"))
     assert(http.response.contains("address is 777 Mulberry Lane"))
+    http.close()
 
     //  Big output
     http.get(HTTP + "/big.php")
     assert(http.status == 200)
     data = new ByteArray
-    while (http.read(data)) {
+    while ((count = http.read(data))) {
         assert(data.toString().contains("aaaabbbb"))
     }
 
