@@ -139,6 +139,9 @@ static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
  */
 static EjsAny *app_env(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
+#if VXWORKS
+    return S(null);
+#else
     EjsPot    *result;
     char        **ep, *pair, *key, *value;
 
@@ -149,6 +152,7 @@ static EjsAny *app_env(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
         ejsSetPropertyByName(ejs, result, EN(key), ejsCreateStringFromAsc(ejs, value));
     }
     return result;
+#endif
 }
 #endif
 
@@ -39045,11 +39049,11 @@ static EjsObj *mapNull(Ejs *ejs, EjsObj *value)
 
 
 /*
-    Get the most "public" host name for the serving host
+    Get the best public host name for the serving host
  */
 static cchar *getHost(HttpConn *conn, EjsRequest *req)
 {
-    cchar       *hostName;
+    cchar       *hostName, *cp;
 
     if (req->server && req->server->name && *req->server->name) {
         hostName = req->server->name;
@@ -39059,6 +39063,9 @@ static cchar *getHost(HttpConn *conn, EjsRequest *req)
         hostName = conn->sock->acceptIp;
     } else {
         hostName = "localhost";
+    }
+    if ((cp = schr(hostName, ':')) != 0) {
+        return snclone(hostName, cp - hostName);
     }
     return hostName;
 }

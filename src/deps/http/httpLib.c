@@ -3712,17 +3712,22 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
     HttpHost    *host;
     Http        *http;
 
+    mprAssert(port);
+
     http = MPR->httpService;
 
     if ((host = mprAllocObj(HttpHost, manageHost)) == 0) {
         return 0;
     }
     if (ip) {
+        //  MOB - isn't port always set?
         if (port) {
             host->name = mprAsprintf("%s:%d", ip, port);
         } else {
             host->name = sclone(ip);
         }
+    } else {
+        host->name = mprAsprintf("*:%d", port);
     }
     host->mutex = mprCreateLock();
     host->aliases = mprCreateList(-1, 0);
@@ -9994,7 +9999,7 @@ void httpSendOutgoingService(HttpQueue *q)
         mprAssert(count >= 0);
         written = mprSendFileToSocket(conn->sock, q->ioFileEntry ? tx->file: 0, tx->pos, q->ioCount, q->iovec, 
             count, NULL, 0);
-        mprLog(0, "Send connector ioCount %d, wrote %d, written so far %d, fileEntry %d", 
+        mprLog(8, "Send connector ioCount %d, wrote %d, written so far %d, fileEntry %d", 
             q->ioCount, written, tx->bytesWritten, q->ioFileEntry);
         if (written < 0) {
             errCode = mprGetError(q);
@@ -11753,7 +11758,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
             httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
         }
     } else if (tx->length > 0 || conn->server) {
-        httpSetHeader(conn, "Content-Length", "%Ld", tx->length);
+        httpAddHeader(conn, "Content-Length", "%Ld", tx->length);
     }
     if (rx->ranges) {
         if (rx->ranges->next == 0) {

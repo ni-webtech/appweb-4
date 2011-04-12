@@ -951,10 +951,24 @@ struct  MprXml;
  */
 #define MPR_TUNE_SIZE       1       /**< Tune for size */
 #define MPR_TUNE_BALANCED   2       /**< Tune balancing speed and size */
-#define MPR_TUNE_SPEED      3       /**< Tune for speed */
+#define MPR_TUNE_SPEED      3       /**< Tune for speed, program will use memory more aggressively */
 
 #ifndef BLD_TUNE
 #define BLD_TUNE MPR_TUNE_BALANCED
+#endif
+
+#if BLD_CC_MMU
+    /* 
+        If the system supports virtual memory, then stack size should use system default. Only used pages will
+        actually consume memory 
+     */
+    #define MPR_DEFAULT_STACK       (0)           /**< Default thread stack size (0 means use system default) */
+#else
+    /* 
+        No MMU, so the stack size actually consumes memory. Set this as low as possible. 
+        NOTE: php and ejs use stack heavily.
+     */
+    #define MPR_DEFAULT_STACK       (64 * 1024)   /**< Default thread stack size (0 means use system default) */
 #endif
 
 #if BLD_TUNE == MPR_TUNE_SIZE || DOXYGEN
@@ -964,7 +978,6 @@ struct  MprXml;
     #define MPR_MAX_FNAME           256           /**< Reasonable filename size */
     #define MPR_MAX_PATH            512           /**< Reasonable path name size */
     #define MPR_MAX_URL             512           /**< Max URL size. Also request URL size. */
-    #define MPR_DEFAULT_STACK       (64 * 1024)   /**< Default thread stack size (64K) */
     #define MPR_MAX_STRING          1024          /**< Maximum (stack) string size */
     #define MPR_MAX_LOG             (8 * 1024)    /**< Maximum log message size (impacts stack) */
     #define MPR_DEFAULT_ALLOC       64            /**< Default small alloc size */
@@ -993,7 +1006,6 @@ struct  MprXml;
     #define MPR_MAX_FNAME           256
     #define MPR_MAX_PATH            1024
     #define MPR_MAX_URL             2048
-    #define MPR_DEFAULT_STACK       (128 * 1024)
     #define MPR_MAX_STRING          2048
     #define MPR_MAX_LOG             (32 * 1024)
     #define MPR_DEFAULT_ALLOC       256
@@ -1021,7 +1033,6 @@ struct  MprXml;
     #define MPR_MAX_FNAME           1024
     #define MPR_MAX_PATH            2048
     #define MPR_MAX_URL             4096
-    #define MPR_DEFAULT_STACK       (256 * 1024)
     #define MPR_MAX_LOG             (64 * 1024)
     #define MPR_MAX_STRING          4096
     #define MPR_DEFAULT_ALLOC       512

@@ -319,7 +319,7 @@ static void registerServerVars(zval *track_vars_array TSRMLS_DC)
 
 static void logMessage(char *message)
 {
-    mprLog(0, "phpModule: %s", message);
+    mprLog(3, "phpModule: %s", message);
 }
 
 
@@ -419,7 +419,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
         mprAssert(nbytes == len);
         mprAdjustBufStart(content, len);
     }
-    mprLog(0, "php: read post data %d remaining %d, data %s", len, mprGetBufLength(content), buffer);
+    mprLog(5, "php: read post data %d remaining %d, data %s", len, mprGetBufLength(content), buffer);
     return len;
 }
 

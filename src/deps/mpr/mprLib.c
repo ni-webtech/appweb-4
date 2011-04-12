@@ -20986,7 +20986,6 @@ int mprStartThread(MprThread *tp)
     taskPriorityGet(taskIdSelf(), &pri);
     taskHandle = taskSpawn(tp->name, pri, 0, tp->stackSize, (FUNCPTR) threadProcWrapper, (int) tp, 
         0, 0, 0, 0, 0, 0, 0, 0, 0);
-
     if (taskHandle < 0) {
         mprError("Can't create thread %s\n", tp->name);
         return MPR_ERR_CANT_INITIALIZE;
