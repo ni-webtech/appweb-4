@@ -19979,9 +19979,9 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
             @duplicate Stream.read
             If the request is posting a form, i.e. the Http ContentType header is set to 
             "application/x-www-form-urlencoded", then the request object will not be created by the HttpServer until
-            all the form data is read and the $params collection is populated with the form data. This permits form
+            all the form data is read and the $params collection created and populated with the form data. This permits form
             data to be processed synchronously without having to use async/observer techniques to respond to readable
-            events. With all other content types, the Request object will be created and run, before incoming client 
+            events. With all other content types, the Request object will be created and run before the incoming client 
             data has been read. To read data in these situations, register an observer function to run when the
             connection becomes "readable".
             @example:
@@ -19990,7 +19990,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
                     if (read(data)) {
                         print("Got " + data)
                     } else {
-                        //  End of input
+                        //  End of input, call finalize() when all output has been written
                         request.finalize()
                     }
                 })

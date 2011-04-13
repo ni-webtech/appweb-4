@@ -21,7 +21,7 @@ static int loadStartupScript(Ejs *ejs, HttpConn *conn, cchar *script);
 static void setScriptName(HttpConn *conn)
 {
     HttpRx      *rx;
-    HttpAlias     *alias;
+    HttpAlias   *alias;
     char        *uri;
 
     rx = conn->rx;
@@ -37,7 +37,7 @@ static void setScriptName(HttpConn *conn)
             uri--;
         }
         rx->scriptName = alias->prefix;
-        rx->pathInfo = (char*) uri;
+        rx->pathInfo = sclone(uri);
         mprLog(5, "ejs: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
     }
 }

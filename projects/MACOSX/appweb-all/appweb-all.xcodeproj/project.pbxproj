@@ -905,10 +905,10 @@
 		C97620660FD04E38009C78E1 /* handlers */ = {
 			isa = PBXGroup;
 			children = (
-				C938480E1123BD80002AD34B /* ejsHandler.c */,
 				C97620690FD04E38009C78E1 /* cgiHandler.c */,
 				C976206A0FD04E38009C78E1 /* dirHandler.c */,
 				C976206B0FD04E38009C78E1 /* egiHandler.c */,
+				C938480E1123BD80002AD34B /* ejsHandler.c */,
 				C976206C0FD04E38009C78E1 /* fileHandler.c */,
 				C97620700FD04E38009C78E1 /* phpHandler.c */,
 			);
