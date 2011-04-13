@@ -1,5 +1,5 @@
 #
-#	Makefile for the MPR - Michael's Portable Runtime
+#	Makefile for the MPR - Multithreaded Portable Runtime
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2010. All Rights Reserved.
 #

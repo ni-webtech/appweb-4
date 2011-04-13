@@ -2348,7 +2348,7 @@ static MprChar *formatExample(Ejs *ejs, EjsString *docString)
 
         buf = mprAlloc(wlen(example) * 4 + 2);
         for (cp = example, dp = buf; *cp && cp < end; ) {
-            for (i = 0; i < indent && *cp && isspace(*cp) && *cp != '\n'; i++, cp++) {}
+            for (i = 0; i < indent && *cp && isspace((int) *cp) && *cp != '\n'; i++, cp++) {}
             for (; *cp && *cp != '\n'; ) {
                 if (*cp == '<' && cp[1] == '%') {
                     mtow(dp, 5, "&lt;", 4);

@@ -143,6 +143,9 @@ $(BLD_INC_DIR)/ejs.slots.h: slots.h
 	rm -f $(BLD_INC_DIR)/ejs.slots.h
 	cp slots.h $(BLD_INC_DIR)/ejs.slots.h
 
+import:
+	cp $(BLD_INC_DIR)/ejs.slots.h slots.h
+
 #
 #   Local variables:
 #   tab-width: 4
