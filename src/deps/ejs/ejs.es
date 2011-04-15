@@ -17963,7 +17963,7 @@ module ejs.web {
                         /* list("priority", [["low", "3"], ["med", "5"], ["high", "9"]]) */
                         let [key, value] = choice
                         selected = (value == defaultValue) ? ' selected="yes"' : ''
-                        write('      <option value="' + value + '"' + selected + '>' + key + '</option>\r\n')
+                        write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
 
                     } else if (choice && choice.id) {
                         /* list("priority", [{id: 77, field: "value", ...}, ...]) */
@@ -17977,8 +17977,8 @@ module ejs.web {
                     } else if (Object.getOwnPropertyCount(choice) > 0) {
                         /* list("priority", [{low: 3}, {med: 5}, {high: 9}]) */
                         for (let [key, value] in choice) {
-                            selected = (value == defaultValue) ? ' selected="yes"' : ''
-                            write('      <option value="' + value + '"' + selected + '>' + key + '</option>\r\n')
+                            selected = (key == defaultValue) ? ' selected="yes"' : ''
+                            write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
                         }
                     } else {
                         /* list("priority", ["low", "med", "high"]) */
@@ -17990,8 +17990,8 @@ module ejs.web {
             } else {
                 /* list("priority", {low: 0, med: 1, high: 2}) */
                 for (let [key, value]  in choices) {
-                    selected = (value == defaultValue) ? ' selected="yes"' : ''
-                    write('      <option value="' + value + '"' + selected + '>' + key + '</option>\r\n')
+                    selected = (key == defaultValue) ? ' selected="yes"' : ''
+                    write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
                 }
             }
             write('    </select>\r\n')
@@ -19887,6 +19887,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
                     }
                     target.route = target.action || "default"
                 }
+dump("TARGET", target)
                 if (target.route) {
                     target.scriptName ||= scriptName
                     if (!target.template && route) {
@@ -19895,6 +19896,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
                 }
             }
             if (target.route && target.template) {
+dump("TEMPLATE", target.template)
                 target = Uri.template(target.template, target).path
             }
             return uri.local.resolve(target).normalize
@@ -21119,10 +21121,10 @@ module ejs.web {
             if (extra) {
                 if (params && Object.getOwnPropertyCount(params) > 0) {
                     if (!(params.action && Object.getOwnPropertyCount(params) == 1)) {
-                        line += "\n                                                    %s".format(serialize(params))
+                        line += "\n                                                      %s".format(serialize(params))
                     }
                 }
-                line += "\n                                                    pattern: " + r.pattern + "\n"
+                line += "\n                                                      pattern: " + r.pattern + "\n"
             }
             print(line)
         }

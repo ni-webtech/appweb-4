@@ -5,6 +5,7 @@
 #
 
 STAGING		:= staging
+
 include		.makedep
 
 gen:

@@ -746,13 +746,11 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
     if (mprShouldAbortRequests(conn)) {
         return 0;
     }
-
     status = httpGetStatus(conn);
     contentLen = httpGetContentLength(conn);
     if (contentLen < 0) {
-        contentLen = conn->rx->readContent;
+        contentLen = (ssize) conn->rx->readContent;
     }
-
     mprLog(6, "Response status %d, elapsed %Ld", status, elapsed);
     if (conn->error) {
         app->success = 0;
@@ -839,7 +837,7 @@ static int setContentLength(HttpConn *conn, MprList *files)
 {
     MprPath     info;
     char        *path, *pair;
-    MprOff      len;
+    ssize       len;
     int         next;
 
     len = 0;
@@ -853,12 +851,12 @@ static int setContentLength(HttpConn *conn, MprList *files)
                 mprError("Can't access file %s", path);
                 return MPR_ERR_CANT_ACCESS;
             }
-            len += info.size;
+            len += (ssize) info.size;
         }
     }
     if (app->formData) {
         for (next = 0; (pair = mprGetNextItem(app->formData, &next)) != 0; ) {
-            len += strlen(pair);
+            len += slen(pair);
         }
         len += mprGetListLength(app->formData) - 1;
     }

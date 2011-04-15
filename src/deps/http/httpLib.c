@@ -2827,7 +2827,7 @@ static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead)
             len = min(len, HTTP_BUFSIZE);
             mprAssert(len > 0);
             if (mprGetBufSpace(content) < len) {
-                mprGrowBuf(content, len);
+                mprGrowBuf(content, (ssize) len);
             }
         } else {
             if (mprGetBufSpace(content) < HTTP_BUFSIZE) {
@@ -2838,7 +2838,7 @@ static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead)
     }
     mprAssert(packet == conn->input);
     mprAssert(len > 0);
-    *bytesToRead = len;
+    *bytesToRead = (ssize) len;
     return packet;
 }
 
@@ -6173,7 +6173,7 @@ static void addPacketForNet(HttpQueue *q, HttpPacket *packet)
     }
     item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
     if (httpShouldTrace(conn, HTTP_TRACE_TX, item, NULL) >= 0) {
-        httpTraceContent(conn, HTTP_TRACE_TX, item, packet, 0, tx->bytesWritten);
+        httpTraceContent(conn, HTTP_TRACE_TX, item, packet, 0, (ssize) tx->bytesWritten);
     }
 }
 
@@ -6339,7 +6339,7 @@ HttpPacket *httpCreatePacket(MprOff size)
         return 0;
     }
     if (size != 0) {
-        if ((packet->content = mprCreateBuf(size < 0 ? HTTP_BUFSIZE: size, -1)) == 0) {
+        if ((packet->content = mprCreateBuf(size < 0 ? HTTP_BUFSIZE: (ssize) size, -1)) == 0) {
             return 0;
         }
     }
@@ -6513,7 +6513,7 @@ int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
     MprOff      len;
 
     len = httpGetPacketLength(p);
-    if (mprPutBlockToBuf(packet->content, mprGetBufStart(p->content), len) != len) {
+    if (mprPutBlockToBuf(packet->content, mprGetBufStart(p->content), (ssize) len) != len) {
         return MPR_ERR_MEMORY;
     }
     return 0;
@@ -6721,8 +6721,8 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, MprOff offset)
 #endif
 
     if (orig->content && httpGetPacketLength(orig) > 0) {
-        mprAdjustBufEnd(orig->content, -count);
-        if (mprPutBlockToBuf(packet->content, mprGetBufEnd(orig->content), count) != count) {
+        mprAdjustBufEnd(orig->content, (ssize) -count);
+        if (mprPutBlockToBuf(packet->content, mprGetBufEnd(orig->content), (ssize) count) != count) {
             return 0;
         }
 #if BLD_DEBUG
@@ -7076,7 +7076,9 @@ void httpSetSendConnector(HttpConn *conn, cchar *path)
     tx = conn->tx;
     tx->flags |= HTTP_TX_SENDFILE;
     tx->filename = sclone(path);
-    maxBody = conn->limits->transmissionBodySize;
+
+    //  MOB - does this limit max transmission?
+    maxBody = (ssize) conn->limits->transmissionBodySize;
 
     qhead = tx->queue[HTTP_QUEUE_TRANS];
     for (q = conn->writeq; q != qhead; q = q->nextQ) {

@@ -2028,7 +2028,7 @@ extern int mprIsValid(cvoid *ptr);
  */
 extern void mprVerifyMem();
 
-/**
+/*
     Test if a memory block is unreferenced by the last garbage collection sweep.
     @param ptr Reference to an allocated memory block.
     @return TRUE if the given memory block is unreferenced and ready for collection.
@@ -2037,7 +2037,7 @@ extern void mprVerifyMem();
  */
 extern int mprIsDead(cvoid* ptr);
 
-/**
+/*
     Revive a memory block scheduled for collection. This should only ever be called in the manager routine for a block
     when the manage flags parameter is set to MPR_MANAGE_FREE. Reviving a block aborts its collection.
     @param ptr Reference to an allocated memory block.
@@ -5360,13 +5360,12 @@ extern void mprSignalDispatcher(MprDispatcher *dispatcher);
 extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags);
 extern MprEvent *mprCreateEventQueue();
 
-/**
+/*
     Queue a new event for service.
     @description Queue an event for service
     @param dispatcher Dispatcher object created via mprCreateDispatcher
     @param event Event object to queue
     @ingroup MprEvent
-    @internal
  */
 extern void mprQueueEvent(MprDispatcher *dispatcher, MprEvent *event);
 
@@ -5605,8 +5604,9 @@ typedef struct MprThread {
 } MprThread;
 
 
-/**
+/*
     Thread local data storage
+    @internal
  */
 typedef struct MprThreadLocal {
 #if BLD_UNIX_LIKE
@@ -5937,7 +5937,7 @@ extern void mprEnableWaitEvents(MprWaitHandler *wp, int desiredMask);
     Recall a wait handler by fd
     @description Signal that a wait handler should be recalled at the earliest opportunity. This is useful
         when a protocol stack has buffered data that must be processed regardless of whether more I/O occurs. 
-    @param fd File descriptor to recall
+    @param fd File descriptor that matches that of a wait handler to recall
     @ingroup MprWaitHandler
  */
 extern void mprRecallWaitHandlerByFd(int fd);
@@ -5946,7 +5946,7 @@ extern void mprRecallWaitHandlerByFd(int fd);
     Recall a wait handler
     @description Signal that a wait handler should be recalled at the earliest opportunity. This is useful
         when a protocol stack has buffered data that must be processed regardless of whether more I/O occurs. 
-    @param fd File descriptor to recall
+    @param wp Wait handler to recall
     @ingroup MprWaitHandler
  */
 extern void mprRecallWaitHandler(MprWaitHandler *wp);
@@ -7546,11 +7546,11 @@ extern int mprGetRandomBytes(char *buf, int size, int block);
  */
 extern int mprGetEndian();
 
-/**
+/*
     Reference to a preallocated empty string
     @return An empty string
-    @internal
     @ingroup Mpr
+    @internal
  */
 extern char* mprEmptyString();
 extern void mprSetExitStrategy(int strategy);

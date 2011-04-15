@@ -61,7 +61,6 @@ flat $(FLAT_VER):
 	cp -r $(BLD_LIB_DIR)/www $(TDIR)
 	find $(TDIR)/src -type f | xargs -I % mv % $(TDIR) 
 	cp $(SRC)/deps/pcre/pcre.h $(SRC)/deps/http/http.h $(SRC)/deps/mpr/mpr.h $(SRC)/deps/mpr/mprSsl.h $(TDIR) 
-	cp $(SRC)/include/master/*.h $(TDIR) 
 	cp $(SRC)/deps/mpr/mprLib.c $(SRC)/deps/mpr/mprSsl.c $(TDIR)
 	cp $(SRC)/deps/http/httpLib.c $(SRC)/deps/pcre/pcre.c $(TDIR)
 	cp $(SRC)/deps/ejs/*.c $(TDIR)
