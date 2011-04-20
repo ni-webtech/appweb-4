@@ -243,8 +243,8 @@ static void writeToCGI(HttpQueue *q)
     HttpPacket  *packet;
     MprCmd      *cmd;
     MprBuf      *buf;
-    ssize       len;
-    int         rc, err;
+    ssize       rc, len;
+    int         err;
 
     cmd = (MprCmd*) q->pair->queueData;
     mprAssert(cmd);

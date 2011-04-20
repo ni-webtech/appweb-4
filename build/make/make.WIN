@@ -32,7 +32,7 @@ _IFLAGS			    += -I$(BLD_INC_DIR) -I$(BLD_TOP)/src/include
 
 _CFLAGS             += -nologo -GR-
 ifeq ($(BLD_TYPE),DEBUG)
-    _CFLAGS	        += -W3 -Zi -Od
+    _CFLAGS	        += -W4 -Zi -Od
     _CFLAGS 	    += -MDd
     _LDFLAGS		+= -debug
 else

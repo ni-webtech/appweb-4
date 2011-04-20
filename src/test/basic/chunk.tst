@@ -1,5 +1,7 @@
 /*
     chunk.tst - Test chunked transfer encoding for response data
+
+    MOB - incomplete
  */
 
 const HTTP = (global.tsession && tsession["http"]) || ":4100"

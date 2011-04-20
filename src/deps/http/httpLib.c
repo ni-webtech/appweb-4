@@ -50,7 +50,7 @@ HttpAlias *httpCreateAlias(cchar *prefix, cchar *target, int code)
         return 0;
     }
     ap->prefix = sclone(prefix);
-    ap->prefixLen = (int) strlen(prefix);
+    ap->prefixLen = slen(prefix);
 
     /*  
         Always strip trailing "/" from the prefix
@@ -68,7 +68,7 @@ HttpAlias *httpCreateAlias(cchar *prefix, cchar *target, int code)
          */
         seps = mprGetPathSeparators(target);
         ap->filename = sclone(target);
-        len = strlen(ap->filename) - 1;
+        len = slen(ap->filename) - 1;
         if (len >= 0 && ap->filename[len] == seps[0]) {
             ap->filename[len] = '\0';
         }
@@ -1412,7 +1412,7 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
         }
     }
     httpError(conn, code, "Authentication Error: %s", msg);
-    httpSetPipeHandler(conn, conn->http->passHandler);
+    httpSetPipelineHandler(conn, conn->http->passHandler);
 }
 
 
@@ -1780,7 +1780,7 @@ static void incomingChunkData(HttpQueue *q, HttpPacket *packet)
     }
     buf = packet->content;
 
-    if (packet->content == 0) {
+    if (buf == 0) {
         if (rx->chunkState == HTTP_CHUNK_DATA) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad chunk state");
             return;
@@ -2176,10 +2176,11 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     conn->startTime = mprGetTime();
     conn->startTicks = mprGetTicks();
 #endif
-
     if (openConnection(conn, url) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
+    httpCreatePipeline(conn, NULL, NULL);
+
     if (setClientHeaders(conn) < 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
@@ -2239,20 +2240,34 @@ static int blockingFileCopy(HttpConn *conn, cchar *path)
 {
     MprFile     *file;
     char        buf[MPR_BUFSIZE];
-    ssize       bytes;
+    ssize       bytes, nbytes, offset;
+    int         oldMode;
 
     file = mprOpenFile(path, O_RDONLY | O_BINARY, 0);
     if (file == 0) {
         mprError("Can't open %s", path);
         return MPR_ERR_CANT_OPEN;
     }
+    mprAddRoot(file);
+    oldMode = mprSetSocketBlockingMode(conn->sock, 1);
     while ((bytes = mprReadFile(file, buf, sizeof(buf))) > 0) {
-        if (httpWriteBlock(conn->writeq, buf, bytes) != bytes) {
-            mprCloseFile(file);
-            return MPR_ERR_CANT_WRITE;
+        offset = 0;
+        while (bytes > 0) {
+            if ((nbytes = httpWriteBlock(conn->writeq, &buf[offset], bytes)) < 0) {
+                mprCloseFile(file);
+                mprRemoveRoot(file);
+                return MPR_ERR_CANT_WRITE;
+            }
+            bytes -= nbytes;
+            offset += nbytes;
+            mprAssert(bytes >= 0);
         }
+        mprYield(0);
     }
+    httpFlushQueue(conn->writeq, 1);
+    mprSetSocketBlockingMode(conn->sock, oldMode);
     mprCloseFile(file);
+    mprRemoveRoot(file);
     return 0;
 }
 
@@ -2516,14 +2531,17 @@ void httpConnTimeout(HttpConn *conn)
     } else {
         if ((conn->lastActivity + limits->inactivityTimeout) < now) {
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT,
-                "Inactive request timed out. Exceeded inactivity timeout of %d sec. Uri: \"%s\"", 
-                limits->inactivityTimeout / 1000, rx->uri);
+                "Exceeded inactivity timeout of %d sec", limits->inactivityTimeout / 1000);
 
         } else if ((conn->started + limits->requestTimeout) < now) {
-            httpError(conn, HTTP_CODE_REQUEST_TIMEOUT, 
-                "Request timed out, exceeded timeout %d sec. Url %s", limits->requestTimeout / 1000, rx->uri);
+            httpError(conn, HTTP_CODE_REQUEST_TIMEOUT, "Exceeded timeout %d sec", limits->requestTimeout / 1000);
         }
         httpFinalize(conn);
+#if UNUSED
+        httpSetState(conn, HTTP_STATE_COMPLETE);
+        httpProcess(conn, NULL);
+#endif
+        httpDisconnect(conn);
     }
 }
 
@@ -2588,7 +2606,9 @@ void httpPrepClientConn(HttpConn *conn, int keepHeaders)
         conn->rx->conn = 0;
     }
     conn->rx = httpCreateRx(conn);
+#if UNUSED
     httpCreatePipeline(conn, NULL, NULL);
+#endif
     commonPrep(conn);
 }
 
@@ -2689,10 +2709,6 @@ static void readEvent(HttpConn *conn)
             break;
         }
         if (conn->readq && conn->readq->count > conn->readq->max) {
-#if UNUSED
-            /* Must break out of this routine as the read queue is overflowing. Schedule a recall */
-            conn->recall = 1;
-#endif
             break;
         }
     }
@@ -2701,7 +2717,8 @@ static void readEvent(HttpConn *conn)
 
 static void writeEvent(HttpConn *conn)
 {
-    LOG(6, "httpProcessWriteEvent, state %d", conn->state);
+    //  MOB 6
+    LOG(3, "httpProcessWriteEvent, state %d", conn->state);
 
     conn->writeBlocked = 0;
     if (conn->tx) {
@@ -2742,11 +2759,10 @@ void httpEnableConnEvents(HttpConn *conn)
             return;
         }
         if (tx) {
-            if (tx->queue[HTTP_QUEUE_TRANS]->prevQ->count > 0) {
+            //  MOB OPT - can we just test writeBlocked?
+            if (conn->writeBlocked || tx->queue[HTTP_QUEUE_TRANS]->prevQ->count > 0) {
                 eventMask |= MPR_WRITABLE;
-            } else {
-                mprAssert(!conn->writeBlocked);
-            } 
+            }
             /*
                 Allow read events even if the current request is not complete. The pipelined request will be buffered 
                 and will be ready when the current request completes.
@@ -2797,7 +2813,8 @@ static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead)
     HttpPacket  *packet;
     MprBuf      *content;
     HttpRx      *rx;
-    MprOff      len;
+    MprOff      remaining;
+    ssize       len;
 
     rx = conn->rx;
     len = HTTP_BUFSIZE;
@@ -2819,10 +2836,11 @@ static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead)
                 accross packets.
              */
             if (rx->remainingContent) {
-                len = rx->remainingContent;
+                remaining = rx->remainingContent;
                 if (rx->flags & HTTP_CHUNKED) {
-                    len = max(len, HTTP_BUFSIZE);
+                    remaining = max(remaining, HTTP_BUFSIZE);
                 }
+                len = (ssize) min(remaining, MAXSSIZE);
             }
             len = min(len, HTTP_BUFSIZE);
             mprAssert(len > 0);
@@ -3072,7 +3090,7 @@ void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
                 conn->rx->status = status;
             }
         }
-        if (conn->rx == 0) {
+        if (conn->rx == 0 || conn->rx->uri == 0) {
             mprLog(2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
         } else {
             mprLog(2, "Error: \"%s\", status %d for URI \"%s\": %s.",
@@ -3870,8 +3888,8 @@ void httpSetHostProtocol(HttpHost *host, cchar *protocol)
 
 int httpAddAlias(HttpHost *host, HttpAlias *newAlias)
 {
-    HttpAlias     *alias;
-    int         rc, next;
+    HttpAlias   *alias;
+    int         next, rc;
 
     if (host->parent && host->aliases == host->parent->aliases) {
         host->aliases = mprCloneList(host->parent->aliases);
@@ -3905,7 +3923,7 @@ int httpAddAlias(HttpHost *host, HttpAlias *newAlias)
 int httpAddDir(HttpHost *host, HttpDir *dir)
 {
     HttpDir     *dp;
-    int         rc, next;
+    int         next, rc;
 
     mprAssert(dir);
     mprAssert(dir->path);
@@ -3970,7 +3988,7 @@ int httpAddLocation(HttpHost *host, HttpLoc *newLocation)
 HttpAlias *httpGetAlias(HttpHost *host, cchar *uri)
 {
     HttpAlias     *alias;
-    int         next;
+    int           next;
 
     if (uri) {
         for (next = 0; (alias = mprGetNextItem(host->aliases, &next)) != 0; ) {
@@ -4004,9 +4022,9 @@ HttpAlias *httpLookupAlias(HttpHost *host, cchar *prefix)
 
 HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg)
 {
-    HttpDir       *dir;
+    HttpDir     *dir;
     char        *path, *tmpPath;
-    int         next, len;
+    int         next;
 
     if (!mprIsAbsPath(pathArg)) {
         path = tmpPath = mprGetAbsPath(pathArg);
@@ -4014,8 +4032,6 @@ HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg)
         path = (char*) pathArg;
         tmpPath = 0;
     }
-    len = (int) strlen(path);
-
     for (next = 0; (dir = mprGetNextItem(host->dirs, &next)) != 0; ) {
         mprAssert(strlen(dir->path) == 0 || dir->path[strlen(dir->path) - 1] != '/');
         if (dir->path != 0) {
@@ -4036,11 +4052,9 @@ HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg)
  */
 HttpDir *httpLookupBestDir(HttpHost *host, cchar *path)
 {
-    HttpDir *dir;
-    ssize   dlen;
-    int     next, len;
-
-    len = (int) strlen(path);
+    HttpDir     *dir;
+    ssize       dlen;
+    int         next;
 
     for (next = 0; (dir = mprGetNextItem(host->dirs, &next)) != 0; ) {
         dlen = dir->pathLen;
@@ -4318,7 +4332,7 @@ HttpStatusCode HttpStatusCodes[] = {
     { 404, "404", "Not Found" },
     { 405, "405", "Method Not Allowed" },
     { 406, "406", "Not Acceptable" },
-    { 408, "408", "Request Time-out" },
+    { 408, "408", "Request Timeout" },
     { 409, "409", "Conflict" },
     { 410, "410", "Length Required" },
     { 411, "411", "Length Required" },
@@ -4332,7 +4346,7 @@ HttpStatusCode HttpStatusCodes[] = {
     { 501, "501", "Not Implemented" },
     { 502, "502", "Bad Gateway" },
     { 503, "503", "Service Unavailable" },
-    { 504, "504", "Gateway Time-out" },
+    { 504, "504", "Gateway Timeout" },
     { 505, "505", "Http Version Not Supported" },
     { 507, "507", "Insufficient Storage" },
 
@@ -4482,12 +4496,12 @@ int httpAddHostToServers(Http *http, struct HttpHost *host)
 {
     HttpServer  *server;
     cchar       *ip;
-    int         count, next;
+    int         next, count;
 
     ip = host->ip ? host->ip : "";
     mprAssert(ip);
 
-    for (count = next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
+    for (count = 0, next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
         if (server->port <= 0 || host->port <= 0 || server->port == host->port) {
             mprAssert(server->ip);
             if (*server->ip == '\0' || *ip == '\0' || scmp(server->ip, ip) == 0) {
@@ -4503,12 +4517,12 @@ int httpAddHostToServers(Http *http, struct HttpHost *host)
 int httpSetNamedVirtualServers(Http *http, cchar *ip, int port)
 {
     HttpServer  *server;
-    int         count, next;
+    int         next, count;
 
     if (ip == 0) {
         ip = "";
     }
-    for (count = next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
+    for (count = 0, next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
         if (server->port <= 0 || port <= 0 || server->port == port) {
             mprAssert(server->ip);
             if (*server->ip == '\0' || *ip == '\0' || scmp(server->ip, ip) == 0) {
@@ -4697,8 +4711,9 @@ static void httpTimer(Http *http, MprEvent *event)
     for (count = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; count++) {
         rx = conn->rx;
         limits = conn->limits;
-        if ((conn->lastActivity + limits->inactivityTimeout) < http->now || 
-            (conn->started + limits->requestTimeout) < http->now) {
+        if (!conn->timeoutEvent && (
+            (conn->lastActivity + limits->inactivityTimeout) < http->now || 
+            (conn->started + limits->requestTimeout) < http->now)) {
             if (rx) {
                 /*
                     Don't call APIs on the conn directly (thread-race). Schedule a timer on the connection's dispatcher
@@ -5181,7 +5196,7 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
 
 
 /*  
-    Set a handler to universally apply to requests in this location block.
+    Set a handler to apply to requests in this location block.
  */
 int httpSetHandler(HttpLoc *loc, cchar *name)
 {
@@ -5988,7 +6003,7 @@ char *httpMakeFilename(HttpConn *conn, HttpAlias *alias, cchar *url, bool skipAl
 
 static void addPacketForNet(HttpQueue *q, HttpPacket *packet);
 static void adjustNetVec(HttpQueue *q, ssize written);
-static ssize buildNetVec(HttpQueue *q);
+static MprOff buildNetVec(HttpQueue *q);
 static void freeNetPackets(HttpQueue *q, ssize written);
 static void netOutgoingService(HttpQueue *q);
 
@@ -6099,7 +6114,7 @@ static void netOutgoingService(HttpQueue *q)
 /*
     Build the IO vector. Return the count of bytes to be written. Return -1 for EOF.
  */
-static ssize buildNetVec(HttpQueue *q)
+static MprOff buildNetVec(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpTx      *tx;
@@ -6331,7 +6346,7 @@ static void managePacket(HttpPacket *packet, int flags);
     used for incoming body content. If size > 0, then create a non-growable buffer 
     of the requested size.
  */
-HttpPacket *httpCreatePacket(MprOff size)
+HttpPacket *httpCreatePacket(ssize size)
 {
     HttpPacket  *packet;
 
@@ -6343,7 +6358,6 @@ HttpPacket *httpCreatePacket(MprOff size)
             return 0;
         }
     }
-    mprLog(8, "DEBUG: httpCreate new packet %d", packet->entityLength);
     return packet;
 }
 
@@ -6353,48 +6367,11 @@ static void managePacket(HttpPacket *packet, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(packet->prefix);
         mprMark(packet->content);
-        mprMark(packet->suffix);
-        /*  
-            Move to manageQueue to reduce stack depth
-            mprMark(packet->next);
-         */
     }
 }
 
 
-#if FUTURE
-void httpFreePacket(HttpQueue *q, HttpPacket *packet)
-{
-    HttpConn    *conn;
-    HttpRx      *rx;
-
-    conn = q->conn;
-    rx = conn->rx;
-
-    if (rx == 0 || packet->content == 0 || packet->content->buflen < HTTP_BUFSIZE || mprIsParent(conn, packet)) {
-        /* 
-            Don't bother recycling non-content, small packets or packets owned by the connection
-            We only store packets owned by the request and not by the connection on the free list.
-         */
-        return;
-    }
-    /*  
-        Add to the packet free list for recycling
-        MOB -- need some thresholds to manage this incase it gets too big
-     */
-    mprAssert(packet->content);
-    mprFlushBuf(packet->content);
-    packet->prefix = 0;
-    packet->suffix = 0;
-    packet->entityLength = 0;
-    packet->flags = 0;
-    packet->next = rx->freePackets;
-    rx->freePackets = packet;
-} 
-#endif
-
-
-HttpPacket *httpCreateDataPacket(MprOff size)
+HttpPacket *httpCreateDataPacket(ssize size)
 {
     HttpPacket    *packet;
 
@@ -6402,6 +6379,21 @@ HttpPacket *httpCreateDataPacket(MprOff size)
         return 0;
     }
     packet->flags = HTTP_PACKET_DATA;
+    return packet;
+}
+
+
+HttpPacket *httpCreateEntityPacket(MprOff pos, MprOff size, HttpFillProc fill)
+{
+    HttpPacket    *packet;
+
+    if ((packet = httpCreatePacket(0)) == 0) {
+        return 0;
+    }
+    packet->flags = HTTP_PACKET_DATA;
+    packet->epos = pos;
+    packet->esize = size;
+    packet->fill = fill;
     return packet;
 }
 
@@ -6470,7 +6462,7 @@ HttpPacket *httpGetPacket(HttpQueue *q)
  */
 bool httpIsPacketTooBig(HttpQueue *q, HttpPacket *packet)
 {
-    MprOff      size;
+    ssize   size;
     
     size = mprGetBufLength(packet->content);
     return size > q->max || size > q->packetSize;
@@ -6478,7 +6470,7 @@ bool httpIsPacketTooBig(HttpQueue *q, HttpPacket *packet)
 
 
 /*  
-    Join a packet onto the service queue
+    Join a packet onto the service queue. This joins packet content data.
  */
 void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
 {
@@ -6489,7 +6481,8 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
         httpPutForService(q, packet, 0);
     } else {
         q->count += httpGetPacketLength(packet);
-        if (q->first && httpGetPacketLength(q->first) == 0) {
+        /* Skip over the header packet */
+        if (q->first && q->first->flags & HTTP_PACKET_HEADER) {
             packet = q->first->next;
             q->first = packet;
         } else {
@@ -6510,7 +6503,10 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
  */
 int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 {
-    MprOff      len;
+    ssize   len;
+
+    mprAssert(packet->esize == 0);
+    mprAssert(p->esize == 0);
 
     len = httpGetPacketLength(p);
     if (mprPutBlockToBuf(packet->content, mprGetBufStart(p->content), (ssize) len) != len) {
@@ -6523,10 +6519,10 @@ int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 /*
     Join queue packets up to the maximum of the given size and the downstream queue packet size.
  */
-void httpJoinPackets(HttpQueue *q, MprOff size)
+void httpJoinPackets(HttpQueue *q, ssize size)
 {
     HttpPacket  *packet, *first, *next;
-    MprOff      maxPacketSize;
+    ssize       maxPacketSize;
 
     if (size < 0) {
         size = MAXINT;
@@ -6555,16 +6551,16 @@ void httpPutBackPacket(HttpQueue *q, HttpPacket *packet)
 {
     mprAssert(packet);
     mprAssert(packet->next == 0);
-    
-    packet->next = q->first;
-
-    if (q->first == 0) {
-        q->last = packet;
-    }
-    q->first = packet;
-    mprAssert(httpGetPacketLength(packet) >= 0);
-    q->count += httpGetPacketLength(packet);
     mprAssert(q->count >= 0);
+    
+    if (packet) {
+        packet->next = q->first;
+        if (q->first == 0) {
+            q->last = packet;
+        }
+        q->first = packet;
+        q->count += httpGetPacketLength(packet);
+    }
 }
 
 
@@ -6592,35 +6588,36 @@ void httpPutForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
 
 
 /*  
-    Split a packet if required so it fits in the downstream queue. Put back the 2nd portion of the split packet on the queue.
-    Ensure that the packet is not larger than "size" if it is greater than zero.
+    Resize and possibly split a packet so it fits in the downstream queue. Put back the 2nd portion of the split packet 
+    on the queue. Ensure that the packet is not larger than "size" if it is greater than zero. If size < 0, then
+    use the default packet size. 
  */
-int httpResizePacket(HttpQueue *q, HttpPacket *packet, MprOff size)
+int httpResizePacket(HttpQueue *q, HttpPacket *packet, ssize size)
 {
     HttpPacket  *tail;
-    MprOff      len;
+    ssize       len;
     
     if (size <= 0) {
         size = MAXINT;
     }
-    /*  
-        Calculate the size that will fit
-     */
-    len = packet->content ? httpGetPacketLength(packet) : packet->entityLength;
-    size = min(size, len);
-    size = min(size, q->nextQ->max);
-    size = min(size, q->nextQ->packetSize);
-
-    if (size == 0) {
-        /* Can't fit anything downstream, no point splitting yet */
-        return 0;
-    }
-    if (size == len) {
-        return 0;
-    }
-    tail = httpSplitPacket(packet, size);
-    if (tail == 0) {
-        return MPR_ERR_MEMORY;
+    if (packet->esize > size) {
+        if ((tail = httpSplitPacket(packet, size)) == 0) {
+            return MPR_ERR_MEMORY;
+        }
+    } else {
+        /*  
+            Calculate the size that will fit downstream
+         */
+        len = packet->content ? httpGetPacketLength(packet) : 0;
+        size = min(size, len);
+        size = min(size, q->nextQ->max);
+        size = min(size, q->nextQ->packetSize);
+        if (size == 0 || size == len) {
+            return 0;
+        }
+        if ((tail = httpSplitPacket(packet, size)) == 0) {
+            return MPR_ERR_MEMORY;
+        }
     }
     httpPutBackPacket(q, tail);
     return 0;
@@ -6640,11 +6637,10 @@ HttpPacket *httpClonePacket(HttpPacket *orig)
     if (orig->prefix) {
         packet->prefix = mprCloneBuf(orig->prefix);
     }
-    if (orig->suffix) {
-        packet->suffix = mprCloneBuf(orig->suffix);
-    }
     packet->flags = orig->flags;
-    packet->entityLength = orig->entityLength;
+    packet->esize = orig->esize;
+    packet->epos = orig->epos;
+    packet->fill = orig->fill;
     return packet;
 }
 
@@ -6655,8 +6651,8 @@ HttpPacket *httpClonePacket(HttpPacket *orig)
 void httpSendPacket(HttpQueue *q, HttpPacket *packet)
 {
     mprAssert(packet);
-    
     mprAssert(q->put);
+
     q->put(q, packet);
 }
 
@@ -6667,8 +6663,8 @@ void httpSendPacket(HttpQueue *q, HttpPacket *packet)
 void httpSendPacketToNext(HttpQueue *q, HttpPacket *packet)
 {
     mprAssert(packet);
-    
     mprAssert(q->nextQ->put);
+
     q->nextQ->put(q->nextQ, packet);
 }
 
@@ -6685,43 +6681,31 @@ void httpSendPackets(HttpQueue *q)
 
 /*  
     Split a packet at a given offset and return a new packet containing the data after the offset.
-    The suffix data migrates to the new packet. 
+    The prefix data remains with the original packet. 
  */
-HttpPacket *httpSplitPacket(HttpPacket *orig, MprOff offset)
+HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
 {
     HttpPacket  *packet;
-    MprOff      count, size;
+    ssize       count, size;
 
-    if (offset >= httpGetPacketLength(orig)) {
-        mprAssert(0);
-        return 0;
-    }
-    count = httpGetPacketLength(orig) - offset;
-    size = max(count, HTTP_BUFSIZE);
-    size = HTTP_PACKET_ALIGN(size);
+    if (orig->esize) {
+        if ((packet = httpCreateEntityPacket(orig->epos + offset, orig->esize - offset, orig->fill)) == 0) {
+            return 0;
+        }
+        orig->esize = offset;
 
-    if ((packet = httpCreatePacket((orig->content == 0) ? 0 : size)) == 0) {
-        return 0;
-    }
-    packet->flags = orig->flags;
-
-    if (orig->entityLength) {
-        orig->entityLength = offset;
-        packet->entityLength = count;
-    }
-
-#if FUTURE
-    /*
-        Suffix migrates to the new packet (Not currently used)
-     */
-    if (packet->suffix) {
-        packet->suffix = orig->suffix;
-        orig->suffix = 0;
-    }
-#endif
-
-    if (orig->content && httpGetPacketLength(orig) > 0) {
-        mprAdjustBufEnd(orig->content, (ssize) -count);
+    } else {
+        if (offset >= httpGetPacketLength(orig)) {
+            mprAssert(offset < httpGetPacketLength(orig));
+            return 0;
+        }
+        count = httpGetPacketLength(orig) - offset;
+        size = max(count, HTTP_BUFSIZE);
+        size = HTTP_PACKET_ALIGN(size);
+        if ((packet = httpCreateDataPacket(size)) == 0) {
+            return 0;
+        }
+        httpAdjustPacketEnd(orig, (ssize) -count);
         if (mprPutBlockToBuf(packet->content, mprGetBufEnd(orig->content), (ssize) count) != count) {
             return 0;
         }
@@ -6729,7 +6713,29 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, MprOff offset)
         mprAddNullToBuf(orig->content);
 #endif
     }
+    packet->flags = orig->flags;
     return packet;
+}
+
+
+void httpAdjustPacketStart(HttpPacket *packet, MprOff size)
+{
+    if (packet->esize) {
+        packet->epos += size;
+        packet->esize -= size;
+    } else if (packet->content) {
+        mprAdjustBufStart(packet->content, (ssize) size);
+    }
+}
+
+
+void httpAdjustPacketEnd(HttpPacket *packet, MprOff size)
+{
+    if (packet->esize) {
+        packet->esize += size;
+    } else if (packet->content) {
+        mprAdjustBufEnd(packet->content, (ssize) size);
+    }
 }
 
 
@@ -6962,8 +6968,8 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
         }
     }
     if (tx->connector == 0) {
-        if (tx->handler == http->fileHandler && rx->flags & HTTP_GET && !rx->ranges && !conn->secure && tx->chunkSize <= 0) {
-            //  MOB - should not use this if tracing content is requested
+        if (tx->handler == http->fileHandler && rx->flags & HTTP_GET && !rx->ranges && !conn->secure && tx->chunkSize <= 0 &&
+                httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_BODY, NULL) < 0) {
             tx->connector = http->sendConnector;
         } else if (loc && loc->connector) {
             tx->connector = loc->connector;
@@ -7059,8 +7065,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
 }
 
 
-//  MOB - who calls
-void httpSetPipeHandler(HttpConn *conn, HttpStage *handler)
+void httpSetPipelineHandler(HttpConn *conn, HttpStage *handler)
 {
     conn->tx->handler = (handler) ? handler : conn->http->passHandler;
 }
@@ -7070,21 +7075,10 @@ void httpSetSendConnector(HttpConn *conn, cchar *path)
 {
 #if !BLD_FEATURE_ROMFS
     HttpTx      *tx;
-    HttpQueue   *q, *qhead;
-    ssize       maxBody;
 
     tx = conn->tx;
     tx->flags |= HTTP_TX_SENDFILE;
     tx->filename = sclone(path);
-
-    //  MOB - does this limit max transmission?
-    maxBody = (ssize) conn->limits->transmissionBodySize;
-
-    qhead = tx->queue[HTTP_QUEUE_TRANS];
-    for (q = conn->writeq; q != qhead; q = q->nextQ) {
-        q->max = maxBody;
-        q->packetSize = maxBody;
-    }
 #else
     mprError("Send connector not available if ROMFS enabled");
 #endif
@@ -7115,14 +7109,15 @@ void httpDestroyPipeline(HttpConn *conn)
 
 void httpStartPipeline(HttpConn *conn)
 {
-    HttpQueue   *qhead, *q;
+    HttpQueue   *qhead, *q, *prevQ, *nextQ;
     HttpTx      *tx;
     
     tx = conn->tx;
 
     if (conn->rx->needInputPipeline) {
         qhead = tx->queue[HTTP_QUEUE_RECEIVE];
-        for (q = qhead->nextQ; q->nextQ != qhead; q = q->nextQ) {
+        for (q = qhead->nextQ; q->nextQ != qhead; q = nextQ) {
+            nextQ = q->nextQ;
             if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
                 if (q->pair == 0 || !(q->pair->flags & HTTP_QUEUE_STARTED)) {
                     q->flags |= HTTP_QUEUE_STARTED;
@@ -7132,7 +7127,8 @@ void httpStartPipeline(HttpConn *conn)
         }
     }
     qhead = tx->queue[HTTP_QUEUE_TRANS];
-    for (q = qhead->prevQ; q->prevQ != qhead; q = q->prevQ) {
+    for (q = qhead->prevQ; q->prevQ != qhead; q = prevQ) {
+        prevQ = q->prevQ;
         if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
             q->flags |= HTTP_QUEUE_STARTED;
             HTTP_TIME(conn, q->stage->name, "start", q->stage->start(q));
@@ -7418,7 +7414,7 @@ void httpDisableQueue(HttpQueue *q)
 void httpDiscardData(HttpQueue *q, bool removePackets)
 {
     HttpPacket  *packet, *prev, *next;
-    MprOff      len;
+    ssize       len;
 
     for (prev = 0, packet = q->first; packet; packet = next) {
         next = packet->next;
@@ -7459,17 +7455,21 @@ bool httpFlushQueue(HttpQueue *q, bool blocking)
 {
     HttpConn    *conn;
     HttpQueue   *next;
+#if UNUSED
     int         oldMode;
+#endif
 
     conn = q->conn;
     LOG(6, "httpFlushQueue blocking %d", blocking);
     mprAssert(conn->sock);
 
+#if UNUSED
     if (q->flags & HTTP_QUEUE_DISABLED || conn->sock == 0) {
         return 0;
     }
+    oldMode = mprSetSocketBlockingMode(conn->sock, blocking);
+#endif
     do {
-        oldMode = mprSetSocketBlockingMode(conn->sock, blocking);
         httpScheduleQueue(q);
         next = q->nextQ;
         if (next->count >= next->max) {
@@ -7479,8 +7479,10 @@ bool httpFlushQueue(HttpQueue *q, bool blocking)
         if (conn->sock == 0) {
             break;
         }
-        mprSetSocketBlockingMode(conn->sock, oldMode);
     } while (blocking && q->count >= q->max);
+#if UNUSED
+    mprSetSocketBlockingMode(conn->sock, oldMode);
+#endif
     return (q->count < q->max) ? 1 : 0;
 }
 
@@ -7630,7 +7632,6 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
         if (len > 0) {
             len = mprGetBlockFromBuf(content, buf, len);
         }
-        rx->readContent += len;
         buf += len;
         size -= len;
         q->count -= len;
@@ -7649,17 +7650,20 @@ int httpIsEof(HttpConn *conn)
 }
 
 
+/*
+    Read all the content buffered so far
+ */
 char *httpReadString(HttpConn *conn)
 {
     HttpRx      *rx;
+    ssize       sofar, nbytes, remaining;
     char        *content;
-    MprOff      remaining, sofar, nbytes;
 
     rx = conn->rx;
+    remaining = (ssize) min(MAXSSIZE, rx->length);
 
-    if (rx->length > 0) {
-        content = mprAlloc(rx->length + 1);
-        remaining = rx->length;
+    if (remaining > 0) {
+        content = mprAlloc(remaining + 1);
         sofar = 0;
         while (remaining > 0) {
             nbytes = httpRead(conn, &content[sofar], remaining);
@@ -7745,35 +7749,49 @@ void httpServiceQueue(HttpQueue *q)
  */
 bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
 {
-    HttpQueue   *next;
-    MprOff      size;
+    HttpQueue   *nextQ;
+    ssize       size;
 
-    next = q->nextQ;
-
-#if UNUSED
-    size = packet->content ? mprGetBufLength(packet->content) : 0;
-#else
+    nextQ = q->nextQ;
     size = httpGetPacketLength(packet);
-#endif
-    if (size <= next->packetSize && (size + next->count) <= next->max) {
+    if (size <= nextQ->packetSize && (size + nextQ->count) <= nextQ->max) {
         return 1;
     }
     if (httpResizePacket(q, packet, 0) < 0) {
         return 0;
     }
     size = httpGetPacketLength(packet);
-    if (size <= next->packetSize && (size + next->count) <= next->max) {
+    mprAssert(size <= nextQ->packetSize);
+    if ((size + nextQ->count) <= nextQ->max) {
         return 1;
     }
     /*  
         The downstream queue is full, so disable the queue and mark the downstream queue as full and service 
-        if immediately if not disabled.  
      */
-    mprLog(7, "Disable queue %s", q->owner);
     httpDisableQueue(q);
-    next->flags |= HTTP_QUEUE_FULL;
-    if (!(next->flags & HTTP_QUEUE_DISABLED)) {
-        httpScheduleQueue(next);
+    nextQ->flags |= HTTP_QUEUE_FULL;
+    if (!(nextQ->flags & HTTP_QUEUE_DISABLED)) {
+        httpScheduleQueue(nextQ);
+    }
+    return 0;
+}
+
+
+/*  
+    Return true if the next queue will accept a certain amount of data.
+ */
+bool httpWillNextQueueAcceptSize(HttpQueue *q, ssize size)
+{
+    HttpQueue   *nextQ;
+
+    nextQ = q->nextQ;
+    if (size <= nextQ->packetSize && (size + nextQ->count) <= nextQ->max) {
+        return 1;
+    }
+    httpDisableQueue(q);
+    nextQ->flags |= HTTP_QUEUE_FULL;
+    if (!(nextQ->flags & HTTP_QUEUE_DISABLED)) {
+        httpScheduleQueue(nextQ);
     }
     return 0;
 }
@@ -7911,11 +7929,10 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
 static void createRangeBoundary(HttpConn *conn);
 static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range);
 static HttpPacket *createFinalRangePacket(HttpConn *conn);
-static void incomingRangeData(HttpQueue *q, HttpPacket *packet);
 static void outgoingRangeService(HttpQueue *q);
 static bool fixRangeLength(HttpConn *conn);
 static bool matchRange(HttpConn *conn, HttpStage *handler);
-static void rangeService(HttpQueue *q, HttpRangeProc fill);
+static void startRange(HttpQueue *q);
 
 
 int httpOpenRangeFilter(Http *http)
@@ -7927,66 +7944,135 @@ int httpOpenRangeFilter(Http *http)
         return MPR_ERR_CANT_CREATE;
     }
     http->rangeFilter = filter;
-    http->rangeService = rangeService;
     filter->match = matchRange; 
+    filter->start = startRange; 
     filter->outgoingService = outgoingRangeService; 
-    filter->incomingData = incomingRangeData; 
     return 0;
 }
 
 
 static bool matchRange(HttpConn *conn, HttpStage *handler)
 {
-    return (conn->rx->ranges) ? 1 : 0;;
+    mprAssert(conn->rx);
+
+    return (conn->rx->ranges) ? 1 : 0;
 }
 
 
-/*
-    The RangeFilter does nothing for incoming data. The rx understands range headers
- */
-static void incomingRangeData(HttpQueue *q, HttpPacket *packet)
+static void startRange(HttpQueue *q)
 {
-    httpSendPacketToNext(q, packet);
+    HttpConn    *conn;
+    HttpTx      *tx;
+    HttpRx      *rx;
+
+    conn = q->conn;
+    tx = conn->tx;
+    rx = conn->rx;
+    mprAssert(rx->ranges);
+
+    if (tx->status != HTTP_CODE_OK || !fixRangeLength(conn)) {
+        httpRemoveQueue(q);
+    } else {
+        tx->status = HTTP_CODE_PARTIAL;
+        if (rx->ranges->next) {
+            createRangeBoundary(conn);
+        }
+    }
 }
 
 
-/*  
-    Apply ranges to outgoing data. 
- */
-static void rangeService(HttpQueue *q, HttpRangeProc fill)
+static void applyRange(HttpQueue *q, HttpPacket *packet)
 {
-    HttpPacket  *packet;
     HttpRange   *range;
     HttpConn    *conn;
     HttpRx      *rx;
     HttpTx      *tx;
-    ssize       bytes, count, endpos;
+    MprOff      endPacket, length, gap, span;
+    ssize       count;
 
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
     range = tx->currentRange;
 
-    if (!(q->flags & HTTP_QUEUE_SERVICED)) {
-        if (tx->entityLength < 0 && q->last->flags & HTTP_PACKET_END) {
+    /*  
+        Process the data packet over multiple ranges ranges until all the data is processed or discarded.
+        A packet may contain data or it may be empty with an associated entityLength. If empty, range packets
+        are filled with entity data as required.
+     */
+    while (range) {
+        length = httpGetPacketEntityLength(packet);
+        if (length <= 0) {
+            break;
+        }
+        endPacket = tx->rangePos + length;
+        if (endPacket < range->start) {
+            /* Packet is before the next range, so discard the entire packet and seek forwards */
+            tx->rangePos += length;
+            break;
 
-           /*   Compute an entity length. This allows negative ranges computed from the end of the data.
-            */
-           tx->entityLength = q->count;
+        } else if (tx->rangePos < range->start) {
+            /*  Packet starts before range so skip some data, but some packet data is in range */
+            gap = (range->start - tx->rangePos);
+            tx->rangePos += gap;
+            if (gap < length) {
+                httpAdjustPacketStart(packet, (ssize) gap);
+            }
+            /* Keep going and examine next range */
+
+        } else {
+            /* In range */
+            mprAssert(range->start <= tx->rangePos && tx->rangePos < range->end);
+            span = min(length, (range->end - tx->rangePos));
+            count = (ssize) min(span, q->nextQ->packetSize);
+            mprAssert(count > 0);
+            if (!httpWillNextQueueAcceptSize(q, count)) {
+                httpPutBackPacket(q, packet);
+                return;
+            }
+            if (length > count) {
+                /* Split packet if packet extends past range */
+                httpPutBackPacket(q, httpSplitPacket(packet, count));
+            }
+            if (packet->fill && (*packet->fill)(q, packet, tx->rangePos, count) < 0) {
+                return;
+            }
+            if (tx->rangeBoundary) {
+                httpSendPacketToNext(q, createRangePacket(conn, range));
+            }
+            httpSendPacketToNext(q, packet);
+            tx->rangePos += count;
         }
-        if (tx->status != HTTP_CODE_OK || !fixRangeLength(conn)) {
-            httpSendPackets(q);
-            httpRemoveQueue(q);
-            return;
+        if (tx->rangePos >= range->end) {
+            tx->currentRange = range = range->next;
         }
-        if (rx->ranges->next) {
-            createRangeBoundary(conn);
-        }
-        tx->status = HTTP_CODE_PARTIAL;
     }
+}
+
+
+/*  
+    Apply ranges to outgoing data. This may be run on behalf of a handlers queue.
+ */
+static void outgoingRangeService(HttpQueue *q)
+{
+    HttpPacket  *packet;
+    HttpRange   *range;
+    HttpConn    *conn;
+    HttpRx      *rx;
+    HttpTx      *tx;
+
+    conn = q->conn;
+    rx = conn->rx;
+    tx = conn->tx;
+    range = tx->currentRange;
 
     for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
-        if (!(packet->flags & HTTP_PACKET_DATA)) {
+        if (packet->flags & HTTP_PACKET_DATA) {
+            applyRange(q, packet);
+        } else {
+            /*
+                Send headers and end packet downstream
+             */
             if (packet->flags & HTTP_PACKET_END && tx->rangeBoundary) {
                 httpSendPacketToNext(q, createFinalRangePacket(conn));
             }
@@ -7995,79 +8081,13 @@ static void rangeService(HttpQueue *q, HttpRangeProc fill)
                 return;
             }
             httpSendPacketToNext(q, packet);
-            continue;
-        }
-
-        /*  Process the current packet over multiple ranges ranges until all the data is processed or discarded.
-         */
-        bytes = packet->content ? mprGetBufLength(packet->content) : packet->entityLength;
-        while (range && bytes > 0) {
-
-            endpos = tx->pos + bytes;
-            if (endpos < range->start) {
-                /* Packet is before the next range, so discard the entire packet */
-                tx->pos += bytes;
-                break;
-
-            } else if (tx->pos > range->end) {
-                /* Missing some output - should not happen */
-                mprAssert(0);
-
-            } else if (tx->pos < range->start) {
-                /*  Packets starts before range with some data in range so skip some data */
-                count = (range->start - tx->pos);
-                bytes -= count;
-                tx->pos += count;
-                if (packet->content == 0) {
-                    packet->entityLength -= count;
-                }
-                if (packet->content) {
-                    mprAdjustBufStart(packet->content, count);
-                }
-                continue;
-
-            } else {
-                /* In range */
-                mprAssert(range->start <= tx->pos && tx->pos < range->end);
-                count = min(bytes, (int) (range->end - tx->pos));
-                count = min(count, q->nextQ->packetSize);
-                mprAssert(count > 0);
-                if (count < bytes) {
-                    //  TODO OPT. Only need to resize if this completes all the range data.
-                    httpResizePacket(q, packet, count);
-                }
-                if (!httpWillNextQueueAcceptPacket(q, packet)) {
-                    httpPutBackPacket(q, packet);
-                    return;
-                }
-                if (fill) {
-                    if ((*fill)(q, packet) < 0) {
-                        return;
-                    }
-                }
-                tx->pos += count;
-                if (tx->rangeBoundary) {
-                    httpSendPacketToNext(q, createRangePacket(conn, range));
-                }
-                httpSendPacketToNext(q, packet);
-                if (tx->pos >= range->end) {
-                    range = range->next;
-                }
-                break;
-            }
         }
     }
-    tx->currentRange = range;
 }
 
 
-static void outgoingRangeService(HttpQueue *q)
-{
-    rangeService(q, NULL);
-}
-
-
-/*  Create a range boundary packet
+/*  
+    Create a range boundary packet
  */
 static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range)
 {
@@ -8093,7 +8113,8 @@ static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range)
 }
 
 
-/*  Create a final range packet that follows all the data
+/*  
+    Create a final range packet that follows all the data
  */
 static HttpPacket *createFinalRangePacket(HttpConn *conn)
 {
@@ -8109,7 +8130,8 @@ static HttpPacket *createFinalRangePacket(HttpConn *conn)
 }
 
 
-/*  Create a range boundary. This is required if more than one range is requested.
+/*  
+    Create a range boundary. This is required if more than one range is requested.
  */
 static void createRangeBoundary(HttpConn *conn)
 {
@@ -8131,11 +8153,11 @@ static bool fixRangeLength(HttpConn *conn)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpRange   *range;
-    ssize       length;
+    MprOff      length;
 
     rx = conn->rx;
     tx = conn->tx;
-    length = tx->entityLength;
+    length = tx->entityLength ? tx->entityLength : tx->length;
 
     for (range = rx->ranges; range; range = range->next) {
         /*
@@ -8155,8 +8177,10 @@ static bool fixRangeLength(HttpConn *conn)
         if (range->start < 0) {
             if (length <= 0) {
                 /*
-                    Can't compute an offset from the end as we don't know the entity length
+                    Can't compute an offset from the end as we don't know the entity length and it is not always possible
+                    or wise to buffer all the output.
                  */
+                httpError(conn, HTTP_CODE_RANGE_NOT_SATISFIABLE, "Can't compute end range with unknown content length"); 
                 return 0;
             }
             /* select last -range-end bytes */
@@ -8395,11 +8419,14 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     rx = conn->rx;
     tx = conn->tx;
     
-    if ((len = mprGetBufLength(packet->content)) == 0) {
+    if ((len = httpGetPacketLength(packet)) == 0) {
         return 0;
     }
     start = mprGetBufStart(packet->content);
     if ((end = scontains(start, "\r\n\r\n", len)) == 0) {
+        if (len >= conn->limits->headerSize) {
+            httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE, "Header too big");
+        }
         return 0;
     }
     len = (int) (end - start);
@@ -8561,7 +8588,10 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
             rx->needInputPipeline = 1;
         }
         conn->http10 = 1;
-    } else if (strcmp(protocol, "HTTP/1.1") != 0) {
+        conn->protocol = protocol;
+    } else if (strcmp(protocol, "HTTP/1.1") == 0) {
+        conn->protocol = protocol;
+    } else {
         httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
     }
     rx->flags |= methodFlags;
@@ -8696,7 +8726,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 if (rx->length >= conn->limits->receiveBodySize) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
-                        "Request content length %d bytes is too big. Limit %d", rx->length, conn->limits->receiveBodySize);
+                        "Request content length %Ld bytes is too big. Limit %Ld", rx->length, conn->limits->receiveBodySize);
                     break;
                 }
                 rx->contentLength = sclone(value);
@@ -8713,7 +8743,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     Where n1 is first byte pos and n2 is last byte pos
                  */
                 char    *sp;
-                int     start, end, size;
+                MprOff  start, end, size;
 
                 start = end = size = -1;
                 sp = value;
@@ -8721,16 +8751,16 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     sp++;
                 }
                 if (*sp) {
-                    start = (int) stoi(sp, 10, NULL);
+                    start = stoi(sp, 10, NULL);
                     if ((sp = strchr(sp, '-')) != 0) {
-                        end = (int) stoi(++sp, 10, NULL);
+                        end = stoi(++sp, 10, NULL);
                     }
                     if ((sp = strchr(sp, '/')) != 0) {
                         /*
                             Note this is not the content length transmitted, but the original size of the input of which
                             the client is transmitting only a portion.
                          */
-                        size = (int) stoi(++sp, 10, NULL);
+                        size = stoi(++sp, 10, NULL);
                     }
                 }
                 if (start < 0 || end < 0 || size < 0 || end <= start) {
@@ -8915,7 +8945,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             Step over "\r\n" after headers. As an optimization, don't do this if chunked so chunking can parse a single
             chunk delimiter of "\r\nSIZE ...\r\n"
          */
-        if (mprGetBufLength(content) >= 2) {
+        if (httpGetPacketLength(packet) >= 2) {
             mprAdjustBufStart(content, 2);
         }
     }
@@ -9086,7 +9116,8 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     HttpTx      *tx;
     HttpQueue   *q;
     MprBuf      *content;
-    MprOff      nbytes, remaining;
+    MprOff      remaining;
+    ssize       nbytes;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -9104,7 +9135,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     } else {
         remaining = rx->remainingContent;
     }
-    nbytes = min(remaining, mprGetBufLength(content));
+    nbytes = (ssize) min(remaining, mprGetBufLength(content));
     mprAssert(nbytes >= 0);
 
     if (nbytes > 0) {
@@ -9118,11 +9149,11 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
         mprAssert(httpGetPacketLength(packet) > 0);
         remaining -= nbytes;
         rx->remainingContent -= nbytes;
-        rx->receivedContent += nbytes;
+        rx->bytesRead += nbytes;
 
-        if (rx->receivedContent >= conn->limits->receiveBodySize) {
+        if (rx->bytesRead >= conn->limits->receiveBodySize) {
             httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
-                "Request body of %d bytes is too big. Limit %d", rx->receivedContent, conn->limits->receiveBodySize);
+                "Request body of %Ld bytes is too big. Limit %Ld", rx->bytesRead, conn->limits->receiveBodySize);
             return 1;
         }
         if (packet == rx->headerPacket) {
@@ -9130,7 +9161,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
             packet = httpSplitPacket(packet, 0);
         }
         conn->input = 0;
-        if (remaining == 0 && mprGetBufLength(packet->content) > nbytes) {
+        if (remaining == 0 && httpGetPacketLength(packet) > nbytes) {
             /*  Split excess data belonging to the next pipelined request.  */
             LOG(7, "processContent: Split packet of %d at %d", httpGetPacketLength(packet), nbytes);
             conn->input = httpSplitPacket(packet, nbytes);
@@ -9182,7 +9213,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         return 0;
     }
 #endif
-    return conn->error || (conn->input ? mprGetBufLength(conn->input->content) : 0);
+    return conn->error || (conn->input ? httpGetPacketLength(conn->input) : 0);
 }
 
 
@@ -9231,10 +9262,10 @@ static void measure(HttpConn *conn)
         elapsed = mprGetTime() - conn->startTime;
 #if MPR_HIGH_RES_TIMER
         if (elapsed < 1000) {
-            mprLog(4, "TIME: Request %s took %,d msec %,d ticks", uri, elapsed, mprGetTicks() - conn->startTicks);
+            mprLog(6, "TIME: Request %s took %,d msec %,d ticks", uri, elapsed, mprGetTicks() - conn->startTicks);
         } else
 #endif
-            mprLog(4, "TIME: Request %s took %,d msec", uri, elapsed);
+            mprLog(6, "TIME: Request %s took %,d msec", uri, elapsed);
     }
 }
 #else
@@ -9251,14 +9282,13 @@ static bool processCompletion(HttpConn *conn)
 
     httpDestroyPipeline(conn);
     measure(conn);
-
-    if (conn->server) {
+    if (conn->server && conn->rx) {
         conn->rx->conn = 0;
         conn->tx->conn = 0;
         conn->rx = 0;
         conn->tx = 0;
         packet = conn->input;
-        more = packet && !conn->connError && (mprGetBufLength(packet->content) > 0);
+        more = packet && !conn->connError && (httpGetPacketLength(packet) > 0);
         httpValidateLimits(conn->server, HTTP_VALIDATE_CLOSE_REQUEST, conn);
         httpPrepServerConn(conn);
         return more;
@@ -9286,14 +9316,14 @@ static ssize getChunkPacketSize(HttpConn *conn, MprBuf *buf)
 {
     HttpRx      *rx;
     char        *start, *cp;
-    ssize       need, size;
+    ssize       size, need;
 
     rx = conn->rx;
     need = 0;
 
     switch (rx->chunkState) {
     case HTTP_CHUNK_DATA:
-        need = rx->remainingContent;
+        need = (ssize) min(MAXSSIZE, rx->remainingContent);
         if (need != 0) {
             break;
         }
@@ -9362,7 +9392,7 @@ bool httpContentNotModified(HttpConn *conn)
 }
 
 
-HttpRange *httpCreateRange(HttpConn *conn, int start, int end)
+HttpRange *httpCreateRange(HttpConn *conn, MprOff start, MprOff end)
 {
     HttpRange     *range;
 
@@ -9384,7 +9414,7 @@ static void manageRange(HttpRange *range, int flags)
 }
 
 
-ssize httpGetContentLength(HttpConn *conn)
+MprOff httpGetContentLength(HttpConn *conn)
 {
     if (conn->rx == 0) {
         mprAssert(conn->rx);
@@ -9628,7 +9658,8 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
  */
 void httpSetWriteBlocked(HttpConn *conn)
 {
-    mprLog(7, "Write Blocked");
+//  MOB
+    mprLog(3, "Write Blocked");
     conn->canProceed = 0;
     conn->writeBlocked = 1;
 }
@@ -9689,7 +9720,6 @@ bool httpMatchEtag(HttpConn *conn, char *requestedEtag)
     if (requestedEtag == 0) {
         return 0;
     }
-
     for (next = 0; (tag = mprGetNextItem(rx->etags, &next)) != 0; ) {
         if (strcmp(tag, requestedEtag) == 0) {
             return (rx->ifMatch) ? 0 : 1;
@@ -9901,9 +9931,9 @@ cvoid *httpGetStageData(HttpConn *conn, cchar *key)
 #if !BLD_FEATURE_ROMFS
 
 static void addPacketForSend(HttpQueue *q, HttpPacket *packet);
-static void adjustSendVec(HttpQueue *q, ssize written);
-static int  buildSendVec(HttpQueue *q);
-static void freeSentPackets(HttpQueue *q, ssize written);
+static void adjustSendVec(HttpQueue *q, MprOff written);
+static MprOff buildSendVec(HttpQueue *q);
+static void adjustPacketData(HttpQueue *q, MprOff written);
 static void sendIncomingService(HttpQueue *q);
 
 
@@ -9934,13 +9964,12 @@ void httpSendOpen(HttpQueue *q)
     conn = q->conn;
     tx = conn->tx;
 
-    /*  
-        To write an entire file, reset the maximum and packet size to the maximum response body size (LimitResponseBody)
-     */
-    q->max = conn->limits->transmissionBodySize;
-    q->packetSize = conn->limits->transmissionBodySize;
-
     if (!(tx->flags & HTTP_TX_NO_BODY)) {
+        if (tx->fileInfo.size > conn->limits->transmissionBodySize) {
+            httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
+                "Http transmission aborted. File size exceeds max body of %d bytes", conn->limits->transmissionBodySize);
+            return;
+        }
         tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
         if (tx->file == 0) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
@@ -9959,7 +9988,8 @@ void httpSendOutgoingService(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpTx      *tx;
-    ssize       written, count;
+    MprFile     *file;
+    MprOff      written;
     int         errCode;
 
     conn = q->conn;
@@ -9991,15 +10021,11 @@ void httpSendOutgoingService(HttpQueue *q)
         if (q->ioIndex == 0 && buildSendVec(q) <= 0) {
             break;
         }
-        /*
-            Write the vector and file data. Exclude the file entry in the io vector.
-         */
-        count = q->ioIndex - q->ioFileEntry;
-        mprAssert(count >= 0);
-        written = mprSendFileToSocket(conn->sock, q->ioFileEntry ? tx->file: 0, tx->pos, q->ioCount, q->iovec, 
-            count, NULL, 0);
-        mprLog(8, "Send connector ioCount %d, wrote %d, written so far %d, fileEntry %d", 
-            q->ioCount, written, tx->bytesWritten, q->ioFileEntry);
+        file = q->ioFile ? tx->file : 0;
+        written = mprSendFileToSocket(conn->sock, file, q->ioPos, q->ioCount, q->iovec, q->ioIndex, NULL, 0);
+
+        mprLog(8, "Send connector ioCount %d, wrote %Ld, written so far %d, sending file %d", q->ioCount, written, 
+            tx->bytesWritten, q->ioFile);
         if (written < 0) {
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
@@ -10021,7 +10047,7 @@ void httpSendOutgoingService(HttpQueue *q)
 
         } else if (written > 0) {
             tx->bytesWritten += written;
-            freeSentPackets(q, written);
+            adjustPacketData(q, written);
             adjustSendVec(q, written);
         }
     }
@@ -10040,7 +10066,7 @@ void httpSendOutgoingService(HttpQueue *q)
     file data. This is used to write transfer the headers and chunk encoding boundaries. Return the count of bytes to 
     be written. Return -1 for EOF.
  */
-static int buildSendVec(HttpQueue *q)
+static MprOff buildSendVec(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpPacket  *packet;
@@ -10049,7 +10075,7 @@ static int buildSendVec(HttpQueue *q)
 
     conn = q->conn;
     q->ioCount = 0;
-    q->ioFileEntry = 0;
+    q->ioFile = 0;
 
     /*  
         Examine each packet and accumulate as many packets into the I/O vector as possible. Can only have one data packet at
@@ -10061,19 +10087,19 @@ static int buildSendVec(HttpQueue *q)
         if (packet->flags & HTTP_PACKET_HEADER) {
             httpWriteHeaders(conn, packet);
             q->count += httpGetPacketLength(packet);
-
-        } else if (httpGetPacketLength(packet) == 0) {
+            
+        } else if (httpGetPacketLength(packet) == 0 && packet->esize == 0) {
             q->flags |= HTTP_QUEUE_EOF;
             if (packet->prefix == NULL) {
                 break;
             }
         }
-        if (q->ioFileEntry || q->ioIndex >= (HTTP_MAX_IOVEC - 2)) {
+        if (q->ioFile || q->ioIndex >= (HTTP_MAX_IOVEC - 2)) {
             break;
         }
         addPacketForSend(q, packet);
     }
-    return (int) q->ioCount;
+    return q->ioCount;
 }
 
 
@@ -10082,6 +10108,7 @@ static int buildSendVec(HttpQueue *q)
  */
 static void addToSendVector(HttpQueue *q, char *ptr, ssize bytes)
 {
+    mprAssert(ptr > 0);
     mprAssert(bytes > 0);
 
     q->iovec[q->ioIndex].start = ptr;
@@ -10109,23 +10136,20 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
     if (packet->prefix) {
         addToSendVector(q, mprGetBufStart(packet->prefix), mprGetBufLength(packet->prefix));
     }
-    if (httpGetPacketLength(packet) > 0) {
+    if (packet->esize > 0) {
+        mprAssert(q->ioFile == 0);
+        q->ioFile = 1;
+        q->ioCount += packet->esize;
+
+    } else if (httpGetPacketLength(packet) > 0) {
         /*
             Header packets have actual content. File data packets are virtual and only have a count.
          */
-        if (packet->content) {
-            addToSendVector(q, mprGetBufStart(packet->content), mprGetBufLength(packet->content));
-
-        } else {
-            addToSendVector(q, 0, httpGetPacketLength(packet));
-            mprAssert(q->ioFileEntry == 0);
-            q->ioFileEntry = 1;
-            q->ioFileOffset += httpGetPacketLength(packet);
+        addToSendVector(q, mprGetBufStart(packet->content), httpGetPacketLength(packet));
+        item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
+        if (httpShouldTrace(conn, HTTP_TRACE_TX, item, NULL) >= 0) {
+            httpTraceContent(conn, HTTP_TRACE_TX, item, packet, 0, tx->bytesWritten);
         }
-    }
-    item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
-    if (httpShouldTrace(conn, HTTP_TRACE_TX, item, NULL) >= 0) {
-        httpTraceContent(conn, HTTP_TRACE_TX, item, packet, 0, tx->bytesWritten);
     }
 }
 
@@ -10134,8 +10158,9 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
     Clear entries from the IO vector that have actually been transmitted. This supports partial writes due to the socket
     being full. Don't come here if we've seen all the packets and all the data has been completely written. ie. small files
     don't come here.
+    MOB - rename - not really freeing anymore
  */
-static void freeSentPackets(HttpQueue *q, ssize bytes)
+static void adjustPacketData(HttpQueue *q, MprOff bytes)
 {
     HttpPacket  *packet;
     ssize       len;
@@ -10147,21 +10172,27 @@ static void freeSentPackets(HttpQueue *q, ssize bytes)
     while ((packet = q->first) != 0) {
         if (packet->prefix) {
             len = mprGetBufLength(packet->prefix);
-            len = min(len, bytes);
+            len = (ssize) min(len, bytes);
             mprAdjustBufStart(packet->prefix, len);
             bytes -= len;
-            /* Prefixes dont' count in the q->count. No need to adjust */
+            /* Prefixes don't count in the q->count. No need to adjust */
             if (mprGetBufLength(packet->prefix) == 0) {
                 packet->prefix = 0;
             }
         }
-        if ((len = httpGetPacketLength(packet)) > 0) {
-            len = min(len, bytes);
-            if (packet->content) {
-                mprAdjustBufStart(packet->content, len);
-            } else {
-                packet->entityLength -= len;
+        if (packet->esize) {
+            len = (ssize) min(packet->esize, bytes);
+            packet->esize -= len;
+            packet->epos += len;
+            bytes -= len;
+            mprAssert(packet->esize >= 0);
+            mprAssert(bytes == 0);
+            if (packet->esize > 0) {
+                break;
             }
+        } else if ((len = httpGetPacketLength(packet)) > 0) {
+            len = (ssize) min(len, bytes);
+            mprAdjustBufStart(packet->content, len);
             bytes -= len;
             q->count -= len;
             mprAssert(q->count >= 0);
@@ -10182,7 +10213,7 @@ static void freeSentPackets(HttpQueue *q, ssize bytes)
     being full. Don't come here if we've seen all the packets and all the data has been completely written. ie. small files
     don't come here.
  */
-static void adjustSendVec(HttpQueue *q, ssize written)
+static void adjustSendVec(HttpQueue *q, MprOff written)
 {
     HttpTx      *tx;
     MprIOVec    *iovec;
@@ -10190,55 +10221,31 @@ static void adjustSendVec(HttpQueue *q, ssize written)
     int         i, j;
 
     tx = q->conn->tx;
-
-    /*  
-        Cleanup the IO vector
-     */
-    if (written == q->ioCount) {
-        /*  
-            Entire vector written. Just reset.
-         */
-        tx->pos = q->ioFileOffset;
-        q->ioIndex = 0;
-        q->ioCount = 0;
-        q->ioFileEntry = 0;
-        q->ioFileOffset = 0;
-
-    } else {
-        /*  
-            Partial write of an vector entry. Need to copy down the unwritten vector entries.
-         */
-        q->ioCount -= written;
-        mprAssert(q->ioCount >= 0);
-        iovec = q->iovec;
-        for (i = 0; i < q->ioIndex; i++) {
-            len = iovec[i].len;
-            if (iovec[i].start) {
-                if (written < len) {
-                    iovec[i].start += written;
-                    iovec[i].len -= written;
-                    break;
-                } else {
-                    written -= len;
-                }
-            } else {
-                /*
-                    File data has a null start ptr
-                 */
-                tx->pos += written;
-                q->ioIndex = 0;
-                q->ioCount = 0;
-                return;
-            }
+    iovec = q->iovec;
+    for (i = 0; i < q->ioIndex; i++) {
+        len = iovec[i].len;
+        if (written < len) {
+            iovec[i].start += (ssize) written;
+            iovec[i].len -= (ssize) written;
+            return;
         }
-
-        /*  Compact */
-        for (j = 0; i < q->ioIndex; ) {
+        written -= len;
+        q->ioCount -= len;
+        for (j = i + 1; i < q->ioIndex; ) {
             iovec[j++] = iovec[i++];
         }
-        q->ioIndex = j;
+        q->ioIndex--;
+        i--;
     }
+    if (written > 0 && q->ioFile) {
+        /* All remaining data came from the file */
+        q->ioPos += written;
+    }
+    q->ioIndex = 0;
+    q->ioCount = 0;
+    q->ioFile = 0;
 }
+
 
 #else
 int httpOpenSendConnector(Http *http) { return 0; }
@@ -10509,7 +10516,7 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
         }
         count = (int) PTOL(mprLookupHash(server->clientLoad, conn->ip));
         mprAddKey(server->clientLoad, conn->ip, ITOP(count + 1));
-        server->clientCount = mprGetHashLength(server->clientLoad);
+        server->clientCount = (int) mprGetHashLength(server->clientLoad);
         break;
 
     case HTTP_VALIDATE_CLOSE_CONN:
@@ -10519,7 +10526,7 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
         } else {
             mprRemoveHash(server->clientLoad, conn->ip);
         }
-        server->clientCount = mprGetHashLength(server->clientLoad);
+        server->clientCount = (int) mprGetHashLength(server->clientLoad);
         mprLog(4, "Close connection %d. Active requests %d, active clients %d.", conn->seqno, server->requestCount, 
             server->clientCount);
         break;
@@ -10711,7 +10718,7 @@ int httpSecureServer(cchar *ip, int port, struct MprSsl *ssl)
     if (ip == 0) {
         ip = "";
     }
-    for (count = next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
+    for (count = 0, next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
         if (server->port <= 0 || port <= 0 || server->port == port) {
             mprAssert(server->ip);
             if (*server->ip == '\0' || *ip == '\0' || scmp(server->ip, ip) == 0) {
@@ -11134,7 +11141,7 @@ static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf,
 }
 
 
-void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssize len, ssize total)
+void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssize len, MprOff total)
 {
     HttpTrace   *trace;
     ssize       size;
@@ -11157,7 +11164,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
         traceBuf(conn, dir, level, "prefix", mprGetBufStart(packet->prefix), size);
     }
     if (packet->content) {
-        size = mprGetBufLength(packet->content);
+        size = httpGetPacketLength(packet);
         size = min(size, len);
         traceBuf(conn, dir, level, "content", mprGetBufStart(packet->content), size);
     }
@@ -11592,7 +11599,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
 }
 
 
-void httpSetContentLength(HttpConn *conn, ssize length)
+void httpSetContentLength(HttpConn *conn, MprOff length)
 {
     HttpTx      *tx;
 
@@ -12118,7 +12125,7 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
     packet = q->first;
     content = packet->content;
     mprAddNullToBuf(content);
-    count = mprGetBufLength(content);
+    count = httpGetPacketLength(packet);
 
     for (done = 0, line = 0; !done; ) {
         if  (up->contentState == HTTP_UPLOAD_BOUNDARY || up->contentState == HTTP_UPLOAD_CONTENT_HEADER) {
@@ -12153,7 +12160,7 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
             if (rc < 0) {
                 done++;
             }
-            if (mprGetBufLength(content) < up->boundaryLen) {
+            if (httpGetPacketLength(packet) < up->boundaryLen) {
                 /*  Incomplete boundary - return to get more data */
                 done++;
             }
@@ -12170,10 +12177,10 @@ static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
     if (packet != rx->headerPacket) {
         mprCompactBuf(content);
     }
-    q->count -= (count - mprGetBufLength(content));
+    q->count -= (count - httpGetPacketLength(packet));
     mprAssert(q->count >= 0);
 
-    if (mprGetBufLength(content) == 0) {
+    if (httpGetPacketLength(packet) == 0) {
         /* 
            Quicker to remove the buffer so the packets don't have to be joined the next time 
          */
@@ -12364,7 +12371,7 @@ static int writeToFile(HttpQueue *q, char *data, ssize len)
     file = up->currentFile;
 
     if ((file->size + len) > limits->uploadSize) {
-        httpError(conn, HTTP_CODE_REQUEST_TOO_LARGE, "Uploaded file exceeds maximum %d", limits->uploadSize);
+        httpError(conn, HTTP_CODE_REQUEST_TOO_LARGE, "Uploaded file exceeds maximum %Ld", limits->uploadSize);
         return MPR_ERR_CANT_WRITE;
     }
     if (len > 0) {
@@ -12462,7 +12469,7 @@ static int processContentData(HttpQueue *q)
             if (packet == 0) {
                 packet = httpCreatePacket(HTTP_BUFSIZE);
             }
-            if (mprGetBufLength(packet->content) > 0) {
+            if (httpGetPacketLength(packet) > 0) {
                 /*
                     Need to add www-form-urlencoding separators
                  */

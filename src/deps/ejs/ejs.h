@@ -1018,11 +1018,9 @@ typedef struct EjsLoc {
 #define EJS_MASK_DYNAMIC        0x2
 #define EJS_MASK_TYPE           ~(EJS_MASK_VISITED | EJS_MASK_DYNAMIC)
 
-#define DYNAMIC(obj)            ((((EjsObj*) obj)->xtype) & EJS_MASK_DYNAMIC)
-#define VISITED(obj)            ((((EjsObj*) obj)->xtype) & EJS_MASK_VISITED)
+#define DYNAMIC(obj)            ((int) ((((EjsObj*) obj)->xtype) & EJS_MASK_DYNAMIC))
+#define VISITED(obj)            ((int) ((((EjsObj*) obj)->xtype) & EJS_MASK_VISITED))
 #define TYPE(obj)               ((EjsType*) ((((EjsObj*) obj)->xtype) & EJS_MASK_TYPE))
-#define CROSS_TYPE(obj)         ejsGetCrossType(ejs, obj)
-
 #define SET_VISITED(obj, value) ((EjsObj*) obj)->xtype = \
                                     ((value) << EJS_SHIFT_VISITED) | (((EjsObj*) obj)->xtype & ~EJS_MASK_VISITED)
 #define SET_DYNAMIC(obj, value) ((EjsObj*) obj)->xtype = \
@@ -1746,6 +1744,7 @@ extern int ejsSetPropertyByName(Ejs *ejs, void *obj, EjsName qname, void *value)
  */
 extern int ejsSetPropertyName(Ejs *ejs, EjsAny *obj, int slotNum, EjsName qname);
 
+//  MOB - should attributes be int64
 /** 
     Set a property's traits
     @description Set the traits describing a property. These include the property's base type and access attributes.
@@ -2890,7 +2889,7 @@ typedef struct EjsHttp {
     EjsObj          *emitter;                   /**< Event emitter */
     EjsByteArray    *data;                      /**< Buffered write data */
     EjsObj          *limits;                    /**< Limits object */
-    EjsObj          *responseCache;             /**< Cached response (only used if response() is used) */
+    EjsString       *responseCache;             /**< Cached response (only used if response() is used) */
     HttpConn        *conn;                      /**< Http connection object */
     MprBuf          *requestContent;            /**< Request body data supplied */
     MprBuf          *responseContent;           /**< Response data */
@@ -3524,9 +3523,6 @@ extern void     ejsTypeNeedsFixup(Ejs *ejs, EjsType *type);
 extern int      ejsGetTypeSize(Ejs *ejs, EjsType *type);
 extern EjsPot   *ejsGetPrototype(Ejs *ejs, EjsAny *obj);
 extern void     ejsSetTypeAttributes(EjsType *type, int64 attributes);
-#if UNUSED
-extern EjsType  *ejsGetCrossType(Ejs *ejs, EjsAny *obj);
-#endif
 
 
 extern int      ejsBootstrapTypes(Ejs *ejs);
@@ -3627,7 +3623,7 @@ typedef struct EjsState {
     EjsObj              **stackBase;        /* Pointer to start of stack mem */
     struct EjsState     *prev;              /* Previous state */
     struct EjsNamespace *internal;          /* Current internal namespace */
-    int                 stackSize;          /* Stack size */
+    ssize               stackSize;          /* Stack size */
     uint                frozen: 1;          /* Garbage collection frozen */
     EjsObj              *t1;                /* Temp one for GC */
 } EjsState;

@@ -191,15 +191,15 @@ static MprSocketProvider *createMatrixSslProvider();
 static MprSocket *createMss(MprSsl *ssl);
 static void     disconnectMss(MprSocket *sp);
 static int      doHandshake(MprSocket *sp, short cipherSuite);
-static int      flushMss(MprSocket *sp);
+static ssize    flushMss(MprSocket *sp);
 static MprSsl   *getDefaultMatrixSsl();
-static int      innerRead(MprSocket *sp, char *userBuf, int len);
+static ssize    innerRead(MprSocket *sp, char *userBuf, ssize len);
 static int      listenMss(MprSocket *sp, cchar *host, int port, int flags);
 static void     manageMatrixSocket(MprSslSocket *msp, int flags);
 static void     manageMatrixSsl(MprSsl *ssl, int flags);
 static void     manageMatrixProvider(MprSocketProvider *provider, int flags);
 static ssize    readMss(MprSocket *sp, void *buf, ssize len);
-static ssize    writeMss(MprSocket *sp, void *buf, ssize len);
+static ssize    writeMss(MprSocket *sp, cvoid *buf, ssize len);
 
 
 int mprCreateMatrixSslModule(bool lazy)
@@ -562,7 +562,7 @@ static int blockingWrite(MprSocket *sp, sslBuf_t *out)
 {
     MprSocketProvider   *standard;
     uchar               *s;
-    int                 bytes;
+    ssize               bytes;
 
     standard = sp->service->standardProvider;
     
@@ -589,7 +589,7 @@ static int doHandshake(MprSocket *sp, short cipherSuite)
 {
     MprSslSocket    *msp;
     char            buf[MPR_SSL_BUFSIZE];
-    int             bytes, rc;
+    ssize           bytes, rc;
 
     msp = sp->sslSocket;
 
@@ -679,14 +679,15 @@ static bool isBufferedData(MprSslSocket *msp)
 /*
     Return number of bytes read. Return -1 on errors and EOF
  */
-static int innerRead(MprSocket *sp, char *userBuf, int len)
+static ssize innerRead(MprSocket *sp, char *userBuf, ssize len)
 {
-    MprSslSocket  *msp;
+    MprSslSocket        *msp;
     MprSocketProvider   *standard;
     sslBuf_t            *inbuf;     /* Cached decoded plain text */
     sslBuf_t            *insock;    /* Cached ciphertext to socket */
     uchar               *buf, error, alertLevel, alertDescription;
-    int                 bytes, rc, space, performRead, remaining;
+    ssize               bytes, space, remaining;
+    int                 rc, performRead;
 
     msp = (MprSslSocket*) sp->sslSocket;
     buf = (uchar*) userBuf;
@@ -747,7 +748,7 @@ readMore:
         Define a temporary sslBuf
      */
     inbuf->start = inbuf->end = inbuf->buf = mprAlloc(len);
-    inbuf->size = len;
+    inbuf->size = (int) len;
 decodeMore:
     /*
         Decode the data we just read from the socket
@@ -923,11 +924,11 @@ static ssize readMss(MprSocket *sp, void *buf, ssize len)
     been encoded.  When it is completely flushed, we return the originally requested length, and resume normal 
     processing.
  */
-static ssize writeMss(MprSocket *sp, void *buf, ssize len)
+static ssize writeMss(MprSocket *sp, cvoid *buf, ssize len)
 {
     MprSslSocket    *msp;
     sslBuf_t        *outsock;
-    int             rc;
+    ssize           rc;
 
     lock(sp);
 
@@ -966,7 +967,7 @@ static ssize writeMss(MprSocket *sp, void *buf, ssize len)
      */
     if (msp->outBufferCount == 0) {
 retryEncode:
-        rc = matrixSslEncode(msp->mssl, (uchar*) buf, len, outsock);
+        rc = matrixSslEncode(msp->mssl, (uchar*) buf, (int) len, outsock);
         switch (rc) {
         case SSL_ERROR:
             unlock(sp);
@@ -1004,13 +1005,13 @@ retryEncode:
         unlock(sp);
         return len;
     }
-    msp->outBufferCount = len;
+    msp->outBufferCount = (int) len;
     unlock(sp);
     return 0;
 }
 
 
-static int flushMss(MprSocket *sp)
+static ssize flushMss(MprSocket *sp)
 {
     MprSslSocket  *msp;
 
@@ -1117,7 +1118,7 @@ static MprSocketProvider *createOpenSslProvider();
 static MprSocket *createOss(MprSsl *ssl);
 static DH       *dhCallback(SSL *ssl, int isExport, int keyLength);
 static void     disconnectOss(MprSocket *sp);
-static int      flushOss(MprSocket *sp);
+static ssize    flushOss(MprSocket *sp);
 static int      listenOss(MprSocket *sp, cchar *host, int port, int flags);
 static void     manageOpenssl(MprOpenssl *osl, int flags);
 static void     manageOpenProvider(MprSocketProvider *provider, int flags);
@@ -1126,7 +1127,7 @@ static void     manageSslStruct(MprSsl *ssl, int flags);
 static ssize    readOss(MprSocket *sp, void *buf, ssize len);
 static RSA      *rsaCallback(SSL *ssl, int isExport, int keyLength);
 static int      verifyX509Certificate(int ok, X509_STORE_CTX *ctx);
-static ssize    writeOss(MprSocket *sp, void *buf, ssize len);
+static ssize    writeOss(MprSocket *sp, cvoid *buf, ssize len);
 
 static DynLock  *sslCreateDynLock(const char *file, int line);
 static void     sslDynLock(int mode, DynLock *dl, const char *file, int line);
@@ -1509,7 +1510,6 @@ static MprSocket *createOss(MprSsl *ssl)
     if (ssl == MPR_SECURE_CLIENT) {
         ssl = 0;
     }
-
     /*
         First get a standard socket
      */
@@ -1593,7 +1593,6 @@ static MprSocket *acceptOss(MprSocket *listen)
     if (sp == 0) {
         return 0;
     }
-
     lock(sp);
     osp = sp->sslSocket;
     mprAssert(osp);
@@ -1641,7 +1640,6 @@ static int connectOss(MprSocket *sp, cchar *host, int port, int flags)
         unlock(sp);
         return MPR_ERR_CANT_CONNECT;
     }
-    
     osp = sp->sslSocket;
     mprAssert(osp);
 
@@ -1733,7 +1731,7 @@ static ssize readOss(MprSocket *sp, void *buf, ssize len)
      */
     retries = 5;
     for (i = 0; i < retries; i++) {
-        rc = SSL_read(osp->osslStruct, buf, len);
+        rc = SSL_read(osp->osslStruct, buf, (int) len);
         if (rc < 0) {
             error = SSL_get_error(osp->osslStruct, rc);
             if (error == SSL_ERROR_WANT_READ || error == SSL_ERROR_WANT_CONNECT || error == SSL_ERROR_WANT_ACCEPT) {
@@ -1798,10 +1796,10 @@ static ssize readOss(MprSocket *sp, void *buf, ssize len)
 /*
     Write data. Return the number of bytes written or -1 on errors.
  */
-static ssize writeOss(MprSocket *sp, void *buf, ssize len)
+static ssize writeOss(MprSocket *sp, cvoid *buf, ssize len)
 {
     MprSslSocket    *osp;
-    ssize          totalWritten;
+    ssize           totalWritten;
     int             rc;
 
     lock(sp);
@@ -1816,10 +1814,8 @@ static ssize writeOss(MprSocket *sp, void *buf, ssize len)
     ERR_clear_error();
 
     do {
-        rc = SSL_write(osp->osslStruct, buf, len);
-        
+        rc = SSL_write(osp->osslStruct, buf, (int) len);
         mprLog(7, "OpenSSL: written %d, requested len %d", rc, len);
-
         if (rc <= 0) {
             rc = SSL_get_error(osp->osslStruct, rc);
             if (rc == SSL_ERROR_WANT_WRITE) {
@@ -1933,7 +1929,7 @@ static int verifyX509Certificate(int ok, X509_STORE_CTX *xContext)
 }
 
 
-static int flushOss(MprSocket *sp)
+static ssize flushOss(MprSocket *sp)
 {
 #if KEEP
     MprSslSocket    *osp;

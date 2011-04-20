@@ -17961,7 +17961,8 @@ module ejs.web {
                 for each (choice in choices) {
                     if (choice is Array) {
                         /* list("priority", [["low", "3"], ["med", "5"], ["high", "9"]]) */
-                        let [key, value] = choice
+                        /* Note: value is first */
+                        let [value, key] = choice
                         selected = (value == defaultValue) ? ' selected="yes"' : ''
                         write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
 
@@ -17976,7 +17977,7 @@ module ejs.web {
                         }
                     } else if (Object.getOwnPropertyCount(choice) > 0) {
                         /* list("priority", [{low: 3}, {med: 5}, {high: 9}]) */
-                        for (let [key, value] in choice) {
+                        for (let [value, key] in choice) {
                             selected = (key == defaultValue) ? ' selected="yes"' : ''
                             write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
                         }
@@ -17989,7 +17990,7 @@ module ejs.web {
                 }
             } else {
                 /* list("priority", {low: 0, med: 1, high: 2}) */
-                for (let [key, value]  in choices) {
+                for (let [value, key]  in choices) {
                     selected = (key == defaultValue) ? ' selected="yes"' : ''
                     write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
                 }
@@ -19887,7 +19888,6 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
                     }
                     target.route = target.action || "default"
                 }
-dump("TARGET", target)
                 if (target.route) {
                     target.scriptName ||= scriptName
                     if (!target.template && route) {
@@ -19896,7 +19896,6 @@ dump("TARGET", target)
                 }
             }
             if (target.route && target.template) {
-dump("TEMPLATE", target.template)
                 target = Uri.template(target.template, target).path
             }
             return uri.local.resolve(target).normalize

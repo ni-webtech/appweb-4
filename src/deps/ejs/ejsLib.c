@@ -2656,7 +2656,7 @@ static EjsObj *booleanConstructor(Ejs *ejs, EjsBoolean *bp, int argc, EjsObj **a
 
 EjsBoolean *ejsCreateBoolean(Ejs *ejs, int value)
 {
-    return (EjsBoolean*) ((value) ? S(true) : S(false));
+    return ((value) ? S(true) : S(false));
 }
 
 
@@ -4817,8 +4817,8 @@ static EjsNumber *cmd_write(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
     EjsByteArray    *bp;
     EjsString       *sp;
     EjsObj          *vp;
-    ssize           len;
-    int             i, wrote;
+    ssize           len, wrote;
+    int             i;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], Array));
 
@@ -4834,7 +4834,6 @@ static EjsNumber *cmd_write(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         args = (EjsArray*) vp;
     }
     wrote = 0;
-
     for (i = 0; i < args->length; i++) {
         if ((vp = ejsGetProperty(ejs, args, i)) == 0) {
             continue;
@@ -5006,41 +5005,43 @@ void ejsDefineConfigProperties(Ejs *ejs)
     ejs->configSet = 1;
     type = ST(Config);
     att = EJS_PROP_STATIC | EJS_PROP_ENUMERABLE;
-    ejsDefineProperty(ejs, type, ES_Config_Debug, N("public", "Debug"), 0, att, BLD_DEBUG ? S(true): S(false));
-    ejsDefineProperty(ejs, type, ES_Config_CPU, N("public", "CPU"), 0, att, ejsCreateStringFromAsc(ejs, BLD_HOST_CPU));
-    ejsDefineProperty(ejs, type, ES_Config_OS, N("public", "OS"), 0, att, ejsCreateStringFromAsc(ejs, BLD_OS));
-    ejsDefineProperty(ejs, type, ES_Config_Product, N("public", "Product"), 0, att, 
-        ejsCreateStringFromAsc(ejs, BLD_PRODUCT));
-    ejsDefineProperty(ejs, type, ES_Config_Title, N("public", "Title"), 0, att, ejsCreateStringFromAsc(ejs, BLD_NAME));
-    mprSprintf(version, sizeof(version), "%s-%s", BLD_VERSION, BLD_NUMBER);
-    ejsDefineProperty(ejs, type, ES_Config_Version, N("public", "Version"), 0, att, ejsCreateStringFromAsc(ejs, version));
 
-    ejsDefineProperty(ejs, type, ES_Config_Legacy, N("public", "Legacy"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_LEGACY_API));
+    /*
+        Must use -1 for slotNumber as this function is called by the compiler when compiling ejs.mod. 
+        There will still be a -Config- property in slot[0]
+     */
+    ejsDefineProperty(ejs, type, -1, N("public", "Debug"), 0, att, BLD_DEBUG ? S(true): S(false));
+    ejsDefineProperty(ejs, type, -1, N("public", "CPU"), 0, att, ejsCreateStringFromAsc(ejs, BLD_HOST_CPU));
+    ejsDefineProperty(ejs, type, -1, N("public", "OS"), 0, att, ejsCreateStringFromAsc(ejs, BLD_OS));
+    ejsDefineProperty(ejs, type, -1, N("public", "Product"), 0, att, 
+        ejsCreateStringFromAsc(ejs, BLD_PRODUCT));
+    ejsDefineProperty(ejs, type, -1, N("public", "Title"), 0, att, ejsCreateStringFromAsc(ejs, BLD_NAME));
+    mprSprintf(version, sizeof(version), "%s-%s", BLD_VERSION, BLD_NUMBER);
+    ejsDefineProperty(ejs, type, -1, N("public", "Version"), 0, att, ejsCreateStringFromAsc(ejs, version));
+
+    ejsDefineProperty(ejs, type, -1, N("public", "Legacy"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_LEGACY_API));
     //  MOB - should genercise this
-    ejsDefineProperty(ejs, type, ES_Config_SSL, N("public", "SSL"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_SSL));
-    ejsDefineProperty(ejs, type, ES_Config_SQLITE, N("public", "SQLITE"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_SQLITE));
+    ejsDefineProperty(ejs, type, -1, N("public", "SSL"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_SSL));
+    ejsDefineProperty(ejs, type, -1, N("public", "SQLITE"), 0, att, ejsCreateBoolean(ejs, BLD_FEATURE_SQLITE));
 
 #if BLD_WIN_LIKE
 {
     EjsString    *path;
 
     path = ejsCreateStringFromAsc(ejs, mprGetAppDir(ejs));
-    ejsDefineProperty(ejs, type, ES_Config_BinDir, N("public", "BinDir"), 0, att, path);
-    ejsDefineProperty(ejs, type, ES_Config_ModDir, N("public", "ModDir"), 0, att, path);
-    ejsDefineProperty(ejs, type, ES_Config_LibDir, N("public", "LibDir"), 0, att, path);
+    ejsDefineProperty(ejs, type, -1, N("public", "BinDir"), 0, att, path);
+    ejsDefineProperty(ejs, type, -1, N("public", "ModDir"), 0, att, path);
+    ejsDefineProperty(ejs, type, -1, N("public", "LibDir"), 0, att, path);
 }
 #else
 #ifdef BLD_BIN_PREFIX
-    ejsDefineProperty(ejs, type, ES_Config_BinDir, N("public", "BinDir"), 0, att, 
-        ejsCreateStringFromAsc(ejs, BLD_BIN_PREFIX));
+    ejsDefineProperty(ejs, type, -1, N("public", "BinDir"), 0, att, ejsCreateStringFromAsc(ejs, BLD_BIN_PREFIX));
 #endif
 #ifdef BLD_MOD_PREFIX
-    ejsDefineProperty(ejs, type, ES_Config_ModDir, N("public", "ModDir"), 0, att, 
-        ejsCreateStringFromAsc(ejs, BLD_MOD_PREFIX));
+    ejsDefineProperty(ejs, type, -1, N("public", "ModDir"), 0, att, ejsCreateStringFromAsc(ejs, BLD_MOD_PREFIX));
 #endif
 #ifdef BLD_LIB_PREFIX
-    ejsDefineProperty(ejs, type, ES_Config_LibDir, N("public", "LibDir"), 0, att, 
-        ejsCreateStringFromAsc(ejs, BLD_LIB_PREFIX));
+    ejsDefineProperty(ejs, type, -1, N("public", "LibDir"), 0, att, ejsCreateStringFromAsc(ejs, BLD_LIB_PREFIX));
 #endif
 #endif
 }
@@ -5117,6 +5118,7 @@ void ejsDefineConfigProperties(Ejs *ejs)
 //  TODO this is a generic need. Make an API
 
 #define getNumber(ejs, a) ejsGetNumber(ejs, (EjsObj*) ejsToNumber(ejs, ((EjsObj*) a)))
+#define getInt(ejs, a) ((int) ejsGetNumber(ejs, (EjsObj*) ejsToNumber(ejs, ((EjsObj*) a))))
 
 /*
     Cast the operand to the specified type
@@ -5124,24 +5126,24 @@ void ejsDefineConfigProperties(Ejs *ejs)
     function cast(type: Type) : Object
  */
 
-static EjsObj *castDate(Ejs *ejs, EjsDate *dp, EjsType *type)
+static EjsAny *castDate(Ejs *ejs, EjsDate *dp, EjsType *type)
 {
     struct tm   tm;
 
     switch (type->sid) {
 
     case S_Boolean:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case S_Number:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) dp->value);
+        return ejsCreateNumber(ejs, (MprNumber) dp->value);
 
     case S_String:
         /*
             Format:  Tue Jul 15 2011 10:53:23 GMT-0700 (PDT)
          */
         mprDecodeLocalTime(&tm, dp->value);
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, mprFormatTime("%a %b %d %Y %T GMT%z (%Z)", &tm));
+        return ejsCreateStringFromAsc(ejs, mprFormatTime("%a %b %d %Y %T GMT%z (%Z)", &tm));
 
     default:
         ejsThrowTypeError(ejs, "Can't cast to this type");
@@ -5160,7 +5162,7 @@ static EjsDate *cloneDate(Ejs *ejs, EjsDate *dp, int deep)
 /*
     TODO - this is the same as number. Should share code
  */
-static EjsObj *coerceDateOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
+static EjsAny *coerceDateOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
 {
     switch (opcode) {
     /*
@@ -5168,13 +5170,13 @@ static EjsObj *coerceDateOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
      */
     case EJS_OP_ADD:
         if (ejsIs(ejs, rhs, Void)) {
-            return (EjsObj*) S(nan);
+            return S(nan);
         } else if (ejsIs(ejs, rhs, Null)) {
-            rhs = (EjsObj*) S(zero);
+            rhs = S(zero);
         } else if (ejsIs(ejs, rhs, Boolean) || ejsIs(ejs, rhs, Number)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         } else {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
         break;
 
@@ -5191,10 +5193,10 @@ static EjsObj *coerceDateOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
         return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
         Unary operators
@@ -5204,15 +5206,15 @@ static EjsObj *coerceDateOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return (EjsObj*) (((EjsDate*) lhs)->value ? S(true) : S(false));
+        return (((EjsDate*) lhs)->value ? S(true) : S(false));
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return (EjsObj*) (((EjsDate*) lhs)->value ? S(false): S(true));
+        return (((EjsDate*) lhs)->value ? S(false): S(true));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(false);
+        return S(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
@@ -5222,9 +5224,9 @@ static EjsObj *coerceDateOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
 }
 
 
-static EjsObj *invokeDateOperator(Ejs *ejs, EjsDate *lhs, int opcode, EjsDate *rhs)
+static EjsAny *invokeDateOperator(Ejs *ejs, EjsDate *lhs, int opcode, EjsDate *rhs)
 {
-    EjsObj      *result;
+    EjsAny      *result;
 
     if (rhs == 0 || TYPE(lhs) != TYPE(rhs)) {
         if (!ejsIs(ejs, lhs, Date) || !ejsIs(ejs, rhs, Date)) {
@@ -5236,90 +5238,90 @@ static EjsObj *invokeDateOperator(Ejs *ejs, EjsDate *lhs, int opcode, EjsDate *r
 
     switch (opcode) {
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value == rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value == rhs->value);
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) ejsCreateBoolean(ejs, !(lhs->value == rhs->value));
+        return ejsCreateBoolean(ejs, !(lhs->value == rhs->value));
 
     case EJS_OP_COMPARE_LT:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value < rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value < rhs->value);
 
     case EJS_OP_COMPARE_LE:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value <= rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value <= rhs->value);
 
     case EJS_OP_COMPARE_GT:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value > rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value > rhs->value);
 
     case EJS_OP_COMPARE_GE:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value >= rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value >= rhs->value);
 
     case EJS_OP_COMPARE_NOT_ZERO:
-        return (EjsObj*) ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) ((lhs->value == 0) ? S(true): S(false));
+        return ((lhs->value == 0) ? S(true): S(false));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
         Unary operators
      */
     case EJS_OP_NEG:
-        return (EjsObj*) ejsCreateNumber(ejs, - (MprNumber) lhs->value);
+        return ejsCreateNumber(ejs, - (MprNumber) lhs->value);
 
     case EJS_OP_LOGICAL_NOT:
-        return (EjsObj*) ejsCreateBoolean(ejs, (MprNumber) !fixed(lhs->value));
+        return ejsCreateBoolean(ejs, (int) !fixed(lhs->value));
 
     case EJS_OP_NOT:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (~fixed(lhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (~fixed(lhs->value)));
 
     /*
         Binary operators
      */
     case EJS_OP_ADD:
-        return (EjsObj*) ejsCreateDate(ejs, lhs->value + rhs->value);
+        return ejsCreateDate(ejs, lhs->value + rhs->value);
 
     case EJS_OP_AND:
-        return (EjsObj*) ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) & fixed(rhs->value)));
+        return ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) & fixed(rhs->value)));
 
     case EJS_OP_DIV:
         if (rhs->value == 0) {
             ejsThrowArithmeticError(ejs, "Divisor is zero");
             return 0;
         }
-        return (EjsObj*) ejsCreateDate(ejs, lhs->value / rhs->value);
+        return ejsCreateDate(ejs, lhs->value / rhs->value);
 
     case EJS_OP_MUL:
-        return (EjsObj*) ejsCreateDate(ejs, lhs->value * rhs->value);
+        return ejsCreateDate(ejs, lhs->value * rhs->value);
 
     case EJS_OP_OR:
-        return (EjsObj*) ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) | fixed(rhs->value)));
+        return ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) | fixed(rhs->value)));
 
     case EJS_OP_REM:
         if (rhs->value == 0) {
             ejsThrowArithmeticError(ejs, "Divisor is zero");
             return 0;
         }
-        return (EjsObj*) ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) % fixed(rhs->value)));
+        return ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) % fixed(rhs->value)));
 
     case EJS_OP_SHL:
-        return (EjsObj*) ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) << fixed(rhs->value)));
+        return ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) << fixed(rhs->value)));
 
     case EJS_OP_SHR:
-        return (EjsObj*) ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) >> fixed(rhs->value)));
+        return ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) >> fixed(rhs->value)));
 
     case EJS_OP_SUB:
-        return (EjsObj*) ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) - fixed(rhs->value)));
+        return ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) - fixed(rhs->value)));
 
     case EJS_OP_USHR:
-        return (EjsObj*) ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) >> fixed(rhs->value)));
+        return ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) >> fixed(rhs->value)));
 
     case EJS_OP_XOR:
-        return (EjsObj*) ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) ^ fixed(rhs->value)));
+        return ejsCreateDate(ejs, (MprNumber) (fixed(lhs->value) ^ fixed(rhs->value)));
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -5345,7 +5347,7 @@ static EjsObj *invokeDateOperator(Ejs *ejs, EjsDate *lhs, int opcode, EjsDate *r
         @param second Integer second value (0-59)
         @param msec Integer millisecond value (0-999)
 */
-static EjsObj *date_Date(Ejs *ejs, EjsDate *date, int argc, EjsObj **argv)
+static EjsDate *date_Date(Ejs *ejs, EjsDate *date, int argc, EjsObj **argv)
 {
     EjsArray    *args;
     EjsObj      *vp;
@@ -5384,32 +5386,32 @@ static EjsObj *date_Date(Ejs *ejs, EjsDate *date, int argc, EjsObj **argv)
         memset(&tm, 0, sizeof(tm));
         tm.tm_isdst = -1;
         vp = ejsGetProperty(ejs, (EjsObj*) args, 0);
-        year = getNumber(ejs, vp);
+        year = getInt(ejs, vp);
         if (0 <= year && year < 100) {
             year += 1900;
         }
         tm.tm_year = year - 1900;
         if (args->length > 1) {
             vp = ejsGetProperty(ejs, (EjsObj*) args, 1);
-            tm.tm_mon = getNumber(ejs, vp);
+            tm.tm_mon = getInt(ejs, vp);
         }
         if (args->length > 2) {
             vp = ejsGetProperty(ejs, (EjsObj*) args, 2);
-            tm.tm_mday = getNumber(ejs, vp);
+            tm.tm_mday = getInt(ejs, vp);
         } else {
             tm.tm_mday = 1;
         }
         if (args->length > 3) {
             vp = ejsGetProperty(ejs, (EjsObj*) args, 3);
-            tm.tm_hour = getNumber(ejs, vp);
+            tm.tm_hour = getInt(ejs, vp);
         }
         if (args->length > 4) {
             vp = ejsGetProperty(ejs, (EjsObj*) args, 4);
-            tm.tm_min = getNumber(ejs, vp);
+            tm.tm_min = getInt(ejs, vp);
         }
         if (args->length > 5) {
             vp = ejsGetProperty(ejs, (EjsObj*) args, 5);
-            tm.tm_sec = getNumber(ejs, vp);
+            tm.tm_sec = getInt(ejs, vp);
         }
         date->value = mprMakeTime(&tm);
         if (date->value == -1) {
@@ -5419,7 +5421,7 @@ static EjsObj *date_Date(Ejs *ejs, EjsDate *date, int argc, EjsObj **argv)
             date->value += getNumber(ejs, vp);
         }
     }
-    return (EjsObj*) date;
+    return date;
 }
 
 
@@ -5427,12 +5429,12 @@ static EjsObj *date_Date(Ejs *ejs, EjsDate *date, int argc, EjsObj **argv)
     function get day(): Number
     Range: 0-6, where 0 is Sunday
  */
-static EjsObj *date_day(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_day(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_wday);
+    return ejsCreateNumber(ejs, tm.tm_wday);
 }
 
 
@@ -5457,12 +5459,12 @@ static EjsObj *date_set_day(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     function get dayOfYear(): Number
     Return day of year (0 - 365)
  */
-static EjsObj *date_dayOfYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_dayOfYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_yday);
+    return ejsCreateNumber(ejs, tm.tm_yday);
 }
 
 
@@ -5487,12 +5489,12 @@ static EjsObj *date_set_dayOfYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv
     function get date(): Number
     Return day of month (1-31)
  */
-static EjsObj *date_date(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_date(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_mday);
+    return ejsCreateNumber(ejs, tm.tm_mday);
 }
 
 
@@ -5517,33 +5519,33 @@ static EjsObj *date_set_date(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     function get elapsed(): Number
     Get the elapsed time in milliseconds since the Date object was constructed
  */
-static EjsObj *date_elapsed(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_elapsed(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, mprGetElapsedTime(dp->value));
+    return ejsCreateNumber(ejs, mprGetElapsedTime(dp->value));
 }
 
 
 /*
     function format(layout: String): String
  */
-static EjsObj *date_format(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsString *date_format(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprFormatTime(ejsToMulti(ejs, argv[0]), &tm));
+    return ejsCreateStringFromAsc(ejs, mprFormatTime(ejsToMulti(ejs, argv[0]), &tm));
 }
 
 
 /*
     function formatUTC(layout: String): String
  */
-static EjsObj *date_formatUTC(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsString *date_formatUTC(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprFormatTime(ejsToMulti(ejs, argv[0]), &tm));
+    return ejsCreateStringFromAsc(ejs, mprFormatTime(ejsToMulti(ejs, argv[0]), &tm));
 }
 
 
@@ -5551,12 +5553,12 @@ static EjsObj *date_formatUTC(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     function get fullYear(): Number
     Return year in 4 digits
  */
-static EjsObj *date_fullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_fullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_year + 1900);
+    return ejsCreateNumber(ejs, tm.tm_year + 1900);
 }
 
 
@@ -5569,7 +5571,7 @@ static EjsObj *date_set_fullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    tm.tm_year = ejsGetNumber(ejs, argv[0]) - 1900;
+    tm.tm_year = (int) ejsGetNumber(ejs, argv[0]) - 1900;
     dp->value = mprMakeTime(&tm);
     return 0;
 }
@@ -5578,12 +5580,12 @@ static EjsObj *date_set_fullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 /*
     function future(msec: Number): Date
  */
-static EjsObj *date_future(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsDate *date_future(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     MprTime     inc;
 
     inc = ejsGetNumber(ejs, argv[0]);
-    return (EjsObj*) ejsCreateDate(ejs, dp->value + inc);
+    return ejsCreateDate(ejs, dp->value + inc);
 }
 
 
@@ -5595,9 +5597,9 @@ static EjsObj *date_future(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 
     function getTimezoneOffset(): Number
 */
-static EjsObj *date_getTimezoneOffset(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getTimezoneOffset(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, -mprGetTimeZoneOffset(dp->value) / (MPR_TICKS_PER_SEC * 60));
+    return ejsCreateNumber(ejs, -mprGetTimeZoneOffset(dp->value) / (MPR_TICKS_PER_SEC * 60));
 }
 
 
@@ -5605,12 +5607,12 @@ static EjsObj *date_getTimezoneOffset(Ejs *ejs, EjsDate *dp, int argc, EjsObj **
     function getUTCDate(): Number
     Range: 0-31
  */
-static EjsObj *date_getUTCDate(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getUTCDate(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_mday);
+    return ejsCreateNumber(ejs, tm.tm_mday);
 }
 
 
@@ -5618,12 +5620,12 @@ static EjsObj *date_getUTCDate(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     function getUTCDay(): Number
     Range: 0-6
  */
-static EjsObj *date_getUTCDay(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getUTCDay(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_wday);
+    return ejsCreateNumber(ejs, tm.tm_wday);
 }
 
 
@@ -5631,12 +5633,12 @@ static EjsObj *date_getUTCDay(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     function getUTCFullYear(): Number
     Range: 4 digits
  */
-static EjsObj *date_getUTCFullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getUTCFullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_year + 1900);
+    return ejsCreateNumber(ejs, tm.tm_year + 1900);
 }
 
 
@@ -5644,12 +5646,12 @@ static EjsObj *date_getUTCFullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **arg
     function getUTCHours(): Number
     Range: 0-23
  */
-static EjsObj *date_getUTCHours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getUTCHours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_hour);
+    return ejsCreateNumber(ejs, tm.tm_hour);
 }
 
 
@@ -5657,9 +5659,9 @@ static EjsObj *date_getUTCHours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     function getUTCMilliseconds(): Number
     Range: 0-999
  */
-static EjsObj *date_getUTCMilliseconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getUTCMilliseconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ((int64) dp->value) % MPR_TICKS_PER_SEC);
+    return ejsCreateNumber(ejs, ((int64) dp->value) % MPR_TICKS_PER_SEC);
 }
 
 
@@ -5667,12 +5669,12 @@ static EjsObj *date_getUTCMilliseconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj *
     function getUTCMinutes(): Number
     Range: 0-31
  */
-static EjsObj *date_getUTCMinutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getUTCMinutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_min);
+    return ejsCreateNumber(ejs, tm.tm_min);
 }
 
 
@@ -5680,12 +5682,12 @@ static EjsObj *date_getUTCMinutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv
     function getUTCMonth(): Number
     Range: 1-12
  */
-static EjsObj *date_getUTCMonth(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getUTCMonth(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_mon);
+    return ejsCreateNumber(ejs, tm.tm_mon);
 }
 
 
@@ -5693,12 +5695,12 @@ static EjsObj *date_getUTCMonth(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     function getUTCSeconds(): Number
     Range: 0-59
  */
-static EjsObj *date_getUTCSeconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_getUTCSeconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_sec);
+    return ejsCreateNumber(ejs, tm.tm_sec);
 }
 
 
@@ -5706,12 +5708,12 @@ static EjsObj *date_getUTCSeconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv
     function get hours(): Number
     Return hour of day (0-23)
  */
-static EjsObj *date_hours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_hours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_hour);
+    return ejsCreateNumber(ejs, tm.tm_hour);
 }
 
 
@@ -5724,7 +5726,7 @@ static EjsObj *date_set_hours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    tm.tm_hour = ejsGetNumber(ejs, argv[0]);
+    tm.tm_hour = (int) ejsGetNumber(ejs, argv[0]);
     dp->value = mprMakeTime(&tm);
     return 0;
 }
@@ -5733,9 +5735,9 @@ static EjsObj *date_set_hours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 /*
     function get milliseconds(): Number
  */
-static EjsObj *date_milliseconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_milliseconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ((int64) dp->value) % MPR_TICKS_PER_SEC);
+    return ejsCreateNumber(ejs, ((int64) dp->value) % MPR_TICKS_PER_SEC);
 }
 
 
@@ -5752,12 +5754,12 @@ static EjsObj *date_set_milliseconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **a
 /*
     function get minutes(): Number
  */
-static EjsObj *date_minutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_minutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_min);
+    return ejsCreateNumber(ejs, tm.tm_min);
 }
 
 
@@ -5769,7 +5771,7 @@ static EjsObj *date_set_minutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    tm.tm_min = ejsGetNumber(ejs, argv[0]);
+    tm.tm_min = (int) ejsGetNumber(ejs, argv[0]);
     dp->value = mprMakeTime(&tm);
     return 0;
 }
@@ -5779,12 +5781,12 @@ static EjsObj *date_set_minutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     function get month(): Number
     Get the month (0-11)
  */
-static EjsObj *date_month(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_month(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_mon);
+    return ejsCreateNumber(ejs, tm.tm_mon);
 }
 
 
@@ -5796,7 +5798,7 @@ static EjsObj *date_set_month(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    tm.tm_mon = ejsGetNumber(ejs, argv[0]);
+    tm.tm_mon = (int) ejsGetNumber(ejs, argv[0]);
     dp->value = mprMakeTime(&tm);
     return 0;
 }
@@ -5805,7 +5807,7 @@ static EjsObj *date_set_month(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 /*
     function nextDay(inc: Number = 1): Date
  */
-static EjsObj *date_nextDay(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsDate *date_nextDay(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     MprTime     inc;
 
@@ -5814,23 +5816,23 @@ static EjsObj *date_nextDay(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     } else {
         inc = 1;
     }
-    return (EjsObj*) ejsCreateDate(ejs, dp->value + (inc * 86400 * 1000));
+    return ejsCreateDate(ejs, dp->value + (inc * 86400 * 1000));
 }
 
 
 /*
     static function now(): Number
  */
-static EjsObj *date_now(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
+static EjsNumber *date_now(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, mprGetTime());
+    return ejsCreateNumber(ejs, mprGetTime());
 }
 
 
 /*
     static function parse(arg: String): Date
  */
-static EjsObj *date_parse(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
+static EjsDate *date_parse(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
 {
     MprTime     when;
 
@@ -5838,14 +5840,14 @@ static EjsObj *date_parse(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
         ejsThrowArgError(ejs, "Can't parse date string: %@", ejsToString(ejs, argv[0]));
         return 0;
     }
-    return (EjsObj*) ejsCreateNumber(ejs, when);
+    return ejsCreateDate(ejs, when);
 }
 
 
 /*
     static function parseDate(arg: String, defaultDate: Date = null): Date
  */
-static EjsObj *date_parseDate(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
+static EjsDate *date_parseDate(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
 {
     struct tm   tm, *defaults;
     MprTime     when;
@@ -5860,14 +5862,14 @@ static EjsObj *date_parseDate(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv
         ejsThrowArgError(ejs, "Can't parse date string: %@", ejsToString(ejs, argv[0]));
         return 0;
     }
-    return (EjsObj*) ejsCreateDate(ejs, when);
+    return ejsCreateDate(ejs, when);
 }
 
 
 /*
     static function parseUTCDate(arg: String, defaultDate: Date = null): Date
  */
-static EjsObj *date_parseUTCDate(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
+static EjsDate *date_parseUTCDate(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
 {
     struct tm   tm, *defaults;
     MprTime     when;
@@ -5882,7 +5884,7 @@ static EjsObj *date_parseUTCDate(Ejs *ejs, EjsDate *unused, int argc, EjsObj **a
         ejsThrowArgError(ejs, "Can't parse date string: %@", ejsToString(ejs, argv[0]));
         return 0;
     }
-    return (EjsObj*) ejsCreateDate(ejs, when);
+    return ejsCreateDate(ejs, when);
 }
 
 
@@ -5890,12 +5892,12 @@ static EjsObj *date_parseUTCDate(Ejs *ejs, EjsDate *unused, int argc, EjsObj **a
     function get seconds(): Number
     Get seconds (0-59)
  */
-static EjsObj *date_seconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_seconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_sec);
+    return ejsCreateNumber(ejs, tm.tm_sec);
 }
 
 
@@ -5907,7 +5909,7 @@ static EjsObj *date_set_seconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    tm.tm_sec = ejsGetNumber(ejs, argv[0]);
+    tm.tm_sec = (int) ejsGetNumber(ejs, argv[0]);
     dp->value = mprMakeTime(&tm);
     return 0;
 }
@@ -5938,7 +5940,7 @@ static EjsObj *date_setUTCFullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **arg
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    tm.tm_year = ejsGetNumber(ejs, argv[0]) - 1900;
+    tm.tm_year = (int) ejsGetNumber(ejs, argv[0]) - 1900;
     dp->value = mprMakeUniversalTime(&tm);
     return 0;
 }
@@ -5952,7 +5954,7 @@ static EjsObj *date_setUTCHours(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    tm.tm_hour = ejsGetNumber(ejs, argv[0]);
+    tm.tm_hour = (int) ejsGetNumber(ejs, argv[0]);
     dp->value = mprMakeUniversalTime(&tm);
     return 0;
 }
@@ -5977,7 +5979,7 @@ static EjsObj *date_setUTCMinutes(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    tm.tm_min = ejsGetNumber(ejs, argv[0]);
+    tm.tm_min = (int) ejsGetNumber(ejs, argv[0]);
     dp->value = mprMakeUniversalTime(&tm);
     return 0;
 }
@@ -5991,7 +5993,7 @@ static EjsObj *date_setUTCMonth(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    tm.tm_mon = ejsGetNumber(ejs, argv[0]);
+    tm.tm_mon = (int) ejsGetNumber(ejs, argv[0]);
     dp->value = mprMakeUniversalTime(&tm);
     return 0;
 }
@@ -6005,7 +6007,7 @@ static EjsObj *date_setUTCSeconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv
     struct tm   tm;
 
     mprDecodeUniversalTime(&tm, dp->value);
-    tm.tm_sec = ejsGetNumber(ejs, argv[0]);
+    tm.tm_sec = (int) ejsGetNumber(ejs, argv[0]);
     dp->value = mprMakeUniversalTime(&tm);
     if (argc >= 2) {
         dp->value = (dp->value / MPR_TICKS_PER_SEC  * MPR_TICKS_PER_SEC) + ejsGetNumber(ejs, argv[1]);
@@ -6017,9 +6019,9 @@ static EjsObj *date_setUTCSeconds(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv
 /*
     static function ticks(): Number
  */
-static EjsObj *date_ticks(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
+static EjsNumber *date_ticks(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, mprGetTicks());
+    return ejsCreateNumber(ejs, mprGetTicks());
 }
 
 
@@ -6027,16 +6029,16 @@ static EjsObj *date_ticks(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
     Get the number of millseconds since Jan 1, 1970 UTC.
     function get time(): Number
  */
-static EjsObj *date_time(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_time(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, dp->value);
+    return ejsCreateNumber(ejs, dp->value);
 }
 
 
 /*
     function set time(value: Number): Number
  */
-static EjsObj *date_set_time(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_set_time(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     dp->value = ejsGetNumber(ejs, argv[0]);
     return 0;
@@ -6048,26 +6050,24 @@ static EjsObj *date_set_time(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     Sample format: "2006-12-15T23:45:09.33-08:00"
     function toISOString(): String
 */
-static EjsObj *date_toISOString(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsString *date_toISOString(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    EjsObj      *vp;
     struct tm   tm;
     char        *base, *str;
 
     mprDecodeUniversalTime(&tm, dp->value);
     base = mprFormatTime("%Y-%m-%dT%H:%M:%S", &tm);
     str = mprAsprintf("%s.%03dZ", base, dp->value % MPR_TICKS_PER_SEC);
-    vp = (EjsObj*) ejsCreateStringFromAsc(ejs, str);
-    return vp;
+    return ejsCreateStringFromAsc(ejs, str);
 }
 
 
 /*
     Serialize using JSON encoding. This uses the ISO date format
 
-    function toJSON()
+    function toJSON(): String
  */
-static EjsObj *date_toJSON(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsString *date_toJSON(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
     char        *base, *str;
@@ -6075,14 +6075,14 @@ static EjsObj *date_toJSON(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     mprDecodeUniversalTime(&tm, dp->value);
     base = mprFormatTime("%Y-%m-%dT%H:%M:%S", &tm);
     str = mprAsprintf("\"%sZ\"", base);
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, str);
+    return ejsCreateStringFromAsc(ejs, str);
 }
 
 
 /*
     override native function toString(): String
  */
-static EjsObj *date_toString(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsString *date_toString(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     return castDate(ejs, dp, ST(String));
 }
@@ -6092,50 +6092,50 @@ static EjsObj *date_toString(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     Construct a date from UTC values
     function UTC(year, month, date, hour = 0, minute = 0, second = 0, msec = 0): Number
  */
-static EjsObj *date_UTC(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
+static EjsNumber *date_UTC(Ejs *ejs, EjsDate *unused, int argc, EjsObj **argv)
 {
     EjsDate     *dp;
     struct tm   tm;
     int         year;
 
     memset(&tm, 0, sizeof(tm));
-    year = getNumber(ejs, argv[0]);
+    year = getInt(ejs, argv[0]);
     if (year < 100) {
         year += 1900;
     }
     tm.tm_year = year - 1900;
     if (argc > 1) {
-        tm.tm_mon = getNumber(ejs, argv[1]);
+        tm.tm_mon = getInt(ejs, argv[1]);
     }
     if (argc > 2) {
-        tm.tm_mday = getNumber(ejs, argv[2]);
+        tm.tm_mday = getInt(ejs, argv[2]);
     }
     if (argc > 3) {
-        tm.tm_hour = getNumber(ejs, argv[3]);
+        tm.tm_hour = getInt(ejs, argv[3]);
     }
     if (argc > 4) {
-        tm.tm_min = getNumber(ejs, argv[4]);
+        tm.tm_min = getInt(ejs, argv[4]);
     }
     if (argc > 5) {
-        tm.tm_sec = getNumber(ejs, argv[5]);
+        tm.tm_sec = getInt(ejs, argv[5]);
     }
     dp = ejsCreateDate(ejs, mprMakeUniversalTime(&tm));
     if (argc > 6) {
         dp->value += getNumber(ejs, argv[6]);
     }
-    return (EjsObj*) ejsCreateNumber(ejs, dp->value);
+    return ejsCreateNumber(ejs, dp->value);
 }
 
 
 /*
     function get year(): Number
  */
-static EjsObj *date_year(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
+static EjsNumber *date_year(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    return (EjsObj*) ejsCreateNumber(ejs, tm.tm_year + 1900);
+    return ejsCreateNumber(ejs, tm.tm_year + 1900);
 }
 
 
@@ -6147,7 +6147,7 @@ static EjsObj *date_set_year(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     struct tm   tm;
 
     mprDecodeLocalTime(&tm, dp->value);
-    tm.tm_year = ejsGetNumber(ejs, argv[0]) - 1900;
+    tm.tm_year = (int) ejsGetNumber(ejs, argv[0]) - 1900;
     dp->value = mprMakeTime(&tm);
     return 0;
 }
@@ -6628,7 +6628,8 @@ static void unmapFile(EjsFile *fp);
  */
 static EjsObj *getFileProperty(Ejs *ejs, EjsFile *fp, int slotNum)
 {
-    int     c, offset;
+    MprOff  offset;
+    int     c;
 
     if (!(fp->mode & FILE_OPEN)) {
         ejsThrowIOError(ejs, "File is not open");
@@ -6693,7 +6694,8 @@ static int lookupFileProperty(Ejs *ejs, EjsFile *fp, EjsName qname)
  */
 static int setFileProperty(Ejs *ejs, EjsFile *fp, int slotNum, EjsObj *value)
 {
-    int     c, offset;
+    MprOff  offset;
+    int     c;
 
     if (!(fp->mode & FILE_OPEN)) {
         ejsThrowIOError(ejs, "File is not open");
@@ -6708,7 +6710,7 @@ static int setFileProperty(Ejs *ejs, EjsFile *fp, int slotNum, EjsObj *value)
     offset = mprSeekFile(fp->file, SEEK_CUR, 0);
     if (slotNum < 0) {
         //  could have an mprGetPosition(file) API
-        slotNum = offset;
+        slotNum = (int) offset;
     }
 
 #if BLD_CC_MMU && FUTURE
@@ -7846,7 +7848,7 @@ static void manageFrame(EjsFrame *frame, int flags)
 static EjsFrame *allocFrame(Ejs *ejs, int numProp)
 {
     EjsObj      *obj;
-    uint        size;
+    ssize       size;
 
     mprAssert(ejs);
 
@@ -9281,8 +9283,8 @@ void ejsConfigureGlobalBlock(Ejs *ejs)
 
 
 
-static EjsObj   *getDateHeader(Ejs *ejs, EjsHttp *hp, cchar *key);
-static EjsObj   *getStringHeader(Ejs *ejs, EjsHttp *hp, cchar *key);
+static EjsDate  *getDateHeader(Ejs *ejs, EjsHttp *hp, cchar *key);
+static EjsString *getStringHeader(Ejs *ejs, EjsHttp *hp, cchar *key);
 static void     httpIOEvent(HttpConn *conn, MprEvent *event);
 static void     httpNotify(HttpConn *conn, int state, int notifyFlags);
 static void     prepForm(Ejs *ejs, EjsHttp *hp, char *prefix, EjsObj *data);
@@ -9297,7 +9299,7 @@ static ssize    writeHttpData(Ejs *ejs, EjsHttp *hp);
 /*  
     function Http(uri: Uri = null)
  */
-static EjsObj *httpConstructor(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsHttp *httpConstructor(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     ejsLoadHttpService(ejs);
 
@@ -9314,31 +9316,31 @@ static EjsObj *httpConstructor(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     hp->method = sclone("GET");
     hp->requestContent = mprCreateBuf(HTTP_BUFSIZE, -1);
     hp->responseContent = mprCreateBuf(HTTP_BUFSIZE, -1);
-    return (EjsObj*) hp;
+    return hp;
 }
 
 
 /*  
     function on(name, observer: function): Void
  */
-EjsObj *http_on(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsObj *http_on(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     EjsFunction     *observer;
     HttpConn        *conn;
 
     observer = (EjsFunction*) argv[1];
     if (observer->boundThis == 0 || observer->boundThis == ejs->global) {
-        observer->boundThis = (EjsObj*) hp;
+        observer->boundThis = hp;
     }
     ejsAddObserver(ejs, &hp->emitter, argv[0], argv[1]);
 
     conn = hp->conn;
     if (conn->readq && conn->readq->count > 0) {
-        ejsSendEvent(ejs, hp->emitter, "readable", NULL, (EjsObj*) hp);
+        ejsSendEvent(ejs, hp->emitter, "readable", NULL, hp);
     }
     if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
             conn->writeq->ioCount == 0) {
-        ejsSendEvent(ejs, hp->emitter, "writable", NULL, (EjsObj*) hp);
+        ejsSendEvent(ejs, hp->emitter, "writable", NULL, hp);
     }
     return 0;
 }
@@ -9347,45 +9349,47 @@ EjsObj *http_on(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get async(): Boolean
  */
-EjsObj *http_async(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsBoolean *http_async(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    return httpGetAsync(hp->conn) ? (EjsObj*) S(true) : (EjsObj*) S(false);
+    return httpGetAsync(hp->conn) ? S(true) : S(false);
 }
 
 
 /*  
     function set async(enable: Boolean): Void
  */
-EjsObj *http_set_async(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsObj *http_set_async(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     HttpConn    *conn;
     int         async;
 
     conn = hp->conn;
-    async = (argv[0] == (EjsObj*) S(true));
+    async = (argv[0] == S(true));
     httpSetAsync(conn, async);
     httpSetIOCallback(conn, httpIOEvent);
     return 0;
 }
 
 
+#if ES_Http_available
 /*  
     function get available(): Number
     DEPRECATED 1.0.0B3 (11/09)
  */
-EjsObj *http_available(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsNumber *http_available(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    ssize     len;
+    MprOff      len;
 
     if (!waitForResponseHeaders(hp, -1)) {
         return 0;
     }
     len = httpGetContentLength(hp->conn);
     if (len > 0) {
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) len);
+        return ejsCreateNumber(ejs, (MprNumber) len);
     }
-    return (EjsObj*) S(minusOne);
+    return (EjsNumber*) S(minusOne);
 }
+#endif
 
 
 /*  
@@ -9420,10 +9424,10 @@ static EjsObj *http_connect(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get certificate(): String
  */
-static EjsObj *http_certificate(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsString *http_certificate(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     if (hp->certFile) {
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, hp->certFile);
+        return ejsCreateStringFromAsc(ejs, hp->certFile);
     }
     return S(null);
 }
@@ -9442,22 +9446,22 @@ static EjsObj *http_set_certificate(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **ar
 /*  
     function get contentLength(): Number
  */
-static EjsObj *http_contentLength(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsNumber *http_contentLength(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    ssize     length;
+    MprOff      length;
 
     if (!waitForResponseHeaders(hp, -1)) {
         return 0;
     }
     length = httpGetContentLength(hp->conn);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) length);
+    return ejsCreateNumber(ejs, (MprNumber) length);
 }
 
 
 /*  
     function get contentType(): String
  */
-static EjsObj *http_contentType(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsString *http_contentType(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     return getStringHeader(ejs, hp, "CONTENT-TYPE");
 }
@@ -9466,7 +9470,7 @@ static EjsObj *http_contentType(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get date(): Date
  */
-static EjsObj *http_date(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsDate *http_date(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     return getDateHeader(ejs, hp, "DATE");
 }
@@ -9487,10 +9491,10 @@ static EjsObj *http_finalize(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get finalized(): Boolean
  */
-static EjsObj *http_finalized(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsBoolean *http_finalized(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     if (hp->conn && hp->conn->tx) {
-        return (EjsObj*) ejsCreateBoolean(ejs, hp->conn->tx->finalized);
+        return ejsCreateBoolean(ejs, hp->conn->tx->finalized);
     }
     return S(false);
 }
@@ -9545,9 +9549,9 @@ static EjsObj *http_form(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get followRedirects(): Boolean
  */
-static EjsObj *http_followRedirects(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsBoolean *http_followRedirects(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, hp->conn->followRedirects);
+    return ejsCreateBoolean(ejs, hp->conn->followRedirects);
 }
 
 
@@ -9579,18 +9583,18 @@ static EjsObj *http_get(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     Return the (proposed) request headers
     function getRequestHeaders(): Object
  */
-static EjsObj *http_getRequestHeaders(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsPot *http_getRequestHeaders(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     MprHash         *p;
     HttpConn        *conn;
-    EjsObj          *headers;
+    EjsPot          *headers;
 
     conn = hp->conn;
-    headers = (EjsObj*) ejsCreateEmptyPot(ejs);
+    headers = ejsCreateEmptyPot(ejs);
     for (p = 0; conn->tx && (p = mprGetNextHash(conn->tx->headers, p)) != 0; ) {
         ejsSetPropertyByName(ejs, headers, EN(p->key), ejsCreateStringFromAsc(ejs, p->data));
     }
-    return (EjsObj*) headers;
+    return headers;
 }
 
 
@@ -9606,11 +9610,11 @@ static EjsObj *http_head(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function header(key: String): String
  */
-static EjsObj *http_header(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsString *http_header(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    EjsObj  *result;
-    cchar   *value;
-    char    *str;
+    EjsString   *result;
+    cchar       *value;
+    char        *str;
 
     if (!waitForResponseHeaders(hp, -1)) {
         return 0;
@@ -9618,9 +9622,9 @@ static EjsObj *http_header(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     str = slower(ejsToMulti(ejs, argv[0]));
     value = httpGetHeader(hp->conn, str);
     if (value) {
-        result = (EjsObj*) ejsCreateStringFromAsc(ejs, value);
+        result = ejsCreateStringFromAsc(ejs, value);
     } else {
-        result = (EjsObj*) S(null);
+        result = S(null);
     }
     return result;
 }
@@ -9629,7 +9633,7 @@ static EjsObj *http_header(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get headers(): Object
  */
-static EjsObj *http_headers(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsPot *http_headers(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     MprHashTable    *hash;
     MprHash         *p;
@@ -9642,21 +9646,21 @@ static EjsObj *http_headers(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     results = ejsCreateEmptyPot(ejs);
     hash = httpGetHeaderHash(hp->conn);
     if (hash == 0) {
-        return (EjsObj*) results;
+        return results;
     }
     for (i = 0, p = mprGetFirstHash(hash); p; p = mprGetNextHash(hash, p), i++) {
         ejsSetPropertyByName(ejs, results, EN(p->key), ejsCreateStringFromAsc(ejs, p->data));
     }
-    return (EjsObj*) results;
+    return results;
 }
 
 
 /*  
     function get isSecure(): Boolean
  */
-static EjsObj *http_isSecure(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsBoolean *http_isSecure(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, hp->conn->secure);
+    return ejsCreateBoolean(ejs, hp->conn->secure);
 }
 
 
@@ -9685,7 +9689,7 @@ static EjsObj *http_set_key(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get lastModified(): Date
  */
-static EjsObj *http_lastModified(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsDate *http_lastModified(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     return getDateHeader(ejs, hp, "LAST-MODIFIED");
 }
@@ -9707,9 +9711,9 @@ static EjsObj *http_limits(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get method(): String
  */
-static EjsObj *http_method(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsString *http_method(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, hp->method);
+    return ejsCreateStringFromAsc(ejs, hp->method);
 }
 
 
@@ -9754,11 +9758,12 @@ static EjsObj *http_put(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number
     Returns a count of bytes read. Non-blocking if a callback is defined. Otherwise, blocks.
  */
-static EjsObj *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsNumber *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     EjsByteArray    *buffer;
     HttpConn        *conn;
-    ssize           offset, count, contentLength;
+    MprOff          contentLength;
+    ssize           offset, count;
 
     conn = hp->conn;
     buffer = (EjsByteArray*) argv[0];
@@ -9772,7 +9777,7 @@ static EjsObj *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     contentLength = httpGetContentLength(conn);
     if (conn->state >= HTTP_STATE_PARSED && contentLength == hp->readCount) {
         /* End of input */
-        return (EjsObj*) S(null);
+        return S(null);
     }
     if (offset < 0) {
         offset = buffer->writePosition;
@@ -9790,7 +9795,7 @@ static EjsObj *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     ejsCopyToByteArray(ejs, buffer, buffer->writePosition, (char*) mprGetBufStart(hp->responseContent), count);
     ejsSetByteArrayPositions(ejs, buffer, -1, buffer->writePosition + count);
     mprAdjustBufStart(hp->responseContent, count);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) count);
+    return ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -9798,9 +9803,9 @@ static EjsObj *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     function readString(count: Number = -1): String
     Read count bytes (default all) of content as a string. This always starts at the first character of content.
  */
-static EjsObj *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsString *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    EjsObj      *result;
+    EjsString   *result;
     HttpConn    *conn;
     ssize       count;
     int         timeout;
@@ -9824,7 +9829,7 @@ static EjsObj *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
         return 0;
     }
     //  MOB - UNICODE ENCODING
-    result = (EjsObj*) ejsCreateStringFromMulti(ejs, mprGetBufStart(hp->responseContent), count);
+    result = ejsCreateStringFromMulti(ejs, mprGetBufStart(hp->responseContent), count);
     mprAdjustBufStart(hp->responseContent, count);
     return result;
 }
@@ -9833,7 +9838,7 @@ static EjsObj *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function off(name, observer: function): Void
  */
-EjsObj *http_off(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsObj *http_off(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     ejsRemoveObserver(ejs, hp->emitter, argv[0], argv[1]);
     return 0;
@@ -9854,13 +9859,13 @@ static EjsObj *http_reset(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get response(): String
  */
-static EjsObj *http_response(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsString *http_response(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     if (hp->responseCache) {
         return hp->responseCache;
     }
     hp->responseCache = http_readString(ejs, hp, argc, argv);
-    return (EjsObj*) hp->responseCache;
+    return hp->responseCache;
 }
 
 
@@ -9869,7 +9874,7 @@ static EjsObj *http_response(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
  */
 static EjsObj *http_set_response(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    hp->responseCache = argv[0];
+    hp->responseCache = (EjsString*) argv[0];
     return 0;
 }
 
@@ -9877,9 +9882,9 @@ static EjsObj *http_set_response(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get retries(): Number
  */
-static EjsObj *http_retries(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsNumber *http_retries(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, hp->conn->retries);
+    return ejsCreateNumber(ejs, hp->conn->retries);
 }
 
 
@@ -9910,7 +9915,7 @@ static EjsObj *http_setCredentials(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **arg
 /*  
     function setHeader(key: String, value: String, overwrite: Boolean = true): Void
  */
-EjsObj *http_setHeader(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsObj *http_setHeader(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     HttpConn    *conn;
     cchar       *key, *value;
@@ -10036,11 +10041,11 @@ static EjsObj *http_trace(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 
 
 /*  
-    function get uri(): String
+    function get uri(): Uri
  */
-static EjsObj *http_uri(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsUri *http_uri(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateUriFromMulti(ejs, hp->uri);
+    return ejsCreateUriFromMulti(ejs, hp->uri);
 }
 
 
@@ -10057,7 +10062,7 @@ static EjsObj *http_set_uri(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 /*  
     function get status(): Number
  */
-static EjsObj *http_status(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsNumber *http_status(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     int     code;
 
@@ -10068,14 +10073,14 @@ static EjsObj *http_status(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     if (code <= 0) {
         return S(null);
     }
-    return (EjsObj*) ejsCreateNumber(ejs, code);
+    return ejsCreateNumber(ejs, code);
 }
 
 
 /*  
     function get statusMessage(): String
  */
-static EjsObj *http_statusMessage(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsString *http_statusMessage(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     HttpConn    *conn;
 
@@ -10084,9 +10089,9 @@ static EjsObj *http_statusMessage(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv
     }
     conn = hp->conn;
     if (conn->errorMsg) {
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, conn->errorMsg);
+        return ejsCreateStringFromAsc(ejs, conn->errorMsg);
     }
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, httpGetStatusMessage(hp->conn));
+    return ejsCreateStringFromAsc(ejs, httpGetStatusMessage(hp->conn));
 }
 
 
@@ -10095,7 +10100,7 @@ static EjsObj *http_statusMessage(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv
 
     function wait(timeout: Number = -1): Boolean
  */
-static EjsObj *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+static EjsBoolean *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     MprTime     mark;
     int         timeout;
@@ -10109,9 +10114,9 @@ static EjsObj *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     }
     mark = mprGetTime();
     if (!waitForState(hp, HTTP_STATE_COMPLETE, timeout, 0)) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
@@ -10149,7 +10154,7 @@ static EjsObj *startHttpRequest(Ejs *ejs, EjsHttp *hp, char *method, int argc, E
     EjsNumber       *written;
     EjsUri          *uriObj;
     HttpConn        *conn;
-    ssize           length, nbytes;
+    ssize           nbytes;
 
     conn = hp->conn;
     hp->responseCache = 0;
@@ -10196,8 +10201,7 @@ static EjsObj *startHttpRequest(Ejs *ejs, EjsHttp *hp, char *method, int argc, E
         }
         httpFinalize(conn);
     }
-    length = hp->conn->tx->length;
-    ejsSendEvent(ejs, hp->emitter, "writable", NULL, (EjsObj*) hp);
+    ejsSendEvent(ejs, hp->emitter, "writable", NULL, hp);
     if (conn->async) {
         httpEnableConnEvents(hp->conn);
     }
@@ -10219,7 +10223,7 @@ static void httpNotify(HttpConn *conn, int state, int notifyFlags)
 
     case HTTP_STATE_PARSED:
         if (hp->emitter) {
-            ejsSendEvent(ejs, hp->emitter, "headers", NULL, (EjsObj*) hp);
+            ejsSendEvent(ejs, hp->emitter, "headers", NULL, hp);
         }
         break;
 
@@ -10239,10 +10243,10 @@ static void httpNotify(HttpConn *conn, int state, int notifyFlags)
     case 0:
         if (hp && hp->emitter) {
             if (notifyFlags & HTTP_NOTIFY_READABLE) {
-                ejsSendEvent(ejs, hp->emitter, "readable", NULL, (EjsObj*) hp);
+                ejsSendEvent(ejs, hp->emitter, "readable", NULL, hp);
             } 
             if (notifyFlags & HTTP_NOTIFY_WRITABLE) {
-                ejsSendEvent(ejs, hp->emitter, "writable", NULL, (EjsObj*) hp);
+                ejsSendEvent(ejs, hp->emitter, "writable", NULL, hp);
             }
         }
         break;
@@ -10338,7 +10342,7 @@ static void httpIOEvent(HttpConn *conn, MprEvent *event)
 }
 
 
-static EjsObj *getDateHeader(Ejs *ejs, EjsHttp *hp, cchar *key)
+static EjsDate *getDateHeader(Ejs *ejs, EjsHttp *hp, cchar *key)
 {
     MprTime     when;
     cchar       *value;
@@ -10348,16 +10352,16 @@ static EjsObj *getDateHeader(Ejs *ejs, EjsHttp *hp, cchar *key)
     }
     value = httpGetHeader(hp->conn, key);
     if (value == 0) {
-        return (EjsObj*) S(null);
+        return S(null);
     }
     if (mprParseTime(&when, value, MPR_UTC_TIMEZONE, NULL) < 0) {
         value = 0;
     }
-    return (EjsObj*) ejsCreateDate(ejs, when);
+    return ejsCreateDate(ejs, when);
 }
 
 
-static EjsObj *getStringHeader(Ejs *ejs, EjsHttp *hp, cchar *key)
+static EjsString *getStringHeader(Ejs *ejs, EjsHttp *hp, cchar *key)
 {
     cchar       *value;
 
@@ -10366,9 +10370,9 @@ static EjsObj *getStringHeader(Ejs *ejs, EjsHttp *hp, cchar *key)
     }
     value = httpGetHeader(hp->conn, key);
     if (value == 0) {
-        return (EjsObj*) S(null);
+        return S(null);
     }
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, value);
+    return ejsCreateStringFromAsc(ejs, value);
 }
 
 
@@ -10697,7 +10701,7 @@ static void sendHttpCloseEvent(Ejs *ejs, EjsHttp *hp)
     if (!hp->closed && ejs->service) {
         hp->closed = 1;
         if (hp->emitter) {
-            ejsSendEvent(ejs, hp->emitter, "close", NULL, (EjsObj*) hp);
+            ejsSendEvent(ejs, hp->emitter, "close", NULL, hp);
         }
     }
 }
@@ -10708,7 +10712,7 @@ static void sendHttpErrorEvent(Ejs *ejs, EjsHttp *hp)
     if (!hp->error) {
         hp->error = 1;
         if (hp->emitter) {
-            ejsSendEvent(ejs, hp->emitter, "error", NULL, (EjsObj*) hp);
+            ejsSendEvent(ejs, hp->emitter, "error", NULL, hp);
         }
     }
 }
@@ -14069,12 +14073,12 @@ static EjsObj *obj_hasOwnProperty(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv
 /*
     static function isExtensible(obj: Object): Boolean
  */
-static EjsObj *obj_isExtensible(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsBoolean *obj_isExtensible(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsObj      *obj;
 
     obj = argv[0];
-    return (EjsObj*) ejsCreateBoolean(ejs, DYNAMIC(obj));
+    return ejsCreateBoolean(ejs, DYNAMIC(obj));
 }
 
 
@@ -15990,8 +15994,9 @@ static int definePotProperty(Ejs *ejs, EjsPot *obj, int slotNum, EjsName qname, 
         } else {
             slotNum = priorSlot;
         }
-
     }
+    mprAssert(priorSlot < 0 || priorSlot == slotNum);
+
     if (slotNum >= obj->numProp && !DYNAMIC(obj)) {
         if (obj->properties == 0 || slotNum >= obj->properties->size) {
             if (growSlots(ejs, obj, slotNum + 1) < 0) {
@@ -21589,7 +21594,8 @@ static EjsType *createTypeVar(Ejs *ejs, EjsType *typeType, int numProp)
     EjsType     *type;
     EjsPot      *obj;
     char        *start;
-    int         typeSize, sizeHash, dynamic;
+    ssize       typeSize;
+    int         sizeHash, dynamic;
 
     mprAssert(ejs);
     
@@ -29714,6 +29720,10 @@ mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->hea
         CASE (EJS_OP_GET_SCOPED_NAME):
             mark = FRAME->pc - 1;
             qname = GET_NAME();
+#if UNUSED
+                mprAssert(strcmp(qname.name->value, "Legacy") != 0);
+                mprAssert(strcmp(qname.name->value, "Config") != 0);
+#endif
             vp = ejsGetVarByName(ejs, NULL, qname, &lookup);
             if (unlikely(vp == 0)) {
                 ejsThrowReferenceError(ejs, "%@ is not defined", qname.name);
@@ -33200,7 +33210,7 @@ static char *search(Ejs *ejs, cchar *filename, int minVersion, int maxVersion)
 static int loadSections(Ejs *ejs, MprFile *file, cchar *path, EjsModuleHdr *hdr, int flags)
 {
     EjsModule   *mp;
-    int         rc, sectionType, created, firstModule, status, next;
+    int         next, rc, sectionType, created, firstModule, status;
 
     created = 0;
     mp = 0;
@@ -33424,7 +33434,7 @@ static int loadDependencySection(Ejs *ejs, EjsModule *mp)
     EjsModule   *module;
     EjsString   *name;
     void        *saveCallback;
-    int         rc, next, minVersion, maxVersion, checksum, nextModule;
+    int         next, rc, minVersion, maxVersion, checksum, nextModule;
 
     mprAssert(ejs);
     mprAssert(mp);
@@ -33852,7 +33862,7 @@ static int loadDebugSection(Ejs *ejs, EjsModule *mp)
      */
     mprAssert(!fun->isNativeProc);
     size = ejsModuleReadInt32(ejs, mp);
-    fun->body.code->debugOffset = mprGetFilePosition(mp->file);
+    fun->body.code->debugOffset = (int) mprGetFilePosition(mp->file);
     mprSeekFile(mp->file, SEEK_CUR, size);
     if (ejs->loaderCallback) {
         (ejs->loaderCallback)(ejs, EJS_SECT_DEBUG, mp, fun);
@@ -34265,7 +34275,7 @@ static char *probe(Ejs *ejs, cchar *path, int minVersion, int maxVersion)
     MprDirEntry     *dp, *best;
     MprList         *files;
     char            *dir, *base, *ext;
-    int             nameLen, version, next, bestVersion;
+    int             next, nameLen, version, bestVersion;
 
     mprAssert(ejs);
     mprAssert(path);
@@ -35866,7 +35876,7 @@ int ejsLookupVarWithNamespaces(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *l
     EjsString       *space;
     EjsBlock        *b;
     MprList         *globalSpaces;
-    int             slotNum, next;
+    int             next, slotNum;
 
     mprAssert(obj);
     mprAssert(name.name);
@@ -39917,16 +39927,16 @@ static EjsObj *req_writeFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     EjsPath         *path;
     HttpConn        *conn;
     HttpRx          *rx;
-    HttpTx          *trans;
+    HttpTx          *tx;
     HttpPacket      *packet;
     MprPath         info;
 
     if (!connOk(ejs, req, 1)) return 0;
     conn = req->conn;
     rx = conn->rx;
-    trans = conn->tx;
+    tx = conn->tx;
 
-    if (rx->ranges || conn->secure || trans->chunkSize > 0) {
+    if (rx->ranges || conn->secure || tx->chunkSize > 0) {
         return S(false);
     }
     path = (EjsPath*) argv[0];
@@ -39934,11 +39944,9 @@ static EjsObj *req_writeFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         ejsThrowIOError(ejs, "Cannot open %s", path->value);
         return S(false);
     }
+    packet = httpCreateEntityPacket(0, info.size, NULL);
+    tx->length = tx->entityLength = info.size;
     httpSetSendConnector(req->conn, path->value);
-
-    packet = httpCreateDataPacket(0);
-    packet->entityLength = (int) info.size;
-    trans->length = trans->entityLength = (int) info.size;
     httpPutForService(conn->writeq, packet, 0);
     httpFinalize(req->conn);
     return S(true);
@@ -40982,13 +40990,12 @@ static void astSpread(EcCompiler *cp, EcNode *np)
 static void astAssignOp(EcCompiler *cp, EcNode *np)
 {
     EcState     *state;
-    int         rc, next;
+    int         rc;
 
     ENTER(cp);
 
     state = cp->state;
     rc = 0;
-    next = 0;
 
     mprAssert(np->kind == N_ASSIGN_OP);
     mprAssert(np->left);
@@ -41793,7 +41800,7 @@ static int defineParameters(EcCompiler *cp, EcNode *np)
     Ejs             *ejs;
     EjsFunction     *fun;
     EcNode          *nameNode, *child, *parameters;
-    int             attributes, next, slotNum, numDefault;
+    int             next, attributes, slotNum, numDefault;
 
     ejs = cp->ejs;
     parameters = np->function.parameters;
@@ -41931,7 +41938,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
     EjsBlock        *block;
     EjsName         qname;
     bool            modified;
-    int             slotNum, next;
+    int             next, slotNum;
 
     mprAssert(cp->phase >= EC_PHASE_BIND);
     mprAssert(np->kind == N_FUNCTION);
@@ -42257,8 +42264,8 @@ static void astFor(EcCompiler *cp, EcNode *np)
  */
 static void astForIn(EcCompiler *cp, EcNode *np)
 {
-    Ejs         *ejs;
-    int         rc;
+    Ejs     *ejs;
+    int     rc;
 
     ENTER(cp);
 
@@ -42427,7 +42434,6 @@ static void astImplements(EcCompiler *cp, EcNode *np)
     int         next;
     
     ENTER(cp);
-    
     mprAssert(np->kind == N_TYPE_IDENTIFIERS);
     
     next = 0;
@@ -42828,10 +42834,10 @@ static void astPostfixOp(EcCompiler *cp, EcNode *np)
 
 static void astProgram(EcCompiler *cp, EcNode *np)
 {
-    Ejs             *ejs;
-    EcState         *state;
-    EcNode          *child;
-    int             next;
+    Ejs         *ejs;
+    EcState     *state;
+    EcNode      *child;
+    int         next;
 
     ENTER(cp);
     ejs = cp->ejs;
@@ -43012,7 +43018,7 @@ static void astTry(EcCompiler *cp, EcNode *np)
     Ejs         *ejs;
     EjsBlock    *block;
     EcNode      *child;
-    EcState         *state;
+    EcState     *state;
     int         next, count;
 
     ENTER(cp);
@@ -44133,7 +44139,7 @@ static void fixupClass(EcCompiler *cp, EjsType *type)
     EjsName         qname;
     EjsTrait        *trait;
     EcNode          *np, *child;
-    int             rc, slotNum, attributes, next, hasInstanceVars;
+    int             next, rc, slotNum, attributes, hasInstanceVars;
 
     if (VISITED(type) || !type->needFixup) {
         return;
@@ -44481,10 +44487,10 @@ static int resolveName(EcCompiler *cp, EcNode *np, EjsObj *vp, EjsName qname)
  */
 static void addGlobalProperty(EcCompiler *cp, EcNode *np, EjsName *qname)
 {
-    Ejs             *ejs;
-    EjsModule       *up;
-    EjsName         *p;
-    int             next;
+    Ejs         *ejs;
+    EjsModule   *up;
+    EjsName     *p;
+    int         next;
 
     ejs = cp->ejs;
 
@@ -45060,7 +45066,7 @@ int ecCodeGen(EcCompiler *cp)
     EjsModule   *mp;
     EcNode      *np;
     MprList     *modules;
-    int         i, version, next, count;
+    int         next, i, version, count;
 
     ejs = cp->ejs;
     if (ecEnterState(cp) < 0) {
@@ -45160,7 +45166,6 @@ static void genArgs(EcCompiler *cp, EcNode *np)
     int         next;
 
     ENTER(cp);
-
     mprAssert(np->kind == N_ARGS);
 
     cp->state->needsValue = 1;
@@ -45224,7 +45229,7 @@ static void genArrayLiteral(EcCompiler *cp, EcNode *np)
 static void genAssignOp(EcCompiler *cp, EcNode *np)
 {
     EcState     *state;
-    int         rc, next;
+    int         next, rc;
 
     ENTER(cp);
 
@@ -46194,7 +46199,7 @@ static int injectCode(Ejs *ejs, EjsFunction *fun, EcCodeGen *extra)
     EjsEx       *ex;
     EjsDebug    *debug;
     uchar       *byteCode;
-    int         i, next, len, codeLen, extraCodeLen;
+    int         next, i, len, codeLen, extraCodeLen;
 
     if (extra == NULL || extra->buf == NULL) {
         return 0;
@@ -46418,7 +46423,7 @@ static void genClass(EcCompiler *cp, EcNode *np)
 static void genDassign(EcCompiler *cp, EcNode *np)
 {
     EcNode      *field;
-    int         count, next;
+    int         next, count;
 
     mprAssert(np->kind == N_DASSIGN);
 
@@ -47084,7 +47089,7 @@ static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun
     EcNode          *parameters, *child;
     EcState         *state;
     EcCodeGen       **buffers, *saveCode;
-    int             next, len, needLongJump, count, firstDefault;
+    int             len, next, needLongJump, count, firstDefault;
 
     ejs = cp->ejs;
     state = cp->state;
@@ -47145,7 +47150,6 @@ static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun
     ecEncodeByte(cp, fun->numDefault + fun->rest + 1);
 
     len = (fun->numDefault + fun->rest + 1) * ((needLongJump) ? 4 : 1);
-
     for (next = firstDefault; next < count; next++) {
         if (buffers[next] == 0) {
             continue;
@@ -47416,7 +47420,6 @@ static void genIf(EcCompiler *cp, EcNode *np)
         ecEncodeOpcode(cp, EJS_OP_GOTO);
         ecEncodeInt32(cp, elseLen);
     }
-
     if (np->tenary.elseCode) {
         copyCodeBuffer(cp, state->code, np->tenary.elseCode);
     }
@@ -47755,8 +47758,8 @@ static void genProgram(EcCompiler *cp, EcNode *np)
 
 static void genPragmas(EcCompiler *cp, EcNode *np)
 {
-    EcNode  *child;
-    int     next;
+    EcNode      *child;
+    int         next;
 
     next = 0;
     while ((child = getNextNode(cp, np, &next))) {
@@ -48687,7 +48690,7 @@ static void copyCodeBuffer(EcCompiler *cp, EcCodeGen *dest, EcCodeGen *src)
     EcJump          *jump;
     EcState         *state;
     uint            baseOffset;
-    int             len, next, i;
+    int             next, len, i;
 
     state = cp->state;
     mprAssert(state);
@@ -48752,8 +48755,7 @@ static void patchJumps(EcCompiler *cp, int kind, int target)
 {
     EcJump      *jump;
     EcCodeGen   *code;
-    int         next;
-    int         offset;
+    int         next, offset;
 
     code = cp->state->code;
     mprAssert(code);
@@ -49223,6 +49225,9 @@ static void processModule(EcCompiler *cp, EjsModule *mp)
         //  MOB -- make these standard strings in native core
         ecAddCStringConstant(cp, EJS_INITIALIZER_NAME);
         ecAddCStringConstant(cp, EJS_EJS_NAMESPACE);
+        if (mp->initializer->resultType) {
+            ecAddNameConstant(cp, mp->initializer->resultType->qname);
+        }
     }
     if (ecCreateModuleSection(cp) < 0) {
         genError(cp, 0, "Can't write module sections");
@@ -49680,7 +49685,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     EcLocation  loc;
     cchar       *ext;
     char        *msg;
-    int         i, j, next, nextModule, lflags, rc, frozen;
+    int         next, i, j, nextModule, lflags, rc, frozen;
 
     ejs = cp->ejs;
     if ((nodes = mprCreateList(-1, 0)) == 0) {
@@ -49745,9 +49750,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
             
             //  MOB - move this deeper (gradually)
             frozen = ejsFreeze(ejs, 1);
-// printf(">>>>>>>>>>> Before parse MUST BE NO GC\n");
             mprAddItem(nodes, ecParseFile(cp, argv[i]));
-// printf("<<<<<<<<<<<< AFTER parse\n");
             ejsFreeze(ejs, frozen);
         }
         mprAssert(!MPR->marking);
@@ -49756,9 +49759,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
 #if UNUSED
         if (!frozen) {
             mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
-// printf("Yield after parse\n");
             mprYield(0);
-// printf("Back from yield after parse\n");
             mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
         }
 #endif
@@ -49778,7 +49779,6 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
         Process the internal representation and generate code
      */
     frozen = ejsFreeze(ejs, 1);
-// printf("Freeze before AST\n");
     if (!cp->parseOnly && cp->errorCount == 0) {
         ecResetParser(cp);
         if (ecAstProcess(cp) < 0) {
@@ -49786,7 +49786,6 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
             cp->nodes = NULL;
             return EJS_ERR;
         }
-// printf("after AST\n");
         if (cp->errorCount == 0) {
             ecResetParser(cp);
             if (ecCodeGen(cp) < 0) {
@@ -49808,9 +49807,7 @@ static int compileInner(EcCompiler *cp, int argc, char **argv)
     cp->nodes = NULL;
     ejsFreeze(ejs, frozen);
     if (!frozen) {
-// printf("Yield after code gen\n");
         mprYield(0);
-// printf("After Yield after code gen\n");
     }
     mprAssert(ejs->result == 0 || (MPR_GET_GEN(MPR_GET_MEM(ejs->result)) != MPR->heap.dead));
     return (cp->errorCount > 0) ? EJS_ERR: 0;
@@ -51529,7 +51526,7 @@ static void createGlobalType(EcCompiler *cp, EjsType *type)
     Ejs             *ejs;
     EjsModule       *mp;
     EjsType         *iface;
-    int             slotNum, next;
+    int             next, slotNum;
 
     ejs = cp->ejs;
     mp = cp->state->currentModule;
@@ -52183,6 +52180,7 @@ void ecEncodeGlobal(EcCompiler *cp, EjsAny *obj, EjsName qname)
         If binding globals, we can encode the slot number of the type.
      */
     slotNum = ejsLookupProperty(ejs, ejs->global, qname);
+    /* MOB - comment this out because ejs.tar was being compiled and bound */
     if (slotNum < ES_global_NUM_CLASS_PROP || cp->bind) {
         if (slotNum >= 0) {
             ecEncodeNum(cp, (slotNum << 2) | EJS_ENCODE_GLOBAL_SLOT);

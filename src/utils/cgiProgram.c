@@ -80,10 +80,10 @@ static int      outputArgs, outputEnv, outputPost, outputQuery;
 static int      outputBytes, outputHeaderLines, responseStatus;
 static char     *outputLocation;
 static char     *postBuf;
-static int      postBufLen;
+static size_t   postBufLen;
 static char     **postKeys;
 static char     *queryBuf;
-static int      queryLen;
+static size_t   queryLen;
 static char     **queryKeys;
 static char     *responseMsg;
 static int      timeout;
@@ -93,12 +93,12 @@ static int      timeout;
 static void     error(char *fmt, ...);
 static void     descape(char *src);
 static char     hex2Char(char *s); 
-static int      getVars(char ***cgiKeys, char *buf, int len);
-static int      getPostData(char **buf, int *len);
-static int      getQueryString(char **buf, int *len);
+static int      getVars(char ***cgiKeys, char *buf, size_t len);
+static int      getPostData(char **buf, size_t *len);
+static int      getQueryString(char **buf, size_t *len);
 static void     printEnv(char **env);
 static void     printQuery();
-static void     printPost(char *buf, int len);
+static void     printPost(char *buf, size_t len);
 static char     *safeGetenv(char *key);
 
 /******************************************************************************/
@@ -437,7 +437,7 @@ static void printQuery()
 }
 
  
-static void printPost(char *buf, int len)
+static void printPost(char *buf, size_t len)
 {
     int     i;
 
@@ -451,7 +451,7 @@ static void printPost(char *buf, int len)
         if (len < (50 * 1000)) {
             write(1, buf, len);
         } else {
-            printf("<H2>Post Data %d bytes found</H2>\r\n", len);
+            printf("<H2>Post Data %ld bytes found</H2>\r\n", len);
         }
 
     } else {
@@ -461,7 +461,7 @@ static void printPost(char *buf, int len)
 }
 
 
-static int getQueryString(char **buf, int *buflen)
+static int getQueryString(char **buf, size_t *buflen)
 {
     *buflen = 0;
     *buf = 0;
@@ -477,10 +477,10 @@ static int getQueryString(char **buf, int *buflen)
 }
 
 
-static int getPostData(char **bufp, int *lenp)
+static int getPostData(char **bufp, size_t *lenp)
 {
     char    *contentLength, *buf;
-    int     bufsize, bytes, size, limit, len;
+    size_t  bufsize, bytes, size, limit, len;
 
     if ((contentLength = getenv("CONTENT_LENGTH")) != 0) {
         size = atoi(contentLength);
@@ -524,7 +524,7 @@ static int getPostData(char **bufp, int *lenp)
 }
 
 
-static int getVars(char ***cgiKeys, char *buf, int buflen)
+static int getVars(char ***cgiKeys, char *buf, size_t buflen)
 {
     char    **keyList;
     char    *eq, *cp, *pp;

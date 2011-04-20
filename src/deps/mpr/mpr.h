@@ -800,7 +800,7 @@ extern "C" {
          */
         #if _DIAB_TOOL
             #if BLD_HOST_CPU_ARCH == MPR_CPU_PPC
-                // #define __va_copy(dest, src) *(dest) = *(src)
+                /* #define __va_copy(dest, src) *(dest) = *(src) */
                 #define __va_copy(dest, src) memcpy((dest), (src), sizeof(va_list))
             #endif
         #endif
@@ -1849,12 +1849,12 @@ typedef struct MprMemStats {
     uint            pageSize;               /* System page size */
     ssize           bytesAllocated;         /* Bytes currently allocated */
     ssize           bytesFree;              /* Bytes currently free */
+    ssize           freed;                  /* Bytes freed in last sweep */
     ssize           redLine;                /* Warn if allocation exceeds this level */
     ssize           maxMemory;              /* Max memory that can be allocated */
     ssize           rss;                    /* OS calculated resident stack size in bytes */
-    ssize           user;                   /* System user RAM size in bytes (excludes kernel) */
+    int64           user;                   /* System user RAM size in bytes (excludes kernel) */
     int64           ram;                    /* System RAM size in bytes */
-    int             freed;                  /* Bytes freed in last sweep */
     int             markVisited;
     int             marked;
     int             sweepVisited;
@@ -2370,7 +2370,7 @@ typedef struct MprString { void *dummy; } MprString;
     @return Returns the number of characters in an allocated string.
     @ingroup MprString
  */
-extern char *itos(char *buf, int size, int64 value, int radix);
+extern char *itos(char *buf, ssize size, int64 value, int radix);
 
 /**
    Find a character in a string. 
@@ -3256,7 +3256,7 @@ extern ssize mprPutBlockToBuf(MprBuf *buf, cchar *ptr, ssize size);
     @returns Number of characters added to the buffer, otherwise a negative error code 
     @ingroup MprBuf
  */
-extern ssize mprPutIntToBuf(MprBuf *buf, int i);
+extern ssize mprPutIntToBuf(MprBuf *buf, int64 i);
 
 /**
     Put a string to the buffer.
@@ -3479,7 +3479,7 @@ extern uint64 mprGetTicks();
 
 #if BLD_DEBUG
     #if MPR_HIGH_RES_TIMER
-        #define MEASURE(level, tag1, tag2, op) \
+        #define MPR_MEASURE(level, tag1, tag2, op) \
             if (1) { \
                 MprTime elapsed, start = mprGetTime(); \
                 uint64  ticks = mprGetTicks(); \
@@ -3492,7 +3492,7 @@ extern uint64 mprGetTicks();
                 } \
             } else 
     #else
-        #define MEASURE(level, tag1, tag2, op) \
+        #define MPR_MEASURE(level, tag1, tag2, op) \
             if (1) { \
                 MprTime start = mprGetTime(); \
                 op; \
@@ -3500,7 +3500,7 @@ extern uint64 mprGetTicks();
             } else 
     #endif
 #else
-    #define MEASURE(level, tag1, tag2, op) op
+    #define MPR_MEASURE(level, tag1, tag2, op) op
 #endif
 
 
@@ -3601,7 +3601,7 @@ typedef int (*MprListCompareProc)(cvoid *arg1, cvoid *arg2);
         mprCreateList. The list will grow as required to store the item
     @param list List pointer returned from #mprCreateList
     @param item Pointer to item to store
-    @return Returns a positive integer list index for the inserted item. If the item cannot be inserted due 
+    @return Returns a positive list index for the inserted item. If the item cannot be inserted due 
         to a memory allocation failure, -1 is returned
     @ingroup MprList
  */
@@ -3663,6 +3663,7 @@ extern void mprClearList(MprList *list);
     @description Search for an item in the list and return its index.
     @param list List pointer returned from mprCreateList.
     @param item Pointer to value stored in the list.
+    @return Positive list index if found, otherwise a negative MPR error code.
     @ingroup MprList
  */
 extern int mprLookupItem(MprList *list, cvoid *item);
@@ -4626,8 +4627,8 @@ typedef struct MprPath {
     MprTime         atime;              /**< Access time */
     MprTime         ctime;              /**< Create time */
     MprTime         mtime;              /**< Modified time */
-    int64           size;               /**< File length */
-    uint            inode;              /**< Inode number */
+    MprOff          size;               /**< File length */
+    int64           inode;              /**< Inode number */
     bool            isDir;              /**< Set if directory */
     bool            isLink;             /**< Set if a symbolic link  */
     bool            isReg;              /**< Set if a regular file */
@@ -5477,7 +5478,7 @@ typedef enum MprXmlToken {
     MPR_XMLTOK_TEXT,
     MPR_XMLTOK_EQ,
     MPR_XMLTOK_EOF,
-    MPR_XMLTOK_SPACE,
+    MPR_XMLTOK_SPACE
 } MprXmlToken;
 
 typedef int (*MprXmlHandler)(struct MprXml *xp, int state, cchar *tagName, cchar* attName, cchar* value);
@@ -6007,10 +6008,10 @@ typedef struct MprSocketProvider {
     int               (*connectSocket)(struct MprSocket *socket, cchar *host, int port, int flags);
     struct MprSocket  *(*createSocket)(struct MprSsl *ssl);
     void              (*disconnectSocket)(struct MprSocket *socket);
-    int               (*flushSocket)(struct MprSocket *socket);
+    ssize             (*flushSocket)(struct MprSocket *socket);
     int               (*listenSocket)(struct MprSocket *socket, cchar *host, int port, int flags);
     ssize             (*readSocket)(struct MprSocket *socket, void *buf, ssize len);
-    ssize             (*writeSocket)(struct MprSocket *socket, void *buf, ssize len);
+    ssize             (*writeSocket)(struct MprSocket *socket, cvoid *buf, ssize len);
 } MprSocketProvider;
 
 typedef int (*MprSocketPrebind)(struct MprSocket *sock);
@@ -6200,7 +6201,7 @@ extern void mprCloseSocket(MprSocket *sp, bool graceful);
     @return A count of bytes actually written. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern int mprFlushSocket(MprSocket *sp);
+extern ssize mprFlushSocket(MprSocket *sp);
 
 /**
     Write to a socket
@@ -6213,7 +6214,7 @@ extern int mprFlushSocket(MprSocket *sp);
     @return A count of bytes actually written. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern ssize mprWriteSocket(MprSocket *sp, void *buf, ssize len);
+extern ssize mprWriteSocket(MprSocket *sp, cvoid *buf, ssize len);
 
 /**
     Write to a string to a socket
@@ -6332,8 +6333,8 @@ extern int mprGetSocketError(MprSocket *sp);
     @return A count of bytes actually written. Return a negative MPR error code on errors.
     @ingroup MprSocket
  */
-extern ssize mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, ssize bytes, MprIOVec *beforeVec, 
-    ssize beforeCount, MprIOVec *afterVec, ssize afterCount);
+extern MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff bytes, MprIOVec *beforeVec, 
+    int beforeCount, MprIOVec *afterVec, int afterCount);
 #endif
 
 /**
@@ -7058,8 +7059,9 @@ extern void mprPollCmd(MprCmd *cmd, MprTime timeout);
     @param bufsize Size of buffer
     @ingroup MprCmd
  */
-extern int mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
+extern ssize mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
 
+//  MOB DOC
 extern int mprIsCmdComplete(MprCmd *cmd);
 
 /**
@@ -7537,7 +7539,7 @@ extern void mprSetInst(long inst);
 extern void mprSetSocketMessage(int message);
 #endif
 
-extern int mprGetRandomBytes(char *buf, int size, int block);
+extern int mprGetRandomBytes(char *buf, ssize size, int block);
 
 /**
     Return the endian byte ordering for the application

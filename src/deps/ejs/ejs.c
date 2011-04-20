@@ -455,7 +455,8 @@ static char *readline(cchar *msg)
     HistEvent   ev; 
     cchar       *str; 
     char        *result;
-    int         len, count; 
+    ssize       len;
+    int         count; 
  
     if (eh == NULL) { 
         eh = initEditLine();
@@ -466,7 +467,7 @@ static char *readline(cchar *msg)
     str = el_gets(eh, &count); 
     if (str && count > 0) { 
         result = strdup(str); 
-        len = strlen(result);
+        len = slen(result);
         if (result[len - 1] == '\n') {
             result[len - 1] = '\0'; 
         }

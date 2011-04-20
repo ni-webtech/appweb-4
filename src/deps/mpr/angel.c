@@ -53,7 +53,8 @@ int main(int argc, char *argv[])
 {
     Mpr     *mpr;
     char    *argp;
-    int     err, nextArg, i, len;
+    ssize   len;
+    int     err, nextArg, i;
 
     err = 0;
     mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
@@ -160,12 +161,12 @@ int main(int argc, char *argv[])
         /* TODO - replace with mprJoin() */
         app->serviceProgram = argv[nextArg++];
         for (len = 0, i = nextArg; i < argc; i++) {
-            len += strlen(argv[i]) + 1;
+            len += slen(argv[i]) + 1;
         }
         app->serviceArgs = mprAlloc(len + 1);
         for (len = 0, i = nextArg; i < argc; i++) {
             strcpy(&app->serviceArgs[len], argv[i]);
-            len += strlen(argv[i]);
+            len += slen(argv[i]);
             app->serviceArgs[len++] = ' ';
         }
         app->serviceArgs[len] = '\0';
