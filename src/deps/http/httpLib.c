@@ -7926,6 +7926,7 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
 
 
 
+static void applyRange(HttpQueue *q, HttpPacket *packet);
 static void createRangeBoundary(HttpConn *conn);
 static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range);
 static HttpPacket *createFinalRangePacket(HttpConn *conn);
@@ -7976,6 +7977,39 @@ static void startRange(HttpQueue *q)
         tx->status = HTTP_CODE_PARTIAL;
         if (rx->ranges->next) {
             createRangeBoundary(conn);
+        }
+    }
+}
+
+
+static void outgoingRangeService(HttpQueue *q)
+{
+    HttpPacket  *packet;
+    HttpRange   *range;
+    HttpConn    *conn;
+    HttpRx      *rx;
+    HttpTx      *tx;
+
+    conn = q->conn;
+    rx = conn->rx;
+    tx = conn->tx;
+    range = tx->currentRange;
+
+    for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
+        if (packet->flags & HTTP_PACKET_DATA) {
+            applyRange(q, packet);
+        } else {
+            /*
+                Send headers and end packet downstream
+             */
+            if (packet->flags & HTTP_PACKET_END && tx->rangeBoundary) {
+                httpSendPacketToNext(q, createFinalRangePacket(conn));
+            }
+            if (!httpWillNextQueueAcceptPacket(q, packet)) {
+                httpPutBackPacket(q, packet);
+                return;
+            }
+            httpSendPacketToNext(q, packet);
         }
     }
 }
@@ -8045,42 +8079,6 @@ static void applyRange(HttpQueue *q, HttpPacket *packet)
         }
         if (tx->rangePos >= range->end) {
             tx->currentRange = range = range->next;
-        }
-    }
-}
-
-
-/*  
-    Apply ranges to outgoing data. This may be run on behalf of a handlers queue.
- */
-static void outgoingRangeService(HttpQueue *q)
-{
-    HttpPacket  *packet;
-    HttpRange   *range;
-    HttpConn    *conn;
-    HttpRx      *rx;
-    HttpTx      *tx;
-
-    conn = q->conn;
-    rx = conn->rx;
-    tx = conn->tx;
-    range = tx->currentRange;
-
-    for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
-        if (packet->flags & HTTP_PACKET_DATA) {
-            applyRange(q, packet);
-        } else {
-            /*
-                Send headers and end packet downstream
-             */
-            if (packet->flags & HTTP_PACKET_END && tx->rangeBoundary) {
-                httpSendPacketToNext(q, createFinalRangePacket(conn));
-            }
-            if (!httpWillNextQueueAcceptPacket(q, packet)) {
-                httpPutBackPacket(q, packet);
-                return;
-            }
-            httpSendPacketToNext(q, packet);
         }
     }
 }
