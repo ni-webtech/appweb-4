@@ -56,7 +56,10 @@ _IFLAGS		    = -I$(BLD_INC_DIR) -I$(BLD_TOP)/src/include
 #
 #	Optimization and debug settings
 #
-_CFLAGS 		    += -Wall -Wshorten-64-to-32
+_CFLAGS 		    += -Wall
+ifeq ($(BLD_OS),MACOSX)
+    _CFLAGS         += -Wshorten-64-to-32
+endif
 ifeq ($(BLD_CC_WARN_UNUSED),1)
     _CFLAGS         += -Wno-unused-result
 endif
