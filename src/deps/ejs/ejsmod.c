@@ -2408,7 +2408,7 @@ static MprChar *wikiFormat(Ejs *ejs, MprChar *start)
             }
             if ((str > start && (str[-1] == '$' || str[-1] == '\\'))) {
                 /* Remove backquote */
-                mprAdjustBufEnd(buf, -sizeof(MprChar));
+                mprAdjustBufEnd(buf, - (int) sizeof(MprChar));
                 mprPutCharToWideBuf(buf, *str);
                 continue;
             }

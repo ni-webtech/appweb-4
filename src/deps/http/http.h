@@ -2396,9 +2396,6 @@ typedef struct HttpTx {
     int             flags;                  /**< Response flags */
     int             finalized;              /**< Finalization done */
     MprOff          length;                 /**< Transmission content length */
-#if UNUSED
-    MprOff          pos;                    /**< Current I/O position in response file */
-#endif
     int             status;                 /**< HTTP request status */
     int             traceMethods;           /**< Handler methods supported */
 

@@ -8034,7 +8034,7 @@ static void applyRange(HttpQueue *q, HttpPacket *packet)
         A packet may contain data or it may be empty with an associated entityLength. If empty, range packets
         are filled with entity data as required.
      */
-    while (range) {
+    while (range && packet) {
         length = httpGetPacketEntityLength(packet);
         if (length <= 0) {
             break;
@@ -8075,6 +8075,7 @@ static void applyRange(HttpQueue *q, HttpPacket *packet)
                 httpSendPacketToNext(q, createRangePacket(conn, range));
             }
             httpSendPacketToNext(q, packet);
+            packet = 0;
             tx->rangePos += count;
         }
         if (tx->rangePos >= range->end) {
@@ -8594,14 +8595,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     }
     rx->flags |= methodFlags;
     rx->originalUri = rx->uri = sclone(uri);
-
     httpSetState(conn, HTTP_STATE_FIRST);
-#if UNUSED
-    if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) >= 0) {
-        mprLog(level, "%s %s %s", rx->method, uri, protocol);
-    }
-    traceRequest(conn, packet);
-#endif
 }
 
 
