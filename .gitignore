@@ -128,3 +128,5 @@ rpm.log
 *.cltmp
 src/server/appweb.conf
 .embedthis
+src/test/web/a
+src/handlers/proxyHandler.nc
