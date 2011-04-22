@@ -17,7 +17,7 @@ typedef struct MaEgi {
 } MaEgi;
 
 /************************************* Code ***********************************/
-
+#if UNUSED
 static bool matchEgi(HttpConn *conn, HttpStage *handler)
 {
     HttpRx    *rx;
@@ -31,6 +31,7 @@ static bool matchEgi(HttpConn *conn, HttpStage *handler)
     rx->pathInfo = "";
     return 1;
 }
+#endif
 
 
 /*
@@ -48,9 +49,9 @@ static void runEgi(HttpQueue *q)
     egi = (MaEgi*) q->stage->stageData;
     
     mprLog(5, "runEgi");
-    form = (MaEgiForm*) mprLookupHash(egi->forms, rx->scriptName);
+    form = (MaEgiForm*) mprLookupHash(egi->forms, rx->pathInfo);
     if (form == 0) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Egi Form: \"%s\" is not defined", rx->scriptName);
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Egi Form: \"%s\" is not defined", rx->pathInfo);
     } else {
         (*form)(q);
     }
@@ -106,7 +107,7 @@ int maOpenEgiHandler(Http *http)
 
     handler = httpCreateHandler(http, "egiHandler", 
         HTTP_STAGE_HEADER_VARS | HTTP_STAGE_QUERY_VARS | HTTP_STAGE_FORM_VARS | HTTP_STAGE_CGI_VARS | \
-        HTTP_STAGE_VIRTUAL, NULL);
+        HTTP_STAGE_EXTRA_PATH | HTTP_STAGE_VIRTUAL, NULL);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -114,7 +115,9 @@ int maOpenEgiHandler(Http *http)
         return MPR_ERR_MEMORY;
     }
     egi = handler->stageData;
+#if UNUSED
     handler->match = matchEgi; 
+#endif
     handler->start = startEgi; 
     handler->process = processEgi; 
     egi->forms = mprCreateHash(HTTP_LARGE_HASH_SIZE, MPR_HASH_STATIC_VALUES);
