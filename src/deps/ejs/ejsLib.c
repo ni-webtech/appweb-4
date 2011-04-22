@@ -38079,6 +38079,8 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         return 0;
     }
     sp->server = server;
+    host = mprGetFirstItem(server->hosts);
+
     if (sp->limits) {
         ejsSetHttpLimits(ejs, server->limits, sp->limits, 1);
     }
@@ -38089,7 +38091,10 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         httpSecureServer(server->ip, sp->port, sp->ssl);
     }
     if (sp->name) {
+#if UNUSED
         httpSetServerName(server, sp->name);
+#endif
+        httpSetHostName(host, sp->name);
     }
     httpSetSoftware(server->http, EJS_HTTPSERVER_NAME);
     httpSetServerAsync(server, sp->async);
@@ -38099,7 +38104,6 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     /*
         This is only required for when http is using non-ejs handlers and/or filters
      */
-    host = mprGetFirstItem(server->hosts);
     root = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
     if (ejsIs(ejs, root, Path)) {
         httpSetHostDocumentRoot(host, root->value);
@@ -38136,9 +38140,15 @@ static EjsObj *hs_name(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
  */
 static EjsObj *hs_set_name(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
+    HttpHost    *host;
+
     sp->name = ejsToMulti(ejs, argv[0]);
-    if (sp->server) {
+    if (sp->server && sp->name) {
+        host = mprGetFirstItem(sp->server->hosts);
+        httpSetHostName(host, sp->name);
+#if UNUSED
         httpSetServerName(sp->server, sp->name);
+#endif
     }
     return 0;
 }
@@ -38551,7 +38561,7 @@ static void processEjs(HttpQueue *q)
 
 
 /* 
-    Create the http pipeline handler for ejs.
+    Create the http pipeline handler
  */
 HttpStage *ejsAddWebHandler(Http *http, MprModule *module)
 {
@@ -39031,8 +39041,8 @@ static cchar *getHost(HttpConn *conn, EjsRequest *req)
 
     if (req->server && req->server->name && *req->server->name) {
         hostName = req->server->name;
-    } else if (conn && conn->rx->hostName && conn->rx->hostName) {
-        hostName = conn->rx->hostName;
+    } else if (conn && conn->rx->hostHeader && conn->rx->hostHeader) {
+        hostName = conn->rx->hostHeader;
     } else if (conn && conn->sock) {
         hostName = conn->sock->acceptIp;
     } else {

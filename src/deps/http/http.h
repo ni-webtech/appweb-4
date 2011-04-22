@@ -271,9 +271,6 @@ typedef struct Http {
     char            *proxyHost;             /**< Proxy ip address */
     int             proxyPort;              /**< Proxy port */
     int             sslLoaded;              /**< True when the SSL provider has been loaded */
-#if UNUSED
-    void            (*rangeService)(struct HttpQueue *q, HttpRangeProc fill);
-#endif
 
     /*
         Callbacks
@@ -776,6 +773,15 @@ typedef void (*HttpQueueService)(struct HttpQueue *q);
  */
 typedef struct HttpQueue {
     cchar               *owner;                 /**< Name of owning stage */
+    ssize               count;                  /**< Bytes in queue (Does not include virt packet data) */
+    ssize               max;                    /**< Maxiumum queue size */
+    ssize               low;                    /**< Low water mark for flow control */
+    ssize               packetSize;             /**< Maximum acceptable packet size */
+    int                 flags;                  /**< Queue flags */
+    HttpPacket          *first;                 /**< First packet in queue (singly linked) */
+    HttpPacket          *last;                  /**< Last packet in queue (tail pointer) */
+    struct HttpQueue    *nextQ;                 /**< Downstream queue for next stage */
+    struct HttpQueue    *prevQ;                 /**< Upstream queue for prior stage */
     struct HttpStage    *stage;                 /**< Stage owning this queue */
     struct HttpConn     *conn;                  /**< Connection ownning this queue */
     HttpQueueOpen       open;                   /**< Open the queue */
@@ -783,19 +789,10 @@ typedef struct HttpQueue {
     HttpQueueStart      start;                  /**< Start the queue */
     HttpQueueData       put;                    /**< Put a message on the queue */
     HttpQueueService    service;                /**< Service the queue */
-    struct HttpQueue    *nextQ;                 /**< Downstream queue for next stage */
-    struct HttpQueue    *prevQ;                 /**< Upstream queue for prior stage */
     struct HttpQueue    *scheduleNext;          /**< Next linkage when queue is on the service queue */
     struct HttpQueue    *schedulePrev;          /**< Previous linkage when queue is on the service queue */
     struct HttpQueue    *pair;                  /**< Queue for the same stage in the opposite direction */
-    HttpPacket          *first;                 /**< First packet in queue (singly linked) */
-    HttpPacket          *last;                  /**< Last packet in queue (tail pointer) */
-    ssize               count;                  /**< Bytes in queue (Does not include virt packet data) */
-    ssize               max;                    /**< Maxiumum queue size */
-    ssize               low;                    /**< Low water mark for flow control */
-    int                 flags;                  /**< Queue flags */
     int                 servicing;              /**< Currently being serviced */
-    ssize               packetSize;             /**< Maximum acceptable packet size */
     int                 direction;              /**< Flow direction */
     void                *queueData;             /**< Stage instance data */
 
@@ -1000,7 +997,7 @@ extern void httpMarkQueueHead(HttpQueue *q);
 #define HTTP_STAGE_HEADER_VARS    0x40000           /**< Create variables from HTTP headers */
 #define HTTP_STAGE_QUERY_VARS     0x80000           /**< Create variables from URI query */
 #define HTTP_STAGE_VIRTUAL        0x100000          /**< Handler serves virtual resources not the physical file system */
-#define HTTP_STAGE_PATH_INFO      0x200000          /**< Always do path info processing */
+#define HTTP_STAGE_EXTRA_PATH     0x200000          /**< Do extra path info (for CGI|PHP) */
 #define HTTP_STAGE_AUTO_DIR       0x400000          /**< Want auto directory redirection */
 #define HTTP_STAGE_VERIFY_ENTITY  0x800000          /**< Verify the request entity exists */
 #define HTTP_STAGE_MISSING_EXT    0x1000000         /**< Support URIs with missing extensions */
@@ -2057,6 +2054,7 @@ typedef struct HttpRx {
     char            *uri;                   /**< URI (alias for parsedUri->uri) (not decoded) */
     char            *scriptName;            /**< ScriptName portion of the url (Decoded). May be empty or start with "/" */
     char            *pathInfo;              /**< Path information after the scriptName (Decoded and normalized) */
+    char            *extraPath;             /**< Extra path information (CGI|PHP) */
 
     HttpConn        *conn;                  /**< Connection object */
 
@@ -2101,10 +2099,8 @@ typedef struct HttpRx {
     char            *cookie;                /**< Cookie header */
     char            *connection;            /**< Connection header */
     char            *contentLength;         /**< Content length string value */
-    char            *hostName;              /**< Client supplied host name */
+    char            *hostHeader;            /**< Client supplied host name header */
 
-    //  MOB -- is this needed if Tx.filename is pathInfo => storage */ 
-    char            *pathTranslated;        /**< Mapped pathInfo to storage. Set by handlers if required. (Decoded) */
     char            *pragma;                /**< Pragma header */
     char            *mimeType;              /**< Mime type of the request payload (ENV: CONTENT_TYPE) */
     char            *originalUri;           /**< Original URI passed by the client */
@@ -2119,6 +2115,7 @@ typedef struct HttpRx {
     /*  
         Auth details
      */
+    int             authenticated;          /**< Request has been authenticated */
     HttpAuth        *auth;                  /**< Auth object */
     char            *authAlgorithm;
     char            *authDetails;
@@ -2757,7 +2754,7 @@ extern HttpEndpoint *httpRemoveHostFromEndpoint(Http *http, cchar *ip, int port,
 #define HTTP_IPADDR_VHOST 0x1
 
 /** 
-    Server endpoint
+    Server endpoint. Servers may have multiple virtual named hosts.
     @stability Evolving
     @defgroup HttpServer HttpServer
     @see HttpServer httpCreateServer httpStartServer httpStopServer
@@ -2769,7 +2766,6 @@ typedef struct HttpServer {
     HttpLimits      *limits;                /**< Alias for first host resource limits */
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
     MprHashTable    *clientLoad;            /**< Table of active client IPs and connection counts */
-    char            *name;                  /**< Published name of the server (ServerName directive) */
     char            *ip;                    /**< Listen IP address */
     int             port;                   /**< Listen port */
     int             async;                  /**< Listening is in async mode (non-blocking) */
@@ -2835,7 +2831,10 @@ extern int httpGetServerAsync(HttpServer *server);
  */
 extern void *httpGetServerContext(HttpServer *server);
 
+#if UNUSED
 extern void httpSetServerName(HttpServer *server, cchar *name);
+#endif
+
 //  MOB - consistency - should not have to provide http
 extern int httpLoadSsl(Http *http);
 
@@ -2914,7 +2913,8 @@ extern HttpServer *httpCreateConfiguredServer(cchar *docRoot, cchar *ip, int por
     @see HttpHost
 */
 typedef struct HttpHost {
-    char            *name;                  /**< ServerName directive - used for redirects */
+    char            *name;                  /**< ServerName directive (may include port) - used for redirects */
+    char            *hostname;              /**< Hostname portion of name */
     char            *infoName;              /**< Informational host name - used in logs */
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, locations */
 
@@ -2923,14 +2923,13 @@ typedef struct HttpHost {
     MprList         *locations;             /**< List of Location defintions */
     HttpLimits      *limits;                /**< Host resource limits */
 
-    //  MOB - reorder and cleanup
-    //  MOB - rename
+    //  MOB - reorder and cleanup and rename
     HttpLoc         *loc;                   /**< Default location */
     MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
 
     char            *documentRoot;          /**< Default directory for web documents */
     char            *serverRoot;            /**< Directory for configuration files */
-    char            *ip;                    /**< IP address */
+    char            *ip;                    /**< IP address. May be null if listening on all interfaces */
     int             port;                   /**< Listening port number */
 
     int             traceLevel;             /**< Trace activation level */

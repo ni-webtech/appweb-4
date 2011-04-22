@@ -499,7 +499,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     mprSetModuleFinalizer(module, finalizePhp); 
 
     handler = httpCreateHandler(http, module->name, 
-        HTTP_STAGE_CGI_VARS | HTTP_STAGE_HEADER_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_VERIFY_ENTITY | 
+        HTTP_STAGE_CGI_VARS | HTTP_STAGE_HEADER_VARS | HTTP_STAGE_EXTRA_PATH | HTTP_STAGE_VERIFY_ENTITY | 
         HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;

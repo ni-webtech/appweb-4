@@ -397,7 +397,6 @@ static void printEnv(char **envp)
     printf("<P>REMOTE_USER=%s</P>\r\n", safeGetenv("REMOTE_USER"));
     printf("<P>SCRIPT_NAME=%s</P>\r\n", safeGetenv("SCRIPT_NAME"));
     printf("<P>SERVER_ADDR=%s</P>\r\n", safeGetenv("SERVER_ADDR"));
-    printf("<P>SERVER_HOST=%s</P>\r\n", safeGetenv("SERVER_HOST"));
     printf("<P>SERVER_NAME=%s</P>\r\n", safeGetenv("SERVER_NAME"));
     printf("<P>SERVER_PORT=%s</P>\r\n", safeGetenv("SERVER_PORT"));
     printf("<P>SERVER_PROTOCOL=%s</P>\r\n", safeGetenv("SERVER_PROTOCOL"));

@@ -1127,17 +1127,6 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     if ((ad = mprAllocObj(AuthData, NULL)) == 0) {
         return 1;
     }
-    //  MOB -- fix
-#if UNUSED
-    if (auth == 0) {
-        httpError(conn, HTTP_CODE_UNAUTHORIZED, "Access Denied, Authorization not enabled");
-        return 1;
-    }
-    if (auth->type == 0) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Authorization required.", 0);
-        return 1;
-    }
-#endif
     if (rx->authDetails == 0) {
         formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing authorization details.", 0);
         return 1;
@@ -1197,6 +1186,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     if (!(http->validateCred)(auth, auth->requiredRealm, ad->userName, ad->password, requiredPassword, &msg)) {
         formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", msg);
     }
+    rx->authenticated = 1;
     return 1;
 }
 
@@ -1396,16 +1386,17 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
         qopClass = auth->qop;
         etag = tx->etag ? tx->etag : "";
         nonce = createDigestNonce(conn->http->secret, etag, auth->requiredRealm);
+        mprAssert(conn->host);
 
         if (scmp(qopClass, "auth") == 0) {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
                 "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
-                auth->requiredRealm, conn->server->name, nonce, etag);
+                auth->requiredRealm, conn->host->name, nonce, etag);
 
         } else if (scmp(qopClass, "auth-int") == 0) {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
                 "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
-                auth->requiredRealm, conn->server->name, nonce, etag);
+                auth->requiredRealm, conn->host->name, nonce, etag);
 
         } else {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", nonce=\"%s\"", auth->requiredRealm, nonce);
@@ -1736,7 +1727,14 @@ int httpOpenChunkFilter(Http *http)
 
 static bool matchChunk(HttpConn *conn, HttpStage *handler)
 {
-    return (conn->tx->length <= 0) ? 1 : 0;
+    HttpTx  *tx;
+
+    /*
+        Don't match if chunking is explicitly turned off vi a the X_APPWEB_CHUNK_SIZE header which sets the chunk 
+        size to zero. Also remove if the response length is already known.
+     */
+    tx = conn->tx;
+    return (tx->length < 0 && tx->chunkSize != 0) ? 1 : 0;
 }
 
 
@@ -1893,7 +1891,9 @@ static void outgoingChunkService(HttpQueue *q)
     } else {
         for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
             if (!(packet->flags & HTTP_PACKET_HEADER)) {
+                httpPutBackPacket(q, packet);
                 httpJoinPackets(q, tx->chunkSize);
+                packet = httpGetPacket(q);
                 if (httpGetPacketLength(packet) > tx->chunkSize) {
                     httpResizePacket(q, packet, tx->chunkSize);
                 }
@@ -2729,9 +2729,7 @@ static void writeEvent(HttpConn *conn)
 }
 
 
-/*
-    This can be called by any thread
- */
+//  MOB - refactor
 void httpEnableConnEvents(HttpConn *conn)
 {
     HttpTx      *tx;
@@ -2759,7 +2757,7 @@ void httpEnableConnEvents(HttpConn *conn)
             return;
         }
         if (tx) {
-            //  MOB OPT - can we just test writeBlocked?
+            //  MOB OPT - can we just test writeBlocked? or count?
             if (conn->writeBlocked || tx->queue[HTTP_QUEUE_TRANS]->prevQ->count > 0) {
                 eventMask |= MPR_WRITABLE;
             }
@@ -2778,19 +2776,12 @@ void httpEnableConnEvents(HttpConn *conn)
             if (conn->waitHandler == 0) {
                 conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, conn->ioCallback, 
                     conn, 0);
-            } else if (eventMask != conn->waitHandler->desiredMask) {
-                mprEnableWaitEvents(conn->waitHandler, eventMask);
+            } else {
+                mprWaitOn(conn->waitHandler, eventMask);
             }
-        } else {
-            if (conn->waitHandler && eventMask != conn->waitHandler->desiredMask) {
-                mprEnableWaitEvents(conn->waitHandler, eventMask);
-            }
+        } else if (conn->waitHandler) {
+            mprWaitOn(conn->waitHandler, eventMask);
         }
-#if UNUSED
-        if (conn->recall && conn->waitHandler) {
-            mprRecallWaitHandler(conn->waitHandler);
-        }
-#endif
         conn->recall = 0;
         mprAssert(conn->dispatcher->enabled);
         unlock(conn->http);
@@ -3357,337 +3348,6 @@ void httpSetDirIndex(HttpDir *dir, cchar *name)
 
 /************************************************************************/
 /*
- *  Start of file "../src/env.c"
- */
-/************************************************************************/
-
-/*
-    env.c -- Manage the request environment
-    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
- */
-
-
-
-/*
-    Define standard CGI variables
- */
-void httpCreateCGIVars(HttpConn *conn)
-{
-    HttpRx          *rx;
-    HttpTx          *tx;
-    HttpHost        *host;
-    HttpUploadFile  *up;
-    HttpServer      *server;
-    MprSocket       *sock;
-    MprHashTable    *table;
-    MprHash         *hp;
-    int             index;
-
-    rx = conn->rx;
-    tx = conn->tx;
-    server = conn->server;
-    host = conn->host;
-
-    table = rx->formVars;
-    if (table == 0) {
-        table = rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
-    }
-    //  TODO - Vars for COOKIEs
-    
-    /*  Alias for REMOTE_USER. Define both for broader compatibility with CGI */
-    mprAddKey(table, "AUTH_TYPE", rx->authType);
-    mprAddKey(table, "AUTH_USER", conn->authUser);
-    mprAddKey(table, "AUTH_GROUP", conn->authGroup);
-    mprAddKey(table, "AUTH_ACL", MPR->emptyString);
-    mprAddKey(table, "CONTENT_LENGTH", rx->contentLength);
-    mprAddKey(table, "CONTENT_TYPE", rx->mimeType);
-    mprAddKey(table, "GATEWAY_INTERFACE", sclone("CGI/1.1"));
-    mprAddKey(table, "QUERY_STRING", rx->parsedUri->query);
-
-    if (conn->sock) {
-        mprAddKey(table, "REMOTE_ADDR", conn->ip);
-    }
-    mprAddKeyFmt(table, "REMOTE_PORT", "%d", conn->port);
-
-    /*  Same as AUTH_USER (yes this is right) */
-    mprAddKey(table, "REMOTE_USER", conn->authUser);
-    mprAddKey(table, "REQUEST_METHOD", rx->method);
-    mprAddKey(table, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
-    
-    sock = conn->sock;
-    mprAddKey(table, "SERVER_ADDR", sock->acceptIp);
-    mprAddKey(table, "SERVER_NAME", server->name);
-    mprAddKeyFmt(table, "SERVER_PORT", "%d", sock->acceptPort);
-
-    /*  HTTP/1.0 or HTTP/1.1 */
-    mprAddKey(table, "SERVER_PROTOCOL", conn->protocol);
-    mprAddKey(table, "SERVER_SOFTWARE", server->http->software);
-
-    /*  This is the original URI before decoding */ 
-    mprAddKey(table, "REQUEST_URI", rx->originalUri);
-
-    /*  URLs are broken into the following: http://{SERVER_NAME}:{SERVER_PORT}{SCRIPT_NAME}{PATH_INFO} */
-    mprAddKey(table, "PATH_INFO", rx->pathInfo);
-    mprAddKey(table, "SCRIPT_NAME", rx->scriptName);
-    mprAddKey(table, "SCRIPT_FILENAME", tx->filename);
-
-    if (rx->pathTranslated) {
-        /*  Only set PATH_TRANSLATED if PATH_INFO is set (CGI spec) */
-        mprAddKey(table, "PATH_TRANSLATED", rx->pathTranslated);
-    }
-    //  MOB -- how do these relate to MVC apps and non-mvc apps
-    mprAddKey(table, "DOCUMENT_ROOT", host->documentRoot);
-    mprAddKey(table, "SERVER_ROOT", host->serverRoot);
-
-    if (rx->files) {
-        for (index = 0, hp = 0; (hp = mprGetNextHash(conn->rx->files, hp)) != 0; index++) {
-            up = (HttpUploadFile*) hp->data;
-            mprAddKey(table, mprAsprintf("FILE_%d_FILENAME", index), up->filename);
-            mprAddKey(table, mprAsprintf("FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
-            mprAddKey(table, mprAsprintf("FILE_%d_CONTENT_TYPE", index), up->contentType);
-            mprAddKey(table, mprAsprintf("FILE_%d_NAME", index), hp->key);
-            mprAddKeyFmt(table, mprAsprintf("FILE_%d_SIZE", index), "%d", up->size);
-        }
-    }
-    if (conn->http->envCallback) {
-        conn->http->envCallback(conn);
-    }
-}
-
-
-/*  
-    Add variables to the vars environment store. This comes from the query string and urlencoded post data.
-    Make variables for each keyword in a query string. The buffer must be url encoded (ie. key=value&key2=value2..., 
-    spaces converted to '+' and all else should be %HEX encoded).
- */
-MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len)
-{
-    cchar           *oldValue;
-    char            *newValue, *decoded, *keyword, *value, *tok;
-
-    if (table == 0) {
-        table = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
-    }
-    decoded = mprAlloc(len + 1);
-    decoded[len] = '\0';
-    memcpy(decoded, buf, len);
-
-    keyword = stok(decoded, "&", &tok);
-    while (keyword != 0) {
-        if ((value = strchr(keyword, '=')) != 0) {
-            *value++ = '\0';
-            value = mprUriDecode(value);
-        } else {
-            value = "";
-        }
-        keyword = mprUriDecode(keyword);
-
-        if (*keyword) {
-            /*  
-                Append to existing keywords.
-             */
-            oldValue = mprLookupHash(table, keyword);
-            if (oldValue != 0 && *oldValue) {
-                if (*value) {
-                    newValue = sjoin(oldValue, " ", value, NULL);
-                    mprAddKey(table, keyword, newValue);
-                }
-            } else {
-                mprAddKey(table, keyword, sclone(value));
-            }
-        }
-        keyword = stok(0, "&", &tok);
-    }
-    return table;
-}
-
-
-MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q)
-{
-    HttpConn    *conn;
-    HttpRx      *rx;
-    MprBuf      *content;
-
-    mprAssert(q);
-    
-    conn = q->conn;
-    rx = conn->rx;
-
-    if ((rx->form || rx->upload) && q->first && q->first->content) {
-        httpJoinPackets(q, -1);
-        content = q->first->content;
-        mprAddNullToBuf(content);
-        mprLog(3, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
-        table = httpAddVars(table, mprGetBufStart(content), mprGetBufLength(content));
-    }
-    return table;
-}
-
-
-int httpTestFormVar(HttpConn *conn, cchar *var)
-{
-    MprHashTable    *vars;
-    
-    if ((vars = conn->rx->formVars) == 0) {
-        return 0;
-    }
-    return vars && mprLookupHash(vars, var) != 0;
-}
-
-
-cchar *httpGetFormVar(HttpConn *conn, cchar *var, cchar *defaultValue)
-{
-    MprHashTable    *vars;
-    cchar           *value;
-    
-    if ((vars = conn->rx->formVars) == 0) {
-        value = mprLookupHash(vars, var);
-        return (value) ? value : defaultValue;
-    }
-    return defaultValue;
-}
-
-
-int httpGetIntFormVar(HttpConn *conn, cchar *var, int defaultValue)
-{
-    MprHashTable    *vars;
-    cchar           *value;
-    
-    if ((vars = conn->rx->formVars) == 0) {
-        value = mprLookupHash(vars, var);
-        return (value) ? (int) stoi(value, 10, NULL) : defaultValue;
-    }
-    return defaultValue;
-}
-
-
-void httpSetFormVar(HttpConn *conn, cchar *var, cchar *value) 
-{
-    MprHashTable    *vars;
-    
-    if ((vars = conn->rx->formVars) == 0) {
-        /* This is allowed. Upload filter uses this when uploading to the file handler */
-        return;
-    }
-    mprAddKey(vars, var, sclone(value));
-}
-
-
-void httpSetIntFormVar(HttpConn *conn, cchar *var, int value) 
-{
-    MprHashTable    *vars;
-    
-    if ((vars = conn->rx->formVars) == 0) {
-        /* This is allowed. Upload filter uses this when uploading to the file handler */
-        return;
-    }
-    mprAddKey(vars, var, mprAsprintf("%d", value));
-}
-
-
-int httpCompareFormVar(HttpConn *conn, cchar *var, cchar *value)
-{
-    MprHashTable    *vars;
-    
-    if ((vars = conn->rx->formVars) == 0) {
-        return 0;
-    }
-    if (strcmp(value, httpGetFormVar(conn, var, " __UNDEF__ ")) == 0) {
-        return 1;
-    }
-    return 0;
-}
-
-
-void httpAddUploadFile(HttpConn *conn, cchar *id, HttpUploadFile *upfile)
-{
-    HttpRx   *rx;
-
-    rx = conn->rx;
-    if (rx->files == 0) {
-        rx->files = mprCreateHash(-1, 0);
-    }
-    mprAddKey(rx->files, id, upfile);
-}
-
-
-void httpRemoveUploadFile(HttpConn *conn, cchar *id)
-{
-    HttpRx    *rx;
-    HttpUploadFile  *upfile;
-
-    rx = conn->rx;
-
-    upfile = (HttpUploadFile*) mprLookupHash(rx->files, id);
-    if (upfile) {
-        mprDeletePath(upfile->filename);
-        upfile->filename = 0;
-    }
-}
-
-
-void httpRemoveAllUploadedFiles(HttpConn *conn)
-{
-    HttpRx          *rx;
-    HttpUploadFile  *upfile;
-    MprHash         *hp;
-
-    rx = conn->rx;
-
-    for (hp = 0; rx->files && (hp = mprGetNextHash(rx->files, hp)) != 0; ) {
-        upfile = (HttpUploadFile*) hp->data;
-        if (upfile->filename) {
-            mprDeletePath(upfile->filename);
-            upfile->filename = 0;
-        }
-    }
-}
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../src/env.c"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "../src/host.c"
  */
 /************************************************************************/
@@ -3711,6 +3371,8 @@ static void manageHost(HttpHost *host, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(host->name);
+        mprMark(host->hostname);
+        mprMark(host->infoName);
         mprMark(host->parent);
         mprMark(host->aliases);
         mprMark(host->dirs);
@@ -3745,16 +3407,17 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
         return 0;
     }
     if (ip) {
-        //  MOB - isn't port always set?
         if (port) {
             host->name = mprAsprintf("%s:%d", ip, port);
+            host->hostname = sclone(ip);
         } else {
-            host->name = sclone(ip);
+            host->hostname = host->name = sclone(ip);
         }
     } else {
         if (port) {
             host->name = mprAsprintf("*:%d", port);
         }
+        host->hostname = sclone("127.0.0.1");
     }
     host->mutex = mprCreateLock();
     host->aliases = mprCreateList(-1, 0);
@@ -3776,6 +3439,8 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
     host->loc = (loc) ? loc : httpCreateLocation();
     httpAddLocation(host, host->loc);
     host->loc->auth = httpCreateAuth(host->loc->auth);
+    httpAddDir(host, httpCreateBareDir("."));
+
     httpAddHost(http, host);
     return host;
 }
@@ -3861,10 +3526,20 @@ void httpSetHostServerRoot(HttpHost *host, cchar *serverRoot)
 
 void httpSetHostName(HttpHost *host, cchar *name)
 {
+    cchar   *cp;
+
     host->name = sclone(name);
+    if ((cp = schr(name, ':')) != 0) {
+        host->hostname = snclone(name, cp - name);
+    } else {
+        host->hostname = host->name;
+    }
 }
 
 
+/*
+    Informational names are used in logs
+ */
 void httpSetHostInfoName(HttpHost *host, cchar *name)
 {
     host->infoName = sclone(name);
@@ -5449,14 +5124,11 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
 
 
 
+static HttpStage *checkDirectory(HttpConn *conn, HttpStage *handler);
 static char *getExtension(HttpConn *conn, cchar *path);
 static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage);
 static HttpStage *findHandler(HttpConn *conn);
-static HttpStage *findLocationHandler(HttpConn *conn);
-static HttpStage *mapToFile(HttpConn *conn, HttpStage *handler);
-static HttpStage *processDirectory(HttpConn *conn, HttpStage *handler);
 static bool rewriteRequest(HttpConn *conn);
-static void setScriptName(HttpConn *conn);
 
 /*
     Match a request to a Host. This is an initial match which may be revised if the request includes a Host header.
@@ -5483,9 +5155,9 @@ void httpMatchHost(HttpConn *conn)
 
     if (httpIsNamedVirtualServer(server)) {
         rx = conn->rx;
-        if ((host = httpLookupHostByName(server, rx->hostName)) == 0) {
+        if ((host = httpLookupHostByName(server, rx->hostHeader)) == 0) {
             httpSetConnHost(conn, host);
-            httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", rx->hostName);
+            httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", rx->hostHeader);
             conn->host = mprGetFirstItem(server->hosts);
             return;
         }
@@ -5514,37 +5186,23 @@ void httpMatchHandler(HttpConn *conn)
     host = conn->host;
     handler = 0;
 
+    mprAssert(rx->pathInfo);
     mprAssert(rx->uri);
     mprAssert(rx->loc);
     mprAssert(rx->alias);
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
 
-    /*
-        Get the best (innermost) location block and see if a handler is explicitly set for that location block.
-        Possibly rewrite the url and retry.
-     */
-    while (!handler && !conn->error && rx->rewrites++ < HTTP_MAX_REWRITE) {
-        /*
-            Give stages a cance to rewrite the request, then match the location handler. If that doesn't match,
-            try to match by extension and/or handler match() routines. This may invoke processDirectory which
-            may redirect and thus require reprocessing -- hence the loop.
-        */
+    for (handler = 0; !handler && !conn->error && (rx->rewrites < HTTP_MAX_REWRITE); rx->rewrites++) {
         if (!rewriteRequest(conn)) {
-            if ((handler = findLocationHandler(conn)) == 0) {
-                handler = findHandler(conn);
-            }
-            handler = mapToFile(conn, handler);
+            handler = findHandler(conn);
         }
     }
-    if (handler == 0 || conn->error || ((tx->flags & HTTP_TX_NO_BODY) && !(rx->flags & HTTP_HEAD))) {
+    if (!handler || conn->error || ((tx->flags & HTTP_TX_NO_BODY) && !(rx->flags & HTTP_HEAD))) {
         handler = http->passHandler;
         if (!conn->error && rx->rewrites >= HTTP_MAX_REWRITE) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
         }
-    }
-    if (handler->flags & HTTP_STAGE_PATH_INFO) {
-        setScriptName(conn);
     }
     tx->handler = handler;
 }
@@ -5585,23 +5243,6 @@ static bool rewriteRequest(HttpConn *conn)
         }
     }
     return 0;
-}
-
-
-static HttpStage *findLocationHandler(HttpConn *conn)
-{
-    HttpRx      *rx;
-    HttpTx      *tx;
-    HttpLoc     *loc;
-    HttpHost    *host;
-
-    rx = conn->rx;
-    tx = conn->tx;
-    host = httpGetConnHost(conn);
-    loc = rx->loc = httpLookupBestLocation(host, rx->pathInfo);
-    rx->auth = loc->auth;
-    mprAssert(loc);
-    return checkHandler(conn, loc->handler);
 }
 
 
@@ -5649,6 +5290,7 @@ char *httpGetExtension(HttpConn *conn)
 static HttpStage *findHandler(HttpConn *conn)
 {
     Http        *http;
+    HttpHost    *host;
     HttpRx      *rx;
     HttpTx      *tx;
     HttpStage   *handler;
@@ -5662,107 +5304,58 @@ static HttpStage *findHandler(HttpConn *conn)
     tx = conn->tx;
     loc = rx->loc;
     handler = 0;
+    host = httpGetConnHost(conn);
 
     mprAssert(rx->uri);
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
     mprAssert(rx->pathInfo);
+    mprAssert(host);
 
-    if (rx->pathInfo == 0) {
-        handler = http->passHandler;
-
-    } else if (tx->extension) {
-        handler = checkHandler(conn, httpGetHandlerByExtension(loc, tx->extension));
-
-    } else if (!tx->fileInfo.valid) {
-        /*
-            URI has no extension, check if the addition of configured  extensions results in a valid filename.
+    /*
+        Check for any explicitly defined handlers (SetHandler directive)
+     */
+    if ((handler = checkHandler(conn, loc->handler)) == 0) {
+        /* 
+            Perform custom handler matching first on all defined handlers 
          */
-        for (path = 0, hp = 0; (hp = mprGetNextHash(loc->extensions, hp)) != 0; ) {
-            handler = (HttpStage*) hp->data;
-            if (*hp->key && (handler->flags & HTTP_STAGE_MISSING_EXT)) {
-                path = sjoin(tx->filename, ".", hp->key, NULL);
-                if (mprGetPathInfo(path, &tx->fileInfo) == 0) {
-                    mprLog(5, "findHandler: Adding extension, new path %s\n", path);
-                    httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL), NULL);
-                    break;
-                }
-            }
-        }
-        if (hp == 0) {
-            handler = 0;
-        }
-    }
-    if (handler == 0) {
-        /* Failed to match by extension, so perform custom handler matching on all defined handlers */
         for (next = 0; (handler = mprGetNextItem(loc->handlers, &next)) != 0; ) {
             if (checkHandler(conn, handler)) {
                 break;
             }
         }
-    }
-    if (handler == 0) {
-        handler = checkHandler(conn, httpGetHandlerByExtension(loc, ""));
         if (handler == 0) {
-            handler = http->passHandler;
-            if (!(rx->flags & (HTTP_OPTIONS | HTTP_TRACE))) {
-                httpError(conn, HTTP_CODE_NOT_IMPLEMENTED, "No handler to service method \"%s\" for request \"%s\"", 
-                    rx->method, rx->pathInfo);
-            }
-        }
-    }
-    return handler;
-}
+            if (tx->extension) {
+                handler = checkHandler(conn, httpGetHandlerByExtension(loc, tx->extension));
 
-
-static HttpStage *mapToFile(HttpConn *conn, HttpStage *handler)
-{
-    HttpRx      *rx;
-    HttpTx      *tx;
-    HttpHost    *host;
-    MprPath     *info, ginfo;
-    char        *gfile;
-
-    rx = conn->rx;
-    tx = conn->tx;
-    host = conn->host;
-    info = &tx->fileInfo;
-
-    mprAssert(handler);
-    mprAssert(tx->filename);
-    mprAssert(info->checked);
-
-    if (!handler || (handler->flags & HTTP_STAGE_VIRTUAL)) {
-        return handler;
-    }
-    if ((rx->dir = httpLookupBestDir(host, tx->filename)) == 0) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Missing directory block for %s", tx->filename);
-    } else {
-        rx->auth = rx->dir->auth;
-        if (info->isDir) {
-            handler = processDirectory(conn, handler);
-
-        } else if (!info->valid) {
-            /*
-                File not found. See if a compressed variant exists.
-             */
-            if (rx->acceptEncoding && strstr(rx->acceptEncoding, "gzip") != 0) {
-                gfile = mprAsprintf("%s.gz", tx->filename);
-                if (mprGetPathInfo(gfile, &ginfo) == 0) {
-                    tx->filename = gfile;
-                    tx->fileInfo = ginfo;
-                    tx->etag = mprAsprintf("\"%x-%Lx-%Lx\"", ginfo.inode, ginfo.size, ginfo.mtime);
-                    httpSetHeader(conn, "Content-Encoding", "gzip");
-                    return handler;
+            } else if (!tx->fileInfo.valid) {
+                /*
+                    URI has no extension, check if the addition of configured  extensions results in a valid filename.
+                 */
+                for (path = 0, hp = 0; (hp = mprGetNextHash(loc->extensions, hp)) != 0; ) {
+                    handler = (HttpStage*) hp->data;
+                    if (*hp->key && (handler->flags & HTTP_STAGE_MISSING_EXT)) {
+                        path = sjoin(tx->filename, ".", hp->key, NULL);
+                        if (mprGetPathInfo(path, &tx->fileInfo) == 0) {
+                            mprLog(5, "findHandler: Adding extension, new path %s\n", path);
+                            httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL), NULL);
+                            break;
+                        }
+                    }
                 }
             }
-            if (!(rx->flags & HTTP_PUT) && (handler->flags & HTTP_STAGE_VERIFY_ENTITY) && 
-                    (rx->auth == 0 || rx->auth->type == 0)) {
-                httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
+            if (handler == 0) {
+                handler = checkHandler(conn, httpGetHandlerByExtension(loc, ""));
+                if (handler == 0) {
+                    if (!(rx->flags & (HTTP_OPTIONS | HTTP_TRACE))) {
+                        httpError(conn, HTTP_CODE_NOT_IMPLEMENTED, "No handler for \"%s\" \"%s\"", rx->method, rx->pathInfo);
+                    }
+                    handler = http->passHandler;
+                }
             }
         }
     }
-    return handler;
+    return checkDirectory(conn, handler);
 }
 
 
@@ -5771,14 +5364,14 @@ static HttpStage *mapToFile(HttpConn *conn, HttpStage *handler)
     (transparent) redirection and serve different content back to the browser. This routine may modify the requested 
     URI and/or the request handler.
  */
-static HttpStage *processDirectory(HttpConn *conn, HttpStage *handler)
+static HttpStage *checkDirectory(HttpConn *conn, HttpStage *handler)
 {
     HttpRx      *rx;
     HttpTx      *tx;
     MprPath     *info;
     HttpHost    *host;
     HttpUri     *prior;
-    char        *path, *index, *pathInfo, *uri;
+    char        *path, *pathInfo, *uri;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -5787,106 +5380,36 @@ static HttpStage *processDirectory(HttpConn *conn, HttpStage *handler)
     prior = rx->parsedUri;
 
     mprAssert(rx->dir);
+    mprAssert(rx->dir->indexName);
     mprAssert(rx->pathInfo);
-    mprAssert(info->isDir);
 
-    index = rx->dir->indexName;
-    path = mprJoinPath(tx->filename, index);
-
-    if (rx->pathInfo[slen(rx->pathInfo) - 1] == '/') {
+    if (!tx->fileInfo.isDir || handler == 0 || handler->flags & HTTP_STAGE_VIRTUAL) {
+        return handler;
+    }
+    if (sends(rx->pathInfo, "/")) {
         /*  
             Internal directory redirections
          */
+        path = mprJoinPath(tx->filename, rx->dir->indexName);
         if (mprPathExists(path, R_OK)) {
             /*  
                 Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
                 Return zero so the request will be rematched on return.
              */
-            pathInfo = mprJoinPath(rx->pathInfo, index);
+            pathInfo = mprJoinPath(rx->pathInfo, rx->dir->indexName);
             uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
             httpSetUri(conn, uri, 0);
+            /* Force a rematch */
             return 0;
         }
     } else {
-#if UNUSED
-        /*  
-            External redirect. Ask the client to re-issue a request for a new location. See if an index exists and if so, 
-            construct a new location for the index. If the index can't be accessed, append a "/" to the URI and redirect.
-         */
-        if (mprPathExists(path, R_OK)) {
-            pathInfo = mprJoinPath(rx->pathInfo, index);
-        } else {
-            pathInfo = sjoin(rx->pathInfo, "/", NULL);
-        }
-#else
-        /* Must not append the index for the external redirect - Messes up PHP wordpress */
+        /* Must not append the index for the external redirect */
         pathInfo = sjoin(rx->pathInfo, "/", NULL);
-#endif
         uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
         httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
         handler = conn->http->passHandler;
     }
     return handler;
-}
-
-
-#if UNUSED
-static bool fileExists(cchar *path) {
-    if (mprPathExists(path, R_OK)) {
-        return 1;
-    }
-#if BLD_WIN_LIKE
-{
-    char    *file;
-    file = sjoin(path, ".exe", NULL);
-    if (mprPathExists(file, R_OK)) {
-        return 1;
-    }
-    file = sjoin(path, ".bat", NULL);
-    if (mprPathExists(file, R_OK)) {
-        return 1;
-    }
-}
-#endif
-    return 0;
-}
-#endif
-
-
-static void setScriptName(HttpConn *conn)
-{
-    HttpAlias   *alias;
-    HttpRx      *rx;
-    HttpTx      *tx;
-    char        *cp, *extraPath, *start, *pathInfo;
-    ssize       scriptLen;
-
-    rx = conn->rx;
-    tx = conn->tx;
-    alias = rx->alias;
-
-    /*
-        Find the script name in the filename. This is assumed to be either:
-        - The original filename up to and including first portion containing a "."
-        - The entire original filename
-        Once found, set the scriptName and trim the extraPath from both the filename and the pathInfo
-     */
-    start = &tx->filename[strlen(alias->filename)];
-    if ((cp = strchr(start, '.')) != 0 && (extraPath = strchr(cp, '/')) != 0) {
-        rx->scriptName = sclone(rx->pathInfo);
-        scriptLen = alias->prefixLen + extraPath - start;
-        rx->pathInfo = sclone(&rx->scriptName[scriptLen]);
-        rx->scriptName[0] = '\0';
-        *extraPath = '\0';
-        httpMapToStorage(conn);
-        if (rx->pathInfo[0]) {
-            rx->pathTranslated = httpMakeFilename(conn, alias, rx->pathInfo, 0);
-        }
-    } else {
-        pathInfo = rx->pathInfo;
-        rx->scriptName = rx->pathInfo;
-        rx->pathInfo = 0;
-    }
 }
 
 
@@ -5908,35 +5431,6 @@ static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage)
         }
     }
     return stage;
-}
-
-
-char *httpMakeFilename(HttpConn *conn, HttpAlias *alias, cchar *url, bool skipAliasPrefix)
-{
-    cchar   *seps;
-    char    *path;
-    int     len;
-
-    mprAssert(alias);
-    mprAssert(url);
-
-    if (skipAliasPrefix) {
-        url += alias->prefixLen;
-    }
-    while (*url == '/') {
-        url++;
-    }
-    len = (int) strlen(alias->filename);
-    if ((path = mprAlloc(len + strlen(url) + 2)) == 0) {
-        return 0;
-    }
-    strcpy(path, alias->filename);
-    if (*url) {
-        seps = mprGetPathSeparators(path);
-        path[len++] = seps[0];
-        strcpy(&path[len], url);
-    }
-    return mprGetNativePath(path);
 }
 
 
@@ -6069,7 +5563,6 @@ static void netOutgoingService(HttpQueue *q)
         if (q->ioIndex == 0 && buildNetVec(q) <= 0) {
             break;
         }
-
         /*  
             Issue a single I/O request to write all the blocks in the I/O vector
          */
@@ -6475,10 +5968,9 @@ bool httpIsPacketTooBig(HttpQueue *q, HttpPacket *packet)
 void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
 {
     if (q->first == 0) {
-        /*  
-            Just use the service queue as a holding queue while we aggregate the post data.
-         */
+        /*  Just use the service queue as a holding queue while we aggregate the post data.  */
         httpPutForService(q, packet, 0);
+
     } else {
         q->count += httpGetPacketLength(packet);
         /* Skip over the header packet */
@@ -6486,9 +5978,7 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
             packet = q->first->next;
             q->first = packet;
         } else {
-            /*
-                Aggregate all data into one packet and free the packet.
-             */
+            /* Aggregate all data into one packet and free the packet.  */
             httpJoinPacket(q->first, packet);
         }
     }
@@ -6521,24 +6011,28 @@ int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
  */
 void httpJoinPackets(HttpQueue *q, ssize size)
 {
-    HttpPacket  *packet, *first, *next;
-    ssize       maxPacketSize;
+    HttpPacket  *packet, *first;
+    ssize       maxPacketSize, len;
 
     if (size < 0) {
         size = MAXINT;
     }
     if ((first = q->first) != 0 && first->next) {
         if (first->flags & HTTP_PACKET_HEADER) {
+            /* Step over a header packet */
             first = first->next;
         }
         maxPacketSize = min(q->nextQ->packetSize, size);
-        for (packet = first->next; packet; packet = next) {
-            next = packet->next;
-            if (packet->content && (httpGetPacketLength(first) + httpGetPacketLength(packet)) < maxPacketSize) {
-                httpJoinPacket(first, packet);
-            } else {
+        for (packet = first->next; packet; packet = packet->next) {
+            if (packet->content == 0 || (len = httpGetPacketLength(packet)) == 0) {
                 break;
             }
+            if ((httpGetPacketLength(first) + len) > maxPacketSize) {
+                break;
+            }
+            httpJoinPacket(first, packet);
+            /* Unlink the packet */
+            first->next = packet->next;
         }
     }
 }
@@ -7010,7 +6504,13 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     for (next = 0; (stage = mprGetNextItem(rx->inputPipeline, &next)) != 0; ) {
         q = httpCreateQueue(conn, stage, HTTP_QUEUE_RECEIVE, q);
     }
-    //  MOB - don't want to call this when using file handler
+    if ((tx->handler->flags & HTTP_STAGE_VERIFY_ENTITY) && !tx->fileInfo.valid && !(rx->flags & HTTP_PUT)) {
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
+    }
+
+    /*
+        Create form and environment vars if required
+     */
     setVars(conn);
 
     conn->writeq = tx->queue[HTTP_QUEUE_TRANS]->nextQ;
@@ -7205,6 +6705,38 @@ void httpDiscardTransmitData(HttpConn *conn)
 }
 
 
+static void trimExtraPath(HttpConn *conn)
+{
+    HttpAlias   *alias;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    char        *cp, *extra, *start;
+    ssize       len;
+
+    rx = conn->rx;
+    tx = conn->tx;
+    alias = rx->alias;
+
+    /*
+        Find the script name in the uri. This is assumed to be either:
+        - The original uri up to and including first path component containing a ".", or
+        - The entire original uri
+        Once found, set the scriptName and trim the extraPath from pathInfo
+        The filename is used to search for a component with "." because we want to skip the alias prefix.
+     */
+    start = &tx->filename[strlen(alias->filename)];
+    if ((cp = strchr(start, '.')) != 0 && (extra = strchr(cp, '/')) != 0) {
+        len = alias->prefixLen + extra - start;
+        if (0 < len && len < slen(rx->pathInfo)) {
+            *extra = '\0';
+            rx->extraPath = sclone(&rx->pathInfo[len]);
+            rx->pathInfo[len] = '\0';
+            return;
+        }
+    }
+}
+
+
 /*
     Create the form variables based on the URI query. Also create formVars for CGI style programs (cgi | egi)
  */
@@ -7216,8 +6748,9 @@ static void setVars(HttpConn *conn)
     rx = conn->rx;
     tx = conn->tx;
 
-    mprAssert(tx->handler);
-
+    if (tx->handler->flags & HTTP_STAGE_EXTRA_PATH) {
+        trimExtraPath(conn);
+    }
     if (tx->handler->flags & HTTP_STAGE_QUERY_VARS && rx->parsedUri->query) {
         rx->formVars = httpAddVars(rx->formVars, rx->parsedUri->query, slen(rx->parsedUri->query));
     }
@@ -7799,7 +7332,7 @@ bool httpWillNextQueueAcceptSize(HttpQueue *q, ssize size)
 
 /*  
     Write a block of data. This is the lowest level write routine for data. This will buffer the data and flush if
-    the queue buffer is full.
+    the queue buffer is full. This will always accept the data but may return with a "short" write.
  */
 ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size)
 {
@@ -8302,6 +7835,7 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->uri);
         mprMark(rx->scriptName);
         mprMark(rx->pathInfo);
+        mprMark(rx->extraPath);
         mprMark(rx->conn);
         mprMark(rx->etags);
         mprMark(rx->headerPacket);
@@ -8317,8 +7851,7 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->cookie);
         mprMark(rx->connection);
         mprMark(rx->contentLength);
-        mprMark(rx->hostName);
-        mprMark(rx->pathTranslated);
+        mprMark(rx->hostHeader);
         mprMark(rx->pragma);
         mprMark(rx->mimeType);
         mprMark(rx->redirect);
@@ -8454,11 +7987,12 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
             rx->parsedUri->scheme = sclone("https");
         }
         rx->parsedUri->port = conn->sock->listenSock->port;
-        rx->parsedUri->host = rx->hostName ? rx->hostName : conn->host->name;
+        rx->parsedUri->host = rx->hostHeader ? rx->hostHeader : conn->host->name;
         if (!tx->handler) {
             httpMatchHandler(conn);  
         }
         loc = rx->loc;
+        mprAssert(loc);
 
         mprLog(3, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
         httpSetState(conn, HTTP_STATE_PARSED);        
@@ -8692,7 +8226,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             if (strcmp(key, "authorization") == 0) {
                 value = sclone(value);
                 rx->authType = stok(value, " \t", &tok);
-                rx->authDetails = tok;
+                rx->authDetails = sclone(tok);
 
             } else if (strcmp(key, "accept-charset") == 0) {
                 rx->acceptCharset = sclone(value);
@@ -8785,7 +8319,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
         case 'h':
             if (strcmp(key, "host") == 0) {
-                rx->hostName = sclone(value);
+                rx->hostHeader = sclone(value);
             }
             break;
 
@@ -9500,24 +9034,46 @@ int httpMapToStorage(HttpConn *conn)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpHost    *host;
-    MprPath     *info;
+    MprPath     *info, ginfo;
+    char        *gfile;
 
     rx = conn->rx;
     tx = conn->tx;
     host = conn->host;
     info = &tx->fileInfo;
 
-    rx->loc = httpLookupBestLocation(host, rx->pathInfo);
-    rx->auth = rx->loc->auth;
     rx->alias = httpGetAlias(host, rx->pathInfo);
     tx->filename = httpMakeFilename(conn, rx->alias, rx->pathInfo, 1);
+
     tx->extension = httpGetExtension(conn);
 #if BLD_WIN_LIKE
     if (tx->extension) {
         tx->extension = slower(tx->extension);
     }
 #endif
+    if ((rx->dir = httpLookupBestDir(host, tx->filename)) == 0) {
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Missing directory block for \"%s\"", tx->filename);
+        return MPR_ERR_CANT_ACCESS;
+    }
+    if (rx->dir->auth) {
+        rx->auth = rx->dir->auth;
+    }
+    if ((rx->loc = httpLookupBestLocation(host, rx->pathInfo)) == 0) {
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Missing location block for \"%s\"", rx->pathInfo);
+        return MPR_ERR_CANT_ACCESS;
+    }
+    if (rx->auth == 0) {
+        rx->auth = rx->loc->auth;
+    }
     mprGetPathInfo(tx->filename, info);
+    if (!info->valid && rx->acceptEncoding && strstr(rx->acceptEncoding, "gzip") != 0) {
+        gfile = mprAsprintf("%s.gz", tx->filename);
+        if (mprGetPathInfo(gfile, &ginfo) == 0) {
+            tx->filename = gfile;
+            tx->fileInfo = ginfo;
+            httpSetHeader(conn, "Content-Encoding", "gzip");
+        }
+    }
     if (info->valid) {
         tx->etag = mprAsprintf("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
     }
@@ -9859,6 +9415,35 @@ cvoid *httpGetStageData(HttpConn *conn, cchar *key)
 }
 
 
+char *httpMakeFilename(HttpConn *conn, HttpAlias *alias, cchar *url, bool skipAliasPrefix)
+{
+    cchar   *seps;
+    char    *path;
+    int     len;
+
+    mprAssert(alias);
+    mprAssert(url);
+
+    if (skipAliasPrefix) {
+        url += alias->prefixLen;
+    }
+    while (*url == '/') {
+        url++;
+    }
+    len = (int) strlen(alias->filename);
+    if ((path = mprAlloc(len + strlen(url) + 2)) == 0) {
+        return 0;
+    }
+    strcpy(path, alias->filename);
+    if (*url) {
+        seps = mprGetPathSeparators(path);
+        path[len++] = seps[0];
+        strcpy(&path[len], url);
+    }
+    return mprGetNativePath(path);
+}
+
+
 /*
     @copy   default
 
@@ -9972,6 +9557,8 @@ void httpSendOpen(HttpQueue *q)
 
 static void sendIncomingService(HttpQueue *q)
 {
+    //  MOB - why
+    mprAssert(0);
     httpEnableConnEvents(q->conn);
 }
 
@@ -10324,9 +9911,11 @@ HttpServer *httpCreateServer(cchar *ip, int port, MprDispatcher *dispatcher, int
     server->port = port;
     server->ip = sclone(ip);
     server->dispatcher = dispatcher;
+#if UNUSED
     if (server->ip && *server->ip) {
         server->name = server->ip;
     }
+#endif
     server->loc = httpInitLocation(http, 1);
     server->hosts = mprCreateList(-1, 0);
     httpAddServer(http, server);
@@ -10339,7 +9928,7 @@ HttpServer *httpCreateServer(cchar *ip, int port, MprDispatcher *dispatcher, int
 
 void httpDestroyServer(HttpServer *server)
 {
-    mprLog(4, "Destroy server %s", server->name ? server->name : server->ip);
+    mprLog(4, "Destroy server %s", /* MOB server->name ? server->name : */ server->ip);
     if (server->waitHandler) {
         mprRemoveWaitHandler(server->waitHandler);
         server->waitHandler = 0;
@@ -10362,7 +9951,9 @@ static int manageServer(HttpServer *server, int flags)
         mprMark(server->waitHandler);
         mprMark(server->clientLoad);
         mprMark(server->hosts);
+#if UNUSED
         mprMark(server->name);
+#endif
         mprMark(server->ip);
         mprMark(server->context);
         mprMark(server->meta);
@@ -10567,7 +10158,7 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
      */
     sock = mprAcceptSocket(server->sock);
     if (server->waitHandler) {
-        mprEnableWaitEvents(server->waitHandler, MPR_READABLE);
+        mprWaitOn(server->waitHandler, MPR_READABLE);
     }
     if (sock == 0) {
         return 0;
@@ -10685,11 +10276,13 @@ void httpSetServerLocation(HttpServer *server, HttpLoc *loc)
 }
 
 
+#if UNUSED
 void httpSetServerName(HttpServer *server, cchar *name)
 {
     mprAssert(server);
     server->name = sclone(name);
 }
+#endif
 
 
 void httpSetServerNotifier(HttpServer *server, HttpNotifier notifier)
@@ -11563,7 +11156,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
             /*
                 Absolute URL. If hostName has a port specifier, it overrides prev->port.
              */
-            uri = httpFormatUri(prev->scheme, rx->hostName, port, target->path, target->reference, target->query, 1);
+            uri = httpFormatUri(prev->scheme, rx->hostHeader, port, target->path, target->reference, target->query, 1);
         } else {
             /*
                 Relative file redirection to a file in the same directory as the previous request.
@@ -11574,7 +11167,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
                 *cp = '\0';
             }
             path = sjoin(dir, "/", target->path, NULL);
-            uri = httpFormatUri(prev->scheme, rx->hostName, port, path, target->reference, target->query, 1);
+            uri = httpFormatUri(prev->scheme, rx->hostHeader, port, path, target->reference, target->query, 1);
         }
         targetUri = uri;
     }
@@ -11631,7 +11224,7 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
         }
     }
     if (webkitVersion >= 312) {
-        domain = sclone(rx->hostName);
+        domain = sclone(rx->hostHeader);
         if ((cp = strchr(domain, ':')) != 0) {
             *cp = '\0';
         }
@@ -13290,6 +12883,341 @@ static void trimPathToDirname(HttpUri *uri)
 /************************************************************************/
 /*
  *  End of file "../src/uri.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../src/var.c"
+ */
+/************************************************************************/
+
+/*
+    var.c -- Manage the request variables
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+ */
+
+
+
+/*
+    Define standard CGI variables
+ */
+void httpCreateCGIVars(HttpConn *conn)
+{
+    HttpRx          *rx;
+    HttpTx          *tx;
+    HttpHost        *host;
+    HttpUploadFile  *up;
+    MprSocket       *sock;
+    MprHashTable    *table;
+    MprHash         *hp;
+    int             index;
+
+    rx = conn->rx;
+    tx = conn->tx;
+    host = conn->host;
+
+    //  MOB - cleanup
+
+    table = rx->formVars;
+    if (table == 0) {
+        table = rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
+    }
+
+    //  TODO - Vars for COOKIEs
+    
+    /*  Alias for REMOTE_USER. Define both for broader compatibility with CGI */
+    mprAddKey(table, "AUTH_TYPE", rx->authType);
+    mprAddKey(table, "AUTH_USER", conn->authUser);
+    mprAddKey(table, "AUTH_GROUP", conn->authGroup);
+    mprAddKey(table, "AUTH_ACL", MPR->emptyString);
+    mprAddKey(table, "CONTENT_LENGTH", rx->contentLength);
+    mprAddKey(table, "CONTENT_TYPE", rx->mimeType);
+    mprAddKey(table, "GATEWAY_INTERFACE", sclone("CGI/1.1"));
+    mprAddKey(table, "QUERY_STRING", rx->parsedUri->query);
+
+    if (conn->sock) {
+        mprAddKey(table, "REMOTE_ADDR", conn->ip);
+    }
+    mprAddKeyFmt(table, "REMOTE_PORT", "%d", conn->port);
+
+    /*  Same as AUTH_USER (yes this is right) */
+    mprAddKey(table, "REMOTE_USER", conn->authUser);
+    mprAddKey(table, "REQUEST_METHOD", rx->method);
+    mprAddKey(table, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
+    
+    sock = conn->sock;
+    mprAddKey(table, "SERVER_ADDR", sock->acceptIp);
+    mprAddKey(table, "SERVER_NAME", host->hostname);
+    mprAddKeyFmt(table, "SERVER_PORT", "%d", sock->acceptPort);
+
+    /*  HTTP/1.0 or HTTP/1.1 */
+    mprAddKey(table, "SERVER_PROTOCOL", conn->protocol);
+    mprAddKey(table, "SERVER_SOFTWARE", conn->http->software);
+
+    /*  This is the original URI before decoding */ 
+    mprAddKey(table, "REQUEST_URI", rx->originalUri);
+
+    /*  
+        URIs are broken into the following: http://{SERVER_NAME}:{SERVER_PORT}{SCRIPT_NAME}{PATH_INFO} 
+        NOTE: For CGI|PHP, scriptName is empty and pathInfo has the script. PATH_INFO is stored in extraPath.
+     */
+    mprAddKey(table, "PATH_INFO", rx->extraPath);
+    mprAddKey(table, "SCRIPT_NAME", rx->pathInfo);
+    mprAddKey(table, "SCRIPT_FILENAME", tx->filename);
+
+    if (rx->extraPath) {
+        /*  Only set PATH_TRANSLATED if extraPath is set (CGI spec) */
+        mprAddKey(table, "PATH_TRANSLATED", httpMakeFilename(conn, rx->alias, rx->extraPath, 0));
+    }
+    //  MOB -- how do these relate to MVC apps and non-mvc apps
+    mprAddKey(table, "DOCUMENT_ROOT", host->documentRoot);
+    mprAddKey(table, "SERVER_ROOT", host->serverRoot);
+
+    if (rx->files) {
+        for (index = 0, hp = 0; (hp = mprGetNextHash(conn->rx->files, hp)) != 0; index++) {
+            up = (HttpUploadFile*) hp->data;
+            mprAddKey(table, mprAsprintf("FILE_%d_FILENAME", index), up->filename);
+            mprAddKey(table, mprAsprintf("FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
+            mprAddKey(table, mprAsprintf("FILE_%d_CONTENT_TYPE", index), up->contentType);
+            mprAddKey(table, mprAsprintf("FILE_%d_NAME", index), hp->key);
+            mprAddKeyFmt(table, mprAsprintf("FILE_%d_SIZE", index), "%d", up->size);
+        }
+    }
+    if (conn->http->envCallback) {
+        conn->http->envCallback(conn);
+    }
+}
+
+
+/*  
+    Add variables to the vars environment store. This comes from the query string and urlencoded post data.
+    Make variables for each keyword in a query string. The buffer must be url encoded (ie. key=value&key2=value2..., 
+    spaces converted to '+' and all else should be %HEX encoded).
+ */
+MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len)
+{
+    cchar   *oldValue;
+    char    *newValue, *decoded, *keyword, *value, *tok;
+
+    if (table == 0) {
+        table = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
+    }
+    decoded = mprAlloc(len + 1);
+    decoded[len] = '\0';
+    memcpy(decoded, buf, len);
+
+    keyword = stok(decoded, "&", &tok);
+    while (keyword != 0) {
+        if ((value = strchr(keyword, '=')) != 0) {
+            *value++ = '\0';
+            value = mprUriDecode(value);
+        } else {
+            value = "";
+        }
+        keyword = mprUriDecode(keyword);
+
+        if (*keyword) {
+            /*  
+                Append to existing keywords
+             */
+            oldValue = mprLookupHash(table, keyword);
+            if (oldValue != 0 && *oldValue) {
+                if (*value) {
+                    newValue = sjoin(oldValue, " ", value, NULL);
+                    mprAddKey(table, keyword, newValue);
+                }
+            } else {
+                mprAddKey(table, keyword, sclone(value));
+            }
+        }
+        keyword = stok(0, "&", &tok);
+    }
+    return table;
+}
+
+
+MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q)
+{
+    HttpConn    *conn;
+    HttpRx      *rx;
+    MprBuf      *content;
+
+    mprAssert(q);
+    
+    conn = q->conn;
+    rx = conn->rx;
+
+    if ((rx->form || rx->upload) && q->first && q->first->content) {
+        httpJoinPackets(q, -1);
+        content = q->first->content;
+        mprAddNullToBuf(content);
+        mprLog(3, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
+        table = httpAddVars(table, mprGetBufStart(content), mprGetBufLength(content));
+    }
+    return table;
+}
+
+
+int httpTestFormVar(HttpConn *conn, cchar *var)
+{
+    MprHashTable    *vars;
+    
+    if ((vars = conn->rx->formVars) == 0) {
+        return 0;
+    }
+    return vars && mprLookupHash(vars, var) != 0;
+}
+
+
+cchar *httpGetFormVar(HttpConn *conn, cchar *var, cchar *defaultValue)
+{
+    MprHashTable    *vars;
+    cchar           *value;
+    
+    if ((vars = conn->rx->formVars) == 0) {
+        value = mprLookupHash(vars, var);
+        return (value) ? value : defaultValue;
+    }
+    return defaultValue;
+}
+
+
+int httpGetIntFormVar(HttpConn *conn, cchar *var, int defaultValue)
+{
+    MprHashTable    *vars;
+    cchar           *value;
+    
+    if ((vars = conn->rx->formVars) == 0) {
+        value = mprLookupHash(vars, var);
+        return (value) ? (int) stoi(value, 10, NULL) : defaultValue;
+    }
+    return defaultValue;
+}
+
+
+void httpSetFormVar(HttpConn *conn, cchar *var, cchar *value) 
+{
+    MprHashTable    *vars;
+    
+    if ((vars = conn->rx->formVars) == 0) {
+        /* This is allowed. Upload filter uses this when uploading to the file handler */
+        return;
+    }
+    mprAddKey(vars, var, sclone(value));
+}
+
+
+void httpSetIntFormVar(HttpConn *conn, cchar *var, int value) 
+{
+    MprHashTable    *vars;
+    
+    if ((vars = conn->rx->formVars) == 0) {
+        /* This is allowed. Upload filter uses this when uploading to the file handler */
+        return;
+    }
+    mprAddKey(vars, var, mprAsprintf("%d", value));
+}
+
+
+int httpCompareFormVar(HttpConn *conn, cchar *var, cchar *value)
+{
+    MprHashTable    *vars;
+    
+    if ((vars = conn->rx->formVars) == 0) {
+        return 0;
+    }
+    if (strcmp(value, httpGetFormVar(conn, var, " __UNDEF__ ")) == 0) {
+        return 1;
+    }
+    return 0;
+}
+
+
+void httpAddUploadFile(HttpConn *conn, cchar *id, HttpUploadFile *upfile)
+{
+    HttpRx   *rx;
+
+    rx = conn->rx;
+    if (rx->files == 0) {
+        rx->files = mprCreateHash(-1, 0);
+    }
+    mprAddKey(rx->files, id, upfile);
+}
+
+
+void httpRemoveUploadFile(HttpConn *conn, cchar *id)
+{
+    HttpRx    *rx;
+    HttpUploadFile  *upfile;
+
+    rx = conn->rx;
+
+    upfile = (HttpUploadFile*) mprLookupHash(rx->files, id);
+    if (upfile) {
+        mprDeletePath(upfile->filename);
+        upfile->filename = 0;
+    }
+}
+
+
+void httpRemoveAllUploadedFiles(HttpConn *conn)
+{
+    HttpRx          *rx;
+    HttpUploadFile  *upfile;
+    MprHash         *hp;
+
+    rx = conn->rx;
+
+    for (hp = 0; rx->files && (hp = mprGetNextHash(rx->files, hp)) != 0; ) {
+        upfile = (HttpUploadFile*) hp->data;
+        if (upfile->filename) {
+            mprDeletePath(upfile->filename);
+            upfile->filename = 0;
+        }
+    }
+}
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../src/var.c"
  */
 /************************************************************************/
 

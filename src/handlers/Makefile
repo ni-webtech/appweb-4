@@ -6,11 +6,14 @@
 
 include 		.makedep
 
+MAKE_IFLAGS			:= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
+phpHandler_IFLAGS	:= $(BLD_PHP_IFLAGS)
+ejsHandler_IFLAGS	:= $(BLD_EJS_IFLAGS)
+
 #
-#	PHP has warnings for 64-32 conversions
+#	Remove shorten-64 warnings because PHP headers trigger this
 #
-_CFLAGS			:= $(patsubst -Wshorten-64-to-32,,$(_CFLAGS))
-MAKE_IFLAGS		:= $(BLD_PHP_IFLAGS) $(BLD_EJS_IFLAGS) $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
+_CFLAGS				:= $(patsubst -Wshorten-64-to-32,,$(_CFLAGS))
 
 ifeq	($(BLD_FEATURE_PHP),1)
 	IMPORTS 	+= $(BLD_OPENSSL_IMPORTS) $(BLD_PHP_IMPORTS)

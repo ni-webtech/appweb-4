@@ -5814,7 +5814,6 @@ extern void mprTermOsWait(MprWaitService *ws);
 extern int  mprStartWaitService(MprWaitService *ws);
 extern int  mprStopWaitService(MprWaitService *ws);
 extern void mprSetWaitServiceThread(MprWaitService *ws, MprThread *thread);
-extern void mprWakeWaitService();
 extern void mprWakeNotifier();
 extern int  mprInitWindow();
 
@@ -5855,30 +5854,19 @@ extern void mprWaitForIO(MprWaitService *ws, MprTime timeout);
 /*
     Handler Flags
  */
-#define MPR_WAIT_RECALL_HANDLER 0x1     /**< Wait handler flag to recall the handler asap */
-#define MPR_WAIT_ADDED          0x2     /**< Wait handler flag for when a handler is added to wait service */
-#define MPR_WAIT_NEW_DISPATCHER 0x4     /**< Wait handler flag to create a new dispatcher for each I/O event */
-
-/*
-    Handler states
- */
-#define MPR_HANDLER_DISABLED    0
-#define MPR_HANDLER_ENABLED     1
-#define MPR_HANDLER_QUEUED      2
-#define MPR_HANDLER_ACTIVE      3
+#define MPR_WAIT_RECALL_HANDLER     0x1     /**< Wait handler flag to recall the handler asap */
+#define MPR_WAIT_NEW_DISPATCHER     0x2     /**< Wait handler flag to create a new dispatcher for each I/O event */
 
 /**
     Wait Handler Service
     @description Wait handlers provide callbacks for when I/O events occur. They provide a wait to service many
         I/O file descriptors without requiring a thread per descriptor.
-    @see mprDisableWaitEvents, mprEnableWaitEvents,
-        mprRecallWaitHandler, MprWaitHandler, mprCreateEvent, mprServiceDispatcher, MprEvent
+    @see mprSetWaitEvents, mprRecallWaitHandler, MprWaitHandler, mprCreateEvent, mprServiceDispatcher, MprEvent
     @defgroup MprWaitHandler MprWaitHandler
  */
 typedef struct MprWaitHandler {
     int             desiredMask;        /**< Mask of desired events */
     int             presentMask;        /**< Mask of current events */
-    int             state;              /**< Wait handler state */
     int             fd;                 /**< O/S File descriptor (sp->sock) */
     int             notifierIndex;      /**< Index for notifier */
     int             flags;              /**< Control flags */
@@ -5918,21 +5906,13 @@ extern MprWaitHandler *mprCreateWaitHandler(int fd, int mask, MprDispatcher *dis
 extern void mprRemoveWaitHandler(MprWaitHandler *wp);
 
 /**
-    Disable wait events
-    @description Disable wait events for a given file descriptor.
+    Subscribe for desired wait events
+    @description Subscribe to the desired wait events for a given wait handler.
     @param wp Wait handler created via #mprCreateWaitHandler
+    @param desiredMask Mask of desired events (MPR_READABLE | MPR_WRITABLE)
     @ingroup MprWaitHandler
  */
-extern void mprDisableWaitEvents(MprWaitHandler *wp);
-
-/**
-    Enable wait events
-    @description Enable wait events for a given file descriptor.
-    @param wp Wait handler created via #mprCreateWaitHandler
-    @param desiredMask Mask of desirable events (MPR_READABLE | MPR_WRITABLE)
-    @ingroup MprWaitHandler
- */
-extern void mprEnableWaitEvents(MprWaitHandler *wp, int desiredMask);
+extern void mprWaitOn(MprWaitHandler *wp, int desiredMask);
 
 /**
     Recall a wait handler by fd
@@ -5981,14 +5961,7 @@ extern int mprCreateNotifierService(MprWaitService *ws);
     @param mask Mask of events of interest. This is made by oring MPR_READABLE and MPR_WRITABLE
     @return Zero if successful, otherwise a negative MPR error code.
  */
-extern int mprAddNotifier(MprWaitService *ws, MprWaitHandler *wp, int mask);
-
-/*
-    Suspend I/O notification services on a wait handler
-    Remove a file descriptor from the wait service
-    @param wp Wait handler associated with the file descriptor
- */
-extern void mprRemoveNotifier(MprWaitHandler *wp);
+extern int mprNotifyOn(MprWaitService *ws, MprWaitHandler *wp, int mask);
 
 /**
     Socket I/O callback procedure. Proc returns non-zero if the socket has been deleted.
