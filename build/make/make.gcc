@@ -235,15 +235,15 @@ export 	_LDPATH _LDFLAGS _LIBS BLD_TOP
 #	Build rule for C source
 #
 $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
-	@if [ "$(PRE)" = 1 ] ; then \
+	if [ "$(PRE)" = 1 ] ; then \
         $(call log) "[Preprocess]" "cc -E $< >$*.pre" ; \
-        $(BLD_CC) -E $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
+        $(BLD_CC) -E $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
     fi
-	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
+	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CC) -c $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
 	else $(call log) "[Compile]" "$(DIR)/$<" ; fi
-	@$(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
+	@$(BLD_CC) -c $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
 	if [ $$? != 0 -a "$(TRACE)" != 1 ] ; then \
-	    $(call log) "[DETAILS]" "$(BLD_CC) -c $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@\n" ; \
+	    $(call log) "[DETAILS]" "$(BLD_CC) -c $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@\n" ; \
         exit 255; \
 	fi
 
@@ -252,9 +252,9 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
 #	Build rule for C++ source
 #
 $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.cpp
-	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CXX) -c  $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(_CXXFLAGS) $(BLD_CFLAGS) $(BLD_CXXFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@  ; \
+	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CXX) -c $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(_CXXFLAGS) $(BLD_CFLAGS) $(BLD_CXXFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@  ; \
 	else d=$(DIR)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
-	@$(BLD_CXX) -c  $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(_CXXFLAGS) $(BLD_CFLAGS) $(BLD_CXXFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ 
+	@$(BLD_CXX) -c $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(_CXXFLAGS) $(BLD_CFLAGS) $(BLD_CXXFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ 
 
 #
 #	Build rules for Java source
