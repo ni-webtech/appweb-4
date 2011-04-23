@@ -4823,7 +4823,6 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
 
 /*
     Wait for a command to complete. Return 0 if the command completed, otherwise it will return MPR_ERR_TIMEOUT. 
-    This will call mprReapCmd if required.
  */
 int mprWaitForCmd(MprCmd *cmd, MprTime timeout)
 {

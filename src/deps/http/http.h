@@ -1396,6 +1396,7 @@ typedef struct HttpConn {
     HttpPacket      *input;                 /**< Header packet */
     HttpQueue       *readq;                 /**< End of the read pipeline */
     HttpQueue       *writeq;                /**< Start of the write pipeline */
+    HttpQueue       *connq;                 /**< Connector write queue */
     MprTime         started;                /**< When the connection started */
     MprTime         lastActivity;           /**< Last activity on the connection */
     MprEvent        *timeoutEvent;          /**< Connection or request timeout event */

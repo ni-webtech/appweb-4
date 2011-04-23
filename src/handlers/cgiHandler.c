@@ -22,7 +22,6 @@
 static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp);
 static void cgiCallback(MprCmd *cmd, int channel, void *data);
 static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix);
-static void enableCgiEvents(HttpQueue *q, MprCmd *cmd, int channel);
 static char *getCgiToken(MprBuf *buf, cchar *delim);
 static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd);
 static bool parseHeader(HttpConn *conn, MprCmd *cmd);
@@ -175,7 +174,8 @@ static void outgoingCgiService(HttpQueue *q)
     MprCmd      *cmd;
 
     cmd = (MprCmd*) q->queueData;
-    mprLog(0, "CGI: OutgoingCgiService q->count %d, q->flags %x", q->count, q->flags);
+    mprLog(7, "CGI: OutgoingCgiService pid %d, q->count %d, q->flags %x, writeBlocked %d", 
+        cmd->pid, q->count, q->flags, q->conn->writeBlocked);
            
     /*
         This will copy outgoing packets downstream toward the network connector and on to the browser. 
@@ -187,7 +187,7 @@ static void outgoingCgiService(HttpQueue *q)
     httpDefaultOutgoingServiceStage(q);
 
     if (cmd->userFlags & MA_CGI_FLOW_CONTROL && q->count < q->low) {
-        mprLog(0, "CGI: OutgoingCgiService - re-enable gateway output count %d (low %d)", q->count, q->low);
+        mprLog(7, "CGI: @@@ OutgoingCgiService - re-enable gateway output count %d (low %d)", q->count, q->low);
         cmd->userFlags &= ~MA_CGI_FLOW_CONTROL;
         mprEnableCmdEvents(cmd, MPR_CMD_STDOUT);
     }
@@ -297,14 +297,13 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
         if (conn->tx && conn->state < HTTP_STATE_COMPLETE) {
             if ((q->count + len) > q->max) {
                 cmd->userFlags |= MA_CGI_FLOW_CONTROL;
+                mprLog(7, "CGI: @@@ client write queue full. Disable queue, enable conn events");
                 httpDisableQueue(q);
-                mprLog(0, "CGI: client write queue full. Disable queue, enable conn events");
-                httpEnableConnEvents(conn);
                 return -1;
             }
             rc = httpWriteBlock(q, mprGetBufStart(buf), len);
-            mprLog(0, "CGI: Write to client %d, absorbed %d, q->count %d, q->max %d, q->flags %x", 
-                len, rc, q->count, q->max, q->flags);
+            mprLog(7, "CGI: Write to client %d, absorbed %d, q->count %d, q->max %d, q->flags %x, writeBlocked %d", 
+                len, rc, q->count, q->max, q->flags, conn->writeBlocked);
         } else {
             /* Command complete - just discard the data */
             rc = len;
@@ -313,7 +312,7 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
             mprAdjustBufStart(buf, rc);
             mprResetBufIfEmpty(buf);
             httpFlushQueue(q, 0);
-            mprLog(0, "CGI: After flush q->count %d, q->max %d, q->flags %x", q->count, q->max, q->flags);
+            mprLog(7, "CGI: After flush q->count %d, q->max %d, q->flags %x", q->count, q->max, q->flags);
         }
     }
     return 0;
@@ -365,11 +364,16 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
             httpFinalize(conn);
         }
     }
-    if (conn->state == HTTP_STATE_COMPLETE) {
+    if (conn->state < HTTP_STATE_COMPLETE) {
+        if (cmd->pid && !(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
+            mprLog(7, "CGI: @@@ enable CGI events for channel %d", channel);
+            mprEnableCmdEvents(cmd, channel);
+        }
+        if (conn->connq->count > 0) {
+            httpEnableConnEvents(conn);
+        }
+    } else {
         httpProcess(conn, NULL);
-    }
-    if (!cmd->complete) {
-        enableCgiEvents(q, cmd, channel);
     }
 }
 
@@ -404,8 +408,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
             nbytes = mprReadCmd(cmd, channel, mprGetBufEnd(buf), space);
             mprResetYield();
 
-            //  MOB 7
-            mprLog(0, "CGI: Read from gateway, channel %d, got %d bytes. errno %d", channel, nbytes, 
+            mprLog(7, "CGI: Read from gateway, channel %d, got %d bytes. errno %d", channel, nbytes, 
                 nbytes >= 0 ? 0 : mprGetOsError());
             if (nbytes < 0) {
                 err = mprGetError();
@@ -422,7 +425,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 /*
                     This may reap the terminated child and thus clear cmd->process if both stderr and stdout are closed.
                  */
-                mprLog(5, "CGI: Gateway EOF for %s", (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
+                mprLog(5, "CGI: Gateway EOF for %s, pid %d", (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr", cmd->pid);
                 mprCloseCmdFd(cmd, channel);
                 break;
 
@@ -455,6 +458,7 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
 
     conn = q->conn;
     mprAssert(conn->tx);
+    mprLog(7, "processCgiData pid %d", cmd->pid);
 
     if (channel == MPR_CMD_STDERR) {
         /*
@@ -482,17 +486,6 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
         }
     }
     return 0;
-}
-
-
-static void enableCgiEvents(HttpQueue *q, MprCmd *cmd, int channel)
-{
-    if (cmd->pid) {
-        //  MOB - is this flow control right?
-        if (!(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
-            mprEnableCmdEvents(cmd, channel);
-        }
-    }
 }
 
 
