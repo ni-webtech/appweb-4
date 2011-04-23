@@ -9795,6 +9795,7 @@ static EjsNumber *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     ejsCopyToByteArray(ejs, buffer, buffer->writePosition, (char*) mprGetBufStart(hp->responseContent), count);
     ejsSetByteArrayPositions(ejs, buffer, -1, buffer->writePosition + count);
     mprAdjustBufStart(hp->responseContent, count);
+    mprResetBufIfEmpty(hp->responseContent);
     return ejsCreateNumber(ejs, (MprNumber) count);
 }
 
@@ -9831,6 +9832,7 @@ static EjsString *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv
     //  MOB - UNICODE ENCODING
     result = ejsCreateStringFromMulti(ejs, mprGetBufStart(hp->responseContent), count);
     mprAdjustBufStart(hp->responseContent, count);
+    mprResetBufIfEmpty(hp->responseContent);
     return result;
 }
 
@@ -10267,6 +10269,7 @@ static ssize readHttpData(Ejs *ejs, EjsHttp *hp, ssize count)
     conn = hp->conn;
 
     buf = hp->responseContent;
+    mprResetBufIfEmpty(buf);
     while (count < 0 || mprGetBufLength(buf) < count) {
         len = (count < 0) ? HTTP_BUFSIZE : (count - mprGetBufLength(buf));
         space = mprGetBufSpace(buf);
@@ -10653,12 +10656,12 @@ void ejsGetHttpLimits(Ejs *ejs, EjsObj *obj, HttpLimits *limits, int server)
     Set the limit field: 
         *limit = obj[field]
  */
-static int setLimit(Ejs *ejs, EjsObj *obj, cchar *field, int factor)
+static int64 setLimit(Ejs *ejs, EjsObj *obj, cchar *field, int factor)
 {
     EjsObj      *vp;
 
     if ((vp = ejsGetPropertyByName(ejs, obj, EN(field))) != 0) {
-        return ejsGetInt(ejs, ejsToNumber(ejs, vp)) * factor;
+        return ejsGetInt64(ejs, ejsToNumber(ejs, vp)) * factor;
     }
     return 0;
 }
@@ -10666,14 +10669,14 @@ static int setLimit(Ejs *ejs, EjsObj *obj, cchar *field, int factor)
 
 void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server) 
 {
-    limits->chunkSize = setLimit(ejs, obj, "chunk", 1);
-    limits->inactivityTimeout = setLimit(ejs, obj, "inactivityTimeout", MPR_TICKS_PER_SEC);
-    limits->receiveBodySize = setLimit(ejs, obj, "receive", 1);
-    limits->keepAliveCount = setLimit(ejs, obj, "reuse", 1);
-    limits->requestTimeout = setLimit(ejs, obj, "requestTimeout", MPR_TICKS_PER_SEC);
-    limits->sessionTimeout = setLimit(ejs, obj, "sessionTimeout", MPR_TICKS_PER_SEC);
-    limits->transmissionBodySize = setLimit(ejs, obj, "transmission", 1);
-    limits->uploadSize = setLimit(ejs, obj, "upload", 1);
+    limits->chunkSize = (ssize) setLimit(ejs, obj, "chunk", 1);
+    limits->inactivityTimeout = (int) setLimit(ejs, obj, "inactivityTimeout", MPR_TICKS_PER_SEC);
+    limits->receiveBodySize = (MprOff) setLimit(ejs, obj, "receive", 1);
+    limits->keepAliveCount = (int) setLimit(ejs, obj, "reuse", 1);
+    limits->requestTimeout = (int) setLimit(ejs, obj, "requestTimeout", MPR_TICKS_PER_SEC);
+    limits->sessionTimeout = (int) setLimit(ejs, obj, "sessionTimeout", MPR_TICKS_PER_SEC);
+    limits->transmissionBodySize = (MprOff) setLimit(ejs, obj, "transmission", 1);
+    limits->uploadSize = (MprOff) setLimit(ejs, obj, "upload", 1);
     if (limits->requestTimeout <= 0) {
         limits->requestTimeout = MPR_MAX_TIMEOUT;
     }
@@ -10683,15 +10686,14 @@ void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server)
     if (limits->sessionTimeout <= 0) {
         limits->sessionTimeout = MPR_MAX_TIMEOUT;
     }
-
     if (server) {
-        limits->clientCount = setLimit(ejs, obj, "clients", 1);
-        limits->requestCount = setLimit(ejs, obj, "requests", 1);
-        limits->sessionCount = setLimit(ejs, obj, "sessions", 1);
-        limits->stageBufferSize = setLimit(ejs, obj, "stageBuffer", 1);
-        limits->uriSize = setLimit(ejs, obj, "uri", 1);
-        limits->headerCount = setLimit(ejs, obj, "headers", 1);
-        limits->headerSize = setLimit(ejs, obj, "header", 1);
+        limits->clientCount = (int) setLimit(ejs, obj, "clients", 1);
+        limits->requestCount = (int) setLimit(ejs, obj, "requests", 1);
+        limits->sessionCount = (int) setLimit(ejs, obj, "sessions", 1);
+        limits->stageBufferSize = (ssize) setLimit(ejs, obj, "stageBuffer", 1);
+        limits->uriSize = (ssize) setLimit(ejs, obj, "uri", 1);
+        limits->headerCount = (int) setLimit(ejs, obj, "headers", 1);
+        limits->headerSize = (ssize) setLimit(ejs, obj, "header", 1);
     }
 }
 
@@ -15164,7 +15166,8 @@ static EjsObj *makePathLink(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 
 
 /*
-    Make a temporary file. Creates a new, uniquely named temporary file.
+    Make a temporary file. Creates a new, uniquely named temporary file. The path object specifies the directory
+    to contain the temp file.
     NOTE: Still the callers responsibility to remove the temp file
   
     function temp(): Path
@@ -28766,6 +28769,19 @@ int ejsGetInt(Ejs *ejs, EjsAny *vp)
     }
     mprAssert(ejsIs(ejs, vp, Number));
     return (vp) ? ((int) (((EjsNumber*) (vp))->value)): 0;
+}
+
+
+int64 ejsGetInt64(Ejs *ejs, EjsAny *vp)
+{
+    mprAssert(vp);
+    if (!ejsIs(ejs, vp, Number)) {
+        if ((vp = ejsCast(ejs, vp, Number)) == 0) {
+            return 0;
+        }
+    }
+    mprAssert(ejsIs(ejs, vp, Number));
+    return (vp) ? ((int64) (((EjsNumber*) (vp))->value)): 0;
 }
 
 

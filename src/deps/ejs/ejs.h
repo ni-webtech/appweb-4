@@ -2997,7 +2997,7 @@ extern EjsNull *ejsCreateNull(Ejs *ejs);
         or int64. 
     @stability Evolving
     @defgroup EjsNumber EjsNumber
-    @see EjsNumber ejsToNumber ejsCreateNumber ejsGetNumber ejsGetInt ejsGetDouble ejsIsInfinite ejsIsNan
+    @see EjsNumber ejsToNumber ejsCreateNumber ejsGetNumber ejsGetInt ejsGetInt64 ejsGetDouble ejsIsInfinite ejsIsNan
  */
 typedef struct EjsNumber {
     EjsObj      obj;                /**< Base object */
@@ -3276,6 +3276,7 @@ extern MprNumber ejsGetNumber(Ejs *ejs, EjsAny *obj);
     @ingroup EjsNumber
  */
 extern int ejsGetInt(Ejs *ejs, EjsAny *obj);
+extern int64 ejsGetInt64(Ejs *ejs, EjsAny *obj);
 
 /** 
     Get the numeric value stored in a EjsNumber object

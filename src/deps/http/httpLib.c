@@ -2721,8 +2721,7 @@ static void readEvent(HttpConn *conn)
 
 static void writeEvent(HttpConn *conn)
 {
-    //  MOB 6
-    LOG(3, "httpProcessWriteEvent, state %d", conn->state);
+    LOG(6, "httpProcessWriteEvent, state %d", conn->state);
 
     conn->writeBlocked = 0;
     if (conn->tx) {
@@ -2761,15 +2760,12 @@ void httpEnableConnEvents(HttpConn *conn)
             return;
         }
         if (tx) {
-#if UNUSED
-            if (conn->writeBlocked || conn->connq->count > 0) {
+            /*
+                Can be writeBlocked with data in the iovec and none in the queue
+             */
+            if (conn->writeBlocked || (conn->connq && conn->connq->count > 0)) {
                 eventMask |= MPR_WRITABLE;
             }
-#else
-            if (conn->connq && conn->connq->count > 0) {
-                eventMask |= MPR_WRITABLE;
-            }
-#endif
             /*
                 Allow read events even if the current request is not complete. The pipelined request will be buffered 
                 and will be ready when the current request completes.
@@ -9219,8 +9215,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
  */
 void httpSetWriteBlocked(HttpConn *conn)
 {
-//  MOB
-    mprLog(3, "Write Blocked");
+    mprLog(6, "Write Blocked");
     conn->canProceed = 0;
     conn->writeBlocked = 1;
 }

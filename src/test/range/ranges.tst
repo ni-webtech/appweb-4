@@ -1,5 +1,5 @@
 /*
-    get.tst - Ranged get tests
+    ranges.tst - Ranged get tests
  */
 
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
