@@ -115,7 +115,8 @@ static void processFile(HttpQueue *q)
 
 
 /*  
-    Populate a packet with file data
+    Populate a packet with file data. Return the number of bytes read or a negative error code. Will not return with
+    a short read.
  */
 static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize size)
 {
@@ -153,10 +154,11 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
 
 
 /*  
-    Prepare a data packet. This involves reading file data into a suitably sized packet. Return the number of bytes read.
+    Prepare a data packet. This involves reading file data into a suitably sized packet. Return the 1 if the packet was 
+    sent entirely, return zero if the packet could not be completely sent. Return a negative error code for write errors.
     This may split the packet if it exceeds the downstreams maximum packet size.
  */
-static ssize prepPacket(HttpQueue *q, HttpPacket *packet)
+static int prepPacket(HttpQueue *q, HttpPacket *packet)
 {
     HttpConn    *conn;
     HttpTx      *tx;
@@ -185,11 +187,11 @@ static ssize prepPacket(HttpQueue *q, HttpPacket *packet)
         }
         return 0;
     }
-    nbytes = readFileData(q, packet, q->ioPos, size);
-    if (nbytes > 0) {
-        q->ioPos += nbytes;
+    if ((nbytes = readFileData(q, packet, q->ioPos, size)) != nbytes) {
+        return MPR_ERR_CANT_READ;
     }
-    return nbytes;
+    q->ioPos += nbytes;
+    return 1;
 }
 
 
@@ -205,7 +207,7 @@ static void outgoingFileService(HttpQueue *q)
     HttpTx      *tx;
     HttpPacket  *packet;
     bool        usingSend;
-    MprOff      len;
+    int         rc;
 
     conn = q->conn;
     rx = conn->rx;
@@ -214,15 +216,14 @@ static void outgoingFileService(HttpQueue *q)
 
     for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
         if (!usingSend && !rx->ranges && packet->flags & HTTP_PACKET_DATA) {
-            if ((len = prepPacket(q, packet)) <= 0) {
-                if (len < 0) {
-                    return;
-                }
+            if ((rc = prepPacket(q, packet)) < 0) {
+                return;
+            } else if (rc == 0) {
                 mprLog(7, "OutgoingFileService downstream full, putback");
                 httpPutBackPacket(q, packet);
                 return;
             }
-            mprLog(7, "OutgoingFileService readData %d", len);
+            mprLog(7, "OutgoingFileService readData %d", rc);
         }
         httpSendPacketToNext(q, packet);
     }

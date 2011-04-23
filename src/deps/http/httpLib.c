@@ -2766,7 +2766,7 @@ void httpEnableConnEvents(HttpConn *conn)
                 eventMask |= MPR_WRITABLE;
             }
 #else
-            if (conn->connq->count > 0) {
+            if (conn->connq && conn->connq->count > 0) {
                 eventMask |= MPR_WRITABLE;
             }
 #endif
@@ -7469,7 +7469,7 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
 
 
 
-static void applyRange(HttpQueue *q, HttpPacket *packet);
+static bool applyRange(HttpQueue *q, HttpPacket *packet);
 static void createRangeBoundary(HttpConn *conn);
 static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range);
 static HttpPacket *createFinalRangePacket(HttpConn *conn);
@@ -7540,7 +7540,9 @@ static void outgoingRangeService(HttpQueue *q)
 
     for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
         if (packet->flags & HTTP_PACKET_DATA) {
-            applyRange(q, packet);
+            if (!applyRange(q, packet)) {
+                return;
+            }
         } else {
             /*
                 Send headers and end packet downstream
@@ -7558,7 +7560,7 @@ static void outgoingRangeService(HttpQueue *q)
 }
 
 
-static void applyRange(HttpQueue *q, HttpPacket *packet)
+static bool applyRange(HttpQueue *q, HttpPacket *packet)
 {
     HttpRange   *range;
     HttpConn    *conn;
@@ -7605,14 +7607,14 @@ static void applyRange(HttpQueue *q, HttpPacket *packet)
             mprAssert(count > 0);
             if (!httpWillNextQueueAcceptSize(q, count)) {
                 httpPutBackPacket(q, packet);
-                return;
+                return 0;
             }
             if (length > count) {
                 /* Split packet if packet extends past range */
                 httpPutBackPacket(q, httpSplitPacket(packet, count));
             }
             if (packet->fill && (*packet->fill)(q, packet, tx->rangePos, count) < 0) {
-                return;
+                return 0;
             }
             if (tx->rangeBoundary) {
                 httpSendPacketToNext(q, createRangePacket(conn, range));
@@ -7625,6 +7627,7 @@ static void applyRange(HttpQueue *q, HttpPacket *packet)
             tx->currentRange = range = range->next;
         }
     }
+    return 1;
 }
 
 
@@ -9391,6 +9394,9 @@ static bool parseRange(HttpConn *conn, char *value)
             return 0;
         }
         if (next) {
+            if (range->end < 0) {
+                return 0;
+            }
             if (next->start >= 0 && range->end > next->start) {
                 return 0;
             }
