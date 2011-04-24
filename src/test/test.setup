@@ -61,6 +61,9 @@ if (test.phase == "init") {
     start(cmd)
 } else {
     stopService()
+    for each (f in find(".", "*.tdat", true)) {
+        rm(f)
+    }
 }
 
 share("host", HTTP)
