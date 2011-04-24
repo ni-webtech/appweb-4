@@ -904,6 +904,8 @@ configureComponent() {
 
     name=$1
     tag=${path:-$libpaths}
+    [ "$builtin" = 1 ] && tag=builtin
+
     if [ "$name" = "" ] ; then
         echo "configureComponent: component missing name"  1>&2
         exit 255
@@ -912,15 +914,6 @@ configureComponent() {
         echo "configureComponent: component missing name"  1>&2
         return 0
     fi
-
-#    if [ "$HAS_CYGPATH" = 1 ] ; then
-#        local p1 cpwd
-#        p1=`canonPath "$path"`
-#        cpwd=`canonPath "$PWD"`
-#        [ "$p1" != "${p1#$cpwd}" ] && builtin=1
-#    else 
-#        [ "$path" != "${path#$PWD}" ] && builtin=1
-#    fi
 
     [ $BLD_CROSS = 0 ] && kind=HOST
 
@@ -1001,7 +994,6 @@ configureComponent() {
     eval BLD_FEATURE_${upper}=1
     value=${path}
     [ "$value" = "" ] && value=1
-    [ "$path" = "" -a "$libpaths" = "" ] && builtin=1
     [ "$iflags" = "-I/usr/include" ] && iflags=
 
     eval CFG_${kind}_${upper}=\"${value}\"
@@ -1020,8 +1012,7 @@ configureComponent() {
     eval CFG_${kind}_${upper}_WITHLIBS=\"$withlibs\"
     eval CFG_${kind}_${upper}_WITHPATHS=\"$withpaths\"
     eval ${kind}_COMPONENTS=\"\$${kind}_COMPONENTS ${name}\"
-    tag=${tag:-builtin}
-    [ "$builtin" = 1 ] && tag=builtin
+    tag=${tag:-system}
     [ $quiet = 0 -a $verbose = 0 -a $kind = HOST ] && echo "$tag"
 }
 

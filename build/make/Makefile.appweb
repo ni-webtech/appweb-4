@@ -100,13 +100,6 @@ cygwin:
 freebsd:
 	./configure --defaults=dev --enable-test --disable-samples --without-php --without-matrixssl --without-openssl
 
-php:
-	DIR=/Users/mob/svn/packages/php/php-5.2.0 ; \
-	CC=arm-linux-gcc AR=arm-linux-ar LD=arm-linux-ld
-	./configure -with-php=builtin --with-php-dir=$$DIR \
-		--with-php-iflags="-I$$DIR -I$$DIR/main -I$$DIR/Zend -I$$DIR/TSRM" \
-		--with-php-libpath="$$DIR/libs" --with-php-libs="libphp crypt resolv db z"
-
 #
 #	Using ubuntu packages: uclibc-toolchain, libuclibc-dev
 #	Use dpkg -L package to see installed files. Installed under /usr/i386-uclibc-linux

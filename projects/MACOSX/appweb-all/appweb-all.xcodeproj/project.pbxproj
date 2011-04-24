@@ -2640,6 +2640,7 @@
 		C9761F7C0FD049F6009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -2650,6 +2651,7 @@
 		C9761F7D0FD049F6009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
@@ -2752,6 +2754,7 @@
 		C97623880FD06C9F009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -2762,6 +2765,7 @@
 		C97623890FD06C9F009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;

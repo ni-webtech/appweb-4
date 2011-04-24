@@ -1,5 +1,5 @@
 /*
-    dirHandler.c - Directory listing handler.
+    dirHandler.c - Directory listing handler
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -38,21 +38,21 @@ static void sortList(HttpConn *conn, MprList *list);
 
 /************************************* Code ***********************************/
 /*
-    Match if the url maps to a directory.
+    Match if the url maps to a directory. The pathInfo must end with "/".
  */
 static bool matchDir(HttpConn *conn, HttpStage *handler)
 {
+    HttpRx      *rx;
     HttpTx      *tx;
     Dir         *dir;
 
     tx = conn->tx;
+    rx = conn->rx;
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
+
     dir = handler->stageData;
-    if (dir) {
-        mprLog(5, "Directory handler matched");
-    }
-    return dir->enabled && tx->fileInfo.isDir;
+    return dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/");
 }
 
 

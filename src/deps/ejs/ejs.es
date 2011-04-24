@@ -7341,6 +7341,7 @@ module ejs {
         function info(...msgs): void
             emit("", Info, "INFO", msgs.join(" ") + "\n")
 
+        //  MOB - should activity take a level?
         /** 
             Emit an activity message
             @param tag Activity tag to prefix the message. The tag string is wraped in "[]".
@@ -17961,9 +17962,10 @@ module ejs.web {
                 for each (choice in choices) {
                     if (choice is Array) {
                         /* list("priority", [["low", "3"], ["med", "5"], ["high", "9"]]) */
-                        let [key, value] = choice
+                        /* Note: value is first */
+                        let [value, key] = choice
                         selected = (value == defaultValue) ? ' selected="yes"' : ''
-                        write('      <option value="' + value + '"' + selected + '>' + key + '</option>\r\n')
+                        write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
 
                     } else if (choice && choice.id) {
                         /* list("priority", [{id: 77, field: "value", ...}, ...]) */
@@ -17976,9 +17978,9 @@ module ejs.web {
                         }
                     } else if (Object.getOwnPropertyCount(choice) > 0) {
                         /* list("priority", [{low: 3}, {med: 5}, {high: 9}]) */
-                        for (let [key, value] in choice) {
-                            selected = (value == defaultValue) ? ' selected="yes"' : ''
-                            write('      <option value="' + value + '"' + selected + '>' + key + '</option>\r\n')
+                        for (let [value, key] in choice) {
+                            selected = (key == defaultValue) ? ' selected="yes"' : ''
+                            write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
                         }
                     } else {
                         /* list("priority", ["low", "med", "high"]) */
@@ -17989,9 +17991,9 @@ module ejs.web {
                 }
             } else {
                 /* list("priority", {low: 0, med: 1, high: 2}) */
-                for (let [key, value]  in choices) {
-                    selected = (value == defaultValue) ? ' selected="yes"' : ''
-                    write('      <option value="' + value + '"' + selected + '>' + key + '</option>\r\n')
+                for (let [value, key]  in choices) {
+                    selected = (key == defaultValue) ? ' selected="yes"' : ''
+                    write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
                 }
             }
             write('    </select>\r\n')
@@ -21119,10 +21121,10 @@ module ejs.web {
             if (extra) {
                 if (params && Object.getOwnPropertyCount(params) > 0) {
                     if (!(params.action && Object.getOwnPropertyCount(params) == 1)) {
-                        line += "\n                                                    %s".format(serialize(params))
+                        line += "\n                                                      %s".format(serialize(params))
                     }
                 }
-                line += "\n                                                    pattern: " + r.pattern + "\n"
+                line += "\n                                                      pattern: " + r.pattern + "\n"
             }
             print(line)
         }

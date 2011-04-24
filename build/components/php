@@ -2,7 +2,7 @@
 #   PHP
 #
 defineComponent() {
-	local path search ver libs iflags idir file imports libpaths
+	local path search ver libs iflags idir file imports libpaths phplib
 
     ver="latest"
     if [ $BLD_HOST_OS = MACOSX ] ; then
@@ -10,21 +10,42 @@ defineComponent() {
     else
         path="${1:-.}"
     fi
-    if [ $BLD_HOST_OS = WIN ] ; then
-        imports=`probe --name php --search "$path:extensions/php/$ver" "Release_TS/php5ts" `
-        if [ "$imports" = "" ] ; then
-            imports=`probe --name php --search "$path:extensions/php/$ver" "Release/php5" `
-        fi
+    if [ "$PHP_LIBS" != "" ] ; then
+        libs="${PHP_LIBS}"
     else
-        imports=`probe --name php --search "$path:extensions/php/$ver/libs" "libphp5" `
+        #
+        #   Probe for the php library
+        #
+        if [ $BLD_HOST_OS = WIN ] ; then
+            phplib=`probe --name php --search "$path:extensions/php/$ver" "Release_TS/php5ts" `
+            if [ "$phplib" = "" ] ; then
+                phplib=`probe --name php --search "$path:extensions/php/$ver" "Release/php5" `
+            fi
+        else
+            phplib=`probe --name php --search "$path:extensions/php/$ver/libs" "libphp5" `
+        fi
+        if [ "${phplib}" ] ; then
+            libs="php5"
+            libpaths="${phplib%/*}"
+            imports="${phplib}"
+        fi
     fi
-    libs="php5"
-    libpaths="${imports%/*}"
-    idir=`probe --name php --search "$path:extensions/php/$ver" --dir "main/php.h"`
-    if [ "$idir" = "" -o "$libpaths" = "" ] ; then
+    if [ "$PHP_LIBPATHS" != "" ] ; then
+        libpaths="${PHP_LIBPATHS}"
+    fi
+    if [ "$PHP_IFLAGS" != "" ] ; then
+        iflags="${PHP_IFLAGS}"
+    else
+        idir=`probe --name php --search "$path:extensions/php/$ver" --dir "main/php.h"`
+        if [ "${idir}" != "" ] ; then
+            iflags="-I${idir} -I${idir}/main -I${idir}/Zend -I${idir}/TSRM"
+        fi
+    fi
+    if [ "$iflags" = "" -o "$libs" = "" ] ; then
         warnComponent "php"
         return
     fi
-    iflags="-I${idir} -I${idir}/main -I${idir}/Zend -I${idir}/TSRM"
-    configureComponent --libs "$libs" --libpaths "$libpaths" --dependencies "mpr" --iflags "$iflags" --imports "$imports" php
+    configureComponent --libs "$libs" --libpaths "$libpaths" --dependencies "mpr" \
+        --cflags "$PHP_CLFAGS" --dflags "$PHP_DFLAGS" --ldflags "$PHP_LDFLAGS" \
+        --iflags "$iflags" --imports "$imports" php
 }

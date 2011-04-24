@@ -282,7 +282,7 @@ static void flushOutput(void *server_context)
 static int writeBlock(cchar *str, uint len TSRMLS_DC)
 {
     HttpConn    *conn;
-    int         written;
+    ssize       written;
 
     conn = (HttpConn*) SG(server_context);
     if (conn == 0) {
@@ -293,7 +293,7 @@ static int writeBlock(cchar *str, uint len TSRMLS_DC)
     if (written <= 0) {
         php_handle_aborted_connection();
     }
-    return written;
+    return (int) written;
 }
 
 
@@ -405,7 +405,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     HttpConn    *conn;
     HttpQueue   *q;
     MprBuf      *content;
-    int         len, nbytes;
+    ssize       len, nbytes;
 
     conn = (HttpConn*) SG(server_context);
     q = conn->tx->queue[HTTP_QUEUE_RECEIVE]->prevQ;
@@ -413,14 +413,14 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
         return 0;
     }
     content = q->first->content;
-    len = min(mprGetBufLength(content), (int) bufsize);
+    len = min(mprGetBufLength(content), bufsize);
     if (len > 0) {
         nbytes = mprMemcpy(buffer, len, mprGetBufStart(content), len);
         mprAssert(nbytes == len);
         mprAdjustBufStart(content, len);
     }
     mprLog(5, "php: read post data %d remaining %d, data %s", len, mprGetBufLength(content), buffer);
-    return len;
+    return (int) len;
 }
 
 
@@ -499,7 +499,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     mprSetModuleFinalizer(module, finalizePhp); 
 
     handler = httpCreateHandler(http, module->name, 
-        HTTP_STAGE_CGI_VARS | HTTP_STAGE_HEADER_VARS | HTTP_STAGE_PATH_INFO | HTTP_STAGE_VERIFY_ENTITY | 
+        HTTP_STAGE_CGI_VARS | HTTP_STAGE_HEADER_VARS | HTTP_STAGE_EXTRA_PATH | HTTP_STAGE_VERIFY_ENTITY | 
         HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;

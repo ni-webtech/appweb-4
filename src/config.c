@@ -847,8 +847,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
     case 'L':
         if (scasecmp(key, "LimitChunkSize") == 0) {
-            num = atoi(value);
-            limits->chunkSize = num;
+            limits->chunkSize = atoi(value);
             return 1;
 
         } else if (scasecmp(key, "LimitClients") == 0) {
@@ -856,11 +855,11 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "LimitMemoryMax") == 0) {
-            mprSetMemLimits(-1, stoi(value, 10, 0));
+            mprSetMemLimits(-1, (ssize) stoi(value, 10, 0));
             return 1;
 
         } else if (scasecmp(key, "LimitMemoryRedline") == 0) {
-            mprSetMemLimits(stoi(value, 10, 0), -1);
+            mprSetMemLimits((ssize) stoi(value, 10, 0), -1);
             return 1;
 
         } else if (scasecmp(key, "LimitRequestBody") == 0) {
@@ -894,8 +893,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "LimitUploadSize") == 0) {
-            num = stoi(value, 10, 0);
-            limits->uploadSize = num;
+            limits->uploadSize = stoi(value, 10, 0);
             return 1;
 
 #if DEPRECATED
