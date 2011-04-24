@@ -4428,7 +4428,6 @@ static EjsObj *cmd_off(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 static EjsNumber *cmd_pid(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 {
     if (cmd->mc == 0 || cmd->mc->pid == 0) {
-        // ejsThrowStateError(ejs, "No active command");
         return S(zero);
     }
     return ejsCreateNumber(ejs, cmd->mc->pid);
@@ -4575,6 +4574,7 @@ static void cmdIOCallback(MprCmd *mc, int channel, void *data)
         ejsCopyToByteArray(cmd->ejs, ba, ba->writePosition, mprGetBufStart(buf), len);
         ba->writePosition += len;
         mprAdjustBufStart(buf, len);
+        mprResetBufIfEmpty(buf);
     }
     if (cmd->async) {
         if (channel == MPR_CMD_STDOUT) {
@@ -4724,7 +4724,7 @@ static EjsObj *cmd_start(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         if (cmd->throw) {
             status = mprGetCmdExitStatus(cmd->mc);
             if (status != 0) {
-                ejsThrowIOError(ejs, "Command failure: %s, exit status %d", mprGetBufStart(cmd->stderrBuf), status);
+                ejsThrowIOError(ejs, "Command failed status %d, %@", status, ejsToString(ejs, cmd->error));
             }
         }
     }
