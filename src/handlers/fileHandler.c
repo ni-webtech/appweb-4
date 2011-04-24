@@ -187,7 +187,7 @@ static int prepPacket(HttpQueue *q, HttpPacket *packet)
         }
         return 0;
     }
-    if ((nbytes = readFileData(q, packet, q->ioPos, size)) != nbytes) {
+    if ((nbytes = readFileData(q, packet, q->ioPos, size)) != size) {
         return MPR_ERR_CANT_READ;
     }
     q->ioPos += nbytes;
