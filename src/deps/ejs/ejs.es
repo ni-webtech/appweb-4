@@ -7341,6 +7341,7 @@ module ejs {
         function info(...msgs): void
             emit("", Info, "INFO", msgs.join(" ") + "\n")
 
+        //  MOB - should activity take a level?
         /** 
             Emit an activity message
             @param tag Activity tag to prefix the message. The tag string is wraped in "[]".
