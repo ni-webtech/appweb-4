@@ -10,6 +10,7 @@ usePrefixes CFG BIN JEM LIB LOG MOD PRD VER WEB
 
 ${CHMOD} 755 "${BLD_CFG_PREFIX}"
 
+#   BARE will be set if doing "make deploy" which calls makeInstall --bare
 if [ "$BARE" = 0 ] ; then
     if [ "${TASK}" = Remove -a -f "${BLD_BIN_PREFIX}/linkup" ] ; then
         cp "${BLD_BIN_PREFIX}/linkup" /tmp/linkup$$

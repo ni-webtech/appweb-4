@@ -4816,16 +4816,6 @@ module ejs {
         /** @hide */
         native function setScope(scope: Object): Void
     }
-
-//  MOB -- remove
-/** 
-        UNUSED @hide 
-    native function makeGetter(fn: Function): Function
-*/
-
-/** UNUSED
-    native function clearBoundThis(fn: Function): Function
-*/
 }
 
 /*
@@ -11110,12 +11100,6 @@ module ejs {
                 throw new ArgError("Must supply a Stream argument")
             }
             inbuf = new ByteArray
-/* UNUSED
-            let self = this
-            inbuf.on("writable", function (event, ba) {
-                self.fill()
-            });
-*/
             nextStream = stream
             newline = FileSystem("/").newline
         }
@@ -18701,19 +18685,6 @@ server.listen("127.0.0.1:7777")
                     App.updateLog()
                 }
             }
-        /* UNUSED
-            directories must be relative to the serverRoot directory
-            if (1 || documentRoot != ".") {
-                let dirs = config.directories
-                for (let [key,value] in dirs) {
-                    //  MOB - multiple servers will keep prepending the doc root
-                    //  MOB - TEMP hack
-                    if (!value.toString().startsWith(documentRoot)) {
-                        dirs[key] = documentRoot.join(value)
-                    }
-                }
-            }
-        */
         }
 
         /** 
@@ -19977,6 +19948,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
          */
         native function on(name, observer: Function): Void
 
+        //  MOB - should there be a blocking read option?
         /** 
             @duplicate Stream.read
             If the request is posting a form, i.e. the Http ContentType header is set to 
@@ -20200,6 +20172,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
          */
         native function write(...data): Number
 
+        //  MOB - add this to ByteArray, Http, Socket (not to Stream)
         /** 
             Write a block of data to the client. This will buffer the written data which will be flushed when either 
             close(), flush() or finalize() is called or the underlying pipeline is full. 

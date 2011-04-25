@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
         } else if (strcmp(argp, "--daemon") == 0) {
             app->runAsDaemon++;
 
-#if UNUSED
+#if UNUSED && KEEP
         } else if (strcmp(argp, "--heartBeat") == 0) {
             /*
                 Set the frequency to check on the program.
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
                 app->logSpec = sclone(argv[++nextArg]);
             }
 
-#if UNUSED
+#if UNUSED && KEEP
         } else if (strcmp(argp, "--program") == 0) {
             if (nextArg >= argc) {
                 err++;
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
                 "  Switches:\n"
                 "    --args               # Args to pass to service\n"
                 "    --daemon             # Run as a daemon\n"
-#if UNUSED
+#if UNUSED && KEEP
                 "    --heartBeat interval # Heart beat interval period (secs) \n"
                 "    --program path       # Service program to start\n"
 #endif

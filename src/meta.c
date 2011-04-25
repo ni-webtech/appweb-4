@@ -132,11 +132,6 @@ static void manageMeta(MaMeta *meta, int flags)
         mprMark(meta->name);
         mprMark(meta->serverRoot);
         mprMark(meta->servers);
-#if UNUSED
-        mprMark(meta->defaultHost);
-        mprMark(meta->hosts);
-        mprMark(meta->hostAddresses);
-#endif
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopMeta(meta);
@@ -177,16 +172,6 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int 
     maSetDefaultMeta(appweb, meta);
     return meta;
 }
-
-
-#if UNUSED
-static void notifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
-{
-    if (state == HTTP_STATE_PARSED) {
-        httpMatchHost(conn);
-    }
-}
-#endif
 
 
 int maStartMeta(MaMeta *meta)
@@ -230,11 +215,6 @@ int maStopMeta(MaMeta *meta)
     HttpServer  *server;
     int         next;
 
-#if UNUSED
-    for (next = 0; (host = mprGetNextItem(meta->hosts, &next)) != 0; ) {
-        maStopHost(host);
-    }
-#endif
     for (next = 0; (server = mprGetNextItem(meta->servers, &next)) != 0; ) {
         httpStopServer(server);
     }
@@ -280,25 +260,6 @@ void maSetMetaRoot(MaMeta *meta, cchar *path)
 }
 
 
-#if UNUSED
-void maSetDocumentRoot(MaMeta *meta, cchar *path)
-{
-    HttpServer  *server;
-    int         next;
-
-#if UNUSED
-    maSetHostDirs(meta->defaultHost, path);
-#endif
-    for (next = 0; ((server = mprGetNextItem(meta->servers, &next)) != 0); ) {
-        httpSetDocumentRoot(server, path);
-    }
-    for (next = 0; (host = mprGetNextItem(meta->hosts, &next)) != 0; ) {
-        httpSetHostDocumentRoot(host, path);
-    }
-}
-#endif
-
-
 /*
     Set the document root for the default server (only)
  */
@@ -318,34 +279,6 @@ void maSetDefaultHost(MaMeta *meta, HttpHost *host)
 {
     meta->defaultHost = host;
 }
-
-
-#if UNUSED
-void maSetKeepAliveTimeout(MaAppweb *appweb, int timeout)
-{
-    //  MOB -- API needed
-    appweb->http->limits->inactivityTimeout = timeout;
-}
-
-
-//  MOB -- is this used?
-void maSetMaxKeepAlive(MaAppweb *appweb, int timeout)
-{
-    //  MOB -- API needed
-    appweb->http->limits->keepAliveCount = timeout;
-}
-
-
-/*  
-    Set the default request timeout. This is the maximum time a request can run.
-    Not to be confused with the session timeout or the keep alive timeout.
- */
-void maSetTimeout(MaAppweb *appweb, int timeout)
-{
-    //  MOB -- API needed
-    appweb->http->limits->requestTimeout = timeout * MPR_TICKS_PER_SEC;
-}
-#endif
 
 
 void maSetForkCallback(MaAppweb *appweb, MprForkCallback callback, void *data)

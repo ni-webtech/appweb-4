@@ -34,6 +34,7 @@ setCompilerOptions()
     eval hasCygwin=\${KIND}_HAS_CYGWIN
     eval hasDiab=\${KIND}_HAS_DIAB
     eval hasWarnUnused=\${KIND}_HAS_WARN_UNUSED
+    eval hasWarn64to32=\${KIND}_HAS_WARN_64TO32
     eval hasUnnamedUnions=\${KIND}_HAS_UNNAMED_UNIONS
     eval flags=\"-Werror \$BLD_${KIND}_CFLAGS \$BLD_${KIND}_DFLAGS \$BLD_${KIND}_IFLAGS \$BLD_${KIND}_LDFLAGS\"
     if [ $os = MACOSX -a "${flags}" = "${flags/-arch/}" ] ; then
@@ -49,6 +50,7 @@ setCompilerOptions()
     eval ${hasMmu}=0
     eval ${hasUnnamedUnions}=0
     eval ${hasWarnUnused}=0
+    eval ${hasWarn64to32}=0
 
     if [ $os = CYGWIN -o $os = FREEBSD -o $os = LINUX -o $os = VXWORKS -o $os = MACOSX ] ; then
         hasGcc=1
@@ -102,6 +104,18 @@ setCompilerOptions()
         eval \"${cc}\" -Werror -Wno-unused-result -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
             eval $hasWarnUnused=1
+        fi
+
+        #
+        #   Test if -Wno-unused-result is supported
+        #
+        if [ "$verbose" != 0 ] ; then
+            echo -e "    Checking for compiler -Wshorten-64-to-32 support"
+            # echo -e "        ${cc}" -Werror -Wshorten-64-to-32 -c $file "\n"
+        fi
+        eval \"${cc}\" -Werror -Wshorten-64-to-32 -c $file >/dev/null 2>&1
+        if [ $? = 0 ] ; then
+            eval $hasWarn64to32=1
         fi
 
         if [ $os != VXWORKS ] ; then
@@ -204,7 +218,7 @@ setCompilerOptions()
                 eval $hasUnnamedUnions=1
             fi
         fi
-        rm -f t$$.o ${file} ${out}
+        # rm -f t$$.o ${file} ${out}
 
     else
         #
@@ -244,6 +258,7 @@ emitCompilerOptions()
     eval v=\$${KIND}_HAS_MTUNE ;            echo -e "${t}BLD_CC_MTUNE=$v"
     eval v=\$${KIND}_HAS_MMU ;              echo -e "${t}BLD_CC_MMU=$v"
     eval v=\$${KIND}_HAS_WARN_UNUSED ;      echo -e "${t}BLD_CC_WARN_UNUSED=$v"
+    eval v=\$${KIND}_HAS_WARN_64TO32 ;      echo -e "${t}BLD_CC_WARN_64TO32=$v"
     eval v=\$${KIND}_HAS_EDITLINE ;         echo -e "${t}BLD_CC_EDITLINE=$v"
     eval v=\$${KIND}_HAS_PAM ;              echo -e "${t}BLD_CC_PAM=$v"
     eval v=\$${KIND}_HAS_STACK_PROTECTOR ;  echo -e "${t}BLD_CC_STACK_PROTECTOR=$v"

@@ -744,9 +744,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             }
             path = httpMakePath(host, path);
             maSetAccessLog(host, path, strim(format, "\"", MPR_TRIM_BOTH));
-#if UNUSED
-            maSetLogHost(host, host);
-#endif
 #endif
             return 1;
         }
@@ -773,9 +770,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             httpSetHostDocumentRoot(host, path);
             httpSetDirPath(dir, path);
-#if UNUSED
-            mprLog(MPR_CONFIG, "DocRoot (%s): \"%s\"", host->name, path);
-#endif
             return 1;
         }
         break;
@@ -965,9 +959,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                     return MPR_ERR_BAD_SYNTAX;
                 }
                 ip = 0;
-#if UNUSED
-                flags = MA_LISTEN_WILD_IP;
-#endif
 
             } else {
                 colonCount = 0;
@@ -987,9 +978,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                         port = atoi(cp);
                     } else {
                         port = HTTP_DEFAULT_PORT;
-#if UNUSED
-                        flags = MA_LISTEN_DEFAULT_PORT;
-#endif
                     }
 
                 } else {
@@ -1001,9 +989,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
                     } else {
                         port = HTTP_DEFAULT_PORT;
-#if UNUSED
-                        flags = MA_LISTEN_DEFAULT_PORT;
-#endif
                     }
                     if (*ip == '[') {
                         ip++;
@@ -1254,6 +1239,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "RunHandler") == 0) {
+            //  MOB - not finished "name" is not set
             name = stok(value, " \t", &value);
             value = slower(strim(value, "\"", MPR_TRIM_BOTH));
             if (scmp(value, "before") == 0) {

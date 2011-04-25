@@ -270,10 +270,6 @@ class EjsMvc {
 
         default:
             throw "Unknown command: " + task
-/* UNUSED TODO
-            rest = cmd.args
-            compile(rest)
-*/
             break
         }
         if (options.apply) {

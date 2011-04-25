@@ -1236,86 +1236,6 @@ typedef struct Ejs {
     EjsAny              *values[EJS_MAX_SPECIAL];
     EjsAny              *global;            /**< The "global" object */
 
-#if UNUSED
-    /*
-        Essential types
-     */
-    //  MOB - should these be in special values except for the really common ones?
-    struct EjsType      *appType;           /**< App type */
-    struct EjsType      *arrayType;         /**< Array type */
-    struct EjsType      *blockType;         /**< Block type */
-    struct EjsType      *booleanType;       /**< Boolean type */
-    struct EjsType      *byteArrayType;     /**< ByteArray type */
-    struct EjsType      *configType;        /**< Config type */
-    struct EjsType      *dateType;          /**< Date type */
-    struct EjsType      *errorType;         /**< Error type */
-    struct EjsType      *errorEventType;    /**< ErrorEvent type */
-    struct EjsType      *eventType;         /**< Event type */
-    struct EjsType      *frameType;         /**< Frame type */
-    struct EjsType      *fileType;          /**< File type */
-    struct EjsType      *fileSystemType;    /**< FileSystem type */
-    struct EjsType      *functionType;      /**< Function type */
-    struct EjsType      *httpType;          /**< Http type */
-    struct EjsType      *httpServerType;    /**< HttpServer type */
-    struct EjsType      *iteratorType;      /**< Iterator type */
-    struct EjsType      *mathType;          /**< Math type */
-    struct EjsType      *namespaceType;     /**< Namespace type */
-    struct EjsType      *nullType;          /**< Null type */
-    struct EjsType      *numberType;        /**< Default numeric type */
-    struct EjsType      *objectType;        /**< Object type */
-    struct EjsType      *pathType;          /**< Path type */
-    struct EjsType      *regExpType;        /**< RegExp type */
-    struct EjsType      *requestType;       /**< Request type */
-    struct EjsType      *sessionType;       /**< Session type object */
-    struct EjsType      *stringType;        /**< String type */
-    struct EjsType      *socketType;        /**< Socket type */
-    struct EjsType      *stopIterationType; /**< StopIteration type */
-    struct EjsType      *typeType;          /**< Type type */
-    struct EjsType      *uriType;           /**< URI type */
-    struct EjsType      *voidType;          /**< Void type */
-    struct EjsType      *webType;           /**< Web type */
-    struct EjsType      *workerType;        /**< Worker type */
-    struct EjsType      *xmlType;           /**< XML type */
-    struct EjsType      *xmlListType;       /**< XMLList type */
-
-    /*
-        Key values
-     */
-    EjsAny              *global;            /**< The "global" object */
-#if BLD_DEBUG
-    struct EjsBlock     *globalBlock;
-#endif
-
-    //  MOB -- move most of these into values above
-    //  MOB - need simpler true/false   ejs->true, ejs->false
-    EjsAny              *falseValue;        /**< The "false" value */
-    struct EjsNumber    *infinityValue;     /**< The infinity number value */
-    struct EjsIterator  *iterator;          /**< Default iterator */
-    struct EjsNumber    *maxValue;          /**< Maximum number value */
-    struct EjsNumber    *minValue;          /**< Minimum number value */
-    struct EjsNumber    *minusOneValue;     /**< The -1 number value */
-    struct EjsNumber    *nanValue;          /**< The "NaN" value if floating point numbers, else zero */
-    struct EjsNumber    *negativeInfinityValue; /**< The negative infinity number value */
-    struct EjsFunction  *nopFunction;       /**< The NOP function */
-    EjsAny              *nullValue;         /**< The "null" value */
-    struct EjsNumber    *oneValue;          /**< The 1 number value */
-    EjsAny              *trueValue;         /**< The "true" value */
-    EjsAny              *undefinedValue;    /**< The "void" value */
-    struct EjsNumber    *zeroValue;         /**< The 0 number value */
-
-    //  MOB - need a more scalable solution (index based on first 4 chars only)
-    EjsString           *emptyString;       /**< "" */
-    EjsString           *lengthString;      /**< "length" */
-    EjsString           *publicString;      /**< "public" */
-    EjsString           *commaProtString;   /**< ",protected" */
-
-    struct EjsNamespace *emptySpace;        /**< Empty namespace */
-    struct EjsNamespace *ejsSpace;          /**< Ejs namespace */
-    struct EjsNamespace *iteratorSpace;     /**< Iterator namespace */
-    struct EjsNamespace *internalSpace;     /**< Internal namespace */
-    struct EjsNamespace *publicSpace;       /**< Public namespace */
-#endif
-
     EjsHelpers          objHelpers;         /**< Default EjsObj helpers */
     EjsHelpers          potHelpers;         /**< Helper methods for Pots */
     char                *errorMsg;          /**< Error message */
@@ -1343,9 +1263,6 @@ typedef struct Ejs {
     MprDispatcher       *dispatcher;        /**< Event dispatcher */
     MprList             *workers;           /**< Worker interpreters */
     MprList             *modules;           /**< Loaded modules */
-#if UNUSED
-    struct EjsFile      *nativeStream;      /**< Native log output stream */
-#endif
 
     void                (*loaderCallback)(struct Ejs *ejs, int kind, ...);
 
@@ -1358,11 +1275,6 @@ typedef struct Ejs {
     Http                *http;              /**< Http service object (copy of EjsService.http) */
     HttpLoc             *loc;               /**< Current HttpLocation object for web start scripts */
 
-#if UNUSED
-    EjsAny              *sessions;          /**< Session cache */
-    int                 sessionTimeout;     /**< Default session timeout */
-    MprEvent            *sessionTimer;      /**< Session expiry timer */
-#endif
     EjsAny              *applications;      /**< Application cache */
     int                 nextSession;        /**< Session ID counter */
     MprMutex            *mutex;             /**< Multithread locking */
@@ -2466,9 +2378,6 @@ typedef struct EjsByteArray {
     ssize           writePosition;      /**< Current write position */
     int             swap;               /**< I/O must swap bytes due to endian byte ordering */
     bool            resizable;          /**< Aray is resizable */
-#if UNUSED
-    EjsObj          *listeners;         /**< Event listeners in async mode */
-#endif
 } EjsByteArray;
 
 /** 
@@ -4697,9 +4606,6 @@ typedef struct EcNode {
             Node        body;                   /* Function body */
             Node        parameters;             /* Function formal parameters */
             Node        constructorSettings;    /* Constructor settings */
-#if UNUSED
-            Node        expressionRef;          /* Reference to the function expression name */
-#endif
             EjsFunction *functionVar;           /* Function variable */
             uint        operatorFn    : 1;      /* operator function */
             uint        getter        : 1;      /* getter function */

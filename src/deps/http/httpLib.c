@@ -2541,10 +2541,6 @@ void httpConnTimeout(HttpConn *conn)
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT, "Exceeded timeout %d sec", limits->requestTimeout / 1000);
         }
         httpFinalize(conn);
-#if UNUSED
-        httpSetState(conn, HTTP_STATE_COMPLETE);
-        httpProcess(conn, NULL);
-#endif
         httpDisconnect(conn);
     }
 }
@@ -2610,9 +2606,6 @@ void httpPrepClientConn(HttpConn *conn, int keepHeaders)
         conn->rx->conn = 0;
     }
     conn->rx = httpCreateRx(conn);
-#if UNUSED
-    httpCreatePipeline(conn, NULL, NULL);
-#endif
     commonPrep(conn);
 }
 
@@ -2936,13 +2929,6 @@ void httpSetConnNotifier(HttpConn *conn, HttpNotifier notifier)
     conn->notifier = notifier;
 }
 
-
-#if UNUSED
-void httpSetRequestNotifier(HttpConn *conn, HttpNotifier notifier)
-{
-    conn->requestNotifier = notifier;
-}
-#endif
 
 void httpSetCredentials(HttpConn *conn, cchar *user, cchar *password)
 {
@@ -5023,14 +5009,6 @@ void httpSetLocationPrefix(HttpLoc *loc, cchar *uri)
 
     loc->prefix = sclone(uri);
     loc->prefixLen = (int) strlen(loc->prefix);
-#if UNUSED
-    /*
-        Always strip trailing "/". Note this is a Uri and not a path.
-     */
-    if (loc->prefixLen > 0 && loc->prefix[loc->prefixLen - 1] == '/') {
-        loc->prefix[--loc->prefixLen] = '\0';
-    }
-#endif
 }
 
 
@@ -6310,13 +6288,6 @@ void httpHandleOptionsTrace(HttpQueue *q)
     tx = conn->tx;
     rx = conn->rx;
 
-#if UNUSED
-    /* Called only for the send queue */
-    if (q->pair) {
-        q->pair->max = q->max;
-        q->pair->packetSize = q->packetSize;
-    }
-#endif
     if (rx->flags & HTTP_TRACE) {
         if (!conn->limits->enableTraceMethod) {
             tx->status = HTTP_CODE_NOT_ACCEPTABLE;
@@ -6341,13 +6312,6 @@ void httpHandleOptionsTrace(HttpQueue *q)
 
 static void openPass(HttpQueue *q)
 {
-#if UNUSED
-    /* Called only for the send queue */
-    if (q->pair) {
-        q->pair->max = q->max;
-        q->pair->packetSize = q->packetSize;
-    }
-#endif
     mprLog(5, "Open passHandler");
     if (q->conn->rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q);
@@ -6994,20 +6958,11 @@ bool httpFlushQueue(HttpQueue *q, bool blocking)
 {
     HttpConn    *conn;
     HttpQueue   *next;
-#if UNUSED
-    int         oldMode;
-#endif
 
     conn = q->conn;
     LOG(6, "httpFlushQueue blocking %d", blocking);
     mprAssert(conn->sock);
 
-#if UNUSED
-    if (q->flags & HTTP_QUEUE_DISABLED || conn->sock == 0) {
-        return 0;
-    }
-    oldMode = mprSetSocketBlockingMode(conn->sock, blocking);
-#endif
     do {
         httpScheduleQueue(q);
         next = q->nextQ;
@@ -7019,9 +6974,6 @@ bool httpFlushQueue(HttpQueue *q, bool blocking)
             break;
         }
     } while (blocking && q->count >= q->max);
-#if UNUSED
-    mprSetSocketBlockingMode(conn->sock, oldMode);
-#endif
     return (q->count < q->max) ? 1 : 0;
 }
 
@@ -8743,11 +8695,6 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         return conn->workerEvent ? 0 : 1;
     }
     httpServiceQueues(conn);
-#if UNUSED
-    if ((conn->readq->count + httpGetPacketLength(packet)) > conn->readq->max) {
-        return 0;
-    }
-#endif
     return conn->error || (conn->input ? httpGetPacketLength(conn->input) : 0);
 }
 
@@ -9922,11 +9869,6 @@ HttpServer *httpCreateServer(cchar *ip, int port, MprDispatcher *dispatcher, int
     server->port = port;
     server->ip = sclone(ip);
     server->dispatcher = dispatcher;
-#if UNUSED
-    if (server->ip && *server->ip) {
-        server->name = server->ip;
-    }
-#endif
     server->loc = httpInitLocation(http, 1);
     server->hosts = mprCreateList(-1, 0);
     httpAddServer(http, server);
@@ -9962,9 +9904,6 @@ static int manageServer(HttpServer *server, int flags)
         mprMark(server->waitHandler);
         mprMark(server->clientLoad);
         mprMark(server->hosts);
-#if UNUSED
-        mprMark(server->name);
-#endif
         mprMark(server->ip);
         mprMark(server->context);
         mprMark(server->meta);
@@ -10285,15 +10224,6 @@ void httpSetServerLocation(HttpServer *server, HttpLoc *loc)
     mprAssert(loc);
     server->loc = loc;
 }
-
-
-#if UNUSED
-void httpSetServerName(HttpServer *server, cchar *name)
-{
-    mprAssert(server);
-    server->name = sclone(name);
-}
-#endif
 
 
 void httpSetServerNotifier(HttpServer *server, HttpNotifier notifier)

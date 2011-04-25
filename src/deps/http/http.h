@@ -1381,12 +1381,6 @@ typedef struct HttpConn {
     MprDispatcher   *newDispatcher;         /**< New dispatcher if using a worker thread */
     MprDispatcher   *oldDispatcher;         /**< Original dispatcher if using a worker thread */
     HttpNotifier    notifier;               /**< Connection Http state change notification callback */
-#if UNUSED
-    /* Removed request notifier. Was calling both requestNotifier and notifier resulting in double readable events.
-       The second event simulated EOF with a count of zero.
-     */
-    HttpNotifier    requestNotifier;        /**< Request Http state change notification callback */
-#endif
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
     MprSocket       *sock;                  /**< Underlying socket handle */
 
@@ -1580,12 +1574,6 @@ extern int httpGetKeepAliveCount(HttpConn *conn);
  */
 extern void httpPrepServerConn(HttpConn *conn);
 
-#if UNUSED
-//  MOB
-#define HTTP_NEW_REQUEST 0
-#define HTTP_RETRY_REQUEST 1
-#endif
-    
 extern void httpPrepClientConn(HttpConn *conn, int keepHeaders);
 extern void httpConsumeLastRequest(HttpConn *conn);
 
@@ -1661,17 +1649,6 @@ extern void httpSetConnHost(HttpConn *conn, void *host);
     @ingroup HttpConn
  */
 extern void httpSetConnNotifier(HttpConn *conn, HttpNotifier fn);
-
-#if UNUSED
-/** 
-    Define a notifier callback for this request.
-    @description The notifier callback will be invoked as the Http request changes state.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param fn Notifier function. 
-    @ingroup HttpConn
-*/
-extern void httpSetRequestNotifier(HttpConn *conn, HttpNotifier fn);
-#endif
 
 /** 
     Control Http Keep-Alive for the connection.
@@ -2030,10 +2007,6 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
 #define HTTP_CREATE_ENV         0x100       /**< Must create env for this request */
 #define HTTP_IF_MODIFIED        0x200       /**< If-[un]modified-since supplied */
 #define HTTP_CHUNKED            0x400       /**< Content is chunk encoded */
-
-#if UNUSED
-#define HTTP_UPLOAD             0x800       /**< Content has uploaded file content */
-#endif
 
 /*  
     Incoming chunk encoding states
@@ -2729,26 +2702,6 @@ extern ssize httpWriteUploadData(HttpConn *conn, MprList *formData, MprList *fil
  */
 extern void httpSetWriteBlocked(HttpConn *conn);
 
-#if UNUSED
-
-/** Host Address Mapping
-    @stability Evolving
-    @defgroup HttpEndpoint HttpEndpoint
-    @see HttpEndpoint
- */
-typedef struct HttpEndpoint {
-    //  MOB - should be a hash based on host name
-    MprList         *hosts;                 /**< Hosts using this address */
-    char            *ip;                    /**< IP Address for this endpoint */
-    int             port;                   /**< Port for this endpoint */
-    int             flags;                  /**< Mapping flags */
-} HttpEndpoint;
-
-extern void httpAddEndpoint(Http *http, HttpEndpoint *endpoint);
-extern HttpEndpoint *httpLookupEndpoint(Http *http, cchar *ip, int port);
-extern HttpEndpoint *httpRemoveHostFromEndpoint(Http *http, cchar *ip, int port, struct HttpHost *host);
-#endif
-
 /*  
     Flags
  */
@@ -2782,7 +2735,6 @@ typedef struct HttpServer {
     struct MprSsl   *ssl;                   /**< Server SSL configuration */
 } HttpServer;
 
-//  UNUSED MOB - remove requestNotifier
 #define HTTP_NOTIFY(conn, state, flags) \
     if (1) { \
         if (conn->notifier) { \
@@ -2831,10 +2783,6 @@ extern int httpGetServerAsync(HttpServer *server);
     @return The server context object defined via httpSetServerContext
  */
 extern void *httpGetServerContext(HttpServer *server);
-
-#if UNUSED
-extern void httpSetServerName(HttpServer *server, cchar *name);
-#endif
 
 //  MOB - consistency - should not have to provide http
 extern int httpLoadSsl(Http *http);
@@ -2950,12 +2898,6 @@ typedef struct HttpHost {
     int             logSize;                /**< Max log size */
 
     MprMutex        *mutex;                 /**< Multithread sync */
-#if UNUSED
-    //  MOB - must mark if enabled
-    MaServer        *meta;                  /**< Meta-server owning this host */
-    struct MaHost   *logHost;               /**< If set, use this hosts logs */
-    char            *mimeFile;              /**< Name of the mime types file */
-#endif
 } HttpHost;
 
 //  MOB DOC

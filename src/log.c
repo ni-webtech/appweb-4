@@ -198,14 +198,6 @@ void maSetAccessLog(HttpHost *host, cchar *path, cchar *format)
 }
 
 
-#if UNUSED
-void maSetLogHost(HttpHost *host, HttpHost *logHost)
-{
-    host->logHost = logHost;
-}
-#endif
-
-
 void maWriteAccessLogEntry(HttpHost *host, cchar *buf, int len)
 {
     static int once = 0;
@@ -245,9 +237,6 @@ void maLogRequest(HttpConn *conn)
     if (host == 0) {
         return;
     }
-#if UNUSED
-    host = host->logHost;
-#endif
     fmt = host->logFormat;
     if (fmt == 0) {
         return;

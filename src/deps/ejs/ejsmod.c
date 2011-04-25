@@ -5287,64 +5287,6 @@ static void getDepends(Ejs *ejs, MprList *list, EjsModule *mp)
     }
 }
 
-
-#if UNUSED
-static int setLogging(Mpr *mpr, char *logSpec)
-{
-    MprFile     *file;
-    char        *levelSpec;
-    int         level;
-
-    level = 0;
-
-    if ((levelSpec = strchr(logSpec, ':')) != 0) {
-        *levelSpec++ = '\0';
-        level = atoi(levelSpec);
-    }
-    if (strcmp(logSpec, "stdout") == 0) {
-        file = mpr->fileSystem->stdOutput;
-    } else {
-        if ((file = mprOpenFile(logSpec, O_WRONLY, 0664)) == 0) {
-            mprPrintfError("Can't open log file %s\n", logSpec);
-            return EJS_ERR;
-        }
-    }
-    mprSetLogLevel(level);
-    mprSetLogHandler(logger, (void*) file);
-    return 0;
-}
-
-
-static void logger(int flags, int level, const char *msg)
-{
-    Mpr         *mpr;
-    MprFile     *file;
-    char        *prefix;
-
-    mpr = mprGetMpr();
-    file = (MprFile*) mpr->logData;
-    prefix = mpr->name;
-
-    while (*msg == '\n') {
-        mprFprintf(file, "\n");
-        msg++;
-    }
-    if (flags & MPR_LOG_SRC) {
-        mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
-    } else if (flags & MPR_ERROR_SRC) {
-        mprFprintf(file, "%s: Error: %s\n", prefix, msg);
-    } else if (flags & MPR_FATAL_SRC) {
-        mprFprintf(file, "%s: Fatal: %s\n", prefix, msg);
-    } else if (flags & MPR_RAW) {
-        mprFprintf(file, "%s", msg);
-    }
-    if (flags & (MPR_ERROR_SRC | MPR_FATAL_SRC | MPR_ASSERT_SRC)) {
-        mprBreakpoint();
-    }
-}
-#endif
-
-
 /*
     @copy   default
     
@@ -5779,9 +5721,6 @@ static void lstFunction(EjsMod *mp, EjsModule *module, EjsObj *block, int slotNu
         interp(mp, module, fun);
     }
     mprFprintf(mp->file,  "\n");
-#if UNUSED
-    leadin(mp, module, 0, 0);
-#endif
 }
 
 
@@ -6149,11 +6088,6 @@ static void lstVarSlot(EjsMod *mp, EjsModule *module, EjsName *qname, EjsTrait *
         if (trait->type == ST(Function)) {
             mprFprintf(mp->file, "%04d    %@ function %@\n", slotNum, space, qname->name);
 
-#if UNUSED
-        } else if (trait->type == ejs->functionType) {
-            mprFprintf(mp->file, "%04d    %@ class %@\n", slotNum, space, qname->name);
-#endif
-
         } else {
             mprFprintf(mp->file, "%04d    %@ var %@: %@\n", slotNum, space, qname->name, trait->type->qname.name);
         }
@@ -6371,11 +6305,6 @@ static char *getAttributeString(EjsMod *mp, int attributes)
     if (attributes & EJS_TYPE_DYNAMIC_INSTANCE) {
         strcat(attributeBuf, "dynamic ");
     }
-#if UNUSED
-    if (attributes & EJS_TYPE_ORPHAN) {
-        strcat(attributeBuf, "orphan ");
-    }
-#endif
     if (attributes & EJS_TRAIT_GETTER) {
         strcat(attributeBuf, "get ");
     }

@@ -17,23 +17,6 @@ typedef struct MaEgi {
 } MaEgi;
 
 /************************************* Code ***********************************/
-#if UNUSED
-static bool matchEgi(HttpConn *conn, HttpStage *handler)
-{
-    HttpRx    *rx;
-
-    /*  
-        Rewrite the entire URL as the script name 
-     */
-    mprLog(5, "matchEgi");
-    rx = conn->rx;
-    rx->scriptName = rx->pathInfo;
-    rx->pathInfo = "";
-    return 1;
-}
-#endif
-
-
 /*
     The process method will run after receiving upload or form data. Otherwise it runs before receiving all the data.
  */
@@ -115,9 +98,6 @@ int maOpenEgiHandler(Http *http)
         return MPR_ERR_MEMORY;
     }
     egi = handler->stageData;
-#if UNUSED
-    handler->match = matchEgi; 
-#endif
     handler->start = startEgi; 
     handler->process = processEgi; 
     egi->forms = mprCreateHash(HTTP_LARGE_HASH_SIZE, MPR_HASH_STATIC_VALUES);
