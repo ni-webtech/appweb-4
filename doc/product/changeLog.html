@@ -80,6 +80,7 @@
             <h2 class="section">Changes in 4.0.0</h2>
             <h3>Major Features</h3>
             <ul>
+                <pre>TODO</pre>
             </ul>
             <h3><strong>API Changes</strong></h3>
             <ul>
@@ -90,23 +91,82 @@
                 <li>Faster performance. Ejscript 2-5x faster, CSP for C-level web serving</li>
                 <li>Improved documentation and samples</li>
             </ul>
-            <a name="r3.2.3" id="r3.2.3"></a>
-            <h2 class="section">Changes in 3.2.3</h2>
+
+            <h2 class="section">Changes in 3.3.1</h2>
+            <!--
+            <h3>Minor Features</h3>
+            <ul>
+                <li>None</li>
+            </ul>
+            -->
             <h3>Key Fixes</h3>
             <ul>
-                <li>Bad timezone on HTTP headers in certain locales</li>
-                <li>Potential bad free of connection input buffer</li>
-                <li>Formatted printing of floating point numbers</li>
-                <li>Update Ejscript documentation</li>
-                <li>Ejscript: Array.slice with negative indicies</li>
-                <li>Ejscript: Date/Time calculations for pre 1970 dates</li>
-                <li>Ejscript: Cygwin Math.pow Infinity results</li>
-                <li>Ejscript: Allow JSON encoded arrays in Http form data</li>
+                <li>Fix HEAD requests</li>
+                <li>Fix responses larger than 2GB</li>
             </ul>
+            <!--
             <h3><strong>API Changes</strong></h3>
             <ul>
                 <li>None</li>
             </ul>
+            -->
+            <a name="r3.3.0" id="r3.3.0"></a>
+            <h2 class="section">Changes in 3.3.0</h2>
+            <h3>Minor Features</h3>
+            <ul>
+                <li>Added <a href="../guide/appweb/users/dir/server.html#chroot">Chroot</a> directive</li>
+                <li>Support filtering shebang lines in PHP scripts</li>
+                <li>Add missing extensions for PHP/CGI requests to allow requests for PHP files without .php extension</li>
+                <li>Support graceful exit</li>
+                <li>Add prototype module unloading for PHP via UnloadModule directive</li>
+                <li>Add request timing to log file at level 5</li>
+                <li>Add ASN1 certificate parsing for SSL</li>
+                <li>Add on-demand initialization for PHP</li>
+                <li>Prototype inactive PHP module unloading</li>
+            </ul>
+            <h3>Key Fixes</h3>
+            <ul>
+                <li>Fix CGI output parsing when gateways omit headers</li>
+                <li>Bad timezone on HTTP headers in certain locales</li>
+                <li>Potential bad free of connection input buffer</li>
+                <li>Formatted printing of floating point numbers</li>
+                <li>Fixed --chroot switch</li>
+                <li>Ensure handlers match() routine is always invoked if required</li>
+                <li>FreeBSD linking fixes</li>
+                <li>CGI for long running requests and requests with large post data</li>
+                <li>Bad reference for req->pathInfo</li>
+                <li>ActionProgram directive for CGI</li>
+                <li>REDIRECT_STATIC compat env var for PHP</li>
+                <li>Inheriting AuthName, Require and CustomLog directives</li>
+                <li>Building with configure --disable-all</li>
+                <li>Ejscript: Windows 7 support and VS 10.0</li>
+                <li>Add missing msvcrt version 10 DLL</li>
+                <li>Update Ejscript documentation</li>
+                <li>Premature exit with large forwad time changes</li>
+                <li>CGI with file upload</li>
+                <li>Return status of 401 instead of 404 when missing file and authentication</li>
+                <li>Rewriting the request URI. Now updates filename, alias, location, extension etc.</li>
+                <li>Configure for vxworks on Linux</li>
+                <li>Fix redirections using SSL</li>
+                <li>Fix running CGI/PHP startup for form and upload requests</li>
+                <li>Ejscript: Array.slice with negative indicies</li>
+                <li>Ejscript: Date/Time calculations for pre 1970 dates</li>
+                <li>Ejscript: Cygwin Math.pow Infinity results</li>
+                <li>Ejscript: Allow JSON encoded arrays in Http form data</li>
+                <li>Ejscript: memory fragmentation</li>
+                <li>Ejscript: exception stack handling</li>
+                <li>Ejscript: parsing XML characters > 127</li>
+                <li>Ejscript: GC issue with new Function()</li>
+                <li>Ejscript: XSS issue with embedded script in URLs - thanks Gjoko Krstic at Zero Science Lab</li>
+                <li>Ejscript: Compiler spin with }; construct</li>
+                <li>Ejscript: escape(quote)</li>
+            </ul>
+            <!--
+            <h3><strong>API Changes</strong></h3>
+            <ul>
+                <li>None</li>
+            </ul>
+            -->
             <a name="r3.2.2" id="r3.2.2"></a>
             <h2 class="section">Changes in 3.2.2</h2>
             <h3>Minor Features</h3>
@@ -125,6 +185,7 @@
             <ul>
                 <li>None</li>
             </ul>
+            
             <a name="r3.2.1" id="r3.2.1"></a>
             <h2 class="section">Changes in 3.2.1</h2>
             <h3>Key Fixes</h3>
