@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="mvc"
-    ProjectGUID="1392aa3f-7139-4b09-8c4e-4a3c9237c4ec"
+    ProjectGUID="4ac71954-c2e9-447b-8c52-281335d54d5a"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -160,7 +160,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{eba81476-eacc-4cc0-87cc-295c86d0729c}"
+            UniqueIdentifier="{eaf80552-adfe-462e-a2a8-0b05e30fa2d1}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -170,7 +170,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{df430313-86bd-4012-881a-468ef123ef6f}"
+            UniqueIdentifier="{85105ad8-84ff-4fbb-8e6e-61434f0cf16e}"
             >
             <File
                 RelativePath="..\..\..\src\deps\ejs\mvc.c"

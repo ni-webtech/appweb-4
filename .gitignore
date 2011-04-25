@@ -131,3 +131,4 @@ src/server/appweb.conf
 src/test/web/a
 src/handlers/proxyHandler.nc
 src/test/web/huge.txt
+projects/WIN/appweb-dynamic/Debug
