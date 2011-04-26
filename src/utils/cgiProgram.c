@@ -316,7 +316,6 @@ int main(int argc, char *argv[], char *envp[])
     }
     printf("</BODY></HTML>\r\n");
 
-    //  MOB - VXWORKS is not defined
 #if VXWORKS
     /*
         VxWorks pipes need an explicit eof string

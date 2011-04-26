@@ -260,7 +260,6 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
             }
             /*
                 Keywords outside of a virtual host or directory section
-                MOB - some errors should abort processing. Support return codes to exit appweb (could use mprFatalError)
              */
             rc = processSetting(meta, key, value, state);
             if (rc == 0) {
@@ -418,7 +417,6 @@ err:
 }
 
 
-// MOB - this does more than validation?
 int maValidateConfiguration(MaMeta *meta)
 {
     MaAppweb        *appweb;
@@ -464,7 +462,6 @@ int maValidateConfiguration(MaMeta *meta)
         for (nextAlias = 0; (alias = mprGetNextItem(host->aliases, &nextAlias)) != 0; ) {
             path = httpMakePath(host, alias->filename);
             if ((bestDir = httpLookupBestDir(host, path)) == 0) {
-                //  MOB Old code would use bestDir = maCreateDir(hp, alias->filename, stack[0].dir);
                 bestDir = httpCreateBareDir(alias->filename);
                 httpAddDir(host, bestDir);
             }
@@ -1004,12 +1001,10 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             }
             if (port == 0) {
                 mprError("Bad or missing port %d in Listen directive", port);
-                //  MOB -- should be able to abort the parsing
                 return -1;
             }
             server = httpCreateServer(ip, port, NULL, 0);
             httpSetMetaServer(server, meta);
-            //  MOB should limits be in the constructor or need an API for this
             server->limits = limits;
             mprAddItem(meta->servers, server);
             if (host->port == 0) {
@@ -1122,11 +1117,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             mprLog(4, "NameVirtual Host: %s ", value);
             mprParseIp(value, &ip, &port, -1);
             httpSetNamedVirtualServers(http, ip, port); 
-#if MOB && FIX
-            if (httpCreateEndpoints(NULL, value) < 0) {
-                return -1;
-            }
-#endif
             return 1;
         }
         break;
@@ -1239,7 +1229,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "RunHandler") == 0) {
-            //  MOB - not finished "name" is not set
+            //  TODO - not finished "name" is not set
             name = stok(value, " \t", &value);
             value = slower(strim(value, "\"", MPR_TRIM_BOTH));
             if (scmp(value, "before") == 0) {
@@ -1270,7 +1260,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
         } else if (scasecmp(key, "ServerRoot") == 0) {
             path = httpReplaceReferences(host, strim(value, "\"", MPR_TRIM_BOTH));
-            //  MOB -- what does this really do?
             maSetMetaRoot(meta, path);
             httpSetHostServerRoot(host, path);
             mprLog(MPR_CONFIG, "Server Root \"%s\"", path);

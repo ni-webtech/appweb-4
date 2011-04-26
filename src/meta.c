@@ -35,9 +35,7 @@ MaAppweb *maCreateAppweb()
     httpSetContext(http, appweb);
     appweb->metas = mprCreateList(-1, 0);
     maGetUserGroup(appweb);
-    
     openHandlers(http);
-    //  MOB - what about pass handler
     return appweb; 
 }
 
@@ -59,9 +57,7 @@ static void manageAppweb(MaAppweb *appweb, int flags)
 
 static void openHandlers(Http *http)
 {
-    //  MOB - rc?
     maOpenDirHandler(http);
-    //  MOB - deprecate EGI
     maOpenEgiHandler(http);
     maOpenFileHandler(http);
 }
@@ -161,7 +157,6 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int 
     meta->http = appweb->http;
 
     maAddMeta(appweb, meta);
-    //  MOB - what is the meta->serverRoot used for?
     maSetMetaRoot(meta, root);
 
     if (ip && port > 0) {
@@ -180,10 +175,6 @@ int maStartMeta(MaMeta *meta)
     HttpHost    *host;
     int         next, nextHost, count, warned;
 
-    /*  
-        Start the Http servers and being listening for requests
-        MOB - refactor and cleanup
-     */
     warned = 0;
     count = 0;
     for (next = 0; (server = mprGetNextItem(meta->servers, &next)) != 0; ) {
@@ -274,19 +265,9 @@ void maSetMetaAddress(MaMeta *meta, cchar *ip, int port)
 }
 
 
-//  MOB - rename maSetMetaDefaultHost
-void maSetDefaultHost(MaMeta *meta, HttpHost *host)
+void maSetMetaDefaultHost(MaMeta *meta, HttpHost *host)
 {
     meta->defaultHost = host;
-}
-
-
-void maSetForkCallback(MaAppweb *appweb, MprForkCallback callback, void *data)
-{
-#if MOB && TODO
-    appweb->forkCallback = callback;
-    appweb->forkData = data;
-#endif
 }
 
 

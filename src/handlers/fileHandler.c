@@ -13,7 +13,7 @@
 
 /***************************** Forward Declarations ***************************/
 
-//  MOB -- more unique prefixes for combo dist
+//  TODO -- more unique prefixes for combo dist
 static void handleDeleteRequest(HttpQueue *q);
 static void handlePutRequest(HttpQueue *q);
 static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize size);

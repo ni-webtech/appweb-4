@@ -50,17 +50,17 @@ static void openEjs(HttpQueue *q)
          */
         mprLog(5, "ejs: create ejs interpreter");
         if ((ejs = ejsCreate(NULL, NULL, NULL, 0, NULL, 0)) == 0) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create Ejs interpreter.");
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create Ejs interpreter");
             return;
         }
         q->stage->stageData = ejs;
         ejs->loc = loc;
         if (loadStartupScript(ejs, conn, loc->script) < 0) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load startup script.");
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load startup script \"%s\"", loc->script);
             return;
         }
         if (loc == 0 || loc->context == 0) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Undefined location context. Check EjsStartup script.");
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Undefined location context, check EjsStartup script");
             return;
         }
     }
@@ -80,13 +80,13 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 }
 
 
-/*
-    Find a start script. Default to /usr/lib/PRODUCT/lib/PRODUCT.es.
- */
 static char *findScript(cchar *script)
 {
     char    *base;
 
+    /*
+        Default to /usr/lib/PRODUCT/lib/PRODUCT.es
+     */
     if (script == 0 || *script == '\0') {
         script = mprAsprintf("%s/../%s/%s", mprGetAppDir(), BLD_LIB_NAME, MA_EJS_START);
     } else {
@@ -126,7 +126,7 @@ static int loadStartupScript(Ejs *ejs, HttpConn *conn, cchar *script)
 
 
 #if VXWORKS
-//  MOB - is this still needed?
+//  TODO - is this still needed?
 /*
     Create a routine to pull in the GCC support routines for double and int64 manipulations for some platforms. Do this
     incase modules reference these routines. Without this, the modules have to reference them. Which leads to multiple 

@@ -96,7 +96,6 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
         mprError("Can't start the web server runtime");
         return MPR_ERR_CANT_INITIALIZE;
     }
-    //  TODO MOB - do we need a meta server when running via an API
     if ((appweb = maCreateAppweb(mpr)) == 0) {
         mprError("Can't create the web server http services");
         return MPR_ERR_CANT_INITIALIZE;

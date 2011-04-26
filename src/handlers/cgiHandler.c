@@ -87,15 +87,6 @@ static void startCgi(HttpQueue *q)
     tx = conn->tx;
 
     mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->loc->flags & HTTP_LOC_AFTER);
-#if UNUSED
-    if (rx->upload && conn->state <= HTTP_STATE_CONTENT) {
-        /*
-            Delay start while the upload filter extracts the uploaded files so the CGI process can be informed via
-            env vars of the file details.
-         */
-        return;
-    }
-#endif
 
     /*
         The command uses the conn dispatcher. This serializes all I/O for both the connection and the CGI gateway
@@ -132,7 +123,6 @@ static void startCgi(HttpQueue *q)
     mprSetCmdDir(cmd, mprGetPathDir(fileName));
     mprSetCmdCallback(cmd, cgiCallback, tx);
 
-    //  MOB Break here kills stress/post
     if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR) < 0) {
         httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't run CGI process: %s, URI %s", fileName, rx->uri);
     }
@@ -749,9 +739,8 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     if (actionProgram) {
         argv[argind++] = sclone(actionProgram);
     }
-    //  MOB - why clone all these string?
+    //  OPT - why clone all these string?
     argv[argind++] = sclone(fileName);
-
 #endif
 
     /*
@@ -814,9 +803,8 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     /*
         If not found, go looking for the fileName with the extensions defined in appweb.conf. 
         NOTE: we don't use PATH deliberately!!!
-        MOB - add extensions just incase the ext is wrong due to a directory with embedded "."
      */
-    if (access(fileName, X_OK) < 0 /* MOB && *ext == '\0' */) {
+    if (access(fileName, X_OK) < 0) {
         for (hp = 0; (hp = mprGetNextHash(loc->extensions, hp)) != 0; ) {
             path = sjoin(fileName, ".", hp->key, NULL);
             if (access(path, X_OK) == 0) {

@@ -47,7 +47,7 @@ typedef struct MaAppweb {
     Http                *http;              /**< Http service object */
     char                *user;              /**< O/S application user name */
     char                *group;             /**< O/S application group name */
-    //  MOB - should this be in http?
+    //  TODO - should this be in http?
     int                 uid;                /**< User Id */
     int                 gid;                /**< Group Id */
     int                 userChanged;
@@ -90,7 +90,7 @@ extern int maStopAppweb(MaAppweb *appweb);
  */
 extern int maSetHttpUser(MaAppweb *appweb, cchar *user);
 
-//  MOB
+//  DOC
 extern void maGetUserGroup(MaAppweb *appweb);
 
 /**
@@ -249,8 +249,8 @@ extern int      maCreateHostAddresses(MaMeta *meta, struct HttpHost *host, cchar
 extern struct HttpHost *maLookupHost(MaMeta *meta, cchar *name);
 extern void     maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags);
 extern HttpHostAddress *maRemoveHostFromHostAddress(MaMeta *meta, cchar *ip, int port, struct HttpHost *host);
-extern void     maSetDefaultHost(MaMeta *meta, struct HttpHost *host);
-extern void     maSetDefaultIndex(MaMeta *meta, cchar *path, cchar *filename);
+extern void     maSetMetaDefaultHost(MaMeta *meta, struct HttpHost *host);
+extern void     maSetMetaDefaultIndex(MaMeta *meta, cchar *path, cchar *filename);
 extern void     maSetDocumentRoot(MaMeta *meta, cchar *path);
 #endif
 

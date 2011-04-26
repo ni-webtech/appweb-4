@@ -300,7 +300,6 @@ static void usageError(Mpr *mpr)
 
     name = mprGetAppName();
 
-    //  MOB - test the ipaddress:port docroot invocation
     mprPrintfError("\n\n%s Usage:\n\n"
     "  %s [options] [IPaddress][:port] [documentRoot]\n\n"
     "  Options:\n"
@@ -388,7 +387,7 @@ static int writePort(HttpHost *host)
     char    numBuf[16], *path;
     int     fd, len;
 
-    //  MOB - should really go to a BLD_LOG_DIR
+    //  TODO - should really go to a BLD_LOG_DIR
     path = mprJoinPath(mprGetAppDir(), "../.port.log");
     if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0) {
         mprError("Could not create port file %s", path);
