@@ -166,9 +166,9 @@ MAIN(ejscMain, int argc, char **argv)
                     app->modules = mprCreateList(-1, 0);
                 }
                 modules = sclone(argv[++nextArg]);
-#if MACOSX
-                //  FIX FOR XCODE MANGLING COMMAND LINE ARGS
-                if (modules[0] == ' ') {
+#if MACOSX || WIN
+                /*  Fix for Xcode and Visual Studio */
+                if (modules[0] == ' ' || scmp(modules, "null") == 0) {
                     modules[0] = '\0';                    
                 }
 #endif
