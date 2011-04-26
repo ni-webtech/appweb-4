@@ -71,7 +71,7 @@ class EjsMvc {
             ejs: "ejs",
             mod: "mod",
         },
-        //  MOB -- should be a files section with "ejsrc", 
+        //  TODO -- should be a files section with "ejsrc", 
         mvc: {
             appmod: "App.mod",
             compiler: "ejsc --debug --web",
@@ -104,13 +104,13 @@ class EjsMvc {
         if (config.mvc) {
             dirs = config.directories
             dirs.home = App.dir
-            //  MOB -- should these come from ejsrc
+            //  TODO -- should these come from ejsrc
             dirs.lib = App.exeDir.join("../lib")
             dirs.mod = App.exeDir.join("../modules")
             for (d in dirs) {
                 dirs[d] = Path(dirs[d])
             }
-            //  MOB -- should this come from ejsrc
+            //  TODO -- should this come from ejsrc
             layoutPage = dirs.layouts.join("default.ejs")
             mvc = Path(App.args[0]).basename
         }
@@ -451,7 +451,6 @@ class EjsMvc {
         }
         let out = dirs.cache.join(file.basename).replaceExt(ext.mod)
         let cmd: String
-        //  MOB -- but search is an array !!
         let search = App.search.join(App.SearchSeparator)
         cmd = getCompilerPath() + " --out " + out + " --search \"" + search + "\" " + dirs.cache.join(config.mvc.appmod) + 
             " " + file
@@ -646,7 +645,7 @@ class EjsMvc {
         binFiles = [ "ejs", "ejsc", "mvc", ]
         extFiles = [ "libcrypto", "libssl", "libmprssl" ]
 
-//  MOB - not used
+//  TODO - not used
         confFiles = [ ]
 
         if (exists(dirs.mod.join("ejs.db.mod"))) {
@@ -898,7 +897,6 @@ class EjsMvc {
         }
     }
 
-//  MOB -- add optional endpoint arg:   mvc run [endpoint]
     function run(args: Array): Void {
         let start = config.mvc.start
         trace("[RUN]", start)
@@ -962,7 +960,6 @@ class EjsMvc {
         }
         generateDatabase()
 
-        //  MOB - use dirs.src
         let files = ["src/App.es", dirs.controllers.join("Base.es")]
         buildFiles(dirs.cache.join("App").joinExt(ext.mod), files)
         App.chdir("..")

@@ -1382,18 +1382,9 @@ static int configureOss(MprSsl *ssl)
 
     /*
         Select the required protocols
-     */
-#if UNUSED && KEEP
-    if (!(ssl->protocols & MPR_PROTO_SSLV2)) {
-        SSL_CTX_set_options(context, SSL_OP_NO_SSLv2);
-        mprLog(4, "OpenSSL: Disabling SSLv2");
-    }
-#else
-    /*
         Disable SSLv2 by default -- it is insecure.
      */
     SSL_CTX_set_options(context, SSL_OP_NO_SSLv2);
-#endif
     if (!(ssl->protocols & MPR_PROTO_SSLV3)) {
         SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
         mprLog(4, "OpenSSL: Disabling SSLv3");

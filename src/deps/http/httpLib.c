@@ -1873,7 +1873,6 @@ static void outgoingChunkService(HttpQueue *q)
             and can bypass the chunk handler.
          */
         if (q->last->flags & HTTP_PACKET_END) {
-            //  MOB -- but what if a content-length header has been defined but not set tx->length
             if (tx->chunkSize < 0 && tx->length <= 0) {
                 /*  
                     Set the response content length and thus disable chunking -- not needed as we know the entity length.
@@ -2462,7 +2461,7 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->currentq);
         mprMark(conn->input);
 
-        //  MOB - these 3 should not be required
+        //  OPT - these 3 should not be required
         mprMark(conn->readq);
         mprMark(conn->writeq);
         mprMark(conn->connq);
@@ -2725,7 +2724,7 @@ static void writeEvent(HttpConn *conn)
 }
 
 
-//  MOB - refactor
+//  TODO - refactor
 void httpEnableConnEvents(HttpConn *conn)
 {
     HttpTx      *tx;
@@ -2808,7 +2807,7 @@ static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead)
     rx = conn->rx;
     len = HTTP_BUFSIZE;
 
-    //  MOB -- simplify. Okay to lose some optimization for chunked data?
+    //  TODO -- simplify. Okay to lose some optimization for chunked data?
     /*  
         The input packet may have pipelined headers and data left from the prior request. It may also have incomplete
         chunk boundary data.
@@ -3422,7 +3421,6 @@ HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc)
     host->mimeTypes = MPR->mimeTypes;
     host->documentRoot = host->serverRoot = sclone(".");
 
-    //  MOB -- not right
     host->traceMask = HTTP_TRACE_TX | HTTP_TRACE_RX | HTTP_TRACE_FIRST | HTTP_TRACE_HEADER;
     host->traceLevel = 3;
     host->traceMaxLength = MAXINT;
@@ -3769,8 +3767,6 @@ HttpLoc *httpLookupBestLocation(HttpHost *host, cchar *uri)
 }
 
 
-//  MOB -- order this file
-
 void httpSetHostTrace(HttpHost *host, int level, int mask)
 {
     host->traceMask = mask;
@@ -3878,7 +3874,6 @@ static int matchRef(cchar *key, char **src)
     Replace a limited set of $VAR references. Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT
     TODO - Expand and formalize this. Should support many more variables.
  */
-//  MOB - rename
 char *httpReplaceReferences(HttpHost *host, cchar *str)
 {
     MprBuf  *buf;
@@ -4136,7 +4131,6 @@ void httpRemoveServer(Http *http, HttpServer *server)
 
 /*  
     Lookup a host address. If ipAddr is null or port is -1, then those elements are wild.
-    MOB - wild cards are not being used - see asserts
  */
 HttpServer *httpLookupServer(Http *http, cchar *ip, int port)
 {
@@ -4213,7 +4207,6 @@ void httpRemoveHost(Http *http, HttpHost *host)
 }
 
 
-//  MOB - rename
 HttpLoc *httpInitLocation(Http *http, int serverSide)
 {
     HttpLoc     *loc;
@@ -4464,8 +4457,6 @@ static bool isIdle()
 void httpAddConn(Http *http, HttpConn *conn)
 {
     lock(http);
-    //  MOB
-    mprAssert(http->connections->length < 25);
     mprAddItem(http->connections, conn);
     conn->started = mprGetTime();
     conn->seqno = http->connCount++;
@@ -5181,7 +5172,11 @@ void httpMatchHandler(HttpConn *conn)
             handler = findHandler(conn);
         }
     }
-    if (!handler || conn->error || ((tx->flags & HTTP_TX_NO_BODY) && !(rx->flags & HTTP_HEAD))) {
+#if UNUSED
+    if (!handler || conn->error || ((tx->flags & HTTP_TX_NO_BODY) && !(rx->flags & HTTP_HEAD)))
+#else
+    if (!handler || conn->error) {
+#endif
         handler = http->passHandler;
         if (!conn->error && rx->rewrites >= HTTP_MAX_REWRITE) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
@@ -5512,8 +5507,8 @@ static void netOutgoingService(HttpQueue *q)
     tx = conn->tx;
     conn->lastActivity = conn->http->now;
     
-    //  MOB - remove
     if (conn->sock == 0 || conn->writeComplete) {
+        /* TODO - Should never happen */
         mprAssert(conn->sock && !conn->writeComplete);
         return;
     }
@@ -6507,7 +6502,6 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
      */
     if (rx->needInputPipeline) {
         qhead = tx->queue[HTTP_QUEUE_RECEIVE];
-        //  MOB - check if this order is right. Auth must be last?
         for (q = qhead->nextQ; q->nextQ != qhead; q = q->nextQ) {
             if (q->open && !(q->flags & (HTTP_QUEUE_OPEN))) {
                 if (q->pair == 0 || !(q->pair->flags & HTTP_QUEUE_OPEN)) {
@@ -6627,7 +6621,6 @@ void httpProcessPipeline(HttpConn *conn)
     HttpQueue   *q;
     
     if (conn->error) {
-        //  MOB -- is this the right place?
         httpFinalize(conn);
     }
     q = conn->tx->queue[HTTP_QUEUE_TRANS]->nextQ;
@@ -7037,7 +7030,7 @@ void httpInitSchedulerQueue(HttpQueue *q)
 
 /*  
     Insert a queue after the previous element
-    MOB - rename append
+    TODO - rename append
  */
 void httpInsertQueue(HttpQueue *prev, HttpQueue *q)
 {
@@ -7110,7 +7103,7 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
             httpWait(conn, 0, MPR_TIMEOUT_SOCKETS);
         }
     }
-    //  MOB - better place for this?
+    //  TODO - better place for this?
     conn->lastActivity = conn->http->now;
 
     for (nbytes = 0; size > 0 && q->count > 0; ) {
@@ -8055,14 +8048,18 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     case 'O':
         if (strcmp(method, "OPTIONS") == 0) {
             methodFlags = HTTP_OPTIONS;
+#if UNUSED
             httpOmitBody(conn);
+#endif
         }
         break;
 
     case 'T':
         if (strcmp(method, "TRACE") == 0) {
             methodFlags = HTTP_TRACE;
+#if UNUSED
             httpOmitBody(conn);
+#endif
         }
         break;
     }
@@ -8678,7 +8675,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     if (packet == NULL) {
         return 0;
     }
-    //  MOB - is this the best place? - move
+    //  TODO - is this the best place? - move
     mprYield(0);
 
     if (!analyseContent(conn, packet)) {
@@ -8926,13 +8923,12 @@ cchar *httpGetHeader(HttpConn *conn, cchar *key)
 }
 
 
-//  MOB -- why does this allocate?
 char *httpGetHeaders(HttpConn *conn)
 {
     HttpRx      *rx;
     MprHash     *hp;
     char        *headers, *key, *cp;
-    int         len;
+    ssize       len;
 
     if (conn->rx == 0) {
         mprAssert(conn->rx);
@@ -8950,7 +8946,7 @@ char *httpGetHeaders(HttpConn *conn)
             }
         }
         headers = srejoin(headers, ": ", hp->data, "\n", NULL);
-        len = (int) strlen(headers);
+        len = strlen(headers);
         hp = mprGetNextHash(rx->headers, hp);
     }
     return headers;
@@ -9469,7 +9465,6 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet);
 static void adjustSendVec(HttpQueue *q, MprOff written);
 static MprOff buildSendVec(HttpQueue *q);
 static void adjustPacketData(HttpQueue *q, MprOff written);
-static void sendIncomingService(HttpQueue *q);
 
 
 int httpOpenSendConnector(Http *http)
@@ -9482,7 +9477,6 @@ int httpOpenSendConnector(Http *http)
     }
     stage->open = httpSendOpen;
     stage->outgoingService = httpSendOutgoingService; 
-    stage->incomingService = sendIncomingService; 
     http->sendConnector = stage;
     return 0;
 }
@@ -9510,14 +9504,6 @@ void httpSendOpen(HttpQueue *q)
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
         }
     }
-}
-
-
-static void sendIncomingService(HttpQueue *q)
-{
-    //  MOB - why
-    mprAssert(0);
-    httpEnableConnEvents(q->conn);
 }
 
 
@@ -9881,7 +9867,7 @@ HttpServer *httpCreateServer(cchar *ip, int port, MprDispatcher *dispatcher, int
 
 void httpDestroyServer(HttpServer *server)
 {
-    mprLog(4, "Destroy server %s", /* MOB server->name ? server->name : */ server->ip);
+    mprLog(4, "Destroy server %s", server->ip);
     if (server->waitHandler) {
         mprRemoveWaitHandler(server->waitHandler);
         server->waitHandler = 0;
@@ -10010,7 +9996,7 @@ int httpStartServer(HttpServer *server)
         return MPR_ERR_CANT_OPEN;
     }
     if (server->async && server->waitHandler ==  0) {
-        //  MOB -- this really should be in server->listen->handler
+        //  TODO -- this really should be in server->listen->handler
         server->waitHandler = mprCreateWaitHandler(server->sock->fd, MPR_SOCKET_READABLE, server->dispatcher,
             httpAcceptConn, server, (server->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
     } else {
@@ -10066,7 +10052,6 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
     
     case HTTP_VALIDATE_OPEN_REQUEST:
         if (server->requestCount >= limits->requestCount) {
-            //  MOB -- will CLOSE_REQUEST get called and thus set the limit to negative?
             unlock(server->http);
             httpError(conn, HTTP_ABORT | HTTP_CODE_SERVICE_UNAVAILABLE, 
                 "Too many concurrent requests %d/%d", server->requestCount, limits->requestCount);
@@ -10113,10 +10098,6 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
     if (sock == 0) {
         return 0;
     }
-
-    //  MOB - is this logic sufficient.
-    //  MOB - better to just do dispatcher =
-    // dispatcher = (event && server->dispatcher == 0) ? event->dispatcher: server->dispatcher;
     dispatcher = event->dispatcher;
 
     if ((conn = httpCreateConn(server->http, server, dispatcher)) == 0) {
@@ -10152,7 +10133,6 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
 }
 
 
-//  MOB Is this used / needed
 void *httpGetMetaServer(HttpServer *server)
 {
     return server->meta;
@@ -10399,7 +10379,7 @@ static void incomingData(HttpQueue *q, HttpPacket *packet)
         httpSendPacketToNext(q, packet);
     } else {
         /* This queue is the last queue in the pipeline */
-        //  MOB - should this call WillAccept?
+        //  TODO - should this call WillAccept?
         if (httpGetPacketLength(packet) > 0) {
             httpJoinPacketForService(q, packet, 0);
             HTTP_NOTIFY(q->conn, 0, HTTP_NOTIFY_READABLE);
@@ -11991,7 +11971,6 @@ static int processContentData(HttpQueue *q)
             data = mprUriDecode(data);
             httpSetFormVar(conn, key, data);
 
-            //  MOB - I think PHP needs to actually get the data if using --upload and --form
             if (packet == 0) {
                 packet = httpCreatePacket(HTTP_BUFSIZE);
             }
@@ -12538,7 +12517,6 @@ HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int dup)
     } else if (cp > uri->path) {
         /*
             Cleanup trailing separators ("../" is the end of the new path)
-            MOB -- do we want to do this?
          */
         cp[-1] = '\0';
     } else {
@@ -12555,7 +12533,6 @@ HttpUri *httpJoinUriPath(HttpUri *result, HttpUri *base, HttpUri *other)
 {
     char    *sep;
 
-    //  MOB -- should allow result to be null
     if (other->path[0] == '/') {
         result->path = sclone(other->path);
     } else {
@@ -12859,17 +12836,16 @@ void httpCreateCGIVars(HttpConn *conn)
     rx = conn->rx;
     tx = conn->tx;
     host = conn->host;
-
-    //  MOB - cleanup
+    sock = conn->sock;
 
     table = rx->formVars;
     if (table == 0) {
         table = rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
     }
 
-    //  TODO - Vars for COOKIEs
-    
-    /*  Alias for REMOTE_USER. Define both for broader compatibility with CGI */
+    /*  
+        Alias for REMOTE_USER. Define both for broader compatibility with CGI 
+     */
     mprAddKey(table, "AUTH_TYPE", rx->authType);
     mprAddKey(table, "AUTH_USER", conn->authUser);
     mprAddKey(table, "AUTH_GROUP", conn->authGroup);
@@ -12884,17 +12860,17 @@ void httpCreateCGIVars(HttpConn *conn)
     }
     mprAddKeyFmt(table, "REMOTE_PORT", "%d", conn->port);
 
-    /*  Same as AUTH_USER (yes this is right) */
+    /*  
+            Same as AUTH_USER (yes this is right) 
+     */
     mprAddKey(table, "REMOTE_USER", conn->authUser);
     mprAddKey(table, "REQUEST_METHOD", rx->method);
     mprAddKey(table, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
     
-    sock = conn->sock;
     mprAddKey(table, "SERVER_ADDR", sock->acceptIp);
     mprAddKey(table, "SERVER_NAME", host->hostname);
     mprAddKeyFmt(table, "SERVER_PORT", "%d", sock->acceptPort);
 
-    /*  HTTP/1.0 or HTTP/1.1 */
     mprAddKey(table, "SERVER_PROTOCOL", conn->protocol);
     mprAddKey(table, "SERVER_SOFTWARE", conn->http->software);
 
@@ -12910,10 +12886,12 @@ void httpCreateCGIVars(HttpConn *conn)
     mprAddKey(table, "SCRIPT_FILENAME", tx->filename);
 
     if (rx->extraPath) {
-        /*  Only set PATH_TRANSLATED if extraPath is set (CGI spec) */
+        /*  
+            Only set PATH_TRANSLATED if extraPath is set (CGI spec) 
+         */
         mprAddKey(table, "PATH_TRANSLATED", httpMakeFilename(conn, rx->alias, rx->extraPath, 0));
     }
-    //  MOB -- how do these relate to MVC apps and non-mvc apps
+
     mprAddKey(table, "DOCUMENT_ROOT", host->documentRoot);
     mprAddKey(table, "SERVER_ROOT", host->serverRoot);
 

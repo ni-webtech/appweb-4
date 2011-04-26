@@ -545,7 +545,7 @@ static MprMem *allocFromHeap(ssize required, int flags)
     INC(requests);
 
     /*
-        MOB OPT - could break this locked section up.
+        TODO OPT - could break this locked section up.
         - Can update bit maps conservatively and lockfree
         - Put locks around freeq unqueue
         - use unlinkBlock or linkBlock only. Do locks internally in these routines
@@ -578,7 +578,7 @@ static MprMem *allocFromHeap(ssize required, int flags)
                     mprAssert(GET_GEN(mp) == heap->eternal);
                     SET_GEN(mp, heap->active);
 
-                    //  MOB -- cleanup
+                    //  OPT
                     mprAtomicBarrier();
                     if (flags & MPR_ALLOC_MANAGER) {
                         SET_MANAGER(mp, dummyManager);
@@ -588,7 +588,6 @@ static MprMem *allocFromHeap(ssize required, int flags)
                     CHECK(mp);
                     CHECK_FREE_MEMORY(mp);
                     if (GET_SIZE(mp) >= (ssize) (required + MPR_ALLOC_MIN_SPLIT)) {
-                        //  MOB -- what is this trying to do?
                         maxBlock = (((ssize) 1 ) << group | (((ssize) bucket) << (max(0, group - 1)))) << MPR_ALIGN_SHIFT;
                         maxBlock += sizeof(MprMem);
 
@@ -600,7 +599,6 @@ static MprMem *allocFromHeap(ssize required, int flags)
                                 SET_PRIOR(after, spare);
                             }
                             SET_SIZE(mp, required);
-                            //  MOB -- cleanup
                             mprAtomicBarrier();
                             SET_LAST(mp, 0);
                             mprAtomicBarrier();
@@ -699,7 +697,6 @@ static MprMem *freeToHeap(MprMem *mp)
     /*
         Coalesce with next if it is free
      */
-    //  MOB - GET_NEXT should be safe lockfree in the sweeper.
     next = GET_NEXT(mp);
     if (next && IS_FREE(next)) {
         BREAKPOINT(next);
@@ -722,7 +719,6 @@ static MprMem *freeToHeap(MprMem *mp)
     prev = GET_PRIOR(mp);
     if (prev && IS_FREE(prev)) {
         BREAKPOINT(prev);
-        //  MOB - lockfree race here as someone else may claim this block
         unlinkBlock((MprFreeMem*) prev);
         if ((after = GET_NEXT(mp)) != NULL) {
             mprAssert(GET_PRIOR(after) == mp);
@@ -918,7 +914,7 @@ static MprMem *allocFromMalloc(ssize required, int flags)
         unlockHeap();
         return NULL;
     }
-    //  MOB - should not do this - alloc block will zero if requried
+    //  OPT - should not do this - alloc block will zero if requried
     memset(mp, 0, required);
     hasManager = (flags & MPR_ALLOC_MANAGER) ? 1 : 0;
     INIT_BLK(mp, required, hasManager, 0, NULL);
@@ -1002,7 +998,7 @@ void *mprVirtAlloc(ssize size, int mode)
         allocException(size, 0);
         return 0;
     }
-    //  MOB locking
+    //  TODO locking
     heap->stats.bytesAllocated += size;
     return ptr;
 }
@@ -1023,7 +1019,7 @@ void mprVirtFree(void *ptr, ssize size)
 #else
     free(ptr);
 #endif
-    //  MOB locking
+    //  TODO locking
     heap->stats.bytesAllocated -= size;
     mprAssert(heap->stats.bytesAllocated >= 0);
 }
@@ -1130,7 +1126,7 @@ static void mark()
     LOG(7, "GC: mark started");
 
     /*
-        MOB DOC here on how marking strategy works
+        TODO here on how marking strategy works
         When parallel, we mark blocks using the current heap->active mark. After marking, synchronization will rotate
         the active/stale/dead markers. After this, existing alive blocks may be marked stale. No blocks will be marked
         active.
@@ -1394,7 +1390,7 @@ void mprRelease(void *ptr)
 static void marker(void *unused, MprThread *tp)
 {
     LOG(5, "DEBUG: marker thread started");
-    //  MOB -- rename from marker to marking?
+    //  TODO -- rename from marker to marking?
     MPR->marker = 1;
     tp->stickyYield = 1;
     tp->yielded = 1;
@@ -12822,7 +12818,7 @@ static void manageModule(MprModule *mp, int flags)
         mprMark(mp->moduleData);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        //  MOB - should this unload the module?
+        //  TODO - should this unload the module?
     }
 }
 
@@ -13978,7 +13974,7 @@ static char *fromCygPath(cchar *path)
 #endif
 
 
-//  MOB -- should this be mprNormalizePath?  apply to all APIs
+//  TODO -- should this be mprNormalizePath?  apply to all APIs
 /*
     Normalize a path to remove redundant "./" and cleanup "../" and make separator uniform. Does not make an abs path.
     It does not map separators nor change case. 
@@ -15085,7 +15081,7 @@ ssize mprFprintf(MprFile *file, cchar *fmt, ...)
 }
 
 
-#if UNUSED && KEEP
+#if FUTURE
 /*
     Printf with a static buffer. Used internally only. WILL NOT MALLOC.
  */
@@ -15395,7 +15391,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
                 }
                 break;
 
-            case 'S':       /* MOB - remove this alias */
+            case 'S':       /* TODO - remove this alias */
                 mprAssert(c != 'S');
 
             case '@':
@@ -18711,7 +18707,7 @@ char *schr(cchar *s, int c)
 
 /*
     Case insensitive string comparison. Limited by length
-    MOB - name is not great. scaselesscmp, sncaselesscmp
+    TODO - name is not great. scaselesscmp, sncaselesscmp
  */
 int scasecmp(cchar *s1, cchar *s2)
 {
@@ -19331,7 +19327,6 @@ int64 stoi(cchar *str, int radix, int *err)
 
 /*
     Note "str" is modifed as per strtok()
-    MOB - should this allocate the result
  */
 char *stok(char *str, cchar *delim, char **last)
 {
@@ -19590,7 +19585,7 @@ int mprParseTestArgs(MprTestService *sp, int argc, char *argv[], MprTestParser e
             sp->echoCmdLine = 1;
 
         } else if (strcmp(argp, "--filter") == 0 || strcmp(argp, "-f") == 0) {
-            //  MOB DEPRECATE
+            //  TODO DEPRECATE
             if (nextArg >= argc) {
                 err++;
             } else {
@@ -20555,7 +20550,7 @@ MprThreadService *mprCreateThreadService()
     if (ts == 0) {
         return 0;
     }
-    //  MOB - not used
+    //  TODO - not used
     if ((ts->mutex = mprCreateLock()) == 0) {
         return 0;
     }
@@ -20774,7 +20769,7 @@ static void threadProc(MprThread *tp)
  */
 int mprStartThread(MprThread *tp)
 {
-    //  MOB - is this needed
+    //  TODO - lock not needed
     lock(tp);
 
 #if BLD_WIN_LIKE
@@ -21423,7 +21418,7 @@ static void workerMain(MprWorker *worker, MprThread *tp)
         }
         changeState(worker, MPR_WORKER_SLEEPING);
 
-        //  MOB -- is this used?
+        //  TODO -- is this used?
         mprAssert(worker->cleanup == 0);
         if (worker->cleanup) {
             (*worker->cleanup)(worker->data, worker);
@@ -21506,7 +21501,6 @@ static int changeState(MprWorker *worker, int state)
     worker->state = state;
 
     if (lp) {
-        //  MOB -- should be able to remove lock
         if (mprAddItem(lp, worker) < 0) {
             mprUnlock(ws->mutex);
             mprAssert(!MPR_ERR_MEMORY);
@@ -22110,7 +22104,7 @@ static void decodeTime(struct tm *tp, MprTime when, bool local)
     offset = dst = 0;
 
     if (local) {
-        //  MOB -- cache the results somehow
+        //  TODO -- cache the results somehow
         timeForZoneCalc = when;
         secs = when / MS_PER_SEC;
         if (secs < MIN_TIME || secs > MAX_TIME) {
@@ -24739,11 +24733,9 @@ ssize wtom(char *dest, ssize destCount, MprChar *src, ssize len)
     if (destCount < 0) {
         destCount = MAXSSIZE;
     }
-#if UNUSED
     if (len < 0) {
         len = MAXSSIZE;
     }
-#endif
     size = min(destCount, len + 1);
     if (size > 0) {
 #if BLD_CHAR_LEN == 1
@@ -24753,7 +24745,7 @@ ssize wtom(char *dest, ssize destCount, MprChar *src, ssize len)
             len = min(slen(src), size - 1);
         }
 #elif BLD_WIN_LIKE
-        //  MOB -- use destCount
+        //  TODO -- use destCount
         len = WideCharToMultiByte(CP_ACP, 0, src, -1, dest, (DWORD) size, NULL, NULL);
 #else
         len = wcstombs(dest, src, size);
@@ -24922,7 +24914,7 @@ static int isValidUtf8(cuchar *src, int len)
 }
 
 
-//  MOB - CLEAN
+//  TODO - CLEAN
 static int offsets[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL, 0xFA082080UL, 0x82082080UL };
 
 ssize xmtow(MprChar *dest, ssize destMax, cchar *src, ssize len) 
@@ -24933,11 +24925,9 @@ ssize xmtow(MprChar *dest, ssize destMax, cchar *src, ssize len)
 
     mprAssert(0 <= len && len < MAXINT);
 
-#if UNUSED
     if (len < 0) {
         len = slen(src);
     }
-#endif
     if (dest) {
         dend = &dest[destMax];
     }
@@ -24984,7 +24974,7 @@ ssize xmtow(MprChar *dest, ssize destMax, cchar *src, ssize len)
     return count;
 }
 
-//  MOB - CLEAN
+//  TODO - CLEAN
 static cuchar marks[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
 
 /*
@@ -25019,11 +25009,9 @@ ssize xwtom(char *dest, ssize destMax, MprChar *src, ssize len)
 
     mprAssert(0 <= len && len < MAXINT);
 
-#if UNUSED
     if (len < 0) {
         len = wlen(src);
     }
-#endif
     if (dest) {
         dend = &dest[destMax];
     }
@@ -25093,20 +25081,6 @@ char *awtom(MprChar *src, ssize *len)
     return sclone(src);
 }
 
-#if UNUSED
-MprChar *wfmt(MprChar *fmt, ...)
-{
-    MprChar     *result;
-    va_list     ap;
-
-    mprAssert(fmt);
-
-    va_start(ap, fmt);
-    result = mprAsprintfv(fmt, ap);
-    va_end(ap);
-    return result;
-}
-#endif
 
 #endif /* BLD_CHAR_LEN > 1 */
 
@@ -25339,35 +25313,6 @@ void mprSleep(MprTime milliseconds)
 {
     Sleep((int) milliseconds);
 }
-
-
-#if UNUSED
-uni *mprToUni(cchar* a, int *len)
-{
-    uni     *wstr;
-    int     *len;
-
-    *len = MultiByteToWideChar(CP_ACP, 0, a, -1, NULL, 0);
-    wstr = mprAlloc((*len + 1) * sizeof(uni));
-    if (wstr) {
-        MultiByteToWideChar(CP_ACP, 0, a, -1, wstr, *len);
-    }
-    return wstr;
-}
-
-
-char *mprToMulti(cuni *w)
-{
-    char    *str;
-    int     len;
-
-    len = WideCharToMultiByte(CP_ACP, 0, w, -1, NULL, 0, NULL, NULL);
-    if ((str = mprAlloc(len + 1)) != 0) {
-        WideCharToMultiByte(CP_ACP, 0, w, -1, str, (DWORD) len, NULL, NULL);
-    }
-    return str;
-}
-#endif
 
 
 void mprWriteToOsLog(cchar *message, int flags, int level)
@@ -26235,7 +26180,6 @@ struct tm *localtime_r(const time_t *when, struct tm *tp)
     mprAssert(when);
     mprAssert(tp);
 
-    //  MOB -- but this is setting if DST is enabled now, not at "when"
     rc = GetTimeZoneInformation(&tz);
     bias = tz.Bias;
     if (rc == TIME_ZONE_ID_DAYLIGHT) {
@@ -26272,7 +26216,6 @@ time_t mktime(struct tm *tp)
 
     mprAssert(tp);
 
-    //  MOB -- but this is setting if DST is enabled now, not at "when"
     rc = GetTimeZoneInformation(&tz);
     bias = tz.Bias;
     if (rc == TIME_ZONE_ID_DAYLIGHT) {
@@ -26289,7 +26232,6 @@ time_t mktime(struct tm *tp)
     s.wMinute = tp->tm_min;
     s.wSecond = tp->tm_sec;
 
-    //  MOB -- rc
     SystemTimeToFileTime(&s, &f);
     result = (time_t) (fileTimeToTime(f) + tz.Bias   60);
     if (rc == TIME_ZONE_ID_DAYLIGHT) {

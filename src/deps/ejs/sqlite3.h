@@ -9,6 +9,12 @@
 /* Work-around for MAC OSX Xcode bug */
 #undef BLD_FEATURE_LEGACY_API
 
+/* Suppress windows posix errors */
+#undef      _CRT_SECURE_NO_WARNINGS
+#define     _CRT_SECURE_NO_WARNINGS 1
+#undef      _CRT_SECURE_NO_DEPRECATE
+#define     _CRT_SECURE_NO_DEPRECATE 1
+
 #include "buildConfig.h"
 
 #ifndef _h_SQLITE3_

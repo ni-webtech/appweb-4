@@ -246,7 +246,7 @@ module ejs {
             }
         }
 
-        //  MOB TODO - move to locale
+        //  TODO - move to locale
         /** 
             Get the current language locale for this application
             @hide
@@ -282,7 +282,6 @@ module ejs {
          */
         native static function putenv(name: String, value: String): Void
 
-        //  MOB -- could return Boolean - true if one event was serviced
         /** 
             Run the application event loop. 
             A script may call run() to service events. The ejs shell will exit when it has executed the last statement
@@ -421,9 +420,6 @@ module ejs {
             if (log.match) {
                 App.log.match = log.match
             }
-            /* MOB - This messes up Appweb 
-                Logger.nativeLevel = log.level
-             */
         }
 
         /*  Append search paths */
@@ -743,7 +739,6 @@ module ejs {
             @param mapper Transforming function
          */
         function map(mapper: Function): Array {
-            //  BUG MOB TODO return clone().transform(mapper)
             var result: Array = clone()
             result.transform(mapper)
             return result
@@ -1219,15 +1214,6 @@ module ejs {
          */
         function readByte(): Number
             inbuf.readByte()
-
-        /** 
-            MOB -- unwanted
-            Read data from the stream into a byte array.
-            @returns a new byte array with the available data. Returns an empty byte array on eof.
-            @throws IOError if an I/O error occurs or premature eof
-        function readByteArray(count: Number = -1): ByteArray
-            inbuf.readByteArray(count)
-         */
 
         /** 
             Read a date from the stream.
@@ -1880,7 +1866,6 @@ module ejs {
 
         /** 
             Write a byte to the array. Data is written to the current write $position pointer which is then incremented.
-//  MOB -- no such details exist
             See $write for details about sync, async modes and event handling.
             @param data Data to write
             @throws IOError if an I/O error occurs or if the stream cannot absorb all the data.
@@ -3684,7 +3669,6 @@ module ejs {
  */
 
 module ejs {
-    //  MOB - rename emitter to something else
     /** 
         The emitter class provides a publish/subscribe model of communication via events. It supports the 
         registration of observers
@@ -3741,8 +3725,9 @@ module ejs {
             }
         }
 
-        /** @hide
-            MOB -- complete or remove
+        /** 
+            @hide
+            TODO - complete or remove
          */
         function delayedFire(name: String, delay: Number, ...args): Void {
             Timer(delay, function() {
@@ -4054,7 +4039,7 @@ module ejs {
         native function AssertError(message: String? = null) 
     }
 
-//MOB Who is using this? Delete
+//UNUSED Who is using this? Delete
     /**
         Code (instruction) error exception class. Thrown when an illegal or insecure operation code is detected 
         in the instruction stream.
@@ -4111,7 +4096,7 @@ module ejs {
         native function MemoryError(message: String? = null) 
     }
 
-//MOB Who is using this? Delete
+//UNUSED Who is using this? Delete
     /**
         OutOfBounds error exception class. Thrown to indicate that an attempt has been made to set or access an 
         object's property outside of the permitted set of values for that property. For example, an array has been 
@@ -4211,7 +4196,7 @@ module ejs {
         native function TypeError(message: String? = null) 
     }
 
-//MOB Delete
+//UNUSED Delete
     /**
         Uri error exception class. Throw a Uri fails to parse.
         @stability prototype
@@ -4760,7 +4745,7 @@ module ejs {
          */
         native function Function(...args)
 /*
-    MOB -- todo
+    FUTURE -- todo
             let body = args.pop()
             let code = "function(" + args.join(",") + ") {\n" + body + "\n}"
             print("CODE " + code)
@@ -4812,7 +4797,7 @@ module ejs {
         //  Number of arguments expected by the function
         native function get length(): Number
 
-        //  MOB -- DOC
+        //  DOC
         /** @hide */
         native function setScope(scope: Object): Void
     }
@@ -5132,7 +5117,7 @@ module ejs {
      */
     native function md5(str: String): String
 
-//  MOB -- rewrite
+//  DOC -- rewrite
     /** 
         Blend one object into another.  The merge is done at the primitive property level and it does a deep clone of 
         the source. If overwrite is true, the property is replaced. If overwrite is false, the property will be added 
@@ -5147,7 +5132,7 @@ module ejs {
      */
     native function blend(dest: Object, src: Object, overwrite: Boolean = true): Object
 
-     // TODO - should cache be a Path
+    // TODO - should cache be a Path
     /** 
         Evaluate a script. Not present in ejsvm.
         @param script Script string to evaluate
@@ -5177,7 +5162,7 @@ module ejs {
     function isFinite(arg: Number): Boolean
         arg.isFinite
 
-    //  TODO MOB - should file and cache be paths?
+    //  TODO - should file and cache be paths?
     /** 
         Load a script or module
         @param file path name to load. File will be interpreted relative to EJSPATH if it is not found as an absolute or
@@ -5531,13 +5516,13 @@ module ejs {
         native function get async(): Boolean
         native function set async(enable: Boolean): Void
 
-        //  MOB - does this do an abortive close?
         /** 
             @duplicate Stream.close 
-            This closes any open network connection and resets the http object to be ready for another connection. 
-            Connections should be explicitly closed rather than relying on the garbage collector to dispose of the 
-            Http object and automatically close the connection. If you have more requests that can be issued on 
-            the same network connection, use reset() rather than close to prepare for a new request on the same connection.
+            This immediately closes any open network connection and resets the http object to be ready for another 
+            connection.  Connections should be explicitly closed rather than relying on the garbage collector to 
+            dispose of the Http object and automatically close the connection. If you have more requests that can 
+            be issued on the same network connection, use reset() rather than close to prepare for a new request 
+            on the same connection.
          */
         native function close(): Void 
 
@@ -6601,8 +6586,8 @@ module ejs {
      */
     native function deserialize(str: String): Object
 
-    //  MOB -- change pretty to format: "pretty" | "compact"
-    //  MOB - change to includeBases (deprecated baseClasses)
+    //  TODO -- change pretty to format: "pretty" | "compact"
+    //  TODO - change to includeBases (deprecated baseClasses)
     /** 
         Encode an object as a string. This function returns a literal string for the object and all its properties. 
         If $maxDepth is sufficiently large (or zero for infinite depth), each property will be processed recursively 
@@ -6815,7 +6800,7 @@ module ejs {
                 }
                 initializer = eval(code, cache)
             }
-            //  MOB -- implement system and module?
+            //  TODO -- implement system and module?
             //  function initializer(require, exports, module, system)
             signatures[path] = exports = {}
             initializer(require, exports, {id: id, path: path}, null)
@@ -6826,7 +6811,6 @@ module ejs {
         public static function cached(id: Path, config = App.config, cachedir: Path = null): Path {
             config ||= App.config
             if (id && config.cache.enable) {
-                //  MOB - should Path("cache") be used?
                 let dir = cachedir || Path(config.directories.cache) || Path("cache")
                 if (dir.exists) {
                     return Path(dir).join(md5(id)).joinExt('.mod')
@@ -7331,7 +7315,7 @@ module ejs {
         function info(...msgs): void
             emit("", Info, "INFO", msgs.join(" ") + "\n")
 
-        //  MOB - should activity take a level?
+        //  TODO - should activity take a level?
         /** 
             Emit an activity message
             @param tag Activity tag to prefix the message. The tag string is wraped in "[]".
@@ -7695,7 +7679,7 @@ module ejs {
          */
         native static function get allocated(): Number
 
-        //  MOB -- should use observers not callbacks
+        //  TODO -- should use observers not callbacks
         /**
             Memory redline callback. When the memory redline limit is exceeded, the callback will be invoked. 
             If no callback is defined and the redline limit is exceeded, a MemoryError exception is thrown. This callback
@@ -7708,13 +7692,12 @@ module ejs {
         native static function set callback(fn: Function): Void
 
 
-//  MOB -- what is the default?
         /**
             Maximum amount of heap memory the application may use in bytes. This defines the upper limit for heap memory 
             usage by the entire hosting application. If this limit is reached, subsequent memory allocations will fail and 
             a $MemoryError exception will be thrown. Setting it to zero will allow unlimited memory allocations up 
             to the system imposed maximum. If $redline is defined and non-zero, the redline callback will be invoked 
-            when the $redline is exceeded.
+            when the $redline is exceeded. By default, maximum is set to unlimited.
          */
         native static function get maximum(): Number
 
@@ -8051,7 +8034,7 @@ module ejs {
          */
         native function Number(value: Object? = null)
 
-//  MOB - convert these back to constants
+//  TODO - convert these back to constants
         /**
             Return the maximim value this number type can assume. Alias for MaxValue.
             An object of the appropriate number with its value set to the maximum value allowed.
@@ -8371,7 +8354,7 @@ module ejs {
          */
         static native function freeze(obj: Object): Void
 
-/* MOB 
+/* FUTURE 
         get options
         @option baseClasses Boolean determining if base class properties will be serialized. Defaults to false.
         @option depth Number indiciating the depth to recurse when converting properties to literals. If set to zero, 
@@ -8396,13 +8379,13 @@ module ejs {
          */
         static native function getOwnPropertyDescriptor(obj: Object, prop: String): Object
 
+//  MOB -- inconsistent with JSON.baseClasses
         /** 
             Return an array of all property names including non-enumerable properties. This returns the bare names
             and does not include the namespace portions of the names. Use getOwnPropertyDescriptor to access property
             namespace values.
             @param obj Object to inspect
             @param options Property selection options
-MOB -- inconsistent with JSON.baseClasses
             @option includeBases Boolean determining if base class properties will included. Defaults to false.
             @option excludeFunctions Boolean determining if function properties will included. Defaults to false.
             @return Array of enumerable property names
@@ -8436,7 +8419,6 @@ MOB -- inconsistent with JSON.baseClasses
          */
         native function hasOwnProperty(name: String): Boolean
 
-//  MOB -- terminology. dynamic vs extensible
         /** 
             Test if an object is extensible
             @return True if the extensible trait of the object is true
@@ -8715,7 +8697,6 @@ module ejs {
          */
         native function get basename(): Path
         
-//  MOB -- perhaps should be split()
         /**
             Path components. This is the path converted to an absolute path and then broken into components for each
             directory level. It is set to an array object with an element for each segment of the path. The first 
@@ -8887,7 +8868,6 @@ module ejs {
          */
         native function joinExt(ext: String): Path
 
-//  MOB -- fix when UNICODE to length in characters
         /**
             The length of the path name in bytes. Note: this is not the file size. For that, use Path.size
          */
@@ -9105,11 +9085,9 @@ module ejs {
          */
         native function get relative(): Path
 
-//  MOB - better not to throw
         /**
             Delete the file associated with the Path object. If this is a directory without contents it will be removed.
             @return True if the file is sucessfully deleted
-            @throws IOError if the file exists and could not be deleted.
          */
         native function remove(): Boolean 
 
@@ -13675,8 +13653,6 @@ module ejs.db.mapper {
      */
     public class Record {
         
-        //  MOB -- these should be private. Also need a default namesapce
-
         static var  _assocName: String          //  Name for use in associations. Lower case class name
         static var  _belongsTo: Array = null    //  List of belonging associations
         static var  _className: String          //  Model class name
@@ -14037,7 +14013,6 @@ module ejs.db.mapper {
             return null
         }
 
-//  MOB -- count not implemented
         /**
             Find records matching a condition. Select a set of records using a given SQL where clause
             @param where SQL WHERE clause to use when selecting rows.
@@ -14386,7 +14361,6 @@ module ejs.db.mapper {
 
         /*
             Make a getter function to lazily (on-demand) read associated records (belongsTo)
-            MOB - OPT should reuse these and not create a new reader for each cell
          */
         private static function makeLazyReader(rec: Record, field: String, model, key: String, 
                 options: Object = {}): Function {
@@ -14602,7 +14576,6 @@ module ejs.db.mapper {
             }
         }
 
-        //  MOB -- count not documented or implemented
         /**
             Run an SQL statement and return selected records.
             @param cmd SQL command to issue. Note: "SELECT" is automatically prepended and ";" is appended for you.
@@ -15132,7 +15105,6 @@ module ejs.db.sqlite {
         function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
             //  TODO - need to access Database.traceAll
             //  TODO - need to better logging framework
-            //  MOB -- but Database does tracing outside this 
             if (trace) {
                 print(tag + ": " + cmd)
             }
@@ -15423,7 +15395,6 @@ module ejs.db {
             @TODO Refactor logging when Log class implemented
          */
         function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
-            //  MOB - refactor tracing. Sqlite does tracing too
             if (options.trace || trace) {
                 print(tag + ": " + cmd)
             }
@@ -15744,7 +15715,7 @@ module ejs.db {
 module ejs.template  {
 
     /*
-        MOB TODO implement these directives
+        TODO implement these directives
           -%>  Omit newline after tag
           <%s   For safe output Html escape the output
      */
@@ -15818,7 +15789,7 @@ module ejs.template  {
 
                 switch (tid) {
                 case Token.Literal:
-                    //  MOB -- should amalgamate writes
+                    //  OPT -- should amalgamate writes
                     out.write("\n        write(\"" + token + "\");")
                     break
 
@@ -16477,7 +16448,7 @@ module ejs.web {
         return (new CommonLogClass(app, logger)).app
     }
 
-    //  MOB - not a great name having Class in the name
+    //  TODO - not a great name having Class in the name
     /**
         Common Log web server logging.
         This logs each HTTP request to a file in the Common Log format defined by the Apache web server.
@@ -16660,7 +16631,7 @@ module ejs.web {
      */
     namespace action = "action"
 
-    //  MOB - need more doc here on controllers
+    //  DOC - need more doc here on controllers
     /** 
         Web framework controller class. The Controller class is part of the Ejscript Model View Controller (MVC) web
         framework. Controller class instances can accept web requests and direct them to action methods for servicing
@@ -16692,7 +16663,7 @@ module ejs.web {
         /** Configuration settings. This is a reference to $ejs.web::Request.config */
         var config: Object 
 
-//  MOB -- rename to "name"
+//  TODO -- rename to "name"
         /** Pascal case controller name */
         var controllerName: String
 
@@ -17464,8 +17435,8 @@ module ejs.web {
             // this.controller = controller
         }
 
-        //  MOB -- state should be stored in View.viewState. This should be stateless
-//  MOB -- all methods must become static
+//  TODO -- state should be stored in View.viewState. This should be stateless
+//  TODO -- all methods must become static
         private var nextId: Number = 0
 
         private function scriptHeader(kind: String, id: String): Void {
@@ -17774,7 +17745,7 @@ module ejs.web {
     /**
         The Html Connector provides bare HTML encoding of View controls.
 
-        MOB Style conventions???
+        TODO Style conventions???
             -ejs- prefixes all internal styles
             -ejs-alert
             -ejs-flash
@@ -19858,7 +19829,8 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
                     if (!target.controller && controller) {
                         target.controller = controller.controllerName
                     }
-                    target.route = target.action || "default"
+                    target.route ||= target.action || "default"
+                    // target.route ||= "default"
                 }
                 if (target.route) {
                     target.scriptName ||= scriptName
@@ -21050,9 +21022,9 @@ module ejs.web {
 
         /**
             Show the route table
-            @param extra Set to true to display extra route information
+            @param extra Set to "full" to display extra route information
          */
-        public function show(extra: Boolean = false): Void {
+        public function show(extra: String = null): Void {
             let lastController
             for each (name in Object.getOwnPropertyNames(routes).sort()) {
                 print("\n" + (name || "Global")+ "/")
@@ -21063,7 +21035,7 @@ module ejs.web {
             print()
         }
 
-        private function showRoute(r: Route, extra: Boolean = false): Void {
+        private function showRoute(r: Route, extra: String = null): Void {
             let method = r.method || "*"
             let target
             let tokens = r.tokens
@@ -21091,7 +21063,7 @@ module ejs.web {
                 template = "*"
             }
             let line = "  %-24s %s %-24s %-7s %s".format(r.name, r.threaded ? "T": " ", target, method, template)
-            if (extra) {
+            if (extra == "full") {
                 if (params && Object.getOwnPropertyCount(params) > 0) {
                     if (!(params.action && Object.getOwnPropertyCount(params) == 1)) {
                         line += "\n                                                      %s".format(serialize(params))
@@ -21484,7 +21456,6 @@ module ejs.web {
                     name = template.name
                 }
             }
-            //  MOB -- was index
             name ||= "default"
             if (outer && !options.name) {
                 name = options.name + "/" + name
@@ -21909,7 +21880,6 @@ module ejs.web {
                 headers["Expires"] = when.toUTCString()
             }
         }
-//  MOB OPT cache request.method
         if (request.method == "GET" || request.method == "POST") {
             headers["Content-Length"] = filename.size
             if (request.config.web.nosend) {
@@ -21920,7 +21890,6 @@ module ejs.web {
 
         } else if (request.method == "DELETE") {
             status = Http.NoContent
-            //  MOB -- remove try when not needed
             try {
                 if (!filename.remove()) {
                     status = Http.NotFound
@@ -21949,7 +21918,6 @@ module ejs.web {
 
         /* Inline function to handle put requests */
         function put(request: Request) {
-            //  MOB -- how to handle ranges?
             let path = request.dir.join(request.pathInfo.trimStart('/'))
             request.status = path.exists ? Http.NoContent : Http.Created
 
@@ -21984,7 +21952,6 @@ module ejs.web {
         @stability prototype
      */
     function StaticBuilder(request: Request): Function {
-        //  MOB -- BUG should not need "ejs.web"
         return "ejs.web"::StaticApp
     }
 }
@@ -22374,11 +22341,12 @@ module ejs.web {
     }
 
     /*
-UNUSED && KEEP
         Return the request form parameters. This creates the params object on demand.
         @returns Object hash of user parameters
         @spec ejs
         @stability prototype
+
+        UNUSED && KEEP
 
     function parseParams(form: Object): Object {
         params = {}
@@ -22632,7 +22600,7 @@ module ejs.web {
         }
 
 //  MOB -- consider deprecating
-        /**
+        /*
             Emit an anchor. This is lable inside an anchor reference. 
             @param text Link text to display
             @param options Optional extra options. See $View for a list of the standard options.
@@ -23604,11 +23572,9 @@ print("Multithreaded request")
             }
         }
 
-        //  MOB -- where here should content mapping take place according to Accept: 
         //    Accept: application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5
         private static function processBody(request: Request, body: Object): Void {
             if (body is Path) {
-                //  MOB -- should have generic way of disabling writeFile
                 if (request.isSecure) {
                     body = File(body, "r")
                 } else {
