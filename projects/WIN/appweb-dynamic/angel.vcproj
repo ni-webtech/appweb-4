@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="angel"
-    ProjectGUID="ad3334c1-2d11-4bd9-9880-ba5c3742cbd7"
+    ProjectGUID="d8b70f29-cb6c-4ccc-8549-227dbf7be207"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -135,7 +135,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -160,7 +160,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{0cc99f55-0ab2-4119-8dc0-799148edf1e4}"
+            UniqueIdentifier="{1260661a-0bd5-474d-9481-c4ad36e398ee}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -174,10 +174,10 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{36e1a019-8623-487e-b1af-45d554a90dec}"
+            UniqueIdentifier="{e12f7d62-090b-428c-8155-5faa33f45ee3}"
             >
             <File
-                RelativePath="..\..\..\src\server\WIN\angel.c"
+                RelativePath="..\..\..\src\deps\mpr\angel.c"
                 >
             </File>
         </Filter>

@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="auth"
-    ProjectGUID="1a2b7e49-2d9e-454a-b9dc-79fb16a35ea7"
+    ProjectGUID="bc17b4fb-848d-43c7-8d3c-ea8bd4fcca2d"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -135,7 +135,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -160,7 +160,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{982c7f21-dbeb-4b1c-84d2-21c462bc1480}"
+            UniqueIdentifier="{0642b3cb-3a74-48da-b326-a296609f443b}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -170,7 +170,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{35921107-532e-4918-a838-f087c92a7320}"
+            UniqueIdentifier="{a668c1a7-59ed-4eff-b5b3-eb8c0b7b9260}"
             >
             <File
                 RelativePath="..\..\..\src\utils\auth.c"

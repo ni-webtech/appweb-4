@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="libhttp"
-    ProjectGUID="d333bff1-6b08-4ec2-9139-4be0fac4a5df"
+    ProjectGUID="e3db4232-3b0d-4c13-8d59-c6866dafe156"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -136,7 +136,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -162,7 +162,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{487d9c88-b032-4bcb-89ea-6b7e7b80f926}"
+            UniqueIdentifier="{22aef351-b0cf-4670-8f16-d37bae729cd2}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -172,7 +172,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{1412e38d-da6a-4841-beaf-554db3ffbce2}"
+            UniqueIdentifier="{7b2b5589-b9bb-4531-94a2-fb237ea92f3c}"
             >
             <File
                 RelativePath="..\..\..\src\deps\http\httpLib.c"

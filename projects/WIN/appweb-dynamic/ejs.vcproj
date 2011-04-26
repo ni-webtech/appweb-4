@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="ejs"
-    ProjectGUID="3f7e5685-e098-4e81-9d88-a0e5ab9c8c10"
+    ProjectGUID="355eb95c-8c4c-463e-a63b-90b781bf0971"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -135,7 +135,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -160,7 +160,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{143f8920-d35b-41c9-8d85-4870670a8d2a}"
+            UniqueIdentifier="{0f505814-89fc-43da-bd91-e6c9369c4ac8}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -170,7 +170,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{14dc4da6-c787-4074-9f84-f74660766504}"
+            UniqueIdentifier="{af1b4b87-e0d5-4323-a1af-4f8914cd8834}"
             >
             <File
                 RelativePath="..\..\..\src\deps\ejs\ejs.c"

@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="mod_cgi"
-    ProjectGUID="bd072b9c-2737-4e47-8249-2a415fe0d853"
+    ProjectGUID="d5e95fa6-d819-4ae9-a6ec-cba2cfcdf6e0"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -136,7 +136,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -162,7 +162,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{84b246c6-3d8e-4a61-b7ba-9825be6981be}"
+            UniqueIdentifier="{1a173751-10c2-4894-bb13-04b8bad2cf9d}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -172,7 +172,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{53b07047-fdf7-4333-b7c9-7696bc8dba52}"
+            UniqueIdentifier="{10c435e6-4746-4c0e-be75-ca8094fe7912}"
             >
             <File
                 RelativePath="..\..\..\src\handlers\cgiHandler.c"

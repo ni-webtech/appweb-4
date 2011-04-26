@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="mod_ssl"
-    ProjectGUID="9657c974-1169-4dc1-9856-226d71ac8b5c"
+    ProjectGUID="c092756a-ef75-409f-917d-d63857b916f4"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -136,7 +136,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -162,7 +162,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{520a75cc-19af-4f21-82e9-cfccad058640}"
+            UniqueIdentifier="{456a4af7-2ef2-413e-8d12-72082eef1a85}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -172,7 +172,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{519d2580-6cdf-431a-a340-7e062f703bae}"
+            UniqueIdentifier="{dbc05388-5036-4b32-a969-27e7c2f8a916}"
             >
             <File
                 RelativePath="..\..\..\src\modules\sslModule.c"

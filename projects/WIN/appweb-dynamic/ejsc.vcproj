@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="ejsc"
-    ProjectGUID="aeba78de-f551-488f-bf87-6f60e5c9dc1d"
+    ProjectGUID="518abc30-2657-44be-9990-8ffaf8836a95"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -29,8 +29,8 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Build Ejscript Modules"
-				CommandLine="if not exist $(ProjectDir)\..\..\..\bin\ejs.mod echo Building ejs.mod &amp; $(IntDir)\ejsc --debug --optimize 9 --bind --require &apos;&apos; --out $(ProjectDir)/../../../bin/ejs.mod $(ProjectDir)/../../../src/deps/ejs/ejs.es&#x0D;&#x0A;if not exist $(ProjectDir)\..\..\..\src\include\ejs.slots.h echo Building ejs.slots.h &amp; $(IntDir)\ejsmod --showBuiltin --showDebug --require &apos;&apos; --listing --out $(ProjectDir)/../../../src/include/ejs.slots.h $(ProjectDir)/../../../bin/ejs.mod"
-				Outputs="$(ProjectDir)/../../../bin/ejs.mod"
+				CommandLine="if not exist $(TargetDir)\ejs.mod echo Building ejs.mod &amp; $(TargetDir)\ejsc --debug --optimize 9 --bind --require null --out $(TargetDir)/ejs.mod $(ProjectDir)/../../../src/deps/ejs/ejs.es&#x0D;&#x0A;if not exist $(ProjectDir)\..\..\..\out\include\ejs.slots.h echo Building ejs.slots.h &amp; $(TargetDir)\ejsmod --require null --listing --out $(ProjectDir)/../../../out/include/ejs.slots.h $(TargetDir)/ejs.mod"
+				Outputs="$(TargetDir)/ejs.mod"
 			/>
 
             <Tool
@@ -71,7 +71,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -105,8 +105,8 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Build Ejscript Modules"
-				CommandLine="if not exist $(ProjectDir)\..\..\..\bin\ejs.mod echo Building ejs.mod &amp; $(IntDir)\ejsc --debug --optimize 9 --bind --require &apos;&apos; --out $(ProjectDir)/../../../bin/ejs.mod $(ProjectDir)/../../../src/deps/ejs/ejs.es&#x0D;&#x0A;if not exist $(ProjectDir)\..\..\..\src\include\ejs.slots.h echo Building ejs.slots.h &amp; $(IntDir)\ejsmod --showBuiltin --showDebug --require &apos;&apos; --listing --out $(ProjectDir)/../../../src/include/ejs.slots.h $(ProjectDir)/../../../bin/ejs.mod"
-				Outputs="$(ProjectDir)/../../../bin/ejs.mod"
+				CommandLine="if not exist $(TargetDir)\ejs.mod echo Building ejs.mod &amp; $(TargetDir)\ejsc --debug --optimize 9 --bind --require null --out $(TargetDir)/ejs.mod $(ProjectDir)/../../../src/deps/ejs/ejs.es&#x0D;&#x0A;if not exist $(ProjectDir)\..\..\..\out\include\ejs.slots.h echo Building ejs.slots.h &amp; $(TargetDir)\ejsmod --require null --listing --out $(ProjectDir)/../../../out/include/ejs.slots.h $(TargetDir)/ejs.mod"
+				Outputs="$(TargetDir)/ejs.mod"
 			/>
 
             <Tool
@@ -147,7 +147,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -172,7 +172,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{363daf6a-a0a1-4bc4-9db8-867623451022}"
+            UniqueIdentifier="{2a7545bf-e0f0-480a-a796-2e3e682907de}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -182,7 +182,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{d02b8abb-d227-4f82-8f52-94471c0224cd}"
+            UniqueIdentifier="{a69a1c14-cece-4734-a1a9-a14e49696f9e}"
             >
             <File
                 RelativePath="..\..\..\src\deps\ejs\ejsc.c"

@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="libappweb"
-    ProjectGUID="1551c75b-8d56-4101-b58e-a90e6028207b"
+    ProjectGUID="c9c45a0d-f167-4f28-813d-19c84bc13b71"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -136,7 +136,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -162,7 +162,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{cd31d10d-da54-4377-a4e9-11a40b0407d0}"
+            UniqueIdentifier="{10bd51f0-aa18-4b06-9ef0-8e43f3bc45d6}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -176,7 +176,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{801b7e84-d978-4d24-b283-9ddab7c1f203}"
+            UniqueIdentifier="{485936dc-d257-47d2-b86c-a3aab306a197}"
             >
             <File
                 RelativePath="..\..\..\src\config.c"

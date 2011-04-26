@@ -3,7 +3,7 @@
     ProjectType="Visual C++"
     Version="8.00"
     Name="appwebMonitor"
-    ProjectGUID="0621571b-21cb-49ac-97e2-6c2d26d267a3"
+    ProjectGUID="2448d680-c7ec-4acd-91fb-44bb5d73e5f9"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -135,7 +135,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../out/include;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -160,7 +160,7 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{5f449977-67a5-4045-b599-d3fd6c9ca21c}"
+            UniqueIdentifier="{d70bc961-9883-4490-a100-145c36ed4d98}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
@@ -178,7 +178,7 @@
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{2b4efb5a-7fa1-4678-9745-945e0f0a286e}"
+            UniqueIdentifier="{100177f9-10f8-46a9-9079-967948b7c104}"
             >
             <File
                 RelativePath="..\..\..\src\server\WIN\appwebMonitor.c"
