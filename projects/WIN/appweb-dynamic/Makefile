@@ -67,7 +67,7 @@ libejs.vcproj: Makefile $(CONFIG)
 	
 libhttp.vcproj: Makefile $(CONFIG)
 	@makeVsProj --project libhttp.vcproj --library http --dflags "$(DFLAGS)" \
-		--def libhttp.def --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(HTTP_HDR) $(SRC)/deps/http/httpLib.c
+		--def libhttp.def --libs "libmpr.lib libmprssl.lib $(LIBS)" $(MPR_HDR) $(HTTP_HDR) $(SRC)/deps/http/httpLib.c
 	
 libappweb.vcproj: Makefile $(CONFIG)
 	@makeVsProj --project libappweb.vcproj --library appweb --dflags "$(DFLAGS)" \
