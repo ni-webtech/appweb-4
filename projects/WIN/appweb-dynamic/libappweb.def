@@ -20,16 +20,16 @@ EXPORTS
   maOpenFileHandler
   maParseConfig
   maRemoveServer
+  maRotateAccessLog
   maRunSimpleWebServer
   maRunWebServer
   maServiceWebServer
   maSetAccessLog
-  maSetDefaultHost
   maSetDefaultMeta
-  maSetForkCallback
   maSetHttpGroup
   maSetHttpUser
   maSetMetaAddress
+  maSetMetaDefaultHost
   maSetMetaRoot
   maSplitConfigValue
   maStartAccessLogging

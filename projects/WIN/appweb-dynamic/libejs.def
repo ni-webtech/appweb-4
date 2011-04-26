@@ -97,7 +97,7 @@ EXPORTS
   ejsBlendObject
   ejsBootstrapTypes
   ejsCaptureStack
-  ejsCast
+  ejsCastType
   ejsCatString
   ejsCatStrings
   ejsClearArray
@@ -109,9 +109,11 @@ EXPORTS
   ejsCloneBlock
   ejsCloneBlockHelpers
   ejsCloneFunction
+  ejsCloneHttpServer
   ejsCloneObjHelpers
   ejsClonePot
   ejsClonePotHelpers
+  ejsCloneRequest
   ejsCoerceOperands
   ejsCompactPot
   ejsCompareMulti
@@ -135,6 +137,7 @@ EXPORTS
   ejsConfigureHttpType
   ejsConfigureIteratorType
   ejsConfigureJSONType
+  ejsConfigureLogFileType
   ejsConfigureLoggerType
   ejsConfigureMathType
   ejsConfigureMemoryType
@@ -242,6 +245,7 @@ EXPORTS
   ejsDecodeInt32
   ejsDecodeNum
   ejsDeepCopyXML
+  ejsDefineConfigProperties
   ejsDefineGlobalFunction
   ejsDefineProperty
   ejsDefineReservedNamespace
@@ -252,6 +256,7 @@ EXPORTS
   ejsDestroy
   ejsDestroyIntern
   ejsDestroySession
+  ejsDisableExit
   ejsDisableFunction
   ejsEmptyName
   ejsEmptyWideName
@@ -281,6 +286,7 @@ EXPORTS
   ejsGetHashSize
   ejsGetHttpLimits
   ejsGetInt
+  ejsGetInt64
   ejsGetItem
   ejsGetLastItem
   ejsGetLength
@@ -350,6 +356,7 @@ EXPORTS
   ejsManageString
   ejsManageXML
   ejsMarkName
+  ejsMatchName
   ejsModuleReadBlock
   ejsModuleReadByte
   ejsModuleReadConst
@@ -371,6 +378,8 @@ EXPORTS
   ejsPopBlockNamespaces
   ejsPropertyHasTrait
   ejsPushBlock
+  ejsRedirectLogging
+  ejsRedirectLoggingToFile
   ejsRegExpToString
   ejsRemoveItem
   ejsRemoveItemAtPos
@@ -383,6 +392,7 @@ EXPORTS
   ejsReportError
   ejsResetBlockNamespaces
   ejsResetByteArray
+  ejsResetByteArrayIfEmpty
   ejsRun
   ejsRunFunction
   ejsRunFunctionByName
@@ -408,13 +418,14 @@ EXPORTS
   ejsSetSearchPath
   ejsSetSessionTimeout
   ejsSetSpecial
+  ejsSetSpecialType
+  ejsSetTypeAttributes
   ejsSetTypeName
   ejsSetXML
   ejsSetupTrace
   ejsShowBlockScope
   ejsShowCurrentScope
   ejsSprintf
-  ejsStartMprLogging
   ejsStartsWithMulti
   ejsStopSessionTimer
   ejsStringToJSON
@@ -460,14 +471,7 @@ EXPORTS
   ejs_db_sqlite_Init
   ejs_web_Init
   g_deserialize
-  getMimeType
   getNextJsonToken
-  http_async
-  http_available
-  http_off
-  http_on
-  http_setHeader
-  http_set_async
   manageFileStream
   manageLoadState
   mem

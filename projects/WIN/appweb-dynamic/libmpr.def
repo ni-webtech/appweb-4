@@ -19,10 +19,10 @@ EXPORTS
   mprAddKey
   mprAddKeyFmt
   mprAddMime
-  mprAddNotifier
   mprAddNullToBuf
   mprAddRoot
   mprAddSocketHandler
+  mprAddStandardSignals
   mprAddTestGroup
   mprAdjustBufEnd
   mprAdjustBufStart
@@ -40,6 +40,7 @@ EXPORTS
   mprAttachFileFd
   mprBreakpoint
   mprCheckBlock
+  mprClaimDispatcher
   mprClearList
   mprCloneBuf
   mprCloneHash
@@ -51,6 +52,7 @@ EXPORTS
   mprCompareTime
   mprConnectSocket
   mprCopyList
+  mprCopyName
   mprCopyPath
   mprCopyright
   mprCreate
@@ -74,6 +76,7 @@ EXPORTS
   mprCreateModuleService
   mprCreateNotifierService
   mprCreateOsService
+  mprCreateSignalService
   mprCreateSocket
   mprCreateSocketService
   mprCreateSpinLock
@@ -98,7 +101,6 @@ EXPORTS
   mprDestroyMemService
   mprDisableCmdEvents
   mprDisableFileBuffering
-  mprDisableWaitEvents
   mprDisconnectCmd
   mprDisconnectSocket
   mprDispatchersAreIdle
@@ -111,7 +113,6 @@ EXPORTS
   mprEnableFileBuffering
   mprEnableGC
   mprEnableSocketEvents
-  mprEnableWaitEvents
   mprEncode64
   mprError
   mprEscapeCmd
@@ -176,7 +177,7 @@ EXPORTS
   mprGetLastPathSeparator
   mprGetListCapacity
   mprGetListLength
-  mprGetLogFd
+  mprGetLogFile
   mprGetLogHandler
   mprGetLogLevel
   mprGetMD5Hash
@@ -270,7 +271,6 @@ EXPORTS
   mprLookupModule
   mprLookupModuleData
   mprMakeArgv
-  mprMakeCmdIO
   mprMakeDir
   mprMakeLink
   mprMakeTime
@@ -284,13 +284,13 @@ EXPORTS
   mprMemdup
   mprMemoryError
   mprNop
+  mprNotifyOn
   mprOpenFile
   mprParseIp
   mprParseTestArgs
   mprParseTime
   mprPathExists
   mprPeekFileChar
-  mprPollCmd
   mprPopItem
   mprPrintMem
   mprPrintf
@@ -314,8 +314,8 @@ EXPORTS
   mprReadRegistry
   mprReadSocket
   mprRealloc
-  mprReapCmd
   mprRecallWaitHandler
+  mprRecallWaitHandlerByFd
   mprRefillBuf
   mprRelayEvent
   mprRelease
@@ -326,9 +326,9 @@ EXPORTS
   mprRemoveItem
   mprRemoveItemAtPos
   mprRemoveLastItem
-  mprRemoveNotifier
   mprRemoveRangeOfItems
   mprRemoveRoot
+  mprRemoveSignalHandler
   mprRemoveSocketHandler
   mprRemoveWaitHandler
   mprReportTestResults
@@ -354,9 +354,9 @@ EXPORTS
   mprSeekFile
   mprSendFileToSocket
   mprServiceEvents
+  mprServiceSignals
   mprServiceWinIO
   mprServicesAreIdle
-  mprSetAltLogData
   mprSetAppName
   mprSetBufMax
   mprSetBufRefillProc
@@ -367,6 +367,7 @@ EXPORTS
   mprSetCurrentThreadPriority
   mprSetDebugMode
   mprSetDomainName
+  mprSetExitStrategy
   mprSetHostName
   mprSetHwnd
   mprSetIdleCallback
@@ -374,7 +375,7 @@ EXPORTS
   mprSetIpAddr
   mprSetItem
   mprSetListLimits
-  mprSetLogFd
+  mprSetLogFile
   mprSetLogHandler
   mprSetLogLevel
   mprSetManager
@@ -404,6 +405,8 @@ EXPORTS
   mprSetThreadStackSize
   mprSetWinMsgCallback
   mprSetWorkerStackSize
+  mprShouldAbortRequests
+  mprShouldDenyNewRequests
   mprSignalCond
   mprSignalDispatcher
   mprSignalMultiCond
@@ -432,6 +435,7 @@ EXPORTS
   mprStopModule
   mprStopModuleService
   mprStopOsService
+  mprStopSignalService
   mprStopThreadService
   mprTerminate
   mprTrimPathExtension
@@ -444,6 +448,7 @@ EXPORTS
   mprUriDecode
   mprUriEncode
   mprUserError
+  mprUsingDefaultLogHandler
   mprVerifyMem
   mprVirtAlloc
   mprVirtFree
@@ -454,12 +459,13 @@ EXPORTS
   mprWaitForMultiCond
   mprWaitForSingleIO
   mprWaitForTestToComplete
+  mprWaitOn
   mprWaitTillIdle
   mprWakeDispatchers
   mprWakeGCService
   mprWakeNotifier
-  mprWakeWaitService
   mprWakeWorkers
+  mprWarn
   mprWriteCmd
   mprWriteFile
   mprWriteFileFormat
