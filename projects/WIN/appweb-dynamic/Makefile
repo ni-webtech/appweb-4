@@ -21,7 +21,7 @@ APPWEB_SRC	= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|test|utils' | egre
 LIBS		= ws2_32.lib
 PROJECTS	= libmpr.vcproj libsqlite3.vcproj libmprssl.vcproj libpcre.vcproj libhttp.vcproj libejs.vcproj \
               libappweb.vcproj appweb.vcproj angel.vcproj appwebMonitor.vcproj ejsmod.vcproj ejsc.vcproj ejs.vcproj \
-              ejssql.vcproj ejsweb.vcproj http.vcproj auth.vcproj \
+              ejssql.vcproj mvc.vcproj http.vcproj auth.vcproj \
 			  mod_cgi.vcproj mod_ejs.vcproj mod_php.vcproj mod_ssl.vcproj
 
 MAKE_IFLAGS	+= $(BLD_MPR_IFLAGS) $(BLD_PCRE_IFLAGS) $(BLD_HTTP_IFLAGS)
@@ -129,7 +129,7 @@ ejsmod.vcproj: Makefile $(CONFIG)
 		--libs "libmpr.lib libejs.lib $(LIBS)" $(MPR_HDR) $(EJS_HDR) \
 		$(SRC)/deps/ejs/ejsmod.c
 
-ejsc.vcproj: Makefile $(CONFIG)
+ejsc.vcproj: Makefile $(CONFIG) ejsc.custom
 	@makeVsProj --project ejsc.vcproj --exe ejsc.exe --search "$(BLD_EJS_LIBPATHS)" --dflags "$(DFLAGS)" \
 		--custom ejsc.custom --libs "libmpr.lib libejs.lib $(LIBS)" $(MPR_HDR) $(EJS_HDR) \
 		$(SRC)/deps/ejs/ejsc.c
@@ -138,13 +138,16 @@ ejssql.vcproj: Makefile $(CONFIG)
 	@makeVsProj --project ejssql.vcproj --exe ejssql.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
 		--libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(MPR_SRC) $(SRC)/deps/ejs/ejssql.c $(SRC)/deps/ejs/sqlite3.c
 
-ejsmvc.vcproj: Makefile $(CONFIG)
-	@makeVsProj --project ejsmvc.vcproj --exe ejsmvc.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
-		--libs "libmpr.lib libejs.lib $(LIBS)" $(MPR_HDR) $(EJS_HDR) $(SRC)/deps/ejs/ejsmvc.c
+mvc.vcproj: Makefile $(CONFIG)
+	@makeVsProj --project mvc.vcproj --exe mvc.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
+		--libs "libmpr.lib libejs.lib $(LIBS)" $(MPR_HDR) $(EJS_HDR) $(SRC)/deps/ejs/mvc.c
 
 ejspage.vcproj: Makefile $(CONFIG)
 	@makeVsProj --project ejspage.vcproj --exe ejspage.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
 		--libs "libmpr.lib libejs.lib $(LIBS)" $(MPR_HDR) $(EJS_HDR) $(SRC)/deps/ejs/ejspage.c
+
+cleanExtra:
+	rm -fr Upgrade* _Upgrade* x64 Win32 *.suo *.sdf *.filters *.vcxproj*
 
 #
 #   Local variables:
