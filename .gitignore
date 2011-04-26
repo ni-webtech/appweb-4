@@ -131,3 +131,12 @@ src/server/appweb.conf
 src/test/web/a
 src/handlers/proxyHandler.nc
 src/test/web/huge.txt
+*.vcxproj
+*.vcxproj.filters
+UpgradeLog*.XML
+_UpgradeReport*
+*.suo.old
+*.sln.old
+*.sdf
+*.opensdf
+projects/WIN/appweb-dynamic/Debug
