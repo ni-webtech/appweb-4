@@ -96,7 +96,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     app->serviceWindowTitle = sclone(BLD_NAME "Angel");
 
     mprSetAppName(BLD_PRODUCT "Monitor", BLD_NAME " Monitor", BLD_VERSION);
-    mprSetLogHandler(logHandler, NULL);
+    mprSetLogHandler(logHandler);
     chdir(mprGetAppDir());
 
     /*
