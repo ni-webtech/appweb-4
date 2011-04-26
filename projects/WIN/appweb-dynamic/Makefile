@@ -24,7 +24,7 @@ PROJECTS	= libmpr.vcproj libsqlite3.vcproj libmprssl.vcproj libpcre.vcproj libht
               ejssql.vcproj mvc.vcproj http.vcproj auth.vcproj \
 			  mod_cgi.vcproj mod_ejs.vcproj mod_php.vcproj mod_ssl.vcproj
 
-MAKE_IFLAGS	+= $(BLD_MPR_IFLAGS) $(BLD_PCRE_IFLAGS) $(BLD_HTTP_IFLAGS)
+MAKE_IFLAGS	+= $(BLD_MPR_IFLAGS) $(BLD_PCRE_IFLAGS) $(BLD_HTTP_IFLAGS) $(BLD_EJS_IFLAGS)
 SSL_IFLAGS	+= $(BLD_OPENSSL_IFLAGS)
 SSL_IFLAGS	+= $(BLD_MATRIXSSL_IFLAGS)
 PHP_IFLAGS	+= $(BLD_PHP_IFLAGS)
@@ -105,7 +105,7 @@ appweb.vcproj: Makefile $(CONFIG)
 
 angel.vcproj: Makefile $(CONFIG)
 	@makeVsProj --project angel.vcproj --graphical --exe angel.exe --search "$(BLD_EJS_LIBPATHS)" \
-		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(SRC)/server/WIN/angel.c
+		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(SRC)/deps/mpr/angel.c
 
 appwebMonitor.vcproj: Makefile $(CONFIG)
 	@makeVsProj --project appwebMonitor.vcproj --graphical --exe appwebMonitor.exe --search "$(BLD_EJS_LIBPATHS)" \

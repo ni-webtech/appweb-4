@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setup", "setup.vcproj", "{1BB92A7A-FA10-4023-BD3F-CCA3CAA85F1A}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmpr", "libmpr.vcproj", "{CB0A8E03-C111-49EA-AB49-5C45489418AD}"
 	ProjectSection(ProjectDependencies) = postProject
         {1BB92A7A-FA10-4023-BD3F-CCA3CAA85F1A} = {1BB92A7A-FA10-4023-BD3F-CCA3CAA85F1A}
@@ -84,7 +86,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http", "http.vcproj", "{CF9
 		{CB0A8E03-C111-49EA-AB49-5C45489418AD} = {CB0A8E03-C111-49EA-AB49-5C45489418AD}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "httpPassword", "httpPassword.vcproj", "{5BA2BA89-8C4F-4822-86CA-34D3D8B7222D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "auth", "auth.vcproj", "{5BA2BA89-8C4F-4822-86CA-34D3D8B7222D}"
 	ProjectSection(ProjectDependencies) = postProject
         {1BB92A7A-FA10-4023-BD3F-CCA3CAA85F1A} = {1BB92A7A-FA10-4023-BD3F-CCA3CAA85F1A}
 		{CB0A8E03-C111-49EA-AB49-5C45489418AD} = {CB0A8E03-C111-49EA-AB49-5C45489418AD}
@@ -139,8 +141,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhttp", "libhttp.vcproj",
 	ProjectSection(ProjectDependencies) = postProject
         {1BB92A7A-FA10-4023-BD3F-CCA3CAA85F1A} = {1BB92A7A-FA10-4023-BD3F-CCA3CAA85F1A}
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setup", "setup.vcproj", "{1BB92A7A-FA10-4023-BD3F-CCA3CAA85F1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

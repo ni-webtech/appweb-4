@@ -27,7 +27,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Install buildConfig.h"
-				CommandLine="if not exist $(ProjectDir)..\..\..\out mkdir $(ProjectDir)..\..\..\out&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include mkdir $(ProjectDir)..\..\..\out\include&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include\buildConfig.h echo Install buildConfig.h to out\include &amp; copy buildConfig.win $(ProjectDir)..\..\..\out\include\buildConfig.h&#x0D;&#x0A;"
+				CommandLine="if not exist $(ProjectDir)..\..\..\out mkdir $(ProjectDir)..\..\..\out&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include mkdir $(ProjectDir)..\..\..\out\include&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include\buildConfig.h echo Install buildConfig.h to out\include &amp; copy buildConfig.win $(ProjectDir)..\..\..\out\include\buildConfig.h&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include\ejs.slots.h echo Install ejs.slots.h to out\include &amp; copy $(ProjectDir)..\..\..\src\deps\ejs\slots.h $(ProjectDir)..\..\..\out\include\ejs.slots.h&#x0D;&#x0A;"
 				Outputs="$(ProjectDir)..\..\..\out\include\buildConfig.h"
 			/>
 			<Tool
@@ -102,7 +102,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Install buildConfig.h"
-				CommandLine="if not exist $(ProjectDir)..\..\..\out mkdir $(ProjectDir)..\..\..\out&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include mkdir $(ProjectDir)..\..\..\out\include&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include\buildConfig.h echo Install buildConfig.h to out\include &amp; copy buildConfig.win $(ProjectDir)..\..\..\out\include\buildConfig.h&#x0D;&#x0A;"
+				CommandLine="if not exist $(ProjectDir)..\..\..\out mkdir $(ProjectDir)..\..\..\out&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include mkdir $(ProjectDir)..\..\..\out\include&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include\buildConfig.h echo Install buildConfig.h to out\include &amp; copy buildConfig.win $(ProjectDir)..\..\..\out\include\buildConfig.h&#x0D;&#x0A;if not exist $(ProjectDir)..\..\..\out\include\ejs.slots.h echo Install ejs.slots.h to out\include &amp; copy $(ProjectDir)..\..\..\src\deps\ejs\slots.h $(ProjectDir)..\..\..\out\include\ejs.slots.h&#x0D;&#x0A;"
 				Outputs="$(ProjectDir)..\..\..\out\include\buildConfig.h"
 			/>
 			<Tool
