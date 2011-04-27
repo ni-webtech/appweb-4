@@ -1,7 +1,4 @@
 #!/usr/bin/env ejs
-
-// GC.enabled = false
-
 /*
     utest -- Embedthis Unit Test Framework
  */
@@ -19,15 +16,13 @@ enumerable class Test {
     /*
          Directories to omit from unit tests
      */
-    // const skipDirs = [ "all", "bin", "build", "doc", "extensions", "lib", "jlocal", "jremote", "modules", "obj", 
-    //     "package", "projects", "releases", "samples", "staging" ]
-    const skipDirs = [ "staging" ]
+    const skipDirs = [ "out", "build", "package", "samples" ]
 
     /*
         Parsed args
      */
     var _bin: Path                          // Path to bin directory
-    var config: Object                      // BuildConfig.make features
+    var config: Object                      // buildConfig.h features
     var continueOnErrors: Boolean = false   // Continue on errors 
     var data: Object                        // Opaque data
     var _depth: Number = 1                  // Test level. Higher levels mean deeper testing.
@@ -77,8 +72,6 @@ enumerable class Test {
             throw "Can't find configure"
         }
         _top = path.dirname.absolute
-//      _top.join("out/bin").absolute
-//      _lib = _top.join("out/lib").absolute
         _bin = App.exeDir
         _lib = App.exeDir.join("../lib")
         if (!_lib.exists) {
@@ -479,27 +472,6 @@ enumerable class Test {
         }
     }
         
-/*MOB
-    function log(level: Number, tag: String, ...items): Void {
-        if (verbosity >= level) {
-            log.write("%12s " % [tag])
-            for each (item in items) {
-                log.write(item)
-            }
-            log.write("\n")
-        }
-    }
-
-    function report(tag: String, ...items): Void {
-        log.activity(tag, ...items)
-        log.write("%12s " % [tag])
-        for each (item in items) {
-            log.write(item)
-        }
-        log.write("\n")
-    }
-*/
-
     function getKey(data: String, key: String): String {
         r = RegExp(key + "=(.*)")
         match = data.match(r)

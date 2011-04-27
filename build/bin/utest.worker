@@ -20,21 +20,6 @@ enumerable public class Test {
 
     var log = App.log
 
-/*MOB
-    public function log(level: Number, name: String, ...items) {
-        if (verbosity >= level) {
-            App.log.activity(name, ...items)
-            out.write("%12s " % [name])
-            out.write(items)
-            if (verbosity > 1) {
-                out.write("\n")
-            } else {
-                out.write(": ")
-            }
-        }
-    }
-*/
-
     public function mapVerbosity(adj: Number): String {
         str = ""
         for (i = test.verbosity + adj; i > 0; i--)
@@ -56,16 +41,6 @@ enumerable public class Test {
         }
         return null
     }
-
-/*MOB
-    public function setLogPath(path: Path): Void {
-        if (path) {
-            out = File(path).open("aw")
-        } else {
-            out = App.outputStream
-        }
-    }
-*/
 
     public function skip(message: String): Void
         postMessage({ skip: message })
