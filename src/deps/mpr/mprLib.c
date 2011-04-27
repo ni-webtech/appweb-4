@@ -1426,6 +1426,7 @@ static void sweeper(void *unused, MprThread *tp)
 /*
     Called by user code to signify the thread is ready for GC and all object references are saved. 
     If the GC marker is synchronizing, this call will block at the GC sync point (should be brief).
+    NOTE: if called by ResetYield, we may be already marking.
  */
 void mprYield(int flags)
 {
