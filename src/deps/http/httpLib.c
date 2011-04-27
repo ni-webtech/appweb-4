@@ -7960,25 +7960,41 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
 }
 
 
+/*
+    Only called by parseRequestLine
+ */
 static void traceRequest(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx  *rx;
     MprBuf  *content;
-    cchar   *endp;
+    cchar   *endp, *ext, *cp;
     int     len, level;
 
     rx = conn->rx;
+    content = packet->content;
+    ext = 0;
+
+    /*
+        Find the Uri extension:   "GET /path.ext HTTP/1.1"
+     */
+    if ((cp = schr(content->start, ' ')) != 0) {
+        if ((cp = schr(++cp, ' ')) != 0) {
+            for (ext = --cp; ext > content->start && *ext != '.'; ext--) ;
+            ext = (*ext == '.') ? snclone(&ext[1], cp - ext) : 0;
+        }
+    }
 
     mprLog(4, "New request from %s:%d to %s:%d", conn->ip, conn->port, conn->sock->acceptIp, conn->sock->acceptPort);
 
-    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
-        content = packet->content;
+    /*
+        If tracing header, do entire header including first line
+     */
+    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, ext) >= 0) {
         endp = strstr((char*) content->start, "\r\n\r\n");
         len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
         httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, packet, len, 0);
 
     } else if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) >= 0) {
-        content = packet->content;
         endp = strstr((char*) content->start, "\r\n");
         len = (endp) ? (int) (endp - mprGetBufStart(content) + 2) : 0;
         if (len > 0) {
@@ -8000,8 +8016,6 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     char        *method, *uri, *protocol;
     int         methodFlags;
 
-    traceRequest(conn, packet);
-
     rx = conn->rx;
     uri = 0;
     methodFlags = 0;
@@ -8010,6 +8024,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     conn->startTime = mprGetTime();
     conn->startTicks = mprGetTicks();
 #endif
+    traceRequest(conn, packet);
 
     method = getToken(conn, " ");
     rx->method = method = supper(method);
@@ -8999,6 +9014,7 @@ int httpMapToStorage(HttpConn *conn)
 
     tx->extension = httpGetExtension(conn);
 #if BLD_WIN_LIKE
+    //  MOB - genercise
     if (tx->extension) {
         tx->extension = slower(tx->extension);
     }

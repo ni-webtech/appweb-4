@@ -365,7 +365,7 @@ table.-ejs-table th {
 }
 
 table.-ejs-table tbody { 
-    cursor: pointer;
+    _cursor: pointer;
 }
 
 table.-ejs-table tbody td { 

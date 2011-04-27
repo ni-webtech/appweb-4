@@ -1301,6 +1301,9 @@ class EjsMvc {
             }
         }
         appName = App.dir.basename.toString().toLowerCase()
+        if (!dirs.controllers.exists) {
+            throw new IOError("Not an MVC application directory")
+        }
         if (!dirs.cache.exists || !isDir(dirs.cache)) {
             upgradeApp()
         }

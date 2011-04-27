@@ -16775,6 +16775,7 @@ module ejs.web {
                         response = "action"::missing()
                     }
                 } else {
+                    App.log.debug(3, "Run action " + actionName)
                     response = (ns)::[actionName]()
                 }
                 if (response && !response.body) {
@@ -17789,15 +17790,8 @@ module ejs.web {
             "domid":                "id",
             "effects":              "data-effects",
             "height":               "height",
-
-//          "key":                  "data-key",
-//          "keyFormat":            "data-key-format",
-//          "refresh":              "data-refresh",
-//          "params":               "data-params",
-
             "method":               "data-method",
             "modal":                "data-modal",
-//  MOB
             "period":               "data-refresh-period",
             "pivot":                "data-pivot",
             "rel":                  "rel",
@@ -17808,7 +17802,7 @@ module ejs.web {
             "width":                "width",
         }
 
-        //  MOB -- need styles for
+        //  MOB -- need to be able to control treeview or not
         private static const defaultStylesheets = [
             "/layout.css", 
             "/themes/default.css", 
@@ -17834,13 +17828,10 @@ module ejs.web {
             write('<div' + getAttributes(options) + '>' +  text + '</div>\r\n')
         }
 
-/*
         function anchor(text: String, options: Object): Void {
-            setLink(options.click, options, "data-click")
             let att = getAttributes(options, {"data-click": true})
             write('<a href="' + options.data-click + '"' + att + '>' + text + '</a>\r\n')
         }
-*/
 
         function button(name: String, value: String, options: Object): Void {
             write('    <input name="' + name + '" type="submit" value="' + value + '"' + getAttributes(options) + ' />\r\n')
@@ -17919,7 +17910,7 @@ module ejs.web {
                         /* list("priority", [["low", "3"], ["med", "5"], ["high", "9"]]) */
                         /* Note: value is first */
                         let [value, key] = choice
-                        selected = (value == defaultValue) ? ' selected="yes"' : ''
+                        selected = (key == defaultValue) ? ' selected="yes"' : ''
                         write('      <option value="' + key + '"' + selected + '>' + value + '</option>\r\n')
 
                     } else if (choice && choice.id) {
@@ -18261,12 +18252,13 @@ module ejs.web {
         }
 */
 
+//  MOB - move to request
         /*
-            Set the template key fields
-                        options.record = r
-                        options.row = row
-                        options.field = name
-                        options.values = values
+            Set the template key fields:
+                options.record = r
+                options.row = row
+                options.field = name
+                options.values = values
         */
         private function setKeyFields(target: Object, keyFields: Array, options: Object): Void {
             let record = options.record
@@ -18297,37 +18289,38 @@ module ejs.web {
          */
         }
 
+//  MOB - move to request
         /**
             Map options to a HTML attribute string. See htmlOptions and $View for a discussion on standard options.
             @param options Control options
             @returns a string containing the HTML attributes to emit. Will return an empty string or a string with a 
                 leading space (and not trailing space)
          */
-        private function getAttributes(options: Object, exclude: Object = null): String {
+        function getAttributes(options: Object, exclude: Object = null): String {
             if (options.hasError) {
                 options.style = append(options.style, "-ejs-field-error")
             }
             if (options.click) {
-                setLink(options.click, options, "data-click")
+                setLinkOptions(options.click, options, "data-click")
 
             } else if (options.remote) {
                 if (options.remote == true && options.action) {
                     options.remote = options.action
                 }
-                setLink(options.remote, options, "data-remote")
+                setLinkOptions(options.remote, options, "data-remote")
 
             } else if (options.edit) {
-                setLink(options.edit, options, "data-edit")
+                setLinkOptions(options.edit, options, "data-edit")
 
-/*
+/*  MOB
             } else if (options.action) {
                 // This is just a safety net incase someone uses "action" instead of click 
-                setLink(options.action, options, "data-click")
+                setLinkOptions(options.action, options, "data-click")
 */
             }
             if (options.refresh) {
                 options.domid ||= getNextID()
-                setLink(options.refresh, options, "data-refresh")
+                setLinkOptions(options.refresh, options, "data-refresh")
             }
             return mapAttributes(options, exclude)
         }
@@ -18377,7 +18370,7 @@ module ejs.web {
             "id_" + lastDomID++
 
         /*
-            Map options to HTML attributes
+            Map options to an HTML attribute string
          */
         private function mapAttributes(options: Object, exclude: Object = null): String {
             let result: String = ""
@@ -18396,7 +18389,17 @@ module ejs.web {
             return (result == "") ? result : (" " + result.trimEnd())
         }
 
-        private function setLink(target: Object, options: Object, prefix: String) {
+//  MOB
+        /*
+            Set option fields for a target URI:
+                options[prefix] == uri
+                options[prefix-method]
+                options[prefix-params]
+            @param target The URI target
+            @param options The options object hash
+            @param prefix The property prefix to use in options
+         */
+        private function setLinkOptions(target: Object, options: Object, prefix: String) {
             if (typeOf(target) != "Object") {
                 target = target.toString()
                 if (target[0] == '@') {
@@ -18410,10 +18413,12 @@ module ejs.web {
             }
             blend(target, options, false)
             if (options.key && options.record) {
+//  MOB -- need to understand this
                 setKeyFields(target, options.key, options)
             }
             target.uri ||= request.link(target)
             if (target.params) {
+//  MOB - should be a utility routine
                 /* Process params and convert to an encoded query string */
                 let list = []
                 for (let [k,v] in target.params) {
@@ -18424,15 +18429,11 @@ module ejs.web {
             options[prefix] = target.uri
             if (target.method) {
                 options[prefix + "-" + "method"] = target.method
+                delete options.method
             }
             if (target.params) {
                 options[prefix + "-" + "params"] = target.params
             }
-/*MOB
-            if (target.key) {
-                options[prefix + "-" + "key"] = target.key
-            }
-*/
         }
 
         private function write(str: String): Void
@@ -19830,7 +19831,6 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
                         target.controller = controller.controllerName
                     }
                     target.route ||= target.action || "default"
-                    // target.route ||= "default"
                 }
                 if (target.route) {
                     target.scriptName ||= scriptName
@@ -20111,18 +20111,18 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
                 The include property is an array of file extensions to include in tracing.
                 The include property is an array of file extensions to exclude from tracing.
                 The all property specifies that everything for this direction should be traced.
-                The conn property specifies that new connections should be traced.
+                The conn property specifies that new connections should be traced. (Rx only)
                 The first property specifies that the first line of the request should be traced.
                 The headers property specifies that the headers (including first line) of the request should be traced.
                 The body property specifies that the body content of the request should be traced.
                 The size property specifies a maximum body size in bytes that will be traced. Content beyond this limit 
                     will not be traced.
-            @option transmit. Object hash with optional properties: include, exclude, first, headers, body, size.
-            @option receive. Object hash with optional properties: include, exclude, conn, first, headers, body, size.
+            @option tx. Object hash with optional properties: include, exclude, first, headers, body, size.
+            @option rx. Object hash with optional properties: include, exclude, conn, first, headers, body, size.
             @example:
                 trace({
-                    transmit: { exclude: ["gif", "png"], "headers": 3, "body": 4, size: 1000000 }
-                    receive:  { "conn": 1, "headers": 2 , "body": 4, size: 1024 }
+                    tx: { exclude: ["gif", "png"], "first": 2, "headers": 3, "body": 4, size: 1000000 }
+                    rx: { "conn": 1, "first": 2, "headers": 3 , "body": 4, size: 1024 }
                 })
           */
         native function trace(options: Object): Void
@@ -20941,8 +20941,10 @@ module ejs.web {
             }
             if (log.level >= 3) {
                 log.debug(3, "Matched route \"" + r.routeSetName + "/" + r.name + "\"")
-                if (log.level >= 5) {
-                    log.debug(5, "  Route params " + serialize(params, {pretty: true}))
+                //  MOB 5
+                if (log.level >= 3) {
+                    //  MOB 5
+                    log.debug(3, "  Route params " + serialize(params, {pretty: true}))
                 }
                 if (log.level >= 6) {
                     log.debug(6, "  Route " + serialize(r, {pretty: true}))
@@ -22599,16 +22601,15 @@ module ejs.web {
             getConnector("alert", options).alert(text, options)
         }
 
-//  MOB -- consider deprecating
         /*
             Emit an anchor. This is lable inside an anchor reference. 
             @param text Link text to display
             @param options Optional extra options. See $View for a list of the standard options.
+         */
         function anchor(text: String, options: Object = {}): Void {
             options = getOptions(options)
             getConnector("label", options).label(text, options)
         }
-*/
 
         /**
             Render a form button. This creates a button suitable for use inside an input form. When the button is clicked,
@@ -22929,9 +22930,10 @@ print("CATCH " + e)
                 options.value property.
             @param choices Choices to select from. This can be an array list where each element is displayed and the value 
                 returned is an element index (origin zero). It can also be an array of key/value array tuples where the 
-                first entry is the value to display and the second is the value to send to the app. Or it can be an 
-                array of objects such as those returned from a table lookup. Lastly, it can be an object where the
-                property key is the value to display and the property value is the value to send to the app.
+                first entry is the value to display and the second is the value to send to the app and store in the 
+                database. Or it can be an array of objects such as those returned from a table lookup. Lastly, it can 
+                be an object where the property key is the value to display and the property value is the value to 
+                send to the app and store in the database.
             @param options Optional extra options. See $View for a list of the standard options.
             @example
                 radio("priority", ["low", "med", "high"])

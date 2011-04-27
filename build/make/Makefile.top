@@ -135,7 +135,7 @@ upload:
 			echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \
 			exit 2 ; \
 		fi ; \
-		cd releases >/dev/null 2>&1 ; \
+		cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
 		if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
 			for name in $(IMG_NAME)* md5-$(IMG_NAME)* ; \
 			do \
@@ -145,7 +145,7 @@ upload:
 			done ; \
 		fi ; \
 		if [ "$(BUILD_UPLOAD_SOURCE)" = "true" ] ; then \
-			cd releases >/dev/null 2>&1 ; \
+			cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
 			if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
 				for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; \
 				do \
@@ -185,30 +185,30 @@ disabled:
 
 test-install-package:
 	name="$(BASE_NAME).tar.tar.gz" ; \
-	cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+	cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
 	priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
 
 test-uninstall-package:
 	name="$(BASE_NAME).tar.tar.gz" ; \
-	cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+	cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
 	priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 
 test-install-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
 		rm -fr "$(PKG_DIR)/*" ; \
 		name="$(BASE_NAME).exe.zip" ; \
-		cp WIN/unattended.ans ../releases/$$name "$(PKG_DIR)" ; cd "$(PKG_DIR)" ; \
+		cp WIN/unattended.ans $(BLD_OUT_DIR)/releases/$$name "$(PKG_DIR)" ; cd "$(PKG_DIR)" ; \
 		unzip -q -o $$name ; \
 		echo "Dir=$(PKG_DIR)" >>unattended.ans ; \
 		./$(BASE_NAME).exe /loadinf=/tmp/unattended.ans /silent ; \
 	elif [ $(BLD_HOST_OS) = MACOSX ] ; then \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
-		hdid $(BLD_TOP)/releases/$(BASE_NAME).dmg >/dev/null ; \
+		hdid $(BLD_OUT_DIR)/releases/$(BASE_NAME).dmg >/dev/null ; \
 		priv installer -package /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION)/$(BLD_PRODUCT).mpkg -target /; \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
-		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+		cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
 		priv $(BLD_PRODUCT)_HEADLESS=1 ./install ; \
 	fi
 
@@ -222,7 +222,7 @@ test-uninstall-native-package:
 		rm -fr "$(PKG_DIR)/*" ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
-		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+		cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
 		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 	fi
 
