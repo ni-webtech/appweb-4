@@ -162,7 +162,7 @@ static void processPhp(HttpQueue *q)
         SG(request_info).auth_user = conn->authUser;
         SG(request_info).auth_password = conn->authPassword;
         SG(request_info).content_type = rx->mimeType;
-        SG(request_info).content_length = rx->length;
+        SG(request_info).content_length = (ssize) rx->length;
         SG(sapi_headers).http_response_code = HTTP_CODE_OK;
         SG(request_info).path_translated = tx->filename;
         SG(request_info).query_string = rx->parsedUri->query;
@@ -405,7 +405,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
         return 0;
     }
     content = q->first->content;
-    len = min(mprGetBufLength(content), bufsize);
+    len = (ssize) min(mprGetBufLength(content), bufsize);
     if (len > 0) {
         nbytes = mprMemcpy(buffer, len, mprGetBufStart(content), len);
         mprAssert(nbytes == len);
