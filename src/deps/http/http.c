@@ -487,6 +487,7 @@ static void showUsage()
         "  --method KIND         # HTTP request method GET|OPTIONS|POST|PUT|TRACE (default GET).\n"
         "  --nofollow            # Don't automatically follow redirects.\n"
         "  --noout               # Don't output files to stdout.\n"
+        "  --out file            # Send output to file\n"
         "  --password pass       # Password for authentication.\n"
         "  --post                # Use POST method. Shortcut for --method POST.\n"
         "  --printable           # Make binary output printable.\n"

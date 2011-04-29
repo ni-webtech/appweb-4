@@ -9148,7 +9148,6 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         if (remainingTime <= 0) {
             break;
         }
-        mprAssert(!mprSocketHasPendingData(conn->sock));
         mprWaitForEvent(conn->dispatcher, remainingTime);
         if (justOne || (conn->sock && mprIsSocketEof(conn->sock) && !workDone)) {
             break;
