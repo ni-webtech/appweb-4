@@ -11626,7 +11626,7 @@ static EjsNumber *lf_emit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
             arg = awtom(((EjsString*) str)->value, &len);
             break;
         }
-        msg = srejoin(msg, arg);
+        msg = srejoin(msg, arg, NULL);
     }
     if (msg) {
         mprRawLog(level, "%s", msg);
