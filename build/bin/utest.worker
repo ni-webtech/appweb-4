@@ -132,7 +132,8 @@ public function stopService() {
     if (Path(PIDFILE).exists) {
         pid = Path(PIDFILE).readString()
         Path(PIDFILE).remove()
-        try { kill(pid, 9); } catch (e) { }
+        try { kill(pid, 9); } catch (e) { /* print("Can't stop service " + pid)  */}
+        App.sleep(500);
     }
 }
 

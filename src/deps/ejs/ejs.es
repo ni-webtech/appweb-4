@@ -18657,6 +18657,12 @@ server.listen("127.0.0.1:7777")
                     App.updateLog()
                 }
             }
+            if (config.web.trace) {
+                trace(config.web.trace)
+            }
+            if (config.web.limits) {
+                setLimits(config.web.limits)
+            }
         }
 
         /** 
@@ -20941,10 +20947,8 @@ module ejs.web {
             }
             if (log.level >= 3) {
                 log.debug(3, "Matched route \"" + r.routeSetName + "/" + r.name + "\"")
-                //  MOB 5
-                if (log.level >= 3) {
-                    //  MOB 5
-                    log.debug(3, "  Route params " + serialize(params, {pretty: true}))
+                if (log.level >= 5) {
+                    log.debug(5, "  Route params " + serialize(params, {pretty: true}))
                 }
                 if (log.level >= 6) {
                     log.debug(6, "  Route " + serialize(r, {pretty: true}))
@@ -23491,13 +23495,12 @@ module ejs.web {
                 showClient: true,
                 //  where: "file" - defaults to web server log
             },
-            // MOB -- not yet implemented
+            /* MOB -- not yet implemented
             session: {
-                //  MOB -- do we need enable
                 enable: true,
-                //  MOB -- is this being used?
                 timeout: 1800,
             },
+            */
             web: {
                 expires: {
                     /*
@@ -23508,8 +23511,10 @@ module ejs.web {
                         "":     86400,
                      */
                 },
-                // endpoint: "127.0.0.1:4000",
+                // endpoint: ":4000",
                 // helpers: [],
+                // limits: {}
+                // trace: {rx: {}, tx: {}}
                 view: {
                     connectors: {
                         table: "html",

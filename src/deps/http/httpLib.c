@@ -12989,7 +12989,7 @@ MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q)
         httpJoinPackets(q, -1);
         content = q->first->content;
         mprAddNullToBuf(content);
-        mprLog(3, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
+        mprLog(6, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
         table = httpAddVars(table, mprGetBufStart(content), mprGetBufLength(content));
     }
     return table;

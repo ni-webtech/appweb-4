@@ -114,6 +114,7 @@ class EjsMvc {
             layoutPage = dirs.layouts.join("default.ejs")
             mvc = Path(App.args[0]).basename
         }
+print("LLLL", layoutPage)
     }
 
     private var cmdOptions = [

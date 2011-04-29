@@ -6,7 +6,7 @@ defineComponent() {
 
     ver="latest"
 
-    if [ $BLD_HOST_OS = MACOSX ] ; then
+    if [ "$BLD_HOST_OS" = MACOSX -o "$BLD_HOST_OS" = LINUX ] ; then
         path=${1:-/usr/include:/usr/lib}
     else
         path="${1:-.}"
