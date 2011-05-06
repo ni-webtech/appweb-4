@@ -17,6 +17,7 @@
 static int loadStartupScript(Ejs *ejs, HttpConn *conn, cchar *script);
 
 /************************************* Code ***********************************/
+
 static void openEjs(HttpQueue *q)
 {
     HttpConn    *conn;
@@ -30,6 +31,7 @@ static void openEjs(HttpQueue *q)
     rx = conn->rx;
     alias = rx->alias;
     uri = rx->pathInfo;
+    loc = rx->loc;
 
     /*
         Set the scriptName to the alias prefix and remove from pathInfo
@@ -43,13 +45,12 @@ static void openEjs(HttpQueue *q)
         rx->pathInfo = sclone(uri);
         mprLog(5, "ejs: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
     }
-    loc = conn->rx->loc;
     if (loc == 0 || loc->context == 0) {
         /*
             On-demand loading of the startup script
          */
         mprLog(5, "ejs: create ejs interpreter");
-        if ((ejs = ejsCreate(NULL, NULL, NULL, 0, NULL, 0)) == 0) {
+        if ((ejs = ejsCreateVM(0, 0, 0, 0, 0, 0, 0)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create Ejs interpreter");
             return;
         }

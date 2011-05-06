@@ -10,7 +10,7 @@ PRODUCT=appweb
 EXE=
 INC="${ROOT_DIR}/usr/include"
 MAN="${ROOT_DIR}/usr/share/man"
-PROGRAMS="ajs ajsc ajsmod ajssql ajsweb appweb http auth"
+PROGRAMS="ejs ejsc ejsmod ejssql ejspage appweb http auth"
 
 if [ -x "${ROOT_DIR}/usr/local/bin" ] ; then
     BIN="${ROOT_DIR}/usr/local/bin"

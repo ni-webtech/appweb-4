@@ -282,7 +282,7 @@ MAIN(ejsMain, int argc, char **argv)
             mpr->name);
         return -1;
     }
-    if ((ejs = ejsCreate(NULL, searchPath, app->modules, argc - nextArg, (cchar **) &argv[nextArg], 0)) == 0) {
+    if ((ejs = ejsCreateVM(0, 0, searchPath, app->modules, argc - nextArg, (cchar **) &argv[nextArg], 0)) == 0) {
         return MPR_ERR_MEMORY;
     }
     app->ejs = ejs;
@@ -326,7 +326,7 @@ MAIN(ejsMain, int argc, char **argv)
         mprPrintMem("Memory Usage", 0);
     }
 #endif
-    ejsDestroy(ejs);
+    ejsDestroyVM(ejs);
     mprDestroy(MPR_EXIT_DEFAULT);
     return err;
 }

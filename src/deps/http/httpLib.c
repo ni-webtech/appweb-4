@@ -2423,7 +2423,7 @@ void httpDestroyConn(HttpConn *conn)
         if (HTTP_STATE_PARSED <= conn->state && conn->state < HTTP_STATE_COMPLETE) {
             HTTP_NOTIFY(conn, HTTP_STATE_COMPLETE, 0);
         }
-        HTTP_NOTIFY(conn, -1, 0);
+        HTTP_NOTIFY(conn, HTTP_EVENT_CLOSE, 0);
         httpRemoveConn(conn->http, conn);
         httpCloseConn(conn);
         conn->input = 0;
@@ -2656,6 +2656,7 @@ void httpEvent(HttpConn *conn, MprEvent *event)
     if (event->mask & MPR_READABLE) {
         readEvent(conn);
     }
+//  MOB -- must not do this if using a worker event
     if (conn->server && conn->keepAliveCount < 0) {
         /*  
             NOTE: compare keepAliveCount with "< 0" so that the client can have one more keep alive request. 
@@ -3056,7 +3057,7 @@ HttpLimits *httpSetUniqueConnLimits(HttpConn *conn)
 
 void httpWritable(HttpConn *conn)
 {
-    HTTP_NOTIFY(conn, 0, HTTP_NOTIFY_WRITABLE);
+    HTTP_NOTIFY(conn, HTTP_EVENT_IO, HTTP_NOTIFY_WRITABLE);
 }
 
 

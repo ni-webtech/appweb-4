@@ -1296,6 +1296,11 @@ extern void httpHandleOptionsTrace(HttpQueue *q);
 #define HTTP_STATE_RUNNING          6       /**< Handler running */
 #define HTTP_STATE_COMPLETE         7       /**< Request complete */
 
+/*
+    I/O Events
+*/
+#define HTTP_EVENT_CLOSE           -1       /**< Connection being closed */
+#define HTTP_EVENT_IO               0       /**< I/O event on connection */
 
 /*
     Limit validation events
@@ -2731,7 +2736,7 @@ typedef struct HttpServer {
     void            *meta;                  /**< Meta server object */
     MprSocket       *sock;                  /**< Listening socket */
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
-    HttpNotifier    notifier;               /**< Http state change notification callback */
+    HttpNotifier    notifier;               /**< Default connection notifier callback */
     struct MprSsl   *ssl;                   /**< Server SSL configuration */
 } HttpServer;
 

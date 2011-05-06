@@ -30,9 +30,9 @@
 
 /*  
     Get the application command line arguments
-    static function get args(): String
+    static function get args(): Array
  */
-static EjsObj *app_args(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsArray *app_args(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsArray    *args;
     int         i;
@@ -41,7 +41,7 @@ static EjsObj *app_args(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     for (i = 0; i < ejs->argc; i++) {
         ejsSetProperty(ejs, args, i, ejsCreateStringFromAsc(ejs, ejs->argv[i]));
     }
-    return (EjsObj*) args;
+    return args;
 }
 
 
@@ -49,9 +49,9 @@ static EjsObj *app_args(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Get the current working directory
     function get dir(): Path
  */
-static EjsObj *app_dir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsPath *app_dir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreatePathFromAsc(ejs, mprGetCurrentPath(ejs));
+    return ejsCreatePathFromAsc(ejs, mprGetCurrentPath(ejs));
 }
 
 
@@ -85,9 +85,9 @@ static EjsObj *app_chdir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Get the directory containing the application's executable file.
     static function get exeDir(): Path
  */
-static EjsObj *app_exeDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsPath *app_exeDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreatePathFromAsc(ejs, mprGetAppDir(ejs));
+    return ejsCreatePathFromAsc(ejs, mprGetAppDir(ejs));
 }
 
 
@@ -95,9 +95,9 @@ static EjsObj *app_exeDir(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Get the application's executable filename.
     static function get exePath(): Path
  */
-static EjsObj *app_exePath(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsPath *app_exePath(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreatePathFromAsc(ejs, mprGetAppPath(ejs));
+    return ejsCreatePathFromAsc(ejs, mprGetAppPath(ejs));
 }
 
 
@@ -200,9 +200,9 @@ static EjsObj *app_putenv(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
     Get the ejs module search path. Does not actually read the environment.
     function get search(): Array
  */
-static EjsObj *app_search(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
+static EjsArray *app_search(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejs->search;
+    return ejs->search;
 }
 
 
@@ -219,14 +219,14 @@ static EjsObj *app_set_search(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 
 /*  
     Get a default search path. NOTE: this does not modify ejs->search.
-    function get createSearch(searchPaths: String): Void
+    function get createSearch(searchPaths: String): Array
  */
-static EjsObj *app_createSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
+static EjsArray *app_createSearch(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
     cchar   *searchPath;
 
     searchPath = (argc == 0) ? NULL : ejsToMulti(ejs, argv[0]);
-    return (EjsObj*) ejsCreateSearchPath(ejs, searchPath);
+    return ejsCreateSearchPath(ejs, searchPath);
 }
 
 
@@ -299,20 +299,20 @@ void ejsConfigureAppType(Ejs *ejs)
     ejsSetProperty(ejs, type, ES_App__outputStream, ejsCreateFileFromFd(ejs, 1, "stdout", O_WRONLY));
     ejsSetProperty(ejs, type, ES_App__errorStream, ejsCreateFileFromFd(ejs, 2, "stderr", O_WRONLY));
 
-    ejsBindMethod(ejs, type, ES_App_args, (EjsProc) app_args);
-    ejsBindMethod(ejs, type, ES_App_createSearch, (EjsProc) app_createSearch);
-    ejsBindMethod(ejs, type, ES_App_dir, (EjsProc) app_dir);
-    ejsBindMethod(ejs, type, ES_App_chdir, (EjsProc) app_chdir);
-    ejsBindMethod(ejs, type, ES_App_exeDir, (EjsProc) app_exeDir);
-    ejsBindMethod(ejs, type, ES_App_exePath, (EjsProc) app_exePath);
-    ejsBindMethod(ejs, type, ES_App_env, (EjsProc) app_env);
-    ejsBindMethod(ejs, type, ES_App_exit, (EjsProc) app_exit);
-    ejsBindMethod(ejs, type, ES_App_getenv, (EjsProc) app_getenv);
-    ejsBindMethod(ejs, type, ES_App_putenv, (EjsProc) app_putenv);
-    ejsBindMethod(ejs, type, ES_App_pid, (EjsProc) app_pid);
-    ejsBindMethod(ejs, type, ES_App_run, (EjsProc) app_run);
-    ejsBindAccess(ejs, type, ES_App_search, (EjsProc) app_search, (EjsProc) app_set_search);
-    ejsBindMethod(ejs, type, ES_App_sleep, (EjsProc) app_sleep);
+    ejsBindMethod(ejs, type, ES_App_args, app_args);
+    ejsBindMethod(ejs, type, ES_App_createSearch, app_createSearch);
+    ejsBindMethod(ejs, type, ES_App_dir, app_dir);
+    ejsBindMethod(ejs, type, ES_App_chdir, app_chdir);
+    ejsBindMethod(ejs, type, ES_App_exeDir, app_exeDir);
+    ejsBindMethod(ejs, type, ES_App_exePath, app_exePath);
+    ejsBindMethod(ejs, type, ES_App_env, app_env);
+    ejsBindMethod(ejs, type, ES_App_exit, app_exit);
+    ejsBindMethod(ejs, type, ES_App_getenv, app_getenv);
+    ejsBindMethod(ejs, type, ES_App_putenv, app_putenv);
+    ejsBindMethod(ejs, type, ES_App_pid, app_pid);
+    ejsBindMethod(ejs, type, ES_App_run, app_run);
+    ejsBindAccess(ejs, type, ES_App_search, app_search, app_set_search);
+    ejsBindMethod(ejs, type, ES_App_sleep, app_sleep);
 }
 
 
@@ -1058,9 +1058,9 @@ static EjsNumber *nextArrayKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **arg
 
     iterator native function get(): Iterator
  */
-static EjsObj *getArrayIterator(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
+static EjsIterator *getArrayIterator(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, ap, (EjsProc) nextArrayKey, 0, NULL);
+    return ejsCreateIterator(ejs, ap, nextArrayKey, 0, NULL);
 }
 
 
@@ -1101,7 +1101,7 @@ static EjsObj *nextArrayValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv
  */
 static EjsAny *getArrayValues(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 {
-    return ejsCreateIterator(ejs, ap, (EjsProc) nextArrayValue, 0, NULL);
+    return ejsCreateIterator(ejs, ap, nextArrayValue, 0, NULL);
 }
 
 
@@ -2094,6 +2094,8 @@ void ejsCreateArrayType(Ejs *ejs)
         manageArray, EJS_POT_HELPERS);
     type->numericIndicies = 1;
     type->virtualSlots = 1;
+    type->mutableInstances = 1;
+    type->dynamicInstances = 1;
 
     helpers = &type->helpers;
     helpers->cast = (EjsCastHelper) castArray;
@@ -2226,7 +2228,7 @@ EjsBlock *ejsCloneBlock(Ejs *ejs, EjsBlock *src, bool deep)
 {
     EjsBlock    *dest;
 
-    dest = (EjsBlock*) ejsClonePot(ejs, (EjsObj*) src, deep);
+    dest = (EjsBlock*) ejsClonePot(ejs, src, deep);
 
     dest->nobind = src->nobind;
     dest->scope = src->scope;
@@ -2447,7 +2449,7 @@ void ejsCreateBlockType(Ejs *ejs)
 
     function cast(type: Type) : Object
  */
-static EjsObj *castBooleanVar(Ejs *ejs, EjsBoolean *vp, EjsType *type)
+static EjsAny *castBooleanVar(Ejs *ejs, EjsBoolean *vp, EjsType *type)
 {
     mprAssert(ejsIs(ejs, vp, Boolean));
 
@@ -2456,7 +2458,7 @@ static EjsObj *castBooleanVar(Ejs *ejs, EjsBoolean *vp, EjsType *type)
         return ((vp->value) ? S(one): S(zero));
 
     case S_String:
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, (vp->value) ? "true" : "false");
+        return ejsCreateStringFromAsc(ejs, (vp->value) ? "true" : "false");
 
     default:
         ejsThrowTypeError(ejs, "Can't cast to this type");
@@ -2468,37 +2470,37 @@ static EjsObj *castBooleanVar(Ejs *ejs, EjsBoolean *vp, EjsType *type)
 /*
     Coerce operands for invokeOperator
  */
-static EjsObj *coerceBooleanOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
+static EjsAny *coerceBooleanOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs)
 {
     switch (opcode) {
 
     case EJS_OP_ADD:
         if (ejsIs(ejs, rhs, Void)) {
-            return (EjsObj*) S(nan);
+            return S(nan);
         } else if (ejsIs(ejs, rhs, Null) || ejsIs(ejs, rhs, Number) || ejsIs(ejs, rhs, Date)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         } else {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
         break;
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+        return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_NE:
         if (ejsIs(ejs, rhs, String)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
-        return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+        return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
         Unary operators
@@ -2508,15 +2510,15 @@ static EjsObj *coerceBooleanOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return (EjsObj*) (((EjsBoolean*) lhs)->value ? S(true): S(false));
+        return (((EjsBoolean*) lhs)->value ? S(true): S(false));
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return (EjsObj*) (((EjsBoolean*) lhs)->value ? S(false) : S(true));
+        return (((EjsBoolean*) lhs)->value ? S(false) : S(true));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(false);
+        return S(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
@@ -2528,13 +2530,13 @@ static EjsObj *coerceBooleanOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *
 /*
     Run an operator on the operands
  */
-static EjsObj *invokeBooleanOperator(Ejs *ejs, EjsBoolean *lhs, int opcode, EjsBoolean *rhs)
+static EjsAny *invokeBooleanOperator(Ejs *ejs, EjsBoolean *lhs, int opcode, EjsBoolean *rhs)
 {
-    EjsObj      *result;
+    EjsAny      *result;
 
     if (rhs == 0 || TYPE(lhs) != TYPE(rhs)) {
         if (!ejsIs(ejs, lhs, Boolean) || !ejsIs(ejs, rhs, Boolean)) {
-            if ((result = coerceBooleanOperands(ejs, (EjsObj*) lhs, opcode, (EjsObj*) rhs)) != 0) {
+            if ((result = coerceBooleanOperands(ejs, lhs, opcode, rhs)) != 0) {
                 return result;
             }
         }
@@ -2546,80 +2548,80 @@ static EjsObj *invokeBooleanOperator(Ejs *ejs, EjsBoolean *lhs, int opcode, EjsB
     switch (opcode) {
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) ((lhs->value == rhs->value) ? S(true): S(false));
+        return ((lhs->value == rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) ((lhs->value != rhs->value) ? S(true): S(false));
+        return ((lhs->value != rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_LT:
-        return (EjsObj*) ((lhs->value < rhs->value) ? S(true): S(false));
+        return ((lhs->value < rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_LE:
-        return (EjsObj*) ((lhs->value <= rhs->value) ? S(true): S(false));
+        return ((lhs->value <= rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_GT:
-        return (EjsObj*) ((lhs->value > rhs->value) ? S(true): S(false));
+        return ((lhs->value > rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_GE:
-        return (EjsObj*) ((lhs->value >= rhs->value) ? S(true): S(false));
+        return ((lhs->value >= rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_NOT_ZERO:
-        return (EjsObj*) ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) ((lhs->value == 0) ? S(true): S(false));
+        return ((lhs->value == 0) ? S(true): S(false));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_COMPARE_FALSE:
-        return (EjsObj*) ((lhs->value) ? S(false): S(true));
+        return ((lhs->value) ? S(false): S(true));
 
     case EJS_OP_COMPARE_TRUE:
-        return (EjsObj*) ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? S(true): S(false));
 
     /*
         Unary operators
      */
     case EJS_OP_NEG:
-        return (EjsObj*) ejsCreateNumber(ejs, - lhs->value);
+        return ejsCreateNumber(ejs, - lhs->value);
 
     case EJS_OP_LOGICAL_NOT:
-        return (EjsObj*) ejsCreateBoolean(ejs, !lhs->value);
+        return ejsCreateBoolean(ejs, !lhs->value);
 
     case EJS_OP_NOT:
-        return (EjsObj*) ejsCreateBoolean(ejs, ~lhs->value);
+        return ejsCreateBoolean(ejs, ~lhs->value);
 
     /*
         Binary operations
      */
     case EJS_OP_ADD:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value + rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value + rhs->value);
 
     case EJS_OP_AND:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value & rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value & rhs->value);
 
     case EJS_OP_DIV:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value / rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value / rhs->value);
 
     case EJS_OP_MUL:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value * rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value * rhs->value);
 
     case EJS_OP_OR:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value | rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value | rhs->value);
 
     case EJS_OP_REM:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value % rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value % rhs->value);
 
     case EJS_OP_SUB:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value - rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value - rhs->value);
 
     case EJS_OP_USHR:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value >> rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value >> rhs->value);
 
     case EJS_OP_XOR:
-        return (EjsObj*) ejsCreateBoolean(ejs, lhs->value ^ rhs->value);
+        return ejsCreateBoolean(ejs, lhs->value ^ rhs->value);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -2637,7 +2639,7 @@ static EjsObj *invokeBooleanOperator(Ejs *ejs, EjsBoolean *lhs, int opcode, EjsB
     to false.
  */
 
-static EjsObj *booleanConstructor(Ejs *ejs, EjsBoolean *bp, int argc, EjsObj **argv)
+static EjsBoolean *booleanConstructor(Ejs *ejs, EjsBoolean *bp, int argc, EjsObj **argv)
 {
     mprAssert(argc == 0 || argc == 1);
 
@@ -2645,15 +2647,16 @@ static EjsObj *booleanConstructor(Ejs *ejs, EjsBoolean *bp, int argc, EjsObj **a
         /* Change the bp value */
         bp->value = ejsToBoolean(ejs, argv[0])->value;
     }
-    return (EjsObj*) bp;
+    return bp;
 }
 
 
-
+#if UNUSED
 EjsBoolean *ejsCreateBoolean(Ejs *ejs, int value)
 {
     return ((value) ? S(true) : S(false));
 }
+#endif
 
 
 void ejsCreateBooleanType(Ejs *ejs)
@@ -2663,7 +2666,6 @@ void ejsCreateBooleanType(Ejs *ejs)
 
     type = ejsCreateNativeType(ejs, N("ejs", "Boolean"), sizeof(EjsBoolean), S_Boolean, ES_Boolean_NUM_CLASS_PROP,
         NULL, EJS_OBJ_HELPERS);
-    type->immutable = 1;
     type->helpers.cast = (EjsCastHelper) castBooleanVar;
     type->helpers.invokeOperator = (EjsInvokeOperatorHelper) invokeBooleanOperator;
 
@@ -2688,7 +2690,7 @@ void ejsConfigureBooleanType(Ejs *ejs)
     type = ST(Boolean);
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) booleanConstructor);
+    ejsBindConstructor(ejs, type, booleanConstructor);
     ejsSetProperty(ejs, ejs->global, ES_boolean, type);
     ejsSetProperty(ejs, ejs->global, ES_true, S(true));
     ejsSetProperty(ejs, ejs->global, ES_false, S(false));
@@ -2753,7 +2755,7 @@ void ejsConfigureBooleanType(Ejs *ejs)
 
 
 static EjsObj *ba_flush(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
-static EjsObj *ba_toString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
+static EjsString *ba_toString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv);
 
 static int  flushByteArray(Ejs *ejs, EjsByteArray *ap);
 static ssize  getInput(Ejs *ejs, EjsByteArray *ap, ssize required);
@@ -2849,13 +2851,13 @@ static ssize getByteArrayPropertyCount(Ejs *ejs, EjsByteArray *ap)
 }
 
 
-static EjsObj *getByteArrayProperty(Ejs *ejs, EjsByteArray *ap, int slotNum)
+static EjsNumber *getByteArrayProperty(Ejs *ejs, EjsByteArray *ap, int slotNum)
 {
     if (slotNum < 0 || slotNum >= ap->length) {
         ejsThrowOutOfBoundsError(ejs, "Bad array subscript");
         return 0;
     }
-    return (EjsObj*) ejsCreateNumber(ejs, ap->value[slotNum]);
+    return ejsCreateNumber(ejs, ap->value[slotNum]);
 }
 
 
@@ -2877,7 +2879,7 @@ static int lookupByteArrayProperty(struct Ejs *ejs, EjsByteArray *ap, EjsName qn
 /*
     Cast operands as required for invokeOperator
  */
-static EjsObj *coerceByteArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode,  EjsObj *rhs)
+static EjsAny *coerceByteArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode,  EjsObj *rhs)
 {
     switch (opcode) {
     /*
@@ -2888,34 +2890,34 @@ static EjsObj *coerceByteArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode,  EjsOb
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, (EjsObj*) S(zero), opcode, rhs);
+        return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_NE:
         if (!ejsIsDefined(ejs, rhs)) {
-            return (EjsObj*) ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
         } else if (ejsIs(ejs, rhs, Number)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         }
-        return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+        return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (ejsIs(ejs, rhs, Number)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         }
-        return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+        return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
         Unary operators
@@ -2931,7 +2933,7 @@ static EjsObj *coerceByteArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode,  EjsOb
 }
 
 
-static EjsObj *invokeByteArrayOperator(Ejs *ejs, EjsObj *lhs, int opcode,  EjsObj *rhs)
+static EjsAny *invokeByteArrayOperator(Ejs *ejs, EjsObj *lhs, int opcode,  EjsObj *rhs)
 {
     EjsObj      *result;
 
@@ -2945,27 +2947,27 @@ static EjsObj *invokeByteArrayOperator(Ejs *ejs, EjsObj *lhs, int opcode,  EjsOb
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_STRICTLY_EQ:
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_GE:
-        return (EjsObj*) ejsCreateBoolean(ejs, (lhs == rhs));
+        return ejsCreateBoolean(ejs, (lhs == rhs));
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
     case EJS_OP_COMPARE_LT: case EJS_OP_COMPARE_GT:
-        return (EjsObj*) ejsCreateBoolean(ejs, !(lhs == rhs));
+        return ejsCreateBoolean(ejs, !(lhs == rhs));
 
     /*
         Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT: case EJS_OP_NEG:
-        return (EjsObj*) S(one);
+        return S(one);
 
     /*
         Binary operators
@@ -3006,7 +3008,7 @@ static int setByteArrayProperty(struct Ejs *ejs, EjsByteArray *ap, int slotNum, 
 /*
     function ByteArray(size: Number = -1, resizable: Boolean = true): ByteArray
  */
-static EjsObj *ba_ByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsByteArray *ba_ByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     bool    resizable;
     int     size;
@@ -3026,17 +3028,7 @@ static EjsObj *ba_ByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     }
     ap->resizable = resizable;
     mprAssert(ap->value);
-    return (EjsObj*) ap;
-}
-
-
-/**
-    function get on(name, listener: Function): Void
- */
-static EjsObj *ba_on(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
-{
-    ejsAddObserver(ejs, &ap->emitter, argv[0], argv[1]);
-    return 0;
+    return ap;
 }
 
 
@@ -3044,9 +3036,9 @@ static EjsObj *ba_on(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Determine if the byte array is in async mode
     function get async(): Boolean
  */
-static EjsObj *ba_async(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsBoolean *ba_async(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return ap->async ? (EjsObj*) S(true) : (EjsObj*) S(false);
+    return ap->async ? S(true) : S(false);
 }
 
 
@@ -3056,7 +3048,7 @@ static EjsObj *ba_async(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_setAsync(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    ap->async = (argv[0] == (EjsObj*) S(true));
+    ap->async = (argv[0] == S(true));
     return 0;
 }
 
@@ -3065,9 +3057,9 @@ static EjsObj *ba_setAsync(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Get the number of bytes that are currently available on this stream for reading.
     function get available(): Number
  */
-static EjsObj *ba_available(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_available(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (ap->writePosition - ap->readPosition));
+    return ejsCreateNumber(ejs, (MprNumber) (ap->writePosition - ap->readPosition));
 }
 
 
@@ -3077,7 +3069,7 @@ static EjsObj *ba_available(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 static EjsObj *ba_close(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     if (ap->emitter) {
-        ejsSendEvent(ejs, ap->emitter, "close", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "close", NULL, ap);
     }
     ap->writePosition = ap->readPosition = 0;
     return 0;
@@ -3108,7 +3100,7 @@ static EjsObj *ba_compact(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Copy data into the array. Data is written at the $destOffset.
     function copyIn(destOffset: Number, src: ByteArray, srcOffset: Number = 0, count: Number = -1): Number
  */
-static EjsObj *ba_copyIn(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_copyIn(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     EjsByteArray    *src;
     ssize           i, destOffset, srcOffset, count;
@@ -3136,7 +3128,7 @@ static EjsObj *ba_copyIn(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     for (i = 0; i < count; i++) {
         ap->value[destOffset++] = src->value[srcOffset++];
     }
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) count);
+    return ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -3144,7 +3136,7 @@ static EjsObj *ba_copyIn(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Copy data from the array. Data is copied from the $srcOffset.
     function copyOut(srcOffset: Number, dest: ByteArray, destOffset: Number = 0, count: Number = -1): Number
  */
-static EjsObj *ba_copyOut(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_copyOut(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     EjsByteArray    *dest;
     ssize           count;
@@ -3169,7 +3161,7 @@ static EjsObj *ba_copyOut(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     for (i = 0; i < count; i++) {
         dest->value[destOffset++] = ap->value[srcOffset++];
     }
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) count);
+    return ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -3177,9 +3169,9 @@ static EjsObj *ba_copyOut(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Determine if the system is using little endian byte ordering
     function get endian(): Number
  */
-static EjsObj *endian(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *endian(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, ap->endian);
+    return ejsCreateNumber(ejs, ap->endian);
 }
 
 
@@ -3208,7 +3200,7 @@ static EjsObj *setEndian(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Function to iterate and return the next element index.
     NOTE: this is not a method of Array. Rather, it is a callback function for Iterator
  */
-static EjsObj *nextByteArrayKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
+static EjsNumber *nextByteArrayKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 {
     EjsByteArray    *ap;
 
@@ -3221,7 +3213,7 @@ static EjsObj *nextByteArrayKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **ar
         ip->index = (int) ap->readPosition;
     }
     if (ip->index < (int) ap->writePosition) {
-        return (EjsObj*) ejsCreateNumber(ejs, ip->index++);
+        return ejsCreateNumber(ejs, ip->index++);
     }
     ejsThrowStopIteration(ejs);
     return 0;
@@ -3232,9 +3224,9 @@ static EjsObj *nextByteArrayKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **ar
     Return the default iterator. This returns the array index names.
     iterator native function get(): Iterator
  */
-static EjsObj *ba_get(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
+static EjsIterator *ba_get(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, ap, (EjsProc) nextByteArrayKey, 0, NULL);
+    return ejsCreateIterator(ejs, ap, nextByteArrayKey, 0, NULL);
 }
 
 
@@ -3242,7 +3234,7 @@ static EjsObj *ba_get(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
     Function to iterate and return the next element value.
     NOTE: this is not a method of Array. Rather, it is a callback function for Iterator
  */
-static EjsObj *nextByteArrayValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
+static EjsNumber *nextByteArrayValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 {
     EjsByteArray    *ap;
 
@@ -3255,7 +3247,7 @@ static EjsObj *nextByteArrayValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **
         ip->index = (int) ap->readPosition;
     }
     if (ip->index < ap->writePosition) {
-        return (EjsObj*) ejsCreateNumber(ejs, ap->value[ip->index++]);
+        return ejsCreateNumber(ejs, ap->value[ip->index++]);
     }
     ejsThrowStopIteration(ejs);
     return 0;
@@ -3266,9 +3258,9 @@ static EjsObj *nextByteArrayValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **
     Return an iterator to return the next array element value.
     iterator native function getValues(): Iterator
  */
-static EjsObj *ba_getValues(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
+static EjsIterator *ba_getValues(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, ap, (EjsProc) nextByteArrayValue, 0, NULL);
+    return ejsCreateIterator(ejs, ap, nextByteArrayValue, 0, NULL);
 }
 
 
@@ -3289,9 +3281,9 @@ static EjsObj *ba_flush(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     @return Returns the number of items in the array
     override function get length(): Number
  */
-static EjsObj *ba_getLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_getLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (int) ap->length);
+    return ejsCreateNumber(ejs, (int) ap->length);
 }
 
 
@@ -3323,9 +3315,9 @@ static EjsObj *ba_setLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     @return Returns the number of items in the array
     function resizable(): Boolean
  */
-static EjsObj *ba_resizable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsBoolean *ba_resizable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return ap->resizable ? (EjsObj*) S(true) : (EjsObj*) S(false);
+    return ap->resizable ? S(true) : S(false);
 }
 
 
@@ -3335,7 +3327,7 @@ static EjsObj *ba_resizable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     write position is updated.
     function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number
  */
-static EjsObj *ba_read(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_read(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     EjsByteArray    *buffer;
     ssize           offset, count;
@@ -3361,7 +3353,7 @@ static EjsObj *ba_read(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     }
     if (getInput(ejs, ap, 1) <= 0) {
         /* eof */
-        return (EjsObj*) S(null);
+        return S(null);
     }
     count = min(availableBytes(ap), count);
     for (i = 0; i < count; i++) {
@@ -3369,9 +3361,9 @@ static EjsObj *ba_read(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     }
     buffer->writePosition += count;
     if (ap->emitter && availableBytes(ap) && !ejs->exception) {
-        ejsSendEvent(ejs, ap->emitter, "writable", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "writable", NULL, ap);
     }
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) count);
+    return ejsCreateNumber(ejs, (MprNumber) count);
 }
 
 
@@ -3379,17 +3371,17 @@ static EjsObj *ba_read(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Read a boolean from the array.
     function readBoolean(): Boolean
  */
-static EjsObj *ba_readBoolean(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsBoolean *ba_readBoolean(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     int     result;
 
     if (getInput(ejs, ap, 1) <= 0) {
         /* eof */
-        return (EjsObj*) S(null);
+        return S(null);
     }
     result = ap->value[ap->readPosition];
     adjustReadPosition(ap, 1);
-    return (EjsObj*) ejsCreateBoolean(ejs, result);
+    return ejsCreateBoolean(ejs, result);
 }
 
 
@@ -3397,17 +3389,17 @@ static EjsObj *ba_readBoolean(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **arg
     Read a byte from the array.
     function readByte(): Number
  */
-static EjsObj *ba_readByte(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_readByte(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     int     result;
 
     if (getInput(ejs, ap, 1) <= 0) {
         /* eof */
-        return (EjsObj*) S(null);
+        return S(null);
     }
     result = ap->value[ap->readPosition];
     adjustReadPosition(ap, 1);
-    return (EjsObj*) ejsCreateNumber(ejs, result);
+    return ejsCreateNumber(ejs, result);
 }
 
 
@@ -3415,7 +3407,7 @@ static EjsObj *ba_readByte(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Read a date from the array.
     function readDate(): Date
  */
-static EjsObj *ba_readDate(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsDate *ba_readDate(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     double  value;
 
@@ -3424,20 +3416,20 @@ static EjsObj *ba_readDate(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
             ejsThrowIOError(ejs, "Premanture eof");
             return 0;
         }
-        return (EjsObj*) S(null);
+        return S(null);
     }
     value = * (double*) &ap->value[ap->readPosition];
     value = swapDouble(ap, value);
     adjustReadPosition(ap, sizeof(double));
-    return (EjsObj*) ejsCreateDate(ejs, (MprTime) value);
+    return ejsCreateDate(ejs, (MprTime) value);
 }
 
 
 /**
     Read a double from the array. The data will be decoded according to the encoding property.
-    function readDouble(): Date
+    function readDouble(): Number
  */
-static EjsObj *ba_readDouble(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_readDouble(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     double  value;
 
@@ -3446,16 +3438,12 @@ static EjsObj *ba_readDouble(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv
             ejsThrowIOError(ejs, "Premanture eof");
             return 0;
         }
-        return (EjsObj*) S(null);
+        return S(null);
     }
-#if OLD
-    value = * (double*) &ap->value[ap->readPosition];
-#else
     memcpy(&value, (char*) &ap->value[ap->readPosition], sizeof(double));
-#endif
     value = swapDouble(ap, value);
     adjustReadPosition(ap, sizeof(double));
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) value);
+    return ejsCreateNumber(ejs, (MprNumber) value);
 }
 
 
@@ -3463,7 +3451,7 @@ static EjsObj *ba_readDouble(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv
     Read a 32-bit integer from the array. The data will be decoded according to the encoding property.
     function readInteger(): Number
  */
-static EjsObj *ba_readInteger(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_readInteger(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     int     value;
 
@@ -3472,12 +3460,12 @@ static EjsObj *ba_readInteger(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **arg
             ejsThrowIOError(ejs, "Premanture eof");
             return 0;
         }
-        return (EjsObj*) S(null);
+        return S(null);
     }
     value = * (int*) &ap->value[ap->readPosition];
     value = swap32(ap, value);
     adjustReadPosition(ap, sizeof(int));
-    return (EjsObj*) ejsCreateNumber(ejs, value);
+    return ejsCreateNumber(ejs, value);
 }
 
 
@@ -3485,7 +3473,7 @@ static EjsObj *ba_readInteger(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **arg
     Read a 64-bit long from the array.The data will be decoded according to the encoding property.
     function readLong(): Number
  */
-static EjsObj *ba_readLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_readLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     int64   value;
 
@@ -3494,12 +3482,12 @@ static EjsObj *ba_readLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
             ejsThrowIOError(ejs, "Premanture eof");
             return 0;
         }
-        return (EjsObj*) S(null);
+        return S(null);
     }
     value = * (int64*) &ap->value[ap->readPosition];
     value = swap64(ap, value);
     adjustReadPosition(ap, sizeof(int64));
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) value);
+    return ejsCreateNumber(ejs, (MprNumber) value);
 }
 
 
@@ -3507,9 +3495,9 @@ static EjsObj *ba_readLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Get the current read position offset
     function get readPosition(): Number
  */
-static EjsObj *ba_readPosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_readPosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ap->readPosition);
+    return ejsCreateNumber(ejs, (MprNumber) ap->readPosition);
 }
 
 
@@ -3541,17 +3529,17 @@ static EjsObj *ba_setReadPosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj *
     Read a 16-bit short integer from the array. The data will be decoded according to the encoding property.
     function readShort(): Number
  */
-static EjsObj *ba_readShort(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_readShort(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     int     value;
 
     if (getInput(ejs, ap, EJS_SIZE_SHORT) <= 0) {
-        return (EjsObj*) S(null);
+        return S(null);
     }
     value = * (short*) &ap->value[ap->readPosition];
     value = swap16(ap, value);
     adjustReadPosition(ap, sizeof(short));
-    return (EjsObj*) ejsCreateNumber(ejs, value);
+    return ejsCreateNumber(ejs, value);
 }
 
 
@@ -3561,25 +3549,25 @@ static EjsObj *ba_readShort(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 
     function readString(count: Number = -1): String
  */
-static EjsObj *ba_readString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsString *ba_readString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    EjsObj  *result;
-    ssize   count;
+    EjsString   *result;
+    ssize       count;
 
     count = (argc == 1) ? ejsGetInt(ejs, argv[0]) : -1;
 
     if (count < 0) {
         if (getInput(ejs, ap, 1) < 0) {
-            return (EjsObj*) S(null);
+            return S(null);
         }
         count = availableBytes(ap);
 
     } else if (getInput(ejs, ap, count) < 0) {
-        return (EjsObj*) S(null);
+        return S(null);
     }
     count = min(count, availableBytes(ap));
     //  TODO - UNICODE ENCODING
-    result = (EjsObj*) ejsCreateStringFromMulti(ejs, (cchar*) &ap->value[ap->readPosition], count);
+    result = ejsCreateStringFromMulti(ejs, (cchar*) &ap->value[ap->readPosition], count);
     adjustReadPosition(ap, count);
     return result;
 }
@@ -3605,11 +3593,21 @@ static EjsObj *ba_reset(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 
 
 /**
-    function off(name, listener: Function): Number
+    function off(name, observer: Function): Number
  */
-static EjsObj *ba_off(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsObj *ba_off(Ejs *ejs, EjsByteArray *ap, int argc, EjsAny **argv)
 {
     ejsRemoveObserver(ejs, ap->emitter, argv[0], argv[1]);
+    return 0;
+}
+
+
+/**
+    function get on(name, observer: Function): Void
+ */
+static EjsObj *ba_on(Ejs *ejs, EjsByteArray *ap, int argc, EjsAny **argv)
+{
+    ejsAddObserver(ejs, &ap->emitter, argv[0], argv[1]);
     return 0;
 }
 
@@ -3618,9 +3616,9 @@ static EjsObj *ba_off(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Get the number of data bytes that the array can store from the write position till the end of the array.
     function get room(): Number
  */
-static EjsObj *ba_room(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_room(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) room(ap));
+    return ejsCreateNumber(ejs, (MprNumber) room(ap));
 }
 
 
@@ -3628,10 +3626,10 @@ static EjsObj *ba_room(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Convert the byte array data between the read and write positions into a string.
     override function toString(): String
  */
-static EjsObj *ba_toString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsString *ba_toString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
     //  TODO - UNICODE ENCODING
-    return (EjsObj*) ejsCreateStringFromMulti(ejs, (cchar*) &ap->value[ap->readPosition], availableBytes(ap));
+    return ejsCreateStringFromMulti(ejs, (cchar*) &ap->value[ap->readPosition], availableBytes(ap));
 }
 
 
@@ -3722,7 +3720,7 @@ EjsNumber *ejsWriteToByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **ar
         }
     }
     if (ap->emitter && wrote > 0 && availableBytes(ap) > 0) {
-        ejsSendEvent(ejs, ap->emitter, "readable", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "readable", NULL, ap);
     }
     return ejsCreateNumber(ejs, (MprNumber) wrote);
 }
@@ -3739,7 +3737,7 @@ static EjsObj *ba_writeByte(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     }
     putByte(ap, ejsGetInt(ejs, argv[0]));
     if (ap->emitter) {
-        ejsSendEvent(ejs, ap->emitter, "readable", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "readable", NULL, ap);
     }
     return 0;
 }
@@ -3756,7 +3754,7 @@ static EjsObj *ba_writeShort(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv
     }
     putShort(ap, ejsGetInt(ejs, argv[0]));
     if (ap->emitter) {
-        ejsSendEvent(ejs, ap->emitter, "readable", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "readable", NULL, ap);
     }
     return 0;
 }
@@ -3773,7 +3771,7 @@ static EjsObj *ba_writeDouble(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **arg
     }
     putDouble(ap, ejsGetDouble(ejs, argv[0]));
     if (ap->emitter) {
-        ejsSendEvent(ejs, ap->emitter, "readable", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "readable", NULL, ap);
     }
     return 0;
 }
@@ -3808,7 +3806,7 @@ static EjsObj *ba_writeLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     }
     putLong(ap, ejsGetInt(ejs, argv[0]));
     if (ap->emitter) {
-        ejsSendEvent(ejs, ap->emitter, "readable", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "readable", NULL, ap);
     }
     return 0;
 }
@@ -3818,9 +3816,9 @@ static EjsObj *ba_writeLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     Get the current write position offset
     function get writePosition(): Number
  */
-static EjsObj *ba_writePosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
+static EjsNumber *ba_writePosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ap->writePosition);
+    return ejsCreateNumber(ejs, (MprNumber) ap->writePosition);
 }
 
 
@@ -3854,11 +3852,11 @@ static EjsObj *ba_setWritePosition(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj 
 static int flushByteArray(Ejs *ejs, EjsByteArray *ap)
 {
     if (ap->emitter && availableBytes(ap) && !ejs->exception) {
-        ejsSendEvent(ejs, ap->emitter, "flush", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "flush", NULL, ap);
     }
     ap->writePosition = ap->readPosition = 0;
     if (ap->emitter) {
-        ejsSendEvent(ejs, ap->emitter, "writable", NULL, (EjsObj*) ap);
+        ejsSendEvent(ejs, ap->emitter, "writable", NULL, ap);
     }
     return 0;
 }
@@ -3899,7 +3897,7 @@ static ssize getInput(Ejs *ejs, EjsByteArray *ap, ssize required)
     }
     if (availableBytes(ap) < required && !ejs->exception) {
         if (ap->emitter) {
-            ejsSendEvent(ejs, ap->emitter, "writable", NULL, (EjsObj*) ap);
+            ejsSendEvent(ejs, ap->emitter, "writable", NULL, ap);
         }
     }
     if (availableBytes(ap) < required) {
@@ -3915,7 +3913,7 @@ bool ejsMakeRoomInByteArray(Ejs *ejs, EjsByteArray *ap, ssize require)
 
     if (room(ap) < require) {
         if (ap->emitter && availableBytes(ap)) {
-            ejsSendEvent(ejs, ap->emitter, "readable", NULL, (EjsObj*) ap);
+            ejsSendEvent(ejs, ap->emitter, "readable", NULL, ap);
         }
         if (room(ap) < require) {
             newLen = max(ap->length + require, ap->length + ap->growInc);
@@ -4142,6 +4140,7 @@ void ejsConfigureByteArrayType(Ejs *ejs)
     ejsSetSpecialType(ejs, S_ByteArray, type);
     type->numericIndicies = 1;
     type->virtualSlots = 1;
+    type->mutableInstances = 1;
     prototype = type->prototype;
 
     helpers = &type->helpers;
@@ -4168,9 +4167,7 @@ void ejsConfigureByteArrayType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ByteArray_length, ba_getLength);
     ejsBindMethod(ejs, prototype, ES_ByteArray_iterator_get, ba_get);
     ejsBindMethod(ejs, prototype, ES_ByteArray_iterator_getValues, ba_getValues);
-#if ES_ByteArray_off
     ejsBindMethod(ejs, prototype, ES_ByteArray_off, ba_off);
-#endif
     ejsBindMethod(ejs, prototype, ES_ByteArray_read, ba_read);
     ejsBindMethod(ejs, prototype, ES_ByteArray_readBoolean, ba_readBoolean);
     ejsBindMethod(ejs, prototype, ES_ByteArray_readByte, ba_readByte);
@@ -4387,11 +4384,17 @@ static EjsObj *cmd_kill(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 
 
 /**
-    function get on(name, listener: Function): Void
+    function get on(name, observer: Function): Void
  */
-static EjsObj *cmd_on(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
+static EjsObj *cmd_on(Ejs *ejs, EjsCmd *cmd, int argc, EjsAny **argv)
 {
-    ejsAddObserver(ejs, &cmd->emitter, argv[0], argv[1]);
+    EjsFunction     *observer;
+
+    observer = (EjsFunction*) argv[1];
+    if (observer->boundThis == 0 || observer->boundThis == ejs->global) {
+        observer->boundThis = cmd;
+    }
+    ejsAddObserver(ejs, &cmd->emitter, argv[0], observer);
     if (!cmd->async) {
         cmd->async = 1;
     }
@@ -4400,9 +4403,9 @@ static EjsObj *cmd_on(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 
 
 /**
-    function get off(name, listener: Function): Void
+    function get off(name, observer: Function): Void
  */
-static EjsObj *cmd_off(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
+static EjsObj *cmd_off(Ejs *ejs, EjsCmd *cmd, int argc, EjsAny **argv)
 {
     ejsRemoveObserver(ejs, cmd->emitter, argv[0], argv[1]);
     return 0;
@@ -4889,6 +4892,7 @@ void ejsConfigureCmdType(Ejs *ejs)
         return;
     }
     type->instanceSize = sizeof(EjsCmd);
+    type->mutableInstances = 1;
     type->manager = (MprManager) manageEjsCmd;
     prototype = type->prototype;
 
@@ -4992,6 +4996,7 @@ void ejsDefineConfigProperties(Ejs *ejs)
     ejs->configSet = 1;
     type = ST(Config);
     att = EJS_PROP_STATIC | EJS_PROP_ENUMERABLE;
+    type->mutable = 0;
 
     /*
         Must use -1 for slotNumber as this function is called by the compiler when compiling ejs.mod. 
@@ -5103,8 +5108,8 @@ void ejsDefineConfigProperties(Ejs *ejs)
 
 //  TODO this is a generic need. Make an API
 
-#define getNumber(ejs, a) ejsGetNumber(ejs, (EjsObj*) ejsToNumber(ejs, ((EjsObj*) a)))
-#define getInt(ejs, a) ((int) ejsGetNumber(ejs, (EjsObj*) ejsToNumber(ejs, ((EjsObj*) a))))
+#define getNumber(ejs, a) ejsGetNumber(ejs, ejsToNumber(ejs, a))
+#define getInt(ejs, a) ((int) ejsGetNumber(ejs, ejsToNumber(ejs, a)))
 
 /*
     Cast the operand to the specified type
@@ -5148,7 +5153,7 @@ static EjsDate *cloneDate(Ejs *ejs, EjsDate *dp, int deep)
 /*
     TODO - this is the same as number. Should share code
  */
-static EjsAny *coerceDateOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
+static EjsAny *coerceDateOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs)
 {
     switch (opcode) {
     /*
@@ -5168,15 +5173,15 @@ static EjsAny *coerceDateOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+        return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_NE:
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (ejsIs(ejs, rhs, String)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
-        return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+        return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
         return S(true);
@@ -5216,7 +5221,7 @@ static EjsAny *invokeDateOperator(Ejs *ejs, EjsDate *lhs, int opcode, EjsDate *r
 
     if (rhs == 0 || TYPE(lhs) != TYPE(rhs)) {
         if (!ejsIs(ejs, lhs, Date) || !ejsIs(ejs, rhs, Date)) {
-            if ((result = coerceDateOperands(ejs, (EjsObj*) lhs, opcode, (EjsObj*) rhs)) != 0) {
+            if ((result = coerceDateOperands(ejs, lhs, opcode, rhs)) != 0) {
                 return result;
             }
         }
@@ -5349,7 +5354,7 @@ static EjsDate *date_Date(Ejs *ejs, EjsDate *date, int argc, EjsObj **argv)
         date->value = mprGetTime();
 
     } else if (args->length == 1) {
-        vp = ejsGetProperty(ejs, (EjsObj*) args, 0);
+        vp = ejsGetProperty(ejs, args, 0);
         if (ejsIs(ejs, vp, Number)) {
             /* Milliseconds */
             date->value = ejsGetNumber(ejs, vp);
@@ -5371,39 +5376,39 @@ static EjsDate *date_Date(Ejs *ejs, EjsDate *date, int argc, EjsObj **argv)
         /* Date(year, month, date, hour, minute, second, msec) or any portion thereof */
         memset(&tm, 0, sizeof(tm));
         tm.tm_isdst = -1;
-        vp = ejsGetProperty(ejs, (EjsObj*) args, 0);
+        vp = ejsGetProperty(ejs, args, 0);
         year = getInt(ejs, vp);
         if (0 <= year && year < 100) {
             year += 1900;
         }
         tm.tm_year = year - 1900;
         if (args->length > 1) {
-            vp = ejsGetProperty(ejs, (EjsObj*) args, 1);
+            vp = ejsGetProperty(ejs, args, 1);
             tm.tm_mon = getInt(ejs, vp);
         }
         if (args->length > 2) {
-            vp = ejsGetProperty(ejs, (EjsObj*) args, 2);
+            vp = ejsGetProperty(ejs, args, 2);
             tm.tm_mday = getInt(ejs, vp);
         } else {
             tm.tm_mday = 1;
         }
         if (args->length > 3) {
-            vp = ejsGetProperty(ejs, (EjsObj*) args, 3);
+            vp = ejsGetProperty(ejs, args, 3);
             tm.tm_hour = getInt(ejs, vp);
         }
         if (args->length > 4) {
-            vp = ejsGetProperty(ejs, (EjsObj*) args, 4);
+            vp = ejsGetProperty(ejs, args, 4);
             tm.tm_min = getInt(ejs, vp);
         }
         if (args->length > 5) {
-            vp = ejsGetProperty(ejs, (EjsObj*) args, 5);
+            vp = ejsGetProperty(ejs, args, 5);
             tm.tm_sec = getInt(ejs, vp);
         }
         date->value = mprMakeTime(&tm);
         if (date->value == -1) {
             ejsThrowArgError(ejs, "Can't construct date from this argument");
         } else if (args->length > 6) {
-            vp = ejsGetProperty(ejs, (EjsObj*) args, 6);
+            vp = ejsGetProperty(ejs, args, 6);
             date->value += getNumber(ejs, vp);
         }
     }
@@ -6159,7 +6164,10 @@ void ejsConfigureDateType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    type = ejsConfigureNativeType(ejs, N("ejs", "Date"), sizeof(EjsDate), NULL, EJS_OBJ_HELPERS);
+    if ((type = ejsConfigureNativeType(ejs, N("ejs", "Date"), sizeof(EjsDate), NULL, EJS_OBJ_HELPERS)) == 0) {
+        return;
+    }
+    type->mutableInstances = 1;
     ejsSetSpecialType(ejs, S_Date, type);
     prototype = type->prototype;
 
@@ -6167,51 +6175,51 @@ void ejsConfigureDateType(Ejs *ejs)
     type->helpers.clone = (EjsCloneHelper) cloneDate;
     type->helpers.invokeOperator = (EjsInvokeOperatorHelper) invokeDateOperator;
 
-    ejsBindMethod(ejs, type, ES_Date_now, (EjsProc) date_now);
+    ejsBindMethod(ejs, type, ES_Date_now, date_now);
 #if ES_Date_ticks
-    ejsBindAccess(ejs, type, ES_Date_ticks, (EjsProc) date_ticks, NULL);
+    ejsBindAccess(ejs, type, ES_Date_ticks, date_ticks, NULL);
 #endif
-    ejsBindMethod(ejs, type, ES_Date_parseDate, (EjsProc) date_parseDate);
-    ejsBindMethod(ejs, type, ES_Date_parseUTCDate, (EjsProc) date_parseUTCDate);
-    ejsBindMethod(ejs, type, ES_Date_parse, (EjsProc) date_parse);
-    ejsBindMethod(ejs, type, ES_Date_UTC, (EjsProc) date_UTC);
+    ejsBindMethod(ejs, type, ES_Date_parseDate, date_parseDate);
+    ejsBindMethod(ejs, type, ES_Date_parseUTCDate, date_parseUTCDate);
+    ejsBindMethod(ejs, type, ES_Date_parse, date_parse);
+    ejsBindMethod(ejs, type, ES_Date_UTC, date_UTC);
 
-    ejsBindConstructor(ejs, type, (EjsProc) date_Date);
-    ejsBindAccess(ejs, prototype, ES_Date_day, (EjsProc) date_day, (EjsProc) date_set_day);
-    ejsBindAccess(ejs, prototype, ES_Date_dayOfYear, (EjsProc) date_dayOfYear, (EjsProc) date_set_dayOfYear);
-    ejsBindAccess(ejs, prototype, ES_Date_date, (EjsProc) date_date, (EjsProc) date_set_date);
-    ejsBindMethod(ejs, prototype, ES_Date_elapsed, (EjsProc) date_elapsed);
-    ejsBindMethod(ejs, prototype, ES_Date_format, (EjsProc) date_format);
-    ejsBindMethod(ejs, prototype, ES_Date_formatUTC, (EjsProc) date_formatUTC);
-    ejsBindAccess(ejs, prototype, ES_Date_fullYear, (EjsProc) date_fullYear, (EjsProc) date_set_fullYear);
-    ejsBindMethod(ejs, prototype, ES_Date_future, (EjsProc) date_future);
-    ejsBindMethod(ejs, prototype, ES_Date_getTimezoneOffset, (EjsProc) date_getTimezoneOffset); 
-    ejsBindMethod(ejs, prototype, ES_Date_getUTCDate, (EjsProc) date_getUTCDate);
-    ejsBindMethod(ejs, prototype, ES_Date_getUTCDay, (EjsProc) date_getUTCDay);
-    ejsBindMethod(ejs, prototype, ES_Date_getUTCFullYear, (EjsProc) date_getUTCFullYear);
-    ejsBindMethod(ejs, prototype, ES_Date_getUTCHours, (EjsProc) date_getUTCHours);
-    ejsBindMethod(ejs, prototype, ES_Date_getUTCMilliseconds, (EjsProc) date_getUTCMilliseconds);
-    ejsBindMethod(ejs, prototype, ES_Date_getUTCMinutes, (EjsProc) date_getUTCMinutes);
-    ejsBindMethod(ejs, prototype, ES_Date_getUTCMonth, (EjsProc) date_getUTCMonth);
-    ejsBindMethod(ejs, prototype, ES_Date_getUTCSeconds, (EjsProc) date_getUTCSeconds);
-    ejsBindAccess(ejs, prototype, ES_Date_hours, (EjsProc) date_hours, (EjsProc) date_set_hours);
-    ejsBindAccess(ejs, prototype, ES_Date_milliseconds, (EjsProc) date_milliseconds, (EjsProc) date_set_milliseconds);
-    ejsBindAccess(ejs, prototype, ES_Date_minutes, (EjsProc) date_minutes, (EjsProc) date_set_minutes);
-    ejsBindAccess(ejs, prototype, ES_Date_month, (EjsProc) date_month, (EjsProc) date_set_month);
-    ejsBindMethod(ejs, prototype, ES_Date_nextDay, (EjsProc) date_nextDay);
-    ejsBindAccess(ejs, prototype, ES_Date_seconds, (EjsProc) date_seconds, (EjsProc) date_set_seconds);
-    ejsBindMethod(ejs, prototype, ES_Date_setUTCDate, (EjsProc) date_setUTCDate);
-    ejsBindMethod(ejs, prototype, ES_Date_setUTCFullYear, (EjsProc) date_setUTCFullYear);
-    ejsBindMethod(ejs, prototype, ES_Date_setUTCHours, (EjsProc) date_setUTCHours);
-    ejsBindMethod(ejs, prototype, ES_Date_setUTCMilliseconds, (EjsProc) date_setUTCMilliseconds);
-    ejsBindMethod(ejs, prototype, ES_Date_setUTCMinutes, (EjsProc) date_setUTCMinutes);
-    ejsBindMethod(ejs, prototype, ES_Date_setUTCMonth, (EjsProc) date_setUTCMonth);
-    ejsBindMethod(ejs, prototype, ES_Date_setUTCSeconds, (EjsProc) date_setUTCSeconds);
-    ejsBindAccess(ejs, prototype, ES_Date_time, (EjsProc) date_time, (EjsProc) date_set_time);
-    ejsBindMethod(ejs, prototype, ES_Date_toJSON, (EjsProc) date_toJSON);
-    ejsBindMethod(ejs, prototype, ES_Date_toISOString, (EjsProc) date_toISOString);
-    ejsBindMethod(ejs, prototype, ES_Date_toString, (EjsProc) date_toString);
-    ejsBindAccess(ejs, prototype, ES_Date_year, (EjsProc) date_year, (EjsProc) date_set_year);
+    ejsBindConstructor(ejs, type, date_Date);
+    ejsBindAccess(ejs, prototype, ES_Date_day, date_day, date_set_day);
+    ejsBindAccess(ejs, prototype, ES_Date_dayOfYear, date_dayOfYear, date_set_dayOfYear);
+    ejsBindAccess(ejs, prototype, ES_Date_date, date_date, date_set_date);
+    ejsBindMethod(ejs, prototype, ES_Date_elapsed, date_elapsed);
+    ejsBindMethod(ejs, prototype, ES_Date_format, date_format);
+    ejsBindMethod(ejs, prototype, ES_Date_formatUTC, date_formatUTC);
+    ejsBindAccess(ejs, prototype, ES_Date_fullYear, date_fullYear, date_set_fullYear);
+    ejsBindMethod(ejs, prototype, ES_Date_future, date_future);
+    ejsBindMethod(ejs, prototype, ES_Date_getTimezoneOffset, date_getTimezoneOffset); 
+    ejsBindMethod(ejs, prototype, ES_Date_getUTCDate, date_getUTCDate);
+    ejsBindMethod(ejs, prototype, ES_Date_getUTCDay, date_getUTCDay);
+    ejsBindMethod(ejs, prototype, ES_Date_getUTCFullYear, date_getUTCFullYear);
+    ejsBindMethod(ejs, prototype, ES_Date_getUTCHours, date_getUTCHours);
+    ejsBindMethod(ejs, prototype, ES_Date_getUTCMilliseconds, date_getUTCMilliseconds);
+    ejsBindMethod(ejs, prototype, ES_Date_getUTCMinutes, date_getUTCMinutes);
+    ejsBindMethod(ejs, prototype, ES_Date_getUTCMonth, date_getUTCMonth);
+    ejsBindMethod(ejs, prototype, ES_Date_getUTCSeconds, date_getUTCSeconds);
+    ejsBindAccess(ejs, prototype, ES_Date_hours, date_hours, date_set_hours);
+    ejsBindAccess(ejs, prototype, ES_Date_milliseconds, date_milliseconds, date_set_milliseconds);
+    ejsBindAccess(ejs, prototype, ES_Date_minutes, date_minutes, date_set_minutes);
+    ejsBindAccess(ejs, prototype, ES_Date_month, date_month, date_set_month);
+    ejsBindMethod(ejs, prototype, ES_Date_nextDay, date_nextDay);
+    ejsBindAccess(ejs, prototype, ES_Date_seconds, date_seconds, date_set_seconds);
+    ejsBindMethod(ejs, prototype, ES_Date_setUTCDate, date_setUTCDate);
+    ejsBindMethod(ejs, prototype, ES_Date_setUTCFullYear, date_setUTCFullYear);
+    ejsBindMethod(ejs, prototype, ES_Date_setUTCHours, date_setUTCHours);
+    ejsBindMethod(ejs, prototype, ES_Date_setUTCMilliseconds, date_setUTCMilliseconds);
+    ejsBindMethod(ejs, prototype, ES_Date_setUTCMinutes, date_setUTCMinutes);
+    ejsBindMethod(ejs, prototype, ES_Date_setUTCMonth, date_setUTCMonth);
+    ejsBindMethod(ejs, prototype, ES_Date_setUTCSeconds, date_setUTCSeconds);
+    ejsBindAccess(ejs, prototype, ES_Date_time, date_time, date_set_time);
+    ejsBindMethod(ejs, prototype, ES_Date_toJSON, date_toJSON);
+    ejsBindMethod(ejs, prototype, ES_Date_toISOString, date_toISOString);
+    ejsBindMethod(ejs, prototype, ES_Date_toString, date_toString);
+    ejsBindAccess(ejs, prototype, ES_Date_year, date_year, date_set_year);
 }
 
 /*
@@ -6320,9 +6328,7 @@ void ejsConfigureDebugType(Ejs *ejs)
     }
     ejsBindMethod(ejs, type, ES_Debug_breakpoint, debug_breakpoint);
     ejsBindAccess(ejs, type, ES_Debug_mode, debug_mode, debug_set_mode);
-    /*
-        Globals
-     */
+
     ejsBindFunction(ejs, ejs->global, ES_breakpoint, debug_breakpoint);
 }
 
@@ -6388,7 +6394,7 @@ void ejsConfigureDebugType(Ejs *ejs)
 
     function cast(type: Type) : Object
  */
-static EjsObj *castError(Ejs *ejs, EjsError *error, EjsType *type)
+static EjsAny *castError(Ejs *ejs, EjsError *error, EjsType *type)
 {
     EjsString   *stack, *msg;
     EjsString   *us;
@@ -6396,16 +6402,16 @@ static EjsObj *castError(Ejs *ejs, EjsError *error, EjsType *type)
 
     switch (type->sid) {
     case S_Boolean:
-        return (EjsObj*) ejsCreateBoolean(ejs, 1);
+        return ejsCreateBoolean(ejs, 1);
 
     case S_String:
-        stack = (EjsString*) ejsRunFunctionBySlot(ejs, (EjsObj*) error, ES_Error_formatStack, 0, NULL);
+        stack = (EjsString*) ejsRunFunctionBySlot(ejs, error, ES_Error_formatStack, 0, NULL);
         us = ejsIs(ejs, stack, String) ? stack : S(empty);
         msg = ejsGetProperty(ejs, error, ES_Error_message);
         if ((buf = mprAsprintf("%@ Exception: %@\nStack:\n%@\n", TYPE(error)->qname.name, msg, us)) == NULL) {
             ejsThrowMemoryError(ejs);
         }
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, buf);
+        return ejsCreateStringFromAsc(ejs, buf);
         break;
 
     default:
@@ -6420,7 +6426,7 @@ static EjsObj *castError(Ejs *ejs, EjsError *error, EjsType *type)
 
     public function Error(message: String = null)
  */
-static EjsObj *errorConstructor(Ejs *ejs, EjsError *error, int argc, EjsObj **argv)
+static EjsError *errorConstructor(Ejs *ejs, EjsError *error, int argc, EjsObj **argv)
 {
     if (argc > 0) {
         ejsSetProperty(ejs, error, ES_Error_message, ejsToString(ejs, argv[0]));
@@ -6429,19 +6435,19 @@ static EjsObj *errorConstructor(Ejs *ejs, EjsError *error, int argc, EjsObj **ar
         ejsSetProperty(ejs, error, ES_Error_timestamp, ejsCreateDate(ejs, mprGetTime()));
         ejsSetProperty(ejs, error, ES_Error_stack, ejsCaptureStack(ejs, 0));
     }
-    return (EjsObj*) error;
+    return error;
 }
 
 
 /*
-    static function capture(uplevels: Number): Void
+    static function capture(uplevels: Number): Array
  */
-static EjsObj *error_capture(Ejs *ejs, EjsError *error, int argc,  EjsObj **argv)
+static EjsArray *error_capture(Ejs *ejs, EjsError *error, int argc,  EjsObj **argv)
 {
     int     uplevels;
     
     uplevels = (argc > 0) ? ejsGetInt(ejs, argv[0]) : 0;
-    return (EjsObj*) ejsCaptureStack(ejs, uplevels);
+    return ejsCaptureStack(ejs, uplevels);
 }
 
 
@@ -6499,7 +6505,7 @@ static void configureType(Ejs *ejs, cchar *name)
 
     type = ejsGetTypeByName(ejs, N("ejs", name));
     mprAssert(type);
-    ejsBindConstructor(ejs, type, (EjsProc) errorConstructor);
+    ejsBindConstructor(ejs, type, errorConstructor);
 }
 
 
@@ -6523,7 +6529,7 @@ void ejsConfigureErrorType(Ejs *ejs)
     configureType(ejs, "TypeError");
     configureType(ejs, "URIError");
 
-    ejsBindMethod(ejs, ST(Error), ES_Error_capture, (EjsProc) error_capture);
+    ejsBindMethod(ejs, ST(Error), ES_Error_capture, error_capture);
 }
 
 
@@ -6610,7 +6616,7 @@ static void unmapFile(EjsFile *fp);
 /*  
     Index into a file and extract a byte. This is random access reading.
  */
-static EjsObj *getFileProperty(Ejs *ejs, EjsFile *fp, int slotNum)
+static EjsNumber *getFileProperty(Ejs *ejs, EjsFile *fp, int slotNum)
 {
     MprOff  offset;
     int     c;
@@ -6649,7 +6655,7 @@ static EjsObj *getFileProperty(Ejs *ejs, EjsFile *fp, int slotNum)
         return 0;
     }
 #endif
-    return (EjsObj*) ejsCreateNumber(ejs, c);
+    return ejsCreateNumber(ejs, c);
 }
 
 
@@ -6763,7 +6769,7 @@ static cchar *getStrOption(Ejs *ejs, EjsObj *options, cchar *field, cchar *defau
     Constructor
     function File(path: Object, options: Object = null)
  */
-static EjsObj *fileConstructor(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
+static EjsFile *fileConstructor(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
     EjsObj      *pp;
     cchar       *path;
@@ -6785,25 +6791,25 @@ static EjsObj *fileConstructor(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
     if (argc == 2) {
         openFile(ejs, fp, 1, &argv[1]);
     }
-    return (EjsObj*) fp;
+    return fp;
 }
 
 
 /*  
     function get canRead(): Boolean
  */
-static EjsObj *canReadFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
+static EjsBoolean *canReadFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, fp->mode & FILE_OPEN && (fp->mode & FILE_READ));
+    return ejsCreateBoolean(ejs, fp->mode & FILE_OPEN && (fp->mode & FILE_READ));
 }
 
 
 /*  
     function get canRead(): Boolean
  */
-static EjsObj *canWriteFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
+static EjsBoolean *canWriteFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, fp->mode & FILE_OPEN && (fp->mode & FILE_WRITE));
+    return ejsCreateBoolean(ejs, fp->mode & FILE_OPEN && (fp->mode & FILE_WRITE));
 }
 
 /*  
@@ -6814,7 +6820,11 @@ static EjsObj *closeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
     if (fp->mode & FILE_OPEN && fp->mode & FILE_WRITE) {
         if (mprFlushFile(fp->file) < 0) {
-            ejsThrowIOError(ejs, "Can't flush file data");
+            if (ejs) {
+                ejsThrowIOError(ejs, "Can't flush file data");
+            } else {
+                mprError("Can't flush file data");
+            }
             return 0;
         }
     }
@@ -6838,7 +6848,7 @@ static EjsObj *closeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
     Function to iterate and return the next element index.
     NOTE: this is not a method of Array. Rather, it is a callback function for Iterator
  */
-static EjsObj *nextKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
+static EjsNumber *nextKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 {
     EjsFile     *fp;
 
@@ -6848,7 +6858,7 @@ static EjsObj *nextKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
         return 0;
     }
     if (ip->index < fp->info.size) {
-        return (EjsObj*) ejsCreateNumber(ejs, ip->index++);
+        return ejsCreateNumber(ejs, ip->index++);
     }
     ejsThrowStopIteration(ejs);
     return 0;
@@ -6859,10 +6869,10 @@ static EjsObj *nextKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
     Return the default iterator for use with "for ... in". This returns byte offsets in the file.
     iterator native function get(): Iterator
  */
-static EjsObj *getFileIterator(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
+static EjsIterator *getFileIterator(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
     mprGetPathInfo(fp->path, &fp->info);
-    return (EjsObj*) ejsCreateIterator(ejs, (EjsObj*) fp, (EjsProc) nextKey, 0, NULL);
+    return ejsCreateIterator(ejs, fp, nextKey, 0, NULL);
 }
 
 
@@ -6913,7 +6923,7 @@ static EjsObj *getFileValues(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
 {
     mprGetPathInfo(fp->path, &fp->info);
 
-    return (EjsObj*) ejsCreateIterator(ejs, (EjsObj*) fp, (EjsProc) nextValue, 0, NULL);
+    return (EjsObj*) ejsCreateIterator(ejs, (EjsObj*) fp, nextValue, 0, NULL);
 }
 
 
@@ -7439,7 +7449,7 @@ static void manageFile(void *ptr, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (fp->file && !fp->attached) {
-            closeFile(TYPE(fp)->ejs, fp, 0, NULL);
+            closeFile(0, fp, 0, NULL);
         }
     }
 }
@@ -7455,29 +7465,30 @@ void ejsConfigureFileType(Ejs *ejs)
 
     type->numericIndicies = 1;
     type->virtualSlots = 1;
+    type->mutableInstances = 1;
     prototype = type->prototype;
 
     type->helpers.getProperty    = (EjsGetPropertyHelper) getFileProperty;
     type->helpers.lookupProperty = (EjsLookupPropertyHelper) lookupFileProperty;
     type->helpers.setProperty    = (EjsSetPropertyHelper) setFileProperty;
 
-    ejsBindConstructor(ejs, type, (EjsProc) fileConstructor);
-    ejsBindMethod(ejs, prototype, ES_File_canRead, (EjsProc) canReadFile);
-    ejsBindMethod(ejs, prototype, ES_File_canWrite, (EjsProc) canWriteFile);
-    ejsBindMethod(ejs, prototype, ES_File_close, (EjsProc) closeFile);
-    ejsBindMethod(ejs, prototype, ES_File_iterator_get, (EjsProc) getFileIterator);
-    ejsBindMethod(ejs, prototype, ES_File_iterator_getValues, (EjsProc) getFileValues);
-    ejsBindMethod(ejs, prototype, ES_File_isOpen, (EjsProc) isFileOpen);
-    ejsBindMethod(ejs, prototype, ES_File_open, (EjsProc) openFile);
-    ejsBindMethod(ejs, prototype, ES_File_options, (EjsProc) getFileOptions);
-    ejsBindMethod(ejs, prototype, ES_File_path, (EjsProc) getFilePath);
-    ejsBindAccess(ejs, prototype, ES_File_position, (EjsProc) getFilePosition, (EjsProc) setFilePosition);
-    ejsBindMethod(ejs, prototype, ES_File_readBytes, (EjsProc) readFileBytes);
-    ejsBindMethod(ejs, prototype, ES_File_readString, (EjsProc) readFileString);
-    ejsBindMethod(ejs, prototype, ES_File_read, (EjsProc) readFile);
-    ejsBindMethod(ejs, prototype, ES_File_size, (EjsProc) getFileSize);
-    ejsBindMethod(ejs, prototype, ES_File_truncate, (EjsProc) truncateFile);
-    ejsBindMethod(ejs, prototype, ES_File_write, (EjsProc) writeFile);
+    ejsBindConstructor(ejs, type, fileConstructor);
+    ejsBindMethod(ejs, prototype, ES_File_canRead, canReadFile);
+    ejsBindMethod(ejs, prototype, ES_File_canWrite, canWriteFile);
+    ejsBindMethod(ejs, prototype, ES_File_close, closeFile);
+    ejsBindMethod(ejs, prototype, ES_File_iterator_get, getFileIterator);
+    ejsBindMethod(ejs, prototype, ES_File_iterator_getValues, getFileValues);
+    ejsBindMethod(ejs, prototype, ES_File_isOpen, isFileOpen);
+    ejsBindMethod(ejs, prototype, ES_File_open, openFile);
+    ejsBindMethod(ejs, prototype, ES_File_options, getFileOptions);
+    ejsBindMethod(ejs, prototype, ES_File_path, getFilePath);
+    ejsBindAccess(ejs, prototype, ES_File_position, getFilePosition, setFilePosition);
+    ejsBindMethod(ejs, prototype, ES_File_readBytes, readFileBytes);
+    ejsBindMethod(ejs, prototype, ES_File_readString, readFileString);
+    ejsBindMethod(ejs, prototype, ES_File_read, readFile);
+    ejsBindMethod(ejs, prototype, ES_File_size, getFileSize);
+    ejsBindMethod(ejs, prototype, ES_File_truncate, truncateFile);
+    ejsBindMethod(ejs, prototype, ES_File_write, writeFile);
 }
 
 /*
@@ -7542,7 +7553,7 @@ void ejsConfigureFileType(Ejs *ejs)
 
     function FileSystem(path: String)
  */
-static EjsObj *fileSystemConstructor(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
+static EjsFileSystem *fileSystemConstructor(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 {
     cchar   *path;
 
@@ -7551,7 +7562,7 @@ static EjsObj *fileSystemConstructor(Ejs *ejs, EjsFileSystem *fp, int argc, EjsO
     path = ejsToMulti(ejs, argv[0]);
     fp->path = mprGetNormalizedPath(path);
     fp->fs = mprLookupFileSystem(path);
-    return (EjsObj*) fp;
+    return fp;
 }
 
 
@@ -7581,9 +7592,9 @@ static EjsObj *fileSystemSpace(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **a
 
     static function hasDrives(): Boolean
  */
-static EjsObj *hasDrives(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
+static EjsBoolean *hasDrives(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, fp->fs->hasDriveSpecs);
+    return ejsCreateBoolean(ejs, fp->fs->hasDriveSpecs);
 }
 
 
@@ -7593,25 +7604,25 @@ static EjsObj *hasDrives(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 
     function get isReady(): Boolean
  */
-static EjsObj *isReady(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
+static EjsBoolean *isReady(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 {
     MprPath     info;
     int         rc;
 
     rc = mprGetPathInfo(ejs, fp->path, &info);
-    return (EjsObj*) ejsCreateBoolean(ejs, rc == 0 && info.isDir);
+    return ejsCreateBoolean(ejs, rc == 0 && info.isDir);
 }
 #endif
 
 
 #if ES_isWritable
-static EjsObj *isWritable(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
+static EjsBoolean *isWritable(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 {
     MprPath     info;
     int         rc;
 
     rc = mprGetPathInfo(ejs, fp->path, &info);
-    return (EjsObj*) ejsCreateBoolean(ejs, rc == 0 && info.isDir);
+    return ejsCreateBoolean(ejs, rc == 0 && info.isDir);
 }
 #endif
 
@@ -7621,9 +7632,9 @@ static EjsObj *isWritable(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 
     function get newline(): String
  */
-static EjsObj *getNewline(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
+static EjsString *getNewline(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprGetPathNewline(fp->path));
+    return ejsCreateStringFromAsc(ejs, mprGetPathNewline(fp->path));
 }
 
 
@@ -7643,7 +7654,7 @@ static EjsObj *setNewline(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 }
 
 
-static EjsObj *root(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
+static EjsPath *root(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 {
     cchar   *separators;
     char    *path, *cp;
@@ -7653,7 +7664,7 @@ static EjsObj *root(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
     if ((cp = strchr(path, separators[0])) != 0) {
         *++cp = '\0';
     }
-    return (EjsObj*) ejsCreatePathFromAsc(ejs, path);
+    return ejsCreatePathFromAsc(ejs, path);
 }
 
 
@@ -7662,9 +7673,9 @@ static EjsObj *root(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 
     static function get separators(): String
  */
-static EjsObj *getSeparators(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
+static EjsString *getSeparators(Ejs *ejs, EjsFileSystem *fp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, fp->fs->separators);
+    return ejsCreateStringFromAsc(ejs, fp->fs->separators);
 }
 
 
@@ -7722,22 +7733,22 @@ void ejsConfigureFileSystemType(Ejs *ejs)
     ejsSetSpecialType(ejs, S_FileSystem, type);
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) fileSystemConstructor);
+    ejsBindConstructor(ejs, type, fileSystemConstructor);
 #if ES_space
-    ejsBindMethod(ejs, prototype, ES_FileSystem_space, (EjsProc) fileSystemSpace);
+    ejsBindMethod(ejs, prototype, ES_FileSystem_space, fileSystemSpace);
 #endif
-    ejsBindMethod(ejs, prototype, ES_FileSystem_hasDrives, (EjsProc) hasDrives);
+    ejsBindMethod(ejs, prototype, ES_FileSystem_hasDrives, hasDrives);
 #if ES_isReady
-    ejsBindMethod(ejs, prototype, ES_FileSystem_isReady, (EjsProc) isReady);
+    ejsBindMethod(ejs, prototype, ES_FileSystem_isReady, isReady);
 #endif
 #if ES_isWritable
-    ejsBindMethod(ejs, prototype, ES_FileSystem_isWritable, (EjsProc) isWritable);
+    ejsBindMethod(ejs, prototype, ES_FileSystem_isWritable, isWritable);
 #endif
-    ejsBindAccess(ejs, prototype, ES_FileSystem_newline, (EjsProc) getNewline, (EjsProc) setNewline);
-    ejsBindMethod(ejs, prototype, ES_FileSystem_root, (EjsProc) root);
-    ejsBindAccess(ejs, prototype, ES_FileSystem_separators, (EjsProc) getSeparators, (EjsProc) setSeparators);
+    ejsBindAccess(ejs, prototype, ES_FileSystem_newline, getNewline, setNewline);
+    ejsBindMethod(ejs, prototype, ES_FileSystem_root, root);
+    ejsBindAccess(ejs, prototype, ES_FileSystem_separators, getSeparators, setSeparators);
 #if ES_size
-    ejsBindMethod(ejs, prototype, ES_FileSystem_size, (EjsProc) size);
+    ejsBindMethod(ejs, prototype, ES_FileSystem_size, size);
 #endif
 }
 
@@ -7909,10 +7920,23 @@ EjsFrame *ejsCreateFrame(Ejs *ejs, EjsFunction *fun, EjsObj *thisObj, int argc, 
     frame->function.throwNulls = fun->throwNulls;
 
     frame->function.boundArgs = fun->boundArgs;
-    frame->function.boundThis = fun->boundThis;
+
+#if UNUSED
+    //  MOB thisObj is always set
+    mprAssert(thisObj);
     if (thisObj) {
         frame->function.boundThis = thisObj;
+    } else if (fun->boundThis) {
+        mprAssert(fun->boundThis != ejs->global);
+        frame->function.boundThis = fun->boundThis;
+    } else {
+        frame->function.boundThis = ejs->global;
     }
+#else
+    /* NOTE: this can be set to ejs->global in frames */
+    frame->function.boundThis = thisObj;
+#endif
+    
     frame->function.resultType = fun->resultType;
     frame->function.body = fun->body;
     frame->pc = fun->body.code->byteCode;
@@ -7928,7 +7952,8 @@ EjsFrame *ejsCreateFrame(Ejs *ejs, EjsFunction *fun, EjsObj *thisObj, int argc, 
             frame->function.block.pot.properties->slots[i].value.ref = argv[i];
         }
     }
-    mprCopyName(frame, fun);
+    //  UNICODE
+    mprSetName(frame, fun->name->value);
     return frame;
 }
 
@@ -7939,8 +7964,10 @@ void ejsCreateFrameType(Ejs *ejs)
 
     type = ejsCreateNativeType(ejs, N("ejs", "Frame"), sizeof(EjsFrame), S_Frame, ES_Frame_NUM_CLASS_PROP,
         manageFrame, EJS_POT_HELPERS);
+    type->mutableInstances = 1;
     ejsSetTypeAttributes(type, EJS_TYPE_DYNAMIC_INSTANCE);
     type->constructor.block.pot.shortScope = 1;
+    type->helpers.clone = (EjsCloneHelper) ejsCloneBlock;
 }
 
 
@@ -8143,7 +8170,10 @@ static EjsObj *fun_applyFunction(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **
     mprAssert(ejsIs(ejs, args, Array));
 
     save = fun->boundThis;
-    thisObj = (argv[0] == S(null)) ? fun->boundThis: argv[0];
+    thisObj = argv[0];
+    if (thisObj == S(null)) {
+        thisObj = fun->boundThis ? fun->boundThis : ejs->global;
+    }
     result =  ejsRunFunction(ejs, fun, thisObj, args->length, args->data);
     fun->boundThis = save;
     return result;
@@ -8155,9 +8185,12 @@ static EjsObj *fun_applyFunction(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **
  */
 static EjsObj *fun_bindFunction(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
 {
+    EjsAny      *thisObj;
+
     mprAssert(argc >= 1);
 
-    fun->boundThis = argv[0];
+    thisObj = argv[0];
+    fun->boundThis = ejsIsDefined(ejs, thisObj) ? thisObj : 0;
     if (argc == 2) {
         fun->boundArgs = (EjsArray*) argv[1];
         mprAssert(ejsIs(ejs, fun->boundArgs, Array));
@@ -8167,11 +8200,11 @@ static EjsObj *fun_bindFunction(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **a
 
 
 /*
-    function bound(): Function
+    function get bound(): Object
  */
-static EjsObj *fun_bound(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
+static EjsAny *fun_bound(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
 {
-    return fun->boundThis;
+    return fun->boundThis ? fun->boundThis : S(undefined);
 }
 
 
@@ -8196,7 +8229,6 @@ static EjsNumber *fun_length(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv
 }
 
 
-#if ES_Function_name
 /*
     function get name(): String
  */
@@ -8207,7 +8239,6 @@ static EjsString *fun_name(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
     }
     return fun->name;
 }
-#endif
 
 
 /*
@@ -8395,28 +8426,7 @@ int ejsSetFunctionCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *by
     mprAssert(byteCode);
     mprAssert(len >= 0);
 
-#if UNUSED
-    code = fun->body.code;
-    if (code == NULL) {
-        if ((code = mprAllocZeroed(sizeof(EjsCode) + len)) == 0) {
-            return MPR_ERR_MEMORY;
-        }
-        fun->body.code = code;
-    } else {
-        if (len > code->codeLen) {
-            if ((code = mprRealloc(code, sizeof(EjsCode) + len)) == 0) {
-                return MPR_ERR_MEMORY;
-            }
-            fun->body.code = code;
-        }
-    }
-    memcpy(code->byteCode, byteCode, len);
-    code->codeLen = len;
-    code->module = module;
-    code->debug = debug;
-#else
     fun->body.code = ejsCreateCode(ejs, fun, module, byteCode, len, debug);
-#endif
     return 0;
 }
 
@@ -8506,42 +8516,28 @@ int ejsInitFunction(Ejs *ejs, EjsFunction *fun, EjsString *name, cuchar *byteCod
     fun->strict = strict;
 
     if (codeLen > 0) {
-#if UNUSED
-        if ((code = mprAllocZeroed(sizeof(EjsCode) + codeLen)) == 0) {
-            return MPR_ERR_MEMORY;
-        }
-        fun->body.code = code;
-        code->module = module;
-        code->numHandlers = numExceptions;
-        code->codeLen = codeLen;
-        memcpy(code->byteCode, byteCode, codeLen);
-#else
         fun->body.code = ejsCreateCode(ejs, fun, module, byteCode, codeLen, NULL);
         fun->body.code->numHandlers = numExceptions;
-#endif
     }
     fun->name = name;
     setFunctionAttributes(fun, attributes);
-    mprSetName(fun, "function");
     return 0;
 }
 
 
 void ejsManageFunction(EjsFunction *fun, int flags)
 {
-    if (fun) {
-        if (flags & MPR_MANAGE_MARK) {
-            ejsManageBlock((EjsBlock*) fun, flags);
-            mprMark(fun->name);
-            mprMark(fun->activation);
-            mprMark(fun->setter);
-            mprMark(fun->archetype);
-            mprMark(fun->resultType);
-            mprMark(fun->boundThis);
-            mprMark(fun->boundArgs);
-            if (!fun->isNativeProc) {
-                mprMark(fun->body.code);
-            }
+    if (flags & MPR_MANAGE_MARK) {
+        ejsManageBlock((EjsBlock*) fun, flags);
+        mprMark(fun->name);
+        mprMark(fun->activation);
+        mprMark(fun->setter);
+        mprMark(fun->archetype);
+        mprMark(fun->resultType);
+        mprMark(fun->boundThis);
+        mprMark(fun->boundArgs);
+        if (!fun->isNativeProc) {
+            mprMark(fun->body.code);
         }
     }
 }
@@ -8574,16 +8570,17 @@ void ejsConfigureFunctionType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ST(Function);
+    type->mutableInstances = 1;
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) fun_Function);
-    ejsBindMethod(ejs, prototype, ES_Function_apply, (EjsProc) fun_applyFunction);
-    ejsBindMethod(ejs, prototype, ES_Function_bind, (EjsProc) fun_bindFunction);
-    ejsBindMethod(ejs, prototype, ES_Function_bound, (EjsProc) fun_bound);
-    ejsBindMethod(ejs, prototype, ES_Function_call, (EjsProc) fun_call);
-    ejsBindMethod(ejs, prototype, ES_Function_length, (EjsProc) fun_length);
-    ejsBindMethod(ejs, prototype, ES_Function_name, (EjsProc) fun_name);
-    ejsBindMethod(ejs, prototype, ES_Function_setScope, (EjsProc) fun_setScope);
+    ejsBindConstructor(ejs, type, fun_Function);
+    ejsBindMethod(ejs, prototype, ES_Function_apply, fun_applyFunction);
+    ejsBindMethod(ejs, prototype, ES_Function_bind, fun_bindFunction);
+    ejsBindMethod(ejs, prototype, ES_Function_bound, fun_bound);
+    ejsBindMethod(ejs, prototype, ES_Function_call, fun_call);
+    ejsBindMethod(ejs, prototype, ES_Function_length, fun_length);
+    ejsBindMethod(ejs, prototype, ES_Function_name, fun_name);
+    ejsBindMethod(ejs, prototype, ES_Function_setScope, fun_setScope);
 }
 
 
@@ -8647,9 +8644,9 @@ void ejsConfigureFunctionType(Ejs *ejs)
 /*
     native static function get enabled(): Boolean
  */
-static EjsObj *gc_enabled(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsBoolean *gc_enabled(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ((mprGetMpr()->heap.enabled) ? S(true): S(false));
+    return ((mprGetMpr()->heap.enabled) ? S(true): S(false));
 }
 
 
@@ -8685,9 +8682,9 @@ static EjsObj *gc_run(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 /*
     native static function get newQuota(): Number
  */
-static EjsObj *gc_newQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsNumber *gc_newQuota(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, mprGetMpr()->heap.newQuota);
+    return ejsCreateNumber(ejs, mprGetMpr()->heap.newQuota);
 }
 
 
@@ -8731,9 +8728,7 @@ void ejsConfigureGCType(Ejs *ejs)
     ejsBindAccess(ejs, type, ES_GC_enabled, gc_enabled, gc_set_enabled);
     ejsBindAccess(ejs, type, ES_GC_newQuota, gc_newQuota, gc_set_newQuota);
     ejsBindMethod(ejs, type, ES_GC_run, gc_run);
-#if ES_GC_verify
     ejsBindMethod(ejs, type, ES_GC_verify, gc_verify);
-#endif
 }
 
 /*
@@ -8797,7 +8792,7 @@ void ejsConfigureGCType(Ejs *ejs)
     Assert a condition is true.
     static function assert(condition: Boolean): Boolean
  */
-static EjsObj *g_assert(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
+static EjsBoolean *g_assert(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
     EjsFrame        *fp;
     MprChar         *source;
@@ -8805,7 +8800,7 @@ static EjsObj *g_assert(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 
     mprAssert(argc == 1);
 
-    if (! ejsIs(ejs, argv[0], Boolean)) {
+    if (!ejsIs(ejs, argv[0], Boolean)) {
         b = (EjsBoolean*) ejsCast(ejs, argv[0], Boolean);
     } else {
         b = (EjsBoolean*) argv[0];
@@ -8821,7 +8816,7 @@ static EjsObj *g_assert(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
         }
         return 0;
     }
-    return vp;
+    return S(true);
 }
 
 
@@ -8833,7 +8828,7 @@ static EjsObj *g_blend(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     EjsObj      *src, *dest;
     int         overwrite;
 
-    overwrite = (argc == 3) ? (argv[2] == (EjsObj*) S(true)) : 1;
+    overwrite = (argc == 3) ? (argv[2] == S(true)) : 1;
     dest = argv[0];
     src = argv[1];
     ejsBlendObject(ejs, dest, src, overwrite);
@@ -8885,10 +8880,10 @@ static EjsObj *g_eval(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Get the hash code for the object.
     function hashcode(o: Object): Number
  */
-static EjsObj *g_hashcode(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
+static EjsNumber *g_hashcode(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
     mprAssert(argc == 1);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) PTOL(argv[0]));
+    return ejsCreateNumber(ejs, (MprNumber) PTOL(argv[0]));
 }
 #endif
 
@@ -8922,9 +8917,9 @@ static EjsObj *g_load(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 
 /*  
     Compute an MD5 checksum
-    static function md5(name: String): void
+    static function md5(name: String): String
  */
-static EjsObj *g_md5(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsString *g_md5(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsString   *str;
     char        *hash;
@@ -8932,7 +8927,7 @@ static EjsObj *g_md5(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     MPR_VERIFY_MEM();
     str = (EjsString*) argv[0];
     hash = mprGetMD5Hash(ejsToMulti(ejs, str), str->length, NULL);
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, hash);
+    return ejsCreateStringFromAsc(ejs, hash);
 }
 
 
@@ -8957,7 +8952,7 @@ int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite)
         /* NOTE: treats arrays as primitive types */
         if (!ejsIs(ejs, vp, Array) && !ejsIsXML(ejs, vp) && ejsGetPropertyCount(ejs, vp) > 0) {
             if ((dp = ejsGetPropertyByName(ejs, dest, name)) == 0 || ejsGetPropertyCount(ejs, dp) == 0) {
-                ejsSetPropertyByName(ejs, dest, name, ejsClonePot(ejs, (EjsObj*) vp, 1));
+                ejsSetPropertyByName(ejs, dest, name, ejsClonePot(ejs, vp, 1));
             } else {
                 ejsBlendObject(ejs, dp, vp, overwrite);
             }
@@ -8997,13 +8992,13 @@ static EjsObj *g_parse(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 
 /*
     Parse the input as an integer
-    static function parseInt(input: String, radix: Number = 10): void
+    static function parseInt(input: String, radix: Number = 10): Number
     Formats:
         [(+|-)][0][OCTAL_DIGITS]
         [(+|-)][0][(x|X)][HEX_DIGITS]
         [(+|-)][DIGITS]
  */
-static EjsObj *g_parseInt(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *g_parseInt(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprNumber   n;
     cchar       *str;
@@ -9019,7 +9014,7 @@ static EjsObj *g_parseInt(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
         if (err) {
             return S(nan);
         }
-        return (EjsObj*) ejsCreateNumber(ejs, n);
+        return ejsCreateNumber(ejs, n);
     }
     return S(nan);
 }
@@ -9107,7 +9102,7 @@ void ejsConfigureGlobalBlock(Ejs *ejs)
     mprAssert(block);
     
     ejsBindFunction(ejs, block, ES_assert, g_assert);
-    ejsBindFunction(ejs, block, ES_cloneBase, (EjsProc) g_cloneBase);
+    ejsBindFunction(ejs, block, ES_cloneBase, g_cloneBase);
     ejsBindFunction(ejs, block, ES_eval, g_eval);
     ejsBindFunction(ejs, block, ES_hashcode, g_hashcode);
     ejsBindFunction(ejs, block, ES_load, g_load);
@@ -9197,6 +9192,7 @@ static ssize    writeHttpData(Ejs *ejs, EjsHttp *hp);
 static EjsHttp *httpConstructor(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     ejsLoadHttpService(ejs);
+    hp->ejs = ejs;
 
     if ((hp->conn = httpCreateConn(ejs->http, NULL, ejs->dispatcher)) == 0) {
         ejsThrowMemoryError(ejs);
@@ -9212,32 +9208,6 @@ static EjsHttp *httpConstructor(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     hp->requestContent = mprCreateBuf(HTTP_BUFSIZE, -1);
     hp->responseContent = mprCreateBuf(HTTP_BUFSIZE, -1);
     return hp;
-}
-
-
-/*  
-    function on(name, observer: function): Void
- */
-static EjsObj *http_on(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
-{
-    EjsFunction     *observer;
-    HttpConn        *conn;
-
-    observer = (EjsFunction*) argv[1];
-    if (observer->boundThis == 0 || observer->boundThis == ejs->global) {
-        observer->boundThis = hp;
-    }
-    ejsAddObserver(ejs, &hp->emitter, argv[0], argv[1]);
-
-    conn = hp->conn;
-    if (conn->readq && conn->readq->count > 0) {
-        ejsSendEvent(ejs, hp->emitter, "readable", NULL, hp);
-    }
-    if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
-            conn->writeq->ioCount == 0) {
-        ejsSendEvent(ejs, hp->emitter, "writable", NULL, hp);
-    }
-    return 0;
 }
 
 
@@ -9631,6 +9601,42 @@ static EjsObj *http_set_method(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 
 
 /*  
+    function off(name, observer: function): Void
+ */
+static EjsObj *http_off(Ejs *ejs, EjsHttp *hp, int argc, EjsAny **argv)
+{
+    ejsRemoveObserver(ejs, hp->emitter, argv[0], argv[1]);
+    return 0;
+}
+
+
+/*  
+    function on(name, observer: function): Void
+ */
+static EjsObj *http_on(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
+{
+    EjsFunction     *observer;
+    HttpConn        *conn;
+
+    observer = (EjsFunction*) argv[1];
+    if (observer->boundThis == 0 || observer->boundThis == ejs->global) {
+        observer->boundThis = hp;
+    }
+    ejsAddObserver(ejs, &hp->emitter, argv[0], observer);
+
+    conn = hp->conn;
+    if (conn->readq && conn->readq->count > 0) {
+        ejsSendEvent(ejs, hp->emitter, "readable", NULL, hp);
+    }
+    if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
+            conn->writeq->ioCount == 0) {
+        ejsSendEvent(ejs, hp->emitter, "writable", NULL, hp);
+    }
+    return 0;
+}
+
+
+/*  
     function post(uri: String = null, ...requestContent): Void
  */
 static EjsObj *http_post(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
@@ -9727,16 +9733,6 @@ static EjsString *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv
     mprAdjustBufStart(hp->responseContent, count);
     mprResetBufIfEmpty(hp->responseContent);
     return result;
-}
-
-
-/*  
-    function off(name, observer: function): Void
- */
-static EjsObj *http_off(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
-{
-    ejsRemoveObserver(ejs, hp->emitter, argv[0], argv[1]);
-    return 0;
 }
 
 
@@ -10110,7 +10106,7 @@ static void httpNotify(HttpConn *conn, int state, int notifyFlags)
     EjsHttp     *hp;
 
     hp = httpGetConnContext(conn);
-    ejs = TYPE(hp)->ejs;
+    ejs = hp->ejs;
 
     switch (state) {
     case HTTP_STATE_BEGIN:
@@ -10225,7 +10221,7 @@ static void httpIOEvent(HttpConn *conn, MprEvent *event)
     mprAssert(conn->async);
 
     hp = conn->context;
-    ejs = TYPE(hp)->ejs;
+    ejs = hp->ejs;
 
     httpEvent(conn, event);
     if (event->mask & MPR_WRITABLE) {
@@ -10394,7 +10390,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
 
     mprAssert(state >= HTTP_STATE_PARSED);
 
-    ejs = TYPE(hp)->ejs;
+    ejs = hp->ejs;
     conn = hp->conn;
     mprAssert(conn->state >= HTTP_STATE_CONNECTED);
 
@@ -10629,7 +10625,7 @@ static void manageHttp(EjsHttp *http, int flags)
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (http->conn) {
-            sendHttpCloseEvent(TYPE(http)->ejs, http);
+            sendHttpCloseEvent(http->ejs, http);
             httpDestroyConn(http->conn);
             http->conn = 0;
         }
@@ -10644,53 +10640,53 @@ void ejsConfigureHttpType(Ejs *ejs)
 
     type = ejsConfigureNativeType(ejs, N("ejs", "Http"), sizeof(EjsHttp), (MprManager) manageHttp, EJS_OBJ_HELPERS);
     prototype = type->prototype;
+    type->mutableInstances = 1;
 
-    ejsBindConstructor(ejs, type, (EjsProc) httpConstructor);
-    ejsBindAccess(ejs, prototype, ES_Http_async, (EjsProc) http_async, (EjsProc) http_set_async);
+    ejsBindConstructor(ejs, type, httpConstructor);
+    ejsBindAccess(ejs, prototype, ES_Http_async, http_async, http_set_async);
 #if ES_Http_available
     /* DEPRECATED */
-    ejsBindMethod(ejs, prototype, ES_Http_available, (EjsProc) http_available);
+    ejsBindMethod(ejs, prototype, ES_Http_available, http_available);
 #endif
-    ejsBindMethod(ejs, prototype, ES_Http_close, (EjsProc) http_close);
-    ejsBindMethod(ejs, prototype, ES_Http_connect, (EjsProc) http_connect);
-    ejsBindAccess(ejs, prototype, ES_Http_certificate, (EjsProc) http_certificate, (EjsProc) http_set_certificate);
-    ejsBindMethod(ejs, prototype, ES_Http_contentLength, (EjsProc) http_contentLength);
-    ejsBindMethod(ejs, prototype, ES_Http_contentType, (EjsProc) http_contentType);
-    ejsBindMethod(ejs, prototype, ES_Http_date, (EjsProc) http_date);
-    ejsBindMethod(ejs, prototype, ES_Http_finalize, (EjsProc) http_finalize);
-    ejsBindMethod(ejs, prototype, ES_Http_finalized, (EjsProc) http_finalized);
-    ejsBindMethod(ejs, prototype, ES_Http_flush, (EjsProc) http_flush);
-    ejsBindAccess(ejs, prototype, ES_Http_followRedirects, (EjsProc) http_followRedirects, 
-        (EjsProc) http_set_followRedirects);
-    ejsBindMethod(ejs, prototype, ES_Http_form, (EjsProc) http_form);
-    ejsBindMethod(ejs, prototype, ES_Http_get, (EjsProc) http_get);
-    ejsBindMethod(ejs, prototype, ES_Http_getRequestHeaders, (EjsProc) http_getRequestHeaders);
-    ejsBindMethod(ejs, prototype, ES_Http_head, (EjsProc) http_head);
-    ejsBindMethod(ejs, prototype, ES_Http_header, (EjsProc) http_header);
-    ejsBindMethod(ejs, prototype, ES_Http_headers, (EjsProc) http_headers);
-    ejsBindMethod(ejs, prototype, ES_Http_isSecure, (EjsProc) http_isSecure);
-    ejsBindAccess(ejs, prototype, ES_Http_key, (EjsProc) http_key, (EjsProc) http_set_key);
-    ejsBindMethod(ejs, prototype, ES_Http_lastModified, (EjsProc) http_lastModified);
-    ejsBindMethod(ejs, prototype, ES_Http_limits, (EjsProc) http_limits);
-    ejsBindAccess(ejs, prototype, ES_Http_method, (EjsProc) http_method, (EjsProc) http_set_method);
-    ejsBindMethod(ejs, prototype, ES_Http_off, (EjsProc) http_off);
-    ejsBindMethod(ejs, prototype, ES_Http_on, (EjsProc) http_on);
-    ejsBindMethod(ejs, prototype, ES_Http_post, (EjsProc) http_post);
-    ejsBindMethod(ejs, prototype, ES_Http_put, (EjsProc) http_put);
-    ejsBindMethod(ejs, prototype, ES_Http_read, (EjsProc) http_read);
-    ejsBindMethod(ejs, prototype, ES_Http_readString, (EjsProc) http_readString);
-    ejsBindMethod(ejs, prototype, ES_Http_reset, (EjsProc) http_reset);
-    ejsBindAccess(ejs, prototype, ES_Http_response, (EjsProc) http_response, (EjsProc) http_set_response);
-    ejsBindAccess(ejs, prototype, ES_Http_retries, (EjsProc) http_retries, (EjsProc) http_set_retries);
-    ejsBindMethod(ejs, prototype, ES_Http_setCredentials, (EjsProc) http_setCredentials);
-    ejsBindMethod(ejs, prototype, ES_Http_setHeader, (EjsProc) http_setHeader);
-    ejsBindMethod(ejs, prototype, ES_Http_setLimits, (EjsProc) http_setLimits);
-    ejsBindMethod(ejs, prototype, ES_Http_status, (EjsProc) http_status);
-    ejsBindMethod(ejs, prototype, ES_Http_statusMessage, (EjsProc) http_statusMessage);
-    ejsBindMethod(ejs, prototype, ES_Http_trace, (EjsProc) http_trace);
-    ejsBindAccess(ejs, prototype, ES_Http_uri, (EjsProc) http_uri, (EjsProc) http_set_uri);
-    ejsBindMethod(ejs, prototype, ES_Http_write, (EjsProc) http_write);
-    ejsBindMethod(ejs, prototype, ES_Http_wait, (EjsProc) http_wait);
+    ejsBindMethod(ejs, prototype, ES_Http_close, http_close);
+    ejsBindMethod(ejs, prototype, ES_Http_connect, http_connect);
+    ejsBindAccess(ejs, prototype, ES_Http_certificate, http_certificate, http_set_certificate);
+    ejsBindMethod(ejs, prototype, ES_Http_contentLength, http_contentLength);
+    ejsBindMethod(ejs, prototype, ES_Http_contentType, http_contentType);
+    ejsBindMethod(ejs, prototype, ES_Http_date, http_date);
+    ejsBindMethod(ejs, prototype, ES_Http_finalize, http_finalize);
+    ejsBindMethod(ejs, prototype, ES_Http_finalized, http_finalized);
+    ejsBindMethod(ejs, prototype, ES_Http_flush, http_flush);
+    ejsBindAccess(ejs, prototype, ES_Http_followRedirects, http_followRedirects, http_set_followRedirects);
+    ejsBindMethod(ejs, prototype, ES_Http_form, http_form);
+    ejsBindMethod(ejs, prototype, ES_Http_get, http_get);
+    ejsBindMethod(ejs, prototype, ES_Http_getRequestHeaders, http_getRequestHeaders);
+    ejsBindMethod(ejs, prototype, ES_Http_head, http_head);
+    ejsBindMethod(ejs, prototype, ES_Http_header, http_header);
+    ejsBindMethod(ejs, prototype, ES_Http_headers, http_headers);
+    ejsBindMethod(ejs, prototype, ES_Http_isSecure, http_isSecure);
+    ejsBindAccess(ejs, prototype, ES_Http_key, http_key, http_set_key);
+    ejsBindMethod(ejs, prototype, ES_Http_lastModified, http_lastModified);
+    ejsBindMethod(ejs, prototype, ES_Http_limits, http_limits);
+    ejsBindAccess(ejs, prototype, ES_Http_method, http_method, http_set_method);
+    ejsBindMethod(ejs, prototype, ES_Http_off, http_off);
+    ejsBindMethod(ejs, prototype, ES_Http_on, http_on);
+    ejsBindMethod(ejs, prototype, ES_Http_post, http_post);
+    ejsBindMethod(ejs, prototype, ES_Http_put, http_put);
+    ejsBindMethod(ejs, prototype, ES_Http_read, http_read);
+    ejsBindMethod(ejs, prototype, ES_Http_readString, http_readString);
+    ejsBindMethod(ejs, prototype, ES_Http_reset, http_reset);
+    ejsBindAccess(ejs, prototype, ES_Http_response, http_response, http_set_response);
+    ejsBindAccess(ejs, prototype, ES_Http_retries, http_retries, http_set_retries);
+    ejsBindMethod(ejs, prototype, ES_Http_setCredentials, http_setCredentials);
+    ejsBindMethod(ejs, prototype, ES_Http_setHeader, http_setHeader);
+    ejsBindMethod(ejs, prototype, ES_Http_setLimits, http_setLimits);
+    ejsBindMethod(ejs, prototype, ES_Http_status, http_status);
+    ejsBindMethod(ejs, prototype, ES_Http_statusMessage, http_statusMessage);
+    ejsBindMethod(ejs, prototype, ES_Http_trace, http_trace);
+    ejsBindAccess(ejs, prototype, ES_Http_uri, http_uri, http_set_uri);
+    ejsBindMethod(ejs, prototype, ES_Http_write, http_write);
+    ejsBindMethod(ejs, prototype, ES_Http_wait, http_wait);
 }
 
 /*
@@ -10802,7 +10798,7 @@ static EjsObj *iteratorConstructor(Ejs *ejs, EjsIterator *ip, int argc, EjsObj *
 /*
     Create an iterator.
  */
-EjsIterator *ejsCreateIterator(Ejs *ejs, EjsAny *obj, EjsProc nativeNext, bool deep, EjsArray *namespaces)
+EjsIterator *ejsCreateIterator(Ejs *ejs, EjsAny *obj, void *nativeNext, bool deep, EjsArray *namespaces)
 {
     EjsIterator     *ip;
 
@@ -10956,12 +10952,12 @@ EjsObj *g_deserialize(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 
 
 /*
-    function serialize(obj: Object, options: Object = null)
+    function serialize(obj: Object, options: Object = null): String
         Options: baseClasses, depth, indent, hidden, pretty, replacer
  */
-static EjsObj *g_serialize(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsString *g_serialize(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsToJSON(ejs, argv[0], (argc == 2) ? argv[1] : NULL);
+    return ejsToJSON(ejs, argv[0], (argc == 2) ? argv[1] : NULL);
 }
 
 
@@ -11317,7 +11313,7 @@ EjsString *ejsToJSON(Ejs *ejs, EjsAny *vp, EjsObj *options)
     EjsObj          *argv[1];
     int             argc;
 
-    fn = (EjsFunction*) ejsGetPropertyByName(ejs, (EjsObj*) TYPE(vp)->prototype, N(NULL, "toJSON"));
+    fn = (EjsFunction*) ejsGetPropertyByName(ejs, TYPE(vp)->prototype, N(NULL, "toJSON"));
     if (!ejsIsFunction(ejs, fn) || (fn->isNativeProc && fn->body.proc == (EjsFun) ejsObjToJSON)) {
         result = ejsSerialize(ejs, vp, options);
     } else {
@@ -11346,7 +11342,7 @@ EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, EjsObj *options)
     if (options) {
         json.options = options;
         if ((arg = ejsGetPropertyByName(ejs, options, EN("baseClasses"))) != 0) {
-            json.baseClasses = (arg == (EjsObj*) S(true));
+            json.baseClasses = (arg == S(true));
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("depth"))) != 0) {
             json.depth = ejsGetInt(ejs, arg);
@@ -11368,13 +11364,13 @@ EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, EjsObj *options)
             }
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("hidden"))) != 0) {
-            json.hidden = (arg == (EjsObj*) S(true));
+            json.hidden = (arg == S(true));
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("namespaces"))) != 0) {
-            json.namespaces = (arg == (EjsObj*) S(true));
+            json.namespaces = (arg == S(true));
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("pretty"))) != 0) {
-            json.pretty = (arg == (EjsObj*) S(true));
+            json.pretty = (arg == S(true));
         }
         json.replacer = ejsGetPropertyByName(ejs, options, EN("replacer"));
         if (!ejsIsFunction(ejs, json.replacer)) {
@@ -11479,7 +11475,7 @@ static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
                     mprPutCharToWideBuf(json->buf, ' ');
                 }
             }
-            fn = (EjsFunction*) ejsGetPropertyByName(ejs, (EjsObj*) TYPE(pp)->prototype, N(NULL, "toJSON"));
+            fn = (EjsFunction*) ejsGetPropertyByName(ejs, TYPE(pp)->prototype, N(NULL, "toJSON"));
 // TODO - check that this is going directly to serialize most of the time
             if (!ejsIsFunction(ejs, fn) || (fn->isNativeProc && fn->body.proc == (EjsFun) ejsObjToJSON)) {
                 sv = serialize(ejs, pp, json);
@@ -11607,7 +11603,7 @@ static EjsNumber *lf_emit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     frozen = ejsFreeze(ejs, 1);
 
     for (i = 0; i < args->length; i++) {
-        vp = ejsGetProperty(ejs, (EjsObj*) args, i);
+        vp = ejsGetProperty(ejs, args, i);
         mprAssert(vp);
         switch (TYPE(vp)->sid) {
         case S_ByteArray:
@@ -11745,138 +11741,6 @@ void ejsConfigureLogFileType(Ejs *ejs)
 
 /************************************************************************/
 /*
- *  Start of file "../../src/core/src/ejsLogger.c"
- */
-/************************************************************************/
-
-/*
-    ejsLogger.c -- Logger class
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-
-
-#if UNUSED
-/*  
-    function get nativeLevel(): Number
- */
-static EjsObj *logger_nativeLevel(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
-{
-    return (EjsObj*) ejsCreateNumber(ejs, mprGetLogLevel(ejs));
-}
-
-
-/*  
-    function set nativeLevel(value: Number): Void
- */
-static EjsObj *logger_set_nativeLevel(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
-{
-    mprSetLogLevel(ejsGetInt(ejs, argv[0]));
-    return 0;
-}
-
-
-/*  
-    function get nativeStream(): Stream
- */
-static EjsFile *logger_nativeStream(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
-{
-    MprFile     *file;
-    int         fd;
-
-    if (ejs->nativeStream == 0) {
-        if ((file = mprGetLogFile()) != 0) {
-            fd = mprGetFileFd(file);
-            ejs->nativeStream = ejsCreateFileFromFd(ejs, fd, "mpr-logger", O_WRONLY);
-            return ejs->nativeStream;
-        } else {
-            ejs->nativeStream = (EjsFile*) S(null);
-        }
-    }
-    return ejs->nativeStream;
-}
-
-
-/*  
-    function set nativeStream(stream: Stream): Void
- */
-static EjsObj *logger_set_nativeStream(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
-{
-    EjsFile  *stream;
-
-    stream = (EjsFile*) argv[0];
-    if (!ejsIs(ejs, stream, File)) {
-        ejsThrowError(ejs, "Argument is not a file stream");
-        return 0;
-    }
-    ejsRedirectLoggingToFile(stream->file, -1);
-    return 0;
-}
-
-#endif
-
-
-//  TODO  -- convert logger to be fully script - not native:
-
-void ejsConfigureLoggerType(Ejs *ejs)
-{
-#if UNUSED
-    EjsType         *type;
-
-    type = ejsGetTypeByName(ejs, N("ejs", "Logger"));
-    mprAssert(type);
-
-    ejsBindAccess(ejs, type, ES_Logger_nativeLevel, logger_nativeLevel, logger_set_nativeLevel);
-    ejsBindAccess(ejs, type, ES_Logger_nativeStream, logger_nativeStream, logger_set_nativeStream);
-#endif
-}
-
-
-/*
-    @copy   default
-
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
-    by the terms of either license. Consult the LICENSE.TXT distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
-
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/core/src/ejsLogger.c"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "../../src/core/src/ejsMath.c"
  */
 /************************************************************************/
@@ -11896,119 +11760,119 @@ void ejsConfigureLoggerType(Ejs *ejs)
 /*
     function abs(value: Number): Number
  */
-static EjsObj *math_abs(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_abs(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     //  TODO - can a null slip through?
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) fabs(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) fabs(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function acos(value: Number): Number
  */
-static EjsObj *math_acos(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_acos(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprNumber   value;
     
     value = ejsGetNumber(ejs, argv[0]);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) acos(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) acos(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function asin(value: Number): Number
  */
-static EjsObj *math_asin(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_asin(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) asin(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) asin(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function atan(value: Number): Number
  */
-static EjsObj *math_atan(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_atan(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) atan(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) atan(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function atan2(x: Number, y: Number): Number
  */
-static EjsObj *math_atan2(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_atan2(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) atan2(ejsGetNumber(ejs, argv[0]), ejsGetNumber(ejs, argv[1])));
+    return ejsCreateNumber(ejs, (MprNumber) atan2(ejsGetNumber(ejs, argv[0]), ejsGetNumber(ejs, argv[1])));
 }
 
 
 /*
     function ceil(value: Number): Number
  */
-static EjsObj *math_ceil(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_ceil(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ceil(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) ceil(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function cos(value: Number): Number
  */
-static EjsObj *math_cos(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_cos(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) cos(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) cos(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function exp(value: Number): Number
  */
-static EjsObj *math_exp(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_exp(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) exp(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) exp(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function floor(value: Number): Number
  */
-static EjsObj *math_floor(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_floor(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) floor(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) floor(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function log10(value: Number): Number
  */
-static EjsObj *math_log10(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_log10(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) log10(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) log10(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function log(value: Number): Number
  */
-static EjsObj *math_log(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_log(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) log(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) log(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function max(x: Number, y: Number): Number
  */
-static EjsObj *math_max(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_max(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprNumber   x, y;
     
     x = ejsGetNumber(ejs, argv[0]);
     y = ejsGetNumber(ejs, argv[1]);
     if (x > y) {
-        return argv[0];
+        return (EjsNumber*) argv[0];
     }
-    return argv[1];
+    return (EjsNumber*) argv[1];
 }
 
 
@@ -12031,7 +11895,7 @@ static EjsObj *math_min(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 /*
     function pow(x: Number, y: Number): Number
  */
-static EjsObj *math_pow(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_pow(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprNumber   x, y, result;
     
@@ -12044,14 +11908,14 @@ static EjsObj *math_pow(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
         result = -result;
     }
 #endif
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) result);
+    return ejsCreateNumber(ejs, (MprNumber) result);
 }
 
 
 /*
     function random(value: Number): Number
  */
-static EjsObj *math_random(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_random(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprNumber   value;
     uint        uvalue;
@@ -12088,14 +11952,14 @@ static EjsObj *math_random(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 }
 #endif
     value = ((MprNumber) (uvalue & 0x7FFFFFFF)) / MAXINT;
-    return (EjsObj*) ejsCreateNumber(ejs, value);
+    return ejsCreateNumber(ejs, value);
 }
 
 
 /*
     function round(value: Number): Number
  */
-static EjsObj *math_round(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_round(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     MprNumber   n;
 
@@ -12105,34 +11969,34 @@ static EjsObj *math_round(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     } else {
         n += 0.5;
     }
-    return (EjsObj*) ejsCreateNumber(ejs, floor(n));
+    return ejsCreateNumber(ejs, floor(n));
 }
 
 
 /*
     function sin(value: Number): Number
  */
-static EjsObj *math_sin(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_sin(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) sin(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) sin(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function sqrt(value: Number): Number
  */
-static EjsObj *math_sqrt(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_sqrt(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) sqrt(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) sqrt(ejsGetNumber(ejs, argv[0])));
 }
 
 
 /*
     function tan(value: Number): Number
  */
-static EjsObj *math_tan(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *math_tan(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) tan(ejsGetNumber(ejs, argv[0])));
+    return ejsCreateNumber(ejs, (MprNumber) tan(ejsGetNumber(ejs, argv[0])));
 }
 
 
@@ -12142,25 +12006,25 @@ void ejsConfigureMathType(Ejs *ejs)
     EjsType     *type;
 
     type = ejsConfigureNativeType(ejs, N("ejs", "Math"), sizeof(EjsObj), NULL, EJS_OBJ_HELPERS);
-    ejsBindMethod(ejs, type, ES_Math_abs, (EjsProc) math_abs);
-    ejsBindMethod(ejs, type, ES_Math_acos, (EjsProc) math_acos);
-    ejsBindMethod(ejs, type, ES_Math_asin, (EjsProc) math_asin);
-    ejsBindMethod(ejs, type, ES_Math_atan, (EjsProc) math_atan);
-    ejsBindMethod(ejs, type, ES_Math_atan2, (EjsProc) math_atan2);
-    ejsBindMethod(ejs, type, ES_Math_ceil, (EjsProc) math_ceil);
-    ejsBindMethod(ejs, type, ES_Math_cos, (EjsProc) math_cos);
-    ejsBindMethod(ejs, type, ES_Math_exp, (EjsProc) math_exp);
-    ejsBindMethod(ejs, type, ES_Math_floor, (EjsProc) math_floor);
-    ejsBindMethod(ejs, type, ES_Math_log, (EjsProc) math_log);
-    ejsBindMethod(ejs, type, ES_Math_log10, (EjsProc) math_log10);
-    ejsBindMethod(ejs, type, ES_Math_max, (EjsProc) math_max);
-    ejsBindMethod(ejs, type, ES_Math_min, (EjsProc) math_min);
-    ejsBindMethod(ejs, type, ES_Math_pow, (EjsProc) math_pow);
-    ejsBindMethod(ejs, type, ES_Math_random, (EjsProc) math_random);
-    ejsBindMethod(ejs, type, ES_Math_round, (EjsProc) math_round);
-    ejsBindMethod(ejs, type, ES_Math_sin, (EjsProc) math_sin);
-    ejsBindMethod(ejs, type, ES_Math_sqrt, (EjsProc) math_sqrt);
-    ejsBindMethod(ejs, type, ES_Math_tan, (EjsProc) math_tan);
+    ejsBindMethod(ejs, type, ES_Math_abs, math_abs);
+    ejsBindMethod(ejs, type, ES_Math_acos, math_acos);
+    ejsBindMethod(ejs, type, ES_Math_asin, math_asin);
+    ejsBindMethod(ejs, type, ES_Math_atan, math_atan);
+    ejsBindMethod(ejs, type, ES_Math_atan2, math_atan2);
+    ejsBindMethod(ejs, type, ES_Math_ceil, math_ceil);
+    ejsBindMethod(ejs, type, ES_Math_cos, math_cos);
+    ejsBindMethod(ejs, type, ES_Math_exp, math_exp);
+    ejsBindMethod(ejs, type, ES_Math_floor, math_floor);
+    ejsBindMethod(ejs, type, ES_Math_log, math_log);
+    ejsBindMethod(ejs, type, ES_Math_log10, math_log10);
+    ejsBindMethod(ejs, type, ES_Math_max, math_max);
+    ejsBindMethod(ejs, type, ES_Math_min, math_min);
+    ejsBindMethod(ejs, type, ES_Math_pow, math_pow);
+    ejsBindMethod(ejs, type, ES_Math_random, math_random);
+    ejsBindMethod(ejs, type, ES_Math_round, math_round);
+    ejsBindMethod(ejs, type, ES_Math_sin, math_sin);
+    ejsBindMethod(ejs, type, ES_Math_sqrt, math_sqrt);
+    ejsBindMethod(ejs, type, ES_Math_tan, math_tan);
 }
 
 
@@ -12223,12 +12087,12 @@ void ejsConfigureMathType(Ejs *ejs)
 /*
     native static function get allocated(): Number
  */
-static EjsObj *getAllocatedMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsNumber *getAllocatedMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     MprMemStats    *mem;
 
     mem = mprGetMemStats(ejs);
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) mem->bytesAllocated);
+    return ejsCreateNumber(ejs, (MprNumber) mem->bytesAllocated);
 }
 
 
@@ -12236,7 +12100,7 @@ static EjsObj *getAllocatedMemory(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **
 /*
     native static function callback(fn: Function): Void
  */
-static EjsObj *setRedlineCallback(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
+static EjsNumber *setRedlineCallback(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     mprAssert(argc == 1 && ejsIsFunction(ejs, argv[0]));
 
@@ -12352,17 +12216,17 @@ void ejsConfigureMemoryType(Ejs *ejs)
         mprError("Can't find Memory type");
         return;
     }
-    ejsBindMethod(ejs, type, ES_Memory_allocated, (EjsProc) getAllocatedMemory);
-    ejsBindAccess(ejs, type, ES_Memory_maximum, (EjsProc) getMaxMemory, (EjsProc) setMaxMemory);
-    ejsBindAccess(ejs, type, ES_Memory_redline, (EjsProc) getRedline, (EjsProc) setRedline);
-    ejsBindMethod(ejs, type, ES_Memory_resident, (EjsProc) getResident);
-    ejsBindMethod(ejs, type, ES_Memory_system, (EjsProc) getSystemRam);
-    ejsBindMethod(ejs, type, ES_Memory_stats, (EjsProc) printStats);
+    ejsBindMethod(ejs, type, ES_Memory_allocated, getAllocatedMemory);
+    ejsBindAccess(ejs, type, ES_Memory_maximum, getMaxMemory, setMaxMemory);
+    ejsBindAccess(ejs, type, ES_Memory_redline, getRedline, setRedline);
+    ejsBindMethod(ejs, type, ES_Memory_resident, getResident);
+    ejsBindMethod(ejs, type, ES_Memory_system, getSystemRam);
+    ejsBindMethod(ejs, type, ES_Memory_stats, printStats);
 
 #if UNUSED
     EjsPot      *prototype;
     prototype = type->prototype;
-    ejsBindAccess(ejs, type, ES_Memory_callback, NULL, (EjsProc) setRedlineCallback);
+    ejsBindAccess(ejs, type, ES_Memory_callback, NULL, setRedlineCallback);
 #endif
 }
 
@@ -12427,14 +12291,14 @@ void ejsConfigureMemoryType(Ejs *ejs)
     Cast the operand to the specified type
  */
 
-static EjsObj *castNamespace(Ejs *ejs, EjsNamespace *vp, EjsType *type)
+static EjsAny *castNamespace(Ejs *ejs, EjsNamespace *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return (EjsObj*) ejsCreateBoolean(ejs, 1);
+        return ejsCreateBoolean(ejs, 1);
 
     case S_String:
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, "[object Namespace]");
+        return ejsCreateStringFromAsc(ejs, "[object Namespace]");
 
     default:
         ejsThrowTypeError(ejs, "Can't cast to this type");
@@ -12443,14 +12307,14 @@ static EjsObj *castNamespace(Ejs *ejs, EjsNamespace *vp, EjsType *type)
 }
 
 
-static EjsObj *invokeNamespaceOperator(Ejs *ejs, EjsNamespace *lhs, int opCode, EjsNamespace *rhs)
+static EjsAny *invokeNamespaceOperator(Ejs *ejs, EjsNamespace *lhs, int opCode, EjsNamespace *rhs)
 {
     bool        boolResult;
 
     switch (opCode) {
     case EJS_OP_COMPARE_EQ:
         if (!ejsIsDefined(ejs, rhs)) {
-            return (EjsObj*) ((opCode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opCode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
         }
         boolResult = ejsCompareString(ejs, lhs->value, rhs->value) == 0;
         break;
@@ -12461,7 +12325,7 @@ static EjsObj *invokeNamespaceOperator(Ejs *ejs, EjsNamespace *lhs, int opCode, 
 
     case EJS_OP_COMPARE_NE:
         if (!ejsIsDefined(ejs, rhs)) {
-            return (EjsObj*) ((opCode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opCode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
         }
         boolResult = !(ejsCompareString(ejs, lhs->value, rhs->value) == 0);
         break;
@@ -12474,7 +12338,7 @@ static EjsObj *invokeNamespaceOperator(Ejs *ejs, EjsNamespace *lhs, int opCode, 
         ejsThrowTypeError(ejs, "Operation is not valid on this type");
         return 0;
     }
-    return (EjsObj*) ejsCreateBoolean(ejs, boolResult);
+    return ejsCreateBoolean(ejs, boolResult);
 }
 
 
@@ -12642,14 +12506,14 @@ void ejsConfigureNamespaceType(Ejs *ejs)
     Cast the null operand to a primitive type
  */
 
-static EjsObj *castNull(Ejs *ejs, EjsObj *vp, EjsType *type)
+static EjsAny *castNull(Ejs *ejs, EjsObj *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case S_Number:
-        return (EjsObj*) S(zero);
+        return S(zero);
 
     case S_Object:
     default:
@@ -12659,24 +12523,24 @@ static EjsObj *castNull(Ejs *ejs, EjsObj *vp, EjsType *type)
         return vp;
 
     case S_String:
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, "null");
+        return ejsCreateStringFromAsc(ejs, "null");
     }
 }
 
 
-static EjsObj *coerceNullOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
+static EjsAny *coerceNullOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
 {
     switch (opcode) {
 
     case EJS_OP_ADD:
         if (!ejsIs(ejs, rhs, Number)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
         /* Fall through */
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, (EjsObj*) S(zero), opcode, rhs);
+        return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
 
     /*
         Comparision
@@ -12684,39 +12548,39 @@ static EjsObj *coerceNullOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (ejsIs(ejs, rhs, Number)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) S(zero), opcode, rhs);
+            return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
         } else if (ejsIs(ejs, rhs, String)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
         break;
 
     case EJS_OP_COMPARE_NE:
         if (ejsIs(ejs, rhs, Void)) {
-            return (EjsObj*) S(false);
+            return S(false);
         }
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_EQ:
         if (ejsIs(ejs, rhs, Void)) {
-            return (EjsObj*) S(true);
+            return S(true);
         }
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
         Unary operators
@@ -12732,7 +12596,7 @@ static EjsObj *coerceNullOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
 }
 
 
-static EjsObj *invokeNullOperator(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
+static EjsAny *invokeNullOperator(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
 {
     EjsObj      *result;
 
@@ -12755,27 +12619,27 @@ static EjsObj *invokeNullOperator(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
     case EJS_OP_COMPARE_LT: case EJS_OP_COMPARE_GT:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
         Unary operators
      */
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT: case EJS_OP_NEG:
-        return (EjsObj*) S(one);
+        return S(one);
 
     /*
         Binary operators. Reinvoke with left = zero
      */
     case EJS_OP_ADD: case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, (EjsObj*) S(zero), opcode, rhs);
+        return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -12787,9 +12651,9 @@ static EjsObj *invokeNullOperator(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
 /*
     iterator native function get(): Iterator
  */
-static EjsObj *getNullIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **argv)
+static EjsIterator *getNullIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, np, NULL, 0, NULL);
+    return ejsCreateIterator(ejs, np, NULL, 0, NULL);
 }
 
 
@@ -12903,18 +12767,18 @@ void ejsConfigureNullType(Ejs *ejs)
 /*
     Cast the operand to the specified type
  */
-static EjsObj *castNumber(Ejs *ejs, EjsNumber *vp, EjsType *type)
+static EjsAny *castNumber(Ejs *ejs, EjsNumber *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return (EjsObj*) ((vp->value) ? S(true) : S(false));
+        return ((vp->value) ? S(true) : S(false));
 
     case S_String:
         //  OPT. mprDtoa does a sclone.
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, mprDtoa(vp->value, 0, 0, 0));
+        return ejsCreateStringFromAsc(ejs, mprDtoa(vp->value, 0, 0, 0));
 
     case S_Number:
-        return (EjsObj*) vp;
+        return vp;
             
     default:
         ejsThrowTypeError(ejs, "Can't cast to this type");
@@ -12929,7 +12793,7 @@ static EjsNumber *cloneNumber(Ejs *ejs, EjsNumber *np, int deep)
 }
 
 
-static EjsObj *coerceNumberOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
+static EjsAny *coerceNumberOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs)
 {
     switch (opcode) {
     /*
@@ -12941,33 +12805,33 @@ static EjsObj *coerceNumberOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *r
         } else if (ejsIs(ejs, rhs, Null)) {
             return lhs;
         } else if (ejsIs(ejs, rhs, Boolean) || ejsIs(ejs, rhs, Date)) {
-            return ejsInvokeOperator(ejs, lhs, opcode, (EjsObj*) ejsToNumber(ejs, rhs));
+            return ejsInvokeOperator(ejs, lhs, opcode, ejsToNumber(ejs, rhs));
         } else {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
         break;
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, lhs, opcode, (EjsObj*) ejsToNumber(ejs, rhs));
+        return ejsInvokeOperator(ejs, lhs, opcode, ejsToNumber(ejs, rhs));
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_NE:
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (!ejsIsDefined(ejs, rhs)) {
-            return (EjsObj*) ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
         } else if (ejsIs(ejs, rhs, Number)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToNumber(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         } else if (ejsIs(ejs, rhs, String)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, lhs), opcode, rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
-        return ejsInvokeOperator(ejs, lhs, opcode, (EjsObj*) ejsToNumber(ejs, rhs));
+        return ejsInvokeOperator(ejs, lhs, opcode, ejsToNumber(ejs, rhs));
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
      *  Unary operators
@@ -12977,15 +12841,15 @@ static EjsObj *coerceNumberOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *r
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return (EjsObj*) (((EjsNumber*) lhs)->value ? S(true) : S(false));
+        return (((EjsNumber*) lhs)->value ? S(true) : S(false));
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return (EjsObj*) (((EjsNumber*) lhs)->value ? S(false): S(true));
+        return (((EjsNumber*) lhs)->value ? S(false): S(true));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(false);
+        return S(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
@@ -12995,7 +12859,7 @@ static EjsObj *coerceNumberOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *r
 }
 
 
-static EjsObj *invokeNumberOperator(Ejs *ejs, EjsNumber *lhs, int opcode, EjsNumber *rhs)
+static EjsAny *invokeNumberOperator(Ejs *ejs, EjsNumber *lhs, int opcode, EjsNumber *rhs)
 {
     EjsObj      *result;
 
@@ -13003,7 +12867,7 @@ static EjsObj *invokeNumberOperator(Ejs *ejs, EjsNumber *lhs, int opcode, EjsNum
     
     if (rhs == 0 || TYPE(lhs) != TYPE(rhs)) {
         if (!ejsIs(ejs, lhs, Number) || !ejsIs(ejs, rhs, Number)) {
-            if ((result = coerceNumberOperands(ejs, (EjsObj*) lhs, opcode, (EjsObj*) rhs)) != 0) {
+            if ((result = coerceNumberOperands(ejs, lhs, opcode, rhs)) != 0) {
                 return result;
             }
         }
@@ -13015,83 +12879,83 @@ static EjsObj *invokeNumberOperator(Ejs *ejs, EjsNumber *lhs, int opcode, EjsNum
     switch (opcode) {
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) ((lhs->value == rhs->value) ? S(true): S(false));
+        return ((lhs->value == rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) ((lhs->value != rhs->value) ? S(true): S(false));
+        return ((lhs->value != rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_LT:
-        return (EjsObj*) ((lhs->value < rhs->value) ? S(true): S(false));
+        return ((lhs->value < rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_LE:
-        return (EjsObj*) ((lhs->value <= rhs->value) ? S(true): S(false));
+        return ((lhs->value <= rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_GT:
-        return (EjsObj*) ((lhs->value > rhs->value) ? S(true): S(false));
+        return ((lhs->value > rhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_GE:
-        return (EjsObj*) ((lhs->value >= rhs->value) ? S(true): S(false));
+        return ((lhs->value >= rhs->value) ? S(true): S(false));
 
     /*
      *  Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return (EjsObj*) ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? S(true): S(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) ((lhs->value == 0) ? S(true): S(false));
+        return ((lhs->value == 0) ? S(true): S(false));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_NEG:
-        return (EjsObj*) ejsCreateNumber(ejs, -lhs->value);
+        return ejsCreateNumber(ejs, -lhs->value);
 
     case EJS_OP_LOGICAL_NOT:
-        return (EjsObj*) ejsCreateBoolean(ejs, !fixed(lhs->value));
+        return ejsCreateBoolean(ejs, !fixed(lhs->value));
 
     case EJS_OP_NOT:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (~fixed(lhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (~fixed(lhs->value)));
 
 
     /*
         Binary operations
      */
     case EJS_OP_ADD:
-        return (EjsObj*) ejsCreateNumber(ejs, lhs->value + rhs->value);
+        return ejsCreateNumber(ejs, lhs->value + rhs->value);
 
     case EJS_OP_AND:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) & fixed(rhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) & fixed(rhs->value)));
 
     case EJS_OP_DIV:
-        return (EjsObj*) ejsCreateNumber(ejs, lhs->value / rhs->value);
+        return ejsCreateNumber(ejs, lhs->value / rhs->value);
 
     case EJS_OP_MUL:
-        return (EjsObj*) ejsCreateNumber(ejs, lhs->value * rhs->value);
+        return ejsCreateNumber(ejs, lhs->value * rhs->value);
 
     case EJS_OP_OR:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) | fixed(rhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) | fixed(rhs->value)));
 
     case EJS_OP_REM:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) % fixed(rhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) % fixed(rhs->value)));
 
     case EJS_OP_SHL:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) << fixed(rhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) << fixed(rhs->value)));
 
     case EJS_OP_SHR:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) >> fixed(rhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) >> fixed(rhs->value)));
 
     case EJS_OP_SUB:
-        return (EjsObj*) ejsCreateNumber(ejs, lhs->value - rhs->value);
+        return ejsCreateNumber(ejs, lhs->value - rhs->value);
 
     case EJS_OP_USHR:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) >> fixed(rhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) >> fixed(rhs->value)));
 
     case EJS_OP_XOR:
-        return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) ^ fixed(rhs->value)));
+        return ejsCreateNumber(ejs, (MprNumber) (fixed(lhs->value) ^ fixed(rhs->value)));
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -13104,7 +12968,7 @@ static EjsObj *invokeNumberOperator(Ejs *ejs, EjsNumber *lhs, int opcode, EjsNum
     Number constructor.
     function Number(value: Object = null)
  */
-static EjsObj *numberConstructor(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
+static EjsNumber *numberConstructor(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
     EjsNumber   *num;
 
@@ -13116,7 +12980,7 @@ static EjsObj *numberConstructor(Ejs *ejs, EjsNumber *np, int argc, EjsObj **arg
             np->value = num->value;
         }
     }
-    return (EjsObj*) np;
+    return np;
 }
 
 
@@ -13124,7 +12988,7 @@ static EjsObj *numberConstructor(Ejs *ejs, EjsNumber *np, int argc, EjsObj **arg
     Function to iterate and return each number in sequence.
     NOTE: this is not a method of Number. Rather, it is a callback function for Iterator.
  */
-static EjsObj *nextNumber(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
+static EjsNumber *nextNumber(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 {
     EjsNumber   *np;
 
@@ -13135,7 +12999,7 @@ static EjsObj *nextNumber(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
     }
 
     if (ip->index < np->value) {
-        return (EjsObj*) ejsCreateNumber(ejs, ip->index++);
+        return ejsCreateNumber(ejs, ip->index++);
     }
     ejsThrowStopIteration(ejs);
     return 0;
@@ -13145,7 +13009,7 @@ static EjsObj *nextNumber(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 /*
     function integral(size: Number: 32): Number
  */
-static EjsObj *integral(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
+static EjsNumber *integral(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
     int64   mask, result;
     int     size;
@@ -13158,44 +13022,45 @@ static EjsObj *integral(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
         mask = (mask << size) - 1;
         result &= mask;
     }
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) result);
+    return ejsCreateNumber(ejs, (MprNumber) result);
 }
 
 
 /*
     function get isFinite(): Boolean
  */
-static EjsObj *isFinite(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
+static EjsBoolean *isFinite(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
     if (np->value == ((EjsNumber*) S(nan))->value || np->value == ((EjsNumber*) S(infinity))->value || 
             np->value == ((EjsNumber*) S(negativeInfinity))->value) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
 /*
     function get isNaN(): Boolean
  */
-static EjsObj *isNaN(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
+static EjsBoolean *isNaN(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
-    return (EjsObj*) (mprIsNan(np->value) ? S(true) : S(false));
+    return (mprIsNan(np->value) ? S(true) : S(false));
 }
 
 
 /*
     function toExponential(fractionDigits: Number = 0): String
+
     Display with only one digit before the decimal point.
  */
-static EjsObj *toExponential(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
+static EjsString *toExponential(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
     char    *result;
     int     ndigits;
     
     ndigits = (argc > 0) ? ejsGetInt(ejs, argv[0]): 0;
     result = mprDtoa(np->value, ndigits, MPR_DTOA_N_DIGITS, MPR_DTOA_EXPONENT_FORM);
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, result);
+    return ejsCreateStringFromAsc(ejs, result);
 }
 
 
@@ -13204,39 +13069,41 @@ static EjsObj *toExponential(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 
     Display the specified number of fractional digits
  */
-static EjsObj *toFixed(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
+static EjsString *toFixed(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
     char    *result;
     int     ndigits;
     
     ndigits = (argc > 0) ? ejsGetInt(ejs, argv[0]) : 0;
     result = mprDtoa(np->value, ndigits, MPR_DTOA_N_FRACTION_DIGITS, MPR_DTOA_FIXED_FORM);
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, result);
+    return ejsCreateStringFromAsc(ejs, result);
 }
 
 
 /*
     function toPrecision(numDigits: Number = MAX_VALUE): String
+
     Display the specified number of total digits
  */
-static EjsObj *toPrecision(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
+static EjsString *toPrecision(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
     char    *result;
     int     ndigits;
     
     ndigits = (argc > 0) ? ejsGetInt(ejs, argv[0]) : 0;
     result = mprDtoa(np->value, ndigits, MPR_DTOA_N_DIGITS, 0);
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, result);
+    return ejsCreateStringFromAsc(ejs, result);
 }
 
 
 /*
     Return the default iterator. This returns the index names.
+
     iterator native function get(): Iterator
  */
-static EjsObj *getNumberIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **argv)
+static EjsIterator *getNumberIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, np, (EjsProc) nextNumber, 0, NULL);
+    return ejsCreateIterator(ejs, np, nextNumber, 0, NULL);
 }
 
 
@@ -13244,9 +13111,9 @@ static EjsObj *getNumberIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **argv)
     Convert the number to a string.
     function toString(): String
  */
-static EjsObj *numberToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
+static EjsObj *numberToString(Ejs *ejs, EjsNumber *vp, int argc, EjsObj **argv)
 {
-    return castNumber(ejs, (EjsNumber*) vp, ST(String));
+    return castNumber(ejs, vp, ST(String));
 }
 
 
@@ -13308,7 +13175,6 @@ void ejsCreateNumberType(Ejs *ejs)
 
     type = ejsCreateNativeType(ejs, N("ejs", "Number"), sizeof(EjsNumber), S_Number, ES_Number_NUM_CLASS_PROP, 
         NULL, EJS_OBJ_HELPERS);
-    type->immutable = 1;
 
     type->helpers.cast = (EjsCastHelper) castNumber;
     type->helpers.clone = (EjsCloneHelper) cloneNumber;
@@ -13377,9 +13243,7 @@ void ejsConfigureNumberType(Ejs *ejs)
     ejsSetProperty(ejs, ejs->global, ES_Infinity, S(infinity));
     ejsSetProperty(ejs, ejs->global, ES_NaN, S(nan));
     ejsSetProperty(ejs, ejs->global, ES_double, type);
-#if ES_num
     ejsSetProperty(ejs, ejs->global, ES_num, type);
-#endif
 }
 
 /*
@@ -13445,14 +13309,14 @@ static EjsObj   *obj_defineProperty(Ejs *ejs, EjsObj *type, int argc, EjsObj **a
 /*
     function get constructor(): Object
  */
-static EjsObj *obj_constructor(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+static EjsType *obj_constructor(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
-    EjsObj      *constructor;
+    EjsType     *constructor;
 
     if ((constructor = ejsGetPropertyByName(ejs, obj, EN("constructor"))) != 0) {
         return constructor;
     }
-    return (EjsObj*) TYPE(obj);
+    return TYPE(obj);
 }
 
 
@@ -13462,7 +13326,7 @@ static EjsObj *obj_constructor(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
     The prototype method is special. It is declared as static so it is generated in the type slots, but it is
     patched to be an instance method so the value of "this" will be preserved when it is invoked.
  */
-static EjsObj *obj_prototype(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+static EjsAny *obj_prototype(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
     EjsFunction     *fun;
     EjsType         *type;
@@ -13487,7 +13351,7 @@ static EjsObj *obj_prototype(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
     } else {
         prototype = S(undefined);
     }
-    return (EjsObj*) prototype;
+    return prototype;
 }
 
 
@@ -13532,13 +13396,13 @@ static EjsObj *obj_clone(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
     bool    deep;
 
-    deep = (argc == 1 && argv[0] == (EjsObj*) S(true));
+    deep = (argc == 1 && argv[0] == S(true));
     return ejsClone(ejs, obj, deep);
 }
 
 
 /*
-    static function create(proto: Object, props: Object = undefined): Void 
+    static function create(proto: Object, props: Object = undefined): Objectd 
  */
 static EjsObj *obj_create(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
@@ -13590,7 +13454,7 @@ static EjsObj *obj_create(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
             obj_defineProperty(ejs, (EjsObj*) type, 3, argv);
         }
     }
-    return (EjsObj*) obj;
+    return obj;
 }
 
 
@@ -13631,12 +13495,12 @@ static EjsObj *obj_defineProperty(Ejs *ejs, EjsObj *unused, int argc, EjsObj **a
     type = ejsGetPropertyByName(ejs, options, EN("type"));
 
     if ((configurable = ejsGetPropertyByName(ejs, options, EN("configurable"))) != 0) {
-        if (configurable == (EjsObj*) S(false)) {
+        if (configurable == S(false)) {
             attributes |= EJS_TRAIT_FIXED;
         }
     }
     if ((enumerable = ejsGetPropertyByName(ejs, options, EN("enumerable"))) != 0) {
-        if (enumerable == (EjsObj*) S(false)) {
+        if (enumerable == S(false)) {
             attributes |= EJS_TRAIT_HIDDEN;
         }
     }
@@ -13677,7 +13541,7 @@ static EjsObj *obj_defineProperty(Ejs *ejs, EjsObj *unused, int argc, EjsObj **a
         value = (EjsObj*) get;
     }
     if ((writable = ejsGetPropertyByName(ejs, options, EN("writable"))) != 0) {
-        if (writable == (EjsObj*) S(false)) {
+        if (writable == S(false)) {
             attributes |= EJS_TRAIT_READONLY;
         }
     }
@@ -13755,9 +13619,9 @@ static EjsObj *nextObjectKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 
     iterator function get(options: Object = null): Iterator
  */
-static EjsObj *obj_get(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+static EjsIterator *obj_get(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, obj, (EjsProc) nextObjectKey, 0, NULL);
+    return ejsCreateIterator(ejs, obj, nextObjectKey, 0, NULL);
 }
 
 
@@ -13791,9 +13655,9 @@ static EjsObj *nextObjectValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **arg
 
     iterator function getValues(options: Object = null): Iterator
  */
-static EjsObj *obj_getValues(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+static EjsIterator *obj_getValues(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, obj, (EjsProc) nextObjectValue, 0, NULL);
+    return ejsCreateIterator(ejs, obj, nextObjectValue, 0, NULL);
 }
 
 
@@ -13802,12 +13666,12 @@ static EjsObj *obj_getValues(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 
     function get getOwnPropertyCount(obj): Number
  */
-static EjsObj *obj_getOwnPropertyCount(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsNumber *obj_getOwnPropertyCount(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsObj      *obj;
 
     obj = argv[0];
-    return (EjsObj*) ejsCreateNumber(ejs, ejsGetPropertyCount(ejs, obj) - TYPE(obj)->numInherited);
+    return ejsCreateNumber(ejs, ejsGetPropertyCount(ejs, obj) - TYPE(obj)->numInherited);
 }
 
 
@@ -13829,7 +13693,7 @@ static EjsObj *obj_getOwnPropertyDescriptor(Ejs *ejs, EjsObj *unused, int argc, 
     qname.space = S(empty);
     qname.name = (EjsString*) argv[1];
     if ((slotNum = ejsLookupVarWithNamespaces(ejs, obj, qname, &lookup)) < 0) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
     trait = ejsGetPropertyTraits(ejs, obj, slotNum);
     result = ejsCreateEmptyPot(ejs);
@@ -13866,7 +13730,7 @@ static EjsObj *obj_getOwnPropertyDescriptor(Ejs *ejs, EjsObj *unused, int argc, 
 
     static function getOwnPropertyNames(obj: Object, options: Object): Array
  */
-static EjsObj *obj_getOwnPropertyNames(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsArray *obj_getOwnPropertyNames(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsObj      *obj, *options, *arg;
     EjsArray    *result;
@@ -13880,10 +13744,10 @@ static EjsObj *obj_getOwnPropertyNames(Ejs *ejs, EjsObj *unused, int argc, EjsOb
     if (argc > 0) {
         options = argv[1];
         if ((arg = ejsGetPropertyByName(ejs, options, EN("includeBases"))) != 0) {
-            includeBases = (arg == (EjsObj*) S(true));
+            includeBases = (arg == S(true));
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("excludeFunctions"))) != 0) {
-            excludeFunctions = (arg == (EjsObj*) S(true));
+            excludeFunctions = (arg == S(true));
         }
     }
     if ((result = ejsCreateArray(ejs, 0)) == 0) {
@@ -13916,26 +13780,27 @@ static EjsObj *obj_getOwnPropertyNames(Ejs *ejs, EjsObj *unused, int argc, EjsOb
             ejsSetProperty(ejs, result, index++, ejsCreateStringFromAsc(ejs, "constructor"));
         }
     }
-    return (EjsObj*) result;
+    return result;
 }
 
 
+//  MOB - is this really a type?
 /*
     static function getOwnPrototypeOf(obj: Object): Type
  */
-static EjsObj *obj_getOwnPrototypeOf(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsType *obj_getOwnPrototypeOf(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsObj      *obj;
 
     obj = argv[0];
-    return (EjsObj*) TYPE(obj)->prototype;
+    return (EjsType*) TYPE(obj)->prototype;
 }
 
 
 /*
     function hasOwnProperty(name: String): Boolean
  */
-static EjsObj *obj_hasOwnProperty(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+static EjsBoolean *obj_hasOwnProperty(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
     EjsName     qname;
     EjsLookup   lookup;
@@ -13944,7 +13809,7 @@ static EjsObj *obj_hasOwnProperty(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv
     qname.space = S(empty);
     qname.name = (EjsString*) argv[0];
     slotNum = ejsLookupVarWithNamespaces(ejs, obj, qname, &lookup);
-    return (EjsObj*) ejsCreateBoolean(ejs, slotNum >= 0);
+    return ejsCreateBoolean(ejs, slotNum >= 0);
 }
 
 
@@ -13963,7 +13828,7 @@ static EjsBoolean *obj_isExtensible(Ejs *ejs, EjsObj *unused, int argc, EjsObj *
 /*
     static function isFrozen(obj: Object): Boolean
  */
-static EjsObj *obj_isFrozen(Ejs *ejs, EjsObj *type, int argc, EjsObj **argv)
+static EjsBoolean *obj_isFrozen(Ejs *ejs, EjsObj *type, int argc, EjsObj **argv)
 {
     EjsTrait    *trait;
     EjsPot      *obj;
@@ -13987,14 +13852,14 @@ static EjsObj *obj_isFrozen(Ejs *ejs, EjsObj *type, int argc, EjsObj **argv)
     if (DYNAMIC(obj)) {
         frozen = 0;
     }
-    return (EjsObj*) ejsCreateBoolean(ejs, frozen);
+    return ejsCreateBoolean(ejs, frozen);
 }
 
 
 /*
     static function isPrototypeOf(obj: Object): Boolean
  */
-static EjsObj *obj_isPrototypeOf(Ejs *ejs, EjsObj *prototype, int argc, EjsObj **argv)
+static EjsBoolean *obj_isPrototypeOf(Ejs *ejs, EjsObj *prototype, int argc, EjsObj **argv)
 {
     EjsObj  *obj;
     
@@ -14006,7 +13871,7 @@ static EjsObj *obj_isPrototypeOf(Ejs *ejs, EjsObj *prototype, int argc, EjsObj *
 /*
     static function isSealed(obj: Object): Boolean
  */
-static EjsObj *obj_isSealed(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsBoolean *obj_isSealed(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsTrait    *trait;
     EjsPot      *obj;
@@ -14026,7 +13891,7 @@ static EjsObj *obj_isSealed(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     if (DYNAMIC(obj)) {
         sealed = 0;
     }
-    return (EjsObj*) ejsCreateBoolean(ejs, sealed);
+    return ejsCreateBoolean(ejs, sealed);
 }
 
 
@@ -14036,7 +13901,7 @@ static EjsObj *obj_isSealed(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 
     static function keys(obj: Object): Array
  */
-static EjsObj *obj_keys(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsArray *obj_keys(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsObj      *obj, *vp;
     EjsArray    *result;
@@ -14059,7 +13924,7 @@ static EjsObj *obj_keys(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
         qname = ejsGetPropertyName(ejs, obj, slotNum);
         ejsSetProperty(ejs, result, slotNum, ejsCreateStringFromAsc(ejs, qname.name));
     }
-    return (EjsObj*) result;
+    return result;
 }
 #endif
 
@@ -14101,7 +13966,7 @@ static EjsObj *obj_seal(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 /*
     function propertyIsEnumerable(property: String, flag: Object = undefined): Boolean
  */
-static EjsObj *obj_propertyIsEnumerable(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+static EjsBoolean *obj_propertyIsEnumerable(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
     EjsTrait    *trait;
     EjsName     qname;
@@ -14113,10 +13978,10 @@ static EjsObj *obj_propertyIsEnumerable(Ejs *ejs, EjsObj *obj, int argc, EjsObj 
     qname.space = S(empty);
     qname.name = (EjsString*) argv[0];
     if ((slotNum = ejsLookupVarWithNamespaces(ejs, obj, qname, &lookup)) < 0) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
     trait = ejsGetPropertyTraits(ejs, obj, slotNum);
-    return (EjsObj*) ejsCreateBoolean(ejs, !trait || !(trait->attributes & EJS_TRAIT_HIDDEN));
+    return ejsCreateBoolean(ejs, !trait || !(trait->attributes & EJS_TRAIT_HIDDEN));
 }
 
 
@@ -14173,9 +14038,9 @@ static EjsType *obj_getBaseType(Ejs *ejs, EjsObj *unused, int argc, EjsObj **arg
 /*
     function isPrototype(obj: Object): Boolean
  */
-static EjsObj *obj_isPrototype(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsBoolean *obj_isPrototype(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, ejsIsPrototype(ejs, argv[0]));
+    return ejsCreateBoolean(ejs, ejsIsPrototype(ejs, argv[0]));
 }
 
 
@@ -14252,10 +14117,10 @@ static EjsString *obj_getName(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 /*
     function typeOf(obj): String
  */
-static EjsObj *obj_typeOf(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+static EjsString *obj_typeOf(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
     mprAssert(argc >= 1);
-    return (EjsObj*) ejsGetTypeName(ejs, argv[0]);
+    return ejsGetTypeName(ejs, argv[0]);
 }
 
 
@@ -14299,6 +14164,7 @@ void ejsConfigureObjectType(Ejs *ejs)
     EjsFunction *fun;
 
     type = ST(Object);
+    type->mutableInstances = 1;
     prototype = type->prototype;
 
     ejsBindMethod(ejs, type, ES_Object_create, obj_create);
@@ -14312,7 +14178,7 @@ void ejsConfigureObjectType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_Object_isFrozen, obj_isFrozen);
     ejsBindMethod(ejs, type, ES_Object_isSealed, obj_isSealed);
     ejsBindMethod(ejs, type, ES_Object_preventExtensions, obj_preventExtensions);
-    ejsBindAccess(ejs, type, ES_Object_prototype, (EjsProc) obj_prototype, obj_set_prototype);
+    ejsBindAccess(ejs, type, ES_Object_prototype, obj_prototype, obj_set_prototype);
     ejsBindMethod(ejs, type, ES_Object_seal, obj_seal);
 
     /* Reflection */
@@ -14323,7 +14189,7 @@ void ejsConfigureObjectType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_Object_isPrototype, obj_isPrototype);
     ejsBindMethod(ejs, type, ES_Object_isType, obj_isType);
 
-    ejsBindMethod(ejs, prototype, ES_Object_constructor, (EjsProc) obj_constructor);
+    ejsBindMethod(ejs, prototype, ES_Object_constructor, obj_constructor);
     ejsBindMethod(ejs, prototype, ES_Object_clone, obj_clone);
     ejsBindMethod(ejs, prototype, ES_Object_iterator_get, obj_get);
     ejsBindMethod(ejs, prototype, ES_Object_iterator_getValues, obj_getValues);
@@ -14334,13 +14200,13 @@ void ejsConfigureObjectType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Object_toString, ejsObjToString);
     ejsBindMethod(ejs, prototype, ES_Object_toJSON, ejsObjToJSON);
 
-    ejsBindFunction(ejs, ejs->global, ES_typeOf, (EjsProc) obj_typeOf);
+    ejsBindFunction(ejs, ejs->global, ES_typeOf, obj_typeOf);
 
     /*
         The prototype method is special. It is declared as static so it is generated in the type slots, but it is
         patched to be an instance method so the value of "this" will be preserved when it is invoked.
      */
-    fun = ejsGetProperty(ejs, (EjsObj*) type, ES_Object_prototype);
+    fun = ejsGetProperty(ejs, type, ES_Object_prototype);
     fun->staticMethod = 0;
     fun->setter->staticMethod = 0;
     type->constructor.block.pot.properties->slots[ES_Object_prototype].trait.attributes &= ~EJS_PROP_STATIC;
@@ -14740,7 +14606,7 @@ static EjsAny *nextPathKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 static EjsAny *getPathIterator(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
     fp->files = mprGetPathFiles(fp->value, 0);
-    return ejsCreateIterator(ejs, (EjsObj*) fp, (EjsProc) nextPathKey, 0, NULL);
+    return ejsCreateIterator(ejs, fp, nextPathKey, 0, NULL);
 }
 
 
@@ -14774,7 +14640,7 @@ static EjsAny *nextPathValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 static EjsAny *getPathValues(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
     fp->files = mprGetPathFiles(fp->value, 0);
-    return ejsCreateIterator(ejs, (EjsObj*) fp, (EjsProc) nextPathValue, 0, NULL);
+    return ejsCreateIterator(ejs, fp, nextPathValue, 0, NULL);
 }
 
 
@@ -15031,7 +14897,7 @@ static EjsObj *makePathLink(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     int     hard;
 
     target = ((EjsPath*) argv[0])->value;
-    hard = (argc >= 2) ? (argv[1] == (EjsObj*) S(true)) : 0;
+    hard = (argc >= 2) ? (argv[1] == S(true)) : 0;
     if (mprMakeLink(fp->value, target, hard) < 0) {
         ejsThrowIOError(ejs, "Can't make link");
     }
@@ -15581,7 +15447,7 @@ static EjsObj *writeToFile(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     }
 
     for (i = 0; i < args->length; i++) {
-        data = ejsToMulti(ejs, ejsToString(ejs, ejsGetProperty(ejs, (EjsObj*) args, i)));
+        data = ejsToMulti(ejs, ejsToString(ejs, ejsGetProperty(ejs, args, i)));
         length = (int) strlen(data);
         bytes = mprWriteFile(file, data, length);
         if (bytes != length) {
@@ -15634,13 +15500,25 @@ static void managePath(EjsPath *path, int flags)
 }
 
 
+void ejsCreatePathType(Ejs *ejs)
+{
+    EjsType     *type;
+
+    type = ejsCreateNativeType(ejs, N("ejs", "Path"), sizeof(EjsPath), S_Path, ES_Path_NUM_CLASS_PROP, 
+        managePath, EJS_OBJ_HELPERS);
+    type->helpers.cast = (EjsCastHelper) castPath;
+    type->helpers.clone = (EjsCloneHelper) clonePath;
+    type->helpers.invokeOperator = (EjsInvokeOperatorHelper) invokePathOperator;
+}
+
+
 void ejsConfigurePathType(Ejs *ejs)
 {
     EjsType     *type;
     EjsPot      *prototype;
 
-    type = ejsConfigureNativeType(ejs, N("ejs", "Path"), sizeof(EjsPath), managePath, EJS_OBJ_HELPERS);
-    ejsSetSpecialType(ejs, S_Path, type);
+    type = ST(Path);
+    mprAssert(type);
     prototype = type->prototype;
 
     type->helpers.cast = (EjsCastHelper) castPath;
@@ -15772,17 +15650,19 @@ EjsAny *ejsCreateEmptyPot(Ejs *ejs)
 }
 
 
-EjsAny *ejsClonePot(Ejs *ejs, EjsAny *vp, bool deep)
+EjsAny *ejsClonePot(Ejs *ejs, EjsAny *obj, bool deep)
 {
     EjsPot      *dest, *src;
     EjsSlot     *dp, *sp;
+    EjsType     *type;
+    EjsObj      *vp;
     int         numProp, i;
 
-    if (!ejsIsPot(ejs, vp)) {
-        mprAssert(ejsIsPot(ejs, vp));
+    if (!ejsIsPot(ejs, obj)) {
+        mprAssert(ejsIsPot(ejs, obj));
         return NULL;
     }
-    src = (EjsPot*) vp;
+    src = (EjsPot*) obj;
     numProp = src->numProp;
     if ((dest = ejsCreatePot(ejs, TYPE(src), numProp)) == 0) {
         return 0;
@@ -15801,8 +15681,23 @@ EjsAny *ejsClonePot(Ejs *ejs, EjsAny *vp, bool deep)
     for (i = 0; i < numProp; i++, sp++, dp++) {
         *dp = *sp;
         dp->hashChain = -1;
-        if (deep && !TYPE(sp->value.ref)->immutable) {
-            dp->value.ref = ejsClone(ejs, sp->value.ref, deep);
+        if (deep) {
+            vp = sp->value.ref;
+            type = TYPE(vp);
+            if ((ejsIsType(ejs, vp) && ((EjsType*) vp)->mutable) || (!ejsIsType(ejs, vp) && type->mutableInstances)) {
+                EjsName qname = ejsGetPropertyName(ejs, src, i);
+                dp->value.ref = ejsClone(ejs, vp, deep);
+                //  UNICODE
+                mprSetName(dp->value.ref, qname.name->value);
+            }
+            if (dp->trait.type && dp->trait.type->mutable) {
+                if ((type = ejsGetPropertyByName(ejs, ejs->global, dp->trait.type->qname)) != 0) {
+                    dp->trait.type = type;
+                } else {
+                    //MOB - forward reference
+                    mprAssert(0);
+                }
+            }
         }
     }
     if (dest->numProp > EJS_HASH_MIN_PROP) {
@@ -15901,7 +15796,7 @@ static int definePotProperty(Ejs *ejs, EjsPot *obj, int slotNum, EjsName qname, 
             return EJS_ERR;
         }
     }
-    if (ejsSetPropertyTraits(ejs, (EjsObj*) obj, slotNum, propType, (int) attributes) < 0) {
+    if (ejsSetPropertyTraits(ejs, obj, slotNum, propType, (int) attributes) < 0) {
         return EJS_ERR;
     }
     if (value && ejsIsFunction(ejs, value)) {
@@ -16780,7 +16675,7 @@ void *ejsCreatePot(Ejs *ejs, EjsType *type, int numProp)
     if (type->hasInstanceVars) {
         numProp = max(numProp, prototype->numProp);
     }
-    if (type->dynamicInstance) {
+    if (type->dynamicInstances) {
         if ((obj = ejsAlloc(ejs, type, 0)) == 0) {
             return 0;
         }
@@ -16844,6 +16739,9 @@ void ejsManagePot(void *ptr, int flags)
                     mprMark(sp->qname.name);
                     mprMark(sp->qname.space);
                     mprMark(sp->value.ref);
+#if FUTURE
+                    mprMark(sp->trait.type);
+#endif
                 }
             }
         }
@@ -16941,7 +16839,7 @@ static EjsObj *ref_Reflect(Ejs *ejs, EjsReflect *rp, int argc,  EjsObj **argv)
     mprAssert(argc == 1);
     rp->subject = argv[0];
     mprAssert(rp->subject->type);
-    return (EjsObj*) rp;
+    return rp;
 }
 
 
@@ -16956,21 +16854,21 @@ static EjsObj *ref_base(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
 
     vp = rp->subject;
     if (ejsIsType(ejs, vp)) {
-        return (EjsObj*) (((EjsType*) vp)->baseType);
+        return (((EjsType*) vp)->baseType);
     }
     if (vp->type == 0) {
         return S(null);
     }
-    return (EjsObj*) vp->type;
+    return vp->type;
 }
 
 
 /*
     function get isType(): Boolean
  */
-static EjsObj *ref_isType(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
+static EjsBoolean *ref_isType(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, ejsIsType(ejs, rp->subject));
+    return ejsCreateBoolean(ejs, ejsIsType(ejs, rp->subject));
 }
 
 
@@ -16979,7 +16877,7 @@ static EjsObj *ref_isType(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
 
     function get type(): Object
  */
-static EjsObj *ref_type(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
+static EjsType *ref_type(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
 {
     EjsObj      *vp;
 
@@ -16987,14 +16885,14 @@ static EjsObj *ref_type(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
     if (vp->type == 0) {
         return S(null);
     }
-    return (EjsObj*) vp->type;
+    return vp->type;
 }
 
 
 /*
     Return the type name of a var as a string. If the var is a type, get the base type.
  */
-EjsObj *ejsGetTypeName(Ejs *ejs, EjsObj *vp)
+EjsString *ejsGetTypeName(Ejs *ejs, EjsObj *vp)
 {
     EjsType     *type;
 
@@ -17005,7 +16903,7 @@ EjsObj *ejsGetTypeName(Ejs *ejs, EjsObj *vp)
     if (type == 0) {
         return S(null);
     }
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, type->qname.name);
+    return ejsCreateStringFromAsc(ejs, type->qname.name);
 }
 
 
@@ -17014,25 +16912,25 @@ EjsObj *ejsGetTypeName(Ejs *ejs, EjsObj *vp)
 
     function get name(): String
  */
-static EjsObj *ref_name(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
+static EjsString *ref_name(Ejs *ejs, EjsReflect *rp, int argc, EjsObj **argv)
 {
     EjsType     *type;
 
     type = (EjsType*) rp->subject;
     if (!ejsIsType(ejs, type)) {
-        return (EjsObj*) S(empty);
+        return S(empty);
     }
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, type->qname.name);
+    return ejsCreateStringFromAsc(ejs, type->qname.name);
 }
 
 
 /*
     function get typeOf(obj): String
  */
-static EjsObj *ref_typeOf(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
+static EjsString *ref_typeOf(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
     mprAssert(argc >= 1);
-    return (EjsObj*) ejsGetTypeName(ejs, argv[0]);
+    return ejsGetTypeName(ejs, argv[0]);
 }
 
 
@@ -17083,16 +16981,16 @@ void ejsConfigureReflectType(Ejs *ejs)
     type = ejsConfigureNativeType(ejs, N("ejs", "Reflect"), sizeof(EjsReflect), manageReflect, EJS_OBJ_HELPERS);
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) ref_Reflect);
-    ejsBindMethod(ejs, prototype, ES_Reflect_base, (EjsProc) ref_base);
-    ejsBindMethod(ejs, prototype, ES_Reflect_isType, (EjsProc) ref_isType);
-    ejsBindMethod(ejs, prototype, ES_Reflect_name, (EjsProc) ref_name);
+    ejsBindConstructor(ejs, type, ref_Reflect);
+    ejsBindMethod(ejs, prototype, ES_Reflect_base, ref_base);
+    ejsBindMethod(ejs, prototype, ES_Reflect_isType, ref_isType);
+    ejsBindMethod(ejs, prototype, ES_Reflect_name, ref_name);
 #if UNUSED
-    ejsBindMethod(ejs, prototype, ES_Reflect_isPrototype, (EjsProc) ref_isPrototype);
-    ejsBindMethod(ejs, prototype, ES_Reflect_prototype, (EjsProc) ref_prototype);
+    ejsBindMethod(ejs, prototype, ES_Reflect_isPrototype, ref_isPrototype);
+    ejsBindMethod(ejs, prototype, ES_Reflect_prototype, ref_prototype);
 #endif
-    ejsBindMethod(ejs, prototype, ES_Reflect_type, (EjsProc) ref_type);
-    ejsBindFunction(ejs, ejs->globalBlock, ES_typeOf, (EjsProc) ref_typeOf);
+    ejsBindMethod(ejs, prototype, ES_Reflect_type, ref_type);
+    ejsBindFunction(ejs, ejs->globalBlock, ES_typeOf, ref_typeOf);
 }
 
 #else
@@ -17192,7 +17090,7 @@ static EjsAny *castRegExp(Ejs *ejs, EjsRegExp *rp, EjsType *type)
     RegExp(pattern: String, flags: String = null)
  */
 
-static EjsObj *regex_Constructor(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsRegExp *regex_Constructor(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
     cchar       *errMsg;
     int         column, errCode;
@@ -17211,13 +17109,13 @@ static EjsObj *regex_Constructor(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **arg
         ejsThrowArgError(ejs, "Can't compile regular expression. Error %s at column %d", errMsg, column);
         return 0;
     }
-    return (EjsObj*) rp;
+    return rp;
 }
 
 
-static EjsObj *regex_getLastIndex(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsNumber *regex_getLastIndex(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, rp->endLastMatch);
+    return ejsCreateNumber(ejs, rp->endLastMatch);
 }
 
 
@@ -17234,7 +17132,7 @@ static EjsObj *regex_setLastIndex(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **ar
 /*
     function exec(str: String, start: Number = 0): Array
  */
-static EjsObj *regex_exec(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsArray *regex_exec(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
     EjsArray    *results;
     EjsString   *match, *str;
@@ -17252,7 +17150,7 @@ static EjsObj *regex_exec(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
     count = pcre_exec(rp->compiled, NULL, str->value, (int) str->length, start, 0, matches, sizeof(matches) / sizeof(int));
     if (count < 0) {
         rp->endLastMatch = 0;
-        return (EjsObj*) S(null);
+        return S(null);
     }
     results = ejsCreateArray(ejs, count);
     for (index = 0, i = 0; i < count; i++, index += 2) {
@@ -17268,56 +17166,56 @@ static EjsObj *regex_exec(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
         rp->startLastMatch = matches[0];
         rp->endLastMatch = matches[1];
     }
-    return (EjsObj*) results;
+    return results;
 }
 
 
-static EjsObj *regex_getGlobalFlag(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsBoolean *regex_getGlobalFlag(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, rp->global);
+    return ejsCreateBoolean(ejs, rp->global);
 }
 
 
-static EjsObj *regex_getIgnoreCase(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsBoolean *regex_getIgnoreCase(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, rp->ignoreCase);
+    return ejsCreateBoolean(ejs, rp->ignoreCase);
 }
 
 
-static EjsObj *regex_getMultiline(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsBoolean *regex_getMultiline(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, rp->multiline);
+    return ejsCreateBoolean(ejs, rp->multiline);
 }
 
 
-static EjsObj *regex_getSource(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsString *regex_getSource(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateString(ejs, rp->pattern, wlen(rp->pattern));
+    return ejsCreateString(ejs, rp->pattern, wlen(rp->pattern));
 }
 
 
-static EjsObj *regex_matched(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsString *regex_matched(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
     if (rp->matched == 0) {
-        return (EjsObj*) S(null);
+        return S(null);
     }
-    return (EjsObj*) rp->matched;
+    return rp->matched;
 }
 
 
-static EjsObj *regex_start(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsNumber *regex_start(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, rp->startLastMatch);
+    return ejsCreateNumber(ejs, rp->startLastMatch);
 }
 
 
-static EjsObj *regex_sticky(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsBoolean *regex_sticky(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateBoolean(ejs, rp->sticky);
+    return ejsCreateBoolean(ejs, rp->sticky);
 }
 
 
-static EjsObj *regex_test(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
+static EjsBoolean *regex_test(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
     EjsString   *str;
     int         count;
@@ -17327,9 +17225,9 @@ static EjsObj *regex_test(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
     count = pcre_exec(rp->compiled, NULL, str->value, (int) str->length, rp->endLastMatch, 0, 0, 0);
     if (count < 0) {
         rp->endLastMatch = 0;
-        return (EjsObj*) S(false);
+        return S(false);
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
@@ -17481,20 +17379,21 @@ void ejsConfigureRegExpType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ST(RegExp);
+    type->mutableInstances = 1;
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) regex_Constructor);
-    ejsBindMethod(ejs, prototype, ES_RegExp_exec, (EjsProc) regex_exec);
-    ejsBindAccess(ejs, prototype, ES_RegExp_lastIndex, (EjsProc) regex_getLastIndex, (EjsProc) regex_setLastIndex);
-    ejsBindMethod(ejs, prototype, ES_RegExp_global, (EjsProc) regex_getGlobalFlag);
-    ejsBindMethod(ejs, prototype, ES_RegExp_ignoreCase, (EjsProc) regex_getIgnoreCase);
-    ejsBindMethod(ejs, prototype, ES_RegExp_multiline, (EjsProc) regex_getMultiline);
-    ejsBindMethod(ejs, prototype, ES_RegExp_source, (EjsProc) regex_getSource);
-    ejsBindMethod(ejs, prototype, ES_RegExp_matched, (EjsProc) regex_matched);
-    ejsBindMethod(ejs, prototype, ES_RegExp_start, (EjsProc) regex_start);
-    ejsBindMethod(ejs, prototype, ES_RegExp_sticky, (EjsProc) regex_sticky);
-    ejsBindMethod(ejs, prototype, ES_RegExp_test, (EjsProc) regex_test);
-    ejsBindMethod(ejs, prototype, ES_RegExp_toString, (EjsProc) ejsRegExpToString);
+    ejsBindConstructor(ejs, type, regex_Constructor);
+    ejsBindMethod(ejs, prototype, ES_RegExp_exec, regex_exec);
+    ejsBindAccess(ejs, prototype, ES_RegExp_lastIndex, regex_getLastIndex, regex_setLastIndex);
+    ejsBindMethod(ejs, prototype, ES_RegExp_global, regex_getGlobalFlag);
+    ejsBindMethod(ejs, prototype, ES_RegExp_ignoreCase, regex_getIgnoreCase);
+    ejsBindMethod(ejs, prototype, ES_RegExp_multiline, regex_getMultiline);
+    ejsBindMethod(ejs, prototype, ES_RegExp_source, regex_getSource);
+    ejsBindMethod(ejs, prototype, ES_RegExp_matched, regex_matched);
+    ejsBindMethod(ejs, prototype, ES_RegExp_start, regex_start);
+    ejsBindMethod(ejs, prototype, ES_RegExp_sticky, regex_sticky);
+    ejsBindMethod(ejs, prototype, ES_RegExp_test, regex_test);
+    ejsBindMethod(ejs, prototype, ES_RegExp_toString, ejsRegExpToString);
 }
 
 /*
@@ -17564,9 +17463,10 @@ static int socketListenEvent(EjsSocket *listen, MprEvent *event);
 /*
     function Socket()
  */
-static EjsObj *sock_Socket(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
+static EjsSocket *sock_Socket(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
     //  TODO -- ssl?
+    sp->ejs = ejs;
     sp->sock = mprCreateSocket(NULL);
     if (sp->sock == 0) {
         ejsThrowMemoryError(ejs);
@@ -17575,24 +17475,14 @@ static EjsObj *sock_Socket(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 #if UNUSED
     sp->waitHandler.fd = -1;
 #endif
-    return (EjsObj*) sp;
-}
-
-
-/*
-    function on(name: [String|Array], listener: Function): Void
- */
-EjsObj *sock_on(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
-{
-    ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
-    return 0;
+    return sp;
 }
 
 
 /*
     function accept(): Socket
  */
-EjsObj *sock_accept(Ejs *ejs, EjsSocket *listen, int argc, EjsObj **argv)
+EjsSocket *sock_accept(Ejs *ejs, EjsSocket *listen, int argc, EjsObj **argv)
 {
     MprSocket   *sock;
     EjsSocket   *sp;
@@ -17610,25 +17500,25 @@ EjsObj *sock_accept(Ejs *ejs, EjsSocket *listen, int argc, EjsObj **argv)
     } else {
         mprSetSocketBlockingMode(sp->sock, 1);
     }
-    return (EjsObj*) sp;
+    return sp;
 }
 
 
 /*
-    function get address(): Void
+    function get address(): String
  */
-EjsObj *sock_address(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
+EjsString *sock_address(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, sp->address);
+    return ejsCreateStringFromAsc(ejs, sp->address);
 }
 
 
 /*
     function get async(): Boolean
  */
-EjsObj *sock_async(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
+EjsBoolean *sock_async(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    return (sp->async) ? (EjsObj*) S(true) : (EjsObj*) S(false);
+    return (sp->async) ? S(true) : S(false);
 }
 
 
@@ -17637,7 +17527,7 @@ EjsObj *sock_async(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
  */
 EjsObj *sock_set_async(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    sp->async = (argv[0] == (EjsObj*) S(true));
+    sp->async = (argv[0] == S(true));
     return 0;
 }
 
@@ -17648,7 +17538,7 @@ EjsObj *sock_set_async(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
  */
 static EjsObj *sock_close(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    ejsSendEvent(ejs, sp->emitter, "close", NULL, (EjsObj*) sp);
+    ejsSendEvent(ejs, sp->emitter, "close", NULL, sp);
     if (sp->sock) {
         mprCloseSocket(sp->sock, 0);
         sp->sock = 0;
@@ -17671,7 +17561,7 @@ static EjsObj *sock_connect(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
         sp->port = (int) ((EjsNumber*) address)->value;
     } else {
         if (!ejsIs(ejs, address, String)) {
-            address = ejsToString(ejs, (EjsObj*) address);
+            address = ejsToString(ejs, address);
         }
         sp->address = ejsToMulti(ejs, address);
         if ((cp = strchr(sp->address, ':')) != 0) {
@@ -17696,7 +17586,7 @@ static EjsObj *sock_connect(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
     } else {
         mprSetSocketBlockingMode(sp->sock, 1);
     }
-    ejsSendEvent(ejs, sp->emitter, "writable", NULL, (EjsObj*) sp);
+    ejsSendEvent(ejs, sp->emitter, "writable", NULL, sp);
     return 0;
 }
 
@@ -17716,7 +17606,7 @@ static EjsObj *sock_listen(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
         sp->port = (int) ((EjsNumber*) address)->value;
     } else {
         if (!ejsIs(ejs, address, String)) {
-            address = ejsToString(ejs, (EjsObj*) address);
+            address = ejsToString(ejs, address);
         }
         sp->address = ejsToMulti(ejs, address);
         if ((cp = strchr(sp->address, ':')) != 0) {
@@ -17746,18 +17636,38 @@ static EjsObj *sock_listen(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 
 
 /*
+    function off(name, observer: Function): Void
+ */
+static EjsObj *sock_off(Ejs *ejs, EjsSocket *sp, int argc, EjsAny **argv)
+{
+    ejsRemoveObserver(ejs, sp->emitter, argv[0], argv[1]);
+    return 0;
+}
+
+
+/*
+    function on(name: [String|Array], observer: Function): Void
+ */
+EjsObj *sock_on(Ejs *ejs, EjsSocket *sp, int argc, EjsAny **argv)
+{
+    ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
+    return 0;
+}
+
+
+/*
     function get port(): Number
  */
-static EjsObj *sock_port(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
+static EjsNumber *sock_port(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, sp->port);
+    return ejsCreateNumber(ejs, sp->port);
 }
 
 
 /*
     function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number
  */
-static EjsObj *sock_read(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
+static EjsNumber *sock_read(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
     EjsByteArray    *ba;
     ssize           nbytes, offset, count;
@@ -17778,40 +17688,30 @@ static EjsObj *sock_read(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
     nbytes = mprReadSocket(sp->sock, &ba->value[offset], count);
     if (nbytes < 0) {
         //  TODO -- should not be using EOF event
-        ejsSendEvent(ejs, sp->emitter, "eof", NULL, (EjsObj*) sp);
+        ejsSendEvent(ejs, sp->emitter, "eof", NULL, sp);
         //  TODO - do we need to set the mask here?
-        return (EjsObj*) S(null);
+        return S(null);
     }
     if (nbytes == 0) {
         //  TODO - but in async, this does not mean eof. See mpr for how to tell eof
         //  TODO -- should not be using EOF event
-        ejsSendEvent(ejs, sp->emitter, "eof", NULL, (EjsObj*) sp);
+        ejsSendEvent(ejs, sp->emitter, "eof", NULL, sp);
         //  TODO - do we need to set the mask here?
-        return (EjsObj*) S(null);
+        return S(null);
     }
     ba->writePosition += nbytes;
     sp->mask |= MPR_READABLE;
     enableSocketEvents(sp, socketIOEvent);
-    return (EjsObj*) ejsCreateNumber(ejs, (int) nbytes);
+    return ejsCreateNumber(ejs, (int) nbytes);
 }
 
 
 /*
     function get remoteAddress(): String
  */
-static EjsObj *sock_remoteAddress(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
+static EjsString *sock_remoteAddress(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, sp->address);
-}
-
-
-/*
-    function off(name, listener: Function): Void
- */
-static EjsObj *sock_off(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
-{
-    ejsRemoveObserver(ejs, sp->emitter, argv[0], argv[1]);
-    return 0;
+    return ejsCreateStringFromAsc(ejs, sp->address);
 }
 
 
@@ -17833,7 +17733,7 @@ static ssize writeSocketData(Ejs *ejs, EjsSocket *sp)
     }
     if (ejsGetByteArrayAvailable(ba) == 0) {
         if (sp->emitter) {
-            ejsSendEvent(ejs, sp->emitter, "writable", NULL, (EjsObj*) sp);
+            ejsSendEvent(ejs, sp->emitter, "writable", NULL, sp);
         }
         if (sp->async) {
             sp->mask &= ~MPR_WRITABLE;
@@ -17880,7 +17780,7 @@ static void enableSocketEvents(EjsSocket *sp, int (*proc)(EjsSocket *sp, MprEven
 {
     Ejs     *ejs;
 
-    ejs = TYPE(sp)->ejs;
+    ejs = sp->ejs;
     if (sp->sock->handler == 0) {
         mprAddSocketHandler(sp->sock, sp->mask, ejs->dispatcher, (MprEventProc) proc, sp, 0);
     } else {
@@ -17894,10 +17794,10 @@ static int socketConnectEvent(EjsSocket *sp, MprEvent *event)
 {
     Ejs     *ejs;
 
-    ejs = sp->type->ejs;
+    ejs = sp->ejs;
     if (sp->emitter) {
-        ejsSendEvent(ejs, sp->emitter, "connect", NULL, (EjsObj*) sp);
-        ejsSendEvent(ejs, sp->emitter, "writable", NULL, (EjsObj*) sp);
+        ejsSendEvent(ejs, sp->emitter, "connect", NULL, sp);
+        ejsSendEvent(ejs, sp->emitter, "writable", NULL, sp);
     }
     enableSocketEvents(sp, socketIOEvent);
     return 0;
@@ -17909,9 +17809,9 @@ static int socketListenEvent(EjsSocket *listen, MprEvent *event)
 {
     Ejs     *ejs;
 
-    ejs = TYPE(listen)->ejs;
+    ejs = listen->ejs;
     if (listen->emitter) {
-        ejsSendEvent(ejs, listen->emitter, "accept", NULL, (EjsObj*) listen);
+        ejsSendEvent(ejs, listen->emitter, "accept", NULL, listen);
     }
     enableSocketEvents(listen, socketListenEvent);
     return 0;
@@ -17922,10 +17822,10 @@ static int socketIOEvent(EjsSocket *sp, MprEvent *event)
 {
     Ejs     *ejs;
 
-    ejs = TYPE(sp)->ejs;
+    ejs = sp->ejs;
     if (event->mask & MPR_READABLE) {
         if (sp->emitter) {
-            ejsSendEvent(ejs, sp->emitter, "readable", NULL, (EjsObj*) sp);
+            ejsSendEvent(ejs, sp->emitter, "readable", NULL, sp);
         }
         sp->mask |= MPR_READABLE;
     } 
@@ -17953,11 +17853,14 @@ static void manageSocket(EjsSocket *sp, int flags)
 
 EjsSocket *ejsCreateSocket(Ejs *ejs)
 {
-    return ejsCreateObj(ejs, ejsGetTypeByName(ejs, N(EJS_EJS_NAMESPACE, "Socket")), 0);
+    EjsSocket   *sp;
+
+    sp = ejsCreateObj(ejs, ejsGetTypeByName(ejs, N(EJS_EJS_NAMESPACE, "Socket")), 0);
+    sp->ejs = ejs;
 #if UNUSED
     sp->waitHandler.fd = -1;
-    return sp;
 #endif
+    return sp;
 }
 
 
@@ -17967,23 +17870,22 @@ void ejsConfigureSocketType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ejsConfigureNativeType(ejs, N("ejs", "Socket"), sizeof(EjsSocket), (MprManager) manageSocket, EJS_OBJ_HELPERS);
+    type->mutableInstances = 1;
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) sock_Socket);
-    ejsBindMethod(ejs, prototype, ES_Socket_accept, (EjsProc) sock_accept);
-    ejsBindMethod(ejs, prototype, ES_Socket_address, (EjsProc) sock_address);
-    ejsBindAccess(ejs, prototype, ES_Socket_async, (EjsProc) sock_async, (EjsProc) sock_set_async);
-    ejsBindMethod(ejs, prototype, ES_Socket_close, (EjsProc) sock_close);
-    ejsBindMethod(ejs, prototype, ES_Socket_connect, (EjsProc) sock_connect);
-    ejsBindMethod(ejs, prototype, ES_Socket_listen, (EjsProc) sock_listen);
-#if ES_Socket_off
-    ejsBindMethod(ejs, prototype, ES_Socket_off, (EjsProc) sock_off);
-#endif
-    ejsBindMethod(ejs, prototype, ES_Socket_on, (EjsProc) sock_on);
-    ejsBindMethod(ejs, prototype, ES_Socket_port, (EjsProc) sock_port);
-    ejsBindMethod(ejs, prototype, ES_Socket_read, (EjsProc) sock_read);
-    ejsBindMethod(ejs, prototype, ES_Socket_remoteAddress, (EjsProc) sock_remoteAddress);
-    ejsBindMethod(ejs, prototype, ES_Socket_write, (EjsProc) sock_write);
+    ejsBindConstructor(ejs, type, sock_Socket);
+    ejsBindMethod(ejs, prototype, ES_Socket_accept, sock_accept);
+    ejsBindMethod(ejs, prototype, ES_Socket_address, sock_address);
+    ejsBindAccess(ejs, prototype, ES_Socket_async, sock_async, sock_set_async);
+    ejsBindMethod(ejs, prototype, ES_Socket_close, sock_close);
+    ejsBindMethod(ejs, prototype, ES_Socket_connect, sock_connect);
+    ejsBindMethod(ejs, prototype, ES_Socket_listen, sock_listen);
+    ejsBindMethod(ejs, prototype, ES_Socket_off, sock_off);
+    ejsBindMethod(ejs, prototype, ES_Socket_on, sock_on);
+    ejsBindMethod(ejs, prototype, ES_Socket_port, sock_port);
+    ejsBindMethod(ejs, prototype, ES_Socket_read, sock_read);
+    ejsBindMethod(ejs, prototype, ES_Socket_remoteAddress, sock_remoteAddress);
+    ejsBindMethod(ejs, prototype, ES_Socket_write, sock_write);
 }
 
 /*
@@ -18073,29 +17975,38 @@ static EjsAny *castString(Ejs *ejs, EjsString *sp, EjsType *type)
     mprAssert(sp);
     mprAssert(type);
 
+#if UNUSED
     if (type == ST(Path)) {
-        return (EjsObj*) ejsCreatePath(ejs, sp);
+        return ejsCreatePath(ejs, sp);
     } else if (type == ST(Uri)) {
-        return (EjsObj*) ejsCreateUri(ejs, sp);
+        return ejsCreateUri(ejs, sp);
     }
+#endif
+
     switch (type->sid) {
     case S_Boolean:
         if (sp != S(empty)) {
-            return (EjsObj*) S(true);
+            return S(true);
         }
-        return (EjsObj*) S(false);
+        return S(false);
 
     case S_Number:
         return ejsParse(ejs, sp->value, S_Number);
 
+    case S_Path:
+        return ejsCreatePath(ejs, sp);
+
     case S_RegExp:
         if (sp && sp->value[0] == '/') {
-            return (EjsObj*) ejsCreateRegExp(ejs, sp);
+            return ejsCreateRegExp(ejs, sp);
         }
         return ejsCreateRegExp(ejs, ejsSprintf(ejs, "/%@/", sp));
 
     case S_String:
         return sp;
+
+    case S_Uri:
+        return ejsCreateUri(ejs, sp);
 
     default:
         ejsThrowTypeError(ejs, "Can't cast to required type");
@@ -18115,13 +18026,12 @@ static EjsString *cloneString(Ejs *ejs, EjsString *sp, bool deep)
 /*
     Get a string element. Slot numbers correspond to character indicies.
  */
-static EjsObj *getStringProperty(Ejs *ejs, EjsString *sp, int index)
+static EjsString *getStringProperty(Ejs *ejs, EjsString *sp, int index)
 {
     if (index < 0 || index >= sp->length) {
-        return (EjsObj*) S(empty);
-        return 0;
+        return S(empty);
     }
-    return (EjsObj*) ejsCreateString(ejs, &sp->value[index], 1);
+    return ejsCreateString(ejs, &sp->value[index], 1);
 }
 
 
@@ -18326,7 +18236,7 @@ static EjsString *stringConstructor(Ejs *ejs, EjsString *sp, int argc, EjsObj **
     if (argc == 1) {
         args = (EjsArray*) argv[0];
         if (args->length > 0) {
-            return ejsToString(ejs, ejsGetProperty(ejs, (EjsObj*) args, 0));
+            return ejsToString(ejs, ejsGetProperty(ejs, args, 0));
         }
     }
     return ejsInternString(sp);
@@ -18338,14 +18248,14 @@ static EjsString *stringConstructor(Ejs *ejs, EjsString *sp, int argc, EjsObj **
 
     function caseCompare(compare: String): Number
  */
-static EjsObj *caseCompare(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsNumber *caseCompare(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     int     result;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], String));
 
     result = wcmp(sp->value, ((EjsString*) argv[0])->value);
-    return (EjsObj*) ejsCreateNumber(ejs, result);
+    return ejsCreateNumber(ejs, result);
 }
 
 
@@ -18354,14 +18264,14 @@ static EjsObj *caseCompare(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function caselessCompare(compare: String): Number
  */
-static EjsObj *caselessCompare(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsNumber *caselessCompare(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     int     result;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], String));
 
     result = wcasecmp(sp->value, ((EjsString*) argv[0])->value);
-    return (EjsObj*) ejsCreateNumber(ejs, result);
+    return ejsCreateNumber(ejs, result);
 }
 
 
@@ -18370,16 +18280,16 @@ static EjsObj *caselessCompare(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function charAt(index: Number): String
  */
-static EjsObj *charAt(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *charAt(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     int     index;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], Number));
     index = ejsGetInt(ejs, argv[0]);
     if (index < 0 || index >= sp->length) {
-        return (EjsObj*) S(empty);
+        return S(empty);
     }
-    return (EjsObj*) ejsCreateString(ejs, &sp->value[index], 1);
+    return ejsCreateString(ejs, &sp->value[index], 1);
 }
 
 
@@ -18409,7 +18319,7 @@ static EjsNumber *charCodeAt(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function concat(...args): String
  */
-static EjsObj *concatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *concatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsArray    *args;
     EjsString   *result, *str;
@@ -18419,15 +18329,15 @@ static EjsObj *concatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     args = (EjsArray*) argv[0];
 
     result = (EjsString*) ejsClone(ejs, sp, 0);
-    count = ejsGetPropertyCount(ejs, (EjsObj*) args);
+    count = ejsGetPropertyCount(ejs, args);
     for (i = 0; i < args->length; i++) {
-        str = ejsToString(ejs, ejsGetProperty(ejs, (EjsObj*) args, i));
+        str = ejsToString(ejs, ejsGetProperty(ejs, args, i));
         if ((result = ejsCatString(ejs, result, str)) == NULL) {
             ejsThrowMemoryError(ejs);
             return 0;
         }
     }
-    return (EjsObj*) result;
+    return result;
 }
 
 
@@ -18436,7 +18346,7 @@ static EjsObj *concatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function contains(pattern: Object): Boolean
  */
-static EjsObj *containsString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsBoolean *containsString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsObj      *pat;
     EjsString   *spat;
@@ -18445,14 +18355,14 @@ static EjsObj *containsString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     if (ejsIs(ejs, pat, String)) {
         spat = (EjsString*) pat;
-        return (EjsObj*) ejsCreateBoolean(ejs, wcontains(sp->value, spat->value, -1) != 0);
+        return ejsCreateBoolean(ejs, wcontains(sp->value, spat->value, -1) != 0);
 
     } else if (ejsIs(ejs, pat, RegExp)) {
         EjsRegExp   *rp;
         int         count;
         rp = (EjsRegExp*) argv[0];
         count = pcre_exec(rp->compiled, NULL, sp->value, (int) sp->length, 0, 0, 0, 0);
-        return (EjsObj*) ejsCreateBoolean(ejs, count >= 0);
+        return ejsCreateBoolean(ejs, count >= 0);
     }
     ejsThrowTypeError(ejs, "Wrong argument type");
     return 0;
@@ -18464,7 +18374,7 @@ static EjsObj *containsString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function endsWith(pattern: String): Boolean
  */
-static EjsObj *endsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsBoolean *endsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString   *pattern;
     ssize       len;
@@ -18474,9 +18384,9 @@ static EjsObj *endsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     pattern = (EjsString*) argv[0];
     len = pattern->length;
     if (len > sp->length) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
-    return (EjsObj*) ejsCreateBoolean(ejs, wncmp(&sp->value[sp->length - len], pattern->value, len) == 0);
+    return ejsCreateBoolean(ejs, wncmp(&sp->value[sp->length - len], pattern->value, len) == 0);
 }
 
 
@@ -18488,11 +18398,11 @@ static EjsObj *endsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     Format:         %[modifier][width][precision][type]
     Modifiers:      +- #,
  */
-static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsArray    *args, *inner;
     EjsString   *result;
-    EjsObj      *value;
+    EjsAny      *value;
     MprChar     *buf, fmt[32];
     ssize       i, flen, start, len, last;
     int         c, nextArg, kind;
@@ -18506,7 +18416,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         via the overloaded operator '%' which in turn invokes format()
      */
     if (args->length == 1) {
-        inner = ejsGetProperty(ejs, (EjsObj*) args, 0);
+        inner = ejsGetProperty(ejs, args, 0);
         if (ejsIs(ejs, inner, Array)) {
             args = inner;
         }
@@ -18541,7 +18451,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             wncopy(fmt, (sizeof(fmt) / sizeof(MprChar)) - 4, &sp->value[start], len);
 
             if (nextArg < args->length) {
-                value = ejsGetProperty(ejs, (EjsObj*) args, nextArg);
+                value = ejsGetProperty(ejs, args, nextArg);
             } else {
                 value = S(null);
             }
@@ -18549,19 +18459,19 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             //  OPT
             switch (kind) {
             case 'd': case 'i': case 'o': case 'u':
-                value = (EjsObj*) ejsToNumber(ejs, value);
+                value = ejsToNumber(ejs, value);
                 flen = sizeof(fmt) - len + 1;
                 mtow(&fmt[len - 1], flen, ".0f", 3);
                 buf = wfmt(fmt, ejsGetNumber(ejs, value));
                 break;
 
             case 'e': case 'g': case 'f':
-                value = (EjsObj*) ejsToNumber(ejs, value);
+                value = ejsToNumber(ejs, value);
                 buf = wfmt(fmt, ejsGetNumber(ejs, value));
                 break;
 
             case 's':
-                value = (EjsObj*) ejsToString(ejs, value);
+                value = ejsToString(ejs, value);
                 buf = wfmt(fmt, ejsToMulti(ejs, value));
                 break;
 
@@ -18591,7 +18501,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     if (sp->length > last) {
         result = buildString(ejs, result, &sp->value[last], sp->length - last);
     }
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
@@ -18600,7 +18510,7 @@ static EjsObj *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     static function fromCharCode(...codes): String
  */
-static EjsObj *fromCharCode(Ejs *ejs, EjsString *unused, int argc, EjsObj **argv)
+static EjsString *fromCharCode(Ejs *ejs, EjsString *unused, int argc, EjsObj **argv)
 {
     EjsString   *result;
     EjsArray    *args;
@@ -18614,12 +18524,12 @@ static EjsObj *fromCharCode(Ejs *ejs, EjsString *unused, int argc, EjsObj **argv
         return 0;
     }
     for (i = 0; i < args->length; i++) {
-        vp = ejsGetProperty(ejs, (EjsObj*) args, i);
+        vp = ejsGetProperty(ejs, args, i);
         result->value[i] = ejsGetInt(ejs, ejsToNumber(ejs, vp));
     }
     result->value[i] = '\0';
     result->length = args->length;
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
@@ -18627,7 +18537,7 @@ static EjsObj *fromCharCode(Ejs *ejs, EjsString *unused, int argc, EjsObj **argv
     Function to iterate and return the next character code.
     NOTE: this is not a method of String. Rather, it is a callback function for Iterator
  */
-static EjsObj *nextStringKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
+static EjsNumber *nextStringKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 {
     EjsString   *sp;
 
@@ -18638,7 +18548,7 @@ static EjsObj *nextStringKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
         return 0;
     }
     if (ip->index < sp->length) {
-        return (EjsObj*) ejsCreateNumber(ejs, ip->index++);
+        return ejsCreateNumber(ejs, ip->index++);
     }
     ejsThrowStopIteration(ejs);
     return 0;
@@ -18650,9 +18560,9 @@ static EjsObj *nextStringKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 
     iterator function get(): Iterator
  */
-static EjsObj *getStringIterator(Ejs *ejs, EjsObj *sp, int argc, EjsObj **argv)
+static EjsIterator *getStringIterator(Ejs *ejs, EjsObj *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, sp, (EjsProc) nextStringKey, 0, NULL);
+    return ejsCreateIterator(ejs, sp, nextStringKey, 0, NULL);
 }
 
 
@@ -18660,7 +18570,7 @@ static EjsObj *getStringIterator(Ejs *ejs, EjsObj *sp, int argc, EjsObj **argv)
     Function to iterate and return the next string character (as a string).
     NOTE: this is not a method of Array. Rather, it is a callback function for Iterator
  */
-static EjsObj *nextStringValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
+static EjsString *nextStringValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
 {
     EjsString   *sp;
 
@@ -18671,7 +18581,7 @@ static EjsObj *nextStringValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **arg
     }
 
     if (ip->index < sp->length) {
-        return (EjsObj*) ejsCreateString(ejs, &sp->value[ip->index++], 1);
+        return ejsCreateString(ejs, &sp->value[ip->index++], 1);
     }
     ejsThrowStopIteration(ejs);
     return 0;
@@ -18683,9 +18593,9 @@ static EjsObj *nextStringValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **arg
 
     iterator function getValues(): Iterator
  */
-static EjsObj *getStringValues(Ejs *ejs, EjsObj *sp, int argc, EjsObj **argv)
+static EjsIterator *getStringValues(Ejs *ejs, EjsObj *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, sp, (EjsProc) nextStringValue, 0, NULL);
+    return ejsCreateIterator(ejs, sp, nextStringValue, 0, NULL);
 }
 
 
@@ -18696,9 +18606,9 @@ static EjsObj *getStringValues(Ejs *ejs, EjsObj *sp, int argc, EjsObj **argv)
     override function get length(): Number
  */
 
-static EjsObj *stringLength(Ejs *ejs, EjsString *ap, int argc, EjsObj **argv)
+static EjsNumber *stringLength(Ejs *ejs, EjsString *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) ap->length);
+    return ejsCreateNumber(ejs, (MprNumber) ap->length);
 }
 
 
@@ -18707,7 +18617,7 @@ static EjsObj *stringLength(Ejs *ejs, EjsString *ap, int argc, EjsObj **argv)
 
     function indexOf(pattern: String, startIndex: Number = 0): Number
  */
-static EjsObj *indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsNumber *indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     EjsString   *pattern;
     ssize       start, index, patternLength;
@@ -18731,105 +18641,105 @@ static EjsObj *indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     }
     index = indexof(&sp->value[start], sp->length - start, pattern, patternLength, 1);
     if (index < 0) {
-        return (EjsObj*) S(minusOne);
+        return S(minusOne);
     }
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) (index + start));
+    return ejsCreateNumber(ejs, (MprNumber) (index + start));
 }
 
 
-static EjsObj *isAlpha(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsBoolean *isAlpha(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (*cp & 0x80 || !isalpha((int) *cp)) {
-            return (EjsObj*) S(false);
+            return S(false);
         }
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
-static EjsObj *isAlphaNum(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsBoolean *isAlphaNum(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (*cp & 0x80 || !isalnum((int) *cp)) {
-            return (EjsObj*) S(false);
+            return S(false);
         }
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
-static EjsObj *isDigit(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsBoolean *isDigit(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (*cp & 0x80 || !isdigit((int) *cp)) {
-            return (EjsObj*) S(false);
+            return S(false);
         }
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
-static EjsObj *isLower(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsBoolean *isLower(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (!islower((int) *cp)) {
-            return (EjsObj*) S(false);
+            return S(false);
         }
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
-static EjsObj *isSpace(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsBoolean *isSpace(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (*cp & 0x80 || !isspace((int) *cp)) {
-            return (EjsObj*) S(false);
+            return S(false);
         }
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
-static EjsObj *isUpper(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsBoolean *isUpper(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return (EjsObj*) S(false);
+        return S(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (!isupper((int) *cp)) {
-            return (EjsObj*) S(false);
+            return S(false);
         }
     }
-    return (EjsObj*) S(true);
+    return S(true);
 }
 
 
@@ -18838,7 +18748,7 @@ static EjsObj *isUpper(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 
     function lastIndexOf(pattern: String, start: Number = -1): Number
  */
-static EjsObj *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsNumber *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     EjsString   *pattern;
     ssize       start, patternLength, index;
@@ -18861,9 +18771,9 @@ static EjsObj *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     }
     index = indexof(sp->value, sp->length, pattern, patternLength, -1);
     if (index < 0) {
-        return (EjsObj*) S(minusOne);
+        return S(minusOne);
     }
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) index);
+    return ejsCreateNumber(ejs, (MprNumber) index);
 }
 
 
@@ -18872,7 +18782,7 @@ static EjsObj *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 
     function match(pattern: RegExp): Array
  */
-static EjsObj *match(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsArray *match(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsRegExp   *rp;
     EjsArray    *results;
@@ -18905,13 +18815,13 @@ static EjsObj *match(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         }
     } while (rp->global);
     if (results == NULL) {
-        return (EjsObj*) S(null);
+        return S(null);
     }
-    return (EjsObj*) results;
+    return results;
 }
 
 
-static EjsObj *printable(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *printable(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString       *result;
     MprChar         buf[16];
@@ -18925,7 +18835,7 @@ static EjsObj *printable(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         }
     }
     if (nonprint == 0) {
-        return (EjsObj*) sp;
+        return sp;
     }
     if ((result = ejsCreateBareString(ejs, sp->length + (nonprint * 6) + 1)) == NULL) {
         return 0;
@@ -18948,11 +18858,11 @@ static EjsObj *printable(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     }
     result->value[j] = '\0';
     result->length = j;
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
-static EjsObj *quote(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *quote(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString       *result;
 
@@ -18964,7 +18874,7 @@ static EjsObj *quote(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     result->value[sp->length + 1] = '"';
     result->value[sp->length + 2] = '\0';
     result->length = sp->length + 2;
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
@@ -18974,7 +18884,7 @@ static EjsObj *quote(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     function remove(start: Number, end: Number = -1): String
 
  */
-static EjsObj *removeCharsFromString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *removeCharsFromString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString       *result;
     ssize           start, end, i, j;
@@ -19012,7 +18922,7 @@ static EjsObj *removeCharsFromString(Ejs *ejs, EjsString *sp, int argc, EjsObj *
         result->value[j] = sp->value[i];
     }
     result->value[j] = '\0';
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
@@ -19043,7 +18953,7 @@ static EjsString *getReplacementText(Ejs *ejs, EjsFunction *fn, int count, int *
 
     function replace(pattern: (String|Regexp), replacement: (String|Function)): String
  */
-static EjsObj *replace(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *replace(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString   *result, *replacement, *pattern;
     EjsFunction *replacementFunction;
@@ -19083,7 +18993,7 @@ static EjsObj *replace(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
                 result = buildString(ejs, result, &sp->value[index], sp->length - index);
             }
         } else {
-            result = (EjsString*) ejsClone(ejs, sp, 0);
+            result = ejsClone(ejs, sp, 0);
         }
 
     } else if (ejsIs(ejs, argv[0], RegExp)) {
@@ -19181,7 +19091,7 @@ static EjsObj *replace(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         ejsThrowTypeError(ejs, "Wrong argument type");
         return 0;
     }
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
@@ -19242,7 +19152,7 @@ static EjsNumber *searchString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function slice(start: Number, end: Number = -1, step: Number = 1): String
  */
-static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString       *result;
     ssize           start, end, step, i, j, size;
@@ -19294,7 +19204,7 @@ static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     }
     result->value[j] = '\0';
     result->length = j;
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
@@ -19303,7 +19213,7 @@ static EjsObj *sliceString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function split(delimiter: (String | RegExp), limit: Number = -1): Array
  */
-static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsArray *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsArray    *results;
     EjsString   *elt, *delim;
@@ -19334,7 +19244,7 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             elt = ejsCreateString(ejs, cp, (int) (mark - cp));
             ejsSetProperty(ejs, results, -1, elt);
         }
-        return (EjsObj*) results;
+        return results;
 
     } else if (ejsIs(ejs, argv[0], RegExp)) {
         EjsRegExp   *rp;
@@ -19361,7 +19271,7 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             match = ejsCreateString(ejs, &sp->value[rp->endLastMatch], sp->length - rp->endLastMatch);
             ejsSetProperty(ejs, results, resultCount++, match);
         }
-        return (EjsObj*) results;
+        return results;
     }
 
     ejsThrowTypeError(ejs, "Wrong argument type");
@@ -19374,14 +19284,14 @@ static EjsObj *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function startsWith(pattern: String): Boolean
  */
-static EjsObj *startsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsBoolean *startsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString   *pattern;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], String));
 
     pattern = (EjsString*) argv[0];
-    return (EjsObj*) ejsCreateBoolean(ejs, wncmp(&sp->value[0], pattern->value, pattern->length) == 0);
+    return ejsCreateBoolean(ejs, wncmp(&sp->value[0], pattern->value, pattern->length) == 0);
 }
 
 
@@ -19390,7 +19300,7 @@ static EjsObj *startsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function substring(start: Number, end: Number = -1): String
  */
-static EjsObj *substring(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *substring(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     ssize   start, end, tmp;
 
@@ -19420,7 +19330,7 @@ static EjsObj *substring(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         start = end;
         end = tmp;
     }
-    return (EjsObj*) ejsSubstring(ejs, sp, start, (int) (end - start));
+    return ejsSubstring(ejs, sp, start, (int) (end - start));
 }
 
 
@@ -19429,7 +19339,7 @@ static EjsObj *substring(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function toCamel(): String
  */
-static EjsObj *toCamel(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *toCamel(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString   *result;
 
@@ -19438,7 +19348,7 @@ static EjsObj *toCamel(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     }
     memcpy(result->value, sp->value, sp->length * sizeof(MprChar));
     result->value[0] = tolower((int) sp->value[0]);
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
@@ -19478,9 +19388,9 @@ EjsString *ejsStringToJSON(Ejs *ejs, EjsObj *vp)
 
     function toLowerCase(locale: String = null): String
  */
-static EjsObj *toLowerCase(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsString *toLowerCase(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
-    return (EjsObj*) ejsToLower(ejs, sp);
+    return ejsToLower(ejs, sp);
 }
 
 
@@ -19489,7 +19399,7 @@ static EjsObj *toLowerCase(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 
     function toPascal(): String
  */
-static EjsObj *toPascal(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *toPascal(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsString   *result;
 
@@ -19498,7 +19408,7 @@ static EjsObj *toPascal(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     }
     memcpy(result->value, sp->value, sp->length * sizeof(MprChar));
     result->value[0] = toupper((int) sp->value[0]);
-    return (EjsObj*) ejsInternString(result);
+    return ejsInternString(result);
 }
 
 
@@ -19507,9 +19417,9 @@ static EjsObj *toPascal(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     override function toString(): String
  */
-static EjsObj *stringToString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsString *stringToString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) sp;
+    return sp;
 }
 
 
@@ -19520,9 +19430,9 @@ static EjsObj *stringToString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 
     function toUpperCase(locale: String = null): String
  */
-static EjsObj *toUpperCase(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsString *toUpperCase(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
-    return (EjsObj*) ejsToUpper(ejs, sp);
+    return ejsToUpper(ejs, sp);
 }
 
 
@@ -19531,7 +19441,7 @@ static EjsObj *toUpperCase(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 
     function tokenize(format: String): Array
  */
-static EjsObj *tokenize(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
+static EjsArray *tokenize(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsArray    *result;
     MprChar     *cp, *buf;
@@ -19573,11 +19483,11 @@ static EjsObj *tokenize(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             buf++;
         }
     }
-    return (EjsObj*) result;
+    return result;
 }
 
 
-static EjsObj *trim(Ejs *ejs, EjsString *sp, EjsString *pattern, int where)
+static EjsString *trim(Ejs *ejs, EjsString *sp, EjsString *pattern, int where)
 {
     MprChar     *start, *end, *mark;
     ssize       index, patternLength;
@@ -19603,7 +19513,7 @@ static EjsObj *trim(Ejs *ejs, EjsString *sp, EjsString *pattern, int where)
     } else {
         patternLength = pattern->length;
         if (patternLength <= 0 || patternLength > sp->length) {
-            return (EjsObj*) sp;
+            return sp;
         }
         mark = sp->value;
         if (where & MPR_TRIM_START) {
@@ -19627,7 +19537,7 @@ static EjsObj *trim(Ejs *ejs, EjsString *sp, EjsString *pattern, int where)
         }
         end = mark + patternLength;
     }
-    return (EjsObj*) ejsSubstring(ejs, sp, (int) (start - sp->value), (int) (end - start));
+    return ejsSubstring(ejs, sp, (int) (start - sp->value), (int) (end - start));
 }
 
 
@@ -19639,7 +19549,7 @@ static EjsObj *trim(Ejs *ejs, EjsString *sp, EjsString *pattern, int where)
 
     function trim(str: String = null): String
  */
-static EjsObj *trimString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsString *trimString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     EjsString   *pattern;
 
@@ -19658,7 +19568,7 @@ static EjsObj *trimString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 /*  
     function trimStart(str: String = null): String
  */
-static EjsObj *trimStartString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsString *trimStartString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     EjsString   *pattern;
 
@@ -19677,7 +19587,7 @@ static EjsObj *trimStartString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv
 /*  
     function trimEnd(str: String = null): String
  */
-static EjsObj *trimEndString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
+static EjsString *trimEndString(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
 {
     EjsString   *pattern;
 
@@ -20732,13 +20642,8 @@ void ejsInitStringType(Ejs *ejs, EjsType *type)
     if (firstTime) {
         mprInitSpinLock(&internLock);
         firstTime = 0;
-#if XXX || 1
         rebuildIntern(ejs->service->intern);
-#endif
     }
-#if XXX
-    rebuildIntern(ejs->service->intern);
-#endif
     ejsCloneObjHelpers(ejs, type);
     type->mutex = mprCreateLock();
     type->helpers.cast = (EjsCastHelper) castString;
@@ -20790,49 +20695,49 @@ void ejsConfigureStringType(Ejs *ejs)
 
     ejsSetProperty(ejs, ejs->global, ES_string, type);
     
-    ejsBindMethod(ejs, type, ES_String_fromCharCode, (EjsProc) fromCharCode);
-    ejsBindConstructor(ejs, type, (EjsProc) stringConstructor);
+    ejsBindMethod(ejs, type, ES_String_fromCharCode, fromCharCode);
+    ejsBindConstructor(ejs, type, stringConstructor);
     
-    ejsBindMethod(ejs, prototype, ES_String_caseCompare, (EjsProc) caseCompare);
-    ejsBindMethod(ejs, prototype, ES_String_caselessCompare, (EjsProc) caselessCompare);
-    ejsBindMethod(ejs, prototype, ES_String_charAt, (EjsProc) charAt);
-    ejsBindMethod(ejs, prototype, ES_String_charCodeAt, (EjsProc) charCodeAt);
-    ejsBindMethod(ejs, prototype, ES_String_concat, (EjsProc) concatString);
-    ejsBindMethod(ejs, prototype, ES_String_contains, (EjsProc) containsString);
-    ejsBindMethod(ejs, prototype, ES_String_endsWith, (EjsProc) endsWith);
-    ejsBindMethod(ejs, prototype, ES_String_format, (EjsProc) formatString);
-    ejsBindMethod(ejs, prototype, ES_String_iterator_get, (EjsProc) getStringIterator);
-    ejsBindMethod(ejs, prototype, ES_String_iterator_getValues, (EjsProc) getStringValues);
-    ejsBindMethod(ejs, prototype, ES_String_indexOf, (EjsProc) indexOf);
-    ejsBindMethod(ejs, prototype, ES_String_isDigit, (EjsProc) isDigit);
-    ejsBindMethod(ejs, prototype, ES_String_isAlpha, (EjsProc) isAlpha);
-    ejsBindMethod(ejs, prototype, ES_String_isAlphaNum, (EjsProc) isAlphaNum);
-    ejsBindMethod(ejs, prototype, ES_String_isLower, (EjsProc) isLower);
-    ejsBindMethod(ejs, prototype, ES_String_isSpace, (EjsProc) isSpace);
-    ejsBindMethod(ejs, prototype, ES_String_isUpper, (EjsProc) isUpper);
-    ejsBindMethod(ejs, prototype, ES_String_lastIndexOf, (EjsProc) lastIndexOf);
-    ejsBindMethod(ejs, prototype, ES_String_length, (EjsProc) stringLength);
-    ejsBindMethod(ejs, prototype, ES_String_match, (EjsProc) match);
-    ejsBindMethod(ejs, prototype, ES_String_remove, (EjsProc) removeCharsFromString);
-    ejsBindMethod(ejs, prototype, ES_String_slice, (EjsProc) sliceString);
-    ejsBindMethod(ejs, prototype, ES_String_split, (EjsProc) split);
-    ejsBindMethod(ejs, prototype, ES_String_printable, (EjsProc) printable);
-    ejsBindMethod(ejs, prototype, ES_String_quote, (EjsProc) quote);
-    ejsBindMethod(ejs, prototype, ES_String_replace, (EjsProc) replace);
-    ejsBindMethod(ejs, prototype, ES_String_reverse, (EjsProc) reverseString);
-    ejsBindMethod(ejs, prototype, ES_String_search, (EjsProc) searchString);
-    ejsBindMethod(ejs, prototype, ES_String_startsWith, (EjsProc) startsWith);
-    ejsBindMethod(ejs, prototype, ES_String_substring, (EjsProc) substring);
-    ejsBindMethod(ejs, prototype, ES_String_toCamel, (EjsProc) toCamel);
-    ejsBindMethod(ejs, prototype, ES_String_toJSON, (EjsProc) ejsStringToJSON);
-    ejsBindMethod(ejs, prototype, ES_String_toLowerCase, (EjsProc) toLowerCase);
-    ejsBindMethod(ejs, prototype, ES_String_toPascal, (EjsProc) toPascal);
-    ejsBindMethod(ejs, prototype, ES_String_toString, (EjsProc) stringToString);
-    ejsBindMethod(ejs, prototype, ES_String_toUpperCase, (EjsProc) toUpperCase);
-    ejsBindMethod(ejs, prototype, ES_String_tokenize, (EjsProc) tokenize);
-    ejsBindMethod(ejs, prototype, ES_String_trim, (EjsProc) trimString);
-    ejsBindMethod(ejs, prototype, ES_String_trimStart, (EjsProc) trimStartString);
-    ejsBindMethod(ejs, prototype, ES_String_trimEnd, (EjsProc) trimEndString);
+    ejsBindMethod(ejs, prototype, ES_String_caseCompare, caseCompare);
+    ejsBindMethod(ejs, prototype, ES_String_caselessCompare, caselessCompare);
+    ejsBindMethod(ejs, prototype, ES_String_charAt, charAt);
+    ejsBindMethod(ejs, prototype, ES_String_charCodeAt, charCodeAt);
+    ejsBindMethod(ejs, prototype, ES_String_concat, concatString);
+    ejsBindMethod(ejs, prototype, ES_String_contains, containsString);
+    ejsBindMethod(ejs, prototype, ES_String_endsWith, endsWith);
+    ejsBindMethod(ejs, prototype, ES_String_format, formatString);
+    ejsBindMethod(ejs, prototype, ES_String_iterator_get, getStringIterator);
+    ejsBindMethod(ejs, prototype, ES_String_iterator_getValues, getStringValues);
+    ejsBindMethod(ejs, prototype, ES_String_indexOf, indexOf);
+    ejsBindMethod(ejs, prototype, ES_String_isDigit, isDigit);
+    ejsBindMethod(ejs, prototype, ES_String_isAlpha, isAlpha);
+    ejsBindMethod(ejs, prototype, ES_String_isAlphaNum, isAlphaNum);
+    ejsBindMethod(ejs, prototype, ES_String_isLower, isLower);
+    ejsBindMethod(ejs, prototype, ES_String_isSpace, isSpace);
+    ejsBindMethod(ejs, prototype, ES_String_isUpper, isUpper);
+    ejsBindMethod(ejs, prototype, ES_String_lastIndexOf, lastIndexOf);
+    ejsBindMethod(ejs, prototype, ES_String_length, stringLength);
+    ejsBindMethod(ejs, prototype, ES_String_match, match);
+    ejsBindMethod(ejs, prototype, ES_String_remove, removeCharsFromString);
+    ejsBindMethod(ejs, prototype, ES_String_slice, sliceString);
+    ejsBindMethod(ejs, prototype, ES_String_split, split);
+    ejsBindMethod(ejs, prototype, ES_String_printable, printable);
+    ejsBindMethod(ejs, prototype, ES_String_quote, quote);
+    ejsBindMethod(ejs, prototype, ES_String_replace, replace);
+    ejsBindMethod(ejs, prototype, ES_String_reverse, reverseString);
+    ejsBindMethod(ejs, prototype, ES_String_search, searchString);
+    ejsBindMethod(ejs, prototype, ES_String_startsWith, startsWith);
+    ejsBindMethod(ejs, prototype, ES_String_substring, substring);
+    ejsBindMethod(ejs, prototype, ES_String_toCamel, toCamel);
+    ejsBindMethod(ejs, prototype, ES_String_toJSON, ejsStringToJSON);
+    ejsBindMethod(ejs, prototype, ES_String_toLowerCase, toLowerCase);
+    ejsBindMethod(ejs, prototype, ES_String_toPascal, toPascal);
+    ejsBindMethod(ejs, prototype, ES_String_toString, stringToString);
+    ejsBindMethod(ejs, prototype, ES_String_toUpperCase, toUpperCase);
+    ejsBindMethod(ejs, prototype, ES_String_tokenize, tokenize);
+    ejsBindMethod(ejs, prototype, ES_String_trim, trimString);
+    ejsBindMethod(ejs, prototype, ES_String_trimStart, trimStartString);
+    ejsBindMethod(ejs, prototype, ES_String_trimEnd, trimEndString);
 
 #if FUTURE
     ejsBindMethod(ejs, prototype, ES_String_LBRACKET, operLBRACKET);
@@ -21120,7 +21025,7 @@ void ejsConfigureSystemType(Ejs *ejs)
 
     function Timer(period: Number, callback: Function, ...args)
  */
-static EjsObj *timer_constructor(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
+static EjsTimer *timer_constructor(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 {
     mprAssert(argc >= 2);
     mprAssert(ejsIs(ejs, argv[0], Number));
@@ -21132,17 +21037,18 @@ static EjsObj *timer_constructor(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv
     tp->args = (EjsArray*) argv[2];
     tp->repeat = 0;
     tp->drift = 1;
-    return (EjsObj*) tp;
+    tp->ejs = ejs;
+    return tp;
 }
 
 
 /*
     function get drift(): Boolean
  */
-static EjsObj *timer_get_drift(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
+static EjsBoolean *timer_get_drift(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 {
     mprAssert(argc == 0);
-    return (EjsObj*) ejsCreateBoolean(ejs, tp->drift);
+    return ejsCreateBoolean(ejs, tp->drift);
 }
 
 
@@ -21160,10 +21066,10 @@ static EjsObj *timer_set_drift(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 /*
     function get onerror(): Function
  */
-static EjsObj *timer_get_onerror(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
+static EjsFunction *timer_get_onerror(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 {
     mprAssert(argc == 0);
-    return (EjsObj*) tp->onerror;
+    return tp->onerror;
 }
 
 
@@ -21180,10 +21086,10 @@ static EjsObj *timer_set_onerror(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv
 /*
     function get period(): Number
  */
-static EjsObj *timer_get_period(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
+static EjsNumber *timer_get_period(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 {
     mprAssert(argc == 0);
-    return (EjsObj*) ejsCreateNumber(ejs, tp->period);
+    return ejsCreateNumber(ejs, tp->period);
 }
 
 
@@ -21202,10 +21108,10 @@ static EjsObj *timer_set_period(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 /*
     function get repeat(): Boolean
  */
-static EjsObj *timer_get_repeat(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
+static EjsBoolean *timer_get_repeat(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 {
     mprAssert(argc == 0);
-    return (EjsObj*) ejsCreateBoolean(ejs, tp->repeat);
+    return ejsCreateBoolean(ejs, tp->repeat);
 }
 
 
@@ -21233,7 +21139,7 @@ static int timerCallback(EjsTimer *tp, MprEvent *e)
     mprAssert(tp->args);
     mprAssert(tp->callback);
 
-    ejs = TYPE(tp)->ejs;
+    ejs = tp->ejs;
     thisObj = (tp->callback->boundThis) ? tp->callback->boundThis : tp;
     ejsRunFunction(ejs, tp->callback, thisObj, tp->args->length, tp->args->data);
     if (ejs->exception) {
@@ -21250,7 +21156,6 @@ static int timerCallback(EjsTimer *tp, MprEvent *e)
         mprRemoveRoot(tp);
         tp->event = 0;
         tp->ejs = 0;
-    } else {
     }
     return 0;
 }
@@ -21318,17 +21223,18 @@ void ejsConfigureTimerType(Ejs *ejs)
     type = ejsGetTypeByName(ejs, N("ejs", "Timer"));
     type->instanceSize = sizeof(EjsTimer);
     type->manager = (MprManager) manageTimer;
+    type->mutableInstances = 1;
     ejsCloneObjHelpers(ejs, type);
 
     prototype = type->prototype;
-    ejsBindConstructor(ejs, type, (EjsProc) timer_constructor);
-    ejsBindMethod(ejs, prototype, ES_Timer_start, (EjsProc) timer_start);
-    ejsBindMethod(ejs, prototype, ES_Timer_stop, (EjsProc) timer_stop);
+    ejsBindConstructor(ejs, type, timer_constructor);
+    ejsBindMethod(ejs, prototype, ES_Timer_start, timer_start);
+    ejsBindMethod(ejs, prototype, ES_Timer_stop, timer_stop);
 
-    ejsBindAccess(ejs, prototype, ES_Timer_drift, (EjsProc) timer_get_drift, (EjsProc) timer_set_drift);
-    ejsBindAccess(ejs, prototype, ES_Timer_period, (EjsProc) timer_get_period, (EjsProc) timer_set_period);
-    ejsBindAccess(ejs, prototype, ES_Timer_onerror, (EjsProc) timer_get_onerror, (EjsProc) timer_set_onerror);
-    ejsBindAccess(ejs, prototype, ES_Timer_repeat, (EjsProc) timer_get_repeat, (EjsProc) timer_set_repeat);
+    ejsBindAccess(ejs, prototype, ES_Timer_drift, timer_get_drift, timer_set_drift);
+    ejsBindAccess(ejs, prototype, ES_Timer_period, timer_get_period, timer_set_period);
+    ejsBindAccess(ejs, prototype, ES_Timer_onerror, timer_get_onerror, timer_set_onerror);
+    ejsBindAccess(ejs, prototype, ES_Timer_repeat, timer_get_repeat, timer_set_repeat);
 }
 
 /*
@@ -21412,31 +21318,40 @@ static EjsType *cloneTypeVar(Ejs *ejs, EjsType *src, bool deep)
         ejsThrowTypeError(ejs, "Expecting a Type object");
         return 0;
     }
-    dest = (EjsType*) (ST(Block)->helpers.clone)(ejs, (EjsObj*) src, deep);
+    dest = (ST(Function)->helpers.clone)(ejs, src, deep);
     if (dest == 0) {
         return dest;
     }
     //  TODO OPT
     dest->baseType = src->baseType;
     dest->callsSuper = src->callsSuper;
+    dest->dynamicInstances = src->dynamicInstances;
     dest->final = src->final;
-    dest->hasConstructor = src->hasConstructor;
     dest->hasBaseConstructors = src->hasBaseConstructors;
     dest->hasBaseInitializers = src->hasBaseInitializers;
-    dest->hasMeta = src->hasMeta;
+    dest->hasConstructor = src->hasConstructor;
     dest->hasInitializer = src->hasInitializer;
+    dest->hasMeta = src->hasMeta;
+    dest->hasScriptFunctions = src->hasScriptFunctions;
     dest->helpers = src->helpers;
-    dest->sid = src->sid;
-    dest->immutable = src->immutable;
+    dest->implements = src->implements;
     dest->initialized = src->initialized;
     dest->instanceSize = src->instanceSize;
     dest->isInterface = src->isInterface;
+    dest->isPot = src->isPot;
+    dest->manager = src->manager;
+    dest->mutable = src->mutable;
+    dest->mutableInstances = src->mutableInstances;
+    dest->mutex = src->mutex;
     dest->module = src->module;
     dest->numericIndicies = src->numericIndicies;
     dest->numInherited = src->numInherited;
     dest->prototype = src->prototype;
     dest->qname = src->qname;
+    dest->sid = src->sid;
     dest->typeData = src->typeData;
+    dest->virtualSlots = src->virtualSlots;
+
     return dest;
 }
 
@@ -21479,7 +21394,6 @@ static EjsType *createTypeVar(Ejs *ejs, EjsType *typeType, int numProp)
     }
     mprSetManager(type, manageType);
     mprInitList(&type->constructor.block.namespaces);
-    type->ejs = ejs;
     obj = (EjsPot*) type;
     SET_TYPE(obj, typeType);
     SET_DYNAMIC(obj, dynamic);
@@ -21519,7 +21433,7 @@ static int setTypeProperty(Ejs *ejs, EjsType *type, int slotNum, EjsObj *value)
         ejsThrowTypeError(ejs, "Object is not dynamic");
         return EJS_ERR;
     }
-    return (ST(Block)->helpers.setProperty)(ejs, (EjsObj*) type, slotNum, value);
+    return (ST(Block)->helpers.setProperty)(ejs, type, slotNum, value);
 }
 
 
@@ -21535,9 +21449,8 @@ static void createBootType(Ejs *ejs, int sid, int size, int dynamic, void *manag
     }
     type->sid = sid;
     type->instanceSize = size;
-    type->dynamicInstance = dynamic;
+    type->dynamicInstances = dynamic;
     type->manager = manager;
-    type->ejs = ejs;
     ejsSetSpecial(ejs, sid, type);
 }
 
@@ -21558,6 +21471,7 @@ static void createBootPrototype(Ejs *ejs, int sid, cchar *name)
     mprSetName(type->prototype, name);
     ejsSetPropertyByName(ejs, ejs->service->foundation, type->qname, type);
 }
+
 
 /*
     Handcraft the Array, Object, String and Type classes.
@@ -21623,7 +21537,6 @@ EjsType *ejsCreateType(Ejs *ejs, EjsName qname, EjsModule *up, EjsType *baseType
     if ((type = createTypeVar(ejs, ST(Type), numTypeProp)) == 0) {
         return 0;
     }
-    mprSetName(type, "type");
     type->manager = ejsManagePot;
     type->sid = sid;
     type->qname = qname;
@@ -21633,13 +21546,17 @@ EjsType *ejsCreateType(Ejs *ejs, EjsName qname, EjsModule *up, EjsType *baseType
     type->instanceSize = instanceSize;
     ejsSetTypeAttributes(type, attributes);
 
+    //  UNICODE
+    mprSetName(type, qname.name->value);
+
     if (prototype) {
         type->prototype = prototype;
     } else {
         if ((type->prototype = ejsCreatePot(ejs, ST(Object), numInstanceProp)) == 0) {
             return 0;
         }
-        mprSetName(type->prototype, "prototype");
+        //  UNICODE
+        mprSetName(type->prototype, qname.name->value);
     }
     type->prototype->isPrototype = 1;
 
@@ -21725,7 +21642,7 @@ EjsType *ejsCreateArchetype(Ejs *ejs, EjsFunction *fun, EjsPot *prototype)
     EjsString   *name;
 
     if (prototype == 0 && fun) {
-        prototype = ejsGetPropertyByName(ejs, (EjsObj*) fun, N(NULL, "prototype"));
+        prototype = ejsGetPropertyByName(ejs, fun, N(NULL, "prototype"));
     }
     baseType = prototype ? TYPE(prototype): ST(Object);
     name = (fun && fun->name) ? fun->name : ejsCreateStringFromAsc(ejs, "-type-from-function-");
@@ -21767,7 +21684,7 @@ void ejsSetTypeAttributes(EjsType *type, int64 attributes)
         type->callsSuper = 1;
     }
     if (attributes & EJS_TYPE_DYNAMIC_INSTANCE) {
-        type->dynamicInstance = 1;
+        type->dynamicInstances = 1;
     }
     if (attributes & EJS_TYPE_FINAL) {
         type->final = 1;
@@ -21781,9 +21698,11 @@ void ejsSetTypeAttributes(EjsType *type, int64 attributes)
     if (attributes & EJS_TYPE_HAS_INSTANCE_VARS) {
         type->hasInstanceVars = 1;
     }
-    if (attributes & EJS_TYPE_IMMUTABLE) {
-        type->immutable = 1;
+#if UNUSED
+    if (attributes & EJS_TYPE_IMMUTABLE_INSTANCES) {
+        type->mutableInstances = 1;
     }
+#endif
     if (attributes & EJS_TYPE_INTERFACE) {
         type->isInterface = 1;
     }
@@ -21894,8 +21813,8 @@ int ejsFixupType(Ejs *ejs, EjsType *type, EjsType *baseType, int makeRoom)
         }
         //  TODO -- when compiling baseType is always != ST(Object)
         //  TODO - should not explicity reference objecttype
-        if (baseType != ST(Object) && baseType->dynamicInstance) {
-            type->dynamicInstance = 1;
+        if (baseType != ST(Object) && baseType->dynamicInstances) {
+            type->dynamicInstances = 1;
         }
         type->hasInstanceVars |= baseType->hasInstanceVars;
     }
@@ -21929,17 +21848,17 @@ int ejsBlendTypeProperties(Ejs *ejs, EjsType *type, EjsType *typeType)
     mprAssert(type);
     mprAssert(typeType);
 
-    count = ejsGetPropertyCount(ejs, (EjsObj*) typeType) - typeType->numInherited;
+    count = ejsGetPropertyCount(ejs, typeType) - typeType->numInherited;
     mprAssert(count == 0);
 
     if (count > 0) { 
         /*  Append properties to the end of the type so as to not mess up the first slot which may be an initializer */
-        destOffset = ejsGetPropertyCount(ejs, (EjsObj*) type);
+        destOffset = ejsGetPropertyCount(ejs, type);
         srcOffset = 0;
-        if (ejsGrowPot(ejs, (EjsObj*) type, type->constructor.block.obj.numProp + count) < 0) {
+        if (ejsGrowPot(ejs, type, type->constructor.block.obj.numProp + count) < 0) {
             return EJS_ERR;
         }
-        if (inheritProperties(ejs, type, (EjsObj*) type, destOffset, (EjsObj*) typeType, srcOffset, count, 0) < 0) {
+        if (inheritProperties(ejs, type, type, destOffset, typeType, srcOffset, count, 0) < 0) {
             return EJS_ERR;
         }
     }
@@ -21948,10 +21867,10 @@ int ejsBlendTypeProperties(Ejs *ejs, EjsType *type, EjsType *typeType)
     if (protoCount > 0) {
         srcOffset = typeType->numInherited;
         destOffset = ejsGetPropertyCount(ejs, type->prototype);
-        if (ejsGrowPot(ejs, (EjsObj*) type->prototype, type->prototype->numProp + protoCount) < 0) {
+        if (ejsGrowPot(ejs, type->prototype, type->prototype->numProp + protoCount) < 0) {
             return EJS_ERR;
         }
-        if (inheritProperties(ejs, type, (EjsObj*) type->prototype, destOffset, (EjsObj*) typeType->prototype, srcOffset, 
+        if (inheritProperties(ejs, type, type->prototype, destOffset, typeType->prototype, srcOffset, 
                 protoCount, 0) < 0) {
             return EJS_ERR;
         }
@@ -21998,7 +21917,7 @@ static int fixupTypeImplements(Ejs *ejs, EjsType *type, int makeRoom)
                     (nsp = (EjsNamespace*) mprGetNextItem(&iface->constructor.block.namespaces, &nextNsp)) != 0;) {
                 ejsAddNamespaceToBlock(ejs, (EjsBlock*) type, nsp);
             }
-            for (bp = iface->constructor.block.scope; bp->scope; bp = bp->scope) {
+            for (bp = iface->constructor.block.scope; bp; bp = bp->scope) {
                 for (nextNsp = 0; (nsp = (EjsNamespace*) mprGetNextItem(&bp->namespaces, &nextNsp)) != 0;) {
                     ejsAddNamespaceToBlock(ejs, (EjsBlock*) type, nsp);
                 }
@@ -22257,6 +22176,9 @@ static void manageType(EjsType *type, int flags)
         mprMark(type->qname.space);
         mprMark(type->prototype);
         mprMark(type->baseType);
+        if (type->mutex) {
+            mprNop(NULL);
+        }
         mprMark(type->mutex);
         mprMark(type->implements);
         mprMark(type->typeData);
@@ -22348,11 +22270,11 @@ void ejsCreateTypeType(Ejs *ejs)
 
 
 
-static EjsObj *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQuery);
+static EjsUri *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQuery);
 static int same(Ejs *ejs, HttpUri *u1, HttpUri *u2, int exact);
 static HttpUri *createHttpUriFromHash(Ejs *ejs, EjsObj *arg, int complete);
 static HttpUri *toHttpUri(Ejs *ejs, EjsObj *arg, int dup);
-static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv);
+static EjsUri *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv);
 
 
 #if UNUSED && KEEP
@@ -22401,7 +22323,7 @@ static EjsUri *cloneUri(Ejs *ejs, EjsUri *src, bool deep)
 }
 
 
-static EjsObj *coerceUriOperands(Ejs *ejs, EjsUri *lhs, int opcode,  EjsObj *rhs)
+static EjsAny *coerceUriOperands(Ejs *ejs, EjsUri *lhs, int opcode,  EjsAny *rhs)
 {
     HttpUri     *uri;
     char        *ustr;
@@ -22413,35 +22335,35 @@ static EjsObj *coerceUriOperands(Ejs *ejs, EjsUri *lhs, int opcode,  EjsObj *rhs
     case EJS_OP_ADD:
         uri = lhs->uri;
         ustr = httpFormatUri(uri->scheme, uri->host, uri->port, uri->path, uri->reference, uri->query, 0);
-        return ejsInvokeOperator(ejs, (EjsObj*) ejsCreateStringFromAsc(ejs, ustr), opcode, rhs);
+        return ejsInvokeOperator(ejs, ejsCreateStringFromAsc(ejs, ustr), opcode, rhs);
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_NE:
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (!ejsIsDefined(ejs, rhs)) {
-            return (EjsObj*) ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
         }
         uri = lhs->uri;
         ustr = httpFormatUri(uri->scheme, uri->host, uri->port, uri->path, uri->reference, uri->query, 0);
-        return ejsInvokeOperator(ejs, (EjsObj*) ejsCreateStringFromAsc(ejs, ustr), opcode, rhs);
+        return ejsInvokeOperator(ejs, ejsCreateStringFromAsc(ejs, ustr), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(false);
+        return S(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
@@ -22451,12 +22373,12 @@ static EjsObj *coerceUriOperands(Ejs *ejs, EjsUri *lhs, int opcode,  EjsObj *rhs
 }
 
 
-static EjsObj *invokeUriOperator(Ejs *ejs, EjsUri *lhs, int opcode,  EjsUri *rhs, void *data)
+static EjsAny *invokeUriOperator(Ejs *ejs, EjsUri *lhs, int opcode,  EjsUri *rhs, void *data)
 {
-    EjsObj      *result;
+    EjsAny      *result;
 
     if (rhs == 0 || TYPE(lhs) != TYPE(rhs)) {
-        if ((result = coerceUriOperands(ejs, lhs, opcode, (EjsObj*) rhs)) != 0) {
+        if ((result = coerceUriOperands(ejs, lhs, opcode, rhs)) != 0) {
             return result;
         }
     }
@@ -22467,42 +22389,42 @@ static EjsObj *invokeUriOperator(Ejs *ejs, EjsUri *lhs, int opcode,  EjsUri *rhs
     case EJS_OP_COMPARE_STRICTLY_EQ:
     case EJS_OP_COMPARE_EQ:
         if (lhs == rhs || (lhs->uri == rhs->uri)) {
-            return (EjsObj*) S(true);
+            return S(true);
         }
-        return (EjsObj*) ejsCreateBoolean(ejs,  same(ejs, lhs->uri, rhs->uri, 1));
+        return ejsCreateBoolean(ejs,  same(ejs, lhs->uri, rhs->uri, 1));
 
     case EJS_OP_COMPARE_NE:
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) ejsCreateBoolean(ejs,  !same(ejs, lhs->uri, rhs->uri, 1));
+        return ejsCreateBoolean(ejs,  !same(ejs, lhs->uri, rhs->uri, 1));
 
     /*  NOTE: these only compare the paths */
     case EJS_OP_COMPARE_LT:
-        return (EjsObj*) ejsCreateBoolean(ejs,  scmp(lhs->uri->path, rhs->uri->path) < 0);
+        return ejsCreateBoolean(ejs,  scmp(lhs->uri->path, rhs->uri->path) < 0);
 
     case EJS_OP_COMPARE_LE:
-        return (EjsObj*) ejsCreateBoolean(ejs,  scmp(lhs->uri->path, rhs->uri->path) <= 0);
+        return ejsCreateBoolean(ejs,  scmp(lhs->uri->path, rhs->uri->path) <= 0);
 
     case EJS_OP_COMPARE_GT:
-        return (EjsObj*) ejsCreateBoolean(ejs,  scmp(lhs->uri->path, rhs->uri->path) > 0);
+        return ejsCreateBoolean(ejs,  scmp(lhs->uri->path, rhs->uri->path) > 0);
 
     case EJS_OP_COMPARE_GE:
-        return (EjsObj*) ejsCreateBoolean(ejs,  scmp(lhs->uri->path, rhs->uri->path) >= 0);
+        return ejsCreateBoolean(ejs,  scmp(lhs->uri->path, rhs->uri->path) >= 0);
 
     /*  
         Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return (EjsObj*) ((lhs->uri->path) ? S(true): S(false));
+        return ((lhs->uri->path) ? S(true): S(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) ((lhs->uri->path == 0) ? S(true): S(false));
+        return ((lhs->uri->path == 0) ? S(true): S(false));
 
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*  
         Binary operators
@@ -22525,12 +22447,12 @@ static EjsObj *invokeUriOperator(Ejs *ejs, EjsUri *lhs, int opcode,  EjsUri *rhs
     function Uri(path: String)
     function Uri(parts: Object)
  */
-static EjsObj *uri_constructor(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_constructor(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     if (argc >= 0) {
         up->uri = toHttpUri(ejs, argv[0], 1);
     }
-    return (EjsObj*) up;
+    return up;
 }
 
 
@@ -22539,7 +22461,7 @@ static EjsObj *uri_constructor(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 
     function absolute(base): Uri
  */
-static EjsObj *uri_absolute(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_absolute(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *result;
     HttpUri     *uri, *baseUri;
@@ -22557,14 +22479,14 @@ static EjsObj *uri_absolute(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
         httpCompleteUri(result->uri, NULL);
     }
     httpNormalizeUri(result->uri);
-    return (EjsObj*) result;
+    return result;
 }
 
 
 /*  
     function get basename(): Uri
  */
-static EjsObj *uri_basename(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_basename(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *np;
     char        *path, *cp;
@@ -22573,7 +22495,7 @@ static EjsObj *uri_basename(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     np = cloneUri(ejs, up, 0);
     path = np->uri->path;
     if (path == 0) {
-        return (EjsObj*) S(empty);
+        return S(empty);
     }
     len = (int) strlen(path);
     if (path[len - 1] == '/') {
@@ -22583,14 +22505,14 @@ static EjsObj *uri_basename(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
             np->uri->path = &cp[1];
         }
     }
-    return (EjsObj*) np;
+    return np;
 }
 
 
 /*  
     function complete(missing = null): Uri
  */
-static EjsObj *uri_complete(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_complete(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri  *result;
 
@@ -22630,7 +22552,7 @@ static EjsObj *uri_components(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     if (uri->query) {
         ejsSetPropertyByName(ejs, obj, EN("query"), ejsCreateStringFromAsc(ejs, uri->query));
     }
-    return (EjsObj*) obj;
+    return obj;
 }
 
 
@@ -22638,9 +22560,9 @@ static EjsObj *uri_components(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Decode a Uri
     static function decode(str: String): String
  */
-static EjsObj *uri_decode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsString *uri_decode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprUriDecode(ejsToMulti(ejs, argv[0])));
+    return ejsCreateStringFromAsc(ejs, mprUriDecode(ejsToMulti(ejs, argv[0])));
 }
 
 
@@ -22648,16 +22570,16 @@ static EjsObj *uri_decode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Decode a Uri component
     static function decodeComponent(str: String): String
  */
-static EjsObj *uri_decodeComponent(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsString *uri_decodeComponent(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprUriDecode(ejsToMulti(ejs, argv[0])));
+    return ejsCreateStringFromAsc(ejs, mprUriDecode(ejsToMulti(ejs, argv[0])));
 }
 
 
 /*  
     function get dirname(): Uri
  */
-static EjsObj *uri_dirname(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_dirname(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *np;
     char        *path, *cp;
@@ -22666,7 +22588,7 @@ static EjsObj *uri_dirname(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     np = cloneUri(ejs, up, 0);
     path = np->uri->path;
     if (path == 0) {
-        return (EjsObj*) S(empty);
+        return S(empty);
     }
     len = (int) strlen(path);
     if (path[len - 1] == '/') {
@@ -22682,7 +22604,7 @@ static EjsObj *uri_dirname(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
             }
         }
     }
-    return (EjsObj*) np;
+    return np;
 }
 
 
@@ -22690,9 +22612,9 @@ static EjsObj *uri_dirname(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Uri Encode a string
     function encode(str: String): String
  */
-static EjsObj *uri_encode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsString *uri_encode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprUriEncode(ejsToMulti(ejs, argv[0]), MPR_ENCODE_URI));
+    return ejsCreateStringFromAsc(ejs, mprUriEncode(ejsToMulti(ejs, argv[0]), MPR_ENCODE_URI));
 }
 
 
@@ -22700,9 +22622,9 @@ static EjsObj *uri_encode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     Encode a Uri component
     static function encodeComponent(str: String): String
  */
-static EjsObj *uri_encodeComponent(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsString *uri_encodeComponent(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprUriEncode(ejsToMulti(ejs, argv[0]), MPR_ENCODE_URI_COMPONENT));
+    return ejsCreateStringFromAsc(ejs, mprUriEncode(ejsToMulti(ejs, argv[0]), MPR_ENCODE_URI_COMPONENT));
 }
 
 
@@ -22710,9 +22632,9 @@ static EjsObj *uri_encodeComponent(Ejs *ejs, EjsObj *unused, int argc, EjsObj **
     Get the Uri extension
     static function get extension(): String
  */
-static EjsObj *uri_extension(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_extension(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->ext);
+    return ejsCreateStringFromAsc(ejs, up->uri->ext);
 }
 
 
@@ -22735,9 +22657,9 @@ static EjsObj *uri_set_extension(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Determine if the uri has an extension
     static function get hasExtension(): Boolean
  */
-static EjsObj *uri_hasExtension(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsBoolean *uri_hasExtension(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ((up->uri->ext) ? S(true) : S(false));
+    return ejsCreateBoolean(ejs, up->uri->ext);
 }
 
 
@@ -22745,9 +22667,9 @@ static EjsObj *uri_hasExtension(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Determine if the uri has a host
     static function get hasHost(): Boolean
  */
-static EjsObj *uri_hasHost(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsBoolean *uri_hasHost(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ((up->uri->host) ? S(true) : S(false));
+    return ejsCreateBoolean(ejs, up->uri->host);
 }
 
 
@@ -22755,9 +22677,9 @@ static EjsObj *uri_hasHost(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Determine if the uri has a port
     static function get hasPort(): Boolean
  */
-static EjsObj *uri_hasPort(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsBoolean *uri_hasPort(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ((up->uri->port > 0) ? S(true) : S(false));
+    return ejsCreateBoolean(ejs, up->uri->port > 0);
 }
 
 
@@ -22765,9 +22687,9 @@ static EjsObj *uri_hasPort(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Determine if the uri has a query
     static function get hasQuery(): Boolean
  */
-static EjsObj *uri_hasQuery(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsBoolean *uri_hasQuery(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ((up->uri->query) ? S(true) : S(false));
+    return ejsCreateBoolean(ejs, up->uri->query);
 }
 
 
@@ -22775,9 +22697,9 @@ static EjsObj *uri_hasQuery(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Determine if the uri has a reference
     static function get hasReference(): Boolean
  */
-static EjsObj *uri_hasReference(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsBoolean *uri_hasReference(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ((up->uri->reference) ? S(true) : S(false));
+    return ejsCreateBoolean(ejs, up->uri->reference);
 }
 
 
@@ -22785,9 +22707,9 @@ static EjsObj *uri_hasReference(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Determine if the uri has a scheme
     static function get hasScheme(): Boolean
  */
-static EjsObj *uri_hasScheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsBoolean *uri_hasScheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ((up->uri->scheme) ? S(true) : S(false));
+    return ejsCreateBoolean(ejs, up->uri->scheme);
 }
 
 
@@ -22795,16 +22717,12 @@ static EjsObj *uri_hasScheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Get the host portion
     static function get host(): String
  */
-static EjsObj *uri_host(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_host(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     if (up->uri->host == 0) {
-#if UNUSED
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, "localhost");
-#else
         return S(null);
-#endif
     }    
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->host);
+    return ejsCreateStringFromAsc(ejs, up->uri->host);
 }
 
 
@@ -22822,9 +22740,9 @@ static EjsObj *uri_set_host(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 /*  
     function get isAbsolute(): Boolean
  */
-static EjsObj *uri_isAbsolute(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsBoolean *uri_isAbsolute(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ((up->uri->path[0] == '/') ? S(true) : S(false));
+    return ejsCreateBoolean(ejs, up->uri->path[0] == '/');
 }
 
 
@@ -22832,12 +22750,12 @@ static EjsObj *uri_isAbsolute(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Determine if the file name is a directory. This 
     function get isDir(): Boolean
  */
-static EjsObj *uri_isDir(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsBoolean *uri_isDir(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     HttpUri     *uri;
 
     uri = up->uri;
-    return (EjsObj*) ((uri->path[strlen(uri->path) - 1] == '/') ? S(true) : S(false));
+    return ejsCreateBoolean(ejs, uri->path[strlen(uri->path) - 1] == '/');
 }
 
 
@@ -22845,7 +22763,7 @@ static EjsObj *uri_isDir(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Join uri segments
     function join(...others): Uri
  */
-static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *result;
     EjsObj      *arg;
@@ -22857,7 +22775,7 @@ static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     result = cloneUri(ejs, up, 0);
     uri = result->uri;
     for (i = 0; i < args->length; i++) {
-        arg = ejsGetProperty(ejs, (EjsObj*) args, i);
+        arg = ejsGetProperty(ejs, args, i);
         if ((other = toHttpUri(ejs, arg, 0)) == NULL) {
             return 0;
         }
@@ -22865,7 +22783,7 @@ static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
         uri = httpJoinUri(oldUri, 1, &other);
     }
     result->uri = uri;
-    return (EjsObj*) result;
+    return result;
 }
 
 
@@ -22873,7 +22791,7 @@ static EjsObj *uri_join(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Join extension
     function joinExt(ext: String): Uri
  */
-static EjsObj *uri_joinExt(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_joinExt(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *np;
     HttpUri     *nuri;
@@ -22887,21 +22805,21 @@ static EjsObj *uri_joinExt(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     }
     nuri->ext = ext;
     nuri->path = sjoin(mprTrimPathExtension(nuri->path), ".", nuri->ext, NULL);
-    return (EjsObj*) np;
+    return np;
 }
 
 
 /*  
     function local(): Uri
  */
-static EjsObj *uri_local(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_local(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *result;
 
     if ((result = cloneUri(ejs, up, 0)) != 0) {
         httpMakeUriLocal(result->uri);
     }
-    return (EjsObj*) result;
+    return result;
 }
 
 
@@ -22909,22 +22827,22 @@ static EjsObj *uri_local(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Get the mimeType
     function mimeType(): String
  */
-static EjsObj *uri_mimeType(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_mimeType(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, mprLookupMime(NULL, up->uri->ext));
+    return ejsCreateStringFromAsc(ejs, mprLookupMime(NULL, up->uri->ext));
 }
 
 
 /*  
     function get normalize(): Uri
  */
-static EjsObj *uri_normalize(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_normalize(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *np;
 
     np = cloneUri(ejs, up, 0);
     np->uri->path = httpNormalizeUriPath(up->uri->path);
-    return (EjsObj*) np;
+    return np;
 }
 
 
@@ -22932,9 +22850,9 @@ static EjsObj *uri_normalize(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Get the path portion
     static function get path(): String
  */
-static EjsObj *uri_path(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_path(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->path);
+    return ejsCreateStringFromAsc(ejs, up->uri->path);
 }
 
 
@@ -22954,7 +22872,7 @@ static EjsObj *uri_set_path(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Get the port portion
     static function get port(): Number
  */
-static EjsObj *uri_port(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsNumber *uri_port(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     HttpUri     *uri;
     
@@ -22964,12 +22882,12 @@ static EjsObj *uri_port(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
             return S(null);
         }
         if (uri->scheme == 0 || strcmp(uri->scheme, "http") == 0) {
-            return (EjsObj*) ejsCreateNumber(ejs, 80);
+            return ejsCreateNumber(ejs, 80);
         } else if (uri->scheme && strcmp(uri->scheme, "https") == 0) {
-            return (EjsObj*) ejsCreateNumber(ejs, 443);
+            return ejsCreateNumber(ejs, 443);
         }
     }
-    return (EjsObj*) ejsCreateNumber(ejs, up->uri->port);
+    return ejsCreateNumber(ejs, up->uri->port);
 }
 
 
@@ -22988,7 +22906,7 @@ static EjsObj *uri_set_port(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Replace the Uri extension
     static function set replaceExt(ext: String): Uri
  */
-static EjsObj *uri_replaceExtension(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_replaceExtension(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *np;
     HttpUri     *nuri;
@@ -23003,14 +22921,14 @@ static EjsObj *uri_replaceExtension(Ejs *ejs, EjsUri *up, int argc, EjsObj **arg
     }
     nuri->ext = ext;
     nuri->path = sjoin(mprTrimPathExtension(nuri->path), ".", nuri->ext, NULL);
-    return (EjsObj*) np;
+    return np;
 }
 
 
 /*  
     function resolve(target): Uri
  */
-static EjsObj *uri_resolve(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_resolve(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *result;
     HttpUri     *uri, *target;
@@ -23029,14 +22947,14 @@ static EjsObj *uri_resolve(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
         uri = httpCloneUri(uri, 0);
     }
     result->uri = uri;
-    return (EjsObj*) result;
+    return result;
 }
 
 
 /*  
     function relative(base): Uri
  */
-static EjsObj *uri_relative(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_relative(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *result;
     HttpUri     *baseUri;
@@ -23044,7 +22962,7 @@ static EjsObj *uri_relative(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     baseUri = toHttpUri(ejs, argv[0], 0);
     result = ejsCreateObj(ejs, ST(Uri), 0);
     result->uri = httpGetRelativeUri(baseUri, up->uri, 1);
-    return (EjsObj*) result;
+    return result;
 }
 
 
@@ -23052,16 +22970,12 @@ static EjsObj *uri_relative(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Get the scheme portion
     static function get scheme(): String
  */
-static EjsObj *uri_scheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_scheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     if (up->uri->scheme == 0) {
-#if UNUSED
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, "http");
-#else
         return S(null);
-#endif
     }
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->scheme);
+    return ejsCreateStringFromAsc(ejs, up->uri->scheme);
 }
 
 
@@ -23080,9 +22994,9 @@ static EjsObj *uri_set_scheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Get the query portion
     static function get query(): String
  */
-static EjsObj *uri_query(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_query(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->query);
+    return ejsCreateStringFromAsc(ejs, up->uri->query);
 }
 
 
@@ -23104,9 +23018,9 @@ static EjsObj *uri_set_query(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     Get the reference portion
     static function get reference(): String
  */
-static EjsObj *uri_reference(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_reference(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->reference);
+    return ejsCreateStringFromAsc(ejs, up->uri->reference);
 }
 
 
@@ -23134,8 +23048,8 @@ static EjsObj *uri_same(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     int     exact;
 
     other = (EjsUri*) argv[0];
-    exact = (argc == 2 && argv[1] == (EjsObj*) S(true));
-    return (EjsObj*) (same(ejs, up->uri, other->uri, exact) ? S(true): S(false));
+    exact = (argc == 2 && argv[1] == S(true));
+    return ejsCreateBoolean(ejs, same(ejs, up->uri, other->uri, exact));
 }
 
 
@@ -23144,7 +23058,7 @@ static EjsObj *uri_same(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 
     function template(pattern: String, ...options): Uri
  */
-static EjsObj *uri_template(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_template(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsArray    *options;
     EjsObj      *obj, *value;
@@ -23188,39 +23102,38 @@ static EjsObj *uri_template(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
         }
     }
     mprAddNullToBuf(buf);
-    return (EjsObj*) ejsCreateUriFromMulti(ejs, mprGetBufStart(buf));
+    return ejsCreateUriFromMulti(ejs, mprGetBufStart(buf));
 }
 
 
 /* 
    function toString(): String
  */
-static EjsObj *uri_toString(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_toString(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     HttpUri     *uri;
 
     uri = up->uri;
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, httpUriToString(uri, 0));
+    return ejsCreateStringFromAsc(ejs, httpUriToString(uri, 0));
 }
 
 
 /* 
    function toLocalString(): String
  */
-static EjsObj *uri_toLocalString(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsString *uri_toLocalString(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     HttpUri     *uri;
 
     uri = up->uri;
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, 
-        httpFormatUri(NULL, NULL, 0, uri->path, uri->reference, uri->query, 0));
+    return ejsCreateStringFromAsc(ejs, httpFormatUri(NULL, NULL, 0, uri->path, uri->reference, uri->query, 0));
 }
 
 
 /*  
     function trimExt(): Uri
  */
-static EjsObj *uri_trimExt(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
+static EjsUri *uri_trimExt(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     EjsUri      *np;
     HttpUri     *nuri;
@@ -23229,7 +23142,7 @@ static EjsObj *uri_trimExt(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     nuri = np->uri;
     nuri->ext = 0;
     nuri->path = mprTrimPathExtension(nuri->path);
-    return (EjsObj*) np;
+    return np;
 }
 
 
@@ -23254,7 +23167,7 @@ static char *uriToString(Ejs *ejs, EjsUri *up)
 #endif
 
 
-static EjsObj *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQuery)
+static EjsUri *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQuery)
 {
     EjsUri      *missingUri;
 
@@ -23274,7 +23187,7 @@ static EjsObj *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQue
     } else {
         httpCompleteUri(up->uri, missingUri->uri);
     }
-    return (EjsObj*) up;
+    return up;
 }
 
 
@@ -23488,6 +23401,7 @@ void ejsConfigureUriType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ejsConfigureNativeType(ejs, N("ejs", "Uri"), sizeof(EjsUri), manageUri, EJS_OBJ_HELPERS);
+    type->mutableInstances = 1;
     ejsSetSpecialType(ejs, S_Uri, type);
     prototype = type->prototype;
 
@@ -23602,23 +23516,23 @@ void ejsConfigureUriType(Ejs *ejs)
     Cast the void operand to a primitive type
  */
 
-static EjsObj *castVoid(Ejs *ejs, EjsVoid *vp, EjsType *type)
+static EjsAny *castVoid(Ejs *ejs, EjsVoid *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case S_Number:
         return S(nan);
 
     case S_Object:
-        return (EjsObj*) vp;
+        return vp;
 
     case S_String:
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, "undefined");
+        return ejsCreateStringFromAsc(ejs, "undefined");
 
     case S_Uri:
-        return (EjsObj*) ejsCreateUriFromMulti(ejs, "undefined");
+        return ejsCreateUriFromMulti(ejs, "undefined");
             
     default:
         ejsThrowTypeError(ejs, "Can't cast to this type");
@@ -23628,44 +23542,44 @@ static EjsObj *castVoid(Ejs *ejs, EjsVoid *vp, EjsType *type)
 
 
 
-static EjsObj *coerceVoidOperands(Ejs *ejs, EjsVoid *lhs, int opcode, EjsVoid *rhs)
+static EjsAny *coerceVoidOperands(Ejs *ejs, EjsVoid *lhs, int opcode, EjsVoid *rhs)
 {
     switch (opcode) {
 
     case EJS_OP_ADD:
         if (!ejsIs(ejs, rhs, Number)) {
-            return ejsInvokeOperator(ejs, (EjsObj*) ejsToString(ejs, (EjsObj*) lhs), opcode, (EjsObj*) rhs);
+            return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
         /* Fall through */
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, (EjsObj*) S(nan), opcode, (EjsObj*) rhs);
+        return ejsInvokeOperator(ejs, S(nan), opcode, rhs);
 
     /*
      *  Comparision
      */
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_COMPARE_NE:
         if (ejsIs(ejs, rhs, Null)) {
-            return (EjsObj*) S(false);
+            return S(false);
         }
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_EQ:
         if (ejsIs(ejs, rhs, Null)) {
-            return (EjsObj*) S(true);
+            return S(true);
         }
-        return (EjsObj*) S(false);
+        return S(false);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
      *  Unary operators
@@ -23676,12 +23590,12 @@ static EjsObj *coerceVoidOperands(Ejs *ejs, EjsVoid *lhs, int opcode, EjsVoid *r
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) S(false);
+        return S(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
@@ -23712,27 +23626,27 @@ static EjsObj *invokeVoidOperator(Ejs *ejs, EjsVoid *lhs, int opcode, EjsVoid *r
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return (EjsObj*) S(true);
+        return S(true);
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
     case EJS_OP_COMPARE_LT: case EJS_OP_COMPARE_GT:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return (EjsObj*) S(false);
+        return S(false);
 
     /*
      *  Unary operators
      */
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT: case EJS_OP_NEG:
-        return (EjsObj*) S(nan);
+        return S(nan);
 
     /*
      *  Binary operators
      */
     case EJS_OP_ADD: case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return (EjsObj*) S(nan);
+        return S(nan);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -23745,9 +23659,9 @@ static EjsObj *invokeVoidOperator(Ejs *ejs, EjsVoid *lhs, int opcode, EjsVoid *r
 /*
     iterator native function get(): Iterator
  */
-static EjsObj *getVoidIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **argv)
+static EjsIterator *getVoidIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, np, NULL, 0, NULL);
+    return ejsCreateIterator(ejs, np, NULL, 0, NULL);
 }
 
 
@@ -23880,7 +23794,7 @@ static EjsObj *workerPreload(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **arg
     Script is optional. If supplied, the script is run immediately by a worker thread. This call
     does not block. Options are: search and name.
  */
-static EjsObj *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
+static EjsWorker *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
 {
     Ejs             *wejs;
     EjsObj          *options, *value, *search;
@@ -23917,7 +23831,7 @@ static EjsObj *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
         Create a new interpreter and an "inside" worker object and pair it with the current "outside" worker.
         The worker interpreter gets a new dispatcher
      */
-    if ((wejs = ejsCreate(NULL, NULL, NULL, 0, NULL, 0)) == 0) {
+    if ((wejs = ejsCreateVM(0, 0, 0, 0, 0, 0, 0)) == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
     }
@@ -23953,7 +23867,7 @@ static EjsObj *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
             return 0;
         }
     }
-    return (EjsObj*) worker;
+    return worker;
 }
 
 
@@ -24026,7 +23940,7 @@ static EjsObj *startWorker(Ejs *ejs, EjsWorker *outsideWorker, int timeout)
 {
     EjsWorker   *insideWorker;
     Ejs         *inside;
-    EjsObj      *result;
+    EjsString   *result;
 
     mprAssert(ejs);
     mprAssert(outsideWorker);
@@ -24062,16 +23976,16 @@ static EjsObj *startWorker(Ejs *ejs, EjsWorker *outsideWorker, int timeout)
     if (join(ejs, (EjsObj*) outsideWorker, timeout) < 0) {
         return S(undefined);
     }
-    result = (EjsObj*) ejsToJSON(inside, inside->result, NULL);
+    result = ejsToJSON(inside, inside->result, NULL);
     if (result == 0) {
         return S(null);
     }
-    return ejsDeserialize(ejs, (EjsString*) result);
+    return ejsDeserialize(ejs, result);
 }
 
 
 /*
-    function eval(script: String, timeout: Boolean = -1): String
+    function eval(script: String, timeout: Boolean = -1): Obj
  */
 static EjsObj *workerEval(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
 {
@@ -24249,7 +24163,7 @@ static EjsObj *workerLoad(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
 /*
     static function lookup(name: String): Worker
  */
-static EjsObj *workerLookup(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
+static EjsWorker *workerLookup(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
     EjsWorker   *worker;
     cchar       *name;
@@ -24260,7 +24174,7 @@ static EjsObj *workerLookup(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     for (next = 0; (worker = mprGetNextItem(ejs->workers, &next)) != NULL; ) {
         if (worker->name && strcmp(name, worker->name) == 0) {
             unlock(ejs);
-            return (EjsObj*) worker;
+            return worker;
         }
     }
     unlock(ejs);
@@ -24283,6 +24197,7 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
     worker = msg->worker;
     worker->gotMessage = 1;
     ejs = worker->ejs;
+    mprAssert(!ejs->exception);
     event = 0;
     ejsFreeze(ejs, 1);
 
@@ -24351,14 +24266,14 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
 
 
 /*
-    function preeval(script: String): String
+    function preeval(script: String): Object
     NOTE: this blocks. 
  */
 static EjsObj *workerPreeval(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
 {
     Ejs         *inside;
     EjsWorker   *insideWorker;
-    EjsObj      *result;
+    EjsString   *result;
 
     mprAssert(!worker->inside);
 
@@ -24375,23 +24290,23 @@ static EjsObj *workerPreeval(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **arg
         handleError(ejs, worker, inside->exception, 1);
         return 0;
     }
-    result = (EjsObj*) ejsToJSON(inside, inside->result, NULL);
+    result = ejsToJSON(inside, inside->result, NULL);
     if (result == 0) {
         return S(null);
     }
-    return ejsDeserialize(ejs, (EjsString*) result);
+    return ejsDeserialize(ejs, result);
 }
 
 
 /*
-    function preload(path: Path): String
+    function preload(path: Path): Object
     NOTE: this blocks. 
  */
 static EjsObj *workerPreload(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
 {
     Ejs         *inside;
     EjsWorker   *insideWorker;
-    EjsObj      *result;
+    EjsString   *result;
 
     mprAssert(argc > 0 && ejsIs(ejs, argv[0], Path));
     mprAssert(!worker->inside);
@@ -24409,11 +24324,11 @@ static EjsObj *workerPreload(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **arg
         handleError(ejs, worker, inside->exception, 1);
         return 0;
     }
-    result = (EjsObj*) ejsToJSON(inside, inside->result, NULL);
+    result = ejsToJSON(inside, inside->result, NULL);
     if (result == 0) {
         return S(null);
     }
-    return ejsDeserialize(ejs, (EjsString*) result);
+    return ejsDeserialize(ejs, result);
 }
 
 
@@ -24440,7 +24355,7 @@ static Message *createMessage()
  */
 static EjsObj *workerPostMessage(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
 {
-    EjsObj          *data;
+    EjsString       *data;
     EjsWorker       *target;
     MprDispatcher   *dispatcher;
     Message         *msg;
@@ -24453,7 +24368,7 @@ static EjsObj *workerPostMessage(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
         Create the event with serialized data in the originating interpreter. It owns the data.
      */
     ejsFreeze(ejs, 1);
-    if ((data = (EjsObj*) ejsToJSON(ejs, argv[0], NULL)) == 0) {
+    if ((data = ejsToJSON(ejs, argv[0], NULL)) == 0) {
         ejsThrowArgError(ejs, "Can't serialize message data");
         return 0;
     }
@@ -24468,7 +24383,7 @@ static EjsObj *workerPostMessage(Ejs *ejs, EjsWorker *worker, int argc, EjsObj *
     msg->callbackSlot = ES_Worker_onmessage;
 
     dispatcher = target->ejs->dispatcher;
-    mprCreateEvent(dispatcher, "postMessage", 0, (MprEventProc) doMessage, msg, 0);
+    mprCreateEvent(dispatcher, "postMessage", 0, doMessage, msg, 0);
     return 0;
 }
 
@@ -24533,7 +24448,7 @@ static int workerMain(EjsWorker *insideWorker, MprEvent *event)
 
 
 /*
-    function terminate()
+    function terminate(): Void
  */
 static EjsObj *workerTerminate(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
 {    
@@ -24558,7 +24473,7 @@ static EjsObj *workerTerminate(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **a
 /*
     function waitForMessage(timeout: Number = -1): Boolean
  */
-static EjsObj *workerWaitForMessage(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
+static EjsBoolean *workerWaitForMessage(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
 {
     MprTime     mark;
     MprTime     remaining;
@@ -24579,9 +24494,9 @@ static EjsObj *workerWaitForMessage(Ejs *ejs, EjsWorker *worker, int argc, EjsOb
 
     if (worker->gotMessage) {
         worker->gotMessage = 0;
-        return (EjsObj*) S(true);
+        return S(true);
     } else {
-        return (EjsObj*) S(true);
+        return S(true);
     }
 }
 
@@ -24676,21 +24591,22 @@ void ejsConfigureWorkerType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ejsConfigureNativeType(ejs, N("ejs", "Worker"), sizeof(EjsWorker), manageWorker, EJS_POT_HELPERS);
+    type->mutableInstances = 1;
     ejsSetSpecialType(ejs, S_Worker, type);
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) workerConstructor);
-    ejsBindMethod(ejs, type, ES_Worker_exit, (EjsProc) workerExit);
-    ejsBindMethod(ejs, type, ES_Worker_join, (EjsProc) workerJoin);
-    ejsBindMethod(ejs, type, ES_Worker_lookup, (EjsProc) workerLookup);
+    ejsBindConstructor(ejs, type, workerConstructor);
+    ejsBindMethod(ejs, type, ES_Worker_exit, workerExit);
+    ejsBindMethod(ejs, type, ES_Worker_join, workerJoin);
+    ejsBindMethod(ejs, type, ES_Worker_lookup, workerLookup);
 
-    ejsBindMethod(ejs, prototype, ES_Worker_eval, (EjsProc) workerEval);
-    ejsBindMethod(ejs, prototype, ES_Worker_load, (EjsProc) workerLoad);
-    ejsBindMethod(ejs, prototype, ES_Worker_preload, (EjsProc) workerPreload);
-    ejsBindMethod(ejs, prototype, ES_Worker_preeval, (EjsProc) workerPreeval);
-    ejsBindMethod(ejs, prototype, ES_Worker_postMessage, (EjsProc) workerPostMessage);
-    ejsBindMethod(ejs, prototype, ES_Worker_terminate, (EjsProc) workerTerminate);
-    ejsBindMethod(ejs, prototype, ES_Worker_waitForMessage, (EjsProc) workerWaitForMessage);
+    ejsBindMethod(ejs, prototype, ES_Worker_eval, workerEval);
+    ejsBindMethod(ejs, prototype, ES_Worker_load, workerLoad);
+    ejsBindMethod(ejs, prototype, ES_Worker_preload, workerPreload);
+    ejsBindMethod(ejs, prototype, ES_Worker_preeval, workerPreeval);
+    ejsBindMethod(ejs, prototype, ES_Worker_postMessage, workerPostMessage);
+    ejsBindMethod(ejs, prototype, ES_Worker_terminate, workerTerminate);
+    ejsBindMethod(ejs, prototype, ES_Worker_waitForMessage, workerWaitForMessage);
 
     ejsSetSpecial(ejs, S_Event, ejsGetTypeByName(ejs, N("ejs", "Event")));
     ejsSetSpecial(ejs, S_ErrorEvent, ejsGetTypeByName(ejs, N("ejs", "ErrorEvent")));
@@ -24915,7 +24831,7 @@ static EjsObj *nextXmlKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
  */
 static EjsObj *getXmlIterator(Ejs *ejs, EjsObj *xml, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, xml, (EjsProc) nextXmlKey, 0, NULL);
+    return (EjsObj*) ejsCreateIterator(ejs, xml, nextXmlKey, 0, NULL);
 }
 
 
@@ -24953,7 +24869,7 @@ static EjsObj *nextXmlValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv)
  */
 static EjsObj *getXmlValues(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, ap, (EjsProc) nextXmlValue, 0, NULL);
+    return (EjsObj*) ejsCreateIterator(ejs, ap, nextXmlValue, 0, NULL);
 }
 
 
@@ -25837,21 +25753,22 @@ void ejsConfigureXMLType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ST(XML);
+    type->mutableInstances = 1;
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) xmlConstructor);
-    ejsBindMethod(ejs, prototype, ES_XML_length, (EjsProc) xmlLength);
-    ejsBindMethod(ejs, prototype, ES_XML_load, (EjsProc) loadXml);
-    ejsBindMethod(ejs, prototype, ES_XML_save, (EjsProc) saveXml);
-    ejsBindMethod(ejs, prototype, ES_XML_name, (EjsProc) getXmlNodeName);
+    ejsBindConstructor(ejs, type, xmlConstructor);
+    ejsBindMethod(ejs, prototype, ES_XML_length, xmlLength);
+    ejsBindMethod(ejs, prototype, ES_XML_load, loadXml);
+    ejsBindMethod(ejs, prototype, ES_XML_save, saveXml);
+    ejsBindMethod(ejs, prototype, ES_XML_name, getXmlNodeName);
 
     ejsBindMethod(ejs, prototype, ES_XML_parent, (EjsNativeFunction) xml_parent);
 
     /*
         Override these methods
      */
-    ejsBindMethod(ejs, prototype, ES_XML_toString, (EjsProc) xmlToString);
-    ejsBindMethod(ejs, prototype, ES_XML_toJSON, (EjsProc) xmlToJson);
+    ejsBindMethod(ejs, prototype, ES_XML_toString, xmlToString);
+    ejsBindMethod(ejs, prototype, ES_XML_toJSON, xmlToJson);
     ejsBindMethod(ejs, prototype, ES_XML_iterator_get, getXmlIterator);
     ejsBindMethod(ejs, prototype, ES_XML_iterator_getValues, getXmlValues);
 #if FUTURE
@@ -26144,7 +26061,7 @@ static EjsObj *nextXmlListKey(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **argv
  */
 static EjsObj *getXmlListIterator(Ejs *ejs, EjsObj *xml, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, xml, (EjsProc) nextXmlListKey, 0, NULL);
+    return (EjsObj*) ejsCreateIterator(ejs, xml, nextXmlListKey, 0, NULL);
 }
 
 
@@ -26182,7 +26099,7 @@ static EjsObj *nextXmlListValue(Ejs *ejs, EjsIterator *ip, int argc, EjsObj **ar
  */
 static EjsObj *getXmlListValues(Ejs *ejs, EjsObj *ap, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateIterator(ejs, ap, (EjsProc) nextXmlListValue, 0, NULL);
+    return (EjsObj*) ejsCreateIterator(ejs, ap, nextXmlListValue, 0, NULL);
 }
 
 
@@ -26726,18 +26643,19 @@ void ejsConfigureXMLListType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ST(XMLList);
+    type->mutableInstances = 1;
     prototype = type->prototype;
 
-    ejsBindConstructor(ejs, type, (EjsProc) xmlListConstructor);
-    ejsBindMethod(ejs, prototype, ES_XMLList_length, (EjsProc) xlLength);
-    ejsBindMethod(ejs, prototype, ES_XMLList_name, (EjsProc) getXmlListNodeName);
+    ejsBindConstructor(ejs, type, xmlListConstructor);
+    ejsBindMethod(ejs, prototype, ES_XMLList_length, xlLength);
+    ejsBindMethod(ejs, prototype, ES_XMLList_name, getXmlListNodeName);
     ejsBindMethod(ejs, prototype, ES_XMLList_parent, (EjsNativeFunction) xl_parent);
 #if FUTURE
     ejsBindMethod(ejs, prototype, "name", name, NULL);
     ejsBindMethod(ejs, prototype, "valueOf", valueOf, NULL);
 #endif
-    ejsBindMethod(ejs, prototype, ES_XMLList_toJSON, (EjsProc) xmlListToJson);
-    ejsBindMethod(ejs, prototype, ES_XMLList_toString, (EjsProc) xmlListToString);
+    ejsBindMethod(ejs, prototype, ES_XMLList_toJSON, xmlListToJson);
+    ejsBindMethod(ejs, prototype, ES_XMLList_toString, xmlListToString);
     ejsBindMethod(ejs, prototype, ES_XMLList_iterator_get, getXmlListIterator);
     ejsBindMethod(ejs, prototype, ES_XMLList_iterator_getValues, getXmlListValues);
 }
@@ -27923,6 +27841,8 @@ int ejsSetPropertyByName(Ejs *ejs, EjsAny *vp, EjsName qname, EjsAny *value)
         if (ejsSetPropertyName(ejs, vp, slotNum, qname) < 0) {
             return EJS_ERR;
         }
+        //  UNICODE
+        mprSetName(vp, qname.name->value);
         return slotNum;
     }
     return ejsSetProperty(ejs, vp, slotNum, value);
@@ -28050,7 +27970,7 @@ static void missingHelper(Ejs *ejs, EjsObj *obj, cchar *helper)
 }
 
 
-static EjsObj *castObj(Ejs *ejs, EjsObj *obj, EjsType *type)
+static EjsAny *castObj(Ejs *ejs, EjsObj *obj, EjsType *type)
 {
     EjsString       *str;
     EjsFunction     *fun;
@@ -28064,7 +27984,7 @@ static EjsObj *castObj(Ejs *ejs, EjsObj *obj, EjsType *type)
     }
     switch (type->sid) {
     case S_Boolean:
-        return (EjsObj*) ejsCreateBoolean(ejs, 1);
+        return ejsCreateBoolean(ejs, 1);
 
     case S_Number:
         str = ejsToString(ejs, obj);
@@ -28084,13 +28004,13 @@ static EjsObj *castObj(Ejs *ejs, EjsObj *obj, EjsType *type)
                 }
             }
         }
-        if (obj == (EjsObj*) ejs->global) {
-            return (EjsObj*) ejsCreateStringFromAsc(ejs, "[object global]");
+        if (obj == ejs->global) {
+            return ejsCreateStringFromAsc(ejs, "[object global]");
         } else {
             if (TYPE(obj)->helpers.cast && TYPE(obj)->helpers.cast != (EjsCastHelper) castObj) {
                 return (TYPE(obj)->helpers.cast)(ejs, obj, type);
             }
-            return (EjsObj*) ejsSprintf(ejs, "[object %@]", TYPE(obj)->qname.name);
+            return ejsSprintf(ejs, "[object %@]", TYPE(obj)->qname.name);
         }
 
     default:
@@ -28739,6 +28659,7 @@ static MPR_INLINE void getPropertyFromSlot(Ejs *ejs, EjsAny *thisObj, EjsAny *ob
             /* Function extraction. Bind the "thisObj" into a clone of the function */
             fun = ejsCloneFunction(ejs, fun, 0);
             fun->boundThis = thisObj;
+            mprAssert(fun->boundThis != ejs->global);
         }
     }
     pushOutside(ejs, value);
@@ -28764,10 +28685,12 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsAny *value, EjsAny *thisObj, Ejs
             }
             return;
         } else {
-            if (!fun->boundThis && thisObj) {
+            if (!fun->boundThis && thisObj && thisObj != ejs->global) {
                 /* Function extraction. Bind the "thisObj" into a clone of the function */
+                /* OPT - this is slow in the a case: a.b.fn */
                 fun = ejsCloneFunction(ejs, fun, 0);
                 fun->boundThis = thisObj;
+                mprAssert(fun->boundThis != ejs->global);
                 value = fun;
             }
         }
@@ -28807,7 +28730,11 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsAny *value, EjsAny *thisObj, Ejs
 #define GET_TYPE()      ((EjsType*) getGlobalArg(ejs, FRAME))
 #define GET_WORD()      ejsDecodeInt32(ejs, &(FRAME)->pc)
 #undef THIS
+#if UNUSED
+#define THIS            FRAME->thisObj
+#else
 #define THIS            FRAME->function.boundThis
+#endif
 #define FILL(mark)      while (mark < FRAME->pc) { *mark++ = EJS_OP_NOP; }
 
 #if DEBUG_IDE
@@ -29529,7 +29456,7 @@ static void *opcodeJump[] = {
         CASE (EJS_OP_GET_TYPE_SLOT):
             slotNum = GET_INT();
             thisObj = pop(ejs);
-            vp = getNthBase(ejs, (EjsObj*) thisObj, GET_INT());
+            vp = getNthBase(ejs, thisObj, GET_INT());
             GET_SLOT(thisObj, vp, slotNum);
             BREAK;
 
@@ -29562,6 +29489,7 @@ static void *opcodeJump[] = {
             if (unlikely(vp == 0)) {
                 ejsThrowReferenceError(ejs, "%@ is not defined", qname.name);
             } else {
+//  XXX
                 CHECK_VALUE(vp, NULL, lookup.obj, lookup.slotNum);
             }
             BREAK;
@@ -30038,13 +29966,13 @@ static void *opcodeJump[] = {
             if (vp == S(null) || vp == S(undefined)) {
                 //  MOB -- refactor
                 if (vp && (slotNum == ES_Object_iterator_get || slotNum == ES_Object_iterator_getValues)) {
-                    callProperty(ejs, (EjsObj*) TYPE(vp), slotNum, vp, argc, 1);
+                    callProperty(ejs, TYPE(vp), slotNum, vp, argc, 1);
                 } else {
                     ejsThrowReferenceError(ejs, "Object reference is null or undefined");
                 }
             } else {
                 //  MOB -- need a function to invoke 
-                callProperty(ejs, (EjsObj*) TYPE(vp)->prototype, slotNum, vp, argc, 1);
+                callProperty(ejs, TYPE(vp)->prototype, slotNum, vp, argc, 1);
             }
             BREAK;
 
@@ -30116,7 +30044,7 @@ static void *opcodeJump[] = {
                 throwNull(ejs);
             } else {
                 type = (EjsType*) getNthBase(ejs, vp, nthBase);
-                callProperty(ejs, (EjsObj*) type, slotNum, (EjsObj*) type, argc, 1);
+                callProperty(ejs, type, slotNum, type, argc, 1);
             }
             BREAK;
 
@@ -30138,7 +30066,7 @@ static void *opcodeJump[] = {
                 ejsThrowReferenceError(ejs, "Bad type reference");
                 BREAK;
             }
-            callProperty(ejs, (EjsObj*) type, slotNum, (EjsObj*) type, argc, 0);
+            callProperty(ejs, type, slotNum, type, argc, 0);
             BREAK;
 
         /*
@@ -30205,6 +30133,7 @@ static void *opcodeJump[] = {
                     Calculate the "this" to use for the function. If required function is a method in the current 
                     "this" object use the current thisObj. If the lookup.obj is a type, then use it. Otherwise global.
                  */
+                //  MOB
                 if ((vp = fun->boundThis) == 0) {
                     if (lookup.obj == THIS) {
                         vp = THIS;
@@ -30213,8 +30142,8 @@ static void *opcodeJump[] = {
                     } else if (ejsIsType(ejs, lookup.obj)) {
                         vp = lookup.obj;
                     } else {
-                        vp = ejs->global;
-                    }
+                        vp = /* lookup.obj */ ejs->global;
+                    } 
                 }
                 callProperty(ejs, lookup.obj, slotNum, vp, argc, 0);
             }
@@ -30240,7 +30169,7 @@ static void *opcodeJump[] = {
             mprAssert(type);
             if (type && type->constructor.block.pot.isFunction) {
                 mprAssert(type->prototype);
-                callFunction(ejs, (EjsFunction*) type, (EjsObj*) vp, argc, 0);
+                callFunction(ejs, (EjsFunction*) type, vp, argc, 0);
                 //  MOB -- must update pushed object
                 state->stack[0] = ejs->result;
             }
@@ -30347,9 +30276,9 @@ static void *opcodeJump[] = {
             } else {
                 type->constructor.block.scope = state->bp;
                 if (type && type->hasInitializer) {
-                    fun = ejsGetProperty(ejs, (EjsObj*) type, 0);
+                    fun = ejsGetProperty(ejs, type, 0);
                     MPR_VERIFY_MEM();
-                    callFunction(ejs, fun, (EjsObj*) type, 0, 0);
+                    callFunction(ejs, fun, type, 0, 0);
                     MPR_VERIFY_MEM();
                     if (type->implements && !ejs->exception) {
                         callInterfaceInitializers(ejs, type);
@@ -30376,13 +30305,17 @@ static void *opcodeJump[] = {
                 //  MOB -- fullScope is always true if DEFINE_FUNCTION is emitted
                 mprAssert(f1->fullScope);
                 if (f1->fullScope) {
+                    //  MOB - why exception for global
                     if (lookup.obj != ejs->global) {
                         f2 = ejsCloneFunction(ejs, f1, 0);
                     } else {
                         f2 = f1;
                     }
                     f2->block.scope = state->bp;
-                    f2->boundThis = FRAME->function.boundThis;
+                    if (FRAME->function.boundThis != ejs->global) {
+                        f2->boundThis = FRAME->function.boundThis;
+                    }
+                    mprAssert(f2->boundThis != ejs->global);
                     mprAssert(!ejsIsPrototype(ejs, lookup.obj));
                     ejsSetProperty(ejs, lookup.obj, lookup.slotNum, f2);
                 }
@@ -31002,9 +30935,10 @@ static void *opcodeJump[] = {
          */
         CASE (EJS_OP_LOGICAL_NOT):
             v1 = pop(ejs);
-            v1 = ejsCast(ejs, v1, Boolean);
-            result = ejsInvokeOperator(ejs, v1, opcode, 0);
-            push(result);
+            if ((v1 = ejsCast(ejs, v1, Boolean)) != 0) {
+                result = ejsInvokeOperator(ejs, v1, opcode, 0);
+                push(result);
+            }
             BREAK;
 
         /*
@@ -31028,7 +30962,7 @@ static void *opcodeJump[] = {
         CASE (EJS_OP_INC):
             v1 = pop(ejs);
             count = (schar) GET_BYTE();
-            result = evalBinaryExpr(ejs, v1, EJS_OP_ADD, (EjsObj*) ejsCreateNumber(ejs, count));
+            result = evalBinaryExpr(ejs, v1, EJS_OP_ADD, ejsCreateNumber(ejs, count));
             push(result);
             BREAK;
 
@@ -31273,7 +31207,7 @@ ejsFreeze(ejs, frozen);
                     n.space = S(empty);
                     slotNum = ejsLookupVar(ejs, v1, n, &lookup);
                     if (slotNum < 0 && ejsIsType(ejs, v1)) {
-                        slotNum = ejsLookupVar(ejs, (EjsObj*) ((EjsType*) v1)->prototype, n, &lookup);
+                        slotNum = ejsLookupVar(ejs, ((EjsType*) v1)->prototype, n, &lookup);
                     }
                 }
                 push(ejsCreateBoolean(ejs, slotNum >= 0));
@@ -31328,6 +31262,7 @@ static void storePropertyToSlot(Ejs *ejs, EjsObj *thisObj, EjsAny *obj, int slot
             fun = ejsGetProperty(ejs, obj, slotNum);
             mprAssert(fun);
             fun = fun->setter;
+            mprAssert(fun);
             callFunction(ejs, fun, thisObj, 1, 0);
             return;
         }
@@ -31354,7 +31289,7 @@ static void storePropertyToSlot(Ejs *ejs, EjsObj *thisObj, EjsAny *obj, int slot
         if (trait->attributes & EJS_TRAIT_READONLY) {
             EjsName  qname;
             vp = ejsGetProperty(ejs, obj, slotNum);
-            if (vp != S(null) && vp != S(undefined)) {
+            if (vp != value && vp != S(null) && vp != S(undefined)) {
                 qname = ejsGetPropertyName(ejs, obj, slotNum);
                 ejsThrowReferenceError(ejs, "Property \"%@\" is not writable", qname.name);
                 return;
@@ -31420,6 +31355,8 @@ static void storeProperty(Ejs *ejs, EjsObj *thisObj, EjsAny *vp, EjsName qname, 
     }
     if (slotNum < 0) {
         slotNum = ejsSetPropertyName(ejs, vp, slotNum, qname);
+        //  UNICODE
+        mprSetName(value, qname.name->value);
     }
     if (!ejs->exception) {
         storePropertyToSlot(ejs, thisObj, vp, slotNum, value);
@@ -31467,6 +31404,8 @@ static void storePropertyToScope(Ejs *ejs, EjsName qname, EjsObj *value)
     } else {
         thisObj = vp = fp->function.moduleInitializer ? ejs->global : (EjsObj*) fp;
         slotNum = ejsSetPropertyName(ejs, vp, slotNum, qname);
+        //  UNICODE
+        mprSetName(value, qname.name->value);
     }
     storePropertyToSlot(ejs, thisObj, vp, slotNum, value);
 }
@@ -31544,12 +31483,18 @@ EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, vo
 #endif
     ejsClearAttention(ejs);
     
+#if UNUSED
     if (thisObj == 0) {
         //  MOB - simplify
         if ((thisObj = fun->boundThis) == 0) {
             thisObj = ejs->state->fp->function.boundThis;
         }
     }    
+#else
+    if (thisObj == 0) {
+        thisObj = fun->boundThis ? fun->boundThis : ejs->global;
+    }
+#endif
     if (ejsIsNativeFunction(ejs, fun)) {
         if (fun->body.proc == 0) {
             ejsThrowArgError(ejs, "Native function is not defined");
@@ -32369,11 +32314,18 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
             return;
         }
     }
+//  XXX
+#if UNUSED || 1
     if (thisObj == 0) {
         if ((thisObj = fun->boundThis) == 0) {
             thisObj = state->fp->function.boundThis;
         } 
     } 
+#else
+    if (thisObj == 0) {
+        thisObj = fun->boundThis ? fun->boundThis : ejs->global;
+    }
+#endif
     if (fun->boundArgs) {
         mprAssert(ejsIs(ejs, fun->boundArgs, Array));
         count = fun->boundArgs->length;
@@ -32421,6 +32373,7 @@ state->frozen = fstate;
         state->stack -= (argc + stackAdjust);
 
     } else {
+        mprAssert(thisObj);
         if ((fp = ejsCreateFrame(ejs, fun, thisObj, argc, argv)) == 0) {
             return;
         }
@@ -32816,7 +32769,7 @@ static int  loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType);
 static int  loadScriptModule(Ejs *ejs, cchar *filename, int minVersion, int maxVersion, int flags);
 static char *makeModuleName(cchar *name);
 static void popScope(EjsModule *mp, int keepScope);
-static void pushScope(EjsModule *mp, EjsBlock *block, EjsObj *obj);
+static void pushScope(EjsModule *mp, EjsAny *block, EjsAny *obj);
 static char *search(Ejs *ejs, cchar *filename, int minVersion, int maxVersion);
 static int  trimModule(Ejs *ejs, char *name);
 static void setDoc(Ejs *ejs, EjsModule *mp, cchar *tag, void *vp, int slotNum);
@@ -33121,7 +33074,11 @@ static EjsModule *loadModuleSection(Ejs *ejs, MprFile *file, EjsModuleHdr *hdr, 
         return 0;
     }
     mp->current = mprCreateList(-1, 0);
-    pushScope(mp, (EjsBlock*) ejs->global, ejs->global);
+#if UNUSED
+    pushScope(mp, ejs->global, ejs->global);
+#else
+    pushScope(mp, 0, ejs->global);
+#endif
     mp->checksum = checksum;
     *created = 1;
 
@@ -33230,14 +33187,14 @@ static int loadBlockSection(Ejs *ejs, EjsModule *mp)
             return MPR_ERR_CANT_CREATE;
         }
     }
-    slotNum = ejsDefineProperty(ejs, current, slotNum, qname, ST(Block), 0, (EjsObj*) bp);
+    slotNum = ejsDefineProperty(ejs, current, slotNum, qname, ST(Block), 0, bp);
     if (slotNum < 0) {
         return MPR_ERR_CANT_WRITE;
     }
     if (ejs->loaderCallback) {
         (ejs->loaderCallback)(ejs, EJS_SECT_BLOCK, mp, current, slotNum, qname.name, numSlot, bp);
     }
-    pushScope(mp, bp, (EjsObj*) bp);
+    pushScope(mp, bp, bp);
     return 0;
 }
 
@@ -33355,7 +33312,7 @@ static int loadClassSection(Ejs *ejs, EjsModule *mp)
         }
     }
     setDoc(ejs, mp, "class", ejs->global, slotNum);
-    pushScope(mp, (EjsBlock*) type, (EjsObj*) type);
+    pushScope(mp, type, type);
 
     if (ejs->loaderCallback) {
         (ejs->loaderCallback)(ejs, EJS_SECT_CLASS, mp, slotNum, qname, type, attributes);
@@ -33381,6 +33338,12 @@ static int loadEndClassSection(Ejs *ejs, EjsModule *mp)
         ejsDefineTypeNamespaces(ejs, type);
     }
     popScope(mp, 0);
+    if (type->dynamicInstances) {
+        type->mutableInstances = 1;
+    }
+#if UNUSED && KEEP
+    mprLog(0, "Type %N is %s and has %s instances", type->qname, (type->mutable) ? "mutable" : "immutable", type->mutableInstances ? "mutable" : "immutable");
+#endif
     return 0;
 }
 
@@ -33498,7 +33461,7 @@ static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
             mp->initializer = fun;
             slotNum = -1;
         } else {
-            slotNum = ejsDefineProperty(ejs, block, slotNum, qname, ST(Function), attributes, (EjsObj*) fun);
+            slotNum = ejsDefineProperty(ejs, block, slotNum, qname, ST(Function), attributes, fun);
             if (slotNum < 0) {
                 return MPR_ERR_MEMORY;
             }
@@ -33518,7 +33481,7 @@ static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
     }
 
     mp->currentMethod = fun;
-    pushScope(mp, ejsIsType(ejs, fun) ? NULL : (EjsBlock*) fun, (EjsObj*) fun->activation);
+    pushScope(mp, ejsIsType(ejs, fun) ? NULL : fun, fun->activation);
     if (ejs->loaderCallback) {
         (ejs->loaderCallback)(ejs, EJS_SECT_FUNCTION, mp, block, slotNum, qname, fun, attributes);
     }
@@ -33608,7 +33571,7 @@ static int loadExceptionSection(Ejs *ejs, EjsModule *mp)
 
 static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
 {
-    EjsType         *type;
+    EjsType         *type, *ctype;
     EjsTypeFixup    *fixup;
     EjsName         qname, propTypeName;
     EjsObj          *current, *value;
@@ -33647,7 +33610,15 @@ static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
         }
     }
     if (ejsIsType(ejs, current)) {
-        if (!(attributes & EJS_PROP_STATIC) && current != ejs->global && ((EjsType*) current)->prototype){
+        ctype = (EjsType*) current;
+        if (!(attributes & EJS_TRAIT_READONLY)) {
+            if (attributes & EJS_PROP_STATIC) {
+                ctype->mutable = 1;
+            } else {
+                ctype->mutableInstances = 1;
+            }
+        }
+        if (!(attributes & EJS_PROP_STATIC) && current != ejs->global && ctype->prototype) {
             current = (EjsObj*) ((EjsType*) current)->prototype;
         }
     }
@@ -34402,11 +34373,11 @@ static EjsObj *getCurrentBlock(EjsModule *mp)
 }
 
 
-static void pushScope(EjsModule *mp, EjsBlock *block, EjsObj *obj)
+static void pushScope(EjsModule *mp, EjsAny *block, EjsAny *obj)
 {
-    mprAssert(block != mp->scope);
     if (block) {
-        block->scope = mp->scope;
+        mprAssert(block != mp->scope);
+        ((EjsBlock*) block)->scope = mp->scope;
         mp->scope = block;
         mprAssert(mp->scope != mp->scope->scope);
     }
@@ -35381,7 +35352,6 @@ double ejsSwapDouble(Ejs *ejs, double a)
  */
 /************************************************************************/
 
-
 /**
     ejsScope.c - Lookup variables in the scope chain.
   
@@ -35392,6 +35362,9 @@ double ejsSwapDouble(Ejs *ejs, double a)
 
 
 
+
+static int lookupVarInBlock(Ejs *ejs, EjsBlock *bp, EjsName name, EjsLookup *lookup);
+
 /*
     Look for a variable by name in the scope chain and return the location in "lookup" and a positive slot number if found. 
     If the name.space is non-empty, then only the given namespace will be used. Otherwise the set of open namespaces will 
@@ -35399,8 +35372,34 @@ double ejsSwapDouble(Ejs *ejs, double a)
  */
 int ejsLookupScope(Ejs *ejs, EjsName name, EjsLookup *lookup)
 {
-    EjsFrame        *frame;
     EjsBlock        *bp;
+    int             slotNum;
+
+    mprAssert(ejs);
+    mprAssert(name.name);
+    mprAssert(name.space);
+    mprAssert(lookup);
+
+    memset(lookup, 0, sizeof(*lookup));
+
+    //  OPT -- remove nthBlock. Not needed if not binding
+    for (lookup->nthBlock = 0, bp = ejs->state->bp; bp; bp = bp->scope, lookup->nthBlock++) {
+        if ((slotNum = lookupVarInBlock(ejs, bp, name, lookup)) >= 0) {
+            return slotNum;
+        }
+    }
+    return lookupVarInBlock(ejs, ejs->global, name, lookup);
+}
+
+
+/*
+    Look for a variable by name in the scope chain and return the location in "lookup" and a positive slot number if found. 
+    If the name.space is non-empty, then only the given namespace will be used. Otherwise the set of open namespaces will 
+    be used. The lookup structure will contain details about the location of the variable.
+ */
+static int lookupVarInBlock(Ejs *ejs, EjsBlock *bp, EjsName name, EjsLookup *lookup)
+{
+    EjsFrame        *frame;
     EjsState        *state;
     EjsType         *type;
     EjsObj          *thisObj;
@@ -35414,62 +35413,72 @@ int ejsLookupScope(Ejs *ejs, EjsName name, EjsLookup *lookup)
 
     state = ejs->state;
     slotNum = -1;
-    
-    memset(lookup, 0, sizeof(*lookup));
     thisObj = state->fp->function.boundThis;
 
-    //  OPT -- remove nthBlock. Not needed if not binding
-    for (lookup->nthBlock = 0, bp = state->bp; bp; bp = bp->scope, lookup->nthBlock++) {
-        /* Seach simple object */
-        lookup->originalObj = bp;
-        if ((slotNum = ejsLookupVarWithNamespaces(ejs, bp, name, lookup)) >= 0) {
-            return slotNum;
-        }
-        if (ejsIsFrame(ejs, bp)) {
-            frame = (EjsFrame*) bp;
-            if (thisObj && frame->function.boundThis == thisObj && 
-                    thisObj != ejs->global && !frame->function.staticMethod && 
-                    !frame->function.isInitializer) {
-                lookup->originalObj = thisObj;
-                /* Instance method only */
-                if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) thisObj, name, lookup)) >= 0) {
+    /* Search simple block */
+    lookup->originalObj = bp;
+    if ((slotNum = ejsLookupVarWithNamespaces(ejs, bp, name, lookup)) >= 0) {
+        return slotNum;
+    }
+    /* Optimized lookup for frames and types. Simple blocks don't need prototype lookup - so examine the type of block */
+    if (ejsIsFrame(ejs, bp)) {
+        frame = (EjsFrame*) bp;
+        if (thisObj && frame->function.boundThis == thisObj && 
+                thisObj != ejs->global && !frame->function.staticMethod && 
+                !frame->function.isInitializer) {
+            lookup->originalObj = thisObj;
+            /* Instance method only */
+            if ((slotNum = ejsLookupVarWithNamespaces(ejs, thisObj, name, lookup)) >= 0) {
+                return slotNum;
+            }
+            /* Search prototype chain */
+            for (nthBase = 1, type = TYPE(thisObj); type; type = type->baseType, nthBase++) {
+                if ((prototype = type->prototype) == 0 || prototype->shortScope) {
+                    break;
+                }
+                if ((slotNum = ejsLookupVarWithNamespaces(ejs, prototype, name, lookup)) >= 0) {
+                    lookup->nthBase = nthBase;
+                    lookup->type = type;
                     return slotNum;
                 }
-                /* Search prototype chain */
-                for (nthBase = 1, type = TYPE(thisObj); type; type = type->baseType, nthBase++) {
-                    if ((prototype = type->prototype) == 0 || prototype->shortScope) {
+            }
+            if (frame->function.isConstructor) {
+                for (nthBase = 1, type = (EjsType*) TYPE(thisObj); type; type = type->baseType, nthBase++) {
+                    if (type->constructor.block.pot.shortScope) {
                         break;
                     }
-                    if ((slotNum = ejsLookupVarWithNamespaces(ejs, prototype, name, lookup)) >= 0) {
+                    if ((slotNum = ejsLookupVarWithNamespaces(ejs, type, name, lookup)) >= 0) {
                         lookup->nthBase = nthBase;
-                        lookup->type = type;
                         return slotNum;
                     }
                 }
-                if (frame->function.isConstructor) {
-                    for (nthBase = 1, type = (EjsType*) TYPE(thisObj); type; type = type->baseType, nthBase++) {
-                        if (type->constructor.block.pot.shortScope) {
-                            break;
-                        }
-                        if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) type, name, lookup)) >= 0) {
-                            lookup->nthBase = nthBase;
-                            return slotNum;
-                        }
-                    }
-                }
-                thisObj = 0;
             }
-        } else if (ejsIsType(ejs, bp)) {
-            //  OPT -- remove nthBase. Not needed if not binding.
-            /* Search base class chain */
-            for (nthBase = 1, type = (EjsType*) bp; type; type = type->baseType, nthBase++) {
-                if (type->constructor.block.pot.shortScope) {
-                    break;
-                }
-                if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) type, name, lookup)) >= 0) {
-                    lookup->nthBase = nthBase;
-                    return slotNum;
-                }
+            thisObj = 0;
+        }
+    } else if (ejsIsType(ejs, bp)) {
+#if UNUSED
+        //  TODO should this be searching the prototype chain here?
+        /* Lookup prototype chain */
+        //  OPT -- remove nthBase. Not needed if not binding.
+        for (nthBase = 1, type = (EjsType*) bp; type; type = type->baseType, nthBase++) {
+            if ((prototype = type->prototype) == 0 || prototype->shortScope) {
+                break;
+            }
+            if ((slotNum = ejsLookupVarWithNamespaces(ejs, prototype, name, lookup)) >= 0) {
+                lookup->nthBase = nthBase;
+                return slotNum;
+            }
+        }
+#endif
+        /* Search base class chain */
+        //  OPT -- remove nthBase. Not needed if not binding.
+        for (nthBase = 1, type = (EjsType*) bp; type; type = type->baseType, nthBase++) {
+            if (type->constructor.block.pot.shortScope) {
+                break;
+            }
+            if ((slotNum = ejsLookupVarWithNamespaces(ejs, type, name, lookup)) >= 0) {
+                lookup->nthBase = nthBase;
+                return slotNum;
             }
         }
     }
@@ -35492,7 +35501,7 @@ int ejsLookupVar(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup)
     memset(lookup, 0, sizeof(*lookup));
 
     /* Lookup simple object */
-    if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) obj, name, lookup)) >= 0) {
+    if ((slotNum = ejsLookupVarWithNamespaces(ejs, obj, name, lookup)) >= 0) {
         return slotNum;
     }
     /* Lookup prototype chain */
@@ -35500,7 +35509,7 @@ int ejsLookupVar(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup)
         if ((prototype = type->prototype) == 0 || prototype->shortScope) {
             break;
         }
-        if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) prototype, name, lookup)) >= 0) {
+        if ((slotNum = ejsLookupVarWithNamespaces(ejs, prototype, name, lookup)) >= 0) {
             lookup->nthBase = nthBase;
             return slotNum;
         }
@@ -35511,7 +35520,7 @@ int ejsLookupVar(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup)
         if (type->constructor.block.pot.shortScope) {
             continue;
         }
-        if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) type, name, lookup)) >= 0) {
+        if ((slotNum = ejsLookupVarWithNamespaces(ejs, type, name, lookup)) >= 0) {
             lookup->nthBase = nthBase;
             return slotNum;
         }
@@ -35564,6 +35573,7 @@ int ejsLookupVarWithNamespaces(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *l
                     /* Unique name match. Name matches, but namespace does not */
                     slotNum = -1;
                 } else if (target.space && target.space->value[0]) {
+                    /* OPT - Look at global spaces first */
                     for (next = -1; (nsp = mprGetPrevItem(globalSpaces, &next)) != 0; ) {
                         if (nsp->value == target.space) {
                             goto done;
@@ -35571,7 +35581,7 @@ int ejsLookupVarWithNamespaces(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *l
                     }
                     //  OPT -- need a fast way to know if the space is a standard reserved namespace or not */
                     /* Verify namespace is open */
-                    for (b = ejs->state->bp; b->scope; b = b->scope) {
+                    for (b = ejs->state->bp; b; b = b->scope) {
                         //  OPT. Doing some namespaces multiple times. Fix in compiler.
                         for (next = -1; (nsp = mprGetPrevItem(&b->namespaces, &next)) != 0; ) {
                             if (nsp->value == target.space) {
@@ -35592,6 +35602,13 @@ int ejsLookupVarWithNamespaces(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *l
                         // mprLog(5, "WARNING: Object has multiple properties of the same name \"%@\"", name.name); 
                         goto done;
                     }
+                }
+            }
+            for (next = -1; (nsp = mprGetPrevItem(globalSpaces, &next)) != 0; ) {
+                qname.space = nsp->value;
+                if ((slotNum = ejsLookupProperty(ejs, obj, qname)) >= 0) {
+                    // mprLog(5, "WARNING: Object has multiple properties of the same name \"%@\"", name.name); 
+                    goto done;
                 }
             }
         }
@@ -35744,8 +35761,10 @@ void ejsShowCurrentScope(Ejs *ejs)
 
 
 static int allocNotifier(int flags, ssize size);
+static int cloneVM(Ejs *ejs, Ejs *master);
 static int  configureEjs(Ejs *ejs);
 static int  defineTypes(Ejs *ejs);
+static void initSearchPath(Ejs *ejs, cchar *search);
 static void manageEjs(Ejs *ejs, int flags);
 static void manageEjsService(EjsService *service, int flags);
 static void markValues(Ejs *ejs);
@@ -35770,6 +35789,7 @@ static EjsService *createService()
     sp->nativeModules = mprCreateHash(-1, MPR_HASH_STATIC_KEYS);
     sp->mutex = mprCreateLock();
     sp->vmlist = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
+    sp->vmpool = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     sp->intern = ejsCreateIntern(sp);
     ejsInitCompiler(sp);
     return sp;
@@ -35782,6 +35802,7 @@ static void manageEjsService(EjsService *sp, int flags)
         mprMark(sp->http);
         mprMark(sp->mutex);
         mprMark(sp->vmlist);
+        mprMark(sp->vmpool);
         mprMark(sp->nativeModules);
         mprMark(sp->intern);
         mprMark(sp->foundation);
@@ -35792,11 +35813,16 @@ static void manageEjsService(EjsService *sp, int flags)
     }
 }
 
+#if FUTURE
+//  MOB - add flag to suppress loading ejs.mod
+Ejs *ejsCreateVM(cchar *search, int argc, cchar **argv, int flags)
+Ejs *ejsCloneVM(Ejs *ejs)
+void ejsSetDispatcher(Ejs *ejs, MprDispatcher *dispatcher);
+int ejsLoadModules(Ejs *ejs, MprList *require);
+#endif
 
-/*  
-    Create a new interpreter
- */
-Ejs *ejsCreate(MprDispatcher *dispatcher, cchar *searchPath, MprList *require, int argc, cchar **argv, int flags)
+//  MOB - refactor args
+Ejs *ejsCreateVM(Ejs *master, MprDispatcher *dispatcher, cchar *search, MprList *require, int argc, cchar **argv, int flags)
 {
     EjsService  *sp;
     Ejs         *ejs;
@@ -35809,10 +35835,10 @@ Ejs *ejsCreate(MprDispatcher *dispatcher, cchar *searchPath, MprList *require, i
 
     if ((sp = MPR->ejsService) == 0) {
         sp = createService();
-        sp->master = ejs;
     }
     ejs->service = sp;
     mprAddItem(sp->vmlist, ejs);
+    ejs->master = master;
 
     if ((ejs->state = mprAllocZeroed(sizeof(EjsState))) == 0) {
         return 0;
@@ -35839,41 +35865,45 @@ Ejs *ejsCreate(MprDispatcher *dispatcher, cchar *searchPath, MprList *require, i
         ejs->dispatcher = dispatcher;
     }
     unlock(sp);
-        
-    if ((ejs->bootSearch = searchPath) == 0) {
-        ejs->bootSearch = getenv("EJSPATH");
-    }
+
     if (ejsInitStack(ejs) < 0) {
-        ejsDestroy(ejs);
+        ejsDestroyVM(ejs);
         mprRemoveRoot(ejs);
         return 0;
     }
     ejs->state->frozen = 1;
-    if (defineTypes(ejs) < 0 || loadStandardModules(ejs, require) < 0) {
-        if (ejs->exception) {
-            ejsReportError(ejs, "Can't initialize interpreter");
-        }
-        ejsDestroy(ejs);
-        mprRemoveRoot(ejs);
+
+    if (master && cloneVM(ejs, master) < 0) {
         return 0;
+    } else {
+        if (defineTypes(ejs) < 0 || loadStandardModules(ejs, require) < 0) {
+            if (ejs->exception) {
+                ejsReportError(ejs, "Can't initialize interpreter");
+            }
+            ejsDestroyVM(ejs);
+            mprRemoveRoot(ejs);
+            return 0;
+        }
+        ejsFreezeGlobal(ejs);
     }
-    ejsFreezeGlobal(ejs);
     if (mprHasMemError(ejs)) {
         mprError("Memory allocation error during initialization");
-        ejsDestroy(ejs);
+        ejsDestroyVM(ejs);
         mprRemoveRoot(ejs);
         return 0;
     }
+    initSearchPath(ejs, search);
     mprRemoveRoot(ejs);
     ejs->state->frozen = 0;
 #if DEBUG_IDE
     mprLog(5, "CREATE %s, length %d", ejs->name, sp->vmlist->length);
 #endif
+    mprAssert(!ejs->exception);
     return ejs;
 }
 
 
-void ejsDestroy(Ejs *ejs)
+void ejsDestroyVM(Ejs *ejs)
 {
     EjsService  *sp;
     EjsState    *state;
@@ -35915,7 +35945,6 @@ static void manageEjs(Ejs *ejs, int flags)
 #endif
         mprMark(ejs->global);
         mprMark(ejs->name);
-        mprMark(ejs->applications);
         mprMark(ejs->doc);
         mprMark(ejs->errorMsg);
         mprMark(ejs->exception);
@@ -35952,7 +35981,7 @@ static void manageEjs(Ejs *ejs, int flags)
         markValues(ejs);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        ejsDestroy(ejs);
+        ejsDestroyVM(ejs);
     }
 }
 
@@ -35989,19 +36018,42 @@ void ejsCloneBlockHelpers(Ejs *ejs, EjsType *type)
 
 static void cloneTypes(Ejs *ejs)
 {
-    Ejs         *master;
-
-    if ((master = ejs->service->master) != 0 && master != ejs) {
+    Ejs     *master;
+    
+    master = (ejs->master) ? ejs->master : mprGetFirstItem(ejs->service->vmlist);
+    if (master) {
         ejs->values[S_Iterator] = master->values[S_Iterator];
         ejs->values[S_StopIteration] = master->values[S_StopIteration];
-#if UNUSED
-        ejs->values[S_String] = master->values[S_String];
-        ejs->values[S_Type] = master->values[S_Type];
-        ejs->values[S_Object] = master->values[S_Object];
-#endif
     }
 }
 
+
+static int cloneVM(Ejs *ejs, Ejs *master)
+{
+    EjsAny      *vp;
+    int         i;
+
+    for (i = 0; i < EJS_MAX_SPECIAL; i++) {
+        vp = master->values[i];
+        if (vp == 0) {
+            continue;
+        }
+        mprAssert(!((ejsIsType(ejs, vp) && ((EjsType*) vp)->mutable) || 
+                (!ejsIsType(ejs, vp) && TYPE(vp)->mutableInstances)));
+        ejs->values[i] = master->values[i];
+    }
+    ejs->global = master->global;
+    ejs->global = ejsClone(ejs, master->global, 1);
+    ejs->potHelpers = master->potHelpers;
+    ejs->objHelpers = master->objHelpers;
+    ejs->modules = mprCloneList(master->modules);
+    ejs->sqlite = master->sqlite;
+    ejs->http = master->http;
+    ejs->loc = master->loc;
+    ejsSetPropertyByName(ejs, ejs->global, N("ejs", "global"), ejs->global);
+    ejs->initialized = 1;
+    return 0;
+}
 
 /*  
     Create the core language types. These are native types and are created prior to loading ejs.mod.
@@ -36032,6 +36084,7 @@ static int defineTypes(Ejs *ejs)
     ejsCreateIteratorType(ejs);
     ejsCreateVoidType(ejs);
     ejsCreateNumberType(ejs);
+    ejsCreatePathType(ejs);
     ejsCreateRegExpType(ejs);
     ejsCreateXMLType(ejs);
     ejsCreateXMLListType(ejs);
@@ -36101,8 +36154,6 @@ static int configureEjs(Ejs *ejs)
     ejsConfigureXMLListType(ejs);
 
     ejsDefineConfigProperties(ejs);
-
-    ejsInitSearchPath(ejs);
     ejs->initialized = 1;
     return 0;
 }
@@ -36131,8 +36182,11 @@ static int loadStandardModules(Ejs *ejs, MprList *require)
 }
 
 
-void ejsInitSearchPath(Ejs *ejs)
+static void initSearchPath(Ejs *ejs, cchar *search)
 {
+    if ((ejs->bootSearch = search) == 0) {
+        ejs->bootSearch = getenv("EJSPATH");
+    }
     if (ejs->bootSearch) {
         ejs->search = ejsCreateSearchPath(ejs, ejs->bootSearch);
     } else {
@@ -36216,7 +36270,7 @@ int ejsEvalModule(cchar *path)
     if ((mpr = mprCreate(0, NULL, 0)) != 0) {
         status = MPR_ERR_MEMORY;
 
-    } else if ((ejs = ejsCreate(NULL, NULL, NULL, 0, NULL, 0)) == 0) {
+    } else if ((ejs = ejsCreateVM(0, 0, 0, 0, 0, 0, 0)) == 0) {
         status = MPR_ERR_MEMORY;
 
     } else if (ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, path), -1, -1, 0) < 0) {
@@ -36321,16 +36375,17 @@ static int runSpecificMethod(Ejs *ejs, cchar *className, cchar *methodName)
     for (i = 0; i < ejs->argc; i++) {
         ejsSetProperty(ejs, args, i, ejsCreateStringFromAsc(ejs, ejs->argv[i]));
     }
-    if (ejsRunFunction(ejs, fun, 0, 1, &args) == 0) {
+    if (ejsRunFunction(ejs, fun, NULL, 1, &args) == 0) {
         return EJS_ERR;
     }
     return 0;
 }
 
 
-int ejsAddObserver(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener)
+int ejsAddObserver(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsFunction *observer)
 {
-    EjsObj      *emitter, *argv[2];
+    EjsAny      *argv[2];
+    EjsObj      *emitter;
     EjsArray    *list;
     int         i;
 
@@ -36339,7 +36394,7 @@ int ejsAddObserver(Ejs *ejs, EjsObj **emitterPtr, EjsObj *name, EjsObj *listener
     }
     emitter = *emitterPtr;
 
-    argv[1] = listener;
+    argv[1] = observer;
     if (ejsIs(ejs, name, Array)) {
         list = (EjsArray*) name;
         for (i = 0; i < list->length; i++) {
@@ -36368,14 +36423,14 @@ int ejsHasObservers(Ejs *ejs, EjsObj *emitter)
 #endif
 
 
-int ejsRemoveObserver(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsObj *listener)
+int ejsRemoveObserver(Ejs *ejs, EjsObj *emitter, EjsObj *name, EjsFunction *observer)
 {
-    EjsObj      *argv[2];
+    EjsAny      *argv[2];
     EjsArray    *list;
     int         i;
 
     if (emitter) {
-        argv[1] = listener;
+        argv[1] = observer;
         if (ejsIs(ejs, name, Array)) {
             list = (EjsArray*) name;
             for (i = 0; i < list->length; i++) {
@@ -37168,9 +37223,9 @@ static int configureSqliteTypes(Ejs *ejs)
     
     type = (EjsType*) ejsConfigureNativeType(ejs, N("ejs.db", "Sqlite"), sizeof(EjsSqlite), manageSqlite, EJS_POT_HELPERS);
     prototype = type->prototype;
-    ejsBindConstructor(ejs, type, (EjsProc) sqliteConstructor);
-    ejsBindMethod(ejs, prototype, ES_ejs_db_Sqlite_close, (EjsProc) sqliteClose);
-    ejsBindMethod(ejs, prototype, ES_ejs_db_Sqlite_sql, (EjsProc) sqliteSql);
+    ejsBindConstructor(ejs, type, sqliteConstructor);
+    ejsBindMethod(ejs, prototype, ES_ejs_db_Sqlite_close, sqliteClose);
+    ejsBindMethod(ejs, prototype, ES_ejs_db_Sqlite_sql, sqliteSql);
 
     if (!initialized) {
         initialized++;
@@ -37411,23 +37466,23 @@ void ejsConfigureFilterType(Ejs *ejs)
     createEjsHttpFilter(ejs);
 
     prototype = type->prototype;
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_write, (EjsProc) filter_write);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_write, filter_write);
 /*
-    ejsBindAccess(ejs, prototype, ES_ejs_web_Filter_async, (EjsProc) filter_async, (EjsProc) filter_set_async);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_close, (EjsProc) filter_close);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_destroySession, (EjsProc) filter_destroySession);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_dontFinalize, (EjsProc) filter_dontFinalize);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_finalize, (EjsProc) filter_finalize);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_flush, (EjsProc) filter_flush);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_header, (EjsProc) filter_header);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_limits, (EjsProc) filter_limits);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_off, (EjsProc) filter_off);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_read, (EjsProc) filter_read);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_sendFile, (EjsProc) filter_sendFile);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_setLimits, (EjsProc) filter_setLimits);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_setHeader, (EjsProc) filter_setHeader);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_trace, (EjsProc) filter_trace);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_write, (EjsProc) filter_write);
+    ejsBindAccess(ejs, prototype, ES_ejs_web_Filter_async, filter_async, filter_set_async);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_close, filter_close);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_destroySession, filter_destroySession);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_dontFinalize, filter_dontFinalize);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_finalize, filter_finalize);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_flush, filter_flush);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_header, filter_header);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_limits, filter_limits);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_off, filter_off);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_read, filter_read);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_sendFile, filter_sendFile);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_setLimits, filter_setLimits);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_setHeader, filter_setHeader);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_trace, filter_trace);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Filter_write, filter_write);
 */
 }
 
@@ -37498,10 +37553,10 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags);
 /*  
     function get address(): String
  */
-static EjsObj *hs_address(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+static EjsString *hs_address(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     if (sp->ip) {
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, sp->ip);
+        return ejsCreateStringFromAsc(ejs, sp->ip);
     } 
     return S(null);
 }
@@ -37510,7 +37565,7 @@ static EjsObj *hs_address(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 /*  
     function accept(): Request
  */
-static EjsObj *hs_accept(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+static EjsRequest *hs_accept(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     HttpConn    *conn;
     MprEvent    event;
@@ -37522,7 +37577,7 @@ static EjsObj *hs_accept(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         mprError("Can't accept connection");
         return 0;
     }
-    return (EjsObj*) createRequest(sp, conn);
+    return createRequest(sp, conn);
 }
 
 
@@ -37557,7 +37612,10 @@ static EjsObj *hs_close(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         ejsSendEvent(ejs, sp->emitter, "close", NULL, sp);
         httpDestroyServer(sp->server);
         sp->server = 0;
+#if UNUSED
+        //  MOB -- where else should the root be removed
         mprRemoveRoot(sp);
+#endif
     }
     return 0;
 }
@@ -37577,17 +37635,6 @@ static EjsObj *hs_limits(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         ejsGetHttpLimits(ejs, sp->limits, limits, 1);
     }
     return sp->limits;
-}
-
-
-/*  
-    function on(name: [String|Array], observer: Function): Void
- */
-static EjsObj *hs_on(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
-{
-    //  TODO -- should fire if currently readable / writable (also socket etc)
-    ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
-    return 0;
 }
 
 
@@ -37642,9 +37689,12 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         sp->server = 0;
     }
     if (ejsIs(ejs, endpoint, Null)) {
-        mprAddRoot(sp);
         if (ejs->loc) {
             ejs->loc->context = sp;
+#if UNUSED
+//  MOB - may not bee needed as ejs->loc is being marked
+            mprAddRoot(sp);
+#endif
         } else {
             ejsThrowStateError(ejs, "Can't find web server context for Ejscript. Check EjsStartup directive");
             return 0;
@@ -37652,7 +37702,10 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         return S(null);
     }
     if (ejs->loc) {
+#if UNUSED
+//  MOB - may not bee needed as ejs->loc is being marked
         mprAddRoot(sp);
+#endif
         /* Being called hosted - ignore endpoint value */
         ejs->loc->context = sp;
         return S(null);
@@ -37691,18 +37744,20 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     /*
         This is only required for when http is using non-ejs handlers and/or filters
      */
-    root = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_documentRoot);
+    root = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_documentRoot);
     if (ejsIs(ejs, root, Path)) {
         httpSetHostDocumentRoot(host, root->value);
     }
-    root = ejsGetProperty(ejs, (EjsObj*) sp, ES_ejs_web_HttpServer_serverRoot);
+    root = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_serverRoot);
     if (ejsIs(ejs, root, Path)) {
         httpSetHostServerRoot(host, root->value);
     }
-
     if (httpStartServer(server) < 0) {
         ejsThrowIOError(ejs, "Can't listen on %s", address->value);
         httpDestroyServer(sp->server);
+#if UNUSED
+        mprRemoveRoot(sp);
+#endif
         sp->server = 0;
         return 0;
     }
@@ -37713,10 +37768,10 @@ static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 /*  
     function get name(): String
  */
-static EjsObj *hs_name(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+static EjsString *hs_name(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     if (sp->name) {
-        return (EjsObj*) ejsCreateStringFromAsc(ejs, sp->name);
+        return ejsCreateStringFromAsc(ejs, sp->name);
     }
     return S(null);
 }
@@ -37738,24 +37793,33 @@ static EjsObj *hs_set_name(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 }
 
 
-#if ES_ejs_web_HttpServer_off
 /*  
     function off(name: [String|Array], observer: Function): Void
  */
-static EjsObj *hs_off(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+static EjsObj *hs_off(Ejs *ejs, EjsHttpServer *sp, int argc, EjsAny **argv)
 {
     ejsRemoveObserver(ejs, sp->emitter, argv[0], argv[1]);
     return 0;
 }
-#endif
+
+
+/*  
+    function on(name: [String|Array], observer: Function): Void
+ */
+static EjsObj *hs_on(Ejs *ejs, EjsHttpServer *sp, int argc, EjsAny **argv)
+{
+    //  TODO -- should fire if currently readable / writable (also socket etc)
+    ejsAddObserver(ejs, &sp->emitter, argv[0], argv[1]);
+    return 0;
+}
 
 
 /*  
     function get port(): Number
  */
-static EjsObj *hs_port(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+static EjsNumber *hs_port(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, sp->port);
+    return ejsCreateNumber(ejs, sp->port);
 }
 
 
@@ -37782,7 +37846,6 @@ static EjsObj *hs_secure(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     if (!ejsIs(ejs, argv[1], Null)) {
         mprSetSslCertFile(sp->ssl, ejsToMulti(ejs, argv[1]));
     }
-
     if (argc >= 3 && ejsIs(ejs, argv[2], Array)) {
         protocols = (EjsArray*) argv[2];
         protoMask = 0;
@@ -37855,9 +37918,9 @@ static EjsObj *hs_trace(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 /*  
     function get software(headers: Object = null): Void
  */
-static EjsObj *hs_software(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+static EjsString *hs_software(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, EJS_HTTPSERVER_NAME);
+    return ejsCreateStringFromAsc(ejs, EJS_HTTPSERVER_NAME);
 }
 
 
@@ -37932,6 +37995,7 @@ static void setHttpPipeline(Ejs *ejs, EjsHttpServer *sp)
 static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
 {
     Ejs             *ejs;
+    EjsHttpServer   *sp;
     EjsRequest      *req;
 
     mprAssert(conn);
@@ -37960,13 +38024,7 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
         }
         break;
 
-    case -1:
-        if (req) {
-            req->conn = 0;
-        }
-        break;
-
-    case 0:
+    case HTTP_EVENT_IO:
         /*  IO event notification for the request.  */
         if (req && req->emitter) {
             if (notifyFlags & HTTP_NOTIFY_READABLE) {
@@ -37977,6 +38035,26 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
             }
         }
         break;
+
+    case HTTP_EVENT_CLOSE:
+        /* Connection close */
+        if (conn->server) {
+            ejs = conn->mark;
+            sp = httpGetServerContext(conn->server);
+            if (ejs && sp->cloned) {
+                printf("CLOSE Connection, remaining VMs %d\n", mprGetListLength(ejs->service->vmlist) - 1);
+#if UNUSED
+                mprRemoveRoot(sp);
+#endif
+                ejsDestroyVM(ejs);
+                conn->mark = 0;
+            }
+        }
+        if (req && req->conn) {
+            req->conn = 0;
+        }
+        break;
+
     }
 }
 
@@ -38195,10 +38273,12 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
         
     } else {
         sp->sessions = 0;
-        ejsStopSessionTimer(sp);
-        if (sp->server && !sp->cloned) {
-            httpDestroyServer(sp->server);
-            sp->server = 0;
+        if (!sp->cloned) {
+            ejsStopSessionTimer(sp);
+            if (sp->server) {
+                httpDestroyServer(sp->server);
+                sp->server = 0;
+            }
         }
     }
 }
@@ -38225,11 +38305,21 @@ EjsHttpServer *ejsCloneHttpServer(Ejs *ejs, EjsHttpServer *sp, bool deep)
     if ((nsp = ejsClonePot(ejs, sp, deep)) == 0) {
         return 0;
     }
+    nsp->cloned = sp;
     nsp->ejs = ejs;
     nsp->async = sp->async;
     nsp->server = sp->server;
     nsp->name = sp->name;
-    nsp->cloned = 1;
+    nsp->ssl = sp->ssl;
+    nsp->connector = sp->connector;
+    nsp->dir = sp->dir;
+    nsp->port = sp->port;
+    nsp->ip = sp->ip;
+    nsp->certFile = sp->certFile;
+    nsp->keyFile = sp->keyFile;
+    nsp->ciphers = sp->ciphers;
+    nsp->protocols = sp->protocols;
+    nsp->sessions = sp->sessions;
     httpInitTrace(nsp->trace);
     return nsp;
 }
@@ -38244,23 +38334,23 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     type->helpers.create = (EjsCreateHelper) createHttpServer;
 
     prototype = type->prototype;
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_accept, (EjsProc) hs_accept);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_address, (EjsProc) hs_address);
-    ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_async, (EjsProc) hs_async, (EjsProc) hs_set_async);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_close, (EjsProc) hs_close);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_limits, (EjsProc) hs_limits);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_isSecure, (EjsProc) hs_isSecure);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_listen, (EjsProc) hs_listen);
-    ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_name, (EjsProc) hs_name, (EjsProc) hs_set_name);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_port, (EjsProc) hs_port);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_off, (EjsProc) hs_off);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_on, (EjsProc) hs_on);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_secure, (EjsProc) hs_secure);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setLimits, (EjsProc) hs_setLimits);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setPipeline, (EjsProc) hs_setPipeline);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_trace, (EjsProc) hs_trace);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_verifyClients, (EjsProc) hs_verifyClients);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_software, (EjsProc) hs_software);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_accept, hs_accept);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_address, hs_address);
+    ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_async, hs_async, hs_set_async);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_close, hs_close);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_limits, hs_limits);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_isSecure, hs_isSecure);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_listen, hs_listen);
+    ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_name, hs_name, hs_set_name);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_port, hs_port);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_off, hs_off);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_on, hs_on);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_secure, hs_secure);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setLimits, hs_setLimits);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setPipeline, hs_setPipeline);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_trace, hs_trace);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_verifyClients, hs_verifyClients);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_software, hs_software);
 
     /* One time initializations */
     ejsLoadHttpService(ejs);
@@ -38343,7 +38433,8 @@ static int connOk(Ejs *ejs, EjsRequest *req, int throwException)
 static void defineParam(Ejs *ejs, EjsObj *params, cchar *key, cchar *svalue)
 {
     EjsName     qname;
-    EjsObj      *vp, *value;
+    EjsAny      *value;
+    EjsObj      *vp;
     char        *subkey, *end;
     int         slotNum;
 
@@ -38352,7 +38443,7 @@ static void defineParam(Ejs *ejs, EjsObj *params, cchar *key, cchar *svalue)
     if (*svalue == '[') {
         value = ejsDeserialize(ejs, ejsCreateStringFromAsc(ejs, svalue));
     } else {
-        value = (EjsObj*) ejsCreateStringFromAsc(ejs, svalue);
+        value = ejsCreateStringFromAsc(ejs, svalue);
     }
     /*  
         name.name.name
@@ -38405,7 +38496,7 @@ static EjsObj *createCookies(Ejs *ejs, EjsRequest *req)
     cchar       *cookieHeader;
 
     if (req->cookies) {
-        return (EjsObj*) req->cookies;
+        return req->cookies;
     }
     if (req->conn == 0) {
         return S(null);
@@ -38416,7 +38507,7 @@ static EjsObj *createCookies(Ejs *ejs, EjsRequest *req)
         argv[0] = (EjsObj*) ejsCreateStringFromAsc(ejs, cookieHeader);
         req->cookies = ejsRunFunctionByName(ejs, ejs->global, N("ejs.web", "parseCookies"), ejs->global, 1, (EjsObj**) argv);
     }
-    return (EjsObj*) req->cookies;
+    return req->cookies;
 }
 
 
@@ -38563,16 +38654,16 @@ static EjsSession *getSession(Ejs *ejs, EjsRequest *req, int create)
 }
 
 
-static EjsObj *createString(Ejs *ejs, cchar *value)
+static EjsString *createString(Ejs *ejs, cchar *value)
 {
     if (value == 0) {
         return S(null);
     }
-    return (EjsObj*) ejsCreateStringFromAsc(ejs, value);
+    return ejsCreateStringFromAsc(ejs, value);
 }
 
 
-static int getDefaultInt(Ejs *ejs, EjsObj *value, int defaultValue)
+static int getDefaultInt(Ejs *ejs, EjsNumber *value, int defaultValue)
 {
     if (value == 0 || ejsIs(ejs, value, Null)) {
         return defaultValue;
@@ -38581,7 +38672,7 @@ static int getDefaultInt(Ejs *ejs, EjsObj *value, int defaultValue)
 }
 
 
-static cchar *getDefaultString(Ejs *ejs, EjsObj *value, cchar *defaultValue)
+static cchar *getDefaultString(Ejs *ejs, EjsString *value, cchar *defaultValue)
 {
     if (value == 0 || ejsIs(ejs, value, Null)) {
         return defaultValue;
@@ -38599,7 +38690,7 @@ static cchar *getRequestString(Ejs *ejs, EjsObj *value)
 }
 
 
-static EjsObj *mapNull(Ejs *ejs, EjsObj *value)
+static EjsAny *mapNull(Ejs *ejs, EjsAny *value)
 {
     if (value == 0) {
         return S(null);
@@ -38680,7 +38771,7 @@ static char *makeRelativeHome(Ejs *ejs, EjsRequest *req)
 /*
     Lookup a property. These properties are virtualized.
  */
-static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
+static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
 {
     EjsObj      *value;
     HttpConn    *conn;
@@ -38824,7 +38915,7 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
     case ES_ejs_web_Request_port:
         if (req->port == 0) {
             if (req->server) {
-                req->port = (EjsObj*) ejsCreateNumber(ejs, req->server->port);
+                req->port = ejsCreateNumber(ejs, req->server->port);
             } else return S(null);
         }
         return req->port;
@@ -38898,22 +38989,24 @@ static void *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
             if (conn) {
                 path = sjoin(scriptName, getDefaultString(ejs, req->pathInfo, conn->rx->uri), NULL);
                 scheme = (conn->secure) ? "https" : "http";
-                req->uri = (EjsObj*) ejsCreateUriFromParts(ejs, 
+                req->uri = ejsCreateUriFromParts(ejs, 
                     getDefaultString(ejs, req->scheme, scheme),
                     getDefaultString(ejs, req->host, getHost(conn, req)),
                     getDefaultInt(ejs, req->port, req->server->port),
                     path,
                     getDefaultString(ejs, req->query, conn->rx->parsedUri->query),
-                    getDefaultString(ejs, req->reference, conn->rx->parsedUri->reference), 0);
+                    getDefaultString(ejs, req->reference, conn->rx->parsedUri->reference), 
+                    0);
             } else {
                 path = sjoin(scriptName, getDefaultString(ejs, req->pathInfo, NULL), NULL);
-                req->uri = (EjsObj*) ejsCreateUriFromParts(ejs, 
+                req->uri = ejsCreateUriFromParts(ejs, 
                     getDefaultString(ejs, req->scheme, NULL),
                     getDefaultString(ejs, req->host, NULL),
                     getDefaultInt(ejs, req->port, 0),
                     path,
                     getDefaultString(ejs, req->query, NULL),
-                    getDefaultString(ejs, req->reference, NULL), 0);
+                    getDefaultString(ejs, req->reference, NULL), 
+                    0);
             }
         }
         return req->uri;
@@ -39008,7 +39101,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
         break;
 
     case ES_ejs_web_Request_host:
-        req->host = (EjsObj*) ejsToString(ejs, value);
+        req->host = ejsToString(ejs, value);
         req->uri = 0;
         break;
 
@@ -39022,23 +39115,23 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
         break;
 
     case ES_ejs_web_Request_pathInfo:
-        req->pathInfo = (EjsObj*) ejsToString(ejs, value);
+        req->pathInfo = ejsToString(ejs, value);
         req->filename = 0;
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_port:
-        req->port = (EjsObj*) ejsToNumber(ejs, value);
+        req->port = ejsToNumber(ejs, value);
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_query:
-        req->query = (EjsObj*) ejsToString(ejs, value);
+        req->query = ejsToString(ejs, value);
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_reference:
-        req->reference = (EjsObj*) ejsToString(ejs, value);
+        req->reference = ejsToString(ejs, value);
         req->uri = 0;
         break;
 
@@ -39055,7 +39148,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
         break;
 
     case ES_ejs_web_Request_scriptName:
-        req->scriptName = (EjsObj*) ejsToString(ejs, value);
+        req->scriptName = ejsToString(ejs, value);
         req->filename = 0;
         req->uri = 0;
         req->absHome = 0;
@@ -39071,35 +39164,35 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
         break;
 
     case ES_ejs_web_Request_scheme:
-        req->scheme = (EjsObj*) ejsToString(ejs, value);
+        req->scheme = ejsToString(ejs, value);
         req->uri = 0;
         break;
 
     case ES_ejs_web_Request_uri:
         up = ejsToUri(ejs, value);
-        req->uri = (EjsObj*) up;
+        req->uri = up;
         req->filename = 0;
         if (!connOk(ejs, req, 0)) {
             /*
                 This is really just for unit testing without a connection
              */
             if (up->uri->scheme) {
-                req->scheme = (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->scheme);
+                req->scheme = ejsCreateStringFromAsc(ejs, up->uri->scheme);
             }
             if (up->uri->host) {
-                req->host = (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->host);
+                req->host = ejsCreateStringFromAsc(ejs, up->uri->host);
             }
             if (up->uri->port) {
-                req->port = (EjsObj*) ejsCreateNumber(ejs, up->uri->port);
+                req->port = ejsCreateNumber(ejs, up->uri->port);
             }
             if (up->uri->path) {
-                req->pathInfo = (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->path);
+                req->pathInfo = ejsCreateStringFromAsc(ejs, up->uri->path);
             }
             if (up->uri->query) {
-                req->query = (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->query);
+                req->query = ejsCreateStringFromAsc(ejs, up->uri->query);
             }
             if (up->uri->reference) {
-                req->reference = (EjsObj*) ejsCreateStringFromAsc(ejs, up->uri->reference);
+                req->reference = ejsCreateStringFromAsc(ejs, up->uri->reference);
             }
         }
         break;
@@ -39135,7 +39228,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
     case ES_ejs_web_Request_method:
         if (!connOk(ejs, req, 1)) return 0;
         if (req->originalMethod == 0) {
-            req->originalMethod = (EjsObj*) ejsCreateStringFromAsc(ejs, req->conn->rx->method);
+            req->originalMethod = ejsCreateStringFromAsc(ejs, req->conn->rx->method);
         }
         req->conn->rx->method = sclone(getRequestString(ejs, value));
         break;
@@ -39237,10 +39330,10 @@ static EjsObj *req_finalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 /*  
     function get finalized(): Boolean
  */
-static EjsObj *req_finalized(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+static EjsBoolean *req_finalized(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
     if (req->conn && req->conn->tx) {
-        return (EjsObj*) ejsCreateBoolean(ejs, req->conn->tx->finalized);
+        return ejsCreateBoolean(ejs, req->conn->tx->finalized);
     }
     return S(false);
 }
@@ -39293,7 +39386,7 @@ static EjsObj *req_header(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 /*  
     function off(name: [String|Array], listener: Function): Void
  */
-static EjsObj *req_off(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+static EjsObj *req_off(Ejs *ejs, EjsRequest *req, int argc, EjsAny **argv)
 {
     ejsRemoveObserver(ejs, req->emitter, argv[0], argv[1]);
     return 0;
@@ -39303,7 +39396,7 @@ static EjsObj *req_off(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 /*  
     function on(name: [String|Array], listener: Function): Void
  */
-static EjsObj *req_on(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+static EjsObj *req_on(Ejs *ejs, EjsRequest *req, int argc, EjsAny **argv)
 {
     HttpConn    *conn;
     
@@ -39311,11 +39404,11 @@ static EjsObj *req_on(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     ejsAddObserver(ejs, &req->emitter, argv[0], argv[1]);
 
     if (conn->readq->count > 0) {
-        ejsSendEvent(ejs, req->emitter, "readable", NULL, (EjsObj*) req);
+        ejsSendEvent(ejs, req->emitter, "readable", NULL, req);
     }
     if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
             conn->writeq->ioCount == 0) {
-        ejsSendEvent(ejs, req->emitter, "writable", NULL, (EjsObj*) req);
+        ejsSendEvent(ejs, req->emitter, "writable", NULL, req);
     }
     return 0;
 }
@@ -39324,7 +39417,7 @@ static EjsObj *req_on(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 /*  
     function read(buffer, offset, count): Number
  */
-static EjsObj *req_read(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+static EjsNumber *req_read(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
     EjsByteArray    *ba;
     ssize           offset, count, nbytes;
@@ -39361,7 +39454,7 @@ static EjsObj *req_read(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         }
     }
     ba->writePosition += nbytes;
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) nbytes);
+    return ejsCreateNumber(ejs, (MprNumber) nbytes);
 }
 
 
@@ -39494,7 +39587,7 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 
     if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
             conn->writeq->ioCount == 0) {
-        ejsSendEvent(ejs, req->emitter, "writable", NULL, (EjsObj*) req);
+        ejsSendEvent(ejs, req->emitter, "writable", NULL, req);
     }
     return 0;
 }
@@ -39537,9 +39630,9 @@ static EjsObj *req_writeFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 /*
     function get written(): Number
  */
-static EjsObj *req_written(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
+static EjsNumber *req_written(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) req->written);
+    return ejsCreateNumber(ejs, (MprNumber) req->written);
 }
 
 
@@ -39561,15 +39654,20 @@ EjsRequest *ejsCloneRequest(Ejs *ejs, EjsRequest *req, bool deep)
     nreq->ejs = ejs;
     nreq->dir = ejsClone(ejs, req->dir, 1);
     nreq->filename = ejsClone(ejs, req->filename, 1);
-    nreq->pathInfo = (EjsObj*) ejsCreateStringFromAsc(ejs, conn->rx->pathInfo);
-    nreq->scriptName = (EjsObj*) ejsCreateStringFromAsc(ejs, conn->rx->scriptName);
+    nreq->pathInfo = ejsCreateStringFromAsc(ejs, conn->rx->pathInfo);
+    nreq->scriptName = ejsCreateStringFromAsc(ejs, conn->rx->scriptName);
     nreq->accepted = req->accepted;
     nreq->running = req->running;
+
+//  MOB - limits?
     if (req->route) {
         nreq->route = ejsClone(ejs, req->route, 1);
     }
     if (req->config) {
         nreq->config = ejsClone(ejs, req->config, 1);
+    }
+    if (req->params) {
+        nreq->params = ejsClone(ejs, req->params, 1);
     }
     return nreq;
 }
@@ -39601,8 +39699,8 @@ EjsRequest *ejsCreateRequest(Ejs *ejs, EjsHttpServer *server, HttpConn *conn, cc
     }
     mprAssert(!VISITED(req->dir));
     //  OPT -- why replicate these two
-    req->pathInfo = (EjsObj*) ejsCreateStringFromAsc(ejs, rx->pathInfo);
-    req->scriptName = (EjsObj*) ejsCreateStringFromAsc(ejs, rx->scriptName);
+    req->pathInfo = ejsCreateStringFromAsc(ejs, rx->pathInfo);
+    req->scriptName = ejsCreateStringFromAsc(ejs, rx->scriptName);
     return req;
 }
 
@@ -39611,7 +39709,7 @@ void ejsSendRequestCloseEvent(Ejs *ejs, EjsRequest *req)
 {
     if (!req->closed && req->emitter) {
         req->closed = 1;
-        ejsSendEvent(ejs, req->emitter, "close", NULL, (EjsObj*) req);
+        ejsSendEvent(ejs, req->emitter, "close", NULL, req);
     }
 }
 
@@ -39620,7 +39718,7 @@ void ejsSendRequestErrorEvent(Ejs *ejs, EjsRequest *req)
 {
     if (!req->error && req->emitter) {
         req->error = 1;
-        ejsSendEvent(ejs, req->emitter, "error", NULL, (EjsObj*) req);
+        ejsSendEvent(ejs, req->emitter, "error", NULL, req);
     }
 }
 
@@ -39628,7 +39726,7 @@ void ejsSendRequestErrorEvent(Ejs *ejs, EjsRequest *req)
 void ejsSendRequestEvent(Ejs *ejs, EjsRequest *req, cchar *event)
 {
     if (req->emitter) {
-        ejsSendEvent(ejs, req->emitter, event, NULL, (EjsObj*) req);
+        ejsSendEvent(ejs, req->emitter, event, NULL, req);
     }
 }
 
@@ -39667,7 +39765,9 @@ static void manageRequest(EjsRequest *req, int flags)
         mprMark(req->server);
         mprMark(req->session);
         mprMark(req->uri);
+#if UNUSED
         mprMark(req->app);
+#endif
     }
 }
 
@@ -39689,24 +39789,24 @@ void ejsConfigureRequestType(Ejs *ejs)
     helpers->setProperty = (EjsSetPropertyHelper) setRequestProperty;
 
     prototype = type->prototype;
-    ejsBindAccess(ejs, prototype, ES_ejs_web_Request_async, (EjsProc) req_async, (EjsProc) req_set_async);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_autoFinalize, (EjsProc) req_autoFinalize);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_close, (EjsProc) req_close);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_destroySession, (EjsProc) req_destroySession);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_dontAutoFinalize, (EjsProc) req_dontAutoFinalize);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_finalize, (EjsProc) req_finalize);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_finalized, (EjsProc) req_finalized);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_flush, (EjsProc) req_flush);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_header, (EjsProc) req_header);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_off, (EjsProc) req_off);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_on, (EjsProc) req_on);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_read, (EjsProc) req_read);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setLimits, (EjsProc) req_setLimits);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setHeader, (EjsProc) req_setHeader);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_trace, (EjsProc) req_trace);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_write, (EjsProc) req_write);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_writeFile, (EjsProc) req_writeFile);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_written, (EjsProc) req_written);
+    ejsBindAccess(ejs, prototype, ES_ejs_web_Request_async, req_async, req_set_async);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_autoFinalize, req_autoFinalize);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_close, req_close);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_destroySession, req_destroySession);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_dontAutoFinalize, req_dontAutoFinalize);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_finalize, req_finalize);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_finalized, req_finalized);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_flush, req_flush);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_header, req_header);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_off, req_off);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_on, req_on);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_read, req_read);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setLimits, req_setLimits);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_setHeader, req_setHeader);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_trace, req_trace);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_write, req_write);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_writeFile, req_writeFile);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_Request_written, req_written);
 }
 
 
@@ -39927,18 +40027,28 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     MprTime         now;
     char            idBuf[64], *id;
     int             count, slotNum, next;
+    static int      nextSession = 0;
 
     if ((server = req->server) == 0) {
         return 0;
     }
-    limits = server->server->limits;
-
-    if (timeout <= 0) {
-        timeout = limits->sessionTimeout;
+    if (server->cloned) {
+        server = server->cloned;
+        ejs = server->ejs;
     }
     now = mprGetTime();
 
+    /*
+        WARNING: this code is multithreaded on "ejs". ejsCreateObj/ejsCreateEmptyPot are thread-safe.
+     */
+    mprLock(sessionLock);
+    limits = server->server->limits;
+    if (timeout <= 0) {
+        timeout = limits->sessionTimeout;
+    }
+
     if ((session = ejsCreateObj(ejs, ST(Session), 0)) == 0) {
+        mprUnlock(sessionLock);
         return 0;
     }
     session->timeout = timeout;
@@ -39947,8 +40057,7 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     /*  
         Use an MD5 prefix of "x" to avoid the hash being interpreted as a numeric index.
      */
-    mprLock(sessionLock);
-    next = ejs->nextSession++;
+    next = nextSession++;
     mprSprintf(idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(ejs) + PTOI(session->expire), (int) now, next);
     id = mprGetMD5Hash(idBuf, sizeof(idBuf), "x");
     if (id == 0) {
@@ -39974,6 +40083,9 @@ EjsSession *ejsCreateSession(Ejs *ejs, EjsRequest *req, int timeout, bool secure
     startSessionTimer(ejs, server);
     mprUnlock(sessionLock);
 
+    /*
+        Session created event issued on the non-cloned vm
+     */
     mprLog(3, "Created new session %s. Count %d/%d", id, slotNum + 1, limits->sessionCount);
     if (server->emitter) {
         ejsSendEvent(ejs, server->emitter, "createSession", NULL, ejsCreateStringFromAsc(ejs, id));
@@ -40202,39 +40314,43 @@ void ejsConfigureSessionType(Ejs *ejs)
 static int configureWebTypes(Ejs *ejs);
 
 
-static int requestWorker(EjsRequest *req, MprEvent *event)
+static void requestWorker(EjsRequest *req, MprEvent *event)
 {
     Ejs         *ejs;
-    EjsObj      *argv[2];
+    EjsObj      *argv[1];
     HttpConn    *conn;
     
     ejs = req->ejs;
     mprAssert(ejs);
-    mprAssert(req->app);
     
     conn = req->conn;
-    argv[0] = (EjsObj*) req->app;
-    argv[1] = (EjsObj*) req;
-    ejsRunFunctionBySlot(ejs, S(Web), ES_ejs_web_Web_workerHelper, 2, argv);
+    argv[0] = (EjsObj*) req;
+
+    /*
+        Run the workerHelper. This may return before the request or a series of requests (keep-alive) are complete.
+     */
+    ejsRunFunctionBySlot(ejs, S(Web), ES_ejs_web_Web_workerHelper, 1, argv);
+#if UNUSED
     conn->dispatcher = conn->oldDispatcher;
+    //  MOB - must hang here
+#endif
     httpEnableConnEvents(conn);
-    return 0; 
+    /* Thread will return to the pool - further I/O events (or close) will come on the conn->dispatcher */
 }
 
 
 /*
-    static function worker(app: Function, req: Request): Void
+    static function worker(req: Request): Void
  */
 static EjsObj *req_worker(Ejs *ejs, EjsObj *web, int argc, EjsObj **argv)
 {
     Ejs         *nejs;
     EjsRequest  *req, *nreq;
-    EjsObj      *app;
     HttpConn    *conn;
 
-    app = argv[0];
-    req = (EjsRequest*) argv[1];
-    if ((nejs = ejsCreate(0, 0, 0, 0, 0, 0)) == 0) {
+    req = (EjsRequest*) argv[0];
+
+    if ((nejs = ejsCreateVM(ejs, 0, 0, 0, 0, 0, 0)) == 0) {
         ejsThrowStateError(ejs, "Can't create interpreter to service request");
         return 0;
     }
@@ -40244,16 +40360,18 @@ static EjsObj *req_worker(Ejs *ejs, EjsObj *web, int argc, EjsObj **argv)
     conn->newDispatcher = nejs->dispatcher;
     
     nejs->loc = ejs->loc;
+#if UNUSED && KEEP
+    /* Need this if not cloning */
     if (ejsLoadModule(nejs, ejsCreateStringFromAsc(nejs, "ejs.web"), -1, -1, EJS_LOADER_RELOAD) < 0) {
         ejsThrowStateError(ejs, "Can't load ejs.web.mod: %s", ejsGetErrorMsg(nejs, 1));
         return 0;
     }
+#endif
     if ((nreq = ejsCloneRequest(nejs, req, 1)) == 0) {
         ejsThrowStateError(ejs, "Can't clone request");
         return 0;
     }
     httpSetConnContext(conn, nreq);
-    nreq->app = app;
 
     if ((nreq->server = ejsCloneHttpServer(nejs, req->server, 1)) == 0) {
         ejsThrowStateError(ejs, "Can't clone request");
@@ -40262,7 +40380,7 @@ static EjsObj *req_worker(Ejs *ejs, EjsObj *web, int argc, EjsObj **argv)
     conn->workerEvent = mprCreateEvent(conn->dispatcher, "RequestWorker", 0, requestWorker, nreq, MPR_EVENT_DONT_QUEUE);
     if (conn->workerEvent == 0) {
         ejsThrowStateError(ejs, "Can't create worker event");
-    }
+    }  
     return 0;
 }
 
@@ -40443,9 +40561,9 @@ static bool     hoistBlockVar(EcCompiler *cp, EcNode *np);
 static void     openBlock(EcCompiler *cp, EcNode *np, EjsBlock *block);
 static void     processAstNode(EcCompiler *cp, EcNode *np);
 static void     removeProperty(EcCompiler *cp, EjsObj *block, EcNode *np);
-static EjsNamespace *resolveNamespace(EcCompiler *cp, EcNode *np, EjsBlock *block, bool *modified);
+static EjsNamespace *resolveNamespace(EcCompiler *cp, EcNode *np, EjsAny *block, bool *modified);
 static void     removeScope(EcCompiler *cp);
-static int      resolveName(EcCompiler *cp, EcNode *node, EjsObj *vp,  EjsName name);
+static int      resolveName(EcCompiler *cp, EcNode *node, EjsAny *vp,  EjsName name);
 static int      resolveProperty(EcCompiler *cp, EcNode *node, EjsType *type, EjsName name);
 static void     setAstDocString(Ejs *ejs, EcNode *np, cchar *tag, void *vp, int slotNum);
 static EjsNamespace *lookupNamespace(Ejs *ejs, EjsString *namespace);
@@ -40631,7 +40749,7 @@ static void defineBlock(EcCompiler *cp, EcNode *np)
     block = np->blockRef;
 
     if (np->createBlockObject) {
-        slotNum = ejsDefineProperty(ejs, letBlock, -1, np->qname, TYPE(block), 0, (EjsObj*) block);
+        slotNum = ejsDefineProperty(ejs, letBlock, -1, np->qname, TYPE(block), 0, block);
         if (slotNum < 0) {
             astError(cp, np, "Can't define block");
         } else {
@@ -40870,25 +40988,12 @@ static EjsType *defineClass(EcCompiler *cp, EcNode *np)
     } else {
         ejsSetTypeAttributes(type, attributes);
         type->module = state->currentModule;
-        /*
-            type->instanceSize = sizeof(EjsPot);
-         */
     }
     type->typeData = np;
     np->klass.ref = type;
 
     nsp = ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PROTECTED_NAMESPACE);
-#if UNUSED
-    //  MOB -- these flags should be args to above()
-    //  MOB -- need some flag like this to speed up scope searching
-    nsp->flags |= EJS_NSP_PROTECTED;
-#endif
-
     nsp = ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PRIVATE_NAMESPACE);
-#if UNUSED
-    //  MOB -- need some flag like this to speed up scope searching
-    nsp->flags |= EJS_NSP_PRIVATE;
-#endif
 
     /*
         Define a property for the type in global
@@ -40907,14 +41012,11 @@ static EjsType *defineClass(EcCompiler *cp, EcNode *np)
         qname.name = ejsCreateStringFromAsc(ejs, mprAsprintf("-%@-", type->qname.name));
         qname.space = ejsCreateStringFromAsc(ejs, EJS_INIT_NAMESPACE);
         fatt = EJS_TRAIT_HIDDEN | EJS_PROP_STATIC;
-        ejsDefineProperty(ejs, (EjsObj*) type, 0, qname, ST(Function), fatt, S(null));
+        ejsDefineProperty(ejs, type, 0, qname, ST(Function), fatt, S(null));
         constructorNode = np->klass.constructor;
         if (constructorNode && !constructorNode->function.isDefault) {
             type->hasConstructor = 1;
         }
-#if MOB
-        ejsDefineProperty(ejs, (EjsObj*) type, 1, EN("prototype"), ST(Object), fatt, type->prototype);
-#endif
     }
     return type;
 }
@@ -40948,14 +41050,14 @@ static void validateClass(EcCompiler *cp, EcNode *np)
         Ensure the class implements all required implemented methods
      */
     for (next = 0; ((iface = (EjsType*) mprGetNextItem(type->implements, &next)) != 0); ) {
-        count = ejsGetPropertyCount(ejs, (EjsObj*) iface);
+        count = ejsGetPropertyCount(ejs, iface);
         for (i = 0; i < count; i++) {
-            fun = ejsGetProperty(ejs, (EjsObj*) iface, i);
+            fun = ejsGetProperty(ejs, iface, i);
             if (!ejsIsFunction(ejs, fun) || fun->isInitializer) {
                 continue;
             }
-            qname = ejsGetPropertyName(ejs, (EjsObj*) iface, i);
-            vp = ejsGetPropertyByName(ejs, (EjsObj*) type, qname);
+            qname = ejsGetPropertyName(ejs, iface, i);
+            vp = ejsGetPropertyByName(ejs, type, qname);
             if (vp == 0 || !ejsIsFunction(ejs, vp)) {
                 astError(cp, np, "Missing method \"%@\" required by interface \"%@\"", qname.name, iface->qname.name);
             } else {
@@ -41000,11 +41102,11 @@ static void bindClass(EcCompiler *cp, EcNode *np)
             cp->fileState->strict);
         np->klass.initializer = fun;
         //  MOB -- better to use DefineProperty and set traits for initializer
-        ejsSetProperty(ejs, (EjsObj*) type, 0, (EjsObj*) fun);
+        ejsSetProperty(ejs, type, 0, fun);
     }
 
     modified = 0;
-    if (!np->literalNamespace && resolveNamespace(cp, np, (EjsBlock*) ejs->global, &modified) == 0) {
+    if (!np->literalNamespace && resolveNamespace(cp, np, ejs->global, &modified) == 0) {
         return;
     }
     if (modified) {
@@ -41358,7 +41460,7 @@ static EjsFunction *defineFunction(EcCompiler *cp, EcNode *np)
                 return 0;
             }
         }
-        slotNum = ejsDefineProperty(ejs, block, slotNum, np->qname, TYPE(fun), np->attributes, (EjsObj*) fun);
+        slotNum = ejsDefineProperty(ejs, block, slotNum, np->qname, TYPE(fun), np->attributes, fun);
         if (slotNum < 0) {
             astError(cp, np, "Can't define function in type \"%@\"", state->currentClass->qname.name);
             return 0;
@@ -41406,13 +41508,13 @@ static int defineParameters(EcCompiler *cp, EcNode *np)
             nameNode = child->left->left;
         }
         attributes |= nameNode->attributes;
-        slotNum = ejsDefineProperty(ejs, (EjsObj*) fun->activation, slotNum, nameNode->qname, NULL, attributes, NULL);
+        slotNum = ejsDefineProperty(ejs, fun->activation, slotNum, nameNode->qname, NULL, attributes, NULL);
         mprAssert(slotNum >= 0);
         /*
             Can assign the lookup information here as these never need fixups.
          */
         nameNode->lookup.slotNum = slotNum;
-        nameNode->lookup.obj = (EjsObj*) fun;
+        nameNode->lookup.obj = fun;
         nameNode->lookup.trait = ejsGetPropertyTraits(ejs, fun->activation, slotNum);
         mprAssert(nameNode->lookup.trait);
         slotNum++;
@@ -41550,7 +41652,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
                 np->left->qname = np->qname;
             }
         }
-        if ((EjsObj*) block == ejs->global) {
+        if (block == ejs->global) {
             addGlobalProperty(cp, np, &np->qname);
         }
     }
@@ -41559,7 +41661,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
         Test for clashes with non-overridden methods in base classes.
      */
     if (currentClass && currentClass->baseType) {
-        slotNum = ecLookupVar(cp, (EjsObj*) currentClass->baseType, np->qname);
+        slotNum = ecLookupVar(cp, currentClass->baseType, np->qname);
         if (slotNum >= 0 && ejsIsA(ejs, np->lookup.ref, (EjsType*) cp->lookup.obj)) {
             if (!(np->attributes & EJS_FUN_OVERRIDE) && !currentClass->baseType->isInterface) {
                 //  MOB - OPT
@@ -41571,7 +41673,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
                 }
             }
 
-            mprAssert(!ejsLookupProperty(ejs, (EjsObj*) currentClass, np->qname));
+            mprAssert(!ejsLookupProperty(ejs, currentClass, np->qname));
             slotNum = -1;
 #if MOB && BINDING_ONLY
             /*
@@ -41579,7 +41681,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
                 Must now define the name of the property and attributes.
              */
 #endif
-            ejsDefineProperty(ejs, (EjsObj*) block, slotNum, np->qname, 0, np->attributes, (EjsObj*) fun);
+            ejsDefineProperty(ejs, block, slotNum, np->qname, 0, np->attributes, fun);
         }
     }
 
@@ -41589,8 +41691,8 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
     if (state->currentClass && state->currentClass->implements) {
         next = 0;
         while ((iface = (EjsType*) mprGetNextItem(state->currentClass->implements, &next))) {
-            slotNum = ecLookupVar(cp, (EjsObj*) iface, np->qname);
-            if (slotNum >= 0 && cp->lookup.obj == (EjsObj*) iface) {
+            slotNum = ecLookupVar(cp, iface, np->qname);
+            if (slotNum >= 0 && cp->lookup.obj == iface) {
                 if (!iface->isInterface) {
                     if (!(np->attributes & EJS_FUN_OVERRIDE)) {
                         astError(cp, np, 
@@ -41602,7 +41704,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
                     /*
                         Install the new function into the v-table by overwriting the inherited implemented method.
                      */
-                    ejsDefineProperty(ejs, (EjsObj*) block, slotNum, np->qname, 0, np->attributes, (EjsObj*) fun);
+                    ejsDefineProperty(ejs, block, slotNum, np->qname, 0, np->attributes, fun);
                 }
             }
         }
@@ -41621,7 +41723,7 @@ static EjsFunction *bindFunction(EcCompiler *cp, EcNode *np)
     }
 
     if (!np->function.isConstructor) {
-        if (resolveName(cp, np, (EjsObj*) block, np->qname) < 0) {
+        if (resolveName(cp, np, block, np->qname) < 0) {
             astError(cp, np, "Internal error. Can't resolve function %@", np->qname.name);
         }
         if (np->lookup.slotNum >= 0) {
@@ -41854,7 +41956,7 @@ static void astForIn(EcCompiler *cp, EcNode *np)
                 TODO MOB - this assumes that iterators use Iterator and it is bindable. What if an operator that
                 implements an Iterable/Iterator interface
              */
-            rc = resolveName(cp, np->forInLoop.iterNext, (EjsObj*) iteratorType->prototype, N("public", "next"));
+            rc = resolveName(cp, np->forInLoop.iterNext, iteratorType->prototype, N("public", "next"));
             if (rc < 0) {
                 astError(cp, np, "Can't find Iterator.next method");
             }
@@ -41862,7 +41964,7 @@ static void astForIn(EcCompiler *cp, EcNode *np)
         
 #else
         np->forInLoop.iterNext->qname = N("public", "next");
-        rc = resolveName(cp, np->forInLoop.iterNext, (EjsObj*) ST(Iterator)->prototype, np->forInLoop.iterNext->qname);
+        rc = resolveName(cp, np->forInLoop.iterNext, ST(Iterator)->prototype, np->forInLoop.iterNext->qname);
         np->forInLoop.iterNext->lookup.bind = 0;
 #endif
     }
@@ -42087,7 +42189,7 @@ static void astBindName(EcCompiler *cp, EcNode *np)
                  */
                 np->lookup.ownerIsType = 1;
                 rc = resolveProperty(cp, np, (EjsType*) left->lookup.ref, np->qname);
-                if (rc < 0 && STRICT_MODE(cp) && !((EjsType*) left->lookup.ref)->dynamicInstance) {
+                if (rc < 0 && STRICT_MODE(cp) && !((EjsType*) left->lookup.ref)->dynamicInstances) {
                     astError(cp, np, "Can't find property \"%@\" in class \"%@\".", np->qname.name,
                         ((EjsType*) left->lookup.ref)->qname.name);
 
@@ -42167,7 +42269,7 @@ static void astBindName(EcCompiler *cp, EcNode *np)
         //  TODO - need propert expression calculation and propagation
         if (left && left->lookup.trait && left->lookup.trait->type) {
             type = left->lookup.trait->type;
-            if (!type->dynamicInstance) {
+            if (!type->dynamicInstances) {
                 astError(cp, np, "Can't find a declaration for \"%@\".", np->qname.name);
             }
         }
@@ -42230,7 +42332,7 @@ static void astBindName(EcCompiler *cp, EcNode *np)
                  */
                 lookup->bind = 0;
 
-            } else if (type->dynamicInstance /* && !BUILTIN(type) */) {
+            } else if (type->dynamicInstances /* && !BUILTIN(type) */) {
                 /*
                     Don't bind non-core dynamic properties
                  */
@@ -42595,7 +42697,7 @@ static void astTry(EcCompiler *cp, EcNode *np)
             catch and finally blocks.
          */
         for (count = 0, block = ejs->state->bp->scope; block && !ejsIsFrame(ejs, block); block = block->scope) {
-                count++;
+            count++;
         }
         np->exception.numBlocks = count;
     }
@@ -42927,6 +43029,7 @@ static void defineVar(EcCompiler *cp, EcNode *np, int varKind, EjsObj *value)
     Ejs             *ejs;
     EjsFunction     *method;
     EjsObj          *obj;
+    EjsType         *type;
     EcState         *state;
     int             slotNum, attributes;
 
@@ -42989,6 +43092,14 @@ static void defineVar(EcCompiler *cp, EcNode *np, int varKind, EjsObj *value)
         astError(cp, np, "Can't define variable \"%@\"", np->qname.name);
         return;
     }
+    if (ejsIsType(ejs, obj) && !(np->attributes & EJS_TRAIT_READONLY)) {
+        type = (EjsType*) obj;
+        if (state->instanceCode) {
+            type->mutableInstances = 1;
+        } else {
+            type->mutable = 1;
+        }
+    }
 }
 
 
@@ -43026,7 +43137,6 @@ static bool hoistBlockVar(EcCompiler *cp, EcNode *np)
         obj = (EjsObj*) state->varBlock;
         attributes |= EJS_PROP_STATIC;
     }
-
     if (!cp->bind && obj == ejs->global) {
         /* Can't hoist variables to global scope if not binding */
         return 0;
@@ -43123,7 +43233,7 @@ static void bindVariableDefinition(EcCompiler *cp, EcNode *np)
             return;
         }
     }
-    if (resolveName(cp, np, (EjsObj*) block, np->qname) < 0) {
+    if (resolveName(cp, np, block, np->qname) < 0) {
         astError(cp, np, "Can't find variable \"%N\"", np->qname.space, np->qname.name);
     }
     typeNode = np->typeNode;
@@ -43214,7 +43324,6 @@ static void astVar(EcCompiler *cp, EcNode *np, int varKind, EjsObj *value)
         }
         return;
     }
-
     state->instanceCode = 0;
     if (state->inClass && !(np->attributes & EJS_PROP_STATIC)) {
         if (state->inMethod) {
@@ -43359,7 +43468,9 @@ static EjsModule *createModule(EcCompiler *cp, EcNode *np)
             astError(cp, np, "Can't create module %@", np->qname.name);
             return 0;
         }
+#if UNUSED
         mp->scope = (EjsBlock*) ejs->global;
+#endif
         if (ecAddModule(cp, mp) < 0) {
             astError(cp, 0, "Can't insert module");
             return 0;
@@ -43873,7 +43984,7 @@ static void fixupClass(EcCompiler *cp, EjsType *type)
     Lookup the namespace for a definition (np->qname.space).  We look for the namespace variable declaration if it is a user
     defined namespace. Otherwise, we trust that if the set of open namespaces has the namespace -- it must exist.
  */
-static EjsNamespace *resolveNamespace(EcCompiler *cp, EcNode *np, EjsBlock *block, bool *modified)
+static EjsNamespace *resolveNamespace(EcCompiler *cp, EcNode *np, EjsAny *block, bool *modified)
 {
     Ejs             *ejs;
     EjsName         qname;
@@ -43955,7 +44066,7 @@ static int resolveProperty(EcCompiler *cp, EcNode *np, EjsType *type, EjsName na
 /*
     Locate a property via lookup and determine the best way to address the property.
  */
-static int resolveName(EcCompiler *cp, EcNode *np, EjsObj *vp, EjsName qname)
+static int resolveName(EcCompiler *cp, EcNode *np, EjsAny *vp, EjsName qname)
 {
     Ejs         *ejs;
     EjsLookup   *lookup;
@@ -43970,15 +44081,11 @@ static int resolveName(EcCompiler *cp, EcNode *np, EjsObj *vp, EjsName qname)
     cp->lookup.bind = 0;
 
     if (vp) {
-        //  MOB -- was anyspace
         if (ecLookupVar(cp, vp, qname) < 0) {
             return EJS_ERR;
         }
-
-    } else {
-        if (ecLookupScope(cp, qname) < 0) {
-            return EJS_ERR;
-        }
+    } else if (ecLookupScope(cp, qname) < 0) {
+        return EJS_ERR;
     }
     cp->lookup.bind = 1;
 
@@ -44259,6 +44366,13 @@ static EjsNamespace *lookupNamespace(Ejs *ejs, EjsString *nspace)
             }
         }
     }
+    block = ejs->global;
+    namespaces = &block->namespaces;
+    for (nextNamespace = -1; (nsp = (EjsNamespace*) mprGetPrevItem(namespaces, &nextNamespace)) != 0; ) {
+        if (nsp->value == nspace) {
+            return nsp;
+        }
+    }
     return 0;
 }
 
@@ -44297,7 +44411,7 @@ int ecLookupScope(EcCompiler *cp, EjsName name)
     //  MOB -- should start one in to step over Compiler block
     for (lookup->nthBlock = 0, bp = state->bp; bp; bp = bp->scope, lookup->nthBlock++) {
         /* Seach simple object */
-        if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) bp, name, lookup)) >= 0) {
+        if ((slotNum = ejsLookupVarWithNamespaces(ejs, bp, name, lookup)) >= 0) {
             return slotNum;
         }
         if (ejsIsFrame(ejs, bp)) {
@@ -44309,7 +44423,7 @@ int ecLookupScope(EcCompiler *cp, EjsName name)
                     if ((prototype = type->prototype) == 0 || prototype->shortScope) {
                         break;
                     }
-                    if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) prototype, name, lookup)) >= 0) {
+                    if ((slotNum = ejsLookupVarWithNamespaces(ejs, prototype, name, lookup)) >= 0) {
                         lookup->nthBase = nthBase;
                         return slotNum;
                     }
@@ -44322,7 +44436,7 @@ int ecLookupScope(EcCompiler *cp, EjsName name)
                     if ((prototype = type->prototype) == 0 || prototype->shortScope) {
                         break;
                     }
-                    if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) prototype, name, lookup)) >= 0) {
+                    if ((slotNum = ejsLookupVarWithNamespaces(ejs, prototype, name, lookup)) >= 0) {
                         lookup->nthBase = nthBase;
                         return slotNum;
                     }
@@ -44334,18 +44448,21 @@ int ecLookupScope(EcCompiler *cp, EjsName name)
                 if (type->constructor.block.pot.shortScope) {
                     break;
                 }
-                if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) type, name, lookup)) >= 0) {
+                if ((slotNum = ejsLookupVarWithNamespaces(ejs, type, name, lookup)) >= 0) {
                     lookup->nthBase = nthBase;
                     return slotNum;
                 }
             }
         }
     }
+    if ((slotNum = ejsLookupVarWithNamespaces(ejs, ejs->global, name, lookup)) >= 0) {
+        return slotNum;
+    }
     return -1;
 }
 
 
-int ecLookupVar(EcCompiler *cp, EjsObj *obj, EjsName name)
+int ecLookupVar(EcCompiler *cp, EjsAny *obj, EjsName name)
 {
     Ejs         *ejs;
     EjsLookup   *lookup;
@@ -44372,7 +44489,7 @@ int ecLookupVar(EcCompiler *cp, EjsObj *obj, EjsName name)
         if ((prototype = type->prototype) == 0 || prototype->shortScope) {
             break;
         }
-        if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) prototype, name, lookup)) >= 0) {
+        if ((slotNum = ejsLookupVarWithNamespaces(ejs, prototype, name, lookup)) >= 0) {
             lookup->nthBase = nthBase;
             return slotNum;
         }
@@ -44384,7 +44501,7 @@ int ecLookupVar(EcCompiler *cp, EjsObj *obj, EjsName name)
             //  MOB -- continue or break?
             continue;
         }
-        if ((slotNum = ejsLookupVarWithNamespaces(ejs, (EjsObj*) type, name, lookup)) >= 0) {
+        if ((slotNum = ejsLookupVarWithNamespaces(ejs, type, name, lookup)) >= 0) {
             lookup->nthBase = nthBase;
             return slotNum;
         }
@@ -46172,6 +46289,7 @@ static void genEndFunction(EcCompiler *cp, EcNode *np)
             ecEncodeOpcode(cp, EJS_OP_RETURN_VALUE);
         }
     }
+    cp->lastOpcode = 0;
     LEAVE(cp);
 }
 
@@ -49487,8 +49605,8 @@ int ejsEvalFile(cchar *path)
     Ejs     *ejs;
     Mpr     *mpr;
 
-    mpr = mprCreate(0, NULL, 0);
-    if ((ejs = ejsCreate(NULL, NULL, NULL, 0, NULL, 0)) == 0) {
+    mpr = mprCreate(0, 0, 0);
+    if ((ejs = ejsCreateVM(0, 0, 0, 0, 0, 0, 0)) == 0) {
         mprDestroy(0);
         return MPR_ERR_MEMORY;
     }
@@ -49511,8 +49629,8 @@ int ejsEvalScript(cchar *script)
     Ejs     *ejs;
     Mpr     *mpr;
 
-    mpr = mprCreate(0, NULL, 0);
-    if ((ejs = ejsCreate(NULL, NULL, NULL, 0, NULL, 0)) == 0) {
+    mpr = mprCreate(0, 0, 0);
+    if ((ejs = ejsCreateVM(0, 0, 0, 0, 0, 0, 0)) == 0) {
         mprDestroy(0);
         return MPR_ERR_MEMORY;
     }

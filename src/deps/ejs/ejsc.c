@@ -269,7 +269,7 @@ MAIN(ejscMain, int argc, char **argv)
     if (doc) {
         ejsFlags |= EJS_FLAG_DOC;
     }
-    ejs = ejsCreate(NULL, searchPath, app->modules, 0, NULL, ejsFlags);
+    ejs = ejsCreateVM(0, 0, searchPath, app->modules, 0, NULL, ejsFlags);
     if (ejs == 0) {
         return MPR_ERR_MEMORY;
     }
