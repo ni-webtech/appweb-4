@@ -1751,7 +1751,7 @@ var router = new Router(Router.Restful)
 
 server.on("readable", function (event, request) {
     App.log.info(request.method, request.uri, request.scheme)
-    Web.serve(request, router)
+    server.serve(request, router)
 })
 
 App.log.info("Listen on", App.config.web.endpoint)

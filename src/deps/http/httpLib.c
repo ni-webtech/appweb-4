@@ -2476,6 +2476,8 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->timeoutEvent);
         mprMark(conn->workerEvent);
         mprMark(conn->mark);
+        mprMark(conn->pool);
+        mprMark(conn->ejs);
 
         httpManageTrace(&conn->trace[0], flags);
         httpManageTrace(&conn->trace[1], flags);
@@ -4153,6 +4155,12 @@ HttpServer *httpLookupServer(Http *http, cchar *ip, int port)
 }
 
 
+HttpServer *httpGetFirstServer(Http *http)
+{
+    return mprGetFirstItem(http->servers);
+}
+
+
 int httpAddHostToServers(Http *http, struct HttpHost *host)
 {
     HttpServer  *server;
@@ -4818,9 +4826,9 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
         return MPR_ERR_CANT_FIND;
     }
     if (extensions && *extensions) {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" for \"%s\"", name, extensions);
+        mprLog(MPR_CONFIG, "Add handler \"%s\" for extensions: \"%s\"", name, extensions);
     } else {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" for \"%s\"", name, loc->prefix);
+        mprLog(MPR_CONFIG, "Add handler \"%s\" for prefix: \"%s\"", name, loc->prefix);
     }
     if (extensions && *extensions) {
         /*
@@ -5105,10 +5113,7 @@ static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage);
 static HttpStage *findHandler(HttpConn *conn);
 static bool rewriteRequest(HttpConn *conn);
 
-/*
-    Match a request to a Host. This is an initial match which may be revised if the request includes a Host header.
-    This is typically invoked from the server state change notifier on transition to the PARSED state.
- */
+
 void httpMatchHost(HttpConn *conn)
 { 
     MprSocket       *listenSock;
@@ -9907,8 +9912,10 @@ static int manageServer(HttpServer *server, int flags)
         mprMark(server->clientLoad);
         mprMark(server->hosts);
         mprMark(server->ip);
+#if UNUSED
         mprMark(server->context);
         mprMark(server->meta);
+#endif
         mprMark(server->sock);
         mprMark(server->dispatcher);
         mprMark(server->ssl);
@@ -10117,7 +10124,6 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
     dispatcher = event->dispatcher;
 
     if ((conn = httpCreateConn(server->http, server, dispatcher)) == 0) {
-        mprError("Can't create connect object. Insufficient memory.");
         mprCloseSocket(sock, 0);
         return 0;
     }
@@ -10149,10 +10155,12 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
 }
 
 
+#if UNUSED
 void *httpGetMetaServer(HttpServer *server)
 {
     return server->meta;
 }
+#endif
 
 
 void *httpGetServerContext(HttpServer *server)
@@ -10187,10 +10195,12 @@ void httpSetServerAddress(HttpServer *server, cchar *ip, int port)
     }
 }
 
+#if UNUSED
 void httpSetMetaServer(HttpServer *server, void *meta)
 {
     server->meta = meta;
 }
+#endif
 
 
 void httpSetServerAsync(HttpServer *server, int async)

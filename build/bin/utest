@@ -48,6 +48,7 @@ enumerable class Test {
     var threads: Number = 1                 // Number of test threads 
     var _top: Path                          // Path to top of source tree
     var version: String = "0.1.0"           // Output version information 
+    var workerImage: Worker                 // Clonable worker image
 
     var program: String                     // Program name
     var currentTest: String                 // Test currently executing
@@ -67,6 +68,7 @@ enumerable class Test {
     public var tsession = { }
         
     function Test() {
+        workerImage = new Worker
         program = Path(App.args[0]).basename
         if ((path = searchUp("configure")) == null) {
             throw "Can't find configure"
@@ -331,9 +333,10 @@ enumerable class Test {
             tsession: tsession,
             threads: threads, 
             top: _top, 
-            verbosity: verbosity, 
+        verbosity: verbosity, 
         }
-        let w: Worker = new Worker
+        // let w: Worker = new Worker
+        let w: Worker = workerImage.clone()
         w.name = fullName
         initWorker(w, export)
 
@@ -545,7 +548,6 @@ test.summary()
 test.exit()
 
 } /* module ejs.test */
-
 
 /*
     @copy   default

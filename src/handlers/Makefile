@@ -6,9 +6,10 @@
 
 include 		.makedep
 
-MAKE_IFLAGS			:= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
-phpHandler_IFLAGS	:= $(BLD_PHP_IFLAGS)
-ejsHandler_IFLAGS	:= $(BLD_EJS_IFLAGS)
+MAKE_IFLAGS			+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
+phpHandler_IFLAGS	+= $(BLD_PHP_IFLAGS)
+ejsHandler_IFLAGS	+= $(BLD_EJS_IFLAGS)
+DEPEND_FLAGS		+= $(BLD_PHP_IFLAGS) $(BLD_EJS_IFLAGS)
 
 #
 #	Remove shorten-64 warnings because PHP headers trigger this

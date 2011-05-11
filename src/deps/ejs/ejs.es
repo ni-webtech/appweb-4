@@ -499,11 +499,6 @@ module ejs {
 
 module ejs {
 
-    /*
-        TODO 
-            - removeByElement(e) - remove an array element by reference
-     */
-
     /**
         Arrays provide a growable, integer indexed, in-memory store for objects.  An array can be treated as a 
         stack (FIFO or LIFO) or a list (ordered).  Insertions can be done at the beginning or end of the stack or at an 
@@ -837,6 +832,7 @@ module ejs {
             @param end Numeric index of the last element to remove
             @spec ejs
          */
+//  MOB - remove and replace with removeElements
         function remove(start: Number, end: Number = -1): Void {
             if (start < 0) {
                 start += length
@@ -846,6 +842,8 @@ module ejs {
             }
             splice(start, end - start + 1)
         }
+
+        native function removeElements(...elts): Void
 
         /**
             Reverse the order of the objects in the array. The elements are reversed in the original array.
@@ -979,6 +977,7 @@ module ejs {
         # DOC_ONLY
         native function << (elements: Array): Array
 
+        //  MOB - need a function equivalent for this
         /**
             Array subtraction. Remove any items that appear in the supplied array.
             @param arr The array to remove.
@@ -8312,7 +8311,7 @@ module ejs {
             @param deep If true, do a deep copy where all object references are also copied, and so on, recursively.
             @spec ejs
          */
-        native function clone(deep: Boolean = true) : Object
+        native function clone(deep: Boolean = true): Object
 
         /** 
             Create a new object, set the object prototype and properties.
@@ -11459,7 +11458,7 @@ module ejs {
         timer.stop()
 
     /**
-        Create a timeout
+        Run a function after a delay
         @param callback Function to invoke when the timer expires
         @param delay Time in milliseconds until the timer expires and the callback is invoked
         @param args Function arguments
@@ -12248,6 +12247,20 @@ module ejs {
          */
         native function Worker(script: Path? = null, options: Object? = null)
 
+        /** 
+            Clone the worker and underlying interpreter
+            @param deep Ignored
+            @spec ejs
+         */
+        native function clone(deep: Boolean = true): Worker
+
+        /** 
+            Create a new worker by cloning the current interpreter
+            @param deep Ignored
+            @spec ejs
+         */
+        native static function cloneSelf(): Worker
+
         /**
             Load the script. The literal script is compiled as a JavaScript program and loaded and run.
             This is similar to the global eval() command but the script is run in its own interpreter and does not
@@ -12291,9 +12304,9 @@ module ejs {
 
         /**
             Preload the specified script or module file to initialize the worker. This will run a script using the current
-            thread and will block. To run a worker using its own thread, use load() or Worker(script).
-            This call will load the script/module and initialize and run global code. The call will block until 
-            all global code has completed and the script/module is initialized. 
+            thread.  This call will load the script/module and initialize and run global code. The call will block until 
+            all global code has completed and the script/module is initialized.  To run a worker using its own thread, 
+            use load() or Worker(script) instead.
             @param path Filename path for the module or script to load. This should include the file extension.
             @returns the value of the last expression in the script or module.
             @throws an exception if the script or module can't be loaded or initialized or if it thows an exception.
@@ -16964,7 +16977,7 @@ module ejs.web {
                 options.layout = Path(config.directories.layouts).join(config.web.view.layout)
             }
             log.debug(4, "writePartialTemplate: \"" + path + "\"")
-            Web.process(TemplateBuilder(request, options), request, false)
+            request.server.process(TemplateBuilder(request, options), request, false)
         }
 
         /** 
@@ -17000,7 +17013,7 @@ module ejs.web {
             if (options.layout === undefined) {
                 options.layout = config.directories.layouts.join(config.web.view.layout)
             }
-            Web.process(TemplateBuilder(request, options), request, false)
+            request.server.process(TemplateBuilder(request, options), request, false)
             request.filename = saveFilename
         }
 
@@ -17018,7 +17031,7 @@ module ejs.web {
                 options.layout = config.directories.layouts.join(config.web.view.layout)
             }
             options.literal = page
-            Web.process(TemplateBuilder(request, options), request, false)
+            request.server.process(TemplateBuilder(request, options), request, false)
         }
 
         /**************************************** Private ******************************************/
@@ -17337,7 +17350,7 @@ module ejs.web {
                     /* Return a String containing the new pathInfo to serve */
                     request.pathInfo += index 
                     let route = request.route.router.route(request)
-                    return Web.process(route.response, request)
+                    return request.server.process(route.response, request)
                 }
             }
             return { 
@@ -18515,6 +18528,77 @@ module ejs.web {
     enumerable dynamic class HttpServer {
         use default namespace public
 
+        private var idleWorkers: Array = []
+        private var activeWorkers: Array = []
+        private var workerImage: Worker
+
+        private static const defaultConfig = {
+            cache: {
+                enable: true,
+                reload: true,
+            },
+            directories: {
+                cache: Path("cache"),
+                layouts: Path("layouts"),
+                views: Path("views"),
+            },
+            extensions: {
+                es:  "es",
+                ejs: "ejs",
+                mod: "mod",
+            },
+            log: {
+                showClient: true,
+                //  where: "file" - defaults to web server log
+            },
+            /* MOB -- not yet implemented
+            session: {
+                enable: true,
+                timeout: 1800,
+            },
+            */
+            web: {
+                expires: {
+                    /*
+                        MOB -- can we have some of this be the default?
+                        html:   86400,
+                        ejs:    86400,
+                        es:     86400,
+                        "":     86400,
+                     */
+                },
+                // endpoint: ":4000",
+                // helpers: [],
+                // limits: {}
+                // trace: {rx: {}, tx: {}}
+                // workers: {}
+                view: {
+                    connectors: {
+                        table: "html",
+                        chart: "google",
+                        rest: "html",
+                    },
+                    formats: {
+                        Date: "%a %e %b %H:%M",
+                    },
+                    layout: "default.ejs",
+                },
+            },
+        }
+
+        /*  
+            One time initialization. Loads the top-level "ejsrc" configuration file.
+            The application must be restarted to reload changes. This happens before HttpServer loads serverRoot/ejsrc.
+         */
+        static function initHttpServer() {
+            blend(App.config, defaultConfig, false)
+            let dirs = App.config.directories
+            for (let [key, value] in dirs) {
+                dirs[key] = Path(value)
+            }
+        }
+        initHttpServer()
+
         /**
             Index files list. Index files are used by various handlers when requests to directories are made. The 
             indicies are tried in turn for the first valid index file.
@@ -18537,16 +18621,15 @@ module ejs.web {
 
         /** 
             Server configuration. Initially refers to App.config which is filled with the aggregated "ejsrc" content.
-            If a documentRoot/ejsrc exists, it is loaded once at startup and is blended (overwrites) existing 
+            If a "ejsrc" configuration file exists, it is loaded once at startup and is blended (overwrites) existing 
             App.config settings.
          */
         enumerable var config: Object
 
-//  MOB - better named documents
         /** 
             Default local directory for web documents to serve. This is used as the default Request.dir value.
          */
-        var documentRoot: Path
+        var documents: Path
 
         /** 
             Flag indicating if the server is using secure communications. This means that TLS/SSL is the underlying
@@ -18572,6 +18655,7 @@ module ejs.web {
             @option transmission Maximum size of outgoing body data.
             @option upload Maximum size of uploaded files.
             @option uri Maximum size of URIs.
+            @option workers Maximum number of Worker virtual machines to create for threaded requests
             @see setLimits
           */
         native function get limits(): Object
@@ -18583,18 +18667,39 @@ module ejs.web {
         native function get name(): String 
         native function set name(hostname: String): Void
 
+        /**
+            HttpServer constructor options
+         */
+        var options: Boolean
+
         /** 
             Get the port bound to this Http endpoint.
             @return The port number or 0 if it is not bound.
          */
         native function get port(): Number 
 
+        /**
+            Function to invoke inside a worker when serving a threaded request. The function is invoked with the signature:
+            function onrequest(request: Request): Void
+         */
+        public var onrequest = defaultOnRequest
+        /*
+            Default onrequest function to handle threaded requests
+            @param request Request object
+         */
+        private function defaultOnRequest(request: Request): Void {
+            App.log.debug(3, "Multithreaded request")
+            try {
+                process(request.route.response, request)
+            } catch (e) {
+                request.writeError(Http.ServerError, e)
+            }
+        }
 
-//  MOB - better named home
         /** 
             Default root directory for the server. The app does not change its current directory to this path.
          */
-        var serverRoot: Path
+        var home: Path
 
         /** 
             Hash of session objects. This is created on demand as requests require session state storage.
@@ -18607,27 +18712,23 @@ module ejs.web {
          */
         native function get software(): String
 
-        /*
-            //  MOB - better HttpServer(options)
-            {
-                home: "dir"
-                documents: "web"
-                threaded: true
-                ejsrc: "ejsrc"
-                other config to blend
-            }
-        */
         /** 
             Create a HttpServer object. The server is created in async mode by default.
             If an "ejsrc" file exists in the server root, it will be loaded and update the "$config" properties.
-            @param documentRoot Directory containing web documents to serve. If set to null and the HttpServer is hosted,
-                the documentRoot will be defined by the web server.
-            @param serverRoot Base directory for the server ejsrc configuration file. If set to null and the HttpServer is 
-                hosted, the serverRoot will be defined by the web server.
+            @param options. Set of options to configure the server.
+            @option documents Directory containing web documents to serve. If unset and the HttpServer is hosted,
+                the $documents property will be defined by the web server.
+            @option home Base directory for the server and the "ejsrc" configuration file. If unset and the HttpServer is 
+                hosted, the $home property will be defined by the web server.
+            @option ejsrc Alternate path to the "ejsrc" configuration file
+            @option config Alternate App.config settings
+            @option threaded MOB
+            @option own If hosted inside a web server, set to true to bypass any web server listening endpoints and 
+                create a new stand-alone listening connection.
             @spec ejs
             @stability prototype
             @example: This is a fully async server:
-let server: HttpServer = new HttpServer(".", "web")
+let server: HttpServer = new HttpServer({documents: "web"})
 let router = Router(Router.Restful)
 server.on("readable", function (event: String, request: Request) {
     request.status = 200
@@ -18645,12 +18746,16 @@ server.on("readable", function (event: String, request: Request) {
 }
 server.listen("127.0.0.1:7777")
          */
-        function HttpServer(documentRoot: Path = ".", serverRoot: Path = ".") {
-            this.documentRoot = documentRoot
-            this.serverRoot = serverRoot
-            config = App.config
-            if (serverRoot != ".") {
-                let path = serverRoot.join("ejsrc")
+        function HttpServer(options: Object = {}) {
+            this.documents = options.documents || "."
+            this.home = options.home || "."
+            this.config = options.config || App.config
+            this.options = options
+            if (options.ejsrc) {
+                blend(config, Path(options.ejsrc).readJSON(), true)
+                App.updateLog()
+            } else if (home != ".") {
+                let path = home.join("ejsrc")
                 if (path.exists) {
                     blend(config, path.readJSON(), true)
                     App.updateLog()
@@ -18674,7 +18779,7 @@ server.listen("127.0.0.1:7777")
                 server = new HttpServer
                 server.listen("8080")
                 while (request = server.accept()) {
-                    Web.serve(request)
+                    server.serve(request)
                 }
          */
         native function accept(): Request
@@ -18683,6 +18788,28 @@ server.listen("127.0.0.1:7777")
             @duplicate Stream.close 
          */
         native function close(): Void
+
+        /*
+            Get a worker for a multithreaded request. This will clone a worker from the workerImage and will
+            enforce the configured limits.workers value.
+         */
+        private function getWorker(): Worker {
+            let w = idleWorkers.pop()
+            if (w == undefined) {
+                if (limits.workers && activeWorkers.length >= limits.workers) {
+                    App.log.debug(1, "Too many workers " + activeWorkers.length + "/" + limits.workers)
+                    return null
+                }
+                workerImage ||= Worker.cloneSelf()
+                w = workerImage.clone()
+                if (config.web.workers.init) {
+                    w.preeval(config.web.workers.init)
+                }
+            }
+            activeWorkers.push(w)
+            App.log.debug(4, "HttpServer.getWorker idle: " + idleWorkers.length + " active:" + activeWorkers.length)
+            return w
+        }
 
         /** 
             Listen for client connections. This creates a HTTP server listening on a single socket endpoint. It can
@@ -18699,16 +18826,17 @@ server.listen("127.0.0.1:7777")
 
             @param endpoint The endpoint address on which to listen. An endoint may be a port number or a composite 
             "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
-            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
-            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
-            hosting web server documentation for specifics.
+            The IP portion may also be "*" to indicate all interfaces.
+            If the server is hosted in a web server, an appropriate existing web server listening connection will be 
+            used. Otherwise, if not hosted, a server socket will be opened on the endpoint.
+            If hosted and an endpoint is not provided, the server will listen on all appropriate web server connections.
             @throws ArgError if the specified endpoint address is not valid or available for binding.
             @event Issues a "accept" event when there is a new connection available.
             @example:
-                server = new Http(".", "./web")
+                server = new Http({home: ".", documents: "web"})
                 server.on("readable", function (event, request) {
-                    //  NOTE: this is set to the request
-                    Web.serve(request)
+                    //  NOTE: "this" is set to the request
+                    server.serve(request)
                 })
                 server.listen("80")
          */
@@ -18735,6 +18863,140 @@ server.listen("127.0.0.1:7777")
          */
         native function on(name, observer: Function): Void
 
+        /**
+            Pass a request into a worker VM. The onrequest callback receives the request. This routine clones stub 
+            Request and HttpServer objects into the worker VM.
+            @param request Request object
+            @param worker Worker to handle the request
+         */
+        native function passRequest(request: Request, worker: Worker)
+
+        /** 
+            Process a web request
+            @param request Request object
+            @param app Web application function 
+         */
+        function process(app: Function, request: Request, finalize: Boolean = true): Void {
+            request.config = config
+            try {
+                if (request.route && request.route.middleware) {
+                    app = Middleware(app, request.route.middleware)
+                }
+                if (finalize) {
+                    request.setupFlash()
+                }
+                let response
+                if (app.bound) {
+                    response = app(request)
+                } else {
+                    response = app.call(request, request)
+                }
+                if (response is Function) {
+                    /* Functions don't auto finalize. The user is responsible for calling finalize() */
+                    response.call(request, request)
+
+                } else if (response) {
+                    request.status = response.status || 200
+                    let headers = response.headers || { "Content-Type": "text/html" }
+                    request.setHeaders(headers)
+                    processBody(request, response.body)
+                } else {
+                    let file = request.responseHeaders["X-Sendfile"]
+                    if (file && !request.isSecure) {
+                        request.writeFile(file)
+                    }
+                }
+                if (finalize) {
+                    request.finalizeFlash()
+                    request.autoFinalize()
+                }
+            } catch (e) {
+                App.log.debug(3, e)
+                request.writeError(Http.ServerError, e)
+            }
+        }
+
+        //    Accept: application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5
+        private function processBody(request: Request, body: Object): Void {
+            if (body is Path) {
+                if (request.isSecure) {
+                    body = File(body, "r")
+                } else {
+                    request.writeFile(body)
+                    return
+                }
+            }
+            if (body is Array) {
+                for each (let item in body) {
+//  MOB -- what about async? what if can't accept all the data?
+                    request.write(item)
+                }
+                request.autoFinalize()
+
+            } else if (body is Stream) {
+                if (body.async) {
+                    request.async = true
+                    //  Should we wait on request being writable or on the body stream being readable?
+//  MOB Must detect eof and do a finalize()
+                    request.on("readable", function(event, request) {
+                        let data = new ByteArray
+                        if (request.read(data)) {
+//  MOB -- what about async? what if can't accept all the data?
+                            request.write(body)
+                        } else {
+                            request.autoFinalize()
+                        }
+                    })
+                    //  MOB -- or this? but what about error events
+                    request.on("complete", function(event, body) {
+                        request.autoFinalize()
+                    })
+                } else {
+                    ba = new ByteArray
+                    while (body.read(ba)) {
+//  MOB -- exceptions on all these writes should be caught --- normal situation for client to disappear
+                        request.write(ba)
+                    }
+                    request.autoFinalize()
+                }
+            } else if (body && body.forEach) {
+                body.forEach(function(block) {
+                    request.write(block)
+                })
+                request.autoFinalize()
+
+            } else if (body is Function) {
+                /* Functions don't auto finalize. The user is responsible for calling finalize() */
+                body.call(request, request)
+
+            } else if (body) {
+                request.write(body)
+                request.autoFinalize()
+
+            } else {
+                let file = request.responseHeaders["X-Sendfile"]
+                if (file && !request.isSecure) {
+                    request.writeFile(file)
+                } else {
+                    request.autoFinalize()
+                }
+            }
+        }
+
+//TEST
+        /** @hide */
+        function pruneWorkers(): Void
+            idleWorkers = []
+
+        private function releaseWorker(w: Worker): Void {
+            activeWorkers.remove(w)
+//TEST
+            if (config.cache.worker) {
+                idleWorkers.push(w)
+            }
+            App.log.debug(4, "HttpServer.releaseWorker idle: " + idleWorkers.length + " active:" + activeWorkers.length)
+        }
+
         /** 
             Define the Secure Sockets Layer (SSL) protocol credentials. This must be done before calling $listen.
             @param keyFile Path of the file containing the server's private key. This file
@@ -18756,6 +19018,34 @@ server.listen("127.0.0.1:7777")
          */
         native function secure(keyFile: Path, certFile: Path!, protocols: Array = null, ciphers: Array = null): Void
 
+        /** 
+            Serve a web request. Convenience function to route, load and start a web application. 
+            Called by web application start script
+            @param request Request object
+            @param router Configured router instance. If omitted, a default Router will be created using the Router.Top
+                routing table.
+         */
+        function serve(request: Request, router: Router = Router()): Void {
+            try {
+                let w: Worker
+                let route: Route = router.route(request)
+                if (route.threaded) {
+                    if ((w = getWorker()) == null) {
+                        request.writeError(Http.ServiceUnavailable, "Server busy")
+                        return
+                    }
+                    request.on("close", function() {releaseWorker(w)})
+                    passRequest(request, w)
+                } else {
+                    //  MOB - rename response => responder
+                    process(route.response, request)
+                }
+            } catch (e) {
+                let status = request.status != Http.Ok ? request.status : Http.ServerError
+                request.writeError(status, e)
+            }
+        }
+
         /**
             Define the stages of the Http processing pipeline. Data flows through the processing pipeline and is
             filtered or transmuted by filter stages. A communications connector is responsible for transmitting to 
@@ -18775,6 +19065,13 @@ server.listen("127.0.0.1:7777")
             @see limits
          */
         native function setLimits(limits: Object): Void
+
+        /**
+            Define a worker that will serve as the base for cloning workers to serve web requests
+            @param worker Configured worker 
+         */
+        function setWorkerImage(w: Worker): Void
+            workerImage = w
 
         /**
             Configure request tracing for the server. The default is to trace the first line of requests and responses at
@@ -18813,6 +19110,32 @@ server.listen("127.0.0.1:7777")
                 Set to null if you are using $caCertPath.
          */
         native function verifyClients(caCertPath: Path, caCertFile: Path): Void
+
+        /**
+            Convenience routine to create a web server. This will start a routing web server that will serve a 
+            variety of content using the given specified route tables.
+            @param address The IP endpoint address on which to listen. The address may be a port number or a composite 
+            "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
+            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
+            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
+            hosting web server documentation for specifics.
+            @param options. Set of options to configure the server.
+            @option documents Directory containing web documents to serve. If unset and the HttpServer is hosted,
+                the $documents property will be defined by the web server.
+            @option home Base directory for the server and the "ejsrc" configuration file. If unset and the HttpServer is 
+                hosted, the $home property will be defined by the web server.
+            @option routes Route table to use. Defaults to Router.Top
+         */
+        static function create(address: String, options: Object = {}): Void {
+            let server: HttpServer = new HttpServer(options)
+            let routes = options.routes || Router.Top
+            var router = Router(routes)
+            server.on("readable", function (event, request) {
+                server.serve(request, router)
+            })
+            server.listen(address)
+            App.run()
+        }
     }
 }
 
@@ -19161,8 +19484,7 @@ module ejs.web {
                 }
                 code += path.readString()
             }
-            //  MOB 4
-            request.log.debug(0, "Rebuild component: " + mod + " files: " + files)
+            request.log.debug(4, "Rebuild component: " + mod + " files: " + files)
             eval(code, mod)
         }
 
@@ -19689,7 +20011,7 @@ module ejs.web {
             Set an error flash notification message.
             Flash messages persist for only one request and are a convenient way to pass state information or 
             feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
-            be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+            be called before and after the request is processed. HttpServer.process will call setupFlash and finalizeFlash 
             automatically.
             @param msg Message to store
          */
@@ -19753,7 +20075,7 @@ module ejs.web {
             Set an informational flash notification message.
             Flash messages persist for only one request and are a convenient way to pass state information or 
             feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
-            be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+            be called before and after the request is processed. HttpServer.process will call setupFlash and finalizeFlash 
             automatically.
             @param msg Message to store
          */
@@ -19902,7 +20224,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
         /** 
             Set a transient flash notification message. Flash messages persist for only one request and are a convenient
                 way to pass state information or feedback messages to the next request. To use flash messages, 
-                setupFlash() and finalizeFlash() must be called before and after the request is processed. Web.process
+                setupFlash() and finalizeFlash() must be called before and after the request is processed. HttpServer.process
                 will call setupFlash and finalizeFlash automatically.
             @param key Flash message key
             @param msg Message to store
@@ -20144,7 +20466,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
             Set a warning flash notification.
             Flash messages persist for only one request and are a convenient way to pass state information or 
             feedback messages to the next request. To use flash messages, setupFlash() and finalizeFlash() must 
-            be called before and after the request is processed. Web.process will call setupFlash and finalizeFlash 
+            be called before and after the request is processed. HttpServer.process will call setupFlash and finalizeFlash 
             automatically.
             @param msg Message to store
          */
@@ -20208,7 +20530,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
          */
         function writeError(status: Number, ...msgs): Void {
             if (!finalized) {
-                this.status = status
+                this.status = status || Http.ServerError
                 let msg = msgs.join(" ").replace(/.*Error Exception: /, "")
                 let title = "Request Error for \"" + pathInfo + "\""
                 if (config.log.showClient) {
@@ -23458,349 +23780,6 @@ MOB -- review and rethink this
 /************************************************************************/
 /*
  *  End of file "../../src/jems/ejs.web/View.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/jems/ejs.web/Web.es"
- */
-/************************************************************************/
-
-/*
-    Web.es - Web framework initialization
-    This loads JSGI (*.es) apps, Template (*.ejs) pages, and MVC applications.
- */
-
-module ejs.web {
-    /** 
-        Web class manages web applications. This class initializes the web framework and loads web applications. 
-        Apps may be JSGI apps with an "es" extension, template apps with an "ejs" extension or MVC applications.
-        @spec ejs
-        @stability prototype
-     */
-    class Web {
-        use default namespace public
-
-        private static const defaultConfig = {
-            cache: {
-                enable: true,
-                reload: true,
-            },
-            directories: {
-                cache: Path("cache"),
-                layouts: Path("layouts"),
-                views: Path("views"),
-            },
-            extensions: {
-                es:  "es",
-                ejs: "ejs",
-                mod: "mod",
-            },
-            log: {
-                showClient: true,
-                //  where: "file" - defaults to web server log
-            },
-            /* MOB -- not yet implemented
-            session: {
-                enable: true,
-                timeout: 1800,
-            },
-            */
-            web: {
-                expires: {
-                    /*
-                        MOB -- can we have some of this be the default?
-                        html:   86400,
-                        ejs:    86400,
-                        es:     86400,
-                        "":     86400,
-                     */
-                },
-                // endpoint: ":4000",
-                // helpers: [],
-                // limits: {}
-                // trace: {rx: {}, tx: {}}
-                view: {
-                    connectors: {
-                        table: "html",
-                        chart: "google",
-                        rest: "html",
-                    },
-                    formats: {
-                        Date: "%a %e %b %H:%M",
-                    },
-                    layout: "default.ejs",
-                },
-            },
-        }
-
-        /*  
-            One time initialization for the Web class. Loads the top-level "ejsrc" configuration file.
-            The server must be restarted to reload changes. This happens before HttpServer loads serverRoot/ejsrc.
-         */
-        private static function initWeb(): Void {
-            blend(App.config, defaultConfig, false)
-            let dirs = App.config.directories
-            for (let [key, value] in dirs) {
-                dirs[key] = Path(value)
-            }
-        }
-        initWeb()
-
-        /** 
-            Serve a web request. Convenience function to route, load and start a web application. 
-            Called by web application start script
-            @param request Request object
-            @param router Configured router instance. If omitted, a default Router will be created using the Router.Top
-                routing table.
-         */
-        static function serve(request: Request, router: Router = Router()): Void {
-            try {
-                let route: Route = router.route(request)
-                if (request.route.threaded) {
-                    worker(request)
-                } else {
-                    process(route.response, request)
-                }
-            } catch (e) {
-                let status = request.status != Http.Ok ? request.status : Http.ServerError
-                request.writeError(status, e)
-            }
-        }
-
-        /**
-            Run the request via a separate worker thread
-            @param request Request object
-         */
-        static native function worker(request: Request): Void
-
-        private static function workerHelper(request: Request): Void {
-            App.log.debug(3, "Multithreaded request")
-            try {
-                process(request.route.response, request)
-            } catch (e) {
-                request.writeError(Http.ServerError, e)
-            }
-        }
-
-        //    Accept: application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5
-        private static function processBody(request: Request, body: Object): Void {
-            if (body is Path) {
-                if (request.isSecure) {
-                    body = File(body, "r")
-                } else {
-                    request.writeFile(body)
-                    return
-                }
-            }
-            if (body is Array) {
-                for each (let item in body) {
-//  MOB -- what about async? what if can't accept all the data?
-                    request.write(item)
-                }
-                request.autoFinalize()
-
-            } else if (body is Stream) {
-                if (body.async) {
-                    request.async = true
-                    //  Should we wait on request being writable or on the body stream being readable?
-//  MOB Must detect eof and do a finalize()
-                    request.on("readable", function(event, request) {
-                        let data = new ByteArray
-                        if (request.read(data)) {
-//  MOB -- what about async? what if can't accept all the data?
-                            request.write(body)
-                        } else {
-                            request.autoFinalize()
-                        }
-                    })
-                    //  MOB -- or this? but what about error events
-                    request.on("complete", function(event, body) {
-                        request.autoFinalize()
-                    })
-                } else {
-                    ba = new ByteArray
-                    while (body.read(ba)) {
-//  MOB -- exceptions on all these writes should be caught --- normal situation for client to disappear
-                        request.write(ba)
-                    }
-                    request.autoFinalize()
-                }
-            } else if (body && body.forEach) {
-                body.forEach(function(block) {
-                    request.write(block)
-                })
-                request.autoFinalize()
-
-            } else if (body is Function) {
-                /* Functions don't auto finalize. The user is responsible for calling finalize() */
-                body.call(request, request)
-
-            } else if (body) {
-                request.write(body)
-                request.autoFinalize()
-
-            } else {
-                let file = request.responseHeaders["X-Sendfile"]
-                if (file && !request.isSecure) {
-                    request.writeFile(file)
-                } else {
-                    request.autoFinalize()
-                }
-            }
-        }
-
-//  MOB WARNING: this may block in write?? - is request in async mode?
-//  MOB -- is this the best name?
-        /** 
-            Process a web request
-            @param request Request object
-            @param app Web application function 
-         */
-        static function process(app: Function, request: Request, finalize: Boolean = true): Void {
-            request.config = request.server.config
-            try {
-                if (request.route && request.route.middleware) {
-                    app = Middleware(app, request.route.middleware)
-                }
-                if (finalize) {
-                    request.setupFlash()
-                }
-                let response
-                if (app.bound) {
-                    response = app(request)
-                } else {
-                    response = app.call(request, request)
-                }
-                if (response is Function) {
-                    /* Functions don't auto finalize. The user is responsible for calling finalize() */
-                    response.call(request, request)
-
-                } else if (response) {
-                    request.status = response.status || 200
-                    let headers = response.headers || { "Content-Type": "text/html" }
-                    request.setHeaders(headers)
-                    processBody(request, response.body)
-                } else {
-                    let file = request.responseHeaders["X-Sendfile"]
-                    if (file && !request.isSecure) {
-                        request.writeFile(file)
-                    }
-                }
-                if (finalize) {
-                    request.finalizeFlash()
-                    request.autoFinalize()
-                }
-            } catch (e) {
-                App.log.debug(3, e)
-                request.writeError(Http.ServerError, e)
-            }
-        }
-
-        /**
-            Convenience routine to start a routing web server that will serve a variety of content. This routines
-            sets up a web server using the specified route tables.
-            @param address The IP endpoint address on which to listen. The address may be a port number or a composite 
-            "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
-            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
-            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
-            hosting web server documentation for specifics.
-            @param documentRoot Directory containing web documents to serve. If set to null and the HttpServer is hosted,
-                the documentRoot will be defined by the web server.
-            @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
-                the serverRoot will be defined by the web server.
-            @param routes Route table to use. Defaults to Router.Top
-         */
-        static function start(address: String, documentRoot: Path = ".", serverRoot: Path = ".", 
-                routes = Router.Top): Void {
-            let server: HttpServer = new HttpServer(documentRoot, serverRoot)
-            var router = Router(routes)
-            server.on("readable", function (event, request) {
-                serve(request, router)
-            })
-            server.listen(address)
-            App.run()
-        }
-
-        /**
-            Convenience routine to run a single web app script. 
-            @param address The IP endpoint address on which to listen. The address may be a port number or a composite 
-            "IP:PORT" string. If only a port number is provided, the socket will listen on all interfaces on that port. 
-            If null is provided for an endpoint value, an existing web server listening connection will be used. In this
-            case, the web server will typically be the virtual host that specifies the EjsStartup script. See the
-            hosting web server documentation for specifics.
-            @param documentRoot Directory containing web documents to serve. If set to null and the HttpServer is hosted,
-                the documentRoot will be defined by the web server.
-            @param serverRoot Base directory for the server configuration. If set to null and the HttpServer is hosted,
-                the serverRoot will be defined by the web server.
-            @example The script must be of the form:
-            exports.app = function (request) {
-                return { 
-                    status: Http.Ok,
-                    body: "Hello World\r\n"
-                }
-            }
-         */
-        static function run(address: String, documentRoot: Path = ".", serverRoot: Path = "."): Void {
-            let server: HttpServer = new HttpServer(documentRoot, serverRoot)
-            server.on("readable", function (event, request) {
-                try {
-                    if (!request.filename.exists) {
-                        request.writeError(Http.NotFound, "Cannot find " + request.uri)
-                    } else {
-                        process(Loader.require(request.filename).app, request)
-                    }
-                } catch {
-                    request.writeError(Http.ServerError, "Exception serving " + request.uri)
-                }
-            })
-            server.listen(address)
-            App.run()
-        }
-    }
-}
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.web/Web.es"
  */
 /************************************************************************/
 

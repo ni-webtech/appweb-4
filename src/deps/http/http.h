@@ -363,6 +363,7 @@ extern void httpSetProxy(Http *http, cchar *host, int port);
 /* Internal APIs */
 extern void httpAddConn(Http *http, struct HttpConn *conn);
 extern int httpAddHostToServers(Http *http, struct HttpHost *host);
+extern struct HttpServer *httpGetFirstServer(Http *http);
 extern void httpRemoveConn(Http *http, struct HttpConn *conn);
 extern cchar *httpLookupStatus(Http *http, int status);
 extern void httpAddServer(Http *http, struct HttpServer *server);
@@ -1400,7 +1401,9 @@ typedef struct HttpConn {
     MprTime         lastActivity;           /**< Last activity on the connection */
     MprEvent        *timeoutEvent;          /**< Connection or request timeout event */
     MprEvent        *workerEvent;           /**< Event for running connection via a worker thread */
-    void            *context;               /**< Embedding context */
+    void            *context;               /**< Embedding context (EjsRequest) */
+    void            *ejs;                   /**< Embedding VM */
+    void            *pool;                  /**< Pool of VMs */
     void            *mark;                  /**< Reference for GC marking */
     char            *boundary;              /**< File upload boundary */
     char            *errorMsg;              /**< Error message for the last request (if any) */
@@ -1948,11 +1951,12 @@ typedef struct HttpLoc {
     MprList         *outputStages;          /**< Output stages */
     MprHashTable    *errorDocuments;        /**< Set of error documents to use on errors */
     struct HttpLoc  *parent;                /**< Parent location */
-    void            *context;               /**< Hosting context */
+    void            *context;               /**< Hosting context (Appweb == EjsPool) */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
+    int             workers;                /**< Number of workers to use for this location */
     char            *searchPath;            /**< Search path */
-    char            *script;                /**< Startup script */
+    char            *script;                /**< Startup script for handlers serving this location */
     struct MprSsl   *ssl;                   /**< SSL configuration */
 } HttpLoc;
 
@@ -2732,8 +2736,10 @@ typedef struct HttpServer {
     int             requestCount;           /**< Count of current active requests */
     int             flags;                  /**< Server control flags */
     void            *context;               /**< Embedding context */
+#if UNUSED
     //  MOB is this needed?
     void            *meta;                  /**< Meta server object */
+#endif
     MprSocket       *sock;                  /**< Listening socket */
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
     HttpNotifier    notifier;               /**< Default connection notifier callback */

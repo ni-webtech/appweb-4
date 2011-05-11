@@ -501,14 +501,6 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     http->phpHandler = handler;
     return 0;
 }
-
-
-#else
-int maPhpHandlerInit(Http *http, MprModule *mp)
-{
-    return 0;
-}
-
 #endif /* BLD_FEATURE_PHP */
 
 /*

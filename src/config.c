@@ -1004,7 +1004,9 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                 return -1;
             }
             server = httpCreateServer(ip, port, NULL, 0);
+#if UNUSED
             httpSetMetaServer(server, meta);
+#endif
             server->limits = limits;
             mprAddItem(meta->servers, server);
             if (host->port == 0) {

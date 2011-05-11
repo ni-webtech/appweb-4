@@ -1603,7 +1603,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=${BUILT_PRODUCTS_DIR}:$PATH\nexport DYLD_LIBRARY_PATH=${BUILT_PRODUCTS_DIR}:$DYLD_LIBRARY_PATH\n\ncd $PROJECT_DIR/../../../src/deps/ejs\n\nNAME=\"ejs\"\nFILES=\"ejs.es\"\nTARGET=$BUILT_PRODUCTS_DIR/$NAME.mod\n\nset -x\n$BUILT_PRODUCTS_DIR/ejsc  --debug --optimize 9 --bind --require ' ' --out $TARGET $FILES\n$BUILT_PRODUCTS_DIR/ejsmod --require ' ' --cslots --listing --out .$NAME.slots.h $TARGET\n\ndiff .$NAME.slots.h $OUT/include >/dev/null 2>&1 || cp .$NAME.slots.h $OUT/include\n\nexit 0";
+			shellScript = "export PATH=${BUILT_PRODUCTS_DIR}:$PATH\nexport DYLD_LIBRARY_PATH=${BUILT_PRODUCTS_DIR}:$DYLD_LIBRARY_PATH\n\ncd $PROJECT_DIR/../../../src/deps/ejs\n\nNAME=\"ejs\"\nFILES=\"ejs.es\"\nTARGET=$BUILT_PRODUCTS_DIR/$NAME.mod\n\nset -x\n$BUILT_PRODUCTS_DIR/ejsc  --debug --optimize 9 --bind --require ' ' --out $TARGET $FILES || exit 255\n$BUILT_PRODUCTS_DIR/ejsmod --require ' ' --cslots --listing --out .$NAME.slots.h $TARGET || exit 255\n\ndiff .$NAME.slots.h $OUT/include >/dev/null 2>&1 || cp .$NAME.slots.h $OUT/include\n\nexit 0";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -2871,8 +2871,8 @@
 		C9AFCC4B0FC521150080E908 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
 				COPY_PHASE_STRIP = NO;
 				ES = "$(PROJECT_DIR)/../../../src/ejs";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -2915,8 +2915,8 @@
 		C9AFCC4C0FC521150080E908 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
 				COPY_PHASE_STRIP = YES;
 				ES = "$(PROJECT_DIR)/../../../src/ejs";
 				OUT = "$(PROJECT_DIR)/../../../out";

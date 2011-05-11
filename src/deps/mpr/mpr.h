@@ -3855,7 +3855,7 @@ extern MprKeyValue *mprCreateKeyPair(cchar *key, cchar *value);
     @param list List pointer returned from mprCreateList.
     @return Returns the last pushed item. If the list is empty, returns NULL.
   */
-extern cvoid *mprPopItem(MprList *list);
+extern void *mprPopItem(MprList *list);
 
 /** 
     Push an item onto the list

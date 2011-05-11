@@ -293,7 +293,9 @@ void ejsConfigureAppType(Ejs *ejs)
 
     type = ejsGetTypeByName(ejs, N("ejs", "App"));
     mprAssert(type);
+#if UNUSED
     ejsSetSpecial(ejs, S_App, type);
+#endif
 
     ejsSetProperty(ejs, type, ES_App__inputStream, ejsCreateFileFromFd(ejs, 0, "stdin", O_RDONLY));
     ejsSetProperty(ejs, type, ES_App__outputStream, ejsCreateFileFromFd(ejs, 1, "stdout", O_WRONLY));
@@ -381,7 +383,7 @@ static int  checkSlot(Ejs *ejs, EjsArray *ap, int slotNum);
 static bool compareArrayElement(Ejs *ejs, EjsObj *v1, EjsObj *v2);
 static int growArray(Ejs *ejs, EjsArray *ap, int len);
 static int lookupArrayProperty(Ejs *ejs, EjsArray *ap, EjsName qname);
-static EjsNumber *pushArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv);
+static EjsNumber *pushArray(Ejs *ejs, EjsArray *ap, int argc, EjsAny **argv);
 static EjsArray *spliceArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv);
 static EjsString *arrayToString(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv);
 
@@ -614,7 +616,7 @@ static EjsObj *coerceArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rh
 }
 
 
-static EjsAny *invokeArrayOperator(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
+static EjsAny *invokeArrayOperator(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs)
 {
     EjsAny  *result;
 
@@ -662,21 +664,21 @@ static EjsAny *invokeArrayOperator(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rh
      */
     case EJS_OP_ADD:
         result = ejsCreateArray(ejs, 0);
-        pushArray(ejs, (EjsArray*) result, 1, &lhs);
-        pushArray(ejs, (EjsArray*) result, 1, &rhs);
+        pushArray(ejs, result, 1, &lhs);
+        pushArray(ejs, result, 1, &rhs);
         return result;
 
     case EJS_OP_AND:
-        return makeIntersection(ejs, (EjsArray*) lhs, (EjsArray*) rhs);
+        return makeIntersection(ejs, lhs, rhs);
 
     case EJS_OP_OR:
-        return makeUnion(ejs, (EjsArray*) lhs, (EjsArray*) rhs);
+        return makeUnion(ejs, lhs, rhs);
 
     case EJS_OP_SHL:
-        return pushArray(ejs, (EjsArray*) lhs, 1, &rhs);
+        return pushArray(ejs, lhs, 1, &rhs);
 
     case EJS_OP_SUB:
-        return removeArrayElements(ejs, (EjsArray*) lhs, (EjsArray*) rhs);
+        return removeArrayElements(ejs, lhs, rhs);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -1374,7 +1376,7 @@ static EjsObj *popArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 
     function push(...items): Number
  */
-static EjsNumber *pushArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
+static EjsNumber *pushArray(Ejs *ejs, EjsArray *ap, int argc, EjsAny **argv)
 {
     EjsArray    *args;
     EjsObj      **src, **dest;
@@ -1393,6 +1395,18 @@ static EjsNumber *pushArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
         dest[i + oldLen] = src[i];
     }
     return ejsCreateNumber(ejs, ap->length);
+}
+
+
+/*
+    Remove array elements
+    MOB - rename to "remove"
+
+    function removeElements(...elts): Array
+ */
+static EjsArray *removeElements(Ejs *ejs, EjsArray *ap, int argc, EjsArray **argv)
+{
+    return removeArrayElements(ejs, ap, argv[0]);
 }
 
 
@@ -2142,6 +2156,9 @@ void ejsConfigureArrayType(Ejs *ejs)
     ejsBindAccess(ejs, prototype, ES_Array_length, getArrayLength, setArrayLength);
     ejsBindMethod(ejs, prototype, ES_Array_pop, popArray);
     ejsBindMethod(ejs, prototype, ES_Array_push, pushArray);
+#if ES_Array_removeElements
+    ejsBindMethod(ejs, prototype, ES_Array_removeElements, removeElements);
+#endif
     ejsBindMethod(ejs, prototype, ES_Array_reverse, reverseArray);
     ejsBindMethod(ejs, prototype, ES_Array_shift, shiftArray);
     ejsBindMethod(ejs, prototype, ES_Array_slice, sliceArray);
@@ -8570,7 +8587,8 @@ void ejsConfigureFunctionType(Ejs *ejs)
     EjsPot      *prototype;
 
     type = ST(Function);
-    type->mutableInstances = 1;
+    //  MOB - testing functions with immutable instances
+    type->mutableInstances = 0;
     prototype = type->prototype;
 
     ejsBindConstructor(ejs, type, fun_Function);
@@ -15686,9 +15704,13 @@ EjsAny *ejsClonePot(Ejs *ejs, EjsAny *obj, bool deep)
             type = TYPE(vp);
             if ((ejsIsType(ejs, vp) && ((EjsType*) vp)->mutable) || (!ejsIsType(ejs, vp) && type->mutableInstances)) {
                 EjsName qname = ejsGetPropertyName(ejs, src, i);
+                // mprLog(0, "CLONE %N", qname);
                 dp->value.ref = ejsClone(ejs, vp, deep);
                 //  UNICODE
                 mprSetName(dp->value.ref, qname.name->value);
+            } else {
+                extern int cloneRef;
+                cloneRef++;
             }
             if (dp->trait.type && dp->trait.type->mutable) {
                 if ((type = ejsGetPropertyByName(ejs, ejs->global, dp->trait.type->qname)) != 0) {
@@ -21331,6 +21353,7 @@ static EjsType *cloneTypeVar(Ejs *ejs, EjsType *src, bool deep)
     dest->hasBaseInitializers = src->hasBaseInitializers;
     dest->hasConstructor = src->hasConstructor;
     dest->hasInitializer = src->hasInitializer;
+    dest->hasInstanceVars = src->hasInstanceVars;
     dest->hasMeta = src->hasMeta;
     dest->hasScriptFunctions = src->hasScriptFunctions;
     dest->helpers = src->helpers;
@@ -23788,37 +23811,22 @@ static void removeWorker(EjsWorker *worker);
 static int workerMain(EjsWorker *worker, MprEvent *event);
 static EjsObj *workerPreload(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv);
 
-/*
-    function Worker(script: String = null, options: Object = null)
 
-    Script is optional. If supplied, the script is run immediately by a worker thread. This call
-    does not block. Options are: search and name.
- */
-static EjsWorker *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
+static EjsWorker *initWorker(Ejs *ejs, EjsWorker *worker, Ejs *baseVm, cchar *name, EjsArray *search, cchar *scriptFile)
 {
     Ejs             *wejs;
-    EjsObj          *options, *value, *search;
     EjsWorker       *self;
     EjsNamespace    *ns;
     EjsName         sname;
-    cchar           *name;
     static int      workerSeqno = 0;
 
     ejsFreeze(ejs, 1);
+    if (worker == 0) {
+        worker = ejsCreateWorker(ejs);
+    }
     worker->ejs = ejs;
     worker->state = EJS_WORKER_BEGIN;
 
-    options = (argc == 2) ? (EjsObj*) argv[1]: NULL;
-    name = 0;
-    search = 0;
-
-    if (options) {
-        search = ejsGetPropertyByName(ejs, options, EN("search"));
-        value = ejsGetPropertyByName(ejs, options, EN("name"));
-        if (ejsIs(ejs, value, String)) {
-            name = ejsToMulti(ejs, value);
-        }
-    }
     if (name) {
         worker->name = sclone(name);
     } else {
@@ -23831,7 +23839,7 @@ static EjsWorker *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsOb
         Create a new interpreter and an "inside" worker object and pair it with the current "outside" worker.
         The worker interpreter gets a new dispatcher
      */
-    if ((wejs = ejsCreateVM(0, 0, 0, 0, 0, 0, 0)) == 0) {
+    if ((wejs = ejsCreateVM(baseVm, 0, 0, 0, 0, 0, 0)) == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
     }
@@ -23858,9 +23866,9 @@ static EjsWorker *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsOb
      */
     ns = ejsDefineReservedNamespace(wejs, wejs->global, NULL, EJS_WORKER_NAMESPACE);
 
-    if (argc > 0 && ejsIs(ejs, argv[0], Path)) {
+    if (scriptFile) {
         addWorker(ejs, worker);
-        worker->scriptFile = sclone(((EjsPath*) argv[0])->value);
+        worker->scriptFile = sclone(scriptFile);
         worker->state = EJS_WORKER_STARTED;
         if (mprCreateEvent(wejs->dispatcher, "workerMain", 0, (MprEventProc) workerMain, self, 0) < 0) {
             ejsThrowStateError(ejs, "Can't create worker event");
@@ -23868,6 +23876,31 @@ static EjsWorker *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsOb
         }
     }
     return worker;
+}
+
+
+static EjsWorker *workerConstructor(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **argv)
+{
+    EjsArray    *search;
+    EjsObj      *options, *value;
+    cchar       *name, *scriptFile;
+
+    ejsFreeze(ejs, 1);
+
+    scriptFile = (argc >= 1) ? ((EjsPath*) argv[0])->value : 0;
+    options = (argc == 2) ? (EjsObj*) argv[1]: NULL;
+    name = 0;
+    search = 0;
+    if (options) {
+        search = ejsGetPropertyByName(ejs, options, EN("search"));
+        value = ejsGetPropertyByName(ejs, options, EN("name"));
+        if (ejsIs(ejs, value, String)) {
+            name = ejsToMulti(ejs, value);
+        }
+    }
+    worker->ejs = ejs;
+    worker->state = EJS_WORKER_BEGIN;
+    return initWorker(ejs, worker, 0, name, search, scriptFile);
 }
 
 
@@ -23981,6 +24014,24 @@ static EjsObj *startWorker(Ejs *ejs, EjsWorker *outsideWorker, int timeout)
         return S(null);
     }
     return ejsDeserialize(ejs, result);
+}
+
+
+/*
+    function clone(deep: Boolean = null): Worker
+ */
+static EjsWorker *workerClone(Ejs *ejs, EjsWorker *baseWorker, int argc, EjsObj **argv)
+{
+    return initWorker(ejs, 0, baseWorker->pair->ejs, 0, 0, 0);
+}
+
+
+/*
+    static function cloneSelf(): Worker
+ */
+static EjsWorker *workerCloneSelf(Ejs *ejs, EjsWorker *unused, int argc, EjsObj **argv)
+{
+    return initWorker(ejs, 0, ejs, 0, 0, 0);
 }
 
 
@@ -24197,7 +24248,6 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
     worker = msg->worker;
     worker->gotMessage = 1;
     ejs = worker->ejs;
-    mprAssert(!ejs->exception);
     event = 0;
     ejsFreeze(ejs, 1);
 
@@ -24599,7 +24649,8 @@ void ejsConfigureWorkerType(Ejs *ejs)
     ejsBindMethod(ejs, type, ES_Worker_exit, workerExit);
     ejsBindMethod(ejs, type, ES_Worker_join, workerJoin);
     ejsBindMethod(ejs, type, ES_Worker_lookup, workerLookup);
-
+    ejsBindMethod(ejs, type, ES_Worker_cloneSelf, workerCloneSelf);
+    ejsBindMethod(ejs, prototype, ES_Worker_clone, workerClone);
     ejsBindMethod(ejs, prototype, ES_Worker_eval, workerEval);
     ejsBindMethod(ejs, prototype, ES_Worker_load, workerLoad);
     ejsBindMethod(ejs, prototype, ES_Worker_preload, workerPreload);
@@ -27536,6 +27587,8 @@ static MprNumber parseNumber(Ejs *ejs, MprChar *str);
 static bool      parseBoolean(Ejs *ejs, MprChar *s);
 
 
+static int acount;
+
 EjsAny *ejsAlloc(Ejs *ejs, EjsType *type, ssize extra)
 {
     EjsObj      *vp;
@@ -27553,6 +27606,7 @@ EjsAny *ejsAlloc(Ejs *ejs, EjsType *type, ssize extra)
     mprAssert(type->manager);
     //  OPT inline here
     mprSetManager(vp, type->manager);
+    acount++;
     return vp;
 }
 
@@ -27598,6 +27652,8 @@ EjsAny *ejsCreateObj(Ejs *ejs, EjsType *type, int numSlots)
     return (type->helpers.create)(ejs, type, numSlots);
 }
 
+int cloneCopy = 0;
+int cloneRef = 0;
 
 /**
     Copy a variable by copying all properties. If a property is a reference  type, just copy the reference.
@@ -27612,6 +27668,7 @@ EjsAny *ejsClone(Ejs *ejs, EjsAny *src, bool deep)
     if (src == 0) {
         return 0;
     }
+cloneCopy++;
     mprAssert(TYPE(src)->helpers.clone);
     if (VISITED(src) == 0) {
         type = TYPE(src);
@@ -30317,6 +30374,7 @@ static void *opcodeJump[] = {
                     }
                     mprAssert(f2->boundThis != ejs->global);
                     mprAssert(!ejsIsPrototype(ejs, lookup.obj));
+                    //  OPT - don't do this for global functions (if f2 == f1 and boundThis not updated (== global))
                     ejsSetProperty(ejs, lookup.obj, lookup.slotNum, f2);
                 }
             }
@@ -31417,25 +31475,27 @@ static void storePropertyToScope(Ejs *ejs, EjsName qname, EjsObj *value)
 EjsObj *ejsRunInitializer(Ejs *ejs, EjsModule *mp)
 {
     EjsModule   *dp;
+    EjsAny      *result;
     int         next;
-
+    
     if (mp->initialized || !mp->hasInitializer) {
         mp->initialized = 1;
-        return S(null);
-    }
-    mp->initialized = 1;
-
-    if (mp->dependencies) {
-        for (next = 0; (dp = (EjsModule*) mprGetNextItem(mp->dependencies, &next)) != 0;) {
-            if (dp->hasInitializer && !dp->initialized) {
-                if (ejsRunInitializer(ejs, dp) == 0) {
-                    return 0;
+        result = S(null);
+    } else {
+        mp->initialized = 1;
+        if (mp->dependencies) {
+            for (next = 0; (dp = mprGetNextItem(mp->dependencies, &next)) != 0;) {
+                if (dp->hasInitializer && !dp->initialized) {
+                    if (ejsRunInitializer(ejs, dp) == 0) {
+                        return 0;
+                    }
                 }
             }
         }
+        mprLog(6, "Running initializer for module %@", mp->name);
+        result = ejsRunFunction(ejs, mp->initializer, ejs->global, 0, NULL);
     }
-    mprLog(6, "Running initializer for module %@", mp->name);
-    return ejsRunFunction(ejs, mp->initializer, ejs->global, 0, NULL);
+    return result;
 }
 
 
@@ -31447,16 +31507,15 @@ int ejsRun(Ejs *ejs)
     EjsModule   *mp;
     int         next;
 
-    /*
-        This is used by ejs to interpret scripts. MOB OPT. Should not run through old modules every time
-     */
-    for (next = 0; (mp = (EjsModule*) mprGetNextItem(ejs->modules, &next)) != 0;) {
-        //MOB - need to keep a list of non-initialized modules
-        if (mp->initialized) {
-            continue;
+    for (next = 0; (mp = mprGetNextItem(ejs->modules, &next)) != 0;) {
+        if (!mp->initialized) {
+            ejsRunInitializer(ejs, mp);
         }
-        MPR_VERIFY_MEM();
-        if (ejsRunInitializer(ejs, mp) == 0) {
+        if (ejsCompareMulti(ejs, mp->name, EJS_DEFAULT_MODULE) == 0) {
+            ejsRemoveModule(ejs, mp);
+            next--;
+        }
+        if (ejs->exception) {
             return EJS_ERR;
         }
     }
@@ -31552,13 +31611,22 @@ EjsAny *ejsRunFunctionBySlot(Ejs *ejs, EjsAny *thisObj, int slotNum, int argc, v
 EjsAny *ejsRunFunctionByName(Ejs *ejs, EjsAny *container, EjsName qname, EjsAny *thisObj, int argc, void *argv)
 {
     EjsFunction     *fun;
+    EjsLookup       lookup;
 
     if (thisObj == 0) {
         thisObj = ejs->global;
     }
-    if ((fun = ejsGetPropertyByName(ejs, container, qname)) == 0) {
-        ejsThrowReferenceError(ejs, "Can't find function %N", qname);
-        return 0;
+    if (container) {
+        if ((fun = ejsGetPropertyByName(ejs, container, qname)) == 0) {
+            ejsThrowReferenceError(ejs, "Can't find function %N", qname);
+            return 0;
+        }
+    } else {
+        if (ejsLookupScope(ejs, qname, &lookup) == 0) {
+            ejsThrowReferenceError(ejs, "Can't find function %N", qname);
+            return 0;
+        }
+        fun = ejsGetProperty(ejs, lookup.obj, lookup.slotNum);
     }
     return ejsRunFunction(ejs, fun, thisObj, argc, argv);
 }
@@ -34482,10 +34550,16 @@ EjsModule *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsConstants 
 }
 
 
+#if UNUSED
+EjsModule *ejsCloneModule(Ejs *ejs, EjsModule *mp)
+{
+    return ejsCreateModule(ejs, mp->name, mp->version, mp->constants);
+}
+#endif
+
+
 static void manageModule(EjsModule *mp, int flags)
 {
-    Ejs     *ejs;
-
     if (flags & MPR_MANAGE_MARK) {
         mprMark(mp->name);
         mprMark(mp->vname);
@@ -34500,15 +34574,11 @@ static void manageModule(EjsModule *mp, int flags)
         mprMark(mp->scope);
         mprMark(mp->currentMethod);
         mprMark(mp->current);
-        mprMark(mp->ejs);
+        mprMark(mp->vms);
 
     } else if (flags & MPR_MANAGE_FREE) {
         mprCloseFile(mp->file);
-        ejs = mp->ejs;
-        if (ejs && ejs->modules) {
-            mprAssert(ejs->name);
-            ejsRemoveModule(ejs, mp);
-        }
+        ejsRemoveModuleFromAll(mp);
     }
 }
 
@@ -34595,7 +34665,10 @@ EjsModule *ejsLookupModule(Ejs *ejs, EjsString *name, int minVersion, int maxVer
 int ejsAddModule(Ejs *ejs, EjsModule *mp)
 {
     mprAssert(ejs->modules);
-    mp->ejs = ejs;
+    if (mp->vms == 0) {
+        mp->vms = mprCreateList(-1, 0);
+        mprAddItem(mp->vms, ejs);
+    }
     return mprAddItem(ejs->modules, mp);
 }
 
@@ -34603,22 +34676,24 @@ int ejsAddModule(Ejs *ejs, EjsModule *mp)
 void ejsRemoveModule(Ejs *ejs, EjsModule *mp)
 {
     mprLog(6, "Remove module: %@", mp->name); 
-    mp->ejs = 0;
-    if (ejs->modules) {
-        mprRemoveItem(ejs->modules, mp);
-    }
+    mprRemoveItem(mp->vms, ejs);
+    mprRemoveItem(ejs->modules, mp);
 }
 
 
-void ejsRemoveModules(Ejs *ejs)
+void ejsRemoveModuleFromAll(EjsModule *mp)
 {
-    EjsModule   *mp;
-    int         next;
+    Ejs     *ejs;
+    int     next;
 
-    for (next = 0; (mp = mprGetNextItem(ejs->modules, &next)) != 0; ) {
-        mp->ejs = 0;
+    if (mp->vms) {
+        mprLog(6, "Remove module from all vms: %@", mp->name); 
+        for (next = 0; (ejs = mprGetNextItem(mp->vms, &next)) != 0; ) {
+            if (ejs->modules) {
+                mprRemoveItem(ejs->modules, mp);
+            }
+        }
     }
-    ejs->modules = 0;
 }
 
 
@@ -35765,11 +35840,12 @@ static int cloneVM(Ejs *ejs, Ejs *master);
 static int  configureEjs(Ejs *ejs);
 static int  defineTypes(Ejs *ejs);
 static void initSearchPath(Ejs *ejs, cchar *search);
+static int  loadStandardModules(Ejs *ejs, MprList *require);
+static void logHandler(int flags, int level, cchar *msg);
 static void manageEjs(Ejs *ejs, int flags);
 static void manageEjsService(EjsService *service, int flags);
 static void markValues(Ejs *ejs);
-static int  loadStandardModules(Ejs *ejs, MprList *require);
-static void logHandler(int flags, int level, cchar *msg);
+static void poolTimer(EjsPool *pool, MprEvent *event);
 static int  runSpecificMethod(Ejs *ejs, cchar *className, cchar *methodName);
 static int  searchForMethod(Ejs *ejs, cchar *methodName, EjsType **typeReturn);
 
@@ -35813,6 +35889,124 @@ static void manageEjsService(EjsService *sp, int flags)
     }
 }
 
+
+static void managePool(EjsPool *pool, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(pool->list);
+        mprMark(pool->template);
+        mprMark(pool->mutex);
+        mprMark(pool->templateScript);
+        mprMark(pool->startScriptPath);
+    }
+}
+
+
+EjsPool *ejsCreatePool(int poolMax, cchar *templateScript, cchar *startScriptPath)
+{
+    EjsPool     *pool;
+
+    if ((pool = mprAllocObj(EjsPool, managePool)) == 0) {
+        return 0;
+    }
+    pool->mutex = mprCreateLock();
+    if ((pool->list = mprCreateList(-1, 0)) == 0) {
+        return 0;
+    }
+    pool->max = poolMax <= 0 ? MAXINT : poolMax;
+    if (templateScript) {
+        pool->templateScript = sclone(templateScript);
+    }
+    if (startScriptPath) {
+        pool->startScriptPath = sclone(startScriptPath);
+    }
+    return pool;
+}
+
+
+Ejs *ejsAllocPoolVM(EjsPool *pool, int flags)
+{
+    Ejs         *ejs;
+    EjsString   *script;
+
+    mprAssert(pool);
+
+    lock(pool);
+    if ((ejs = mprPopItem(pool->list)) == 0) {
+        if (pool->count >= pool->max) {
+            mprError("Too many ejs VMS: %d max %d", pool->count, pool->max);
+            unlock(pool);
+            return 0;
+        }
+        if (pool->template == 0) {
+            if ((pool->template = ejsCreateVM(0, 0, 0, 0, 0, 0, flags)) == 0) {
+                return 0;
+            }
+            if (pool->templateScript) {
+                script = ejsCreateStringFromAsc(pool->template, pool->templateScript);
+                if (ejsLoadScriptLiteral(pool->template, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
+                    mprError("Can't execute \"%s\"\n%s", script, ejsGetErrorMsg(pool->template, 1));
+                    return 0;
+                }
+            }
+        }
+        if ((ejs = ejsCreateVM(pool->template, 0, 0, 0, 0, 0, flags)) == 0) {
+            mprMemoryError("Can't alloc ejs VM");
+            unlock(pool);
+            return 0;
+        }
+        mprAddRoot(ejs);
+        if (pool->startScriptPath) {
+            if (ejsLoadScriptFile(ejs, pool->startScriptPath, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
+                mprError("Can't load \"%s\"\n%s", pool->startScriptPath, ejsGetErrorMsg(ejs, 1));
+                mprRemoveRoot(ejs);
+                return 0;
+            }
+        }
+        pool->count++;
+    }
+    pool->lastActivity = mprGetTime();
+    mprLog(0, "ejs: Alloc VM active %d, allocated %d, max %d", pool->count - mprGetListLength(pool->list), 
+        pool->count, pool->max);
+
+    if (!mprGetDebugMode()) {
+        pool->timer = mprCreateTimerEvent(NULL, "ejsPoolTimer", HTTP_TIMER_PERIOD, poolTimer, pool,
+            MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
+    }
+    mprRemoveRoot(ejs);
+    unlock(pool);
+    return ejs;
+}
+
+
+void ejsFreePoolVM(EjsPool *pool, Ejs *ejs)
+{
+    mprAssert(pool);
+    mprAssert(ejs);
+
+    pool->lastActivity = mprGetTime();
+    lock(pool);
+    mprPushItem(pool->list, ejs);
+    mprLog(0, "ejs: Free VM, active %d, allocated %d, max %d", pool->count - mprGetListLength(pool->list), pool->count,
+        pool->max);
+    unlock(pool);
+}
+
+
+static void poolTimer(EjsPool *pool, MprEvent *event)
+{
+    lock(pool);
+    if (mprGetElapsedTime(pool->lastActivity) > EJS_POOL_INACTIVITY_TIMEOUT && !mprGetDebugMode()) {
+        pool->template = 0;
+        mprClearList(pool->list);
+    }
+    unlock(pool);
+}
+
+
+//  MOB - need timer to free unused VMs
+
+
 #if FUTURE
 //  MOB - add flag to suppress loading ejs.mod
 Ejs *ejsCreateVM(cchar *search, int argc, cchar **argv, int flags)
@@ -35848,10 +36042,11 @@ Ejs *ejsCreateVM(Ejs *master, MprDispatcher *dispatcher, cchar *search, MprList 
     ejs->argc = argc;
     ejs->argv = argv;
     ejs->dontExit = sp->dontExit;
-    ejs->flags |= (flags & (EJS_FLAG_NO_INIT | EJS_FLAG_DOC));
+    ejs->flags |= (flags & (EJS_FLAG_NO_INIT | EJS_FLAG_DOC | EJS_FLAG_HOSTED));
+    ejs->hosted = (flags & EJS_FLAG_HOSTED) ? 1 : 0;
 
     /*
-        Modules are not marked in the modules list. This way, modules are collected when not references.
+        Modules are not marked in the modules list. This way, modules are collected when not referenced.
         Workers are marked. This way workers are preserved to run in the background until they exit.
      */
     ejs->modules = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
@@ -35873,8 +36068,10 @@ Ejs *ejsCreateVM(Ejs *master, MprDispatcher *dispatcher, cchar *search, MprList 
     }
     ejs->state->frozen = 1;
 
-    if (master && cloneVM(ejs, master) < 0) {
-        return 0;
+    if (master) {
+        if (cloneVM(ejs, master) < 0) {
+            return 0;
+        }
     } else {
         if (defineTypes(ejs) < 0 || loadStandardModules(ejs, require) < 0) {
             if (ejs->exception) {
@@ -35916,7 +36113,9 @@ void ejsDestroyVM(Ejs *ejs)
     ejs->destroying = 1;
     sp = ejs->service;
     if (sp) {
+#if UNUSED
         ejsRemoveModules(ejs);
+#endif
         ejsRemoveWorkers(ejs);
         state = ejs->state;
         if (state->stackBase) {
@@ -35936,6 +36135,8 @@ static void manageEjs(Ejs *ejs, int flags)
 {
     EjsState    *start, *state;
     EjsObj      *vp, **vpp, **top;
+    EjsModule   *mp;
+    int         next;
 
     if (flags & MPR_MANAGE_MARK) {
 #if DEBUG_IDE && 0
@@ -35953,8 +36154,16 @@ static void manageEjs(Ejs *ejs, int flags)
         mprMark(ejs->result);
         mprMark(ejs->search);
         mprMark(ejs->dispatcher);
+        mprMark(ejs->httpServers);
         mprMark(ejs->workers);
+
+        for (next = 0; (mp = (EjsModule*) mprGetNextItem(ejs->modules, &next)) != 0;) {
+            if (!mp->initialized) {
+                mprMark(mp);
+            }
+        }
         mprMark(ejs->modules);
+
         /*
             Mark active call stack
          */
@@ -35979,7 +36188,6 @@ static void manageEjs(Ejs *ejs, int flags)
             }
         }
         markValues(ejs);
-
     } else if (flags & MPR_MANAGE_FREE) {
         ejsDestroyVM(ejs);
     }
@@ -36031,25 +36239,37 @@ static void cloneTypes(Ejs *ejs)
 static int cloneVM(Ejs *ejs, Ejs *master)
 {
     EjsAny      *vp;
-    int         i;
+    EjsModule   *mp;
+    int         i, next;
 
     for (i = 0; i < EJS_MAX_SPECIAL; i++) {
         vp = master->values[i];
         if (vp == 0) {
             continue;
         }
-        mprAssert(!((ejsIsType(ejs, vp) && ((EjsType*) vp)->mutable) || 
-                (!ejsIsType(ejs, vp) && TYPE(vp)->mutableInstances)));
+#if UNUSED
+        mprAssert(!((ejsIsType(ejs, vp) && ((EjsType*) vp)->mutable) ||(!ejsIsType(ejs, vp) && TYPE(vp)->mutableInstances)));
+#endif
         ejs->values[i] = master->values[i];
     }
     ejs->global = master->global;
+
+// extern int cloneCopy;
+// MOB extern int cloneRef;
+
     ejs->global = ejsClone(ejs, master->global, 1);
+// print("Copied %d, ref %d\n", cloneCopy, cloneRef);
+
+
     ejs->potHelpers = master->potHelpers;
     ejs->objHelpers = master->objHelpers;
-    ejs->modules = mprCloneList(master->modules);
     ejs->sqlite = master->sqlite;
     ejs->http = master->http;
-    ejs->loc = master->loc;
+
+    ejs->modules = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
+    for (next = 0; (mp = (EjsModule*) mprGetNextItem(master->modules, &next)) != 0;) {
+        ejsAddModule(ejs, mp);
+    }
     ejsSetPropertyByName(ejs, ejs->global, N("ejs", "global"), ejs->global);
     ejs->initialized = 1;
     return 0;
@@ -37546,6 +37766,7 @@ void ejsConfigureFilterType(Ejs *ejs)
 
 
 static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn);
+static EjsHttpServer *lookupServer(Ejs *ejs, cchar *ip, int port);
 static void setHttpPipeline(Ejs *ejs, EjsHttpServer *sp);
 static void setupConnTrace(HttpConn *conn);
 static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags);
@@ -37612,10 +37833,6 @@ static EjsObj *hs_close(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
         ejsSendEvent(ejs, sp->emitter, "close", NULL, sp);
         httpDestroyServer(sp->server);
         sp->server = 0;
-#if UNUSED
-        //  MOB -- where else should the root be removed
-        mprRemoveRoot(sp);
-#endif
     }
     return 0;
 }
@@ -37672,96 +37889,88 @@ static EjsObj *hs_isSecure(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 
 /*  
     function listen(endpoint): Void
-    An endpoint can be either a "port", "ip:port", or null
+    An endpoint can be either a "port" or "ip:port", or null
  */
-static EjsObj *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+static EjsVoid *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     HttpServer  *server;
     HttpHost    *host;
     EjsString   *address;
-    EjsObj      *endpoint;
-    EjsPath     *root;
+    EjsObj      *endpoint, *options;
+    EjsPath     *home, *documents;
 
     endpoint = (argc >= 1) ? argv[0] : S(null);
-
-    if (sp->server) {
-        httpDestroyServer(sp->server);
-        sp->server = 0;
+    if (endpoint != S(null)) {
+        address = ejsToString(ejs, endpoint);
+        mprParseIp(address->value, &sp->ip, &sp->port, 0);
+    } else {
+        address = 0;
     }
-    if (ejsIs(ejs, endpoint, Null)) {
-        if (ejs->loc) {
-            ejs->loc->context = sp;
-#if UNUSED
-//  MOB - may not bee needed as ejs->loc is being marked
-            mprAddRoot(sp);
-#endif
-        } else {
-            ejsThrowStateError(ejs, "Can't find web server context for Ejscript. Check EjsStartup directive");
+    if (ejs->hosted) {
+        if ((options = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_options)) != 0) {
+            sp->hosted = ejsGetPropertyByName(ejs, options, EN("own")) != S(true);
+        }
+    }
+
+    if (!sp->hosted) {
+        if (address == 0) {
+            ejsThrowArgError(ejs, "Missing listen endpoint");
             return 0;
         }
-        return S(null);
-    }
-    if (ejs->loc) {
-#if UNUSED
-//  MOB - may not bee needed as ejs->loc is being marked
-        mprAddRoot(sp);
-#endif
-        /* Being called hosted - ignore endpoint value */
-        ejs->loc->context = sp;
-        return S(null);
-    }
-    address = ejsToString(ejs, endpoint);
-    mprParseIp(address->value, &sp->ip, &sp->port, 80);
+        if (sp->server) {
+            httpDestroyServer(sp->server);
+            sp->server = 0;
+        }
+        /*
+            The server uses the ejsDispatcher. This is VERY important. All connections will inherit this also.
+            This serializes all activity on one dispatcher.
+         */
+        if ((server = httpCreateServer(sp->ip, sp->port, ejs->dispatcher, HTTP_CREATE_HOST)) == 0) {
+            ejsThrowIOError(ejs, "Can't create Http server object");
+            return 0;
+        }
+        sp->server = server;
+        host = mprGetFirstItem(server->hosts);
+        if (sp->limits) {
+            ejsSetHttpLimits(ejs, server->limits, sp->limits, 1);
+        }
+        if (sp->incomingStages || sp->outgoingStages || sp->connector) {
+            setHttpPipeline(ejs, sp);
+        }
+        if (sp->ssl) {
+            httpSecureServer(server->ip, sp->port, sp->ssl);
+        }
+        if (sp->name) {
+            httpSetHostName(host, sp->name);
+        }
+        httpSetSoftware(server->http, EJS_HTTPSERVER_NAME);
+        httpSetServerAsync(server, sp->async);
+        httpSetServerContext(server, sp);
+        httpSetServerNotifier(server, stateChangeNotifier);
 
-    /*
-        The server uses the ejsDispatcher. This is VERY important. All connections will inherit this also.
-        This serializes all activity on one dispatcher.
-     */
-    if ((server = httpCreateServer(sp->ip, sp->port, ejs->dispatcher, HTTP_CREATE_HOST)) == 0) {
-        ejsThrowIOError(ejs, "Can't create Http server object");
-        return 0;
+        /*
+            This is only required for when http is using non-ejs handlers and/or filters
+         */
+        documents = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_documents);
+        if (ejsIs(ejs, documents, Path)) {
+            httpSetHostDocumentRoot(host, documents->value);
+        }
+        home = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_home);
+        if (ejsIs(ejs, home, Path)) {
+            httpSetHostServerRoot(host, home->value);
+        }
+        if (httpStartServer(server) < 0) {
+            httpDestroyServer(sp->server);
+            sp->server = 0;
+            ejsThrowIOError(ejs, "Can't listen on %s", address->value);
+        }
     }
-    sp->server = server;
-    host = mprGetFirstItem(server->hosts);
-
-    if (sp->limits) {
-        ejsSetHttpLimits(ejs, server->limits, sp->limits, 1);
+    if (ejs->httpServers == 0) {
+       ejs->httpServers = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     }
-    if (sp->incomingStages || sp->outgoingStages || sp->connector) {
-        setHttpPipeline(ejs, sp);
-    }
-    if (sp->ssl) {
-        httpSecureServer(server->ip, sp->port, sp->ssl);
-    }
-    if (sp->name) {
-        httpSetHostName(host, sp->name);
-    }
-    httpSetSoftware(server->http, EJS_HTTPSERVER_NAME);
-    httpSetServerAsync(server, sp->async);
-    httpSetServerContext(server, sp);
-    httpSetServerNotifier(server, stateChangeNotifier);
-
-    /*
-        This is only required for when http is using non-ejs handlers and/or filters
-     */
-    root = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_documentRoot);
-    if (ejsIs(ejs, root, Path)) {
-        httpSetHostDocumentRoot(host, root->value);
-    }
-    root = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_serverRoot);
-    if (ejsIs(ejs, root, Path)) {
-        httpSetHostServerRoot(host, root->value);
-    }
-    if (httpStartServer(server) < 0) {
-        ejsThrowIOError(ejs, "Can't listen on %s", address->value);
-        httpDestroyServer(sp->server);
-#if UNUSED
-        mprRemoveRoot(sp);
-#endif
-        sp->server = 0;
-        return 0;
-    }
-    return S(null);
+    mprRemoveItem(ejs->httpServers, sp);
+    mprAddItem(ejs->httpServers, sp);
+    return 0;
 }
 
 
@@ -37934,6 +38143,65 @@ static EjsObj *hs_verifyClients(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **
 }
 
 
+static void receiveRequest(EjsRequest *req, MprEvent *event)
+{
+    Ejs             *ejs;
+    EjsAny          *argv[1];
+    EjsFunction     *onrequest;
+    HttpConn        *conn;
+    
+    conn = req->conn;
+    ejs = req->ejs;
+    mprAssert(ejs);
+
+    onrequest = ejsGetProperty(ejs, req->server, ES_ejs_web_HttpServer_onrequest);
+    if (!ejsIsFunction(ejs, onrequest)) {
+        ejsThrowStateError(ejs, "HttpServer.onrequest is not a function");
+        return;
+    }
+    argv[0] = req;
+    ejsRunFunction(ejs, onrequest, req->server, 1, argv);
+    httpEnableConnEvents(conn);
+}
+
+
+/*
+    function passRequest(req: Request, worker: Worker): Void
+ */
+static EjsVoid *hs_passRequest(Ejs *ejs, EjsHttpServer *server, int argc, EjsAny **argv)
+{
+    Ejs             *nejs;
+    EjsRequest      *req, *nreq;
+    EjsWorker       *worker;
+    HttpConn        *conn;
+
+    req = argv[0];
+    worker = argv[1];
+
+    nejs = worker->pair->ejs;
+    conn = req->conn;
+    conn->ejs = nejs;
+    conn->oldDispatcher = conn->dispatcher;
+    conn->newDispatcher = nejs->dispatcher;
+
+    if ((nreq = ejsCloneRequest(nejs, req, 1)) == 0) {
+        ejsThrowStateError(ejs, "Can't clone request");
+        return 0;
+    }
+    httpSetConnContext(conn, nreq);
+
+    if ((nreq->server = ejsCloneHttpServer(nejs, req->server, 1)) == 0) {
+        ejsThrowStateError(ejs, "Can't clone request");
+        return 0;
+    }
+    conn->workerEvent = mprCreateEvent(conn->dispatcher, "RequestWorker", 0, receiveRequest, nreq, MPR_EVENT_DONT_QUEUE);
+    if (conn->workerEvent == 0) {
+        ejsThrowStateError(ejs, "Can't create worker event");
+    }  
+    return 0;
+}
+
+
 
 //  TODO rethink this. This should really go into the HttpHost object
 
@@ -37995,7 +38263,6 @@ static void setHttpPipeline(Ejs *ejs, EjsHttpServer *sp)
 static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
 {
     Ejs             *ejs;
-    EjsHttpServer   *sp;
     EjsRequest      *req;
 
     mprAssert(conn);
@@ -38021,6 +38288,9 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
                 ejsSendRequestErrorEvent(ejs, req);
             }
             ejsSendRequestCloseEvent(ejs, req);
+            if (req->cloned) {
+                ejsSendRequestCloseEvent(req->cloned->ejs, req->cloned);
+            }
         }
         break;
 
@@ -38038,36 +38308,36 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
 
     case HTTP_EVENT_CLOSE:
         /* Connection close */
-        if (conn->server) {
-            ejs = conn->mark;
-            sp = httpGetServerContext(conn->server);
-            if (ejs && sp->cloned) {
-                printf("CLOSE Connection, remaining VMs %d\n", mprGetListLength(ejs->service->vmlist) - 1);
 #if UNUSED
-                mprRemoveRoot(sp);
-#endif
-                ejsDestroyVM(ejs);
-                conn->mark = 0;
-            }
+        if (conn->pool) {
+            ejsFreePoolVM(conn->pool, conn->ejs);
+            conn->ejs = 0;
         }
+#endif
         if (req && req->conn) {
             req->conn = 0;
         }
         break;
-
     }
 }
 
 
-static void closeEjs(HttpQueue *q)
+static void closeEjsHandler(HttpQueue *q)
 {
     EjsRequest  *req;
+    HttpConn    *conn;
 
-    if ((req = httpGetConnContext(q->conn)) != 0) {
+    conn = q->conn;
+
+    if ((req = httpGetConnContext(conn)) != 0) {
         ejsSendRequestCloseEvent(req->ejs, req);
         req->conn = 0;
     }
-    httpSetConnContext(q->conn, 0);
+    httpSetConnContext(conn, 0);
+    if (conn->pool) {
+        ejsFreePoolVM(conn->pool, conn->ejs);
+        conn->ejs = 0;
+    }
 }
 
 
@@ -38099,11 +38369,10 @@ static void setupConnTrace(HttpConn *conn)
     EjsHttpServer   *sp;
     int             i;
 
-    sp = httpGetServerContext(conn->server);
-    mprAssert(sp);
-
-    for (i = 0; i < HTTP_TRACE_MAX_DIR; i++) {
-        conn->trace[i] = sp->trace[i];
+    if ((sp = httpGetServerContext(conn->server)) != 0) {
+        for (i = 0; i < HTTP_TRACE_MAX_DIR; i++) {
+            conn->trace[i] = sp->trace[i];
+        }
     }
 }
 
@@ -38144,70 +38413,51 @@ static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn)
 }
 
 
-static EjsHttpServer *getServer(HttpConn *conn)
+static void startEjsHandler(HttpQueue *q)
 {
     EjsHttpServer   *sp;
-    HttpLoc         *loc;
+    EjsRequest      *req;
+    Ejs             *ejs;
+    HttpServer      *server;
+    HttpConn        *conn;
+    MprSocket       *lp;
 
-    if ((sp = httpGetServerContext(conn->server)) == 0) {
-        /* Hosted handler. Must supply a location block which defines the HttpServer instance.  */
-        loc = conn->rx->loc;
-        if (loc == 0 || loc->context == 0) {
-            if (!conn->error) {
-                mprError("Location block is not defined for request");
-            }
-            return 0;
+    conn = q->conn;
+    server = conn->server;
+
+    if ((sp = httpGetServerContext(server)) == 0) {
+        lp = conn->sock->listenSock;
+        if ((sp = lookupServer(conn->ejs, lp->ip, lp->port)) == 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, 
+                    "No HttpServer configured to serve for request from %s:%d", lp->ip, lp->port);
+            return;
         }
-        sp = (EjsHttpServer*) loc->context;
-        if (sp->server == 0) {
-            /* Don't set limits or pipeline. That will come from the embedding server */
-            sp->server = conn->server;
-            sp->server->ssl = loc->ssl;
-            sp->ip = sclone(conn->server->ip);
-            sp->port = conn->server->port;
-            sp->dir = sclone(conn->host->documentRoot);
+        ejs = sp->ejs;
+        sp->server = server;
+        sp->ip = server->ip;
+        sp->port = server->port;
+        if (!ejsIsDefined(ejs, ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_documents))) {
+            ejsSetProperty(ejs, sp, ES_ejs_web_HttpServer_documents, 
+                ejsCreateStringFromAsc(ejs, conn->host->documentRoot));
         }
-        httpSetServerContext(conn->server, sp);
+    } else {
+        ejs = sp->ejs;
     }
     if (conn->notifier == 0) {
         httpSetConnNotifier(conn, stateChangeNotifier);
     }
-    return sp;
-}
+    if ((req = createRequest(sp, conn)) != 0) {
+        ejsSendEvent(ejs, sp->emitter, "readable", req, req);
 
-
-/*
-    Note: this may be called multiple times for async, long-running requests.
-    TODO -rename then
- */
-static void startEjs(HttpQueue *q)
-{
-    EjsHttpServer   *sp;
-    EjsRequest      *req;
-    HttpConn        *conn;
-
-    conn = q->conn;
-    if ((sp = getServer(conn)) == 0) {
-        return;
-    }
-    createRequest(sp, conn);
-    req = httpGetConnContext(conn);
-    if (req && !req->accepted) {
-        /* Server accept event */
-        req->accepted = 1;
-        ejsSendEvent(sp->ejs, sp->emitter, "readable", req, req);
+        /* Send EOF if form or upload and all content has been received.  */
         if (conn->rx->startAfterContent && conn->rx->eof) {
-            /* 
-                If form or upload, then all content is already buffered and no more input data will arrive. So can send
-                the EOF notification here
-             */
             HTTP_NOTIFY(conn, 0, HTTP_NOTIFY_READABLE);
         }
     }
 }
 
 
-static void processEjs(HttpQueue *q)
+static void processEjsHandler(HttpQueue *q)
 {
     HttpConn        *conn;
     
@@ -38236,10 +38486,10 @@ HttpStage *ejsAddWebHandler(Http *http, MprModule *module)
         return 0;
     }
     http->ejsHandler = handler;
-    handler->close = closeEjs;
+    handler->close = closeEjsHandler;
     handler->incomingData = incomingEjsData;
-    handler->start = startEjs;
-    handler->process = processEjs;
+    handler->start = startEjsHandler;
+    handler->process = processEjsHandler;
     return handler;
 }
 
@@ -38256,7 +38506,6 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
         mprMark(sp->sessionTimer);
         mprMark(sp->ssl);
         mprMark(sp->connector);
-        mprMark(sp->dir);
         mprMark(sp->keyFile);
         mprMark(sp->certFile);
         mprMark(sp->protocols);
@@ -38272,10 +38521,13 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
         httpManageTrace(&sp->trace[1], flags);
         
     } else {
+        if (sp->ejs->httpServers) {
+            mprRemoveItem(sp->ejs->httpServers, sp);
+        }
         sp->sessions = 0;
         if (!sp->cloned) {
             ejsStopSessionTimer(sp);
-            if (sp->server) {
+            if (sp->server && !sp->hosted) {
                 httpDestroyServer(sp->server);
                 sp->server = 0;
             }
@@ -38312,7 +38564,6 @@ EjsHttpServer *ejsCloneHttpServer(Ejs *ejs, EjsHttpServer *sp, bool deep)
     nsp->name = sp->name;
     nsp->ssl = sp->ssl;
     nsp->connector = sp->connector;
-    nsp->dir = sp->dir;
     nsp->port = sp->port;
     nsp->ip = sp->ip;
     nsp->certFile = sp->certFile;
@@ -38322,6 +38573,27 @@ EjsHttpServer *ejsCloneHttpServer(Ejs *ejs, EjsHttpServer *sp, bool deep)
     nsp->sessions = sp->sessions;
     httpInitTrace(nsp->trace);
     return nsp;
+}
+
+
+static EjsHttpServer *lookupServer(Ejs *ejs, cchar *ip, int port)
+{
+    EjsHttpServer   *sp;
+    int             next;
+
+    if (ip == 0) {
+        ip = "";
+    }
+    if (ejs->httpServers) {
+        for (next = 0; (sp = mprGetNextItem(ejs->httpServers, &next)) != 0; ) {
+            if (sp->port <= 0 || port <= 0 || sp->port == port) {
+                if (sp->ip == 0 || *sp->ip == '\0' || *ip == '\0' || scmp(sp->ip, ip) == 0) {
+                    return sp;
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 
@@ -38344,6 +38616,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_name, hs_name, hs_set_name);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_port, hs_port);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_off, hs_off);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_passRequest, hs_passRequest);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_on, hs_on);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_secure, hs_secure);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setLimits, hs_setLimits);
@@ -38773,7 +39046,7 @@ static char *makeRelativeHome(Ejs *ejs, EjsRequest *req)
  */
 static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
 {
-    EjsObj      *value;
+    EjsAny      *value, *app;
     HttpConn    *conn;
     cchar       *pathInfo, *scriptName;
     char        *path, *filename, *uri, *ip, *scheme;
@@ -38812,7 +39085,8 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         value = ST(Object)->helpers.getProperty(ejs, (EjsObj*) req, slotNum);
         if (value == 0 || ejsIs(ejs, value, Null)) {
             /* Default to App.config */
-            value = ejsGetProperty(ejs, ST(App), ES_App_config);
+            app = ejsGetProperty(ejs, ejs->global, ES_App);
+            value = ejsGetProperty(ejs, app, ES_App_config);
         }
         return mapNull(ejs, value);
 
@@ -38883,7 +39157,8 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
 
     case ES_ejs_web_Request_log:
         if (req->log == 0) {
-            req->log = ejsGetProperty(ejs, ST(App), ES_App_log);
+            app = ejsGetProperty(ejs, ejs->global, ES_App);
+            req->log = ejsGetProperty(ejs, app, ES_App_log);
         }
         return req->log;
 
@@ -39332,10 +39607,7 @@ static EjsObj *req_finalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
  */
 static EjsBoolean *req_finalized(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    if (req->conn && req->conn->tx) {
-        return ejsCreateBoolean(ejs, req->conn->tx->finalized);
-    }
-    return S(false);
+    return ejsCreateBoolean(ejs, req->conn == 0 || req->conn->tx->finalized);
 }
 
 
@@ -39408,6 +39680,7 @@ static EjsObj *req_on(Ejs *ejs, EjsRequest *req, int argc, EjsAny **argv)
     }
     if (!conn->writeComplete && !conn->error && HTTP_STATE_CONNECTED <= conn->state && conn->state < HTTP_STATE_COMPLETE &&
             conn->writeq->ioCount == 0) {
+        //  MOB - where else are writable events issued?  - what if write blocked and then resuming?
         ejsSendEvent(ejs, req->emitter, "writable", NULL, req);
     }
     return 0;
@@ -39656,8 +39929,11 @@ EjsRequest *ejsCloneRequest(Ejs *ejs, EjsRequest *req, bool deep)
     nreq->filename = ejsClone(ejs, req->filename, 1);
     nreq->pathInfo = ejsCreateStringFromAsc(ejs, conn->rx->pathInfo);
     nreq->scriptName = ejsCreateStringFromAsc(ejs, conn->rx->scriptName);
+#if UNUSED
     nreq->accepted = req->accepted;
+#endif
     nreq->running = req->running;
+    nreq->cloned = req;
 
 //  MOB - limits?
     if (req->route) {
@@ -39765,9 +40041,9 @@ static void manageRequest(EjsRequest *req, int flags)
         mprMark(req->server);
         mprMark(req->session);
         mprMark(req->uri);
-#if UNUSED
-        mprMark(req->app);
-#endif
+        mprMark(req->cloned);
+    } else {
+        // mprLog(0, "FREE REQUEST - cloned %p", req->cloned);
     }
 }
 
@@ -40303,6 +40579,7 @@ void ejsConfigureSessionType(Ejs *ejs)
  */
 /************************************************************************/
 
+//  MOB - remove Web class and blend into HttpServer
 /*
     ejsWeb.c -- Ejscript web framework.
 
@@ -40312,78 +40589,6 @@ void ejsConfigureSessionType(Ejs *ejs)
 
 
 static int configureWebTypes(Ejs *ejs);
-
-
-static void requestWorker(EjsRequest *req, MprEvent *event)
-{
-    Ejs         *ejs;
-    EjsObj      *argv[1];
-    HttpConn    *conn;
-    
-    ejs = req->ejs;
-    mprAssert(ejs);
-    
-    conn = req->conn;
-    argv[0] = (EjsObj*) req;
-
-    /*
-        Run the workerHelper. This may return before the request or a series of requests (keep-alive) are complete.
-     */
-    ejsRunFunctionBySlot(ejs, S(Web), ES_ejs_web_Web_workerHelper, 1, argv);
-#if UNUSED
-    conn->dispatcher = conn->oldDispatcher;
-    //  MOB - must hang here
-#endif
-    httpEnableConnEvents(conn);
-    /* Thread will return to the pool - further I/O events (or close) will come on the conn->dispatcher */
-}
-
-
-/*
-    static function worker(req: Request): Void
- */
-static EjsObj *req_worker(Ejs *ejs, EjsObj *web, int argc, EjsObj **argv)
-{
-    Ejs         *nejs;
-    EjsRequest  *req, *nreq;
-    HttpConn    *conn;
-
-    req = (EjsRequest*) argv[0];
-
-    if ((nejs = ejsCreateVM(ejs, 0, 0, 0, 0, 0, 0)) == 0) {
-        ejsThrowStateError(ejs, "Can't create interpreter to service request");
-        return 0;
-    }
-    conn = req->conn;
-    conn->mark = nejs;
-    conn->oldDispatcher = conn->dispatcher;
-    conn->newDispatcher = nejs->dispatcher;
-    
-    nejs->loc = ejs->loc;
-#if UNUSED && KEEP
-    /* Need this if not cloning */
-    if (ejsLoadModule(nejs, ejsCreateStringFromAsc(nejs, "ejs.web"), -1, -1, EJS_LOADER_RELOAD) < 0) {
-        ejsThrowStateError(ejs, "Can't load ejs.web.mod: %s", ejsGetErrorMsg(nejs, 1));
-        return 0;
-    }
-#endif
-    if ((nreq = ejsCloneRequest(nejs, req, 1)) == 0) {
-        ejsThrowStateError(ejs, "Can't clone request");
-        return 0;
-    }
-    httpSetConnContext(conn, nreq);
-
-    if ((nreq->server = ejsCloneHttpServer(nejs, req->server, 1)) == 0) {
-        ejsThrowStateError(ejs, "Can't clone request");
-        return 0;
-    }
-    conn->workerEvent = mprCreateEvent(conn->dispatcher, "RequestWorker", 0, requestWorker, nreq, MPR_EVENT_DONT_QUEUE);
-    if (conn->workerEvent == 0) {
-        ejsThrowStateError(ejs, "Can't create worker event");
-    }  
-    return 0;
-}
-
 
 /*  
     HTML escape a string
@@ -40398,20 +40603,9 @@ static EjsObj *web_escapeHtml(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 }
 
 
-
 static int configureWebTypes(Ejs *ejs)
 {
-    EjsType     *type;
     int         slotNum;
-
-    if ((type = ejsGetTypeByName(ejs, N("ejs.web", "Web"))) == 0) {
-        mprError("Can't find ejs.web::Web class");
-        ejs->hasError = 1;
-        return MPR_ERR_CANT_INITIALIZE;
-    }
-    ejsSetSpecialType(ejs, S_Web, type);
-
-    ejsBindMethod(ejs, type, ES_ejs_web_Web_worker, req_worker);
 
     if ((slotNum = ejsLookupProperty(ejs, ejs->global, N("ejs.web", "escapeHtml"))) != 0) {
         ejsBindFunction(ejs, ejs->global, slotNum, web_escapeHtml);
@@ -49570,6 +49764,7 @@ int ejsLoadScriptLiteral(Ejs *ejs, EjsString *script, cchar *cache, int flags)
     } else {
         cp->noout = 1;
     }
+    //  UNICODE -- should this API be multi or unicode
     if (ecOpenMemoryStream(cp, ejsToMulti(ejs, script), script->length) < 0) {
         mprError("Can't open memory stream");
         mprRemoveRoot(cp);
