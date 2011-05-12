@@ -1466,7 +1466,7 @@ class Templates {
         enable: true,
         location: "stdout",
         level: 1,
-        showClient: false,
+        showClient: true,
     },
 
     mvc: {

@@ -333,9 +333,8 @@ enumerable class Test {
             tsession: tsession,
             threads: threads, 
             top: _top, 
-        verbosity: verbosity, 
+            verbosity: verbosity, 
         }
-        // let w: Worker = new Worker
         let w: Worker = workerImage.clone()
         w.name = fullName
         initWorker(w, export)

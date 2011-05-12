@@ -18519,8 +18519,8 @@ module ejs.web {
 module ejs.web {
 
     /**
-        HttpServer objects represents the server-side of a Hypertext Transfer Protocol (HTTP) version 1.1 connection. 
-        It is used to receive HTTP requests and generate responses. It supports the HTTP/1.1 standard
+        HttpServer objects represents the server-side of Hypertext Transfer Protocol (HTTP) version 1.1 connections. 
+        The HttpServer class is used to receive HTTP requests and generate responses. It supports the HTTP/1.1 standard
         including methods for GET, POST, PUT, DELETE, OPTIONS, and TRACE. It also supports Keep-Alive and SSL connections.
         @spec ejs
         @stability evolving
@@ -18551,12 +18551,6 @@ module ejs.web {
                 showClient: true,
                 //  where: "file" - defaults to web server log
             },
-            /* MOB -- not yet implemented
-            session: {
-                enable: true,
-                timeout: 1800,
-            },
-            */
             web: {
                 expires: {
                     /*
@@ -18683,6 +18677,7 @@ module ejs.web {
             function onrequest(request: Request): Void
          */
         public var onrequest = defaultOnRequest
+
         /*
             Default onrequest function to handle threaded requests
             @param request Request object
@@ -18911,12 +18906,11 @@ server.listen("127.0.0.1:7777")
                     request.autoFinalize()
                 }
             } catch (e) {
-                App.log.debug(3, e)
+                App.log.debug(1, e)
                 request.writeError(Http.ServerError, e)
             }
         }
 
-        //    Accept: application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5
         private function processBody(request: Request, body: Object): Void {
             if (body is Path) {
                 if (request.isSecure) {
@@ -18983,14 +18977,12 @@ server.listen("127.0.0.1:7777")
             }
         }
 
-//TEST
         /** @hide */
         function pruneWorkers(): Void
             idleWorkers = []
 
         private function releaseWorker(w: Worker): Void {
             activeWorkers.remove(w)
-//TEST
             if (config.cache.worker) {
                 idleWorkers.push(w)
             }
@@ -19405,6 +19397,9 @@ module ejs.web {
                 for each (key in ["bin", "db", "controllers", "models", "src", "static"]) {
                     dirs[key] = request.dir.join(dirs[key])
                 }
+                for (let [key, value] in dirs) {
+                    dirs[key] = Path(value)
+                }
                 App.updateLog()
             }
 /* FUTURE
@@ -19548,8 +19543,7 @@ module ejs.web {
     function MvcBuilder(request: Request): Function {
         let mvc: Mvc
         if ((mvc = Mvc.apps[request.dir]) == null) {
-            //  MOB 2
-            App.log.debug(5, "Load MVC application from \"" + request.dir + "\"")
+            App.log.debug(2, "Load MVC application from \"" + request.dir + "\"")
             // mvc = Mvc.apps[request.dir] = new Mvc(request)
             mvc = new Mvc(request)
         }
@@ -20255,7 +20249,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
          */
         native function on(name, observer: Function): Void
 
-        //  MOB - should there be a blocking read option?
+//  MOB - should there be a blocking read option?
         /** 
             @duplicate Stream.read
             If the request is posting a form, i.e. the Http ContentType header is set to 
@@ -20479,7 +20473,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
          */
         native function write(...data): Number
 
-        //  MOB - add this to ByteArray, Http, Socket (not to Stream)
+//  MOB - add this to ByteArray, Http, Socket (not to Stream)
         /** 
             Write a block of data to the client. This will buffer the written data which will be flushed when either 
             close(), flush() or finalize() is called or the underlying pipeline is full. 
@@ -20650,6 +20644,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
 
         /*************************************** Deprecated ***************************************/
 
+//  MOB - remove all this legacy stuff
         /** 
             @hide
             @deprecated 2.0.0
