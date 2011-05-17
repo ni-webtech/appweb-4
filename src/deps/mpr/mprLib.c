@@ -9744,7 +9744,6 @@ MprHashTable *mprCreateHash(int hashSize, int flags)
     if ((table = mprAllocObj(MprHashTable, manageHashTable)) == 0) {
         return 0;
     }
-    /*  TODO -- should support rehashing */
     if (hashSize < MPR_DEFAULT_HASH_SIZE) {
         hashSize = MPR_DEFAULT_HASH_SIZE;
     }
@@ -9957,17 +9956,64 @@ void *mprLookupHash(MprHashTable *table, cvoid *key)
 
 
 /*
+    Exponential primes
+ */
+static int hashSizes[] = {
+     19, 29, 59, 79, 97, 193, 389, 769, 1543, 3079, 6151, 12289, 24593, 49157, 98317, 196613, 0
+};
+
+
+static int getHashSize(int numKeys)
+{
+    int     i;
+
+    for (i = 0; hashSizes[i]; i++) {
+        if (numKeys < hashSizes[i]) {
+            return hashSizes[i];
+        }
+    }
+    return hashSizes[i - 1];
+}
+
+
+/*
     This is unlocked because it is read-only
  */
 static MprHash *lookupHash(int *bucketIndex, MprHash **prevSp, MprHashTable *table, cvoid *key)
 {
-    MprHash     *sp, *prev;
-    int         index, rc;
+    MprHash     *sp, *prev, *next;
+    MprHash     **buckets;
+    int         hashSize, i, index, rc;
 
     mprAssert(key);
 
     if (key == 0 || table == 0) {
         return 0;
+    }
+    if (table->length > table->hashSize) {
+        hashSize = getHashSize(table->length * 4 / 3);
+        if (table->hashSize < hashSize) {
+            if ((buckets = mprAllocZeroed(sizeof(MprHash*) * hashSize)) != 0) {
+                table->length = 0;
+                for (i = 0; i < table->hashSize; i++) {
+                    for (sp = table->buckets[i]; sp; sp = next) {
+                        next = sp->next;
+                        mprAssert(next != sp);
+                        index = table->hash(sp->key, slen(sp->key)) % hashSize;
+                        if (buckets[index]) {
+                            sp->next = buckets[index];
+                        } else {
+                            sp->next = 0;
+                        }
+                        buckets[index] = sp;
+                        sp->bucket = index;
+                        table->length++;
+                    }
+                }
+                table->hashSize = hashSize;
+                table->buckets = buckets;
+            }
+        }
     }
     index = table->hash(key, slen(key)) % table->hashSize;
     if (bucketIndex) {
@@ -12122,7 +12168,7 @@ MprHashTable *mprCreateMimeTypes(cchar *path)
         mprCloseFile(file);
 
     } else {
-        if ((table = mprCreateHash(MPR_DEFAULT_HASH_SIZE, 0)) == 0) {
+        if ((table = mprCreateHash(59, 0)) == 0) {
             return 0;
         }
         addStandardMimeTypes(table);
@@ -21815,7 +21861,7 @@ int mprCreateTimeService()
     TimeToken           *tt;
 
     mpr = MPR;
-    mpr->timeTokens = mprCreateHash(-1, MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES);
+    mpr->timeTokens = mprCreateHash(59, MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES);
     for (tt = days; tt->name; tt++) {
         mprAddKey(mpr->timeTokens, tt->name, (void*) tt);
     }
@@ -26957,7 +27003,7 @@ static MprXmlToken getToken(MprXml *xp, int state)
                 }
                 putLastChar(xp, c);
             }
-            if (mprGetBufLength(tokBuf) <= 0) {
+            if (mprGetBufLength(tokBuf) < 0) {
                 return MPR_XMLTOK_ERR;
             }
             mprAddNullToBuf(tokBuf);

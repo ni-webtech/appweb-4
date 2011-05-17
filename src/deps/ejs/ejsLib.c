@@ -2655,7 +2655,6 @@ static EjsAny *invokeBooleanOperator(Ejs *ejs, EjsBoolean *lhs, int opcode, EjsB
     If the value is omitted or 0, -1, NaN, false, null, undefined or the empty string, then set the boolean value to
     to false.
  */
-
 static EjsBoolean *booleanConstructor(Ejs *ejs, EjsBoolean *bp, int argc, EjsObj **argv)
 {
     mprAssert(argc == 0 || argc == 1);
@@ -2667,13 +2666,6 @@ static EjsBoolean *booleanConstructor(Ejs *ejs, EjsBoolean *bp, int argc, EjsObj
     return bp;
 }
 
-
-#if UNUSED
-EjsBoolean *ejsCreateBoolean(Ejs *ejs, int value)
-{
-    return ((value) ? S(true) : S(false));
-}
-#endif
 
 
 void ejsCreateBooleanType(Ejs *ejs)
@@ -10546,9 +10538,6 @@ void ejsGetHttpLimits(Ejs *ejs, EjsObj *obj, HttpLimits *limits, int server)
         ejsSetPropertyByName(ejs, obj, EN("header"), ejsCreateNumber(ejs, (MprNumber) limits->headerSize));
         ejsSetPropertyByName(ejs, obj, EN("headers"), ejsCreateNumber(ejs, (MprNumber) limits->headerCount));
         ejsSetPropertyByName(ejs, obj, EN("requests"), ejsCreateNumber(ejs, (MprNumber) limits->requestCount));
-#if UNUSED
-        ejsSetPropertyByName(ejs, obj, EN("sessions"), ejsCreateNumber(ejs, (MprNumber) limits->sessionCount));
-#endif
         ejsSetPropertyByName(ejs, obj, EN("stageBuffer"), ejsCreateNumber(ejs, (MprNumber) limits->stageBufferSize));
         ejsSetPropertyByName(ejs, obj, EN("uri"), ejsCreateNumber(ejs, (MprNumber) limits->uriSize));
     }
@@ -10592,9 +10581,6 @@ void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server)
     if (server) {
         limits->clientCount = (int) setLimit(ejs, obj, "clients", 1);
         limits->requestCount = (int) setLimit(ejs, obj, "requests", 1);
-#if UNUSED
-        limits->sessionCount = (int) setLimit(ejs, obj, "sessions", 1);
-#endif
         limits->stageBufferSize = (ssize) setLimit(ejs, obj, "stageBuffer", 1);
         limits->uriSize = (ssize) setLimit(ejs, obj, "uri", 1);
         limits->headerCount = (int) setLimit(ejs, obj, "headers", 1);
@@ -16588,8 +16574,8 @@ int ejsMakeHash(Ejs *ejs, EjsPot *obj)
 }
 
 
-//  TODO -- rename
-void ejsClearPotHash(EjsPot *obj)
+#if UNUSED
+void ejsClearHash(EjsPot *obj)
 {
     EjsSlot         *sp;
     int             i;
@@ -16604,6 +16590,7 @@ void ejsClearPotHash(EjsPot *obj)
         }
     }
 }
+#endif
 
 
 static void removeHashEntry(Ejs *ejs, EjsPot *obj, EjsName qname)
@@ -18137,14 +18124,6 @@ static EjsAny *castString(Ejs *ejs, EjsString *sp, EjsType *type)
 {
     mprAssert(sp);
     mprAssert(type);
-
-#if UNUSED
-    if (type == ST(Path)) {
-        return ejsCreatePath(ejs, sp);
-    } else if (type == ST(Uri)) {
-        return ejsCreateUri(ejs, sp);
-    }
-#endif
 
     switch (type->sid) {
     case S_Boolean:
@@ -20447,14 +20426,6 @@ EjsString *ejsInternWide(Ejs *ejs, MprChar *value, ssize len)
     if ((sp = ejsAlloc(ejs, ST(String), (len + 1) * sizeof(MprChar))) != NULL) {
         memcpy(sp->value, value, len * sizeof(MprChar));
         sp->value[len] = 0;
-#if UNUSED
-        if (strcmp(value, "multithread") == 0) {
-            MprThread *tp = mprGetCurrentThread();
-            MprMem *mp = MPR_GET_MEM(sp);
-            printf("EJS %s %p, ALLOCATE multithread GEN %d MARK %d, active %d\n", ejs->name, ejs, (int) MPR_GET_GEN(mp), (int) MPR_GET_MARK(mp), MPR->heap.active);
-            printf("\n");
-        }
-#endif
     }
     sp->length = len;
     linkString(head, sp);
@@ -20496,14 +20467,6 @@ EjsString *ejsInternAsc(Ejs *ejs, cchar *value, ssize len)
                     ip->reuse++;
                     /* Revive incase almost stale or dead */
                     mprRevive(sp);
-#if UNUSED
-                    if (strcmp(value, "multithread") == 0) {
-                        MprThread *tp = mprGetCurrentThread();
-                        MprMem *mp = MPR_GET_MEM(sp);
-                        printf("EJS %s, @@@@ REVIVE MULTITHREAD GEN %d MARK %d, active %d\n", ejs->name, (int) MPR_GET_GEN(mp), (int) MPR_GET_MARK(mp), MPR->heap.active);
-                        printf("\n");
-                    }
-#endif
                     iunlock();
                     return sp;
                 }
@@ -35304,6 +35267,7 @@ int ejsEncodeInt32(Ejs *ejs, uchar *pos, int number)
         mprAssert("Code generation error. Word exceeds maximum");
         return 0;
     }
+    memset(pos, 0, 4);
     len = ejsEncodeNum(ejs, pos, (int64) number);
     mprAssert(len <= 4);
     return 4;
@@ -38498,12 +38462,6 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
 
     case HTTP_EVENT_CLOSE:
         /* Connection close */
-#if UNUSED
-        if (conn->pool) {
-            ejsFreePoolVM(conn->pool, conn->ejs);
-            conn->ejs = 0;
-        }
-#endif
         if (req && req->conn) {
             req->conn = 0;
         }
@@ -38693,10 +38651,6 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
         ejsManagePot(sp, flags);
         mprMark(sp->ejs);
         mprMark(sp->server);
-#if UNUSED
-        mprMark(sp->sessionTimer);
-        mprMark(sp->sessions);
-#endif
         mprMark(sp->ssl);
         mprMark(sp->connector);
         mprMark(sp->keyFile);
@@ -38716,17 +38670,11 @@ static void manageHttpServer(EjsHttpServer *sp, int flags)
         if (sp->ejs && sp->ejs->httpServers) {
             mprRemoveItem(sp->ejs->httpServers, sp);
         }
-#if UNUSED
-        sp->sessions = 0;
-#endif
         if (!sp->cloned) {
             if (sp->server && !sp->hosted) {
                 httpDestroyServer(sp->server);
                 sp->server = 0;
             }
-#if UNUSED
-            ejsCheckSessionTimer(sp);
-#endif
         }
     }
 }
@@ -38766,9 +38714,6 @@ EjsHttpServer *ejsCloneHttpServer(Ejs *ejs, EjsHttpServer *sp, bool deep)
     nsp->keyFile = sp->keyFile;
     nsp->ciphers = sp->ciphers;
     nsp->protocols = sp->protocols;
-#if UNUSED
-    nsp->sessions = sp->sessions;
-#endif
     httpInitTrace(nsp->trace);
     return nsp;
 }
@@ -40064,12 +40009,6 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     q = conn->writeq;
 
     if (httpIsFinalized(conn)) {
-        /*
-            Better to just eat the data if already finalized
-         */
-#if UNUSED
-        ejsThrowIOError(ejs, "Response already finalized");
-#endif
         return 0;
     }
     for (i = 0; i < args->length; i++) {
@@ -40180,9 +40119,6 @@ EjsRequest *ejsCloneRequest(Ejs *ejs, EjsRequest *req, bool deep)
     nreq->filename = ejsClone(ejs, req->filename, 1);
     nreq->pathInfo = ejsCreateStringFromAsc(ejs, conn->rx->pathInfo);
     nreq->scriptName = ejsCreateStringFromAsc(ejs, conn->rx->scriptName);
-#if UNUSED
-    nreq->accepted = req->accepted;
-#endif
     nreq->running = req->running;
     nreq->cloned = req;
 

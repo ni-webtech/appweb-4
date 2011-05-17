@@ -1212,10 +1212,6 @@ typedef struct Ejs {
     void                *sqlite;            /**< Sqlite context information */
 
     Http                *http;              /**< Http service object (copy of EjsService.http) */
-#if UNUSED
-    HttpLoc             *loc;               /**< Current HttpLocation object for web start scripts */
-    EjsAny              *applications;      /**< Application cache */
-#endif
     MprMutex            *mutex;             /**< Multithread locking */
 } Ejs;
 
@@ -2216,9 +2212,6 @@ typedef struct EjsFrame {
     struct EjsFrame *caller;                /**< Previous invoking frame */
     EjsObj          **stackBase;            /**< Start of stack in this function */
     EjsObj          **stackReturn;          /**< Top of stack to return to */
-#if UNUSED
-    EjsObj          *thisObj;               /**< Current "this" object for the frame */
-#endif
     EjsLine         *line;                  /**< Debug source line */
     uchar           *pc;                    /**< Program counter */
     uchar           *attentionPc;           /**< Restoration PC value after attention */
@@ -3214,11 +3207,7 @@ typedef struct EjsType {
     EjsHelpers      helpers;                        /**< Type helper methods */
     struct EjsType  *baseType;                      /**< Base class */
     MprManager      manager;                        /**< Manager callback */
-#if UNUSED
-    struct Ejs      *ejs;                           /**< Interpreter reference */
-#endif
     MprMutex        *mutex;                         /**< Optional locking for types that require it */
-
     MprList         *implements;                    /**< List of implemented interfaces */
         
     uint            callsSuper           : 1;       /**< Constructor calls super() */
@@ -3626,9 +3615,6 @@ struct EjsArray *ejsCreateSearchPath(Ejs *ejs, cchar *searchPath);
     @ingroup Ejs
  */
 extern void ejsSetSearchPath(Ejs *ejs, struct EjsArray *search);
-#if UNUSED
-extern void ejsInitSearchPath(Ejs *ejs);
-#endif
 
 /**
     Evaluate a file
@@ -4193,9 +4179,6 @@ typedef struct EjsHttpServer {
     EjsPot          pot;                        /**< Extends Object */
     Ejs             *ejs;                       /**< Ejscript interpreter handle */
     HttpServer      *server;                    /**< Http server object */
-#if UNUSED
-    MprEvent        *sessionTimer;              /**< Session expiry timer */
-#endif
     struct MprSsl   *ssl;                       /**< SSL configuration */
     HttpTrace       trace[2];                   /**< Default tracing for requests */
     cchar           *connector;                 /**< Pipeline connector */
@@ -4211,9 +4194,6 @@ typedef struct EjsHttpServer {
     struct EjsHttpServer *cloned;               /**< Server that was cloned */
     EjsObj          *emitter;                   /**< Event emitter */
     EjsObj          *limits;                    /**< Limits object */
-#if UNUSED
-    EjsPot          *sessions;                  /**< Session cache */
-#endif
     EjsArray        *incomingStages;            /**< Incoming Http pipeline stages */
     EjsArray        *outgoingStages;            /**< Outgoing Http pipeline stages */
 } EjsHttpServer;
@@ -4262,9 +4242,6 @@ typedef struct EjsRequest {
     Ejs             *ejs;               /**< Ejscript interpreter handle */
     struct EjsSession *session;         /**< Current session */
 
-#if UNUSED
-    int             accepted;           /**< Request has been accepted from the HttpServer */
-#endif
     //  OPT - make bit fields
     int             dontAutoFinalize;   /**< Suppress auto-finalization */
     int             probedSession;      /**< Determined if a session exists */
@@ -4328,16 +4305,9 @@ extern EjsSession *ejsGetSession(Ejs *ejs, EjsString *key, MprTime timeout, int 
     @param session Session object created via ejsGetSession()
 */
 extern int ejsDestroySession(Ejs *ejs, EjsSession *session);
-
 extern void ejsSetSessionTimeout(Ejs *ejs, EjsSession *sp, int timeout);
-
 extern void ejsSendRequestCloseEvent(Ejs *ejs, EjsRequest *req);
 extern void ejsSendRequestErrorEvent(Ejs *ejs, EjsRequest *req);
-
-#if UNUSED
-//  MOB - should take no arg
-extern void ejsCheckSessionTimer(EjsHttpServer *server);
-#endif
 
 
 extern void ejsConfigureHttpServerType(Ejs *ejs);
