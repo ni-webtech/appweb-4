@@ -190,7 +190,7 @@ static void processPhp(HttpQueue *q)
     } zend_end_try();
 
     zend_try {
-        hp = mprGetFirstHash(rx->headers);
+        hp = mprGetFirstKey(rx->headers);
         while (hp) {
             if (hp->data) {
                 key = sjoin("HTTP_", supper(hp->key), NULL);
@@ -198,16 +198,16 @@ static void processPhp(HttpQueue *q)
                 mprLog(4, "php: header %s = %s", key, hp->data);
 
             }
-            hp = mprGetNextHash(rx->headers, hp);
+            hp = mprGetNextKey(rx->headers, hp);
         }
         if (rx->formVars) {
-            hp = mprGetFirstHash(rx->formVars);
+            hp = mprGetFirstKey(rx->formVars);
             while (hp) {
                 if (hp->data) {
                     php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
                     mprLog(4, "php: form var %s = %s", hp->key, hp->data);
                 }
-                hp = mprGetNextHash(rx->formVars, hp);
+                hp = mprGetNextKey(rx->formVars, hp);
             }
         }
     } zend_end_try();

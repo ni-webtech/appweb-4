@@ -805,7 +805,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
         NOTE: we don't use PATH deliberately!!!
      */
     if (access(fileName, X_OK) < 0) {
-        for (hp = 0; (hp = mprGetNextHash(loc->extensions, hp)) != 0; ) {
+        for (hp = 0; (hp = mprGetNextKey(loc->extensions, hp)) != 0; ) {
             path = sjoin(fileName, ".", hp->key, NULL);
             if (access(path, X_OK) == 0) {
                 break;
@@ -938,7 +938,7 @@ static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix)
     MprHash     *hp;
     char        *cp;
 
-    for (hp = 0; (hp = mprGetNextHash(vars, hp)) != 0; ) {
+    for (hp = 0; (hp = mprGetNextKey(vars, hp)) != 0; ) {
         if (hp->data) {
             if (prefix) {
                 cp = sjoin(prefix, hp->key, "=", (char*) hp->data, NULL);

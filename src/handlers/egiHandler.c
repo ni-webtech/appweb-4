@@ -32,7 +32,7 @@ static void runEgi(HttpQueue *q)
     egi = (MaEgi*) q->stage->stageData;
     
     mprLog(5, "runEgi");
-    form = (MaEgiForm*) mprLookupHash(egi->forms, rx->pathInfo);
+    form = (MaEgiForm*) mprLookupKey(egi->forms, rx->pathInfo);
     if (form == 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Egi Form: \"%s\" is not defined", rx->pathInfo);
     } else {

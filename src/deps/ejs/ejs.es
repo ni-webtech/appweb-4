@@ -5726,6 +5726,7 @@ FUTURE & KEEP
             Resource limits for requests.
             @param limits. Limits is an object hash with the following properties:
             @option chunk Maximum size of a chunk when using chunked transfer encoding.
+            @option connReuse Maximum number of times to reuse a connection for requests (KeepAlive count).
             Chunked encoding will be used if the total body content length is unknown at the time the request headers 
             must be emitted. The Http class will typically buffer output until $flush is called and will often be able 
             to determine the content length even if a Content-Length header has not been explicitly defined. 
@@ -5734,7 +5735,6 @@ FUTURE & KEEP
             @option inactivityTimeout Maximum time in seconds to keep a connection open if idle. Set to zero for no timeout.
             @option receive Maximum size of incoming body data.
             @option requestTimeout Maximum time in seconds for a request to complete. Set to zero for no timeout.
-            @option reuse Maximum number of times to reuse a connection for requests (KeepAlive count).
             @option stageBuffer Maximum stage buffer size for each direction.
             @option transmission Maximum size of outgoing body data.
             @see setLimits
@@ -14403,7 +14403,6 @@ module ejs.db.mapper {
             if (options.noassoc) {
                 options.depth = 0
             }
-
             if (options.columns) {
                 columns = options.columns
                 /*
@@ -14541,6 +14540,20 @@ module ejs.db.mapper {
                 throw new Error("Database connection has not yet been established")
             }
 
+/*
+    MOB - prototype caching
+
+            if (options.lifespan) {
+                if (App.config.cache.database && App.config.cache.database.enable) {
+                    if (_cache[cmd]) {
+                        results = App.store.read("::ejs.db.mapper::" + controllerName + "::" + actionName)
+                        if (results) {
+                            return deserialize(results)
+                        }
+                    }
+                }
+            }
+ */
             let results: Array
             try {
                 if (_trace) {
@@ -16931,13 +16944,6 @@ module ejs.web {
                 log = request.log
                 params = request.params
                 config = request.config
-            /*
-UNUSED MOB
-                if (config.database) {
-                    //  MOB - OPT - move this into MVC and do only once
-                    openDatabase(request)
-                }
-            */
                 if (request.method == "POST") {
                     before(checkSecurityToken)
                 }
@@ -16974,7 +16980,18 @@ UNUSED MOB
             params.action = actionName
             runCheckers(_beforeCheckers)
             let response
+            //  MOB - is this right to test autoFinalizing here?
             if (!request.finalized && request.autoFinalizing) {
+/*
+                MOB - prototype action caching
+                if (_cache[actionName]) {
+                    response = App.store.read("::ejs.web.action::" + controllerName + "::" + actionName)
+                    if (response) {
+                        return deserialize(response)
+                    }
+                    request.writeBuffer = new ByteArray
+                }
+ */
                 if (!(ns)::[actionName]) {
                     if (!viewExists(actionName)) {
                         response = "action"::missing()
@@ -16995,6 +17012,14 @@ UNUSED MOB
             if (!response) {
                 request.autoFinalize()
             }
+/*MOB
+            //  MOB - but what if not finalized? 
+            //  MOB - options. Could just have caching for what the action has rendered.
+            if (_cache[actionName]) {
+                response = App.store.write("::ejs.web.action::" + controllerName + "::" + actionName, 
+                    serialize(request.writeBuffer), _cache[actionName])
+            }
+ */
             return response
         }
 
@@ -17021,6 +17046,16 @@ UNUSED MOB
             _beforeCheckers ||= []
             _beforeCheckers.append([fn, options])
         }
+
+/*MOB
+        //  MOB - this is action caching. Caches entire page
+        //  Usage:  cache("index", {lifespan: 200})
+        function cache(name: String, options: Object = null): Void {
+            if (config.cache.action.enable) {
+                _cache[name] = options
+            }
+        }
+ */
 
         /** @duplicate ejs.web::Request.dontAutoFinalize */
         function dontAutoFinalize(): Void
@@ -18726,8 +18761,8 @@ module ejs.web {
 
         private static const defaultConfig = {
             app: {
-                reload: true,
                 cache: true,
+                reload: true,
             },
             dirs: {
                 cache: Path("cache"),
@@ -18746,14 +18781,13 @@ module ejs.web {
                 adapter: "local",
                 "class": "Local",
                 module: "ejs.store.local",
-                limits: {
-                    lifespan: 3600,
-                },
+                lifespan: 3600,
             },
             web: {
                 cache: {
-                    workers: true,
-                }
+                    workers: { enable: true, limit: 10 },
+                },
+                limits: {},
                 views: {
                     connectors: {
                         table: "html",
@@ -18765,7 +18799,6 @@ module ejs.web {
                     },
                     layout: "default.ejs",
                 },
-                workers: {},
             },
         }
 
@@ -18827,19 +18860,20 @@ module ejs.web {
             @param limits. Limits is an object hash with the following properties:
             @option chunk Maximum size of a chunk when using chunked transfer encoding.
             @option clients Maximum number of simultaneous clients.
+            @option connReuse Maximum number of times to reuse a connection for requests (KeepAlive count).
             @option headers Maximum number of headers in a request.
             @option header Maximum size of headers.
             @option inactivityTimeout Maximum time in seconds to keep a connection open if idle. Set to zero for no timeout.
             @option receive Maximum size of incoming body data.
             @option requests Maximum number of simultaneous requests.
             @option requestTimeout Maximum time in seconds for a request to complete. Set to zero for no timeout.
-            @option reuse Maximum number of times to reuse a connection for requests (KeepAlive count).
             @option sessionTimeout Default time to preserve session state for new requests. Set to zero for no timeout.
             @option stageBuffer Maximum stage buffer size for each direction.
             @option transmission Maximum size of outgoing body data.
             @option upload Maximum size of uploaded files.
             @option uri Maximum size of URIs.
-            @option workers Maximum number of Worker virtual machines to create for threaded requests
+            @option workers Maximum number of Worker threads to utilize for threaded requests. This value is initialized
+                from the ejsrc cache.workers.limit field.
             @see setLimits
           */
         native function get limits(): Object
@@ -18952,10 +18986,8 @@ server.listen("127.0.0.1:7777")
             if (web.trace) {
                 trace(web.trace)
             }
-            if (web.limits) {
-                /* This will set session limits too */
-                setLimits(web.limits)
-            }
+            web.limits.workers ||= web.cache.workers.limit
+            setLimits(web.limits)
             if (web.session) {
                 openSession()
             }
@@ -19006,7 +19038,7 @@ server.listen("127.0.0.1:7777")
                 }
                 workerImage ||= Worker.cloneSelf()
                 w = workerImage.clone()
-                if (config.web.workers.init) {
+                if (config.web.workers && config.web.workers.init) {
                     w.preeval(config.web.workers.init)
                 }
             }
@@ -19101,6 +19133,7 @@ server.listen("127.0.0.1:7777")
                     let headers = response.headers || { "Content-Type": "text/html" }
                     request.setHeaders(headers)
                     processBody(request, response.body)
+
                 } else {
                     let file = request.responseHeaders["X-Sendfile"]
                     if (file && !request.isSecure) {
@@ -19189,7 +19222,7 @@ server.listen("127.0.0.1:7777")
 
         private function releaseWorker(w: Worker): Void {
             activeWorkers.remove(w)
-            if (config.cache.worker) {
+            if (config.web.cache.workers.enable) {
                 idleWorkers.push(w)
             }
             App.log.debug(4, "HttpServer.releaseWorker idle: " + idleWorkers.length + " active:" + activeWorkers.length)
@@ -19971,10 +20004,10 @@ module ejs.web {
             Resource limits for the request. The limits have initial default values defined by the owning HttpServer.
             @param limits. Limits is an object hash with the following properties:
             @option chunk Maximum size of a chunk when using chunked transfer encoding.
+            @option connReuse Maximum number of times to reuse a connection for requests (KeepAlive count).
             @option inactivityTimeout Maximum time in seconds to keep a connection open if idle. Set to zero for no timeout.
             @option receive Maximum size of incoming body data.
             @option requestTimeout Maximum time in seconds for a request to complete. Set to zero for no timeout.
-            @option reuse Maximum number of times to reuse a connection for requests (KeepAlive count).
             @option sessionTimeout Maximum time to preserve session state. Set to zero for no timeout.
             @option transmission Maximum size of outgoing body data.
             @option upload Maximum size of uploaded files.
@@ -21189,9 +21222,13 @@ module ejs.web {
          */
         public function addHandlers(): Void {
             let staticPattern = "\/" + (App.config.dirs.static.basename || "static") + "\/.*"
+            //  MOB - why test here?
             if (staticPattern) {
                 add(staticPattern, {name: "default", response: StaticApp})
             }
+/*  MOB
+            add(/\.html$|\.css$|\.jpg$|\.gif$|\.png$|\.ico$|\.css$|\.js$/,  {name: "static",  response: StaticApp})
+ */
             add(/\.es$/,  {name: "es",  response: ScriptApp, method: "*"})
             add(/\.ejs$/, {name: "ejs", module: "ejs.template", response: TemplateApp, method: "*"})
             add(isDir,    {name: "dir", response: DirApp})
@@ -21321,6 +21358,7 @@ module ejs.web {
             switch (routeSet) {
             case Top:
                 addHandlers()
+                //  MOB - should this not be addCatchall()
                 addDefault(StaticApp)
                 break
             case Restful:

@@ -392,7 +392,7 @@ cchar *httpGetNativePassword(HttpAuth *auth, cchar *realm, cchar *user)
     up = 0;
     key = sjoin(realm, ":", user, NULL);
     if (auth->users) {
-        up = (HttpUser*) mprLookupHash(auth->users, key);
+        up = (HttpUser*) mprLookupKey(auth->users, key);
     }
     if (up == 0) {
         return 0;
@@ -442,7 +442,7 @@ static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user)
         if (auth->users == 0) {
             return 0;
         }
-        return mprLookupHash(auth->users, key) != 0;
+        return mprLookupKey(auth->users, key) != 0;
     }
 
     if (auth->requiredUsers) {
@@ -468,7 +468,7 @@ static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user)
             if (auth->groups == 0) {
                 gp = 0;
             } else {
-                gp = (HttpGroup*) mprLookupHash(auth->groups, group);
+                gp = (HttpGroup*) mprLookupKey(auth->groups, group);
             }
             if (gp == 0) {
                 mprError("Can't find group %s", group);
@@ -485,7 +485,7 @@ static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user)
     }
     if (auth->requiredAcl != 0) {
         key = sjoin(realm, ":", user, NULL);
-        up = (HttpUser*) mprLookupHash(auth->users, key);
+        up = (HttpUser*) mprLookupKey(auth->users, key);
         if (up) {
             mprLog(6, "UserRealm \"%s\" has ACL %lx, Required ACL %lx", key, up->acl, auth->requiredAcl);
             if (up->acl & auth->requiredAcl) {
@@ -538,7 +538,7 @@ int httpAddGroup(HttpAuth *auth, cchar *group, HttpAcl acl, bool enabled)
     if (auth->groups == 0) {
         auth->groups = mprCreateHash(-1, 0);
     }
-    if (mprLookupHash(auth->groups, group)) {
+    if (mprLookupKey(auth->groups, group)) {
         return MPR_ERR_ALREADY_EXISTS;
     }
     if (mprAddKey(auth->groups, group, gp) == 0) {
@@ -587,7 +587,7 @@ int httpAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool
         auth->users = mprCreateHash(-1, 0);
     }
     key = sjoin(realm, ":", user, NULL);
-    if (mprLookupHash(auth->users, key)) {
+    if (mprLookupKey(auth->users, key)) {
         return MPR_ERR_ALREADY_EXISTS;
     }
     if (mprAddKey(auth->users, key, up) == 0) {
@@ -619,7 +619,7 @@ int httpAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *userList)
 
     gp = 0;
 
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupHash(auth->groups, group)) == 0) {
+    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
     tok = NULL;
@@ -640,7 +640,7 @@ int httpDisableGroup(HttpAuth *auth, cchar *group)
 
     gp = 0;
 
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupHash(auth->groups, group)) == 0) {
+    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
     gp->enabled = 0;
@@ -655,7 +655,7 @@ int httpDisableUser(HttpAuth *auth, cchar *realm, cchar *user)
 
     up = 0;
     key = sjoin(realm, ":", user, NULL);
-    if (auth->users == 0 || (up = (HttpUser*) mprLookupHash(auth->users, key)) == 0) {
+    if (auth->users == 0 || (up = (HttpUser*) mprLookupKey(auth->users, key)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
     up->enabled = 0;
@@ -668,7 +668,7 @@ int httpEnableGroup(HttpAuth *auth, cchar *group)
     HttpGroup     *gp;
 
     gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupHash(auth->groups, group)) == 0) {
+    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
     gp->enabled = 1;
@@ -683,7 +683,7 @@ int httpEnableUser(HttpAuth *auth, cchar *realm, cchar *user)
 
     up = 0;
     key = sjoin(realm, ":", user, NULL);    
-    if (auth->users == 0 || (up = (HttpUser*) mprLookupHash(auth->users, key)) == 0) {
+    if (auth->users == 0 || (up = (HttpUser*) mprLookupKey(auth->users, key)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
     up->enabled = 1;
@@ -696,7 +696,7 @@ HttpAcl httpGetGroupAcl(HttpAuth *auth, char *group)
     HttpGroup     *gp;
 
     gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupHash(auth->groups, group)) == 0) {
+    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
     return gp->acl;
@@ -708,7 +708,7 @@ bool httpIsGroupEnabled(HttpAuth *auth, cchar *group)
     HttpGroup     *gp;
 
     gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupHash(auth->groups, group)) == 0) {
+    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
         return 0;
     }
     return gp->enabled;
@@ -722,7 +722,7 @@ bool httpIsUserEnabled(HttpAuth *auth, cchar *realm, cchar *user)
 
     up = 0;
     key = sjoin(realm, ":", user, NULL);
-    if (auth->users == 0 || (up = (HttpUser*) mprLookupHash(auth->users, key)) == 0) {
+    if (auth->users == 0 || (up = (HttpUser*) mprLookupKey(auth->users, key)) == 0) {
         return 0;
     }
     return up->enabled;
@@ -769,7 +769,7 @@ void httpUpdateUserAcls(HttpAuth *auth)
         Reset the ACL for each user
      */
     if (auth->users != 0) {
-        for (userHash = 0; (userHash = mprGetNextHash(auth->users, userHash)) != 0; ) {
+        for (userHash = 0; (userHash = mprGetNextKey(auth->users, userHash)) != 0; ) {
             ((HttpUser*) userHash->data)->acl = 0;
         }
     }
@@ -778,9 +778,9 @@ void httpUpdateUserAcls(HttpAuth *auth)
         Get the union of all ACLs defined for a user over all groups that the user is a member of.
      */
     if (auth->groups != 0 && auth->users != 0) {
-        for (groupHash = 0; (groupHash = mprGetNextHash(auth->groups, groupHash)) != 0; ) {
+        for (groupHash = 0; (groupHash = mprGetNextKey(auth->groups, groupHash)) != 0; ) {
             gp = ((HttpGroup*) groupHash->data);
-            for (userHash = 0; (userHash = mprGetNextHash(auth->users, userHash)) != 0; ) {
+            for (userHash = 0; (userHash = mprGetNextKey(auth->users, userHash)) != 0; ) {
                 user = ((HttpUser*) userHash->data);
                 if (strcmp(user->name, user->name) == 0) {
                     user->acl = user->acl | gp->acl;
@@ -794,10 +794,10 @@ void httpUpdateUserAcls(HttpAuth *auth)
 
 int httpRemoveGroup(HttpAuth *auth, cchar *group)
 {
-    if (auth->groups == 0 || !mprLookupHash(auth->groups, group)) {
+    if (auth->groups == 0 || !mprLookupKey(auth->groups, group)) {
         return MPR_ERR_CANT_ACCESS;
     }
-    mprRemoveHash(auth->groups, group);
+    mprRemoveKey(auth->groups, group);
     return 0;
 }
 
@@ -807,10 +807,10 @@ int httpRemoveUser(HttpAuth *auth, cchar *realm, cchar *user)
     char    *key;
 
     key = sjoin(realm, ":", user, NULL);
-    if (auth->users == 0 || !mprLookupHash(auth->users, key)) {
+    if (auth->users == 0 || !mprLookupKey(auth->users, key)) {
         return MPR_ERR_CANT_ACCESS;
     }
-    mprRemoveHash(auth->users, key);
+    mprRemoveKey(auth->users, key);
     return 0;
 }
 
@@ -821,7 +821,7 @@ int httpRemoveUsersFromGroup(HttpAuth *auth, cchar *group, cchar *userList)
     char        *user, *users, *tok;
 
     gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupHash(auth->groups, group)) == 0) {
+    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
     tok = NULL;
@@ -840,7 +840,7 @@ int httpSetGroupAcl(HttpAuth *auth, cchar *group, HttpAcl acl)
     HttpGroup     *gp;
 
     gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupHash(auth->groups, group)) == 0) {
+    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
     gp->acl = acl;
@@ -951,12 +951,12 @@ int httpWriteUserFile(Http *http, HttpAuth *auth, char *path)
         mprError("Can't open %s", tempFile);
         return MPR_ERR_CANT_OPEN;
     }
-    hp = mprGetNextHash(auth->users, 0);
+    hp = mprGetNextKey(auth->users, 0);
     while (hp) {
         up = (HttpUser*) hp->data;
         mprSprintf(buf, sizeof(buf), "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
         mprWriteFile(file, buf, (int) strlen(buf));
-        hp = mprGetNextHash(auth->users, hp);
+        hp = mprGetNextKey(auth->users, hp);
     }
     mprCloseFile(file);
     unlink(path);
@@ -982,7 +982,7 @@ int httpWriteGroupFile(Http *http, HttpAuth *auth, char *path)
         return MPR_ERR_CANT_OPEN;
     }
 
-    hp = mprGetNextHash(auth->groups, 0);
+    hp = mprGetNextKey(auth->groups, 0);
     while (hp) {
         gp = (HttpGroup*) hp->data;
         mprSprintf(buf, sizeof(buf), "%d: %x: %s: ", gp->enabled, gp->acl, gp->name);
@@ -991,7 +991,7 @@ int httpWriteGroupFile(Http *http, HttpAuth *auth, char *path)
             mprWriteFile(file, name, strlen(name));
         }
         mprWriteFile(file, "\n", 1);
-        hp = mprGetNextHash(auth->groups, hp);
+        hp = mprGetNextKey(auth->groups, hp);
     }
     mprCloseFile(file);
     unlink(path);
@@ -3813,10 +3813,10 @@ void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *ex
 int httpSetupTrace(HttpHost *host, cchar *ext)
 {
     if (ext) {
-        if (host->traceInclude && !mprLookupHash(host->traceInclude, ext)) {
+        if (host->traceInclude && !mprLookupKey(host->traceInclude, ext)) {
             return 0;
         }
-        if (host->traceExclude && mprLookupHash(host->traceExclude, ext)) {
+        if (host->traceExclude && mprLookupKey(host->traceExclude, ext)) {
             return 0;
         }
     }
@@ -4305,7 +4305,7 @@ void httpAddStage(Http *http, HttpStage *stage)
 
 HttpStage *httpLookupStage(Http *http, cchar *name)
 {
-    return (HttpStage*) mprLookupHash(http->stages, name);
+    return (HttpStage*) mprLookupKey(http->stages, name);
 }
 
 
@@ -4315,7 +4315,7 @@ cchar *httpLookupStatus(Http *http, int status)
     char            key[8];
     
     itos(key, sizeof(key), status, 10);
-    ep = (HttpStatusCode*) mprLookupHash(http->statusCodes, key);
+    ep = (HttpStatusCode*) mprLookupKey(http->statusCodes, key);
     if (ep == 0) {
         return "Custom error";
     }
@@ -5001,7 +5001,7 @@ void httpResetHandlers(HttpLoc *loc)
 
 HttpStage *httpGetHandlerByExtension(HttpLoc *loc, cchar *ext)
 {
-    return (HttpStage*) mprLookupHash(loc->extensions, ext);
+    return (HttpStage*) mprLookupKey(loc->extensions, ext);
 }
 
 
@@ -5047,7 +5047,7 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
         return 0;
     }
     itos(numBuf, sizeof(numBuf), code, 10);
-    return (cchar*) mprLookupHash(loc->errorDocuments, numBuf);
+    return (cchar*) mprLookupKey(loc->errorDocuments, numBuf);
 }
 
 
@@ -5222,7 +5222,7 @@ static bool rewriteRequest(HttpConn *conn)
             return 1;
         }
     }
-    for (he = 0; (he = mprGetNextHash(loc->extensions, he)) != 0; ) {
+    for (he = 0; (he = mprGetNextKey(loc->extensions, he)) != 0; ) {
         handler = (HttpStage*) he->data;
         if (handler->rewrite && handler->rewrite(conn, handler)) {
             return 1;
@@ -5318,7 +5318,7 @@ static HttpStage *findHandler(HttpConn *conn)
                 /*
                     URI has no extension, check if the addition of configured  extensions results in a valid filename.
                  */
-                for (path = 0, hp = 0; (hp = mprGetNextHash(loc->extensions, hp)) != 0; ) {
+                for (path = 0, hp = 0; (hp = mprGetNextKey(loc->extensions, hp)) != 0; ) {
                     handler = (HttpStage*) hp->data;
                     if (*hp->key && (handler->flags & HTTP_STAGE_MISSING_EXT)) {
                         path = sjoin(tx->filename, ".", hp->key, NULL);
@@ -6743,7 +6743,7 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter)
         return filter->match(conn, filter);
     }
     if (filter->extensions && tx->extension) {
-        return mprLookupHash(filter->extensions, tx->extension) != 0;
+        return mprLookupKey(filter->extensions, tx->extension) != 0;
     }
     return 1;
 }
@@ -8198,7 +8198,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         if (strspn(key, "%<>/\\") > 0) {
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad header key value");
         }
-        if ((oldValue = mprLookupHash(rx->headers, key)) != 0) {
+        if ((oldValue = mprLookupKey(rx->headers, key)) != 0) {
             mprAddKey(rx->headers, key, mprAsprintf("%s, %s", oldValue, value));
         } else {
             mprAddKey(rx->headers, key, sclone(value));
@@ -8943,7 +8943,7 @@ cchar *httpGetHeader(HttpConn *conn, cchar *key)
         mprAssert(conn->rx);
         return 0;
     }
-    return mprLookupHash(conn->rx->headers, slower(key));
+    return mprLookupKey(conn->rx->headers, slower(key));
 }
 
 
@@ -8960,7 +8960,7 @@ char *httpGetHeaders(HttpConn *conn)
     }
     rx = conn->rx;
     headers = 0;
-    for (len = 0, hp = mprGetFirstHash(rx->headers); hp; ) {
+    for (len = 0, hp = mprGetFirstKey(rx->headers); hp; ) {
         headers = srejoin(headers, hp->key, NULL);
         key = &headers[len];
         for (cp = &key[1]; *cp; cp++) {
@@ -8971,7 +8971,7 @@ char *httpGetHeaders(HttpConn *conn)
         }
         headers = srejoin(headers, ": ", hp->data, "\n", NULL);
         len = strlen(headers);
-        hp = mprGetNextHash(rx->headers, hp);
+        hp = mprGetNextKey(rx->headers, hp);
     }
     return headers;
 }
@@ -9389,7 +9389,7 @@ cvoid *httpGetStageData(HttpConn *conn, cchar *key)
     if (rx->requestData == 0) {
         return NULL;
     }
-    return mprLookupHash(rx->requestData, key);
+    return mprLookupKey(rx->requestData, key);
 }
 
 
@@ -10059,17 +10059,17 @@ int httpValidateLimits(HttpServer *server, int event, HttpConn *conn)
                 "Too many concurrent clients %d/%d", server->clientCount, limits->clientCount);
             return 0;
         }
-        count = (int) PTOL(mprLookupHash(server->clientLoad, conn->ip));
+        count = (int) PTOL(mprLookupKey(server->clientLoad, conn->ip));
         mprAddKey(server->clientLoad, conn->ip, ITOP(count + 1));
         server->clientCount = (int) mprGetHashLength(server->clientLoad);
         break;
 
     case HTTP_VALIDATE_CLOSE_CONN:
-        count = (int) PTOL(mprLookupHash(server->clientLoad, conn->ip));
+        count = (int) PTOL(mprLookupKey(server->clientLoad, conn->ip));
         if (count > 1) {
             mprAddKey(server->clientLoad, conn->ip, ITOP(count - 1));
         } else {
-            mprRemoveHash(server->clientLoad, conn->ip);
+            mprRemoveKey(server->clientLoad, conn->ip);
         }
         server->clientCount = (int) mprGetHashLength(server->clientLoad);
         mprLog(4, "Close connection %d. Active requests %d, active clients %d.", conn->seqno, server->requestCount, 
@@ -10612,11 +10612,11 @@ int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext)
         return -1;
     }
     if (ext) {
-        if (trace->include && !mprLookupHash(trace->include, ext)) {
+        if (trace->include && !mprLookupKey(trace->include, ext)) {
             trace->disable = 1;
             return -1;
         }
-        if (trace->exclude && mprLookupHash(trace->exclude, ext)) {
+        if (trace->exclude && mprLookupKey(trace->exclude, ext)) {
             trace->disable = 1;
             return -1;
         }
@@ -10851,7 +10851,7 @@ int httpRemoveHeader(HttpConn *conn, cchar *key)
     if (conn->tx == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
-    return mprRemoveHash(conn->tx->headers, key);
+    return mprRemoveKey(conn->tx->headers, key);
 }
 
 
@@ -10870,7 +10870,7 @@ void httpAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     value = mprAsprintfv(fmt, vargs);
     va_end(vargs);
 
-    if (!mprLookupHash(conn->tx->headers, key)) {
+    if (!mprLookupKey(conn->tx->headers, key)) {
         addHeader(conn, key, value);
     }
 }
@@ -10885,7 +10885,7 @@ void httpAddHeaderString(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(key && *key);
     mprAssert(value);
 
-    if (!mprLookupHash(conn->tx->headers, key)) {
+    if (!mprLookupKey(conn->tx->headers, key)) {
         addHeader(conn, key, sclone(value));
     }
 }
@@ -10908,7 +10908,7 @@ void httpAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     value = mprAsprintfv(fmt, vargs);
     va_end(vargs);
 
-    oldValue = mprLookupHash(conn->tx->headers, key);
+    oldValue = mprLookupKey(conn->tx->headers, key);
     if (oldValue) {
         addHeader(conn, key, mprAsprintf("%s, %s", oldValue, value));
     } else {
@@ -10928,7 +10928,7 @@ void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(key && *key);
     mprAssert(value && *value);
 
-    oldValue = mprLookupHash(conn->tx->headers, key);
+    oldValue = mprLookupKey(conn->tx->headers, key);
     if (oldValue) {
         addHeader(conn, key, mprAsprintf("%s, %s", oldValue, value));
     } else {
@@ -11239,10 +11239,10 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         httpAddHeaderString(conn, "Cache-Control", "no-cache");
 
     } else if (rx->loc && rx->loc->expires) {
-        mimeType = mprLookupHash(tx->headers, "Content-Type");
-        expires = PTOL(mprLookupHash(rx->loc->expires, mimeType ? mimeType : ""));
+        mimeType = mprLookupKey(tx->headers, "Content-Type");
+        expires = PTOL(mprLookupKey(rx->loc->expires, mimeType ? mimeType : ""));
         if (expires == 0) {
-            expires = PTOL(mprLookupHash(rx->loc->expires, ""));
+            expires = PTOL(mprLookupKey(rx->loc->expires, ""));
         }
         if (expires) {
             mprDecodeUniversalTime(&tm, mprGetTime() + (expires * MPR_TICKS_PER_SEC));
@@ -11382,7 +11382,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     /* 
        Output headers
      */
-    hp = mprGetFirstHash(conn->tx->headers);
+    hp = mprGetFirstKey(conn->tx->headers);
     while (hp) {
         mprPutStringToBuf(packet->content, hp->key);
         mprPutStringToBuf(packet->content, ": ");
@@ -11390,7 +11390,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
             mprPutStringToBuf(packet->content, hp->data);
         }
         mprPutStringToBuf(packet->content, "\r\n");
-        hp = mprGetNextHash(conn->tx->headers, hp);
+        hp = mprGetNextKey(conn->tx->headers, hp);
     }
 
     /* 
@@ -12925,7 +12925,7 @@ void httpCreateCGIVars(HttpConn *conn)
     mprAddKey(table, "SERVER_ROOT", host->serverRoot);
 
     if (rx->files) {
-        for (index = 0, hp = 0; (hp = mprGetNextHash(conn->rx->files, hp)) != 0; index++) {
+        for (index = 0, hp = 0; (hp = mprGetNextKey(conn->rx->files, hp)) != 0; index++) {
             up = (HttpUploadFile*) hp->data;
             mprAddKey(table, mprAsprintf("FILE_%d_FILENAME", index), up->filename);
             mprAddKey(table, mprAsprintf("FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
@@ -12971,7 +12971,7 @@ MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len)
             /*  
                 Append to existing keywords
              */
-            oldValue = mprLookupHash(table, keyword);
+            oldValue = mprLookupKey(table, keyword);
             if (oldValue != 0 && *oldValue) {
                 if (*value) {
                     newValue = sjoin(oldValue, " ", value, NULL);
@@ -13016,7 +13016,7 @@ int httpTestFormVar(HttpConn *conn, cchar *var)
     if ((vars = conn->rx->formVars) == 0) {
         return 0;
     }
-    return vars && mprLookupHash(vars, var) != 0;
+    return vars && mprLookupKey(vars, var) != 0;
 }
 
 
@@ -13026,7 +13026,7 @@ cchar *httpGetFormVar(HttpConn *conn, cchar *var, cchar *defaultValue)
     cchar           *value;
     
     if ((vars = conn->rx->formVars) == 0) {
-        value = mprLookupHash(vars, var);
+        value = mprLookupKey(vars, var);
         return (value) ? value : defaultValue;
     }
     return defaultValue;
@@ -13039,7 +13039,7 @@ int httpGetIntFormVar(HttpConn *conn, cchar *var, int defaultValue)
     cchar           *value;
     
     if ((vars = conn->rx->formVars) == 0) {
-        value = mprLookupHash(vars, var);
+        value = mprLookupKey(vars, var);
         return (value) ? (int) stoi(value, 10, NULL) : defaultValue;
     }
     return defaultValue;
@@ -13103,7 +13103,7 @@ void httpRemoveUploadFile(HttpConn *conn, cchar *id)
 
     rx = conn->rx;
 
-    upfile = (HttpUploadFile*) mprLookupHash(rx->files, id);
+    upfile = (HttpUploadFile*) mprLookupKey(rx->files, id);
     if (upfile) {
         mprDeletePath(upfile->filename);
         upfile->filename = 0;
@@ -13119,7 +13119,7 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
 
     rx = conn->rx;
 
-    for (hp = 0; rx->files && (hp = mprGetNextHash(rx->files, hp)) != 0; ) {
+    for (hp = 0; rx->files && (hp = mprGetNextKey(rx->files, hp)) != 0; ) {
         upfile = (HttpUploadFile*) hp->data;
         if (upfile->filename) {
             mprDeletePath(upfile->filename);

@@ -1363,7 +1363,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     /*
         Allow all stages to parse the request
      */
-    hp = mprGetFirstHash(http->stages);
+    hp = mprGetFirstKey(http->stages);
     while (hp) {
         stage = (HttpStage*) hp->data;
         if (stage->parse) {
@@ -1374,7 +1374,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (rc > 0) {
             break;
         }
-        hp = mprGetNextHash(http->stages, hp);
+        hp = mprGetNextKey(http->stages, hp);
     }
     return rc;
 }

@@ -9465,7 +9465,7 @@ static EjsPot *http_getRequestHeaders(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **
 
     conn = hp->conn;
     headers = ejsCreateEmptyPot(ejs);
-    for (p = 0; conn->tx && (p = mprGetNextHash(conn->tx->headers, p)) != 0; ) {
+    for (p = 0; conn->tx && (p = mprGetNextKey(conn->tx->headers, p)) != 0; ) {
         ejsSetPropertyByName(ejs, headers, EN(p->key), ejsCreateStringFromAsc(ejs, p->data));
     }
     return headers;
@@ -9522,7 +9522,7 @@ static EjsPot *http_headers(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     if (hash == 0) {
         return results;
     }
-    for (i = 0, p = mprGetFirstHash(hash); p; p = mprGetNextHash(hash, p), i++) {
+    for (i = 0, p = mprGetFirstKey(hash); p; p = mprGetNextKey(hash, p), i++) {
         ejsSetPropertyByName(ejs, results, EN(p->key), ejsCreateStringFromAsc(ejs, p->data));
     }
     return results;
@@ -10524,8 +10524,8 @@ static bool waitForResponseHeaders(EjsHttp *hp, int timeout)
 void ejsGetHttpLimits(Ejs *ejs, EjsObj *obj, HttpLimits *limits, int server) 
 {
     ejsSetPropertyByName(ejs, obj, EN("chunk"), ejsCreateNumber(ejs, (MprNumber) limits->chunkSize));
+    ejsSetPropertyByName(ejs, obj, EN("connReuse"), ejsCreateNumber(ejs, limits->keepAliveCount));
     ejsSetPropertyByName(ejs, obj, EN("receive"), ejsCreateNumber(ejs, (MprNumber) limits->receiveBodySize));
-    ejsSetPropertyByName(ejs, obj, EN("reuse"), ejsCreateNumber(ejs, limits->keepAliveCount));
     ejsSetPropertyByName(ejs, obj, EN("transmission"), ejsCreateNumber(ejs, (MprNumber) limits->transmissionBodySize));
     ejsSetPropertyByName(ejs, obj, EN("upload"), ejsCreateNumber(ejs, (MprNumber) limits->uploadSize));
     ejsSetPropertyByName(ejs, obj, EN("inactivityTimeout"), 
@@ -10564,7 +10564,7 @@ void ejsSetHttpLimits(Ejs *ejs, HttpLimits *limits, EjsObj *obj, int server)
     limits->chunkSize = (ssize) setLimit(ejs, obj, "chunk", 1);
     limits->inactivityTimeout = (int) setLimit(ejs, obj, "inactivityTimeout", MPR_TICKS_PER_SEC);
     limits->receiveBodySize = (MprOff) setLimit(ejs, obj, "receive", 1);
-    limits->keepAliveCount = (int) setLimit(ejs, obj, "reuse", 1);
+    limits->keepAliveCount = (int) setLimit(ejs, obj, "connReuse", 1);
     limits->requestTimeout = (int) setLimit(ejs, obj, "requestTimeout", MPR_TICKS_PER_SEC);
     limits->sessionTimeout = (int) setLimit(ejs, obj, "sessionTimeout", MPR_TICKS_PER_SEC);
     limits->transmissionBodySize = (MprOff) setLimit(ejs, obj, "transmission", 1);
@@ -34555,7 +34555,7 @@ EjsDoc *ejsCreateDoc(Ejs *ejs, cchar *tag, void *vp, int slotNum, EjsString *doc
         ejs->doc = mprCreateHash(EJS_DOC_HASH_SIZE, 0);
     }
     mprSprintf(key, sizeof(key), "%s %Lx %d", tag, PTOL(vp), slotNum);
-    if ((doc = mprLookupHash(ejs->doc, key)) != 0) {
+    if ((doc = mprLookupKey(ejs->doc, key)) != 0) {
         return doc;
     }
     if ((doc = mprAllocObj(EjsDoc, manageDoc)) == 0) {
@@ -34753,7 +34753,7 @@ int ejsAddNativeModule(Ejs *ejs, cchar *name, EjsNativeCallback callback, int ch
 
 EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, cchar *name) 
 {
-    return mprLookupHash(ejs->service->nativeModules, name);
+    return mprLookupKey(ejs->service->nativeModules, name);
 }
 
 
@@ -38898,7 +38898,7 @@ static EjsObj *createParams(Ejs *ejs, EjsRequest *req)
         params = (EjsObj*) ejsCreateEmptyPot(ejs);
         if (req->conn && (formVars = req->conn->rx->formVars) != 0) {
             hp = 0;
-            while ((hp = mprGetNextHash(formVars, hp)) != NULL) {
+            while ((hp = mprGetNextKey(formVars, hp)) != NULL) {
                 defineParam(ejs, params, hp->key, hp->data);
             }
         }
@@ -38918,7 +38918,7 @@ static EjsObj *createCookies(Ejs *ejs, EjsRequest *req)
     if (req->conn == 0) {
         return S(null);
     }
-    if ((cookieHeader = mprLookupHash(req->conn->rx->headers, "cookie")) == 0) {
+    if ((cookieHeader = mprLookupKey(req->conn->rx->headers, "cookie")) == 0) {
         req->cookies = S(null);
     } else {
         argv[0] = (EjsObj*) ejsCreateStringFromAsc(ejs, cookieHeader);
@@ -38954,7 +38954,7 @@ static EjsObj *createFiles(Ejs *ejs, EjsRequest *req)
             return S(null);
         }
         req->files = files = (EjsObj*) ejsCreateEmptyPot(ejs);
-        for (index = 0, hp = 0; (hp = mprGetNextHash(conn->rx->files, hp)) != 0; index++) {
+        for (index = 0, hp = 0; (hp = mprGetNextKey(conn->rx->files, hp)) != 0; index++) {
             up = (HttpUploadFile*) hp->data;
             file = (EjsObj*) ejsCreateEmptyPot(ejs);
             ejsSetPropertyByName(ejs, file, EN("filename"), ejsCreateStringFromAsc(ejs, up->filename));
@@ -38980,7 +38980,7 @@ static EjsObj *createHeaders(Ejs *ejs, EjsRequest *req)
     if (req->headers == 0) {
         req->headers = (EjsObj*) ejsCreateEmptyPot(ejs);
         conn = req->conn;
-        for (hp = 0; conn && (hp = mprGetNextHash(conn->rx->headers, hp)) != 0; ) {
+        for (hp = 0; conn && (hp = mprGetNextKey(conn->rx->headers, hp)) != 0; ) {
             n = EN(hp->key);
             if ((old = ejsGetPropertyByName(ejs, req->headers, n)) != 0) {
                 value = ejsCreateStringFromAsc(ejs, sjoin(ejsToMulti(ejs, old), "; ", hp->data, NULL));
@@ -39039,7 +39039,7 @@ static EjsObj *createResponseHeaders(Ejs *ejs, EjsRequest *req)
         conn = req->conn;
         if (conn && conn->tx) {
             /* Get default headers */
-            for (hp = 0; (hp = mprGetNextHash(conn->tx->headers, hp)) != 0; ) {
+            for (hp = 0; (hp = mprGetNextKey(conn->tx->headers, hp)) != 0; ) {
                 ejsSetPropertyByName(ejs, req->responseHeaders, EN(hp->key), ejsCreateStringFromAsc(ejs, hp->data));
             }
             conn->headersCallback = (HttpHeadersCallback) fillResponseHeaders;
@@ -40354,7 +40354,7 @@ static EjsString *makeKey(Ejs *ejs, EjsSession *sp)
 
     /* Thread race here on nextSession++ not critical */
     mprSprintf(idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(ejs) + PTOI(sp), (int) mprGetTime(), nextSession++);
-    return ejsCreateStringFromAsc(ejs, mprGetMD5Hash(idBuf, sizeof(idBuf), "session-"));
+    return ejsCreateStringFromAsc(ejs, mprGetMD5Hash(idBuf, sizeof(idBuf), "::ejs.web.session::"));
 }
 
 
@@ -50734,7 +50734,7 @@ static int makeAlphaToken(EcCompiler *cp, EcToken *tp, int c)
     if (c) {
         putBackChar(stream, c);
     }
-    rp = (ReservedWord*) mprLookupHash(cp->keywords, tp->text);
+    rp = (ReservedWord*) mprLookupKey(cp->keywords, tp->text);
     if (rp) {
         setTokenID(tp, rp->tokenId, rp->subId, rp->groupMask);
     } else {
@@ -51853,7 +51853,7 @@ static void createDocSection(EcCompiler *cp, cchar *tag, EjsPot *block, int slot
         ejs->doc = mprCreateHash(EJS_DOC_HASH_SIZE, 0);
     }
     mprSprintf(key, sizeof(key), "%s %Lx %d", tag, PTOL(block), slotNum);
-    if ((doc = mprLookupHash(ejs->doc, key)) == 0) {
+    if ((doc = mprLookupKey(ejs->doc, key)) == 0) {
         return;
     }
     ecEncodeByte(cp, EJS_SECT_DOC);
@@ -51978,7 +51978,7 @@ int ecAddDocConstant(EcCompiler *cp, cchar *tag, void *vp, int slotNum)
     mprAssert(slotNum >= 0);
 
     mprSprintf(key, sizeof(key), "%s %Lx %d", tag, PTOL(vp), slotNum);
-    doc = (EjsDoc*) mprLookupHash(ejs->doc, key);
+    doc = (EjsDoc*) mprLookupKey(ejs->doc, key);
     if (doc && doc->docString) {
         if (ecAddStringConstant(cp, doc->docString) < 0) {
             mprAssert(0);
@@ -52007,7 +52007,7 @@ int ecAddModuleConstant(EcCompiler *cp, EjsModule *mp, cchar *str)
         return 0;
     }
     constants = mp->constants;
-    if (constants->table && (hp = mprLookupHashEntry(constants->table, str)) != 0) {
+    if (constants->table && (hp = mprLookupKeyEntry(constants->table, str)) != 0) {
         return PTOI(hp->data);
     }
     index = ejsAddConstant(cp->ejs, constants, str);

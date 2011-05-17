@@ -9811,10 +9811,10 @@ MprHashTable *mprCloneHash(MprHashTable *master)
     if (table == 0) {
         return 0;
     }
-    hp = mprGetFirstHash(master);
+    hp = mprGetFirstKey(master);
     while (hp) {
         mprAddKey(table, hp->key, hp->data);
-        hp = mprGetNextHash(master, hp);
+        hp = mprGetNextKey(master, hp);
     }
     return table;
 }
@@ -9903,10 +9903,7 @@ MprHash *mprAddDuplicateKey(MprHashTable *table, cvoid *key, cvoid *ptr)
 }
 
 
-/*
-    Remove an entry from the table
- */
-int mprRemoveHash(MprHashTable *table, cvoid *key)
+int mprRemoveKey(MprHashTable *table, cvoid *key)
 {
     MprHash     *sp, *prevSp;
     int         index;
@@ -9930,7 +9927,7 @@ int mprRemoveHash(MprHashTable *table, cvoid *key)
 /*
     Lookup a key and return the hash entry
  */
-MprHash *mprLookupHashEntry(MprHashTable *table, cvoid *key)
+MprHash *mprLookupKeyEntry(MprHashTable *table, cvoid *key)
 {
     mprAssert(key);
 
@@ -9941,7 +9938,7 @@ MprHash *mprLookupHashEntry(MprHashTable *table, cvoid *key)
 /*
     Lookup a key and return the hash entry data
  */
-void *mprLookupHash(MprHashTable *table, cvoid *key)
+void *mprLookupKey(MprHashTable *table, cvoid *key)
 {
     MprHash     *sp;
 
@@ -10064,7 +10061,7 @@ int mprGetHashLength(MprHashTable *table)
 /*
     Return the first entry in the table.
  */
-MprHash *mprGetFirstHash(MprHashTable *table)
+MprHash *mprGetFirstKey(MprHashTable *table)
 {
     MprHash     *sp;
     int         i;
@@ -10083,7 +10080,7 @@ MprHash *mprGetFirstHash(MprHashTable *table)
 /*
     Return the next entry in the table
  */
-MprHash *mprGetNextHash(MprHashTable *table, MprHash *last)
+MprHash *mprGetNextKey(MprHashTable *table, MprHash *last)
 {
     MprHash     *sp;
     int         i;
@@ -10091,7 +10088,7 @@ MprHash *mprGetNextHash(MprHashTable *table, MprHash *last)
     mprAssert(table);
 
     if (last == 0) {
-        return mprGetFirstHash(table);
+        return mprGetFirstKey(table);
     }
     if (last->next) {
         return last->next;
@@ -10597,15 +10594,18 @@ int mprSetListLimits(MprList *lp, int initialSize, int maxSize)
     }
     size = initialSize * sizeof(void*);
 
+    lock(lp);
     if (lp->items == 0) {
         if ((lp->items = mprAlloc(size)) == 0) {
             mprAssert(!MPR_ERR_MEMORY);
+            unlock(lp);
             return MPR_ERR_MEMORY;
         }
         memset(lp->items, 0, size);
         lp->capacity = initialSize;
     }
     lp->maxSize = maxSize;
+    unlock(lp);
     return 0;
 }
 
@@ -10617,16 +10617,20 @@ int mprCopyList(MprList *dest, MprList *src)
 
     mprClearList(dest);
 
+    lock(src);
     if (mprSetListLimits(dest, src->capacity, src->maxSize) < 0) {
         mprAssert(!MPR_ERR_MEMORY);
+        unlock(src);
         return MPR_ERR_MEMORY;
     }
     for (next = 0; (item = mprGetNextItem(src, &next)) != 0; ) {
         if (mprAddItem(dest, item) < 0) {
             mprAssert(!MPR_ERR_MEMORY);
+            unlock(src);
             return MPR_ERR_MEMORY;
         }
     }
+    unlock(src);
     return 0;
 }
 
@@ -10635,8 +10639,7 @@ MprList *mprCloneList(MprList *src)
 {
     MprList     *lp;
 
-    lp = mprCreateList(src->capacity, src->flags);
-    if (lp == 0) {
+    if ((lp = mprCreateList(src->capacity, src->flags)) == 0) {
         return 0;
     }
     if (mprCopyList(lp, src) < 0) {
@@ -10941,19 +10944,22 @@ void *mprGetNextItem(MprList *lp, int *next)
     if (lp == 0) {
         return 0;
     }
+    lock(lp);
     index = *next;
-
     if (index < lp->length) {
         item = lp->items[index];
         *next = ++index;
+        unlock(lp);
         return item;
     }
+    unlock(lp);
     return 0;
 }
 
 
 void *mprGetPrevItem(MprList *lp, int *next)
 {
+    void    *item;
     int     index;
 
     mprAssert(next);
@@ -10961,15 +10967,18 @@ void *mprGetPrevItem(MprList *lp, int *next)
     if (lp == 0) {
         return 0;
     }
+    lock(lp);
     if (*next < 0) {
         *next = lp->length;
     }
     index = *next;
-
     if (--index < lp->length && index >= 0) {
         *next = index;
-        return lp->items[index];
+        item = lp->items[index];
+        unlock(lp);
+        return item;
     }
+    unlock(lp);
     return 0;
 }
 
@@ -10987,9 +10996,11 @@ void *mprPopItem(MprList *lp)
 
     item = NULL;
     if (lp->length > 0) {
+        lock(lp);
         index = lp->length - 1;
         item = mprGetItem(lp, index);
         mprRemoveItemAtPos(lp, index);
+        unlock(lp);
     }
     return item;
 }
@@ -11091,7 +11102,9 @@ static int growList(MprList *lp, int incr)
 
 void mprSortList(MprList *lp, void *compare)
 {
+    lock(lp);
     qsort(lp->items, lp->length, sizeof(void*), compare);
+    unlock(lp);
 }
 
 
@@ -12219,7 +12232,7 @@ int mprSetMimeProgram(MprHashTable *table, cchar *mimeType, cchar *program)
     
     hp = 0;
     mt = 0;
-    while ((hp = mprGetNextHash(table, hp)) != 0) {
+    while ((hp = mprGetNextKey(table, hp)) != 0) {
         mt = (MprMime*) hp->data;
         if (mt->type[0] == mimeType[0] && strcmp(mt->type, mimeType) == 0) {
             break;
@@ -12241,7 +12254,7 @@ cchar *mprGetMimeProgram(MprHashTable *table, cchar *mimeType)
     if (mimeType == 0 || *mimeType == '\0') {
         return 0;
     }
-    if ((mt = mprLookupHash(table, mimeType)) == 0) {
+    if ((mt = mprLookupKey(table, mimeType)) == 0) {
         return 0;
     }
     return mt->program;
@@ -12262,7 +12275,7 @@ cchar *mprLookupMime(MprHashTable *table, cchar *ext)
     if (table == 0) {
         table = MPR->mimeTypes;
     }
-    if ((mt = mprLookupHash(table, ext)) == 0) {;
+    if ((mt = mprLookupKey(table, ext)) == 0) {;
         return "application/octet-stream";
     }
     return mt->type;
@@ -16326,7 +16339,7 @@ static MprRomInode *lookup(MprRomFileSystem *rfs, cchar *path)
     if (*path == '/') {
         path++;
     }
-    return (MprRomInode*) mprLookupHash(rfs->fileIndex, path);
+    return (MprRomInode*) mprLookupKey(rfs->fileIndex, path);
 }
 
 
@@ -22880,7 +22893,7 @@ static int lookupSym(cchar *token, int kind)
 {
     TimeToken   *tt;
 
-    if ((tt = (TimeToken*) mprLookupHash(MPR->timeTokens, token)) == 0) {
+    if ((tt = (TimeToken*) mprLookupKey(MPR->timeTokens, token)) == 0) {
         return -1;
     }
     if (kind != (tt->value & TOKEN_MASK)) {
@@ -23051,7 +23064,7 @@ int mprParseTime(MprTime *time, cchar *dateString, int zoneFlags, struct tm *def
             explicitZone = 1;
 
         } else if (isalpha((int) *token)) {
-            if ((tt = (TimeToken*) mprLookupHash(MPR->timeTokens, token)) != 0) {
+            if ((tt = (TimeToken*) mprLookupKey(MPR->timeTokens, token)) != 0) {
                 kind = tt->value & TOKEN_MASK;
                 value = tt->value & ~TOKEN_MASK; 
                 switch (kind) {

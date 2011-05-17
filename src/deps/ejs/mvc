@@ -1440,18 +1440,9 @@ class Templates {
         start: "start.es",
     },
 
-    store: {
-        adapter: "local",
-        class: "Local",
-        module: "ejs.store.local",
-        limits: {
-            lifespan: 3600,
-        },
-    },
-
     web: {
         cache: {
-            workers: true,
+            workers: { enable: true, limit: 10},
         },
         expires: {
             html:   86400,
@@ -1462,9 +1453,12 @@ class Templates {
         limits: {
             requestTimeout: 3600, 
             sessionTimeout: 3600, 
-            workers: 10,
         },
         listen: ":4000",
+        trace: {
+            tx: { exclude: ["jpg", "gif", "png", "ico", "css",], headers: 4, body: 5, size: 10240 },
+            rx: { exclude: ["jpg", "gif", "png", "ico", "css", "js"], conn: 5, first: 2, headers: 3, body: 4, size: 1024 },
+        },
         views: {
             connectors: {
                 table: "html",
