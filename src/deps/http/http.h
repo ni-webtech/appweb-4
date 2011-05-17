@@ -394,7 +394,9 @@ typedef struct HttpLimits {
     int     headerCount;            /**< Max number of header lines */
     int     keepAliveCount;         /**< Max number of keep alive requests to perform per socket */
     int     requestCount;           /**< Max number of simultaneous concurrent requests */
+#if UNUSED
     int     sessionCount;           /**< Max number of opened session state stores */
+#endif
 
     int     inactivityTimeout;      /**< Default timeout for keep-alive and idle requests (msec) */
     int     requestTimeout;         /**< Default time a request can take (msec) */

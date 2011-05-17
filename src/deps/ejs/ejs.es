@@ -80,28 +80,23 @@ module ejs {
             @hide
          */
         static internal var defaultConfig = {
-            /*
-                search: null,
-                script: null,
-             */
             log: {
                 enable: true,
                 location: "stderr",
                 level: 0,
-                /* match: null, */
             },
-            cache: {
-                enable: false,
-                reload: true,
+            app: {
+                cache: false,
+                reload: false,
             },
-            directories: {
-                cache: "cache",
+            dirs: {
+                cache: Path("cache"),
             },
-            init: {
-                /* load: [] */
+            files: {
+                ejsrc: Path("ejsrc"),
             },
-            test: {
-            },
+            init: { },
+            test: { },
         }
 
         /**
@@ -127,6 +122,11 @@ module ejs {
             the script or "ejs" if running interactively.
          */
         static var name: String
+
+        /**
+            Application in-memory store reference. See $ejs.store::Store
+         */
+        static var store: Store
 
         /** 
             Application title name. Multi-word, Camel Case name for the application suitable for display. This is 
@@ -301,6 +301,7 @@ module ejs {
 
         /** 
             Sleep the application for the given number of milliseconds. Events will be serviced while asleep.
+            An alternative to sleep is $App.run which can be configured to sleep and return early if an event is received.
             @param delay Time in milliseconds to sleep. Set to -1 to sleep forever.
          */
         native static function sleep(delay: Number = -1): Void
@@ -421,7 +422,6 @@ module ejs {
                 App.log.match = log.match
             }
         }
-
         /*  Append search paths */
         if (config.search) {
             if (config.search is Array) {
@@ -430,12 +430,14 @@ module ejs {
                 App.search = config.search.split(App.SearchSeparator) + App.search
             }
         }
-
         /*  Pre-load modules and scripts */
         if (config.init.load) {
             for each (m in config.init.load) {
                 load(m)
             }
+        }
+        if (config.store) {
+            App.store = new Store(null, config.store)
         }
     }
 
@@ -6722,7 +6724,7 @@ module ejs {
          */
         public static function require(id: String, config: Object = App.config): Object {
             let exports = signatures[id]
-            if (!exports || config.cache.reload) {
+            if (!exports || config.app.reload) {
                 let path: Path = locate(id, config)
                 if (path.modified > timestamps[path]) {
                     if (!global."ejs.cjs"::CommonSystem) {
@@ -6750,7 +6752,7 @@ module ejs {
             let initializer, code
             let cache: Path = cached(id, config)
             if (path) {
-                if (cache && cache.exists && (!config.cache.reload || cache.modified > path.modified)) {
+                if (cache && cache.exists && (!config.app.reload || cache.modified > path.modified)) {
                     /* Cache mod file exists and is current */
                     if (initializers[path]) {
                         App.log.debug(4, "Use memory cache for \"" + path + "\"")
@@ -6764,7 +6766,8 @@ module ejs {
 
                 } else {
                     /* Missing or out of date cache mod file */
-                    if (initializers[path] && config.cache.preloaded) {
+                    //  MOB - can we eliminate preloaded and just use reload?
+                    if (initializers[path] && config.app.preloaded) {
                         //  Everything compiled flat - everything in App.mod
                         //  MOB -- warning. This prevents reload working. Should rebuild all and reload.
                         initializer = initializers[path]
@@ -6814,8 +6817,8 @@ module ejs {
         /** @hide */
         public static function cached(id: Path, config = App.config, cachedir: Path = null): Path {
             config ||= App.config
-            if (id && config.cache.enable) {
-                let dir = cachedir || Path(config.directories.cache) || Path("cache")
+            if (id && config.app.cache) {
+                let dir = cachedir || Path(config.dirs.cache) || Path("cache")
                 if (dir.exists) {
                     return Path(dir).join(md5(id)).joinExt('.mod')
                 } else {
@@ -10162,6 +10165,189 @@ module ejs {
 /************************************************************************/
 /*
  *  End of file "../../src/core/Socket.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/core/Store.es"
+ */
+/************************************************************************/
+
+/*
+    Store.es -- Store class providing key/value storage.
+
+    Usage Tutorial:
+
+        store = new Store("local", {lifespan: 86400, timeout: 5000, memory: 200000000, keys: 10000000})
+
+        session = store.read(key)
+        store.write(key, value, {lifespan: 3600})
+        store.remove("session", sessionID)
+        store.destroy()
+
+        store = new Store("memcached", {addresses: ["127.0.0.1:11211"], debug: false})
+ */
+module ejs {
+
+    /**
+        Store meta class to manage in-memory storage of key-value data. The Store class provides an abstraction over
+        various in-memory and disk-based caching store backends.
+        @stability prototype
+     */
+    class Store {
+        use default namespace public
+
+        private var adapter: Object
+
+        /**
+            Store constructor.
+            @param adapter Adapter for the store store. E.g. "local". The Local store is the only currently supported
+                store backend.
+            @param options Adapter options. The common options are described below, other options are passed through
+            to the relevant caching backend.
+            @option lifespan Default lifespan for key values
+            @option timeout Timeout on store I/O operations
+            @option trace Trace I/O operations for debug
+            @option module Module name containing the store connector class. This is a bare module name without ".mod"
+                or any leading path.
+            @option class Class name containing the store backend.
+         */
+        function Store(adapter: String = null, options: Object = null) {
+            adapter ||= "local"
+            let adapterClass = options["class"] || options.adapter.toPascal()
+            //  BUG should be able to use (options.module) below
+            let module = options.module
+            if (!global.module::[adapterClass]) {
+                load(module + ".mod")
+                if (!global.module::[adapterClass]) {
+                    throw "Can't find store adapter: \"" + module + "::" + adapter + "\""
+                }
+            }
+            this.adapter = new global.module::[adapterClass](options)
+        }
+
+        /**
+            Destroy the store
+         */
+        function destroy(): Void
+            adapter.destroy()
+
+        /**
+            Set a new expire date for a key
+            @param key Key to modify
+            @param when Date at which to expire the data. Set to null to never expire.
+         */
+        function expire(key: String, when: Date): Void
+            adapter.expire(key, when)
+
+        /**
+            Resource limits for the server and for initial resource limits for requests.
+            @param limits. Limits is an object hash. Depending on the store backend in-use, the limits object may have
+                some of the following properties. Consult the documentation for the actual store backend for which properties
+                are supported by the backend.
+            @option keys Maximum number of keys in the store. Set to zero for no limit.
+            @option lifespan Default time to preserve key data. Set to zero for no timeout.
+            @option memory Total memory to allocate for store keys and data. Set to zero for no limit.
+            @option retries Maximum number of times to retry I/O operations with store backends.
+            @option timeout Maximum time to transact I/O operations with store backends. Set to zero for no timeout.
+            @see setLimits
+          */
+        function get limits(): Object
+            adapter.limits
+
+        /**
+            Read a key. 
+            @param key Key value to read.
+            @param options Read options
+            @option version If set to true, the read will return an object hash containing the data and a unique version 
+                identifier for the last update to this key. This version identifier can be specified to write to peform
+                an atomic CAS (check and swap) operation.
+            @return Null if the key is not present. Otherwise return key data as a string or if the options parameter 
+                specified "version == true", return an object with the properties "data" for the key data and 
+                "version" for the CAS version identifier.
+         */
+        function read(key: String, options: Object = null): Object
+            adapter.read(key, options)
+
+        /**
+            Remove the key and associated value from the store
+            @param key Key value to remove. If key is null, then all keys are removed.
+            @param Return true if the key was removed
+         */
+        function remove(key: String): Boolean
+            adapter.remove(key)
+
+        /**
+            Update the store store resource limits. The supplied limit fields are updated.
+            See the $limits property for limit field details.
+            @param limits Object hash of limit fields and values
+            @see limits
+         */
+        function setLimits(limits: Object): Void
+            adapter.setLimits(limits)
+
+        /**
+            Write the key and associated value to the store. The value is written according to the optional mode option.  
+            @option lifespan Preservation time for the key in seconds 
+            @option expire When to expire the key. Takes precedence over lifetime.
+            @option mode Mode of writing: "set" is the default and means set a new value and create if required.
+                "add" means set the value only if the key does not already exist. "append" means append to any existing
+                value and create if required. "prepend" means prepend to any existing value and create if required.
+            @option version Unique version identifier to be used for a conditional write. The write will only be 
+                performed if the version id for the key has not changed. This implements an atomic compare and swap.
+                See $read.
+            @option throw Throw an exception rather than returning null if the version id has been updated for the key.
+            @return The number of bytes written, returns null if the write failed due to an updated version identifier for
+                the key.
+         */
+        function write(key: String, value: Object, options: Object = {}): Number
+            adapter.write(key, value, options)
+    }
+
+}
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/core/Store.es"
  */
 /************************************************************************/
 
@@ -14852,7 +15038,7 @@ module ejs.db.sqlite {
         @spec ejs
         @stabilitiy prototype
      */
-    "ejs.db" class Sqlite {
+    class Sqlite {
 
         /*
             Map independent types to SQL types
@@ -14928,7 +15114,7 @@ module ejs.db.sqlite {
             @options name Database name URI specifying the SQLite database to open. 
                 Example: file://var/spool/db/database.db
          */
-        native "ejs.db" function Sqlite(options: Object)
+        native function Sqlite(options: Object)
 
         /** @duplicate ejs.db::Database.addColumn */
         function addColumn(table: String, column: String, datatype: String, options = null): Void {
@@ -15117,9 +15303,8 @@ module ejs.db.sqlite {
         /** @duplicate ejs.db::Database.query */
         function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
             //  TODO - need to access Database.traceAll
-            //  TODO - need to better logging framework
             if (trace) {
-                print(tag + ": " + cmd)
+                App.log.activity(tag,  cmd)
             }
             return sql(cmd)
         }
@@ -15129,11 +15314,11 @@ module ejs.db.sqlite {
 
         /** @duplicate ejs.db::Database.sqlTypeToDataType */
         function sqlTypeToDataType(sqlType: String): String
-            "ejs.db"::Sqlite.SqlTypeToDataType[sqlType]
+            Sqlite.SqlTypeToDataType[sqlType]
 
         /** @duplicate ejs.db::Database.sqlTypeToEjsType */
         function sqlTypeToEjsType(sqlType: String): Type
-            "ejs.db"::Sqlite.SqlTypeToEjsType[sqlType]
+            Sqlite.SqlTypeToEjsType[sqlType]
 
         /** @duplicate ejs.db::Database.startTransaction 
             @hide */
@@ -15217,38 +15402,38 @@ module ejs.db {
             Initialize a database connection using the supplied database connection string. The first opened database
             will also be defined as the default database.
             @param adapter Database adapter to use. E.g. "sqlite". Sqlite is currently the only supported adapter.
-            @param options Connection options. This may be filename or an object hash of properties. If set to a filename
-                they type must be either String or Path and it should contain the filename of the database on the local
-                system. If options is set ot an object hash. It should contain adapter specific properties that specify 
-                how to attach to the database. Typical fields include:
-                <ul>
-                    <li>name - Database URI
-                        Examples: http://example.com:1234/database.db,
-                        Examples: file://var/spool/db/database.db
-                    </li>
-                    <li>username - Database username</li>
-                    <li>password - Database password</li>
-                    <li>trace - Trace database commands to the log
-                    <li>socket - /var/run/mysqld/mysqld.sock
-                </ul>
+            @param options Connection options. This may be filename or an object hash of properties. If set to a filename,
+             it should contain the filename of the database on the local system. If options is an object hash, it should 
+             contain adapter specific properties that specify how to attach to the database. 
+            @option name Database name
+            @option username Database username
+            @option password Database password
+            @option trace Trace database commands to the log
+            @option socket Database communications socket
+            @option module Module name containing the database connector class. This is a bare module name without ".mod"
+                or any leading path.
+            @option class Class name containing the database backend.
          */
         function Database(adapter: String, options: Object) {
             Database.defaultDb ||= this
-            if (adapter == "sqlite3") adapter = "sqlite"
             if (options is String || options is Path) {
                 let name = Path(options)
                 options = { name: name }
             }
             options.trace ||= false
             this.options = options
-            let adapterClass = adapter.toPascal()
-            if (!global."ejs.db"::[adapterClass]) {
-                load("ejs.db." + adapter + ".mod")
+            adapter ||= "sqlite"
+            options.module ||= ("ejs.db." + adapter)
+            let adapterClass = options["class"] || adapter.toPascal()
+            //BUG - should be able to use (options.module) below
+            let module = options.module
+            if (!global.module::[adapterClass]) {
+                load(module + ".mod")
+                if (!global.module::[adapterClass]) {
+                    throw "Can't find database connector \"" + module + "::" + adapter + "\""
+                }
             }
-            if (!global."ejs.db"::[adapterClass]) {
-                throw "Can't find database connector for " + adapter
-            }
-            this.adapter = new global."ejs.db"::[adapterClass](options)
+            this.adapter = new global.module::[adapterClass](options)
         }
 
         /**
@@ -15843,7 +16028,7 @@ module ejs.template  {
                         break
 
                     case "layout":
-                        let layouts = options.layouts || App.config.directories.layouts || "layouts"
+                        let layouts = options.layouts || App.config.dirs.layouts || "layouts"
                         let path = args[1]
                         if (path == "" || path == '""') {
                             layoutPage = undefined
@@ -16666,6 +16851,7 @@ module ejs.web {
          */
         use default namespace module
 
+        //  MOB - not thread safe
         private static var _initRequest: Request
 
         private var _afterCheckers: Array
@@ -16724,6 +16910,7 @@ module ejs.web {
         static function create(request: Request, cname: String = null): Controller {
             request.params.controller = request.params.controller.toPascal()
             cname ||= (request.params.controller + "Controller")
+// MOB - not thread safe !!!
             _initRequest = request
             let c: Controller = new global[cname](request)
             c.request = request
@@ -16744,9 +16931,13 @@ module ejs.web {
                 log = request.log
                 params = request.params
                 config = request.config
+            /*
+UNUSED MOB
                 if (config.database) {
+                    //  MOB - OPT - move this into MVC and do only once
                     openDatabase(request)
                 }
+            */
                 if (request.method == "POST") {
                     before(checkSecurityToken)
                 }
@@ -16968,13 +17159,13 @@ module ejs.web {
             Render a partial response using template file.
             @param path Path to the template to render to the client
             @param options Additional options.
-            @option layout Optional layout template. Defaults to config.directories.layouts/default.ejs.
+            @option layout Optional layout template. Defaults to config.dirs.layouts/default.ejs.
          */
         function writePartialTemplate(path: Path, options: Object = {}): Void { 
             request.filename = path
             request.setHeader("Content-Type", "text/html")
             if (options.layout === undefined) {
-                options.layout = Path(config.directories.layouts).join(config.web.view.layout)
+                options.layout = Path(config.dirs.layouts).join(config.web.views.layout)
             }
             log.debug(4, "writePartialTemplate: \"" + path + "\"")
             request.server.process(TemplateBuilder(request, options), request, false)
@@ -16987,15 +17178,15 @@ module ejs.web {
                 joining the views directory with the controller name and view name. E.g. views/Controller/list.ejs.
             @param options Additional options.
             @option controller Optional controller for the view.
-            @option layout Optional layout template. Defaults to config.directories.layouts/default.ejs.
+            @option layout Optional layout template. Defaults to config.dirs.layouts/default.ejs.
          */
         function writeView(viewName = null, options: Object = {}): Void {
             let controller = options.controller || controllerName
             viewName ||= options.action || actionName
             if (options.layout === undefined) {
-                options.layout = config.directories.layouts.join(config.web.view.layout)
+                options.layout = config.dirs.layouts.join(config.web.views.layout)
             }
-            writeTemplate(config.directories.views.join(controller, viewName).joinExt(config.extensions.ejs), options)
+            writeTemplate(config.dirs.views.join(controller, viewName).joinExt(config.extensions.ejs), options)
         }
 
         /** 
@@ -17003,7 +17194,7 @@ module ejs.web {
             This call writes the result of running the view template file back to the client.
             @param path Path to the view template to render and write to the client.
             @param options Additional options.
-            @option layout Optional layout template. Defaults to config.directories.layouts/default.ejs.
+            @option layout Optional layout template. Defaults to config.dirs.layouts/default.ejs.
          */
         function writeTemplate(path: Path, options: Object = {}): Void {
             log.debug(4, "writeTemplate: \"" + path + "\"")
@@ -17011,7 +17202,7 @@ module ejs.web {
             request.filename = path
             request.setHeader("Content-Type", "text/html")
             if (options.layout === undefined) {
-                options.layout = config.directories.layouts.join(config.web.view.layout)
+                options.layout = config.dirs.layouts.join(config.web.views.layout)
             }
             request.server.process(TemplateBuilder(request, options), request, false)
             request.filename = saveFilename
@@ -17022,13 +17213,13 @@ module ejs.web {
             This call writes the result of running the view template file back to the client.
             @param page String literal containing the view template to render and write to the client.
             @param options Additional options.
-            @option layout Path layout template. Defaults to config.directories.layouts/default.ejs.
+            @option layout Path layout template. Defaults to config.dirs.layouts/default.ejs.
          */
         function writeTemplateLiteral(page: String, options: Object = {}): Void {
             log.debug(4, "writeTemplateLiteral")
             request.setHeader("Content-Type", "text/html")
             if (options.layout === undefined) {
-                options.layout = config.directories.layouts.join(config.web.view.layout)
+                options.layout = config.dirs.layouts.join(config.web.views.layout)
             }
             options.literal = page
             request.server.process(TemplateBuilder(request, options), request, false)
@@ -17040,6 +17231,7 @@ module ejs.web {
             request.checkSecurityToken()
 
         /*
+UNUSED MOB
             Open database. Expects ejsrc configuration:
 
             mode: "debug",
@@ -17051,13 +17243,12 @@ module ejs.web {
                 test: { name: "db/blog.sdb", trace: true },
                 production: { name: "db/blog.sdb", trace: true },
             }
-         */
         private function openDatabase(request: Request) {
             let dbconfig = config.database
             let dbclass = dbconfig["class"]
-            let options = dbconfig[config.mode]
             if (dbclass) {
-                if (dbconfig.module && !global[dbclass]) {
+                let options = dbconfig[config.mode]
+                if (dbconfig.module && !global.(dbconfig.module)::[dbclass]) {
                     global.load(dbconfig.module + ".mod")
                 }
                 let module = dbconfig.module || "public"
@@ -17065,6 +17256,7 @@ module ejs.web {
                 new (module)::[dbclass](dbconfig.adapter, options)
             }
         }
+*/
 
         /* 
             Run the before/after checkers. These are typically used to handle authorization and similar tasks
@@ -17093,7 +17285,7 @@ module ejs.web {
             if (global[viewClass]) {
                 return true
             }
-            let path = config.directories.views.join(controllerName, name).joinExt(config.extensions.ejs)
+            let path = config.dirs.views.join(controllerName, name).joinExt(config.extensions.ejs)
             if (path.exists) {
                 return true
             }
@@ -18011,7 +18203,7 @@ module ejs.web {
                     options.minified = true
                 }
                 /* MVC directory */
-                let dirs = request.config.directories
+                let dirs = request.config.dirs
                 let sdir = (dirs && dirs.static) ? dirs.static.basename : "static"
                 for each (uri in defaultScripts) {
                     uri = request.link("/" + sdir + uri)
@@ -18031,7 +18223,7 @@ module ejs.web {
         function stylesheet(uri: String, options: Object): Void {
             if (uri == null) {
                 /* MVC directory */
-                let dirs = request.config.directories
+                let dirs = request.config.dirs
                 let sdir = (dirs && dirs.static) ? dirs.static.basename : "static"
                 for each (uri in defaultStylesheets) {
                     uri = request.link("/" + sdir + uri)
@@ -18533,11 +18725,11 @@ module ejs.web {
         private var workerImage: Worker
 
         private static const defaultConfig = {
-            cache: {
-                enable: true,
+            app: {
                 reload: true,
+                cache: true,
             },
-            directories: {
+            dirs: {
                 cache: Path("cache"),
                 layouts: Path("layouts"),
                 views: Path("views"),
@@ -18549,24 +18741,20 @@ module ejs.web {
             },
             log: {
                 showClient: true,
-                //  where: "file" - defaults to web server log
+            },
+            store: {
+                adapter: "local",
+                "class": "Local",
+                module: "ejs.store.local",
+                limits: {
+                    lifespan: 3600,
+                },
             },
             web: {
-                expires: {
-                    /*
-                        MOB -- can we have some of this be the default?
-                        html:   86400,
-                        ejs:    86400,
-                        es:     86400,
-                        "":     86400,
-                     */
-                },
-                // endpoint: ":4000",
-                // helpers: [],
-                // limits: {}
-                // trace: {rx: {}, tx: {}}
-                // workers: {}
-                view: {
+                cache: {
+                    workers: true,
+                }
+                views: {
                     connectors: {
                         table: "html",
                         chart: "google",
@@ -18577,18 +18765,21 @@ module ejs.web {
                     },
                     layout: "default.ejs",
                 },
+                workers: {},
             },
         }
 
         /*  
-            One time initialization. Loads the top-level "ejsrc" configuration file.
-            The application must be restarted to reload changes. This happens before HttpServer loads serverRoot/ejsrc.
+            One time initialization. Blend mandatory config into App.config.
          */
         static function initHttpServer() {
             blend(App.config, defaultConfig, false)
-            let dirs = App.config.directories
+            let dirs = App.config.dirs
             for (let [key, value] in dirs) {
                 dirs[key] = Path(value)
+            }
+            if (App.store == null && App.config.store) {
+                App.store = new Store(null, App.config.store)
             }
         }
         initHttpServer()
@@ -18643,8 +18834,7 @@ module ejs.web {
             @option requests Maximum number of simultaneous requests.
             @option requestTimeout Maximum time in seconds for a request to complete. Set to zero for no timeout.
             @option reuse Maximum number of times to reuse a connection for requests (KeepAlive count).
-            @option sessions Maximum number of simultaneous sessions.
-            @option sessionTimeout Maximum time to preserve session state. Set to zero for no timeout.
+            @option sessionTimeout Default time to preserve session state for new requests. Set to zero for no timeout.
             @option stageBuffer Maximum stage buffer size for each direction.
             @option transmission Maximum size of outgoing body data.
             @option upload Maximum size of uploaded files.
@@ -18697,11 +18887,6 @@ module ejs.web {
         var home: Path
 
         /** 
-            Hash of session objects. This is created on demand as requests require session state storage.
-         */
-        var sessions: Object
-
-        /** 
             Software description for the web server
             @return A string containing the name and version of the web server software
          */
@@ -18717,7 +18902,6 @@ module ejs.web {
                 hosted, the $home property will be defined by the web server.
             @option ejsrc Alternate path to the "ejsrc" configuration file
             @option config Alternate App.config settings
-            @option threaded MOB
             @option own If hosted inside a web server, set to true to bypass any web server listening endpoints and 
                 create a new stand-alone listening connection.
             @spec ejs
@@ -18726,6 +18910,7 @@ module ejs.web {
 let server: HttpServer = new HttpServer({documents: "web"})
 let router = Router(Router.Restful)
 server.on("readable", function (event: String, request: Request) {
+    // "this" object is also set to request
     request.status = 200
     request.setHeaders({"Content-Type": "text/plain"})
     request.on("readable", function (event, request) {
@@ -18747,7 +18932,14 @@ server.listen("127.0.0.1:7777")
             this.config = options.config || App.config
             this.options = options
             if (options.ejsrc) {
-                blend(config, Path(options.ejsrc).readJSON(), true)
+                config.ejsrc = options.ejsrc
+            }
+            if (config.files.ejsrc && config.files.ejsrc.exists) {
+                blend(config, Path(config.files.ejsrc).readJSON(), true)
+                let dirs = config.dirs
+                for (let [key, value] in dirs) {
+                    dirs[key] = Path(value)
+                }
                 App.updateLog()
             } else if (home != ".") {
                 let path = home.join("ejsrc")
@@ -18756,11 +18948,28 @@ server.listen("127.0.0.1:7777")
                     App.updateLog()
                 }
             }
-            if (config.web.trace) {
-                trace(config.web.trace)
+            let web = config.web
+            if (web.trace) {
+                trace(web.trace)
             }
-            if (config.web.limits) {
-                setLimits(config.web.limits)
+            if (web.limits) {
+                /* This will set session limits too */
+                setLimits(web.limits)
+            }
+            if (web.session) {
+                openSession()
+            }
+        }
+
+        private function openSession() {
+            let sconfig = config.session
+            let sclass = sconfig["class"]
+            if (sclass) {
+                if (sconfig.module && !global.(module)::[sclass]) {
+                    global.load(sconfig.module + ".mod")
+                }
+                let module = sconfig.module || "public"
+                new (module)::[sclass](sconfig.adapter, sconfig.options)
             }
         }
 
@@ -18849,12 +19058,9 @@ server.listen("127.0.0.1:7777")
             @param name Name of the event to listen for. The name may be an array of events.
             @param observer Callback listening function. The function is called with the following signature:
                 function on(event: String, ...args): Void
-            @event readable Issued when there is a new request available. This readable event will explicitlyl set the
+            @event readable Issued when there is a new request available. This readable event will explicitly set the
                 value of "this" to the request regardless of whether the function has a bound "this" value.
             @event close Issued when server is being closed.
-            @event createSession Issued when a new session store object is created for a client. The request object is
-                passed.
-            @event destroySession Issued when a session is destroyed. The request object is passed.
          */
         native function on(name, observer: Function): Void
 
@@ -19348,8 +19554,7 @@ module ejs.web {
             Default configuration for MVC apps. This layers over App.defaultConfig and ejs.web::defaultConfig.
          */
         private static var defaultConfig = {
-            //  MOB -- change to dirs
-            directories: {
+            dirs: {
                 bin: Path("bin"),
                 db: Path("db"),
                 controllers: Path("controllers"),
@@ -19358,8 +19563,6 @@ module ejs.web {
                 static: Path("static"),
             },
             mvc: {
-                //  MOB -- what is this?
-                app: "",
                 //  MOB - should be moved to files
                 appmod: "App.mod",
                 view: {
@@ -19369,68 +19572,51 @@ module ejs.web {
             },
         }
 
+        private var config: Object
         private static var loaded: Object = {}
         private static const EJSRC = "ejsrc"
 
-    /* UNUSED
-        private static function initConfig(): Void {
-            blend(App.config, defaultConfig, false)
-        }
-        initConfig()
-     */
         blend(App.config, defaultConfig, false)
 
-        /*
-            Load the app/ejsrc and defaultConfig. Blend with the HttpServer.config
-            @return The configuration object
-         */
-        private function loadConfig(request: Request): Object {
-            let config = request.config
-            let path = request.dir.join(EJSRC)
-            if (request.dir != request.server.documentRoot && path.exists) {
-                /* This is an app specific ejsrc */
-                let appConfig = path.readJSON()
-                /* Clone to get a request private copy of the configuration before blending "app/ejsrc" */
-                config = request.config = request.config.clone()
-                blend(config, appConfig, true)
-                let dirs = config.directories
-                for each (key in ["bin", "db", "controllers", "models", "src", "static"]) {
-                    dirs[key] = request.dir.join(dirs[key])
-                }
-                for (let [key, value] in dirs) {
-                    dirs[key] = Path(value)
-                }
-                App.updateLog()
-            }
-/* FUTURE
-            //  Create per-MVC app logs
-            if (config.log) {
-                logger = new Logger("request", App.log, config.log.level)
-            }
-            if (config.mvc.app) {
-                // Load custom MVC app script and use it 
-                let script = request.dir.join(config.mvc.app)
-                if (script.exists) {
-                    startup = Loader.load(script, script, config).app
-                }
-            }
-*/
-            return config
-        }
-
         /** 
-            Load an MVC application. This is typically called by the Router to load an application after routing
-            the request to determine the appropriate controller
+            Load an MVC application and the optional application specific ejsrc file
             @param request Request object
          */
         function Mvc(request: Request) {
-            let config = loadConfig(request)
-            let dirs = config.directories
-            let appmod = dirs.cache.join(config.mvc.appmod)
+            config = request.config
+            let path = request.dir.join(EJSRC)
+            if (request.dir != request.server.documents && path.exists) {
+                loadConfig(request, path)
+                request.config = config
+            }
+            if (config.database) {
+                openDatabase(request)
+            }
+        }
 
-            //  MOB - from here down needs to be done per request
-            //  MOB - what about reloading ejsrc
-            if (config.cache.flat) {
+        /*
+            Load the app/ejsrc and defaultConfig
+         */
+        private function loadConfig(request: Request, path: Path): Void {
+            let appConfig = path.readJSON()
+            config = blend(config.clone(), appConfig, true)
+            let dirs = config.dirs
+            for each (key in ["bin", "db", "controllers", "models", "src", "static"]) {
+                dirs[key] = request.dir.join(dirs[key])
+            }
+            for (let [key, value] in dirs) {
+                dirs[key] = Path(value)
+            }
+            App.updateLog()
+        }
+
+        /*
+            Load the required parts of the Mvc app
+         */
+        function load(request: Request) {
+            let dirs = config.dirs
+            let appmod = dirs.cache.join(config.mvc.appmod)
+            if (config.web.cache.flat) {
                 if (!global.BaseController) {
                     global.load(appmod)
                 }
@@ -19441,7 +19627,7 @@ module ejs.web {
 
                 /* Load App. Touch ejsrc triggers a complete reload */
                 let files, deps
-                if (config.cache.reload) {
+                if (config.app.reload) {
                     deps = [dir.join(EJSRC)]
                     files = dirs.models.find("*" + ext.es)
                     files += dirs.src.find("*" + ext.es)
@@ -19457,7 +19643,7 @@ module ejs.web {
                 let controller = params.controller = params.controller.toPascal()
                 let mod = dirs.cache.join(controller).joinExt(ext.mod)
                 if (controller != "Base") {
-                    if (!global[controller + "Controller"] && mod.exists && !config.cache.reload) {
+                    if (!global[controller + "Controller"] && mod.exists && !config.app.reload) {
                         loadComponent(request, mod)
                     } else {
                         files = [dirs.controllers.join(controller).joinExt(ext.es)]
@@ -19466,21 +19652,6 @@ module ejs.web {
                     }
                 }
             }
-            // FUTURE request.logger = logger
-        }
-
-        private function rebuildComponent(request: Request, mod: Path, files: Array) {
-            let code = "require ejs.web\n"
-            for each (file in files) {
-                let path = Path(file)
-                if (!path.exists) {
-                    request.status = Http.NotFound
-                    throw "Can't find required component: \"" + path + "\""
-                }
-                code += path.readString()
-            }
-            request.log.debug(4, "Rebuild component: " + mod + " files: " + files)
-            eval(code, mod)
         }
 
         /** 
@@ -19493,7 +19664,7 @@ module ejs.web {
          */
         public function loadComponent(request: Request, mod: Path, files: Array? = null, deps: Array? = null) {
             let rebuild = false
-            if (mod.exists && request.config.cache.reload) {
+            if (mod.exists && request.config.app.reload) {
                 let when = mod.modified
                 for each (file in (files + deps)) {
                     if (file.exists && file.modified > when) {
@@ -19516,6 +19687,42 @@ module ejs.web {
                 }
             }
         }
+
+        /*
+            Open database. Expects ejsrc configuration:
+                mode: "debug",
+                database: {
+                    adapter: "sqlite",
+                    module: "ejs.db.sqlite",
+                    class: "Sqlite",
+                    debug: { name: "db/blog.sdb", trace: true },
+                    test: { name: "db/blog.sdb", trace: true },
+                    production: { name: "db/blog.sdb", trace: true },
+                }
+         */
+        private function openDatabase(request: Request) {
+            let dbconfig = config.database
+            if (dbconfig) {
+                global.load("ejs.db.mod")
+                blend(dbconfig, dbconfig[config.mode])
+                new "ejs.db"::["Database"](dbconfig.adapter, dbconfig)
+            }
+        }
+
+        private function rebuildComponent(request: Request, mod: Path, files: Array) {
+            let code = "require ejs.web\n"
+            for each (file in files) {
+                let path = Path(file)
+                if (!path.exists) {
+                    request.status = Http.NotFound
+                    throw "Can't find required component: \"" + path + "\""
+                }
+                code += path.readString()
+            }
+            request.log.debug(4, "Rebuild component: " + mod + " files: " + files)
+            eval(code, mod)
+        }
+
     }
 
     /**
@@ -19530,13 +19737,11 @@ module ejs.web {
         return app(request)
     }
 
-//  MOB -- update doc
+//  MOB -- update doc. Rename from builder?
     /** 
         MVC builder for use in routing tables. The MVC builder function can be included directly in Route table entries.
         @param request Request object. 
         @return A web script function that services a web request.
-        @example:
-          { name: "index", builder: MvcBuilder, match: "/" }
         @spec ejs
         @stability prototype
      */
@@ -19544,12 +19749,11 @@ module ejs.web {
         let mvc: Mvc
         if ((mvc = Mvc.apps[request.dir]) == null) {
             App.log.debug(2, "Load MVC application from \"" + request.dir + "\"")
-            // mvc = Mvc.apps[request.dir] = new Mvc(request)
-            mvc = new Mvc(request)
+            mvc = Mvc.apps[request.dir] = new Mvc(request)
         }
-        let cname: String = request.params.controller + "Controller"
+        mvc.load(request)
         //  MOB - rename app to be more unique
-        return Controller.create(request, cname).app
+        return Controller.create(request, request.params.controller + "Controller").app
     }
 }
 
@@ -19981,6 +20185,7 @@ module ejs.web {
          */
         function createSession(timeout: Number = -1): Session {
             if (timeout >= 0) {
+// - MOB - does this change the timeout for just this session or for all?
                 setLimits({ sessionTimeout: timeout })
             }
             return session
@@ -20983,7 +21188,7 @@ module ejs.web {
             Add routes to handle static content, directories, "es" scripts and stand-alone ejs templated pages.
          */
         public function addHandlers(): Void {
-            let staticPattern = "\/" + (App.config.directories.static.basename || "static") + "\/.*"
+            let staticPattern = "\/" + (App.config.dirs.static.basename || "static") + "\/.*"
             if (staticPattern) {
                 add(staticPattern, {name: "default", response: StaticApp})
             }
@@ -21984,13 +22189,37 @@ module ejs.web {
     /** 
         Session state storage class. 
         The session state objects can be used to share state between requests. The $ejs.web::Request object has
-        a $ejs.web::Request.session property that stores an Session instance. Storing objects into the session instance
-        will cause the object to be serialized for later retrieveal.
-
+        a $ejs.web::Request.session property that stores a Session object instance. Values stored into the session 
+        state are serialized and deserialized upon retrieval.
         @spec ejs
     */
-    dynamic class Session { }
+    dynamic class Session { 
+        use default namespace public
+
+        /**
+            Create a new session state object. This uses the Store in-memory caching service.
+            @param key Optional key to provide. If omitted or null, a new key will be generated. If the given key has
+                expired, a new key will be generated.
+            @param options
+            @option lifespan Lifespan in seconds for the session
+         */
+        native function Session(key, options: Object = null)
+
+        /**
+            Get the session ID key for a session. This is a static method so as to not clash with session properties.
+            @param session Session to examine
+            @return The session ID key.
+         */
+        native static function key(session: Session!): String
+
+        /**
+            Destroy a session
+            @param session Session to destroy
+         */
+        native static function destorySession(session: Session!): Void
+    }
 }
+
 
 
 /*
@@ -22879,7 +23108,7 @@ module ejs.web {
 //  MOB -- replace all this with blend. Perhaps request and config come over automatically.
                 this.request = request
                 this.config = request.config
-                formats = config.web.view.formats
+                formats = config.web.views.sformats
                 for each (let n: String in 
                         Object.getOwnPropertyNames(controller, {includeBases: true, excludeFunctions: true})) {
                     if (n.startsWith("_")) continue
@@ -22890,7 +23119,7 @@ module ejs.web {
                 request = {}
                 config = App.config
             }
-            for (helper in config.web.view.helpers) {
+            for (helper in config.web.views.shelpers) {
                 if (helper.contains("::")) {
                     [mod, klass] = helper.split("::")
                     global.load(mod + ".mod")
@@ -23484,7 +23713,7 @@ MOB -- review and rethink this
                     ext = viewPath.ext
                 }
             }
-            controller.writeTemplate(request.dir.join(config.directories.views.basename, cname, action).joinExt(ext))
+            controller.writeTemplate(request.dir.join(config.dirs.views.basename, cname, action).joinExt(ext))
         }
 
         // MOB TODO - need a rich text editor. Wiki style.  wiki()
@@ -23568,7 +23797,7 @@ MOB -- review and rethink this
         }
 
         private function getConnector(kind: String, options: Object = {}) {
-            let vc = config.web.view
+            let vc = config.web.views
             let connectorName = options.connector || vc.connectors[kind] || vc.connectors["rest"]
             let name = (connectorName + "ViewConnector").toPascal()
             if (connectors[name]) {

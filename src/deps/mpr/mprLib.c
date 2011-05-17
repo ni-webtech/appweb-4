@@ -7234,7 +7234,7 @@ void mprDestroyDispatcher(MprDispatcher *dispatcher)
     MprEventService     *es;
     MprEvent            *q, *event, *next;
 
-    if (dispatcher && dispatcher->cond) {
+    if (dispatcher && !dispatcher->destroyed) {
         mprAssert(dispatcher->magic == MPR_DISPATCHER_MAGIC);
         es = dispatcher->service;
         lock(es);
@@ -7247,7 +7247,8 @@ void mprDestroyDispatcher(MprDispatcher *dispatcher)
                 mprRemoveEvent(event);
             }
         }
-        dispatcher->cond = 0;
+        dispatcher->enabled = 0;
+        dispatcher->destroyed = 1;
         unlock(es);
     }
 }
@@ -7532,7 +7533,6 @@ void mprScheduleDispatcher(MprDispatcher *dispatcher)
    
     mprAssert(dispatcher);
     mprAssert(dispatcher->magic == MPR_DISPATCHER_MAGIC);
-    mprAssert(dispatcher->enabled);
     mprAssert(dispatcher->name);
     mprAssert(dispatcher->cond);
     es = dispatcher->service;
@@ -7640,19 +7640,24 @@ static void serviceDispatcher(MprDispatcher *dispatcher)
 
 static void serviceDispatcherMain(MprDispatcher *dispatcher)
 {
+    mprAssert(!dispatcher->destroyed);
+
     if (!isRunning(dispatcher)) {
+//  MOB -- this should not be happending
         /* Dispatcher may have been destroyed after starting the worker */
         return;
     }
-    mprAssert(isRunning(dispatcher));
     mprAssert(dispatcher->magic == MPR_DISPATCHER_MAGIC);
     mprAssert(dispatcher->cond);
     mprAssert(dispatcher->name);
+    mprAssert(!dispatcher->destroyed);
 
     dispatcher->owner = mprGetCurrentOsThread();
     dispatchEvents(dispatcher);
-    dispatcher->owner = 0;
-    scheduleDispatcher(dispatcher);
+    if (!dispatcher->destroyed) {
+        dispatcher->owner = 0;
+        scheduleDispatcher(dispatcher);
+    }
 }
 
 
@@ -9732,7 +9737,6 @@ static void manageHashTable(MprHashTable *table, int flags);
 /*
     Create a new hash table of a given size. Caller should provide a size that is a prime number for the greatest efficiency.
  */
-
 MprHashTable *mprCreateHash(int hashSize, int flags)
 {
     MprHashTable    *table;

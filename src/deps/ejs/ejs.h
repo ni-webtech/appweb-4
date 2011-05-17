@@ -680,7 +680,7 @@ extern "C" {
 #define EJS_POOL_INACTIVITY_TIMEOUT (60  * 1000)    /* Prune inactive pooled VMs older than this */
 #define EJS_SQLITE_TIMEOUT          30000           /* Database busy timeout */
 #define EJS_SESSION_TIMEOUT         1800
-#define EJS_TIMER_PERIOD            1000            /* Timer checks ever 1 second */
+#define EJS_SESSION_TIMER_PERIOD    (60 * 1000)     /* Timer checks ever minute */
 #define EJS_FILE_PERMS              0664            /* Default file perms */
 #define EJS_DIR_PERMS               0775            /* Default dir perms */
 
@@ -1782,7 +1782,9 @@ extern void ejsManageIntern(Ejs *ejs, int flags);
 extern void ejsDestroyIntern(EjsIntern *intern);
 
 extern int       ejsAtoi(Ejs *ejs, EjsString *sp, int radix);
-extern EjsString *ejsCatString(Ejs *ejs, EjsString *dest, EjsString *src);
+
+//  MOB - rename Join
+extern EjsString *ejsCatString(Ejs *ejs, EjsString *s1, EjsString *s2);
 extern EjsString *ejsCatStrings(Ejs *ejs, EjsString *src, ...);
 extern EjsString *ejsSubstring(Ejs *ejs, EjsString *src, ssize start, ssize len);
 extern int       ejsCompareString(Ejs *ejs, EjsString *s1, EjsString *s2);
@@ -2598,6 +2600,15 @@ extern EjsError *ejsThrowStateError(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(
 extern EjsObj *ejsThrowStopIteration(Ejs *ejs);
 
 /** 
+    Throw a string message. This will not capture the stack as part of the exception message.
+    @param ejs Ejs reference returned from #ejsCreate
+    @param fmt Printf style format string to use for the error message
+    @param ... Message arguments
+    @ingroup EjsError
+ */
+extern EjsString *ejsThrowString(Ejs *ejs, cchar *fmt, ...) PRINTF_ATTRIBUTE(2,3);
+
+/** 
     Throw an syntax error exception
     @param ejs Ejs reference returned from #ejsCreate
     @param fmt Printf style format string to use for the error message
@@ -3161,6 +3172,8 @@ extern int64 ejsGetInt64(Ejs *ejs, EjsAny *obj);
     @ingroup EjsNumber
  */
 extern double ejsGetDouble(Ejs *ejs, EjsAny *obj);
+
+#define ejsGetDate(ejs, obj) (ejsIs(ejs, obj, Date) ? ((EjsDate*) obj)->value : 0)
 
 //  MOB -- rename alloc/free
 typedef EjsAny  *(*EjsCreateHelper)(Ejs *ejs, struct EjsType *type, int size);
@@ -4074,6 +4087,15 @@ extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, cchar *name);
 extern EjsModule *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsConstants *constants);
 extern EjsModule *ejsCloneModule(Ejs *ejs, EjsModule *mp);
 
+extern EjsVoid *ejsStoreExpire(Ejs *ejs, EjsObj *store, EjsString *key, EjsDate *when);
+extern EjsAny *ejsStoreRead(Ejs *ejs, EjsObj *store, EjsString *key, EjsObj *options);
+extern EjsAny *ejsStoreReadObj(Ejs *ejs, EjsObj *store, EjsString *key, EjsObj *options);
+extern EjsBoolean *ejsStoreRemove(Ejs *ejs, EjsObj *store, EjsString *key);
+extern EjsVoid *ejsStoreSetLimits(Ejs *ejs, EjsObj *store, EjsObj *limits);
+extern EjsNumber *ejsStoreWrite(Ejs *ejs, EjsObj *store, EjsString *key, EjsString *value, EjsObj *options);
+extern EjsNumber *ejsStoreWriteObj(Ejs *ejs, EjsObj *store, EjsString *key, EjsAny *value, EjsObj *options);
+
+
 #ifdef __cplusplus
 }
 #endif
@@ -4171,7 +4193,9 @@ typedef struct EjsHttpServer {
     EjsPot          pot;                        /**< Extends Object */
     Ejs             *ejs;                       /**< Ejscript interpreter handle */
     HttpServer      *server;                    /**< Http server object */
+#if UNUSED
     MprEvent        *sessionTimer;              /**< Session expiry timer */
+#endif
     struct MprSsl   *ssl;                       /**< SSL configuration */
     HttpTrace       trace[2];                   /**< Default tracing for requests */
     cchar           *connector;                 /**< Pipeline connector */
@@ -4187,7 +4211,9 @@ typedef struct EjsHttpServer {
     struct EjsHttpServer *cloned;               /**< Server that was cloned */
     EjsObj          *emitter;                   /**< Event emitter */
     EjsObj          *limits;                    /**< Limits object */
+#if UNUSED
     EjsPot          *sessions;                  /**< Session cache */
+#endif
     EjsArray        *incomingStages;            /**< Incoming Http pipeline stages */
     EjsArray        *outgoingStages;            /**< Outgoing Http pipeline stages */
 } EjsHttpServer;
@@ -4270,47 +4296,48 @@ extern EjsRequest *ejsCreateRequest(Ejs *ejs, EjsHttpServer *server, HttpConn *c
 extern EjsRequest *ejsCloneRequest(Ejs *ejs, EjsRequest *req, bool deep);
 
 /** 
-    Session Class
+    Session Class. Requests can access to session state storage via the Session class.
     @description
         Session objects represent a shared session state object into which Http Requests and store and retrieve data
         that persists beyond a single request.
     @stability Prototype
     @defgroup EjsSession EjsSession
-    @see EjsSession ejsCreateSession ejsDestroySession
+    @see EjsSession ejsGetSession ejsDestroySession
  */
 typedef struct EjsSession {
-    EjsPot      pot;
-    MprTime     expire;             /* When the session should expire */
-    cchar       *id;                /* Session ID */
-    int         timeout;            /* Session inactivity lifespan */
-    int         index;              /* Index in sesssions[] */
+    EjsPot      pot;                /* Session properties */
+    EjsString   *key;               /* Session ID key */
+    EjsObj      *store;             /* Store reference */
+    EjsObj      *options;           /* Default write options */
+    MprTime     lifespan;           /* Session inactivity lifespan */
+    int         ready;              /* Data cached from store into pot */
 } EjsSession;
 
 /** 
-    Create a session object
+    Create a session object for a given key. If the given key is NULL or has expired, a new key will be generated.
     @param ejs Ejs interpreter handle returned from $ejsCreate
-    @param req Request object creating the session
-    @param timeout Timeout in milliseconds
-    @param secure If the session is to be given a cookie that is designated as only for secure sessions (SSL)
+    @param key String containing the session ID
     @returns A new session object.
 */
-extern EjsSession *ejsCreateSession(Ejs *ejs, struct EjsRequest *req, int timeout, bool secure);
-extern EjsSession *ejsGetSession(Ejs *ejs, struct EjsRequest *req);
+extern EjsSession *ejsGetSession(Ejs *ejs, EjsString *key, MprTime timeout, int create);
 
 /** 
     Destroy as session. This destroys the session object so that subsequent requests will need to establish a new session.
     @param ejs Ejs interpreter handle returned from $ejsCreate
     @param server Server object owning the session.
-    @param session Session object created via ejsCreateSession()
+    @param session Session object created via ejsGetSession()
 */
-extern int ejsDestroySession(Ejs *ejs, EjsHttpServer *server, EjsSession *session);
+extern int ejsDestroySession(Ejs *ejs, EjsSession *session);
 
 extern void ejsSetSessionTimeout(Ejs *ejs, EjsSession *sp, int timeout);
-extern void ejsUpdateSessionLimits(Ejs *ejs, EjsHttpServer *server);
 
 extern void ejsSendRequestCloseEvent(Ejs *ejs, EjsRequest *req);
 extern void ejsSendRequestErrorEvent(Ejs *ejs, EjsRequest *req);
-extern void ejsStopSessionTimer(EjsHttpServer *server);
+
+#if UNUSED
+//  MOB - should take no arg
+extern void ejsCheckSessionTimer(EjsHttpServer *server);
+#endif
 
 
 extern void ejsConfigureHttpServerType(Ejs *ejs);

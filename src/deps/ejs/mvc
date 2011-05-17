@@ -43,18 +43,7 @@ class EjsMvc {
 
     /* This layers over App.defaultConfig */
     private var defaultConfig = {
-        mode: "debug",
-        cache: {
-            enable: true,
-            reload: true,
-        },
-        database: {
-            timeout: 5000,
-            debug: { },
-            test: { },
-            production: { },
-        },
-        directories: {
+        dirs: {
             bin: Path("bin"),
             db: Path("db"),
             cache: Path("cache"),
@@ -71,28 +60,10 @@ class EjsMvc {
             ejs: "ejs",
             mod: "mod",
         },
-        //  TODO -- should be a files section with "ejsrc", 
         mvc: {
             appmod: "App.mod",
             compiler: "ejsc --debug --web",
             start: "start.es",
-        },
-        web: {
-            view: {
-                connectors: {
-                    table: "html",
-                    chart: "google",
-                    rest: "html",
-                },
-                formats: {
-                    Date: "%a %e %b %H:%M",
-                },
-                // helpers: []
-            },
-        },
-        session: {
-            enable: true,
-            timeout: 1800,
         },
     }
 
@@ -101,20 +72,17 @@ class EjsMvc {
         loadConfig("ejsrc", true)
         ext = config.extensions
 
-        //  MOB - why test config.mvc
-        if (config.mvc) {
-            dirs = config.directories
-            dirs.home = App.dir
-            //  TODO -- should these come from ejsrc
-            dirs.lib = App.exeDir.join("../lib")
-            dirs.mod = App.exeDir.join("../modules")
-            for (d in dirs) {
-                dirs[d] = Path(dirs[d])
-            }
-            //  TODO -- should this come from ejsrc
-            layoutPage = dirs.layouts.join("default.ejs")
-            mvc = Path(App.args[0]).basename
+        dirs = config.dirs
+        dirs.home = App.dir
+        //  TODO -- should these come from ejsrc
+        dirs.lib = App.exeDir.join("../lib")
+        dirs.mod = App.exeDir.join("../modules")
+        for (d in dirs) {
+            dirs[d] = Path(dirs[d])
         }
+        //  TODO -- should this come from ejsrc
+        layoutPage = dirs.layouts.join("default.ejs")
+        mvc = Path(App.args[0]).basename
     }
 
     private var cmdOptions = [
@@ -978,7 +946,7 @@ class EjsMvc {
         makeConfigFile("ejsrc", data)
         /* Reload */
         loadConfig("ejsrc", true)
-        assert(dirs == config.directories)
+        assert(dirs == config.dirs)
         for (d in dirs) {
             dirs[d] = Path(dirs[d])
         }
@@ -1431,16 +1399,15 @@ class Templates {
 '{
     mode: "debug",
 
-    cache: {
-        enable: true,
+    app: {
+        cache: true,
         reload: true,
     },
 
     database: {
-        module: "ejs.db",
-        class: "Database",
-        adapter: "sqlite3",
-        timeout: 5000,
+        adapter: "sqlite",
+        class: "Sqlite",
+        module: "ejs.db.sqlite",
         debug: {
             name: "db/${NAME}.sdb", username: "", password: "", trace: false,
         },
@@ -1452,7 +1419,7 @@ class Templates {
         },
     },
     
-    directories: {
+    dirs: {
         cache: "cache",
         db: "db",
         migrations: "db/migrations",
@@ -1464,7 +1431,7 @@ class Templates {
 
     log: {
         enable: true,
-        location: "stdout",
+        location: "stderr",
         level: 1,
         showClient: true,
     },
@@ -1473,20 +1440,32 @@ class Templates {
         start: "start.es",
     },
 
-    session: {
-        enable: true,
-        timeout: 1800,
+    store: {
+        adapter: "local",
+        class: "Local",
+        module: "ejs.store.local",
+        limits: {
+            lifespan: 3600,
+        },
     },
 
     web: {
-        endpoint: ":4000",
+        cache: {
+            workers: true,
+        },
         expires: {
             html:   86400,
             ejs:    86400,
             es:     86400,
             "":     86400,
         },
-        view: {
+        limits: {
+            requestTimeout: 3600, 
+            sessionTimeout: 3600, 
+            workers: 10,
+        },
+        listen: ":4000",
+        views: {
             connectors: {
                 table: "html",
                 chart: "google",
@@ -1754,8 +1733,8 @@ server.on("readable", function (event, request) {
     server.serve(request, router)
 })
 
-App.log.info("Listen on", App.config.web.endpoint)
-server.listen(App.config.web.endpoint)
+App.log.info("Listen on", App.config.web.listen)
+server.listen(App.config.web.listen)
 App.run()
 '
 
