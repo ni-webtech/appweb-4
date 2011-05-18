@@ -1,37 +1,25 @@
 //  Ejsript default configuration
 {
     mode: "debug",
-    cache: {
-        enable: true,
+    app: {
+        cache: true,
         reload: true,
     },
-    directories: {
+    dirs: {
         cache: "cache",
     },
     log: {
         enable: true,
-        location: "stdout",
+        location: "stderr",
         level: 2,
-        match: null,
         showClient: true,
     },
-    session: {
-        enable: true,
-        timeout: 1800,
-    },
     web: {
-        inactivity: 3600,
-        timeout: 3600,
-        expires: {
-            "html": 86400,
-            "ejs": 86400,
-            "es": 86400,
-            "": 86400,
+        limits: {
+            inactivityTimeout: 3600,
+            requestTimeout: 3600,
+            sessionTimeout: 3600,
         },
-        endpoint: "127.0.0.1:4000",
-        view: {
-            connectors: { },
-            formats: { },
-        },
+        listen: "127.0.0.1:4000",
     },
 }

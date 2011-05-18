@@ -3483,6 +3483,7 @@ extern void     ejsDefineConfigProperties(Ejs *ejs);
 #if BLD_FEATURE_SQLITE
 extern int      ejs_db_sqlite_Init(Ejs *ejs, MprModule *mp);
 #endif
+extern int      ejs_cache_local_Init(Ejs *ejs, MprModule *mp);
 extern int      ejs_web_Init(Ejs *ejs, MprModule *mp);
 
 /* 
@@ -4073,13 +4074,13 @@ extern EjsNativeModule *ejsLookupNativeModule(Ejs *ejs, cchar *name);
 extern EjsModule *ejsCreateModule(Ejs *ejs, EjsString *name, int version, EjsConstants *constants);
 extern EjsModule *ejsCloneModule(Ejs *ejs, EjsModule *mp);
 
-extern EjsVoid *ejsStoreExpire(Ejs *ejs, EjsObj *store, EjsString *key, EjsDate *when);
-extern EjsAny *ejsStoreRead(Ejs *ejs, EjsObj *store, EjsString *key, EjsObj *options);
-extern EjsAny *ejsStoreReadObj(Ejs *ejs, EjsObj *store, EjsString *key, EjsObj *options);
-extern EjsBoolean *ejsStoreRemove(Ejs *ejs, EjsObj *store, EjsString *key);
-extern EjsVoid *ejsStoreSetLimits(Ejs *ejs, EjsObj *store, EjsObj *limits);
-extern EjsNumber *ejsStoreWrite(Ejs *ejs, EjsObj *store, EjsString *key, EjsString *value, EjsObj *options);
-extern EjsNumber *ejsStoreWriteObj(Ejs *ejs, EjsObj *store, EjsString *key, EjsAny *value, EjsObj *options);
+extern EjsVoid *ejsCacheExpire(Ejs *ejs, EjsObj *cache, EjsString *key, EjsDate *when);
+extern EjsAny *ejsCacheRead(Ejs *ejs, EjsObj *cache, EjsString *key, EjsObj *options);
+extern EjsAny *ejsCacheReadObj(Ejs *ejs, EjsObj *cache, EjsString *key, EjsObj *options);
+extern EjsBoolean *ejsCacheRemove(Ejs *ejs, EjsObj *cache, EjsString *key);
+extern EjsVoid *ejsCacheSetLimits(Ejs *ejs, EjsObj *cache, EjsObj *limits);
+extern EjsNumber *ejsCacheWrite(Ejs *ejs, EjsObj *cache, EjsString *key, EjsString *value, EjsObj *options);
+extern EjsNumber *ejsCacheWriteObj(Ejs *ejs, EjsObj *cache, EjsString *key, EjsAny *value, EjsObj *options);
 
 
 #ifdef __cplusplus
@@ -4284,7 +4285,7 @@ extern EjsRequest *ejsCloneRequest(Ejs *ejs, EjsRequest *req, bool deep);
 typedef struct EjsSession {
     EjsPot      pot;                /* Session properties */
     EjsString   *key;               /* Session ID key */
-    EjsObj      *store;             /* Store reference */
+    EjsObj      *cache;             /* Cache store reference */
     EjsObj      *options;           /* Default write options */
     MprTime     lifespan;           /* Session inactivity lifespan */
     int         ready;              /* Data cached from store into pot */

@@ -5844,7 +5844,7 @@ SQLITE_API int sqlite3_strnicmp(const char *, const char *, int);
 
 /************************************************************************/
 /*
- *  Start of file "../../src//jems/ejs.db.sqlite/src/ejssql.c"
+ *  Start of file "../../src/jems/ejs.db.sqlite/src/ejssql.c"
  */
 /************************************************************************/
 
@@ -9055,7 +9055,7 @@ int main(int argc, char **argv){
 #endif /* BLD_FEATURE_SQLITE */
 /************************************************************************/
 /*
- *  End of file "../../src//jems/ejs.db.sqlite/src/ejssql.c"
+ *  End of file "../../src/jems/ejs.db.sqlite/src/ejssql.c"
  */
 /************************************************************************/
 

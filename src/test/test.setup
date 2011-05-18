@@ -4,10 +4,10 @@
 require ejs.unix
 
 let conf         = Path("appweb.conf").readString()
-const PORT       = conf.replace(/.*Listen ([0-9]+) *# MAIN.*/ms, "$1")
-const SSL_PORT   = conf.replace(/.*Listen ([0-9]+) *# SSL.*/ms, "$1")
-const VHOST_PORT = conf.replace(/.*Listen ([0-9]+) *# VHOST.*/ms, "$1")
-const IPHOST     = conf.replace(/.*Listen ([0-9]+) *# IPHOST.*/ms, "$1")
+const PORT       = conf.replace(/.*Listen *([0-9]+) *# MAIN.*/ms, "$1")
+const SSL_PORT   = conf.replace(/.*Listen *([0-9]+) *# SSL.*/ms, "$1")
+const VHOST_PORT = conf.replace(/.*Listen *([0-9]+) *# VHOST.*/ms, "$1")
+const IPHOST     = conf.replace(/.*Listen *([0-9]+) *# IPHOST.*/ms, "$1")
 const LOCALHOST  = "127.0.0.1"
 const HTTP       = "http://" + LOCALHOST + ":" + PORT
 const HTTPS      = "https://" + LOCALHOST + ":" + SSL_PORT
@@ -19,6 +19,7 @@ function start(cmd: String): Void {
         let pid = System.daemon(cmd)
         Path(PIDFILE).write(pid)
     }
+
     let url = ":" + PORT + "/web/ready.ready"
     for (i in 10) {
         http = new Http
@@ -33,7 +34,7 @@ function start(cmd: String): Void {
         http.close()
     }
     if (http.status != 404 && http.status != 200) {
-        throw "Cant start web server"
+        throw "Can't start web server"
     }
     http.close()
 }

@@ -124,9 +124,9 @@ module ejs {
         static var name: String
 
         /**
-            Application in-memory store reference. See $ejs.store::Store
+            Application in-memory cache reference
          */
-        static var store: Store
+        static var cache: Cache
 
         /** 
             Application title name. Multi-word, Camel Case name for the application suitable for display. This is 
@@ -436,8 +436,8 @@ module ejs {
                 load(m)
             }
         }
-        if (config.store) {
-            App.store = new Store(null, config.store)
+        if (config.cache) {
+            App.cache = new Cache(null, blend({shared: true}, config.cache))
         }
     }
 
@@ -2000,6 +2000,199 @@ module ejs {
 /************************************************************************/
 /*
  *  End of file "../../src/core/ByteArray.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/core/Cache.es"
+ */
+/************************************************************************/
+
+/*
+    Cache.es -- Cache class providing key/value storage.
+
+    Usage Tutorial:
+
+        cache = new Cache("local", {lifespan: 86400, timeout: 5000, memory: 200000000, keys: 10000000})
+
+        session = cache.read(key)
+        cache.write(key, value, {lifespan: 3600})
+        cache.remove("session", sessionID)
+        cache.destroy()
+
+        cache = new Cache("memcached", {addresses: ["127.0.0.1:11211"], debug: false})
+        cache = new Cache("file", {dir: "/tmp"})
+
+        Ejs uses the key naming convention:  ::module::key
+ */
+module ejs {
+
+    /**
+        Cache meta class to manage in-memory storage of key-value data. The Cache class provides an abstraction over
+        various in-memory and disk-based caching cache backends.
+        @stability prototype
+     */
+    class Cache {
+        use default namespace public
+
+        private var adapter: Object
+
+        /**
+            Cache constructor.
+            @param adapter Adapter for the cache cache. E.g. "local". The Local cache is the only currently supported
+                cache backend.
+            @param options Adapter options. The common options are described below, other options are passed through
+            to the relevant caching backend.
+            @option lifespan Default lifespan for key values
+            @option resolution Time in milliseconds to check for expired expired keys
+            @option timeout Timeout on cache I/O operations
+            @option trace Trace I/O operations for debug
+            @option module Module name containing the cache connector class. This is a bare module name without ".mod"
+                or any leading path.
+            @option class Class name containing the cache backend.
+         */
+        function Cache(adapter: String = null, options: Object = null) {
+            adapter ||= "local"
+            let adapterClass = options["class"] || options.adapter.toPascal()
+            //  BUG should be able to use (options.module) below
+            let module = options.module
+            if (!global.module::[adapterClass]) {
+                load(module + ".mod")
+                if (!global.module::[adapterClass]) {
+                    throw "Can't find cache adapter: \"" + module + "::" + adapter + "\""
+                }
+            }
+            this.adapter = new global.module::[adapterClass](options)
+        }
+
+        /**
+            Destroy the cache
+         */
+        function destroy(): Void
+            adapter.destroy()
+
+        /**
+            Set a new expire date for a key
+            @param key Key to modify
+            @param when Date at which to expire the data. Set to null to never expire.
+         */
+        function expire(key: String, when: Date): Void
+            adapter.expire(key, when)
+
+        /**
+            Resource limits for the server and for initial resource limits for requests.
+            @param limits. Limits is an object hash. Depending on the cache backend in-use, the limits object may have
+                some of the following properties. Consult the documentation for the actual cache backend for which properties
+                are supported by the backend.
+            @option keys Maximum number of keys in the cache. Set to zero for no limit.
+            @option lifespan Default time to preserve key data. Set to zero for no timeout.
+            @option memory Total memory to allocate for cache keys and data. Set to zero for no limit.
+            @option retries Maximum number of times to retry I/O operations with cache backends.
+            @option timeout Maximum time to transact I/O operations with cache backends. Set to zero for no timeout.
+            @see setLimits
+          */
+        function get limits(): Object
+            adapter.limits
+
+        /**
+            Read a key. 
+            @param key Key value to read.
+            @param options Read options
+            @option version If set to true, the read will return an object hash containing the data and a unique version 
+                identifier for the last update to this key. This version identifier can be specified to write to peform
+                an atomic CAS (check and swap) operation.
+            @return Null if the key is not present. Otherwise return key data as a string or if the options parameter 
+                specified "version == true", return an object with the properties "data" for the key data and 
+                "version" for the CAS version identifier.
+         */
+        function read(key: String, options: Object = null): String
+            adapter.read(key, options)
+
+        function readObj(key: String, options: Object = null): Object
+            deserialize(adapter.read(key, options))
+
+        /**
+            Remove the key and associated value from the cache
+            @param key Key value to remove. If key is null, then all keys are removed.
+            @param Return true if the key was removed
+         */
+        function remove(key: String): Boolean
+            adapter.remove(key)
+
+        /**
+            Update the cache cache resource limits. The supplied limit fields are updated.
+            See the $limits property for limit field details.
+            @param limits Object hash of limit fields and values
+            @see limits
+         */
+        function setLimits(limits: Object): Void
+            adapter.setLimits(limits)
+
+        /**
+            Write the key and associated value to the cache. The value is written according to the optional mode option.  
+            @option lifespan Preservation time for the key in seconds 
+            @option expire When to expire the key. Takes precedence over lifetime.
+            @option mode Mode of writing: "set" is the default and means set a new value and create if required.
+                "add" means set the value only if the key does not already exist. "append" means append to any existing
+                value and create if required. "prepend" means prepend to any existing value and create if required.
+            @option version Unique version identifier to be used for a conditional write. The write will only be 
+                performed if the version id for the key has not changed. This implements an atomic compare and swap.
+                See $read.
+            @option throw Throw an exception rather than returning null if the version id has been updated for the key.
+            @return The number of bytes written, returns null if the write failed due to an updated version identifier for
+                the key.
+         */
+        function write(key: String, value: String, options: Object = null): Number
+            adapter.write(key, value, options)
+
+        function writeObj(key: String, value: Object, options: Object = null): Number
+            adapter.write(key, serialize(value), options)
+    }
+
+}
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/core/Cache.es"
  */
 /************************************************************************/
 
@@ -6674,13 +6867,15 @@ module ejs {
 
 module ejs {
 
-    /** 
+    /**
         Loader for CommonJS modules. The Loader class provides provides a $require() function to load
             script files.
+        WARNING: this will not be supported in future releases as the Harmony loader will be supported instead.
         @param id Module identifier. May be top level or may be an identifier relative to the loading script.
         @returns An object hash of exports from the module
         @spec ejs
         @stability prototype
+        @hide
      */
     public function require(id: String): Object
         Loader.require(id)
@@ -6698,8 +6893,8 @@ module ejs {
         private static var timestamps = {}
         private static const defaultExtensions = [".es", ".js"]
 
-        /**
-            UNUSED - not yet used
+        /*
+            WARNING: this will not be supported in future releases as the Harmony loader will be supported instead.
             @hide
          */
         public static function init(mainId: String? = null)
@@ -6718,6 +6913,7 @@ module ejs {
 
         /**
             Load a CommonJS module. The module is loaded only once unless it is modified.
+            WARNING: this will not be supported in future releases as the Harmony loader will be supported instead.
             @param id Name of the module to load. The id may be an absolute path, relative path or a path fragment that is
                 resolved relative to the App search path. Ids may or may not include a ".es" or ".js" extension.
             @return a hash of exported properties
@@ -6727,8 +6923,9 @@ module ejs {
             if (!exports || config.app.reload) {
                 let path: Path = locate(id, config)
                 if (path.modified > timestamps[path]) {
-                    if (!global."ejs.cjs"::CommonSystem) {
-                        /* On-demand loading of CommonJS modules */
+                    //  On-demand loading of CommonJS support
+                    //  DEPRECATED
+                    if (config.commonJS && !global."ejs.cjs"::CommonSystem) {
                         global.load("ejs.cjs.mod")
                     }
                     return load(id, path, config)
@@ -6802,11 +6999,9 @@ module ejs {
                 }
                 initializer = eval(code, cache)
             }
-            //  TODO -- implement system and module?
-            //  function initializer(require, exports, module, system)
             signatures[path] = exports = {}
             initializer(require, exports, {id: id, path: path}, null)
-    /*
+    /* UNUSED
             if (exports.app.bound == this) {
                 exports.app.bind(null)
             }
@@ -10165,189 +10360,6 @@ module ejs {
 /************************************************************************/
 /*
  *  End of file "../../src/core/Socket.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/core/Store.es"
- */
-/************************************************************************/
-
-/*
-    Store.es -- Store class providing key/value storage.
-
-    Usage Tutorial:
-
-        store = new Store("local", {lifespan: 86400, timeout: 5000, memory: 200000000, keys: 10000000})
-
-        session = store.read(key)
-        store.write(key, value, {lifespan: 3600})
-        store.remove("session", sessionID)
-        store.destroy()
-
-        store = new Store("memcached", {addresses: ["127.0.0.1:11211"], debug: false})
- */
-module ejs {
-
-    /**
-        Store meta class to manage in-memory storage of key-value data. The Store class provides an abstraction over
-        various in-memory and disk-based caching store backends.
-        @stability prototype
-     */
-    class Store {
-        use default namespace public
-
-        private var adapter: Object
-
-        /**
-            Store constructor.
-            @param adapter Adapter for the store store. E.g. "local". The Local store is the only currently supported
-                store backend.
-            @param options Adapter options. The common options are described below, other options are passed through
-            to the relevant caching backend.
-            @option lifespan Default lifespan for key values
-            @option timeout Timeout on store I/O operations
-            @option trace Trace I/O operations for debug
-            @option module Module name containing the store connector class. This is a bare module name without ".mod"
-                or any leading path.
-            @option class Class name containing the store backend.
-         */
-        function Store(adapter: String = null, options: Object = null) {
-            adapter ||= "local"
-            let adapterClass = options["class"] || options.adapter.toPascal()
-            //  BUG should be able to use (options.module) below
-            let module = options.module
-            if (!global.module::[adapterClass]) {
-                load(module + ".mod")
-                if (!global.module::[adapterClass]) {
-                    throw "Can't find store adapter: \"" + module + "::" + adapter + "\""
-                }
-            }
-            this.adapter = new global.module::[adapterClass](options)
-        }
-
-        /**
-            Destroy the store
-         */
-        function destroy(): Void
-            adapter.destroy()
-
-        /**
-            Set a new expire date for a key
-            @param key Key to modify
-            @param when Date at which to expire the data. Set to null to never expire.
-         */
-        function expire(key: String, when: Date): Void
-            adapter.expire(key, when)
-
-        /**
-            Resource limits for the server and for initial resource limits for requests.
-            @param limits. Limits is an object hash. Depending on the store backend in-use, the limits object may have
-                some of the following properties. Consult the documentation for the actual store backend for which properties
-                are supported by the backend.
-            @option keys Maximum number of keys in the store. Set to zero for no limit.
-            @option lifespan Default time to preserve key data. Set to zero for no timeout.
-            @option memory Total memory to allocate for store keys and data. Set to zero for no limit.
-            @option retries Maximum number of times to retry I/O operations with store backends.
-            @option timeout Maximum time to transact I/O operations with store backends. Set to zero for no timeout.
-            @see setLimits
-          */
-        function get limits(): Object
-            adapter.limits
-
-        /**
-            Read a key. 
-            @param key Key value to read.
-            @param options Read options
-            @option version If set to true, the read will return an object hash containing the data and a unique version 
-                identifier for the last update to this key. This version identifier can be specified to write to peform
-                an atomic CAS (check and swap) operation.
-            @return Null if the key is not present. Otherwise return key data as a string or if the options parameter 
-                specified "version == true", return an object with the properties "data" for the key data and 
-                "version" for the CAS version identifier.
-         */
-        function read(key: String, options: Object = null): Object
-            adapter.read(key, options)
-
-        /**
-            Remove the key and associated value from the store
-            @param key Key value to remove. If key is null, then all keys are removed.
-            @param Return true if the key was removed
-         */
-        function remove(key: String): Boolean
-            adapter.remove(key)
-
-        /**
-            Update the store store resource limits. The supplied limit fields are updated.
-            See the $limits property for limit field details.
-            @param limits Object hash of limit fields and values
-            @see limits
-         */
-        function setLimits(limits: Object): Void
-            adapter.setLimits(limits)
-
-        /**
-            Write the key and associated value to the store. The value is written according to the optional mode option.  
-            @option lifespan Preservation time for the key in seconds 
-            @option expire When to expire the key. Takes precedence over lifetime.
-            @option mode Mode of writing: "set" is the default and means set a new value and create if required.
-                "add" means set the value only if the key does not already exist. "append" means append to any existing
-                value and create if required. "prepend" means prepend to any existing value and create if required.
-            @option version Unique version identifier to be used for a conditional write. The write will only be 
-                performed if the version id for the key has not changed. This implements an atomic compare and swap.
-                See $read.
-            @option throw Throw an exception rather than returning null if the version id has been updated for the key.
-            @return The number of bytes written, returns null if the write failed due to an updated version identifier for
-                the key.
-         */
-        function write(key: String, value: Object, options: Object = {}): Number
-            adapter.write(key, value, options)
-    }
-
-}
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/core/Store.es"
  */
 /************************************************************************/
 
@@ -13715,108 +13727,154 @@ module ejs {
 
 /************************************************************************/
 /*
- *  Start of file "../../src/jems/ejs.cjs/CommonJS.es"
+ *  Start of file "../../src/jems/ejs.cache.local/LocalCache.es"
  */
 /************************************************************************/
 
 /*
-    CommonJS class
+    LocalCache.es -- Local in-memory key/value cache class 
  */
 
-module ejs.cjs {
+module ejs.cache.local {
 
     /**
-        CommonJS System class. This is provided for compatibility with the CommonJS environment.
+        Fast, non-scalable, non-durable, in-memory key/value cache class. The cache is in-process and is not 
+        available to other processes on the same machine. Key/value data is not persisted. Use this cache if you require
+        the fastest, non-scalable key/value cache alternative. There is one cache per Application. All uses of the LocalCache
+        class connect to the one cache using one domain of keys.
+        @stability prototype
      */
-    enumerable dynamic class CommonSystem {
-        use default namespace public
-
-        static var stdin: Stream
-        static var stdout: Stream
-        static var stderr: Stream
-        static var args: Array
-        static var env: Object
-        static var fs: CommonFile
-        static var platform: String
-        static var system: CommonSystem
-
-        /** @hide */
-        function CommonSystem() {
-            stdin = App.inputStream
-            stdout = App.outputStream
-            stderr = App.errorStream
-            args = App.args
-            env = {}        // App.env
-            platform = Config.title
-            this.global = global
-
-            fs = new CommonFile
-            log = App.log
-            system = this
-        }
-
-    /*
-        function print(...args): Void
-            global.print(...args)
-     */
-        /** @hide */
-        function log(...msgs): Void
-            App.logger.info(...msgs)
-    }
-
-    /**
-        CommonJS File class. This is provided for compatibility with the CommonJS environment.
-     */
-    class CommonFile {
+    class LocalCache {
         use default namespace public
 
         /**
-            Open a path and return a File object.
-            @param path Filename to open
-            @param options Open options
-            @options mode optional file access mode string. Use "r" for read, "w" for write, "a" for append to existing
-                content, "+" never truncate.
-            @options permissions optional Posix permissions number mask. Defaults to 0664.
-            @options owner String representing the file owner (Not implemented)
-            @options group String representing the file group (Not implemented)
-            @return a File stream object which implements the Stream interface.
-            @throws IOError if the path or file cannot be created.
+            Create and connect to the local cache. An application has only one cache regardless of how many LocalCache
+            instances are created. All LocalCache instances connect to the same underlying cache. Multiple interpreters
+            can use the local cache to reliably share information.
+            @param options Configuration options.
+            @option shared Create or connect to a single, shared cache. If multiple interpreters in a single
+                process create shared LocalCache instances they will be able to share key/value data.
+            @option lifespan Default lifespan for key values. Set to zero for a default unlimited timeout.
+            @option resolution Time in milliseconds to check for expired expired keys
+            @option memory Maximum memory to use for keys and data
+            @option trace Trace I/O operations for debug
          */
-        function open(path: String, options): Stream
-            File(path, options)
+        native function LocalCache(options: Object = null)
 
         /**
-            Read a file and return a string
-            @param path Filename to read from
-            @param options Ignored
-            @return File data as a string
+            Destroy the cache
          */
-        function read(path: String, options = null): String
-            Path(path).readString()
-
-       /**
-            The base of portion of the path. The base portion is the trailing portion without any directory elements.
-            @param path Path name to examine
-            @param extension Ignored
-            @return the base portion of the path as a string
-        */
-        function basename(path: String, extension: String = ""): String
-            Path(path).basename
+        native function destroy(): Void
 
         /**
-            Write data to a file.
-            @param path Filename to write to
-            @param data Data to write to the file
+            Set a fixed expire date for a key. After defining an expiry, the key's lifespan will not be renewed via
+            access to the key.
+            @param key Key to modify.
+            @param expires Date at which to expire the data. Set expires to null to cause the key to never expire.
+            @return True if the key's expiry can be updated. 
          */
-        function write(path: String, data): Void
-            Path(path).write(data)
+        native function expire(key: String~, expires: Date): Boolean
+
+        /**
+            Resource limits for the server and for initial resource limits for requests.
+            @param limits. Limits is an object hash with the following properties:
+            @option keys Maximum number of keys in the cache.
+            @option lifespan Default time to preserve key data. Set to zero for an unlimited default timeout.
+            @option memory Maximum memory to use for keys and data.
+            @see setLimits
+          */
+        native function get limits(): Object
+
+        /**
+            Read a key. Read will return the keys value or null if the key is not present or expired. If options.version
+            is set to true, then the call will return an object with "data" and "version" properties where version is
+            the key's unique update version ID. Each time the key is updated, the version ID is automatically changed to
+            a new value. Versions IDs can be used used for conditional (CAS) writes.
+            @param key Key value to read.
+            @param options Read options
+            @option version If set to true, the read will return an object hash containing the data and a unique version 
+                identifier for the last update to this key. This version identifier can be specified to write to peform
+                an atomic CAS (check and swap) operation.
+            @return Null if the key is not present. Otherwise return key data as a string or if the options parameter 
+                specified "version == true", return an object with the properties "data" for the key data and 
+                "version" for the CAS version identifier.
+         */
+        native function read(key: String~, options: Object = null): String
+
+        /**
+            @param key Key value to remove. If key is null, then all keys are removed.
+            @return True if the key was removed.
+         */
+        native function remove(key: String): Boolean
+
+        /**
+            Update the cache cache resource limits. The supplied limit fields are updated.
+            See the $limits property for limit field details.
+            @param limits Object hash of limit fields and values
+            @see limits
+         */
+        native function setLimits(limits: Object): Void
+
+        /**
+            Write the key and associated value to the cache. The value is written according to the optional mode option.  
+            The key's expiry will be updated based on the defined lifespan from the current time.
+            @option expires When to expire the key. Takes precedence over lifetime. 
+            @option lifespan Preservation time for the key in seconds. If zero, the key will never expire.
+            @option mode Mode of writing: "set" is the default and means set a new value and create if required.
+                "add" means set the value only if the key does not already exist. "append" means append to any existing
+                value and create if required. "prepend" means prepend to any existing value and create if required.
+                NOTE: only "set" is implemented.
+            @option throw Throw an exception rather than returning null if the version id has been updated for the key. 
+            @option version Required key version for the write to succeed. A version can be obtained via the $read 
+                call. If set to true, the read will return an object hash containing the data and a unique version 
+                identifier for the last update to this key. This version identifier can be specified to write to peform
+                an atomic CAS (check and swap) operation.
+            @return The number of bytes written, returns null if the write failed due to an updated version identifier for
+                the key.
+         */
+        native function write(key: String~, value: String~, options: Object = null): Number
     }
-
-    global.system = new CommonSystem
 }
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
 /************************************************************************/
 /*
- *  End of file "../../src/jems/ejs.cjs/CommonJS.es"
+ *  End of file "../../src/jems/ejs.cache.local/LocalCache.es"
  */
 /************************************************************************/
 
@@ -18777,10 +18835,10 @@ module ejs.web {
             log: {
                 showClient: true,
             },
-            store: {
+            cache: {
                 adapter: "local",
-                "class": "Local",
-                module: "ejs.store.local",
+                "class": "LocalCache",
+                module: "ejs.cache.local",
                 lifespan: 3600,
             },
             web: {
@@ -18811,8 +18869,8 @@ module ejs.web {
             for (let [key, value] in dirs) {
                 dirs[key] = Path(value)
             }
-            if (App.store == null && App.config.store) {
-                App.store = new Store(null, App.config.store)
+            if (App.cache == null && App.config.cache) {
+                App.cache = new Cache(null, blend({shared: true}, App.config.cache))
             }
         }
         initHttpServer()
