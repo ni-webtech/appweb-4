@@ -2020,13 +2020,13 @@ module ejs {
 
         session = cache.read(key)
         cache.write(key, value, {lifespan: 3600})
-        cache.remove("session", sessionID)
+        cache.remove(key)
         cache.destroy()
 
         cache = new Cache("memcached", {addresses: ["127.0.0.1:11211"], debug: false})
         cache = new Cache("file", {dir: "/tmp"})
 
-        Ejs uses the key naming convention:  ::module::key
+        Ejs internally uses the key naming convention:  ::module::key
  */
 module ejs {
 
@@ -2054,18 +2054,20 @@ module ejs {
                 or any leading path.
             @option class Class name containing the cache backend.
          */
-        function Cache(adapter: String = null, options: Object = null) {
-            adapter ||= "local"
-            let adapterClass = options["class"] || options.adapter.toPascal()
-            //  BUG should be able to use (options.module) below
-            let module = options.module
-            if (!global.module::[adapterClass]) {
-                load(module + ".mod")
-                if (!global.module::[adapterClass]) {
-                    throw "Can't find cache adapter: \"" + module + "::" + adapter + "\""
+        function Cache(adapter: String = null, options: Object = {}) {
+            if (adapter == null) {
+                options = blend({shared: true}, options, true)
+                adapter = "local"
+            }
+            let adapterClass = options["class"] || "LocalCache"
+            let modname = options.module || "ejs.cache.local"
+            if (!global.modname::[adapterClass]) {
+                load(modname + ".mod")
+                if (!global.modname::[adapterClass]) {
+                    throw "Can't find cache adapter: \"" + modname + "::" + adapter + "\""
                 }
             }
-            this.adapter = new global.module::[adapterClass](options)
+            this.adapter = new global.modname::[adapterClass](options)
         }
 
         /**
@@ -2081,6 +2083,15 @@ module ejs {
          */
         function expire(key: String, when: Date): Void
             adapter.expire(key, when)
+
+        /**
+            Increment a key's value by a given amount. This operation is atomic.
+            @param key Key value to read.
+            @param amount Amount by which to increment the value. This amount can be negative to achieve a decrement.
+            @return The new key value. If the key does not exist, it is initialized to the amount value.
+         */ 
+        function inc(key: String, amount: Number = 1): Number
+            adapter.inc(key, amount)
 
         /**
             Resource limits for the server and for initial resource limits for requests.
@@ -13774,6 +13785,14 @@ module ejs.cache.local {
             @return True if the key's expiry can be updated. 
          */
         native function expire(key: String~, expires: Date): Boolean
+
+        /**
+            Increment a key's value by a given amount. This operation is atomic.
+            @param key Key value to read.
+            @param amount Amount by which to increment the value. This amount can be negative to achieve a decrement.
+            @return The new key value
+         */ 
+        native function inc(key: String~, amount: Number~ = 1): Number
 
         /**
             Resource limits for the server and for initial resource limits for requests.

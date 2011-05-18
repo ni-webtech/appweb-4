@@ -12966,7 +12966,9 @@ static void manageModule(MprModule *mp, int flags)
         mprMark(mp->name);
         mprMark(mp->path);
         mprMark(mp->entry);
+#if UNUSED
         mprMark(mp->moduleData);
+#endif
 
     } else if (flags & MPR_MANAGE_FREE) {
         //  TODO - should this unload the module?
