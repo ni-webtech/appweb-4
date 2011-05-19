@@ -4473,6 +4473,8 @@ module ejs {
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+//  MOB - rethink various throws
+
 module ejs {
 
     /** 
@@ -4564,20 +4566,30 @@ module ejs {
          */
         native function get isOpen(): Boolean
 
-//  MOB - is this implemented?
-        /** @duplicate Stream.off */
+        /** 
+            TODO
+            @duplicate Stream.off 
+            @hide
+         */
         native function off(name, observer: Function): Void
 
-//  MOB - is this implemented?
-        /** @duplicate Stream.on */
+        /** 
+            TODO
+            @duplicate Stream.on 
+            @hide
+         */
         native function on(name, observer: Function): Void
 
+        //  MOB - would it be better not to throw?
         /**  
             Open a file. This opens the file designated when the File constructor was called.
             @params options Optional options. If ommitted, the options default to open the file in read mode.
                 Options can be either a mode string or can be an options hash. 
             @options mode optional file access mode string. Use "r" for read, "w" for write, "a" for append to existing
-                content, "+" never truncate. Defaults to "r".
+                content, "c" to create the file if it does not exist, "l" to gain an exclusive lock, "s" for a shared lock,
+                "t" for text mode, and "+" to never truncate. Defaults to "r". 
+                If "w" is specified and the file does not exist, it will be created. 
+                If "c" is specified and the file exists, the open will fail.
             @options permissions Number containing the Posix permissions number value. Note: this is a number
                 and not a string representation of an octal posix number.
             @options owner String representing the file owner (Not implemented)
@@ -4643,13 +4655,13 @@ module ejs {
 
         /** 
             Remove a file
-            @throws IOError if the file could not be removed.
+            @return true if the file could be removed
          */
-        function remove(): Void {
+        function remove(): Boolean {
             if (isOpen) {
-                throw new IOError("File is open")
+                return false
             }
-            Path(path).remove()
+            return Path(path).remove()
         }
 
         /** 
@@ -4657,6 +4669,7 @@ module ejs {
          */
         native function get size(): Number 
 
+        //  MOB -- perhaps better to not throw
         /**     
             Truncate the file. 
             @param value the new length of the file
@@ -6058,7 +6071,7 @@ FUTURE & KEEP
             Get the ejs session cookie. This call extracts the ejs session cookie from the Http response headers.
             Ejscript sessions are identified by a client cookie which when transmitted with subsequent requests will 
             permit the server to locate the relevant session state store for the server-side application. 
-            Use: setCookie("Cookie", cookie) to transmit the cookie on subsquent requests.
+            Use: setCookie(cookie) to transmit the cookie on subsquent requests.
          */
         function get sessionCookie() {
             let cookie = header("Set-Cookie")
@@ -22740,7 +22753,8 @@ module ejs.web {
             path = request.filename
             if (path && !path.exists) {
                 request.writeError(Http.NotFound, "Cannot find " + path)
-                return null
+                //  MOB - is this a generic need for a function like this?
+                return function() {}
             }
         }
         return Loader.load(path, path, request.config, function (id, path) {

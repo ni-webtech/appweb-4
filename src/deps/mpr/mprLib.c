@@ -7267,7 +7267,8 @@ static void manageDispatcher(MprDispatcher *dispatcher, int flags)
     es = dispatcher->service;
 
     if (flags & MPR_MANAGE_MARK) {
-        mprAssert(!dispatcher->destroyed);
+        //  MOB -- remove this assert -- when shutting down, stopping may not be set
+        mprAssert(!dispatcher->destroyed || mprIsStopping());
         mprMark(dispatcher->name);
         mprMark(dispatcher->eventQ);
         mprMark(dispatcher->cond);

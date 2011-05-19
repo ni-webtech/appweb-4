@@ -7528,10 +7528,24 @@ static int mapMode(cchar *mode)
         omode &= ~O_TRUNC;
     }
     if (strchr(mode, '+')) {
+        /* Append to existing content */
         omode &= ~O_TRUNC;
     }
     if (strchr(mode, 't')) {
+        /* Text mode */
         omode &= ~O_BINARY;
+    }
+    if (strchr(mode, 'l')) {
+        /* Exclusive lock */
+        omode |= O_EXLOCK;
+    }
+    if (strchr(mode, 's')) {
+        /* Shared lock */
+        omode |= O_SHLOCK;
+    }
+    if (strchr(mode, 'c')) {
+        /* Create - must not exist prior */
+        omode |= O_CREAT | O_EXCL;
     }
     return omode;
 }
@@ -37232,6 +37246,7 @@ void ejsDisableExit(Ejs *ejs)
 
 typedef struct EjsLocalCache
 {
+    //  MOB - does this need to be pot?
     EjsPot          pot;                /* Object base */
     MprHashTable    *store;             /* Key/value store */
     MprMutex        *mutex;             /* Cache lock*/
@@ -37720,6 +37735,32 @@ static void manageCacheItem(CacheItem *item, int flags)
 }
 
 
+static EjsLocalCache *cloneLocalCache(Ejs *ejs, EjsLocalCache *src, bool deep)
+{
+    EjsLocalCache   *dest;
+
+    if ((dest = ejsCreateObj(ejs, TYPE(src), 0)) == 0) {
+        return 0;
+    }
+    if (src->shared) {
+        dest->shared = src->shared;
+    } else if (src == shared) {
+        dest->shared = src;
+    } else {
+        dest->store = mprCreateHash(CACHE_HASH_SIZE, 0);
+        dest->mutex = mprCreateLock();
+        dest->timer = 0;
+        dest->lifespan = src->lifespan;
+        dest->resolution = src->resolution;
+        dest->usedMem = src->usedMem;
+        dest->maxMem = src->maxMem;
+        dest->maxKeys = src->maxKeys;
+        dest->shared = src->shared;
+    }
+    return dest;
+}
+
+
 static int configureLocalTypes(Ejs *ejs)
 {
     EjsType     *type;
@@ -37730,6 +37771,7 @@ static int configureLocalTypes(Ejs *ejs)
     type->instanceSize = sizeof(EjsLocalCache);
     type->mutableInstances = 1;
     type->manager = (MprManager) manageLocalCache;
+    type->helpers.clone = (EjsCloneHelper) cloneLocalCache;
 
     ejsBindConstructor(ejs, type, localConstructor);
     prototype = type->prototype;

@@ -327,6 +327,7 @@ MAIN(ejsMain, int argc, char **argv)
     }
 #endif
     app->ejs = 0;
+    mprTerminate(MPR_EXIT_DEFAULT);
     ejsDestroyVM(ejs);
     mprDestroy(MPR_EXIT_DEFAULT);
     return err;
