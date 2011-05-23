@@ -1222,8 +1222,8 @@ typedef struct Ejs {
 typedef struct EjsPool {
     MprList     *list;                      /**< Free list */
     MprTime     lastActivity;               /**< When a VM was last used */
-    MprMutex    *mutex;                     /**< Multithread locking */
     MprEvent    *timer;                     /**< VM prune timer */
+    MprMutex    *mutex;                     /**< Multithread lock */
     int         count;                      /**< Count of allocated VMs */
     int         max;                        /**< Maximum number of VMs */
     Ejs         *template;                  /**< VM template to clone */

@@ -442,6 +442,7 @@ static bool parseArgs(int argc, char **argv)
     argc = argc - nextArg;
     argv = &argv[nextArg];
     app->target = argv[argc - 1];
+    app->iterations *= app->loadThreads;
 
     if (--argc > 0) {
         /*

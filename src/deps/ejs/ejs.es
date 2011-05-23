@@ -2043,7 +2043,7 @@ module ejs {
         /**
             Cache constructor.
             @param adapter Adapter for the cache cache. E.g. "local". The Local cache is the only currently supported
-                cache backend.
+                cache backend. 
             @param options Adapter options. The common options are described below, other options are passed through
             to the relevant caching backend.
             @option lifespan Default lifespan for key values
@@ -2051,16 +2051,21 @@ module ejs {
             @option timeout Timeout on cache I/O operations
             @option trace Trace I/O operations for debug
             @option module Module name containing the cache connector class. This is a bare module name without ".mod"
-                or any leading path.
-            @option class Class name containing the cache backend.
+                or any leading path. If module is not present, a module name is derrived using "ejs.cache" + adapter.
+            @option class Class name containing the cache backend. If the class property is not present, the 
+                class is derived from the adapter name with "Cache" appended. The first letter of the adapter is converted
+                to uppercase. For example, if the adapter was "mem", the class would be inferred to be "MemCache".
          */
         function Cache(adapter: String = null, options: Object = {}) {
+            let adapterClass, modname
             if (adapter == null) {
                 options = blend({shared: true}, options, true)
                 adapter = "local"
+                modname = "ejs.cache.local"
+                adapterClass = "LocalCache"
             }
-            let adapterClass = options["class"] || "LocalCache"
-            let modname = options.module || "ejs.cache.local"
+            adapterClass ||= options["class"] || (adapter.toPascal() + "Cache")
+            modname ||= options.module || ("ejs.cache." + adapter)
             if (!global.modname::[adapterClass]) {
                 load(modname + ".mod")
                 if (!global.modname::[adapterClass]) {

@@ -18115,13 +18115,13 @@ static int internHashSizes[] = {
 };
 
 /*
-    XXX 
+    MOB OPT - holding spin locks too long. ejsInternAsc can take a while
     Intern locking
  */
-static MprSpin      internLock;
-static MprSpin      *ispin = &internLock;
-#define ilock()     mprSpinLock(ispin);
-#define iunlock()   mprSpinUnlock(ispin);
+static MprMutex     internLock;
+static MprMutex     *ilock = &internLock;
+#define ilock()     mprLock(ilock);
+#define iunlock()   mprUnlock(ilock);
 
 
 static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len);
@@ -20391,11 +20391,12 @@ EjsString *ejsInternString(EjsString *str)
         }
     }
     linkString(head, str);
-    iunlock();
     if (step > EJS_MAX_COLLISIONS) {
         /*  Remake the entire hash - should not happen often */
+        //  MOB OPT - BAD holding lock while rebuildingIntern
         rebuildIntern(ip);
     }
+    iunlock();
     return str;
 }
 
@@ -20443,11 +20444,11 @@ EjsString *ejsInternWide(Ejs *ejs, MprChar *value, ssize len)
     }
     sp->length = len;
     linkString(head, sp);
-    iunlock();
     if (step > EJS_MAX_COLLISIONS) {
         /*  Remake the entire hash - should not happen often */
         rebuildIntern(ip);
     }
+    iunlock();
     return sp;
 }
 
@@ -20500,11 +20501,11 @@ EjsString *ejsInternAsc(Ejs *ejs, cchar *value, ssize len)
     }
     sp->length = len;
     linkString(head, sp);
-    iunlock();
     if (step > EJS_MAX_COLLISIONS) {
         /*  Remake the entire hash - should not happen often */
         rebuildIntern(ip);
     }
+    iunlock();
     return sp;
 }
 
@@ -20557,11 +20558,11 @@ EjsString *ejsInternMulti(Ejs *ejs, cchar *value, ssize len)
         }
     }
     linkString(head, src);
-    iunlock();
     if (step > EJS_MAX_COLLISIONS) {
         /*  Remake the entire hash - should not happen often */
         rebuildIntern(ip);
     }
+    iunlock();
     return sp;
 }
 #endif /* BLD_CHAR_LEN > 1 */
@@ -20779,11 +20780,13 @@ void ejsInitStringType(Ejs *ejs, EjsType *type)
 {
     static int firstTime = 1;
 
+    mprGlobalLock();
     if (firstTime) {
-        mprInitSpinLock(&internLock);
+        mprInitLock(&internLock);
         firstTime = 0;
         rebuildIntern(ejs->service->intern);
     }
+    mprGlobalUnlock();
     ejsCloneObjHelpers(ejs, type);
     type->mutex = mprCreateLock();
     type->helpers.cast = (EjsCastHelper) castString;
@@ -36045,8 +36048,8 @@ static void managePool(EjsPool *pool, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(pool->list);
-        mprMark(pool->template);
         mprMark(pool->mutex);
+        mprMark(pool->template);
         mprMark(pool->templateScript);
         mprMark(pool->startScriptPath);
     }
@@ -36060,10 +36063,10 @@ EjsPool *ejsCreatePool(int poolMax, cchar *templateScript, cchar *startScriptPat
     if ((pool = mprAllocObj(EjsPool, managePool)) == 0) {
         return 0;
     }
-    pool->mutex = mprCreateLock();
     if ((pool->list = mprCreateList(-1, 0)) == 0) {
         return 0;
     }
+    pool->mutex = mprCreateLock();
     pool->max = poolMax <= 0 ? MAXINT : poolMax;
     if (templateScript) {
         pool->templateScript = sclone(templateScript);
@@ -36079,31 +36082,39 @@ Ejs *ejsAllocPoolVM(EjsPool *pool, int flags)
 {
     Ejs         *ejs;
     EjsString   *script;
+    int         frozen;
 
     mprAssert(pool);
 
-    lock(pool);
-    if ((ejs = mprPopItem(pool->list)) == 0) {
+    //  OPT -- don't need locking
+    ejs = mprPopItem(pool->list);
+
+    if (ejs == 0) {
         if (pool->count >= pool->max) {
             mprError("Too many ejs VMS: %d max %d", pool->count, pool->max);
-            unlock(pool);
             return 0;
         }
+        lock(pool);
         if (pool->template == 0) {
             if ((pool->template = ejsCreateVM(0, 0, 0, 0, 0, 0, flags)) == 0) {
+                unlock(pool);
                 return 0;
             }
             if (pool->templateScript) {
                 script = ejsCreateStringFromAsc(pool->template, pool->templateScript);
+                frozen = ejsFreeze(pool->template, 1);
                 if (ejsLoadScriptLiteral(pool->template, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
                     mprError("Can't execute \"%s\"\n%s", script, ejsGetErrorMsg(pool->template, 1));
+                    unlock(pool);
                     return 0;
                 }
+                ejsFreeze(pool->template, frozen);
             }
         }
+        unlock(pool);
+
         if ((ejs = ejsCreateVM(pool->template, 0, 0, 0, 0, 0, flags)) == 0) {
             mprMemoryError("Can't alloc ejs VM");
-            unlock(pool);
             return 0;
         }
         mprAddRoot(ejs);
@@ -36114,6 +36125,7 @@ Ejs *ejsAllocPoolVM(EjsPool *pool, int flags)
                 return 0;
             }
         }
+        mprRemoveRoot(ejs);
         pool->count++;
     }
     pool->lastActivity = mprGetTime();
@@ -36124,8 +36136,6 @@ Ejs *ejsAllocPoolVM(EjsPool *pool, int flags)
         pool->timer = mprCreateTimerEvent(NULL, "ejsPoolTimer", HTTP_TIMER_PERIOD, poolTimer, pool,
             MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
     }
-    mprRemoveRoot(ejs);
-    unlock(pool);
     return ejs;
 }
 
@@ -36136,22 +36146,18 @@ void ejsFreePoolVM(EjsPool *pool, Ejs *ejs)
     mprAssert(ejs);
 
     pool->lastActivity = mprGetTime();
-    lock(pool);
     mprPushItem(pool->list, ejs);
     mprLog(5, "ejs: Free VM, active %d, allocated %d, max %d", pool->count - mprGetListLength(pool->list), pool->count,
         pool->max);
-    unlock(pool);
 }
 
 
 static void poolTimer(EjsPool *pool, MprEvent *event)
 {
-    lock(pool);
     if (mprGetElapsedTime(pool->lastActivity) > EJS_POOL_INACTIVITY_TIMEOUT && !mprGetDebugMode()) {
         pool->template = 0;
         mprClearList(pool->list);
     }
-    unlock(pool);
 }
 
 
@@ -36178,9 +36184,12 @@ Ejs *ejsCreateVM(Ejs *master, MprDispatcher *dispatcher, cchar *search, MprList 
     }
     mprAddRoot(ejs);
 
+    mprGlobalLock();
     if ((sp = MPR->ejsService) == 0) {
         sp = createService();
     }
+    mprGlobalUnlock();
+
     ejs->service = sp;
     mprAddItem(sp->vmlist, ejs);
     ejs->master = master;
@@ -36224,14 +36233,17 @@ Ejs *ejsCreateVM(Ejs *master, MprDispatcher *dispatcher, cchar *search, MprList 
             return 0;
         }
     } else {
+        mprGlobalLock();
         if (defineTypes(ejs) < 0 || loadStandardModules(ejs, require) < 0) {
             if (ejs->exception) {
                 ejsReportError(ejs, "Can't initialize interpreter");
             }
             ejsDestroyVM(ejs);
             mprRemoveRoot(ejs);
+            mprGlobalUnlock();
             return 0;
         }
+        mprGlobalUnlock();
         ejsFreezeGlobal(ejs);
     }
     if (mprHasMemError(ejs)) {
@@ -39217,6 +39229,7 @@ static void startEjsHandler(HttpQueue *q)
     server = conn->server;
 
     if ((sp = httpGetServerContext(server)) == 0) {
+        mprAssert(conn->ejs);
         lp = conn->sock->listenSock;
         if ((sp = lookupServer(conn->ejs, lp->ip, lp->port)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, 

@@ -7651,11 +7651,8 @@ static void serviceDispatcher(MprDispatcher *dispatcher)
 
     } else {
         if (mprStartWorker((MprWorkerProc) serviceDispatcherMain, dispatcher) < 0) {
-            /* Can't start a worker thread. Put back on the wait queue */
-            mprAssert(!dispatcher->destroyed);
-//  MOB
-            mprAssert(0);
-            queueDispatcher(dispatcher->service->waitQ, dispatcher);
+            /* Can't start a worker thread, run using the current thread */
+            serviceDispatcherMain(dispatcher);
         } 
     }
 }
