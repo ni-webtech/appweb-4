@@ -1933,7 +1933,7 @@ static char *fmtAttributes(EjsAny *vp, int attributes, int klass)
         if (attributes & EJS_TYPE_FINAL) {
             strcat(attributeBuf, "final ");
         }
-        if (attributes & EJS_TYPE_DYNAMIC_INSTANCE) {
+        if (attributes & EJS_TYPE_DYNAMIC_INSTANCES) {
             strcat(attributeBuf, "dynamic ");
         }
     } else if (ejsIsFunction(ejs, vp)) {
@@ -6302,7 +6302,7 @@ static char *getAttributeString(EjsMod *mp, int attributes)
     if (attributes & EJS_FUN_OVERRIDE) {
         strcat(attributeBuf, "override ");
     }
-    if (attributes & EJS_TYPE_DYNAMIC_INSTANCE) {
+    if (attributes & EJS_TYPE_DYNAMIC_INSTANCES) {
         strcat(attributeBuf, "dynamic ");
     }
     if (attributes & EJS_TRAIT_GETTER) {
@@ -6621,8 +6621,8 @@ static int createSlotFile(EjsMod *bp, EjsModule *mp, MprFile *file)
     mprFprintf(file, "\n/*\n   Slots for the \"%@\" module \n */\n", mp->name);
 
     slotNum = ejsGetPropertyCount(ejs, ejs->global);
-    type = ejsCreateType(ejs, N(EJS_EJS_NAMESPACE, EJS_GLOBAL), NULL, NULL, NULL, sizeof(EjsType), -1, 
-        ejsGetPropertyCount(ejs, ejs->global), 0, 0);
+    type = ejsCreateType(ejs, N(EJS_EJS_NAMESPACE, EJS_GLOBAL), NULL, NULL, NULL, -1, 
+        ejsGetPropertyCount(ejs, ejs->global), 0, sizeof(EjsType), 0, EJS_TYPE_POT);
     type->constructor.block = *(EjsBlock*) ejs->global;
     SET_TYPE(type, ST(Type));
     type->constructor.block.pot.isType = 1;

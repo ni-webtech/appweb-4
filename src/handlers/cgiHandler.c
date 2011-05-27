@@ -588,6 +588,10 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
             } else if (strcmp(key, "content-type") == 0) {
                 httpSetHeaderString(conn, "Content-Type", value);
 
+            } else if (strcmp(key, "content-length") == 0) {
+                httpSetContentLength(conn, (MprOff) stoi(value, 10, 0));
+                httpSetChunkSize(conn, 0);
+
             } else {
                 /*
                     Now pass all other headers back to the client

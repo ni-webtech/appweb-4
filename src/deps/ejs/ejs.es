@@ -704,7 +704,7 @@ module ejs {
         native function join(sep: String = ""): String
 
         /**
-            Find an item searching from the end of the arry.
+            Find an item searching from the end of the array.
             Search for an item using strict equality "===". This call searches from the end of the array for the given 
             element.
             @param element The object to search for.
@@ -5182,6 +5182,8 @@ module ejs {
 
 module ejs {
 
+    //  MOB - fix order
+
     /**
         Constant set to true in all Ejscript interpreters
         @spec ejs
@@ -5200,12 +5202,14 @@ module ejs {
      */
     public namespace public
 
+    //  MOB - is this used as a global?
     /** 
         The internal namespace used to make entities visible within a single module only.
         @spec ejs
      */
     public namespace internal
 
+    //  MOB -- remove iterator namespace
     /** 
         The iterator namespace used to define iterators.
         @spec ejs
@@ -5216,74 +5220,90 @@ module ejs {
         Alias for the Boolean type
        @spec ejs
      */
-    native const boolean: Type
+    const boolean: Type
 
     /** 
         Alias for the Number type
      */
-    native const double: Type
+    const double: Type
 
     /** 
        Alias for the Number type
        @spec ejs
      */
-    native const num: Type
+    const num: Type
 
     /** 
         Alias for the String type
      */
-    native const string: Type
+    const string: Type
+
+    /**
+        Empty string value
+     */
+    const empty: String
 
     /** 
         Boolean false value.
      */
-    native const false: Boolean
+    const false: Boolean
 
     /** 
         Global variable space reference. The global variable references an object which is the global variable space. 
         This is useful when guaranteed access to a global variable is required. e.g. global.someName.
         @spec ejs
      */
-    native var global: Object
+    var global: Object
 
     /** 
         Null value. The null value is returned when testing a nullable variable that has not yet had a 
         value assigned or one that has had null explicitly assigned.
      */
-    native const null: Null
+    const null: Null
 
     /** 
         Infinity value.
      */
-    native const Infinity: Number
+    const Infinity: Number
 
     /** 
         Negative infinity value.
      */
-    native const NegativeInfinity: Number
+    const NegativeInfinity: Number
 
     /** 
         Invalid numeric value. If the numeric type is set to an integral type, the value is zero.
      */
-    native const NaN: Number
+    const NaN: Number
 
     /** 
         True value
      */
-    native const true: Boolean
+    const true: Boolean
 
     /** 
         Undefined variable value. The undefined value is returned when testing
         for a property that has not been defined. 
      */
-    native const undefined: Void
+    const undefined: Void
 
     /** 
         Void type value. 
         This is an alias for Void.
         @spec ejs
      */
-    native const void: Type
+    const void: Type
+
+    /* Internal slot reservations */
+    internal const commaProt: String
+    internal const one: Number
+    internal const zero: Number
+    internal const length: String
+    internal const minusOne: Number
+    internal const emptySpace: Namespace
+    internal const max: Number
+    internal const min: Number
+    internal const nop: Function
 
     /** 
         Assert a condition is true. This call tests if a condition is true by testing to see if the supplied 
@@ -15151,7 +15171,7 @@ module ejs.db.sqlite {
         /*
             Map independent types to SQL types
          */
-        static const DataTypeToSqlType: Object = {
+        static var DataTypeToSqlType: Object = {
             "binary":       "blob",
             "boolean":      "tinyint",
             "date":         "date",
@@ -15169,7 +15189,7 @@ module ejs.db.sqlite {
         /*
             Map independent types to SQL types
          */
-        static const SqlTypeToDataType: Object = {
+        static var SqlTypeToDataType: Object = {
             "blob":         "binary",
             "tinyint":      "boolean",
             "date":         "date",
@@ -15185,7 +15205,7 @@ module ejs.db.sqlite {
         /*
             Map SQL types to Ejscript native types
          */
-        static const SqlTypeToEjsType: Object = {
+        static var SqlTypeToEjsType: Object = {
             "blob":         String,
             "date":         Date,
             "datetime":     Date,
@@ -15203,7 +15223,7 @@ module ejs.db.sqlite {
             Map Ejscript native types back to SQL types
             INCOMPLETE and INCORRECT
          
-        static const EjsToDataType: Object = {
+        static var EjsToDataType: Object = {
             "string":       "varchar",
             "number":       "decimal",
             "date":         "datetime",
@@ -20921,7 +20941,7 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
             JSGI specification configuration object.
             @spec jsgi-0.3
          */
-        static const jsgi: Object = {
+        static var jsgi: Object = {
             errors: App.log,
             version: [0,3],
             multithread: true,
