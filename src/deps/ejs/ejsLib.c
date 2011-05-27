@@ -5695,6 +5695,7 @@ static EjsString *date_formatUTC(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 }
 
 
+#if UNUSED && DEPRECATED
 /*
     function get fullYear(): Number
     Return year in 4 digits
@@ -5721,6 +5722,7 @@ static EjsObj *date_set_fullYear(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
     dp->value = mprMakeTime(&tm);
     return 0;
 }
+#endif
 
 
 /*
@@ -6343,7 +6345,9 @@ void ejsConfigureDateType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Date_elapsed, date_elapsed);
     ejsBindMethod(ejs, prototype, ES_Date_format, date_format);
     ejsBindMethod(ejs, prototype, ES_Date_formatUTC, date_formatUTC);
+#if UNUSED && DEPRECATED
     ejsBindAccess(ejs, prototype, ES_Date_fullYear, date_fullYear, date_set_fullYear);
+#endif
     ejsBindMethod(ejs, prototype, ES_Date_future, date_future);
     ejsBindMethod(ejs, prototype, ES_Date_getTimezoneOffset, date_getTimezoneOffset); 
     ejsBindMethod(ejs, prototype, ES_Date_getUTCDate, date_getUTCDate);
@@ -10605,6 +10609,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
             if (httpNeedRetry(conn, &url)) {
                 if (url) {
                     uri = httpCreateUri(url, 0);
+                    httpCompleteUri(uri, httpCreateUri(hp->uri, 0));
                     hp->uri = httpUriToString(uri, 1);
                 }
                 count--; 
