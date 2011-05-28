@@ -35836,11 +35836,15 @@ Ejs *ejsAllocPoolVM(EjsPool *pool, int flags)
                 unlock(pool);
                 return 0;
             }
+            if (ejsLoadModules(pool->template, 0, 0) < 0) {
+                unlock(pool);
+                return 0;
+            }
             if (pool->templateScript) {
                 script = ejsCreateStringFromAsc(pool->template, pool->templateScript);
                 paused = ejsPauseGC(pool->template);
                 if (ejsLoadScriptLiteral(pool->template, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
-                    mprError("Can't execute \"%s\"\n%s", script, ejsGetErrorMsg(pool->template, 1));
+                    mprError("Can't execute \"%@\"\n%s", script, ejsGetErrorMsg(pool->template, 1));
                     unlock(pool);
                     ejsResumeGC(pool->template, paused);
                     return 0;
@@ -38625,7 +38629,7 @@ static void closeEjsHandler(HttpQueue *q)
         req->conn = 0;
     }
     httpSetConnContext(conn, 0);
-    if (conn->pool) {
+    if (conn->pool && conn->ejs) {
         ejsFreePoolVM(conn->pool, conn->ejs);
         conn->ejs = 0;
     }
@@ -38716,6 +38720,9 @@ static void startEjsHandler(HttpQueue *q)
     conn = q->conn;
     server = conn->server;
 
+    if (conn->ejs == 0) {
+        return;
+    }
     if ((sp = httpGetServerContext(server)) == 0) {
         mprAssert(conn->ejs);
         lp = conn->sock->listenSock;

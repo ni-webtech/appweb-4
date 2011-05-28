@@ -6423,7 +6423,6 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
 
     tx->outputPipeline = mprCreateList(-1, 0);
     tx->handler = proposedHandler ? proposedHandler : http->passHandler;
-
     mprAddItem(tx->outputPipeline, tx->handler);
 
     if (loc->outputStages) {
@@ -8071,18 +8070,12 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     case 'O':
         if (strcmp(method, "OPTIONS") == 0) {
             methodFlags = HTTP_OPTIONS;
-#if UNUSED
-            httpOmitBody(conn);
-#endif
         }
         break;
 
     case 'T':
         if (strcmp(method, "TRACE") == 0) {
             methodFlags = HTTP_TRACE;
-#if UNUSED
-            httpOmitBody(conn);
-#endif
         }
         break;
     }
@@ -9023,7 +9016,7 @@ int httpMapToStorage(HttpConn *conn)
 
     tx->extension = httpGetExtension(conn);
 #if BLD_WIN_LIKE
-    //  MOB - genercise
+    //  TODO genercise
     if (tx->extension) {
         tx->extension = slower(tx->extension);
     }

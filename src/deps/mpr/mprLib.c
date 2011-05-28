@@ -365,6 +365,7 @@ void *mprAllocBlock(ssize usize, int flags)
     int         padWords;
 
     mprAssert(!MPR->marking);
+    mprAssert(usize >= 0);
 
     padWords = padding[flags & MPR_ALLOC_PAD_MASK];
     size = usize + sizeof(MprMem) + (padWords * sizeof(void*));
@@ -9004,6 +9005,7 @@ int mprFlushFile(MprFile *file)
 }
 
 
+//  MOB - naming vs mprSeekFile or mprSetFilePosition or mprTellFile
 MprOff mprGetFilePosition(MprFile *file)
 {
     return file->pos;

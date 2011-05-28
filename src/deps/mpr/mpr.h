@@ -473,9 +473,9 @@ typedef int64 MprTime;
 #endif
 
 #if OFF_T_MAX
-    #define MAXOFF          OFF_T_MAX
+    #define MAXOFF       OFF_T_MAX
 #else
-    #define MAXOFF          INT64(0x7fffffffffffffff)
+    #define MAXOFF       INT64(0x7fffffffffffffff)
 #endif
 
 /*
@@ -3562,6 +3562,7 @@ extern int mprParseTime(MprTime *time, cchar *dateString, int timezone, struct t
 extern int mprGetTimeZoneOffset(MprTime when);
 
 
+//  MOB -- rename to PERM_VALUES
 #define MPR_LIST_STATIC_VALUES  0x1     /**< List values are permanent and should not be marked by GC */
 
 /**
