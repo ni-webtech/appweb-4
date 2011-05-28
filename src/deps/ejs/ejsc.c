@@ -214,7 +214,7 @@ MAIN(ejscMain, int argc, char **argv)
             require("ejs");
             require("ejs.unix");
             require("ejs.db");
-            //  TODO MOB - decouple and remove this
+            //  TODO - decouple and remove this
             require("ejs.db.mapper");
             require("ejs.web");
 
@@ -269,9 +269,11 @@ MAIN(ejscMain, int argc, char **argv)
     if (doc) {
         ejsFlags |= EJS_FLAG_DOC;
     }
-    ejs = ejsCreateVM(0, 0, searchPath, app->modules, 0, NULL, ejsFlags);
-    if (ejs == 0) {
+    if ((ejs = ejsCreateVM(0, 0, ejsFlags)) == 0) {
         return MPR_ERR_MEMORY;
+    }
+    if (ejsLoadModules(ejs, searchPath, app->modules) < 0) {
+        return MPR_ERR_CANT_READ;
     }
     app->ejs = ejs;
     ecFlags |= (debug) ? EC_FLAGS_DEBUG: 0;

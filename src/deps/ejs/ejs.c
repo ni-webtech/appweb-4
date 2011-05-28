@@ -282,8 +282,11 @@ MAIN(ejsMain, int argc, char **argv)
             mpr->name);
         return -1;
     }
-    if ((ejs = ejsCreateVM(0, 0, searchPath, app->modules, argc - nextArg, (cchar **) &argv[nextArg], 0)) == 0) {
+    if ((ejs = ejsCreateVM(argc - nextArg, (cchar **) &argv[nextArg], 0)) == 0) {
         return MPR_ERR_MEMORY;
+    }
+    if (ejsLoadModules(ejs, searchPath, app->modules) < 0) {
+        return MPR_ERR_CANT_READ;
     }
     app->ejs = ejs;
 
@@ -391,7 +394,6 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
         mprError("Can't open input");
         return EJS_ERR;
     }
-    // MOB ecResetInput(cp);
     tmpArgv[0] = EC_INPUT_STREAM;
 
     while (!cp->stream->eof && !mprIsStopping()) {
@@ -531,14 +533,12 @@ static int commandGets(EcStream *stream)
 {
     /*  
         Execute one string of commands. So we only come here once. Second time round, nextChar will be set.
-        MOB - this logic is not right
      */
     if (stream->nextChar) {
         stream->eof = 1;
         return -1;
     }
     mprAssert(0);
-    //  MOB -- because of the test above, nextChar must be zero
     return (int) (stream->end - stream->nextChar);
 }
 
