@@ -93,11 +93,12 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
                 mode |= O_APPEND;
                 mprGetPathInfo(spec, &info);
                 if (host->logSize <= 0 || (info.valid && info.size > host->logSize)) {
-                    maRotateAccessLog(spec, host->logCount, host->logSize);
+                    maRotateLog(spec, host->logCount, host->logSize);
                 }
             } else {
                 mode |= O_TRUNC;
             }
+            //  MOB - is this buffered
             if ((file = mprOpenFile(spec, mode, 0664)) == 0) {
                 mprPrintfError("Can't open log file %s\n", spec);
                 return -1;
@@ -141,7 +142,6 @@ int maStopLogging()
     Mpr         *mpr;
 
     mpr = mprGetMpr();
-
     file = mpr->logFile;
     if (file) {
         mprCloseFile(file);
@@ -184,7 +184,6 @@ void maSetAccessLog(HttpHost *host, cchar *path, cchar *format)
     if (format == NULL || *format == '\0') {
         format = "%h %l %u %t \"%r\" %>s %b";
     }
-
     host->logPath = sclone(path);
     host->logFormat = sclone(format);
 
@@ -208,7 +207,7 @@ void maWriteAccessLogEntry(HttpHost *host, cchar *buf, int len)
 }
 
 
-void maRotateAccessLog(cchar *path, int count, int maxSize)
+void maRotateLog(cchar *path, int count, int maxSize)
 {
     char    *from, *to;
     int     i;
@@ -252,7 +251,6 @@ void maLogRequest(HttpConn *conn)
             mprPutCharToBuf(buf, c);
             continue;
         }
-
         switch (c) {
         case 'a':                           /* Remote IP */
             mprPutStringToBuf(buf, conn->ip);

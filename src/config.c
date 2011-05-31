@@ -717,6 +717,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return MPR_ERR_BAD_SYNTAX;
 #endif
 
+        //  FUTURE - support simple AccessLog with standard NCSA format
         } else if (scasecmp(key, "CustomLog") == 0) {
 #if !BLD_FEATURE_ROMFS
             char *format, *end;
@@ -1077,9 +1078,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "LoadModulePath") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
             path = sjoin(value, MPR_SEARCH_SEP, mprGetAppDir(meta), NULL);
-#if DEBUG_IDE
-            path = sjoin(path, MPR_SEARCH_SEP, "../../projects/MACOSX/appweb-all/build/Debug", NULL);
-#endif
             mprSetModuleSearchPath(path);
             return 1;
 

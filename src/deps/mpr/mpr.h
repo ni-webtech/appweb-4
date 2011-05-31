@@ -7113,7 +7113,7 @@ typedef struct Mpr {
     MprFile         *logFile;               /**< Log file */
     MprHashTable    *mimeTypes;             /**< Table of mime types */
     MprHashTable    *timeTokens;            /**< Date/Time parsing tokens */
-    char            *searchPath;            /**< Cached PATH for program execution */
+    char            *pathEnv;               /**< Cached PATH env var. Used by MprCmd */
     char            *name;                  /**< Product name */
     char            *title;                 /**< Product title */
     char            *version;               /**< Product version */

@@ -1124,7 +1124,6 @@ typedef struct EjsIntern {
 #define S_true ES_true
 #define S_undefined ES_undefined
 #define S_zero ES_zero
-#define EJS_MAX_SPECIAL ES_global_NUM_CLASS_PROP
 
 #define S_StopIteration ES_iterator_StopIteration
 #define S_nan ES_NaN
@@ -1136,6 +1135,13 @@ typedef struct EjsIntern {
 #define S_internalSpace ES_internal
 #define S_publicSpace ES_public
 #define S_emptySpace ES_emptySpace
+
+/*
+    Special values outside ejs.mod
+
+*/
+#define S_LocalCache ES_global_NUM_CLASS_PROP + 1
+#define EJS_MAX_SPECIAL ES_global_NUM_CLASS_PROP + 10
 
 extern int ejsAddImmutable(struct Ejs *ejs, int sid, EjsName qname, EjsAny *value);
 extern EjsAny *ejsGetImmutable(struct Ejs *ejs, int sid);
@@ -3262,11 +3268,11 @@ extern EjsType *ejsConfigureType(Ejs *ejs, EjsType *type, struct EjsModule *up, 
     int numTypeProp, int numInstanceProp, int64 attributes);
 
 //  DOC
-extern EjsType  *ejsCreateNativeType(Ejs *ejs, EjsName qname, int size, int slotNum, int numProp, void *manager, 
+extern EjsType  *ejsCreateCoreType(Ejs *ejs, EjsName qname, int size, int slotNum, int numProp, void *manager, 
         int64 attributes);
+extern EjsType  *ejsFinalizeCoreType(Ejs *ejs, EjsName qname);
 //  DOC
 extern EjsType  *ejsFinalizeScriptType(Ejs *ejs, EjsName qname, int size, void *manager, int64 attributes);
-extern EjsType  *ejsFinalizeNativeType(Ejs *ejs, EjsName qname);
 
 //  DOC
 extern EjsObj *ejsCreatePrototype(Ejs *ejs, EjsType *type, int numProp);
@@ -3428,6 +3434,7 @@ extern void     ejsConfigureFunctionType(Ejs *ejs);
 extern void     ejsConfigureHttpType(Ejs *ejs);
 extern void     ejsConfigureIteratorType(Ejs *ejs);
 extern void     ejsConfigureJSONType(Ejs *ejs);
+extern void     ejsConfigureLocalCacheType(Ejs *ejs);
 extern void     ejsConfigureLogFileType(Ejs *ejs);
 extern void     ejsConfigureNamespaceType(Ejs *ejs);
 extern void     ejsConfigureMemoryType(Ejs *ejs);

@@ -2100,7 +2100,7 @@ void ejsCreateArrayType(Ejs *ejs)
     EjsType         *type;
     EjsHelpers      *helpers;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "Array"), sizeof(EjsArray), S_Array, ES_Array_NUM_CLASS_PROP, manageArray, 
+    type = ejsCreateCoreType(ejs, N("ejs", "Array"), sizeof(EjsArray), S_Array, ES_Array_NUM_CLASS_PROP, manageArray, 
         EJS_TYPE_POT | EJS_TYPE_NUMERIC_INDICIES | EJS_TYPE_VIRTUAL_SLOTS | EJS_TYPE_MUTABLE_INSTANCES | 
         EJS_TYPE_DYNAMIC_INSTANCES);
 
@@ -2127,7 +2127,7 @@ void ejsConfigureArrayType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Array"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Array"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -2389,7 +2389,7 @@ void ejsConfigureBlockType(Ejs *ejs)
 {
     EjsType     *type;
     
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Block"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Block"))) == 0) {
         return;
     }
     ejsAddImmutable(ejs, S_commaProt, EN(",protected"), ejsCreateStringFromAsc(ejs, ",protected"));
@@ -2666,7 +2666,7 @@ void ejsCreateBooleanType(Ejs *ejs)
     EjsType     *type;
     EjsBoolean  *vp;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "Boolean"), sizeof(EjsBoolean), S_Boolean, ES_Boolean_NUM_CLASS_PROP, 
+    type = ejsCreateCoreType(ejs, N("ejs", "Boolean"), sizeof(EjsBoolean), S_Boolean, ES_Boolean_NUM_CLASS_PROP, 
         0, EJS_TYPE_OBJ | EJS_TYPE_IMMUTABLE_INSTANCES);
     type->helpers.cast = (EjsCastHelper) castBooleanVar;
     type->helpers.invokeOperator = (EjsInvokeOperatorHelper) invokeBooleanOperator;
@@ -2688,7 +2688,7 @@ void ejsConfigureBooleanType(Ejs *ejs)
 {
     EjsType     *type;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Boolean"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Boolean"))) == 0) {
         return;
     }
     ejsBindConstructor(ejs, type, booleanConstructor);
@@ -5049,6 +5049,7 @@ void ejsConfigureCmdType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Cmd_write, cmd_write);
 }
 
+
 /*
     @copy   default
 
@@ -5113,7 +5114,7 @@ void ejsCreateConfigType(Ejs *ejs)
         The Config object may be used by conditional compilation, so the type must exist without loading ejs.mod
         The compiler will call ejsDefineConfigProperties if required.
      */
-    ejsCreateNativeType(ejs, N("ejs", "Config"), sizeof(EjsPot), S_Config, ES_Config_NUM_CLASS_PROP, 
+    ejsCreateCoreType(ejs, N("ejs", "Config"), sizeof(EjsPot), S_Config, ES_Config_NUM_CLASS_PROP, 
         ejsManagePot, EJS_TYPE_POT);
 }
 
@@ -5124,7 +5125,7 @@ void ejsDefineConfigProperties(Ejs *ejs)
     char        version[16];
     int         att;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Config"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Config"))) == 0) {
         return;
     }
     /* Not mutable once initialized - Should have a Config instance instead */
@@ -6566,7 +6567,7 @@ static EjsType *defineType(Ejs *ejs, cchar *name, int id)
 {
     EjsType     *type;
 
-    type = ejsCreateNativeType(ejs, N("ejs", name), sizeof(EjsError), id, ES_Error_NUM_CLASS_PROP, ejsManagePot, 
+    type = ejsCreateCoreType(ejs, N("ejs", name), sizeof(EjsError), id, ES_Error_NUM_CLASS_PROP, ejsManagePot, 
         EJS_TYPE_POT | EJS_TYPE_DYNAMIC_INSTANCES | EJS_TYPE_HAS_INSTANCE_VARS | EJS_TYPE_MUTABLE_INSTANCES);
     type->constructor.block.nobind = 1;
     type->helpers.cast = (EjsCastHelper) castError;
@@ -6599,7 +6600,7 @@ static void configureType(Ejs *ejs, cchar *name)
 {
     EjsType     *type;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", name))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", name))) == 0) {
         return;
     }
     ejsBindConstructor(ejs, type, errorConstructor);
@@ -7484,14 +7485,18 @@ static int mapMode(cchar *mode)
         /* Text mode */
         omode &= ~O_BINARY;
     }
+#if O_EXLOCK
     if (strchr(mode, 'l')) {
         /* Exclusive lock */
         omode |= O_EXLOCK;
     }
+#endif
+#if O_SHLOCK
     if (strchr(mode, 's')) {
         /* Shared lock */
         omode |= O_SHLOCK;
     }
+#endif
     if (strchr(mode, 'c')) {
         /* Create - must not exist prior */
         omode |= O_CREAT | O_EXCL;
@@ -8052,7 +8057,7 @@ void ejsCreateFrameType(Ejs *ejs)
 {
     EjsType     *type;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "Frame"), sizeof(EjsFrame), S_Frame, ES_Frame_NUM_CLASS_PROP,
+    type = ejsCreateCoreType(ejs, N("ejs", "Frame"), sizeof(EjsFrame), S_Frame, ES_Frame_NUM_CLASS_PROP,
         manageFrame, EJS_TYPE_POT | EJS_TYPE_DYNAMIC_INSTANCES | EJS_TYPE_MUTABLE_INSTANCES);
     type->constructor.block.pot.shortScope = 1;
     type->configured = 1;
@@ -8064,7 +8069,7 @@ void ejsConfigureFrameType(Ejs *ejs)
 {
     EjsType     *type;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Frame"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Frame"))) == 0) {
         return;
     }
 }
@@ -8648,8 +8653,8 @@ void ejsCreateFunctionType(Ejs *ejs)
     EjsHelpers      *helpers;
     EjsFunction     *nop;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "Function"), sizeof(EjsFunction), S_Function, ES_Function_NUM_CLASS_PROP,
-        ejsManageFunction, EJS_TYPE_POT | EJS_TYPE_IMMUTABLE_INSTANCES);
+    type = ejsCreateCoreType(ejs, N("ejs", "Function"), sizeof(EjsFunction), S_Function, ES_Function_NUM_CLASS_PROP,
+        ejsManageFunction, EJS_TYPE_POT | EJS_TYPE_IMMUTABLE_INSTANCES | EJS_TYPE_DYNAMIC_INSTANCES);
     helpers = &type->helpers;
     helpers->create = (EjsCreateHelper) createFunction;
     helpers->cast   = (EjsCastHelper) castFunction;
@@ -8667,7 +8672,7 @@ void ejsConfigureFunctionType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Function"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Function"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -8987,17 +8992,28 @@ static EjsNumber *g_hashcode(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 
 /*  
     Load a script or module. Name should have an extension. Name will be located according to the EJSPATH search strategy.
-    static function load(filename: String, cache: String): void
+
+    static function load(filename: String, options: Object): void
+
+    options = { cache: String|Path, reload: true }
  */
 static EjsObj *g_load(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
+    EjsObj      *options, *vp;
     cchar       *path, *cache, *cp;
+    int         reload;
 
-    MPR_VERIFY_MEM();
-
+    cache = 0;
+    reload = 1;
     path = ejsToMulti(ejs, argv[0]);
-    cache = (argc < 2) ? 0 : ejsToMulti(ejs, argv[1]);
+    options = (argc >= 2) ? argv[1] : 0;
 
+    if (options) {
+        if ((vp = ejsGetPropertyByName(ejs, options, EN("cache"))) != 0) {
+            cache = ejsToMulti(ejs, ejsToString(ejs, vp));
+        }
+        reload = ejsGetPropertyByName(ejs, options, EN("reload")) == S(true);
+    }
     if ((cp = strrchr(path, '.')) != NULL && strcmp(cp, EJS_MODULE_EXT) != 0) {
         if (ejs->service->loadScriptFile == 0) {
             ejsThrowIOError(ejs, "load: Compiling is not enabled for %s", path);
@@ -9005,7 +9021,7 @@ static EjsObj *g_load(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
             return (ejs->service->loadScriptFile)(ejs, path, cache);
         }
     } else {
-        ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, path), -1, -1, EJS_LOADER_RELOAD);
+        ejsLoadModule(ejs, ejsCreateStringFromAsc(ejs, path), -1, -1, (reload) ? EJS_LOADER_RELOAD : 0);
         return (ejs->exception) ? 0 : ejs->result;
     }
     return 0;
@@ -10935,9 +10951,9 @@ static void manageIterator(EjsIterator *ip, int flags)
  */
 void ejsCreateIteratorType(Ejs *ejs)
 {
-    ejsCreateNativeType(ejs, N(EJS_ITERATOR_NAMESPACE, "Iterator"), sizeof(EjsIterator), S_Iterator,  
+    ejsCreateCoreType(ejs, N(EJS_ITERATOR_NAMESPACE, "Iterator"), sizeof(EjsIterator), S_Iterator,  
         ES_iterator_Iterator_NUM_CLASS_PROP, manageIterator, EJS_TYPE_OBJ);
-    ejsCreateNativeType(ejs, N(EJS_ITERATOR_NAMESPACE, "StopIteration"), sizeof(EjsError), S_StopIteration, 
+    ejsCreateCoreType(ejs, N(EJS_ITERATOR_NAMESPACE, "StopIteration"), sizeof(EjsError), S_StopIteration, 
         ES_iterator_StopIteration_NUM_CLASS_PROP, manageIterator, EJS_TYPE_OBJ);
 }
 
@@ -10947,13 +10963,13 @@ void ejsConfigureIteratorType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N(EJS_ITERATOR_NAMESPACE, "Iterator"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N(EJS_ITERATOR_NAMESPACE, "Iterator"))) == 0) {
         return;
     }
     prototype = type->prototype;
     ejsBindMethod(ejs, prototype, ES_iterator_Iterator_next, nextIterator);
 
-    if ((type = ejsFinalizeNativeType(ejs, N(EJS_ITERATOR_NAMESPACE, "StopIteration"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N(EJS_ITERATOR_NAMESPACE, "StopIteration"))) == 0) {
         return;
     }
 }
@@ -11669,6 +11685,610 @@ void ejsConfigureJSONType(Ejs *ejs)
 /************************************************************************/
 /*
  *  End of file "../../src/core/src/ejsJSON.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/core/src/ejsLocalCache.c"
+ */
+/************************************************************************/
+
+/**
+    ejsEjsLocalCache.c - Native code for the Local cache class.
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+
+
+
+#define CACHE_TIMER_PERIOD  (60 * MPR_TICKS_PER_SEC)
+#define CACHE_TIMER_PERIOD  (60 * MPR_TICKS_PER_SEC)
+#define CACHE_HASH_SIZE     257
+#define CACHE_LIFESPAN      (86400 * MPR_TICKS_PER_SEC)
+
+typedef struct EjsLocalCache
+{
+    EjsObj          obj;                /* Object base */
+    MprHashTable    *store;             /* Key/value store */
+    MprMutex        *mutex;             /* Cache lock*/
+    MprEvent        *timer;             /* Pruning timer */
+    MprTime         lifespan;           /* Default lifespan */
+    int             resolution;         /* Frequence for pruner */
+    ssize           usedMem;            /* Memory in use for keys and data */
+    ssize           maxKeys;            /* Max number of keys */
+    ssize           maxMem;             /* Max memory for session data */
+    struct EjsLocalCache *shared;       /* Shared common cache */
+} EjsLocalCache;
+
+static EjsLocalCache *shared;           /* Singleton shared cache */
+
+typedef struct CacheItem
+{
+    EjsString   *key;                   /* Original key */
+    EjsString   *data;                  /* Cache data */
+    MprTime     expires;                /* Fixed expiry date. If zero, key is imortal. */
+    MprTime     lifespan;               /* Lifespan after each access to key */
+    int64       version;
+} CacheItem;
+
+
+static void localPruner(EjsLocalCache *cache, MprEvent *event);
+static void manageLocalCache(EjsLocalCache *cache, int flags);
+static void manageCacheItem(CacheItem *item, int flags);
+static void setLocalLimits(Ejs *ejs, EjsLocalCache *cache, EjsPot *options);
+
+/*
+   function Local(options)
+ */
+static EjsLocalCache *localConstructor(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
+{
+    EjsPot      *options;
+    int         wantShared;
+
+    options = (argc >= 1 && ejsIsDefined(ejs, argv[0])) ? argv[0] : 0;
+    wantShared = (options && ejsGetPropertyByName(ejs, options, EN("shared")) == S(true));
+
+    if (wantShared && shared) {
+        cache->shared = shared;
+    } else {
+        cache->mutex = mprCreateLock();
+        cache->store = mprCreateHash(CACHE_HASH_SIZE, 0);
+        cache->maxMem = MAXSSIZE;
+        cache->maxKeys = MAXSSIZE;
+        cache->resolution = CACHE_TIMER_PERIOD;
+        cache->lifespan = CACHE_LIFESPAN;
+        setLocalLimits(ejs, cache, options);
+        if (wantShared) {
+            shared = cache;
+        }
+    }
+    return cache;
+}
+
+
+static EjsVoid *sl_destroy(Ejs *ejs, EjsLocalCache *cache, int argc, EjsObj **argv)
+{
+    if (cache->timer && cache != shared) {
+        mprRemoveEvent(cache->timer);
+        cache->timer = 0;
+    }
+    //  MOB - race here
+    if (cache == shared) {
+        shared = 0;
+    }
+    return 0;
+}
+
+
+/*
+    function expire(key: String, expires: Date): Boolean
+ */
+static EjsAny *sl_expire(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
+{
+    EjsString   *key;
+    EjsDate     *expires;
+    CacheItem   *item;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    key = argv[0];
+    expires = argv[1];
+
+    lock(cache);
+    //  UNICODE
+    if ((item = mprLookupKey(cache->store, key->value)) == 0) {
+        unlock(cache);
+        return S(false);
+    }
+    item->lifespan = 0;
+    if (expires == S(null)) {
+        item->expires = 0;
+    } else {
+        item->expires = ejsGetDate(ejs, expires);
+    }
+    unlock(cache);
+    return S(true);
+}
+
+
+/*
+    function inc(key: String, amount: Number): Number
+ */
+static EjsAny *sl_inc(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
+{
+    EjsString   *key;
+    CacheItem   *item;
+    int64       amount;
+    char        nbuf[32];
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    key = argv[0];
+    amount = (argc >= 2) ? ejsGetInt(ejs, argv[1]) : 1;
+
+    lock(cache);
+    //  UNICODE
+    if ((item = mprLookupKey(cache->store, key->value)) == 0) {
+        if ((item = mprAllocObj(CacheItem, manageCacheItem)) == 0) {
+            ejsThrowMemoryError(ejs);
+            return 0;
+        }
+    } else {
+        amount += stoi(item->data->value, 10, 0);
+    }
+    if (item->data) {
+        cache->usedMem -= item->data->length;
+    }
+    item->data = ejsCreateStringFromAsc(ejs, itos(nbuf, sizeof(nbuf), amount, 10));
+    cache->usedMem += item->data->length;
+    item->expires = mprGetTime() + item->lifespan;
+    item->version++;
+    unlock(cache);
+    return item->data;
+}
+
+
+/*
+    function get limits(): Object
+ */
+static EjsPot *sl_limits(Ejs *ejs, EjsLocalCache *cache, int argc, EjsObj **argv)
+{
+    EjsPot      *result;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    result = ejsCreateEmptyPot(ejs);
+    ejsSetPropertyByName(ejs, result, EN("keys"), ejsCreateNumber(ejs, cache->maxKeys == MAXSSIZE ? 0 : cache->maxKeys));
+    ejsSetPropertyByName(ejs, result, EN("lifespan"), ejsCreateNumber(ejs, cache->lifespan / MPR_TICKS_PER_SEC));
+    ejsSetPropertyByName(ejs, result, EN("memory"), ejsCreateNumber(ejs, cache->maxMem == MAXSSIZE ? 0 : cache->maxMem));
+    return result;
+}
+
+
+/*
+    function read(key: String, options: Object = null): Object
+ */
+static EjsAny *sl_read(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
+{
+    EjsString   *key;
+    EjsAny      *result;
+    EjsPot      *options;
+    CacheItem   *item;
+    int         getVersion;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    key = argv[0];
+    getVersion = 0;
+
+    if (argc >= 2 && ejsIsDefined(ejs, argv[1])) {
+        options = argv[1];
+        getVersion = ejsGetPropertyByName(ejs, options, EN("version")) == S(true);
+    }
+    lock(cache);
+    //  UNICODE
+    if ((item = mprLookupKey(cache->store, key->value)) == 0) {
+        unlock(cache);
+        return S(null);
+    }
+    if (item->lifespan) {
+        item->expires = mprGetTime() + item->lifespan;
+    }
+    if (getVersion) {
+        result = ejsCreatePot(ejs, S(Object), 2);
+        ejsSetPropertyByName(ejs, result, EN("version"), ejsCreateNumber(ejs, item->version));
+        ejsSetPropertyByName(ejs, result, EN("data"), item->data);
+    } else {
+        result = item->data;
+    }
+    unlock(cache);
+    return result;
+}
+
+
+/*
+    native function remove(key: String): Boolean
+ */
+static EjsBoolean *sl_remove(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
+{
+    EjsString   *key;
+    EjsAny      *result;
+    CacheItem   *item;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    key = argv[0];
+    lock(cache);
+    if (ejsIsDefined(ejs, key)) {
+        //  UNICODE
+        if ((item = mprLookupKey(cache->store, key->value)) != 0) {
+            cache->usedMem -= (key->length + item->data->length);
+            mprRemoveKey(cache->store, key->value);
+            result = S(true);
+        } else {
+            result = S(false);
+        }
+
+    } else {
+        /* Remove all keys */
+        result = mprGetHashLength(cache->store) ? S(true) : S(false);
+        cache->store = mprCreateHash(CACHE_HASH_SIZE, 0);
+        cache->usedMem = 0;
+    }
+    unlock(cache);
+    return result;
+}
+
+
+static void setLocalLimits(Ejs *ejs, EjsLocalCache *cache, EjsPot *options)
+{
+    EjsAny      *vp;
+
+    if (!options) {
+        return;
+    }
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    if ((vp = ejsGetPropertyByName(ejs, options, EN("keys"))) != 0) {
+        cache->maxKeys = (ssize) ejsGetInt64(ejs, vp);
+        if (cache->maxKeys <= 0) {
+            cache->maxKeys = MAXSSIZE;
+        }
+    }
+    if ((vp = ejsGetPropertyByName(ejs, options, EN("lifespan"))) != 0) {
+        cache->lifespan = (ssize) ejsGetInt64(ejs, vp) * MPR_TICKS_PER_SEC;
+    }
+    if ((vp = ejsGetPropertyByName(ejs, options, EN("memory"))) != 0) {
+        cache->maxMem = (ssize) ejsGetInt64(ejs, vp);
+        if (cache->maxMem <= 0) {
+            cache->maxMem = MAXSSIZE;
+        }
+    }
+    if ((vp = ejsGetPropertyByName(ejs, options, EN("resolution"))) != 0) {
+        cache->resolution = ejsGetInt(ejs, vp);
+        if (cache->resolution <= 0) {
+            cache->resolution = CACHE_TIMER_PERIOD;
+        }
+    }
+}
+
+
+/*
+    function setLimits(limits: Object): Void
+ */
+static EjsVoid *sl_setLimits(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
+{
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    setLocalLimits(ejs, cache, argv[0]);
+    return 0;
+}
+
+
+/*
+    function write(key: String~, value: String~, options: Object = null): Number
+ */
+static EjsNumber *sl_write(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
+{
+    CacheItem   *item;
+    EjsString   *key, *value, *sp;
+    EjsPot      *options;
+    EjsAny      *vp;
+    MprTime     expires;
+    MprHash     *hp;
+    ssize       len, oldLen;
+    int64       lifespan, version;
+    int         checkVersion, exists, add, set, prepend, append, throw;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    checkVersion = exists = add = prepend = append = throw = 0;
+    set = 1;
+    expires = 0;
+    lifespan = cache->lifespan;
+    key = argv[0];
+    value = argv[1];
+
+    if (argc >= 3 && argv[2] != S(null)) {
+        options = argv[2];
+        if ((vp = ejsGetPropertyByName(ejs, options, EN("lifespan"))) != 0) {
+            lifespan = ejsGetInt64(ejs, vp) * MPR_TICKS_PER_SEC;
+        }
+        if ((vp = ejsGetPropertyByName(ejs, options, EN("expires"))) != 0 && ejsIs(ejs, vp, Date)) {
+            expires = ejsGetDate(ejs, vp);
+        }
+        if ((sp = ejsGetPropertyByName(ejs, options, EN("mode"))) != 0) {
+            set = 0;
+            //  UNICODE
+            if (scmp(sp->value, "add") == 0) {
+                add = 1;
+            } else if (scmp(sp->value, "append") == 0) {
+                append = 1;
+            } else if (scmp(sp->value, "prepend") == 0) {
+                prepend = 1;
+            } else if (scmp(sp->value, "set") == 0) {
+                set = 1;
+            }
+        }
+        throw = (vp = ejsGetPropertyByName(ejs, options, EN("throw"))) == S(true);
+        if ((vp = ejsGetPropertyByName(ejs, options, EN("version"))) != 0) {
+            version = ejsGetInt64(ejs, vp);
+            checkVersion = 1;
+        }
+    }
+    lock(cache);
+    if ((hp = mprLookupKeyEntry(cache->store, key->value)) != 0) {
+        exists++;
+        item = (CacheItem*) hp->data;
+        if (checkVersion) {
+            if (item->version != version) {
+                if (throw) {
+                    ejsThrowStateError(ejs, "Key version does not match");
+                } else {
+                    return S(null);
+                }
+                unlock(cache);
+            }
+        }
+    } else {
+        if ((item = mprAllocObj(CacheItem, manageCacheItem)) == 0) {
+            ejsThrowMemoryError(ejs);
+            return 0;
+        }
+        //  UNICODE
+        mprAddKey(cache->store, key->value, item);
+        set = 1;
+        item->key = key;
+    }
+    oldLen = (item->data) ? (item->key->length + item->data->length) : 0;
+    if (set) {
+        item->data = value;
+    } else if (add) {
+        if (exists) {
+            return S(null);
+        }
+        item->data = value;
+    } else if (append) {
+        item->data = ejsCatString(ejs, item->data, value);
+    } else if (prepend) {
+        item->data = ejsCatString(ejs, value, item->data);
+    }
+    if (expires) {
+        /* Expires takes precedence over lifespan */
+        item->expires = expires;
+        item->lifespan = 0;
+    } else if (lifespan == 0) {
+        /* Never expires */
+        item->expires = 0;
+    } else {
+        item->lifespan = lifespan;
+        item->expires = mprGetTime() + item->lifespan;
+    }
+    item->version++;
+    len = item->key->length + item->data->length;
+
+    cache->usedMem += (len - oldLen);
+
+    if (cache->timer == 0) {
+        mprLog(5, "Start ejs.local.cache prune timer with resolution %d", cache->resolution);
+        cache->timer = mprCreateTimerEvent(ejs->dispatcher, "localCacheTimer", cache->resolution, localPruner, cache, 
+            MPR_EVENT_STATIC_DATA); 
+    }
+    unlock(cache);
+    //  UNICODE
+    return ejsCreateNumber(ejs, len);
+}
+
+
+/*
+    Check for expired keys
+ */
+static void localPruner(EjsLocalCache *cache, MprEvent *event)
+{
+    MprTime         when, factor;
+    MprHash         *hp;
+    CacheItem       *item;
+    ssize           excessKeys;
+
+    if (mprTryLock(cache->mutex)) {
+        when = mprGetTime();
+        for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
+            item = (CacheItem*) hp->data;
+            if (item->expires && item->expires <= when) {
+                mprLog(5, "ejs.local.cache prune key %s", hp->key);
+                mprRemoveKey(cache->store, hp->key);
+                cache->usedMem -= (item->key->length + item->data->length);
+            }
+        }
+        mprAssert(cache->usedMem >= 0);
+
+        /*
+            If too many keys or too much memory used, prune keys expiring first.
+         */
+        if (cache->maxKeys < MAXSSIZE || cache->maxMem < MAXSSIZE) {
+            excessKeys = mprGetHashLength(cache->store) - cache->maxKeys;
+            while (excessKeys > 0 || cache->usedMem > cache->maxMem) {
+                for (factor = 3600; excessKeys > 0; factor *= 2) {
+                    for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
+                        if (item->expires && item->expires <= when) {
+                            mprLog(5, "ejs.local.cache prune key %s", hp->key);
+                            mprRemoveKey(cache->store, hp->key);
+                            cache->usedMem -= (item->key->length + item->data->length);
+                        }
+                    }
+                    when += factor;
+                }
+                if (factor < 0) {
+                    mprAssert(factor > 0);
+                    break;
+                }
+            }
+        }
+        mprAssert(cache->usedMem >= 0);
+
+        if (mprGetHashLength(cache->store) == 0) {
+            mprRemoveEvent(event);
+            cache->timer = 0;
+        }
+        unlock(cache);
+    }
+}
+
+
+static void manageLocalCache(EjsLocalCache *cache, int flags) 
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(cache->store);
+        mprMark(cache->mutex);
+        mprMark(cache->timer);
+        mprMark(cache->shared);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (cache == shared) {
+            shared = 0;
+        }
+    }
+}
+
+
+static void manageCacheItem(CacheItem *item, int flags) 
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(item->key);
+        mprMark(item->data);
+    }
+}
+
+
+static EjsLocalCache *cloneLocalCache(Ejs *ejs, EjsLocalCache *src, bool deep)
+{
+    EjsLocalCache   *dest;
+
+    if ((dest = ejsCreateObj(ejs, TYPE(src), 0)) == 0) {
+        return 0;
+    }
+    if (src->shared) {
+        dest->shared = src->shared;
+    } else if (src == shared) {
+        dest->shared = src;
+    } else {
+        dest->store = mprCreateHash(CACHE_HASH_SIZE, 0);
+        dest->mutex = mprCreateLock();
+        dest->timer = 0;
+        dest->lifespan = src->lifespan;
+        dest->resolution = src->resolution;
+        dest->usedMem = src->usedMem;
+        dest->maxMem = src->maxMem;
+        dest->maxKeys = src->maxKeys;
+        dest->shared = src->shared;
+    }
+    return dest;
+}
+
+
+void ejsConfigureLocalCacheType(Ejs *ejs)
+{
+    EjsType     *type;
+    EjsPot      *prototype;
+
+    if ((type = ejsFinalizeScriptType(ejs, N("ejs", "LocalCache"), sizeof(EjsLocalCache), 
+            manageLocalCache, EJS_TYPE_OBJ | EJS_TYPE_MUTABLE_INSTANCES)) == 0) {
+        return;
+    }
+    ejsAddImmutable(ejs, S_LocalCache, type->qname, type);
+    type->helpers.clone = (EjsCloneHelper) cloneLocalCache;
+    ejsBindConstructor(ejs, type, localConstructor);
+
+    prototype = type->prototype;
+    ejsBindMethod(ejs, prototype, ES_LocalCache_destroy, sl_destroy);
+    ejsBindMethod(ejs, prototype, ES_LocalCache_expire, sl_expire);
+    ejsBindMethod(ejs, prototype, ES_LocalCache_inc, sl_inc);
+    ejsBindAccess(ejs, prototype, ES_LocalCache_limits, sl_limits, 0);
+    ejsBindMethod(ejs, prototype, ES_LocalCache_read, sl_read);
+    ejsBindMethod(ejs, prototype, ES_LocalCache_remove, sl_remove);
+    ejsBindMethod(ejs, prototype, ES_LocalCache_setLimits, sl_setLimits);
+    ejsBindMethod(ejs, prototype, ES_LocalCache_write, sl_write);
+}
+
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/core/src/ejsLocalCache.c"
  */
 /************************************************************************/
 
@@ -12538,7 +13158,7 @@ void ejsCreateNamespaceType(Ejs *ejs)
 {
     EjsType     *type;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "Namespace"), sizeof(EjsNamespace), S_Namespace, ES_Namespace_NUM_CLASS_PROP,
+    type = ejsCreateCoreType(ejs, N("ejs", "Namespace"), sizeof(EjsNamespace), S_Namespace, ES_Namespace_NUM_CLASS_PROP,
         manageNamespace, EJS_TYPE_OBJ | EJS_TYPE_IMMUTABLE_INSTANCES);
     type->helpers.cast = (EjsCastHelper) castNamespace;
     type->helpers.invokeOperator = (EjsInvokeOperatorHelper) invokeNamespaceOperator;
@@ -12549,7 +13169,7 @@ void ejsConfigureNamespaceType(Ejs *ejs)
 {
     EjsType     *type;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Namespace"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Namespace"))) == 0) {
         return;
     }
     ejsSetProperty(ejs, ejs->global, ES_iterator, S(iteratorSpace));
@@ -12799,7 +13419,7 @@ void ejsConfigureNullType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Null"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Null"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -13277,7 +13897,7 @@ void ejsCreateNumberType(Ejs *ejs)
     EjsType     *type;
     static int  zero = 0;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "Number"), sizeof(EjsNumber), S_Number, ES_Number_NUM_CLASS_PROP, 
+    type = ejsCreateCoreType(ejs, N("ejs", "Number"), sizeof(EjsNumber), S_Number, ES_Number_NUM_CLASS_PROP, 
         NULL, EJS_TYPE_OBJ | EJS_TYPE_IMMUTABLE_INSTANCES);
 
     type->helpers.cast = (EjsCastHelper) castNumber;
@@ -13323,7 +13943,7 @@ void ejsConfigureNumberType(Ejs *ejs)
     EjsType    *type;
     EjsPot     *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Number"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Number"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -14258,7 +14878,7 @@ void ejsConfigureObjectType(Ejs *ejs)
     EjsPot      *prototype;
     EjsFunction *fun;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Object"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Object"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -15599,7 +16219,7 @@ void ejsCreatePathType(Ejs *ejs)
 {
     EjsType     *type;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "Path"), sizeof(EjsPath), S_Path, ES_Path_NUM_CLASS_PROP, managePath, 
+    type = ejsCreateCoreType(ejs, N("ejs", "Path"), sizeof(EjsPath), S_Path, ES_Path_NUM_CLASS_PROP, managePath, 
         EJS_TYPE_OBJ | EJS_TYPE_IMMUTABLE_INSTANCES);
     type->helpers.cast = (EjsCastHelper) castPath;
     type->helpers.clone = (EjsCloneHelper) clonePath;
@@ -15612,7 +16232,7 @@ void ejsConfigurePathType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Path"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Path"))) == 0) {
         return;
     }
     //  TODO - rename all and use pa_ prefix
@@ -17131,7 +17751,7 @@ void ejsCreateRegExpType(Ejs *ejs)
 {
     EjsType     *type;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "RegExp"), sizeof(EjsRegExp), S_RegExp, ES_RegExp_NUM_CLASS_PROP,
+    type = ejsCreateCoreType(ejs, N("ejs", "RegExp"), sizeof(EjsRegExp), S_RegExp, ES_RegExp_NUM_CLASS_PROP,
         manageRegExp, EJS_TYPE_OBJ | EJS_TYPE_MUTABLE_INSTANCES);
     type->helpers.cast = (EjsCastHelper) castRegExp;
 }
@@ -17142,7 +17762,7 @@ void ejsConfigureRegExpType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "RegExp"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "RegExp"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -20343,7 +20963,7 @@ void ejsConfigureStringType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "String"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "String"))) == 0) {
         return;
     }
     ejsSetProperty(ejs, ejs->global, ES_string, type);
@@ -21108,11 +21728,18 @@ EjsType *ejsCreateType(Ejs *ejs, EjsName qname, EjsModule *up, EjsType *baseType
 /*
     Create a native built-in type. This is used for the core native classes of the language.
  */
-EjsType *ejsCreateNativeType(Ejs *ejs, EjsName qname, int size, int sid, int numTypeProp, void *manager, int64 attributes)
+EjsType *ejsCreateCoreType(Ejs *ejs, EjsName qname, int size, int sid, int numTypeProp, void *manager, int64 attributes)
 {
     EjsType     *type;
 
-    mprAssert(sid >= 0);
+#if BLD_DEBUG
+    if (attributes & EJS_TYPE_POT) {
+        if (size > sizeof(EjsPot)) {
+            mprAssert(attributes & EJS_TYPE_DYNAMIC_INSTANCES);
+            attributes |= EJS_TYPE_DYNAMIC_INSTANCES;
+        }
+    }
+#endif
     if ((type = ejsCreateType(ejs, qname, NULL, NULL, NULL, sid, numTypeProp, 0, size, manager, attributes)) == 0) {
         ejs->hasError = 1;
         return 0;
@@ -21124,7 +21751,7 @@ EjsType *ejsCreateNativeType(Ejs *ejs, EjsName qname, int size, int sid, int num
 }
 
 
-EjsType *ejsFinalizeNativeType(Ejs *ejs, EjsName qname)
+EjsType *ejsFinalizeCoreType(Ejs *ejs, EjsName qname)
 {
     EjsType     *type;
 
@@ -21151,6 +21778,14 @@ EjsType *ejsFinalizeScriptType(Ejs *ejs, EjsName qname, int size, void *manager,
     if (type->configured) {
         return 0;
     }
+#if UNUSED
+    if (attributes & EJS_TYPE_POT) {
+        if (size > sizeof(EjsPot)) {
+            mprAssert(attributes & EJS_TYPE_DYNAMIC_INSTANCES);
+            attributes |= EJS_TYPE_DYNAMIC_INSTANCES;
+        }
+    }
+#endif
     attributes = setDefaultAttributes(type, size, attributes);
     attributes = ejsSetTypeAttributes(type, size, manager, attributes);
     ejsSetTypeHelpers(type, attributes);
@@ -23421,7 +24056,7 @@ void ejsCreateVoidType(Ejs *ejs)
 {
     EjsType     *type;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "Void"), sizeof(EjsVoid), S_Void, ES_Void_NUM_CLASS_PROP, NULL, 
+    type = ejsCreateCoreType(ejs, N("ejs", "Void"), sizeof(EjsVoid), S_Void, ES_Void_NUM_CLASS_PROP, NULL, 
         EJS_TYPE_OBJ);
 
     type->helpers.cast             = (EjsCastHelper) castVoid;
@@ -23438,7 +24073,7 @@ void ejsConfigureVoidType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "Void"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Void"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -25497,7 +26132,7 @@ void ejsCreateXMLType(Ejs *ejs)
 {
     EjsType     *type;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "XML"), sizeof(EjsXML), S_XML, ES_XML_NUM_CLASS_PROP, ejsManageXML, 
+    type = ejsCreateCoreType(ejs, N("ejs", "XML"), sizeof(EjsXML), S_XML, ES_XML_NUM_CLASS_PROP, ejsManageXML, 
         EJS_TYPE_OBJ);
 
     /*
@@ -25521,7 +26156,7 @@ void ejsConfigureXMLType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "XML"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "XML"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -26386,7 +27021,7 @@ void ejsCreateXMLListType(Ejs *ejs)
 {
     EjsType     *type;
 
-    type = ejsCreateNativeType(ejs, N("ejs", "XMLList"), sizeof(EjsXML), S_XMLList, ES_XMLList_NUM_CLASS_PROP, 
+    type = ejsCreateCoreType(ejs, N("ejs", "XMLList"), sizeof(EjsXML), S_XMLList, ES_XMLList_NUM_CLASS_PROP, 
         ejsManageXML, EJS_TYPE_OBJ);
 
     /*
@@ -26410,7 +27045,7 @@ void ejsConfigureXMLListType(Ejs *ejs)
     EjsType     *type;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeNativeType(ejs, N("ejs", "XMLList"))) == 0) {
+    if ((type = ejsFinalizeCoreType(ejs, N("ejs", "XMLList"))) == 0) {
         return;
     }
     prototype = type->prototype;
@@ -27323,8 +27958,6 @@ static MprNumber parseNumber(Ejs *ejs, MprChar *str);
 static bool      parseBoolean(Ejs *ejs, MprChar *s);
 
 
-static int acount;
-
 EjsAny *ejsAlloc(Ejs *ejs, EjsType *type, ssize extra)
 {
     EjsObj      *vp;
@@ -27342,7 +27975,6 @@ EjsAny *ejsAlloc(Ejs *ejs, EjsType *type, ssize extra)
     mprAssert(type->manager);
     //  OPT inline here
     mprSetManager(vp, type->manager);
-    acount++;
     return vp;
 }
 
@@ -29282,7 +29914,6 @@ static void *opcodeJump[] = {
             if (unlikely(vp == 0)) {
                 ejsThrowReferenceError(ejs, "%@ is not defined", qname.name);
             } else {
-//  XXX
                 CHECK_VALUE(vp, NULL, lookup.obj, lookup.slotNum);
             }
             BREAK;
@@ -36007,7 +36638,6 @@ static int defineTypes(Ejs *ejs)
 #if BLD_FEATURE_SQLITE
     ejs_db_sqlite_Init(ejs, NULL);
 #endif
-    ejs_cache_local_Init(ejs, NULL);
     ejs_web_Init(ejs, NULL);
 #endif
     if (ejs->hasError || mprHasMemError(ejs)) {
@@ -36049,6 +36679,7 @@ static int configureEjs(Ejs *ejs)
         ejsConfigureGCType(ejs);
         ejsConfigureHttpType(ejs);
         ejsConfigureJSONType(ejs);
+        ejsConfigureLocalCacheType(ejs);
         ejsConfigureLogFileType(ejs);
         ejsConfigureMathType(ejs);
         ejsConfigureMemoryType(ejs);
@@ -36720,622 +37351,6 @@ void ejsDisableExit(Ejs *ejs)
 /************************************************************************/
 /*
  *  End of file "../../src/vm/ejsService.c"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "../../src/jems/ejs.cache.local/src/ejsLocalCache.c"
- */
-/************************************************************************/
-
-/**
-    ejsEjsLocalCache.c - Native code for the Local cache class.
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-
-
-
-#define CACHE_TIMER_PERIOD  (60 * MPR_TICKS_PER_SEC)
-#define CACHE_TIMER_PERIOD  (60 * MPR_TICKS_PER_SEC)
-#define CACHE_HASH_SIZE     257
-#define CACHE_LIFESPAN      (86400 * MPR_TICKS_PER_SEC)
-
-typedef struct EjsLocalCache
-{
-    //  MOB - does this need to be pot?
-    EjsPot          pot;                /* Object base */
-    MprHashTable    *store;             /* Key/value store */
-    MprMutex        *mutex;             /* Cache lock*/
-    MprEvent        *timer;             /* Pruning timer */
-    MprTime         lifespan;           /* Default lifespan */
-    int             resolution;         /* Frequence for pruner */
-    ssize           usedMem;            /* Memory in use for keys and data */
-    ssize           maxKeys;            /* Max number of keys */
-    ssize           maxMem;             /* Max memory for session data */
-    struct EjsLocalCache *shared;       /* Shared common cache */
-} EjsLocalCache;
-
-static EjsLocalCache *shared;           /* Singleton shared cache */
-
-typedef struct CacheItem
-{
-    EjsString   *key;                   /* Original key */
-    EjsString   *data;                  /* Cache data */
-    MprTime     expires;                /* Fixed expiry date. If zero, key is imortal. */
-    MprTime     lifespan;               /* Lifespan after each access to key */
-    int64       version;
-} CacheItem;
-
-
-static void localPruner(EjsLocalCache *cache, MprEvent *event);
-static void manageLocalCache(EjsLocalCache *cache, int flags);
-static void manageCacheItem(CacheItem *item, int flags);
-static void setLocalLimits(Ejs *ejs, EjsLocalCache *cache, EjsPot *options);
-
-/*
-   function Local(options)
- */
-static EjsLocalCache *localConstructor(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
-{
-    EjsPot      *options;
-    int         wantShared;
-
-    options = (argc >= 1 && ejsIsDefined(ejs, argv[0])) ? argv[0] : 0;
-    wantShared = (options && ejsGetPropertyByName(ejs, options, EN("shared")) == S(true));
-
-    if (wantShared && shared) {
-        cache->shared = shared;
-    } else {
-        cache->mutex = mprCreateLock();
-        cache->store = mprCreateHash(CACHE_HASH_SIZE, 0);
-        cache->maxMem = MAXSSIZE;
-        cache->maxKeys = MAXSSIZE;
-        cache->resolution = CACHE_TIMER_PERIOD;
-        cache->lifespan = CACHE_LIFESPAN;
-        setLocalLimits(ejs, cache, options);
-        if (wantShared) {
-            shared = cache;
-        }
-    }
-    return cache;
-}
-
-
-static EjsVoid *sl_destroy(Ejs *ejs, EjsLocalCache *cache, int argc, EjsObj **argv)
-{
-    if (cache->timer && cache != shared) {
-        mprRemoveEvent(cache->timer);
-        cache->timer = 0;
-    }
-    //  MOB - race here
-    if (cache == shared) {
-        shared = 0;
-    }
-    return 0;
-}
-
-
-/*
-    function expire(key: String, expires: Date): Boolean
- */
-static EjsAny *sl_expire(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
-{
-    EjsString   *key;
-    EjsDate     *expires;
-    CacheItem   *item;
-
-    if (cache->shared) {
-        cache = cache->shared;
-        mprAssert(cache == shared);
-    }
-    key = argv[0];
-    expires = argv[1];
-
-    lock(cache);
-    //  UNICODE
-    if ((item = mprLookupKey(cache->store, key->value)) == 0) {
-        unlock(cache);
-        return S(false);
-    }
-    item->lifespan = 0;
-    if (expires == S(null)) {
-        item->expires = 0;
-    } else {
-        item->expires = ejsGetDate(ejs, expires);
-    }
-    unlock(cache);
-    return S(true);
-}
-
-
-/*
-    function inc(key: String, amount: Number): Number
- */
-static EjsAny *sl_inc(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
-{
-    EjsString   *key;
-    CacheItem   *item;
-    int64       amount;
-    char        nbuf[32];
-
-    if (cache->shared) {
-        cache = cache->shared;
-        mprAssert(cache == shared);
-    }
-    key = argv[0];
-    amount = (argc >= 2) ? ejsGetInt(ejs, argv[1]) : 1;
-
-    lock(cache);
-    //  UNICODE
-    if ((item = mprLookupKey(cache->store, key->value)) == 0) {
-        if ((item = mprAllocObj(CacheItem, manageCacheItem)) == 0) {
-            ejsThrowMemoryError(ejs);
-            return 0;
-        }
-    } else {
-        amount += stoi(item->data->value, 10, 0);
-    }
-    if (item->data) {
-        cache->usedMem -= item->data->length;
-    }
-    item->data = ejsCreateStringFromAsc(ejs, itos(nbuf, sizeof(nbuf), amount, 10));
-    cache->usedMem += item->data->length;
-    item->expires = mprGetTime() + item->lifespan;
-    item->version++;
-    unlock(cache);
-    return item->data;
-}
-
-
-/*
-    function get limits(): Object
- */
-static EjsPot *sl_limits(Ejs *ejs, EjsLocalCache *cache, int argc, EjsObj **argv)
-{
-    EjsPot      *result;
-
-    if (cache->shared) {
-        cache = cache->shared;
-        mprAssert(cache == shared);
-    }
-    result = ejsCreateEmptyPot(ejs);
-    ejsSetPropertyByName(ejs, result, EN("keys"), ejsCreateNumber(ejs, cache->maxKeys == MAXSSIZE ? 0 : cache->maxKeys));
-    ejsSetPropertyByName(ejs, result, EN("lifespan"), ejsCreateNumber(ejs, cache->lifespan / MPR_TICKS_PER_SEC));
-    ejsSetPropertyByName(ejs, result, EN("memory"), ejsCreateNumber(ejs, cache->maxMem == MAXSSIZE ? 0 : cache->maxMem));
-    return result;
-}
-
-
-/*
-    function read(key: String, options: Object = null): Object
- */
-static EjsAny *sl_read(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
-{
-    EjsString   *key;
-    EjsAny      *result;
-    EjsPot      *options;
-    CacheItem   *item;
-    int         getVersion;
-
-    if (cache->shared) {
-        cache = cache->shared;
-        mprAssert(cache == shared);
-    }
-    key = argv[0];
-    getVersion = 0;
-
-    if (argc >= 2 && ejsIsDefined(ejs, argv[1])) {
-        options = argv[1];
-        getVersion = ejsGetPropertyByName(ejs, options, EN("version")) == S(true);
-    }
-    lock(cache);
-    //  UNICODE
-    if ((item = mprLookupKey(cache->store, key->value)) == 0) {
-        unlock(cache);
-        return S(null);
-    }
-    if (item->lifespan) {
-        item->expires = mprGetTime() + item->lifespan;
-    }
-    if (getVersion) {
-        result = ejsCreatePot(ejs, S(Object), 2);
-        ejsSetPropertyByName(ejs, result, EN("version"), ejsCreateNumber(ejs, item->version));
-        ejsSetPropertyByName(ejs, result, EN("data"), item->data);
-    } else {
-        result = item->data;
-    }
-    unlock(cache);
-    return result;
-}
-
-
-/*
-    native function remove(key: String): Boolean
- */
-static EjsBoolean *sl_remove(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
-{
-    EjsString   *key;
-    EjsAny      *result;
-    CacheItem   *item;
-
-    if (cache->shared) {
-        cache = cache->shared;
-        mprAssert(cache == shared);
-    }
-    key = argv[0];
-    lock(cache);
-    if (ejsIsDefined(ejs, key)) {
-        //  UNICODE
-        if ((item = mprLookupKey(cache->store, key->value)) != 0) {
-            cache->usedMem -= (key->length + item->data->length);
-            mprRemoveKey(cache->store, key->value);
-            result = S(true);
-        } else {
-            result = S(false);
-        }
-
-    } else {
-        /* Remove all keys */
-        result = mprGetHashLength(cache->store) ? S(true) : S(false);
-        cache->store = mprCreateHash(CACHE_HASH_SIZE, 0);
-        cache->usedMem = 0;
-    }
-    unlock(cache);
-    return result;
-}
-
-
-static void setLocalLimits(Ejs *ejs, EjsLocalCache *cache, EjsPot *options)
-{
-    EjsAny      *vp;
-
-    if (!options) {
-        return;
-    }
-    if (cache->shared) {
-        cache = cache->shared;
-        mprAssert(cache == shared);
-    }
-    if ((vp = ejsGetPropertyByName(ejs, options, EN("keys"))) != 0) {
-        cache->maxKeys = (ssize) ejsGetInt64(ejs, vp);
-        if (cache->maxKeys <= 0) {
-            cache->maxKeys = MAXSSIZE;
-        }
-    }
-    if ((vp = ejsGetPropertyByName(ejs, options, EN("lifespan"))) != 0) {
-        cache->lifespan = (ssize) ejsGetInt64(ejs, vp) * MPR_TICKS_PER_SEC;
-    }
-    if ((vp = ejsGetPropertyByName(ejs, options, EN("memory"))) != 0) {
-        cache->maxMem = (ssize) ejsGetInt64(ejs, vp);
-        if (cache->maxMem <= 0) {
-            cache->maxMem = MAXSSIZE;
-        }
-    }
-    if ((vp = ejsGetPropertyByName(ejs, options, EN("resolution"))) != 0) {
-        cache->resolution = ejsGetInt(ejs, vp);
-        if (cache->resolution <= 0) {
-            cache->resolution = CACHE_TIMER_PERIOD;
-        }
-    }
-}
-
-
-/*
-    function setLimits(limits: Object): Void
- */
-static EjsVoid *sl_setLimits(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
-{
-    if (cache->shared) {
-        cache = cache->shared;
-        mprAssert(cache == shared);
-    }
-    setLocalLimits(ejs, cache, argv[0]);
-    return 0;
-}
-
-
-/*
-    function write(key: String~, value: String~, options: Object = null): Number
- */
-static EjsNumber *sl_write(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
-{
-    CacheItem   *item;
-    EjsString   *key, *value, *sp;
-    EjsPot      *options;
-    EjsAny      *vp;
-    MprTime     expires;
-    MprHash     *hp;
-    ssize       len, oldLen;
-    int64       lifespan, version;
-    int         checkVersion, exists, add, set, prepend, append, throw;
-
-    if (cache->shared) {
-        cache = cache->shared;
-        mprAssert(cache == shared);
-    }
-    checkVersion = exists = add = prepend = append = throw = 0;
-    set = 1;
-    expires = 0;
-    lifespan = cache->lifespan;
-    key = argv[0];
-    value = argv[1];
-
-    if (argc >= 3 && argv[2] != S(null)) {
-        options = argv[2];
-        if ((vp = ejsGetPropertyByName(ejs, options, EN("lifespan"))) != 0) {
-            lifespan = ejsGetInt64(ejs, vp) * MPR_TICKS_PER_SEC;
-        }
-        if ((vp = ejsGetPropertyByName(ejs, options, EN("expires"))) != 0 && ejsIs(ejs, vp, Date)) {
-            expires = ejsGetDate(ejs, vp);
-        }
-        if ((sp = ejsGetPropertyByName(ejs, options, EN("mode"))) != 0) {
-            set = 0;
-            //  UNICODE
-            if (scmp(sp->value, "add") == 0) {
-                add = 1;
-            } else if (scmp(sp->value, "append") == 0) {
-                append = 1;
-            } else if (scmp(sp->value, "prepend") == 0) {
-                prepend = 1;
-            } else if (scmp(sp->value, "set") == 0) {
-                set = 1;
-            }
-        }
-        throw = (vp = ejsGetPropertyByName(ejs, options, EN("throw"))) == S(true);
-        if ((vp = ejsGetPropertyByName(ejs, options, EN("version"))) != 0) {
-            version = ejsGetInt64(ejs, vp);
-            checkVersion = 1;
-        }
-    }
-    lock(cache);
-    if ((hp = mprLookupKeyEntry(cache->store, key->value)) != 0) {
-        exists++;
-        item = (CacheItem*) hp->data;
-        if (checkVersion) {
-            if (item->version != version) {
-                if (throw) {
-                    ejsThrowStateError(ejs, "Key version does not match");
-                } else {
-                    return S(null);
-                }
-                unlock(cache);
-            }
-        }
-    } else {
-        if ((item = mprAllocObj(CacheItem, manageCacheItem)) == 0) {
-            ejsThrowMemoryError(ejs);
-            return 0;
-        }
-        //  UNICODE
-        mprAddKey(cache->store, key->value, item);
-        set = 1;
-        item->key = key;
-    }
-    oldLen = (item->data) ? (item->key->length + item->data->length) : 0;
-    if (set) {
-        item->data = value;
-    } else if (add) {
-        if (exists) {
-            return S(null);
-        }
-        item->data = value;
-    } else if (append) {
-        item->data = ejsCatString(ejs, item->data, value);
-    } else if (prepend) {
-        item->data = ejsCatString(ejs, value, item->data);
-    }
-    if (expires) {
-        /* Expires takes precedence over lifespan */
-        item->expires = expires;
-        item->lifespan = 0;
-    } else if (lifespan == 0) {
-        /* Never expires */
-        item->expires = 0;
-    } else {
-        item->lifespan = lifespan;
-        item->expires = mprGetTime() + item->lifespan;
-    }
-    item->version++;
-    len = item->key->length + item->data->length;
-
-    cache->usedMem += (len - oldLen);
-
-    if (cache->timer == 0) {
-        mprLog(5, "Start ejs.local.cache prune timer with resolution %d", cache->resolution);
-        cache->timer = mprCreateTimerEvent(ejs->dispatcher, "localCacheTimer", cache->resolution, localPruner, cache, 
-            MPR_EVENT_STATIC_DATA); 
-    }
-    unlock(cache);
-    //  UNICODE
-    return ejsCreateNumber(ejs, len);
-}
-
-
-/*
-    Check for expired keys
- */
-static void localPruner(EjsLocalCache *cache, MprEvent *event)
-{
-    MprTime         when, factor;
-    MprHash         *hp;
-    CacheItem       *item;
-    ssize           excessKeys;
-
-    if (mprTryLock(cache->mutex)) {
-        when = mprGetTime();
-        for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
-            item = (CacheItem*) hp->data;
-            if (item->expires && item->expires <= when) {
-                mprLog(5, "ejs.local.cache prune key %s", hp->key);
-                mprRemoveKey(cache->store, hp->key);
-                cache->usedMem -= (item->key->length + item->data->length);
-            }
-        }
-        mprAssert(cache->usedMem >= 0);
-
-        /*
-            If too many keys or too much memory used, prune keys expiring first.
-         */
-        if (cache->maxKeys < MAXSSIZE || cache->maxMem < MAXSSIZE) {
-            excessKeys = mprGetHashLength(cache->store) - cache->maxKeys;
-            while (excessKeys > 0 || cache->usedMem > cache->maxMem) {
-                for (factor = 3600; excessKeys > 0; factor *= 2) {
-                    for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
-                        if (item->expires && item->expires <= when) {
-                            mprLog(5, "ejs.local.cache prune key %s", hp->key);
-                            mprRemoveKey(cache->store, hp->key);
-                            cache->usedMem -= (item->key->length + item->data->length);
-                        }
-                    }
-                    when += factor;
-                }
-                if (factor < 0) {
-                    mprAssert(factor > 0);
-                    break;
-                }
-            }
-        }
-        mprAssert(cache->usedMem >= 0);
-
-        if (mprGetHashLength(cache->store) == 0) {
-            mprRemoveEvent(event);
-            cache->timer = 0;
-        }
-        unlock(cache);
-    }
-}
-
-
-static void manageLocalCache(EjsLocalCache *cache, int flags) 
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(cache->store);
-        mprMark(cache->mutex);
-        mprMark(cache->timer);
-        mprMark(cache->shared);
-
-    } else if (flags & MPR_MANAGE_FREE) {
-        if (cache == shared) {
-            shared = 0;
-        }
-    }
-}
-
-
-static void manageCacheItem(CacheItem *item, int flags) 
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(item->key);
-        mprMark(item->data);
-    }
-}
-
-
-static EjsLocalCache *cloneLocalCache(Ejs *ejs, EjsLocalCache *src, bool deep)
-{
-    EjsLocalCache   *dest;
-
-    if ((dest = ejsCreateObj(ejs, TYPE(src), 0)) == 0) {
-        return 0;
-    }
-    if (src->shared) {
-        dest->shared = src->shared;
-    } else if (src == shared) {
-        dest->shared = src;
-    } else {
-        dest->store = mprCreateHash(CACHE_HASH_SIZE, 0);
-        dest->mutex = mprCreateLock();
-        dest->timer = 0;
-        dest->lifespan = src->lifespan;
-        dest->resolution = src->resolution;
-        dest->usedMem = src->usedMem;
-        dest->maxMem = src->maxMem;
-        dest->maxKeys = src->maxKeys;
-        dest->shared = src->shared;
-    }
-    return dest;
-}
-
-
-static int configureLocalTypes(Ejs *ejs)
-{
-    EjsType     *type;
-    EjsPot      *prototype;
-
-    type = ejsGetTypeByName(ejs, N("ejs.cache.local", "LocalCache"));
-    mprAssert(type);
-    type->instanceSize = sizeof(EjsLocalCache);
-    type->mutableInstances = 1;
-    type->manager = (MprManager) manageLocalCache;
-    type->helpers.clone = (EjsCloneHelper) cloneLocalCache;
-
-    ejsBindConstructor(ejs, type, localConstructor);
-    prototype = type->prototype;
-
-    ejsBindMethod(ejs, prototype, ES_ejs_cache_local_LocalCache_destroy, sl_destroy);
-    ejsBindMethod(ejs, prototype, ES_ejs_cache_local_LocalCache_expire, sl_expire);
-    ejsBindMethod(ejs, prototype, ES_ejs_cache_local_LocalCache_inc, sl_inc);
-    ejsBindAccess(ejs, prototype, ES_ejs_cache_local_LocalCache_limits, sl_limits, 0);
-    ejsBindMethod(ejs, prototype, ES_ejs_cache_local_LocalCache_read, sl_read);
-    ejsBindMethod(ejs, prototype, ES_ejs_cache_local_LocalCache_remove, sl_remove);
-    ejsBindMethod(ejs, prototype, ES_ejs_cache_local_LocalCache_setLimits, sl_setLimits);
-    ejsBindMethod(ejs, prototype, ES_ejs_cache_local_LocalCache_write, sl_write);
-    return 0;
-}
-
-
-/*
-    Module load entry point
- */
-int ejs_cache_local_Init(Ejs *ejs, MprModule *mp)
-{
-    return ejsAddNativeModule(ejs, "ejs.cache.local", configureLocalTypes, _ES_CHECKSUM_ejs_cache_local, EJS_LOADER_ETERNAL);
-}
-
-
-/*
-    @copy   default
-
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
-    by the terms of either license. Consult the LICENSE.TXT distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
-
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/jems/ejs.cache.local/src/ejsLocalCache.c"
  */
 /************************************************************************/
 
@@ -38169,7 +38184,7 @@ static EjsObj *hs_setLimits(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
     if ((vp = ejsGetPropertyByName(ejs, sp->limits, EN("sessionTimeout"))) != 0) {
         app = ejsGetPropertyByName(ejs, ejs->global, N("ejs", "App"));
         cache = ejsGetProperty(ejs, app, ES_App_cache);
-        if (cache) {
+        if (cache && cache != S(null)) {
             cacheLimits = ejsCreateEmptyPot(ejs);
             ejsSetPropertyByName(ejs, cacheLimits, EN("lifespan"), vp);
             ejsCacheSetLimits(ejs, cache, cacheLimits);
@@ -38720,11 +38735,10 @@ static void startEjsHandler(HttpQueue *q)
     conn = q->conn;
     server = conn->server;
 
-    if (conn->ejs == 0) {
+    if (conn->error) {
         return;
     }
     if ((sp = httpGetServerContext(server)) == 0) {
-        mprAssert(conn->ejs);
         lp = conn->sock->listenSock;
         if ((sp = lookupServer(conn->ejs, lp->ip, lp->port)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, 
@@ -38897,7 +38911,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     EjsPot      *prototype;
 
     if ((type = ejsFinalizeScriptType(ejs, N("ejs.web", "HttpServer"), sizeof(EjsHttpServer), manageHttpServer, 
-            EJS_TYPE_POT)) == 0) {
+            EJS_TYPE_POT | EJS_TYPE_DYNAMIC_INSTANCES)) == 0) {
         return;
     }
     type->helpers.create = (EjsCreateHelper) createHttpServer;
@@ -40396,7 +40410,8 @@ void ejsConfigureRequestType(Ejs *ejs)
     EjsHelpers  *helpers;
     EjsPot      *prototype;
 
-    if ((type = ejsFinalizeScriptType(ejs, N("ejs.web", "Request"), sizeof(EjsRequest), manageRequest, EJS_TYPE_POT)) == 0) {
+    if ((type = ejsFinalizeScriptType(ejs, N("ejs.web", "Request"), sizeof(EjsRequest), manageRequest, 
+            EJS_TYPE_DYNAMIC_INSTANCES | EJS_TYPE_POT)) == 0) {
         return;
     }
     helpers = &type->helpers;
@@ -40494,8 +40509,11 @@ static EjsSession *initSession(Ejs *ejs, EjsSession *sp, EjsString *key, MprTime
     EjsObj      *app;
 
     app = ejsGetPropertyByName(ejs, ejs->global, N("ejs", "App"));
-    sp->cache = ejsGetProperty(ejs, app, ES_App_cache);
-
+    if ((sp->cache = ejsGetProperty(ejs, app, ES_App_cache)) == S(null)) {
+        ejsThrowStateError(ejs, "App.cache is null");
+        sp->cache = 0;
+        return 0;
+    }
     sp->lifespan = timeout;
     sp->key = key;
     return sp;
@@ -40527,7 +40545,9 @@ EjsSession *ejsGetSession(Ejs *ejs, EjsString *key, MprTime timeout, int create)
         return 0;
     }
     mprSetName(sp, "session");
-    initSession(ejs, sp, key, timeout);
+    if ((sp = initSession(ejs, sp, key, timeout)) == 0) {
+        return 0;
+    }
     if (!getSessionState(ejs, sp) && create) {
         sp->key = makeKey(ejs, sp);
     }
@@ -40687,7 +40707,8 @@ void ejsConfigureSessionType(Ejs *ejs)
     EjsType         *type;
     EjsHelpers      *helpers;
 
-    if ((type = ejsFinalizeScriptType(ejs, N("ejs.web", "Session"), sizeof(EjsSession), manageSession, EJS_TYPE_POT)) == 0) {
+    if ((type = ejsFinalizeScriptType(ejs, N("ejs.web", "Session"), sizeof(EjsSession), manageSession, 
+            EJS_TYPE_POT | EJS_TYPE_DYNAMIC_INSTANCES)) == 0) {
         return;
     }
     /*

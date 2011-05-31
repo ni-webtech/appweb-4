@@ -377,7 +377,7 @@ extern HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *p
 
 extern char         *maMakePath(HttpHost *host, cchar *file);
 extern char         *maReplaceReferences(HttpHost *host, cchar *str);
-extern void         maRotateAccessLog(cchar *path, int count, int maxSize);
+extern void         maRotateLog(cchar *path, int count, int maxSize);
 extern void         maSetAccessLog(HttpHost *host, cchar *path, cchar *format);
 extern int          maStopLogging();
 extern int          maStartLogging(HttpHost *host, cchar *logSpec);
