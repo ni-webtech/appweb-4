@@ -1418,11 +1418,14 @@ typedef struct HttpConn {
     int             http10;                 /**< Using legacy HTTP/1.0 */
 
     int             port;                   /**< Remote port */
+#if UNUSED
     int             recall;                 /**< Recall I/O handler requrired */
+#endif
     int             retries;                /**< Client request retries */
     int             secure;                 /**< Using https */
     int             seqno;                  /**< Unique connection sequence number */
     int             writeBlocked;           /**< Transmission writing is blocked */
+    int             worker;                 /**< Use worker */
 
     HttpTrace       trace[2];               /**< Tracing for [rx|tx] */
 
@@ -1724,6 +1727,8 @@ extern void httpWritable(HttpConn *conn);
 /** Internal APIs */
 extern struct HttpConn *httpAccept(struct HttpServer *server);
 extern void httpEnableConnEvents(HttpConn *conn);
+extern void httpUsePrimary(HttpConn *conn);
+extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *event);
 extern HttpPacket *httpGetConnPacket(HttpConn *conn);
 extern void httpSetPipelineHandler(HttpConn *conn, HttpStage *handler);
 extern void httpSetSendConnector(HttpConn *conn, cchar *path);

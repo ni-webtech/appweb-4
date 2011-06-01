@@ -4992,7 +4992,6 @@ static EjsObj *cmd_exec(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 }
 
 
-
 static void manageEjsCmd(EjsCmd *cmd, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
@@ -12110,8 +12109,11 @@ static EjsNumber *sl_write(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **ar
     cache->usedMem += (len - oldLen);
 
     if (cache->timer == 0) {
-        mprLog(5, "Start ejs.local.cache prune timer with resolution %d", cache->resolution);
-        cache->timer = mprCreateTimerEvent(ejs->dispatcher, "localCacheTimer", cache->resolution, localPruner, cache, 
+        mprLog(5, "Start LocalCache pruner with resolution %d", cache->resolution);
+        /* 
+            Use the MPR dispatcher incase this VM is destroyed 
+         */
+        cache->timer = mprCreateTimerEvent(MPR->dispatcher, "localCacheTimer", cache->resolution, localPruner, cache, 
             MPR_EVENT_STATIC_DATA); 
     }
     unlock(cache);
@@ -12135,7 +12137,7 @@ static void localPruner(EjsLocalCache *cache, MprEvent *event)
         for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
             item = (CacheItem*) hp->data;
             if (item->expires && item->expires <= when) {
-                mprLog(5, "ejs.local.cache prune key %s", hp->key);
+                mprLog(5, "LocalCache prune key %s", hp->key);
                 mprRemoveKey(cache->store, hp->key);
                 cache->usedMem -= (item->key->length + item->data->length);
             }
@@ -12151,7 +12153,7 @@ static void localPruner(EjsLocalCache *cache, MprEvent *event)
                 for (factor = 3600; excessKeys > 0; factor *= 2) {
                     for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
                         if (item->expires && item->expires <= when) {
-                            mprLog(5, "ejs.local.cache prune key %s", hp->key);
+                            mprLog(5, "LocalCache prune key %s", hp->key);
                             mprRemoveKey(cache->store, hp->key);
                             cache->usedMem -= (item->key->length + item->data->length);
                         }
@@ -36228,8 +36230,8 @@ Ejs *ejsCreateVM(int argc, cchar **argv, int flags)
     }
     ejs->argc = argc;
     ejs->argv = argv;
-    ejs->dispatcher = mprCreateDispatcher(ejs->name, 1);
     ejs->name = mprAsprintf("ejs-%d", sp->seqno++);
+    ejs->dispatcher = mprCreateDispatcher(ejs->name, 1);
     ejs->mutex = mprCreateLock(ejs);
     ejs->dontExit = sp->dontExit;
     ejs->empty = 1;
@@ -38477,6 +38479,10 @@ static void receiveRequest(EjsRequest *req, MprEvent *event)
     }
     argv[0] = req;
     ejsRunFunction(ejs, onrequest, req->server, 1, argv);
+    if (conn->state == HTTP_STATE_BEGIN) {
+        conn->ejs = 0;
+        httpUsePrimary(conn);        
+    }
     httpEnableConnEvents(conn);
 }
 
@@ -38490,6 +38496,7 @@ static EjsVoid *hs_passRequest(Ejs *ejs, EjsHttpServer *server, int argc, EjsAny
     EjsRequest      *req, *nreq;
     EjsWorker       *worker;
     HttpConn        *conn;
+    MprEvent        *event;
 
     req = argv[0];
     worker = argv[1];
@@ -38497,8 +38504,6 @@ static EjsVoid *hs_passRequest(Ejs *ejs, EjsHttpServer *server, int argc, EjsAny
     nejs = worker->pair->ejs;
     conn = req->conn;
     conn->ejs = nejs;
-    conn->oldDispatcher = conn->dispatcher;
-    conn->newDispatcher = nejs->dispatcher;
 
     if ((nreq = ejsCloneRequest(nejs, req, 1)) == 0) {
         ejsThrowStateError(ejs, "Can't clone request");
@@ -38510,10 +38515,8 @@ static EjsVoid *hs_passRequest(Ejs *ejs, EjsHttpServer *server, int argc, EjsAny
         ejsThrowStateError(ejs, "Can't clone request");
         return 0;
     }
-    conn->workerEvent = mprCreateEvent(conn->dispatcher, "RequestWorker", 0, receiveRequest, nreq, MPR_EVENT_DONT_QUEUE);
-    if (conn->workerEvent == 0) {
-        ejsThrowStateError(ejs, "Can't create worker event");
-    }  
+    event = mprCreateEvent(conn->dispatcher, "RequestWorker", 0, receiveRequest, nreq, MPR_EVENT_DONT_QUEUE);
+    httpUseWorker(conn, nejs->dispatcher, event);
     return 0;
 }
 
@@ -38605,7 +38608,7 @@ static void stateChangeNotifier(HttpConn *conn, int state, int notifyFlags)
             }
             ejsSendRequestCloseEvent(ejs, req);
             if (req->cloned) {
-                ejsSendRequestCloseEvent(req->cloned->ejs, req->cloned);
+                ejsSendRequestCloseEvent(req->ejs, req->cloned);
             }
         }
         break;
@@ -38753,6 +38756,8 @@ static void startEjsHandler(HttpQueue *q)
             ejsSetProperty(ejs, sp, ES_ejs_web_HttpServer_documents, 
                 ejsCreateStringFromAsc(ejs, conn->host->documentRoot));
         }
+    } else if (conn->ejs) {
+        ejs = conn->ejs;
     } else {
         ejs = sp->ejs;
     }
