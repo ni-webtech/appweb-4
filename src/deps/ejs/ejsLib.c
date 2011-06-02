@@ -4390,6 +4390,8 @@ static EjsObj *cmd_start(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv);
  */
 static EjsCmd *cmd_constructor(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 {
+    cmd->stdoutBuf = mprCreateBuf(MPR_BUFSIZE, -1);
+    cmd->stderrBuf = mprCreateBuf(MPR_BUFSIZE, -1);
     cmd->ejs = ejs;
     cmd->timeout = -1;
     if (argc >= 1) {
@@ -4592,7 +4594,7 @@ static EjsNumber *cmd_read(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         count = buffer->length - buffer->writePosition;
     }
     nbytes = mprGetBufLength(cmd->stdoutBuf);
-    if (nbytes == 0 && !cmd->async) {
+    if (nbytes == 0 && !cmd->async && cmd->mc) {
         if (mprWaitForCmd(cmd->mc, cmd->timeout) < 0) {
             ejsThrowStateError(ejs, "Command timed out");
             return 0;
@@ -4625,7 +4627,7 @@ static EjsString *cmd_readString(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         count = MAXSSIZE;
     }
     nbytes = mprGetBufLength(cmd->stdoutBuf);
-    if (nbytes == 0) {
+    if (nbytes == 0 && cmd->mc) {
         if (mprWaitForCmd(cmd->mc, cmd->timeout) < 0) {
             ejsThrowStateError(ejs, "Command timed out");
             return 0;
@@ -4731,7 +4733,7 @@ static int parseOptions(Ejs *ejs, EjsCmd *cmd)
         }
         if ((value = ejsGetPropertyByName(ejs, cmd->options, EN("dir"))) != 0) {
             path = ejsToPath(ejs, value);
-            if (path) {
+            if (path && cmd->mc) {
                 mprSetCmdDir(cmd->mc, path->value);
             }
         }
@@ -4798,12 +4800,8 @@ static EjsObj *cmd_start(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         return 0;
     }
     mprSetCmdCallback(cmd->mc, cmdIOCallback, cmd);
-    if (cmd->stdoutBuf == 0) {
-        cmd->stdoutBuf = mprCreateBuf(MPR_BUFSIZE, -1);
-    }
-    if (cmd->stderrBuf == 0) {
-        cmd->stderrBuf = mprCreateBuf(MPR_BUFSIZE, -1);
-    }
+    mprFlushBuf(cmd->stdoutBuf);
+    mprFlushBuf(cmd->stderrBuf);
     if (!setCmdArgs(ejs, cmd, argc, argv)) {
         return 0;
     }
@@ -19631,6 +19629,9 @@ static EjsArray *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             if (rp->endLastMatch <= matches[0]) {
                 match = ejsCreateString(ejs, &sp->value[rp->endLastMatch], matches[0] - rp->endLastMatch);
                 ejsSetProperty(ejs, results, resultCount++, match);
+            }
+            if (matches[1] == rp->endLastMatch) {
+                matches[1]++;
             }
             rp->endLastMatch = matches[1];
         } while (rp->global);
