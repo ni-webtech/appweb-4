@@ -5209,6 +5209,7 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
         *dp++ = '\0';                        /* Windows requires two nulls */
         mprAssert(dp <= endp);
     }
+    mprLog(5, "Windows command line: %s", cmd->command);
 #endif /* BLD_WIN_LIKE */
     return 0;
 }
@@ -14465,16 +14466,16 @@ char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
         nextDir = sclone(nextDir);
         dir = stok(nextDir, MPR_SEARCH_SEP, &tok);
         while (dir && *dir) {
-            mprLog(5, "mprSearchForFile: %s in directory %s", file, nextDir);
+            mprLog(7, "mprSearchForFile: %s in directory %s", file, nextDir);
             path = mprJoinPath(dir, file);
             if (mprPathExists(path, access)) {
-                mprLog(5, "mprSearchForFile: found %s", path);
+                mprLog(7, "mprSearchForFile: found %s", path);
                 return mprGetNormalizedPath(path);
             }
             if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
                 path = mprJoinPathExt(path, BLD_EXE);
                 if (mprPathExists(path, access)) {
-                    mprLog(5, "mprSearchForFile: found %s", path);
+                    mprLog(7, "mprSearchForFile: found %s", path);
                     return mprGetNormalizedPath(path);
                 }
             }
@@ -18841,7 +18842,7 @@ char *schr(cchar *s, int c)
 
 /*
     Case insensitive string comparison. Limited by length
-    TODO - name is not great. scaselesscmp, sncaselesscmp
+    MOB TODO - name is not great. scaselesscmp, sncaselesscmp
  */
 int scasecmp(cchar *s1, cchar *s2)
 {

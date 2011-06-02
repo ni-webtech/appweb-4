@@ -75,8 +75,8 @@ class EjsMvc {
         dirs = config.dirs
         dirs.home = App.dir
         //  TODO -- should these come from ejsrc
-        dirs.lib = App.exeDir.join("../lib")
-        dirs.mod = App.exeDir.join("../modules")
+        dirs.lib = Config.LibDir                    //  App.exeDir.join("../lib")
+        dirs.mod = Config.ModDir                    //  App.exeDir.join("../modules")
         for (d in dirs) {
             dirs[d] = Path(dirs[d])
         }
@@ -614,7 +614,7 @@ class EjsMvc {
         binFiles = [ "ejs", "ejsc", "mvc", ]
         extFiles = [ "libcrypto", "libssl", "libmprssl" ]
 
-//  TODO - not used
+        //  TODO - not used
         confFiles = [ ]
 
         if (exists(dirs.mod.join("ejs.db.mod"))) {

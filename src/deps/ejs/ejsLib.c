@@ -11868,7 +11868,8 @@ static EjsPot *sl_limits(Ejs *ejs, EjsLocalCache *cache, int argc, EjsObj **argv
     }
     result = ejsCreateEmptyPot(ejs);
     ejsSetPropertyByName(ejs, result, EN("keys"), ejsCreateNumber(ejs, cache->maxKeys == MAXSSIZE ? 0 : cache->maxKeys));
-    ejsSetPropertyByName(ejs, result, EN("lifespan"), ejsCreateNumber(ejs, cache->lifespan / MPR_TICKS_PER_SEC));
+    ejsSetPropertyByName(ejs, result, EN("lifespan"), 
+        ejsCreateNumber(ejs, (MprNumber) (cache->lifespan / MPR_TICKS_PER_SEC)));
     ejsSetPropertyByName(ejs, result, EN("memory"), ejsCreateNumber(ejs, cache->maxMem == MAXSSIZE ? 0 : cache->maxMem));
     return result;
 }
@@ -11907,7 +11908,7 @@ static EjsAny *sl_read(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
     }
     if (getVersion) {
         result = ejsCreatePot(ejs, S(Object), 2);
-        ejsSetPropertyByName(ejs, result, EN("version"), ejsCreateNumber(ejs, item->version));
+        ejsSetPropertyByName(ejs, result, EN("version"), ejsCreateNumber(ejs, (MprNumber) item->version));
         ejsSetPropertyByName(ejs, result, EN("data"), item->data);
     } else {
         result = item->data;
@@ -16398,14 +16399,11 @@ EjsAny *ejsClonePot(Ejs *ejs, EjsAny *obj, bool deep)
             vp = sp->value.ref;
             type = TYPE(vp);
             if ((ejsIsType(ejs, vp) && ((EjsType*) vp)->mutable) || (!ejsIsType(ejs, vp) && type->mutableInstances)) {
-                dp->value.ref = ejsClone(ejs, vp, deep);
 #if BLD_DEBUG
                 EjsName qname = ejsGetPropertyName(ejs, src, i);
                 mprSetName(dp->value.ref, qname.name->value);
-            } else {
-                extern int cloneRef;
-                cloneRef++;
 #endif
+                dp->value.ref = ejsClone(ejs, vp, deep);
             }
         }
     }
@@ -37745,7 +37743,6 @@ static int configureSqliteTypes(Ejs *ejs)
 {
     EjsType     *type;
     EjsPot      *prototype;
-    static int  initialized = 0;
     
     if ((type = ejsFinalizeScriptType(ejs, N("ejs.db.sqlite", "Sqlite"), sizeof(EjsSqlite), manageSqlite,
             EJS_TYPE_POT)) == 0) {
@@ -37756,19 +37753,16 @@ static int configureSqliteTypes(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_db_sqlite_Sqlite_close, sqliteClose);
     ejsBindMethod(ejs, prototype, ES_ejs_db_sqlite_Sqlite_sql, sqliteSql);
 
-    if (!initialized) {
-        initialized++;
 #if MAP_ALLOC
-        sqlite3_config(SQLITE_CONFIG_MALLOC, &mem);
+    sqlite3_config(SQLITE_CONFIG_MALLOC, &mem);
 #endif
 #if MAP_MUTEXES
-        sqlite3_config(SQLITE_CONFIG_MUTEX, &mut);
+    sqlite3_config(SQLITE_CONFIG_MUTEX, &mut);
 #endif
-        sqlite3_config(THREAD_STYLE);
-        if (sqlite3_initialize() != SQLITE_OK) {
-            mprError("Can't initialize SQLite");
-            return MPR_ERR_CANT_INITIALIZE;
-        }
+    sqlite3_config(THREAD_STYLE);
+    if (sqlite3_initialize() != SQLITE_OK) {
+        mprError("Can't initialize SQLite");
+        return MPR_ERR_CANT_INITIALIZE;
     }
     return 0;
 }
@@ -38229,7 +38223,6 @@ static EjsVoid *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
             sp->hosted = ejsGetPropertyByName(ejs, options, EN("own")) != S(true);
         }
     }
-
     if (!sp->hosted) {
         if (address == 0) {
             ejsThrowArgError(ejs, "Missing listen endpoint");
@@ -38347,6 +38340,20 @@ static EjsObj *hs_on(Ejs *ejs, EjsHttpServer *sp, int argc, EjsAny **argv)
 static EjsNumber *hs_port(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     return ejsCreateNumber(ejs, sp->port);
+}
+
+
+/*  
+    function run(): Void
+ */
+static EjsVoid *hs_run(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+{
+    if (!sp->hosted) {
+        while (!ejs->exiting && !mprIsStopping()) {
+            mprWaitForEvent(ejs->dispatcher, MAXINT); 
+        }
+    }
+    return 0;
 }
 
 
@@ -38694,10 +38701,17 @@ static EjsRequest *createRequest(EjsHttpServer *sp, HttpConn *conn)
 {
     Ejs             *ejs;
     EjsRequest      *req;
+    EjsPath         *documents;
     cchar           *dir;
 
     ejs = sp->ejs;
-    dir = conn->host->documentRoot;
+    documents = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_documents);
+    if (ejsIs(ejs, documents, Path)) {
+        dir = documents->value;
+    } else {
+        /* Safety fall back */
+        dir = conn->host->documentRoot;
+    }
     req = ejsCreateRequest(ejs, sp, conn, dir);
     httpSetConnContext(conn, req);
 
@@ -38933,8 +38947,11 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_name, hs_name, hs_set_name);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_port, hs_port);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_off, hs_off);
-    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_passRequest, hs_passRequest);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_on, hs_on);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_passRequest, hs_passRequest);
+#if ES_ejs_web_HttpServer_run
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_run, hs_run);
+#endif
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_secure, hs_secure);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setLimits, hs_setLimits);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setPipeline, hs_setPipeline);
@@ -40649,7 +40666,7 @@ static int setSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum, EjsAny *val
     }
     if (sp->options == 0) {
         sp->options = ejsCreateEmptyPot(ejs);
-        ejsSetPropertyByName(ejs, sp->options, EN("lifespan"), ejsCreateNumber(ejs, sp->lifespan));
+        ejsSetPropertyByName(ejs, sp->options, EN("lifespan"), ejsCreateNumber(ejs, (MprNumber) sp->lifespan));
     }
     if (ejsCacheWriteObj(ejs, sp->cache, sp->key, sp, sp->options) == 0) {
         return EJS_ERR;
@@ -45677,7 +45694,8 @@ static void genClassName(EcCompiler *cp, EjsType *type)
         return;
     }
     slotNum = ejsLookupProperty(ejs, ejs->global, type->qname);
-    if (cp->bind && slotNum <= ES_global_NUM_CLASS_PROP) {
+    if (cp->bind && slotNum < ES_global_NUM_CLASS_PROP) {
+        //  MOB - WARNING: this won't work if classes are implemented like Record.
         mprAssert(slotNum >= 0);
         genGlobalName(cp, slotNum);
 

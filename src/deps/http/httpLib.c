@@ -2424,6 +2424,7 @@ void httpDestroyConn(HttpConn *conn)
             HTTP_NOTIFY(conn, HTTP_STATE_COMPLETE, 0);
         }
         HTTP_NOTIFY(conn, HTTP_EVENT_CLOSE, 0);
+        mprAssert(conn->http);
         httpRemoveConn(conn->http, conn);
         httpCloseConn(conn);
         conn->input = 0;
@@ -2777,8 +2778,8 @@ void httpEnableConnEvents(HttpConn *conn)
         event = conn->workerEvent;
         conn->workerEvent = 0;
         mprQueueEvent(conn->dispatcher, event);
-    }
-    if (conn->state < HTTP_STATE_COMPLETE && conn->sock && !mprIsSocketEof(conn->sock)) {
+
+    } else if (conn->state < HTTP_STATE_COMPLETE && conn->sock && !mprIsSocketEof(conn->sock)) {
         //  MOB - why locking here?
         lock(conn->http);
         if (tx) {
@@ -2793,7 +2794,7 @@ void httpEnableConnEvents(HttpConn *conn)
                 and will be ready when the current request completes.
              */
             q = tx->queue[HTTP_QUEUE_RECEIVE]->nextQ;
-            if (q->count < q->max /* UNUSED || conn->recall */) {
+            if (q->count < q->max) {
                 eventMask |= MPR_READABLE;
             }
         } else {
@@ -2811,9 +2812,6 @@ void httpEnableConnEvents(HttpConn *conn)
         } else if (conn->waitHandler) {
             mprWaitOn(conn->waitHandler, eventMask);
         }
-#if UNUSED
-        conn->recall = 0;
-#endif
         mprAssert(conn->dispatcher->enabled);
         unlock(conn->http);
     }
@@ -4737,7 +4735,7 @@ HttpLoc *httpCreateLocation()
     loc->http = MPR->httpService;
     loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
     loc->handlers = mprCreateList(-1, 0);
-    loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
+    loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     loc->inputStages = mprCreateList(-1, 0);
     loc->outputStages = mprCreateList(-1, 0);
@@ -4804,6 +4802,7 @@ HttpLoc *httpCreateInheritedLocation(HttpLoc *parent)
     loc->script = parent->script;
     loc->searchPath = parent->searchPath;
     loc->ssl = parent->ssl;
+    loc->workers = parent->workers;
     return loc;
 }
 
@@ -4936,7 +4935,7 @@ int httpAddFilter(HttpLoc *loc, cchar *name, cchar *extensions, int direction)
     filter = httpCloneStage(loc->http, stage);
 
     if (extensions && *extensions) {
-        filter->extensions = mprCreateHash(0, 0);
+        filter->extensions = mprCreateHash(0, MPR_HASH_CASELESS);
         extlist = sclone(extensions);
         word = stok(extlist, " \t\r\n", &tok);
         while (word) {
@@ -5014,7 +5013,7 @@ void httpResetPipeline(HttpLoc *loc)
     if (loc->parent == 0) {
         loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
         loc->expires = mprCreateHash(0, MPR_HASH_STATIC_VALUES);
-        loc->extensions = mprCreateHash(0, 0);
+        loc->extensions = mprCreateHash(0, MPR_HASH_CASELESS);
         loc->handlers = mprCreateList(-1, 0);
         loc->inputStages = mprCreateList(-1, 0);
         loc->inputStages = mprCreateList(-1, 0);
@@ -5350,12 +5349,12 @@ static HttpStage *findHandler(HttpConn *conn)
                     URI has no extension, check if the addition of configured  extensions results in a valid filename.
                  */
                 for (path = 0, hp = 0; (hp = mprGetNextKey(loc->extensions, hp)) != 0; ) {
-                    handler = (HttpStage*) hp->data;
-                    if (*hp->key && (handler->flags & HTTP_STAGE_MISSING_EXT)) {
+                    if (*hp->key && (((HttpStage*)hp->data)->flags & HTTP_STAGE_MISSING_EXT)) {
                         path = sjoin(tx->filename, ".", hp->key, NULL);
                         if (mprGetPathInfo(path, &tx->fileInfo) == 0) {
                             mprLog(5, "findHandler: Adding extension, new path %s\n", path);
                             httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL), NULL);
+                            handler = (HttpStage*) hp->data;
                             break;
                         }
                     }
@@ -9046,8 +9045,7 @@ int httpMapToStorage(HttpConn *conn)
     tx->filename = httpMakeFilename(conn, rx->alias, rx->pathInfo, 1);
 
     tx->extension = httpGetExtension(conn);
-#if BLD_WIN_LIKE
-    //  TODO genercise
+#if UNUSED && BLD_WIN_LIKE
     if (tx->extension) {
         tx->extension = slower(tx->extension);
     }
@@ -10140,14 +10138,13 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
 
     /*
         This will block in sync mode until a connection arrives
-        MOB -- this is calling WaitOn in ejs
      */
-    sock = mprAcceptSocket(server->sock);
-    if (server->waitHandler) {
-        mprWaitOn(server->waitHandler, MPR_READABLE);
-    }
-    if (sock == 0) {
+    if ((sock = mprAcceptSocket(server->sock)) == 0) {
         return 0;
+    }
+    if (server->waitHandler) {
+//  MOB - what is this doing here?
+        mprWaitOn(server->waitHandler, MPR_READABLE);
     }
     dispatcher = event->dispatcher;
 
@@ -12229,7 +12226,7 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
         if ((cp = srchr(up->path, '/')) != NULL) {
             if (cp <= tok) {
                 up->ext = sclone(++tok);
-#if BLD_WIN_LIKE
+#if UNUSED && BLD_WIN_LIKE
                 for (cp = up->ext; *cp; cp++) {
                     *cp = (char) tolower((int) *cp);
                 }
@@ -12237,7 +12234,7 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
             }
         } else {
             up->ext = sclone(++tok);
-#if BLD_WIN_LIKE
+#if UNUSED && BLD_WIN_LIKE
             for (cp = up->ext; *cp; cp++) {
                 *cp = (char) tolower((int) *cp);
             }
@@ -12312,7 +12309,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
         if ((cp = srchr(up->path, '/')) != NULL) {
             if (cp <= tok) {
                 up->ext = sclone(&tok[1]);
-#if BLD_WIN_LIKE
+#if UNUSED && BLD_WIN_LIKE
                 for (cp = up->ext; *cp; cp++) {
                     *cp = (char) tolower((int) *cp);
                 }
@@ -12320,7 +12317,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
             }
         } else {
             up->ext = sclone(&tok[1]);
-#if BLD_WIN_LIKE
+#if UNUSED && BLD_WIN_LIKE
             for (cp = up->ext; *cp; cp++) {
                 *cp = (char) tolower((int) *cp);
             }
@@ -12378,7 +12375,7 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
         if ((cp = srchr(up->path, '/')) != NULL) {
             if (cp <= tok) {
                 up->ext = sclone(&tok[1]);
-#if BLD_WIN_LIKE
+#if UNUSED && BLD_WIN_LIKE
                 for (cp = up->ext; *cp; cp++) {
                     *cp = (char) tolower((int) *cp);
                 }
@@ -12386,7 +12383,7 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
             }
         } else {
             up->ext = sclone(&tok[1]);
-#if BLD_WIN_LIKE
+#if UNUSED && BLD_WIN_LIKE
             for (cp = up->ext; *cp; cp++) {
                 *cp = (char) tolower((int) *cp);
             }

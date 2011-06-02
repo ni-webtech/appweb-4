@@ -2483,17 +2483,27 @@ module ejs {
             }
             let cmd = new Cmd
             if (Config.OS == "WIN") {
-                // cmd.start(["cmd", "/c", "WMIC PROCESS get Processid,Commandline | type"])
-                cmd.start(["/bin/sh", "-c", "/bin/ps -W | awk '{print $4,$8}'"])
+                cmd.start('cmd /A /C "WMIC PROCESS get Processid,Commandline /format:csv"')
+                for each (line in cmd.readLines()) {
+                    let fields = line.split(",")
+                    let pid = fields.pop().trim()
+                    let command = fields.slice(1).join(" ")
+                    if (!pid.isDigit || command == "") continue
+                    if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
+                        if (preserve.length == 0 || !preserve.find(function(e, index, arrr) { return e == pid })) {
+                            // print("KILL " + pid + " pattern " + pattern + " signal " + signal)
+                            Cmd.kill(pid, signal)
+                        }
+                    }
+                }
             } else {
-                cmd.start(["/bin/sh", "-c", "/bin/ps -e | awk '{print $1,$4}'"])
-            }
-            for each (line in cmd.readLines()) {
-                let [pid,command] = line.split(" ")
-                if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
-                    if (preserve.length == 0 || !preserve.find(function(e, index, arrr) { return e == pid })) {
-                        // print("KILL " + pid + " pattern " + pattern + " signal " + signal)
-                        Cmd.kill(pid, signal)
+                for each (line in cmd.readLines()) {
+                    let [pid,command] = line.split(" ")
+                    if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
+                        if (preserve.length == 0 || !preserve.find(function(e, index, arrr) { return e == pid })) {
+                            // print("KILL " + pid + " pattern " + pattern + " signal " + signal)
+                            Cmd.kill(pid, signal)
+                        }
                     }
                 }
             }
@@ -2509,19 +2519,28 @@ module ejs {
             @return An array of matching processes. Each array entry is an object with properties "pid" and "command".
             @hide 
          */
-        static function ps(pattern: Object): Array {
+        static function ps(pattern: Object = ""): Array {
             let result = []
             let cmd = new Cmd
             if (Config.OS == "WIN") {
-                // cmd.start(["cmd", "/c", "WMIC PROCESS get Processid,Commandline | type"])
-                cmd.start(["/bin/sh", "-c", "/bin/ps -W | awk '{print $4,$8}'"])
+                cmd.start('cmd /A /C "WMIC PROCESS get Processid,Commandline /format:csv"')
+                for each (line in cmd.readLines()) {
+                    let fields = line.split(",")
+                    let pid = fields.pop().trim()
+                    let command = fields.slice(1).join(" ")
+                    if (!pid.isDigit || command == "") continue
+                    if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
+                        result.append({pid: pid, command: command})
+                    }
+                }
             } else {
-                cmd.start(["/bin/sh", "-c", "/bin/ps -e | awk '{print $1,$4}'"])
-            }
-            for each (line in cmd.readLines()) {
-                let [pid,command] = line.split(" ")
-                if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
-                    result.append({pid: pid, command: command})
+                cmd.start(["/bin/sh", "-c", "/bin/ps -e"])
+                for each (line in cmd.readLines()) {
+                    let [pid,command] = line.split(" ")
+                    let command = fields.slice(3).join(" ")
+                    if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
+                        result.append({pid: pid, command: command})
+                    }
                 }
             }
             cmd.close()
@@ -8727,6 +8746,7 @@ module ejs {
         /** 
             Clone the object
             @param deep If true, do a deep copy where all object references are also copied, and so on, recursively.
+            A shallow clone will do 1 level deep. Deep clones are N-level deep.
             @spec ejs
          */
         native function clone(deep: Boolean = true): Object
@@ -18025,6 +18045,7 @@ module ejs.web {
         }
 
         function icon(uri: String, options: Object): Void {
+            //MOB uri = request.link(uri)
             write('    <link href="' + uri + '" rel="shortcut icon" />\r\n')
         }
 
@@ -18143,6 +18164,7 @@ module ejs.web {
                     write('    <script src="' + uri + '" type="text/javascript"></script>\r\n')
                 }
             } else {
+                //MOB uri = request.link(uri)
                 write('    <script src="' + uri + '" type="text/javascript"></script>\r\n')
             }
         }
@@ -18162,6 +18184,7 @@ module ejs.web {
                     write('    <link rel="stylesheet" type="text/css" href="' + uri + '" />\r\n')
                 }
             } else {
+                //MOB uri = request.link(uri)
                 write('    <link rel="stylesheet" type="text/css" href="' + uri + '" />\r\n')
             }
         }
@@ -19124,6 +19147,12 @@ server.listen("127.0.0.1:7777")
             }
             App.log.debug(4, "HttpServer.releaseWorker idle: " + idleWorkers.length + " active:" + activeWorkers.length)
         }
+
+        /** 
+            Run the application event loop to service requests.
+            If the HttpServer is hosted in a web server, this call does nothing as the web server will service events. 
+         */
+        native function run(): Void
 
         /** 
             Define the Secure Sockets Layer (SSL) protocol credentials. This must be done before calling $listen.
@@ -20980,7 +21009,7 @@ module ejs.web {
         r.add("\@/User/register")
 
         //  Add route for files with a ".es" extension and use the ScriptApp to generate the response
-        r.add(/\.es$/, {response: ScriptApp})
+        r.add(/\.es$/i, {response: ScriptApp})
 
         //  Add route for directories and use the DirApp to generate the response
         r.add(Router.isDir, {name: "dir", response: DirApp})
@@ -21124,11 +21153,11 @@ module ejs.web {
             if (staticPattern) {
                 add(staticPattern, {name: "default", response: StaticApp})
             }
-/*  MOB
-            add(/\.html$|\.css$|\.jpg$|\.gif$|\.png$|\.ico$|\.css$|\.js$/,  {name: "static",  response: StaticApp})
+/*  FUTURE
+            add(/\.html$|\.css$|\.jpg$|\.gif$|\.png$|\.ico$|\.css$|\.js$/i,  {name: "static",  response: StaticApp})
  */
-            add(/\.es$/,  {name: "es",  response: ScriptApp, method: "*"})
-            add(/\.ejs$/, {name: "ejs", module: "ejs.template", response: TemplateApp, method: "*"})
+            add(/\.es$/i,  {name: "es",  response: ScriptApp, method: "*"})
+            add(/\.ejs$/i, {name: "ejs", module: "ejs.template", response: TemplateApp, method: "*"})
             add(isDir,    {name: "dir", response: DirApp})
         }
 
