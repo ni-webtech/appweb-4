@@ -34,6 +34,8 @@ static void openEjs(HttpQueue *q)
             loc->context = ejsCreatePool(loc->workers, "require ejs.web", loc->script);
             mprLog(5, "ejs: Demand load Ejscript web framework");
         }
+        
+        //  MOB - remove conn->pool and store in ejs->pool
         pool = conn->pool = loc->context;
         if ((ejs = ejsAllocPoolVM(pool, EJS_FLAG_HOSTED)) == 0) {
             httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't create Ejs interpreter");
