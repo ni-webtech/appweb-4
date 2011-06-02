@@ -13,7 +13,7 @@ ifeq ($(BLD_FEATURE_HTTP_CLIENT),1)
 endif
 
 ifeq ($(BLD_STATIC),0)
-	PRE_DIRS 	+= handler
+	PRE_DIRS 	+= simpleHandler
 endif
 
 ifeq ($(BLD_FEATURE_EJS),1)

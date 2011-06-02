@@ -54,18 +54,23 @@ static void incomingSimpleData(MaQueue *q, MaPacket *packet)
 }
 
 
-int maOpenSimpleHandler(MaHttp *http)
+/*
+    Module load initialization. This is called when the module is first loaded. The module name is "Simple".
+ */
+MprModule *mprSimpleHandlerInit(MaHttp *http)
 {
+    MprModule   *module;
     MaStage     *stage;
 
-    stage = maCreateHandler(http, "simpleHandler", MA_STAGE_ALL | MA_STAGE_VIRTUAL);
-    if (stage == 0) {
-        return MPR_ERR_CANT_CREATE;
+    if ((module = mprCreateModule(http, "simpleHandler", BLD_VERSION, NULL, NULL, NULL)) == 0) {
+        return 0;
+    }
+    if ((stage = maCreateHandler(http, "simpleHandler", MA_STAGE_ALL | MA_STAGE_VIRTUAL)) == 0) {
+        return 0;
     }
     stage->run = runSimple;
     stage->incomingData = incomingSimpleData;
-
-    return 0;
+    return module;
 }
 
 

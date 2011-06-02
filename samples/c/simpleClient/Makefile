@@ -4,11 +4,11 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
-NAME			:= simpleClient
-
 include 		.makedep
 
+NAME			= simpleClient
 TARGETS			+= $(NAME)$(BLD_EXE)
+MAKE_IFLAGS     += $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
 compileExtra: 	$(TARGETS)
 
