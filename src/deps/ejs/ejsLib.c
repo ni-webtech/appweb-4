@@ -16431,6 +16431,7 @@ void ejsFixCrossRefs(Ejs *ejs, EjsPot *obj)
     
     for (i = 0; i < numProp; i++, sp++) {
         if (sp->trait.type && sp->trait.type->mutable) {
+            mprAssert(sp->trait.type->qname.name);
             if ((type = ejsGetPropertyByName(ejs, ejs->global, sp->trait.type->qname)) != 0) {
                 sp->trait.type = type;
             } else {
@@ -33979,6 +33980,7 @@ static int loadPropertySection(Ejs *ejs, EjsModule *mp, int sectionType)
     value = 0;
     current = getCurrentBlock(mp);
     qname = ejsModuleReadName(ejs, mp);
+
     attributes = ejsModuleReadInt(ejs, mp);
     slotNum = ejsModuleReadInt(ejs, mp);
     ejsModuleReadType(ejs, mp, &type, &fixup, &propTypeName, 0);
@@ -36270,9 +36272,10 @@ Ejs *ejsCloneVM(Ejs *master)
             return 0;
         }
         ejs->global = ejsClone(ejs, master->global, 1);
-        ejsFixCrossRefs(ejs, ejs->global);
+        ejsSetPropertyByName(ejs, ejs->global, N("ejs", "global"), ejs->global);
         ejsDefineGlobals(ejs);
         ejsDefineGlobalNamespaces(ejs);
+        ejsFixCrossRefs(ejs, ejs->global);
         ejs->sqlite = master->sqlite;
         ejs->http = master->http;
         ejs->initialized = master->initialized;
@@ -36280,7 +36283,6 @@ Ejs *ejsCloneVM(Ejs *master)
         for (next = 0; (mp = mprGetNextItem(master->modules, &next)) != 0;) {
             ejsAddModule(ejs, mp);
         }
-        ejsSetPropertyByName(ejs, ejs->global, N("ejs", "global"), ejs->global);
     } else {
         if ((ejs = ejsCreateVM(0, 0, 0)) == 0) {
             return 0;
@@ -52000,7 +52002,9 @@ void ecEncodeGlobal(EcCompiler *cp, EjsAny *obj, EjsName qname)
         If binding globals, we can encode the slot number of the type.
      */
     slotNum = ejsLookupProperty(ejs, ejs->global, qname);
-    if (slotNum < ES_global_NUM_CLASS_PROP || cp->bind) {
+
+    //  MOB - don't bind for Appweb all-in-one. ejs.web can load at different places 
+    if (slotNum < ES_global_NUM_CLASS_PROP /* || cp->bind */) {
         if (slotNum >= 0) {
             ecEncodeNum(cp, (slotNum << 2) | EJS_ENCODE_GLOBAL_SLOT);
             return;
