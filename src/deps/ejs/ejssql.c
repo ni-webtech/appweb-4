@@ -6385,9 +6385,9 @@ static int installSchemaModule(sqlite3 *db, sqlite3 *sdb){
 **
 ** Example:
 **
-**   INSERT INTO t1(a) VALUES('1');
-**   INSERT INTO t1(a) VALUES('2');
-**   INSERT INTO t1(a) VALUES('3');
+**   INSERT INTO t1(a) VALUEESV('1');
+**   INSERT INTO t1(a) VALUEESV('2');
+**   INSERT INTO t1(a) VALUEESV('3');
 **   SELECT sj(a, ', ') FROM t1;
 **
 **     =>  "1, 2, 3"
@@ -7407,7 +7407,7 @@ static int callback(void *pArg, int nArg, char **azArg, char **azCol){
     }
     case MODE_Insert: {
       if( azArg==0 ) break;
-      fprintf(p->out,"INSERT INTO %s VALUES(",p->zDestTable);
+      fprintf(p->out,"INSERT INTO %s VALUEESV(",p->zDestTable);
       for(i=0; i<nArg; i++){
         char *zSep = i>0 ? ",": "";
         if( azArg[i]==0 ){
@@ -7576,7 +7576,7 @@ static int dump_callback(void *pArg, int nArg, char **azArg, char **azCol){
     }
     zIns = sqlite3_mprintf(
        "INSERT INTO sqlite_master(type,name,tbl_name,rootpage,sql)"
-       "VALUES('table','%q','%q',0,'%q');",
+       "VALUEESV('table','%q','%q',0,'%q');",
        zTable, zTable, zSql);
     fprintf(p->out, "%s\n", zIns);
     sqlite3_free(zIns);
@@ -7607,7 +7607,7 @@ static int dump_callback(void *pArg, int nArg, char **azArg, char **azCol){
     if( zTmp ){
       zSelect = appendText(zSelect, zTmp, '\'');
     }
-    zSelect = appendText(zSelect, " || ' VALUES(' || ", 0);
+    zSelect = appendText(zSelect, " || ' VALUEESV(' || ", 0);
     rc = sqlite3_step(pTableInfo);
     while( rc==SQLITE_ROW ){
       const char *zText = (const char *)sqlite3_column_text(pTableInfo, 1);
@@ -8106,7 +8106,7 @@ static int do_meta_command(char *zLine, struct callback_data *p){
     if( nCol==0 ) return 0;
     zSql = malloc( nByte + 20 + nCol*2 );
     if( zSql==0 ) return 0;
-    sqlite3_snprintf(nByte+20, zSql, "INSERT INTO '%q' VALUES(?", zTable);
+    sqlite3_snprintf(nByte+20, zSql, "INSERT INTO '%q' VALUEESV(?", zTable);
     j = strlen30(zSql);
     for(i=1; i<nCol; i++){
       zSql[j++] = ',';

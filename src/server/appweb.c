@@ -12,7 +12,7 @@
             --name uniqueName       # Name for this instance
             --threads maxThreads    # Set maximum worker threads
             --version               # Output version information
-            -v                      # Same as --log stdout:2
+            -v                      # Same as --log stderr:2
  */
 
 /********************************* Includes ***********************************/
@@ -154,7 +154,7 @@ MAIN(appweb, int argc, char **argv)
             app->workers = atoi(argv[++argind]);
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
-            maStartLogging(NULL, "stdout:2");
+            maStartLogging(NULL, "stderr:2");
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);

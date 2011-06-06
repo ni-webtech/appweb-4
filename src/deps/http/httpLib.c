@@ -2658,7 +2658,6 @@ void httpEvent(HttpConn *conn, MprEvent *event)
     if (event->mask & MPR_READABLE) {
         readEvent(conn);
     }
-//  MOB -- must not do this if using a worker event
     if (conn->server && conn->keepAliveCount < 0) {
         /*  
             NOTE: compare keepAliveCount with "< 0" so that the client can have one more keep alive request. 
@@ -4852,8 +4851,8 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
 
     http = loc->http;
     graduate(loc);
-    handler = httpLookupStage(http, name);
-    if (handler == 0) {
+
+    if ((handler = httpLookupStage(http, name)) == 0) {
         mprError("Can't find stage %s", name); 
         return MPR_ERR_CANT_FIND;
     }
@@ -4887,7 +4886,9 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
              */
             mprAddKey(loc->extensions, "", handler);
         }
-        mprAddItem(loc->handlers, handler);
+        if (mprLookupItem(loc->handlers, handler) < 0) {
+            mprAddItem(loc->handlers, handler);
+        }
     }
     return 0;
 }
@@ -5309,7 +5310,7 @@ static HttpStage *findHandler(HttpConn *conn)
     HttpHost    *host;
     HttpRx      *rx;
     HttpTx      *tx;
-    HttpStage   *handler;
+    HttpStage   *handler, *h;
     HttpLoc     *loc;
     MprHash     *hp;
     char        *path;
@@ -5335,8 +5336,9 @@ static HttpStage *findHandler(HttpConn *conn)
         /* 
             Perform custom handler matching first on all defined handlers 
          */
-        for (next = 0; (handler = mprGetNextItem(loc->handlers, &next)) != 0; ) {
-            if (checkHandler(conn, handler)) {
+        for (next = 0; (h = mprGetNextItem(loc->handlers, &next)) != 0; ) {
+            if (checkHandler(conn, h)) {
+                handler = h;
                 break;
             }
         }
@@ -9727,7 +9729,6 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
     Clear entries from the IO vector that have actually been transmitted. This supports partial writes due to the socket
     being full. Don't come here if we've seen all the packets and all the data has been completely written. ie. small files
     don't come here.
-    MOB - rename - not really freeing anymore
  */
 static void adjustPacketData(HttpQueue *q, MprOff bytes)
 {
@@ -10143,7 +10144,7 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
         return 0;
     }
     if (server->waitHandler) {
-//  MOB - what is this doing here?
+        /* Re-enable events on the listen socket */
         mprWaitOn(server->waitHandler, MPR_READABLE);
     }
     dispatcher = event->dispatcher;
@@ -12889,45 +12890,30 @@ void httpCreateCGIVars(HttpConn *conn)
     host = conn->host;
     sock = conn->sock;
 
-    table = rx->formVars;
-    if (table == 0) {
+    if ((table = rx->formVars) == 0) {
         table = rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
     }
-
-    /*  
-        Alias for REMOTE_USER. Define both for broader compatibility with CGI 
-     */
     mprAddKey(table, "AUTH_TYPE", rx->authType);
     mprAddKey(table, "AUTH_USER", conn->authUser);
     mprAddKey(table, "AUTH_GROUP", conn->authGroup);
     mprAddKey(table, "AUTH_ACL", MPR->emptyString);
     mprAddKey(table, "CONTENT_LENGTH", rx->contentLength);
     mprAddKey(table, "CONTENT_TYPE", rx->mimeType);
+    mprAddKey(table, "DOCUMENT_ROOT", host->documentRoot);
     mprAddKey(table, "GATEWAY_INTERFACE", sclone("CGI/1.1"));
     mprAddKey(table, "QUERY_STRING", rx->parsedUri->query);
-
-    if (conn->sock) {
-        mprAddKey(table, "REMOTE_ADDR", conn->ip);
-    }
+    mprAddKey(table, "REMOTE_ADDR", conn->ip);
     mprAddKeyFmt(table, "REMOTE_PORT", "%d", conn->port);
-
-    /*  
-            Same as AUTH_USER (yes this is right) 
-     */
     mprAddKey(table, "REMOTE_USER", conn->authUser);
     mprAddKey(table, "REQUEST_METHOD", rx->method);
     mprAddKey(table, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
-    
     mprAddKey(table, "SERVER_ADDR", sock->acceptIp);
     mprAddKey(table, "SERVER_NAME", host->hostname);
     mprAddKeyFmt(table, "SERVER_PORT", "%d", sock->acceptPort);
-
     mprAddKey(table, "SERVER_PROTOCOL", conn->protocol);
+    mprAddKey(table, "SERVER_ROOT", host->serverRoot);
     mprAddKey(table, "SERVER_SOFTWARE", conn->http->software);
-
-    /*  This is the original URI before decoding */ 
     mprAddKey(table, "REQUEST_URI", rx->originalUri);
-
     /*  
         URIs are broken into the following: http://{SERVER_NAME}:{SERVER_PORT}{SCRIPT_NAME}{PATH_INFO} 
         NOTE: For CGI|PHP, scriptName is empty and pathInfo has the script. PATH_INFO is stored in extraPath.
@@ -12935,17 +12921,12 @@ void httpCreateCGIVars(HttpConn *conn)
     mprAddKey(table, "PATH_INFO", rx->extraPath);
     mprAddKey(table, "SCRIPT_NAME", rx->pathInfo);
     mprAddKey(table, "SCRIPT_FILENAME", tx->filename);
-
     if (rx->extraPath) {
         /*  
             Only set PATH_TRANSLATED if extraPath is set (CGI spec) 
          */
         mprAddKey(table, "PATH_TRANSLATED", httpMakeFilename(conn, rx->alias, rx->extraPath, 0));
     }
-
-    mprAddKey(table, "DOCUMENT_ROOT", host->documentRoot);
-    mprAddKey(table, "SERVER_ROOT", host->serverRoot);
-
     if (rx->files) {
         for (index = 0, hp = 0; (hp = mprGetNextKey(conn->rx->files, hp)) != 0; index++) {
             up = (HttpUploadFile*) hp->data;

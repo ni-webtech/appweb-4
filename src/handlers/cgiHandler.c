@@ -968,14 +968,12 @@ static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix)
 static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpLoc     *loc;
-    MaMeta      *meta;
     HttpHost    *host;
     HttpAlias   *alias;
     HttpDir     *dir, *parent;
     char        *program, *mimeType, *prefix, *path;
 
     host = state->host;
-    meta = state->meta;
     loc = state->loc;
 
     if (scasecmp(key, "Action") == 0) {
@@ -1025,8 +1023,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     HttpStage     *handler;
 
     handler = httpCreateHandler(http, "cgiHandler", 
-        HTTP_STAGE_HEADER_VARS | HTTP_STAGE_QUERY_VARS | HTTP_STAGE_FORM_VARS | HTTP_STAGE_CGI_VARS | 
-        HTTP_STAGE_EXTRA_PATH | HTTP_STAGE_MISSING_EXT, module);
+        HTTP_STAGE_QUERY_VARS | HTTP_STAGE_CGI_VARS | HTTP_STAGE_EXTRA_PATH | HTTP_STAGE_MISSING_EXT, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

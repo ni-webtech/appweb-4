@@ -996,8 +996,10 @@ extern void httpMarkQueueHead(HttpQueue *q);
 #define HTTP_STAGE_FILTER         0x4000            /**< Stage is a filter  */
 #define HTTP_STAGE_MODULE         0x8000            /**< Stage is a filter  */
 #define HTTP_STAGE_CGI_VARS       0x10000           /**< Create CGI variables */
-#define HTTP_STAGE_FORM_VARS      0x20000           /**< Create variables from form body data */
+#if UNUSED
+#define HTTP_STAGE_FORM_VARS      0x20000           /**< Create form variables from form body data */
 #define HTTP_STAGE_HEADER_VARS    0x40000           /**< Create variables from HTTP headers */
+#endif
 #define HTTP_STAGE_QUERY_VARS     0x80000           /**< Create variables from URI query */
 #define HTTP_STAGE_VIRTUAL        0x100000          /**< Handler serves virtual resources not the physical file system */
 #define HTTP_STAGE_EXTRA_PATH     0x200000          /**< Do extra path info (for CGI|PHP) */

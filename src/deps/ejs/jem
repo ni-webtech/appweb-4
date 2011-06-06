@@ -194,7 +194,7 @@ class JemCmd
         [ "field", String ],
         [ "force" ],
         [ "from", String ],
-        [ "log", /\w+(:\d)/, "stdout:1" ],
+        [ "log", /\w+(:\d)/, "stderr:1" ],
         [ "repository", String ],
         [ ["quiet", "q"] ],
         [ "to", String ],

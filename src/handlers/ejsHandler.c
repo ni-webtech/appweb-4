@@ -64,9 +64,41 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpStage   *stage;
     HttpLoc     *loc;
+    HttpHost    *host;
+    HttpAlias   *alias;
+    HttpDir     *dir, *parent;
+    char        *prefix, *path;
     
     loc = state->loc;
-    if (scasecmp(key, "EjsStartup") == 0) {
+    host = state->host;
+
+    if (scasecmp(key, "EjsAlias") == 0) {
+        if (maSplitConfigValue(&prefix, &path, value, 1) < 0 || path == 0 || prefix == 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        prefix = httpReplaceReferences(host, prefix);
+        path = httpMakePath(host, path);
+        dir = httpLookupDir(host, path);
+        if (httpLookupDir(host, path) == 0) {
+            parent = mprGetFirstItem(host->dirs);
+            dir = httpCreateDir(path, parent);
+        }
+        alias = httpCreateAlias(prefix, path, 0);
+        mprLog(4, "EjsAlias \"%s\" for \"%s\"", prefix, path);
+        httpAddAlias(host, alias);
+
+        if (httpLookupLocation(host, prefix)) {
+            mprError("Location already exists for \"%s\"", value);
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        loc = httpCreateInheritedLocation(state->loc);
+        httpSetLocationPrefix(loc, prefix);
+        httpSetLocationAuth(loc, state->dir->auth);
+        httpAddLocation(host, loc);
+        httpSetHandler(loc, "ejsHandler");
+        return 1;
+
+    } else if (scasecmp(key, "EjsStartup") == 0) {
         loc->script = strim(value, "\"", MPR_TRIM_BOTH);
         return 1;
 

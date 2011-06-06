@@ -1097,7 +1097,8 @@ struct  MprXml;
 #define MPR_TIMEOUT_CMD         60000       /**< Command Request timeout (60 sec) */
 #define MPR_TIMEOUT_SOCKETS     10000       /**< General sockets timeout */
 #define MPR_TIMEOUT_LOG_STAMP   3600000     /**< Time between log time stamps (1 hr) */
-#define MPR_TIMEOUT_PRUNER      600000      /**< Time between pruner runs (10 min) */
+#define MPR_TIMEOUT_PRUNER      600000      /**< Time between worker thread pruner runs (10 min) */
+#define MPR_TIMEOUT_WORKER      300000      /**< Prune worker that has been idle for 5 minutes */
 #define MPR_TIMEOUT_START_TASK  10000       /**< Time to start tasks running */
 #define MPR_TIMEOUT_STOP_TASK   10000       /**< Time to stop or reap tasks */
 #define MPR_TIMEOUT_STOP_THREAD 10000       /**< Time to stop running threads */
@@ -6439,7 +6440,6 @@ typedef struct MprWorkerStats {
     int             minThreads;         /* Configured minimum */
     int             numThreads;         /* Configured minimum */
     int             maxUse;             /* Max used */
-    int             pruneHighWater;     /* Peak thread use in last minute */
     int             idleThreads;        /* Current idle */
     int             busyThreads;        /* Current busy */
 } MprWorkerStats;
@@ -6459,7 +6459,6 @@ typedef struct MprWorkerService {
     int             minThreads;         /* Max # threads in worker pool */
     int             nextThreadNum;      /* Unique next thread number */
     int             numThreads;         /* Current number of threads in worker pool */
-    int             pruneHighWater;     /* Peak thread use in last minute */
     int             stackSize;          /* Stack size for worker threads */
     MprMutex        *mutex;             /* Per task synchronization */
     struct MprEvent *pruneTimer;        /* Timer for excess threads pruner */
@@ -6532,16 +6531,18 @@ extern void mprGetWorkerServiceStats(MprWorkerService *ps, MprWorkerStats *stats
  */
 typedef void (*MprWorkerProc)(void *data, struct MprWorker *worker);
 
-/*
-    Threads in the worker thread pool
+/**
+    Worker thread structure. Worker threads are allocated and dedicated to tasks. When idle, they are stored in
+    an idle worker pool. An idle worker pruner runs regularly and terminates idle workers to save memory.
  */
 typedef struct MprWorker {
     MprWorkerProc   proc;                   /* Procedure to run */
     MprWorkerProc   cleanup;                /* Procedure to cleanup after run before sleeping */
-    void            *data;
-    int             state;
-    int             flags;
+    void            *data;                  /* User per-worker data */
+    int             state;                  /* Worker state */
+    int             flags;                  /* Worker flags */
     MprThread       *thread;                /* Thread associated with this worker */
+    MprTime         lastActivity;           /* When the worker was last used */
     MprWorkerService *workerService;        /* Worker service */
     MprCond         *idleCond;              /* Used to wait for work */
 } MprWorker;
@@ -7128,7 +7129,7 @@ typedef struct Mpr {
     int             eventing;               /**< Servicing events thread is active */
     int             exitStrategy;           /**< How to exit the app (normal, immediate, graceful) */
     int             flags;                  /**< Misc flags */
-    int             logging;                /**< App has specified --log */
+    int             cmdlineLogging;         /**< App has specified --log on the command line */
     int             hasError;               /**< Mpr has an initialization error */
     int             marker;                 /**< Marker thread is active */
     int             marking;                /**< Actually marking objects now */
@@ -7446,6 +7447,10 @@ extern int mprGetOsError();
     @ingroup Mpr
  */
 extern int mprGetError();
+
+extern int mprSetCmdlineLogging(int on);
+extern int mprGetCmdlineLogging();
+
 
 #define MPR_ARGV_ARGS_ONLY    0x1     /**< Command is missing program name */
 

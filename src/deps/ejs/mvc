@@ -34,6 +34,7 @@ class EjsMvc {
     private var db: Database
     private var debug: Boolean = false
     private var ext: Object
+    private var endpoint: String = ":4000"
     private var layoutPage: String
     private var mode: String = "debug"
     private var mvc: String
@@ -97,6 +98,7 @@ class EjsMvc {
         [ "full" ],
         [ [ "keep", "k" ] ],
         [ "layout", String ],
+        [ "listen", String ],
         [ "min" ],
         [ "overwrite" ],
         [ [ "quiet", "q" ] ],
@@ -106,13 +108,14 @@ class EjsMvc {
     ]
 
     function usage(): Void {
-        print("\nUsage: " + mvc + " [options] [commands] ...\n" +
+        error("\nUsage: " + mvc + " [options] [commands] ...\n" +
             "  Options:\n" + 
             "    --apply                      # Apply migrations\n" + 
             "    --database [sqlite | mysql]  # Sqlite only currently supported adapter\n" + 
             "    --full\n" + 
             "    --keep\n" + 
             "    --layout layoutPage\n" + 
+            "    --listen port\n" + 
             "    --min\n" + 
             "    --reverse                    # Reverse generated migrations\n" + 
             "    --overwrite\n" + 
@@ -120,7 +123,7 @@ class EjsMvc {
             "    --verbose\n")
 
         let pre = "    " + mvc + " "
-        print("  Commands:\n" +
+        error("  Commands:\n" +
             pre + "clean\n" +
             pre + "compile [flat | app | controller names | view names]\n" +
             pre + "compile path/name.ejs ...\n" +
@@ -184,6 +187,9 @@ class EjsMvc {
         }
         if (options.verbose) {
             verbose += (options.verbose cast Number)
+        }
+        if (options.listen) {
+            endpoint = (options.listen)
         }
         App.search = [dirs.cache] + App.search
     }
@@ -1300,6 +1306,7 @@ class EjsMvc {
             return
         }
         data = data.replace(/\${NAME}/g, appName)
+        data = data.replace(/\${ENDPOINT}/g, endpoint)
         makeFile(path, data, "Config File")
     }
 
@@ -1459,7 +1466,7 @@ class Templates {
             requestTimeout: 3600, 
             sessionTimeout: 3600, 
         },
-        listen: ":4000",
+        listen: "${ENDPOINT}",
         trace: {
             tx: { exclude: ["jpg", "gif", "png", "ico", "css",], headers: 4, body: 5, size: 10240 },
             rx: { exclude: ["jpg", "gif", "png", "ico", "css", "js"], conn: 5, first: 2, headers: 3, body: 4, size: 1024 },

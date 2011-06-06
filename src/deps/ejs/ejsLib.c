@@ -115,7 +115,7 @@ static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
         return 0;
     }
     status = argc >= 1 ? ejsGetInt(ejs, argv[0]) : 0;
-    how = ejsToMulti(ejs, argc >= 2 ? ejsToString(ejs, argv[1]): S(empty));
+    how = ejsToMulti(ejs, argc >= 2 ? ejsToString(ejs, argv[1]): ESV(empty));
 
     if (scmp(how, "default") == 0) {
         mode = MPR_EXIT_DEFAULT;
@@ -140,12 +140,12 @@ static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 static EjsAny *app_env(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 {
 #if VXWORKS
-    return S(null);
+    return ESV(null);
 #else
     EjsPot  *result;
     char        **ep, *pair, *key, *value;
 
-    result = ejsCreatePot(ejs, S(Object), 0);
+    result = ejsCreatePot(ejs, ESV(Object), 0);
     for (ep = environ; ep && *ep; ep++) {
         pair = sclone(*ep);
         key = stok(pair, "=", &value);
@@ -167,7 +167,7 @@ static EjsAny *app_getenv(Ejs *ejs, EjsObj *app, int argc, EjsObj **argv)
 
     value = getenv(ejsToMulti(ejs, argv[0]));
     if (value == 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateStringFromAsc(ejs, value);
 }
@@ -259,7 +259,7 @@ static EjsObj *app_run(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
         rc = mprWaitForEvent(ejs->dispatcher, remaining); 
         remaining = mprGetRemainingTime(mark, timeout);
     } while (!oneEvent && !ejs->exiting && remaining > 0 && !mprIsStopping());
-    return (rc == 0) ? S(true) : S(false);
+    return (rc == 0) ? ESV(true) : ESV(false);
 }
 
 
@@ -396,7 +396,7 @@ static EjsArray *createArray(Ejs *ejs, EjsType *type, int numProp)
 {
     EjsArray     *ap;
 
-    if ((ap = ejsCreatePot(ejs, S(Array), 0)) == 0) {
+    if ((ap = ejsCreatePot(ejs, ESV(Array), 0)) == 0) {
         return 0;
     }
     ap->length = 0;
@@ -417,10 +417,10 @@ static EjsAny *castArray(Ejs *ejs, EjsArray *vp, EjsType *type)
 {
     switch (type->sid) {
     case ES_Boolean:
-        return S(true);
+        return ESV(true);
 
     case ES_Number:
-        return S(zero);
+        return ESV(zero);
 
     case ES_String:
         return arrayToString(ejs, vp, 0, 0);
@@ -471,7 +471,7 @@ static int deleteArrayProperty(Ejs *ejs, EjsArray *ap, int slot)
         mprAssert(0);
         return EJS_ERR;
     }
-    if (ejsSetProperty(ejs, ap, slot, S(undefined)) < 0) {
+    if (ejsSetProperty(ejs, ap, slot, ESV(undefined)) < 0) {
         return EJS_ERR;
     }
     if ((slot + 1) == ap->length) {
@@ -508,7 +508,7 @@ static int getArrayPropertyCount(Ejs *ejs, EjsArray *ap)
 static EjsObj *getArrayProperty(Ejs *ejs, EjsArray *ap, int slotNum)
 {
     if (slotNum < 0 || slotNum >= ap->length) {
-        return S(undefined);
+        return ESV(undefined);
     }
     return ap->data[slotNum];
 }
@@ -527,7 +527,7 @@ static EjsObj *getArrayPropertyByName(Ejs *ejs, EjsArray *ap, EjsName qname)
     }
 
     /* The "length" property is a method getter */
-    if (qname.name == S(length)) {
+    if (qname.name == ESV(length)) {
         return 0;
     }
     slotNum = (ejs->service->potHelpers.lookupProperty)(ejs, ap, qname);
@@ -570,11 +570,11 @@ static EjsObj *coerceArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rh
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
+        return ejsInvokeOperator(ejs, ESV(zero), opcode, rhs);
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_NE:
         if (!ejsIsDefined(ejs, rhs)) {
-            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? ESV(false): ESV(true));
         } else if (ejsIs(ejs, rhs, Number)) {
             return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         }
@@ -591,13 +591,13 @@ static EjsObj *coerceArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rh
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     /*
         Unary operators
@@ -607,7 +607,7 @@ static EjsObj *coerceArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rh
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -637,24 +637,24 @@ static EjsAny *invokeArrayOperator(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rh
         Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT: case EJS_OP_NEG:
-        return S(one);
+        return ESV(one);
 
     /*
         Binary operators
      */
     case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_REM:
     case EJS_OP_SHR: case EJS_OP_USHR: case EJS_OP_XOR:
-        return S(zero);
+        return ESV(zero);
 
     /*
         Operator overload
@@ -705,7 +705,7 @@ static int setArrayPropertyByName(Ejs *ejs, EjsArray *ap, EjsName qname, EjsObj 
 
     if (!isdigit((int) qname.name->value[0])) { 
         /* The "length" property is a method getter */
-        if (qname.name == S(length)) {
+        if (qname.name == ESV(length)) {
             setArrayLength(ejs, ap, 1, &value);
             return ES_Array_length;
         }
@@ -963,7 +963,7 @@ static EjsArray *compactArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     oldLen = ap->length;
     ap->length = (int) (dest - &data[0]);
     for (i = ap->length; i < oldLen; i++) {
-        *dest++ = S(undefined);
+        *dest++ = ESV(undefined);
     }
     return ap;
 }
@@ -1187,7 +1187,7 @@ static EjsNumber *indexOfArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
         start += ap->length;
     }
     if (start >= ap->length) {
-        return S(minusOne);
+        return ESV(minusOne);
     }
     if (start < 0) {
         start = 0;
@@ -1197,7 +1197,7 @@ static EjsNumber *indexOfArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
             return ejsCreateNumber(ejs, i);
         }
     }
-    return S(minusOne);
+    return ESV(minusOne);
 }
 
 
@@ -1260,7 +1260,7 @@ static EjsString *joinArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     int             i;
 
     sep = (argc == 1) ? (EjsString*) argv[0] : NULL;
-    result = S(empty);
+    result = ESV(empty);
     for (i = 0; i < ap->length; i++) {
         vp = ap->data[i];
         if (!ejsIsDefined(ejs, vp)) {
@@ -1298,14 +1298,14 @@ static EjsNumber *lastArrayIndexOf(Ejs *ejs, EjsArray *ap, int argc, EjsObj **ar
         start = ap->length - 1;
     }
     if (start < 0) {
-        return S(minusOne);
+        return ESV(minusOne);
     }
     for (i = start; i >= 0; i--) {
         if (compareArrayElement(ejs, ap->data[i], element)) {
             return ejsCreateNumber(ejs, i);
         }
     }
-    return S(minusOne);
+    return ESV(minusOne);
 }
 
 
@@ -1361,7 +1361,7 @@ static EjsObj *setArrayLength(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 static EjsObj *popArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 {
     if (ap->length == 0) {
-        return S(undefined);
+        return ESV(undefined);
     }
     return ap->data[--ap->length];
 }
@@ -1445,7 +1445,7 @@ static EjsObj *shiftArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     int         i;
 
     if (ap->length == 0) {
-        return S(undefined);
+        return ESV(undefined);
     }
     data = ap->data;
     result = data[0];
@@ -1615,7 +1615,7 @@ static EjsArray *sortArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
         return ap;
     }
     compare = (EjsFunction*) ((argc >= 1) ? argv[0]: NULL);
-    if (compare == S(null)) {
+    if (compare == ESV(null)) {
         compare = 0;
     }
     if (compare && !ejsIsFunction(ejs, compare)) {
@@ -1750,7 +1750,7 @@ static EjsString *arrayToString(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     EjsObj              *vp;
     int             i, rc;
 
-    result = S(empty);
+    result = ESV(empty);
     if (result == 0) {
         ejsThrowMemoryError(ejs);
         return 0;
@@ -1882,7 +1882,7 @@ static int growArray(Ejs *ejs, EjsArray *ap, int len)
         }
         dp = &ap->data[ap->length];
         for (i = ap->length; i < count; i++) {
-            *dp++ = S(undefined);
+            *dp++ = ESV(undefined);
         }
     } else {
         mprNop(ITOP(size));
@@ -2066,7 +2066,7 @@ EjsArray *ejsCreateArray(Ejs *ejs, int size)
     /*
         No need to invoke constructor
      */
-    if ((ap = ejsCreatePot(ejs, S(Array), 0)) != 0) {
+    if ((ap = ejsCreatePot(ejs, ESV(Array), 0)) != 0) {
         ap->length = 0;
         if (size > 0 && growArray(ejs, ap, size) < 0) {
             ejsThrowMemoryError(ejs);
@@ -2296,7 +2296,7 @@ void ejsInheritBaseClassNamespaces(Ejs *ejs, EjsType *type, EjsType *baseType)
     if (baseNamespaces) {
         for (next = 0; ((nsp = (EjsNamespace*) mprGetNextItem(baseNamespaces, &next)) != 0); ) {
             //  OPT -- must be a better way to do this?
-            if (ejsContainsString(ejs, nsp->value, S(commaProt))) {
+            if (ejsContainsString(ejs, nsp->value, ESV(commaProt))) {
                 for (i = 0; ((existing = (EjsNamespace*) mprGetNextItem(&block->namespaces, &i)) != 0); ) {
                     if (existing->value == nsp->value) {
                         break;
@@ -2318,7 +2318,7 @@ EjsBlock *ejsCreateBlock(Ejs *ejs, int size)
 {
     EjsBlock        *block;
 
-    if ((block = ejsCreatePot(ejs, S(Block), size)) == 0) {
+    if ((block = ejsCreatePot(ejs, ESV(Block), size)) == 0) {
         return 0;
     }
     block->pot.shortScope = 1;
@@ -2465,7 +2465,7 @@ static EjsAny *castBooleanVar(Ejs *ejs, EjsBoolean *vp, EjsType *type)
 
     switch (type->sid) {
     case S_Number:
-        return ((vp->value) ? S(one): S(zero));
+        return ((vp->value) ? ESV(one): ESV(zero));
 
     case S_String:
         return ejsCreateStringFromAsc(ejs, (vp->value) ? "true" : "false");
@@ -2486,7 +2486,7 @@ static EjsAny *coerceBooleanOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *
 
     case EJS_OP_ADD:
         if (ejsIs(ejs, rhs, Void)) {
-            return S(nan);
+            return ESV(nan);
         } else if (ejsIs(ejs, rhs, Null) || ejsIs(ejs, rhs, Number) || ejsIs(ejs, rhs, Date)) {
             return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         } else {
@@ -2507,10 +2507,10 @@ static EjsAny *coerceBooleanOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *
         return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return S(false);
+        return ESV(false);
 
     /*
         Unary operators
@@ -2520,19 +2520,19 @@ static EjsAny *coerceBooleanOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return (((EjsBoolean*) lhs)->value ? S(true): S(false));
+        return (((EjsBoolean*) lhs)->value ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return (((EjsBoolean*) lhs)->value ? S(false) : S(true));
+        return (((EjsBoolean*) lhs)->value ? ESV(false) : ESV(true));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return S(false);
+        return ESV(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
 }
 
@@ -2558,38 +2558,38 @@ static EjsAny *invokeBooleanOperator(Ejs *ejs, EjsBoolean *lhs, int opcode, EjsB
     switch (opcode) {
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_STRICTLY_EQ:
-        return ((lhs->value == rhs->value) ? S(true): S(false));
+        return ((lhs->value == rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
-        return ((lhs->value != rhs->value) ? S(true): S(false));
+        return ((lhs->value != rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_LT:
-        return ((lhs->value < rhs->value) ? S(true): S(false));
+        return ((lhs->value < rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_LE:
-        return ((lhs->value <= rhs->value) ? S(true): S(false));
+        return ((lhs->value <= rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_GT:
-        return ((lhs->value > rhs->value) ? S(true): S(false));
+        return ((lhs->value > rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_GE:
-        return ((lhs->value >= rhs->value) ? S(true): S(false));
+        return ((lhs->value >= rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_NOT_ZERO:
-        return ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return ((lhs->value == 0) ? S(true): S(false));
+        return ((lhs->value == 0) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_FALSE:
-        return ((lhs->value) ? S(false): S(true));
+        return ((lhs->value) ? ESV(false): ESV(true));
 
     case EJS_OP_COMPARE_TRUE:
-        return ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? ESV(true): ESV(false));
 
     /*
         Unary operators
@@ -2788,10 +2788,10 @@ static EjsAny *castByteArrayVar(Ejs *ejs, EjsByteArray *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return S(true);
+        return ESV(true);
 
     case S_Number:
-        return S(zero);
+        return ESV(zero);
 
     case S_String:
         return ba_toString(ejs, vp, 0, 0);
@@ -2836,7 +2836,7 @@ static int deleteByteArrayProperty(struct Ejs *ejs, EjsByteArray *ap, int slot)
             ap->writePosition = ap->length - 1;
         }
     }
-    if (ejsSetProperty(ejs, ap, slot, S(undefined)) < 0) {
+    if (ejsSetProperty(ejs, ap, slot, ESV(undefined)) < 0) {
         return EJS_ERR;
     }
     return 0;
@@ -2888,11 +2888,11 @@ static EjsAny *coerceByteArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode,  EjsOb
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
+        return ejsInvokeOperator(ejs, ESV(zero), opcode, rhs);
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_NE:
         if (!ejsIsDefined(ejs, rhs)) {
-            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? ESV(false): ESV(true));
         } else if (ejsIs(ejs, rhs, Number)) {
             return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         }
@@ -2909,13 +2909,13 @@ static EjsAny *coerceByteArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode,  EjsOb
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     /*
         Unary operators
@@ -2925,7 +2925,7 @@ static EjsAny *coerceByteArrayOperands(Ejs *ejs, EjsObj *lhs, int opcode,  EjsOb
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -2955,24 +2955,24 @@ static EjsAny *invokeByteArrayOperator(Ejs *ejs, EjsObj *lhs, int opcode,  EjsOb
         Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT: case EJS_OP_NEG:
-        return S(one);
+        return ESV(one);
 
     /*
         Binary operators
      */
     case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_REM:
     case EJS_OP_SHR: case EJS_OP_USHR: case EJS_OP_XOR:
-        return S(zero);
+        return ESV(zero);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -3036,7 +3036,7 @@ static EjsByteArray *ba_ByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj *
  */
 static EjsBoolean *ba_async(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return ap->async ? S(true) : S(false);
+    return ap->async ? ESV(true) : ESV(false);
 }
 
 
@@ -3046,7 +3046,7 @@ static EjsBoolean *ba_async(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsObj *ba_setAsync(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    ap->async = (argv[0] == S(true));
+    ap->async = (argv[0] == ESV(true));
     return 0;
 }
 
@@ -3315,7 +3315,7 @@ static EjsObj *ba_setLength(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
  */
 static EjsBoolean *ba_resizable(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
 {
-    return ap->resizable ? S(true) : S(false);
+    return ap->resizable ? ESV(true) : ESV(false);
 }
 
 
@@ -3351,7 +3351,7 @@ static EjsNumber *ba_read(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
     }
     if (getInput(ejs, ap, 1) <= 0) {
         /* eof */
-        return S(null);
+        return ESV(null);
     }
     count = min(availableBytes(ap), count);
     for (i = 0; i < count; i++) {
@@ -3375,7 +3375,7 @@ static EjsBoolean *ba_readBoolean(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj *
 
     if (getInput(ejs, ap, 1) <= 0) {
         /* eof */
-        return S(null);
+        return ESV(null);
     }
     result = ap->value[ap->readPosition];
     adjustReadPosition(ap, 1);
@@ -3393,7 +3393,7 @@ static EjsNumber *ba_readByte(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **arg
 
     if (getInput(ejs, ap, 1) <= 0) {
         /* eof */
-        return S(null);
+        return ESV(null);
     }
     result = ap->value[ap->readPosition];
     adjustReadPosition(ap, 1);
@@ -3414,7 +3414,7 @@ static EjsDate *ba_readDate(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **argv)
             ejsThrowIOError(ejs, "Premanture eof");
             return 0;
         }
-        return S(null);
+        return ESV(null);
     }
     value = * (double*) &ap->value[ap->readPosition];
     value = swapDouble(ap, value);
@@ -3436,7 +3436,7 @@ static EjsNumber *ba_readDouble(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **a
             ejsThrowIOError(ejs, "Premanture eof");
             return 0;
         }
-        return S(null);
+        return ESV(null);
     }
     memcpy(&value, (char*) &ap->value[ap->readPosition], sizeof(double));
     value = swapDouble(ap, value);
@@ -3458,7 +3458,7 @@ static EjsNumber *ba_readInteger(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **
             ejsThrowIOError(ejs, "Premanture eof");
             return 0;
         }
-        return S(null);
+        return ESV(null);
     }
     value = * (int*) &ap->value[ap->readPosition];
     value = swap32(ap, value);
@@ -3480,7 +3480,7 @@ static EjsNumber *ba_readLong(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **arg
             ejsThrowIOError(ejs, "Premanture eof");
             return 0;
         }
-        return S(null);
+        return ESV(null);
     }
     value = * (int64*) &ap->value[ap->readPosition];
     value = swap64(ap, value);
@@ -3532,7 +3532,7 @@ static EjsNumber *ba_readShort(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **ar
     int     value;
 
     if (getInput(ejs, ap, EJS_SIZE_SHORT) <= 0) {
-        return S(null);
+        return ESV(null);
     }
     value = * (short*) &ap->value[ap->readPosition];
     value = swap16(ap, value);
@@ -3556,12 +3556,12 @@ static EjsString *ba_readString(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **a
 
     if (count < 0) {
         if (getInput(ejs, ap, 1) < 0) {
-            return S(null);
+            return ESV(null);
         }
         count = availableBytes(ap);
 
     } else if (getInput(ejs, ap, count) < 0) {
-        return S(null);
+        return ESV(null);
     }
     count = min(count, availableBytes(ap));
     //  TODO - UNICODE ENCODING
@@ -4100,7 +4100,7 @@ EjsByteArray *ejsCreateByteArray(Ejs *ejs, ssize size)
     /*
         No need to invoke constructor
      */
-    ap = ejsCreateObj(ejs, S(ByteArray), 0);
+    ap = ejsCreateObj(ejs, ESV(ByteArray), 0);
     if (ap == 0) {
         return 0;
     }
@@ -4262,7 +4262,7 @@ EjsAny *ejsCacheRead(Ejs *ejs, EjsObj *cache, EjsString *key, EjsObj *options)
 
     ejsPauseGC(ejs);
     argv[0] = key;
-    argv[1] = (options) ? options : S(null);
+    argv[1] = (options) ? options : ESV(null);
     return ejsRunFunctionBySlot(ejs, cache, ES_Cache_read, 2, argv);
 }
 
@@ -4273,8 +4273,8 @@ EjsAny *ejsCacheReadObj(Ejs *ejs, EjsObj *cache, EjsString *key, EjsObj *options
 
     ejsPauseGC(ejs);
     argv[0] = key;
-    argv[1] = (options) ? options : S(null);
-    if ((value = ejsRunFunctionBySlot(ejs, cache, ES_Cache_read, 2, argv)) == 0 || value == S(null)) {
+    argv[1] = (options) ? options : ESV(null);
+    if ((value = ejsRunFunctionBySlot(ejs, cache, ES_Cache_read, 2, argv)) == 0 || value == ESV(null)) {
         return 0;
     }
     return ejsDeserialize(ejs, value);
@@ -4308,7 +4308,7 @@ EjsNumber *ejsCacheWrite(Ejs *ejs, EjsObj *cache, EjsString *key, EjsString *val
     ejsPauseGC(ejs);
     argv[0] = key;
     argv[1] = value;
-    argv[2] = (options) ? options : S(null);
+    argv[2] = (options) ? options : ESV(null);
     return ejsRunFunctionBySlot(ejs, cache, ES_Cache_write, 3, argv);
 }
 
@@ -4320,7 +4320,7 @@ EjsNumber *ejsCacheWriteObj(Ejs *ejs, EjsObj *cache, EjsString *key, EjsAny *val
     ejsPauseGC(ejs);
     argv[0] = key;
     argv[1] = ejsSerialize(ejs, value, 0);
-    argv[2] = (options) ? options : S(null);
+    argv[2] = (options) ? options : ESV(null);
     return ejsRunFunctionBySlot(ejs, cache, ES_Cache_write, 3, argv);
 }
 
@@ -4513,9 +4513,9 @@ static EjsObj *cmd_kill(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         if (cmd->throw) {
             ejsThrowIOError(ejs, "Can't kill %d with signal %d, errno %d", pid, signal, errno);
         }
-        return S(false);
+        return ESV(false);
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -4554,7 +4554,7 @@ static EjsObj *cmd_off(Ejs *ejs, EjsCmd *cmd, int argc, EjsAny **argv)
 static EjsNumber *cmd_pid(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 {
     if (cmd->mc == 0 || cmd->mc->pid == 0) {
-        return S(zero);
+        return ESV(zero);
     }
     return ejsCreateNumber(ejs, cmd->mc->pid);
 }
@@ -4727,7 +4727,7 @@ static int parseOptions(Ejs *ejs, EjsCmd *cmd)
     flags = MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR;
     if (cmd->options) {
         if ((value = ejsGetPropertyByName(ejs, cmd->options, EN("detach"))) != 0) {
-            if (value == S(true)) {
+            if (value == ESV(true)) {
                 flags |= MPR_CMD_DETACH;
             }
         }
@@ -4738,7 +4738,7 @@ static int parseOptions(Ejs *ejs, EjsCmd *cmd)
             }
         }
         if ((value = ejsGetPropertyByName(ejs, cmd->options, EN("exception"))) != 0) {
-            if (value == S(true)) {
+            if (value == ESV(true)) {
                 cmd->throw = 1;
             }
         }
@@ -4792,7 +4792,7 @@ static EjsObj *cmd_start(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
     cmd->command = argv[0];
     cmd->options = (argc >=2 ) ? argv[1] : 0;
 
-    if (cmd->command == S(null)) {
+    if (cmd->command == ESV(null)) {
         ejsThrowStateError(ejs, "Missing command line");
         return 0;
     }
@@ -4885,9 +4885,9 @@ static EjsObj *cmd_stop(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
     }
     if (mprStopCmd(cmd->mc, signal) < 0) {
         ejsThrowIOError(ejs, "Can't kill %d with signal %d, errno %d", cmd->mc->pid, signal, errno);
-        return S(false);
+        return ESV(false);
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -4924,9 +4924,9 @@ static EjsObj *cmd_wait(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
     }
     /* NOTE: mprWaitForCmd will auto-finalize */
     if (mprWaitForCmd(cmd->mc, timeout) < 0) {
-        return S(false);
+        return ESV(false);
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -5133,7 +5133,7 @@ void ejsDefineConfigProperties(Ejs *ejs)
         There will still be a -Config- property in slot[0]
      */
     att = EJS_PROP_STATIC | EJS_PROP_ENUMERABLE;
-    ejsDefineProperty(ejs, type, -1, N("public", "Debug"), 0, att, BLD_DEBUG ? S(true): S(false));
+    ejsDefineProperty(ejs, type, -1, N("public", "Debug"), 0, att, BLD_DEBUG ? ESV(true): ESV(false));
     ejsDefineProperty(ejs, type, -1, N("public", "CPU"), 0, att, ejsCreateStringFromAsc(ejs, BLD_HOST_CPU));
     ejsDefineProperty(ejs, type, -1, N("public", "OS"), 0, att, ejsCreateStringFromAsc(ejs, BLD_OS));
     ejsDefineProperty(ejs, type, -1, N("public", "Product"), 0, att, 
@@ -5254,7 +5254,7 @@ static EjsAny *castDate(Ejs *ejs, EjsDate *dp, EjsType *type)
 
     switch (type->sid) {
     case S_Boolean:
-        return S(true);
+        return ESV(true);
 
     case S_Number:
         return ejsCreateNumber(ejs, (MprNumber) dp->value);
@@ -5291,9 +5291,9 @@ static EjsAny *coerceDateOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs
      */
     case EJS_OP_ADD:
         if (ejsIs(ejs, rhs, Void)) {
-            return S(nan);
+            return ESV(nan);
         } else if (ejsIs(ejs, rhs, Null)) {
-            rhs = S(zero);
+            rhs = ESV(zero);
         } else if (ejsIs(ejs, rhs, Boolean) || ejsIs(ejs, rhs, Number)) {
             return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         } else {
@@ -5314,10 +5314,10 @@ static EjsAny *coerceDateOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs
         return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return S(false);
+        return ESV(false);
 
     /*
         Unary operators
@@ -5327,19 +5327,19 @@ static EjsAny *coerceDateOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return (((EjsDate*) lhs)->value ? S(true) : S(false));
+        return (((EjsDate*) lhs)->value ? ESV(true) : ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return (((EjsDate*) lhs)->value ? S(false): S(true));
+        return (((EjsDate*) lhs)->value ? ESV(false): ESV(true));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return S(false);
+        return ESV(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -5377,16 +5377,16 @@ static EjsAny *invokeDateOperator(Ejs *ejs, EjsDate *lhs, int opcode, EjsDate *r
         return ejsCreateBoolean(ejs, lhs->value >= rhs->value);
 
     case EJS_OP_COMPARE_NOT_ZERO:
-        return ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return ((lhs->value == 0) ? S(true): S(false));
+        return ((lhs->value == 0) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
-        return S(false);
+        return ESV(false);
 
     /*
         Unary operators
@@ -6177,7 +6177,7 @@ static EjsString *date_toJSON(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
  */
 static EjsString *date_toString(Ejs *ejs, EjsDate *dp, int argc, EjsObj **argv)
 {
-    return castDate(ejs, dp, S(String));
+    return castDate(ejs, dp, ESV(String));
 }
 
 
@@ -6253,7 +6253,7 @@ EjsDate *ejsCreateDate(Ejs *ejs, MprTime value)
 {
     EjsDate *vp;
 
-    vp = ejsCreateObj(ejs, S(Date), 0);
+    vp = ejsCreateObj(ejs, ESV(Date), 0);
     if (vp != 0) {
         vp->value = value;
     }
@@ -6401,7 +6401,7 @@ static EjsObj *debug_breakpoint(Ejs *ejs, EjsObj *unused, int argc, EjsObj **arg
  */
 static EjsObj *debug_mode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return mprGetDebugMode() ? S(true) : S(false);
+    return mprGetDebugMode() ? ESV(true) : ESV(false);
 }
 
 
@@ -6410,7 +6410,7 @@ static EjsObj *debug_mode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
  */
 static EjsObj *debug_set_mode(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    mprSetDebugMode(argv[0] == S(true));
+    mprSetDebugMode(argv[0] == ESV(true));
     return 0;
 }
 
@@ -6501,7 +6501,7 @@ static EjsAny *castError(Ejs *ejs, EjsError *error, EjsType *type)
 
     case S_String:
         stack = (EjsString*) ejsRunFunctionBySlot(ejs, error, ES_Error_formatStack, 0, NULL);
-        us = ejsIs(ejs, stack, String) ? stack : S(empty);
+        us = ejsIs(ejs, stack, String) ? stack : ESV(empty);
         msg = ejsGetProperty(ejs, error, ES_Error_message);
         if ((buf = mprAsprintf("%@ Exception: %@\nStack:\n%@\n", TYPE(error)->qname.name, msg, us)) == NULL) {
             ejsThrowMemoryError(ejs);
@@ -6526,7 +6526,7 @@ static EjsError *errorConstructor(Ejs *ejs, EjsError *error, int argc, EjsObj **
     if (argc > 0) {
         ejsSetProperty(ejs, error, ES_Error_message, ejsToString(ejs, argv[0]));
     }
-    if (S(Date)) {
+    if (ESV(Date)) {
         ejsSetProperty(ejs, error, ES_Error_timestamp, ejsCreateDate(ejs, mprGetTime()));
         ejsSetProperty(ejs, error, ES_Error_stack, ejsCaptureStack(ejs, 0));
     }
@@ -6624,7 +6624,7 @@ void ejsConfigureErrorType(Ejs *ejs)
     configureType(ejs, "TypeError");
     configureType(ejs, "URIError");
 
-    ejsBindMethod(ejs, S(Error), ES_Error_capture, error_capture);
+    ejsBindMethod(ejs, ESV(Error), ES_Error_capture, error_capture);
 }
 
 
@@ -7196,7 +7196,7 @@ static EjsObj *readFileBytes(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
         ejsThrowIOError(ejs, "Can't read from file: %s", fp->path);
         return 0;
     } else if (totalRead == 0) {
-        return S(null);
+        return ESV(null);
     }
     ejsSetByteArrayPositions(ejs, result, 0, totalRead);
     return (EjsObj*) result;
@@ -7302,7 +7302,7 @@ static EjsNumber *readFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
     if (totalRead < 0) {
         return 0;
     } else if (totalRead == 0) {
-        return S(zero);
+        return ESV(zero);
     }
     ejsSetByteArrayPositions(ejs, buffer, -1, offset + totalRead);
     return ejsCreateNumber(ejs, (MprNumber) totalRead);
@@ -7318,7 +7318,7 @@ static EjsObj *getFileSize(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
     MprPath     info;
 
     if (mprGetPathInfo(fp->path, &info) < 0) {
-        return (EjsObj*) S(minusOne);
+        return (EjsObj*) ESV(minusOne);
     }
     return (EjsObj*) ejsCreateNumber(ejs, (MprNumber) info.size);
 }
@@ -7510,7 +7510,7 @@ EjsFile *ejsCreateFile(Ejs *ejs, cchar *path)
 
     mprAssert(path && *path);
 
-    fp = ejsCreateObj(ejs, S(File), 0);
+    fp = ejsCreateObj(ejs, ESV(File), 0);
     if (fp == 0) {
         return 0;
     }
@@ -7527,7 +7527,7 @@ EjsFile *ejsCreateFileFromFd(Ejs *ejs, int fd, cchar *name, int mode)
     mprAssert(fd >= 0);
     mprAssert(name);
 
-    if ((fp = ejsCreateObj(ejs, S(File), 0)) == NULL) {
+    if ((fp = ejsCreateObj(ejs, ESV(File), 0)) == NULL) {
         return NULL;
     }
     fp->perms = EJS_FILE_PERMS;
@@ -7823,7 +7823,7 @@ EjsFileSystem *ejsCreateFileSystem(Ejs *ejs, cchar *path)
     EjsFileSystem   *fs;
     EjsObj          *arg;
 
-    fs = ejsCreateObj(ejs, S(FileSystem), 0);
+    fs = ejsCreateObj(ejs, ESV(FileSystem), 0);
     if (fs == 0) {
         return 0;
     }
@@ -7947,7 +7947,7 @@ static EjsFrame *allocFrame(Ejs *ejs, int numProp)
         return 0;
     }
     mprSetManager(obj, manageFrame);
-    SET_TYPE(obj, S(Frame));
+    SET_TYPE(obj, ESV(Frame));
     ejsSetMemRef(obj);
     return (EjsFrame*) obj;
 }
@@ -7960,7 +7960,7 @@ EjsFrame *ejsCreateCompilerFrame(Ejs *ejs, EjsFunction *fun)
 {
     EjsFrame    *fp;
 
-    if ((fp = ejsCreatePot(ejs, S(Frame), 0)) == 0) {
+    if ((fp = ejsCreatePot(ejs, ESV(Frame), 0)) == 0) {
         return 0;
     }
     fp->orig = fun;
@@ -8139,7 +8139,7 @@ static EjsFunction *createFunction(Ejs *ejs, EjsType *type, int numProp)
 {
     EjsFunction     *fun;
 
-    if ((fun = ejsCreatePot(ejs, S(Function), 0)) == 0) {
+    if ((fun = ejsCreatePot(ejs, ESV(Function), 0)) == 0) {
         return 0;
     }
     fun->block.pot.isFunction = 1;
@@ -8160,10 +8160,10 @@ static EjsAny *castFunction(Ejs *ejs, EjsFunction *vp, EjsType *type)
         return ejsCreateStringFromAsc(ejs, "[function Function]");
 
     case S_Number:
-        return S(nan);
+        return ESV(nan);
 
     case S_Boolean:
-        return S(true);
+        return ESV(true);
             
     default:
         ejsThrowTypeError(ejs, "Can't cast type \"%@\"", type->qname.name);
@@ -8272,7 +8272,7 @@ static EjsObj *fun_applyFunction(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **
 
     save = fun->boundThis;
     thisObj = argv[0];
-    if (thisObj == S(null)) {
+    if (thisObj == ESV(null)) {
         thisObj = fun->boundThis ? fun->boundThis : ejs->global;
     }
     result =  ejsRunFunction(ejs, fun, thisObj, args->length, args->data);
@@ -8305,7 +8305,7 @@ static EjsObj *fun_bindFunction(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **a
  */
 static EjsAny *fun_bound(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
 {
-    return fun->boundThis ? fun->boundThis : S(undefined);
+    return fun->boundThis ? fun->boundThis : ESV(undefined);
 }
 
 
@@ -8336,7 +8336,7 @@ static EjsNumber *fun_length(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv
 static EjsString *fun_name(Ejs *ejs, EjsFunction *fun, int argc, EjsObj **argv)
 {
     if (fun->name && fun->name->value[0] == '-') {
-        return S(empty);
+        return ESV(empty);
     }
     return fun->name;
 }
@@ -8534,7 +8534,7 @@ int ejsSetFunctionCode(Ejs *ejs, EjsFunction *fun, EjsModule *module, cuchar *by
 
 static EjsObj *nopFunction(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
-    return S(undefined);
+    return ESV(undefined);
 }
 
 
@@ -8559,7 +8559,7 @@ EjsPot *ejsCreateActivation(Ejs *ejs, EjsFunction *fun, int numProp)
 {
     EjsPot  *activation;
 
-    activation = ejsCreatePot(ejs, S(Object), numProp);
+    activation = ejsCreatePot(ejs, ESV(Object), numProp);
     mprCopyName(activation, fun);
     return activation;
 }
@@ -8570,7 +8570,7 @@ EjsFunction *ejsCreateSimpleFunction(Ejs *ejs, EjsString *name, int attributes)
 {
     EjsFunction     *fun;
 
-    if ((fun = ejsCreateObj(ejs, S(Function), 0)) == NULL) {
+    if ((fun = ejsCreateObj(ejs, ESV(Function), 0)) == NULL) {
         return 0;
     }
     fun->name = name;
@@ -8746,7 +8746,7 @@ void ejsConfigureFunctionType(Ejs *ejs)
  */
 static EjsBoolean *gc_enabled(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
-    return ((mprGetMpr()->heap.enabled) ? S(true): S(false));
+    return ((mprGetMpr()->heap.enabled) ? ESV(true): ESV(false));
 }
 
 
@@ -8915,7 +8915,7 @@ static EjsBoolean *g_assert(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
         }
         return 0;
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -8927,7 +8927,7 @@ static EjsObj *g_blend(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     EjsObj      *src, *dest;
     int         overwrite;
 
-    overwrite = (argc == 3) ? (argv[2] == S(true)) : 1;
+    overwrite = (argc == 3) ? (argv[2] == ESV(true)) : 1;
     dest = argv[0];
     src = argv[1];
     ejsBlendObject(ejs, dest, src, overwrite);
@@ -9009,7 +9009,7 @@ static EjsObj *g_load(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
         if ((vp = ejsGetPropertyByName(ejs, options, EN("cache"))) != 0) {
             cache = ejsToMulti(ejs, ejsToString(ejs, vp));
         }
-        reload = ejsGetPropertyByName(ejs, options, EN("reload")) == S(true);
+        reload = ejsGetPropertyByName(ejs, options, EN("reload")) == ESV(true);
     }
     if ((cp = strrchr(path, '.')) != NULL && strcmp(cp, EJS_MODULE_EXT) != 0) {
         if (ejs->service->loadScriptFile == 0) {
@@ -9122,11 +9122,11 @@ static EjsNumber *g_parseInt(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     if (*str == '-' || *str == '+' || isdigit((int) *str)) {
         n = (MprNumber) stoi(str, radix, &err);
         if (err) {
-            return S(nan);
+            return ESV(nan);
         }
         return ejsCreateNumber(ejs, n);
     }
-    return S(nan);
+    return ESV(nan);
 }
 
 
@@ -9199,18 +9199,18 @@ void ejsDefineGlobalNamespaces(Ejs *ejs)
 void ejsDefineGlobals(Ejs *ejs)
 {
     if (!ejs->empty) {
-        ejsSetProperty(ejs, ejs->global, ES_void, S(Void));
-        ejsSetProperty(ejs, ejs->global, ES_undefined, S(undefined));
-        ejsSetProperty(ejs, ejs->global, ES_null, S(null));
+        ejsSetProperty(ejs, ejs->global, ES_void, ESV(Void));
+        ejsSetProperty(ejs, ejs->global, ES_undefined, ESV(undefined));
+        ejsSetProperty(ejs, ejs->global, ES_null, ESV(null));
         ejsSetProperty(ejs, ejs->global, ES_global, ejs->global);
-        ejsSetProperty(ejs, ejs->global, ES_NegativeInfinity, S(negativeInfinity));
-        ejsSetProperty(ejs, ejs->global, ES_Infinity, S(infinity));
-        ejsSetProperty(ejs, ejs->global, ES_NaN, S(nan));
-        ejsSetProperty(ejs, ejs->global, ES_double, S(Number));
-        ejsSetProperty(ejs, ejs->global, ES_num, S(Number));
-        ejsSetProperty(ejs, ejs->global, ES_boolean, S(Boolean));
-        ejsSetProperty(ejs, ejs->global, ES_true, S(true));
-        ejsSetProperty(ejs, ejs->global, ES_false, S(false));
+        ejsSetProperty(ejs, ejs->global, ES_NegativeInfinity, ESV(negativeInfinity));
+        ejsSetProperty(ejs, ejs->global, ES_Infinity, ESV(infinity));
+        ejsSetProperty(ejs, ejs->global, ES_NaN, ESV(nan));
+        ejsSetProperty(ejs, ejs->global, ES_double, ESV(Number));
+        ejsSetProperty(ejs, ejs->global, ES_num, ESV(Number));
+        ejsSetProperty(ejs, ejs->global, ES_boolean, ESV(Boolean));
+        ejsSetProperty(ejs, ejs->global, ES_true, ESV(true));
+        ejsSetProperty(ejs, ejs->global, ES_false, ESV(false));
     }
 }
 
@@ -9335,7 +9335,7 @@ static EjsHttp *httpConstructor(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
  */
 static EjsBoolean *http_async(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    return httpGetAsync(hp->conn) ? S(true) : S(false);
+    return httpGetAsync(hp->conn) ? ESV(true) : ESV(false);
 }
 
 
@@ -9348,7 +9348,7 @@ static EjsObj *http_set_async(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     int         async;
 
     conn = hp->conn;
-    async = (argv[0] == S(true));
+    async = (argv[0] == ESV(true));
     httpSetAsync(conn, async);
     httpSetIOCallback(conn, httpIOEvent);
     return 0;
@@ -9371,7 +9371,7 @@ static EjsNumber *http_available(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     if (len > 0) {
         return ejsCreateNumber(ejs, (MprNumber) len);
     }
-    return (EjsNumber*) S(minusOne);
+    return (EjsNumber*) ESV(minusOne);
 }
 #endif
 
@@ -9412,7 +9412,7 @@ static EjsString *http_certificate(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **arg
     if (hp->certFile) {
         return ejsCreateStringFromAsc(ejs, hp->certFile);
     }
-    return S(null);
+    return ESV(null);
 }
 
 
@@ -9479,7 +9479,7 @@ static EjsBoolean *http_finalized(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv
     if (hp->conn && hp->conn->tx) {
         return ejsCreateBoolean(ejs, hp->conn->tx->finalized);
     }
-    return S(false);
+    return ESV(false);
 }
 
 
@@ -9607,7 +9607,7 @@ static EjsString *http_header(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     if (value) {
         result = ejsCreateStringFromAsc(ejs, value);
     } else {
-        result = S(null);
+        result = ESV(null);
     }
     return result;
 }
@@ -9655,7 +9655,7 @@ static EjsAny *http_key(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     if (hp->keyFile) {
         return ejsCreateStringFromAsc(ejs, hp->keyFile);
     }
-    return S(null);
+    return ESV(null);
 }
 
 
@@ -9795,7 +9795,7 @@ static EjsNumber *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     contentLength = httpGetContentLength(conn);
     if (conn->state >= HTTP_STATE_PARSED && contentLength == hp->readCount) {
         /* End of input */
-        return S(null);
+        return ESV(null);
     }
     if (offset < 0) {
         offset = buffer->writePosition;
@@ -10081,7 +10081,7 @@ static EjsNumber *http_status(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     }
     code = httpGetStatus(hp->conn);
     if (code <= 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateNumber(ejs, code);
 }
@@ -10124,9 +10124,9 @@ static EjsBoolean *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
     }
     mark = mprGetTime();
     if (!waitForState(hp, HTTP_STATE_COMPLETE, timeout, 0)) {
-        return S(false);
+        return ESV(false);
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -10361,7 +10361,7 @@ static EjsDate *getDateHeader(Ejs *ejs, EjsHttp *hp, cchar *key)
     }
     value = httpGetHeader(hp->conn, key);
     if (value == 0) {
-        return S(null);
+        return ESV(null);
     }
     if (mprParseTime(&when, value, MPR_UTC_TIMEZONE, NULL) < 0) {
         value = 0;
@@ -10379,7 +10379,7 @@ static EjsString *getStringHeader(Ejs *ejs, EjsHttp *hp, cchar *key)
     }
     value = httpGetHeader(hp->conn, key);
     if (value == 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateStringFromAsc(ejs, value);
 }
@@ -10885,7 +10885,7 @@ EjsObj *ejsThrowStopIteration(Ejs *ejs)
 #if FUTURE
     ejs->exception = ejs->iterator;
 #else
-    ejs->exception = S(StopIteration);
+    ejs->exception = ESV(StopIteration);
 #endif
     ejsAttention(ejs);
     return ejs->exception;
@@ -10920,7 +10920,7 @@ EjsIterator *ejsCreateIterator(Ejs *ejs, EjsAny *obj, void *nativeNext, bool dee
 {
     EjsIterator     *ip;
 
-    ip = ejsCreateObj(ejs, S(Iterator), 0);
+    ip = ejsCreateObj(ejs, ESV(Iterator), 0);
     if (ip) {
         ip->index = 0;
         ip->indexVar = 0;
@@ -11085,7 +11085,7 @@ EjsAny *ejsDeserialize(Ejs *ejs, EjsString *str)
         return 0;
     }
     if (str->length == 0) {
-        return S(empty);
+        return ESV(empty);
     }
     js.next = js.data = str->value;
     js.end = &js.data[str->length];
@@ -11381,9 +11381,9 @@ static EjsObj *parseLiteralInner(Ejs *ejs, MprBuf *buf, JsonState *js)
                     vp = ejsCreateString(ejs, value, strlen(value));
                 } else {
                     if (mcmp(value, "null") == 0) {
-                        vp = S(null);
+                        vp = ESV(null);
                     } else if (mcmp(value, "undefined") == 0) {
-                        vp = S(undefined);
+                        vp = ESV(undefined);
                     } else {
                         vp = ejsParse(ejs, value, -1);
                     }
@@ -11456,7 +11456,7 @@ EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, EjsObj *options)
     if (options) {
         json.options = options;
         if ((arg = ejsGetPropertyByName(ejs, options, EN("baseClasses"))) != 0) {
-            json.baseClasses = (arg == S(true));
+            json.baseClasses = (arg == ESV(true));
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("depth"))) != 0) {
             json.depth = ejsGetInt(ejs, arg);
@@ -11478,13 +11478,13 @@ EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, EjsObj *options)
             }
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("hidden"))) != 0) {
-            json.hidden = (arg == S(true));
+            json.hidden = (arg == ESV(true));
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("namespaces"))) != 0) {
-            json.namespaces = (arg == S(true));
+            json.namespaces = (arg == ESV(true));
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("pretty"))) != 0) {
-            json.pretty = (arg == S(true));
+            json.pretty = (arg == ESV(true));
         }
         json.replacer = ejsGetPropertyByName(ejs, options, EN("replacer"));
         if (!ejsIsFunction(ejs, json.replacer)) {
@@ -11514,7 +11514,7 @@ static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
         All others just use toString.
      */
     count = ejsGetLength(ejs, vp);
-    if (count == 0 && TYPE(vp) != S(Object) && TYPE(vp) != S(Array)) {
+    if (count == 0 && TYPE(vp) != ESV(Object) && TYPE(vp) != ESV(Array)) {
         //  OPT - need some flag for this test.
         if (!ejsIsDefined(ejs, vp) || ejsIs(ejs, vp, Boolean) || ejsIs(ejs, vp, Number)) {
             return ejsToString(ejs, vp);
@@ -11554,7 +11554,7 @@ static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
             if (isArray) {
                 itos(key, sizeof(key), slotNum, 10);
                 qname.name = ejsCreateStringFromAsc(ejs, key);
-                qname.space = S(empty);
+                qname.space = ESV(empty);
             } else {
                 qname = ejsGetPropertyName(ejs, vp, slotNum);
             }
@@ -11569,7 +11569,7 @@ static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
             }
             if (!isArray) {
                 if (json->namespaces) {
-                    if (qname.space != S(empty)) {
+                    if (qname.space != ESV(empty)) {
                         mprPutFmtToWideBuf(json->buf, "\"%@\"::", qname.space);
                     }
                 }
@@ -11747,7 +11747,7 @@ static EjsLocalCache *localConstructor(Ejs *ejs, EjsLocalCache *cache, int argc,
     int         wantShared;
 
     options = (argc >= 1 && ejsIsDefined(ejs, argv[0])) ? argv[0] : 0;
-    wantShared = (options && ejsGetPropertyByName(ejs, options, EN("shared")) == S(true));
+    wantShared = (options && ejsGetPropertyByName(ejs, options, EN("shared")) == ESV(true));
 
     if (wantShared && shared) {
         cache->shared = shared;
@@ -11801,16 +11801,16 @@ static EjsAny *sl_expire(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv
     //  UNICODE
     if ((item = mprLookupKey(cache->store, key->value)) == 0) {
         unlock(cache);
-        return S(false);
+        return ESV(false);
     }
     item->lifespan = 0;
-    if (expires == S(null)) {
+    if (expires == ESV(null)) {
         item->expires = 0;
     } else {
         item->expires = ejsGetDate(ejs, expires);
     }
     unlock(cache);
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -11893,19 +11893,19 @@ static EjsAny *sl_read(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
 
     if (argc >= 2 && ejsIsDefined(ejs, argv[1])) {
         options = argv[1];
-        getVersion = ejsGetPropertyByName(ejs, options, EN("version")) == S(true);
+        getVersion = ejsGetPropertyByName(ejs, options, EN("version")) == ESV(true);
     }
     lock(cache);
     //  UNICODE
     if ((item = mprLookupKey(cache->store, key->value)) == 0) {
         unlock(cache);
-        return S(null);
+        return ESV(null);
     }
     if (item->lifespan) {
         item->expires = mprGetTime() + item->lifespan;
     }
     if (getVersion) {
-        result = ejsCreatePot(ejs, S(Object), 2);
+        result = ejsCreatePot(ejs, ESV(Object), 2);
         ejsSetPropertyByName(ejs, result, EN("version"), ejsCreateNumber(ejs, (MprNumber) item->version));
         ejsSetPropertyByName(ejs, result, EN("data"), item->data);
     } else {
@@ -11936,14 +11936,14 @@ static EjsBoolean *sl_remove(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **
         if ((item = mprLookupKey(cache->store, key->value)) != 0) {
             cache->usedMem -= (key->length + item->data->length);
             mprRemoveKey(cache->store, key->value);
-            result = S(true);
+            result = ESV(true);
         } else {
-            result = S(false);
+            result = ESV(false);
         }
 
     } else {
         /* Remove all keys */
-        result = mprGetHashLength(cache->store) ? S(true) : S(false);
+        result = mprGetHashLength(cache->store) ? ESV(true) : ESV(false);
         cache->store = mprCreateHash(CACHE_HASH_SIZE, 0);
         cache->usedMem = 0;
     }
@@ -12024,10 +12024,11 @@ static EjsNumber *sl_write(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **ar
     set = 1;
     expires = 0;
     lifespan = cache->lifespan;
+    version = 0;
     key = argv[0];
     value = argv[1];
 
-    if (argc >= 3 && argv[2] != S(null)) {
+    if (argc >= 3 && argv[2] != ESV(null)) {
         options = argv[2];
         if ((vp = ejsGetPropertyByName(ejs, options, EN("lifespan"))) != 0) {
             lifespan = ejsGetInt64(ejs, vp) * MPR_TICKS_PER_SEC;
@@ -12048,7 +12049,7 @@ static EjsNumber *sl_write(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **ar
                 set = 1;
             }
         }
-        throw = (vp = ejsGetPropertyByName(ejs, options, EN("throw"))) == S(true);
+        throw = (vp = ejsGetPropertyByName(ejs, options, EN("throw"))) == ESV(true);
         if ((vp = ejsGetPropertyByName(ejs, options, EN("version"))) != 0) {
             version = ejsGetInt64(ejs, vp);
             checkVersion = 1;
@@ -12063,7 +12064,7 @@ static EjsNumber *sl_write(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **ar
                 if (throw) {
                     ejsThrowStateError(ejs, "Key version does not match");
                 } else {
-                    return S(null);
+                    return ESV(null);
                 }
                 unlock(cache);
             }
@@ -12083,7 +12084,7 @@ static EjsNumber *sl_write(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **ar
         item->data = value;
     } else if (add) {
         if (exists) {
-            return S(null);
+            return ESV(null);
         }
         item->data = value;
     } else if (append) {
@@ -12151,6 +12152,7 @@ static void localPruner(EjsLocalCache *cache, MprEvent *event)
             while (excessKeys > 0 || cache->usedMem > cache->maxMem) {
                 for (factor = 3600; excessKeys > 0; factor *= 2) {
                     for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
+                        item = (CacheItem*) hp->data;
                         if (item->expires && item->expires <= when) {
                             mprLog(5, "LocalCache prune key %s", hp->key);
                             mprRemoveKey(cache->store, hp->key);
@@ -12365,7 +12367,7 @@ static EjsNumber *lf_emit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
  */
 static EjsBoolean *lf_logging(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    return ejsCreateBoolean(ejs, MPR->logging);
+    return ejsCreateBoolean(ejs, mprGetCmdlineLogging());
 }
 
 /*  
@@ -13042,7 +13044,7 @@ static EjsAny *invokeNamespaceOperator(Ejs *ejs, EjsNamespace *lhs, int opCode, 
     switch (opCode) {
     case EJS_OP_COMPARE_EQ:
         if (!ejsIsDefined(ejs, rhs)) {
-            return ((opCode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opCode == EJS_OP_COMPARE_EQ) ? ESV(false): ESV(true));
         }
         boolResult = ejsCompareString(ejs, lhs->value, rhs->value) == 0;
         break;
@@ -13053,7 +13055,7 @@ static EjsAny *invokeNamespaceOperator(Ejs *ejs, EjsNamespace *lhs, int opCode, 
 
     case EJS_OP_COMPARE_NE:
         if (!ejsIsDefined(ejs, rhs)) {
-            return ((opCode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opCode == EJS_OP_COMPARE_EQ) ? ESV(false): ESV(true));
         }
         boolResult = !(ejsCompareString(ejs, lhs->value, rhs->value) == 0);
         break;
@@ -13101,7 +13103,7 @@ EjsString *ejsFormatReservedNamespace(Ejs *ejs, EjsName *typeName, EjsString *sp
     EjsString   *namespace;
 
     if (typeName) {
-        if (typeName->space && typeName->space == S(public)) {
+        if (typeName->space && typeName->space == ESV(public)) {
             namespace = ejsSprintf(ejs, "[%N,%@]", *typeName, spaceName);
         } else {
             namespace = ejsSprintf(ejs, "[%@,%@]", typeName->name, spaceName);
@@ -13120,7 +13122,7 @@ EjsNamespace *ejsCreateNamespace(Ejs *ejs, EjsString *name)
 {
     EjsNamespace    *np;
 
-    if ((np = ejsCreateObj(ejs, S(Namespace), 0)) == 0) {
+    if ((np = ejsCreateObj(ejs, ESV(Namespace), 0)) == 0) {
         return 0;
     }
     np->value = name;
@@ -13173,9 +13175,9 @@ void ejsConfigureNamespaceType(Ejs *ejs)
     if ((type = ejsFinalizeCoreType(ejs, N("ejs", "Namespace"))) == 0) {
         return;
     }
-    ejsSetProperty(ejs, ejs->global, ES_iterator, S(iteratorSpace));
-    ejsSetProperty(ejs, ejs->global, ES_public, S(publicSpace));
-    ejsSetProperty(ejs, ejs->global, ES_ejs, S(ejsSpace));
+    ejsSetProperty(ejs, ejs->global, ES_iterator, ESV(iteratorSpace));
+    ejsSetProperty(ejs, ejs->global, ES_public, ESV(publicSpace));
+    ejsSetProperty(ejs, ejs->global, ES_ejs, ESV(ejsSpace));
 }
 
 /*
@@ -13243,10 +13245,10 @@ static EjsAny *castNull(Ejs *ejs, EjsObj *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return S(false);
+        return ESV(false);
 
     case S_Number:
-        return S(zero);
+        return ESV(zero);
 
     case S_Object:
     default:
@@ -13273,7 +13275,7 @@ static EjsAny *coerceNullOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
+        return ejsInvokeOperator(ejs, ESV(zero), opcode, rhs);
 
     /*
         Comparision
@@ -13281,7 +13283,7 @@ static EjsAny *coerceNullOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (ejsIs(ejs, rhs, Number)) {
-            return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
+            return ejsInvokeOperator(ejs, ESV(zero), opcode, rhs);
         } else if (ejsIs(ejs, rhs, String)) {
             return ejsInvokeOperator(ejs, ejsToString(ejs, lhs), opcode, rhs);
         }
@@ -13289,31 +13291,31 @@ static EjsAny *coerceNullOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
 
     case EJS_OP_COMPARE_NE:
         if (ejsIs(ejs, rhs, Void)) {
-            return S(false);
+            return ESV(false);
         }
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_EQ:
         if (ejsIs(ejs, rhs, Void)) {
-            return S(true);
+            return ESV(true);
         }
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     /*
         Unary operators
@@ -13323,7 +13325,7 @@ static EjsAny *coerceNullOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -13352,27 +13354,27 @@ static EjsAny *invokeNullOperator(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
     case EJS_OP_COMPARE_LT: case EJS_OP_COMPARE_GT:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     /*
         Unary operators
      */
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT: case EJS_OP_NEG:
-        return S(one);
+        return ESV(one);
 
     /*
         Binary operators. Reinvoke with left = zero
      */
     case EJS_OP_ADD: case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
+        return ejsInvokeOperator(ejs, ESV(zero), opcode, rhs);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -13403,7 +13405,7 @@ static EjsObj *getNullProperty(Ejs *ejs, EjsNull *unused, int slotNum)
  */
 EjsNull *ejsCreateNull(Ejs *ejs)
 {
-    return S(null);
+    return ESV(null);
 }
 
 
@@ -13496,7 +13498,7 @@ static EjsAny *castNumber(Ejs *ejs, EjsNumber *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return ((vp->value) ? S(true) : S(false));
+        return ((vp->value) ? ESV(true) : ESV(false));
 
     case S_String:
         //  OPT. mprDtoa does a sclone.
@@ -13526,7 +13528,7 @@ static EjsAny *coerceNumberOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *r
      */
     case EJS_OP_ADD:
         if (ejsIs(ejs, rhs, Void)) {
-            return S(nan);
+            return ESV(nan);
         } else if (ejsIs(ejs, rhs, Null)) {
             return lhs;
         } else if (ejsIs(ejs, rhs, Boolean) || ejsIs(ejs, rhs, Date)) {
@@ -13544,7 +13546,7 @@ static EjsAny *coerceNumberOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *r
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (!ejsIsDefined(ejs, rhs)) {
-            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? ESV(false): ESV(true));
         } else if (ejsIs(ejs, rhs, Number)) {
             return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         } else if (ejsIs(ejs, rhs, String)) {
@@ -13553,10 +13555,10 @@ static EjsAny *coerceNumberOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *r
         return ejsInvokeOperator(ejs, lhs, opcode, ejsToNumber(ejs, rhs));
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return S(false);
+        return ESV(false);
 
     /*
      *  Unary operators
@@ -13566,19 +13568,19 @@ static EjsAny *coerceNumberOperands(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *r
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return (((EjsNumber*) lhs)->value ? S(true) : S(false));
+        return (((EjsNumber*) lhs)->value ? ESV(true) : ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return (((EjsNumber*) lhs)->value ? S(false): S(true));
+        return (((EjsNumber*) lhs)->value ? ESV(false): ESV(true));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return S(false);
+        return ESV(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -13604,37 +13606,37 @@ static EjsAny *invokeNumberOperator(Ejs *ejs, EjsNumber *lhs, int opcode, EjsNum
     switch (opcode) {
 
     case EJS_OP_COMPARE_EQ: case EJS_OP_COMPARE_STRICTLY_EQ:
-        return ((lhs->value == rhs->value) ? S(true): S(false));
+        return ((lhs->value == rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
-        return ((lhs->value != rhs->value) ? S(true): S(false));
+        return ((lhs->value != rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_LT:
-        return ((lhs->value < rhs->value) ? S(true): S(false));
+        return ((lhs->value < rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_LE:
-        return ((lhs->value <= rhs->value) ? S(true): S(false));
+        return ((lhs->value <= rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_GT:
-        return ((lhs->value > rhs->value) ? S(true): S(false));
+        return ((lhs->value > rhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_GE:
-        return ((lhs->value >= rhs->value) ? S(true): S(false));
+        return ((lhs->value >= rhs->value) ? ESV(true): ESV(false));
 
     /*
      *  Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return ((lhs->value == 0) ? S(true): S(false));
+        return ((lhs->value == 0) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_NEG:
         return ejsCreateNumber(ejs, -lhs->value);
@@ -13756,11 +13758,11 @@ static EjsNumber *integral(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
  */
 static EjsBoolean *isFinite(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
-    if (np->value == ((EjsNumber*) S(nan))->value || np->value == ((EjsNumber*) S(infinity))->value || 
-            np->value == ((EjsNumber*) S(negativeInfinity))->value) {
-        return S(false);
+    if (np->value == ((EjsNumber*) ESV(nan))->value || np->value == ((EjsNumber*) ESV(infinity))->value || 
+            np->value == ((EjsNumber*) ESV(negativeInfinity))->value) {
+        return ESV(false);
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -13769,7 +13771,7 @@ static EjsBoolean *isFinite(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
  */
 static EjsBoolean *isNaN(Ejs *ejs, EjsNumber *np, int argc, EjsObj **argv)
 {
-    return (mprIsNan(np->value) ? S(true) : S(false));
+    return (mprIsNan(np->value) ? ESV(true) : ESV(false));
 }
 
 
@@ -13838,7 +13840,7 @@ static EjsIterator *getNumberIterator(Ejs *ejs, EjsObj *np, int argc, EjsObj **a
  */
 static EjsObj *numberToString(Ejs *ejs, EjsNumber *vp, int argc, EjsObj **argv)
 {
-    return castNumber(ejs, vp, S(String));
+    return castNumber(ejs, vp, ESV(String));
 }
 
 
@@ -13879,13 +13881,13 @@ EjsNumber *ejsCreateNumber(Ejs *ejs, MprNumber value)
     EjsNumber   *vp;
 
     if (value == 0) {
-        return S(zero);
+        return ESV(zero);
     } else if (value == 1) {
-        return S(one);
+        return ESV(one);
     } else if (value == -1) {
-        return S(minusOne);
+        return ESV(minusOne);
     }
-    if ((vp = ejsCreateObj(ejs, S(Number), 0)) != 0) {
+    if ((vp = ejsCreateObj(ejs, ESV(Number), 0)) != 0) {
         vp->value = value;
     }
     return vp;
@@ -13959,11 +13961,11 @@ void ejsConfigureNumberType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_Number_toPrecision, toPrecision);
     ejsBindMethod(ejs, prototype, ES_Number_toString, numberToString);
 
-    ejsSetProperty(ejs, type, ES_Number_MaxValue, S(max));
-    ejsSetProperty(ejs, type, ES_Number_MinValue, S(min));
-    ejsSetProperty(ejs, type, ES_Number_NEGATIVE_INFINITY, S(negativeInfinity));
-    ejsSetProperty(ejs, type, ES_Number_POSITIVE_INFINITY, S(infinity));
-    ejsSetProperty(ejs, type, ES_Number_NaN, S(nan));
+    ejsSetProperty(ejs, type, ES_Number_MaxValue, ESV(max));
+    ejsSetProperty(ejs, type, ES_Number_MinValue, ESV(min));
+    ejsSetProperty(ejs, type, ES_Number_NEGATIVE_INFINITY, ESV(negativeInfinity));
+    ejsSetProperty(ejs, type, ES_Number_POSITIVE_INFINITY, ESV(infinity));
+    ejsSetProperty(ejs, type, ES_Number_NaN, ESV(nan));
 }
 
 /*
@@ -14054,7 +14056,7 @@ static EjsAny *obj_prototype(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 
     if (ejs->compiling) {
         mprAssert(0);
-        prototype = S(undefined);
+        prototype = ESV(undefined);
         
     } else if (ejsIsType(ejs, obj)) {
         prototype = ((EjsType*) obj)->prototype;
@@ -14069,7 +14071,7 @@ static EjsAny *obj_prototype(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
             prototype = type->prototype;
         }
     } else {
-        prototype = S(undefined);
+        prototype = ESV(undefined);
     }
     return prototype;
 }
@@ -14085,7 +14087,7 @@ static EjsObj *obj_set_prototype(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 
     if (ejs->compiling) {
         mprAssert(0);
-        return S(undefined);
+        return ESV(undefined);
     }
     prototype = (EjsPot*) argv[0];
     if (ejsIsType(ejs, obj)) {
@@ -14116,7 +14118,7 @@ static EjsObj *obj_clone(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
     bool    deep;
 
-    deep = (argc == 1 && argv[0] == S(true));
+    deep = (argc == 1 && argv[0] == ESV(true));
     return ejsClone(ejs, obj, deep);
 }
 
@@ -14197,7 +14199,7 @@ static EjsObj *obj_defineProperty(Ejs *ejs, EjsObj *unused, int argc, EjsObj **a
         return NULL;
     }
     qname.name = (EjsString*) argv[1];
-    qname.space = S(empty);
+    qname.space = ESV(empty);
     options = argv[2];
     value = 0;
     set = get = 0;
@@ -14215,12 +14217,12 @@ static EjsObj *obj_defineProperty(Ejs *ejs, EjsObj *unused, int argc, EjsObj **a
     type = ejsGetPropertyByName(ejs, options, EN("type"));
 
     if ((configurable = ejsGetPropertyByName(ejs, options, EN("configurable"))) != 0) {
-        if (configurable == S(false)) {
+        if (configurable == ESV(false)) {
             attributes |= EJS_TRAIT_FIXED;
         }
     }
     if ((enumerable = ejsGetPropertyByName(ejs, options, EN("enumerable"))) != 0) {
-        if (enumerable == S(false)) {
+        if (enumerable == ESV(false)) {
             attributes |= EJS_TRAIT_HIDDEN;
         }
     }
@@ -14261,7 +14263,7 @@ static EjsObj *obj_defineProperty(Ejs *ejs, EjsObj *unused, int argc, EjsObj **a
         value = (EjsObj*) get;
     }
     if ((writable = ejsGetPropertyByName(ejs, options, EN("writable"))) != 0) {
-        if (writable == S(false)) {
+        if (writable == ESV(false)) {
             attributes |= EJS_TRAIT_READONLY;
         }
     }
@@ -14410,16 +14412,16 @@ static EjsObj *obj_getOwnPropertyDescriptor(Ejs *ejs, EjsObj *unused, int argc, 
 
     obj = argv[0];
     //  TODO - ugly
-    qname.space = S(empty);
+    qname.space = ESV(empty);
     qname.name = (EjsString*) argv[1];
     if ((slotNum = ejsLookupVarWithNamespaces(ejs, obj, qname, &lookup)) < 0) {
-        return S(false);
+        return ESV(false);
     }
     trait = ejsGetPropertyTraits(ejs, obj, slotNum);
     result = ejsCreateEmptyPot(ejs);
     value = ejsGetVarByName(ejs, obj, qname, &lookup);
     if (value == 0) {
-        value = S(null);
+        value = ESV(null);
     }
     type = (trait) ? trait->type: 0;
     if (trait && trait->attributes & EJS_TRAIT_GETTER) {
@@ -14438,7 +14440,7 @@ static EjsObj *obj_getOwnPropertyDescriptor(Ejs *ejs, EjsObj *unused, int argc, 
         ejsCreateBoolean(ejs, !trait || !(trait->attributes & EJS_TRAIT_HIDDEN)));
     qn = ejsGetPropertyName(ejs, obj, slotNum);
     ejsSetPropertyByName(ejs, result, EN("namespace"), qn.space);
-    ejsSetPropertyByName(ejs, result, EN("type"), type ? (EjsObj*) type : S(null));
+    ejsSetPropertyByName(ejs, result, EN("type"), type ? (EjsObj*) type : ESV(null));
     ejsSetPropertyByName(ejs, result, EN("writable"), 
         ejsCreateBoolean(ejs, !trait || !(trait->attributes & EJS_TRAIT_READONLY)));
     return result;
@@ -14464,10 +14466,10 @@ static EjsArray *obj_getOwnPropertyNames(Ejs *ejs, EjsObj *unused, int argc, Ejs
     if (argc > 0) {
         options = argv[1];
         if ((arg = ejsGetPropertyByName(ejs, options, EN("includeBases"))) != 0) {
-            includeBases = (arg == S(true));
+            includeBases = (arg == ESV(true));
         }
         if ((arg = ejsGetPropertyByName(ejs, options, EN("excludeFunctions"))) != 0) {
-            excludeFunctions = (arg == S(true));
+            excludeFunctions = (arg == ESV(true));
         }
     }
     if ((result = ejsCreateArray(ejs, 0)) == 0) {
@@ -14522,7 +14524,7 @@ static EjsBoolean *obj_hasOwnProperty(Ejs *ejs, EjsObj *obj, int argc, EjsObj **
     EjsLookup   lookup;
     int         slotNum;
 
-    qname.space = S(empty);
+    qname.space = ESV(empty);
     qname.name = (EjsString*) argv[0];
     slotNum = ejsLookupVarWithNamespaces(ejs, obj, qname, &lookup);
     return ejsCreateBoolean(ejs, slotNum >= 0);
@@ -14580,7 +14582,7 @@ static EjsBoolean *obj_isPrototypeOf(Ejs *ejs, EjsObj *prototype, int argc, EjsO
     EjsObj  *obj;
     
     obj = argv[0];
-    return (prototype == ((EjsObj*) TYPE(obj)->prototype)) ? S(true) : S(false);
+    return (prototype == ((EjsObj*) TYPE(obj)->prototype)) ? ESV(true) : ESV(false);
 }
 
 
@@ -14691,10 +14693,10 @@ static EjsBoolean *obj_propertyIsEnumerable(Ejs *ejs, EjsObj *obj, int argc, Ejs
 
     mprAssert(argc == 1 || argc == 2);
 
-    qname.space = S(empty);
+    qname.space = ESV(empty);
     qname.name = (EjsString*) argv[0];
     if ((slotNum = ejsLookupVarWithNamespaces(ejs, obj, qname, &lookup)) < 0) {
-        return S(false);
+        return ESV(false);
     }
     trait = ejsGetPropertyTraits(ejs, obj, slotNum);
     return ejsCreateBoolean(ejs, !trait || !(trait->attributes & EJS_TRAIT_HIDDEN));
@@ -14730,7 +14732,7 @@ EjsString *ejsObjToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
     if (ejsIs(ejs, vp, String)) {
         return (EjsString*) vp;
     }
-    return (ejs->service->objHelpers.cast)(ejs, vp, S(String));
+    return (ejs->service->objHelpers.cast)(ejs, vp, ESV(String));
 }
 
 
@@ -14747,7 +14749,7 @@ static EjsType *obj_getBaseType(Ejs *ejs, EjsObj *unused, int argc, EjsObj **arg
     if (ejsIsType(ejs, vp)) {
         return (((EjsType*) vp)->baseType);
     }
-    return S(null);
+    return ESV(null);
 }
 
 
@@ -14791,11 +14793,11 @@ EjsString *ejsGetTypeName(Ejs *ejs, EjsAny *obj)
     EjsType     *type;
 
     if (obj == 0) {
-        return S(undefined);
+        return ESV(undefined);
     }
     type = (EjsType*) TYPE(obj);
     if (type == 0) {
-        return S(null);
+        return ESV(null);
     }
     return type->qname.name;
 }
@@ -14827,7 +14829,7 @@ static EjsString *obj_getName(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     } else if (ejsIsFunction(ejs, obj)) {
         return ((EjsFunction*) obj)->name;
     }
-    return S(empty);
+    return ESV(empty);
 }
 
 /*
@@ -14847,7 +14849,7 @@ EjsString *ejsGetTypeOf(Ejs *ejs, EjsAny *vp)
 {
     cchar   *word;
 
-    if (vp == S(undefined)) {
+    if (vp == ESV(undefined)) {
         word = "undefined";
 
     } else if (ejsIs(ejs, vp, Null)) {
@@ -15017,31 +15019,31 @@ static EjsAny *coercePathOperands(Ejs *ejs, EjsPath *lhs, int opcode,  EjsAny *r
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (!ejsIsDefined(ejs, rhs)) {
-            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? ESV(false): ESV(true));
         }
         return ejsInvokeOperator(ejs, ejsCreateStringFromAsc(ejs, lhs->value), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return S(false);
+        return ESV(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -15063,7 +15065,7 @@ static EjsAny *invokePathOperator(Ejs *ejs, EjsPath *lhs, int opcode,  EjsPath *
     case EJS_OP_COMPARE_STRICTLY_EQ:
     case EJS_OP_COMPARE_EQ:
         if (lhs == rhs || (lhs->value == rhs->value)) {
-            return S(true);
+            return ESV(true);
         }
         return ejsCreateBoolean(ejs,  scmp(lhs->value, rhs->value) == 0);
 
@@ -15087,17 +15089,17 @@ static EjsAny *invokePathOperator(Ejs *ejs, EjsPath *lhs, int opcode,  EjsPath *
         Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return ((lhs->value) ? S(true): S(false));
+        return ((lhs->value) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return ((lhs->value == 0) ? S(true): S(false));
+        return ((lhs->value == 0) ? ESV(true): ESV(false));
 
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
-        return S(false);
+        return ESV(false);
 
     /*
         Binary operators
@@ -15150,7 +15152,7 @@ static EjsDate *getAccessedDate(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 
     mprGetPathInfo(fp->value, &info);
     if (!info.valid) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateDate(ejs, ((MprTime) info.atime) * 1000);
 }
@@ -15251,7 +15253,7 @@ static EjsDate *getCreatedDate(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 
     mprGetPathInfo(fp->value, &info);
     if (!info.valid) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateDate(ejs, ((MprTime) info.ctime) * 1000);
 }
@@ -15288,7 +15290,7 @@ static EjsString *getPathExtension(Ejs *ejs, EjsPath *fp, int argc, EjsObj **arg
     char    *ext;
 
     if ((ext = mprGetPathExtension(fp->value)) == 0) {
-        return S(empty);
+        return ESV(empty);
     }
     return ejsCreateStringFromAsc(ejs, ext);
 }
@@ -15436,7 +15438,7 @@ static EjsBoolean *pathHasDrive(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
  */
 static EjsBoolean *isPathAbsolute(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
-    return (mprIsAbsPath(fp->value) ? S(true): S(false));
+    return (mprIsAbsPath(fp->value) ? ESV(true): ESV(false));
 }
 
 
@@ -15485,7 +15487,7 @@ static EjsBoolean *isPathRegular(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
  */
 static EjsBoolean *isPathRelative(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
-    return (mprIsRelPath(fp->value) ? S(true): S(false));
+    return (mprIsRelPath(fp->value) ? ESV(true): ESV(false));
 }
 
 
@@ -15550,7 +15552,7 @@ static EjsPath *pathLinkTarget(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     char    *path;
 
     if ((path = mprGetPathLink(fp->value)) == 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreatePathFromAsc(ejs, mprGetPathLink(fp->value));
 }
@@ -15613,7 +15615,7 @@ static EjsObj *makePathLink(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     int     hard;
 
     target = ((EjsPath*) argv[0])->value;
-    hard = (argc >= 2) ? (argv[1] == S(true)) : 0;
+    hard = (argc >= 2) ? (argv[1] == ESV(true)) : 0;
     if (mprMakeLink(fp->value, target, hard) < 0) {
         ejsThrowIOError(ejs, "Can't make link");
     }
@@ -15677,7 +15679,7 @@ static EjsDate *getModifiedDate(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 
     mprGetPathInfo(fp->value, &info);
     if (!info.valid) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateDate(ejs, ((MprTime) info.mtime) * 1000);
 }
@@ -15731,7 +15733,7 @@ static EjsNumber *getPerms(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     MprPath     info;
 
     if (mprGetPathInfo(fp->value, &info) < 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateNumber(ejs, info.perms);
 }
@@ -15766,7 +15768,7 @@ static EjsPath *getPortablePath(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     char    *path;
     int     lower;
 
-    lower = (argc >= 1 && argv[0] == S(true));
+    lower = (argc >= 1 && argv[0] == ESV(true));
     path = mprGetPortablePath(fp->value);
     if (lower) {
         path = slower(path);
@@ -15972,10 +15974,10 @@ static EjsObj *removePath(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 
     if (mprGetPathInfo(fp->value, &info) == 0) {
         if (mprDeletePath(fp->value) < 0) {
-            return S(false);
+            return ESV(false);
         }
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -16037,9 +16039,9 @@ static EjsBoolean *isPathSame(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     } else if (ejsIs(ejs, argv[0], Path)) {
         other = ((EjsPath*) (argv[0]))->value;
     } else {
-        return S(false);
+        return ESV(false);
     }
-    return (mprSamePath(fp->value, other) ? S(true) : S(false));
+    return (mprSamePath(fp->value, other) ? ESV(true) : ESV(false));
 }
 
 
@@ -16067,7 +16069,7 @@ static EjsString *pathSeparator(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 static EjsNumber *getPathFileSize(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
 {
     if (mprGetPathInfo(fp->value, &fp->info) < 0) {
-        return S(minusOne);
+        return ESV(minusOne);
     }
     return ejsCreateNumber(ejs, (MprNumber) fp->info.size);
 }
@@ -16193,7 +16195,7 @@ EjsPath *ejsCreatePath(Ejs *ejs, EjsString *path)
 {
     EjsPath     *fp;
 
-    if ((fp = ejsCreateObj(ejs, S(Path), 0)) == 0) {
+    if ((fp = ejsCreateObj(ejs, ESV(Path), 0)) == 0) {
         return 0;
     }
     pathConstructor(ejs, fp, 1, (EjsObj**) &path);
@@ -16358,7 +16360,7 @@ static void removeHashEntry(Ejs *ejs, EjsPot *obj, EjsName qname);
 
 EjsAny *ejsCreateEmptyPot(Ejs *ejs)
 {
-    return ejsCreatePot(ejs, S(Object), 0);
+    return ejsCreatePot(ejs, ESV(Object), 0);
 }
 
 
@@ -16462,7 +16464,7 @@ static EjsObj *prepareAccessors(Ejs *ejs, EjsPot *obj, int slotNum, int64 *attri
             }
         } else {
             /* No existing getter, must define a dummy getter - will not be called */
-            fun = (EjsFunction*) ejsCloneFunction(ejs, S(nop), 0);
+            fun = (EjsFunction*) ejsCloneFunction(ejs, ESV(nop), 0);
             fun->setter = (EjsFunction*) value;
         }
         value = (EjsObj*) fun;
@@ -16524,7 +16526,7 @@ static int definePotProperty(Ejs *ejs, EjsPot *obj, int slotNum, EjsName qname, 
         value = prepareAccessors(ejs, obj, slotNum, &attributes, value);
     }
     if (value) {
-        if (ejsSetProperty(ejs, obj, slotNum, value ? value: S(null)) < 0) {
+        if (ejsSetProperty(ejs, obj, slotNum, value ? value: ESV(null)) < 0) {
             return EJS_ERR;
         }
     }
@@ -16570,7 +16572,7 @@ static int deletePotProperty(Ejs *ejs, EjsPot *obj, int slotNum)
         removeHashEntry(ejs, obj, qname);
     }
     sp = &obj->properties->slots[slotNum];
-    sp->value.ref = S(undefined);
+    sp->value.ref = ESV(undefined);
     sp->trait.type = 0;
     sp->trait.attributes = EJS_TRAIT_DELETED | EJS_TRAIT_HIDDEN;
     return 0;
@@ -16975,11 +16977,11 @@ void ejsZeroSlots(Ejs *ejs, EjsSlot *slots, int count)
     if (slots) {
         //  TODO OPT. If hashChans were biased by +1 and NULL was allowed for names, then a simple zero would suffice.
         for (sp = &slots[count - 1]; sp >= slots; sp--) {
-            sp->value.ref = S(null);
+            sp->value.ref = ESV(null);
             sp->hashChain = -1;
             //  TODO -- why set names to this. Better to set to null?
-            sp->qname.name = S(empty);
-            sp->qname.space = S(empty);
+            sp->qname.name = ESV(empty);
+            sp->qname.space = ESV(empty);
             sp->trait.type = 0;
             sp->trait.attributes = 0;
         }
@@ -17207,8 +17209,8 @@ static void removeHashEntry(Ejs *ejs, EjsPot *obj, EjsName qname)
             sp = &obj->properties->slots[slotNum];
             if (CMP_QNAME(&sp->qname, &qname)) {
                 //  TODO -- would null be better
-                sp->qname.name = S(empty);
-                sp->qname.space = S(empty);
+                sp->qname.name = ESV(empty);
+                sp->qname.space = ESV(empty);
                 sp->hashChain = -1;
                 return;
             }
@@ -17230,8 +17232,8 @@ static void removeHashEntry(Ejs *ejs, EjsPot *obj, EjsName qname)
                 buckets[index] = obj->properties->slots[slotNum].hashChain;
             }
             //  TODO -- null would be better
-            sp->qname.name = S(empty);
-            sp->qname.space = S(empty);
+            sp->qname.name = ESV(empty);
+            sp->qname.space = ESV(empty);
             sp->hashChain = -1;
             return;
         }
@@ -17453,7 +17455,7 @@ static EjsAny *castRegExp(Ejs *ejs, EjsRegExp *rp, EjsType *type)
 
     switch (type->sid) {
     case S_Boolean:
-        return S(true);
+        return ESV(true);
 
     case S_String:
         flags = makeFlags(rp);
@@ -17533,7 +17535,7 @@ static EjsArray *regex_exec(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
     count = pcre_exec(rp->compiled, NULL, str->value, (int) str->length, start, 0, matches, sizeof(matches) / sizeof(int));
     if (count < 0) {
         rp->endLastMatch = 0;
-        return S(null);
+        return ESV(null);
     }
     results = ejsCreateArray(ejs, count);
     for (index = 0, i = 0; i < count; i++, index += 2) {
@@ -17580,7 +17582,7 @@ static EjsString *regex_getSource(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **ar
 static EjsString *regex_matched(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
 {
     if (rp->matched == 0) {
-        return S(null);
+        return ESV(null);
     }
     return rp->matched;
 }
@@ -17608,15 +17610,15 @@ static EjsBoolean *regex_test(Ejs *ejs, EjsRegExp *rp, int argc, EjsObj **argv)
     count = pcre_exec(rp->compiled, NULL, str->value, (int) str->length, rp->endLastMatch, 0, 0, 0);
     if (count < 0) {
         rp->endLastMatch = 0;
-        return S(false);
+        return ESV(false);
     }
-    return S(true);
+    return ESV(true);
 }
 
 
 EjsString *ejsRegExpToString(Ejs *ejs, EjsRegExp *rp)
 {
-    return (EjsString*) castRegExp(ejs, rp, S(String));
+    return (EjsString*) castRegExp(ejs, rp, ESV(String));
 }
 
 /*
@@ -17634,7 +17636,7 @@ EjsRegExp *ejsCreateRegExp(Ejs *ejs, EjsString *pattern)
         ejsThrowArgError(ejs, "Bad regular expression pattern. Must start with '/'");
         return 0;
     }
-    rp = ejsCreateObj(ejs, S(RegExp), 0);
+    rp = ejsCreateObj(ejs, ESV(RegExp), 0);
     if (rp != 0) {
         /*
             Strip off flags for passing to pcre_compile2
@@ -17901,7 +17903,7 @@ EjsString *sock_address(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
  */
 EjsBoolean *sock_async(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    return (sp->async) ? S(true) : S(false);
+    return (sp->async) ? ESV(true) : ESV(false);
 }
 
 
@@ -17910,7 +17912,7 @@ EjsBoolean *sock_async(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
  */
 EjsObj *sock_set_async(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
 {
-    sp->async = (argv[0] == S(true));
+    sp->async = (argv[0] == ESV(true));
     return 0;
 }
 
@@ -18073,14 +18075,14 @@ static EjsNumber *sock_read(Ejs *ejs, EjsSocket *sp, int argc, EjsObj **argv)
         //  TODO -- should not be using EOF event
         ejsSendEvent(ejs, sp->emitter, "eof", NULL, sp);
         //  TODO - do we need to set the mask here?
-        return S(null);
+        return ESV(null);
     }
     if (nbytes == 0) {
         //  TODO - but in async, this does not mean eof. See mpr for how to tell eof
         //  TODO -- should not be using EOF event
         ejsSendEvent(ejs, sp->emitter, "eof", NULL, sp);
         //  TODO - do we need to set the mask here?
-        return S(null);
+        return ESV(null);
     }
     ba->writePosition += nbytes;
     sp->mask |= MPR_READABLE;
@@ -18352,10 +18354,10 @@ static EjsAny *castString(Ejs *ejs, EjsString *sp, EjsType *type)
 
     switch (type->sid) {
     case S_Boolean:
-        if (sp != S(empty)) {
-            return S(true);
+        if (sp != ESV(empty)) {
+            return ESV(true);
         }
-        return S(false);
+        return ESV(false);
 
     case S_Number:
         return ejsParse(ejs, sp->value, S_Number);
@@ -18396,7 +18398,7 @@ static EjsString *cloneString(Ejs *ejs, EjsString *sp, bool deep)
 static EjsString *getStringProperty(Ejs *ejs, EjsString *sp, int index)
 {
     if (index < 0 || index >= sp->length) {
-        return S(empty);
+        return ESV(empty);
     }
     return ejsCreateString(ejs, &sp->value[index], 1);
 }
@@ -18433,10 +18435,10 @@ static EjsAny *coerceStringOperands(Ejs *ejs, EjsAny *lhs, int opcode,  EjsAny *
         return ejsInvokeOperator(ejs, lhs, opcode, ejsToString(ejs, rhs));
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return S(false);
+        return ESV(false);
 
     /*
         Unary operators
@@ -18450,19 +18452,19 @@ static EjsAny *coerceStringOperands(Ejs *ejs, EjsAny *lhs, int opcode,  EjsAny *
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return (((EjsString*) lhs) ? S(true) : S(false));
+        return (((EjsString*) lhs) ? ESV(true) : ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return (((EjsString*) lhs) ? S(false): S(true));
+        return (((EjsString*) lhs) ? ESV(false): ESV(true));
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return S(false);
+        return ESV(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -18488,18 +18490,18 @@ static EjsAny *invokeStringOperator(Ejs *ejs, EjsString *lhs, int opcode, EjsStr
         //  OPT -- should use lhs == rhs
         if (lhs->value == rhs->value) {
             mprAssert(lhs == rhs);
-            return S(true);
+            return ESV(true);
         }
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_NE:
     case EJS_OP_COMPARE_STRICTLY_NE:
         //  OPT -- should use lhs == rhs
         if (lhs->value != rhs->value) {
             mprAssert(lhs != rhs);
-            return S(true);
+            return ESV(true);
         }
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_LT:
         return ejsCreateBoolean(ejs, 
@@ -18521,17 +18523,17 @@ static EjsAny *invokeStringOperator(Ejs *ejs, EjsString *lhs, int opcode, EjsStr
         Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return ((lhs) ? S(true): S(false));
+        return ((lhs) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return ((lhs == 0) ? S(true): S(false));
+        return ((lhs == 0) ? ESV(true): ESV(false));
 
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
-        return S(false);
+        return ESV(false);
 
     /*
         Binary operators
@@ -18654,7 +18656,7 @@ static EjsString *charAt(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], Number));
     index = ejsGetInt(ejs, argv[0]);
     if (index < 0 || index >= sp->length) {
-        return S(empty);
+        return ESV(empty);
     }
     return ejsCreateString(ejs, &sp->value[index], 1);
 }
@@ -18675,7 +18677,7 @@ static EjsNumber *charCodeAt(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         index = (int) sp->length -1 ;
     }
     if (index < 0 || index >= sp->length) {
-        return S(nan);
+        return ESV(nan);
     }
     return ejsCreateNumber(ejs, (uchar) sp->value[index]);
 }
@@ -18751,7 +18753,7 @@ static EjsBoolean *endsWith(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
     pattern = (EjsString*) argv[0];
     len = pattern->length;
     if (len > sp->length) {
-        return S(false);
+        return ESV(false);
     }
     return ejsCreateBoolean(ejs, wncmp(&sp->value[sp->length - len], pattern->value, len) == 0);
 }
@@ -18820,7 +18822,7 @@ static EjsString *formatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
             if (nextArg < args->length) {
                 value = ejsGetProperty(ejs, args, nextArg);
             } else {
-                value = S(null);
+                value = ESV(null);
             }
             buf = 0;
             //  OPT
@@ -19008,7 +19010,7 @@ static EjsNumber *indexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     }
     index = indexof(&sp->value[start], sp->length - start, pattern, patternLength, 1);
     if (index < 0) {
-        return S(minusOne);
+        return ESV(minusOne);
     }
     return ejsCreateNumber(ejs, (MprNumber) (index + start));
 }
@@ -19019,14 +19021,14 @@ static EjsBoolean *isAlpha(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return S(false);
+        return ESV(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (*cp & 0x80 || !isalpha((int) *cp)) {
-            return S(false);
+            return ESV(false);
         }
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -19035,14 +19037,14 @@ static EjsBoolean *isAlphaNum(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return S(false);
+        return ESV(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (*cp & 0x80 || !isalnum((int) *cp)) {
-            return S(false);
+            return ESV(false);
         }
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -19051,14 +19053,14 @@ static EjsBoolean *isDigit(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return S(false);
+        return ESV(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (*cp & 0x80 || !isdigit((int) *cp)) {
-            return S(false);
+            return ESV(false);
         }
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -19067,14 +19069,14 @@ static EjsBoolean *isLower(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return S(false);
+        return ESV(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (!islower((int) *cp)) {
-            return S(false);
+            return ESV(false);
         }
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -19083,14 +19085,14 @@ static EjsBoolean *isSpace(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return S(false);
+        return ESV(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (*cp & 0x80 || !isspace((int) *cp)) {
-            return S(false);
+            return ESV(false);
         }
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -19099,14 +19101,14 @@ static EjsBoolean *isUpper(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     MprChar     *cp;
 
     if (sp->length == 0) {
-        return S(false);
+        return ESV(false);
     }
     for (cp = sp->value; cp < &sp->value[sp->length]; cp++) {
         if (!isupper((int) *cp)) {
-            return S(false);
+            return ESV(false);
         }
     }
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -19138,7 +19140,7 @@ static EjsNumber *lastIndexOf(Ejs *ejs, EjsString *sp, int argc,  EjsObj **argv)
     }
     index = indexof(sp->value, sp->length, pattern, patternLength, -1);
     if (index < 0) {
-        return S(minusOne);
+        return ESV(minusOne);
     }
     return ejsCreateNumber(ejs, (MprNumber) index);
 }
@@ -19182,7 +19184,7 @@ static EjsArray *match(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         }
     } while (rp->global);
     if (results == NULL) {
-        return S(null);
+        return ESV(null);
     }
     return results;
 }
@@ -19503,7 +19505,7 @@ static EjsNumber *searchString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         rp = (EjsRegExp*) argv[0];
         count = pcre_exec(rp->compiled, NULL, sp->value, (int) sp->length, 0, 0, matches, sizeof(matches) / sizeof(int));
         if (count < 0) {
-            return S(minusOne);
+            return ESV(minusOne);
         }
         return ejsCreateNumber(ejs, matches[0]);
 
@@ -19621,25 +19623,26 @@ static EjsArray *split(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
         rp = (EjsRegExp*) argv[0];
         rp->endLastMatch = 0;
         resultCount = 0;
-        do {
+        while (1) {
             count = (int) pcre_exec(rp->compiled, NULL, sp->value, (int) sp->length, rp->endLastMatch, 0, matches, 
                 sizeof(matches) / sizeof(int));
             if (count <= 0) {
                 break;
             }
-            if (rp->endLastMatch <= matches[0]) {
-                match = ejsCreateString(ejs, &sp->value[rp->endLastMatch], matches[0] - rp->endLastMatch);
-                ejsSetProperty(ejs, results, resultCount++, match);
-            }
+            match = ejsCreateString(ejs, &sp->value[rp->endLastMatch], matches[0] - rp->endLastMatch);
+            ejsSetProperty(ejs, results, resultCount++, match);
             if (matches[1] == rp->endLastMatch) {
-                matches[1]++;
+                /* Catch patterns that match the empty string - prevents infinite loop */
+                rp->endLastMatch = matches[1] + 1;
+            } else {
+                rp->endLastMatch = matches[1];
             }
-            rp->endLastMatch = matches[1];
-        } while (rp->global);
-
+        }
         if (rp->endLastMatch < sp->length) {
             match = ejsCreateString(ejs, &sp->value[rp->endLastMatch], sp->length - rp->endLastMatch);
-            ejsSetProperty(ejs, results, resultCount++, match);
+            ejsSetProperty(ejs, results, resultCount, match);
+        } else {
+            ejsSetProperty(ejs, results, resultCount, ESV(empty));
         }
         return results;
     }
@@ -20381,7 +20384,7 @@ int ejsContainsString(Ejs *ejs, EjsString *sp, EjsString *pat)
 char *ejsToMulti(Ejs *ejs, EjsAny *ev)
 {
     if (ev == 0) {
-        ev = S(empty);
+        ev = ESV(empty);
     }
     if (!ejsIs(ejs, ev, String)) {
         if ((ev = ejsCast(ejs, ev, String)) == 0) {
@@ -20423,7 +20426,7 @@ EjsString *ejsSubstring(Ejs *ejs, EjsString *src, ssize start, ssize len)
         len = src->length - start;
     }
     if (len < 0 || (start + len) > src->length || start < 0) {
-        return S(empty);
+        return ESV(empty);
     }
     len = min(len, src->length);
     if ((result = ejsCreateBareString(ejs, len)) == NULL) {
@@ -20608,7 +20611,7 @@ EjsString *ejsInternWide(Ejs *ejs, MprChar *value, ssize len)
             }
         }
     }
-    if ((sp = ejsAlloc(ejs, S(String), (len + 1) * sizeof(MprChar))) != NULL) {
+    if ((sp = ejsAlloc(ejs, ESV(String), (len + 1) * sizeof(MprChar))) != NULL) {
         memcpy(sp->value, value, len * sizeof(MprChar));
         sp->value[len] = 0;
     }
@@ -20658,7 +20661,7 @@ EjsString *ejsInternAsc(Ejs *ejs, cchar *value, ssize len)
             }
         }
     }
-    if ((sp = ejsAlloc(ejs, S(String), (len + 1) * sizeof(MprChar))) != NULL) {
+    if ((sp = ejsAlloc(ejs, ESV(String), (len + 1) * sizeof(MprChar))) != NULL) {
 #if BLD_CHAR_LEN > 1
         for (i = 0; i < len; i++) {
             sp->value[i] = value[i];
@@ -20703,7 +20706,7 @@ EjsString *ejsInternMulti(Ejs *ejs, cchar *value, ssize len)
         Have to convert the multibyte string to unicode before comparision. Convert into an EjsString to it is ready
         to intern if not found.
      */
-    if ((src = ejsAlloc(ejs, S(String), (len + 1) * sizeof(MprChar))) != NULL) {
+    if ((src = ejsAlloc(ejs, ESV(String), (len + 1) * sizeof(MprChar))) != NULL) {
         src->length = mtow(src->value, len + 1, value, len);
         value = src->value;
     }
@@ -20867,7 +20870,7 @@ EjsString *ejsCreateBareString(Ejs *ejs, ssize len)
     EjsString   *sp;
     
     mprAssert(0 <= len && len < MAXINT);
-    if ((sp = ejsAlloc(ejs, S(String), (len + 1) * sizeof(MprChar))) != NULL) {
+    if ((sp = ejsAlloc(ejs, ESV(String), (len + 1) * sizeof(MprChar))) != NULL) {
         sp->length = len;
         sp->value[0] = 0;
         sp->value[len] = 0;
@@ -20881,7 +20884,7 @@ EjsString *ejsCreateNonInternedString(Ejs *ejs, MprChar *value, ssize len)
     EjsString   *sp;
     
     mprAssert(0 <= len && len < MAXINT);
-    if ((sp = ejsAlloc(ejs, S(String), (len + 1) * sizeof(MprChar))) != NULL) {
+    if ((sp = ejsAlloc(ejs, ESV(String), (len + 1) * sizeof(MprChar))) != NULL) {
         memcpy(sp->value, value, (len + 1) * sizeof(MprChar));
         sp->length = len;
         sp->value[len] = 0;
@@ -21217,7 +21220,7 @@ static EjsString *system_ipaddr(Ejs *ejs, EjsObj *unused, int argc, EjsObj **arg
         return ejsCreateStringFromAsc(ejs, ip ? ip : "127.0.0.1");
     }
 #endif
-    return S(null);
+    return ESV(null);
 }
 
 
@@ -21436,9 +21439,9 @@ static int timerCallback(EjsTimer *tp, MprEvent *e)
 
 
 /*
-    function start(): Void
+    function start(): Timer
  */
-static EjsObj *timer_start(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
+static EjsTimer *timer_start(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
 {
     int     flags;
 
@@ -21450,7 +21453,7 @@ static EjsObj *timer_start(Ejs *ejs, EjsTimer *tp, int argc, EjsObj **argv)
             return 0;
         }
     }
-    return 0;
+    return tp;
 }
 
 
@@ -21615,17 +21618,17 @@ int ejsCreateBootstrapTypes(Ejs *ejs)
     ejs->service->immutable = immutable = ejsCreatePot(ejs, objectType, 0);
     ejsGrowPot(ejs, immutable, max(EJS_NUM_GLOBAL, ES_global_NUM_CLASS_PROP));
     mprSetName(immutable, "immutable");
-    S(null) = null = ejsCreateObj(ejs, nullType, 0);
-    mprSetName(S(null), "null value");
+    ESV(null) = null = ejsCreateObj(ejs, nullType, 0);
+    mprSetName(ESV(null), "null value");
     zeroSlots(ejs, immutable, immutable->numProp, null);
 
     /*
         Preset some essential types and values so we can finish up the types
      */
-    S(Object) = objectType;
-    S(String) = stringType;
-    S(null) = null;
-    S(empty) = ejsCreateStringFromAsc(ejs, "");
+    ESV(Object) = objectType;
+    ESV(String) = stringType;
+    ESV(null) = null;
+    ESV(empty) = ejsCreateStringFromAsc(ejs, "");
 
     finishBootType(ejs, ES_String, N("ejs", "String"), stringType);
     finishBootType(ejs, ES_Object, N("ejs", "Object"), objectType);
@@ -21673,7 +21676,7 @@ static void finishBootType(Ejs *ejs, int slotNum, EjsName qname, EjsType *type)
     mprSetName(type, qname.name->value);
     ejsAddImmutable(ejs, slotNum, type->qname, type);
 
-    if ((type->prototype = ejsCreatePot(ejs, S(Object), 0)) == 0) {
+    if ((type->prototype = ejsCreatePot(ejs, ESV(Object), 0)) == 0) {
         return;
     }
     mprSetName(type->prototype, qname.name->value);
@@ -21694,7 +21697,7 @@ EjsType *ejsCreateType(Ejs *ejs, EjsName qname, EjsModule *up, EjsType *baseType
     mprAssert(ejs);
     mprAssert(size >= 0);
     
-    if ((type = createTypeVar(ejs, S(Type), numTypeProp)) == 0) {
+    if ((type = createTypeVar(ejs, ESV(Type), numTypeProp)) == 0) {
         return 0;
     }
     attributes = setDefaultAttributes(type, size, attributes);
@@ -21712,7 +21715,7 @@ EjsType *ejsCreateType(Ejs *ejs, EjsName qname, EjsModule *up, EjsType *baseType
     if (prototype) {
         type->prototype = prototype;
     } else {
-        if ((type->prototype = ejsCreatePot(ejs, S(Object), numInstanceProp)) == 0) {
+        if ((type->prototype = ejsCreatePot(ejs, ESV(Object), numInstanceProp)) == 0) {
             return 0;
         }
         //  UNICODE
@@ -21836,20 +21839,20 @@ EjsType *ejsCreateArchetype(Ejs *ejs, EjsFunction *fun, EjsPot *prototype)
     if (prototype == 0 && fun) {
         prototype = ejsGetPropertyByName(ejs, fun, N(NULL, "prototype"));
     }
-    baseType = prototype ? TYPE(prototype): S(Object);
+    baseType = prototype ? TYPE(prototype): ESV(Object);
     name = (fun && fun->name) ? fun->name : ejsCreateStringFromAsc(ejs, "-type-from-function-");
     qname.space = ejsCreateStringFromAsc(ejs, EJS_PROTOTYPE_NAMESPACE);
     qname.name = name;
-    type = ejsCreateType(ejs, qname, NULL, baseType, prototype, -1, 0, 0, ST(Object)->instanceSize, 0, 
+    type = ejsCreateType(ejs, qname, NULL, baseType, prototype, -1, 0, 0, EST(Object)->instanceSize, 0, 
         EJS_TYPE_POT | EJS_TYPE_DYNAMIC_INSTANCES);
     if (type == 0) {
         return 0;
     }
     if (fun) {
         code = fun->body.code;
-        /*  using S(Object) as the return type because the Yahoo module pattern returns {} in the constructor */
+        /*  using ESV(Object) as the return type because the Yahoo module pattern returns {} in the constructor */
         ejsInitFunction(ejs, (EjsFunction*) type, type->qname.name, code->byteCode, code->codeLen, 
-            fun->numArgs, fun->numDefault, code->numHandlers, S(Object), EJS_TRAIT_HIDDEN | EJS_TRAIT_FIXED, 
+            fun->numArgs, fun->numDefault, code->numHandlers, ESV(Object), EJS_TRAIT_HIDDEN | EJS_TRAIT_FIXED, 
             code->module, NULL, fun->strict);
         type->constructor.activation = ejsClone(ejs, fun->activation, 0);
         type->constructor.boundThis = 0;
@@ -22053,7 +22056,7 @@ static int inheritProperties(Ejs *ejs, EjsType *type, EjsPot *obj, int destOffse
     for (i = destOffset; i < (destOffset + count); i++) {
         if ((vp = ejsGetProperty(ejs, obj, i)) != 0 && !ejsIs(ejs, vp, Null) && !ejsIsFunction(ejs, vp)) {
             if (ejsIsType(ejs, vp)) {
-                ejsSetProperty(ejs, obj, i, S(null));
+                ejsSetProperty(ejs, obj, i, ESV(null));
             }
         }
     }
@@ -22066,7 +22069,7 @@ static void fixInstanceSize(Ejs *ejs, EjsType *type)
 {
     EjsType     *tp;
 
-    for (tp = type->baseType; tp && tp != S(Object); tp = tp->baseType) {
+    for (tp = type->baseType; tp && tp != ESV(Object); tp = tp->baseType) {
         if (tp->instanceSize > type->instanceSize) {
             type->instanceSize = tp->instanceSize;
         }
@@ -22093,9 +22096,9 @@ int ejsFixupType(Ejs *ejs, EjsType *type, EjsType *baseType, int makeRoom)
         if (baseType->hasConstructor || baseType->hasBaseConstructors) {
             type->hasBaseConstructors = 1;
         }
-        //  TODO -- when compiling baseType is always != S(Object)
+        //  TODO -- when compiling baseType is always != ESV(Object)
         //  TODO - should not explicity reference objecttype
-        if (baseType != S(Object) && baseType->dynamicInstances) {
+        if (baseType != ESV(Object) && baseType->dynamicInstances) {
             type->dynamicInstances = 1;
         }
         type->hasInstanceVars |= baseType->hasInstanceVars;
@@ -22109,7 +22112,7 @@ int ejsFixupType(Ejs *ejs, EjsType *type, EjsType *baseType, int makeRoom)
         if (type->implements || baseType->prototype->numProp > 0) {
             fixupPrototypeProperties(ejs, type, baseType, makeRoom);
         }
-        if (baseType->isPot && baseType != S(Object)) {
+        if (baseType->isPot && baseType != ESV(Object)) {
             type->isPot = 1;
         }
    }
@@ -22311,7 +22314,7 @@ int ejsDefineGlobalFunction(Ejs *ejs, EjsString *name, EjsProc fn)
     EjsFunction *fun;
     EjsName     qname;
 
-    if ((fun = ejsCreateFunction(ejs, name, NULL, -1, 0, 0, 0, S(Object), 0, NULL, NULL, 0)) == 0) {
+    if ((fun = ejsCreateFunction(ejs, name, NULL, -1, 0, 0, 0, ESV(Object), 0, NULL, NULL, 0)) == 0) {
         return MPR_ERR_MEMORY;
     }
     fun->body.proc = fn;
@@ -22433,7 +22436,7 @@ static EjsType *cloneTypeVar(Ejs *ejs, EjsType *src, bool deep)
         ejsThrowTypeError(ejs, "Expecting a Type object");
         return 0;
     }
-    dest = (ST(Function)->helpers.clone)(ejs, src, deep);
+    dest = (EST(Function)->helpers.clone)(ejs, src, deep);
     if (dest == 0) {
         return dest;
     }
@@ -22548,7 +22551,7 @@ static int setTypeProperty(Ejs *ejs, EjsType *type, int slotNum, EjsObj *value)
         ejsThrowTypeError(ejs, "Object is not dynamic");
         return EJS_ERR;
     }
-    return (ST(Block)->helpers.setProperty)(ejs, type, slotNum, value);
+    return (EST(Block)->helpers.setProperty)(ejs, type, slotNum, value);
 }
 
 
@@ -22666,7 +22669,7 @@ static EjsUri *castToUri(Ejs *ejs, EjsObj *arg)
 {
     EjsUri  *up;
 
-    up = ejsCreateObj(ejs, S(Uri), 0);
+    up = ejsCreateObj(ejs, ESV(Uri), 0);
     if (ejsIs(ejs, arg, String)) {
         up->uri = httpCreateUri(up, ejsToMulti(ejs, arg), 0);
 
@@ -22720,33 +22723,33 @@ static EjsAny *coerceUriOperands(Ejs *ejs, EjsUri *lhs, int opcode,  EjsAny *rhs
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
         if (!ejsIsDefined(ejs, rhs)) {
-            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? ESV(false): ESV(true));
         }
         uri = lhs->uri;
         ustr = httpFormatUri(uri->scheme, uri->host, uri->port, uri->path, uri->reference, uri->query, 0);
         return ejsInvokeOperator(ejs, ejsCreateStringFromAsc(ejs, ustr), opcode, rhs);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_TRUE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_ZERO:
     case EJS_OP_COMPARE_FALSE:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
-        return S(false);
+        return ESV(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -22768,7 +22771,7 @@ static EjsAny *invokeUriOperator(Ejs *ejs, EjsUri *lhs, int opcode,  EjsUri *rhs
     case EJS_OP_COMPARE_STRICTLY_EQ:
     case EJS_OP_COMPARE_EQ:
         if (lhs == rhs || (lhs->uri == rhs->uri)) {
-            return S(true);
+            return ESV(true);
         }
         return ejsCreateBoolean(ejs,  same(ejs, lhs->uri, rhs->uri, 1));
 
@@ -22793,17 +22796,17 @@ static EjsAny *invokeUriOperator(Ejs *ejs, EjsUri *lhs, int opcode,  EjsUri *rhs
         Unary operators
      */
     case EJS_OP_COMPARE_NOT_ZERO:
-        return ((lhs->uri->path) ? S(true): S(false));
+        return ((lhs->uri->path) ? ESV(true): ESV(false));
 
     case EJS_OP_COMPARE_ZERO:
-        return ((lhs->uri->path == 0) ? S(true): S(false));
+        return ((lhs->uri->path == 0) ? ESV(true): ESV(false));
 
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
-        return S(false);
+        return ESV(false);
 
     /*  
         Binary operators
@@ -22874,7 +22877,7 @@ static EjsUri *uri_basename(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     np = cloneUri(ejs, up, 0);
     path = np->uri->path;
     if (path == 0) {
-        return S(empty);
+        return ESV(empty);
     }
     len = (int) strlen(path);
     if (path[len - 1] == '/') {
@@ -22967,7 +22970,7 @@ static EjsUri *uri_dirname(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     np = cloneUri(ejs, up, 0);
     path = np->uri->path;
     if (path == 0) {
-        return S(empty);
+        return ESV(empty);
     }
     len = (int) strlen(path);
     if (path[len - 1] == '/') {
@@ -23099,7 +23102,7 @@ static EjsBoolean *uri_hasScheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 static EjsString *uri_host(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     if (up->uri->host == 0) {
-        return S(null);
+        return ESV(null);
     }    
     return ejsCreateStringFromAsc(ejs, up->uri->host);
 }
@@ -23258,7 +23261,7 @@ static EjsNumber *uri_port(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     uri = up->uri;
     if (uri->port == 0) {
         if (uri->host == 0) {
-            return S(null);
+            return ESV(null);
         }
         if (uri->scheme == 0 || strcmp(uri->scheme, "http") == 0) {
             return ejsCreateNumber(ejs, 80);
@@ -23314,7 +23317,7 @@ static EjsUri *uri_resolve(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 
     uri = up->uri;
     target = toHttpUri(ejs, argv[0], 0);
-    result = ejsCreateObj(ejs, S(Uri), 0);
+    result = ejsCreateObj(ejs, ESV(Uri), 0);
     uri = httpResolveUri(uri, 1, &target, 0);
     if (up->uri == uri) {
         uri = httpCloneUri(uri, 0);
@@ -23333,7 +23336,7 @@ static EjsUri *uri_relative(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     HttpUri     *baseUri;
 
     baseUri = toHttpUri(ejs, argv[0], 0);
-    result = ejsCreateObj(ejs, S(Uri), 0);
+    result = ejsCreateObj(ejs, ESV(Uri), 0);
     result->uri = httpGetRelativeUri(baseUri, up->uri, 1);
     return result;
 }
@@ -23346,7 +23349,7 @@ static EjsUri *uri_relative(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 static EjsString *uri_scheme(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
 {
     if (up->uri->scheme == 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateStringFromAsc(ejs, up->uri->scheme);
 }
@@ -23421,7 +23424,7 @@ static EjsObj *uri_same(Ejs *ejs, EjsUri *up, int argc, EjsObj **argv)
     int     exact;
 
     other = (EjsUri*) argv[0];
-    exact = (argc == 2 && argv[1] == S(true));
+    exact = (argc == 2 && argv[1] == ESV(true));
     return ejsCreateBoolean(ejs, same(ejs, up->uri, other->uri, exact));
 }
 
@@ -23547,7 +23550,7 @@ static EjsUri *completeUri(Ejs *ejs, EjsUri *up, EjsObj *missing, int includeQue
     if (!ejsIsDefined(ejs, missing)) {
         missingUri = 0;
     } else if (ejsGetLength(ejs, missing) > 0) {
-        missingUri = ejsCreateObj(ejs, S(Uri), 0);
+        missingUri = ejsCreateObj(ejs, ESV(Uri), 0);
         missingUri->uri = createHttpUriFromHash(ejs, missing, 1);
     } else {
         missingUri = ejsToUri(ejs, missing);
@@ -23725,7 +23728,7 @@ EjsUri *ejsCreateUri(Ejs *ejs, EjsString *path)
 {
     EjsUri      *up;
 
-    if ((up = ejsCreateObj(ejs, S(Uri), 0)) == NULL) {
+    if ((up = ejsCreateObj(ejs, ESV(Uri), 0)) == NULL) {
         return 0;
     }
     uri_constructor(ejs, up, 1, (EjsObj**) &path);
@@ -23738,7 +23741,7 @@ EjsUri *ejsCreateUriFromMulti(Ejs *ejs, cchar *path)
     EjsUri      *up;
     EjsObj      *arg;
 
-    if ((up = ejsCreateObj(ejs, S(Uri), 0)) == 0) {
+    if ((up = ejsCreateObj(ejs, ESV(Uri), 0)) == 0) {
         return 0;
     }
     arg = (EjsObj*) ejsCreateStringFromAsc(ejs, path);
@@ -23752,7 +23755,7 @@ EjsUri *ejsCreateUriFromParts(Ejs *ejs, cchar *scheme, cchar *host, int port, cc
 {
     EjsUri      *up;
 
-    if ((up = ejsCreateObj(ejs, S(Uri), 0)) == 0) {
+    if ((up = ejsCreateObj(ejs, ESV(Uri), 0)) == 0) {
         return 0;
     }
     up->uri = httpCreateUriFromParts(scheme, host, port, path, reference, query, complete);
@@ -23893,10 +23896,10 @@ static EjsAny *castVoid(Ejs *ejs, EjsVoid *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return S(false);
+        return ESV(false);
 
     case S_Number:
-        return S(nan);
+        return ESV(nan);
 
     case S_Object:
         return vp;
@@ -23927,32 +23930,32 @@ static EjsAny *coerceVoidOperands(Ejs *ejs, EjsVoid *lhs, int opcode, EjsVoid *r
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, S(nan), opcode, rhs);
+        return ejsInvokeOperator(ejs, ESV(nan), opcode, rhs);
 
     /*
      *  Comparision
      */
     case EJS_OP_COMPARE_LE: case EJS_OP_COMPARE_LT:
     case EJS_OP_COMPARE_GE: case EJS_OP_COMPARE_GT:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_NE:
         if (ejsIs(ejs, rhs, Null)) {
-            return S(false);
+            return ESV(false);
         }
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_NE:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_EQ:
         if (ejsIs(ejs, rhs, Null)) {
-            return S(true);
+            return ESV(true);
         }
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
-        return S(false);
+        return ESV(false);
 
     /*
      *  Unary operators
@@ -23963,16 +23966,16 @@ static EjsAny *coerceVoidOperands(Ejs *ejs, EjsVoid *lhs, int opcode, EjsVoid *r
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -23999,27 +24002,27 @@ static EjsObj *invokeVoidOperator(Ejs *ejs, EjsVoid *lhs, int opcode, EjsVoid *r
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_NE: case EJS_OP_COMPARE_STRICTLY_NE:
     case EJS_OP_COMPARE_LT: case EJS_OP_COMPARE_GT:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     /*
      *  Unary operators
      */
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT: case EJS_OP_NEG:
-        return S(nan);
+        return ESV(nan);
 
     /*
      *  Binary operators
      */
     case EJS_OP_ADD: case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return S(nan);
+        return ESV(nan);
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not implemented for type %@", opcode, TYPE(lhs)->qname.name);
@@ -24050,7 +24053,7 @@ static EjsObj *getVoidProperty(Ejs *ejs, EjsVoid *unused, int slotNum)
  */
 EjsVoid *ejsCreateUndefined(Ejs *ejs)
 {
-    return (EjsVoid*) S(undefined);
+    return (EjsVoid*) ESV(undefined);
 }
 
 
@@ -24066,7 +24069,7 @@ void ejsCreateVoidType(Ejs *ejs)
     type->helpers.getProperty      = (EjsGetPropertyHelper) getVoidProperty;
 
     ejsAddImmutable(ejs, ES_undefined, EN("undefined"), ejsCreateObj(ejs, type, 0));
-    mprSetName(S(undefined), "undefined");
+    mprSetName(ESV(undefined), "undefined");
 }
 
 
@@ -24360,17 +24363,17 @@ static EjsObj *startWorker(Ejs *ejs, EjsWorker *outsideWorker, int timeout)
         return 0;
     }
     if (timeout == 0) {
-        return S(undefined);
+        return ESV(undefined);
     } 
     if (timeout < 0) {
         timeout = MAXINT;
     }
     if (join(ejs, (EjsObj*) outsideWorker, timeout) < 0) {
-        return S(undefined);
+        return ESV(undefined);
     }
     result = ejsToJSON(inside, inside->result, NULL);
     if (result == 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsDeserialize(ejs, result);
 }
@@ -24460,7 +24463,7 @@ static int reapJoins(Ejs *ejs, EjsObj *workers)
         if (completed == set->length) {
             joined = 1;
         }
-    } else if (TYPE(workers) == S(Worker)) {
+    } else if (TYPE(workers) == ESV(Worker)) {
         /* Join one worker */
         worker = (EjsWorker*) workers;
         if (worker->state >= EJS_WORKER_COMPLETE) {
@@ -24522,7 +24525,7 @@ static EjsObj *workerJoin(Ejs *ejs, EjsWorker *unused, int argc, EjsObj **argv)
     timeout = (argc == 2) ? ejsGetInt(ejs, argv[1]) : MAXINT;
     mprAssert(!MPR->marking);
 
-    return (join(ejs, workers, timeout) == 0) ? S(true): S(false);
+    return (join(ejs, workers, timeout) == 0) ? ESV(true): ESV(false);
 }
 
 
@@ -24588,7 +24591,7 @@ static EjsWorker *workerLookup(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv
         }
     }
     unlock(ejs);
-    return S(null);
+    return ESV(null);
 }
 
 
@@ -24614,12 +24617,12 @@ static int doMessage(Message *msg, MprEvent *mprEvent)
 
     switch (msg->callbackSlot) {
     case ES_Worker_onerror:
-        event = ejsCreateObj(ejs, S(ErrorEvent), 0);
+        event = ejsCreateObj(ejs, ESV(ErrorEvent), 0);
         break;
             
     case ES_Worker_onclose:
     case ES_Worker_onmessage:
-        event = ejsCreateObj(ejs, S(Event), 0);
+        event = ejsCreateObj(ejs, ESV(Event), 0);
         break;
             
     default:
@@ -24701,7 +24704,7 @@ static EjsObj *workerPreeval(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **arg
     }
     result = ejsToJSON(inside, inside->result, NULL);
     if (result == 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsDeserialize(ejs, result);
 }
@@ -24735,7 +24738,7 @@ static EjsObj *workerPreload(Ejs *ejs, EjsWorker *worker, int argc, EjsObj **arg
     }
     result = ejsToJSON(inside, inside->result, NULL);
     if (result == 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsDeserialize(ejs, result);
 }
@@ -24903,9 +24906,9 @@ static EjsBoolean *workerWaitForMessage(Ejs *ejs, EjsWorker *worker, int argc, E
 
     if (worker->gotMessage) {
         worker->gotMessage = 0;
-        return S(true);
+        return ESV(true);
     } else {
-        return S(true);
+        return ESV(true);
     }
 }
 
@@ -24965,7 +24968,7 @@ static void handleError(Ejs *ejs, EjsWorker *worker, EjsObj *exception, int thro
 
 EjsWorker *ejsCreateWorker(Ejs *ejs)
 {
-    return ejsCreateObj(ejs, S(Worker), 0);
+    return ejsCreateObj(ejs, ESV(Worker), 0);
 }
 
 
@@ -25124,7 +25127,7 @@ static EjsAny *castXml(Ejs *ejs, EjsXML *xml, EjsType *type)
 
     mprAssert(ejsIsXML(ejs, xml));
 
-    if (type == S(XMLList)) {
+    if (type == ESV(XMLList)) {
         return xml;
     }
 
@@ -25135,13 +25138,13 @@ static EjsAny *castXml(Ejs *ejs, EjsXML *xml, EjsType *type)
         return ejsCreateBoolean(ejs, 1);
 
     case S_Number:
-        result = castXml(ejs, xml, S(String));
+        result = castXml(ejs, xml, ESV(String));
         return ejsToNumber(ejs, result);
 
     case S_String:
         if (xml->kind == EJS_XML_ELEMENT) {
             if (xml->elements == 0) {
-                return S(empty);
+                return ESV(empty);
             }
             if (xml->elements && mprGetListLength(xml->elements) == 1) {
                 //  TODO - what about PI and comments?
@@ -25881,7 +25884,7 @@ static EjsString *xmlToJson(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
  */
 static EjsObj *xmlToString(Ejs *ejs, EjsObj *obj, int argc, EjsObj **argv)
 {
-    return (TYPE(obj)->helpers.cast)(ejs, obj, S(String));
+    return (TYPE(obj)->helpers.cast)(ejs, obj, ESV(String));
 }
 
 
@@ -25916,14 +25919,14 @@ static EjsObj *setLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 
     if (length < ap->length) {
         for (i = length; i < ap->length; i++) {
-            if (ejsSetProperty(ejs, ap, i, S(undefined)) < 0) {
+            if (ejsSetProperty(ejs, ap, i, ESV(undefined)) < 0) {
                 //  TODO - DIAG
                 return 0;
             }
         }
 
     } else if (length > ap->length) {
-        if (ejsSetProperty(ejs, ap, length - 1, S(undefined)) < 0) {
+        if (ejsSetProperty(ejs, ap, length - 1, ESV(undefined)) < 0) {
             //  TODO - DIAG
             return 0;
         }
@@ -25940,7 +25943,7 @@ static EjsObj *setLength(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
  */
 static EjsObj *xml_parent(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 {
-    return (xml->parent && xml != xml->parent) ? (EjsObj*) xml->parent : (EjsObj*) S(null);
+    return (xml->parent && xml != xml->parent) ? (EjsObj*) xml->parent : (EjsObj*) ESV(null);
 }
 
 /*
@@ -26062,7 +26065,7 @@ EjsXML *ejsCreateXML(Ejs *ejs, int kind, EjsName qname, EjsXML *parent, EjsStrin
 {
     EjsXML      *xml;
 
-    if ((xml = (EjsXML*) ejsAlloc(ejs, S(XML), 0)) == NULL) {
+    if ((xml = (EjsXML*) ejsAlloc(ejs, ESV(XML), 0)) == NULL) {
         return 0;
     }
     if (qname.name) {
@@ -26298,7 +26301,7 @@ static EjsObj *xlCast(Ejs *ejs, EjsXML *vp, EjsType *type)
     EjsXML      *elt, *item;
     int         next;
 
-    if (type == S(XML)) {
+    if (type == ESV(XML)) {
         return (EjsObj*) vp;
     }
     switch (type->sid) {
@@ -26308,7 +26311,7 @@ static EjsObj *xlCast(Ejs *ejs, EjsXML *vp, EjsType *type)
         return (EjsObj*) ejsCreateBoolean(ejs, 1);
 
     case S_Number:
-        result = xlCast(ejs, vp, S(String));
+        result = xlCast(ejs, vp, ESV(String));
         result = (EjsObj*) ejsToNumber(ejs, result);
         return result;
 
@@ -26318,7 +26321,7 @@ static EjsObj *xlCast(Ejs *ejs, EjsXML *vp, EjsType *type)
             elt = mprGetFirstItem(vp->elements);
             if (elt->kind == EJS_XML_ELEMENT) {
                 if (elt->elements == 0) {
-                    return (EjsObj*) S(empty);
+                    return (EjsObj*) ESV(empty);
                 }
                 if (elt->elements && mprGetListLength(elt->elements) == 1) {
                     //  TODO - what about PI and comments?
@@ -26431,7 +26434,7 @@ static EjsObj *getXmlListNodeName(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv
     } else if (xml->targetObject) {
         return (EjsObj*) xml->targetObject->qname.name;
     } else {
-        return S(null);
+        return ESV(null);
     }
 }
 
@@ -26777,7 +26780,7 @@ static int setXmlListPropertyByName(Ejs *ejs, EjsXML *list, EjsName qname, EjsOb
  */
 static EjsObj *xl_parent(Ejs *ejs, EjsXML *xml, int argc, EjsObj **argv)
 {
-    return xml->targetObject ? (EjsObj*) xml->targetObject : (EjsObj*) S(null);
+    return xml->targetObject ? (EjsObj*) xml->targetObject : (EjsObj*) ESV(null);
 }
 
 
@@ -26864,7 +26867,7 @@ static EjsXML *resolve(Ejs *ejs, EjsXML *xml)
         /*
             Create the property as an element (The text value will be optimized away).
          */
-        ejsSetPropertyByName(ejs, targetObject, xml->targetProperty, S(empty));
+        ejsSetPropertyByName(ejs, targetObject, xml->targetProperty, ESV(empty));
         targetPropertyList = ejsGetPropertyByName(ejs, (EjsObj*) targetObject, xml->targetProperty);
     }
     return targetPropertyList;
@@ -26943,7 +26946,7 @@ static EjsObj *xmlListToJson(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
  */
 static EjsObj *xmlListToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
-    return (TYPE(vp)->helpers.cast)(ejs, vp, S(String));
+    return (TYPE(vp)->helpers.cast)(ejs, vp, ESV(String));
 }
 
 
@@ -26980,14 +26983,14 @@ static EjsObj *setLength(Ejs *ejs, EjsXMLList *xml, int argc, EjsObj **argv)
 #if KEEP
     if (length < ap->length) {
         for (i = length; i < ap->length; i++) {
-            if (ejsSetProperty(ejs, ap, i, S(undefined)) < 0) {
+            if (ejsSetProperty(ejs, ap, i, ESV(undefined)) < 0) {
                 //  TODO - DIAG
                 return 0;
             }
         }
 
     } else if (length > ap->length) {
-        if (ejsSetProperty(ejs, ap, length - 1, S(undefined)) < 0) {
+        if (ejsSetProperty(ejs, ap, length - 1, ESV(undefined)) < 0) {
             //  TODO - DIAG
             return 0;
         }
@@ -27005,7 +27008,7 @@ EjsXML *ejsCreateXMLList(Ejs *ejs, EjsXML *targetObject, EjsName targetProperty)
 {
     EjsXML      *list;
 
-    if ((list = (EjsXML*) ejsAlloc(ejs, S(XMLList), 0)) == NULL) {
+    if ((list = (EjsXML*) ejsAlloc(ejs, ESV(XMLList), 0)) == NULL) {
         return 0;
     }
     list->kind = EJS_XML_LIST;
@@ -27157,8 +27160,8 @@ MprXml *ejsCreateXmlParser(Ejs *ejs, EjsXML *xml, cchar *filename)
     parser->nodeStack[0].obj = xml;
     
     //  TODO - these 2 are not really needed. Can use ejs->
-    parser->xmlType = S(XML);
-    parser->xmlListType = S(XMLList);
+    parser->xmlType = ESV(XML);
+    parser->xmlListType = ESV(XMLList);
     parser->filename = filename;
 
     mprXmlSetParseArg(xp, parser);
@@ -27587,7 +27590,7 @@ static EjsAny *createException(Ejs *ejs, EjsType *type, cchar* fmt, va_list fmtA
         mprAssert(argv[0]);
         return 0;
     }
-    if (ST(Error)->constructor.body.proc) {
+    if (EST(Error)->constructor.body.proc) {
         error = (EjsError*) ejsCreateInstance(ejs, type, 1, argv);
     } else {
         error = ejsCreatePot(ejs, type, 0);
@@ -27608,7 +27611,7 @@ EjsAny *ejsCreateException(Ejs *ejs, int slot, cchar *fmt, va_list fmtArgs)
     }
     type = (ejs->initialized) ? ejsGetProperty(ejs, ejs->global, slot) : NULL;
     if (type == 0) {
-        type = ST(Error);
+        type = EST(Error);
     }
     error = createException(ejs, type, fmt, fmtArgs);
     if (error) {
@@ -27803,7 +27806,7 @@ EjsArray *ejsCaptureStack(Ejs *ejs, int uplevels)
                     ejsSetPropertyByName(ejs, frame, EN("lineno"), ejsCreateNumber(ejs, lineNumber));
                     ejsSetPropertyByName(ejs, frame, EN("code"), ejsCreateString(ejs, source, wlen(source)));
                 } else {
-                    ejsSetPropertyByName(ejs, frame, EN("filename"), ST(undefined));
+                    ejsSetPropertyByName(ejs, frame, EN("filename"), EST(undefined));
                 }
                 ejsSetPropertyByName(ejs, frame, EN("func"), fp->function.name);
                 ejsSetProperty(ejs, stack, index++, frame);
@@ -27848,11 +27851,11 @@ cchar *ejsGetErrorMsg(Ejs *ejs, int withStack)
             tag = ejsCreateStringFromAsc(ejs, "Error");
             message = (EjsString*) error;
             
-        } else if (error == ST(StopIteration)) {
+        } else if (error == EST(StopIteration)) {
             message = ejsCreateStringFromAsc(ejs, "Uncaught StopIteration exception");
         }
     }
-    if (message == S(null) || message == 0) {
+    if (message == ESV(null) || message == 0) {
         msg = ejsCreateStringFromAsc(ejs, "Exception");
     } else{
         msg = ejsToString(ejs, message);
@@ -28320,7 +28323,7 @@ EjsNumber *ejsToNumber(Ejs *ejs, EjsAny *vp)
         return (EjsNumber*) vp;
     }
     if (TYPE(vp)->helpers.cast) {
-        return (TYPE(vp)->helpers.cast)(ejs, vp, ST(Number));
+        return (TYPE(vp)->helpers.cast)(ejs, vp, EST(Number));
     }
     ejsThrowInternalError(ejs, "CastVar helper not defined for type \"%@\"", TYPE(vp)->qname.name);
     return 0;
@@ -28337,7 +28340,7 @@ EjsBoolean *ejsToBoolean(Ejs *ejs, EjsAny *vp)
         return (EjsBoolean*) vp;
     }
     if (TYPE(vp)->helpers.cast) {
-        return (TYPE(vp)->helpers.cast)(ejs, vp, ST(Boolean));
+        return (TYPE(vp)->helpers.cast)(ejs, vp, EST(Boolean));
     }
     ejsThrowInternalError(ejs, "CastVar helper not defined for type \"%@\"", TYPE(vp)->qname.name);
     return 0;
@@ -28427,7 +28430,7 @@ static EjsAny *castObj(Ejs *ejs, EjsObj *obj, EjsType *type)
 
     case ES_String:
         if (!ejsIsType(ejs, obj) && !ejsIsPrototype(ejs, obj)) {
-            if (ejsLookupVar(ejs, obj, EN("toString"), &lookup) >= 0 && lookup.obj != ST(Object)->prototype) {
+            if (ejsLookupVar(ejs, obj, EN("toString"), &lookup) >= 0 && lookup.obj != EST(Object)->prototype) {
                 fun = ejsGetProperty(ejs, lookup.obj, lookup.slotNum);
                 if (fun && ejsIsFunction(ejs, fun) && fun->body.proc != (EjsFun) ejsObjToString) {
                     result = ejsRunFunction(ejs, fun, obj, 0, NULL);
@@ -28475,11 +28478,11 @@ EjsAny *ejsCoerceOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
 
     case EJS_OP_AND: case EJS_OP_DIV: case EJS_OP_MUL: case EJS_OP_OR: case EJS_OP_REM:
     case EJS_OP_SHL: case EJS_OP_SHR: case EJS_OP_SUB: case EJS_OP_USHR: case EJS_OP_XOR:
-        return ejsInvokeOperator(ejs, S(zero), opcode, rhs);
+        return ejsInvokeOperator(ejs, ESV(zero), opcode, rhs);
 
     case EJS_OP_COMPARE_EQ:  case EJS_OP_COMPARE_NE:
         if (!ejsIsDefined(ejs, rhs)) {
-            return ((opcode == EJS_OP_COMPARE_EQ) ? S(false): S(true));
+            return ((opcode == EJS_OP_COMPARE_EQ) ? ESV(false): ESV(true));
         } else if (ejsIs(ejs, rhs, Number)) {
             return ejsInvokeOperator(ejs, ejsToNumber(ejs, lhs), opcode, rhs);
         }
@@ -28496,13 +28499,13 @@ EjsAny *ejsCoerceOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NOT_ZERO:
     case EJS_OP_COMPARE_NULL:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_STRICTLY_EQ:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     /* Unary operators */
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT:
@@ -28510,7 +28513,7 @@ EjsAny *ejsCoerceOperands(Ejs *ejs, EjsObj *lhs, int opcode, EjsObj *rhs)
 
     default:
         ejsThrowTypeError(ejs, "Opcode %d not valid for type %@", opcode, TYPE(lhs)->qname.name);
-        return S(undefined);
+        return ESV(undefined);
     }
     return 0;
 }
@@ -28539,17 +28542,17 @@ EjsAny *ejsInvokeOperatorDefault(Ejs *ejs, EjsAny *lhs, int opcode, EjsAny *rhs)
     /* Unary operators */
 
     case EJS_OP_COMPARE_NOT_ZERO:
-        return S(true);
+        return ESV(true);
 
     case EJS_OP_COMPARE_UNDEFINED:
     case EJS_OP_COMPARE_NULL:
     case EJS_OP_COMPARE_FALSE:
     case EJS_OP_COMPARE_TRUE:
     case EJS_OP_COMPARE_ZERO:
-        return S(false);
+        return ESV(false);
 
     case EJS_OP_LOGICAL_NOT: case EJS_OP_NOT: case EJS_OP_NEG:
-        return S(one);
+        return ESV(one);
 
     /* Binary operators */
 
@@ -28590,7 +28593,7 @@ static int deletePropertyByName(Ejs *ejs, EjsObj *obj, EjsName qname)
 
 static EjsObj *getProperty(Ejs *ejs, EjsObj *obj, int slotNum)
 {
-    if (obj == 0 || obj == S(null) || obj == S(undefined)) {
+    if (obj == 0 || obj == ESV(null) || obj == ESV(undefined)) {
         ejsThrowReferenceError(ejs, "Object is null");
         return NULL;
     }
@@ -28628,7 +28631,7 @@ static int lookupProperty(struct Ejs *ejs, EjsObj *obj, EjsName qname)
 
 static int setProperty(Ejs *ejs, EjsObj *obj, int slotNum, EjsObj *value)
 {
-    if (obj == 0 || obj == S(null) || obj == S(undefined)) {
+    if (obj == 0 || obj == ESV(null) || obj == ESV(undefined)) {
         ejsThrowReferenceError(ejs, "Object is null");
         return EJS_ERR;
     }
@@ -28639,7 +28642,7 @@ static int setProperty(Ejs *ejs, EjsObj *obj, int slotNum, EjsObj *value)
 
 static int setPropertyName(Ejs *ejs, EjsObj *obj, int slotNum, EjsName qname)
 {
-    if (obj == 0 || obj == S(null) || obj == S(undefined)) {
+    if (obj == 0 || obj == ESV(null) || obj == ESV(undefined)) {
         ejsThrowReferenceError(ejs, "Object is null");
         return EJS_ERR;
     }
@@ -28650,7 +28653,7 @@ static int setPropertyName(Ejs *ejs, EjsObj *obj, int slotNum, EjsName qname)
 
 static int setPropertyTraits(Ejs *ejs, EjsObj *obj, int slot, EjsType *type, int attributes)
 {
-    if (obj == 0 || obj == S(null) || obj == S(undefined)) {
+    if (obj == 0 || obj == ESV(null) || obj == ESV(undefined)) {
         ejsThrowReferenceError(ejs, "Object is null");
         return EJS_ERR;
     }
@@ -28688,7 +28691,7 @@ EjsName ejsEmptyName(Ejs *ejs, cchar *name)
     EjsName     n;
 
     n.name = ejsCreateStringFromAsc(ejs, name);
-    n.space = S(empty);
+    n.space = ESV(empty);
     return n;
 }
 
@@ -28698,7 +28701,7 @@ EjsName ejsEmptyWideName(Ejs *ejs, MprChar *name)
     EjsName     n;
 
     n.name = ejsCreateString(ejs, name, strlen(name));
-    n.space = S(empty);
+    n.space = ESV(empty);
     return n;
 }
 
@@ -28754,10 +28757,10 @@ EjsAny *ejsParse(Ejs *ejs, MprChar *str, int preferredType)
 
         } else if (!isdigit((int) *buf) && *buf != '.') {
             if (mcmp(buf, "true") == 0) {
-                return S(true);
+                return ESV(true);
 
             } else if (mcmp(buf, "false") == 0) {
-                return S(false);
+                return ESV(false);
             }
             sid = S_String;
 
@@ -28840,7 +28843,7 @@ static MprNumber parseNumber(Ejs *ejs, MprChar *str)
         str++;
     }
     if (*str != '.' && !isdigit((int) *str)) {
-        return ((EjsNumber*) S(nan))->value;
+        return ((EjsNumber*) ESV(nan))->value;
     }
     /*
         Floatng format: [DIGITS].[DIGITS][(e|E)[+|-]DIGITS]
@@ -29126,7 +29129,7 @@ static MPR_INLINE void checkGetter(Ejs *ejs, EjsAny *value, EjsAny *thisObj, Ejs
             }
         }
     } else if (value == 0) {
-        value = S(undefined);
+        value = ESV(undefined);
     }
     pushOutside(ejs, value);
 }
@@ -29487,7 +29490,7 @@ static void *opcodeJump[] = {
              */
             if (ejs->result == 0) {
                 // OPT - remove this
-                ejs->result = S(undefined);
+                ejs->result = ESV(undefined);
             }
             if (FRAME->getter) {
                 push(ejs->result);
@@ -29512,8 +29515,8 @@ static void *opcodeJump[] = {
                 if (FRAME->function.resultType) {
                     type = FRAME->function.resultType;
                     //  TODO remove this voidType
-                    if (type != ST(Void) && !ejsIsA(ejs, ejs->result, type)) {
-                        if (ejs->result == S(null) || ejs->result == S(undefined)) {
+                    if (type != EST(Void) && !ejsIsA(ejs, ejs->result, type)) {
+                        if (ejs->result == ESV(null) || ejs->result == ESV(undefined)) {
                             if (FRAME->function.throwNulls) {
                                 ejsThrowTypeError(ejs, "Unacceptable null or undefined return value");
                                 BREAK;
@@ -29546,7 +29549,7 @@ static void *opcodeJump[] = {
                 Return
          */
         CASE (EJS_OP_RETURN):
-            ejs->result = S(undefined);
+            ejs->result = ESV(undefined);
             if (FRAME->caller == 0) {
                 goto done;
             }
@@ -29667,7 +29670,7 @@ static void *opcodeJump[] = {
                 Stack after         [XML]
          */
         CASE (EJS_OP_LOAD_XML):
-            v1 = ejsCreateObj(ejs, ST(XML), 0);
+            v1 = ejsCreateObj(ejs, EST(XML), 0);
             str = GET_STRING();
             ejsLoadXMLString(ejs, (EjsXML*) v1, str);
             push(v1);
@@ -29696,7 +29699,7 @@ static void *opcodeJump[] = {
                 Stack after         [Null]
          */
         CASE (EJS_OP_LOAD_NULL):
-            push(S(null));
+            push(ESV(null));
             BREAK;
 
         /*
@@ -29706,7 +29709,7 @@ static void *opcodeJump[] = {
                 Stack after         [undefined]
          */
         CASE (EJS_OP_LOAD_UNDEFINED):
-            push(S(undefined));
+            push(ESV(undefined));
             BREAK;
 
         CASE (EJS_OP_LOAD_THIS):
@@ -29750,7 +29753,7 @@ static void *opcodeJump[] = {
                 Stack after         [true]
          */
         CASE (EJS_OP_LOAD_TRUE):
-            push(S(true));
+            push(ESV(true));
             BREAK;
 
         /*
@@ -29760,7 +29763,7 @@ static void *opcodeJump[] = {
                 Stack after         [false]
          */
         CASE (EJS_OP_LOAD_FALSE):
-            push(S(false));
+            push(ESV(false));
             BREAK;
 
         /*
@@ -29938,12 +29941,12 @@ static void *opcodeJump[] = {
             }
             vp = ejsGetVarByName(ejs, NULL, qname, &lookup);
             if (unlikely(vp == 0)) {
-                push(S(undefined));
+                push(ESV(undefined));
             } else {
                 CHECK_VALUE(vp, NULL, lookup.obj, lookup.slotNum);
             }
 #if DYNAMIC_BINDING
-            if (ejs->flags & EJS_FLAG_COMPILER || TYPE(lookup.obj) == ST(Object) || lookup.slotNum >= 4096) {
+            if (ejs->flags & EJS_FLAG_COMPILER || TYPE(lookup.obj) == EST(Object) || lookup.slotNum >= 4096) {
                 BREAK;
             }
             if (lookup.obj == ejs->global) {
@@ -29982,7 +29985,7 @@ static void *opcodeJump[] = {
 #endif
             qname = GET_NAME();
             vp = pop(ejs);
-            if (vp == S(null) || vp == S(undefined)) {
+            if (vp == ESV(null) || vp == ESV(undefined)) {
                 ejsThrowReferenceError(ejs, "Object reference is null");
                 BREAK;
             }
@@ -30044,7 +30047,7 @@ static void *opcodeJump[] = {
             mark = FRAME->pc - 1;
             qname = GET_NAME();
             vp = pop(ejs);
-            if (vp == S(null) || vp == S(undefined)) {
+            if (vp == ESV(null) || vp == ESV(undefined)) {
                 ejsThrowReferenceError(ejs, "Object reference is null");
                 BREAK;
             }
@@ -30075,13 +30078,13 @@ static void *opcodeJump[] = {
             v1 = pop(ejs);
             v2 = pop(ejs);
             vp = pop(ejs);
-            if (vp == 0 || vp == S(null) || vp == S(undefined)) {
+            if (vp == 0 || vp == ESV(null) || vp == ESV(undefined)) {
                 ejsThrowReferenceError(ejs, "Object reference is null");
                 BREAK;
             }
             if (TYPE(vp)->numericIndicies && ejsIs(ejs, v1, Number)) {
                 vp = ejsGetProperty(ejs, vp, ejsGetInt(ejs, v1));
-                push(vp == 0 ? S(null) : vp);
+                push(vp == 0 ? ESV(null) : vp);
                 BREAK;
             } else {
                 qname.name = ejsToString(ejs, v1);
@@ -30386,7 +30389,7 @@ static void *opcodeJump[] = {
             argc += ejs->spreadArgs;
             ejs->spreadArgs = 0;
             vp = state->stack[-argc];
-            if (vp == S(null) || vp == S(undefined)) {
+            if (vp == ESV(null) || vp == ESV(undefined)) {
                 //  TODO -- refactor
                 if (vp && (slotNum == ES_Object_iterator_get || slotNum == ES_Object_iterator_getValues)) {
                     callProperty(ejs, TYPE(vp), slotNum, vp, argc, 1);
@@ -30441,7 +30444,7 @@ static void *opcodeJump[] = {
             argc += ejs->spreadArgs;
             ejs->spreadArgs = 0;
             vp = state->stack[-argc];
-            if (vp == 0 || vp == S(null) || vp == S(undefined)) {
+            if (vp == 0 || vp == ESV(null) || vp == ESV(undefined)) {
                 ejsThrowReferenceError(ejs, "Object reference is null");
             } else {
                 callProperty(ejs, vp, slotNum, vp, argc, 1);
@@ -30462,7 +30465,7 @@ static void *opcodeJump[] = {
             argc += ejs->spreadArgs;
             ejs->spreadArgs = 0;
             vp = state->stack[-argc];
-            if (vp == S(null) || vp == S(undefined)) {
+            if (vp == ESV(null) || vp == ESV(undefined)) {
                 throwNull(ejs);
             } else {
                 type = (EjsType*) getNthBase(ejs, vp, nthBase);
@@ -30483,7 +30486,7 @@ static void *opcodeJump[] = {
             argc += ejs->spreadArgs;
             ejs->spreadArgs = 0;
             type = (EjsType*) getNthBase(ejs, THIS, nthBase);
-            if (type == ST(Object)) {
+            if (type == EST(Object)) {
                 //  TODO - remove
                 ejsThrowReferenceError(ejs, "Bad type reference");
                 BREAK;
@@ -30544,7 +30547,7 @@ static void *opcodeJump[] = {
 
             } else if (!ejsIsFunction(ejs, fun)) {
                 if (!ejs->exception) {
-                    if ((EjsObj*) vp == (EjsObj*) S(undefined)) {
+                    if ((EjsObj*) vp == (EjsObj*) ESV(undefined)) {
                         ejsThrowReferenceError(ejs, "Function is undefined");
                     } else {
                         ejsThrowReferenceError(ejs, "Reference is not a function");
@@ -30582,7 +30585,7 @@ static void *opcodeJump[] = {
             argc += ejs->spreadArgs;
             ejs->spreadArgs = 0;
             vp = state->stack[-argc];
-            if (vp == 0 || vp == S(null) || vp == S(undefined)) {
+            if (vp == 0 || vp == ESV(null) || vp == ESV(undefined)) {
                 throwNull(ejs);
                 BREAK;
             }
@@ -31050,7 +31053,7 @@ static void *opcodeJump[] = {
                 Stack after         []
          */
         CASE (EJS_OP_BRANCH_NULL):
-            push(S(null));
+            push(ESV(null));
             offset = GET_WORD();
             goto commonBranchCode;
 
@@ -31061,7 +31064,7 @@ static void *opcodeJump[] = {
                 Stack after         []
          */
         CASE (EJS_OP_BRANCH_UNDEFINED):
-            push(S(undefined));
+            push(ESV(undefined));
             offset = GET_WORD();
             goto commonBranchCode;
 
@@ -31081,7 +31084,7 @@ static void *opcodeJump[] = {
                 Stack after         []
          */
         CASE (EJS_OP_BRANCH_NOT_ZERO):
-            push(S(zero));
+            push(ESV(zero));
             offset = GET_WORD();
             goto commonBranchCode;
 
@@ -31200,7 +31203,7 @@ static void *opcodeJump[] = {
                 Stack after         [boolean]
          */
         CASE (EJS_OP_COMPARE_NULL):
-            push(S(null));
+            push(ESV(null));
             goto binaryExpression;
 
         /*
@@ -31210,7 +31213,7 @@ static void *opcodeJump[] = {
                 Stack after         [boolean]
          */
         CASE (EJS_OP_COMPARE_UNDEFINED):
-            push(S(undefined));
+            push(ESV(undefined));
             goto binaryExpression;
 
         /*
@@ -31507,13 +31510,13 @@ static void *opcodeJump[] = {
             vp = pop(ejs);
             slotNum = ejsLookupVar(ejs, vp, qname, &lookup);
             if (slotNum < 0) {
-                push(S(true));
+                push(ESV(true));
             } else {
                 if (ejsPropertyHasTrait(ejs, lookup.obj, slotNum, EJS_TRAIT_FIXED)) {
-                    push(S(false));
+                    push(ESV(false));
                 } else {
                     ejsDeletePropertyByName(ejs, lookup.obj, lookup.name);
-                    push(S(true));
+                    push(ESV(true));
                 }
             }
             BREAK;
@@ -31535,13 +31538,13 @@ static void *opcodeJump[] = {
             }
             slotNum = ejsLookupScope(ejs, qname, &lookup);
             if (slotNum < 0) {
-                push(S(true));
+                push(ESV(true));
             } else {
                 if (ejsPropertyHasTrait(ejs, lookup.obj, slotNum, EJS_TRAIT_FIXED)) {
-                    push(S(false));
+                    push(ESV(false));
                 } else {
                     ejsDeletePropertyByName(ejs, lookup.obj, lookup.name);
-                    push(S(true));
+                    push(ESV(true));
                 }
             }
             BREAK;
@@ -31623,7 +31626,7 @@ static void *opcodeJump[] = {
                 EjsName n = { nameVar, NULL };
                 slotNum = ejsLookupProperty(ejs, v1, n);
                 if (slotNum < 0) {
-                    n.space = S(empty);
+                    n.space = ESV(empty);
                     slotNum = ejsLookupVar(ejs, v1, n, &lookup);
                     if (slotNum < 0 && ejsIsType(ejs, v1)) {
                         slotNum = ejsLookupVar(ejs, ((EjsType*) v1)->prototype, n, &lookup);
@@ -31687,7 +31690,7 @@ static void storePropertyToSlot(Ejs *ejs, EjsObj *thisObj, EjsAny *obj, int slot
         }
         if (trait->type) {
             if (!ejsIsA(ejs, value, trait->type)) {
-                if (value == S(null) || value == S(undefined)) {
+                if (value == ESV(null) || value == ESV(undefined)) {
                     if (trait->attributes & EJS_TRAIT_THROW_NULLS) {
                         ejsThrowTypeError(ejs, "Unacceptable null or undefined value");
                         return;
@@ -31708,8 +31711,8 @@ static void storePropertyToSlot(Ejs *ejs, EjsObj *thisObj, EjsAny *obj, int slot
         if (trait->attributes & EJS_TRAIT_READONLY) {
             EjsName  qname;
             vp = ejsGetProperty(ejs, obj, slotNum);
-            if (vp != value && vp != S(null) && vp != S(undefined)) {
-                if (ejsInvokeOperator(ejs, vp, EJS_OP_COMPARE_EQ, value) != S(true)) {
+            if (vp != value && vp != ESV(null) && vp != ESV(undefined)) {
+                if (ejsInvokeOperator(ejs, vp, EJS_OP_COMPARE_EQ, value) != ESV(true)) {
                     qname = ejsGetPropertyName(ejs, obj, slotNum);
                     ejsThrowReferenceError(ejs, "Property \"%@\" is not writable", qname.name);
                     return;
@@ -31841,7 +31844,7 @@ EjsObj *ejsRunInitializer(Ejs *ejs, EjsModule *mp)
     
     if (mp->initialized || !mp->hasInitializer) {
         mp->initialized = 1;
-        result = S(null);
+        result = ESV(null);
     } else {
         mp->initialized = 1;
         if (mp->dependencies) {
@@ -31853,7 +31856,7 @@ EjsObj *ejsRunInitializer(Ejs *ejs, EjsModule *mp)
                 }
             }
         }
-        mprLog(6, "Running initializer for module %@", mp->name);
+        mprLog(7, "Running initializer for module %@", mp->name);
         result = ejsRunFunction(ejs, mp->initializer, ejs->global, 0, NULL);
     }
     return result;
@@ -31914,7 +31917,7 @@ EjsAny *ejsRunFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, vo
         ejs->result = (fun->body.proc)(ejs, thisObj, argc, argv);
         ejs->state->stack -= argc;
         if (ejs->result == 0) {
-            ejs->result = S(null);
+            ejs->result = ESV(null);
         }
 
     } else {
@@ -32015,7 +32018,7 @@ static int validateArgs(Ejs *ejs, EjsFunction *fun, int argc, void *args)
             } else {
                 /* Create undefined values for missing args for script functions */
                 for (i = argc; i < nonDefault; i++) {
-                    pushOutside(ejs, S(undefined));
+                    pushOutside(ejs, ESV(undefined));
                 }
                 argc = nonDefault;
             }
@@ -32059,7 +32062,7 @@ static int validateArgs(Ejs *ejs, EjsFunction *fun, int argc, void *args)
         }
         type = trait->type;
         if (!ejsIsA(ejs, argv[i], type)) {
-            if ((argv[i] == S(null) || argv[i] == S(undefined))) {
+            if ((argv[i] == ESV(null) || argv[i] == ESV(undefined))) {
                 if (trait->attributes & EJS_TRAIT_THROW_NULLS) {
                     badArgType(ejs, activation, trait, i);
                     return EJS_ERR;
@@ -32305,7 +32308,7 @@ static void checkExceptionHandlers(Ejs *ejs)
     mprAssert(pc >= 0);
 
 rescan:
-    if (!fp->function.inException || (ejs->exception == ST(StopIteration))) {
+    if (!fp->function.inException || (ejs->exception == EST(StopIteration))) {
         /*
             Normal exception in a try block. NOTE: the catch will jump or fall through to the finally block code.
             ie. We won't come here again for the finally code unless there is an exception in the catch block.
@@ -32472,10 +32475,10 @@ static EjsAny *evalBinaryExpr(Ejs *ejs, EjsAny *lhs, EjsOpCode opcode, EjsAny *r
     int         slotNum;
 
     if (lhs == 0) {
-        lhs = S(undefined);
+        lhs = ESV(undefined);
     }
     if (rhs == 0) {
-        rhs = S(undefined);
+        rhs = ESV(undefined);
     }
     result = ejsInvokeOperator(ejs, lhs, opcode, rhs);
 
@@ -32715,7 +32718,7 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
         }
         
     } else if (!ejsIsFunction(ejs, fun)) {
-        if (fun == S(undefined)) {
+        if (fun == ESV(undefined)) {
             ejsThrowReferenceError(ejs, "Function is undefined");
             return;
         } else {
@@ -32769,7 +32772,7 @@ static void callFunction(Ejs *ejs, EjsFunction *fun, EjsAny *thisObj, int argc, 
         ejs->result = (fun->body.proc)(ejs, thisObj, argc, argv);
         state->paused = fstate;
         if (ejs->result == 0) {
-            ejs->result = S(null);
+            ejs->result = ESV(null);
         }
         state->stack -= (argc + stackAdjust);
 
@@ -33241,7 +33244,7 @@ static int initializeModule(Ejs *ejs, EjsModule *mp)
         if (nativeModule && (nativeModule->callback)(ejs) < 0) {
             return MPR_ERR_CANT_INITIALIZE;
         }
-        if (ejs->hasError || ST(Error) == 0 || mprHasMemError(ejs)) {
+        if (ejs->hasError || EST(Error) == 0 || mprHasMemError(ejs)) {
             if (!ejs->exception) {
                 ejsThrowIOError(ejs, "Initialization error for %s (%d, %d)", mp->path, ejs->hasError, mprHasMemError(ejs));
             }
@@ -33581,7 +33584,7 @@ static int loadBlockSection(Ejs *ejs, EjsModule *mp)
             return MPR_ERR_CANT_CREATE;
         }
     }
-    slotNum = ejsDefineProperty(ejs, current, slotNum, qname, ST(Block), 0, bp);
+    slotNum = ejsDefineProperty(ejs, current, slotNum, qname, EST(Block), 0, bp);
     if (slotNum < 0) {
         return MPR_ERR_CANT_WRITE;
     }
@@ -33637,7 +33640,7 @@ static int loadClassSection(Ejs *ejs, EjsModule *mp)
         if (attributes & EJS_TYPE_FIXUP) {
             baseType = 0;
             if (fixup == 0) {
-                fixup = createFixup(ejs, mp, (baseType) ? baseType->qname : ST(Object)->qname, -1);
+                fixup = createFixup(ejs, mp, (baseType) ? baseType->qname : EST(Object)->qname, -1);
             }
         }
         mprLog(9, "    Load %@ class %@ for module %@ at slotNum %d", qname.space, qname.name, mp->name, slotNum);
@@ -33690,7 +33693,7 @@ static int loadClassSection(Ejs *ejs, EjsModule *mp)
             }
         }
     }
-    slotNum = ejsDefineProperty(ejs, ejs->global, slotNum, qname, ST(Type), attributes, (EjsObj*) type);
+    slotNum = ejsDefineProperty(ejs, ejs->global, slotNum, qname, EST(Type), attributes, (EjsObj*) type);
     if (slotNum < 0) {
         ejsThrowMemoryError(ejs);
         return MPR_ERR_MEMORY;
@@ -33849,7 +33852,7 @@ static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
                 mp->initializer = fun;
                 slotNum = -1;
             } else {
-                if ((slotNum = ejsDefineProperty(ejs, block, slotNum, qname, ST(Function), attributes, fun)) < 0) {
+                if ((slotNum = ejsDefineProperty(ejs, block, slotNum, qname, EST(Function), attributes, fun)) < 0) {
                     return MPR_ERR_MEMORY;
                 }
             }
@@ -33870,7 +33873,7 @@ static int loadFunctionSection(Ejs *ejs, EjsModule *mp)
         if (attributes & EJS_TRAIT_SETTER && fun->setter) {
             fun = fun->setter;
         }
-        if ((slotNum = ejsDefineProperty(ejs, block, slotNum, qname, ST(Function), attributes, fun)) < 0) {
+        if ((slotNum = ejsDefineProperty(ejs, block, slotNum, qname, EST(Function), attributes, fun)) < 0) {
             return MPR_ERR_MEMORY;
         }
         mprAssert(fun->endFunction);
@@ -34407,7 +34410,7 @@ static char *searchForModule(Ejs *ejs, cchar *moduleName, int minVersion, int ma
     withDotMod = makeModuleName(moduleName);
     name = mprGetNormalizedPath(withDotMod);
 
-    mprLog(6, "Search for module \"%s\"", name);
+    mprLog(7, "Search for module \"%s\"", name);
 
     /*
         1. Search for path directly
@@ -34527,7 +34530,6 @@ char *ejsSearchForModule(Ejs *ejs, cchar *moduleName, int minVersion, int maxVer
     withDotMod = makeModuleName(moduleName);
     name = mprGetNormalizedPath(withDotMod);
 
-    mprLog(6, "Search for module \"%s\"", name);
     path = searchForModule(ejs, name, minVersion, maxVersion);
     if (path) {
         mprLog(6, "Found %s at %s", name, path);
@@ -34629,7 +34631,7 @@ int ejsModuleReadType(Ejs *ejs, EjsModule *mp, EjsType **typeRef, EjsTypeFixup *
         slot = t >> 2;
         if (0 <= slot && slot < ejsGetLength(ejs, ejs->global)) {
             type = ejsGetProperty(ejs, ejs->global, slot);
-            if (type && (EjsObj*) type != S(null)) {
+            if (type && (EjsObj*) type != ESV(null)) {
                 qname = type->qname;
             }
         }
@@ -34656,7 +34658,7 @@ int ejsModuleReadType(Ejs *ejs, EjsModule *mp, EjsType **typeRef, EjsTypeFixup *
         }
         break;
     }
-    if (type == S(null)) {
+    if (type == ESV(null)) {
         type = 0;
     }
     if (type) {
@@ -35068,7 +35070,7 @@ EjsConstants *ejsCreateConstants(Ejs *ejs, int count, ssize size)
     if ((constants->index = mprAlloc(count * sizeof(EjsString*))) == NULL) {
         return 0;
     }
-    constants->index[0] = S(empty);
+    constants->index[0] = ESV(empty);
     constants->indexCount = 1;
     return constants;
 }
@@ -35227,8 +35229,11 @@ static EjsDebug *loadDebug(Ejs *ejs, EjsFunction *fun)
     code = fun->body.code;
     prior = 0;
     debug = NULL;
-    lock(mp);
 
+    /*
+        Synchronize with ejsLoadModule. May be multiple threads using immutable types
+     */
+    lock(mp);
     if (mp->file == 0) {
         if ((mp->file = mprOpenFile(mp->path, O_RDONLY | O_BINARY, 0666)) == NULL) {
             mprLog(5, "Can't open module file %s", mp->path);
@@ -36366,7 +36371,6 @@ static void manageEjs(Ejs *ejs, int flags)
     int         next;
 
     if (flags & MPR_MANAGE_MARK) {
-        mprAssert(!ejs->destroying);
         mprMark(ejs->global);
         mprMark(ejs->name);
         mprMark(ejs->doc);
@@ -36660,7 +36664,7 @@ static int configureEjs(Ejs *ejs)
     /* 
         Order matters
      */
-    if (!ST(Object)->configured) {
+    if (!EST(Object)->configured) {
         ejsConfigureGlobalBlock(ejs);
         ejsConfigureObjectType(ejs);
         ejsConfigureIteratorType(ejs);
@@ -36979,7 +36983,7 @@ int ejsSendEventv(Ejs *ejs, EjsObj *emitter, cchar *name, EjsAny *thisObj, int a
         argv = args;
         av = mprAlloc((argc + 2) * sizeof(EjsObj*));
         av[0] = (EjsObj*) ejsCreateStringFromAsc(ejs, name);
-        av[1] = thisObj ? thisObj : S(null);
+        av[1] = thisObj ? thisObj : ESV(null);
         for (i = 0; i < argc; i++) {
             av[i + 2] = argv[i];
         }
@@ -37091,9 +37095,9 @@ int ejsRedirectLogging(cchar *logSpec)
 
     level = 0;
     if (logSpec == 0) {
-        logSpec = "stdout:1";
+        logSpec = "stderr:1";
     } else {
-        MPR->logging = 1;
+        mprSetCmdlineLogging(1);
     }
     spec = sclone(logSpec);
 
@@ -37252,15 +37256,15 @@ void ejsUnlockVm(Ejs *ejs)
 }
 
 
-void ejsLockService(Ejs *ejs)
+void ejsLockService()
 {
-    mprLock(ejs->service->mutex);
+    mprLock(((EjsService*) MPR->ejsService)->mutex);
 }
 
 
-void ejsUnlockService(Ejs *ejs)
+void ejsUnlockService()
 {
-    mprUnlock(ejs->service->mutex);
+    mprUnlock(((EjsService*) MPR->ejsService)->mutex);
 }
 
 
@@ -37380,15 +37384,14 @@ void ejsDisableExit(Ejs *ejs)
 
 #include    "sqlite3.h"
 
-
-#define THREAD_STYLE SQLITE_CONFIG_MULTITHREAD
-//#define THREAD_STYLE SQLITE_CONFIG_SERIALIZED
-
 /*
-    Map allocation and mutex routines. Can't use this (yet) as allocated memory must be marked
+    Map allocation and mutex routines to use ejscript version.
  */
 #define MAP_ALLOC   1
 #define MAP_MUTEXES 1
+
+#define THREAD_STYLE SQLITE_CONFIG_MULTITHREAD
+//#define THREAD_STYLE SQLITE_CONFIG_SERIALIZED
 
 /*
     Ejscript Sqlite class object
@@ -37399,6 +37402,10 @@ typedef struct EjsSqlite {
     Ejs             *ejs;           /* Interp reference */
     int             memory;         /* In-memory database */
 } EjsSqlite;
+
+static int sqliteInitialized;
+
+static void initSqlite();
 
 /*
     DB Constructor and also used for constructor for sub classes.
@@ -37422,6 +37429,9 @@ static EjsObj *sqliteConstructor(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **arg
     db->ejs = ejs;
     options = argv[0];
     
+    if (!sqliteInitialized) {
+        initSqlite();
+    }
     /*
         TODO - this will create a database if it doesn't exist. Should have more control over creating databases.
      */
@@ -37430,7 +37440,7 @@ static EjsObj *sqliteConstructor(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **arg
     } else {
         path = ejsToMulti(ejs, ejsToString(ejs, ejsGetPropertyByName(ejs, options, EN("name"))));
     }
-#if SECURITY_RISK
+#if MEMORY_BASED_SQLITE
     if (strncmp(path, "memory://", 9) == 0) {
         sdb = (sqlite3*) (size_t) stoi(&path[9], 10, NULL);
 
@@ -37453,7 +37463,7 @@ static EjsObj *sqliteConstructor(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **arg
             ejsThrowArgError(ejs, "Unknown SQLite database URI %s", path);
             return 0;
         }
-#if SECURITY_RISK
+#if MEMORY_BASED_SQLITE
     }
 #endif
     db->sdb = sdb;
@@ -37605,7 +37615,9 @@ static EjsObj *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **argv)
 
 
 #if MAP_ALLOC
-
+/*
+    Map memory allocations to use MPR
+ */
 static void *allocBlock(int size)
 {
     void    *ptr;
@@ -37663,7 +37675,9 @@ struct sqlite3_mem_methods mem = {
 #endif /* MAP_ALLOC */
 
 #if MAP_MUTEXES
-
+/*
+    Map mutexes to use MPR
+ */
 static int initMutex(void) { 
     return 0; 
 }
@@ -37742,6 +37756,27 @@ static int manageSqlite(EjsSqlite *db, int flags)
 }
 
 
+static void initSqlite()
+{
+    ejsLockService();
+    if (!sqliteInitialized) {
+#if MAP_ALLOC
+        sqlite3_config(SQLITE_CONFIG_MALLOC, &mem);
+#endif
+#if MAP_MUTEXES
+        sqlite3_config(SQLITE_CONFIG_MUTEX, &mut);
+#endif
+        sqlite3_config(THREAD_STYLE);
+        if (sqlite3_initialize() != SQLITE_OK) {
+            mprError("Can't initialize SQLite");
+            return;
+        }
+        sqliteInitialized = 1;
+    }
+    ejsUnlockService();
+}
+
+
 static int configureSqliteTypes(Ejs *ejs)
 {
     EjsType     *type;
@@ -37756,6 +37791,7 @@ static int configureSqliteTypes(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_db_sqlite_Sqlite_close, sqliteClose);
     ejsBindMethod(ejs, prototype, ES_ejs_db_sqlite_Sqlite_sql, sqliteSql);
 
+#if UNUSED
 #if MAP_ALLOC
     sqlite3_config(SQLITE_CONFIG_MALLOC, &mem);
 #endif
@@ -37767,6 +37803,7 @@ static int configureSqliteTypes(Ejs *ejs)
         mprError("Can't initialize SQLite");
         return MPR_ERR_CANT_INITIALIZE;
     }
+#endif
     return 0;
 }
 
@@ -38085,7 +38122,7 @@ static EjsString *hs_address(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **arg
     if (sp->ip) {
         return ejsCreateStringFromAsc(ejs, sp->ip);
     } 
-    return S(null);
+    return ESV(null);
 }
 
 
@@ -38113,7 +38150,7 @@ static EjsRequest *hs_accept(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **arg
  */
 static EjsObj *hs_async(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
-    return (sp->async) ? S(true): S(false);
+    return (sp->async) ? ESV(true): ESV(false);
 }
 
 
@@ -38183,7 +38220,7 @@ static EjsObj *hs_setLimits(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
     if ((vp = ejsGetPropertyByName(ejs, sp->limits, EN("sessionTimeout"))) != 0) {
         app = ejsGetPropertyByName(ejs, ejs->global, N("ejs", "App"));
         cache = ejsGetProperty(ejs, app, ES_App_cache);
-        if (cache && cache != S(null)) {
+        if (cache && cache != ESV(null)) {
             cacheLimits = ejsCreateEmptyPot(ejs);
             ejsSetPropertyByName(ejs, cacheLimits, EN("lifespan"), vp);
             ejsCacheSetLimits(ejs, cache, cacheLimits);
@@ -38198,7 +38235,7 @@ static EjsObj *hs_setLimits(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
  */
 static EjsObj *hs_isSecure(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
-    return sp->ssl ? S(true): S(false);
+    return sp->ssl ? ESV(true): ESV(false);
 }
 
 
@@ -38214,8 +38251,8 @@ static EjsVoid *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     EjsObj      *endpoint, *options;
     EjsPath     *home, *documents;
 
-    endpoint = (argc >= 1) ? argv[0] : S(null);
-    if (endpoint != S(null)) {
+    endpoint = (argc >= 1) ? argv[0] : ESV(null);
+    if (endpoint != ESV(null)) {
         address = ejsToString(ejs, endpoint);
         mprParseIp(address->value, &sp->ip, &sp->port, 0);
     } else {
@@ -38223,7 +38260,7 @@ static EjsVoid *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     }
     if (ejs->hosted) {
         if ((options = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_options)) != 0) {
-            sp->hosted = ejsGetPropertyByName(ejs, options, EN("own")) != S(true);
+            sp->hosted = ejsGetPropertyByName(ejs, options, EN("own")) != ESV(true);
         }
     }
     if (!sp->hosted) {
@@ -38296,7 +38333,7 @@ static EjsString *hs_name(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     if (sp->name) {
         return ejsCreateStringFromAsc(ejs, sp->name);
     }
-    return S(null);
+    return ESV(null);
 }
 
 
@@ -38677,7 +38714,7 @@ static void incomingEjsData(HttpQueue *q, HttpPacket *packet)
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
         }
         httpPutForService(q, packet, 0);
-        if (rx->form || rx->upload) {
+        if (rx->form) {
             rx->formVars = httpAddVarsFromQueue(rx->formVars, q);
         }
     } else {
@@ -38816,7 +38853,7 @@ HttpStage *ejsAddWebHandler(Http *http, MprModule *module)
     if (http->ejsHandler) {
         return http->ejsHandler;
     }
-    handler = httpCreateHandler(http, "ejsHandler", HTTP_STAGE_ALL | HTTP_STAGE_QUERY_VARS | HTTP_STAGE_FORM_VARS, module);
+    handler = httpCreateHandler(http, "ejsHandler", HTTP_STAGE_ALL | HTTP_STAGE_QUERY_VARS, module);
     if (handler == 0) {
         return 0;
     }
@@ -39109,10 +39146,10 @@ static EjsObj *createCookies(Ejs *ejs, EjsRequest *req)
         return req->cookies;
     }
     if (req->conn == 0) {
-        return S(null);
+        return ESV(null);
     }
     if ((cookieHeader = mprLookupKey(req->conn->rx->headers, "cookie")) == 0) {
-        req->cookies = S(null);
+        req->cookies = ESV(null);
     } else {
         argv[0] = (EjsObj*) ejsCreateStringFromAsc(ejs, cookieHeader);
         req->cookies = ejsRunFunctionByName(ejs, ejs->global, N("ejs.web", "parseCookies"), ejs->global, 1, argv);
@@ -39140,11 +39177,11 @@ static EjsObj *createFiles(Ejs *ejs, EjsRequest *req)
 
     if (req->files == 0) {
         if (req->conn == 0) {
-            return S(null);
+            return ESV(null);
         }
         conn = req->conn;
         if (conn->rx->files == 0) {
-            return S(null);
+            return ESV(null);
         }
         req->files = files = (EjsObj*) ejsCreateEmptyPot(ejs);
         for (index = 0, hp = 0; (hp = mprGetNextKey(conn->rx->files, hp)) != 0; index++) {
@@ -39315,7 +39352,7 @@ static EjsSession *getSession(Ejs *ejs, EjsRequest *req, int create)
 static EjsString *createString(Ejs *ejs, cchar *value)
 {
     if (value == 0) {
-        return S(null);
+        return ESV(null);
     }
     return ejsCreateStringFromAsc(ejs, value);
 }
@@ -39351,7 +39388,7 @@ static cchar *getRequestString(Ejs *ejs, EjsObj *value)
 static EjsAny *mapNull(Ejs *ejs, EjsAny *value)
 {
     if (value == 0) {
-        return S(null);
+        return ESV(null);
     }
     return value;
 }
@@ -39449,7 +39486,7 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
                 uri = mprAsprintf("%s://%s:%d%s/", scheme, ip, port, conn->rx->scriptName);
                 req->absHome = (EjsObj*) ejsCreateUriFromMulti(ejs, uri);
             } else {
-                req->absHome = S(null);
+                req->absHome = ESV(null);
             }
         }
         return req->absHome;
@@ -39467,7 +39504,7 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return ejsCreateBoolean(ejs, !req->dontAutoFinalize);
 
     case ES_ejs_web_Request_config:
-        value = ST(Object)->helpers.getProperty(ejs, req, slotNum);
+        value = EST(Object)->helpers.getProperty(ejs, req, slotNum);
         if (value == 0 || ejsIs(ejs, value, Null)) {
             /* Default to App.config */
             app = ejsGetProperty(ejs, ejs->global, ES_App);
@@ -39483,12 +39520,12 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         if (conn) {
             createHeaders(ejs, req);
             return mapNull(ejs, ejsGetPropertyByName(ejs, req->headers, EN("content-type")));
-        } else return S(null);
+        } else return ESV(null);
 
     case ES_ejs_web_Request_cookies:
         if (conn) {
             return createCookies(ejs, req);
-        } else return S(null);
+        } else return ESV(null);
 
     case ES_ejs_web_Request_dir:
         return req->dir;
@@ -39509,7 +39546,7 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
                 req->filename = ejsCreatePathFromAsc(ejs, pathInfo);
             }
         }
-        return req->filename ? (EjsObj*) req->filename : S(null);
+        return req->filename ? (EjsObj*) req->filename : ESV(null);
 
     case ES_ejs_web_Request_files:
         return createFiles(ejs, req);
@@ -39521,7 +39558,7 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         if (req->home == 0) {
             if (conn) {
                 req->home = ejsCreateUriFromMulti(ejs, makeRelativeHome(ejs, req));
-            } else return S(null);
+            } else return ESV(null);
         }
         return req->home;
 
@@ -39562,7 +39599,7 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
                 req->originalUri = (EjsObj*) ejsCreateUriFromParts(ejs, scheme, getHost(conn, req), req->server->port, 
                     conn->rx->uri, conn->rx->parsedUri->query, conn->rx->parsedUri->reference, 0);
             } else {
-                return S(null);
+                return ESV(null);
             }
         }
         return req->originalUri;
@@ -39577,7 +39614,7 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         if (req->port == 0) {
             if (req->server) {
                 req->port = ejsCreateNumber(ejs, req->server->port);
-            } else return S(null);
+            } else return ESV(null);
         }
         return req->port;
 
@@ -39618,7 +39655,7 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         return req->scheme;
 
     case ES_ejs_web_Request_scriptName:
-        return req->scriptName ? req->scriptName : S(empty);
+        return req->scriptName ? req->scriptName : ESV(empty);
 
     case ES_ejs_web_Request_server:
         return req->server;
@@ -39627,16 +39664,16 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
         if (req->session == 0) {
             req->session = getSession(ejs, req, 1);
         }
-        return req->session ? req->session : S(null);
+        return req->session ? req->session : ESV(null);
 
     case ES_ejs_web_Request_sessionID:
         getSession(ejs, req, 0);
-        return (req->session) ? req->session->key : S(null);
+        return (req->session) ? req->session->key : ESV(null);
 
     case ES_ejs_web_Request_status:
         if (conn) {
             return ejsCreateNumber(ejs, conn->tx->status);
-        } else return S(null);
+        } else return ESV(null);
 
     case ES_ejs_web_Request_uri:
         if (req->uri == 0) {
@@ -39668,7 +39705,7 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
 
     default:
         if (slotNum < req->pot.numProp) {
-            return ST(Object)->helpers.getProperty(ejs, req, slotNum);
+            return EST(Object)->helpers.getProperty(ejs, req, slotNum);
         }
     }
     return 0;
@@ -39721,7 +39758,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
 
     switch (slotNum) {
     default:
-        return ST(Object)->helpers.setProperty(ejs, req, slotNum, value);
+        return EST(Object)->helpers.setProperty(ejs, req, slotNum, value);
 
     case ES_ejs_web_Request_config:
         req->config = value;
@@ -39791,7 +39828,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
         break;
 
     case ES_ejs_web_Request_responded:
-        req->responded = (value == S(true));
+        req->responded = (value == ESV(true));
         break;
 
     case ES_ejs_web_Request_responseHeaders:
@@ -39903,7 +39940,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
  */
 static EjsObj *req_async(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -39912,7 +39949,7 @@ static EjsObj *req_async(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
  */
 static EjsObj *req_set_async(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    if (argv[0] != S(true)) {
+    if (argv[0] != ESV(true)) {
         ejsThrowIOError(ejs, "Request only supports async mode");
     }
     return 0;
@@ -40035,7 +40072,7 @@ static EjsObj *req_header(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
             }
         }
     }
-    return (value) ? value : S(null);
+    return (value) ? value : ESV(null);
 }
 
 
@@ -40107,7 +40144,7 @@ static EjsNumber *req_read(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     if (nbytes == 0) {
         if (httpIsEof(req->conn)) {
             //  TODO -- should this set req->conn to zero?
-            return S(null);
+            return ESV(null);
         }
     }
     ba->writePosition += nbytes;
@@ -40128,7 +40165,7 @@ static EjsObj *req_setHeader(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     if (!connOk(ejs, req, 1)) return 0;
     key = ejsToMulti(ejs, argv[0]);
     value = (EjsString*) argv[1];
-    overwrite = argc < 3 || argv[2] == S(true);
+    overwrite = argc < 3 || argv[2] == ESV(true);
     createResponseHeaders(ejs, req);
     if (!overwrite) {
         if ((old = ejsGetPropertyByName(ejs, req->responseHeaders, EN(key))) != 0) {
@@ -40267,19 +40304,19 @@ static EjsObj *req_writeFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     tx = conn->tx;
 
     if (rx->ranges || conn->secure || tx->chunkSize > 0) {
-        return S(false);
+        return ESV(false);
     }
     path = (EjsPath*) argv[0];
     if (mprGetPathInfo(path->value, &info) < 0) {
         ejsThrowIOError(ejs, "Cannot open %s", path->value);
-        return S(false);
+        return ESV(false);
     }
     packet = httpCreateEntityPacket(0, info.size, NULL);
     tx->length = tx->entityLength = info.size;
     httpSetSendConnector(req->conn, path->value);
     httpPutForService(conn->writeq, packet, 0);
     httpFinalize(req->conn);
-    return S(true);
+    return ESV(true);
 }
 
 
@@ -40534,7 +40571,7 @@ static EjsSession *initSession(Ejs *ejs, EjsSession *sp, EjsString *key, MprTime
     EjsObj      *app;
 
     app = ejsGetPropertyByName(ejs, ejs->global, N("ejs", "App"));
-    if ((sp->cache = ejsGetProperty(ejs, app, ES_App_cache)) == S(null)) {
+    if ((sp->cache = ejsGetProperty(ejs, app, ES_App_cache)) == ESV(null)) {
         ejsThrowStateError(ejs, "App.cache is null");
         sp->cache = 0;
         return 0;
@@ -40636,7 +40673,7 @@ static EjsObj *getSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum)
     value = ejs->service->potHelpers.getProperty(ejs, sp, slotNum);
     if (ejsIs(ejs, value, Void)) {
         /*  Return empty string so that web pages can access session values without having to test for null/undefined */
-        value = S(empty);
+        value = ESV(empty);
     }
     return value;
 }
@@ -40648,7 +40685,7 @@ static EjsObj *getSessionPropertyByName(Ejs *ejs, EjsSession *sp, EjsName qname)
 
     getSessionState(ejs, sp);
     slotNum = ejs->service->potHelpers.lookupProperty(ejs, sp, qname);
-    return (slotNum < 0) ? S(empty) : ejs->service->potHelpers.getProperty(ejs, sp, slotNum);
+    return (slotNum < 0) ? ESV(empty) : ejs->service->potHelpers.getProperty(ejs, sp, slotNum);
 }
 
 
@@ -41411,7 +41448,7 @@ static EjsType *defineClass(EcCompiler *cp, EcNode *np)
     /*
         Define a property for the type in global
      */
-    slotNum = ejsDefineProperty(ejs, ejs->global, slotNum, np->qname, ST(Type), attributes, type);
+    slotNum = ejsDefineProperty(ejs, ejs->global, slotNum, np->qname, EST(Type), attributes, type);
     if (slotNum < 0) {
         astError(cp, np, "Can't install type %n",  np->qname);
         return 0;
@@ -41424,7 +41461,7 @@ static EjsType *defineClass(EcCompiler *cp, EcNode *np)
         qname.name = ejsCreateStringFromAsc(ejs, mprAsprintf("-%@-", type->qname.name));
         qname.space = ejsCreateStringFromAsc(ejs, EJS_INIT_NAMESPACE);
         fatt = EJS_TRAIT_HIDDEN | EJS_PROP_STATIC;
-        ejsDefineProperty(ejs, type, 0, qname, ST(Function), fatt, S(null));
+        ejsDefineProperty(ejs, type, 0, qname, EST(Function), fatt, ESV(null));
         constructorNode = np->klass.constructor;
         if (constructorNode && !constructorNode->function.isDefault) {
             type->hasConstructor = 1;
@@ -41509,7 +41546,7 @@ static void bindClass(EcCompiler *cp, EcNode *np)
             Create the static initializer function. Code gen will fill out the code
          */
         mp = state->currentModule;
-        fun = ejsCreateFunction(ejs, np->qname.name, NULL, -1, 0, 0, 0, ST(Void), EJS_FUN_INITIALIZER, mp, NULL, 
+        fun = ejsCreateFunction(ejs, np->qname.name, NULL, -1, 0, 0, 0, EST(Void), EJS_FUN_INITIALIZER, mp, NULL, 
             cp->fileState->strict);
         np->klass.initializer = fun;
         ejsSetProperty(ejs, type, 0, fun);
@@ -42261,13 +42298,13 @@ static void astFunction(EcCompiler *cp, EcNode *np)
      */
     if (cp->phase >= EC_PHASE_BIND) {
         if (!np->function.hasReturn && (np->function.resultType != 0)) {
-            if (fun->resultType == 0 || fun->resultType != ST(Void)) {
+            if (fun->resultType == 0 || fun->resultType != EST(Void)) {
                 /*
                     Native classes have no body defined in script, so we can't verify whether or not it has 
                     an appropriate return.
                  */
                 if (!(state->currentClass && state->currentClass->isInterface) && !(np->attributes & EJS_PROP_NATIVE)) {
-                    if (ejs->initialized || fun->resultType == 0 || fun->resultType != ST(Void)) {
+                    if (ejs->initialized || fun->resultType == 0 || fun->resultType != EST(Void)) {
                         astError(cp, np, "Function \"%@\" must return a value",  np->qname.name);
                     }
                 }
@@ -42333,7 +42370,7 @@ static void astForIn(EcCompiler *cp, EcNode *np)
      */
     if (cp->phase >= EC_PHASE_BIND) {
         np->forInLoop.iterNext->qname = N("public", "next");
-        rc = resolveName(cp, np->forInLoop.iterNext, ST(Iterator)->prototype, np->forInLoop.iterNext->qname);
+        rc = resolveName(cp, np->forInLoop.iterNext, EST(Iterator)->prototype, np->forInLoop.iterNext->qname);
         np->forInLoop.iterNext->lookup.bind = 0;
     }
     if (np->forInLoop.body) {
@@ -42375,7 +42412,7 @@ static EjsObj *evalNode(EcCompiler *cp, EcNode *np)
     }
     /*  Install the Config object as a local variable in the initializer function */
     config = ejsGetPropertyByName(ejs, ejs->global, N("ejs", "Config"));
-    ejsDefineProperty(ejs, mp->initializer->activation, 0, EN("Config"), ST(Type), 0, config);
+    ejsDefineProperty(ejs, mp->initializer->activation, 0, EN("Config"), EST(Type), 0, config);
     ejsDefineConfigProperties(ejs);
 
     result = ejsRunInitializer(ejs, mp);
@@ -42700,7 +42737,7 @@ static void astBindName(EcCompiler *cp, EcNode *np)
                     Ugly (but effective) hack just for XML to discriminate between length and length()
                     TODO - refactor away
                  */
-                if (type == ST(XML) || type == ST(XMLList)) {
+                if (type == EST(XML) || type == EST(XMLList)) {
                     if (np->parent == 0 || np->parent->parent == 0 || np->parent->parent->kind != N_CALL) {
                         lookup->bind = 0;
                     }
@@ -42888,7 +42925,7 @@ static void astReturn(EcCompiler *cp, EcNode *np)
         fun = state->currentFunction;
         if (fun->hasReturn) {
             if (np->left) {
-                if (fun->resultType && fun->resultType == ST(Void)) {
+                if (fun->resultType && fun->resultType == EST(Void)) {
                     /*
                         Allow block-less function expressions where a return node was generated by the parser.
                      */
@@ -42898,8 +42935,8 @@ static void astReturn(EcCompiler *cp, EcNode *np)
                 }
 
             } else {
-                if (fun->resultType && fun->resultType != ST(Void)) {
-                    if (! (!ejs->initialized && fun->resultType->qname.name == ST(Void)->qname.name)) {
+                if (fun->resultType && fun->resultType != EST(Void)) {
+                    if (! (!ejs->initialized && fun->resultType->qname.name == EST(Void)->qname.name)) {
                         astError(cp, np, "Return in function \"%@\" must return a value", functionNode->qname.name);
                     }
                 }
@@ -43640,7 +43677,7 @@ static void astInitVar(EcCompiler *cp, EcNode *np)
                 /*
                     Erase the value incase being run in the ejs shell. Must not prematurely define values.
                  */
-                ejsSetProperty(ejs, state->varBlock, slotNum, S(undefined));
+                ejsSetProperty(ejs, state->varBlock, slotNum, ESV(undefined));
             }
         }
     }
@@ -43773,7 +43810,7 @@ static EjsFunction *createModuleInitializer(EcCompiler *cp, EcNode *np, EjsModul
 
     ejs = cp->ejs;
     
-    fun = ejsCreateFunction(ejs, mp->name, 0, -1, 0, 0, 0, ST(Void), EJS_FUN_MODULE_INITIALIZER, mp, mp->scope, 
+    fun = ejsCreateFunction(ejs, mp->name, 0, -1, 0, 0, 0, EST(Void), EJS_FUN_MODULE_INITIALIZER, mp, mp->scope, 
         cp->state->strict);
     if (fun == 0) {
         astError(cp, np, "Can't create initializer function");
@@ -44170,7 +44207,7 @@ static void fixupClass(EcCompiler *cp, EjsType *type)
                 qname.name = np->klass.extends;
                 baseType = (EjsType*) getTypeProperty(cp, ejs->global, qname);
             } else {
-                if (! (!ejs->initialized && type->qname.name == ST(Object)->qname.name)) {
+                if (! (!ejs->initialized && type->qname.name == EST(Object)->qname.name)) {
                     baseType = (EjsType*) getTypeProperty(cp, ejs->global, N(EJS_EJS_NAMESPACE, "Object"));
                 }
             }
@@ -44192,7 +44229,7 @@ static void fixupClass(EcCompiler *cp, EjsType *type)
         }
     }
     if (baseType == 0) {
-        if (! (!ejs->initialized && type->qname.name == ST(Object)->qname.name) && !np->klass.isInterface) {
+        if (! (!ejs->initialized && type->qname.name == EST(Object)->qname.name) && !np->klass.isInterface) {
             astError(cp, np, "Can't find base type for %@", type->qname.name);
             SET_VISITED(type, 0);
             LEAVE(cp);
@@ -44268,7 +44305,7 @@ static void fixupClass(EcCompiler *cp, EjsType *type)
     if (ejs->empty) {
         typeType = (EjsType*) getTypeProperty(cp, ejs->global, N(EJS_EJS_NAMESPACE, "Type"));
     } else {
-        typeType = ST(Type);
+        typeType = EST(Type);
     }
     if (typeType == 0) {
         astError(cp, 0, "Can't find Type class");
@@ -44438,7 +44475,7 @@ static int resolveName(EcCompiler *cp, EcNode *np, EjsAny *vp, EjsName qname)
         lookup->nthBlock = 0;
     }
     mprAssert(lookup->ref);    
-    if (lookup->ref == S(null)) {
+    if (lookup->ref == ESV(null)) {
         lookup->ref = 0;
     }
 
@@ -44727,7 +44764,7 @@ int ecLookupScope(EcCompiler *cp, EjsName name)
 
     ejs = cp->ejs;
     if (name.space == NULL) {
-        name.space = S(empty);
+        name.space = ESV(empty);
     }
     lookup = &cp->lookup;
     state = ejs->state;
@@ -44803,7 +44840,7 @@ int ecLookupVar(EcCompiler *cp, EjsAny *obj, EjsName name)
     ejs = cp->ejs;
     lookup = &cp->lookup;
     if (name.space == NULL) {
-        name.space = S(empty);
+        name.space = ESV(empty);
     }
     memset(lookup, 0, sizeof(*lookup));
 
@@ -45453,7 +45490,7 @@ static void genDelete(EcCompiler *cp, EcNode *np)
         } else {
             /* delete obj[expr] */
             ecEncodeOpcode(cp, EJS_OP_LOAD_STRING);
-            ecEncodeConst(cp, S(empty));
+            ecEncodeConst(cp, ESV(empty));
             processNode(cp, lright);
             ecEncodeOpcode(cp, EJS_OP_DELETE_NAME_EXPR);
             popStack(cp, 2);
@@ -45956,7 +45993,7 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
     if (staticMethod) {
         mprAssert(ejsIsType(ejs, lookup->obj));
         if (state->currentClass && state->inFunction && 
-                lookup->obj != ST(Object)) {
+                lookup->obj != EST(Object)) {
             /*
                 Calling a static method from within a class or subclass. So we can use "this".
              */
@@ -46101,7 +46138,7 @@ static void genCall(EcCompiler *cp, EcNode *np)
      */
     hasResult = 0;
     if (fun && ejsIsFunction(ejs, fun)) {
-        if (fun->resultType && fun->resultType != ST(Void)) {
+        if (fun->resultType && fun->resultType != EST(Void)) {
             hasResult = 1;
 
         } else if (fun->hasReturn || ejsIsType(ejs, fun)) {
@@ -46450,7 +46487,7 @@ static void genDot(EcCompiler *cp, EcNode *np, EcNode **rightMost)
         state->currentObjectNode = 0;
         state->needsValue = 1;
         ecEncodeOpcode(cp, EJS_OP_LOAD_STRING);
-        ecEncodeConst(cp, S(empty));
+        ecEncodeConst(cp, ESV(empty));
         pushStack(cp, 1);
         if (right->kind == N_LITERAL) {
             genLiteral(cp, right);
@@ -46502,7 +46539,7 @@ static void genEndFunction(EcCompiler *cp, EcNode *np)
                 ecEncodeOpcode(cp, EJS_OP_RETURN);
             }
 
-        } else if (fun->resultType == ST(Void)) {
+        } else if (fun->resultType == EST(Void)) {
             ecEncodeOpcode(cp, EJS_OP_RETURN);
 
         } else {
@@ -46898,7 +46935,7 @@ static void genForIn(EcCompiler *cp, EcNode *np)
         pushStack(cp, 1);
         //  TODO space is not used with numericIndicies
         ecEncodeOpcode(cp, EJS_OP_LOAD_STRING);
-        ecEncodeConst(cp, S(empty));
+        ecEncodeConst(cp, ESV(empty));
         pushStack(cp, 1);
     }
 
@@ -46947,7 +46984,7 @@ static void genForIn(EcCompiler *cp, EcNode *np)
         Note: we have a zero length handler (noop)
      */
     handlerStart = ecGetCodeOffset(cp);
-    addException(cp, tryStart, tryEnd, ST(StopIteration), handlerStart, handlerStart, 0, startMark,
+    addException(cp, tryStart, tryEnd, EST(StopIteration), handlerStart, handlerStart, 0, startMark,
         EJS_EX_CATCH | EJS_EX_ITERATION);
 
     /*
@@ -46999,7 +47036,7 @@ static void genDefaultParameterCode(EcCompiler *cp, EcNode *np, EjsFunction *fun
     if (fun->rest) {
         buffers[count - 1] = state->code = allocCodeBuffer(cp);
         ecEncodeOpcode(cp, EJS_OP_NEW_ARRAY);
-        ecEncodeGlobal(cp, (EjsObj*) ST(Array), ST(Array)->qname);
+        ecEncodeGlobal(cp, (EjsObj*) EST(Array), EST(Array)->qname);
         ecEncodeNum(cp, 0);
         pushStack(cp, 1);
         if (fun->numArgs < 10) {
@@ -47359,7 +47396,7 @@ static void genLiteral(EcCompiler *cp, EcNode *np)
     ENTER(cp);
     ejs = cp->ejs;
 
-    if (TYPE(np->literal.var) == ST(XML)) {
+    if (TYPE(np->literal.var) == EST(XML)) {
         ecEncodeOpcode(cp, EJS_OP_LOAD_XML);
         data = ejsCreateString(ejs, mprGetBufStart(np->literal.data), mprGetBufLength(np->literal.data) / sizeof(MprChar));
         ecEncodeConst(cp, data);
@@ -47568,7 +47605,7 @@ static void genField(EcCompiler *cp, EcNode *np)
 
     } else if (fieldName->kind == N_LITERAL) {
         ecEncodeOpcode(cp, EJS_OP_LOAD_STRING);
-        ecEncodeConst(cp, S(empty));
+        ecEncodeConst(cp, ESV(empty));
         pushStack(cp, 1);
         genLiteral(cp, fieldName);
 
@@ -47663,7 +47700,7 @@ static void genReturn(EcCompiler *cp, EcNode *np)
     }
     if (np->left) {
         fun = cp->state->currentFunction;
-        if (fun->resultType == NULL || fun->resultType != ST(Void)) {
+        if (fun->resultType == NULL || fun->resultType != EST(Void)) {
             cp->state->needsValue = 1;
             processNode(cp, np->left);
             cp->state->needsValue = 0;
@@ -48080,7 +48117,7 @@ static void genTry(EcCompiler *cp, EcNode *np)
                 catchType = (EjsType*) arg->typeNode->lookup.ref;
             }
             if (catchType == 0) {
-                catchType = ST(Void);
+                catchType = EST(Void);
             }
             ecAddNameConstant(cp, catchType->qname);
             addException(cp, tryStart, tryEnd, catchType, handlerStart, handlerEnd, np->exception.numBlocks, numStack, 
@@ -48095,7 +48132,7 @@ static void genTry(EcCompiler *cp, EcNode *np)
         handlerStart = ecGetCodeOffset(cp);
         copyCodeBuffer(cp, state->code, np->exception.finallyBlock->code);
         handlerEnd = ecGetCodeOffset(cp);
-        addException(cp, tryStart, tryEnd, ST(Void), handlerStart, handlerEnd, np->exception.numBlocks, numStack, 
+        addException(cp, tryStart, tryEnd, EST(Void), handlerStart, handlerEnd, np->exception.numBlocks, numStack, 
             EJS_EX_FINALLY);
     }
     LEAVE(cp);
@@ -51758,7 +51795,7 @@ static void createPropertySection(EcCompiler *cp, EjsPot *block, int slotNum, Ej
     mprLog(7, "    global property section %@", qname.name);
 
     if (trait->type) {
-        if (trait->type == ST(Namespace) || (!ejs->initialized && trait->type->qname.name == ST(Namespace)->qname.name)){
+        if (trait->type == EST(Namespace) || (!ejs->initialized && trait->type->qname.name == EST(Namespace)->qname.name)){
             attributes |= EJS_PROP_HAS_VALUE;
         }
     }
@@ -53737,7 +53774,7 @@ static EcNode *parseFunctionExpression(EcCompiler *cp)
     if (np->qname.name == 0) {
         np->qname.name = ejsSprintf(cp->ejs, "--fun_%d-%d--", np->seqno, (int) mprGetTime());
     }
-    np->qname.space = state->inFunction ? S(empty): cp->fileState->nspace;
+    np->qname.space = state->inFunction ? ESV(empty): cp->fileState->nspace;
 
     np = parseFunctionSignature(cp, np);
     if (np == 0) {
@@ -53836,7 +53873,7 @@ static EcNode *parseObjectLiteral(EcCompiler *cp)
         getToken(cp);
         typeNode = parseNullableTypeExpression(cp);
     } else {
-        typeNode = createNode(cp, N_QNAME, ST(Object)->qname.name);
+        typeNode = createNode(cp, N_QNAME, EST(Object)->qname.name);
     }
     np->objectLiteral.typeNode = linkNode(np, typeNode);
     np->objectLiteral.isArray = 0;
@@ -54079,7 +54116,7 @@ static EcNode *parseArrayLiteral(EcCompiler *cp)
         }
         if (np) {
             if (typeNode == 0) {
-                typeNode = createNode(cp, N_QNAME, ST(Array)->qname.name);
+                typeNode = createNode(cp, N_QNAME, EST(Array)->qname.name);
             }
             np->objectLiteral.typeNode = linkNode(np, typeNode);
         }
@@ -54303,10 +54340,10 @@ struct EcNode *parseXMLInitializer(EcCompiler *cp)
     np = createNode(cp, N_LITERAL, NULL);
     np->literal.data = mprCreateBuf(0, 0);
 
-    if (ST(XML) == 0) {
+    if (EST(XML) == 0) {
         return LEAVE(cp, parseError(cp, "No XML support configured"));
     }
-    np->literal.var = (EjsObj*) ejsCreateObj(ejs, ST(XML), 0);
+    np->literal.var = (EjsObj*) ejsCreateObj(ejs, EST(XML), 0);
 
     switch (peekToken(cp)) {
     case T_XML_COMMENT_START:
@@ -54720,7 +54757,7 @@ static EcNode *parsePrimaryExpression(EcCompiler *cp)
             np = createNode(cp, N_QNAME, tokenString(cp));
         } else {
             np = createNode(cp, N_LITERAL, tokenString(cp));
-            np->literal.var = S(null);
+            np->literal.var = ESV(null);
         }
         break;
 
@@ -54730,7 +54767,7 @@ static EcNode *parsePrimaryExpression(EcCompiler *cp)
             np = createNode(cp, N_QNAME, tokenString(cp));
         } else {
             np = createNode(cp, N_LITERAL, tokenString(cp));
-            np->literal.var = S(undefined);
+            np->literal.var = ESV(undefined);
         }
         break;
 
@@ -56848,7 +56885,7 @@ static EcNode *parseTypeExpression(EcCompiler *cp)
 
     case T_MUL:
         getToken(cp);
-        np = createNode(cp, N_QNAME, ST(Object)->qname.name);
+        np = createNode(cp, N_QNAME, EST(Object)->qname.name);
         np->name.isType = 1;
         break;
 
@@ -60073,7 +60110,7 @@ static EcNode *parseParameter(EcCompiler *cp, bool rest)
     np = parseParameterKind(cp);
     parameter = parseTypedPattern(cp);
     if (parameter) {
-        parameter->qname.space = S(empty);
+        parameter->qname.space = ESV(empty);
     }
     np = appendNode(np, parameter);
     if (parameter) {
@@ -60182,7 +60219,7 @@ static EcNode *parseResultType(EcCompiler *cp)
         getToken(cp);
         if (peekToken(cp) == T_VOID) {
             getToken(cp);
-            np = createNode(cp, N_QNAME, ST(Void)->qname.name);
+            np = createNode(cp, N_QNAME, EST(Void)->qname.name);
             np->name.isType = 1;
 
         } else {
@@ -60367,7 +60404,7 @@ static EcNode *parseFunctionBody(EcCompiler *cp, EcNode *fun)
 
     ejs = cp->ejs;
     cp->state->inFunction = 1;
-    cp->state->nspace = S(empty);
+    cp->state->nspace = ESV(empty);
 
     if (peekToken(cp) == T_LBRACE) {
         np = parseBlock(cp);
@@ -62333,7 +62370,7 @@ void ecResetInput(EcCompiler *cp)
     cp->stream->flags &= ~EC_STREAM_EOL;
     cp->error = 0;
     cp->ejs->exception = 0;
-    cp->ejs->result = S(undefined);
+    cp->ejs->result = ESV(undefined);
     while ((tp = cp->putback) != 0 && (tp->tokenId == T_EOF || tp->tokenId == T_NOP)) {
         ecGetToken(cp);
     }
@@ -62388,7 +62425,7 @@ static EjsString *tokenString(EcCompiler *cp)
     if (cp->token) {
         return ejsCreateString(cp->ejs, cp->token->text, cp->token->length);
     }
-    return S(empty);
+    return ESV(empty);
 }
 
 

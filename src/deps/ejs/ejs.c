@@ -231,7 +231,7 @@ MAIN(ejsMain, int argc, char **argv)
             }
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
-            ejsRedirectLogging("stdout:2");
+            ejsRedirectLogging("stderr:2");
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintfError("%s %s-%s\n", BLD_NAME, BLD_VERSION, BLD_NUMBER);
@@ -276,7 +276,7 @@ MAIN(ejsMain, int argc, char **argv)
             "  --stats                  # Print memory stats on exit\n"
             "  --strict                 # Default compilation mode to strict\n"
             "  --require 'module,...'   # Required list of modules to pre-load\n"
-            "  --verbose | -v           # Same as --log stdout:2 \n"
+            "  --verbose | -v           # Same as --log stderr:2 \n"
             "  --version                # Emit the compiler version information\n"
             "  --warn level             # Set the warning message level (0-9 default is 0)\n\n",
             mpr->name);
@@ -401,7 +401,7 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
         cp->uid = 0;
         if (ecCompile(cp, 1, tmpArgv) < 0) {
             mprRawLog(0, "%s", cp->errorMsg);
-            ejs->result = S(undefined);
+            ejs->result = ESV(undefined);
             err++;
         }
         if (!err && cp->errorCount == 0) {
@@ -409,12 +409,12 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
                 ejsReportError(ejs, "Error in script");
             }
         }
-        if (!ejs->exception && ejs->result != S(undefined)) {
+        if (!ejs->exception && ejs->result != ESV(undefined)) {
             if (ejsIs(ejs, ejs->result, Date) || ejsIsType(ejs, ejs->result)) {
                 if ((result = (EjsString*) ejsToString(ejs, ejs->result)) != 0) {
                     mprPrintf("%@\n", result);
                 }
-            } else if (ejs->result != S(null)) {
+            } else if (ejs->result != ESV(null)) {
                 if ((result = (EjsString*) ejsToJSON(ejs, ejs->result, NULL)) != 0) {
                     mprPrintf("%@\n", result);
                 }

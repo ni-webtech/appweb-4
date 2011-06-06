@@ -77,7 +77,9 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
     mpr = mprGetMpr();
 
     if (logSpec == 0) {
-        logSpec = "stdout:0";
+        logSpec = "stderr:0";
+    } else {
+        mprSetCmdlineLogging(1);
     }
     if (*logSpec && strcmp(logSpec, "none") != 0) {
         spec = sclone(logSpec);
