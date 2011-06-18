@@ -3711,6 +3711,7 @@ EjsNumber *ejsWriteToByteArray(Ejs *ejs, EjsByteArray *ap, int argc, EjsObj **ar
             /*
                 Note: this only copies between the read/write positions of the source byte array
              */
+            //  MOB - should use RC value (== len)
             ejsCopyToByteArray(ejs, ap, ap->writePosition, (char*) &bp->value[bp->readPosition], len);
             ap->writePosition += len;
             wrote += len;
@@ -4058,7 +4059,7 @@ void ejsSetByteArrayPositions(Ejs *ejs, EjsByteArray *ba, ssize readPosition, ss
 }
 
 
-int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, ssize offset, char *data, ssize length)
+ssize ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, ssize offset, cchar *data, ssize length)
 {
     int     i;
 
@@ -4077,7 +4078,7 @@ int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, ssize offset, char *data, ssi
     for (i = 0; i < length; i++) {
         ba->value[offset++] = data[i];
     }
-    return 0;
+    return length;
 }
 
 
@@ -4248,80 +4249,101 @@ void ejsConfigureByteArrayType(Ejs *ejs)
 EjsVoid *ejsCacheExpire(Ejs *ejs, EjsObj *cache, EjsString *key, EjsDate *when)
 {
     EjsAny  *argv[3];
+    int     prior;
 
-    ejsPauseGC(ejs);
+    prior = ejsPauseGC(ejs);
     argv[0] = key;
     argv[1] = when;
-    return ejsRunFunctionBySlot(ejs, cache, ES_Cache_expire, 2, argv);
+    ejsRunFunctionBySlot(ejs, cache, ES_Cache_expire, 2, argv);
+    ejsResumeGC(ejs, prior);
+    return 0;
 }
 
 
 EjsAny *ejsCacheRead(Ejs *ejs, EjsObj *cache, EjsString *key, EjsObj *options)
 {
-    EjsAny  *argv[3];
+    EjsAny  *argv[3], *result;
+    int     prior;
 
-    ejsPauseGC(ejs);
+    prior = ejsPauseGC(ejs);
     argv[0] = key;
     argv[1] = (options) ? options : ESV(null);
-    return ejsRunFunctionBySlot(ejs, cache, ES_Cache_read, 2, argv);
+    result = ejsRunFunctionBySlot(ejs, cache, ES_Cache_read, 2, argv);
+    ejsResumeGC(ejs, prior);
+    return result;
 }
 
 
 EjsAny *ejsCacheReadObj(Ejs *ejs, EjsObj *cache, EjsString *key, EjsObj *options)
 {
-    EjsAny  *value, *argv[3];
+    EjsAny  *value, *argv[3], *result;
+    int     prior;
 
-    ejsPauseGC(ejs);
+    prior = ejsPauseGC(ejs);
     argv[0] = key;
     argv[1] = (options) ? options : ESV(null);
     if ((value = ejsRunFunctionBySlot(ejs, cache, ES_Cache_read, 2, argv)) == 0 || value == ESV(null)) {
         return 0;
     }
-    return ejsDeserialize(ejs, value);
+    result = ejsDeserialize(ejs, value);
+    ejsResumeGC(ejs, prior);
+    return result;
 }
 
 
 EjsBoolean *ejsCacheRemove(Ejs *ejs, EjsObj *cache, EjsString *key)
 {
-    EjsAny  *argv[3];
+    EjsAny  *argv[3], *result;
+    int     prior;
 
-    ejsPauseGC(ejs);
+    prior = ejsPauseGC(ejs);
     argv[0] = key;
-    return ejsRunFunctionBySlot(ejs, cache, ES_Cache_remove, 1, argv);
+    result = ejsRunFunctionBySlot(ejs, cache, ES_Cache_remove, 1, argv);
+    ejsResumeGC(ejs, prior);
+    return result;
 }
 
 
 EjsVoid *ejsCacheSetLimits(Ejs *ejs, EjsObj *cache, EjsObj *limits)
 {
-    EjsAny  *argv[2];
+    EjsAny  *argv[2], *result;
+    int     prior;
 
-    ejsPauseGC(ejs);
+    prior = ejsPauseGC(ejs);
     argv[0] = limits;
-    return ejsRunFunctionBySlot(ejs, cache, ES_Cache_setLimits, 2, argv);
+    result = ejsRunFunctionBySlot(ejs, cache, ES_Cache_setLimits, 2, argv);
+    ejsResumeGC(ejs, prior);
+    return result;
 }
 
 
 EjsNumber *ejsCacheWrite(Ejs *ejs, EjsObj *cache, EjsString *key, EjsString *value, EjsObj *options)
 {
-    EjsAny  *argv[3];
+    EjsAny  *argv[3], *result;
+    int     prior;
 
-    ejsPauseGC(ejs);
+    prior = ejsPauseGC(ejs);
     argv[0] = key;
     argv[1] = value;
     argv[2] = (options) ? options : ESV(null);
-    return ejsRunFunctionBySlot(ejs, cache, ES_Cache_write, 3, argv);
+    result = ejsRunFunctionBySlot(ejs, cache, ES_Cache_write, 3, argv);
+    ejsResumeGC(ejs, prior);
+    return result;
 }
 
 
 EjsNumber *ejsCacheWriteObj(Ejs *ejs, EjsObj *cache, EjsString *key, EjsAny *value, EjsObj *options)
 {
-    EjsAny  *argv[3];
+    EjsAny  *argv[3], *result;
+    int     prior;
 
-    ejsPauseGC(ejs);
+    prior = ejsPauseGC(ejs);
     argv[0] = key;
     argv[1] = ejsSerialize(ejs, value, 0);
     argv[2] = (options) ? options : ESV(null);
-    return ejsRunFunctionBySlot(ejs, cache, ES_Cache_write, 3, argv);
+    result = ejsRunFunctionBySlot(ejs, cache, ES_Cache_write, 3, argv);
+    ejsResumeGC(ejs, prior);
+    return result;
 }
 
 
@@ -4602,6 +4624,7 @@ static EjsNumber *cmd_read(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         nbytes = mprGetBufLength(cmd->stdoutBuf);
     }
     count = min(count, nbytes);
+    //  MOB - should use RC Value (== count)
     ejsCopyToByteArray(ejs, buffer, buffer->writePosition, (char*) mprGetBufStart(cmd->stdoutBuf), count);
     ejsSetByteArrayPositions(ejs, buffer, -1, buffer->writePosition + count);
     mprAdjustBufStart(cmd->stdoutBuf, count);
@@ -4697,6 +4720,7 @@ static void cmdIOCallback(MprCmd *mc, int channel, void *data)
             cmd->error = ejsCreateByteArray(cmd->ejs, -1);
         }
         ba = cmd->error;
+        //  MOB - should use RC Value (== count)
         ejsCopyToByteArray(cmd->ejs, ba, ba->writePosition, mprGetBufStart(buf), len);
         ba->writePosition += len;
         mprAdjustBufStart(buf, len);
@@ -4753,7 +4777,6 @@ static int parseOptions(Ejs *ejs, EjsCmd *cmd)
 static bool setCmdArgs(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 {
     EjsArray    *ap;
-    char        *command;
     int         i;
 
     if (ejsIs(ejs, cmd->command, Array)) {
@@ -4769,9 +4792,13 @@ static bool setCmdArgs(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
         cmd->argc = ap->length;
 
     } else {
-        cmd->command = ejsToString(ejs, cmd->command);
+        cmd->command = ejsToMulti(ejs, cmd->command);
+#if UNUSED
+        char *command;
         command = ejsToMulti(ejs, argv[0]);
-        if (mprMakeArgv(command, &cmd->argc, &cmd->argv, 0) < 0 || cmd->argv == 0) {
+        //  MOB - was "command" below
+#endif
+        if (mprMakeArgv(cmd->command, &cmd->argc, &cmd->argv, 0) < 0 || cmd->argv == 0) {
             ejsThrowArgError(ejs, "Can't parse command line");
             return 0;
         }
@@ -8920,17 +8947,28 @@ static EjsBoolean *g_assert(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 
 
 /*  
-    function blend(dest: Object, src: Object, overwrite: Boolean = true): void
+    function blend(dest: Object, src: Object, options = null): Object
  */
 static EjsObj *g_blend(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    EjsObj      *src, *dest;
-    int         overwrite;
+    EjsObj      *src, *dest, *options;
+    int         flags;
 
-    overwrite = (argc == 3) ? (argv[2] == ESV(true)) : 1;
+    options = (argc >= 3) ? argv[2] : 0;
+    if (options) {
+        flags = 0;
+        flags |= ejsGetPropertyByName(ejs, options, EN("functions")) == ESV(true) ? EJS_BLEND_FUNCTIONS : 0;
+        flags |= ejsGetPropertyByName(ejs, options, EN("trace")) == ESV(true) ? EJS_BLEND_TRACE : 0;
+
+        flags |= ejsGetPropertyByName(ejs, options, EN("overwrite")) == ESV(false) ? 0 : EJS_BLEND_OVERWRITE;
+        flags |= ejsGetPropertyByName(ejs, options, EN("subclass")) == ESV(false) ? 0 : EJS_BLEND_SUBCLASSES;
+        flags |= ejsGetPropertyByName(ejs, options, EN("deep")) == ESV(false) ? 0 : EJS_BLEND_DEEP;
+    } else {
+        flags = EJS_BLEND_DEEP | EJS_BLEND_OVERWRITE | EJS_BLEND_SUBCLASSES;
+    }
     dest = argv[0];
     src = argv[1];
-    ejsBlendObject(ejs, dest, src, overwrite);
+    ejsBlendObject(ejs, dest, src, 0, flags);
     return dest;
 }
 
@@ -9046,34 +9084,53 @@ static EjsString *g_md5(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     things). The blending is done at the primitive property level. If overwrite is true, the property is replaced. If
     overwrite is false, the property will be added if it does not already exist
  */
-int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite)
+int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int xoverwrite, int flags)
 {
+    EjsTrait    *trait;
     EjsObj      *vp, *dp;
     EjsName     name;
-    int         i, count;
+    int         i, count, start, deep, functions, overwrite, privateProps, trace;
 
     count = ejsGetLength(ejs, src);
-    for (i = 0; i < count; i++) {
-        vp = ejsGetProperty(ejs, src, i);
-        if (vp == 0) {
+    start = (flags & EJS_BLEND_SUBCLASSES) ? 0 : TYPE(src)->numInherited;
+    deep = (flags & EJS_BLEND_DEEP) ? 1 : 0;
+    overwrite = (flags & EJS_BLEND_OVERWRITE) ? 1 : 0;
+    functions = (flags & EJS_BLEND_FUNCTIONS) ? 1 : 0;
+    privateProps = (flags & EJS_BLEND_PRIVATE) ? 1 : 0;
+    trace = (flags & EJS_BLEND_TRACE) ? 1 : 0;
+
+    for (i = start; i < count; i++) {
+        if ((trait = ejsGetPropertyTraits(ejs, src, i)) != 0) {
+            if (trait->attributes & (EJS_TRAIT_DELETED | EJS_FUN_INITIALIZER | EJS_FUN_MODULE_INITIALIZER)) {
+                continue;
+            }
+        }
+        if ((vp = ejsGetProperty(ejs, src, i)) == 0) {
+            continue;
+        }
+        if (!functions && ejsIsFunction(ejs, ejsGetProperty(ejs, src, i))) {
             continue;
         }
         name = ejsGetPropertyName(ejs, src, i);
+        if (!privateProps && ejsContainsMulti(ejs, name.space, ",private")) {
+            continue;
+        }
+        if (trace) {
+            mprLog(0, "NAME %N", name);
+        }
         /* NOTE: treats arrays as primitive types */
-        if (!ejsIs(ejs, vp, Array) && !ejsIsXML(ejs, vp) && ejsGetLength(ejs, vp) > 0) {
+        if (deep && !ejsIs(ejs, vp, Array) && !ejsIsXML(ejs, vp) && ejsGetLength(ejs, vp) > 0) {
             if ((dp = ejsGetPropertyByName(ejs, dest, name)) == 0 || ejsGetLength(ejs, dp) == 0) {
-                ejsSetPropertyByName(ejs, dest, name, ejsClonePot(ejs, vp, 1));
+                ejsSetPropertyByName(ejs, dest, name, ejsClonePot(ejs, vp, deep));
             } else {
-                ejsBlendObject(ejs, dp, vp, overwrite);
+                ejsBlendObject(ejs, dp, vp, 0, flags);
             }
         } else {
             /* Primitive type (including arrays) */
             if (overwrite) {
                 ejsSetPropertyByName(ejs, dest, name, vp);
-            } else {
-                if (ejsLookupProperty(ejs, dest, name) < 0) {
-                    ejsSetPropertyByName(ejs, dest, name, vp);
-                }
+            } else if (ejsLookupProperty(ejs, dest, name) < 0) {
+                ejsSetPropertyByName(ejs, dest, name, vp);
             }
         }
     }
@@ -9301,8 +9358,8 @@ static ssize    readHttpData(Ejs *ejs, EjsHttp *hp, ssize count);
 static void     sendHttpCloseEvent(Ejs *ejs, EjsHttp *hp);
 static void     sendHttpErrorEvent(Ejs *ejs, EjsHttp *hp);
 static EjsObj   *startHttpRequest(Ejs *ejs, EjsHttp *hp, char *method, int argc, EjsObj **argv);
-static bool     waitForResponseHeaders(EjsHttp *hp, int timeout);
-static bool     waitForState(EjsHttp *hp, int state, int timeout, int throw);
+static bool     waitForResponseHeaders(EjsHttp *hp, MprTime timeout);
+static bool     waitForState(EjsHttp *hp, int state, MprTime timeout, int throw);
 static ssize    writeHttpData(Ejs *ejs, EjsHttp *hp);
 
 /*  
@@ -9810,6 +9867,7 @@ static EjsNumber *http_read(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
         return 0;
     } 
     hp->readCount += count;
+    //  MOB - should use RC Value (== count)
     ejsCopyToByteArray(ejs, buffer, buffer->writePosition, (char*) mprGetBufStart(hp->responseContent), count);
     ejsSetByteArrayPositions(ejs, buffer, -1, buffer->writePosition + count);
     mprAdjustBufStart(hp->responseContent, count);
@@ -9827,7 +9885,7 @@ static EjsString *http_readString(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv
     EjsString   *result;
     HttpConn    *conn;
     ssize       count;
-    int         timeout;
+    MprTime     timeout;
     
     count = (argc == 1) ? ejsGetInt(ejs, argv[0]) : -1;
     conn = hp->conn;
@@ -9962,7 +10020,7 @@ static EjsObj *http_setLimits(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
         hp->limits = (EjsObj*) ejsCreateEmptyPot(ejs);
         ejsGetHttpLimits(ejs, hp->limits, hp->conn->limits, 0);
     }
-    ejsBlendObject(ejs, hp->limits, argv[0], 1);
+    ejsBlendObject(ejs, hp->limits, argv[0], 0, EJS_BLEND_OVERWRITE);
     ejsSetHttpLimits(ejs, hp->conn->limits, hp->limits, 0);
     return 0;
 }
@@ -10113,7 +10171,7 @@ static EjsString *http_statusMessage(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **a
 static EjsBoolean *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
     MprTime     mark;
-    int         timeout;
+    MprTime     timeout;
 
     timeout = (argc >= 1) ? ejsGetInt(ejs, argv[0]) : -1;
     if (timeout < 0) {
@@ -10498,14 +10556,14 @@ static bool expired(EjsHttp *hp)
     Wait for the connection to acheive a requested state
     Timeout is in msec. <= 0 means don't wait.
  */
-static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
+static bool waitForState(EjsHttp *hp, int state, MprTime timeout, int throw)
 {
     Ejs             *ejs;
-    MprTime         mark;
+    MprTime         mark, remaining;
     HttpConn        *conn;
     HttpUri         *uri;
     char            *url;
-    int             count, redirectCount, success, rc, remaining;
+    int             count, redirectCount, success, rc;
 
     mprAssert(state >= HTTP_STATE_PARSED);
 
@@ -10607,7 +10665,7 @@ static bool waitForState(EjsHttp *hp, int state, int timeout, int throw)
     Wait till the response headers have been received. Safe in sync and async mode. Async mode never blocks.
     Timeout < 0 means use default inactivity timeout. Timeout of zero means wait forever.
  */
-static bool waitForResponseHeaders(EjsHttp *hp, int timeout)
+static bool waitForResponseHeaders(EjsHttp *hp, MprTime timeout)
 {
     if (hp->conn->async) {
         timeout = 0;
@@ -11498,6 +11556,8 @@ EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, EjsObj *options)
 }
 
 
+//  TOD REFACTOR
+
 static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
 {
     EjsName     qname;
@@ -11513,7 +11573,7 @@ static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
         The main code below can handle Arrays, Objects, objects derrived from Object and also native classes with properties.
         All others just use toString.
      */
-    count = ejsGetLength(ejs, vp);
+    count = ejsIsPot(ejs, vp) ? ejsGetLength(ejs, vp) : 0;
     if (count == 0 && TYPE(vp) != ESV(Object) && TYPE(vp) != ESV(Array)) {
         //  OPT - need some flag for this test.
         if (!ejsIsDefined(ejs, vp) || ejsIs(ejs, vp, Boolean) || ejsIs(ejs, vp, Number)) {
@@ -11548,7 +11608,6 @@ static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
                 return 0;
             }
             if (pp == 0) {
-                mprAssert(0);
                 continue;
             }
             if (isArray) {
@@ -11590,7 +11649,7 @@ static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
                 }
             }
             fn = (EjsFunction*) ejsGetPropertyByName(ejs, TYPE(pp)->prototype, N(NULL, "toJSON"));
-// TODO - check that this is going directly to serialize most of the time
+// OPT - check that this is going directly to serialize most of the time
             if (!ejsIsFunction(ejs, fn) || (fn->isNativeProc && fn->body.proc == (EjsFun) ejsObjToJSON)) {
                 sv = serialize(ejs, pp, json);
             } else {
@@ -11703,7 +11762,6 @@ void ejsConfigureJSONType(Ejs *ejs)
 
 
 #define CACHE_TIMER_PERIOD  (60 * MPR_TICKS_PER_SEC)
-#define CACHE_TIMER_PERIOD  (60 * MPR_TICKS_PER_SEC)
 #define CACHE_HASH_SIZE     257
 #define CACHE_LIFESPAN      (86400 * MPR_TICKS_PER_SEC)
 
@@ -11736,6 +11794,7 @@ typedef struct CacheItem
 static void localPruner(EjsLocalCache *cache, MprEvent *event);
 static void manageLocalCache(EjsLocalCache *cache, int flags);
 static void manageCacheItem(CacheItem *item, int flags);
+static void removeItem(EjsLocalCache *cache, CacheItem *item);
 static void setLocalLimits(Ejs *ejs, EjsLocalCache *cache, EjsPot *options);
 
 /*
@@ -11805,7 +11864,7 @@ static EjsAny *sl_expire(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv
     }
     item->lifespan = 0;
     if (expires == ESV(null)) {
-        item->expires = 0;
+        removeItem(cache, item);
     } else {
         item->expires = ejsGetDate(ejs, expires);
     }
@@ -11901,9 +11960,17 @@ static EjsAny *sl_read(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **argv)
         unlock(cache);
         return ESV(null);
     }
+    if (item->expires && item->expires <= mprGetTime()) {
+        unlock(cache);
+        return ESV(null);
+    }
+#if UNUSED && FUTURE
+    //  MOB - reading should not refresh cache
+    //  Perhaps option "read-refresh"
     if (item->lifespan) {
         item->expires = mprGetTime() + item->lifespan;
     }
+#endif
     if (getVersion) {
         result = ejsCreatePot(ejs, ESV(Object), 2);
         ejsSetPropertyByName(ejs, result, EN("version"), ejsCreateNumber(ejs, (MprNumber) item->version));
@@ -12122,6 +12189,16 @@ static EjsNumber *sl_write(Ejs *ejs, EjsLocalCache *cache, int argc, EjsAny **ar
 }
 
 
+static void removeItem(EjsLocalCache *cache, CacheItem *item)
+{
+    lock(cache);
+    //UNICODE
+    mprRemoveKey(cache->store, item->key->value);
+    cache->usedMem -= (item->key->length + item->data->length);
+    unlock(cache);
+}
+
+
 /*
     Check for expired keys
  */
@@ -12136,10 +12213,11 @@ static void localPruner(EjsLocalCache *cache, MprEvent *event)
         when = mprGetTime();
         for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
             item = (CacheItem*) hp->data;
+            mprLog(6, "LocalCache: \"%@\" lifespan %d, expires in %d secs", item->key, 
+                    item->lifespan / 1000, (item->expires - when) / 1000);
             if (item->expires && item->expires <= when) {
-                mprLog(5, "LocalCache prune key %s", hp->key);
-                mprRemoveKey(cache->store, hp->key);
-                cache->usedMem -= (item->key->length + item->data->length);
+                mprLog(5, "LocalCache prune expired key %s", hp->key);
+                removeItem(cache, item);
             }
         }
         mprAssert(cache->usedMem >= 0);
@@ -12150,20 +12228,16 @@ static void localPruner(EjsLocalCache *cache, MprEvent *event)
         if (cache->maxKeys < MAXSSIZE || cache->maxMem < MAXSSIZE) {
             excessKeys = mprGetHashLength(cache->store) - cache->maxKeys;
             while (excessKeys > 0 || cache->usedMem > cache->maxMem) {
-                for (factor = 3600; excessKeys > 0; factor *= 2) {
+                for (factor = 3600; excessKeys > 0 && factor < (86400 * 1000); factor *= 4) {
                     for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
                         item = (CacheItem*) hp->data;
                         if (item->expires && item->expires <= when) {
-                            mprLog(5, "LocalCache prune key %s", hp->key);
-                            mprRemoveKey(cache->store, hp->key);
-                            cache->usedMem -= (item->key->length + item->data->length);
+                            mprLog(5, "LocalCache too big execess keys %Ld, mem %Ld, prune key %s", 
+                                    excessKeys, (cache->maxMem - cache->usedMem), hp->key);
+                            removeItem(cache, item);
                         }
                     }
                     when += factor;
-                }
-                if (factor < 0) {
-                    mprAssert(factor > 0);
-                    break;
                 }
             }
         }
@@ -12933,7 +13007,7 @@ static EjsNumber *getSystemRam(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **arg
 static EjsObj *printStats(Ejs *ejs, EjsObj *thisObj, int argc, EjsObj **argv)
 {
     //  TODO - should go to log file and not to stdout
-    mprPrintMem("Memory Report", 0);
+    mprPrintMem("Memory Report", 1);
     return 0;
 }
 
@@ -13498,7 +13572,7 @@ static EjsAny *castNumber(Ejs *ejs, EjsNumber *vp, EjsType *type)
 {
     switch (type->sid) {
     case S_Boolean:
-        return ((vp->value) ? ESV(true) : ESV(false));
+        return ((vp->value && !ejsIsNan(vp->value)) ? ESV(true) : ESV(false));
 
     case S_String:
         //  OPT. mprDtoa does a sclone.
@@ -15813,6 +15887,7 @@ static EjsByteArray *readBytes(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     rc = 0;
     offset = 0;
     while ((bytes = mprReadFile(file, buffer, MPR_BUFSIZE)) > 0) {
+        //  MOB - should use RC Value (== bytes)
         if (ejsCopyToByteArray(ejs, result, offset, buffer, bytes) < 0) {
             ejsThrowMemoryError(ejs);
             rc = -1;
@@ -20563,8 +20638,9 @@ EjsString *ejsInternString(EjsString *str)
             }
         }
     }
+    ip->count++;
     linkString(head, str);
-    if (step > EJS_MAX_COLLISIONS) {
+    if (step > EJS_MAX_COLLISIONS && ip->count > (ip->size/2)) {
         /*  Remake the entire hash - should not happen often */
         //  OPT - BAD holding lock while rebuildingIntern
         rebuildIntern(ip);
@@ -20616,9 +20692,11 @@ EjsString *ejsInternWide(Ejs *ejs, MprChar *value, ssize len)
         sp->value[len] = 0;
     }
     sp->length = len;
+    ip->count++;
     linkString(head, sp);
-    if (step > EJS_MAX_COLLISIONS) {
+    if (step > EJS_MAX_COLLISIONS && ip->count > (ip->size/2)) {
         /*  Remake the entire hash - should not happen often */
+        //  OPT - BAD holding lock while rebuildingIntern
         rebuildIntern(ip);
     }
     unlock(ip);
@@ -20673,9 +20751,11 @@ EjsString *ejsInternAsc(Ejs *ejs, cchar *value, ssize len)
         sp->value[len] = 0;
     }
     sp->length = len;
+    ip->count++;
     linkString(head, sp);
-    if (step > EJS_MAX_COLLISIONS) {
+    if (step > EJS_MAX_COLLISIONS && ip->count > (ip->size/2)) {
         /*  Remake the entire hash - should not happen often */
+        //  OPT - BAD holding lock while rebuildingIntern
         rebuildIntern(ip);
     }
     unlock(ip);
@@ -20730,9 +20810,11 @@ EjsString *ejsInternMulti(Ejs *ejs, cchar *value, ssize len)
             }
         }
     }
+    ip->count++;
     linkString(head, src);
-    if (step > EJS_MAX_COLLISIONS) {
+    if (step > EJS_MAX_COLLISIONS && ip->count > (ip->size/2)) {
         /*  Remake the entire hash - should not happen often */
+        //  OPT - BAD holding lock while rebuildingIntern
         rebuildIntern(ip);
     }
     unlock(ip);
@@ -20754,28 +20836,31 @@ static int getInternHashSize(int size)
 }
 
 
-static int rebuildIntern(EjsIntern *intern)
+static int rebuildIntern(EjsIntern *ip)
 {
     EjsString   *oldBuckets, *sp, *next, *head;
     int         i, newSize, oldSize;
 
-    mprAssert(intern);
+    mprAssert(ip);
 
-    oldBuckets = intern->buckets;
-    newSize = getInternHashSize(intern->size * 2);
+    oldBuckets = ip->buckets;
+    newSize = getInternHashSize(ip->size + 1);
     oldSize = 0;
     if (oldBuckets) {
-        oldSize = intern->size;
+        oldSize = ip->size;
         if (oldSize > newSize) {
             return 0;
         }
     }
-    if ((intern->buckets = mprAllocZeroed((newSize * sizeof(EjsString)))) == NULL) {
+    mprLog(6, "Grow string intern new size %d old size %d, count %d, sizeof(EjsString) %d", 
+        newSize, oldSize, ip->count, sizeof(EjsString));
+
+    if ((ip->buckets = mprAllocZeroed((newSize * sizeof(EjsString)))) == NULL) {
         return MPR_ERR_MEMORY;
     }
-    intern->size = newSize;
+    ip->size = newSize;
     for (i = 0; i < newSize; i++) {
-        sp = &intern->buckets[i];
+        sp = &ip->buckets[i];
         sp->next = sp->prev = sp;
     }
     if (oldBuckets) {
@@ -20903,6 +20988,7 @@ void ejsManageString(EjsString *sp, int flags)
     } else if (flags & MPR_MANAGE_FREE) {
         ip = ((EjsService*) MPR->ejsService)->intern;
         lock(ip);
+        ip->count--;
         unlinkString(sp);
         unlock(ip);
     }
@@ -20933,6 +21019,7 @@ void ejsDestroyIntern(EjsIntern *ip)
         head = &ip->buckets[i];
         for (sp = head->next; sp != head; sp = next) {
             next = sp->next;
+            ip->count--;
             unlinkString(sp);
         }
     }
@@ -21156,20 +21243,54 @@ static EjsNumber *system_daemon(Ejs *ejs, EjsObj *unused, int argc, EjsObj **arg
 }
 
 
-//  TODO - refactor and rename
 /*
-    function exec(cmd: String): Void
+    function exec(cmd = null): Void
  */
 static EjsObj *system_exec(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
 #if BLD_UNIX_LIKE
-    char    **argVector;
-    int     argCount;
+    EjsObj      *args;
+    EjsArray    *ap;
+    char        *path, **argVector;
+    int         argCount, i;
 
-    mprMakeArgv(ejsToMulti(ejs, argv[0]), &argCount, &argVector, 0);
-    execv(argVector[0], argVector);
+    if (argc == 0) {
+        path = MPR->argv[0];
+        if (!mprIsAbsPath(path)) {
+            path = mprGetAppPath();
+        }
+        for (i = 3; i < MPR_MAX_FILE; i++) {
+            close(i);
+        }
+        execv(path, MPR->argv);
+        ejsThrowStateError(ejs, "Can't exec %s", path);
+    } else {
+        args = argv[0];
+        if (ejsIs(ejs, args, Array)) {
+            ap = (EjsArray*) args;
+            if ((argVector = mprAlloc(sizeof(void*) * (ap->length + 1))) == 0) {
+                ejsThrowMemoryError(ejs);
+                return 0;
+            }
+            for (i = 0; i < ap->length; i++) {
+                argVector[i] = ejsToMulti(ejs, ejsToString(ejs, ejsGetProperty(ejs, args, i)));
+            }
+            argVector[i] = 0;
+            argCount = ap->length;
+
+        } else {
+            if (mprMakeArgv(ejsToMulti(ejs, args), &argCount, &argVector, 0) < 0 || argVector == 0) {
+                ejsThrowArgError(ejs, "Can't parse command line");
+                return 0;
+            }
+        }
+        for (i = 3; i < MPR_MAX_FILE; i++) {
+            close(i);
+        }
+        execv(argVector[0], argVector);
+        ejsThrowStateError(ejs, "Can't exec %@", ejsToString(ejs, argv[0]));
+    }
 #endif
-    ejsThrowStateError(ejs, "Can't exec %@", ejsToString(ejs, argv[0]));
     return 0;
 }
 
@@ -33016,7 +33137,7 @@ static EjsOpCode traceCode(Ejs *ejs, EjsOpCode opcode)
     fp = state->fp;
     opcount[opcode]++;
 
-    if (ejs->initialized && doDebug) {
+    if (1 || ejs->initialized && doDebug) {
         offset = (int) (fp->pc - fp->function.body.code->byteCode) - 1;
         if (offset < 0) {
             offset = 0;
@@ -37270,7 +37391,7 @@ void ejsUnlockService()
 
 void ejsLoadHttpService(Ejs *ejs)
 {
-    ejsLockService(ejs);
+    ejsLockService();
     if (mprGetMpr()->httpService == 0) {
         httpCreate();
     }
@@ -37278,7 +37399,7 @@ void ejsLoadHttpService(Ejs *ejs)
     if (ejs->http == 0) {
         mprError("Can't load Http Service");
     }
-    ejsUnlockService(ejs);
+    ejsUnlockService();
 }
 
 
@@ -37388,7 +37509,9 @@ void ejsDisableExit(Ejs *ejs)
     Map allocation and mutex routines to use ejscript version.
  */
 #define MAP_ALLOC   1
-#define MAP_MUTEXES 1
+
+//  MOB - 
+#define MAP_MUTEXES 0
 
 #define THREAD_STYLE SQLITE_CONFIG_MULTITHREAD
 //#define THREAD_STYLE SQLITE_CONFIG_SERIALIZED
@@ -37559,7 +37682,8 @@ static EjsObj *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **argv)
                     } else {
                         /*
                             Append the table name for columns from foreign tables. Convert to camel case (tableColumn)
-                            TODO - refactor crude singularization.
+                            Prefix with "_". ie. "_TableColumn"
+                            MOB - remove singularization.
                          */
                         len = strlen(tableName) + 1;
                         tableName = sjoin("_", tableName, colName, NULL);
@@ -37574,7 +37698,6 @@ static EjsObj *sqliteSql(Ejs *ejs, EjsSqlite *db, int argc, EjsObj **argv)
                             strcpy(&tableName[len - 1], colName);
                             len--;
                         }
-                        // tableName[0] = tolower((int) tableName[0]);
                         tableName[len] = toupper((int) tableName[len]);
                         qname = EN(tableName);
                     }
@@ -37678,6 +37801,9 @@ struct sqlite3_mem_methods mem = {
 /*
     Map mutexes to use MPR
  */
+
+int mutc = 0;
+
 static int initMutex(void) { 
     return 0; 
 }
@@ -37688,12 +37814,14 @@ static int termMutex(void) {
 }
 
 
+//  MOB - incomplete must handle kind
 static sqlite3_mutex *allocMutex(int kind)
 {
     MprMutex    *lock;
 
     if ((lock = mprCreateLock()) != 0) {
         mprHold(lock);
+        mutc++;
     }
     return (sqlite3_mutex*) lock;
 }
@@ -37701,6 +37829,7 @@ static sqlite3_mutex *allocMutex(int kind)
 
 static void freeMutex(sqlite3_mutex *mutex)
 {
+    mutc--;
     mprRelease((MprMutex*) mutex);
 }
 
@@ -38212,7 +38341,7 @@ static EjsObj *hs_setLimits(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
         mprAssert(limits);
         ejsGetHttpLimits(ejs, sp->limits, limits, 1);
     }
-    ejsBlendObject(ejs, sp->limits, argv[0], 1);
+    ejsBlendObject(ejs, sp->limits, argv[0], 0, EJS_BLEND_OVERWRITE);
     if (sp->server) {
         limits = (sp->server) ? sp->server->limits : ejs->http->serverLimits;
         ejsSetHttpLimits(ejs, limits, sp->limits, 1);
@@ -39118,6 +39247,51 @@ static void defineParam(Ejs *ejs, EjsObj *params, cchar *key, cchar *svalue)
 }
 
 
+static int sortForm(MprHash **h1, MprHash **h2)
+{
+    return scmp((*h1)->key, (*h2)->key);
+}
+
+
+/*
+    Create the formData string. This is a stable, sorted string of form variables
+ */
+static EjsString *createFormData(Ejs *ejs, EjsRequest *req)
+{
+    MprHashTable    *formVars;
+    MprHash         *hp;
+    MprList         *list;
+    char            *buf, *cp;
+    ssize           len;
+    int             next;
+
+    if (req->formData == 0) {
+        if (req->conn && (formVars = req->conn->rx->formVars) != 0) {
+            if ((list = mprCreateList(mprGetHashLength(formVars), 0)) != 0) {
+                len = 0;
+                for (hp = 0; (hp = mprGetNextKey(formVars, hp)) != NULL; ) {
+                    mprAddItem(list, hp);
+                    len += slen(hp->key) + slen(hp->data) + 2;
+                }
+                if ((buf = mprAlloc(len + 1)) != 0) {
+                    mprSortList(list, sortForm);
+                    cp = buf;
+                    for (next = 0; (hp = mprGetNextItem(list, &next)) != 0; ) {
+                        strcpy(cp, hp->key); cp += slen(hp->key);
+                        *cp++ = '=';
+                        strcpy(cp, hp->data); cp += slen(hp->data);
+                        *cp++ = '&';
+                    }
+                    cp[-1] = '\0';
+                    req->formData = ejsCreateStringFromAsc(ejs, buf);
+                }
+            }
+        }
+    }
+    return req->formData;
+}
+
+
 static EjsObj *createParams(Ejs *ejs, EjsRequest *req)
 {
     EjsObj          *params;
@@ -39551,6 +39725,9 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
     case ES_ejs_web_Request_files:
         return createFiles(ejs, req);
 
+    case ES_ejs_web_Request_formData:
+        return createFormData(ejs, req);
+
     case ES_ejs_web_Request_headers:
         return createHeaders(ejs, req);
 
@@ -39702,6 +39879,11 @@ static EjsAny *getRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum)
             }
         }
         return req->uri;
+
+#if ES_ejs_web_Request_writeBuffer
+    case ES_ejs_web_Request_writeBuffer:
+        return req->writeBuffer;
+#endif
 
     default:
         if (slotNum < req->pot.numProp) {
@@ -39889,6 +40071,12 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
         }
         break;
 
+#if ES_ejs_web_Request_writeBuffer
+    case ES_ejs_web_Request_writeBuffer:
+        req->writeBuffer = (EjsByteArray*) value;
+        break;
+#endif
+
     /*
         Read-only fields
      */
@@ -39899,6 +40087,7 @@ static int setRequestProperty(Ejs *ejs, EjsRequest *req, int slotNum,  EjsObj *v
     case ES_ejs_web_Request_cookies:
     case ES_ejs_web_Request_env:
     case ES_ejs_web_Request_errorMessage:
+    case ES_ejs_web_Request_formData:
     case ES_ejs_web_Request_files:
     case ES_ejs_web_Request_isSecure:
     case ES_ejs_web_Request_limits:
@@ -39963,8 +40152,12 @@ static EjsObj *req_set_async(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
  */
 static EjsObj *req_autoFinalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
+    /* If writeBuffer is set, HttpServer is capturning output for caching */
     if (req->conn && !req->dontAutoFinalize) {
-        httpFinalize(req->conn);
+        if (!req->writeBuffer) {
+            httpFinalize(req->conn);
+        }
+        req->finalized = 1;
     }
     return 0;
 }
@@ -39976,7 +40169,10 @@ static EjsObj *req_autoFinalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **ar
 static EjsObj *req_close(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
     if (req->conn) {
-        httpFinalize(req->conn);
+        if (!req->writeBuffer) {
+            httpFinalize(req->conn);
+        }
+        req->finalized = 1;
         httpCloseRx(req->conn);
     }
     ejsSendRequestCloseEvent(ejs, req);
@@ -40012,12 +40208,17 @@ static EjsObj *req_dontAutoFinalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj 
 
 /*  
     function finalize(): Void
+
+    This routine is idempotent. If using writeBuffers, it will be called multiple times.
  */
 static EjsObj *req_finalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
     if (req->conn) {
-        httpFinalize(req->conn);
+        if (!req->writeBuffer || req->writeBuffer == ESV(null)) {
+            httpFinalize(req->conn);
+        }
     }
+    req->finalized = 1;
     req->responded = 1;
     return 0;
 }
@@ -40028,7 +40229,7 @@ static EjsObj *req_finalize(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
  */
 static EjsBoolean *req_finalized(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
-    return ejsCreateBoolean(ejs, req->conn == 0 || req->conn->tx->finalized);
+    return ejsCreateBoolean(ejs, req->conn == 0 || req->finalized || req->conn->tx->finalized);
 }
 
 
@@ -40195,7 +40396,7 @@ static EjsObj *req_setLimits(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
         req->limits = ejsCreateEmptyPot(ejs);
         ejsGetHttpLimits(ejs, req->limits, req->conn->limits, 0);
     }
-    ejsBlendObject(ejs, req->limits, argv[0], 1);
+    ejsBlendObject(ejs, req->limits, argv[0], 0, EJS_BLEND_OVERWRITE);
     ejsSetHttpLimits(ejs, req->conn->limits, req->limits, 0);
     if (req->session) {
         ejsSetSessionTimeout(ejs, req->session, req->conn->limits->sessionTimeout);
@@ -40214,8 +40415,28 @@ static EjsObj *req_trace(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 }
 
 
+/*
+    Single channel for all write data
+ */
+static ssize writeResponseData(Ejs *ejs, EjsRequest *req, cchar *buf, ssize len)
+{
+    ssize   written;
+    
+    if (req->writeBuffer && req->writeBuffer != ESV(null)) {
+        if ((written = ejsCopyToByteArray(ejs, req->writeBuffer, -1, buf, len)) > 0) {
+            //  MOB - need API to do combined write to ByteArray and inc writePosition
+            req->writeBuffer->writePosition += written;
+        }
+        return written;
+    } else {
+        return httpWriteBlock(req->conn->writeq, buf, len);
+    }
+}
+
+
 /*  
     Write text to the client. This call writes the arguments back to the client's browser. 
+    This and writeFile are the lowest channel for write data.
  
     function write(data: Object): Void
  */
@@ -40225,28 +40446,24 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     EjsString       *s;
     EjsObj          *data;
     EjsByteArray    *ba;
-    HttpQueue       *q;
     HttpConn        *conn;
     ssize           len, written;
     int             err, i;
 
-    if (!connOk(ejs, req, 1)) return 0;
-
+    conn = req->conn;
+    if (!connOk(ejs, req, 1) || httpIsFinalized(conn)) {
+        return 0;
+    }
     err = 0;
     written = 0;
     args = (EjsArray*) argv[0];
-    conn = req->conn;
-    q = conn->writeq;
 
-    if (httpIsFinalized(conn)) {
-        return 0;
-    }
     for (i = 0; i < args->length; i++) {
         data = args->data[i];
         switch (TYPE(data)->sid) {
         case S_String:
             s = (EjsString*) data;
-            if ((written = httpWriteBlock(q, s->value, s->length)) != s->length) {
+            if ((written = writeResponseData(ejs, req, s->value, s->length)) != s->length) {
                 err++;
             }
             break;
@@ -40257,14 +40474,14 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
             //      ba->readPosition += len;
             //      should reset ptrs also
             len = ba->writePosition - ba->readPosition;
-            if ((written = httpWriteBlock(q, (char*) &ba->value[ba->readPosition], len)) != len) {
+            if ((written = writeResponseData(ejs, req, (char*) &ba->value[ba->readPosition], len)) != len) {
                 err++;
             }
             break;
 
         default:
             s = (EjsString*) ejsToString(ejs, data);
-            if (s == NULL || (written = httpWriteBlock(q, s->value, s->length)) != s->length) {
+            if (s == NULL || (written = writeResponseData(ejs, req, s->value, s->length)) != s->length) {
                 err++;
             }
         }
@@ -40288,6 +40505,8 @@ static EjsObj *req_write(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 
 /*  
     function writeFile(path: Path): Boolean
+
+    Note: this bypasses req->writeBuffer
  */
 static EjsObj *req_writeFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
 {
@@ -40316,6 +40535,7 @@ static EjsObj *req_writeFile(Ejs *ejs, EjsRequest *req, int argc, EjsObj **argv)
     httpSetSendConnector(req->conn, path->value);
     httpPutForService(conn->writeq, packet, 0);
     httpFinalize(req->conn);
+    req->finalized = 1;
     return ESV(true);
 }
 
@@ -40460,8 +40680,8 @@ static void manageRequest(EjsRequest *req, int flags)
         mprMark(req->session);
         mprMark(req->uri);
         mprMark(req->cloned);
-    } else {
-        // mprLog(0, "FREE REQUEST - cloned %p", req->cloned);
+        mprMark(req->writeBuffer);
+        mprMark(req->formData);
     }
 }
 
@@ -40576,7 +40796,7 @@ static EjsSession *initSession(Ejs *ejs, EjsSession *sp, EjsString *key, MprTime
         sp->cache = 0;
         return 0;
     }
-    sp->lifespan = timeout;
+    sp->timeout = timeout;
     sp->key = key;
     return sp;
 }
@@ -40595,7 +40815,7 @@ static EjsString *makeKey(Ejs *ejs, EjsSession *sp)
 
 /*
     Get (create) a session object using the supplied key. If the key has expired or is NULL, then generate a new key if
-    create is true.
+    create is true. The timeout is in msec.
  */
 EjsSession *ejsGetSession(Ejs *ejs, EjsString *key, MprTime timeout, int create)
 {
@@ -40631,6 +40851,8 @@ static void manageSession(EjsSession *sp, int flags)
     if (flags & MPR_MANAGE_MARK) {
         ejsManagePot(sp, flags);
         mprMark(sp->key);
+        mprMark(sp->options);
+        mprMark(sp->cache);
     }
 }
 
@@ -40706,7 +40928,8 @@ static int setSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum, EjsAny *val
     }
     if (sp->options == 0) {
         sp->options = ejsCreateEmptyPot(ejs);
-        ejsSetPropertyByName(ejs, sp->options, EN("lifespan"), ejsCreateNumber(ejs, (MprNumber) sp->lifespan));
+        ejsSetPropertyByName(ejs, sp->options, EN("lifespan"), 
+            ejsCreateNumber(ejs, (MprNumber) (sp->timeout / MPR_TICKS_PER_SEC)));
     }
     if (ejsCacheWriteObj(ejs, sp->cache, sp->key, sp, sp->options) == 0) {
         return EJS_ERR;
@@ -40715,7 +40938,10 @@ static int setSessionProperty(Ejs *ejs, EjsSession *sp, int slotNum, EjsAny *val
 }
 
 
-void ejsSetSessionTimeout(Ejs *ejs, EjsSession *sp, int timeout)
+/*
+    The timeout arg is a number of ticks to add to the current time
+ */
+void ejsSetSessionTimeout(Ejs *ejs, EjsSession *sp, MprTime timeout)
 {
     ejsCacheExpire(ejs, sp->cache, sp->key, ejsCreateDate(ejs, mprGetTime() + timeout));
 }
@@ -40730,15 +40956,15 @@ static EjsSession *sess_constructor(Ejs *ejs, EjsSession *sp, int argc, EjsAny *
 {
     EjsAny      *vp;
     EjsPot      *options;
-    MprTime     lifespan;
+    MprTime     timeout;
 
-    lifespan = 0;
+    timeout = 0;
     if (argc > 0) {
         options = argv[0];
         vp = ejsGetPropertyByName(ejs, options, EN("lifespan"));
-        lifespan = ejsGetInt(ejs, vp);
+        timeout = ejsGetInt(ejs, vp) * MPR_TICKS_PER_SEC;
     }
-    return initSession(ejs, sp, sp->key, lifespan);
+    return initSession(ejs, sp, sp->key, timeout);
 }
 
 

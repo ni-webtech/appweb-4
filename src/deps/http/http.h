@@ -394,13 +394,10 @@ typedef struct HttpLimits {
     int     headerCount;            /**< Max number of header lines */
     int     keepAliveCount;         /**< Max number of keep alive requests to perform per socket */
     int     requestCount;           /**< Max number of simultaneous concurrent requests */
-#if UNUSED
-    int     sessionCount;           /**< Max number of opened session state stores */
-#endif
 
-    int     inactivityTimeout;      /**< Default timeout for keep-alive and idle requests (msec) */
-    int     requestTimeout;         /**< Default time a request can take (msec) */
-    int     sessionTimeout;         /**< Default time a session can persist (msec) */
+    MprTime inactivityTimeout;      /**< Default timeout for keep-alive and idle requests (msec) */
+    MprTime requestTimeout;         /**< Default time a request can take (msec) */
+    MprTime sessionTimeout;         /**< Default time a session can persist (msec) */
 
     int     enableTraceMethod;      /**< Trace method enabled */
 } HttpLimits;
@@ -996,10 +993,6 @@ extern void httpMarkQueueHead(HttpQueue *q);
 #define HTTP_STAGE_FILTER         0x4000            /**< Stage is a filter  */
 #define HTTP_STAGE_MODULE         0x8000            /**< Stage is a filter  */
 #define HTTP_STAGE_CGI_VARS       0x10000           /**< Create CGI variables */
-#if UNUSED
-#define HTTP_STAGE_FORM_VARS      0x20000           /**< Create form variables from form body data */
-#define HTTP_STAGE_HEADER_VARS    0x40000           /**< Create variables from HTTP headers */
-#endif
 #define HTTP_STAGE_QUERY_VARS     0x80000           /**< Create variables from URI query */
 #define HTTP_STAGE_VIRTUAL        0x100000          /**< Handler serves virtual resources not the physical file system */
 #define HTTP_STAGE_EXTRA_PATH     0x200000          /**< Do extra path info (for CGI|PHP) */
@@ -1420,9 +1413,6 @@ typedef struct HttpConn {
     int             http10;                 /**< Using legacy HTTP/1.0 */
 
     int             port;                   /**< Remote port */
-#if UNUSED
-    int             recall;                 /**< Recall I/O handler requrired */
-#endif
     int             retries;                /**< Client request retries */
     int             secure;                 /**< Using https */
     int             seqno;                  /**< Unique connection sequence number */
@@ -2745,10 +2735,6 @@ typedef struct HttpServer {
     int             requestCount;           /**< Count of current active requests */
     int             flags;                  /**< Server control flags */
     void            *context;               /**< Embedding context */
-#if UNUSED
-    //  MOB is this needed?
-    void            *meta;                  /**< Meta server object */
-#endif
     MprSocket       *sock;                  /**< Listening socket */
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
     HttpNotifier    notifier;               /**< Default connection notifier callback */

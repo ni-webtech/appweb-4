@@ -128,6 +128,11 @@ module ejs {
          */
         static var cache: Cache
 
+        /**
+            Application start time
+         */
+        static var started: Date = new Date
+
         /** 
             Application title name. Multi-word, Camel Case name for the application suitable for display. This is 
             initialized to the name of the script or "Embedthis Ejscript" if running interactively.
@@ -145,19 +150,6 @@ module ejs {
                 is invoked as "ejs script arg1 arg2", then args[0] will be "script", args[1] will be "arg1" etc.
          */
         native static function get args(): Array
-
-        /*
-UNUSED
-            Application in-memory cache reference
-        static function get cache(): Cache {
-            if (!cacheStore) {
-                cacheStore = new Cache(null, blend({shared: true}, config.cache))
-            }
-            return cacheStore
-        }
-        static function set cache(c: Cache): Void
-            cacheStore = c
-*/
 
         /** 
             Change the application's working directory
@@ -252,7 +244,7 @@ UNUSED
         static function loadrc(path: Path, overwrite: Boolean = true) {
             if (path.exists) {
                 try {
-                    blend(App.config, path.readJSON(), overwrite)
+                    blend(App.config, path.readJSON(), {overwrite: overwrite})
                 } catch (e) {
                     errorStream.write(App.exePath.basename +  " Can't parse " + path + ": " + e + "\n")
                 }
@@ -365,10 +357,11 @@ UNUSED
 
         /**
             Redirect the Application's logger based on the App.config.log setting
+            Ignored if app is invoked with --log
          */
         static function updateLog(): Void {
             let log = config.log
-            if (log && log.enable) {
+            if (!App.logFile.logging && log && log.enable) {
                 App.log.redirect(log.location, log.level)
             }
         }
@@ -410,7 +403,7 @@ UNUSED
             App.loadrc(Path(dir).join(".ejsrc"))
         }
         App.loadrc("ejsrc")
-        blend(config, App.defaultConfig, false)
+        blend(config, App.defaultConfig, {overwrite: false})
 
         stdout = TextStream(App.outputStream)
         stderr = TextStream(App.errorStream)
@@ -450,6 +443,7 @@ UNUSED
             }
         }
         if (config.cache) {
+            //  MOB - should there be a config.cache.enable instead
             App.cache = new Cache(null, blend({shared: true}, config.cache))
         }
     }
@@ -2018,6 +2012,255 @@ module ejs {
 /************************************************************************/
 /*
  *  End of file "../../src/core/ByteArray.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/core/Cache.es"
+ */
+/************************************************************************/
+
+/*
+    Cache.es -- Cache class providing key/value storage.
+
+    Usage Tutorial:
+
+        cache = new Cache("local", {lifespan: 86400, timeout: 5000, memory: 200000000, keys: 10000000})
+
+        session = cache.read(key)
+        cache.write(key, value, {lifespan: 3600})
+        cache.remove(key)
+        cache.destroy()
+
+        cache = new Cache("memcached", {addresses: ["127.0.0.1:11211"], debug: false})
+        cache = new Cache("file", {dir: "/tmp"})
+
+        Ejs internally uses the key naming convention:  ::module::key
+ */
+module ejs {
+
+    /**
+        Cache meta class to manage in-memory storage of key-value data. The Cache class provides an abstraction over
+        various in-memory and disk-based caching cache backends.
+        @stability prototype
+     */
+    class Cache {
+        use default namespace public
+
+        private var adapter: Object
+
+        /**
+            Cache constructor.
+            @param adapter Adapter for the cache cache. E.g. "local". The Local cache is the only currently supported
+                cache backend. 
+            @param options Adapter options. The common options are described below, other options are passed through
+            to the relevant caching backend.
+            @option lifespan Default lifespan for key values in seconds.
+            @option resolution Time in milliseconds to check for expired expired keys
+            @option timeout Timeout on cache I/O operations
+            @option trace Trace I/O operations for debug
+            @option module Module name containing the cache connector class. This is a bare module name without ".mod"
+                or any leading path. If module is not present, a module name is derrived using "ejs.cache" + adapter.
+            @option class Class name containing the cache backend. If the class property is not present, the 
+                class is derived from the adapter name with "Cache" appended. The first letter of the adapter is converted
+                to uppercase. For example, if the adapter was "mem", the class would be inferred to be "MemCache".
+         */
+        function Cache(adapter: String = null, options: Object = {}) {
+            let adapterClass, modname
+            if (adapter == null || adapter == "local") {
+                options = blend({shared: true}, options)
+                adapter = "local"
+                modname = "ejs"
+                adapterClass = "LocalCache"
+            } else {
+                adapterClass ||= options["class"] || (adapter.toPascal() + "Cache")
+                modname ||= options.module || ("ejs.cache." + adapter)
+                if (!global.modname::[adapterClass]) {
+                    load(modname + ".mod", {reload: false})
+                    if (!global.modname::[adapterClass]) {
+                        throw "Can't find cache adapter: \"" + modname + "::" + adapter + "\""
+                    }
+                }
+            }
+            this.adapter = new global.modname::[adapterClass](options)
+        }
+
+        /**
+            Destroy the cache
+         */
+        function destroy(): Void
+            adapter.destroy()
+
+        //  MOB - bit inconsistent that expires takes only a date and not a lifespan too
+        /**
+            Set a new expire date for a key
+            @param key Key to modify
+            @param when Date at which to expire the data. Set to null to never expire.
+            @return True if the key's expiry can be updated. 
+         */
+        function expire(key: String, when: Date): Boolean
+            adapter.expire(key, when)
+
+        /**
+            Increment a key's value by a given amount. This operation is atomic.
+            @param key Key value to read.
+            @param amount Amount by which to increment the value. This amount can be negative to achieve a decrement.
+            @return The new key value. If the key does not exist, it is initialized to the amount value.
+         */ 
+        function inc(key: String, amount: Number = 1): Number
+            adapter.inc(key, amount)
+
+        /**
+            Resource limits for the server and for initial resource limits for requests.
+            @param limits. Limits is an object hash. Depending on the cache backend in-use, the limits object may have
+                some of the following properties. Consult the documentation for the actual cache backend for which properties
+                are supported by the backend.
+            @option keys Maximum number of keys in the cache. Set to zero for no limit.
+            @option lifespan Default time in seconds to preserve key data. Set to zero for no timeout.
+            @option memory Total memory to allocate for cache keys and data. Set to zero for no limit.
+            @option retries Maximum number of times to retry I/O operations with cache backends.
+            @option timeout Maximum time to transact I/O operations with cache backends. Set to zero for no timeout.
+            @see setLimits
+          */
+        function get limits(): Object
+            adapter.limits
+
+        /**
+            Read a key. 
+            @param key Key value to read.
+            @param options Read options
+            @option version If set to true, the read will return an object hash containing the data and a unique version 
+                identifier for the last update to this key. This version identifier can be specified to write to peform
+                an atomic CAS (check and swap) operation.
+            @return Null if the key is not present. Otherwise return key data as a string or if the options parameter 
+                specified "version == true", return an object with the properties "data" for the key data and 
+                "version" for the CAS version identifier.
+         */
+        function read(key: String, options: Object = null): String
+            adapter.read(key, options)
+
+        /**
+            Read a key and return an object 
+            This will read the data for a key and then deserialize. This assumes that $writeObj was used to store the
+            key value.
+            @param key Key value to read.
+            @param options Read options
+            @option version If set to true, the read will return an object hash containing the data and a unique version 
+                identifier for the last update to this key. This version identifier can be specified to write to peform
+                an atomic CAS (check and swap) operation.
+            @return Null if the key is not present. Otherwise return key data as an object.
+         */
+        function readObj(key: String, options: Object = null): Object {
+            let data = adapter.read(key, options)
+            if (data) {
+                return deserialize(data)
+            }
+            return null
+        }
+
+        /**
+            Remove the key and associated value from the cache
+            @param key Key value to remove. If key is null, then all keys are removed.
+            @return true if the key was removed
+         */
+        function remove(key: String): Boolean
+            adapter.remove(key)
+
+        /**
+            Update the cache cache resource limits. The supplied limit fields are updated.
+            See the $limits property for limit field details.
+            @param limits Object hash of limit fields and values
+            @see limits
+         */
+        function setLimits(limits: Object): Void
+            adapter.setLimits(limits)
+
+        /**
+            Write the key and associated value to the cache. The value is written according to the optional mode option.  
+            @param key Key to modify
+            @param value String value to associate with the key
+            @param options Options values
+            @option lifespan Preservation time for the key in seconds.
+            @option expire When to expire the key. Takes precedence over lifetime.
+            @option mode Mode of writing: "set" is the default and means set a new value and create if required.
+                "add" means set the value only if the key does not already exist. "append" means append to any existing
+                value and create if required. "prepend" means prepend to any existing value and create if required.
+            @option version Unique version identifier to be used for a conditional write. The write will only be 
+                performed if the version id for the key has not changed. This implements an atomic compare and swap.
+                See $read.
+            @option throw Throw an exception rather than returning null if the version id has been updated for the key.
+            @return The number of bytes written, returns null if the write failed due to an updated version identifier for
+                the key.
+         */
+        function write(key: String, value: String, options: Object = null): Number
+            adapter.write(key, value, options)
+
+        /**
+            Write the key and associated object value to the cache. The object value is serialized using JSON notation and
+            written according to the optional mode option.  
+            @param key Key to modify
+            @param value Object to associate with the key
+            @param options Options values
+            @option lifespan Preservation time for the key in seconds. Set to zero for never expire.
+            @option expire When to expire the key. Takes precedence over lifetime.
+            @option mode Mode of writing: "set" is the default and means set a new value and create if required.
+                "add" means set the value only if the key does not already exist. "append" means append to any existing
+                value and create if required. "prepend" means prepend to any existing value and create if required.
+            @option version Unique version identifier to be used for a conditional write. The write will only be 
+                performed if the version id for the key has not changed. This implements an atomic compare and swap.
+                See $read.
+            @option throw Throw an exception rather than returning null if the version id has been updated for the key.
+            @return The number of bytes written, returns null if the write failed due to an updated version identifier for
+                the key.
+         */
+        function writeObj(key: String, value: Object, options: Object = null): Number
+            adapter.write(key, serialize(value), options)
+    }
+
+}
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "../../src/core/Cache.es"
  */
 /************************************************************************/
 
@@ -5188,20 +5431,25 @@ module ejs {
      */
     native function md5(str: String): String
 
-//  DOC -- rewrite
     /** 
-        Blend one object into another.  The merge is done at the primitive property level and it does a deep clone of 
-        the source. If overwrite is true, the property is replaced. If overwrite is false, the property will be added 
-        if it does not already exist This is useful for inheriting and optionally overwriting option hashes (among other
-        things). 
+        Blend the contents of one object into another. This routine copies the properites of one object into another.
+        If a property is an object reference and the "deep" option is set, the object is cloned using a deep clone. 
+        Otherwise the object reference is copied.
+        If the overwrite option is false, the property will only be copied if it does not already exist in the destination.
         @param dest Destination object
         @param src Source object
-        @param overwrite Boolean. If true, then overwrite existing properties in the destination object.
+        @param options Control options
+        @option overwrite Boolean. If true, then overwrite existing properties in the destination object. Defaults to true.
+        @option deep Boolean. If true, then recursively copy the properties of any objects referenced in the source object.
+            Otherwise, the copy is only one level deep. Defaults to true.
+        @option functions Boolean. If true, then copy functions. Defaults to false.
+        @option subclasses Boolean. If true, then copy subclass properties. Defaults to true.
+        @option trace Boolean. If true, then trace to the App.log the copied property names.
         @returns An the destination object
         @spec ejs
-        @hide
+        @example blend(dest, src, { overwrite: true, deep: true, functions: false, subclasses: true })
      */
-    native function blend(dest: Object, src: Object, overwrite: Boolean = true): Object
+    native function blend(dest: Object, src: Object, options = null): Object
 
     // TODO - should cache be a Path
     /** 
@@ -6977,7 +7225,7 @@ module ejs {
             @param options Configuration options.
             @option shared Create or connect to a single, shared cache. If multiple interpreters in a single
                 process create shared LocalCache instances they will be able to share key/value data.
-            @option lifespan Default lifespan for key values. Set to zero for a default unlimited timeout.
+            @option lifespan Default lifespan for key values in seconds. Set to zero for a default unlimited timeout.
             @option resolution Time in milliseconds to check for expired expired keys
             @option memory Maximum memory to use for keys and data
             @option trace Trace I/O operations for debug
@@ -7010,7 +7258,7 @@ module ejs {
             Resource limits for the server and for initial resource limits for requests.
             @param limits. Limits is an object hash with the following properties:
             @option keys Maximum number of keys in the cache.
-            @option lifespan Default time to preserve key data. Set to zero for an unlimited default timeout.
+            @option lifespan Default time to preserve key data in seconds. Set to zero for an unlimited default timeout.
             @option memory Maximum memory to use for keys and data.
             @see setLimits
           */
@@ -9479,6 +9727,7 @@ module ejs {
          */
         native function truncate(size: Number): Void
 
+        //  MOB rename? - bit confusing "write". This really does a "save"
         /**
             Write the file contents. This method opens the file, writes the contents and closes the file.
             @param args The data to write to the file. Data is serialized in before writing. Note that numbers will not 
@@ -11028,10 +11277,11 @@ module ejs {
             sh(args)
 
         /** 
-            @hide TODO TEMP 
-            MOB - remove
+            Exec a new program to replace the current program. A new process is not created.
+            NOTE: this call does not return
+            @param args Command arguments. The args may be either a string or an array of strings.
          */
-        native static function exec(args): String
+        native static function exec(args = null): Void
     }
 }
 
@@ -13592,248 +13842,6 @@ module ejs {
 
 /************************************************************************/
 /*
- *  Start of file "../../src/core/cache.es"
- */
-/************************************************************************/
-
-/*
-    Cache.es -- Cache class providing key/value storage.
-
-    Usage Tutorial:
-
-        cache = new Cache("local", {lifespan: 86400, timeout: 5000, memory: 200000000, keys: 10000000})
-
-        session = cache.read(key)
-        cache.write(key, value, {lifespan: 3600})
-        cache.remove(key)
-        cache.destroy()
-
-        cache = new Cache("memcached", {addresses: ["127.0.0.1:11211"], debug: false})
-        cache = new Cache("file", {dir: "/tmp"})
-
-        Ejs internally uses the key naming convention:  ::module::key
- */
-module ejs {
-
-    /**
-        Cache meta class to manage in-memory storage of key-value data. The Cache class provides an abstraction over
-        various in-memory and disk-based caching cache backends.
-        @stability prototype
-     */
-    class Cache {
-        use default namespace public
-
-        private var adapter: Object
-
-        /**
-            Cache constructor.
-            @param adapter Adapter for the cache cache. E.g. "local". The Local cache is the only currently supported
-                cache backend. 
-            @param options Adapter options. The common options are described below, other options are passed through
-            to the relevant caching backend.
-            @option lifespan Default lifespan for key values
-            @option resolution Time in milliseconds to check for expired expired keys
-            @option timeout Timeout on cache I/O operations
-            @option trace Trace I/O operations for debug
-            @option module Module name containing the cache connector class. This is a bare module name without ".mod"
-                or any leading path. If module is not present, a module name is derrived using "ejs.cache" + adapter.
-            @option class Class name containing the cache backend. If the class property is not present, the 
-                class is derived from the adapter name with "Cache" appended. The first letter of the adapter is converted
-                to uppercase. For example, if the adapter was "mem", the class would be inferred to be "MemCache".
-         */
-        function Cache(adapter: String = null, options: Object = {}) {
-            let adapterClass, modname
-            if (adapter == null || adapter == "local") {
-                options = blend({shared: true}, options, true)
-                adapter = "local"
-                modname = "ejs"
-                adapterClass = "LocalCache"
-            } else {
-                adapterClass ||= options["class"] || (adapter.toPascal() + "Cache")
-                modname ||= options.module || ("ejs.cache." + adapter)
-                if (!global.modname::[adapterClass]) {
-                    load(modname + ".mod", {reload: false})
-                    if (!global.modname::[adapterClass]) {
-                        throw "Can't find cache adapter: \"" + modname + "::" + adapter + "\""
-                    }
-                }
-            }
-            this.adapter = new global.modname::[adapterClass](options)
-        }
-
-        /**
-            Destroy the cache
-         */
-        function destroy(): Void
-            adapter.destroy()
-
-        /**
-            Set a new expire date for a key
-            @param key Key to modify
-            @param when Date at which to expire the data. Set to null to never expire.
-         */
-        function expire(key: String, when: Date): Void
-            adapter.expire(key, when)
-
-        /**
-            Increment a key's value by a given amount. This operation is atomic.
-            @param key Key value to read.
-            @param amount Amount by which to increment the value. This amount can be negative to achieve a decrement.
-            @return The new key value. If the key does not exist, it is initialized to the amount value.
-         */ 
-        function inc(key: String, amount: Number = 1): Number
-            adapter.inc(key, amount)
-
-        /**
-            Resource limits for the server and for initial resource limits for requests.
-            @param limits. Limits is an object hash. Depending on the cache backend in-use, the limits object may have
-                some of the following properties. Consult the documentation for the actual cache backend for which properties
-                are supported by the backend.
-            @option keys Maximum number of keys in the cache. Set to zero for no limit.
-            @option lifespan Default time to preserve key data. Set to zero for no timeout.
-            @option memory Total memory to allocate for cache keys and data. Set to zero for no limit.
-            @option retries Maximum number of times to retry I/O operations with cache backends.
-            @option timeout Maximum time to transact I/O operations with cache backends. Set to zero for no timeout.
-            @see setLimits
-          */
-        function get limits(): Object
-            adapter.limits
-
-        /**
-            Read a key. 
-            @param key Key value to read.
-            @param options Read options
-            @option version If set to true, the read will return an object hash containing the data and a unique version 
-                identifier for the last update to this key. This version identifier can be specified to write to peform
-                an atomic CAS (check and swap) operation.
-            @return Null if the key is not present. Otherwise return key data as a string or if the options parameter 
-                specified "version == true", return an object with the properties "data" for the key data and 
-                "version" for the CAS version identifier.
-         */
-        function read(key: String, options: Object = null): String
-            adapter.read(key, options)
-
-        /**
-            Read a key and return an object 
-            This will read the data for a key and then deserialize. This assumes that $writeObj was used to store the
-            key value.
-            @param key Key value to read.
-            @param options Read options
-            @option version If set to true, the read will return an object hash containing the data and a unique version 
-                identifier for the last update to this key. This version identifier can be specified to write to peform
-                an atomic CAS (check and swap) operation.
-            @return Null if the key is not present. Otherwise return key data as an object.
-         */
-        function readObj(key: String, options: Object = null): Object
-            deserialize(adapter.read(key, options))
-
-        /**
-            Remove the key and associated value from the cache
-            @param key Key value to remove. If key is null, then all keys are removed.
-            @return true if the key was removed
-         */
-        function remove(key: String): Boolean
-            adapter.remove(key)
-
-        /**
-            Update the cache cache resource limits. The supplied limit fields are updated.
-            See the $limits property for limit field details.
-            @param limits Object hash of limit fields and values
-            @see limits
-         */
-        function setLimits(limits: Object): Void
-            adapter.setLimits(limits)
-
-        /**
-            Write the key and associated value to the cache. The value is written according to the optional mode option.  
-            @param key Key to modify
-            @param value String value to associate with the key
-            @param options Options values
-            @option lifespan Preservation time for the key in seconds 
-            @option expire When to expire the key. Takes precedence over lifetime.
-            @option mode Mode of writing: "set" is the default and means set a new value and create if required.
-                "add" means set the value only if the key does not already exist. "append" means append to any existing
-                value and create if required. "prepend" means prepend to any existing value and create if required.
-            @option version Unique version identifier to be used for a conditional write. The write will only be 
-                performed if the version id for the key has not changed. This implements an atomic compare and swap.
-                See $read.
-            @option throw Throw an exception rather than returning null if the version id has been updated for the key.
-            @return The number of bytes written, returns null if the write failed due to an updated version identifier for
-                the key.
-         */
-        function write(key: String, value: String, options: Object = null): Number
-            adapter.write(key, value, options)
-
-        /**
-            Write the key and associated object value to the cache. The object value is serialized using JSON notation and
-            written according to the optional mode option.  
-            @param key Key to modify
-            @param value Object to associate with the key
-            @param options Options values
-            @option lifespan Preservation time for the key in seconds 
-            @option expire When to expire the key. Takes precedence over lifetime.
-            @option mode Mode of writing: "set" is the default and means set a new value and create if required.
-                "add" means set the value only if the key does not already exist. "append" means append to any existing
-                value and create if required. "prepend" means prepend to any existing value and create if required.
-            @option version Unique version identifier to be used for a conditional write. The write will only be 
-                performed if the version id for the key has not changed. This implements an atomic compare and swap.
-                See $read.
-            @option throw Throw an exception rather than returning null if the version id has been updated for the key.
-            @return The number of bytes written, returns null if the write failed due to an updated version identifier for
-                the key.
-         */
-        function writeObj(key: String, value: Object, options: Object = null): Number
-            adapter.write(key, serialize(value), options)
-    }
-
-}
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "../../src/core/cache.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "../../src/jems/ejs.db.mapper/Record.es"
  */
 /************************************************************************/
@@ -13862,8 +13870,17 @@ module ejs.db.mapper {
      */
     public class Record {
         
+
         static var  _assocName: String          //  Name for use in associations. Lower case class name
         static var  _belongsTo: Array = null    //  List of belonging associations
+
+        /*
+            Queries to cache. Indexed by model name and optionally query string. Contains cache options for this model.
+            Created on demand if cache() is called.
+         */
+        static var _cacheOptions: Object = {}
+        static var _caching: Boolean
+
         static var  _className: String          //  Model class name
         static var  _columns: Object            //  List of columns in this database table
         static var  _hasOne: Array = null       //  List of 1-1 containment associations
@@ -13934,8 +13951,8 @@ module ejs.db.mapper {
          */
         function initialize(fields: Object? = null): Void {
             _imodel = Object.getType(this)
-            if (fields) for (let field in fields) {
-                this."public"::[field] = fields[field]
+            if (fields) {
+                blend(this, fields, {deep: false, overwrite: true})
             }
         }
 
@@ -13972,6 +13989,69 @@ module ejs.db.mapper {
             _belongsTo ||= []
             _belongsTo.append(owner)
         }
+
+        /**
+            Database query caching. This caches controls the caching of database records. If enabled, the results
+            of queries are cached with a given lifetime. If the lifetime has not expired, subsequent queries will
+            be optimized by retrieving cached data. If the record is updated, the cached data will be removed so that
+            the next query retrieves fresh data.
+            Caching is disabled/enabled via the ejsrc config.cache.database.enable field. It is enabled by default.
+            Caching may be used for any Database model, though typically it is most useful for state-less GET requests.
+            @param model Model class. This can be a Model class object, "this" or a String model class name.
+                You can specify "this" in static code or can also use "this" in class instance
+                code and this routine will determine the underlying model class name.
+            @param options Cache control options. Default options for all model caching can also be provided by the 
+                ejsrc config.cache.database field.
+            @option lifespan Time in seconds for the cached output to persist.
+            @option query SQL query command to further differentiate cached content. If supplied, different cache data
+                can be stored for each query that applies to the given model. If the URI is set to "*" all 
+                URIs for the specified model will be uniquely cached. 
+            @example 
+                cache()
+                cache("Store", {lifespan: 200})
+                cache(this, {query: "SELECT * from Products"})
+                cache(this, {query: "*"})
+         */
+        static function cache(model = null, options: Object = {}): Void {
+            _caching = App.config.cache.database.enable
+            if (!_caching) {
+                return
+            }
+            let mname
+            if (model == null) {
+                mname = _className
+            } else if (model is String) {
+                mname = model
+            } else if (!(model is Type)) {
+                model = Object.getType(model)
+                mname = Object.getName(model)
+            } else {
+                mname = Object.getName(model)
+            }
+            blend(options, App.config.cache.database, {overwrite: false})
+            cacheIndex = getCacheIndex(mname)
+            _cacheOptions[cacheIndex] = options
+            if (options.lifespan is Number) {
+                let cacheName = cacheIndex
+                if (options.query) {
+                    cacheName += "::" + options.query
+                }
+                /* Invalidate cache data for app reloads */
+                App.cache.expire(cacheName, null)
+                App.cache.expire(cacheName, Date().future(options.lifespan * 1000))
+            }
+        }
+
+        private static function getCacheIndex(model: String): String
+            "::ejs.db.mapper::" + model
+
+        private static function getCacheName(name: String, options: Object, query: String): String {
+            if (options && options.query && query) {
+                name += "::" + query
+            }
+            return name
+        }
+
 
         /*
             Read a single record of kind "model" by the given "key". Data is cached for subsequent reuse.
@@ -14061,8 +14141,6 @@ module ejs.db.mapper {
                 if (model is Array) {
                     model = model[0]
                 }
-                // print("   Create Assoc for " + _tableName + "[" + model._assocName + "] for " + model._tableName + "[" + 
-                //    rec[model._foreignId] + "]")
                 if (preload == true || (preload && preload.contains(model))) {
                     /*
                         Query did table join, so rec already has the data. Extract the fields for the referred model and
@@ -14098,6 +14176,7 @@ module ejs.db.mapper {
             Process a sql result and add properties for each field in the row
          */
         private static function createRecord(data: Object, options: Object = {}) {
+var before = Memory.resident
             let rec: Record = new global[_className]
             rec.initialize(data)
             rec._keyValue = data[_keyName]
@@ -14134,6 +14213,7 @@ module ejs.db.mapper {
                 }
             }
             rec.coerceToEjsTypes()
+// print("Record.createRecord(" + _className + ") consumed " + (Memory.resident - before))
             return rec
         }
 
@@ -14146,6 +14226,27 @@ module ejs.db.mapper {
             field ||= ""
             _errors ||= {}
             _errors[field] = msg
+        }
+
+        /*
+            Fetch cached data from the cache if present
+            @return a response object
+         */
+        private static function fetchCachedResponse(query: String = null): Object {
+            let cacheIndex = getCacheIndex(_className)
+            let options = _cacheOptions[cacheIndex]
+            if (options) {
+                let cacheName = getCacheName(cacheIndex, options, query)
+                if (!options.query || options.query == "*" || cacheName == (cacheIndex + "::" + options.query)) {
+                    let item = App.cache.readObj(cacheName)
+                    if (item) {
+                        App.log.debug(3, "Use cached database query: " + cacheName)
+                        return item
+                    }
+                }
+                App.log.debug(3, "No cached database query for: " + cacheName)
+            }
+            return null
         }
 
         /**
@@ -14162,6 +14263,7 @@ module ejs.db.mapper {
             @option order ORDER BY clause
             @option group GROUP BY clause
             @option include [Model, ...] Models to join in the query and create associations for. Always preloads.
+                The include Model entry may also be an array of [Model, "Join Condition"]
             @option joins Low level join statement "LEFT JOIN vists on stockId = visits.id". Low level joins do not
                 create association objects (or lazy loaders). The names of the joined columns are prefixed with the
                 appropriate table name using camel case (tableColumn).
@@ -14404,8 +14506,12 @@ module ejs.db.mapper {
             let from: String
             let conditions: String
             let where: Boolean
+            let results: Array
 
             if (!_columns) _model.getSchema()
+            if (_caching && (results = fetchCachedResponse())) {
+                return results
+            }
             if (options == null) {
                 options = {}
             }
@@ -14549,34 +14655,26 @@ module ejs.db.mapper {
             if (_db == null) {
                 throw new Error("Database connection has not yet been established")
             }
-
-/*
-    MOB - prototype caching
-
-            if (options.lifespan) {
-                if (App.config.cache.database && App.config.cache.database.enable) {
-                    if (_cache[cmd]) {
-                        results = App.store.read("::ejs.db.mapper::" + controllerName + "::" + actionName)
-                        if (results) {
-                            return deserialize(results)
-                        }
+            if (_caching && (results = fetchCachedResponse(cmd))) {
+                return results
+            }
+            if (results == null) {
+                try {
+                    if (_trace) {
+                        let start = new Date
+                        results = _db.query(cmd, "find", _trace)
+                        App.log.activity("TIME", "Query Time:", start.elapsed)
+                        App.log.info("Query Time:", start.elapsed)
+                    } else {
+                        results = _db.query(cmd, "find", _trace)
                     }
+                    if (_caching) {
+                        saveQuery(results, cmd)
+                    }
+                } 
+                catch (e) {
+                    throw e
                 }
-            }
- */
-            let results: Array
-            try {
-                if (_trace) {
-                    let start = new Date
-                    results = _db.query(cmd, "find", _trace)
-                    App.log.activity("TIME", "Query Time:", start.elapsed)
-                    App.log.info("Query Time:", start.elapsed)
-                } else {
-                    results = _db.query(cmd, "find", _trace)
-                }
-            }
-            catch (e) {
-                throw e
             }
             return results
         }
@@ -14751,7 +14849,30 @@ module ejs.db.mapper {
                 _keyValue = this["id"] = result[0]["last_insert_rowid()"] cast Number
             }
             runFilters(_imodel._afterFilters)
+            if (_imodel._caching) {
+                let cacheIndex = getCacheIndex(_imodel._className)
+                let options = _cacheOptions[cacheIndex]
+                if (options == null || options.query == null) {
+                    let cacheName = getCacheName(cacheIndex, options)
+                    App.log.debug(3, "Expire database query cache " + cacheName)
+                    App.cache.writeObj(cacheName, null, options)
+                } else {
+                }
+            }
             return true
+        }
+
+        /*
+            Save the output from a database query for future reuse
+         */
+        private static function saveQuery(results, query: String = null): Void {
+            let cacheIndex = getCacheIndex(_className)
+            let options = _cacheOptions[cacheIndex]
+            if (options) {
+                let cacheName = getCacheName(cacheIndex, options, query)
+                App.cache.writeObj(cacheName, results, options)
+                App.log.debug(3, "Cache database query " + cacheName)
+            }
         }
 
         /**
@@ -15141,11 +15262,11 @@ module ejs.db.sqlite {
 
         /** @duplicate ejs.db::Database.addColumn */
         function addColumn(table: String, column: String, datatype: String, options = null): Void {
-            datatype = DataTypeToSqlType[datatype.toLowerCase()]
-            if (datatype == undefined) {
+            let mapped = DataTypeToSqlType[datatype.toLowerCase()]
+            if (mapped == undefined) {
                 throw "Bad Ejscript column type: " + datatype
             }
-            query("ALTER TABLE " + table + " ADD " + column + " " + datatype)
+            query("ALTER TABLE " + table + " ADD " + column + " " + mapped)
         }
 
         /** @duplicate ejs.db::Database.addIndex */
@@ -15323,13 +15444,24 @@ module ejs.db.sqlite {
          */
         function rollback(): Void {}
 
+        //  MOB - why have query and sql
+
         /** @duplicate ejs.db::Database.query */
         function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
             //  TODO - need to access Database.traceAll
+            let mark, size
+            //  MOB - rationalize Sqlite.query with Database.query and Record.innerFind
             if (trace) {
-                App.log.activity(tag,  cmd)
+                App.log.debug(0, tag + ": " + cmd)
+                mark = new Date
+                size = Memory.resident
             }
-            return sql(cmd)
+            let result = sql(cmd)
+            if (trace) {
+                App.log.activity("Stats", "Sqlite query %.2f msec, memory %.2f MB, resident %.2f".format(mark.elapsed, 
+                    (Memory.resident - size) / (1024 * 1024), Memory.resident / (1024 * 1024)))
+            }
+            return result
         }
 
         /** @duplicate ejs.db::Database.sql */
@@ -15616,10 +15748,19 @@ module ejs.db {
             @TODO Refactor logging when Log class implemented
          */
         function query(cmd: String, tag: String = "SQL", trace: Boolean = false): Array {
-            if (options.trace || trace) {
-                print(tag + ": " + cmd)
+            let mark, size
+            trace ||= options.trace
+            if (trace) {
+                App.log.activity(tag, cmd)
+                mark = new Date
+                size = Memory.resident
             }
-            return adapter.sql(cmd)
+            let result = adapter.sql(cmd)
+            if (trace) {
+                App.log.activity("Stats", "Elapsed %5.2f msec, memory %5.2f".format(mark.elapsed, 
+                    (Memory.resident - size) / (1024 * 1024)))
+            }
+            return result
         }
 
         /**
@@ -16879,11 +17020,18 @@ module ejs.web {
          */
         use default namespace module
 
+        /*
+            Actions to cache. Indexed by controller+action name plus optionally, post and query data. 
+            Contains cache options for this action. Created on demand if cache() is called.
+         */
+        private static var _cacheOptions: Object = {}
+        private static var _caching: Boolean
+
         private var _afterCheckers: Array
         private var _beforeCheckers: Array
 
         /** Name of the Controller action method being run for this request */
-        var actionName:  String 
+        var actionName: String 
 
         /** Configuration settings. This is a reference to $ejs.web::Request.config */
         var config: Object 
@@ -16947,7 +17095,7 @@ module ejs.web {
          */
         function Controller(req: Request = null) {
             /*  _initRequest may be set by create() to allow subclasses to omit constructors */
-            controllerName = typeOf(this).trim("Controller") || "-DefaultController-"
+            controllerName = typeOf(this).trim("Controller") //MOB || "-DefaultController-"
             request = req || _initRequest
             if (request) {
                 request.controller = this
@@ -16974,6 +17122,126 @@ module ejs.web {
             _afterCheckers.append([fn, options])
         }
 
+        /*
+            Fetch cached data from the cache if present.
+            @return a response object
+         */
+        private function fetchCachedResponse(): Object {
+            let cacheIndex = getCacheIndex(controllerName, actionName)
+            let options = _cacheOptions[cacheIndex]
+            if (options) {
+                let cacheName = getCacheName(cacheIndex, options)
+                if ((!options.uri || options.uri == "*" || cacheName == (cacheIndex + "::" + options.uri)) && 
+                        options.mode != "manual") {
+                    let hdr
+                    if ((hdr = request.header("Cache-Control")) && (hdr.contains("max-age=0") || hdr.contains("no-cache"))) {
+                        App.log.debug(5, "Cache-control header rejects use of cached content")
+                    } else {
+                        let item = App.cache.readObj(cacheName)
+                        if (item) {
+                            /*
+                                Observe headers
+                                If-None-Match: "ec18d-54-4d706a63"
+                                If-Modified-Since: Fri, 04 Mar 2011 04:28:19 GMT
+                             */
+                            let status = Http.Ok
+                            if ((hdr = request.header("If-None-Match")) && hdr == item.tag) {
+                                /* 
+                                    RFC2616 requires returning PrecondFailed, but chrome doesn't send an If-Modified-Since
+                                    header and so returning PrecondFailed caused Chrome to fail.
+                                 */
+                                // SPEC REQUIRES THIS BUG CHROME FAILS status = Http.PrecondFailed
+                                status = Http.NotModified
+                            }
+                            if ((hdr = request.header("If-Modified-Since"))) {
+                                if (item.modified <= Date.parse(hdr)) {
+                                    status = Http.NotModified
+                                }
+                            }
+                            if (options.client) {
+                                setHeader("Cache-Control", options.client, false)
+                            }
+                            setHeader("Last-Modified", Date(item.modified).toUTCString())
+                            setHeader("Etag", md5(cacheName))
+                            if (status == Http.Ok) {
+                                //  MOB - change this trace to just use "actionName"
+                                App.log.debug(5, "Use cached: " + cacheName)
+                                write(item.data)
+                                request.finalize()
+                            } else {
+                                App.log.debug(5, "Use cached content, status: " + status + ", " + cacheName)
+                            }
+                            return {status: status}
+                        }
+                        App.log.debug(5, "No cached content for: " + cacheName)
+                    }
+                    request.writeBuffer = new ByteArray
+                    setHeader("Etag", md5(cacheName))
+                    if (options.client) {
+                        setHeader("Cache-Control", options.client, false)
+                    }
+                }
+            }
+            setHeader("Last-Modified", Date().toUTCString())
+            return null
+        }
+
+        /**
+            Manually write out cached content to the client.
+            This routine will write is valid (non-expired) cached data to the client. Caching for actions is enabled by
+            calling $cache() in the Controller.
+            @return True if valid cached content was found to write to the client.
+         */
+        function writeCached(): Boolean {
+            let cacheIndex = getCacheIndex(controllerName, actionName)
+            let options = _cacheOptions[cacheIndex]
+            if (request.finalized || !options) {
+                return false
+            }
+            let cacheName = getCacheName(cacheIndex, options)
+            if ((!options.uri || options.uri == "*" || cacheName == options.uri)) {
+                let item
+                if (item = App.cache.readObj(cacheName)) {
+                    App.log.debug(5, "Use cached: " + cacheName)
+                    setHeader("Etag", md5(cacheName))
+                    setHeader("Last-Modified", Date(item.modified).toUTCString())
+                    if (options.client) {
+                        setHeader("Cache-Control", options.client, false)
+                    }
+                    request.writeBuffer = null
+                    write(item.data)
+                    request.finalize()
+                    return true
+                }
+            }
+            App.log.debug(5, "no cached: " + cacheName)
+            return false
+        }
+
+        /*
+            Save the output from the action for future requests
+         */
+        private function saveCachedResponse(): Void {
+            if (request.finalized) {
+                let cacheIndex = getCacheIndex(controllerName, actionName)
+                /* Cache output */
+                let options = _cacheOptions[cacheIndex]
+                if (options) {
+                    let cacheName = getCacheName(cacheIndex, options)
+                    let etag = md5(cacheName)
+                    App.cache.writeObj(cacheName, { tag: etag, modified: Date.now(), data: request.writeBuffer}, options)
+                    App.log.debug(5, "Cache action " + cacheName + ", " + request.writeBuffer.available + " bytes")
+                }
+            }
+            let data = request.writeBuffer
+            request.writeBuffer = null
+            request.write(data)
+            if (request.finalized) {
+                /* Now that writeBuffer is cleared, finalize will actually finalize the request */
+                request.finalize()
+            }
+        }
+
         //  MOB - rename
         /** 
             Controller web application. This function will run a controller action method and return a response object. 
@@ -16985,29 +17253,23 @@ module ejs.web {
             @return A response object hash {status, headers, body} or null if writing directly using the request object.
          */
         function app(request: Request, aname: String = null): Object {
+            let response, cacheIndex, cacheName
             let ns = params.namespace || "action"
+
             actionName ||= aname || params.action || "index"
             params.action = actionName
             runCheckers(_beforeCheckers)
-            let response
-            //  MOB - is this right to test autoFinalizing here?
+
             if (!request.finalized && request.autoFinalizing) {
-/*
-                MOB - prototype action caching
-                if (_cache[actionName]) {
-                    response = App.store.read("::ejs.web.action::" + controllerName + "::" + actionName)
-                    if (response) {
-                        return deserialize(response)
-                    }
-                    request.writeBuffer = new ByteArray
+                if (_caching && (response = fetchCachedResponse())) {
+                    return response
                 }
- */
                 if (!(ns)::[actionName]) {
                     if (!viewExists(actionName)) {
                         response = "action"::missing()
                     }
                 } else {
-                    App.log.debug(3, "Run action " + actionName)
+                    App.log.debug(4, "Run action " + actionName)
                     response = (ns)::[actionName]()
                 }
                 if (response && !response.body) {
@@ -17022,14 +17284,9 @@ module ejs.web {
             if (!response) {
                 request.autoFinalize()
             }
-/*MOB
-            //  MOB - but what if not finalized? 
-            //  MOB - options. Could just have caching for what the action has rendered.
-            if (_cache[actionName]) {
-                response = App.store.write("::ejs.web.action::" + controllerName + "::" + actionName, 
-                    serialize(request.writeBuffer), _cache[actionName])
+            if (request.writeBuffer) {
+                saveCachedResponse()
             }
- */
             return response
         }
 
@@ -17057,15 +17314,163 @@ module ejs.web {
             _beforeCheckers.append([fn, options])
         }
 
-/*MOB
-        //  MOB - this is action caching. Caches entire page
-        //  Usage:  cache("index", {lifespan: 200})
-        function cache(name: String, options: Object = null): Void {
-            if (config.cache.action.enable) {
-                _cache[name] = options
+        /**
+            Controler action caching. This caches the entire output of an action (including generated view).
+            Caching is disabled/enabled via the ejsrc config.cache.actions.enable field. It is enabled by default.
+            Caching may be used for any HTTP method, though typically it is most useful for state-less GET requests.
+            Output data is uniquely cached for requests with different URI post data or query parameters.
+            @param controller Controller class. This can be a Controller class object, "this" or a String controller name.
+                You can specify "this" in static code or can also use "this" in class instance
+                code and this routine will determine the underlying controller class.
+            @param actions Action string or array of actions
+            @param options Cache control options. Default options for all action caching can be provided via the 
+                ejsrc config.cache.actions field. This is frequently used to specifiy a default lifespan for cached data.
+            @option mode Client caching mode. Defaults to "server" if unset. If mode is set to "client", a Cache-Control 
+                header will be sent to the client with the caching "max-age" set to the lifespan. This causes the client 
+                to serve client-cached content and to not contact the server at all until the max-age expires. 
+                If mode is set to "manual", the output from the action will be cached, but the action routine will 
+                always be called. To use the cached content in this mode, call $writeCached() in the action method. 
+                The default mode is "server" which caches content at the server for the specified lifespan. In server mode, 
+                the client will cache requests, but will always revalidate the request with the server. If the server-side 
+                content has not expired, a HTTP Not-Modified (304) response will be given and the client will use its 
+                client-side cached content.
+
+                Use "client" mode for static content that will rarely change and for which using "reload" in the browser
+                is an adequate solution to force a refresh. Use "server" mode for dynamic content in conjunction with 
+                $updateCache to expire or update cache contents. Use "manual" mode when the action routine needs to 
+                determine if cached content can be used on a case by case basis.
+
+                If a client browser clicks reload, the client cached and server cached content will be ignored and the 
+                action method will be always invoked.
+
+            @option lifespan Time in seconds for the cached output to persist.
+            @option client Cache-Control header to send to the client to control caching in the client.
+                Use this for explicit control of the Cache-Control header and thus control of caching in the client.
+                This can be used to set a "max-age" for cached data in the client.
+                These are some of the HTTP/1.1 Cache-Control keywords that can be used in the client option are:
+                "max-age" Max time in seconds the resource is considered fresh.
+                "s-maxage" Max time in seconds the resource is considered fresh from a shared cache.
+                "public" marks authenticated responses as cacheable.
+                "private" shared caches may not store the response.
+                "no-cache" cache must re-submit request for validation before using cached copy.
+                "no-store" response may not be stored in a cache.
+                "must-revalidate" forces clients to revalidate the request with the server.
+                "proxy-revalidate" similar to must-revalidate except only for proxy caches>
+            @option uri URI and parameter to further differentiate cached content. If supplied, different cache data
+                can be stored for each URI that applies to the given controller/action. If the URI is set to "*" all 
+                URIs for that action/controller are uniquely cached. If the request has POST data, the URI may include
+                such post data in a query format. E.g. {uri: /buy?item=scarf&quantity=1}.
+            @example 
+                cache(DashController, "index", {lifespan: 200})
+                cache(this, ["index", "edit", "show"])
+                cache(this, "index", false)
+         */
+        static function cache(controller, actions: Object, options: Object = {}): Void {
+            _caching = App.config.cache.actions.enable
+            if (!_caching) {
+                return
+            }
+            let cname
+            if (controller is String) {
+                cname = controller.trim("Controller")
+            } else if (!(controller is Type)) {
+                controller = Object.getType(controller)
+                cname = Object.getName(controller).trim("Controller")
+            } else {
+                cname = Object.getName(controller).trim("Controller")
+            }
+            if (actions is String || actions is Function) {
+                actions = [actions]
+            }
+            blend(options, App.config.cache.actions, {overwrite: false})
+            if (options.mode == "client") {
+                options.client ||= "max-age=" + options.lifespan
+            }
+            for each (name in actions) {
+                cacheIndex = getCacheIndex(cname, name)
+                _cacheOptions[cacheIndex] = options
+                if (options.lifespan is Number) {
+                    let cacheName = cacheIndex
+                    if (options.uri) {
+                        cacheName += "::" + options.uri
+                    }
+                    /* Invalidate cache data when the app is reloaded */
+                    App.cache.expire(cacheName, null)
+                    App.cache.expire(cacheName, Date().future(options.lifespan * 1000))
+                }
             }
         }
- */
+
+        /**
+            Update the cache contents.
+            This will manually update the cache contents for the given actions with the supplied data. If data is null,
+            then cached content will be immediately expired.
+            @param controller Controller class. This can be a Controller class object, "this" or a String controller name.
+                You can specify "this" in static code or can also use "this" in class instance
+                code and this routine will determine the underlying controller class.
+            @param actions Action string or array of actions
+            @param data Object data to cache. Data is serialized using JSON and stored in the cache. Set to null to
+                invalidate/expire cached data.
+            @param options Cache control options.
+            @option uri URI and parameter to further differentiate cached content. If supplied, different cache data
+                can be stored for each URI that applies to the given controller/action. If the URI is set to "*" all 
+                URIs for that action/controller are uniquely cached. If the request has POST data, the URI may include
+                such post data in a query format. E.g. {uri: /buy?item=scarf&quantity=1}
+          */
+        static function updateCache(controller, actions: Object, data: Object, options: Object = {}): Void {
+            _caching = App.config.cache.actions.enable
+            if (!_caching) {
+                return
+            }
+            let cname
+            if (controller is String) {
+                cname = controller.trim("Controller")
+            } else if (!(controller is Type)) {
+                controller = Object.getType(controller)
+                cname = Object.getName(controller).trim("Controller")
+            } else {
+                cname = Object.getName(controller).trim("Controller")
+            }
+            if (actions is String || actions is Function) {
+                actions = [actions]
+            }
+            for each (name in actions) {
+                cacheIndex = getCacheIndex(cname, name)
+                let cacheName = cacheIndex
+                if (options.uri) {
+                    cacheName += "::" + options.uri
+                }
+                if (data == null) {
+                    App.log.debug(5, "Expire " + cacheName)
+                    App.cache.expire(cacheName, Date())
+                } else {
+                    let etag = md5(cacheName)
+                    App.cache.writeObj(cacheName, { tag: etag, modified: Date.now(), data: data}, _cacheOptions[cacheIndex])
+                    App.log.debug(5, "Update cache " + cacheName)
+                }
+            }
+        }
+
+        /** @duplicate ejs.web::Request.clearCache */
+        function clearFlash(): Void
+            request.clearFlash()
+
+        private static function getCacheIndex(cname: String, name: String = "*"): String
+            "::ejs.web.action::" + cname + "::" + name
+
+        /*
+            Create a full cache key name by combining the name prefix from getCacheIndex with URI information 
+            URI information is added if cache() is called with options.uri set to something
+         */
+        private function getCacheName(name: String, options: Object): String {
+            if (options && options.uri) {
+                name += "::" + request.pathInfo
+                if (request.formData) {
+                    name += "?" + request.formData
+                }
+            }
+            return name
+        }
 
         /** @duplicate ejs.web::Request.dontAutoFinalize */
         function dontAutoFinalize(): Void
@@ -17908,7 +18313,7 @@ module ejs.web {
                 if (response.body is String) {
                     let length = response.body.length
                     response.headers ||= {}
-                    blend(response.headers, {"Content-Length": length}, true)
+                    blend(response.headers, {"Content-Length": length})
                 }
                 response.body = null
             }
@@ -18004,7 +18409,7 @@ module ejs.web {
         private var view: View
 
         /* Sequential DOM ID generator */
-        private var lastDomID: Number = 0
+        private static var lastDomID: Number = 0
 
         /*
             Mapping of helper options to HTML attributes.
@@ -18315,7 +18720,6 @@ module ejs.web {
                 for (name in columns) {
                     values[name] = view.getValue(r, name, options)
                 }
-                
                 let rowOptions = {
                     click: options.click,
                     edit: options.edit,
@@ -18631,7 +19035,7 @@ module ejs.web {
             } else {
                 target = target.clone()
             }
-            blend(target, options, false)
+            blend(target, options, {overwrite: false})
             if (options.key && options.record) {
                 /* Set template key fields */
                 setKeyFields(target, options.key, options)
@@ -18742,7 +19146,6 @@ module ejs.web {
         private var idleWorkers: Array = []
         private var activeWorkers: Array = []
         private var workerImage: Worker
-        private var pruner: Timer
 
         private static const defaultConfig = {
             app: {
@@ -18767,11 +19170,11 @@ module ejs.web {
                 "class": "LocalCache",
                 module: "ejs",
                 lifespan: 3600,
+                actions: { enable: true },
+                records: { enable: true },
+                workers: { enable: true, limit: 10 },
             },
             web: {
-                cache: {
-                    workers: { enable: true, limit: 10 },
-                },
                 limits: {},
                 views: {
                     connectors: {
@@ -18792,7 +19195,7 @@ module ejs.web {
             @hide
          */
         static function initHttpServer() {
-            blend(App.config, defaultConfig, false)
+            blend(App.config, defaultConfig, {overwrite: false})
             let dirs = App.config.dirs
             for (let [key, value] in dirs) {
                 dirs[key] = Path(value)
@@ -18955,7 +19358,7 @@ server.listen("127.0.0.1:7777")
                 config.ejsrc = options.ejsrc
             }
             if (config.files.ejsrc && config.files.ejsrc.exists) {
-                blend(config, Path(config.files.ejsrc).readJSON(), true)
+                blend(config, Path(config.files.ejsrc).readJSON())
                 let dirs = config.dirs
                 for (let [key, value] in dirs) {
                     dirs[key] = Path(value)
@@ -18964,7 +19367,7 @@ server.listen("127.0.0.1:7777")
             } else if (home != ".") {
                 let path = home.join("ejsrc")
                 if (path.exists) {
-                    blend(config, path.readJSON(), true)
+                    blend(config, path.readJSON())
                     App.updateLog()
                 }
             }
@@ -18972,7 +19375,7 @@ server.listen("127.0.0.1:7777")
             if (web.trace) {
                 trace(web.trace)
             }
-            web.limits.workers ||= web.cache.workers.limit
+            web.limits.workers ||= config.cache.workers.limit
             setLimits(web.limits)
             if (web.session) {
                 openSession()
@@ -19120,7 +19523,9 @@ server.listen("127.0.0.1:7777")
                     request.status = response.status || 200
                     let headers = response.headers || { "Content-Type": "text/html" }
                     request.setHeaders(headers)
-                    processBody(request, response.body)
+                    if (response.body) {
+                        processBody(request, response.body)
+                    }
 
                 } else {
                     let file = request.responseHeaders["X-Sendfile"]
@@ -19219,9 +19624,8 @@ server.listen("127.0.0.1:7777")
 
         private function releaseWorker(w: Worker): Void {
             activeWorkers.remove(w)
-            if (config.web.cache.workers.enable) {
+            if (config.cache.workers.enable) {
                 idleWorkers.push(w)
-                pruner.restart()
             }
             App.log.debug(4, "HttpServer.releaseWorker idle: " + idleWorkers.length + " active:" + activeWorkers.length)
         }
@@ -19274,7 +19678,9 @@ server.listen("127.0.0.1:7777")
                     /* Must not touch request from here on - the worker owns it now */
                 } else {
                     //  MOB - rename response => responder
+                    let mark = new Date
                     process(route.response, request)
+                    App.log.debug(2, "Elapsed " + mark.elapsed + " msec for " + request.uri)
                 }
             } catch (e) {
                 let status = request.status != Http.Ok ? request.status : Http.ServerError
@@ -19614,33 +20020,62 @@ module ejs.web {
         private static var loaded: Object = {}
         private static const EJSRC = "ejsrc"
 
-        blend(App.config, defaultConfig, false)
+        blend(App.config, defaultConfig, {overwrite: false})
 
         /** 
             Load an MVC application and the optional application specific ejsrc file
             @param request Request object
          */
-        function Mvc(request: Request) {
-            config = request.config
-            let path = request.dir.join(EJSRC)
-            if (request.dir != request.server.documents && path.exists) {
-                loadConfig(request, path)
-                request.config = config
+        function Mvc(dir: Path, cfg = App.config) {
+            this.config = cfg
+            let path = dir.join(EJSRC)
+            if (path.exists) {
+                loadConfig(dir, path)
             }
             if (config.database) {
-                openDatabase(request)
+                openDatabase()
             }
+        }
+
+        /**
+            Factory to load an MVC application.
+            @param dir Base directory containing the MVC application. Defaults to "."
+            @param config Default configuration for the application
+            @return An Mvc application object
+          */
+        public static function load(dir: Path = ".", config = App.config): Mvc {
+            if ((mvc = Mvc.apps[dir]) == null) {
+                App.log.debug(2, "Load MVC application from \"" + dir + "\"")
+                mvc = Mvc.apps[dir] = new Mvc(dir, config)
+                let appmod = config.dirs.cache.join(config.mvc.appmod)
+
+                /* Load App. Touch ejsrc triggers a complete reload */
+                let files, deps
+                if (config.app.reload) {
+                    let dirs = config.dirs
+                    let ext = config.extensions
+                    deps = [dir.join(EJSRC)]
+                    files = dirs.models.find("*" + ext.es)
+                    files += dirs.src.find("*" + ext.es)
+                    files += [dirs.controllers.join("Base").joinExt(ext.es)]
+                }
+                let request = new Request("/")
+                request.config = config
+                mvc.loadComponent(request, appmod, files, deps)
+                loaded[appmod] = new Date
+            }
+            return mvc
         }
 
         /*
             Load the app/ejsrc and defaultConfig
          */
-        private function loadConfig(request: Request, path: Path): Void {
+        private function loadConfig(baseDir: Path, path: Path): Void {
             let appConfig = path.readJSON()
-            config = blend(config.clone(), appConfig, true)
+            config = blend(config.clone(), appConfig)
             let dirs = config.dirs
             for each (key in ["bin", "db", "controllers", "models", "src", "static"]) {
-                dirs[key] = request.dir.join(dirs[key])
+                dirs[key] = baseDir.join(dirs[key])
             }
             for (let [key, value] in dirs) {
                 dirs[key] = Path(value)
@@ -19651,10 +20086,12 @@ module ejs.web {
         /*
             Load the required parts of the Mvc app
          */
-        function load(request: Request) {
+        function loadRequest(request: Request) {
+            request.config = config
             let dirs = config.dirs
             let appmod = dirs.cache.join(config.mvc.appmod)
-            if (config.web.cache.flat) {
+            //  MOB - implement flat
+            if (config.web.flat) {
                 if (!global.BaseController) {
                     global.load(appmod)
                 }
@@ -19738,11 +20175,11 @@ module ejs.web {
                     production: { name: "db/blog.sdb", trace: true },
                 }
          */
-        private function openDatabase(request: Request) {
-            let dbconfig = config.database
+        public static function openDatabase() {
+            let dbconfig = App.config.database
             if (dbconfig) {
                 global.load("ejs.db.mod", {reload: false})
-                blend(dbconfig, dbconfig[config.mode])
+                blend(dbconfig, dbconfig[App.config.mode])
                 new "ejs.db"::["Database"](dbconfig.adapter, dbconfig)
             }
         }
@@ -19763,6 +20200,7 @@ module ejs.web {
 
     }
 
+    //  MOB - who uses this?
     /**
         MVC request handler.  
         @param request Request object
@@ -19784,12 +20222,8 @@ module ejs.web {
         @stability prototype
      */
     function MvcBuilder(request: Request): Function {
-        let mvc: Mvc
-        if ((mvc = Mvc.apps[request.dir]) == null) {
-            App.log.debug(2, "Load MVC application from \"" + request.dir + "\"")
-            mvc = Mvc.apps[request.dir] = new Mvc(request)
-        }
-        mvc.load(request)
+        let mvc: Mvc = Mvc.load(request.dir, request.config)
+        mvc.loadRequest(request)
         //  MOB - rename app to be more unique
         return Controller.create(request, request.params.controller + "Controller").app
     }
@@ -19977,6 +20411,12 @@ module ejs.web {
         public var flash: Object
 
         /** 
+            The request form parameters as a string. This parameters are www-url decoded from the POST request body data. 
+            This is useful to get a stable, sorted string representing the form parameters.
+         */
+        native enumerable var formData: String
+
+        /** 
             Request Http headers. This is an object hash filled with lower-case request headers from the client. If multiple 
             headers of the same key value are defined, their contents will be catenated with a ", " separator as per the 
             HTTP/1.1 specification. Use the header() method if you want to retrieve a single header.
@@ -20052,7 +20492,8 @@ module ejs.web {
         native enumerable var originalUri: Uri
 
         /** 
-            The request form parameters. This parameters are www-url decoded from the POST request body data. 
+            The request form parameters plus other routing parameters. 
+            The form parameters are www-url decoded from the POST request body data. See also $form.
          */
         native enumerable var params: Object
 
@@ -20165,6 +20606,11 @@ module ejs.web {
          */
         native enumerable var uri: Uri
 
+        /**
+            Write buffer when capturing output
+         */
+        var writeBuffer: ByteArray
+
         /*************************************** Methods ******************************************/
         /**
             Construct the a Request object. Request objects are typically created by HttpServers and not constructed
@@ -20211,6 +20657,14 @@ module ejs.web {
                 throw new SecurityError("Security token does not match. Potential CSRF attack. Denying request")
             }
         }
+
+        /**
+            Clear previous flags messages. Useful when using client mode caching for an action.
+            @stability prototype
+            @hide
+         */
+        function clearFlash(): Void
+            flash = null
 
         /**
             Create a session state object. The session state object can be used to share state between requests.
@@ -20732,8 +21186,10 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
         native function writeBlock(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number 
 
         /**
+MOB - DEBUG
             Write content based on the requested accept mime type
             @param data Data to send to the client
+            @hide
          */
         function writeContent(data): Void {
             let mime = matchContent("application/json", "text/html", "application/xml", "text/plain")
@@ -20868,22 +21324,6 @@ r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}"
          */
         function get serverPort(): Number
             server.port
-
-        /**
-            @example
-            @option max-age Max time in seconds the resource is considered fresh
-            @option s-maxage Max time in seconds the resource is considered fresh from a shared cache
-            @option public marks authenticated responses as cacheable
-            @option private shared caches may not store the response
-            @option no-cache cache must re-submit request for validation before using cached copy
-            @option no-store response may not be stored in a cache.
-            @option must-revalidate forces caches to observe expiry and other freshness information
-            @option proxy-revalidate similar to must-revalidate except only for proxy caches
-            @hide
-            MOB - complete
-          */
-        function cache(options) {
-        }
 
         /*************************************** Deprecated ***************************************/
 
@@ -21083,7 +21523,7 @@ module ejs.web {
         //  Match /some/path and run myCustomApp to generate a response. Target is data for myCustomApp.
         r.add("/some/path", {response: myCustomApp, target: "/other/path"})
 
-        //  Match /some/path and run MvcApp with controller == User and action == "register"
+        //  Match /User/register and run MvcApp with controller == User and action == "register"
         r.add("\@/User/register")
 
         //  Add route for files with a ".es" extension and use the ScriptApp to generate the response
@@ -21092,10 +21532,10 @@ module ejs.web {
         //  Add route for directories and use the DirApp to generate the response
         r.add(Router.isDir, {name: "dir", response: DirApp})
 
-        //  Add route for RESTful routes and respond with the MvcApp
+        //  Add routes for RESTful routes for URIs starting with "/User" and respond using MvcApp
         r.addResources("User")
 
-        //  Manually create restful routes
+        //  Manually create restful routes using the given URI template patterns
         r.add("/{controller}",           {action: "create", method: "POST"})
         r.add("/{controller}/init",      {action: "init"})
         r.add("/{controller}",           {action: "index"})
@@ -21397,6 +21837,8 @@ module ejs.web {
         /**
             Add a route
             @param template String or Regular Expression defining the form of a matching URI (Request.pathInfo).
+                If options are not provided and the template arg is a string starting with "\@", the template is
+                interpreted both as a URI and as providing the options. See $options below for more details.
             @param options Route options representing the URI and options to use when servicing the request. If it
                 is a string, it may begin with a "\@" and be of the form "\@[controller/]action". In this case, if there
                 is a "/" delimiter, the first portion is a controller and the second is the controller action to invoke.
@@ -21420,6 +21862,7 @@ module ejs.web {
             @examples:
                 Route("/{controller}(/{action}(/{id}))/", { method: "POST" })
                 Route("/User/login", {name: "login" })
+                Route("\@/User/login")
             @option name Name for the route
             @option method String|RegExp HTTP methods to support.
             @option limits Limits object for the requests on this route. See HttpServer.limits.
@@ -21545,7 +21988,7 @@ module ejs.web {
                 r.initialized = true
             }
             if (log.level >= 3) {
-                log.debug(3, "Matched route \"" + r.routeSetName + "/" + r.name + "\"")
+                log.debug(4, "Matched route \"" + r.routeSetName + "/" + r.name + "\"")
                 if (log.level >= 5) {
                     log.debug(5, "  Route params " + serialize(params, {pretty: true}))
                 }
@@ -21612,6 +22055,7 @@ module ejs.web {
         public function setDefaultApp(app: Function): Void
             defaultApp = app
 
+        //  MOB - rethink the "full" arg
         /**
             Show the route table
             @param extra Set to "full" to display extra route information
@@ -21832,7 +22276,8 @@ module ejs.web {
                 The controller or action may be absent. For example: "\@Controller/", "\@action", "\@controller/action".
                 If the string does not begin with an "\@", it is interpreted as a literal URI. 
                 For example: "/web/index.html". If the options is an object hash, it may contain the options below:
-            @option action Action method to service the request. This may be of the form "controller/action" or "controller/"
+            @option action Action method to service the request. This may be of the form "action", "controller/action" or 
+                "controller/".  If the action portion omitted, the default action (index) will be used.
             @option controller Controller to service the request.
             @option name Name to give to the route. If absent, the name is created from the controller and action names.
             @option outer Parent route. The parent's template and parameters are appended to this route.
@@ -22403,7 +22848,8 @@ module ejs.web {
 
     /** 
         Static content handler. This supports DELETE, GET, POST and PUT methods. It handles directory redirection
-        and will use X-SendFile for efficient transmission of static content.
+        and will use X-SendFile for efficient transmission of static content. The If-Match, If-None-Match,
+        If-Modified-Since and If-Unmodified-Since headers are supported.
         @param request Request objects
         @returns A response hash object
         @example:
@@ -22414,6 +22860,7 @@ module ejs.web {
     function StaticApp(request: Request): Object {
         let filename = request.filename
         let status = Http.Ok, body
+        let hdr
 
         let headers = {
             "Content-Type": Uri(request.uri).mimeType,
@@ -22439,54 +22886,66 @@ module ejs.web {
             headers["ETag"] = etag
             headers["Last-Modified"] = filename.modified.toUTCString()
         }
-        let ignoreIfModified = false
 
-        let rtags = request.header("If-Match")
-        if (rtags) {
-            for each (rtag in rtags.split(",")) {
-                if (rtag != etag || (rtag == "*" && !filename.exists)) {
-                    /* Etag doesn't match - don't retrieve - must still check If-Modified */
-                   status = Http.PrecondFailed
-                } else {
-                    ignoreIfModified = true
+        /*
+            If a specified tag matches, then return the full resource
+         */
+        let match = false
+        if (hdr = request.header("If-Match")) {
+            for each (rtag in hdr.split(",")) {
+                if (rtag == etag || (rtag == "*" && filename.exists)) {
+                    match = true
+                    break
                 }
             }
+            if (!match) {
+                return { status: Http.PrecondFailed }
+            }
         }
-        let rtags = request.header("If-None-Match")
-        if (rtags) {
-            for each (rtag in rtags.split(",")) {
-                if (rtag == etag || (rtag == "*" && filename.exists)) {
-                    /* Etag matches - don't retrieve */
-                    status = Http.PrecondFailed
-                } else {
-                    ignoreIfModified = true
+        /*
+            If a specified etag matches, then no need to process the request. Respond with Not-Modified.
+         */
+        match = true
+        if (hdr = request.header("If-None-Match")) {
+            for each (rtag in hdr.split(",")) {
+                if (rtag != etag || (rtag == "*" && !filename.exists)) {
+                    match = false
                 }
+            }
+            if (match) {
+                status = Http.PrecondFailed
+                /* Keep going to allow If-Modified-Since to be analysed */
             }
         }
 
         /*
-            Must not return NotModified if an If-None-Match failed
+            If the resource has not been modified since, return Not-Modified
          */
-        if (!ignoreIfModified && (when = request.header("If-Modified-Since"))) {
-            when = Date.parse(when)
-            if (filename.exists && filename.modified <= when) {
-                return { headers: headers, status: Http.NotModified }
+        if (match && (when = request.header("If-Modified-Since"))) {
+            if (request.method == "GET" || request.method == "HEAD") {
+                if (filename.exists && filename.modified <= Date.parse(when) && !request.header("Range")) {
+                    status = Http.NotModified
+                }
             }
         }
-        if (!ignoreIfModified && (when = request.header("If-Unmodified-Since"))) {
-            when = Date.parse(when)
-            if (!filename.exists && when < filename.modified) {
+        if (when = request.header("If-Unmodified-Since")) {
+            if (!filename.exists || Date.parse(when) < filename.modified) {
                 status = Http.PrecondFailed
             }
         }
+        if (status == Http.NotModified &&
+                (hdr = request.header("Cache-Control")) && (hdr.contains("max-age=0") || hdr.contains("no-cache"))) {
+            status = Http.Ok
+        }
         if (status != Http.Ok) {
-            return { status: status }
+            return { headers: headers, status: status }
         }
         let expires = request.config.web.expires
         if (expires) {
             let lifetime = expires[request.extension] || expires[""]
             if (lifetime) {
                 headers["Cache-Control"] = "max-age=" + lifetime
+                /* OPT - don't really need to do expires. Cache-Control should be sufficient */
                 let when = new Date
                 when.time += (lifetime * 1000)
                 headers["Expires"] = when.toUTCString()
@@ -23042,8 +23501,10 @@ module ejs.web {
  */
 module ejs.web {
 
+    //  MOB - is this necessary?
     require ejs.web
 
+    //  MOB - what does option click Boolean mean below??
     /**
         Base class for web framework Views. This class provides the core functionality for templated Ejscript view 
         web pages. Ejscript web pages are compiled to create a new View class which extends the View base class.  
@@ -23155,32 +23616,28 @@ module ejs.web {
         function View(request: Object) {
             if (request) {
                 controller = request.controller
-//  MOB -- replace all this with blend. Perhaps request and config come over automatically.
+                blend(this, controller, {overwrite: true, deep: false})
+                /* Manual construction may not have a controller */
+                config = request.config
                 this.request = request
-                this.config = request.config
                 formats = config.web.views.formats
-                for each (let n: String in 
-                        Object.getOwnPropertyNames(controller, {includeBases: true, excludeFunctions: true})) {
-                    if (n.startsWith("_")) continue
-                    //  MOB - can we remove public::
-                    this.public::[n] = controller[n]
-                }
             } else {
                 request = {}
                 config = App.config
             }
-            for (helper in config.web.views.shelpers) {
+
+        /*  FUTURE
+            for each (helper in config.web.views.helpers) {
                 if (helper.contains("::")) {
                     [mod, klass] = helper.split("::")
                     global.load(mod + ".mod")
-                    /*  MOB -- should use 
-                        blend(this, global.[mod]::[klass])
-                     */
+                    //  MOB -- should use blend(this, global.[mod]::[klass])
                     blend(this, global[klass])
                 } else {
                     blend(this, global[helper])
                 }
             }
+         */
         }
 
         /**
@@ -23614,11 +24071,12 @@ print("CATCH " + e)
         /*
             TODO table
             - in-cell editing
+            - per-row click URIs
             - pagination
          */
         /**
             Render a table. The table control can display static or dynamic tabular data. The client table control 
-                manages sorting by column, dynamic data refreshes, pagination and clicking on rows or cells.
+                manages sorting by column, dynamic data refreshes and clicking on rows or cells.
             @param data Data to display. The data must be a grid of data, ie. an Array of objects where each object 
                 represents the data for a row. The column names are the object property names and the cell text is 
                 the object property values.
@@ -23956,7 +24414,6 @@ MOB -- review and rethink this
             //  MOB -- put all standard types here -- faster
         }
 
-        //  MOB -- 
         private static function dateFormatter(view: View, value: Object, options: Object): String
             new Date(value).format(view.formats.Date)
 

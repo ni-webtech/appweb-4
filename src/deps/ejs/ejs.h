@@ -1076,7 +1076,8 @@ typedef void (*EjsLoaderCallback)(struct Ejs *ejs, int kind, ...);
 typedef struct EjsIntern {
     EjsString       *buckets;               /**< Hash buckets and references to link chains of strings (unicode) */
     int             size;                   /**< Size of hash */
-    int             reuse;
+    int             count;                  /**< Count of entries */
+    uint64          reuse;
     uint64          accesses;
     MprMutex        *mutex;
 } EjsIntern;
@@ -1705,7 +1706,15 @@ extern EjsObj   *ejsToSource(Ejs *ejs, EjsObj *obj, int argc, void *argv);
 
 extern EjsString *ejsObjToString(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
 extern EjsString *ejsObjToJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv);
-extern int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite);
+
+#define EJS_BLEND_DEEP          0x1
+#define EJS_BLEND_FUNCTIONS     0x2
+#define EJS_BLEND_OVERWRITE     0x4
+#define EJS_BLEND_SUBCLASSES    0x8
+#define EJS_BLEND_PRIVATE       0x10
+#define EJS_BLEND_TRACE         0x20
+
+extern int ejsBlendObject(Ejs *ejs, EjsObj *dest, EjsObj *src, int overwrite, int flags);
 extern bool ejsMatchName(Ejs *ejs, EjsName *a, EjsName *b);
 
 /** 
@@ -2361,9 +2370,9 @@ extern void ejsSetByteArrayPositions(Ejs *ejs, EjsByteArray *ba, ssize readPosit
     @param offset Offset in the byte array to which to copy the data.
     @param data Pointer to the source data
     @param length Length of the data to copy
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return Count of bytes written or negative MPR error code.
  */
-extern int ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, ssize offset, char *data, ssize length);
+extern ssize ejsCopyToByteArray(Ejs *ejs, EjsByteArray *ba, ssize offset, cchar *data, ssize length);
 
 extern void ejsResetByteArray(EjsByteArray *ba);
 extern ssize ejsGetByteArrayAvailable(EjsByteArray *ba);
@@ -4244,6 +4253,7 @@ typedef struct EjsRequest {
     EjsObj          *env;               /**< Request.env */
     EjsPath         *filename;          /**< Physical resource filename */
     EjsObj          *files;             /**< Files object */
+    EjsString       *formData;          /**< Form data as a stable, sorted string */
     EjsObj          *headers;           /**< Headers object */
     EjsUri          *home;              /**< Relative URI to the home of the application from this request */
     EjsString       *host;              /**< Host property */
@@ -4251,7 +4261,7 @@ typedef struct EjsRequest {
     EjsObj          *log;               /**< Log object */
     EjsString       *originalMethod;    /**< Saved original method */
     EjsObj          *originalUri;       /**< Saved original URI */
-    EjsObj          *params;            /**< Form variables */
+    EjsObj          *params;            /**< Form variables + routing variables */
     EjsString       *pathInfo;          /**< PathInfo property */
     EjsNumber       *port;              /**< Port property */
     EjsString       *query;             /**< Query property */
@@ -4261,6 +4271,7 @@ typedef struct EjsRequest {
     EjsString       *scheme;            /**< Scheme property */
     EjsString       *scriptName;        /**< ScriptName property */
     EjsUri          *uri;               /**< Complete uri */
+    EjsByteArray    *writeBuffer;       /**< Write buffer for capturing output */
 
     Ejs             *ejs;               /**< Ejscript interpreter handle */
     struct EjsSession *session;         /**< Current session */
@@ -4270,6 +4281,7 @@ typedef struct EjsRequest {
     int             probedSession;      /**< Determined if a session exists */
     int             closed;             /**< Request closed and "close" event has been issued */
     int             error;              /**< Request errored and "error" event has been issued */
+    int             finalized;          /**< Request has written all output data */
     int             responded;          /**< Request has done some output or changed status */
     int             running;            /**< Request has started */
     ssize           written;            /**< Count of data bytes written to the client */
@@ -4309,7 +4321,7 @@ typedef struct EjsSession {
     EjsString   *key;               /* Session ID key */
     EjsObj      *cache;             /* Cache store reference */
     EjsObj      *options;           /* Default write options */
-    MprTime     lifespan;           /* Session inactivity lifespan */
+    MprTime     timeout;            /* Session inactivity timeout (msecs) */
     int         ready;              /* Data cached from store into pot */
 } EjsSession;
 
@@ -4329,7 +4341,7 @@ extern EjsSession *ejsGetSession(Ejs *ejs, EjsString *key, MprTime timeout, int 
     @param session Session object created via ejsGetSession()
 */
 extern int ejsDestroySession(Ejs *ejs, EjsSession *session);
-extern void ejsSetSessionTimeout(Ejs *ejs, EjsSession *sp, int timeout);
+extern void ejsSetSessionTimeout(Ejs *ejs, EjsSession *sp, MprTime timeout);
 extern void ejsSendRequestCloseEvent(Ejs *ejs, EjsRequest *req);
 extern void ejsSendRequestErrorEvent(Ejs *ejs, EjsRequest *req);
 

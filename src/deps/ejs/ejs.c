@@ -327,7 +327,7 @@ MAIN(ejsMain, int argc, char **argv)
 #if BLD_DEBUG
      if (stats) {
         mprSetLogLevel(1);
-        mprPrintMem("Memory Usage", 0);
+        mprPrintMem("Memory Usage", 1);
     }
 #endif
     app->ejs = 0;

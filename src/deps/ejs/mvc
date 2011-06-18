@@ -69,7 +69,7 @@ class EjsMvc {
     }
 
     function EjsMvc() {
-        blend(config, defaultConfig, false)
+        blend(config, defaultConfig, {overwrite: false})
         loadConfig("ejsrc", true)
         ext = config.extensions
 
@@ -1297,7 +1297,7 @@ class EjsMvc {
                 return false
             }
         }
-        blend(config, path.readJSON(), overwrite)
+        blend(config, path.readJSON(), {overwrite: overwrite})
         return true
     }
 
@@ -1458,9 +1458,13 @@ class Templates {
         },
         expires: {
             html:   86400,
-            ejs:    86400,
-            es:     86400,
-            "":     86400,
+            png:    86400,
+            gif:    86400,
+            ico:    86400,
+            jpg:    86400,
+            js:     86400,
+            css:    86400,
+            ico:    86400,
         },
         limits: {
             requestTimeout: 3600, 

@@ -159,7 +159,7 @@ class JemCmd
     function JemCmd() {
         loadDefaults()
 //  MOB -- should update App.config
-        blend(config, defaultConfig, false)
+        blend(config, defaultConfig, {overwrite: false})
         dirs = config.directories
         dirs.home = App.dir
 //  MOB -- rename ext to extensions
@@ -1228,7 +1228,7 @@ print(e)
             }
         }
         let settings = deserialize(path.readString())
-        blend(config, settings, overwrite)
+        blend(config, settings, {overwrite: overwrite})
         return true
     }
 

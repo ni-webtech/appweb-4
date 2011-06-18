@@ -2536,7 +2536,7 @@ void httpConnTimeout(HttpConn *conn)
     } else {
         if ((conn->lastActivity + limits->inactivityTimeout) < now) {
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT,
-                "Exceeded inactivity timeout of %d sec", limits->inactivityTimeout / 1000);
+                "Exceeded inactivity timeout of %Ld sec", limits->inactivityTimeout / 1000);
 
         } else if ((conn->started + limits->requestTimeout) < now) {
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT, "Exceeded timeout %d sec", limits->requestTimeout / 1000);
@@ -4283,9 +4283,6 @@ void httpInitLimits(HttpLimits *limits, int serverSide)
     limits->clientCount = HTTP_MAX_CLIENTS;
     limits->keepAliveCount = HTTP_MAX_KEEP_ALIVE;
     limits->requestCount = HTTP_MAX_REQUESTS;
-#if UNUSED
-    limits->sessionCount = HTTP_MAX_SESSIONS;
-#endif
 
 #if FUTURE
     mprSetMaxSocketClients(server, atoi(value));
@@ -5211,11 +5208,7 @@ void httpMatchHandler(HttpConn *conn)
             handler = findHandler(conn);
         }
     }
-#if UNUSED
-    if (!handler || conn->error || ((tx->flags & HTTP_TX_NO_BODY) && !(rx->flags & HTTP_HEAD)))
-#else
     if (!handler || conn->error) {
-#endif
         handler = http->passHandler;
         if (!conn->error && rx->rewrites >= HTTP_MAX_REWRITE) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
@@ -5698,7 +5691,7 @@ static void addPacketForNet(HttpQueue *q, HttpPacket *packet)
         addToNetVector(q, mprGetBufStart(packet->content), mprGetBufLength(packet->content));
     }
     item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
-    if (httpShouldTrace(conn, HTTP_TRACE_TX, item, NULL) >= 0) {
+    if (httpShouldTrace(conn, HTTP_TRACE_TX, item, tx->extension) >= 0) {
         httpTraceContent(conn, HTTP_TRACE_TX, item, packet, 0, (ssize) tx->bytesWritten);
     }
 }
@@ -6466,7 +6459,7 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     }
     if (tx->connector == 0) {
         if (tx->handler == http->fileHandler && rx->flags & HTTP_GET && !rx->ranges && !conn->secure && tx->chunkSize <= 0 &&
-                httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_BODY, NULL) < 0) {
+                httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_BODY, tx->extension) < 0) {
             tx->connector = http->sendConnector;
         } else if (loc && loc->connector) {
             tx->connector = loc->connector;
@@ -8020,6 +8013,7 @@ static void traceRequest(HttpConn *conn, HttpPacket *packet)
         if ((cp = schr(++cp, ' ')) != 0) {
             for (ext = --cp; ext > content->start && *ext != '.'; ext--) ;
             ext = (*ext == '.') ? snclone(&ext[1], cp - ext) : 0;
+            conn->tx->extension = ext;
         }
     }
 
@@ -8033,7 +8027,7 @@ static void traceRequest(HttpConn *conn, HttpPacket *packet)
         len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
         httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, packet, len, 0);
 
-    } else if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, NULL)) >= 0) {
+    } else if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, ext)) >= 0) {
         endp = strstr((char*) content->start, "\r\n");
         len = (endp) ? (int) (endp - mprGetBufStart(content) + 2) : 0;
         if (len > 0) {
@@ -8147,15 +8141,17 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
 static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
+    HttpTx      *tx;
     MprBuf      *content;
     cchar       *endp;
     char        *protocol, *status;
     int         len, level, traced;
 
     rx = conn->rx;
+    tx = conn->tx;
     traced = 0;
 
-    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, conn->tx->extension) >= 0) {
+    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, tx->extension) >= 0) {
         content = packet->content;
         endp = strstr((char*) content->start, "\r\n\r\n");
         len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
@@ -8178,7 +8174,7 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     if (slen(rx->statusMessage) >= conn->limits->uriSize) {
         httpError(conn, HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad response. Status message too long");
     }
-    if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, conn->tx->extension)) >= 0) {
+    if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, tx->extension)) >= 0) {
         mprLog(level, "%s %d %s", protocol, rx->status, rx->statusMessage);
     }
 }
@@ -8672,7 +8668,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     mprAssert(nbytes >= 0);
 
     if (nbytes > 0) {
-        if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, NULL) >= 0) {
+        if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, tx->extension) >= 0) {
             httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, 0);
         }
     }
@@ -8779,14 +8775,16 @@ static bool processRunning(HttpConn *conn)
 static void measure(HttpConn *conn)
 {
     MprTime     elapsed;
+    HttpTx      *tx;
     cchar       *uri;
 
-    if (conn->rx == 0 || conn->tx == 0) {
+    tx = conn->tx;
+    if (conn->rx == 0 || tx == 0) {
         return;
     }
-    uri = (conn->server) ? conn->rx->uri : conn->tx->parsedUri->path;
+    uri = (conn->server) ? conn->rx->uri : tx->parsedUri->path;
    
-    if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, NULL) >= 0) {
+    if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, tx->extension) >= 0) {
         elapsed = mprGetTime() - conn->startTime;
 #if MPR_HIGH_RES_TIMER
         if (elapsed < 1000) {
@@ -8907,7 +8905,7 @@ bool httpContentNotModified(HttpConn *conn)
     if (rx->flags & HTTP_IF_MODIFIED) {
         /*  
             If both checks, the last modification time and etag, claim that the request doesn't need to be
-            performed, skip the transfer. TODO - need to check if fileInfo is actually set.
+            performed, skip the transfer.
          */
         modified = (MprTime) tx->fileInfo.mtime * MPR_TICKS_PER_SEC;
         same = httpMatchModified(conn, modified) && httpMatchEtag(conn, tx->etag);
@@ -9045,13 +9043,8 @@ int httpMapToStorage(HttpConn *conn)
 
     rx->alias = httpGetAlias(host, rx->pathInfo);
     tx->filename = httpMakeFilename(conn, rx->alias, rx->pathInfo, 1);
-
     tx->extension = httpGetExtension(conn);
-#if UNUSED && BLD_WIN_LIKE
-    if (tx->extension) {
-        tx->extension = slower(tx->extension);
-    }
-#endif
+
     if ((rx->dir = httpLookupBestDir(host, tx->filename)) == 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Missing directory block for \"%s\"", tx->filename);
         return MPR_ERR_CANT_ACCESS;
@@ -9718,7 +9711,7 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
          */
         addToSendVector(q, mprGetBufStart(packet->content), httpGetPacketLength(packet));
         item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
-        if (httpShouldTrace(conn, HTTP_TRACE_TX, item, NULL) >= 0) {
+        if (httpShouldTrace(conn, HTTP_TRACE_TX, item, tx->extension) >= 0) {
             httpTraceContent(conn, HTTP_TRACE_TX, item, packet, 0, tx->bytesWritten);
         }
     }
@@ -9938,10 +9931,6 @@ static int manageServer(HttpServer *server, int flags)
         mprMark(server->clientLoad);
         mprMark(server->hosts);
         mprMark(server->ip);
-#if UNUSED
-        mprMark(server->context);
-        mprMark(server->meta);
-#endif
         mprMark(server->sock);
         mprMark(server->dispatcher);
         mprMark(server->ssl);
@@ -10181,14 +10170,6 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
 }
 
 
-#if UNUSED
-void *httpGetMetaServer(HttpServer *server)
-{
-    return server->meta;
-}
-#endif
-
-
 void *httpGetServerContext(HttpServer *server)
 {
     return server->context;
@@ -10220,14 +10201,6 @@ void httpSetServerAddress(HttpServer *server, cchar *ip, int port)
         httpStartServer(server);
     }
 }
-
-#if UNUSED
-void httpSetMetaServer(HttpServer *server, void *meta)
-{
-    server->meta = meta;
-}
-#endif
-
 
 void httpSetServerAsync(HttpServer *server, int async)
 {
@@ -11258,6 +11231,11 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
 
     httpAddHeaderString(conn, "Date", conn->http->currentDate);
 
+    if (tx->extension) {
+        if ((mimeType = (char*) mprLookupMime(conn->host->mimeTypes, tx->extension)) != 0) {
+            httpAddHeaderString(conn, "Content-Type", mimeType);
+        }
+    }
     if (tx->flags & HTTP_TX_DONT_CACHE) {
         httpAddHeaderString(conn, "Cache-Control", "no-cache");
 
@@ -11269,8 +11247,9 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         }
         if (expires) {
             mprDecodeUniversalTime(&tm, mprGetTime() + (expires * MPR_TICKS_PER_SEC));
-            hdr = mprFormatTime(MPR_HTTP_DATE, &tm);
             httpAddHeader(conn, "Cache-Control", "max-age=%d", expires);
+            /* Expires is for old HTTP/1.0 clients */
+            hdr = mprFormatTime(MPR_HTTP_DATE, &tm);
             httpAddHeader(conn, "Expires", "%s", hdr);
         }
     }
@@ -11300,15 +11279,10 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         }
         httpAddHeader(conn, "Accept-Ranges", "bytes");
     }
-    if (tx->extension) {
-        if ((mimeType = (char*) mprLookupMime(conn->host->mimeTypes, tx->extension)) != 0) {
-            httpAddHeaderString(conn, "Content-Type", mimeType);
-        }
-    }
     if (conn->server) {
         if (--conn->keepAliveCount > 0) {
             httpSetHeaderString(conn, "Connection", "keep-alive");
-            httpSetHeader(conn, "Keep-Alive", "timeout=%d, max=%d", conn->limits->inactivityTimeout / 1000, 
+            httpSetHeader(conn, "Keep-Alive", "timeout=%Ld, max=%d", conn->limits->inactivityTimeout / 1000,
                 conn->keepAliveCount);
         } else {
             httpSetHeaderString(conn, "Connection", "close");
@@ -11396,7 +11370,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
             }
         }
     }
-    if ((level = httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_FIRST, NULL)) >= mprGetLogLevel(tx)) {
+    if ((level = httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_FIRST, tx->extension)) >= mprGetLogLevel(tx)) {
         mprAddNullToBuf(buf);
         mprLog(level, "%s", mprGetBufStart(buf));
     }
@@ -12227,19 +12201,9 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
         if ((cp = srchr(up->path, '/')) != NULL) {
             if (cp <= tok) {
                 up->ext = sclone(++tok);
-#if UNUSED && BLD_WIN_LIKE
-                for (cp = up->ext; *cp; cp++) {
-                    *cp = (char) tolower((int) *cp);
-                }
-#endif
             }
         } else {
             up->ext = sclone(++tok);
-#if UNUSED && BLD_WIN_LIKE
-            for (cp = up->ext; *cp; cp++) {
-                *cp = (char) tolower((int) *cp);
-            }
-#endif
         }
     }
     if (up->path == 0) {
@@ -12310,19 +12274,9 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
         if ((cp = srchr(up->path, '/')) != NULL) {
             if (cp <= tok) {
                 up->ext = sclone(&tok[1]);
-#if UNUSED && BLD_WIN_LIKE
-                for (cp = up->ext; *cp; cp++) {
-                    *cp = (char) tolower((int) *cp);
-                }
-#endif
             }
         } else {
             up->ext = sclone(&tok[1]);
-#if UNUSED && BLD_WIN_LIKE
-            for (cp = up->ext; *cp; cp++) {
-                *cp = (char) tolower((int) *cp);
-            }
-#endif
         }
     }
     return up;
@@ -12376,19 +12330,9 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
         if ((cp = srchr(up->path, '/')) != NULL) {
             if (cp <= tok) {
                 up->ext = sclone(&tok[1]);
-#if UNUSED && BLD_WIN_LIKE
-                for (cp = up->ext; *cp; cp++) {
-                    *cp = (char) tolower((int) *cp);
-                }
-#endif
             }
         } else {
             up->ext = sclone(&tok[1]);
-#if UNUSED && BLD_WIN_LIKE
-            for (cp = up->ext; *cp; cp++) {
-                *cp = (char) tolower((int) *cp);
-            }
-#endif
         }
     }
     return up;
