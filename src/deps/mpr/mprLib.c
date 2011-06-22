@@ -179,6 +179,7 @@ static MprMem   headBlock, *head;
 static void allocException(ssize size, bool granted);
 static void checkYielded();
 static void dummyManager(void *ptr, int flags);
+static ssize getMemSize();
 static void *getNextRoot();
 static void getSystemInfo();
 static void initGen();
@@ -976,8 +977,7 @@ static MprMem *freeToMalloc(MprMem *mp)
 
 /*
     Allocate virtual memory and check a memory allocation request against configured maximums and redlines. 
-    Do this so that the application does not need to check the result of every little memory allocation. Rather, 
-    an application-wide memory allocation failure can be invoked proactively when a memory redline is exceeded. 
+    An application-wide memory allocation failure routine can be invoked from here when a memory redline is exceeded. 
     It is the application's responsibility to set the red-line value suitable for the system.
  */
 void *mprVirtAlloc(ssize size, int mode)
@@ -985,7 +985,7 @@ void *mprVirtAlloc(ssize size, int mode)
     ssize       used;
     void        *ptr;
 
-    used = mprGetMem();
+    used = getMemSize();
     if (heap->pageSize) {
         size = MPR_PAGE_ALIGN(size, heap->pageSize);
     }
@@ -1783,7 +1783,7 @@ static void printTracking()
             for (np = &lp->names[0]; *np && np < &lp->names[MPR_TRACK_NAMES]; np++) {
                 if (*np) {
                     if (np == lp->names) {
-                        printf("%10ld %-24s\n", lp->count, *np);
+                        printf("%10d %-24s\n", (int) lp->count, *np);
                     } else {
                         printf("           %-24s\n", *np);
                     }
@@ -1850,7 +1850,7 @@ void mprPrintMem(cchar *msg, int detail)
 
     printf("\n\nMPR Memory Report %s\n", msg);
     printf("------------------------------------------------------------------------------------------\n");
-    printf("  Total memory        %14d K\n",             (int) mprGetMem() / 1024);
+    printf("  Total memory        %14d K\n",             (int) (mprGetMem() / 1024));
     printf("  Current heap memory %14d K\n",             (int) (ap->bytesAllocated / 1024));
     printf("  Free heap memory    %14d K\n",             (int) (ap->bytesFree / 1024));
     printf("  Allocation errors   %14d\n",               ap->errors);
@@ -2172,13 +2172,13 @@ MprMemStats *mprGetMemStats()
     }
 #endif
 #if MACOSX || FREEBSD
-    size_t      len;
+    size_t len;
     int         mib[2];
 #if FREEBSD
-    ssize       ram, usermem;
+    ssize ram, usermem;
     mib[1] = HW_MEMSIZE;
 #else
-    int64       ram, usermem;
+    int64 ram, usermem;
     mib[1] = HW_PHYSMEM;
 #endif
     mib[0] = CTL_HW;
@@ -2199,21 +2199,83 @@ MprMemStats *mprGetMemStats()
 }
 
 
+/*
+    Return the amount of memory currently in use. This routine may open files and thus is not very quick on some 
+    platforms. On FREEBDS it returns the peak resident set size using getrusage. If a suitable O/S API is not available,
+    the amount of heap memory allocated by the MPR is returned.
+ */
 ssize mprGetMem()
 {
-#if LINUX || MACOSX || FREEBSD
+    ssize size = 0;
+
+#if LINUX
+    int fd;
+    char path[MPR_MAX_PATH];
+    sprintf(path, "/proc/%d/status", getpid());
+    if ((fd = open(path, O_RDONLY)) >= 0) {
+        char buf[MPR_BUFSIZE], *tok;
+        int nbytes = read(fd, buf, sizeof(buf) - 1);
+        close(fd);
+        if (nbytes > 0) {
+            buf[nbytes] = '\0';
+            if ((tok = strstr(buf, "VmRSS:")) != 0) {
+                for (tok += 6; tok && isspace((int) *tok); tok++) {}
+                size = stoi(tok, 10, 0) * 1024;
+            }
+        }
+    }
+    if (size == 0) {
+        struct rusage rusage;
+        getrusage(RUSAGE_SELF, &rusage);
+        size = rusage.ru_maxrss * 1024;
+    }
+#elif MACOSX
+    struct task_basic_info info;
+    mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t) &info, &count) == KERN_SUCCESS) {
+        size = info.resident_size;
+    }
+#elif FREEBSD
     struct rusage   rusage;
     getrusage(RUSAGE_SELF, &rusage);
-    return rusage.ru_maxrss;
-#else
-    return heap->stats.bytesAllocated;
+    size = rusage.ru_maxrss;
 #endif
+    if (size == 0) {
+        size = heap->stats.bytesAllocated;
+    }
+    return size;
+}
+
+
+/*
+    Return the amount of memory currently in use. Use an appropriate (fast) O/S routine. If one is not available,
+    use the amount of heap memory allocated by the MPR.
+    WARNING: this routine must be FAST as it is used by the MPR memory allocation mechanism.
+ */
+static ssize getMemSize()
+{
+    ssize   size = 0;
+
+#if LINUX
+    struct rusage rusage;
+    getrusage(RUSAGE_SELF, &rusage);
+    size = rusage.ru_maxrss * 1024;
+#elif MACOSX
+    struct task_basic_info info;
+    mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t) &info, &count) == KERN_SUCCESS) {
+        size = info.resident_size;
+    }
+#endif
+    if (size == 0) {
+        size = heap->stats.bytesAllocated;
+    }
+    return size;
 }
 
 
 #if NEED_FFSL
 #if USE_FFSL_ASM_X86
-
 static MPR_INLINE int ffsl(ulong x)
 {
     long    r;

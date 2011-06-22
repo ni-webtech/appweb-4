@@ -4854,7 +4854,7 @@ int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
         return MPR_ERR_CANT_FIND;
     }
     if (extensions && *extensions) {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" for extensions: \"%s\"", name, extensions);
+        mprLog(MPR_CONFIG, "Add handler \"%s\" for extensions: %s", name, extensions);
     } else {
         mprLog(MPR_CONFIG, "Add handler \"%s\" for prefix: \"%s\"", name, loc->prefix);
     }
@@ -5330,7 +5330,7 @@ static HttpStage *findHandler(HttpConn *conn)
             Perform custom handler matching first on all defined handlers 
          */
         for (next = 0; (h = mprGetNextItem(loc->handlers, &next)) != 0; ) {
-            if (checkHandler(conn, h)) {
+            if (h->match && checkHandler(conn, h)) {
                 handler = h;
                 break;
             }

@@ -89,6 +89,8 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
         }
         if (strcmp(spec, "stdout") == 0) {
             file = mpr->fileSystem->stdOutput;
+        } else if (strcmp(spec, "stderr") == 0) {
+            file = mpr->fileSystem->stdError;
         } else {
             mode = O_CREAT | O_WRONLY | O_TEXT;
             if (host && host->logCount) {

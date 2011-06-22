@@ -1122,6 +1122,8 @@ print(e)
             logFile = parts[0]
             logLevel = parts[1]
             if (logFile == "stdout") {
+                out = App.outputStream
+            } else if (logFile == "stderr") {
                 out = App.errorStream
             } else {
                 out = Path(logFile).open("w")

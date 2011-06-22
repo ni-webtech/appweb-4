@@ -1662,7 +1662,7 @@ extern EjsName ejsGetPotPropertyName(Ejs *ejs, EjsPot *obj, int slotNum);
  */
 extern EjsAny *ejsClonePot(Ejs *ejs, EjsAny *src, bool deep);
 
-extern void ejsFixCrossRefs(Ejs *ejs, EjsPot *obj);
+extern void ejsFixTraits(Ejs *ejs, EjsPot *obj);
 
 /** 
     Grow a pot object
@@ -1975,15 +1975,7 @@ typedef struct EjsConstants {
     int           locked;                   /**< No more additions allowed */
     MprHashTable  *table;                   /**< Hash table for fast lookup when compiling */
     EjsString     **index;                  /**< Interned string index */
-#if UNUSED
-//  MOB - remove
-    struct EjsModule     *mp;
-#endif
 } EjsConstants;
-
-extern EjsConstants *ejsCreateConstants(Ejs *ejs, int count, ssize size);
-extern int ejsGrowConstants(Ejs *ejs, EjsConstants *constants, ssize size);
-extern int ejsAddConstant(Ejs *ejs, EjsConstants *constants, cchar *str);
 
 #define EJS_DEBUG_INCR 16
 
@@ -2738,9 +2730,8 @@ typedef struct EjsFileSystem {
 extern EjsFileSystem *ejsCreateFileSystem(Ejs *ejs, cchar *path);
 extern EjsObj *ejsCreateGlobal(Ejs *ejs);
 extern void ejsFreezeGlobal(Ejs *ejs);
+extern void ejsCreateGlobalNamespaces(Ejs *ejs);
 extern void ejsDefineGlobalNamespaces(Ejs *ejs);
-extern void ejsDefineGlobals(Ejs *ejs);
-
 
 /** 
     Http Class
@@ -3159,7 +3150,6 @@ extern double ejsGetDouble(Ejs *ejs, EjsAny *obj);
 
 #define ejsGetDate(ejs, obj) (ejsIs(ejs, obj, Date) ? ((EjsDate*) obj)->value : 0)
 
-//  MOB -- rename alloc/free
 typedef EjsAny  *(*EjsCreateHelper)(Ejs *ejs, struct EjsType *type, int size);
 typedef EjsAny  *(*EjsCastHelper)(Ejs *ejs, EjsAny *obj, struct EjsType *type);
 typedef EjsAny  *(*EjsCloneHelper)(Ejs *ejs, EjsAny *obj, bool deep);
@@ -3548,6 +3538,7 @@ typedef struct EjsService {
     Http            *http;                  /**< Http service */
     uint            dontExit: 1;            /**< Prevent App.exit() from exiting */
     uint            logging: 1;             /**< Using --log */
+    uint            immutableInitialized: 1;/**< Immutable types are initialized */
     uint            seqno;                  /**< Interp sequence numbers */
     EjsIntern       *intern;                /**< Interned Unicode string hash - shared over all interps */
     EjsPot          *immutable;             /**< Immutable types and special values*/
@@ -3743,7 +3734,6 @@ extern int ejsCheckModuleLoaded(Ejs *ejs, cchar *name);
 extern void ejsClearExiting(Ejs *ejs);
 extern EjsAny *ejsCreateException(Ejs *ejs, int slot, cchar *fmt, va_list fmtArgs);
 extern EjsAny *ejsGetVarByName(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup);
-extern int ejsInitStack(Ejs *ejs);
 extern void ejsLog(Ejs *ejs, cchar *fmt, ...);
 
 extern int ejsLookupVar(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup);
@@ -4013,6 +4003,10 @@ typedef struct EjsModule {
 
 } EjsModule;
 
+extern int ejsCreateConstants(Ejs *ejs, EjsModule *mp, int count, ssize size, char *pool);
+extern int ejsGrowConstants(Ejs *ejs, EjsModule *mp, ssize size);
+extern int ejsAddConstant(Ejs *ejs, EjsModule *mp, cchar *str);
+
 
 typedef int (*EjsNativeCallback)(Ejs *ejs);
 
@@ -4063,7 +4057,6 @@ typedef struct EjsDoc {
 //  MOB -- would this be better with an ascii name?
 extern int          ejsLoadModule(Ejs *ejs, EjsString *name, int minVer, int maxVer, int flags);
 extern char         *ejsSearchForModule(Ejs *ejs, cchar *name, int minVer, int maxVer);
-extern int          ejsSetModuleConstants(Ejs *ejs, EjsModule *mp, EjsConstants *constants);
 
 extern void         ejsModuleReadBlock(Ejs *ejs, EjsModule *module, char *buf, int len);
 extern int          ejsModuleReadByte(Ejs *ejs, EjsModule *module);

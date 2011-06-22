@@ -4274,7 +4274,12 @@ module ejs {
             let result = ""
             let i = 0
             for each (frame in stack) {
-                result += " [%02d] %s, line %d, %s, %s\n".format(i++, frame.filename, frame.lineno, frame.func, frame.code)
+                if (frame.filename) {
+                    result += " [%02d] %s, line %d, %s, %s\n".format(
+                        i++, frame.filename, frame.lineno, frame.func, frame.code)
+                } else {
+                    result += " [%02d] %s\n".format(i++, frame.func)
+                }
             }
             return result
         }
@@ -5385,6 +5390,7 @@ module ejs {
      */
     native function assert(condition: Boolean): Void
 
+    //  MOB - is this used?
     /** 
         Replace the base type of a type with an exact clone. 
         @param klass Class in which to replace the base class.
@@ -5509,14 +5515,7 @@ module ejs {
         @param args Variables to print
         @spec ejs
      */
-    native function print(...args): void
-
-    /**
-        Print the arguments using a printf style format string
-        @param fmt Format string
-        @param args Variables to print
-     */
-    function printf(fmt, ...args): Void
+    function printf(fmt: String, ...args): Void
         App.outputStream.write(fmt.format(args))
 
     /** 
@@ -5543,26 +5542,7 @@ module ejs {
      */
     native function parseInt(str: String, radix: Number = 10): Number
 
-    /* TODO - remove
-        Determine the type of a variable. 
-        @param o Variable to examine.
-        @return Returns a string containing the arguments type. Possible types are:
-            @li $undefined "undefined"
-            @li $Object "object"
-            @li $Boolean "boolean"
-            @li $Function "function"
-            @li Number "number"
-            @li String "string"
-        Note that JavaScript has many other types that are not accurately represented by the typeof call. Such types
-        and values include: Array, String, Function, Math, Date, RegExp, Error and null and undefined values. 
-        Consequently, typeof() is unable to correctly identify object data types. Use the fixed $typeOf() function
-        instead.
-        @remarks Note that lower case names are returned for class names.
-        @spec ejs
-    native function typeof(o: Object): String
-     */
-
-    /** @hide  TODO - temp only */
+    /** @hide */
     function printHash(name: String, o: Object): Void
         print("%20s %X" % [name, hashcode(o)])
 
@@ -8217,9 +8197,11 @@ module ejs {
          */
         native static function set redline(value: Number): Void
 
+        //  MOB BUG
         /**
             Application's current resident set in bytes. This is the total memory used to host the application and 
             includes all the the application code, data and heap. It is measured by the O/S.
+            NOTE: this is currently reporting the peak resident memory and not the current resident memory.
          */
         native static function get resident(): Number
 
@@ -12572,7 +12554,7 @@ module ejs {
             Create a new worker by cloning the current interpreter
             @spec ejs
          */
-        native static function cloneSelf(): Worker
+        native static function fork(): Worker
 
         /**
             Load the script. The literal script is compiled as a JavaScript program and loaded and run.
@@ -14240,11 +14222,11 @@ var before = Memory.resident
                 if (!options.query || options.query == "*" || cacheName == (cacheIndex + "::" + options.query)) {
                     let item = App.cache.readObj(cacheName)
                     if (item) {
-                        App.log.debug(3, "Use cached database query: " + cacheName)
+                        App.log.debug(6, "Use cached database query: " + cacheName)
                         return item
                     }
                 }
-                App.log.debug(3, "No cached database query for: " + cacheName)
+                App.log.debug(6, "No cached database query for: " + cacheName)
             }
             return null
         }
@@ -14854,7 +14836,7 @@ var before = Memory.resident
                 let options = _cacheOptions[cacheIndex]
                 if (options == null || options.query == null) {
                     let cacheName = getCacheName(cacheIndex, options)
-                    App.log.debug(3, "Expire database query cache " + cacheName)
+                    App.log.debug(6, "Expire database query cache " + cacheName)
                     App.cache.writeObj(cacheName, null, options)
                 } else {
                 }
@@ -14871,7 +14853,7 @@ var before = Memory.resident
             if (options) {
                 let cacheName = getCacheName(cacheIndex, options, query)
                 App.cache.writeObj(cacheName, results, options)
-                App.log.debug(3, "Cache database query " + cacheName)
+                App.log.debug(6, "Cache database query " + cacheName)
             }
         }
 
@@ -17025,7 +17007,6 @@ module ejs.web {
             Contains cache options for this action. Created on demand if cache() is called.
          */
         private static var _cacheOptions: Object = {}
-        private static var _caching: Boolean
 
         private var _afterCheckers: Array
         private var _beforeCheckers: Array
@@ -17135,7 +17116,7 @@ module ejs.web {
                         options.mode != "manual") {
                     let hdr
                     if ((hdr = request.header("Cache-Control")) && (hdr.contains("max-age=0") || hdr.contains("no-cache"))) {
-                        App.log.debug(5, "Cache-control header rejects use of cached content")
+                        App.log.debug(0, "Cache-control header rejects use of cached content")
                     } else {
                         let item = App.cache.readObj(cacheName)
                         if (item) {
@@ -17165,15 +17146,15 @@ module ejs.web {
                             setHeader("Etag", md5(cacheName))
                             if (status == Http.Ok) {
                                 //  MOB - change this trace to just use "actionName"
-                                App.log.debug(5, "Use cached: " + cacheName)
+                                App.log.debug(0, "Use cached: " + cacheName)
                                 write(item.data)
-                                request.finalize()
+                                // MOB request.finalize()
                             } else {
-                                App.log.debug(5, "Use cached content, status: " + status + ", " + cacheName)
+                                App.log.debug(0, "Use cached content, status: " + status + ", " + cacheName)
                             }
                             return {status: status}
                         }
-                        App.log.debug(5, "No cached content for: " + cacheName)
+                        App.log.debug(0, "No cached content for: " + cacheName)
                     }
                     request.writeBuffer = new ByteArray
                     setHeader("Etag", md5(cacheName))
@@ -17202,7 +17183,7 @@ module ejs.web {
             if ((!options.uri || options.uri == "*" || cacheName == options.uri)) {
                 let item
                 if (item = App.cache.readObj(cacheName)) {
-                    App.log.debug(5, "Use cached: " + cacheName)
+                    App.log.debug(0, "Use cached: " + cacheName)
                     setHeader("Etag", md5(cacheName))
                     setHeader("Last-Modified", Date(item.modified).toUTCString())
                     if (options.client) {
@@ -17214,7 +17195,7 @@ module ejs.web {
                     return true
                 }
             }
-            App.log.debug(5, "no cached: " + cacheName)
+            App.log.debug(0, "no cached: " + cacheName)
             return false
         }
 
@@ -17230,7 +17211,7 @@ module ejs.web {
                     let cacheName = getCacheName(cacheIndex, options)
                     let etag = md5(cacheName)
                     App.cache.writeObj(cacheName, { tag: etag, modified: Date.now(), data: request.writeBuffer}, options)
-                    App.log.debug(5, "Cache action " + cacheName + ", " + request.writeBuffer.available + " bytes")
+                    App.log.debug(0, "Cache action " + cacheName + ", " + request.writeBuffer.available + " bytes")
                 }
             }
             let data = request.writeBuffer
@@ -17261,8 +17242,10 @@ module ejs.web {
             runCheckers(_beforeCheckers)
 
             if (!request.finalized && request.autoFinalizing) {
-                if (_caching && (response = fetchCachedResponse())) {
-                    return response
+                if (App.config.cache.actions.enable) {
+                    if (response = fetchCachedResponse()) {
+                        return response
+                    }
                 }
                 if (!(ns)::[actionName]) {
                     if (!viewExists(actionName)) {
@@ -17366,10 +17349,6 @@ module ejs.web {
                 cache(this, "index", false)
          */
         static function cache(controller, actions: Object, options: Object = {}): Void {
-            _caching = App.config.cache.actions.enable
-            if (!_caching) {
-                return
-            }
             let cname
             if (controller is String) {
                 cname = controller.trim("Controller")
@@ -17378,6 +17357,9 @@ module ejs.web {
                 cname = Object.getName(controller).trim("Controller")
             } else {
                 cname = Object.getName(controller).trim("Controller")
+            }
+            if (!App.config.cache.actions.enable) {
+                return
             }
             if (actions is String || actions is Function) {
                 actions = [actions]
@@ -17418,10 +17400,6 @@ module ejs.web {
                 such post data in a query format. E.g. {uri: /buy?item=scarf&quantity=1}
           */
         static function updateCache(controller, actions: Object, data: Object, options: Object = {}): Void {
-            _caching = App.config.cache.actions.enable
-            if (!_caching) {
-                return
-            }
             let cname
             if (controller is String) {
                 cname = controller.trim("Controller")
@@ -17430,6 +17408,9 @@ module ejs.web {
                 cname = Object.getName(controller).trim("Controller")
             } else {
                 cname = Object.getName(controller).trim("Controller")
+            }
+            if (!App.config.cache.actions.enable) {
+                return
             }
             if (actions is String || actions is Function) {
                 actions = [actions]
@@ -17441,12 +17422,12 @@ module ejs.web {
                     cacheName += "::" + options.uri
                 }
                 if (data == null) {
-                    App.log.debug(5, "Expire " + cacheName)
+                    App.log.debug(6, "Expire " + cacheName)
                     App.cache.expire(cacheName, Date())
                 } else {
                     let etag = md5(cacheName)
                     App.cache.writeObj(cacheName, { tag: etag, modified: Date.now(), data: data}, _cacheOptions[cacheIndex])
-                    App.log.debug(5, "Update cache " + cacheName)
+                    App.log.debug(6, "Update cache " + cacheName)
                 }
             }
         }
@@ -18628,6 +18609,10 @@ module ejs.web {
             }
         }
 
+        function refresh(on: String, off, options: Object): Void {
+            write('    <img src="' + on + '" data-on="' + on + '" data-off="' + off + '" class="-ejs-refresh" />')
+        }
+
         function script(uri: String, options: Object): Void {
             if (uri == null) {
                 if (options.minified == undefined) {
@@ -18662,7 +18647,6 @@ module ejs.web {
                     write('    <link rel="stylesheet" type="text/css" href="' + uri + '" />\r\n')
                 }
             } else {
-                //MOB uri = request.link(uri)
                 write('    <link rel="stylesheet" type="text/css" href="' + uri + '" />\r\n')
             }
         }
@@ -18698,9 +18682,10 @@ module ejs.web {
                 write('    <thead>\r\n')
                 if (options.title) {
                     let length = Object.getOwnPropertyCount(columns)
-                    write('        <tr><td colspan="' + length + '">' + options.title + '</td></tr>\r\n')
+                    write('        <tr class="-ejs-table-title"><td colspan="' + length + '">' + 
+                        options.title + '</td></tr>\r\n')
                 }
-                write('        <tr>\r\n')
+                write('        <tr class="-ejs-table-header">\r\n')
                 for (let [name, column] in columns) {
                     if (name == null) continue
                     let header = (column.header) ? (column.header) : name.toPascal()
@@ -18863,7 +18848,7 @@ module ejs.web {
         }
 
 /*
-        //  FUTURE MOB -- never called. MOB -- better to push to client via data-filter
+        //  FUTURE -- never called. -- better to push to client via data-filter
         //  TODO - this actually modifies the grid. Need to doc this.
         private function filter(data: Array): Array {
             data = data.clone()
@@ -18913,7 +18898,6 @@ module ejs.web {
             }
         }
 
-//  MOB - move to request
         /**
             Map options to a HTML attribute string. See htmlOptions and $View for a discussion on standard options.
             @param options Control options
@@ -18936,11 +18920,6 @@ module ejs.web {
             } else if (options.edit) {
                 setLinkOptions(options.edit, options, "data-edit")
 
-/*  MOB
-            } else if (options.action) {
-                // This is just a safety net incase someone uses "action" instead of click 
-                setLinkOptions(options.action, options, "data-click")
-*/
             }
             if (options.refresh) {
                 options.domid ||= getNextID()
@@ -19007,6 +18986,8 @@ module ejs.web {
                     if (htmlOptions[key] || key.startsWith("data-")) {
                         let mapped = htmlOptions[key] ? htmlOptions[key] : key
                         result += mapped + '="' + value + '" '
+                    } else if (key == "pass") {
+                        result += value + ' '
                     }
                 }
             }
@@ -19141,7 +19122,7 @@ module ejs.web {
         use default namespace public
 
         /** Frequency to check and release excess worker threads */
-        static var PrunePeriod = 60 * 1024
+        static var PrunePeriod = 60 * 1000
 
         private var idleWorkers: Array = []
         private var activeWorkers: Array = []
@@ -19296,7 +19277,7 @@ module ejs.web {
             @param request Request object
          */
         private function defaultOnRequest(request: Request): Void {
-            App.log.debug(3, "Multithreaded request")
+            App.log.debug(6, "Multithreaded request")
             try {
                 process(request.route.response, request)
             } catch (e) {
@@ -19381,7 +19362,7 @@ server.listen("127.0.0.1:7777")
                 openSession()
             }
             //  MOB - BUG. Need this.fun to bind the function
-            setInterval(this.pruneWorkers, PrunePeriod, this)
+            //MOB setInterval(this.pruneWorkers, PrunePeriod, this)
         }
 
         private function openSession() {
@@ -19427,7 +19408,11 @@ server.listen("127.0.0.1:7777")
                     App.log.debug(1, "Too many workers " + activeWorkers.length + "/" + limits.workers)
                     return null
                 }
-                workerImage ||= Worker.cloneSelf()
+                //MOB workerImage ||= Worker.fork()
+                if (workerImage == null) {
+                    workerImage = new Worker
+                    workerImage.preeval("require ejs.web")
+                }
                 w = workerImage.clone()
                 if (config.web.workers && config.web.workers.init) {
                     w.preeval(config.web.workers.init)
@@ -19501,6 +19486,7 @@ server.listen("127.0.0.1:7777")
             @param app Web application function 
          */
         function process(app: Function, request: Request, finalize: Boolean = true): Void {
+let mark = new Date
             request.config = config
             try {
                 if (request.route && request.route.middleware) {
@@ -19529,7 +19515,7 @@ server.listen("127.0.0.1:7777")
 
                 } else {
                     let file = request.responseHeaders["X-Sendfile"]
-                    if (file && !request.isSecure) {
+                    if (file && !request.isSecure && !request.finalized) {
                         request.writeFile(file)
                     }
                 }
@@ -19541,6 +19527,7 @@ server.listen("127.0.0.1:7777")
                 App.log.debug(1, e)
                 request.writeError(Http.ServerError, e)
             }
+// App.log.debug(2, "LEAVE PROCESSING  " + mark.elapsed + " msec for " + request.uri)
         }
 
         private function processBody(request: Request, body: Object): Void {
@@ -19665,6 +19652,7 @@ server.listen("127.0.0.1:7777")
                 routing table.
          */
         function serve(request: Request, router: Router = Router()): Void {
+            request.mark = new Date
             try {
                 let w: Worker
                 let route: Route = router.route(request)
@@ -19673,7 +19661,10 @@ server.listen("127.0.0.1:7777")
                         request.writeError(Http.ServiceUnavailable, "Server busy")
                         return
                     }
-                    request.on("close", function() {releaseWorker(w)})
+                    request.on("close", function() {
+                        releaseWorker(w) 
+                        App.log.debug(2, "Elapsed " + request.mark.elapsed + " msec for " + request.uri)
+                    })
                     passRequest(request, w)
                     /* Must not touch request from here on - the worker owns it now */
                 } else {
@@ -23560,6 +23551,7 @@ module ejs.web {
             URI and params manually.
         @option id Number Numeric database ID for the record that originated the data for the view element.
         @option method String HTTP method to invoke.
+        @option pass String attributes to pass through unaltered to the client
         @option params Request parameters to include with a click or remote request
         @option period Number Period in milliseconds to invoke the $refresh URI to update the control data. If period
             is zero (or undefined), then refresh will be done using a perisistent connection.
@@ -24016,6 +24008,12 @@ print("CATCH " + e)
             getConnector("radio", options).radio(name, value, choices, options)
         }
 
+        function refresh(on: Uri, off: Uri, options: Object = {}): Void {
+            let connector = getConnector("refresh", options)
+            options = getOptions(options)
+            getConnector("refresh", options).refresh(on, off, options)
+        }
+
         /** 
             Emit a script link.
             @param target Script URI to load. URI or array of scripts. Call with no arguments or set to null to 
@@ -24312,6 +24310,7 @@ MOB -- review and rethink this
                 return connectors[name]
             }
             try {
+                //  MOB - what is this doing?
                 return connectors[name] = new global[name](this)
             } catch (e: Error) {
                 throw new Error("Undefined view connector: " + name)

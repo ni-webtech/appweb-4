@@ -231,6 +231,9 @@
 
 #if MACOSX
     #include    <mach-o/dyld.h>
+    #include    <mach-o/dyld.h>
+    #include    <mach/mach_init.h>
+    #include    <mach/task.h>
     #include    <sys/sysctl.h>
     #include    <libkern/OSAtomic.h>
 #endif

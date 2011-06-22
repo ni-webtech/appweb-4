@@ -16,7 +16,7 @@ rom:
 	./configure --host=i386-apple-darwin --build=x86_64-apple-darwin --rom --static --without-ssl --without-php --without-ejs
 
 config32:
-	./configure --host=i386-apple-darwin --build=i386-apple-darwin --without-matrixssl --without-php
+	./configure --host=i386-apple-darwin --build=i386-apple-darwin --without-matrixssl --without-php --release
 
 cross32:
 	./configure --host=i386-apple-darwin --without-matrixssl --without-php
