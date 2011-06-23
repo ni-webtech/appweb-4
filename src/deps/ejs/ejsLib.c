@@ -7402,6 +7402,7 @@ EjsObj *writeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
             break;
         }
         if (mprWriteFile(fp->file, buf, len) != len) {
+            mprLog(0, "Write IO error %d\n", mprGetOsError());
             ejsThrowIOError(ejs, "Can't write to %s", fp->path);
             return 0;
         }
@@ -36376,10 +36377,14 @@ Ejs *ejsCloneVM(Ejs *master)
 
     if (master) {
         mprAssert(!master->empty);
+        //  MOB - cleanup
+        extern int cloneCopy;
+        cloneCopy = 0;
         if ((ejs = ejsCreateVM(master->argc, master->argv, master ? master->flags : 0)) == 0) {
             return 0;
         }
         cloneProperties(ejs, master);
+        // printf("CLONE copied %d properties\n", cloneCopy);
         ejsFixTraits(ejs, ejs->global);
         ejs->sqlite = master->sqlite;
         ejs->http = master->http;
@@ -36733,12 +36738,12 @@ static void cloneProperties(Ejs *ejs, Ejs *master)
             immutable = 1;
         }
         if (immutable) {
-            //  MOB - remove
-            mprLog(6, "REF   %d, %N", i, qname);
+            //  MOB - cleanup
+            // mprLog(0, "REF   %d, %N", i, qname);
         } else {
             mvp = vp;
             vp = ejsClone(ejs, mvp, 1);
-            mprLog(6, "CLONE %d %N from %p to %p", i, qname, mvp, vp);
+            // mprLog(0, "CLONE %d %N from %p to %p", i, qname, mvp, vp);
         }
         ejsSetProperty(ejs, ejs->global, i, vp);
     }
@@ -38969,7 +38974,7 @@ HttpStage *ejsAddWebHandler(Http *http, MprModule *module)
     if (http->ejsHandler) {
         return http->ejsHandler;
     }
-    handler = httpCreateHandler(http, "ejsHandler", HTTP_STAGE_ALL | HTTP_STAGE_QUERY_VARS, module);
+    handler = httpCreateHandler(http, "ejsHandler", HTTP_STAGE_ALL | HTTP_STAGE_QUERY_VARS | HTTP_STAGE_VIRTUAL, module);
     if (handler == 0) {
         return 0;
     }

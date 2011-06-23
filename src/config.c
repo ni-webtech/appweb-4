@@ -695,7 +695,19 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         break;
 
     case 'C':
-        if (scasecmp(key, "Chroot") == 0) {
+        if (scasecmp(key, "Cache") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            when = stok(value, " \t", &extensions);
+            httpAddLocationExpiry(loc, (MprTime) stoi(when, 10, NULL), extensions);
+            return 1;
+
+        } else if (scasecmp(key, "CacheByType") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            when = stok(value, " \t", &mimeTypes);
+            httpAddLocationExpiryByType(loc, (MprTime) stoi(when, 10, NULL), mimeTypes);
+            return 1;
+
+        } else if (scasecmp(key, "Chroot") == 0) {
 #if BLD_UNIX_LIKE
             path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             if (chdir(path) < 0) {
@@ -801,12 +813,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                     }
                 }
             }
-            return 1;
-
-        } else if (scasecmp(key, "Expires") == 0) {
-            value = strim(value, "\"", MPR_TRIM_BOTH);
-            when = stok(value, " \t", &mimeTypes);
-            httpAddLocationExpiry(loc, (MprTime) stoi(when, 10, NULL), mimeTypes);
             return 1;
         }
         break;

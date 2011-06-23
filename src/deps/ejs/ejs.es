@@ -19408,7 +19408,6 @@ server.listen("127.0.0.1:7777")
                     App.log.debug(1, "Too many workers " + activeWorkers.length + "/" + limits.workers)
                     return null
                 }
-                //MOB workerImage ||= Worker.fork()
                 if (workerImage == null) {
                     workerImage = new Worker
                     workerImage.preeval("require ejs.web")

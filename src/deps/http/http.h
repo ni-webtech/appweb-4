@@ -1944,7 +1944,8 @@ typedef struct HttpLoc {
     HttpStage       *handler;               /**< Fixed handler */
     void            *handlerData;           /**< Data reserved for the handler */
     MprHashTable    *extensions;            /**< Hash of handlers by extensions */
-    MprHashTable    *expires;               /**< Expiry of content by mime type */
+    MprHashTable    *expires;               /**< Expiry of content by extension */
+    MprHashTable    *expiresByType;         /**< Expiry of content by mime type */
     MprList         *handlers;              /**< List of handlers for this location */
     MprList         *inputStages;           /**< Input stages */
     MprList         *outputStages;          /**< Output stages */
@@ -1980,7 +1981,8 @@ extern HttpLoc *httpCreateInheritedLocation(HttpLoc *location);
 extern int httpSetHandler(HttpLoc *location, cchar *name);
 extern int httpAddFilter(HttpLoc *location, cchar *name, cchar *extensions, int direction);
 extern void httpClearStages(HttpLoc *location, int direction);
-extern void httpAddLocationExpiry(HttpLoc *location, MprTime when, cchar *mimeTypes);
+extern void httpAddLocationExpiry(HttpLoc *location, MprTime when, cchar *extensions);
+extern void httpAddLocationExpiryByType(HttpLoc *location, MprTime when, cchar *mimeTypes);
 
 /**
     Upload File

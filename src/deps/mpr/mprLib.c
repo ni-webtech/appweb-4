@@ -17385,7 +17385,7 @@ static void standardSignalHandler(void *ignored, MprSignal *sp)
 #if BLD_UNIX_LIKE
         /*  Ensure shells are on a new line */
         if (isatty(1)) {
-            write(1, "\n", 1);
+            if (write(1, "\n", 1) < 0) {}
         }
 #endif
         mprTerminate(MPR_EXIT_IMMEDIATE);

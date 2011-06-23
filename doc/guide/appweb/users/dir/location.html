@@ -159,7 +159,82 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="location" id="location"></a>
+            </table>
+
+            <a name="cache" id="cache"></a>
+            <h2>Cache</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control client-side caching by document extension</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Cache lifespan extensions ...</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Cache 86400 html gif jpeg jpg png pdf ico js<br/>
+                            Cache 86400 ""</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Cache directive enables the generation of "Cache-Control" and "Expires" HTTP 
+                            headers for matching documents. The Cache-Control and Expires HTTP headers instruct
+                            clients to cache response content for a specified duration. If the document is subsequently
+                            required by the client before the response content has expired, the document will be served
+                            from the client cache without contacting the server. </p>
+                            <p>The Cache directive specifies a lifespan in seconds to be used for any document that
+                            matches one of the set of given extensions. An empty extension "" may be given to match
+                            all documents regardless of extension.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="cacheByType" id="cacheByType"></a>
+            <h2>CacheByType</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control client-side caching by document mime type</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Cache lifespan mime-types ...</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Location</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Cache 86400 image/gif text/css</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The CacheByType directive enables the generation of "Cache-Control" and "Expires" HTTP 
+                            headers for matching documents. The Cache-Control and Expires HTTP headers instruct
+                            clients to cache response content for a specified duration. If the document is subsequently
+                            required by the client before the response content has expired, the document will be served
+                            from the client cache without contacting the server. </p>
+                            <p>The Cache directive specifies a lifespan in seconds to be used for any document that
+                            matches one of the set of given mime-types for the document. An empty mime-type "" may be 
+                            given to match all documents regardless of type.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="location" id="location"></a>
             <h2>Location</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>

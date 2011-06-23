@@ -302,6 +302,14 @@ Include conf/applications/*
                         <td>Defines the file of user names.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/location.html#cache">Cache</a></td>
+                        <td>Control client-side caching by document extension.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/location.html#cacheByType">CacheByType</a></td>
+                        <td>Control client-side caching by document mime type.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/server.html#chroot">Chroot</a></td>
                         <td>Define the directory for a "chroot jail" in which Appweb will execute.</td>
                     </tr>
@@ -326,32 +334,16 @@ Include conf/applications/*
                         <td>Directory containing web content.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/ejs.html#ejsApp">EjsApp</a></td>
-                        <td>Enable the enclosing location block as an Ejscript application.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/ejs.html#ejsAppAlias">EjsAppAlias</a></td>
+                        <td><a href="dir/ejs.html#ejsAlias">EjsAlias</a></td>
                         <td>Define an Ejscript application alias.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/ejs.html#ejsAppDir">EjsAppDir</a></td>
-                        <td>Define a directory as containing Ejscript applications.</td>
+                        <td><a href="dir/ejs.html#ejsStartup">EjsStartup</a></td>
+                        <td>Define an Ejscript application script.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/ejs.html#ejsAppDirAlias">EjsAppDirAlias</a></td>
-                        <td>Define an Ejscript application directory alias.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/ejs.html#ejsErrors">EjsErrors</a></td>
-                        <td>Control how Ejscript manages errors.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/ejs.html#ejsSession">EjsSession</a></td>
-                        <td>Control if Ejscript automatically creates sessions.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/ejs.html#ejsSessionTimeout">EjsSessionTimeout</a></td>
-                        <td>Define the default session timeout value.</td>
+                        <td><a href="dir/ejs.html#ejsWorkers">EjsWorkers</a></td>
+                        <td>Define the maximum number of worker threads.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#errorDocument">ErrorDocument</a></td>
