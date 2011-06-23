@@ -117,7 +117,7 @@ package-only:
 	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
 
 packageExtra:
-	if [ -d package -a -f package/binary.files ] ; then \
+	if [ -d package -a -f package/binary.files -a -d package/$(BLD_HOST_OS) ] ; then \
 		if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
 			export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
 			fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
