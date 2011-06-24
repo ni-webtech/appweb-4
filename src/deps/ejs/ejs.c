@@ -399,6 +399,7 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
     while (!cp->stream->eof && !mprIsStopping()) {
         err = 0;
         cp->uid = 0;
+        ejs->result = ESV(undefined);
         if (ecCompile(cp, 1, tmpArgv) < 0) {
             mprRawLog(0, "%s", cp->errorMsg);
             ejs->result = ESV(undefined);
@@ -410,12 +411,12 @@ static int interpretCommands(EcCompiler *cp, cchar *cmd)
             }
         }
         if (!ejs->exception && ejs->result != ESV(undefined)) {
-            if (ejsIs(ejs, ejs->result, Date) || ejsIsType(ejs, ejs->result)) {
+            if (ejsIs(ejs, ejs->result, Date) /* MOB || ejsIsType(ejs, ejs->result) */) {
                 if ((result = (EjsString*) ejsToString(ejs, ejs->result)) != 0) {
                     mprPrintf("%@\n", result);
                 }
             } else if (ejs->result != ESV(null)) {
-                if ((result = (EjsString*) ejsToJSON(ejs, ejs->result, NULL)) != 0) {
+                if ((result = (EjsString*) ejsSerialize(ejs, ejs->result, EJS_JSON_SHOW_PRETTY)) != 0) {
                     mprPrintf("%@\n", result);
                 }
             }

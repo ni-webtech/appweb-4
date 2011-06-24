@@ -15,7 +15,6 @@
 #define MA_MAX_CONFIG_DEPTH     16              /**< Max nest of directives in config file */
 #define MA_MAX_ACCESS_LOG       20971520        /**< Access file size (20 MB) */
 #define MA_MAX_REWRITE          10              /**< Maximum recursive URI rewrites */
-#define MA_EJS_START            "start.es"      /**< Default ejs startup script */
 #define MA_SERVER_NAME          "Embedthis-Appweb/" BLD_VERSION
 
 #undef HTTP_NAME

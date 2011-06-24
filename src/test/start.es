@@ -1,11 +1,8 @@
+//  NOT - used
 require ejs.web
-
-// App.log.info("Starting server.es")
-let server: HttpServer = new HttpServer({documents: "web", own: true})
+let server: HttpServer = new HttpServer
 var router = Router(Router.Top)
-
 server.on("readable", function (event, request) {
     server.serve(request, router)
 })
-
 server.listen()

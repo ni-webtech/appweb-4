@@ -88,7 +88,9 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
             httpAddHandler(loc, "ejsHandler", ".ejs");
+#if UNUSED
             httpSetLocationScript(loc, "start.es");
+#endif
         }
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
@@ -1513,6 +1515,9 @@ int maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes)
 {
     char    *endp;
 
+    mprAssert(arg);
+    *arg = 0;
+    
     if (buf == 0) {
         return -1;
     }

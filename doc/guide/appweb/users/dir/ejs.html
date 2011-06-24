@@ -130,16 +130,15 @@
                         <td>
                             <p>The EjsStartup directive specifies the script filename used to start the application.
                             <p>If the script filename is relative, it is found in the ejs application directory specified
-                            by EjsAlias (or Alias).</p>
-                            <p>A minimal startup script may look like this:</p>
+                            by EjsAlias (or Alias). Virtual hosts and location blocks will inherit an outer EjsStartup
+                            definition. If not startup script is specified, the following default script is used:</p>
                             <pre>require ejs.web
 let server: HttpServer = new HttpServer
-var router = new Router(Router.Restful)
+var router = new Router(Router.Top)
 server.on("readable", function (event, request) {
     server.serve(request, router)
 })
-server.listen(80)
-App.run()
+server.listen()
 </pre>
                         </td>
                     </tr>
@@ -170,7 +169,8 @@ App.run()
                         <td>
                             <p>This directive specifies the maximum number of worker threads to use when serving
                             requests for the ejs handler. Worker threads are retained in a pool for rapid reuse once
-                            requests complete. Set to zero for single-threaded operation.</p>
+                            requests complete. Set to zero for single-threaded operation. Defaults to the number
+                            of Appweb theads set via ThreadLimit (defaults to 10).</p>
                         </td>
                     </tr>
                 </tbody>

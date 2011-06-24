@@ -1957,6 +1957,7 @@ typedef struct HttpLoc {
     int             workers;                /**< Number of workers to use for this location */
     char            *searchPath;            /**< Search path */
     char            *script;                /**< Startup script for handlers serving this location */
+    char            *scriptPath;            /**< Startup script path for handlers serving this location */
     struct MprSsl   *ssl;                   /**< SSL configuration */
 } HttpLoc;
 
@@ -1972,7 +1973,7 @@ extern void httpSetLocationAutoDelete(HttpLoc *location, int enable);
 extern void httpSetLocationFlags(HttpLoc *location, int flags);
 extern void httpSetLocationHandler(HttpLoc *location, cchar *name);
 extern void httpSetLocationPrefix(HttpLoc *location, cchar *uri);
-extern void httpSetLocationScript(HttpLoc *location, cchar *script);
+extern void httpSetLocationScript(HttpLoc *location, cchar *script, cchar *scriptPath);
 extern int httpSetConnector(HttpLoc *location, cchar *name);
 extern int httpAddHandler(HttpLoc *location, cchar *name, cchar *extensions);
 

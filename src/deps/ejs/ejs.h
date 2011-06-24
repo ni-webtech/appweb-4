@@ -1225,11 +1225,12 @@ typedef struct EjsPool {
     int         max;                        /**< Maximum number of VMs */
     Ejs         *template;                  /**< VM template to clone */
     char        *templateScript;            /**< Template initialization script filename */
-    char        *startScriptPath;           /**< Template initialization literal script */
+    char        *startScript;               /**< Template initialization literal script */
+    char        *startScriptPath;           /**< Template initialization script filename */
 } EjsPool;
 
 
-extern EjsPool *ejsCreatePool(int poolMax, cchar *templateScriptPath, cchar *startScript);
+extern EjsPool *ejsCreatePool(int poolMax, cchar *templateScriptPath, cchar *startScript, cchar *startScriptPath);
 extern Ejs *ejsAllocPoolVM(EjsPool *pool, int flags);
 extern void ejsFreePoolVM(EjsPool *pool, Ejs *ejs);
 
@@ -1807,8 +1808,15 @@ extern EjsString *ejsSprintf(Ejs *ejs, cchar *fmt, ...);
  */
 extern EjsString *ejsToJSON(Ejs *ejs, EjsAny *obj, EjsObj *options);
 
-//  MOB - low level serialize
-extern EjsString *ejsSerialize(Ejs *ejs, EjsAny *obj, EjsObj *options);
+extern EjsString *ejsSerializeWithOptions(Ejs *ejs, EjsAny *obj, EjsObj *options);
+
+#define EJS_JSON_SHOW_SUBCLASSES    0x1
+#define EJS_JSON_SHOW_HIDDEN        0x2
+#define EJS_JSON_SHOW_NAMESPACES    0x4
+#define EJS_JSON_SHOW_PRETTY        0x8
+
+extern EjsString *ejsSerialize(Ejs *ejs, EjsAny *obj, int flags);
+
 
 /** 
     Cast a variable to a string

@@ -86,8 +86,10 @@ module ejs {
                 level: 0,
             },
             app: {
-                cache: false,
                 reload: false,
+            },
+            cache: {
+                app: { enable: false },
             },
             dirs: {
                 cache: Path("cache"),
@@ -7027,7 +7029,7 @@ module ejs {
          */
         public static function require(id: String, config: Object = App.config): Object {
             let exports = signatures[id]
-            if (!exports || config.app.reload) {
+            if (!exports || config.cache.app.reload) {
                 let path: Path = locate(id, config)
                 if (path.modified > timestamps[path]) {
                     //  On-demand loading of CommonJS support
@@ -7056,7 +7058,7 @@ module ejs {
             let initializer, code
             let cache: Path = cached(id, config)
             if (path) {
-                if (cache && cache.exists && (!config.app.reload || cache.modified > path.modified)) {
+                if (cache && cache.exists && (!config.cache.app.reload || cache.modified > path.modified)) {
                     /* Cache mod file exists and is current */
                     if (initializers[path]) {
                         App.log.debug(4, "Use memory cache for \"" + path + "\"")
@@ -7119,7 +7121,7 @@ module ejs {
         /** @hide */
         public static function cached(id: Path, config = App.config, cachedir: Path = null): Path {
             config ||= App.config
-            if (id && config.app.cache) {
+            if (id && config.cache.app.enable) {
                 let dir = cachedir || Path(config.dirs.cache) || Path("cache")
                 if (dir.exists) {
                     return Path(dir).join(md5(id)).joinExt('.mod')
@@ -11113,6 +11115,7 @@ module ejs {
         function % (arg: Object): String
             format(arg)
 
+//  MOB - Cleanup
         /** 
             @hide 
             @deprecated 2.0.0
@@ -19129,10 +19132,6 @@ module ejs.web {
         private var workerImage: Worker
 
         private static const defaultConfig = {
-            app: {
-                cache: true,
-                reload: true,
-            },
             dirs: {
                 cache: Path("cache"),
                 layouts: Path("layouts"),
@@ -19151,6 +19150,7 @@ module ejs.web {
                 "class": "LocalCache",
                 module: "ejs",
                 lifespan: 3600,
+                app:     { enable: true, reload: true },
                 actions: { enable: true },
                 records: { enable: true },
                 workers: { enable: true, limit: 10 },
@@ -19224,6 +19224,12 @@ module ejs.web {
             protocol scheme.
          */
         native function get isSecure(): Boolean
+
+        /**
+            Flag indicating if the server is running hosted inside a web server
+         */
+        native function get hosted(): Boolean
+        native function set hosted(value: Boolean): Void
 
         /**
             Resource limits for the server and for initial resource limits for requests.
@@ -19306,8 +19312,8 @@ module ejs.web {
                 hosted, the $home property will be defined by the web server.
             @option ejsrc Alternate path to the "ejsrc" configuration file
             @option config Alternate App.config settings
-            @option own If hosted inside a web server, set to true to bypass any web server listening endpoints and 
-                create a new stand-alone listening connection.
+            @option unhosted If hosted inside a web server, set to true to bypass any web server listening endpoints and 
+                create a new stand-alone (unhosted) listening connection.
             @spec ejs
             @stability prototype
             @example: This is a fully async server:
@@ -19337,6 +19343,9 @@ server.listen("127.0.0.1:7777")
             this.options = options
             if (options.ejsrc) {
                 config.ejsrc = options.ejsrc
+            }
+            if (options.unhosted) {
+                this.hosted = false
             }
             if (config.files.ejsrc && config.files.ejsrc.exists) {
                 blend(config, Path(config.files.ejsrc).readJSON())
@@ -19426,9 +19435,10 @@ server.listen("127.0.0.1:7777")
             Listen for client connections. This creates a HTTP server listening on a single socket endpoint. It can
             also be used to attach to an existing listening connection if embedded in a web server. 
             
-            When used inside a web server, the web server should define the listening endpoints and ensure the 
-            EjsScript startup script is executed. Then, when listen is called, the HttpServer object will be bound to
-            the web server's listening connection. In this case, the endpoint argument is not required and is ignored.
+            When hosted inside a web server, the web server will define the listening endpoints and ensure the 
+            EjsScript startup script is executed. Then, when listen() is called, the HttpServer object will be bound to
+            the actual web server's listening connection. In this case, the endpoint argument is not required and 
+            is ignored.
 
             HttpServer supports both sync and async modes of operation.  In sync mode, after listen call is made, 
             $accept must be called to wait for and receive client connections. The $accept call will create the 
@@ -19618,7 +19628,8 @@ let mark = new Date
 
         /** 
             Run the application event loop to service requests.
-            If the HttpServer is hosted in a web server, this call does nothing as the web server will service events. 
+            If the HttpServer is hosted in a web server, this call does nothing as the web server will service events and
+            will return immediately. 
          */
         native function run(): Void
 
@@ -21791,8 +21802,8 @@ module ejs.web {
                also be set to null to add not routes. This is useful for creating a bare Router instance. Defaults 
                to Top.
             @param options Options to apply to all routes
-            @option threaded Boolean If true, the request should be execute in a worker thread if possible. This thread 
-                will not be dedicated, but will be assigned as the request requires CPU resources.
+            @option workers Boolean If true, requests should be execute in a worker thread if possible. The worker thread 
+                will be pooled when the request completes and will be available for subsequent requests.  
            @throws Error for an unknown route set.
          */
         function Router(routeSet: String = Top, options: Object = {}) {
@@ -21819,8 +21830,8 @@ module ejs.web {
         private function insertRoute(r: Route): Void {
             let routeSet = routes[r.routeSetName] ||= {}
             routeSet[r.name] = r
-            if (r.threaded == null) {
-                r.threaded = routerOptions.threaded
+            if (r.workers == null) {
+                r.workers = routerOptions.workers
             }
         }
 
@@ -22090,7 +22101,7 @@ module ejs.web {
             } else if (!template) {
                 template = "*"
             }
-            let line = "  %-24s %s %-24s %-7s %s".format(r.name, r.threaded ? "T": " ", target, method, template)
+            let line = "  %-24s %s %-24s %-7s %s".format(r.name, r.workers ? "W": " ", target, method, template)
             if (extra == "full") {
                 if (params && Object.getOwnPropertyCount(params) > 0) {
                     if (!(params.action && Object.getOwnPropertyCount(params) == 1)) {
@@ -22224,10 +22235,10 @@ module ejs.web {
         var template: Object
 
         /**
-            If true, the request should execute in a worker thread if possible. This thread will not be dedicated, 
-            but will be assigned as the request requires CPU resources.
+            If true, requests should execute using a worker thread if possible. The worker thread will be pooled when
+            the request completes and be available for use by subsequent requests.
          */
-        var threaded: Boolean
+        var workers: Boolean
 
         /**
             Key tokens in the route template
@@ -22505,7 +22516,7 @@ module ejs.web {
             moduleName = options.module
             rewrite = options.rewrite
             redirect = options.redirect
-            threaded = options.threaded
+            workers = options.workers
             trace = options.trace
             if (options.method == "" || options.method == "*") {
                 method = options.method = ""
@@ -23207,17 +23218,17 @@ module ejs.web {
         /** 
             Name of the uploaded file given by the client
          */
-        native var clientFilename: String
+        var clientFilename: String
 
         /** 
             Mime type of the encoded data
          */
-        native var contentType: String
+        var contentType: String
 
         /** 
             Name of the uploaded file. This is a temporary file in the upload directory.
          */
-        native var filename: String
+        var filename: Path
 
         /** 
             HTML input ID for the upload file element
@@ -23227,7 +23238,7 @@ module ejs.web {
         /** 
             Size of the uploaded file in bytes
          */
-        native var size: Number
+        var size: Number
     }
 }
 

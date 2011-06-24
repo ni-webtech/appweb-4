@@ -1412,10 +1412,12 @@ class Templates {
     mode: "debug",
 
     app: {
-        cache: true,
-        reload: true,
     },
 
+    cache : {
+        app:     { enable: true, reload: true },
+        workers: { enable: true, limit: 10},
+    },
     database: {
         adapter: "sqlite",
         class: "Sqlite",
@@ -1453,18 +1455,15 @@ class Templates {
     },
 
     web: {
-        cache: {
-            workers: { enable: true, limit: 10},
-        },
         expires: {
             html:   86400,
             png:    86400,
             gif:    86400,
             ico:    86400,
             jpg:    86400,
+            jpeg:   86400,
             js:     86400,
             css:    86400,
-            ico:    86400,
         },
         limits: {
             requestTimeout: 3600, 

@@ -11,6 +11,18 @@
 #if BLD_FEATURE_EJS
 #include    "ejs.h"
 
+/************************************* Data ***********************************/
+
+static char startup[] = "\
+    require ejs.web; \
+    let server: HttpServer = new HttpServer; \
+    var router = Router(Router.Top); \
+    server.on('readable', function (event, request) { \
+        server.serve(request, router) \
+    }); \
+    server.listen(); \
+";
+
 /************************************* Code ***********************************/
 
 static void openEjs(HttpQueue *q)
@@ -31,10 +43,15 @@ static void openEjs(HttpQueue *q)
 
     if (!conn->ejs) {
         if (!loc->context) {
-            loc->context = ejsCreatePool(loc->workers, "require ejs.web", loc->script);
+            if (loc->script == 0) {
+                loc->script = startup;
+            }
+            if (loc->workers < 0) {
+                loc->workers = mprGetMaxWorkers();
+            }
+            loc->context = ejsCreatePool(loc->workers, "require ejs.web", loc->script, loc->scriptPath);
             mprLog(5, "ejs: Demand load Ejscript web framework");
         }
-        
         //  MOB - remove conn->pool and store in ejs->pool
         pool = conn->pool = loc->context;
         if ((ejs = ejsAllocPoolVM(pool, EJS_FLAG_HOSTED)) == 0) {
@@ -67,14 +84,24 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpHost    *host;
     HttpAlias   *alias;
     HttpDir     *dir, *parent;
-    char        *prefix, *path;
+    char        *prefix, *path, *script, *next;
     
     loc = state->loc;
     host = state->host;
 
     if (scasecmp(key, "EjsAlias") == 0) {
-        if (maSplitConfigValue(&prefix, &path, value, 1) < 0 || path == 0 || prefix == 0) {
+        /*
+            EjsAlias prefix [path] [script]
+         */
+        if (maGetConfigValue(&prefix, value, &next, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
+        }
+        if (maGetConfigValue(&path, next, &next, 1) < 0) {
+            path = ".";
+        }
+        maGetConfigValue(&script, next, &next, 1);
+        if (script) {
+            loc->scriptPath = strim(script, "\"", MPR_TRIM_BOTH);
         }
         prefix = httpReplaceReferences(host, prefix);
         path = httpMakePath(host, path);
@@ -95,11 +122,12 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
         httpSetLocationPrefix(loc, prefix);
         httpSetLocationAuth(loc, state->dir->auth);
         httpAddLocation(host, loc);
+        httpSetLocationScript(loc, 0, script);
         httpSetHandler(loc, "ejsHandler");
         return 1;
 
     } else if (scasecmp(key, "EjsStartup") == 0) {
-        loc->script = strim(value, "\"", MPR_TRIM_BOTH);
+        loc->scriptPath = strim(value, "\"", MPR_TRIM_BOTH);
         return 1;
 
     } else if (scasecmp(key, "EjsWorkers") == 0) {

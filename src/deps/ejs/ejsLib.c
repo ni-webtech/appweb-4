@@ -11486,7 +11486,7 @@ EjsString *ejsToJSON(Ejs *ejs, EjsAny *vp, EjsObj *options)
 
     fn = (EjsFunction*) ejsGetPropertyByName(ejs, TYPE(vp)->prototype, N(NULL, "toJSON"));
     if (!ejsIsFunction(ejs, fn) || (fn->isNativeProc && fn->body.proc == (EjsFun) ejsObjToJSON)) {
-        result = ejsSerialize(ejs, vp, options);
+        result = ejsSerializeWithOptions(ejs, vp, options);
     } else {
         argv[0] = options;
         argc = options ? 1 : 0;
@@ -11496,10 +11496,7 @@ EjsString *ejsToJSON(Ejs *ejs, EjsAny *vp, EjsObj *options)
 }
 
 
-/*
-    Low level JSON encoding.
- */
-EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, EjsObj *options)
+EjsString *ejsSerializeWithOptions(Ejs *ejs, EjsAny *vp, EjsObj *options)
 {
     Json        json;
     EjsObj      *arg;
@@ -11507,9 +11504,8 @@ EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, EjsObj *options)
     int         i;
 
     memset(&json, 0, sizeof(Json));
-
     json.depth = 99;
-    
+
     if (options) {
         json.options = options;
         if ((arg = ejsGetPropertyByName(ejs, options, EN("baseClasses"))) != 0) {
@@ -11555,7 +11551,19 @@ EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, EjsObj *options)
 }
 
 
-//  TOD REFACTOR
+EjsString *ejsSerialize(Ejs *ejs, EjsAny *vp, int flags)
+{
+    Json    json;
+
+    memset(&json, 0, sizeof(Json));
+    json.depth = 99;
+    json.pretty = (flags & EJS_JSON_SHOW_PRETTY) ? 1 : 0;
+    json.hidden = (flags & EJS_JSON_SHOW_HIDDEN) ? 1 : 0;
+    json.namespaces = (flags & EJS_JSON_SHOW_NAMESPACES) ? 1 : 0;
+    json.baseClasses = (flags & EJS_JSON_SHOW_SUBCLASSES) ? 1 : 0;
+    return serialize(ejs, vp, &json);
+}
+
 
 static EjsString *serialize(Ejs *ejs, EjsAny *vp, Json *json)
 {
@@ -14774,7 +14782,7 @@ static EjsBoolean *obj_propertyIsEnumerable(Ejs *ejs, EjsObj *obj, int argc, Ejs
  */
 EjsString *ejsObjToJSON(Ejs *ejs, EjsObj *vp, int argc, EjsObj **argv)
 {
-    return ejsSerialize(ejs, vp, (argc == 1) ? argv[0] : NULL);
+    return ejsSerializeWithOptions(ejs, vp, (argc == 1) ? argv[0] : NULL);
 }
 
 
@@ -25041,8 +25049,8 @@ static void handleError(Ejs *ejs, EjsWorker *worker, EjsObj *exception, int thro
     inside = worker->pair->ejs;
     
     inside->exception = 0;
-    str = ejsSerialize(inside, exception, NULL);
-    e = ejsDeserialize(ejs, ejsSerialize(inside, exception, NULL));
+    str = ejsSerialize(inside, exception, 0);
+    e = ejsDeserialize(ejs, ejsSerialize(inside, exception, 0));
     inside->exception = exception;
 
     /*
@@ -31981,9 +31989,10 @@ int ejsRun(Ejs *ejs)
     EjsModule   *mp;
     int         next;
 
+    //  MOB OPT - should not examine all modules just to run a script
     for (next = 0; (mp = mprGetNextItem(ejs->modules, &next)) != 0;) {
         if (!mp->initialized) {
-            ejsRunInitializer(ejs, mp);
+            ejs->result = ejsRunInitializer(ejs, mp);
         }
         if (ejsCompareMulti(ejs, mp->name, EJS_DEFAULT_MODULE) == 0) {
             ejsRemoveModule(ejs, mp);
@@ -36376,8 +36385,8 @@ Ejs *ejsCloneVM(Ejs *master)
     int         next;
 
     if (master) {
-        mprAssert(!master->empty);
         //  MOB - cleanup
+        mprAssert(!master->empty);
         extern int cloneCopy;
         cloneCopy = 0;
         if ((ejs = ejsCreateVM(master->argc, master->argv, master ? master->flags : 0)) == 0) {
@@ -36529,12 +36538,13 @@ static void managePool(EjsPool *pool, int flags)
         mprMark(pool->mutex);
         mprMark(pool->template);
         mprMark(pool->templateScript);
+        mprMark(pool->startScript);
         mprMark(pool->startScriptPath);
     }
 }
 
 
-EjsPool *ejsCreatePool(int poolMax, cchar *templateScript, cchar *startScriptPath)
+EjsPool *ejsCreatePool(int poolMax, cchar *templateScript, cchar *startScript, cchar *startScriptPath)
 {
     EjsPool     *pool;
 
@@ -36548,6 +36558,9 @@ EjsPool *ejsCreatePool(int poolMax, cchar *templateScript, cchar *startScriptPat
     pool->max = poolMax <= 0 ? MAXINT : poolMax;
     if (templateScript) {
         pool->templateScript = sclone(templateScript);
+    }
+    if (startScript) {
+        pool->startScript = sclone(startScript);
     }
     if (startScriptPath) {
         pool->startScriptPath = sclone(startScriptPath);
@@ -36601,6 +36614,13 @@ Ejs *ejsAllocPoolVM(EjsPool *pool, int flags)
         if (pool->startScriptPath) {
             if (ejsLoadScriptFile(ejs, pool->startScriptPath, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
                 mprError("Can't load \"%s\"\n%s", pool->startScriptPath, ejsGetErrorMsg(ejs, 1));
+                mprRemoveRoot(ejs);
+                return 0;
+            }
+        } else if (pool->startScript) {
+            script = ejsCreateStringFromAsc(ejs, pool->startScript);
+            if (ejsLoadScriptLiteral(ejs, script, NULL, EC_FLAGS_NO_OUT | EC_FLAGS_BIND) < 0) {
+                mprError("Can't load \"%s\"\n%s", script, ejsGetErrorMsg(ejs, 1));
                 mprRemoveRoot(ejs);
                 return 0;
             }
@@ -38351,8 +38371,8 @@ static EjsObj *hs_setLimits(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
 }
 
 
-/*  
-    function get isSecure(): Void
+/*
+    function get isSecure(): Boolean
  */
 static EjsObj *hs_isSecure(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
@@ -38360,31 +38380,54 @@ static EjsObj *hs_isSecure(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 }
 
 
+/*
+    function get hosted(): Boolean
+ */
+static EjsObj *hs_hosted(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+{
+    return sp->hosted ? ESV(true): ESV(false);
+}
+
+
+/*
+    function set hosted(value: Boolean): Void
+ */
+static EjsVoid *hs_set_hosted(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+{
+    sp->hosted = (argv[0] == ESV(true)) ? 1 : 0;
+    return 0;
+}
+
+
 /*  
     function listen(endpoint): Void
-    An endpoint can be either a "port" or "ip:port", or null
+
+    An endpoint can be either a "port" or "ip:port", or null. If hosted, this call does little -- just add to the
+    ejs->httpServers list.
  */
 static EjsVoid *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
 {
     HttpServer  *server;
     HttpHost    *host;
     EjsString   *address;
-    EjsObj      *endpoint, *options;
+    EjsObj      *endpoint;
     EjsPath     *home, *documents;
 
-    endpoint = (argc >= 1) ? argv[0] : ESV(null);
-    if (endpoint != ESV(null)) {
-        address = ejsToString(ejs, endpoint);
-        mprParseIp(address->value, &sp->ip, &sp->port, 0);
-    } else {
-        address = 0;
-    }
+#if UNUSED
     if (ejs->hosted) {
         if ((options = ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_options)) != 0) {
-            sp->hosted = ejsGetPropertyByName(ejs, options, EN("own")) != ESV(true);
+            sp->hosted = ejsGetPropertyByName(ejs, options, EN("unhosted")) != ESV(true);
         }
     }
+#endif
     if (!sp->hosted) {
+        endpoint = (argc >= 1) ? argv[0] : ESV(null);
+        if (endpoint != ESV(null)) {
+            address = ejsToString(ejs, endpoint);
+            mprParseIp(address->value, &sp->ip, &sp->port, 0);
+        } else {
+            address = 0;
+        }
         if (address == 0) {
             ejsThrowArgError(ejs, "Missing listen endpoint");
             return 0;
@@ -38440,6 +38483,7 @@ static EjsVoid *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     if (ejs->httpServers == 0) {
        ejs->httpServers = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     }
+    /* Remove to make sure old listening() registrations are removed */
     mprRemoveItem(ejs->httpServers, sp);
     mprAddItem(ejs->httpServers, sp);
     return 0;
@@ -39033,6 +39077,7 @@ static EjsHttpServer *createHttpServer(Ejs *ejs, EjsType *type, int size)
         return 0;
     }
     sp->ejs = ejs;
+    sp->hosted = ejs->hosted;
     sp->async = 1;
     httpInitTrace(sp->trace);
     return sp;
@@ -39103,6 +39148,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_async, hs_async, hs_set_async);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_close, hs_close);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_limits, hs_limits);
+    ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_hosted, hs_hosted, hs_set_hosted);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_isSecure, hs_isSecure);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_listen, hs_listen);
     ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_name, hs_name, hs_set_name);
@@ -39353,7 +39399,7 @@ static EjsObj *createFiles(Ejs *ejs, EjsRequest *req)
         for (index = 0, hp = 0; (hp = mprGetNextKey(conn->rx->files, hp)) != 0; index++) {
             up = (HttpUploadFile*) hp->data;
             file = (EjsObj*) ejsCreateEmptyPot(ejs);
-            ejsSetPropertyByName(ejs, file, EN("filename"), ejsCreateStringFromAsc(ejs, up->filename));
+            ejsSetPropertyByName(ejs, file, EN("filename"), ejsCreatePathFromAsc(ejs, up->filename));
             ejsSetPropertyByName(ejs, file, EN("clientFilename"), ejsCreateStringFromAsc(ejs, up->clientFilename));
             ejsSetPropertyByName(ejs, file, EN("contentType"), ejsCreateStringFromAsc(ejs, up->contentType));
             ejsSetPropertyByName(ejs, file, EN("name"), ejsCreateStringFromAsc(ejs, hp->key));
@@ -41280,7 +41326,6 @@ int ecAstProcess(EcCompiler *cp)
     if (ecEnterState(cp) < 0) {
         return EJS_ERR;
     }
-
     ejs = cp->ejs;
     cp->blockState = cp->state;
 
@@ -44222,6 +44267,7 @@ static void processAstNode(EcCompiler *cp, EcNode *np)
 
     case N_QNAME:
         astName(cp, np);
+        codeRequired++;
         break;
 
     case N_NEW:

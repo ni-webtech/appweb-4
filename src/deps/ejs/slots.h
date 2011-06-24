@@ -779,19 +779,20 @@
 /*
     Class property slots for the "Config" type 
  */
-#define ES_Config_Debug                                                0
-#define ES_Config_CPU                                                  1
-#define ES_Config_OS                                                   2
-#define ES_Config_Product                                              3
-#define ES_Config_Title                                                4
-#define ES_Config_Version                                              5
-#define ES_Config_LibDir                                               6
-#define ES_Config_BinDir                                               7
-#define ES_Config_ModDir                                               8
-#define ES_Config_Legacy                                               9
-#define ES_Config_SSL                                                  10
-#define ES_Config_SQLITE                                               11
-#define ES_Config_NUM_CLASS_PROP                                       12
+#define ES_Config__initializer___Config_                               0
+#define ES_Config_Debug                                                1
+#define ES_Config_CPU                                                  2
+#define ES_Config_OS                                                   3
+#define ES_Config_Product                                              4
+#define ES_Config_Title                                                5
+#define ES_Config_Version                                              6
+#define ES_Config_LibDir                                               7
+#define ES_Config_BinDir                                               8
+#define ES_Config_ModDir                                               9
+#define ES_Config_Legacy                                               10
+#define ES_Config_SSL                                                  11
+#define ES_Config_SQLITE                                               12
+#define ES_Config_NUM_CLASS_PROP                                       13
 
 /*
    Prototype (instance) slots for "Config" type 
@@ -2452,7 +2453,8 @@
 /*
     Class property slots for the "XML" type 
  */
-#define ES_XML_NUM_CLASS_PROP                                          0
+#define ES_XML__initializer___XML_                                     0
+#define ES_XML_NUM_CLASS_PROP                                          1
 
 /*
    Prototype (instance) slots for "XML" type 
@@ -2551,7 +2553,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1441281
+#define _ES_CHECKSUM_ejs   1442302
 
 #endif
 /************************************************************************/
@@ -2799,35 +2801,36 @@
 #define ES_ejs_web_HttpServer_config                                   5
 #define ES_ejs_web_HttpServer_documents                                6
 #define ES_ejs_web_HttpServer_isSecure                                 7
-#define ES_ejs_web_HttpServer_limits                                   8
-#define ES_ejs_web_HttpServer_name                                     9
-#define ES_ejs_web_HttpServer_options                                  10
-#define ES_ejs_web_HttpServer_port                                     11
-#define ES_ejs_web_HttpServer_onrequest                                12
-#define ES_ejs_web_HttpServer_defaultOnRequest                         13
-#define ES_ejs_web_HttpServer_home                                     14
-#define ES_ejs_web_HttpServer_software                                 15
-#define ES_ejs_web_HttpServer_openSession                              16
-#define ES_ejs_web_HttpServer_accept                                   17
-#define ES_ejs_web_HttpServer_close                                    18
-#define ES_ejs_web_HttpServer_getWorker                                19
-#define ES_ejs_web_HttpServer_listen                                   20
-#define ES_ejs_web_HttpServer_off                                      21
-#define ES_ejs_web_HttpServer_on                                       22
-#define ES_ejs_web_HttpServer_passRequest                              23
-#define ES_ejs_web_HttpServer_process                                  24
-#define ES_ejs_web_HttpServer_processBody                              25
-#define ES_ejs_web_HttpServer_pruneWorkers                             26
-#define ES_ejs_web_HttpServer_releaseWorker                            27
-#define ES_ejs_web_HttpServer_run                                      28
-#define ES_ejs_web_HttpServer_secure                                   29
-#define ES_ejs_web_HttpServer_serve                                    30
-#define ES_ejs_web_HttpServer_setPipeline                              31
-#define ES_ejs_web_HttpServer_setLimits                                32
-#define ES_ejs_web_HttpServer_setWorkerImage                           33
-#define ES_ejs_web_HttpServer_trace                                    34
-#define ES_ejs_web_HttpServer_verifyClients                            35
-#define ES_ejs_web_HttpServer_NUM_INSTANCE_PROP                        36
+#define ES_ejs_web_HttpServer_hosted                                   8
+#define ES_ejs_web_HttpServer_limits                                   9
+#define ES_ejs_web_HttpServer_name                                     10
+#define ES_ejs_web_HttpServer_options                                  11
+#define ES_ejs_web_HttpServer_port                                     12
+#define ES_ejs_web_HttpServer_onrequest                                13
+#define ES_ejs_web_HttpServer_defaultOnRequest                         14
+#define ES_ejs_web_HttpServer_home                                     15
+#define ES_ejs_web_HttpServer_software                                 16
+#define ES_ejs_web_HttpServer_openSession                              17
+#define ES_ejs_web_HttpServer_accept                                   18
+#define ES_ejs_web_HttpServer_close                                    19
+#define ES_ejs_web_HttpServer_getWorker                                20
+#define ES_ejs_web_HttpServer_listen                                   21
+#define ES_ejs_web_HttpServer_off                                      22
+#define ES_ejs_web_HttpServer_on                                       23
+#define ES_ejs_web_HttpServer_passRequest                              24
+#define ES_ejs_web_HttpServer_process                                  25
+#define ES_ejs_web_HttpServer_processBody                              26
+#define ES_ejs_web_HttpServer_pruneWorkers                             27
+#define ES_ejs_web_HttpServer_releaseWorker                            28
+#define ES_ejs_web_HttpServer_run                                      29
+#define ES_ejs_web_HttpServer_secure                                   30
+#define ES_ejs_web_HttpServer_serve                                    31
+#define ES_ejs_web_HttpServer_setPipeline                              32
+#define ES_ejs_web_HttpServer_setLimits                                33
+#define ES_ejs_web_HttpServer_setWorkerImage                           34
+#define ES_ejs_web_HttpServer_trace                                    35
+#define ES_ejs_web_HttpServer_verifyClients                            36
+#define ES_ejs_web_HttpServer_NUM_INSTANCE_PROP                        37
 #define ES_ejs_web_HttpServer_NUM_INHERITED_PROP                       0
 
 /*
@@ -3045,7 +3048,7 @@
 #define ES_ejs_web_Route_routeSetName                                  13
 #define ES_ejs_web_Route_target                                        14
 #define ES_ejs_web_Route_template                                      15
-#define ES_ejs_web_Route_threaded                                      16
+#define ES_ejs_web_Route_workers                                       16
 #define ES_ejs_web_Route_tokens                                        17
 #define ES_ejs_web_Route_trace                                         18
 #define ES_ejs_web_Route_match                                         19
@@ -3179,7 +3182,7 @@
 #define ES_ejs_web_View_plainFormatter_value                           1
 #define ES_ejs_web_View_plainFormatter_options                         2
 
-#define _ES_CHECKSUM_ejs_web   828727
+#define _ES_CHECKSUM_ejs_web   831509
 
 #endif
 /************************************************************************/
