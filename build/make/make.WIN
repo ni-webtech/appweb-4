@@ -86,10 +86,10 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
     fi
 	@if [ "$(TRACE)" = 1 ] ; then echo "$(BLD_CC)" -c $($(*)_DLFAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ -Fd$(BLD_OBJ_DIR)/ ; \
 	else d=$(DIR)/$< ; d=$${d#./} ; $(call log) "[Compile]" $$d ; fi
-	@"$(BLD_CC)" -c $($(*)_DLFAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ -Fd$(BLD_OBJ_DIR)/ >.$$$$.cltmp ; \
+	@"$(BLD_CC)" -c $($(*)_DLFAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CFLAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -Fo$@ -Fd$(BLD_OBJ_DIR)/ 2>&1 >.$$$$.cltmp ; \
 	status=$$? ; \
-	if [ $$status -ne 0 -o "$(TRACE)" = "1" ] ; then cat .$$$$.cltmp ; rm -f .$$$$.cltmp ; \
-    else cat .$$$$.cltmp | grep warning ; fi ; rm -f .$$$$.cltmp ; \
+	if [ $$status -ne 0 -o "$(TRACE)" = "1" ] ; then cat .$$$$.cltmp >&2; rm -f .$$$$.cltmp ; \
+    else cat .$$$$.cltmp | grep warning >&2; fi ; rm -f .$$$$.cltmp ; \
 	if [ $$status -ne 0 ] ; then exit 255; else true ; fi
 
 #
