@@ -49,7 +49,8 @@ static void openEjs(HttpQueue *q)
             if (loc->workers < 0) {
                 loc->workers = mprGetMaxWorkers();
             }
-            poolScript = sfmt("require ejs.web; global.ejs::HttpServerHome = '%s'; global.ejs::HttpServerDocuments = '%s';", alias->filename, alias->filename);
+            poolScript = sfmt("require ejs.web; global.ejs::HttpServerHome = '%s'; global.ejs::HttpServerDocuments = '%s';",
+                alias->filename, alias->filename);
             loc->context = ejsCreatePool(loc->workers, poolScript, loc->script, loc->scriptPath);
             mprLog(5, "ejs: Demand load Ejscript web framework");
         }
