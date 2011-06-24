@@ -69,7 +69,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>EjsAlias UrlPrefix Directory</td>
+                        <td>EjsAlias UriPrefix [Directory] [Script] [Workers]</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -77,15 +77,36 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>EjsAlias /myapp/ &nbsp;/var/www/myapp/</td>
+                        <td>EjsAlias /myapp/ &nbsp;/var/www/myapp/ start.es 10</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The EjsAlias directive defines an Ejscript application at the given directory which
-                            will receive all requests that begin with specified URL prefix. This one-line directive 
+                            will receive all requests that begin with specified URI prefix. This one-line directive 
                             is typically all you need to do to define an Ejscript application.</p>
 
+                            <p>The UriPrefix argument is mandatory, all others are optional.
+                            The Directory argument is used to define the ejs HttpServer home and documents properties that
+                            describe the base directory for the ejs application and the static documents directory. 
+                            This may be overridden by modifying the home and documents properties of the HttpServer instance.
+
+                            <p>The Script argument specifies the application startup script.
+                            If not startup script is specified, the following default script is used by default:</p>
+                            <pre>require ejs.web
+let server: HttpServer = new HttpServer
+var router = new Router(Router.Top)
+server.on("readable", function (event, request) {
+    server.serve(request, router)
+})
+server.listen()
+</pre>
+                            <p>The Workers arguments speci
+                            <p>The Workers arguments directive specifies the maximum number of worker threads to use 
+                            when serving requests for this ejs application. Worker threads are retained in a pool for 
+                            rapid reuse once requests complete. Set to zero for single-threaded operation. Defaults to 
+                            any previously defined worker limit via EjsWorkers or the number of Appweb theads set via 
+                            ThreadLimit (defaults to 10).</p>
                             <p>It is convenient to define applications using this directive in a separate configuration
                             file for each application. If the application config file is stored under the Appweb
                             "conf/apps" directory, then Appweb will read it automatically when it starts. This makes it

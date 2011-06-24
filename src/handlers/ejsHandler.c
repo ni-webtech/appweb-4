@@ -33,7 +33,7 @@ static void openEjs(HttpQueue *q)
     HttpLoc     *loc;
     Ejs         *ejs;
     EjsPool     *pool;
-    char        *uri;
+    char        *poolScript, *uri;
     
     conn = q->conn;
     rx = conn->rx;
@@ -44,12 +44,13 @@ static void openEjs(HttpQueue *q)
     if (!conn->ejs) {
         if (!loc->context) {
             if (loc->script == 0) {
-                loc->script = startup;
+                loc->script = sclone(startup);
             }
             if (loc->workers < 0) {
                 loc->workers = mprGetMaxWorkers();
             }
-            loc->context = ejsCreatePool(loc->workers, "require ejs.web", loc->script, loc->scriptPath);
+            poolScript = sfmt("require ejs.web; global.ejs::HttpServerHome = '%s'; global.ejs::HttpServerDocuments = '%s';", alias->filename, alias->filename);
+            loc->context = ejsCreatePool(loc->workers, poolScript, loc->script, loc->scriptPath);
             mprLog(5, "ejs: Demand load Ejscript web framework");
         }
         //  MOB - remove conn->pool and store in ejs->pool
@@ -84,7 +85,7 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpHost    *host;
     HttpAlias   *alias;
     HttpDir     *dir, *parent;
-    char        *prefix, *path, *script, *next;
+    char        *prefix, *path, *script, *next, *workers;
     
     loc = state->loc;
     host = state->host;
@@ -100,12 +101,14 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
             path = ".";
         }
         maGetConfigValue(&script, next, &next, 1);
-        if (script) {
-            loc->scriptPath = strim(script, "\"", MPR_TRIM_BOTH);
-        }
+        maGetConfigValue(&workers, next, &next, 1);
+
         prefix = httpReplaceReferences(host, prefix);
         path = httpMakePath(host, path);
         dir = httpLookupDir(host, path);
+        if (script) {
+            script = strim(script, "\"", MPR_TRIM_BOTH);
+        }
         if (httpLookupDir(host, path) == 0) {
             parent = mprGetFirstItem(host->dirs);
             dir = httpCreateDir(path, parent);
@@ -120,9 +123,13 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
         }
         loc = httpCreateInheritedLocation(state->loc);
         httpSetLocationPrefix(loc, prefix);
+        httpSetLocationAlias(loc, alias);
         httpSetLocationAuth(loc, state->dir->auth);
         httpAddLocation(host, loc);
         httpSetLocationScript(loc, 0, script);
+        if (workers) {
+            httpSetLocationWorkers(loc, atoi(workers));
+        }
         httpSetHandler(loc, "ejsHandler");
         return 1;
 

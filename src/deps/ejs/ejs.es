@@ -19303,8 +19303,8 @@ module ejs.web {
         native function get software(): String
 
         /** 
-            Create a HttpServer object. The server is created in async mode by default.
-            If an "ejsrc" file exists in the server root, it will be loaded and update the "$config" properties.
+            Create a HttpServer object. The server is set to async mode by default.
+            If an "ejsrc" file exists in the server root, it will be loaded.
             @param options. Set of options to configure the server.
             @option documents Directory containing web documents to serve. If unset and the HttpServer is hosted,
                 the $documents property will be defined by the web server.
@@ -19337,22 +19337,29 @@ server.on("readable", function (event: String, request: Request) {
 server.listen("127.0.0.1:7777")
          */
         function HttpServer(options: Object = {}) {
-            this.documents = options.documents || "."
-            this.home = options.home || "."
-            this.config = options.config || App.config
+            if (options.unhosted) {
+                hosted = false
+            }
+            if (hosted) {
+                documents = options.documents || global.ejs::HttpServerDocuments || "."
+                home = options.home || global.ejs::HttpServerHome || "."
+            } else {
+                documents = options.documents || "."
+                home = options.home || "."
+            }
+            config = options.config || App.config
             this.options = options
             if (options.ejsrc) {
                 config.ejsrc = options.ejsrc
             }
-            if (options.unhosted) {
-                this.hosted = false
-            }
             if (config.files.ejsrc && config.files.ejsrc.exists) {
                 blend(config, Path(config.files.ejsrc).readJSON())
+            /*
                 let dirs = config.dirs
                 for (let [key, value] in dirs) {
                     dirs[key] = Path(value)
                 }
+             */
                 App.updateLog()
             } else if (home != ".") {
                 let path = home.join("ejsrc")
@@ -19360,6 +19367,10 @@ server.listen("127.0.0.1:7777")
                     blend(config, path.readJSON())
                     App.updateLog()
                 }
+            }
+            let dirs = config.dirs
+            for (let [key, value] in dirs) {
+                dirs[key] = home.join(value)
             }
             let web = config.web
             if (web.trace) {
@@ -19371,7 +19382,7 @@ server.listen("127.0.0.1:7777")
                 openSession()
             }
             //  MOB - BUG. Need this.fun to bind the function
-            //MOB setInterval(this.pruneWorkers, PrunePeriod, this)
+            setInterval(this.pruneWorkers, PrunePeriod, this)
         }
 
         private function openSession() {

@@ -19740,13 +19740,12 @@ char *strim(cchar *str, cchar *set, int where)
     if (str == 0 || set == 0) {
         return 0;
     }
-    s = sclone(str);
     if (where & MPR_TRIM_START) {
-        i = strspn(s, set);
+        i = strspn(str, set);
     } else {
         i = 0;
     }
-    s += i;
+    s = sclone(&str[i]);
     if (where & MPR_TRIM_END) {
         len = slen(s);
         while (len > 0 && strspn(&s[len - 1], set) > 0) {

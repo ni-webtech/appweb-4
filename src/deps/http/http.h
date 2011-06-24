@@ -1939,7 +1939,7 @@ typedef struct HttpLoc {
     int             flags;                  /**< Location flags */
     char            *prefix;                /**< Location prefix name */
     int             prefixLen;              /**< Length of the prefix name */
-    int             sessionTimeout;         /**< Session timeout for this location */
+    HttpAlias       *alias;                 /**< Associated alias for this location */
     HttpStage       *connector;             /**< Network connector to use */
     HttpStage       *handler;               /**< Fixed handler */
     void            *handlerData;           /**< Data reserved for the handler */
@@ -1954,6 +1954,9 @@ typedef struct HttpLoc {
     void            *context;               /**< Hosting context (Appweb == EjsPool) */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
+#if UNUSED
+    int             sessionTimeout;         /**< Session timeout for this location */
+#endif
     int             workers;                /**< Number of workers to use for this location */
     char            *searchPath;            /**< Search path */
     char            *script;                /**< Startup script for handlers serving this location */
@@ -1969,11 +1972,13 @@ extern struct HttpStage *httpGetHandlerByExtension(HttpLoc *location, cchar *ext
 extern cchar *httpLookupErrorDocument(HttpLoc *location, int code);
 extern void httpResetPipeline(HttpLoc *location);
 extern void httpSetLocationAuth(HttpLoc *location, HttpAuth *auth);
+extern void httpSetLocationAlias(HttpLoc *location, HttpAlias *alias);
 extern void httpSetLocationAutoDelete(HttpLoc *location, int enable);
 extern void httpSetLocationFlags(HttpLoc *location, int flags);
 extern void httpSetLocationHandler(HttpLoc *location, cchar *name);
 extern void httpSetLocationPrefix(HttpLoc *location, cchar *uri);
 extern void httpSetLocationScript(HttpLoc *location, cchar *script, cchar *scriptPath);
+extern void httpSetLocationWorkers(HttpLoc *location, int workers);
 extern int httpSetConnector(HttpLoc *location, cchar *name);
 extern int httpAddHandler(HttpLoc *location, cchar *name, cchar *extensions);
 

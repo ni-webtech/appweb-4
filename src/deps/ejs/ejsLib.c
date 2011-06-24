@@ -38972,8 +38972,7 @@ static void startEjsHandler(HttpQueue *q)
         sp->ip = server->ip;
         sp->port = server->port;
         if (!ejsIsDefined(ejs, ejsGetProperty(ejs, sp, ES_ejs_web_HttpServer_documents))) {
-            ejsSetProperty(ejs, sp, ES_ejs_web_HttpServer_documents, 
-                ejsCreateStringFromAsc(ejs, conn->host->documentRoot));
+            ejsSetProperty(ejs, sp, ES_ejs_web_HttpServer_documents, ejsCreateStringFromAsc(ejs, conn->host->documentRoot));
         }
     } else if (conn->ejs) {
         ejs = conn->ejs;
@@ -39156,9 +39155,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_off, hs_off);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_on, hs_on);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_passRequest, hs_passRequest);
-#if ES_ejs_web_HttpServer_run
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_run, hs_run);
-#endif
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_secure, hs_secure);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setLimits, hs_setLimits);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_setPipeline, hs_setPipeline);
@@ -48751,7 +48748,7 @@ static MprFile *openModuleFile(EcCompiler *cp, cchar *filename)
         return 0;
     }
     if ((cp->file = mprOpenFile(filename,  O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0664)) == 0) {
-        genError(cp, 0, "Can't create %s", filename);
+        genError(cp, 0, "Can't create module file \"%s\"", filename);
         return 0;
     }
 

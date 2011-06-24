@@ -4798,7 +4798,9 @@ HttpLoc *httpCreateInheritedLocation(HttpLoc *parent)
     loc->expiresByType = parent->expiresByType;
     loc->connector = parent->connector;
     loc->errorDocuments = parent->errorDocuments;
+#if UNUSED
     loc->sessionTimeout = parent->sessionTimeout;
+#endif
     loc->auth = httpCreateAuth(parent->auth);
     loc->uploadDir = parent->uploadDir;
     loc->autoDelete = parent->autoDelete;
@@ -4835,12 +4837,6 @@ void httpFinalizeLocation(HttpLoc *loc)
         mprConfigureSsl(loc->ssl);
     }
 #endif
-}
-
-
-void httpSetLocationAuth(HttpLoc *loc, HttpAuth *auth)
-{
-    loc->auth = auth;
 }
 
 
@@ -5058,6 +5054,21 @@ HttpStage *httpGetHandlerByExtension(HttpLoc *loc, cchar *ext)
 }
 
 
+void httpSetLocationAlias(HttpLoc *loc, HttpAlias *alias)
+{
+    mprAssert(loc);
+    mprAssert(alias);
+
+    loc->alias = alias;
+}
+
+
+void httpSetLocationAuth(HttpLoc *loc, HttpAuth *auth)
+{
+    loc->auth = auth;
+}
+
+
 void httpSetLocationPrefix(HttpLoc *loc, cchar *uri)
 {
     mprAssert(loc);
@@ -5087,6 +5098,12 @@ void httpSetLocationScript(HttpLoc *loc, cchar *script, cchar *scriptPath)
     if (scriptPath) {
         loc->scriptPath = sclone(scriptPath);
     }
+}
+
+
+void httpSetLocationWorkers(HttpLoc *loc, int workers)
+{
+    loc->workers = workers;
 }
 
 
