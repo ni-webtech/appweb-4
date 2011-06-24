@@ -1416,6 +1416,7 @@ class Templates {
 
     cache : {
         app:     { enable: true, reload: true },
+        actions: { enable: true, lifespan: 1800 },
         workers: { enable: true, limit: 10},
     },
     database: {
@@ -1466,13 +1467,14 @@ class Templates {
             css:    86400,
         },
         limits: {
+            inactivityTimeout: 3600, 
             requestTimeout: 3600, 
             sessionTimeout: 3600, 
         },
         listen: "${ENDPOINT}",
         trace: {
-            tx: { exclude: ["jpg", "gif", "png", "ico", "css",], headers: 4, body: 5, size: 10240 },
             rx: { exclude: ["jpg", "gif", "png", "ico", "css", "js"], conn: 5, first: 2, headers: 3, body: 4, size: 1024 },
+            tx: { exclude: ["jpg", "gif", "png", "ico", "css",], headers: 4, body: 5, size: 10240 },
         },
         views: {
             connectors: {
