@@ -447,7 +447,7 @@ int maValidateConfiguration(MaMeta *meta)
         if (mprGetListLength(server->hosts) == 0) {
             httpAddHostToServer(server, defaultHost);
             if (defaultHost->ip == 0) {
-                httpSetHostName(host, server->ip, server->port);
+                httpSetHostName(defaultHost, server->ip, server->port);
             }
         }
     }
