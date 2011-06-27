@@ -441,8 +441,10 @@ typedef int64 MprTime;
     #endif
     #if BLD_WIN_LIKE
         #define isNan(f) (_isnan(f))
+    #elif VXWORKS || MACOSX || LINUX
+        #define isNan(f) (isnan(f))
     #else
-        #define isNan(f) (f == FP_NAN)
+        #define isNan(f) (fpclassify(f) == FP_NAN)
     #endif
 #endif
 

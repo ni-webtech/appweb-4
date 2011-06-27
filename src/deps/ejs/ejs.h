@@ -2894,12 +2894,10 @@ extern struct EjsNumber *ejsToNumber(Ejs *ejs, EjsAny *obj);
 extern bool ejsIsInfinite(MprNumber f);
 #if WIN
 #define ejsIsNan(f) (_isnan(f))
-#elif MACOSX
-    #define ejsIsNan(f) isnan(f)
-#elif VXWORKS
+#elif MACOSX || LINUX || VXWORKS
     #define ejsIsNan(f) isnan(f)
 #else
-    #define ejsIsNan(f) (f == FP_NAN)
+    #define ejsIsNan(f) (fpclassify(f) == FP_NAN)
 #endif
 
 /** 

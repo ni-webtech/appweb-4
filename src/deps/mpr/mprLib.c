@@ -682,13 +682,16 @@ static MprMem *growHeap(ssize required, int flags)
         spare = (MprMem*) ((char*) mp + required);
         INIT_BLK(spare, spareLen, 0, 1, mp);
         CHECK(spare);
-    }
-    lockHeap();
-    INC(allocs);
-    if (spareLen > 0) {
+        lockHeap();
+        INC(allocs);
         linkBlock(spare);
+        unlockHeap();
+    } else {
+        //  OPT
+        lockHeap();
+        INC(allocs);
+        unlockHeap();
     }
-    unlockHeap();
     return mp;
 }
 
