@@ -3491,6 +3491,7 @@ module ejs {
 
         /**
             Return the current time as milliseconds since Jan 1 1970.
+            This returns the same value as date.time for instances.
             @spec mozilla
          */
         static native function now(): Number

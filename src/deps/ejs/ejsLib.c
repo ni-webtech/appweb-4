@@ -20617,7 +20617,8 @@ EjsString *ejsInternString(EjsString *str)
 {
     EjsString   *head, *sp;
     EjsIntern   *ip;
-    int         index, i, step;
+    ssize       i, len;
+    int         index, step;
 
     ip = ((EjsService*) MPR->ejsService)->intern;
     step = 0;
@@ -20627,8 +20628,15 @@ EjsString *ejsInternString(EjsString *str)
     index = whash(str->value, str->length) % ip->size;
     if ((head = &ip->buckets[index]) != NULL) {
         for (sp = head->next; sp != head; sp = sp->next, step++) {
+            if (str == sp) {
+                mprRevive(sp);
+                unlock(ip);
+                return sp;
+            }
             if (sp->length == str->length) {
-                for (i = 0; i < sp->length && i < str->length; i++) {
+                len = min(sp->length, str->length);
+                //  OPT
+                for (i = 0; i < len; i++) {
                     if (sp->value[i] != str->value[i]) {
                         break;
                     }
@@ -38443,7 +38451,7 @@ static EjsVoid *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
             httpSecureServer(server, sp->ssl);
         }
         if (sp->name) {
-            httpSetHostName(host, sp->name);
+            httpSetHostName(host, sp->name, -1);
         }
         httpSetSoftware(server->http, EJS_HTTPSERVER_NAME);
         httpSetServerAsync(server, sp->async);
@@ -38499,7 +38507,7 @@ static EjsObj *hs_set_name(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
     sp->name = ejsToMulti(ejs, argv[0]);
     if (sp->server && sp->name) {
         host = mprGetFirstItem(sp->server->hosts);
-        httpSetHostName(host, sp->name);
+        httpSetHostName(host, sp->name, -1);
     }
     return 0;
 }

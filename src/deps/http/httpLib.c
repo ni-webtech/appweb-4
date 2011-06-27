@@ -1126,7 +1126,7 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     if (!conn->server || auth == 0 || auth->type == 0) {
         return 0;
     }
-    if ((ad = mprAllocObj(AuthData, NULL)) == 0) {
+    if ((ad = mprAllocStruct(AuthData)) == 0) {
         return 1;
     }
     if (rx->authDetails == 0) {
@@ -3078,9 +3078,10 @@ HttpLimits *httpSetUniqueConnLimits(HttpConn *conn)
 {
     HttpLimits      *limits;
 
-    limits = mprAllocObj(HttpLimits, NULL);
-    *limits = *conn->limits;
-    conn->limits = limits;
+    if ((limits = mprAllocStruct(HttpLimits)) != 0) {
+        *limits = *conn->limits;
+        conn->limits = limits;
+    }
     return limits;
 }
 
@@ -3390,11 +3391,7 @@ static void manageHost(HttpHost *host, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(host->name);
-#if UNUSED
-        mprMark(host->hostname);
-        mprMark(host->logName);
-#endif
-        mprMark(host->address);
+        mprMark(host->ip);
         mprMark(host->parent);
         mprMark(host->aliases);
         mprMark(host->dirs);
@@ -3519,39 +3516,32 @@ void httpSetHostServerRoot(HttpHost *host, cchar *serverRoot)
 }
 
 
-void httpSetHostAddress(HttpHost *host, cchar *name, int port)
+/*
+    Set the host name intelligently from the name specified by ip:port. Port may be set to -1 and ip may contain a port
+    specifier, ie. "address:port". This routines sets host->name and host->ip, host->port which is used for vhost matching.
+ */
+void httpSetHostName(HttpHost *host, cchar *ip, int port)
 {
-    if (name) {
+    if (port < 0 && schr(ip, ':')) {
+        char *pip;
+        mprParseIp(ip, &pip, &port, -1);
+        ip = pip;
+    }
+    if (ip) {
         if (port > 0) {
-            host->address = mprAsprintf("%s:%d", name, port);
+            host->name = mprAsprintf("%s:%d", ip, port);
         } else {
-            host->address = sclone(name);
+            host->name = sclone(ip);
         }
     } else {
         mprAssert(port > 0);
-        host->address = mprAsprintf("*:%d", port);
+        host->name = mprAsprintf("*:%d", port);
     }
-    if (host->name == 0) {
-        host->name = host->address;
+    if (scmp(ip, "default") != 0) {
+        host->ip = sclone(ip);
+        host->port = port;
     }
 }
-
-
-/*
-    Name can be an IP or a textual hostname
- */
-void httpSetHostName(HttpHost *host, cchar *name)
-{
-    host->name = sclone(name);
-}
-
-
-#if UNUSED
-void httpSetHostLogName(HttpHost *host, cchar *name)
-{
-    host->logName = sclone(name);
-}
-#endif
 
 
 void httpSetHostProtocol(HttpHost *host, cchar *protocol)
@@ -4171,30 +4161,6 @@ HttpServer *httpGetFirstServer(Http *http)
 }
 
 
-#if UNUSED
-int httpAddHostToServers(Http *http, struct HttpHost *host)
-{
-    HttpServer  *server;
-    char        *ip;
-    int         next, count, port;
-
-    mprParseIp(host->address, &ip, &port, -1);
-    mprAssert(ip);
-
-    for (count = 0, next = 0; (server = mprGetNextItem(http->servers, &next)) != 0; ) {
-        if (server->port <= 0 || port <= 0 || server->port == port) {
-            mprAssert(server->ip);
-            if (*server->ip == '\0' || *ip == '\0' || scmp(server->ip, ip) == 0) {
-                httpAddHostToServer(server, host);
-                count++;
-            }
-        }
-    }
-    return (count == 0) ? MPR_ERR_CANT_FIND : 0;
-}
-#endif
-
-
 void httpAddHost(Http *http, HttpHost *host)
 {
     mprAddItem(http->hosts, host);
@@ -4270,7 +4236,7 @@ HttpLimits *httpCreateLimits(int serverSide)
 {
     HttpLimits  *limits;
 
-    if ((limits = mprAllocObj(HttpLimits, NULL)) != 0) {
+    if ((limits = mprAllocStruct(HttpLimits)) != 0) {
         httpInitLimits(limits, serverSide);
     }
     return limits;
@@ -5157,30 +5123,27 @@ void httpMatchHost(HttpConn *conn)
     MprSocket       *listenSock;
     HttpServer      *server;
     HttpHost        *host;
-    HttpRx          *rx;
     Http            *http;
 
     http = conn->http;
     listenSock = conn->sock->listenSock;
 
-    server = httpLookupServer(http, listenSock->ip, listenSock->port);
-    if (server == 0 || (host = mprGetFirstItem(server->hosts)) == 0) {
-        mprError("No host to serve request from %s:%d", listenSock->ip, listenSock->port);
+    if ((server = httpLookupServer(http, listenSock->ip, listenSock->port)) == 0) {
+        mprError("No server for request from %s:%d", listenSock->ip, listenSock->port);
         mprCloseSocket(conn->sock, 0);
         return;
     }
-    mprAssert(host);
-
     if (httpIsNamedVirtualServer(server)) {
-        rx = conn->rx;
-        if ((host = httpLookupHost(server, rx->hostHeader)) == 0) {
-            httpSetConnHost(conn, host);
-            httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", rx->hostHeader);
-            conn->host = mprGetFirstItem(server->hosts);
-            return;
-        }
+        host = httpLookupHost(server, conn->rx->hostHeader);
+    } else {
+        host = mprGetFirstItem(server->hosts);
     }
-    mprAssert(host);
+    if (host == 0) {
+        httpSetConnHost(conn, 0);
+        httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", conn->rx->hostHeader);
+        conn->host = mprGetFirstItem(server->hosts);
+        return;
+    }
     mprLog(4, "Select host: \"%s\"", host->name);
     conn->host = host;
 }
@@ -9313,7 +9276,7 @@ static bool parseRange(HttpConn *conn, char *value)
     stok(value, "=", &value);
 
     for (last = 0; value && *value; ) {
-        if ((range = mprAllocObj(HttpRange, NULL)) == 0) {
+        if ((range = mprAllocObj(HttpRange, manageRange)) == 0) {
             return 0;
         }
         /*  
@@ -9889,7 +9852,7 @@ HttpServer *httpCreateServer(cchar *ip, int port, MprDispatcher *dispatcher, int
 
     if (flags & HTTP_CREATE_HOST) {
         host = httpCreateHost(server->loc);
-        httpSetHostAddress(host, ip, port);
+        httpSetHostName(host, ip, port);
         httpAddHostToServer(server, host);
     }
     return server;
@@ -10173,6 +10136,7 @@ int httpGetServerAsync(HttpServer *server)
 }
 
 
+//  MOB - rename. This could be a "restart"
 void httpSetServerAddress(HttpServer *server, cchar *ip, int port)
 {
     if (ip) {
@@ -10181,14 +10145,6 @@ void httpSetServerAddress(HttpServer *server, cchar *ip, int port)
     if (port >= 0) {
         server->port = port;
     }
-#if XXX
-    HttpHost    *host;
-
-    int         next;
-    for (next = 0; (host = mprGetNextItem(server->hosts, &next)) != 0; ) {
-        httpSetHostAddress(host, ip, port);
-    }
-#endif
     if (server->sock) {
         httpStopServer(server);
         httpStartServer(server);
@@ -10306,24 +10262,32 @@ void httpAddHostToServer(HttpServer *server, HttpHost *host)
 
 bool httpIsNamedVirtualServer(HttpServer *server)
 {
-    return server->flags & HTTP_IPADDR_VHOST;
+    return server->flags & HTTP_NAMED_VHOST;
 }
 
 
 void httpSetNamedVirtualServer(HttpServer *server)
 {
-    server->flags |= HTTP_IPADDR_VHOST;
+    server->flags |= HTTP_NAMED_VHOST;
 }
 
 
 HttpHost *httpLookupHost(HttpServer *server, cchar *name)
 {
     HttpHost    *host;
-    int         next;
+    char        *ip;
+    int         next, port;
+
+    if (name == 0) {
+        return mprGetFirstItem(server->hosts);
+    }
+    mprParseIp(name, &ip, &port, -1);
 
     for (next = 0; (host = mprGetNextItem(server->hosts, &next)) != 0; ) {
-        if (name == 0 || strcmp(name, host->name) == 0) {
-            return host;
+        if (host->port <= 0 || port <= 0 || host->port == port) {
+            if (*host->ip == '\0' || *ip == '\0' || scmp(host->ip, ip) == 0) {
+                return host;
+            }
         }
     }
     return 0;

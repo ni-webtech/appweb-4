@@ -248,7 +248,7 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
 {
     Dir     *dir;
     char    *parent, *parentSuffix;
-    int     order, reverseOrder, fancy, isRootDir;
+    int     reverseOrder, fancy, isRootDir;
 
     dir = q->stage->stageData;
     
@@ -262,10 +262,8 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
     httpWrite(q, "<h1>Index of %s</h1>\r\n", path);
 
     if (dir->sortOrder > 0) {
-        order = 'A';
         reverseOrder = 'D';
     } else {
-        order = 'D';
         reverseOrder = 'A';
     }
     if (dir->fancyIndexing == 0) {

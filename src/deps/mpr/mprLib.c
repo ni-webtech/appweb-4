@@ -7256,7 +7256,7 @@ MprDiskFileSystem *mprCreateDiskFileSystem(cchar *path)
     dfs->writeFile = writeFile;
 
 #if !WINCE
-    if ((dfs->stdError = mprAllocObj(MprFile, NULL)) == 0) {
+    if ((dfs->stdError = mprAllocStruct(MprFile)) == 0) {
         return NULL;
     }
     mprSetName(dfs->stdError, "stderr");
@@ -7264,7 +7264,7 @@ MprDiskFileSystem *mprCreateDiskFileSystem(cchar *path)
     dfs->stdError->fileSystem = fs;
     dfs->stdError->mode = O_WRONLY;
 
-    if ((dfs->stdInput = mprAllocObj(MprFile, NULL)) == 0) {
+    if ((dfs->stdInput = mprAllocStruct(MprFile)) == 0) {
         return NULL;
     }
     mprSetName(dfs->stdInput, "stdin");
@@ -7272,7 +7272,7 @@ MprDiskFileSystem *mprCreateDiskFileSystem(cchar *path)
     dfs->stdInput->fileSystem = fs;
     dfs->stdInput->mode = O_RDONLY;
 
-    if ((dfs->stdOutput = mprAllocObj(MprFile, NULL)) == 0) {
+    if ((dfs->stdOutput = mprAllocStruct(MprFile)) == 0) {
         return NULL;
     }
     mprSetName(dfs->stdOutput, "stdout");
@@ -10083,7 +10083,7 @@ MprHash *mprAddKey(MprHashTable *table, cvoid *key, cvoid *ptr)
     /*
         Hash entries are managed by manageHashTable
      */
-    if ((sp = mprAllocObj(MprHash, 0)) == 0) {
+    if ((sp = mprAllocStruct(MprHash)) == 0) {
         unlock(table);
         return 0;
     }
@@ -10124,7 +10124,7 @@ MprHash *mprAddDuplicateKey(MprHashTable *table, cvoid *key, cvoid *ptr)
     MprHash     *sp;
     int         index;
 
-    if ((sp = mprAllocObj(MprHash, 0)) == 0) {
+    if ((sp = mprAllocStruct(MprHash)) == 0) {
         return 0;
     }
     sp->data = ptr;
@@ -18745,7 +18745,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
 
     ss = MPR->socketService;
 
-    if ((sa = mprAllocObj(struct sockaddr_in, 0)) == 0) {
+    if ((sa = mprAllocStruct(struct sockaddr_in)) == 0) {
         mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }

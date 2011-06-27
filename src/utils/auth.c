@@ -205,15 +205,26 @@ static int readPassFile(char *passFile)
 }
  
 
+static void manageUser(User *up, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(up->name);
+        mprMark(up->realm);
+        mprMark(up->password);
+    }
+}
+
+
 static User *createUser(cchar *realm, cchar *name, cchar *password, bool enabled)
 {
     User    *up;
 
-    up = mprAllocObj(User, NULL);
-    up->realm = sclone(realm);
-    up->name = sclone(name);
-    up->password = sclone(password);
-    up->enabled = enabled;
+    if ((up = mprAllocObj(User, manageUser)) != 0) {
+        up->realm = sclone(realm);
+        up->name = sclone(name);
+        up->password = sclone(password);
+        up->enabled = enabled;
+    }
     return up;
 }
 
