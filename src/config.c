@@ -525,7 +525,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *ip;
     char        *names, *type, *items, *include, *exclude, *when, *mimeTypes;
     ssize       len;
-    int         port, rc, code, processed, num, flags, colonCount, mask, level;
+    int         port, rc, code, num, colonCount, mask, level;
 
     mprAssert(state);
     mprAssert(key);
@@ -542,8 +542,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     mprAssert(host);
     mprAssert(dir);
     auth = state->auth;
-    processed = 0;
-    flags = 0;
 
     //  TODO - crashes with missing value
     //  TODO - need a real parser

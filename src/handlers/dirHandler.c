@@ -167,13 +167,11 @@ static void parseQuery(HttpConn *conn)
 
 static void sortList(HttpConn *conn, MprList *list)
 {
-    HttpRx      *rx;
     HttpTx      *tx;
     MprDirEntry *tmp, **items;
     Dir         *dir;
     int         count, i, j, rc;
 
-    rx = conn->rx;
     tx = conn->tx;
     dir = tx->handler->stageData;
     
@@ -270,7 +268,6 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
         order = 'D';
         reverseOrder = 'A';
     }
-
     if (dir->fancyIndexing == 0) {
         fancy = '0';
     } else if (dir->fancyIndexing == 1) {
@@ -278,14 +275,12 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
     } else if (dir->fancyIndexing == 2) {
         fancy = '2';
     }
-
     parent = mprGetPathDir(path);
     if (parent[strlen(parent) - 1] != '/') {
         parentSuffix = "/";
     } else {
         parentSuffix = "";
     }
-
     isRootDir = (strcmp(path, "/") == 0);
 
     if (dir->fancyIndexing == 2) {
@@ -427,13 +422,11 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
 
 static void outputFooter(HttpQueue *q)
 {
-    HttpRx      *rx;
     HttpConn    *conn;
     MprSocket   *sock;
     Dir         *dir;
     
     conn = q->conn;
-    rx = conn->rx;
     dir = q->stage->stageData;
     
     if (dir->fancyIndexing == 2) {
@@ -519,7 +512,7 @@ static int parseDir(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpStage   *handler;
     Dir         *dir;
-    char        *name, *extensions, *option, *nextTok, *junk;
+    char        *extensions, *option, *nextTok, *junk;
 
     handler = httpLookupStage(http, "dirHandler");
     dir = handler->stageData;
@@ -528,7 +521,7 @@ static int parseDir(Http *http, cchar *key, char *value, MaConfigState *state)
     if (scasecmp(key, "AddIcon") == 0) {
         /*  AddIcon file ext ext ext */
         /*  Not yet supported */
-        name = stok(value, " \t", &extensions);
+        /* name = */ stok(value, " \t", &extensions);
         parseWords(dir->extList, extensions);
         return 1;
 

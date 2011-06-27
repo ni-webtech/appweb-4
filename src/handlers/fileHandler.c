@@ -122,12 +122,10 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
 {
     HttpConn    *conn;
     HttpTx      *tx;
-    HttpRx      *rx;
     ssize       nbytes;
 
     conn = q->conn;
     tx = conn->tx;
-    rx = conn->rx;
 
     if (packet->content == 0 && (packet->content = mprCreateBuf(size, size)) == 0) {
         return MPR_ERR_MEMORY;
@@ -160,15 +158,10 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
  */
 static int prepPacket(HttpQueue *q, HttpPacket *packet)
 {
-    HttpConn    *conn;
-    HttpTx      *tx;
     HttpQueue   *nextQ;
     ssize       size, nbytes;
 
-    conn = q->conn;
-    tx = conn->tx;
     nextQ = q->nextQ;
-
     if (packet->esize > nextQ->packetSize) {
         httpPutBackPacket(q, httpSplitPacket(packet, nextQ->packetSize));
         size = nextQ->packetSize;
@@ -325,11 +318,9 @@ static void handlePutRequest(HttpQueue *q)
 static void handleDeleteRequest(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpRx      *rx;
     HttpTx      *tx;
 
     conn = q->conn;
-    rx = conn->rx;
     tx = conn->tx;
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);

@@ -52,14 +52,12 @@ static void exitApp(HttpQueue *q)
 static void printVars(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpTx      *tx;
     HttpRx      *rx;
     char        *sw;
     char        *newLocation;
     int         responseStatus;
 
     conn = q->conn;
-    tx = conn->tx;
     rx = conn->rx;
     newLocation = 0;
     responseStatus = 0;

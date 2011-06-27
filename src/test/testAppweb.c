@@ -183,7 +183,6 @@ bool simpleGet(MprTestGroup *gp, cchar *uri, int expectStatus)
 
 bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
 {
-    Http        *http;
     HttpConn    *conn;
     MprOff      contentLen;
     ssize       len;
@@ -197,7 +196,6 @@ bool simpleForm(MprTestGroup *gp, char *uri, char *formData, int expectStatus)
     if (startRequest(gp, "POST", uri) < 0) {
         return 0;
     }
-    http = getHttp(gp);
     conn = getConn(gp);
 
     if (formData) {

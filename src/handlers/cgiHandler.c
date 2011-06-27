@@ -135,10 +135,8 @@ static void startCgi(HttpQueue *q)
  */
 static void processCgi(HttpQueue *q)
 {
-    HttpConn        *conn;
-    MprCmd          *cmd;
+    MprCmd      *cmd;
 
-    conn = q->conn;
     cmd = (MprCmd*) q->queueData;
     mprAssert(cmd);
 
@@ -190,7 +188,6 @@ static void outgoingCgiService(HttpQueue *q)
 static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
 {
     HttpConn    *conn;
-    HttpTx      *tx;
     HttpRx      *rx;
     MprCmd      *cmd;
 
@@ -198,9 +195,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
     mprAssert(packet);
     
     conn = q->conn;
-    tx = conn->tx;
     rx = conn->rx;
-
     cmd = (MprCmd*) q->pair->queueData;
     conn->lastActivity = conn->http->now;
 
@@ -621,8 +616,8 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    HttpHost      *host;
-    char        *fileName, **argv, *program, *cmdScript, status[8], *indexQuery, *cp, *tok;
+    HttpHost    *host;
+    char        *fileName, **argv, status[8], *indexQuery, *cp, *tok;
     cchar       *actionProgram;
     size_t      len;
     int         argc, argind, i;
@@ -634,7 +629,6 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     fileName = tx->filename;
     mprAssert(fileName);
 
-    program = cmdScript = 0;
     actionProgram = 0;
     argind = 0;
     argc = *argcp;
@@ -669,7 +663,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 
 #if BLD_WIN_LIKE || VXWORKS
 {
-    char    *bangScript, *cmdBuf;
+    char    *bangScript, *cmdBuf, *program, *cmdScript;
 
     /*
         On windows we attempt to find an executable matching the fileName.
@@ -746,7 +740,6 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     //  OPT - why clone all these string?
     argv[argind++] = sclone(fileName);
 #endif
-
     /*
         ISINDEX queries. Only valid if there is not a "=" in the query. If this is so, then we must not
         have these args in the query env also?
@@ -991,10 +984,10 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
             Create an alias and location with a cgiHandler and pathInfo processing
          */
         path = httpMakePath(host, path);
-        dir = httpLookupDir(host, path);
         if (httpLookupDir(host, path) == 0) {
             parent = mprGetFirstItem(host->dirs);
             dir = httpCreateDir(path, parent);
+            httpAddDir(host, dir);
         }
         alias = httpCreateAlias(prefix, path, 0);
         mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);

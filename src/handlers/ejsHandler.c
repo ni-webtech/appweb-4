@@ -106,13 +106,13 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 
         prefix = httpReplaceReferences(host, prefix);
         path = httpMakePath(host, path);
-        dir = httpLookupDir(host, path);
         if (script) {
             script = strim(script, "\"", MPR_TRIM_BOTH);
         }
         if (httpLookupDir(host, path) == 0) {
             parent = mprGetFirstItem(host->dirs);
             dir = httpCreateDir(path, parent);
+            httpAddDir(host, dir);
         }
         alias = httpCreateAlias(prefix, path, 0);
         mprLog(4, "EjsAlias \"%s\" for \"%s\"", prefix, path);

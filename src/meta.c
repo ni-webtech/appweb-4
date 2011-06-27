@@ -92,11 +92,9 @@ MaMeta *maLookupMeta(MaAppweb *appweb, cchar *name)
 int maStartAppweb(MaAppweb *appweb)
 {
     MaMeta  *meta;
-    Http    *http;
     char    *timeText;
     int     next;
 
-    http = appweb->http;
     for (next = 0; (meta = mprGetNextItem(appweb->metas, &next)) != 0; ) {
         if (maStartMeta(meta) < 0) {
             return MPR_ERR_CANT_INITIALIZE;
