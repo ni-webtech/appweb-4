@@ -986,7 +986,7 @@ static void waitForUser()
 
     mprLock(app->mutex);
     mprPrintf("Pause: ");
-    (void) read(0, (char*) &c, 1);
+    if (read(0, (char*) &c, 1) < 0) {}
     mprUnlock(app->mutex);
 }
 

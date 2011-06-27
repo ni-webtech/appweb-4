@@ -289,7 +289,7 @@ static void angel()
                 if (app->verbose) {
                     mprPrintf("%s: Change dir to %s\n", app->appName, app->homeDir);
                 }
-                (void) chdir(app->homeDir);
+                if (chdir(app->homeDir) < 0) {}
 
                 for (i = 3; i < 128; i++) {
                     close(i);

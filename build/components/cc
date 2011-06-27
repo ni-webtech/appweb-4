@@ -104,10 +104,11 @@ setCompilerOptions()
         echo -e "#include <stdio.h>\n#include <stdlib.h>\nint main() { realloc(0, 1024); return 0; }\n" >$file
         #
         #   Test that it passes with -Wno-unused-result and that it fails without it
+        #   Needs optimization to trigger on most systems
         #
-        eval \"${cc}\" -Werror -Wall -Wno-unused-result -c $file >/dev/null 2>&1
+        eval \"${cc}\" -Os -Werror -Wall -Wno-unused-result -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
-            eval \"${cc}\" -Werror -Wall -c $file >/dev/null 2>&1
+            eval \"${cc}\" -Os -Werror -Wall -c $file >/dev/null 2>&1
             if [ $? != 0 ] ; then
                 eval $hasWarnUnused=1
             fi

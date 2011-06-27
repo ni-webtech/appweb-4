@@ -9206,13 +9206,13 @@ static EjsObj *g_printLine(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
                 return 0;
             }
             data = ejsToMulti(ejs, s);
-            (void) write(1, (char*) data, (int) strlen(data));
+            if (write(1, (char*) data, (int) strlen(data)) < 0) {}
             if ((i+1) < count) {
-                (void) write(1, " ", 1);
+                if (write(1, " ", 1) < 0) {}
             }
         }
     }
-    (void) write(1, "\n", 1);
+    if (write(1, "\n", 1) < 0) {}
     return 0;
 }
 
