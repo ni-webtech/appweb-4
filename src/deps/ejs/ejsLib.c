@@ -104,6 +104,7 @@ static EjsPath *app_exePath(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 /*  
     Exit the application
     static function exit(status: Number, how: String = "default"): void
+    MOB - status is not implemented
  */
 static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
@@ -126,7 +127,7 @@ static EjsObj *app_exit(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     } else {
         mode = MPR_EXIT_NORMAL;
     }
-    mprTerminate(mode);
+    mprTerminate(mode, status);
     ejsAttention(ejs);
     return 0;
 }
@@ -1211,7 +1212,7 @@ static EjsArray *insertArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 {
     EjsArray    *args;
     EjsObj          **src, **dest;
-    int         i, pos, delta, oldLen, endInsert;
+    int         i, pos, delta, endInsert;
 
     mprAssert(argc == 2 && ejsIs(ejs, argv[1], Array));
 
@@ -1227,7 +1228,6 @@ static EjsArray *insertArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     }
     args = (EjsArray*) argv[1];
 
-    oldLen = ap->length;
     if (growArray(ejs, ap, ap->length + args->length) < 0) {
         return 0;
     }
@@ -1260,6 +1260,10 @@ static EjsString *joinArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     int             i;
 
     sep = (argc == 1) ? (EjsString*) argv[0] : NULL;
+    if (sep == ESV(empty) && ap->length == 1 && ejsIs(ejs, ap->data[0], String)) {
+        /* Optimized path for joining [string]. This happens frequently with fun(...args) */
+        return (EjsString*) ap->data[0];
+    }
     result = ESV(empty);
     for (i = 0; i < ap->length; i++) {
         vp = ap->data[i];
@@ -1809,7 +1813,7 @@ static EjsArray *unshiftArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
 {
     EjsArray    *args;
     EjsObj          **src, **dest;
-    int         i, delta, oldLen, endInsert;
+    int         i, delta, endInsert;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], Array));
 
@@ -1817,7 +1821,6 @@ static EjsArray *unshiftArray(Ejs *ejs, EjsArray *ap, int argc, EjsObj **argv)
     if (args->length <= 0) {
         return ap;
     }
-    oldLen = ap->length;
     if (growArray(ejs, ap, ap->length + args->length) < 0) {
         return 0;
     }
@@ -7392,7 +7395,7 @@ EjsObj *writeFile(Ejs *ejs, EjsFile *fp, int argc, EjsObj **argv)
             len = ap->writePosition - ap->readPosition;
             break;
 
-        case S_String:
+        case S_String: // UNICODE
             buf = awtom(((EjsString*) vp)->value, &len);
             break;
 
@@ -9189,7 +9192,6 @@ static EjsObj *g_printLine(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
     EjsString   *s;
     EjsObj      *args, *vp;
     cchar       *data;
-    ssize       rc;
     int         i, count;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], Array));
@@ -9204,13 +9206,13 @@ static EjsObj *g_printLine(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
                 return 0;
             }
             data = ejsToMulti(ejs, s);
-            rc = write(1, (char*) data, (int) strlen(data));
+            (void) write(1, (char*) data, (int) strlen(data));
             if ((i+1) < count) {
-                rc = write(1, " ", 1);
+                (void) write(1, " ", 1);
             }
         }
     }
-    rc = write(1, "\n", 1);
+    (void) write(1, "\n", 1);
     return 0;
 }
 
@@ -10167,7 +10169,6 @@ static EjsString *http_statusMessage(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **a
  */
 static EjsBoolean *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
 {
-    MprTime     mark;
     MprTime     timeout;
 
     timeout = (argc >= 1) ? ejsGetInt(ejs, argv[0]) : -1;
@@ -10177,7 +10178,6 @@ static EjsBoolean *http_wait(Ejs *ejs, EjsHttp *hp, int argc, EjsObj **argv)
             timeout = MAXINT;
         }
     }
-    mark = mprGetTime();
     if (!waitForState(hp, HTTP_STATE_COMPLETE, timeout, 0)) {
         return ESV(false);
     }
@@ -12578,9 +12578,6 @@ static EjsNumber *math_abs(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
  */
 static EjsNumber *math_acos(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 {
-    MprNumber   value;
-    
-    value = ejsGetNumber(ejs, argv[0]);
     return ejsCreateNumber(ejs, (MprNumber) acos(ejsGetNumber(ejs, argv[0])));
 }
 
@@ -18772,13 +18769,12 @@ static EjsString *concatString(Ejs *ejs, EjsString *sp, int argc, EjsObj **argv)
 {
     EjsArray    *args;
     EjsString   *result, *str;
-    int         i, count;
+    int         i;
 
     mprAssert(argc == 1 && ejsIs(ejs, argv[0], Array));
     args = (EjsArray*) argv[0];
 
     result = (EjsString*) ejsClone(ejs, sp, 0);
-    count = ejsGetLength(ejs, args);
     for (i = 0; i < args->length; i++) {
         str = ejsToString(ejs, ejsGetProperty(ejs, args, i));
         if ((result = ejsCatString(ejs, result, str)) == NULL) {
@@ -20102,14 +20098,14 @@ static int catString(Ejs *ejs, EjsString *dest, char *str, ssize len)
 static EjsString *buildString(Ejs *ejs, EjsString *result, MprChar *str, ssize len)
 {
     EjsString   *newBuf;
-    ssize       size;
+    ssize       room, size;
 
     mprAssert(result);
 
-    size = mprGetBlockSize(result);
-    if (result->length + len >= size) {
-        len = max(result->length + len, MPR_BUFSIZE);
-        if ((newBuf = ejsCreateBareString(ejs, len)) == NULL) {
+    room = mprGetBlockSize(result) - sizeof(EjsString);
+    if ((result->length + len + 1) >= room) {
+        size = max(result->length + len, MPR_BUFSIZE);
+        if ((newBuf = ejsCreateBareString(ejs, size)) == NULL) {
             return NULL;
         }
         memcpy(newBuf->value, result->value, result->length * sizeof(MprChar));
@@ -20182,6 +20178,12 @@ EjsString *ejsCatString(Ejs *ejs, EjsString *s1, EjsString *s2)
     EjsString   *result;
     ssize       len;
 
+    if (s1->length == 0) {
+        return s2;
+    }
+    if (s2->length == 0) {
+        return s1;
+    }
     len = s1->length + s2->length;
     if ((result = ejsCreateBareString(ejs, len)) == NULL) {
         return NULL;
@@ -20225,7 +20227,7 @@ EjsString *ejsCatStrings(Ejs *ejs, EjsString *src, ...)
 
 int ejsStartsWithMulti(Ejs *ejs, EjsString *sp, cchar *pat)
 {
-    ssize   i, len;
+    ssize   i;
 
     mprAssert(sp);
     mprAssert(pat);
@@ -20233,8 +20235,6 @@ int ejsStartsWithMulti(Ejs *ejs, EjsString *sp, cchar *pat)
     if (pat == 0 || *pat == '\0') {
         return 0;
     }
-    len = strlen(pat);
-    
     for (i = 0; pat[i] && i < sp->length; i++) {
         if (sp->value[i] != pat[i]) {
             break;
@@ -22505,8 +22505,6 @@ void ejsSetTypeName(Ejs *ejs, EjsType *type, EjsName qname)
  */
 void ejsDefineTypeNamespaces(Ejs *ejs, EjsType *type)
 {
-    EjsNamespace        *nsp;
-
     if (type->baseType) {
         /*
             Inherit the base class's protected and internal namespaces
@@ -22514,8 +22512,8 @@ void ejsDefineTypeNamespaces(Ejs *ejs, EjsType *type)
         ejsInheritBaseClassNamespaces(ejs, type, type->baseType);
     }
     //  TODO - add readonly here
-    nsp = ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PROTECTED_NAMESPACE);
-    nsp = ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PRIVATE_NAMESPACE);
+    ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PROTECTED_NAMESPACE);
+    ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PRIVATE_NAMESPACE);
 }
 
 
@@ -24278,7 +24276,6 @@ static EjsWorker *initWorker(Ejs *ejs, EjsWorker *worker, Ejs *baseVM, cchar *na
 {
     Ejs             *wejs;
     EjsWorker       *self;
-    EjsNamespace    *ns;
     EjsName         sname;
     static int      workerSeqno = 0;
 
@@ -24336,7 +24333,7 @@ static EjsWorker *initWorker(Ejs *ejs, EjsWorker *worker, Ejs *baseVM, cchar *na
     /*
         Workers have a dedicated namespace to enable viewing of the worker globals (self, onmessage, postMessage...)
      */
-    ns = ejsDefineReservedNamespace(wejs, wejs->global, NULL, EJS_WORKER_NAMESPACE);
+    ejsDefineReservedNamespace(wejs, wejs->global, NULL, EJS_WORKER_NAMESPACE);
     
     addWorker(ejs, worker);
 
@@ -24645,15 +24642,12 @@ static EjsObj *workerJoin(Ejs *ejs, EjsWorker *unused, int argc, EjsObj **argv)
 static void loadFile(EjsWorker *worker, cchar *path)
 {
     Ejs         *ejs;
-    EjsObj      *result;
     cchar       *cp;
 
     mprAssert(worker->inside);
     mprAssert(worker->pair && worker->pair->ejs);
 
     ejs = worker->ejs;
-    result = 0;
-
     if ((cp = strrchr(path, '.')) != NULL && strcmp(cp, EJS_MODULE_EXT) != 0) {
         if (ejs->service->loadScriptFile == 0) {
             ejsThrowIOError(ejs, "load: Compiling is not enabled for %s", path);
@@ -25029,7 +25023,6 @@ static EjsBoolean *workerWaitForMessage(Ejs *ejs, EjsWorker *worker, int argc, E
 static void handleError(Ejs *ejs, EjsWorker *worker, EjsObj *exception, int throwOutside)
 {
     Ejs             *inside;
-    EjsString       *str;
     EjsObj          *e;
     MprDispatcher   *dispatcher;
     Message         *msg;
@@ -25049,7 +25042,6 @@ static void handleError(Ejs *ejs, EjsWorker *worker, EjsObj *exception, int thro
     inside = worker->pair->ejs;
     
     inside->exception = 0;
-    str = ejsSerialize(inside, exception, 0);
     e = ejsDeserialize(ejs, ejsSerialize(inside, exception, 0));
     inside->exception = exception;
 
@@ -25489,7 +25481,7 @@ static EjsObj *invokeXmlOperator(Ejs *ejs, EjsXML *lhs, int opcode,  EjsXML *rhs
  */
 static int setXmlPropertyAttributeByName(Ejs *ejs, EjsXML *xml, EjsName qname, EjsObj *value)
 {
-    EjsXML      *elt, *attribute, *rp, *xvalue, *lastElt;
+    EjsXML      *elt, *attribute, *xvalue, *lastElt;
     EjsString   *sv;
     EjsName     qn;
     MprChar     *str;
@@ -25522,7 +25514,6 @@ static int setXmlPropertyAttributeByName(Ejs *ejs, EjsXML *xml, EjsName qname, E
             mprAssert(qname.name->value[0] == '@');
             if (wcmp(elt->qname.name->value, &qname.name->value[1]) == 0) {
                 if (last >= 0) {
-                    rp = mprGetItem(xml->attributes, last);
                     mprRemoveItemAtPos(xml->attributes, last);
                 }
                 last = index;
@@ -28153,7 +28144,6 @@ int cloneRef = 0;
 EjsAny *ejsClone(Ejs *ejs, EjsAny *src, bool deep)
 {
     EjsAny      *dest;
-    EjsType     *type;
     
     if (src == 0) {
         return 0;
@@ -28161,7 +28151,6 @@ EjsAny *ejsClone(Ejs *ejs, EjsAny *src, bool deep)
 cloneCopy++;
     mprAssert(TYPE(src)->helpers.clone);
     if (VISITED(src) == 0) {
-        type = TYPE(src);
         SET_VISITED(src, 1);
         dest = (TYPE(src)->helpers.clone)(ejs, src, deep);
         SET_VISITED(src, 0);
@@ -29345,7 +29334,9 @@ static void VM(Ejs *ejs, EjsFunction *fun, EjsAny *otherThis, int argc, int stac
     EjsFunction *f1, *f2;
     EjsNamespace *nsp;
     EjsString   *str;
+#if UNUSED
     uchar       *mark;
+#endif
     int         i, offset, count, opcode, attributes, paused;
 
 #if BLD_UNIX_LIKE || (VXWORKS && !BLD_CC_DIAB)
@@ -30030,7 +30021,9 @@ static void *opcodeJump[] = {
                 Stack after         [value]
          */
         CASE (EJS_OP_GET_SCOPED_NAME):
+#if UNUSED
             mark = FRAME->pc - 1;
+#endif
             qname = GET_NAME();
             vp = ejsGetVarByName(ejs, NULL, qname, &lookup);
             if (unlikely(vp == 0)) {
@@ -30049,7 +30042,9 @@ static void *opcodeJump[] = {
                 Stack after         [value]
          */
         CASE (EJS_OP_GET_SCOPED_NAME_EXPR):
+#if UNUSED
             mark = FRAME->pc - 1;
+#endif
             qname.name = ejsToString(ejs, pop(ejs));
             v1 = pop(ejs);
             if (ejsIs(ejs, v1, Namespace)) {
@@ -32370,7 +32365,7 @@ static EjsEx *inHandler(Ejs *ejs, int kind)
 static uint findEndException(Ejs *ejs)
 {
     EjsFrame    *fp;
-    EjsEx       *best, *ex;
+    EjsEx       *ex;
     EjsCode     *code;
     uint        offset, pc;
     int         i;
@@ -32381,7 +32376,7 @@ static uint findEndException(Ejs *ejs)
     pc = (uint) (fp->pc - code->byteCode - 1);
     offset = 0;
 
-    for (best = 0, i = 0; i < code->numHandlers; i++) {
+    for (i = 0; i < code->numHandlers; i++) {
         ex = code->handlers[i];
         /*
             Comparison must include try and all catch handlers, incase there are multiple catch handlers
@@ -32479,12 +32474,10 @@ static void createExceptionBlock(Ejs *ejs, EjsEx *ex, int flags)
     EjsBlock        *block;
     EjsFrame        *fp;
     EjsState        *state;
-    EjsCode         *code;
     int             i, count;
 
     state = ejs->state;
     fp = state->fp;
-    code = state->fp->function.body.code;
     mprAssert(ex);
 
     ejsClearAttention(ejs);
@@ -33312,9 +33305,7 @@ int ejsLoadModule(Ejs *ejs, EjsString *path, int minVersion, int maxVersion, int
 static int initializeModule(Ejs *ejs, EjsModule *mp)
 {
     EjsNativeModule     *nativeModule;
-    int                 priorGen, paused;
-
-    priorGen = 0;
+    int                 paused;
 
     if (mp->hasNative && !mp->configured) {
         /*
@@ -34258,7 +34249,6 @@ static int loadScriptModule(Ejs *ejs, cchar *filename, int minVersion, int maxVe
 static int fixupTypes(Ejs *ejs, MprList *list)
 {
     EjsTypeFixup    *fixup;
-    EjsModule       *mp;
     EjsType         *type, *targetType;
     EjsTrait        *trait;
     EjsFunction     *targetFunction;
@@ -34266,7 +34256,6 @@ static int fixupTypes(Ejs *ejs, MprList *list)
     int             next;
 
     for (next = 0; (fixup = (EjsTypeFixup*) mprGetNextItem(list, &next)) != 0; ) {
-        mp = 0;
         type = 0;
         if (fixup->typeSlotNum >= 0) {
             type = ejsGetProperty(ejs, ejs->global, fixup->typeSlotNum);
@@ -36729,7 +36718,6 @@ static void cloneProperties(Ejs *ejs, Ejs *master)
     EjsAny      *vp, *mvp;
     EjsName     qname;
     EjsTrait    *trait;
-    EjsType     *type;
     int         i, immutable, numProp;
 
     mprAssert(ejs);
@@ -36746,7 +36734,6 @@ static void cloneProperties(Ejs *ejs, Ejs *master)
         trait = ejsGetPropertyTraits(master, master->global, i);
         ejsSetPropertyTraits(ejs, ejs->global, i, trait->type, trait->attributes);
         immutable = 0;
-        type = TYPE(vp);
         if (ejsIsType(ejs, vp)) {
             if (!((EjsType*) vp)->mutable) {
                 immutable = 1;
@@ -38453,7 +38440,7 @@ static EjsVoid *hs_listen(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
             setHttpPipeline(ejs, sp);
         }
         if (sp->ssl) {
-            httpSecureServer(server->ip, sp->port, sp->ssl);
+            httpSecureServer(server, sp->ssl);
         }
         if (sp->name) {
             httpSetHostName(host, sp->name);
@@ -41284,14 +41271,11 @@ static EjsNamespace *lookupNamespace(Ejs *ejs, EjsString *namespace);
  */
 static int astProcess(EcCompiler *cp, EcNode *np)
 {
-    Ejs     *ejs;
     int     phase;
 
     if (ecEnterState(cp) < 0) {
         return EJS_ERR;
     }
-
-    ejs = cp->ejs;
     cp->blockState = cp->state;
 
     /*
@@ -41316,14 +41300,12 @@ static int astProcess(EcCompiler *cp, EcNode *np)
 
 int ecAstProcess(EcCompiler *cp)
 {
-    Ejs         *ejs;
     EcNode      *np;
     int         phase, i, count;
 
     if (ecEnterState(cp) < 0) {
         return EJS_ERR;
     }
-    ejs = cp->ejs;
     cp->blockState = cp->state;
 
     /*
@@ -41396,13 +41378,10 @@ static void astSpread(EcCompiler *cp, EcNode *np)
 static void astAssignOp(EcCompiler *cp, EcNode *np)
 {
     EcState     *state;
-    int         rc;
 
     ENTER(cp);
 
     state = cp->state;
-    rc = 0;
-
     mprAssert(np->kind == N_ASSIGN_OP);
     mprAssert(np->left);
     mprAssert(np->right);
@@ -41476,7 +41455,6 @@ static void bindBlock(EcCompiler *cp, EcNode *np)
 {
     Ejs         *ejs;
     EjsBlock    *block;
-    int         rc;
     
     mprAssert(cp->phase == EC_PHASE_BIND);
     mprAssert(np->kind == N_BLOCK || np->kind == N_MODULE);
@@ -41485,7 +41463,7 @@ static void bindBlock(EcCompiler *cp, EcNode *np)
     block = np->blockRef;
     mprAssert(block);
 
-    rc = resolveName(cp, np, NULL, np->qname);
+    resolveName(cp, np, NULL, np->qname);
     if (np->blockCreated) {
         if (! np->createBlockObject) {
             mprAssert(cp->lookup.obj);
@@ -41642,11 +41620,9 @@ static void astCaseLabel(EcCompiler *cp, EcNode *np)
 static void astCatch(EcCompiler *cp, EcNode *np)
 {
     EjsBlock    *block;
-    Ejs         *ejs;
 
     ENTER(cp);
 
-    ejs = cp->ejs;
     block = ejsCreateBlock(cp->ejs, 0);
     mprSetName(block, MPR_NAME("catch"));
     addScope(cp, block);
@@ -41663,7 +41639,6 @@ static EjsType *defineClass(EcCompiler *cp, EcNode *np)
     EcState         *state;
     EcNode          *constructorNode;
     EjsName         qname;
-    EjsNamespace    *nsp;
     int             fatt, attributes, slotNum, sid;
     
     mprAssert(np->kind == N_CLASS);
@@ -41701,8 +41676,8 @@ static EjsType *defineClass(EcCompiler *cp, EcNode *np)
     type->typeData = np;
     np->klass.ref = type;
 
-    nsp = ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PROTECTED_NAMESPACE);
-    nsp = ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PRIVATE_NAMESPACE);
+    ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PROTECTED_NAMESPACE);
+    ejsDefineReservedNamespace(ejs, (EjsBlock*) type, &type->qname, EJS_PRIVATE_NAMESPACE);
 
     /*
         Define a property for the type in global
@@ -41741,11 +41716,9 @@ static void validateClass(EcCompiler *cp, EcNode *np)
     EjsName     qname;
     EjsFunction *fun;
     EjsObj      *vp;
-    EcState     *state;
     int         next, i, count;
 
     ejs = cp->ejs;
-    state = cp->state;
     type = np->klass.ref;
 
     baseType = type->baseType;
@@ -41944,14 +41917,11 @@ static void astDassign(EcCompiler *cp, EcNode *np)
 static void astDirectives(EcCompiler *cp, EcNode *np)
 {
     EcNode      *child;
-    Ejs         *ejs;
     int         next;
 
     mprAssert(np->kind == N_DIRECTIVES);
-
     ENTER(cp);
 
-    ejs = cp->ejs;
     cp->state->blockNestCount++;
     next = 0;
     while ((child = getNextAstNode(cp, np, &next))) {
@@ -42609,7 +42579,6 @@ static void astFor(EcCompiler *cp, EcNode *np)
 static void astForIn(EcCompiler *cp, EcNode *np)
 {
     Ejs     *ejs;
-    int     rc;
 
     ENTER(cp);
 
@@ -42629,7 +42598,7 @@ static void astForIn(EcCompiler *cp, EcNode *np)
      */
     if (cp->phase >= EC_PHASE_BIND) {
         np->forInLoop.iterNext->qname = N("public", "next");
-        rc = resolveName(cp, np->forInLoop.iterNext, EST(Iterator)->prototype, np->forInLoop.iterNext->qname);
+        resolveName(cp, np->forInLoop.iterNext, EST(Iterator)->prototype, np->forInLoop.iterNext->qname);
         np->forInLoop.iterNext->lookup.bind = 0;
     }
     if (np->forInLoop.body) {
@@ -42792,7 +42761,7 @@ static void astBindName(EcCompiler *cp, EcNode *np)
     Ejs             *ejs;
     EjsType         *type;
     EjsLookup       *lookup;
-    EjsFunction     *fun, *currentFunction;
+    EjsFunction     *fun;
     EcNode          *left;
     EcState         *state;
     int             rc;
@@ -43011,7 +42980,6 @@ static void astBindName(EcCompiler *cp, EcNode *np)
     /*
         If accessing unbound variables, then the function will require full scope if a closure is ever required.
      */
-    currentFunction = state->currentFunction;
     if (lookup->slotNum < 0) {
         if (cp->phase == EC_PHASE_BIND && cp->warnLevel > 5) {
             astWarn(cp, np, "Using unbound variable reference for \"%@\"", np->qname.name);
@@ -43090,15 +43058,12 @@ static void astField(EcCompiler *cp, EcNode *np)
 
 static void astPragmas(EcCompiler *cp, EcNode *np)
 {
-    Ejs         *ejs;
     EcNode      *child;
     int         next;
 
     mprAssert(np->kind == N_PRAGMAS);
 
     ENTER(cp);
-    ejs = cp->ejs;
-
     next = 0;
     while ((child = getNextAstNode(cp, np, &next))) {
         processAstNode(cp, child);
@@ -43139,16 +43104,13 @@ static void astPostfixOp(EcCompiler *cp, EcNode *np)
 
 static void astProgram(EcCompiler *cp, EcNode *np)
 {
-    Ejs         *ejs;
     EcState     *state;
     EcNode      *child;
     int         next;
 
     ENTER(cp);
-    ejs = cp->ejs;
     state = cp->state;
     state->nspace = np->qname.name;
-
     next = 0;
     while ((child = getNextAstNode(cp, np, &next)) != 0) {
         processAstNode(cp, child);
@@ -43323,7 +43285,6 @@ static void astTry(EcCompiler *cp, EcNode *np)
     Ejs         *ejs;
     EjsBlock    *block;
     EcNode      *child;
-    EcState     *state;
     int         next, count;
 
     ENTER(cp);
@@ -43332,8 +43293,6 @@ static void astTry(EcCompiler *cp, EcNode *np)
     mprAssert(np->exception.tryBlock);
 
     ejs = cp->ejs;
-    state = cp->state;
-
     processAstNode(cp, np->exception.tryBlock);
 
     if (cp->phase == EC_PHASE_BIND) {
@@ -43617,15 +43576,11 @@ static void astRequire(EcCompiler *cp, EcNode *np)
 
 static void astWith(EcCompiler *cp, EcNode *np)
 {
-    Ejs         *ejs;
     EjsLookup   *lookup;
     bool        pushed;
 
     ENTER(cp);
-
-    ejs = cp->ejs;
     pushed = 0;
-
     processAstNode(cp, np->with.object);
 
     if (cp->phase >= EC_PHASE_BIND) {
@@ -43651,9 +43606,6 @@ static void astWith(EcCompiler *cp, EcNode *np)
 
 static bool typeIsCompatible(EcCompiler *cp, EjsType *first, EjsType *second)
 {
-    Ejs     *ejs;
-
-    ejs = cp->ejs;
     if (first == 0 || second == 0) {
         return 1;
     }
@@ -43670,7 +43622,6 @@ static bool typeIsCompatible(EcCompiler *cp, EjsType *first, EjsType *second)
 static void defineVar(EcCompiler *cp, EcNode *np, int varKind, EjsObj *value)
 {
     Ejs             *ejs;
-    EjsFunction     *method;
     EjsObj          *obj;
     EjsType         *type;
     EcState         *state;
@@ -43678,9 +43629,7 @@ static void defineVar(EcCompiler *cp, EcNode *np, int varKind, EjsObj *value)
 
     ejs = cp->ejs;
     mprAssert(cp->phase == EC_PHASE_DEFINE);
-
     state = cp->state;
-    method = state->currentFunction;
 
     if (state->inClass) {
         np->attributes |= EJS_TRAIT_FIXED;
@@ -43830,7 +43779,6 @@ static bool hoistBlockVar(EcCompiler *cp, EcNode *np)
 static void bindVariableDefinition(EcCompiler *cp, EcNode *np)
 {
     Ejs             *ejs;
-    EjsFunction     *fun;
     EjsBlock        *block;
     EjsTrait        *trait;
     EcState         *state;
@@ -43843,7 +43791,6 @@ static void bindVariableDefinition(EcCompiler *cp, EcNode *np)
 
     ejs = cp->ejs;
     state = cp->state;
-    fun = state->currentFunction;
 
     if (np->name.letScope) {
         block = state->optimizedLetBlock;
@@ -44009,15 +43956,12 @@ static void astVar(EcCompiler *cp, EcNode *np, int varKind, EjsObj *value)
 
 static void astVarDefinition(EcCompiler *cp, EcNode *np, int *codeRequired, int *instanceCode)
 {
-    Ejs         *ejs;
     EcNode      *var;
     EcState     *state;
     int         next;
 
     mprAssert(np->kind == N_VAR_DEFINITION);
-
     ENTER(cp);
-    ejs = cp->ejs;
     state = cp->state;
 
     for (next = 0; (var = getNextAstNode(cp, np, &next)); ) {
@@ -44142,7 +44086,6 @@ static EcNode *getNextAstNode(EcCompiler *cp, EcNode *np, int *next)
 static void processAstNode(EcCompiler *cp, EcNode *np)
 {
     EcState     *state;
-    EjsType     *type;
     int         codeRequired, instanceCode;
 
     ENTER(cp);
@@ -44202,7 +44145,6 @@ static void processAstNode(EcCompiler *cp, EcNode *np)
 
     case N_CLASS:
         astClass(cp, np);
-        type = np->klass.ref;
         codeRequired++;
         break;
 
@@ -44440,7 +44382,7 @@ static void fixupClass(EcCompiler *cp, EjsType *type)
     EjsName         qname;
     EjsTrait        *trait;
     EcNode          *np, *child;
-    int             next, rc, slotNum, attributes, hasInstanceVars;
+    int             next, slotNum, attributes, hasInstanceVars;
 
     if (VISITED(type) || !type->needFixup) {
         return;
@@ -44453,7 +44395,6 @@ static void fixupClass(EcCompiler *cp, EjsType *type)
 
     ENTER(cp);
 
-    rc = 0;
     ejs = cp->ejs;
     SET_VISITED(type, 1);
     np = (EcNode*) type->typeData;
@@ -44777,12 +44718,9 @@ static int resolveName(EcCompiler *cp, EcNode *np, EjsAny *vp, EjsName qname)
  */
 static void addGlobalProperty(EcCompiler *cp, EcNode *np, EjsName *qname)
 {
-    Ejs         *ejs;
     EjsModule   *up;
     EjsName     *p;
     int         next;
-
-    ejs = cp->ejs;
 
     up = cp->state->currentModule;
     mprAssert(up);
@@ -45361,13 +45299,11 @@ void ecGenConditionalCode(EcCompiler *cp, EcNode *np, EjsModule *mp)
  */
 int ecCodeGen(EcCompiler *cp)
 {
-    Ejs         *ejs;
     EjsModule   *mp;
     EcNode      *np;
     MprList     *modules;
-    int         next, i, version, count;
+    int         next, i, count;
 
-    ejs = cp->ejs;
     if (ecEnterState(cp) < 0) {
         return EJS_ERR;
     }
@@ -45388,10 +45324,9 @@ int ecCodeGen(EcCompiler *cp)
         Open once if merging into a single output file
      */
     if (cp->outputFile) {
-        for (version = next = 0; (mp = mprGetNextItem(cp->modules, &next)) != 0; ) {
+        for (next = 0; (mp = mprGetNextItem(cp->modules, &next)) != 0; ) {
             if (next <= 1 || mp->globalProperties || mp->hasInitializer || 
                     ejsCompareMulti(cp->ejs, mp->name, EJS_DEFAULT_MODULE) != 0) {
-                version = mp->version;
                 break;
             }
         }
@@ -45440,10 +45375,8 @@ int ecCodeGen(EcCompiler *cp)
 static void orderModule(EcCompiler *cp, MprList *list, EjsModule *mp)
 {
     EjsModule   *dp;
-    Ejs         *ejs;
     int         next;
     
-    ejs = cp->ejs;
     mp->visited = 1;
     for (next = 0; (dp = mprGetNextItem(mp->dependencies, &next)) != 0; ) {
         if (mprLookupItem(list, dp) < 0 && mprLookupItem(cp->modules, dp) >= 0) {
@@ -45509,18 +45442,14 @@ static void genSpread(EcCompiler *cp, EcNode *np)
 static void genAssignOp(EcCompiler *cp, EcNode *np)
 {
     EcState     *state;
-    int         next, rc;
 
     ENTER(cp);
-
-    state = cp->state;
-    rc = 0;
-    next = 0;
 
     mprAssert(np->kind == N_ASSIGN_OP);
     mprAssert(np->left);
     mprAssert(np->right);
 
+    state = cp->state;
     state->onLeft = 0;
 
     /*
@@ -45626,7 +45555,6 @@ static void genBreak(EcCompiler *cp, EcNode *np)
 
 static void genBlock(EcCompiler *cp, EcNode *np)
 {
-    Ejs             *ejs;
     EjsNamespace    *namespace;
     EcState         *state;
     EjsBlock        *block;
@@ -45637,7 +45565,6 @@ static void genBlock(EcCompiler *cp, EcNode *np)
     ENTER(cp);
 
     state = cp->state;
-    ejs = cp->ejs;
     block = (EjsBlock*) np->blockRef;
 
     if (block && np->createBlockObject) {
@@ -45949,17 +45876,14 @@ static void genBaseClassPropertyName(EcCompiler *cp, int slotNum, int nthBase)
  */
 static void genThisBaseClassPropertyName(EcCompiler *cp, EjsType *type, int slotNum)
 {
-    Ejs         *ejs;
     EcState     *state;
     int         code, nthBase;
 
+    mprAssert(0);
     mprAssert(slotNum >= 0);
     mprAssert(type && ejsIsType(ejs, type));
-
-    ejs = cp->ejs;
     state = cp->state;
 
-    mprAssert(0);
     /*
         Count based up from object 
      */
@@ -46020,16 +45944,13 @@ static void genClassName(EcCompiler *cp, EjsType *type)
  */
 static void genPropertyViaThis(EcCompiler *cp, int slotNum)
 {
-    Ejs             *ejs;
     EcState         *state;
     int             code;
 
     mprAssert(slotNum >= 0);
-
-    ejs = cp->ejs;
+    mprAssert(0);
     state = cp->state;
 
-    mprAssert(0);
     /*
         Property in the current "this" object
      */
@@ -46168,7 +46089,7 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
     EcState         *state;
     EjsFunction     *fun;
     EjsLookup       *lookup;
-    int             fast, argc, staticMethod, count;    
+    int             fast, argc, staticMethod;    
         
     ejs = cp->ejs;
     state = cp->state;
@@ -46204,7 +46125,6 @@ static void genCallSequence(EcCompiler *cp, EcNode *np)
                 Could be an arbitrary expression on the left. Need a consistent way to save the right most
                 object before the property. 
              */
-            count = getStackCount(cp);
             processNodeGetValue(cp, left);
             ecEncodeOpcode(cp, EJS_OP_LOAD_THIS_LOOKUP);
             pushStack(cp, 1);
@@ -46648,16 +46568,14 @@ static void genDirectives(EcCompiler *cp, EcNode *np, bool saveResult)
 {
     EcState     *lastDirectiveState;
     EcNode      *child;
-    int         next, lastKind, mark;
+    int         next, mark;
 
     ENTER(cp);
 
     lastDirectiveState = cp->directiveState;
-    lastKind = -1;
     next = 0;
     mark = getStackCount(cp);
     while ((child = getNextNode(cp, np, &next)) && !cp->error) {
-        lastKind = child->kind;
         cp->directiveState = cp->state;
         processNode(cp, child);
         if (!saveResult) {
@@ -47375,7 +47293,6 @@ static void genFunction(EcCompiler *cp, EcNode *np)
     EjsType         *baseType;
     EjsName         qname;
     EjsTrait        *trait;
-    EjsLookup       *lookup;
     EjsPot          *activation;
     int             i, numProp;
 
@@ -47407,7 +47324,6 @@ static void genFunction(EcCompiler *cp, EcNode *np)
         We only need to define the function if it needs full scope (unbound property access) or it is a nested function.
      */
     if (fun->fullScope) {
-        lookup = &np->lookup;
         ecEncodeOpcode(cp, EJS_OP_DEFINE_FUNCTION);
         ecEncodeName(cp, np->qname);
     }
@@ -47904,13 +47820,10 @@ static void genPostfixOp(EcCompiler *cp, EcNode *np)
 
 static void genProgram(EcCompiler *cp, EcNode *np)
 {
-    Ejs         *ejs;
     EcNode      *child;
     int         next;
 
     ENTER(cp);
-
-    ejs = cp->ejs;
 
     next = 0;
     while ((child = getNextNode(cp, np, &next)) && !cp->error) {
@@ -48501,7 +48414,6 @@ static void genNameExpr(EcCompiler *cp, EcNode *np)
  */
 static void genUnboundName(EcCompiler *cp, EcNode *np)
 {
-    Ejs         *ejs;
     EcState     *state;
     EjsObj      *owner;
     EjsLookup   *lookup;
@@ -48509,9 +48421,7 @@ static void genUnboundName(EcCompiler *cp, EcNode *np)
 
     ENTER(cp);
 
-    ejs = cp->ejs;
     state = cp->state;
-
     mprAssert(!np->lookup.bind || !cp->bind);
 
     lookup = &np->lookup;
@@ -48625,12 +48535,9 @@ static void genModule(EcCompiler *cp, EcNode *np)
 static void genUseModule(EcCompiler *cp, EcNode *np)
 {
     EcNode      *child;
-    Ejs         *ejs;
     int         next;
 
     ENTER(cp);
-
-    ejs = cp->ejs;
 
     mprAssert(np->kind == N_USE_MODULE);
 
@@ -48665,13 +48572,9 @@ static void genUseNamespace(EcCompiler *cp, EcNode *np)
 
 static void genVar(EcCompiler *cp, EcNode *np)
 {
-    EcState     *state;
-
     mprAssert(np->kind == N_VAR);
 
     ENTER(cp);
-    state = cp->state;
-
     ecAddNameConstant(cp, np->qname);
     if (np->lookup.trait && np->lookup.trait->type) {
         ecAddStringConstant(cp, np->lookup.trait->type->qname.name);
@@ -48948,7 +48851,6 @@ static int flushModule(MprFile *file, EcCodeGen *code)
  */
 static void createInitializer(EcCompiler *cp, EjsModule *mp)
 {
-    Ejs             *ejs;
     EjsFunction     *fun;
     EcState         *state;
     EcCodeGen       *code;
@@ -48956,7 +48858,6 @@ static void createInitializer(EcCompiler *cp, EjsModule *mp)
 
     ENTER(cp);
 
-    ejs = cp->ejs;
     state = cp->state;
     mprAssert(state);
 
@@ -49335,14 +49236,12 @@ static void processNode(EcCompiler *cp, EcNode *np)
  */
 static void processModule(EcCompiler *cp, EjsModule *mp)
 {
-    Ejs         *ejs;
     EcState     *state;
     EcCodeGen   *code;
     char        *path;
 
     ENTER(cp);
 
-    ejs = cp->ejs;
     state = cp->state;
     state->currentModule = mp;
 
@@ -49800,11 +49699,6 @@ int ecCompile(EcCompiler *cp, int argc, char **argv)
     Ejs     *ejs;
     int     rc, saveCompiling, paused;
 
-#if BLD_DEBUG
-    MprThread   *tp;
-    
-    tp = mprGetCurrentThread();
-#endif
     ejs = cp->ejs;
     saveCompiling = ejs->compiling;
     ejs->compiling = 1;
@@ -50059,9 +49953,8 @@ int ejsLoadScriptLiteral(Ejs *ejs, EjsString *script, cchar *cache, int flags)
 int ejsEvalFile(cchar *path)
 {
     Ejs     *ejs;
-    Mpr     *mpr;
 
-    mpr = mprCreate(0, 0, 0);
+    mprCreate(0, 0, 0);
     if ((ejs = ejsCreateVM(0, 0, 0)) == 0) {
         mprDestroy(0);
         return MPR_ERR_MEMORY;
@@ -50087,9 +49980,8 @@ int ejsEvalFile(cchar *path)
 int ejsEvalScript(cchar *script)
 {
     Ejs     *ejs;
-    Mpr     *mpr;
 
-    mpr = mprCreate(0, 0, 0);
+    mprCreate(0, 0, 0);
     if ((ejs = ejsCreateVM(0, 0, 0)) == 0) {
         mprDestroy(0);
         return MPR_ERR_MEMORY;
@@ -50184,9 +50076,7 @@ void ecErrorv(EcCompiler *cp, cchar *severity, EcLocation *loc, cchar *fmt, va_l
 {
     cchar   *appName;
     char    *pointer, *errorMsg, *msg;
-    int     errCode;
 
-    errCode = 0;
     appName = mprGetAppName(cp);
     msg = mprAsprintfv(fmt, args);
 
@@ -50417,11 +50307,10 @@ static void manageToken(EcToken *tp, int flags)
 
 static EcToken *getLexToken(EcCompiler *cp)
 {
-    EcToken     *prev, *tp;
+    EcToken     *tp;
 
     if ((tp = cp->putback) != 0) {
         cp->putback = tp->next;
-        prev = cp->token;
         cp->token = tp;
     } else {
         if ((cp->token = mprAllocObj(EcToken, manageToken)) == 0) {
@@ -51504,7 +51393,6 @@ int ecCreateModuleHeader(EcCompiler *cp)
  */
 int ecCreateModuleSection(EcCompiler *cp)
 {
-    Ejs             *ejs;
     EjsConstants    *constants;
     EjsModule       *mp;
     EcState         *state;
@@ -51514,11 +51402,9 @@ int ecCreateModuleSection(EcCompiler *cp)
     state = cp->state;
     buf = state->code->buf;
     mp = state->currentModule;
+    constants = mp->constants;
 
     mprLog(7, "Create module section %s", mp->name);
-
-    ejs = cp->ejs;
-    constants = mp->constants;
 
     ecEncodeByte(cp, EJS_SECT_MODULE);
     ecEncodeConst(cp, mp->name);
@@ -51556,14 +51442,11 @@ int ecCreateModuleSection(EcCompiler *cp)
 
 static void createDependencySection(EcCompiler *cp)
 {
-    Ejs         *ejs;
     EjsModule   *module, *mp;
     int         i, count, version;
 
     mp = cp->state->currentModule;
     mprAssert(mp);
-
-    ejs = cp->ejs;
 
     /*
         If merging, don't need references to dependent modules as they are aggregated onto the output
@@ -51728,7 +51611,7 @@ static void createClassSection(EcCompiler *cp, EjsPot *block, int slotNum, EjsPo
     EjsType         *type, *iface;
     EjsPot          *prototype;
     EjsTrait        *trait;
-    EjsName         qname, pname;
+    EjsName         qname;
     int             next, attributes, interfaceCount, instanceTraits, count;
 
     ejs = cp->ejs;
@@ -51818,7 +51701,6 @@ static void createClassSection(EcCompiler *cp, EjsPot *block, int slotNum, EjsPo
     if (prototype) {
         count = ejsGetLength(ejs, prototype);
         for (slotNum = 0; slotNum < count; slotNum++) {
-            pname = ejsGetPropertyName(ejs, prototype, slotNum);
             trait = ejsGetPropertyTraits(ejs, prototype, slotNum);
             if (slotNum < type->numInherited) {
                 if (trait && !(trait->attributes & EJS_FUN_OVERRIDE)) {
@@ -51950,18 +51832,13 @@ static void createFunctionSection(EcCompiler *cp, EjsPot *block, int slotNum, Ej
  */
 static void createExceptionSection(EcCompiler *cp, EjsFunction *fun)
 {
-    Ejs         *ejs;
     EjsEx       *ex;
-    EjsModule   *mp;
     EjsCode     *code;
     int         i;
 
     mprAssert(fun);
 
-    mp = cp->state->currentModule;
-    ejs = cp->ejs;
     code = fun->body.code;
-
     ecEncodeByte(cp, EJS_SECT_EXCEPTION);
 
     for (i = 0; i < code->numHandlers; i++) {
@@ -51984,13 +51861,11 @@ static void createExceptionSection(EcCompiler *cp, EjsFunction *fun)
 
 static void createDebugSection(EcCompiler *cp, EjsFunction *fun)
 {
-    EcCodeGen   *code;
     EjsDebug    *debug;
     EjsLine     *line;
     int         i, patchSizeOffset, startDebug;
 
     mprAssert(fun);
-    code = cp->state->code;
     debug = fun->body.code->debug;
 
     ecEncodeByte(cp, EJS_SECT_DEBUG);
@@ -52011,13 +51886,10 @@ static void createDebugSection(EcCompiler *cp, EjsFunction *fun)
 static void createBlockSection(EcCompiler *cp, EjsPot *parent, int slotNum, EjsBlock *block)
 {
     Ejs             *ejs;
-    EjsModule       *mp;
     EjsName         qname;
     int             i;
 
     ejs = cp->ejs;
-    mp = cp->state->currentModule;
-
     ecEncodeByte(cp, EJS_SECT_BLOCK);
     qname = ejsGetPropertyName(ejs, parent, slotNum);
     ecEncodeConst(cp, qname.name);
@@ -52237,13 +52109,11 @@ int ecAddDocConstant(EcCompiler *cp, cchar *tag, void *vp, int slotNum)
  */
 int ecAddModuleConstant(EcCompiler *cp, EjsModule *mp, cchar *str)
 {
-    Ejs             *ejs;
     EjsConstants    *constants;
     MprHash         *hp;
     int             index;
 
     mprAssert(mp);
-    ejs = cp->ejs;
 
     if (str == 0) {
         mprAssert(0);
@@ -54185,11 +54055,9 @@ static EcNode *parseFieldList(EcCompiler *cp, EcNode *np)
 static EcNode *parseLiteralField(EcCompiler *cp)
 {
     EcNode  *fp, *np, *id, *funRef, *fieldName;
-    int     getterSetter;
 
     ENTER(cp);
     np = 0;
-    getterSetter = 0;
     
     getToken(cp);
     if ((cp->token->tokenId == T_GET || cp->token->tokenId == T_SET) && peekToken(cp) != T_COLON) {
@@ -56506,7 +56374,8 @@ static EcNode *parseLetExpression(EcCompiler *cp)
     if (getToken(cp) != T_RPAREN) {
         return LEAVE(cp, expected(cp, ")"));
     }
-    return 0;
+    //  MOB - was return 0
+    return np;
 }
 
 
@@ -56673,11 +56542,9 @@ static void fixDassign(EcCompiler *cp, EcNode *np)
 static EcNode *parseAssignmentExpression(EcCompiler *cp)
 {
     EcNode      *np, *parent;
-    EcState     *state;
     int         subId;
 
     ENTER(cp);
-    state = cp->state;
 
     np = parseConditionalExpression(cp);
     if (np) {
@@ -58235,11 +58102,9 @@ static EcNode *parseDoStatement(EcCompiler *cp)
  */
 static EcNode *parseWhileStatement(EcCompiler *cp)
 {
-    EcNode      *np, *initializer;
+    EcNode      *np;
 
     ENTER(cp);
-
-    initializer = 0;
 
     if (getToken(cp) != T_WHILE) {
         return LEAVE(cp, parseError(cp, "Expecting \"while\""));
@@ -61307,8 +61172,6 @@ static EcNode *parseModuleDefinition(EcCompiler *cp)
 static EcNode *parseModuleName(EcCompiler *cp)
 {
     EcNode      *np, *idp;
-    Ejs         *ejs;
-    EjsObj      *lastPackage;
     EjsString   *name;
 
     ENTER(cp);
@@ -61318,9 +61181,6 @@ static EcNode *parseModuleName(EcCompiler *cp)
         return LEAVE(cp, np);
     }
     name = np->qname.name;
-
-    ejs = cp->ejs;
-    lastPackage = 0;
 
     while (np && getToken(cp) == T_DOT) {
         /*
@@ -61609,11 +61469,8 @@ static EcNode *parsePragmaItem(EcCompiler *cp)
     EcNode      *np, *ns;
     EcState     *upper;
     EjsModule   *module;
-    int         attributes;
 
     ENTER(cp);
-
-    attributes = 0;
 
     np = createNode(cp, N_PRAGMA, NULL);
     np->pragma.strict = cp->fileState->strict;
@@ -62372,7 +62229,6 @@ static EcNode *createAssignNode(EcCompiler *cp, EcNode *lhs, EcNode *rhs, EcNode
  */
 static EcNode *appendNode(EcNode *np, EcNode *child)
 {
-    EcCompiler      *cp;
     MprList         *list;
     int             index;
 
@@ -62380,9 +62236,7 @@ static EcNode *appendNode(EcNode *np, EcNode *child)
         return 0;
     }
     mprAssert(np != child);
-    
     list = np->children;
-    cp = np->cp;
 
     if ((index = mprAddItem(np->children, child)) < 0) {
         return 0;
@@ -62443,15 +62297,13 @@ static EcNode *linkNode(EcNode *np, EcNode *node)
  */
 static EcNode *insertNode(EcNode *np, EcNode *child, int pos)
 {
-    EcCompiler      *cp;
-    MprList         *list;
-    int             index, len;
+    MprList     *list;
+    int         index, len;
 
     if (child == 0 || np == 0) {
         return 0;
     }
     list = np->children;
-    cp = np->cp;
 
     index = mprInsertItemAtPos(list, pos, child);
     if (index < 0) {
@@ -62474,14 +62326,11 @@ static EcNode *insertNode(EcNode *np, EcNode *child, int pos)
  */
 static EcNode *removeNode(EcNode *np, EcNode *child)
 {
-    EcCompiler      *cp;
-    int             index;
+    int         index;
 
     if (child == 0 || np == 0) {
         return 0;
     }
-    cp = np->cp;
-
     index = mprRemoveItem(np->children, child);
     mprAssert(index >= 0);
 
@@ -62938,12 +62787,10 @@ static void manageNode(EcNode *node, int flags)
  */
 static EcNode *createNode(EcCompiler *cp, int kind, EjsString *name)
 {
-    Ejs         *ejs;
     EcNode      *np;
     EcToken     *token;
 
     mprAssert(cp->state);
-    ejs = cp->ejs;
 
     if ((np = mprAllocObj(EcNode, manageNode)) == 0) {
         return 0;

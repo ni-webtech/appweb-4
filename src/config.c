@@ -117,6 +117,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     Http            *http;
     HttpDir         *dir;
     HttpHost        *host;
+    HttpServer      *server;
     MprDirEntry     *dp;
     MprList         *includes;
     MaConfigState   stack[MA_MAX_CONFIG_DEPTH], *state;
@@ -130,7 +131,8 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     memset(stack, 0, sizeof(stack));
     meta->alreadyLogging = mprGetLogHandler() ? 1 : 0;
 
-    defaultHost = host = httpCreateHost(NULL, 0, NULL);
+    defaultHost = host = httpCreateHost(0);
+    httpSetHostName(host, "default");
     meta->defaultHost = defaultHost;
 
     top = 0;
@@ -157,7 +159,9 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     state->auth = state->dir->auth;
 
     httpAddDir(host, state->dir);
-    httpSetHostInfoName(host, "Main Server");
+#if UNUSED
+    httpSetHostLogName(host, "Main Server");
+#endif
 
     /*
         Parse each line in the config file
@@ -323,15 +327,18 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 value = strim(value, "\"", MPR_TRIM_BOTH);
                 state = pushState(state, &top);
                 mprParseIp(value, &ip, &port, -1);
-                state->host = httpCreateVirtualHost(ip, port, host);
-                httpSetHostDocumentRoot(state->host, host->documentRoot);
-                httpSetHostServerRoot(state->host, host->serverRoot);
-                host = state->host;
+                host = state->host = httpCloneHost(host);
+                httpSetHostAddress(host, ip, port);
                 state->loc = host->loc;
                 state->auth = host->loc->auth;
                 state->dir = httpCreateDir(stack[top - 1].dir->path, stack[top - 1].dir);
                 state->auth = state->dir->auth;
                 httpAddDir(host, state->dir);
+                if ((server = httpLookupServer(http, ip, port)) == 0) {
+                    mprError("Can't find listen directive for virtual host %s", value); 
+                } else {
+                    httpAddHostToServer(server, host);
+                }
 
             } else if (scasecmp(key, "Directory") == 0) {
                 path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
@@ -443,12 +450,16 @@ int maValidateConfiguration(MaMeta *meta)
         Validate the hosts
      */
     for (nextHost = 0; (host = mprGetNextItem(http->hosts, &nextHost)) != 0; ) {
+#if UNUSED
         mprAssert(host->ip);
         mprAssert(host->port > 0);
         if (httpAddHostToServers(http, host) < 0) {
-            mprError("Missing a listen directive for %s:%d", host->ip, host->port);
+            mprError("Missing a listen directive for %s", host->name);
             return 0;
         }
+#endif
+        mprAssert(host->name && host->name);
+        mprAssert(host->address && host->address);
         if (host->documentRoot == 0) {
             httpSetHostDocumentRoot(host, defaultHost->documentRoot);
         }
@@ -472,15 +483,17 @@ int maValidateConfiguration(MaMeta *meta)
         /*
             Define a informational host name if one has not been defined via ServerName
          */
+#if UNUSED
         if (host->name == 0) {
             if (host->port) {
-                httpSetHostInfoName(host, mprAsprintf("%s:%d", (host->ip && *host->ip) ? host->ip : "*", host->port));
-                httpSetHostName(host, mprAsprintf("%s:%d", mprGetHostName(), host->port));
+                httpSetHostLogName(host, mprAsprintf("%s:%d", (host->ip && *host->ip) ? host->ip : "*", host->port));
+                httpSetHostName(host, mprGetHostName(), host->port);
             } else {
                 httpSetHostName(host, mprGetHostName());
-                httpSetHostInfoName(host, mprGetHostName());
+                httpSetHostLogName(host, mprGetHostName());
             }
         }
+#endif
         mprLog(MPR_CONFIG, "Host \"%s\"", host->name);
         mprLog(MPR_CONFIG, "    ServerRoot \"%s\"", host->serverRoot);
         mprLog(MPR_CONFIG, "    DocumentRoot: \"%s\"", host->documentRoot);
@@ -1013,14 +1026,10 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                 return -1;
             }
             server = httpCreateServer(ip, port, NULL, 0);
-#if UNUSED
-            httpSetMetaServer(server, meta);
-#endif
             server->limits = limits;
             mprAddItem(meta->servers, server);
-            if (host->port == 0) {
-                httpSetHostAddress(host, ip, port);
-            }
+            httpAddHostToServer(server, host);
+            httpSetHostAddress(host, ip, port);
             return 1;
 
         } else if (scasecmp(key, "LogLevel") == 0) {
@@ -1259,14 +1268,15 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     case 'S':
         if (scasecmp(key, "ServerName") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
+#if UNUSED
             if (host->port != 80) {
                 value = sfmt("%s:%d", value, host->port);
             }
-            if (strncmp(value, "http://", 7) == 0) {
-                value = &value[7];
-            }
-            httpSetHostName(host, value);
-            httpSetHostInfoName(host, value);
+#endif
+            httpSetHostName(host, strim(value, "http://", MPR_TRIM_START));
+#if UNUSED
+            httpSetHostLogName(host, value);
+#endif
             return 1;
 
         } else if (scasecmp(key, "ServerRoot") == 0) {

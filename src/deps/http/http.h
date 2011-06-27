@@ -362,7 +362,9 @@ extern void httpSetProxy(Http *http, cchar *host, int port);
 
 /* Internal APIs */
 extern void httpAddConn(Http *http, struct HttpConn *conn);
+#if UNUSED
 extern int httpAddHostToServers(Http *http, struct HttpHost *host);
+#endif
 extern struct HttpServer *httpGetFirstServer(Http *http);
 extern void httpRemoveConn(Http *http, struct HttpConn *conn);
 extern cchar *httpLookupStatus(Http *http, int status);
@@ -2724,7 +2726,7 @@ extern void httpSetWriteBlocked(HttpConn *conn);
 #define HTTP_IPADDR_VHOST 0x1
 
 /** 
-    Server endpoint. Servers may have multiple virtual named hosts.
+    Server listening endpoint. Servers may have multiple virtual named hosts.
     @stability Evolving
     @defgroup HttpServer HttpServer
     @see HttpServer httpCreateServer httpStartServer httpStopServer
@@ -2736,7 +2738,7 @@ typedef struct HttpServer {
     HttpLimits      *limits;                /**< Alias for first host resource limits */
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
     MprHashTable    *clientLoad;            /**< Table of active client IPs and connection counts */
-    char            *ip;                    /**< Listen IP address */
+    char            *ip;                    /**< Listen IP address. May be null if listening on all interfaces. */
     int             port;                   /**< Listen port */
     int             async;                  /**< Listening is in async mode (non-blocking) */
     int             clientCount;            /**< Count of current active clients */
@@ -2849,9 +2851,10 @@ extern int httpStartServer(HttpServer *server);
 extern void httpStopServer(HttpServer *server);
 
 //  MOB DOC
-extern int httpSecureServer(cchar *ip, int port, struct MprSsl *ssl);
+extern int httpSecureServer(HttpServer *server, struct MprSsl *ssl);
+extern int httpSecureServerByName(cchar *name, struct MprSsl *ssl);
 extern void httpSetServerAddress(HttpServer *server, cchar *ip, int port);
-extern struct HttpHost *httpLookupHostByName(HttpServer *server, cchar *name);
+extern struct HttpHost *httpLookupHost(HttpServer *server, cchar *name);
 
 extern HttpServer *httpCreateConfiguredServer(cchar *docRoot, cchar *ip, int port);
 
@@ -2869,16 +2872,18 @@ extern HttpServer *httpCreateConfiguredServer(cchar *docRoot, cchar *ip, int por
 
 /**
     Host Object
-    A Host object represents a logical host. Several logical hosts may share a single HttpServer. Hosts may represent 
-    a single listening HTTP connection endpoint or they may be a named virtual host sharing an endpoint.
+    A Host object represents a logical host. Several logical hosts may share a single HttpServer.
     @stability Evolving
     @defgroup HttpHost HttpHost
     @see HttpHost
 */
 typedef struct HttpHost {
     char            *name;                  /**< ServerName directive (may include port) - used for redirects */
+    char            *address;                /**< Virtual host listening address */
+#if UNUSED
     char            *hostname;              /**< Hostname portion of name */
-    char            *infoName;              /**< Informational host name - used in logs */
+    char            *logName;               /**< Host name used in logs */
+#endif
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, locations */
 
     MprList         *aliases;               /**< List of Alias definitions */
@@ -2892,8 +2897,11 @@ typedef struct HttpHost {
 
     char            *documentRoot;          /**< Default directory for web documents */
     char            *serverRoot;            /**< Directory for configuration files */
+
+#if UNUSED
     char            *ip;                    /**< IP address. May be null if listening on all interfaces */
     int             port;                   /**< Listening port number */
+#endif
 
     int             traceLevel;             /**< Trace activation level */
     int             traceMaxLength;         /**< Maximum trace file length (if known) */
@@ -2918,8 +2926,8 @@ typedef struct HttpHost {
 extern int  httpAddAlias(HttpHost *host, HttpAlias *newAlias);
 extern int httpAddDir(HttpHost *host, HttpDir *dir);
 extern int  httpAddLocation(HttpHost *host, HttpLoc *newLocation);
-extern HttpHost *httpCreateHost(cchar *ip, int port, HttpLoc *loc);
-extern HttpHost *httpCreateVirtualHost(cchar *ip, int port, HttpHost *parent);
+extern HttpHost *httpCreateHost(HttpLoc *loc);
+extern HttpHost *httpCloneHost(HttpHost *parent);
 extern HttpAlias *httpGetAlias(HttpHost *host, cchar *uri);
 extern HttpAlias *httpLookupAlias(HttpHost *host, cchar *prefix);
 extern HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg);
@@ -2930,9 +2938,12 @@ extern char *httpMakePath(HttpHost *host, cchar *file);
 extern char *httpReplaceReferences(HttpHost *host, cchar *str);
 extern void httpSetHostAddress(HttpHost *host, cchar *ip, int port);
 extern void httpSetHostDocumentRoot(HttpHost *host, cchar *dir);
-extern void httpSetHostInfoName(HttpHost *host, cchar *name);
+#if UNUSED
+extern void httpSetHostLogName(HttpHost *host, cchar *name);
+#endif
 extern void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize);
 extern void httpSetHostName(HttpHost *host, cchar *name);
+extern void httpSetHostAddress(HttpHost *host, cchar *ip, int port);
 extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
 extern void httpSetHostTrace(HttpHost *host, int level, int mask);
 extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude);
@@ -2940,7 +2951,6 @@ extern void httpSetHostServerRoot(HttpHost *host, cchar *dir);
 extern int  httpSetupTrace(HttpHost *host, cchar *ext);
 extern void httpAddHostToServer(HttpServer *server, HttpHost *host);
 extern bool httpIsNamedVirtualServer(HttpServer *server);
-extern HttpHost *httpLookupVirtualHost(HttpServer *server, cchar *hostStr);
 extern void httpSetNamedVirtualServer(HttpServer *server);
 
 #ifdef __cplusplus

@@ -15,9 +15,9 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpLoc     *loc;
     HttpHost    *host;
-    char        *path, *ip, *tok, *word, *enable, *provider;
+    char        *path, *tok, *word, *enable, *provider;
     char        prefix[MPR_MAX_FNAME];
-    int         protoMask, mask, port;
+    int         protoMask, mask;
     static int  hasBeenWarned = 0;
 
     host = state->host;
@@ -39,25 +39,31 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
     if (loc->ssl == 0) {
         loc->ssl = mprCreateSsl(loc);
     }
+#if UNUSED || 1
     if (scasecmp(key, "SSLEngine") == 0 || scasecmp(key, "SSL") == 0) {
         enable = stok(value, " \t", &tok);
         provider = stok(0, " \t", &tok);
         if (scasecmp(value, "on") == 0 || *value == '\0') {
-            if (httpSecureServer(host->ip, host->port, loc->ssl) < 0) {
-                mprError("No HttpServer at %s:%d to secure", host->ip, host->port);
+            if (httpSecureServerByName(host->name, loc->ssl) < 0) {
+                mprError("No HttpServer at %s to secure", host->name);
             }
         } else if (scasecmp(value, "off") == 0) {
-            if (httpSecureServer(host->ip, host->port, 0) < 0) {
-                mprError("No HttpServer at %s:%d to disable SSL", host->ip, host->port);
+            if (httpSecureServerByName(host->name, 0) < 0) {
+                mprError("No HttpServer at %s to disable SSL", host->name);
             }
         } else {
-            mprParseIp(value, &ip, &port, -1);
-            if (httpSecureServer(ip, port, loc->ssl) < 0) {
-                mprError("No HttpServer at %s:%d to secure", ip, port);
+            /*  MOB - should doc this option:  SSLEngine IP:PORT */
+            if (httpSecureServerByName(value, loc->ssl) < 0) {
+                mprError("No HttpServer at %s to secure", value);
             }
         }
         return 1;
     }
+#else
+    if (scasecmp(key, "SSLEngine") == 0) {
+        mprError("SSLEngine is deprecated. Please use ListenSecure");
+    }
+#endif
     path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
 
     if (scasecmp(key, "SSLCACertificatePath") == 0) {

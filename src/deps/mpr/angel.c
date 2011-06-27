@@ -237,7 +237,7 @@ static void angel()
 {
     MprTime     mark;
     char        **av, *env[3], **argv;
-    int         err, i, status, ac, next, rc;
+    int         err, i, status, ac, next;
 
     app->servicePid = 0;
 
@@ -289,7 +289,7 @@ static void angel()
                 if (app->verbose) {
                     mprPrintf("%s: Change dir to %s\n", app->appName, app->homeDir);
                 }
-                rc = chdir(app->homeDir);
+                (void) chdir(app->homeDir);
 
                 for (i = 3; i < 128; i++) {
                     close(i);
@@ -395,7 +395,7 @@ static int setupUnixSignals()
 static void catchSignal(int signo, siginfo_t *info, void *arg)
 {
     cleanup();
-    mprTerminate(0);
+    mprTerminate(0, -1);
 }
 
 

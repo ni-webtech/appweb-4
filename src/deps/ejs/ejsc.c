@@ -50,7 +50,7 @@ MAIN(ejscMain, int argc, char **argv)
     EcCompiler      *cp;
     char            *argp, *searchPath, *outputFile, *certFile, *name, *tok, *modules;
     int             nextArg, err, ejsFlags, ecFlags, bind, debug, doc, merge, modver;
-    int             warnLevel, noout, parseOnly, tabWidth, optimizeLevel, strict, strip;
+    int             warnLevel, noout, parseOnly, tabWidth, optimizeLevel, strict;
 
     /*
         Initialize the Multithreaded Portable Runtime (MPR)
@@ -186,9 +186,10 @@ MAIN(ejscMain, int argc, char **argv)
                 certFile = argv[++nextArg];
             }
 
+#if FUTURE
         } else if (strcmp(argp, "--strip") == 0) {
             strip = 1;
-
+#endif
         } else if (strcmp(argp, "--tabWidth") == 0) {
             if (nextArg >= argc) {
                 err++;

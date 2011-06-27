@@ -973,7 +973,7 @@ static void finishThread(MprThread *tp)
         mprLock(app->mutex);
         app->activeLoadThreads--;
         if (--app->activeLoadThreads <= 0) {
-            mprTerminate(MPR_EXIT_DEFAULT);
+            mprTerminate(MPR_EXIT_DEFAULT, -1);
         }
         mprUnlock(app->mutex);
     }
@@ -982,12 +982,11 @@ static void finishThread(MprThread *tp)
 
 static void waitForUser()
 {
-    ssize   rc;
     int     c;
 
     mprLock(app->mutex);
     mprPrintf("Pause: ");
-    rc = read(0, (char*) &c, 1);
+    (void) read(0, (char*) &c, 1);
     mprUnlock(app->mutex);
 }
 

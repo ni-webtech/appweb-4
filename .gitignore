@@ -140,3 +140,5 @@ _UpgradeReport*
 *.sdf
 *.opensdf
 projects/WIN/appweb-dynamic/Debug
+.rpmmacros
+rpm.log

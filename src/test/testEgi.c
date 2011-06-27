@@ -45,7 +45,7 @@ static void exitApp(HttpQueue *q)
 {
     httpFinalize(q->conn);
     mprLog(0, "Instructed to exit ...");
-    mprTerminate(1);
+    mprTerminate(1, -1);
 }
 
 
