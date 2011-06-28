@@ -446,7 +446,7 @@ class EjsMvc {
              //  Skip layouts
             return null
         }
-        if (!file.startsWith(dirs.views.toString() + "/") || file.extension != ext.ejs) {
+        if (!file.startsWith(dirs.views.toString()) || file.extension != ext.ejs) {
             throw "File \"" + file + " \" is not a view. Path should be \"" + dirs.views.join("CONTROLLER/VIEW.ejs") + "\""
         }
         if (!file.exists) {
