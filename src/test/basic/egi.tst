@@ -56,7 +56,6 @@ if (test && test.config["debug"] == 1) {
     }
 
     function query() {
-/*MOB
         http.get(HTTP + "/egiProgram.egi?a=b&c=d&e=f")
         match("SCRIPT_NAME", "/egiProgram.egi")
         contains("QVAR a=b")
@@ -71,7 +70,7 @@ if (test && test.config["debug"] == 1) {
         match("QVAR var1", "a a")
         match("QVAR var2", "b b")
         match("QVAR var3", "c")
-*/
+
         //
         //  Post data should be turned into variables
         //
@@ -131,11 +130,9 @@ if (test && test.config["debug"] == 1) {
         assert(http.response.contains("QVAR a|b c>d e?f g>h i'j k\"l m n"))
     }
 
-/*MOB
     basic()
     forms()
     alias()
-*/
     query()
     encoding()
     status()
