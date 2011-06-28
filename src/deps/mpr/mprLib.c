@@ -5358,7 +5358,7 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
     cmd->command[len] = '\0';
     
     /*
-        Add quotes around all args and backquote [", ', \\]
+        Add quotes around all args that have spaces and backquote [", ', \\]
         Example:    ["showColors", "red", "light blue", "Can't \"render\""]
         Becomes:    "showColors" "red" "light blue" "Can't \"render\""
      */
@@ -5366,13 +5366,18 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
     for (ap = &argv[0]; *ap; ) {
         start = cp = *ap;
         quote = '"';
-        for (*dp++ = quote; *cp; ) {
-            if (*cp == quote && !(cp > start && cp[-1] == '\\')) {
-                *dp++ = '\\';
+        if (strchr(cp, ' ') != 0 && cp[0] != quote) {
+            for (*dp++ = quote; *cp; ) {
+                if (*cp == quote && !(cp > start && cp[-1] == '\\')) {
+                    *dp++ = '\\';
+                }
+                *dp++ = *cp++;
             }
-            *dp++ = *cp++;
+            *dp++ = quote;
+        } else {
+            strcpy(dp, qp);
+            dp += strlen(cp);
         }
-        *dp++ = quote;
         if (*++ap) {
             *dp++ = ' ';
         }
