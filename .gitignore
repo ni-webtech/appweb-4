@@ -142,3 +142,4 @@ _UpgradeReport*
 projects/WIN/appweb-dynamic/Debug
 .rpmmacros
 rpm.log
+*.stackdump
