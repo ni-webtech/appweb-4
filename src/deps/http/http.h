@@ -1493,9 +1493,8 @@ extern void httpDestroyConn(HttpConn *conn);
     Create a request pipeline
     @param conn HttpConn object created via $httpCreateConn
     @param location Location object controlling how the pipeline is configured for the request
-    @param handler Handler to process the request for server side requests
  */
-extern void httpCreateTxPipeline(HttpConn *conn, struct HttpLoc *location, HttpStage *handler);
+extern void httpCreateTxPipeline(HttpConn *conn, struct HttpLoc *location);
 extern void httpCreateRxPipeline(HttpConn *conn, struct HttpLoc *location);
 
 /**
