@@ -2579,12 +2579,11 @@ module ejs {
                     }
                 }
             } else {
-                // cmd.start(["/bin/sh", "-c", "/bin/ps -e | awk '{print $1,$4}'"])
-                cmd.start(["/bin/sh", "-c", "/bin/ps -e"])
+                cmd.start(["/bin/sh", "-c", "/bin/ps -ef"])
                 for each (line in cmd.readLines()) {
                     let fields = line.trim().split(/ +/g)
-                    let pid = fields[0]
-                    let command = fields.slice(3).join(" ")
+                    let pid = fields[1]
+                    let command = fields.slice(7).join(" ")
                     if (!pid.isDigit || command == "") continue
                     if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
                         result.append({pid: pid, command: command})

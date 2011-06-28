@@ -95,7 +95,7 @@ static void startFile(HttpQueue *q)
     } else {
         /* Create a single data packet based on the entity length.  */
         packet = httpCreateEntityPacket(0, tx->entityLength, readFileData);
-        if (!rx->ranges) {
+        if (!tx->outputRanges) {
             /* Can set a content length */
             tx->length = tx->entityLength;
         }
@@ -208,7 +208,7 @@ static void outgoingFileService(HttpQueue *q)
     usingSend = tx->connector == conn->http->sendConnector;
 
     for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
-        if (!usingSend && !rx->ranges && packet->flags & HTTP_PACKET_DATA) {
+        if (!usingSend && !tx->outputRanges && packet->flags & HTTP_PACKET_DATA) {
             if ((rc = prepPacket(q, packet)) < 0) {
                 return;
             } else if (rc == 0) {
@@ -286,7 +286,7 @@ static void handlePutRequest(HttpQueue *q)
     mprAssert(tx->fileInfo.checked);
 
     path = tx->filename;
-    if (rx->ranges) {
+    if (tx->outputRanges) {
         /*  
             Open an existing file with fall-back to create
          */

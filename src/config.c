@@ -546,7 +546,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AddFilter") == 0) {
             /* Scope: server, host, location */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_INCOMING | HTTP_STAGE_OUTGOING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_RX | HTTP_STAGE_TX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -555,7 +555,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AddInputFilter") == 0) {
             /* Scope: server, host, location */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_INCOMING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_RX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -564,7 +564,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AddOutputFilter") == 0) {
             /* Scope: server, host, location */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_OUTGOING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_TX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }

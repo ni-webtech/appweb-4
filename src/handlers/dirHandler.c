@@ -40,7 +40,7 @@ static void sortList(HttpConn *conn, MprList *list);
 /*
     Match if the url maps to a directory. The pathInfo must end with "/".
  */
-static bool matchDir(HttpConn *conn, HttpStage *handler)
+static bool matchDir(HttpConn *conn, HttpStage *handler, int dirrection)
 {
     HttpRx      *rx;
     HttpTx      *tx;
@@ -51,8 +51,11 @@ static bool matchDir(HttpConn *conn, HttpStage *handler)
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
 
-    dir = handler->stageData;
-    return dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/");
+    if (dirrection & HTTP_STAGE_TX) {
+        dir = handler->stageData;
+        return dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/");
+    }
+    return 0;
 }
 
 

@@ -280,7 +280,7 @@ static int writeBlock(cchar *str, uint len TSRMLS_DC)
     if (conn == 0) {
         return -1;
     }
-    written = httpWriteBlock(conn->tx->queue[HTTP_QUEUE_TRANS]->nextQ, str, len);
+    written = httpWriteBlock(conn->tx->queue[HTTP_QUEUE_TX]->nextQ, str, len);
     mprLog(6, "php: write %d", written);
     if (written <= 0) {
         php_handle_aborted_connection();
@@ -400,7 +400,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     ssize       len, nbytes;
 
     conn = (HttpConn*) SG(server_context);
-    q = conn->tx->queue[HTTP_QUEUE_RECEIVE]->prevQ;
+    q = conn->tx->queue[HTTP_QUEUE_RX]->prevQ;
     if (q->first == 0) {
         return 0;
     }

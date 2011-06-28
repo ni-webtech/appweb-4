@@ -327,7 +327,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     tx = conn->tx;
     mprAssert(tx);
     conn->lastActivity = conn->http->now;
-    q = conn->tx->queue[HTTP_QUEUE_TRANS]->nextQ;
+    q = conn->tx->queue[HTTP_QUEUE_TX]->nextQ;
 
     switch (channel) {
     case MPR_CMD_STDIN:

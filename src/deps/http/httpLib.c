@@ -1087,7 +1087,7 @@ static char *createDigestNonce(cchar *secret, cchar *etag, cchar *realm);
 static void decodeBasicAuth(HttpConn *conn, AuthData *ad);
 static int  decodeDigestDetails(HttpConn *conn, AuthData *ad);
 static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg);
-static bool matchAuth(HttpConn *conn, HttpStage *handler);
+static bool matchAuth(HttpConn *conn, HttpStage *handler, int dir);
 static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when);
 
 
@@ -1105,7 +1105,7 @@ int httpOpenAuthFilter(Http *http)
 }
 
 
-static bool matchAuth(HttpConn *conn, HttpStage *handler)
+static bool matchAuth(HttpConn *conn, HttpStage *handler, int dir)
 {
     Http        *http;
     HttpRx      *rx;
@@ -1123,7 +1123,14 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
     http = conn->http;
     auth = rx->auth;
 
-    if (!conn->server || auth == 0 || auth->type == 0) {
+#if BLD_DEBUG
+    if (dir & HTTP_STAGE_TX) {
+        mprError("AuthFilter configured as output filter. It should be configured as an input filter.");
+        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing authorization details.", 0);
+        return 1;
+    }
+#endif
+    if (!(dir & HTTP_STAGE_RX) || !conn->server || auth == 0 || auth->type == 0) {
         return 0;
     }
     if ((ad = mprAllocStruct(AuthData)) == 0) {
@@ -1156,7 +1163,6 @@ static bool matchAuth(HttpConn *conn, HttpStage *handler)
         formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Wrong authentication protocol", 0);
         return 1;
     }
-
     /*  
         Some backend methods can't return the password and will simply do everything in validateCred. 
         In this case, they and will return "". That is okay.
@@ -1702,7 +1708,7 @@ void __pamAuth() {}
 
 
 static void incomingChunkData(HttpQueue *q, HttpPacket *packet);
-static bool matchChunk(HttpConn *conn, HttpStage *handler);
+static bool matchChunk(HttpConn *conn, HttpStage *handler, int dir);
 static void openChunk(HttpQueue *q);
 static void outgoingChunkService(HttpQueue *q);
 static void setChunkPrefix(HttpQueue *q, HttpPacket *packet);
@@ -1727,16 +1733,25 @@ int httpOpenChunkFilter(Http *http)
 }
 
 
-static bool matchChunk(HttpConn *conn, HttpStage *handler)
+static bool matchChunk(HttpConn *conn, HttpStage *handler, int dir)
 {
     HttpTx  *tx;
 
-    /*
-        Don't match if chunking is explicitly turned off vi a the X_APPWEB_CHUNK_SIZE header which sets the chunk 
-        size to zero. Also remove if the response length is already known.
-     */
-    tx = conn->tx;
-    return (tx->length < 0 && tx->chunkSize != 0) ? 1 : 0;
+    if (dir & HTTP_STAGE_TX) {
+        /*
+            Don't match if chunking is explicitly turned off vi a the X_APPWEB_CHUNK_SIZE header which sets the chunk 
+            size to zero. Also remove if the response length is already known.
+         */
+        tx = conn->tx;
+        return (tx->length < 0 && tx->chunkSize != 0) ? 1 : 0;
+
+    } else {
+        /* 
+            Must always be ready to handle chunked response data. Clients create their incoming pipeline before it is
+            know what the response data looks like (chunked or not).
+         */
+        return 1;
+    }
 }
 
 
@@ -1749,7 +1764,9 @@ static void openChunk(HttpQueue *q)
     rx = conn->rx;
 
     q->packetSize = min(conn->limits->chunkSize, q->max);
+#if UNUSED
     rx->chunkState = HTTP_CHUNK_START;
+#endif
 }
 
 
@@ -2180,7 +2197,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     if (openConnection(conn, url) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    httpCreatePipeline(conn, NULL, NULL);
+    httpCreateTxPipeline(conn, conn->http->clientLocation, NULL);
 
     if (setClientHeaders(conn) < 0) {
         return MPR_ERR_CANT_INITIALIZE;
@@ -2792,7 +2809,7 @@ void httpEnableConnEvents(HttpConn *conn)
                 Allow read events even if the current request is not complete. The pipelined request will be buffered 
                 and will be ready when the current request completes.
              */
-            q = tx->queue[HTTP_QUEUE_RECEIVE]->nextQ;
+            q = tx->queue[HTTP_QUEUE_RX]->nextQ;
             if (q->count < q->max) {
                 eventMask |= MPR_READABLE;
             }
@@ -4181,12 +4198,13 @@ HttpLoc *httpInitLocation(Http *http, int serverSide)
         Create default incoming and outgoing pipelines. Order matters.
      */
     loc = httpCreateLocation();
-    httpAddFilter(loc, http->authFilter->name, NULL, HTTP_STAGE_OUTGOING);
-    httpAddFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_OUTGOING);
-    httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_OUTGOING);
-
-    httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_INCOMING);
-    httpAddFilter(loc, http->uploadFilter->name, NULL, HTTP_STAGE_INCOMING);
+    httpAddFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
+    httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_TX);
+    httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_RX);
+    if (serverSide) {
+        httpAddFilter(loc, http->uploadFilter->name, NULL, HTTP_STAGE_RX);
+        httpAddFilter(loc, http->authFilter->name, NULL, HTTP_STAGE_RX);
+    }
     loc->connector = http->netConnector;
     return loc;
 }
@@ -4201,7 +4219,7 @@ void httpInitLimits(HttpLimits *limits, int serverSide)
     limits->receiveBodySize = HTTP_MAX_RECEIVE_BODY;
     limits->requestCount = HTTP_MAX_REQUESTS;
     limits->stageBufferSize = HTTP_MAX_STAGE_BUFFER;
-    limits->transmissionBodySize = HTTP_MAX_TRANSMISSION_BODY;
+    limits->transmissionBodySize = HTTP_MAX_TX_BODY;
     limits->uploadSize = HTTP_MAX_UPLOAD;
     limits->uriSize = MPR_MAX_URL;
 
@@ -4881,10 +4899,10 @@ int httpAddFilter(HttpLoc *loc, cchar *name, cchar *extensions, int direction)
         }
     }
     graduate(loc);
-    if (direction & HTTP_STAGE_INCOMING) {
+    if (direction & HTTP_STAGE_RX) {
         mprAddItem(loc->inputStages, filter);
     }
-    if (direction & HTTP_STAGE_OUTGOING) {
+    if (direction & HTTP_STAGE_TX) {
         mprAddItem(loc->outputStages, filter);
     }
     return 0;
@@ -4925,10 +4943,10 @@ void httpAddLocationExpiryByType(HttpLoc *loc, MprTime when, cchar *mimeTypes)
 
 void httpClearStages(HttpLoc *loc, int direction)
 {
-    if (direction & HTTP_STAGE_INCOMING) {
+    if (direction & HTTP_STAGE_RX) {
         loc->inputStages = mprCreateList(-1, 0);
     }
-    if (direction & HTTP_STAGE_OUTGOING) {
+    if (direction & HTTP_STAGE_TX) {
         loc->outputStages = mprCreateList(-1, 0);
     }
 }
@@ -5403,7 +5421,7 @@ static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage)
     }
     if (stage->match && !(stage->flags & HTTP_STAGE_UNLOADED)) {
         /* Can't have match routines on unloaded modules */
-        if (!stage->match(conn, stage)) {
+        if (!stage->match(conn, stage, HTTP_STAGE_RX | HTTP_STAGE_TX)) {
             return 0;
         }
     }
@@ -6383,34 +6401,34 @@ int httpOpenPassHandler(Http *http)
 /************************************************************************/
 
 /*
-    pipeline.c -- HTTP pipeline processing.
+    pipeline.c -- HTTP pipeline processing. 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
 
 
 
-static bool matchFilter(HttpConn *conn, HttpStage *filter);
+static bool matchFilter(HttpConn *conn, HttpStage *filter, int dir);
+static void openQueues(HttpConn *conn);
+static void pairQueues(HttpConn *conn);
 static void setVars(HttpConn *conn);
 
-/*  
-    Create processing pipeline
- */
-void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler)
+
+void httpCreateTxPipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler)
 {
     Http        *http;
     HttpTx      *tx;
     HttpRx      *rx;
-    HttpQueue   *q, *qhead, *rq, *rqhead;
+    HttpQueue   *q;
     HttpStage   *stage, *filter;
     int         next;
+
+    mprAssert(conn);
+    mprAssert(loc);
 
     http = conn->http;
     rx = conn->rx;
     tx = conn->tx;
-
-    mprAssert(!conn->server || tx->filename);
-    loc = (loc) ? loc : http->clientLocation;
 
     tx->outputPipeline = mprCreateList(-1, 0);
     tx->handler = proposedHandler ? proposedHandler : http->passHandler;
@@ -6418,13 +6436,14 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
 
     if (loc->outputStages) {
         for (next = 0; (filter = mprGetNextItem(loc->outputStages, &next)) != 0; ) {
-            if (matchFilter(conn, filter)) {
+            if (matchFilter(conn, filter, HTTP_STAGE_TX)) {
                 mprAddItem(tx->outputPipeline, filter);
             }
         }
     }
     if (tx->connector == 0) {
-        if (tx->handler == http->fileHandler && rx->flags & HTTP_GET && !rx->ranges && !conn->secure && tx->chunkSize <= 0 &&
+        if (tx->handler == http->fileHandler && rx->flags & HTTP_GET && !tx->outputRanges && 
+                !conn->secure && tx->chunkSize <= 0 &&
                 httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_BODY, tx->extension) < 0) {
             tx->connector = http->sendConnector;
         } else if (loc && loc->connector) {
@@ -6435,71 +6454,97 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
     }
     mprAddItem(tx->outputPipeline, tx->connector);
 
-    /*  
-        Create the receive pipeline for this request
-     */
-    if (rx->needInputPipeline) {
-        rx->inputPipeline = mprCreateList(-1, 0);
-        mprAddItem(rx->inputPipeline, http->netConnector);
-        if (loc) {
-            for (next = 0; (filter = mprGetNextItem(loc->inputStages, &next)) != 0; ) {
-                if (!matchFilter(conn, filter)) {
-                    continue;
-                }
-                mprAddItem(rx->inputPipeline, filter);
-            }
-        }
-        mprAddItem(rx->inputPipeline, tx->handler);
-    }
-    
-    /* Set the zero'th entry Incase a filter changed tx->handler */
-    mprSetItem(tx->outputPipeline, 0, tx->handler);
-
     /*  Create the outgoing queue heads and open the queues */
-    q = tx->queue[HTTP_QUEUE_TRANS];
+    q = tx->queue[HTTP_QUEUE_TX];
     for (next = 0; (stage = mprGetNextItem(tx->outputPipeline, &next)) != 0; ) {
-        q = httpCreateQueue(conn, stage, HTTP_QUEUE_TRANS, q);
+        q = httpCreateQueue(conn, stage, HTTP_QUEUE_TX, q);
     }
+    conn->writeq = tx->queue[HTTP_QUEUE_TX]->nextQ;
+    conn->connq = tx->queue[HTTP_QUEUE_TX]->prevQ;
 
-    /*  Create the incoming queue heads and open the queues.  */
-    q = tx->queue[HTTP_QUEUE_RECEIVE];
-    for (next = 0; (stage = mprGetNextItem(rx->inputPipeline, &next)) != 0; ) {
-        q = httpCreateQueue(conn, stage, HTTP_QUEUE_RECEIVE, q);
-    }
     if ((tx->handler->flags & HTTP_STAGE_VERIFY_ENTITY) && !tx->fileInfo.valid && !(rx->flags & HTTP_PUT)) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
     }
-
-    /*
-        Create form and environment vars if required
-     */
     setVars(conn);
-
-    conn->writeq = tx->queue[HTTP_QUEUE_TRANS]->nextQ;
-    conn->readq = tx->queue[HTTP_QUEUE_RECEIVE]->prevQ;
-    conn->connq = tx->queue[HTTP_QUEUE_TRANS]->prevQ;
+    pairQueues(conn);
+    openQueues(conn);
     httpPutForService(conn->writeq, httpCreateHeaderPacket(), 0);
+}
 
-    /*  
-        Pair up the send and receive queues
-     */
-    qhead = tx->queue[HTTP_QUEUE_TRANS];
-    rqhead = tx->queue[HTTP_QUEUE_RECEIVE];
-    mprAssert(q->nextQ != qhead);
+
+void httpCreateRxPipeline(HttpConn *conn, HttpLoc *loc)
+{
+    Http        *http;
+    HttpTx      *tx;
+    HttpRx      *rx;
+    HttpQueue   *q;
+    HttpStage   *stage, *filter;
+    int         next;
+
+    mprAssert(conn);
+    mprAssert(loc);
+
+    http = conn->http;
+    rx = conn->rx;
+    tx = conn->tx;
+
+    rx->inputPipeline = mprCreateList(-1, 0);
+    mprAddItem(rx->inputPipeline, http->netConnector);
+    if (loc) {
+        for (next = 0; (filter = mprGetNextItem(loc->inputStages, &next)) != 0; ) {
+            if (!matchFilter(conn, filter, HTTP_STAGE_RX)) {
+                continue;
+            }
+            mprAddItem(rx->inputPipeline, filter);
+        }
+    }
+    mprAddItem(rx->inputPipeline, tx->handler);
+    if (tx->outputPipeline) {
+        /* Set the zero'th entry Incase a filter changed tx->handler */
+        mprSetItem(tx->outputPipeline, 0, tx->handler);
+    }
+    /*  Create the incoming queue heads and open the queues.  */
+    q = tx->queue[HTTP_QUEUE_RX];
+    for (next = 0; (stage = mprGetNextItem(rx->inputPipeline, &next)) != 0; ) {
+        q = httpCreateQueue(conn, stage, HTTP_QUEUE_RX, q);
+    }
+    conn->readq = tx->queue[HTTP_QUEUE_RX]->prevQ;
+
+    pairQueues(conn);
+    openQueues(conn);
+}
+
+
+static void pairQueues(HttpConn *conn)
+{
+    HttpTx      *tx;
+    HttpQueue   *q, *qhead, *rq, *rqhead;
+
+    tx = conn->tx;
+    qhead = tx->queue[HTTP_QUEUE_TX];
+    rqhead = tx->queue[HTTP_QUEUE_RX];
     for (q = qhead->nextQ; q != qhead; q = q->nextQ) {
-        for (rq = rqhead->nextQ; rq != rqhead; rq = rq->nextQ) {
-            if (q->stage == rq->stage) {
-                q->pair = rq;
-                rq->pair = q;
+        if (q->pair == 0) {
+            for (rq = rqhead->nextQ; rq != rqhead; rq = rq->nextQ) {
+                if (q->stage == rq->stage) {
+                    q->pair = rq;
+                    rq->pair = q;
+                }
             }
         }
     }
+}
 
-    /*  
-        Open the queues (keep going on errors). Open in data flow order (input first). Handler is last.
-     */
-    if (rx->needInputPipeline) {
-        qhead = tx->queue[HTTP_QUEUE_RECEIVE];
+
+static void openQueues(HttpConn *conn)
+{
+    HttpTx      *tx;
+    HttpQueue   *q, *qhead;
+    int         i;
+
+    tx = conn->tx;
+    for (i = 0; i < HTTP_MAX_QUEUE; i++) {
+        qhead = tx->queue[i];
         for (q = qhead->nextQ; q->nextQ != qhead; q = q->nextQ) {
             if (q->open && !(q->flags & (HTTP_QUEUE_OPEN))) {
                 if (q->pair == 0 || !(q->pair->flags & HTTP_QUEUE_OPEN)) {
@@ -6509,21 +6554,6 @@ void httpCreatePipeline(HttpConn *conn, HttpLoc *loc, HttpStage *proposedHandler
             }
         }
     }
-    qhead = tx->queue[HTTP_QUEUE_TRANS];
-    for (q = qhead->prevQ; q->prevQ != qhead; q = q->prevQ) {
-        if (q->open && !(q->flags & HTTP_QUEUE_OPEN)) {
-            q->flags |= HTTP_QUEUE_OPEN;
-            httpOpenQueue(q, conn->tx->chunkSize);
-        }
-    }
-    /* Open the handler last */
-    q = qhead->nextQ;
-    if (q->open) {
-        mprAssert(!(q->flags & HTTP_QUEUE_OPEN));
-        q->flags |= HTTP_QUEUE_OPEN;
-        httpOpenQueue(q, conn->tx->chunkSize);
-    }
-    conn->flags |= HTTP_CONN_PIPE_CREATED;
 }
 
 
@@ -6553,7 +6583,7 @@ void httpDestroyPipeline(HttpConn *conn)
     HttpQueue   *q, *qhead;
     int         i;
 
-    if (conn->flags & HTTP_CONN_PIPE_CREATED && conn->tx) {
+    if (conn->tx) {
         tx = conn->tx;
         for (i = 0; i < HTTP_MAX_QUEUE; i++) {
             qhead = tx->queue[i];
@@ -6564,7 +6594,6 @@ void httpDestroyPipeline(HttpConn *conn)
                 }
             }
         }
-        conn->flags &= ~HTTP_CONN_PIPE_CREATED;
     }
 }
 
@@ -6577,7 +6606,7 @@ void httpStartPipeline(HttpConn *conn)
     tx = conn->tx;
 
     if (conn->rx->needInputPipeline) {
-        qhead = tx->queue[HTTP_QUEUE_RECEIVE];
+        qhead = tx->queue[HTTP_QUEUE_RX];
         for (q = qhead->nextQ; q->nextQ != qhead; q = nextQ) {
             nextQ = q->nextQ;
             if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
@@ -6588,7 +6617,7 @@ void httpStartPipeline(HttpConn *conn)
             }
         }
     }
-    qhead = tx->queue[HTTP_QUEUE_TRANS];
+    qhead = tx->queue[HTTP_QUEUE_TX];
     for (q = qhead->prevQ; q->prevQ != qhead; q = prevQ) {
         prevQ = q->prevQ;
         if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
@@ -6621,7 +6650,7 @@ void httpProcessPipeline(HttpConn *conn)
     if (conn->error) {
         httpFinalize(conn);
     }
-    q = conn->tx->queue[HTTP_QUEUE_TRANS]->nextQ;
+    q = conn->tx->queue[HTTP_QUEUE_TX]->nextQ;
     if (q->stage->process) {
         HTTP_TIME(conn, q->stage->name, "process", q->stage->process(q));
     }
@@ -6659,7 +6688,7 @@ void httpDiscardTransmitData(HttpConn *conn)
     if (tx == 0) {
         return;
     }
-    qhead = tx->queue[HTTP_QUEUE_TRANS];
+    qhead = tx->queue[HTTP_QUEUE_TX];
     for (q = qhead->nextQ; q != qhead; q = q->nextQ) {
         httpDiscardData(q, 1);
     }
@@ -6724,13 +6753,13 @@ static void setVars(HttpConn *conn)
 /*
     Match a filter by extension
  */
-static bool matchFilter(HttpConn *conn, HttpStage *filter)
+static bool matchFilter(HttpConn *conn, HttpStage *filter, int dir)
 {
     HttpTx      *tx;
 
     tx = conn->tx;
     if (filter->match) {
-        return filter->match(conn, filter);
+        return filter->match(conn, filter, dir);
     }
     if (filter->extensions && tx->extension) {
         return mprLookupKey(filter->extensions, tx->extension) != 0;
@@ -6829,7 +6858,7 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int dir, HttpQueue 
     q->start = stage->start;
     q->direction = dir;
 
-    if (dir == HTTP_QUEUE_TRANS) {
+    if (dir == HTTP_QUEUE_TX) {
         q->put = stage->outgoingData;
         q->service = stage->outgoingService;
         
@@ -7412,7 +7441,7 @@ static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range);
 static HttpPacket *createFinalRangePacket(HttpConn *conn);
 static void outgoingRangeService(HttpQueue *q);
 static bool fixRangeLength(HttpConn *conn);
-static bool matchRange(HttpConn *conn, HttpStage *handler);
+static bool matchRange(HttpConn *conn, HttpStage *handler, int dir);
 static void startRange(HttpQueue *q);
 
 
@@ -7432,11 +7461,11 @@ int httpOpenRangeFilter(Http *http)
 }
 
 
-static bool matchRange(HttpConn *conn, HttpStage *handler)
+static bool matchRange(HttpConn *conn, HttpStage *handler, int dir)
 {
     mprAssert(conn->rx);
 
-    return (conn->rx->ranges) ? 1 : 0;
+    return ((dir & HTTP_STAGE_TX) && conn->tx->outputRanges) ? 1 : 0;
 }
 
 
@@ -7449,13 +7478,13 @@ static void startRange(HttpQueue *q)
     conn = q->conn;
     tx = conn->tx;
     rx = conn->rx;
-    mprAssert(rx->ranges);
+    mprAssert(tx->outputRanges);
 
     if (tx->status != HTTP_CODE_OK || !fixRangeLength(conn)) {
         httpRemoveQueue(q);
     } else {
         tx->status = HTTP_CODE_PARTIAL;
-        if (rx->ranges->next) {
+        if (tx->outputRanges->next) {
             createRangeBoundary(conn);
         }
     }
@@ -7635,7 +7664,7 @@ static bool fixRangeLength(HttpConn *conn)
     tx = conn->tx;
     length = tx->entityLength ? tx->entityLength : tx->length;
 
-    for (range = rx->ranges; range; range = range->next) {
+    for (range = tx->outputRanges; range; range = range->next) {
         /*
                 Range: 0-49             first 50 bytes
                 Range: 50-99,200-249    Two 50 byte ranges from 50 and 200
@@ -7767,6 +7796,7 @@ HttpRx *httpCreateRx(HttpConn *conn)
     rx->scriptName = mprEmptyString();
     rx->needInputPipeline = !conn->server;
     rx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
+    rx->chunkState = HTTP_CHUNK_START;
     return rx;
 }
 
@@ -7802,7 +7832,6 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->referrer);
         mprMark(rx->userAgent);
         mprMark(rx->formVars);
-        mprMark(rx->ranges);
         mprMark(rx->inputRange);
         mprMark(rx->auth);
         mprMark(rx->authAlgorithm);
@@ -7940,11 +7969,15 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
 
         mprLog(4, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
         httpSetState(conn, HTTP_STATE_PARSED);        
-        httpCreatePipeline(conn, loc, tx->handler);
+        /* Clients have already created their Tx pipeline */
+        httpCreateRxPipeline(conn, loc);
+        httpCreateTxPipeline(conn, loc, tx->handler);
         rx->startAfterContent = (loc->flags & HTTP_LOC_AFTER || ((rx->form || rx->upload) && loc->flags & HTTP_LOC_SMART));
 
+    //  MOB - what happens if server responds to client with other status
     } else if (!(100 <= rx->status && rx->status < 200)) {
         httpSetState(conn, HTTP_STATE_PARSED);        
+        httpCreateRxPipeline(conn, conn->http->clientLocation);
     }
     return 1;
 }
@@ -8606,7 +8639,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
 
     rx = conn->rx;
     tx = conn->tx;
-    q = tx->queue[HTTP_QUEUE_RECEIVE];
+    q = tx->queue[HTTP_QUEUE_RX];
 
     content = packet->content;
     if (rx->flags & HTTP_CHUNKED) {
@@ -8667,7 +8700,7 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     HttpQueue   *q;
 
     rx = conn->rx;
-    q = conn->tx->queue[HTTP_QUEUE_RECEIVE];
+    q = conn->tx->queue[HTTP_QUEUE_RX];
 
     if (conn->connError || rx->remainingContent <= 0) {
         httpSetState(conn, HTTP_STATE_RUNNING);
@@ -8843,7 +8876,9 @@ static ssize getChunkPacketSize(HttpConn *conn, MprBuf *buf)
     default:
         mprAssert(0);
     }
+#if UNUSED
     rx->remainingContent = need;
+#endif
     return need;
 }
 
@@ -8865,8 +8900,8 @@ bool httpContentNotModified(HttpConn *conn)
          */
         modified = (MprTime) tx->fileInfo.mtime * MPR_TICKS_PER_SEC;
         same = httpMatchModified(conn, modified) && httpMatchEtag(conn, tx->etag);
-        if (rx->ranges && !same) {
-            rx->ranges = 0;
+        if (tx->outputRanges && !same) {
+            tx->outputRanges = 0;
         }
         return same;
     }
@@ -9260,10 +9295,12 @@ bool httpMatchModified(HttpConn *conn, MprTime time)
 static bool parseRange(HttpConn *conn, char *value)
 {
     HttpRx      *rx;
+    HttpTx      *tx;
     HttpRange   *range, *last, *next;
     char        *tok, *ep;
 
     rx = conn->rx;
+    tx = conn->tx;
 
     value = sclone(value);
     if (value == 0) {
@@ -9302,7 +9339,7 @@ static bool parseRange(HttpConn *conn, char *value)
             range->len = (int) (range->end - range->start);
         }
         if (last == 0) {
-            rx->ranges = range;
+            tx->outputRanges = range;
         } else {
             last->next = range;
         }
@@ -9312,7 +9349,7 @@ static bool parseRange(HttpConn *conn, char *value)
     /*  
         Validate ranges
      */
-    for (range = rx->ranges; range; range = range->next) {
+    for (range = tx->outputRanges; range; range = range->next) {
         if (range->end != -1 && range->start >= range->end) {
             return 0;
         }
@@ -9333,7 +9370,7 @@ static bool parseRange(HttpConn *conn, char *value)
             }
         }
     }
-    conn->tx->currentRange = rx->ranges;
+    conn->tx->currentRange = tx->outputRanges;
     return (last) ? 1: 0;
 }
 
@@ -10793,8 +10830,8 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers)
     tx->traceMethods = HTTP_STAGE_ALL;
     tx->chunkSize = -1;
 
-    tx->queue[HTTP_QUEUE_TRANS] = httpCreateQueueHead(conn, "TxHead");
-    tx->queue[HTTP_QUEUE_RECEIVE] = httpCreateQueueHead(conn, "RxHead");
+    tx->queue[HTTP_QUEUE_TX] = httpCreateQueueHead(conn, "TxHead");
+    tx->queue[HTTP_QUEUE_RX] = httpCreateQueueHead(conn, "RxHead");
 
     if (headers) {
         tx->headers = headers;
@@ -10829,6 +10866,7 @@ static void manageTx(HttpTx *tx, int flags)
         mprMark(tx->queue[0]);
         mprMark(tx->queue[1]);
         mprMark(tx->parsedUri);
+        mprMark(tx->outputRanges);
         mprMark(tx->currentRange);
         mprMark(tx->headers);
         mprMark(tx->rangeBoundary);
@@ -11073,7 +11111,7 @@ void *httpGetQueueData(HttpConn *conn)
 {
     HttpQueue     *q;
 
-    q = conn->tx->queue[HTTP_QUEUE_TRANS];
+    q = conn->tx->queue[HTTP_QUEUE_TX];
     return q->nextQ->queueData;
 }
 
@@ -11294,9 +11332,9 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     } else if (tx->length > 0 || conn->server) {
         httpAddHeader(conn, "Content-Length", "%Ld", tx->length);
     }
-    if (rx->ranges) {
-        if (rx->ranges->next == 0) {
-            range = rx->ranges;
+    if (tx->outputRanges) {
+        if (tx->outputRanges->next == 0) {
+            range = tx->outputRanges;
             if (tx->entityLength > 0) {
                 httpSetHeader(conn, "Content-Range", "bytes %Ld-%Ld/%Ld", range->start, range->end, tx->entityLength);
             } else {
@@ -11325,7 +11363,7 @@ void httpSetEntityLength(HttpConn *conn, int64 len)
 
     tx = conn->tx;
     tx->entityLength = len;
-    if (conn->rx->ranges == 0) {
+    if (tx->outputRanges == 0) {
         tx->length = len;
     }
 }
@@ -11426,7 +11464,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     }
     if (tx->altBody) {
         mprPutStringToBuf(buf, tx->altBody);
-        httpDiscardData(tx->queue[HTTP_QUEUE_TRANS]->nextQ, 0);
+        httpDiscardData(tx->queue[HTTP_QUEUE_TX]->nextQ, 0);
     }
     tx->headerSize = mprGetBufLength(buf);
     tx->flags |= HTTP_TX_HEADERS_CREATED;
@@ -11521,7 +11559,7 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
 static void incomingUploadData(HttpQueue *q, HttpPacket *packet);
 static void manageHttpUploadFile(HttpUploadFile *file, int flags);
 static void manageUpload(Upload *up, int flags);
-static bool matchUpload(HttpConn *conn, HttpStage *filter);
+static bool matchUpload(HttpConn *conn, HttpStage *filter, int dir);
 static void openUpload(HttpQueue *q);
 static int  processContentBoundary(HttpQueue *q, char *line);
 static int  processContentHeader(HttpQueue *q, char *line);
@@ -11547,12 +11585,15 @@ int httpOpenUploadFilter(Http *http)
 /*  
     Match if this request needs the upload filter. Return true if needed.
  */
-static bool matchUpload(HttpConn *conn, HttpStage *filter)
+static bool matchUpload(HttpConn *conn, HttpStage *filter, int dir)
 {
     HttpRx  *rx;
     char    *pat;
     ssize   len;
     
+    if (!(dir & HTTP_STAGE_RX)) {
+        return 0;
+    }
     rx = conn->rx;
     if (!(rx->flags & HTTP_POST) || rx->remainingContent <= 0) {
         return 0;
