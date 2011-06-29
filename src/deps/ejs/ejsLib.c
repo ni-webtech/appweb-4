@@ -15727,8 +15727,8 @@ static EjsPath *pa_map(Ejs *ejs, EjsPath *fp, int argc, EjsObj **argv)
     char    *path;
     int     separator;
 
-    sep = ejsToMulti(ejs, argv[0]);
-    separator = *sep ? *sep : '/';
+    sep = (argc >= 1) ? ejsToMulti(ejs, argv[0]) : "/";
+    separator = *sep;
     path = sclone(fp->value);
     mprMapSeparators(path, separator);
     return ejsCreatePathFromAsc(ejs, path);
@@ -36499,6 +36499,7 @@ static void manageEjs(Ejs *ejs, int flags)
         mprMark(ejs->dispatcher);
         mprMark(ejs->httpServers);
         mprMark(ejs->workers);
+        mprMark(ejs->hostedHome);
 
         for (next = 0; (mp = mprGetNextItem(ejs->modules, &next)) != 0;) {
             if (!mp->initialized) {
@@ -36550,7 +36551,7 @@ static void managePool(EjsPool *pool, int flags)
 }
 
 
-EjsPool *ejsCreatePool(int poolMax, cchar *templateScript, cchar *startScript, cchar *startScriptPath)
+EjsPool *ejsCreatePool(int poolMax, cchar *templateScript, cchar *startScript, cchar *startScriptPath, char *home)
 {
     EjsPool     *pool;
 
@@ -36571,6 +36572,9 @@ EjsPool *ejsCreatePool(int poolMax, cchar *templateScript, cchar *startScript, c
     if (startScriptPath) {
         pool->startScriptPath = sclone(startScriptPath);
     }
+    if (home) {
+        pool->hostedHome = sclone(home);
+    }
     return pool;
 }
 
@@ -36590,6 +36594,9 @@ Ejs *ejsAllocPoolVM(EjsPool *pool, int flags)
         }
         lock(pool);
         if (pool->template == 0) {
+            /*
+                Create the pool template VM
+             */
             if ((pool->template = ejsCreateVM(0, 0, flags)) == 0) {
                 unlock(pool);
                 return 0;
@@ -36615,6 +36622,9 @@ Ejs *ejsAllocPoolVM(EjsPool *pool, int flags)
         if ((ejs = ejsCloneVM(pool->template)) == 0) {
             mprMemoryError("Can't alloc ejs VM");
             return 0;
+        }
+        if (pool->hostedHome) {
+            ejs->hostedHome = pool->hostedHome;
         }
         mprAddRoot(ejs);
         if (pool->startScriptPath) {
@@ -38313,6 +38323,15 @@ static EjsObj *hs_set_async(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv
 
 
 /*  
+    function get hostedHome(): Path
+ */
+static EjsPath *hs_hostedHome(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
+{
+    return ejsCreatePathFromAsc(ejs, ejs->hostedHome);
+}
+
+
+/*  
     function close(): Void
  */
 static EjsObj *hs_close(Ejs *ejs, EjsHttpServer *sp, int argc, EjsObj **argv)
@@ -39149,6 +39168,7 @@ void ejsConfigureHttpServerType(Ejs *ejs)
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_accept, hs_accept);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_address, hs_address);
     ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_async, hs_async, hs_set_async);
+    ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_hostedHome, hs_hostedHome);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_close, hs_close);
     ejsBindMethod(ejs, prototype, ES_ejs_web_HttpServer_limits, hs_limits);
     ejsBindAccess(ejs, prototype, ES_ejs_web_HttpServer_hosted, hs_hosted, hs_set_hosted);

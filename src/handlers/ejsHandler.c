@@ -33,7 +33,7 @@ static void openEjs(HttpQueue *q)
     HttpLoc     *loc;
     Ejs         *ejs;
     EjsPool     *pool;
-    char        *poolScript, *uri;
+    char        *uri;
     
     conn = q->conn;
     rx = conn->rx;
@@ -49,9 +49,12 @@ static void openEjs(HttpQueue *q)
             if (loc->workers < 0) {
                 loc->workers = mprGetMaxWorkers();
             }
+#if UNUSED
+            filename = mprGetPortablePath(alias->filename);
             poolScript = sfmt("require ejs.web; global.ejs::HttpServerHome = '%s'; global.ejs::HttpServerDocuments = '%s';",
                 alias->filename, alias->filename);
-            loc->context = ejsCreatePool(loc->workers, poolScript, loc->script, loc->scriptPath);
+#endif
+            loc->context = ejsCreatePool(loc->workers, "require ejs.web", loc->script, loc->scriptPath, alias->filename);
             mprLog(5, "ejs: Demand load Ejscript web framework");
         }
         //  MOB - remove conn->pool and store in ejs->pool

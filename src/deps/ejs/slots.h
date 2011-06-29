@@ -2800,37 +2800,38 @@
 #define ES_ejs_web_HttpServer_async                                    4
 #define ES_ejs_web_HttpServer_config                                   5
 #define ES_ejs_web_HttpServer_documents                                6
-#define ES_ejs_web_HttpServer_isSecure                                 7
-#define ES_ejs_web_HttpServer_hosted                                   8
-#define ES_ejs_web_HttpServer_limits                                   9
-#define ES_ejs_web_HttpServer_name                                     10
-#define ES_ejs_web_HttpServer_options                                  11
-#define ES_ejs_web_HttpServer_port                                     12
-#define ES_ejs_web_HttpServer_onrequest                                13
-#define ES_ejs_web_HttpServer_defaultOnRequest                         14
-#define ES_ejs_web_HttpServer_home                                     15
-#define ES_ejs_web_HttpServer_software                                 16
-#define ES_ejs_web_HttpServer_openSession                              17
-#define ES_ejs_web_HttpServer_accept                                   18
-#define ES_ejs_web_HttpServer_close                                    19
-#define ES_ejs_web_HttpServer_getWorker                                20
-#define ES_ejs_web_HttpServer_listen                                   21
-#define ES_ejs_web_HttpServer_off                                      22
-#define ES_ejs_web_HttpServer_on                                       23
-#define ES_ejs_web_HttpServer_passRequest                              24
-#define ES_ejs_web_HttpServer_process                                  25
-#define ES_ejs_web_HttpServer_processBody                              26
-#define ES_ejs_web_HttpServer_pruneWorkers                             27
-#define ES_ejs_web_HttpServer_releaseWorker                            28
-#define ES_ejs_web_HttpServer_run                                      29
-#define ES_ejs_web_HttpServer_secure                                   30
-#define ES_ejs_web_HttpServer_serve                                    31
-#define ES_ejs_web_HttpServer_setPipeline                              32
-#define ES_ejs_web_HttpServer_setLimits                                33
-#define ES_ejs_web_HttpServer_setWorkerImage                           34
-#define ES_ejs_web_HttpServer_trace                                    35
-#define ES_ejs_web_HttpServer_verifyClients                            36
-#define ES_ejs_web_HttpServer_NUM_INSTANCE_PROP                        37
+#define ES_ejs_web_HttpServer_hostedHome                               7
+#define ES_ejs_web_HttpServer_isSecure                                 8
+#define ES_ejs_web_HttpServer_hosted                                   9
+#define ES_ejs_web_HttpServer_limits                                   10
+#define ES_ejs_web_HttpServer_name                                     11
+#define ES_ejs_web_HttpServer_options                                  12
+#define ES_ejs_web_HttpServer_port                                     13
+#define ES_ejs_web_HttpServer_onrequest                                14
+#define ES_ejs_web_HttpServer_defaultOnRequest                         15
+#define ES_ejs_web_HttpServer_home                                     16
+#define ES_ejs_web_HttpServer_software                                 17
+#define ES_ejs_web_HttpServer_openSession                              18
+#define ES_ejs_web_HttpServer_accept                                   19
+#define ES_ejs_web_HttpServer_close                                    20
+#define ES_ejs_web_HttpServer_getWorker                                21
+#define ES_ejs_web_HttpServer_listen                                   22
+#define ES_ejs_web_HttpServer_off                                      23
+#define ES_ejs_web_HttpServer_on                                       24
+#define ES_ejs_web_HttpServer_passRequest                              25
+#define ES_ejs_web_HttpServer_process                                  26
+#define ES_ejs_web_HttpServer_processBody                              27
+#define ES_ejs_web_HttpServer_pruneWorkers                             28
+#define ES_ejs_web_HttpServer_releaseWorker                            29
+#define ES_ejs_web_HttpServer_run                                      30
+#define ES_ejs_web_HttpServer_secure                                   31
+#define ES_ejs_web_HttpServer_serve                                    32
+#define ES_ejs_web_HttpServer_setPipeline                              33
+#define ES_ejs_web_HttpServer_setLimits                                34
+#define ES_ejs_web_HttpServer_setWorkerImage                           35
+#define ES_ejs_web_HttpServer_trace                                    36
+#define ES_ejs_web_HttpServer_verifyClients                            37
+#define ES_ejs_web_HttpServer_NUM_INSTANCE_PROP                        38
 #define ES_ejs_web_HttpServer_NUM_INHERITED_PROP                       0
 
 /*
@@ -3182,7 +3183,7 @@
 #define ES_ejs_web_View_plainFormatter_value                           1
 #define ES_ejs_web_View_plainFormatter_options                         2
 
-#define _ES_CHECKSUM_ejs_web   831510
+#define _ES_CHECKSUM_ejs_web   832981
 
 #endif
 /************************************************************************/

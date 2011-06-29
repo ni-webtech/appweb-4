@@ -1176,6 +1176,7 @@ typedef struct Ejs {
     cchar               *methodName;        /**< Name of a specific method to run for a program */
     char                *errorMsg;          /**< Error message */
     cchar               **argv;             /**< Command line args */
+    char                *hostedHome;        /**< Home directory for hosted HttpServer */
     int                 argc;               /**< Count of command line args */
     int                 flags;              /**< Execution flags */
     int                 exitStatus;         /**< Status to exit() */
@@ -1227,10 +1228,12 @@ typedef struct EjsPool {
     char        *templateScript;            /**< Template initialization script filename */
     char        *startScript;               /**< Template initialization literal script */
     char        *startScriptPath;           /**< Template initialization script filename */
+    char        *hostedHome;                /**< Home directory for hosted HttpServer */
 } EjsPool;
 
 
-extern EjsPool *ejsCreatePool(int poolMax, cchar *templateScriptPath, cchar *startScript, cchar *startScriptPath);
+extern EjsPool *ejsCreatePool(int poolMax, cchar *templateScriptPath, cchar *startScript, cchar *startScriptPath, 
+        char *home);
 extern Ejs *ejsAllocPoolVM(EjsPool *pool, int flags);
 extern void ejsFreePoolVM(EjsPool *pool, Ejs *ejs);
 
