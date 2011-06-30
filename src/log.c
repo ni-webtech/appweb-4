@@ -62,7 +62,7 @@ static void logHandler(int flags, int level, cchar *msg)
 
 
 /*
-    Start error and information logging. Note: this is not per-request access logging
+    Start error and information logging. Note: this is not per-request access logging.
  */
 int maStartLogging(HttpHost *host, cchar *logSpec)
 {
