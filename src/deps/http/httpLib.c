@@ -4198,12 +4198,13 @@ HttpLoc *httpInitLocation(Http *http, int serverSide)
         Create default incoming and outgoing pipelines. Order matters.
      */
     loc = httpCreateLocation();
+    if (serverSide) {
+        httpAddFilter(loc, http->authFilter->name, NULL, HTTP_STAGE_RX);
+    }
     httpAddFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
-    httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_TX);
-    httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_RX);
+    httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
     if (serverSide) {
         httpAddFilter(loc, http->uploadFilter->name, NULL, HTTP_STAGE_RX);
-        httpAddFilter(loc, http->authFilter->name, NULL, HTTP_STAGE_RX);
     }
     loc->connector = http->netConnector;
     return loc;

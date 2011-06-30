@@ -4765,7 +4765,7 @@ module ejs {
             @param items The data argument can be ByteArrays, strings or Numbers. All other types will call serialize
             first before writing. Note that numbers will not be written in a cross platform manner. If that is required, use
             the BinaryStream class to control the byte ordering when writing numbers.
-            @returns the number of bytes written.  
+            @returns the number of bytes written.
             @throws IOError if the file could not be written.
          */
         native function write(...items): Number
@@ -7658,6 +7658,8 @@ module ejs {
                 location = location.toString()
                 let [path, lev] = location.split(":")
                 _level = lev || level || this._level
+                /* Redirect the MPR logger */
+                App.logFile.redirect(path, level)
                 let stream
                 if (path == "stdout") {
                     stream = App.outputStream
@@ -7831,11 +7833,15 @@ module ejs {
         }
 
         /** 
-            Write messages to the logger stream.
+            Write messages to the logger stream. NOTE: for the Logger class, I/O errors will not throw exceptions. 
             @duplicate Stream.write
          */
-        function write(...data): Number
-            (_outStream) ? _outStream.write(data.join(" ")) : 0
+        function write(...data): Number {
+            try {
+                return (_outStream) ? _outStream.write(data.join(" ")) : 0
+            } catch {}
+            return 0
+        }
 
         /** 
             Emit a warning message.
@@ -7867,9 +7873,9 @@ module ejs {
             if (_outStream is Logger) {
                 _outStream.emit(origin, level, kind, msg)
             } else if (kind) {
-                _outStream.write(origin + ": " + kind + ": " + msg)
+                write(origin + ": " + kind + ": " + msg)
             } else {
-                _outStream.write(origin + ": " + level + ": " + msg)
+                write(origin + ": " + level + ": " + msg)
             }
         }
     }
@@ -17120,7 +17126,7 @@ module ejs.web {
                         options.mode != "manual") {
                     let hdr
                     if ((hdr = request.header("Cache-Control")) && (hdr.contains("max-age=0") || hdr.contains("no-cache"))) {
-                        App.log.debug(0, "Cache-control header rejects use of cached content")
+                        App.log.debug(5, "Cache-control header rejects use of cached content")
                     } else {
                         let item = App.cache.readObj(cacheName)
                         if (item) {
@@ -17150,15 +17156,15 @@ module ejs.web {
                             setHeader("Etag", md5(cacheName))
                             if (status == Http.Ok) {
                                 //  MOB - change this trace to just use "actionName"
-                                App.log.debug(0, "Use cached: " + cacheName)
+                                App.log.debug(5, "Use cached: " + cacheName)
                                 write(item.data)
                                 // MOB request.finalize()
                             } else {
-                                App.log.debug(0, "Use cached content, status: " + status + ", " + cacheName)
+                                App.log.debug(5, "Use cached content, status: " + status + ", " + cacheName)
                             }
                             return {status: status}
                         }
-                        App.log.debug(0, "No cached content for: " + cacheName)
+                        App.log.debug(5, "No cached content for: " + cacheName)
                     }
                     request.writeBuffer = new ByteArray
                     setHeader("Etag", md5(cacheName))
@@ -17187,7 +17193,7 @@ module ejs.web {
             if ((!options.uri || options.uri == "*" || cacheName == options.uri)) {
                 let item
                 if (item = App.cache.readObj(cacheName)) {
-                    App.log.debug(0, "Use cached: " + cacheName)
+                    App.log.debug(5, "Use cached: " + cacheName)
                     setHeader("Etag", md5(cacheName))
                     setHeader("Last-Modified", Date(item.modified).toUTCString())
                     if (options.client) {
@@ -17199,7 +17205,7 @@ module ejs.web {
                     return true
                 }
             }
-            App.log.debug(0, "no cached: " + cacheName)
+            App.log.debug(5, "no cached: " + cacheName)
             return false
         }
 
@@ -17215,7 +17221,7 @@ module ejs.web {
                     let cacheName = getCacheName(cacheIndex, options)
                     let etag = md5(cacheName)
                     App.cache.writeObj(cacheName, { tag: etag, modified: Date.now(), data: request.writeBuffer}, options)
-                    App.log.debug(0, "Cache action " + cacheName + ", " + request.writeBuffer.available + " bytes")
+                    App.log.debug(5, "Cache action " + cacheName + ", " + request.writeBuffer.available + " bytes")
                 }
             }
             let data = request.writeBuffer
@@ -19348,7 +19354,6 @@ server.listen("127.0.0.1:7777")
             }
             if (hosted) {
                 let path = hostedHome
-    print("HOSTED PATH " + path)
                 documents = options.documents || path
                 home = options.home || path
             } else {
@@ -19357,10 +19362,8 @@ server.listen("127.0.0.1:7777")
             }
             config = options.config || App.config
             this.options = options
-            if (options.ejsrc) {
-                config.ejsrc = options.ejsrc
-            }
-            if (config.files.ejsrc && config.files.ejsrc.exists) {
+            let ejsrc = options.ejsrc || config.files.ejsrc
+            if (ejsrc.exists && !App.config.files.ejsrc.same(ejsrc)) {
                 blend(config, Path(config.files.ejsrc).readJSON())
                 App.updateLog()
             } else if (home != ".") {
@@ -19686,7 +19689,7 @@ let mark = new Date
                     }
                     request.on("close", function() {
                         releaseWorker(w) 
-                        App.log.debug(2, "Elapsed " + request.mark.elapsed + " msec for " + request.uri)
+                        App.log.debug(3, "Elapsed " + request.mark.elapsed + " msec for " + request.uri)
                     })
                     passRequest(request, w)
                     /* Must not touch request from here on - the worker owns it now */
@@ -19694,7 +19697,7 @@ let mark = new Date
                     //  MOB - rename response => responder
                     let mark = new Date
                     process(route.response, request)
-                    App.log.debug(2, "Elapsed " + mark.elapsed + " msec for " + request.uri)
+                    App.log.debug(3, "Elapsed " + mark.elapsed + " msec for " + request.uri)
                 }
             } catch (e) {
                 let status = request.status != Http.Ok ? request.status : Http.ServerError
@@ -20065,7 +20068,7 @@ module ejs.web {
 
                 /* Load App. Touch ejsrc triggers a complete reload */
                 let files, deps
-                if (config.app.reload) {
+                if (config.cache.app.reload) {
                     let dirs = config.dirs
                     let ext = config.extensions
                     deps = [dir.join(EJSRC)]
@@ -20116,7 +20119,7 @@ module ejs.web {
 
                 /* Load App. Touch ejsrc triggers a complete reload */
                 let files, deps
-                if (config.app.reload) {
+                if (config.cache.app.reload) {
                     deps = [dir.join(EJSRC)]
                     files = dirs.models.find("*" + ext.es)
                     files += dirs.src.find("*" + ext.es)
@@ -20132,7 +20135,7 @@ module ejs.web {
                 let controller = params.controller = params.controller.toPascal()
                 let mod = dirs.cache.join(controller).joinExt(ext.mod)
                 if (controller != "Base") {
-                    if (!global[controller + "Controller"] && mod.exists && !config.app.reload) {
+                    if (!global[controller + "Controller"] && mod.exists && !config.cache.app.reload) {
                         loadComponent(request, mod)
                     } else {
                         files = [dirs.controllers.join(controller).joinExt(ext.es)]
@@ -20153,7 +20156,7 @@ module ejs.web {
          */
         public function loadComponent(request: Request, mod: Path, files: Array? = null, deps: Array? = null) {
             let rebuild = false
-            if (mod.exists && request.config.app.reload) {
+            if (mod.exists && request.config.cache.app.reload) {
                 let when = mod.modified
                 for each (file in (files + deps)) {
                     if (file.exists && file.modified > when) {

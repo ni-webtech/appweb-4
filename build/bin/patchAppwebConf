@@ -92,7 +92,7 @@ editAppwebConf()
 
     if [ -f "$doc" ] ; then
         sed -e "
-            s![ 	][ 	]*Alias /doc/.*!    Alias /doc/ \"${docPrefix}\/\"!" <"$doc" >"$doc.new"
+            s!Alias /doc/.*!Alias /doc/ \"${docPrefix}\/\"!" <"$doc" >"$doc.new"
         [ $? = 0 ] && mv "$doc.new" "$doc"
     fi
 

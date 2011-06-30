@@ -170,6 +170,7 @@ MAIN(ejsMain, int argc, char **argv)
                 err++;
             } else {
                 ejsRedirectLogging(argv[++nextArg]);
+                mprSetCmdlineLogging(1);
             }
 
         } else if (strcmp(argp, "--method") == 0) {
@@ -232,6 +233,7 @@ MAIN(ejsMain, int argc, char **argv)
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
             ejsRedirectLogging("stderr:2");
+            mprSetCmdlineLogging(1);
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintfError("%s %s-%s\n", BLD_NAME, BLD_VERSION, BLD_NUMBER);

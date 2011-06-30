@@ -12485,7 +12485,6 @@ static EjsFile *lf_redirect(Ejs *ejs, EjsObj *unused, int argc, EjsObj **argv)
 
     logSpec = ejsToMulti(ejs, argv[0]);
     level = (argc >= 2) ? ejsGetInt(ejs, argv[1]) : -1;
-
     ejsRedirectLogging(logSpec);
     if (level >= 0) {
         mprSetLogLevel(level);
@@ -37234,6 +37233,7 @@ static void logHandler(int flags, int level, cchar *msg)
     solo = 0;
 }
 
+
 int ejsRedirectLogging(cchar *logSpec)
 {
     MprFile     *file;
@@ -37243,8 +37243,6 @@ int ejsRedirectLogging(cchar *logSpec)
     level = 0;
     if (logSpec == 0) {
         logSpec = "stderr:1";
-    } else {
-        mprSetCmdlineLogging(1);
     }
     spec = sclone(logSpec);
 
@@ -37259,6 +37257,7 @@ int ejsRedirectLogging(cchar *logSpec)
         file = MPR->fileSystem->stdError;
 
     } else {
+        //  TODO - should provide some means to append to the log
         if ((file = mprOpenFile(spec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
             mprPrintfError("Can't open log file %s\n", spec);
             return EJS_ERR;

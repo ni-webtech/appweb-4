@@ -63,7 +63,7 @@ $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(cal
 #
 #	Patch the appweb.conf configuration file based on the configure --config=dir setting
 #
-appweb.conf: $(BLD_INC_DIR)/buildConfig.h
+appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile
 	$(call log) "[Patch]" "appweb.conf"
 	(dir=`pwd` ; cd $(BLD_FEATURE_CONFIG) ; find . -type f | \
 		egrep -v 'CVS/|RCS/|SCCS/|.svn/' | cpio -pdum $$dir >/dev/null 2>&1)

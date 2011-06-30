@@ -29,7 +29,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
     HttpServer      *server;
     HttpHost        *host;
     HttpAlias       *alias;
-    HttpLoc         *loc;
+    HttpLoc         *loc, *cloc;
     char            *path, *searchPath, *dir;
 
     appweb = meta->appweb;
@@ -61,13 +61,21 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
             mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_MOD_PREFIX: BLD_ABS_MOD_DIR);
 #endif
         mprSetModuleSearchPath(searchPath);
+
+#if UNUSED
         httpSetConnector(loc, "netConnector");
-        /*  
+
+        /*
             Auth must be added first to authorize all requests. File is last as a catch all.
          */
         if (httpLookupStage(http, "authFilter")) {
             httpAddHandler(loc, "authFilter", "");
+            httpAddFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
+            httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
+            httpAddFilter(loc, "uploadFilter", NULL, HTTP_STAGE_RX);
+            httpAddFilter(loc, "authFilter", NULL, HTTP_STAGE_RX);
         }
+#endif
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
             httpAddHandler(loc, "cgiHandler", ".cgi .cgi-nph .bat .cmd .pl .py");
@@ -79,10 +87,10 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
                 alias = httpCreateAlias("/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
                 httpAddAlias(host, alias);
-                loc = httpCreateInheritedLocation(host->loc);
-                httpSetLocationPrefix(loc, "/cgi-bin/");
-                httpSetHandler(loc, "cgiHandler");
-                httpAddLocation(host, loc);
+                cloc = httpCreateInheritedLocation(host->loc);
+                httpSetLocationPrefix(cloc, "/cgi-bin/");
+                httpSetHandler(cloc, "cgiHandler");
+                httpAddLocation(host, cloc);
             }
         }
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
@@ -790,14 +798,11 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                     mprLog(4, "Already logging. Ignoring ErrorLog directive");
                 } else {
                     maStopLogging(meta);
-                    if (strncmp(path, "stdout", 6) != 0) {
+                    if (strncmp(path, "stdout", 6) != 0 && !strncmp(path, "stderr", 6) != 0) {
                         path = httpMakePath(host, path);
-                        rc = maStartLogging(host, path);
-                    } else {
-                        rc = maStartLogging(host, path);
                     }
-                    if (rc < 0) {
-                        mprError("Can't write to ErrorLog");
+                    if (maStartLogging(host, path) < 0) {
+                        mprError("Can't write to ErrorLog: %s", path);
                         return MPR_ERR_BAD_SYNTAX;
                     }
                 }

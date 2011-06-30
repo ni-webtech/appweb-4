@@ -4993,7 +4993,14 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
             mprError("Error waiting CGI I/O, error %d", mprGetOsError());
         }
     }
-    return;
+}
+
+
+static void waitThread(MprCmd *cmd, MprThread *thread)
+{
+    while (cmd->process || cmd->eofCount < cmd->requiredEof) {
+        waitForWinEvent(cmd, cmd->timeoutPeriod);
+    }
 }
 #endif
 
@@ -5491,6 +5498,10 @@ static int startProcess(MprCmd *cmd)
     cmd->thread = procInfo.hThread;
     cmd->process = procInfo.hProcess;
     cmd->pid = procInfo.dwProcessId;
+    if ((cmd->waiter = mprCreateThread("cmdWaiter", waitThread, NULL, 0)) == 0) {
+        mprError("Can't create wait thread for cmd: %s, %d", cmd->program, mprGetOsError());
+        return MPR_ERR_CANT_CREATE;
+    }
     return 0;
 }
 
@@ -8841,8 +8852,10 @@ static void manageEvent(MprEvent *event, int flags)
         mprMark(event->name);
         mprMark(event->dispatcher);
         mprMark(event->handler);
+#if UNUSED
         mprMark(event->next);
         mprMark(event->prev);
+#endif
         if (!(event->flags & MPR_EVENT_STATIC_DATA)) {
             mprMark(event->data);
         }

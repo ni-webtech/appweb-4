@@ -78,8 +78,6 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
 
     if (logSpec == 0) {
         logSpec = "stderr:0";
-    } else {
-        mprSetCmdlineLogging(1);
     }
     if (*logSpec && strcmp(logSpec, "none") != 0) {
         spec = sclone(logSpec);
@@ -102,9 +100,8 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
             } else {
                 mode |= O_TRUNC;
             }
-            //  MOB - is this buffered
             if ((file = mprOpenFile(spec, mode, 0664)) == 0) {
-                mprPrintfError("Can't open log file %s\n", spec);
+                mprError("Can't open log file %s", spec);
                 return -1;
             }
             once = 0;
@@ -112,13 +109,7 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
         mprSetLogLevel(level);
         mprSetLogHandler(logHandler);
         mprSetLogFile(file);
-#if FUTURE && !BLD_WIN_LIKE
-        /*
-            TODO - The currently breaks MprCmd as it will close stderr.
-         */
-        dup2(file->fd, 1);
-        dup2(file->fd, 2);
-#endif
+
         if (once++ == 0) {
             mprLog(MPR_CONFIG, "Configuration for %s", mprGetAppTitle(mpr));
             mprLog(MPR_CONFIG, "---------------------------------------------");
