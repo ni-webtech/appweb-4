@@ -109,15 +109,15 @@ module ejs {
         /** 
             Application logger. This singleton object respresents the Application default logger.
             If the ejsrc startup configuration file defines a log.location field, the log logger will send messages to
-            the defined location. Otherwise, messages will be sent to the LogFile stream. 
+            the defined location. Otherwise, messages will be sent to the MprLog stream. 
          */
         public static var log: Logger
 
         /** 
-            Application LogFile object. This singleton object represents the Application log file specified via the
+            Application MPR log object. This singleton object represents the Application log file specified via the
             --log command line switch.
          */
-        public static var logFile: LogFile
+        public static var mprLog: MprLog
 
         /** 
             Application name. Single word, lower-case name for the application. This is initialized to the name of
@@ -359,12 +359,13 @@ module ejs {
 
         /**
             Redirect the Application's logger based on the App.config.log setting
-            Ignored if app is invoked with --log
+            Ignored if app is invoked with --log on the command line.
          */
         static function updateLog(): Void {
             let log = config.log
-            if (!App.logFile.logging && log && log.enable) {
+            if (log && log.enable && !App.mprLog.cmdline) {
                 App.log.redirect(log.location, log.level)
+                App.mprLog.redirect(log.location, log.level)
             }
         }
 
@@ -394,7 +395,7 @@ module ejs {
         App.name = App.args[0] || Config.Product
         App.title = App.args[0] || Config.Title
         App.version = Config.Version
-        App.logFile = new LogFile
+        App.mprLog = new MprLog
 
         /*  
             Load ~/.ejsrc and ejsrc
@@ -414,10 +415,11 @@ module ejs {
         let log = config.log
         let stream
         if (log.enable) {
-            if (App.logFile.logging) {
-                /* App invoked with a --log switch */
-                log.level = App.logFile.level
-                stream = App.logFile;
+/* UNUSED
+            if (App.mprLog.cmdline) {
+                // App invoked with a --log switch
+                log.level = App.mprLog.level
+                stream = App.mprLog;
             } else if (log.location == "stdout") {
                 stream = App.outputStream
             } else if (log.location == "stderr") {
@@ -425,7 +427,17 @@ module ejs {
             } else {
                 stream = File(log.location, "w")
             }
-            App.log = new Logger(App.name, stream, log.level)
+UNUSED */
+            let level = log.level
+            let location = log.location
+            if (App.mprLog.cmdline) {
+                /* App invoked with a --log switch */
+                level = App.mprLog.level
+                location = App.mprLog;
+            } else {
+                App.mprLog.redirect(location, level)
+            }
+            App.log = new Logger(App.name, location, log.level)
             if (log.match) {
                 App.log.match = log.match
             }
@@ -4671,7 +4683,8 @@ module ejs {
             @options mode optional file access mode string. Use "r" for read, "w" for write, "a" for append to existing
                 content, "c" to create the file if it does not exist, "l" to gain an exclusive lock, "s" for a shared lock,
                 "t" for text mode, and "+" to never truncate. Defaults to "r". NOTE: not all platforms support "l" and "s".
-                If "w" is specified and the file does not exist, it will be created. 
+                If "w" is specified and the file does not exist, it will be created. If "+" is not specified, the file
+                    will be truncated when opened, unless "a" is specified to append to existing content.
                 If "c" is specified and the file exists, the open will fail.
             @options permissions Number containing the Posix permissions number value. Note: this is a number
                 and not a string representation of an octal posix number.
@@ -7439,117 +7452,6 @@ module ejs {
 
 /************************************************************************/
 /*
- *  Start of file "../../src/core/LogFile.es"
- */
-/************************************************************************/
-
-/*
-    LogFile.es - Application Log File class
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-module ejs {
-
-    /** 
-        The LogFile class manages the Application's log mechanism. If the Application was started with a 
-        "--log" command line switch, the application will write log messages to the specified file, otherwise 
-        messages will be sent to the standard error console. The Application will have a single instance of the 
-        LogFile class created and stored in the App.logFile property.
-
-        The Logger class can be used to create higher level logging filters and aggregators and use the LogFile as the
-        final output stream.
-
-        @spec ejs
-        @stability prototype
-     */
-    class LogFile implements Stream {
-
-        use default namespace public
-
-        /** 
-            Sync/async mode. Not supported.
-            @hide
-         */
-        function get async(): Boolean
-            false
-
-        function set async(enable: Boolean): Void {
-            throw "Async mode not supported"
-        }
-
-        /** 
-            Close the LogFile and stop logging
-            @hide
-         */
-        function close(): Void {}
-
-        /**
-            Is the Application is using logging. ie. Has been invoked with a --log switch.
-         */
-        native function get logging(): Boolean
-
-        /** 
-            Emit messages to the LogFile stream at a given level
-            @param level Verbosity level at which to emit the message (0-9).
-            @param data Data messages to emit
-         */
-        native function emit(level: Number, ...data): Number
-
-        /**
-            @hide
-         */
-        function flush(dir: Number = Stream.BOTH): Void { }
-
-        /** 
-            The numeric verbosity setting (0-9) of this LogFile. Zero is least verbose, nine is the most verbose.
-            Messages with a lower (or equal) verbosity level than the LogFile's level are emitted.
-            WARNING: Changing the logging verbosity level will affect logging for all interpreters.
-         */
-        native function get level(): Number
-        native function set level(level: Number): void 
-
-        /** @hide */
-        function off(name, observer: Function): Void {
-            throw "off is not supported"
-        }
-
-        /** @hide */
-        function on(name, observer: Function): Void {
-            throw "on is not supported"
-        }
-
-        /** @hide */
-        function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number  {
-            throw "Read not supported"
-            return null
-        }
-
-        /** 
-            Redirect log output. WARNING: Redirecting the logging output will redirect messages for all interpreters.
-            @param location Output location to send messages to.
-            @param level Verbosity level for logging. 
-         */
-        native function redirect(location: String, level: Number = null): Void
-
-        /** 
-            Write messages to the LogFile stream at level 0
-            @duplicate Stream.write
-         */
-        function write(...data): Number
-            emit(0, ...data)
-    }
-}
-/************************************************************************/
-/*
- *  End of file "../../src/core/LogFile.es"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "../../src/core/Logger.es"
  */
 /************************************************************************/
@@ -7658,8 +7560,6 @@ module ejs {
                 location = location.toString()
                 let [path, lev] = location.split(":")
                 _level = lev || level || this._level
-                /* Redirect the MPR logger */
-                App.logFile.redirect(path, level)
                 let stream
                 if (path == "stdout") {
                     stream = App.outputStream
@@ -8265,6 +8165,119 @@ module ejs {
 /************************************************************************/
 /*
  *  End of file "../../src/core/Memory.es"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "../../src/core/MprLog.es"
+ */
+/************************************************************************/
+
+/*
+    MprLog.es - Application Log File class
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+module ejs {
+
+    /** 
+        The MprLog class manages the Application's internal MPR log mechanism. If the Application was started with a 
+        "--log" command line switch, the application will write log messages to the specified file, otherwise 
+        messages will be sent to the standard error console. The Application will have a single instance of the 
+        MprLog class created and stored in the App.mprLog property.
+
+        The Logger class can be used to create higher level logging filters and aggregators and use the MprLog as the
+        final output stream.
+
+        @spec ejs
+        @stability prototype
+     */
+    class MprLog implements Stream {
+
+        use default namespace public
+
+        /** 
+            Sync/async mode. Not supported.
+            @hide
+         */
+        function get async(): Boolean
+            false
+
+        function set async(enable: Boolean): Void {
+            throw "Async mode not supported"
+        }
+
+        /** 
+            Close the MprLog and stop logging
+            @hide
+         */
+        function close(): Void {}
+
+        /**
+            Did the Application initiate logging via a command line --log switch. This overrides default application
+            settings.
+         */
+        native function get cmdline(): Boolean
+        native function set cmdline(on: Boolean): Void
+
+        /** 
+            Emit messages to the MprLog stream at a given level
+            @param level Verbosity level at which to emit the message (0-9).
+            @param data Data messages to emit
+         */
+        native function emit(level: Number, ...data): Number
+
+        /**
+            @hide
+         */
+        function flush(dir: Number = Stream.BOTH): Void { }
+
+        /** 
+            The numeric verbosity setting (0-9) of this MprLog. Zero is least verbose, nine is the most verbose.
+            Messages with a lower (or equal) verbosity level than the MprLog's level are emitted.
+            WARNING: Changing the logging verbosity level will affect logging for all interpreters.
+         */
+        native function get level(): Number
+        native function set level(level: Number): void 
+
+        /** @hide */
+        function off(name, observer: Function): Void {
+            throw "off is not supported"
+        }
+
+        /** @hide */
+        function on(name, observer: Function): Void {
+            throw "on is not supported"
+        }
+
+        /** @hide */
+        function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number  {
+            throw "Read not supported"
+            return null
+        }
+
+        /** 
+            Redirect log output. WARNING: Redirecting the logging output will redirect messages for all interpreters.
+            @param location Output location to send messages to.
+            @param level Verbosity level for logging. 
+         */
+        native function redirect(location: String, level: Number = null): Void
+
+        /** 
+            Write messages to the MprLog stream at level 0
+            @duplicate Stream.write
+         */
+        function write(...data): Number
+            emit(0, ...data)
+    }
+}
+/************************************************************************/
+/*
+ *  End of file "../../src/core/MprLog.es"
  */
 /************************************************************************/
 

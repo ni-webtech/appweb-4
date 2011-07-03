@@ -336,10 +336,10 @@
 #define ES_Loader                                                      101
 #define ES_LocalCache                                                  102
 #define ES_Locale                                                      103
-#define ES_LogFile                                                     104
-#define ES_Logger                                                      105
-#define ES_Math                                                        106
-#define ES_Memory                                                      107
+#define ES_Logger                                                      104
+#define ES_Math                                                        105
+#define ES_Memory                                                      106
+#define ES_MprLog                                                      107
 #define ES_Namespace                                                   108
 #define ES_Null                                                        109
 #define ES_Number                                                      110
@@ -456,7 +456,7 @@
 #define ES_App_defaultConfig                                           6
 #define ES_App_emitter                                                 7
 #define ES_App_log                                                     8
-#define ES_App_logFile                                                 9
+#define ES_App_mprLog                                                  9
 #define ES_App_name                                                    10
 #define ES_App_cache                                                   11
 #define ES_App_started                                                 12
@@ -1658,29 +1658,6 @@
 
 
 /*
-    Class property slots for the "LogFile" type 
- */
-#define ES_LogFile_NUM_CLASS_PROP                                      0
-
-/*
-   Prototype (instance) slots for "LogFile" type 
- */
-#define ES_LogFile_async                                               0
-#define ES_LogFile_close                                               1
-#define ES_LogFile_logging                                             2
-#define ES_LogFile_emit                                                3
-#define ES_LogFile_flush                                               4
-#define ES_LogFile_level                                               5
-#define ES_LogFile_off                                                 6
-#define ES_LogFile_on                                                  7
-#define ES_LogFile_read                                                8
-#define ES_LogFile_redirect                                            9
-#define ES_LogFile_write                                               10
-#define ES_LogFile_NUM_INSTANCE_PROP                                   11
-#define ES_LogFile_NUM_INHERITED_PROP                                  0
-
-
-/*
     Class property slots for the "Logger" type 
  */
 #define ES_Logger__initializer___Logger_                               0
@@ -1809,6 +1786,29 @@
  */
 #define ES_Memory_NUM_INSTANCE_PROP                                    0
 #define ES_Memory_NUM_INHERITED_PROP                                   0
+
+
+/*
+    Class property slots for the "MprLog" type 
+ */
+#define ES_MprLog_NUM_CLASS_PROP                                       0
+
+/*
+   Prototype (instance) slots for "MprLog" type 
+ */
+#define ES_MprLog_async                                                0
+#define ES_MprLog_close                                                1
+#define ES_MprLog_cmdline                                              2
+#define ES_MprLog_emit                                                 3
+#define ES_MprLog_flush                                                4
+#define ES_MprLog_level                                                5
+#define ES_MprLog_off                                                  6
+#define ES_MprLog_on                                                   7
+#define ES_MprLog_read                                                 8
+#define ES_MprLog_redirect                                             9
+#define ES_MprLog_write                                                10
+#define ES_MprLog_NUM_INSTANCE_PROP                                    11
+#define ES_MprLog_NUM_INHERITED_PROP                                   0
 
 
 /*
@@ -2553,7 +2553,7 @@
 #define ES_XMLList_NUM_INSTANCE_PROP                                   20
 #define ES_XMLList_NUM_INHERITED_PROP                                  0
 
-#define _ES_CHECKSUM_ejs   1442302
+#define _ES_CHECKSUM_ejs   1444478
 
 #endif
 /************************************************************************/
@@ -3183,7 +3183,7 @@
 #define ES_ejs_web_View_plainFormatter_value                           1
 #define ES_ejs_web_View_plainFormatter_options                         2
 
-#define _ES_CHECKSUM_ejs_web   832981
+#define _ES_CHECKSUM_ejs_web   833517
 
 #endif
 /************************************************************************/

@@ -4526,11 +4526,11 @@ static void manageCmd(MprCmd *cmd, int flags)
         mprMark(cmd->stdoutBuf);
         mprMark(cmd->stderrBuf);
         mprMark(cmd->userData);
+        mprMark(cmd->mutex);
 #if BLD_WIN_LIKE
         mprMark(cmd->command);
         mprMark(cmd->arg0);
 #endif
-        mprMark(cmd->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
         resetCmd(cmd);
@@ -4951,6 +4951,8 @@ void mprDisableCmdEvents(MprCmd *cmd, int channel)
 /*
     Windows only routine to wait for I/O on the channels to the gateway and the child process.
     NamedPipes can't use WaitForMultipleEvents (can use overlapped I/O)
+    WARNING: this should not be called from a dispatcher other than cmd->dispatcher. If so, then the calls to
+    mprWaitForEvent may occur after the event has been processed.
  */
 static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
 {
@@ -4958,13 +4960,12 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
     int         i, rc, nbytes;
 
     mark = mprGetTime();
-    remaining = timeout;
     for (i = MPR_CMD_STDOUT; i < MPR_CMD_MAX_PIPE; i++) {
         if (cmd->files[i].handle) {
             rc = PeekNamedPipe(cmd->files[i].handle, NULL, 0, NULL, &nbytes, NULL);
             if (rc && nbytes > 0 || cmd->process == 0) {
                 mprQueueIOEvent(cmd->handlers[i]);
-                mprWaitForEvent(cmd->dispatcher, remaining);
+                mprWaitForEvent(cmd->dispatcher, timeout);
                 return;
             }
         }
@@ -4972,36 +4973,54 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
     if (cmd->files[MPR_CMD_STDIN].handle) {
         /* Not finalized */
         mprQueueIOEvent(cmd->handlers[MPR_CMD_STDIN]);
-        mprWaitForEvent(cmd->dispatcher, remaining);
+        mprWaitForEvent(cmd->dispatcher, timeout);
         return;
     }
     if (cmd->process) {
-        delay = (cmd->eofCount == cmd->requiredEof && cmd->files[MPR_CMD_STDIN].handle == 0) ? remaining : 0;
+        delay = (cmd->eofCount == cmd->requiredEof && cmd->files[MPR_CMD_STDIN].handle == 0) ? timeout : 0;
         if (WaitForSingleObject(cmd->process, (DWORD) delay) == WAIT_OBJECT_0) {
             reapCmd(cmd);
             return;
         }
-        /* Stop busy waiting */
-        mprSleep(10);
-    }
-    if (cmd->eofCount == cmd->requiredEof && cmd->process) {
-        remaining = mprGetRemainingTime(mark, timeout);
-        rc = WaitForSingleObject(cmd->process, (DWORD) remaining);
-        if (rc == WAIT_OBJECT_0) {
-            reapCmd(cmd);
-        } else {
+        if (cmd->eofCount == cmd->requiredEof) {
+            remaining = mprGetRemainingTime(mark, timeout);
+            rc = WaitForSingleObject(cmd->process, (DWORD) remaining);
+            if (rc == WAIT_OBJECT_0) {
+                reapCmd(cmd);
+                return;
+            }
             mprError("Error waiting CGI I/O, error %d", mprGetOsError());
         }
     }
+    /* Stop busy waiting */
+    mprSleep(10);
 }
 
 
+#if UNUSED
 static void cmdIOThread(MprCmd *cmd, MprThread *thread)
 {
-    while (cmd->process || cmd->eofCount < cmd->requiredEof) {
-        waitForWinEvent(cmd, cmd->timeoutPeriod);
+    MprTime     mark, remaining, delay;
+    int         i, rc, nbytes;
+
+    while (!cmd->complete) {
+        if (mprShouldAbortRequests()) {
+            break;
+        }
+        if (cmd->files[MPR_CMD_STDIN].handle) {
+            mprQueueIOEvent(cmd->handlers[MPR_CMD_STDIN]);
+        }
+        for (i = MPR_CMD_STDOUT; i < MPR_CMD_MAX_PIPE; i++) {
+            if (cmd->files[i].handle) {
+                rc = PeekNamedPipe(cmd->files[i].handle, NULL, 0, NULL, &nbytes, NULL);
+                if (rc && nbytes > 0 || cmd->process == 0) {
+                    mprQueueIOEvent(cmd->handlers[i]);
+                }
+            }
+        }
     }
 }
+#endif
 #endif
 
 
@@ -5498,10 +5517,6 @@ static int startProcess(MprCmd *cmd)
     cmd->thread = procInfo.hThread;
     cmd->process = procInfo.hProcess;
     cmd->pid = procInfo.dwProcessId;
-    if ((cmd->ioThread = mprCreateThread("cmdThread", cmdIOThread, NULL, 0)) == 0) {
-        mprError("Can't create wait thread for cmd: %s, %d", cmd->program, mprGetOsError());
-        return MPR_ERR_CANT_CREATE;
-    }
     return 0;
 }
 
@@ -21757,7 +21772,7 @@ static MprWorker *createWorker(MprWorkerService *ws, int stackSize)
     worker->idleCond = mprCreateCond();
 
     mprSprintf(name, sizeof(name), "worker.%u", getNextThreadNum(ws));
-    worker->thread = mprCreateThread(name, (MprThreadProc) workerMain, (void*) worker, 0);
+    worker->thread = mprCreateThread(name, (MprThreadProc) workerMain, worker, 0);
     return worker;
 }
 
@@ -21965,8 +21980,11 @@ static int changeState(MprWorker *worker, int state)
 #define MIN_YEAR    1901
 #define MAX_YEAR    2037
 
+/*
+    MacOSX can't handle MIN_TIME == -0x7FFFFFFF
+ */
 #define MAX_TIME    0x7FFFFFFF
-#define MIN_TIME    -(MAX_TIME)
+#define MIN_TIME    -0xFFFFFFF
 
 /*
     Token types or'd into the TimeToken value
@@ -22253,7 +22271,7 @@ int mprGetTimeZoneOffset(MprTime when)
     if (secs < MIN_TIME || secs > MAX_TIME) {
         /* secs overflows time_t on this platform. Need to map to an alternate valid year */
         decodeTime(&t, when, 0);
-        t.tm_year = 110;
+        t.tm_year = 111;
         alternate = makeTime(&t);
     }
     t.tm_isdst = -1;
@@ -22281,7 +22299,7 @@ MprTime mprMakeTime(struct tm *tp)
         offset = getTimeZoneOffsetFromTm(&t);
     } else {
         t = *tp;
-        t.tm_year = 110;
+        t.tm_year = 111;
         alternate = makeTime(&t);
         localTime(&t, alternate);
         offset = getTimeZoneOffsetFromTm(&t);
@@ -22315,6 +22333,7 @@ static int localTime(struct tm *timep, MprTime time)
     return 0;
 }
 
+
 struct tm *universalTime(struct tm *timep, MprTime time)
 {
 #if BLD_UNIX_LIKE || WINCE
@@ -22335,7 +22354,7 @@ struct tm *universalTime(struct tm *timep, MprTime time)
 
 /*
     Return the timezone offset (including DST) in msec. local == (UTC + offset)
-    Assumes a valid "tm" with isdst correctly set.
+    Assumes a valid (local) "tm" with isdst correctly set.
  */
 static int getTimeZoneOffsetFromTm(struct tm *tp)
 {
@@ -22369,7 +22388,7 @@ static int getTimeZoneOffsetFromTm(struct tm *tp)
 #else
     struct timezone     tz;
     struct timeval      tv;
-    int offset;
+    int                 offset;
     gettimeofday(&tv, &tz);
     offset = -tz.tz_minuteswest * MS_PER_MIN;
     if (tp->tm_isdst) {
@@ -22380,7 +22399,7 @@ static int getTimeZoneOffsetFromTm(struct tm *tp)
 }
 
 /*
-    Convert "struct tm" to MprTime
+    Convert "struct tm" to MprTime. This ignores GMT offset and DST.
  */
 static MprTime makeTime(struct tm *tp)
 {
@@ -23268,7 +23287,7 @@ int mprParseTime(MprTime *time, cchar *dateString, int zoneFlags, struct tm *def
 #endif
 
     /*
-        Set to -1 to cause mktime will try to determine if DST is in effect
+        Set to -1 to try to determine if DST is in effect
      */
     tm.tm_isdst = -1;
     str = slower(dateString);
