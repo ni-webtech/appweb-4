@@ -4996,32 +4996,6 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
     /* Stop busy waiting */
     mprSleep(10);
 }
-
-
-#if UNUSED
-static void cmdIOThread(MprCmd *cmd, MprThread *thread)
-{
-    MprTime     mark, remaining, delay;
-    int         i, rc, nbytes;
-
-    while (!cmd->complete) {
-        if (mprShouldAbortRequests()) {
-            break;
-        }
-        if (cmd->files[MPR_CMD_STDIN].handle) {
-            mprQueueIOEvent(cmd->handlers[MPR_CMD_STDIN]);
-        }
-        for (i = MPR_CMD_STDOUT; i < MPR_CMD_MAX_PIPE; i++) {
-            if (cmd->files[i].handle) {
-                rc = PeekNamedPipe(cmd->files[i].handle, NULL, 0, NULL, &nbytes, NULL);
-                if (rc && nbytes > 0 || cmd->process == 0) {
-                    mprQueueIOEvent(cmd->handlers[i]);
-                }
-            }
-        }
-    }
-}
-#endif
 #endif
 
 
