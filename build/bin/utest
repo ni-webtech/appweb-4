@@ -173,8 +173,6 @@ enumerable class Test {
     function initialize(): Void {
         if (logSpec) {
             App.log.redirect(logSpec)
-            App.log.nativeStream = App.log.outStream
-            App.log.nativeLevel = App.log.level
         }
         if (echo) {
             log.activity("Test", App.args.join(" "))

@@ -4904,7 +4904,8 @@ ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
         /* Process has exited - EOF */
         return 0;
     }
-    errno = EAGAIN;
+    /* This maps to EAGAIN */
+    SetLastError(WSAEWOULDBLOCK);
     return -1;
 }
 #else
@@ -4995,32 +4996,6 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
     /* Stop busy waiting */
     mprSleep(10);
 }
-
-
-#if UNUSED
-static void cmdIOThread(MprCmd *cmd, MprThread *thread)
-{
-    MprTime     mark, remaining, delay;
-    int         i, rc, nbytes;
-
-    while (!cmd->complete) {
-        if (mprShouldAbortRequests()) {
-            break;
-        }
-        if (cmd->files[MPR_CMD_STDIN].handle) {
-            mprQueueIOEvent(cmd->handlers[MPR_CMD_STDIN]);
-        }
-        for (i = MPR_CMD_STDOUT; i < MPR_CMD_MAX_PIPE; i++) {
-            if (cmd->files[i].handle) {
-                rc = PeekNamedPipe(cmd->files[i].handle, NULL, 0, NULL, &nbytes, NULL);
-                if (rc && nbytes > 0 || cmd->process == 0) {
-                    mprQueueIOEvent(cmd->handlers[i]);
-                }
-            }
-        }
-    }
-}
-#endif
 #endif
 
 
@@ -18475,7 +18450,7 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
 
         if (!done && toWriteFile > 0 && file->fd >= 0) {
             off = (off_t) offset;
-            while (toWriteFile > 0) {
+            while (!done && toWriteFile > 0) {
                 nbytes = (ssize) min(MAXSSIZE, toWriteFile);
 #if LINUX && !__UCLIBC__
                 rc = sendfile(sock->fd, file->fd, &off, nbytes);
@@ -18485,10 +18460,10 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
                 if (rc > 0) {
                     written += rc;
                     toWriteFile -= rc;
-                    if (rc != nbytes) {
-                        done++;
-                        break;
-                    }
+                }
+                if (rc != nbytes) {
+                    done++;
+                    break;
                 }
             }
         }
