@@ -6829,7 +6829,6 @@ typedef struct MprCmd {
     void            *userData;          /* User data storage */
     int             userFlags;          /* User flags storage */
 #if BLD_WIN_LIKE
-    MprThread       *ioThread;          /* Thread to pump I/O events */
     HANDLE          thread;             /* Handle of the primary thread for the created process */
     HANDLE          process;            /* Process handle for the created process */
     char            *command;           /* Windows command line */          
