@@ -21,7 +21,7 @@ if (!test || test.config["ssl"] == 1) {
     http.close()
 
     //  Validate get contents
-    http.get(HTTPS + "/index.html")
+    http.get(HTTPS + "/index.html?a=b")
     assert(http.response.endsWith("</html>\n"))
     assert(http.response.endsWith("</html>\n"))
     http.close()

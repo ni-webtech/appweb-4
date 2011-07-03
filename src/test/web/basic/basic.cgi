@@ -3,4 +3,4 @@
 echo "Content-type: text/plain"
 echo ""
 
-env
+/usr/bin/env

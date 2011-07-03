@@ -2590,6 +2590,8 @@ module ejs {
                         result.append({pid: pid, command: command})
                     }
                 }
+                //  Windows WMIC drops this
+                Path("TempWmicBatchFile.bat").remove()
             } else {
                 cmd.start(["/bin/sh", "-c", "/bin/ps -ef"])
                 for each (line in cmd.readLines()) {

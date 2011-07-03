@@ -148,9 +148,9 @@ EXPORTS
   ejsConfigureIteratorType
   ejsConfigureJSONType
   ejsConfigureLocalCacheType
-  ejsConfigureLogFileType
   ejsConfigureMathType
   ejsConfigureMemoryType
+  ejsConfigureMprLogType
   ejsConfigureNamespaceType
   ejsConfigureNullType
   ejsConfigureNumberType
