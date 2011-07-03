@@ -139,17 +139,25 @@ static void processCgi(HttpQueue *q)
 
     cmd = (MprCmd*) q->queueData;
     mprAssert(cmd);
-
     mprLog(5, "CGI: Process");
 
+    if (q->pair) {
+        writeToCGI(q->pair);
+    }
     if (q->pair == 0 || q->pair->count == 0) {
         /*  Close the CGI program's stdin (idempotent). This will allow the gateway to exit if it was expecting input data */
         if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
             mprCloseCmdFd(cmd, MPR_CMD_STDIN);
         }
-    } else {
-        writeToCGI(q->pair);
     }
+#if BLD_WIN_LIKE
+    /*
+        Windows can't select on named pipes. So must poll here.
+     */
+    while (!cmd->complete) {
+        mprWaitForCmd(cmd, 1000);
+    }
+#endif
 }
 
 
@@ -320,7 +328,6 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     if (conn == 0) {
         return;
     }
-
     mprAssert(conn->tx);
     mprAssert(conn->rx);
 
@@ -331,6 +338,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
 
     switch (channel) {
     case MPR_CMD_STDIN:
+//  MOB - do we ever get this event?
         /* CGI's stdin can now accept more data */
         writeToCGI(q->pair);
         break;
