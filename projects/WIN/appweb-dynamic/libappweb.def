@@ -20,7 +20,7 @@ EXPORTS
   maOpenFileHandler
   maParseConfig
   maRemoveServer
-  maRotateAccessLog
+  maRotateLog
   maRunSimpleWebServer
   maRunWebServer
   maServiceWebServer

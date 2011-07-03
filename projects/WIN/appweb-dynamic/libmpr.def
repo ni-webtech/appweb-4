@@ -26,7 +26,7 @@ EXPORTS
   mprAddTestGroup
   mprAdjustBufEnd
   mprAdjustBufStart
-  mprAllocBlock
+  mprAllocMem
   mprAppendList
   mprAsprintf
   mprAsprintfv
@@ -146,6 +146,7 @@ EXPORTS
   mprGetCmdBuf
   mprGetCmdExitStatus
   mprGetCmdFd
+  mprGetCmdlineLogging
   mprGetCurrentOsThread
   mprGetCurrentPath
   mprGetCurrentThread
@@ -163,8 +164,8 @@ EXPORTS
   mprGetFilePosition
   mprGetFileSize
   mprGetFileString
-  mprGetFirstHash
   mprGetFirstItem
+  mprGetFirstKey
   mprGetFirstPathSeparator
   mprGetHashLength
   mprGetHeapFlags
@@ -189,8 +190,8 @@ EXPORTS
   mprGetMpr
   mprGetNativePath
   mprGetNextEvent
-  mprGetNextHash
   mprGetNextItem
+  mprGetNextKey
   mprGetNonBlockDispatcher
   mprGetNormalizedPath
   mprGetOsError
@@ -264,9 +265,9 @@ EXPORTS
   mprLookAtLastCharInBuf
   mprLookAtNextCharInBuf
   mprLookupFileSystem
-  mprLookupHash
-  mprLookupHashEntry
   mprLookupItem
+  mprLookupKey
+  mprLookupKeyEntry
   mprLookupMime
   mprLookupModule
   mprLookupModuleData
@@ -281,7 +282,7 @@ EXPORTS
   mprMarkBlock
   mprMemcmp
   mprMemcpy
-  mprMemdup
+  mprMemdupMem
   mprMemoryError
   mprNop
   mprNotifyOn
@@ -313,7 +314,7 @@ EXPORTS
   mprReadFile
   mprReadRegistry
   mprReadSocket
-  mprRealloc
+  mprReallocMem
   mprRecallWaitHandler
   mprRecallWaitHandlerByFd
   mprRefillBuf
@@ -322,9 +323,9 @@ EXPORTS
   mprReleaseWorker
   mprReleaseWorkerFromDispatcher
   mprRemoveEvent
-  mprRemoveHash
   mprRemoveItem
   mprRemoveItemAtPos
+  mprRemoveKey
   mprRemoveLastItem
   mprRemoveRangeOfItems
   mprRemoveRoot
@@ -357,6 +358,7 @@ EXPORTS
   mprServiceSignals
   mprServiceWinIO
   mprServicesAreIdle
+  mprSetAllocName
   mprSetAppName
   mprSetBufMax
   mprSetBufRefillProc
@@ -364,6 +366,7 @@ EXPORTS
   mprSetCmdCallback
   mprSetCmdDir
   mprSetCmdTimeout
+  mprSetCmdlineLogging
   mprSetCurrentThreadPriority
   mprSetDebugMode
   mprSetDomainName
@@ -432,6 +435,7 @@ EXPORTS
   mprStopCmdService
   mprStopContinuousEvent
   mprStopEventService
+  mprStopGCService
   mprStopModule
   mprStopModuleService
   mprStopOsService

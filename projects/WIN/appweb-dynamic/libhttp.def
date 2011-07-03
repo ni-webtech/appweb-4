@@ -14,9 +14,9 @@ EXPORTS
   httpAddHeaderString
   httpAddHost
   httpAddHostToServer
-  httpAddHostToServers
   httpAddLocation
   httpAddLocationExpiry
+  httpAddLocationExpiryByType
   httpAddServer
   httpAddStage
   httpAddUploadFile
@@ -32,6 +32,7 @@ EXPORTS
   httpAppendQueue
   httpCallEvent
   httpClearStages
+  httpCloneHost
   httpClonePacket
   httpCloneStage
   httpCloneUri
@@ -65,19 +66,19 @@ EXPORTS
   httpCreateLimits
   httpCreateLocation
   httpCreatePacket
-  httpCreatePipeline
   httpCreateQueue
   httpCreateQueueHead
   httpCreateRange
   httpCreateRx
+  httpCreateRxPipeline
   httpCreateSecret
   httpCreateServer
   httpCreateStage
   httpCreateTx
+  httpCreateTxPipeline
   httpCreateUri
   httpCreateUriFromParts
   httpCreateUser
-  httpCreateVirtualHost
   httpDefaultOutgoingServiceStage
   httpDestroy
   httpDestroyConn
@@ -124,6 +125,7 @@ EXPORTS
   httpGetDefaultClientPort
   httpGetError
   httpGetExtension
+  httpGetFirstServer
   httpGetFormVar
   httpGetGroupAcl
   httpGetHandlerByExtension
@@ -131,7 +133,6 @@ EXPORTS
   httpGetHeaderHash
   httpGetHeaders
   httpGetIntFormVar
-  httpGetMetaServer
   httpGetNativePassword
   httpGetNextQueueForService
   httpGetPacket
@@ -170,7 +171,7 @@ EXPORTS
   httpLookupBestLocation
   httpLookupDir
   httpLookupErrorDocument
-  httpLookupHostByName
+  httpLookupHost
   httpLookupLocation
   httpLookupServer
   httpLookupStage
@@ -227,6 +228,7 @@ EXPORTS
   httpResolveUri
   httpScheduleQueue
   httpSecureServer
+  httpSecureServerByName
   httpSendOpen
   httpSendOutgoingService
   httpSendPacket
@@ -266,9 +268,7 @@ EXPORTS
   httpSetHeader
   httpSetHeaderString
   httpSetHeadersCallback
-  httpSetHostAddress
   httpSetHostDocumentRoot
-  httpSetHostInfoName
   httpSetHostLogRotation
   httpSetHostName
   httpSetHostProtocol
@@ -279,13 +279,14 @@ EXPORTS
   httpSetIntFormVar
   httpSetKeepAliveCount
   httpSetListenCallback
+  httpSetLocationAlias
   httpSetLocationAuth
   httpSetLocationAutoDelete
   httpSetLocationFlags
   httpSetLocationPrefix
   httpSetLocationScript
+  httpSetLocationWorkers
   httpSetMatchCallback
-  httpSetMetaServer
   httpSetMimeType
   httpSetNamedVirtualServer
   httpSetNamedVirtualServers
@@ -319,6 +320,8 @@ EXPORTS
   httpTraceContent
   httpUpdateUserAcls
   httpUriToString
+  httpUsePrimary
+  httpUseWorker
   httpValidateLimits
   httpValidateNativeCredentials
   httpWait
