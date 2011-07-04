@@ -6316,8 +6316,8 @@ FUTURE & KEEP
         /** 
             Wait for a request to complete. This will call $finalize() if in sync mode and the request is not already 
             finalized.
-            @param timeout Timeout in milliseconds to wait for the request to complete. A timeout of zero means no 
-            timeout, ie. wait forever. A timeout of < 0 (default), means use the default request timeout.
+            @param timeout Timeout in milliseconds to wait for the request to complete. A timeout of zero means don't block.
+            A timeout of < 0 (default), means use the default request timeout.
             @return True if the request successfully completes.
          */
         native function wait(timeout: Number = -1): Boolean

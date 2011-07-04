@@ -1083,7 +1083,7 @@ typedef struct AuthData
 
 static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
     cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);
-static char *createDigestNonce(cchar *secret, cchar *etag, cchar *realm);
+static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *etag, cchar *realm);
 static void decodeBasicAuth(HttpConn *conn, AuthData *ad);
 static int  decodeDigestDetails(HttpConn *conn, AuthData *ad);
 static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg);
@@ -1393,7 +1393,7 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
     } else if (auth->type == HTTP_AUTH_DIGEST) {
         qopClass = auth->qop;
         etag = tx->etag ? tx->etag : "";
-        nonce = createDigestNonce(conn->http->secret, etag, auth->requiredRealm);
+        nonce = createDigestNonce(conn, conn->http->secret, etag, auth->requiredRealm);
         mprAssert(conn->host);
 
         if (scmp(qopClass, "auth") == 0) {
@@ -1418,14 +1418,14 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
 /*
     Create a nonce value for digest authentication (RFC 2617)
  */ 
-static char *createDigestNonce(cchar *secret, cchar *etag, cchar *realm)
+static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *etag, cchar *realm)
 {
     MprTime     now;
     char        nonce[256];
 
     mprAssert(realm && *realm);
 
-    now = mprGetTime();
+    now = conn->http->now;
     mprSprintf(nonce, sizeof(nonce), "%s:%s:%s:%Lx", secret, etag, realm, now);
     return mprEncode64(nonce);
 }
@@ -2104,7 +2104,7 @@ static int setClientHeaders(HttpConn *conn)
             mprLog(MPR_ERROR, "Http: Can't create secret for digest authentication");
             return MPR_ERR_CANT_CREATE;
         }
-        conn->authCnonce = mprAsprintf("%s:%s:%x", http->secret, conn->authRealm, (uint) mprGetTime()); 
+        conn->authCnonce = mprAsprintf("%s:%s:%x", http->secret, conn->authRealm, (int) http->now);
 
         mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
         len = strlen(a1Buf);
@@ -2191,7 +2191,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     conn->tx->parsedUri = httpCreateUri(url, 0);
 
 #if BLD_DEBUG
-    conn->startTime = mprGetTime();
+    conn->startTime = conn->http->now;
     conn->startTicks = mprGetTicks();
 #endif
     if (openConnection(conn, url) == 0) {
@@ -2636,7 +2636,7 @@ void httpConsumeLastRequest(HttpConn *conn)
     if (!conn->sock || conn->state < HTTP_STATE_FIRST) {
         return;
     }
-    mark = mprGetTime();
+    mark = conn->http->now;
     while (!httpIsEof(conn) && mprGetRemainingTime(mark, conn->limits->requestTimeout) > 0) {
         if (httpRead(conn, junk, sizeof(junk)) <= 0) {
             break;
@@ -2653,7 +2653,7 @@ void httpCallEvent(HttpConn *conn, int mask)
     MprEvent    e;
 
     e.mask = mask;
-    e.timestamp = mprGetTime();
+    e.timestamp = conn->http->now;
     httpEvent(conn, &e);
 }
 
@@ -4413,7 +4413,7 @@ static bool isIdle()
     static MprTime  lastTrace = 0;
 
     http = (Http*) mprGetMpr()->httpService;
-    now = mprGetTime();
+    now = http->now;
 
     lock(http);
     for (next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; ) {
@@ -4442,7 +4442,7 @@ void httpAddConn(Http *http, HttpConn *conn)
 {
     lock(http);
     mprAddItem(http->connections, conn);
-    conn->started = mprGetTime();
+    conn->started = http->now;
     conn->seqno = http->connCount++;
     if ((http->now + MPR_TICKS_PER_SEC) < conn->started) {
         updateCurrentDate(http);
@@ -4475,7 +4475,7 @@ int httpCreateSecret(Http *http)
 
     if (mprGetRandomBytes(bytes, sizeof(bytes), 0) < 0) {
         mprError("Can't get sufficient random data for secure SSL operation. If SSL is used, it may not be secure.");
-        now = mprGetTime(); 
+        now = http->now;
         pid = (int) getpid();
         cp = (char*) &now;
         bp = bytes;
@@ -4513,7 +4513,7 @@ char *httpGetDateString(MprPath *sbuf)
     struct tm   tm;
 
     if (sbuf == 0) {
-        when = mprGetTime();
+        when = ((Http*) MPR->httpService)->now;
     } else {
         when = (MprTime) sbuf->mtime * MPR_TICKS_PER_SEC;
     }
@@ -8047,7 +8047,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     methodFlags = 0;
 
 #if BLD_DEBUG
-    conn->startTime = mprGetTime();
+    conn->startTime = conn->http->now;
     conn->startTicks = mprGetTicks();
 #endif
     traceRequest(conn, packet);
@@ -9119,18 +9119,16 @@ static void waitHandler(HttpConn *conn, struct MprEvent *event)
 
 /*
     Wait for an Http event until the http reaches a specified state or a timeout expires
-    If timeout is == -1, then no timeout is used. If state is zero, it waits for just one event.
+    If timeout is zero, then wait forever. If set to < 0, then use default inactivity and duration timeouts. 
+    If state is zero, it waits for just one event.
  */
 int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
     Http        *http;
-    MprTime     expire, remainingTime;
+    MprTime     mark, remaining, inactivityTimeout;
     int         eventMask, addedHandler, saveAsync, justOne, workDone;
 
     http = conn->http;
-    if (timeout <= 0) {
-        timeout = MAXINT;
-    }
     if (state == 0) {
         state = HTTP_STATE_COMPLETE;
         justOne = 1;
@@ -9144,12 +9142,20 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
     if (conn->input && httpGetPacketLength(conn->input) > 0) {
         httpProcess(conn, conn->input);
     }
-    http->now = mprGetTime();
-    expire = http->now + timeout;
-    remainingTime = expire - http->now;
+    mark = mprGetTime();
+#if UNUSED
+    if (conn->async) {
+        timeout = 0;
+    }
+#endif
+    inactivityTimeout = timeout < 0 ? conn->limits->inactivityTimeout : MPR_MAX_TIMEOUT;
+    if (timeout < 0) {
+        timeout = conn->limits->requestTimeout;
+    }
     saveAsync = conn->async;
     addedHandler = 0;
 
+    remaining = timeout;
     while (!conn->error && conn->state < state) {
         if (conn->waitHandler == 0) {
             conn->async = 1;
@@ -9161,12 +9167,11 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
             addedHandler = 1;
         }
         workDone = httpServiceQueues(conn);
-        remainingTime = expire - http->now;
-        if (remainingTime <= 0) {
+        mprWaitForEvent(conn->dispatcher, min(inactivityTimeout, remaining));
+        if (justOne || (conn->sock && mprIsSocketEof(conn->sock) && !workDone)) {
             break;
         }
-        mprWaitForEvent(conn->dispatcher, remainingTime);
-        if (justOne || (conn->sock && mprIsSocketEof(conn->sock) && !workDone)) {
+        if ((remaining = mprGetRemainingTime(mark, timeout)) <= 0) {
             break;
         }
     }
@@ -9179,7 +9184,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         return MPR_ERR_CANT_CONNECT;
     }
     if (!justOne && conn->state < state) {
-        return (remainingTime <= 0) ? MPR_ERR_TIMEOUT : MPR_ERR_CANT_READ;
+        return (remaining <= 0) ? MPR_ERR_TIMEOUT : MPR_ERR_CANT_READ;
     }
     return 0;
 }
@@ -10159,7 +10164,7 @@ HttpConn *httpAcceptConn(HttpServer *server, MprEvent *event)
             conn->ip, conn->port, sock->acceptIp, sock->acceptPort, conn->secure ? "(secure)" : "");
     }
     e.mask = MPR_READABLE;
-    e.timestamp = mprGetTime();
+    e.timestamp = conn->http->now;
     (conn->ioCallback)(conn, &e);
     return conn;
 }
@@ -11318,7 +11323,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
 #if UNUSED && KEEP
             /* Old HTTP/1.0 clients don't understand Cache-Control */
             struct tm   tm;
-            mprDecodeUniversalTime(&tm, mprGetTime() + (expires * MPR_TICKS_PER_SEC));
+            mprDecodeUniversalTime(&tm, conn->http->now + (expires * MPR_TICKS_PER_SEC));
             httpAddHeader(conn, "Expires", "%s", mprFormatTime(MPR_HTTP_DATE, &tm));
 #endif
         }
