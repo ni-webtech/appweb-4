@@ -7609,6 +7609,8 @@ int mprServiceEvents(MprTime timeout, int flags)
 /*
     Wait for an event to occur. Expect the event to signal the cond var.
     WARNING: this will enable GC while sleeping
+    Return MPR_ERR_TIMEOUT if no event was seen before the timeout.
+    MOB - should this return a count of events?
  */
 int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
 {
@@ -23869,7 +23871,7 @@ void stubMprUnix() {}
 
 /************************************************************************/
 /*
- *  Start of file "../src/mprVxworks.c"
+ *  Start of file "../src/mprVxWorks.c"
  */
 /************************************************************************/
 
@@ -24082,7 +24084,7 @@ void stubMprVxWorks() {}
  */
 /************************************************************************/
 /*
- *  End of file "../src/mprVxworks.c"
+ *  End of file "../src/mprVxWorks.c"
  */
 /************************************************************************/
 
