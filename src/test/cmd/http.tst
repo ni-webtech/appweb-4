@@ -1,7 +1,6 @@
 /*
     http.tst - Test the http command
  */
-
 if (test.depth > 1) {
 
     const HTTP = (global.tsession && tsession["http"]) || ":4100"
@@ -14,7 +13,6 @@ if (test.depth > 1) {
     function run(args): String {
         App.log.debug(5, "[TestRun]", command + args)
         try {
-            // print(command + args)
             result = System.run(command + args)
             assert(true)
         } catch (e) {
@@ -121,12 +119,10 @@ if (test.depth > 1) {
         run("-i 2000 /index.html")
         run("-i 2000 /big.txt")
     }
-    
     //  Cleanup
     for each (f in Path("../web/tmp").files()) {
         Path(f).remove()
     }
-
 
 } else {
     test.skip("Test runs at depth 2")
