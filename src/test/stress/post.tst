@@ -37,15 +37,20 @@ function postTest(url: String) {
     http.close()
 }
 
+// print("HTML")
 postTest("/index.html")
 
+// print("EJS")
 if (test.config["ejs"] == 1) {
     postTest("/form.ejs")
 }
+
+// print("PHP")
 if (test.config["php"] == 1) {
     postTest("/form.php")
 }
 
+// print("CGI")
 if (test.config["cgi"] == 1) {
     postTest("/cgi-bin/cgiProgram")
 }

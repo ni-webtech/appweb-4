@@ -13,9 +13,10 @@
 
 /***************************** Forward Declarations ***************************/
 
+//  TODO -- more unique prefixes for combo dist
 static void handleDeleteRequest(HttpQueue *q);
-static int  readFileData(HttpQueue *q, HttpPacket *packet);
 static void handlePutRequest(HttpQueue *q);
+static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize size);
 
 /*********************************** Code *************************************/
 /*
@@ -45,10 +46,14 @@ static void openFile(HttpQueue *q)
             httpSetStatus(conn, HTTP_CODE_NOT_MODIFIED);
             httpOmitBody(conn);
         } else {
-            httpSetEntityLength(conn, (int) tx->fileInfo.size);
+            httpSetEntityLength(conn, tx->fileInfo.size);
         }
         if (!tx->fileInfo.isReg && !tx->fileInfo.isLink) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't locate document: %s", rx->uri);
+            
+        } else if (tx->fileInfo.size > conn->limits->transmissionBodySize) {
+            httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
+                "Http transmission aborted. File size exceeds max body of %d bytes", conn->limits->transmissionBodySize);
             
         } else if (!(tx->connector == conn->http->sendConnector)) {
             /*
@@ -89,9 +94,9 @@ static void startFile(HttpQueue *q)
         }
     } else {
         /* Create a single data packet based on the entity length.  */
-        packet = httpCreateDataPacket(0);
-        packet->entityLength = tx->entityLength;
-        if (!rx->ranges) {
+        packet = httpCreateEntityPacket(0, tx->entityLength, readFileData);
+        if (!tx->outputRanges) {
+            /* Can set a content length */
             tx->length = tx->entityLength;
         }
         httpPutForService(q, packet, 0);
@@ -101,13 +106,92 @@ static void startFile(HttpQueue *q)
 
 static void processFile(HttpQueue *q)
 {
+    /*
+        The queue already contains a single data packet representing all the output data.
+        So can be finalized now.
+     */
     httpFinalize(q->conn);
 }
 
 
 /*  
-    The service routine will be called when all incoming data has been received. This routine may flow control if the 
-    downstream stage cannot accept all the file data. It will then be re-called as required to send more data.
+    Populate a packet with file data. Return the number of bytes read or a negative error code. Will not return with
+    a short read.
+ */
+static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize size)
+{
+    HttpConn    *conn;
+    HttpTx      *tx;
+    ssize       nbytes;
+
+    conn = q->conn;
+    tx = conn->tx;
+
+    if (packet->content == 0 && (packet->content = mprCreateBuf(size, size)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    mprAssert(size <= mprGetBufSpace(packet->content));    
+    mprLog(7, "readFileData size %d, pos %Ld", size, pos);
+    
+    if (pos >= 0) {
+        mprSeekFile(tx->file, SEEK_SET, pos);
+    }
+    if ((nbytes = mprReadFile(tx->file, mprGetBufStart(packet->content), size)) != size) {
+        /*  
+            As we may have sent some data already to the client, the only thing we can do is abort and hope the client 
+            notices the short data.
+         */
+        httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't read file %s", tx->filename);
+        return MPR_ERR_CANT_READ;
+    }
+    mprAdjustBufEnd(packet->content, nbytes);
+    packet->esize -= nbytes;
+    mprAssert(packet->esize == 0);
+    return nbytes;
+}
+
+
+/*  
+    Prepare a data packet. This involves reading file data into a suitably sized packet. Return the 1 if the packet was 
+    sent entirely, return zero if the packet could not be completely sent. Return a negative error code for write errors.
+    This may split the packet if it exceeds the downstreams maximum packet size.
+ */
+static int prepPacket(HttpQueue *q, HttpPacket *packet)
+{
+    HttpQueue   *nextQ;
+    ssize       size, nbytes;
+
+    nextQ = q->nextQ;
+    if (packet->esize > nextQ->packetSize) {
+        httpPutBackPacket(q, httpSplitPacket(packet, nextQ->packetSize));
+        size = nextQ->packetSize;
+    } else {
+        size = (ssize) packet->esize;
+    }
+    if ((size + nextQ->count) > nextQ->max) {
+        /*  
+            The downstream queue is full, so disable the queue and mark the downstream queue as full and service.
+            Will re-enable via a writable event on the connection.
+         */
+        nextQ->flags |= HTTP_QUEUE_FULL;
+        httpDisableQueue(q);
+        if (!(nextQ->flags & HTTP_QUEUE_DISABLED)) {
+            httpScheduleQueue(nextQ);
+        }
+        return 0;
+    }
+    if ((nbytes = readFileData(q, packet, q->ioPos, size)) != size) {
+        return MPR_ERR_CANT_READ;
+    }
+    q->ioPos += nbytes;
+    return 1;
+}
+
+
+/*  
+    The service routine will be called to service outgoing packets on the service queue. It will only be called 
+    once all incoming data has been received. This routine may flow control if the downstream stage cannot accept 
+    all the file data. It will then be re-called as required to send more data.
  */
 static void outgoingFileService(HttpQueue *q)
 {
@@ -116,36 +200,25 @@ static void outgoingFileService(HttpQueue *q)
     HttpTx      *tx;
     HttpPacket  *packet;
     bool        usingSend;
-    int         len;
+    int         rc;
 
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
-
-    mprLog(7, "OutgoingFileService");
-
     usingSend = tx->connector == conn->http->sendConnector;
 
-    if (rx->ranges) {
-        mprAssert(conn->http->rangeService);
-        (*conn->http->rangeService)(q, (usingSend) ? NULL : readFileData);
-    
-    } else {
-        for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
-            if (!usingSend && packet->flags & HTTP_PACKET_DATA) {
-                if (!httpWillNextQueueAcceptPacket(q, packet)) {
-                    mprLog(7, "OutgoingFileService downstream full, putback");
-                    httpPutBackPacket(q, packet);
-                    return;
-                }
-                if ((len = readFileData(q, packet)) < 0) {
-                    return;
-                }
-                mprLog(7, "OutgoingFileService readData %d", len);
-                tx->pos += len;
+    for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
+        if (!usingSend && !tx->outputRanges && packet->flags & HTTP_PACKET_DATA) {
+            if ((rc = prepPacket(q, packet)) < 0) {
+                return;
+            } else if (rc == 0) {
+                mprLog(7, "OutgoingFileService downstream full, putback");
+                httpPutBackPacket(q, packet);
+                return;
             }
-            httpSendPacketToNext(q, packet);
+            mprLog(7, "OutgoingFileService readData %d", rc);
         }
+        httpSendPacketToNext(q, packet);
     }
     mprLog(7, "OutgoingFileService complete");
 }
@@ -167,15 +240,11 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
     file = (MprFile*) q->queueData;
     
     if (file == 0) {
-        /*  
-            Not a PUT so just ignore the incoming data.
-         */
+        /*  Not a PUT so just ignore the incoming data.  */
         return;
     }
     if (httpGetPacketLength(packet) == 0) {
-        /*
-            End of input
-         */
+        /* End of input */
         if (file) {
             mprCloseFile(file);
         }
@@ -187,58 +256,13 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
     mprAssert(len > 0);
 
     range = rx->inputRange;
-    if (range && ((MprOffset) mprSeekFile(file, SEEK_SET, (long) range->start)) != range->start) {
+    if (range && mprSeekFile(file, SEEK_SET, range->start) != range->start) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't seek to range start to %d", range->start);
     } else {
         if (mprWriteFile(file, mprGetBufStart(buf), len) != len) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't PUT to %s", tx->filename);
         }
     }
-}
-
-
-/*  
-    Populate a packet with file data
- */
-static int readFileData(HttpQueue *q, HttpPacket *packet)
-{
-    HttpConn    *conn;
-    HttpTx      *tx;
-    HttpRx      *rx;
-    ssize       len, rc;
-
-    conn = q->conn;
-    tx = conn->tx;
-    rx = conn->rx;
-
-    if (packet->content == 0) {
-        len = packet->entityLength;
-        if ((packet->content = mprCreateBuf(len, len)) == 0) {
-            return MPR_ERR_MEMORY;
-        }
-    } else {
-        len = mprGetBufSpace(packet->content);
-    }
-    mprAssert(len <= mprGetBufSpace(packet->content));    
-    mprLog(7, "readFileData len %d, pos %d", len, tx->pos);
-    
-    if (rx->ranges) {
-        /*  
-            rangeService will have set tx->pos to the next read position already
-         */
-        mprSeekFile(tx->file, SEEK_SET, (MprOffset) tx->pos);
-    }
-
-    if ((rc = mprReadFile(tx->file, mprGetBufStart(packet->content), len)) != len) {
-        /*  
-            As we may have sent some data already to the client, the only thing we can do is abort and hope the client 
-            notices the short data.
-         */
-        httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't read file %s", tx->filename);
-        return MPR_ERR_CANT_READ;
-    }
-    mprAdjustBufEnd(packet->content, len);
-    return (int) len;
 }
 
 
@@ -262,7 +286,7 @@ static void handlePutRequest(HttpQueue *q)
     mprAssert(tx->fileInfo.checked);
 
     path = tx->filename;
-    if (rx->ranges) {
+    if (tx->outputRanges) {
         /*  
             Open an existing file with fall-back to create
          */
@@ -294,11 +318,9 @@ static void handlePutRequest(HttpQueue *q)
 static void handleDeleteRequest(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpRx      *rx;
     HttpTx      *tx;
 
     conn = q->conn;
-    rx = conn->rx;
     tx = conn->tx;
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);

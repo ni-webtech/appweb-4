@@ -160,11 +160,6 @@ module ejs {
         native static function get dir(): Path
 
         /** 
-            Application environment. Object hash of all environment variables.
-         */
-        native static function get env(): Object
-
-        /** 
             The directory containing the application executable
          */
         native static function get exeDir(): Path
@@ -2134,14 +2129,14 @@ module ejs {
             All events are called with the signature:
             function (event: String, cmd: Cmd): Void
          */
-        native function on(name, observer: Function): Void
+        native function on(name, listener: Function): Void
 
         /** 
             This call is not supported.
             @duplicate Stream.off
             @hide
          */
-        native function off(name, observer: Function): Void
+        native function off(name, listener: Function): Void
 
         /**
             Process ID of the the command. This is set to the process ID (PID) of the command. If no command has 
@@ -2151,7 +2146,7 @@ module ejs {
 
         /**
             @duplicate Stream.read
-            If no observer has been defined via $on(), this call will block if there is no data to be read.
+            If no listener has been defined via $on(), this call will block if there is no data to be read.
          */
         native function read(buffer: ByteArray, offset: Number = 0, count: Number = -1): Number
 
@@ -2245,7 +2240,6 @@ module ejs {
 
         /**
             Start a command in the background as a daemon.  No data can be written to the daemon's stdin.
-            @param cmdline Command line to use. The cmdline may be either a string or an array of strings.
             @return The process ID. This pid can be used with kill().
          */
         static function daemon(cmdline: Object, options: Object = null): Number {
@@ -5229,12 +5223,8 @@ module ejs {
      */
     native function print(...args): void
 
-    /**
-        Print the arguments using a printf style format string
-        @param fmt Format string
-        @param args Variables to print
-     */
-    function printf(fmt, ...args): Void
+    //  MOB DOC
+    function printf(fmt, ...args)
         App.outputStream.write(fmt.format(args))
 
     /** 
@@ -6737,12 +6727,6 @@ module ejs {
             require.main = mainId
         }
 
-        /**
-            Register a CommonJS module initializer
-            @param id Unique path ID for the module. This is typically a relative path to the module
-            @param fn Module initialization function
-            @return The function 
-         */
         public static function register(id, fn): Function {
             Loader.initializers[id] = fn
             return fn
@@ -6923,7 +6907,6 @@ module ejs {
     /**
         Locale information.
         @stability prototype
-        @hide
      */
     class Locale {
 
@@ -13497,6 +13480,7 @@ module ejs.cjs {
             stdout = App.outputStream
             stderr = App.errorStream
             args = App.args
+//  TODO MOB
             env = {}        // App.env
             platform = Config.title
             this.global = global
@@ -13626,7 +13610,7 @@ module ejs.db.mapper {
 
         use default namespace public
 
-        /**
+        /*
             Constructor for use when instantiating directly from Record. Typically, use models will implement this
             class and will provdie their own constructor which calls initialize().
          */
@@ -16346,8 +16330,8 @@ module ejs.web {
 
 module ejs.web {
     /** 
-        Common Log web server logging. 
-        This function is a middleware constructor that returns a web application function.
+        CommonLog middleware script. This logs each request to a file in the Common Log format defined 
+        by the Apache web server.
         @param app Application servicing the request and generating the response.
         @param logger Stream to use for writing access log information
         @return A web application function that services a web request and when invoked with the request object will 
@@ -16362,8 +16346,7 @@ module ejs.web {
     }
 
     /**
-        Common Log web server logging.
-        This logs each HTTP request to a file in the Common Log format defined by the Apache web server.
+        TODO - doc
      */
     class CommonLogClass {
         var innerApp: Function
@@ -19252,12 +19235,12 @@ module ejs.web {
             Request configuration. Initially refers to App.config which is filled with the aggregated "ejsrc" content.
             Middleware may modify to refer to a request local configuration object.
          */
-        native enumerable var config: Object
+        enumerable var config: Object
 
         /** 
             Associated Controller object. Set to null if no associated controller.
          */
-        native enumerable var controller: Controller
+        enumerable var controller: Controller
 
         /** 
             Get the request content length. This is the length of body data sent by the client with the request. 
@@ -19308,7 +19291,7 @@ module ejs.web {
             Physical filename for the resource supplying the response content for the request. Virtual requests where
             the Request $uri does not correspond to any physical resource may not define this property.
          */
-        native enumerable var filename: Path
+        enumerable var filename: Path
 
         /** 
             Notification "flash" messages to pass to the next request (only). By convention, the following keys are used:
@@ -19385,7 +19368,7 @@ module ejs.web {
             the client is stored in this property and the method property reflects the newly defined value. If method is
             not overridden, originalMethod will be null.
          */
-        native enumerable var originalMethod: String
+        enumerable var originalMethod: String
 
         /**
             The original request URI supplied by the client. This is the Uri path supplied by the client on the first
@@ -19509,7 +19492,7 @@ module ejs.web {
         native enumerable var uri: Uri
 
         /*************************************** Methods ******************************************/
-        /**
+        /*
             Construct the a Request object. Request objects are typically created by HttpServers and not constructed
             manually.
             @param uri Request URI
@@ -20001,9 +19984,6 @@ module ejs.web {
             }
         }
 
-        /**
-            @hide
-         */
         function showRequest(): Void {
             write("request: {\r\n") 
             for (let [key,value] in this) {
@@ -20126,7 +20106,7 @@ module ejs.web {
                     } catch {}
                 }
                 finalize()
-                log.debug(4, "Request error (" + status + ") for: \"" + uri + "\". " + msg)
+                log.debug(1, "Request error (" + status + ") for: \"" + uri + "\". " + msg)
             }
         }
 
@@ -21149,7 +21129,7 @@ module ejs.web {
          */
         internal var splitter: String
 
-        /**
+        /*
             Create a new Route instance. This is normally not invoked directly. Rather Router.add() is used to
             create and install routes into the Router.
             @param template String or Regular Expression defining the form of a matching URI (Request.pathInfo).
@@ -21164,7 +21144,6 @@ module ejs.web {
             @option name Name to give to the route. If absent, the name is created from the controller and action names.
             @option outer Parent route. The parent's template and parameters are appended to this route.
             @option params Override parameter to provide to the request in the Request.params.
-            @param router Owning router object
             @examples:
                 Route("/{controller}(/{action}(/{id}))/", { method: "POST" })
                 Route("/User/login", {name: "login" })
@@ -23443,11 +23422,16 @@ module ejs.web {
             The server must be restarted to reload changes. This happens before HttpServer loads serverRoot/ejsrc.
          */
         private static function initWeb(): Void {
-            blend(App.config, defaultConfig, false)
-            let dirs = App.config.directories
-            for (let [key, value] in dirs) {
-                dirs[key] = Path(value)
+        /*
+            MOB - remove
+            config = App.config
+            let path = Path("ejsrc")
+            if (path.exists) {
+                let webConfig = deserialize(path.readString())
+                blend(config, webConfig, true)
             }
+        */
+            blend(App.config, defaultConfig, false)
         }
         initWeb()
 

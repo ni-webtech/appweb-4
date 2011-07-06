@@ -16,7 +16,7 @@ rom:
 	./configure --host=i386-apple-darwin --build=x86_64-apple-darwin --rom --static --without-ssl --without-php --without-ejs
 
 config32:
-	./configure --host=i386-apple-darwin --build=i386-apple-darwin --without-matrixssl --without-php
+	./configure --host=i386-apple-darwin --build=i386-apple-darwin --without-matrixssl --without-php --release
 
 cross32:
 	./configure --host=i386-apple-darwin --without-matrixssl --without-php
@@ -99,13 +99,6 @@ cygwin:
 
 freebsd:
 	./configure --defaults=dev --enable-test --disable-samples --without-php --without-matrixssl --without-openssl
-
-php:
-	DIR=/Users/mob/svn/packages/php/php-5.2.0 ; \
-	CC=arm-linux-gcc AR=arm-linux-ar LD=arm-linux-ld
-	./configure -with-php=builtin --with-php-dir=$$DIR \
-		--with-php-iflags="-I$$DIR -I$$DIR/main -I$$DIR/Zend -I$$DIR/TSRM" \
-		--with-php-libpath="$$DIR/libs" --with-php-libs="libphp crypt resolv db z"
 
 #
 #	Using ubuntu packages: uclibc-toolchain, libuclibc-dev

@@ -156,8 +156,8 @@ static int patch(char *path)
         return -1;
     }
     stat(path, &sbuf);
-    inBuf = (char*) malloc(sbuf.st_size + 1);
-    rc = fread(inBuf, 1, sbuf.st_size, ifp);
+    inBuf = (char*) malloc((int) sbuf.st_size + 1);
+    rc = fread(inBuf, 1, (int) sbuf.st_size, ifp);
     if (rc < 0) {
         fprintf(stderr, "dsi: Can't read file %s\n", path);
         free(inBuf);
@@ -261,8 +261,8 @@ static int patch(char *path)
             tok = "<!-- EndDsi -->";
             len = strlen(tok);
             if (strncmp(start, tok, strlen(tok)) == 0) {
-                dsiBuf = (char*) malloc(sbuf.st_size + 1);
-                rc = fread(dsiBuf, 1, sbuf.st_size, dsiFp);
+                dsiBuf = (char*) malloc((int) sbuf.st_size + 1);
+                rc = fread(dsiBuf, 1, (int) sbuf.st_size, dsiFp);
                 if (rc < 0) {
                     fprintf(stderr, "dsi: Can't read DSI %s\n", dsiPath);
                     return -1;

@@ -1,5 +1,5 @@
 /*
-    dirHandler.c - Directory listing handler.
+    dirHandler.c - Directory listing handler
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -38,21 +38,24 @@ static void sortList(HttpConn *conn, MprList *list);
 
 /************************************* Code ***********************************/
 /*
-    Match if the url maps to a directory.
+    Match if the url maps to a directory. The pathInfo must end with "/".
  */
-static bool matchDir(HttpConn *conn, HttpStage *handler)
+static bool matchDir(HttpConn *conn, HttpStage *handler, int dirrection)
 {
+    HttpRx      *rx;
     HttpTx      *tx;
     Dir         *dir;
 
     tx = conn->tx;
+    rx = conn->rx;
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
-    dir = handler->stageData;
-    if (dir) {
-        mprLog(5, "Directory handler matched");
+
+    if (dirrection & HTTP_STAGE_TX) {
+        dir = handler->stageData;
+        return dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/");
     }
-    return dir->enabled && tx->fileInfo.isDir;
+    return 0;
 }
 
 
@@ -167,13 +170,11 @@ static void parseQuery(HttpConn *conn)
 
 static void sortList(HttpConn *conn, MprList *list)
 {
-    HttpRx      *rx;
     HttpTx      *tx;
     MprDirEntry *tmp, **items;
     Dir         *dir;
     int         count, i, j, rc;
 
-    rx = conn->rx;
     tx = conn->tx;
     dir = tx->handler->stageData;
     
@@ -250,7 +251,7 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
 {
     Dir     *dir;
     char    *parent, *parentSuffix;
-    int     order, reverseOrder, fancy, isRootDir;
+    int     reverseOrder, fancy, isRootDir;
 
     dir = q->stage->stageData;
     
@@ -264,13 +265,10 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
     httpWrite(q, "<h1>Index of %s</h1>\r\n", path);
 
     if (dir->sortOrder > 0) {
-        order = 'A';
         reverseOrder = 'D';
     } else {
-        order = 'D';
         reverseOrder = 'A';
     }
-
     if (dir->fancyIndexing == 0) {
         fancy = '0';
     } else if (dir->fancyIndexing == 1) {
@@ -278,14 +276,12 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
     } else if (dir->fancyIndexing == 2) {
         fancy = '2';
     }
-
     parent = mprGetPathDir(path);
     if (parent[strlen(parent) - 1] != '/') {
         parentSuffix = "/";
     } else {
         parentSuffix = "";
     }
-
     isRootDir = (strcmp(path, "/") == 0);
 
     if (dir->fancyIndexing == 2) {
@@ -389,7 +385,7 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
     } else {
         host = httpGetConnHost(q->conn);
         ext = mprGetPathExtension(ep->name);
-        if ((mimeType = mprLookupMime(host->mimeTypes, ext)) != 0) {
+        if (ext && (mimeType = mprLookupMime(host->mimeTypes, ext)) != 0) {
             if (strcmp(ext, "es") == 0 || strcmp(ext, "ejs") == 0 || strcmp(ext, "php") == 0) {
                 icon = "text";
             } else if (strstr(mimeType, "text") != 0) {
@@ -427,13 +423,11 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
 
 static void outputFooter(HttpQueue *q)
 {
-    HttpRx      *rx;
     HttpConn    *conn;
     MprSocket   *sock;
     Dir         *dir;
     
     conn = q->conn;
-    rx = conn->rx;
     dir = q->stage->stageData;
     
     if (dir->fancyIndexing == 2) {
@@ -519,7 +513,7 @@ static int parseDir(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpStage   *handler;
     Dir         *dir;
-    char        *name, *extensions, *option, *nextTok, *junk;
+    char        *extensions, *option, *nextTok, *junk;
 
     handler = httpLookupStage(http, "dirHandler");
     dir = handler->stageData;
@@ -528,7 +522,7 @@ static int parseDir(Http *http, cchar *key, char *value, MaConfigState *state)
     if (scasecmp(key, "AddIcon") == 0) {
         /*  AddIcon file ext ext ext */
         /*  Not yet supported */
-        name = stok(value, " \t", &extensions);
+        /* name = */ stok(value, " \t", &extensions);
         parseWords(dir->extList, extensions);
         return 1;
 

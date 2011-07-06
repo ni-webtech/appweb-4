@@ -12,7 +12,7 @@
             --name uniqueName       # Name for this instance
             --threads maxThreads    # Set maximum worker threads
             --version               # Output version information
-            -v                      # Same as --log stdout:2
+            -v                      # Same as --log stderr:2
  */
 
 /********************************* Includes ***********************************/
@@ -131,7 +131,7 @@ MAIN(appweb, int argc, char **argv)
             }
             app->serverRoot = mprGetAbsPath(argv[++argind]);
             if (chdir(app->serverRoot) < 0) {
-                mprError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
+                mprError("%s: Can't change directory to %s", mprGetAppName(), app->serverRoot);
                 exit(4);
             }
 
@@ -140,6 +140,7 @@ MAIN(appweb, int argc, char **argv)
                 usageError();
             }
             maStartLogging(NULL, argv[++argind]);
+            mprSetCmdlineLogging(1);
 
         } else if (strcmp(argp, "--name") == 0 || strcmp(argp, "-n") == 0) {
             if (argind >= argc) {
@@ -154,17 +155,26 @@ MAIN(appweb, int argc, char **argv)
             app->workers = atoi(argv[++argind]);
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
-            maStartLogging(NULL, "stdout:2");
+            maStartLogging(NULL, "stderr:2");
+            mprSetCmdlineLogging(1);
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
             exit(0);
 
         } else {
-            mprError("Unknown switch \"%s\"\n", argp);
+            mprError("Unknown switch \"%s\"", argp);
             usageError();
             exit(5);
         }
+    }
+    if (mprStart() < 0) {
+        mprUserError("Can't start MPR for %s", mprGetAppName());
+        mprDestroy(MPR_EXIT_DEFAULT);
+        return MPR_ERR_CANT_INITIALIZE;
+    }
+    if (checkEnvironment(argv[0]) < 0) {
+        exit(6);
     }
     if (argc > argind) {
         if (argc > (argind + 2)) {
@@ -174,19 +184,9 @@ MAIN(appweb, int argc, char **argv)
         if (argc > argind) {
             app->documentRoot = sclone(argv[argind++]);
         }
-    }
-    if (mprStart() < 0) {
-        mprUserError("Can't start MPR for %s", mprGetAppName());
-        mprDestroy(MPR_EXIT_DEFAULT);
-        return MPR_ERR_CANT_INITIALIZE;
-    }
-    if (findConfigFile() < 0) {
-        exit(6);
-    }
-    if (ipAddrPort) {
         mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
-    }
-    if (checkEnvironment(argv[0]) < 0) {
+        
+    } else if (findConfigFile() < 0) {
         exit(7);
     }
     if (jail && changeRoot(jail) < 0) {
@@ -232,7 +232,7 @@ static int changeRoot(cchar *jail)
 {
 #if BLD_UNIX_LIKE
     if (chdir(app->serverRoot) < 0) {
-        mprError("%s: Can't change directory to %s\n", mprGetAppName(), app->serverRoot);
+        mprError("%s: Can't change directory to %s", mprGetAppName(), app->serverRoot);
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (chroot(jail) < 0) {
@@ -285,10 +285,14 @@ static int findConfigFile()
     }
     if (!mprPathExists(app->configFile, R_OK)) {
         if (!userPath) {
+#if UNUSED
             app->configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
+#else
+            app->configFile = mprJoinPath(mprGetAppDir(), mprAsprintf("../%s/%s.conf", BLD_LIB_NAME, mprGetAppName()));
+#endif
         }
         if (!mprPathExists(app->configFile, R_OK)) {
-            mprError("Can't open config file %s\n", app->configFile);
+            mprError("Can't open config file %s", app->configFile);
             return MPR_ERR_CANT_OPEN;
         }
     }
@@ -302,8 +306,7 @@ static void usageError(Mpr *mpr)
 
     name = mprGetAppName();
 
-    //  MOB - test the ipaddress:port docroot invocation
-    mprPrintfError("\n\n%s Usage:\n\n"
+    mprPrintfError("\n%s Usage:\n\n"
     "  %s [options] [IPaddress][:port] [documentRoot]\n\n"
     "  Options:\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
@@ -316,7 +319,7 @@ static void usageError(Mpr *mpr)
     "    --threads maxThreads   # Set maximum worker threads\n"
     "    --version              # Output version information\n\n"
     "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",
-        name, name, name, name, name);
+        mprGetAppTitle(), name, name, name, name);
     exit(10);
 }
 
@@ -390,7 +393,7 @@ static int writePort(HttpHost *host)
     char    numBuf[16], *path;
     int     fd, len;
 
-    //  MOB - should really go to a BLD_LOG_DIR
+    //  TODO - should really go to a BLD_LOG_DIR
     path = mprJoinPath(mprGetAppDir(), "../.port.log");
     if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0) {
         mprError("Could not create port file %s", path);

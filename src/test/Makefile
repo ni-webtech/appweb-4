@@ -33,7 +33,7 @@ $(BLD_BIN_DIR)/testAppweb$(BLD_EXE): $(OBJECTS) $(call lib, appweb)
 $(BLD_MOD_DIR)/egiTest$(BLD_SHOBJ): $(call lib, appweb) $(BLD_OBJ_DIR)/testEgi$(BLD_OBJ)
 	bld --shared --library $(BLD_MOD_DIR)/egiTest --libs "$(LIBS) $(BLD_APPWEB_LIBS)" testEgi$(BLD_OBJ)
 
-ifneq	($(BUILDING_CROSS),1)
+ifeq	($(BLD_CROSS),0)
 testExtra:
 	mkdir -p web/tmp
 	find . -name '*.mod' | xargs rm -f >/dev/null 2>&1 ; true

@@ -32,8 +32,12 @@ static void logHandler(int flags, int level, cchar *msg)
     if (flags & MPR_LOG_SRC) {
         mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
 
-    } else if (flags & MPR_ERROR_SRC) {
-        mprSprintf(buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
+    } else if (flags & (MPR_WARN_SRC | MPR_ERROR_SRC)) {
+        if (flags & MPR_WARN_SRC) {
+            mprSprintf(buf, sizeof(buf), "%s: Warning: %s\n", prefix, msg);
+        } else {
+            mprSprintf(buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
+        }
         mprWriteToOsLog(buf, flags, level);
 
         /*
@@ -58,7 +62,7 @@ static void logHandler(int flags, int level, cchar *msg)
 
 
 /*
-    Start error and information logging. Note: this is not per-request access logging
+    Start error and information logging. Note: this is not per-request access logging.
  */
 int maStartLogging(HttpHost *host, cchar *logSpec)
 {
@@ -73,7 +77,7 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
     mpr = mprGetMpr();
 
     if (logSpec == 0) {
-        logSpec = "stdout:0";
+        logSpec = "stderr:0";
     }
     if (*logSpec && strcmp(logSpec, "none") != 0) {
         spec = sclone(logSpec);
@@ -83,19 +87,21 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
         }
         if (strcmp(spec, "stdout") == 0) {
             file = mpr->fileSystem->stdOutput;
+        } else if (strcmp(spec, "stderr") == 0) {
+            file = mpr->fileSystem->stdError;
         } else {
             mode = O_CREAT | O_WRONLY | O_TEXT;
             if (host && host->logCount) {
                 mode |= O_APPEND;
                 mprGetPathInfo(spec, &info);
                 if (host->logSize <= 0 || (info.valid && info.size > host->logSize)) {
-                    maRotateAccessLog(spec, host->logCount, host->logSize);
+                    maRotateLog(spec, host->logCount, host->logSize);
                 }
             } else {
                 mode |= O_TRUNC;
             }
             if ((file = mprOpenFile(spec, mode, 0664)) == 0) {
-                mprPrintfError("Can't open log file %s\n", spec);
+                mprError("Can't open log file %s", spec);
                 return -1;
             }
             once = 0;
@@ -103,13 +109,7 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
         mprSetLogLevel(level);
         mprSetLogHandler(logHandler);
         mprSetLogFile(file);
-#if FUTURE && !BLD_WIN_LIKE
-        /*
-            TODO - The currently breaks MprCmd as it will close stderr.
-         */
-        dup2(file->fd, 1);
-        dup2(file->fd, 2);
-#endif
+
         if (once++ == 0) {
             mprLog(MPR_CONFIG, "Configuration for %s", mprGetAppTitle(mpr));
             mprLog(MPR_CONFIG, "---------------------------------------------");
@@ -137,7 +137,6 @@ int maStopLogging()
     Mpr         *mpr;
 
     mpr = mprGetMpr();
-
     file = mpr->logFile;
     if (file) {
         mprCloseFile(file);
@@ -180,7 +179,6 @@ void maSetAccessLog(HttpHost *host, cchar *path, cchar *format)
     if (format == NULL || *format == '\0') {
         format = "%h %l %u %t \"%r\" %>s %b";
     }
-
     host->logPath = sclone(path);
     host->logFormat = sclone(format);
 
@@ -194,14 +192,6 @@ void maSetAccessLog(HttpHost *host, cchar *path, cchar *format)
 }
 
 
-#if UNUSED
-void maSetLogHost(HttpHost *host, HttpHost *logHost)
-{
-    host->logHost = logHost;
-}
-#endif
-
-
 void maWriteAccessLogEntry(HttpHost *host, cchar *buf, int len)
 {
     static int once = 0;
@@ -212,7 +202,7 @@ void maWriteAccessLogEntry(HttpHost *host, cchar *buf, int len)
 }
 
 
-void maRotateAccessLog(cchar *path, int count, int maxSize)
+void maRotateLog(cchar *path, int count, int maxSize)
 {
     char    *from, *to;
     int     i;
@@ -241,9 +231,6 @@ void maLogRequest(HttpConn *conn)
     if (host == 0) {
         return;
     }
-#if UNUSED
-    host = host->logHost;
-#endif
     fmt = host->logFormat;
     if (fmt == 0) {
         return;
@@ -259,7 +246,6 @@ void maLogRequest(HttpConn *conn)
             mprPutCharToBuf(buf, c);
             continue;
         }
-
         switch (c) {
         case 'a':                           /* Remote IP */
             mprPutStringToBuf(buf, conn->ip);
@@ -273,12 +259,12 @@ void maLogRequest(HttpConn *conn)
             if (tx->bytesWritten == 0) {
                 mprPutCharToBuf(buf, '-');
             } else {
-                mprPutIntToBuf(buf, (int) tx->bytesWritten);
+                mprPutIntToBuf(buf, tx->bytesWritten);
             } 
             break;
 
         case 'B':                           /* Bytes written (minus headers) */
-            mprPutIntToBuf(buf, (int) (tx->bytesWritten - tx->headerSize));
+            mprPutIntToBuf(buf, (tx->bytesWritten - tx->headerSize));
             break;
 
         case 'h':                           /* Remote host */
@@ -295,7 +281,7 @@ void maLogRequest(HttpConn *conn)
             break;
 
         case 'O':                           /* Bytes written (including headers) */
-            mprPutIntToBuf(buf, (int) tx->bytesWritten);
+            mprPutIntToBuf(buf, tx->bytesWritten);
             break;
 
         case 'r':                           /* First line of request */
@@ -327,7 +313,7 @@ void maLogRequest(HttpConn *conn)
                 scopy(&keyBuf[5], sizeof(keyBuf) - 5, qualifier);
                 switch (c) {
                 case 'i':
-                    value = (char*) mprLookupHash(rx->headers, supper(keyBuf));
+                    value = (char*) mprLookupKey(rx->headers, supper(keyBuf));
                     mprPutStringToBuf(buf, value ? value : "-");
                     break;
                 default:

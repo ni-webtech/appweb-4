@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="ejsweb"
-	ProjectGUID="{72DC0024-3415-4ADE-8CF5-CCA7C82B0020}"
+	Name="auth"
+	ProjectGUID="{5BA2BA89-8C4F-4822-86CA-34D3D8B7222D}"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -41,7 +41,7 @@
 				Optimization="1"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../..;../../../src/include"
+				AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmpr.lib libejs-3.3.0.lib ws2_32.lib"
+				AdditionalDependencies="libmpr.lib ws2_32.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="false"
@@ -123,7 +123,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../..;../../../src/include"
+				AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -146,7 +146,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmpr.lib libejs-3.3.0.lib ws2_32.lib"
+				AdditionalDependencies="libmpr.lib ws2_32.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
@@ -185,40 +185,20 @@
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{79f9e964-64c3-4f31-ba4a-b0509931ca44}"
+			UniqueIdentifier="{7d690dfa-3375-4788-83dd-47ed5f10fa2e}"
 			>
 			<File
 				RelativePath="..\..\..\buildConfig.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\include\ejs.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\include\master\ejs.slots.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\include\ejs.slots.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\include\mpr.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\include\mprSsl.h"
 				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{8f8ecc44-3c37-4d99-be72-e0bdd94f1397}"
+			UniqueIdentifier="{7e7a7843-8d35-43bb-a691-7a3b00243c8b}"
 			>
 			<File
-				RelativePath="..\..\..\src\ejs\ejsweb.c"
+				RelativePath="..\..\..\src\utils\auth.c"
 				>
 			</File>
 		</Filter>

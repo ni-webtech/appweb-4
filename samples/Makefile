@@ -8,9 +8,7 @@
 
 include 		.makedep 
 
-ifeq ($(BLD_FEATURE_SAMPLES),1)
-	PRE_DIRS	+= c ejs
-endif
+# PRE_DIRS		+= c ejs
 
 #
 #   Local variables:

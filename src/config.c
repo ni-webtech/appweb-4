@@ -29,7 +29,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
     HttpServer      *server;
     HttpHost        *host;
     HttpAlias       *alias;
-    HttpLoc         *loc;
+    HttpLoc         *loc, *cloc;
     char            *path, *searchPath, *dir;
 
     appweb = meta->appweb;
@@ -45,12 +45,11 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         return 0;
 
     } else {
-        //  MOB TEST THIS
-        //  MOB - bug appweb is always calling this with a configFile defined - never empty
         mprLog(2, "DocumentRoot %s", docRoot);
         if ((server = httpCreateConfiguredServer(docRoot, ip, port)) == 0) {
             return MPR_ERR_CANT_OPEN;
         }
+        maAddServer(meta, server);
         host = meta->defaultHost = mprGetFirstItem(server->hosts);
         mprAssert(host);
 
@@ -62,13 +61,21 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
             mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_MOD_PREFIX: BLD_ABS_MOD_DIR);
 #endif
         mprSetModuleSearchPath(searchPath);
+
+#if UNUSED
         httpSetConnector(loc, "netConnector");
-        /*  
+
+        /*
             Auth must be added first to authorize all requests. File is last as a catch all.
          */
         if (httpLookupStage(http, "authFilter")) {
             httpAddHandler(loc, "authFilter", "");
+            httpAddFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
+            httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
+            httpAddFilter(loc, "uploadFilter", NULL, HTTP_STAGE_RX);
+            httpAddFilter(loc, "authFilter", NULL, HTTP_STAGE_RX);
         }
+#endif
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
             httpAddHandler(loc, "cgiHandler", ".cgi .cgi-nph .bat .cmd .pl .py");
@@ -80,15 +87,18 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
                 alias = httpCreateAlias("/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
                 httpAddAlias(host, alias);
-                loc = httpCreateInheritedLocation(host->loc);
-                httpSetLocationPrefix(loc, "/cgi-bin/");
-                httpSetHandler(loc, "cgiHandler");
-                httpAddLocation(host, loc);
+                cloc = httpCreateInheritedLocation(host->loc);
+                httpSetLocationPrefix(cloc, "/cgi-bin/");
+                httpSetHandler(cloc, "cgiHandler");
+                httpAddLocation(host, cloc);
             }
         }
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
             httpAddHandler(loc, "ejsHandler", ".ejs");
+#if UNUSED
+            httpSetLocationScript(loc, "start.es");
+#endif
         }
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
@@ -99,7 +109,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         }
     }
     if (serverRoot) {
-        maSetMetaRoot(meta, path);
+        maSetMetaRoot(meta, serverRoot);
     }
     if (ip || port > 0) {
         maSetMetaAddress(meta, ip, port);
@@ -115,6 +125,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     Http            *http;
     HttpDir         *dir;
     HttpHost        *host;
+    HttpServer      *server;
     MprDirEntry     *dp;
     MprList         *includes;
     MaConfigState   stack[MA_MAX_CONFIG_DEPTH], *state;
@@ -128,7 +139,8 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     memset(stack, 0, sizeof(stack));
     meta->alreadyLogging = mprGetLogHandler() ? 1 : 0;
 
-    defaultHost = host = httpCreateHost(NULL, 0, NULL);
+    defaultHost = host = httpCreateHost(0);
+    httpSetHostName(host, "default", -1);
     meta->defaultHost = defaultHost;
 
     top = 0;
@@ -153,9 +165,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
      */
     state->loc->auth = state->dir->auth;
     state->auth = state->dir->auth;
-
     httpAddDir(host, state->dir);
-    httpSetHostInfoName(host, "Main Server");
 
     /*
         Parse each line in the config file
@@ -260,7 +270,6 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
             }
             /*
                 Keywords outside of a virtual host or directory section
-                MOB - some errors should abort processing. Support return codes to exit appweb (could use mprFatalError)
              */
             rc = processSetting(meta, key, value, state);
             if (rc == 0) {
@@ -322,15 +331,18 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 value = strim(value, "\"", MPR_TRIM_BOTH);
                 state = pushState(state, &top);
                 mprParseIp(value, &ip, &port, -1);
-                state->host = httpCreateVirtualHost(ip, port, host);
-                httpSetHostDocumentRoot(state->host, host->documentRoot);
-                httpSetHostServerRoot(state->host, host->serverRoot);
-                host = state->host;
+                host = state->host = httpCloneHost(host);
+                httpSetHostName(host, ip, port);
                 state->loc = host->loc;
                 state->auth = host->loc->auth;
                 state->dir = httpCreateDir(stack[top - 1].dir->path, stack[top - 1].dir);
                 state->auth = state->dir->auth;
                 httpAddDir(host, state->dir);
+                if ((server = httpLookupServer(http, ip, port)) == 0) {
+                    mprError("Can't find listen directive for virtual host %s", value); 
+                } else {
+                    httpAddHostToServer(server, host);
+                }
 
             } else if (scasecmp(key, "Directory") == 0) {
                 path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
@@ -418,7 +430,6 @@ err:
 }
 
 
-// MOB - this does more than validation?
 int maValidateConfiguration(MaMeta *meta)
 {
     MaAppweb        *appweb;
@@ -426,8 +437,9 @@ int maValidateConfiguration(MaMeta *meta)
     HttpAlias       *alias;
     HttpDir         *bestDir;
     HttpHost        *host, *defaultHost;
+    HttpServer      *server;
     char            *path;
-    int             nextAlias, nextHost;
+    int             nextAlias, nextHost, nextServer;
 
     appweb = meta->appweb;
     http = appweb->http;
@@ -439,16 +451,17 @@ int maValidateConfiguration(MaMeta *meta)
         return 0;
     }
 
-    /*
-        Validate the hosts
-     */
-    for (nextHost = 0; (host = mprGetNextItem(http->hosts, &nextHost)) != 0; ) {
-        mprAssert(host->ip);
-        mprAssert(host->port > 0);
-        if (httpAddHostToServers(http, host) < 0) {
-            mprError("Missing a listen directive for %s:%d", host->ip, host->port);
-            return 0;
+    for (nextServer = 0; (server = mprGetNextItem(http->servers, &nextServer)) != 0; ) {
+        if (mprGetListLength(server->hosts) == 0) {
+            httpAddHostToServer(server, defaultHost);
+            if (defaultHost->ip == 0) {
+                httpSetHostName(defaultHost, server->ip, server->port);
+            }
         }
+    }
+
+    for (nextHost = 0; (host = mprGetNextItem(http->hosts, &nextHost)) != 0; ) {
+        mprAssert(host->name && host->name);
         if (host->documentRoot == 0) {
             httpSetHostDocumentRoot(host, defaultHost->documentRoot);
         }
@@ -464,22 +477,8 @@ int maValidateConfiguration(MaMeta *meta)
         for (nextAlias = 0; (alias = mprGetNextItem(host->aliases, &nextAlias)) != 0; ) {
             path = httpMakePath(host, alias->filename);
             if ((bestDir = httpLookupBestDir(host, path)) == 0) {
-                //  MOB Old code would use bestDir = maCreateDir(hp, alias->filename, stack[0].dir);
                 bestDir = httpCreateBareDir(alias->filename);
                 httpAddDir(host, bestDir);
-            }
-        }
-
-        /*
-            Define a informational host name if one has not been defined via ServerName
-         */
-        if (host->name == 0) {
-            if (host->port) {
-                httpSetHostInfoName(host, mprAsprintf("%s:%d", (host->ip && *host->ip) ? host->ip : "*", host->port));
-                httpSetHostName(host, mprAsprintf("%s:%d", mprGetHostName(), host->port));
-            } else {
-                httpSetHostName(host, mprGetHostName());
-                httpSetHostInfoName(host, mprGetHostName());
             }
         }
         mprLog(MPR_CONFIG, "Host \"%s\"", host->name);
@@ -509,10 +508,11 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     HttpServer  *server;
     MprHash     *hp;
     MprModule   *module;
+    MprOff      onum;
     char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *ip;
     char        *names, *type, *items, *include, *exclude, *when, *mimeTypes;
     ssize       len;
-    int         port, rc, code, processed, num, flags, colonCount, mask, level;
+    int         port, rc, code, num, colonCount, mask, level;
 
     mprAssert(state);
     mprAssert(key);
@@ -529,11 +529,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     mprAssert(host);
     mprAssert(dir);
     auth = state->auth;
-    processed = 0;
-    flags = 0;
-
-    //  TODO - crashes with missing value
-    //  TODO - need a real parser
 
     switch (toupper((int) key[0])) {
     case 'A':
@@ -559,7 +554,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AddFilter") == 0) {
             /* Scope: server, host, location */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_INCOMING | HTTP_STAGE_OUTGOING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_RX | HTTP_STAGE_TX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -568,7 +563,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AddInputFilter") == 0) {
             /* Scope: server, host, location */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_INCOMING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_RX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -577,7 +572,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AddOutputFilter") == 0) {
             /* Scope: server, host, location */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_OUTGOING) < 0) {
+            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_TX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -697,7 +692,19 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         break;
 
     case 'C':
-        if (scasecmp(key, "Chroot") == 0) {
+        if (scasecmp(key, "Cache") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            when = stok(value, " \t", &extensions);
+            httpAddLocationExpiry(loc, (MprTime) stoi(when, 10, NULL), extensions);
+            return 1;
+
+        } else if (scasecmp(key, "CacheByType") == 0) {
+            value = strim(value, "\"", MPR_TRIM_BOTH);
+            when = stok(value, " \t", &mimeTypes);
+            httpAddLocationExpiryByType(loc, (MprTime) stoi(when, 10, NULL), mimeTypes);
+            return 1;
+
+        } else if (scasecmp(key, "Chroot") == 0) {
 #if BLD_UNIX_LIKE
             path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             if (chdir(path) < 0) {
@@ -719,6 +726,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return MPR_ERR_BAD_SYNTAX;
 #endif
 
+        //  FUTURE - support simple AccessLog with standard NCSA format
         } else if (scasecmp(key, "CustomLog") == 0) {
 #if !BLD_FEATURE_ROMFS
             char *format, *end;
@@ -743,9 +751,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             }
             path = httpMakePath(host, path);
             maSetAccessLog(host, path, strim(format, "\"", MPR_TRIM_BOTH));
-#if UNUSED
-            maSetLogHost(host, host);
-#endif
 #endif
             return 1;
         }
@@ -772,9 +777,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
             httpSetHostDocumentRoot(host, path);
             httpSetDirPath(dir, path);
-#if UNUSED
-            mprLog(MPR_CONFIG, "DocRoot (%s): \"%s\"", host->name, path);
-#endif
             return 1;
         }
         break;
@@ -796,24 +798,15 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                     mprLog(4, "Already logging. Ignoring ErrorLog directive");
                 } else {
                     maStopLogging(meta);
-                    if (strncmp(path, "stdout", 6) != 0) {
+                    if (strncmp(path, "stdout", 6) != 0 && !strncmp(path, "stderr", 6) != 0) {
                         path = httpMakePath(host, path);
-                        rc = maStartLogging(host, path);
-                    } else {
-                        rc = maStartLogging(host, path);
                     }
-                    if (rc < 0) {
-                        mprError("Can't write to ErrorLog");
+                    if (maStartLogging(host, path) < 0) {
+                        mprError("Can't write to ErrorLog: %s", path);
                         return MPR_ERR_BAD_SYNTAX;
                     }
                 }
             }
-            return 1;
-
-        } else if (scasecmp(key, "Expires") == 0) {
-            value = strim(value, "\"", MPR_TRIM_BOTH);
-            when = stok(value, " \t", &mimeTypes);
-            httpAddLocationExpiry(loc, (MprTime) stoi(when, 10, NULL), mimeTypes);
             return 1;
         }
         break;
@@ -846,11 +839,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
     case 'L':
         if (scasecmp(key, "LimitChunkSize") == 0) {
-            num = atoi(value);
-            if (num < MA_BOT_CHUNK_SIZE || num > MA_TOP_CHUNK_SIZE) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
-            limits->chunkSize = num;
+            limits->chunkSize = atoi(value);
             return 1;
 
         } else if (scasecmp(key, "LimitClients") == 0) {
@@ -858,71 +847,45 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "LimitMemoryMax") == 0) {
-            mprSetMemLimits(-1, atoi(value));
+            mprSetMemLimits(-1, (ssize) stoi(value, 10, 0));
             return 1;
 
         } else if (scasecmp(key, "LimitMemoryRedline") == 0) {
-            mprSetMemLimits(atoi(value), -1);
+            mprSetMemLimits((ssize) stoi(value, 10, 0), -1);
             return 1;
 
         } else if (scasecmp(key, "LimitRequestBody") == 0) {
-            num = atoi(value);
-            if (num < MA_BOT_BODY || num > MA_TOP_BODY) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
-            limits->receiveBodySize = num;
+            onum = stoi(value, 10, 0);
+            limits->receiveBodySize = onum;
             return 1;
 
-        //  MOB -- Deprecate Field and update doc
-        } else if (scasecmp(key, "LimitRequestFields") == 0 || 
-                scasecmp(key, "LimitRequestHeaderCount") == 0) {
+        } else if (scasecmp(key, "LimitRequestFields") == 0 || scasecmp(key, "LimitRequestHeaderCount") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_NUM_HEADERS || num > MA_TOP_NUM_HEADERS) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->headerCount = num;
             return 1;
 
-        //  MOB -- Deprecate Field and update doc
         } else if (scasecmp(key, "LimitRequestFieldSize") == 0 || scasecmp(key, "LimitRequestHeaderSize") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_HEADER || num > MA_TOP_HEADER) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->headerSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitResponseBody") == 0) {
-            num = atoi(value);
-            if (num < MA_BOT_RESPONSE_BODY || num > MA_TOP_RESPONSE_BODY) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
-            limits->transmissionBodySize = num;
+            onum = stoi(value, 10, 0);
+            limits->transmissionBodySize = onum;
             return 1;
 
         } else if (scasecmp(key, "LimitStageBuffer") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_STAGE_BUFFER || num > MA_TOP_STAGE_BUFFER) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->stageBufferSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitUrl") == 0 || scasecmp(key, "LimitUri") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_URL || num > MA_TOP_URL){
-                return MPR_ERR_BAD_SYNTAX;
-            }
             limits->uriSize = num;
             return 1;
 
         } else if (scasecmp(key, "LimitUploadSize") == 0) {
-            num = atoi(value);
-            if (num != -1 && (num < MA_BOT_UPLOAD_SIZE || num > MA_TOP_UPLOAD_SIZE)){
-                //  TODO - should emit a message for all these cases
-                return MPR_ERR_BAD_SYNTAX;
-            }
-            limits->uploadSize = num;
+            limits->uploadSize = stoi(value, 10, 0);
             return 1;
 
 #if DEPRECATED
@@ -966,8 +929,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                 }
                 meta.insert(new HttpServer(ip->ip, port));
                 if (host->ipAddrPort == 0) {
-                    mprSprintf(ipAddrPort, sizeof(ipAddrPort), "%s:%d", ip->ip, port);
-                    maSetHostAddress(host, ipAddrPort);
+                    httpSetHostName(host, ip->ip, port);
                 }
                 break;
             }
@@ -994,9 +956,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                     return MPR_ERR_BAD_SYNTAX;
                 }
                 ip = 0;
-#if UNUSED
-                flags = MA_LISTEN_WILD_IP;
-#endif
 
             } else {
                 colonCount = 0;
@@ -1016,9 +975,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                         port = atoi(cp);
                     } else {
                         port = HTTP_DEFAULT_PORT;
-#if UNUSED
-                        flags = MA_LISTEN_DEFAULT_PORT;
-#endif
                     }
 
                 } else {
@@ -1030,9 +986,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
                     } else {
                         port = HTTP_DEFAULT_PORT;
-#if UNUSED
-                        flags = MA_LISTEN_DEFAULT_PORT;
-#endif
                     }
                     if (*ip == '[') {
                         ip++;
@@ -1048,17 +1001,21 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             }
             if (port == 0) {
                 mprError("Bad or missing port %d in Listen directive", port);
-                //  MOB -- should be able to abort the parsing
                 return -1;
             }
+#if FUTURE
+            if (host != defaultHost) {
+                mprError("Can't have listen directive inside a VirtualHost block");
+                return -1;
+            }
+#endif
             server = httpCreateServer(ip, port, NULL, 0);
-            httpSetMetaServer(server, meta);
-            //  MOB should limits be in the constructor or need an API for this
             server->limits = limits;
             mprAddItem(meta->servers, server);
-            if (host->port == 0) {
-                httpSetHostAddress(host, ip, port);
-            }
+#if UNUSED
+            httpAddHostToServer(server, host);
+            httpSetHostName(host, ip, port);
+#endif
             return 1;
 
         } else if (scasecmp(key, "LogLevel") == 0) {
@@ -1166,11 +1123,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             mprLog(4, "NameVirtual Host: %s ", value);
             mprParseIp(value, &ip, &port, -1);
             httpSetNamedVirtualServers(http, ip, port); 
-#if MOB && FIX
-            if (httpCreateEndpoints(NULL, value) < 0) {
-                return -1;
-            }
-#endif
             return 1;
         }
         break;
@@ -1283,6 +1235,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "RunHandler") == 0) {
+            //  TODO - not finished "name" is not set
             name = stok(value, " \t", &value);
             value = slower(strim(value, "\"", MPR_TRIM_BOTH));
             if (scmp(value, "before") == 0) {
@@ -1301,18 +1254,12 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     case 'S':
         if (scasecmp(key, "ServerName") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
-            if (strncmp(value, "http://", 7) == 0) {
-                httpSetHostName(host, &value[7]);
-                httpSetHostInfoName(host, &value[7]);
-            } else {
-                httpSetHostName(host, value);
-                httpSetHostInfoName(host, value);
-            }
+            value = strim(value, "http://", MPR_TRIM_START);
+            httpSetHostName(host, value, -1);
             return 1;
 
         } else if (scasecmp(key, "ServerRoot") == 0) {
             path = httpReplaceReferences(host, strim(value, "\"", MPR_TRIM_BOTH));
-            //  MOB -- what does this really do?
             maSetMetaRoot(meta, path);
             httpSetHostServerRoot(host, path);
             mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
@@ -1338,9 +1285,6 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
         } else if (scasecmp(key, "StartThreads") == 0) {
             num = atoi(value);
-            if (num < 0 || num > MA_TOP_THREADS) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             mprSetMinWorkers(num);
             return 1;
         }
@@ -1349,17 +1293,11 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     case 'T':
         if (scasecmp(key, "ThreadLimit") == 0) {
             num = atoi(value);
-            if (num < 0 || num > MA_TOP_THREADS) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             mprSetMaxWorkers(num);
             return 1;
 
         } else if (scasecmp(key, "ThreadStackSize") == 0) {
             num = atoi(value);
-            if (num < MA_BOT_STACK || num > MA_TOP_STACK) {
-                return MPR_ERR_BAD_SYNTAX;
-            }
             mprSetThreadStackSize(num);
             return 1;
 
@@ -1415,13 +1353,12 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         }
         break;
     }
-
     rc = 0;
 
     /*
         Allow all stages to parse the request
      */
-    hp = mprGetFirstHash(http->stages);
+    hp = mprGetFirstKey(http->stages);
     while (hp) {
         stage = (HttpStage*) hp->data;
         if (stage->parse) {
@@ -1432,7 +1369,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (rc > 0) {
             break;
         }
-        hp = mprGetNextHash(http->stages, hp);
+        hp = mprGetNextKey(http->stages, hp);
     }
     return rc;
 }
@@ -1567,6 +1504,9 @@ int maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes)
 {
     char    *endp;
 
+    mprAssert(arg);
+    *arg = 0;
+    
     if (buf == 0) {
         return -1;
     }

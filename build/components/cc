@@ -34,8 +34,9 @@ setCompilerOptions()
     eval hasCygwin=\${KIND}_HAS_CYGWIN
     eval hasDiab=\${KIND}_HAS_DIAB
     eval hasWarnUnused=\${KIND}_HAS_WARN_UNUSED
+    eval hasWarn64to32=\${KIND}_HAS_WARN_64TO32
     eval hasUnnamedUnions=\${KIND}_HAS_UNNAMED_UNIONS
-    eval flags=\"-Werror \$BLD_${KIND}_CFLAGS \$BLD_${KIND}_DFLAGS \$BLD_${KIND}_IFLAGS \$BLD_${KIND}_LDFLAGS\"
+    eval flags=\"-Werror -Wall \$BLD_${KIND}_CFLAGS \$BLD_${KIND}_DFLAGS \$BLD_${KIND}_IFLAGS \$BLD_${KIND}_LDFLAGS\"
     if [ $os = MACOSX -a "${flags}" = "${flags/-arch/}" ] ; then
         flags="$flags -arch $cpu"
     fi
@@ -49,6 +50,7 @@ setCompilerOptions()
     eval ${hasMmu}=0
     eval ${hasUnnamedUnions}=0
     eval ${hasWarnUnused}=0
+    eval ${hasWarn64to32}=0
 
     if [ $os = CYGWIN -o $os = FREEBSD -o $os = LINUX -o $os = VXWORKS -o $os = MACOSX ] ; then
         hasGcc=1
@@ -74,7 +76,7 @@ setCompilerOptions()
         if [ $? = 0 ] ; then
             eval $hasMtune=1
 		else
-			eval \"${cc}\" -Werror -mtune=${cpu} -c $file >/dev/null 2>&1
+			eval \"${cc}\" -Werror -Wall -mtune=${cpu} -c $file >/dev/null 2>&1
 			if [ $? = 0 ] ; then
 				eval $hasMtune=1
 			fi
@@ -85,9 +87,9 @@ setCompilerOptions()
         #
         if [ "$verbose" != 0 ] ; then
             echo -e "    Checking for compiler -fno-stack-protector support"
-            # echo -e "        ${cc}" -Werror -fno-stack-protector -c $file "\n"
+            # echo -e "        ${cc}" -Werror -Wall -fno-stack-protector -c $file "\n"
         fi
-        eval \"${cc}\" -Werror -fno-stack-protector -c $file >/dev/null 2>&1
+        eval \"${cc}\" -Werror -Wall -fno-stack-protector -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
             eval $hasStackProtector=1
         fi
@@ -97,11 +99,31 @@ setCompilerOptions()
         #
         if [ "$verbose" != 0 ] ; then
             echo -e "    Checking for compiler -Wno-unused-result support"
-            # echo -e "        ${cc}" -Werror -Wno-unused-result -c $file "\n"
+            # echo -e "        ${cc}" -Werror -Wall -Wno-unused-result -c $file "\n"
         fi
-        eval \"${cc}\" -Werror -Wno-unused-result -c $file >/dev/null 2>&1
+        echo -e "#include <stdio.h>\n#include <stdlib.h>\nint main() { realloc(0, 1024); return 0; }\n" >$file
+        #
+        #   Test that it passes with -Wno-unused-result and that it fails without it
+        #   Needs optimization to trigger on most systems
+        #
+        eval \"${cc}\" -Os -Werror -Wall -Wno-unused-result -c $file >/dev/null 2>&1
         if [ $? = 0 ] ; then
-            eval $hasWarnUnused=1
+            eval \"${cc}\" -Os -Werror -Wall -c $file >/dev/null 2>&1
+            if [ $? != 0 ] ; then
+                eval $hasWarnUnused=1
+            fi
+        fi
+
+        #
+        #   Test if -Wshorten-64-to-32 result is supported
+        #
+        if [ "$verbose" != 0 ] ; then
+            echo -e "    Checking for compiler -Wshorten-64-to-32 support"
+            # echo -e "        ${cc}" -Werror -Wall -Wshorten-64-to-32 -c $file "\n"
+        fi
+        eval \"${cc}\" -Werror -Wall -Wshorten-64-to-32 -c $file >/dev/null 2>&1
+        if [ $? = 0 ] ; then
+            eval $hasWarn64to32=1
         fi
 
         if [ $os != VXWORKS ] ; then
@@ -112,7 +134,7 @@ setCompilerOptions()
                 echo -e "    Checking for fork()"
                 # echo -e "        ${cc}" -o $out -c $file "\n"
             fi
-            echo -e "#include <stdio.h>\nint main() { fork(); return 0; }\n" >$file
+            echo -e "#include <stdio.h>\n#include <unistd.h>\nint main() { fork(); return 0; }\n" >$file
             eval \"${cc}\" ${flags} -o $out $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasMmu=1
@@ -128,7 +150,7 @@ setCompilerOptions()
                 echo -e "    Checking for dlopen()"
                 # echo "         ${cc}" -o $out -c $file 
             fi
-            echo -e "#include <stdio.h>\nint main() { dlopen(); return 0; }\n" >$file
+            echo -e "#include <stdio.h>\n#include <dlfcn.h>\nint main() { dlopen(\"test.so\", 0); return 0; }\n" >$file
             eval \"${cc}\" ${flags} -o $out $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasDynLoad=1
@@ -173,7 +195,7 @@ setCompilerOptions()
                 # echo "         ${cc}" -o $out -c $file 
             fi
             echo -e "#include <stdarg.h>\nva_list d = {{0}};\n" >$file
-            eval \"${cc}\" ${flags} -Werror -c -o $out -c $file >/dev/null 2>&1
+            eval \"${cc}\" ${flags} -Werror -Wall -c -o $out -c $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasDoubleBraces=1
             fi
@@ -186,7 +208,7 @@ setCompilerOptions()
                 # echo "         ${cc}" -o $out -c $file 
             fi
             echo -e "#include <stdio.h>\nint main() { __sync_synchronize(); return 0; }\n" >$file
-            eval \"${cc}\" ${flags} -Werror -c -o $out -c $file >/dev/null 2>&1
+            eval \"${cc}\" ${flags} -Werror -Wall -c -o $out -c $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasSync=1
             fi
@@ -199,7 +221,7 @@ setCompilerOptions()
                 # echo "         ${cc}" -o $out -c $file 
             fi
             echo -e "#include <stdio.h>\nint main() { struct test { union { int x; int y; };}; return 0; }\n" >$file
-            eval \"${cc}\" ${flags} -Werror -c -o $out -c $file >/dev/null 2>&1
+            eval \"${cc}\" ${flags} -Werror -Wall -c -o $out -c $file >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasUnnamedUnions=1
             fi
@@ -244,6 +266,7 @@ emitCompilerOptions()
     eval v=\$${KIND}_HAS_MTUNE ;            echo -e "${t}BLD_CC_MTUNE=$v"
     eval v=\$${KIND}_HAS_MMU ;              echo -e "${t}BLD_CC_MMU=$v"
     eval v=\$${KIND}_HAS_WARN_UNUSED ;      echo -e "${t}BLD_CC_WARN_UNUSED=$v"
+    eval v=\$${KIND}_HAS_WARN_64TO32 ;      echo -e "${t}BLD_CC_WARN_64TO32=$v"
     eval v=\$${KIND}_HAS_EDITLINE ;         echo -e "${t}BLD_CC_EDITLINE=$v"
     eval v=\$${KIND}_HAS_PAM ;              echo -e "${t}BLD_CC_PAM=$v"
     eval v=\$${KIND}_HAS_STACK_PROTECTOR ;  echo -e "${t}BLD_CC_STACK_PROTECTOR=$v"

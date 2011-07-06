@@ -37,4 +37,4 @@ if (test.threads == 1) {
     assert(uploaded.size == size)
     sh("diff " + uploaded + " " + TESTFILE)
 }
-rm(TESTFILE)
+Path(TESTFILE).remove

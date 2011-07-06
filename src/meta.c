@@ -35,9 +35,7 @@ MaAppweb *maCreateAppweb()
     httpSetContext(http, appweb);
     appweb->metas = mprCreateList(-1, 0);
     maGetUserGroup(appweb);
-    
     openHandlers(http);
-    //  MOB - what about pass handler
     return appweb; 
 }
 
@@ -59,9 +57,7 @@ static void manageAppweb(MaAppweb *appweb, int flags)
 
 static void openHandlers(Http *http)
 {
-    //  MOB - rc?
     maOpenDirHandler(http);
-    //  MOB - deprecate EGI
     maOpenEgiHandler(http);
     maOpenFileHandler(http);
 }
@@ -96,11 +92,9 @@ MaMeta *maLookupMeta(MaAppweb *appweb, cchar *name)
 int maStartAppweb(MaAppweb *appweb)
 {
     MaMeta  *meta;
-    Http    *http;
     char    *timeText;
     int     next;
 
-    http = appweb->http;
     for (next = 0; (meta = mprGetNextItem(appweb->metas, &next)) != 0; ) {
         if (maStartMeta(meta) < 0) {
             return MPR_ERR_CANT_INITIALIZE;
@@ -132,11 +126,6 @@ static void manageMeta(MaMeta *meta, int flags)
         mprMark(meta->name);
         mprMark(meta->serverRoot);
         mprMark(meta->servers);
-#if UNUSED
-        mprMark(meta->defaultHost);
-        mprMark(meta->hosts);
-        mprMark(meta->hostAddresses);
-#endif
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopMeta(meta);
@@ -166,7 +155,6 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int 
     meta->http = appweb->http;
 
     maAddMeta(appweb, meta);
-    //  MOB - what is the meta->serverRoot used for?
     maSetMetaRoot(meta, root);
 
     if (ip && port > 0) {
@@ -179,26 +167,12 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int 
 }
 
 
-#if UNUSED
-static void notifyServerStateChange(HttpConn *conn, int state, int notifyFlags)
-{
-    if (state == HTTP_STATE_PARSED) {
-        httpMatchHost(conn);
-    }
-}
-#endif
-
-
 int maStartMeta(MaMeta *meta)
 {
     HttpServer  *server;
     HttpHost    *host;
     int         next, nextHost, count, warned;
 
-    /*  
-        Start the Http servers and being listening for requests
-        MOB - refactor and cleanup
-     */
     warned = 0;
     count = 0;
     for (next = 0; (server = mprGetNextItem(meta->servers, &next)) != 0; ) {
@@ -230,11 +204,6 @@ int maStopMeta(MaMeta *meta)
     HttpServer  *server;
     int         next;
 
-#if UNUSED
-    for (next = 0; (host = mprGetNextItem(meta->hosts, &next)) != 0; ) {
-        maStopHost(host);
-    }
-#endif
     for (next = 0; (server = mprGetNextItem(meta->servers, &next)) != 0; ) {
         httpStopServer(server);
     }
@@ -280,25 +249,6 @@ void maSetMetaRoot(MaMeta *meta, cchar *path)
 }
 
 
-#if UNUSED
-void maSetDocumentRoot(MaMeta *meta, cchar *path)
-{
-    HttpServer  *server;
-    int         next;
-
-#if UNUSED
-    maSetHostDirs(meta->defaultHost, path);
-#endif
-    for (next = 0; ((server = mprGetNextItem(meta->servers, &next)) != 0); ) {
-        httpSetDocumentRoot(server, path);
-    }
-    for (next = 0; (host = mprGetNextItem(meta->hosts, &next)) != 0; ) {
-        httpSetHostDocumentRoot(host, path);
-    }
-}
-#endif
-
-
 /*
     Set the document root for the default server (only)
  */
@@ -313,47 +263,9 @@ void maSetMetaAddress(MaMeta *meta, cchar *ip, int port)
 }
 
 
-//  MOB - rename maSetMetaDefaultHost
-void maSetDefaultHost(MaMeta *meta, HttpHost *host)
+void maSetMetaDefaultHost(MaMeta *meta, HttpHost *host)
 {
     meta->defaultHost = host;
-}
-
-
-#if UNUSED
-void maSetKeepAliveTimeout(MaAppweb *appweb, int timeout)
-{
-    //  MOB -- API needed
-    appweb->http->limits->inactivityTimeout = timeout;
-}
-
-
-//  MOB -- is this used?
-void maSetMaxKeepAlive(MaAppweb *appweb, int timeout)
-{
-    //  MOB -- API needed
-    appweb->http->limits->keepAliveCount = timeout;
-}
-
-
-/*  
-    Set the default request timeout. This is the maximum time a request can run.
-    Not to be confused with the session timeout or the keep alive timeout.
- */
-void maSetTimeout(MaAppweb *appweb, int timeout)
-{
-    //  MOB -- API needed
-    appweb->http->limits->requestTimeout = timeout * MPR_TICKS_PER_SEC;
-}
-#endif
-
-
-void maSetForkCallback(MaAppweb *appweb, MprForkCallback callback, void *data)
-{
-#if MOB && TODO
-    appweb->forkCallback = callback;
-    appweb->forkData = data;
-#endif
 }
 
 

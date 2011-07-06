@@ -68,13 +68,13 @@
 
 /* Begin PBXBuildFile section */
 		C92D5C6B130DF56C0097EBA8 /* meta.c in Sources */ = {isa = PBXBuildFile; fileRef = C92D5C6A130DF56C0097EBA8 /* meta.c */; };
+		C9377AAF1392DD1A0015D37C /* libmatrixsslstatic.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C9377AAE1392DD1A0015D37C /* libmatrixsslstatic.a */; };
 		C938480F1123BD80002AD34B /* ejsHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C938480E1123BD80002AD34B /* ejsHandler.c */; };
 		C94086AF101A665B0019809C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C94086D8101A672F0019809C /* testAppweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086CB101A672F0019809C /* testAppweb.c */; };
 		C94086DE101A672F0019809C /* testHttp.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086D2101A672F0019809C /* testHttp.c */; };
 		C96176F412DCE345002702E0 /* auth.c in Sources */ = {isa = PBXBuildFile; fileRef = C96176F312DCE345002702E0 /* auth.c */; };
 		C96176F712DCE387002702E0 /* libphp5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C96176F612DCE369002702E0 /* libphp5.dylib */; };
-		C96176FB12DCE3AE002702E0 /* libmatrixsslstatic.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C96176F512DCE369002702E0 /* libmatrixsslstatic.a */; };
 		C9761EBE0FD0457A009C78E1 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9761EC00FD04594009C78E1 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9761EC10FD04599009C78E1 /* libpcre.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA70FD03FAA009C78E1 /* libpcre.dylib */; };
@@ -605,6 +605,7 @@
 
 /* Begin PBXFileReference section */
 		C92D5C6A130DF56C0097EBA8 /* meta.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = meta.c; path = ../../../src/meta.c; sourceTree = SOURCE_ROOT; };
+		C9377AAE1392DD1A0015D37C /* libmatrixsslstatic.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmatrixsslstatic.a; path = ../../../out/lib/libmatrixsslstatic.a; sourceTree = "<group>"; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C94086CB101A672F0019809C /* testAppweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testAppweb.c; path = ../../../src/test/testAppweb.c; sourceTree = SOURCE_ROOT; };
@@ -612,7 +613,6 @@
 		C94086E3101A67470019809C /* testAppweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testAppweb.h; path = ../../../src/test/testAppweb.h; sourceTree = SOURCE_ROOT; };
 		C95C31E80FC5292A00FB3105 /* appweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = appweb.c; path = ../../../src/server/appweb.c; sourceTree = SOURCE_ROOT; };
 		C96176F312DCE345002702E0 /* auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = auth.c; path = ../../../src/utils/auth.c; sourceTree = SOURCE_ROOT; };
-		C96176F512DCE369002702E0 /* libmatrixsslstatic.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmatrixsslstatic.a; path = ../../../out/lib/libmatrixsslstatic.a; sourceTree = SOURCE_ROOT; };
 		C96176F612DCE369002702E0 /* libphp5.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libphp5.dylib; path = ../../../out/lib/libphp5.dylib; sourceTree = SOURCE_ROOT; };
 		C9761DA00FD03F94009C78E1 /* libmpr.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmpr.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9761DA70FD03FAA009C78E1 /* libpcre.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -696,8 +696,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C96176FB12DCE3AE002702E0 /* libmatrixsslstatic.a in Frameworks */,
 				C9C2BEEC100EF66D009B160F /* libmpr.dylib in Frameworks */,
+				C9377AAF1392DD1A0015D37C /* libmatrixsslstatic.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -884,7 +884,6 @@
 			children = (
 				C97620660FD04E38009C78E1 /* handlers */,
 				C97620730FD04E38009C78E1 /* modules */,
-				C976205D0FD04E0A009C78E1 /* connectors */,
 				C95C31E80FC5292A00FB3105 /* appweb.c */,
 				C9817C1C110D170500F241EF /* config.c */,
 				C9817C1E110D170500F241EF /* convenience.c */,
@@ -903,21 +902,13 @@
 			name = utils;
 			sourceTree = "<group>";
 		};
-		C976205D0FD04E0A009C78E1 /* connectors */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = connectors;
-			path = ../../../src/connectors;
-			sourceTree = "<group>";
-		};
 		C97620660FD04E38009C78E1 /* handlers */ = {
 			isa = PBXGroup;
 			children = (
-				C938480E1123BD80002AD34B /* ejsHandler.c */,
 				C97620690FD04E38009C78E1 /* cgiHandler.c */,
 				C976206A0FD04E38009C78E1 /* dirHandler.c */,
 				C976206B0FD04E38009C78E1 /* egiHandler.c */,
+				C938480E1123BD80002AD34B /* ejsHandler.c */,
 				C976206C0FD04E38009C78E1 /* fileHandler.c */,
 				C97620700FD04E38009C78E1 /* phpHandler.c */,
 			);
@@ -1054,7 +1045,7 @@
 		C9D81660101D32A40039DD9D /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				C96176F512DCE369002702E0 /* libmatrixsslstatic.a */,
+				C9377AAE1392DD1A0015D37C /* libmatrixsslstatic.a */,
 				C96176F612DCE369002702E0 /* libphp5.dylib */,
 			);
 			name = Libraries;
@@ -1612,7 +1603,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=${BUILT_PRODUCTS_DIR}:$PATH\nexport DYLD_LIBRARY_PATH=${BUILT_PRODUCTS_DIR}:$DYLD_LIBRARY_PATH\n\ncd $PROJECT_DIR/../../../src/deps/ejs\n\nNAME=\"ejs\"\nFILES=\"ejs.es\"\nTARGET=$BUILT_PRODUCTS_DIR/$NAME.mod\n\n$BUILT_PRODUCTS_DIR/ejsc  --debug --optimize 9 --bind --require \"\" --out $TARGET $FILES\n$BUILT_PRODUCTS_DIR/ejsmod --showDebug --require \"\" --cslots --listing --out .$NAME.slots.h $TARGET\n\ndiff .$NAME.slots.h $OUT/include >/dev/null 2>&1 || cp .$NAME.slots.h $OUT/include\n\nset +x\nexit 0";
+			shellScript = "export PATH=${BUILT_PRODUCTS_DIR}:$PATH\nexport DYLD_LIBRARY_PATH=${BUILT_PRODUCTS_DIR}:$DYLD_LIBRARY_PATH\n\ncd $PROJECT_DIR/../../../src/deps/ejs\n\nNAME=\"ejs\"\nFILES=\"ejs.es\"\nTARGET=$BUILT_PRODUCTS_DIR/$NAME.mod\n\nset -x\n$BUILT_PRODUCTS_DIR/ejsc  --debug --optimize 9 --bind --require ' ' --out $TARGET $FILES || exit 255\n$BUILT_PRODUCTS_DIR/ejsmod --require ' ' --cslots --listing --out .$NAME.slots.h $TARGET || exit 255\n\ndiff .$NAME.slots.h $OUT/include >/dev/null 2>&1 || cp .$NAME.slots.h $OUT/include\n\nexit 0";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -2287,6 +2278,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_7)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../lib\"";
@@ -2294,6 +2286,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6 = "\"$(SRCROOT)/../../../out/lib\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_7 = "\"$(SRCROOT)/../../../out/lib\"";
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
@@ -2321,6 +2314,7 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_7)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../lib\"";
@@ -2328,6 +2322,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6 = "\"$(SRCROOT)/../../../out/lib\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_7 = "\"$(SRCROOT)/../../../out/lib\"";
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
@@ -2372,7 +2367,7 @@
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				PREBINDING = NO;
-				PRODUCT_NAME = libajs;
+				PRODUCT_NAME = libejs;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2388,8 +2383,12 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INSTALL_PATH = /usr/local/lib;
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
+				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../out/lib\"";
 				PREBINDING = NO;
 				PRODUCT_NAME = libappweb;
 			};
@@ -2408,8 +2407,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../out/lib\"";
 				PREBINDING = NO;
 				PRODUCT_NAME = libappweb;
 				ZERO_LINK = NO;
@@ -2450,7 +2451,7 @@
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				PREBINDING = NO;
-				PRODUCT_NAME = libsqlite3;
+				PRODUCT_NAME = libsqlite;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2484,7 +2485,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = ajs;
+				PRODUCT_NAME = ejs;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2514,7 +2515,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = ajsc;
+				PRODUCT_NAME = ejsc;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2544,7 +2545,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = ajsmod;
+				PRODUCT_NAME = ejsmod;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2574,7 +2575,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = ajssql;
+				PRODUCT_NAME = ejssql;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2641,7 +2642,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				PREBINDING = NO;
-				PRODUCT_NAME = httpPassword;
+				PRODUCT_NAME = auth;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2649,6 +2650,7 @@
 		C9761F7C0FD049F6009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -2659,6 +2661,7 @@
 		C9761F7D0FD049F6009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
@@ -2723,7 +2726,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/lib;
 				PREBINDING = NO;
-				PRODUCT_NAME = mod_egi;
+				PRODUCT_NAME = egiTest;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2761,6 +2764,7 @@
 		C97623880FD06C9F009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -2771,6 +2775,7 @@
 		C97623890FD06C9F009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
@@ -2827,7 +2832,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../out/lib\"";
 				PREBINDING = NO;
-				PRODUCT_NAME = mod_cgi;
+				PRODUCT_NAME = mod_ssl;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -2868,7 +2873,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				OTHER_LDFLAGS = "";
 				PREBINDING = NO;
-				PRODUCT_NAME = libmpr;
+				PRODUCT_NAME = libhttp;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3036,7 +3041,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../lib\"";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6 = "\"$(SRCROOT)/../../../out/lib\"";
 				PREBINDING = NO;
-				PRODUCT_NAME = mod_cgi;
+				PRODUCT_NAME = mod_php;
 				ZERO_LINK = NO;
 			};
 			name = Release;

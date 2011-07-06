@@ -2,8 +2,8 @@
 <VisualStudioProject
     ProjectType="Visual C++"
     Version="8.00"
-    Name="httpPassword"
-    ProjectGUID="e911ef66-350e-4f65-8b41-36bd740b1beb"
+    Name="mvc"
+    ProjectGUID="4ac71954-c2e9-447b-8c52-281335d54d5a"
     RootNamespace=""
     Keyword="Win32Proj"
     TargetFrameworkVersion="0"
@@ -65,7 +65,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/include/master;../../..;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="1"
                 FavorSizeOrSpeed="1"
@@ -77,7 +77,7 @@
             <Tool
                 Name="VCLinkerTool"
                 AdditionalLibraryDirectories="$(OutDir)"
-                AdditionalDependencies="libmpr.lib ws2_32.lib"
+                AdditionalDependencies="libmpr.lib libejs.lib ws2_32.lib"
                 Targetmachine="1"
                 SubSystem="1"
                 LinkIncremental="1"
@@ -135,7 +135,7 @@
                 CompileAs="0"
                 StringPooling="true"
                 MinimalRebuild="true"
-                AdditionalIncludeDirectories="../../../src/include/master;../../..;../../../src/include"
+                AdditionalIncludeDirectories="../../../src/deps/mpr;../../../src/deps/pcre;../../../src/deps/http;../../../src/deps/ejs;../../../out/include;../../../src/include"
                 PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;;_REENTRANT;_MT"
                 Optimization="0"
                 FavorSizeOrSpeed="1"
@@ -146,7 +146,7 @@
             <Tool
                 Name="VCLinkerTool"
                 AdditionalLibraryDirectories="$(OutDir)"
-                AdditionalDependencies="libmpr.lib ws2_32.lib"
+                AdditionalDependencies="libmpr.lib libejs.lib ws2_32.lib"
                 Targetmachine="1"
                 SubSystem="1"
                 LinkIncremental="2"
@@ -160,28 +160,20 @@
         <Filter
             Name="Header Files"
             Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{b9109f94-6f7d-4b46-a671-c6350d17483c}"
+            UniqueIdentifier="{eaf80552-adfe-462e-a2a8-0b05e30fa2d1}"
             >
             <File
                 RelativePath="..\..\..\buildConfig.h"
-                >
-            </File>
-            <File
-                RelativePath="..\..\..\src\include\mpr.h"
-                >
-            </File>
-            <File
-                RelativePath="..\..\..\src\include\mprSsl.h"
                 >
             </File>
         </Filter>
         <Filter
             Name="Source Files"
             Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{d4a09872-26cf-4bed-acdb-20d46020c3c9}"
+            UniqueIdentifier="{85105ad8-84ff-4fbb-8e6e-61434f0cf16e}"
             >
             <File
-                RelativePath="..\..\..\src\utils\httpPassword.c"
+                RelativePath="..\..\..\src\deps\ejs\mvc.c"
                 >
             </File>
         </Filter>

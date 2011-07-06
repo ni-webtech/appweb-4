@@ -10,7 +10,6 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_HTTP_CLIENT
 /********************************* Code *******************************/
 
 MAIN(simpleClient, int argc, char** argv)
@@ -68,7 +67,6 @@ MAIN(simpleClient, int argc, char** argv)
     mprFree(mpr);
     return 0;
 }
-#endif /* BLD_FEATURE_HTTP_CLIENT */
 
 /*
     @copy   default

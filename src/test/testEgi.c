@@ -45,21 +45,19 @@ static void exitApp(HttpQueue *q)
 {
     httpFinalize(q->conn);
     mprLog(0, "Instructed to exit ...");
-    mprTerminate(1);
+    mprTerminate(1, -1);
 }
 
 
 static void printVars(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpTx      *tx;
     HttpRx      *rx;
     char        *sw;
     char        *newLocation;
     int         responseStatus;
 
     conn = q->conn;
-    tx = conn->tx;
     rx = conn->rx;
     newLocation = 0;
     responseStatus = 0;
@@ -121,7 +119,7 @@ static void printRequestHeaders(HttpQueue *q)
 
     env = q->conn->rx->headers;
     httpWrite(q, "<H2>Request Headers</H2>\r\n");
-    for (hp = 0; (hp = mprGetNextHash(env, hp)) != 0; ) {
+    for (hp = 0; (hp = mprGetNextKey(env, hp)) != 0; ) {
         httpWrite(q, "<P>%s=%s</P>\r\n", hp->key, hp->data ? hp->data: "");
     }
     httpWrite(q, "\r\n");
@@ -136,7 +134,7 @@ static void printFormVars(HttpQueue *q)
 
     env = q->conn->rx->formVars;
     httpWrite(q, "<H2>Request Form Variables</H2>\r\n");
-    for (hp = 0; (hp = mprGetNextHash(env, hp)) != 0; ) {
+    for (hp = 0; (hp = mprGetNextKey(env, hp)) != 0; ) {
         httpWrite(q, "<P>%s=%s</P>\r\n", hp->key, hp->data ? hp->data: "");
     }
     httpWrite(q, "\r\n");

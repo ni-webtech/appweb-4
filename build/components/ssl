@@ -19,6 +19,10 @@ defineComponent() {
     if isdefined OPENSSL ; then
         deps="$deps openssl"
     fi
+    if [ "$deps" = "" ] ; then
+        warnComponent mprSsl "No SSL provider configured"
+        return
+    fi
     deps="$deps mpr"
     if [ "$path" = . ] ; then
         builtin="--builtin"

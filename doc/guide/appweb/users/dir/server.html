@@ -527,11 +527,11 @@ http://site/esp/myScript.esp/extra/path
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The ServerName directive allows the server to create a HTTP address for itself to use
-                            when creating redirection URLs. The hostName should be a fully qualified domain name with
-                            port number if using a port other than port 80.</p>
-                            <p>When used inside Name VirtualHost blocks, the ServerName directive specifies the name
-                            that must be specified in the "Host" HTTP header.</p>
+                            <p>The ServerName directive specifies the base HTTP address that will be used 
+                            for identification and for redirection responses. The given hostName should be a fully 
+                            qualified domain name with port number if using a port other than port 80.</p>
+                            <p>When used inside Name based VirtualHost blocks, this directive specifies the Host
+                            HTTP header that should be supplied with the request.</p>
                         </td>
                     </tr>
                 </tbody>

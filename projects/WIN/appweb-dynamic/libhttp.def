@@ -11,13 +11,13 @@ EXPORTS
   httpAddGroup
   httpAddHandler
   httpAddHeader
+  httpAddHeaderString
   httpAddHost
   httpAddHostToServer
-  httpAddHostToServers
   httpAddLocation
   httpAddLocationExpiry
+  httpAddLocationExpiryByType
   httpAddServer
-  httpAddSimpleHeader
   httpAddStage
   httpAddUploadFile
   httpAddUser
@@ -25,20 +25,23 @@ EXPORTS
   httpAddUsersToGroup
   httpAddVars
   httpAddVarsFromQueue
+  httpAdjustPacketEnd
+  httpAdjustPacketStart
   httpAppendHeader
+  httpAppendHeaderString
   httpAppendQueue
   httpCallEvent
   httpClearStages
+  httpCloneHost
   httpClonePacket
   httpCloneStage
   httpCloneUri
   httpCloseConn
   httpCloseRx
   httpCompareFormVar
-  httpCompleteRequest
   httpCompleteUri
   httpCompleteWriting
-  httpConnError
+  httpConnTimeout
   httpConnect
   httpConsumeLastRequest
   httpContentNotModified
@@ -46,13 +49,14 @@ EXPORTS
   httpCreateAlias
   httpCreateAuth
   httpCreateBareDir
+  httpCreateCGIVars
   httpCreateConfiguredServer
   httpCreateConn
   httpCreateConnector
   httpCreateDataPacket
   httpCreateDir
   httpCreateEndPacket
-  httpCreateEnvVars
+  httpCreateEntityPacket
   httpCreateFilter
   httpCreateGroup
   httpCreateHandler
@@ -62,19 +66,19 @@ EXPORTS
   httpCreateLimits
   httpCreateLocation
   httpCreatePacket
-  httpCreatePipeline
   httpCreateQueue
   httpCreateQueueHead
   httpCreateRange
   httpCreateRx
+  httpCreateRxPipeline
   httpCreateSecret
   httpCreateServer
   httpCreateStage
   httpCreateTx
+  httpCreateTxPipeline
   httpCreateUri
   httpCreateUriFromParts
   httpCreateUser
-  httpCreateVirtualHost
   httpDefaultOutgoingServiceStage
   httpDestroy
   httpDestroyConn
@@ -87,7 +91,9 @@ EXPORTS
   httpDisableUser
   httpDiscardData
   httpDiscardTransmitData
+  httpDisconnect
   httpDontCache
+  httpEaseLimits
   httpEnableConnEvents
   httpEnableGroup
   httpEnableQueue
@@ -119,6 +125,7 @@ EXPORTS
   httpGetDefaultClientPort
   httpGetError
   httpGetExtension
+  httpGetFirstServer
   httpGetFormVar
   httpGetGroupAcl
   httpGetHandlerByExtension
@@ -126,7 +133,6 @@ EXPORTS
   httpGetHeaderHash
   httpGetHeaders
   httpGetIntFormVar
-  httpGetMetaServer
   httpGetNativePassword
   httpGetNextQueueForService
   httpGetPacket
@@ -159,14 +165,13 @@ EXPORTS
   httpJoinPackets
   httpJoinUri
   httpJoinUriPath
-  httpLimitError
   httpLoadSsl
   httpLookupAlias
   httpLookupBestDir
   httpLookupBestLocation
   httpLookupDir
   httpLookupErrorDocument
-  httpLookupHostByName
+  httpLookupHost
   httpLookupLocation
   httpLookupServer
   httpLookupStage
@@ -197,7 +202,6 @@ EXPORTS
   httpPrepServerConn
   httpProcess
   httpProcessPipeline
-  httpProtocolError
   httpPutBackPacket
   httpPutForService
   httpRead
@@ -224,6 +228,7 @@ EXPORTS
   httpResolveUri
   httpScheduleQueue
   httpSecureServer
+  httpSecureServerByName
   httpSendOpen
   httpSendOutgoingService
   httpSendPacket
@@ -261,9 +266,10 @@ EXPORTS
   httpSetGroupAcl
   httpSetHandler
   httpSetHeader
+  httpSetHeaderString
   httpSetHeadersCallback
-  httpSetHostAddress
   httpSetHostDocumentRoot
+  httpSetHostLogRotation
   httpSetHostName
   httpSetHostProtocol
   httpSetHostServerRoot
@@ -273,20 +279,20 @@ EXPORTS
   httpSetIntFormVar
   httpSetKeepAliveCount
   httpSetListenCallback
+  httpSetLocationAlias
   httpSetLocationAuth
   httpSetLocationAutoDelete
   httpSetLocationFlags
   httpSetLocationPrefix
   httpSetLocationScript
+  httpSetLocationWorkers
   httpSetMatchCallback
-  httpSetMetaServer
   httpSetMimeType
   httpSetNamedVirtualServer
   httpSetNamedVirtualServers
-  httpSetPipeHandler
+  httpSetPipelineHandler
   httpSetProtocol
   httpSetProxy
-  httpSetRequestNotifier
   httpSetRequiredAcl
   httpSetResponseBody
   httpSetRetries
@@ -295,9 +301,7 @@ EXPORTS
   httpSetServerAsync
   httpSetServerContext
   httpSetServerLocation
-  httpSetServerName
   httpSetServerNotifier
-  httpSetSimpleHeader
   httpSetSoftware
   httpSetStageData
   httpSetState
@@ -316,10 +320,13 @@ EXPORTS
   httpTraceContent
   httpUpdateUserAcls
   httpUriToString
+  httpUsePrimary
+  httpUseWorker
   httpValidateLimits
   httpValidateNativeCredentials
   httpWait
   httpWillNextQueueAcceptPacket
+  httpWillNextQueueAcceptSize
   httpWritable
   httpWrite
   httpWriteBlock

@@ -96,7 +96,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     app->serviceWindowTitle = sclone(BLD_NAME "Angel");
 
     mprSetAppName(BLD_PRODUCT "Monitor", BLD_NAME " Monitor", BLD_VERSION);
-    mprSetLogHandler(logHandler, NULL);
+    mprSetLogHandler(logHandler);
     chdir(mprGetAppDir());
 
     /*
@@ -294,7 +294,7 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
     switch (msg) {
     case WM_DESTROY:
     case WM_QUIT:
-        mprTerminate(MPR_EXIT_GRACEFUL);
+        mprTerminate(MPR_EXIT_GRACEFUL, -1);
         break;
     
     case APPWEB_MONITOR_MESSAGE:

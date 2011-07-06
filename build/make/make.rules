@@ -172,9 +172,10 @@ dependCwd:
 		$(MAKE) -S --no-print-directory TRACE=$(TRACE) -C $(BLD_TOP)/build/src tools ; \
 	fi
 	[ "$(TRACE)" = 1 ] && \
-	    echo $(TRACE) $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out $(BLD_OUT_DIR) $(MAKE_IFLAGS) $(BLD_IFLAGS) \
-            $(_IFLAGS) $(COMPILE) ; true
-	$(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out "$(BLD_OUT_DIR)" $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(COMPILE)
+	    echo $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out $(BLD_OUT_DIR) $(MAKE_IFLAGS) $(BLD_IFLAGS) \
+            $(_IFLAGS) $(DEPEND_FLAGS) $(COMPILE) ; true
+	$(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out "$(BLD_OUT_DIR)" \
+        $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(DEPEND_FLAGS) $(COMPILE)
 
 dependDirs:
 	if [ ! -f .makedep ] ; then \

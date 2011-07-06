@@ -1,7 +1,6 @@
 /*
     http.tst - Test the http command
  */
-
 if (test.depth > 1) {
 
     const HTTP = (global.tsession && tsession["http"]) || ":4100"
@@ -12,9 +11,8 @@ if (test.depth > 1) {
     }
 
     function run(args): String {
-        App.log.debug(2, "[TestRun]", command + args)
+        App.log.debug(5, "[TestRun]", command + args)
         try {
-            // print(command + args)
             result = System.run(command + args)
             assert(true)
         } catch (e) {
@@ -35,7 +33,7 @@ if (test.depth > 1) {
     //  Chunked get
     data = run("--chunk 256 /big.txt")
     assert(data.startsWith("012345678"))
-    assert(data.trimEnd().endsWith("END"))
+    assert(data.trimEnd().endsWith("END OF DOCUMENT"))
 
     //  Chunked empty get
     data = run("--chunk 100 /empty.html")
@@ -69,20 +67,20 @@ if (test.depth > 1) {
     //  PUT file
     run("test.dat /tmp/day.tmp")
     if (test.threads == 1) {
-        assert(exists("../web/tmp/day.tmp"))
+        assert(Path("../web/tmp/day.tmp").exists)
     }
 
     let files = Path(".").files().join(" ")
     run(files + " /tmp/")
     if (test.threads == 1) {
-        assert(exists("../web/tmp/http.tst"))
+        assert(Path("../web/tmp/http.tst").exists)
     }
 
     //  DELETE
     run("test.dat /tmp/test.dat")
-    assert(exists("../web/tmp/test.dat"))
+    assert(Path("../web/tmp/test.dat").exists)
     run("--method DELETE /tmp/test.dat")
-    assert(!exists("../web/tmp/test.dat"))
+    assert(!Path("../web/tmp/test.dat").exists)
 
     //  Options with show status
     run("--method OPTIONS /index.html")
@@ -98,7 +96,7 @@ if (test.depth > 1) {
     data = run("--upload " + files + " /upload.ejs")
     assert(data.contains('"clientFilename": "http.tst"'))
     if (test.threads == 1) {
-        assert(exists("../web/tmp/http.tst"))
+        assert(Path("../web/tmp/http.tst").exists)
     }
 
     let files = Path(".").files().join(" ")
@@ -121,12 +119,10 @@ if (test.depth > 1) {
         run("-i 2000 /index.html")
         run("-i 2000 /big.txt")
     }
-    
     //  Cleanup
     for each (f in Path("../web/tmp").files()) {
         Path(f).remove()
     }
-
 
 } else {
     test.skip("Test runs at depth 2")

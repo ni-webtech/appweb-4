@@ -5,6 +5,9 @@
             if (isset($_POST[submit])) {
                 header('X-Private-Header: 123');
             }
+            foreach ($_SERVER as $key => $value) {
+                echo "_SERVER $key is $value <br/>\n";
+            }
             foreach ($_POST as $key => $value) {
                 echo "_POST $key is $value <br/>\n";
             }

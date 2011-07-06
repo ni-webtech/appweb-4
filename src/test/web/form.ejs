@@ -2,9 +2,34 @@
 <head><title>Form Test</title></head>
 <body>
 <% 	
-    // request.show("PARAMS", request.params)
-    // request.show("REQUEST", request)
+    request.show("PARAMS", request.params)
+    request.show("REQUEST", request)
+/*
+    // Async reading 
+    request.dontAutoFinalize()
+    let total = 0
+    request.on("readable", function (event, request) {
+        let data = new ByteArray
+        if (count = request.read(data)) {
+            total += count
+        } else {
+            print("GOT EOF " + total + " bytes")
+            request.showRequest()
+            request.finalize()
+        }
+    })
+*/
+/*
+    Sync reading 
+    buf = new ByteArray
+    while ((count = request.read(buf)) > 0) {
+        print("GOT " + count)
+    }
+    print("FINAL " + count)
     request.showRequest()
+    request.finalize()
+    print("LEAVING")
+*/
 %>
 </body>
 </html>

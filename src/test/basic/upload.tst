@@ -2,6 +2,8 @@
     upload.tst - File upload tests
  */
 
+require ejs.unix
+
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 

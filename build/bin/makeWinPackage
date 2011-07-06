@@ -7,6 +7,10 @@
 
 setupWin() {
     log Generate Windows installation packages
+    if [ ! -x "${BLD_PKG}" ] ; then
+        echo "Can't locate InnoSetup packager"
+        exit 2
+    fi
 }
 
 ################################################################################

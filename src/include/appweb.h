@@ -15,31 +15,8 @@
 #define MA_MAX_CONFIG_DEPTH     16              /**< Max nest of directives in config file */
 #define MA_MAX_ACCESS_LOG       20971520        /**< Access file size (20 MB) */
 #define MA_MAX_REWRITE          10              /**< Maximum recursive URI rewrites */
-#define MA_EJS_START            "start.es"      /**< Default ejs startup script */
-
-/*  These constants are to sanity check user input in the http.conf
- */
-#define MA_BOT_BODY             512
-#define MA_TOP_BODY             (0x7fffffff)        /* 2 GB */
-#define MA_BOT_CHUNK_SIZE       512
-#define MA_TOP_CHUNK_SIZE       (4 * 1024 * 1024)   /* 4 MB */
-#define MA_BOT_NUM_HEADERS      8
-#define MA_TOP_NUM_HEADERS      (20 * 1024)
-#define MA_BOT_HEADER           512
-#define MA_TOP_HEADER           (20 * 1024 * 1024)
-#define MA_BOT_URL              64
-#define MA_TOP_URL              (255 * 1024 * 1024) /* 256 MB */
-#define MA_BOT_RESPONSE_BODY    512
-#define MA_TOP_RESPONSE_BODY    0x7fffffff          /* 2 GB */
-#define MA_BOT_STACK            (16 * 1024)
-#define MA_TOP_STACK            (4 * 1024 * 1024)
-#define MA_BOT_STAGE_BUFFER     (2 * 1024)
-#define MA_TOP_STAGE_BUFFER     (1 * 1024 * 1024)   /* 1 MB */
-#define MA_BOT_UPLOAD_SIZE      1
-#define MA_TOP_UPLOAD_SIZE      0x7fffffff          /* 2 GB */
-#define MA_TOP_THREADS          100
-
 #define MA_SERVER_NAME          "Embedthis-Appweb/" BLD_VERSION
+
 #undef HTTP_NAME
 #define HTTP_NAME               MA_SERVER_NAME
 
@@ -67,11 +44,9 @@ typedef struct MaAppweb {
     struct MaMeta       *defaultMeta;       /**< Default meta server object */
     MprList             *metas;             /**< List of meta server objects */
     Http                *http;              /**< Http service object */
-
     char                *user;              /**< O/S application user name */
     char                *group;             /**< O/S application group name */
-
-    //  MOB - should this be in http?
+    //  TODO - should this be in http?
     int                 uid;                /**< User Id */
     int                 gid;                /**< Group Id */
     int                 userChanged;
@@ -114,7 +89,7 @@ extern int maStopAppweb(MaAppweb *appweb);
  */
 extern int maSetHttpUser(MaAppweb *appweb, cchar *user);
 
-//  MOB
+//  DOC
 extern void maGetUserGroup(MaAppweb *appweb);
 
 /**
@@ -127,11 +102,11 @@ extern void maGetUserGroup(MaAppweb *appweb);
  */
 extern int maSetHttpGroup(MaAppweb *appweb, cchar *group);
 
-extern void         maAddMeta(MaAppweb *appweb, struct MaMeta *meta);
-extern int          maApplyChangedGroup(MaAppweb *appweb);
-extern int          maApplyChangedUser(MaAppweb *appweb);
+extern void maAddMeta(MaAppweb *appweb, struct MaMeta *meta);
+extern int maApplyChangedGroup(MaAppweb *appweb);
+extern int maApplyChangedUser(MaAppweb *appweb);
 extern struct MaMeta *maLookupMeta(MaAppweb *appweb, cchar *name);
-extern int          maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname);
+extern int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname);
 
 extern void maSetDefaultMeta(MaAppweb *appweb, struct MaMeta *meta);
 
@@ -273,8 +248,8 @@ extern int      maCreateHostAddresses(MaMeta *meta, struct HttpHost *host, cchar
 extern struct HttpHost *maLookupHost(MaMeta *meta, cchar *name);
 extern void     maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags);
 extern HttpHostAddress *maRemoveHostFromHostAddress(MaMeta *meta, cchar *ip, int port, struct HttpHost *host);
-extern void     maSetDefaultHost(MaMeta *meta, struct HttpHost *host);
-extern void     maSetDefaultIndex(MaMeta *meta, cchar *path, cchar *filename);
+extern void     maSetMetaDefaultHost(MaMeta *meta, struct HttpHost *host);
+extern void     maSetMetaDefaultIndex(MaMeta *meta, cchar *path, cchar *filename);
 extern void     maSetDocumentRoot(MaMeta *meta, cchar *path);
 #endif
 
@@ -401,7 +376,7 @@ extern HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *p
 
 extern char         *maMakePath(HttpHost *host, cchar *file);
 extern char         *maReplaceReferences(HttpHost *host, cchar *str);
-extern void         maRotateAccessLog(cchar *path, int count, int maxSize);
+extern void         maRotateLog(cchar *path, int count, int maxSize);
 extern void         maSetAccessLog(HttpHost *host, cchar *path, cchar *format);
 extern int          maStopLogging();
 extern int          maStartLogging(HttpHost *host, cchar *logSpec);

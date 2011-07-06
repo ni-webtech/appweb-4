@@ -1018,30 +1018,29 @@ typedef struct EjsLoc {
 #define EJS_MASK_DYNAMIC        0x2
 #define EJS_MASK_TYPE           ~(EJS_MASK_VISITED | EJS_MASK_DYNAMIC)
 
-#define DYNAMIC(obj)            ((((EjsObj*) obj)->xtype) & EJS_MASK_DYNAMIC)
-#define VISITED(obj)            ((((EjsObj*) obj)->xtype) & EJS_MASK_VISITED)
-#define TYPE(obj)               ((EjsType*) ((((EjsObj*) obj)->xtype) & EJS_MASK_TYPE))
-#define CROSS_TYPE(obj)         ejsGetCrossType(ejs, obj)
+#define DYNAMIC(vp)             ((((EjsObj*) vp)->xtype) & EJS_MASK_DYNAMIC)
+#define VISITED(vp)             ((((EjsObj*) vp)->xtype) & EJS_MASK_VISITED)
+#define TYPE(vp)                ((EjsType*) ((((EjsObj*) vp)->xtype) & EJS_MASK_TYPE))
 
-#define SET_VISITED(obj, value) ((EjsObj*) obj)->xtype = \
-                                    ((value) << EJS_SHIFT_VISITED) | (((EjsObj*) obj)->xtype & ~EJS_MASK_VISITED)
-#define SET_DYNAMIC(obj, value) ((EjsObj*) obj)->xtype = \
-                                    (((size_t) value) << EJS_SHIFT_DYNAMIC) | (((EjsObj*) obj)->xtype & ~EJS_MASK_DYNAMIC)
+#define SET_VISITED(vp, value)  ((EjsObj*) vp)->xtype = \
+                                    ((value) << EJS_SHIFT_VISITED) | (((EjsObj*) vp)->xtype & ~EJS_MASK_VISITED)
+#define SET_DYNAMIC(vp, value)  ((EjsObj*) vp)->xtype = \
+                                    (((size_t) value) << EJS_SHIFT_DYNAMIC) | (((EjsObj*) vp)->xtype & ~EJS_MASK_DYNAMIC)
 #if BLD_DEBUG
-#define SET_TYPE_NAME(obj, t)   if (1) { \
+#define SET_TYPE_NAME(vp, t)    if (1) { \
                                     if (t && ((EjsType*) t)->qname.name) { \
-                                        ((EjsObj*) obj)->kind = ((EjsType*) t)->qname.name->value; \
+                                        ((EjsObj*) vp)->kind = ((EjsType*) t)->qname.name->value; \
                                     } \
-                                    ((EjsObj*) obj)->type = ((EjsType*) t); \
+                                    ((EjsObj*) vp)->type = ((EjsType*) t); \
                                 } else
 #else
-#define SET_TYPE_NAME(obj, type)
+#define SET_TYPE_NAME(vp, type)
 #endif
 
-#define SET_TYPE(obj, value)     if (1) { \
-                                    ((EjsObj*) obj)->xtype = \
-                                        (((size_t) value) << EJS_SHIFT_TYPE) | (((EjsObj*) obj)->xtype & ~EJS_MASK_TYPE); \
-                                    SET_TYPE_NAME(obj, value); \
+#define SET_TYPE(vp, value)      if (1) { \
+                                    ((EjsObj*) vp)->xtype = \
+                                        (((size_t) value) << EJS_SHIFT_TYPE) | (((EjsObj*) vp)->xtype & ~EJS_MASK_TYPE); \
+                                    SET_TYPE_NAME(vp, value); \
                                 } else
 
 typedef void EjsAny;
@@ -1786,7 +1785,7 @@ extern EjsAny *ejsCreateEmptyPot(Ejs *ejs);
     @return A new object instance
     @ingroup EjsObj
  */
-extern EjsAny *ejsCreatePot(Ejs *ejs, struct EjsType *type, int size);
+extern void *ejsCreatePot(Ejs *ejs, struct EjsType *type, int size);
 
 extern int ejsCompactPot(Ejs *ejs, EjsPot *obj);
 extern int ejsInsertPotProperties(Ejs *ejs, EjsPot *pot, int numSlots, int offset);
@@ -2066,7 +2065,9 @@ extern int      ejsAddNamespaceToBlock(Ejs *ejs, EjsBlock *blockRef, struct EjsN
 extern int      ejsAddScope(EjsBlock *block, EjsBlock *scopeBlock);
 extern EjsBlock *ejsCreateBlock(Ejs *ejs, int numSlots);
 
+//  TODO - why do we have ejsCloneObject, ejsCloneBlock ... Surely ejsCloneVar is sufficient?
 extern EjsBlock *ejsCloneBlock(Ejs *ejs, EjsBlock *src, bool deep);
+
 extern int      ejsCaptureScope(Ejs *ejs, EjsBlock *block, struct EjsArray *scopeChain);
 extern int      ejsCopyScope(EjsBlock *block, struct EjsArray *chain);
 extern int      ejsGetNamespaceCount(EjsBlock *block);
@@ -3429,7 +3430,6 @@ extern int ejsDefineGlobalFunction(Ejs *ejs, EjsString *name, EjsFun fn);
     WARNING: this macros assumes an "ejs" variable in scope. This is done because it is such a pervasive idiom, the
     assumption is worth the benefit.
  */
-//  MOB - need doc for this too
 //  MOB - #define ejsIs(ejs, obj, name) (obj && ejs->values[S_ ## name] == TYPE(obj))
 #define ejsIs(ejs, obj, name) ejsIsA(ejs, obj, ejs->values[S_ ## name])
 #define ejsIsDefined(ejs, obj) (obj != 0 && !ejsIs(ejs, obj, Null) && !ejsIs(ejs, obj, Void))
@@ -3522,9 +3522,6 @@ extern void     ejsTypeNeedsFixup(Ejs *ejs, EjsType *type);
 extern int      ejsGetTypeSize(Ejs *ejs, EjsType *type);
 extern EjsPot   *ejsGetPrototype(Ejs *ejs, EjsAny *obj);
 extern void     ejsSetTypeAttributes(EjsType *type, int64 attributes);
-#if UNUSED
-extern EjsType  *ejsGetCrossType(Ejs *ejs, EjsAny *obj);
-#endif
 
 
 extern int      ejsBootstrapTypes(Ejs *ejs);
@@ -3835,7 +3832,7 @@ extern int ejsInitStack(Ejs *ejs);
 extern void ejsLog(Ejs *ejs, cchar *fmt, ...);
 
 extern int ejsLookupVar(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup);
-extern int ejsLookupVarWithNamespaces(Ejs *ejs, EjsAny *obj, EjsName name, EjsLookup *lookup);
+extern int ejsLookupVarWithNamespaces(Ejs *ejs, EjsObj *obj, EjsName name, EjsLookup *lookup);
 
 extern int ejsLookupScope(Ejs *ejs, EjsName name, EjsLookup *lookup);
 extern int ejsRunProgram(Ejs *ejs, cchar *className, cchar *methodName);
@@ -4177,7 +4174,7 @@ extern int          ejsSwapInt32(Ejs *ejs, int word);
 extern int64        ejsSwapInt64(Ejs *ejs, int64 word);
 
 extern char         *ejsGetDocKey(Ejs *ejs, EjsBlock *block, int slotNum, char *buf, int bufsize);
-extern EjsDoc       *ejsCreateDoc(Ejs *ejs, cchar *tag, void *vp, int slotNum, EjsString *docString);
+extern EjsDoc       *ejsCreateDoc(Ejs *ejs, void *vp, int slotNum, EjsString *docString);
 
 extern int          ejsAddModule(Ejs *ejs, EjsModule *up);
 extern EjsModule    *ejsLookupModule(Ejs *ejs, EjsString *name, int minVersion, int maxVersion);
@@ -4322,11 +4319,11 @@ typedef struct EjsRequest {
     EjsObj          *cookies;           /**< Cached cookies */
     HttpConn        *conn;              /**< Underlying Http connection object */
     EjsHttpServer   *server;            /**< Owning server */
+
     EjsObj          *app;               /**< Application build function. Used when threaded */
     EjsObj          *absHome;           /**< Absolute URI to the home of the application from this request */
-    EjsObj          *config;            /**< Request config environment */
-    EjsPath         *dir;               /**< Home directory containing the application */
     EjsObj          *emitter;           /**< Event emitter */
+    EjsPath         *dir;               /**< Home directory containing the application */
     EjsObj          *env;               /**< Request.env */
     EjsPath         *filename;          /**< Physical resource filename */
     EjsObj          *files;             /**< Files object */
@@ -4342,7 +4339,6 @@ typedef struct EjsRequest {
     EjsObj          *port;              /**< Port property */
     EjsObj          *query;             /**< Query property */
     EjsObj          *reference;         /**< Reference property */
-    EjsObj          *route;             /**< Matching route in route table */
     EjsObj          *responseHeaders;   /**< Headers object */
     EjsObj          *scheme;            /**< Scheme property */
     EjsObj          *scriptName;        /**< ScriptName property */
@@ -5323,7 +5319,7 @@ extern void     ecAddConstants(EcCompiler *cp, EjsAny *obj);
 extern int      ecAddStringConstant(EcCompiler *cp, EjsString *sp);
 extern int      ecAddCStringConstant(EcCompiler *cp, cchar *str);
 extern int      ecAddNameConstant(EcCompiler *cp, EjsName qname);
-extern int      ecAddDocConstant(EcCompiler *cp, cchar *tag, void *vp, int slotNum);
+extern int      ecAddDocConstant(EcCompiler *cp, void *vp, int slotNum);
 extern int      ecAddModuleConstant(EcCompiler *cp, EjsModule *up, cchar *str);
 extern int      ecCreateModuleHeader(EcCompiler *cp);
 extern int      ecCreateModuleSection(EcCompiler *cp);

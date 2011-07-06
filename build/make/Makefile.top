@@ -83,19 +83,25 @@ $(BLD_TOOLS_DIR)/edep$(BLD_EXE):
 dependExtra:
 	[ ! -L extensions ] && ln -s ../packages extensions ; true
 
-deploy deploy-%:
+deploy: deploy-binary
+
+ deploy-%:
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
 	if [ "$$ROOT_DIR" = "" ] ; then echo -n "Enter deployment directory : " ; read ROOT_DIR ; fi ; \
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
 		$$BROWSER --root=$$ROOT_DIR --bare --install --with-conf="$(CONF)" pre $$packs post ; \
 
-install install-%:
+install: install-binary
+
+ install-%:
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
 	[ "$$packs" = "binary dev" ] && BROWSER=--browser ; \
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
 		$$BROWSER --root=$(ROOT_DIR) --install $(INS_WITH) pre $$packs post
 
-uninstall uninstall-%:
+uninstall: uninstall-binary
+
+ uninstall-%:
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev" ; \
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
 		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
@@ -117,7 +123,7 @@ package-only:
 	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
 
 packageExtra:
-	if [ -d package -a -f package/binary.files ] ; then \
+	if [ -d package -a -f package/binary.files -a -d package/$(BLD_HOST_OS) ] ; then \
 		if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
 			export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
 			fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
@@ -135,7 +141,7 @@ upload:
 			echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \
 			exit 2 ; \
 		fi ; \
-		cd releases >/dev/null 2>&1 ; \
+		cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
 		if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
 			for name in $(IMG_NAME)* md5-$(IMG_NAME)* ; \
 			do \
@@ -145,7 +151,7 @@ upload:
 			done ; \
 		fi ; \
 		if [ "$(BUILD_UPLOAD_SOURCE)" = "true" ] ; then \
-			cd releases >/dev/null 2>&1 ; \
+			cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
 			if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
 				for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; \
 				do \
@@ -185,30 +191,30 @@ disabled:
 
 test-install-package:
 	name="$(BASE_NAME).tar.tar.gz" ; \
-	cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+	cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
 	priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
 
 test-uninstall-package:
 	name="$(BASE_NAME).tar.tar.gz" ; \
-	cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+	cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
 	priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 
 test-install-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
 		rm -fr "$(PKG_DIR)/*" ; \
 		name="$(BASE_NAME).exe.zip" ; \
-		cp WIN/unattended.ans ../releases/$$name "$(PKG_DIR)" ; cd "$(PKG_DIR)" ; \
+		cp WIN/unattended.ans $(BLD_OUT_DIR)/releases/$$name "$(PKG_DIR)" ; cd "$(PKG_DIR)" ; \
 		unzip -q -o $$name ; \
 		echo "Dir=$(PKG_DIR)" >>unattended.ans ; \
 		./$(BASE_NAME).exe /loadinf=/tmp/unattended.ans /silent ; \
 	elif [ $(BLD_HOST_OS) = MACOSX ] ; then \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
-		hdid $(BLD_TOP)/releases/$(BASE_NAME).dmg >/dev/null ; \
+		hdid $(BLD_OUT_DIR)/releases/$(BASE_NAME).dmg >/dev/null ; \
 		priv installer -package /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION)/$(BLD_PRODUCT).mpkg -target /; \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
-		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+		cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
 		priv $(BLD_PRODUCT)_HEADLESS=1 ./install ; \
 	fi
 
@@ -222,7 +228,7 @@ test-uninstall-native-package:
 		rm -fr "$(PKG_DIR)/*" ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
-		cd $(BLD_TOP); top=`pwd` ; cd /tmp ; tar xvfz $$top/releases/$$name ; \
+		cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
 		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 	fi
 
