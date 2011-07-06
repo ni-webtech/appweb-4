@@ -1397,6 +1397,7 @@ typedef struct HttpConn {
     void            *ejs;                   /**< Embedding VM */
     void            *pool;                  /**< Pool of VMs */
     void            *mark;                  /**< Reference for GC marking */
+    void            *data;                  /**< Custom data for request */
     char            *boundary;              /**< File upload boundary */
     char            *errorMsg;              /**< Error message for the last request (if any) */
     char            *ip;                    /**< Remote client IP address */
