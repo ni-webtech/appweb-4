@@ -2523,7 +2523,8 @@ module ejs {
 
         /** 
             Kill all matching processes. This call enables selection of the processes to kill a pattern match over
-            the processes command line.
+            the processes command line. Note: this command does not throw exceptions if a matching process cannot be
+            killed. Use kill() for reliable process execution.
             @param pattern of processes to kill. This can be a string name or a regular expression to match with.
             @param signal Signal number to send to the processes to kill. If the signal is null, then the system default
                 signal is sent (SIGTERM).
@@ -2545,7 +2546,9 @@ module ejs {
                     if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
                         if (preserve.length == 0 || !preserve.find(function(e, index, arrr) { return e == pid })) {
                             // print("KILL " + pid + " pattern " + pattern + " signal " + signal)
-                            Cmd.kill(pid, signal)
+                            try {
+                                Cmd.kill(pid, signal)
+                            } catch {}
                         }
                     }
                 }
@@ -2559,7 +2562,9 @@ module ejs {
                     if ((pattern is RegExp && pattern.test(command)) || command.search(pattern.toString()) >= 0) {
                         if (preserve.length == 0 || !preserve.find(function(e, index, arrr) { return e == pid })) {
                             // print("KILL " + pid + " pattern " + pattern + " signal " + signal)
-                            Cmd.kill(pid, signal)
+                            try {
+                                Cmd.kill(pid, signal)
+                            } catch {}
                         }
                     }
                 }

@@ -2887,6 +2887,7 @@ typedef struct HttpHost {
     HttpLoc         *loc;                   /**< Default location */
     MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
 
+    //  MOB - rename documents and home
     char            *documentRoot;          /**< Default directory for web documents */
     char            *serverRoot;            /**< Directory for configuration files */
 

@@ -13177,10 +13177,6 @@ static void manageModule(MprModule *mp, int flags)
         mprMark(mp->name);
         mprMark(mp->path);
         mprMark(mp->entry);
-#if UNUSED
-        mprMark(mp->moduleData);
-#endif
-
     } else if (flags & MPR_MANAGE_FREE) {
         //  TODO - should this unload the module?
     }
@@ -14154,6 +14150,7 @@ char *mprJoinPath(cchar *path, cchar *other)
 
 /*
     Join an extension to a path. If path already has an extension, this call does nothing.
+    MOB - the extension should not have "." But BLD_EXE and buildConfig extensions do.
  */
 char *mprJoinPathExt(cchar *path, cchar *ext)
 {
@@ -23871,7 +23868,7 @@ void stubMprUnix() {}
 
 /************************************************************************/
 /*
- *  Start of file "../src/mprVxWorks.c"
+ *  Start of file "../src/mprVxworks.c"
  */
 /************************************************************************/
 
@@ -24084,7 +24081,7 @@ void stubMprVxWorks() {}
  */
 /************************************************************************/
 /*
- *  End of file "../src/mprVxWorks.c"
+ *  End of file "../src/mprVxworks.c"
  */
 /************************************************************************/
 
