@@ -5004,6 +5004,7 @@ static EjsNumber *cmd_write(Ejs *ejs, EjsCmd *cmd, int argc, EjsObj **argv)
 }
 
 
+//  MOB - compare with System.exec
 /*
     function exec(cmd: Object): Void
  */
@@ -11759,7 +11760,7 @@ typedef struct EjsLocalCache
     MprHashTable    *store;             /* Key/value store */
     MprMutex        *mutex;             /* Cache lock*/
     MprEvent        *timer;             /* Pruning timer */
-    MprTime         lifespan;           /* Default lifespan */
+    MprTime         lifespan;           /* Default lifespan (msec) */
     int             resolution;         /* Frequence for pruner */
     ssize           usedMem;            /* Memory in use for keys and data */
     ssize           maxKeys;            /* Max number of keys */
@@ -11774,7 +11775,7 @@ typedef struct CacheItem
     EjsString   *key;                   /* Original key */
     EjsString   *data;                  /* Cache data */
     MprTime     expires;                /* Fixed expiry date. If zero, key is imortal. */
-    MprTime     lifespan;               /* Lifespan after each access to key */
+    MprTime     lifespan;               /* Lifespan after each access to key (msec) */
     int64       version;
 } CacheItem;
 
@@ -21184,6 +21185,7 @@ void ejsConfigureStringType(Ejs *ejs)
 
 
 
+//  MOB - compare with ejsCmd before deleting
 /*
     function run(cmd: String): String
  */
@@ -21254,6 +21256,7 @@ static EjsNumber *system_daemon(Ejs *ejs, EjsObj *unused, int argc, EjsObj **arg
 }
 
 
+//  MOB - compare with ejsCmd before deleting
 /*
     function exec(cmd = null): Void
  */

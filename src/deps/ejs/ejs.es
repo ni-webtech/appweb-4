@@ -17369,6 +17369,8 @@ module ejs.web {
                 "no-store" response may not be stored in a cache.
                 "must-revalidate" forces clients to revalidate the request with the server.
                 "proxy-revalidate" similar to must-revalidate except only for proxy caches>
+
+//  MOB - unclear, clarify
             @option uri URI and parameter to further differentiate cached content. If supplied, different cache data
                 can be stored for each URI that applies to the given controller/action. If the URI is set to "*" all 
                 URIs for that action/controller are uniquely cached. If the request has POST data, the URI may include
@@ -21320,6 +21322,7 @@ MOB - DEBUG
         native function get written(): Number
 
         /********************************************** JSGI  ********************************************************/
+        //   MOB - Deprecate
         /** 
             JSGI specification configuration object.
             @spec jsgi-0.3
