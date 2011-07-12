@@ -24,6 +24,7 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 
 #include <errno.h>
+#include <ctype.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -220,7 +221,6 @@ int main(int argc, char *argv[], char *envp[])
         fprintf(stderr, "Error at cgiProgram:%d\n", __LINE__);
         exit(255);
     }
-
     method = getenv("REQUEST_METHOD") ;
     if (method == 0) {
         method = "GET";
@@ -524,9 +524,17 @@ static int getPostData(char **bufp, size_t *lenp)
 
 static int getVars(char ***cgiKeys, char *buf, size_t buflen)
 {
-    char    **keyList;
-    char    *eq, *cp, *pp;
+    char    **keyList, *eq, *cp, *pp, *newbuf;
     int     i, keyCount;
+
+    if (buflen > 0) {
+        if ((newbuf = malloc(buflen + 1)) == 0) {
+            error("Can't allocate memory");
+            return 0;
+        }
+        strncpy(newbuf, buf, buflen);
+        buf = newbuf;
+    }
 
     /*
         Change all plus signs back to spaces
@@ -539,7 +547,6 @@ static int getVars(char ***cgiKeys, char *buf, size_t buflen)
             keyCount++;
         }
     }
-
     if (keyCount == 0) {
         return 0;
     }
@@ -573,18 +580,17 @@ static char hex2Char(char *s)
     char    c;
 
     if (*s >= 'A') {
-        c = (*s & 0xDF) - 'A';
+        c = toupper(*s & 0xFF) - 'A' + 10;
     } else {
         c = *s - '0';
     }
     s++;
 
     if (*s >= 'A') {
-        c = c * 16 + ((*s & 0xDF) - 'A');
+        c = (c * 16) + (toupper(*s & 0xFF) - 'A') + 10;
     } else {
-        c = c * 16 + (*s - '0');
+        c = (c * 16) + (toupper(*s & 0xFF) - '0');
     }
-
     return c;
 }
 

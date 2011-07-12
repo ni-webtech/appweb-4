@@ -99,9 +99,10 @@ if (!test || test.config["cgi"] == 1) {
 
         //
         //  Query string vars should not be turned into variables for GETs
+        //  Extra path only supported for cgi programs with extensions.
         //
-        http.get(HTTP + "/cgi-bin/cgiProgram/extra/path?var1=a+a&var2=b%20b&var3=c")
-        match("SCRIPT_NAME", "/cgi-bin/cgiProgram")
+        http.get(HTTP + "/cgiProgram.cgi/extra/path?var1=a+a&var2=b%20b&var3=c")
+        match("SCRIPT_NAME", "/cgiProgram.cgi")
         match("QUERY_STRING", "var1=a+a&var2=b%20b&var3=c")
         match("QVAR var1", "a a")
         match("QVAR var2", "b b")
@@ -110,8 +111,8 @@ if (!test || test.config["cgi"] == 1) {
         //
         //  Post data should be turned into variables
         //
-        http.form(HTTP + "/cgi-bin/cgiProgram/extra/path?var1=a+a&var2=b%20b&var3=c", 
-            { name: "Peter", address: "777+Mulberry+Lane" })
+        http.form(HTTP + "/cgiProgram.cgi/extra/path?var1=a+a&var2=b%20b&var3=c", 
+            { name: "Peter", address: "777 Mulberry Lane" })
         match("QUERY_STRING", "var1=a+a&var2=b%20b&var3=c")
         match("QVAR var1", "a a")
         match("QVAR var2", "b b")
@@ -128,11 +129,11 @@ if (!test || test.config["cgi"] == 1) {
         assert(keyword("ARG[0]").contains("cgiProgram"))
         assert(!http.response.contains("ARG[1]"))
 
-        http.get(HTTP + "/cgi-bin/cgiProgram/extra/path")
+        http.get(HTTP + "/cgiProgram.cgi/extra/path")
         assert(keyword("ARG[0]").contains("cgiProgram"))
         assert(!http.response.contains("ARG[1]"))
 
-        http.get(HTTP + "/cgi-bin/cgiProgram/extra/path?a+b+c")
+        http.get(HTTP + "/cgiProgram.cgi/extra/path?a+b+c")
         match("QUERY_STRING", "a+b+c")
         assert(keyword("ARG[0]").contains("cgiProgram"))
         match("ARG.1.", "a")
@@ -144,9 +145,9 @@ if (!test || test.config["cgi"] == 1) {
     }
 
     function encoding() {
-        http.get(HTTP + "/cgi-bin/cgi%20Program/extra%20long/a/../path|/a/..?var%201=value%201")
+        http.get(HTTP + "/cgiProgram.cgi/extra%20long/a/../path|/a/..?var%201=value%201")
         match("QUERY_STRING", "var%201=value%201")
-        match("SCRIPT_NAME", "/cgi-bin/cgi Program")
+        match("SCRIPT_NAME", "/cgiProgram.cgi")
         match("QVAR var 1", "value 1")
         match("PATH_INFO", "/extra long/path|/")
 
@@ -154,11 +155,16 @@ if (!test || test.config["cgi"] == 1) {
         let path = Path(scriptFilename).dirname.join("extra long/path|")
         let translated = keyword("PATH_TRANSLATED")
         assert(path == translated)
+
+        http.get(HTTP + "/cgi-bin/cgi%20Program?var%201=value%201")
+        match("QUERY_STRING", "var%201=value%201")
+        match("SCRIPT_NAME", "/cgi-bin/cgi Program")
+        match("QVAR var 1", "value 1")
     }
 
     function status() {
         let http = new Http
-        http.addHeader("SWITCHES", "-s%20711")
+        http.setHeader("SWITCHES", "-s%20711")
         http.get(HTTP + "/cgi-bin/cgiProgram")
         assert(http.status == 711)
         http.close()
@@ -166,7 +172,7 @@ if (!test || test.config["cgi"] == 1) {
 
     function location() {
         let http = new Http
-        http.addHeader("SWITCHES", "-l%20/index.html")
+        http.setHeader("SWITCHES", "-l%20/index.html")
         http.followRedirects = false
         http.get(HTTP + "/cgi-bin/cgiProgram")
         assert(http.status == 302)
@@ -176,7 +182,7 @@ if (!test || test.config["cgi"] == 1) {
     //  Non-parsed header
     function nph() {
         let http = new Http
-        http.addHeader("SWITCHES", "-n")
+        http.setHeader("SWITCHES", "-n")
         http.get(HTTP + "/cgi-bin/nph-cgiProgram")
         assert(http.status == 200)
         assert(http.response.startsWith("HTTP/1.0"))
