@@ -120,12 +120,6 @@ BLD_FEATURE_DIR=1
 #
 BLD_FEATURE_ESP=1
 
-#
-#	Ejscript Web Framework settings
-#   MOB -- move out of here
-#
-BLD_FEATURE_EJS_ALL_IN_ONE=1
-
 ################################################################################
 #
 #	Some fixups for O/Ss

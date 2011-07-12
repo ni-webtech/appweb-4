@@ -1042,6 +1042,7 @@ configureComponent() {
 probe()
 {
     local args emitdir extensions name d e f file found path search arch shobj exe trace warn SAVE_IFS OLD_PATH
+    local executable
 
     args="$@"
     trace=$verbose
@@ -1050,12 +1051,16 @@ probe()
     eval shobj=\$BLD_${KIND}_SHOBJ
     eval exe=\$BLD_${KIND}_EXE
     extensions="$exe $shobj $arch .h"
+    executable=0
     warn=0
 
     while [ "${1#--}" != "$1" ] ; do
         case ${1#--} in
         dir)
             emitdir=1
+            ;;
+        exe)
+            executable=1
             ;;
         extensions)
             shift ; extensions=$1
@@ -1094,6 +1099,7 @@ probe()
                 found=${found#${file}}
             fi
             found=`canonPath "${file}"`
+            [ "$found" != "" -a "$executable" = 1 -a ! -x "$found" ] && found=""
             [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
         fi
     fi
@@ -1111,6 +1117,7 @@ probe()
             found=${found%${file}}
             found=${found%/}
         fi
+        [ "$found" != "" -a "$executable" = 1 -a ! -x "$found" ] && found=""
         [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: $name at found $found" 1>&2
     fi
 
@@ -1134,6 +1141,7 @@ probe()
                         found=${f}
                     fi
                     search=
+                    [ "$found" != "" -a "$executable" = 1 -a ! -x "$found" ] && found=""
                     [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
                     break
                 fi

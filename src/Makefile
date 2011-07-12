@@ -26,7 +26,7 @@ ifeq ($(BLD_FEATURE_DIR),1)
 	SOURCES		+= $(shell ls handlers/dirHandler.c)
 endif
 OBJECTS			= $(patsubst %.c,$(BLD_OBJ_DIR)/%$(BLD_OBJ),$(notdir $(SOURCES)))
-MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
+# MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 LIBS			:= $(BLD_APPWEB_LIBS)
 
 #
@@ -35,7 +35,7 @@ LIBS			:= $(BLD_APPWEB_LIBS)
 ifeq	($(BLD_FEATURE_CGI),1)
 	MODULES		+= $(BLD_MOD_DIR)/$(CGI)$(BLD_SHOBJ)
 endif
-ifneq	($(BLD_EJS_IFLAGS),)
+ifeq	($(BLD_FEATURE_EJS),1)
 	MODULES		+= $(BLD_MOD_DIR)/$(EJS)$(BLD_SHOBJ)
 endif
 ifeq	($(BLD_FEATURE_ESP),1)
@@ -52,7 +52,7 @@ endif
 compileFirst: tools
 
 tools:
-	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) -C deps compile
+	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) DIR=$(DIR)/deps -C deps compile
 ifeq ($(BLD_CROSS),1)
 	echo
 	$(call log) [Notice] "Building $(BLD_NAME) for ($(BLD_HOST_SYSTEM))"

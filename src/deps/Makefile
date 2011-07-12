@@ -8,7 +8,8 @@ include 		.makedep
 
 #
 #	If building with EJS, must use ejs versions of libmpr, libhttp, libpcre
-ifeq ($(BLD_EJS_IFLAGS),)
+#
+ifeq ($(BLD_FEATURE_EJS),0)
 	ifeq ($(BLD_MPR_BUILTIN),1)
 		PRE_DIRS	+= mpr
 	endif

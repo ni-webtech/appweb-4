@@ -28,6 +28,7 @@ defineComponent() {
     incdir=`probe --name ejs.h --dir --search "$path:$path/out/include" "ejs.h" `
     if [ "$incdir" != "" ] ; then
         headers="`echo $incdir/ejs*.h`"
+        # Currently using iflags below
         # imports="$imports $headers"
     fi
     if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
@@ -44,11 +45,11 @@ defineComponent() {
     withlibs="pcre"
     libs="$libs pcre"
     if [ "$builtin" = "" ] ; then
-        if [ "${libdir}" != "" ] ; then
-            libs="$libs ejs.web"
-        fi
         if [ "${incdir}" != "" ] ; then
             iflags=-I${incdir}
+        fi
+        if [ "${libdir}" != "" ] ; then
+            libs="$libs ejs.web"
         else
             optional=
             libs=
@@ -56,8 +57,9 @@ defineComponent() {
             deps=
             present="--present 0"
         fi
-        ejsbin=`probe --name ejs --search "$path:$path/out/bin:$SEARCH_PATH" ejs`
+        ejsbin=`probe --exe --name ejs --search "$path:$path/out/bin:$SEARCH_PATH" ejs`
     fi
-    configureComponent --libs "ejs $libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" $builtin $present \
-        --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" --path "$ejsbin" ejs
+    configureComponent --libs "ejs $libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" \
+        $builtin $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" \
+        --path "$ejsbin" ejs
 }

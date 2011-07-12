@@ -15,7 +15,6 @@ ifeq ($(BLD_FEATURE_CGI),1)
 	CGIP		:= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	TARGETS		+= cgi-bin/testScript web/cgiProgram.cgi
 endif
-//MOB MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
 compileExtra: 	$(TARGETS) $(MODULES)
 

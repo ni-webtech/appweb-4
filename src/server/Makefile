@@ -9,7 +9,6 @@ POST_DIRS			:= package
 include 			.makedep 
 
 PRE_DIRS			+= $(BLD_OS) test
-//MOB MAKE_IFLAGS			+= $(BLD_MPR_IFLAGS)
 
 #
 #	Extra libraries
@@ -32,9 +31,7 @@ TARGETS				+= $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)
 ifeq	($(BLD_FEATURE_CGI),1)
 	EXTRA_TARGETS 	+= cgi-bin/cgiProgram$(BLD_EXE)
 endif
-
 TARGETS				+= appweb.conf
-//MOB MAKE_IFLAGS			+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
 compileExtra: $(TARGETS) $(EXTRA_TARGETS)
 

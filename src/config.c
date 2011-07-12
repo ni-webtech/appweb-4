@@ -1463,11 +1463,7 @@ static bool featureSupported(char *key)
         return 1;
 
     } else if (scasecmp(key, "EJS_MODULE") == 0) {
-#ifdef BLD_EJS_IFLAGS
-        return 1;
-#else
-        return 0;
-#endif
+        return BLD_FEATURE_EJS;
 
     } else if (scasecmp(key, "PHP_MODULE") == 0) {
         return BLD_FEATURE_PHP;

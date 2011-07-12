@@ -17,7 +17,7 @@ endif
 ifeq	($(BLD_FEATURE_DIR),1)
 	OBJECTS 		+= $(BLD_OBJ_DIR)/dirHandler$(BLD_OBJ)
 endif
-ifneq	($(BLD_EJS_IFLAGS),)
+ifeq	($(BLD_FEATURE_EJS),1)
 	OBJECTS 		+= $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
 endif
 ifeq	($(BLD_FEATURE_PHP),1)
