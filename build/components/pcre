@@ -26,5 +26,5 @@ defineComponent() {
         imports="$imports $headers"
     fi
     builtin=`[ $path = . ] && echo --builtin`
-    configureComponent --libs "pcre" --libpaths "$libpaths" --iflags "$iflags" --imports "$imports" $builtin pcre
+    configureComponent --libs "pcre" --libpaths "$libpaths" --imports "$imports" $builtin pcre
 }

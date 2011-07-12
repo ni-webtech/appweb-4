@@ -11,18 +11,20 @@ http.get(HTTP + "/test.xml")
 assert(http.readXml().customer.name == "Joe Green")
 */
 
-//  Test http.read() into a byte array
-http.get(HTTP + "/big.ejs")
-buf = new ByteArray
-count = 0
-while (http.read(buf) > 0) {
-    count += buf.available
+if (!test || test.config["ejs"] == 1) {
+    //  Test http.read() into a byte array
+    http.get(HTTP + "/big.ejs")
+    buf = new ByteArray
+    count = 0
+    while (http.read(buf) > 0) {
+        count += buf.available
+    }
+    if (count != 63201) {
+        print("COUNT IS " + count + " code " + http.status)
+    }
+    assert(count == 63201)
+    http.close()
 }
-if (count != 63201) {
-    print("COUNT IS " + count + " code " + http.status)
-}
-assert(count == 63201)
-http.close()
 
 http.get(HTTP + "/lines.txt")
 lines = http.readLines()

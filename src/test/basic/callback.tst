@@ -2,6 +2,8 @@
  *  callback.tst - Http tests using callbacks
  */
 
+//  MOB - re-enable
+
 if (false) {
     const HTTP = (global.tsession && tsession["http"]) || ":4100"
     let http: Http = new Http

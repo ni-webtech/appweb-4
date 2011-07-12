@@ -840,12 +840,13 @@ warnComponent() {
 #   Configure a component. Called by build/components/*
 #
 configureComponent() {
-    local cflags dflags dependencies kind iflags imports ldflags libpaths libs name upperDep new
+    local cflags dflags dependencies kind iflags imports ldflags libpaths libs name upperDep new present needed
     local path withlibs withpaths upper priorMandatory priorPath emitter disable optional v tag builtin
 
     kind=$KIND
     builtin=0
     libpaths=
+    present=1
 
     [ "$verbose" != 0 ] && echo -e "    configureComponent $@"
 
@@ -889,6 +890,9 @@ configureComponent() {
             ;;
         path)
             shift ; path="$1"
+            ;;
+        present)
+            shift ; present="$1"
             ;;
         withlibs)
             shift ; withlibs="$1"
@@ -940,9 +944,9 @@ configureComponent() {
     for dep in $optional $dependencies
     do
         udep=`upper ${dep}`
-        eval present=\$CFG_${kind}_${udep}
+        eval needed=\$CFG_${kind}_${udep}
 
-        if [ "$present" != "" ] ; then
+        if [ "$needed" != "" ] ; then
 
             eval v=\$CFG_${kind}_${udep}_LIBS
             [ "$v" != "" ] && libs="$libs $v"
@@ -1014,6 +1018,7 @@ configureComponent() {
     eval CFG_${kind}_${upper}_LIBPATHS=\"$libpaths\"
     eval CFG_${kind}_${upper}_MANDATORY=\"$mandatory\"
     eval CFG_${kind}_${upper}_OPTIONAL_DEPENDENCIES=\"$optional\"
+    eval CFG_${kind}_${upper}_PRESENT=\"$present\"
     if [ "$builtin" = 1 ] ; then
         eval CFG_${kind}_${upper}_WITHLIBS=\"$withlibs\"
         eval CFG_${kind}_${upper}_WITHPATHS=\"$withpaths\"
@@ -1850,18 +1855,19 @@ emitComponents() {
     for p in $BLD_COMPONENTS
     do
         p=`upper ${p}`
-        eval present="\$CFG_${kind}_${p}"
+        eval present="\$CFG_${kind}_${p}_PRESENT"
         eval dir=\$CFG_${p}_DIR
 
         echo -e "\n${t}#\n${t}#\t${p}\n${t}#" 
-        if [ "$present" = "" ] ; then 
+        if [ "$present" = "0" ] ; then 
             echo -e "${t}BLD_FEATURE_${p}=0" 
-            continue
+            eval v="\$CFG_${kind}_${p}_PRESENT"
+            [ "$v" = "" ] && continue
         else
             echo -e "${t}BLD_FEATURE_${p}=1" 
         fi
 
-        set | grep "^CFG_${kind}_${p}" | egrep -v "_EMITTER|_WITH=|_WITH_|_MANDATORY=" | while read v
+        set | grep "^CFG_${kind}_${p}" | egrep -v "_EMITTER|_WITH=|_WITH_|_MANDATORY=|_PRESENT=" | while read v
         do
             [ "$v" = "CFG_${kind}_${p}=1" ] && continue
             v=${v%=*}
@@ -2100,12 +2106,18 @@ Environment Variables:
   LDFLAGS                  Linker flags. For example: use -L<dir> to specify
                            where to find libraries in non-standard directories.
 
-Variables for native compilation of tools needed by the build process.
+  Variables for native compilation of tools needed by the build process:
+
   BUILD_CC                 C/C++ compiler to use for native /local compilation
                            and linking on the build system.
   BUILD_LD                 Linker to use for native /local linking on the
                            build system.
   BUILD_MT                 Windows manifest command.
+
+  Some components also listen for environment variables to set IFLAGS, LIBS and
+  LIBPATHS. For example:  
+
+    PHP_IFLAGS="-I/php" PHP_LIBS=libxml ./configure
 
 Installation Directory Options:
   When doing a "make install" the --prefix and --binDir are used. The other

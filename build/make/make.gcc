@@ -235,7 +235,7 @@ export 	_LDPATH _LDFLAGS _LIBS BLD_TOP
 #	Build rule for C source
 #
 $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
-	if [ "$(PRE)" = 1 ] ; then \
+	@if [ "$(PRE)" = 1 ] ; then \
         $(call log) "[Preprocess]" "cc -E $< >$*.pre" ; \
         $(BLD_CC) -E $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o `basename $@ | sed 's/$(BLD_OBJ)$$/.pre/'` ; \
     fi

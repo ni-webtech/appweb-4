@@ -2,12 +2,10 @@
 #   Mpr
 #
 defineComponent() {
-    local internal libpaths iflags path builtin incdir
+    local libpaths path builtin incdir
 
-    internal=src/deps/mpr
-    path="${1:-${internal}}"
-    iflags=-I`probe --name mpr.h --dir --warn --search "$path:$path/${internal}:$path/src/include" "mpr.h"`
-    if [ "$path" != "${internal}" ] ; then
+    path="${1:-.}"
+    if [ "$path" != "." ] ; then
         import_libmpr=`probe --name mpr --search "$path:$path/out/lib" "libmpr"`
         if [ "$import_libmpr" = "" ] ; then
             warnComponent mpr "Can't locate libmpr"
@@ -19,9 +17,14 @@ defineComponent() {
             return
         fi
     fi
-    incdir=`probe --dir --name mpr.h --search "$path:$path/out/include" "mpr.h" `
-    imports="$import_libmpr $import_libmprssl $incdir/mpr.h $incdir/mprSsl.h"
-    libpaths="${import_libmpr%/*}"
-    builtin=`[ $path = "${internal}" ] && echo --builtin`
-    configureComponent --libs "mpr" --libpaths "$libpaths" --iflags "$iflags" $builtin --imports "$imports" mpr
+    builtin=`[ $path = "." ] && echo --builtin`
+    incdir=`probe --dir --name mpr.h --search "$path:$path/src/deps/mpr:$path/out/include" "mpr.h" `
+    if [ "$incdir" != "" ] ; then
+        imports="$incdir/mpr.h $incdir/mprSsl.h"
+    fi
+    if [ "$builtin" = "" ] ; then
+        imports="$imports $import_libmpr $import_libmprssl"
+        libpaths="${import_libmpr%/*}"
+    fi
+    configureComponent --libs "mpr" --libpaths "$libpaths" $builtin --imports "$imports" mpr
 }

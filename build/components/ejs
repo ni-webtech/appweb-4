@@ -2,7 +2,7 @@
 #   Ejs
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports shobj moddir incdir iflags
+    local deps libs optional path libdir builtin imports shobj moddir incdir iflags present
 
     path="${1:-.}"
 
@@ -54,9 +54,10 @@ defineComponent() {
             libs=
             withlibs=
             deps=
+            present="--present 0"
         fi
         ejsbin=`probe --name ejs --search "$path:$path/out/bin:$SEARCH_PATH" ejs`
     fi
-    configureComponent --libs "ejs $libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" $builtin \
+    configureComponent --libs "ejs $libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" $builtin $present \
         --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" --path "$ejsbin" ejs
 }

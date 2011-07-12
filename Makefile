@@ -33,19 +33,6 @@ diff import sync:
 	$(BLD_TOOLS_DIR)/import.sh --$@ ../mpr/out/releases/mpr-dist.tgz
 	$(BLD_TOOLS_DIR)/import.sh --$@ ../http/out/releases/http-dist.tgz
 	$(BLD_TOOLS_DIR)/import.sh --$@ ../pcre/out/releases/pcre-dist.tgz
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../ejs/out/releases/ejs-dist.tgz
-	if [ ../ejs/doc/index.html -nt doc/ejs/index.html ] ; then \
-		echo "#  import ejs doc"  \
-		chmod -R +w doc/ejs doc/man ; \
-		rm -fr doc/ejs ; \
-		mkdir -p doc/ejs ; \
-		( cd ../ejs/doc ; find . -type f | \
-			egrep -v '/xml/|/html/|/dsi/|.makedep|.DS_Store|.pptx|\/Archive' | cpio --quiet -pdum ../../appweb/doc/ejs ) ; \
-		chmod +w doc/man/* ; \
-		cp doc/ejs/man/*.1 doc/man ; \
-		chmod -R +w doc/ejs ; \
-		rm -f doc/api/ejsBare.html ; \
-	fi
 	echo
 
 testExtra: test-projects
@@ -56,9 +43,6 @@ ifeq    ($(BLD_HOST_OS),WIN)
 		$(BLD_TOOLS_DIR)/nativeBuild ; \
 	fi
 endif
-
-ext:
-	./configure --with-mpr=../mpr --with-ssl=../mpr --with-http=../http  --with-ejs=../ejs --with-sqlite=../ejs --with-pcre=../pcre
 
 #
 #   Local variables:
