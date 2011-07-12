@@ -72,6 +72,7 @@ endif
 
 $(BLD_TOP)/build/src/.makedep: $(BLD_OUT_DIR)/include/buildConfig.h
 	echo -e "\n  # Making dynamic makefile dependancies\n"
+	find . -name '*.h' | xargs cp "{}" $(BLD_INC_DIR)
 	$(MAKE) TRACE=$(TRACE) --no-print-directory depend clean
 
 #
@@ -232,7 +233,6 @@ test-uninstall-native-package:
 		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 	fi
 
-# SAM SRC
 test-installed:
 	complete=1 ; \
 	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
@@ -293,14 +293,14 @@ installed-files:
 	) | sort | uniq
 
 cleanExtra:
-	find $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_MOD_DIR) $(BLD_LIB_DIR) -type f -print | egrep -v 'buildConfig' | xargs rm -f
+	# find $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_MOD_DIR) $(BLD_LIB_DIR) -type f -print | egrep -v 'buildConfig' | xargs rm -f
 	[ "$(_RECURSIVE_)" = "" ] && \
 		$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) _RECURSIVE_=1 -C . clean ; true
 
 clobberExtra:
 	rm -fr $(BLD_OUT_DIR)
 
-buildConfig.sh buildConfig.h $(BLD_OUT_DIR)/buildConfig.h:
+# buildConfig.sh buildConfig.h $(BLD_OUT_DIR)/buildConfig.h:
 
 #
 #	Do a new top level build after incrementing the build number

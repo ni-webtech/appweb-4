@@ -4,13 +4,16 @@
 # 	opyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
+OBJECTS			=
+
 include 		.makedep
 
 ifeq	($(BLD_FEATURE_CGI),1)
 	TARGETS		+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
+	OBJECTS		+= $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 endif
 TARGETS			+= $(BLD_BIN_DIR)/auth$(BLD_EXE)
-MAKE_IFLAGS		+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
+OBJECTS			+= $(BLD_OBJ_DIR)/auth$(BLD_OBJ)
 
 compileExtra: $(TARGETS)
 
@@ -19,7 +22,7 @@ $(BLD_BIN_DIR)/auth$(BLD_EXE): $(OBJECTS)
 		$(BLD_OBJ_DIR)/auth$(BLD_OBJ)
 
 $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE): $(OBJECTS)
-	bld --exe $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ) $(BLD_OBJ_DIR)/mprLib$(BLD_OBJ)
+	bld --exe $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) ../server/cgi-bin
 	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) ../test/cgi-bin
 	chmod +x ../server/cgi-bin/cgiProgram$(BLD_EXE) ../test/cgi-bin/cgiProgram$(BLD_EXE)

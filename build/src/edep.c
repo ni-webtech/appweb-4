@@ -29,14 +29,15 @@ static int      quiet;
 
 /**************************** Forward Declarations ****************************/
 
-static char     *mprGetBaseName(char *name);
-static int      mprGetDirName(char *buf, int bufsize, char *path);
+static void     catchInterrupt(int signo);
 static void     openSignals();
 static int      findDependencies(FILE *fp, char *fname);
 static int      depSort(const void *p1, const void *p2);
 static char     *mapExtension(char *path);
-static void     catchInterrupt(int signo);
 static char     *mapDelimiters(char *s);
+static char     *mprGetBaseName(char *name);
+static int      mprGetDirName(char *buf, int bufsize, char *path);
+static int      sends(char *str, char *suffix);
 
 /************************************ Code ************************************/
 
@@ -124,9 +125,19 @@ int main(int argc, char *argv[])
     fprintf(fp, "\n#\n#   Read the build configuration.\n#\n");
     fprintf(fp, "include $(BLD_INC_DIR)/buildConfig.h\n\n");
 
-    fprintf(fp, "SRC =");
+    fprintf(fp, "SRC ?=");
     for (i = nextArg; i < argc; i++) {
-        if (access(argv[i], R_OK) != 0) {
+        if (sends(argv[i], ".h") || access(argv[i], R_OK) != 0) {
+            continue;
+        }
+        strncpy(path, argv[i], sizeof(path));
+        fprintf(fp, " \\\n\t%s", mprGetBaseName(path));
+    }
+    fprintf(fp, "\n\n");
+
+    fprintf(fp, "SRCH ?=");
+    for (i = nextArg; i < argc; i++) {
+        if (!sends(argv[i], ".h") || access(argv[i], R_OK) != 0) {
             continue;
         }
         strncpy(path, argv[i], sizeof(path));
@@ -135,20 +146,30 @@ int main(int argc, char *argv[])
     fprintf(fp, "\n\n");
 
     fprintf(fp, "ifneq ($(NATIVE_ONLY),1)\n");
-    fprintf(fp, "OBJECTS =");
+    fprintf(fp, "OBJECTS ?=");
     for (i = nextArg; i < argc; i++) {
-        if (access(argv[i], R_OK) != 0) {
+        if (sends(argv[i], ".h") || access(argv[i], R_OK) != 0) {
             continue;
         }
         strncpy(path, argv[i], sizeof(path));
         mapExtension(path);
         fprintf(fp, " \\\n\t$(BLD_OBJ_DIR)/%s", mprGetBaseName(path));
     }
+    fprintf(fp, "\n\n");
+    fprintf(fp, "HEADERS ?=");
+    for (i = nextArg; i < argc; i++) {
+        if (!sends(argv[i], ".h") || access(argv[i], R_OK) != 0) {
+            continue;
+        }
+        strncpy(path, argv[i], sizeof(path));
+        mapExtension(path);
+        fprintf(fp, " \\\n\t$(BLD_INC_DIR)/%s", mprGetBaseName(path));
+    }
     fprintf(fp, "\n");
     fprintf(fp, "endif\n");
 
     for (i = nextArg; !finished && i < argc; i++) {
-        if (*argv[i] == '*') {
+        if (*argv[i] == '*' || sends(argv[i], ".h")) {
             continue;
         }
         strcpy(path, argv[i]);
@@ -238,8 +259,7 @@ static int findDependencies(FILE *fp, char *fname)
         }
 
         ep = cp;
-        while (isalnum((int) *ep) || *ep == '_' || *ep == '.' || *ep == '/' || 
-                *ep == '-') {
+        while (isalnum((int) *ep) || *ep == '_' || *ep == '.' || *ep == '/' || *ep == '-') {
             ep++;
         }
         *ep = '\0';
@@ -248,7 +268,7 @@ static int findDependencies(FILE *fp, char *fname)
         if (buf[0] == '/' || (buf[0] == '.' && buf[1] == '.')) {
             if (access(buf, R_OK) < 0) {
                 if (!quiet) {
-                    fprintf(stderr, "Cant find include %s\n", buf);
+                    fprintf(stderr, "Can't find include %s\n", buf);
                 }
                 continue;
             }
@@ -272,8 +292,7 @@ static int findDependencies(FILE *fp, char *fname)
                 }
                 if (j == numIncludeDir) {
                     if (!quiet) {
-                        fprintf(stderr, "Cant find include %s in %s at %d\n", 
-                            buf, fname, line);
+                        fprintf(stderr, "Can't find include %s in %s at %d\n", buf, fname, line);
                     }
                     continue;
                 }
@@ -377,7 +396,7 @@ static char *mprGetBaseName(char *name)
 /*
     Return the directory portion of a pathname into the users buffer.
  */
-int mprGetDirName(char *buf, int bufsize, char *path)
+static int mprGetDirName(char *buf, int bufsize, char *path)
 {
     char    *cp;
     int     dlen;
@@ -407,6 +426,18 @@ int mprGetDirName(char *buf, int bufsize, char *path)
         return 0;
     }
     return -1;
+}
+
+
+static int sends(char *str, char *suffix)
+{
+    if (str == 0 || suffix == 0) {
+        return 0;
+    }
+    if (strcmp(&str[strlen(str) - strlen(suffix)], suffix) == 0) {
+        return 1;
+    }
+    return 0;
 }
 
 

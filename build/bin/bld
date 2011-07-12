@@ -220,6 +220,11 @@ searchLib()
 
     [ "$VERBOSE" -gt 0 ] && echo -e "\nbld: searchLib for library $name" >&2
 
+    if [ "${name:0:1}" = "/" -a -f "$name" ] ; then
+        canonPath "${name}"
+        return 
+    fi 
+
     suffixes="${SUFFIXES}"
     if [ "${name%.*}" != "${name}" ] ; then
         suffixes=".${name##*.}"
@@ -235,7 +240,6 @@ searchLib()
 
     for path in "${BLD_LIB_DIR}" "${BLD_MOD_DIR}" ${LIBRARY_PATHS} "$syslib" "$extraSysLib"
     do
-        # MOB removed ""
         for suffix in `echo $suffixes`
         do
             for prefix in lib ""
@@ -589,7 +593,6 @@ OBJECTS=`eval echo ${OBJECTS}`
 #   Make paths unique
 #
 LIBRARY_PATHS=`echo ${LIBRARY_PATHS} | tr ' ' '\n' | uniq | tr '\n' ' '`
-#LIBS=`echo ${LIBS} | tr ' ' '\n' | uniq | tr '\n' ' '`
 LIBS=`uniqueLibs ${LIBS}`
 MODULES=`echo ${MODULES} | tr ' ' '\n' | uniq | tr '\n' ' '`
 

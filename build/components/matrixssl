@@ -21,6 +21,6 @@ defineComponent() {
         return
     fi
     CFG_HOST_SSL_MANDATORY=1
-    libpaths="${imports%/*}"
+    # libpaths="${imports%/*}"
     configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" --imports "$imports" matrixssl
 }

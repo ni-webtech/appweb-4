@@ -47,12 +47,18 @@ with --os=wince ld
 
 with --build --optional doxygen
 with --os=win --build --optional pkg
+
+# MOB - ned to find ejs first
 with mpr 
 with http
-with --host --optional matrixssl openssl ssl php
-with --optional sqlite 
-with --optional pcre
+with --host --optional matrixssl openssl ssl
+with --host --optional php
+
 with --optional ejs
+with --optional pcre
+with --optional dir
+with --optional cgi
+with --optional esp
 with appweb
 
 ###############################################################################
@@ -100,12 +106,23 @@ BLD_FEATURE_AUTH_FILE=1
 BLD_FEATURE_AUTH_PAM=0
 
 #
-#	Ability to run commands (processes). Necessary if you want to use CGI or EJS
+#	Common Gateway Interface (CGI) handler
 #
 BLD_FEATURE_CGI=1
 
 #
+#	Directory listing handler
+#
+BLD_FEATURE_DIR=1
+
+#
+#	Embedded Server Pages (ESP) handler
+#
+BLD_FEATURE_ESP=1
+
+#
 #	Ejscript Web Framework settings
+#   MOB -- move out of here
 #
 BLD_FEATURE_EJS_ALL_IN_ONE=1
 

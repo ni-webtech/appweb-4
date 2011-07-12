@@ -37,6 +37,14 @@ manageFeatures()
             BLD_FEATURE_FLOAT=1
         fi
     fi
+    if [ "$BLD_FEATURE_ESP" = 1 ] ; then
+        if [ "$BLD_FEATURE_PCRE" != 1 ] ; then
+            echo " "
+            echo "PCRE (Regular expression support is required for ESP."
+            echo "Enabling the PCRE support."
+            BLD_FEATURE_PCRE=1
+        fi
+    fi
     if [ "$BLD_FEATURE_SEND" = 1 ] ; then
         if [ "$BLD_FEATURE_ROMFS" = 1 ] ; then
             BLD_FEATURE_SEND=0
@@ -74,9 +82,7 @@ createFeatureConfig()
 BLD_APPWEB_PRODUCT=1
 BLD_FEATURE_AUTH_FILE=$BLD_FEATURE_AUTH_FILE
 BLD_FEATURE_AUTH_PAM=$BLD_FEATURE_AUTH_PAM
-BLD_FEATURE_CGI=$BLD_FEATURE_CGI
 BLD_FEATURE_CONFIG=$BLD_FEATURE_CONFIG
-BLD_FEATURE_EJS_ALL_IN_ONE=$BLD_FEATURE_EJS_ALL_IN_ONE
 
 #
 #   Default port configuration
@@ -85,6 +91,14 @@ BLD_HTTP_PORT=$BLD_HTTP_PORT
 BLD_SSL_PORT=$BLD_SSL_PORT
 
 !EOF_FEATURE_CONFIG1
+}
+
+
+emitExtraComponents()
+{
+    local kind
+
+    kind=$1
 }
 
 
@@ -99,7 +113,7 @@ Additional Appweb Features:
   --sslPort=PORT           Set the default SSL port to use for the product.
   --webDir=PATH            Set the directory for web documents (DocumentRoot).
 
-Optional Components: cgi, ejs, matrixssl, openssl, php, sqlite
+Optional Components: cgi, dir, ejs, esp, matrixssl, openssl, php, sqlite
 
   --with-NAME=[DIR]        Support the NAME component. DIR is the base 
                            directory to find the component.  The 
@@ -148,18 +162,13 @@ parseArg()
         BLD_FEATURE_ASSERT=0
         BLD_FEATURE_AUTH_FILE=1
         BLD_FEATURE_AUTH_PAM=0
-        BLD_FEATURE_CGI=0
         BLD_FEATURE_LEGACY_API=0
         BLD_FEATURE_ROMFS=0
-        ;;
-    disable-cgi)
-        BLD_FEATURE_CGI=0
         ;;
     enable-all)
         BLD_FEATURE_ASSERT=1
         BLD_FEATURE_AUTH_FILE=1
         BLD_FEATURE_AUTH_PAM=1
-        BLD_FEATURE_CGI=1
         BLD_FEATURE_LEGACY_API=1
         BLD_FEATURE_ROMFS=0
         if [ "$BLD_HOST_OS" != WIN -a "$BLD_HOST_OS" != VXWORKS ] ; then
@@ -167,9 +176,6 @@ parseArg()
         else
             BLD_FEATURE_AUTH_PAM=0
         fi
-        ;;
-    enable-cgi)
-        BLD_FEATURE_CGI=1
         ;;
     port=*)
         BLD_HTTP_PORT=${ARG}

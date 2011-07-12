@@ -2,20 +2,23 @@
 #   Http
 #
 defineComponent() {
-    local path iflags libpaths builtin imports
+    local internal path iflags libpaths builtin libraries imports headers
 
-    path="${1:-.}"
-    iflags=-I`probe --name http.h --dir --search "$path:$path/src/deps/http:$path/src/include" "http.h"`
-    if [ "$path" != "." ] ; then
-        imports=`probe --name libhttp --search "$path:$path/out/lib" "libhttp" `
-        if [ "$imports" = "" ] ; then
+    internal="src/deps/http"
+    path="${1:-${internal}}"
+    iflags=-I`probe --name http.h --dir --search "$path:$path/${internal}:$path/src/include" "http.h"`
+    if [ "$path" != "${internal}" ] ; then
+        libraries=`probe --name libhttp --search "$path:$path/out/lib" "libhttp" `
+        if [ "$libraries" = "" ] ; then
             warnComponent http "Can't locate libhttp"
             return
         fi
     fi
-    builtin=`[ $path = . ] && echo --builtin`
-    libpaths="${imports%/*}"
+    headers=`probe --name http.h --search "$path:$path/out/include" "http.h" `
+    builtin=`[ $path = "$internal" ] && echo --builtin`
+    libpaths="${libraries%/*}"
     libs="http"
+    imports="$libraries $headers"
 
     if [ `eval echo \\$${KIND}_HAS_PAM` = 1 ] ; then
         libs="$libs pam"

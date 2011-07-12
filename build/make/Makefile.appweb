@@ -12,6 +12,9 @@ config:
 	./configure
 	make depend clean >/dev/null
 
+esp:
+	./configure --host=i386-apple-darwin --without-matrixssl --without-php --disable-cgi
+
 rom:
 	./configure --host=i386-apple-darwin --build=x86_64-apple-darwin --rom --static --without-ssl --without-php --without-ejs
 

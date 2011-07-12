@@ -761,7 +761,7 @@ findComponents() {
  
             if [ ! -f "${BLD_TOP}/build/components/${name}" ] ; then
                 echo "Missing component file: build/components/$name"
-                continue
+                exit 255
             fi
 
             eval BLD_UNIX_LIKE=\$BLD_${kind}_UNIX              
@@ -982,6 +982,9 @@ configureComponent() {
         done
         iflags="$new"
     fi
+    if [ "$imports" != "" ] ; then
+        BLD_IMPORTS="$imports $BLD_IMPORTS"
+    fi
 
     #
     #   Don't make libraries unique on Linux. ld does not rescan.
@@ -995,7 +998,9 @@ configureComponent() {
     value=${path}
     [ "$value" = "" ] && value=1
     [ "$iflags" = "-I/usr/include" ] && iflags=
-
+    if [ "$libpaths" = "/usr/lib" -o "$libpaths" = "/lib" ] ; then
+        libpaths=
+    fi
     eval CFG_${kind}_${upper}=\"${value}\"
     eval CFG_${kind}_${upper}_BUILTIN=\"$builtin\"
     eval CFG_${kind}_${upper}_CFLAGS=\"$cflags\"
@@ -1009,10 +1014,12 @@ configureComponent() {
     eval CFG_${kind}_${upper}_LIBPATHS=\"$libpaths\"
     eval CFG_${kind}_${upper}_MANDATORY=\"$mandatory\"
     eval CFG_${kind}_${upper}_OPTIONAL_DEPENDENCIES=\"$optional\"
-    eval CFG_${kind}_${upper}_WITHLIBS=\"$withlibs\"
-    eval CFG_${kind}_${upper}_WITHPATHS=\"$withpaths\"
+    if [ "$builtin" = 1 ] ; then
+        eval CFG_${kind}_${upper}_WITHLIBS=\"$withlibs\"
+        eval CFG_${kind}_${upper}_WITHPATHS=\"$withpaths\"
+    fi
     eval ${kind}_COMPONENTS=\"\$${kind}_COMPONENTS ${name}\"
-    tag=${tag:-system}
+    tag=${tag:-imported}
     [ $quiet = 0 -a $verbose = 0 -a $kind = HOST ] && echo "$tag"
 }
 
@@ -1229,7 +1236,8 @@ without() {
     lowerName=`lower ${name}`
 
     if [ ! -f build/components/${lowerName} ] ; then
-        echo -e "\nUnknown component \"${name}\". Ignoring and continuing ...\n"
+        echo -e "\nCan't locate component \"${name}\".\n"
+        exit 255
     fi
     components=" ${BLD_COMPONENTS} "
     if [ "${components/ $lowerName /}" = "$components" ] ; then
@@ -1237,6 +1245,8 @@ without() {
     fi
     BLD_COMPONENTS="${components/ $lowerName / }"
     eval "CFG_WITHOUT_${upperName}"=1
+    eval "CFG_HOST_${upperName}_WITH"=0
+    eval "CFG_BUILD_${upperName}_WITH"=0
     eval "BLD_FEATURE_${upperName}"=0
 }
 
@@ -1449,6 +1459,8 @@ createConfigFooter()
     then
         cat >>$FILE <<!EOF_CONFIG_FOOTER_MAKE
 # End of Makefile definitions
+
+
 else
 #else /* !IGNORE_IN_C_CODE */
 
@@ -1625,8 +1637,14 @@ BLD_FEATURE_FLOAT=$BLD_FEATURE_FLOAT
 BLD_FEATURE_LEGACY_API=$BLD_FEATURE_LEGACY_API
 BLD_FEATURE_VALLOC=$BLD_FEATURE_VALLOC
 
+#
+#   All import libraries
+#
+BLD_IMPORTS="${BLD_IMPORTS}"
+
 !EOF_STANDARD_FEATURES
 
+    #   MOB - would be better if this emitted to stdout instead of to $FILE
     createFeatureConfig $FILE
 
     #
@@ -1673,6 +1691,8 @@ BLD_FEATURE_VALLOC=$BLD_FEATURE_VALLOC
         [ "$FILE" = "$CONFIG_H" ] && echo -e 'endif\n' >>$FILE
         [ "$FILE" = "$CONFIG_SRC" ] && echo -e ' _#endif' >>$FILE
     fi
+    echo '' >>$FILE
+
     if [ "$FILE" = "$CONFIG_H" ] ; then
         echo 'EXPORT_OBJECTS ?= 1' >>$FILE
         echo 'ifeq ($(EXPORT_OBJECTS),0)' >>$FILE
@@ -1759,9 +1779,12 @@ createCrossConfig()
     eval v=\$BLD_${kind}_BIN_DIR ; echo -e "${t}BLD_BIN_DIR=\"${v}\""
     eval v=\$BLD_${kind}_OBJ_DIR ; echo -e "${t}BLD_OBJ_DIR=\"${v}\""
     eval v=\$BLD_${kind}_MOD_DIR ; echo -e "${t}BLD_MOD_DIR=\"${v}\""
-    eval v=\$BLD_${kind}_JEM_DIR ; echo -e "${t}BLD_JEM_DIR=\"${v}\""
     eval v=\$BLD_${kind}_LIB_DIR ; echo -e "${t}BLD_LIB_DIR=\"${v}\""
     eval v=\$BLD_${kind}_INC_DIR ; echo -e "${t}BLD_INC_DIR=\"${v}\""
+
+    # if [ "$BLD_PRODUCT" = "ejs" -o "$CFG_HOST_EJS_WITH" = 1 ] ; then
+    #     eval v=\$BLD_${kind}_JEM_DIR ; echo -e "${t}BLD_JEM_DIR=\"${v}\""
+    # fi
 
     echo
     eval v=\${BLD_OUT_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_OUT_DIR=\"${v}\""
@@ -1770,9 +1793,9 @@ createCrossConfig()
     eval v=\${BLD_${kind}_OBJ_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_OBJ_DIR=\"${v}\"" ; mkdir -p "${v}"
     eval v=\${BLD_${kind}_MOD_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_MOD_DIR=\"${v}\"" ; mkdir -p "${v}"
 
-    if [ "$CFG_HOST_EJS_WITH" = 1 ] ; then
-        eval v=\${BLD_${kind}_JEM_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_JEM_DIR=\"${v}\"" ; mkdir -p "${v}"
-    fi
+    # if [ "$BLD_PRODUCT" = "ejs" -o "$CFG_HOST_EJS_WITH" = 1 ] ; then
+    #     eval v=\${BLD_${kind}_JEM_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_JEM_DIR=\"${v}\"" ; mkdir -p "${v}"
+    # fi
     eval v=\${BLD_${kind}_INC_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_INC_DIR=\"${v}\"" ; mkdir -p "${v}"
 
     if [ $name != $CONFIG_SRC ] ; then
@@ -1814,7 +1837,6 @@ createCrossConfig()
         echo -e "\n${t}#\n${t}#\tBuild Tools Features\n${t}#"
         echo -e "${t}BLD_FEATURE_ROMFS=0"
     fi
-
     emitComponents $kind
 }
 
@@ -1870,6 +1892,7 @@ emitComponents() {
         v=${v/WITHOUT/FEATURE}
         echo -e "${t}${v#_}=0"
     done
+    emitExtraComponents $kind
 }
 
 
@@ -1981,8 +2004,24 @@ postGen() {
     BLD_TOP=. build/bin/makedep
     touch "${CONFIG_H}"
     touch ${BLD_OUT_DIR}/.needDepend
-#   echo -e "  # Clean old objects ..."
-#   make clean 2>&1 >/dev/null
+
+}
+
+
+doImports() {
+    local f
+
+    # MOB - temp until components does this
+    # find src -name '*.h' | while read x; do cp $x ${BLD_OUT_DIR}/include ; done
+
+    for f in $BLD_IMPORTS
+    do
+        if [ "${f##*.}" = "h" ] ; then
+            cp $f $BLD_OUT_DIR/include
+        else
+            cp $f $BLD_OUT_DIR/lib
+        fi
+    done
 }
 
 
@@ -2474,6 +2513,7 @@ manageFeatures
 createBuildConfig
 postGen
 showBuildConfig
+doImports
 
 exit 0
 

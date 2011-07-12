@@ -4,12 +4,34 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
-include 		.makedep
+OBJECTS				= 
 
-MAKE_IFLAGS			+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
-phpHandler_IFLAGS	+= $(BLD_PHP_IFLAGS)
+include 			.makedep
+
+OBJECTS				:= \
+	$(BLD_OBJ_DIR)/fileHandler$(BLD_OBJ)
+
+ifeq	($(BLD_FEATURE_CGI),1)
+	OBJECTS 		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
+endif
+ifeq	($(BLD_FEATURE_DIR),1)
+	OBJECTS 		+= $(BLD_OBJ_DIR)/dirHandler$(BLD_OBJ)
+endif
+ifneq	($(BLD_EJS_IFLAGS),)
+	OBJECTS 		+= $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
+endif
+ifeq	($(BLD_FEATURE_PHP),1)
+	OBJECTS			+= $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ)
+endif
+ifeq	($(BLD_FEATURE_ESP),1)
+	PRE_DIRS		+= esp
+endif
+
 ejsHandler_IFLAGS	+= $(BLD_EJS_IFLAGS)
-DEPEND_FLAGS		+= $(BLD_PHP_IFLAGS) $(BLD_EJS_IFLAGS)
+phpHandler_IFLAGS	+= $(BLD_PHP_IFLAGS)
+DEPEND_FLAGS		+= $(BLD_PHP_IFLAGS)
+
+compileExtra: $(OBJECTS)
 
 #
 #	Remove shorten-64 warnings because PHP headers trigger this
@@ -21,18 +43,12 @@ ifeq	($(BLD_FEATURE_PHP),1)
 	IMPORTED	+= $(patsubst %,$(BLD_LIB_DIR)/%, $(notdir $(IMPORTS)))
 endif
 
-compileExtra: 	$(IMPORTED) export
+compileExtra: 	$(IMPORTED)
 
 $(IMPORTED): $(IMPORTS)
 	getlib $^
 	$(call log) "[Import]" "$(IMPORTS)"
 	
-export:
-ifeq	($(BLD_FEATURE_PHP),1)
-	find $(BLD_TOP)/projects/MACOSX -name Debug | while read d ; do \
-		cp $(BLD_PHP_IMPORTS) $$d ; done
-endif
-
 #
 #   Local variables:
 #   tab-width: 4

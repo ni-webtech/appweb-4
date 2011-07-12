@@ -46,7 +46,7 @@ endif
 
 include		$(BLD_TOP)/build/make.config
 
-COMPILE     ?= *.c
+COMPILE     ?= *.c *.h
 .PHONY:		test always
 .NOTPARALLEL:
 
@@ -89,7 +89,6 @@ do [ -d "$$i" ] || continue ;\
             $(MAKE) -S --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) depend ; \
             cd - >/dev/null 2>&1 ; \
         fi ; \
-        [ "$(TRACE)" = 1 ] && echo "cd $$i" ; \
 		$(MAKE) -S -C "$$i" --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) $$T ; \
 		if [ $$? != 0 ] ; then \
 			echo "\# WARNING: Makefile error in `pwd`" ; \
@@ -133,22 +132,36 @@ vlib = $(patsubst %, $(BLD_LIB_DIR)/lib%$(BLD_LIB),$(1))
 #vlib = $(patsubst %, $(BLD_LIB_DIR)/lib%-$(BLD_VERSION)$(BLD_LIB),$(1))
 #mod  = $(patsubst %, $(BLD_MOD_DIR)/%-$(BLD_VERSION).mod,$(1))
 
+
 #
 #	Default target
 #
-all: compile
+all: headers compile
+
+$(BUILD_CHECK):
 
 #
-#	Compile target phases
-#
-compile: check $(BUILD_CHECK) compileFirst compileDirs files compileTargets compileExtra compileAdirs compileFinal
+#   Export headers to out/include
+# 
+headers: check $(BUILD_CHECK) headersDirs $(HEADERS) headersExtra
+
+headersDirs:
+	@T=headers ; D="$(PRE_DIRS)" ; $(DO_RECURSE) 
+
+headersAdirs:
+	@T=headers ; D="$(POST_DIRS)" ; $(DO_RECURSE) 
+
+headersExtra:
+
+depend: check $(BUILD_CHECK) dependExtra dependDirs dependCwd dependAfter
 
 check:
 	@mkdir -p $(BLD_OUT_DIR) $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_MOD_DIR) $(BLD_LIB_DIR) $(BLD_INC_DIR)
 
-$(BUILD_CHECK):
-
-files: $(OBJECTS)
+#
+#	Compile target phases
+#
+compile: check $(BUILD_CHECK) compileFirst compileDirs $(HEADERS) $(OBJECTS) compileTargets compileExtra compileAdirs compileFinal
 
 compileFirst:
 
@@ -168,17 +181,17 @@ compileAdirs:
 depend: check $(BUILD_CHECK) dependExtra dependDirs dependCwd dependAfter
 
 dependCwd:
-	if [ ! -x $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) ] ; then \
+	@if [ ! -x $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) ] ; then \
 		$(MAKE) -S --no-print-directory TRACE=$(TRACE) -C $(BLD_TOP)/build/src tools ; \
 	fi
-	[ "$(TRACE)" = 1 ] && \
+	@[ "$(TRACE)" = 1 ] && \
 	    echo $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out $(BLD_OUT_DIR) $(MAKE_IFLAGS) $(BLD_IFLAGS) \
             $(_IFLAGS) $(DEPEND_FLAGS) $(COMPILE) ; true
-	$(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out "$(BLD_OUT_DIR)" \
+	@$(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out "$(BLD_OUT_DIR)" \
         $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(DEPEND_FLAGS) $(COMPILE)
 
 dependDirs:
-	if [ ! -f .makedep ] ; then \
+	@if [ ! -f .makedep ] ; then \
 		echo "  makedep" ; \
 	    cd $(BLD_TOP) >/dev/null 2>&1 ; makedep ; make depend ; cd - >/dev/null 2>&1 ; \
 	fi
@@ -305,3 +318,10 @@ packageExtra:
 #
 dummy:
 	true
+
+$(BLD_INC_DIR)/%.h: %.h
+	@if [ "$(TRACE)" = 1 ] ; then echo cp $< $@  ; \
+	else d=$(DIR)/$< ; d=$${d#./} ; $(call log) "[Export]" $$d ; fi
+	@[ -f "$@" ] && chmod +w $@; true
+	@cp $< $@ 
+

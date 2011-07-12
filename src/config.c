@@ -223,6 +223,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
         if (scasecmp(key, "Include") == 0) {
             state->lineNumber++;
             value = strim(value, "\"", MPR_TRIM_BOTH);
+            value = httpReplaceReferences(host, value);
             if ((cp = strchr(value, '*')) == 0) {
                 state = pushState(state, &top);
                 state->lineNumber = 0;
@@ -1455,37 +1456,31 @@ static bool featureSupported(char *key)
         return BLD_DEBUG;
 #endif
 
-#ifdef BLD_FEATURE_CGI
     } else if (scasecmp(key, "CGI_MODULE") == 0) {
         return BLD_FEATURE_CGI;
-#endif
 
     } else if (scasecmp(key, "DIR_MODULE") == 0) {
         return 1;
 
-    } else if (scasecmp(key, "EGI_MODULE") == 0) {
-        return 1;
-
-#ifdef BLD_FEATURE_EJS
     } else if (scasecmp(key, "EJS_MODULE") == 0) {
-        return BLD_FEATURE_EJS;
+#ifdef BLD_EJS_IFLAGS
+        return 1;
+#else
+        return 0;
 #endif
 
-#ifdef BLD_FEATURE_PHP
     } else if (scasecmp(key, "PHP_MODULE") == 0) {
         return BLD_FEATURE_PHP;
-#endif
-
-#ifdef BLD_FEATURE_SSL
+        
     } else if (scasecmp(key, "SSL_MODULE") == 0) {
         return BLD_FEATURE_SSL;
-#endif
     }
     mprError("Unknown conditional \"%s\"", key);
     return 0;
 }
 
 
+//  MOB - should these allocate
 int maSplitConfigValue(char **s1, char **s2, char *buf, int quotes)
 {
     char    *next;
@@ -1500,6 +1495,7 @@ int maSplitConfigValue(char **s1, char **s2, char *buf, int quotes)
 }
 
 
+//  MOB - should these allocate
 int maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes)
 {
     char    *endp;

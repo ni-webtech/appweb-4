@@ -12,7 +12,6 @@ conf/log.conf
 conf/modules
 conf/modules/cgi.conf
 conf/modules/dir.conf
-conf/modules/egi.conf
 conf/modules/upload.conf
 conf/tune.conf
 web
@@ -43,6 +42,5 @@ web/test/test.pl
 web/test/test.py
 web/test/upload
 web/test/upload/upload-cgi.html
-web/test/upload/upload-egi.html
 web/test/upload/upload.html
 web/test/upload/uploadComplete.html

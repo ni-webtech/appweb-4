@@ -21,10 +21,10 @@ defineComponent() {
         #
         #   Use system libraries
         #
-        libpaths="/usr/lib"
-        imports="$libpaths/libssl.a $libpaths/libcrypto.a"
+        # libpaths="/usr/lib"
+        imports="/usr/lib/libssl.a /usr/lib/libcrypto.a"
         libs="ssl crypto"
-        iflags="-I$libpaths/include"
+        iflags="-I/usr/lib/include"
 
     else 
         libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `

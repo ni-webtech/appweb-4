@@ -57,8 +57,9 @@ static void manageAppweb(MaAppweb *appweb, int flags)
 
 static void openHandlers(Http *http)
 {
+#if BLD_FEATURE_DIR
     maOpenDirHandler(http);
-    maOpenEgiHandler(http);
+#endif
     maOpenFileHandler(http);
 }
 
@@ -395,7 +396,7 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
     char        *path;
 
     if (strcmp(name, "authFilter") == 0 || strcmp(name, "rangeFilter") == 0 || strcmp(name, "uploadFilter") == 0 ||
-            strcmp(name, "fileHandler") == 0 || strcmp(name, "egiHandler") == 0 || strcmp(name, "dirHandler") == 0) {
+            strcmp(name, "fileHandler") == 0 || strcmp(name, "dirHandler") == 0) {
         mprLog(1, "The %s module is now builtin. No need to use LoadModule", name);
         return 0;
     }

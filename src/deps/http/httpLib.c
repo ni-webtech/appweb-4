@@ -3923,6 +3923,10 @@ char *httpReplaceReferences(HttpHost *host, cchar *str)
                 } else if (matchRef("PRODUCT", &src)) {
                     mprPutStringToBuf(buf, BLD_PRODUCT);
                     continue;
+
+                } else if (matchRef("OS", &src)) {
+                    mprPutStringToBuf(buf, BLD_OS);
+                    continue;
                 }
             }
             mprPutCharToBuf(buf, *src++);

@@ -4,9 +4,17 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
+OBJECTS			=
+
 include 		.makedep
 
-MAKE_IFLAGS		:= $(BLD_OPENSSL_IFLAGS) $(BLD_MATRIXSSL_IFLAGS) $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
+ifeq ($(BLD_FEATURE_SSL),1)
+	OBJECTS		= $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ)
+endif
+
+MAKE_IFLAGS		:= $(BLD_OPENSSL_IFLAGS) $(BLD_MATRIXSSL_IFLAGS) 
+
+compileExtra: $(OBJECTS)
 
 #
 #   Local variables:

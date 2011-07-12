@@ -122,7 +122,6 @@ extern int maAuthFilterInit(Http *http, MprModule *mp);
 extern int maCgiHandlerInit(Http *http, MprModule *mp);
 extern int maChunkFilterInit(Http *http, MprModule *mp);
 extern int maDirHandlerInit(Http *http, MprModule *mp);
-extern int maEgiHandlerInit(Http *http, MprModule *mp);
 extern int maEjsHandlerInit(Http *http, MprModule *mp);
 extern int maNetConnectorInit(Http *http, MprModule *mp);
 extern int maPhpHandlerInit(Http *http, MprModule *mp);
@@ -327,7 +326,6 @@ extern bool     maValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *us
 /********************************** MaUploadFile *********************************/
 
 extern int maOpenDirHandler(Http *http);
-extern int maOpenEgiHandler(Http *http);
 extern int maOpenFileHandler(Http *http);
 extern int maOpenSendConnector(Http *http);
 
@@ -385,9 +383,6 @@ extern int          maStartAccessLogging(HttpHost *host);
 extern int          maStopAccessLogging(HttpHost *host);
 
 /************************************ EGI *************************************/
-
-typedef void (MaEgiForm)(HttpQueue *q);
-extern int maDefineEgiForm(Http *http, cchar *name, MaEgiForm *form);
 
 #ifdef __cplusplus
 } /* extern C */

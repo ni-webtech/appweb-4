@@ -5,11 +5,10 @@
  */
 /********************************** Includes **********************************/
 
-#include    "http.h"
 #include    "appweb.h"
 
 #if BLD_FEATURE_EJS
-#include    "ejs.h"
+    #include    "ejs.h"
 
 /************************************* Data ***********************************/
 
@@ -78,7 +77,6 @@ static void openEjs(HttpQueue *q)
         rx->pathInfo = sclone(uri);
         mprLog(5, "ejs: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
     }
-
 }
 
 
