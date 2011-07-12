@@ -1,0 +1,7 @@
+#
+#   Dir handler
+#
+defineComponent() {
+    eval file=\$BLD_${KIND}_DIR
+    configureComponent --builtin dir
+}

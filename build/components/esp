@@ -1,0 +1,7 @@
+#
+#   ESP handler
+#
+defineComponent() {
+    eval file=\$BLD_${KIND}_ESP
+    configureComponent --builtin esp
+}

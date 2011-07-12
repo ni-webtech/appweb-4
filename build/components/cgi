@@ -1,0 +1,7 @@
+#
+#   CGI handler
+#
+defineComponent() {
+    eval file=\$BLD_${KIND}_CGI
+    configureComponent --builtin cgi
+}
