@@ -28,7 +28,7 @@ makeDep() {
 all: compile
 
 BLD_TOP     := ${BLD_TOP:-${top}}
-BLD_INC_DIR := ${BLD_INC_DIR:-${top}/out/include}
+BLD_INC_DIR := ${BLD_INC_DIR:-${top}/out/inc}
 
 #
 #   Read the build configuration, rules and per-os make definitions.

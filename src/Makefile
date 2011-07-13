@@ -33,19 +33,19 @@ LIBS			:= $(BLD_APPWEB_LIBS)
 #	Order of modules matters. Dependencies must be earlier in the list.
 #
 ifeq	($(BLD_FEATURE_CGI),1)
-	MODULES		+= $(BLD_MOD_DIR)/$(CGI)$(BLD_SHOBJ)
+	MODULES		+= $(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ)
 endif
 ifeq	($(BLD_FEATURE_EJS),1)
-	MODULES		+= $(BLD_MOD_DIR)/$(EJS)$(BLD_SHOBJ)
+	MODULES		+= $(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ)
 endif
 ifeq	($(BLD_FEATURE_ESP),1)
-	MODULES		+= $(BLD_MOD_DIR)/$(ESP)$(BLD_SHOBJ)
+	MODULES		+= $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ)
 endif
 ifeq	($(BLD_FEATURE_PHP),1)
-	MODULES		+= $(BLD_MOD_DIR)/$(PHP)$(BLD_SHOBJ)
+	MODULES		+= $(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ)
 endif
 ifeq ($(BLD_FEATURE_SSL),1)
-	MODULES		+= $(BLD_MOD_DIR)/$(SSL)$(BLD_SHOBJ)
+	MODULES		+= $(BLD_LIB_DIR)/$(SSL)$(BLD_SHOBJ)
 endif
 # TARGETS			+= $(BLD_LIB_DIR)/appweb.conf
 
@@ -72,23 +72,23 @@ $(BLD_LIB_DIR)/libappweb$(BLD_LIB): Makefile $(OBJECTS) $(BLD_MPR_MAKEDEP)
 #
 #	Build Modules
 #
-$(BLD_MOD_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_MOD_DIR)/$(CGI) --libs "$(LIBS)" $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
+$(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(CGI) --libs "$(LIBS)" $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
 
-$(BLD_MOD_DIR)/$(EJS)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_MOD_DIR)/$(EJS) --search "$(BLD_EJS_LIBPATHS)" --libs "$(LIBS) $(BLD_EJS_LIBS)" \
+$(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(EJS) --search "$(BLD_EJS_LIBPATHS)" --libs "$(LIBS) $(BLD_EJS_LIBS)" \
 		$(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
 
-$(BLD_MOD_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/espFramework$(BLD_OBJ) $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) \
+$(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/espFramework$(BLD_OBJ) $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) \
 		$(BLD_OBJ_DIR)/espTemplate$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_MOD_DIR)/$(ESP) --libs "$(LIBS) $(BLD_ESP_LIBS)" $(BLD_OBJ_DIR)/esp*$(BLD_OBJ)
+	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --libs "$(LIBS) $(BLD_ESP_LIBS)" $(BLD_OBJ_DIR)/esp*$(BLD_OBJ)
 
-$(BLD_MOD_DIR)/$(PHP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_MOD_DIR)/$(PHP) --rpath "$(BLD_MOD_PREFIX)" \
+$(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(PHP) --rpath "$(BLD_LIB_PREFIX)" \
 		--search "$(BLD_PHP_LIBPATHS)" --libs "$(BLD_PHP_LIBS) $(LIBS)" $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ)
 
-$(BLD_MOD_DIR)/$(SSL)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_MOD_DIR)/$(SSL) --search "$(BLD_SSL_LIBPATHS)" --libs "$(LIBS) $(BLD_SSL_LIBS)" \
+$(BLD_LIB_DIR)/$(SSL)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(SSL) --search "$(BLD_SSL_LIBPATHS)" --libs "$(LIBS) $(BLD_SSL_LIBS)" \
 		$(BLD_OBJ_DIR)/sslModule$(BLD_OBJ)
 
 cleanExtra:

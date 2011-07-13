@@ -246,7 +246,7 @@ setup() {
     cd ${BLD_TOP}
     BLD_TOP=.
 
-    . `cacheConfig ${BLD_TOP}/out/include/buildConfig.h`
+    . `cacheConfig ${BLD_TOP}/out/inc/buildConfig.h`
 
     . ${BLD_TOP}/build/bin/makePackage.common
     . package/makeInstall.${BLD_PRODUCT}
@@ -481,8 +481,7 @@ if [ "$BARE" = 1 ] ; then
     mkdir -p ${ROOT_DIR}/bin ${ROOT_DIR}/lib ${ROOT_DIR}/mod
 	mv ${BLD_BIN_PREFIX}/* ${ROOT_DIR}/bin
 	mv ${BLD_LIB_PREFIX}/* ${ROOT_DIR}/lib
-	mv ${BLD_MOD_PREFIX}/* ${ROOT_DIR}/mod
-	rm -f ${BLD_MOD_PREFIX}/fileList.txt
+	rm -f ${BLD_LIB_PREFIX}/fileList.txt
     #
     #   Try to be careful with removals
     #

@@ -143,7 +143,7 @@ patchSource() {
                 find . -name '*.cpp'
             ) | while read f
             do
-                ${ABS_BLD_TOOLS_DIR}/defeature ${ABS_BLD_TOP}/out/include/.buildConfig.sh $f
+                ${ABS_BLD_TOOLS_DIR}/defeature ${ABS_BLD_TOP}/out/inc/.buildConfig.sh $f
             done
         fi
         cd ${HOME}
@@ -409,7 +409,7 @@ createChecksums() {
 #
 findTop
 BLD_OUT_DIR=$BLD_TOP/out
-. `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
+. `cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
 
 set -- ${OPTIONS} $*
 while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do

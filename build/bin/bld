@@ -238,7 +238,7 @@ searchLib()
     fi
     extraSysLib=/usr/local/lib
 
-    for path in "${BLD_LIB_DIR}" "${BLD_MOD_DIR}" ${LIBRARY_PATHS} "$syslib" "$extraSysLib"
+    for path in "${BLD_LIB_DIR}" ${LIBRARY_PATHS} "$syslib" "$extraSysLib"
     do
         for suffix in `echo $suffixes`
         do
@@ -520,7 +520,7 @@ useArg() {
 
 BLD_TOP=`findTop`
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
-. `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
+. `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
 
 parseArgs "$@"
 argc=$#
@@ -600,7 +600,7 @@ MODULES=`echo ${MODULES} | tr ' ' '\n' | uniq | tr '\n' ' '`
 #   Prepare for action
 #
 if [ "$BLD_WIN_LIKE" = 1 ] ; then
-    paths="-libpath:${BLD_LIB_DIR} -libpath:${BLD_MOD_DIR}"
+    paths="-libpath:${BLD_LIB_DIR}"
     for p in ${LIBRARY_PATHS} ; do
         if [ "${p}" != "" ] ; then
             paths="${paths} -libpath:${p}"
@@ -665,7 +665,7 @@ else
     #
     #   Unix / Linux / MacOS / FreeBSD
     #
-    paths="-L${BLD_LIB_DIR} -L${BLD_MOD_DIR}"
+    paths="-L${BLD_LIB_DIR}"
     for p in ${LIBRARY_PATHS} ; do
         if [ "${p}" != "" ] ; then
             paths="${paths} -L${p}"
@@ -696,13 +696,13 @@ else
     fi
 
     if [ "$OS" = MACOSX ] ; then
-        RPATH_LIST="@executable_path/../$BLD_LIB_NAME @executable_path/../$BLD_MOD_NAME @executable_path/ @loader_path/ $RPATH_LIST"
+        RPATH_LIST="@executable_path/../$BLD_LIB_NAME @executable_path/ @loader_path/ $RPATH_LIST"
     elif [ "$OS" = LINUX ] ; then
         if [ "$BLD_TYPE" = "RELEASE" ] ; then
             # Uclinux needs the LIB_PREFIX explicitly in the rpath as $ORIGIN doesn't seem to work
-            RPATH_LIST="${BLD_LIB_PREFIX} ${BLD_MOD_PREFIX} $RPATH_LIST"
+            RPATH_LIST="${BLD_LIB_PREFIX} $RPATH_LIST"
         fi
-        RPATH_LIST="ORIGIN/ ORIGIN/../$BLD_LIB_NAME ORIGIN/../$BLD_MOD_NAME $RPATH_LIST"
+        RPATH_LIST="ORIGIN/ ORIGIN/../$BLD_LIB_NAME $RPATH_LIST"
     elif [ "$OS" = FREEBSD ] ; then
         RPATH_LIST="lib modules $RPATH_LIST"
     fi

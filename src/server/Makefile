@@ -64,7 +64,7 @@ appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile
 	$(call log) "[Patch]" "appweb.conf"
 	(dir=`pwd` ; cd $(BLD_FEATURE_CONFIG) ; find . -type f | \
 		egrep -v 'CVS/|RCS/|SCCS/|.svn/' | cpio -pdum $$dir >/dev/null 2>&1)
-	BLD_CFG_PREFIX=. BLD_WEB_PREFIX=./web BLD_MOD_PREFIX=$(BLD_MOD_DIR) BLD_DOC_PREFIX=../../doc \
+	BLD_CFG_PREFIX=. BLD_WEB_PREFIX=./web BLD_LIB_PREFIX=$(BLD_LIB_DIR) BLD_DOC_PREFIX=../../doc \
 	BLD_SERVER=`hostname` BLD_LOG_PREFIX=./logs BLD_HTTP_PORT=$(BLD_HTTP_PORT) BLD_SSL_PORT=$(BLD_SSL_PORT) \
 	patchAppwebConf appweb.conf conf/hosts/ssl-default.conf conf/log.conf conf/doc.conf
 

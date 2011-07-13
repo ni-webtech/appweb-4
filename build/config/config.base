@@ -33,7 +33,6 @@ BLD_INC_PREFIX=${BLD_VER_PREFIX}/inc
 BLD_JEM_PREFIX=${BLD_PRD_PREFIX}/jems
 BLD_LOG_PREFIX=${BLD_STATE_PREFIX}/log/${BLD_PRODUCT}
 BLD_MAN_PREFIX=${BLD_VER_PREFIX}/man
-BLD_MOD_PREFIX=${BLD_VER_PREFIX}/modules
 BLD_SAM_PREFIX=${BLD_VER_PREFIX}/samples
 BLD_SRC_PREFIX=${BLD_PREFIX}/src/${BLD_PRODUCT}-${BLD_VERSION}
 BLD_WEB_PREFIX=${BLD_STATE_PREFIX}/www/${BLD_PRODUCT}-default
@@ -101,7 +100,6 @@ fi
 
 eval BLD_${KIND}_BIN_DIR='\${BLD_OUT_DIR}'/${system}bin
 eval BLD_${KIND}_LIB_DIR='\${BLD_OUT_DIR}'/${system}lib
-eval BLD_${KIND}_MOD_DIR='\${BLD_OUT_DIR}'/${system}modules
 eval BLD_${KIND}_JEM_DIR='\${BLD_OUT_DIR}'/${system}jlocal
 eval BLD_${KIND}_OBJ_DIR='\${BLD_OUT_DIR}'/${system}obj
-eval BLD_${KIND}_INC_DIR='\${BLD_OUT_DIR}'/include
+eval BLD_${KIND}_INC_DIR='\${BLD_OUT_DIR}'/inc

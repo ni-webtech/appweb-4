@@ -245,7 +245,7 @@ searchLib()
         name="${name%.*}"
     fi
 
-    for path in ${LIBRARY_PATHS} "${BLD_LIB_DIR}" "${BLD_LIB_PREFIX}" "${BLD_MOD_PREFIX}" "$syslib" "$extraSysLib"
+    for path in ${LIBRARY_PATHS} "${BLD_LIB_DIR}" "${BLD_LIB_PREFIX}" "$syslib" "$extraSysLib"
     do
         for suffix in `echo $suffixes`
         do
@@ -752,7 +752,7 @@ BLD_TOP=`findTop`
 
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
 
-. `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
+. `cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
 parseArgs "$@"
 log "Generate" ${PROJECT}
 

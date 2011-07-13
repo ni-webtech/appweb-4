@@ -28,4 +28,3 @@ else
     system=
 fi
 eval BLD_${KIND}_LIB_DIR='\${BLD_OUT_DIR}/'${system}bin
-eval BLD_${KIND}_MOD_DIR='\${BLD_OUT_DIR}/'${system}bin

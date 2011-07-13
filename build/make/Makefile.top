@@ -70,7 +70,7 @@ endif
 #
 .PRECIOUS	: $(BLD_TOP)/build/src/.makedep
 
-$(BLD_TOP)/build/src/.makedep: $(BLD_OUT_DIR)/include/buildConfig.h
+$(BLD_TOP)/build/src/.makedep: $(BLD_OUT_DIR)/inc/buildConfig.h
 	echo -e "\n  # Making dynamic makefile dependancies\n"
 	find . -name '*.h' | xargs cp "{}" $(BLD_INC_DIR)
 	$(MAKE) TRACE=$(TRACE) --no-print-directory depend clean
@@ -236,7 +236,7 @@ test-uninstall-native-package:
 test-installed:
 	complete=1 ; \
 	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
-		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_MOD_PREFIX) $(BLD_PRD_PREFIX) \
+		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) \
 		$(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; \
 	do \
 		if [ ! -x $$dir ] ; then \
@@ -257,7 +257,7 @@ test-installed:
 test-removed:
 	partial=0 ; \
 	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
-		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_MOD_PREFIX) $(BLD_PRD_PREFIX) \
+		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) \
 		$(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; \
 	do \
 		if [ -x $$dir ] ; then \
@@ -273,7 +273,7 @@ checkInstalled: installed-files
 installed-files:
 	( \
 	for d in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
-		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_MOD_PREFIX) $(BLD_PRD_PREFIX) \
+		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) \
 		$(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) /var/log /var/www /usr/share /usr/share/doc /usr/include /var/lib /var/spool ; \
 		do \
 			if [ "`echo $$d/$(BLD_PRODUCT)*`" != $$d/$(BLD_PRODUCT)'*' ] ; then \

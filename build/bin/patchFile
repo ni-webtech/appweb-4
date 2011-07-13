@@ -45,7 +45,6 @@ s^!!BLD_ABS_BIN_DIR!!^${BLD_ABS_BIN_DIR}^g;
 s^!!BLD_ABS_INC_DIR!!^${BLD_ABS_INC_DIR}^g;
 s^!!BLD_ABS_JEM_DIR!!^${BLD_ABS_JEM_DIR}^g;
 s^!!BLD_ABS_LIB_DIR!!^${BLD_ABS_LIB_DIR}^g;
-s^!!BLD_ABS_MOD_DIR!!^${BLD_ABS_MOD_DIR}^g;
 s^!!BLD_ABS_OBJ_DIR!!^${BLD_ABS_OBJ_DIR}^g;
 s^!!BLD_APPWEB!!^${BLD_APPWEB}^g;
 s^!!BLD_APPWEB_BUILTIN!!^${BLD_APPWEB_BUILTIN}^g;
@@ -157,9 +156,6 @@ s^!!BLD_MAKE!!^${BLD_MAKE}^g;
 s^!!BLD_MAKE_BUILTIN!!^${BLD_MAKE_BUILTIN}^g;
 s^!!BLD_MAKE_WITH!!^${BLD_MAKE_WITH}^g;
 s^!!BLD_MAN_PREFIX!!^${BLD_MAN_PREFIX}^g;
-s^!!BLD_MOD_DIR!!^${BLD_MOD_DIR}^g;
-s^!!BLD_MOD_NAME!!^${BLD_MOD_NAME}^g;
-s^!!BLD_MOD_PREFIX!!^${BLD_MOD_PREFIX}^g;
 s^!!BLD_NAME!!^${BLD_NAME}^g;
 s^!!BLD_NUMBER!!^${BLD_NUMBER}^g;
 s^!!BLD_NUMBER_ONLY!!^${BLD_NUMBER_ONLY}^g;
@@ -199,7 +195,6 @@ s^!!ORIG_BLD_MAN_PREFIX!!^${ORIG_BLD_MAN_PREFIX}^g;
             " < /tmp/in$$.tmp > /tmp/out$$.tmp
             mv /tmp/out$$.tmp /tmp/in$$.tmp
             sed -e "
-s^!!ORIG_BLD_MOD_PREFIX!!^${ORIG_BLD_MOD_PREFIX}^g;
 s^!!ORIG_BLD_PRD_PREFIX!!^${ORIG_BLD_PRD_PREFIX}^g;
 s^!!ORIG_BLD_PREFIX!!^${ORIG_BLD_PREFIX}^g;
 s^!!ORIG_BLD_SAM_PREFIX!!^${ORIG_BLD_SAM_PREFIX}^g;
@@ -219,6 +214,6 @@ s^!!ROOT_DIR!!^${ROOT_DIR}^g;
 unset BLD_TOP
 BLD_TOP=`findTop`
 BLD_OUT_DIR=$BLD_TOP/out
-. `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
+. `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
 
 patchFile $*

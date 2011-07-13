@@ -106,9 +106,9 @@ DO_RECURSE=$(RECURSE)
 #
 ifneq ($(BLD_OS),WIN)
     ifeq ($(BLD_OS),MACOSX)
-        setlibpath = export DYLD_LIBRARY_PATH="$(BLD_BIN_DIR):$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
+        setlibpath = export DYLD_LIBRARY_PATH="$(BLD_BIN_DIR):$(BLD_BUILD_LIB_DIR)"
     else
-        setlibpath = export LD_LIBRARY_PATH="$(BLD_BIN_DIR):$(BLD_BUILD_LIB_DIR):$(BLD_BUILD_MOD_DIR)"
+        setlibpath = export LD_LIBRARY_PATH="$(BLD_BIN_DIR):$(BLD_BUILD_LIB_DIR)"
     endif
     ifeq ($(BLD_OS),CYGWIN)
         export PATH:="$(BLD_TOP)/modules:$(PATH)"
@@ -126,12 +126,7 @@ else
 endif
 
 lib  = $(patsubst %, $(BLD_LIB_DIR)/lib%$(BLD_LIB),$(1))
-mod  = $(patsubst %, $(BLD_MOD_DIR)/%.mod,$(1))
 vlib = $(patsubst %, $(BLD_LIB_DIR)/lib%$(BLD_LIB),$(1))
-
-#vlib = $(patsubst %, $(BLD_LIB_DIR)/lib%-$(BLD_VERSION)$(BLD_LIB),$(1))
-#mod  = $(patsubst %, $(BLD_MOD_DIR)/%-$(BLD_VERSION).mod,$(1))
-
 
 #
 #	Default target
@@ -156,7 +151,7 @@ headersExtra:
 depend: check $(BUILD_CHECK) dependExtra dependDirs dependCwd dependAfter
 
 check:
-	@mkdir -p $(BLD_OUT_DIR) $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_MOD_DIR) $(BLD_LIB_DIR) $(BLD_INC_DIR)
+	@mkdir -p $(BLD_OUT_DIR) $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_LIB_DIR) $(BLD_INC_DIR)
 
 #
 #	Compile target phases

@@ -135,8 +135,8 @@ vxdeploy:
 	cp $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(VXDEPLOY)
 	[ -f $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) ] && \
 		cp $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) $(VXDEPLOY)/cgi-bin ; true
-	[ $(BLD_STATIC) = 0 ] && cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(VXDEPLOY) ; true
-	cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*.mod $(VXDEPLOY)
+	[ $(BLD_STATIC) = 0 ] && cp $(BLD_LIB_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(VXDEPLOY) ; true
+	cp $(BLD_LIB_DIR)/$(BLD_HOST_SYSTEM)/*.mod $(VXDEPLOY)
 	sed -e 's/UploadDir.*/UploadDir ./' < src/server/template/flat/appweb.conf >$(VXDEPLOY)/appweb.conf
 	cp -r src/server/*.db $(VXDEPLOY)
 	cp -r src/server/mime.types $(VXDEPLOY)
@@ -151,8 +151,8 @@ cedeploy:
 	rm -f $(CEDEPLOY)/*$(BLD_EXE)
 	[ -f $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) ] && \
 		cp $(BLD_BIN_DIR)/$(BLD_HOST_SYSTEM)/cgiProgram$(BLD_EXE) $(CEDEPLOY)/cgi-bin ; true
-	[ $(BLD_STATIC) = 0 ] && cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(CEDEPLOY) ; true
-	cp $(BLD_MOD_DIR)/$(BLD_HOST_SYSTEM)/*.mod $(CEDEPLOY)
+	[ $(BLD_STATIC) = 0 ] && cp $(BLD_LIB_DIR)/$(BLD_HOST_SYSTEM)/*$(BLD_EXE) $(CEDEPLOY) ; true
+	cp $(BLD_LIB_DIR)/$(BLD_HOST_SYSTEM)/*.mod $(CEDEPLOY)
 	sed -e 's/UploadDir.*/UploadDir ./' < src/server/template/flat/appweb.conf >$(CEDEPLOY)/appweb.conf
 	cp -r src/server/*.db $(CEDEPLOY)
 	cp -r src/server/mime.types $(CEDEPLOY)

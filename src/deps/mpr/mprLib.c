@@ -13082,7 +13082,7 @@ MprModuleService *mprCreateModuleService()
         return 0;
     }
     ms->modules = mprCreateList(-1, 0);
-    ms->searchPath = sfmt(".:%s:%s/../%s:%s", mprGetAppDir(), mprGetAppDir(), BLD_MOD_NAME, BLD_MOD_PREFIX);
+    ms->searchPath = sfmt(".:%s:%s/../%s:%s", mprGetAppDir(), mprGetAppDir(), BLD_LIB_NAME, BLD_LIB_PREFIX);
     ms->mutex = mprCreateLock();
     return ms;
 }

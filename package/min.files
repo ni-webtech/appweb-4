@@ -13,13 +13,8 @@ fi
 
 cpy -m 755 -d ${BLD_BIN_DIR} "appweb*${BLD_EXE}" "${ROOT_DIR}"
 
-if `ls ${BLD_MOD_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then
-	cpy -m 755 -d ${BLD_MOD_DIR} "*${BLD_SHOBJ}" "${ROOT_DIR}"
-fi
-if [ $BLD_LIB_DIR != $BLD_MOD_DIR ] ; then
-	if `ls ${BLD_LIB_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then
-		cpy -m 755 -d ${BLD_LIB_DIR} "*${BLD_SHOBJ}" "${ROOT_DIR}"
-	fi
+if `ls ${BLD_LIB_DIR}/*${BLD_SHOBJ} >/dev/null 2>&1` ; then
+	cpy -m 755 -d ${BLD_LIB_DIR} "*${BLD_SHOBJ}" "${ROOT_DIR}"
 fi
 
 if [ "$WITH_CONF" = "" ] ; then
@@ -35,7 +30,7 @@ fi
 
 if [ "${TASK}" != Remove ] ; then
     (
-        export BLD_CFG_PREFIX=. BLD_WEB_PREFIX=web BLD_DOC_PREFIX=. BLD_MOD_PREFIX=. BLD_LOG_PREFIX=.
+        export BLD_CFG_PREFIX=. BLD_WEB_PREFIX=web BLD_DOC_PREFIX=. BLD_LIB_PREFIX=. BLD_LOG_PREFIX=.
         export BLD_HTTP_PORT BLD_SSL_PORT 
         patchAppwebConf "${ROOT_DIR}/appweb.conf" >/dev/null 2>&1
     )
@@ -52,9 +47,10 @@ if [ "$BLD_FEATURE_SSL" = 1 ] ; then
     cpy src/server/ssl/server.* "${ROOT_DIR}"
 fi
 if [ "$BLD_FEATURE_EJS" = 1 ] ; then
-	cpy -d ${BLD_MOD_DIR} "ajs.mod" "${ROOT_DIR}"
+    # MOB - cleanup - not using ajs anymore
+	cpy -d ${BLD_LIB_DIR} "ajs.mod" "${ROOT_DIR}"
     if [ "$BLD_CROSS" = 0 ] ; then
-        cpy -d ${BLD_MOD_DIR} "ejsweb.mod" "${ROOT_DIR}"
+        cpy -d ${BLD_LIB_DIR} "ejsweb.mod" "${ROOT_DIR}"
         cpy -m 755 -d ${BLD_BIN_DIR} ejsc${BLD_EXE} ejsweb${BLD_EXE} ajs${BLD_EXE} ajsmod${BLD_EXE} \
             ajssql${BLD_EXE} "${ROOT_DIR}"
     fi

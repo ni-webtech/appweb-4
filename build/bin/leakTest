@@ -67,7 +67,7 @@ trap "
     fi
 " SIGALRM
 
-. `cacheConfig ${BLD_OUT_DIR}/include/buildConfig.h`
+. `cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
 
 #
 #   Can't do leak tests if doing cross-development

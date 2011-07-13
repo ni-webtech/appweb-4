@@ -80,7 +80,7 @@ enumerable class Test {
         if (!_lib.exists) {
             _lib = _bin
         }
-        parseBuildConfig(_top.join("out/include/buildConfig.h"));
+        parseBuildConfig(_top.join("out/inc/buildConfig.h"));
     }
 
     /*

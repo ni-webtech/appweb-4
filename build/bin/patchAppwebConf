@@ -7,7 +7,7 @@
 #
 #   Must set the env vars:
 #
-#       BLD_CFG_PREFIX, BLD_WEB_PREFIX, BLD_MOD_PREFIX BLD_HTTP_PORT, BLD_SSL_PORT
+#       BLD_CFG_PREFIX, BLD_WEB_PREFIX, BLD_HTTP_PORT, BLD_SSL_PORT
 #
 ###############################################################################
 
@@ -68,7 +68,7 @@ editAppwebConf()
         sed -e "
             s!^ServerRoot.*\".*!ServerRoot \"${BLD_CFG_PREFIX}\"!
             s!^DocumentRoot.*\".*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
-            s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_MOD_PREFIX}\"!
+            s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_LIB_PREFIX}\"!
             s!^Listen.*!Listen ${BLD_HTTP_PORT}!
             s!^User .*!User ${username}!
             s!^Group .*!Group ${groupname}!" <"$conf" >"$conf.new"

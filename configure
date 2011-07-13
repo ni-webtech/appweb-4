@@ -1348,10 +1348,10 @@ createBuildConfig() {
     #   Create the buildConfig.h
     #
     [ $quiet = 0 ] && echo "  #"
-    mkdir -p "${BLD_OUT_DIR}/bin" "${BLD_OUT_DIR}/include"
+    mkdir -p "${BLD_OUT_DIR}/bin" "${BLD_OUT_DIR}/inc"
     
     CONFIG_ARGS="${BLD_OUT_DIR}/${CONFIG_ARGS}"
-    CONFIG_H="${BLD_OUT_DIR}/include/${CONFIG_H}"
+    CONFIG_H="${BLD_OUT_DIR}/inc/${CONFIG_H}"
 
     [ $quiet = 0 ] && echo "  # Creating $CONFIG_H ..."
     rm -f "$CONFIG_H"
@@ -1383,7 +1383,7 @@ createBuildConfig() {
 
     cat $CONFIG_SRC >>$CONFIG_H
     chmod 444 $CONFIG_H
-    rm -f "${BLD_OUT_DIR}/include/${CONFIG_CACHE}"
+    rm -f "${BLD_OUT_DIR}/inc/${CONFIG_CACHE}"
 
     >$CONFIG_ARGS
     for t in ANT AR BREW CC DOXYGEN CXX JAVAC JDK JAR LD LDXX MT MUNCH NM RANLIB RC STRIP
@@ -1602,7 +1602,6 @@ BLD_JEM_PREFIX="$BLD_JEM_PREFIX"
 BLD_LIB_PREFIX="$BLD_LIB_PREFIX"
 BLD_LOG_PREFIX="$BLD_LOG_PREFIX"
 BLD_MAN_PREFIX="$BLD_MAN_PREFIX"
-BLD_MOD_PREFIX="$BLD_MOD_PREFIX"
 BLD_PRD_PREFIX="$BLD_PRD_PREFIX"
 BLD_SAM_PREFIX="$BLD_SAM_PREFIX"
 BLD_SRC_PREFIX="$BLD_SRC_PREFIX"
@@ -1614,16 +1613,8 @@ BLD_WEB_PREFIX="$BLD_WEB_PREFIX"
 #
 !EOF_CONFIG2
 
-#   v=`eval relativePath "${BLD_BUILD_BIN_DIR}"` 
-#   echo -e "BLD_BUILD_BIN_DIR=\"${v}\""      >>$FILE
-#   v=`eval relativePath "${BLD_BUILD_LIB_DIR}"` 
-#   echo -e "BLD_BUILD_LIB_DIR=\"${v}\""      >>$FILE
-#   v=`eval relativePath "${BLD_BUILD_MOD_DIR}"` 
-#   echo -e "BLD_BUILD_MOD_DIR=\"${v}\""      >>$FILE
-
     echo -e "BLD_BUILD_BIN_DIR=\"${BLD_BUILD_BIN_DIR}\""      >>$FILE
     echo -e "BLD_BUILD_LIB_DIR=\"${BLD_BUILD_LIB_DIR}\""      >>$FILE
-    echo -e "BLD_BUILD_MOD_DIR=\"${BLD_BUILD_MOD_DIR}\""      >>$FILE
 
     cat >>$FILE <<!EOF_CONFIG2a
 
@@ -1636,8 +1627,6 @@ BLD_WEB_PREFIX="$BLD_WEB_PREFIX"
     echo -e "BLD_ABS_BUILD_BIN_DIR=\"${v}\""      >>$FILE
     v=`eval canonPath "${BLD_BUILD_LIB_DIR}"` 
     echo -e "BLD_ABS_BUILD_LIB_DIR=\"${v}\""      >>$FILE
-    v=`eval canonPath "${BLD_BUILD_MOD_DIR}"` 
-    echo -e "BLD_ABS_BUILD_MOD_DIR=\"${v}\""      >>$FILE
 
     cat >>$FILE <<!EOF_STANDARD_FEATURES
 
@@ -1781,7 +1770,7 @@ createCrossConfig()
     fi
     echo -e "${t}BLD_TOOLS_DIR=\"\${BLD_TOP}/build/bin\""
     echo
-    for d in BIN LIB OBJ MOD INC
+    for d in BIN LIB OBJ INC
     do
         eval dir=\$BLD_${kind}_${d}_DIR
         dir=${dir/\${BLD_OUT_DIR\}\/}
@@ -1791,7 +1780,6 @@ createCrossConfig()
     echo
     eval v=\$BLD_${kind}_BIN_DIR ; echo -e "${t}BLD_BIN_DIR=\"${v}\""
     eval v=\$BLD_${kind}_OBJ_DIR ; echo -e "${t}BLD_OBJ_DIR=\"${v}\""
-    eval v=\$BLD_${kind}_MOD_DIR ; echo -e "${t}BLD_MOD_DIR=\"${v}\""
     eval v=\$BLD_${kind}_LIB_DIR ; echo -e "${t}BLD_LIB_DIR=\"${v}\""
     eval v=\$BLD_${kind}_INC_DIR ; echo -e "${t}BLD_INC_DIR=\"${v}\""
 
@@ -1804,7 +1792,6 @@ createCrossConfig()
     eval v=\${BLD_${kind}_BIN_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_BIN_DIR=\"${v}\"" ; mkdir -p "${v}"
     eval v=\${BLD_${kind}_LIB_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_LIB_DIR=\"${v}\"" ; mkdir -p "${v}"
     eval v=\${BLD_${kind}_OBJ_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_OBJ_DIR=\"${v}\"" ; mkdir -p "${v}"
-    eval v=\${BLD_${kind}_MOD_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_MOD_DIR=\"${v}\"" ; mkdir -p "${v}"
 
     # if [ "$BLD_PRODUCT" = "ejs" -o "$CFG_HOST_EJS_WITH" = 1 ] ; then
     #     eval v=\${BLD_${kind}_JEM_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_JEM_DIR=\"${v}\"" ; mkdir -p "${v}"
@@ -1956,7 +1943,7 @@ showBuildConfig() {
     printf "  #   %-15s %s\n" "BLD_OUT_DIR" ${where}
     for kind in HOST BUILD ; do
         [ "$kind" = BUILD -a $BLD_CROSS = 0 ] && continue
-        for p in INC BIN LIB MOD OBJ
+        for p in INC BIN LIB OBJ
         do
             eval dir=\$BLD_${kind}_${p}_DIR
             eval where=${dir}
@@ -1965,7 +1952,7 @@ showBuildConfig() {
         done
     done
     echo -e "  #\n  # Installation Directories (when installed):"
-    for p in PRD VER CFG BIN JEM LIB MOD WEB INC
+    for p in PRD VER CFG BIN JEM LIB WEB INC
     do
         eval dir=\$BLD_${p}_PREFIX
         if [ "$p" = "JEM" ] ; then
@@ -2025,15 +2012,10 @@ postGen() {
 doImports() {
     local f
 
-    # MOB - temp until components does this
-    # find src -name '*.h' | while read x; do cp $x ${BLD_OUT_DIR}/include ; done
-
     for f in $BLD_IMPORTS
     do
         if [ "${f##*.}" = "h" ] ; then
-            cp $f $BLD_OUT_DIR/include
-        elif [ "${f##*.}" = "mod" ] ; then
-            cp $f $BLD_OUT_DIR/modules
+            cp $f $BLD_OUT_DIR/inc
         else
             cp $f $BLD_OUT_DIR/lib
         fi
@@ -2424,7 +2406,6 @@ while [ "${1#--}" != "$1" ] ; do
         BLD_JEM_PREFIX=`remapDir "$BLD_JEM_PREFIX" "$BLD_PREFIX" "$ARG"`
         BLD_LIB_PREFIX=`remapDir "$BLD_LIB_PREFIX" "$BLD_PREFIX" "$ARG"`
         BLD_MAN_PREFIX=`remapDir "$BLD_MAN_PREFIX" "$BLD_PREFIX" "$ARG"`
-        BLD_MOD_PREFIX=`remapDir "$BLD_MOD_PREFIX" "$BLD_PREFIX" "$ARG"`
         BLD_PRD_PREFIX=`remapDir "$BLD_PRD_PREFIX" "$BLD_PREFIX" "$ARG"`
         BLD_ROOT_PREFIX=`remapDir "$BLD_ROOT_PREFIX" "$BLD_PREFIX" "$ARG"`
         BLD_SAM_PREFIX=`remapDir "$BLD_SAM_PREFIX" "$BLD_PREFIX" "$ARG"`

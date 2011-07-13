@@ -34,7 +34,7 @@ Embedthis Appweb is an embeddable HTTP Web Server
 if [ -x /usr/bin/chcon ] ; then 
 	sestatus | grep enabled >/dev/null 2>&1
 	if [ $? = 0 ] ; then
-		for f in !!ORIG_BLD_LIB_PREFIX!!/*.so !!ORIG_BLD_MOD_PREFIX!!/*.so ; do
+		for f in !!ORIG_BLD_LIB_PREFIX!!/*.so ; do
 			chcon /usr/bin/chcon -t texrel_shlib_t $f
 		done
 	fi

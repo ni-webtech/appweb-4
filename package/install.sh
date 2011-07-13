@@ -45,7 +45,6 @@ BLD_INC_PREFIX="!!ORIG_BLD_INC_PREFIX!!"
 BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
 BLD_LOG_PREFIX="!!ORIG_BLD_LOG_PREFIX!!"
 BLD_MAN_PREFIX="!!ORIG_BLD_MAN_PREFIX!!"
-BLD_MOD_PREFIX="!!ORIG_BLD_MOD_PREFIX!!"
 BLD_SRC_PREFIX="!!ORIG_BLD_SRC_PREFIX!!"
 BLD_WEB_PREFIX="!!ORIG_BLD_WEB_PREFIX!!"
 
@@ -283,7 +282,7 @@ patchAppwebConf()
         sed -e "
             s!^ServerRoot.*\".*!ServerRoot \"${BLD_CFG_PREFIX}\"!
             s!^DocumentRoot.*\".*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
-            s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_MOD_PREFIX}\"!
+            s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_LIB_PREFIX}\"!
             s!^Listen.*!Listen ${BLD_HTTP_PORT}!
             s!^User .*!User ${username}!
             s!^Group .*!Group ${groupname}!" <"$conf" >"$conf.new"
@@ -433,7 +432,7 @@ installFiles() {
 
     if [ -f /etc/redhat-release -a -x /usr/bin/chcon ] ; then 
         if sestatus | grep enabled >/dev/nulll ; then
-            for f in $BLD_LIB_PREFIX/*.so $BLD_MOD_PREFIX/*.so ; do
+            for f in $BLD_LIB_PREFIX/*.so ; do
                 chcon /usr/bin/chcon -t texrel_shlib_t $f 2>&1 >/dev/null
             done
         fi
@@ -476,7 +475,7 @@ patchConfiguration() {
         cp "$BLD_CFG_PREFIX/new.conf" "$BLD_CFG_PREFIX/$BLD_PRODUCT.conf"
     fi
     BLD_CFG_PREFIX="$BLD_CFG_PREFIX" BLD_WEB_PREFIX="$BLD_WEB_PREFIX" BLD_DOC_PREFIX="$BLD_DOC_PREFIX" \
-        BLD_LIB_PREFIX="$BLD_LIB_PREFIX" BLD_MOD_PREFIX="$BLD_MOD_PREFIX" BLD_LOG_PREFIX="$BLD_LOG_PREFIX" \
+        BLD_LIB_PREFIX="$BLD_LIB_PREFIX" BLD_LOG_PREFIX="$BLD_LOG_PREFIX" \
         BLD_SERVER=$HOSTNAME BLD_HTTP_PORT=$HTTP_PORT BLD_SSL_PORT=$SSL_PORT \
         patchAppwebConf "${BLD_CFG_PREFIX}/appweb.conf" "${BLD_CFG_PREFIX}/conf/hosts/ssl-default.conf" \
         "${BLD_CFG_PREFIX}/conf/log.conf" "${BLD_CFG_PREFIX}/conf/doc.conf"

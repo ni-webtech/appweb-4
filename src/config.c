@@ -58,7 +58,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         searchPath = mprAsprintf("%s" MPR_SEARCH_SEP ".", dir);
 #else
         searchPath = mprAsprintf("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
-            mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_MOD_PREFIX: BLD_ABS_MOD_DIR);
+            mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_LIB_PREFIX: BLD_ABS_LIB_DIR);
 #endif
         mprSetModuleSearchPath(searchPath);
 
