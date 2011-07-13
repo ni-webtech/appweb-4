@@ -6810,6 +6810,7 @@ typedef struct MprCmd {
     int             eofCount;           /* Count of end-of-files */
     int             requiredEof;        /* Number of EOFs required for an exit */
     int             complete;           /* All channels EOF and status gathered */
+    int             disconnected;       /* Command not connected, may not yet have exit status */
 
     char            **makeArgv;         /* Allocated argv */ 
     char            **argv;             /* List of args. Null terminated */

@@ -17,6 +17,7 @@ if (!test || test.config["ejs"] == 1) {
     assert(http.response.contains('"a": "x"'))
     assert(http.response.contains('"b": "y"'))
     assert(http.response.contains('"c": "z"'))
+
 } else {
     test.skip("EJS not enabled")
 }

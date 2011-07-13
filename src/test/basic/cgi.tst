@@ -226,7 +226,6 @@ if (!test || test.config["cgi"] == 1) {
         match("QUERY_STRING", "a|b+c>d+e?f+g>h+i'j+k\"l+m%20n")
         assert(http.response.contains("QVAR a|b c>d e?f g>h i'j k\"l m n"))
     }
-
     forms()
     alias()
     extraPath()

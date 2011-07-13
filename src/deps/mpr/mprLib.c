@@ -4630,6 +4630,7 @@ void mprDisconnectCmd(MprCmd *cmd)
             cmd->handlers[i] = 0;
         }
     }
+    cmd->disconnected = 1;
 }
 
 
@@ -4655,6 +4656,7 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
             cmd->eofCount++;
             if (cmd->eofCount >= cmd->requiredEof && cmd->pid == 0) {
                 cmd->complete = 1;
+                cmd->disconnected = 1;
             }
         }
     }
@@ -4873,6 +4875,7 @@ int mprStopCmd(MprCmd *cmd, int signal)
         signal = SIGTERM;
     }
     if (cmd->pid) {
+        cmd->disconnected = 1;
 #if BLD_WIN_LIKE
         return TerminateProcess(cmd->process, 2) == 0;
 #elif VXWORKS
@@ -5114,6 +5117,9 @@ static void reapCmd(MprCmd *cmd)
         }
         if (cmd->callback) {
             (cmd->callback)(cmd, -1, cmd->callbackData);
+        }
+        if (cmd->complete) {
+            cmd->disconnected = 1;
         }
     }
     mprLog(6, "Cmd reaped: status %d, pid %d, eof %d / %d\n", cmd->status, cmd->pid, cmd->eofCount, cmd->requiredEof);

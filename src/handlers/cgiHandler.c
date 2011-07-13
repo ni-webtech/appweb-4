@@ -31,17 +31,17 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
 static void startCgi(HttpQueue *q);
 
 #if BLD_DEBUG
-static void traceCGIData(MprCmd *cmd, char *src, ssize size);
-#define traceData(cmd, src, size) traceCGIData(cmd, src, size)
+    static void traceCGIData(MprCmd *cmd, char *src, ssize size);
+    #define traceData(cmd, src, size) traceCGIData(cmd, src, size)
 #else
-#define traceData(cmd, src, size)
+    #define traceData(cmd, src, size)
 #endif
 
 #if BLD_WIN_LIKE || VXWORKS
-static void findExecutable(HttpConn *conn, char **program, char **script, char **bangScript, char *fileName);
+    static void findExecutable(HttpConn *conn, char **program, char **script, char **bangScript, char *fileName);
 #endif
 #if BLD_WIN_LIKE
-static void checkCompletion(HttpQueue *q, MprEvent *event);
+    static void checkCompletion(HttpQueue *q, MprEvent *event);
 #endif
 
 /************************************* Code ***********************************/
@@ -103,7 +103,8 @@ static void startCgi(HttpQueue *q)
     fileName = argv[0];
 
     baseName = mprGetPathBase(fileName);
-    if (strncmp(baseName, "nph-", 4) == 0 || (strlen(baseName) > 4 && strcmp(&baseName[strlen(baseName) - 4], "-nph") == 0)){
+    if (strncmp(baseName, "nph-", 4) == 0 || 
+            (strlen(baseName) > 4 && strcmp(&baseName[strlen(baseName) - 4], "-nph") == 0)) {
         /* Pretend we've seen the header for Non-parsed Header CGI programs */
         cmd->userFlags |= MA_CGI_SEEN_HEADER;
     }
@@ -145,7 +146,10 @@ static void processCgi(HttpQueue *q)
         writeToCGI(q->pair);
     }
     if (q->pair == 0 || q->pair->count == 0) {
-        /*  Close the CGI program's stdin (idempotent). This will allow the gateway to exit if it was expecting input data */
+        /*  
+            Close the CGI program's stdin (idempotent). This will allow the gateway to exit if it was 
+            expecting input data 
+         */
         if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
             mprCloseCmdFd(cmd, MPR_CMD_STDIN);
         }
@@ -330,6 +334,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     }
     mprAssert(conn->tx);
     mprAssert(conn->rx);
+    mprAssert(!cmd->disconnected);
 
     tx = conn->tx;
     mprAssert(tx);
@@ -357,16 +362,18 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
             httpFinalize(conn);
         }
     }
-    if (conn->state < HTTP_STATE_COMPLETE) {
-        if (cmd->pid && !(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
-            mprLog(7, "CGI: @@@ enable CGI events for channel %d", channel);
-            mprEnableCmdEvents(cmd, channel);
+    if (!cmd->disconnected) {
+        if (conn->state < HTTP_STATE_COMPLETE) {
+            if (cmd->pid && !(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
+                mprLog(7, "CGI: @@@ enable CGI events for channel %d", channel);
+                mprEnableCmdEvents(cmd, channel);
+            }
+            if (conn->connq->count > 0) {
+                httpEnableConnEvents(conn);
+            }
+        } else {
+            httpProcess(conn, NULL);
         }
-        if (conn->connq->count > 0) {
-            httpEnableConnEvents(conn);
-        }
-    } else {
-        httpProcess(conn, NULL);
     }
 }
 
@@ -384,9 +391,13 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
     conn = q->conn;
     tx = conn->tx;
     mprAssert(tx);
+    mprAssert(!cmd->disconnected);
+
     mprResetBufIfEmpty(buf);
 
-    while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock) {
+    while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock && !cmd->disconnected) {
+        mprAssert(!cmd->disconnected);
+
         do {
             /*
                 Read as much data from the CGI as possible
@@ -430,6 +441,8 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
             }
             conn->lastActivity = conn->http->now;
         } while ((space = mprGetBufSpace(buf)) > 0);
+        
+        mprAssert(!cmd->disconnected);
 
         if (mprGetBufLength(buf) == 0) {
             break;
@@ -451,6 +464,8 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
 
     conn = q->conn;
     mprAssert(conn->tx);
+    mprAssert(!cmd->disconnected);
+    
     mprLog(7, "processCgiData pid %d", cmd->pid);
 
     if (channel == MPR_CMD_STDERR) {
@@ -468,10 +483,9 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
 
     } else {
         if (!(cmd->userFlags & MA_CGI_SEEN_HEADER) && !parseHeader(conn, cmd)) {
-            mprNop(0);
             return -1;
         } 
-        if (cmd->userFlags & MA_CGI_SEEN_HEADER) {
+        if (!cmd->disconnected && cmd->userFlags & MA_CGI_SEEN_HEADER) {
             if (writeToClient(q, cmd, buf, channel) < 0) {
                 mprNop(0);
                 return -1;

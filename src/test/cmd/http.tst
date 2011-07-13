@@ -59,10 +59,12 @@ if (test.depth > 1) {
     run("--user 'joshua:pass1' /basic/basic.html")
     run("--user 'joshua' --password 'pass1' /basic/basic.html")
 
-    //  Form data
-    data = run("--form 'name=John+Smith&address=300+Park+Avenue' /form.ejs")
-    assert(data.contains('"address": "300 Park Avenue"'))
-    assert(data.contains('"name": "John Smith"'))
+    if (!test || test.config["ejs"] == 1) {
+        //  Form data
+        data = run("--form 'name=John+Smith&address=300+Park+Avenue' /form.ejs")
+        assert(data.contains('"address": "300 Park Avenue"'))
+        assert(data.contains('"name": "John Smith"'))
+    }
 
     //  PUT file
     run("test.dat /tmp/day.tmp")
@@ -92,23 +94,25 @@ if (test.depth > 1) {
     assert(data.contains('content-type'))
 
     //  Upload
-    let files = Path(".").files().join(" ")
-    data = run("--upload " + files + " /upload.ejs")
-    assert(data.contains('"clientFilename": "http.tst"'))
-    if (test.threads == 1) {
-        assert(Path("../web/tmp/http.tst").exists)
+    if (!test || test.config["ejs"] == 1) {
+        let files = Path(".").files().join(" ")
+        data = run("--upload " + files + " /upload.ejs")
+        assert(data.contains('"clientFilename": "http.tst"'))
+        if (test.threads == 1) {
+            assert(Path("../web/tmp/http.tst").exists)
+        }
+
+        let files = Path(".").files().join(" ")
+        data = run("--upload --form 'name=John+Smith&address=300+Park+Avenue' " + files + " /upload.ejs")
+        assert(data.contains('"address": "300 Park Avenue"'))
+        assert(data.contains('"clientFilename": "http.tst"'))
+
+        data = run("--cookie 'test-id=12341234; $domain=site.com; $path=/dir/' /form.ejs")
+
+        assert(data.contains('"test-id": '))
+        assert(data.contains('"domain": "site.com"'))
+        assert(data.contains('"path": "/dir/"'))
     }
-
-    let files = Path(".").files().join(" ")
-    data = run("--upload --form 'name=John+Smith&address=300+Park+Avenue' " + files + " /upload.ejs")
-    assert(data.contains('"address": "300 Park Avenue"'))
-    assert(data.contains('"clientFilename": "http.tst"'))
-
-    data = run("--cookie 'test-id=12341234; $domain=site.com; $path=/dir/' /form.ejs")
-
-    assert(data.contains('"test-id": '))
-    assert(data.contains('"domain": "site.com"'))
-    assert(data.contains('"path": "/dir/"'))
 
     //  Ranges
     assert(run("--range 0-4 /numbers.html").trim() == "01234")
