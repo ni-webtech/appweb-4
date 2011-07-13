@@ -2032,6 +2032,8 @@ doImports() {
     do
         if [ "${f##*.}" = "h" ] ; then
             cp $f $BLD_OUT_DIR/include
+        elif [ "${f##*.}" = "mod" ] ; then
+            cp $f $BLD_OUT_DIR/modules
         else
             cp $f $BLD_OUT_DIR/lib
         fi

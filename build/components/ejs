@@ -2,9 +2,10 @@
 #   Ejs
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports shobj moddir incdir iflags present
+    local deps libs optional path libdir builtin imports moddir incdir iflags present moddir SHOBJ
 
     path="${1:-.}"
+    eval SHOBJ=\$BLD_${kind}_SHOBJ
 
     if [ "$path" != "." ] ; then
         libdir=`probe --name libejs --dir --search "$path/out/lib:$path" "libejs" `
@@ -13,7 +14,6 @@ defineComponent() {
             warnComponent ejs "Can't locate libejs"
             return
         fi
-        eval SHOBJ=\$BLD_${kind}_SHOBJ
         libraries="`echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre*`"
         if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
             if isdefined SQLITE ; then
@@ -31,6 +31,13 @@ defineComponent() {
         # Currently using iflags below
         # imports="$imports $headers"
     fi
+
+    moddir=`probe --name ejs.mod --dir --search "$path:$path/out/modules" "ejs.mod" `
+    if [ "$moddir" != "" ] ; then
+        modules=`echo $moddir/*.mod $moddir/*${SHOBJ}`
+        imports="$imports $modules"
+    fi
+
     if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
         if isdefined SQLITE ; then
             optional="$optional sqlite"
