@@ -31,6 +31,7 @@
 
     #define ZTS 1
     #undef ulong
+    #undef ZEND_API
     #undef HAVE_SOCKLEN_T
 
     /*
