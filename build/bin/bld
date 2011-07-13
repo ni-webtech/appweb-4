@@ -227,8 +227,11 @@ searchLib()
 
     suffixes="${SUFFIXES}"
     if [ "${name%.*}" != "${name}" ] ; then
-        suffixes=".${name##*.}"
-        name="${name%.*}"
+        suffix=".${name##*.}"
+        if [ "${suffixes}" != "${suffixes/${suffix}}" ] ; then
+            name="${name%.*}"
+            suffixes=$suffix
+        fi
     fi
 
     if [ "$BLD_CPU" = "x86_64" -a -x /usr/lib64 ] ; then
@@ -280,7 +283,7 @@ searchLib()
 # 	Look in the library paths with a "lib" prefix first.
 #
 findLib() {
-    local path library static suffixes base newLibName imports
+    local path library static base newLibName imports
 
     library="$1"
     newLibName="$2"
@@ -316,17 +319,19 @@ findLib() {
             return
         fi
         if [ "$base" = "${base#lib}" ] ; then
-			if [ "$BLD_UNIX_LIKE" = "1" -a "$BLD_OS" != MACOSX ] ; then
-				#
-				#   If the library does not start with "lib", modern gcc can use use ":" prefix on Linux
-				#
-				# eval $newLibName="-l:$library"
-                eval $newLibName="$library"
-				cp $newName .
-				[ "$imports" != "" ] && eval $imports=\"`basename $newName` \$$imports\"
-			else
-                eval $newLibName="$newName"
-			fi
+##			if [ "$BLD_UNIX_LIKE" = "1" -a "$BLD_OS" != MACOSX ] ; then
+##				#
+##				#   FUTURE -- If the library does not start with "lib", modern gcc can use use ":" prefix on Linux
+##				#   eval $newLibName="-l:$library"
+##                #
+##                eval $newLibName="$library"
+##				cp $newName .
+##				[ "$imports" != "" ] && eval $imports=\"`basename $newName` \$$imports\"
+##			else
+##                eval $newLibName="$newName"
+##			fi
+
+            eval $newLibName="$newName"
 		else
             if [ "$OS" = "VXWORKS" ] ; then
                 eval $newLibName="$newName"
