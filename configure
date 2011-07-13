@@ -2014,15 +2014,16 @@ postGen() {
 doImports() {
     local f SHOBJ
 
-    # MOB - not yet supporting Cross compilation of imports
-
     SHOBJ=$BLD_HOST_SHOBJ
 
+    # MOB - not yet supporting Cross compilation of imports
     # for kind in HOST BUILD ; do
     # done
 
     for f in $BLD_IMPORTS
     do
+        # Windows puts relative paths in BLD_IMPORTS using ${BLD_TOP}
+        eval f="${f}"
         if [ "${f##*.}" = "h" ] ; then
             cp $f $BLD_OUT_DIR/inc
         elif [ ".${f##*.}" = "${SHOBJ}" ] ; then
