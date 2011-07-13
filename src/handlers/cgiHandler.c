@@ -392,12 +392,15 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
     tx = conn->tx;
     mprAssert(tx);
     mprAssert(!cmd->disconnected);
+    mprAssert(conn->state > HTTP_STATE_BEGIN);
 
     mprResetBufIfEmpty(buf);
 
-    while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock) {
+    //  MOB - refactor
 
+    while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock && conn->state > HTTP_STATE_BEGIN) {
         do {
+            mprAssert(conn->state > HTTP_STATE_BEGIN);
             /*
                 Read as much data from the CGI as possible
              */
@@ -421,6 +424,9 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                     break;
                 }
                 mprLog(5, "CGI: Gateway read error %d for %s", err, (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr");
+                /* 
+                    WARNING: this may complete the request here 
+                 */
                 mprCloseCmdFd(cmd, channel);
                 break;
                 
@@ -429,6 +435,9 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                     This may reap the terminated child and thus clear cmd->process if both stderr and stdout are closed.
                  */
                 mprLog(5, "CGI: Gateway EOF for %s, pid %d", (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr", cmd->pid);
+                /* 
+                    WARNING: this may complete the request here 
+                 */
                 mprCloseCmdFd(cmd, channel);
                 break;
 
@@ -439,17 +448,20 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 mprAddNullToBuf(buf);
             }
             conn->lastActivity = conn->http->now;
-        } while ((space = mprGetBufSpace(buf)) > 0);
-        
+        } while ((space = mprGetBufSpace(buf)) > 0 && conn->state > HTTP_STATE_BEGIN);
+
+        if (conn->state == HTTP_STATE_BEGIN) {
+            return;
+        }
         if (mprGetBufLength(buf) == 0) {
             break;
         }
         if (processCgiData(q, cmd, channel, buf) < 0) {
-            mprNop(0);
             break;
         }
     }
-    if (cmd->complete) {
+    if (cmd->complete && conn->state > HTTP_STATE_BEGIN) {
+        mprAssert(conn->tx);
         httpFinalize(conn);
     }
 }
@@ -460,8 +472,8 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
     HttpConn    *conn;
 
     conn = q->conn;
+    mprAssert(conn->state > HTTP_STATE_BEGIN);
     mprAssert(conn->tx);
-    mprAssert(!cmd->disconnected);
     
     mprLog(7, "processCgiData pid %d", cmd->pid);
 
