@@ -395,8 +395,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
 
     mprResetBufIfEmpty(buf);
 
-    while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock && !cmd->disconnected) {
-        mprAssert(!cmd->disconnected);
+    while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock) {
 
         do {
             /*
@@ -442,8 +441,6 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
             conn->lastActivity = conn->http->now;
         } while ((space = mprGetBufSpace(buf)) > 0);
         
-        mprAssert(!cmd->disconnected);
-
         if (mprGetBufLength(buf) == 0) {
             break;
         }
