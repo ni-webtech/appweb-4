@@ -6725,6 +6725,7 @@ static void trimExtraPath(HttpConn *conn)
     HttpAlias   *alias;
     HttpRx      *rx;
     HttpTx      *tx;
+    cchar       *seps;
     char        *cp, *extra, *start;
     ssize       len;
 
@@ -6740,7 +6741,8 @@ static void trimExtraPath(HttpConn *conn)
         The filename is used to search for a component with "." because we want to skip the alias prefix.
      */
     start = &tx->filename[strlen(alias->filename)];
-    if ((cp = strchr(start, '.')) != 0 && (extra = strchr(cp, '/')) != 0) {
+    seps = mprGetPathSeparators(start);
+    if ((cp = strchr(start, '.')) != 0 && (extra = strchr(cp, seps[0])) != 0) {
         len = alias->prefixLen + extra - start;
         if (0 < len && len < slen(rx->pathInfo)) {
             *extra = '\0';
