@@ -9,14 +9,12 @@ EXPORTS
   maCreateLocationAlias
   maCreateMeta
   maCreateWebServer
-  maDefineEgiForm
   maGetConfigValue
   maGetUserGroup
   maLoadModule
   maLogRequest
   maLookupMeta
   maOpenDirHandler
-  maOpenEgiHandler
   maOpenFileHandler
   maParseConfig
   maRemoveServer

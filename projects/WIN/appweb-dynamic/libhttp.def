@@ -175,6 +175,7 @@ EXPORTS
   httpLookupLocation
   httpLookupServer
   httpLookupStage
+  httpLookupStageData
   httpLookupStatus
   httpMakeFilename
   httpMakePath
@@ -185,6 +186,7 @@ EXPORTS
   httpMatchHandler
   httpMatchHost
   httpMatchModified
+  httpMemoryError
   httpNeedRetry
   httpNormalizeUri
   httpNormalizeUriPath

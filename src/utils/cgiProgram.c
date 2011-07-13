@@ -533,6 +533,7 @@ static int getVars(char ***cgiKeys, char *buf, size_t buflen)
             return 0;
         }
         strncpy(newbuf, buf, buflen);
+        newbuf[buflen] = '\0';
         buf = newbuf;
     }
 
