@@ -18,7 +18,7 @@ defineComponent() {
         fi
     fi
     builtin=`[ $path = "." ] && echo --builtin`
-    incdir=`probe --dir --name mpr.h --search "$path:$path/src/deps/mpr:$path/out/include" "mpr.h" `
+    incdir=`probe --dir --name mpr.h --search "$path:$path/src/deps/mpr:$path/out/inc" "mpr.h" `
     if [ "$incdir" != "" ] ; then
         imports="$incdir/mpr.h $incdir/mprSsl.h"
     fi

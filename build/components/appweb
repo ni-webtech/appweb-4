@@ -30,7 +30,7 @@ defineComponent() {
             imports="$libraries"
         fi
     fi
-    incdir=`probe --name appweb.h --dir --search "$path:$path/out/include" "appweb.h" `
+    incdir=`probe --name appweb.h --dir --search "$path:$path/out/inc" "appweb.h" `
     if [ "$incdir" != "" ] ; then
         headers="`echo $incdir/appweb*.h`"
         # imports="$imports $headers"

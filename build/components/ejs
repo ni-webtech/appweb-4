@@ -2,39 +2,36 @@
 #   Ejs
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports moddir incdir iflags present moddir SHOBJ
+    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ
 
     path="${1:-.}"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
 
     if [ "$path" != "." ] ; then
         libdir=`probe --name libejs --dir --search "$path/out/lib:$path" "libejs" `
-        moddir=`probe --name ejs.web --dir --search "$path/out/modules:$path" "ejs.web" `
         if [ "$libdir" = "" -a "$path" != "." ] ; then
             warnComponent ejs "Can't locate libejs"
             return
         fi
-        libraries="`echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre*`"
+        libraries="`echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ}`"
         if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
             if isdefined SQLITE ; then
                 libraries="$libraries `echo $libdir/libsqlite3*`"
             fi
         fi
-        libraries="$libraries `echo $moddir/*${SHOBJ}`"
         if [ "$libdir" != "" ] ; then
             imports="$libraries"
         fi
     fi
-    incdir=`probe --name ejs.h --dir --search "$path:$path/out/include" "ejs.h" `
+    incdir=`probe --name ejs.h --dir --search "$path:$path/out/inc" "ejs.h" `
     if [ "$incdir" != "" ] ; then
         headers="`echo $incdir/ejs*.h`"
         # Currently using iflags below
         # imports="$imports $headers"
     fi
 
-    moddir=`probe --name ejs.mod --dir --search "$path:$path/out/modules" "ejs.mod" `
-    if [ "$moddir" != "" ] ; then
-        modules=`echo $moddir/*.mod $moddir/*${SHOBJ}`
+    if [ "$libdir" != "" ] ; then
+        modules=`echo $libdir/*.mod`
         imports="$imports $modules"
     fi
 

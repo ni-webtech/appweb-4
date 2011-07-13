@@ -12,7 +12,7 @@ defineComponent() {
             return
         fi
     fi
-    headers=`probe --name http.h --search "$path:$path/src/deps/http:$path/out/include" "http.h" `
+    headers=`probe --name http.h --search "$path:$path/src/deps/http:$path/out/inc" "http.h" `
     builtin=`[ $path = "." ] && echo --builtin`
     if [ "$headers" != "" ] ; then
         imports="$headers"

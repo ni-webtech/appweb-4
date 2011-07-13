@@ -7,7 +7,7 @@
 BUILD_CROSS	:= 0
 PRE_DIRS	:= src
 
-include .makedep
+include 	.makedep
 
 dependExtra:
 	chmod +x *
