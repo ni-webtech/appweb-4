@@ -1856,7 +1856,7 @@ emitComponents() {
         eval dir=\$CFG_${p}_DIR
 
         echo -e "\n${t}#\n${t}#\t${p}\n${t}#" 
-        if [ "$present" = "0" ] ; then 
+        if [ "$present" != "1" ] ; then 
             echo -e "${t}BLD_FEATURE_${p}=0" 
             eval v="\$CFG_${kind}_${p}_PRESENT"
             [ "$v" = "" ] && continue
