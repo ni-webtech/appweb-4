@@ -1,0 +1,140 @@
+Next:
+    - What is 2nd arg
+        - espDefineAction(esp, "what-goes-here", SomeAction);
+    - Problem, if just text, then not a good match for route->replacement as it will vary with
+        controller and action strings
+    - In Dev mode
+        - Reload defaults to on, off in release mode
+
+
+Questions
+    - Nice to have DLL for just controllers
+    - Nice to have multiple actions in one DLL
+    - How to reload code that is being used on some other thread? (need EspIdle flag)
+
+Notes:
+    - cache HTML output
+    - views *.esp
+    - Routing 
+        - Route URI pattern controller/action or to PAGE.esp
+        - Are restful routes the default?
+    - Caching
+        - Must be enabled in code. Cache(), updateCache(), writeCached() APIs to control.
+
+    Directives
+- MOB - what about EjsRestfulRoute or
+        EjsRestfulRoute NAME URI 
+        - EjsShowRoutes
+
+        EspReload on|off                # Reload changed source code
+        EspModules "cache"
+        EspCache 86400          # default HTML caching lifespan. Zero disables cache.
+        EspRoute Name URI-Template Path|Action-Key [Library]
+            - {patterns} in URI get defined in params
+            - A link() template gets created for each route
+
+        EspAlias /prefix /directory         # All paths are under /directory
+        EspRoute Home GET,POST,PUT ^/$ index.esp
+
+- MOB - would the action be better as {controller}-{action}
+        EspRoute Default GET,POST /{controller}/{action}  $controller-$action MyApp
+        EspRoute Default ALL /{controller}/{action}  $controller-$action MyApp
+        EspCompile template
+
+        Example:
+            EspAlias /prefix /directory
+                # Must define default routes
+
+            <Location /prefix>
+                Alias /prefix /directory
+                AddHandler fileHandler html git jpeg jpg png pdf ico css js
+                AddHandler espHandler
+                EspRoute HOME GET "^/$" "home"
+                EspRoute Default ALL "/{controller}/{action}" "/$controller/$action"
+                EspReload on|off
+                EspCompile \
+                    cc -c -DPIC -Wall -g -fPIC -arch x86_64 \
+                    -I/Users/mob/git/appweb/src/deps/mpr -I/Users/mob/git/appweb/src/deps/http \
+                    -I../../out/include -I../../src/include \
+                    -L../out/lib -L../out/modules -L/Users/mob/git/appweb/out/lib \
+                    -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/../modules \
+                    -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ \
+                    -install_name @rpath/mod_cgi.dylib -dynamiclib \
+                    ${NAME}.c \
+                    -lappweb -lhttp -lmpr -lpthread -lm
+                    -o ../out/modules/${NAME}.dylib 
+
+                    # how to handle different O/Ss
+                    # how to handle linking vs installed Appweb vs local dev Appweb
+            </Location>
+
+Controller Library
+    static void SomeAction(HttpConn *conn) {
+    }
+
+    int esp_${CONTROLLER}(Esp *esp, MprModule *module) {
+        espDefineAction(esp, "what-goes-here", SomeAction);
+        espDefineAction(esp, "what-goes-here", OtherAction);
+        ...
+        int mode = server | client | manual
+        espServerCache(esp, lifespan, URI, SomeAction, OtherAction, NULL);
+        espClientCache(esp, lifespan, URI, SomeAction, OtherAction, NULL);
+        espManualCache(esp, lifespan, URI, SomeAction, OtherAction, NULL);
+        return 0;
+    }
+
+View Library
+    /*
+     * Generated from /Users/mob/git/appweb/src/test/web/test.esp
+     */
+    #include "esp.h"
+
+    static void espView_b88e0b906a2e077bac58f8e7367d796a(HttpConn *conn) {
+       espWrite(conn, "data", -1);
+    }
+    int espInit_espView_b88e0b906a2e077bac58f8e7367d796a(Esp *esp, MprModule *module) {
+       espDefineView(esp, "/Users/mob/git/appweb/src/test/web/test.esp", espView_b88e0b906a2e077bac58f8e7367d796a);
+       return 0;
+    } 
+
+
+Reg Exp pattern matching
+    Match /URI/Pattern  /New/URI
+    <LocationMatch /REGEXP>
+
+
+Framework
+    - Base on Request.es
+    - cookies hash
+    - Security tokens?
+    - flash
+    - sessions
+    - link() 
+    - redirect()
+    - setCookie(), setHeader(), setHeaders(), setLimits(), setStatus(), trace(), writeError(), write(), writeFile(),
+        writeSafe(), 
+    - Cookies
+    - Sessions
+    - Auto-finalize
+    - View controls:
+        - Use same jquery.ejs.js => rename jquery.xxx.js
+        alert, anchor, button, buttonLink, chart, checkbox, div, flash, endform, form, icon, image, input, label, list,
+            mail, progress, radio, refresh, script, security, stylesheet, table, tabs, text, tree,  
+    - Controller
+        writeCached, 
+        cache() => control caching generated HTML
+        updateCache()
+        clearFlash
+        finalize()
+        finalized()
+        writeView
+        writeTemplate
+        checkSecurityToken
+        escape()
+
+    Templates
+        - Layouts
+        - Multilevel
+        - Expression
+        - @@ etc
+
