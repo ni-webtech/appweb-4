@@ -187,8 +187,6 @@ copyRemoveFiles() {
 
     local home dir packName root
 
-    [ "$QUIET" = 0 ] && log $VERB File packages
-
     for packName in $PACKS
     do
         processPackage ${packName}.files

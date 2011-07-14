@@ -200,64 +200,15 @@ dependAfter:
 #
 #	Run unit tests
 #
-test: $(BUILD_CHECK) testDirs testExtra testExtraExtra testFinal testCleanup
+test: $(BUILD_CHECK) testDirs testExtra testStandard testFinal testCleanup
 
 testDirs:
 	@T=test ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
 
-testExtra testExtraExtra testFinal testCleanup:
+testExtra testFinal testCleanup:
 
-
-#
-#	Run load tests
-#
-loadTest: $(BUILD_CHECK) loadTestDirs loadTestExtra
-
-loadTestDirs:
-	@T=loadTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
-
-loadTestExtra:
-
-
-#
-#	Run memory leak tests
-#
-leakTest: $(BUILD_CHECK) leakTestDirs leakTestExtra
-
-leakTestDirs:
-	@T=leakTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
-
-leakTestExtra:
-
-
-#
-#	Run memory longevity tests
-#
-longevityTest: $(BUILD_CHECK) longevityTestDirs longevityTestExtra
-
-longevityTestDirs:
-	@T=longevityTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
-
-longevityTestExtra:
-
-
-#
-#	Run benchmarks
-#
-bench: $(BUILD_CHECK) benchDirs benchExtra
-
-benchDirs:
-	@T=bench ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
-
-benchExtra:
-
-
-buildFarmTest: $(BUILD_CHECK) buildFarmTestDirs buildFarmTestExtra
-
-buildFarmTestDirs:
-	@T=buildFarmTest ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
-
-buildFarmTestExtra:
+testStandard:
+	[ "$(SKIP_UTEST)" != "1" ] && utest -v -d $(BUILD_DEPTH) ; true
 
 
 #
@@ -294,20 +245,21 @@ projectsDirs:
 projectsExtra:
 
 #
-#	Create a redistributable package
+#	Create a redistributable package. Do make package in the top dir to actually make a package.
+#   Other package targets are used to prepare the system for packaging
 #
-package: $(BUILD_CHECK) packagePrepFirst packagePriv packageDirs packageExtra
+package: $(BUILD_CHECK) packageFirst packageDirs packageExtra packageFinal
 
-packagePrepFirst:
-	@T=packagePrep ; D="$(PRE_DIRS)" ; $(DO_RECURSE) 
+packageDirs:
+	@T=package; D="$(PRE_DIRS)" ; $(DO_RECURSE) 
 
-packagePrep:
-
-packagePriv:
+packageFirst:
 
 packageDirs:
 
 packageExtra:
+
+packageFinal:
 
 #
 #	Used to suppress make warning that there is "Nothing to be done for target"

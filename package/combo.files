@@ -1,0 +1,57 @@
+#
+#	combo.files - Files needed for the combo installation
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+#
+S=${BLD_TOP}/src
+
+#
+#   Output directories. Note: these are in the staging directory.
+#
+DIR="${BLD_OUT_DIR}/staging/${BLD_PRODUCT}-${BLD_VERSION}"
+SRC="${DIR}/src/deps/appweb"
+DOC="${DIR}/doc"
+
+APPWEB_HEADERS="${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h"
+LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav'`
+
+#
+#   Build files
+#
+mkdir -p ${SRC} ${DOC}/man ${DOC}/api
+cp ${BLD_TOP}/package/Makefile.combo "${SRC}/Makefile"
+# cp ${BLD_INC_DIR}/buildConfig.h "${DIR}/buildConfig.h"
+
+#
+#	appweb.h
+#
+echo '#include "appwebConfig.h"' >${SRC}/appweb.h
+echo '#include "http.h"' >>${SRC}/appweb.h
+combo ${APPWEB_HEADERS} | egrep -v '#include.*appweb|#include.*http' >>${SRC}/appweb.h
+
+#
+#	appwebLib.c
+#
+echo '#include "appweb.h"' >${SRC}/appwebLib.c
+combo ${LIB_SOURCES} | egrep -v '#include.*appweb|#include.*http' >>${SRC}/appwebLib.c
+
+#
+#	appweb.c
+#
+echo '#include "appweb.h"' >${SRC}/appweb.c
+combo ${S}/server/appweb.c | egrep -v '#include.*appweb|#include.*http' >>${SRC}/appweb.c
+
+#
+#	Doc
+#
+cp ${BLD_TOP}/doc/man/appweb.1 ${DOC}/man
+cp ${BLD_TOP}/doc/man/appwebMonitor.1 ${DOC}/man
+cp ${BLD_TOP}/doc/man/auth.1 ${DOC}
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4 noexpandtab
+#

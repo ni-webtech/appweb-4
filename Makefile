@@ -22,27 +22,13 @@
 #	To remove, use make uninstall-ITEM, where ITEM is a component above.
 #
 
+DEPS			= tools mpr pcre http
+
 include			build/make/Makefile.top
 include			build/make/Makefile.appweb
 
 testCleanup:
 	killall testAppweb >/dev/null 2>&1 ; true
-
-diff import sync:
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../tools/out/releases/tools-dist.tgz
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../mpr/out/releases/mpr-dist.tgz
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../http/out/releases/http-dist.tgz
-	$(BLD_TOOLS_DIR)/import.sh --$@ ../pcre/out/releases/pcre-dist.tgz
-	echo
-
-testExtra: test-projects
-
-test-projects:
-ifeq    ($(BLD_HOST_OS),WIN)
-	if [ "$(BUILD_DEPTH)" -ge 3 ] ; then \
-		$(BLD_TOOLS_DIR)/nativeBuild ; \
-	fi
-endif
 
 #
 #   Local variables:

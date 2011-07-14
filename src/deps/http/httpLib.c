@@ -16,7 +16,7 @@
 
 /************************************************************************/
 /*
- *  Start of file "../src/alias.c"
+ *  Start of file "./src/alias.c"
  */
 /************************************************************************/
 
@@ -126,7 +126,7 @@ static void manageAlias(HttpAlias *alias, int flags)
  */
 /************************************************************************/
 /*
- *  End of file "../src/alias.c"
+ *  End of file "./src/alias.c"
  */
 /************************************************************************/
 
@@ -134,7 +134,7 @@ static void manageAlias(HttpAlias *alias, int flags)
 
 /************************************************************************/
 /*
- *  Start of file "../src/auth.c"
+ *  Start of file "./src/auth.c"
  */
 /************************************************************************/
 
@@ -359,7 +359,7 @@ void httpInitAuth(Http *http)
  */
 /************************************************************************/
 /*
- *  End of file "../src/auth.c"
+ *  End of file "./src/auth.c"
  */
 /************************************************************************/
 
@@ -367,7 +367,7 @@ void httpInitAuth(Http *http)
 
 /************************************************************************/
 /*
- *  Start of file "../src/authFile.c"
+ *  Start of file "./src/authFile.c"
  */
 /************************************************************************/
 
@@ -1045,7 +1045,7 @@ void __nativeAuthFile() {}
  */
 /************************************************************************/
 /*
- *  End of file "../src/authFile.c"
+ *  End of file "./src/authFile.c"
  */
 /************************************************************************/
 
@@ -1053,7 +1053,7 @@ void __nativeAuthFile() {}
 
 /************************************************************************/
 /*
- *  Start of file "../src/authFilter.c"
+ *  Start of file "./src/authFilter.c"
  */
 /************************************************************************/
 
@@ -1536,7 +1536,7 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
  */
 /************************************************************************/
 /*
- *  End of file "../src/authFilter.c"
+ *  End of file "./src/authFilter.c"
  */
 /************************************************************************/
 
@@ -1544,7 +1544,7 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
 
 /************************************************************************/
 /*
- *  Start of file "../src/authPam.c"
+ *  Start of file "./src/authPam.c"
  */
 /************************************************************************/
 
@@ -1686,7 +1686,7 @@ void __pamAuth() {}
  */
 /************************************************************************/
 /*
- *  End of file "../src/authPam.c"
+ *  End of file "./src/authPam.c"
  */
 /************************************************************************/
 
@@ -1694,7 +1694,7 @@ void __pamAuth() {}
 
 /************************************************************************/
 /*
- *  Start of file "../src/chunkFilter.c"
+ *  Start of file "./src/chunkFilter.c"
  */
 /************************************************************************/
 
@@ -1983,7 +1983,7 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
  */
 /************************************************************************/
 /*
- *  End of file "../src/chunkFilter.c"
+ *  End of file "./src/chunkFilter.c"
  */
 /************************************************************************/
 
@@ -1991,7 +1991,7 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
 
 /************************************************************************/
 /*
- *  Start of file "../src/client.c"
+ *  Start of file "./src/client.c"
  */
 /************************************************************************/
 
@@ -2358,7 +2358,7 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
  */
 /************************************************************************/
 /*
- *  End of file "../src/client.c"
+ *  End of file "./src/client.c"
  */
 /************************************************************************/
 
@@ -2366,7 +2366,7 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
 
 /************************************************************************/
 /*
- *  Start of file "../src/conn.c"
+ *  Start of file "./src/conn.c"
  */
 /************************************************************************/
 
@@ -3250,7 +3250,7 @@ void httpDisconnect(HttpConn *conn)
  */
 /************************************************************************/
 /*
- *  End of file "../src/conn.c"
+ *  End of file "./src/conn.c"
  */
 /************************************************************************/
 
@@ -3258,7 +3258,7 @@ void httpDisconnect(HttpConn *conn)
 
 /************************************************************************/
 /*
- *  Start of file "../src/dir.c"
+ *  Start of file "./src/dir.c"
  */
 /************************************************************************/
 
@@ -3384,7 +3384,7 @@ void httpSetDirIndex(HttpDir *dir, cchar *name)
  */
 /************************************************************************/
 /*
- *  End of file "../src/dir.c"
+ *  End of file "./src/dir.c"
  */
 /************************************************************************/
 
@@ -3392,7 +3392,7 @@ void httpSetDirIndex(HttpDir *dir, cchar *name)
 
 /************************************************************************/
 /*
- *  Start of file "../src/host.c"
+ *  Start of file "./src/host.c"
  */
 /************************************************************************/
 
@@ -3975,7 +3975,7 @@ char *httpReplaceReferences(HttpHost *host, cchar *str)
  */
 /************************************************************************/
 /*
- *  End of file "../src/host.c"
+ *  End of file "./src/host.c"
  */
 /************************************************************************/
 
@@ -3983,7 +3983,7 @@ char *httpReplaceReferences(HttpHost *host, cchar *str)
 
 /************************************************************************/
 /*
- *  Start of file "../src/httpService.c"
+ *  Start of file "./src/httpService.c"
  */
 /************************************************************************/
 
@@ -4664,7 +4664,7 @@ static void updateCurrentDate(Http *http)
  */
 /************************************************************************/
 /*
- *  End of file "../src/httpService.c"
+ *  End of file "./src/httpService.c"
  */
 /************************************************************************/
 
@@ -4672,7 +4672,7 @@ static void updateCurrentDate(Http *http)
 
 /************************************************************************/
 /*
- *  Start of file "../src/location.c"
+ *  Start of file "./src/location.c"
  */
 /************************************************************************/
 
@@ -5130,7 +5130,7 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
  */
 /************************************************************************/
 /*
- *  End of file "../src/location.c"
+ *  End of file "./src/location.c"
  */
 /************************************************************************/
 
@@ -5138,7 +5138,7 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
 
 /************************************************************************/
 /*
- *  Start of file "../src/match.c"
+ *  Start of file "./src/match.c"
  */
 /************************************************************************/
 
@@ -5488,7 +5488,7 @@ static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage)
  */
 /************************************************************************/
 /*
- *  End of file "../src/match.c"
+ *  End of file "./src/match.c"
  */
 /************************************************************************/
 
@@ -5496,7 +5496,7 @@ static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage)
 
 /************************************************************************/
 /*
- *  Start of file "../src/netConnector.c"
+ *  Start of file "./src/netConnector.c"
  */
 /************************************************************************/
 
@@ -5828,7 +5828,7 @@ static void adjustNetVec(HttpQueue *q, ssize written)
  */
 /************************************************************************/
 /*
- *  End of file "../src/netConnector.c"
+ *  End of file "./src/netConnector.c"
  */
 /************************************************************************/
 
@@ -5836,7 +5836,7 @@ static void adjustNetVec(HttpQueue *q, ssize written)
 
 /************************************************************************/
 /*
- *  Start of file "../src/packet.c"
+ *  Start of file "./src/packet.c"
  */
 /************************************************************************/
 
@@ -6287,7 +6287,7 @@ void httpAdjustPacketEnd(HttpPacket *packet, MprOff size)
  */
 /************************************************************************/
 /*
- *  End of file "../src/packet.c"
+ *  End of file "./src/packet.c"
  */
 /************************************************************************/
 
@@ -6295,7 +6295,7 @@ void httpAdjustPacketEnd(HttpPacket *packet, MprOff size)
 
 /************************************************************************/
 /*
- *  Start of file "../src/passHandler.c"
+ *  Start of file "./src/passHandler.c"
  */
 /************************************************************************/
 
@@ -6410,7 +6410,7 @@ int httpOpenPassHandler(Http *http)
  */
 /************************************************************************/
 /*
- *  End of file "../src/passHandler.c"
+ *  End of file "./src/passHandler.c"
  */
 /************************************************************************/
 
@@ -6418,7 +6418,7 @@ int httpOpenPassHandler(Http *http)
 
 /************************************************************************/
 /*
- *  Start of file "../src/pipeline.c"
+ *  Start of file "./src/pipeline.c"
  */
 /************************************************************************/
 
@@ -6832,7 +6832,7 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter, int dir)
  */
 /************************************************************************/
 /*
- *  End of file "../src/pipeline.c"
+ *  End of file "./src/pipeline.c"
  */
 /************************************************************************/
 
@@ -6840,7 +6840,7 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter, int dir)
 
 /************************************************************************/
 /*
- *  Start of file "../src/queue.c"
+ *  Start of file "./src/queue.c"
  */
 /************************************************************************/
 
@@ -7442,7 +7442,7 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
  */
 /************************************************************************/
 /*
- *  End of file "../src/queue.c"
+ *  End of file "./src/queue.c"
  */
 /************************************************************************/
 
@@ -7450,7 +7450,7 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
 
 /************************************************************************/
 /*
- *  Start of file "../src/rangeFilter.c"
+ *  Start of file "./src/rangeFilter.c"
  */
 /************************************************************************/
 
@@ -7768,7 +7768,7 @@ static bool fixRangeLength(HttpConn *conn)
  */
 /************************************************************************/
 /*
- *  End of file "../src/rangeFilter.c"
+ *  End of file "./src/rangeFilter.c"
  */
 /************************************************************************/
 
@@ -7776,7 +7776,7 @@ static bool fixRangeLength(HttpConn *conn)
 
 /************************************************************************/
 /*
- *  Start of file "../src/rx.c"
+ *  Start of file "./src/rx.c"
  */
 /************************************************************************/
 
@@ -9497,7 +9497,7 @@ char *httpMakeFilename(HttpConn *conn, HttpAlias *alias, cchar *url, bool skipAl
  */
 /************************************************************************/
 /*
- *  End of file "../src/rx.c"
+ *  End of file "./src/rx.c"
  */
 /************************************************************************/
 
@@ -9505,7 +9505,7 @@ char *httpMakeFilename(HttpConn *conn, HttpAlias *alias, cchar *url, bool skipAl
 
 /************************************************************************/
 /*
- *  Start of file "../src/sendConnector.c"
+ *  Start of file "./src/sendConnector.c"
  */
 /************************************************************************/
 
@@ -9872,7 +9872,7 @@ void httpSendOutgoingService(HttpQueue *q) {}
  */
 /************************************************************************/
 /*
- *  End of file "../src/sendConnector.c"
+ *  End of file "./src/sendConnector.c"
  */
 /************************************************************************/
 
@@ -9880,7 +9880,7 @@ void httpSendOutgoingService(HttpQueue *q) {}
 
 /************************************************************************/
 /*
- *  Start of file "../src/server.c"
+ *  Start of file "./src/server.c"
  */
 /************************************************************************/
 
@@ -10421,7 +10421,7 @@ int httpSetNamedVirtualServers(Http *http, cchar *ip, int port)
  */
 /************************************************************************/
 /*
- *  End of file "../src/server.c"
+ *  End of file "./src/server.c"
  */
 /************************************************************************/
 
@@ -10429,7 +10429,7 @@ int httpSetNamedVirtualServers(Http *http, cchar *ip, int port)
 
 /************************************************************************/
 /*
- *  Start of file "../src/stage.c"
+ *  Start of file "./src/stage.c"
  */
 /************************************************************************/
 
@@ -10632,7 +10632,7 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags, MprModule *mo
  */
 /************************************************************************/
 /*
- *  End of file "../src/stage.c"
+ *  End of file "./src/stage.c"
  */
 /************************************************************************/
 
@@ -10640,7 +10640,7 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags, MprModule *mo
 
 /************************************************************************/
 /*
- *  Start of file "../src/trace.c"
+ *  Start of file "./src/trace.c"
  */
 /************************************************************************/
 
@@ -10824,7 +10824,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
  */
 /************************************************************************/
 /*
- *  End of file "../src/trace.c"
+ *  End of file "./src/trace.c"
  */
 /************************************************************************/
 
@@ -10832,7 +10832,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
 
 /************************************************************************/
 /*
- *  Start of file "../src/tx.c"
+ *  Start of file "./src/tx.c"
  */
 /************************************************************************/
 
@@ -11544,7 +11544,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
  */
 /************************************************************************/
 /*
- *  End of file "../src/tx.c"
+ *  End of file "./src/tx.c"
  */
 /************************************************************************/
 
@@ -11552,7 +11552,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
 
 /************************************************************************/
 /*
- *  Start of file "../src/uploadFilter.c"
+ *  Start of file "./src/uploadFilter.c"
  */
 /************************************************************************/
 
@@ -12202,7 +12202,7 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
  */
 /************************************************************************/
 /*
- *  End of file "../src/uploadFilter.c"
+ *  End of file "./src/uploadFilter.c"
  */
 /************************************************************************/
 
@@ -12210,7 +12210,7 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
 
 /************************************************************************/
 /*
- *  Start of file "../src/uri.c"
+ *  Start of file "./src/uri.c"
  */
 /************************************************************************/
 
@@ -12901,7 +12901,7 @@ static void trimPathToDirname(HttpUri *uri)
  */
 /************************************************************************/
 /*
- *  End of file "../src/uri.c"
+ *  End of file "./src/uri.c"
  */
 /************************************************************************/
 
@@ -12909,7 +12909,7 @@ static void trimPathToDirname(HttpUri *uri)
 
 /************************************************************************/
 /*
- *  Start of file "../src/var.c"
+ *  Start of file "./src/var.c"
  */
 /************************************************************************/
 
@@ -13217,7 +13217,7 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
  */
 /************************************************************************/
 /*
- *  End of file "../src/var.c"
+ *  End of file "./src/var.c"
  */
 /************************************************************************/
 

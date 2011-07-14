@@ -31,6 +31,8 @@
 #	To remove, use make uninstall-ITEM, where ITEM is a component above.
 #
 
+SHELL		= bash
+BUILD_DEPTH	?= 2
 BLD_TOP		= .
 FIRST		= first
 IMG_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)
@@ -39,7 +41,6 @@ BASE_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-$(BLD_HOST_DIST)-$(BLD_H
 PACKS		= binary dev source
 PKG_DIR		= $(BLD_TOP)/out/staging
 INS_WITH	= --with-conf="$(CONF)" --with-testweb 
-SHELL		= bash
 
 #
 #	Conditionally read in the Make rules and templates. The buildConfig.h
@@ -65,6 +66,12 @@ all clean clobber compile depend package test projects: always
 .PHONY: always
 endif
 
+diff import sync:
+	for dep in $(DEPS) ; do \
+		$(BLD_TOOLS_DIR)/import.sh --$@ ../$$dep/out/releases/$$dep-combo.tgz ; \
+	done
+	echo
+
 #
 #	Check for the existing of the dynamic dependancy files (.makedep)
 #
@@ -76,98 +83,28 @@ $(BLD_TOP)/build/src/.makedep: $(BLD_OUT_DIR)/inc/buildConfig.h
 	$(MAKE) TRACE=$(TRACE) --no-print-directory depend clean
 
 #
-#	Build the build tools
+#	Ensure the build tools are built first
 #
 $(BLD_TOOLS_DIR)/edep$(BLD_EXE): 
 	T=$(BLD_TOOLS_DIR)/src; $(DO_RECURSE)
 
+#
+#	If publisher build, always do a combo build as part of the final compile 
+#
+compileFinal: 
+	[ -f .publisher ] && $(MAKE) TRACE=$(TRACE) --no-print-directory packageCombo ; true
+
 dependExtra:
 	[ ! -L extensions ] && ln -s ../packages extensions ; true
 
-deploy: deploy-binary
-
- deploy-%:
-	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
-	if [ "$$ROOT_DIR" = "" ] ; then echo -n "Enter deployment directory : " ; read ROOT_DIR ; fi ; \
-	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
-		$$BROWSER --root=$$ROOT_DIR --bare --install --with-conf="$(CONF)" pre $$packs post ; \
-
-install: install-binary
-
-install-%:
-	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
-	[ "$$packs" = "binary dev" ] && BROWSER=--browser ; \
-	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
-		$$BROWSER --root=$(ROOT_DIR) --install $(INS_WITH) pre $$packs post
-
-uninstall: uninstall-binary
-
- uninstall-%:
-	packs=$* ; [ "$$packs" = "" ] && packs="binary dev" ; \
-	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
-		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
-	
-compileFinal: dist
-
-dist:
-	if [ ! -f .embedthis ] ; then \
-		true ; \
-	elif [ -d package/dist ] ; then \
-		make -C package/dist dist ; \
-	elif [ -f package/Makefile ] ; then \
-		make -C package dist ; \
-	elif [ -d dist ] ; then \
-		make -C dist dist ; \
+#
+#	Top level test targets to test installing and removing packages
+#
+testExtra:
+	if [ "$(BUILD_DEPTH)" -ge 5 ] ; then \
+		$(MAKE) test-projects ; \
 	fi
-
-package-only:
-	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
-
-packageExtra:
-	if [ -d package -a -f package/binary.files -a -d package/$(BLD_HOST_OS) ] ; then \
-		if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
-			export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
-			fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
-				$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \
-		else \
-			$(call log) "[INFO]" "Packaging skipped at build depth $(BUILD_DEPTH)" ; \
-		fi ; \
-	fi
-
-upload:
-	if [ "$(BUILD_DEPTH)" -lt 2 ] ; then \
-		$(call log) "[INFO]" "Skip upload for BUILD_DEPTH $(BUILD_DEPTH)"; \
-	else \
-		if [ "$(BUILD_UPLOAD)" = "" ] ; then \
-			echo "Can't upload: BUILD_UPLOAD is not defined" >&2; \
-			exit 2 ; \
-		fi ; \
-		cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
-		if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
-			for name in $(IMG_NAME)* md5-$(IMG_NAME)* ; \
-			do \
-				chmod 664 $$name ; \
-				echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-				http -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-			done ; \
-		fi ; \
-		if [ "$(BUILD_UPLOAD_SOURCE)" = "true" ] ; then \
-			cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
-			if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
-				for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; \
-				do \
-					chmod 664 $$name ; \
-					echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-					http -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
-				done ; \
-			fi ; \
-		fi ; \
-	fi
-
-testExtraExtra:
-
-disabled:
-	if [ "$(BUILD_DEPTH)" -ge 5 -a "$(BLD_PRODUCT)" != ejs ] ; then \
+	if [ "$(BUILD_DEPTH)" -ge 5 ] ; then \
 		$(MAKE) test-installed ; \
 		$(MAKE) uninstall ; \
 		$(MAKE) test-removed ; \
@@ -180,15 +117,14 @@ disabled:
 		$(MAKE) test-uninstall-native-package ; \
 		$(MAKE) test-removed ; \
 	fi
-	if [ "$(BUILD_DEPTH)" -ge 4 ] ; then \
-	   	$(MAKE) leakTest ; \
+
+#	MOB - add Xcode
+test-projects:
+ifeq    ($(BLD_HOST_OS),WIN)
+	if [ "$(BUILD_DEPTH)" -ge 3 ] ; then \
+		$(BLD_TOOLS_DIR)/nativeBuild ; \
 	fi
-	if [ "$(BUILD_DEPTH)" -ge 5 ] ; then \
-	   	$(MAKE) benchTest ; \
-	fi
-	if [ "$(BUILD_DEPTH)" -ge 6 ] ; then \
-	   	$(MAKE) loadTest ; \
-	fi
+endif
 
 test-install-package:
 	name="$(BASE_NAME).tar.tar.gz" ; \
@@ -252,7 +188,7 @@ test-installed:
 	http -q $$port/test/test.pl ; \
 	http -q $$port/test/test.py ; \
 	echo Installed
-	# http -q $$port/test/test.ejs
+	#http -q $$port/test/test.ejs
 
 test-removed:
 	partial=0 ; \
@@ -268,9 +204,9 @@ test-removed:
 	[ $$partial = 1 ] && exit 255 ; \
 	echo Removed
 
-checkInstalled: installed-files
+checkInstalled: installedFiles
 
-installed-files:
+installedFiles:
 	( \
 	for d in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
 		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) \
@@ -299,19 +235,76 @@ cleanExtra:
 clobberExtra:
 	rm -fr $(BLD_OUT_DIR)
 
-# buildConfig.sh buildConfig.h $(BLD_OUT_DIR)/buildConfig.h:
+deploy: deploy-binary
 
-#
-#	Do a new top level build after incrementing the build number
-#
-newbuild: incVersion clean compile
+deploy-%:
+	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
+	if [ "$$ROOT_DIR" = "" ] ; then echo -n "Enter deployment directory : " ; read ROOT_DIR ; fi ; \
+	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
+		$$BROWSER --root=$$ROOT_DIR --bare --install --with-conf="$(CONF)" pre $$packs post ; \
+
+install: install-binary
+
+install-%:
+	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
+	[ "$$packs" = "binary dev" ] && BROWSER=--browser ; \
+	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
+		$$BROWSER --root=$(ROOT_DIR) --install $(INS_WITH) pre $$packs post
+
+uninstall: uninstall-binary
+
+uninstall-%:
+	packs=$* ; [ "$$packs" = "" ] && packs="binary dev" ; \
+	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
+		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
+	
+combo packageCombo:
+	$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) --package combo && \
+			$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) combo ; \
+
+flat packageFlat:
+	$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) --package flat && \
+	$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) flat ; \
+
+packageRelease:
+	if [ "$(BUILD_DEPTH)" -ge 2 ] ; then \
+		export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
+		fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
+			$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \
+	else \
+		$(call log) "[INFO]" "Packaging skipped at build depth $(BUILD_DEPTH)" ; \
+	fi
+
+package-only:
+	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
+
+upload:
+	if [ "$(BUILD_DEPTH)" -lt 2 ] ; then \
+		$(call log) "[INFO]" "Skip upload for BUILD_DEPTH $(BUILD_DEPTH)"; \
+	else \
+		if [ "$(BUILD_UPLOAD)" = "" ] ; then \
+			echo "Can't upload: missing a BUILD_UPLOAD authorization key" >&2; \
+			exit 2 ; \
+		fi ; \
+		cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
+		if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
+			for name in $(IMG_NAME)* md5-$(IMG_NAME)* ; do \
+				chmod 664 $$name ; \
+				echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+				http -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+			done ; \
+		fi ; \
+		if [ "$(BUILD_UPLOAD_SOURCE)" = "true" ] ; then \
+			cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
+			if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
+				for name in $(SRC_NAME)* md5-$(SRC_NAME)* ; do \
+					chmod 664 $$name ; \
+					echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+					http -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
+				done ; \
+			fi ; \
+		fi ; \
+	fi
 
 version:
 	echo $(BLD_VERSION)-$(BLD_NUMBER)
-
-incVersion:
-	@num=`expr $(BLD_NUMBER) + 1` ; \
-	cp build/product.config /tmp/build$$$$.tmp ; \
-	sed s/BLD_NUMBER=\"$(BLD_NUMBER)\"/BLD_NUMBER=\"$${num}\"/ </tmp/build$$$$.tmp >build/product.config
-	./configure
-

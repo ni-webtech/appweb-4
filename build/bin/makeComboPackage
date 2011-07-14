@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+#   makeComboPackage - Create combo package
+#
+#   This script creates ....
+#
+#   $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-combo.tgz
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+#
+################################################################################
+
+COMBO="${BLD_OUT_DIR}/releases/${BLD_PRODUCT}-${BLD_VERSION}-${BLD_NUMBER}-combo.tgz"
+GENERIC="${BLD_OUT_DIR}/releases/${BLD_PRODUCT}-combo.tgz"
+
+makeComboPackage() {
+    log Create Combo package
+    cd ${ROOT_DIR}
+    rm -f ${COMBO}
+    log Run "tar -cfz ${COMBO} ."
+    tar -czf ${COMBO} .
+    cd ${HOME}
+    rm -f "${GENERIC}"
+    ln -s ${COMBO} ${GENERIC}
+}
+
+makeComboPackage

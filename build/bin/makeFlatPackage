@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+#   makeFlatPackage - Create flat package
+#
+#   This script creates ....
+#
+#   $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-flat.tgz
+#
+#   Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+#
+################################################################################
+
+FLAT="${BLD_OUT_DIR}/releases/${BLD_PRODUCT}-${BLD_VERSION}-${BLD_NUMBER}-flat.tgz"
+GENERIC="${BLD_OUT_DIR}/releases/${BLD_PRODUCT}-flat.tgz"
+
+makeFlatPackage() {
+    log Create Flat package
+    cd ${ROOT_DIR}/${BLD_PRODUCT}-${BLD_VERSION}
+    find src -type f | xargs -I % mv % .
+    rm -fr doc src Makefile
+    cd ..
+    rm -f ${FLAT}
+    log Run "tar -cfz ${FLAT} ."
+    tar -czf ${FLAT} .
+    cd ${HOME}
+    rm -f "${GENERIC}"
+    ln -s ${FLAT} ${GENERIC}
+}
+
+makeFlatPackage
+
+#
+#   Local variables:
+#   tab-width: 4
+#   c-basic-offset: 4
+#   End:
+#   vim: sw=4 ts=4 noexpandtab
+#

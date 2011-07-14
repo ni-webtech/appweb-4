@@ -3,7 +3,7 @@
 /******************************************************************************/
 /* 
     This file is an amalgamation of all the individual source code files for the
-    .
+    MPR SSL.
   
     Catenating all the source into a single file makes embedding simpler and
     the resulting application faster, as many compilers can do whole file
@@ -16,7 +16,7 @@
 
 /************************************************************************/
 /*
- *  Start of file "../src/include/mprSsl.h"
+ *  Start of file "./out/inc/mprSsl.h"
  */
 /************************************************************************/
 
@@ -161,7 +161,7 @@ extern int mprCreateMatrixSslModule(bool lazy);
  */
 /************************************************************************/
 /*
- *  End of file "../src/include/mprSsl.h"
+ *  End of file "./out/inc/mprSsl.h"
  */
 /************************************************************************/
 
@@ -169,7 +169,7 @@ extern int mprCreateMatrixSslModule(bool lazy);
 
 /************************************************************************/
 /*
- *  Start of file "../src/ssl/mprMatrixssl.c"
+ *  Start of file "./src/ssl/mprMatrixssl.c"
  */
 /************************************************************************/
 
@@ -1064,7 +1064,7 @@ int mprCreateMatrixSslModule(bool lazy) { return -1; }
  */
 /************************************************************************/
 /*
- *  End of file "../src/ssl/mprMatrixssl.c"
+ *  End of file "./src/ssl/mprMatrixssl.c"
  */
 /************************************************************************/
 
@@ -1072,7 +1072,7 @@ int mprCreateMatrixSslModule(bool lazy) { return -1; }
 
 /************************************************************************/
 /*
- *  Start of file "../src/ssl/mprOpenssl.c"
+ *  Start of file "./src/ssl/mprOpenssl.c"
  */
 /************************************************************************/
 
@@ -2143,7 +2143,7 @@ int mprCreateOpenSslModule(bool lazy) { return -1; }
  */
 /************************************************************************/
 /*
- *  End of file "../src/ssl/mprOpenssl.c"
+ *  End of file "./src/ssl/mprOpenssl.c"
  */
 /************************************************************************/
 
@@ -2151,7 +2151,7 @@ int mprCreateOpenSslModule(bool lazy) { return -1; }
 
 /************************************************************************/
 /*
- *  Start of file "../src/ssl/mprSsl.c"
+ *  Start of file "./src/ssl/mprSsl.c"
  */
 /************************************************************************/
 
@@ -2424,7 +2424,7 @@ void mprVerifySslClients(MprSsl *ssl, bool on)
  */
 /************************************************************************/
 /*
- *  End of file "../src/ssl/mprSsl.c"
+ *  End of file "./src/ssl/mprSsl.c"
  */
 /************************************************************************/
 

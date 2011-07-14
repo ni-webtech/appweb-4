@@ -4,10 +4,10 @@
 #
 #   This script creates ....
 #
-#   ${BLD_PRODUCT}-bin-{version}-{build}-{OS}-{ARCH}.{FMT}.tar.gz
-#   ${BLD_PRODUCT}-dev-{version}-{build}.{FMT}.tar.gz
-#   ${BLD_PRODUCT}-doc-{version}-{build}.{FMT}.tar.gz
-#   ${BLD_PRODUCT}-src-{version}-{build}.{FMT}.tar.gz
+#   ${BLD_PRODUCT}-bin-{version}-{build}-{OS}-{ARCH}.{FMT}.tgz
+#   ${BLD_PRODUCT}-dev-{version}-{build}.{FMT}.tgz
+#   ${BLD_PRODUCT}-doc-{version}-{build}.{FMT}.tgz
+#   ${BLD_PRODUCT}-src-{version}-{build}.{FMT}.tgz
 #
 ################################################################################
 #
@@ -31,10 +31,12 @@
 #
 ################################################################################
 
+COMBO=0
 DRY_RUN=
+MD5=
 QUIET=0
 TASK=Package
-MD5=
+
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
 : ${ABS_BLD_REL_DIR:=$BLD_OUT_DIR/releases}
 
@@ -82,16 +84,11 @@ setup() {
 
     . ${BLD_TOP}/build/bin/makePackage.common
 
-    if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 ] ; then
+    if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 -a "$COMBO" != 1 ] ; then
         echo -e "\nWARNING: Non-root package. Installed files will be owned by `id -nu`\n"
     fi
-
     preparePrefixes
-
-    log Clean Image area
     mkdir -p ${ABS_BLD_REL_DIR}
-    ${RM} -fr ${ABS_BLD_REL_DIR}/${BLD_PRODUCT}-*
-    ${RM} -fr ${ABS_BLD_REL_DIR}/md5-${BLD_PRODUCT}-*
 
     #
     #   Remove extended attributes on Mac OS X
@@ -114,6 +111,7 @@ setup() {
         exit 255
     fi
 }
+
 
 patchSource() {
     local f
@@ -177,9 +175,9 @@ createArchives() {
         #
         if [ "$suffix" = "src" ] ; then
 
-            file=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}.tar`
+            file=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}.tgz`
             file="${ROOT_DIR}/$file"
-            ${RM} -f "${file}" "${file}.gz"
+            ${RM} -f "${file}"
             [ $BLD_BUILD_OS = WIN ] && file=`cygpath "${file}"`
 
             #
@@ -202,9 +200,8 @@ createArchives() {
 
             ${RM} -f ${file} ${file}.gz
 
-            log Run tar -cf ${file} --files-from=$fromFiles
-            tar -cf ${file} --files-from=$fromFiles
-            gzip ${file}
+            log Run tar -czf ${file} --files-from=$fromFiles
+            tar -czf ${file} --files-from=$fromFiles
 
             log Generate zip images for the src distribution
 
@@ -216,8 +213,8 @@ createArchives() {
             cd $HOME >/dev/null
 
         else
-            file=`createPackageName $name`.tar
-            ${RM} -f "${ROOT_DIR}/${file}" "${ROOT_DIR}/${file}.gz"
+            file=`createPackageName $name`.tgz
+            ${RM} -f "${ROOT_DIR}/${file}"
 
             createFileList "$listLoc" "${ROOT_DIR}/${dir}"
 
@@ -230,9 +227,8 @@ createArchives() {
             find $dir -type f -print > $fromFiles
             find $dir -type l -print >>$fromFiles
 
-            log Run "tar -cf ${file} --files-from=${fromFiles}"
-            tar -cf ${file} --files-from=${fromFiles}
-            gzip ${file}
+            log Run "tar -czf ${file} --files-from=${fromFiles}"
+            tar -czf ${file} --files-from=${fromFiles}
             if [ "$suffix" = "src" ] ; then
                 log Generate Zip images for the src distribution
                 cat "$dir/fileList.txt" | zip -q "${ROOT_DIR}/${file}" -@
@@ -285,10 +281,8 @@ sum() {
     file="$1"
     base=${file##*/}                # basename
     dir=${file%/*}                  # dirname
-
     cd "$dir" >/dev/null
-    log Checksum "$MD5 ${base}"
-    $MD5 "${base}" | awk '{ print $1 }' > "${dir}/md5-${base}.txt"
+    eval $MD5 "${base}" | awk '{ print $1 }' > "${dir}/md5-${base}.txt"
     chmod 755 "${dir}/md5-${base}.txt"
     chown `id -ru` "${dir}/md5-${base}.txt"
     cd $HOME >/dev/null
@@ -297,7 +291,7 @@ sum() {
 cleanup() {
     log Complete "Package Complete"
 
-    if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 ] ; then
+    if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 -a "$COMBO" != 1 ] ; then
         echo -e "\nWARNING: Non-root package. Installed files will be owned by `id -nu`\n"
     fi
     [ "$KEEP" != "1" ] && ${RM} -rf ${ROOT_DIR}
@@ -359,15 +353,13 @@ createEnvelopes() {
             ls -1 COPYRIGHT.TXT README.TXT LICENSE.TXT *.$fmt | grep -v "${BLD_PRODUCT}-src" | zip -q ${env} -@
             ls -1 COPYRIGHT.TXT README.TXT LICENSE.TXT *.$fmt | zip -q "${env}" -@
         else
-            env=${ROOT_DIR}/$name.tar
-            ${RM} -f $env ${env}.gz
+            env=${ROOT_DIR}/$name.tgz
+            ${RM} -f $env
             files="*.$fmt"
             srcPkg=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}.${fmt}`
             files=`echo $files | sed "s^$srcPkg^^"`
-            log Run "tar -cf `basename ${env}` COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files"
-            tar -cf ${env} COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files
-            log Run "gzip ${env}"
-            gzip ${env}
+            log Run "tar -czf `basename ${env}` COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files"
+            tar -czf ${env} COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files
         fi
         count=`expr $count + 1`
     done
@@ -420,6 +412,12 @@ while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
     dry|dry-run)
         DRY_RUN=1
         ;;
+    combo)
+        COMBO=1
+        ;;
+    keep)
+        KEEP=1
+        ;;
     quiet|-q)
         QUIET=1
         ;;
@@ -437,10 +435,19 @@ PACKS=$*
 PACKS=${PACKS:=binary dev}
 
 setup
-createArchives
-createScripts
-createPlatformPackages
-createEnvelopes
-copyImages
+
+if [ "$COMBO" = 1 ] ; then
+    if [ "$PACKS" = combo ] ; then
+        . ${BLD_TOOLS_DIR}/makeComboPackage
+    elif [ "$PACKS" = flat ] ; then
+        . ${BLD_TOOLS_DIR}/makeFlatPackage
+    fi
+else
+    createArchives
+    createScripts
+    createPlatformPackages
+    createEnvelopes
+    copyImages
+fi
 createChecksums
 cleanup
