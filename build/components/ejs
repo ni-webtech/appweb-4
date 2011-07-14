@@ -15,7 +15,8 @@ defineComponent() {
         else
             type=release
         fi
-        search="${search}:../ejs-master-${type}/out/lib:../ejs-master-${type}/out/lib:../ejs-master-${type}/out/bin"
+        search="${search}:../ejs-master-${type}/out/lib:../ejs-master-${type}/out/bin"
+        search="${search}:../ejs-master-${type}/out/inc"
     fi
 
     libdir=`probe --name libejs --dir --search "$search" "libejs" `
