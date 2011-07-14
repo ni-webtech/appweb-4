@@ -2,7 +2,7 @@
 #   Ejs
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ
+    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ type
 
     path="${1:-.}"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
@@ -10,7 +10,12 @@ defineComponent() {
     search="$path/out/lib:$path/out/inc:$path"
     if [ "${path}" = "." ] ; then
         search="${search}:../ejs/out/lib:../ejs/out/inc:../ejs/out/bin"
-        search="${search}:../ejs-master-release/out/lib:../ejs-master-release/out/lib:../ejs-master-release/out/bin"
+        if [ "$BLD_DEBUG" = 1 ] ; then
+            type=standard
+        else
+            type=release
+        fi
+        search="${search}:../ejs-master-${type}/out/lib:../ejs-master-${type}/out/lib:../ejs-master-${type}/out/bin"
     fi
 
     libdir=`probe --name libejs --dir --search "$search" "libejs" `
