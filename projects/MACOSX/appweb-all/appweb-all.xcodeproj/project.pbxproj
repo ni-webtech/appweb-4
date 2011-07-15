@@ -1670,7 +1670,6 @@
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
-					"-lmatrixsslstatic",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = libmprssl;
@@ -1703,7 +1702,6 @@
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
-					"-lmatrixsslstatic",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = libmprssl;
