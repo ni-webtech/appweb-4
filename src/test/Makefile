@@ -6,6 +6,7 @@
 
 BUILD_DEPTH		?= 2
 TEST_SYSTEM		:= 127.0.0.1:4100
+SKIP_STND_TEST	= 1
 
 include 		.makedep
 
@@ -24,21 +25,6 @@ compileExtra: 	$(TARGETS) $(MODULES)
 $(BLD_BIN_DIR)/testAppweb$(BLD_EXE): $(OBJECTS) $(call lib, appweb)
 	bld --exe $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "http $(BLD_APPWEB_LIBS)" \
 		testHttp$(BLD_OBJ) testAppweb$(BLD_OBJ)
-
-ifeq	($(BLD_CROSS),0)
-testExtra:
-	mkdir -p web/tmp
-	find . -name '*.mod' | xargs rm -f >/dev/null 2>&1 ; true
-	if [ ! -f $(BLD_BIN_DIR)/ejs ] ; then \
-		if ! which ejs >/dev/null ; then \
-			$(call log) "[Test]" "Skip unit tests. Required \"ejs\" is installed." ; \
-		else \
-			ejs $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH); \
-		fi ; \
-	else \
-		$(BLD_BIN_DIR)/ejs $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH); \
-	fi
-endif
 
 #
 #	Update the shbang path in testScript. Must be an absolute path on some systems and for valgrind.
@@ -112,7 +98,12 @@ scanUpdate:
 apacheBench:
 	ab -k -c 10 -n 1000 http://127.0.0.1:4010/bench.html 
 
-cleanExtra:
+testPrep:
+	mkdir -p web/tmp
+	rm -f web/tmp/*
+	find . -name '*.mod' | xargs rm -f >/dev/null 2>&1 ; true
+
+cleanExtra: testPrep
 	rm -f *.obj *.pdb
 	rm -f access.log error.log leak.log
 	rm -f $(MODULES) $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) testAppweb$(BLD_EXE)
@@ -124,8 +115,8 @@ cleanExtra:
 #	Don't copy this. Ensure you set minimal permissions on upload and temp directories
 #
 dependExtra:
-	mkdir -p web/upload web/tmp
-	chmod 777 web/upload web/tmp
+	mkdir -p web/tmp
+	chmod 777 web/tmp
 
 #
 #   Local variables:

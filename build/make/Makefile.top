@@ -100,7 +100,7 @@ dependExtra:
 #
 #	Top level test targets to test installing and removing packages
 #
-testExtra:
+testExtra::
 	if [ "$(BUILD_DEPTH)" -ge 5 ] ; then \
 		$(MAKE) test-projects ; \
 	fi
