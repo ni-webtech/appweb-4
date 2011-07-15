@@ -4875,7 +4875,6 @@ int mprStopCmd(MprCmd *cmd, int signal)
         signal = SIGTERM;
     }
     if (cmd->pid) {
-        cmd->disconnected = 1;
 #if BLD_WIN_LIKE
         return TerminateProcess(cmd->process, 2) == 0;
 #elif VXWORKS

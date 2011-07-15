@@ -364,18 +364,16 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
             httpFinalize(conn);
         }
     }
-    if (!cmd->disconnected) {
-        if (conn->state < HTTP_STATE_COMPLETE) {
-            if (cmd->pid && !(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
-                mprLog(7, "CGI: @@@ enable CGI events for channel %d", channel);
-                mprEnableCmdEvents(cmd, channel);
-            }
-            if (conn->connq->count > 0) {
-                httpEnableConnEvents(conn);
-            }
-        } else {
-            httpProcess(conn, NULL);
+    if (conn->state < HTTP_STATE_COMPLETE) {
+        if (cmd->pid && !(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
+            mprLog(7, "CGI: @@@ enable CGI events for channel %d", channel);
+            mprEnableCmdEvents(cmd, channel);
         }
+        if (conn->connq->count > 0) {
+            httpEnableConnEvents(conn);
+        }
+    } else {
+        httpProcess(conn, NULL);
     }
 }
 
@@ -496,7 +494,7 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
         if (!(cmd->userFlags & MA_CGI_SEEN_HEADER) && !parseHeader(conn, cmd)) {
             return -1;
         } 
-        if (!cmd->disconnected && cmd->userFlags & MA_CGI_SEEN_HEADER) {
+        if (cmd->userFlags & MA_CGI_SEEN_HEADER) {
             if (writeToClient(q, cmd, buf, channel) < 0) {
                 mprNop(0);
                 return -1;
