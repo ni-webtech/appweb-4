@@ -8,7 +8,7 @@
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
 files="$*"
 
-. `cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
+. `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
 
 for path in $files
 do

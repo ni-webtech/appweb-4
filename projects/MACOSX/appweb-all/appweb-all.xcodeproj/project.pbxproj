@@ -47,6 +47,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		C911C02E13CFB35200A5FC0E /* libappweb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DC30FD03FD9009C78E1 /* libappweb.dylib */; };
+		C911C03013CFB3EB00A5FC0E /* libpcre.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C911C02F13CFB3AB00A5FC0E /* libpcre.dylib */; };
 		C92D5C6B130DF56C0097EBA8 /* meta.c in Sources */ = {isa = PBXBuildFile; fileRef = C92D5C6A130DF56C0097EBA8 /* meta.c */; };
 		C938480F1123BD80002AD34B /* ejsHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C938480E1123BD80002AD34B /* ejsHandler.c */; };
 		C94086AF101A665B0019809C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
@@ -98,8 +100,6 @@
 		C9D817AE101D4C8E0039DD9D /* phpHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C97620700FD04E38009C78E1 /* phpHandler.c */; };
 		C9E4B73613C7F4F3005345FA /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9E4B73713C7F4F3005345FA /* libhttp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9817C51110D183800F241EF /* libhttp.dylib */; };
-		C9E4B73813C7F4F3005345FA /* libappweb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DC30FD03FD9009C78E1 /* libappweb.dylib */; };
-		C9E4B73E13C7F51D005345FA /* libpcre.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA70FD03FAA009C78E1 /* libpcre.dylib */; };
 		C9E4B74413C7F547005345FA /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C9E4B73F13C7F547005345FA /* espHandler.c */; };
 		C9E4B74513C7F547005345FA /* esp.h in Headers */ = {isa = PBXBuildFile; fileRef = C9E4B74013C7F547005345FA /* esp.h */; };
 		C9E4B74613C7F547005345FA /* esp.h in Headers */ = {isa = PBXBuildFile; fileRef = C9E4B74013C7F547005345FA /* esp.h */; };
@@ -357,13 +357,6 @@
 			remoteGlobalIDString = C9761DAD0FD03FBA009C78E1;
 			remoteInfo = libmprssl;
 		};
-		C9817C95110D200800F241EF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = C9761DA60FD03FAA009C78E1;
-			remoteInfo = libpcre;
-		};
 		C9817C9B110D202A00F241EF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
@@ -402,6 +395,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C911C02F13CFB3AB00A5FC0E /* libpcre.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C92D5C6A130DF56C0097EBA8 /* meta.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = meta.c; path = ../../../src/meta.c; sourceTree = SOURCE_ROOT; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -411,7 +405,6 @@
 		C95C31E80FC5292A00FB3105 /* appweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = appweb.c; path = ../../../src/server/appweb.c; sourceTree = SOURCE_ROOT; };
 		C96176F312DCE345002702E0 /* auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = auth.c; path = ../../../src/utils/auth.c; sourceTree = SOURCE_ROOT; };
 		C9761DA00FD03F94009C78E1 /* libmpr.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmpr.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9761DA70FD03FAA009C78E1 /* libpcre.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmprssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9761DC30FD03FD9009C78E1 /* libappweb.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libappweb.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9761E030FD04150009C78E1 /* http */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = http; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -577,10 +570,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9E4B73E13C7F51D005345FA /* libpcre.dylib in Frameworks */,
+				C911C03013CFB3EB00A5FC0E /* libpcre.dylib in Frameworks */,
+				C911C02E13CFB35200A5FC0E /* libappweb.dylib in Frameworks */,
 				C9E4B73613C7F4F3005345FA /* libmpr.dylib in Frameworks */,
 				C9E4B73713C7F4F3005345FA /* libhttp.dylib in Frameworks */,
-				C9E4B73813C7F4F3005345FA /* libappweb.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -683,7 +676,8 @@
 		C9AFCC480FC521150080E908 = {
 			isa = PBXGroup;
 			children = (
-				C9761DA70FD03FAA009C78E1 /* libpcre.dylib */,
+				C911C02F13CFB3AB00A5FC0E /* libpcre.dylib */,
+				C9761DC30FD03FD9009C78E1 /* libappweb.dylib */,
 				C9D81660101D32A40039DD9D /* Libraries */,
 				C9AFCC5D0FC521A10080E908 /* Headers */,
 				C9817BA3110D13BC00F241EF /* Dependencies */,
@@ -697,7 +691,6 @@
 			children = (
 				C9761DA00FD03F94009C78E1 /* libmpr.dylib */,
 				C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */,
-				C9761DC30FD03FD9009C78E1 /* libappweb.dylib */,
 				C9AFCC560FC521440080E908 /* appweb */,
 				C9761E030FD04150009C78E1 /* http */,
 				C9761E0A0FD0415A009C78E1 /* auth */,
@@ -901,7 +894,7 @@
 			);
 			name = libpcre;
 			productName = libpcre;
-			productReference = C9761DA70FD03FAA009C78E1 /* libpcre.dylib */;
+			productReference = C911C02F13CFB3AB00A5FC0E /* libpcre.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 		C9761DAD0FD03FBA009C78E1 /* libmprssl */ = {
@@ -935,7 +928,6 @@
 				C9817C5D110D189000F241EF /* PBXTargetDependency */,
 				C9817C5F110D189000F241EF /* PBXTargetDependency */,
 				C9817C94110D200800F241EF /* PBXTargetDependency */,
-				C9817C96110D200800F241EF /* PBXTargetDependency */,
 			);
 			name = libappweb;
 			productName = libappweb;
@@ -1460,11 +1452,6 @@
 			target = C9761DAD0FD03FBA009C78E1 /* libmprssl */;
 			targetProxy = C9817C93110D200800F241EF /* PBXContainerItemProxy */;
 		};
-		C9817C96110D200800F241EF /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = C9761DA60FD03FAA009C78E1 /* libpcre */;
-			targetProxy = C9817C95110D200800F241EF /* PBXContainerItemProxy */;
-		};
 		C9817C9C110D202A00F241EF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C9817C49110D183800F241EF /* libhttp */;
@@ -1643,10 +1630,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/lib;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
 				PREBINDING = NO;
 				PRODUCT_NAME = libpcre;

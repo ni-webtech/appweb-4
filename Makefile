@@ -18,6 +18,7 @@
 #		make install				# Call install-binary + install-dev
 #		make install-binary			# Install binary files
 #		make install-dev			# Install development libraries and headers
+#		make deploy					# Deploy binary files to a directory
 #
 #	To remove, use make uninstall-ITEM, where ITEM is a component above.
 #

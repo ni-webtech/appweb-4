@@ -113,8 +113,8 @@ checkSetup() {
     #   Convert paths to be absolute with a drive spec on windows
     #
     export BLD_TOP=`canonPath .`
-    BLD_TOOLS_DIR=${BLD_TOP}/build/bin
-    BLD_OUT_DIR=out
+    exprort BLD_TOOLS_DIR=${BLD_TOP}/build/bin
+    export BLD_OUT_DIR=out
     rm -rf $BLD_OUT_DIR
 
     #
@@ -2027,7 +2027,7 @@ doImports() {
         if [ "${f##*.}" = "h" ] ; then
             cp $f $BLD_OUT_DIR/inc
         elif [ ".${f##*.}" = "${SHOBJ}" ] ; then
-            getlib $f
+            ${BLD_TOOLS_DIR}/getlib $f
         else
             cp $f $BLD_OUT_DIR/lib
         fi

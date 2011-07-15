@@ -216,6 +216,11 @@ testStandard:
 #
 clean: $(BUILD_CHECK) cleanDirs cleanExtra 
 	rm -f $(CLEANIT) $(TARGETS) $(OBJECTS)
+ifeq ($(BLD_OS),WIN)
+	echo $(TARGETS)
+	t="$(TARGETS)" ; rm -f $${t//.exe/.pdb} ; rm -f $${t//.dll/.pdb} ; rm -f $${t//.dll/.exp} ; \
+        rm -f $${t//.dll/.lib} ; rm -f $${t//.dll/.lib} ; rm -f $${t//.dll/.def}
+endif
 
 cleanDirs:
 	@T=clean ; D="$(PRE_DIRS)" ; $(DO_RECURSE) ; D="$(POST_DIRS)" ; $(DO_RECURSE)
