@@ -32,26 +32,23 @@ defineComponent() {
     fi
     if [ "$libdir" != "" ] ; then
         imports="$libraries"
-    fi
-    incdir=`probe --name ejs.h --dir --search "$search" "ejs.h" `
-    if [ "$incdir" != "" ] ; then
-        headers="`echo $incdir/ejs*.h`"
-        # Currently using iflags below
-        # imports="$imports $headers"
-    fi
-
-    if [ "$libdir" != "" ] ; then
+        incdir=`probe --name ejs.h --dir --search "$search" "ejs.h" `
+        if [ "$incdir" != "" ] ; then
+            headers="`echo $incdir/ejs*.h`"
+            # Currently using iflags below
+            # imports="$imports $headers"
+        fi
         modules=`echo $libdir/*.mod`
         imports="$imports $modules"
+        http=`probe --exe --name http --search "$search" http`
+        if [ "$http" != "" ] ; then
+            imports="$imports $http"
+        fi
     fi
-
     if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
         if isdefined SQLITE ; then
             optional="$optional sqlite"
         fi
-    fi
-    if [ "$libs" != "" ] ; then
-        libs="ejs $libs pcre"
     fi
     builtin=`[ "$path" = "." -a -f src/include/ejs.h ] && echo --builtin`
     optional="$optional ssl"
@@ -71,7 +68,8 @@ defineComponent() {
             deps=
             present="--present 0"
         fi
-        ejsbin=`probe --exe --name ejs --search "$path:$path/out/bin:$SEARCH_PATH" ejs`
+        # ejsbin=`probe --exe --name ejs --search "$path:$path/out/bin:$SEARCH_PATH" ejs`
+        ejsbin=`probe --exe --name ejs --search "$search" ejs`
     fi
     configureComponent --libs "ejs $libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" \
         $builtin $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" \

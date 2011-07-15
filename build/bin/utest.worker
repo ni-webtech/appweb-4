@@ -75,8 +75,8 @@ public function cleanDir(path) {
  */
 public function sh(args): String {
     // App.log.activity("Run", "Run: " + args)
-    // return Cmd.sh(args)
-    return System.run(("/bin/sh -c \"" + args.replace(/\\/g, "\\\\") + "\"").trim('\n'))
+    // return System.run(("/bin/sh -c \"" + args.replace(/\\/g, "\\\\") + "\"").trim('\n'))
+    return Cmd.sh(args)
 }
 
 

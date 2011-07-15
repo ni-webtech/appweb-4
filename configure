@@ -2012,7 +2012,7 @@ postGen() {
 
 
 doImports() {
-    local f SHOBJ
+    local f SHOBJ ext
 
     SHOBJ=$BLD_HOST_SHOBJ
 
@@ -2024,12 +2024,15 @@ doImports() {
     do
         # Windows puts relative paths in BLD_IMPORTS using ${BLD_TOP}
         eval f="${f}"
-        if [ "${f##*.}" = "h" ] ; then
+        ext=".${f##*.}"
+        if [ "${ext}" = ".h" ] ; then
             cp $f $BLD_OUT_DIR/inc
-        elif [ ".${f##*.}" = "${SHOBJ}" ] ; then
+        elif [ "${ext}" = "${SHOBJ}" ] ; then
             ${BLD_TOOLS_DIR}/getlib $f
-        else
+        elif [ "${ext}" = ".mod" -o "${ext}" = ".a" ] ; then
             cp $f $BLD_OUT_DIR/lib
+        else
+            cp $f $BLD_OUT_DIR/bin
         fi
     done
 }

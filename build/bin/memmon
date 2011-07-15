@@ -6,7 +6,7 @@ if (App.args.length < 2) {
 
 let max = 0
 while (true) {
-    size = System.sh("memsize " + App.args[1]) 
+    size = Cmd.sh("memsize " + App.args[1]) 
     size = size cast Number
     if (size > max) {
         max = size
