@@ -113,7 +113,7 @@ checkSetup() {
     #   Convert paths to be absolute with a drive spec on windows
     #
     export BLD_TOP=`canonPath .`
-    exprort BLD_TOOLS_DIR=${BLD_TOP}/build/bin
+    export BLD_TOOLS_DIR=${BLD_TOP}/build/bin
     export BLD_OUT_DIR=out
     rm -rf $BLD_OUT_DIR
 
