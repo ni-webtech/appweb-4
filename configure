@@ -595,7 +595,6 @@ relativePath() {
     local count ccount seg commonDir commonLevels
 
     home="$PWD"
-
     dir="$1"
 
     if [ "BLD_HOST_OS" = "WIN" -o "$BLD_HOST_OS" = "WINCE" ] ; then
@@ -843,7 +842,7 @@ warnComponent() {
 #
 configureComponent() {
     local cflags dflags dependencies kind iflags imports ldflags libpaths libs name upperDep new present needed
-    local path withlibs withpaths upper priorMandatory priorPath emitter disable optional v tag builtin
+    local path withlibs withpaths upper priorMandatory priorPath emitter disable optional v tag builtin f newImports
 
     kind=$KIND
     builtin=0
@@ -988,6 +987,13 @@ configureComponent() {
         done
         iflags="$new"
     fi
+    newImports=
+    for f in $imports ; do
+        f=`relativePath "${f}"`
+        newImports="${f} $newImports"
+    done
+    imports="$newImports"
+
     if [ "$imports" != "" ] ; then
         BLD_IMPORTS="$imports $BLD_IMPORTS"
     fi
