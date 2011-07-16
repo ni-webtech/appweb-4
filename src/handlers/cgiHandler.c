@@ -494,7 +494,7 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
         if (!(cmd->userFlags & MA_CGI_SEEN_HEADER) && !parseHeader(conn, cmd)) {
             return -1;
         } 
-        if (cmd->userFlags & MA_CGI_SEEN_HEADER) {
+        if (cmd->userFlags & MA_CGI_SEEN_HEADER && conn->state > HTTP_STATE_BEGIN) {
             if (writeToClient(q, cmd, buf, channel) < 0) {
                 mprNop(0);
                 return -1;
