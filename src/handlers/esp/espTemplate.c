@@ -55,11 +55,7 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
                 mprPutStringToBuf(buf, out);
                 cp += 5;
             } else if (sncmp(cp, "${INC}", 6) == 0) {
-#if DEBUG_IDE   //MOB TEMP
-                mprPutStringToBuf(buf, BLD_ABS_INC_DIR);
-#else
                 mprPutStringToBuf(buf, getOutDir(BLD_INC_NAME));
-#endif
                 cp += 5;
             } else if (sncmp(cp, "${LIB}", 6) == 0) {
                 mprPutStringToBuf(buf, getOutDir(BLD_LIB_NAME));

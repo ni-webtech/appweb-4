@@ -1,0 +1,16 @@
+//
+//  shared.xcconfig in appweb-all
+//
+//  Copyright 2011 Embedthis Software. All rights reserved.
+//
+
+
+// MOB4[sdk=iphoneos*][arch=arm6] = blabla
+XXX_C = 1
+
+// OTHER_LDFLAGS=$(inherited) -framework EventKit
+
+
+XXX_B[variant=debug] = YES
+// This does works
+XXX_A[variant=debug] = "MyDef"

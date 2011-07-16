@@ -48,10 +48,9 @@ with --os=wince ld
 with --build --optional doxygen
 with --os=win --build --optional pkg
 
-# MOB - ned to find ejs first
 with mpr 
 with http
-with --host --optional matrixssl openssl ssl
+with --host --optional openssl ssl
 with --host --optional php
 
 with --optional ejs
