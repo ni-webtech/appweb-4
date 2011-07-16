@@ -30,7 +30,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
     HttpHost        *host;
     HttpAlias       *alias;
     HttpLoc         *loc, *cloc;
-    char            *path, *searchPath, *dir, *libDir;
+    char            *path, *searchPath, *dir;
 
     appweb = meta->appweb;
     http = appweb->http;
@@ -57,9 +57,11 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
 #if WIN
         searchPath = mprAsprintf("%s" MPR_SEARCH_SEP ".", dir);
 #else
-        libDir = mprJoinPath(mprGetPathParent(dir), BLD_LIB_NAME);
+{
+        char *libDir = mprJoinPath(mprGetPathParent(dir), BLD_LIB_NAME);
         searchPath = mprAsprintf("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
             mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_LIB_PREFIX: libDir);
+}
 #endif
         mprSetModuleSearchPath(searchPath);
 

@@ -595,7 +595,11 @@ relativePath() {
     local count ccount seg commonDir commonLevels
 
     home="$PWD"
-    dir="$1"
+
+    #
+    #   Expand ${BLD_TOP}
+    #
+    eval dir="$1"
 
     if [ "BLD_HOST_OS" = "WIN" -o "$BLD_HOST_OS" = "WINCE" ] ; then
         dir=`canonPath "$dir" | tr '[A-Z]' '[a-z]'`
@@ -1975,6 +1979,7 @@ showBuildConfig() {
             echo -e "  #   ${p}   ${dir}"
         fi
     done
+    echo -e "  #"
     echo
 }
 
@@ -2031,10 +2036,13 @@ doImports() {
         # Windows puts relative paths in BLD_IMPORTS using ${BLD_TOP}
         eval f="${f}"
         ext=".${f##*.}"
-        if [ "${ext}" = ".h" ] ; then
+        if [ ! -f "${f}" ] ; then
+            echo "Can't find ${f} to import"
+            exit 255
+        elif [ "${ext}" = ".h" ] ; then
             cp $f $BLD_OUT_DIR/inc
         elif [ "${ext}" = "${SHOBJ}" ] ; then
-            ${BLD_TOOLS_DIR}/getlib $f
+            QUIET=1 ${BLD_TOOLS_DIR}/getlib $f
         elif [ "${ext}" = ".mod" -o "${ext}" = ".a" ] ; then
             cp $f $BLD_OUT_DIR/lib
         else

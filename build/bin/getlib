@@ -24,13 +24,13 @@ do
         file=${file/.dll/.lib}
         path=`dirname "$path"`/$file
         if [ -f "$path" ] ; then
-            printf "%12s %s\n" "[Import]" $path
+            [ "$QUIET" != 1 ] && printf "%12s %s\n" "[Import]" $path
             cp "${path}" "${BLD_LIB_DIR}"
             chmod 755 ${BLD_LIB_DIR}/$file
         fi
     else
         file=`basename $path`
-        printf "%12s %s\n" "[Import]" $file
+        [ "$QUIET" != 1 ] && printf "%12s %s\n" "[Import]" $file
         cp "$path" "${BLD_LIB_DIR}/$file"
         chmod 755 "${BLD_LIB_DIR}/$file"
         if [ "${BLD_HOST_OS}" = "CYGWIN" ] ; then
