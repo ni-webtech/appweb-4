@@ -237,6 +237,34 @@
 			remoteGlobalIDString = C9761E090FD0415A009C78E1;
 			remoteInfo = auth;
 		};
+		C9B12BD613D176BF00470A96 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9761FFC0FD04D5C009C78E1;
+			remoteInfo = mod_cgi;
+		};
+		C9B12BD813D176BF00470A96 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9E4B72F13C7F4F3005345FA;
+			remoteInfo = mod_esp;
+		};
+		C9B12BDA13D176BF00470A96 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9D817A1101D4C2A0039DD9D;
+			remoteInfo = mod_php;
+		};
+		C9B12BDC13D176BF00470A96 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C97DCAAF101D4FE7008EB048;
+			remoteInfo = mod_ssl;
+		};
 		C9D817B2101D4CC70039DD9D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
@@ -520,11 +548,6 @@
 		C9AFCC480FC521150080E908 = {
 			isa = PBXGroup;
 			children = (
-				C9761DA00FD03F94009C78E1 /* libmpr.dylib */,
-				C9817C51110D183800F241EF /* libhttp.dylib */,
-				C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */,
-				C9B12BCA13D175C300470A96 /* libpcre.dylib */,
-				C9761DC30FD03FD9009C78E1 /* libappweb.dylib */,
 				C9B12BB413D1727100470A96 /* Configurations */,
 				C9AFCC570FC521440080E908 /* Products */,
 				C9D81660101D32A40039DD9D /* Libraries */,
@@ -602,6 +625,11 @@
 		C9D81660101D32A40039DD9D /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				C9761DA00FD03F94009C78E1 /* libmpr.dylib */,
+				C9817C51110D183800F241EF /* libhttp.dylib */,
+				C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */,
+				C9B12BCA13D175C300470A96 /* libpcre.dylib */,
+				C9761DC30FD03FD9009C78E1 /* libappweb.dylib */,
 			);
 			name = Libraries;
 			sourceTree = "<group>";
@@ -685,6 +713,10 @@
 			buildRules = (
 			);
 			dependencies = (
+				C9B12BD713D176BF00470A96 /* PBXTargetDependency */,
+				C9B12BD913D176BF00470A96 /* PBXTargetDependency */,
+				C9B12BDB13D176BF00470A96 /* PBXTargetDependency */,
+				C9B12BDD13D176BF00470A96 /* PBXTargetDependency */,
 				C9B12BAE13D170D400470A96 /* PBXTargetDependency */,
 				C9B12BB013D170D400470A96 /* PBXTargetDependency */,
 				C9B12BB213D170D400470A96 /* PBXTargetDependency */,
@@ -924,6 +956,7 @@
 				C93E6EFE11E83A3B00248470 /* prep */,
 				C9761D9F0FD03F94009C78E1 /* libmpr */,
 				C9761DAD0FD03FBA009C78E1 /* libmprssl */,
+				C9B12BC213D175C300470A96 /* libpcre */,
 				C9817C49110D183800F241EF /* libhttp */,
 				C9761DC20FD03FD9009C78E1 /* libappweb */,
 				C9761FFC0FD04D5C009C78E1 /* mod_cgi */,
@@ -934,7 +967,6 @@
 				C9761E020FD04150009C78E1 /* http */,
 				C9761E090FD0415A009C78E1 /* auth */,
 				C9408698101A665B0019809C /* testAppweb */,
-				C9B12BC213D175C300470A96 /* libpcre */,
 			);
 		};
 /* End PBXProject section */
@@ -1161,6 +1193,26 @@
 			isa = PBXTargetDependency;
 			target = C9761E090FD0415A009C78E1 /* auth */;
 			targetProxy = C9B12BB113D170D400470A96 /* PBXContainerItemProxy */;
+		};
+		C9B12BD713D176BF00470A96 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9761FFC0FD04D5C009C78E1 /* mod_cgi */;
+			targetProxy = C9B12BD613D176BF00470A96 /* PBXContainerItemProxy */;
+		};
+		C9B12BD913D176BF00470A96 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9E4B72F13C7F4F3005345FA /* mod_esp */;
+			targetProxy = C9B12BD813D176BF00470A96 /* PBXContainerItemProxy */;
+		};
+		C9B12BDB13D176BF00470A96 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9D817A1101D4C2A0039DD9D /* mod_php */;
+			targetProxy = C9B12BDA13D176BF00470A96 /* PBXContainerItemProxy */;
+		};
+		C9B12BDD13D176BF00470A96 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C97DCAAF101D4FE7008EB048 /* mod_ssl */;
+			targetProxy = C9B12BDC13D176BF00470A96 /* PBXContainerItemProxy */;
 		};
 		C9D817B3101D4CC70039DD9D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
