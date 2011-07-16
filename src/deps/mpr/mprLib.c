@@ -276,7 +276,6 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
     mp = malloc(mprSize);
     size = mprSize;
 #endif
-
     MPR = (Mpr*) GET_PTR(mp);
     INIT_BLK(mp, mprSize, 1, 0, NULL);
     SET_MANAGER(mp, manager);
