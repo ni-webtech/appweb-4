@@ -253,7 +253,7 @@ setup() {
     [ $TASK = Package ] && VERB=Copy
     [ $TASK = Remove ] && VERB=Removing
 
-    if [ ! -x "${BLD_BUILD_BIN_DIR}/dsi${BLD_EXE}" ] ; then
+    if [ ! -x "${BLD_BUILD_BIN_DIR}/dsi${BLD_BUILD_EXE}" ] ; then
         echo "Must compile first before $VERB"
         exit 255
     fi

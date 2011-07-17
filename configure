@@ -2023,7 +2023,7 @@ postGen() {
 
 
 doImports() {
-    local f SHOBJ ext
+    local f SHOBJ ext base
 
     SHOBJ=$BLD_HOST_SHOBJ
 
@@ -2031,15 +2031,16 @@ doImports() {
     # for kind in HOST BUILD ; do
     # done
 
-    for f in $BLD_IMPORTS
-    do
-        # Windows puts relative paths in BLD_IMPORTS using ${BLD_TOP}
+    for f in $BLD_IMPORTS ; do
+        # Expand relative paths in BLD_IMPORTS using ${BLD_TOP}
         eval f="${f}"
         ext=".${f##*.}"
+        base="${f##*/}"
         if [ ! -f "${f}" ] ; then
             echo "Can't find ${f} to import"
             exit 255
         elif [ "${ext}" = ".h" ] ; then
+            rm -f $BLD_OUT_DIR/inc/$base
             cp $f $BLD_OUT_DIR/inc
         elif [ "${ext}" = "${SHOBJ}" ] ; then
             QUIET=1 ${BLD_TOOLS_DIR}/getlib $f

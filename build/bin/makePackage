@@ -63,8 +63,8 @@ setup() {
     umask 022
     BLD_DATE=`date '+%c'`
 
-    if [ ! -x "${BLD_BUILD_BIN_DIR}/dsi${BLD_EXE}" ] ; then
-        echo "MOB2 Must compile first before installing"
+    if [ ! -x "${BLD_BUILD_BIN_DIR}/dsi${BLD_BUILD_EXE}" ] ; then
+        echo "Must compile first before installing"
         exit 255
     fi
 
