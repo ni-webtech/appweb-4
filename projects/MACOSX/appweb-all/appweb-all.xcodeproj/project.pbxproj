@@ -1164,7 +1164,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\nif [ \"$SKIP_INSTALL\" != YES ] ; then\n    mkdir -p $DSTROOT/etc/appweb/conf\n    cp $SRC/server/appweb.conf $DSTROOT/etc/appweb\n    cp $SRC/server/mime.types $DSTROOT/etc/appweb\n    cp -r $SRC/server/conf $DSTROOT/etc/appweb\n    cp $SRC/server/groups.db $SRC/server/users.db $DSTROOT/etc/appweb\n    cp $SRC/server/php.ini $DSTROOT/etc/appweb\n    cp -r $SRC/server/ssl $DSTROOT/etc/appweb\nfi";
+			shellScript = "cp -r $SRC/server/template/standard/conf $SRC/server/conf\ncp -r $SRC/server/template/standard/appweb.conf $SRC/server\n\nif [ \"$SKIP_INSTALL\" != YES ] ; then\n    mkdir -p $DSTROOT/etc/appweb/conf\n    cp $SRC/server/appweb.conf $DSTROOT/etc/appweb\n    cp $SRC/server/mime.types $DSTROOT/etc/appweb\n    cp -r $SRC/server/conf $DSTROOT/etc/appweb\n    cp $SRC/server/groups.db $SRC/server/users.db $DSTROOT/etc/appweb\n    cp $SRC/server/php.ini $DSTROOT/etc/appweb\n    cp -r $SRC/server/ssl $DSTROOT/etc/appweb\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 
