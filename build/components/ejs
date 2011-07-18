@@ -11,9 +11,10 @@ defineComponent() {
 
     deps="mpr http"
     optional="ssl"
+    libs="ejs"
     if [ "$pcre" = 1 ] ; then
         withlibs="pcre"
-        libs="ejs pcre"
+        libs="$libs pcre"
     fi
 
     if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
