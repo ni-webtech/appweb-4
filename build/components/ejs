@@ -7,11 +7,15 @@ defineComponent() {
     path="${1:-.}"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
     builtin=`[ "$path" = "." -a -f src/include/ejs.h ] && echo --builtin`
+    eval pcre=\$CFG_${kind}_PCRE
 
     deps="mpr http"
-    withlibs="pcre"
-    libs="pcre"
     optional="ssl"
+    if [ "$pcre" = 1 ] ; then
+        withlibs="pcre"
+        libs="ejs pcre"
+    fi
+
     if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
         if isdefined SQLITE ; then
             optional="$optional sqlite"
@@ -82,7 +86,7 @@ defineComponent() {
     else
         ejsbin="${BLD_BIN_DIR}/ejs"
     fi
-    configureComponent --libs "ejs $libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" \
+    configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" \
         $builtin $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" \
         --path "$ejsbin" ejs
 }

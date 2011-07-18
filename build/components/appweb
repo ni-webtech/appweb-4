@@ -2,65 +2,71 @@
 #   Appweb
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports moddir incdir iflags SHOBJ pcre
+    local deps libs optional path libdir builtin imports moddir incdir iflags SHOBJ pcre appweb present
 
     path="${1:-.}"
+        eval SHOBJ=\$BLD_${kind}_SHOBJ
+    builtin=`[ "$path" = "." -a -f src/include/appweb.h ] && echo --builtin`
+    eval pcre=\$CFG_${kind}_PCRE
 
-    if [ "$path" != "." ] ; then
-        libdir=`probe --name libappweb --dir --search "$path/out/lib:$path" "libappweb" `
-        moddir=`probe --name appweb.web --dir --search "$path/out/modules:$path" "appweb.web" `
+    deps="mpr http"
+    optional="ssl"
+    if [ "$pcre" = 1 ] ; then
+        withlibs="pcre"
+        libs="appweb pcre"
+    fi
+
+    if [ "$builtin" = "" ] ; then
+        search="$path/out/lib:$path/out/inc:$path"
+        if [ "${path}" = "." ] ; then
+            search="${search}:../appweb/out/lib:../appweb/out/inc:../appweb/out/bin"
+            if [ "$BLD_DEBUG" = 1 ] ; then
+                type=standard
+            else
+                type=release
+            fi
+            search="${search}:../appweb-master-${type}/out/lib:../appweb-master-${type}/out/bin"
+            search="${search}:../appweb-master-${type}/out/inc"
+        fi
+
+        libdir=`probe --name libappweb --dir --search "$search" "libappweb" `
         if [ "$libdir" = "" -a "$path" != "." ] ; then
             warnComponent appweb "Can't locate libappweb"
             return
         fi
-        eval SHOBJ=\$BLD_${kind}_SHOBJ
-        eval pcre=\$CFG_${kind}_PCRE
         libraries="`echo $libdir/libappweb* $libdir/libmpr* $libdir/libhttp*`"
         if [ "$pcre" = 1 ] ; then
             libraries="$libraries `echo $libdir/libpcre*`"
         fi
-        if [ "$BLD_FEATURE_APPWEB_ALL_IN_ONE" = 1 ] ; then
-            #if isdefined SQLITE ; then
-            #    libraries="$libraries `echo $libdir/libsqlite3*`"
-            #fi
-            true
-        fi
-        libraries="$libraries `echo $moddir/*${SHOBJ}`"
         if [ "$libdir" != "" ] ; then
             imports="$libraries"
         fi
-    fi
-    incdir=`probe --name appweb.h --dir --search "$path:$path/out/inc" "appweb.h" `
-    if [ "$incdir" != "" ] ; then
-        headers="`echo $incdir/appweb*.h`"
-        # imports="$imports $headers"
-    fi
-    if [ "$BLD_FEATURE_APPWEB_ALL_IN_ONE" = 1 ] ; then
-        #if isdefined SQLITE ; then
-        #    optional="$optional sqlite"
-        #fi
-        true
-    fi
-    if [ "$libs" != "" ] ; then
-        libs="appweb $libs pcre"
-    fi
-    builtin=`[ "$path" = "." -a -f src/include/appweb.h ] && echo --builtin`
-    optional="$optional ssl pcre"
-    deps="mpr http"
-    if [ "$builtin" = "" ] ; then
-        if [ "${libdir}" != "" ] ; then
-            libs="$libs appweb.web"
-        fi
-        if [ "${incdir}" != "" ] ; then
-            iflags=-I${incdir}
+
+        appweb=`probe --exe --name appweb --search "$search" appweb`
+
+        if [ "$libdir" != "" ] ; then
+            incdir=`probe --name appweb.h --dir --search "$search" "appweb.h" `
+            if [ "$incdir" != "" ] ; then
+                headers="`echo $incdir/appweb*.h`"
+                # Currently using iflags below
+                # imports="$imports $headers"
+            fi
+            http=`probe --exe --name http --search "$search" http`
+            if [ "$http" != "" ] ; then
+                imports="$imports $http"
+            fi
+            optional="$optional ssl pcre"
+            if [ "${incdir}" != "" ] ; then
+                iflags=-I${incdir}
+            fi
         else
             optional=
             libs=
             withlibs=
             deps=
+            present="--present 0"
         fi
-        appwebbin=`probe --name appweb --search "$path:$path/out/bin:$SEARCH_PATH" appweb`
     fi
-    configureComponent --libs "appweb $libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" $builtin \
-        --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" --path "$appwebbin" appweb
+    configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" $builtin \
+        $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" --path "$appweb" appweb
 }
