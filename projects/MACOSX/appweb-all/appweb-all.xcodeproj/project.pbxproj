@@ -43,17 +43,6 @@
 			name = All;
 			productName = All;
 		};
-		C976D55B13D3BBD4001BBFDF /* finalize */ = {
-			isa = PBXAggregateTarget;
-			buildConfigurationList = C976D55C13D3BBD4001BBFDF /* Build configuration list for PBXAggregateTarget "finalize" */;
-			buildPhases = (
-				C976D55F13D3BBDD001BBFDF /* ShellScript */,
-			);
-			dependencies = (
-			);
-			name = finalize;
-			productName = finalize;
-		};
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
@@ -993,7 +982,6 @@
 				C9761E020FD04150009C78E1 /* http */,
 				C9761E090FD0415A009C78E1 /* auth */,
 				C9408698101A665B0019809C /* testAppweb */,
-				C976D55B13D3BBD4001BBFDF /* finalize */,
 			);
 		};
 /* End PBXProject section */
@@ -1123,20 +1111,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "export BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_PCRE_IMPORTS";
-		};
-		C976D55F13D3BBDD001BBFDF /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "
-";
 		};
 		C976D56013D3BC05001BBFDF /* Deployment */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1745,20 +1719,6 @@
 			};
 			name = Release;
 		};
-		C976D55D13D3BBD4001BBFDF /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		C976D55E13D3BBD4001BBFDF /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 		C97DCAB9101D4FE7008EB048 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2188,15 +2148,6 @@
 			buildConfigurations = (
 				C9761FFE0FD04D5C009C78E1 /* Debug */,
 				C9761FFF0FD04D5C009C78E1 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		C976D55C13D3BBD4001BBFDF /* Build configuration list for PBXAggregateTarget "finalize" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C976D55D13D3BBD4001BBFDF /* Debug */,
-				C976D55E13D3BBD4001BBFDF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
