@@ -349,6 +349,7 @@
 		C94086D2101A672F0019809C /* testHttp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testHttp.c; path = ../../../src/test/testHttp.c; sourceTree = SOURCE_ROOT; };
 		C95C31E80FC5292A00FB3105 /* appweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = appweb.c; path = ../../../src/server/appweb.c; sourceTree = SOURCE_ROOT; };
 		C96176F312DCE345002702E0 /* auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = auth.c; path = ../../../src/utils/auth.c; sourceTree = SOURCE_ROOT; };
+		C972B80113D402B800A33EB9 /* buildConfig.default */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = buildConfig.default; sourceTree = "<group>"; };
 		C9761DA00FD03F94009C78E1 /* libmpr.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmpr.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmprssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9761DC30FD03FD9009C78E1 /* libappweb.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libappweb.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -376,7 +377,6 @@
 		C9817CF0110D234800F241EF /* makerom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = makerom.c; path = ../../../src/deps/mpr/makerom.c; sourceTree = SOURCE_ROOT; };
 		C9A26CED13D1787B007A3D7C /* mod_ejs.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_ejs.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9AFCC560FC521440080E908 /* appweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appweb; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9B12B7F13D16F2000470A96 /* buildConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buildConfig.h; path = ../../../out/inc/buildConfig.h; sourceTree = "<group>"; };
 		C9B12BCA13D175C300470A96 /* libpcre.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9D817AD101D4C2A0039DD9D /* mod_php.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_php.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9E4B73D13C7F4F3005345FA /* mod_esp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_esp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -547,6 +547,7 @@
 		C95C31E70FC528C700FB3105 /* server */ = {
 			isa = PBXGroup;
 			children = (
+				C976D54113D35433001BBFDF /* appweb.h */,
 				C95C31E80FC5292A00FB3105 /* appweb.c */,
 				C9817C1C110D170500F241EF /* config.c */,
 				C9817C1E110D170500F241EF /* convenience.c */,
@@ -611,7 +612,6 @@
 				C9B12BB413D1727100470A96 /* Configurations */,
 				C9AFCC570FC521440080E908 /* Products */,
 				C9D81660101D32A40039DD9D /* Libraries */,
-				C9AFCC5D0FC521A10080E908 /* Headers */,
 				C9AFCC5C0FC5219B0080E908 /* Source */,
 			);
 			sourceTree = "<group>";
@@ -647,14 +647,6 @@
 			name = Source;
 			sourceTree = "<group>";
 		};
-		C9AFCC5D0FC521A10080E908 /* Headers */ = {
-			isa = PBXGroup;
-			children = (
-				C976D54113D35433001BBFDF /* appweb.h */,
-			);
-			name = Headers;
-			sourceTree = "<group>";
-		};
 		C9AFCC6A0FC522600080E908 /* mpr */ = {
 			isa = PBXGroup;
 			children = (
@@ -668,7 +660,7 @@
 		C9B12BB413D1727100470A96 /* Configurations */ = {
 			isa = PBXGroup;
 			children = (
-				C9B12B7F13D16F2000470A96 /* buildConfig.h */,
+				C972B80113D402B800A33EB9 /* buildConfig.default */,
 			);
 			name = Configurations;
 			sourceTree = "<group>";
@@ -1018,7 +1010,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc\nexit 0";
+			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc $OUT/lib\n\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.default -nt $OUT/inc/buildConfig.h ] ; then\n    # echo Install buildConfig.default to $OUT/inc/buildConfig.h\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.default $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\nfi\nexit 0";
 		};
 		C976D54A13D35902001BBFDF /* Export Headers */ = {
 			isa = PBXShellScriptBuildPhase;

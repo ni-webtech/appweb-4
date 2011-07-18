@@ -1,0 +1,242 @@
+//
+//  Appweb definitions when building in Xcode.
+//  
+//  This is a hand-customized buildConfig.h. You may use the configure program to create a new version.
+//
+
+//
+//  Key product settings
+//
+#define BLD_APPWEB_PRODUCT 1
+#define BLD_PRODUCT "appweb"
+#define BLD_NAME "Embedthis Appweb"
+#define BLD_TYPE "DEBUG"
+#define BLD_VERSION "4.0.0"
+#define BLD_NUMBER "B0"
+#define BLD_TUNE MPR_TUNE_SIZE
+#define BLD_CHAR_LEN 1
+#define BLD_CHAR char
+#define BLD_DEFAULTS "standard"
+#define BLD_COMPONENTS "   ar cc make nm strip ranlib doxygen mpr http openssl ssl pcre dir cgi esp appweb  "
+#define BLD_EMBEDTHIS 0
+#define BLD_DEBUG 1
+
+//
+//  Version information
+//
+#define BLD_NUMBER_ONLY "B0"
+#define BLD_MAJOR_VERSION 4
+#define BLD_MINOR_VERSION 0
+#define BLD_PATCH_VERSION 0
+#define BLD_VNUM "4000000"
+
+//
+//  Other product settings
+//
+#define BLD_COMPANY "Embedthis"
+#define BLD_DIRS "build src test all doc samples projects package releases"
+#define BLD_CLEAN_INSTALL "0"
+#define BLD_LICENSE "gpl"
+#define BLD_COMMERCIAL "0"
+
+//
+//  Host and build system
+//
+#define BLD_HOST_SYSTEM "x86_64-apple-macosx"
+#define BLD_BUILD_SYSTEM "x86_64-apple-macosx"
+#define BLD_CROSS "0"
+
+//
+//  Host system settings
+//
+#define BLD_HOST_OS "MACOSX"
+#define BLD_HOST_CPU_ARCH MPR_CPU_IX64
+#define BLD_HOST_CPU "x86_64"
+#define BLD_HOST_CPU_UPPER "X86_64"
+#define BLD_HOST_CPU_MODEL ""
+#define BLD_HOST_DIST "Apple"
+#define BLD_HOST_DIST_VER "10.6.7"
+#define BLD_HOST_UNIX 1
+#define BLD_HOST_WIN 0
+
+//
+//  Build system settings
+//
+#define BLD_BUILD_OS "MACOSX"
+#define BLD_BUILD_CPU_ARCH MPR_CPU_IX64
+#define BLD_BUILD_CPU "x86_64"
+#define BLD_BUILD_CPU_UPPER "X86_64"
+#define BLD_BUILD_CPU_MODEL ""
+#define BLD_BUILD_UNIX 1
+#define BLD_BUILD_WIN 0
+
+//
+//  System and installation directories
+//
+#define BLD_ROOT_PREFIX "/"
+#define BLD_PREFIX "/usr"
+#define BLD_CFG_PREFIX "/etc/appweb"
+#define BLD_BIN_PREFIX "/usr/lib/appweb/bin"
+#define BLD_DOC_PREFIX "/usr/lib/appweb/doc"
+#define BLD_INC_PREFIX "/usr/lib/appweb/inc"
+#define BLD_JEM_PREFIX "/usr/lib/appweb/jems"
+#define BLD_LIB_PREFIX "/usr/lib/appweb/lib"
+#define BLD_LOG_PREFIX "/var/log/appweb"
+#define BLD_MAN_PREFIX "/usr/lib/appweb/man"
+#define BLD_PRD_PREFIX "/usr/lib/appweb"
+#define BLD_SAM_PREFIX "/usr/lib/appweb/samples"
+#define BLD_SRC_PREFIX "/usr/src/appweb-4.0.0"
+#define BLD_VER_PREFIX "/usr/lib/appweb"
+#define BLD_WEB_PREFIX "/var/www/appweb-default"
+
+//
+//  Relative native build directories
+//
+#define BLD_BUILD_BIN_DIR "${BLD_OUT_DIR}/bin"
+#define BLD_BUILD_LIB_DIR "${BLD_OUT_DIR}/lib"
+
+//
+//  Standard feature selections
+//
+#define BLD_FEATURE_ASSERT 1
+#define BLD_FEATURE_DEVICE PocketPC2003
+#define BLD_FEATURE_FLOAT 1
+#define BLD_FEATURE_LEGACY_API 0
+#define BLD_FEATURE_VALLOC 1
+
+//
+//  Appweb features
+//
+#define BLD_APPWEB_PRODUCT 1
+#define BLD_FEATURE_AUTH_FILE 1
+#define BLD_FEATURE_AUTH_PAM 0
+#define BLD_FEATURE_CONFIG template/standard
+#define BLD_FEATURE_ROMFS 0
+
+
+//
+//  Components
+//
+#define BLD_FEATURE_HTTP 1
+#define BLD_FEATURE_OPENSSL 1
+#define BLD_FEATURE_SSL 1
+#define BLD_FEATURE_PCRE 1
+#define BLD_FEATURE_DIR 1
+#define BLD_FEATURE_CGI 1
+#define BLD_FEATURE_ESP 1
+#define BLD_FEATURE_APPWEB 1
+#define BLD_FEATURE_EJS 0
+#define BLD_FEATURE_PHP 0
+
+//
+//  Default port configuration
+//
+#define BLD_HTTP_PORT 7777
+#define BLD_SSL_PORT 4443
+
+//
+//  File extensions
+//
+#define BLD_HOST_ARCH ".a"
+#define BLD_HOST_EXE ""
+#define BLD_HOST_OBJ ".o"
+#define BLD_HOST_PIOBJ ".o"
+#define BLD_HOST_CLASS ".class"
+#define BLD_HOST_SHLIB ".dylib"
+#define BLD_HOST_SHOBJ ".dylib"
+
+//
+//  Operating system and CPU settings
+//
+#define MACOSX 1
+#define BLD_OS "MACOSX"
+#define BLD_CPU_ARCH MPR_CPU_IX64
+#define BLD_CPU "x86_64"
+#define BLD_CPU_UPPER "X86_64"
+#define BLD_CPU_MODEL ""
+#define BLD_DIST "Apple"
+#define BLD_DIST_VER "10.6.7"
+#define BLD_UNIX_LIKE 1
+#define BLD_WIN_LIKE 0
+
+//
+//  Compiler and linker flags
+//
+#define BLD_CFLAGS ""
+#define BLD_DFLAGS ""
+#define BLD_IFLAGS ""
+#define BLD_LDFLAGS ""
+#define BLD_JFLAGS ""
+#define BLD_CPPFLAGS ""
+
+//
+//  File extensions
+//
+#define BLD_ARCH ".a"
+#define BLD_EXE ""
+#define BLD_CLASS ".class"
+#define BLD_SHLIB ".dylib"
+#define BLD_SHOBJ ".dylib"
+#define BLD_LIB ".dylib"
+#define BLD_OBJ ".o"
+#define BLD_PIOBJ ".o"
+
+//
+//  Output directories
+//
+#define BLD_OUT_DIR "${BLD_TOP}/out"
+#define BLD_TOOLS_DIR "${BLD_TOP}/build/bin"
+#define BLD_BIN_NAME "bin"
+#define BLD_LIB_NAME "lib"
+#define BLD_OBJ_NAME "obj"
+#define BLD_INC_NAME "inc"
+#define BLD_BIN_DIR "${BLD_OUT_DIR}/bin"
+#define BLD_OBJ_DIR "${BLD_OUT_DIR}/obj"
+#define BLD_LIB_DIR "${BLD_OUT_DIR}/lib"
+#define BLD_INC_DIR "${BLD_OUT_DIR}/inc"
+
+//
+//  Tools
+//
+#define BLD_AR "/usr/bin/ar"
+#define BLD_CC "/usr/bin/cc"
+#define BLD_MAKE "/usr/bin/make"
+#define BLD_NM "/usr/bin/nm"
+#define BLD_STRIP "/usr/bin/strip"
+#define BLD_RANLIB "/usr/bin/ranlib"
+#define BLD_DOXYGEN "/usr/local/bin/doxygen"
+
+//
+//  Compilation controls
+//
+#define BLD_CC_DOUBLE_BRACES 1
+#define BLD_CC_DYN_LOAD 1
+#define BLD_CC_MTUNE 1
+#define BLD_CC_MMU 1
+#define BLD_CC_WARN_UNUSED 0
+#define BLD_CC_WARN_64TO32 1
+#define BLD_CC_EDITLINE 1
+#define BLD_CC_PAM 0
+#define BLD_CC_STACK_PROTECTOR 1
+#define BLD_CC_SYNC 1
+#define BLD_CC_UNNAMED_UNIONS 1
+
+//
+//  Libraries
+//
+#define BLD_MPR_LIBS "mpr"
+#define BLD_HTTP_LIBS "http"
+#define BLD_OPENSSL_LIBS "ssl crypto"
+#define BLD_SSL_LIBS "mprssl ssl crypto mpr"
+#define BLD_PCRE_LIBS "pcre"
+#define BLD_APPWEB_LIBS "appweb mprssl ssl crypto mpr pcre http"
+#define BLD_SSL_WITHLIBS "ssl crypto mpr"
+#define BLD_APPWEB_WITHLIBS "mprssl ssl crypto mpr pcre http"
+
+//
+//  Imports
+//
+#define BLD_IMPORTS "${BLD_TOP}/src/deps/pcre/pcre.h  ${BLD_TOP}/src/deps/http/http.h  ${BLD_TOP}/src/deps/mpr/mprSsl.h ${BLD_TOP}/src/deps/mpr/mpr.h  "
+#define BLD_MPR_IMPORTS "${BLD_TOP}/src/deps/mpr/mprSsl.h ${BLD_TOP}/src/deps/mpr/mpr.h "
+#define BLD_HTTP_IMPORTS "${BLD_TOP}/src/deps/http/http.h "
+#define BLD_PCRE_IMPORTS "${BLD_TOP}/src/deps/pcre/pcre.h "
