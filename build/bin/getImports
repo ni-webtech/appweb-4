@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+#   getImports -- Get imports (used by xcode projects)
+#
+#   Usage: getImports dest files ...
+#
+#   Copyright (c) Embedthis LLC, 2003-2011. All Rights Reserved.
+#
+
+DEST=$1
+shift
+IMPORTS=$*
+
+export BLD_TOP=$TOP
+export BLD_TOOLS_DIR=$BLD_TOP/build/bin
+export BLD_OUT_DIR=$BLD_TOP/out
+export BLD_LIB_DIR=$DEST
+
+for f in $IMPORTS ; do
+    eval f="${f}"
+    base="${f##*/}"
+    ext=".${f##*.}"
+    if [ ! -f "${f}" ] ; then
+        echo "Can't find ${f} to import"
+        exit 255
+    elif [ "${ext}" = ".h" ] ; then
+        rm -f $BLD_OUT_DIR/inc/$base
+        cp $f $BLD_OUT_DIR/inc
+    elif [ "${ext}" = "${SHOBJ}" ] ; then
+        QUIET=1 ${BLD_TOOLS_DIR}/getlib $f
+    elif [ "${ext}" = ".mod" -o "${ext}" = ".a" ] ; then
+        # cp $f $BLD_OUT_DIR/lib
+        cp $f $DEST
+    else
+        # cp $f $BLD_OUT_DIR/bin
+        cp $f $DEST
+    fi
+done

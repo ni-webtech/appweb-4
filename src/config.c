@@ -514,7 +514,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     MprModule   *module;
     MprOff      onum;
     char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *ip;
-    char        *names, *type, *items, *include, *exclude, *when, *mimeTypes;
+    char        *names, *type, *items, *include, *exclude, *when, *mimeTypes, *lib, *sep;
     ssize       len;
     int         port, rc, code, num, colonCount, mask, level;
 
@@ -1084,7 +1084,9 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
         } else if (scasecmp(key, "LoadModulePath") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
-            path = sjoin(value, MPR_SEARCH_SEP, mprGetAppDir(meta), NULL);
+            sep = MPR_SEARCH_SEP;
+            lib = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
+            path = sjoin(value, sep, mprGetAppDir(), sep, lib, sep, BLD_LIB_PREFIX, NULL);
             mprSetModuleSearchPath(path);
             return 1;
 
