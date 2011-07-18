@@ -36,7 +36,14 @@ defineComponent() {
             warnComponent ejs "Can't locate libejs"
             return
         fi
-        libraries="`echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ}`"
+        for lib in `echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ}` ; do
+            if [ ! -f "$lib" ] ; then
+                warnComponent ejs "Ejs is not correctly built. Missing $lib"
+                echo "Can't use ejs. Ejs is not correctly built. Missing $lib"
+                return
+            fi
+            libraries="$lib $libraries"
+        done
         if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
             if isdefined SQLITE ; then
                 libraries="$libraries `echo $libdir/libsqlite3*`"
