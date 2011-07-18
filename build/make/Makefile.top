@@ -68,7 +68,7 @@ endif
 
 diff import sync:
 	for dep in $(DEPS) ; do \
-		$(BLD_TOOLS_DIR)/import.sh --$@ ../$$dep/out/releases/$$dep-combo.tgz ; \
+		$(BLD_TOOLS_DIR)/syncup --$@ ../$$dep/out/releases/$$dep-combo.tgz ; \
 	done
 	echo
 
