@@ -11,7 +11,7 @@
 			isa = PBXAggregateTarget;
 			buildConfigurationList = C93E6F0311E83A6200248470 /* Build configuration list for PBXAggregateTarget "prep" */;
 			buildPhases = (
-				C93E6EFD11E83A3B00248470 /* ShellScript */,
+				C93E6EFD11E83A3B00248470 /* Initialize */,
 			);
 			dependencies = (
 			);
@@ -721,7 +721,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = C9761DCF0FD03FE7009C78E1 /* Build configuration list for PBXNativeTarget "libmpr" */;
 			buildPhases = (
-				C976D54F13D3A977001BBFDF /* Import Libraries and Headers */,
+				C9EA7DEF13D4E0280035EB46 /* Import Libraries and Headers */,
 				C9761D9D0FD03F94009C78E1 /* Sources */,
 				C9761D9E0FD03F94009C78E1 /* Frameworks */,
 			);
@@ -878,7 +878,7 @@
 			buildPhases = (
 				C9AFCC530FC521440080E908 /* Sources */,
 				C9AFCC540FC521440080E908 /* Frameworks */,
-				C976D56113D3BD09001BBFDF /* Deployment */,
+				C976D56113D3BD09001BBFDF /* Deploy */,
 			);
 			buildRules = (
 			);
@@ -987,18 +987,22 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		C93E6EFD11E83A3B00248470 /* ShellScript */ = {
+		C93E6EFD11E83A3B00248470 /* Initialize */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
+				/tmp/a.tmp,
 			);
+			name = Initialize;
 			outputPaths = (
+				/tmp/b.tmp,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc $OUT/lib\n\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.default -nt $OUT/inc/buildConfig.h ] ; then\n    # echo Install buildConfig.default to $OUT/inc/buildConfig.h\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.default $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\nfi\nexit 0";
+			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\n\nmkdir -p $OUT/inc $OUT/lib\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.default -nt $OUT/inc/buildConfig.h ] ; then\n    # echo Install buildConfig.default to $OUT/inc/buildConfig.h\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.default $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\nfi\nexit 0";
+			showEnvVarsInLog = 0;
 		};
 		C976D54A13D35902001BBFDF /* Export Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1070,20 +1074,6 @@
 			shellPath = /bin/sh;
 			shellScript = "DIR=$BUILT_PRODUCTS_DIR\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_PHP\" = 1 ] ; then\n    $BLD_TOOLS_DIR/getImports $DIR $BLD_PHP_IMPORTS\nelse\n    if [ ! -f \"$DIR/libphp5.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o $DIR/libphp5.dylib /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\nfi";
 		};
-		C976D54F13D3A977001BBFDF /* Import Libraries and Headers */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Import Libraries and Headers";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "export BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_MPR_IMPORTS";
-		};
 		C976D55013D3A9FB001BBFDF /* Import Libraries and Headers */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1124,21 +1114,35 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "DEST=$BUILT_PRODUCTS_DIR\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_EJS\" = 1 ] ; then\n    if [ \"$SKIP_INSTALL\" != YES ] ; then\n        echo cp $OUT/lib/*.mod $DSTROOT\n    fi\nfi";
+			shellScript = "DEST=$BUILT_PRODUCTS_DIR\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_EJS\" = 1 ] ; then\n    if [ \"$SKIP_INSTALL\" != YES ] ; then\n        cp $OUT/lib/*.mod $DSTROOT\n    fi\nfi";
 		};
-		C976D56113D3BD09001BBFDF /* Deployment */ = {
+		C976D56113D3BD09001BBFDF /* Deploy */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = Deployment;
+			name = Deploy;
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cp -r $SRC/server/template/standard/conf $SRC/server/conf\ncp -r $SRC/server/template/standard/appweb.conf $SRC/server\n\nif [ \"$SKIP_INSTALL\" != YES ] ; then\n    mkdir -p $DSTROOT/etc/appweb/conf\n    cp $SRC/server/appweb.conf $DSTROOT/etc/appweb\n    cp $SRC/server/mime.types $DSTROOT/etc/appweb\n    cp -r $SRC/server/conf $DSTROOT/etc/appweb\n    cp $SRC/server/groups.db $SRC/server/users.db $DSTROOT/etc/appweb\n    cp $SRC/server/php.ini $DSTROOT/etc/appweb\n    cp -r $SRC/server/ssl $DSTROOT/etc/appweb\nfi";
+		};
+		C9EA7DEF13D4E0280035EB46 /* Import Libraries and Headers */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Import Libraries and Headers";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\nexport BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_MPR_IMPORTS";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1444,17 +1448,9 @@
 		C94086B1101A665B0019809C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = /usr/local/bin;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
 				PRODUCT_NAME = testAppweb;
 				SKIP_INSTALL = YES;
 			};
@@ -1463,37 +1459,21 @@
 		C94086B2101A665B0019809C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = /usr/local/bin;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
 				PRODUCT_NAME = testAppweb;
 				SKIP_INSTALL = YES;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C9761DA10FD03F95009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
 				EXECUTABLE_PREFIX = "";
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
 				HEADER_SEARCH_PATHS = "$(inherited)";
-				LD_DYLIB_INSTALL_NAME = "@rpath/$(EXECUTABLE_PATH)";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
 				PRODUCT_NAME = libmpr;
 			};
 			name = Debug;
@@ -1501,19 +1481,11 @@
 		C9761DA20FD03F95009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
 				HEADER_SEARCH_PATHS = "$(inherited)";
-				LD_DYLIB_INSTALL_NAME = "@rpath/$(EXECUTABLE_PATH)";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
 				PRODUCT_NAME = libmpr;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -1549,7 +1521,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
@@ -1593,7 +1564,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
@@ -1608,15 +1578,8 @@
 		C9761E050FD04151009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				INSTALL_PATH = /usr/lib/appweb/bin;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
 				PRODUCT_NAME = http;
 			};
 			name = Debug;
@@ -1624,30 +1587,17 @@
 		C9761E060FD04151009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				INSTALL_PATH = /usr/lib/appweb/bin;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
 				PRODUCT_NAME = http;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C9761E0C0FD0415B009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				INSTALL_PATH = /usr/lib/appweb/bin;
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
 				PRODUCT_NAME = auth;
 			};
 			name = Debug;
@@ -1655,15 +1605,9 @@
 		C9761E0D0FD0415B009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				INSTALL_PATH = /usr/lib/appweb/bin;
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
 				PRODUCT_NAME = auth;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -1709,7 +1653,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
@@ -1741,7 +1684,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
@@ -1775,7 +1717,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
@@ -1814,7 +1755,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
 				HEADER_SEARCH_PATHS = (
@@ -1837,12 +1777,13 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
 				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
+				BBIN = $SRCROOT/../../../build/bin;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 4.0.0;
 				DEPLOYMENT_LOCATION = YES;
-				DEPLOYMENT_POSTPROCESSING = NO;
 				DSTROOT = /tmp/appweb.dst;
-				DYLIB_COMPATIBILITY_VERSION = 4.0.0;
-				DYLIB_CURRENT_VERSION = 4.0.0;
+				DYLIB_COMPATIBILITY_VERSION = "$(CURRENT_PROJECT_VERSION)";
+				DYLIB_CURRENT_VERSION = "$(CURRENT_PROJECT_VERSION)";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
@@ -1868,12 +1809,13 @@
 					"-Wl,-rpath,@executable_path/../lib",
 					"-Wl,-rpath,@executable_path/",
 					"-Wl,-rpath,@loader_path/",
+					"-lcrypto",
+					"-lssl",
 				);
 				OUT = "$(PROJECT_DIR)/../../../out";
-				PREBINDING = NO;
-				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = YES;
 				SKIP_INSTALL = NO;
 				SRC = "$(PROJECT_DIR)/../../../src";
+				STRIP_INSTALLED_PRODUCT = NO;
 				TOP = "$(PROJECT_DIR)/../../..";
 			};
 			name = Debug;
@@ -1883,12 +1825,13 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
 				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
+				BBIN = $SRCROOT/../../../build/bin;
 				COPY_PHASE_STRIP = YES;
+				CURRENT_PROJECT_VERSION = 4.0.0;
 				DEPLOYMENT_LOCATION = YES;
-				DEPLOYMENT_POSTPROCESSING = NO;
 				DSTROOT = /tmp/appweb.dst;
-				DYLIB_COMPATIBILITY_VERSION = 4.0.0;
-				DYLIB_CURRENT_VERSION = 4.0.0;
+				DYLIB_COMPATIBILITY_VERSION = "$(CURRENT_PROJECT_VERSION)";
+				DYLIB_CURRENT_VERSION = "$(CURRENT_PROJECT_VERSION)";
 				HEADER_SEARCH_PATHS = $OUT/inc;
 				INSTALL_PATH = /usr/lib/appweb/lib;
 				LD_DYLIB_INSTALL_NAME = "@rpath/$(EXECUTABLE_PATH)";
@@ -1897,6 +1840,8 @@
 					"-Wl,-rpath,@executable_path/../lib",
 					"-Wl,-rpath,@executable_path/",
 					"-Wl,-rpath,@loader_path/",
+					"-lcrypto",
+					"-lssl",
 				);
 				OUT = "$(PROJECT_DIR)/../../../out";
 				SKIP_INSTALL = NO;
@@ -1908,17 +1853,10 @@
 		C9AFCC590FC521450080E908 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = /usr/lib/appweb/bin;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
 				PRODUCT_NAME = appweb;
 			};
 			name = Debug;
@@ -1926,18 +1864,11 @@
 		C9AFCC5A0FC521450080E908 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = /usr/lib/appweb/bin;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
 				PRODUCT_NAME = appweb;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -2013,7 +1944,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
@@ -2059,7 +1989,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
 				PREBINDING = NO;
