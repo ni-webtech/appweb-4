@@ -1450,7 +1450,7 @@ createConfigHeader()
     /* C Source Code Definitions */
 !EOF_CONFIG_HEADER_SRC
     else
-        echo -e "#if IGNORE_IN_C_CODE\n" >$FILE
+        echo -e "#if IGNORE_IN_C_CODE" >$FILE
         echo -e "#\n#   ${FILE} -- Universal Build Configuration File." >>$FILE
         cat >>$FILE <<!EOF_CONFIG_HEADER_MAKE
 #
@@ -1658,7 +1658,6 @@ BLD_IMPORTS="${BLD_IMPORTS}"
 
 !EOF_STANDARD_FEATURES
 
-    #   MOB - would be better if this emitted to stdout instead of to $FILE
     createFeatureConfig $FILE
 
     #
@@ -1837,9 +1836,7 @@ createCrossConfig()
             SYS_DIR=":/sbin:/usr/sbin:"
         fi
         eval path=\$CFG_${kind}_PATH
-
-        #   Cygwin needs modules to be in the path
-        echo -e "${t}export PATH:=${out}/bin:${out}/modules:${out}/lib:${out}/lib:${top}/build/bin${SYS_DIR}:${path}:\$(PATH)" 
+        echo -e "${t}export PATH:=${top}/build/bin:${out}/bin:${out}/lib${SYS_DIR}:${path}:\$(PATH)" 
     fi
 
     if [ $kind = "HOST" ] ; then
@@ -2026,10 +2023,6 @@ doImports() {
     local f SHOBJ ext base
 
     SHOBJ=$BLD_HOST_SHOBJ
-
-    # MOB - not yet supporting Cross compilation of imports
-    # for kind in HOST BUILD ; do
-    # done
 
     for f in $BLD_IMPORTS ; do
         # Expand relative paths in BLD_IMPORTS using ${BLD_TOP}

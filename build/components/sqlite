@@ -2,15 +2,15 @@
 #   SQLite
 #
 defineComponent() {
-    local libpaths iflags path builtin 
+    local libpaths incdir path builtin 
 
     path="${1:-.}"
-    iflags=-I`probe --name sqlite --dir --warn --search "$path:$path/src/deps/ejs:$path/src/include" "sqlite3.h"`
+    incdir=`probe --name sqlite --dir --warn --search "$path:$path/src/deps/ejs:$path/src/include" "sqlite3.h"`
     libpaths=`probe --name sqlite --dir --search "$path:$path/out/lib" "libsqlite3"`
-    if [ "$libpaths" = "" -a "$iflags" = "-I" ] ; then
+    if [ "$libpaths" = "" -a "$incdir" = "" ] ; then
         warnComponent sqlite "Can't locate libsqlite3"
         return
     fi
     builtin=`[ "$path" = . ] && echo --builtin`
-    configureComponent --libs "sqlite3" --libpaths "$libpaths" --iflags "$iflags" $builtin sqlite
+    configureComponent --libs "sqlite3" --libpaths "$libpaths" $builtin sqlite
 }

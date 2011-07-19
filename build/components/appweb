@@ -43,29 +43,25 @@ defineComponent() {
         fi
 
         appweb=`probe --exe --name appweb --search "$search" appweb`
-
-        if [ "$libdir" != "" ] ; then
-            incdir=`probe --name appweb.h --dir --search "$search" "appweb.h" `
-            if [ "$incdir" != "" ] ; then
-                headers="`echo $incdir/appweb*.h`"
-                # Currently using iflags below
-                # imports="$imports $headers"
-            fi
-            http=`probe --exe --name http --search "$search" http`
-            if [ "$http" != "" ] ; then
-                imports="$imports $http"
-            fi
-            optional="$optional ssl pcre"
-            if [ "${incdir}" != "" ] ; then
-                iflags=-I${incdir}
-            fi
-        else
+        incdir=`probe --name appweb.h --dir --search "$search" "appweb.h" `
+        if [ "$incdir" != "" ] ; then
+            headers="`echo $incdir/appweb*.h`"
+            # Currently using iflags below
+            # imports="$imports $headers"
+        fi
+        http=`probe --exe --name http --search "$search" http`
+        if [ "$http" != "" ] ; then
+            imports="$imports $http"
+        fi
+        if [ "$libdir" == "" ] ; then
             optional=
             libs=
             withlibs=
             deps=
             present="--present 0"
         fi
+    else
+        imports="src/include/appweb*.h src/include/customize.h"
     fi
     configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" $builtin \
         $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" --path "$appweb" appweb
