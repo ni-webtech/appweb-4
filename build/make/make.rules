@@ -110,14 +110,16 @@ ifneq ($(BLD_OS),WIN)
     else
         setlibpath = export LD_LIBRARY_PATH="$(BLD_BIN_DIR):$(BLD_BUILD_LIB_DIR)"
     endif
-    ifeq ($(BLD_OS),CYGWIN)
-        export PATH:="$(BLD_TOP)/modules:$(PATH)"
-    endif
 else
 	setlibpath  = true
     CYGWIN      += nodosfilewarning
     export      CYGWIN
 endif
+
+#
+#   Not needed as buildConfig.h supplies this
+#
+#   export PATH:="$(BLD_BUILD_BIN_DIR):$(BLD_BIN_DIR):$(BLD_LIB_DIR):$(PATH)"
 
 ifeq ($(findstring s,$(MAKEFLAGS)),)
     log = true

@@ -16,7 +16,6 @@ ifeq ($(BLD_CHAR_LEN),4)
 	CHAR			= int32
 endif
 MAKE_DFLAGS			+= -DPCRE_CHAR=$(CHAR)
-MAKE_IFLAGS			+= $(BLD_PCRE_IFLAGS) $(BLD_MPR_IFLAGS)
 PCRE_LIB			+= $(BLD_LIB_DIR)/libpcre$(BLD_LIB)
 ifeq ($(BLD_FEATURE_PCRE),1)
 	TARGETS			+= $(PCRE_LIB)

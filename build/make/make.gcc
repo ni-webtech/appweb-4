@@ -190,7 +190,7 @@ ifneq ($(findstring -march=,$(BLD_CFLAGS) $(BLD_DFLAGS)),)
     _CFLAGS   := $(patsubst -march=%,,$(_CFLAGS)) 
 endif
 
-_LDPATH			= $(BLD_ABS_LIB_DIR)
+_LDPATH			= $(BLD_LIB_DIR)
 
 # ifeq ($(BLD_OS),LINUX)
 #     _LDFLAGS	+= -Wl,-rpath-link=$(BLD_ABS_LIB_DIR)
