@@ -4,7 +4,7 @@ README.TXT for the Windows VS Projects
 
 The VS projects are:
 
-appweb-dynamic - Builds Appweb using dynamic linking. All modules are loadable.
+appweb-all - Builds Appweb using all modules except: PHP, EJS, SSL
 
 --------------------------------------------------------------------------------
 

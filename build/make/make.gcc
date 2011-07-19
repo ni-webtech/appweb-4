@@ -51,7 +51,7 @@ else
 	TUNE		= mcpu
 endif
 
-_IFLAGS		    = -I$(BLD_INC_DIR) -I$(BLD_TOP)/src/include 
+_IFLAGS		    = -I$(BLD_INC_DIR)
 
 #
 #	Optimization and debug settings

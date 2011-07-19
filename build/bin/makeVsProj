@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#   makeVsProj -- Make Visual Studio Projects 
+#   makeVsProj -- Make Visual Studio (10) Projects 
 #
 #   Copyright (c) Embedthis LLC, 2003-2011. All Rights Reserved.
 #
@@ -9,6 +9,7 @@
 #   and link flag environment variables. It can't really be run on the command
 #   line as it will be missing BLD_LDFLAGS etc.
 #
+echo IFLAGS ON ENTRY $IFLAGS
 
 ARCHIVE=
 CFLAGS=
@@ -27,6 +28,7 @@ LIBRARY_PATHS=
 LIBS=
 MAKE_STATIC=
 OMITSTDLIBS=0
+MACHINE=MachineX86
 PLATFORM=Win32
 RESOURCES=
 RPATH_LIST=
@@ -40,9 +42,10 @@ VERSION_SONAME=0
 VERBOSE=${VERBOSE:=0}
 
 #
-#   VS 2005 compatible
+#   VS 10 compatible
 #
-VS_VERSION=8.00
+PROJECT_FILE_VERSION=10.0.30319.1
+TOOLS_VERSION=4.0
 
 ###############################################################################
 
@@ -58,15 +61,6 @@ parseArgs() {
     local argc
 
     argc=$#
-
-#   echo -en "\nmakeVsProj "
-#   i=1
-#   while [ $i -le $argc ] ; do
-#       echo -en "\"${!i}\" "
-#       i=$((i + 1))
-#   done
-#   echo
-
     _INDEX=1
     while [ $_INDEX -le $argc ] ; do
 
@@ -87,6 +81,14 @@ parseArgs() {
             ;;
         --def)
             DEF="${_ARG}"
+            if [ ! -f "${DEF}" -a "$name" = Debug ] ; then
+                echo "makeVsProj: WARNING: Can't find module definition file: ${DEF}"
+                exit 255
+            fi
+            useArg
+            ;;
+        --deps)
+            DEPS="$DEPS ${_ARG}"
             useArg
             ;;
         --dflags)
@@ -197,6 +199,7 @@ makeVsProj: usage: makeVsProj [options] objects ....
     --custom                Custom build step file
     --debug                 Not implemented
     --def                   Import definition file
+    --deps "projects"       Dependent projects
     --entry name            Shared library entry point
     --exe name              Name of executable to build
     --graphical             Create a windowed program instead of a console.
@@ -244,7 +247,6 @@ searchLib()
         suffixes=".${name#*.}"
         name="${name%.*}"
     fi
-
     for path in ${LIBRARY_PATHS} "${BLD_LIB_DIR}" "${BLD_LIB_PREFIX}" "$syslib" "$extraSysLib"
     do
         for suffix in `echo $suffixes`
@@ -295,7 +297,6 @@ findLib() {
         echo "$newName"
         return
     fi
-
     libName="${libName%$BLD_ARCH}"
     libName="${libName%$BLD_SHLIB}"
     echo "${libName}.lib"
@@ -361,31 +362,10 @@ output() {
 #
 #   Emit the project header
 #
-#   TODO - try to cleanup the formatting?
 outputHeader() {
-    local guid
-
-    guid=`uuidgen`
-
     cat >>$PROJECT <<!EOF_HEADER
-<?xml version="1.0" encoding="UTF-8"?>
-<VisualStudioProject
-    ProjectType="Visual C++"
-    Version="$VS_VERSION"
-    Name="${NAME%.*}"
-    ProjectGUID="${guid}"
-    RootNamespace=""
-    Keyword="Win32Proj"
-    TargetFrameworkVersion="0"
-    >
-    <Platforms>
-        <Platform
-            Name="${PLATFORM}"
-        />
-    </Platforms>
-    <ToolFiles>
-    </ToolFiles>
-    <Configurations>
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="${TOOLS_VERSION}" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 !EOF_HEADER
 }
 
@@ -394,207 +374,130 @@ outputHeader() {
 #   Emit a block per configuration
 #
 outputConfiguration() {
-    local name
-
+    local guid name ptype CTOK PTOK OTOK UTOK VTOK
     name=$1
+    guid=`uuidgen`
+    if [ "$EXECUTABLE" ] ; then
+        ptype="Application"
+    else
+        ptype="DynamicLibrary"
+    fi
+    if [ "$GRAPHICAL" ] ; then
+        subsystem="Windows"
+    else 
+        subsystem="Console"
+    fi
+
+echo HERE IFLAGS $IFLAGS
+    #
+    #   Workaround for here-document execution of $(word)
+    #
+    CTOK='$(Configuration)'
+    PTOK='$(Platform)'
+    OTOK='$(OutDir)'
+    UTOK='$(UserRootDir)'
+    VTOK='$(VCTargetsPath)'
 
     cat >>$PROJECT <<!EOF_CONFIGURATION_A
-        <Configuration
-            Name="${name}|${PLATFORM}"
-            OutputDirectory="\$(PlatformName)\\\$(ConfigurationName)"
-            IntermediateDirectory="\$(PlatformName)\\\$(ConfigurationName)"
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|${PLATFORM}">
+      <Configuration>Debug</Configuration>
+      <Platform>${PLATFORM}</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|${PLATFORM}">
+      <Configuration>Release</Configuration>
+      <Platform>${PLATFORM}</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{${guid}}</ProjectGuid>
+    <RootNamespace />
+    <Keyword>${PLATFORM}Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="${VTOK}\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'" Label="Configuration">
+    <ConfigurationType>${ptype}</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'" Label="Configuration">
+    <ConfigurationType>${ptype}</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="${VTOK}\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'" Label="PropertySheets">
+    <Import Project="${UTOK}\Microsoft.Cpp.${PTOK}.user.props" Condition="exists('${UTOK}\Microsoft.Cpp.${PTOK}.user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'" Label="PropertySheets">
+    <Import Project="${UTOK}\Microsoft.Cpp.${PTOK}.user.props" Condition="exists('${UTOK}\Microsoft.Cpp.${PTOK}.user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>${PROJECT_FILE_VERSION}</_ProjectFileVersion>
+    <OutDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${PTOK}\\${CTOK}\</OutDir>
+    <IntDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${PTOK}\\${CTOK}\</IntDir>
+    <LinkIncremental Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">false</LinkIncremental>
+    <OutDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${PTOK}\\${CTOK}\</OutDir>
+    <IntDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${PTOK}\\${CTOK}\</IntDir>
+    <LinkIncremental Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <CompileAs>Default</CompileAs>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <AdditionalIncludeDirectories>${IFLAGS};%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>${DFLAGS};%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization>MinSpace</Optimization>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>${OTOK};%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>${LIB_LIST};%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>${DEF}</ModuleDefinitionFile>
+      <TargetMachine>${MACHINE}</TargetMachine>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <CompileAs>Default</CompileAs>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <AdditionalIncludeDirectories>${IFLAGS};%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>${DFLAGS};%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>${OTOK};%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmpr.lib;libhttp.lib;libappweb.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TargetMachine>${MACHINE}</TargetMachine>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
 !EOF_CONFIGURATION_A
-
-    if [ "$EXECUTABLE" ] ; then
-        output '            ConfigurationType="1"'
-    else
-        output '            ConfigurationType="2"'
-    fi
-    if [ "${PLATFORM}" = Win32 ] ; then
-        output '            CharacterSet="0"'
-    else
-        # TODO is this right for CE?
-        output '            CharacterSet="0"'
-    fi
-
-cat >>$PROJECT <<!EOF_CONFIGURATION_A1
-            >
-            <Tool
-                Name="VCPreBuildEventTool"
-            />
-!EOF_CONFIGURATION_A1
-
-            if [ "$CUSTOM" = "" ] ; then
-                echo '<Tool Name="VCCustomBuildTool" />' >>$PROJECT
-            else
-                cat $CUSTOM >>$PROJECT
-            fi
-cat >>$PROJECT <<!EOF_CONFIGURATION_A2
-            <Tool
-                Name="VCManagedResourceCompilerTool"
-            />
-            <Tool
-                Name="VCResourceCompilerTool"
-            />
-            <Tool
-                Name="VCPreLinkEventTool"
-            />
-            <Tool
-                Name="VCALinkTool"
-            />
-            <Tool
-                Name="VCManifestTool"
-            />
-            <Tool
-                Name="VCXDCMakeTool"
-            />
-            <Tool
-                Name="VCBscMakeTool"
-            />
-            <Tool
-                Name="VCFxCopTool"
-            />
-            <Tool
-                Name="VCAppVerifierTool"
-            />
-            <Tool
-                Name="VCPostBuildEventTool"
-            />
-            <Tool
-                Name="VCCLCompilerTool"
-                UsePrecompiledHeader="0"
-                WarningLevel="3"
-                ExceptionHandling="0"
-                CompileAs="0"
-                StringPooling="true"
-                MinimalRebuild="true"
-!EOF_CONFIGURATION_A2
-
-    output "                AdditionalIncludeDirectories=\"${IFLAGS}\""
-    output "                PreprocessorDefinitions=\"${DFLAGS}\""
-    if [ "$name" = Debug ] ; then
-        output '                Optimization="0"'
-    else 
-        output '                Optimization="1"'
-    fi
-    if [ "${PLATFORM}" = Win32 ] ; then
-        output '                FavorSizeOrSpeed="1"'
-        if [ "$name" = Debug ] ; then
-            output '                BasicRuntimeChecks="3"'
-            output '                RuntimeLibrary="3"'
-            output '                DebugInformationFormat="4"'
-        else 
-            output '                RuntimeLibrary="2"'
-            output '                DebugInformationFormat="3"'
-            output '                EnableIntrinsicFunctions="true"'
-            output '                EnableFunctionLevelLinking="true"'
-        fi
-    else
-        #
-        #   WinCE
-        #
-        output '                FavorSizeOrSpeed="2"'
-        output "                ExecutionBucket=\"7\""
-        if [ "$name" = Debug ] ; then
-            if [ "$LIBRARY" != "" ] ; then
-                output '                RuntimeLibrary="3"'
-            else
-                output '                RuntimeLibrary="1"'
-            fi
-            output '                DebugInformationFormat="3"'
-        else 
-            if [ "$LIBRARY" != "" ] ; then
-                output '                RuntimeLibrary="0"'
-            else
-                output '                RuntimeLibrary="1"'
-            fi
-            output '                DebugInformationFormat="0"'
-            output '                EnableIntrinsicFunctions="true"'
-            output '                EnableFunctionLevelLinking="true"'
-        fi
-    fi
-
-    cat >>$PROJECT <<!EOF_CONFIGURATION_B
-            />
-            <Tool
-                Name="VCLinkerTool"
-                AdditionalLibraryDirectories="\$(OutDir)"
-                AdditionalDependencies="${LIB_LIST}"
-!EOF_CONFIGURATION_B
-    if [ "${DEF}" != "" ] ; then
-        if [ ! -f "${DEF}" -a "$name" = Debug ] ; then
-            echo "makeVsProj: WARNING: Can't find module definition file: ${DEF}"
-        else
-            output "                ModuleDefinitionFile=\"${DEF}\""
-        fi
-    fi
-    if [ "${PLATFORM}" = Win32 ] ; then
-        output '                Targetmachine="1"'
-        if [ "$EXECUTABLE" -a "$GRAPHICAL" ] ; then
-            output '                SubSystem="2"'
-        else
-            output '                SubSystem="1"'
-        fi
-
-        if [ "$name" = Debug ] ; then
-            output '                LinkIncremental="2"'
-            output '                GenerateDebugInformation="true"'
-        else
-            output '                LinkIncremental="1"'
-            output '                GenerateDebugInformation="false"'
-            output '                OptimizeReferences="2"'
-            output '                EnableCOMDATAFolding="2"'
-        fi
-
-    else
-        output '                Targetmachine="3"'
-        output '                StackReserveSize="65536"'
-        output '                StackCommitSize="4096"'
-        output '                AdditionalOptions=" /subsystem:windowsce,4.20 /machine:ARM /ARMPADCODE"'
-        output '                EnableCOMDATFolding="0"'
-        output '                DelayLoadDlls="$(NOINHERIT)"'
-        #
-        #   Wince
-        #
-        if [ "$EXECUTABLE" -a "$GRAPHICAL" ] ; then
-            output '                SubSystem="0"'
-        else
-            output '                SubSystem="0"'
-        fi
-
-        if [ "$name" = Debug ] ; then
-            output '                LinkIncremental="2"'
-            output '                GenerateDebugInformation="true"'
-        else
-            output '                LinkIncremental="1"'
-            output '                GenerateDebugInformation="false"'
-            output '                OptimizeReferences="2"'
-        fi
-    fi
-    cat >>$PROJECT <<!EOF_CONFIGURATION_C
-            />
-!EOF_CONFIGURATION_C
-    if [ "${PLATFORM}" != Win32 ] ; then
-        cat >>$PROJECT <<!EOF_CONFIGURATION_D
-        <DeploymentTool
-            ForceDirty="-1"
-            RegisterOutput="0"
-            AdditionalFiles=""
-!EOF_CONFIGURATION_D
-        output "            RemoteDirectory=\"%CSIDL_PROGRAM_FILES%\\${EXECUTABLE%.*}\""
-        output "        />"
-    fi
-    output '        </Configuration>'
-}
-
-
-outputEndConfigurations() {
-    cat >>$PROJECT <<!EOF_END_CONFIGURATIONS
-    </Configurations>
-    <References>
-    </References>
-    <Files>
-!EOF_END_CONFIGURATIONS
 }
 
 
@@ -602,26 +505,12 @@ outputHeaders() {
     local f uuid
 
     [ "$HEADERS" = "" ] && return
-
-    uuid=`uuidgen`
-
-    cat >>$PROJECT <<!EOF_HEADERS_A
-        <Filter
-            Name="Header Files"
-            Filter="h;hpp;hxx;hm;inl;inc;xsd"
-            UniqueIdentifier="{${uuid}}"
-            >
-!EOF_HEADERS_A
-
+    output "  <ItemGroup>"
     for f in $HEADERS ; do
         f=${f//\//\\}
-        output "            <File"
-        output "                RelativePath=\"${f}\""
-        output "                >"
-        output "            </File>"
+        output "     <ClInclude Include=\"${f}\" />"
     done
-
-    output "        </Filter>"
+    output "  </ItemGroup>"
 }
 
 
@@ -654,38 +543,31 @@ outputResources() {
 outputSources() {
     local f uuid
 
-    uuid=`uuidgen`
-
     [ "$SOURCES" = "" ] && return
 
-    cat >>$PROJECT <<!EOF_SOURCES_A
-        <Filter
-            Name="Source Files"
-            Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-            UniqueIdentifier="{${uuid}}"
-            >
-!EOF_SOURCES_A
-
+    output "  <ItemGroup>"
     for f in $SOURCES ; do
         f=${f//\//\\}
-        output "            <File"
-        output "                RelativePath=\"${f}\""
-        output "                >"
-        #
-        #   Temporary while sqlite has so many warnings
-        #
-        if [ "${f##*\\}" = "sqlite3.c" -o "${f##*\\}" = "sqlite.c" -o "${f##*\\}" = "esql.c" ] ; then
-            output "            <FileConfiguration Name=\"Release|${PLATFORM}\">"
-            output '                <Tool Name="VCCLCompilerTool" WarningLevel="1" />'
-            output '            </FileConfiguration>'
-            output "            <FileConfiguration Name=\"Debug|${PLATFORM}\">"
-            output '                <Tool Name="VCCLCompilerTool" WarningLevel="1" />'
-            output '            </FileConfiguration>'
-        fi
-        output "            </File>"
+        output "    <ClCompile Include=\"${f}\" />"
     done
+    output "  </ItemGroup>"
+}
 
-    output "        </Filter>"
+
+outputDependencies() {
+    local dep
+    if [ "${DEPS}" != "" ] ; then
+        for dep in ${DEPS} ; do
+              # REMOVED <Project>{GUID}</Project>
+            cat >>$PROJECT <<!EOF_DEPS
+          <ItemGroup>
+            <ProjectReference Include="${dep}">
+              <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+            </ProjectReference>
+          </ItemGroup>
+!EOF_DEPS
+        done
+    fi
 }
 
 
@@ -693,15 +575,17 @@ outputSources() {
 #   Emit the final trailer for the project file
 #
 outputTrailer() {
+    local VTOK
+
+    VTOK='$(VCTargetsPath)'
 
     cat >>$PROJECT <<!EOF_TRAILER
-    </Files>
-    <Globals>
-    </Globals>
-</VisualStudioProject>
+  <Import Project="${VTOK}\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
 !EOF_TRAILER
 }
-
 
 
 #
@@ -772,9 +656,7 @@ fi
 CFLAGS="${CFLAGS} ${MAKE_CFLAGS} ${_CFLAGS} ${BLD_CFLAGS}"
 IFLAGS="${IFLAGS} ${MAKE_IFLAGS} ${_IFLAGS} ${BLD_IFLAGS}"
 LDFLAGS="${LDFLAGS} ${MAKE_LDFLAGS} ${_LDFLAGS} ${BLD_LDFLAGS}"
-
 IFLAGS=`echo $IFLAGS | sed 's/-I//g; s/ /;/g'`
-
 DFLAGS=`echo $DFLAGS ${MAKE_DFLAGS} ${_DFLAGS} ${BLD_DFLAGS} | sed 's/ -D/;/g' | sed 's/;_WIN32_WCE=0x420//'`
 
 #
@@ -869,13 +751,11 @@ STND_LIBS=$_SHARED_LIBS
 rm -f $PROJECT
 
 outputHeader
-for config in Release Debug ; do
-    outputConfiguration $config
-done
-outputEndConfigurations
+outputConfiguration
 outputHeaders
 outputSources
-outputResources
+# outputResources
+outputDependencies
 outputTrailer
 unix2dos -D $PROJECT 2>/dev/null
 
