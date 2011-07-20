@@ -6455,6 +6455,12 @@ extern void mprSetSslCaPath(struct MprSsl *ssl, cchar *caPath);
 extern void mprSetSslProtocols(struct MprSsl *ssl, int protocols);
 extern void mprVerifySslClients(struct MprSsl *ssl, bool on);
 
+/**
+    Worker thread callback signature
+    @param data worker callback data. Set via mprStartWorker or mprActivateWorker
+    @param worker Reference to the worker thread object
+ */
+typedef void (*MprWorkerProc)(void *data, struct MprWorker *worker);
 
 typedef struct MprWorkerStats {
     int             maxThreads;         /* Configured max number of threads */
@@ -6483,12 +6489,14 @@ typedef struct MprWorkerService {
     int             stackSize;          /* Stack size for worker threads */
     MprMutex        *mutex;             /* Per task synchronization */
     struct MprEvent *pruneTimer;        /* Timer for excess threads pruner */
+    MprWorkerProc   startWorker;        /* Worker thread startup hook */
 } MprWorkerService;
 
 
 extern MprWorkerService *mprCreateWorkerService();
 extern int mprStartWorkerService();
 extern void mprWakeWorkers();
+extern void mprSetWorkerStartCallback(MprWorkerProc start);
 
 /**
     Get the count of available worker threads
@@ -6544,13 +6552,6 @@ extern void mprGetWorkerServiceStats(MprWorkerService *ps, MprWorkerStats *stats
     Flags
  */
 #define MPR_WORKER_DEDICATED   0x1          /* Worker reserved and not part of the worker pool */
-
-/**
-    Worker thread callback signature
-    @param data worker callback data. Set via mprStartWorker or mprActivateWorker
-    @param worker Reference to the worker thread object
- */
-typedef void (*MprWorkerProc)(void *data, struct MprWorker *worker);
 
 /**
     Worker thread structure. Worker threads are allocated and dedicated to tasks. When idle, they are stored in

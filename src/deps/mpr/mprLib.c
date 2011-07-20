@@ -17752,7 +17752,6 @@ static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
         unlock(sp);
         return MPR_ERR_CANT_FIND;
     }
-
     sp->fd = (int) socket(family, datagram ? SOCK_DGRAM: SOCK_STREAM, protocol);
     if (sp->fd < 0) {
         unlock(sp);
@@ -18736,7 +18735,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
                 break;
             }
         } else {
-            if (r->ai_family == AF_INET) {
+            if (r->ai_family == AF_INET || ip == 0) {
                 break;
             }
         }
@@ -18853,7 +18852,7 @@ static int ipv6(cchar *ip)
     int     colons;
 
     if (ip == 0 || *ip == 0) {
-        return 0;
+        return 1;
     }
     colons = 0;
     for (cp = (char*) ip; ((*cp != '\0') && (colons < 2)) ; cp++) {
@@ -21631,6 +21630,12 @@ void mprActivateWorker(MprWorker *worker, MprWorkerProc proc, void *data)
 }
 
 
+void mprSetWorkerStartCallback(MprWorkerProc start)
+{
+    MPR->workerService->startWorker = start;
+}
+
+
 int mprStartWorker(MprWorkerProc proc, void *data)
 {
     MprWorkerService    *ws;
@@ -21797,6 +21802,9 @@ static void workerMain(MprWorker *worker, MprThread *tp)
     mprAssert(worker->state == MPR_WORKER_BUSY);
     mprAssert(!worker->idleCond->triggered);
 
+    if (ws->startWorker) {
+        (*ws->startWorker)(worker->data, worker);
+    }
     mprLock(ws->mutex);
 
     while (!(worker->state & MPR_WORKER_PRUNED) && !mprIsStopping()) {
