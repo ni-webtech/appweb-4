@@ -18823,6 +18823,20 @@ static int getSocketIpAddr(struct sockaddr *addr, int addrlen, char *ip, int ipL
 #if (BLD_UNIX_LIKE || WIN)
     char    service[NI_MAXSERV];
 
+#ifdef IN6_IS_ADDR_V4MAPPED
+    if (addr->sa_family == AF_INET6) {
+        struct sockaddr_in6* addr6= (struct sockaddr_in6*) addr;
+        if (IN6_IS_ADDR_V4MAPPED(&addr6->sin6_addr)) {
+            struct sockaddr_in addr4;
+            memset(&addr4, 0, sizeof(addr4));
+            addr4.sin_family = AF_INET;
+            addr4.sin_port = addr6->sin6_port;
+            memcpy(&addr4.sin_addr.s_addr, addr6->sin6_addr.s6_addr + 12, sizeof(addr4.sin_addr.s_addr));
+            memcpy(addr, &addr4, sizeof(addr4));
+            addrlen = sizeof(addr4);
+        }
+    }
+#endif
     if (getnameinfo(addr, addrlen, ip, ipLen, service, sizeof(service), NI_NUMERICHOST | NI_NUMERICSERV | NI_NOFQDN)) {
         return MPR_ERR_BAD_VALUE;
     }
