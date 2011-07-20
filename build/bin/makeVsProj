@@ -9,7 +9,6 @@
 #   and link flag environment variables. It can't really be run on the command
 #   line as it will be missing BLD_LDFLAGS etc.
 #
-echo IFLAGS ON ENTRY $IFLAGS
 
 ARCHIVE=
 CFLAGS=
@@ -141,6 +140,10 @@ parseArgs() {
             PROJECT="${_ARG}"
             useArg
             ;;
+        --props)
+            PROPS="$PROPS ${_ARG}"
+            useArg
+            ;;
         --quiet)
             ;;
         --platform)
@@ -181,7 +184,6 @@ parseArgs() {
             ;;
         esac
     done
-
     if [ "$NAME" = "" ] ; then
         NAME="$PROJECT"
     fi
@@ -199,7 +201,7 @@ makeVsProj: usage: makeVsProj [options] objects ....
     --custom                Custom build step file
     --debug                 Not implemented
     --def                   Import definition file
-    --deps "projects"       Dependent projects
+    --deps "projects..."    Dependent projects
     --entry name            Shared library entry point
     --exe name              Name of executable to build
     --graphical             Create a windowed program instead of a console.
@@ -211,6 +213,7 @@ makeVsProj: usage: makeVsProj [options] objects ....
     --omitstdlibs           Don't use standard libraries (UNIX only)
     --objects "objects..."  String containing objects to link
     --project               Project file name
+    --props "propfiles..."  Project file name
     --quiet                 Run quietly without tracing actions to stdout
     --resources file        Resource file (menus and icons for Windows)
     --rpath path            Specify the executable run-time library search path
@@ -225,7 +228,7 @@ makeVsProj: usage: makeVsProj [options] objects ....
       BLD_TOP               Top of the source tree
 
     Configuration files used:
-        buildConfig.sh
+        buildConfig.h
 !EOF
     exit 255
 }
@@ -247,12 +250,9 @@ searchLib()
         suffixes=".${name#*.}"
         name="${name%.*}"
     fi
-    for path in ${LIBRARY_PATHS} "${BLD_LIB_DIR}" "${BLD_LIB_PREFIX}" "$syslib" "$extraSysLib"
-    do
-        for suffix in `echo $suffixes`
-        do
-            for prefix in lib ""
-            do
+    for path in ${LIBRARY_PATHS} "${BLD_LIB_DIR}" "${BLD_LIB_PREFIX}" "$syslib" "$extraSysLib" ; do
+        for suffix in `echo $suffixes` ; do
+            for prefix in lib "" ; do
                 [ "$path" = "" ] && continue
 
                 file=`shopt -s extglob ; eval ls -1 "${path}/${prefix}${name}?(.*)${suffix}*" 2>/dev/null | head -1`
@@ -303,23 +303,6 @@ findLib() {
 }
 
 
-#
-#   For some reason, link commands can complete and the executable is not yet visible on windows.
-#
-waitFor() {
-    local timeout file
-
-    file=$1
-    timeout=$2
-
-    while [ ! -x $file -a $timeout -gt 0 ] ; do
-        [ $VERBOSE -gt 0 ] && echo "File $file not yet present, waiting ..."
-        sleep 1
-        timeout=$(($timeout - 1))
-    done
-}
-
-
 basename() {
     local name="${1##*/}"
     echo "${name%$2}"
@@ -356,235 +339,6 @@ findTop() {
 
 output() {
     echo "$*" >>$PROJECT
-}
-
-
-#
-#   Emit the project header
-#
-outputHeader() {
-    cat >>$PROJECT <<!EOF_HEADER
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="${TOOLS_VERSION}" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-!EOF_HEADER
-}
-
-
-#
-#   Emit a block per configuration
-#
-outputConfiguration() {
-    local guid name ptype CTOK PTOK OTOK UTOK VTOK
-    name=$1
-    guid=`uuidgen`
-    if [ "$EXECUTABLE" ] ; then
-        ptype="Application"
-    else
-        ptype="DynamicLibrary"
-    fi
-    if [ "$GRAPHICAL" ] ; then
-        subsystem="Windows"
-    else 
-        subsystem="Console"
-    fi
-
-echo HERE IFLAGS $IFLAGS
-    #
-    #   Workaround for here-document execution of $(word)
-    #
-    CTOK='$(Configuration)'
-    PTOK='$(Platform)'
-    OTOK='$(OutDir)'
-    UTOK='$(UserRootDir)'
-    VTOK='$(VCTargetsPath)'
-
-    cat >>$PROJECT <<!EOF_CONFIGURATION_A
-  <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|${PLATFORM}">
-      <Configuration>Debug</Configuration>
-      <Platform>${PLATFORM}</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|${PLATFORM}">
-      <Configuration>Release</Configuration>
-      <Platform>${PLATFORM}</Platform>
-    </ProjectConfiguration>
-  </ItemGroup>
-  <PropertyGroup Label="Globals">
-    <ProjectGuid>{${guid}}</ProjectGuid>
-    <RootNamespace />
-    <Keyword>${PLATFORM}Proj</Keyword>
-  </PropertyGroup>
-  <Import Project="${VTOK}\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'" Label="Configuration">
-    <ConfigurationType>${ptype}</ConfigurationType>
-    <CharacterSet>NotSet</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'" Label="Configuration">
-    <ConfigurationType>${ptype}</ConfigurationType>
-    <CharacterSet>NotSet</CharacterSet>
-  </PropertyGroup>
-  <Import Project="${VTOK}\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'" Label="PropertySheets">
-    <Import Project="${UTOK}\Microsoft.Cpp.${PTOK}.user.props" Condition="exists('${UTOK}\Microsoft.Cpp.${PTOK}.user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'" Label="PropertySheets">
-    <Import Project="${UTOK}\Microsoft.Cpp.${PTOK}.user.props" Condition="exists('${UTOK}\Microsoft.Cpp.${PTOK}.user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <_ProjectFileVersion>${PROJECT_FILE_VERSION}</_ProjectFileVersion>
-    <OutDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${PTOK}\\${CTOK}\</OutDir>
-    <IntDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${PTOK}\\${CTOK}\</IntDir>
-    <LinkIncremental Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">false</LinkIncremental>
-    <OutDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${PTOK}\\${CTOK}\</OutDir>
-    <IntDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${PTOK}\\${CTOK}\</IntDir>
-    <LinkIncremental Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">true</LinkIncremental>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">
-    <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <ExceptionHandling>
-      </ExceptionHandling>
-      <CompileAs>Default</CompileAs>
-      <StringPooling>true</StringPooling>
-      <MinimalRebuild>true</MinimalRebuild>
-      <AdditionalIncludeDirectories>${IFLAGS};%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>${DFLAGS};%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <Optimization>MinSpace</Optimization>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-    </ClCompile>
-    <Link>
-      <AdditionalLibraryDirectories>${OTOK};%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>${LIB_LIST};%(AdditionalDependencies)</AdditionalDependencies>
-      <ModuleDefinitionFile>${DEF}</ModuleDefinitionFile>
-      <TargetMachine>${MACHINE}</TargetMachine>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
-      <OptimizeReferences>true</OptimizeReferences>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">
-    <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <ExceptionHandling>
-      </ExceptionHandling>
-      <CompileAs>Default</CompileAs>
-      <StringPooling>true</StringPooling>
-      <MinimalRebuild>true</MinimalRebuild>
-      <AdditionalIncludeDirectories>${IFLAGS};%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>${DFLAGS};%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <Optimization>Disabled</Optimization>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-    </ClCompile>
-    <Link>
-      <AdditionalLibraryDirectories>${OTOK};%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libmpr.lib;libhttp.lib;libappweb.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <TargetMachine>${MACHINE}</TargetMachine>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-  </ItemDefinitionGroup>
-!EOF_CONFIGURATION_A
-}
-
-
-outputHeaders() {
-    local f uuid
-
-    [ "$HEADERS" = "" ] && return
-    output "  <ItemGroup>"
-    for f in $HEADERS ; do
-        f=${f//\//\\}
-        output "     <ClInclude Include=\"${f}\" />"
-    done
-    output "  </ItemGroup>"
-}
-
-
-outputResources() {
-    local f uuid
-
-    [ "$RESOURCES" = "" ] && return
-
-    uuid=`uuidgen`
-    cat >>$PROJECT <<!EOF_RESOURCES_A
-        <Filter
-            Name="Resource Files"
-            Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-            UniqueIdentifier="{${uuid}}"
-            >
-!EOF_RESOURCES_A
-
-    for f in $RESOURCES ; do
-        f=${f//\//\\}
-        output "            <File"
-        output "                RelativePath=\"${f}\""
-        output "                >"
-        output "            </File>"
-    done
-
-    output "        </Filter>"
-}
-
-
-outputSources() {
-    local f uuid
-
-    [ "$SOURCES" = "" ] && return
-
-    output "  <ItemGroup>"
-    for f in $SOURCES ; do
-        f=${f//\//\\}
-        output "    <ClCompile Include=\"${f}\" />"
-    done
-    output "  </ItemGroup>"
-}
-
-
-outputDependencies() {
-    local dep
-    if [ "${DEPS}" != "" ] ; then
-        for dep in ${DEPS} ; do
-              # REMOVED <Project>{GUID}</Project>
-            cat >>$PROJECT <<!EOF_DEPS
-          <ItemGroup>
-            <ProjectReference Include="${dep}">
-              <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-            </ProjectReference>
-          </ItemGroup>
-!EOF_DEPS
-        done
-    fi
-}
-
-
-#
-#   Emit the final trailer for the project file
-#
-outputTrailer() {
-    local VTOK
-
-    VTOK='$(VCTargetsPath)'
-
-    cat >>$PROJECT <<!EOF_TRAILER
-  <Import Project="${VTOK}\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
-</Project>
-!EOF_TRAILER
 }
 
 
@@ -629,6 +383,272 @@ useArg() {
 
 ###############################################################################
 #
+#   Emit the project header
+#
+outputHeader() {
+    cat >>$PROJECT <<!EOF_HEADER
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="${TOOLS_VERSION}" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+!EOF_HEADER
+}
+
+
+#
+#   Emit a block per configuration
+#
+outputConfiguration() {
+    local guid ptype CTOK PTOK OTOK UTOK VTOK STOK cfg
+
+    guid=`uuidgen | tr '[a-z]' '[A-Z]'`
+    echo $guid >$NAME.guid
+    if [ "$EXECUTABLE" ] ; then
+        ptype="Application"
+    else
+        ptype="DynamicLibrary"
+    fi
+    if [ "$GRAPHICAL" ] ; then
+        subsystem="Windows"
+    else 
+        subsystem="Console"
+    fi
+
+    #
+    #   Workaround for here-document execution of $(word)
+    #
+    CTOK='$(Configuration)'
+    PTOK='$(Platform)'
+    STOK='$(SolutionDir)'
+    OTOK='$(OutDir)'
+    UTOK='$(UserRootDir)'
+    VTOK='$(VCTargetsPath)'
+
+    for cfg in $PROPS ; do
+        PROP_FILES="${PROP_FILES}
+    <Import Project=\"${cfg}\" />"
+    done
+
+    cat >>$PROJECT <<!EOF_CONFIGURATION_A
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|${PLATFORM}">
+      <Configuration>Debug</Configuration>
+      <Platform>${PLATFORM}</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|${PLATFORM}">
+      <Configuration>Release</Configuration>
+      <Platform>${PLATFORM}</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{${guid}}</ProjectGuid>
+    <RootNamespace />
+    <Keyword>${PLATFORM}Proj</Keyword>
+  </PropertyGroup>
+
+  <Import Project="${VTOK}\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'" Label="Configuration">
+    <ConfigurationType>${ptype}</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'" Label="Configuration">
+    <ConfigurationType>${ptype}</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+
+  <Import Project="${VTOK}\Microsoft.Cpp.props" />
+
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+
+  <ImportGroup Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'" Label="PropertySheets">
+    <Import Project="${UTOK}\Microsoft.Cpp.${PTOK}.user.props" Condition="exists('${UTOK}\Microsoft.Cpp.${PTOK}.user.props')" Label="LocalAppDataPlatform" />
+    $PROP_FILES
+    <Import Project="debug.props" />
+  </ImportGroup>
+
+  <ImportGroup Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'" Label="PropertySheets">
+    <Import Project="${UTOK}\Microsoft.Cpp.${PTOK}.user.props" Condition="exists('${UTOK}\Microsoft.Cpp.${PTOK}.user.props')" Label="LocalAppDataPlatform" />
+    $PROP_FILES
+    <Import Project="release.props" />
+  </ImportGroup>
+
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>${PROJECT_FILE_VERSION}</_ProjectFileVersion>
+    <OutDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${STOK}\\${CTOK}\</OutDir>
+    <IntDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${CTOK}\</IntDir>
+    <OutDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${STOK}\\${CTOK}\</OutDir>
+    <IntDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${CTOK}\</IntDir>
+  </PropertyGroup>
+
+!EOF_CONFIGURATION_A
+}
+
+
+outputHeaders() {
+    local f uuid
+
+    [ "$HEADERS" = "" ] && return
+    output "  <ItemGroup>"
+    for f in $HEADERS ; do
+        f=${f//\//\\}
+        output "    <ClInclude Include=\"${f}\" />"
+    done
+    output "  </ItemGroup>"
+}
+
+
+outputResources() {
+    local f uuid
+
+    [ "$RESOURCES" = "" ] && return
+    uuid=`uuidgen`
+    cat >>$PROJECT <<!EOF_RESOURCES_A
+        <Filter
+            Name="Resource Files"
+            Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
+            UniqueIdentifier="{${uuid}}"
+            >
+!EOF_RESOURCES_A
+    for f in $RESOURCES ; do
+        f=${f//\//\\}
+        output "            <File"
+        output "                RelativePath=\"${f}\""
+        output "                >"
+        output "            </File>"
+    done
+
+    output "        </Filter>"
+}
+
+
+outputSources() {
+    local f
+
+    [ "$SOURCES" = "" ] && return
+    output "  <ItemGroup>"
+    for f in $SOURCES ; do
+        f=${f//\//\\}
+        output "    <ClCompile Include=\"${f}\" />"
+    done
+    output "  </ItemGroup>"
+}
+
+outputLinkOptions() {
+    local CTOK PTOK def
+
+    CTOK='$(Configuration)'
+    PTOK='$(Platform)'
+
+    if [ "$DEF" != "" ] ; then
+        for def in $DEF ; do
+            cat >>$PROJECT <<!EOF_LINK_OPTIONS
+
+  <ItemDefinitionGroup>
+    <Link>
+      <ModuleDefinitionFile>$def</ModuleDefinitionFile>
+      <AdditionalDependencies>$LIB_LIST;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+!EOF_LINK_OPTIONS
+        done
+    fi
+
+    if [ "$LIB_LIST" != "" ] ; then
+        cat >>$PROJECT <<!EOF_LINK_LIBS
+
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>$LIB_LIST;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+!EOF_LINK_LIBS
+    fi
+
+    if [ "$GRAPHICAL" != "" ] ; then
+        cat >>$PROJECT <<!EOF_LINK_SUBSYSTEM
+
+  <ItemDefinitionGroup>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+
+!EOF_LINK_SUBSYSTEM
+    fi
+}
+
+
+outputDependencies() {
+    local dep guid
+    if [ "${DEPS}" != "" ] ; then
+        for dep in ${DEPS} ; do
+            dep="${dep%.vcxproj}"
+            if [ ! -f ${dep}.vcxproj.guid ] ; then
+                echo "Missing project GUID for $dep, omitting dependency for $NAME on $dep"
+                continue
+            fi
+            guid="{"`cat ${dep}.vcxproj.guid`"}"
+            cat >>$PROJECT <<!EOF_DEPS
+  <ItemGroup>
+    <ProjectReference Include="${dep}.vcxproj">
+      <Project>${guid}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+!EOF_DEPS
+        done
+    fi
+}
+
+
+outputMsTargets() {
+    local VTOK
+
+    VTOK='$(VCTargetsPath)'
+
+    cat >>$PROJECT <<!EOF_TRAILER
+  <Import Project="${VTOK}\Microsoft.Cpp.targets" />
+
+!EOF_TRAILER
+}
+
+outputCustom() {
+    local file
+
+    for file in $CUSTOM ; do
+        if [ "$CUSTOM" != "" ] ; then
+            if [ ! -f "$CUSTOM" ] ; then
+                echo "Can't locate $CUSTOM"
+                exit 255
+            fi
+            cat <$CUSTOM >>$PROJECT 
+        fi
+    done
+}
+
+#
+#   Emit the final trailer for the project file
+#
+outputTrailer() {
+    local VTOK
+
+    VTOK='$(VCTargetsPath)'
+
+    cat >>$PROJECT <<!EOF_TRAILER
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
+!EOF_TRAILER
+}
+
+###############################################################################
+#
 #   Main
 #
 
@@ -639,10 +659,8 @@ BLD_TOP=`findTop`
 . `cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
 parseArgs "$@"
 log "Generate" ${PROJECT}
-
 argc=$#
 shift $((_INDEX - 1))
-
 OS=${BLD_OS}
 
 if [ "$PROJECT" = "" ] ; then
@@ -669,8 +687,7 @@ else
     SUFFIXES="$SUFFIXES ${BLD_ARCH} ${BLD_SHLIB}"
 fi
 
-if [ "${OBJECT_FILE_LIST}" ]
-then
+if [ "${OBJECT_FILE_LIST}" ] ; then
     for f in ${OBJECT_FILE_LIST}
     do
         OBJECTS="$OBJECTS `cat ${f}`"
@@ -729,6 +746,7 @@ for l in ${SYSLIBS} ; do
     fi
 done
 LIB_LIST=${LIB_LIST# *}
+LIB_LIST=${LIB_LIST// /;}
 
 if [ "$LIBRARY" != "" ] ; then
     if [ "$MAKE_STATIC" = 0 -a "$ENTRY" = "" ]
@@ -754,8 +772,11 @@ outputHeader
 outputConfiguration
 outputHeaders
 outputSources
+outputLinkOptions
 # outputResources
 outputDependencies
+outputMsTargets
+outputCustom
 outputTrailer
 unix2dos -D $PROJECT 2>/dev/null
 
