@@ -1,0 +1,4 @@
+LIBRARY ejs.db.sqlite.dll
+EXPORTS
+  ejs_db_sqlite_Init
+  mem

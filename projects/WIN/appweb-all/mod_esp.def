@@ -1,0 +1,13 @@
+LIBRARY mod_esp.dll
+EXPORTS
+  espAutoFinalize
+  espCompile
+  espDefineAction
+  espDefineView
+  espFinalize
+  espFinalized
+  espSetAutoFinalizing
+  espSetStatus
+  espWrite
+  maEspHandlerInit
+  pcre_replace

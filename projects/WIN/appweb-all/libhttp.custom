@@ -1,0 +1,12 @@
+  <PropertyGroup>
+    <BuildDependsOn>
+        Setup;
+        $(BuildDependsOn);
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\http.h" Inputs="$(ProjectDir)..\..\..\src\deps\http\http.h">
+    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\deps\http\http.h" 
+          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  </Target>
+

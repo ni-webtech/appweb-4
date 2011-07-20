@@ -1,0 +1,12 @@
+  <PropertyGroup>
+    <BuildDependsOn>
+        Setup;
+        $(BuildDependsOn);
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\buildConfig.h" Inputs="$(ProjectDir)buildConfig.default">
+    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)buildConfig.default" 
+          DestinationFiles="$(ProjectDir)..\..\..\out\inc\buildConfig.h" />
+  </Target>
+

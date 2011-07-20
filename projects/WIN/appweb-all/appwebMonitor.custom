@@ -1,0 +1,12 @@
+  <PropertyGroup>
+    <BuildDependsOn>
+        Setup;
+        $(BuildDependsOn);
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\appwebMonitor.h" Inputs="$(ProjectDir)..\..\..\src\include\appwebMonitor.h">
+    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\include\appwebMonitor.h" 
+          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  </Target>
+

@@ -84,7 +84,6 @@ EXPORTS
   ejsAddNamespaceToBlock
   ejsAddNativeModule
   ejsAddObserver
-  ejsAddWebHandler
   ejsAlloc
   ejsAllocPoolVM
   ejsAppendArray
@@ -118,9 +117,7 @@ EXPORTS
   ejsCloneArray
   ejsCloneBlock
   ejsCloneFunction
-  ejsCloneHttpServer
   ejsClonePot
-  ejsCloneRequest
   ejsCloneVM
   ejsCoerceOperands
   ejsCompactPot
@@ -143,7 +140,6 @@ EXPORTS
   ejsConfigureFunctionType
   ejsConfigureGCType
   ejsConfigureGlobalBlock
-  ejsConfigureHttpServerType
   ejsConfigureHttpType
   ejsConfigureIteratorType
   ejsConfigureJSONType
@@ -157,8 +153,6 @@ EXPORTS
   ejsConfigureObjectType
   ejsConfigurePathType
   ejsConfigureRegExpType
-  ejsConfigureRequestType
-  ejsConfigureSessionType
   ejsConfigureSocketType
   ejsConfigureStringType
   ejsConfigureSystemType
@@ -226,7 +220,6 @@ EXPORTS
   ejsCreatePotHelpers
   ejsCreateRegExp
   ejsCreateRegExpType
-  ejsCreateRequest
   ejsCreateReservedNamespace
   ejsCreateSearchPath
   ejsCreateSimpleFunction
@@ -263,7 +256,6 @@ EXPORTS
   ejsDeletePropertyByName
   ejsDeserialize
   ejsDestroyIntern
-  ejsDestroySession
   ejsDestroyVM
   ejsDisableExit
   ejsDisableFunction
@@ -314,7 +306,6 @@ EXPORTS
   ejsGetPropertyName
   ejsGetPropertyTraits
   ejsGetPrototype
-  ejsGetSession
   ejsGetSlot
   ejsGetType
   ejsGetTypeByName
@@ -418,9 +409,6 @@ EXPORTS
   ejsSearchForModule
   ejsSendEvent
   ejsSendEventv
-  ejsSendRequestCloseEvent
-  ejsSendRequestErrorEvent
-  ejsSendRequestEvent
   ejsSerialize
   ejsSerializeWithOptions
   ejsSetByteArrayPositions
@@ -433,7 +421,6 @@ EXPORTS
   ejsSetPropertyName
   ejsSetPropertyTraits
   ejsSetSearchPath
-  ejsSetSessionTimeout
   ejsSetTypeAttributes
   ejsSetTypeHelpers
   ejsSetTypeName
@@ -483,13 +470,10 @@ EXPORTS
   ejsXMLDescendants
   ejsXMLToString
   ejsZeroSlots
-  ejs_db_sqlite_Init
-  ejs_web_Init
   g_deserialize
   getNextJsonToken
   manageFileStream
   manageLoadState
-  mem
   nodes
   parseXMLAttribute
   parseXMLAttributes

@@ -1,0 +1,11 @@
+  <PropertyGroup>
+    <BuildDependsOn>
+        Setup;
+        $(BuildDependsOn);
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\mprSsl.h" Inputs="$(ProjectDir)..\..\..\src\deps\mpr\mprSsl.h">
+    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\deps\mpr\mprSsl.h" 
+          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  </Target>

@@ -1,0 +1,19 @@
+
+  <PropertyGroup>
+    <BuildDependsOn>
+        Setup;
+        $(BuildDependsOn);
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <IncludeFiles Include="$(ProjectDir)..\..\..\src\include\appweb.h" />
+    <IncludeFiles Include="$(ProjectDir)..\..\..\src\include\customize.h" />
+    <ExportFiles  Include="$(ProjectDir)..\..\..\out\inc\appweb.h" />
+    <ExportFiles  Include="$(ProjectDir)..\..\..\out\inc\customize.h" />
+  </ItemGroup>
+
+  <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  </Target>
+
