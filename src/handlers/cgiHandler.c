@@ -1060,6 +1060,13 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->parse = (HttpParse) parseCgi; 
     return 0;
 }
+
+#else /* BLD_FEATURE_CGI */
+
+int maCgiHandlerInit(Http *http, MprModule *module)
+{
+    return 0;
+}
 #endif /* BLD_FEATURE_CGI */
 
 /*

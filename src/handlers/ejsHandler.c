@@ -164,6 +164,12 @@ int maEjsHandlerInit(Http *http, MprModule *module)
     }
     return 0;
 }
+#else /* BLD_FEATURE_EJS */
+
+int maEjsHandlerInit(Http *http, MprModule *module)
+{
+    return 0;
+}
 #endif /* BLD_FEATURE_EJS */
 
 /*
