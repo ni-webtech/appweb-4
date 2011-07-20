@@ -14,7 +14,7 @@ SSL				:= mod_ssl
 
 include 		.makedep
 
-PRE_DIRS		+= include deps
+PRE_DIRS		+= deps
 PRE_DIRS		+= handlers filters modules
 ifeq	($(BLD_FEATURE_ESP),1)
 	PRE_DIRS	+= handlers/esp

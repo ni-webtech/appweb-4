@@ -5,6 +5,8 @@ defineComponent() {
     local libpaths path builtin incdir
 
     path="${1:-.}"
+    builtin=`[ $path = "." ] && echo --builtin`
+
     if [ "$path" != "." ] ; then
         import_libmpr=`probe --name mpr --search "$path:$path/out/lib" "libmpr"`
         if [ "$import_libmpr" = "" ] ; then
@@ -17,8 +19,7 @@ defineComponent() {
             return
         fi
     fi
-    builtin=`[ $path = "." ] && echo --builtin`
-    incdir=`probe --dir --name mpr.h --search "$path:$path/src/deps/mpr:$path/out/inc" "mpr.h" `
+    incdir=`probe --dir --name mpr.h --search "$path:$path/src:$path/src/deps/mpr:$path/out/inc" "mpr.h" `
     if [ "$incdir" != "" ] ; then
         imports="$incdir/mpr.h $incdir/mprSsl.h"
     fi

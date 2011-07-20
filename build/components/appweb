@@ -6,7 +6,7 @@ defineComponent() {
 
     path="${1:-.}"
         eval SHOBJ=\$BLD_${kind}_SHOBJ
-    builtin=`[ "$path" = "." -a -f src/include/appweb.h ] && echo --builtin`
+    builtin=`[ "$path" = "." -a -f src/appweb.h ] && echo --builtin`
     eval pcre=\$CFG_${kind}_PCRE
 
     deps="mpr http"
@@ -61,7 +61,7 @@ defineComponent() {
             present="--present 0"
         fi
     else
-        imports="src/include/appweb*.h src/include/customize.h"
+        imports="src/appweb*.h src/customize.h"
     fi
     configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" $builtin \
         $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" --path "$appweb" appweb

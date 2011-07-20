@@ -5,12 +5,13 @@ defineComponent() {
     local libpaths incdir path builtin 
 
     path="${1:-.}"
-    incdir=`probe --name sqlite --dir --warn --search "$path:$path/src/deps/ejs:$path/src/include" "sqlite3.h"`
+    builtin=`[ "$path" = . ] && echo --builtin`
+
+    incdir=`probe --name sqlite --dir --warn --search "$path:$path/src/deps/ejs:$path/src/jems/ejs.db.sqlite/src" "sqlite3.h"`
     libpaths=`probe --name sqlite --dir --search "$path:$path/out/lib" "libsqlite3"`
     if [ "$libpaths" = "" -a "$incdir" = "" ] ; then
         warnComponent sqlite "Can't locate libsqlite3"
         return
     fi
-    builtin=`[ "$path" = . ] && echo --builtin`
     configureComponent --libs "sqlite3" --libpaths "$libpaths" $builtin sqlite
 }

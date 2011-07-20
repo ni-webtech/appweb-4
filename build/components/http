@@ -5,6 +5,8 @@ defineComponent() {
     local iflags libpaths builtin libraries imports headers
 
     path="${1:-.}"
+    builtin=`[ $path = "." ] && echo --builtin`
+
     if [ "$path" != "." ] ; then
         libraries=`probe --name libhttp --search "$path:$path/out/lib" "libhttp" `
         if [ "$libraries" = "" ] ; then
@@ -12,8 +14,7 @@ defineComponent() {
             return
         fi
     fi
-    headers=`probe --name http.h --search "$path:$path/src/deps/http:$path/out/inc" "http.h" `
-    builtin=`[ $path = "." ] && echo --builtin`
+    headers=`probe --name http.h --search "$path:$path/src:$path/src/deps/http:$path/out/inc" "http.h" `
     if [ "$headers" != "" ] ; then
         imports="$headers"
     fi

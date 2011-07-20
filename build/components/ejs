@@ -6,7 +6,7 @@ defineComponent() {
 
     path="${1:-.}"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
-    builtin=`[ "$path" = "." -a -f src/include/ejs.h ] && echo --builtin`
+    builtin=`[ "$path" = "." -a -f src/ejs.h ] && echo --builtin`
     eval pcre=\$CFG_${kind}_PCRE
 
     deps="mpr http"
@@ -58,21 +58,15 @@ defineComponent() {
 
         if [ "$libdir" != "" ] ; then
             imports="$libraries"
-            incdir=`probe --name ejs.h --dir --search "$search" "ejs.h" `
-            if [ "$incdir" != "" ] ; then
-                headers="`echo $incdir/ejs*.h`"
-                # Currently using iflags below
-                # imports="$imports $headers"
-            fi
             modules=`echo $libdir/*.mod`
             imports="$imports $modules"
             http=`probe --exe --name http --search "$search" http`
             if [ "$http" != "" ] ; then
                 imports="$imports $http"
             fi
-            if [ "${incdir}" != "" ] ; then
-                iflags=-I${incdir}
-            fi
+#           if [ "${incdir}" != "" ] ; then
+#               iflags=-I${incdir}
+#           fi
             libs="$libs ejs.web"
             if [ "${ejsbin}" != "" ] ; then
                 imports="$imports $ejsbin"
@@ -86,6 +80,11 @@ defineComponent() {
         fi
     else
         ejsbin="${BLD_BIN_DIR}/ejs"
+    fi
+    incdir=`probe --name ejs.h --dir --search "$search" "ejs.h" `
+    if [ "$incdir" != "" ] ; then
+        headers="`echo $incdir/ejs*.h $incdir/customize.h`"
+        imports="$imports $headers"
     fi
     configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" \
         $builtin $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" \

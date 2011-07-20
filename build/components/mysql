@@ -8,7 +8,7 @@ defineComponent() {
     path="$1"
     if [ "$path" != "" ] ; then
         libpaths=`probe --name libmysql --search "$path:$path/out/lib" "libmysqlclient" `
-        iflags=-I`probe --name mysql.h --search "$path:$path/src/include" "mysql.h"`
+        iflags=-I`probe --name mysql.h --search "$path:$path/src" "mysql.h"`
         if [ "$libpaths" = "" ] ; then
             warnComponent "mysql"
             return

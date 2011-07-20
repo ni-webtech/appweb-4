@@ -11,17 +11,12 @@ defineComponent() {
             warnComponent pcre "Can't locate libpcre"
             return
         fi
-        headers=`probe --name pcre.h --search "$path:$path/out/inc" "pcre.h" `
-        if [ "$headers" = "" ] ; then
-            warnComponent pcre "Can't locate pcre.h"
-            return
-        fi
     fi
     if [ "$libraries" != "" ] ; then
         imports="$libraries"
         libpaths="${libraries%/*}"
     fi
-    headers=`probe --name pcre --search "$path:$path/src/deps/pcre:$path/src/include" "pcre.h"`
+    headers=`probe --name pcre --search "$path:$path/src:$path/src/deps/pcre" "pcre.h"`
     if [ "$headers" != "" ] ; then
         imports="$imports $headers"
     fi
