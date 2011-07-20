@@ -375,7 +375,6 @@
 		C976206C0FD04E38009C78E1 /* fileHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fileHandler.c; sourceTree = "<group>"; };
 		C97620700FD04E38009C78E1 /* phpHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = phpHandler.c; sourceTree = "<group>"; };
 		C97620760FD04E38009C78E1 /* sslModule.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sslModule.c; sourceTree = "<group>"; };
-		C976D54113D35433001BBFDF /* appweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = appweb.h; path = ../../../src/include/appweb.h; sourceTree = "<group>"; };
 		C976D54813D356A8001BBFDF /* testAppweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testAppweb.h; path = ../../../src/test/testAppweb.h; sourceTree = "<group>"; };
 		C97DCABB101D4FE7008EB048 /* mod_ssl.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_ssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9817C11110D157800F241EF /* mprLib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mprLib.c; path = ../../../src/deps/mpr/mprLib.c; sourceTree = SOURCE_ROOT; };
@@ -389,6 +388,8 @@
 		C9817C51110D183800F241EF /* libhttp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libhttp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9817CF0110D234800F241EF /* makerom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = makerom.c; path = ../../../src/deps/mpr/makerom.c; sourceTree = SOURCE_ROOT; };
 		C9A26CED13D1787B007A3D7C /* mod_ejs.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_ejs.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9A44E9813D74BAC009BF64B /* appweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = appweb.h; path = ../../../src/appweb.h; sourceTree = "<group>"; };
+		C9A44E9913D74BAC009BF64B /* customize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = customize.h; path = ../../../src/customize.h; sourceTree = "<group>"; };
 		C9AFCC560FC521440080E908 /* appweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9B12BCA13D175C300470A96 /* libpcre.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9D7A7C913D4F28D000428C7 /* angel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = angel; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -570,7 +571,8 @@
 		C95C31E70FC528C700FB3105 /* server */ = {
 			isa = PBXGroup;
 			children = (
-				C976D54113D35433001BBFDF /* appweb.h */,
+				C9A44E9813D74BAC009BF64B /* appweb.h */,
+				C9A44E9913D74BAC009BF64B /* customize.h */,
 				C95C31E80FC5292A00FB3105 /* appweb.c */,
 				C9817C1C110D170500F241EF /* config.c */,
 				C9817C1E110D170500F241EF /* convenience.c */,
@@ -1085,7 +1087,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp $SRC/include/appweb*.h $OUT/inc";
+			shellScript = "cp $SRC/appweb*.h $SRC/customize.h $OUT/inc";
 		};
 		C976D54C13D359D5001BBFDF /* Export Header */ = {
 			isa = PBXShellScriptBuildPhase;

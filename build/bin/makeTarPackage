@@ -8,17 +8,18 @@
 ################################################################################
 
 makeTarPackage() {
-    local file
+    local file owner
 
     log Create Tar package
     cd ${ROOT_DIR}
     file=`echo ${BLD_PRODUCT}-${BLD_VERSION}-${BLD_NUMBER}-${BLD_HOST_DIST}-${BLD_HOST_OS}-${BLD_HOST_CPU}.tar.tar`
     rm -f ${file}*
-    srcPkg=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}`.tar.gz
-    files=`echo *.gz | sed "s^$srcPkg^^"`
+    srcPkg=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}`.tgz
+    files=`echo *.tgz | sed "s^$srcPkg^^"`
 
-    log Run "tar -cf ${file} install uninstall README.TXT ..."
-    tar -cf ${file} install uninstall README.TXT ${files}
+    [ $BLD_OS = LINUX -o $BLD_OS = WIN ] && owner="--owner 0 --group 0"
+    log Run "tar $owner -cf ${file} install uninstall README.TXT ..."
+    tar $owner -cf ${file} install uninstall README.TXT ${files}
     log Run "gzip ${file}"
     gzip ${file}
     cd ${HOME}

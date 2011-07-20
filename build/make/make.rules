@@ -64,7 +64,7 @@ BUILDING_NATIVE := 0
 MAKE			:= $(BLD_MAKE)
 MAKE			?= make
 TEMP			?= /tmp
-ifeq ($(TRACE),)
+ifneq ($(TRACE),1)
     MAKEFLAGS   += -s TRACE=0
 endif
 ifeq ($(findstring TRACE=0,$(MAKEFLAGS)),)

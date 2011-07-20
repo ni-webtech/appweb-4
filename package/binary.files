@@ -111,28 +111,9 @@ if [ "$BLD_FEATURE_SSL" = 1 ] ; then
     cpy src/server/ssl/server.* "${BLD_CFG_PREFIX}/ssl"
 fi
 if [ "$BLD_FEATURE_EJS" = 1 ] ; then
-#   cpy -d ${BLD_LIB_DIR} "ejs-${BLD_VERSION}.mod" "${BLD_LIB_PREFIX}"
-    cpy -d ${BLD_LIB_DIR} "ejs.mod" "${BLD_LIB_PREFIX}"
-    if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 -o "$BLD_FEATURE_EJS_CROSS_COMPILER" = 1 ] ; then
-#       cpy -m 644 -d "${BLD_LIB_DIR}" appweb.conf "${BLD_LIB_PREFIX}"
-#       if [ $BLD_HOST_OS = WIN ] ; then
-#           cpy -d ${BLD_LIB_DIR} "ejsweb-${BLD_VERSION}.mod" "${BLD_LIB_PREFIX}"
-#       fi
-
-#   MOB - need mvc, ejspage
-#       cpy -m 755 -d ${BLD_BIN_DIR} mvc "${BLD_BIN_PREFIX}"
-        cpy -s -m 755 -d ${BLD_BIN_DIR} ejsc${BLD_EXE} "${BLD_BIN_PREFIX}"
-        if [ "$BARE" = 0 ] ; then
-            makeDir "${BLD_LIB_DIR}/www"
-            cpy -m 644 -d "${BLD_LIB_DIR}/www" "*" "${BLD_LIB_PREFIX}/www"
-        fi
-    fi
-    if [ "$BLD_CROSS" = 0 -o "$BLD_FEATURE_COMPLETE_CROSS" = 1 ] ; then
-        cpy -s -m 755 -d ${BLD_BIN_DIR} ejs${BLD_EXE} ejsmod${BLD_EXE} "${BLD_BIN_PREFIX}"
-    fi
-    if [ "$BLD_FEATURE_SQLITE" = 1 ] ; then
-        cpy -s -m 755 -d ${BLD_BIN_DIR} ejssql${BLD_EXE} "${BLD_BIN_PREFIX}"
-    fi
+    cpy -s -m 755 -d ${BLD_BIN_DIR} ejs${BLD_EXE} "${BLD_BIN_PREFIX}"
+    cpy -d ${BLD_LIB_DIR} 'ejs*.mod' "${BLD_LIB_PREFIX}"
+    cpy -s -m 755 -d ${BLD_BIN_DIR} ejspage "${BLD_BIN_PREFIX}"
 fi
 
 #

@@ -64,9 +64,14 @@ defineComponent() {
             if [ "$http" != "" ] ; then
                 imports="$imports $http"
             fi
-#           if [ "${incdir}" != "" ] ; then
-#               iflags=-I${incdir}
-#           fi
+            makerom=`probe --exe --name makerom --search "$search" makerom`
+            if [ "$makerom" != "" ] ; then
+                imports="$imports $makerom"
+            fi
+            ejspage=`probe --exe --name ejspage --search "$search" ejspage`
+            if [ "$ejspage" != "" ] ; then
+                imports="$imports $ejspage"
+            fi
             libs="$libs ejs.web"
             if [ "${ejsbin}" != "" ] ; then
                 imports="$imports $ejsbin"
