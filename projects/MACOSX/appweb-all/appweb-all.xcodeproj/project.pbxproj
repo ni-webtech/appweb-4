@@ -1893,7 +1893,7 @@
 					"-lssl",
 				);
 				OUT = "$(PROJECT_DIR)/../../../out";
-				SKIP_INSTALL = NO;
+				SKIP_INSTALL = YES;
 				SRC = "$(PROJECT_DIR)/../../../src";
 				STRIP_INSTALLED_PRODUCT = NO;
 				TOP = "$(PROJECT_DIR)/../../..";
@@ -1924,7 +1924,7 @@
 					"-lssl",
 				);
 				OUT = "$(PROJECT_DIR)/../../../out";
-				SKIP_INSTALL = NO;
+				SKIP_INSTALL = YES;
 				SRC = "$(PROJECT_DIR)/../../../src";
 				TOP = "$(PROJECT_DIR)/../../..";
 			};
