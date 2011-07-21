@@ -1,5 +1,5 @@
 #
-#	Makefile for the MACOSX projects
+#	Makefile for the appweb-all project
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2009. All Rights Reserved.
 #

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 44;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -43,6 +43,18 @@
 			);
 			name = All;
 			productName = All;
+		};
+		C9D7B35513D8C030006C3A9B /* test */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = C9D7B35713D8C030006C3A9B /* Build configuration list for PBXAggregateTarget "test" */;
+			buildPhases = (
+				C9D7B35613D8C030006C3A9B /* Test */,
+			);
+			dependencies = (
+				C9BD40CB13D8CA8B00CB61A0 /* PBXTargetDependency */,
+			);
+			name = test;
+			productName = prep;
 		};
 /* End PBXAggregateTarget section */
 
@@ -316,6 +328,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = C97DCAAF101D4FE7008EB048;
 			remoteInfo = mod_ssl;
+		};
+		C9BD40CA13D8CA8B00CB61A0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9761F7B0FD049F5009C78E1;
+			remoteInfo = All;
 		};
 		C9D7A7CE13D4F332000428C7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1037,6 +1056,7 @@
 				C9761E090FD0415A009C78E1 /* auth */,
 				C9408698101A665B0019809C /* testAppweb */,
 				C9D7A7B613D4F28D000428C7 /* angel */,
+				C9D7B35513D8C030006C3A9B /* test */,
 			);
 		};
 /* End PBXProject section */
@@ -1048,11 +1068,10 @@
 			files = (
 			);
 			inputPaths = (
-				/tmp/a.tmp,
 			);
 			name = Initialize;
 			outputPaths = (
-				/tmp/b.tmp,
+				dummy,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1190,6 +1209,20 @@
 			shellPath = /bin/sh;
 			shellScript = "cp -r $SRC/server/template/standard/conf $SRC/server/conf\ncp -r $SRC/server/template/standard/appweb.conf $SRC/server\n\nif [ \"$SKIP_INSTALL\" != YES ] ; then\n    mkdir -p $DSTROOT/etc/appweb/conf\n    cp $SRC/server/appweb.conf $DSTROOT/etc/appweb\n    cp $SRC/server/mime.types $DSTROOT/etc/appweb\n    cp -r $SRC/server/conf $DSTROOT/etc/appweb\n    cp $SRC/server/groups.db $SRC/server/users.db $DSTROOT/etc/appweb\n    cp $SRC/server/php.ini $DSTROOT/etc/appweb\n    cp -r $SRC/server/ssl $DSTROOT/etc/appweb\nfi\nexit 0";
 			showEnvVarsInLog = 0;
+		};
+		C9D7B35613D8C030006C3A9B /* Test */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = Test;
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd $SRC ; $TOP/../ejs/out/bin/ejs $BBIN/utest -v";
 		};
 		C9EA7DEF13D4E0280035EB46 /* Import Libraries and Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1481,6 +1514,11 @@
 			target = C97DCAAF101D4FE7008EB048 /* mod_ssl */;
 			targetProxy = C9B12BDC13D176BF00470A96 /* PBXContainerItemProxy */;
 		};
+		C9BD40CB13D8CA8B00CB61A0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9761F7B0FD049F5009C78E1 /* All */;
+			targetProxy = C9BD40CA13D8CA8B00CB61A0 /* PBXContainerItemProxy */;
+		};
 		C9D7A7CF13D4F332000428C7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C93E6EFE11E83A3B00248470 /* prep */;
@@ -1511,7 +1549,6 @@
 /* Begin XCBuildConfiguration section */
 		C93E6EFF11E83A3B00248470 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				PRODUCT_NAME = prep;
 			};
@@ -1519,7 +1556,6 @@
 		};
 		C93E6F0011E83A3B00248470 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = prep;
@@ -1528,7 +1564,6 @@
 		};
 		C94086B1101A665B0019809C /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_PREFIX_HEADER = "";
@@ -1540,7 +1575,6 @@
 		};
 		C94086B2101A665B0019809C /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_PREFIX_HEADER = "";
@@ -1552,31 +1586,28 @@
 		};
 		C9761DA10FD03F95009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib\n";
 				PRODUCT_NAME = libmpr;
 			};
 			name = Debug;
 		};
 		C9761DA20FD03F95009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib\n";
 				PRODUCT_NAME = libmpr;
 			};
 			name = Release;
 		};
 		C9761DAF0FD03FBA009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lcrypto",
@@ -1588,11 +1619,10 @@
 		};
 		C9761DB00FD03FBA009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lcrypto",
@@ -1604,27 +1634,24 @@
 		};
 		C9761DC40FD03FD9009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libappweb;
 			};
 			name = Debug;
 		};
 		C9761DC50FD03FD9009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libappweb;
 			};
 			name = Release;
 		};
 		C9761E050FD04151009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
@@ -1634,7 +1661,6 @@
 		};
 		C9761E060FD04151009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
@@ -1644,7 +1670,6 @@
 		};
 		C9761E0C0FD0415B009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
@@ -1654,7 +1679,6 @@
 		};
 		C9761E0D0FD0415B009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
@@ -1664,7 +1688,6 @@
 		};
 		C9761F7C0FD049F6009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				PRODUCT_NAME = All;
 			};
@@ -1672,7 +1695,6 @@
 		};
 		C9761F7D0FD049F6009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = All;
@@ -1681,76 +1703,69 @@
 		};
 		C9761FFE0FD04D5C009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_cgi;
 			};
 			name = Debug;
 		};
 		C9761FFF0FD04D5C009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_cgi;
 			};
 			name = Release;
 		};
 		C97DCAB9101D4FE7008EB048 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_ssl;
 			};
 			name = Debug;
 		};
 		C97DCABA101D4FE7008EB048 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_ssl;
 			};
 			name = Release;
 		};
 		C9817C4F110D183800F241EF /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libhttp;
 			};
 			name = Debug;
 		};
 		C9817C50110D183800F241EF /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libhttp;
 			};
 			name = Release;
 		};
 		C9A26CEB13D1787B007A3D7C /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					$TOP/../ejs/out/inc,
 				);
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lejs",
@@ -1762,14 +1777,13 @@
 		};
 		C9A26CEC13D1787B007A3D7C /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					$TOP/../ejs/out/inc,
 				);
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lejs",
@@ -1783,6 +1797,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
+				"ADDITIONAL_SDKS[arch=*]" = "";
+				MACOSX_DEPLOYMENT_TARGET = "";
 			};
 			name = Debug;
 		};
@@ -1790,12 +1806,12 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = "";
 			};
 			name = Release;
 		};
 		C9AFCC590FC521450080E908 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1807,7 +1823,6 @@
 		};
 		C9AFCC5A0FC521450080E908 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1819,27 +1834,24 @@
 		};
 		C9B12BC813D175C300470A96 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libpcre;
 			};
 			name = Debug;
 		};
 		C9B12BC913D175C300470A96 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libpcre;
 			};
 			name = Release;
 		};
 		C9D7A7C713D4F28D000428C7 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
@@ -1849,7 +1861,6 @@
 		};
 		C9D7A7C813D4F28D000428C7 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
@@ -1857,9 +1868,23 @@
 			};
 			name = Release;
 		};
+		C9D7B35813D8C030006C3A9B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = test;
+			};
+			name = Debug;
+		};
+		C9D7B35913D8C030006C3A9B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = test;
+			};
+			name = Release;
+		};
 		C9D817AB101D4C2A0039DD9D /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				HEADER_SEARCH_PATHS = (
@@ -1869,7 +1894,7 @@
 					../../../extensions/php/latest/main,
 					../../../extensions/php/latest,
 				);
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lphp5",
@@ -1880,7 +1905,6 @@
 		};
 		C9D817AC101D4C2A0039DD9D /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
@@ -1891,7 +1915,7 @@
 					../../../extensions/php/latest/main,
 					../../../extensions/php/latest,
 				);
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lphp5",
@@ -1902,20 +1926,18 @@
 		};
 		C9E4B73B13C7F4F3005345FA /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_esp;
 			};
 			name = Debug;
 		};
 		C9E4B73C13C7F4F3005345FA /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = /usr/lib/appweb/lib;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_esp;
 			};
 			name = Release;
@@ -2063,6 +2085,15 @@
 			buildConfigurations = (
 				C9D7A7C713D4F28D000428C7 /* Debug */,
 				C9D7A7C813D4F28D000428C7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C9D7B35713D8C030006C3A9B /* Build configuration list for PBXAggregateTarget "test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9D7B35813D8C030006C3A9B /* Debug */,
+				C9D7B35913D8C030006C3A9B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
