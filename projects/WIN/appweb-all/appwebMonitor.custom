@@ -1,3 +1,4 @@
+
   <PropertyGroup>
     <BuildDependsOn>
         Setup;
@@ -5,8 +6,12 @@
     </BuildDependsOn>
   </PropertyGroup>
 
-  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\appwebMonitor.h" Inputs="$(ProjectDir)..\..\..\src\server\appwebMonitor.h">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\server\appwebMonitor.h" 
-          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  <ItemGroup>
+    <IncludeFiles Include="$(ProjectDir)..\..\..\src\server\appwebMonitor.h" />
+    <ExportFiles  Include="$(ProjectDir)..\..\..\out\inc\appwebMonitor.h" />
+  </ItemGroup>
+
+  <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
   </Target>
 

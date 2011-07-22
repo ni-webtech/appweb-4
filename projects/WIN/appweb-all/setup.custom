@@ -5,8 +5,12 @@
     </BuildDependsOn>
   </PropertyGroup>
 
-  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\buildConfig.h" Inputs="$(ProjectDir)buildConfig.default">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)buildConfig.default" 
-          DestinationFiles="$(ProjectDir)..\..\..\out\inc\buildConfig.h" />
+  <ItemGroup>
+    <IncludeFiles Include="$(ProjectDir)buildConfig.default" />
+    <ExportFiles  Include="$(ProjectDir)..\..\..\out\inc\buildConfig.h" />
+  </ItemGroup>
+
+  <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
   </Target>
 

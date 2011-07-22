@@ -7,7 +7,6 @@
 CONFIG		= buildConfig.default
 
 include     .makedep
-
 include     $(CONFIG)
 
 VSP			= makeVsProj
@@ -51,8 +50,7 @@ appweb-all.sln: Makefile $(CONFIG)
 	$(VSS) --solution appweb-all.sln \
 		--deps "libmpr setup" \
 		--deps "libpcre setup" \
-		setup libmpr libmprssl libhttp libpcre libappweb angel appweb appwebMonitor auth http mod_cgi mod_ejs mod_esp \
-		mod_php mod_ssl
+		$(PROJECTS)
 
 setup.vcxproj: setup.custom Makefile $(CONFIG)
 	$(VSP) --project setup.vcxproj --custom setup.custom
@@ -129,17 +127,17 @@ mod_ssl.vcxproj: Makefile $(CONFIG)
 #	Executables
 #
 appweb.vcxproj: Makefile $(CONFIG)
-	$(VSP) --project appweb.vcxproj --exe appweb.exe --search "$(BLD_EJS_LIBPATHS)" --dflags "$(DFLAGS)" \
+	$(VSP) --project appweb.vcxproj --exe appweb.exe --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
 		--libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(SRC)/server/appweb.c
 
 angel.vcxproj: Makefile $(CONFIG)
-	$(VSP) --project angel.vcxproj --graphical --exe angel.exe --search "$(BLD_EJS_LIBPATHS)" \
+	$(VSP) --project angel.vcxproj --graphical --exe angel.exe \
 		--props "$(PROPS)" --deps libmpr \
 		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(SRC)/deps/mpr/angel.c
 
 appwebMonitor.vcxproj: appwebMonitor.custom Makefile $(CONFIG)
-	$(VSP) --project appwebMonitor.vcxproj --graphical --exe appwebMonitor.exe --search "$(BLD_EJS_LIBPATHS)" \
+	$(VSP) --project appwebMonitor.vcxproj --graphical --exe appwebMonitor.exe \
 		--props "$(PROPS)" --deps libmpr \
 		--custom appwebMonitor.custom \
 		--resources $(SRC)/server/appweb.rc \
@@ -167,7 +165,7 @@ libsqlite3.vcxproj: Makefile $(CONFIG)
 ejspage.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project ejspage.vcxproj --exe ejspage.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps setup \
-		--libs "libmpr.lib libejs.lib $(LIBS)" $(MPR_HDR) $(EJS_HDR) $(SRC)/deps/ejs/ejspage.c
+		--libs "libmpr.lib libejs.lib $(LIBS)" $(SRC)/deps/ejs/ejspage.c
 
 cleanExtra:
 	rm -fr Upgrade* _Upgrade* x64 Win32 *.suo *.sdf *.filters *.vcxproj*
