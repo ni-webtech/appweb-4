@@ -67,11 +67,6 @@ with appweb
 BLD_FEATURE_ASSERT=1
 
 #
-#	Name of the config directory to use. Can be an absolute path or be relative to src/server
-#
-BLD_FEATURE_CONFIG=template/standard
-
-#
 #	Device or emulator. (PocketPC2003, Smartphone2003)
 #
 if [ "$BLD_FEATURE_DEVICE" = "" ] ; then
