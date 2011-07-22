@@ -4,11 +4,12 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2009. All Rights Reserved.
 #
 
-CONFIG		= buildConfig.default
+CONFIG		= buildConfig.master
 
 include     .makedep
 include     $(CONFIG)
 
+HEADERS		=
 VSP			= makeVsProj
 VSS			= makeVsSol
 SRC			= $(BLD_TOP)/src
@@ -53,7 +54,7 @@ appweb-all.sln: Makefile $(CONFIG)
 		$(PROJECTS)
 
 setup.vcxproj: setup.custom Makefile $(CONFIG)
-	$(VSP) --project setup.vcxproj --custom setup.custom
+	$(VSP) --project setup.vcxproj --props "$(PROPS)" --custom setup.custom
 
 libmpr.vcxproj: libmpr.custom Makefile $(CONFIG)
 	$(VSP) --project libmpr.vcxproj --library mpr --dflags "$(DFLAGS)" \

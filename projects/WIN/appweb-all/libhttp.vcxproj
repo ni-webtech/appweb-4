@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E05DFE1F-A667-47A3-B511-575BAA1F6C2E}</ProjectGuid>
+    <ProjectGuid>{FBB81A2F-8CEC-43F8-9A09-3431D31CB4E6}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -84,14 +84,14 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{B251D78F-8658-4277-ADDD-5F1E137722B8}</Project>
+      <Project>{EA8063EB-98A0-4719-A98F-D2EABBE906DE}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="libmprssl.vcxproj">
-      <Project>{F4F09AE1-BFA8-48E9-88A4-F4C130780AF4}</Project>
+      <Project>{AA1918F6-64F8-4375-AC40-E4973FDE3FA4}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
@@ -104,9 +104,13 @@
     </BuildDependsOn>
   </PropertyGroup>
 
-  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\http.h" Inputs="$(ProjectDir)..\..\..\src\deps\http\http.h">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\deps\http\http.h" 
-          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  <ItemGroup>
+    <IncludeFiles Include="$(SRC)/deps/http/http.h" />
+    <ExportFiles  Include="$(BLD_INC_DIR)/http.h" />
+  </ItemGroup>
+
+  <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(BLD_INC_DIR)" />
   </Target>
 
   <ImportGroup Label="ExtensionTargets">

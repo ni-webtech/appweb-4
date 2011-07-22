@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F4F09AE1-BFA8-48E9-88A4-F4C130780AF4}</ProjectGuid>
+    <ProjectGuid>{AA1918F6-64F8-4375-AC40-E4973FDE3FA4}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -83,11 +83,12 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{B251D78F-8658-4277-ADDD-5F1E137722B8}</Project>
+      <Project>{EA8063EB-98A0-4719-A98F-D2EABBE906DE}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
 
   <PropertyGroup>
     <BuildDependsOn>
@@ -96,10 +97,15 @@
     </BuildDependsOn>
   </PropertyGroup>
 
-  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\mprSsl.h" Inputs="$(ProjectDir)..\..\..\src\deps\mpr\mprSsl.h">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\deps\mpr\mprSsl.h" 
-          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  <ItemGroup>
+    <IncludeFiles Include="$(SRC)/deps/mpr/mprSsl.h" />
+    <ExportFiles  Include="$(BLD_INC_DIR)/mprSsl.h" />
+  </ItemGroup>
+
+  <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(BLD_INC_DIR)" />
   </Target>
+
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

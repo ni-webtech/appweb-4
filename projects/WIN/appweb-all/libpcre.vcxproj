@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{63D17F69-5189-4AE1-8D6D-7D05364F66E3}</ProjectGuid>
+    <ProjectGuid>{C451508D-5CD3-4BAF-9182-F5F817F2B1BB}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -82,6 +82,7 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 
+
   <PropertyGroup>
     <BuildDependsOn>
         Setup;
@@ -89,9 +90,13 @@
     </BuildDependsOn>
   </PropertyGroup>
 
-  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\pcre.h" Inputs="$(ProjectDir)..\..\..\src\deps\pcre\pcre.h">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\deps\pcre\pcre.h" 
-          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  <ItemGroup>
+    <IncludeFiles Include="$(SRC)/deps/pcre/pcre.h" />
+    <ExportFiles  Include="$(BLD_INC_DIR)/pcre.h" />
+  </ItemGroup>
+
+  <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(BLD_INC_DIR)" />
   </Target>
 
   <ImportGroup Label="ExtensionTargets">
