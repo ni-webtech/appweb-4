@@ -61,7 +61,7 @@ defineComponent() {
             present="--present 0"
         fi
     else
-        imports="src/appweb.h src/server/appwebMonitor.h src/customize.h"
+        imports="src/appweb*.h src/customize.h"
     fi
     configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" $builtin \
         $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" --path "$appweb" appweb
