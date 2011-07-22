@@ -49,7 +49,7 @@ parseArgs() {
         --deps)
             proj=${_ARG%% *}
             rest=${_ARG#?* }
-            eval DEPS_${proj}=\"$rest\"
+            eval DEPS_${proj//\./_}=\"$rest\"
             useArg
             ;;
         --name)
@@ -192,7 +192,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 
 
 outputSolProjects() {
-    local proj base guid xid dguid deps
+    local proj base guid xid dguid deps dep
     for proj in $PROJECTS ; do
         if [ ! -f ${proj}.guid ] ; then
             echo "Missing project GUID for $proj"
@@ -202,7 +202,7 @@ outputSolProjects() {
         xid="{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"
         base=${proj%.*}
         output 'Project("'${xid}'")' "= \"${base}\", \"${proj}\", \"${guid}\""
-        eval deps=\$DEPS_${base}
+        eval deps=\$DEPS_${base//\./_}
         if [ "$deps" != "" ] ; then
             for dep in $deps ; do
                 if [ ! -f ${dep}.vcxproj.guid ] ; then
