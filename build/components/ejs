@@ -16,13 +16,12 @@ defineComponent() {
         withlibs="pcre"
         libs="$libs pcre"
     fi
-
     if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
         if isdefined SQLITE ; then
             optional="$optional sqlite"
+            libraries="$libraries `echo $libdir/libsqlite3*`"
         fi
     fi
-
     if [ "$builtin" = "" ] ; then
         search="$path/out/lib:$path/out/inc:$path"
         if [ "${path}" = "." ] ; then
@@ -35,27 +34,21 @@ defineComponent() {
             search="${search}:../ejs-master-${type}/out/lib:../ejs-master-${type}/out/bin"
             search="${search}:../ejs-master-${type}/out/inc"
         fi
-
-        libdir=`probe --name libejs --dir --search "$search" "libejs" `
-        if [ "$libdir" = "" -a "$path" != "." ] ; then
-            warnComponent ejs "Can't locate libejs"
-            return
-        fi
-        for lib in `echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ}` ; do
-            if [ ! -f "$lib" ] ; then
-                warnComponent ejs "Ejs is not correctly built. Missing $lib"
-                echo "Can't use ejs. Ejs is not correctly built. Missing $lib"
-                return
-            fi
-            libraries="$lib $libraries"
-        done
-        if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
-            if isdefined SQLITE ; then
-                libraries="$libraries `echo $libdir/libsqlite3*`"
-            fi
-        fi
         ejsbin=`probe --exe --name ejs --search "$search" ejs`
+        libdir=`probe --name libejs --dir --search "$search" "libejs" `
 
+        if [ "$libdir" != "" ] ; then
+            for lib in `echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ}` ; do
+                if [ ! -f "$lib" ] ; then
+                    warnComponent ejs "Ejs is not correctly built. Missing $lib"
+                    echo "Can't use ejs. Ejs is not correctly built. Missing $lib"
+                    libdir=""
+                    break
+                    return
+                fi
+                libraries="$lib $libraries"
+            done
+        fi
         if [ "$libdir" != "" ] ; then
             imports="$libraries"
             modules=`echo $libdir/*.mod`
