@@ -5,8 +5,8 @@
     </BuildDependsOn>
   </PropertyGroup>
 
-  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\appwebMonitor.h" Inputs="$(ProjectDir)..\..\..\src\include\appwebMonitor.h">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\include\appwebMonitor.h" 
+  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\appwebMonitor.h" Inputs="$(ProjectDir)..\..\..\src\server\appwebMonitor.h">
+    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\server\appwebMonitor.h" 
           DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
   </Target>
 
