@@ -6,10 +6,13 @@
      <BLD_FEATURE_CGI>1</BLD_FEATURE_CGI>
      <BLD_FEATURE_EJS>0</BLD_FEATURE_EJS>
      <BLD_FEATURE_PHP>0</BLD_FEATURE_PHP>
+     <BLD_FEATURE_SSL>0</BLD_FEATURE_SSL>
      <BLD_TOP>../../..</BLD_TOP>
      <BLD_OUT_DIR>$(BLD_TOP)/out</BLD_OUT_DIR>
      <BLD_BIN_DIR>$(BLD_OUT_DIR)/bin</BLD_BIN_DIR>
      <BLD_OBJ_DIR>$(BLD_OUT_DIR)/obj</BLD_OBJ_DIR>
+     <SRC>$(BLD_TOP)/src</SRC>
+     <BLD_ABS_BIN_DIR>$([System.IO.Path]::GetFullPath($(BLD_OUT_DIR)/bin)</BLD_ABS_BIN_DIR>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

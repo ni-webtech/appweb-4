@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{672F7A99-6C9A-4CD3-932F-3D5A6B1A019F}</ProjectGuid>
+    <ProjectGuid>{020B6CFB-4884-4AB9-912A-0242F9DD3339}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -89,11 +89,12 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{B251D78F-8658-4277-ADDD-5F1E137722B8}</Project>
+      <Project>{EA8063EB-98A0-4719-A98F-D2EABBE906DE}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
 
   <PropertyGroup>
     <BuildDependsOn>
@@ -102,9 +103,13 @@
     </BuildDependsOn>
   </PropertyGroup>
 
-  <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\appwebMonitor.h" Inputs="$(ProjectDir)..\..\..\src\server\appwebMonitor.h">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\server\appwebMonitor.h" 
-          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+  <ItemGroup>
+    <IncludeFiles Include="$(SRC)/server/appwebMonitor.h" />
+    <ExportFiles  Include="$(BLD_INC_DIR)/appwebMonitor.h" />
+  </ItemGroup>
+
+  <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(BLD_INC_DIR)" />
   </Target>
 
   <ImportGroup Label="ExtensionTargets">

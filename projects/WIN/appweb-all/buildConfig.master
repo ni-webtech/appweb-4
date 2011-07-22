@@ -208,8 +208,6 @@ export INCLUDE:=C:/Program Files/Microsoft Visual Studio 10.0/VC/INCLUDE;C:/Prog
 
 export LIB:=C:/Program Files/Microsoft SDKs/Windows/v7.1/LIB;C:/Program Files/Microsoft Visual Studio 10.0/VC/lib;$(LIB)
 
-export PATH:=/home/mob/appweb/out/bin:/home/mob/appweb/out/modules:/home/mob/appweb/out/lib:/home/mob/appweb/out/lib:/home/mob/appweb/build/bin:/bin:/usr/bin:/Program Files/Microsoft Visual Studio 10.0/Common7/IDE:/Program Files/Microsoft Visual Studio 10.0/VC/bin:/Program Files/Microsoft Visual Studio 10.0/Common7/Tools:/Program Files/Microsoft Visual Studio 10.0/SDK/v3.5/bin:/Program Files/Microsoft Visual Studio 10.0/VC/VCPackages:/Program Files/Microsoft SDKs/Windows/v7.1/bin:$(PATH)
-
 #
 #	Features
 #

@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{122C2722-BA96-4A15-927A-7091C6E76F52}</ProjectGuid>
+    <ProjectGuid>{757287D4-E500-4999-B4DC-D464B8423CF4}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -89,21 +89,21 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{B251D78F-8658-4277-ADDD-5F1E137722B8}</Project>
+      <Project>{EA8063EB-98A0-4719-A98F-D2EABBE906DE}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="libhttp.vcxproj">
-      <Project>{E05DFE1F-A667-47A3-B511-575BAA1F6C2E}</Project>
+      <Project>{FBB81A2F-8CEC-43F8-9A09-3431D31CB4E6}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="libpcre.vcxproj">
-      <Project>{63D17F69-5189-4AE1-8D6D-7D05364F66E3}</Project>
+      <Project>{C451508D-5CD3-4BAF-9182-F5F817F2B1BB}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
@@ -118,14 +118,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <IncludeFiles Include="$(ProjectDir)..\..\..\src\appweb.h" />
-    <IncludeFiles Include="$(ProjectDir)..\..\..\src\customize.h" />
-    <ExportFiles  Include="$(ProjectDir)..\..\..\out\inc\appweb.h" />
-    <ExportFiles  Include="$(ProjectDir)..\..\..\out\inc\customize.h" />
+    <IncludeFiles Include="$(SRC)/appweb.h" />
+    <IncludeFiles Include="$(SRC)/customize.h" />
+    <ExportFiles  Include="$(BLD_INC_DIR)/appweb.h" />
+    <ExportFiles  Include="$(BLD_INC_DIR)/customize.h" />
   </ItemGroup>
 
   <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
-    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(BLD_INC_DIR)" />
   </Target>
 
   <ImportGroup Label="ExtensionTargets">
