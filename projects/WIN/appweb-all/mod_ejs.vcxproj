@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0D455D16-8861-4DA2-91D1-D5EC4522BE76}</ProjectGuid>
+    <ProjectGuid>{D9C5A02F-60D6-43DC-B59A-9860383CB3BA}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -50,6 +50,7 @@
   </ImportGroup>
 
   <PropertyGroup Label="UserMacros" />
+
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
@@ -63,6 +64,7 @@
     <ClInclude Include="..\..\..\out\inc\mpr.h" />
     <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
   </ItemGroup>
+
   <ItemGroup Condition="'$(BLD_FEATURE_EJS)' == '1'">
     <ClCompile Include="..\..\..\src\handlers\ejsHandler.c" />
   </ItemGroup>
@@ -81,7 +83,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{3A5E3922-4637-42FE-9C50-AEDB8EE05806}</Project>
+      <Project>{122C2722-BA96-4A15-927A-7091C6E76F52}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{C0EE95F5-1B49-4583-B312-82AB766C96F3}</ProjectGuid>
+    <ProjectGuid>{6434F5EB-8517-41E2-801E-F1D369CD3C90}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -50,6 +50,7 @@
   </ImportGroup>
 
   <PropertyGroup Label="UserMacros" />
+
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
@@ -63,6 +64,7 @@
     <ClInclude Include="..\..\..\out\inc\mpr.h" />
     <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
   </ItemGroup>
+
   <ItemGroup Condition="'$(BLD_FEATURE_SSL)' == '1'">
     <ClCompile Include="..\..\..\src\modules\sslModule.c" />
   </ItemGroup>
@@ -81,7 +83,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{3A5E3922-4637-42FE-9C50-AEDB8EE05806}</Project>
+      <Project>{122C2722-BA96-4A15-927A-7091C6E76F52}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

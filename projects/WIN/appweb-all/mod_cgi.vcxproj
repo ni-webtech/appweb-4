@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{C7E3CC14-84C2-4491-86DF-DD2CA1086220}</ProjectGuid>
+    <ProjectGuid>{C57D0701-B115-4C92-92CC-A42797E30C64}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -50,6 +50,7 @@
   </ImportGroup>
 
   <PropertyGroup Label="UserMacros" />
+
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
@@ -63,6 +64,7 @@
     <ClInclude Include="..\..\..\out\inc\mpr.h" />
     <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
   </ItemGroup>
+
   <ItemGroup Condition="'$(BLD_FEATURE_CGI)' == '1'">
     <ClCompile Include="..\..\..\src\handlers\cgiHandler.c" />
   </ItemGroup>
@@ -81,7 +83,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{3A5E3922-4637-42FE-9C50-AEDB8EE05806}</Project>
+      <Project>{122C2722-BA96-4A15-927A-7091C6E76F52}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

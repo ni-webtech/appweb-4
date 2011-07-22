@@ -1,5 +1,6 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -10,34 +11,46 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{96253A07-D435-4310-B576-8005BB5EA431}</ProjectGuid>
+    <ProjectGuid>{672F7A99-6C9A-4CD3-932F-3D5A6B1A019F}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
+
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
+
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
+
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    
     <Import Project="product.props" />
     <Import Project="debug.props" />
   </ImportGroup>
+
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    
     <Import Project="product.props" />
     <Import Project="release.props" />
   </ImportGroup>
+
   <PropertyGroup Label="UserMacros" />
+
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
@@ -45,6 +58,7 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
   </PropertyGroup>
+
   <ItemGroup>
     <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
     <ClInclude Include="..\..\..\out\inc\mpr.h" />
@@ -52,38 +66,47 @@
     <ClInclude Include="..\..\..\out\inc\appweb.h" />
     <ClInclude Include="..\..\..\src\include\appwebMonitor.h" />
   </ItemGroup>
-  <ItemGroup>
+
+  <ItemGroup >
     <ClCompile Include="..\..\..\src\server\WIN\appwebMonitor.c" />
   </ItemGroup>
-  <ItemDefinitionGroup>
+
+  <ItemDefinitionGroup >
     <Link>
       <AdditionalDependencies>libmpr.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+
   <ItemDefinitionGroup>
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
+
   <ItemGroup>
     <ResourceCompile Include="..\..\..\src\server\appweb.rc" />
-  </ItemGroup>
+    </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{70284A37-705D-457D-8F00-C58394AE9C8E}</Project>
+      <Project>{B251D78F-8658-4277-ADDD-5F1E137722B8}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
   <PropertyGroup>
     <BuildDependsOn>
         Setup;
         $(BuildDependsOn);
     </BuildDependsOn>
   </PropertyGroup>
+
   <Target Name="Setup" Outputs="$(ProjectDir)..\..\..\out\inc\appwebMonitor.h" Inputs="$(ProjectDir)..\..\..\src\server\appwebMonitor.h">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\server\appwebMonitor.h" DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
+    <Copy SkipUnchangedFiles="true" SourceFiles="$(ProjectDir)..\..\..\src\server\appwebMonitor.h" 
+          DestinationFolder="$(ProjectDir)..\..\..\out\inc" />
   </Target>
+
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{4520C3F8-1AD9-45E0-B23A-D0A1F8906565}</ProjectGuid>
+    <ProjectGuid>{F4F09AE1-BFA8-48E9-88A4-F4C130780AF4}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -50,6 +50,7 @@
   </ImportGroup>
 
   <PropertyGroup Label="UserMacros" />
+
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
@@ -63,6 +64,7 @@
     <ClInclude Include="..\..\..\out\inc\mpr.h" />
     <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
   </ItemGroup>
+
   <ItemGroup >
     <ClCompile Include="..\..\..\src\deps\mpr\mprSsl.c" />
   </ItemGroup>
@@ -81,7 +83,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{70284A37-705D-457D-8F00-C58394AE9C8E}</Project>
+      <Project>{B251D78F-8658-4277-ADDD-5F1E137722B8}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

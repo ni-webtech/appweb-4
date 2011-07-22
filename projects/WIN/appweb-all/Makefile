@@ -33,9 +33,13 @@ SOLUTIONS	= appweb-all.sln
 
 PROPS		+= product.props
 
-compileExtra: prep $(PROJECTS) $(SOLUTIONS)
+#
+#	Don't want to do this every build, just on demand
+#
+gen: prep $(PROJECTS) $(SOLUTIONS)
 
 prep:
+	touch Makefile
 	if ls $(BLD_BIN_DIR)/*.def >/dev/null 2>&1 ; then \
 		for f in $(BLD_BIN_DIR)/*.def ; do \
 			base=`basename "$$f"` ; \

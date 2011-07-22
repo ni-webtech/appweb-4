@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{3A5E3922-4637-42FE-9C50-AEDB8EE05806}</ProjectGuid>
+    <ProjectGuid>{122C2722-BA96-4A15-927A-7091C6E76F52}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -50,6 +50,7 @@
   </ImportGroup>
 
   <PropertyGroup Label="UserMacros" />
+
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
@@ -64,6 +65,7 @@
     <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
     <ClInclude Include="..\..\..\out\inc\appweb.h" />
   </ItemGroup>
+
   <ItemGroup >
     <ClCompile Include="..\..\..\src\config.c" />
     <ClCompile Include="..\..\..\src\convenience.c" />
@@ -87,19 +89,21 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{70284A37-705D-457D-8F00-C58394AE9C8E}</Project>
+      <Project>{B251D78F-8658-4277-ADDD-5F1E137722B8}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="libhttp.vcxproj">
-      <Project>{45EECD3A-C703-45C4-A0CD-58968A7A9DAC}</Project>
+      <Project>{E05DFE1F-A667-47A3-B511-575BAA1F6C2E}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="libpcre.vcxproj">
-      <Project>{446F4CF3-CEA4-4702-8C23-B6F371C2BD40}</Project>
+      <Project>{63D17F69-5189-4AE1-8D6D-7D05364F66E3}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

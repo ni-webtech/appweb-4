@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{FB9D9DEC-5D41-4BF1-A6EB-3A4930CCE65A}</ProjectGuid>
+    <ProjectGuid>{8F718739-9B7C-47ED-A6CB-42954CA584DA}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -50,6 +50,7 @@
   </ImportGroup>
 
   <PropertyGroup Label="UserMacros" />
+
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
@@ -61,6 +62,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\out\inc\http.h" />
   </ItemGroup>
+
   <ItemGroup >
     <ClCompile Include="..\..\..\src\deps\http\http.c" />
   </ItemGroup>
@@ -73,7 +75,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libhttp.vcxproj">
-      <Project>{45EECD3A-C703-45C4-A0CD-58968A7A9DAC}</Project>
+      <Project>{E05DFE1F-A667-47A3-B511-575BAA1F6C2E}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
