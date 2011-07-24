@@ -113,7 +113,7 @@ fi
 if [ "$BLD_FEATURE_EJS" = 1 ] ; then
     cpy -s -m 755 -d ${BLD_BIN_DIR} ejs${BLD_EXE} "${BLD_BIN_PREFIX}"
     cpy -d ${BLD_LIB_DIR} 'ejs*.mod' "${BLD_LIB_PREFIX}"
-    cpy -s -m 755 -d ${BLD_BIN_DIR} ejspage "${BLD_BIN_PREFIX}"
+    cpy -m 755 -d ${BLD_BIN_DIR} ejspage "${BLD_BIN_PREFIX}"
 fi
 
 #
