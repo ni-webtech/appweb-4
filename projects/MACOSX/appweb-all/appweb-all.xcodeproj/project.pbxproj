@@ -572,10 +572,10 @@
 		C90C0CCD13CCFE7B00A43FD9 /* esp */ = {
 			isa = PBXGroup;
 			children = (
-				C9E4B73F13C7F547005345FA /* espHandler.c */,
 				C9E4B74013C7F547005345FA /* esp.h */,
-				C9E4B74113C7F547005345FA /* espTemplate.c */,
 				C9E4B74213C7F547005345FA /* espFramework.c */,
+				C9E4B73F13C7F547005345FA /* espHandler.c */,
+				C9E4B74113C7F547005345FA /* espTemplate.c */,
 			);
 			name = esp;
 			sourceTree = "<group>";
@@ -1799,6 +1799,7 @@
 			buildSettings = {
 				"ADDITIONAL_SDKS[arch=*]" = "";
 				MACOSX_DEPLOYMENT_TARGET = "";
+				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
@@ -1807,6 +1808,7 @@
 			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
 				MACOSX_DEPLOYMENT_TARGET = "";
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
