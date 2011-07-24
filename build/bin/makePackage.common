@@ -340,7 +340,7 @@ cpy() {
             fi
 
             [ $v -gt 0 ] && echo -e "cp -pf ${src} ${dest}"
-            ${CP} -pf "${src}" "${dest}"
+            ${CP} -P -pf "${src}" "${dest}"
             if [ $? != 0 ] ; then
                 echo "# Can't copy: cp -pf $src $dest"
                 echo -e "\nIf installing to system directories, become administrator or attain"

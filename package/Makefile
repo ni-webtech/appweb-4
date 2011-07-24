@@ -14,7 +14,7 @@ dependExtra:
 packageFinal:
 	$(MAKE) -C .. packageRelease
 	$(MAKE) -C .. packageCombo
-
+	$(MAKE) -C .. packageFlat
 
 #
 #   Local variables:

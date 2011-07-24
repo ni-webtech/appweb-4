@@ -84,7 +84,7 @@ defineComponent() {
             present="--present 0"
         fi
     else
-        ejsbin="${BLD_BIN_DIR}/ejs"
+        ejsbin=`canonPath ${BLD_OUT_DIR}/bin/ejs`
     fi
     incdir=`probe --name ejs.h --dir --search "$search" "ejs.h" `
     if [ "$incdir" != "" ] ; then

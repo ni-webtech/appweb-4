@@ -231,6 +231,7 @@ installedFiles:
 cleanExtra:
 	[ "$(_RECURSIVE_)" = "" ] && \
 		$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) _RECURSIVE_=1 -C . clean ; true
+	rm -f $(BLD_OUT_DIR)/releases/*
 
 clobberExtra:
 	rm -fr $(BLD_OUT_DIR)

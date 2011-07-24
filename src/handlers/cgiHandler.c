@@ -1065,6 +1065,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
 
 int maCgiHandlerInit(Http *http, MprModule *module)
 {
+    mprNop(0);
     return 0;
 }
 #endif /* BLD_FEATURE_CGI */

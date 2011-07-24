@@ -670,7 +670,6 @@ else
     #
     #   Unix / Linux / MacOS / FreeBSD
     #
-    paths="-L${BLD_LIB_DIR}"
     for p in ${LIBRARY_PATHS} ; do
         if [ "${p}" != "" ] ; then
             paths="${paths} -L${p}"
@@ -813,7 +812,6 @@ if [ "$BLD_WIN_LIKE" = 1 ] ; then
                 ENTRY_SW=""
                 DEF_SW=""
             fi
-
             run "${LINKER}" ${DSO} "-out:${SHARED_LIBRARY}" ${ENTRY_SW} ${DEF_SW} ${MAKE_LDFLAGS} ${BLD_LDFLAGS} ${_LDFLAGS}\
                 ${LINK_SWITCHES} ${_LDFLAGS} ${LINK_LIBRARY_PATHS} "-libpath:${_LDPATH}" \
                 ${EXTRA_FLAGS} ${OBJECTS} ${LIB_LIST} ${STND_LIBS} >/tmp/link$$.tmp

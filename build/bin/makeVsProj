@@ -57,7 +57,7 @@ log() {
 }
 
 parseArgs() {
-    local argc
+    local argc value
 
     argc=$#
     _INDEX=1
@@ -68,6 +68,11 @@ parseArgs() {
         case "${_SWITCH}" in 
         --cflags)
             CFLAGS="$CFLAGS ${_ARG}"
+            useArg
+            ;;
+        --condition)
+            value=${_ARG//$\\/$}
+            CONDITION="Condition=\"${value}\""
             useArg
             ;;
         --custom)
@@ -198,6 +203,7 @@ usage() {
 makeVsProj: usage: makeVsProj [options] objects ....
     Options:
     --cflags                Compiler flags
+    --condition             Compile and link MSBuild condition
     --custom                Custom build step file
     --debug                 Not implemented
     --def                   Import definition file
@@ -476,14 +482,14 @@ outputConfiguration() {
   </ImportGroup>
 
   <PropertyGroup Label="UserMacros" />
+
   <PropertyGroup>
     <_ProjectFileVersion>${PROJECT_FILE_VERSION}</_ProjectFileVersion>
-    <OutDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${STOK}\\${CTOK}\</OutDir>
-    <IntDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${CTOK}\</IntDir>
-    <OutDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${STOK}\\${CTOK}\</OutDir>
-    <IntDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${CTOK}\</IntDir>
+    <OutDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${WIN_OUT_DIR//\//\\}\\bin\\</OutDir>
+    <IntDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${WIN_OUT_DIR}\\obj\\</IntDir>
+    <OutDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${WIN_OUT_DIR}\\bin\\</OutDir>
+    <IntDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${WIN_OUT_DIR}\\obj\\</IntDir>
   </PropertyGroup>
-
 !EOF_CONFIGURATION_A
 }
 
@@ -492,6 +498,7 @@ outputHeaders() {
     local f uuid
 
     [ "$HEADERS" = "" ] && return
+    output ""
     output "  <ItemGroup>"
     for f in $HEADERS ; do
         f=${f//\//\\}
@@ -502,26 +509,16 @@ outputHeaders() {
 
 
 outputResources() {
-    local f uuid
+    local f
 
     [ "$RESOURCES" = "" ] && return
-    uuid=`uuidgen`
-    cat >>$PROJECT <<!EOF_RESOURCES_A
-        <Filter
-            Name="Resource Files"
-            Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-            UniqueIdentifier="{${uuid}}"
-            >
-!EOF_RESOURCES_A
+    output ""
+    output "  <ItemGroup>"
     for f in $RESOURCES ; do
         f=${f//\//\\}
-        output "            <File"
-        output "                RelativePath=\"${f}\""
-        output "                >"
-        output "            </File>"
+        output "    <ResourceCompile Include=\"${f}\" />"
     done
-
-    output "        </Filter>"
+    output "    </ItemGroup>"
 }
 
 
@@ -529,7 +526,8 @@ outputSources() {
     local f
 
     [ "$SOURCES" = "" ] && return
-    output "  <ItemGroup>"
+    output ""
+    output "  <ItemGroup $CONDITION>"
     for f in $SOURCES ; do
         f=${f//\//\\}
         output "    <ClCompile Include=\"${f}\" />"
@@ -550,10 +548,8 @@ outputLinkOptions() {
   <ItemDefinitionGroup>
     <Link>
       <ModuleDefinitionFile>$def</ModuleDefinitionFile>
-      <AdditionalDependencies>$LIB_LIST;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-
 !EOF_LINK_OPTIONS
         done
     fi
@@ -561,16 +557,16 @@ outputLinkOptions() {
     if [ "$LIB_LIST" != "" ] ; then
         cat >>$PROJECT <<!EOF_LINK_LIBS
 
-  <ItemDefinitionGroup>
+  <ItemDefinitionGroup $CONDITION>
     <Link>
       <AdditionalDependencies>$LIB_LIST;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-
 !EOF_LINK_LIBS
     fi
 
     if [ "$GRAPHICAL" != "" ] ; then
+        
         cat >>$PROJECT <<!EOF_LINK_SUBSYSTEM
 
   <ItemDefinitionGroup>
@@ -578,7 +574,6 @@ outputLinkOptions() {
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
-
 !EOF_LINK_SUBSYSTEM
     fi
 }
@@ -595,6 +590,7 @@ outputDependencies() {
             fi
             guid="{"`cat ${dep}.vcxproj.guid`"}"
             cat >>$PROJECT <<!EOF_DEPS
+
   <ItemGroup>
     <ProjectReference Include="${dep}.vcxproj">
       <Project>${guid}</Project>
@@ -616,6 +612,15 @@ outputMsTargets() {
   <Import Project="${VTOK}\Microsoft.Cpp.targets" />
 
 !EOF_TRAILER
+    if [ "$CONDITION" != "" ] ; then
+    cat >>$PROJECT <<!EOF_TRAILER_2
+  <PropertyGroup ${CONDITION/==/!=}>
+    <BuildDependsOn>
+    </BuildDependsOn>
+  </PropertyGroup>
+
+!EOF_TRAILER_2
+    fi
 }
 
 outputCustom() {
@@ -653,8 +658,8 @@ outputTrailer() {
 #
 
 BLD_TOP=`findTop`
-
 : ${BLD_OUT_DIR:=$BLD_TOP/out}
+WIN_OUT_DIR=${BLD_OUT_DIR//\//\\}
 
 . `cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`
 parseArgs "$@"
@@ -773,7 +778,7 @@ outputConfiguration
 outputHeaders
 outputSources
 outputLinkOptions
-# outputResources
+outputResources
 outputDependencies
 outputMsTargets
 outputCustom

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 44;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -43,6 +43,18 @@
 			);
 			name = All;
 			productName = All;
+		};
+		C9D7B35513D8C030006C3A9B /* test */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = C9D7B35713D8C030006C3A9B /* Build configuration list for PBXAggregateTarget "test" */;
+			buildPhases = (
+				C9D7B35613D8C030006C3A9B /* Test */,
+			);
+			dependencies = (
+				C9BD40CB13D8CA8B00CB61A0 /* PBXTargetDependency */,
+			);
+			name = test;
+			productName = prep;
 		};
 /* End PBXAggregateTarget section */
 
@@ -317,6 +329,13 @@
 			remoteGlobalIDString = C97DCAAF101D4FE7008EB048;
 			remoteInfo = mod_ssl;
 		};
+		C9BD40CA13D8CA8B00CB61A0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9761F7B0FD049F5009C78E1;
+			remoteInfo = All;
+		};
 		C9D7A7CE13D4F332000428C7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
@@ -355,6 +374,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C9081AA513D899CE00FE7376 /* Product.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Product.xcconfig; sourceTree = "<group>"; };
 		C92D5C6A130DF56C0097EBA8 /* meta.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = meta.c; path = ../../../src/meta.c; sourceTree = SOURCE_ROOT; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -362,6 +382,8 @@
 		C94086D2101A672F0019809C /* testHttp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testHttp.c; path = ../../../src/test/testHttp.c; sourceTree = SOURCE_ROOT; };
 		C95C31E80FC5292A00FB3105 /* appweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = appweb.c; path = ../../../src/server/appweb.c; sourceTree = SOURCE_ROOT; };
 		C96176F312DCE345002702E0 /* auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = auth.c; path = ../../../src/utils/auth.c; sourceTree = SOURCE_ROOT; };
+		C969664713D8A11000B16C66 /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		C969664813D8A11900B16C66 /* Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		C972B80113D402B800A33EB9 /* buildConfig.default */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = buildConfig.default; sourceTree = "<group>"; };
 		C9761DA00FD03F94009C78E1 /* libmpr.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmpr.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmprssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -688,6 +710,9 @@
 			isa = PBXGroup;
 			children = (
 				C972B80113D402B800A33EB9 /* buildConfig.default */,
+				C9081AA513D899CE00FE7376 /* Product.xcconfig */,
+				C969664713D8A11000B16C66 /* Debug.xcconfig */,
+				C969664813D8A11900B16C66 /* Release.xcconfig */,
 			);
 			name = Configurations;
 			sourceTree = "<group>";
@@ -707,13 +732,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		C9761DAA0FD03FBA009C78E1 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		C9761FF90FD04D5C009C78E1 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -777,7 +795,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = C9761DD10FD03FE7009C78E1 /* Build configuration list for PBXNativeTarget "libmprssl" */;
 			buildPhases = (
-				C9761DAA0FD03FBA009C78E1 /* Headers */,
 				C9761DAB0FD03FBA009C78E1 /* Sources */,
 				C9761DAC0FD03FBA009C78E1 /* Frameworks */,
 			);
@@ -1039,6 +1056,7 @@
 				C9761E090FD0415A009C78E1 /* auth */,
 				C9408698101A665B0019809C /* testAppweb */,
 				C9D7A7B613D4F28D000428C7 /* angel */,
+				C9D7B35513D8C030006C3A9B /* test */,
 			);
 		};
 /* End PBXProject section */
@@ -1050,16 +1068,14 @@
 			files = (
 			);
 			inputPaths = (
-				/tmp/a.tmp,
 			);
 			name = Initialize;
 			outputPaths = (
-				/tmp/b.tmp,
+				dummy,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\n\nmkdir -p $OUT/inc $OUT/lib\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.default -nt $OUT/inc/buildConfig.h ] ; then\n    # echo Install buildConfig.default to $OUT/inc/buildConfig.h\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.default $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\nfi\nexit 0";
-			showEnvVarsInLog = 0;
+			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc $OUT/bin\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.master -nt $OUT/inc/buildConfig.h ] ; then\n    # echo Install buildConfig.default to $OUT/inc/buildConfig.h\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.master $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\nfi\nexit 0";
 		};
 		C976D54A13D35902001BBFDF /* Export Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1073,7 +1089,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp $SRC/handlers/esp/esp.h $OUT/inc";
+			shellScript = "cp $SRC/handlers/esp/esp.h $OUT/inc\nexit 0";
+			showEnvVarsInLog = 0;
 		};
 		C976D54B13D35989001BBFDF /* Export Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1087,7 +1104,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp $SRC/appweb*.h $SRC/customize.h $OUT/inc";
+			shellScript = "cp $SRC/appweb*.h $SRC/customize.h $OUT/inc\nexit 0";
+			showEnvVarsInLog = 0;
 		};
 		C976D54C13D359D5001BBFDF /* Export Header */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1101,7 +1119,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp $SRC/test/testAppweb.h $OUT/inc";
+			shellScript = "cp $SRC/test/testAppweb.h $OUT/inc\nexit 0";
+			showEnvVarsInLog = 0;
 		};
 		C976D54D13D35A43001BBFDF /* Import Libraries and Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1115,7 +1134,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "DEST=$BUILT_PRODUCTS_DIR\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_EJS\" = 1 ] ; then\n    $BLD_TOOLS_DIR/getImports $DEST $BLD_EJS_IMPORTS\nelse\n    rm -f $DEST/ejs $DIR/http $DEST/*.mod\n    if [ ! -f \"$DEST/libejs.dylib\" ] ; then\n        rm -f $DEST/libejs* $DIR/libhttp* $DEST/libmpr* $DEST/libpcre*\n        >/tmp/empty$$.c ; cc -dynamiclib -o $DEST/libejs.dylib /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\n    if [ ! -f \"$DEST/ejs.web.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o $DEST/ejs.web.dylib /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\nfi";
+			shellScript = "DEST=\"$BUILT_PRODUCTS_DIR\"\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_EJS\" = 1 ] ; then\n    $BLD_TOOLS_DIR/getImports \"$DEST\" $BLD_EJS_IMPORTS\nelse\n    if [ ! -f \"$DEST/libejs.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o \"$DEST/libejs.dylib\" /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\n    if [ ! -f \"$DEST/ejs.web.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o \"$DEST/ejs.web.dylib\" /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\nfi\nexit 0";
+			showEnvVarsInLog = 0;
 		};
 		C976D54E13D3A5DC001BBFDF /* Import Libraries and Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1129,7 +1149,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "DIR=$BUILT_PRODUCTS_DIR\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_PHP\" = 1 ] ; then\n    $BLD_TOOLS_DIR/getImports $DIR $BLD_PHP_IMPORTS\nelse\n    if [ ! -f \"$DIR/libphp5.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o $DIR/libphp5.dylib /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\nfi";
+			shellScript = "DIR=\"$BUILT_PRODUCTS_DIR\"\n\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_PHP\" = 1 ] ; then\n    $BLD_TOOLS_DIR/getImports \"$DIR\" $BLD_PHP_IMPORTS\nelse\n    if [ ! -f \"$DIR/libphp5.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o \"$DIR/libphp5.dylib\" /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\nfi\nexit 0";
 		};
 		C976D55013D3A9FB001BBFDF /* Import Libraries and Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1143,7 +1163,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_HTTP_IMPORTS";
+			shellScript = "export BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_HTTP_IMPORTS\nexit 0";
+			showEnvVarsInLog = 0;
 		};
 		C976D55113D3AC1A001BBFDF /* Import Libraries and Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1157,7 +1178,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_PCRE_IMPORTS";
+			shellScript = "export BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_PCRE_IMPORTS\nexit 0";
+			showEnvVarsInLog = 0;
 		};
 		C976D56013D3BC05001BBFDF /* Deployment */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1185,7 +1207,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp -r $SRC/server/template/standard/conf $SRC/server/conf\ncp -r $SRC/server/template/standard/appweb.conf $SRC/server\n\nif [ \"$SKIP_INSTALL\" != YES ] ; then\n    mkdir -p $DSTROOT/etc/appweb/conf\n    cp $SRC/server/appweb.conf $DSTROOT/etc/appweb\n    cp $SRC/server/mime.types $DSTROOT/etc/appweb\n    cp -r $SRC/server/conf $DSTROOT/etc/appweb\n    cp $SRC/server/groups.db $SRC/server/users.db $DSTROOT/etc/appweb\n    cp $SRC/server/php.ini $DSTROOT/etc/appweb\n    cp -r $SRC/server/ssl $DSTROOT/etc/appweb\nfi";
+			shellScript = "cp -r $SRC/server/master/* $SRC/server\n\nif [ \"$SKIP_INSTALL\" != YES ] ; then\n    mkdir -p $DSTROOT/etc/appweb/conf\n    cp $SRC/server/appweb.conf $DSTROOT/etc/appweb\n    cp $SRC/server/mime.types $DSTROOT/etc/appweb\n    cp -r $SRC/server/*.conf  $DSTROOT/etc/appweb\n    cp $SRC/server/groups.db $SRC/server/users.db $DSTROOT/etc/appweb\n    cp $SRC/server/php.ini $DSTROOT/etc/appweb\n    cp -r $SRC/server/ssl $DSTROOT/etc/appweb\nfi\nexit 0";
+			showEnvVarsInLog = 0;
+		};
+		C9D7B35613D8C030006C3A9B /* Test */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = Test;
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd $SRC ; $TOP/../ejs/out/bin/ejs $BBIN/utest -v";
 		};
 		C9EA7DEF13D4E0280035EB46 /* Import Libraries and Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1199,7 +1236,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\nexport BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_MPR_IMPORTS";
+			shellScript = "export BLD_TOP=$TOP\n. `${TOP}/build/bin/cacheConfig ${OUT}/inc/buildConfig.h`\n\n$TOP/build/bin/getImports $BUILT_PRODUCTS_DIR $BLD_MPR_IMPORTS\nexit 0";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1476,6 +1514,11 @@
 			target = C97DCAAF101D4FE7008EB048 /* mod_ssl */;
 			targetProxy = C9B12BDC13D176BF00470A96 /* PBXContainerItemProxy */;
 		};
+		C9BD40CB13D8CA8B00CB61A0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9761F7B0FD049F5009C78E1 /* All */;
+			targetProxy = C9BD40CA13D8CA8B00CB61A0 /* PBXContainerItemProxy */;
+		};
 		C9D7A7CF13D4F332000428C7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C93E6EFE11E83A3B00248470 /* prep */;
@@ -1507,9 +1550,6 @@
 		C93E6EFF11E83A3B00248470 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = prep;
 			};
 			name = Debug;
@@ -1517,11 +1557,8 @@
 		C93E6F0011E83A3B00248470 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = prep;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -1530,7 +1567,7 @@
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = testAppweb;
 				SKIP_INSTALL = YES;
 			};
@@ -1541,7 +1578,7 @@
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = testAppweb;
 				SKIP_INSTALL = YES;
 			};
@@ -1550,10 +1587,8 @@
 		C9761DA10FD03F95009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				INSTALL_PATH = "$(INSTALL_PATH)/lib\n";
 				PRODUCT_NAME = libmpr;
 			};
 			name = Debug;
@@ -1561,10 +1596,8 @@
 		C9761DA20FD03F95009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				INSTALL_PATH = "$(INSTALL_PATH)/lib\n";
 				PRODUCT_NAME = libmpr;
 			};
 			name = Release;
@@ -1572,26 +1605,14 @@
 		C9761DAF0FD03FBA009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
 				EXECUTABLE_PREFIX = "";
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6 = "\"$(SRCROOT)/../../../out/lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_7 = "\"$(SRCROOT)/../../../out/lib\"";
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lcrypto",
 					"-lssl",
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = libmprssl;
 			};
 			name = Debug;
@@ -1599,42 +1620,23 @@
 		C9761DB00FD03FBA009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6 = "\"$(SRCROOT)/../../../out/lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_7 = "\"$(SRCROOT)/../../../out/lib\"";
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lcrypto",
 					"-lssl",
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = libmprssl;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C9761DC40FD03FD9009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				EXECUTABLE_PREFIX = "";
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../out/lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libappweb;
 			};
 			name = Debug;
@@ -1642,16 +1644,9 @@
 		C9761DC50FD03FD9009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../out/lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libappweb;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -1659,7 +1654,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = http;
 			};
 			name = Debug;
@@ -1668,7 +1663,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = http;
 			};
 			name = Release;
@@ -1677,7 +1672,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = auth;
 			};
 			name = Debug;
@@ -1686,7 +1681,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = auth;
 			};
 			name = Release;
@@ -1694,10 +1689,6 @@
 		C9761F7C0FD049F6009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = i386;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = All;
 			};
 			name = Debug;
@@ -1705,25 +1696,16 @@
 		C9761F7D0FD049F6009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = i386;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = All;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C9761FFE0FD04D5C009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_cgi;
 			};
 			name = Debug;
@@ -1731,30 +1713,18 @@
 		C9761FFF0FD04D5C009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_cgi;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C97DCAB9101D4FE7008EB048 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				LD_DYLIB_INSTALL_NAME = "$(DYLIB_INSTALL_NAME_BASE:standardizepath)/$(EXECUTABLE_PATH)";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../out/lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_ssl;
 			};
 			name = Debug;
@@ -1762,32 +1732,18 @@
 		C97DCABA101D4FE7008EB048 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				LD_DYLIB_INSTALL_NAME = "$(DYLIB_INSTALL_NAME_BASE:standardizepath)/$(EXECUTABLE_PATH)";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../out/lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_ssl;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C9817C4F110D183800F241EF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				EXECUTABLE_PREFIX = "";
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libhttp;
 			};
 			name = Debug;
@@ -1795,37 +1751,26 @@
 		C9817C50110D183800F241EF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libhttp;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C9A26CEB13D1787B007A3D7C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					$TOP/../ejs/out/inc,
 				);
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lejs",
 					"$(BUILT_PRODUCTS_DIR)/ejs.web.dylib",
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = mod_ejs;
 			};
 			name = Debug;
@@ -1833,100 +1778,35 @@
 		C9A26CEC13D1787B007A3D7C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					$TOP/../ejs/out/inc,
 				);
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lejs",
 					"$(BUILT_PRODUCTS_DIR)/ejs.web.dylib",
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = mod_ejs;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C9AFCC4B0FC521150080E908 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
-				BBIN = $SRCROOT/../../../build/bin;
-				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4.0.0;
-				DEPLOYMENT_LOCATION = YES;
-				DSTROOT = /tmp/appweb.dst;
-				DYLIB_COMPATIBILITY_VERSION = "$(CURRENT_PROJECT_VERSION)";
-				DYLIB_CURRENT_VERSION = "$(CURRENT_PROJECT_VERSION)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG_IDE=1";
-				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = NO;
-				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = NO;
-				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = NO;
-				GCC_WARN_PEDANTIC = NO;
-				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = NO;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_LABEL = YES;
-				GCC_WARN_UNUSED_VALUE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = $OUT/inc;
-				INSTALL_PATH = /usr/lib/appweb/lib;
-				LD_DYLIB_INSTALL_NAME = "@rpath/$(EXECUTABLE_PATH)";
-				LIBRARY_SEARCH_PATHS = "$(OUT)/lib";
-				OTHER_LDFLAGS = (
-					"-Wl,-rpath,@executable_path/../lib",
-					"-Wl,-rpath,@executable_path/",
-					"-Wl,-rpath,@loader_path/",
-					"-lcrypto",
-					"-lssl",
-				);
-				OUT = "$(PROJECT_DIR)/../../../out";
-				SKIP_INSTALL = YES;
-				SRC = "$(PROJECT_DIR)/../../../src";
-				STRIP_INSTALLED_PRODUCT = NO;
-				TOP = "$(PROJECT_DIR)/../../..";
+				"ADDITIONAL_SDKS[arch=*]" = "";
+				MACOSX_DEPLOYMENT_TARGET = "";
 			};
 			name = Debug;
 		};
 		C9AFCC4C0FC521150080E908 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_64_BIT_PRE_XCODE_3_1 = x86_64;
-				BBIN = $SRCROOT/../../../build/bin;
-				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 4.0.0;
-				DEPLOYMENT_LOCATION = YES;
-				DSTROOT = /tmp/appweb.dst;
-				DYLIB_COMPATIBILITY_VERSION = "$(CURRENT_PROJECT_VERSION)";
-				DYLIB_CURRENT_VERSION = "$(CURRENT_PROJECT_VERSION)";
-				HEADER_SEARCH_PATHS = $OUT/inc;
-				INSTALL_PATH = /usr/lib/appweb/lib;
-				LD_DYLIB_INSTALL_NAME = "@rpath/$(EXECUTABLE_PATH)";
-				LIBRARY_SEARCH_PATHS = "$(OUT)/lib";
-				OTHER_LDFLAGS = (
-					"-Wl,-rpath,@executable_path/../lib",
-					"-Wl,-rpath,@executable_path/",
-					"-Wl,-rpath,@loader_path/",
-					"-lcrypto",
-					"-lssl",
-				);
-				OUT = "$(PROJECT_DIR)/../../../out";
-				SKIP_INSTALL = YES;
-				SRC = "$(PROJECT_DIR)/../../../src";
-				TOP = "$(PROJECT_DIR)/../../..";
+				MACOSX_DEPLOYMENT_TARGET = "";
 			};
 			name = Release;
 		};
@@ -1936,7 +1816,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = appweb;
 			};
 			name = Debug;
@@ -1947,7 +1827,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = appweb;
 			};
 			name = Release;
@@ -1955,17 +1835,8 @@
 		C9B12BC813D175C300470A96 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				EXECUTABLE_PREFIX = "";
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libpcre;
 			};
 			name = Debug;
@@ -1973,18 +1844,9 @@
 		C9B12BC913D175C300470A96 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libpcre;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -1992,9 +1854,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = angel;
 			};
 			name = Debug;
@@ -2003,22 +1863,30 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "";
-				INSTALL_PATH = "$(INSTALL_PATH)/../bin";
+				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = angel;
+			};
+			name = Release;
+		};
+		C9D7B35813D8C030006C3A9B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = test;
+			};
+			name = Debug;
+		};
+		C9D7B35913D8C030006C3A9B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = test;
 			};
 			name = Release;
 		};
 		C9D817AB101D4C2A0039DD9D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					../../../extensions/php/latest/TSRM,
@@ -2026,17 +1894,11 @@
 					../../../extensions/php/latest/main,
 					../../../extensions/php/latest,
 				);
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6 = "\"$(SRCROOT)/../../../out/lib\"";
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lphp5",
 				);
-				PREBINDING = YES;
 				PRODUCT_NAME = mod_php;
 			};
 			name = Debug;
@@ -2044,11 +1906,8 @@
 		C9D817AC101D4C2A0039DD9D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
 				EXECUTABLE_PREFIX = "";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					../../../extensions/php/latest/TSRM,
@@ -2056,32 +1915,20 @@
 					../../../extensions/php/latest/main,
 					../../../extensions/php/latest,
 				);
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_4 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../lib\"";
-				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_6 = "\"$(SRCROOT)/../../../out/lib\"";
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lphp5",
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = mod_php;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		C9E4B73B13C7F4F3005345FA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_esp;
 			};
 			name = Debug;
@@ -2089,13 +1936,9 @@
 		C9E4B73C13C7F4F3005345FA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				PREBINDING = NO;
+				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_esp;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -2242,6 +2085,15 @@
 			buildConfigurations = (
 				C9D7A7C713D4F28D000428C7 /* Debug */,
 				C9D7A7C813D4F28D000428C7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C9D7B35713D8C030006C3A9B /* Build configuration list for PBXAggregateTarget "test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9D7B35813D8C030006C3A9B /* Debug */,
+				C9D7B35913D8C030006C3A9B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

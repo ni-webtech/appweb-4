@@ -82,7 +82,6 @@ createFeatureConfig()
 BLD_APPWEB_PRODUCT=1
 BLD_FEATURE_AUTH_FILE=$BLD_FEATURE_AUTH_FILE
 BLD_FEATURE_AUTH_PAM=$BLD_FEATURE_AUTH_PAM
-BLD_FEATURE_CONFIG=$BLD_FEATURE_CONFIG
 
 #
 #   Default port configuration
@@ -108,7 +107,6 @@ help()
 
 Additional Appweb Features:
   --auth=[pam|file]        Build with file or PAM-based authorization support.
-  --conf=FILE              File to use for the appweb.conf configuration file.
   --port=PORT              Set the default HTTP port to use for the product.
   --sslPort=PORT           Set the default SSL port to use for the product.
   --webDir=PATH            Set the directory for web documents (DocumentRoot).
@@ -148,13 +146,6 @@ parseArg()
         else
             echo "Unknown authorization backend for --auth"
             exit 255
-        fi
-        ;;
-    conf=*|config=*)
-        if [ "${ARG}" = "${ARG/\/}" ] ; then
-            BLD_FEATURE_CONFIG="template/${ARG}"
-        else
-            BLD_FEATURE_CONFIG="${ARG}"
         fi
         ;;
     disable-all)

@@ -505,6 +505,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
 
 int maPhpHandlerInit(Http *http, MprModule *module)
 {
+    mprNop(0);
     return 0;
 }
 #endif /* BLD_FEATURE_PHP */

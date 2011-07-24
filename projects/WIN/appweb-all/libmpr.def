@@ -408,6 +408,7 @@ EXPORTS
   mprSetThreadStackSize
   mprSetWinMsgCallback
   mprSetWorkerStackSize
+  mprSetWorkerStartCallback
   mprShouldAbortRequests
   mprShouldDenyNewRequests
   mprSignalCond

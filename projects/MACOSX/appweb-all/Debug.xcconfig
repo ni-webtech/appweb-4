@@ -1,0 +1,16 @@
+//
+//  Debug.xcconfig - Debug configuration for appweb-all
+//
+//  Copyright 2011 Embedthis Software. All rights reserved.
+//
+
+#include "Product.xcconfig"
+
+COPY_PHASE_STRIP = NO
+GCC_OPTIMIZATION_LEVEL = 0
+GCC_PREPROCESSOR_DEFINITIONS = DEBUG_IDE=1
+GCC_WARN_UNUSED_FUNCTION = YES
+GCC_WARN_UNUSED_LABEL = YES
+GCC_WARN_UNUSED_VARIABLE = YES
+GCC_WARN_UNUSED_VALUE = YES
+STRIP_INSTALLED_PRODUCT = NO

@@ -1068,10 +1068,12 @@ struct  MprXml;
 #define MPR_DEFAULT_BREAK_PORT  9473
 #define MPR_FD_MIN              32
 
-#define MPR_MAX_IP_NAME         128
-#define MPR_MAX_IP_ADDR         16
-#define MPR_MAX_IP_PORT         6
-#define MPR_MAX_IP_ADDR_PORT    32
+/* Longest IPv6 is XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX (40 bytes with null) */ 
+
+#define MPR_MAX_IP_NAME         1024
+#define MPR_MAX_IP_ADDR         1024
+#define MPR_MAX_IP_PORT         8
+#define MPR_MAX_IP_ADDR_PORT    1024
 
 /*
     Signal sent on Unix to break out of a select call.

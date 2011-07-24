@@ -18823,6 +18823,20 @@ static int getSocketIpAddr(struct sockaddr *addr, int addrlen, char *ip, int ipL
 #if (BLD_UNIX_LIKE || WIN)
     char    service[NI_MAXSERV];
 
+#ifdef IN6_IS_ADDR_V4MAPPED
+    if (addr->sa_family == AF_INET6) {
+        struct sockaddr_in6* addr6= (struct sockaddr_in6*) addr;
+        if (IN6_IS_ADDR_V4MAPPED(&addr6->sin6_addr)) {
+            struct sockaddr_in addr4;
+            memset(&addr4, 0, sizeof(addr4));
+            addr4.sin_family = AF_INET;
+            addr4.sin_port = addr6->sin6_port;
+            memcpy(&addr4.sin_addr.s_addr, addr6->sin6_addr.s6_addr + 12, sizeof(addr4.sin_addr.s_addr));
+            memcpy(addr, &addr4, sizeof(addr4));
+            addrlen = sizeof(addr4);
+        }
+    }
+#endif
     if (getnameinfo(addr, addrlen, ip, ipLen, service, sizeof(service), NI_NUMERICHOST | NI_NUMERICSERV | NI_NOFQDN)) {
         return MPR_ERR_BAD_VALUE;
     }
@@ -26855,7 +26869,7 @@ void stubMprWince() {}
 
 
 
-static MprXmlToken getToken(MprXml *xp, int state);
+static MprXmlToken getXmlToken(MprXml *xp, int state);
 static int  getNextChar(MprXml *xp);
 static void manageXml(MprXml *xml, int flags);
 static int  scanFor(MprXml *xp, char *str);
@@ -26961,7 +26975,7 @@ static int parseNext(MprXml *xp, int state)
      */
     while (1) {
 
-        token = getToken(xp, state);
+        token = getXmlToken(xp, state);
 
         if (token == MPR_XMLTOK_TOO_BIG) {
             xmlError(xp, "XML token is too big");
@@ -27045,13 +27059,13 @@ static int parseNext(MprXml *xp, int state)
                     Must be an attribute name
                  */
                 aname = sclone(mprGetBufStart(tokBuf));
-                token = getToken(xp, state);
+                token = getXmlToken(xp, state);
                 if (token != MPR_XMLTOK_EQ) {
                     xmlError(xp, "Missing assignment for attribute \"%s\"", aname);
                     return MPR_ERR_BAD_SYNTAX;
                 }
 
-                token = getToken(xp, state);
+                token = getXmlToken(xp, state);
                 if (token != MPR_XMLTOK_TEXT) {
                     xmlError(xp, "Missing value for attribute \"%s\"", aname);
                     return MPR_ERR_BAD_SYNTAX;
@@ -27154,7 +27168,7 @@ static int parseNext(MprXml *xp, int state)
             if (rc < 0) {
                 return rc;
             }
-            if (getToken(xp, state) != MPR_XMLTOK_GR) {
+            if (getXmlToken(xp, state) != MPR_XMLTOK_GR) {
                 xmlError(xp, "Syntax error");
                 return MPR_ERR_BAD_SYNTAX;
             }
@@ -27178,7 +27192,7 @@ static int parseNext(MprXml *xp, int state)
     has special cases for the states MPR_XML_ELT_DATA where we have an optimized read of element data, and 
     MPR_XML_AFTER_LS where we distinguish between element names, processing instructions and comments. 
  */
-static MprXmlToken getToken(MprXml *xp, int state)
+static MprXmlToken getXmlToken(MprXml *xp, int state)
 {
     MprBuf      *tokBuf;
     char        *cp;
@@ -29110,7 +29124,7 @@ hexdig_init(void)
 #endif
 
  static int
-match
+dmatch
 #ifdef KR_headers
     (sp, t) char **sp, *t;
 #else
@@ -30214,9 +30228,9 @@ strtod
              switch(c) {
               case 'i':
               case 'I':
-                if (match(&s,"nf")) {
+                if (dmatch(&s,"nf")) {
                     --s;
-                    if (!match(&s,"inity"))
+                    if (!dmatch(&s,"inity"))
                         ++s;
                     word0(&rv) = 0x7ff00000;
                     word1(&rv) = 0;
@@ -30225,7 +30239,7 @@ strtod
                 break;
               case 'n':
               case 'N':
-                if (match(&s, "an")) {
+                if (dmatch(&s, "an")) {
                     word0(&rv) = NAN_WORD0;
                     word1(&rv) = NAN_WORD1;
 #ifndef No_Hex_NaN

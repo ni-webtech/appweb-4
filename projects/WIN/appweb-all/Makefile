@@ -4,12 +4,12 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2009. All Rights Reserved.
 #
 
-CONFIG		= buildConfig.default
+CONFIG		= buildConfig.master
 
 include     .makedep
-
 include     $(CONFIG)
 
+HEADERS		=
 VSP			= makeVsProj
 VSS			= makeVsSol
 SRC			= $(BLD_TOP)/src
@@ -31,11 +31,15 @@ PROJECTS	= setup.vcxproj libmpr.vcxproj libmprssl.vcxproj libpcre.vcxproj libhtt
 OTHER_PROJECTS= libejs.vcxproj libsqlite3.vcxproj ejsmod.vcxproj ejsc.vcxproj ejs.vcxproj ejssql.vcxproj mvc.vcxproj 
 SOLUTIONS	= appweb-all.sln
 
-PROPS		+= appweb.props
+PROPS		+= product.props
 
-compileExtra: prep $(PROJECTS) $(SOLUTIONS)
+#
+#	Don't want to do this every build, just on demand
+#
+gen: prep $(PROJECTS) $(SOLUTIONS)
 
 prep:
+	touch Makefile
 	if ls $(BLD_BIN_DIR)/*.def >/dev/null 2>&1 ; then \
 		for f in $(BLD_BIN_DIR)/*.def ; do \
 			base=`basename "$$f"` ; \
@@ -47,38 +51,37 @@ appweb-all.sln: Makefile $(CONFIG)
 	$(VSS) --solution appweb-all.sln \
 		--deps "libmpr setup" \
 		--deps "libpcre setup" \
-		setup libmpr libmprssl libhttp libpcre libappweb angel appweb appwebMonitor auth http mod_cgi mod_ejs mod_esp \
-		mod_php mod_ssl
+		$(PROJECTS)
 
-setup.vcxproj: Makefile $(CONFIG)
-	$(VSP) --project setup.vcxproj --custom setup.custom
+setup.vcxproj: setup.custom Makefile $(CONFIG)
+	$(VSP) --project setup.vcxproj --props "$(PROPS)" --custom setup.custom
 
-libmpr.vcxproj: Makefile $(CONFIG)
+libmpr.vcxproj: libmpr.custom Makefile $(CONFIG)
 	$(VSP) --project libmpr.vcxproj --library mpr --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" \
 		--custom libmpr.custom \
 		--def libmpr.def --libs "$(LIBS)" $(MPR_HDR) $(MPR_SRC)
 	
-libmprssl.vcxproj: Makefile $(CONFIG)
+libmprssl.vcxproj: libmprssl.custom Makefile $(CONFIG)
 	$(VSP) --project libmprssl.vcxproj --library mprssl --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libmpr \
 		--custom libmprssl.custom \
 		--iflags "$(SSL_IFLAGS)" --def libmprssl.def --libs "libmpr.lib $(LIBS)" \
 		$(MPR_HDR) $(SRC)/deps/mpr/mprSsl.c
 	
-libpcre.vcxproj: Makefile $(CONFIG)
+libpcre.vcxproj: libpcre.custom Makefile $(CONFIG)
 	$(VSP) --project libpcre.vcxproj --library pcre --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" \
 		--custom libpcre.custom \
 		--def libpcre.def --libs "$(LIBS)" $(MPR_HDR) $(SRC)/deps/pcre/pcre.c
 	
-libhttp.vcxproj: Makefile $(CONFIG)
+libhttp.vcxproj: libhttp.custom Makefile $(CONFIG)
 	$(VSP) --project libhttp.vcxproj --library http --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps "libmpr libmprssl" \
 		--custom libhttp.custom \
 		--def libhttp.def --libs "libmpr.lib libmprssl.lib $(LIBS)" $(MPR_HDR) $(HTTP_HDR) $(SRC)/deps/http/httpLib.c
 	
-libappweb.vcxproj: Makefile $(CONFIG)
+libappweb.vcxproj: libappweb.custom Makefile $(CONFIG)
 	$(VSP) --project libappweb.vcxproj --library appweb --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps "libmpr libhttp libpcre" \
 		--custom libappweb.custom \
@@ -90,12 +93,14 @@ libappweb.vcxproj: Makefile $(CONFIG)
 mod_cgi.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_cgi.vcxproj --library cgi --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
+		--condition "'$$\(BLD_FEATURE_CGI)' == '1'" \
 		--def mod_cgi.def --libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" \
 		$(MPR_HDR) $(SRC)/handlers/cgiHandler.c
 
 mod_ejs.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_ejs.vcxproj --library ejs --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
+		--condition "'$$\(BLD_FEATURE_EJS)' == '1'" \
 		--def mod_ejs.def --libs "libmpr.lib libhttp.lib libsqlite3.lib libejs.lib libappweb.lib $(LIBS)" \
 		$(MPR_HDR) $(EJS_HDR) $(SRC)/handlers/ejsHandler.c
 
@@ -108,12 +113,14 @@ mod_esp.vcxproj: Makefile $(CONFIG)
 mod_php.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_php.vcxproj --library php --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
+		--condition "'$$\(BLD_FEATURE_PHP)' == '1'" \
 		--iflags "$(PHP_IFLAGS)" --def mod_php.def --libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" \
         $(MPR_HDR) $(SRC)/handlers/phpHandler.c
 
 mod_ssl.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_ssl.vcxproj --library ssl --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
+		--condition "'$$\(BLD_FEATURE_SSL)' == '1'" \
 		--def mod_ssl.def --libs "libmpr.lib libmprssl.lib libhttp.lib libappweb.lib $(LIBS)" \
 		$(MPR_HDR) $(SRC)/modules/sslModule.c
 
@@ -121,19 +128,20 @@ mod_ssl.vcxproj: Makefile $(CONFIG)
 #	Executables
 #
 appweb.vcxproj: Makefile $(CONFIG)
-	$(VSP) --project appweb.vcxproj --exe appweb.exe --search "$(BLD_EJS_LIBPATHS)" --dflags "$(DFLAGS)" \
+	$(VSP) --project appweb.vcxproj --exe appweb.exe --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
 		--libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(SRC)/server/appweb.c
 
 angel.vcxproj: Makefile $(CONFIG)
-	$(VSP) --project angel.vcxproj --graphical --exe angel.exe --search "$(BLD_EJS_LIBPATHS)" \
+	$(VSP) --project angel.vcxproj --graphical --exe angel.exe \
 		--props "$(PROPS)" --deps libmpr \
 		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(SRC)/deps/mpr/angel.c
 
-appwebMonitor.vcxproj: Makefile $(CONFIG)
-	$(VSP) --project appwebMonitor.vcxproj --graphical --exe appwebMonitor.exe --search "$(BLD_EJS_LIBPATHS)" \
+appwebMonitor.vcxproj: appwebMonitor.custom Makefile $(CONFIG)
+	$(VSP) --project appwebMonitor.vcxproj --graphical --exe appwebMonitor.exe \
 		--props "$(PROPS)" --deps libmpr \
 		--custom appwebMonitor.custom \
+		--resources $(SRC)/server/appweb.rc \
 		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) \
         $(SRC)/include/appwebMonitor.h $(SRC)/server/WIN/appwebMonitor.c
 
@@ -158,7 +166,7 @@ libsqlite3.vcxproj: Makefile $(CONFIG)
 ejspage.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project ejspage.vcxproj --exe ejspage.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps setup \
-		--libs "libmpr.lib libejs.lib $(LIBS)" $(MPR_HDR) $(EJS_HDR) $(SRC)/deps/ejs/ejspage.c
+		--libs "libmpr.lib libejs.lib $(LIBS)" $(SRC)/deps/ejs/ejspage.c
 
 cleanExtra:
 	rm -fr Upgrade* _Upgrade* x64 Win32 *.suo *.sdf *.filters *.vcxproj*

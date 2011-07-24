@@ -60,7 +60,6 @@ bin/httpPassword
 staging
 src/test/web/tmp
 *.tmp
-*.user
 Win32
 *.ncb
 *.suo
@@ -131,7 +130,6 @@ src/server/appweb.conf
 src/test/web/a
 src/handlers/proxyHandler.nc
 src/test/web/huge.txt
-*.vcxproj
 *.vcxproj.filters
 UpgradeLog*.XML
 _UpgradeReport*
@@ -144,3 +142,4 @@ projects/WIN/appweb-dynamic/Debug
 rpm.log
 *.stackdump
 .publisher
+*.guid

@@ -1470,6 +1470,9 @@ static bool featureSupported(char *key)
     } else if (scasecmp(key, "EJS_MODULE") == 0) {
         return BLD_FEATURE_EJS;
 
+    } else if (scasecmp(key, "ESP_MODULE") == 0) {
+        return BLD_FEATURE_ESP;
+
     } else if (scasecmp(key, "PHP_MODULE") == 0) {
         return BLD_FEATURE_PHP;
         

@@ -2038,7 +2038,11 @@ doImports() {
         elif [ "${ext}" = "${SHOBJ}" ] ; then
             QUIET=1 ${BLD_TOOLS_DIR}/getlib $f
         elif [ "${ext}" = ".mod" -o "${ext}" = ".a" ] ; then
-            cp $f $BLD_OUT_DIR/lib
+            if [ "$BLD_OS" = WIN ] ; then
+                cp $f $BLD_OUT_DIR/bin
+            else
+                cp $f $BLD_OUT_DIR/lib
+            fi
         else
             cp $f $BLD_OUT_DIR/bin
         fi
