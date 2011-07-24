@@ -121,7 +121,11 @@ typedef struct EspReq {
     Esp             *esp;                   /* Convenient back pointer */
     EspRoute        *route;                 /* Route used for request */
     MprBuf          *cacheBuffer;           /* HTML output caching */
+    char            *baseName;              /* Base name of intermediate compiled file */
     char            *module;                /* Name of compiled module */
+    char            *source;                /* Name of ESP source */
+    char            *path;                  /* Path to controller */
+    char            *entry;                 /* Module entry point */
     int             responded;              /* Controller/action has responded in part */
     int             autoFinalize;           /* Request is/will-be auto-finalized */
 } EspReq;

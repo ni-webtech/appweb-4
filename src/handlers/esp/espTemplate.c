@@ -48,8 +48,8 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
             mprPutStringToBuf(buf, cp);
         } else if (*cp == '$') {
             if (sncmp(cp, "${SRC}", 6) == 0) {
-                //  MOB - Was out
-                mprPutStringToBuf(buf, source);
+                /* Currently putting temp C code in the modules directory */
+                mprPutStringToBuf(buf, out);
                 cp += 5;
             } else if (sncmp(cp, "${OUT}", 6) == 0) {
                 mprPutStringToBuf(buf, out);
@@ -109,7 +109,6 @@ bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module)
 
     cmd = mprCreateCmd(conn->dispatcher);
     commandLine = getCompileCommand(conn, path, module);
-    printf("%s\n", commandLine);
     if (mprRunCmd(cmd, commandLine, &out, &err, 0) != 0) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile view %s, error %s", path, err);
         return 0;
@@ -204,7 +203,7 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
             state = ESP_STAGE_IN_ESP_TAG;
             tid = getEspToken(state, &parse);
             while (tid != ESP_TOK_EOF && tid != ESP_TOK_EOF && tid != ESP_TOK_END_ESP) {
-                *script = sjoin(*script, joinLine(parse.token), NULL);
+                *script = sjoin(*script, parse.token, NULL);
                 tid = getEspToken(state, &parse);
             }
             state = ESP_STAGE_BEGIN;
@@ -241,7 +240,7 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
         /*
             Wrap the script
          */
-        printf("%s", *script);
+printf("SCRIPT: \n%s\n", *script);
         *script = sfmt(\
             "/*\n * Generated from %s\n */\n"\
             "#include \"esp.h\"\n\n"\

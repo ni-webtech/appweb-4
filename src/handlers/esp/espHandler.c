@@ -153,45 +153,45 @@ static void runView(HttpConn *conn, cchar *actionKey)
     Esp         *esp;
     EspReq      *req;
     EspView     view;
-    char        *source, *path, *module, *name, *entry;
 
     req = conn->data;
     esp = req->esp;
-    path = mprJoinPath(conn->host->documentRoot, actionKey);
-    source = mprJoinPathExt(path, ".esp");
-    name = mprGetMD5Hash(source, slen(source), "espView_");
-    module = mprAsprintf("%s/%s%s", req->esp->modDir, name, BLD_SHLIB);
+    req->path = mprJoinPath(conn->host->documentRoot, actionKey);
+    req->source = mprJoinPathExt(req->path, ".esp");
+    req->baseName = mprGetMD5Hash(req->source, slen(req->source), "espView_");
+    req->module = mprAsprintf("%s/%s%s", req->esp->modDir, req->baseName, BLD_SHLIB);
 
     if (esp->reload) {
-        if (!mprPathExists(source, R_OK)) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find view %s", source);
+        if (!mprPathExists(req->source, R_OK)) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find view %s", req->source);
             return;
         }
-        if (!moduleIsCurrent(conn, name, path, source, module)) {
+        if (!moduleIsCurrent(conn, req->baseName, req->path, req->source, req->module)) {
             /* Modules are named by source to aid debugging */
-            if ((mp = mprLookupModule(source)) != 0) {
+            if ((mp = mprLookupModule(req->source)) != 0) {
                 //  What if some modules cant be unloaded?
                 //  MOB - must complete all other running requests first
                 mprUnloadModule(mp);
             }
-            if (!espCompile(conn, name, source, module)) {
+            //  WARNING: this will allow GC
+            if (!espCompile(conn, req->baseName, req->source, req->module)) {
                 return;
             }
-            entry = sfmt("espInit_%s", name);
+            req->entry = sfmt("espInit_%s", req->baseName);
             //  MOB - who keeps reference to module?
-            if ((mp = mprCreateModule(source, module, entry, esp)) == 0) {
+            if ((mp = mprCreateModule(req->source, req->module, req->entry, esp)) == 0) {
                 httpMemoryError(conn);
                 return;
             }
             //  MOB - this should return an error msg
             if (mprLoadModule(mp) < 0) {
-                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled module for %s", source);
+                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled module for %s", req->source);
                 return;
             }
         }
     }
-    if ((view = mprLookupKey(esp->views, path)) == 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find defined view for %s", path);
+    if ((view = mprLookupKey(esp->views, req->path)) == 0) {
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find defined view for %s", req->path);
         return;
     }
     (view)(conn);
@@ -629,7 +629,11 @@ static void manageEsp(Esp *esp, int flags)
 static void manageReq(EspReq *req, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(req->entry);
+        mprMark(req->path);
+        mprMark(req->source);
         mprMark(req->module);
+        mprMark(req->baseName);
         mprMark(req->cacheBuffer);
         mprMark(req->route);
         mprMark(req->esp);

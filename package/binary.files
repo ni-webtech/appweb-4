@@ -46,12 +46,16 @@ else
     cpy src/server/web/min-index.html "${BLD_WEB_PREFIX}/appweb.html"
 fi
 
+makeDir "${BLD_CFG_PREFIX}/conf"
 if [ "$WITH_CONF" = "" ] ; then
-    makeDir "${BLD_CFG_PREFIX}/conf"
     cpy "src/server/appweb.conf" "${BLD_CFG_PREFIX}"
-    cpy "src/server/conf/*" "${BLD_CFG_PREFIX}/conf"
+    cpy "src/server/conf/*.conf" "${BLD_CFG_PREFIX}/conf"
 else
     cpy "$WITH_CONF" "${BLD_CFG_PREFIX}/appweb.conf"
+fi
+if [ "$BLD_FEATURE_ESP" = "1" ] ; then
+    makeDir "${BLD_CFG_PREFIX}/conf/esp"
+    cpy "src/server/conf/esp" "${BLD_CFG_PREFIX}/conf/esp"
 fi
 
 if [ "$BARE" = 0 ] ; then
