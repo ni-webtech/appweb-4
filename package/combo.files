@@ -12,28 +12,28 @@ DIR="${BLD_OUT_DIR}/staging/${BLD_PRODUCT}-${BLD_VERSION}"
 SRC="${DIR}/src/deps/appweb"
 DOC="${DIR}/doc"
 
-APPWEB_HEADERS="${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h"
-LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav'`
+APPWEB_HEADERS="${BLD_INC_DIR}/mpr.h ${BLD_INC_DIR}/mprSsl.h ${BLD_INC_DIR}/http.h ${BLD_INC_DIR}/pcre.h ${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h ${BLD_INC_DIR}/esp.h"
+LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|angel|makerom'`
+DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'angel|makerom|utils|test|http/http.c'`
 
 #
 #   Build files
 #
 mkdir -p ${SRC} ${DOC}/man ${DOC}/api
 cp ${BLD_TOP}/package/Makefile.combo "${SRC}/Makefile"
-# cp ${BLD_INC_DIR}/buildConfig.h "${DIR}/buildConfig.h"
+cp ${BLD_INC_DIR}/buildConfig.h "${DIR}/buildConfig.h"
 
 #
 #	appweb.h
 #
-echo '#include "appwebConfig.h"' >${SRC}/appweb.h
-echo '#include "http.h"' >>${SRC}/appweb.h
-combo ${APPWEB_HEADERS} | egrep -v '#include.*appweb|#include.*http' >>${SRC}/appweb.h
+echo '#include "buildConfig.h"' >${SRC}/appweb.h
+combo ${APPWEB_HEADERS} | egrep -v '#include.*appweb|#include.*http|#include.*esp|#include.*mpr|#include.*pcre|#include.*customize.h' >>${SRC}/appweb.h
 
 #
 #	appwebLib.c
 #
 echo '#include "appweb.h"' >${SRC}/appwebLib.c
-combo ${LIB_SOURCES} | egrep -v '#include.*appweb|#include.*http' >>${SRC}/appwebLib.c
+combo ${LIB_SOURCES} | egrep -v '#include.*appweb|#include.*http|#include.*esp|#include.*mpr|#include.*pcre' >>${SRC}/appwebLib.c
 
 #
 #	appweb.c
@@ -42,11 +42,24 @@ echo '#include "appweb.h"' >${SRC}/appweb.c
 combo ${S}/server/appweb.c | egrep -v '#include.*appweb|#include.*http' >>${SRC}/appweb.c
 
 #
+#	appweb.conf
+#
+cp ${S}/server/*.conf ${SRC}
+cp ${S}/server/esp-*.conf ${SRC}
+
+#
 #	Doc
 #
 cp ${BLD_TOP}/doc/man/appweb.1 ${DOC}/man
 cp ${BLD_TOP}/doc/man/appwebMonitor.1 ${DOC}/man
 cp ${BLD_TOP}/doc/man/auth.1 ${DOC}
+
+
+#
+#	deps.c
+#
+echo '#include "appweb.h"' >${SRC}/deps.c
+combo ${DEP_SOURCES} | egrep -v '#include.*appweb|#include.*http|#include.*esp|#include.*mpr|#include.*pcre' >>${SRC}/deps.c
 
 #
 #   Local variables:

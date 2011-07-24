@@ -19,22 +19,3 @@ compileExtra:	$(TARGETS)
 $(BLD_BIN_DIR)/appweb$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/appweb$(BLD_EXE) --libs "$(BLD_EJS_LIBS)" \
 		--modules "ejs.web$(BLD_SHOBJ)" $(WEB_OBJECTS)
-
-romFiles.c: ../mime.types ../appweb.conf default-web/*.html
-	$(call log) "[Generate]" "romFiles.c"
-	echo -e ".\nappweb.conf\nmime.types" >rom.files
-	find default-web -print | egrep -v 'CVS|\.svn|\.cvsignore|\.ignore|\.tmp|\.sav|\.php|\.ejs|php' >>rom.files
-	$(call setlibpath) ; sort rom.files | uniq | xargs makerom --name romFiles >romFiles.c
-
-$(BLD_LIB_DIR)/mime.types: mime.types
-	$(call log) "[Generate]" "mime.types"
-	rm -f $(BLD_LIB_DIR)/mime.types
-	cp mime.types $(BLD_LIB_DIR)
-
-$(BLD_LIB_DIR)/appweb.conf: appweb.conf
-	$(call log) "[Generate]" "appweb.conf"
-	cp appweb.conf $(BLD_LIB_DIR)
-
-$(BLD_LIB_DIR)/start.es: start.es
-	$(call log) "[Generate]" "start.es"
-	cp start.es $(BLD_LIB_DIR)
