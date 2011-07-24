@@ -6,7 +6,7 @@
 
 # TRACE=1
 
-usePrefixes CFG BIN JEM LIB LOG PRD VER WEB 
+usePrefixes CFG BIN LIB LOG PRD VER WEB 
 
 ${CHMOD} 755 "${BLD_CFG_PREFIX}"
 
@@ -47,14 +47,9 @@ else
 fi
 
 if [ "$WITH_CONF" = "" ] ; then
-	if [ -d "$BLD_FEATURE_CONFIG" ] ; then
-		configDir="$BLD_FEATURE_CONFIG"
-	else
-		configDir="src/server/$BLD_FEATURE_CONFIG"
-	fi
-    cpy "${configDir}/appweb.conf" "${BLD_CFG_PREFIX}"
-    makeDir "${BLD_CFG_PREFIX}"
-    cpy "${configDir}/*" "${BLD_CFG_PREFIX}"
+    makeDir "${BLD_CFG_PREFIX}/conf"
+    cpy "src/server/appweb.conf" "${BLD_CFG_PREFIX}"
+    cpy "src/server/conf/*" "${BLD_CFG_PREFIX}/conf"
 else
     cpy "$WITH_CONF" "${BLD_CFG_PREFIX}/appweb.conf"
 fi
@@ -77,16 +72,7 @@ if [ "${TASK}" != Remove ] ; then
         done
         export BLD_HTTP_PORT BLD_SSL_PORT 
 		multipartConfig=1
-		for f in "${dir}/appweb.conf" "${dir}/conf/hosts/ssl-default.conf" "${dir}/conf/log.conf" "${dir}/conf/doc.conf"
-		do
-			[ ! -f "$f" ] && multipartConfig=0 
-		done
-        if [ "$multipartConfig" = "0" ] ; then
-            patchAppwebConf "${dir}/appweb.conf"
-        else
-            patchAppwebConf "${dir}/appweb.conf" "${dir}/conf/hosts/ssl-default.conf" \
-                "${dir}/conf/log.conf" "${dir}/conf/doc.conf"
-        fi
+        patchAppwebConf "${dir}/appweb.conf"
     )
 fi
 
