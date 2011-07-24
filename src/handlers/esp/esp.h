@@ -136,8 +136,14 @@ extern bool espCompile(HttpConn *conn, cchar *name, cchar *source, char *module)
 extern char *pcre_replace(cchar *str, void *pattern, cchar *replacement, MprList **parts, int flags);
 
 extern ssize espWrite(HttpConn *conn, cchar *buf, ssize len);
-extern void espDefineView(Esp *esp, cchar *path, void *view);
+extern void espRedirect(HttpConn *conn, int status, cchar *target);
+extern void espSetStatus(HttpConn *conn, int status);
+extern void espFinalize(HttpConn *conn);
+extern bool espFinalized(HttpConn *conn); 
+extern bool espSetAutoFinalizing(HttpConn *conn, int on);
+extern void espAutoFinalize(HttpConn *conn);
 
+extern void espDefineView(Esp *esp, cchar *path, void *view);
 
 #ifdef __cplusplus
 } /* extern C */

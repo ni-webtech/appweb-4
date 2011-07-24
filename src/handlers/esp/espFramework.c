@@ -34,6 +34,12 @@ ssize espWrite(HttpConn *conn, cchar *buf, ssize len)
 }
 
 
+void espRedirect(HttpConn *conn, int status, cchar *target)
+{
+    httpRedirect(conn, status, target);
+}
+
+
 void espSetStatus(HttpConn *conn, int status)
 {
     EspReq      *req;

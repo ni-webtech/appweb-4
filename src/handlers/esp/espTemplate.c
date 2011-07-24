@@ -48,8 +48,8 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
             mprPutStringToBuf(buf, cp);
         } else if (*cp == '$') {
             if (sncmp(cp, "${SRC}", 6) == 0) {
-                //  MOB - should this not use source?
-                mprPutStringToBuf(buf, out);
+                //  MOB - Was out
+                mprPutStringToBuf(buf, source);
                 cp += 5;
             } else if (sncmp(cp, "${OUT}", 6) == 0) {
                 mprPutStringToBuf(buf, out);
@@ -58,10 +58,6 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
                 mprPutStringToBuf(buf, getOutDir(BLD_INC_NAME));
                 cp += 5;
             } else if (sncmp(cp, "${LIB}", 6) == 0) {
-                mprPutStringToBuf(buf, getOutDir(BLD_LIB_NAME));
-                cp += 5;
-            //  MOB - remove MOD
-            } else if (sncmp(cp, "${MOD}", 6) == 0) {
                 mprPutStringToBuf(buf, getOutDir(BLD_LIB_NAME));
                 cp += 5;
             } else if (sncmp(cp, "${SHLIB}", 8) == 0) {
@@ -94,7 +90,6 @@ bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module)
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't read view %s", path);
         return 0;
     }
-//  MOB WRAP
     if (buildScript(path, name, page, &script, &err) < 0) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build view %s, error %s", path, err);
         return 0;

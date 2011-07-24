@@ -552,7 +552,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         return 1;
 
     } else if (scasecmp(key, "EspKeepSource") == 0) {
-        esp->keepSource = scasecmp(value, "on") == 0;
+        esp->keepSource = (scasecmp(value, "on") == 0 || scasecmp(value, "yes") == 0);
         return 1;
 
     } else if (scasecmp(key, "EspModules") == 0) {
@@ -692,8 +692,7 @@ int maEspHandlerInit(Http *http)
         esp->modDir = sclone(".");
     }
     esp->lifespan = ESP_LIFESPAN;
-    //  MOB - need directive for this
-    esp->keepSource = 1;
+    esp->keepSource = 0;
     esp->reload = BLD_DEBUG;
     return 0;
 }
