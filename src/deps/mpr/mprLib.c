@@ -4504,7 +4504,7 @@ static void manageCmd(MprCmd *cmd, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(cmd->program);
         mprMark(cmd->makeArgv);
-        mprMark(cmd->userEnv);
+        mprMark(cmd->defaultEnv);
         mprMark(cmd->env);
 #if BLD_UNIX_LIKE
         if (cmd->env) {
@@ -4699,9 +4699,9 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, int flags)
 /*
     Env is an array of "KEY=VALUE" strings. Null terminated
  */
-void mprSetCmdEnv(MprCmd *cmd, cchar **env)
+void mprSetDefaultCmdEnv(MprCmd *cmd, cchar **env)
 {
-    cmd->userEnv = env;
+    cmd->defaultEnv = env;
 }
 
 
@@ -5268,7 +5268,7 @@ void mprSetCmdDir(MprCmd *cmd, cchar *dir)
 static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 {
     if (env == 0) {
-        env = (char**) cmd->userEnv;
+        env = (char**) cmd->defaultEnv;
     }
 #if VXWORKS
     cmd->argv = argv;
@@ -18748,7 +18748,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
                 break;
             }
         } else {
-            if (r->ai_family == AF_INET || ip == 0) {
+            if (r->ai_family == AF_INET) {
                 break;
             }
         }
