@@ -51,6 +51,12 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
                 /* Currently putting temp C code in the modules directory */
                 mprPutStringToBuf(buf, out);
                 cp += 5;
+            } else if (sncmp(cp, "${DEBUG}", 8) == 0) {
+                mprPutStringToBuf(buf, BLD_DEBUG ? "-g" : "");
+                cp += 7;
+            } else if (sncmp(cp, "${ARCH}", 7) == 0) {
+                mprPutStringToBuf(buf, BLD_HOST_CPU);
+                cp += 6;
             } else if (sncmp(cp, "${OUT}", 6) == 0) {
                 mprPutStringToBuf(buf, out);
                 cp += 5;
@@ -109,7 +115,12 @@ bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module)
 
     cmd = mprCreateCmd(conn->dispatcher);
     commandLine = getCompileCommand(conn, path, module);
+    mprLog(0, "ESP compile: %s\n", commandLine);
     if (mprRunCmd(cmd, commandLine, &out, &err, 0) != 0) {
+printf("ERROR\n");
+printf("OUT %s\n", out);
+printf("ERR %s\n", err);
+
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile view %s, error %s", path, err);
         return 0;
     }
