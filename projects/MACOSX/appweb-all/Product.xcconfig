@@ -4,13 +4,15 @@
 //  Copyright 2011 Embedthis Software. All rights reserved.
 //
 
-BLD_PRODUCT_NAME = appweb
+BLD_PRODUCT_NAME = ejs
 CURRENT_PROJECT_VERSION = 4.0.0
 
 TOP = $(SRCROOT)/../../..
 OUT = $(TOP)/out
 SRC = $(TOP)/src
+JEMS = $(SRC)/jems
 BBIN = $(TOP)/build/bin
+
 SYMROOT = $(OUT)/bin
 CONFIGURATION_TEMP_DIR = $(OUT)/tmp/$(CONFIGURATION)
 CONFIGURATION_BUILD_DIR = $(SYMROOT)

@@ -6819,6 +6819,7 @@ typedef struct MprCmd {
     char            **argv;             /* List of args. Null terminated */
     char            **env;              /* List of environment variables. Null terminated */
     char            *dir;               /* Current working dir for the process */
+    cchar           **userEnv;          /* Environment to use if no env passed to mprStartCmd */
     int             argc;               /* Count of args in argv */
     MprTime         timestamp;          /* Timeout timestamp for last I/O  */
     MprTime         timeoutPeriod;      /* Timeout value */
@@ -7073,6 +7074,8 @@ extern ssize mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
     @param cmd MprCmd object created via mprCreateCmd
  */
 extern int mprIsCmdComplete(MprCmd *cmd);
+
+extern void mprSetCmdEnv(MprCmd *cmd, cchar **env);
 
 /**
     Mime Type hash table entry (the URL extension is the key)
