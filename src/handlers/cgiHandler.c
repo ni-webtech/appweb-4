@@ -71,17 +71,14 @@ static void startCgi(HttpQueue *q)
     HttpTx          *tx;
     HttpConn        *conn;
     MprCmd          *cmd;
-    MprHashTable    *vars;
     cchar           *baseName;
     char            **argv, **envv, *fileName;
     int             argc, varCount, count;
 
-    argv = 0;
-    vars = 0;
-    argc = 0;
-
     mprLog(5, "CGI: Start");
 
+    argv = 0;
+    argc = 0;
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
@@ -111,8 +108,7 @@ static void startCgi(HttpQueue *q)
     /*  
         Build environment variables
      */
-    vars = rx->formVars;
-    varCount = mprGetHashLength(vars) + mprGetHashLength(rx->headers);
+    varCount = mprGetHashLength(rx->formVars) + mprGetHashLength(rx->headers);
     if ((envv = mprAlloc((varCount + 1) * sizeof(char*))) != 0) {
         count = copyVars(envv, 0, rx->formVars, "");
         count = copyVars(envv, count, rx->headers, "HTTP_");

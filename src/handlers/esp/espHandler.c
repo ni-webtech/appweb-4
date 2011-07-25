@@ -159,7 +159,7 @@ static void runView(HttpConn *conn, cchar *actionKey)
     req->path = mprJoinPath(conn->host->documentRoot, actionKey);
     req->source = mprJoinPathExt(req->path, ".esp");
     req->baseName = mprGetMD5Hash(req->source, slen(req->source), "espView_");
-    req->module = mprAsprintf("%s/%s%s", req->esp->modDir, req->baseName, BLD_SHLIB);
+    req->module = mprGetNormalizedPath(mprAsprintf("%s/%s%s", req->esp->modDir, req->baseName, BLD_SHOBJ));
 
     if (esp->reload) {
         if (!mprPathExists(req->source, R_OK)) {
@@ -190,7 +190,7 @@ static void runView(HttpConn *conn, cchar *actionKey)
             }
         }
     }
-    if ((view = mprLookupKey(esp->views, req->path)) == 0) {
+    if ((view = mprLookupKey(esp->views, mprGetPortablePath(req->path))) == 0) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find defined view for %s", req->path);
         return;
     }
@@ -501,7 +501,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpDir     *dir, *parent;
     Esp         *esp;
     EspRoute    *route;
-    char        *prefix, *path, *next, *methods;
+    char        *ekey, *evalue, *prefix, *path, *next, *methods, *prior;
     
     host = state->host;
     loc = state->loc;
@@ -551,6 +551,23 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         esp->compile = strim(value, "\"", MPR_TRIM_BOTH);
         return 1;
 
+    } else if (scasecmp(key, "EspEnv") == 0) {
+        if (maGetConfigValue(&ekey, value, &next, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        if (maGetConfigValue(&evalue, next, &next, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        if (esp->env == 0) {
+            esp->env = mprCreateList(-1, 0);
+        }
+        if ((prior = getenv(ekey)) != 0) {
+            mprAddItem(esp->env, sfmt("%s=%s;%s", ekey, evalue, prior));
+        } else {
+            mprAddItem(esp->env, sfmt("%s=%s", ekey, evalue));
+        }
+        return 1;
+
     } else if (scasecmp(key, "EspKeepSource") == 0) {
         esp->keepSource = (scasecmp(value, "on") == 0 || scasecmp(value, "yes") == 0);
         return 1;
@@ -567,7 +584,6 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if ((route = mprAllocObj(EspRoute, manageRoute)) == 0) {
             return MPR_ERR_MEMORY;
         }
-
         if (maGetConfigValue(&route->name, value, &next, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
@@ -622,6 +638,7 @@ static void manageEsp(Esp *esp, int flags)
         mprMark(esp->views);
         mprMark(esp->compile);
         mprMark(esp->modDir);
+        mprMark(esp->env);
     }
 }
 

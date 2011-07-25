@@ -88,6 +88,7 @@ typedef struct Esp {
     MprHashTable    *actions;               /* Table of actions */
     MprHashTable    *views;                 /* Table of views */
     MprHashTable    *modules;               /* Compiled modules */
+    MprList         *env;                   /* Environment for compiler */
     MprList         *routes;                /* Ordered list of routes */
     char            *compile;               /* Compile template */
     char            *modDir;                /* Directory for cache files */

@@ -358,6 +358,8 @@ EXPORTS
   mprServiceSignals
   mprServiceWinIO
   mprServicesAreIdle
+  mprSetDefaultCmdEnv
+  mprAddNullItem
   mprSetAllocName
   mprSetAppName
   mprSetBufMax
