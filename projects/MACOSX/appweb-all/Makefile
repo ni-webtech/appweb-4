@@ -9,8 +9,9 @@ include     .makedep
 compileExtra: Product.xcconfig
 
 Product.xcconfig: $(BLD_INC_DIR)/buildConfig.h Makefile
-	cp Product.xcconfig /tmp/$$.tmp ; \
-	sed 's/CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = $(BLD_VERSION)/' </tmp/$$.tmp >Product.xcconfig
+	cp Product.xcconfig /tmp/$$$$.tmp ; \
+	sed 's/CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = $(BLD_VERSION)/' </tmp/$$$$.tmp >Product.xcconfig ; \
+	rm -f /tmp/$$$$.tmp
 
 #   Local variables:
 #   tab-width: 4
