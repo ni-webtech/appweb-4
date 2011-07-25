@@ -11,6 +11,7 @@
      <BLD_OUT_DIR>$(BLD_TOP)/out</BLD_OUT_DIR>
      <BLD_BIN_DIR>$(BLD_OUT_DIR)/bin</BLD_BIN_DIR>
      <BLD_OBJ_DIR>$(BLD_OUT_DIR)/obj</BLD_OBJ_DIR>
+     <BLD_INC_DIR>$(BLD_OUT_DIR)/inc</BLD_INC_DIR>
      <SRC>$(BLD_TOP)/src</SRC>
      <BLD_ABS_BIN_DIR>$([System.IO.Path]::GetFullPath($(BLD_OUT_DIR)/bin)</BLD_ABS_BIN_DIR>
   </PropertyGroup>
